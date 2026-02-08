@@ -1,0 +1,115 @@
+# Sentient Factory - AI Development Rules
+
+## Project Structure
+- This is a monorepo using pnpm workspaces and TurboRepo
+- All shared code should be in `packages/`
+- All runnable applications should be in `apps/`
+- Documentation is in `docs/` (Docusaurus)
+
+## Code Conventions
+
+### TypeScript/JavaScript
+- Use TypeScript for all new code
+- Follow ESLint configuration (Airbnb style guide)
+- Use functional programming patterns where appropriate
+- Prefer async/await over callbacks
+- Use named exports over default exports
+
+### Python (AI Engine)
+- Use Python 3.11+
+- Follow PEP 8 guidelines
+- Use type hints (Pydantic for data validation)
+- Use async/await for I/O operations
+- Document functions with docstrings
+
+### API Design
+- REST APIs should follow JSON:API specification
+- Use OpenAPI/Swagger for documentation
+- Version APIs (e.g., /api/v1/)
+- Consistent error responses with error codes
+
+## AI-Specific Guidelines
+
+### For AI Engine (apps/ai-engine)
+- Use LangChain for agent orchestration
+- Implement proper error handling for LLM calls
+- Cache LLM responses when appropriate
+- Log all AI decisions with reasoning
+- Use environment variables for API keys
+
+### Shared Types (packages/shared-types)
+- This is the SINGLE SOURCE OF TRUTH for types
+- All TypeScript interfaces and Python Pydantic models should be synchronized
+- When adding a new type, update both TypeScript and Python versions
+- Types should be versioned and backward compatible
+
+## Development Workflow
+
+1. **Start with types**: Define interfaces in `packages/shared-types/`
+2. **Implement logic**: Write business logic in appropriate service
+3. **Add tests**: Write unit and integration tests
+4. **Update docs**: Update relevant documentation
+
+## Database & State Management
+- Use PostgreSQL for relational data
+- Use Redis for caching and sessions
+- Use InfluxDB for time-series data (sensor readings)
+- All database schemas should be versioned with migrations
+
+## Logging & Monitoring
+- Use structured logging (JSON format)
+- Include correlation IDs for request tracing
+- Log at appropriate levels (DEBUG, INFO, WARN, ERROR)
+- All logs should be searchable and filterable
+
+## Security
+- Never commit secrets to repository
+- Use environment variables for configuration
+- Validate all inputs (both API and AI inputs)
+- Implement rate limiting for public APIs
+- Use HTTPS in production
+
+## AI Safety & Ethics
+- Implement content filtering for AI outputs
+- Log all AI-generated content for audit
+- Provide human-in-the-loop options for critical decisions
+- Respect user privacy and data ownership
+- Be transparent about AI limitations
+
+## Performance
+- Cache expensive computations
+- Use connection pooling for databases
+- Implement pagination for large datasets
+- Monitor memory usage (especially for AI models)
+- Use background jobs for long-running tasks
+
+## Testing
+- Write unit tests for business logic
+- Write integration tests for API endpoints
+- Write E2E tests for critical user flows
+- Mock external services (APIs, databases)
+- Test error scenarios
+
+## When You're Stuck
+1. Check `packages/shared-types/` for type definitions
+2. Look at existing patterns in similar services
+3. Check the documentation in `docs/`
+4. Ask for clarification if requirements are unclear
+
+## Important Files
+- `package.json` - Root dependencies and scripts
+- `turbo.json` - Build pipeline configuration
+- `infra/docker-compose.yml` - Local development setup
+- `.env.example` - Environment variables template
+
+## Commit Messages
+Use Conventional Commits format:
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `style:` Code style changes
+- `refactor:` Code refactoring
+- `test:` Adding or updating tests
+- `chore:` Maintenance tasks
+
+Example: `feat(ai-engine): add predictive maintenance agent`

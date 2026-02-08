@@ -1,0 +1,59 @@
+{
+  "name": "sentient-factory",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Intelligent manufacturing platform - Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:all": "./scripts/start-all.sh",
+    "ports:list": "node scripts/port-manager.js list",
+    "ports:check": "node scripts/port-manager.js check",
+    "ports:find": "node scripts/port-manager.js find",
+    "ports:update": "node scripts/port-manager.js update",
+    "ports:toggle": "node scripts/port-manager.js toggle",
+    "ports:active": "node scripts/port-manager.js active",
+    "ports:env": "node scripts/port-manager.js env",
+    "ports:commands": "node scripts/port-manager.js commands",
+    "ports:script": "node scripts/port-manager.js script",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "docker:up": "docker-compose -f infra/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infra/docker-compose.yml down",
+    "docker:logs": "docker-compose -f infra/docker-compose.yml logs -f",
+    "db:migrate": "cd apps/api-gateway && npm run db:migrate",
+    "db:seed": "cd apps/api-gateway && npm run db:seed",
+    "docs:dev": "cd docs && npm run start",
+    "docs:build": "cd docs && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prettier": "^3.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "npm@10.0.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "keywords": [
+    "manufacturing",
+    "ai",
+    "iot",
+    "industry-4.0",
+    "smart-factory"
+  ],
+  "author": "Sentient Factory Team",
+  "license": "MIT",
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "pg": "^8.18.0"
+  }
+}
