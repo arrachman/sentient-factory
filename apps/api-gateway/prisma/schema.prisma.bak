@@ -1,0 +1,171 @@
+// Task B0001: Database Schema Design
+// This schema defines the core data models for the Sentient Factory API Gateway.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @default(cuid()) @unique
+  email        String    @unique
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String?   @map("full_name")
+  avatarUrl    String?   @map("avatar_url")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  roles       UserRole[]
+  departments UserDepartment[]
+  sessions    Session[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @default(cuid()) @unique
+  name        String    @unique
+  description String?
+  isSystem    Boolean   @default(false) @map("is_system")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @default(cuid()) @unique
+  name        String    @unique
+  description String?
+  module      String
+  action      String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @default(cuid()) @unique
+  roleId       String    @map("role_id")
+  permissionId String    @map("permission_id")
+  assignedAt   DateTime  @default(now()) @map("assigned_at")
+  // No updated/deleted for join table usually, but added per request consistency if needed
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  role       Role       @relation(fields: [roleId], references: [uuid])
+  permission Permission @relation(fields: [permissionId], references: [uuid])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Department {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @default(cuid()) @unique
+  name        String
+  code        String    @unique
+  description String?
+  parentId    String?   @map("parent_id")
+  managerId   String?   @map("manager_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  parent   Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [uuid])
+  children Department[]     @relation("DepartmentHierarchy")
+  users    UserDepartment[]
+
+  @@map("departments")
+}
+
+model UserRole {
+  id         Int       @id @default(autoincrement())
+  uuid       String    @default(cuid()) @unique
+  userId     String    @map("user_id")
+  roleId     String    @map("role_id")
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  user User @relation(fields: [userId], references: [uuid])
+  role Role @relation(fields: [roleId], references: [uuid])
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model UserDepartment {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @default(cuid()) @unique
+  userId       String    @map("user_id")
+  departmentId String    @map("department_id")
+  joinedAt     DateTime  @default(now()) @map("joined_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  user       User       @relation(fields: [userId], references: [uuid])
+  department Department @relation(fields: [departmentId], references: [uuid])
+
+  @@unique([userId, departmentId])
+  @@map("user_departments")
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  uuid      String   @default(cuid()) @unique
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  // Session usually doesn't need soft delete, it expires.
+
+  user User @relation(fields: [userId], references: [uuid])
+
+  @@map("sessions")
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  uuid       String   @default(cuid()) @unique
+  userId     String?  @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldData    Json?    @map("old_data")
+  newData    Json?    @map("new_data")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+  // Audit log MUST NOT be deleted or modified.
+
+  user User? @relation(fields: [userId], references: [uuid])
+
+  @@map("audit_logs")
+}

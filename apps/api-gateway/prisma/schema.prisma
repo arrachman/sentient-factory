@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id(map: "user_pkey") @default(autoincrement())
+  uuid         String    @unique @default(cuid())
+  email        String    @unique
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String?   @map("full_name")
+  avatarUrl    String?   @map("avatar_url")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String?   @map("created_by")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+
+  roles       UserRole[]
+  departments UserDepartment[]
+  sessions    Session[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @default(cuid())
+  name        String    @unique
+  description String?
+  isSystem    Boolean   @default(false) @map("is_system")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@map("role")
+}
+
+model Permission {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @default(cuid())
+  name        String    @unique
+  description String?
+  module      String
+  action      String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+
+  roles RolePermission[]
+
+  @@map("permission")
+}
+
+model RolePermission {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @unique @default(cuid())
+  roleId       String    @map("role_id")
+  permissionId String    @map("permission_id")
+  assignedAt   DateTime  @default(now()) @map("assigned_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String?   @map("created_by")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+
+  role       Role       @relation(fields: [roleId], references: [uuid])
+  permission Permission @relation(fields: [permissionId], references: [uuid])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permission")
+}
+
+model Department {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @default(cuid())
+  name        String
+  code        String    @unique
+  description String?
+  parentId    String?   @map("parent_id")
+  managerId   String?   @map("manager_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+
+  parent   Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [uuid])
+  children Department[]     @relation("DepartmentHierarchy")
+  users    UserDepartment[]
+
+  @@map("department")
+}
+
+model UserRole {
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique @default(cuid())
+  userId     String    @map("user_id")
+  roleId     String    @map("role_id")
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  createdBy  String?   @map("created_by")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy  String?   @map("updated_by")
+  deletedAt  DateTime? @map("deleted_at")
+  deletedBy  String?   @map("deleted_by")
+
+  user User @relation(fields: [userId], references: [uuid])
+  role Role @relation(fields: [roleId], references: [uuid])
+
+  @@unique([userId, roleId])
+  @@map("user_role")
+}
+
+model UserDepartment {
+  id           Int       @id @default(autoincrement())
+  uuid         String    @unique @default(cuid())
+  userId       String    @map("user_id")
+  departmentId String    @map("department_id")
+  joinedAt     DateTime  @default(now()) @map("joined_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String?   @map("created_by")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+  deletedAt    DateTime? @map("deleted_at")
+  deletedBy    String?   @map("deleted_by")
+
+  user       User       @relation(fields: [userId], references: [uuid])
+  department Department @relation(fields: [departmentId], references: [uuid])
+
+  @@unique([userId, departmentId])
+  @@map("user_department")
+}
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  uuid      String    @unique @default(cuid())
+  userId    String    @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at")
+  ipAddress String?   @map("ip_address")
+  userAgent String?   @map("user_agent")
+  createdAt DateTime  @default(now()) @map("created_at")
+  createdBy String?   @map("created_by")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy String?   @map("updated_by")
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  user User @relation(fields: [userId], references: [uuid])
+
+  @@map("session")
+}
+
+model AuditLog {
+  id         Int       @id @default(autoincrement())
+  uuid       String    @unique @default(cuid())
+  userId     String?   @map("user_id")
+  action     String
+  entityType String    @map("entity_type")
+  entityId   String?   @map("entity_id")
+  oldData    Json?     @map("old_data")
+  newData    Json?     @map("new_data")
+  ipAddress  String?   @map("ip_address")
+  userAgent  String?   @map("user_agent")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  createdBy  String?   @map("created_by")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy  String?   @map("updated_by")
+  deletedAt  DateTime? @map("deleted_at")
+  deletedBy  String?   @map("deleted_by")
+
+  user User? @relation(fields: [userId], references: [uuid])
+
+  @@map("auditlog")
+}
