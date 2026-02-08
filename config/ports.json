@@ -1,0 +1,80 @@
+{
+  "apps": {
+    "web-dashboard": {
+      "name": "Web Dashboard",
+      "port": 3101,
+      "type": "nextjs",
+      "envVar": "WEB_DASHBOARD_PORT",
+      "description": "Main administration dashboard",
+      "isActive": true
+    },
+    "landing-page": {
+      "name": "Landing Page",
+      "port": 3102,
+      "type": "nextjs",
+      "envVar": "LANDING_PAGE_PORT",
+      "description": "Marketing landing page",
+      "isActive": true
+    },
+    "api-gateway": {
+      "name": "API Gateway",
+      "port": 3103,
+      "type": "nestjs",
+      "envVar": "API_GATEWAY_PORT",
+      "description": "Backend API server",
+      "isActive": true
+    },
+    "ai-engine": {
+      "name": "AI Engine",
+      "port": 3104,
+      "type": "node",
+      "envVar": "AI_ENGINE_PORT",
+      "description": "AI processing service",
+      "isActive": false
+    }
+  },
+  "services": {
+    "docs": {
+      "name": "Documentation",
+      "port": 3105,
+      "type": "docs",
+      "envVar": "DOCS_PORT",
+      "description": "Project documentation",
+      "isActive": true
+    },
+    "postgres": {
+      "port": 5432,
+      "description": "PostgreSQL database"
+    },
+    "redis": {
+      "port": 6379,
+      "description": "Redis cache"
+    },
+    "influxdb": {
+      "port": 8086,
+      "description": "InfluxDB time-series database"
+    },
+    "rabbitmq": {
+      "port": 5672,
+      "description": "RabbitMQ message broker"
+    },
+    "minio": {
+      "port": 9000,
+      "description": "MinIO object storage"
+    },
+    "grafana": {
+      "port": 3006,
+      "description": "Grafana monitoring dashboard"
+    },
+    "prometheus": {
+      "port": 9090,
+      "description": "Prometheus metrics"
+    }
+  },
+  "defaults": {
+    "nextjs": 3000,
+    "fastify": 3000,
+    "node": 3000,
+    "docs": 3000
+  }
+}
