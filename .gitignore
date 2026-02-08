@@ -234,7 +234,7 @@ docker-compose.override.yml
 .cursor/
 
 _metronic_source/
-docs/
+# docs/
 # apps/
 # config/
 # infra/
