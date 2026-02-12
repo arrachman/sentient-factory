@@ -48,7 +48,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(@Request() req: any) {
+  async logout(@Request() _req: any) {
     return {
       success: true,
       message: 'Logged out successfully',
@@ -78,7 +78,7 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Token refreshed' })
-  async refresh(@Request() req: any) {
+  async refresh(@Request() _req: any) {
     return {
       success: true,
       data: {
