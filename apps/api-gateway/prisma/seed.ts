@@ -396,12 +396,12 @@ async function main() {
     },
   });
 
-  const masterDataCustomerMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-customer' },
+  const masterDataContactMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-contact' },
     update: {
-      title: 'Customer',
-      path: '/app/master/customer',
-      icon: 'Users',
+      title: 'Contact',
+      path: '/app/master/contact',
+      icon: 'ContactRound',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
       sortOrder: 1,
@@ -409,63 +409,13 @@ async function main() {
       isActive: true,
     },
     create: {
-      key: 'master-data-customer',
-      title: 'Customer',
-      path: '/app/master/customer',
-      icon: 'Users',
+      key: 'master-data-contact',
+      title: 'Contact',
+      path: '/app/master/contact',
+      icon: 'ContactRound',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
       sortOrder: 1,
-      isVisible: true,
-      isActive: true,
-    },
-  });
-
-  const masterDataSupplierMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-supplier' },
-    update: {
-      title: 'Supplier',
-      path: '/app/master/supplier',
-      icon: 'Truck',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
-      key: 'master-data-supplier',
-      title: 'Supplier',
-      path: '/app/master/supplier',
-      icon: 'Truck',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-  });
-
-  const masterDataCompanyMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-company' },
-    update: {
-      title: 'Company',
-      path: '/app/master/company',
-      icon: 'Building2',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 3,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
-      key: 'master-data-company',
-      title: 'Company',
-      path: '/app/master/company',
-      icon: 'Building2',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 3,
       isVisible: true,
       isActive: true,
     },
@@ -543,6 +493,17 @@ async function main() {
       sortOrder: 6,
       isVisible: true,
       isActive: true,
+    },
+  });
+
+  await prisma.menu.updateMany({
+    where: {
+      key: { in: ['master-data-customer', 'master-data-supplier', 'master-data-company'] },
+    },
+    data: {
+      isVisible: false,
+      isActive: false,
+      updatedBy: 'seed',
     },
   });
 
@@ -690,9 +651,7 @@ async function main() {
   await assignMenuToRole(adminRole.uuid, administratorSessionMenu.uuid);
   await assignMenuToRole(adminRole.uuid, administratorAuditlogMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataCustomerMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataSupplierMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataCompanyMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataContactMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataItemMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataProvinceMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataCityMenu.uuid);

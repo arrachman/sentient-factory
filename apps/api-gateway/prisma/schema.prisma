@@ -202,6 +202,32 @@ model UserDepartment {
   @@map("m0_user_department")
 }
 
+model MasterDataContact {
+  id               Int       @id @default(autoincrement())
+  uuid             String    @unique @default(cuid())
+  code             String    @unique
+  name             String
+  tax              String?
+  website          String?
+  address          String?
+  street           String?
+  city             String?
+  province         String?
+  zipCode          String?   @map("zip_code")
+  type             String
+  contactFirstName String?   @map("contact_first_name")
+  contactEmail     String?   @map("contact_email")
+  contactPhone     String?   @map("contact_phone")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  createdBy        String?   @map("created_by")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?   @map("updated_by")
+  deletedAt        DateTime? @map("deleted_at")
+  deletedBy        String?   @map("deleted_by")
+
+  @@map("m1_contact")
+}
+
 model Session {
   id        Int       @id @default(autoincrement())
   uuid      String    @unique @default(cuid())

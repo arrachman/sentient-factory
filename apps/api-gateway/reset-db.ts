@@ -6,6 +6,8 @@ const resetSQL = `
 -- 1. MEMBERSIHKAN TABEL LAMA DAN BARU
 DROP TABLE IF EXISTS public."m0_auditlog" CASCADE;
 DROP TABLE IF EXISTS public."m0_session" CASCADE;
+DROP TABLE IF EXISTS public."m1_contact" CASCADE;
+DROP TABLE IF EXISTS public."m0_master_data_contact" CASCADE;
 DROP TABLE IF EXISTS public."m0_role_menu" CASCADE;
 DROP TABLE IF EXISTS public."m0_role_permission" CASCADE;
 DROP TABLE IF EXISTS public."m0_user_department" CASCADE;
@@ -18,6 +20,7 @@ DROP TABLE IF EXISTS public."m0_permission" CASCADE;
 
 DROP TABLE IF EXISTS public."auditlog" CASCADE;
 DROP TABLE IF EXISTS public."session" CASCADE;
+DROP TABLE IF EXISTS public."master_data_contact" CASCADE;
 DROP TABLE IF EXISTS public."role_menu" CASCADE;
 DROP TABLE IF EXISTS public."role_permission" CASCADE;
 DROP TABLE IF EXISTS public."user_department" CASCADE;
@@ -235,6 +238,34 @@ CREATE TABLE public."m0_session" (
     uuid text NOT NULL
 );
 CREATE TRIGGER tr_m0_session_updated_at BEFORE UPDATE ON public."m0_session" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 14. TABEL m1_contact
+CREATE TABLE public."m1_contact" (
+    id SERIAL PRIMARY KEY,
+    code text NOT NULL,
+    name text NOT NULL,
+    tax text,
+    website text,
+    address text,
+    street text,
+    city text,
+    province text,
+    zip_code text,
+    type text NOT NULL,
+    contact_first_name text,
+    contact_email text,
+    contact_phone text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_contact_code_key UNIQUE (code),
+    CONSTRAINT m1_contact_uuid_key UNIQUE (uuid)
+);
+CREATE TRIGGER tr_m1_contact_updated_at BEFORE UPDATE ON public."m1_contact" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 `;
 
 async function main() {
