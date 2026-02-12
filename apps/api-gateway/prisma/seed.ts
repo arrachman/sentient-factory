@@ -172,7 +172,43 @@ async function main() {
   await assignRole(staffEng.uuid, userRole.uuid);
   await assignRole(staffHr.uuid, userRole.uuid);
 
-  // 7. Assign Departments
+  // 7. Create Sidebar Menu
+  const dashboardMenu = await prisma.menu.upsert({
+    where: { key: 'dashboard' },
+    update: {
+      title: 'Dashboard',
+      path: '/app',
+      icon: 'LayoutGrid',
+      type: 'ITEM',
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'dashboard',
+      title: 'Dashboard',
+      path: '/app',
+      icon: 'LayoutGrid',
+      type: 'ITEM',
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const assignMenuToRole = async (roleUuid: string, menuUuid: string) => {
+    await prisma.roleMenu.upsert({
+      where: { roleId_menuId: { roleId: roleUuid, menuId: menuUuid } },
+      update: { canView: true, deletedAt: null, deletedBy: null },
+      create: { roleId: roleUuid, menuId: menuUuid, canView: true },
+    });
+  };
+
+  await assignMenuToRole(adminRole.uuid, dashboardMenu.uuid);
+  await assignMenuToRole(managerRole.uuid, dashboardMenu.uuid);
+  await assignMenuToRole(userRole.uuid, dashboardMenu.uuid);
+
+  // 8. Assign Departments
   const assignDept = async (userUuid: string, deptUuid: string) => {
     await prisma.userDepartment.upsert({
       where: { userId_departmentId: { userId: userUuid, departmentId: deptUuid } },
@@ -186,7 +222,7 @@ async function main() {
   await assignDept(staffEng.uuid, engineeringDept.uuid);
   await assignDept(staffHr.uuid, hrDept.uuid);
 
-  // 8. Create Dummy Audit Logs
+  // 9. Create Dummy Audit Logs
   await prisma.auditLog.create({
     data: {
       userId: adminUser.uuid,
