@@ -27,9 +27,20 @@ export async function POST(request: NextRequest) {
     });
 
     const payload = await response.json().catch(() => null);
-    return NextResponse.json(payload ?? { success: false, message: 'Invalid response from API.' }, {
+    const result = NextResponse.json(payload ?? { success: false, message: 'Invalid response from API.' }, {
       status: response.status,
     });
+
+    const token = payload?.data?.token;
+    if (response.ok && token) {
+      result.cookies.set('sf_token', token, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: 'lax',
+      });
+    }
+
+    return result;
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       return NextResponse.json(

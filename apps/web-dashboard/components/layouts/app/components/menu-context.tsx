@@ -52,6 +52,33 @@ function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
     });
 }
 
+function hasTokenCookie() {
+  if (typeof document === 'undefined') {
+    return false;
+  }
+  return document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .some((part) => part.startsWith('sf_token='));
+}
+
+function getTokenFromCookie() {
+  if (typeof document === 'undefined') {
+    return '';
+  }
+
+  const tokenPart = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith('sf_token='));
+
+  if (!tokenPart) {
+    return '';
+  }
+
+  return decodeURIComponent(tokenPart.substring('sf_token='.length));
+}
+
 export function AppMenuProvider({ children }: { children: ReactNode }) {
   const [menus, setMenus] = useState<MenuConfig>(MENU_SIDEBAR);
   const [loading, setLoading] = useState(true);
@@ -60,10 +87,25 @@ export function AppMenuProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function loadMenus() {
+      if (!hasTokenCookie()) {
+        if (!cancelled) {
+          setMenus(MENU_SIDEBAR);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
+        const token = getTokenFromCookie();
         const response = await fetch('/api/menus/sidebar', {
           method: 'GET',
           cache: 'no-store',
+          credentials: 'include',
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
         });
 
         if (!response.ok) {
