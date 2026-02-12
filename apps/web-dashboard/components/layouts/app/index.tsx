@@ -3,6 +3,7 @@
 import { Metadata } from 'next';
 import { LayoutProvider } from './components/context';
 import { Main } from './components/main';
+import { AppMenuProvider } from './components/menu-context';
 
 // Generate metadata for the layout
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,9 +19,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <LayoutProvider>
-      <Main>
-        {children}
-      </Main>
+      <AppMenuProvider>
+        <Main>
+          {children}
+        </Main>
+      </AppMenuProvider>
     </LayoutProvider>
   );
 }

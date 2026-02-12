@@ -196,6 +196,181 @@ async function main() {
     },
   });
 
+  const administratorMenu = await prisma.menu.upsert({
+    where: { key: 'administrator' },
+    update: {
+      title: 'Administrator',
+      path: null,
+      icon: 'Shield',
+      type: 'GROUP',
+      parentId: null,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator',
+      title: 'Administrator',
+      path: null,
+      icon: 'Shield',
+      type: 'GROUP',
+      parentId: null,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const administratorUsersMenu = await prisma.menu.upsert({
+    where: { key: 'administrator-users' },
+    update: {
+      title: 'Users',
+      path: '/app/administrator/users',
+      icon: 'Users',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator-users',
+      title: 'Users',
+      path: '/app/administrator/users',
+      icon: 'Users',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const administratorDepartmentMenu = await prisma.menu.upsert({
+    where: { key: 'administrator-department' },
+    update: {
+      title: 'Department',
+      path: '/app/administrator/department',
+      icon: 'Building',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator-department',
+      title: 'Department',
+      path: '/app/administrator/department',
+      icon: 'Building',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const administratorPermissionMenu = await prisma.menu.upsert({
+    where: { key: 'administrator-permission' },
+    update: {
+      title: 'Permission',
+      path: '/app/administrator/permission',
+      icon: 'Key',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator-permission',
+      title: 'Permission',
+      path: '/app/administrator/permission',
+      icon: 'Key',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const administratorSubmenuMenu = await prisma.menu.upsert({
+    where: { key: 'administrator-menu' },
+    update: {
+      title: 'Menu',
+      path: '/app/administrator/menu',
+      icon: 'LayoutGrid',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator-menu',
+      title: 'Menu',
+      path: '/app/administrator/menu',
+      icon: 'LayoutGrid',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const administratorSessionMenu = await prisma.menu.upsert({
+    where: { key: 'administrator-session' },
+    update: {
+      title: 'Session',
+      path: '/app/administrator/session',
+      icon: 'Clock',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 5,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator-session',
+      title: 'Session',
+      path: '/app/administrator/session',
+      icon: 'Clock',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 5,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const administratorAuditlogMenu = await prisma.menu.upsert({
+    where: { key: 'administrator-auditlog' },
+    update: {
+      title: 'Auditlog',
+      path: '/app/administrator/auditlog',
+      icon: 'FileText',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 6,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'administrator-auditlog',
+      title: 'Auditlog',
+      path: '/app/administrator/auditlog',
+      icon: 'FileText',
+      type: 'ITEM',
+      parentId: administratorMenu.uuid,
+      sortOrder: 6,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
   const assignMenuToRole = async (roleUuid: string, menuUuid: string) => {
     await prisma.roleMenu.upsert({
       where: { roleId_menuId: { roleId: roleUuid, menuId: menuUuid } },
@@ -207,6 +382,13 @@ async function main() {
   await assignMenuToRole(adminRole.uuid, dashboardMenu.uuid);
   await assignMenuToRole(managerRole.uuid, dashboardMenu.uuid);
   await assignMenuToRole(userRole.uuid, dashboardMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorUsersMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorDepartmentMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorPermissionMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorSubmenuMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorSessionMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, administratorAuditlogMenu.uuid);
 
   // 8. Assign Departments
   const assignDept = async (userUuid: string, deptUuid: string) => {

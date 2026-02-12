@@ -1,11 +1,11 @@
 import { Fragment, ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { MENU_SIDEBAR } from '@/config/app.config';
 import { MenuItem } from '@/config/types';
 import { cn } from '@/lib/utils';
 import { useMenu } from '@/hooks/use-menu';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAppMenu } from './menu-context';
 
 export interface ToolbarHeadingProps {
   title?: string | ReactNode;
@@ -26,8 +26,9 @@ function ToolbarActions({ children }: { children?: ReactNode }) {
 
 function ToolbarBreadcrumbs() {
   const pathname = usePathname();
+  const { menus } = useAppMenu();
   const { getBreadcrumb, isActive } = useMenu(pathname);
-  const items: MenuItem[] = getBreadcrumb(MENU_SIDEBAR);
+  const items: MenuItem[] = getBreadcrumb(menus);
 
   if (items.length === 0) {
     return null;
@@ -78,8 +79,9 @@ function ToolbarHeading ({ children }: { children: ReactNode }) {
 
 function ToolbarPageTitle ({ children }: { children?: string }) {
   const pathname = usePathname();
+  const { menus } = useAppMenu();
   const { getCurrentItem } = useMenu(pathname);
-  const item = getCurrentItem(MENU_SIDEBAR);
+  const item = getCurrentItem(menus);
 
   return (
     <h1 className="text-xl font-medium leading-none text-mono">

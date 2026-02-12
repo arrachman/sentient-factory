@@ -1,7 +1,6 @@
 'use client';
 
 import { JSX, useCallback } from 'react';
-import { MENU_SIDEBAR } from '@/config/app.config';
 import { MenuConfig, MenuItem } from '@/config/types';
 import { cn } from '@/lib/utils';
 import {
@@ -18,9 +17,11 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAppMenu } from './menu-context';
 
 export function SidebarMenu() {
   const pathname = usePathname();
+  const { menus } = useAppMenu();
 
   // Memoize matchPath to prevent unnecessary re-renders
   const matchPath = useCallback(
@@ -220,7 +221,7 @@ export function SidebarMenu() {
         collapsible
         classNames={classNames}
       >
-        {buildMenu(MENU_SIDEBAR)}
+        {buildMenu(menus)}
       </AccordionMenu>
     </ScrollArea>
   );
