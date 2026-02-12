@@ -34,7 +34,7 @@ export class MenusService {
       },
     });
 
-    const roleIds = userRoles.map((item) => item.roleId);
+    const roleIds = userRoles.map((item: { roleId: string }) => item.roleId);
     if (roleIds.length === 0) {
       return [];
     }

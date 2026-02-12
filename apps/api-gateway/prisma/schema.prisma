@@ -29,7 +29,7 @@ model User {
   sessions    Session[]
   auditLogs   AuditLog[]
 
-  @@map("users")
+  @@map("m0_users")
 }
 
 model Role {
@@ -49,7 +49,7 @@ model Role {
   users       UserRole[]
   menus       RoleMenu[]
 
-  @@map("role")
+  @@map("m0_role")
 }
 
 model Menu {
@@ -77,7 +77,7 @@ model Menu {
   roles    RoleMenu[]
 
   @@index([parentId, sortOrder])
-  @@map("menu")
+  @@map("m0_menu")
 }
 
 model RoleMenu {
@@ -98,7 +98,7 @@ model RoleMenu {
   menu Menu @relation(fields: [menuId], references: [uuid])
 
   @@unique([roleId, menuId])
-  @@map("role_menu")
+  @@map("m0_role_menu")
 }
 
 model Permission {
@@ -117,7 +117,7 @@ model Permission {
 
   roles RolePermission[]
 
-  @@map("permission")
+  @@map("m0_permission")
 }
 
 model RolePermission {
@@ -137,7 +137,7 @@ model RolePermission {
   permission Permission @relation(fields: [permissionId], references: [uuid])
 
   @@unique([roleId, permissionId])
-  @@map("role_permission")
+  @@map("m0_role_permission")
 }
 
 model Department {
@@ -159,7 +159,7 @@ model Department {
   children Department[]     @relation("DepartmentHierarchy")
   users    UserDepartment[]
 
-  @@map("department")
+  @@map("m0_department")
 }
 
 model UserRole {
@@ -179,7 +179,7 @@ model UserRole {
   role Role @relation(fields: [roleId], references: [uuid])
 
   @@unique([userId, roleId])
-  @@map("user_role")
+  @@map("m0_user_role")
 }
 
 model UserDepartment {
@@ -199,7 +199,7 @@ model UserDepartment {
   department Department @relation(fields: [departmentId], references: [uuid])
 
   @@unique([userId, departmentId])
-  @@map("user_department")
+  @@map("m0_user_department")
 }
 
 model Session {
@@ -219,7 +219,7 @@ model Session {
 
   user User @relation(fields: [userId], references: [uuid])
 
-  @@map("session")
+  @@map("m0_session")
 }
 
 model AuditLog {
@@ -242,5 +242,5 @@ model AuditLog {
 
   user User? @relation(fields: [userId], references: [uuid])
 
-  @@map("auditlog")
+  @@map("m0_auditlog")
 }

@@ -240,3 +240,4 @@ _metronic_source/
 # infra/
 
 apps/web-dashboard/node_modules
+backups/

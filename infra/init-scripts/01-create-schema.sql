@@ -4,7 +4,7 @@ GRANT ALL PRIVILEGES ON DATABASE sentient_factory TO app_user;
 
 -- Create sample table
 \c sentient_factory;
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS m0_users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Insert sample data
-INSERT INTO users (username, email) VALUES 
+INSERT INTO m0_users (username, email) VALUES 
     ('admin', 'admin@sentient-factory.com'),
     ('user1', 'user1@sentient-factory.com')
 ON CONFLICT (username) DO NOTHING;

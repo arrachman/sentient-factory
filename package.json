@@ -28,6 +28,8 @@
     "docker:up": "docker-compose -f infra/docker-compose.yml up -d",
     "docker:down": "docker-compose -f infra/docker-compose.yml down",
     "docker:logs": "docker-compose -f infra/docker-compose.yml logs -f",
+    "db:backup": "./scripts/backup-postgres.sh",
+    "db:backup:install-cron": "./scripts/install-pg-backup-cron.sh",
     "db:migrate": "cd apps/api-gateway && npm run db:migrate",
     "db:seed": "cd apps/api-gateway && npm run db:seed",
     "docs:dev": "cd docs && npm run start",
