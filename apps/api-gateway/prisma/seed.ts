@@ -371,6 +371,306 @@ async function main() {
     },
   });
 
+  const masterDataMenu = await prisma.menu.upsert({
+    where: { key: 'master-data' },
+    update: {
+      title: 'Master Data',
+      path: null,
+      icon: 'Database',
+      type: 'GROUP',
+      parentId: null,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data',
+      title: 'Master Data',
+      path: null,
+      icon: 'Database',
+      type: 'GROUP',
+      parentId: null,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataCustomerMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-customer' },
+    update: {
+      title: 'Customer',
+      path: '/app/master/customer',
+      icon: 'Users',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-customer',
+      title: 'Customer',
+      path: '/app/master/customer',
+      icon: 'Users',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataSupplierMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-supplier' },
+    update: {
+      title: 'Supplier',
+      path: '/app/master/supplier',
+      icon: 'Truck',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-supplier',
+      title: 'Supplier',
+      path: '/app/master/supplier',
+      icon: 'Truck',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataCompanyMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-company' },
+    update: {
+      title: 'Company',
+      path: '/app/master/company',
+      icon: 'Building2',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-company',
+      title: 'Company',
+      path: '/app/master/company',
+      icon: 'Building2',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataItemMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-item' },
+    update: {
+      title: 'Item',
+      path: '/app/master/item',
+      icon: 'Package',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-item',
+      title: 'Item',
+      path: '/app/master/item',
+      icon: 'Package',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataProvinceMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-province' },
+    update: {
+      title: 'Province',
+      path: '/app/master-province',
+      icon: 'Map',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 5,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-province',
+      title: 'Province',
+      path: '/app/master-province',
+      icon: 'Map',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 5,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataCityMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-city' },
+    update: {
+      title: 'City',
+      path: '/app/master-city',
+      icon: 'MapPin',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 6,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-city',
+      title: 'City',
+      path: '/app/master-city',
+      icon: 'MapPin',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 6,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const logisticMenu = await prisma.menu.upsert({
+    where: { key: 'logistic' },
+    update: {
+      title: 'Logistic',
+      path: null,
+      icon: 'Truck',
+      type: 'GROUP',
+      parentId: null,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'logistic',
+      title: 'Logistic',
+      path: null,
+      icon: 'Truck',
+      type: 'GROUP',
+      parentId: null,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const logisticTransactionMenu = await prisma.menu.upsert({
+    where: { key: 'logistic-transaction' },
+    update: {
+      title: 'Transaction',
+      path: '/app/logistic/transaction',
+      icon: 'ArrowRightLeft',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'logistic-transaction',
+      title: 'Transaction',
+      path: '/app/logistic/transaction',
+      icon: 'ArrowRightLeft',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 1,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const logisticReportMonitoringDoMenu = await prisma.menu.upsert({
+    where: { key: 'logistic-report-monitoring-do' },
+    update: {
+      title: 'Report Monitoring DO',
+      path: '/app/logistic/report-monitoring-do',
+      icon: 'ClipboardList',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'logistic-report-monitoring-do',
+      title: 'Report Monitoring DO',
+      path: '/app/logistic/report-monitoring-do',
+      icon: 'ClipboardList',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const logisticReportStockBatchMenu = await prisma.menu.upsert({
+    where: { key: 'logistic-report-stock-batch' },
+    update: {
+      title: 'Report Stock Batch',
+      path: '/app/logistic/report-stock-batch',
+      icon: 'Boxes',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'logistic-report-stock-batch',
+      title: 'Report Stock Batch',
+      path: '/app/logistic/report-stock-batch',
+      icon: 'Boxes',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 3,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const logisticReportStockMutationMenu = await prisma.menu.upsert({
+    where: { key: 'logistic-report-stock-mutation' },
+    update: {
+      title: 'Report Stock Mutation',
+      path: '/app/logistic/report-stock-mutation',
+      icon: 'Repeat',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'logistic-report-stock-mutation',
+      title: 'Report Stock Mutation',
+      path: '/app/logistic/report-stock-mutation',
+      icon: 'Repeat',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 4,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
   const assignMenuToRole = async (roleUuid: string, menuUuid: string) => {
     await prisma.roleMenu.upsert({
       where: { roleId_menuId: { roleId: roleUuid, menuId: menuUuid } },
@@ -389,6 +689,18 @@ async function main() {
   await assignMenuToRole(adminRole.uuid, administratorSubmenuMenu.uuid);
   await assignMenuToRole(adminRole.uuid, administratorSessionMenu.uuid);
   await assignMenuToRole(adminRole.uuid, administratorAuditlogMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataCustomerMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataSupplierMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataCompanyMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataItemMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataProvinceMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataCityMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticTransactionMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticReportMonitoringDoMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticReportStockBatchMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticReportStockMutationMenu.uuid);
 
   // 8. Assign Departments
   const assignDept = async (userUuid: string, deptUuid: string) => {
