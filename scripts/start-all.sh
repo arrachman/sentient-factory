@@ -19,7 +19,7 @@ fi
 get_port() {
     local app_key=$1
     node -e "
-        const config = require('../config/ports.json');
+        const config = require('./config/ports.json');
         const app = config.apps['$app_key'];
         if (app) {
             console.log(app.port);

@@ -14,7 +14,7 @@
       "type": "nextjs",
       "envVar": "LANDING_PAGE_PORT",
       "description": "Marketing landing page",
-      "isActive": true
+      "isActive": false
     },
     "api-gateway": {
       "name": "API Gateway",

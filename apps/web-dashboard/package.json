@@ -1,6 +1,6 @@
 {
-  "name": "@sentient-factory/web-dashboard",
-  "version": "1.0.0",
+  "name": "metronic-react-starter-kit",
+  "version": "9.4.2",
   "private": true,
   "scripts": {
     "dev": "next dev",

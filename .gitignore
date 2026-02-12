@@ -238,3 +238,5 @@ _metronic_source/
 # apps/
 # config/
 # infra/
+
+apps/web-dashboard/node_modules
