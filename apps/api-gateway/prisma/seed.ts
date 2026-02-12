@@ -450,7 +450,7 @@ async function main() {
     where: { key: 'master-data-province' },
     update: {
       title: 'Province',
-      path: '/app/master-province',
+      path: '/app/master/province',
       icon: 'Map',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
@@ -461,7 +461,7 @@ async function main() {
     create: {
       key: 'master-data-province',
       title: 'Province',
-      path: '/app/master-province',
+      path: '/app/master/province',
       icon: 'Map',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
@@ -475,7 +475,7 @@ async function main() {
     where: { key: 'master-data-city' },
     update: {
       title: 'City',
-      path: '/app/master-city',
+      path: '/app/master/city',
       icon: 'MapPin',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
@@ -486,11 +486,61 @@ async function main() {
     create: {
       key: 'master-data-city',
       title: 'City',
-      path: '/app/master-city',
+      path: '/app/master/city',
       icon: 'MapPin',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
       sortOrder: 6,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataUomMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-uom' },
+    update: {
+      title: 'UOM',
+      path: '/app/master/uom',
+      icon: 'Ruler',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 7,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-uom',
+      title: 'UOM',
+      path: '/app/master/uom',
+      icon: 'Ruler',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 7,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  const masterDataWarehouseMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-warehouse' },
+    update: {
+      title: 'Warehouse',
+      path: '/app/master/warehouse',
+      icon: 'Warehouse',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 8,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-warehouse',
+      title: 'Warehouse',
+      path: '/app/master/warehouse',
+      icon: 'Warehouse',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 8,
       isVisible: true,
       isActive: true,
     },
@@ -632,6 +682,125 @@ async function main() {
     },
   });
 
+  // 7b. Seed Master Data Province & City (Indonesia)
+  const indonesiaProvinces = [
+    { uuid: 'prov-id-ac', name: 'Aceh', isoCode: 'ID-AC' },
+    { uuid: 'prov-id-su', name: 'Sumatera Utara', isoCode: 'ID-SU' },
+    { uuid: 'prov-id-sb', name: 'Sumatera Barat', isoCode: 'ID-SB' },
+    { uuid: 'prov-id-ri', name: 'Riau', isoCode: 'ID-RI' },
+    { uuid: 'prov-id-kr', name: 'Kepulauan Riau', isoCode: 'ID-KR' },
+    { uuid: 'prov-id-ja', name: 'Jambi', isoCode: 'ID-JA' },
+    { uuid: 'prov-id-ss', name: 'Sumatera Selatan', isoCode: 'ID-SS' },
+    { uuid: 'prov-id-bb', name: 'Kepulauan Bangka Belitung', isoCode: 'ID-BB' },
+    { uuid: 'prov-id-be', name: 'Bengkulu', isoCode: 'ID-BE' },
+    { uuid: 'prov-id-la', name: 'Lampung', isoCode: 'ID-LA' },
+    { uuid: 'prov-id-jk', name: 'DKI Jakarta', isoCode: 'ID-JK' },
+    { uuid: 'prov-id-jb', name: 'Jawa Barat', isoCode: 'ID-JB' },
+    { uuid: 'prov-id-bt', name: 'Banten', isoCode: 'ID-BT' },
+    { uuid: 'prov-id-jt', name: 'Jawa Tengah', isoCode: 'ID-JT' },
+    { uuid: 'prov-id-yo', name: 'DI Yogyakarta', isoCode: 'ID-YO' },
+    { uuid: 'prov-id-ji', name: 'Jawa Timur', isoCode: 'ID-JI' },
+    { uuid: 'prov-id-ba', name: 'Bali', isoCode: 'ID-BA' },
+    { uuid: 'prov-id-nb', name: 'Nusa Tenggara Barat', isoCode: 'ID-NB' },
+    { uuid: 'prov-id-nt', name: 'Nusa Tenggara Timur', isoCode: 'ID-NT' },
+    { uuid: 'prov-id-kb', name: 'Kalimantan Barat', isoCode: 'ID-KB' },
+    { uuid: 'prov-id-kt', name: 'Kalimantan Tengah', isoCode: 'ID-KT' },
+    { uuid: 'prov-id-ks', name: 'Kalimantan Selatan', isoCode: 'ID-KS' },
+    { uuid: 'prov-id-ki', name: 'Kalimantan Timur', isoCode: 'ID-KI' },
+    { uuid: 'prov-id-ku', name: 'Kalimantan Utara', isoCode: 'ID-KU' },
+    { uuid: 'prov-id-sa', name: 'Sulawesi Utara', isoCode: 'ID-SA' },
+    { uuid: 'prov-id-go', name: 'Gorontalo', isoCode: 'ID-GO' },
+    { uuid: 'prov-id-st', name: 'Sulawesi Tengah', isoCode: 'ID-ST' },
+    { uuid: 'prov-id-sr', name: 'Sulawesi Barat', isoCode: 'ID-SR' },
+    { uuid: 'prov-id-sn', name: 'Sulawesi Selatan', isoCode: 'ID-SN' },
+    { uuid: 'prov-id-sg', name: 'Sulawesi Tenggara', isoCode: 'ID-SG' },
+    { uuid: 'prov-id-ma', name: 'Maluku', isoCode: 'ID-MA' },
+    { uuid: 'prov-id-mu', name: 'Maluku Utara', isoCode: 'ID-MU' },
+    { uuid: 'prov-id-pa', name: 'Papua', isoCode: 'ID-PA' },
+    { uuid: 'prov-id-pb', name: 'Papua Barat', isoCode: 'ID-PB' },
+    { uuid: 'prov-id-pd', name: 'Papua Barat Daya', isoCode: 'ID-PD' },
+    { uuid: 'prov-id-ps', name: 'Papua Selatan', isoCode: 'ID-PS' },
+    { uuid: 'prov-id-pt', name: 'Papua Tengah', isoCode: 'ID-PT' },
+    { uuid: 'prov-id-pe', name: 'Papua Pegunungan', isoCode: 'ID-PE' },
+  ] as const;
+
+  const provinceUuidByIsoCode = new Map<string, string>();
+  for (const province of indonesiaProvinces) {
+    const rows = await prisma.$queryRaw<{ uuid: string }[]>`
+      INSERT INTO public."m1_province" (uuid, name, iso_code, created_by, updated_by, deleted_at, deleted_by)
+      VALUES (${province.uuid}, ${province.name}, ${province.isoCode}, ${'seed'}, ${'seed'}, NULL, NULL)
+      ON CONFLICT (iso_code)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        updated_by = EXCLUDED.updated_by,
+        deleted_at = NULL,
+        deleted_by = NULL
+      RETURNING uuid;
+    `;
+    provinceUuidByIsoCode.set(province.isoCode, rows[0]?.uuid ?? province.uuid);
+  }
+
+  const indonesiaCities = [
+    { uuid: 'city-id-ac-banda-aceh', provinceIsoCode: 'ID-AC', name: 'Banda Aceh', postalCode: '23111' },
+    { uuid: 'city-id-su-medan', provinceIsoCode: 'ID-SU', name: 'Medan', postalCode: '20111' },
+    { uuid: 'city-id-sb-padang', provinceIsoCode: 'ID-SB', name: 'Padang', postalCode: '25111' },
+    { uuid: 'city-id-ri-pekanbaru', provinceIsoCode: 'ID-RI', name: 'Pekanbaru', postalCode: '28111' },
+    { uuid: 'city-id-kr-tanjung-pinang', provinceIsoCode: 'ID-KR', name: 'Tanjung Pinang', postalCode: '29111' },
+    { uuid: 'city-id-ja-jambi', provinceIsoCode: 'ID-JA', name: 'Jambi', postalCode: '36111' },
+    { uuid: 'city-id-ss-palembang', provinceIsoCode: 'ID-SS', name: 'Palembang', postalCode: '30111' },
+    { uuid: 'city-id-bb-pangkalpinang', provinceIsoCode: 'ID-BB', name: 'Pangkalpinang', postalCode: '33111' },
+    { uuid: 'city-id-be-bengkulu', provinceIsoCode: 'ID-BE', name: 'Bengkulu', postalCode: '38111' },
+    { uuid: 'city-id-la-bandar-lampung', provinceIsoCode: 'ID-LA', name: 'Bandar Lampung', postalCode: '35111' },
+    { uuid: 'city-id-jk-jakarta-pusat', provinceIsoCode: 'ID-JK', name: 'Jakarta Pusat', postalCode: '10110' },
+    { uuid: 'city-id-jb-bandung', provinceIsoCode: 'ID-JB', name: 'Bandung', postalCode: '40111' },
+    { uuid: 'city-id-bt-serang', provinceIsoCode: 'ID-BT', name: 'Serang', postalCode: '42111' },
+    { uuid: 'city-id-jt-semarang', provinceIsoCode: 'ID-JT', name: 'Semarang', postalCode: '50111' },
+    { uuid: 'city-id-yo-yogyakarta', provinceIsoCode: 'ID-YO', name: 'Yogyakarta', postalCode: '55111' },
+    { uuid: 'city-id-ji-surabaya', provinceIsoCode: 'ID-JI', name: 'Surabaya', postalCode: '60111' },
+    { uuid: 'city-id-ba-denpasar', provinceIsoCode: 'ID-BA', name: 'Denpasar', postalCode: '80111' },
+    { uuid: 'city-id-nb-mataram', provinceIsoCode: 'ID-NB', name: 'Mataram', postalCode: '83111' },
+    { uuid: 'city-id-nt-kupang', provinceIsoCode: 'ID-NT', name: 'Kupang', postalCode: '85111' },
+    { uuid: 'city-id-kb-pontianak', provinceIsoCode: 'ID-KB', name: 'Pontianak', postalCode: '78111' },
+    { uuid: 'city-id-kt-palangka-raya', provinceIsoCode: 'ID-KT', name: 'Palangka Raya', postalCode: '73111' },
+    { uuid: 'city-id-ks-banjarmasin', provinceIsoCode: 'ID-KS', name: 'Banjarmasin', postalCode: '70111' },
+    { uuid: 'city-id-ki-samarinda', provinceIsoCode: 'ID-KI', name: 'Samarinda', postalCode: '75111' },
+    { uuid: 'city-id-ku-tarakan', provinceIsoCode: 'ID-KU', name: 'Tarakan', postalCode: '77111' },
+    { uuid: 'city-id-sa-manado', provinceIsoCode: 'ID-SA', name: 'Manado', postalCode: '95111' },
+    { uuid: 'city-id-go-gorontalo', provinceIsoCode: 'ID-GO', name: 'Gorontalo', postalCode: '96111' },
+    { uuid: 'city-id-st-palu', provinceIsoCode: 'ID-ST', name: 'Palu', postalCode: '94111' },
+    { uuid: 'city-id-sr-mamuju', provinceIsoCode: 'ID-SR', name: 'Mamuju', postalCode: '91511' },
+    { uuid: 'city-id-sn-makassar', provinceIsoCode: 'ID-SN', name: 'Makassar', postalCode: '90111' },
+    { uuid: 'city-id-sg-kendari', provinceIsoCode: 'ID-SG', name: 'Kendari', postalCode: '93111' },
+    { uuid: 'city-id-ma-ambon', provinceIsoCode: 'ID-MA', name: 'Ambon', postalCode: '97111' },
+    { uuid: 'city-id-mu-ternate', provinceIsoCode: 'ID-MU', name: 'Ternate', postalCode: '97711' },
+    { uuid: 'city-id-pa-jayapura', provinceIsoCode: 'ID-PA', name: 'Jayapura', postalCode: '99111' },
+    { uuid: 'city-id-pb-manokwari', provinceIsoCode: 'ID-PB', name: 'Manokwari', postalCode: '98311' },
+    { uuid: 'city-id-pd-sorong', provinceIsoCode: 'ID-PD', name: 'Sorong', postalCode: '98411' },
+    { uuid: 'city-id-ps-merauke', provinceIsoCode: 'ID-PS', name: 'Merauke', postalCode: '99611' },
+    { uuid: 'city-id-pt-nabire', provinceIsoCode: 'ID-PT', name: 'Nabire', postalCode: '98811' },
+    { uuid: 'city-id-pe-wamena', provinceIsoCode: 'ID-PE', name: 'Wamena', postalCode: '99511' },
+  ] as const;
+
+  for (const city of indonesiaCities) {
+    const provinceUuid = provinceUuidByIsoCode.get(city.provinceIsoCode);
+    if (!provinceUuid) {
+      throw new Error(`Province ISO code ${city.provinceIsoCode} was not found while seeding city ${city.name}`);
+    }
+
+    await prisma.$executeRaw`
+      INSERT INTO public."m1_city" (uuid, province_id, name, postal_code, created_by, updated_by, deleted_at, deleted_by)
+      VALUES (${city.uuid}, ${provinceUuid}, ${city.name}, ${city.postalCode}, ${'seed'}, ${'seed'}, NULL, NULL)
+      ON CONFLICT (uuid)
+      DO UPDATE SET
+        province_id = EXCLUDED.province_id,
+        name = EXCLUDED.name,
+        postal_code = EXCLUDED.postal_code,
+        updated_by = EXCLUDED.updated_by,
+        deleted_at = NULL,
+        deleted_by = NULL;
+    `;
+  }
+
   const assignMenuToRole = async (roleUuid: string, menuUuid: string) => {
     await prisma.roleMenu.upsert({
       where: { roleId_menuId: { roleId: roleUuid, menuId: menuUuid } },
@@ -655,6 +824,8 @@ async function main() {
   await assignMenuToRole(adminRole.uuid, masterDataItemMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataProvinceMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataCityMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataUomMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataWarehouseMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticTransactionMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticReportMonitoringDoMenu.uuid);

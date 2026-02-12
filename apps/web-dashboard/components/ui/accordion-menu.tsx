@@ -98,6 +98,10 @@ function AccordionMenu({
   }, [children, matchPath, selectedValue, props.type]);
 
   const [nestedStates, setNestedStates] = React.useState<Record<string, string | string[]>>(initialNestedStates);
+  React.useEffect(() => {
+    setNestedStates(initialNestedStates);
+  }, [initialNestedStates]);
+
   const multipleValue = (
     Array.isArray(nestedStates['root'])
       ? nestedStates['root']

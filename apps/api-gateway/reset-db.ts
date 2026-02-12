@@ -7,6 +7,11 @@ const resetSQL = `
 DROP TABLE IF EXISTS public."m0_auditlog" CASCADE;
 DROP TABLE IF EXISTS public."m0_session" CASCADE;
 DROP TABLE IF EXISTS public."m1_contact" CASCADE;
+DROP TABLE IF EXISTS public."m1_uom" CASCADE;
+DROP TABLE IF EXISTS public."m1_province" CASCADE;
+DROP TABLE IF EXISTS public."m1_city" CASCADE;
+DROP TABLE IF EXISTS public."m1_warehouse" CASCADE;
+DROP TABLE IF EXISTS public."m1_item" CASCADE;
 DROP TABLE IF EXISTS public."m0_master_data_contact" CASCADE;
 DROP TABLE IF EXISTS public."m0_role_menu" CASCADE;
 DROP TABLE IF EXISTS public."m0_role_permission" CASCADE;
@@ -21,6 +26,11 @@ DROP TABLE IF EXISTS public."m0_permission" CASCADE;
 DROP TABLE IF EXISTS public."auditlog" CASCADE;
 DROP TABLE IF EXISTS public."session" CASCADE;
 DROP TABLE IF EXISTS public."master_data_contact" CASCADE;
+DROP TABLE IF EXISTS public."master_data_uom" CASCADE;
+DROP TABLE IF EXISTS public."master_data_province" CASCADE;
+DROP TABLE IF EXISTS public."master_data_warehouse" CASCADE;
+DROP TABLE IF EXISTS public."master_data_city" CASCADE;
+DROP TABLE IF EXISTS public."master_data_item" CASCADE;
 DROP TABLE IF EXISTS public."role_menu" CASCADE;
 DROP TABLE IF EXISTS public."role_permission" CASCADE;
 DROP TABLE IF EXISTS public."user_department" CASCADE;
@@ -266,6 +276,99 @@ CREATE TABLE public."m1_contact" (
     CONSTRAINT m1_contact_uuid_key UNIQUE (uuid)
 );
 CREATE TRIGGER tr_m1_contact_updated_at BEFORE UPDATE ON public."m1_contact" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 15. TABEL m1_uom
+CREATE TABLE public."m1_uom" (
+    id SERIAL PRIMARY KEY,
+    code text NOT NULL,
+    name text NOT NULL,
+    type text NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_uom_code_key UNIQUE (code),
+    CONSTRAINT m1_uom_uuid_key UNIQUE (uuid)
+);
+CREATE TRIGGER tr_m1_uom_updated_at BEFORE UPDATE ON public."m1_uom" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 16. TABEL m1_province
+CREATE TABLE public."m1_province" (
+    id SERIAL PRIMARY KEY,
+    name text NOT NULL,
+    iso_code text NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_province_iso_code_key UNIQUE (iso_code),
+    CONSTRAINT m1_province_uuid_key UNIQUE (uuid)
+);
+CREATE TRIGGER tr_m1_province_updated_at BEFORE UPDATE ON public."m1_province" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 17. TABEL m1_city
+CREATE TABLE public."m1_city" (
+    id SERIAL PRIMARY KEY,
+    province_id text NOT NULL,
+    name text NOT NULL,
+    postal_code text NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_city_uuid_key UNIQUE (uuid),
+    CONSTRAINT m1_city_province_id_fkey FOREIGN KEY (province_id) REFERENCES public."m1_province"(uuid) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE TRIGGER tr_m1_city_updated_at BEFORE UPDATE ON public."m1_city" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 18. TABEL m1_warehouse
+CREATE TABLE public."m1_warehouse" (
+    id SERIAL PRIMARY KEY,
+    name text NOT NULL,
+    city_id text,
+    location_name text,
+    address_detail text,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_warehouse_uuid_key UNIQUE (uuid)
+);
+CREATE TRIGGER tr_m1_warehouse_updated_at BEFORE UPDATE ON public."m1_warehouse" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 19. TABEL m1_item
+CREATE TABLE public."m1_item" (
+    id SERIAL PRIMARY KEY,
+    code text NOT NULL,
+    name text NOT NULL,
+    category text NOT NULL,
+    uom_id text NOT NULL,
+    item_type text NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_item_code_key UNIQUE (code),
+    CONSTRAINT m1_item_uuid_key UNIQUE (uuid),
+    CONSTRAINT m1_item_uom_id_fkey FOREIGN KEY (uom_id) REFERENCES public."m1_uom"(uuid) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE TRIGGER tr_m1_item_updated_at BEFORE UPDATE ON public."m1_item" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 `;
 
 async function main() {
