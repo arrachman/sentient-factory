@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateMasterDataWarehouseDto {
   @ApiProperty({ example: 'Warehouse Surabaya' })
@@ -7,11 +7,11 @@ export class CreateMasterDataWarehouseDto {
   @MaxLength(120)
   name!: string;
 
-  @ApiPropertyOptional({ example: 'city_uuid_123' })
-  @IsOptional()
+  @ApiProperty({ example: 'city-id-su-medan' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
-  cityId?: string;
+  cityId!: string;
 
   @ApiPropertyOptional({ example: 'Rungkut Industrial Area' })
   @IsOptional()

@@ -334,7 +334,7 @@ CREATE TRIGGER tr_m1_city_updated_at BEFORE UPDATE ON public."m1_city" FOR EACH 
 CREATE TABLE public."m1_warehouse" (
     id SERIAL PRIMARY KEY,
     name text NOT NULL,
-    city_id text,
+    city_id text NOT NULL,
     location_name text,
     address_detail text,
     created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -344,7 +344,8 @@ CREATE TABLE public."m1_warehouse" (
     deleted_at timestamp(3) without time zone,
     deleted_by text,
     uuid text NOT NULL,
-    CONSTRAINT m1_warehouse_uuid_key UNIQUE (uuid)
+    CONSTRAINT m1_warehouse_uuid_key UNIQUE (uuid),
+    CONSTRAINT m1_warehouse_city_id_fkey FOREIGN KEY (city_id) REFERENCES public."m1_city"(uuid) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE TRIGGER tr_m1_warehouse_updated_at BEFORE UPDATE ON public."m1_warehouse" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 

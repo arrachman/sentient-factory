@@ -23,12 +23,19 @@ import {
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
 
+type MasterDataCity = {
+  uuid: string;
+  name: string;
+  postalCode: string;
+};
+
 type MasterDataWarehouse = {
   uuid: string;
   name: string;
-  cityId?: string | null;
+  cityId: string;
   locationName?: string | null;
   addressDetail?: string | null;
+  city?: MasterDataCity | null;
 };
 
 type FormState = {
@@ -55,11 +62,13 @@ function getTokenFromCookie() {
 
 export default function MasterDataWarehousePage() {
   const [items, setItems] = useState<MasterDataWarehouse[]>([]);
+  const [cities, setCities] = useState<MasterDataCity[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingCity, setLoadingCity] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
@@ -104,8 +113,38 @@ export default function MasterDataWarehousePage() {
     }
   };
 
+  const fetchCityOptions = async () => {
+    setLoadingCity(true);
+    setError('');
+    try {
+      const query = new URLSearchParams({ page: '1', limit: '100' });
+      const response = await fetch(`/api/master-data-cities?${query.toString()}`, {
+        cache: 'no-store',
+        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || 'Failed to load city data');
+      }
+
+      const nextCities = Array.isArray(payload.data) ? payload.data : [];
+      setCities(nextCities);
+      setForm((state) => {
+        if (state.cityId || nextCities.length === 0) {
+          return state;
+        }
+        return { ...state, cityId: nextCities[0].uuid };
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load city data');
+    } finally {
+      setLoadingCity(false);
+    }
+  };
+
   useEffect(() => {
     fetchList(1);
+    fetchCityOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -128,7 +167,7 @@ export default function MasterDataWarehousePage() {
         },
         body: JSON.stringify({
           name: form.name,
-          cityId: form.cityId || undefined,
+          cityId: form.cityId,
           locationName: form.locationName || undefined,
           addressDetail: form.addressDetail || undefined,
         }),
@@ -139,7 +178,10 @@ export default function MasterDataWarehousePage() {
         throw new Error(result?.message || 'Failed to save data');
       }
 
-      setForm(initialForm);
+      setForm({
+        ...initialForm,
+        cityId: cities[0]?.uuid || '',
+      });
       setEditingUuid(null);
       setShowForm(false);
       await fetchList(page);
@@ -155,7 +197,7 @@ export default function MasterDataWarehousePage() {
     setShowForm(true);
     setForm({
       name: item.name ?? '',
-      cityId: item.cityId ?? '',
+      cityId: item.cityId ?? item.city?.uuid ?? '',
       locationName: item.locationName ?? '',
       addressDetail: item.addressDetail ?? '',
     });
@@ -179,7 +221,10 @@ export default function MasterDataWarehousePage() {
       }
       if (editingUuid === uuid) {
         setEditingUuid(null);
-        setForm(initialForm);
+        setForm({
+          ...initialForm,
+          cityId: cities[0]?.uuid || '',
+        });
         setShowForm(false);
       }
       await fetchList(page);
@@ -199,7 +244,10 @@ export default function MasterDataWarehousePage() {
           <Button
             onClick={() => {
               setEditingUuid(null);
-              setForm(initialForm);
+              setForm({
+                ...initialForm,
+                cityId: cities[0]?.uuid || '',
+              });
               setShowForm(true);
             }}
           >
@@ -233,7 +281,7 @@ export default function MasterDataWarehousePage() {
                 <TableRow>
                   <TableHead className="w-[60px]">No</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead>City ID</TableHead>
+                  <TableHead>City</TableHead>
                   <TableHead>Location Name</TableHead>
                   <TableHead>Address Detail</TableHead>
                   <TableHead className="w-[150px]">Actions</TableHead>
@@ -253,7 +301,7 @@ export default function MasterDataWarehousePage() {
                     <TableRow key={item.uuid}>
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.cityId || '-'}</TableCell>
+                      <TableCell>{item.city?.name || cities.find((city) => city.uuid === item.cityId)?.name || '-'}</TableCell>
                       <TableCell>{item.locationName || '-'}</TableCell>
                       <TableCell>{item.addressDetail || '-'}</TableCell>
                       <TableCell>
@@ -321,12 +369,24 @@ export default function MasterDataWarehousePage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cityId">City ID</Label>
-                  <Input
+                  <Label htmlFor="cityId">
+                    City <span className="text-destructive">*</span>
+                  </Label>
+                  <select
                     id="cityId"
+                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
                     value={form.cityId}
                     onChange={(e) => setForm((s) => ({ ...s, cityId: e.target.value }))}
-                  />
+                    required
+                    disabled={loadingCity || cities.length === 0}
+                  >
+                    {cities.length === 0 ? <option value="">No city available</option> : null}
+                    {cities.map((city) => (
+                      <option key={city.uuid} value={city.uuid}>
+                        {city.name} ({city.postalCode})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor="locationName">Location Name</Label>
@@ -349,7 +409,7 @@ export default function MasterDataWarehousePage() {
               {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
               <div className="flex items-center gap-2">
-                <Button type="submit" disabled={submitting}>
+                <Button type="submit" disabled={submitting || loadingCity || cities.length === 0}>
                   <Save />
                   {submitting ? 'Saving...' : editingUuid ? 'Update' : 'Create'}
                 </Button>
@@ -359,7 +419,10 @@ export default function MasterDataWarehousePage() {
                   onClick={() => {
                     setShowForm(false);
                     setEditingUuid(null);
-                    setForm(initialForm);
+                    setForm({
+                      ...initialForm,
+                      cityId: cities[0]?.uuid || '',
+                    });
                   }}
                 >
                   <ArrowLeft />

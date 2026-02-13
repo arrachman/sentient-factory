@@ -274,7 +274,8 @@ model MasterDataCity {
   deletedAt  DateTime? @map("deleted_at")
   deletedBy  String?   @map("deleted_by")
 
-  province MasterDataProvince @relation(fields: [provinceId], references: [uuid])
+  province   MasterDataProvince   @relation(fields: [provinceId], references: [uuid])
+  warehouses MasterDataWarehouse[]
 
   @@map("m1_city")
 }
@@ -283,7 +284,7 @@ model MasterDataWarehouse {
   id            Int       @id @default(autoincrement())
   uuid          String    @unique @default(cuid())
   name          String
-  cityId        String?   @map("city_id")
+  cityId        String    @map("city_id")
   locationName  String?   @map("location_name")
   addressDetail String?   @map("address_detail")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -292,6 +293,7 @@ model MasterDataWarehouse {
   updatedBy     String?   @map("updated_by")
   deletedAt     DateTime? @map("deleted_at")
   deletedBy     String?   @map("deleted_by")
+  city          MasterDataCity @relation(fields: [cityId], references: [uuid])
 
   @@map("m1_warehouse")
 }

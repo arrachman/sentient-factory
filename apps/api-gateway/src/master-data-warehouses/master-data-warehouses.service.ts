@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataWarehouseDto } from './dto/create-master-data-warehouse.dto';
@@ -10,10 +10,19 @@ export class MasterDataWarehousesService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateMasterDataWarehouseDto, actorId?: string) {
+    const cityId = dto.cityId.trim();
+    const city = await this.prisma.masterDataCity.findFirst({
+      where: { uuid: cityId, deletedAt: null },
+      select: { uuid: true },
+    });
+    if (!city) {
+      throw new BadRequestException('City not found');
+    }
+
     const created = await this.prisma.masterDataWarehouse.create({
       data: {
         name: dto.name,
-        cityId: dto.cityId,
+        cityId,
         locationName: dto.locationName,
         addressDetail: dto.addressDetail,
         createdBy: actorId ?? null,
@@ -79,6 +88,21 @@ export class MasterDataWarehousesService {
     });
     if (!existing) {
       throw new NotFoundException('Master data warehouse not found');
+    }
+
+    if (typeof dto.cityId !== 'undefined') {
+      const cityId = dto.cityId.trim();
+      if (!cityId) {
+        throw new BadRequestException('City is required');
+      }
+      const city = await this.prisma.masterDataCity.findFirst({
+        where: { uuid: cityId, deletedAt: null },
+        select: { uuid: true },
+      });
+      if (!city) {
+        throw new BadRequestException('City not found');
+      }
+      dto.cityId = cityId;
     }
 
     const updated = await this.prisma.masterDataWarehouse.update({
