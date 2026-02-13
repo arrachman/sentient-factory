@@ -224,6 +224,7 @@ model MasterDataContact {
   updatedBy        String?   @map("updated_by")
   deletedAt        DateTime? @map("deleted_at")
   deletedBy        String?   @map("deleted_by")
+  deliveryOrders   DeliveryOrder[]
 
   @@map("m1_contact")
 }
@@ -276,6 +277,7 @@ model MasterDataCity {
 
   province   MasterDataProvince   @relation(fields: [provinceId], references: [uuid])
   warehouses MasterDataWarehouse[]
+  deliveryOrders DeliveryOrder[]  @relation("DoDestinationCity")
 
   @@map("m1_city")
 }
@@ -314,9 +316,82 @@ model MasterDataItem {
   deletedAt DateTime? @map("deleted_at")
   deletedBy String?   @map("deleted_by")
 
-  uom MasterDataUom @relation(fields: [uomId], references: [uuid])
+  uom       MasterDataUom        @relation(fields: [uomId], references: [uuid])
+  doDetails DeliveryOrderDetail[]
 
   @@map("m1_item")
+}
+
+model DeliveryOrder {
+  id                   Int       @id @default(autoincrement())
+  uuid                 String    @unique @default(cuid())
+  reportNo             BigInt    @unique @default(autoincrement()) @map("report_no")
+  doNumber             String    @map("do_number")
+  doDate               DateTime  @db.Date @map("do_date")
+  doReceivedDate       DateTime  @db.Date @map("do_received_date")
+  customerId           String    @map("customer_id")
+  destinationCityId    String?   @map("destination_city_id")
+  stdLeadTimeDays      Int       @default(0) @map("std_lead_time_days")
+  stdReturnDoDays      Int       @default(0) @map("std_return_do_days")
+  shippingDate         DateTime? @db.Date @map("shipping_date")
+  actualReceivedDate   DateTime? @db.Date @map("actual_received_date")
+  receivedBy           String?   @map("received_by")
+  doScanReturnDate     DateTime? @db.Date @map("do_scan_return_date")
+  standardReceivedDate DateTime? @db.Date @map("standard_received_date")
+  stdDoReturnDate      DateTime? @db.Date @map("std_do_return_date")
+  kpiDeliveryStatus    String?   @map("kpi_delivery_status")
+  kpiDoReturnStatus    String?   @map("kpi_do_return_status")
+  totalItemTypes       Int       @default(0) @map("total_item_types")
+  totalBatches         Int       @default(0) @map("total_batches")
+  totalQtyPcs          Decimal   @default(0) @db.Decimal(18, 2) @map("total_qty_pcs")
+  totalKg              Decimal   @default(0) @db.Decimal(18, 3) @map("total_kg")
+  bu                   String?
+  notes                String?
+  status               String    @default("DRAFT")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  createdBy            String?   @map("created_by")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy            String?   @map("updated_by")
+  deletedAt            DateTime? @map("deleted_at")
+  deletedBy            String?   @map("deleted_by")
+
+  customer        MasterDataContact @relation(fields: [customerId], references: [uuid])
+  destinationCity MasterDataCity?   @relation("DoDestinationCity", fields: [destinationCityId], references: [uuid])
+  details         DeliveryOrderDetail[]
+
+  @@index([customerId])
+  @@index([shippingDate])
+  @@index([doReceivedDate])
+  @@map("m2_do")
+}
+
+model DeliveryOrderDetail {
+  id               Int       @id @default(autoincrement())
+  uuid             String    @unique @default(cuid())
+  doId             String    @map("do_id")
+  lineNo           Int       @map("line_no")
+  itemId           String    @map("item_id")
+  batchNumber      String    @map("batch_number")
+  qtyPcs           Decimal   @default(0) @db.Decimal(18, 2) @map("qty_pcs")
+  qtyKg            Decimal   @db.Decimal(18, 3) @map("qty_kg")
+  itemCodeSnapshot String?   @map("item_code_snapshot")
+  itemNameSnapshot String?   @map("item_name_snapshot")
+  uomCodeSnapshot  String?   @map("uom_code_snapshot")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  createdBy        String?   @map("created_by")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy        String?   @map("updated_by")
+  deletedAt        DateTime? @map("deleted_at")
+  deletedBy        String?   @map("deleted_by")
+
+  deliveryOrder DeliveryOrder @relation(fields: [doId], references: [uuid])
+  item          MasterDataItem @relation(fields: [itemId], references: [uuid])
+
+  @@unique([doId, lineNo])
+  @@index([doId])
+  @@index([itemId])
+  @@map("m2_do_detail")
 }
 
 model Session {

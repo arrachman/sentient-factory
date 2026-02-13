@@ -10,6 +10,7 @@ import { MasterDataItemsModule } from './master-data-items/master-data-items.mod
 import { MasterDataProvincesModule } from './master-data-provinces/master-data-provinces.module';
 import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.module';
 import { MasterDataWarehousesModule } from './master-data-warehouses/master-data-warehouses.module';
+import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MasterDataWarehousesModule } from './master-data-warehouses/master-data
     MasterDataProvincesModule,
     MasterDataCitiesModule,
     MasterDataWarehousesModule,
+    DeliveryOrdersModule,
   ],
 })
 export class AppModule {}
