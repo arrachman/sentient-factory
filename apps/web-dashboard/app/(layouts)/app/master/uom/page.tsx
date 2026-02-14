@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Save,
   Trash2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -209,11 +210,33 @@ export default function MasterDataUomPage() {
         {!showForm ? (
           <div className="rounded-lg border p-5">
             <div className="mb-3 flex items-center gap-2">
+              <div className="relative flex-1">
               <Input
                 placeholder="Search by code, name, type..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    fetchList(1);
+                  }
+                }}
+                className="pr-8"
               />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Reset search"
+                  onClick={() => {
+                    setSearch('');
+                    fetchList(1);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              ) : null}
+            </div>
               <Button variant="outline" onClick={() => fetchList(1)} disabled={loading}>
                 <RefreshCw />
                 Search

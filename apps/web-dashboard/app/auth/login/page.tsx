@@ -15,8 +15,8 @@ function hasAuthCookie() {
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('Password123!');
+  const [email, setEmail] = useState('adm.medan@fr-labs.my.id');
+  const [password, setPassword] = useState('12345678');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 

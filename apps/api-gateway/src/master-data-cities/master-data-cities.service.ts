@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataCityDto } from './dto/create-master-data-city.dto';
 import { QueryMasterDataCityDto } from './dto/query-master-data-city.dto';
@@ -28,7 +29,7 @@ export class MasterDataCitiesService {
       select: { uuid: true },
     });
     if (existing) {
-      throw new BadRequestException('City with same province, name, and postal code already exists');
+      throwDuplicate({ fieldLabel: 'City with same province, name, and postal code' });
     }
 
     const created = await this.prisma.masterDataCity.create({
@@ -139,7 +140,7 @@ export class MasterDataCitiesService {
       select: { uuid: true },
     });
     if (duplicate) {
-      throw new BadRequestException('City with same province, name, and postal code already exists');
+      throwDuplicate({ fieldLabel: 'City with same province, name, and postal code' });
     }
 
     const updated = await this.prisma.masterDataCity.update({

@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Save,
   Trash2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,9 +30,22 @@ type AdministratorUser = {
   email: string;
   username: string;
   fullName?: string | null;
+  warehouseId?: string | null;
+  warehouseName?: string | null;
   isActive: boolean;
   role?: string | null;
   roles?: string[];
+};
+
+type WarehouseOption = {
+  value: string;
+  label: string;
+};
+
+type WarehouseApiItem = {
+  uuid?: string;
+  name?: string | null;
+  locationName?: string | null;
 };
 
 type FormState = {
@@ -39,6 +53,7 @@ type FormState = {
   username: string;
   fullName: string;
   password: string;
+  warehouseId: string;
   isActive: boolean;
 };
 
@@ -47,6 +62,7 @@ const initialForm: FormState = {
   username: '',
   fullName: '',
   password: '',
+  warehouseId: '',
   isActive: true,
 };
 
@@ -67,6 +83,7 @@ export default function AdministratorUsersPage() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -113,6 +130,32 @@ export default function AdministratorUsersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const fetchWarehouses = async () => {
+      try {
+        const response = await fetch('/api/master-data-warehouses?page=1&limit=100', {
+          cache: 'no-store',
+          headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.success) {
+          return;
+        }
+        const options = (Array.isArray(payload.data) ? payload.data : []).map(
+          (item: WarehouseApiItem) => ({
+            value: String(item.uuid ?? ''),
+            label: String(item.locationName || item.name || item.uuid || ''),
+          }),
+        );
+        setWarehouses(options);
+      } catch {
+        setWarehouses([]);
+      }
+    };
+
+    fetchWarehouses();
+  }, [token]);
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
@@ -123,6 +166,7 @@ export default function AdministratorUsersPage() {
         email: form.email.trim(),
         username: form.username.trim(),
         fullName: form.fullName.trim() || undefined,
+        warehouseId: form.warehouseId.trim(),
         isActive: form.isActive,
       };
 
@@ -169,6 +213,7 @@ export default function AdministratorUsersPage() {
       username: item.username ?? '',
       fullName: item.fullName ?? '',
       password: '',
+      warehouseId: item.warehouseId ?? '',
       isActive: item.isActive,
     });
   };
@@ -229,11 +274,33 @@ export default function AdministratorUsersPage() {
         {!showForm ? (
           <div className="rounded-lg border p-5">
             <div className="mb-3 flex items-center gap-2">
-              <Input
-                placeholder="Search by email, username, or full name..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+              <div className="relative flex-1">
+                <Input
+                  placeholder="Search by email, username, or full name..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      fetchList(1);
+                    }
+                  }}
+                  className="pr-8"
+                />
+                {search ? (
+                  <button
+                    type="button"
+                    aria-label="Reset search"
+                    onClick={() => {
+                      setSearch('');
+                      fetchList(1);
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </button>
+                ) : null}
+              </div>
               <Button variant="outline" onClick={() => fetchList(1)} disabled={loading}>
                 <RefreshCw />
                 Search
@@ -247,6 +314,7 @@ export default function AdministratorUsersPage() {
                   <TableHead>Full Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Username</TableHead>
+                  <TableHead>Warehouse</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="w-[150px]">Actions</TableHead>
@@ -255,11 +323,11 @@ export default function AdministratorUsersPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7}>Loading...</TableCell>
+                    <TableCell colSpan={8}>Loading...</TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7}>No users found.</TableCell>
+                    <TableCell colSpan={8}>No users found.</TableCell>
                   </TableRow>
                 ) : (
                   items.map((item, index) => (
@@ -268,6 +336,7 @@ export default function AdministratorUsersPage() {
                       <TableCell>{item.fullName || '-'}</TableCell>
                       <TableCell>{item.email}</TableCell>
                       <TableCell>{item.username}</TableCell>
+                      <TableCell>{item.warehouseName || '-'}</TableCell>
                       <TableCell className="capitalize">{item.role || '-'}</TableCell>
                       <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell>
@@ -387,6 +456,21 @@ export default function AdministratorUsersPage() {
                     searchPlaceholder="Search status..."
                     emptyText="No status found."
                     triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="warehouseId">
+                    Warehouse <span className="text-destructive">*</span>
+                  </Label>
+                  <AutocompleteSelect
+                    value={form.warehouseId}
+                    onValueChange={(value) => setForm((s) => ({ ...s, warehouseId: value }))}
+                    options={warehouses}
+                    placeholder="Select warehouse"
+                    searchPlaceholder="Search warehouse..."
+                    emptyText="No warehouse found."
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                    required
                   />
                 </div>
               </div>

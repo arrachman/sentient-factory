@@ -13,6 +13,7 @@ import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.
 import { MasterDataCitySlasModule } from './master-data-city-slas/master-data-city-slas.module';
 import { MasterDataWarehousesModule } from './master-data-warehouses/master-data-warehouses.module';
 import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
+import { InboundsModule } from './inbounds/inbounds.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
     MasterDataCitySlasModule,
     MasterDataWarehousesModule,
     DeliveryOrdersModule,
+    InboundsModule,
   ],
 })
 export class AppModule {}

@@ -28,4 +28,10 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ example: 'wh_f4616bc245e7476b84511d3fee141176' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  warehouseId?: string;
 }

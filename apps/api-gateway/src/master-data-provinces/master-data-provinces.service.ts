@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataProvinceDto } from './dto/create-master-data-province.dto';
 import { QueryMasterDataProvinceDto } from './dto/query-master-data-province.dto';
@@ -11,21 +12,33 @@ export class MasterDataProvincesService {
 
   async create(dto: CreateMasterDataProvinceDto, actorId?: string) {
     const existingIso = await this.prisma.masterDataProvince.findFirst({
-      where: { isoCode: dto.isoCode, deletedAt: null },
-      select: { uuid: true },
+      where: { isoCode: dto.isoCode },
+      select: { uuid: true, deletedAt: true },
     });
     if (existingIso) {
-      throw new BadRequestException(`Province ISO code '${dto.isoCode}' already exists`);
+      throwDuplicate({
+        fieldLabel: 'Province ISO code',
+        value: dto.isoCode,
+        isSoftDeleted: Boolean(existingIso.deletedAt),
+      });
     }
 
-    const created = await this.prisma.masterDataProvince.create({
-      data: {
-        name: dto.name,
-        isoCode: dto.isoCode,
-        createdBy: actorId ?? null,
-        updatedBy: actorId ?? null,
-      },
-    });
+    let created;
+    try {
+      created = await this.prisma.masterDataProvince.create({
+        data: {
+          name: dto.name,
+          isoCode: dto.isoCode,
+          createdBy: actorId ?? null,
+          updatedBy: actorId ?? null,
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['isoCode', 'iso_code', 'm1_province_iso_code_key'])) {
+        throwDuplicate({ fieldLabel: 'Province ISO code', value: dto.isoCode });
+      }
+      throw error;
+    }
 
     return { success: true, data: created };
   }
@@ -86,22 +99,34 @@ export class MasterDataProvincesService {
 
     if (dto.isoCode && dto.isoCode !== existing.isoCode) {
       const duplicate = await this.prisma.masterDataProvince.findFirst({
-        where: { isoCode: dto.isoCode, deletedAt: null, NOT: { uuid } },
-        select: { uuid: true },
+        where: { isoCode: dto.isoCode, NOT: { uuid } },
+        select: { uuid: true, deletedAt: true },
       });
       if (duplicate) {
-        throw new BadRequestException(`Province ISO code '${dto.isoCode}' already exists`);
+        throwDuplicate({
+          fieldLabel: 'Province ISO code',
+          value: dto.isoCode,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
       }
     }
 
-    const updated = await this.prisma.masterDataProvince.update({
-      where: { uuid },
-      data: {
-        name: dto.name,
-        isoCode: dto.isoCode,
-        updatedBy: actorId ?? null,
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.masterDataProvince.update({
+        where: { uuid },
+        data: {
+          name: dto.name,
+          isoCode: dto.isoCode,
+          updatedBy: actorId ?? null,
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['isoCode', 'iso_code', 'm1_province_iso_code_key'])) {
+        throwDuplicate({ fieldLabel: 'Province ISO code', value: dto.isoCode ?? existing.isoCode });
+      }
+      throw error;
+    }
 
     return { success: true, data: updated };
   }

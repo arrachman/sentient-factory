@@ -63,6 +63,7 @@ CREATE TABLE public."m0_users" (
     email text NOT NULL,
     username text NOT NULL,
     password_hash text NOT NULL,
+    warehouse_id text,
     full_name text,
     avatar_url text,
     is_active boolean DEFAULT true NOT NULL,
@@ -73,8 +74,10 @@ CREATE TABLE public."m0_users" (
     updated_by text,
     deleted_at timestamp(3) without time zone,
     deleted_by text,
-    uuid text NOT NULL
+    uuid text NOT NULL,
+    CONSTRAINT chk_m0_users_active_requires_warehouse CHECK (NOT is_active OR warehouse_id IS NOT NULL)
 );
+CREATE INDEX m0_users_warehouse_id_idx ON public."m0_users"(warehouse_id);
 CREATE TRIGGER tr_m0_users_updated_at BEFORE UPDATE ON public."m0_users" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
 -- 4. TABEL m0_role
@@ -392,6 +395,13 @@ CREATE TABLE public."m1_warehouse" (
     CONSTRAINT m1_warehouse_city_id_fkey FOREIGN KEY (city_id) REFERENCES public."m1_city"(uuid) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE TRIGGER tr_m1_warehouse_updated_at BEFORE UPDATE ON public."m1_warehouse" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- Relasi user -> warehouse
+ALTER TABLE public."m0_users"
+ADD CONSTRAINT m0_users_warehouse_id_fkey
+FOREIGN KEY (warehouse_id) REFERENCES public."m1_warehouse"(uuid)
+ON UPDATE CASCADE
+ON DELETE SET NULL;
 
 -- 21. TABEL m1_item
 CREATE TABLE public."m1_item" (

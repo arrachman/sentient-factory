@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataItemDto } from './dto/create-master-data-item.dto';
 import { QueryMasterDataItemDto } from './dto/query-master-data-item.dto';
@@ -11,11 +12,15 @@ export class MasterDataItemsService {
 
   async create(dto: CreateMasterDataItemDto, actorId?: string) {
     const existing = await this.prisma.masterDataItem.findFirst({
-      where: { code: dto.code, deletedAt: null },
-      select: { uuid: true },
+      where: { code: dto.code },
+      select: { uuid: true, deletedAt: true },
     });
     if (existing) {
-      throw new BadRequestException(`Item code '${dto.code}' already exists`);
+      throwDuplicate({
+        fieldLabel: 'Item code',
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
     }
 
     const uom = await this.prisma.masterDataUom.findFirst({
@@ -26,21 +31,29 @@ export class MasterDataItemsService {
       throw new BadRequestException('UOM not found or inactive');
     }
 
-    const created = await this.prisma.masterDataItem.create({
-      data: {
-        code: dto.code,
-        name: dto.name,
-        category: dto.category,
-        uomId: dto.uomId,
-        itemType: dto.itemType,
-        isActive: dto.isActive ?? true,
-        createdBy: actorId ?? null,
-        updatedBy: actorId ?? null,
-      },
-      include: {
-        uom: { select: { uuid: true, code: true, name: true, type: true } },
-      },
-    });
+    let created;
+    try {
+      created = await this.prisma.masterDataItem.create({
+        data: {
+          code: dto.code,
+          name: dto.name,
+          category: dto.category,
+          uomId: dto.uomId,
+          itemType: dto.itemType,
+          isActive: dto.isActive ?? true,
+          createdBy: actorId ?? null,
+          updatedBy: actorId ?? null,
+        },
+        include: {
+          uom: { select: { uuid: true, code: true, name: true, type: true } },
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code', 'm1_item_code_key'])) {
+        throwDuplicate({ fieldLabel: 'Item code', value: dto.code });
+      }
+      throw error;
+    }
 
     return { success: true, data: created };
   }
@@ -126,11 +139,15 @@ export class MasterDataItemsService {
 
     if (dto.code && dto.code !== existing.code) {
       const duplicate = await this.prisma.masterDataItem.findFirst({
-        where: { code: dto.code, deletedAt: null, NOT: { uuid } },
-        select: { uuid: true },
+        where: { code: dto.code, NOT: { uuid } },
+        select: { uuid: true, deletedAt: true },
       });
       if (duplicate) {
-        throw new BadRequestException(`Item code '${dto.code}' already exists`);
+        throwDuplicate({
+          fieldLabel: 'Item code',
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
       }
     }
 
@@ -144,21 +161,29 @@ export class MasterDataItemsService {
       }
     }
 
-    const updated = await this.prisma.masterDataItem.update({
-      where: { uuid },
-      data: {
-        code: dto.code,
-        name: dto.name,
-        category: dto.category,
-        uomId: dto.uomId,
-        itemType: dto.itemType,
-        isActive: dto.isActive,
-        updatedBy: actorId ?? null,
-      },
-      include: {
-        uom: { select: { uuid: true, code: true, name: true, type: true } },
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.masterDataItem.update({
+        where: { uuid },
+        data: {
+          code: dto.code,
+          name: dto.name,
+          category: dto.category,
+          uomId: dto.uomId,
+          itemType: dto.itemType,
+          isActive: dto.isActive,
+          updatedBy: actorId ?? null,
+        },
+        include: {
+          uom: { select: { uuid: true, code: true, name: true, type: true } },
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code', 'm1_item_code_key'])) {
+        throwDuplicate({ fieldLabel: 'Item code', value: dto.code ?? existing.code });
+      }
+      throw error;
+    }
 
     return { success: true, data: updated };
   }

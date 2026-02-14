@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeliveryOrderDetailDto } from './dto/create-delivery-order-detail.dto';
 import { CreateDeliveryOrderDto } from './dto/create-delivery-order.dto';
@@ -287,14 +288,17 @@ export class DeliveryOrdersService {
     const duplicate = await this.prisma.deliveryOrder.findFirst({
       where: {
         doNumber,
-        deletedAt: null,
         NOT: exceptUuid ? { uuid: exceptUuid } : undefined,
       },
-      select: { uuid: true },
+      select: { uuid: true, deletedAt: true },
     });
 
     if (duplicate) {
-      throw new BadRequestException(`DO number '${doNumber}' already exists`);
+      throwDuplicate({
+        fieldLabel: 'DO number',
+        value: doNumber,
+        isSoftDeleted: Boolean(duplicate.deletedAt),
+      });
     }
   }
 

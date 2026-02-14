@@ -61,16 +61,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'Current user profile' })
   getProfile(@Request() req: any) {
-    const user = req.user;
-    return {
-      success: true,
-      data: {
-        id: user.id,
-        email: user.email,
-        name: user.fullName || user.username,
-        role: user.roles?.[0] || 'user',
-      },
-    };
+    return this.authService.getProfile(req.user);
   }
 
   @UseGuards(JwtAuthGuard)

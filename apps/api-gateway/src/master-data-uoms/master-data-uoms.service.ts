@@ -1,5 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataUomDto } from './dto/create-master-data-uom.dto';
 import { QueryMasterDataUomDto } from './dto/query-master-data-uom.dto';
@@ -11,22 +12,34 @@ export class MasterDataUomsService {
 
   async create(dto: CreateMasterDataUomDto, actorId?: string) {
     const existing = await this.prisma.masterDataUom.findFirst({
-      where: { code: dto.code, deletedAt: null },
-      select: { uuid: true },
+      where: { code: dto.code },
+      select: { uuid: true, deletedAt: true },
     });
     if (existing) {
-      throw new BadRequestException(`UOM code '${dto.code}' already exists`);
+      throwDuplicate({
+        fieldLabel: 'UOM code',
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
     }
 
-    const created = await this.prisma.masterDataUom.create({
-      data: {
-        code: dto.code,
-        name: dto.name,
-        type: dto.type,
-        createdBy: actorId ?? null,
-        updatedBy: actorId ?? null,
-      },
-    });
+    let created;
+    try {
+      created = await this.prisma.masterDataUom.create({
+        data: {
+          code: dto.code,
+          name: dto.name,
+          type: dto.type,
+          createdBy: actorId ?? null,
+          updatedBy: actorId ?? null,
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code', 'm1_uom_code_key'])) {
+        throwDuplicate({ fieldLabel: 'UOM code', value: dto.code });
+      }
+      throw error;
+    }
 
     return { success: true, data: created };
   }
@@ -88,23 +101,35 @@ export class MasterDataUomsService {
 
     if (dto.code && dto.code !== existing.code) {
       const duplicate = await this.prisma.masterDataUom.findFirst({
-        where: { code: dto.code, deletedAt: null, NOT: { uuid } },
-        select: { uuid: true },
+        where: { code: dto.code, NOT: { uuid } },
+        select: { uuid: true, deletedAt: true },
       });
       if (duplicate) {
-        throw new BadRequestException(`UOM code '${dto.code}' already exists`);
+        throwDuplicate({
+          fieldLabel: 'UOM code',
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
       }
     }
 
-    const updated = await this.prisma.masterDataUom.update({
-      where: { uuid },
-      data: {
-        code: dto.code,
-        name: dto.name,
-        type: dto.type,
-        updatedBy: actorId ?? null,
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.masterDataUom.update({
+        where: { uuid },
+        data: {
+          code: dto.code,
+          name: dto.name,
+          type: dto.type,
+          updatedBy: actorId ?? null,
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code', 'm1_uom_code_key'])) {
+        throwDuplicate({ fieldLabel: 'UOM code', value: dto.code ?? existing.code });
+      }
+      throw error;
+    }
 
     return { success: true, data: updated };
   }

@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Save,
   Trash2,
+  X,
   Truck,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -170,7 +171,7 @@ function addDays(dateString?: string, days?: string) {
 
 function badgeVariant(status?: 'ONTIME' | 'LATE' | null) {
   if (status === 'ONTIME') {
-    return 'default';
+    return 'primary';
   }
   if (status === 'LATE') {
     return 'destructive';
@@ -567,11 +568,33 @@ export default function LogisticTransactionDoPage() {
         {!showForm ? (
           <div className="rounded-lg border p-5">
             <div className="mb-3 grid gap-2 md:grid-cols-[1fr_220px_auto]">
+              <div className="relative flex-1">
               <Input
                 placeholder="Search DO Number, Customer, BU..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    fetchList(1);
+                  }
+                }}
+                className="pr-8"
               />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Reset search"
+                  onClick={() => {
+                    setSearch('');
+                    fetchList(1);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-4" />
+                </button>
+              ) : null}
+            </div>
               <AutocompleteSelect
                 value={statusFilter}
                 onValueChange={(value) => setStatusFilter(value)}

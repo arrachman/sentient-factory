@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataDivisionDto } from './dto/create-master-data-division.dto';
 import { QueryMasterDataDivisionDto } from './dto/query-master-data-division.dto';
@@ -41,15 +42,19 @@ export class MasterDataDivisionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateMasterDataDivisionDto, actorId?: string) {
-    const existing = await this.prisma.$queryRaw<{ uuid: string }[]>`
-      SELECT uuid
+    const existing = await this.prisma.$queryRaw<{ uuid: string; deleted_at: Date | null }[]>`
+      SELECT uuid, deleted_at
       FROM public."m1_division"
-      WHERE code = ${dto.code} AND deleted_at IS NULL
+      WHERE code = ${dto.code}
       LIMIT 1
     `;
 
-    if (existing.length > 0) {
-      throw new BadRequestException(`Division code '${dto.code}' already exists`);
+    if (existing[0]) {
+      throwDuplicate({
+        fieldLabel: 'Division code',
+        value: dto.code,
+        isSoftDeleted: Boolean(existing[0].deleted_at),
+      });
     }
 
     const created = await this.prisma.$queryRaw<DivisionRow[]>`
@@ -138,14 +143,18 @@ export class MasterDataDivisionsService {
     }
 
     if (dto.code && dto.code !== existing.code) {
-      const duplicate = await this.prisma.$queryRaw<{ uuid: string }[]>`
-        SELECT uuid
+      const duplicate = await this.prisma.$queryRaw<{ uuid: string; deleted_at: Date | null }[]>`
+        SELECT uuid, deleted_at
         FROM public."m1_division"
-        WHERE code = ${dto.code} AND deleted_at IS NULL AND uuid <> ${uuid}
+        WHERE code = ${dto.code} AND uuid <> ${uuid}
         LIMIT 1
       `;
-      if (duplicate.length > 0) {
-        throw new BadRequestException(`Division code '${dto.code}' already exists`);
+      if (duplicate[0]) {
+        throwDuplicate({
+          fieldLabel: 'Division code',
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate[0].deleted_at),
+        });
       }
     }
 

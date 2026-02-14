@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { CreateMasterDataContactDto } from './dto/create-master-data-contact.dto';
 import { QueryMasterDataContactDto } from './dto/query-master-data-contact.dto';
 import { UpdateMasterDataContactDto } from './dto/update-master-data-contact.dto';
@@ -11,11 +12,15 @@ export class MasterDataContactsService {
 
   async create(dto: CreateMasterDataContactDto, actorId?: string) {
     const existing = await this.prisma.masterDataContact.findFirst({
-      where: { code: dto.code, deletedAt: null },
-      select: { uuid: true },
+      where: { code: dto.code },
+      select: { uuid: true, deletedAt: true },
     });
     if (existing) {
-      throw new BadRequestException(`Contact code '${dto.code}' already exists`);
+      throwDuplicate({
+        fieldLabel: 'Contact code',
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
     }
 
     const data: Prisma.MasterDataContactCreateInput = {
@@ -36,7 +41,18 @@ export class MasterDataContactsService {
       updatedBy: actorId ?? null,
     };
 
-    const created = await this.prisma.masterDataContact.create({ data });
+    let created;
+    try {
+      created = await this.prisma.masterDataContact.create({ data });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code', 'm1_contact_code_key'])) {
+        throwDuplicate({
+          fieldLabel: 'Contact code',
+          value: dto.code,
+        });
+      }
+      throw error;
+    }
     return { success: true, data: created };
   }
 
@@ -107,33 +123,48 @@ export class MasterDataContactsService {
 
     if (dto.code && dto.code !== existing.code) {
       const duplicate = await this.prisma.masterDataContact.findFirst({
-        where: { code: dto.code, deletedAt: null, NOT: { uuid } },
-        select: { uuid: true },
+        where: { code: dto.code, NOT: { uuid } },
+        select: { uuid: true, deletedAt: true },
       });
       if (duplicate) {
-        throw new BadRequestException(`Contact code '${dto.code}' already exists`);
+        throwDuplicate({
+          fieldLabel: 'Contact code',
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
       }
     }
 
-    const updated = await this.prisma.masterDataContact.update({
-      where: { uuid },
-      data: {
-        code: dto.code,
-        name: dto.name,
-        tax: dto.tax,
-        website: dto.website,
-        address: dto.address,
-        street: dto.street,
-        city: dto.city,
-        province: dto.province,
-        zipCode: dto.zipCode,
-        type: dto.type,
-        contactFirstName: dto.contactFirstName,
-        contactEmail: dto.contactEmail,
-        contactPhone: dto.contactPhone,
-        updatedBy: actorId ?? null,
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.masterDataContact.update({
+        where: { uuid },
+        data: {
+          code: dto.code,
+          name: dto.name,
+          tax: dto.tax,
+          website: dto.website,
+          address: dto.address,
+          street: dto.street,
+          city: dto.city,
+          province: dto.province,
+          zipCode: dto.zipCode,
+          type: dto.type,
+          contactFirstName: dto.contactFirstName,
+          contactEmail: dto.contactEmail,
+          contactPhone: dto.contactPhone,
+          updatedBy: actorId ?? null,
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code', 'm1_contact_code_key'])) {
+        throwDuplicate({
+          fieldLabel: 'Contact code',
+          value: dto.code ?? existing.code,
+        });
+      }
+      throw error;
+    }
 
     return { success: true, data: updated };
   }

@@ -7,7 +7,6 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toAbsoluteUrl } from '@/lib/helpers';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -144,11 +143,15 @@ function getUserFromTokenCookie() {
   const payload = token ? decodeJwtPayload(token) : null;
 
   const email = typeof payload?.email === 'string' && payload.email.length > 0 ? payload.email : '-';
-  const username =
-    typeof payload?.username === 'string' && payload.username.length > 0 ? payload.username : 'User';
+  const name =
+    (typeof payload?.fullName === 'string' && payload.fullName.length > 0
+      ? payload.fullName
+      : typeof payload?.name === 'string' && payload.name.length > 0
+        ? payload.name
+        : 'User');
 
   return {
-    name: username,
+    name,
     email,
   };
 }

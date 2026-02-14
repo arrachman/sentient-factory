@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataCitySlaDto } from './dto/create-master-data-city-sla.dto';
 import { QueryMasterDataCitySlaDto } from './dto/query-master-data-city-sla.dto';
@@ -64,7 +65,7 @@ export class MasterDataCitySlasService {
       LIMIT 1
     `;
     if (existing.length > 0) {
-      throw new BadRequestException('SLA for this city already exists');
+      throwDuplicate({ fieldLabel: 'SLA for this city' });
     }
 
     const recycled = await this.prisma.$queryRaw<{ uuid: string }[]>`
@@ -240,7 +241,7 @@ export class MasterDataCitySlasService {
         LIMIT 1
       `;
       if (duplicate.length > 0) {
-        throw new BadRequestException('SLA for this city already exists');
+        throwDuplicate({ fieldLabel: 'SLA for this city' });
       }
     }
 
