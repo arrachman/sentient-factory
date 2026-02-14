@@ -341,13 +341,16 @@ export default function LogisticInboundPage() {
         : [];
       const nextItems = Array.isArray(itemPayload.data) ? itemPayload.data : [];
       const userId = String(profilePayload?.data?.id ?? '');
+      const mappedWarehouseIdRaw =
+        profilePayload?.data?.warehouseId ??
+        profilePayload?.data?.user?.warehouseId ??
+        '';
+      const mappedWarehouseId = String(mappedWarehouseIdRaw).trim();
+      const resolvedLockedWarehouseId =
+        mappedWarehouseId && mappedWarehouseId !== 'null' && mappedWarehouseId !== 'undefined'
+          ? mappedWarehouseId
+          : '';
 
-      const userWarehouse =
-        nextWarehouses.find(
-          (warehouse: WarehouseOption) =>
-            String(warehouse?.createdBy ?? '') === userId,
-        ) || null;
-      const resolvedLockedWarehouseId = userWarehouse?.uuid || '';
       if (userId && !resolvedLockedWarehouseId) {
         throw new Error(
           'Warehouse user login tidak ditemukan. Hubungi admin untuk mapping warehouse.',
