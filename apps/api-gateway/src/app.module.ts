@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { MenusModule } from './menus/menus.module';
 import { MasterDataContactsModule } from './master-data-contacts/master-data-contacts.module';
 import { MasterDataUomsModule } from './master-data-uoms/master-data-uoms.module';
+import { MasterDataDivisionsModule } from './master-data-divisions/master-data-divisions.module';
 import { MasterDataItemsModule } from './master-data-items/master-data-items.module';
 import { MasterDataProvincesModule } from './master-data-provinces/master-data-provinces.module';
 import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.module';
@@ -24,6 +25,7 @@ import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
     MenusModule,
     MasterDataContactsModule,
     MasterDataUomsModule,
+    MasterDataDivisionsModule,
     MasterDataItemsModule,
     MasterDataProvincesModule,
     MasterDataCitiesModule,

@@ -2,9 +2,18 @@
 // This script seeds the database with initial roles, permissions, and a default admin user.
 
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { pbkdf2Sync, randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
+
+async function hashPassword(password: string): Promise<string> {
+  const salt = randomBytes(16);
+  const iterations = 210000;
+  const digest = 'sha512';
+  const derived = pbkdf2Sync(password, salt, iterations, 64, digest);
+
+  return `pbkdf2$v1$${digest}$${iterations}$${salt.toString('base64')}$${derived.toString('base64')}`;
+}
 
 async function main() {
   console.log('Seeding database...');
@@ -104,12 +113,12 @@ async function main() {
   });
 
   // 5. Create Users
-  const passwordHash = await bcrypt.hash('Password123!', 10);
+  const passwordHash = await hashPassword('Password123!');
 
   // Super Admin
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@example.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'admin@example.com',
       username: 'admin',
@@ -122,7 +131,7 @@ async function main() {
   // Manager Engineering
   const managerUser = await prisma.user.upsert({
     where: { email: 'manager.eng@example.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'manager.eng@example.com',
       username: 'manager_eng',
@@ -135,7 +144,7 @@ async function main() {
   // Staff Engineering
   const staffEng = await prisma.user.upsert({
     where: { email: 'staff.eng@example.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'staff.eng@example.com',
       username: 'staff_eng',
@@ -148,7 +157,7 @@ async function main() {
   // Staff HR
   const staffHr = await prisma.user.upsert({
     where: { email: 'staff.hr@example.com' },
-    update: {},
+    update: { passwordHash },
     create: {
       email: 'staff.hr@example.com',
       username: 'staff_hr',
@@ -421,6 +430,31 @@ async function main() {
     },
   });
 
+  const masterDataDivisionMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-division' },
+    update: {
+      title: 'Division',
+      path: '/app/master/division',
+      icon: 'Building2',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-division',
+      title: 'Division',
+      path: '/app/master/division',
+      icon: 'Building2',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
   const masterDataItemMenu = await prisma.menu.upsert({
     where: { key: 'master-data-item' },
     update: {
@@ -682,6 +716,38 @@ async function main() {
     },
   });
 
+  const divisions = [
+    {
+      uuid: 'division-fb',
+      code: 'F&B',
+      name: 'Food & Beverage',
+      description: 'Divisi penjualan makanan dan minuman retail',
+      isActive: true,
+    },
+    {
+      uuid: 'division-insti',
+      code: 'INSTI',
+      name: 'Institution',
+      description: 'Divisi penjualan ke institusi/B2B/Horeca',
+      isActive: true,
+    },
+  ] as const;
+
+  for (const division of divisions) {
+    await prisma.$executeRaw`
+      INSERT INTO public."m1_division" (uuid, code, name, description, is_active, created_by, updated_by, deleted_at, deleted_by)
+      VALUES (${division.uuid}, ${division.code}, ${division.name}, ${division.description}, ${division.isActive}, ${'seed'}, ${'seed'}, NULL, NULL)
+      ON CONFLICT (code)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        description = EXCLUDED.description,
+        is_active = EXCLUDED.is_active,
+        updated_by = EXCLUDED.updated_by,
+        deleted_at = NULL,
+        deleted_by = NULL;
+    `;
+  }
+
   // 7b. Seed Master Data Province & City (Indonesia)
   const indonesiaProvinces = [
     { uuid: 'prov-id-ac', name: 'Aceh', isoCode: 'ID-AC' },
@@ -821,6 +887,7 @@ async function main() {
   await assignMenuToRole(adminRole.uuid, administratorAuditlogMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataContactMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataDivisionMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataItemMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataProvinceMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataCityMenu.uuid);

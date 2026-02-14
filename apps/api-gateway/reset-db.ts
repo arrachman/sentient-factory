@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS public."m0_session" CASCADE;
 DROP TABLE IF EXISTS public."m2_do_detail" CASCADE;
 DROP TABLE IF EXISTS public."m2_do" CASCADE;
 DROP TABLE IF EXISTS public."m1_contact" CASCADE;
+DROP TABLE IF EXISTS public."m1_division" CASCADE;
 DROP TABLE IF EXISTS public."m1_uom" CASCADE;
 DROP TABLE IF EXISTS public."m1_province" CASCADE;
 DROP TABLE IF EXISTS public."m1_city" CASCADE;
@@ -299,7 +300,26 @@ CREATE TABLE public."m1_uom" (
 );
 CREATE TRIGGER tr_m1_uom_updated_at BEFORE UPDATE ON public."m1_uom" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 16. TABEL m1_province
+-- 16. TABEL m1_division
+CREATE TABLE public."m1_division" (
+    id SERIAL PRIMARY KEY,
+    code text NOT NULL,
+    name text NOT NULL,
+    description text,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_division_code_key UNIQUE (code),
+    CONSTRAINT m1_division_uuid_key UNIQUE (uuid)
+);
+CREATE TRIGGER tr_m1_division_updated_at BEFORE UPDATE ON public."m1_division" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 17. TABEL m1_province
 CREATE TABLE public."m1_province" (
     id SERIAL PRIMARY KEY,
     name text NOT NULL,
@@ -316,7 +336,7 @@ CREATE TABLE public."m1_province" (
 );
 CREATE TRIGGER tr_m1_province_updated_at BEFORE UPDATE ON public."m1_province" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 17. TABEL m1_city
+-- 18. TABEL m1_city
 CREATE TABLE public."m1_city" (
     id SERIAL PRIMARY KEY,
     province_id text NOT NULL,
@@ -334,7 +354,7 @@ CREATE TABLE public."m1_city" (
 );
 CREATE TRIGGER tr_m1_city_updated_at BEFORE UPDATE ON public."m1_city" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 18. TABEL m1_warehouse
+-- 19. TABEL m1_warehouse
 CREATE TABLE public."m1_warehouse" (
     id SERIAL PRIMARY KEY,
     name text NOT NULL,
@@ -353,7 +373,7 @@ CREATE TABLE public."m1_warehouse" (
 );
 CREATE TRIGGER tr_m1_warehouse_updated_at BEFORE UPDATE ON public."m1_warehouse" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 19. TABEL m1_item
+-- 20. TABEL m1_item
 CREATE TABLE public."m1_item" (
     id SERIAL PRIMARY KEY,
     code text NOT NULL,

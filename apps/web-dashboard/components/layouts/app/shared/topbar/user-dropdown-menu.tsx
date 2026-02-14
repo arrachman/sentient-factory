@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import {
   Moon,
   UserCircle,
@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const user = useMemo(() => getUserFromTokenCookie(), []);
 
   const handleThemeToggle = (checked: boolean) => {
     setTheme(checked ? 'dark' : 'light');
@@ -49,19 +50,16 @@ export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
                 href="#"
                 className="text-sm text-mono hover:text-primary font-semibold"
               >
-                Sean
+                {user.name}
               </Link>
               <a
-                href={`mailto:sean@kt.com`}
+                href={`mailto:${user.email}`}
                 className="text-xs text-muted-foreground hover:text-primary"
               >
-                sean@kt.com
+                {user.email}
               </a>
             </div>
           </div>
-          <Badge variant="primary" appearance="light" size="sm">
-            Pro
-          </Badge>
         </div>
 
         <DropdownMenuSeparator />
@@ -106,4 +104,51 @@ export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
       </DropdownMenuContent>
     </DropdownMenu>
   );
+}
+
+function getTokenFromCookie() {
+  if (typeof document === 'undefined') {
+    return '';
+  }
+
+  const tokenPart = document.cookie
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith('sf_token='));
+
+  if (!tokenPart) {
+    return '';
+  }
+
+  return decodeURIComponent(tokenPart.substring('sf_token='.length));
+}
+
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) {
+      return null;
+    }
+
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+    const payload = atob(padded);
+    return JSON.parse(payload) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function getUserFromTokenCookie() {
+  const token = getTokenFromCookie();
+  const payload = token ? decodeJwtPayload(token) : null;
+
+  const email = typeof payload?.email === 'string' && payload.email.length > 0 ? payload.email : '-';
+  const username =
+    typeof payload?.username === 'string' && payload.username.length > 0 ? payload.username : 'User';
+
+  return {
+    name: username,
+    email,
+  };
 }

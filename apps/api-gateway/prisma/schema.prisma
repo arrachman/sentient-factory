@@ -246,6 +246,23 @@ model MasterDataUom {
   @@map("m1_uom")
 }
 
+model MasterDataDivision {
+  id          Int       @id @default(autoincrement())
+  uuid        String    @unique @default(cuid())
+  code        String    @unique
+  name        String
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   String?   @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy   String?   @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   String?   @map("deleted_by")
+
+  @@map("m1_division")
+}
+
 model MasterDataProvince {
   id        Int       @id @default(autoincrement())
   uuid      String    @unique @default(cuid())
