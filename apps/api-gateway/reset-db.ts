@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS public."m1_division" CASCADE;
 DROP TABLE IF EXISTS public."m1_uom" CASCADE;
 DROP TABLE IF EXISTS public."m1_province" CASCADE;
 DROP TABLE IF EXISTS public."m1_city" CASCADE;
+DROP TABLE IF EXISTS public."m1_city_sla" CASCADE;
 DROP TABLE IF EXISTS public."m1_warehouse" CASCADE;
 DROP TABLE IF EXISTS public."m1_item" CASCADE;
 DROP TABLE IF EXISTS public."m0_master_data_contact" CASCADE;
@@ -354,7 +355,26 @@ CREATE TABLE public."m1_city" (
 );
 CREATE TRIGGER tr_m1_city_updated_at BEFORE UPDATE ON public."m1_city" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 19. TABEL m1_warehouse
+-- 19. TABEL m1_city_sla
+CREATE TABLE public."m1_city_sla" (
+    id SERIAL PRIMARY KEY,
+    city_id text NOT NULL,
+    std_lead_time_days integer DEFAULT 0 NOT NULL,
+    std_return_do_days integer DEFAULT 0 NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_by text,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_by text,
+    deleted_at timestamp(3) without time zone,
+    deleted_by text,
+    uuid text NOT NULL,
+    CONSTRAINT m1_city_sla_uuid_key UNIQUE (uuid),
+    CONSTRAINT m1_city_sla_city_id_fkey FOREIGN KEY (city_id) REFERENCES public."m1_city"(uuid) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+CREATE INDEX m1_city_sla_city_id_idx ON public."m1_city_sla"(city_id);
+CREATE TRIGGER tr_m1_city_sla_updated_at BEFORE UPDATE ON public."m1_city_sla" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
+
+-- 20. TABEL m1_warehouse
 CREATE TABLE public."m1_warehouse" (
     id SERIAL PRIMARY KEY,
     name text NOT NULL,
@@ -373,7 +393,7 @@ CREATE TABLE public."m1_warehouse" (
 );
 CREATE TRIGGER tr_m1_warehouse_updated_at BEFORE UPDATE ON public."m1_warehouse" FOR EACH ROW EXECUTE FUNCTION update_timestamp_column();
 
--- 20. TABEL m1_item
+-- 21. TABEL m1_item
 CREATE TABLE public."m1_item" (
     id SERIAL PRIMARY KEY,
     code text NOT NULL,

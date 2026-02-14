@@ -10,6 +10,7 @@ import { MasterDataDivisionsModule } from './master-data-divisions/master-data-d
 import { MasterDataItemsModule } from './master-data-items/master-data-items.module';
 import { MasterDataProvincesModule } from './master-data-provinces/master-data-provinces.module';
 import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.module';
+import { MasterDataCitySlasModule } from './master-data-city-slas/master-data-city-slas.module';
 import { MasterDataWarehousesModule } from './master-data-warehouses/master-data-warehouses.module';
 import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
 
@@ -29,6 +30,7 @@ import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
     MasterDataItemsModule,
     MasterDataProvincesModule,
     MasterDataCitiesModule,
+    MasterDataCitySlasModule,
     MasterDataWarehousesModule,
     DeliveryOrdersModule,
   ],

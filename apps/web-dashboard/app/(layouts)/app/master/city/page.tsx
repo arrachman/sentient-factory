@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Toolbar,
@@ -348,21 +349,20 @@ export default function MasterDataCityPage() {
                   <Label htmlFor="provinceId">
                     Province <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="provinceId"
-                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                  <AutocompleteSelect
                     value={form.provinceId}
-                    onChange={(e) => setForm((s) => ({ ...s, provinceId: e.target.value }))}
+                    onValueChange={(value) => setForm((s) => ({ ...s, provinceId: value }))}
+                    options={provinces.map((province) => ({
+                      value: province.uuid,
+                      label: `${province.name} (${province.isoCode})`,
+                    }))}
+                    placeholder={provinces.length === 0 ? 'No province available' : 'Select province'}
+                    searchPlaceholder="Search province..."
+                    emptyText="No province found."
                     required
                     disabled={loadingProvince || provinces.length === 0}
-                  >
-                    {provinces.length === 0 ? <option value="">No province available</option> : null}
-                    {provinces.map((province) => (
-                      <option key={province.uuid} value={province.uuid}>
-                        {province.name} ({province.isoCode})
-                      </option>
-                    ))}
-                  </select>
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
                 </div>
 
                 <div>

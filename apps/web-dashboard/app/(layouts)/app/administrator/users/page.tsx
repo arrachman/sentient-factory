@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Toolbar,
@@ -375,15 +376,18 @@ export default function AdministratorUsersPage() {
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                 <div>
                   <Label htmlFor="isActive">Status</Label>
-                  <select
-                    id="isActive"
-                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                  <AutocompleteSelect
                     value={form.isActive ? 'active' : 'inactive'}
-                    onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.value === 'active' }))}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
+                    onValueChange={(value) => setForm((s) => ({ ...s, isActive: value === 'active' }))}
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                    ]}
+                    placeholder="Select status"
+                    searchPlaceholder="Search status..."
+                    emptyText="No status found."
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
                 </div>
               </div>
 

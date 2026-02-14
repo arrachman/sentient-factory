@@ -530,6 +530,31 @@ async function main() {
     },
   });
 
+  const masterDataCitySlaMenu = await prisma.menu.upsert({
+    where: { key: 'master-data-city-sla' },
+    update: {
+      title: 'City SLA',
+      path: '/app/master/city-sla',
+      icon: 'Clock',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 7,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'master-data-city-sla',
+      title: 'City SLA',
+      path: '/app/master/city-sla',
+      icon: 'Clock',
+      type: 'ITEM',
+      parentId: masterDataMenu.uuid,
+      sortOrder: 7,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
   const masterDataUomMenu = await prisma.menu.upsert({
     where: { key: 'master-data-uom' },
     update: {
@@ -538,7 +563,7 @@ async function main() {
       icon: 'Ruler',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
-      sortOrder: 7,
+      sortOrder: 8,
       isVisible: true,
       isActive: true,
     },
@@ -549,7 +574,7 @@ async function main() {
       icon: 'Ruler',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
-      sortOrder: 7,
+      sortOrder: 8,
       isVisible: true,
       isActive: true,
     },
@@ -563,7 +588,7 @@ async function main() {
       icon: 'Warehouse',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
-      sortOrder: 8,
+      sortOrder: 9,
       isVisible: true,
       isActive: true,
     },
@@ -574,7 +599,7 @@ async function main() {
       icon: 'Warehouse',
       type: 'ITEM',
       parentId: masterDataMenu.uuid,
-      sortOrder: 8,
+      sortOrder: 9,
       isVisible: true,
       isActive: true,
     },
@@ -616,11 +641,11 @@ async function main() {
     },
   });
 
-  const logisticTransactionMenu = await prisma.menu.upsert({
-    where: { key: 'logistic-transaction' },
+  const logisticOutboundMenu = await prisma.menu.upsert({
+    where: { key: 'logistic-outbound' },
     update: {
-      title: 'Transaction',
-      path: '/app/logistic/transaction',
+      title: 'Outbound',
+      path: '/app/logistic/outbound',
       icon: 'ArrowRightLeft',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
@@ -629,15 +654,49 @@ async function main() {
       isActive: true,
     },
     create: {
-      key: 'logistic-transaction',
-      title: 'Transaction',
-      path: '/app/logistic/transaction',
+      key: 'logistic-outbound',
+      title: 'Outbound',
+      path: '/app/logistic/outbound',
       icon: 'ArrowRightLeft',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
       sortOrder: 1,
       isVisible: true,
       isActive: true,
+    },
+  });
+
+  const logisticInboundMenu = await prisma.menu.upsert({
+    where: { key: 'logistic-inbound' },
+    update: {
+      title: 'Inbound',
+      path: '/app/logistic/inbound',
+      icon: 'ArrowDownToLine',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+    create: {
+      key: 'logistic-inbound',
+      title: 'Inbound',
+      path: '/app/logistic/inbound',
+      icon: 'ArrowDownToLine',
+      type: 'ITEM',
+      parentId: logisticMenu.uuid,
+      sortOrder: 2,
+      isVisible: true,
+      isActive: true,
+    },
+  });
+
+  await prisma.menu.updateMany({
+    where: { key: 'logistic-transaction' },
+    data: {
+      isVisible: false,
+      isActive: false,
+      updatedBy: 'seed',
     },
   });
 
@@ -649,7 +708,7 @@ async function main() {
       icon: 'ClipboardList',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
-      sortOrder: 2,
+      sortOrder: 3,
       isVisible: true,
       isActive: true,
     },
@@ -660,7 +719,7 @@ async function main() {
       icon: 'ClipboardList',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
-      sortOrder: 2,
+      sortOrder: 3,
       isVisible: true,
       isActive: true,
     },
@@ -674,7 +733,7 @@ async function main() {
       icon: 'Boxes',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
-      sortOrder: 3,
+      sortOrder: 4,
       isVisible: true,
       isActive: true,
     },
@@ -685,7 +744,7 @@ async function main() {
       icon: 'Boxes',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
-      sortOrder: 3,
+      sortOrder: 4,
       isVisible: true,
       isActive: true,
     },
@@ -699,7 +758,7 @@ async function main() {
       icon: 'Repeat',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
-      sortOrder: 4,
+      sortOrder: 5,
       isVisible: true,
       isActive: true,
     },
@@ -710,7 +769,7 @@ async function main() {
       icon: 'Repeat',
       type: 'ITEM',
       parentId: logisticMenu.uuid,
-      sortOrder: 4,
+      sortOrder: 5,
       isVisible: true,
       isActive: true,
     },
@@ -835,7 +894,13 @@ async function main() {
     { uuid: 'city-id-go-gorontalo', provinceIsoCode: 'ID-GO', name: 'Gorontalo', postalCode: '96111' },
     { uuid: 'city-id-st-palu', provinceIsoCode: 'ID-ST', name: 'Palu', postalCode: '94111' },
     { uuid: 'city-id-sr-mamuju', provinceIsoCode: 'ID-SR', name: 'Mamuju', postalCode: '91511' },
+    { uuid: 'city-id-sr-polman', provinceIsoCode: 'ID-SR', name: 'Polman', postalCode: '91311' },
     { uuid: 'city-id-sn-makassar', provinceIsoCode: 'ID-SN', name: 'Makassar', postalCode: '90111' },
+    { uuid: 'city-id-sn-gowa', provinceIsoCode: 'ID-SN', name: 'Gowa', postalCode: '92111' },
+    { uuid: 'city-id-sn-malino', provinceIsoCode: 'ID-SN', name: 'Malino', postalCode: '92174' },
+    { uuid: 'city-id-sn-takalar', provinceIsoCode: 'ID-SN', name: 'Takalar', postalCode: '92211' },
+    { uuid: 'city-id-sa-airmadidi', provinceIsoCode: 'ID-SA', name: 'Airmadidi', postalCode: '95371' },
+    { uuid: 'city-id-sa-amurang', provinceIsoCode: 'ID-SA', name: 'Amurang', postalCode: '95954' },
     { uuid: 'city-id-sg-kendari', provinceIsoCode: 'ID-SG', name: 'Kendari', postalCode: '93111' },
     { uuid: 'city-id-ma-ambon', provinceIsoCode: 'ID-MA', name: 'Ambon', postalCode: '97111' },
     { uuid: 'city-id-mu-ternate', provinceIsoCode: 'ID-MU', name: 'Ternate', postalCode: '97711' },
@@ -867,6 +932,51 @@ async function main() {
     `;
   }
 
+  const citySlaSeeds = [
+    { cityName: 'Makassar', stdLeadTimeDays: 7, stdReturnDoDays: 1 },
+    { cityName: 'Manado', stdLeadTimeDays: 7, stdReturnDoDays: 12 },
+  ] as const;
+
+  for (const sla of citySlaSeeds) {
+    const city = await prisma.masterDataCity.findFirst({
+      where: { name: sla.cityName, deletedAt: null },
+      select: { uuid: true },
+    });
+
+    if (!city) {
+      continue;
+    }
+
+    const existingSla = await prisma.$queryRaw<{ uuid: string; deleted_at: Date | null }[]>`
+      SELECT uuid, deleted_at
+      FROM public."m1_city_sla"
+      WHERE city_id = ${city.uuid}
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `;
+
+    if (existingSla.length > 0) {
+      await prisma.$executeRaw`
+        UPDATE public."m1_city_sla"
+        SET std_lead_time_days = ${sla.stdLeadTimeDays},
+            std_return_do_days = ${sla.stdReturnDoDays},
+            deleted_at = NULL,
+            deleted_by = NULL,
+            updated_at = CURRENT_TIMESTAMP,
+            updated_by = ${'seed'}
+        WHERE uuid = ${existingSla[0].uuid}
+      `;
+      continue;
+    }
+
+    await prisma.$executeRaw`
+      INSERT INTO public."m1_city_sla" (
+        uuid, city_id, std_lead_time_days, std_return_do_days, created_by, updated_by, deleted_at, deleted_by
+      )
+      VALUES (${`city-sla-${city.uuid}`}, ${city.uuid}, ${sla.stdLeadTimeDays}, ${sla.stdReturnDoDays}, ${'seed'}, ${'seed'}, NULL, NULL)
+    `;
+  }
+
   const assignMenuToRole = async (roleUuid: string, menuUuid: string) => {
     await prisma.roleMenu.upsert({
       where: { roleId_menuId: { roleId: roleUuid, menuId: menuUuid } },
@@ -891,10 +1001,12 @@ async function main() {
   await assignMenuToRole(adminRole.uuid, masterDataItemMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataProvinceMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataCityMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, masterDataCitySlaMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataUomMenu.uuid);
   await assignMenuToRole(adminRole.uuid, masterDataWarehouseMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticTransactionMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticOutboundMenu.uuid);
+  await assignMenuToRole(adminRole.uuid, logisticInboundMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticReportMonitoringDoMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticReportStockBatchMenu.uuid);
   await assignMenuToRole(adminRole.uuid, logisticReportStockMutationMenu.uuid);

@@ -295,8 +295,28 @@ model MasterDataCity {
   province   MasterDataProvince   @relation(fields: [provinceId], references: [uuid])
   warehouses MasterDataWarehouse[]
   deliveryOrders DeliveryOrder[]  @relation("DoDestinationCity")
+  citySlas   MasterDataCitySla[]
 
   @@map("m1_city")
+}
+
+model MasterDataCitySla {
+  id              Int       @id @default(autoincrement())
+  uuid            String    @unique @default(cuid())
+  cityId          String    @map("city_id")
+  stdLeadTimeDays Int       @default(0) @map("std_lead_time_days")
+  stdReturnDoDays Int       @default(0) @map("std_return_do_days")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  createdBy       String?   @map("created_by")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?   @map("updated_by")
+  deletedAt       DateTime? @map("deleted_at")
+  deletedBy       String?   @map("deleted_by")
+
+  city MasterDataCity @relation(fields: [cityId], references: [uuid])
+
+  @@index([cityId])
+  @@map("m1_city_sla")
 }
 
 model MasterDataWarehouse {

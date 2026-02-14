@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Toolbar,
@@ -438,21 +439,20 @@ export default function MasterDataItemPage() {
                   <Label htmlFor="uomId">
                     UOM <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="uomId"
-                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                  <AutocompleteSelect
                     value={form.uomId}
-                    onChange={(e) => setForm((s) => ({ ...s, uomId: e.target.value }))}
+                    onValueChange={(value) => setForm((s) => ({ ...s, uomId: value }))}
+                    options={uoms.map((uom) => ({
+                      value: uom.uuid,
+                      label: `${uom.code} - ${uom.name}`,
+                    }))}
+                    placeholder={uoms.length === 0 ? 'No UOM available' : 'Select UOM'}
+                    searchPlaceholder="Search UOM..."
+                    emptyText="No UOM found."
                     required
                     disabled={loadingUom || uoms.length === 0}
-                  >
-                    {uoms.length === 0 ? <option value="">No UOM available</option> : null}
-                    {uoms.map((uom) => (
-                      <option key={uom.uuid} value={uom.uuid}>
-                        {uom.code} - {uom.name}
-                      </option>
-                    ))}
-                  </select>
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
                   <p className="mt-1 text-xs text-muted-foreground">
                     Kelola UOM di halaman <code>/app/master/uom</code>.
                   </p>
@@ -461,16 +461,19 @@ export default function MasterDataItemPage() {
                   <Label htmlFor="isActive">
                     Is Active <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="isActive"
-                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                  <AutocompleteSelect
                     value={form.isActive ? 'true' : 'false'}
-                    onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.value === 'true' }))}
+                    onValueChange={(value) => setForm((s) => ({ ...s, isActive: value === 'true' }))}
+                    options={[
+                      { value: 'true', label: 'Active' },
+                      { value: 'false', label: 'Inactive' },
+                    ]}
+                    placeholder="Select status"
+                    searchPlaceholder="Search status..."
+                    emptyText="No status found."
                     required
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
                 </div>
               </div>
 

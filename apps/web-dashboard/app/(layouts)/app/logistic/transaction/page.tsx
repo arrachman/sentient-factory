@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,6 +48,13 @@ type ItemOption = {
     code: string;
     name: string;
   } | null;
+};
+
+type DivisionOption = {
+  uuid: string;
+  code: string;
+  name: string;
+  isActive?: boolean;
 };
 
 type DeliveryOrderDetailForm = {
@@ -200,6 +208,7 @@ export default function LogisticTransactionDoPage() {
   const [customers, setCustomers] = useState<ContactOption[]>([]);
   const [cities, setCities] = useState<CityOption[]>([]);
   const [itemOptions, setItemOptions] = useState<ItemOption[]>([]);
+  const [divisions, setDivisions] = useState<DivisionOption[]>([]);
 
   const [form, setForm] = useState<DeliveryOrderForm>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
@@ -238,6 +247,14 @@ export default function LogisticTransactionDoPage() {
       totalKg,
     };
   }, [form.details]);
+
+  const buOptions = useMemo(() => {
+    const existing = divisions.some((division) => division.code === form.bu);
+    if (!form.bu || existing) {
+      return divisions;
+    }
+    return [{ uuid: 'current-bu', code: form.bu, name: form.bu }, ...divisions];
+  }, [divisions, form.bu]);
 
   const fetchList = async (targetPage = page) => {
     const safePage = typeof targetPage === 'number' && Number.isInteger(targetPage) && targetPage > 0 ? targetPage : 1;
@@ -280,16 +297,18 @@ export default function LogisticTransactionDoPage() {
     try {
       const headers = token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined;
 
-      const [customerRes, cityRes, itemRes] = await Promise.all([
+      const [customerRes, cityRes, itemRes, divisionRes] = await Promise.all([
         fetch('/api/master-data-contacts?page=1&limit=100&type=customer', { cache: 'no-store', headers }),
         fetch('/api/master-data-cities?page=1&limit=100', { cache: 'no-store', headers }),
         fetch('/api/master-data-items?page=1&limit=100&isActive=true', { cache: 'no-store', headers }),
+        fetch('/api/master-data-divisions?page=1&limit=100', { cache: 'no-store', headers }),
       ]);
 
-      const [customerPayload, cityPayload, itemPayload] = await Promise.all([
+      const [customerPayload, cityPayload, itemPayload, divisionPayload] = await Promise.all([
         customerRes.json().catch(() => null),
         cityRes.json().catch(() => null),
         itemRes.json().catch(() => null),
+        divisionRes.json().catch(() => null),
       ]);
 
       if (!customerRes.ok || !customerPayload?.success) {
@@ -301,19 +320,25 @@ export default function LogisticTransactionDoPage() {
       if (!itemRes.ok || !itemPayload?.success) {
         throw new Error(itemPayload?.message || 'Failed to load item options');
       }
+      if (!divisionRes.ok || !divisionPayload?.success) {
+        throw new Error(divisionPayload?.message || 'Failed to load division options');
+      }
 
       const nextCustomers: ContactOption[] = Array.isArray(customerPayload.data) ? customerPayload.data : [];
       const nextCities: CityOption[] = Array.isArray(cityPayload.data) ? cityPayload.data : [];
       const nextItems: ItemOption[] = Array.isArray(itemPayload.data) ? itemPayload.data : [];
+      const nextDivisions: DivisionOption[] = Array.isArray(divisionPayload.data) ? divisionPayload.data : [];
 
       setCustomers(nextCustomers);
       setCities(nextCities);
       setItemOptions(nextItems);
+      setDivisions(nextDivisions);
 
       setForm((state) => ({
         ...state,
         customerId: state.customerId || nextCustomers[0]?.uuid || '',
         destinationCityId: state.destinationCityId || nextCities[0]?.uuid || '',
+        bu: state.bu || nextDivisions[0]?.code || '',
         details: state.details.map((row, index) => ({
           ...row,
           itemId: row.itemId || (index === 0 ? nextItems[0]?.uuid || '' : row.itemId),
@@ -340,6 +365,7 @@ export default function LogisticTransactionDoPage() {
       doReceivedDate: new Date().toISOString().slice(0, 10),
       customerId: customers[0]?.uuid || '',
       destinationCityId: cities[0]?.uuid || '',
+      bu: divisions[0]?.code || '',
       details: [{ ...initialDetail(), itemId: itemOptions[0]?.uuid || '' }],
     });
     setShowForm(true);
@@ -546,18 +572,17 @@ export default function LogisticTransactionDoPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <select
-                className="h-10 rounded-md border bg-background px-3 text-sm"
+              <AutocompleteSelect
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All Status</option>
-                {STATUS_OPTIONS.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(value) => setStatusFilter(value)}
+                options={[
+                  { value: '', label: 'All Status' },
+                  ...STATUS_OPTIONS.map((status) => ({ value: status, label: status })),
+                ]}
+                placeholder="All Status"
+                searchPlaceholder="Search status..."
+                emptyText="No status found."
+              />
               <Button variant="outline" onClick={() => fetchList(1)} disabled={loading}>
                 <RefreshCw />
                 Search
@@ -671,10 +696,16 @@ export default function LogisticTransactionDoPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>BU (Bagian Usaha)</Label>
-                      <Input
+                      <AutocompleteSelect
                         value={form.bu}
-                        onChange={(e) => setForm((state) => ({ ...state, bu: e.target.value }))}
-                        placeholder="Mis. EXPORT"
+                        onValueChange={(value) => setForm((state) => ({ ...state, bu: value }))}
+                        options={buOptions.map((division) => ({
+                          value: division.code,
+                          label: `${division.code} - ${division.name}`,
+                        }))}
+                        placeholder="Select BU"
+                        searchPlaceholder="Search BU..."
+                        emptyText="No BU found."
                       />
                     </div>
                     <div className="space-y-2">
@@ -697,34 +728,33 @@ export default function LogisticTransactionDoPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Tujuan / Customer</Label>
-                      <select
-                        className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                      <AutocompleteSelect
                         value={form.customerId}
-                        onChange={(e) => setForm((state) => ({ ...state, customerId: e.target.value }))}
+                        onValueChange={(value) => setForm((state) => ({ ...state, customerId: value }))}
+                        options={customers.map((customer) => ({
+                          value: customer.uuid,
+                          label: customer.name,
+                          keywords: customer.code,
+                        }))}
+                        placeholder="Select customer"
+                        searchPlaceholder="Search customer..."
+                        emptyText="No customer found."
                         required
-                      >
-                        <option value="">Select customer</option>
-                        {customers.map((customer) => (
-                          <option key={customer.uuid} value={customer.uuid}>
-                            {customer.code} - {customer.name}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>Kota Tujuan</Label>
-                      <select
-                        className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                      <AutocompleteSelect
                         value={form.destinationCityId}
-                        onChange={(e) => setForm((state) => ({ ...state, destinationCityId: e.target.value }))}
-                      >
-                        <option value="">Select city</option>
-                        {cities.map((city) => (
-                          <option key={city.uuid} value={city.uuid}>
-                            {city.name} ({city.postalCode})
-                          </option>
-                        ))}
-                      </select>
+                        onValueChange={(value) => setForm((state) => ({ ...state, destinationCityId: value }))}
+                        options={cities.map((city) => ({
+                          value: city.uuid,
+                          label: `${city.name} (${city.postalCode})`,
+                        }))}
+                        placeholder="Select city"
+                        searchPlaceholder="Search city..."
+                        emptyText="No city found."
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label>STD Lead Time (Hari)</Label>
@@ -778,17 +808,14 @@ export default function LogisticTransactionDoPage() {
                     </div>
                     <div className="space-y-2">
                       <Label>Status</Label>
-                      <select
-                        className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+                      <AutocompleteSelect
                         value={form.status}
-                        onChange={(e) => setForm((state) => ({ ...state, status: e.target.value }))}
-                      >
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
+                        onValueChange={(value) => setForm((state) => ({ ...state, status: value }))}
+                        options={STATUS_OPTIONS.map((status) => ({ value: status, label: status }))}
+                        placeholder="Select status"
+                        searchPlaceholder="Search status..."
+                        emptyText="No status found."
+                      />
                     </div>
                   </div>
                   <div className="mt-4 space-y-2">
@@ -828,20 +855,19 @@ export default function LogisticTransactionDoPage() {
                         <TableRow key={`${index}-${detail.itemId}-${detail.batchNumber}`}>
                           <TableCell>{index + 1}</TableCell>
                           <TableCell>
-                            <select
-                              className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                            <AutocompleteSelect
                               value={detail.itemId}
-                              onChange={(e) => setDetailField(index, 'itemId', e.target.value)}
+                              onValueChange={(value) => setDetailField(index, 'itemId', value)}
+                              options={itemOptions.map((item) => ({
+                                value: item.uuid,
+                                label: `${item.code} - ${item.name}${item.uom?.code ? ` (UOM: ${item.uom.code})` : ''}`,
+                              }))}
+                              placeholder="Select item"
+                              searchPlaceholder="Search item..."
+                              emptyText="No item found."
                               required
-                            >
-                              <option value="">Select item</option>
-                              {itemOptions.map((item) => (
-                                <option key={item.uuid} value={item.uuid}>
-                                  {item.code} - {item.name}{' '}
-                                  {item.uom?.code ? `(UOM: ${item.uom.code})` : ''}
-                                </option>
-                              ))}
-                            </select>
+                              triggerClassName="h-9 px-2 text-sm"
+                            />
                           </TableCell>
                           <TableCell>
                             <Input

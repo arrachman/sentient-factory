@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -340,16 +341,19 @@ export default function MasterDataDivisionPage() {
                   <Label htmlFor="isActive">
                     Status <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="isActive"
-                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                  <AutocompleteSelect
                     value={form.isActive ? 'true' : 'false'}
-                    onChange={(e) => setForm((s) => ({ ...s, isActive: e.target.value === 'true' }))}
+                    onValueChange={(value) => setForm((s) => ({ ...s, isActive: value === 'true' }))}
+                    options={[
+                      { value: 'true', label: 'Active' },
+                      { value: 'false', label: 'Inactive' },
+                    ]}
+                    placeholder="Select status"
+                    searchPlaceholder="Search status..."
+                    emptyText="No status found."
                     required
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
                 </div>
               </div>
 

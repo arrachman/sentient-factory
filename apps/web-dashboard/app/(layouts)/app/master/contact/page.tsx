@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -26,6 +27,16 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 
 type ContactType = 'customer' | 'supplier' | 'company';
+
+type MasterDataCity = {
+  uuid: string;
+  name: string;
+  postalCode: string;
+  province?: {
+    uuid: string;
+    name: string;
+  };
+};
 
 type MasterDataContact = {
   uuid: string;
@@ -96,11 +107,13 @@ function slugifyCode(value: string) {
 
 export default function MasterDataContactPage() {
   const [items, setItems] = useState<MasterDataContact[]>([]);
+  const [cities, setCities] = useState<MasterDataCity[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingCity, setLoadingCity] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
@@ -109,6 +122,21 @@ export default function MasterDataContactPage() {
   const [totalItems, setTotalItems] = useState(0);
 
   const token = useMemo(() => getTokenFromCookie(), []);
+  const cityOptions = useMemo(
+    () =>
+      cities.map((city) => ({
+        value: city.name,
+        label: `${city.name}${city.province?.name ? ` - ${city.province.name}` : ''}${city.postalCode ? ` (${city.postalCode})` : ''}`,
+        keywords: `${city.name} ${city.province?.name ?? ''} ${city.postalCode ?? ''}`.trim(),
+      })),
+    [cities],
+  );
+  const cityAutocompleteOptions = useMemo(() => {
+    if (!form.city || cityOptions.some((option) => option.value === form.city)) {
+      return cityOptions;
+    }
+    return [{ value: form.city, label: form.city }, ...cityOptions];
+  }, [cityOptions, form.city]);
 
   const fetchList = async (targetPage = page) => {
     const safePage =
@@ -144,8 +172,30 @@ export default function MasterDataContactPage() {
     }
   };
 
+  const fetchCityOptions = async () => {
+    setLoadingCity(true);
+    setError('');
+    try {
+      const query = new URLSearchParams({ page: '1', limit: '100' });
+      const response = await fetch(`/api/master-data-cities?${query.toString()}`, {
+        cache: 'no-store',
+        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || 'Failed to load city data');
+      }
+      setCities(Array.isArray(payload.data) ? payload.data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load city data');
+    } finally {
+      setLoadingCity(false);
+    }
+  };
+
   useEffect(() => {
     fetchList(1);
+    fetchCityOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -405,17 +455,20 @@ export default function MasterDataContactPage() {
                 <Label htmlFor="type">
                   Type <span className="text-destructive">*</span>
                 </Label>
-                <select
-                  id="type"
-                  className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                <AutocompleteSelect
                   value={form.type}
-                  onChange={(e) => setForm((s) => ({ ...s, type: e.target.value as ContactType }))}
+                  onValueChange={(value) => setForm((s) => ({ ...s, type: value as ContactType }))}
+                  options={[
+                    { value: 'customer', label: 'Customer' },
+                    { value: 'supplier', label: 'Supplier' },
+                    { value: 'company', label: 'Company' },
+                  ]}
+                  placeholder="Select type"
+                  searchPlaceholder="Search type..."
+                  emptyText="No type found."
                   required
-                >
-                  <option value="customer">Customer</option>
-                  <option value="supplier">Supplier</option>
-                  <option value="company">Company</option>
-                </select>
+                  triggerClassName="h-8.5 text-[0.8125rem]"
+                />
               </div>
               <div>
                 <Label htmlFor="contactEmail">Email</Label>
@@ -435,6 +488,27 @@ export default function MasterDataContactPage() {
                   id="contactPhone"
                   value={form.contactPhone}
                   onChange={(e) => setForm((s) => ({ ...s, contactPhone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label htmlFor="city">City</Label>
+                <AutocompleteSelect
+                  value={form.city}
+                  onValueChange={(value) => {
+                    const selectedCity = cities.find((city) => city.name === value);
+                    setForm((s) => ({
+                      ...s,
+                      city: value,
+                      province: selectedCity?.province?.name ?? s.province,
+                      zipCode: selectedCity?.postalCode ?? s.zipCode,
+                    }));
+                  }}
+                  options={cityAutocompleteOptions}
+                  placeholder={loadingCity ? 'Loading city...' : 'Select city'}
+                  searchPlaceholder="Search city..."
+                  emptyText="No city found."
+                  disabled={loadingCity}
+                  triggerClassName="h-8.5 text-[0.8125rem]"
                 />
               </div>
             </div>
@@ -466,14 +540,6 @@ export default function MasterDataContactPage() {
                         id="street"
                         value={form.street}
                         onChange={(e) => setForm((s) => ({ ...s, street: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        value={form.city}
-                        onChange={(e) => setForm((s) => ({ ...s, city: e.target.value }))}
                       />
                     </div>
                     <div>

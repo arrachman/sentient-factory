@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   Toolbar,
@@ -372,21 +373,21 @@ export default function MasterDataWarehousePage() {
                   <Label htmlFor="cityId">
                     City <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="cityId"
-                    className="h-8.5 w-full rounded-md border border-input bg-background px-3 text-[0.8125rem]"
+                  <AutocompleteSelect
                     value={form.cityId}
-                    onChange={(e) => setForm((s) => ({ ...s, cityId: e.target.value }))}
+                    onValueChange={(value) => setForm((s) => ({ ...s, cityId: value }))}
+                    options={cities.map((city) => ({
+                      value: city.uuid,
+                      label: `${city.name} (${city.postalCode})`,
+                      keywords: city.province ? `${city.province.name} ${city.province.isoCode}` : undefined,
+                    }))}
+                    placeholder={cities.length === 0 ? 'No city available' : 'Select city'}
+                    searchPlaceholder="Search city..."
+                    emptyText="No city found."
                     required
                     disabled={loadingCity || cities.length === 0}
-                  >
-                    {cities.length === 0 ? <option value="">No city available</option> : null}
-                    {cities.map((city) => (
-                      <option key={city.uuid} value={city.uuid}>
-                        {city.name} ({city.postalCode})
-                      </option>
-                    ))}
-                  </select>
+                    triggerClassName="h-8.5 text-[0.8125rem]"
+                  />
                 </div>
                 <div>
                   <Label htmlFor="locationName">Location Name</Label>
