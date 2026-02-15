@@ -64,6 +64,8 @@ export class InboundsService {
         });
       }
 
+      await this.syncInboundInventoryLedger(tx, header.uuid, actorId);
+
       return header;
     });
 
@@ -214,7 +216,7 @@ export class InboundsService {
 
     const detailsProvided = Array.isArray(dto.details);
     let detailPayload: NormalizedInboundDetail[] = [];
-    let itemMap: Map<string, { code: string; name: string }> = new Map();
+    let itemMap: Map<string, { code: string; name: string; uomId: string }> = new Map();
 
     if (detailsProvided) {
       detailPayload = this.normalizeAndValidateDetails(dto.details as CreateInboundDetailDto[]);
@@ -279,6 +281,8 @@ export class InboundsService {
           });
         }
       }
+
+      await this.syncInboundInventoryLedger(tx, uuid, actorId);
     });
 
     return this.findOne(uuid);
@@ -293,8 +297,8 @@ export class InboundsService {
       throw new NotFoundException('Inbound not found');
     }
 
-    await this.prisma.$transaction([
-      this.prisma.inbound.update({
+    await this.prisma.$transaction(async (tx) => {
+      await tx.inbound.update({
         where: { uuid },
         data: {
           deletedAt: new Date(),
@@ -302,16 +306,16 @@ export class InboundsService {
           status: 'CANCELLED',
           updatedBy: actorId ?? null,
         },
-      }),
-      this.prisma.inboundDetail.updateMany({
+      });
+      await tx.inboundDetail.updateMany({
         where: { inboundId: uuid, deletedAt: null },
         data: {
           deletedAt: new Date(),
           deletedBy: actorId ?? null,
           updatedBy: actorId ?? null,
         },
-      }),
-      this.prisma.inboundDetailBatch.updateMany({
+      });
+      await tx.inboundDetailBatch.updateMany({
         where: {
           inboundDetail: { inboundId: uuid },
           deletedAt: null,
@@ -321,8 +325,10 @@ export class InboundsService {
           deletedBy: actorId ?? null,
           updatedBy: actorId ?? null,
         },
-      }),
-    ]);
+      });
+
+      await this.syncInboundInventoryLedger(tx, uuid, actorId);
+    });
 
     return { success: true, message: 'Inbound deleted' };
   }
@@ -517,6 +523,7 @@ export class InboundsService {
         uuid: true,
         code: true,
         name: true,
+        uomId: true,
       },
     });
 
@@ -525,6 +532,118 @@ export class InboundsService {
     }
 
     return new Map(items.map((item) => [item.uuid, item]));
+  }
+
+  private async syncInboundInventoryLedger(
+    tx: Prisma.TransactionClient,
+    inboundUuid: string,
+    actorId?: string,
+  ) {
+    const now = new Date();
+    await tx.inventoryLedger.updateMany({
+      where: {
+        referenceDocType: 'INBOUND',
+        referenceDocId: inboundUuid,
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: now,
+        deletedBy: actorId ?? null,
+        updatedBy: actorId ?? null,
+      },
+    });
+
+    const inbound = await tx.inbound.findFirst({
+      where: { uuid: inboundUuid },
+      select: {
+        uuid: true,
+        transactionNo: true,
+        transactionDate: true,
+        warehouseId: true,
+        status: true,
+        deletedAt: true,
+        details: {
+          where: { deletedAt: null },
+          orderBy: [{ lineNo: 'asc' }],
+          select: {
+            itemId: true,
+            item: {
+              select: {
+                uomId: true,
+              },
+            },
+            batches: {
+              where: { deletedAt: null },
+              orderBy: [{ lineNo: 'asc' }],
+              select: {
+                batchIn: true,
+                qty: true,
+                expiredDate: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!inbound || inbound.deletedAt || inbound.status !== 'POSTED') {
+      return;
+    }
+
+    for (const detail of inbound.details) {
+      for (const batch of detail.batches) {
+        const batchNumber = String(batch.batchIn ?? '').trim();
+        if (!batchNumber) {
+          continue;
+        }
+
+        const inventoryBatch = await tx.inventoryBatch.upsert({
+          where: {
+            itemId_batchNumber: {
+              itemId: detail.itemId,
+              batchNumber,
+            },
+          },
+          update: {
+            expiryDate: batch.expiredDate ?? undefined,
+            isActive: true,
+            deletedAt: null,
+            deletedBy: null,
+            updatedBy: actorId ?? null,
+          },
+          create: {
+            itemId: detail.itemId,
+            batchNumber,
+            expiryDate: batch.expiredDate ?? null,
+            isActive: true,
+            createdBy: actorId ?? null,
+            updatedBy: actorId ?? null,
+          },
+          select: { uuid: true },
+        });
+
+        await tx.inventoryLedger.create({
+          data: {
+            transactionDate: inbound.transactionDate,
+            itemId: detail.itemId,
+            warehouseId: inbound.warehouseId,
+            batchId: inventoryBatch.uuid,
+            transactionType: 'INBOUND',
+            referenceDocType: 'INBOUND',
+            referenceDocId: inbound.uuid,
+            referenceNumber: inbound.transactionNo,
+            quantityPcs: batch.qty,
+            quantityKg: 0,
+            uomId: detail.item.uomId,
+            unitCost: null,
+            totalValue: 0,
+            userId: actorId ?? null,
+            createdBy: actorId ?? null,
+            updatedBy: actorId ?? null,
+          },
+        });
+      }
+    }
   }
 }
 
