@@ -38,6 +38,13 @@ export class DeliveryOrdersController {
     return this.service.findAll(query);
   }
 
+  @Get('batch-options')
+  @ApiOperation({ summary: 'Get batch options by item for delivery order form' })
+  @ApiResponse({ status: 200, description: 'Batch options' })
+  getBatchOptions(@Query('itemId') itemId: string) {
+    return this.service.getBatchOptions(itemId);
+  }
+
   @Get(':uuid')
   @ApiOperation({ summary: 'Get one delivery order' })
   @ApiResponse({ status: 200, description: 'Delivery order detail' })

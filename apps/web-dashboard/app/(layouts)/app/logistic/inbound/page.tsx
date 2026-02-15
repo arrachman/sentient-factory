@@ -118,10 +118,23 @@ type InboundDetailApi = {
 
 const STATUS_OPTIONS = ['DRAFT', 'POSTED', 'CANCELLED'] as const;
 
+function toInputDate(value: Date) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getDefaultExpiredDate() {
+  const date = new Date();
+  date.setMonth(date.getMonth() + 1);
+  return toInputDate(date);
+}
+
 const initialBatch = (): InboundBatchForm => ({
   batchIn: '',
   qty: '',
-  expiredDate: '',
+  expiredDate: getDefaultExpiredDate(),
   notes: '',
 });
 
@@ -350,24 +363,19 @@ export default function LogisticInboundPage() {
         mappedWarehouseId && mappedWarehouseId !== 'null' && mappedWarehouseId !== 'undefined'
           ? mappedWarehouseId
           : '';
-
-      if (userId && !resolvedLockedWarehouseId) {
-        throw new Error(
-          'Warehouse user login tidak ditemukan. Hubungi admin untuk mapping warehouse.',
-        );
-      }
+      const nextLockedWarehouseId = resolvedLockedWarehouseId;
 
       setSuppliers(nextSuppliers);
       setWarehouses(nextWarehouses);
       setItemOptions(nextItems);
       setCurrentUserId(userId);
-      setLockedWarehouseId(resolvedLockedWarehouseId);
+      setLockedWarehouseId(nextLockedWarehouseId);
 
       setForm((state) => ({
         ...state,
         supplierId: state.supplierId || nextSuppliers[0]?.uuid || '',
         warehouseId:
-          resolvedLockedWarehouseId ||
+          nextLockedWarehouseId ||
           state.warehouseId ||
           nextWarehouses[0]?.uuid ||
           '',

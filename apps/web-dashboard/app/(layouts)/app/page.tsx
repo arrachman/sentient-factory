@@ -3,13 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, RefreshCw } from 'lucide-react';
-import {
-  Toolbar,
-  ToolbarActions,
-  ToolbarDescription,
-  ToolbarHeading,
-  ToolbarPageTitle,
-} from '@/components/layouts/app/components/toolbar';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,6 +15,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Toolbar,
+  ToolbarActions,
+  ToolbarDescription,
+  ToolbarHeading,
+  ToolbarPageTitle,
+} from '@/components/layouts/app/components/toolbar';
 
 type InboundRow = {
   uuid: string;
@@ -40,7 +40,7 @@ type OutboundRow = {
   uuid: string;
   doNumber: string;
   doDate: string;
-  status: 'DRAFT' | 'SHIPPED' | 'RECEIVED' | 'CLOSED' | 'CANCELLED';
+  status: 'OPEN' | 'DELIVERY' | 'DELIVERED' | 'COMPLETED';
   customer?: {
     name?: string | null;
   } | null;
@@ -126,14 +126,14 @@ function inboundBadgeVariant(status?: InboundRow['status']) {
 }
 
 function outboundBadgeVariant(status?: OutboundRow['status']) {
-  if (status === 'CLOSED' || status === 'RECEIVED') {
+  if (status === 'COMPLETED') {
     return 'success';
   }
-  if (status === 'CANCELLED') {
-    return 'destructive';
-  }
-  if (status === 'SHIPPED') {
+  if (status === 'DELIVERY') {
     return 'info';
+  }
+  if (status === 'DELIVERED') {
+    return 'primary';
   }
   return 'secondary';
 }
@@ -160,11 +160,13 @@ export default function Page() {
   );
   const outboundInProgress = useMemo(
     () =>
-      outboundRows.filter((row) => row.status === 'SHIPPED' || row.status === 'DRAFT').length,
+      outboundRows.filter(
+        (row) => row.status === 'OPEN' || row.status === 'DELIVERY',
+      ).length,
     [outboundRows],
   );
   const outboundClosed = useMemo(
-    () => outboundRows.filter((row) => row.status === 'CLOSED').length,
+    () => outboundRows.filter((row) => row.status === 'COMPLETED').length,
     [outboundRows],
   );
 
@@ -206,17 +208,23 @@ export default function Page() {
       ]);
 
       if (!inboundRes.ok || !inboundPayload?.success) {
-        throw new Error(inboundPayload?.message || 'Failed to load inbound data');
+        throw new Error(
+          inboundPayload?.message || 'Failed to load inbound data',
+        );
       }
       if (!outboundRes.ok || !outboundPayload?.success) {
-        throw new Error(outboundPayload?.message || 'Failed to load outbound data');
+        throw new Error(
+          outboundPayload?.message || 'Failed to load outbound data',
+        );
       }
 
       const inboundData = inboundPayload as ListResponse<InboundRow>;
       const outboundData = outboundPayload as ListResponse<OutboundRow>;
 
       setInboundRows(Array.isArray(inboundData.data) ? inboundData.data : []);
-      setOutboundRows(Array.isArray(outboundData.data) ? outboundData.data : []);
+      setOutboundRows(
+        Array.isArray(outboundData.data) ? outboundData.data : [],
+      );
       setInboundTotal(Number(inboundData.meta?.total ?? 0));
       setOutboundTotal(Number(outboundData.meta?.total ?? 0));
     } catch (err) {
@@ -237,7 +245,8 @@ export default function Page() {
         <ToolbarHeading>
           <ToolbarPageTitle>Logistic Dashboard</ToolbarPageTitle>
           <ToolbarDescription>
-            Ringkasan aktivitas inbound dan outbound ({PERIOD_OPTIONS.find((x) => x.value === period)?.label}).
+            Ringkasan aktivitas inbound dan outbound (
+            {PERIOD_OPTIONS.find((x) => x.value === period)?.label}).
           </ToolbarDescription>
         </ToolbarHeading>
         <ToolbarActions>
@@ -251,7 +260,11 @@ export default function Page() {
               emptyText="Periode tidak ditemukan."
             />
           </div>
-          <Button variant="outline" onClick={() => fetchDashboardData(period)} disabled={loading}>
+          <Button
+            variant="outline"
+            onClick={() => fetchDashboardData(period)}
+            disabled={loading}
+          >
             <RefreshCw />
             Refresh
           </Button>
@@ -277,7 +290,9 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{inboundTotal}</p>
-            <p className="text-xs text-muted-foreground">Total dokumen inbound</p>
+            <p className="text-xs text-muted-foreground">
+              Total dokumen inbound
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -286,7 +301,9 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{outboundTotal}</p>
-            <p className="text-xs text-muted-foreground">Total dokumen outbound</p>
+            <p className="text-xs text-muted-foreground">
+              Total dokumen outbound
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -337,13 +354,19 @@ export default function Page() {
                 ) : (
                   inboundRows.map((row) => (
                     <TableRow key={row.uuid}>
-                      <TableCell className="font-medium">{row.transactionNo || '-'}</TableCell>
+                      <TableCell className="font-medium">
+                        {row.transactionNo || '-'}
+                      </TableCell>
                       <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                       <TableCell>{row.supplier?.name || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={inboundBadgeVariant(row.status)}>{row.status || '-'}</Badge>
+                        <Badge variant={inboundBadgeVariant(row.status)}>
+                          {row.status || '-'}
+                        </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{row._count?.details ?? 0}</TableCell>
+                      <TableCell className="text-right">
+                        {row._count?.details ?? 0}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -379,13 +402,19 @@ export default function Page() {
                 ) : (
                   outboundRows.map((row) => (
                     <TableRow key={row.uuid}>
-                      <TableCell className="font-medium">{row.doNumber || '-'}</TableCell>
+                      <TableCell className="font-medium">
+                        {row.doNumber || '-'}
+                      </TableCell>
                       <TableCell>{fmtDate(row.doDate)}</TableCell>
                       <TableCell>{row.customer?.name || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={outboundBadgeVariant(row.status)}>{row.status || '-'}</Badge>
+                        <Badge variant={outboundBadgeVariant(row.status)}>
+                          {row.status || '-'}
+                        </Badge>
                       </TableCell>
-                      <TableCell className="text-right">{row.totalKg ?? 0}</TableCell>
+                      <TableCell className="text-right">
+                        {row.totalKg ?? 0}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

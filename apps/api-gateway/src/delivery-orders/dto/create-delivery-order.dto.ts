@@ -6,6 +6,7 @@ import {
   IsDateString,
   IsIn,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
@@ -14,11 +15,12 @@ import {
 } from 'class-validator';
 import { CreateDeliveryOrderDetailDto } from './create-delivery-order-detail.dto';
 
-const DELIVERY_ORDER_STATUSES = ['DRAFT', 'SHIPPED', 'RECEIVED', 'CLOSED', 'CANCELLED'] as const;
+const DELIVERY_ORDER_STATUSES = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
 
 export class CreateDeliveryOrderDto {
   @ApiProperty({ example: 'DO-2026-0001' })
   @IsString()
+  @IsNotEmpty()
   @MaxLength(100)
   doNumber!: string;
 
@@ -87,7 +89,7 @@ export class CreateDeliveryOrderDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({ enum: DELIVERY_ORDER_STATUSES, default: 'DRAFT' })
+  @ApiPropertyOptional({ enum: DELIVERY_ORDER_STATUSES, default: 'OPEN' })
   @IsOptional()
   @IsString()
   @IsIn(DELIVERY_ORDER_STATUSES)

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { throwDuplicate } from '../common/errors/duplicate.util';
+import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeliveryOrderDetailDto } from './dto/create-delivery-order-detail.dto';
 import { CreateDeliveryOrderDto } from './dto/create-delivery-order.dto';
@@ -12,60 +12,79 @@ export class DeliveryOrdersService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateDeliveryOrderDto, actorId?: string) {
-    await this.ensureDoNumberAvailable(dto.doNumber);
+    const doNumber = this.normalizeRequiredDoNumber(dto.doNumber);
+    await this.ensureDoNumberAvailable(doNumber);
 
-    await this.ensureCustomerExists(dto.customerId);
-    if (dto.destinationCityId) {
-      await this.ensureCityExists(dto.destinationCityId);
+    const customer = await this.ensureCustomerExists(dto.customerId);
+    const defaults = await this.resolveDefaultsFromCustomerCity(customer.city ?? undefined);
+
+    const resolvedDestinationCityId =
+      dto.destinationCityId?.trim() || defaults.destinationCityId || null;
+    if (resolvedDestinationCityId) {
+      await this.ensureCityExists(resolvedDestinationCityId);
     }
+
+    const resolvedSla = resolvedDestinationCityId
+      ? await this.findCitySlaByCityId(resolvedDestinationCityId)
+      : null;
+    const resolvedStdLeadTimeDays = dto.stdLeadTimeDays ?? resolvedSla?.stdLeadTimeDays ?? 0;
+    const resolvedStdReturnDoDays = dto.stdReturnDoDays ?? resolvedSla?.stdReturnDoDays ?? 0;
 
     const detailPayload = this.normalizeAndValidateDetails(dto.details);
     const itemMap = await this.getActiveItems(detailPayload.map((detail) => detail.itemId));
 
-    const created = await this.prisma.$transaction(async (tx) => {
-      const header = await tx.deliveryOrder.create({
-        data: {
-          doNumber: dto.doNumber,
-          doDate: new Date(dto.doDate),
-          doReceivedDate: new Date(dto.doReceivedDate),
-          customerId: dto.customerId,
-          destinationCityId: dto.destinationCityId?.trim() || null,
-          stdLeadTimeDays: dto.stdLeadTimeDays ?? 0,
-          stdReturnDoDays: dto.stdReturnDoDays ?? 0,
-          shippingDate: dto.shippingDate ? new Date(dto.shippingDate) : null,
-          actualReceivedDate: dto.actualReceivedDate ? new Date(dto.actualReceivedDate) : null,
-          receivedBy: dto.receivedBy ?? null,
-          doScanReturnDate: dto.doScanReturnDate ? new Date(dto.doScanReturnDate) : null,
-          bu: dto.bu ?? null,
-          notes: dto.notes ?? null,
-          status: dto.status ?? 'DRAFT',
-          createdBy: actorId ?? null,
-          updatedBy: actorId ?? null,
-        },
-      });
-
-      await tx.deliveryOrderDetail.createMany({
-        data: detailPayload.map((detail, index) => {
-          const item = itemMap.get(detail.itemId)!;
-          return {
-            doId: header.uuid,
-            lineNo: index + 1,
-            itemId: detail.itemId,
-            batchNumber: detail.batchNumber,
-            qtyPcs: detail.qtyPcs ?? 0,
-            qtyKg: detail.qtyKg,
-            itemCodeSnapshot: item.code,
-            itemNameSnapshot: item.name,
-            uomCodeSnapshot: item.uom.code,
-            notes: detail.notes ?? null,
+    let created;
+    try {
+      created = await this.prisma.$transaction(async (tx) => {
+        const header = await tx.deliveryOrder.create({
+          data: {
+            doNumber,
+            doDate: new Date(dto.doDate),
+            doReceivedDate: new Date(dto.doReceivedDate),
+            customerId: dto.customerId,
+            destinationCityId: resolvedDestinationCityId,
+            stdLeadTimeDays: resolvedStdLeadTimeDays,
+            stdReturnDoDays: resolvedStdReturnDoDays,
+            shippingDate: dto.shippingDate ? new Date(dto.shippingDate) : null,
+            actualReceivedDate: dto.actualReceivedDate ? new Date(dto.actualReceivedDate) : null,
+            receivedBy: dto.receivedBy ?? null,
+            doScanReturnDate: dto.doScanReturnDate ? new Date(dto.doScanReturnDate) : null,
+            bu: dto.bu ?? null,
+            notes: dto.notes ?? null,
+            status: dto.status ?? 'OPEN',
             createdBy: actorId ?? null,
             updatedBy: actorId ?? null,
-          };
-        }),
-      });
+          },
+        });
 
-      return header;
-    });
+        await tx.deliveryOrderDetail.createMany({
+          data: detailPayload.map((detail, index) => {
+            const item = itemMap.get(detail.itemId)!;
+            return {
+              doId: header.uuid,
+              lineNo: index + 1,
+              itemId: detail.itemId,
+              batchNumber: detail.batchNumber,
+              qtyPcs: detail.qtyPcs ?? 0,
+              qtyKg: detail.qtyKg,
+              itemCodeSnapshot: item.code,
+              itemNameSnapshot: item.name,
+              uomCodeSnapshot: item.uom.code,
+              notes: detail.notes ?? null,
+              createdBy: actorId ?? null,
+              updatedBy: actorId ?? null,
+            };
+          }),
+        });
+
+        return header;
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['do_number', 'doNumber', 'm2_do_do_number_key'])) {
+        throwDuplicate({ fieldLabel: 'DO number', value: doNumber });
+      }
+      throw error;
+    }
 
     return this.findOne(created.uuid);
   }
@@ -129,6 +148,42 @@ export class DeliveryOrdersService {
     };
   }
 
+  async getBatchOptions(itemId?: string) {
+    const normalizedItemId = String(itemId ?? '').trim();
+    if (!normalizedItemId) {
+      throw new BadRequestException('itemId is required');
+    }
+
+    const rows = await this.prisma.inboundDetailBatch.groupBy({
+      by: ['batchIn'],
+      where: {
+        deletedAt: null,
+        inboundDetail: {
+          deletedAt: null,
+          itemId: normalizedItemId,
+          inbound: {
+            deletedAt: null,
+            status: 'POSTED',
+          },
+        },
+      },
+      _sum: {
+        qty: true,
+      },
+      orderBy: {
+        batchIn: 'asc',
+      },
+    });
+
+    return {
+      success: true,
+      data: rows.map((row) => ({
+        batchNumber: row.batchIn,
+        qtyPcs: Number(row._sum.qty ?? 0),
+      })),
+    };
+  }
+
   async findOne(uuid: string) {
     const item = await this.prisma.deliveryOrder.findFirst({
       where: { uuid, deletedAt: null },
@@ -176,8 +231,12 @@ export class DeliveryOrdersService {
       throw new NotFoundException('Delivery order not found');
     }
 
-    if (dto.doNumber && dto.doNumber !== existing.doNumber) {
-      await this.ensureDoNumberAvailable(dto.doNumber, uuid);
+    if (typeof dto.doNumber !== 'undefined') {
+      const normalizedDoNumber = this.normalizeRequiredDoNumber(dto.doNumber);
+      dto.doNumber = normalizedDoNumber;
+      if (normalizedDoNumber !== existing.doNumber) {
+        await this.ensureDoNumberAvailable(normalizedDoNumber, uuid);
+      }
     }
 
     if (dto.customerId) {
@@ -197,57 +256,73 @@ export class DeliveryOrdersService {
     let itemMap: Map<string, { code: string; name: string; uom: { code: string } }> = new Map();
 
     if (detailsProvided) {
-      detailPayload = this.normalizeAndValidateDetails(dto.details as CreateDeliveryOrderDetailDto[]);
+      detailPayload = this.normalizeAndValidateDetails(
+        dto.details as CreateDeliveryOrderDetailDto[],
+      );
       itemMap = await this.getActiveItems(detailPayload.map((detail) => detail.itemId));
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.deliveryOrder.update({
-        where: { uuid },
-        data: {
-          doNumber: dto.doNumber,
-          doDate: dto.doDate ? new Date(dto.doDate) : undefined,
-          doReceivedDate: dto.doReceivedDate ? new Date(dto.doReceivedDate) : undefined,
-          customerId: dto.customerId,
-          destinationCityId:
-            typeof dto.destinationCityId !== 'undefined' ? dto.destinationCityId || null : undefined,
-          stdLeadTimeDays: dto.stdLeadTimeDays,
-          stdReturnDoDays: dto.stdReturnDoDays,
-          shippingDate: dto.shippingDate ? new Date(dto.shippingDate) : undefined,
-          actualReceivedDate: dto.actualReceivedDate ? new Date(dto.actualReceivedDate) : undefined,
-          receivedBy: dto.receivedBy,
-          doScanReturnDate: dto.doScanReturnDate ? new Date(dto.doScanReturnDate) : undefined,
-          bu: dto.bu,
-          notes: dto.notes,
-          status: dto.status,
-          updatedBy: actorId ?? null,
-        },
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.deliveryOrder.update({
+          where: { uuid },
+          data: {
+            doNumber: dto.doNumber,
+            doDate: dto.doDate ? new Date(dto.doDate) : undefined,
+            doReceivedDate: dto.doReceivedDate ? new Date(dto.doReceivedDate) : undefined,
+            customerId: dto.customerId,
+            destinationCityId:
+              typeof dto.destinationCityId !== 'undefined'
+                ? dto.destinationCityId || null
+                : undefined,
+            stdLeadTimeDays: dto.stdLeadTimeDays,
+            stdReturnDoDays: dto.stdReturnDoDays,
+            shippingDate: dto.shippingDate ? new Date(dto.shippingDate) : undefined,
+            actualReceivedDate: dto.actualReceivedDate
+              ? new Date(dto.actualReceivedDate)
+              : undefined,
+            receivedBy: dto.receivedBy,
+            doScanReturnDate: dto.doScanReturnDate ? new Date(dto.doScanReturnDate) : undefined,
+            bu: dto.bu,
+            notes: dto.notes,
+            status: dto.status,
+            updatedBy: actorId ?? null,
+          },
+        });
+
+        if (detailsProvided) {
+          await tx.deliveryOrderDetail.deleteMany({ where: { doId: uuid } });
+
+          await tx.deliveryOrderDetail.createMany({
+            data: detailPayload.map((detail, index) => {
+              const item = itemMap.get(detail.itemId)!;
+              return {
+                doId: uuid,
+                lineNo: index + 1,
+                itemId: detail.itemId,
+                batchNumber: detail.batchNumber,
+                qtyPcs: detail.qtyPcs ?? 0,
+                qtyKg: detail.qtyKg,
+                itemCodeSnapshot: item.code,
+                itemNameSnapshot: item.name,
+                uomCodeSnapshot: item.uom.code,
+                notes: detail.notes ?? null,
+                createdBy: actorId ?? null,
+                updatedBy: actorId ?? null,
+              };
+            }),
+          });
+        }
       });
-
-      if (detailsProvided) {
-        await tx.deliveryOrderDetail.deleteMany({ where: { doId: uuid } });
-
-        await tx.deliveryOrderDetail.createMany({
-          data: detailPayload.map((detail, index) => {
-            const item = itemMap.get(detail.itemId)!;
-            return {
-              doId: uuid,
-              lineNo: index + 1,
-              itemId: detail.itemId,
-              batchNumber: detail.batchNumber,
-              qtyPcs: detail.qtyPcs ?? 0,
-              qtyKg: detail.qtyKg,
-              itemCodeSnapshot: item.code,
-              itemNameSnapshot: item.name,
-              uomCodeSnapshot: item.uom.code,
-              notes: detail.notes ?? null,
-              createdBy: actorId ?? null,
-              updatedBy: actorId ?? null,
-            };
-          }),
+    } catch (error) {
+      if (isUniqueViolation(error, ['do_number', 'doNumber', 'm2_do_do_number_key'])) {
+        throwDuplicate({
+          fieldLabel: 'DO number',
+          value: dto.doNumber ?? existing.doNumber,
         });
       }
-    });
+      throw error;
+    }
 
     return this.findOne(uuid);
   }
@@ -267,7 +342,7 @@ export class DeliveryOrdersService {
         data: {
           deletedAt: new Date(),
           deletedBy: actorId ?? null,
-          status: 'CANCELLED',
+          status: 'COMPLETED',
           updatedBy: actorId ?? null,
         },
       }),
@@ -302,6 +377,14 @@ export class DeliveryOrdersService {
     }
   }
 
+  private normalizeRequiredDoNumber(value?: string) {
+    const doNumber = String(value ?? '').trim();
+    if (!doNumber) {
+      throw new BadRequestException('DO number is required');
+    }
+    return doNumber;
+  }
+
   private async ensureCustomerExists(customerId: string) {
     const customer = await this.prisma.masterDataContact.findFirst({
       where: {
@@ -309,12 +392,48 @@ export class DeliveryOrdersService {
         type: 'customer',
         deletedAt: null,
       },
-      select: { uuid: true },
+      select: { uuid: true, city: true },
     });
 
     if (!customer) {
       throw new BadRequestException('Customer not found');
     }
+
+    return customer;
+  }
+
+  private async resolveDefaultsFromCustomerCity(customerCity?: string) {
+    const normalizedCityName = String(customerCity ?? '').trim();
+    if (!normalizedCityName) {
+      return { destinationCityId: null as string | null };
+    }
+
+    const matchedCity = await this.prisma.masterDataCity.findFirst({
+      where: {
+        name: {
+          equals: normalizedCityName,
+          mode: 'insensitive',
+        },
+        deletedAt: null,
+      },
+      select: { uuid: true },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+
+    return { destinationCityId: matchedCity?.uuid ?? null };
+  }
+
+  private async findCitySlaByCityId(cityId: string) {
+    return this.prisma.masterDataCitySla.findFirst({
+      where: {
+        cityId,
+        deletedAt: null,
+      },
+      select: {
+        stdLeadTimeDays: true,
+        stdReturnDoDays: true,
+      },
+    });
   }
 
   private async ensureCityExists(cityId: string) {
@@ -349,7 +468,9 @@ export class DeliveryOrdersService {
 
       const compositeKey = `${itemId}::${batchNumber.toLowerCase()}`;
       if (seen.has(compositeKey)) {
-        throw new BadRequestException(`Duplicate item and batch combination: ${itemId} - ${batchNumber}`);
+        throw new BadRequestException(
+          `Duplicate item and batch combination: ${itemId} - ${batchNumber}`,
+        );
       }
       seen.add(compositeKey);
 

@@ -68,7 +68,7 @@ services:
     ports:
       - "${WEB_DASHBOARD_PORT}:${WEB_DASHBOARD_PORT}"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL}
       CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING}
@@ -78,7 +78,7 @@ services:
       - web_dashboard_next_cache:/app/.next
     depends_on:
       - api-gateway
-    command: sh -c "npm install --include=dev && npm run build && npm run start -- -p ${WEB_DASHBOARD_PORT}"
+    command: sh -c "npm install --include=dev && npm run dev -- --webpack -H 0.0.0.0 -p ${WEB_DASHBOARD_PORT}"
 
   docs:
     image: node:20-alpine

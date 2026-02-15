@@ -405,6 +405,21 @@ export class InboundsService {
     if (!actorId) {
       throw new BadRequestException('User login tidak ditemukan');
     }
+
+    const actor = await this.prisma.user.findFirst({
+      where: {
+        uuid: actorId,
+        deletedAt: null,
+      },
+      select: {
+        warehouseId: true,
+      },
+    });
+    const mappedWarehouseId = String(actor?.warehouseId ?? '').trim();
+    if (mappedWarehouseId && mappedWarehouseId !== 'null' && mappedWarehouseId !== 'undefined') {
+      return mappedWarehouseId;
+    }
+
     const ownedWarehouse = await this.prisma.masterDataWarehouse.findFirst({
       where: {
         deletedAt: null,
@@ -454,8 +469,7 @@ export class InboundsService {
       return {
         itemId,
         qty: detailQty,
-        uomInput:
-          rawDetail.uomInput == null ? undefined : Number(rawDetail.uomInput),
+        uomInput: rawDetail.uomInput == null ? undefined : Number(rawDetail.uomInput),
         notes: rawDetail.notes?.trim() || undefined,
         batches,
       };

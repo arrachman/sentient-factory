@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-const DELIVERY_ORDER_STATUSES = ['DRAFT', 'SHIPPED', 'RECEIVED', 'CLOSED', 'CANCELLED'] as const;
+const DELIVERY_ORDER_STATUSES = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
 
 export class QueryDeliveryOrderDto {
   @ApiPropertyOptional({ example: 1, default: 1 })

@@ -4,6 +4,7 @@ import { useLayout } from './context';
 import { Footer } from './footer';
 import { Header } from './header';
 import { Sidebar } from './sidebar';
+import { BackendStatusWarning } from './backend-status-warning';
 
 export function Main({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
@@ -48,6 +49,7 @@ export function Main({ children }: { children: React.ReactNode }) {
 
       <div className="wrapper flex grow flex-col">
         <Header />
+        <BackendStatusWarning />
 
         <main className="grow pt-5" role="content">
           {children}
