@@ -20,7 +20,7 @@ function getAuthHeader(request: NextRequest): string | null {
   return `Bearer ${token}`;
 }
 
-export async function GET(request: NextRequest) {
+async function proxy(request: NextRequest, method: 'GET' | 'POST') {
   const authHeader = getAuthHeader(request);
   if (!authHeader) {
     return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
@@ -31,16 +31,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const base = getApiBaseUrl();
-    const url = new URL(`${base}/api/delivery-orders/batch-options`);
-    request.nextUrl.searchParams.forEach((value, key) => {
-      url.searchParams.set(key, value);
-    });
+    const url = new URL(`${base}/api/outbound`);
+    if (method === 'GET') {
+      request.nextUrl.searchParams.forEach((value, key) => {
+        url.searchParams.set(key, value);
+      });
+    }
 
     const response = await fetch(url.toString(), {
-      method: 'GET',
+      method,
       headers: {
         Authorization: authHeader,
+        ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
       },
+      body: method === 'POST' ? await request.text() : undefined,
       signal: controller.signal,
       cache: 'no-store',
     });
@@ -57,4 +61,12 @@ export async function GET(request: NextRequest) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function GET(request: NextRequest) {
+  return proxy(request, 'GET');
+}
+
+export async function POST(request: NextRequest) {
+  return proxy(request, 'POST');
 }

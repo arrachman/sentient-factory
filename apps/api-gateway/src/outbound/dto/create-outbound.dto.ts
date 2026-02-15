@@ -13,11 +13,11 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { CreateDeliveryOrderDetailDto } from './create-delivery-order-detail.dto';
+import { CreateOutboundDetailDto } from './create-outbound-detail.dto';
 
 const DELIVERY_ORDER_STATUSES = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
 
-export class CreateDeliveryOrderDto {
+export class CreateOutboundDto {
   @ApiProperty({ example: 'DO-2026-0001' })
   @IsString()
   @IsNotEmpty()
@@ -95,10 +95,10 @@ export class CreateDeliveryOrderDto {
   @IsIn(DELIVERY_ORDER_STATUSES)
   status?: (typeof DELIVERY_ORDER_STATUSES)[number];
 
-  @ApiProperty({ type: [CreateDeliveryOrderDetailDto] })
+  @ApiProperty({ type: [CreateOutboundDetailDto] })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
-  @Type(() => CreateDeliveryOrderDetailDto)
-  details!: CreateDeliveryOrderDetailDto[];
+  @Type(() => CreateOutboundDetailDto)
+  details!: CreateOutboundDetailDto[];
 }

@@ -83,7 +83,7 @@ export default function MasterDataUomPage() {
 
       const response = await fetch(`/api/master-data-uoms?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -119,7 +119,7 @@ export default function MasterDataUomPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           code: form.code,
@@ -164,7 +164,7 @@ export default function MasterDataUomPage() {
     try {
       const response = await fetch(`/api/master-data-uoms/${uuid}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {

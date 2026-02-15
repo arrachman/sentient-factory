@@ -6,8 +6,9 @@ const resetSQL = `
 -- 1. MEMBERSIHKAN TABEL LAMA DAN BARU
 DROP TABLE IF EXISTS public."m0_auditlog" CASCADE;
 DROP TABLE IF EXISTS public."m0_session" CASCADE;
-DROP TABLE IF EXISTS public."m2_do_detail" CASCADE;
-DROP TABLE IF EXISTS public."m2_do" CASCADE;
+DROP TABLE IF EXISTS public."m2_outbound_detail_batch" CASCADE;
+DROP TABLE IF EXISTS public."m2_outbound_detail" CASCADE;
+DROP TABLE IF EXISTS public."m2_outbound" CASCADE;
 DROP TABLE IF EXISTS public."m1_contact" CASCADE;
 DROP TABLE IF EXISTS public."m1_division" CASCADE;
 DROP TABLE IF EXISTS public."m1_uom" CASCADE;

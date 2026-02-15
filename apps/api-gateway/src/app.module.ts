@@ -12,7 +12,7 @@ import { MasterDataProvincesModule } from './master-data-provinces/master-data-p
 import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.module';
 import { MasterDataCitySlasModule } from './master-data-city-slas/master-data-city-slas.module';
 import { MasterDataWarehousesModule } from './master-data-warehouses/master-data-warehouses.module';
-import { DeliveryOrdersModule } from './delivery-orders/delivery-orders.module';
+import { OutboundModule } from './outbound/outbound.module';
 import { InboundsModule } from './inbounds/inbounds.module';
 
 @Module({
@@ -33,7 +33,7 @@ import { InboundsModule } from './inbounds/inbounds.module';
     MasterDataCitiesModule,
     MasterDataCitySlasModule,
     MasterDataWarehousesModule,
-    DeliveryOrdersModule,
+    OutboundModule,
     InboundsModule,
   ],
 })

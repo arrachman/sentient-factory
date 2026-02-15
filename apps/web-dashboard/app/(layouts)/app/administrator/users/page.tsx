@@ -107,7 +107,7 @@ export default function AdministratorUsersPage() {
 
       const response = await fetch(`/api/users?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -135,7 +135,7 @@ export default function AdministratorUsersPage() {
       try {
         const response = await fetch('/api/master-data-warehouses?page=1&limit=100', {
           cache: 'no-store',
-          headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         const payload = await response.json().catch(() => null);
         if (!response.ok || !payload?.success) {
@@ -185,7 +185,7 @@ export default function AdministratorUsersPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -228,7 +228,7 @@ export default function AdministratorUsersPage() {
     try {
       const response = await fetch(`/api/users/${uuid}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {

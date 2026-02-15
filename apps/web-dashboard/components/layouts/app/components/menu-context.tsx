@@ -31,7 +31,22 @@ function resolveIcon(iconName: string | null | undefined): MenuItem['icon'] {
   if (!iconName) {
     return undefined;
   }
-  return iconMap[iconName];
+  const iconCandidate = iconMap[iconName];
+  if (!iconCandidate) {
+    return undefined;
+  }
+
+  // Guard against invalid icon names or non-component exports from lucide-react.
+  if (
+    typeof iconCandidate === 'function' ||
+    (typeof iconCandidate === 'object' &&
+      iconCandidate !== null &&
+      '$$typeof' in iconCandidate)
+  ) {
+    return iconCandidate;
+  }
+
+  return undefined;
 }
 
 function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
@@ -76,7 +91,12 @@ function getTokenFromCookie() {
     return '';
   }
 
-  return decodeURIComponent(tokenPart.substring('sf_token='.length));
+  const rawToken = tokenPart.substring('sf_token='.length);
+  try {
+    return decodeURIComponent(rawToken);
+  } catch {
+    return rawToken;
+  }
 }
 
 export function AppMenuProvider({ children }: { children: ReactNode }) {

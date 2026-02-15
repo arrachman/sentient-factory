@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, RefreshCw } from 'lucide-react';
+import {
+  Toolbar,
+  ToolbarActions,
+  ToolbarDescription,
+  ToolbarHeading,
+  ToolbarPageTitle,
+} from '@/components/layouts/app/components/toolbar';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,13 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Toolbar,
-  ToolbarActions,
-  ToolbarDescription,
-  ToolbarHeading,
-  ToolbarPageTitle,
-} from '@/components/layouts/app/components/toolbar';
 
 type InboundRow = {
   uuid: string;
@@ -40,12 +40,18 @@ type OutboundRow = {
   uuid: string;
   doNumber: string;
   doDate: string;
-  status: 'OPEN' | 'DELIVERY' | 'DELIVERED' | 'COMPLETED';
+  status: 'DRAFT' | 'SHIPPED' | 'RECEIVED' | 'CLOSED' | 'CANCELLED';
   customer?: {
     name?: string | null;
   } | null;
-  totalKg?: number | string;
+  totalKg?: unknown;
   totalBatches?: number;
+};
+
+type DecimalLike = {
+  s?: number;
+  e?: number;
+  d?: number[];
 };
 
 type ListResponse<T> = {
@@ -90,6 +96,54 @@ function fmtDate(value?: string | null) {
   }).format(date);
 }
 
+function isDecimalLike(value: unknown): value is DecimalLike {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      Array.isArray((value as DecimalLike).d) &&
+      typeof (value as DecimalLike).e === 'number',
+  );
+}
+
+function decimalLikeToString(value: DecimalLike): string {
+  const digits = Array.isArray(value.d) ? value.d.join('') : '';
+  if (!digits) {
+    return '0';
+  }
+
+  const sign = value.s === -1 ? '-' : '';
+  const exponent = typeof value.e === 'number' ? value.e : digits.length - 1;
+  const decimalPos = exponent + 1;
+
+  if (decimalPos <= 0) {
+    return `${sign}0.${'0'.repeat(Math.abs(decimalPos))}${digits}`.replace(/\.?0+$/, '') || '0';
+  }
+  if (decimalPos >= digits.length) {
+    return `${sign}${digits}${'0'.repeat(decimalPos - digits.length)}`;
+  }
+
+  return `${sign}${digits.slice(0, decimalPos)}.${digits.slice(decimalPos)}`.replace(/\.?0+$/, '') || '0';
+}
+
+function normalizeNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (isDecimalLike(value)) {
+    const parsed = Number(decimalLikeToString(value));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function fmtKg(value: unknown) {
+  return normalizeNumber(value).toLocaleString('id-ID', { maximumFractionDigits: 3 });
+}
+
 function toDateOnly(value: Date) {
   return value.toISOString().slice(0, 10);
 }
@@ -126,14 +180,14 @@ function inboundBadgeVariant(status?: InboundRow['status']) {
 }
 
 function outboundBadgeVariant(status?: OutboundRow['status']) {
-  if (status === 'COMPLETED') {
+  if (status === 'CLOSED' || status === 'RECEIVED') {
     return 'success';
   }
-  if (status === 'DELIVERY') {
-    return 'info';
+  if (status === 'CANCELLED') {
+    return 'destructive';
   }
-  if (status === 'DELIVERED') {
-    return 'primary';
+  if (status === 'SHIPPED') {
+    return 'info';
   }
   return 'secondary';
 }
@@ -160,13 +214,11 @@ export default function Page() {
   );
   const outboundInProgress = useMemo(
     () =>
-      outboundRows.filter(
-        (row) => row.status === 'OPEN' || row.status === 'DELIVERY',
-      ).length,
+      outboundRows.filter((row) => row.status === 'SHIPPED' || row.status === 'DRAFT').length,
     [outboundRows],
   );
   const outboundClosed = useMemo(
-    () => outboundRows.filter((row) => row.status === 'COMPLETED').length,
+    () => outboundRows.filter((row) => row.status === 'CLOSED').length,
     [outboundRows],
   );
 
@@ -196,7 +248,7 @@ export default function Page() {
           cache: 'no-store',
           headers,
         }),
-        fetch(`/api/delivery-orders?${outboundQuery.toString()}`, {
+        fetch(`/api/outbound?${outboundQuery.toString()}`, {
           cache: 'no-store',
           headers,
         }),
@@ -208,23 +260,17 @@ export default function Page() {
       ]);
 
       if (!inboundRes.ok || !inboundPayload?.success) {
-        throw new Error(
-          inboundPayload?.message || 'Failed to load inbound data',
-        );
+        throw new Error(inboundPayload?.message || 'Failed to load inbound data');
       }
       if (!outboundRes.ok || !outboundPayload?.success) {
-        throw new Error(
-          outboundPayload?.message || 'Failed to load outbound data',
-        );
+        throw new Error(outboundPayload?.message || 'Failed to load outbound data');
       }
 
       const inboundData = inboundPayload as ListResponse<InboundRow>;
       const outboundData = outboundPayload as ListResponse<OutboundRow>;
 
       setInboundRows(Array.isArray(inboundData.data) ? inboundData.data : []);
-      setOutboundRows(
-        Array.isArray(outboundData.data) ? outboundData.data : [],
-      );
+      setOutboundRows(Array.isArray(outboundData.data) ? outboundData.data : []);
       setInboundTotal(Number(inboundData.meta?.total ?? 0));
       setOutboundTotal(Number(outboundData.meta?.total ?? 0));
     } catch (err) {
@@ -245,8 +291,7 @@ export default function Page() {
         <ToolbarHeading>
           <ToolbarPageTitle>Logistic Dashboard</ToolbarPageTitle>
           <ToolbarDescription>
-            Ringkasan aktivitas inbound dan outbound (
-            {PERIOD_OPTIONS.find((x) => x.value === period)?.label}).
+            Ringkasan aktivitas inbound dan outbound ({PERIOD_OPTIONS.find((x) => x.value === period)?.label}).
           </ToolbarDescription>
         </ToolbarHeading>
         <ToolbarActions>
@@ -260,11 +305,7 @@ export default function Page() {
               emptyText="Periode tidak ditemukan."
             />
           </div>
-          <Button
-            variant="outline"
-            onClick={() => fetchDashboardData(period)}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={() => fetchDashboardData(period)} disabled={loading}>
             <RefreshCw />
             Refresh
           </Button>
@@ -290,9 +331,7 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{inboundTotal}</p>
-            <p className="text-xs text-muted-foreground">
-              Total dokumen inbound
-            </p>
+            <p className="text-xs text-muted-foreground">Total dokumen inbound</p>
           </CardContent>
         </Card>
         <Card>
@@ -301,9 +340,7 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-semibold">{outboundTotal}</p>
-            <p className="text-xs text-muted-foreground">
-              Total dokumen outbound
-            </p>
+            <p className="text-xs text-muted-foreground">Total dokumen outbound</p>
           </CardContent>
         </Card>
         <Card>
@@ -354,19 +391,13 @@ export default function Page() {
                 ) : (
                   inboundRows.map((row) => (
                     <TableRow key={row.uuid}>
-                      <TableCell className="font-medium">
-                        {row.transactionNo || '-'}
-                      </TableCell>
+                      <TableCell className="font-medium">{row.transactionNo || '-'}</TableCell>
                       <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                       <TableCell>{row.supplier?.name || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={inboundBadgeVariant(row.status)}>
-                          {row.status || '-'}
-                        </Badge>
+                        <Badge variant={inboundBadgeVariant(row.status)}>{row.status || '-'}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {row._count?.details ?? 0}
-                      </TableCell>
+                      <TableCell className="text-right">{row._count?.details ?? 0}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -402,19 +433,13 @@ export default function Page() {
                 ) : (
                   outboundRows.map((row) => (
                     <TableRow key={row.uuid}>
-                      <TableCell className="font-medium">
-                        {row.doNumber || '-'}
-                      </TableCell>
+                      <TableCell className="font-medium">{row.doNumber || '-'}</TableCell>
                       <TableCell>{fmtDate(row.doDate)}</TableCell>
                       <TableCell>{row.customer?.name || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={outboundBadgeVariant(row.status)}>
-                          {row.status || '-'}
-                        </Badge>
+                        <Badge variant={outboundBadgeVariant(row.status)}>{row.status || '-'}</Badge>
                       </TableCell>
-                      <TableCell className="text-right">
-                        {row.totalKg ?? 0}
-                      </TableCell>
+                      <TableCell className="text-right">{fmtKg(row.totalKg)}</TableCell>
                     </TableRow>
                   ))
                 )}

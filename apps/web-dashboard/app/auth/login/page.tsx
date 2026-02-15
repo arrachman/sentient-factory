@@ -49,8 +49,8 @@ export default function LoginPage() {
         return;
       }
 
-      document.cookie = `${TOKEN_COOKIE}=${payload.data.token}; Path=/; Max-Age=604800; SameSite=Lax`;
-      router.replace('/app');
+      document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(payload.data.token)}; Path=/; Max-Age=604800; SameSite=Lax`;
+      window.location.assign('/app');
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         setError('Request login timeout. Pastikan API berjalan di port 3103.');

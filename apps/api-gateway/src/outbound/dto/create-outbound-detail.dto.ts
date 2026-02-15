@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
-export class CreateDeliveryOrderDetailDto {
+export class CreateOutboundDetailDto {
   @ApiProperty({ example: 'cm123abc456def' })
   @IsString()
   @MaxLength(100)

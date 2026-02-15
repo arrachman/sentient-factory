@@ -13,7 +13,6 @@ import {
   RefreshCw,
   Save,
   Trash2,
-  Truck,
   X,
 } from 'lucide-react';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
@@ -81,7 +80,7 @@ type DivisionOption = {
 type DeliveryOrderDetailForm = {
   itemId: string;
   batchNumbers: string[];
-  qtyPcs: string;
+  batchQtyMap: Record<string, string>;
   qtyKg: string;
   notes: string;
 };
@@ -135,12 +134,18 @@ type DeliveryOrderListItem = {
   };
 };
 
+type DecimalLike = {
+  s?: number;
+  e?: number;
+  d?: number[];
+};
+
 const STATUS_OPTIONS = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
 
 const initialDetail = (): DeliveryOrderDetailForm => ({
   itemId: '',
   batchNumbers: [],
-  qtyPcs: '',
+  batchQtyMap: {},
   qtyKg: '',
   notes: '',
 });
@@ -211,6 +216,61 @@ function badgeVariant(status?: 'ONTIME' | 'LATE' | null) {
   return 'secondary';
 }
 
+function isDecimalLike(value: unknown): value is DecimalLike {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as DecimalLike;
+  return Array.isArray(candidate.d);
+}
+
+function decimalLikeToString(value: DecimalLike): string {
+  const sign = value.s === -1 ? '-' : '';
+  const exponent = Number.isFinite(value.e) ? Number(value.e) : 0;
+  const chunks = Array.isArray(value.d) ? value.d : [];
+
+  if (chunks.length === 0) {
+    return '0';
+  }
+
+  const digits = chunks
+    .map((chunk, index) => (index === 0 ? String(chunk) : String(chunk).padStart(7, '0')))
+    .join('')
+    .replace(/^0+/, '') || '0';
+
+  const decimalPos = exponent + 1;
+  let normalized = '';
+
+  if (decimalPos <= 0) {
+    normalized = `0.${'0'.repeat(Math.abs(decimalPos))}${digits}`;
+  } else if (decimalPos >= digits.length) {
+    normalized = `${digits}${'0'.repeat(decimalPos - digits.length)}`;
+  } else {
+    normalized = `${digits.slice(0, decimalPos)}.${digits.slice(decimalPos)}`;
+  }
+
+  normalized = normalized.replace(/\.?0+$/, '');
+  return `${sign}${normalized || '0'}`;
+}
+
+function normalizeNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  if (isDecimalLike(value)) {
+    const parsed = Number(decimalLikeToString(value));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
 type ApiDetailPayload = {
   itemId?: string;
   batchNumber?: string;
@@ -230,7 +290,12 @@ function mapApiDetails(details: ApiDetailPayload[]): DeliveryOrderDetailForm[] {
   return details.map((detail) => ({
     itemId: String(detail.itemId ?? detail.item?.uuid ?? ''),
     batchNumbers: detail.batchNumber ? [String(detail.batchNumber)] : [],
-    qtyPcs: detail.qtyPcs != null ? String(detail.qtyPcs) : '',
+    batchQtyMap: detail.batchNumber
+      ? {
+          [String(detail.batchNumber)]:
+            detail.qtyPcs != null ? String(detail.qtyPcs) : '0',
+        }
+      : {},
     qtyKg: detail.qtyKg != null ? String(detail.qtyKg) : '',
     notes: String(detail.notes ?? ''),
   }));
@@ -264,9 +329,9 @@ function BatchMultiSelect({
       return '';
     }
     if (value.length === 1) {
-      return value[0];
+      return `${value[0]} (1 batch)`;
     }
-    return `${value.length} batches selected`;
+    return `${value.length} batch selected`;
   }, [value]);
 
   const toggleBatch = (batchNumber: string) => {
@@ -371,39 +436,83 @@ export default function LogisticTransactionDoPage() {
     (itemId: string, batchNumber: string) => {
       const options = batchOptionsByItemId[itemId] || [];
       const match = options.find((option) => option.batchNumber === batchNumber);
-      return Number(match?.qtyPcs ?? 0);
+      const parsed = Number(match?.qtyPcs ?? 0);
+      return Number.isFinite(parsed) ? parsed : 0;
     },
     [batchOptionsByItemId],
   );
 
-  const getAutoQtyPcs = useCallback(
-    (itemId: string, batchNumbers: string[]) => {
-      if (!itemId || batchNumbers.length === 0) {
-        return '';
+  const getSelectedBatchQtyPcs = useCallback(
+    (
+      itemId: string,
+      batchNumber: string,
+      batchQtyMap: Record<string, string>,
+    ) => {
+      const raw = batchQtyMap[batchNumber];
+      const requestedQty = Math.floor(Number(raw));
+      const maxQtyPcs = getBatchQtyPcs(itemId, batchNumber);
+
+      if (Number.isFinite(maxQtyPcs) && maxQtyPcs > 0) {
+        if (raw == null || raw === '') {
+          return maxQtyPcs;
+        }
+        if (!Number.isFinite(requestedQty) || requestedQty < 0) {
+          return 0;
+        }
+        return Math.min(requestedQty, maxQtyPcs);
       }
-      const total = batchNumbers.reduce(
-        (sum, batchNumber) => sum + getBatchQtyPcs(itemId, batchNumber),
-        0,
-      );
-      return String(total);
+
+      // Fallback when max from options is unavailable: rely on selected qty input.
+      if (!Number.isFinite(requestedQty) || requestedQty < 0) {
+        return 0;
+      }
+      return requestedQty;
     },
     [getBatchQtyPcs],
   );
 
+  const getAutoQtyPcs = useCallback(
+    (
+      itemId: string,
+      batchNumbers: string[],
+      batchQtyMap: Record<string, string>,
+    ) => {
+      if (!itemId || batchNumbers.length === 0) {
+        return '';
+      }
+      const total = batchNumbers.reduce(
+        (sum, batchNumber) =>
+          sum + getSelectedBatchQtyPcs(itemId, batchNumber, batchQtyMap),
+        0,
+      );
+      return String(total);
+    },
+    [getSelectedBatchQtyPcs],
+  );
+
   const fetchBatchOptions = useCallback(
-    async (itemId: string) => {
+    async (itemId: string, force = false) => {
       const normalizedItemId = itemId.trim();
-      if (!normalizedItemId || batchOptionsByItemId[normalizedItemId]) {
+      if (!normalizedItemId) {
+        return;
+      }
+
+      const existingOptions = batchOptionsByItemId[normalizedItemId];
+      if (!force && Array.isArray(existingOptions) && existingOptions.length > 0) {
         return;
       }
 
       try {
+        const query = new URLSearchParams({ itemId: normalizedItemId });
+        if (editingUuid) {
+          query.set('excludeDoId', editingUuid);
+        }
         const response = await fetch(
-          `/api/delivery-orders/batch-options?itemId=${encodeURIComponent(normalizedItemId)}`,
+          `/api/outbound/batch-options?${query.toString()}`,
           {
             cache: 'no-store',
             headers: token
-              ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+              ? { Authorization: `Bearer ${token}` }
               : undefined,
           },
         );
@@ -429,7 +538,7 @@ export default function LogisticTransactionDoPage() {
         }));
       }
     },
-    [batchOptionsByItemId, token],
+    [batchOptionsByItemId, editingUuid, token],
   );
 
   const summary = useMemo(() => {
@@ -446,7 +555,9 @@ export default function LogisticTransactionDoPage() {
     let totalPcs = 0;
     let totalKg = 0;
     activeRows.forEach((row) => {
-      totalPcs += Number(getAutoQtyPcs(row.itemId, row.batchNumbers) || 0) || 0;
+      totalPcs +=
+        Number(getAutoQtyPcs(row.itemId, row.batchNumbers, row.batchQtyMap) || 0) ||
+        0;
       totalKg += Number(row.qtyKg || 0) || 0;
     });
 
@@ -519,10 +630,10 @@ export default function LogisticTransactionDoPage() {
         query.set('status', statusFilter);
       }
 
-      const response = await fetch(`/api/delivery-orders?${query.toString()}`, {
+      const response = await fetch(`/api/outbound?${query.toString()}`, {
         cache: 'no-store',
         headers: token
-          ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+          ? { Authorization: `Bearer ${token}` }
           : undefined,
       });
       const payload = await response.json().catch(() => null);
@@ -530,7 +641,17 @@ export default function LogisticTransactionDoPage() {
         throw new Error(payload?.message || 'Failed to load delivery orders');
       }
 
-      setItems(Array.isArray(payload.data) ? payload.data : []);
+      const normalizedItems: DeliveryOrderListItem[] = (Array.isArray(payload.data) ? payload.data : []).map(
+        (row: DeliveryOrderListItem) => ({
+          ...row,
+          totalItemTypes: normalizeNumber(row?.totalItemTypes),
+          totalBatches: normalizeNumber(row?.totalBatches),
+          totalQtyPcs: normalizeNumber(row?.totalQtyPcs),
+          totalKg: normalizeNumber(row?.totalKg),
+        }),
+      );
+
+      setItems(normalizedItems);
       const meta = payload?.meta;
       setPage(typeof meta?.page === 'number' ? meta.page : safePage);
       setTotalPages(typeof meta?.totalPages === 'number' ? meta.totalPages : 1);
@@ -549,7 +670,7 @@ export default function LogisticTransactionDoPage() {
     setError('');
     try {
       const headers = token
-        ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+        ? { Authorization: `Bearer ${token}` }
         : undefined;
 
       const [customerRes, cityRes, itemRes, divisionRes, citySlaRes] =
@@ -731,7 +852,7 @@ export default function LogisticTransactionDoPage() {
       ),
     );
     itemIds.forEach((itemId) => {
-      void fetchBatchOptions(itemId);
+      void fetchBatchOptions(itemId, true);
     });
   }, [fetchBatchOptions, form.details, showForm]);
 
@@ -746,10 +867,10 @@ export default function LogisticTransactionDoPage() {
   const openEditForm = async (uuid: string) => {
     setError('');
     try {
-      const response = await fetch(`/api/delivery-orders/${uuid}`, {
+      const response = await fetch(`/api/outbound/${uuid}`, {
         cache: 'no-store',
         headers: token
-          ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+          ? { Authorization: `Bearer ${token}` }
           : undefined,
       });
 
@@ -792,7 +913,7 @@ export default function LogisticTransactionDoPage() {
         detailRows
           .map((detail) => detail.itemId.trim())
           .filter(Boolean)
-          .map((itemId) => fetchBatchOptions(itemId)),
+          .map((itemId) => fetchBatchOptions(itemId, true)),
       );
       setShowForm(true);
     } catch (err) {
@@ -835,11 +956,16 @@ export default function LogisticTransactionDoPage() {
         return normalizedBatches.map((batchNumber, index) => ({
           itemId,
           batchNumber,
-          qtyPcs: getBatchQtyPcs(itemId, batchNumber),
+          qtyPcs: getSelectedBatchQtyPcs(itemId, batchNumber, row.batchQtyMap),
           qtyKg: index === batchCount - 1 ? qtyKgRemainder : qtyKgBase,
           notes: row.notes.trim(),
         }));
       });
+
+      const hasInvalidBatchQty = normalizedDetails.some((detail) => detail.qtyPcs <= 0);
+      if (hasInvalidBatchQty) {
+        throw new Error('Qty PCS per batch harus lebih dari 0.');
+      }
 
       if (normalizedDetails.length === 0) {
         throw new Error('Minimal satu baris detail batch item wajib diisi.');
@@ -870,8 +996,8 @@ export default function LogisticTransactionDoPage() {
       };
 
       const endpoint = editingUuid
-        ? `/api/delivery-orders/${editingUuid}`
-        : '/api/delivery-orders';
+        ? `/api/outbound/${editingUuid}`
+        : '/api/outbound';
       const method = editingUuid ? 'PATCH' : 'POST';
 
       const response = await fetch(endpoint, {
@@ -879,7 +1005,7 @@ export default function LogisticTransactionDoPage() {
         headers: {
           'Content-Type': 'application/json',
           ...(token
-            ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+            ? { Authorization: `Bearer ${token}` }
             : {}),
         },
         body: JSON.stringify(payload),
@@ -914,10 +1040,10 @@ export default function LogisticTransactionDoPage() {
 
     setError('');
     try {
-      const response = await fetch(`/api/delivery-orders/${uuid}`, {
+      const response = await fetch(`/api/outbound/${uuid}`, {
         method: 'DELETE',
         headers: token
-          ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+          ? { Authorization: `Bearer ${token}` }
           : undefined,
       });
 
@@ -936,7 +1062,7 @@ export default function LogisticTransactionDoPage() {
 
   const setDetailField = (
     index: number,
-    key: 'itemId' | 'qtyPcs' | 'qtyKg' | 'notes',
+    key: 'itemId' | 'qtyKg' | 'notes',
     value: string,
   ) => {
     setForm((state) => ({
@@ -944,7 +1070,7 @@ export default function LogisticTransactionDoPage() {
       details: state.details.map((detail, i) =>
         i === index
           ? key === 'itemId'
-            ? { ...detail, itemId: value, batchNumbers: [], qtyPcs: '' }
+            ? { ...detail, itemId: value, batchNumbers: [], batchQtyMap: {} }
             : { ...detail, [key]: value }
           : detail,
       ),
@@ -954,9 +1080,75 @@ export default function LogisticTransactionDoPage() {
   const setDetailBatchNumbers = (index: number, batchNumbers: string[]) => {
     setForm((state) => ({
       ...state,
-      details: state.details.map((detail, i) =>
-        i === index ? { ...detail, batchNumbers, qtyPcs: '' } : detail,
-      ),
+      details: state.details.map((detail, i) => {
+        if (i !== index) {
+          return detail;
+        }
+
+        const normalizedBatchNumbers = Array.from(new Set(batchNumbers));
+        const nextBatchQtyMap = normalizedBatchNumbers.reduce<Record<string, string>>(
+          (acc, batchNumber) => {
+            const maxQtyPcs = getBatchQtyPcs(detail.itemId, batchNumber);
+            const previousValue = detail.batchQtyMap[batchNumber];
+            if (previousValue == null || previousValue === '') {
+              acc[batchNumber] = String(maxQtyPcs);
+              return acc;
+            }
+
+            const parsed = Math.floor(Number(previousValue));
+            if (!Number.isFinite(parsed) || parsed < 0) {
+              acc[batchNumber] = String(maxQtyPcs);
+              return acc;
+            }
+
+            acc[batchNumber] = String(Math.min(parsed, maxQtyPcs));
+            return acc;
+          },
+          {},
+        );
+
+        return {
+          ...detail,
+          batchNumbers: normalizedBatchNumbers,
+          batchQtyMap: nextBatchQtyMap,
+        };
+      }),
+    }));
+  };
+
+  const setDetailBatchQty = (index: number, batchNumber: string, rawValue: string) => {
+    setForm((state) => ({
+      ...state,
+      details: state.details.map((detail, i) => {
+        if (i !== index) {
+          return detail;
+        }
+
+        const maxQtyPcs = getBatchQtyPcs(detail.itemId, batchNumber);
+        if (rawValue === '') {
+          return {
+            ...detail,
+            batchQtyMap: {
+              ...detail.batchQtyMap,
+              [batchNumber]: '',
+            },
+          };
+        }
+
+        const parsed = Math.floor(Number(rawValue));
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          return detail;
+        }
+
+        const clamped = Math.min(parsed, maxQtyPcs);
+        return {
+          ...detail,
+          batchQtyMap: {
+            ...detail.batchQtyMap,
+            [batchNumber]: String(clamped),
+          },
+        };
+      }),
     }));
   };
 
@@ -1376,135 +1568,6 @@ export default function LogisticTransactionDoPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border p-5">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-base font-semibold">
-                      Detail Barang (Per Batch)
-                    </h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={addDetailRow}
-                    >
-                      <Plus />
-                      Add Batch Row
-                    </Button>
-                  </div>
-
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[50px]">No</TableHead>
-                        <TableHead>Item</TableHead>
-                        <TableHead>Batch Number</TableHead>
-                        <TableHead className="w-[120px] text-right">
-                          Qty PCS
-                        </TableHead>
-                        <TableHead className="w-[120px] text-right">
-                          Qty KG
-                        </TableHead>
-                        <TableHead>Notes</TableHead>
-                        <TableHead className="w-[80px]">Act</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {form.details.map((detail, index) => (
-                        <TableRow
-                          key={`${index}-${detail.itemId}-${detail.batchNumbers.join('|')}`}
-                        >
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>
-                            <AutocompleteSelect
-                              value={detail.itemId}
-                              onValueChange={async (value) => {
-                                setDetailField(index, 'itemId', value)
-                                await fetchBatchOptions(value);
-                              }}
-                              options={itemOptions.map((item) => ({
-                                value: item.uuid,
-                                label: `${item.code} - ${item.name}${item.uom?.code ? ` (UOM: ${item.uom.code})` : ''}`,
-                              }))}
-                              placeholder="Select item"
-                              searchPlaceholder="Search item..."
-                              emptyText="No item found."
-                              required
-                              triggerClassName="h-9 px-2 text-sm"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <BatchMultiSelect
-                              value={detail.batchNumbers}
-                              onChange={(value) =>
-                                setDetailBatchNumbers(index, value)
-                              }
-                              options={(batchOptionsByItemId[detail.itemId] || [])
-                                .map((option) => {
-                                  const taken = form.details.some(
-                                    (row, rowIndex) =>
-                                      rowIndex !== index &&
-                                      row.itemId === detail.itemId &&
-                                      row.batchNumbers.includes(option.batchNumber),
-                                  );
-                                  return { ...option, disabled: taken };
-                                })}
-                              placeholder={detail.itemId ? 'Select batch(es)' : 'Select item first'}
-                              searchPlaceholder="Search batch..."
-                              emptyText={
-                                detail.itemId
-                                  ? 'No batch found for this item.'
-                                  : 'Select item first.'
-                              }
-                              disabled={!detail.itemId}
-                              required
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              step="0.01"
-                              className="text-right"
-                              value={getAutoQtyPcs(detail.itemId, detail.batchNumbers)}
-                              readOnly
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0.001}
-                              step="0.001"
-                              className="text-right"
-                              value={detail.qtyKg}
-                              onChange={(e) =>
-                                setDetailField(index, 'qtyKg', e.target.value)
-                              }
-                              required
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={detail.notes}
-                              onChange={(e) =>
-                                setDetailField(index, 'notes', e.target.value)
-                              }
-                              placeholder="Optional"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeDetailRow(index)}
-                            >
-                              <Trash2 />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
               </div>
 
               <div className="space-y-5">
@@ -1568,24 +1631,197 @@ export default function LogisticTransactionDoPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border p-5">
-                  <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                    <Truck className="size-4" />
-                    <span>Operational Tips</span>
-                  </div>
-                  <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                    <li>
-                      Satu item boleh dikirim multi batch dalam 1 nomor DO.
-                    </li>
-                    <li>
-                      Pastikan kombinasi Item + Batch unik dalam satu dokumen.
-                    </li>
-                    <li>
-                      Perhitungan preview SLA menggunakan tanggal DO dan
-                      parameter SLA kota tujuan.
-                    </li>
-                  </ul>
+              </div>
+
+              <div className="rounded-lg border p-5 xl:col-span-2">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-semibold">
+                    Detail Barang (Per Batch)
+                  </h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addDetailRow}
+                  >
+                    <Plus />
+                    Add Item
+                  </Button>
                 </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[50px]">No</TableHead>
+                      <TableHead>Item + Batch Number</TableHead>
+                      <TableHead className="w-[120px] text-right">
+                        Qty PCS
+                      </TableHead>
+                      <TableHead className="w-[120px] text-right">
+                        Qty KG
+                      </TableHead>
+                      <TableHead>Notes</TableHead>
+                      <TableHead className="w-[80px]">Act</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {form.details.map((detail, index) => {
+                      const selectedBatchDetails = detail.batchNumbers.map((batchNumber) => ({
+                        batchNumber,
+                        maxQtyPcs: getBatchQtyPcs(detail.itemId, batchNumber),
+                        qtyPcs: getSelectedBatchQtyPcs(
+                          detail.itemId,
+                          batchNumber,
+                          detail.batchQtyMap,
+                        ),
+                        rawQtyPcs: detail.batchQtyMap[batchNumber] ?? '',
+                      }));
+
+                      return (
+                      <TableRow
+                        key={`${index}-${detail.itemId}-${detail.batchNumbers.join('|')}`}
+                      >
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>
+                          <div className="space-y-2">
+                            <div className="space-y-2">
+                              <AutocompleteSelect
+                                value={detail.itemId}
+                                onValueChange={async (value) => {
+                                  setDetailField(index, 'itemId', value)
+                                  await fetchBatchOptions(value, true);
+                                }}
+                                options={itemOptions.map((item) => ({
+                                  value: item.uuid,
+                                  label: `${item.code} - ${item.name}${item.uom?.code ? ` (UOM: ${item.uom.code})` : ''}`,
+                                }))}
+                                placeholder="Select item"
+                                searchPlaceholder="Search item..."
+                                emptyText="No item found."
+                                required
+                                triggerClassName="h-9 px-2 text-sm"
+                              />
+                              <BatchMultiSelect
+                                value={detail.batchNumbers}
+                                onChange={(value) =>
+                                  setDetailBatchNumbers(index, value)
+                                }
+                                options={(batchOptionsByItemId[detail.itemId] || [])
+                                  .map((option) => {
+                                    const taken = form.details.some(
+                                      (row, rowIndex) =>
+                                        rowIndex !== index &&
+                                        row.itemId === detail.itemId &&
+                                        row.batchNumbers.includes(option.batchNumber),
+                                    );
+                                    return {
+                                      ...option,
+                                      disabled: taken || option.qtyPcs <= 0,
+                                    };
+                                  })}
+                                placeholder={detail.itemId ? 'Select batch(es)' : 'Select item first'}
+                                searchPlaceholder="Search batch..."
+                                emptyText={
+                                  detail.itemId
+                                    ? 'No batch found for this item.'
+                                    : 'Select item first.'
+                                }
+                                disabled={!detail.itemId}
+                                required
+                              />
+                            </div>
+                            {selectedBatchDetails.length > 0 ? (
+                              <div className="rounded-md border bg-muted/20 p-2 text-xs">
+                                <div className="mb-1 font-medium text-foreground">
+                                  Selected batches
+                                </div>
+                                <div className="space-y-1">
+                                  {selectedBatchDetails.map((batch) => (
+                                    <div
+                                      key={`${detail.itemId}-${batch.batchNumber}`}
+                                      className="grid grid-cols-[1fr_110px] items-center gap-2"
+                                    >
+                                      <span className="truncate">{batch.batchNumber}</span>
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        max={batch.maxQtyPcs}
+                                        step={1}
+                                        value={batch.rawQtyPcs}
+                                        onChange={(e) =>
+                                          setDetailBatchQty(
+                                            index,
+                                            batch.batchNumber,
+                                            e.target.value,
+                                          )
+                                        }
+                                        className="h-7 text-right text-xs"
+                                      />
+                                      <div className="col-span-2 flex items-center justify-between text-[11px] text-muted-foreground">
+                                        <span>
+                                          {batch.qtyPcs.toLocaleString('id-ID')} pcs dipakai
+                                        </span>
+                                        <span>
+                                          max {batch.maxQtyPcs.toLocaleString('id-ID')} pcs
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            className="text-right"
+                            value={getAutoQtyPcs(
+                              detail.itemId,
+                              detail.batchNumbers,
+                              detail.batchQtyMap,
+                            )}
+                            readOnly
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min={0.001}
+                            step="0.001"
+                            className="text-right"
+                            value={detail.qtyKg}
+                            onChange={(e) =>
+                              setDetailField(index, 'qtyKg', e.target.value)
+                            }
+                            required
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            value={detail.notes}
+                            onChange={(e) =>
+                              setDetailField(index, 'notes', e.target.value)
+                            }
+                            placeholder="Optional"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeDetailRow(index)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </div>
 

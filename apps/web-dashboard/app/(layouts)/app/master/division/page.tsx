@@ -91,7 +91,7 @@ export default function MasterDataDivisionPage() {
 
       const response = await fetch(`/api/master-data-divisions?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -136,7 +136,7 @@ export default function MasterDataDivisionPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
       });
@@ -177,7 +177,7 @@ export default function MasterDataDivisionPage() {
     try {
       const response = await fetch(`/api/master-data-divisions/${uuid}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {

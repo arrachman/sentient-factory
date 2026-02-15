@@ -273,7 +273,7 @@ export default function LogisticInboundPage() {
       const response = await fetch(`/api/inbounds?${query.toString()}`, {
         cache: 'no-store',
         headers: token
-          ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+          ? { Authorization: `Bearer ${token}` }
           : undefined,
       });
 
@@ -299,7 +299,7 @@ export default function LogisticInboundPage() {
     setError('');
     try {
       const headers = token
-        ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+        ? { Authorization: `Bearer ${token}` }
         : undefined;
 
       const [profileRes, supplierRes, warehouseRes, itemRes] =
@@ -417,7 +417,7 @@ export default function LogisticInboundPage() {
       const response = await fetch(`/api/inbounds/${uuid}`, {
         cache: 'no-store',
         headers: token
-          ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+          ? { Authorization: `Bearer ${token}` }
           : undefined,
       });
       const payload = await response.json().catch(() => null);
@@ -512,7 +512,7 @@ export default function LogisticInboundPage() {
         headers: {
           'Content-Type': 'application/json',
           ...(token
-            ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+            ? { Authorization: `Bearer ${token}` }
             : {}),
         },
         body: JSON.stringify(payload),
@@ -544,7 +544,7 @@ export default function LogisticInboundPage() {
       const response = await fetch(`/api/inbounds/${uuid}`, {
         method: 'DELETE',
         headers: token
-          ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
+          ? { Authorization: `Bearer ${token}` }
           : undefined,
       });
 

@@ -100,7 +100,7 @@ export default function MasterDataWarehousePage() {
 
       const response = await fetch(`/api/master-data-warehouses?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -126,7 +126,7 @@ export default function MasterDataWarehousePage() {
       const query = new URLSearchParams({ page: '1', limit: '100' });
       const response = await fetch(`/api/master-data-cities?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -169,7 +169,7 @@ export default function MasterDataWarehousePage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           name: form.name,
@@ -219,7 +219,7 @@ export default function MasterDataWarehousePage() {
     try {
       const response = await fetch(`/api/master-data-warehouses/${uuid}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {

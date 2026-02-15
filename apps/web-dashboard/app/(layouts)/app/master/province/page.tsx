@@ -80,7 +80,7 @@ export default function MasterDataProvincePage() {
 
       const response = await fetch(`/api/master-data-provinces?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -118,7 +118,7 @@ export default function MasterDataProvincePage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           name: form.name,
@@ -161,7 +161,7 @@ export default function MasterDataProvincePage() {
     try {
       const response = await fetch(`/api/master-data-provinces/${uuid}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {

@@ -4,7 +4,7 @@ import { IsDateString, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class
 
 const DELIVERY_ORDER_STATUSES = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
 
-export class QueryDeliveryOrderDto {
+export class QueryOutboundDto {
   @ApiPropertyOptional({ example: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)

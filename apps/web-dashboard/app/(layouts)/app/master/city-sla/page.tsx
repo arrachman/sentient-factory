@@ -109,7 +109,7 @@ export default function MasterDataCitySlaPage() {
   );
 
   const fetchExistingSlaCityIds = async () => {
-    const headers = token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined;
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
     const cityIds: string[] = [];
     let pageCursor = 1;
     let totalPagesCursor = 1;
@@ -159,7 +159,7 @@ export default function MasterDataCitySlaPage() {
 
       const response = await fetch(`/api/master-data-city-slas?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -187,7 +187,7 @@ export default function MasterDataCitySlaPage() {
       const query = new URLSearchParams({ page: '1', limit: '100' });
       const response = await fetch(`/api/master-data-cities?${query.toString()}`, {
         cache: 'no-store',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !payload?.success) {
@@ -230,7 +230,7 @@ export default function MasterDataCitySlaPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           cityId: form.cityId,
@@ -279,7 +279,7 @@ export default function MasterDataCitySlaPage() {
     try {
       const response = await fetch(`/api/master-data-city-slas/${uuid}`, {
         method: 'DELETE',
-        headers: token ? { Authorization: `Bearer ${decodeURIComponent(token)}` } : undefined,
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success) {

@@ -119,7 +119,12 @@ function getTokenFromCookie() {
     return '';
   }
 
-  return decodeURIComponent(tokenPart.substring('sf_token='.length));
+  const rawToken = tokenPart.substring('sf_token='.length);
+  try {
+    return decodeURIComponent(rawToken);
+  } catch {
+    return rawToken;
+  }
 }
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
