@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateDeliveryOrderDto } from './dto/create-delivery-order.dto';
+import { QueryMonitoringDeliveryOrderDto } from './dto/query-monitoring-delivery-order.dto';
 import { QueryDeliveryOrderDto } from './dto/query-delivery-order.dto';
 import { UpdateDeliveryOrderDto } from './dto/update-delivery-order.dto';
 import { DeliveryOrdersService } from './delivery-orders.service';
@@ -41,8 +42,15 @@ export class DeliveryOrdersController {
   @Get('batch-options')
   @ApiOperation({ summary: 'Get batch options by item for delivery order form' })
   @ApiResponse({ status: 200, description: 'Batch options' })
-  getBatchOptions(@Query('itemId') itemId: string) {
-    return this.service.getBatchOptions(itemId);
+  getBatchOptions(@Query('itemId') itemId: string, @Query('excludeDoId') excludeDoId?: string) {
+    return this.service.getBatchOptions(itemId, excludeDoId);
+  }
+
+  @Get('report-monitoring-do')
+  @ApiOperation({ summary: 'Get monitoring DO and delivery report data' })
+  @ApiResponse({ status: 200, description: 'Monitoring report data' })
+  getMonitoringReport(@Query() query: QueryMonitoringDeliveryOrderDto) {
+    return this.service.findMonitoringReport(query);
   }
 
   @Get(':uuid')

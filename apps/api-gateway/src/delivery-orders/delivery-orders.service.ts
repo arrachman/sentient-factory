@@ -4,6 +4,7 @@ import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.ut
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDeliveryOrderDetailDto } from './dto/create-delivery-order-detail.dto';
 import { CreateDeliveryOrderDto } from './dto/create-delivery-order.dto';
+import { QueryMonitoringDeliveryOrderDto } from './dto/query-monitoring-delivery-order.dto';
 import { QueryDeliveryOrderDto } from './dto/query-delivery-order.dto';
 import { UpdateDeliveryOrderDto } from './dto/update-delivery-order.dto';
 
@@ -36,6 +37,8 @@ export class DeliveryOrdersService {
     let created;
     try {
       created = await this.prisma.$transaction(async (tx) => {
+        await this.ensureBatchAvailability(detailPayload, undefined, tx);
+
         const header = await tx.deliveryOrder.create({
           data: {
             doNumber,
@@ -148,39 +151,253 @@ export class DeliveryOrdersService {
     };
   }
 
-  async getBatchOptions(itemId?: string) {
+  async getBatchOptions(itemId?: string, excludeDoId?: string) {
     const normalizedItemId = String(itemId ?? '').trim();
     if (!normalizedItemId) {
       throw new BadRequestException('itemId is required');
     }
 
-    const rows = await this.prisma.inboundDetailBatch.groupBy({
-      by: ['batchIn'],
-      where: {
-        deletedAt: null,
-        inboundDetail: {
+    const normalizedExcludeDoId = String(excludeDoId ?? '').trim() || undefined;
+    const [inboundRows, usedRows] = await this.prisma.$transaction([
+      this.prisma.inboundDetailBatch.groupBy({
+        by: ['batchIn'],
+        where: {
           deletedAt: null,
-          itemId: normalizedItemId,
-          inbound: {
+          inboundDetail: {
             deletedAt: null,
-            status: 'POSTED',
+            itemId: normalizedItemId,
+            inbound: {
+              deletedAt: null,
+              status: 'POSTED',
+            },
           },
         },
-      },
-      _sum: {
-        qty: true,
-      },
-      orderBy: {
-        batchIn: 'asc',
-      },
+        _sum: {
+          qty: true,
+        },
+        orderBy: {
+          batchIn: 'asc',
+        },
+      }),
+      this.prisma.deliveryOrderDetail.groupBy({
+        by: ['batchNumber'],
+        where: {
+          deletedAt: null,
+          itemId: normalizedItemId,
+          deliveryOrder: {
+            deletedAt: null,
+            uuid: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
+          },
+        },
+        _sum: {
+          qtyPcs: true,
+        },
+      }),
+    ]);
+
+    const usedByBatch = new Map<string, number>();
+    usedRows.forEach((row) => {
+      const key = String(row.batchNumber ?? '')
+        .trim()
+        .toLowerCase();
+      if (!key) {
+        return;
+      }
+      const qty = Number(row._sum.qtyPcs ?? 0);
+      usedByBatch.set(key, (usedByBatch.get(key) ?? 0) + (Number.isFinite(qty) ? qty : 0));
     });
 
     return {
       success: true,
-      data: rows.map((row) => ({
-        batchNumber: row.batchIn,
-        qtyPcs: Number(row._sum.qty ?? 0),
-      })),
+      data: inboundRows
+        .map((row) => {
+          const inboundQty = Number(row._sum.qty ?? 0);
+          const usedQty =
+            usedByBatch.get(
+              String(row.batchIn ?? '')
+                .trim()
+                .toLowerCase(),
+            ) ?? 0;
+          const remainingQty = Math.max(inboundQty - usedQty, 0);
+          return {
+            batchNumber: row.batchIn,
+            qtyPcs: remainingQty,
+          };
+        })
+        .filter((row) => row.qtyPcs > 0),
+    };
+  }
+
+  async findMonitoringReport(query: QueryMonitoringDeliveryOrderDto) {
+    const where: Prisma.DeliveryOrderWhereInput = { deletedAt: null };
+
+    if (query.cityId?.trim()) {
+      where.destinationCityId = query.cityId.trim();
+    }
+
+    if (query.provinceId?.trim()) {
+      where.destinationCity = {
+        provinceId: query.provinceId.trim(),
+      };
+    }
+
+    if (query.doReceivedDateFrom || query.doReceivedDateTo) {
+      where.doReceivedDate = {
+        gte: query.doReceivedDateFrom ? new Date(query.doReceivedDateFrom) : undefined,
+        lte: query.doReceivedDateTo ? new Date(query.doReceivedDateTo) : undefined,
+      };
+    }
+
+    const items = await this.prisma.deliveryOrder.findMany({
+      where,
+      include: {
+        customer: { select: { uuid: true, code: true, name: true, type: true } },
+        destinationCity: {
+          select: {
+            uuid: true,
+            name: true,
+            postalCode: true,
+            province: { select: { uuid: true, name: true, isoCode: true } },
+          },
+        },
+        details: {
+          where: { deletedAt: null },
+          select: { itemId: true, batchNumber: true },
+        },
+      },
+      orderBy: [{ doReceivedDate: 'desc' }, { createdAt: 'desc' }],
+    });
+
+    const pairKeys = new Set<string>();
+    const batchNumbers = new Set<string>();
+    const itemIds = new Set<string>();
+    items.forEach((row) => {
+      row.details.forEach((detail) => {
+        const itemId = String(detail.itemId ?? '').trim();
+        const batchNumber = String(detail.batchNumber ?? '').trim();
+        if (!itemId || !batchNumber) {
+          return;
+        }
+        pairKeys.add(`${itemId}::${batchNumber}`);
+        itemIds.add(itemId);
+        batchNumbers.add(batchNumber);
+      });
+    });
+
+    const sourceByPair = new Map<
+      string,
+      Array<{
+        supplierId: string | null;
+        supplierName: string | null;
+        warehouseId: string | null;
+        warehouseName: string | null;
+      }>
+    >();
+
+    if (pairKeys.size > 0) {
+      const sourceRows = await this.prisma.inboundDetailBatch.findMany({
+        where: {
+          deletedAt: null,
+          batchIn: { in: [...batchNumbers] },
+          inboundDetail: {
+            deletedAt: null,
+            itemId: { in: [...itemIds] },
+            inbound: { deletedAt: null },
+          },
+        },
+        select: {
+          batchIn: true,
+          inboundDetail: {
+            select: {
+              itemId: true,
+              inbound: {
+                select: {
+                  supplierId: true,
+                  warehouseId: true,
+                  supplier: { select: { name: true } },
+                  warehouse: { select: { name: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      sourceRows.forEach((row) => {
+        const itemId = String(row.inboundDetail?.itemId ?? '').trim();
+        const batchNumber = String(row.batchIn ?? '').trim();
+        const pairKey = `${itemId}::${batchNumber}`;
+
+        if (!pairKeys.has(pairKey)) {
+          return;
+        }
+
+        const next = sourceByPair.get(pairKey) ?? [];
+        next.push({
+          supplierId: row.inboundDetail?.inbound?.supplierId ?? null,
+          supplierName: row.inboundDetail?.inbound?.supplier?.name ?? null,
+          warehouseId: row.inboundDetail?.inbound?.warehouseId ?? null,
+          warehouseName: row.inboundDetail?.inbound?.warehouse?.name ?? null,
+        });
+        sourceByPair.set(pairKey, next);
+      });
+    }
+
+    const supplierFilter = query.supplierId?.trim() || '';
+    const warehouseFilter = query.warehouseId?.trim() || '';
+
+    const enriched = items
+      .map((row) => {
+        const supplierSet = new Map<string, string>();
+        const warehouseSet = new Map<string, string>();
+
+        row.details.forEach((detail) => {
+          const pairKey = `${detail.itemId}::${detail.batchNumber}`;
+          const sources = sourceByPair.get(pairKey) ?? [];
+          sources.forEach((source) => {
+            if (source.supplierId) {
+              supplierSet.set(source.supplierId, source.supplierName || source.supplierId);
+            }
+            if (source.warehouseId) {
+              warehouseSet.set(source.warehouseId, source.warehouseName || source.warehouseId);
+            }
+          });
+        });
+
+        return {
+          ...row,
+          sourceSuppliers: [...supplierSet.entries()].map(([id, name]) => ({ id, name })),
+          sourceWarehouses: [...warehouseSet.entries()].map(([id, name]) => ({ id, name })),
+        };
+      })
+      .filter((row) => {
+        if (supplierFilter) {
+          const hasSupplier = row.sourceSuppliers.some(
+            (supplier) => supplier.id === supplierFilter,
+          );
+          if (!hasSupplier) {
+            return false;
+          }
+        }
+
+        if (warehouseFilter) {
+          const hasWarehouse = row.sourceWarehouses.some(
+            (warehouse) => warehouse.id === warehouseFilter,
+          );
+          if (!hasWarehouse) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+    return {
+      success: true,
+      data: enriched,
+      meta: {
+        total: enriched.length,
+      },
     };
   }
 
@@ -264,6 +481,10 @@ export class DeliveryOrdersService {
 
     try {
       await this.prisma.$transaction(async (tx) => {
+        if (detailsProvided) {
+          await this.ensureBatchAvailability(detailPayload, uuid, tx);
+        }
+
         await tx.deliveryOrder.update({
           where: { uuid },
           data: {
@@ -504,5 +725,120 @@ export class DeliveryOrdersService {
     }
 
     return new Map(items.map((item) => [item.uuid, item]));
+  }
+
+  private async ensureBatchAvailability(
+    details: CreateDeliveryOrderDetailDto[],
+    excludeDoId?: string,
+    tx: Prisma.TransactionClient,
+  ) {
+    const requestedByPair = new Map<string, number>();
+    const pairLabelByKey = new Map<string, { itemId: string; batchNumber: string }>();
+    const itemIds = new Set<string>();
+    const batchNumbers = new Set<string>();
+
+    details.forEach((detail) => {
+      const itemId = String(detail.itemId ?? '').trim();
+      const batchNumber = String(detail.batchNumber ?? '').trim();
+      const qty = Number(detail.qtyPcs ?? 0);
+      const qtyPcs = Number.isFinite(qty) ? qty : 0;
+      const key = `${itemId}::${batchNumber.toLowerCase()}`;
+
+      requestedByPair.set(key, (requestedByPair.get(key) ?? 0) + qtyPcs);
+      if (!pairLabelByKey.has(key)) {
+        pairLabelByKey.set(key, { itemId, batchNumber });
+      }
+      itemIds.add(itemId);
+      batchNumbers.add(batchNumber);
+    });
+
+    if (pairLabelByKey.size === 0) {
+      return;
+    }
+
+    const normalizedExcludeDoId = String(excludeDoId ?? '').trim() || undefined;
+    const [inboundRows, usedRows] = await Promise.all([
+      tx.inboundDetailBatch.findMany({
+        where: {
+          deletedAt: null,
+          batchIn: { in: [...batchNumbers] },
+          inboundDetail: {
+            deletedAt: null,
+            itemId: { in: [...itemIds] },
+            inbound: {
+              deletedAt: null,
+              status: 'POSTED',
+            },
+          },
+        },
+        select: {
+          batchIn: true,
+          qty: true,
+          inboundDetail: {
+            select: {
+              itemId: true,
+            },
+          },
+        },
+      }),
+      tx.deliveryOrderDetail.findMany({
+        where: {
+          deletedAt: null,
+          itemId: { in: [...itemIds] },
+          batchNumber: { in: [...batchNumbers] },
+          deliveryOrder: {
+            deletedAt: null,
+            uuid: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
+          },
+        },
+        select: {
+          itemId: true,
+          batchNumber: true,
+          qtyPcs: true,
+        },
+      }),
+    ]);
+
+    const inboundByPair = new Map<string, number>();
+    inboundRows.forEach((row) => {
+      const itemId = String(row.inboundDetail?.itemId ?? '').trim();
+      const batchNumber = String(row.batchIn ?? '').trim();
+      if (!itemId || !batchNumber) {
+        return;
+      }
+      const key = `${itemId}::${batchNumber.toLowerCase()}`;
+      const qty = Number(row.qty ?? 0);
+      inboundByPair.set(key, (inboundByPair.get(key) ?? 0) + (Number.isFinite(qty) ? qty : 0));
+    });
+
+    const usedByPair = new Map<string, number>();
+    usedRows.forEach((row) => {
+      const itemId = String(row.itemId ?? '').trim();
+      const batchNumber = String(row.batchNumber ?? '').trim();
+      if (!itemId || !batchNumber) {
+        return;
+      }
+      const key = `${itemId}::${batchNumber.toLowerCase()}`;
+      const qty = Number(row.qtyPcs ?? 0);
+      usedByPair.set(key, (usedByPair.get(key) ?? 0) + (Number.isFinite(qty) ? qty : 0));
+    });
+
+    requestedByPair.forEach((requestedQty, key) => {
+      const pair = pairLabelByKey.get(key);
+      if (!pair) {
+        return;
+      }
+      const inboundQty = inboundByPair.get(key) ?? 0;
+      const usedQty = usedByPair.get(key) ?? 0;
+      const availableQty = Math.max(inboundQty - usedQty, 0);
+
+      if (requestedQty > availableQty) {
+        throw new BadRequestException(
+          `Insufficient stock for item ${pair.itemId} batch ${pair.batchNumber}. Remaining ${availableQty.toLocaleString(
+            'en-US',
+          )} pcs, requested ${requestedQty.toLocaleString('en-US')} pcs.`,
+        );
+      }
+    });
   }
 }
