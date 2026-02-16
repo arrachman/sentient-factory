@@ -142,7 +142,6 @@ type InboundDetailApi = {
   [key: string]: unknown;
 };
 
-const STATUS_OPTIONS = ['DRAFT', 'POSTED', 'CANCELLED'] as const;
 const REQUIRED_FIELD_CLASS =
   'border-blue-500/70 focus-visible:border-blue-600 focus-visible:ring-blue-100';
 const REQUIRED_SELECT_TRIGGER_CLASS =
@@ -476,9 +475,9 @@ export default function LogisticInboundPage() {
   const [showForm, setShowForm] = useState(false);
   const [currentUserId, setCurrentUserId] = useState('');
   const [lockedWarehouseId, setLockedWarehouseId] = useState('');
+  const [isAdminRole, setIsAdminRole] = useState(false);
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -526,9 +525,6 @@ export default function LogisticInboundPage() {
       });
       if (search.trim()) {
         query.set('search', search.trim());
-      }
-      if (statusFilter) {
-        query.set('status', statusFilter);
       }
 
       const response = await fetch(`/api/inbounds?${query.toString()}`, {
@@ -617,6 +613,19 @@ export default function LogisticInboundPage() {
         ? itemPayload.data
         : [];
       const userId = String(profilePayload?.data?.id ?? '');
+      const roleNames = [
+        profilePayload?.data?.role,
+        ...(Array.isArray(profilePayload?.data?.roles)
+          ? profilePayload.data.roles
+          : []),
+        profilePayload?.data?.user?.role,
+        ...(Array.isArray(profilePayload?.data?.user?.roles)
+          ? profilePayload.data.user.roles
+          : []),
+      ]
+        .map((value) => String(value ?? '').trim().toLowerCase())
+        .filter(Boolean);
+      const hasAdminRole = roleNames.includes('admin');
       const mappedWarehouseIdRaw =
         profilePayload?.data?.warehouseId ??
         profilePayload?.data?.user?.warehouseId ??
@@ -628,12 +637,13 @@ export default function LogisticInboundPage() {
       )
         ? mappedWarehouseId
         : '';
-      const nextLockedWarehouseId = resolvedLockedWarehouseId;
+      const nextLockedWarehouseId = hasAdminRole ? '' : resolvedLockedWarehouseId;
 
       setSuppliers(nextSuppliers);
       setWarehouses(nextWarehouses);
       setItemOptions(nextItems);
       setCurrentUserId(userId);
+      setIsAdminRole(hasAdminRole);
       setLockedWarehouseId(nextLockedWarehouseId);
 
       setForm((state) => ({
@@ -748,20 +758,12 @@ export default function LogisticInboundPage() {
             }))
             .filter((batch) => batch.batchIn && batch.qty > 0);
 
-          const parsedUomInput = detail.uomInput.trim();
           const isDetailValid =
             detail.itemId && batches.length > 0;
-          if (isDetailValid && parsedUomInput === '') {
-            throw new Error('Input UOM wajib diisi untuk setiap item yang memiliki batch.');
-          }
-
-          const uomInput = Number(parsedUomInput);
-          if (
-            isDetailValid &&
-            (!Number.isInteger(uomInput) || uomInput < 0)
-          ) {
-            throw new Error('Input UOM harus integer dan tidak boleh negatif.');
-          }
+          const uomInput = Math.max(
+            0,
+            Math.trunc(Number(detail.uomInput.trim() || 0)),
+          );
 
           return {
             itemId: detail.itemId,
@@ -985,7 +987,7 @@ export default function LogisticInboundPage() {
       <div className="space-y-5">
         {!showForm ? (
           <div className="rounded-lg border p-5">
-            <div className="mb-3 grid gap-2 md:grid-cols-[1fr_200px_auto]">
+            <div className="mb-3 grid gap-2 md:grid-cols-[1fr_auto]">
               <div className="relative flex-1">
                 <Input
                   placeholder="Search transaction no, supplier, warehouse..."
@@ -1013,20 +1015,6 @@ export default function LogisticInboundPage() {
                   </button>
                 ) : null}
               </div>
-              <AutocompleteSelect
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value)}
-                options={[
-                  { value: '', label: 'All Status' },
-                  ...STATUS_OPTIONS.map((status) => ({
-                    value: status,
-                    label: status,
-                  })),
-                ]}
-                placeholder="All Status"
-                searchPlaceholder="Search status..."
-                emptyText="No status found."
-              />
               <Button
                 variant="outline"
                 onClick={() => fetchList(1)}
@@ -1246,7 +1234,7 @@ export default function LogisticInboundPage() {
                         required
                         triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
                       />
-                      {lockedWarehouseId ? (
+                      {!isAdminRole && lockedWarehouseId ? (
                         <p className="text-xs text-muted-foreground">
                           Warehouse dikunci berdasarkan user login (
                           {currentUserId}).
@@ -1326,7 +1314,7 @@ export default function LogisticInboundPage() {
                       key={`detail-${detailIndex}`}
                       className="rounded-md border p-4"
                     >
-                      <div className="mb-3 grid gap-3 md:grid-cols-[1fr_160px_180px_auto]">
+                      <div className="mb-3 grid gap-3 md:grid-cols-[1fr_160px_auto]">
                         <div className="space-y-1 md:col-span-4">
                           <Label>Item</Label>
                           <AutocompleteSelect
@@ -1357,24 +1345,6 @@ export default function LogisticInboundPage() {
                         <div className="space-y-1">
                           <Label>Qty (auto)</Label>
                           <Input value={String(detailQty)} readOnly />
-                        </div>
-                        <div className="space-y-1">
-                          <Label>Input UOM (integer)</Label>
-                          <Input
-                            type="number"
-                            step="1"
-                            min="0"
-                            placeholder="cth: 25"
-                            value={detail.uomInput}
-                            onChange={(e) =>
-                              setDetailField(
-                                detailIndex,
-                                'uomInput',
-                                e.target.value,
-                              )
-                            }
-                            className={REQUIRED_FIELD_CLASS}
-                          />
                         </div>
                         <div className="flex items-end">
                           <Button

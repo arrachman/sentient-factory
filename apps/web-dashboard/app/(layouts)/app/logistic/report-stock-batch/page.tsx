@@ -22,7 +22,8 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 
 type WarehouseOption = {
-  uuid: string;
+  id?: string | number;
+  uuid?: string | number;
   name: string;
 };
 
@@ -151,9 +152,26 @@ function formatProductLabel(row?: ReportRow | null) {
   return parts.join(' ');
 }
 
+function toEntityId(value: unknown) {
+  if (value == null) {
+    return '';
+  }
+  const id = String(value).trim();
+  if (!id || id === 'null' || id === 'undefined') {
+    return '';
+  }
+  return id;
+}
+
+function pickEntityId(entity?: { id?: string | number; uuid?: string | number } | null) {
+  return toEntityId(entity?.id ?? entity?.uuid);
+}
+
 export default function ReportStockBatchPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilter);
   const [rows, setRows] = useState<ReportRow[]>([]);
+  const [lockedWarehouseId, setLockedWarehouseId] = useState('');
+  const [isAdminRole, setIsAdminRole] = useState(false);
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
   const [items, setItems] = useState<ItemOption[]>([]);
@@ -178,7 +196,11 @@ export default function ReportStockBatchPage() {
     setLoadingOptions(true);
     setError('');
     try {
-      const [warehouseRes, supplierRes, itemRes] = await Promise.all([
+      const [profileRes, warehouseRes, supplierRes, itemRes] = await Promise.all([
+        fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers,
+        }),
         fetch('/api/master-data-warehouses?page=1&limit=100', {
           cache: 'no-store',
           headers,
@@ -193,12 +215,16 @@ export default function ReportStockBatchPage() {
         }),
       ]);
 
-      const [warehousePayload, supplierPayload, itemPayload] = await Promise.all([
+      const [profilePayload, warehousePayload, supplierPayload, itemPayload] = await Promise.all([
+        profileRes.json().catch(() => null),
         warehouseRes.json().catch(() => null),
         supplierRes.json().catch(() => null),
         itemRes.json().catch(() => null),
       ]);
 
+      if (!profileRes.ok || !profilePayload?.success) {
+        throw new Error(profilePayload?.message || 'Failed to load current user');
+      }
       if (!warehouseRes.ok || !warehousePayload?.success) {
         throw new Error(warehousePayload?.message || 'Failed to load warehouse options');
       }
@@ -209,9 +235,59 @@ export default function ReportStockBatchPage() {
         throw new Error(itemPayload?.message || 'Failed to load item options');
       }
 
-      setWarehouses(Array.isArray(warehousePayload.data) ? warehousePayload.data : []);
+      const nextWarehouses: WarehouseOption[] = Array.isArray(warehousePayload.data) ? warehousePayload.data : [];
+      setWarehouses(nextWarehouses);
       setSuppliers(Array.isArray(supplierPayload.data) ? supplierPayload.data : []);
       setItems(Array.isArray(itemPayload.data) ? itemPayload.data : []);
+
+      const profileData = profilePayload?.data ?? {};
+      const roleNames = [
+        profileData?.role,
+        ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
+        profileData?.user?.role,
+        ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
+      ]
+        .map((value) => String(value ?? '').trim().toLowerCase())
+        .filter(Boolean);
+      const hasAdminRole = roleNames.includes('admin');
+      setIsAdminRole(hasAdminRole);
+
+      const warehouseCandidates = [
+        profileData?.warehouseId,
+        profileData?.user?.warehouseId,
+        profileData?.warehouse?.id,
+        profileData?.user?.warehouse?.id,
+        profileData?.warehouseUuid,
+        profileData?.user?.warehouseUuid,
+        profileData?.warehouse?.uuid,
+        profileData?.user?.warehouse?.uuid,
+      ]
+        .map((value) => toEntityId(value))
+        .filter(Boolean);
+      const optionIds = new Set(nextWarehouses.map((warehouse) => pickEntityId(warehouse)).filter(Boolean));
+      const profileWarehouseName = String(
+        profileData?.warehouse?.name ?? profileData?.user?.warehouse?.name ?? '',
+      )
+        .trim()
+        .toLowerCase();
+      const warehouseByName = nextWarehouses.find(
+        (warehouse) =>
+          profileWarehouseName &&
+          String(warehouse?.name ?? '').trim().toLowerCase() === profileWarehouseName,
+      );
+      const defaultWarehouseId =
+        warehouseCandidates.find((candidate) => optionIds.has(candidate)) ||
+        pickEntityId(warehouseByName) ||
+        '';
+      if (defaultWarehouseId && !hasAdminRole) {
+        setLockedWarehouseId(defaultWarehouseId);
+        setFilters((prev) => ({
+          ...prev,
+          warehouseId: defaultWarehouseId,
+        }));
+      } else {
+        setLockedWarehouseId('');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load options');
     } finally {
@@ -224,7 +300,9 @@ export default function ReportStockBatchPage() {
     setError('');
     try {
       const query = new URLSearchParams();
-      if (filters.warehouseId) {
+      if (!isAdminRole && lockedWarehouseId) {
+        query.set('warehouseId', lockedWarehouseId);
+      } else if (filters.warehouseId) {
         query.set('warehouseId', filters.warehouseId);
       }
       if (filters.supplierId) {
@@ -250,7 +328,7 @@ export default function ReportStockBatchPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters, headers]);
+  }, [filters, headers, isAdminRole, lockedWarehouseId]);
 
   useEffect(() => {
     fetchOptions();
@@ -395,15 +473,26 @@ export default function ReportStockBatchPage() {
             <AutocompleteSelect
               value={filters.warehouseId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, warehouseId: value }))}
-              options={warehouses.map((warehouse) => ({
-                value: warehouse.uuid,
-                label: warehouse.name,
-              }))}
+              options={warehouses.flatMap((warehouse) => {
+                const value = pickEntityId(warehouse);
+                if (!value) {
+                  return [];
+                }
+                return {
+                  value,
+                  label: warehouse.name,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All warehouses'}
               searchPlaceholder="Search warehouse..."
               emptyText="No warehouse found"
-              disabled={loadingOptions}
+              disabled={loadingOptions || (!isAdminRole && Boolean(lockedWarehouseId))}
             />
+            {!isAdminRole && lockedWarehouseId ? (
+              <p className="text-xs text-muted-foreground">
+                Warehouse dikunci berdasarkan user login.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -443,7 +532,17 @@ export default function ReportStockBatchPage() {
           <Button type="button" onClick={fetchReport} disabled={loading}>
             Show Data
           </Button>
-          <Button type="button" variant="outline" onClick={() => setFilters(initialFilter)} disabled={loading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              setFilters({
+                ...initialFilter,
+                warehouseId: isAdminRole ? '' : lockedWarehouseId,
+              })
+            }
+            disabled={loading}
+          >
             Reset Filters
           </Button>
         </div>

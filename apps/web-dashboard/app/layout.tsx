@@ -11,8 +11,19 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Metronic',
-    default: 'Metronic', // a default is required when creating a template
+    template: '%s | Sentient Factory',
+    default: 'Sentient Factory', // a default is required when creating a template
+  },
+  icons: {
+    icon: [
+      {
+        url: '/media/app/favicon-16x13.png',
+        sizes: '13x16',
+        type: 'image/png',
+      },
+    ],
+    shortcut: '/media/app/favicon-16x13.png',
+    apple: '/media/app/favicon-16x13.png',
   },
 };
 

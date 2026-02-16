@@ -107,7 +107,7 @@ Get detailed profile information for a specific user.
     "lastName": "Doe",
     "role": "admin",
     "status": "active",
-    "phone": "+1234567890",
+    "phone": "+12345690",
     "department": "IT",
     "position": "Lead Developer",
     "avatarUrl": "https://...",

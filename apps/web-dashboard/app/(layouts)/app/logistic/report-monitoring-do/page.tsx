@@ -37,7 +37,8 @@ type CityOption = {
 };
 
 type WarehouseOption = {
-  uuid: string;
+  id?: string | number;
+  uuid?: string | number;
   name: string;
 };
 
@@ -71,13 +72,20 @@ type MonitoringRow = {
   stdReturnDoDays?: number;
   stdDoReturnDate?: string | null;
   kpiDoReturnStatus?: string | null;
-  totalQtyPcs?: string | number | null;
-  totalKg?: string | number | null;
+  totalItemTypes?: string | number | DecimalLike | null;
+  totalQtyPcs?: string | number | DecimalLike | null;
+  totalKg?: string | number | DecimalLike | null;
   sourceSuppliers?: Array<{ id: string; name: string }>;
   sourceWarehouses?: Array<{ id: string; name: string }>;
   customer?: {
     name?: string;
   } | null;
+};
+
+type DecimalLike = {
+  s?: number;
+  e?: number;
+  d?: number[];
 };
 
 type FilterState = {
@@ -139,12 +147,64 @@ function fmtExcelDate(value?: string | null) {
   return `${day}/${month}/${year}`;
 }
 
-function fmtNumber(value?: string | number | null) {
-  const n = Number(value ?? 0);
-  if (Number.isNaN(n)) {
+function isDecimalLike(value: unknown): value is DecimalLike {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const candidate = value as DecimalLike;
+  return Array.isArray(candidate.d);
+}
+
+function decimalLikeToString(value: DecimalLike): string {
+  const sign = value.s === -1 ? '-' : '';
+  const exponent = Number.isFinite(value.e) ? Number(value.e) : 0;
+  const chunks = Array.isArray(value.d) ? value.d : [];
+
+  if (chunks.length === 0) {
     return '0';
   }
-  return n.toLocaleString('id-ID');
+
+  const digits =
+    chunks
+      .map((chunk, index) => (index === 0 ? String(chunk) : String(chunk).padStart(7, '0')))
+      .join('')
+      .replace(/^0+/, '') || '0';
+
+  const decimalPos = exponent + 1;
+  let normalized = '';
+
+  if (decimalPos <= 0) {
+    normalized = `0.${'0'.repeat(Math.abs(decimalPos))}${digits}`;
+  } else if (decimalPos >= digits.length) {
+    normalized = `${digits}${'0'.repeat(decimalPos - digits.length)}`;
+  } else {
+    normalized = `${digits.slice(0, decimalPos)}.${digits.slice(decimalPos)}`;
+  }
+
+  if (normalized.includes('.')) {
+    normalized = normalized.replace(/\.?0+$/, '');
+  }
+
+  return `${sign}${normalized || '0'}`;
+}
+
+function normalizeNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  if (isDecimalLike(value)) {
+    const parsed = Number(decimalLikeToString(value));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function fmtNumber(value?: unknown) {
+  return normalizeNumber(value).toLocaleString('id-ID');
 }
 
 function mapKpi(value?: string | null) {
@@ -161,6 +221,21 @@ function mapKpi(value?: string | null) {
   }
 
   return value;
+}
+
+function toEntityId(value: unknown) {
+  if (value == null) {
+    return '';
+  }
+  const id = String(value).trim();
+  if (!id || id === 'null' || id === 'undefined') {
+    return '';
+  }
+  return id;
+}
+
+function pickEntityId(entity?: { id?: string | number; uuid?: string | number } | null) {
+  return toEntityId(entity?.id ?? entity?.uuid);
 }
 
 function downloadBufferAsXlsx(buffer: ArrayBuffer, filename: string) {
@@ -180,6 +255,8 @@ function downloadBufferAsXlsx(buffer: ArrayBuffer, filename: string) {
 export default function ReportMonitoringDoPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilter);
   const [rows, setRows] = useState<MonitoringRow[]>([]);
+  const [lockedWarehouseId, setLockedWarehouseId] = useState('');
+  const [isAdminRole, setIsAdminRole] = useState(false);
 
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
@@ -250,19 +327,58 @@ export default function ReportMonitoringDoPage() {
       setSuppliers(Array.isArray(supplierPayload.data) ? supplierPayload.data : []);
       setProvinces(Array.isArray(provincePayload.data) ? provincePayload.data : []);
 
-      const mappedWarehouseIdRaw =
-        profilePayload?.data?.warehouseId ?? profilePayload?.data?.user?.warehouseId ?? '';
-      const mappedWarehouseId = String(mappedWarehouseIdRaw).trim();
-      const defaultWarehouseId =
-        mappedWarehouseId && mappedWarehouseId !== 'null' && mappedWarehouseId !== 'undefined'
-          ? mappedWarehouseId
-          : '';
+      const profileData = profilePayload?.data ?? {};
+      const roleNames = [
+        profileData?.role,
+        ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
+        profileData?.user?.role,
+        ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
+      ]
+        .map((value) => String(value ?? '').trim().toLowerCase())
+        .filter(Boolean);
+      const hasAdminRole = roleNames.includes('admin');
+      setIsAdminRole(hasAdminRole);
 
-      if (defaultWarehouseId) {
+      const warehouseCandidates = [
+        profileData?.warehouseId,
+        profileData?.user?.warehouseId,
+        profileData?.warehouse?.id,
+        profileData?.user?.warehouse?.id,
+        profileData?.warehouseUuid,
+        profileData?.user?.warehouseUuid,
+        profileData?.warehouse?.uuid,
+        profileData?.user?.warehouse?.uuid,
+      ]
+        .map((value) => toEntityId(value))
+        .filter(Boolean);
+      const optionIds = new Set(
+        (Array.isArray(warehousePayload.data) ? warehousePayload.data : [])
+          .map((warehouse: WarehouseOption) => pickEntityId(warehouse))
+          .filter(Boolean),
+      );
+      const profileWarehouseName = String(
+        profileData?.warehouse?.name ?? profileData?.user?.warehouse?.name ?? '',
+      )
+        .trim()
+        .toLowerCase();
+      const warehouseByName = (Array.isArray(warehousePayload.data) ? warehousePayload.data : []).find(
+        (warehouse: WarehouseOption) =>
+          profileWarehouseName &&
+          String(warehouse?.name ?? '').trim().toLowerCase() === profileWarehouseName,
+      );
+      const defaultWarehouseId =
+        warehouseCandidates.find((candidate) => optionIds.has(candidate)) ||
+        pickEntityId(warehouseByName) ||
+        '';
+
+      if (defaultWarehouseId && !hasAdminRole) {
+        setLockedWarehouseId(defaultWarehouseId);
         setFilters((prev) => ({
           ...prev,
-          warehouseId: prev.warehouseId || defaultWarehouseId,
+          warehouseId: defaultWarehouseId,
         }));
+      } else {
+        setLockedWarehouseId('');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load options');
@@ -303,7 +419,9 @@ export default function ReportMonitoringDoPage() {
     setError('');
     try {
       const query = new URLSearchParams();
-      if (filters.warehouseId) {
+      if (!isAdminRole && lockedWarehouseId) {
+        query.set('warehouseId', lockedWarehouseId);
+      } else if (filters.warehouseId) {
         query.set('warehouseId', filters.warehouseId);
       }
       if (filters.supplierId) {
@@ -340,7 +458,7 @@ export default function ReportMonitoringDoPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters, headers]);
+  }, [filters, headers, isAdminRole, lockedWarehouseId]);
 
   useEffect(() => {
     fetchOptions();
@@ -415,8 +533,8 @@ export default function ReportMonitoringDoPage() {
         Number(row.stdReturnDoDays ?? 0),
         fmtExcelDate(row.stdDoReturnDate),
         mapKpi(row.kpiDoReturnStatus),
-        Number(row.totalQtyPcs ?? 0),
-        Number(row.totalKg ?? 0),
+        normalizeNumber(row.totalItemTypes ?? row.totalQtyPcs),
+        normalizeNumber(row.totalKg),
       ]);
 
       const workbook = new ExcelJS.Workbook();
@@ -527,15 +645,26 @@ export default function ReportMonitoringDoPage() {
             <AutocompleteSelect
               value={filters.warehouseId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, warehouseId: value }))}
-              options={warehouses.map((warehouse) => ({
-                value: warehouse.uuid,
-                label: warehouse.name,
-              }))}
+              options={warehouses.flatMap((warehouse) => {
+                const value = pickEntityId(warehouse);
+                if (!value) {
+                  return [];
+                }
+                return {
+                  value,
+                  label: warehouse.name,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All warehouses'}
               searchPlaceholder="Search warehouse..."
               emptyText="No warehouse found"
-              disabled={loadingOptions}
+              disabled={loadingOptions || (!isAdminRole && Boolean(lockedWarehouseId))}
             />
+            {!isAdminRole && lockedWarehouseId ? (
+              <p className="text-xs text-muted-foreground">
+                Warehouse dikunci berdasarkan user login.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2">
@@ -607,7 +736,12 @@ export default function ReportMonitoringDoPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setFilters(initialFilter)}
+            onClick={() =>
+              setFilters({
+                ...initialFilter,
+                warehouseId: isAdminRole ? '' : lockedWarehouseId,
+              })
+            }
             disabled={loading}
           >
             Reset Filters
@@ -652,7 +786,9 @@ export default function ReportMonitoringDoPage() {
                 ) : null}
 
                 {rows.map((row, index) => (
-                  <TableRow key={row.uuid}>
+                  <TableRow
+                    key={`${row.uuid || row.doNumber || 'row'}-${row.doReceivedDate || 'date'}-${index}`}
+                  >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{row.doNumber || '-'}</TableCell>
                     <TableCell>{fmtDate(row.doReceivedDate)}</TableCell>
@@ -668,7 +804,9 @@ export default function ReportMonitoringDoPage() {
                         ? row.sourceSuppliers.map((item) => item.name).join(', ')
                         : '-'}
                     </TableCell>
-                    <TableCell className="text-right">{fmtNumber(row.totalQtyPcs)}</TableCell>
+                    <TableCell className="text-right">
+                      {fmtNumber(row.totalItemTypes ?? row.totalQtyPcs)}
+                    </TableCell>
                     <TableCell className="text-right">{fmtNumber(row.totalKg)}</TableCell>
                   </TableRow>
                 ))}

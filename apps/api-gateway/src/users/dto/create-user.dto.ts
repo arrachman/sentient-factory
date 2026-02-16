@@ -15,7 +15,7 @@ export class CreateUserDto {
 
   @ApiProperty({ example: 'Password123!' })
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   password!: string;
 
   @ApiPropertyOptional({ example: 'Admin Operations' })

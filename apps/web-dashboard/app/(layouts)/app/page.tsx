@@ -389,8 +389,8 @@ export default function Page() {
                     <TableCell colSpan={5}>Belum ada data inbound.</TableCell>
                   </TableRow>
                 ) : (
-                  inboundRows.map((row) => (
-                    <TableRow key={row.uuid}>
+                  inboundRows.map((row, index) => (
+                    <TableRow key={row.uuid || row.transactionNo || `inbound-${index}`}>
                       <TableCell className="font-medium">{row.transactionNo || '-'}</TableCell>
                       <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                       <TableCell>{row.supplier?.name || '-'}</TableCell>
@@ -431,8 +431,8 @@ export default function Page() {
                     <TableCell colSpan={5}>Belum ada data outbound.</TableCell>
                   </TableRow>
                 ) : (
-                  outboundRows.map((row) => (
-                    <TableRow key={row.uuid}>
+                  outboundRows.map((row, index) => (
+                    <TableRow key={row.uuid || row.doNumber || `outbound-${index}`}>
                       <TableCell className="font-medium">{row.doNumber || '-'}</TableCell>
                       <TableCell>{fmtDate(row.doDate)}</TableCell>
                       <TableCell>{row.customer?.name || '-'}</TableCell>

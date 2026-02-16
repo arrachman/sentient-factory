@@ -72,7 +72,7 @@ export class CreateMasterDataContactDto {
   @MaxLength(255)
   contactEmail?: string;
 
-  @ApiPropertyOptional({ example: '+628123456789' })
+  @ApiPropertyOptional({ example: '+6281234569' })
   @IsOptional()
   @IsString()
   @MaxLength(50)

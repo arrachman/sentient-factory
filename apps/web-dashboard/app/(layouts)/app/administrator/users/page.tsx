@@ -435,7 +435,7 @@ export default function AdministratorUsersPage() {
                     value={form.password}
                     onChange={(e) => setForm((s) => ({ ...s, password: e.target.value }))}
                     required={!editingUuid}
-                    minLength={8}
+                    minLength={6}
                   />
                 </div>
               </div>

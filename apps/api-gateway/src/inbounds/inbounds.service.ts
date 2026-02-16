@@ -301,6 +301,8 @@ export class InboundsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
+      await this.ensureInboundDeleteWillNotCauseNegativeStock(tx, id);
+
       await tx.inbound.update({
         where: { id },
         data: {
@@ -336,6 +338,93 @@ export class InboundsService {
     return { success: true, message: 'Inbound deleted' };
   }
 
+  private async ensureInboundDeleteWillNotCauseNegativeStock(
+    tx: Prisma.TransactionClient,
+    inboundId: number,
+  ) {
+    const inboundContributions = await tx.inventoryLedger.groupBy({
+      by: ['itemId', 'warehouseId', 'batchId'],
+      where: {
+        referenceDocType: 'INBOUND',
+        referenceDocId: String(inboundId),
+        deletedAt: null,
+      },
+      _sum: {
+        quantityPcs: true,
+      },
+    });
+
+    if (!inboundContributions.length) {
+      return;
+    }
+
+    const keySet = new Set<string>();
+    const inboundQtyByKey = new Map<string, number>();
+    inboundContributions.forEach((row) => {
+      const key = `${row.itemId}::${row.warehouseId}::${row.batchId}`;
+      keySet.add(key);
+      const qty = Number(row._sum.quantityPcs ?? 0);
+      inboundQtyByKey.set(key, Number.isFinite(qty) ? qty : 0);
+    });
+
+    const whereOr = [...keySet].map((key) => {
+      const [itemId, warehouseId, batchId] = key.split('::').map((value) => Number(value));
+      return {
+        itemId,
+        warehouseId,
+        batchId,
+      };
+    });
+
+    const currentBalances = await tx.inventoryLedger.groupBy({
+      by: ['itemId', 'warehouseId', 'batchId'],
+      where: {
+        deletedAt: null,
+        OR: whereOr,
+      },
+      _sum: {
+        quantityPcs: true,
+      },
+    });
+
+    const currentBalanceByKey = new Map<string, number>();
+    currentBalances.forEach((row) => {
+      const key = `${row.itemId}::${row.warehouseId}::${row.batchId}`;
+      const qty = Number(row._sum.quantityPcs ?? 0);
+      currentBalanceByKey.set(key, Number.isFinite(qty) ? qty : 0);
+    });
+
+    const violations = [...keySet].filter((key) => {
+      const currentBalance = currentBalanceByKey.get(key) ?? 0;
+      const inboundQty = inboundQtyByKey.get(key) ?? 0;
+      const projectedBalance = currentBalance - inboundQty;
+      return projectedBalance < -0.000001;
+    });
+
+    if (!violations.length) {
+      return;
+    }
+
+    const batchIds = [...new Set(violations.map((key) => Number(key.split('::')[2])))];
+    const batchRows = await tx.inventoryBatch.findMany({
+      where: {
+        id: { in: batchIds },
+      },
+      select: {
+        id: true,
+        batchNumber: true,
+      },
+    });
+    const batchById = new Map(batchRows.map((row) => [row.id, row.batchNumber]));
+
+    const firstViolation = violations[0];
+    const [itemId, warehouseId, batchId] = firstViolation.split('::').map((value) => Number(value));
+    const batchNumber = batchById.get(batchId) ?? String(batchId);
+    throw new BadRequestException(
+      `Inbound tidak bisa dihapus karena stok akan minus. Item ${itemId}, batch ${batchNumber}, warehouse ${warehouseId} sudah dipakai outbound.`,
+    );
+  }
+
   private async resolveTransactionNo(tx: Prisma.TransactionClient, transactionNo?: string) {
     const candidate = transactionNo?.trim();
     if (candidate) {
@@ -348,22 +437,27 @@ export class InboundsService {
     const m = String(today.getMonth() + 1).padStart(2, '0');
     const d = String(today.getDate()).padStart(2, '0');
     const datePart = `${y}${m}${d}`;
+    const prefix = `INB-${datePart}-`;
 
-    const start = new Date(today);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(today);
-    end.setHours(23, 59, 59, 999);
-
-    const countToday = await tx.inbound.count({
+    const latestForDate = await tx.inbound.findFirst({
       where: {
-        transactionDate: {
-          gte: start,
-          lte: end,
+        transactionNo: {
+          startsWith: prefix,
         },
+      },
+      select: {
+        transactionNo: true,
+      },
+      orderBy: {
+        transactionNo: 'desc',
       },
     });
 
-    return `INB-${datePart}-${String(countToday + 1).padStart(4, '0')}`;
+    const latestSuffixRaw = latestForDate?.transactionNo?.slice(prefix.length) ?? '';
+    const latestSuffix = Number.parseInt(latestSuffixRaw, 10);
+    const nextSequence = Number.isInteger(latestSuffix) && latestSuffix > 0 ? latestSuffix + 1 : 1;
+
+    return `${prefix}${String(nextSequence).padStart(4, '0')}`;
   }
 
   private async ensureTransactionNoAvailable(transactionNo: string, exceptId?: number) {

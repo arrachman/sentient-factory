@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
+  CircleCheck,
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
@@ -12,6 +13,7 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Truck,
   Trash2,
   X,
 } from 'lucide-react';
@@ -127,6 +129,7 @@ type DeliveryOrderListItem = {
   actualReceivedDate?: string | null;
   stdDoReturnDate?: string | null;
   doScanReturnDate?: string | null;
+  stdLeadTimeDays?: string | number;
   kpiDeliveryStatus?: 'ONTIME' | 'LATE' | null;
   kpiDoReturnStatus?: 'ONTIME' | 'LATE' | null;
   totalItemTypes: number;
@@ -145,6 +148,28 @@ type DecimalLike = {
   s?: number;
   e?: number;
   d?: number[];
+};
+
+type DeliveryActionState = {
+  id: string;
+  shippingDate: string;
+  stdLeadTimeDays: number;
+};
+
+type DeliveredActionState = {
+  id: string;
+  shippingDate: string;
+  stdLeadTimeDays: number;
+  actualReceivedDate: string;
+  receivedBy: string;
+  doScanReturnDate: string;
+};
+
+type CompletedActionState = {
+  id: string;
+  doDate: string;
+  doScanReturnDate: string;
+  stdDoReturnDate: string;
 };
 
 const STATUS_OPTIONS = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
@@ -213,14 +238,73 @@ function addDays(dateString?: string, days?: string) {
   return fmtDate(date.toISOString());
 }
 
-function badgeVariant(status?: 'ONTIME' | 'LATE' | null) {
-  if (status === 'ONTIME') {
+function calculateStandardReceivedDate(dateString?: string, days?: number) {
+  if (!dateString) {
+    return '';
+  }
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const dayCount = Number(days ?? 0);
+  if (!Number.isFinite(dayCount)) {
+    return '';
+  }
+  date.setDate(date.getDate() + dayCount);
+  return date.toISOString().slice(0, 10);
+}
+
+function resolveDeliveryKpiStatus(actualReceivedDate?: string, standardReceivedDate?: string) {
+  if (!actualReceivedDate || !standardReceivedDate) {
+    return '-';
+  }
+  const actual = new Date(actualReceivedDate);
+  const standard = new Date(standardReceivedDate);
+  if (Number.isNaN(actual.getTime()) || Number.isNaN(standard.getTime())) {
+    return '-';
+  }
+  return actual.getTime() <= standard.getTime() ? 'ONTIME' : 'LATE';
+}
+
+function resolveReturnDoKpiStatus(doScanReturnDate?: string, stdDoReturnDate?: string) {
+  if (!doScanReturnDate || !stdDoReturnDate) {
+    return '-';
+  }
+  const scanDate = new Date(doScanReturnDate);
+  const standardDate = new Date(stdDoReturnDate);
+  if (Number.isNaN(scanDate.getTime()) || Number.isNaN(standardDate.getTime())) {
+    return '-';
+  }
+  return scanDate.getTime() <= standardDate.getTime() ? 'ONTIME' : 'LATE';
+}
+
+function outboundStatusBadgeVariant(status?: DeliveryOrderListItem['status']) {
+  if (status === 'OPEN') {
+    return 'warning';
+  }
+  if (status === 'DELIVERY') {
+    return 'info';
+  }
+  if (status === 'DELIVERED') {
     return 'primary';
   }
-  if (status === 'LATE') {
-    return 'destructive';
+  if (status === 'COMPLETED') {
+    return 'success';
   }
   return 'secondary';
+}
+
+function diffDays(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) {
+    return null;
+  }
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return null;
+  }
+  const msPerDay = 24 * 60 * 60 * 1000;
+  return Math.round((end.getTime() - start.getTime()) / msPerDay);
 }
 
 function isDecimalLike(value: unknown): value is DecimalLike {
@@ -490,7 +574,13 @@ export default function LogisticTransactionDoPage() {
   const [loading, setLoading] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deliverySubmittingId, setDeliverySubmittingId] = useState<string | null>(null);
+  const [deliveredSubmittingId, setDeliveredSubmittingId] = useState<string | null>(null);
+  const [completedSubmittingId, setCompletedSubmittingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [deliveryAction, setDeliveryAction] = useState<DeliveryActionState | null>(null);
+  const [deliveredAction, setDeliveredAction] = useState<DeliveredActionState | null>(null);
+  const [completedAction, setCompletedAction] = useState<CompletedActionState | null>(null);
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -711,14 +801,42 @@ export default function LogisticTransactionDoPage() {
         throw new Error(payload?.message || 'Failed to load delivery orders');
       }
 
-      const normalizedItems: DeliveryOrderListItem[] = (Array.isArray(payload.data) ? payload.data : []).map(
-        (row: DeliveryOrderListItem) => ({
-          ...row,
-          totalItemTypes: normalizeNumber(row?.totalItemTypes),
-          totalBatches: normalizeNumber(row?.totalBatches),
-          totalQtyPcs: normalizeNumber(row?.totalQtyPcs),
-          totalKg: normalizeNumber(row?.totalKg),
-        }),
+      const normalizedItems: DeliveryOrderListItem[] = (
+        Array.isArray(payload.data) ? payload.data : []
+      ).map(
+        (
+          row: DeliveryOrderListItem & {
+            _count?: { details?: number };
+            details?: Array<{ batches?: unknown[] }>;
+            total_item_types?: number | string;
+            total_batches?: number | string;
+            total_kg?: number | string;
+          },
+        ) => {
+          const fallbackTotalItemTypes = normalizeNumber(
+            row?._count?.details,
+          );
+          const fallbackTotalBatches = Array.isArray(row?.details)
+            ? row.details.reduce(
+                (sum, detail) =>
+                  sum + (Array.isArray(detail?.batches) ? detail.batches.length : 0),
+                0,
+              )
+            : 0;
+
+          return {
+            ...row,
+            stdLeadTimeDays: normalizeNumber(row?.stdLeadTimeDays),
+            totalItemTypes: normalizeNumber(
+              row?.totalItemTypes ?? row?.total_item_types ?? fallbackTotalItemTypes,
+            ),
+            totalBatches: normalizeNumber(
+              row?.totalBatches ?? row?.total_batches ?? fallbackTotalBatches,
+            ),
+            totalQtyPcs: normalizeNumber(row?.totalQtyPcs),
+            totalKg: normalizeNumber(row?.totalKg ?? row?.total_kg),
+          };
+        },
       );
 
       setItems(normalizedItems);
@@ -1146,6 +1264,188 @@ export default function LogisticTransactionDoPage() {
     }
   };
 
+  const buildDeliveryActionState = (rowId: string, item: DeliveryOrderListItem): DeliveryActionState => ({
+    id: rowId,
+    shippingDate: item.shippingDate
+      ? String(item.shippingDate).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+    stdLeadTimeDays: normalizeNumber(item.stdLeadTimeDays),
+  });
+
+  const buildDeliveredActionState = (rowId: string, item: DeliveryOrderListItem): DeliveredActionState => ({
+    id: rowId,
+    shippingDate: item.shippingDate ? String(item.shippingDate).slice(0, 10) : '',
+    stdLeadTimeDays: normalizeNumber(item.stdLeadTimeDays),
+    actualReceivedDate: item.actualReceivedDate
+      ? String(item.actualReceivedDate).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+    receivedBy: String(item.customer?.name ?? '').trim(),
+    doScanReturnDate: item.doScanReturnDate
+      ? String(item.doScanReturnDate).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+  });
+
+  const buildCompletedActionState = (rowId: string, item: DeliveryOrderListItem): CompletedActionState => ({
+    id: rowId,
+    doDate: item.doDate ? String(item.doDate).slice(0, 10) : '',
+    doScanReturnDate: item.doScanReturnDate
+      ? String(item.doScanReturnDate).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+    stdDoReturnDate: item.stdDoReturnDate
+      ? String(item.stdDoReturnDate).slice(0, 10)
+      : new Date().toISOString().slice(0, 10),
+  });
+
+  const setToDelivery = async () => {
+    if (!deliveryAction) {
+      return;
+    }
+    if (!deliveryAction.shippingDate) {
+      setError('Tanggal kirim wajib diisi.');
+      return;
+    }
+
+    setError('');
+    setDeliverySubmittingId(deliveryAction.id);
+    try {
+      const response = await fetch(`/api/outbound/${deliveryAction.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token
+            ? { Authorization: `Bearer ${token}` }
+            : {}),
+        },
+        body: JSON.stringify({
+          status: 'DELIVERY',
+          shippingDate: deliveryAction.shippingDate,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || 'Failed to update delivery status');
+      }
+
+      setDeliveryAction(null);
+      setDeliveredAction(null);
+      setCompletedAction(null);
+      await fetchList(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update delivery status');
+    } finally {
+      setDeliverySubmittingId(null);
+    }
+  };
+
+  const setToDelivered = async () => {
+    if (!deliveredAction) {
+      return;
+    }
+    if (!deliveredAction.actualReceivedDate) {
+      setError('Aktual barang diterima wajib diisi.');
+      return;
+    }
+    if (!deliveredAction.receivedBy.trim()) {
+      setError('Diterima oleh wajib diisi.');
+      return;
+    }
+    if (!deliveredAction.doScanReturnDate) {
+      setError('Tanggal scan DO kembali wajib diisi.');
+      return;
+    }
+
+    setError('');
+    setDeliveredSubmittingId(deliveredAction.id);
+    try {
+      const response = await fetch(`/api/outbound/${deliveredAction.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token
+            ? { Authorization: `Bearer ${token}` }
+            : {}),
+        },
+        body: JSON.stringify({
+          status: 'DELIVERED',
+          actualReceivedDate: deliveredAction.actualReceivedDate,
+          receivedBy: deliveredAction.receivedBy.trim(),
+          doScanReturnDate: deliveredAction.doScanReturnDate,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || 'Failed to update delivered status');
+      }
+
+      setDeliveredAction(null);
+      setDeliveryAction(null);
+      setCompletedAction(null);
+      await fetchList(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update delivered status');
+    } finally {
+      setDeliveredSubmittingId(null);
+    }
+  };
+
+  const setToCompleted = async () => {
+    if (!completedAction) {
+      return;
+    }
+    if (!completedAction.doScanReturnDate) {
+      setError('Tanggal scan DO kembali wajib diisi.');
+      return;
+    }
+    if (!completedAction.stdDoReturnDate) {
+      setError('STD DO Kembali wajib diisi.');
+      return;
+    }
+    const stdReturnDoDays = diffDays(completedAction.doDate, completedAction.stdDoReturnDate);
+    if (stdReturnDoDays == null) {
+      setError('Format tanggal STD DO Kembali tidak valid.');
+      return;
+    }
+    if (stdReturnDoDays < 0) {
+      setError('STD DO Kembali tidak boleh lebih kecil dari DO Date.');
+      return;
+    }
+
+    setError('');
+    setCompletedSubmittingId(completedAction.id);
+    try {
+      const response = await fetch(`/api/outbound/${completedAction.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token
+            ? { Authorization: `Bearer ${token}` }
+            : {}),
+        },
+        body: JSON.stringify({
+          status: 'COMPLETED',
+          doScanReturnDate: completedAction.doScanReturnDate,
+          stdReturnDoDays,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.success) {
+        throw new Error(payload?.message || 'Failed to update completed status');
+      }
+
+      setCompletedAction(null);
+      setDeliveredAction(null);
+      setDeliveryAction(null);
+      await fetchList(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update completed status');
+    } finally {
+      setCompletedSubmittingId(null);
+    }
+  };
+
   const setDetailField = (
     index: number,
     key: 'itemId' | 'qtyKg' | 'notes',
@@ -1363,32 +1663,30 @@ export default function LogisticTransactionDoPage() {
               </Button>
             </div>
 
-            <Table>
+            <Table className="w-full table-fixed">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[60px]">No</TableHead>
-                  <TableHead>DO Number</TableHead>
-                  <TableHead>DO Date</TableHead>
+                  <TableHead className="w-[40px] whitespace-nowrap">No</TableHead>
+                  <TableHead className="w-[110px]">DO Number</TableHead>
+                  <TableHead className="w-[110px] whitespace-nowrap">DO Date</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>KPI Kirim</TableHead>
-                  <TableHead>KPI Return</TableHead>
-                  <TableHead className="text-right">Tot Item</TableHead>
-                  <TableHead className="text-right">Tot Batch</TableHead>
-                  <TableHead className="text-right">Tot KG</TableHead>
-                  <TableHead className="w-[170px]">Actions</TableHead>
+                  <TableHead className="w-[90px] text-center whitespace-nowrap">Status</TableHead>
+                  <TableHead className="w-[90px] text-center whitespace-nowrap">Tot Item</TableHead>
+                  <TableHead className="w-[90px] text-center whitespace-nowrap">Tot Batch</TableHead>
+                  <TableHead className="w-[90px] text-center whitespace-nowrap">Tot KG</TableHead>
+                  <TableHead className="w-[250px] text-center whitespace-nowrap">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={11}>
+                    <TableCell colSpan={9}>
                       Loading delivery orders...
                     </TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11}>
+                    <TableCell colSpan={9}>
                       No delivery orders found.
                     </TableCell>
                   </TableRow>
@@ -1397,14 +1695,14 @@ export default function LogisticTransactionDoPage() {
                     const rowId = toEntityId(item.id ?? item.uuid);
                     return (
                     <TableRow key={rowId || `outbound-${index}`}>
-                      <TableCell>{(page - 1) * limit + index + 1}</TableCell>
+                      <TableCell className="whitespace-nowrap">{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>
                         <div className="font-medium">{item.doNumber}</div>
                         <div className="text-xs text-muted-foreground">
                           Report #{item.reportNo}
                         </div>
                       </TableCell>
-                      <TableCell>{fmtDate(item.doDate)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{fmtDate(item.doDate)}</TableCell>
                       <TableCell>
                         <div className="font-medium">
                           {item.customer?.name || '-'}
@@ -1413,30 +1711,372 @@ export default function LogisticTransactionDoPage() {
                           {item.customer?.code || '-'}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{item.status}</Badge>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant={outboundStatusBadgeVariant(item.status)}>{item.status}</Badge>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={badgeVariant(item.kpiDeliveryStatus)}>
-                          {item.kpiDeliveryStatus || '-'}
-                        </Badge>
+                      <TableCell className="text-right whitespace-nowrap">
+                        {normalizeNumber(item.totalItemTypes).toLocaleString('id-ID')}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={badgeVariant(item.kpiDoReturnStatus)}>
-                          {item.kpiDoReturnStatus || '-'}
-                        </Badge>
+                      <TableCell className="text-right whitespace-nowrap">
+                        {normalizeNumber(item.totalBatches).toLocaleString('id-ID')}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {item.totalItemTypes ?? 0}
+                      <TableCell className="text-right whitespace-nowrap">
+                        {normalizeNumber(item.totalKg).toLocaleString('id-ID')}
                       </TableCell>
                       <TableCell className="text-right">
-                        {item.totalBatches ?? 0}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {item.totalKg ?? 0}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {item.status === 'OPEN' && rowId ? (
+                            <Popover
+                              open={deliveryAction?.id === rowId}
+                              onOpenChange={(open) => {
+                                if (open) {
+                                  setDeliveryAction(buildDeliveryActionState(rowId, item));
+                                  return;
+                                }
+                                if (deliveryAction?.id === rowId && !deliverySubmittingId) {
+                                  setDeliveryAction(null);
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800"
+                                  disabled={Boolean(
+                                    (deliverySubmittingId && deliverySubmittingId !== rowId) ||
+                                      deliveredSubmittingId ||
+                                      completedSubmittingId,
+                                  )}
+                                >
+                                  <Truck className="size-4" />
+                                  Set Delivery
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-80 space-y-3 text-left" align="start">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold">Ubah Status ke DELIVERY</p>
+                                  <p className="text-xs text-muted-foreground">{item.doNumber}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor={`shipping-date-${rowId}`}>Tanggal Kirim</Label>
+                                  <Input
+                                    id={`shipping-date-${rowId}`}
+                                    type="date"
+                                    value={deliveryAction?.shippingDate ?? ''}
+                                    onChange={(event) =>
+                                      setDeliveryAction((state) =>
+                                        state && state.id === rowId
+                                          ? { ...state, shippingDate: event.target.value }
+                                          : state,
+                                      )
+                                    }
+                                    required
+                                  />
+                                </div>
+                                <div className="rounded-md border p-2 text-sm">
+                                  <p className="text-xs text-muted-foreground">
+                                    Standard Barang Diterima
+                                  </p>
+                                  <p className="font-semibold">
+                                    {addDays(
+                                      deliveryAction?.shippingDate,
+                                      String(deliveryAction?.stdLeadTimeDays ?? 0),
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {deliveryAction?.shippingDate
+                                      ? `${fmtDate(deliveryAction.shippingDate)} + ${deliveryAction.stdLeadTimeDays} hari`
+                                      : '-'}
+                                  </p>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setDeliveryAction(null)}
+                                    disabled={deliverySubmittingId === rowId}
+                                  >
+                                    Batal
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => void setToDelivery()}
+                                    disabled={deliverySubmittingId === rowId || !deliveryAction?.shippingDate}
+                                  >
+                                    {deliverySubmittingId === rowId ? 'Saving...' : 'Simpan'}
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          ) : null}
+                          {item.status === 'DELIVERY' && rowId ? (
+                            <Popover
+                              open={deliveredAction?.id === rowId}
+                              onOpenChange={(open) => {
+                                if (open) {
+                                  setDeliveredAction(buildDeliveredActionState(rowId, item));
+                                  return;
+                                }
+                                if (deliveredAction?.id === rowId && !deliveredSubmittingId) {
+                                  setDeliveredAction(null);
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                                  disabled={Boolean(
+                                    (deliveredSubmittingId && deliveredSubmittingId !== rowId) ||
+                                      deliverySubmittingId ||
+                                      completedSubmittingId,
+                                  )}
+                                >
+                                  <Check className="size-4" />
+                                  Set Delivered
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-100 space-y-3 text-left" align="start">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold">Ubah Status ke DELIVERED</p>
+                                  <p className="text-xs text-muted-foreground">{item.doNumber}</p>
+                                </div>
+                                <div className="grid gap-3 md:grid-cols-2">
+                                  <div className="space-y-1">
+                                    <Label htmlFor={`actual-received-date-${rowId}`}>
+                                      Aktual Barang Diterima
+                                    </Label>
+                                    <Input
+                                      id={`actual-received-date-${rowId}`}
+                                      type="date"
+                                      value={deliveredAction?.actualReceivedDate ?? ''}
+                                      onChange={(event) =>
+                                        setDeliveredAction((state) =>
+                                          state && state.id === rowId
+                                            ? { ...state, actualReceivedDate: event.target.value }
+                                            : state,
+                                        )
+                                      }
+                                      required
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label htmlFor={`do-scan-return-date-${rowId}`}>
+                                      Tanggal Scan DO Kembali
+                                    </Label>
+                                    <Input
+                                      id={`do-scan-return-date-${rowId}`}
+                                      type="date"
+                                      value={deliveredAction?.doScanReturnDate ?? ''}
+                                      onChange={(event) =>
+                                        setDeliveredAction((state) =>
+                                          state && state.id === rowId
+                                            ? { ...state, doScanReturnDate: event.target.value }
+                                            : state,
+                                        )
+                                      }
+                                      required
+                                    />
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor={`received-by-${rowId}`}>Diterima Oleh</Label>
+                                  <Input
+                                    id={`received-by-${rowId}`}
+                                    value={deliveredAction?.receivedBy ?? ''}
+                                    onChange={(event) =>
+                                      setDeliveredAction((state) =>
+                                        state && state.id === rowId
+                                          ? { ...state, receivedBy: event.target.value }
+                                          : state,
+                                      )
+                                    }
+                                    placeholder="Nama penerima"
+                                    required
+                                  />
+                                </div>
+                                <div className="rounded-md border p-2 text-sm">
+                                  <p className="text-xs text-muted-foreground">
+                                    KPI Ketepatan Pengiriman
+                                  </p>
+                                  {(() => {
+                                    const standardReceivedDate = calculateStandardReceivedDate(
+                                      deliveredAction?.shippingDate,
+                                      deliveredAction?.stdLeadTimeDays,
+                                    );
+                                    const kpiStatus = resolveDeliveryKpiStatus(
+                                      deliveredAction?.actualReceivedDate,
+                                      standardReceivedDate,
+                                    );
+                                    return (
+                                      <div className="space-y-1">
+                                        <p className="font-medium">
+                                          Standard Barang Diterima:{' '}
+                                          {standardReceivedDate ? fmtDate(standardReceivedDate) : '-'}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          Jika aktual barang diterima ≤ standard barang diterima, status
+                                          ONTIME. Jika melewati standard, status LATE.
+                                        </p>
+                                        <Badge
+                                          variant={
+                                            kpiStatus === 'ONTIME'
+                                              ? 'primary'
+                                              : kpiStatus === 'LATE'
+                                                ? 'destructive'
+                                                : 'secondary'
+                                          }
+                                        >
+                                          {kpiStatus}
+                                        </Badge>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setDeliveredAction(null)}
+                                    disabled={deliveredSubmittingId === rowId}
+                                  >
+                                    Batal
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => void setToDelivered()}
+                                    disabled={
+                                      deliveredSubmittingId === rowId ||
+                                      !deliveredAction?.actualReceivedDate ||
+                                      !deliveredAction?.receivedBy.trim() ||
+                                      !deliveredAction?.doScanReturnDate
+                                    }
+                                  >
+                                    {deliveredSubmittingId === rowId ? 'Saving...' : 'Simpan'}
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          ) : null}
+                          {item.status === 'DELIVERED' && rowId ? (
+                            <Popover
+                              open={completedAction?.id === rowId}
+                              onOpenChange={(open) => {
+                                if (open) {
+                                  setCompletedAction(buildCompletedActionState(rowId, item));
+                                  return;
+                                }
+                                if (completedAction?.id === rowId && !completedSubmittingId) {
+                                  setCompletedAction(null);
+                                }
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                                  disabled={Boolean(
+                                    (completedSubmittingId && completedSubmittingId !== rowId) ||
+                                      deliverySubmittingId ||
+                                      deliveredSubmittingId,
+                                  )}
+                                >
+                                  <CircleCheck className="size-4" />
+                                  Set Completed
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-96 space-y-3 text-left" align="start">
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold">Ubah Status ke COMPLETED</p>
+                                  <p className="text-xs text-muted-foreground">{item.doNumber}</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor={`std-do-return-date-${rowId}`}>STD DO Kembali</Label>
+                                  <Input
+                                    id={`std-do-return-date-${rowId}`}
+                                    type="date"
+                                    value={completedAction?.stdDoReturnDate ?? ''}
+                                    onChange={(event) =>
+                                      setCompletedAction((state) =>
+                                        state && state.id === rowId
+                                          ? { ...state, stdDoReturnDate: event.target.value }
+                                          : state,
+                                      )
+                                    }
+                                    required
+                                  />
+                                </div>
+                                <div className="rounded-md border p-2 text-sm">
+                                  <p className="text-xs text-muted-foreground">
+                                    KPI Ketepatan Pengiriman (Pengembalian DO)
+                                  </p>
+                                  <div className="mt-1 space-y-1">
+                                    <p className="font-medium">
+                                      Tanggal Scan DO Kembali: {fmtDate(completedAction?.doScanReturnDate)}
+                                    </p>
+                                    <p className="font-medium">
+                                      STD DO Kembali: {fmtDate(completedAction?.stdDoReturnDate)}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Jika Tanggal Scan DO Kembali ≤ STD DO Kembali = ONTIME
+                                      {' | '}
+                                      Jika Tanggal Scan DO Kembali {'>'} STD DO Kembali = LATE
+                                    </p>
+                                    <Badge
+                                      variant={
+                                        resolveReturnDoKpiStatus(
+                                          completedAction?.doScanReturnDate,
+                                          completedAction?.stdDoReturnDate,
+                                        ) === 'ONTIME'
+                                          ? 'primary'
+                                          : resolveReturnDoKpiStatus(
+                                                completedAction?.doScanReturnDate,
+                                                completedAction?.stdDoReturnDate,
+                                              ) === 'LATE'
+                                            ? 'destructive'
+                                            : 'secondary'
+                                      }
+                                    >
+                                      {resolveReturnDoKpiStatus(
+                                        completedAction?.doScanReturnDate,
+                                        completedAction?.stdDoReturnDate,
+                                      )}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCompletedAction(null)}
+                                    disabled={completedSubmittingId === rowId}
+                                  >
+                                    Batal
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => void setToCompleted()}
+                                    disabled={
+                                      completedSubmittingId === rowId ||
+                                      !completedAction?.doScanReturnDate ||
+                                      !completedAction?.stdDoReturnDate
+                                    }
+                                  >
+                                    {completedSubmittingId === rowId ? 'Saving...' : 'Simpan'}
+                                  </Button>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          ) : null}
                           <Button
                             variant="outline"
                             size="icon"

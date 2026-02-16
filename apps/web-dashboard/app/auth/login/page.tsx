@@ -16,7 +16,7 @@ function hasAuthCookie() {
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('adm.medan@fr-labs.my.id');
-  const [password, setPassword] = useState('12345678');
+  const [password, setPassword] = useState('123456');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
               id="password"
               type="password"
               required
-              minLength={8}
+              minLength={6}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none ring-primary/20 focus:ring"

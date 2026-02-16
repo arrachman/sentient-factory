@@ -169,6 +169,16 @@ export class OutboundService {
           customer: { select: { id: true, code: true, name: true, type: true } },
           destinationCity: { select: { id: true, name: true, postalCode: true } },
           _count: { select: { details: { where: { deletedAt: null } } } },
+          details: {
+            where: { deletedAt: null },
+            select: {
+              qtyKg: true,
+              batches: {
+                where: { deletedAt: null },
+                select: { id: true },
+              },
+            },
+          },
         },
         orderBy: [{ createdAt: 'desc' }],
         skip,
@@ -177,9 +187,25 @@ export class OutboundService {
       this.prisma.deliveryOrder.count({ where }),
     ]);
 
+    const data = items.map((item) => {
+      const totalItemTypes = item._count?.details ?? 0;
+      const totalBatches = item.details.reduce((sum, detail) => sum + detail.batches.length, 0);
+      const totalKg = item.details.reduce((sum, detail) => {
+        const qtyKg = Number(detail.qtyKg ?? 0);
+        return sum + (Number.isFinite(qtyKg) ? qtyKg : 0);
+      }, 0);
+
+      return {
+        ...item,
+        totalItemTypes,
+        totalBatches,
+        totalKg,
+      };
+    });
+
     return {
       success: true,
-      data: items,
+      data,
       meta: {
         page,
         limit,
@@ -308,6 +334,8 @@ export class OutboundService {
           where: { deletedAt: null },
           select: {
             itemId: true,
+            qtyPcs: true,
+            qtyKg: true,
             batches: {
               where: { deletedAt: null },
               select: { batchOut: true },
@@ -402,6 +430,15 @@ export class OutboundService {
       .map((row) => {
         const supplierSet = new Map<number, string>();
         const warehouseSet = new Map<number, string>();
+        const totalItemTypes = row.details.length;
+        const totalQtyPcs = row.details.reduce((sum, detail) => {
+          const qty = Number(detail.qtyPcs ?? 0);
+          return sum + (Number.isFinite(qty) ? qty : 0);
+        }, 0);
+        const totalKg = row.details.reduce((sum, detail) => {
+          const qty = Number(detail.qtyKg ?? 0);
+          return sum + (Number.isFinite(qty) ? qty : 0);
+        }, 0);
 
         row.details.forEach((detail) => {
           detail.batches.forEach((batch) => {
@@ -426,6 +463,9 @@ export class OutboundService {
 
         return {
           ...row,
+          totalItemTypes,
+          totalQtyPcs,
+          totalKg,
           sourceSuppliers: [...supplierSet.entries()].map(([id, name]) => ({ id, name })),
           sourceWarehouses: [...warehouseSet.entries()].map(([id, name]) => ({ id, name })),
         };
