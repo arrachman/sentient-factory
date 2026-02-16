@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
@@ -27,6 +28,7 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type MasterDataProvince = {
   uuid: string;
@@ -44,6 +46,7 @@ type MasterDataCity = {
 
 type MasterDataCitySla = {
   uuid: string;
+  createdAt?: string;
   cityId: string;
   stdLeadTimeDays: number;
   stdReturnDoDays: number;
@@ -73,6 +76,16 @@ function getTokenFromCookie() {
 }
 
 export default function MasterDataCitySlaPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/city-sla/add';
+  const isUpdateRoute = pathname === '/app/master/city-sla/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataCitySla[]>([]);
   const [cities, setCities] = useState<MasterDataCity[]>([]);
   const [existingSlaCityIds, setExistingSlaCityIds] = useState<string[]>([]);
@@ -211,11 +224,34 @@ export default function MasterDataCitySlaPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
     fetchCityOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm || loadingCity) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm({
+      ...initialForm,
+      cityId: addableCities[0]?.uuid || '',
+    });
+    setShowForm(true);
+  }, [addableCities, isAddRoute, loadingCity, showForm]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -250,6 +286,9 @@ export default function MasterDataCitySlaPage() {
       });
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/city-sla');
+      }
       await fetchList(page);
       await fetchCityOptions();
     } catch (err) {
@@ -292,6 +331,9 @@ export default function MasterDataCitySlaPage() {
           cityId: '',
         });
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/city-sla');
+        }
       }
       await fetchList(page);
       await fetchCityOptions();
@@ -309,14 +351,7 @@ export default function MasterDataCitySlaPage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm({
-                ...initialForm,
-                cityId: addableCities[0]?.uuid || '',
-              });
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/city-sla/add')}
             disabled={loadingCity || addableCities.length === 0}
           >
             <Plus />
@@ -398,7 +433,18 @@ export default function MasterDataCitySlaPage() {
                       <TableCell className="text-right">{item.stdReturnDoDays}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" aria-label="Edit city SLA" onClick={() => onEdit(item)}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Edit city SLA"
+                            onClick={() =>
+                              router.push(
+                                `/app/master/city-sla/update?ref=${encodeURIComponent(
+                                  buildEntityRef(item.uuid, item.createdAt),
+                                )}`,
+                              )
+                            }
+                          >
                             <Pencil />
                           </Button>
                           <Button variant="destructive" size="icon" aria-label="Delete city SLA" onClick={() => onDelete(item.uuid)}>
@@ -517,6 +563,9 @@ export default function MasterDataCitySlaPage() {
                 onClick={() => {
                   setShowForm(false);
                   setEditingUuid(null);
+                  if (isAddRoute || isUpdateRoute) {
+                    router.push('/app/master/city-sla');
+                  }
                 }}
               >
                 <ArrowLeft />

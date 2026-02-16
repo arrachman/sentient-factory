@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -24,6 +25,7 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type MasterDataUom = {
   uuid: string;
@@ -34,6 +36,7 @@ type MasterDataUom = {
 
 type MasterDataItem = {
   uuid: string;
+  createdAt?: string;
   code: string;
   name: string;
   category: string;
@@ -80,6 +83,16 @@ function slugifyCode(value: string) {
 }
 
 export default function MasterDataItemPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/item/add';
+  const isUpdateRoute = pathname === '/app/master/item/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataItem[]>([]);
   const [uoms, setUoms] = useState<MasterDataUom[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
@@ -159,11 +172,34 @@ export default function MasterDataItemPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
     fetchUomOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm || loadingUom) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm({
+      ...initialForm,
+      uomId: uoms[0]?.uuid || '',
+    });
+    setShowForm(true);
+  }, [isAddRoute, loadingUom, showForm, uoms]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -202,6 +238,9 @@ export default function MasterDataItemPage() {
       });
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/item');
+      }
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save data');
@@ -246,6 +285,9 @@ export default function MasterDataItemPage() {
           uomId: uoms[0]?.uuid || '',
         });
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/item');
+        }
       }
       await fetchList(page);
     } catch (err) {
@@ -262,14 +304,7 @@ export default function MasterDataItemPage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm({
-                ...initialForm,
-                uomId: uoms[0]?.uuid || '',
-              });
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/item/add')}
           >
             <Plus />
             Add Item
@@ -352,7 +387,18 @@ export default function MasterDataItemPage() {
                       <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" aria-label="Edit item" onClick={() => onEdit(item)}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Edit item"
+                            onClick={() =>
+                              router.push(
+                                `/app/master/item/update?ref=${encodeURIComponent(
+                                  buildEntityRef(item.uuid, item.createdAt),
+                                )}`,
+                              )
+                            }
+                          >
                             <Pencil />
                           </Button>
                           <Button variant="destructive" size="icon" aria-label="Delete item" onClick={() => onDelete(item.uuid)}>
@@ -515,6 +561,9 @@ export default function MasterDataItemPage() {
                       uomId: uoms[0]?.uuid || '',
                     });
                     setShowForm(false);
+                    if (isAddRoute || isUpdateRoute) {
+                      router.push('/app/master/item');
+                    }
                   }}
                 >
                   <ArrowLeft />

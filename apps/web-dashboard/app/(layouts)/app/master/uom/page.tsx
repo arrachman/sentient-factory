@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -23,9 +24,11 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type MasterDataUom = {
   uuid: string;
+  createdAt?: string;
   code: string;
   name: string;
   type: string;
@@ -52,6 +55,16 @@ function getTokenFromCookie() {
 }
 
 export default function MasterDataUomPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/uom/add';
+  const isUpdateRoute = pathname === '/app/master/uom/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataUom[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
@@ -101,10 +114,30 @@ export default function MasterDataUomPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm(initialForm);
+    setShowForm(true);
+  }, [isAddRoute, showForm]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -136,6 +169,9 @@ export default function MasterDataUomPage() {
       setForm(initialForm);
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/uom');
+      }
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save data');
@@ -174,6 +210,9 @@ export default function MasterDataUomPage() {
         setEditingUuid(null);
         setForm(initialForm);
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/uom');
+        }
       }
       await fetchList(page);
     } catch (err) {
@@ -190,11 +229,7 @@ export default function MasterDataUomPage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm(initialForm);
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/uom/add')}
           >
             <Plus />
             Add UOM
@@ -271,7 +306,18 @@ export default function MasterDataUomPage() {
                       <TableCell>{item.type}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" aria-label="Edit UOM" onClick={() => onEdit(item)}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Edit UOM"
+                            onClick={() =>
+                              router.push(
+                                `/app/master/uom/update?ref=${encodeURIComponent(
+                                  buildEntityRef(item.uuid, item.createdAt),
+                                )}`,
+                              )
+                            }
+                          >
                             <Pencil />
                           </Button>
                           <Button variant="destructive" size="icon" aria-label="Delete UOM" onClick={() => onDelete(item.uuid)}>
@@ -368,6 +414,9 @@ export default function MasterDataUomPage() {
                     setEditingUuid(null);
                     setForm(initialForm);
                     setShowForm(false);
+                    if (isAddRoute || isUpdateRoute) {
+                      router.push('/app/master/uom');
+                    }
                   }}
                 >
                   <ArrowLeft />

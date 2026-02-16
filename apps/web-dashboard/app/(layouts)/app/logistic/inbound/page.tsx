@@ -96,6 +96,7 @@ type InboundListItem = {
   reportNo: string | number;
   transactionNo: string;
   transactionDate: string;
+  createdAt?: string;
   status: 'DRAFT' | 'POSTED' | 'CANCELLED';
   supplier?: {
     uuid: string;
@@ -111,16 +112,34 @@ type InboundListItem = {
   };
 };
 
+type DecimalLike = {
+  s?: number;
+  e?: number;
+  d?: number[];
+};
+
 type InboundDetailApi = {
   itemId?: string;
   uomInput?: number | null;
+  qty?: string | number | DecimalLike;
   notes?: string | null;
   batches?: Array<{
     batchIn?: string;
-    qty?: string | number;
+    batchNumber?: string;
+    batchOut?: string;
+    batchNo?: string;
+    qty?: string | number | DecimalLike;
+    qtyPcs?: string | number | DecimalLike;
+    qty_pcs?: string | number | DecimalLike;
+    quantity?: string | number | DecimalLike;
+    quantityPcs?: string | number | DecimalLike;
     expiredDate?: string | null;
+    expiryDate?: string | null;
+    expired_date?: string | null;
     notes?: string | null;
+    note?: string | null;
   }>;
+  [key: string]: unknown;
 };
 
 const STATUS_OPTIONS = ['DRAFT', 'POSTED', 'CANCELLED'] as const;
@@ -210,28 +229,230 @@ function pickInboundId(item?: InboundListItem | null) {
   return toEntityId(item?.id ?? item?.uuid);
 }
 
+function toBase64Url(input: string) {
+  const base64 = btoa(input);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function fromBase64Url(input: string) {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+  const paddingLength = (4 - (normalized.length % 4)) % 4;
+  const padded = normalized + '='.repeat(paddingLength);
+  return atob(padded);
+}
+
+function buildInboundRef(id: string, createdAt?: string | null) {
+  if (!id) {
+    return '';
+  }
+
+  const millis = createdAt ? Date.parse(createdAt) : NaN;
+  const safeMillis = Number.isFinite(millis) ? Math.trunc(millis) : 0;
+  return toBase64Url(`${id}.${safeMillis}`);
+}
+
+function parseInboundRef(ref: string) {
+  if (!ref) {
+    return '';
+  }
+
+  try {
+    const decoded = fromBase64Url(ref);
+    const [id] = decoded.split('.', 1);
+    const normalizedId = toEntityId(id);
+    return normalizedId;
+  } catch {
+    return '';
+  }
+}
+
+function toNumberInputValue(value: unknown) {
+  if (value == null) {
+    return '';
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : '';
+  }
+  if (isDecimalLike(value)) {
+    const normalized = decimalLikeToString(value);
+    return Number.isFinite(Number(normalized)) ? normalized : '';
+  }
+
+  const normalized = String(value).trim().replace(',', '.');
+  if (!normalized) {
+    return '';
+  }
+
+  return Number.isFinite(Number(normalized)) ? normalized : '';
+}
+
+function isDecimalLike(value: unknown): value is DecimalLike {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as DecimalLike;
+  return Array.isArray(candidate.d);
+}
+
+function decimalLikeToString(value: DecimalLike): string {
+  const sign = value.s === -1 ? '-' : '';
+  const exponent = Number.isFinite(value.e) ? Number(value.e) : 0;
+  const chunks = Array.isArray(value.d) ? value.d : [];
+
+  if (chunks.length === 0) {
+    return '0';
+  }
+
+  const digits =
+    chunks
+      .map((chunk, index) =>
+        index === 0 ? String(chunk) : String(chunk).padStart(7, '0'),
+      )
+      .join('')
+      .replace(/^0+/, '') || '0';
+
+  const decimalPos = exponent + 1;
+  let normalized = '';
+
+  if (decimalPos <= 0) {
+    normalized = `0.${'0'.repeat(Math.abs(decimalPos))}${digits}`;
+  } else if (decimalPos >= digits.length) {
+    normalized = `${digits}${'0'.repeat(decimalPos - digits.length)}`;
+  } else {
+    normalized = `${digits.slice(0, decimalPos)}.${digits.slice(decimalPos)}`;
+  }
+
+  if (normalized.includes('.')) {
+    normalized = normalized.replace(/\.?0+$/, '');
+  }
+
+  return `${sign}${normalized || '0'}`;
+}
+
+function readObjectValueByKeys(
+  source: Record<string, unknown>,
+  keys: string[],
+) {
+  for (const key of keys) {
+    if (source[key] != null) {
+      return source[key];
+    }
+  }
+  return undefined;
+}
+
+function readFirstValueByMatcher(
+  source: Record<string, unknown>,
+  matcher: (key: string) => boolean,
+) {
+  const key = Object.keys(source).find((item) => matcher(item.toLowerCase()));
+  return key ? source[key] : undefined;
+}
+
+function toRecord(value: unknown) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function resolveBatchesFromDetail(detail: InboundDetailApi) {
+  if (Array.isArray(detail.batches)) {
+    return detail.batches;
+  }
+
+  const dynamicBatchArray = Object.entries(detail).find(([key, value]) => {
+    if (!Array.isArray(value)) {
+      return false;
+    }
+    const lower = key.toLowerCase();
+    return lower.includes('batch');
+  });
+
+  return Array.isArray(dynamicBatchArray?.[1]) ? dynamicBatchArray[1] : [];
+}
+
 function mapDetailFromApi(details?: InboundDetailApi[]): InboundDetailForm[] {
   if (!Array.isArray(details) || details.length === 0) {
     return [initialDetail()];
   }
 
-  return details.map((detail) => ({
-    itemId: String(detail.itemId ?? ''),
-    uomInput:
-      detail.uomInput == null ? '' : String(Math.trunc(Number(detail.uomInput))),
-    notes: String(detail.notes ?? ''),
-    batches:
-      Array.isArray(detail.batches) && detail.batches.length > 0
-        ? detail.batches.map((batch) => ({
-            batchIn: String(batch.batchIn ?? ''),
-            qty: batch.qty != null ? String(batch.qty) : '',
-            expiredDate: batch.expiredDate
-              ? String(batch.expiredDate).slice(0, 10)
-              : '',
-            notes: String(batch.notes ?? ''),
-          }))
-        : [initialBatch()],
-  }));
+  return details.map((detail) => {
+    const batches = resolveBatchesFromDetail(detail);
+    const detailRecord = toRecord(detail) ?? {};
+    const detailQtyFallback = toNumberInputValue(
+      readObjectValueByKeys(detailRecord, ['qty', 'qtyPcs', 'qty_pcs', 'quantity', 'quantityPcs']) ??
+        readFirstValueByMatcher(detailRecord, (key) => key.includes('qty') || key.includes('quantity')),
+    );
+
+    return {
+      itemId: String(detail.itemId ?? ''),
+      uomInput:
+        detail.uomInput == null ? '' : String(Math.trunc(Number(detail.uomInput))),
+      notes: String(detail.notes ?? ''),
+      batches:
+        batches.length > 0
+          ? batches.map((batch) => {
+              const batchRecord = toRecord(batch) ?? {};
+              const qtyRaw =
+                readObjectValueByKeys(batchRecord, [
+                  'qty',
+                  'qtyPcs',
+                  'qty_pcs',
+                  'quantity',
+                  'quantityPcs',
+                  'quantity_pcs',
+                ]) ??
+                readFirstValueByMatcher(
+                  batchRecord,
+                  (key) => key.includes('qty') || key.includes('quantity'),
+                );
+
+              const batchIdRaw =
+                readObjectValueByKeys(batchRecord, [
+                  'batchIn',
+                  'batchNumber',
+                  'batchOut',
+                  'batchNo',
+                  'batch',
+                ]) ??
+                readFirstValueByMatcher(batchRecord, (key) => key.includes('batch'));
+
+              const expiredRaw =
+                readObjectValueByKeys(batchRecord, [
+                  'expiredDate',
+                  'expiryDate',
+                  'expired_date',
+                  'expiry_date',
+                ]) ??
+                readFirstValueByMatcher(
+                  batchRecord,
+                  (key) => key.includes('expir'),
+                );
+
+              const notesRaw =
+                readObjectValueByKeys(batchRecord, ['notes', 'note']) ??
+                readFirstValueByMatcher(
+                  batchRecord,
+                  (key) => key.includes('note'),
+                );
+
+              return {
+                batchIn: String(batchIdRaw ?? ''),
+                qty:
+                  qtyRaw != null
+                    ? toNumberInputValue(qtyRaw)
+                    : batches.length === 1
+                      ? detailQtyFallback
+                      : '',
+                expiredDate: String(expiredRaw ?? '').slice(0, 10),
+                notes: String(notesRaw ?? ''),
+              };
+            })
+          : [initialBatch()],
+    };
+  });
 }
 
 export default function LogisticInboundPage() {
@@ -241,6 +462,9 @@ export default function LogisticInboundPage() {
   const isAddRoute = pathname === '/app/logistic/inbound/add';
   const isUpdateRoute = pathname === '/app/logistic/inbound/update';
   const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseInboundRef(updateRef);
+  const updateInboundId = updateUuid || decodedRefId;
 
   const [items, setItems] = useState<InboundListItem[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
@@ -452,13 +676,13 @@ export default function LogisticInboundPage() {
     if (!isUpdateRoute || showForm || loadingOptions) {
       return;
     }
-    if (!updateUuid) {
-      setError('Inbound UUID wajib diisi untuk halaman update.');
+    if (!updateInboundId) {
+      setError('Inbound reference wajib diisi untuk halaman update.');
       return;
     }
-    void openEditForm(updateUuid);
+    void openEditForm(updateInboundId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUpdateRoute, updateUuid, showForm, loadingOptions]);
+  }, [isUpdateRoute, updateInboundId, showForm, loadingOptions]);
 
   const openCreateForm = () => {
     setEditingUuid(null);
@@ -867,8 +1091,12 @@ export default function LogisticInboundPage() {
                             aria-label="Edit inbound"
                             onClick={() => {
                               if (rowId) {
+                                const inboundRef = buildInboundRef(
+                                  rowId,
+                                  item.createdAt,
+                                );
                                 router.push(
-                                  `/app/logistic/inbound/update?uuid=${encodeURIComponent(rowId)}`,
+                                  `/app/logistic/inbound/update?ref=${encodeURIComponent(inboundRef)}`,
                                 );
                               }
                             }}
@@ -1069,33 +1297,6 @@ export default function LogisticInboundPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border p-5">
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      type="submit"
-                      disabled={submitting || loadingOptions}
-                    >
-                      <Save />
-                      {submitting
-                        ? 'Saving...'
-                        : editingUuid
-                          ? 'Update Inbound'
-                          : 'Create Inbound'}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowForm(false);
-                        setEditingUuid(null);
-                        router.push('/app/logistic/inbound');
-                      }}
-                    >
-                      <ArrowLeft />
-                      Back to List
-                    </Button>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1293,6 +1494,34 @@ export default function LogisticInboundPage() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="rounded-lg border p-5">
+              <div className="flex flex-col gap-2 md:flex-row md:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditingUuid(null);
+                    router.push('/app/logistic/inbound');
+                  }}
+                >
+                  <ArrowLeft />
+                  Back to List
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitting || loadingOptions}
+                >
+                  <Save />
+                  {submitting
+                    ? 'Saving...'
+                    : editingUuid
+                      ? 'Update Inbound'
+                      : 'Create Inbound'}
+                </Button>
               </div>
             </div>
           </form>

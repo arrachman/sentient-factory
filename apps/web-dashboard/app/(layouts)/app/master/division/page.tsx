@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -26,9 +27,11 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type MasterDataDivision = {
   uuid: string;
+  createdAt?: string;
   code: string;
   name: string;
   description?: string | null;
@@ -60,6 +63,16 @@ function getTokenFromCookie() {
 }
 
 export default function MasterDataDivisionPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/division/add';
+  const isUpdateRoute = pathname === '/app/master/division/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataDivision[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
@@ -109,10 +122,30 @@ export default function MasterDataDivisionPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm(initialForm);
+    setShowForm(true);
+  }, [isAddRoute, showForm]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -148,6 +181,9 @@ export default function MasterDataDivisionPage() {
       setForm(initialForm);
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/division');
+      }
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save data');
@@ -187,6 +223,9 @@ export default function MasterDataDivisionPage() {
         setEditingUuid(null);
         setForm(initialForm);
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/division');
+        }
       }
       await fetchList(page);
     } catch (err) {
@@ -203,11 +242,7 @@ export default function MasterDataDivisionPage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm(initialForm);
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/division/add')}
           >
             <Plus />
             Add Division
@@ -284,7 +319,18 @@ export default function MasterDataDivisionPage() {
                       <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" aria-label="Edit division" onClick={() => onEdit(item)}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Edit division"
+                            onClick={() =>
+                              router.push(
+                                `/app/master/division/update?ref=${encodeURIComponent(
+                                  buildEntityRef(item.uuid, item.createdAt),
+                                )}`,
+                              )
+                            }
+                          >
                             <Pencil />
                           </Button>
                           <Button variant="destructive" size="icon" aria-label="Delete division" onClick={() => onDelete(item.uuid)}>
@@ -408,6 +454,9 @@ export default function MasterDataDivisionPage() {
                     setEditingUuid(null);
                     setForm(initialForm);
                     setShowForm(false);
+                    if (isAddRoute || isUpdateRoute) {
+                      router.push('/app/master/division');
+                    }
                   }}
                 >
                   <ArrowLeft />

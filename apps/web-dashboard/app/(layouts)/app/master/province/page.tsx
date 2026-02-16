@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -23,9 +24,11 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type MasterDataProvince = {
   uuid: string;
+  createdAt?: string;
   name: string;
   isoCode: string;
 };
@@ -49,6 +52,16 @@ function getTokenFromCookie() {
 }
 
 export default function MasterDataProvincePage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/province/add';
+  const isUpdateRoute = pathname === '/app/master/province/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataProvince[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
@@ -98,10 +111,30 @@ export default function MasterDataProvincePage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm(initialForm);
+    setShowForm(true);
+  }, [isAddRoute, showForm]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -134,6 +167,9 @@ export default function MasterDataProvincePage() {
       setForm(initialForm);
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/province');
+      }
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save data');
@@ -171,6 +207,9 @@ export default function MasterDataProvincePage() {
         setEditingUuid(null);
         setForm(initialForm);
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/province');
+        }
       }
       await fetchList(page);
     } catch (err) {
@@ -187,11 +226,7 @@ export default function MasterDataProvincePage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm(initialForm);
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/province/add')}
           >
             <Plus />
             Add Province
@@ -266,7 +301,18 @@ export default function MasterDataProvincePage() {
                       <TableCell>{item.isoCode}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" aria-label="Edit province" onClick={() => onEdit(item)}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Edit province"
+                            onClick={() =>
+                              router.push(
+                                `/app/master/province/update?ref=${encodeURIComponent(
+                                  buildEntityRef(item.uuid, item.createdAt),
+                                )}`,
+                              )
+                            }
+                          >
                             <Pencil />
                           </Button>
                           <Button variant="destructive" size="icon" aria-label="Delete province" onClick={() => onDelete(item.uuid)}>
@@ -354,6 +400,9 @@ export default function MasterDataProvincePage() {
                     setEditingUuid(null);
                     setForm(initialForm);
                     setShowForm(false);
+                    if (isAddRoute || isUpdateRoute) {
+                      router.push('/app/master/province');
+                    }
                   }}
                 >
                   <ArrowLeft />

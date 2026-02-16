@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -24,6 +25,7 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type MasterDataProvince = {
   uuid: string;
@@ -33,6 +35,7 @@ type MasterDataProvince = {
 
 type MasterDataCity = {
   uuid: string;
+  createdAt?: string;
   provinceId: string;
   name: string;
   postalCode: string;
@@ -60,6 +63,16 @@ function getTokenFromCookie() {
 }
 
 export default function MasterDataCityPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/city/add';
+  const isUpdateRoute = pathname === '/app/master/city/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataCity[]>([]);
   const [provinces, setProvinces] = useState<MasterDataProvince[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
@@ -139,11 +152,34 @@ export default function MasterDataCityPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
     fetchProvinceOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm || loadingProvince) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm({
+      ...initialForm,
+      provinceId: provinces[0]?.uuid || '',
+    });
+    setShowForm(true);
+  }, [isAddRoute, loadingProvince, provinces, showForm]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -178,6 +214,9 @@ export default function MasterDataCityPage() {
       });
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/city');
+      }
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save data');
@@ -219,6 +258,9 @@ export default function MasterDataCityPage() {
           provinceId: provinces[0]?.uuid || '',
         });
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/city');
+        }
       }
       await fetchList(page);
     } catch (err) {
@@ -235,14 +277,7 @@ export default function MasterDataCityPage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm({
-                ...initialForm,
-                provinceId: provinces[0]?.uuid || '',
-              });
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/city/add')}
           >
             <Plus />
             Add City
@@ -319,7 +354,18 @@ export default function MasterDataCityPage() {
                       <TableCell>{item.postalCode}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" aria-label="Edit city" onClick={() => onEdit(item)}>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            aria-label="Edit city"
+                            onClick={() =>
+                              router.push(
+                                `/app/master/city/update?ref=${encodeURIComponent(
+                                  buildEntityRef(item.uuid, item.createdAt),
+                                )}`,
+                              )
+                            }
+                          >
                             <Pencil />
                           </Button>
                           <Button variant="destructive" size="icon" aria-label="Delete city" onClick={() => onDelete(item.uuid)}>
@@ -430,6 +476,9 @@ export default function MasterDataCityPage() {
                       provinceId: provinces[0]?.uuid || '',
                     });
                     setShowForm(false);
+                    if (isAddRoute || isUpdateRoute) {
+                      router.push('/app/master/city');
+                    }
                   }}
                 >
                   <ArrowLeft />

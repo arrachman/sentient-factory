@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
@@ -41,37 +41,42 @@ import {
 import { cn } from '@/lib/utils';
 
 type ContactOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
   city?: string | null;
 };
 
 type CityOption = {
-  uuid: string;
-  name: string;
-  postalCode: string;
+  id?: string | number;
+  uuid?: string | number;
+  name?: string;
+  postalCode?: string;
 };
 
 type CitySlaOption = {
-  cityId: string;
+  cityId?: string | number;
   stdLeadTimeDays: number;
   stdReturnDoDays: number;
 };
 
 type ItemOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
   uom?: {
-    uuid: string;
-    code: string;
-    name: string;
+    id?: string | number;
+    uuid?: string | number;
+    code?: string;
+    name?: string;
   } | null;
 };
 
 type DivisionOption = {
-  uuid: string;
+  id?: string | number;
+  uuid?: string | number;
   code: string;
   name: string;
   isActive?: boolean;
@@ -110,7 +115,9 @@ type DeliveryOrderForm = {
 };
 
 type DeliveryOrderListItem = {
+  id?: string | number;
   uuid: string;
+  createdAt?: string;
   reportNo: string | number;
   doNumber: string;
   doDate: string;
@@ -271,14 +278,30 @@ function normalizeNumber(value: unknown): number {
   return 0;
 }
 
+function toEntityId(value: unknown) {
+  if (value == null) {
+    return '';
+  }
+  const id = String(value).trim();
+  if (!id || id === 'null' || id === 'undefined') {
+    return '';
+  }
+  return id;
+}
+
+function pickEntityId(entity?: { id?: string | number; uuid?: string | number } | null) {
+  return toEntityId(entity?.id ?? entity?.uuid);
+}
+
 type ApiDetailPayload = {
-  itemId?: string;
+  itemId?: string | number;
   batchNumber?: string;
   qtyPcs?: string | number | null;
   qtyKg?: string | number | null;
   notes?: string | null;
   item?: {
-    uuid?: string;
+    id?: string | number;
+    uuid?: string | number;
   } | null;
 };
 
@@ -288,7 +311,7 @@ function mapApiDetails(details: ApiDetailPayload[]): DeliveryOrderDetailForm[] {
   }
 
   return details.map((detail) => ({
-    itemId: String(detail.itemId ?? detail.item?.uuid ?? ''),
+    itemId: toEntityId(detail.itemId ?? detail.item?.id ?? detail.item?.uuid),
     batchNumbers: detail.batchNumber ? [String(detail.batchNumber)] : [],
     batchQtyMap: detail.batchNumber
       ? {
@@ -398,11 +421,55 @@ function BatchMultiSelect({
   );
 }
 
+function toBase64Url(input: string) {
+  const base64 = btoa(input);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function fromBase64Url(input: string) {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/');
+  const paddingLength = (4 - (normalized.length % 4)) % 4;
+  const padded = normalized + '='.repeat(paddingLength);
+  return atob(padded);
+}
+
+function buildEntityRef(id: string, createdAt?: string | null) {
+  const normalizedId = String(id ?? '').trim();
+  if (!normalizedId) {
+    return '';
+  }
+
+  const millis = createdAt ? Date.parse(createdAt) : NaN;
+  const safeMillis = Number.isFinite(millis) ? Math.trunc(millis) : 0;
+  return toBase64Url(`${normalizedId}.${safeMillis}`);
+}
+
+function parseEntityRef(ref: string) {
+  const normalizedRef = String(ref ?? '').trim();
+  if (!normalizedRef) {
+    return '';
+  }
+
+  try {
+    const decoded = fromBase64Url(normalizedRef);
+    const [id] = decoded.split('.', 1);
+    return String(id ?? '').trim();
+  } catch {
+    return '';
+  }
+}
+
 export default function LogisticTransactionDoPage() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isOutboundRoute = pathname.startsWith('/app/logistic/outbound');
   const isOutboundAddRoute = pathname === '/app/logistic/outbound/add';
+  const isOutboundUpdateRoute = pathname === '/app/logistic/outbound/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedUpdateRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedUpdateRefId;
 
   const [items, setItems] = useState<DeliveryOrderListItem[]>([]);
   const [customers, setCustomers] = useState<ContactOption[]>([]);
@@ -492,7 +559,7 @@ export default function LogisticTransactionDoPage() {
 
   const fetchBatchOptions = useCallback(
     async (itemId: string, force = false) => {
-      const normalizedItemId = itemId.trim();
+      const normalizedItemId = toEntityId(itemId);
       if (!normalizedItemId) {
         return;
       }
@@ -543,9 +610,9 @@ export default function LogisticTransactionDoPage() {
 
   const summary = useMemo(() => {
     const activeRows = form.details.filter(
-      (row) => row.itemId.trim() && row.batchNumbers.length > 0,
+      (row) => toEntityId(row.itemId) && row.batchNumbers.length > 0,
     );
-    const itemTypeCount = new Set(activeRows.map((row) => row.itemId.trim()))
+    const itemTypeCount = new Set(activeRows.map((row) => toEntityId(row.itemId)))
       .size;
     const totalBatch = activeRows.reduce(
       (sum, row) => sum + row.batchNumbers.length,
@@ -578,12 +645,14 @@ export default function LogisticTransactionDoPage() {
   }, [divisions, form.bu]);
 
   const citySlaByCityId = useMemo(() => {
-    return new Map(citySlas.map((row) => [row.cityId, row]));
+    return new Map(citySlas.map((row) => [toEntityId(row.cityId), row]));
   }, [citySlas]);
 
   const resolveDefaultByCustomer = useCallback(
     (customerId: string) => {
-      const selectedCustomer = customers.find((row) => row.uuid === customerId);
+      const selectedCustomer = customers.find(
+        (row) => pickEntityId(row) === customerId,
+      );
       const customerCity = String(selectedCustomer?.city ?? '')
         .trim()
         .toLowerCase();
@@ -592,15 +661,16 @@ export default function LogisticTransactionDoPage() {
       }
 
       const matchedCity = cities.find(
-        (city) => city.name.trim().toLowerCase() === customerCity,
+        (city) => String(city.name ?? '').trim().toLowerCase() === customerCity,
       );
       if (!matchedCity) {
         return null;
       }
 
-      const sla = citySlaByCityId.get(matchedCity.uuid);
+      const cityId = pickEntityId(matchedCity);
+      const sla = citySlaByCityId.get(cityId);
       return {
-        destinationCityId: matchedCity.uuid,
+        destinationCityId: cityId,
         stdLeadTimeDays: String(sla?.stdLeadTimeDays ?? 0),
         stdReturnDoDays: String(sla?.stdReturnDoDays ?? 0),
       };
@@ -757,20 +827,20 @@ export default function LogisticTransactionDoPage() {
       setDivisions(nextDivisions);
       setCitySlas(nextCitySlas);
 
-      const fallbackCustomerId = nextCustomers[0]?.uuid || '';
+      const fallbackCustomerId = pickEntityId(nextCustomers[0]);
       const fallbackCustomer = nextCustomers.find(
-        (row) => row.uuid === fallbackCustomerId,
+        (row) => pickEntityId(row) === fallbackCustomerId,
       );
       const fallbackCustomerCity = String(fallbackCustomer?.city ?? '')
         .trim()
         .toLowerCase();
       const fallbackMatchedCity = nextCities.find(
-        (city) => city.name.trim().toLowerCase() === fallbackCustomerCity,
+        (city) =>
+          String(city.name ?? '').trim().toLowerCase() === fallbackCustomerCity,
       );
-      const fallbackCityId =
-        fallbackMatchedCity?.uuid || nextCities[0]?.uuid || '';
+      const fallbackCityId = pickEntityId(fallbackMatchedCity) || pickEntityId(nextCities[0]);
       const fallbackSla = nextCitySlas.find(
-        (row) => row.cityId === fallbackCityId,
+        (row) => toEntityId(row.cityId) === fallbackCityId,
       );
 
       setForm((state) => ({
@@ -789,7 +859,8 @@ export default function LogisticTransactionDoPage() {
         details: state.details.map((row, index) => ({
           ...row,
           itemId:
-            row.itemId || (index === 0 ? nextItems[0]?.uuid || '' : row.itemId),
+            toEntityId(row.itemId) ||
+            (index === 0 ? pickEntityId(nextItems[0]) : toEntityId(row.itemId)),
         })),
       }));
     } catch (err) {
@@ -806,7 +877,7 @@ export default function LogisticTransactionDoPage() {
   }, []);
 
   const openCreateForm = useCallback(() => {
-    const fallbackCustomerId = customers[0]?.uuid || '';
+    const fallbackCustomerId = pickEntityId(customers[0]);
     const defaults = resolveDefaultByCustomer(fallbackCustomerId);
     setEditingUuid(null);
     setForm({
@@ -814,11 +885,11 @@ export default function LogisticTransactionDoPage() {
       doDate: new Date().toISOString().slice(0, 10),
       doReceivedDate: new Date().toISOString().slice(0, 10),
       customerId: fallbackCustomerId,
-      destinationCityId: defaults?.destinationCityId || cities[0]?.uuid || '',
+      destinationCityId: defaults?.destinationCityId || pickEntityId(cities[0]),
       stdLeadTimeDays: defaults?.stdLeadTimeDays || '0',
       stdReturnDoDays: defaults?.stdReturnDoDays || '0',
       bu: divisions[0]?.code || '',
-      details: [{ ...initialDetail(), itemId: itemOptions[0]?.uuid || '' }],
+      details: [{ ...initialDetail(), itemId: pickEntityId(itemOptions[0]) }],
     });
     setShowForm(true);
   }, [cities, customers, divisions, itemOptions, resolveDefaultByCustomer]);
@@ -840,6 +911,21 @@ export default function LogisticTransactionDoPage() {
   ]);
 
   useEffect(() => {
+    if (!isOutboundUpdateRoute || loadingOptions) {
+      return;
+    }
+    if (!updateId) {
+      setError('Delivery order reference wajib diisi untuk halaman update.');
+      return;
+    }
+    if (showForm && editingUuid === updateId) {
+      return;
+    }
+    void openEditForm(updateId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingUuid, isOutboundUpdateRoute, loadingOptions, showForm, updateId]);
+
+  useEffect(() => {
     if (!showForm) {
       return;
     }
@@ -847,7 +933,7 @@ export default function LogisticTransactionDoPage() {
     const itemIds = Array.from(
       new Set(
         form.details
-          .map((detail) => detail.itemId.trim())
+          .map((detail) => toEntityId(detail.itemId))
           .filter(Boolean),
       ),
     );
@@ -911,7 +997,7 @@ export default function LogisticTransactionDoPage() {
       });
       await Promise.all(
         detailRows
-          .map((detail) => detail.itemId.trim())
+          .map((detail) => toEntityId(detail.itemId))
           .filter(Boolean)
           .map((itemId) => fetchBatchOptions(itemId, true)),
       );
@@ -932,11 +1018,11 @@ export default function LogisticTransactionDoPage() {
 
     try {
       const normalizedDetails = form.details.flatMap((row) => {
-        const itemId = row.itemId.trim();
+        const itemId = toEntityId(row.itemId);
         const batchNumbers = row.batchNumbers
           .map((batchNumber) => String(batchNumber).trim())
           .filter(Boolean);
-        const qtyKgRaw = row.qtyKg.trim();
+        const qtyKgRaw = String(row.qtyKg ?? '').trim();
         if (!itemId || batchNumbers.length === 0 || !qtyKgRaw) {
           return [];
         }
@@ -958,7 +1044,7 @@ export default function LogisticTransactionDoPage() {
           batchNumber,
           qtyPcs: getSelectedBatchQtyPcs(itemId, batchNumber, row.batchQtyMap),
           qtyKg: index === batchCount - 1 ? qtyKgRemainder : qtyKgBase,
-          notes: row.notes.trim(),
+          notes: String(row.notes ?? '').trim(),
         }));
       });
 
@@ -1157,7 +1243,7 @@ export default function LogisticTransactionDoPage() {
       ...state,
       details: [
         ...state.details,
-        { ...initialDetail(), itemId: itemOptions[0]?.uuid || '' },
+        { ...initialDetail(), itemId: pickEntityId(itemOptions[0]) },
       ],
     }));
   };
@@ -1307,8 +1393,10 @@ export default function LogisticTransactionDoPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  items.map((item, index) => (
-                    <TableRow key={item.uuid}>
+                  items.map((item, index) => {
+                    const rowId = toEntityId(item.id ?? item.uuid);
+                    return (
+                    <TableRow key={rowId || `outbound-${index}`}>
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>
                         <div className="font-medium">{item.doNumber}</div>
@@ -1353,7 +1441,19 @@ export default function LogisticTransactionDoPage() {
                             variant="outline"
                             size="icon"
                             aria-label="Edit transaction"
-                            onClick={() => openEditForm(item.uuid)}
+                            onClick={() => {
+                              if (isOutboundRoute) {
+                                const ref = buildEntityRef(rowId, item.createdAt);
+                                router.push(
+                                  `/app/logistic/outbound/update?ref=${encodeURIComponent(ref)}`,
+                                );
+                                return;
+                              }
+                              if (rowId) {
+                                void openEditForm(rowId);
+                              }
+                            }}
+                            disabled={!rowId}
                           >
                             <Pencil />
                           </Button>
@@ -1361,14 +1461,20 @@ export default function LogisticTransactionDoPage() {
                             variant="destructive"
                             size="icon"
                             aria-label="Delete transaction"
-                            onClick={() => remove(item.uuid)}
+                            onClick={() => {
+                              if (rowId) {
+                                void remove(rowId);
+                              }
+                            }}
+                            disabled={!rowId}
                           >
                             <Trash2 />
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -1472,15 +1578,16 @@ export default function LogisticTransactionDoPage() {
                         value={form.customerId}
                         onValueChange={(value) =>
                           setForm((state) => {
+                            const normalizedCustomerId = toEntityId(value);
                             const nextState: DeliveryOrderForm = {
                               ...state,
-                              customerId: value,
+                              customerId: normalizedCustomerId,
                             };
                             if (editingUuid) {
                               return nextState;
                             }
 
-                            const defaults = resolveDefaultByCustomer(value);
+                            const defaults = resolveDefaultByCustomer(normalizedCustomerId);
                             if (!defaults) {
                               return nextState;
                             }
@@ -1493,11 +1600,17 @@ export default function LogisticTransactionDoPage() {
                             };
                           })
                         }
-                        options={customers.map((customer) => ({
-                          value: customer.uuid,
-                          label: customer.name,
-                          keywords: customer.code,
-                        }))}
+                        options={customers.flatMap((customer) => {
+                          const value = pickEntityId(customer);
+                          if (!value) {
+                            return [];
+                          }
+                          return {
+                            value,
+                            label: String(customer.name ?? ''),
+                            keywords: customer.code,
+                          };
+                        })}
                         placeholder="Select customer"
                         searchPlaceholder="Search customer..."
                         emptyText="No customer found."
@@ -1511,13 +1624,21 @@ export default function LogisticTransactionDoPage() {
                         onValueChange={(value) =>
                           setForm((state) => ({
                             ...state,
-                            destinationCityId: value,
+                            destinationCityId: toEntityId(value),
                           }))
                         }
-                        options={cities.map((city) => ({
-                          value: city.uuid,
-                          label: `${city.name} (${city.postalCode})`,
-                        }))}
+                        options={cities.flatMap((city) => {
+                          const value = pickEntityId(city);
+                          if (!value) {
+                            return [];
+                          }
+                          const cityName = String(city.name ?? '');
+                          const postalCode = String(city.postalCode ?? '');
+                          return {
+                            value,
+                            label: `${cityName}${postalCode ? ` (${postalCode})` : ''}`,
+                          };
+                        })}
                         placeholder="Select city"
                         searchPlaceholder="Search city..."
                         emptyText="No city found."
@@ -1687,13 +1808,23 @@ export default function LogisticTransactionDoPage() {
                               <AutocompleteSelect
                                 value={detail.itemId}
                                 onValueChange={async (value) => {
-                                  setDetailField(index, 'itemId', value)
-                                  await fetchBatchOptions(value, true);
+                                  const normalizedItemId = toEntityId(value);
+                                  setDetailField(index, 'itemId', normalizedItemId);
+                                  await fetchBatchOptions(normalizedItemId, true);
                                 }}
-                                options={itemOptions.map((item) => ({
-                                  value: item.uuid,
-                                  label: `${item.code} - ${item.name}${item.uom?.code ? ` (UOM: ${item.uom.code})` : ''}`,
-                                }))}
+                                options={itemOptions.flatMap((item) => {
+                                  const value = pickEntityId(item);
+                                  if (!value) {
+                                    return [];
+                                  }
+                                  const code = String(item.code ?? '');
+                                  const name = String(item.name ?? '');
+                                  const uomCode = String(item.uom?.code ?? '');
+                                  return {
+                                    value,
+                                    label: `${code} - ${name}${uomCode ? ` (UOM: ${uomCode})` : ''}`,
+                                  };
+                                })}
                                 placeholder="Select item"
                                 searchPlaceholder="Search item..."
                                 emptyText="No item found."

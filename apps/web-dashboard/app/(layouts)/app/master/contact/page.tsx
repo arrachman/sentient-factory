@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ChevronLeft,
@@ -26,6 +27,7 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 type ContactType = 'customer' | 'supplier' | 'company';
 
@@ -41,6 +43,7 @@ type MasterDataCity = {
 
 type MasterDataContact = {
   uuid: string;
+  createdAt?: string;
   code: string;
   name: string;
   tax?: string | null;
@@ -107,6 +110,16 @@ function slugifyCode(value: string) {
 }
 
 export default function MasterDataContactPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/master/contact/add';
+  const isUpdateRoute = pathname === '/app/master/contact/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+  const updateRef = searchParams.get('ref')?.trim() ?? '';
+  const decodedRefId = parseEntityRef(updateRef);
+  const updateId = updateUuid || decodedRefId;
+
   const [items, setItems] = useState<MasterDataContact[]>([]);
   const [cities, setCities] = useState<MasterDataCity[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
@@ -194,11 +207,31 @@ export default function MasterDataContactPage() {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchList(1);
     fetchCityOptions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isAddRoute || showForm) {
+      return;
+    }
+    setEditingUuid(null);
+    setForm(initialForm);
+    setShowForm(true);
+  }, [isAddRoute, showForm]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || !updateId || showForm) {
+      return;
+    }
+    const item = items.find((row) => row.uuid === updateId);
+    if (!item) {
+      return;
+    }
+    onEdit(item);
+  }, [isUpdateRoute, updateId, showForm, items]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -243,6 +276,9 @@ export default function MasterDataContactPage() {
       setForm(initialForm);
       setEditingUuid(null);
       setShowForm(false);
+      if (isAddRoute || isUpdateRoute) {
+        router.push('/app/master/contact');
+      }
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save data');
@@ -291,6 +327,9 @@ export default function MasterDataContactPage() {
         setEditingUuid(null);
         setForm(initialForm);
         setShowForm(false);
+        if (isAddRoute || isUpdateRoute) {
+          router.push('/app/master/contact');
+        }
       }
       await fetchList(page);
     } catch (err) {
@@ -307,11 +346,7 @@ export default function MasterDataContactPage() {
         </ToolbarHeading>
         <ToolbarActions>
           <Button
-            onClick={() => {
-              setEditingUuid(null);
-              setForm(initialForm);
-              setShowForm(true);
-            }}
+            onClick={() => router.push('/app/master/contact/add')}
           >
             <Plus />
             Add Contact
@@ -388,7 +423,18 @@ export default function MasterDataContactPage() {
                     <TableCell className="capitalize">{item.type}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="icon" aria-label="Edit contact" onClick={() => onEdit(item)}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          aria-label="Edit contact"
+                          onClick={() =>
+                            router.push(
+                              `/app/master/contact/update?ref=${encodeURIComponent(
+                                buildEntityRef(item.uuid, item.createdAt),
+                              )}`,
+                            )
+                          }
+                        >
                           <Pencil />
                         </Button>
                         <Button
@@ -615,6 +661,9 @@ export default function MasterDataContactPage() {
                   setEditingUuid(null);
                   setForm(initialForm);
                   setShowForm(false);
+                  if (isAddRoute || isUpdateRoute) {
+                    router.push('/app/master/contact');
+                  }
                 }}
               >
                 <ArrowLeft />
