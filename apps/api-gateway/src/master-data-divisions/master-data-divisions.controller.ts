@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  ParseIntPipe,
   Param,
   Patch,
   Post,
@@ -38,24 +39,24 @@ export class MasterDataDivisionsController {
     return this.service.findAll(query);
   }
 
-  @Get(':uuid')
+  @Get(':id')
   @ApiOperation({ summary: 'Get one master data division' })
   @ApiResponse({ status: 200, description: 'Master data division detail' })
-  findOne(@Param('uuid') uuid: string) {
-    return this.service.findOne(uuid);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
-  @Patch(':uuid')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update master data division' })
   @ApiResponse({ status: 200, description: 'Master data division updated' })
-  update(@Param('uuid') uuid: string, @Body() dto: UpdateMasterDataDivisionDto, @Request() req: any) {
-    return this.service.update(uuid, dto, req.user?.id);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataDivisionDto, @Request() req: any) {
+    return this.service.update(id, dto, req.user?.id);
   }
 
-  @Delete(':uuid')
+  @Delete(':id')
   @ApiOperation({ summary: 'Delete master data division (soft delete)' })
   @ApiResponse({ status: 200, description: 'Master data division deleted' })
-  remove(@Param('uuid') uuid: string, @Request() req: any) {
-    return this.service.remove(uuid, req.user?.id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.remove(id, req.user?.id);
   }
 }

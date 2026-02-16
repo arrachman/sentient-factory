@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateInboundBatchDto } from './dto/create-inbound-batch.dto';
 import { CreateInboundDetailDto } from './dto/create-inbound-detail.dto';
 import { CreateInboundDto } from './dto/create-inbound.dto';
@@ -12,8 +13,9 @@ import { UpdateInboundDto } from './dto/update-inbound.dto';
 export class InboundsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateInboundDto, actorId?: string) {
-    await this.ensureSupplierExists(dto.supplierId);
+  async create(dto: CreateInboundDto, actorId?: string | number) {
+    const supplierId = this.parseId(dto.supplierId, 'Supplier ID');
+    await this.ensureSupplierExists(supplierId);
     const effectiveWarehouseId = await this.resolveWarehouseForActor(actorId);
     await this.ensureWarehouseExists(effectiveWarehouseId);
 
@@ -26,12 +28,12 @@ export class InboundsService {
         data: {
           transactionNo,
           transactionDate: dto.transactionDate ? new Date(dto.transactionDate) : new Date(),
-          supplierId: dto.supplierId,
+          supplierId,
           warehouseId: effectiveWarehouseId,
           notes: dto.notes ?? null,
           status: 'POSTED',
-          createdBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          createdBy: toAuditUserId(actorId),
+          updatedBy: toAuditUserId(actorId),
         },
       });
 
@@ -39,7 +41,7 @@ export class InboundsService {
         const item = itemMap.get(detail.itemId)!;
         await tx.inboundDetail.create({
           data: {
-            inboundId: header.uuid,
+            inboundId: header.id,
             lineNo: index + 1,
             itemId: detail.itemId,
             qty: detail.qty,
@@ -47,8 +49,8 @@ export class InboundsService {
             itemCodeSnapshot: item.code,
             itemNameSnapshot: item.name,
             notes: detail.notes ?? null,
-            createdBy: actorId ?? null,
-            updatedBy: actorId ?? null,
+            createdBy: toAuditUserId(actorId),
+            updatedBy: toAuditUserId(actorId),
             batches: {
               create: detail.batches.map((batch, batchIndex) => ({
                 lineNo: batchIndex + 1,
@@ -56,20 +58,20 @@ export class InboundsService {
                 qty: batch.qty,
                 expiredDate: batch.expiredDate ? new Date(batch.expiredDate) : null,
                 notes: batch.notes ?? null,
-                createdBy: actorId ?? null,
-                updatedBy: actorId ?? null,
+                createdBy: toAuditUserId(actorId),
+                updatedBy: toAuditUserId(actorId),
               })),
             },
           },
         });
       }
 
-      await this.syncInboundInventoryLedger(tx, header.uuid, actorId);
+      await this.syncInboundInventoryLedger(tx, header.id, actorId);
 
       return header;
     });
 
-    return this.findOne(created.uuid);
+    return this.findOne(created.id);
   }
 
   async findAll(query: QueryInboundDto) {
@@ -84,11 +86,13 @@ export class InboundsService {
     }
 
     if (query.supplierId?.trim()) {
-      where.supplierId = query.supplierId.trim();
+      const supplierId = this.parseId(query.supplierId.trim(), 'Supplier ID');
+      where.supplierId = supplierId;
     }
 
     if (query.warehouseId?.trim()) {
-      where.warehouseId = query.warehouseId.trim();
+      const warehouseId = this.parseId(query.warehouseId.trim(), 'Warehouse ID');
+      where.warehouseId = warehouseId;
     }
 
     if (query.transactionDateFrom || query.transactionDateTo) {
@@ -113,13 +117,13 @@ export class InboundsService {
       this.prisma.inbound.findMany({
         where,
         include: {
-          supplier: { select: { uuid: true, code: true, name: true, type: true } },
+          supplier: { select: { id: true, code: true, name: true, type: true } },
           warehouse: {
             select: {
-              uuid: true,
+              id: true,
               name: true,
               locationName: true,
-              city: { select: { uuid: true, name: true, postalCode: true } },
+              city: { select: { id: true, name: true, postalCode: true } },
             },
           },
           _count: { select: { details: { where: { deletedAt: null } } } },
@@ -143,23 +147,23 @@ export class InboundsService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.inbound.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
       include: {
-        supplier: { select: { uuid: true, code: true, name: true, type: true } },
+        supplier: { select: { id: true, code: true, name: true, type: true } },
         warehouse: {
           select: {
-            uuid: true,
+            id: true,
             name: true,
             locationName: true,
             addressDetail: true,
             city: {
               select: {
-                uuid: true,
+                id: true,
                 name: true,
                 postalCode: true,
-                province: { select: { uuid: true, name: true, isoCode: true } },
+                province: { select: { id: true, name: true, isoCode: true } },
               },
             },
           },
@@ -170,12 +174,12 @@ export class InboundsService {
           include: {
             item: {
               select: {
-                uuid: true,
+                id: true,
                 code: true,
                 name: true,
                 category: true,
                 itemType: true,
-                uom: { select: { uuid: true, code: true, name: true, type: true } },
+                uom: { select: { id: true, code: true, name: true, type: true } },
               },
             },
             batches: {
@@ -193,30 +197,29 @@ export class InboundsService {
     return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateInboundDto, actorId?: string) {
+  async update(id: number, dto: UpdateInboundDto, actorId?: string | number) {
     const existing = await this.prisma.inbound.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true, transactionNo: true },
+      where: { id, deletedAt: null },
+      select: { id: true, transactionNo: true },
     });
     if (!existing) {
       throw new NotFoundException('Inbound not found');
     }
 
     if (dto.transactionNo && dto.transactionNo !== existing.transactionNo) {
-      await this.ensureTransactionNoAvailable(dto.transactionNo, uuid);
+      await this.ensureTransactionNoAvailable(dto.transactionNo, id);
     }
 
     if (dto.supplierId) {
-      await this.ensureSupplierExists(dto.supplierId);
+      await this.ensureSupplierExists(this.parseId(dto.supplierId, 'Supplier ID'));
     }
 
     const effectiveWarehouseId = await this.resolveWarehouseForActor(actorId);
-    dto.warehouseId = effectiveWarehouseId;
     await this.ensureWarehouseExists(effectiveWarehouseId);
 
     const detailsProvided = Array.isArray(dto.details);
     let detailPayload: NormalizedInboundDetail[] = [];
-    let itemMap: Map<string, { code: string; name: string; uomId: string }> = new Map();
+    let itemMap: Map<number, { id: number; code: string; name: string; uomId: number }> = new Map();
 
     if (detailsProvided) {
       detailPayload = this.normalizeAndValidateDetails(dto.details as CreateInboundDetailDto[]);
@@ -225,24 +228,24 @@ export class InboundsService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.inbound.update({
-        where: { uuid },
+        where: { id },
         data: {
           transactionNo: dto.transactionNo,
           transactionDate: dto.transactionDate ? new Date(dto.transactionDate) : undefined,
-          supplierId: dto.supplierId,
+          supplierId: dto.supplierId ? this.parseId(dto.supplierId, 'Supplier ID') : undefined,
           warehouseId: effectiveWarehouseId,
           notes: dto.notes,
           status: dto.status,
-          updatedBy: actorId ?? null,
+          updatedBy: toAuditUserId(actorId),
         },
       });
 
       if (detailsProvided) {
         const existingDetails = await tx.inboundDetail.findMany({
-          where: { inboundId: uuid },
-          select: { uuid: true },
+          where: { inboundId: id },
+          select: { id: true },
         });
-        const detailIds = existingDetails.map((row) => row.uuid);
+        const detailIds = existingDetails.map((row) => row.id);
 
         if (detailIds.length > 0) {
           await tx.inboundDetailBatch.deleteMany({
@@ -250,13 +253,13 @@ export class InboundsService {
           });
         }
 
-        await tx.inboundDetail.deleteMany({ where: { inboundId: uuid } });
+        await tx.inboundDetail.deleteMany({ where: { inboundId: id } });
 
         for (const [index, detail] of detailPayload.entries()) {
           const item = itemMap.get(detail.itemId)!;
           await tx.inboundDetail.create({
             data: {
-              inboundId: uuid,
+              inboundId: id,
               lineNo: index + 1,
               itemId: detail.itemId,
               qty: detail.qty,
@@ -264,8 +267,8 @@ export class InboundsService {
               itemCodeSnapshot: item.code,
               itemNameSnapshot: item.name,
               notes: detail.notes ?? null,
-              createdBy: actorId ?? null,
-              updatedBy: actorId ?? null,
+              createdBy: toAuditUserId(actorId),
+              updatedBy: toAuditUserId(actorId),
               batches: {
                 create: detail.batches.map((batch, batchIndex) => ({
                   lineNo: batchIndex + 1,
@@ -273,8 +276,8 @@ export class InboundsService {
                   qty: batch.qty,
                   expiredDate: batch.expiredDate ? new Date(batch.expiredDate) : null,
                   notes: batch.notes ?? null,
-                  createdBy: actorId ?? null,
-                  updatedBy: actorId ?? null,
+                  createdBy: toAuditUserId(actorId),
+                  updatedBy: toAuditUserId(actorId),
                 })),
               },
             },
@@ -282,16 +285,16 @@ export class InboundsService {
         }
       }
 
-      await this.syncInboundInventoryLedger(tx, uuid, actorId);
+      await this.syncInboundInventoryLedger(tx, id, actorId);
     });
 
-    return this.findOne(uuid);
+    return this.findOne(id);
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string | number) {
     const existing = await this.prisma.inbound.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('Inbound not found');
@@ -299,35 +302,35 @@ export class InboundsService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.inbound.update({
-        where: { uuid },
+        where: { id },
         data: {
           deletedAt: new Date(),
-          deletedBy: actorId ?? null,
+          deletedBy: toAuditUserId(actorId),
           status: 'CANCELLED',
-          updatedBy: actorId ?? null,
+          updatedBy: toAuditUserId(actorId),
         },
       });
       await tx.inboundDetail.updateMany({
-        where: { inboundId: uuid, deletedAt: null },
+        where: { inboundId: id, deletedAt: null },
         data: {
           deletedAt: new Date(),
-          deletedBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          deletedBy: toAuditUserId(actorId),
+          updatedBy: toAuditUserId(actorId),
         },
       });
       await tx.inboundDetailBatch.updateMany({
         where: {
-          inboundDetail: { inboundId: uuid },
+          inboundDetail: { inboundId: id },
           deletedAt: null,
         },
         data: {
           deletedAt: new Date(),
-          deletedBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          deletedBy: toAuditUserId(actorId),
+          updatedBy: toAuditUserId(actorId),
         },
       });
 
-      await this.syncInboundInventoryLedger(tx, uuid, actorId);
+      await this.syncInboundInventoryLedger(tx, id, actorId);
     });
 
     return { success: true, message: 'Inbound deleted' };
@@ -363,13 +366,13 @@ export class InboundsService {
     return `INB-${datePart}-${String(countToday + 1).padStart(4, '0')}`;
   }
 
-  private async ensureTransactionNoAvailable(transactionNo: string, exceptUuid?: string) {
+  private async ensureTransactionNoAvailable(transactionNo: string, exceptId?: number) {
     const duplicate = await this.prisma.inbound.findFirst({
       where: {
         transactionNo,
-        NOT: exceptUuid ? { uuid: exceptUuid } : undefined,
+        NOT: exceptId ? { id: exceptId } : undefined,
       },
-      select: { uuid: true, deletedAt: true },
+      select: { id: true, deletedAt: true },
     });
 
     if (duplicate) {
@@ -381,14 +384,14 @@ export class InboundsService {
     }
   }
 
-  private async ensureSupplierExists(supplierId: string) {
+  private async ensureSupplierExists(supplierId: number) {
     const supplier = await this.prisma.masterDataContact.findFirst({
       where: {
-        uuid: supplierId,
+        id: supplierId,
         type: 'supplier',
         deletedAt: null,
       },
-      select: { uuid: true },
+      select: { id: true },
     });
 
     if (!supplier) {
@@ -396,10 +399,10 @@ export class InboundsService {
     }
   }
 
-  private async ensureWarehouseExists(warehouseId: string) {
+  private async ensureWarehouseExists(warehouseId: number) {
     const warehouse = await this.prisma.masterDataWarehouse.findFirst({
-      where: { uuid: warehouseId, deletedAt: null },
-      select: { uuid: true },
+      where: { id: warehouseId, deletedAt: null },
+      select: { id: true },
     });
 
     if (!warehouse) {
@@ -407,31 +410,32 @@ export class InboundsService {
     }
   }
 
-  private async resolveWarehouseForActor(actorId?: string) {
+  private async resolveWarehouseForActor(actorId?: string | number) {
     if (!actorId) {
       throw new BadRequestException('User login tidak ditemukan');
     }
+    const actorUserId = this.parseActorId(actorId);
 
     const actor = await this.prisma.user.findFirst({
       where: {
-        uuid: actorId,
+        id: actorUserId,
         deletedAt: null,
       },
       select: {
         warehouseId: true,
       },
     });
-    const mappedWarehouseId = String(actor?.warehouseId ?? '').trim();
-    if (mappedWarehouseId && mappedWarehouseId !== 'null' && mappedWarehouseId !== 'undefined') {
+    const mappedWarehouseId = actor?.warehouseId;
+    if (mappedWarehouseId && mappedWarehouseId > 0) {
       return mappedWarehouseId;
     }
 
     const ownedWarehouse = await this.prisma.masterDataWarehouse.findFirst({
       where: {
         deletedAt: null,
-        createdBy: actorId,
+        createdBy: toAuditUserId(actorId),
       },
-      select: { uuid: true },
+      select: { id: true },
       orderBy: [{ createdAt: 'asc' }],
     });
 
@@ -439,7 +443,7 @@ export class InboundsService {
       throw new BadRequestException('Warehouse untuk user login belum terdaftar');
     }
 
-    return ownedWarehouse.uuid;
+    return ownedWarehouse.id;
   }
 
   private normalizeAndValidateDetails(
@@ -449,13 +453,10 @@ export class InboundsService {
       throw new BadRequestException('At least one detail row is required');
     }
 
-    const seenItemIds = new Set<string>();
+    const seenItemIds = new Set<number>();
 
     return details.map((rawDetail) => {
-      const itemId = rawDetail.itemId.trim();
-      if (!itemId) {
-        throw new BadRequestException('Detail itemId is required');
-      }
+      const itemId = this.parseId(rawDetail.itemId, 'Detail itemId');
 
       if (seenItemIds.has(itemId)) {
         throw new BadRequestException(`Duplicate item in detail: ${itemId}`);
@@ -465,6 +466,17 @@ export class InboundsService {
       const batches = this.normalizeAndValidateBatches(rawDetail.batches);
       const qtyFromBatches = batches.reduce((total, batch) => total + batch.qty, 0);
       const detailQty = Number(rawDetail.qty);
+      const detailUomInput = Number(rawDetail.uomInput);
+
+      if (!Number.isFinite(detailQty) || detailQty <= 0) {
+        throw new BadRequestException(`Detail qty for item ${itemId} must be greater than 0`);
+      }
+
+      if (!Number.isInteger(detailUomInput) || detailUomInput < 0) {
+        throw new BadRequestException(
+          `Detail uomInput for item ${itemId} must be an integer and cannot be negative`,
+        );
+      }
 
       if (Math.abs(detailQty - qtyFromBatches) > 0.0001) {
         throw new BadRequestException(
@@ -475,7 +487,7 @@ export class InboundsService {
       return {
         itemId,
         qty: detailQty,
-        uomInput: rawDetail.uomInput == null ? undefined : Number(rawDetail.uomInput),
+        uomInput: detailUomInput,
         notes: rawDetail.notes?.trim() || undefined,
         batches,
       };
@@ -501,29 +513,38 @@ export class InboundsService {
       }
       seenBatchNumbers.add(batchKey);
 
+      const qty = Number(rawBatch.qty);
+      if (!Number.isFinite(qty) || qty <= 0) {
+        throw new BadRequestException(`Batch qty must be greater than 0 for batch ${batchIn}`);
+      }
+
       return {
         batchIn,
-        qty: Number(rawBatch.qty),
+        qty,
         expiredDate: rawBatch.expiredDate,
         notes: rawBatch.notes?.trim() || undefined,
       };
     });
   }
 
-  private async getActiveItems(itemIds: string[]) {
+  private async getActiveItems(itemIds: number[]) {
     const uniqueItemIds = [...new Set(itemIds)];
 
     const items = await this.prisma.masterDataItem.findMany({
       where: {
-        uuid: { in: uniqueItemIds },
+        id: { in: uniqueItemIds },
         isActive: true,
         deletedAt: null,
       },
       select: {
-        uuid: true,
+        id: true,
         code: true,
         name: true,
-        uomId: true,
+        uom: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
@@ -531,35 +552,49 @@ export class InboundsService {
       throw new BadRequestException('One or more items are not found or inactive');
     }
 
-    return new Map(items.map((item) => [item.uuid, item]));
+    return new Map(
+      items.map((item) => [
+        item.id,
+        {
+          id: item.id,
+          code: item.code,
+          name: item.name,
+          uomId: item.uom.id,
+        },
+      ]),
+    );
   }
 
   private async syncInboundInventoryLedger(
     tx: Prisma.TransactionClient,
-    inboundUuid: string,
-    actorId?: string,
+    inboundId: number,
+    actorId?: string | number,
   ) {
     const now = new Date();
     await tx.inventoryLedger.updateMany({
       where: {
         referenceDocType: 'INBOUND',
-        referenceDocId: inboundUuid,
+        referenceDocId: String(inboundId),
         deletedAt: null,
       },
       data: {
         deletedAt: now,
-        deletedBy: actorId ?? null,
-        updatedBy: actorId ?? null,
+        deletedBy: toAuditUserId(actorId),
+        updatedBy: toAuditUserId(actorId),
       },
     });
 
     const inbound = await tx.inbound.findFirst({
-      where: { uuid: inboundUuid },
+      where: { id: inboundId },
       select: {
-        uuid: true,
+        id: true,
         transactionNo: true,
         transactionDate: true,
-        warehouseId: true,
+        warehouse: {
+          select: {
+            id: true,
+          },
+        },
         status: true,
         deletedAt: true,
         details: {
@@ -569,7 +604,12 @@ export class InboundsService {
             itemId: true,
             item: {
               select: {
-                uomId: true,
+                id: true,
+                uom: {
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
             batches: {
@@ -590,6 +630,8 @@ export class InboundsService {
       return;
     }
 
+    const actorUserId = await this.resolveActorUserId(tx, actorId);
+
     for (const detail of inbound.details) {
       for (const batch of detail.batches) {
         const batchNumber = String(batch.batchIn ?? '').trim();
@@ -600,50 +642,73 @@ export class InboundsService {
         const inventoryBatch = await tx.inventoryBatch.upsert({
           where: {
             itemId_batchNumber: {
-              itemId: detail.itemId,
+              itemId: detail.item.id,
               batchNumber,
             },
           },
           update: {
             expiryDate: batch.expiredDate ?? undefined,
-            isActive: true,
             deletedAt: null,
             deletedBy: null,
-            updatedBy: actorId ?? null,
+            updatedBy: toAuditUserId(actorId),
           },
           create: {
-            itemId: detail.itemId,
+            itemId: detail.item.id,
             batchNumber,
             expiryDate: batch.expiredDate ?? null,
-            isActive: true,
-            createdBy: actorId ?? null,
-            updatedBy: actorId ?? null,
+            createdBy: toAuditUserId(actorId),
+            updatedBy: toAuditUserId(actorId),
           },
-          select: { uuid: true },
+          select: { id: true },
         });
 
         await tx.inventoryLedger.create({
           data: {
             transactionDate: inbound.transactionDate,
-            itemId: detail.itemId,
-            warehouseId: inbound.warehouseId,
-            batchId: inventoryBatch.uuid,
+            itemId: detail.item.id,
+            warehouseId: inbound.warehouse.id,
+            batchId: inventoryBatch.id,
             transactionType: 'INBOUND',
             referenceDocType: 'INBOUND',
-            referenceDocId: inbound.uuid,
+            referenceDocId: String(inbound.id),
             referenceNumber: inbound.transactionNo,
             quantityPcs: batch.qty,
             quantityKg: 0,
-            uomId: detail.item.uomId,
+            uomId: detail.item.uom.id,
             unitCost: null,
             totalValue: 0,
-            userId: actorId ?? null,
-            createdBy: actorId ?? null,
-            updatedBy: actorId ?? null,
+            userId: actorUserId ?? null,
+            createdBy: toAuditUserId(actorId),
+            updatedBy: toAuditUserId(actorId),
           },
         });
       }
     }
+  }
+
+  private async resolveActorUserId(tx: Prisma.TransactionClient, actorId?: string | number) {
+    if (actorId === undefined || actorId === null || actorId === '') {
+      return undefined;
+    }
+    const normalizedActorId = this.parseActorId(actorId);
+
+    const actor = await tx.user.findFirst({
+      where: {
+        id: normalizedActorId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    return actor?.id;
+  }
+
+  private parseId(value: string | number, fieldLabel: string): number {
+    return parseIntStrict(String(value), fieldLabel);
+  }
+
+  private parseActorId(value: string | number): number {
+    return parseIntStrict(String(value), 'User ID');
   }
 }
 
@@ -655,9 +720,18 @@ type NormalizedInboundBatch = {
 };
 
 type NormalizedInboundDetail = {
-  itemId: string;
+  itemId: number;
   qty: number;
   uomInput?: number;
   notes?: string;
   batches: NormalizedInboundBatch[];
 };
+
+// Keep parsing centralized to avoid string-vs-number drift.
+function parseIntStrict(value: string, fieldLabel: string): number {
+  const parsed = Number(String(value ?? '').trim());
+  if (!Number.isInteger(parsed)) {
+    throw new BadRequestException(`${fieldLabel} is invalid`);
+  }
+  return parsed;
+}

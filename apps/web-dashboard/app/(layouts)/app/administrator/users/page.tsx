@@ -341,13 +341,11 @@ export default function AdministratorUsersPage() {
                       <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => onEdit(item)}>
+                          <Button variant="outline" size="icon" aria-label="Edit user" onClick={() => onEdit(item)}>
                             <Pencil />
-                            Edit
                           </Button>
-                          <Button variant="destructive" size="sm" onClick={() => onDelete(item.uuid)}>
+                          <Button variant="destructive" size="icon" aria-label="Delete user" onClick={() => onDelete(item.uuid)}>
                             <Trash2 />
-                            Delete
                           </Button>
                         </div>
                       </TableCell>

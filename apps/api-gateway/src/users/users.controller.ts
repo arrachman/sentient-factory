@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -38,24 +39,24 @@ export class UsersController {
     return this.service.findAll(query);
   }
 
-  @Get(':uuid')
+  @Get(':id')
   @ApiOperation({ summary: 'Get one user' })
   @ApiResponse({ status: 200, description: 'User detail' })
-  findOne(@Param('uuid') uuid: string) {
-    return this.service.findOne(uuid);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
-  @Patch(':uuid')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update user' })
   @ApiResponse({ status: 200, description: 'User updated' })
-  update(@Param('uuid') uuid: string, @Body() dto: UpdateUserDto, @Request() req: any) {
-    return this.service.update(uuid, dto, req.user?.id);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Request() req: any) {
+    return this.service.update(id, dto, req.user?.id);
   }
 
-  @Delete(':uuid')
+  @Delete(':id')
   @ApiOperation({ summary: 'Delete user (soft delete)' })
   @ApiResponse({ status: 200, description: 'User deleted' })
-  remove(@Param('uuid') uuid: string, @Request() req: any) {
-    return this.service.remove(uuid, req.user?.id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.remove(id, req.user?.id);
   }
 }

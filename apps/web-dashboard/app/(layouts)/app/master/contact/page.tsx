@@ -388,17 +388,16 @@ export default function MasterDataContactPage() {
                     <TableCell className="capitalize">{item.type}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => onEdit(item)}>
+                        <Button variant="outline" size="icon" aria-label="Edit contact" onClick={() => onEdit(item)}>
                           <Pencil />
-                          Edit
                         </Button>
                         <Button
                           variant="destructive"
-                          size="sm"
+                          size="icon"
+                          aria-label="Delete contact"
                           onClick={() => onDelete(item.uuid)}
                         >
                           <Trash2 />
-                          Delete
                         </Button>
                       </div>
                     </TableCell>

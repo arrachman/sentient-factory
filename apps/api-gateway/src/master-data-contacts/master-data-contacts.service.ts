@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { CreateMasterDataContactDto } from './dto/create-master-data-contact.dto';
 import { QueryMasterDataContactDto } from './dto/query-master-data-contact.dto';
@@ -10,10 +11,10 @@ import { UpdateMasterDataContactDto } from './dto/update-master-data-contact.dto
 export class MasterDataContactsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateMasterDataContactDto, actorId?: string) {
+  async create(dto: CreateMasterDataContactDto, actorId?: string | number) {
     const existing = await this.prisma.masterDataContact.findFirst({
       where: { code: dto.code },
-      select: { uuid: true, deletedAt: true },
+      select: { id: true, deletedAt: true },
     });
     if (existing) {
       throwDuplicate({
@@ -37,8 +38,8 @@ export class MasterDataContactsService {
       contactFirstName: dto.contactFirstName ?? null,
       contactEmail: dto.contactEmail ?? null,
       contactPhone: dto.contactPhone ?? null,
-      createdBy: actorId ?? null,
-      updatedBy: actorId ?? null,
+      createdBy: toAuditUserId(actorId),
+      updatedBy: toAuditUserId(actorId),
     };
 
     let created;
@@ -103,9 +104,9 @@ export class MasterDataContactsService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.masterDataContact.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
     if (!item) {
       throw new NotFoundException('Master data contact not found');
@@ -113,9 +114,9 @@ export class MasterDataContactsService {
     return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateMasterDataContactDto, actorId?: string) {
+  async update(id: number, dto: UpdateMasterDataContactDto, actorId?: string | number) {
     const existing = await this.prisma.masterDataContact.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
     if (!existing) {
       throw new NotFoundException('Master data contact not found');
@@ -123,8 +124,8 @@ export class MasterDataContactsService {
 
     if (dto.code && dto.code !== existing.code) {
       const duplicate = await this.prisma.masterDataContact.findFirst({
-        where: { code: dto.code, NOT: { uuid } },
-        select: { uuid: true, deletedAt: true },
+        where: { code: dto.code, NOT: { id } },
+        select: { id: true, deletedAt: true },
       });
       if (duplicate) {
         throwDuplicate({
@@ -138,7 +139,7 @@ export class MasterDataContactsService {
     let updated;
     try {
       updated = await this.prisma.masterDataContact.update({
-        where: { uuid },
+        where: { id },
         data: {
           code: dto.code,
           name: dto.name,
@@ -153,7 +154,7 @@ export class MasterDataContactsService {
           contactFirstName: dto.contactFirstName,
           contactEmail: dto.contactEmail,
           contactPhone: dto.contactPhone,
-          updatedBy: actorId ?? null,
+          updatedBy: toAuditUserId(actorId),
         },
       });
     } catch (error) {
@@ -169,20 +170,20 @@ export class MasterDataContactsService {
     return { success: true, data: updated };
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string | number) {
     const existing = await this.prisma.masterDataContact.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('Master data contact not found');
     }
 
     await this.prisma.masterDataContact.update({
-      where: { uuid },
+      where: { id },
       data: {
         deletedAt: new Date(),
-        deletedBy: actorId ?? null,
+        deletedBy: toAuditUserId(actorId),
       },
     });
 

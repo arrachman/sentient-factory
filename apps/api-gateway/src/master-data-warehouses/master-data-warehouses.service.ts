@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateMasterDataWarehouseDto } from './dto/create-master-data-warehouse.dto';
 import { QueryMasterDataWarehouseDto } from './dto/query-master-data-warehouse.dto';
 import { UpdateMasterDataWarehouseDto } from './dto/update-master-data-warehouse.dto';
@@ -10,10 +11,13 @@ export class MasterDataWarehousesService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateMasterDataWarehouseDto, actorId?: string) {
-    const cityId = dto.cityId.trim();
+    const cityId = Number(dto.cityId);
+    if (!Number.isInteger(cityId)) {
+      throw new BadRequestException('City ID is invalid');
+    }
     const city = await this.prisma.masterDataCity.findFirst({
-      where: { uuid: cityId, deletedAt: null },
-      select: { uuid: true },
+      where: { id: cityId, deletedAt: null },
+      select: { id: true },
     });
     if (!city) {
       throw new BadRequestException('City not found');
@@ -25,8 +29,8 @@ export class MasterDataWarehousesService {
         cityId,
         locationName: dto.locationName,
         addressDetail: dto.addressDetail,
-        createdBy: actorId ?? null,
-        updatedBy: actorId ?? null,
+        createdBy: toAuditUserId(actorId),
+        updatedBy: toAuditUserId(actorId),
       },
     });
 
@@ -43,15 +47,18 @@ export class MasterDataWarehousesService {
       const q = query.search.trim();
       where.OR = [
         { name: { contains: q, mode: 'insensitive' } },
-        { cityId: { contains: q, mode: 'insensitive' } },
         { locationName: { contains: q, mode: 'insensitive' } },
         { addressDetail: { contains: q, mode: 'insensitive' } },
+        { city: { name: { contains: q, mode: 'insensitive' } } },
       ];
     }
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.masterDataWarehouse.findMany({
         where,
+        include: {
+          city: { select: { id: true, name: true, postalCode: true } },
+        },
         orderBy: [{ createdAt: 'desc' }],
         skip,
         take: limit,
@@ -71,9 +78,9 @@ export class MasterDataWarehousesService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.masterDataWarehouse.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
     if (!item) {
       throw new NotFoundException('Master data warehouse not found');
@@ -81,58 +88,58 @@ export class MasterDataWarehousesService {
     return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateMasterDataWarehouseDto, actorId?: string) {
+  async update(id: number, dto: UpdateMasterDataWarehouseDto, actorId?: string) {
     const existing = await this.prisma.masterDataWarehouse.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('Master data warehouse not found');
     }
 
+    let nextCityId: number | undefined;
     if (typeof dto.cityId !== 'undefined') {
-      const cityId = dto.cityId.trim();
-      if (!cityId) {
-        throw new BadRequestException('City is required');
+      nextCityId = Number(dto.cityId);
+      if (!Number.isInteger(nextCityId)) {
+        throw new BadRequestException('City ID is invalid');
       }
       const city = await this.prisma.masterDataCity.findFirst({
-        where: { uuid: cityId, deletedAt: null },
-        select: { uuid: true },
+        where: { id: nextCityId, deletedAt: null },
+        select: { id: true },
       });
       if (!city) {
         throw new BadRequestException('City not found');
       }
-      dto.cityId = cityId;
     }
 
     const updated = await this.prisma.masterDataWarehouse.update({
-      where: { uuid },
+      where: { id },
       data: {
         name: dto.name,
-        cityId: dto.cityId,
+        cityId: nextCityId,
         locationName: dto.locationName,
         addressDetail: dto.addressDetail,
-        updatedBy: actorId ?? null,
+        updatedBy: toAuditUserId(actorId),
       },
     });
 
     return { success: true, data: updated };
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string) {
     const existing = await this.prisma.masterDataWarehouse.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('Master data warehouse not found');
     }
 
     await this.prisma.masterDataWarehouse.update({
-      where: { uuid },
+      where: { id },
       data: {
         deletedAt: new Date(),
-        deletedBy: actorId ?? null,
+        deletedBy: toAuditUserId(actorId),
       },
     });
 

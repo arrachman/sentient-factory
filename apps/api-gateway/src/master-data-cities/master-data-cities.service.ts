@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateMasterDataCityDto } from './dto/create-master-data-city.dto';
 import { QueryMasterDataCityDto } from './dto/query-master-data-city.dto';
 import { UpdateMasterDataCityDto } from './dto/update-master-data-city.dto';
@@ -11,9 +12,14 @@ export class MasterDataCitiesService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateMasterDataCityDto, actorId?: string) {
+    const provinceId = Number(dto.provinceId);
+    if (!Number.isInteger(provinceId)) {
+      throw new BadRequestException('Province ID is invalid');
+    }
+
     const province = await this.prisma.masterDataProvince.findFirst({
-      where: { uuid: dto.provinceId, deletedAt: null },
-      select: { uuid: true },
+      where: { id: provinceId, deletedAt: null },
+      select: { id: true },
     });
     if (!province) {
       throw new BadRequestException('Province not found');
@@ -21,12 +27,12 @@ export class MasterDataCitiesService {
 
     const existing = await this.prisma.masterDataCity.findFirst({
       where: {
-        provinceId: dto.provinceId,
+        provinceId,
         name: dto.name,
         postalCode: dto.postalCode,
         deletedAt: null,
       },
-      select: { uuid: true },
+      select: { id: true },
     });
     if (existing) {
       throwDuplicate({ fieldLabel: 'City with same province, name, and postal code' });
@@ -34,14 +40,14 @@ export class MasterDataCitiesService {
 
     const created = await this.prisma.masterDataCity.create({
       data: {
-        provinceId: dto.provinceId,
+        provinceId,
         name: dto.name,
         postalCode: dto.postalCode,
-        createdBy: actorId ?? null,
-        updatedBy: actorId ?? null,
+        createdBy: toAuditUserId(actorId),
+        updatedBy: toAuditUserId(actorId),
       },
       include: {
-        province: { select: { uuid: true, name: true, isoCode: true } },
+        province: { select: { id: true, name: true, isoCode: true } },
       },
     });
 
@@ -56,7 +62,10 @@ export class MasterDataCitiesService {
     const where: Prisma.MasterDataCityWhereInput = { deletedAt: null };
 
     if (query.provinceId?.trim()) {
-      where.provinceId = query.provinceId.trim();
+      const provinceId = Number(query.provinceId.trim());
+      if (Number.isInteger(provinceId)) {
+        where.provinceId = provinceId;
+      }
     }
 
     if (query.search?.trim()) {
@@ -73,7 +82,7 @@ export class MasterDataCitiesService {
       this.prisma.masterDataCity.findMany({
         where,
         include: {
-          province: { select: { uuid: true, name: true, isoCode: true } },
+          province: { select: { id: true, name: true, isoCode: true } },
         },
         orderBy: [{ createdAt: 'desc' }],
         skip,
@@ -94,11 +103,11 @@ export class MasterDataCitiesService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.masterDataCity.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
       include: {
-        province: { select: { uuid: true, name: true, isoCode: true } },
+        province: { select: { id: true, name: true, isoCode: true } },
       },
     });
     if (!item) {
@@ -107,22 +116,25 @@ export class MasterDataCitiesService {
     return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateMasterDataCityDto, actorId?: string) {
+  async update(id: number, dto: UpdateMasterDataCityDto, actorId?: string) {
     const existing = await this.prisma.masterDataCity.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
     if (!existing) {
       throw new NotFoundException('Master data city not found');
     }
 
-    const nextProvinceId = dto.provinceId ?? existing.provinceId;
+    const nextProvinceId = dto.provinceId ? Number(dto.provinceId) : existing.provinceId;
     const nextName = dto.name ?? existing.name;
     const nextPostalCode = dto.postalCode ?? existing.postalCode;
 
     if (dto.provinceId) {
+      if (!Number.isInteger(nextProvinceId)) {
+        throw new BadRequestException('Province ID is invalid');
+      }
       const province = await this.prisma.masterDataProvince.findFirst({
-        where: { uuid: dto.provinceId, deletedAt: null },
-        select: { uuid: true },
+        where: { id: nextProvinceId, deletedAt: null },
+        select: { id: true },
       });
       if (!province) {
         throw new BadRequestException('Province not found');
@@ -135,44 +147,44 @@ export class MasterDataCitiesService {
         name: nextName,
         postalCode: nextPostalCode,
         deletedAt: null,
-        NOT: { uuid },
+        NOT: { id },
       },
-      select: { uuid: true },
+      select: { id: true },
     });
     if (duplicate) {
       throwDuplicate({ fieldLabel: 'City with same province, name, and postal code' });
     }
 
     const updated = await this.prisma.masterDataCity.update({
-      where: { uuid },
+      where: { id },
       data: {
-        provinceId: dto.provinceId,
+        provinceId: dto.provinceId ? nextProvinceId : undefined,
         name: dto.name,
         postalCode: dto.postalCode,
-        updatedBy: actorId ?? null,
+        updatedBy: toAuditUserId(actorId),
       },
       include: {
-        province: { select: { uuid: true, name: true, isoCode: true } },
+        province: { select: { id: true, name: true, isoCode: true } },
       },
     });
 
     return { success: true, data: updated };
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string) {
     const existing = await this.prisma.masterDataCity.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('Master data city not found');
     }
 
     await this.prisma.masterDataCity.update({
-      where: { uuid },
+      where: { id },
       data: {
         deletedAt: new Date(),
-        deletedBy: actorId ?? null,
+        deletedBy: toAuditUserId(actorId),
       },
     });
 

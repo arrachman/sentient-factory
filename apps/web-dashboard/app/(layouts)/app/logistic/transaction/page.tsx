@@ -1351,19 +1351,19 @@ export default function LogisticTransactionDoPage() {
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
-                            size="sm"
+                            size="icon"
+                            aria-label="Edit transaction"
                             onClick={() => openEditForm(item.uuid)}
                           >
                             <Pencil />
-                            Edit
                           </Button>
                           <Button
                             variant="destructive"
-                            size="sm"
+                            size="icon"
+                            aria-label="Delete transaction"
                             onClick={() => remove(item.uuid)}
                           >
                             <Trash2 />
-                            Delete
                           </Button>
                         </div>
                       </TableCell>

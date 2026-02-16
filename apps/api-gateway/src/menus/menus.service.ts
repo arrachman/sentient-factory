@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 type SidebarMenuItem = {
-  id: string;
+  id: number;
   key: string;
   title: string;
   path: string | null;
   icon: string | null;
   type: string;
-  parentId: string | null;
+  parentId: number | null;
   sortOrder: number;
   children: SidebarMenuItem[];
 };
@@ -17,13 +17,17 @@ type SidebarMenuItem = {
 export class MenusService {
   constructor(private prisma: PrismaService) {}
 
-  async getSidebarByUserId(userId: string): Promise<SidebarMenuItem[]> {
+  async getSidebarByUserId(userId: number | string): Promise<SidebarMenuItem[]> {
     if (!userId) {
+      return [];
+    }
+    const normalizedUserId = typeof userId === 'number' ? userId : Number(userId);
+    if (!Number.isInteger(normalizedUserId)) {
       return [];
     }
     const userRoles = await this.prisma.userRole.findMany({
       where: {
-        userId,
+        userId: normalizedUserId,
         deletedAt: null,
         role: {
           deletedAt: null,
@@ -34,7 +38,7 @@ export class MenusService {
       },
     });
 
-    const roleIds = userRoles.map((item: { roleId: string }) => item.roleId);
+    const roleIds = userRoles.map((item) => item.roleId);
     if (roleIds.length === 0) {
       return [];
     }
@@ -50,10 +54,10 @@ export class MenusService {
           isVisible: true,
         },
       },
-      select: {
+      include: {
         menu: {
           select: {
-            uuid: true,
+            id: true,
             key: true,
             title: true,
             path: true,
@@ -71,12 +75,12 @@ export class MenusService {
       },
     });
 
-    const dedupedMap = new Map<string, SidebarMenuItem>();
+    const dedupedMap = new Map<number, SidebarMenuItem>();
     for (const row of roleMenus) {
       const menu = row.menu;
-      if (!dedupedMap.has(menu.uuid)) {
-        dedupedMap.set(menu.uuid, {
-          id: menu.uuid,
+      if (!dedupedMap.has(menu.id)) {
+        dedupedMap.set(menu.id, {
+          id: menu.id,
           key: menu.key,
           title: menu.title,
           path: menu.path,

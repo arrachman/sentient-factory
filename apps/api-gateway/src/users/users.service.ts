@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { Prisma, User } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -8,7 +9,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { hashPassword } from '../auth/password-hasher';
 
 type WarehouseMeta = {
-  warehouseId: string | null;
+  warehouseId: number | null;
   warehouseName: string | null;
 };
 
@@ -35,37 +36,39 @@ export class UsersService {
     });
   }
 
-  async findOneById(id: string): Promise<User | null> {
+  async findOneById(id: string | number): Promise<User | null> {
+    const userId = typeof id === 'number' ? id : Number(id);
+    if (!Number.isInteger(userId)) {
+      return null;
+    }
     return this.prisma.user.findUnique({
-      where: { uuid: id },
+      where: { id: userId },
     });
   }
 
-  async findOneByUuid(uuid: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { uuid },
-    });
+  async findOneByUuid(id: string | number): Promise<User | null> {
+    return this.findOneById(id);
   }
 
-  async hasWarehouse(uuid: string): Promise<boolean> {
-    const warehouseId = await this.getCurrentWarehouseId(uuid);
+  async hasWarehouse(id: string | number): Promise<boolean> {
+    const warehouseId = await this.getCurrentWarehouseId(id);
     return Boolean(warehouseId);
   }
 
-  async getWarehouseMetaByUserUuid(uuid: string): Promise<WarehouseMeta> {
-    const rows = await this.prisma.$queryRaw<
-      Array<{ warehouse_id: string | null; warehouse_name: string | null }>
-    >`
-      SELECT u.warehouse_id, w.name AS warehouse_name
-      FROM "m0_users" u
-      LEFT JOIN "m1_warehouse" w ON w.uuid = u.warehouse_id AND w.deleted_at IS NULL
-      WHERE u.uuid = ${uuid}
-      LIMIT 1
-    `;
-
+  async getWarehouseMetaByUserUuid(id: string | number): Promise<WarehouseMeta> {
+    const userId = typeof id === 'number' ? id : Number(id);
+    if (!Number.isInteger(userId)) {
+      return { warehouseId: null, warehouseName: null };
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        warehouse: { select: { id: true, name: true } },
+      },
+    });
     return {
-      warehouseId: rows[0]?.warehouse_id ?? null,
-      warehouseName: rows[0]?.warehouse_name ?? null,
+      warehouseId: user?.warehouse?.id ?? null,
+      warehouseName: user?.warehouse?.name ?? null,
     };
   }
 
@@ -118,8 +121,8 @@ export class UsersService {
           passwordHash,
           fullName: dto.fullName ?? null,
           isActive: dto.isActive ?? true,
-          createdBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          createdBy: toAuditUserId(actorId),
+          updatedBy: toAuditUserId(actorId),
         },
         include: {
           roles: {
@@ -139,7 +142,7 @@ export class UsersService {
       throw error;
     }
 
-    await this.setWarehouseId(created.uuid, normalizedWarehouseId ?? null);
+    await this.setWarehouseId(created.id, normalizedWarehouseId ?? null);
     const [serialized] = await this.serializeUsersWithWarehouse([created]);
 
     return {
@@ -198,9 +201,9 @@ export class UsersService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.user.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
       include: {
         roles: {
           where: { deletedAt: null },
@@ -223,10 +226,10 @@ export class UsersService {
     };
   }
 
-  async update(uuid: string, dto: UpdateUserDto, actorId?: string) {
+  async update(id: number, dto: UpdateUserDto, actorId?: string) {
     const existing = await this.prisma.user.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true, email: true, username: true, isActive: true },
+      where: { id, deletedAt: null },
+      select: { id: true, email: true, username: true, isActive: true },
     });
     if (!existing) {
       throw new NotFoundException('User not found');
@@ -234,8 +237,8 @@ export class UsersService {
 
     if (dto.email && dto.email !== existing.email) {
       const emailExists = await this.prisma.user.findFirst({
-        where: { email: dto.email, NOT: { uuid } },
-        select: { uuid: true, deletedAt: true },
+        where: { email: dto.email, NOT: { id } },
+        select: { id: true, deletedAt: true },
       });
       if (emailExists) {
         throwDuplicate({
@@ -248,8 +251,8 @@ export class UsersService {
 
     if (dto.username && dto.username !== existing.username) {
       const usernameExists = await this.prisma.user.findFirst({
-        where: { username: dto.username, NOT: { uuid } },
-        select: { uuid: true, deletedAt: true },
+        where: { username: dto.username, NOT: { id } },
+        select: { id: true, deletedAt: true },
       });
       if (usernameExists) {
         throwDuplicate({
@@ -271,7 +274,7 @@ export class UsersService {
     const nextWarehouseId =
       normalizedWarehouseId !== undefined
         ? normalizedWarehouseId
-        : await this.getCurrentWarehouseId(uuid);
+        : await this.getCurrentWarehouseId(id);
 
     if (nextIsActive && !nextWarehouseId) {
       throw new BadRequestException('Active user must have warehouse assigned');
@@ -280,14 +283,14 @@ export class UsersService {
     let updated;
     try {
       updated = await this.prisma.user.update({
-        where: { uuid },
+        where: { id },
         data: {
           email: dto.email,
           username: dto.username,
           fullName: dto.fullName,
           isActive: dto.isActive,
           passwordHash,
-          updatedBy: actorId ?? null,
+          updatedBy: toAuditUserId(actorId),
         },
         include: {
           roles: {
@@ -309,7 +312,7 @@ export class UsersService {
     }
 
     if (normalizedWarehouseId !== undefined) {
-      await this.setWarehouseId(uuid, normalizedWarehouseId);
+      await this.setWarehouseId(id, normalizedWarehouseId);
     }
 
     const [serialized] = await this.serializeUsersWithWarehouse([updated]);
@@ -319,21 +322,21 @@ export class UsersService {
     };
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string) {
     const existing = await this.prisma.user.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('User not found');
     }
 
     await this.prisma.user.update({
-      where: { uuid },
+      where: { id },
       data: {
         isActive: false,
         deletedAt: new Date(),
-        deletedBy: actorId ?? null,
+        deletedBy: toAuditUserId(actorId),
       },
     });
 
@@ -352,66 +355,68 @@ export class UsersService {
     return;
   }
 
-  private normalizeWarehouseId(warehouseId?: string): string | null | undefined {
+  private normalizeWarehouseId(warehouseId?: string): number | null | undefined {
     if (warehouseId === undefined) {
       return undefined;
     }
     const normalized = warehouseId.trim();
-    return normalized.length > 0 ? normalized : null;
+    if (!normalized.length) return null;
+    const parsed = Number(normalized);
+    if (!Number.isInteger(parsed)) {
+      throw new BadRequestException('Warehouse ID is invalid');
+    }
+    return parsed;
   }
 
-  private async ensureWarehouseExists(warehouseId: string): Promise<void> {
+  private async ensureWarehouseExists(warehouseId: number): Promise<void> {
     const warehouse = await this.prisma.masterDataWarehouse.findFirst({
       where: {
-        uuid: warehouseId,
+        id: warehouseId,
         deletedAt: null,
       },
-      select: { uuid: true },
+      select: { id: true },
     });
     if (!warehouse) {
       throw new BadRequestException('Warehouse not found');
     }
   }
 
-  private async getCurrentWarehouseId(userUuid: string): Promise<string | null> {
-    const rows = await this.prisma.$queryRaw<Array<{ warehouse_id: string | null }>>`
-      SELECT warehouse_id
-      FROM "m0_users"
-      WHERE uuid = ${userUuid}
-      LIMIT 1
-    `;
-    return rows[0]?.warehouse_id ?? null;
+  private async getCurrentWarehouseId(userId: string | number): Promise<number | null> {
+    const id = typeof userId === 'number' ? userId : Number(userId);
+    if (!Number.isInteger(id)) return null;
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { warehouseId: true },
+    });
+    return user?.warehouseId ?? null;
   }
 
-  private async setWarehouseId(userUuid: string, warehouseId: string | null): Promise<void> {
-    await this.prisma.$executeRaw`
-      UPDATE "m0_users"
-      SET warehouse_id = ${warehouseId}
-      WHERE uuid = ${userUuid}
-    `;
+  private async setWarehouseId(userId: number, warehouseId: number | null): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { warehouseId },
+    });
   }
 
-  private async getWarehouseMapByUserUuids(userUuids: string[]): Promise<Record<string, WarehouseMeta>> {
-    if (userUuids.length === 0) {
+  private async getWarehouseMapByUserUuids(userIds: number[]): Promise<Record<string, WarehouseMeta>> {
+    if (userIds.length === 0) {
       return {};
     }
 
-    const rows = await this.prisma.$queryRaw<
-      Array<{ user_uuid: string; warehouse_id: string | null; warehouse_name: string | null }>
-    >(
-      Prisma.sql`
-        SELECT u.uuid AS user_uuid, u.warehouse_id, w.name AS warehouse_name
-        FROM "m0_users" u
-        LEFT JOIN "m1_warehouse" w ON w.uuid = u.warehouse_id AND w.deleted_at IS NULL
-        WHERE u.uuid IN (${Prisma.join(userUuids)})
-      `,
-    );
+    const rows = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: {
+        id: true,
+        warehouseId: true,
+        warehouse: { select: { name: true } },
+      },
+    });
 
     const map: Record<string, WarehouseMeta> = {};
     for (const row of rows) {
-      map[row.user_uuid] = {
-        warehouseId: row.warehouse_id,
-        warehouseName: row.warehouse_name,
+      map[String(row.id)] = {
+        warehouseId: row.warehouseId,
+        warehouseName: row.warehouse?.name ?? null,
       };
     }
     return map;
@@ -428,8 +433,8 @@ export class UsersService {
       }
     >,
   ) {
-    const warehouseMap = await this.getWarehouseMapByUserUuids(users.map((item) => item.uuid));
-    return users.map((user) => this.serializeUser(user, warehouseMap[user.uuid]));
+    const warehouseMap = await this.getWarehouseMapByUserUuids(users.map((item) => item.id));
+    return users.map((user) => this.serializeUser(user, warehouseMap[String(user.id)]));
   }
 
   private serializeUser(

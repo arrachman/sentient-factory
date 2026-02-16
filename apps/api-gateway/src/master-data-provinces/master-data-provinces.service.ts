@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateMasterDataProvinceDto } from './dto/create-master-data-province.dto';
 import { QueryMasterDataProvinceDto } from './dto/query-master-data-province.dto';
 import { UpdateMasterDataProvinceDto } from './dto/update-master-data-province.dto';
@@ -13,7 +14,7 @@ export class MasterDataProvincesService {
   async create(dto: CreateMasterDataProvinceDto, actorId?: string) {
     const existingIso = await this.prisma.masterDataProvince.findFirst({
       where: { isoCode: dto.isoCode },
-      select: { uuid: true, deletedAt: true },
+      select: { id: true, deletedAt: true },
     });
     if (existingIso) {
       throwDuplicate({
@@ -29,8 +30,8 @@ export class MasterDataProvincesService {
         data: {
           name: dto.name,
           isoCode: dto.isoCode,
-          createdBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          createdBy: toAuditUserId(actorId),
+          updatedBy: toAuditUserId(actorId),
         },
       });
     } catch (error) {
@@ -79,9 +80,9 @@ export class MasterDataProvincesService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.masterDataProvince.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
     if (!item) {
       throw new NotFoundException('Master data province not found');
@@ -89,9 +90,9 @@ export class MasterDataProvincesService {
     return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateMasterDataProvinceDto, actorId?: string) {
+  async update(id: number, dto: UpdateMasterDataProvinceDto, actorId?: string) {
     const existing = await this.prisma.masterDataProvince.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
     });
     if (!existing) {
       throw new NotFoundException('Master data province not found');
@@ -99,8 +100,8 @@ export class MasterDataProvincesService {
 
     if (dto.isoCode && dto.isoCode !== existing.isoCode) {
       const duplicate = await this.prisma.masterDataProvince.findFirst({
-        where: { isoCode: dto.isoCode, NOT: { uuid } },
-        select: { uuid: true, deletedAt: true },
+        where: { isoCode: dto.isoCode, NOT: { id } },
+        select: { id: true, deletedAt: true },
       });
       if (duplicate) {
         throwDuplicate({
@@ -114,11 +115,11 @@ export class MasterDataProvincesService {
     let updated;
     try {
       updated = await this.prisma.masterDataProvince.update({
-        where: { uuid },
+        where: { id },
         data: {
           name: dto.name,
           isoCode: dto.isoCode,
-          updatedBy: actorId ?? null,
+          updatedBy: toAuditUserId(actorId),
         },
       });
     } catch (error) {
@@ -131,20 +132,20 @@ export class MasterDataProvincesService {
     return { success: true, data: updated };
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string) {
     const existing = await this.prisma.masterDataProvince.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('Master data province not found');
     }
 
     await this.prisma.masterDataProvince.update({
-      where: { uuid },
+      where: { id },
       data: {
         deletedAt: new Date(),
-        deletedBy: actorId ?? null,
+        deletedBy: toAuditUserId(actorId),
       },
     });
 

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -38,24 +39,24 @@ export class MasterDataWarehousesController {
     return this.service.findAll(query);
   }
 
-  @Get(':uuid')
+  @Get(':id')
   @ApiOperation({ summary: 'Get one master data warehouse' })
   @ApiResponse({ status: 200, description: 'Master data warehouse detail' })
-  findOne(@Param('uuid') uuid: string) {
-    return this.service.findOne(uuid);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
   }
 
-  @Patch(':uuid')
+  @Patch(':id')
   @ApiOperation({ summary: 'Update master data warehouse' })
   @ApiResponse({ status: 200, description: 'Master data warehouse updated' })
-  update(@Param('uuid') uuid: string, @Body() dto: UpdateMasterDataWarehouseDto, @Request() req: any) {
-    return this.service.update(uuid, dto, req.user?.id);
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataWarehouseDto, @Request() req: any) {
+    return this.service.update(id, dto, req.user?.id);
   }
 
-  @Delete(':uuid')
+  @Delete(':id')
   @ApiOperation({ summary: 'Delete master data warehouse (soft delete)' })
   @ApiResponse({ status: 200, description: 'Master data warehouse deleted' })
-  remove(@Param('uuid') uuid: string, @Request() req: any) {
-    return this.service.remove(uuid, req.user?.id);
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.remove(id, req.user?.id);
   }
 }

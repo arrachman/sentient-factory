@@ -29,15 +29,14 @@ export class CreateInboundDetailDto {
   @IsString()
   notes?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 25,
     description: 'Input integer bebas untuk kebutuhan UOM kg/liter',
   })
-  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(0)
-  uomInput?: number;
+  uomInput!: number;
 
   @ApiProperty({ type: [CreateInboundBatchDto] })
   @IsArray()

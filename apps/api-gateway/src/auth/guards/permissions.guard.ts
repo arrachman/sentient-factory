@@ -2,7 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
-import { User, Role, Permission, UserRole, Prisma } from '@prisma/client'; // Import Prisma and specific models
+import { Prisma } from '@prisma/client';
 
 // Define a type for the user object with its relations
 type UserWithRolesAndPermissions = Prisma.UserGetPayload<{
@@ -40,21 +40,12 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
-    // user object comes from JwtStrategy: { id, email, username }
-    // Assuming user.id is the uuid string
+    const userId = Number(user?.id);
+    if (!Number.isInteger(userId)) return false;
 
-    // Step 1: Find the internal integer ID of the user using their UUID
-    const userDbId = await this.prisma.user.findFirst({
-      where: { uuid: user.id as string },
-      select: { id: true },
-    });
-
-    if (!userDbId) return false;
-
-    // Step 2: Fetch the user with their roles and permissions using the internal integer ID
     const userWithPermissions: UserWithRolesAndPermissions | null = await this.prisma.user.findUnique({
       where: {
-        id: userDbId.id, // Use the internal integer ID
+        id: userId,
       },
       include: {
         roles: {

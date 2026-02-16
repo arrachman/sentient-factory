@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 type PairSource = {
-  warehouseId: string;
+  warehouseId: number;
   expiryDate: Date | null;
 };
 
@@ -28,14 +28,14 @@ async function main() {
         uuid: true,
         transactionNo: true,
         transactionDate: true,
-        warehouseId: true,
+        warehouse: { select: { id: true } },
         createdBy: true,
         details: {
           where: { deletedAt: null },
           orderBy: [{ lineNo: 'asc' }],
           select: {
             itemId: true,
-            item: { select: { uomId: true } },
+            item: { select: { id: true, uom: { select: { id: true } } } },
             batches: {
               where: { deletedAt: null },
               orderBy: [{ lineNo: 'asc' }],
@@ -64,7 +64,7 @@ async function main() {
           const key = pairKey(detail.itemId, batchNumber);
           if (!sourceByPair.has(key)) {
             sourceByPair.set(key, {
-              warehouseId: inbound.warehouseId,
+              warehouseId: inbound.warehouse.id,
               expiryDate: batch.expiredDate ?? null,
             });
           }
@@ -72,43 +72,48 @@ async function main() {
           const inventoryBatch = await tx.inventoryBatch.upsert({
             where: {
               itemId_batchNumber: {
-                itemId: detail.itemId,
+                itemId: detail.item.id,
                 batchNumber,
               },
             },
             update: {
               expiryDate: batch.expiredDate ?? undefined,
-              isActive: true,
               deletedAt: null,
               deletedBy: null,
             },
             create: {
-              itemId: detail.itemId,
+              itemId: detail.item.id,
               batchNumber,
               expiryDate: batch.expiredDate ?? null,
-              isActive: true,
               createdBy: inbound.createdBy ?? null,
               updatedBy: inbound.createdBy ?? null,
             },
-            select: { uuid: true },
+            select: { id: true },
           });
+
+          const createdByUser = inbound.createdBy
+            ? await tx.user.findFirst({
+                where: { uuid: inbound.createdBy, deletedAt: null },
+                select: { id: true },
+              })
+            : null;
 
           await tx.inventoryLedger.create({
             data: {
               transactionDate: inbound.transactionDate,
-              itemId: detail.itemId,
-              warehouseId: inbound.warehouseId,
-              batchId: inventoryBatch.uuid,
+              itemId: detail.item.id,
+              warehouseId: inbound.warehouse.id,
+              batchId: inventoryBatch.id,
               transactionType: 'INBOUND',
               referenceDocType: 'INBOUND',
               referenceDocId: inbound.uuid,
               referenceNumber: inbound.transactionNo,
               quantityPcs: batch.qty,
               quantityKg: 0,
-              uomId: detail.item.uomId,
+              uomId: detail.item.uom.id,
               unitCost: null,
               totalValue: 0,
-              userId: inbound.createdBy ?? null,
+              userId: createdByUser?.id ?? null,
               createdBy: inbound.createdBy ?? null,
               updatedBy: inbound.createdBy ?? null,
             },
@@ -131,7 +136,7 @@ async function main() {
           orderBy: [{ lineNo: 'asc' }],
           select: {
             itemId: true,
-            item: { select: { uomId: true } },
+            item: { select: { id: true, uom: { select: { id: true } } } },
             batches: {
               where: { deletedAt: null },
               orderBy: [{ lineNo: 'asc' }],
@@ -168,46 +173,50 @@ async function main() {
           const inventoryBatch = await tx.inventoryBatch.upsert({
             where: {
               itemId_batchNumber: {
-                itemId: detail.itemId,
+                itemId: detail.item.id,
                 batchNumber,
               },
             },
             update: {
               expiryDate: source.expiryDate ?? batch.expiredDate ?? undefined,
-              isActive: true,
               deletedAt: null,
               deletedBy: null,
             },
             create: {
-              itemId: detail.itemId,
+              itemId: detail.item.id,
               batchNumber,
               expiryDate: source.expiryDate ?? batch.expiredDate ?? null,
-              isActive: true,
               createdBy: outbound.createdBy ?? null,
               updatedBy: outbound.createdBy ?? null,
             },
-            select: { uuid: true },
+            select: { id: true },
           });
 
           const qtyPcs = Number(batch.qtyPcs ?? 0);
           const qtyKg = Number(batch.qtyKg ?? 0);
+          const createdByUser = outbound.createdBy
+            ? await tx.user.findFirst({
+                where: { uuid: outbound.createdBy, deletedAt: null },
+                select: { id: true },
+              })
+            : null;
 
           await tx.inventoryLedger.create({
             data: {
               transactionDate: outbound.doDate ?? new Date(),
-              itemId: detail.itemId,
+              itemId: detail.item.id,
               warehouseId: source.warehouseId,
-              batchId: inventoryBatch.uuid,
+              batchId: inventoryBatch.id,
               transactionType: 'OUTBOUND',
               referenceDocType: 'OUTBOUND',
               referenceDocId: outbound.uuid,
               referenceNumber: outbound.doNumber,
               quantityPcs: -Math.abs(Number.isFinite(qtyPcs) ? qtyPcs : 0),
               quantityKg: -Math.abs(Number.isFinite(qtyKg) ? qtyKg : 0),
-              uomId: detail.item.uomId,
+              uomId: detail.item.uom.id,
               unitCost: null,
               totalValue: 0,
-              userId: outbound.createdBy ?? null,
+              userId: createdByUser?.id ?? null,
               notes: batch.notes ?? null,
               createdBy: outbound.createdBy ?? null,
               updatedBy: outbound.createdBy ?? null,

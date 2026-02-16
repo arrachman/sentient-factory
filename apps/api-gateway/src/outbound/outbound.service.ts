@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateOutboundDetailDto } from './dto/create-outbound-detail.dto';
 import { CreateOutboundDto } from './dto/create-outbound.dto';
 import { QueryMonitoringOutboundDto } from './dto/query-monitoring-outbound.dto';
@@ -10,20 +11,31 @@ import { QueryStockBatchReportDto } from './dto/query-stock-batch-report.dto';
 import { QueryStockMutationReportDto } from './dto/query-stock-mutation-report.dto';
 import { UpdateOutboundDto } from './dto/update-outbound.dto';
 
+type NormalizedOutboundDetail = Omit<CreateOutboundDetailDto, 'itemId' | 'batchNumber'> & {
+  itemId: number;
+  batchNumber: string;
+};
+
 @Injectable()
 export class OutboundService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateOutboundDto, actorId?: string) {
+  async create(dto: CreateOutboundDto, actorId?: string | number) {
+    const auditActor = this.normalizeAuditActor(actorId);
     const doNumber = this.normalizeRequiredDoNumber(dto.doNumber);
     await this.ensureDoNumberAvailable(doNumber);
 
-    const customer = await this.ensureCustomerExists(dto.customerId);
+    const customerId = this.parseId(dto.customerId, 'customerId');
+    const customer = await this.ensureCustomerExists(customerId);
     const defaults = await this.resolveDefaultsFromCustomerCity(customer.city ?? undefined);
 
+    const requestedDestinationCityId = this.parseOptionalId(
+      dto.destinationCityId,
+      'destinationCityId',
+    );
     const resolvedDestinationCityId =
-      dto.destinationCityId?.trim() || defaults.destinationCityId || null;
-    if (resolvedDestinationCityId) {
+      requestedDestinationCityId ?? defaults.destinationCityId ?? null;
+    if (resolvedDestinationCityId !== null) {
       await this.ensureCityExists(resolvedDestinationCityId);
     }
 
@@ -46,7 +58,7 @@ export class OutboundService {
             doNumber,
             doDate: new Date(dto.doDate),
             doReceivedDate: new Date(dto.doReceivedDate),
-            customerId: dto.customerId,
+            customerId,
             destinationCityId: resolvedDestinationCityId,
             stdLeadTimeDays: resolvedStdLeadTimeDays,
             stdReturnDoDays: resolvedStdReturnDoDays,
@@ -57,8 +69,8 @@ export class OutboundService {
             bu: dto.bu ?? null,
             notes: dto.notes ?? null,
             status: dto.status ?? 'OPEN',
-            createdBy: actorId ?? null,
-            updatedBy: actorId ?? null,
+            createdBy: auditActor ?? null,
+            updatedBy: auditActor ?? null,
           },
         });
 
@@ -68,7 +80,7 @@ export class OutboundService {
 
           const createdDetail = await tx.deliveryOrderDetail.create({
             data: {
-              doId: header.uuid,
+              doId: header.id,
               lineNo: index + 1,
               itemId: detail.itemId,
               qtyPcs: detail.qtyPcs ?? 0,
@@ -77,27 +89,27 @@ export class OutboundService {
               itemNameSnapshot: item.name,
               uomCodeSnapshot: item.uom.code,
               notes: detail.notes ?? null,
-              createdBy: actorId ?? null,
-              updatedBy: actorId ?? null,
+              createdBy: auditActor ?? null,
+              updatedBy: auditActor ?? null,
             },
-            select: { uuid: true },
+            select: { id: true },
           });
 
           await tx.outboundDetailBatch.create({
             data: {
-              outboundDetailId: createdDetail.uuid,
+              outboundDetailId: createdDetail.id,
               lineNo: 1,
               batchOut: detail.batchNumber,
               qtyPcs: detail.qtyPcs ?? 0,
               qtyKg: detail.qtyKg,
               notes: detail.notes ?? null,
-              createdBy: actorId ?? null,
-              updatedBy: actorId ?? null,
+              createdBy: auditActor ?? null,
+              updatedBy: auditActor ?? null,
             },
           });
         }
 
-        await this.syncOutboundInventoryLedger(tx, header.uuid, actorId);
+        await this.syncOutboundInventoryLedger(tx, header.id, actorId);
 
         return header;
       });
@@ -115,7 +127,7 @@ export class OutboundService {
       throw error;
     }
 
-    return this.findOne(created.uuid);
+    return this.findOne(created.id);
   }
 
   async findAll(query: QueryOutboundDto) {
@@ -130,7 +142,7 @@ export class OutboundService {
     }
 
     if (query.customerId?.trim()) {
-      where.customerId = query.customerId.trim();
+      where.customerId = this.parseId(query.customerId, 'customerId');
     }
 
     if (query.doDateFrom || query.doDateTo) {
@@ -154,8 +166,8 @@ export class OutboundService {
       this.prisma.deliveryOrder.findMany({
         where,
         include: {
-          customer: { select: { uuid: true, code: true, name: true, type: true } },
-          destinationCity: { select: { uuid: true, name: true, postalCode: true } },
+          customer: { select: { id: true, code: true, name: true, type: true } },
+          destinationCity: { select: { id: true, name: true, postalCode: true } },
           _count: { select: { details: { where: { deletedAt: null } } } },
         },
         orderBy: [{ createdAt: 'desc' }],
@@ -178,12 +190,12 @@ export class OutboundService {
   }
 
   async getBatchOptions(itemId?: string, excludeDoId?: string) {
-    const normalizedItemId = String(itemId ?? '').trim();
-    if (!normalizedItemId) {
+    if (!String(itemId ?? '').trim()) {
       throw new BadRequestException('itemId is required');
     }
+    const normalizedItemId = this.parseId(itemId as string, 'itemId');
 
-    const normalizedExcludeDoId = String(excludeDoId ?? '').trim() || undefined;
+    const normalizedExcludeDoId = this.parseOptionalId(excludeDoId, 'excludeDoId');
     const [inboundRows, usedRows] = await this.prisma.$transaction([
       this.prisma.inboundDetailBatch.groupBy({
         by: ['batchIn'],
@@ -214,7 +226,7 @@ export class OutboundService {
             itemId: normalizedItemId,
             deliveryOrder: {
               deletedAt: null,
-              uuid: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
+              id: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
             },
           },
         },
@@ -264,12 +276,12 @@ export class OutboundService {
     const where: Prisma.DeliveryOrderWhereInput = { deletedAt: null };
 
     if (query.cityId?.trim()) {
-      where.destinationCityId = query.cityId.trim();
+      where.destinationCityId = this.parseId(query.cityId, 'cityId');
     }
 
     if (query.provinceId?.trim()) {
       where.destinationCity = {
-        provinceId: query.provinceId.trim(),
+        provinceId: this.parseId(query.provinceId, 'provinceId'),
       };
     }
 
@@ -283,13 +295,13 @@ export class OutboundService {
     const items = await this.prisma.deliveryOrder.findMany({
       where,
       include: {
-        customer: { select: { uuid: true, code: true, name: true, type: true } },
+        customer: { select: { id: true, code: true, name: true, type: true } },
         destinationCity: {
           select: {
-            uuid: true,
+            id: true,
             name: true,
             postalCode: true,
-            province: { select: { uuid: true, name: true, isoCode: true } },
+            province: { select: { id: true, name: true, isoCode: true } },
           },
         },
         details: {
@@ -308,13 +320,13 @@ export class OutboundService {
 
     const pairKeys = new Set<string>();
     const batchNumbers = new Set<string>();
-    const itemIds = new Set<string>();
+    const itemIds = new Set<number>();
     items.forEach((row) => {
       row.details.forEach((detail) => {
-        const itemId = String(detail.itemId ?? '').trim();
+        const itemId = Number(detail.itemId ?? 0);
         detail.batches.forEach((batch) => {
           const batchNumber = String(batch.batchOut ?? '').trim();
-          if (!itemId || !batchNumber) {
+          if (!Number.isInteger(itemId) || itemId <= 0 || !batchNumber) {
             return;
           }
           pairKeys.add(`${itemId}::${batchNumber}`);
@@ -327,9 +339,9 @@ export class OutboundService {
     const sourceByPair = new Map<
       string,
       Array<{
-        supplierId: string | null;
+        supplierId: number | null;
         supplierName: string | null;
-        warehouseId: string | null;
+        warehouseId: number | null;
         warehouseName: string | null;
       }>
     >();
@@ -383,13 +395,13 @@ export class OutboundService {
       });
     }
 
-    const supplierFilter = query.supplierId?.trim() || '';
-    const warehouseFilter = query.warehouseId?.trim() || '';
+    const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
+    const warehouseFilter = this.parseOptionalId(query.warehouseId, 'warehouseId');
 
     const enriched = items
       .map((row) => {
-        const supplierSet = new Map<string, string>();
-        const warehouseSet = new Map<string, string>();
+        const supplierSet = new Map<number, string>();
+        const warehouseSet = new Map<number, string>();
 
         row.details.forEach((detail) => {
           detail.batches.forEach((batch) => {
@@ -397,10 +409,16 @@ export class OutboundService {
             const sources = sourceByPair.get(pairKey) ?? [];
             sources.forEach((source) => {
               if (source.supplierId) {
-                supplierSet.set(source.supplierId, source.supplierName || source.supplierId);
+                supplierSet.set(
+                  source.supplierId,
+                  source.supplierName || String(source.supplierId),
+                );
               }
               if (source.warehouseId) {
-                warehouseSet.set(source.warehouseId, source.warehouseName || source.warehouseId);
+                warehouseSet.set(
+                  source.warehouseId,
+                  source.warehouseName || String(source.warehouseId),
+                );
               }
             });
           });
@@ -413,7 +431,7 @@ export class OutboundService {
         };
       })
       .filter((row) => {
-        if (supplierFilter) {
+        if (supplierFilter !== undefined) {
           const hasSupplier = row.sourceSuppliers.some(
             (supplier) => supplier.id === supplierFilter,
           );
@@ -422,7 +440,7 @@ export class OutboundService {
           }
         }
 
-        if (warehouseFilter) {
+        if (warehouseFilter !== undefined) {
           const hasWarehouse = row.sourceWarehouses.some(
             (warehouse) => warehouse.id === warehouseFilter,
           );
@@ -445,41 +463,56 @@ export class OutboundService {
 
   async findStockBatchReport(query: QueryStockBatchReportDto) {
     const minimumStockPcs = 0;
-    const warehouseFilter = String(query.warehouseId ?? '').trim();
-    const supplierFilter = String(query.supplierId ?? '').trim();
-    const itemFilter = String(query.itemId ?? '').trim();
+    const warehouseFilter = this.parseOptionalId(query.warehouseId, 'warehouseId');
+    const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
+    const itemFilter = this.parseOptionalId(query.itemId, 'itemId');
+
+    const [warehouseFilterRow, itemFilterRow] = await Promise.all([
+      warehouseFilter !== undefined
+        ? this.prisma.masterDataWarehouse.findFirst({
+            where: { id: warehouseFilter, deletedAt: null },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      itemFilter !== undefined
+        ? this.prisma.masterDataItem.findFirst({
+            where: { id: itemFilter, deletedAt: null },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     const ledgerRows = await this.prisma.inventoryLedger.findMany({
       where: {
         deletedAt: null,
-        warehouseId: warehouseFilter || undefined,
-        itemId: itemFilter || undefined,
+        warehouseId: warehouseFilterRow?.id,
+        itemId: itemFilterRow?.id,
       },
       include: {
         item: {
           select: {
-            uuid: true,
+            id: true,
             code: true,
             name: true,
-            uom: { select: { uuid: true, code: true, name: true } },
+            uom: { select: { id: true, code: true, name: true } },
           },
         },
-        warehouse: { select: { uuid: true, name: true } },
-        batch: { select: { uuid: true, batchNumber: true } },
+        warehouse: { select: { id: true, name: true } },
+        batch: { select: { id: true, batchNumber: true } },
       },
       orderBy: [{ transactionDate: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
     });
 
     const pairKeys = new Set<string>();
-    const itemIds = new Set<string>();
+    const itemIds = new Set<number>();
     const batchNumbers = new Set<string>();
-    const warehouseIds = new Set<string>();
+    const warehouseIds = new Set<number>();
 
     ledgerRows.forEach((row) => {
-      const itemId = String(row.itemId ?? '').trim();
+      const itemId = Number(row.item?.id ?? 0);
       const batchNumber = String(row.batch?.batchNumber ?? '').trim();
-      const warehouseId = String(row.warehouseId ?? '').trim();
-      if (!itemId || !batchNumber || !warehouseId) {
+      const warehouseId = Number(row.warehouse?.id ?? 0);
+      if (!Number.isInteger(itemId) || itemId <= 0 || !batchNumber || !warehouseId) {
         return;
       }
       pairKeys.add(`${itemId}::${batchNumber}::${warehouseId}`);
@@ -488,7 +521,7 @@ export class OutboundService {
       warehouseIds.add(warehouseId);
     });
 
-    const suppliersByPair = new Map<string, Array<{ id: string; name: string }>>();
+    const suppliersByPair = new Map<string, Array<{ id: number; name: string }>>();
 
     if (pairKeys.size > 0) {
       const inboundSources = await this.prisma.inboundDetailBatch.findMany({
@@ -524,8 +557,8 @@ export class OutboundService {
       inboundSources.forEach((row) => {
         const itemId = String(row.inboundDetail?.itemId ?? '').trim();
         const batchNumber = String(row.batchIn ?? '').trim();
-        const warehouseId = String(row.inboundDetail?.inbound?.warehouseId ?? '').trim();
-        const supplierId = String(row.inboundDetail?.inbound?.supplierId ?? '').trim();
+        const warehouseId = Number(row.inboundDetail?.inbound?.warehouseId ?? 0);
+        const supplierId = Number(row.inboundDetail?.inbound?.supplierId ?? 0);
         if (!itemId || !batchNumber || !warehouseId || !supplierId) {
           return;
         }
@@ -539,7 +572,7 @@ export class OutboundService {
         if (!current.some((supplier) => supplier.id === supplierId)) {
           current.push({
             id: supplierId,
-            name: row.inboundDetail?.inbound?.supplier?.name ?? supplierId,
+            name: row.inboundDetail?.inbound?.supplier?.name ?? String(supplierId),
           });
         }
         suppliersByPair.set(pairKey, current);
@@ -550,11 +583,11 @@ export class OutboundService {
 
     const data = ledgerRows
       .filter((row) => {
-        if (!supplierFilter) {
+        if (supplierFilter === undefined) {
           return true;
         }
 
-        const pairKey = `${row.itemId}::${row.batch?.batchNumber ?? ''}::${row.warehouseId}`;
+        const pairKey = `${row.item?.id ?? ''}::${row.batch?.batchNumber ?? ''}::${row.warehouse?.id ?? ''}`;
         const suppliers = suppliersByPair.get(pairKey) ?? [];
         return suppliers.some((supplier) => supplier.id === supplierFilter);
       })
@@ -569,11 +602,11 @@ export class OutboundService {
         const nextBalance = prevBalance + numericQty;
         balancesByKey.set(balanceKey, nextBalance);
 
-        const pairKey = `${row.itemId}::${row.batch?.batchNumber ?? ''}::${row.warehouseId}`;
+        const pairKey = `${row.item?.id ?? ''}::${row.batch?.batchNumber ?? ''}::${row.warehouse?.id ?? ''}`;
         const suppliers = suppliersByPair.get(pairKey) ?? [];
 
         return {
-          uuid: row.uuid,
+          id: row.id,
           item: row.item,
           warehouse: row.warehouse,
           batch: row.batch,
@@ -598,33 +631,48 @@ export class OutboundService {
   }
 
   async findStockMutationReport(query: QueryStockMutationReportDto) {
-    const warehouseFilter = String(query.warehouseId ?? '').trim();
-    const supplierFilter = String(query.supplierId ?? '').trim();
-    const itemFilter = String(query.itemId ?? '').trim();
+    const warehouseFilter = this.parseOptionalId(query.warehouseId, 'warehouseId');
+    const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
+    const itemFilter = this.parseOptionalId(query.itemId, 'itemId');
+
+    const [warehouseFilterRow, itemFilterRow] = await Promise.all([
+      warehouseFilter !== undefined
+        ? this.prisma.masterDataWarehouse.findFirst({
+            where: { id: warehouseFilter, deletedAt: null },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      itemFilter !== undefined
+        ? this.prisma.masterDataItem.findFirst({
+            where: { id: itemFilter, deletedAt: null },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     const ledgerRows = await this.prisma.inventoryLedger.findMany({
       where: {
         deletedAt: null,
-        warehouseId: warehouseFilter || undefined,
-        itemId: itemFilter || undefined,
+        warehouseId: warehouseFilterRow?.id,
+        itemId: itemFilterRow?.id,
       },
       include: {
         item: {
           select: {
-            uuid: true,
+            id: true,
             code: true,
             name: true,
           },
         },
         warehouse: {
           select: {
-            uuid: true,
+            id: true,
             name: true,
           },
         },
         batch: {
           select: {
-            uuid: true,
+            id: true,
             batchNumber: true,
             expiryDate: true,
           },
@@ -636,10 +684,10 @@ export class OutboundService {
     const batchBalanceMap = new Map<
       string,
       {
-        itemId: string;
+        itemId: number;
         itemCode: string;
         itemName: string;
-        warehouseId: string;
+        warehouseId: number;
         warehouseName: string;
         batchNumber: string;
         expiryDate: Date | null;
@@ -649,18 +697,18 @@ export class OutboundService {
 
     ledgerRows.forEach((row) => {
       const itemId = String(row.itemId ?? '').trim();
-      const warehouseId = String(row.warehouseId ?? '').trim();
-      const batchId = String(row.batchId ?? '').trim();
+      const warehouseId = Number(row.warehouseId ?? 0);
+      const batchId = Number(row.batchId ?? 0);
       if (!itemId || !warehouseId || !batchId) {
         return;
       }
 
       const key = `${itemId}::${warehouseId}::${batchId}`;
       const current = batchBalanceMap.get(key) ?? {
-        itemId,
+        itemId: row.item?.id ?? itemId,
         itemCode: row.item?.code ?? '',
         itemName: row.item?.name ?? '',
-        warehouseId,
+        warehouseId: row.warehouse?.id ?? warehouseId,
         warehouseName: row.warehouse?.name ?? '',
         batchNumber: row.batch?.batchNumber ?? '',
         expiryDate: row.batch?.expiryDate ?? null,
@@ -678,9 +726,9 @@ export class OutboundService {
 
     const balances = [...batchBalanceMap.values()].filter((row) => Math.abs(row.total) > 0.000001);
     const pairKeys = new Set<string>();
-    const itemIds = new Set<string>();
+    const itemIds = new Set<number>();
     const batchNumbers = new Set<string>();
-    const warehouseIds = new Set<string>();
+    const warehouseIds = new Set<number>();
 
     balances.forEach((row) => {
       if (!row.itemId || !row.batchNumber || !row.warehouseId) {
@@ -692,7 +740,7 @@ export class OutboundService {
       warehouseIds.add(row.warehouseId);
     });
 
-    const suppliersByPair = new Map<string, Array<{ id: string; name: string }>>();
+    const suppliersByPair = new Map<string, Array<{ id: number; name: string }>>();
 
     if (pairKeys.size > 0) {
       const inboundSources = await this.prisma.inboundDetailBatch.findMany({
@@ -728,8 +776,8 @@ export class OutboundService {
       inboundSources.forEach((row) => {
         const itemId = String(row.inboundDetail?.itemId ?? '').trim();
         const batchNumber = String(row.batchIn ?? '').trim();
-        const warehouseId = String(row.inboundDetail?.inbound?.warehouseId ?? '').trim();
-        const supplierId = String(row.inboundDetail?.inbound?.supplierId ?? '').trim();
+        const warehouseId = Number(row.inboundDetail?.inbound?.warehouseId ?? 0);
+        const supplierId = Number(row.inboundDetail?.inbound?.supplierId ?? 0);
         if (!itemId || !batchNumber || !warehouseId || !supplierId) {
           return;
         }
@@ -743,7 +791,7 @@ export class OutboundService {
         if (!current.some((supplier) => supplier.id === supplierId)) {
           current.push({
             id: supplierId,
-            name: row.inboundDetail?.inbound?.supplier?.name ?? supplierId,
+            name: row.inboundDetail?.inbound?.supplier?.name ?? String(supplierId),
           });
         }
         suppliersByPair.set(pairKey, current);
@@ -759,7 +807,7 @@ export class OutboundService {
 
     const data = balances
       .filter((row) => {
-        if (!supplierFilter) {
+        if (supplierFilter === undefined) {
           return true;
         }
         const pairKey = `${row.itemId}::${row.batchNumber}::${row.warehouseId}`;
@@ -836,17 +884,17 @@ export class OutboundService {
     };
   }
 
-  async findOne(uuid: string) {
+  async findOne(id: number) {
     const item = await this.prisma.deliveryOrder.findFirst({
-      where: { uuid, deletedAt: null },
+      where: { id, deletedAt: null },
       include: {
-        customer: { select: { uuid: true, code: true, name: true, type: true } },
+        customer: { select: { id: true, code: true, name: true, type: true } },
         destinationCity: {
           select: {
-            uuid: true,
+            id: true,
             name: true,
             postalCode: true,
-            province: { select: { uuid: true, name: true, isoCode: true } },
+            province: { select: { id: true, name: true, isoCode: true } },
           },
         },
         details: {
@@ -859,12 +907,12 @@ export class OutboundService {
             },
             item: {
               select: {
-                uuid: true,
+                id: true,
                 code: true,
                 name: true,
                 category: true,
                 itemType: true,
-                uom: { select: { uuid: true, code: true, name: true, type: true } },
+                uom: { select: { id: true, code: true, name: true, type: true } },
               },
             },
           },
@@ -878,10 +926,11 @@ export class OutboundService {
     return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateOutboundDto, actorId?: string) {
+  async update(id: number, dto: UpdateOutboundDto, actorId?: string | number) {
+    const auditActor = this.normalizeAuditActor(actorId);
     const existing = await this.prisma.deliveryOrder.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true, doNumber: true },
+      where: { id, deletedAt: null },
+      select: { id: true, doNumber: true },
     });
     if (!existing) {
       throw new NotFoundException('outbound not found');
@@ -891,50 +940,52 @@ export class OutboundService {
       const normalizedDoNumber = this.normalizeRequiredDoNumber(dto.doNumber);
       dto.doNumber = normalizedDoNumber;
       if (normalizedDoNumber !== existing.doNumber) {
-        await this.ensureDoNumberAvailable(normalizedDoNumber, uuid);
+        await this.ensureDoNumberAvailable(normalizedDoNumber, id);
       }
     }
 
     if (dto.customerId) {
-      await this.ensureCustomerExists(dto.customerId);
+      const customerId = this.parseId(dto.customerId, 'customerId');
+      dto.customerId = String(customerId);
+      await this.ensureCustomerExists(customerId);
     }
 
     if (typeof dto.destinationCityId !== 'undefined') {
-      const destinationCityId = dto.destinationCityId?.trim();
-      if (destinationCityId) {
+      const destinationCityId = this.parseOptionalId(dto.destinationCityId, 'destinationCityId');
+      if (destinationCityId !== undefined) {
         await this.ensureCityExists(destinationCityId);
       }
-      dto.destinationCityId = destinationCityId;
+      dto.destinationCityId =
+        typeof destinationCityId === 'number' ? String(destinationCityId) : undefined;
     }
 
     const detailsProvided = Array.isArray(dto.details);
-    let detailPayload: CreateOutboundDetailDto[] = [];
-    let itemMap: Map<string, { code: string; name: string; uomId: string; uom: { code: string } }> =
-      new Map();
+    let detailPayload: NormalizedOutboundDetail[] = [];
+    let itemMap = new Map<number, { id: number; code: string; name: string; uom: { code: string } }>();
 
     if (detailsProvided) {
-      detailPayload = this.normalizeAndValidateDetails(
-        dto.details as CreateOutboundDetailDto[],
-      );
+      detailPayload = this.normalizeAndValidateDetails(dto.details as CreateOutboundDetailDto[]);
       itemMap = await this.getActiveItems(detailPayload.map((detail) => detail.itemId));
     }
 
     try {
       await this.prisma.$transaction(async (tx) => {
         if (detailsProvided) {
-          await this.ensureBatchAvailability(detailPayload, tx, uuid);
+          await this.ensureBatchAvailability(detailPayload, tx, id);
         }
 
         await tx.deliveryOrder.update({
-          where: { uuid },
+          where: { id },
           data: {
             doNumber: dto.doNumber,
             doDate: dto.doDate ? new Date(dto.doDate) : undefined,
             doReceivedDate: dto.doReceivedDate ? new Date(dto.doReceivedDate) : undefined,
-            customerId: dto.customerId,
+            customerId: dto.customerId ? this.parseId(dto.customerId, 'customerId') : undefined,
             destinationCityId:
               typeof dto.destinationCityId !== 'undefined'
-                ? dto.destinationCityId || null
+                ? dto.destinationCityId
+                  ? this.parseId(dto.destinationCityId, 'destinationCityId')
+                  : null
                 : undefined,
             stdLeadTimeDays: dto.stdLeadTimeDays,
             stdReturnDoDays: dto.stdReturnDoDays,
@@ -947,22 +998,22 @@ export class OutboundService {
             bu: dto.bu,
             notes: dto.notes,
             status: dto.status,
-            updatedBy: actorId ?? null,
+            updatedBy: auditActor ?? null,
           },
         });
 
         if (detailsProvided) {
           const existingDetailRows = await tx.deliveryOrderDetail.findMany({
-            where: { doId: uuid },
-            select: { uuid: true },
+            where: { doId: id },
+            select: { id: true },
           });
-          const existingDetailIds = existingDetailRows.map((row) => row.uuid);
+          const existingDetailIds = existingDetailRows.map((row) => row.id);
           if (existingDetailIds.length > 0) {
             await tx.outboundDetailBatch.deleteMany({
               where: { outboundDetailId: { in: existingDetailIds } },
             });
           }
-          await tx.deliveryOrderDetail.deleteMany({ where: { doId: uuid } });
+          await tx.deliveryOrderDetail.deleteMany({ where: { doId: id } });
 
           for (let index = 0; index < detailPayload.length; index += 1) {
             const detail = detailPayload[index];
@@ -970,7 +1021,7 @@ export class OutboundService {
 
             const createdDetail = await tx.deliveryOrderDetail.create({
               data: {
-                doId: uuid,
+                doId: id,
                 lineNo: index + 1,
                 itemId: detail.itemId,
                 qtyPcs: detail.qtyPcs ?? 0,
@@ -979,28 +1030,28 @@ export class OutboundService {
                 itemNameSnapshot: item.name,
                 uomCodeSnapshot: item.uom.code,
                 notes: detail.notes ?? null,
-                createdBy: actorId ?? null,
-                updatedBy: actorId ?? null,
+                createdBy: auditActor ?? null,
+                updatedBy: auditActor ?? null,
               },
-              select: { uuid: true },
+              select: { id: true },
             });
 
             await tx.outboundDetailBatch.create({
               data: {
-                outboundDetailId: createdDetail.uuid,
+                outboundDetailId: createdDetail.id,
                 lineNo: 1,
                 batchOut: detail.batchNumber,
                 qtyPcs: detail.qtyPcs ?? 0,
                 qtyKg: detail.qtyKg,
                 notes: detail.notes ?? null,
-                createdBy: actorId ?? null,
-                updatedBy: actorId ?? null,
+                createdBy: auditActor ?? null,
+                updatedBy: auditActor ?? null,
               },
             });
           }
         }
 
-        await this.syncOutboundInventoryLedger(tx, uuid, actorId);
+        await this.syncOutboundInventoryLedger(tx, id, actorId);
       });
     } catch (error) {
       if (
@@ -1019,13 +1070,14 @@ export class OutboundService {
       throw error;
     }
 
-    return this.findOne(uuid);
+    return this.findOne(id);
   }
 
-  async remove(uuid: string, actorId?: string) {
+  async remove(id: number, actorId?: string | number) {
+    const auditActor = this.normalizeAuditActor(actorId);
     const existing = await this.prisma.deliveryOrder.findFirst({
-      where: { uuid, deletedAt: null },
-      select: { uuid: true },
+      where: { id, deletedAt: null },
+      select: { id: true },
     });
     if (!existing) {
       throw new NotFoundException('outbound not found');
@@ -1033,50 +1085,50 @@ export class OutboundService {
 
     await this.prisma.$transaction(async (tx) => {
       await tx.deliveryOrder.update({
-        where: { uuid },
+        where: { id },
         data: {
           deletedAt: new Date(),
-          deletedBy: actorId ?? null,
+          deletedBy: auditActor ?? null,
           status: 'COMPLETED',
-          updatedBy: actorId ?? null,
+          updatedBy: auditActor ?? null,
         },
       });
       await tx.outboundDetailBatch.updateMany({
         where: {
           deletedAt: null,
           outboundDetail: {
-            doId: uuid,
+            doId: id,
             deletedAt: null,
           },
         },
         data: {
           deletedAt: new Date(),
-          deletedBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          deletedBy: auditActor ?? null,
+          updatedBy: auditActor ?? null,
         },
       });
       await tx.deliveryOrderDetail.updateMany({
-        where: { doId: uuid, deletedAt: null },
+        where: { doId: id, deletedAt: null },
         data: {
           deletedAt: new Date(),
-          deletedBy: actorId ?? null,
-          updatedBy: actorId ?? null,
+          deletedBy: auditActor ?? null,
+          updatedBy: auditActor ?? null,
         },
       });
 
-      await this.syncOutboundInventoryLedger(tx, uuid, actorId);
+      await this.syncOutboundInventoryLedger(tx, id, actorId);
     });
 
     return { success: true, message: 'outbound deleted' };
   }
 
-  private async ensureDoNumberAvailable(doNumber: string, exceptUuid?: string) {
+  private async ensureDoNumberAvailable(doNumber: string, exceptId?: number) {
     const duplicate = await this.prisma.deliveryOrder.findFirst({
       where: {
         doNumber,
-        NOT: exceptUuid ? { uuid: exceptUuid } : undefined,
+        NOT: exceptId ? { id: exceptId } : undefined,
       },
-      select: { uuid: true, deletedAt: true },
+      select: { id: true, deletedAt: true },
     });
 
     if (duplicate) {
@@ -1096,14 +1148,14 @@ export class OutboundService {
     return doNumber;
   }
 
-  private async ensureCustomerExists(customerId: string) {
+  private async ensureCustomerExists(customerId: number) {
     const customer = await this.prisma.masterDataContact.findFirst({
       where: {
-        uuid: customerId,
+        id: customerId,
         type: 'customer',
         deletedAt: null,
       },
-      select: { uuid: true, city: true },
+      select: { id: true, city: true },
     });
 
     if (!customer) {
@@ -1116,7 +1168,7 @@ export class OutboundService {
   private async resolveDefaultsFromCustomerCity(customerCity?: string) {
     const normalizedCityName = String(customerCity ?? '').trim();
     if (!normalizedCityName) {
-      return { destinationCityId: null as string | null };
+      return { destinationCityId: null as number | null };
     }
 
     const matchedCity = await this.prisma.masterDataCity.findFirst({
@@ -1127,14 +1179,14 @@ export class OutboundService {
         },
         deletedAt: null,
       },
-      select: { uuid: true },
+      select: { id: true },
       orderBy: [{ createdAt: 'asc' }],
     });
 
-    return { destinationCityId: matchedCity?.uuid ?? null };
+    return { destinationCityId: matchedCity?.id ?? null };
   }
 
-  private async findCitySlaByCityId(cityId: string) {
+  private async findCitySlaByCityId(cityId: number) {
     return this.prisma.masterDataCitySla.findFirst({
       where: {
         cityId,
@@ -1147,10 +1199,10 @@ export class OutboundService {
     });
   }
 
-  private async ensureCityExists(cityId: string) {
+  private async ensureCityExists(cityId: number) {
     const city = await this.prisma.masterDataCity.findFirst({
-      where: { uuid: cityId, deletedAt: null },
-      select: { uuid: true },
+      where: { id: cityId, deletedAt: null },
+      select: { id: true },
     });
 
     if (!city) {
@@ -1158,7 +1210,7 @@ export class OutboundService {
     }
   }
 
-  private normalizeAndValidateDetails(details: CreateOutboundDetailDto[]) {
+  private normalizeAndValidateDetails(details: CreateOutboundDetailDto[]): NormalizedOutboundDetail[] {
     if (!details.length) {
       throw new BadRequestException('At least one detail row is required');
     }
@@ -1166,7 +1218,7 @@ export class OutboundService {
     const seen = new Set<string>();
 
     return details.map((raw) => {
-      const itemId = raw.itemId.trim();
+      const itemId = this.parseId(raw.itemId, 'detail.itemId');
       const batchNumber = raw.batchNumber.trim();
 
       if (!itemId) {
@@ -1177,7 +1229,7 @@ export class OutboundService {
         throw new BadRequestException('Detail batchNumber is required');
       }
 
-      const compositeKey = `${itemId}::${batchNumber.toLowerCase()}`;
+      const compositeKey = `${String(itemId)}::${batchNumber.toLowerCase()}`;
       if (seen.has(compositeKey)) {
         throw new BadRequestException(
           `Duplicate item and batch combination: ${itemId} - ${batchNumber}`,
@@ -1193,21 +1245,20 @@ export class OutboundService {
     });
   }
 
-  private async getActiveItems(itemIds: string[]) {
+  private async getActiveItems(itemIds: number[]) {
     const uniqueItemIds = [...new Set(itemIds)];
 
     const items = await this.prisma.masterDataItem.findMany({
       where: {
-        uuid: { in: uniqueItemIds },
+        id: { in: uniqueItemIds },
         isActive: true,
         deletedAt: null,
       },
       select: {
-        uuid: true,
+        id: true,
         code: true,
         name: true,
-        uomId: true,
-        uom: { select: { code: true } },
+        uom: { select: { id: true, code: true } },
       },
     });
 
@@ -1215,26 +1266,42 @@ export class OutboundService {
       throw new BadRequestException('One or more items are not found or inactive');
     }
 
-    return new Map(items.map((item) => [item.uuid, item]));
+    return new Map(
+      items.map((item) => [
+        item.id,
+        {
+          id: item.id,
+          code: item.code,
+          name: item.name,
+          uomId: item.uom.id,
+          uom: { code: item.uom.code },
+        },
+      ]),
+    );
   }
 
-  private async resolveWarehouseForActor(tx: Prisma.TransactionClient, actorId?: string) {
-    if (!actorId) {
+  private async resolveWarehouseForActor(tx: Prisma.TransactionClient, actorId?: string | number) {
+    const parsedActorId = this.parseOptionalActorUserId(actorId);
+    if (!parsedActorId) {
       return undefined;
     }
 
     const actor = await tx.user.findFirst({
       where: {
-        uuid: actorId,
+        id: parsedActorId,
         deletedAt: null,
       },
       select: {
-        warehouseId: true,
+        warehouse: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
-    const mappedWarehouseId = String(actor?.warehouseId ?? '').trim();
-    if (!mappedWarehouseId || mappedWarehouseId === 'null' || mappedWarehouseId === 'undefined') {
+    const mappedWarehouseId = actor?.warehouse?.id;
+    if (!mappedWarehouseId || mappedWarehouseId <= 0) {
       return undefined;
     }
 
@@ -1243,27 +1310,28 @@ export class OutboundService {
 
   private async syncOutboundInventoryLedger(
     tx: Prisma.TransactionClient,
-    deliveryOrderUuid: string,
-    actorId?: string,
+    deliveryOrderId: number,
+    actorId?: string | number,
   ) {
+    const auditActor = this.normalizeAuditActor(actorId);
     const now = new Date();
     await tx.inventoryLedger.updateMany({
       where: {
         referenceDocType: 'OUTBOUND',
-        referenceDocId: deliveryOrderUuid,
+        referenceDocId: String(deliveryOrderId),
         deletedAt: null,
       },
       data: {
         deletedAt: now,
-        deletedBy: actorId ?? null,
-        updatedBy: actorId ?? null,
+        deletedBy: auditActor ?? null,
+        updatedBy: auditActor ?? null,
       },
     });
 
     const outbound = await tx.deliveryOrder.findFirst({
-      where: { uuid: deliveryOrderUuid },
+      where: { id: deliveryOrderId },
       select: {
-        uuid: true,
+        id: true,
         doNumber: true,
         doDate: true,
         deletedAt: true,
@@ -1274,7 +1342,12 @@ export class OutboundService {
             itemId: true,
             item: {
               select: {
-                uomId: true,
+                id: true,
+                uom: {
+                  select: {
+                    id: true,
+                  },
+                },
               },
             },
             batches: {
@@ -1298,11 +1371,12 @@ export class OutboundService {
     }
 
     const actorWarehouseId = await this.resolveWarehouseForActor(tx, actorId);
-    const itemIds = new Set<string>();
+    const actorUserId = await this.resolveActorUserId(tx, actorId);
+    const itemIds = new Set<number>();
     const batchNumbers = new Set<string>();
 
     outbound.details.forEach((detail) => {
-      const itemId = String(detail.itemId ?? '').trim();
+      const itemId = Number(detail.itemId ?? 0);
       if (!itemId) {
         return;
       }
@@ -1315,7 +1389,7 @@ export class OutboundService {
       });
     });
 
-    const sourceByPair = new Map<string, { warehouseId: string; expiryDate: Date | null }>();
+    const sourceByPair = new Map<string, { warehouseId: number; expiryDate: Date | null }>();
     if (itemIds.size > 0 && batchNumbers.size > 0) {
       const inboundSources = await tx.inboundDetailBatch.findMany({
         where: {
@@ -1338,7 +1412,11 @@ export class OutboundService {
               itemId: true,
               inbound: {
                 select: {
-                  warehouseId: true,
+                  warehouse: {
+                    select: {
+                      id: true,
+                    },
+                  },
                   transactionDate: true,
                 },
               },
@@ -1351,7 +1429,7 @@ export class OutboundService {
       inboundSources.forEach((source) => {
         const itemId = String(source.inboundDetail?.itemId ?? '').trim();
         const batchNumber = String(source.batchIn ?? '').trim();
-        const warehouseId = String(source.inboundDetail?.inbound?.warehouseId ?? '').trim();
+        const warehouseId = Number(source.inboundDetail?.inbound?.warehouse?.id ?? 0);
         if (!itemId || !batchNumber || !warehouseId) {
           return;
         }
@@ -1385,26 +1463,24 @@ export class OutboundService {
         const inventoryBatch = await tx.inventoryBatch.upsert({
           where: {
             itemId_batchNumber: {
-              itemId: detail.itemId,
+              itemId: detail.item.id,
               batchNumber,
             },
           },
           update: {
             expiryDate: source?.expiryDate ?? batch.expiredDate ?? undefined,
-            isActive: true,
             deletedAt: null,
             deletedBy: null,
-            updatedBy: actorId ?? null,
+            updatedBy: auditActor ?? null,
           },
           create: {
-            itemId: detail.itemId,
+            itemId: detail.item.id,
             batchNumber,
             expiryDate: source?.expiryDate ?? batch.expiredDate ?? null,
-            isActive: true,
-            createdBy: actorId ?? null,
-            updatedBy: actorId ?? null,
+            createdBy: auditActor ?? null,
+            updatedBy: auditActor ?? null,
           },
-          select: { uuid: true },
+          select: { id: true },
         });
 
         const qtyPcs = Number(batch.qtyPcs ?? 0);
@@ -1413,44 +1489,61 @@ export class OutboundService {
         await tx.inventoryLedger.create({
           data: {
             transactionDate: outbound.doDate ?? now,
-            itemId: detail.itemId,
+            itemId: detail.item.id,
             warehouseId,
-            batchId: inventoryBatch.uuid,
+            batchId: inventoryBatch.id,
             transactionType: 'OUTBOUND',
             referenceDocType: 'OUTBOUND',
-            referenceDocId: outbound.uuid,
+            referenceDocId: String(outbound.id),
             referenceNumber: outbound.doNumber,
             quantityPcs: -Math.abs(Number.isFinite(qtyPcs) ? qtyPcs : 0),
             quantityKg: -Math.abs(Number.isFinite(qtyKg) ? qtyKg : 0),
-            uomId: detail.item.uomId,
+            uomId: detail.item.uom.id,
             unitCost: null,
             totalValue: 0,
-            userId: actorId ?? null,
+            userId: actorUserId ?? null,
             notes: batch.notes ?? null,
-            createdBy: actorId ?? null,
-            updatedBy: actorId ?? null,
+            createdBy: auditActor ?? null,
+            updatedBy: auditActor ?? null,
           },
         });
       }
     }
   }
 
+  private async resolveActorUserId(tx: Prisma.TransactionClient, actorId?: string | number) {
+    const parsedActorId = this.parseOptionalActorUserId(actorId);
+    if (!parsedActorId) {
+      return undefined;
+    }
+
+    const actor = await tx.user.findFirst({
+      where: {
+        id: parsedActorId,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    return actor?.id;
+  }
+
   private async ensureBatchAvailability(
-    details: CreateOutboundDetailDto[],
+    details: NormalizedOutboundDetail[],
     tx: Prisma.TransactionClient,
-    excludeDoId?: string,
+    excludeDoId?: number,
   ) {
     const requestedByPair = new Map<string, number>();
-    const pairLabelByKey = new Map<string, { itemId: string; batchNumber: string }>();
-    const itemIds = new Set<string>();
+    const pairLabelByKey = new Map<string, { itemId: number; batchNumber: string }>();
+    const itemIds = new Set<number>();
     const batchNumbers = new Set<string>();
 
     details.forEach((detail) => {
-      const itemId = String(detail.itemId ?? '').trim();
+      const itemId = detail.itemId;
       const batchNumber = String(detail.batchNumber ?? '').trim();
       const qty = Number(detail.qtyPcs ?? 0);
       const qtyPcs = Number.isFinite(qty) ? qty : 0;
-      const key = `${itemId}::${batchNumber.toLowerCase()}`;
+      const key = `${String(itemId)}::${batchNumber.toLowerCase()}`;
 
       requestedByPair.set(key, (requestedByPair.get(key) ?? 0) + qtyPcs);
       if (!pairLabelByKey.has(key)) {
@@ -1464,7 +1557,7 @@ export class OutboundService {
       return;
     }
 
-    const normalizedExcludeDoId = String(excludeDoId ?? '').trim() || undefined;
+    const normalizedExcludeDoId = excludeDoId;
     const [inboundRows, usedRows] = await Promise.all([
       tx.inboundDetailBatch.findMany({
         where: {
@@ -1498,7 +1591,7 @@ export class OutboundService {
             itemId: { in: [...itemIds] },
             deliveryOrder: {
               deletedAt: null,
-              uuid: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
+              id: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
             },
           },
         },
@@ -1555,5 +1648,59 @@ export class OutboundService {
         );
       }
     });
+  }
+
+  private parseId(value: string | number, label: string): number {
+    if (typeof value === 'number') {
+      if (Number.isInteger(value) && value > 0) {
+        return value;
+      }
+      throw new BadRequestException(`${label} must be a valid integer`);
+    }
+
+    const normalized = String(value ?? '').trim();
+    if (!normalized) {
+      throw new BadRequestException(`${label} is required`);
+    }
+
+    const parsed = Number(normalized);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new BadRequestException(`${label} must be a valid integer`);
+    }
+
+    return parsed;
+  }
+
+  private parseOptionalId(
+    value: string | number | null | undefined,
+    label: string,
+  ): number | undefined {
+    if (typeof value === 'undefined' || value === null) {
+      return undefined;
+    }
+    if (typeof value === 'string' && !value.trim()) {
+      return undefined;
+    }
+    return this.parseId(value, label);
+  }
+
+  private parseOptionalActorUserId(actorId?: string | number): number | undefined {
+    if (typeof actorId === 'undefined' || actorId === null) {
+      return undefined;
+    }
+    const normalized = String(actorId).trim();
+    if (!normalized) {
+      return undefined;
+    }
+    const parsed = Number(normalized);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      return undefined;
+    }
+    return parsed;
+  }
+
+  private normalizeAuditActor(actorId?: string | number): number | undefined {
+    const normalized = toAuditUserId(actorId);
+    return normalized ?? undefined;
   }
 }

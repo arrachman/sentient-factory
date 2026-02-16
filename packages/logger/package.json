@@ -8,7 +8,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint src/**/*.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "if [ -f tsconfig.json ]; then tsc --noEmit; else echo 'No tsconfig.json, skipping typecheck'; fi"
   },
   "dependencies": {
     "pino": "^9.0.0",

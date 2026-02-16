@@ -18,7 +18,7 @@ export class AuthService {
       if (!user.isActive) {
         return null;
       }
-      const hasWarehouse = await this.usersService.hasWarehouse(user.uuid);
+      const hasWarehouse = await this.usersService.hasWarehouse(user.id);
       if (!hasWarehouse) {
         return null;
       }
@@ -30,11 +30,11 @@ export class AuthService {
 
   async login(user: any) {
     const roles = user.roles?.map((ur: any) => ur.role.name) || [];
-    const warehouse = await this.usersService.getWarehouseMetaByUserUuid(user.uuid);
+    const warehouse = await this.usersService.getWarehouseMetaByUserUuid(user.id);
     const payload = {
       username: user.username,
       fullName: user.fullName ?? null,
-      sub: user.uuid,
+      sub: user.id,
       email: user.email,
       roles: roles,
     };
@@ -47,7 +47,7 @@ export class AuthService {
         token: accessToken,
         refreshToken: refreshToken,
         user: {
-          id: user.uuid,
+          id: user.id,
           email: user.email,
           username: user.username,
           fullName: user.fullName,
@@ -96,7 +96,7 @@ export class AuthService {
     return {
       success: true,
       data: {
-        id: user.uuid,
+        id: user.id,
         email: user.email,
         name: user.fullName,
         username: user.username,
@@ -113,7 +113,7 @@ export class AuthService {
       ? await this.usersService.getWarehouseMetaByUserUuid(authUser.id)
       : { warehouseId: null, warehouseName: null };
 
-    const id = authUser?.id ?? dbUser?.uuid ?? null;
+    const id = authUser?.id ?? dbUser?.id ?? null;
     const email = dbUser?.email ?? authUser?.email ?? null;
     const username = dbUser?.username ?? authUser?.username ?? null;
     const fullName =

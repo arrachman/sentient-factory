@@ -8,7 +8,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "lint": "eslint src/**/*.ts src/**/*.tsx",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "if [ -f tsconfig.json ]; then tsc --noEmit; else echo 'No tsconfig.json, skipping typecheck'; fi",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

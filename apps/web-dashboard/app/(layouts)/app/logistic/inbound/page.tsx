@@ -12,8 +12,11 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
-import { Badge } from '@/components/ui/badge';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  AutocompleteSelect,
+  type AutocompleteSelectOption,
+} from '@/components/ui/autocomplete-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,14 +38,16 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 
 type SupplierOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
 };
 
 type WarehouseOption = {
-  uuid: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  name?: string;
   createdBy?: string | null;
   locationName?: string | null;
   city?: {
@@ -51,9 +56,10 @@ type WarehouseOption = {
 };
 
 type ItemOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
   uom?: {
     name?: string | null;
     code?: string | null;
@@ -85,6 +91,7 @@ type InboundForm = {
 };
 
 type InboundListItem = {
+  id?: string | number;
   uuid: string;
   reportNo: string | number;
   transactionNo: string;
@@ -117,6 +124,10 @@ type InboundDetailApi = {
 };
 
 const STATUS_OPTIONS = ['DRAFT', 'POSTED', 'CANCELLED'] as const;
+const REQUIRED_FIELD_CLASS =
+  'border-blue-500/70 focus-visible:border-blue-600 focus-visible:ring-blue-100';
+const REQUIRED_SELECT_TRIGGER_CLASS =
+  'border-blue-500/70 focus-visible:border-blue-600 focus-visible:ring-blue-100';
 
 function toInputDate(value: Date) {
   const year = value.getFullYear();
@@ -180,6 +191,25 @@ function fmtDate(value?: string | null) {
   }).format(date);
 }
 
+function toEntityId(value: unknown) {
+  if (value == null) {
+    return '';
+  }
+  const id = String(value).trim();
+  if (!id || id === 'null' || id === 'undefined') {
+    return '';
+  }
+  return id;
+}
+
+function pickEntityId(entity?: { id?: string | number; uuid?: string | number } | null) {
+  return toEntityId(entity?.id ?? entity?.uuid);
+}
+
+function pickInboundId(item?: InboundListItem | null) {
+  return toEntityId(item?.id ?? item?.uuid);
+}
+
 function mapDetailFromApi(details?: InboundDetailApi[]): InboundDetailForm[] {
   if (!Array.isArray(details) || details.length === 0) {
     return [initialDetail()];
@@ -205,6 +235,13 @@ function mapDetailFromApi(details?: InboundDetailApi[]): InboundDetailForm[] {
 }
 
 export default function LogisticInboundPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isAddRoute = pathname === '/app/logistic/inbound/add';
+  const isUpdateRoute = pathname === '/app/logistic/inbound/update';
+  const updateUuid = searchParams.get('uuid')?.trim() ?? '';
+
   const [items, setItems] = useState<InboundListItem[]>([]);
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
@@ -346,23 +383,27 @@ export default function LogisticInboundPage() {
         throw new Error(itemPayload?.message || 'Failed to load item options');
       }
 
-      const nextSuppliers = Array.isArray(supplierPayload.data)
+      const nextSuppliers: SupplierOption[] = Array.isArray(supplierPayload.data)
         ? supplierPayload.data
         : [];
-      const nextWarehouses = Array.isArray(warehousePayload.data)
+      const nextWarehouses: WarehouseOption[] = Array.isArray(warehousePayload.data)
         ? warehousePayload.data
         : [];
-      const nextItems = Array.isArray(itemPayload.data) ? itemPayload.data : [];
+      const nextItems: ItemOption[] = Array.isArray(itemPayload.data)
+        ? itemPayload.data
+        : [];
       const userId = String(profilePayload?.data?.id ?? '');
       const mappedWarehouseIdRaw =
         profilePayload?.data?.warehouseId ??
         profilePayload?.data?.user?.warehouseId ??
         '';
-      const mappedWarehouseId = String(mappedWarehouseIdRaw).trim();
-      const resolvedLockedWarehouseId =
-        mappedWarehouseId && mappedWarehouseId !== 'null' && mappedWarehouseId !== 'undefined'
-          ? mappedWarehouseId
-          : '';
+      const mappedWarehouseId = toEntityId(mappedWarehouseIdRaw);
+      const fallbackWarehouseId = pickEntityId(nextWarehouses[0]);
+      const resolvedLockedWarehouseId = nextWarehouses.some(
+        (warehouse) => pickEntityId(warehouse) === mappedWarehouseId,
+      )
+        ? mappedWarehouseId
+        : '';
       const nextLockedWarehouseId = resolvedLockedWarehouseId;
 
       setSuppliers(nextSuppliers);
@@ -373,17 +414,17 @@ export default function LogisticInboundPage() {
 
       setForm((state) => ({
         ...state,
-        supplierId: state.supplierId || nextSuppliers[0]?.uuid || '',
+        supplierId: state.supplierId || pickEntityId(nextSuppliers[0]) || '',
         warehouseId:
           nextLockedWarehouseId ||
           state.warehouseId ||
-          nextWarehouses[0]?.uuid ||
+          fallbackWarehouseId ||
           '',
         details: state.details.map((detail, index) => ({
           ...detail,
           itemId:
             detail.itemId ||
-            (index === 0 ? nextItems[0]?.uuid || '' : detail.itemId),
+            (index === 0 ? pickEntityId(nextItems[0]) || '' : detail.itemId),
         })),
       }));
     } catch (err) {
@@ -399,14 +440,34 @@ export default function LogisticInboundPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!isAddRoute || showForm || loadingOptions) {
+      return;
+    }
+    openCreateForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAddRoute, showForm, loadingOptions]);
+
+  useEffect(() => {
+    if (!isUpdateRoute || showForm || loadingOptions) {
+      return;
+    }
+    if (!updateUuid) {
+      setError('Inbound UUID wajib diisi untuk halaman update.');
+      return;
+    }
+    void openEditForm(updateUuid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isUpdateRoute, updateUuid, showForm, loadingOptions]);
+
   const openCreateForm = () => {
     setEditingUuid(null);
     setForm({
       ...initialForm,
       transactionDate: new Date().toISOString().slice(0, 10),
-      supplierId: suppliers[0]?.uuid || '',
-      warehouseId: lockedWarehouseId || warehouses[0]?.uuid || '',
-      details: [{ ...initialDetail(), itemId: itemOptions[0]?.uuid || '' }],
+      supplierId: pickEntityId(suppliers[0]) || '',
+      warehouseId: lockedWarehouseId || pickEntityId(warehouses[0]) || '',
+      details: [{ ...initialDetail(), itemId: pickEntityId(itemOptions[0]) || '' }],
     });
     setShowForm(true);
   };
@@ -454,16 +515,6 @@ export default function LogisticInboundPage() {
     try {
       const detailsPayload = form.details
         .map((detail) => {
-          const parsedUomInput = detail.uomInput.trim();
-          const uomInput =
-            parsedUomInput === '' ? undefined : Number(parsedUomInput);
-          if (
-            uomInput !== undefined &&
-            (!Number.isInteger(uomInput) || uomInput < 0)
-          ) {
-            throw new Error('Input UOM harus integer dan tidak boleh negatif.');
-          }
-
           const batches = detail.batches
             .map((batch) => ({
               batchIn: batch.batchIn.trim(),
@@ -473,9 +524,24 @@ export default function LogisticInboundPage() {
             }))
             .filter((batch) => batch.batchIn && batch.qty > 0);
 
+          const parsedUomInput = detail.uomInput.trim();
+          const isDetailValid =
+            detail.itemId && batches.length > 0;
+          if (isDetailValid && parsedUomInput === '') {
+            throw new Error('Input UOM wajib diisi untuk setiap item yang memiliki batch.');
+          }
+
+          const uomInput = Number(parsedUomInput);
+          if (
+            isDetailValid &&
+            (!Number.isInteger(uomInput) || uomInput < 0)
+          ) {
+            throw new Error('Input UOM harus integer dan tidak boleh negatif.');
+          }
+
           return {
             itemId: detail.itemId,
-            uomInput,
+            uomInput: isDetailValid ? uomInput : undefined,
             notes: detail.notes.trim() || undefined,
             qty: batches.reduce((sum, batch) => sum + batch.qty, 0),
             batches,
@@ -525,6 +591,7 @@ export default function LogisticInboundPage() {
 
       setShowForm(false);
       setEditingUuid(null);
+      router.push('/app/logistic/inbound');
       await fetchList(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save inbound');
@@ -598,7 +665,7 @@ export default function LogisticInboundPage() {
       ...state,
       details: [
         ...state.details,
-        { ...initialDetail(), itemId: itemOptions[0]?.uuid || '' },
+        { ...initialDetail(), itemId: pickEntityId(itemOptions[0]) || '' },
       ],
     }));
   };
@@ -608,7 +675,7 @@ export default function LogisticInboundPage() {
       if (state.details.length === 1) {
         return {
           ...state,
-          details: [{ ...initialDetail(), itemId: itemOptions[0]?.uuid || '' }],
+          details: [{ ...initialDetail(), itemId: pickEntityId(itemOptions[0]) || '' }],
         };
       }
       return {
@@ -659,7 +726,10 @@ export default function LogisticInboundPage() {
         <ToolbarActions>
           {!showForm ? (
             <>
-              <Button onClick={openCreateForm} disabled={loadingOptions}>
+              <Button
+                onClick={() => router.push('/app/logistic/inbound/add')}
+                disabled={loadingOptions}
+              >
                 <Plus />
                 Add Inbound
               </Button>
@@ -673,7 +743,14 @@ export default function LogisticInboundPage() {
               </Button>
             </>
           ) : (
-            <Button variant="outline" onClick={() => setShowForm(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowForm(false);
+                setEditingUuid(null);
+                router.push('/app/logistic/inbound');
+              }}
+            >
               <ArrowLeft />
               Back to List
             </Button>
@@ -744,7 +821,6 @@ export default function LogisticInboundPage() {
                   <TableHead>Date</TableHead>
                   <TableHead>Supplier</TableHead>
                   <TableHead>Warehouse</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Item Row</TableHead>
                   <TableHead className="w-[170px]">Actions</TableHead>
                 </TableRow>
@@ -752,15 +828,17 @@ export default function LogisticInboundPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={8}>Loading inbounds...</TableCell>
+                    <TableCell colSpan={7}>Loading inbounds...</TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8}>No inbound found.</TableCell>
+                    <TableCell colSpan={7}>No inbound found.</TableCell>
                   </TableRow>
                 ) : (
-                  items.map((item, index) => (
-                    <TableRow key={item.uuid}>
+                  items.map((item, index) => {
+                    const rowId = pickInboundId(item);
+                    return (
+                    <TableRow key={rowId || `inbound-${index}`}>
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>
                         <div className="font-medium">{item.transactionNo}</div>
@@ -778,17 +856,6 @@ export default function LogisticInboundPage() {
                         </div>
                       </TableCell>
                       <TableCell>{item.warehouse?.name || '-'}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            item.status === 'CANCELLED'
-                              ? 'destructive'
-                              : 'secondary'
-                          }
-                        >
-                          {item.status}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-right">
                         {item._count?.details ?? 0}
                       </TableCell>
@@ -796,24 +863,37 @@ export default function LogisticInboundPage() {
                         <div className="flex gap-2">
                           <Button
                             variant="outline"
-                            size="sm"
-                            onClick={() => openEditForm(item.uuid)}
+                            size="icon"
+                            aria-label="Edit inbound"
+                            onClick={() => {
+                              if (rowId) {
+                                router.push(
+                                  `/app/logistic/inbound/update?uuid=${encodeURIComponent(rowId)}`,
+                                );
+                              }
+                            }}
+                            disabled={!rowId}
                           >
                             <Pencil />
-                            Edit
                           </Button>
                           <Button
                             variant="destructive"
-                            size="sm"
-                            onClick={() => remove(item.uuid)}
+                            size="icon"
+                            aria-label="Delete inbound"
+                            onClick={() => {
+                              if (rowId) {
+                                void remove(rowId);
+                              }
+                            }}
+                            disabled={!rowId}
                           >
                             <Trash2 />
-                            Delete
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -852,6 +932,9 @@ export default function LogisticInboundPage() {
                   <h3 className="mb-4 text-base font-semibold">
                     Inbound Header
                   </h3>
+                  <p className="mb-4 text-xs text-muted-foreground">
+                    Field dengan border biru wajib diisi.
+                  </p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Transaction No</Label>
@@ -878,6 +961,7 @@ export default function LogisticInboundPage() {
                           }))
                         }
                         required
+                        className={REQUIRED_FIELD_CLASS}
                       />
                     </div>
                     <div className="space-y-2">
@@ -887,14 +971,22 @@ export default function LogisticInboundPage() {
                         onValueChange={(value) =>
                           setForm((state) => ({ ...state, supplierId: value }))
                         }
-                        options={suppliers.map((supplier) => ({
-                          value: supplier.uuid,
-                          label: supplier.name,
-                          keywords: supplier.code,
-                        }))}
+                        options={suppliers.flatMap<AutocompleteSelectOption>((supplier) => {
+                            const value = pickEntityId(supplier);
+                            if (!value) {
+                              return [];
+                            }
+                            return {
+                              value,
+                              label: String(supplier.name ?? ''),
+                              keywords: supplier.code,
+                            };
+                          })}
                         placeholder="Select supplier"
                         searchPlaceholder="Search supplier..."
                         emptyText="No supplier found."
+                        required
+                        triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
                       />
                     </div>
                     <div className="space-y-2">
@@ -904,15 +996,27 @@ export default function LogisticInboundPage() {
                         onValueChange={(value) =>
                           setForm((state) => ({ ...state, warehouseId: value }))
                         }
-                        options={warehouses.map((warehouse) => ({
-                          value: warehouse.uuid,
-                          label: `${warehouse.name}${warehouse.city?.name ? ` - ${warehouse.city.name}` : ''}`,
-                          keywords: warehouse.locationName || undefined,
-                        }))}
+                        options={warehouses.flatMap<AutocompleteSelectOption>((warehouse) => {
+                            const value = pickEntityId(warehouse);
+                            if (!value) {
+                              return [];
+                            }
+                            const warehouseName = String(warehouse.name ?? '');
+                            const cityName = warehouse.city?.name
+                              ? String(warehouse.city.name)
+                              : '';
+                            return {
+                              value,
+                              label: `${warehouseName}${cityName ? ` - ${cityName}` : ''}`,
+                              keywords: warehouse.locationName || undefined,
+                            };
+                          })}
                         placeholder="Select warehouse"
                         searchPlaceholder="Search warehouse..."
                         emptyText="No warehouse found."
                         disabled={Boolean(lockedWarehouseId)}
+                        required
+                        triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
                       />
                       {lockedWarehouseId ? (
                         <p className="text-xs text-muted-foreground">
@@ -938,189 +1042,6 @@ export default function LogisticInboundPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border p-5">
-                  <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-base font-semibold">Item & Batch</h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addDetailRow}
-                    >
-                      <Plus />
-                      Add Item
-                    </Button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {form.details.map((detail, detailIndex) => {
-                      const detailQty = detail.batches.reduce(
-                        (sum, batch) => sum + (Number(batch.qty || 0) || 0),
-                        0,
-                      );
-
-                      return (
-                        <div
-                          key={`detail-${detailIndex}`}
-                          className="rounded-md border p-4"
-                        >
-                          <div className="mb-3 grid gap-3 md:grid-cols-[1fr_160px_180px_auto]">
-                            <div className="space-y-1">
-                              <Label>Item</Label>
-                              <AutocompleteSelect
-                                value={detail.itemId}
-                                onValueChange={(value) =>
-                                  setDetailField(detailIndex, 'itemId', value)
-                                }
-                                options={itemOptions.map((item) => ({
-                                  value: item.uuid,
-                                  label: `${item.code} - ${item.name}`,
-                                  keywords: `${item.uom?.name ?? ''} ${item.uom?.code ?? ''}`,
-                                }))}
-                                placeholder="Select item"
-                                searchPlaceholder="Search item..."
-                                emptyText="No item found."
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label>Qty (auto)</Label>
-                              <Input value={String(detailQty)} readOnly />
-                            </div>
-                            <div className="space-y-1">
-                              <Label>Input UOM (integer)</Label>
-                              <Input
-                                type="number"
-                                step="1"
-                                min="0"
-                                placeholder="cth: 25"
-                                value={detail.uomInput}
-                                onChange={(e) =>
-                                  setDetailField(
-                                    detailIndex,
-                                    'uomInput',
-                                    e.target.value,
-                                  )
-                                }
-                              />
-                            </div>
-                            <div className="flex items-end">
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => removeDetailRow(detailIndex)}
-                              >
-                                <Trash2 />
-                                Remove Item
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="mb-3">
-                            <Label>Catatan Item</Label>
-                            <Input
-                              value={detail.notes}
-                              onChange={(e) =>
-                                setDetailField(
-                                  detailIndex,
-                                  'notes',
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Catatan item"
-                            />
-                          </div>
-
-                          <div className="space-y-2 rounded-md border p-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium">Batch Rows</p>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addBatchRow(detailIndex)}
-                              >
-                                <Plus />
-                                Add Batch
-                              </Button>
-                            </div>
-
-                            {detail.batches.map((batch, batchIndex) => (
-                              <div
-                                key={`batch-${detailIndex}-${batchIndex}`}
-                                className="grid gap-2 md:grid-cols-4"
-                              >
-                                <Input
-                                  placeholder="Batch number"
-                                  value={batch.batchIn}
-                                  onChange={(e) =>
-                                    setBatchField(
-                                      detailIndex,
-                                      batchIndex,
-                                      'batchIn',
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  min="0"
-                                  placeholder="Qty"
-                                  value={batch.qty}
-                                  onChange={(e) =>
-                                    setBatchField(
-                                      detailIndex,
-                                      batchIndex,
-                                      'qty',
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                                <Input
-                                  type="date"
-                                  value={batch.expiredDate}
-                                  onChange={(e) =>
-                                    setBatchField(
-                                      detailIndex,
-                                      batchIndex,
-                                      'expiredDate',
-                                      e.target.value,
-                                    )
-                                  }
-                                />
-                                <div className="flex gap-2">
-                                  <Input
-                                    placeholder="Catatan batch"
-                                    value={batch.notes}
-                                    onChange={(e) =>
-                                      setBatchField(
-                                        detailIndex,
-                                        batchIndex,
-                                        'notes',
-                                        e.target.value,
-                                      )
-                                    }
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    onClick={() =>
-                                      removeBatchRow(detailIndex, batchIndex)
-                                    }
-                                  >
-                                    <Trash2 />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
               </div>
 
               <div className="space-y-4">
@@ -1167,6 +1088,7 @@ export default function LogisticInboundPage() {
                       onClick={() => {
                         setShowForm(false);
                         setEditingUuid(null);
+                        router.push('/app/logistic/inbound');
                       }}
                     >
                       <ArrowLeft />
@@ -1174,6 +1096,203 @@ export default function LogisticInboundPage() {
                     </Button>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-base font-semibold">Item & Batch</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addDetailRow}
+                >
+                  <Plus />
+                  Add Item
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                {form.details.map((detail, detailIndex) => {
+                  const detailQty = detail.batches.reduce(
+                    (sum, batch) => sum + (Number(batch.qty || 0) || 0),
+                    0,
+                  );
+
+                  return (
+                    <div
+                      key={`detail-${detailIndex}`}
+                      className="rounded-md border p-4"
+                    >
+                      <div className="mb-3 grid gap-3 md:grid-cols-[1fr_160px_180px_auto]">
+                        <div className="space-y-1 md:col-span-4">
+                          <Label>Item</Label>
+                          <AutocompleteSelect
+                            value={detail.itemId}
+                            onValueChange={(value) =>
+                              setDetailField(detailIndex, 'itemId', value)
+                            }
+                            options={itemOptions.flatMap<AutocompleteSelectOption>((item) => {
+                                const value = pickEntityId(item);
+                                if (!value) {
+                                  return [];
+                                }
+                                const code = String(item.code ?? '');
+                                const name = String(item.name ?? '');
+                                return {
+                                  value,
+                                  label: `${code} - ${name}`,
+                                  keywords: `${item.uom?.name ?? ''} ${item.uom?.code ?? ''}`,
+                                };
+                              })}
+                            placeholder="Select item"
+                            searchPlaceholder="Search item..."
+                            emptyText="No item found."
+                            required
+                            triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Qty (auto)</Label>
+                          <Input value={String(detailQty)} readOnly />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Input UOM (integer)</Label>
+                          <Input
+                            type="number"
+                            step="1"
+                            min="0"
+                            placeholder="cth: 25"
+                            value={detail.uomInput}
+                            onChange={(e) =>
+                              setDetailField(
+                                detailIndex,
+                                'uomInput',
+                                e.target.value,
+                              )
+                            }
+                            className={REQUIRED_FIELD_CLASS}
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeDetailRow(detailIndex)}
+                          >
+                            <Trash2 />
+                            Remove Item
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <Label>Catatan Item</Label>
+                        <Input
+                          value={detail.notes}
+                          onChange={(e) =>
+                            setDetailField(
+                              detailIndex,
+                              'notes',
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Catatan item"
+                        />
+                      </div>
+
+                      <div className="space-y-2 rounded-md border p-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">Batch Rows</p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => addBatchRow(detailIndex)}
+                          >
+                            <Plus />
+                            Add Batch
+                          </Button>
+                        </div>
+
+                        {detail.batches.map((batch, batchIndex) => (
+                          <div
+                            key={`batch-${detailIndex}-${batchIndex}`}
+                            className="grid gap-2 md:grid-cols-4"
+                          >
+                            <Input
+                              placeholder="Batch number"
+                              value={batch.batchIn}
+                              onChange={(e) =>
+                                setBatchField(
+                                  detailIndex,
+                                  batchIndex,
+                                  'batchIn',
+                                  e.target.value,
+                                )
+                              }
+                              className={REQUIRED_FIELD_CLASS}
+                            />
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Qty"
+                              value={batch.qty}
+                              onChange={(e) =>
+                                setBatchField(
+                                  detailIndex,
+                                  batchIndex,
+                                  'qty',
+                                  e.target.value,
+                                )
+                              }
+                              className={REQUIRED_FIELD_CLASS}
+                            />
+                            <Input
+                              type="date"
+                              value={batch.expiredDate}
+                              onChange={(e) =>
+                                setBatchField(
+                                  detailIndex,
+                                  batchIndex,
+                                  'expiredDate',
+                                  e.target.value,
+                                )
+                              }
+                            />
+                            <div className="flex gap-2">
+                              <Input
+                                placeholder="Catatan batch"
+                                value={batch.notes}
+                                onChange={(e) =>
+                                  setBatchField(
+                                    detailIndex,
+                                    batchIndex,
+                                    'notes',
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                onClick={() =>
+                                  removeBatchRow(detailIndex, batchIndex)
+                                }
+                              >
+                                <Trash2 />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </form>

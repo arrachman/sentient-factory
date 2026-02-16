@@ -1,4 +1,4 @@
-import { UserRole } from './common';
+import { BaseEntity, UserRole } from './common';
 
 export interface User extends BaseEntity {
   email: string;

@@ -1,69 +1,41 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { randomUUID } from 'crypto';
 import { throwDuplicate } from '../common/errors/duplicate.util';
+import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataDivisionDto } from './dto/create-master-data-division.dto';
 import { QueryMasterDataDivisionDto } from './dto/query-master-data-division.dto';
 import { UpdateMasterDataDivisionDto } from './dto/update-master-data-division.dto';
 
-type DivisionRow = {
-  uuid: string;
-  code: string;
-  name: string;
-  description: string | null;
-  is_active: boolean;
-  created_at: Date;
-  created_by: string | null;
-  updated_at: Date;
-  updated_by: string | null;
-  deleted_at: Date | null;
-  deleted_by: string | null;
-};
-
-function toDivision(row: DivisionRow) {
-  return {
-    uuid: row.uuid,
-    code: row.code,
-    name: row.name,
-    description: row.description,
-    isActive: row.is_active,
-    createdAt: row.created_at,
-    createdBy: row.created_by,
-    updatedAt: row.updated_at,
-    updatedBy: row.updated_by,
-    deletedAt: row.deleted_at,
-    deletedBy: row.deleted_by,
-  };
-}
-
 @Injectable()
 export class MasterDataDivisionsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateMasterDataDivisionDto, actorId?: string) {
-    const existing = await this.prisma.$queryRaw<{ uuid: string; deleted_at: Date | null }[]>`
-      SELECT uuid, deleted_at
-      FROM public."m1_division"
-      WHERE code = ${dto.code}
-      LIMIT 1
-    `;
+  async create(dto: CreateMasterDataDivisionDto, actorId?: string | number) {
+    const existing = await this.prisma.masterDataDivision.findFirst({
+      where: { code: dto.code },
+      select: { id: true, deletedAt: true },
+    });
 
-    if (existing[0]) {
+    if (existing) {
       throwDuplicate({
         fieldLabel: 'Division code',
         value: dto.code,
-        isSoftDeleted: Boolean(existing[0].deleted_at),
+        isSoftDeleted: Boolean(existing.deletedAt),
       });
     }
 
-    const created = await this.prisma.$queryRaw<DivisionRow[]>`
-      INSERT INTO public."m1_division" (uuid, code, name, description, is_active, created_by, updated_by)
-      VALUES (${randomUUID()}, ${dto.code}, ${dto.name}, ${dto.description ?? null}, ${dto.isActive}, ${actorId ?? null}, ${actorId ?? null})
-      RETURNING uuid, code, name, description, is_active, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
-    `;
+    const created = await this.prisma.masterDataDivision.create({
+      data: {
+        code: dto.code,
+        name: dto.name,
+        description: dto.description ?? null,
+        isActive: dto.isActive,
+        createdBy: this.toActor(actorId),
+        updatedBy: this.toActor(actorId),
+      },
+    });
 
-    return { success: true, data: created[0] ? toDivision(created[0]) : null };
+    return { success: true, data: created };
   }
 
   async findAll(query: QueryMasterDataDivisionDto) {
@@ -71,40 +43,32 @@ export class MasterDataDivisionsService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const whereClauses: Prisma.Sql[] = [Prisma.sql`deleted_at IS NULL`];
-    if (query.search?.trim()) {
-      const q = `%${query.search.trim()}%`;
-      whereClauses.push(
-        Prisma.sql`(
-          code ILIKE ${q}
-          OR name ILIKE ${q}
-          OR COALESCE(description, '') ILIKE ${q}
-        )`,
-      );
-    }
+    const where = {
+      deletedAt: null as Date | null,
+      ...(query.search?.trim()
+        ? {
+            OR: [
+              { code: { contains: query.search.trim(), mode: 'insensitive' as const } },
+              { name: { contains: query.search.trim(), mode: 'insensitive' as const } },
+              { description: { contains: query.search.trim(), mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
 
-    const whereSql = Prisma.sql`WHERE ${Prisma.join(whereClauses, ' AND ')}`;
-
-    const items = await this.prisma.$queryRaw<DivisionRow[]>(Prisma.sql`
-      SELECT uuid, code, name, description, is_active, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
-      FROM public."m1_division"
-      ${whereSql}
-      ORDER BY created_at DESC
-      OFFSET ${skip}
-      LIMIT ${limit}
-    `);
-
-    const counts = await this.prisma.$queryRaw<{ total: bigint }[]>(Prisma.sql`
-      SELECT COUNT(*)::bigint AS total
-      FROM public."m1_division"
-      ${whereSql}
-    `);
-
-    const total = Number(counts[0]?.total ?? 0);
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.masterDataDivision.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.masterDataDivision.count({ where }),
+    ]);
 
     return {
       success: true,
-      data: items.map(toDivision),
+      data: items,
       meta: {
         page,
         limit,
@@ -114,98 +78,79 @@ export class MasterDataDivisionsService {
     };
   }
 
-  async findOne(uuid: string) {
-    const rows = await this.prisma.$queryRaw<DivisionRow[]>`
-      SELECT uuid, code, name, description, is_active, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
-      FROM public."m1_division"
-      WHERE uuid = ${uuid} AND deleted_at IS NULL
-      LIMIT 1
-    `;
+  async findOne(id: number) {
+    const item = await this.prisma.masterDataDivision.findFirst({
+      where: { id, deletedAt: null },
+    });
 
-    if (rows.length === 0) {
+    if (!item) {
       throw new NotFoundException('Master data division not found');
     }
 
-    return { success: true, data: toDivision(rows[0]) };
+    return { success: true, data: item };
   }
 
-  async update(uuid: string, dto: UpdateMasterDataDivisionDto, actorId?: string) {
-    const existingRows = await this.prisma.$queryRaw<DivisionRow[]>`
-      SELECT uuid, code, name, description, is_active, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
-      FROM public."m1_division"
-      WHERE uuid = ${uuid} AND deleted_at IS NULL
-      LIMIT 1
-    `;
+  async update(id: number, dto: UpdateMasterDataDivisionDto, actorId?: string | number) {
+    const existing = await this.prisma.masterDataDivision.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, code: true },
+    });
 
-    const existing = existingRows[0];
     if (!existing) {
       throw new NotFoundException('Master data division not found');
     }
 
     if (dto.code && dto.code !== existing.code) {
-      const duplicate = await this.prisma.$queryRaw<{ uuid: string; deleted_at: Date | null }[]>`
-        SELECT uuid, deleted_at
-        FROM public."m1_division"
-        WHERE code = ${dto.code} AND uuid <> ${uuid}
-        LIMIT 1
-      `;
-      if (duplicate[0]) {
+      const duplicate = await this.prisma.masterDataDivision.findFirst({
+        where: { code: dto.code, NOT: { id } },
+        select: { id: true, deletedAt: true },
+      });
+      if (duplicate) {
         throwDuplicate({
           fieldLabel: 'Division code',
           value: dto.code,
-          isSoftDeleted: Boolean(duplicate[0].deleted_at),
+          isSoftDeleted: Boolean(duplicate.deletedAt),
         });
       }
     }
 
-    const setClauses: Prisma.Sql[] = [];
-    if (typeof dto.code !== 'undefined') {
-      setClauses.push(Prisma.sql`code = ${dto.code}`);
-    }
-    if (typeof dto.name !== 'undefined') {
-      setClauses.push(Prisma.sql`name = ${dto.name}`);
-    }
-    if (typeof dto.description !== 'undefined') {
-      setClauses.push(Prisma.sql`description = ${dto.description ?? null}`);
-    }
-    if (typeof dto.isActive !== 'undefined') {
-      setClauses.push(Prisma.sql`is_active = ${dto.isActive}`);
-    }
+    const updated = await this.prisma.masterDataDivision.update({
+      where: { id },
+      data: {
+        code: dto.code,
+        name: dto.name,
+        description: dto.description,
+        isActive: dto.isActive,
+        updatedBy: this.toActor(actorId),
+      },
+    });
 
-    setClauses.push(Prisma.sql`updated_at = CURRENT_TIMESTAMP`);
-    setClauses.push(Prisma.sql`updated_by = ${actorId ?? null}`);
-
-    const updated = await this.prisma.$queryRaw<DivisionRow[]>(Prisma.sql`
-      UPDATE public."m1_division"
-      SET ${Prisma.join(setClauses, ', ')}
-      WHERE uuid = ${uuid}
-      RETURNING uuid, code, name, description, is_active, created_at, created_by, updated_at, updated_by, deleted_at, deleted_by
-    `);
-
-    return { success: true, data: updated[0] ? toDivision(updated[0]) : null };
+    return { success: true, data: updated };
   }
 
-  async remove(uuid: string, actorId?: string) {
-    const existing = await this.prisma.$queryRaw<{ uuid: string }[]>`
-      SELECT uuid
-      FROM public."m1_division"
-      WHERE uuid = ${uuid} AND deleted_at IS NULL
-      LIMIT 1
-    `;
+  async remove(id: number, actorId?: string | number) {
+    const existing = await this.prisma.masterDataDivision.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
 
-    if (existing.length === 0) {
+    if (!existing) {
       throw new NotFoundException('Master data division not found');
     }
 
-    await this.prisma.$executeRaw`
-      UPDATE public."m1_division"
-      SET deleted_at = CURRENT_TIMESTAMP,
-          deleted_by = ${actorId ?? null},
-          updated_at = CURRENT_TIMESTAMP,
-          updated_by = ${actorId ?? null}
-      WHERE uuid = ${uuid}
-    `;
+    await this.prisma.masterDataDivision.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        deletedBy: this.toActor(actorId),
+        updatedBy: this.toActor(actorId),
+      },
+    });
 
     return { success: true, message: 'Master data division deleted' };
+  }
+
+  private toActor(actorId?: string | number): number | null {
+    return toAuditUserId(actorId);
   }
 }
