@@ -16,7 +16,7 @@ export class InboundsService {
   async create(dto: CreateInboundDto, actorId?: string | number) {
     const supplierId = this.parseId(dto.supplierId, 'Supplier ID');
     await this.ensureSupplierExists(supplierId);
-    const effectiveWarehouseId = await this.resolveWarehouseForActor(actorId);
+    const effectiveWarehouseId = await this.resolveWarehouseForActor(actorId, dto.warehouseId);
     await this.ensureWarehouseExists(effectiveWarehouseId);
 
     const detailPayload = this.normalizeAndValidateDetails(dto.details);
@@ -214,7 +214,7 @@ export class InboundsService {
       await this.ensureSupplierExists(this.parseId(dto.supplierId, 'Supplier ID'));
     }
 
-    const effectiveWarehouseId = await this.resolveWarehouseForActor(actorId);
+    const effectiveWarehouseId = await this.resolveWarehouseForActor(actorId, dto.warehouseId);
     await this.ensureWarehouseExists(effectiveWarehouseId);
 
     const detailsProvided = Array.isArray(dto.details);
@@ -504,7 +504,7 @@ export class InboundsService {
     }
   }
 
-  private async resolveWarehouseForActor(actorId?: string | number) {
+  private async resolveWarehouseForActor(actorId?: string | number, requestedWarehouseId?: string) {
     if (!actorId) {
       throw new BadRequestException('User login tidak ditemukan');
     }
@@ -517,8 +517,30 @@ export class InboundsService {
       },
       select: {
         warehouseId: true,
+        roles: {
+          where: { deletedAt: null },
+          select: {
+            role: {
+              select: {
+                name: true,
+                deletedAt: true,
+              },
+            },
+          },
+        },
       },
     });
+    const isAdmin = (actor?.roles ?? []).some((item) => {
+      const roleName = String(item.role?.name ?? '')
+        .trim()
+        .toLowerCase();
+      return Boolean(roleName === 'admin' && !item.role?.deletedAt);
+    });
+
+    if (isAdmin && requestedWarehouseId?.trim()) {
+      return this.parseId(requestedWarehouseId, 'Warehouse ID');
+    }
+
     const mappedWarehouseId = actor?.warehouseId;
     if (mappedWarehouseId && mappedWarehouseId > 0) {
       return mappedWarehouseId;

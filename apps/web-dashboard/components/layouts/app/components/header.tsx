@@ -47,7 +47,7 @@ export function Header() {
         <div className="flex lg:hidden items-center gap-2.5">
           <Link href="/" className="shrink-0">
             <img
-              src={toAbsoluteUrl('/media/app/sentient-factory-logo.png')}
+              src={toAbsoluteUrl('/media/app/default-logo-custom.png')}
               className="h-[26px] w-auto max-w-[140px]"
               alt="Sentient Factory"
             />
