@@ -22,6 +22,12 @@ export class UsersService {
       where: { email },
       include: {
         roles: {
+          where: {
+            deletedAt: null,
+            role: {
+              deletedAt: null,
+            },
+          },
           include: {
             role: true,
           },
@@ -72,6 +78,35 @@ export class UsersService {
     };
   }
 
+  async getActiveRoleNamesByUserId(id: string | number): Promise<string[]> {
+    const userId = typeof id === 'number' ? id : Number(id);
+    if (!Number.isInteger(userId)) {
+      return [];
+    }
+
+    const rows = await this.prisma.userRole.findMany({
+      where: {
+        userId,
+        deletedAt: null,
+        role: {
+          deletedAt: null,
+        },
+      },
+      include: {
+        role: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: [{ assignedAt: 'asc' }, { id: 'asc' }],
+    });
+
+    return rows
+      .map((row) => row.role?.name?.trim())
+      .filter((value): value is string => Boolean(value));
+  }
+
   async create(data: Prisma.UserCreateInput): Promise<User> {
     return this.prisma.user.create({
       data,
@@ -104,12 +139,16 @@ export class UsersService {
     const passwordHash = await hashPassword(dto.password);
     const nextIsActive = dto.isActive ?? true;
     const normalizedWarehouseId = this.normalizeWarehouseId(dto.warehouseId);
+    const normalizedRoleIds = this.normalizeRoleIds(dto.roleIds, dto.roleId);
 
     if (nextIsActive && !normalizedWarehouseId) {
       throw new BadRequestException('Active user must have warehouse assigned');
     }
     if (normalizedWarehouseId) {
       await this.ensureWarehouseExists(normalizedWarehouseId);
+    }
+    if (normalizedRoleIds !== undefined) {
+      await this.ensureRolesExist(normalizedRoleIds);
     }
 
     let created;
@@ -121,6 +160,7 @@ export class UsersService {
           passwordHash,
           fullName: dto.fullName ?? null,
           isActive: dto.isActive ?? true,
+          warehouseId: normalizedWarehouseId ?? null,
           createdBy: toAuditUserId(actorId),
           updatedBy: toAuditUserId(actorId),
         },
@@ -142,8 +182,24 @@ export class UsersService {
       throw error;
     }
 
-    await this.setWarehouseId(created.id, normalizedWarehouseId ?? null);
-    const [serialized] = await this.serializeUsersWithWarehouse([created]);
+    if (normalizedRoleIds !== undefined) {
+      await this.syncRoles(created.id, normalizedRoleIds, actorId);
+    }
+    const refreshed = await this.prisma.user.findFirst({
+      where: { id: created.id, deletedAt: null },
+      include: {
+        roles: {
+          where: { deletedAt: null },
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+    if (!refreshed) {
+      throw new NotFoundException('User not found');
+    }
+    const [serialized] = await this.serializeUsersWithWarehouse([refreshed]);
 
     return {
       success: true,
@@ -265,9 +321,13 @@ export class UsersService {
 
     const passwordHash = dto.password ? await hashPassword(dto.password) : undefined;
     const normalizedWarehouseId = this.normalizeWarehouseId(dto.warehouseId);
+    const normalizedRoleIds = this.normalizeRoleIds(dto.roleIds, dto.roleId);
 
     if (normalizedWarehouseId) {
       await this.ensureWarehouseExists(normalizedWarehouseId);
+    }
+    if (normalizedRoleIds !== undefined) {
+      await this.ensureRolesExist(normalizedRoleIds);
     }
 
     const nextIsActive = dto.isActive ?? existing.isActive;
@@ -280,9 +340,8 @@ export class UsersService {
       throw new BadRequestException('Active user must have warehouse assigned');
     }
 
-    let updated;
     try {
-      updated = await this.prisma.user.update({
+      await this.prisma.user.update({
         where: { id },
         data: {
           email: dto.email,
@@ -314,8 +373,26 @@ export class UsersService {
     if (normalizedWarehouseId !== undefined) {
       await this.setWarehouseId(id, normalizedWarehouseId);
     }
+    if (normalizedRoleIds !== undefined) {
+      await this.syncRoles(id, normalizedRoleIds, actorId);
+    }
 
-    const [serialized] = await this.serializeUsersWithWarehouse([updated]);
+    const refreshed = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        roles: {
+          where: { deletedAt: null },
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+    if (!refreshed) {
+      throw new NotFoundException('User not found');
+    }
+
+    const [serialized] = await this.serializeUsersWithWarehouse([refreshed]);
     return {
       success: true,
       data: serialized,
@@ -368,6 +445,34 @@ export class UsersService {
     return parsed;
   }
 
+  private normalizeRoleIds(roleIds?: string[], roleId?: string): number[] | undefined {
+    if (Array.isArray(roleIds)) {
+      const parsed = roleIds.map((value) => {
+        const normalized = String(value ?? '').trim();
+        const roleIdNumber = Number(normalized);
+        if (!normalized.length || !Number.isInteger(roleIdNumber)) {
+          throw new BadRequestException('Role IDs are invalid');
+        }
+        return roleIdNumber;
+      });
+      return Array.from(new Set(parsed));
+    }
+
+    if (roleId === undefined) {
+      return undefined;
+    }
+
+    const normalized = roleId.trim();
+    if (!normalized.length) {
+      return [];
+    }
+    const parsed = Number(normalized);
+    if (!Number.isInteger(parsed)) {
+      throw new BadRequestException('Role ID is invalid');
+    }
+    return [parsed];
+  }
+
   private async ensureWarehouseExists(warehouseId: number): Promise<void> {
     const warehouse = await this.prisma.masterDataWarehouse.findFirst({
       where: {
@@ -379,6 +484,98 @@ export class UsersService {
     if (!warehouse) {
       throw new BadRequestException('Warehouse not found');
     }
+  }
+
+  private async ensureRolesExist(roleIds: number[]): Promise<void> {
+    if (roleIds.length === 0) {
+      return;
+    }
+    const roles = await this.prisma.role.findMany({
+      where: {
+        id: { in: roleIds },
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (roles.length !== roleIds.length) {
+      throw new BadRequestException('One or more roles are invalid');
+    }
+  }
+
+  private async syncRoles(
+    userId: number,
+    roleIds: number[],
+    actorId?: string | number,
+  ): Promise<void> {
+    const auditActor = toAuditUserId(actorId);
+    const now = new Date();
+    const roleIdSet = new Set(roleIds);
+
+    await this.prisma.$transaction(async (tx) => {
+      const existingRows = await tx.userRole.findMany({
+        where: { userId },
+        select: { id: true, roleId: true, deletedAt: true },
+      });
+      const existingByRoleId = new Map<number, { id: number; deletedAt: Date | null }>();
+      existingRows.forEach((row) => {
+        existingByRoleId.set(row.roleId, { id: row.id, deletedAt: row.deletedAt });
+      });
+
+      for (const nextRoleId of roleIds) {
+        const existing = existingByRoleId.get(nextRoleId);
+        if (!existing) {
+          await tx.userRole.create({
+            data: {
+              userId,
+              roleId: nextRoleId,
+              createdBy: auditActor,
+              updatedBy: auditActor,
+            },
+          });
+          continue;
+        }
+
+        if (existing.deletedAt) {
+          await tx.userRole.update({
+            where: { id: existing.id },
+            data: {
+              deletedAt: null,
+              deletedBy: null,
+              updatedBy: auditActor,
+            },
+          });
+        }
+      }
+
+      if (roleIds.length === 0) {
+        await tx.userRole.updateMany({
+          where: {
+            userId,
+            deletedAt: null,
+          },
+          data: {
+            deletedAt: now,
+            deletedBy: auditActor,
+            updatedBy: auditActor,
+          },
+        });
+      } else {
+        await tx.userRole.updateMany({
+          where: {
+            userId,
+            deletedAt: null,
+            roleId: {
+              notIn: [...roleIdSet],
+            },
+          },
+          data: {
+            deletedAt: now,
+            deletedBy: auditActor,
+            updatedBy: auditActor,
+          },
+        });
+      }
+    });
   }
 
   private async getCurrentWarehouseId(userId: string | number): Promise<number | null> {
@@ -398,7 +595,9 @@ export class UsersService {
     });
   }
 
-  private async getWarehouseMapByUserUuids(userIds: number[]): Promise<Record<string, WarehouseMeta>> {
+  private async getWarehouseMapByUserUuids(
+    userIds: number[],
+  ): Promise<Record<string, WarehouseMeta>> {
     if (userIds.length === 0) {
       return {};
     }
@@ -427,6 +626,7 @@ export class UsersService {
       User & {
         roles?: Array<{
           role: {
+            id: number;
             name: string;
           };
         }>;
@@ -441,6 +641,7 @@ export class UsersService {
     user: User & {
       roles?: Array<{
         role: {
+          id: number;
           name: string;
         };
       }>;
@@ -452,6 +653,8 @@ export class UsersService {
       ...safe,
       warehouseId: warehouseMeta?.warehouseId ?? null,
       warehouseName: warehouseMeta?.warehouseName ?? null,
+      roleIds: user.roles?.map((item) => item.role.id) ?? [],
+      roleId: user.roles?.[0]?.role?.id ?? null,
       roles: user.roles?.map((item) => item.role.name) ?? [],
       role: user.roles?.[0]?.role?.name ?? null,
     };

@@ -36,6 +36,11 @@ export class QueryOutboundDto {
   @IsString()
   customerId?: string;
 
+  @ApiPropertyOptional({ example: '1' })
+  @IsOptional()
+  @IsString()
+  warehouseId?: string;
+
   @ApiPropertyOptional({ example: '2026-02-01' })
   @IsOptional()
   @IsDateString()

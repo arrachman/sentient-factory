@@ -131,12 +131,25 @@ function fmtDate(value?: string | null) {
   }).format(date);
 }
 
-function fmtExcelDate(value?: string | null) {
+function toDateOrNull(value?: string | Date | null) {
   if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
+}
+
+function fmtExcelDate(value?: string | Date | null) {
+  const date = toDateOrNull(value);
+  if (!date) {
     return '';
   }
 
-  const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return '';
   }
@@ -145,6 +158,35 @@ function fmtExcelDate(value?: string | null) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = String(date.getFullYear());
   return `${day}/${month}/${year}`;
+}
+
+function addDaysFromDate(value?: string | null, days?: number) {
+  const date = toDateOrNull(value);
+  if (!date) {
+    return null;
+  }
+
+  const safeDays = Number.isFinite(days) ? Number(days) : 0;
+  const next = new Date(date);
+  next.setDate(next.getDate() + safeDays);
+  return next;
+}
+
+function normalizeDateOnly(value?: string | Date | null) {
+  const date = toDateOrNull(value);
+  if (!date) {
+    return null;
+  }
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function computeKpiStatus(actualDate?: string | Date | null, standardDate?: string | Date | null) {
+  const actual = normalizeDateOnly(actualDate);
+  const standard = normalizeDateOnly(standardDate);
+  if (!actual || !standard) {
+    return '';
+  }
+  return actual.getTime() <= standard.getTime() ? 'ONTIME' : 'LATE';
 }
 
 function isDecimalLike(value: unknown): value is DecimalLike {
@@ -205,22 +247,6 @@ function normalizeNumber(value: unknown): number {
 
 function fmtNumber(value?: unknown) {
   return normalizeNumber(value).toLocaleString('id-ID');
-}
-
-function mapKpi(value?: string | null) {
-  if (!value) {
-    return '-';
-  }
-
-  if (value.toUpperCase() === 'ONTIME') {
-    return 'ON TIME';
-  }
-
-  if (value.toUpperCase() === 'LATE') {
-    return 'LATE';
-  }
-
-  return value;
 }
 
 function toEntityId(value: unknown) {
@@ -329,9 +355,7 @@ export default function ReportMonitoringDoPage() {
 
       const profileData = profilePayload?.data ?? {};
       const roleNames = [
-        profileData?.role,
         ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
-        profileData?.user?.role,
         ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
       ]
         .map((value) => String(value ?? '').trim().toLowerCase())
@@ -513,29 +537,40 @@ export default function ReportMonitoringDoPage() {
         'TOTAL KG',
       ];
 
-      const dataRows = rows.map((row, index) => [
-        index + 1,
-        row.doNumber || '',
-        fmtExcelDate(row.createdAt),
-        row.bu || '',
-        fmtExcelDate(row.doReceivedDate),
-        row.customer?.name || '',
-        row.destinationCity?.name || '',
-        Number(row.stdLeadTimeDays ?? 0),
-        fmtExcelDate(row.shippingDate),
-        fmtExcelDate(row.standardReceivedDate),
-        fmtExcelDate(row.actualReceivedDate),
-        row.receivedBy || '',
-        fmtExcelDate(row.doScanReturnDate),
-        '',
-        mapKpi(row.kpiDeliveryStatus),
-        fmtExcelDate(row.doScanReturnDate),
-        Number(row.stdReturnDoDays ?? 0),
-        fmtExcelDate(row.stdDoReturnDate),
-        mapKpi(row.kpiDoReturnStatus),
-        normalizeNumber(row.totalItemTypes ?? row.totalQtyPcs),
-        normalizeNumber(row.totalKg),
-      ]);
+      const dataRows = rows.map((row, index) => {
+        const stdLeadTimeDays = Number(row.stdLeadTimeDays ?? 0);
+        const stdReturnDoDays = Number(row.stdReturnDoDays ?? 0);
+
+        const standardReceivedDate = addDaysFromDate(row.shippingDate, stdLeadTimeDays);
+        const stdDoReturnDate = addDaysFromDate(row.shippingDate, stdReturnDoDays);
+
+        const kpiDeliveryStatus = computeKpiStatus(row.actualReceivedDate, standardReceivedDate);
+        const kpiDoReturnStatus = computeKpiStatus(row.doScanReturnDate, stdDoReturnDate);
+
+        return [
+          index + 1,
+          row.doNumber || '',
+          fmtExcelDate(row.createdAt),
+          row.bu || '',
+          fmtExcelDate(row.doReceivedDate),
+          row.customer?.name || '',
+          row.destinationCity?.name || '',
+          stdLeadTimeDays,
+          fmtExcelDate(row.shippingDate),
+          fmtExcelDate(standardReceivedDate),
+          fmtExcelDate(row.actualReceivedDate),
+          row.receivedBy || '',
+          fmtExcelDate(row.doScanReturnDate),
+          '',
+          kpiDeliveryStatus,
+          fmtExcelDate(row.doScanReturnDate),
+          stdReturnDoDays,
+          fmtExcelDate(stdDoReturnDate),
+          kpiDoReturnStatus,
+          normalizeNumber(row.totalItemTypes ?? row.totalQtyPcs),
+          normalizeNumber(row.totalKg),
+        ];
+      });
 
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Monitoring DO');

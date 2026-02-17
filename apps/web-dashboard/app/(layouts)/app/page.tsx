@@ -34,6 +34,7 @@ type InboundRow = {
   _count?: {
     details?: number;
   };
+  totalBatches?: number;
 };
 
 type OutboundRow = {
@@ -167,16 +168,6 @@ function resolvePeriodRange(period: PeriodFilter) {
     from: toDateOnly(from),
     to: toDateOnly(to),
   };
-}
-
-function inboundBadgeVariant(status?: InboundRow['status']) {
-  if (status === 'POSTED') {
-    return 'success';
-  }
-  if (status === 'CANCELLED') {
-    return 'destructive';
-  }
-  return 'secondary';
 }
 
 function outboundBadgeVariant(status?: OutboundRow['status']) {
@@ -375,7 +366,7 @@ export default function Page() {
                   <TableHead>Transaction</TableHead>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Supplier</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Qty Batch</TableHead>
                   <TableHead className="text-right">Item</TableHead>
                 </TableRow>
               </TableHeader>
@@ -394,8 +385,8 @@ export default function Page() {
                       <TableCell className="font-medium">{row.transactionNo || '-'}</TableCell>
                       <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                       <TableCell>{row.supplier?.name || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant={inboundBadgeVariant(row.status)}>{row.status || '-'}</Badge>
+                      <TableCell className="text-right">
+                        {Number(row.totalBatches ?? 0).toLocaleString('id-ID')}
                       </TableCell>
                       <TableCell className="text-right">{row._count?.details ?? 0}</TableCell>
                     </TableRow>

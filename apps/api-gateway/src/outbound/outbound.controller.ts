@@ -38,22 +38,27 @@ export class OutboundController {
   @Get()
   @ApiOperation({ summary: 'Get outbounds' })
   @ApiResponse({ status: 200, description: 'List of outbounds' })
-  findAll(@Query() query: QueryOutboundDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: QueryOutboundDto, @Request() req: any) {
+    return this.service.findAll(query, req.user?.id);
   }
 
   @Get('batch-options')
   @ApiOperation({ summary: 'Get batch options by item for outbound form' })
   @ApiResponse({ status: 200, description: 'Batch options' })
-  getBatchOptions(@Query('itemId') itemId: string, @Query('excludeDoId') excludeDoId?: string) {
-    return this.service.getBatchOptions(itemId, excludeDoId);
+  getBatchOptions(
+    @Query('itemId') itemId: string,
+    @Query('excludeDoId') excludeDoId?: string,
+    @Query('warehouseId') warehouseId?: string,
+    @Request() req?: any,
+  ) {
+    return this.service.getBatchOptions(itemId, excludeDoId, warehouseId, req?.user?.id);
   }
 
   @Get('report-monitoring-do')
   @ApiOperation({ summary: 'Get monitoring DO and delivery report data' })
   @ApiResponse({ status: 200, description: 'Monitoring report data' })
-  getMonitoringReport(@Query() query: QueryMonitoringOutboundDto) {
-    return this.service.findMonitoringReport(query);
+  getMonitoringReport(@Query() query: QueryMonitoringOutboundDto, @Request() req: any) {
+    return this.service.findMonitoringReport(query, req.user?.id);
   }
 
   @Get('report-stock-batch')
@@ -73,14 +78,18 @@ export class OutboundController {
   @Get(':id')
   @ApiOperation({ summary: 'Get one outbound' })
   @ApiResponse({ status: 200, description: 'outbound detail' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.findOne(id, req.user?.id);
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update outbound' })
   @ApiResponse({ status: 200, description: 'outbound updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOutboundDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateOutboundDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

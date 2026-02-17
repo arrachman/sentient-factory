@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'admin.ops@example.com' })
@@ -34,4 +43,18 @@ export class CreateUserDto {
   @IsString()
   @MaxLength(255)
   warehouseId?: string;
+
+  @ApiPropertyOptional({ example: '1' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  roleId?: string;
+
+  @ApiPropertyOptional({ example: ['1', '2'] })
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  @MaxLength(50, { each: true })
+  roleIds?: string[];
 }

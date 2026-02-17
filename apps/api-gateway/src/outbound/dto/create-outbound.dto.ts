@@ -37,6 +37,11 @@ export class CreateOutboundDto {
   @MaxLength(100)
   customerId!: string;
 
+  @ApiProperty({ example: '1' })
+  @IsString()
+  @MaxLength(100)
+  warehouseId!: string;
+
   @ApiPropertyOptional({ example: 'cm123city456def' })
   @IsOptional()
   @IsString()

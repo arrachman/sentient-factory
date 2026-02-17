@@ -217,9 +217,7 @@ export default function ReportStockMutationPage() {
 
       const profileData = profilePayload?.data ?? {};
       const roleNames = [
-        profileData?.role,
         ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
-        profileData?.user?.role,
         ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
       ]
         .map((value) => String(value ?? '').trim().toLowerCase())

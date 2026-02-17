@@ -1,24 +1,34 @@
-// Task B0002: Database Setup & Migration
-// This script seeds the database with initial roles, permissions, and a default admin user.
-
 import { PrismaClient } from '@prisma/client';
 import { pbkdf2Sync, randomBytes } from 'crypto';
 
 const prisma = new PrismaClient();
+
+type MenuSeed = {
+  key: string;
+  title: string;
+  path: string | null;
+  icon: string | null;
+  type: 'GROUP' | 'ITEM';
+  parentKey: string | null;
+  sortOrder: number;
+  isVisible?: boolean;
+  isActive?: boolean;
+  permissionName?: string | null;
+};
 
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16);
   const iterations = 210000;
   const digest = 'sha512';
   const derived = pbkdf2Sync(password, salt, iterations, 64, digest);
-
   return `pbkdf2$v1$${digest}$${iterations}$${salt.toString('base64')}$${derived.toString('base64')}`;
 }
 
 async function main() {
   console.log('Seeding database...');
 
-  // 1. Create permissions
+  const passwordHash = await hashPassword('Password123!');
+
   const permissions = [
     { name: 'user:create', module: 'user', action: 'create', description: 'Create users' },
     { name: 'user:read', module: 'user', action: 'read', description: 'Read users' },
@@ -34,1022 +44,832 @@ async function main() {
     { name: 'audit:view', module: 'audit', action: 'view', description: 'View audit logs' },
   ];
 
-  for (const permData of permissions) {
+  for (const perm of permissions) {
     await prisma.permission.upsert({
-      where: { name: permData.name },
-      update: {},
-      create: permData,
+      where: { name: perm.name },
+      update: {
+        module: perm.module,
+        action: perm.action,
+        description: perm.description,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: perm,
     });
   }
 
-  // 2. Create Roles
   const adminRole = await prisma.role.upsert({
     where: { name: 'admin' },
-    update: {},
-    create: { name: 'admin', description: 'System Administrator', isSystem: true },
+    update: {
+      description: 'System Administrator',
+      isSystem: true,
+      deletedAt: null,
+      deletedBy: null,
+    },
+    create: {
+      name: 'admin',
+      description: 'System Administrator',
+      isSystem: true,
+    },
   });
 
   const managerRole = await prisma.role.upsert({
     where: { name: 'manager' },
-    update: {},
-    create: { name: 'manager', description: 'Department Manager', isSystem: false },
+    update: {
+      description: 'Department Manager',
+      isSystem: false,
+      deletedAt: null,
+      deletedBy: null,
+    },
+    create: {
+      name: 'manager',
+      description: 'Department Manager',
+      isSystem: false,
+    },
   });
 
   const userRole = await prisma.role.upsert({
     where: { name: 'user' },
-    update: {},
-    create: { name: 'user', description: 'Regular User', isSystem: true },
+    update: {
+      description: 'Regular User',
+      isSystem: true,
+      deletedAt: null,
+      deletedBy: null,
+    },
+    create: {
+      name: 'user',
+      description: 'Regular User',
+      isSystem: true,
+    },
   });
 
-  // 3. Assign Permissions (Admin gets all)
-  const allPermissions = await prisma.permission.findMany();
-  for (const permission of allPermissions) {
+  const allPermissions = await prisma.permission.findMany({
+    where: { deletedAt: null },
+    select: { id: true, name: true },
+  });
+  const managerPermissionNames = new Set(['user:read', 'user:update', 'department:manage']);
+
+  for (const perm of allPermissions) {
     await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: adminRole.uuid, permissionId: permission.uuid } },
-      update: {},
-      create: { roleId: adminRole.uuid, permissionId: permission.uuid },
+      where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
+      update: { deletedAt: null, deletedBy: null },
+      create: { roleId: adminRole.id, permissionId: perm.id },
+    });
+    if (managerPermissionNames.has(perm.name)) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId: managerRole.id, permissionId: perm.id } },
+        update: { deletedAt: null, deletedBy: null },
+        create: { roleId: managerRole.id, permissionId: perm.id },
+      });
+    }
+  }
+
+  const provinceSeeds = [
+    { isoCode: 'ID-SU', name: 'Sumatera Utara' },
+    { isoCode: 'ID-KS', name: 'Kalimantan Selatan' },
+    { isoCode: 'ID-SS', name: 'Sumatera Selatan' },
+    { isoCode: 'ID-SN', name: 'Sulawesi Selatan' },
+  ];
+
+  const provinceByIso = new Map<string, number>();
+  for (const seed of provinceSeeds) {
+    const province = await prisma.masterDataProvince.upsert({
+      where: { isoCode: seed.isoCode },
+      update: {
+        name: seed.name,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        isoCode: seed.isoCode,
+        name: seed.name,
+      },
+      select: { id: true },
+    });
+    provinceByIso.set(seed.isoCode, province.id);
+  }
+
+  const citySeeds = [
+    { provinceIso: 'ID-SU', name: 'Medan', postalCode: '20111' },
+    { provinceIso: 'ID-KS', name: 'Banjarmasin', postalCode: '70111' },
+    { provinceIso: 'ID-SS', name: 'Palembang', postalCode: '30111' },
+    { provinceIso: 'ID-SN', name: 'Makassar', postalCode: '90111' },
+  ];
+
+  const cityByName = new Map<string, number>();
+  for (const seed of citySeeds) {
+    const provinceId = provinceByIso.get(seed.provinceIso);
+    if (!provinceId) {
+      throw new Error(`Province not found for ${seed.name}`);
+    }
+    const existing = await prisma.masterDataCity.findFirst({
+      where: { provinceId, name: seed.name },
+      select: { id: true },
+    });
+
+    const city = existing
+      ? await prisma.masterDataCity.update({
+          where: { id: existing.id },
+          data: {
+            postalCode: seed.postalCode,
+            deletedAt: null,
+            deletedBy: null,
+          },
+          select: { id: true },
+        })
+      : await prisma.masterDataCity.create({
+          data: {
+            provinceId,
+            name: seed.name,
+            postalCode: seed.postalCode,
+          },
+          select: { id: true },
+        });
+
+    cityByName.set(seed.name, city.id);
+  }
+
+  const warehouseSeeds = [
+    { name: 'Medan', cityName: 'Medan', locationName: 'Gudang Medan' },
+    { name: 'Banjarmasin', cityName: 'Banjarmasin', locationName: 'Gudang Banjarmasin' },
+    { name: 'Palembang', cityName: 'Palembang', locationName: 'Gudang Palembang' },
+    { name: 'Makasar', cityName: 'Makassar', locationName: 'Gudang Makasar' },
+  ];
+
+  const warehouseByName = new Map<string, number>();
+  for (const seed of warehouseSeeds) {
+    const cityId = cityByName.get(seed.cityName);
+    if (!cityId) {
+      throw new Error(`City not found for warehouse ${seed.name}`);
+    }
+
+    const existing = await prisma.masterDataWarehouse.findFirst({
+      where: { name: seed.name, cityId },
+      select: { id: true },
+    });
+
+    const warehouse = existing
+      ? await prisma.masterDataWarehouse.update({
+          where: { id: existing.id },
+          data: {
+            locationName: seed.locationName,
+            deletedAt: null,
+            deletedBy: null,
+          },
+          select: { id: true },
+        })
+      : await prisma.masterDataWarehouse.create({
+          data: {
+            name: seed.name,
+            cityId,
+            locationName: seed.locationName,
+          },
+          select: { id: true },
+        });
+
+    warehouseByName.set(seed.name, warehouse.id);
+  }
+
+  const uomSeeds = [
+    { code: 'PCS', name: 'Pieces', type: 'unit' },
+    { code: 'KG', name: 'Kilogram', type: 'weight' },
+  ];
+  for (const seed of uomSeeds) {
+    await prisma.masterDataUom.upsert({
+      where: { code: seed.code },
+      update: {
+        name: seed.name,
+        type: seed.type,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: seed,
     });
   }
 
-  // Manager gets read/update user & dept manage
-  const managerPermissions = allPermissions.filter((p) =>
-    ['user:read', 'user:update', 'department:manage'].includes(p.name),
-  );
-  for (const permission of managerPermissions) {
-    await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: managerRole.uuid, permissionId: permission.uuid } },
-      update: {},
-      create: { roleId: managerRole.uuid, permissionId: permission.uuid },
+  const contactSeeds = [
+    {
+      code: 'SUP-001',
+      name: 'PT Supplier Utama',
+      type: 'SUPPLIER',
+      city: 'Medan',
+      province: 'Sumatera Utara',
+      contactFirstName: 'Budi',
+      contactEmail: 'supplier.utama@example.com',
+      contactPhone: '081200000001',
+      address: 'Jl. Industri No. 1, Medan',
+      tax: '01.234.567.8-901.000',
+    },
+    {
+      code: 'CUS-001',
+      name: 'PT Pelanggan Retail',
+      type: 'CUSTOMER',
+      city: 'Palembang',
+      province: 'Sumatera Selatan',
+      contactFirstName: 'Sari',
+      contactEmail: 'pelanggan.retail@example.com',
+      contactPhone: '081200000002',
+      address: 'Jl. Niaga No. 99, Palembang',
+      tax: '02.345.678.9-012.000',
+    },
+  ];
+
+  for (const seed of contactSeeds) {
+    await prisma.masterDataContact.upsert({
+      where: { code: seed.code },
+      update: {
+        name: seed.name,
+        type: seed.type,
+        city: seed.city,
+        province: seed.province,
+        contactFirstName: seed.contactFirstName,
+        contactEmail: seed.contactEmail,
+        contactPhone: seed.contactPhone,
+        address: seed.address,
+        tax: seed.tax,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        code: seed.code,
+        name: seed.name,
+        type: seed.type,
+        city: seed.city,
+        province: seed.province,
+        contactFirstName: seed.contactFirstName,
+        contactEmail: seed.contactEmail,
+        contactPhone: seed.contactPhone,
+        address: seed.address,
+        tax: seed.tax,
+      },
     });
   }
 
-  // 4. Create Departments
+  const pcsUom = await prisma.masterDataUom.findUnique({
+    where: { code: 'PCS' },
+    select: { id: true },
+  });
+  const kgUom = await prisma.masterDataUom.findUnique({
+    where: { code: 'KG' },
+    select: { id: true },
+  });
+  if (!pcsUom || !kgUom) {
+    throw new Error('Required UOM seeds (PCS/KG) not found');
+  }
+
+  const itemSeeds = [
+    {
+      code: 'ITEM-001',
+      name: 'Gula Pasir Premium 1KG',
+      category: 'RAW_MATERIAL',
+      itemType: 'RAW',
+      uomId: kgUom.id,
+    },
+    {
+      code: 'ITEM-002',
+      name: 'Kopi Bubuk 250GR',
+      category: 'FINISHED_GOOD',
+      itemType: 'FG',
+      uomId: pcsUom.id,
+    },
+  ];
+
+  for (const seed of itemSeeds) {
+    await prisma.masterDataItem.upsert({
+      where: { code: seed.code },
+      update: {
+        name: seed.name,
+        category: seed.category,
+        itemType: seed.itemType,
+        uomId: seed.uomId,
+        isActive: true,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        code: seed.code,
+        name: seed.name,
+        category: seed.category,
+        itemType: seed.itemType,
+        uomId: seed.uomId,
+        isActive: true,
+      },
+    });
+  }
+
+  const divisionSeeds = [
+    { code: 'FNB', name: 'Food & Beverage', description: 'Retail food and beverage division' },
+    { code: 'INSTI', name: 'Institution', description: 'Institution and B2B division' },
+  ];
+  for (const seed of divisionSeeds) {
+    await prisma.masterDataDivision.upsert({
+      where: { code: seed.code },
+      update: {
+        name: seed.name,
+        description: seed.description,
+        isActive: true,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        ...seed,
+        isActive: true,
+      },
+    });
+  }
+
   const rootDepartment = await prisma.department.upsert({
     where: { code: 'root' },
-    update: {},
-    create: { name: 'Headquarters', code: 'root', description: 'Global HQ' },
+    update: {
+      name: 'Headquarters',
+      description: 'Global HQ',
+      parentId: null,
+      deletedAt: null,
+      deletedBy: null,
+    },
+    create: {
+      code: 'root',
+      name: 'Headquarters',
+      description: 'Global HQ',
+    },
+    select: { id: true },
   });
 
-  const engineeringDept = await prisma.department.upsert({
+  const engineeringDepartment = await prisma.department.upsert({
     where: { code: 'eng' },
-    update: {},
-    create: {
+    update: {
       name: 'Engineering',
+      description: 'Engineering and Technology',
+      parentId: rootDepartment.id,
+      deletedAt: null,
+      deletedBy: null,
+    },
+    create: {
       code: 'eng',
-      description: 'Engineering & Tech',
-      parentId: rootDepartment.uuid,
+      name: 'Engineering',
+      description: 'Engineering and Technology',
+      parentId: rootDepartment.id,
     },
+    select: { id: true },
   });
 
-  const hrDept = await prisma.department.upsert({
+  const hrDepartment = await prisma.department.upsert({
     where: { code: 'hr' },
-    update: {},
-    create: {
+    update: {
       name: 'Human Resources',
-      code: 'hr',
-      description: 'HR & People',
-      parentId: rootDepartment.uuid,
+      description: 'Human Resources',
+      parentId: rootDepartment.id,
+      deletedAt: null,
+      deletedBy: null,
     },
+    create: {
+      code: 'hr',
+      name: 'Human Resources',
+      description: 'Human Resources',
+      parentId: rootDepartment.id,
+    },
+    select: { id: true },
   });
 
-  // 5. Create Users
-  const passwordHash = await hashPassword('Password123!');
-
-  // Super Admin
-  const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@example.com' },
-    update: { passwordHash },
-    create: {
+  const users = [
+    {
       email: 'admin@example.com',
       username: 'admin',
-      passwordHash,
       fullName: 'System Administrator',
-      isActive: true,
+      role: 'admin',
+      departmentId: rootDepartment.id,
+      warehouseName: 'Medan',
     },
-  });
-
-  // Manager Engineering
-  const managerUser = await prisma.user.upsert({
-    where: { email: 'manager.eng@example.com' },
-    update: { passwordHash },
-    create: {
+    {
+      email: 'administrator@example.com',
+      username: 'administrator',
+      fullName: 'Administrator',
+      role: 'admin',
+      departmentId: rootDepartment.id,
+      warehouseName: 'Medan',
+    },
+    {
       email: 'manager.eng@example.com',
       username: 'manager_eng',
-      passwordHash,
       fullName: 'Engineering Manager',
-      isActive: true,
+      role: 'manager',
+      departmentId: engineeringDepartment.id,
+      warehouseName: 'Medan',
     },
-  });
-
-  // Staff Engineering
-  const staffEng = await prisma.user.upsert({
-    where: { email: 'staff.eng@example.com' },
-    update: { passwordHash },
-    create: {
+    {
       email: 'staff.eng@example.com',
       username: 'staff_eng',
-      passwordHash,
       fullName: 'Engineering Staff',
-      isActive: true,
+      role: 'user',
+      departmentId: engineeringDepartment.id,
+      warehouseName: 'Medan',
     },
-  });
-
-  // Staff HR
-  const staffHr = await prisma.user.upsert({
-    where: { email: 'staff.hr@example.com' },
-    update: { passwordHash },
-    create: {
+    {
       email: 'staff.hr@example.com',
       username: 'staff_hr',
-      passwordHash,
       fullName: 'HR Staff',
-      isActive: true,
+      role: 'user',
+      departmentId: hrDepartment.id,
+      warehouseName: 'Medan',
     },
-  });
+  ] as const;
 
-  // 6. Assign Roles to Users
-  const assignRole = async (userUuid: string, roleUuid: string) => {
-    await prisma.userRole.upsert({
-      where: { userId_roleId: { userId: userUuid, roleId: roleUuid } },
-      update: {},
-      create: { userId: userUuid, roleId: roleUuid },
+  const roleByName = new Map([
+    ['admin', adminRole.id],
+    ['manager', managerRole.id],
+    ['user', userRole.id],
+  ]);
+
+  for (const userSeed of users) {
+    const warehouseId = warehouseByName.get(userSeed.warehouseName);
+    if (!warehouseId) {
+      throw new Error(`Warehouse not found for user ${userSeed.email}`);
+    }
+
+    const user = await prisma.user.upsert({
+      where: { email: userSeed.email },
+      update: {
+        username: userSeed.username,
+        fullName: userSeed.fullName,
+        passwordHash,
+        isActive: true,
+        warehouseId,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        email: userSeed.email,
+        username: userSeed.username,
+        fullName: userSeed.fullName,
+        passwordHash,
+        isActive: true,
+        warehouseId,
+      },
+      select: { id: true, email: true },
     });
-  };
 
-  await assignRole(adminUser.uuid, adminRole.uuid);
-  await assignRole(managerUser.uuid, managerRole.uuid);
-  await assignRole(staffEng.uuid, userRole.uuid);
-  await assignRole(staffHr.uuid, userRole.uuid);
+    const roleId = roleByName.get(userSeed.role);
+    if (!roleId) {
+      throw new Error(`Role not found for user ${userSeed.email}`);
+    }
 
-  // 7. Create Sidebar Menu
-  const dashboardMenu = await prisma.menu.upsert({
-    where: { key: 'dashboard' },
-    update: {
-      title: 'Dashboard',
-      path: '/app',
-      icon: 'LayoutGrid',
-      type: 'ITEM',
-      sortOrder: 1,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId } },
+      update: { deletedAt: null, deletedBy: null },
+      create: { userId: user.id, roleId },
+    });
+
+    await prisma.userDepartment.upsert({
+      where: { userId_departmentId: { userId: user.id, departmentId: userSeed.departmentId } },
+      update: { deletedAt: null, deletedBy: null },
+      create: { userId: user.id, departmentId: userSeed.departmentId },
+    });
+  }
+
+  const menuSeeds: MenuSeed[] = [
+    {
       key: 'dashboard',
       title: 'Dashboard',
       path: '/app',
       icon: 'LayoutGrid',
       type: 'ITEM',
+      parentKey: null,
       sortOrder: 1,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorMenu = await prisma.menu.upsert({
-    where: { key: 'administrator' },
-    update: {
-      title: 'Administrator',
-      path: null,
-      icon: 'Shield',
-      type: 'GROUP',
-      parentId: null,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator',
       title: 'Administrator',
       path: null,
       icon: 'Shield',
       type: 'GROUP',
-      parentId: null,
+      parentKey: null,
       sortOrder: 2,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorUsersMenu = await prisma.menu.upsert({
-    where: { key: 'administrator-users' },
-    update: {
-      title: 'Users',
-      path: '/app/administrator/users',
-      icon: 'Users',
-      type: 'ITEM',
-      parentId: administratorMenu.uuid,
-      sortOrder: 1,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator-users',
       title: 'Users',
       path: '/app/administrator/users',
       icon: 'Users',
       type: 'ITEM',
-      parentId: administratorMenu.uuid,
+      parentKey: 'administrator',
       sortOrder: 1,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorDepartmentMenu = await prisma.menu.upsert({
-    where: { key: 'administrator-department' },
-    update: {
-      title: 'Department',
-      path: '/app/administrator/department',
-      icon: 'Building',
-      type: 'ITEM',
-      parentId: administratorMenu.uuid,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator-department',
       title: 'Department',
       path: '/app/administrator/department',
       icon: 'Building',
       type: 'ITEM',
-      parentId: administratorMenu.uuid,
+      parentKey: 'administrator',
       sortOrder: 2,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorPermissionMenu = await prisma.menu.upsert({
-    where: { key: 'administrator-permission' },
-    update: {
-      title: 'Permission',
-      path: '/app/administrator/permission',
-      icon: 'Key',
-      type: 'ITEM',
-      parentId: administratorMenu.uuid,
-      sortOrder: 3,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator-permission',
       title: 'Permission',
       path: '/app/administrator/permission',
       icon: 'Key',
       type: 'ITEM',
-      parentId: administratorMenu.uuid,
+      parentKey: 'administrator',
       sortOrder: 3,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorSubmenuMenu = await prisma.menu.upsert({
-    where: { key: 'administrator-menu' },
-    update: {
-      title: 'Menu',
-      path: '/app/administrator/menu',
-      icon: 'LayoutGrid',
-      type: 'ITEM',
-      parentId: administratorMenu.uuid,
-      sortOrder: 4,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator-menu',
       title: 'Menu',
       path: '/app/administrator/menu',
       icon: 'LayoutGrid',
       type: 'ITEM',
-      parentId: administratorMenu.uuid,
+      parentKey: 'administrator',
       sortOrder: 4,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorSessionMenu = await prisma.menu.upsert({
-    where: { key: 'administrator-session' },
-    update: {
-      title: 'Session',
-      path: '/app/administrator/session',
-      icon: 'Clock',
-      type: 'ITEM',
-      parentId: administratorMenu.uuid,
-      sortOrder: 5,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator-session',
       title: 'Session',
       path: '/app/administrator/session',
       icon: 'Clock',
       type: 'ITEM',
-      parentId: administratorMenu.uuid,
+      parentKey: 'administrator',
       sortOrder: 5,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const administratorAuditlogMenu = await prisma.menu.upsert({
-    where: { key: 'administrator-auditlog' },
-    update: {
-      title: 'Auditlog',
-      path: '/app/administrator/auditlog',
-      icon: 'FileText',
-      type: 'ITEM',
-      parentId: administratorMenu.uuid,
-      sortOrder: 6,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'administrator-auditlog',
       title: 'Auditlog',
       path: '/app/administrator/auditlog',
       icon: 'FileText',
       type: 'ITEM',
-      parentId: administratorMenu.uuid,
+      parentKey: 'administrator',
       sortOrder: 6,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataMenu = await prisma.menu.upsert({
-    where: { key: 'master-data' },
-    update: {
-      title: 'Master Data',
-      path: null,
-      icon: 'Database',
-      type: 'GROUP',
-      parentId: null,
-      sortOrder: 3,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data',
       title: 'Master Data',
       path: null,
       icon: 'Database',
       type: 'GROUP',
-      parentId: null,
+      parentKey: null,
       sortOrder: 3,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataContactMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-contact' },
-    update: {
-      title: 'Contact',
-      path: '/app/master/contact',
-      icon: 'ContactRound',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 1,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-contact',
       title: 'Contact',
       path: '/app/master/contact',
       icon: 'ContactRound',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 1,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataDivisionMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-division' },
-    update: {
-      title: 'Division',
-      path: '/app/master/division',
-      icon: 'Building2',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-division',
       title: 'Division',
       path: '/app/master/division',
       icon: 'Building2',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 2,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataItemMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-item' },
-    update: {
-      title: 'Item',
-      path: '/app/master/item',
-      icon: 'Package',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 4,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-item',
       title: 'Item',
       path: '/app/master/item',
       icon: 'Package',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 4,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataProvinceMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-province' },
-    update: {
-      title: 'Province',
-      path: '/app/master/province',
-      icon: 'Map',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 5,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-province',
       title: 'Province',
       path: '/app/master/province',
       icon: 'Map',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 5,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataCityMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-city' },
-    update: {
-      title: 'City',
-      path: '/app/master/city',
-      icon: 'MapPin',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 6,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-city',
       title: 'City',
       path: '/app/master/city',
       icon: 'MapPin',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 6,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataCitySlaMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-city-sla' },
-    update: {
-      title: 'City SLA',
-      path: '/app/master/city-sla',
-      icon: 'Clock',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 7,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-city-sla',
       title: 'City SLA',
       path: '/app/master/city-sla',
       icon: 'Clock',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 7,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataUomMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-uom' },
-    update: {
-      title: 'UOM',
-      path: '/app/master/uom',
-      icon: 'Ruler',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 8,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-uom',
       title: 'UOM',
       path: '/app/master/uom',
       icon: 'Ruler',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 8,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const masterDataWarehouseMenu = await prisma.menu.upsert({
-    where: { key: 'master-data-warehouse' },
-    update: {
-      title: 'Warehouse',
-      path: '/app/master/warehouse',
-      icon: 'Warehouse',
-      type: 'ITEM',
-      parentId: masterDataMenu.uuid,
-      sortOrder: 9,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'master-data-warehouse',
       title: 'Warehouse',
       path: '/app/master/warehouse',
       icon: 'Warehouse',
       type: 'ITEM',
-      parentId: masterDataMenu.uuid,
+      parentKey: 'master-data',
       sortOrder: 9,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  await prisma.menu.updateMany({
-    where: {
-      key: { in: ['master-data-customer', 'master-data-supplier', 'master-data-company'] },
-    },
-    data: {
-      isVisible: false,
-      isActive: false,
-      updatedBy: 'seed',
-    },
-  });
-
-  const logisticMenu = await prisma.menu.upsert({
-    where: { key: 'logistic' },
-    update: {
-      title: 'Logistic',
-      path: null,
-      icon: 'Truck',
-      type: 'GROUP',
-      parentId: null,
-      sortOrder: 4,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'logistic',
       title: 'Logistic',
       path: null,
       icon: 'Truck',
       type: 'GROUP',
-      parentId: null,
+      parentKey: null,
       sortOrder: 4,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const logisticOutboundMenu = await prisma.menu.upsert({
-    where: { key: 'logistic-outbound' },
-    update: {
-      title: 'Outbound',
-      path: '/app/logistic/outbound',
-      icon: 'ArrowRightLeft',
-      type: 'ITEM',
-      parentId: logisticMenu.uuid,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
-      key: 'logistic-outbound',
-      title: 'Outbound',
-      path: '/app/logistic/outbound',
-      icon: 'ArrowRightLeft',
-      type: 'ITEM',
-      parentId: logisticMenu.uuid,
-      sortOrder: 2,
-      isVisible: true,
-      isActive: true,
-    },
-  });
-
-  const logisticInboundMenu = await prisma.menu.upsert({
-    where: { key: 'logistic-inbound' },
-    update: {
-      title: 'Inbound',
-      path: '/app/logistic/inbound',
-      icon: 'ArrowDownToLine',
-      type: 'ITEM',
-      parentId: logisticMenu.uuid,
-      sortOrder: 1,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'logistic-inbound',
       title: 'Inbound',
       path: '/app/logistic/inbound',
       icon: 'ArrowDownToLine',
       type: 'ITEM',
-      parentId: logisticMenu.uuid,
+      parentKey: 'logistic',
       sortOrder: 1,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  await prisma.menu.updateMany({
-    where: { key: 'logistic-transaction' },
-    data: {
-      isVisible: false,
-      isActive: false,
-      updatedBy: 'seed',
-    },
-  });
-
-  const logisticReportMonitoringDoMenu = await prisma.menu.upsert({
-    where: { key: 'logistic-report-monitoring-do' },
-    update: {
-      title: 'Report Monitoring DO',
-      path: '/app/logistic/report-monitoring-do',
-      icon: 'ClipboardList',
+    {
+      key: 'logistic-outbound',
+      title: 'Outbound',
+      path: '/app/logistic/outbound',
+      icon: 'ArrowRightLeft',
       type: 'ITEM',
-      parentId: logisticMenu.uuid,
-      sortOrder: 3,
-      isVisible: true,
-      isActive: true,
+      parentKey: 'logistic',
+      sortOrder: 2,
     },
-    create: {
+    {
       key: 'logistic-report-monitoring-do',
       title: 'Report Monitoring DO',
       path: '/app/logistic/report-monitoring-do',
       icon: 'ClipboardList',
       type: 'ITEM',
-      parentId: logisticMenu.uuid,
+      parentKey: 'logistic',
       sortOrder: 3,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const logisticReportStockBatchMenu = await prisma.menu.upsert({
-    where: { key: 'logistic-report-stock-batch' },
-    update: {
-      title: 'Report Stock Batch',
-      path: '/app/logistic/report-stock-batch',
-      icon: 'Boxes',
-      type: 'ITEM',
-      parentId: logisticMenu.uuid,
-      sortOrder: 4,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'logistic-report-stock-batch',
       title: 'Report Stock Batch',
       path: '/app/logistic/report-stock-batch',
       icon: 'Boxes',
       type: 'ITEM',
-      parentId: logisticMenu.uuid,
+      parentKey: 'logistic',
       sortOrder: 4,
-      isVisible: true,
-      isActive: true,
     },
-  });
-
-  const logisticReportStockMutationMenu = await prisma.menu.upsert({
-    where: { key: 'logistic-report-stock-mutation' },
-    update: {
-      title: 'Report Stock Mutation',
-      path: '/app/logistic/report-stock-mutation',
-      icon: 'Repeat',
-      type: 'ITEM',
-      parentId: logisticMenu.uuid,
-      sortOrder: 5,
-      isVisible: true,
-      isActive: true,
-    },
-    create: {
+    {
       key: 'logistic-report-stock-mutation',
       title: 'Report Stock Mutation',
       path: '/app/logistic/report-stock-mutation',
       icon: 'Repeat',
       type: 'ITEM',
-      parentId: logisticMenu.uuid,
+      parentKey: 'logistic',
       sortOrder: 5,
-      isVisible: true,
-      isActive: true,
     },
-  });
+  ];
 
-  const divisions = [
-    {
-      uuid: 'division-fb',
-      code: 'F&B',
-      name: 'Food & Beverage',
-      description: 'Divisi penjualan makanan dan minuman retail',
-      isActive: true,
-    },
-    {
-      uuid: 'division-insti',
-      code: 'INSTI',
-      name: 'Institution',
-      description: 'Divisi penjualan ke institusi/B2B/Horeca',
-      isActive: true,
-    },
-  ] as const;
-
-  for (const division of divisions) {
-    await prisma.$executeRaw`
-      INSERT INTO public."m1_division" (uuid, code, name, description, is_active, created_by, updated_by, deleted_at, deleted_by)
-      VALUES (${division.uuid}, ${division.code}, ${division.name}, ${division.description}, ${division.isActive}, ${'seed'}, ${'seed'}, NULL, NULL)
-      ON CONFLICT (code)
-      DO UPDATE SET
-        name = EXCLUDED.name,
-        description = EXCLUDED.description,
-        is_active = EXCLUDED.is_active,
-        updated_by = EXCLUDED.updated_by,
-        deleted_at = NULL,
-        deleted_by = NULL;
-    `;
-  }
-
-  // 7b. Seed Master Data Province & City (Indonesia)
-  const indonesiaProvinces = [
-    { uuid: 'prov-id-ac', name: 'Aceh', isoCode: 'ID-AC' },
-    { uuid: 'prov-id-su', name: 'Sumatera Utara', isoCode: 'ID-SU' },
-    { uuid: 'prov-id-sb', name: 'Sumatera Barat', isoCode: 'ID-SB' },
-    { uuid: 'prov-id-ri', name: 'Riau', isoCode: 'ID-RI' },
-    { uuid: 'prov-id-kr', name: 'Kepulauan Riau', isoCode: 'ID-KR' },
-    { uuid: 'prov-id-ja', name: 'Jambi', isoCode: 'ID-JA' },
-    { uuid: 'prov-id-ss', name: 'Sumatera Selatan', isoCode: 'ID-SS' },
-    { uuid: 'prov-id-bb', name: 'Kepulauan Bangka Belitung', isoCode: 'ID-BB' },
-    { uuid: 'prov-id-be', name: 'Bengkulu', isoCode: 'ID-BE' },
-    { uuid: 'prov-id-la', name: 'Lampung', isoCode: 'ID-LA' },
-    { uuid: 'prov-id-jk', name: 'DKI Jakarta', isoCode: 'ID-JK' },
-    { uuid: 'prov-id-jb', name: 'Jawa Barat', isoCode: 'ID-JB' },
-    { uuid: 'prov-id-bt', name: 'Banten', isoCode: 'ID-BT' },
-    { uuid: 'prov-id-jt', name: 'Jawa Tengah', isoCode: 'ID-JT' },
-    { uuid: 'prov-id-yo', name: 'DI Yogyakarta', isoCode: 'ID-YO' },
-    { uuid: 'prov-id-ji', name: 'Jawa Timur', isoCode: 'ID-JI' },
-    { uuid: 'prov-id-ba', name: 'Bali', isoCode: 'ID-BA' },
-    { uuid: 'prov-id-nb', name: 'Nusa Tenggara Barat', isoCode: 'ID-NB' },
-    { uuid: 'prov-id-nt', name: 'Nusa Tenggara Timur', isoCode: 'ID-NT' },
-    { uuid: 'prov-id-kb', name: 'Kalimantan Barat', isoCode: 'ID-KB' },
-    { uuid: 'prov-id-kt', name: 'Kalimantan Tengah', isoCode: 'ID-KT' },
-    { uuid: 'prov-id-ks', name: 'Kalimantan Selatan', isoCode: 'ID-KS' },
-    { uuid: 'prov-id-ki', name: 'Kalimantan Timur', isoCode: 'ID-KI' },
-    { uuid: 'prov-id-ku', name: 'Kalimantan Utara', isoCode: 'ID-KU' },
-    { uuid: 'prov-id-sa', name: 'Sulawesi Utara', isoCode: 'ID-SA' },
-    { uuid: 'prov-id-go', name: 'Gorontalo', isoCode: 'ID-GO' },
-    { uuid: 'prov-id-st', name: 'Sulawesi Tengah', isoCode: 'ID-ST' },
-    { uuid: 'prov-id-sr', name: 'Sulawesi Barat', isoCode: 'ID-SR' },
-    { uuid: 'prov-id-sn', name: 'Sulawesi Selatan', isoCode: 'ID-SN' },
-    { uuid: 'prov-id-sg', name: 'Sulawesi Tenggara', isoCode: 'ID-SG' },
-    { uuid: 'prov-id-ma', name: 'Maluku', isoCode: 'ID-MA' },
-    { uuid: 'prov-id-mu', name: 'Maluku Utara', isoCode: 'ID-MU' },
-    { uuid: 'prov-id-pa', name: 'Papua', isoCode: 'ID-PA' },
-    { uuid: 'prov-id-pb', name: 'Papua Barat', isoCode: 'ID-PB' },
-    { uuid: 'prov-id-pd', name: 'Papua Barat Daya', isoCode: 'ID-PD' },
-    { uuid: 'prov-id-ps', name: 'Papua Selatan', isoCode: 'ID-PS' },
-    { uuid: 'prov-id-pt', name: 'Papua Tengah', isoCode: 'ID-PT' },
-    { uuid: 'prov-id-pe', name: 'Papua Pegunungan', isoCode: 'ID-PE' },
-  ] as const;
-
-  const provinceUuidByIsoCode = new Map<string, string>();
-  for (const province of indonesiaProvinces) {
-    const rows = await prisma.$queryRaw<{ uuid: string }[]>`
-      INSERT INTO public."m1_province" (uuid, name, iso_code, created_by, updated_by, deleted_at, deleted_by)
-      VALUES (${province.uuid}, ${province.name}, ${province.isoCode}, ${'seed'}, ${'seed'}, NULL, NULL)
-      ON CONFLICT (iso_code)
-      DO UPDATE SET
-        name = EXCLUDED.name,
-        updated_by = EXCLUDED.updated_by,
-        deleted_at = NULL,
-        deleted_by = NULL
-      RETURNING uuid;
-    `;
-    provinceUuidByIsoCode.set(province.isoCode, rows[0]?.uuid ?? province.uuid);
-  }
-
-  const indonesiaCities = [
-    { uuid: 'city-id-ac-banda-aceh', provinceIsoCode: 'ID-AC', name: 'Banda Aceh', postalCode: '23111' },
-    { uuid: 'city-id-su-medan', provinceIsoCode: 'ID-SU', name: 'Medan', postalCode: '20111' },
-    { uuid: 'city-id-sb-padang', provinceIsoCode: 'ID-SB', name: 'Padang', postalCode: '25111' },
-    { uuid: 'city-id-ri-pekanbaru', provinceIsoCode: 'ID-RI', name: 'Pekanbaru', postalCode: '28111' },
-    { uuid: 'city-id-kr-tanjung-pinang', provinceIsoCode: 'ID-KR', name: 'Tanjung Pinang', postalCode: '29111' },
-    { uuid: 'city-id-ja-jambi', provinceIsoCode: 'ID-JA', name: 'Jambi', postalCode: '36111' },
-    { uuid: 'city-id-ss-palembang', provinceIsoCode: 'ID-SS', name: 'Palembang', postalCode: '30111' },
-    { uuid: 'city-id-bb-pangkalpinang', provinceIsoCode: 'ID-BB', name: 'Pangkalpinang', postalCode: '33111' },
-    { uuid: 'city-id-be-bengkulu', provinceIsoCode: 'ID-BE', name: 'Bengkulu', postalCode: '38111' },
-    { uuid: 'city-id-la-bandar-lampung', provinceIsoCode: 'ID-LA', name: 'Bandar Lampung', postalCode: '35111' },
-    { uuid: 'city-id-jk-jakarta-pusat', provinceIsoCode: 'ID-JK', name: 'Jakarta Pusat', postalCode: '10110' },
-    { uuid: 'city-id-jb-bandung', provinceIsoCode: 'ID-JB', name: 'Bandung', postalCode: '40111' },
-    { uuid: 'city-id-bt-serang', provinceIsoCode: 'ID-BT', name: 'Serang', postalCode: '42111' },
-    { uuid: 'city-id-jt-semarang', provinceIsoCode: 'ID-JT', name: 'Semarang', postalCode: '50111' },
-    { uuid: 'city-id-yo-yogyakarta', provinceIsoCode: 'ID-YO', name: 'Yogyakarta', postalCode: '55111' },
-    { uuid: 'city-id-ji-surabaya', provinceIsoCode: 'ID-JI', name: 'Surabaya', postalCode: '60111' },
-    { uuid: 'city-id-ba-denpasar', provinceIsoCode: 'ID-BA', name: 'Denpasar', postalCode: '80111' },
-    { uuid: 'city-id-nb-mataram', provinceIsoCode: 'ID-NB', name: 'Mataram', postalCode: '83111' },
-    { uuid: 'city-id-nt-kupang', provinceIsoCode: 'ID-NT', name: 'Kupang', postalCode: '85111' },
-    { uuid: 'city-id-kb-pontianak', provinceIsoCode: 'ID-KB', name: 'Pontianak', postalCode: '78111' },
-    { uuid: 'city-id-kt-palangka-raya', provinceIsoCode: 'ID-KT', name: 'Palangka Raya', postalCode: '73111' },
-    { uuid: 'city-id-ks-banjarmasin', provinceIsoCode: 'ID-KS', name: 'Banjarmasin', postalCode: '70111' },
-    { uuid: 'city-id-ki-samarinda', provinceIsoCode: 'ID-KI', name: 'Samarinda', postalCode: '75111' },
-    { uuid: 'city-id-ku-tarakan', provinceIsoCode: 'ID-KU', name: 'Tarakan', postalCode: '77111' },
-    { uuid: 'city-id-sa-manado', provinceIsoCode: 'ID-SA', name: 'Manado', postalCode: '95111' },
-    { uuid: 'city-id-go-gorontalo', provinceIsoCode: 'ID-GO', name: 'Gorontalo', postalCode: '96111' },
-    { uuid: 'city-id-st-palu', provinceIsoCode: 'ID-ST', name: 'Palu', postalCode: '94111' },
-    { uuid: 'city-id-sr-mamuju', provinceIsoCode: 'ID-SR', name: 'Mamuju', postalCode: '91511' },
-    { uuid: 'city-id-sr-polman', provinceIsoCode: 'ID-SR', name: 'Polman', postalCode: '91311' },
-    { uuid: 'city-id-sn-makassar', provinceIsoCode: 'ID-SN', name: 'Makassar', postalCode: '90111' },
-    { uuid: 'city-id-sn-gowa', provinceIsoCode: 'ID-SN', name: 'Gowa', postalCode: '92111' },
-    { uuid: 'city-id-sn-malino', provinceIsoCode: 'ID-SN', name: 'Malino', postalCode: '92174' },
-    { uuid: 'city-id-sn-takalar', provinceIsoCode: 'ID-SN', name: 'Takalar', postalCode: '92211' },
-    { uuid: 'city-id-sa-airmadidi', provinceIsoCode: 'ID-SA', name: 'Airmadidi', postalCode: '95371' },
-    { uuid: 'city-id-sa-amurang', provinceIsoCode: 'ID-SA', name: 'Amurang', postalCode: '95954' },
-    { uuid: 'city-id-sg-kendari', provinceIsoCode: 'ID-SG', name: 'Kendari', postalCode: '93111' },
-    { uuid: 'city-id-ma-ambon', provinceIsoCode: 'ID-MA', name: 'Ambon', postalCode: '97111' },
-    { uuid: 'city-id-mu-ternate', provinceIsoCode: 'ID-MU', name: 'Ternate', postalCode: '97711' },
-    { uuid: 'city-id-pa-jayapura', provinceIsoCode: 'ID-PA', name: 'Jayapura', postalCode: '99111' },
-    { uuid: 'city-id-pb-manokwari', provinceIsoCode: 'ID-PB', name: 'Manokwari', postalCode: '98311' },
-    { uuid: 'city-id-pd-sorong', provinceIsoCode: 'ID-PD', name: 'Sorong', postalCode: '98411' },
-    { uuid: 'city-id-ps-merauke', provinceIsoCode: 'ID-PS', name: 'Merauke', postalCode: '99611' },
-    { uuid: 'city-id-pt-nabire', provinceIsoCode: 'ID-PT', name: 'Nabire', postalCode: '98811' },
-    { uuid: 'city-id-pe-wamena', provinceIsoCode: 'ID-PE', name: 'Wamena', postalCode: '99511' },
-  ] as const;
-
-  for (const city of indonesiaCities) {
-    const provinceUuid = provinceUuidByIsoCode.get(city.provinceIsoCode);
-    if (!provinceUuid) {
-      throw new Error(`Province ISO code ${city.provinceIsoCode} was not found while seeding city ${city.name}`);
-    }
-
-    await prisma.$executeRaw`
-      INSERT INTO public."m1_city" (uuid, province_id, name, postal_code, created_by, updated_by, deleted_at, deleted_by)
-      VALUES (${city.uuid}, ${provinceUuid}, ${city.name}, ${city.postalCode}, ${'seed'}, ${'seed'}, NULL, NULL)
-      ON CONFLICT (uuid)
-      DO UPDATE SET
-        province_id = EXCLUDED.province_id,
-        name = EXCLUDED.name,
-        postal_code = EXCLUDED.postal_code,
-        updated_by = EXCLUDED.updated_by,
-        deleted_at = NULL,
-        deleted_by = NULL;
-    `;
-  }
-
-  const citySlaSeeds = [
-    { cityName: 'Makassar', stdLeadTimeDays: 7, stdReturnDoDays: 1 },
-    { cityName: 'Manado', stdLeadTimeDays: 7, stdReturnDoDays: 12 },
-  ] as const;
-
-  for (const sla of citySlaSeeds) {
-    const city = await prisma.masterDataCity.findFirst({
-      where: { name: sla.cityName, deletedAt: null },
-      select: { uuid: true },
+  const menuByKey = new Map<string, number>();
+  for (const seed of menuSeeds.filter((m) => m.parentKey === null)) {
+    const menu = await prisma.menu.upsert({
+      where: { key: seed.key },
+      update: {
+        title: seed.title,
+        path: seed.path,
+        icon: seed.icon,
+        type: seed.type,
+        parentId: null,
+        sortOrder: seed.sortOrder,
+        isVisible: seed.isVisible ?? true,
+        isActive: seed.isActive ?? true,
+        permissionName: seed.permissionName ?? null,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        key: seed.key,
+        title: seed.title,
+        path: seed.path,
+        icon: seed.icon,
+        type: seed.type,
+        parentId: null,
+        sortOrder: seed.sortOrder,
+        isVisible: seed.isVisible ?? true,
+        isActive: seed.isActive ?? true,
+        permissionName: seed.permissionName ?? null,
+      },
+      select: { id: true },
     });
-
-    if (!city) {
-      continue;
-    }
-
-    const existingSla = await prisma.$queryRaw<{ uuid: string; deleted_at: Date | null }[]>`
-      SELECT uuid, deleted_at
-      FROM public."m1_city_sla"
-      WHERE city_id = ${city.uuid}
-      ORDER BY updated_at DESC
-      LIMIT 1
-    `;
-
-    if (existingSla.length > 0) {
-      await prisma.$executeRaw`
-        UPDATE public."m1_city_sla"
-        SET std_lead_time_days = ${sla.stdLeadTimeDays},
-            std_return_do_days = ${sla.stdReturnDoDays},
-            deleted_at = NULL,
-            deleted_by = NULL,
-            updated_at = CURRENT_TIMESTAMP,
-            updated_by = ${'seed'}
-        WHERE uuid = ${existingSla[0].uuid}
-      `;
-      continue;
-    }
-
-    await prisma.$executeRaw`
-      INSERT INTO public."m1_city_sla" (
-        uuid, city_id, std_lead_time_days, std_return_do_days, created_by, updated_by, deleted_at, deleted_by
-      )
-      VALUES (${`city-sla-${city.uuid}`}, ${city.uuid}, ${sla.stdLeadTimeDays}, ${sla.stdReturnDoDays}, ${'seed'}, ${'seed'}, NULL, NULL)
-    `;
+    menuByKey.set(seed.key, menu.id);
   }
 
-  const assignMenuToRole = async (roleUuid: string, menuUuid: string) => {
+  for (const seed of menuSeeds.filter((m) => m.parentKey !== null)) {
+    const parentId = menuByKey.get(seed.parentKey as string);
+    if (!parentId) {
+      throw new Error(`Parent menu not found for ${seed.key}`);
+    }
+    const menu = await prisma.menu.upsert({
+      where: { key: seed.key },
+      update: {
+        title: seed.title,
+        path: seed.path,
+        icon: seed.icon,
+        type: seed.type,
+        parentId,
+        sortOrder: seed.sortOrder,
+        isVisible: seed.isVisible ?? true,
+        isActive: seed.isActive ?? true,
+        permissionName: seed.permissionName ?? null,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        key: seed.key,
+        title: seed.title,
+        path: seed.path,
+        icon: seed.icon,
+        type: seed.type,
+        parentId,
+        sortOrder: seed.sortOrder,
+        isVisible: seed.isVisible ?? true,
+        isActive: seed.isActive ?? true,
+        permissionName: seed.permissionName ?? null,
+      },
+      select: { id: true },
+    });
+    menuByKey.set(seed.key, menu.id);
+  }
+
+  const assignMenuToRole = async (roleId: number, menuId: number) => {
     await prisma.roleMenu.upsert({
-      where: { roleId_menuId: { roleId: roleUuid, menuId: menuUuid } },
+      where: { roleId_menuId: { roleId, menuId } },
       update: { canView: true, deletedAt: null, deletedBy: null },
-      create: { roleId: roleUuid, menuId: menuUuid, canView: true },
+      create: { roleId, menuId, canView: true },
     });
   };
 
-  await assignMenuToRole(adminRole.uuid, dashboardMenu.uuid);
-  await assignMenuToRole(managerRole.uuid, dashboardMenu.uuid);
-  await assignMenuToRole(userRole.uuid, dashboardMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorUsersMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorDepartmentMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorPermissionMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorSubmenuMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorSessionMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, administratorAuditlogMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataContactMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataDivisionMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataItemMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataProvinceMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataCityMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataCitySlaMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataUomMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, masterDataWarehouseMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticOutboundMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticInboundMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticReportMonitoringDoMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticReportStockBatchMenu.uuid);
-  await assignMenuToRole(adminRole.uuid, logisticReportStockMutationMenu.uuid);
+  for (const menuId of menuByKey.values()) {
+    await assignMenuToRole(adminRole.id, menuId);
+  }
 
-  // 8. Assign Departments
-  const assignDept = async (userUuid: string, deptUuid: string) => {
-    await prisma.userDepartment.upsert({
-      where: { userId_departmentId: { userId: userUuid, departmentId: deptUuid } },
-      update: {},
-      create: { userId: userUuid, departmentId: deptUuid },
-    });
-  };
+  const dashboardId = menuByKey.get('dashboard');
+  if (dashboardId) {
+    await assignMenuToRole(managerRole.id, dashboardId);
+    await assignMenuToRole(userRole.id, dashboardId);
+  }
 
-  await assignDept(adminUser.uuid, rootDepartment.uuid);
-  await assignDept(managerUser.uuid, engineeringDept.uuid);
-  await assignDept(staffEng.uuid, engineeringDept.uuid);
-  await assignDept(staffHr.uuid, hrDept.uuid);
-
-  // 9. Create Dummy Audit Logs
-  await prisma.auditLog.create({
-    data: {
-      userId: adminUser.uuid,
-      action: 'USER_LOGIN',
-      entityType: 'AUTH',
-      entityId: adminUser.uuid,
-      ipAddress: '127.0.0.1',
-      userAgent: 'Mozilla/5.0 (Dummy Seed)',
-    },
+  const adminUser = await prisma.user.findUnique({
+    where: { email: 'admin@example.com' },
+    select: { id: true },
   });
+  if (adminUser) {
+    const existingAudit = await prisma.auditLog.findFirst({
+      where: {
+        userId: adminUser.id,
+        action: 'USER_LOGIN',
+        entityType: 'AUTH',
+        entityId: String(adminUser.id),
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (!existingAudit) {
+      await prisma.auditLog.create({
+        data: {
+          userId: adminUser.id,
+          action: 'USER_LOGIN',
+          entityType: 'AUTH',
+          entityId: String(adminUser.id),
+          ipAddress: '127.0.0.1',
+          userAgent: 'Mozilla/5.0 (Seed)',
+          createdBy: adminUser.id,
+          updatedBy: adminUser.id,
+        },
+      });
+    }
+  }
 
   console.log('Seeding completed.');
-  console.log('------------------------------------------------');
-  console.log('Admin:   admin@example.com       (Role: admin, Dept: HQ)');
-  console.log('Manager: manager.eng@example.com (Role: manager, Dept: Engineering)');
-  console.log('Staff 1: staff.eng@example.com   (Role: user, Dept: Engineering)');
-  console.log('Staff 2: staff.hr@example.com    (Role: user, Dept: HR)');
-  console.log('Password for all: Password123!');
-  console.log('------------------------------------------------');
+  console.log('-------------------------------------------');
+  console.log('Admin:   admin@example.com');
+  console.log('Manager: manager.eng@example.com');
+  console.log('Staff:   staff.eng@example.com');
+  console.log('Staff:   staff.hr@example.com');
+  console.log('Password for all users: Password123!');
+  console.log('-------------------------------------------');
 }
 
 main()
-  .catch((e) => {
-    console.error('Seeding error:', e);
+  .catch((error) => {
+    console.error('Seeding error:', error);
     process.exit(1);
   })
   .finally(async () => {

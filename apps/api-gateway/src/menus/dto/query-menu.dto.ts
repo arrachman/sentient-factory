@@ -38,4 +38,12 @@ export class QueryMenuDto {
   @Transform(({ value }) => toBoolean(value))
   @IsBoolean()
   includeInactive?: boolean = false;
+
+  @ApiPropertyOptional({
+    example: '12',
+    description: "Filter by parent menu ID. Use 'null' for root/no parent menus.",
+  })
+  @IsOptional()
+  @IsString()
+  parentId?: string;
 }

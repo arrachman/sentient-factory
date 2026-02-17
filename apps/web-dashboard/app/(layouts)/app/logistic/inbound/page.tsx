@@ -644,18 +644,17 @@ export default function LogisticInboundPage() {
         : [];
       const userId = String(profilePayload?.data?.id ?? '');
       const roleNames = [
-        profilePayload?.data?.role,
         ...(Array.isArray(profilePayload?.data?.roles)
           ? profilePayload.data.roles
           : []),
-        profilePayload?.data?.user?.role,
         ...(Array.isArray(profilePayload?.data?.user?.roles)
           ? profilePayload.data.user.roles
           : []),
       ]
         .map((value) => String(value ?? '').trim().toLowerCase())
         .filter(Boolean);
-      const hasAdminRole = roleNames.includes('admin');
+      const hasGlobalWarehouseAccess =
+        roleNames.includes('super_admin') || roleNames.includes('admin');
       const mappedWarehouseIdRaw =
         profilePayload?.data?.warehouseId ??
         profilePayload?.data?.user?.warehouseId ??
@@ -669,28 +668,28 @@ export default function LogisticInboundPage() {
         ].filter(Boolean);
         return candidateIds.includes(mappedWarehouseId);
       });
-      const nextWarehouses = hasAdminRole
+      const nextWarehouses = hasGlobalWarehouseAccess
         ? allWarehouses
         : matchedWarehouse
           ? [matchedWarehouse]
           : [];
       const fallbackWarehouseId = pickEntityId(nextWarehouses[0]);
-      const resolvedLockedWarehouseId = hasAdminRole
+      const resolvedLockedWarehouseId = hasGlobalWarehouseAccess
         ? ''
         : pickEntityId(matchedWarehouse ?? null);
-      const nextLockedWarehouseId = hasAdminRole ? '' : resolvedLockedWarehouseId;
+      const nextLockedWarehouseId = hasGlobalWarehouseAccess ? '' : resolvedLockedWarehouseId;
 
       setSuppliers(nextSuppliers);
       setWarehouses(nextWarehouses);
       setItemOptions(nextItems);
       setCurrentUserId(userId);
-      setIsAdminRole(hasAdminRole);
+      setIsAdminRole(hasGlobalWarehouseAccess);
       setLockedWarehouseId(nextLockedWarehouseId);
 
       setForm((state) => ({
         ...state,
         supplierId: state.supplierId || pickEntityId(nextSuppliers[0]) || '',
-        warehouseId: hasAdminRole
+        warehouseId: hasGlobalWarehouseAccess
           ? state.warehouseId || fallbackWarehouseId || ''
           : nextLockedWarehouseId || fallbackWarehouseId || '',
         details: state.details.map((detail, index) => ({
@@ -701,7 +700,7 @@ export default function LogisticInboundPage() {
         })),
       }));
 
-      if (!hasAdminRole && !nextLockedWarehouseId) {
+      if (!hasGlobalWarehouseAccess && !nextLockedWarehouseId) {
         setError('Warehouse user login tidak ditemukan. Hubungi admin untuk assign warehouse.');
       }
     } catch (err) {

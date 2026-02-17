@@ -324,6 +324,7 @@ model MasterDataWarehouse {
   deletedAt        DateTime?         @map("deleted_at")
   deletedBy        Int?           @map("deleted_by")
   city             MasterDataCity    @relation(fields: [cityId], references: [id])
+  deliveryOrders   DeliveryOrder[]
   inbounds         Inbound[]
   users            User[]
   inventoryLedgers InventoryLedger[]
@@ -362,6 +363,7 @@ model DeliveryOrder {
   doDate               DateTime  @map("do_date") @db.Date
   doReceivedDate       DateTime  @map("do_received_date") @db.Date
   customerId           Int       @map("customer_id")
+  warehouseId          Int?      @map("warehouse_id")
   destinationCityId    Int?      @map("destination_city_id")
   stdLeadTimeDays      Int       @default(0) @map("std_lead_time_days")
   stdReturnDoDays      Int       @default(0) @map("std_return_do_days")
@@ -388,10 +390,12 @@ model DeliveryOrder {
   deletedBy            Int?   @map("deleted_by")
 
   customer        MasterDataContact     @relation(fields: [customerId], references: [id])
+  warehouse       MasterDataWarehouse?  @relation(fields: [warehouseId], references: [id])
   destinationCity MasterDataCity?       @relation("DoDestinationCity", fields: [destinationCityId], references: [id])
   details         DeliveryOrderDetail[]
 
   @@index([customerId])
+  @@index([warehouseId])
   @@index([shippingDate])
   @@index([doReceivedDate])
   @@map("m2_outbound")

@@ -102,6 +102,7 @@ export default function AdministratorMenuPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
+  const [parentFilter, setParentFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -134,6 +135,9 @@ export default function AdministratorMenuPage() {
       if (search.trim()) {
         query.set('search', search.trim());
       }
+      if (parentFilter !== 'all') {
+        query.set('parentId', parentFilter);
+      }
 
       const response = await fetch(`/api/menus?${query.toString()}`, {
         cache: 'no-store',
@@ -158,7 +162,7 @@ export default function AdministratorMenuPage() {
   const fetchParentOptions = async () => {
     try {
       const response = await fetch(
-        '/api/menus?page=1&limit=1000&includeInactive=true',
+        '/api/menus?page=1&limit=100&includeInactive=true',
         {
           cache: 'no-store',
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -329,6 +333,15 @@ export default function AdministratorMenuPage() {
     return [{ value: '', label: 'No Parent' }, ...filtered];
   }, [parentOptions, editingId]);
 
+  const parentFilterOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All Parent' },
+      { value: 'null', label: 'No Parent' },
+      ...parentOptions,
+    ],
+    [parentOptions],
+  );
+
   return (
     <div className="container">
       <Toolbar>
@@ -357,7 +370,7 @@ export default function AdministratorMenuPage() {
       <div className="space-y-5">
         {!showForm ? (
           <div className="rounded-lg border p-5">
-            <div className="mb-3 flex items-center gap-2">
+            <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_260px_auto]">
               <div className="relative flex-1">
                 <Input
                   placeholder="Search by key, title, path, icon..."
@@ -385,13 +398,22 @@ export default function AdministratorMenuPage() {
                   </button>
                 ) : null}
               </div>
+              <AutocompleteSelect
+                value={parentFilter}
+                onValueChange={(value) => setParentFilter(value || 'all')}
+                options={parentFilterOptions}
+                placeholder="Filter parent"
+                searchPlaceholder="Search parent..."
+                emptyText="No parent found."
+                triggerClassName="h-9 text-sm"
+              />
               <Button
                 variant="outline"
                 onClick={() => fetchList(1)}
                 disabled={loading}
               >
                 <RefreshCw />
-                Search
+                Apply
               </Button>
             </div>
 

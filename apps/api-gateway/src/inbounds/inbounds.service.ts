@@ -71,15 +71,20 @@ export class InboundsService {
       return header;
     });
 
-    return this.findOne(created.id);
+    return this.findOne(created.id, actorId);
   }
 
-  async findAll(query: QueryInboundDto) {
+  async findAll(query: QueryInboundDto, actorId?: string | number) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
     const where: Prisma.InboundWhereInput = { deletedAt: null };
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId, query.warehouseId);
+
+    if (typeof scopedWarehouseId === 'number') {
+      where.warehouseId = scopedWarehouseId;
+    }
 
     if (query.status) {
       where.status = query.status;
@@ -90,7 +95,7 @@ export class InboundsService {
       where.supplierId = supplierId;
     }
 
-    if (query.warehouseId?.trim()) {
+    if (query.warehouseId?.trim() && typeof scopedWarehouseId !== 'number') {
       const warehouseId = this.parseId(query.warehouseId.trim(), 'Warehouse ID');
       where.warehouseId = warehouseId;
     }
@@ -126,6 +131,18 @@ export class InboundsService {
               city: { select: { id: true, name: true, postalCode: true } },
             },
           },
+          details: {
+            where: { deletedAt: null },
+            select: {
+              _count: {
+                select: {
+                  batches: {
+                    where: { deletedAt: null },
+                  },
+                },
+              },
+            },
+          },
           _count: { select: { details: { where: { deletedAt: null } } } },
         },
         orderBy: [{ createdAt: 'desc' }],
@@ -137,7 +154,12 @@ export class InboundsService {
 
     return {
       success: true,
-      data: items,
+      data: items.map((item) => ({
+        ...item,
+        totalBatches: Array.isArray(item.details)
+          ? item.details.reduce((sum, detail) => sum + Number(detail?._count?.batches ?? 0), 0)
+          : 0,
+      })),
       meta: {
         page,
         limit,
@@ -147,9 +169,14 @@ export class InboundsService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, actorId?: string | number) {
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const item = await this.prisma.inbound.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        warehouseId: typeof scopedWarehouseId === 'number' ? scopedWarehouseId : undefined,
+      },
       include: {
         supplier: { select: { id: true, code: true, name: true, type: true } },
         warehouse: {
@@ -198,8 +225,13 @@ export class InboundsService {
   }
 
   async update(id: number, dto: UpdateInboundDto, actorId?: string | number) {
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const existing = await this.prisma.inbound.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        warehouseId: typeof scopedWarehouseId === 'number' ? scopedWarehouseId : undefined,
+      },
       select: { id: true, transactionNo: true },
     });
     if (!existing) {
@@ -288,12 +320,17 @@ export class InboundsService {
       await this.syncInboundInventoryLedger(tx, id, actorId);
     });
 
-    return this.findOne(id);
+    return this.findOne(id, actorId);
   }
 
   async remove(id: number, actorId?: string | number) {
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const existing = await this.prisma.inbound.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        warehouseId: typeof scopedWarehouseId === 'number' ? scopedWarehouseId : undefined,
+      },
       select: { id: true },
     });
     if (!existing) {
@@ -505,11 +542,72 @@ export class InboundsService {
   }
 
   private async resolveWarehouseForActor(actorId?: string | number, requestedWarehouseId?: string) {
+    const actor = await this.getActorWarehouseAccess(actorId);
+    if (actor.canAccessAllWarehouses && requestedWarehouseId?.trim()) {
+      return this.parseId(requestedWarehouseId, 'Warehouse ID');
+    }
+
+    const mappedWarehouseId = actor.warehouseId;
+    if (mappedWarehouseId && mappedWarehouseId > 0) {
+      return mappedWarehouseId;
+    }
+
+    const ownedWarehouse = await this.prisma.masterDataWarehouse.findFirst({
+      where: {
+        deletedAt: null,
+        createdBy: toAuditUserId(actorId),
+      },
+      select: { id: true },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+
+    if (!ownedWarehouse) {
+      throw new BadRequestException('Warehouse untuk user login belum terdaftar');
+    }
+
+    return ownedWarehouse.id;
+  }
+
+  private async resolveWarehouseFilterForActor(
+    actorId?: string | number,
+    requestedWarehouseId?: string,
+  ): Promise<number | undefined> {
+    const actor = await this.getActorWarehouseAccess(actorId);
+
+    if (actor.canAccessAllWarehouses) {
+      if (requestedWarehouseId?.trim()) {
+        return this.parseId(requestedWarehouseId, 'Warehouse ID');
+      }
+      return undefined;
+    }
+
+    const mappedWarehouseId = actor.warehouseId;
+    if (mappedWarehouseId && mappedWarehouseId > 0) {
+      return mappedWarehouseId;
+    }
+
+    const ownedWarehouse = await this.prisma.masterDataWarehouse.findFirst({
+      where: {
+        deletedAt: null,
+        createdBy: toAuditUserId(actorId),
+      },
+      select: { id: true },
+      orderBy: [{ createdAt: 'asc' }],
+    });
+
+    if (!ownedWarehouse) {
+      throw new BadRequestException('Warehouse untuk user login belum terdaftar');
+    }
+
+    return ownedWarehouse.id;
+  }
+
+  private async getActorWarehouseAccess(actorId?: string | number) {
     if (!actorId) {
       throw new BadRequestException('User login tidak ditemukan');
     }
-    const actorUserId = this.parseActorId(actorId);
 
+    const actorUserId = this.parseActorId(actorId);
     const actor = await this.prisma.user.findFirst({
       where: {
         id: actorUserId,
@@ -530,36 +628,21 @@ export class InboundsService {
         },
       },
     });
-    const isAdmin = (actor?.roles ?? []).some((item) => {
-      const roleName = String(item.role?.name ?? '')
+
+    const roleNames = (actor?.roles ?? []).map((item) =>
+      String(item.role?.name ?? '')
         .trim()
-        .toLowerCase();
-      return Boolean(roleName === 'admin' && !item.role?.deletedAt);
-    });
+        .toLowerCase(),
+    );
 
-    if (isAdmin && requestedWarehouseId?.trim()) {
-      return this.parseId(requestedWarehouseId, 'Warehouse ID');
-    }
+    const canAccessAllWarehouses = roleNames.some(
+      (roleName) => roleName === 'super_admin' || roleName === 'admin',
+    );
 
-    const mappedWarehouseId = actor?.warehouseId;
-    if (mappedWarehouseId && mappedWarehouseId > 0) {
-      return mappedWarehouseId;
-    }
-
-    const ownedWarehouse = await this.prisma.masterDataWarehouse.findFirst({
-      where: {
-        deletedAt: null,
-        createdBy: toAuditUserId(actorId),
-      },
-      select: { id: true },
-      orderBy: [{ createdAt: 'asc' }],
-    });
-
-    if (!ownedWarehouse) {
-      throw new BadRequestException('Warehouse untuk user login belum terdaftar');
-    }
-
-    return ownedWarehouse.id;
+    return {
+      warehouseId: actor?.warehouseId,
+      canAccessAllWarehouses,
+    };
   }
 
   private normalizeAndValidateDetails(

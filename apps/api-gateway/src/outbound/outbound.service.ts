@@ -26,7 +26,9 @@ export class OutboundService {
     await this.ensureDoNumberAvailable(doNumber);
 
     const customerId = this.parseId(dto.customerId, 'customerId');
+    const warehouseId = await this.resolveInputWarehouseForActor(actorId, dto.warehouseId);
     const customer = await this.ensureCustomerExists(customerId);
+    await this.ensureWarehouseExists(warehouseId);
     const defaults = await this.resolveDefaultsFromCustomerCity(customer.city ?? undefined);
 
     const requestedDestinationCityId = this.parseOptionalId(
@@ -51,7 +53,7 @@ export class OutboundService {
     let created;
     try {
       created = await this.prisma.$transaction(async (tx) => {
-        await this.ensureBatchAvailability(detailPayload, tx, undefined);
+        await this.ensureBatchAvailability(detailPayload, tx, undefined, warehouseId);
 
         const header = await tx.deliveryOrder.create({
           data: {
@@ -59,6 +61,7 @@ export class OutboundService {
             doDate: new Date(dto.doDate),
             doReceivedDate: new Date(dto.doReceivedDate),
             customerId,
+            warehouseId,
             destinationCityId: resolvedDestinationCityId,
             stdLeadTimeDays: resolvedStdLeadTimeDays,
             stdReturnDoDays: resolvedStdReturnDoDays,
@@ -127,15 +130,20 @@ export class OutboundService {
       throw error;
     }
 
-    return this.findOne(created.id);
+    return this.findOne(created.id, actorId);
   }
 
-  async findAll(query: QueryOutboundDto) {
+  async findAll(query: QueryOutboundDto, actorId?: string | number) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
     const where: Prisma.DeliveryOrderWhereInput = { deletedAt: null };
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId, query.warehouseId);
+
+    if (typeof scopedWarehouseId === 'number') {
+      where.warehouseId = scopedWarehouseId;
+    }
 
     if (query.status) {
       where.status = query.status;
@@ -159,38 +167,55 @@ export class OutboundService {
         { bu: { contains: q, mode: 'insensitive' } },
         { customer: { code: { contains: q, mode: 'insensitive' } } },
         { customer: { name: { contains: q, mode: 'insensitive' } } },
+        { warehouse: { name: { contains: q, mode: 'insensitive' } } },
       ];
     }
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.deliveryOrder.findMany({
-        where,
-        include: {
-          customer: { select: { id: true, code: true, name: true, type: true } },
-          destinationCity: { select: { id: true, name: true, postalCode: true } },
-          _count: { select: { details: { where: { deletedAt: null } } } },
-          details: {
-            where: { deletedAt: null },
-            select: {
-              qtyKg: true,
-              batches: {
-                where: { deletedAt: null },
-                select: { id: true },
+    let items: Array<any> = [];
+    let total = 0;
+    try {
+      const result = await this.prisma.$transaction([
+        this.prisma.deliveryOrder.findMany({
+          where,
+          include: {
+            customer: { select: { id: true, code: true, name: true, type: true } },
+            warehouse: { select: { id: true, name: true, locationName: true } },
+            destinationCity: { select: { id: true, name: true, postalCode: true } },
+            _count: { select: { details: { where: { deletedAt: null } } } },
+            details: {
+              where: { deletedAt: null },
+              select: {
+                qtyKg: true,
+                batches: {
+                  where: { deletedAt: null },
+                  select: { id: true },
+                },
               },
             },
           },
-        },
-        orderBy: [{ createdAt: 'desc' }],
-        skip,
-        take: limit,
-      }),
-      this.prisma.deliveryOrder.count({ where }),
-    ]);
+          orderBy: [{ createdAt: 'desc' }],
+          skip,
+          take: limit,
+        }),
+        this.prisma.deliveryOrder.count({ where }),
+      ]);
+      [items, total] = result;
+    } catch (error) {
+      if (this.isMissingWarehouseColumnError(error)) {
+        throw new BadRequestException(
+          'Schema database outbound belum update. Jalankan migration terbaru (warehouse_id pada m2_outbound).',
+        );
+      }
+      throw error;
+    }
 
     const data = items.map((item) => {
       const totalItemTypes = item._count?.details ?? 0;
-      const totalBatches = item.details.reduce((sum, detail) => sum + detail.batches.length, 0);
-      const totalKg = item.details.reduce((sum, detail) => {
+      const totalBatches = item.details.reduce(
+        (sum: number, detail: { batches: Array<unknown> }) => sum + detail.batches.length,
+        0,
+      );
+      const totalKg = item.details.reduce((sum: number, detail: { qtyKg?: number | string }) => {
         const qtyKg = Number(detail.qtyKg ?? 0);
         return sum + (Number.isFinite(qtyKg) ? qtyKg : 0);
       }, 0);
@@ -215,13 +240,19 @@ export class OutboundService {
     };
   }
 
-  async getBatchOptions(itemId?: string, excludeDoId?: string) {
+  async getBatchOptions(
+    itemId?: string,
+    excludeDoId?: string,
+    warehouseId?: string,
+    actorId?: string | number,
+  ) {
     if (!String(itemId ?? '').trim()) {
       throw new BadRequestException('itemId is required');
     }
     const normalizedItemId = this.parseId(itemId as string, 'itemId');
 
     const normalizedExcludeDoId = this.parseOptionalId(excludeDoId, 'excludeDoId');
+    const normalizedWarehouseId = await this.resolveWarehouseFilterForActor(actorId, warehouseId);
     const [inboundRows, usedRows] = await this.prisma.$transaction([
       this.prisma.inboundDetailBatch.groupBy({
         by: ['batchIn'],
@@ -233,6 +264,7 @@ export class OutboundService {
             inbound: {
               deletedAt: null,
               status: 'POSTED',
+              warehouseId: normalizedWarehouseId,
             },
           },
         },
@@ -253,6 +285,7 @@ export class OutboundService {
             deliveryOrder: {
               deletedAt: null,
               id: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
+              warehouseId: normalizedWarehouseId,
             },
           },
         },
@@ -298,7 +331,7 @@ export class OutboundService {
     };
   }
 
-  async findMonitoringReport(query: QueryMonitoringOutboundDto) {
+  async findMonitoringReport(query: QueryMonitoringOutboundDto, actorId?: string | number) {
     const where: Prisma.DeliveryOrderWhereInput = { deletedAt: null };
 
     if (query.cityId?.trim()) {
@@ -322,6 +355,14 @@ export class OutboundService {
       where,
       include: {
         customer: { select: { id: true, code: true, name: true, type: true } },
+        warehouse: {
+          select: {
+            id: true,
+            name: true,
+            locationName: true,
+            city: { select: { id: true, name: true, postalCode: true } },
+          },
+        },
         destinationCity: {
           select: {
             id: true,
@@ -424,7 +465,7 @@ export class OutboundService {
     }
 
     const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
-    const warehouseFilter = this.parseOptionalId(query.warehouseId, 'warehouseId');
+    const warehouseFilter = await this.resolveWarehouseFilterForActor(actorId, query.warehouseId);
 
     const enriched = items
       .map((row) => {
@@ -668,6 +709,119 @@ export class OutboundService {
         total: data.length,
       },
     };
+  }
+
+  private async resolveWarehouseFilterForActor(
+    actorId?: string | number,
+    requestedWarehouseId?: string,
+  ): Promise<number | undefined> {
+    const actor = await this.getActorWarehouseAccess(actorId);
+    if (actor.canAccessAllWarehouses) {
+      if (requestedWarehouseId?.trim()) {
+        return this.parseId(requestedWarehouseId, 'warehouseId');
+      }
+      return undefined;
+    }
+
+    if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
+      return actor.warehouseId;
+    }
+
+    throw new BadRequestException('Warehouse untuk user login belum terdaftar');
+  }
+
+  private async resolveInputWarehouseForActor(
+    actorId?: string | number,
+    requestedWarehouseId?: string,
+    fallbackWarehouseId?: number,
+  ): Promise<number> {
+    const actor = await this.getActorWarehouseAccess(actorId);
+
+    if (actor.canAccessAllWarehouses) {
+      if (requestedWarehouseId?.trim()) {
+        return this.parseId(requestedWarehouseId, 'warehouseId');
+      }
+      if (typeof fallbackWarehouseId === 'number' && fallbackWarehouseId > 0) {
+        return fallbackWarehouseId;
+      }
+      if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
+        return actor.warehouseId;
+      }
+      throw new BadRequestException('warehouseId is required');
+    }
+
+    if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
+      return actor.warehouseId;
+    }
+
+    throw new BadRequestException('Warehouse untuk user login belum terdaftar');
+  }
+
+  private async getActorWarehouseAccess(actorId?: string | number) {
+    const actorUserId = this.parseOptionalActorId(actorId);
+    if (!actorUserId) {
+      throw new BadRequestException('User login tidak ditemukan');
+    }
+
+    const actor = await this.prisma.user.findFirst({
+      where: {
+        id: actorUserId,
+        deletedAt: null,
+      },
+      select: {
+        warehouseId: true,
+        roles: {
+          where: {
+            deletedAt: null,
+            role: { deletedAt: null },
+          },
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!actor) {
+      throw new BadRequestException('User login tidak ditemukan');
+    }
+
+    const roleNames = (actor.roles ?? [])
+      .map((row) =>
+        String(row.role?.name ?? '')
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean);
+
+    const canAccessAllWarehouses = roleNames.some(
+      (roleName) => roleName === 'admin' || roleName === 'super_admin',
+    );
+
+    return {
+      warehouseId: actor.warehouseId,
+      canAccessAllWarehouses,
+    };
+  }
+
+  private parseOptionalActorId(actorId?: string | number): number | undefined {
+    if (typeof actorId === 'number') {
+      return Number.isInteger(actorId) ? actorId : undefined;
+    }
+    const parsed = Number(String(actorId ?? '').trim());
+    return Number.isInteger(parsed) ? parsed : undefined;
+  }
+
+  private isMissingWarehouseColumnError(error: unknown): boolean {
+    const code = String((error as any)?.code ?? '').trim();
+    const metaText = JSON.stringify((error as any)?.meta ?? {})
+      .toLowerCase()
+      .trim();
+    return code === 'P2022' && metaText.includes('warehouse_id');
   }
 
   async findStockMutationReport(query: QueryStockMutationReportDto) {
@@ -924,9 +1078,14 @@ export class OutboundService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, actorId?: string | number) {
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const item = await this.prisma.deliveryOrder.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        warehouseId: typeof scopedWarehouseId === 'number' ? scopedWarehouseId : undefined,
+      },
       include: {
         customer: { select: { id: true, code: true, name: true, type: true } },
         destinationCity: {
@@ -968,9 +1127,14 @@ export class OutboundService {
 
   async update(id: number, dto: UpdateOutboundDto, actorId?: string | number) {
     const auditActor = this.normalizeAuditActor(actorId);
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const existing = await this.prisma.deliveryOrder.findFirst({
-      where: { id, deletedAt: null },
-      select: { id: true, doNumber: true },
+      where: {
+        id,
+        deletedAt: null,
+        warehouseId: typeof scopedWarehouseId === 'number' ? scopedWarehouseId : undefined,
+      },
+      select: { id: true, doNumber: true, warehouseId: true },
     });
     if (!existing) {
       throw new NotFoundException('outbound not found');
@@ -990,6 +1154,13 @@ export class OutboundService {
       await this.ensureCustomerExists(customerId);
     }
 
+    const effectiveWarehouseId = await this.resolveInputWarehouseForActor(
+      actorId,
+      dto.warehouseId,
+      existing.warehouseId ?? undefined,
+    );
+    await this.ensureWarehouseExists(effectiveWarehouseId);
+
     if (typeof dto.destinationCityId !== 'undefined') {
       const destinationCityId = this.parseOptionalId(dto.destinationCityId, 'destinationCityId');
       if (destinationCityId !== undefined) {
@@ -1001,7 +1172,10 @@ export class OutboundService {
 
     const detailsProvided = Array.isArray(dto.details);
     let detailPayload: NormalizedOutboundDetail[] = [];
-    let itemMap = new Map<number, { id: number; code: string; name: string; uom: { code: string } }>();
+    let itemMap = new Map<
+      number,
+      { id: number; code: string; name: string; uom: { code: string } }
+    >();
 
     if (detailsProvided) {
       detailPayload = this.normalizeAndValidateDetails(dto.details as CreateOutboundDetailDto[]);
@@ -1011,7 +1185,7 @@ export class OutboundService {
     try {
       await this.prisma.$transaction(async (tx) => {
         if (detailsProvided) {
-          await this.ensureBatchAvailability(detailPayload, tx, id);
+          await this.ensureBatchAvailability(detailPayload, tx, id, effectiveWarehouseId);
         }
 
         await tx.deliveryOrder.update({
@@ -1021,6 +1195,7 @@ export class OutboundService {
             doDate: dto.doDate ? new Date(dto.doDate) : undefined,
             doReceivedDate: dto.doReceivedDate ? new Date(dto.doReceivedDate) : undefined,
             customerId: dto.customerId ? this.parseId(dto.customerId, 'customerId') : undefined,
+            warehouseId: effectiveWarehouseId,
             destinationCityId:
               typeof dto.destinationCityId !== 'undefined'
                 ? dto.destinationCityId
@@ -1110,13 +1285,18 @@ export class OutboundService {
       throw error;
     }
 
-    return this.findOne(id);
+    return this.findOne(id, actorId);
   }
 
   async remove(id: number, actorId?: string | number) {
     const auditActor = this.normalizeAuditActor(actorId);
+    const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const existing = await this.prisma.deliveryOrder.findFirst({
-      where: { id, deletedAt: null },
+      where: {
+        id,
+        deletedAt: null,
+        warehouseId: typeof scopedWarehouseId === 'number' ? scopedWarehouseId : undefined,
+      },
       select: { id: true },
     });
     if (!existing) {
@@ -1205,6 +1385,17 @@ export class OutboundService {
     return customer;
   }
 
+  private async ensureWarehouseExists(warehouseId: number) {
+    const warehouse = await this.prisma.masterDataWarehouse.findFirst({
+      where: { id: warehouseId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (!warehouse) {
+      throw new BadRequestException('Warehouse not found');
+    }
+  }
+
   private async resolveDefaultsFromCustomerCity(customerCity?: string) {
     const normalizedCityName = String(customerCity ?? '').trim();
     if (!normalizedCityName) {
@@ -1250,7 +1441,9 @@ export class OutboundService {
     }
   }
 
-  private normalizeAndValidateDetails(details: CreateOutboundDetailDto[]): NormalizedOutboundDetail[] {
+  private normalizeAndValidateDetails(
+    details: CreateOutboundDetailDto[],
+  ): NormalizedOutboundDetail[] {
     if (!details.length) {
       throw new BadRequestException('At least one detail row is required');
     }
@@ -1374,6 +1567,7 @@ export class OutboundService {
         id: true,
         doNumber: true,
         doDate: true,
+        warehouseId: true,
         deletedAt: true,
         details: {
           where: { deletedAt: null },
@@ -1493,7 +1687,7 @@ export class OutboundService {
 
         const pairKey = `${detail.itemId}::${batchNumber.toLowerCase()}`;
         const source = sourceByPair.get(pairKey);
-        const warehouseId = source?.warehouseId || actorWarehouseId;
+        const warehouseId = outbound.warehouseId || source?.warehouseId || actorWarehouseId;
         if (!warehouseId) {
           throw new BadRequestException(
             `Warehouse source is not found for item ${detail.itemId} batch ${batchNumber}`,
@@ -1572,6 +1766,7 @@ export class OutboundService {
     details: NormalizedOutboundDetail[],
     tx: Prisma.TransactionClient,
     excludeDoId?: number,
+    warehouseId?: number,
   ) {
     const requestedByPair = new Map<string, number>();
     const pairLabelByKey = new Map<string, { itemId: number; batchNumber: string }>();
@@ -1609,6 +1804,7 @@ export class OutboundService {
             inbound: {
               deletedAt: null,
               status: 'POSTED',
+              warehouseId,
             },
           },
         },
@@ -1632,6 +1828,7 @@ export class OutboundService {
             deliveryOrder: {
               deletedAt: null,
               id: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
+              warehouseId,
             },
           },
         },

@@ -35,15 +35,15 @@ export class InboundsController {
   @Get()
   @ApiOperation({ summary: 'Get inbounds' })
   @ApiResponse({ status: 200, description: 'List of inbounds' })
-  findAll(@Query() query: QueryInboundDto) {
-    return this.service.findAll(query);
+  findAll(@Query() query: QueryInboundDto, @Request() req: any) {
+    return this.service.findAll(query, req.user?.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get one inbound' })
   @ApiResponse({ status: 200, description: 'Inbound detail' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.service.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.findOne(id, req.user?.id);
   }
 
   @Patch(':id')

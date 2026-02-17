@@ -29,7 +29,7 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const roles = user.roles?.map((ur: any) => ur.role.name) || [];
+    const roles = await this.usersService.getActiveRoleNamesByUserId(user.id);
     const warehouse = await this.usersService.getWarehouseMetaByUserUuid(user.id);
     const payload = {
       username: user.username,
@@ -112,18 +112,19 @@ export class AuthService {
     const warehouse = authUser?.id
       ? await this.usersService.getWarehouseMetaByUserUuid(authUser.id)
       : { warehouseId: null, warehouseName: null };
+    const roles = authUser?.id
+      ? await this.usersService.getActiveRoleNamesByUserId(authUser.id)
+      : [];
 
     const id = authUser?.id ?? dbUser?.id ?? null;
     const email = dbUser?.email ?? authUser?.email ?? null;
     const username = dbUser?.username ?? authUser?.username ?? null;
     const fullName =
-      (typeof dbUser?.fullName === 'string' && dbUser.fullName.trim().length > 0
+      typeof dbUser?.fullName === 'string' && dbUser.fullName.trim().length > 0
         ? dbUser.fullName
         : typeof authUser?.fullName === 'string' && authUser.fullName.trim().length > 0
           ? authUser.fullName
-          : null);
-    const roles = Array.isArray(authUser?.roles) ? authUser.roles : [];
-
+          : null;
     return {
       success: true,
       data: {
@@ -134,7 +135,6 @@ export class AuthService {
         name: fullName || username || 'User',
         warehouseId: warehouse.warehouseId,
         warehouseName: warehouse.warehouseName,
-        role: roles[0] || 'user',
         roles,
       },
     };

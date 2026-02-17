@@ -74,10 +74,21 @@ export class MenusService {
     const skip = (page - 1) * limit;
     const keyword = query.search?.trim();
     const includeInactive = query.includeInactive ?? false;
+    const parentFilter = query.parentId?.trim();
+    const normalizedParentId =
+      parentFilter && parentFilter !== 'null' ? Number(parentFilter) : undefined;
+    const hasParentFilter =
+      parentFilter === 'null' ||
+      (Number.isInteger(normalizedParentId) && Number(normalizedParentId) > 0);
 
     const where = {
       deletedAt: null as Date | null,
       ...(includeInactive ? {} : { isActive: true }),
+      ...(hasParentFilter
+        ? {
+            parentId: parentFilter === 'null' ? null : Number(normalizedParentId),
+          }
+        : {}),
       ...(keyword
         ? {
             OR: [
@@ -241,6 +252,8 @@ export class MenusService {
     if (!Number.isInteger(normalizedUserId)) {
       return [];
     }
+    await this.ensureAdministratorRoleMenu();
+
     const userRoles = await this.prisma.userRole.findMany({
       where: {
         userId: normalizedUserId,
@@ -330,6 +343,98 @@ export class MenusService {
 
     sortRecursively(roots);
     return roots;
+  }
+
+  private async ensureAdministratorRoleMenu() {
+    const administratorParent = await this.prisma.menu.upsert({
+      where: { key: 'administrator' },
+      update: {
+        title: 'Administrator',
+        path: null,
+        icon: 'ShieldUser',
+        type: 'COLLAPSE',
+        parentId: null,
+        isVisible: true,
+        isActive: true,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        key: 'administrator',
+        title: 'Administrator',
+        path: null,
+        icon: 'ShieldUser',
+        type: 'COLLAPSE',
+        parentId: null,
+        sortOrder: 50,
+        isVisible: true,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    const roleMenu = await this.prisma.menu.upsert({
+      where: { key: 'administrator-role' },
+      update: {
+        title: 'Role',
+        path: '/app/administrator/role',
+        icon: 'ShieldCheck',
+        type: 'ITEM',
+        parentId: administratorParent.id,
+        sortOrder: 34,
+        isVisible: true,
+        isActive: true,
+        deletedAt: null,
+        deletedBy: null,
+      },
+      create: {
+        key: 'administrator-role',
+        title: 'Role',
+        path: '/app/administrator/role',
+        icon: 'ShieldCheck',
+        type: 'ITEM',
+        parentId: administratorParent.id,
+        sortOrder: 34,
+        isVisible: true,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    const adminRole = await this.prisma.role.findFirst({
+      where: { name: 'admin', deletedAt: null },
+      select: { id: true },
+    });
+    if (!adminRole) {
+      return;
+    }
+
+    const existingRoleMenu = await this.prisma.roleMenu.findFirst({
+      where: { roleId: adminRole.id, menuId: roleMenu.id },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!existingRoleMenu) {
+      await this.prisma.roleMenu.create({
+        data: {
+          roleId: adminRole.id,
+          menuId: roleMenu.id,
+          canView: true,
+        },
+      });
+      return;
+    }
+
+    if (existingRoleMenu.deletedAt) {
+      await this.prisma.roleMenu.update({
+        where: { id: existingRoleMenu.id },
+        data: {
+          canView: true,
+          deletedAt: null,
+          deletedBy: null,
+        },
+      });
+    }
   }
 
   private async ensureParentExists(parentId: number) {

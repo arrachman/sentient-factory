@@ -13,6 +13,7 @@ import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.
 import { MasterDataCitySlasModule } from './master-data-city-slas/master-data-city-slas.module';
 import { MasterDataWarehousesModule } from './master-data-warehouses/master-data-warehouses.module';
 import { MasterDataPermissionsModule } from './master-data-permissions/master-data-permissions.module';
+import { MasterDataRolesModule } from './master-data-roles/master-data-roles.module';
 import { OutboundModule } from './outbound/outbound.module';
 import { InboundsModule } from './inbounds/inbounds.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
@@ -38,6 +39,7 @@ import { SessionsModule } from './sessions/sessions.module';
     MasterDataCitySlasModule,
     MasterDataWarehousesModule,
     MasterDataPermissionsModule,
+    MasterDataRolesModule,
     OutboundModule,
     InboundsModule,
     AuditLogsModule,
