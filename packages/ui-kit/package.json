@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "if [ -f tsconfig.json ]; then tsc; else echo 'No tsconfig.json, skipping build'; fi",
+    "dev": "if [ -f tsconfig.json ]; then tsc --watch; else echo 'No tsconfig.json, skipping dev'; fi",
     "lint": "eslint src/**/*.ts src/**/*.tsx",
     "typecheck": "if [ -f tsconfig.json ]; then tsc --noEmit; else echo 'No tsconfig.json, skipping typecheck'; fi",
     "storybook": "storybook dev -p 6006",

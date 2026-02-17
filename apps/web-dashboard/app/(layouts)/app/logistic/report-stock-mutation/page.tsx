@@ -184,7 +184,7 @@ export default function ReportStockMutationPage() {
           cache: 'no-store',
           headers,
         }),
-        fetch('/api/master-data-items?page=1&limit=200', {
+        fetch('/api/master-data-items?page=1&limit=100', {
           cache: 'no-store',
           headers,
         }),

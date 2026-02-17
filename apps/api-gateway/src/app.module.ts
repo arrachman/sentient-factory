@@ -12,8 +12,12 @@ import { MasterDataProvincesModule } from './master-data-provinces/master-data-p
 import { MasterDataCitiesModule } from './master-data-cities/master-data-cities.module';
 import { MasterDataCitySlasModule } from './master-data-city-slas/master-data-city-slas.module';
 import { MasterDataWarehousesModule } from './master-data-warehouses/master-data-warehouses.module';
+import { MasterDataPermissionsModule } from './master-data-permissions/master-data-permissions.module';
 import { OutboundModule } from './outbound/outbound.module';
 import { InboundsModule } from './inbounds/inbounds.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -33,8 +37,12 @@ import { InboundsModule } from './inbounds/inbounds.module';
     MasterDataCitiesModule,
     MasterDataCitySlasModule,
     MasterDataWarehousesModule,
+    MasterDataPermissionsModule,
     OutboundModule,
     InboundsModule,
+    AuditLogsModule,
+    DepartmentsModule,
+    SessionsModule,
   ],
 })
 export class AppModule {}

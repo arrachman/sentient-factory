@@ -100,14 +100,15 @@ function getTokenFromCookie() {
 }
 
 export function AppMenuProvider({ children }: { children: ReactNode }) {
-  const [menus, setMenus] = useState<MenuConfig>(MENU_SIDEBAR);
+  const [menus, setMenus] = useState<MenuConfig>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadMenus() {
-      if (!hasTokenCookie()) {
+      const hasToken = hasTokenCookie();
+      if (!hasToken) {
         if (!cancelled) {
           setMenus(MENU_SIDEBAR);
           setLoading(false);
@@ -133,12 +134,18 @@ export function AppMenuProvider({ children }: { children: ReactNode }) {
         }
 
         const payload = (await response.json()) as SidebarMenuApiResponse;
-        if (!cancelled && payload.success && Array.isArray(payload.data)) {
-          setMenus(mapApiMenus(payload.data));
+        if (!cancelled) {
+          if (payload.success && Array.isArray(payload.data)) {
+            setMenus(mapApiMenus(payload.data));
+          } else {
+            // Authenticated user must never get unrestricted static menu fallback.
+            setMenus([]);
+          }
         }
       } catch {
         if (!cancelled) {
-          setMenus(MENU_SIDEBAR);
+          // Keep menu restricted when backend menu endpoint fails for logged-in users.
+          setMenus([]);
         }
       } finally {
         if (!cancelled) {

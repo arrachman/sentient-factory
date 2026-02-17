@@ -21,6 +21,13 @@ import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -197,7 +204,7 @@ const initialForm: DeliveryOrderForm = {
   status: 'OPEN',
   bu: '',
   notes: '',
-  details: [initialDetail()],
+  details: [],
 };
 
 function getTokenFromCookie() {
@@ -391,7 +398,7 @@ type ApiDetailPayload = {
 
 function mapApiDetails(details: ApiDetailPayload[]): DeliveryOrderDetailForm[] {
   if (!Array.isArray(details) || details.length === 0) {
-    return [initialDetail()];
+    return [];
   }
 
   return details.map((detail) => ({
@@ -578,6 +585,10 @@ export default function LogisticTransactionDoPage() {
   const [deliveredSubmittingId, setDeliveredSubmittingId] = useState<string | null>(null);
   const [completedSubmittingId, setCompletedSubmittingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingDetailIndex, setEditingDetailIndex] = useState<number | null>(null);
+  const [itemModalError, setItemModalError] = useState('');
+  const [draftDetail, setDraftDetail] = useState<DeliveryOrderDetailForm>(initialDetail());
   const [deliveryAction, setDeliveryAction] = useState<DeliveryActionState | null>(null);
   const [deliveredAction, setDeliveredAction] = useState<DeliveredActionState | null>(null);
   const [completedAction, setCompletedAction] = useState<CompletedActionState | null>(null);
@@ -588,6 +599,24 @@ export default function LogisticTransactionDoPage() {
   const [totalItems, setTotalItems] = useState(0);
 
   const token = useMemo(() => getTokenFromCookie(), []);
+  const itemOptionMap = useMemo(() => {
+    const map = new Map<string, ItemOption>();
+    itemOptions.forEach((item) => {
+      const id = pickEntityId(item);
+      if (id) {
+        map.set(id, item);
+      }
+    });
+    return map;
+  }, [itemOptions]);
+
+  const createDefaultDetail = useCallback(
+    () => ({
+      ...initialDetail(),
+      itemId: pickEntityId(itemOptions[0]),
+    }),
+    [itemOptions],
+  );
 
   const getBatchQtyPcs = useCallback(
     (itemId: string, batchNumber: string) => {
@@ -1007,10 +1036,14 @@ export default function LogisticTransactionDoPage() {
       stdLeadTimeDays: defaults?.stdLeadTimeDays || '0',
       stdReturnDoDays: defaults?.stdReturnDoDays || '0',
       bu: divisions[0]?.code || '',
-      details: [{ ...initialDetail(), itemId: pickEntityId(itemOptions[0]) }],
+      details: [],
     });
+    setIsItemModalOpen(false);
+    setEditingDetailIndex(null);
+    setItemModalError('');
+    setDraftDetail(createDefaultDetail());
     setShowForm(true);
-  }, [cities, customers, divisions, itemOptions, resolveDefaultByCustomer]);
+  }, [cities, createDefaultDetail, customers, divisions, resolveDefaultByCustomer]);
 
   useEffect(() => {
     if (!isOutboundAddRoute || loadingOptions) {
@@ -1113,6 +1146,10 @@ export default function LogisticTransactionDoPage() {
         notes: String(data.notes ?? ''),
         details: detailRows,
       });
+      setIsItemModalOpen(false);
+      setEditingDetailIndex(null);
+      setItemModalError('');
+      setDraftDetail(createDefaultDetail());
       await Promise.all(
         detailRows
           .map((detail) => toEntityId(detail.itemId))
@@ -1446,121 +1483,204 @@ export default function LogisticTransactionDoPage() {
     }
   };
 
-  const setDetailField = (
-    index: number,
-    key: 'itemId' | 'qtyKg' | 'notes',
-    value: string,
-  ) => {
-    setForm((state) => ({
+  const draftItemTotalPcs = useMemo(
+    () =>
+      Number(
+        getAutoQtyPcs(
+          draftDetail.itemId,
+          draftDetail.batchNumbers,
+          draftDetail.batchQtyMap,
+        ) || 0,
+      ) || 0,
+    [draftDetail.batchNumbers, draftDetail.batchQtyMap, draftDetail.itemId, getAutoQtyPcs],
+  );
+
+  const openAddItemModal = () => {
+    setEditingDetailIndex(null);
+    setDraftDetail(createDefaultDetail());
+    setItemModalError('');
+    setIsItemModalOpen(true);
+  };
+
+  const openEditItemModal = async (index: number) => {
+    const existing = form.details[index];
+    if (!existing) {
+      return;
+    }
+    const itemId = toEntityId(existing.itemId);
+    if (itemId) {
+      await fetchBatchOptions(itemId, true);
+    }
+    setEditingDetailIndex(index);
+    setDraftDetail({
+      ...existing,
+      batchNumbers: [...existing.batchNumbers],
+      batchQtyMap: { ...existing.batchQtyMap },
+    });
+    setItemModalError('');
+    setIsItemModalOpen(true);
+  };
+
+  const closeItemModal = () => {
+    setIsItemModalOpen(false);
+    setEditingDetailIndex(null);
+    setItemModalError('');
+    setDraftDetail(createDefaultDetail());
+  };
+
+  const setDraftField = (key: 'qtyKg' | 'notes', value: string) => {
+    setDraftDetail((state) => ({
       ...state,
-      details: state.details.map((detail, i) =>
-        i === index
-          ? key === 'itemId'
-            ? { ...detail, itemId: value, batchNumbers: [], batchQtyMap: {} }
-            : { ...detail, [key]: value }
-          : detail,
-      ),
+      [key]: value,
     }));
   };
 
-  const setDetailBatchNumbers = (index: number, batchNumbers: string[]) => {
-    setForm((state) => ({
+  const setDraftItemId = async (value: string) => {
+    const normalizedItemId = toEntityId(value);
+    setDraftDetail((state) => ({
       ...state,
-      details: state.details.map((detail, i) => {
-        if (i !== index) {
-          return detail;
-        }
+      itemId: normalizedItemId,
+      batchNumbers: [],
+      batchQtyMap: {},
+    }));
+    if (normalizedItemId) {
+      await fetchBatchOptions(normalizedItemId, true);
+    }
+  };
 
-        const normalizedBatchNumbers = Array.from(new Set(batchNumbers));
-        const nextBatchQtyMap = normalizedBatchNumbers.reduce<Record<string, string>>(
-          (acc, batchNumber) => {
-            const maxQtyPcs = getBatchQtyPcs(detail.itemId, batchNumber);
-            const previousValue = detail.batchQtyMap[batchNumber];
-            if (previousValue == null || previousValue === '') {
-              acc[batchNumber] = String(maxQtyPcs);
-              return acc;
-            }
-
-            const parsed = Math.floor(Number(previousValue));
-            if (!Number.isFinite(parsed) || parsed < 0) {
-              acc[batchNumber] = String(maxQtyPcs);
-              return acc;
-            }
-
-            acc[batchNumber] = String(Math.min(parsed, maxQtyPcs));
+  const setDraftBatchNumbers = (batchNumbers: string[]) => {
+    setDraftDetail((state) => {
+      const normalizedBatchNumbers = Array.from(
+        new Set(batchNumbers.map((batchNumber) => String(batchNumber).trim()).filter(Boolean)),
+      );
+      const nextBatchQtyMap = normalizedBatchNumbers.reduce<Record<string, string>>(
+        (acc, batchNumber) => {
+          const maxQtyPcs = getBatchQtyPcs(state.itemId, batchNumber);
+          const previousValue = state.batchQtyMap[batchNumber];
+          if (previousValue == null || previousValue === '') {
+            acc[batchNumber] = String(maxQtyPcs);
             return acc;
-          },
-          {},
-        );
+          }
 
-        return {
-          ...detail,
-          batchNumbers: normalizedBatchNumbers,
-          batchQtyMap: nextBatchQtyMap,
-        };
-      }),
-    }));
+          const parsed = Math.floor(Number(previousValue));
+          if (!Number.isFinite(parsed) || parsed < 0) {
+            acc[batchNumber] = String(maxQtyPcs);
+            return acc;
+          }
+
+          acc[batchNumber] = String(Math.min(parsed, maxQtyPcs));
+          return acc;
+        },
+        {},
+      );
+
+      return {
+        ...state,
+        batchNumbers: normalizedBatchNumbers,
+        batchQtyMap: nextBatchQtyMap,
+      };
+    });
   };
 
-  const setDetailBatchQty = (index: number, batchNumber: string, rawValue: string) => {
-    setForm((state) => ({
-      ...state,
-      details: state.details.map((detail, i) => {
-        if (i !== index) {
-          return detail;
-        }
-
-        const maxQtyPcs = getBatchQtyPcs(detail.itemId, batchNumber);
-        if (rawValue === '') {
-          return {
-            ...detail,
-            batchQtyMap: {
-              ...detail.batchQtyMap,
-              [batchNumber]: '',
-            },
-          };
-        }
-
-        const parsed = Math.floor(Number(rawValue));
-        if (!Number.isFinite(parsed) || parsed < 0) {
-          return detail;
-        }
-
-        const clamped = Math.min(parsed, maxQtyPcs);
-        return {
-          ...detail,
-          batchQtyMap: {
-            ...detail.batchQtyMap,
-            [batchNumber]: String(clamped),
-          },
-        };
-      }),
-    }));
-  };
-
-  const addDetailRow = () => {
-    setForm((state) => ({
-      ...state,
-      details: [
-        ...state.details,
-        { ...initialDetail(), itemId: pickEntityId(itemOptions[0]) },
-      ],
-    }));
-  };
-
-  const removeDetailRow = (index: number) => {
-    setForm((state) => {
-      if (state.details.length === 1) {
+  const setDraftBatchQty = (batchNumber: string, rawValue: string) => {
+    setDraftDetail((state) => {
+      const maxQtyPcs = getBatchQtyPcs(state.itemId, batchNumber);
+      if (rawValue === '') {
         return {
           ...state,
-          details: [initialDetail()],
+          batchQtyMap: {
+            ...state.batchQtyMap,
+            [batchNumber]: '',
+          },
+        };
+      }
+
+      const parsed = Math.floor(Number(rawValue));
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return state;
+      }
+
+      const clamped = Math.min(parsed, maxQtyPcs);
+      return {
+        ...state,
+        batchQtyMap: {
+          ...state.batchQtyMap,
+          [batchNumber]: String(clamped),
+        },
+      };
+    });
+  };
+
+  const saveDraftItem = () => {
+    const itemId = toEntityId(draftDetail.itemId);
+    if (!itemId) {
+      setItemModalError('Item wajib dipilih.');
+      return;
+    }
+
+    const selectedBatchNumbers = Array.from(
+      new Set(
+        draftDetail.batchNumbers
+          .map((batchNumber) => String(batchNumber).trim())
+          .filter(Boolean),
+      ),
+    );
+    if (selectedBatchNumbers.length === 0) {
+      setItemModalError('Minimal satu batch wajib dipilih.');
+      return;
+    }
+
+    const qtyKg = Number(draftDetail.qtyKg || 0);
+    if (!Number.isFinite(qtyKg) || qtyKg <= 0) {
+      setItemModalError('Qty KG wajib diisi dan harus lebih dari 0.');
+      return;
+    }
+
+    const nextBatchQtyMap = selectedBatchNumbers.reduce<Record<string, string>>(
+      (acc, batchNumber) => {
+        const selectedQty = getSelectedBatchQtyPcs(
+          itemId,
+          batchNumber,
+          draftDetail.batchQtyMap,
+        );
+        acc[batchNumber] = String(selectedQty);
+        return acc;
+      },
+      {},
+    );
+
+    const normalizedDetail: DeliveryOrderDetailForm = {
+      ...draftDetail,
+      itemId,
+      batchNumbers: selectedBatchNumbers,
+      batchQtyMap: nextBatchQtyMap,
+      qtyKg: String(qtyKg),
+      notes: draftDetail.notes.trim(),
+    };
+
+    setForm((state) => {
+      if (editingDetailIndex == null) {
+        return {
+          ...state,
+          details: [...state.details, normalizedDetail],
         };
       }
       return {
         ...state,
-        details: state.details.filter((_, i) => i !== index),
+        details: state.details.map((detail, index) =>
+          index === editingDetailIndex ? normalizedDetail : detail,
+        ),
       };
     });
+
+    closeItemModal();
+  };
+
+  const removeDetailRow = (index: number) => {
+    setForm((state) => ({
+      ...state,
+      details: state.details.filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -1857,7 +1977,11 @@ export default function LogisticTransactionDoPage() {
                                       onChange={(event) =>
                                         setDeliveredAction((state) =>
                                           state && state.id === rowId
-                                            ? { ...state, actualReceivedDate: event.target.value }
+                                            ? {
+                                                ...state,
+                                                actualReceivedDate: event.target.value,
+                                                doScanReturnDate: event.target.value,
+                                              }
                                             : state,
                                         )
                                       }
@@ -2396,13 +2520,11 @@ export default function LogisticTransactionDoPage() {
 
               <div className="rounded-lg border p-5 xl:col-span-2">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-base font-semibold">
-                    Detail Barang (Per Batch)
-                  </h3>
+                  <h3 className="text-base font-semibold">Item List</h3>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={addDetailRow}
+                    onClick={openAddItemModal}
                   >
                     <Plus />
                     Add Item
@@ -2412,189 +2534,231 @@ export default function LogisticTransactionDoPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[50px]">No</TableHead>
-                      <TableHead>Item + Batch Number</TableHead>
-                      <TableHead className="w-[120px] text-right">
-                        Qty PCS
-                      </TableHead>
-                      <TableHead className="w-[120px] text-right">
-                        Qty KG
-                      </TableHead>
+                      <TableHead className="w-[60px]">No</TableHead>
+                      <TableHead>Item</TableHead>
+                      <TableHead>UOM</TableHead>
+                      <TableHead className="text-right">Total Batch</TableHead>
+                      <TableHead className="text-right">Qty PCS</TableHead>
+                      <TableHead className="text-right">Qty KG</TableHead>
                       <TableHead>Notes</TableHead>
-                      <TableHead className="w-[80px]">Act</TableHead>
+                      <TableHead className="w-[140px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {form.details.map((detail, index) => {
-                      const selectedBatchDetails = detail.batchNumbers.map((batchNumber) => ({
-                        batchNumber,
-                        maxQtyPcs: getBatchQtyPcs(detail.itemId, batchNumber),
-                        qtyPcs: getSelectedBatchQtyPcs(
-                          detail.itemId,
-                          batchNumber,
-                          detail.batchQtyMap,
-                        ),
-                        rawQtyPcs: detail.batchQtyMap[batchNumber] ?? '',
-                      }));
-
-                      return (
-                      <TableRow
-                        key={`${index}-${detail.itemId}-${detail.batchNumbers.join('|')}`}
-                      >
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                          <div className="space-y-2">
-                            <div className="space-y-2">
-                              <AutocompleteSelect
-                                value={detail.itemId}
-                                onValueChange={async (value) => {
-                                  const normalizedItemId = toEntityId(value);
-                                  setDetailField(index, 'itemId', normalizedItemId);
-                                  await fetchBatchOptions(normalizedItemId, true);
-                                }}
-                                options={itemOptions.flatMap((item) => {
-                                  const value = pickEntityId(item);
-                                  if (!value) {
-                                    return [];
-                                  }
-                                  const code = String(item.code ?? '');
-                                  const name = String(item.name ?? '');
-                                  const uomCode = String(item.uom?.code ?? '');
-                                  return {
-                                    value,
-                                    label: `${code} - ${name}${uomCode ? ` (UOM: ${uomCode})` : ''}`,
-                                  };
-                                })}
-                                placeholder="Select item"
-                                searchPlaceholder="Search item..."
-                                emptyText="No item found."
-                                required
-                                triggerClassName="h-9 px-2 text-sm"
-                              />
-                              <BatchMultiSelect
-                                value={detail.batchNumbers}
-                                onChange={(value) =>
-                                  setDetailBatchNumbers(index, value)
-                                }
-                                options={(batchOptionsByItemId[detail.itemId] || [])
-                                  .map((option) => {
-                                    const taken = form.details.some(
-                                      (row, rowIndex) =>
-                                        rowIndex !== index &&
-                                        row.itemId === detail.itemId &&
-                                        row.batchNumbers.includes(option.batchNumber),
-                                    );
-                                    return {
-                                      ...option,
-                                      disabled: taken || option.qtyPcs <= 0,
-                                    };
-                                  })}
-                                placeholder={detail.itemId ? 'Select batch(es)' : 'Select item first'}
-                                searchPlaceholder="Search batch..."
-                                emptyText={
-                                  detail.itemId
-                                    ? 'No batch found for this item.'
-                                    : 'Select item first.'
-                                }
-                                disabled={!detail.itemId}
-                                required
-                              />
-                            </div>
-                            {selectedBatchDetails.length > 0 ? (
-                              <div className="rounded-md border bg-muted/20 p-2 text-xs">
-                                <div className="mb-1 font-medium text-foreground">
-                                  Selected batches
-                                </div>
-                                <div className="space-y-1">
-                                  {selectedBatchDetails.map((batch) => (
-                                    <div
-                                      key={`${detail.itemId}-${batch.batchNumber}`}
-                                      className="grid grid-cols-[1fr_110px] items-center gap-2"
-                                    >
-                                      <span className="truncate">{batch.batchNumber}</span>
-                                      <Input
-                                        type="number"
-                                        min={1}
-                                        max={batch.maxQtyPcs}
-                                        step={1}
-                                        value={batch.rawQtyPcs}
-                                        onChange={(e) =>
-                                          setDetailBatchQty(
-                                            index,
-                                            batch.batchNumber,
-                                            e.target.value,
-                                          )
-                                        }
-                                        className="h-7 text-right text-xs"
-                                      />
-                                      <div className="col-span-2 flex items-center justify-between text-[11px] text-muted-foreground">
-                                        <span>
-                                          {batch.qtyPcs.toLocaleString('id-ID')} pcs dipakai
-                                        </span>
-                                        <span>
-                                          max {batch.maxQtyPcs.toLocaleString('id-ID')} pcs
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            className="text-right"
-                            value={getAutoQtyPcs(
-                              detail.itemId,
-                              detail.batchNumbers,
-                              detail.batchQtyMap,
-                            )}
-                            readOnly
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0.001}
-                            step="0.001"
-                            className="text-right"
-                            value={detail.qtyKg}
-                            onChange={(e) =>
-                              setDetailField(index, 'qtyKg', e.target.value)
-                            }
-                            required
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={detail.notes}
-                            onChange={(e) =>
-                              setDetailField(index, 'notes', e.target.value)
-                            }
-                            placeholder="Optional"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => removeDetailRow(index)}
-                          >
-                            <Trash2 />
-                          </Button>
+                    {form.details.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-muted-foreground">
+                          Belum ada item. Klik + Add Item untuk mulai input outbound.
                         </TableCell>
                       </TableRow>
-                      );
-                    })}
+                    ) : (
+                      form.details.map((detail, index) => {
+                        const item = itemOptionMap.get(detail.itemId);
+                        const totalQtyPcs = Number(
+                          getAutoQtyPcs(detail.itemId, detail.batchNumbers, detail.batchQtyMap) || 0,
+                        );
+                        return (
+                          <TableRow key={`${index}-${detail.itemId}-${detail.batchNumbers.join('|')}`}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{item?.name || '-'}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {item?.code || detail.itemId || '-'}
+                              </div>
+                            </TableCell>
+                            <TableCell>{item?.uom?.name || item?.uom?.code || '-'}</TableCell>
+                            <TableCell className="text-right">
+                              {detail.batchNumbers.length}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {(Number.isFinite(totalQtyPcs) ? totalQtyPcs : 0).toLocaleString('id-ID')}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {(Number(detail.qtyKg || 0) || 0).toLocaleString('id-ID')}
+                            </TableCell>
+                            <TableCell className="max-w-[280px] truncate">
+                              {detail.notes || '-'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  aria-label="Edit item"
+                                  onClick={() => void openEditItemModal(index)}
+                                >
+                                  <Pencil />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  aria-label="Remove item"
+                                  onClick={() => removeDetailRow(index)}
+                                >
+                                  <Trash2 />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
                   </TableBody>
                 </Table>
               </div>
             </div>
+
+            <Dialog
+              open={isItemModalOpen}
+              onOpenChange={(nextOpen) => {
+                if (!nextOpen) {
+                  closeItemModal();
+                }
+              }}
+            >
+              <DialogContent className="max-w-[980px] p-0">
+                <DialogHeader className="border-b px-5 pt-5 pb-4">
+                  <DialogTitle>
+                    {editingDetailIndex == null ? 'Tambah Item' : 'Edit Item'}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 px-5 pb-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Item</Label>
+                      <AutocompleteSelect
+                        value={draftDetail.itemId}
+                        onValueChange={(value) => void setDraftItemId(value)}
+                        options={itemOptions.flatMap((item) => {
+                          const value = pickEntityId(item);
+                          if (!value) {
+                            return [];
+                          }
+                          const code = String(item.code ?? '');
+                          const name = String(item.name ?? '');
+                          const uomCode = String(item.uom?.code ?? '');
+                          return {
+                            value,
+                            label: `${code} - ${name}${uomCode ? ` (UOM: ${uomCode})` : ''}`,
+                          };
+                        })}
+                        placeholder="Select item"
+                        searchPlaceholder="Search item..."
+                        emptyText="No item found."
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Qty KG</Label>
+                      <Input
+                        type="number"
+                        min={0.001}
+                        step="0.001"
+                        value={draftDetail.qtyKg}
+                        onChange={(e) => setDraftField('qtyKg', e.target.value)}
+                        placeholder="Contoh: 150.5"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Batch</Label>
+                    <BatchMultiSelect
+                      value={draftDetail.batchNumbers}
+                      onChange={setDraftBatchNumbers}
+                      options={(batchOptionsByItemId[draftDetail.itemId] || []).map((option) => {
+                        const taken = form.details.some(
+                          (row, rowIndex) =>
+                            rowIndex !== editingDetailIndex &&
+                            row.itemId === draftDetail.itemId &&
+                            row.batchNumbers.includes(option.batchNumber),
+                        );
+                        return {
+                          ...option,
+                          disabled: taken || option.qtyPcs <= 0,
+                        };
+                      })}
+                      placeholder={draftDetail.itemId ? 'Select batch(es)' : 'Select item first'}
+                      searchPlaceholder="Search batch..."
+                      emptyText={
+                        draftDetail.itemId
+                          ? 'No batch found for this item.'
+                          : 'Select item first.'
+                      }
+                      disabled={!draftDetail.itemId}
+                      required
+                    />
+                  </div>
+
+                  {draftDetail.batchNumbers.length > 0 ? (
+                    <div className="rounded-md border">
+                      <div className="border-b px-3 py-2 text-sm font-medium">
+                        Selected Batches
+                      </div>
+                      <div className="space-y-2 p-3">
+                        {draftDetail.batchNumbers.map((batchNumber) => {
+                          const maxQtyPcs = getBatchQtyPcs(draftDetail.itemId, batchNumber);
+                          const qtyPcs = getSelectedBatchQtyPcs(
+                            draftDetail.itemId,
+                            batchNumber,
+                            draftDetail.batchQtyMap,
+                          );
+                          const rawQtyPcs = draftDetail.batchQtyMap[batchNumber] ?? '';
+                          return (
+                            <div key={`${draftDetail.itemId}-${batchNumber}`} className="grid gap-2 md:grid-cols-[1fr_170px]">
+                              <div className="flex items-center text-sm">{batchNumber}</div>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={maxQtyPcs}
+                                step={1}
+                                value={rawQtyPcs}
+                                onChange={(e) => setDraftBatchQty(batchNumber, e.target.value)}
+                                className="text-right"
+                              />
+                              <div className="md:col-span-2 text-xs text-muted-foreground">
+                                {qtyPcs.toLocaleString('id-ID')} pcs dipakai (max {maxQtyPcs.toLocaleString('id-ID')} pcs)
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="space-y-2">
+                    <Label>Notes</Label>
+                    <Input
+                      value={draftDetail.notes}
+                      onChange={(e) => setDraftField('notes', e.target.value)}
+                      placeholder="Optional"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                    <span>Total Qty Item (PCS)</span>
+                    <span className="font-semibold">{draftItemTotalPcs.toLocaleString('id-ID')}</span>
+                  </div>
+
+                  {itemModalError ? (
+                    <p className="text-sm text-destructive">{itemModalError}</p>
+                  ) : null}
+
+                  <DialogFooter className="pt-0">
+                    <Button type="button" variant="outline" onClick={closeItemModal}>
+                      Cancel
+                    </Button>
+                    <Button type="button" onClick={saveDraftItem}>
+                      {editingDetailIndex == null ? 'Simpan/Add Item' : 'Update Item'}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {error ? (
               <p className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-600">

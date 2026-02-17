@@ -18,6 +18,13 @@ import {
   type AutocompleteSelectOption,
 } from '@/components/ui/autocomplete-select';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -181,7 +188,7 @@ const initialForm: InboundForm = {
   warehouseId: '',
   status: 'POSTED',
   notes: '',
-  details: [initialDetail()],
+  details: [],
 };
 
 function getTokenFromCookie() {
@@ -374,7 +381,7 @@ function resolveBatchesFromDetail(detail: InboundDetailApi) {
 
 function mapDetailFromApi(details?: InboundDetailApi[]): InboundDetailForm[] {
   if (!Array.isArray(details) || details.length === 0) {
-    return [initialDetail()];
+    return [];
   }
 
   return details.map((detail) => {
@@ -482,6 +489,14 @@ export default function LogisticInboundPage() {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingDetailIndex, setEditingDetailIndex] = useState<number | null>(
+    null,
+  );
+  const [itemModalError, setItemModalError] = useState('');
+  const [draftDetail, setDraftDetail] = useState<InboundDetailForm>(
+    initialDetail(),
+  );
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
@@ -489,6 +504,21 @@ export default function LogisticInboundPage() {
   const [totalItems, setTotalItems] = useState(0);
 
   const token = useMemo(() => getTokenFromCookie(), []);
+  const itemOptionMap = useMemo(() => {
+    const map = new Map<string, ItemOption>();
+    itemOptions.forEach((item) => {
+      const id = pickEntityId(item);
+      if (id) {
+        map.set(id, item);
+      }
+    });
+    return map;
+  }, [itemOptions]);
+
+  const createDefaultDetail = () => ({
+    ...initialDetail(),
+    itemId: pickEntityId(itemOptions[0]) || '',
+  });
 
   const detailSummary = useMemo(() => {
     let totalQty = 0;
@@ -606,7 +636,7 @@ export default function LogisticInboundPage() {
       const nextSuppliers: SupplierOption[] = Array.isArray(supplierPayload.data)
         ? supplierPayload.data
         : [];
-      const nextWarehouses: WarehouseOption[] = Array.isArray(warehousePayload.data)
+      const allWarehouses: WarehouseOption[] = Array.isArray(warehousePayload.data)
         ? warehousePayload.data
         : [];
       const nextItems: ItemOption[] = Array.isArray(itemPayload.data)
@@ -631,12 +661,23 @@ export default function LogisticInboundPage() {
         profilePayload?.data?.user?.warehouseId ??
         '';
       const mappedWarehouseId = toEntityId(mappedWarehouseIdRaw);
+      const matchedWarehouse = allWarehouses.find((warehouse) => {
+        const candidateIds = [
+          toEntityId(warehouse.id),
+          toEntityId(warehouse.uuid),
+          pickEntityId(warehouse),
+        ].filter(Boolean);
+        return candidateIds.includes(mappedWarehouseId);
+      });
+      const nextWarehouses = hasAdminRole
+        ? allWarehouses
+        : matchedWarehouse
+          ? [matchedWarehouse]
+          : [];
       const fallbackWarehouseId = pickEntityId(nextWarehouses[0]);
-      const resolvedLockedWarehouseId = nextWarehouses.some(
-        (warehouse) => pickEntityId(warehouse) === mappedWarehouseId,
-      )
-        ? mappedWarehouseId
-        : '';
+      const resolvedLockedWarehouseId = hasAdminRole
+        ? ''
+        : pickEntityId(matchedWarehouse ?? null);
       const nextLockedWarehouseId = hasAdminRole ? '' : resolvedLockedWarehouseId;
 
       setSuppliers(nextSuppliers);
@@ -649,11 +690,9 @@ export default function LogisticInboundPage() {
       setForm((state) => ({
         ...state,
         supplierId: state.supplierId || pickEntityId(nextSuppliers[0]) || '',
-        warehouseId:
-          nextLockedWarehouseId ||
-          state.warehouseId ||
-          fallbackWarehouseId ||
-          '',
+        warehouseId: hasAdminRole
+          ? state.warehouseId || fallbackWarehouseId || ''
+          : nextLockedWarehouseId || fallbackWarehouseId || '',
         details: state.details.map((detail, index) => ({
           ...detail,
           itemId:
@@ -661,6 +700,10 @@ export default function LogisticInboundPage() {
             (index === 0 ? pickEntityId(nextItems[0]) || '' : detail.itemId),
         })),
       }));
+
+      if (!hasAdminRole && !nextLockedWarehouseId) {
+        setError('Warehouse user login tidak ditemukan. Hubungi admin untuk assign warehouse.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load options');
     } finally {
@@ -701,8 +744,12 @@ export default function LogisticInboundPage() {
       transactionDate: new Date().toISOString().slice(0, 10),
       supplierId: pickEntityId(suppliers[0]) || '',
       warehouseId: lockedWarehouseId || pickEntityId(warehouses[0]) || '',
-      details: [{ ...initialDetail(), itemId: pickEntityId(itemOptions[0]) || '' }],
+      details: [],
     });
+    setIsItemModalOpen(false);
+    setEditingDetailIndex(null);
+    setItemModalError('');
+    setDraftDetail(createDefaultDetail());
     setShowForm(true);
   };
 
@@ -733,6 +780,10 @@ export default function LogisticInboundPage() {
         notes: String(data.notes ?? ''),
         details: mapDetailFromApi(data.details),
       });
+      setIsItemModalOpen(false);
+      setEditingDetailIndex(null);
+      setItemModalError('');
+      setDraftDetail(createDefaultDetail());
       setShowForm(true);
     } catch (err) {
       setError(
@@ -852,91 +903,139 @@ export default function LogisticInboundPage() {
     }
   };
 
-  const setDetailField = (
-    index: number,
-    key: keyof InboundDetailForm,
-    value: string,
-  ) => {
-    setForm((state) => ({
-      ...state,
-      details: state.details.map((detail, i) =>
-        i === index ? { ...detail, [key]: value } : detail,
+  const draftItemTotalQty = useMemo(
+    () =>
+      draftDetail.batches.reduce(
+        (sum, batch) => sum + (Number(batch.qty || 0) || 0),
+        0,
       ),
+    [draftDetail.batches],
+  );
+
+  const openAddItemModal = () => {
+    setEditingDetailIndex(null);
+    setDraftDetail(createDefaultDetail());
+    setItemModalError('');
+    setIsItemModalOpen(true);
+  };
+
+  const openEditItemModal = (index: number) => {
+    const existing = form.details[index];
+    if (!existing) {
+      return;
+    }
+    setEditingDetailIndex(index);
+    setDraftDetail({
+      ...existing,
+      batches:
+        existing.batches.length > 0
+          ? existing.batches.map((batch) => ({ ...batch }))
+          : [initialBatch()],
+    });
+    setItemModalError('');
+    setIsItemModalOpen(true);
+  };
+
+  const closeItemModal = () => {
+    setIsItemModalOpen(false);
+    setEditingDetailIndex(null);
+    setItemModalError('');
+    setDraftDetail(createDefaultDetail());
+  };
+
+  const setDraftField = (key: keyof InboundDetailForm, value: string) => {
+    setDraftDetail((state) => ({
+      ...state,
+      [key]: value,
     }));
   };
 
-  const setBatchField = (
-    detailIndex: number,
+  const setDraftBatchField = (
     batchIndex: number,
     key: keyof InboundBatchForm,
     value: string,
   ) => {
-    setForm((state) => ({
+    setDraftDetail((state) => ({
       ...state,
-      details: state.details.map((detail, i) =>
-        i !== detailIndex
-          ? detail
-          : {
-              ...detail,
-              batches: detail.batches.map((batch, j) =>
-                j === batchIndex ? { ...batch, [key]: value } : batch,
-              ),
-            },
+      batches: state.batches.map((batch, index) =>
+        index === batchIndex ? { ...batch, [key]: value } : batch,
       ),
     }));
   };
 
-  const addDetailRow = () => {
-    setForm((state) => ({
+  const addDraftBatchRow = () => {
+    setDraftDetail((state) => ({
       ...state,
-      details: [
-        ...state.details,
-        { ...initialDetail(), itemId: pickEntityId(itemOptions[0]) || '' },
-      ],
+      batches: [...state.batches, initialBatch()],
     }));
   };
 
-  const removeDetailRow = (index: number) => {
-    setForm((state) => {
-      if (state.details.length === 1) {
+  const removeDraftBatchRow = (batchIndex: number) => {
+    setDraftDetail((state) => {
+      if (state.batches.length === 1) {
         return {
           ...state,
-          details: [{ ...initialDetail(), itemId: pickEntityId(itemOptions[0]) || '' }],
+          batches: [initialBatch()],
         };
       }
       return {
         ...state,
-        details: state.details.filter((_, i) => i !== index),
+        batches: state.batches.filter((_, index) => index !== batchIndex),
       };
     });
   };
 
-  const addBatchRow = (detailIndex: number) => {
-    setForm((state) => ({
-      ...state,
-      details: state.details.map((detail, i) =>
-        i === detailIndex
-          ? { ...detail, batches: [...detail.batches, initialBatch()] }
-          : detail,
-      ),
-    }));
+  const saveDraftItem = () => {
+    const validBatches = draftDetail.batches
+      .filter((batch) => batch.batchIn.trim() && Number(batch.qty || 0) > 0)
+      .map((batch) => ({
+        ...batch,
+        batchIn: batch.batchIn.trim(),
+        notes: batch.notes.trim(),
+      }));
+
+    if (!draftDetail.itemId) {
+      setItemModalError('Item wajib dipilih.');
+      return;
+    }
+
+    if (validBatches.length === 0) {
+      setItemModalError(
+        'Minimal satu batch valid wajib diisi (batch number dan qty > 0).',
+      );
+      return;
+    }
+
+    const normalizedDetail: InboundDetailForm = {
+      ...draftDetail,
+      itemId: draftDetail.itemId,
+      notes: draftDetail.notes.trim(),
+      batches: validBatches,
+    };
+
+    setForm((state) => {
+      if (editingDetailIndex == null) {
+        return {
+          ...state,
+          details: [...state.details, normalizedDetail],
+        };
+      }
+
+      return {
+        ...state,
+        details: state.details.map((detail, index) =>
+          index === editingDetailIndex ? normalizedDetail : detail,
+        ),
+      };
+    });
+
+    closeItemModal();
   };
 
-  const removeBatchRow = (detailIndex: number, batchIndex: number) => {
+  const removeDetailRow = (index: number) => {
     setForm((state) => ({
       ...state,
-      details: state.details.map((detail, i) => {
-        if (i !== detailIndex) {
-          return detail;
-        }
-        if (detail.batches.length === 1) {
-          return { ...detail, batches: [initialBatch()] };
-        }
-        return {
-          ...detail,
-          batches: detail.batches.filter((_, j) => j !== batchIndex),
-        };
-      }),
+      details: state.details.filter((_, i) => i !== index),
     }));
   };
 
@@ -1145,9 +1244,6 @@ export default function LogisticInboundPage() {
             <div className="grid gap-5 xl:grid-cols-[2fr_1fr]">
               <div className="space-y-5">
                 <div className="rounded-lg border p-5">
-                  <h3 className="mb-4 text-base font-semibold">
-                    Inbound Header
-                  </h3>
                   <p className="mb-4 text-xs text-muted-foreground">
                     Field dengan border biru wajib diisi.
                   </p>
@@ -1230,7 +1326,7 @@ export default function LogisticInboundPage() {
                         placeholder="Select warehouse"
                         searchPlaceholder="Search warehouse..."
                         emptyText="No warehouse found."
-                        disabled={Boolean(lockedWarehouseId)}
+                        disabled={!isAdminRole}
                         required
                         triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
                       />
@@ -1290,181 +1386,99 @@ export default function LogisticInboundPage() {
 
             <div className="rounded-lg border p-5">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-base font-semibold">Item & Batch</h3>
+                <h3 className="text-base font-semibold">Item List</h3>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={addDetailRow}
+                  onClick={openAddItemModal}
                 >
                   <Plus />
                   Add Item
                 </Button>
               </div>
 
-              <div className="space-y-4">
-                {form.details.map((detail, detailIndex) => {
-                  const detailQty = detail.batches.reduce(
-                    (sum, batch) => sum + (Number(batch.qty || 0) || 0),
-                    0,
-                  );
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60px]">No</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>UOM</TableHead>
+                    <TableHead className="text-right">Total Batch</TableHead>
+                    <TableHead className="text-right">Total Qty</TableHead>
+                    <TableHead>Notes</TableHead>
+                    <TableHead className="w-[140px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {form.details.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={7}
+                        className="text-muted-foreground"
+                      >
+                        Belum ada item. Klik Add Item untuk mulai input batch.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    form.details.map((detail, detailIndex) => {
+                      const item = itemOptionMap.get(detail.itemId);
+                      const detailQty = detail.batches.reduce(
+                        (sum, batch) => sum + (Number(batch.qty || 0) || 0),
+                        0,
+                      );
 
-                  return (
-                    <div
-                      key={`detail-${detailIndex}`}
-                      className="rounded-md border p-4"
-                    >
-                      <div className="mb-3 grid gap-3 md:grid-cols-[1fr_160px_auto]">
-                        <div className="space-y-1 md:col-span-4">
-                          <Label>Item</Label>
-                          <AutocompleteSelect
-                            value={detail.itemId}
-                            onValueChange={(value) =>
-                              setDetailField(detailIndex, 'itemId', value)
-                            }
-                            options={itemOptions.flatMap<AutocompleteSelectOption>((item) => {
-                                const value = pickEntityId(item);
-                                if (!value) {
-                                  return [];
-                                }
-                                const code = String(item.code ?? '');
-                                const name = String(item.name ?? '');
-                                return {
-                                  value,
-                                  label: `${code} - ${name}`,
-                                  keywords: `${item.uom?.name ?? ''} ${item.uom?.code ?? ''}`,
-                                };
-                              })}
-                            placeholder="Select item"
-                            searchPlaceholder="Search item..."
-                            emptyText="No item found."
-                            required
-                            triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label>Qty (auto)</Label>
-                          <Input value={String(detailQty)} readOnly />
-                        </div>
-                        <div className="flex items-end">
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => removeDetailRow(detailIndex)}
-                          >
-                            <Trash2 />
-                            Remove Item
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <Label>Catatan Item</Label>
-                        <Input
-                          value={detail.notes}
-                          onChange={(e) =>
-                            setDetailField(
-                              detailIndex,
-                              'notes',
-                              e.target.value,
-                            )
-                          }
-                          placeholder="Catatan item"
-                        />
-                      </div>
-
-                      <div className="space-y-2 rounded-md border p-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">Batch Rows</p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => addBatchRow(detailIndex)}
-                          >
-                            <Plus />
-                            Add Batch
-                          </Button>
-                        </div>
-
-                        {detail.batches.map((batch, batchIndex) => (
-                          <div
-                            key={`batch-${detailIndex}-${batchIndex}`}
-                            className="grid gap-2 md:grid-cols-4"
-                          >
-                            <Input
-                              placeholder="Batch number"
-                              value={batch.batchIn}
-                              onChange={(e) =>
-                                setBatchField(
-                                  detailIndex,
-                                  batchIndex,
-                                  'batchIn',
-                                  e.target.value,
-                                )
-                              }
-                              className={REQUIRED_FIELD_CLASS}
-                            />
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="Qty"
-                              value={batch.qty}
-                              onChange={(e) =>
-                                setBatchField(
-                                  detailIndex,
-                                  batchIndex,
-                                  'qty',
-                                  e.target.value,
-                                )
-                              }
-                              className={REQUIRED_FIELD_CLASS}
-                            />
-                            <Input
-                              type="date"
-                              value={batch.expiredDate}
-                              onChange={(e) =>
-                                setBatchField(
-                                  detailIndex,
-                                  batchIndex,
-                                  'expiredDate',
-                                  e.target.value,
-                                )
-                              }
-                            />
+                      return (
+                        <TableRow key={`detail-${detailIndex}`}>
+                          <TableCell>{detailIndex + 1}</TableCell>
+                          <TableCell>
+                            <div className="font-medium">
+                              {item?.name || '-'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {item?.code || detail.itemId || '-'}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {item?.uom?.name || item?.uom?.code || '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {detail.batches.length}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {detailQty}
+                          </TableCell>
+                          <TableCell className="max-w-[280px] truncate">
+                            {detail.notes || '-'}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex gap-2">
-                              <Input
-                                placeholder="Catatan batch"
-                                value={batch.notes}
-                                onChange={(e) =>
-                                  setBatchField(
-                                    detailIndex,
-                                    batchIndex,
-                                    'notes',
-                                    e.target.value,
-                                  )
-                                }
-                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                aria-label="Edit item"
+                                onClick={() => openEditItemModal(detailIndex)}
+                              >
+                                <Pencil />
+                              </Button>
                               <Button
                                 type="button"
                                 variant="destructive"
                                 size="icon"
-                                onClick={() =>
-                                  removeBatchRow(detailIndex, batchIndex)
-                                }
+                                aria-label="Remove item"
+                                onClick={() => removeDetailRow(detailIndex)}
                               >
                                 <Trash2 />
                               </Button>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
             <div className="rounded-lg border p-5">
@@ -1494,6 +1508,183 @@ export default function LogisticInboundPage() {
                 </Button>
               </div>
             </div>
+
+            <Dialog
+              open={isItemModalOpen}
+              onOpenChange={(nextOpen) => {
+                if (!nextOpen) {
+                  closeItemModal();
+                }
+              }}
+            >
+              <DialogContent className="max-w-[1100px] p-0">
+                <DialogHeader className="border-b px-5 pt-5 pb-4">
+                  <DialogTitle>
+                    {editingDetailIndex == null ? 'Tambah Item' : 'Edit Item'}
+                  </DialogTitle>
+                </DialogHeader>
+
+                <div className="space-y-4 px-5 pb-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Item</Label>
+                      <AutocompleteSelect
+                        value={draftDetail.itemId}
+                        onValueChange={(value) => setDraftField('itemId', value)}
+                        options={itemOptions.flatMap<AutocompleteSelectOption>((item) => {
+                          const value = pickEntityId(item);
+                          if (!value) {
+                            return [];
+                          }
+                          const code = String(item.code ?? '');
+                          const name = String(item.name ?? '');
+                          return {
+                            value,
+                            label: `${code} - ${name}`,
+                            keywords: `${item.uom?.name ?? ''} ${item.uom?.code ?? ''}`,
+                          };
+                        })}
+                        placeholder="Select item"
+                        searchPlaceholder="Search item..."
+                        emptyText="No item found."
+                        required
+                        triggerClassName={REQUIRED_SELECT_TRIGGER_CLASS}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Catatan Item</Label>
+                      <Input
+                        value={draftDetail.notes}
+                        onChange={(e) => setDraftField('notes', e.target.value)}
+                        placeholder="Catatan item"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <div className="flex items-center justify-between border-b px-3 py-2">
+                      <p className="text-sm font-medium">Batch Rows</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addDraftBatchRow}
+                      >
+                        <Plus />
+                        + Add Batch
+                      </Button>
+                    </div>
+
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Batch Number</TableHead>
+                          <TableHead className="w-[160px]">Qty</TableHead>
+                          <TableHead className="w-[180px]">Exp Date</TableHead>
+                          <TableHead>Notes</TableHead>
+                          <TableHead className="w-[72px]">Action</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {draftDetail.batches.map((batch, batchIndex) => (
+                          <TableRow key={`draft-batch-${batchIndex}`}>
+                            <TableCell>
+                              <Input
+                                placeholder="Batch number"
+                                value={batch.batchIn}
+                                onChange={(e) =>
+                                  setDraftBatchField(
+                                    batchIndex,
+                                    'batchIn',
+                                    e.target.value,
+                                  )
+                                }
+                                className={REQUIRED_FIELD_CLASS}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="Qty"
+                                value={batch.qty}
+                                onChange={(e) =>
+                                  setDraftBatchField(
+                                    batchIndex,
+                                    'qty',
+                                    e.target.value,
+                                  )
+                                }
+                                className={REQUIRED_FIELD_CLASS}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="date"
+                                value={batch.expiredDate}
+                                onChange={(e) =>
+                                  setDraftBatchField(
+                                    batchIndex,
+                                    'expiredDate',
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                placeholder="Catatan batch"
+                                value={batch.notes}
+                                onChange={(e) =>
+                                  setDraftBatchField(
+                                    batchIndex,
+                                    'notes',
+                                    e.target.value,
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => removeDraftBatchRow(batchIndex)}
+                              >
+                                <Trash2 />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                    <span>Total Qty Item</span>
+                    <span className="font-semibold">{draftItemTotalQty}</span>
+                  </div>
+
+                  {itemModalError ? (
+                    <p className="text-sm text-destructive">{itemModalError}</p>
+                  ) : null}
+
+                  <DialogFooter className="pt-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={closeItemModal}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="button" onClick={saveDraftItem}>
+                      {editingDetailIndex == null ? 'Simpan/Add Item' : 'Update Item'}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </DialogContent>
+            </Dialog>
           </form>
         )}
 

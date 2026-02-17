@@ -65,9 +65,9 @@ export function AutocompleteSelect({
             <CommandInput placeholder={searchPlaceholder} />
             <CommandList>
               <CommandEmpty>{emptyText}</CommandEmpty>
-              {options.map((option) => (
+              {options.map((option, index) => (
                 <CommandItem
-                  key={option.value}
+                  key={`${option.value || 'option'}-${index}`}
                   value={`${option.label} ${option.keywords ?? ''}`}
                   disabled={option.disabled}
                   onSelect={() => {

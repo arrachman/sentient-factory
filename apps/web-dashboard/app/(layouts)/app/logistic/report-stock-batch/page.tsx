@@ -209,7 +209,7 @@ export default function ReportStockBatchPage() {
           cache: 'no-store',
           headers,
         }),
-        fetch('/api/master-data-items?page=1&limit=200', {
+        fetch('/api/master-data-items?page=1&limit=100', {
           cache: 'no-store',
           headers,
         }),
@@ -582,8 +582,10 @@ export default function ReportStockBatchPage() {
                   </TableRow>
                 ) : null}
 
-                {rows.map((row) => (
-                  <TableRow key={row.uuid}>
+                {rows.map((row, index) => (
+                  <TableRow
+                    key={`${String(row.uuid || '')}-${String(row.batch?.batchNumber || '')}-${String(row.transactionDate || '')}-${index}`}
+                  >
                     <TableCell>{formatProductLabel(row) || '-'}</TableCell>
                     <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                     <TableCell>{row.mmfOrDo || '-'}</TableCell>

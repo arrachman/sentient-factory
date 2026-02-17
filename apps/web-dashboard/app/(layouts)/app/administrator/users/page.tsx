@@ -26,7 +26,8 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 
 type AdministratorUser = {
-  uuid: string;
+  id?: string | number;
+  uuid?: string | number;
   email: string;
   username: string;
   fullName?: string | null;
@@ -74,6 +75,21 @@ function getTokenFromCookie() {
     ?.slice('sf_token='.length) || '';
 }
 
+function toEntityId(value: unknown) {
+  if (value == null) {
+    return '';
+  }
+  const id = String(value).trim();
+  if (!id || id === 'null' || id === 'undefined') {
+    return '';
+  }
+  return id;
+}
+
+function pickUserId(user?: AdministratorUser | null) {
+  return toEntityId(user?.id ?? user?.uuid);
+}
+
 export default function AdministratorUsersPage() {
   const [items, setItems] = useState<AdministratorUser[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
@@ -113,7 +129,14 @@ export default function AdministratorUsersPage() {
       if (!response.ok || !payload?.success) {
         throw new Error(payload?.message || 'Failed to load users');
       }
-      setItems(Array.isArray(payload.data) ? payload.data : []);
+      const normalizedItems: AdministratorUser[] = (
+        Array.isArray(payload.data) ? payload.data : []
+      ).map((item: AdministratorUser) => ({
+        ...item,
+        id: item.id ?? item.uuid,
+        uuid: item.uuid ?? item.id,
+      }));
+      setItems(normalizedItems);
       const meta = payload?.meta;
       setPage(typeof meta?.page === 'number' ? meta.page : safePage);
       setTotalPages(typeof meta?.totalPages === 'number' ? meta.totalPages : 1);
@@ -206,7 +229,12 @@ export default function AdministratorUsersPage() {
   };
 
   const onEdit = (item: AdministratorUser) => {
-    setEditingUuid(item.uuid);
+    const userId = pickUserId(item);
+    if (!userId) {
+      setError('User ID is missing');
+      return;
+    }
+    setEditingUuid(userId);
     setShowForm(true);
     setForm({
       email: item.email ?? '',
@@ -218,7 +246,7 @@ export default function AdministratorUsersPage() {
     });
   };
 
-  const onDelete = async (uuid: string) => {
+  const onDelete = async (userId: string) => {
     const ok = window.confirm('Delete this user?');
     if (!ok) {
       return;
@@ -226,7 +254,7 @@ export default function AdministratorUsersPage() {
 
     setError('');
     try {
-      const response = await fetch(`/api/users/${uuid}`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
@@ -234,7 +262,7 @@ export default function AdministratorUsersPage() {
       if (!response.ok || !result?.success) {
         throw new Error(result?.message || 'Failed to delete user');
       }
-      if (editingUuid === uuid) {
+      if (editingUuid === userId) {
         setEditingUuid(null);
         setForm(initialForm);
         setShowForm(false);
@@ -331,7 +359,7 @@ export default function AdministratorUsersPage() {
                   </TableRow>
                 ) : (
                   items.map((item, index) => (
-                    <TableRow key={item.uuid}>
+                    <TableRow key={pickUserId(item) || `user-row-${index}`}>
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>{item.fullName || '-'}</TableCell>
                       <TableCell>{item.email}</TableCell>
@@ -344,7 +372,19 @@ export default function AdministratorUsersPage() {
                           <Button variant="outline" size="icon" aria-label="Edit user" onClick={() => onEdit(item)}>
                             <Pencil />
                           </Button>
-                          <Button variant="destructive" size="icon" aria-label="Delete user" onClick={() => onDelete(item.uuid)}>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            aria-label="Delete user"
+                            onClick={() => {
+                              const userId = pickUserId(item);
+                              if (!userId) {
+                                setError('User ID is missing');
+                                return;
+                              }
+                              void onDelete(userId);
+                            }}
+                          >
                             <Trash2 />
                           </Button>
                         </div>
