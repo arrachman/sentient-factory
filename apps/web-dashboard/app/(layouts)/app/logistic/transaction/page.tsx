@@ -704,14 +704,7 @@ export default function LogisticTransactionDoPage() {
       if (!normalizedItemId) {
         return;
       }
-      const normalizedWarehouseId = toEntityId(form.warehouseId);
-      if (!normalizedWarehouseId) {
-        setBatchOptionsByItemId((state) => ({
-          ...state,
-          [normalizedItemId]: [],
-        }));
-        return;
-      }
+      const normalizedWarehouseId = toEntityId(lockedWarehouseId || form.warehouseId);
 
       const existingOptions = batchOptionsByItemId[normalizedItemId];
       if (!force && Array.isArray(existingOptions) && existingOptions.length > 0) {
@@ -720,7 +713,9 @@ export default function LogisticTransactionDoPage() {
 
       try {
         const query = new URLSearchParams({ itemId: normalizedItemId });
-        query.set('warehouseId', normalizedWarehouseId);
+        if (normalizedWarehouseId) {
+          query.set('warehouseId', normalizedWarehouseId);
+        }
         if (editingUuid) {
           query.set('excludeDoId', editingUuid);
         }
@@ -755,7 +750,7 @@ export default function LogisticTransactionDoPage() {
         }));
       }
     },
-    [batchOptionsByItemId, editingUuid, form.warehouseId, token],
+    [batchOptionsByItemId, editingUuid, form.warehouseId, lockedWarehouseId, token],
   );
 
   const summary = useMemo(() => {
@@ -1583,11 +1578,11 @@ export default function LogisticTransactionDoPage() {
   );
 
   useEffect(() => {
-    if (!isItemModalOpen || !draftItemId || !toEntityId(form.warehouseId)) {
+    if (!isItemModalOpen || !draftItemId) {
       return;
     }
     void fetchBatchOptions(draftItemId, true);
-  }, [draftItemId, fetchBatchOptions, form.warehouseId, isItemModalOpen]);
+  }, [draftItemId, fetchBatchOptions, isItemModalOpen]);
 
   const openAddItemModal = () => {
     setEditingDetailIndex(null);
