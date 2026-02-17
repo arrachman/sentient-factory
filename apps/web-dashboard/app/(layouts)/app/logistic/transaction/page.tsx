@@ -83,6 +83,18 @@ type ItemOption = {
   } | null;
 };
 
+type WarehouseOption = {
+  id?: string | number;
+  uuid?: string | number;
+  name?: string;
+  locationName?: string | null;
+  city?: {
+    id?: string | number;
+    name?: string | null;
+    postalCode?: string | null;
+  } | null;
+};
+
 type DivisionOption = {
   id?: string | number;
   uuid?: string | number;
@@ -110,6 +122,7 @@ type DeliveryOrderForm = {
   doDate: string;
   doReceivedDate: string;
   customerId: string;
+  warehouseId: string;
   destinationCityId: string;
   stdLeadTimeDays: string;
   stdReturnDoDays: string;
@@ -149,6 +162,12 @@ type DeliveryOrderListItem = {
     code: string;
     name: string;
   };
+  warehouse?: {
+    id?: string | number;
+    uuid?: string | number;
+    name?: string | null;
+    locationName?: string | null;
+  } | null;
 };
 
 type DecimalLike = {
@@ -194,6 +213,7 @@ const initialForm: DeliveryOrderForm = {
   doDate: '',
   doReceivedDate: '',
   customerId: '',
+  warehouseId: '',
   destinationCityId: '',
   stdLeadTimeDays: '0',
   stdReturnDoDays: '0',
@@ -564,6 +584,7 @@ export default function LogisticTransactionDoPage() {
 
   const [items, setItems] = useState<DeliveryOrderListItem[]>([]);
   const [customers, setCustomers] = useState<ContactOption[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [cities, setCities] = useState<CityOption[]>([]);
   const [citySlas, setCitySlas] = useState<CitySlaOption[]>([]);
   const [itemOptions, setItemOptions] = useState<ItemOption[]>([]);
@@ -571,6 +592,7 @@ export default function LogisticTransactionDoPage() {
     Record<string, BatchOption[]>
   >({});
   const [divisions, setDivisions] = useState<DivisionOption[]>([]);
+  const [lockedWarehouseId, setLockedWarehouseId] = useState('');
 
   const [form, setForm] = useState<DeliveryOrderForm>(initialForm);
   const [editingUuid, setEditingUuid] = useState<string | null>(null);
@@ -682,6 +704,14 @@ export default function LogisticTransactionDoPage() {
       if (!normalizedItemId) {
         return;
       }
+      const normalizedWarehouseId = toEntityId(form.warehouseId);
+      if (!normalizedWarehouseId) {
+        setBatchOptionsByItemId((state) => ({
+          ...state,
+          [normalizedItemId]: [],
+        }));
+        return;
+      }
 
       const existingOptions = batchOptionsByItemId[normalizedItemId];
       if (!force && Array.isArray(existingOptions) && existingOptions.length > 0) {
@@ -690,6 +720,7 @@ export default function LogisticTransactionDoPage() {
 
       try {
         const query = new URLSearchParams({ itemId: normalizedItemId });
+        query.set('warehouseId', normalizedWarehouseId);
         if (editingUuid) {
           query.set('excludeDoId', editingUuid);
         }
@@ -724,7 +755,7 @@ export default function LogisticTransactionDoPage() {
         }));
       }
     },
-    [batchOptionsByItemId, editingUuid, token],
+    [batchOptionsByItemId, editingUuid, form.warehouseId, token],
   );
 
   const summary = useMemo(() => {
@@ -890,9 +921,17 @@ export default function LogisticTransactionDoPage() {
         ? { Authorization: `Bearer ${token}` }
         : undefined;
 
-      const [customerRes, cityRes, itemRes, divisionRes, citySlaRes] =
+      const [profileRes, customerRes, warehouseRes, cityRes, itemRes, divisionRes, citySlaRes] =
         await Promise.all([
+          fetch('/api/auth/me', {
+            cache: 'no-store',
+            headers,
+          }),
           fetch('/api/master-data-contacts?page=1&limit=100&type=customer', {
+            cache: 'no-store',
+            headers,
+          }),
+          fetch('/api/master-data-warehouses?page=1&limit=100', {
             cache: 'no-store',
             headers,
           }),
@@ -915,22 +954,34 @@ export default function LogisticTransactionDoPage() {
         ]);
 
       const [
+        profilePayload,
         customerPayload,
+        warehousePayload,
         cityPayload,
         itemPayload,
         divisionPayload,
         citySlaPayload,
       ] = await Promise.all([
+        profileRes.json().catch(() => null),
         customerRes.json().catch(() => null),
+        warehouseRes.json().catch(() => null),
         cityRes.json().catch(() => null),
         itemRes.json().catch(() => null),
         divisionRes.json().catch(() => null),
         citySlaRes.json().catch(() => null),
       ]);
 
+      if (!profileRes.ok || !profilePayload?.success) {
+        throw new Error(profilePayload?.message || 'Failed to load current user profile');
+      }
       if (!customerRes.ok || !customerPayload?.success) {
         throw new Error(
           customerPayload?.message || 'Failed to load customer options',
+        );
+      }
+      if (!warehouseRes.ok || !warehousePayload?.success) {
+        throw new Error(
+          warehousePayload?.message || 'Failed to load warehouse options',
         );
       }
       if (!cityRes.ok || !cityPayload?.success) {
@@ -953,6 +1004,17 @@ export default function LogisticTransactionDoPage() {
       const nextCustomers: ContactOption[] = Array.isArray(customerPayload.data)
         ? customerPayload.data
         : [];
+      const nextWarehouses: WarehouseOption[] = Array.isArray(warehousePayload.data)
+        ? warehousePayload.data
+        : [];
+      const profileWarehouseId = toEntityId(
+        profilePayload?.data?.warehouseId ?? profilePayload?.data?.user?.warehouseId,
+      );
+      const filteredWarehouses = profileWarehouseId
+        ? nextWarehouses.filter(
+            (warehouse) => pickEntityId(warehouse) === profileWarehouseId,
+          )
+        : nextWarehouses;
       const nextCities: CityOption[] = Array.isArray(cityPayload.data)
         ? cityPayload.data
         : [];
@@ -969,12 +1031,16 @@ export default function LogisticTransactionDoPage() {
         : [];
 
       setCustomers(nextCustomers);
+      setWarehouses(filteredWarehouses);
+      setLockedWarehouseId(profileWarehouseId);
       setCities(nextCities);
       setItemOptions(nextItems);
       setDivisions(nextDivisions);
       setCitySlas(nextCitySlas);
 
       const fallbackCustomerId = pickEntityId(nextCustomers[0]);
+      const fallbackWarehouseId =
+        profileWarehouseId || pickEntityId(filteredWarehouses[0]);
       const fallbackCustomer = nextCustomers.find(
         (row) => pickEntityId(row) === fallbackCustomerId,
       );
@@ -993,6 +1059,7 @@ export default function LogisticTransactionDoPage() {
       setForm((state) => ({
         ...state,
         customerId: state.customerId || fallbackCustomerId,
+        warehouseId: state.warehouseId || fallbackWarehouseId,
         destinationCityId: state.destinationCityId || fallbackCityId,
         stdLeadTimeDays:
           state.stdLeadTimeDays && state.stdLeadTimeDays !== '0'
@@ -1025,6 +1092,7 @@ export default function LogisticTransactionDoPage() {
 
   const openCreateForm = useCallback(() => {
     const fallbackCustomerId = pickEntityId(customers[0]);
+    const fallbackWarehouseId = lockedWarehouseId || pickEntityId(warehouses[0]);
     const defaults = resolveDefaultByCustomer(fallbackCustomerId);
     setEditingUuid(null);
     setForm({
@@ -1032,6 +1100,7 @@ export default function LogisticTransactionDoPage() {
       doDate: new Date().toISOString().slice(0, 10),
       doReceivedDate: new Date().toISOString().slice(0, 10),
       customerId: fallbackCustomerId,
+      warehouseId: fallbackWarehouseId,
       destinationCityId: defaults?.destinationCityId || pickEntityId(cities[0]),
       stdLeadTimeDays: defaults?.stdLeadTimeDays || '0',
       stdReturnDoDays: defaults?.stdReturnDoDays || '0',
@@ -1043,7 +1112,15 @@ export default function LogisticTransactionDoPage() {
     setItemModalError('');
     setDraftDetail(createDefaultDetail());
     setShowForm(true);
-  }, [cities, createDefaultDetail, customers, divisions, resolveDefaultByCustomer]);
+  }, [
+    cities,
+    createDefaultDetail,
+    customers,
+    divisions,
+    lockedWarehouseId,
+    resolveDefaultByCustomer,
+    warehouses,
+  ]);
 
   useEffect(() => {
     if (!isOutboundAddRoute || loadingOptions) {
@@ -1128,6 +1205,7 @@ export default function LogisticTransactionDoPage() {
           ? String(data.doReceivedDate).slice(0, 10)
           : '',
         customerId: String(data.customerId ?? ''),
+        warehouseId: String(data.warehouseId ?? ''),
         destinationCityId: String(data.destinationCityId ?? ''),
         stdLeadTimeDays: String(data.stdLeadTimeDays ?? 0),
         stdReturnDoDays: String(data.stdReturnDoDays ?? 0),
@@ -1211,12 +1289,17 @@ export default function LogisticTransactionDoPage() {
       if (normalizedDetails.length === 0) {
         throw new Error('Minimal satu baris detail batch item wajib diisi.');
       }
+      const effectiveWarehouseId = lockedWarehouseId || toEntityId(form.warehouseId);
+      if (!effectiveWarehouseId) {
+        throw new Error('Warehouse wajib dipilih.');
+      }
 
       const payload = {
         doNumber: form.doNumber.trim(),
         doDate: form.doDate,
         doReceivedDate: form.doReceivedDate,
         customerId: form.customerId,
+        warehouseId: effectiveWarehouseId,
         destinationCityId: form.destinationCityId || undefined,
         stdLeadTimeDays: Number(form.stdLeadTimeDays || 0),
         stdReturnDoDays: Number(form.stdReturnDoDays || 0),
@@ -1790,6 +1873,7 @@ export default function LogisticTransactionDoPage() {
                   <TableHead className="w-[110px]">DO Number</TableHead>
                   <TableHead className="w-[110px] whitespace-nowrap">DO Date</TableHead>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Warehouse</TableHead>
                   <TableHead className="w-[90px] text-center whitespace-nowrap">Status</TableHead>
                   <TableHead className="w-[90px] text-center whitespace-nowrap">Tot Item</TableHead>
                   <TableHead className="w-[90px] text-center whitespace-nowrap">Tot Batch</TableHead>
@@ -1800,13 +1884,13 @@ export default function LogisticTransactionDoPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={10}>
                       Loading delivery orders...
                     </TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={10}>
                       No delivery orders found.
                     </TableCell>
                   </TableRow>
@@ -1830,6 +1914,9 @@ export default function LogisticTransactionDoPage() {
                         <div className="text-xs text-muted-foreground">
                           {item.customer?.code || '-'}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {item.warehouse?.name || '-'}
                       </TableCell>
                       <TableCell className="whitespace-nowrap">
                         <Badge variant={outboundStatusBadgeVariant(item.status)}>{item.status}</Badge>
@@ -2378,6 +2465,37 @@ export default function LogisticTransactionDoPage() {
                         placeholder="Select customer"
                         searchPlaceholder="Search customer..."
                         emptyText="No customer found."
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Warehouse</Label>
+                      <AutocompleteSelect
+                        value={form.warehouseId}
+                        onValueChange={(value) =>
+                          setForm((state) => ({
+                            ...state,
+                            warehouseId: lockedWarehouseId || toEntityId(value),
+                          }))
+                        }
+                        options={warehouses.flatMap((warehouse) => {
+                          const value = pickEntityId(warehouse);
+                          if (!value) {
+                            return [];
+                          }
+                          const cityName = String(warehouse.city?.name ?? '').trim();
+                          return {
+                            value,
+                            label: cityName
+                              ? `${String(warehouse.name ?? '')} - ${cityName}`
+                              : String(warehouse.name ?? ''),
+                            keywords: warehouse.locationName || undefined,
+                          };
+                        })}
+                        placeholder="Select warehouse"
+                        searchPlaceholder="Search warehouse..."
+                        emptyText="No warehouse found."
+                        disabled={Boolean(lockedWarehouseId)}
                         required
                       />
                     </div>
