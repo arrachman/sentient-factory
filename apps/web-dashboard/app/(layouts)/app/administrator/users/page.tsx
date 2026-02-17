@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
@@ -31,6 +32,8 @@ type AdministratorUser = {
   email: string;
   username: string;
   fullName?: string | null;
+  roleId?: string | number | null;
+  roleIds?: Array<string | number>;
   warehouseId?: string | null;
   warehouseName?: string | null;
   isActive: boolean;
@@ -44,9 +47,16 @@ type WarehouseOption = {
 };
 
 type WarehouseApiItem = {
+  id?: string | number;
   uuid?: string;
   name?: string | null;
   locationName?: string | null;
+};
+
+type RoleApiItem = {
+  id?: string | number;
+  uuid?: string | number;
+  name?: string | null;
 };
 
 type FormState = {
@@ -54,6 +64,7 @@ type FormState = {
   username: string;
   fullName: string;
   password: string;
+  roleIds: string[];
   warehouseId: string;
   isActive: boolean;
 };
@@ -63,6 +74,7 @@ const initialForm: FormState = {
   username: '',
   fullName: '',
   password: '',
+  roleIds: [],
   warehouseId: '',
   isActive: true,
 };
@@ -100,10 +112,12 @@ export default function AdministratorUsersPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
+  const [roles, setRoles] = useState<WarehouseOption[]>([]);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [defaultWarehouseId, setDefaultWarehouseId] = useState('');
 
   const token = useMemo(() => getTokenFromCookie(), []);
 
@@ -166,8 +180,8 @@ export default function AdministratorUsersPage() {
         }
         const options = (Array.isArray(payload.data) ? payload.data : []).map(
           (item: WarehouseApiItem) => ({
-            value: String(item.uuid ?? ''),
-            label: String(item.locationName || item.name || item.uuid || ''),
+            value: String(item.id ?? item.uuid ?? ''),
+            label: String(item.locationName || item.name || item.id || item.uuid || ''),
           }),
         );
         setWarehouses(options);
@@ -179,6 +193,64 @@ export default function AdministratorUsersPage() {
     fetchWarehouses();
   }, [token]);
 
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const response = await fetch('/api/master-data-roles?page=1&limit=100&includeSystem=true', {
+          cache: 'no-store',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.success) {
+          return;
+        }
+        const options = (Array.isArray(payload.data) ? payload.data : []).map((item: RoleApiItem) => ({
+          value: String(item.id ?? item.uuid ?? ''),
+          label: String(item.name || item.id || item.uuid || ''),
+        }));
+        setRoles(options);
+      } catch {
+        setRoles([]);
+      }
+    };
+
+    fetchRoles();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchCurrentUserProfile = async () => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.success) {
+          return;
+        }
+
+        const rawWarehouseId =
+          payload?.data?.warehouseId ??
+          payload?.data?.user?.warehouseId ??
+          null;
+        const normalizedWarehouseId =
+          rawWarehouseId == null ? '' : String(rawWarehouseId).trim();
+        setDefaultWarehouseId(normalizedWarehouseId);
+      } catch {
+        setDefaultWarehouseId('');
+      }
+    };
+
+    fetchCurrentUserProfile();
+  }, [token]);
+
+  useEffect(() => {
+    if (!showForm || editingUuid || form.warehouseId || !defaultWarehouseId) {
+      return;
+    }
+    setForm((prev) => ({ ...prev, warehouseId: defaultWarehouseId }));
+  }, [defaultWarehouseId, editingUuid, form.warehouseId, showForm]);
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSubmitting(true);
@@ -189,9 +261,14 @@ export default function AdministratorUsersPage() {
         email: form.email.trim(),
         username: form.username.trim(),
         fullName: form.fullName.trim() || undefined,
+        roleIds: form.roleIds,
         warehouseId: form.warehouseId.trim(),
         isActive: form.isActive,
       };
+
+      if (!Array.isArray(form.roleIds) || form.roleIds.length === 0) {
+        throw new Error('Please select at least one role');
+      }
 
       if (editingUuid) {
         if (form.password.trim()) {
@@ -241,6 +318,11 @@ export default function AdministratorUsersPage() {
       username: item.username ?? '',
       fullName: item.fullName ?? '',
       password: '',
+      roleIds: Array.isArray(item.roleIds)
+        ? item.roleIds.map((value) => toEntityId(value)).filter(Boolean)
+        : toEntityId(item.roleId)
+          ? [toEntityId(item.roleId)]
+          : [],
       warehouseId: item.warehouseId ?? '',
       isActive: item.isActive,
     });
@@ -284,7 +366,7 @@ export default function AdministratorUsersPage() {
           <Button
             onClick={() => {
               setEditingUuid(null);
-              setForm(initialForm);
+              setForm({ ...initialForm, warehouseId: defaultWarehouseId || initialForm.warehouseId });
               setShowForm(true);
             }}
           >
@@ -365,7 +447,9 @@ export default function AdministratorUsersPage() {
                       <TableCell>{item.email}</TableCell>
                       <TableCell>{item.username}</TableCell>
                       <TableCell>{item.warehouseName || '-'}</TableCell>
-                      <TableCell className="capitalize">{item.role || '-'}</TableCell>
+                      <TableCell className="capitalize">
+                        {item.roles?.length ? item.roles.join(', ') : item.role || '-'}
+                      </TableCell>
                       <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -481,6 +565,42 @@ export default function AdministratorUsersPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div>
+                  <Label>
+                    Roles <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="max-h-40 space-y-2 overflow-y-auto rounded-md border p-2">
+                    {roles.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No role found.</p>
+                    ) : (
+                      roles.map((role) => {
+                        const checked = form.roleIds.includes(role.value);
+                        return (
+                          <label key={role.value} className="flex cursor-pointer items-center gap-2 text-sm">
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={(next) => {
+                                setForm((prev) => {
+                                  if (next) {
+                                    return {
+                                      ...prev,
+                                      roleIds: Array.from(new Set([...prev.roleIds, role.value])),
+                                    };
+                                  }
+                                  return {
+                                    ...prev,
+                                    roleIds: prev.roleIds.filter((item) => item !== role.value),
+                                  };
+                                });
+                              }}
+                            />
+                            <span>{role.label}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
                 <div>
                   <Label htmlFor="isActive">Status</Label>
                   <AutocompleteSelect
