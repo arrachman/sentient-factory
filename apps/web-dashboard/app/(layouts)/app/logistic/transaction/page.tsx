@@ -1577,6 +1577,17 @@ export default function LogisticTransactionDoPage() {
       ) || 0,
     [draftDetail.batchNumbers, draftDetail.batchQtyMap, draftDetail.itemId, getAutoQtyPcs],
   );
+  const draftItemId = useMemo(
+    () => toEntityId(draftDetail.itemId),
+    [draftDetail.itemId],
+  );
+
+  useEffect(() => {
+    if (!isItemModalOpen || !draftItemId || !toEntityId(form.warehouseId)) {
+      return;
+    }
+    void fetchBatchOptions(draftItemId, true);
+  }, [draftItemId, fetchBatchOptions, form.warehouseId, isItemModalOpen]);
 
   const openAddItemModal = () => {
     setEditingDetailIndex(null);
@@ -2788,11 +2799,11 @@ export default function LogisticTransactionDoPage() {
                     <BatchMultiSelect
                       value={draftDetail.batchNumbers}
                       onChange={setDraftBatchNumbers}
-                      options={(batchOptionsByItemId[draftDetail.itemId] || []).map((option) => {
+                      options={(batchOptionsByItemId[draftItemId] || []).map((option) => {
                         const taken = form.details.some(
                           (row, rowIndex) =>
                             rowIndex !== editingDetailIndex &&
-                            row.itemId === draftDetail.itemId &&
+                            toEntityId(row.itemId) === draftItemId &&
                             row.batchNumbers.includes(option.batchNumber),
                         );
                         return {
@@ -2800,14 +2811,14 @@ export default function LogisticTransactionDoPage() {
                           disabled: taken || option.qtyPcs <= 0,
                         };
                       })}
-                      placeholder={draftDetail.itemId ? 'Select batch(es)' : 'Select item first'}
+                      placeholder={draftItemId ? 'Select batch(es)' : 'Select item first'}
                       searchPlaceholder="Search batch..."
                       emptyText={
-                        draftDetail.itemId
+                        draftItemId
                           ? 'No batch found for this item.'
                           : 'Select item first.'
                       }
-                      disabled={!draftDetail.itemId}
+                      disabled={!draftItemId}
                       required
                     />
                   </div>
