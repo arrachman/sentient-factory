@@ -36,6 +36,10 @@ type AdministratorUser = {
   roleIds?: Array<string | number>;
   warehouseId?: string | null;
   warehouseName?: string | null;
+  warehouse?: {
+    id?: string | number | null;
+    uuid?: string | number | null;
+  } | null;
   isActive: boolean;
   role?: string | null;
   roles?: string[];
@@ -149,6 +153,7 @@ export default function AdministratorUsersPage() {
         ...item,
         id: item.id ?? item.uuid,
         uuid: item.uuid ?? item.id,
+        warehouseId: toEntityId(item.warehouseId ?? item.warehouse?.id ?? item.warehouse?.uuid),
       }));
       setItems(normalizedItems);
       const meta = payload?.meta;
@@ -232,9 +237,12 @@ export default function AdministratorUsersPage() {
         const rawWarehouseId =
           payload?.data?.warehouseId ??
           payload?.data?.user?.warehouseId ??
+          payload?.data?.warehouse?.id ??
+          payload?.data?.user?.warehouse?.id ??
+          payload?.data?.warehouse?.uuid ??
+          payload?.data?.user?.warehouse?.uuid ??
           null;
-        const normalizedWarehouseId =
-          rawWarehouseId == null ? '' : String(rawWarehouseId).trim();
+        const normalizedWarehouseId = toEntityId(rawWarehouseId);
         setDefaultWarehouseId(normalizedWarehouseId);
       } catch {
         setDefaultWarehouseId('');
@@ -323,7 +331,7 @@ export default function AdministratorUsersPage() {
         : toEntityId(item.roleId)
           ? [toEntityId(item.roleId)]
           : [],
-      warehouseId: item.warehouseId ?? '',
+      warehouseId: toEntityId(item.warehouseId ?? item.warehouse?.id ?? item.warehouse?.uuid),
       isActive: item.isActive,
     });
   };
