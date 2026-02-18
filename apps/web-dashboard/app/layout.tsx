@@ -14,17 +14,6 @@ export const metadata: Metadata = {
     template: '%s | Sentient Factory',
     default: 'Sentient Factory', // a default is required when creating a template
   },
-  icons: {
-    icon: [
-      {
-        url: '/media/app/favicon-16x13.png',
-        sizes: '13x16',
-        type: 'image/png',
-      },
-    ],
-    shortcut: '/media/app/favicon-16x13.png',
-    apple: '/media/app/favicon-16x13.png',
-  },
 };
 
 export default async function RootLayout({
