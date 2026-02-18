@@ -28,15 +28,17 @@ type WarehouseOption = {
 };
 
 type SupplierOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
 };
 
 type ItemOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
 };
 
 type ReportRow = {
@@ -167,6 +169,31 @@ function pickEntityId(entity?: { id?: string | number; uuid?: string | number } 
   return toEntityId(entity?.id ?? entity?.uuid);
 }
 
+function extractRoleNames(values: unknown[]): string[] {
+  return values
+    .map((value) => {
+      if (!value) {
+        return '';
+      }
+      if (typeof value === 'string') {
+        return value;
+      }
+      if (typeof value === 'object') {
+        const roleName = (value as { name?: unknown })?.name;
+        if (typeof roleName === 'string') {
+          return roleName;
+        }
+        const nestedRoleName = (value as { role?: { name?: unknown } })?.role?.name;
+        if (typeof nestedRoleName === 'string') {
+          return nestedRoleName;
+        }
+      }
+      return '';
+    })
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export default function ReportStockBatchPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilter);
   const [rows, setRows] = useState<ReportRow[]>([]);
@@ -241,13 +268,11 @@ export default function ReportStockBatchPage() {
       setItems(Array.isArray(itemPayload.data) ? itemPayload.data : []);
 
       const profileData = profilePayload?.data ?? {};
-      const roleNames = [
+      const roleNames = extractRoleNames([
         ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
         ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
-      ]
-        .map((value) => String(value ?? '').trim().toLowerCase())
-        .filter(Boolean);
-      const hasAdminRole = roleNames.includes('admin');
+      ]);
+      const hasAdminRole = roleNames.includes('admin') || roleNames.includes('super_admin');
       setIsAdminRole(hasAdminRole);
 
       const warehouseCandidates = [
@@ -498,10 +523,18 @@ export default function ReportStockBatchPage() {
             <AutocompleteSelect
               value={filters.supplierId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, supplierId: value }))}
-              options={suppliers.map((supplier) => ({
-                value: supplier.uuid,
-                label: `${supplier.code} - ${supplier.name}`,
-              }))}
+              options={suppliers.flatMap((supplier) => {
+                const value = pickEntityId(supplier);
+                if (!value) {
+                  return [];
+                }
+                const code = String(supplier.code ?? '').trim();
+                const name = String(supplier.name ?? '').trim();
+                return {
+                  value,
+                  label: [code, name].filter(Boolean).join(' - ') || value,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All suppliers'}
               searchPlaceholder="Search supplier..."
               emptyText="No supplier found"
@@ -514,10 +547,18 @@ export default function ReportStockBatchPage() {
             <AutocompleteSelect
               value={filters.itemId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, itemId: value }))}
-              options={items.map((item) => ({
-                value: item.uuid,
-                label: `${item.code} - ${item.name}`,
-              }))}
+              options={items.flatMap((item) => {
+                const value = pickEntityId(item);
+                if (!value) {
+                  return [];
+                }
+                const code = String(item.code ?? '').trim();
+                const name = String(item.name ?? '').trim();
+                return {
+                  value,
+                  label: [code, name].filter(Boolean).join(' - ') || value,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All items'}
               searchPlaceholder="Search item..."
               emptyText="No item found"
@@ -561,6 +602,9 @@ export default function ReportStockBatchPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>No</TableHead>
+                  <TableHead>Warehouse</TableHead>
+                  <TableHead>Supplier</TableHead>
                   <TableHead>Produk</TableHead>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>MMF/DO</TableHead>
@@ -574,7 +618,7 @@ export default function ReportStockBatchPage() {
               <TableBody>
                 {!loading && rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={11} className="h-24 text-center text-muted-foreground">
                       No report data found.
                     </TableCell>
                   </TableRow>
@@ -584,6 +628,9 @@ export default function ReportStockBatchPage() {
                   <TableRow
                     key={`${String(row.uuid || '')}-${String(row.batch?.batchNumber || '')}-${String(row.transactionDate || '')}-${index}`}
                   >
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{row.warehouse?.name || '-'}</TableCell>
+                    <TableCell>{row.supplierNames?.length ? row.supplierNames.join(', ') : '-'}</TableCell>
                     <TableCell>{formatProductLabel(row) || '-'}</TableCell>
                     <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                     <TableCell>{row.mmfOrDo || '-'}</TableCell>

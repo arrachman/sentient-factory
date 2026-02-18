@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Download, RefreshCw } from 'lucide-react';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,15 +24,18 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 
 type ProvinceOption = {
-  uuid: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  name?: string;
 };
 
 type CityOption = {
-  uuid: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  name?: string;
   province?: {
-    uuid?: string;
+    id?: string | number;
+    uuid?: string | number;
     name?: string;
   } | null;
 };
@@ -43,9 +47,10 @@ type WarehouseOption = {
 };
 
 type SupplierOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
 };
 
 type MonitoringRow = {
@@ -77,6 +82,7 @@ type MonitoringRow = {
   totalKg?: string | number | DecimalLike | null;
   sourceSuppliers?: Array<{ id: string; name: string }>;
   sourceWarehouses?: Array<{ id: string; name: string }>;
+  status?: string | null;
   customer?: {
     name?: string;
   } | null;
@@ -93,6 +99,7 @@ type FilterState = {
   supplierId: string;
   provinceId: string;
   cityId: string;
+  status: string;
   doReceivedDate: string;
 };
 
@@ -101,8 +108,11 @@ const initialFilter: FilterState = {
   supplierId: '',
   provinceId: '',
   cityId: '',
+  status: '',
   doReceivedDate: '',
 };
+
+const STATUS_OPTIONS = ['OPEN', 'DELIVERY', 'DELIVERED', 'COMPLETED'] as const;
 
 function getTokenFromCookie() {
   return (
@@ -189,6 +199,22 @@ function computeKpiStatus(actualDate?: string | Date | null, standardDate?: stri
   return actual.getTime() <= standard.getTime() ? 'ONTIME' : 'LATE';
 }
 
+function outboundStatusBadgeVariant(status?: string | null) {
+  if (status === 'OPEN') {
+    return 'warning';
+  }
+  if (status === 'DELIVERY') {
+    return 'info';
+  }
+  if (status === 'DELIVERED') {
+    return 'primary';
+  }
+  if (status === 'COMPLETED') {
+    return 'success';
+  }
+  return 'secondary';
+}
+
 function isDecimalLike(value: unknown): value is DecimalLike {
   if (!value || typeof value !== 'object') {
     return false;
@@ -260,8 +286,34 @@ function toEntityId(value: unknown) {
   return id;
 }
 
-function pickEntityId(entity?: { id?: string | number; uuid?: string | number } | null) {
-  return toEntityId(entity?.id ?? entity?.uuid);
+function pickIdFromUnknown(entity: unknown, extraKeys: string[] = []) {
+  if (!entity || typeof entity !== 'object') {
+    return '';
+  }
+  const record = entity as Record<string, unknown>;
+  const candidates = [
+    'id',
+    'uuid',
+    '_id',
+    'warehouseId',
+    'supplierId',
+    'provinceId',
+    'cityId',
+    'contactId',
+    'warehouse_id',
+    'supplier_id',
+    'province_id',
+    'city_id',
+    'contact_id',
+    ...extraKeys,
+  ];
+  for (const key of candidates) {
+    const value = toEntityId(record[key]);
+    if (value) {
+      return value;
+    }
+  }
+  return '';
 }
 
 function downloadBufferAsXlsx(buffer: ArrayBuffer, filename: string) {
@@ -377,7 +429,7 @@ export default function ReportMonitoringDoPage() {
         .filter(Boolean);
       const optionIds = new Set(
         (Array.isArray(warehousePayload.data) ? warehousePayload.data : [])
-          .map((warehouse: WarehouseOption) => pickEntityId(warehouse))
+          .map((warehouse: WarehouseOption) => pickIdFromUnknown(warehouse))
           .filter(Boolean),
       );
       const profileWarehouseName = String(
@@ -392,7 +444,7 @@ export default function ReportMonitoringDoPage() {
       );
       const defaultWarehouseId =
         warehouseCandidates.find((candidate) => optionIds.has(candidate)) ||
-        pickEntityId(warehouseByName) ||
+        pickIdFromUnknown(warehouseByName) ||
         '';
 
       if (defaultWarehouseId && !hasAdminRole) {
@@ -457,6 +509,9 @@ export default function ReportMonitoringDoPage() {
       if (filters.cityId) {
         query.set('cityId', filters.cityId);
       }
+      if (filters.status) {
+        query.set('status', filters.status);
+      }
       if (filters.doReceivedDate) {
         query.set('doReceivedDateFrom', filters.doReceivedDate);
         query.set('doReceivedDateTo', filters.doReceivedDate);
@@ -497,7 +552,9 @@ export default function ReportMonitoringDoPage() {
   }, [fetchReport]);
 
   const selectedProvinceName = useMemo(() => {
-    const selected = provinces.find((item) => item.uuid === filters.provinceId);
+    const selected = provinces.find(
+      (item) => pickIdFromUnknown(item, ['provinceId']) === filters.provinceId,
+    );
     return selected?.name || 'All Provinces';
   }, [filters.provinceId, provinces]);
 
@@ -658,7 +715,7 @@ export default function ReportMonitoringDoPage() {
         <ToolbarHeading>
           <ToolbarPageTitle>Report Monitoring DO</ToolbarPageTitle>
           <ToolbarDescription>
-            Monitor DO and delivery with Warehouse, Supplier, Province, City, and DO Received Date filters.ab
+            Monitor DO and delivery with Warehouse, Supplier, Province, City, Status, and DO Received Date filters.
           </ToolbarDescription>
         </ToolbarHeading>
         <ToolbarActions>
@@ -674,14 +731,15 @@ export default function ReportMonitoringDoPage() {
       </Toolbar>
 
       <div className="rounded-lg border bg-card p-5 md:p-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="space-y-2">
             <Label>Warehouse</Label>
             <AutocompleteSelect
               value={filters.warehouseId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, warehouseId: value }))}
+              clearable={isAdminRole}
               options={warehouses.flatMap((warehouse) => {
-                const value = pickEntityId(warehouse);
+                const value = pickIdFromUnknown(warehouse);
                 if (!value) {
                   return [];
                 }
@@ -707,10 +765,19 @@ export default function ReportMonitoringDoPage() {
             <AutocompleteSelect
               value={filters.supplierId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, supplierId: value }))}
-              options={suppliers.map((supplier) => ({
-                value: supplier.uuid,
-                label: `${supplier.code} - ${supplier.name}`,
-              }))}
+              clearable
+              options={suppliers.flatMap((supplier) => {
+                const value = pickIdFromUnknown(supplier, ['supplierId', 'contactId']);
+                if (!value) {
+                  return [];
+                }
+                const code = String(supplier.code ?? '').trim();
+                const name = String(supplier.name ?? '').trim();
+                return {
+                  value,
+                  label: code ? `${code} - ${name}` : name || value,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All suppliers'}
               searchPlaceholder="Search supplier..."
               emptyText="No supplier found"
@@ -725,10 +792,17 @@ export default function ReportMonitoringDoPage() {
               onValueChange={(value) =>
                 setFilters((prev) => ({ ...prev, provinceId: value, cityId: '' }))
               }
-              options={provinces.map((province) => ({
-                value: province.uuid,
-                label: province.name,
-              }))}
+              clearable
+              options={provinces.flatMap((province) => {
+                const value = pickIdFromUnknown(province, ['provinceId']);
+                if (!value) {
+                  return [];
+                }
+                return {
+                  value,
+                  label: String(province.name ?? value),
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All provinces'}
               searchPlaceholder="Search province..."
               emptyText="No province found"
@@ -741,13 +815,37 @@ export default function ReportMonitoringDoPage() {
             <AutocompleteSelect
               value={filters.cityId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, cityId: value }))}
-              options={cities.map((city) => ({
-                value: city.uuid,
-                label: city.name,
-              }))}
+              clearable
+              options={cities.flatMap((city) => {
+                const value = pickIdFromUnknown(city, ['cityId']);
+                if (!value) {
+                  return [];
+                }
+                return {
+                  value,
+                  label: String(city.name ?? value),
+                };
+              })}
               placeholder="All cities"
               searchPlaceholder="Search city..."
               emptyText="No city found"
+              disabled={loadingOptions}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <AutocompleteSelect
+              value={filters.status}
+              onValueChange={(value) => setFilters((prev) => ({ ...prev, status: value }))}
+              clearable
+              options={STATUS_OPTIONS.map((status) => ({
+                value: status,
+                label: status,
+              }))}
+              placeholder="All status"
+              searchPlaceholder="Search status..."
+              emptyText="No status found"
               disabled={loadingOptions}
             />
           </div>
@@ -802,11 +900,12 @@ export default function ReportMonitoringDoPage() {
                 <TableRow>
                   <TableHead>No</TableHead>
                   <TableHead>DO Number</TableHead>
-                  <TableHead>DO Received Date</TableHead>
-                  <TableHead>Destination</TableHead>
-                  <TableHead>Province</TableHead>
                   <TableHead>Warehouse</TableHead>
                   <TableHead>Supplier</TableHead>
+                  <TableHead>Province</TableHead>
+                  <TableHead>Destination</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>DO Received Date</TableHead>
                   <TableHead className="text-right">Total Items</TableHead>
                   <TableHead className="text-right">Total KG</TableHead>
                 </TableRow>
@@ -814,7 +913,7 @@ export default function ReportMonitoringDoPage() {
               <TableBody>
                 {!loading && rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
                       No report data found.
                     </TableCell>
                   </TableRow>
@@ -826,9 +925,6 @@ export default function ReportMonitoringDoPage() {
                   >
                     <TableCell>{index + 1}</TableCell>
                     <TableCell>{row.doNumber || '-'}</TableCell>
-                    <TableCell>{fmtDate(row.doReceivedDate)}</TableCell>
-                    <TableCell>{row.destinationCity?.name || '-'}</TableCell>
-                    <TableCell>{row.destinationCity?.province?.name || '-'}</TableCell>
                     <TableCell>
                       {row.sourceWarehouses?.length
                         ? row.sourceWarehouses.map((item) => item.name).join(', ')
@@ -839,6 +935,12 @@ export default function ReportMonitoringDoPage() {
                         ? row.sourceSuppliers.map((item) => item.name).join(', ')
                         : '-'}
                     </TableCell>
+                    <TableCell>{row.destinationCity?.province?.name || '-'}</TableCell>
+                    <TableCell>{row.destinationCity?.name || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={outboundStatusBadgeVariant(row.status)}>{row.status || '-'}</Badge>
+                    </TableCell>
+                    <TableCell>{fmtDate(row.doReceivedDate)}</TableCell>
                     <TableCell className="text-right">
                       {fmtNumber(row.totalItemTypes ?? row.totalQtyPcs)}
                     </TableCell>

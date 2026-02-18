@@ -22,6 +22,11 @@ export class QueryMonitoringOutboundDto {
   @IsString()
   cityId?: string;
 
+  @ApiPropertyOptional({ example: 'OPEN' })
+  @IsOptional()
+  @IsString()
+  status?: string;
+
   @ApiPropertyOptional({ example: '2026-02-01' })
   @IsOptional()
   @IsDateString()

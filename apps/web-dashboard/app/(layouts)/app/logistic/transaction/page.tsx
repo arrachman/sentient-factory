@@ -150,6 +150,7 @@ type DeliveryOrderListItem = {
   stdDoReturnDate?: string | null;
   doScanReturnDate?: string | null;
   stdLeadTimeDays?: string | number;
+  stdReturnDoDays?: string | number;
   kpiDeliveryStatus?: 'ONTIME' | 'LATE' | null;
   kpiDoReturnStatus?: 'ONTIME' | 'LATE' | null;
   totalItemTypes: number;
@@ -193,8 +194,9 @@ type DeliveredActionState = {
 
 type CompletedActionState = {
   id: string;
-  doDate: string;
+  shippingDate: string;
   doScanReturnDate: string;
+  stdReturnDoDays: number;
   stdDoReturnDate: string;
 };
 
@@ -293,18 +295,6 @@ function resolveDeliveryKpiStatus(actualReceivedDate?: string, standardReceivedD
   return actual.getTime() <= standard.getTime() ? 'ONTIME' : 'LATE';
 }
 
-function resolveReturnDoKpiStatus(doScanReturnDate?: string, stdDoReturnDate?: string) {
-  if (!doScanReturnDate || !stdDoReturnDate) {
-    return '-';
-  }
-  const scanDate = new Date(doScanReturnDate);
-  const standardDate = new Date(stdDoReturnDate);
-  if (Number.isNaN(scanDate.getTime()) || Number.isNaN(standardDate.getTime())) {
-    return '-';
-  }
-  return scanDate.getTime() <= standardDate.getTime() ? 'ONTIME' : 'LATE';
-}
-
 function outboundStatusBadgeVariant(status?: DeliveryOrderListItem['status']) {
   if (status === 'OPEN') {
     return 'warning';
@@ -319,19 +309,6 @@ function outboundStatusBadgeVariant(status?: DeliveryOrderListItem['status']) {
     return 'success';
   }
   return 'secondary';
-}
-
-function diffDays(startDate?: string, endDate?: string) {
-  if (!startDate || !endDate) {
-    return null;
-  }
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return null;
-  }
-  const msPerDay = 24 * 60 * 60 * 1000;
-  return Math.round((end.getTime() - start.getTime()) / msPerDay);
 }
 
 function isDecimalLike(value: unknown): value is DecimalLike {
@@ -1402,13 +1379,15 @@ export default function LogisticTransactionDoPage() {
 
   const buildCompletedActionState = (rowId: string, item: DeliveryOrderListItem): CompletedActionState => ({
     id: rowId,
-    doDate: item.doDate ? String(item.doDate).slice(0, 10) : '',
+    shippingDate: item.shippingDate ? String(item.shippingDate).slice(0, 10) : '',
     doScanReturnDate: item.doScanReturnDate
       ? String(item.doScanReturnDate).slice(0, 10)
       : new Date().toISOString().slice(0, 10),
-    stdDoReturnDate: item.stdDoReturnDate
-      ? String(item.stdDoReturnDate).slice(0, 10)
-      : new Date().toISOString().slice(0, 10),
+    stdReturnDoDays: normalizeNumber(item.stdReturnDoDays),
+    stdDoReturnDate: calculateStandardReceivedDate(
+      item.shippingDate ? String(item.shippingDate).slice(0, 10) : '',
+      normalizeNumber(item.stdReturnDoDays),
+    ),
   });
 
   const setToDelivery = async () => {
@@ -1514,16 +1493,7 @@ export default function LogisticTransactionDoPage() {
       return;
     }
     if (!completedAction.stdDoReturnDate) {
-      setError('STD DO Kembali wajib diisi.');
-      return;
-    }
-    const stdReturnDoDays = diffDays(completedAction.doDate, completedAction.stdDoReturnDate);
-    if (stdReturnDoDays == null) {
-      setError('Format tanggal STD DO Kembali tidak valid.');
-      return;
-    }
-    if (stdReturnDoDays < 0) {
-      setError('STD DO Kembali tidak boleh lebih kecil dari DO Date.');
+      setError('STD DO Kembali tidak dapat dihitung. Pastikan Tanggal kirim dan Std return DO terisi.');
       return;
     }
 
@@ -1541,7 +1511,7 @@ export default function LogisticTransactionDoPage() {
         body: JSON.stringify({
           status: 'COMPLETED',
           doScanReturnDate: completedAction.doScanReturnDate,
-          stdReturnDoDays,
+          stdReturnDoDays: completedAction.stdReturnDoDays,
         }),
       });
 
@@ -2215,58 +2185,19 @@ export default function LogisticTransactionDoPage() {
                                   <p className="text-xs text-muted-foreground">{item.doNumber}</p>
                                 </div>
                                 <div className="space-y-1">
-                                  <Label htmlFor={`std-do-return-date-${rowId}`}>STD DO Kembali</Label>
-                                  <Input
-                                    id={`std-do-return-date-${rowId}`}
-                                    type="date"
-                                    value={completedAction?.stdDoReturnDate ?? ''}
-                                    onChange={(event) =>
-                                      setCompletedAction((state) =>
-                                        state && state.id === rowId
-                                          ? { ...state, stdDoReturnDate: event.target.value }
-                                          : state,
-                                      )
-                                    }
-                                    required
-                                  />
-                                </div>
-                                <div className="rounded-md border p-2 text-sm">
+                                  <p className="text-xs text-muted-foreground">Target Tanggal DO Kembali</p>
                                   <p className="text-xs text-muted-foreground">
-                                    KPI Ketepatan Pengiriman (Pengembalian DO)
+                                    Tanggal Kirim DO: {fmtDate(completedAction?.shippingDate)}
                                   </p>
-                                  <div className="mt-1 space-y-1">
-                                    <p className="font-medium">
-                                      Tanggal Scan DO Kembali: {fmtDate(completedAction?.doScanReturnDate)}
-                                    </p>
-                                    <p className="font-medium">
-                                      STD DO Kembali: {fmtDate(completedAction?.stdDoReturnDate)}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                      Jika Tanggal Scan DO Kembali ≤ STD DO Kembali = ONTIME
-                                      {' | '}
-                                      Jika Tanggal Scan DO Kembali {'>'} STD DO Kembali = LATE
-                                    </p>
-                                    <Badge
-                                      variant={
-                                        resolveReturnDoKpiStatus(
-                                          completedAction?.doScanReturnDate,
-                                          completedAction?.stdDoReturnDate,
-                                        ) === 'ONTIME'
-                                          ? 'primary'
-                                          : resolveReturnDoKpiStatus(
-                                                completedAction?.doScanReturnDate,
-                                                completedAction?.stdDoReturnDate,
-                                              ) === 'LATE'
-                                            ? 'destructive'
-                                            : 'secondary'
-                                      }
-                                    >
-                                      {resolveReturnDoKpiStatus(
-                                        completedAction?.doScanReturnDate,
-                                        completedAction?.stdDoReturnDate,
-                                      )}
-                                    </Badge>
-                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    Standar Pengembalian DO: {normalizeNumber(completedAction?.stdReturnDoDays)} hari
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Perhitungan: {fmtDate(completedAction?.shippingDate)} + {normalizeNumber(completedAction?.stdReturnDoDays)} hari
+                                  </p>
+                                  <p className="text-sm font-semibold">
+                                    Hasil Target: {fmtDate(completedAction?.stdDoReturnDate)}
+                                  </p>
                                 </div>
                                 <div className="flex justify-end gap-2">
                                   <Button
@@ -2284,8 +2215,7 @@ export default function LogisticTransactionDoPage() {
                                     onClick={() => void setToCompleted()}
                                     disabled={
                                       completedSubmittingId === rowId ||
-                                      !completedAction?.doScanReturnDate ||
-                                      !completedAction?.stdDoReturnDate
+                                      !completedAction?.doScanReturnDate
                                     }
                                   >
                                     {completedSubmittingId === rowId ? 'Saving...' : 'Simpan'}
@@ -2532,34 +2462,6 @@ export default function LogisticTransactionDoPage() {
                         emptyText="No city found."
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>STD Lead Time (Hari)</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={form.stdLeadTimeDays}
-                        onChange={(e) =>
-                          setForm((state) => ({
-                            ...state,
-                            stdLeadTimeDays: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>STD Return DO (Hari)</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={form.stdReturnDoDays}
-                        onChange={(e) =>
-                          setForm((state) => ({
-                            ...state,
-                            stdReturnDoDays: e.target.value,
-                          }))
-                        }
-                      />
-                    </div>
                   </div>
                   <div className="mt-4 space-y-2">
                     <Label>Catatan</Label>
@@ -2585,6 +2487,18 @@ export default function LogisticTransactionDoPage() {
                     SLA & KPI Preview
                   </h3>
                   <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span>STD Lead Time (Hari)</span>
+                      <span className="font-medium">
+                        {`${form.stdLeadTimeDays || '0'} hari`}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span>SSTD Return DO (Hari)</span>
+                      <span className="font-medium">
+                        {`${form.stdReturnDoDays || '0'} hari`}
+                      </span>
+                    </div>
                     <div className="flex items-center justify-between border-b pb-2">
                       <span>Standard Barang Diterima</span>
                       <span className="font-medium">

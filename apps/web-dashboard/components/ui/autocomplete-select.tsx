@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -13,7 +13,7 @@ export type AutocompleteSelectOption = {
 };
 
 type AutocompleteSelectProps = {
-  value: string;
+  value?: string | null;
   onValueChange: (value: string) => void;
   options: AutocompleteSelectOption[];
   placeholder?: string;
@@ -21,6 +21,8 @@ type AutocompleteSelectProps = {
   emptyText?: string;
   disabled?: boolean;
   required?: boolean;
+  clearable?: boolean;
+  clearText?: string;
   className?: string;
   triggerClassName?: string;
 };
@@ -34,14 +36,17 @@ export function AutocompleteSelect({
   emptyText = 'No result found.',
   disabled = false,
   required = false,
+  clearable = false,
+  clearText = 'Clear selection',
   className,
   triggerClassName,
 }: AutocompleteSelectProps) {
   const [open, setOpen] = useState(false);
+  const normalizedValue = value ?? '';
 
   const selectedLabel = useMemo(
-    () => options.find((option) => option.value === value)?.label ?? '',
-    [options, value],
+    () => options.find((option) => option.value === normalizedValue)?.label ?? '',
+    [options, normalizedValue],
   );
 
   return (
@@ -65,17 +70,31 @@ export function AutocompleteSelect({
             <CommandInput placeholder={searchPlaceholder} />
             <CommandList>
               <CommandEmpty>{emptyText}</CommandEmpty>
+              {clearable && normalizedValue && !disabled ? (
+                <CommandItem
+                  value={clearText}
+                  onSelect={() => {
+                    onValueChange('');
+                    setOpen(false);
+                  }}
+                >
+                  <X className="mr-2 size-4 opacity-70" />
+                  {clearText}
+                </CommandItem>
+              ) : null}
               {options.map((option, index) => (
                 <CommandItem
                   key={`${option.value || 'option'}-${index}`}
                   value={`${option.label} ${option.keywords ?? ''}`}
                   disabled={option.disabled}
                   onSelect={() => {
-                    onValueChange(option.value);
+                    onValueChange(option.value ?? '');
                     setOpen(false);
                   }}
                 >
-                  <Check className={cn('mr-2 size-4', value === option.value ? 'opacity-100' : 'opacity-0')} />
+                  <Check
+                    className={cn('mr-2 size-4', normalizedValue === option.value ? 'opacity-100' : 'opacity-0')}
+                  />
                   {option.label}
                 </CommandItem>
               ))}
@@ -83,7 +102,7 @@ export function AutocompleteSelect({
           </Command>
         </PopoverContent>
       </Popover>
-      <input value={value} readOnly required={required} tabIndex={-1} className="sr-only" aria-hidden />
+      <input value={normalizedValue} readOnly required={required} tabIndex={-1} className="sr-only" aria-hidden />
     </div>
   );
 }

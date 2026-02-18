@@ -344,6 +344,10 @@ export class OutboundService {
       };
     }
 
+    if (query.status?.trim()) {
+      where.status = query.status.trim().toUpperCase();
+    }
+
     if (query.doReceivedDateFrom || query.doReceivedDateTo) {
       where.doReceivedDate = {
         gte: query.doReceivedDateFrom ? new Date(query.doReceivedDateFrom) : undefined,

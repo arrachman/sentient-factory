@@ -28,15 +28,17 @@ type WarehouseOption = {
 };
 
 type SupplierOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
 };
 
 type ItemOption = {
-  uuid: string;
-  code: string;
-  name: string;
+  id?: string | number;
+  uuid?: string | number;
+  code?: string;
+  name?: string;
 };
 
 type MutationRow = {
@@ -142,6 +144,31 @@ function pickEntityId(entity?: { id?: string | number; uuid?: string | number } 
   return toEntityId(entity?.id ?? entity?.uuid);
 }
 
+function extractRoleNames(values: unknown[]): string[] {
+  return values
+    .map((value) => {
+      if (!value) {
+        return '';
+      }
+      if (typeof value === 'string') {
+        return value;
+      }
+      if (typeof value === 'object') {
+        const roleName = (value as { name?: unknown })?.name;
+        if (typeof roleName === 'string') {
+          return roleName;
+        }
+        const nestedRoleName = (value as { role?: { name?: unknown } })?.role?.name;
+        if (typeof nestedRoleName === 'string') {
+          return nestedRoleName;
+        }
+      }
+      return '';
+    })
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 export default function ReportStockMutationPage() {
   const [filters, setFilters] = useState<FilterState>(initialFilter);
   const [rows, setRows] = useState<MutationRow[]>([]);
@@ -216,13 +243,11 @@ export default function ReportStockMutationPage() {
       setItems(Array.isArray(itemPayload.data) ? itemPayload.data : []);
 
       const profileData = profilePayload?.data ?? {};
-      const roleNames = [
+      const roleNames = extractRoleNames([
         ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
         ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
-      ]
-        .map((value) => String(value ?? '').trim().toLowerCase())
-        .filter(Boolean);
-      const hasAdminRole = roleNames.includes('admin');
+      ]);
+      const hasAdminRole = roleNames.includes('admin') || roleNames.includes('super_admin');
       setIsAdminRole(hasAdminRole);
 
       const warehouseCandidates = [
@@ -310,6 +335,29 @@ export default function ReportStockMutationPage() {
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
+
+  const warehouseNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    warehouses.forEach((warehouse) => {
+      const name = String(warehouse.name ?? '').trim();
+      if (!name) {
+        return;
+      }
+      const entityId = pickEntityId(warehouse);
+      const id = toEntityId(warehouse.id);
+      const uuid = toEntityId(warehouse.uuid);
+      if (entityId) {
+        map.set(entityId, name);
+      }
+      if (id) {
+        map.set(id, name);
+      }
+      if (uuid) {
+        map.set(uuid, name);
+      }
+    });
+    return map;
+  }, [warehouses]);
 
   const exportToExcel = async () => {
     if (!rows.length) {
@@ -480,10 +528,18 @@ export default function ReportStockMutationPage() {
             <AutocompleteSelect
               value={filters.supplierId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, supplierId: value }))}
-              options={suppliers.map((supplier) => ({
-                value: supplier.uuid,
-                label: `${supplier.code} - ${supplier.name}`,
-              }))}
+              options={suppliers.flatMap((supplier) => {
+                const value = pickEntityId(supplier);
+                if (!value) {
+                  return [];
+                }
+                const code = String(supplier.code ?? '').trim();
+                const name = String(supplier.name ?? '').trim();
+                return {
+                  value,
+                  label: [code, name].filter(Boolean).join(' - ') || value,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All suppliers'}
               searchPlaceholder="Search supplier..."
               emptyText="No supplier found"
@@ -496,10 +552,18 @@ export default function ReportStockMutationPage() {
             <AutocompleteSelect
               value={filters.itemId}
               onValueChange={(value) => setFilters((prev) => ({ ...prev, itemId: value }))}
-              options={items.map((item) => ({
-                value: item.uuid,
-                label: `${item.code} - ${item.name}`,
-              }))}
+              options={items.flatMap((item) => {
+                const value = pickEntityId(item);
+                if (!value) {
+                  return [];
+                }
+                const code = String(item.code ?? '').trim();
+                const name = String(item.name ?? '').trim();
+                return {
+                  value,
+                  label: [code, name].filter(Boolean).join(' - ') || value,
+                };
+              })}
               placeholder={loadingOptions ? 'Loading...' : 'All items'}
               searchPlaceholder="Search item..."
               emptyText="No item found"
@@ -544,6 +608,8 @@ export default function ReportStockMutationPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>No.</TableHead>
+                  <TableHead>Warehouse</TableHead>
+                  <TableHead>Supplier</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>No. Batch</TableHead>
                   <TableHead>Exp. Dated</TableHead>
@@ -558,7 +624,7 @@ export default function ReportStockMutationPage() {
               <TableBody>
                 {!loading && rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={12} className="h-24 text-center text-muted-foreground">
                       No report data found.
                     </TableCell>
                   </TableRow>
@@ -567,6 +633,8 @@ export default function ReportStockMutationPage() {
                 {rows.map((row, index) => (
                   <TableRow key={`${row.itemId}-${row.warehouseId}-${row.batchNumber}-${index}`}>
                     <TableCell>{index + 1}</TableCell>
+                    <TableCell>{warehouseNameById.get(toEntityId(row.warehouseId)) || '-'}</TableCell>
+                    <TableCell>{row.supplierNames?.length ? row.supplierNames.join(', ') : '-'}</TableCell>
                     <TableCell>{row.description || '-'}</TableCell>
                     <TableCell>{row.batchNumber || '-'}</TableCell>
                     <TableCell>{fmtDate(row.expiryDate)}</TableCell>
