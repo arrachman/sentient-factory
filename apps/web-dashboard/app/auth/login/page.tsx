@@ -76,73 +76,84 @@ export default function LoginPage() {
           className="mb-6 h-25 w-auto"
         />
 
-        <div className="w-full rounded-xl border bg-background p-6 shadow-sm">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Sentient Factory
-          </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Sign in to your admin account
-          </p>
-        </div>
-
-          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium" htmlFor="email">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="email"
-                  type="email"
-                  required
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-md border bg-background py-2 pl-10 pr-3 text-sm outline-none ring-primary/20 focus:ring"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium" htmlFor="password">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  minLength={6}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-md border bg-background py-2 pl-10 pr-10 text-sm outline-none ring-primary/20 focus:ring"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  className="absolute inset-y-0 right-0 flex cursor-pointer items-center px-3 text-muted-foreground hover:text-foreground"
-                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-            </div>
-
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        <div className="flex flex-col items-stretch text-card-foreground rounded-xl bg-card border border-border black/5 w-full shadow-lg">
+          <div
+            data-slot="card-header"
+            className="flex items-center justify-between flex-wrap px-5 min-h-14 gap-2.5 border-b border-border space-y-1"
+          >
+            <h3
+              data-slot="card-title"
+              className="tracking-tight text-2xl font-bold text-center"
             >
-              {loading ? 'Loading...' : 'Sign In'}
-              {!loading ? <LogIn className="size-4" /> : null}
-            </button>
-          </form>
+              Welcome Back
+            </h3>
+            <div
+              data-slot="card-description"
+              className="text-sm text-muted-foreground text-center"
+            >
+              Sign in to access Sentient Factory
+            </div>
+          </div>
+          <div className="w-full p-6">
+
+            <form className="mt-2 space-y-4" onSubmit={onSubmit}>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium" htmlFor="email">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="w-full rounded-md border bg-background py-2 pl-10 pr-3 text-sm outline-none ring-primary/20 focus:ring"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium" htmlFor="password">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="w-full rounded-md border bg-background py-2 pl-10 pr-10 text-sm outline-none ring-primary/20 focus:ring"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    className="absolute inset-y-0 right-0 flex cursor-pointer items-center px-3 text-muted-foreground hover:text-foreground"
+                    aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                  >
+                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+              >
+                {loading ? 'Loading...' : 'Sign In'}
+                {!loading ? <LogIn className="size-4" /> : null}
+              </button>
+            </form>
+          </div>
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">

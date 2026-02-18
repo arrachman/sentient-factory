@@ -338,16 +338,18 @@ export default function MasterDataCityPage() {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  <TableRow>
+                  <TableRow key="city-loading">
                     <TableCell colSpan={5}>Loading...</TableCell>
                   </TableRow>
                 ) : items.length === 0 ? (
-                  <TableRow>
+                  <TableRow key="city-empty">
                     <TableCell colSpan={5}>No city data found.</TableCell>
                   </TableRow>
                 ) : (
                   items.map((item, index) => (
-                    <TableRow key={item.uuid}>
+                    <TableRow
+                      key={`${item.uuid || item.provinceId || 'city'}-${item.name || 'name'}-${index}`}
+                    >
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>{item.province ? `${item.province.name} (${item.province.isoCode})` : '-'}</TableCell>
                       <TableCell>{item.name}</TableCell>
