@@ -1371,7 +1371,7 @@ export default function LogisticTransactionDoPage() {
     actualReceivedDate: item.actualReceivedDate
       ? String(item.actualReceivedDate).slice(0, 10)
       : new Date().toISOString().slice(0, 10),
-    receivedBy: String(item.customer?.name ?? '').trim(),
+    receivedBy: '',
     doScanReturnDate: item.doScanReturnDate
       ? String(item.doScanReturnDate).slice(0, 10)
       : new Date().toISOString().slice(0, 10),
@@ -2216,6 +2216,32 @@ export default function LogisticTransactionDoPage() {
                                   <p className="text-sm font-semibold">
                                     STD DO Kembali: {fmtDate(completedAction?.stdDoReturnDate)}
                                   </p>
+                                  <p className="text-xs text-muted-foreground">Ketepatan pengembalian DO</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Scan DO kembali ≤ STD DO kembali: ONTIME.
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Scan DO kembali {'>'} STD DO kembali: LATE.
+                                  </p>
+                                  {(() => {
+                                    const kpiStatus = resolveDeliveryKpiStatus(
+                                      completedAction?.doScanReturnDate,
+                                      completedAction?.stdDoReturnDate,
+                                    );
+                                    return (
+                                      <Badge
+                                        variant={
+                                          kpiStatus === 'ONTIME'
+                                            ? 'primary'
+                                            : kpiStatus === 'LATE'
+                                              ? 'destructive'
+                                              : 'secondary'
+                                        }
+                                      >
+                                        {kpiStatus}
+                                      </Badge>
+                                    );
+                                  })()}
                                 </div>
                                 <div className="flex justify-end gap-2">
                                   <Button

@@ -424,7 +424,7 @@ export default function MasterDataCitySlaPage() {
                   </TableRow>
                 ) : (
                   items.map((item, index) => (
-                    <TableRow key={item.uuid}>
+                    <TableRow key={`${item.uuid || item.cityId || 'city-sla'}-${index}`}>
                       <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                       <TableCell>{item.city?.province ? `${item.city.province.name} (${item.city.province.isoCode})` : '-'}</TableCell>
                       <TableCell>{item.city?.name || '-'}</TableCell>
