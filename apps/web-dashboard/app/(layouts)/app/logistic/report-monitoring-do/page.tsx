@@ -316,6 +316,31 @@ function pickIdFromUnknown(entity: unknown, extraKeys: string[] = []) {
   return '';
 }
 
+function extractRoleNames(values: unknown[]): string[] {
+  return values
+    .map((value) => {
+      if (!value) {
+        return '';
+      }
+      if (typeof value === 'string') {
+        return value;
+      }
+      if (typeof value === 'object') {
+        const roleName = (value as { name?: unknown })?.name;
+        if (typeof roleName === 'string') {
+          return roleName;
+        }
+        const nestedRoleName = (value as { role?: { name?: unknown } })?.role?.name;
+        if (typeof nestedRoleName === 'string') {
+          return nestedRoleName;
+        }
+      }
+      return '';
+    })
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+}
+
 function downloadBufferAsXlsx(buffer: ArrayBuffer, filename: string) {
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -406,13 +431,11 @@ export default function ReportMonitoringDoPage() {
       setProvinces(Array.isArray(provincePayload.data) ? provincePayload.data : []);
 
       const profileData = profilePayload?.data ?? {};
-      const roleNames = [
+      const roleNames = extractRoleNames([
         ...(Array.isArray(profileData?.roles) ? profileData.roles : []),
         ...(Array.isArray(profileData?.user?.roles) ? profileData.user.roles : []),
-      ]
-        .map((value) => String(value ?? '').trim().toLowerCase())
-        .filter(Boolean);
-      const hasAdminRole = roleNames.includes('admin');
+      ]);
+      const hasAdminRole = roleNames.includes('admin') || roleNames.includes('super_admin');
       setIsAdminRole(hasAdminRole);
 
       const warehouseCandidates = [

@@ -1489,7 +1489,7 @@ export default function LogisticTransactionDoPage() {
       return;
     }
     if (!completedAction.doScanReturnDate) {
-      setError('Tanggal scan DO kembali wajib diisi.');
+      setError('Tanggal DO kembali wajib diisi.');
       return;
     }
     if (!completedAction.stdDoReturnDate) {
@@ -2185,7 +2185,25 @@ export default function LogisticTransactionDoPage() {
                                   <p className="text-xs text-muted-foreground">{item.doNumber}</p>
                                 </div>
                                 <div className="space-y-1">
-                                  <p className="text-xs text-muted-foreground">Target Tanggal DO Kembali</p>
+                                  <Label htmlFor={`do-return-date-completed-${rowId}`}>
+                                    Tanggal DO Kembali
+                                  </Label>
+                                  <Input
+                                    id={`do-return-date-completed-${rowId}`}
+                                    type="date"
+                                    value={completedAction?.doScanReturnDate ?? ''}
+                                    onChange={(event) =>
+                                      setCompletedAction((state) =>
+                                        state && state.id === rowId
+                                          ? { ...state, doScanReturnDate: event.target.value }
+                                          : state,
+                                      )
+                                    }
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-xs text-muted-foreground">STD DO Kembali (Hasil Target)</p>
                                   <p className="text-xs text-muted-foreground">
                                     Tanggal Kirim DO: {fmtDate(completedAction?.shippingDate)}
                                   </p>
@@ -2196,7 +2214,7 @@ export default function LogisticTransactionDoPage() {
                                     Perhitungan: {fmtDate(completedAction?.shippingDate)} + {normalizeNumber(completedAction?.stdReturnDoDays)} hari
                                   </p>
                                   <p className="text-sm font-semibold">
-                                    Hasil Target: {fmtDate(completedAction?.stdDoReturnDate)}
+                                    STD DO Kembali: {fmtDate(completedAction?.stdDoReturnDate)}
                                   </p>
                                 </div>
                                 <div className="flex justify-end gap-2">
