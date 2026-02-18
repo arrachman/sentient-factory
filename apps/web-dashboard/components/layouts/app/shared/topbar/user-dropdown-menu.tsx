@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 import {
+  LogOut,
   Moon,
   UserCircle,
 } from 'lucide-react';
@@ -97,6 +98,7 @@ export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
             className="w-full"
             onClick={handleLogout}
           >
+            <LogOut />
             Logout
           </Button>
         </div>
