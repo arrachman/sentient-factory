@@ -134,7 +134,7 @@ export default function AdministratorUsersPage() {
     setLoading(true);
     setError('');
     try {
-      const query = new URLSearchParams({ page: String(safePage), limit: String(limit) });
+      const query = new URLSearchParams({ page: String(safePage), limit: String(limit), isActive: 'true' });
       if (search.trim()) {
         query.set('search', search.trim());
       }

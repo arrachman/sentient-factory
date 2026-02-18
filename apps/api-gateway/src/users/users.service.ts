@@ -225,6 +225,10 @@ export class UsersService {
       ];
     }
 
+    if (typeof query.isActive === 'boolean') {
+      where.isActive = query.isActive;
+    }
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
         where,
