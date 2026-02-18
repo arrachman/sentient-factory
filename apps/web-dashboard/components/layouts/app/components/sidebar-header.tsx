@@ -23,7 +23,7 @@ export function SidebarHeader() {
           />
           <img
             src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-            className="small-logo h-[59px] max-w-none"
+            className="small-logo h-[46px] max-w-none"
             alt="Mini Logo"
           />
         </div>
@@ -35,7 +35,7 @@ export function SidebarHeader() {
           />
           <img
             src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-            className="small-logo h-[59px] max-w-none"
+            className="small-logo h-[46px] max-w-none"
             alt="Mini Logo"
           />
         </div>
@@ -46,7 +46,7 @@ export function SidebarHeader() {
         mode="icon"
         variant="outline"
         className={cn(
-          'size-7 absolute start-full top-2/4 rtl:translate-x-2/4 -translate-x-2/4 -translate-y-2/4',
+          'size-7 absolute z-30 start-full top-2/4 rtl:translate-x-2/4 -translate-x-2/4 -translate-y-2/4',
           sidebarCollapse ? 'ltr:rotate-180' : 'rtl:rotate-180',
         )}
       >
