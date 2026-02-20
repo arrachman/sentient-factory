@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const TOKEN_COOKIE = 'sf_token';
+import { TOKEN_COOKIE } from '@/shared/auth/constants';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get(TOKEN_COOKIE)?.value;

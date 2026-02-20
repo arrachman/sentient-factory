@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { TOKEN_COOKIE } from '@/shared/auth/constants';
 
 const LOGIN_TIMEOUT_MS = 10000;
 
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     const token = payload?.data?.token;
     if (response.ok && token) {
-      result.cookies.set('sf_token', token, {
+      result.cookies.set(TOKEN_COOKIE, token, {
         path: '/',
         maxAge: 60 * 60 * 24 * 7,
         sameSite: 'lax',

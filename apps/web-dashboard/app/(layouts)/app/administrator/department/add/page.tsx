@@ -1,3 +1,5 @@
-'use client';
+import AdministratorDepartmentPageView from '@/features/administrator-department/ui/administrator-department-page';
 
-export { default } from '../page';
+export default function AdministratorDepartmentAddPage() {
+  return <AdministratorDepartmentPageView />;
+}

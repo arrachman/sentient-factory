@@ -2,7 +2,7 @@
   "apps": {
     "web-dashboard": {
       "name": "Web Dashboard",
-      "port": 3101,
+      "port": 3201,
       "type": "nextjs",
       "envVar": "WEB_DASHBOARD_PORT",
       "description": "Main administration dashboard",
@@ -18,7 +18,7 @@
     },
     "api-gateway": {
       "name": "API Gateway",
-      "port": 3103,
+      "port": 3203,
       "type": "nestjs",
       "envVar": "API_GATEWAY_PORT",
       "description": "Backend API server",
@@ -36,18 +36,18 @@
   "services": {
     "docs": {
       "name": "Documentation",
-      "port": 3105,
+      "port": 3205,
       "type": "docs",
       "envVar": "DOCS_PORT",
       "description": "Project documentation",
       "isActive": true
     },
     "postgres": {
-      "port": 5432,
+      "port": 3208,
       "description": "PostgreSQL database"
     },
     "redis": {
-      "port": 6379,
+      "port": 3209,
       "description": "Redis cache"
     },
     "influxdb": {
