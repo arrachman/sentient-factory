@@ -37,9 +37,6 @@ type LogisticTransactionListPanelProps = {
   setDeliveryAction: React.Dispatch<React.SetStateAction<DeliveryActionState | null>>;
   setDeliveredAction: React.Dispatch<React.SetStateAction<DeliveredActionState | null>>;
   setCompletedAction: React.Dispatch<React.SetStateAction<CompletedActionState | null>>;
-  buildDeliveryActionState: (rowId: string, item: DeliveryOrderListItem) => DeliveryActionState;
-  buildDeliveredActionState: (rowId: string, item: DeliveryOrderListItem) => DeliveredActionState;
-  buildCompletedActionState: (rowId: string, item: DeliveryOrderListItem) => CompletedActionState;
   onSetToDelivery: () => void;
   onSetToDelivered: () => void;
   onSetToCompleted: () => void;
@@ -70,9 +67,6 @@ export function LogisticTransactionListPanel({
   setDeliveryAction,
   setDeliveredAction,
   setCompletedAction,
-  buildDeliveryActionState,
-  buildDeliveredActionState,
-  buildCompletedActionState,
   onSetToDelivery,
   onSetToDelivered,
   onSetToCompleted,
@@ -192,9 +186,6 @@ export function LogisticTransactionListPanel({
                           setDeliveryAction={setDeliveryAction}
                           setDeliveredAction={setDeliveredAction}
                           setCompletedAction={setCompletedAction}
-                          buildDeliveryActionState={buildDeliveryActionState}
-                          buildDeliveredActionState={buildDeliveredActionState}
-                          buildCompletedActionState={buildCompletedActionState}
                           deliverySubmittingId={deliverySubmittingId}
                           deliveredSubmittingId={deliveredSubmittingId}
                           completedSubmittingId={completedSubmittingId}

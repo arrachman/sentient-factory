@@ -1,8 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight, RefreshCw } from 'lucide-react';
+import { useLogisticDashboardPage } from '@/app/(layouts)/app/hooks/use-logistic-dashboard-page';
+import {
+  fmtDate,
+  fmtKg,
+  outboundBadgeVariant,
+  PERIOD_OPTIONS,
+  type PeriodFilter,
+} from '@/app/(layouts)/app/model/logistic-dashboard';
 import {
   Toolbar,
   ToolbarActions,
@@ -14,265 +22,27 @@ import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-
-type InboundRow = {
-  uuid: string;
-  transactionNo: string;
-  transactionDate: string;
-  status: 'DRAFT' | 'POSTED' | 'CANCELLED';
-  supplier?: {
-    name?: string | null;
-  } | null;
-  _count?: {
-    details?: number;
-  };
-  totalBatches?: number;
-};
-
-type OutboundRow = {
-  uuid: string;
-  doNumber: string;
-  doDate: string;
-  status: 'DRAFT' | 'SHIPPED' | 'RECEIVED' | 'CLOSED' | 'CANCELLED';
-  customer?: {
-    name?: string | null;
-  } | null;
-  totalKg?: unknown;
-  totalBatches?: number;
-};
-
-type DecimalLike = {
-  s?: number;
-  e?: number;
-  d?: number[];
-};
-
-type ListResponse<T> = {
-  success?: boolean;
-  data?: T[];
-  meta?: {
-    total?: number;
-  };
-  message?: string;
-};
-
-type PeriodFilter = 'today' | '7d' | '30d';
-
-const PERIOD_OPTIONS: Array<{ value: PeriodFilter; label: string }> = [
-  { value: 'today', label: 'Hari Ini' },
-  { value: '7d', label: '7 Hari' },
-  { value: '30d', label: '30 Hari' },
-];
-
-function getTokenFromCookie() {
-  return (
-    document.cookie
-      .split(';')
-      .map((part) => part.trim())
-      .find((part) => part.startsWith('sf_token='))
-      ?.slice('sf_token='.length) || ''
-  );
-}
-
-function fmtDate(value?: string | null) {
-  if (!value) {
-    return '-';
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '-';
-  }
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-}
-
-function isDecimalLike(value: unknown): value is DecimalLike {
-  return Boolean(
-    value &&
-      typeof value === 'object' &&
-      Array.isArray((value as DecimalLike).d) &&
-      typeof (value as DecimalLike).e === 'number',
-  );
-}
-
-function decimalLikeToString(value: DecimalLike): string {
-  const digits = Array.isArray(value.d) ? value.d.join('') : '';
-  if (!digits) {
-    return '0';
-  }
-
-  const sign = value.s === -1 ? '-' : '';
-  const exponent = typeof value.e === 'number' ? value.e : digits.length - 1;
-  const decimalPos = exponent + 1;
-
-  if (decimalPos <= 0) {
-    return `${sign}0.${'0'.repeat(Math.abs(decimalPos))}${digits}`.replace(/\.?0+$/, '') || '0';
-  }
-  if (decimalPos >= digits.length) {
-    return `${sign}${digits}${'0'.repeat(decimalPos - digits.length)}`;
-  }
-
-  return `${sign}${digits.slice(0, decimalPos)}.${digits.slice(decimalPos)}`.replace(/\.?0+$/, '') || '0';
-}
-
-function normalizeNumber(value: unknown): number {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  if (isDecimalLike(value)) {
-    const parsed = Number(decimalLikeToString(value));
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function fmtKg(value: unknown) {
-  return normalizeNumber(value).toLocaleString('id-ID', { maximumFractionDigits: 3 });
-}
-
-function toDateOnly(value: Date) {
-  return value.toISOString().slice(0, 10);
-}
-
-function resolvePeriodRange(period: PeriodFilter) {
-  const to = new Date();
-  to.setHours(23, 59, 59, 999);
-
-  const from = new Date(to);
-  if (period === 'today') {
-    from.setHours(0, 0, 0, 0);
-  } else if (period === '7d') {
-    from.setDate(from.getDate() - 6);
-    from.setHours(0, 0, 0, 0);
-  } else {
-    from.setDate(from.getDate() - 29);
-    from.setHours(0, 0, 0, 0);
-  }
-
-  return {
-    from: toDateOnly(from),
-    to: toDateOnly(to),
-  };
-}
-
-function outboundBadgeVariant(status?: OutboundRow['status']) {
-  if (status === 'CLOSED' || status === 'RECEIVED') {
-    return 'success';
-  }
-  if (status === 'CANCELLED') {
-    return 'destructive';
-  }
-  if (status === 'SHIPPED') {
-    return 'info';
-  }
-  return 'secondary';
-}
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 export default function Page() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [period, setPeriod] = useState<PeriodFilter>('7d');
-
-  const [inboundRows, setInboundRows] = useState<InboundRow[]>([]);
-  const [outboundRows, setOutboundRows] = useState<OutboundRow[]>([]);
-  const [inboundTotal, setInboundTotal] = useState(0);
-  const [outboundTotal, setOutboundTotal] = useState(0);
-
-  const token = useMemo(() => getTokenFromCookie(), []);
-
-  const inboundPosted = useMemo(
-    () => inboundRows.filter((row) => row.status === 'POSTED').length,
-    [inboundRows],
-  );
-  const inboundCancelled = useMemo(
-    () => inboundRows.filter((row) => row.status === 'CANCELLED').length,
-    [inboundRows],
-  );
-  const outboundInProgress = useMemo(
-    () =>
-      outboundRows.filter((row) => row.status === 'SHIPPED' || row.status === 'DRAFT').length,
-    [outboundRows],
-  );
-  const outboundClosed = useMemo(
-    () => outboundRows.filter((row) => row.status === 'CLOSED').length,
-    [outboundRows],
-  );
-
-  const fetchDashboardData = async (activePeriod: PeriodFilter = period) => {
-    setLoading(true);
-    setError('');
-    try {
-      const headers = token
-        ? { Authorization: `Bearer ${decodeURIComponent(token)}` }
-        : undefined;
-      const range = resolvePeriodRange(activePeriod);
-      const inboundQuery = new URLSearchParams({
-        page: '1',
-        limit: '10',
-        transactionDateFrom: range.from,
-        transactionDateTo: range.to,
-      });
-      const outboundQuery = new URLSearchParams({
-        page: '1',
-        limit: '10',
-        doDateFrom: range.from,
-        doDateTo: range.to,
-      });
-
-      const [inboundRes, outboundRes] = await Promise.all([
-        fetch(`/api/inbounds?${inboundQuery.toString()}`, {
-          cache: 'no-store',
-          headers,
-        }),
-        fetch(`/api/outbound?${outboundQuery.toString()}`, {
-          cache: 'no-store',
-          headers,
-        }),
-      ]);
-
-      const [inboundPayload, outboundPayload] = await Promise.all([
-        inboundRes.json().catch(() => null),
-        outboundRes.json().catch(() => null),
-      ]);
-
-      if (!inboundRes.ok || !inboundPayload?.success) {
-        throw new Error(inboundPayload?.message || 'Failed to load inbound data');
-      }
-      if (!outboundRes.ok || !outboundPayload?.success) {
-        throw new Error(outboundPayload?.message || 'Failed to load outbound data');
-      }
-
-      const inboundData = inboundPayload as ListResponse<InboundRow>;
-      const outboundData = outboundPayload as ListResponse<OutboundRow>;
-
-      setInboundRows(Array.isArray(inboundData.data) ? inboundData.data : []);
-      setOutboundRows(Array.isArray(outboundData.data) ? outboundData.data : []);
-      setInboundTotal(Number(inboundData.meta?.total ?? 0));
-      setOutboundTotal(Number(outboundData.meta?.total ?? 0));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    loading,
+    error,
+    period,
+    setPeriod,
+    inboundRows,
+    outboundRows,
+    inboundTotal,
+    outboundTotal,
+    inboundPosted,
+    inboundCancelled,
+    outboundInProgress,
+    outboundClosed,
+    fetchDashboardData,
+  } = useLogisticDashboardPage();
 
   useEffect(() => {
-    fetchDashboardData(period);
+    void fetchDashboardData(period);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]);
 
@@ -296,7 +66,7 @@ export default function Page() {
               emptyText="Periode tidak ditemukan."
             />
           </div>
-          <Button variant="outline" onClick={() => fetchDashboardData(period)} disabled={loading}>
+          <Button variant="outline" onClick={() => void fetchDashboardData(period)} disabled={loading}>
             <RefreshCw />
             Refresh
           </Button>
@@ -385,9 +155,7 @@ export default function Page() {
                       <TableCell className="font-medium">{row.transactionNo || '-'}</TableCell>
                       <TableCell>{fmtDate(row.transactionDate)}</TableCell>
                       <TableCell>{row.supplier?.name || '-'}</TableCell>
-                      <TableCell className="text-right">
-                        {Number(row.totalBatches ?? 0).toLocaleString('id-ID')}
-                      </TableCell>
+                      <TableCell className="text-right">{Number(row.totalBatches ?? 0).toLocaleString('id-ID')}</TableCell>
                       <TableCell className="text-right">{row._count?.details ?? 0}</TableCell>
                     </TableRow>
                   ))

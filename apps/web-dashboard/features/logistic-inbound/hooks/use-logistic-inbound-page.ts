@@ -19,9 +19,16 @@ import {
   buildInboundRef,
   initialForm,
   parseInboundRef,
-  pickEntityId,
-  pickInboundId,
 } from '@/features/logistic-inbound/model/utils';
+import {
+  applyOptionsToFormState,
+  buildCreateInboundForm,
+  buildInboundDetailSummary,
+  buildInboundDetailsPayload,
+  buildInboundUpdateRoute,
+  buildItemOptionMap,
+  toSafePage,
+} from '@/features/logistic-inbound/hooks/use-logistic-inbound-page.helpers';
 import { buildAuthHeader, getClientToken } from '@/shared/auth/token.client';
 
 export function useLogisticInboundPage() {
@@ -61,34 +68,8 @@ export function useLogisticInboundPage() {
   const token = useMemo(() => getClientToken(), []);
   const headers = useMemo(() => buildAuthHeader(token), [token]);
 
-  const itemOptionMap = useMemo(() => {
-    const map = new Map<string, ItemOption>();
-    itemOptions.forEach((item) => {
-      const id = pickEntityId(item);
-      if (id) {
-        map.set(id, item);
-      }
-    });
-    return map;
-  }, [itemOptions]);
-
-  const detailSummary = useMemo(() => {
-    let totalQty = 0;
-    let totalBatch = 0;
-
-    form.details.forEach((detail) => {
-      detail.batches.forEach((batch) => {
-        totalBatch += 1;
-        totalQty += Number(batch.qty || 0) || 0;
-      });
-    });
-
-    return {
-      totalItemTypes: form.details.length,
-      totalBatch,
-      totalQty,
-    };
-  }, [form.details]);
+  const itemOptionMap = useMemo(() => buildItemOptionMap(itemOptions), [itemOptions]);
+  const detailSummary = useMemo(() => buildInboundDetailSummary(form.details), [form.details]);
 
   const {
     isItemModalOpen,
@@ -113,7 +94,7 @@ export function useLogisticInboundPage() {
 
   const fetchList = useCallback(
     async (targetPage = page) => {
-      const safePage = typeof targetPage === 'number' && Number.isInteger(targetPage) && targetPage > 0 ? targetPage : 1;
+      const safePage = toSafePage(targetPage);
 
       setLoading(true);
       setError('');
@@ -148,7 +129,6 @@ export function useLogisticInboundPage() {
       const userId = result.currentUserId;
       const hasGlobalWarehouseAccess = result.isAdminRole;
       const nextLockedWarehouseId = result.lockedWarehouseId;
-      const fallbackWarehouseId = pickEntityId(nextWarehouses[0]);
 
       setSuppliers(nextSuppliers);
       setWarehouses(nextWarehouses);
@@ -157,17 +137,16 @@ export function useLogisticInboundPage() {
       setIsAdminRole(hasGlobalWarehouseAccess);
       setLockedWarehouseId(nextLockedWarehouseId);
 
-      setForm((state) => ({
-        ...state,
-        supplierId: state.supplierId || pickEntityId(nextSuppliers[0]) || '',
-        warehouseId: hasGlobalWarehouseAccess
-          ? state.warehouseId || fallbackWarehouseId || ''
-          : nextLockedWarehouseId || fallbackWarehouseId || '',
-        details: state.details.map((detail, index) => ({
-          ...detail,
-          itemId: detail.itemId || (index === 0 ? pickEntityId(nextItems[0]) || '' : detail.itemId),
-        })),
-      }));
+      setForm((state) =>
+        applyOptionsToFormState({
+          state,
+          suppliers: nextSuppliers,
+          warehouses: nextWarehouses,
+          items: nextItems,
+          isAdminRole: hasGlobalWarehouseAccess,
+          lockedWarehouseId: nextLockedWarehouseId,
+        }),
+      );
 
       if (!hasGlobalWarehouseAccess && !nextLockedWarehouseId) {
         setError('Warehouse user login tidak ditemukan. Hubungi admin untuk assign warehouse.');
@@ -181,13 +160,7 @@ export function useLogisticInboundPage() {
 
   const openCreateForm = useCallback(() => {
     setEditingUuid(null);
-    setForm({
-      ...initialForm,
-      transactionDate: new Date().toISOString().slice(0, 10),
-      supplierId: pickEntityId(suppliers[0]) || '',
-      warehouseId: lockedWarehouseId || pickEntityId(warehouses[0]) || '',
-      details: [],
-    });
+    setForm(buildCreateInboundForm({ suppliers, warehouses, lockedWarehouseId }));
     closeItemModal();
     setShowForm(true);
   }, [closeItemModal, lockedWarehouseId, suppliers, warehouses]);
@@ -213,29 +186,7 @@ export function useLogisticInboundPage() {
     setError('');
 
     try {
-      const detailsPayload = form.details
-        .map((detail) => {
-          const batches = detail.batches
-            .map((batch) => ({
-              batchIn: batch.batchIn.trim(),
-              qty: Number(batch.qty || 0),
-              expiredDate: batch.expiredDate || undefined,
-              notes: batch.notes.trim() || undefined,
-            }))
-            .filter((batch) => batch.batchIn && batch.qty > 0);
-
-          const isDetailValid = detail.itemId && batches.length > 0;
-          const uomInput = Math.max(0, Math.trunc(Number(detail.uomInput.trim() || 0)));
-
-          return {
-            itemId: detail.itemId,
-            uomInput: isDetailValid ? uomInput : undefined,
-            notes: detail.notes.trim() || undefined,
-            qty: batches.reduce((sum, batch) => sum + batch.qty, 0),
-            batches,
-          };
-        })
-        .filter((detail) => detail.itemId && detail.batches.length > 0 && detail.qty > 0);
+      const detailsPayload = buildInboundDetailsPayload(form.details);
 
       if (detailsPayload.length === 0) {
         throw new Error('Minimal satu detail item dengan batch valid wajib diisi.');
@@ -289,13 +240,11 @@ export function useLogisticInboundPage() {
 
   const openEditRoute = useCallback(
     (item: InboundListItem) => {
-      const rowId = pickInboundId(item);
-      if (!rowId) {
+      const nextRoute = buildInboundUpdateRoute(item, buildInboundRef);
+      if (!nextRoute) {
         return;
       }
-
-      const inboundRef = buildInboundRef(rowId, item.createdAt);
-      router.push(`/app/logistic/inbound/update?ref=${encodeURIComponent(inboundRef)}`);
+      router.push(nextRoute);
     },
     [router],
   );

@@ -3,54 +3,17 @@
 'use client';
 
 import * as React from 'react';
-import { createContext, useContext } from 'react';
 import { cn } from '@/lib/utils';
-
-// Types
-type StepperOrientation = 'horizontal' | 'vertical';
-type StepState = 'active' | 'completed' | 'inactive' | 'loading';
-type StepIndicators = {
-  active?: React.ReactNode;
-  completed?: React.ReactNode;
-  inactive?: React.ReactNode;
-  loading?: React.ReactNode;
-};
-
-interface StepperContextValue {
-  activeStep: number;
-  setActiveStep: (step: number) => void;
-  stepsCount: number;
-  orientation: StepperOrientation;
-  registerTrigger: (node: HTMLButtonElement | null) => void;
-  triggerNodes: HTMLButtonElement[];
-  focusNext: (currentIdx: number) => void;
-  focusPrev: (currentIdx: number) => void;
-  focusFirst: () => void;
-  focusLast: () => void;
-  indicators: StepIndicators;
-}
-
-interface StepItemContextValue {
-  step: number;
-  state: StepState;
-  isDisabled: boolean;
-  isLoading: boolean;
-}
-
-const StepperContext = createContext<StepperContextValue | undefined>(undefined);
-const StepItemContext = createContext<StepItemContextValue | undefined>(undefined);
-
-function useStepper() {
-  const ctx = useContext(StepperContext);
-  if (!ctx) throw new Error('useStepper must be used within a Stepper');
-  return ctx;
-}
-
-function useStepItem() {
-  const ctx = useContext(StepItemContext);
-  if (!ctx) throw new Error('useStepItem must be used within a StepperItem');
-  return ctx;
-}
+import {
+  type StepIndicators,
+  type StepState,
+  type StepperContextValue,
+  type StepperOrientation,
+  StepItemContext,
+  StepperContext,
+  useStepItem,
+  useStepper,
+} from '@/components/ui/stepper.helpers';
 
 interface StepperProps extends React.HTMLAttributes<HTMLDivElement> {
   defaultValue?: number;
