@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { Download, RefreshCw } from 'lucide-react';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import {
   Table,
   TableBody,
@@ -29,6 +31,7 @@ import {
   outboundStatusBadgeVariant,
   pickIdFromUnknown,
 } from '@/features/logistic-report-monitoring-do/model/utils';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 
 export default function ReportMonitoringDoPage() {
   const {
@@ -48,6 +51,18 @@ export default function ReportMonitoringDoPage() {
     suppliers,
     warehouses,
   } = useLogisticReportMonitoringDo();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
+  const totalPages = Math.max(1, Math.ceil(rows.length / limit));
+
+  useEffect(() => {
+    setPage((current) => Math.min(Math.max(1, current), totalPages));
+  }, [totalPages]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * limit;
+    return rows.slice(start, start + limit);
+  }, [limit, page, rows]);
 
   return (
     <div className="container">
@@ -257,11 +272,11 @@ export default function ReportMonitoringDoPage() {
                   </TableRow>
                 ) : null}
 
-                {rows.map((row, index) => (
+                {pagedRows.map((row, index) => (
                   <TableRow
                     key={`${row.uuid || row.doNumber || 'row'}-${row.doReceivedDate || 'date'}-${index}`}
                   >
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                     <TableCell>{row.doNumber || '-'}</TableCell>
                     <TableCell>
                       {row.sourceWarehouses?.length
@@ -288,6 +303,21 @@ export default function ReportMonitoringDoPage() {
               </TableBody>
             </Table>
           </div>
+          <StandardPagination
+            page={page}
+            limit={limit}
+            totalPages={totalPages}
+            totalItems={rows.length}
+            loading={loading}
+            onPageChange={(nextPage) => setPage(Math.min(Math.max(1, nextPage), totalPages))}
+            onLimitChange={(nextLimit) => {
+              if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+                return;
+              }
+              setLimit(nextLimit);
+              setPage(1);
+            }}
+          />
         </div>
       </div>
     </div>

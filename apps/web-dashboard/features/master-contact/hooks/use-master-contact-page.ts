@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   useCreateMasterContactMutation,
@@ -19,6 +20,7 @@ import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 
 function normalizePayload(form: ContactFormState): ContactFormState {
   const effectiveCode = form.code.trim() || slugifyCode(form.name);
+
   return {
     ...form,
     code: effectiveCode,
@@ -75,7 +77,7 @@ export function useMasterContactPage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
 
   const listQuery = useMasterContactListQuery(page, limit, search);
   const citiesQuery = useMasterContactCitiesQuery();
@@ -241,6 +243,14 @@ export function useMasterContactPage() {
     setPage(nextPage);
   }, []);
 
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+  }, []);
+
   const openAddRoute = useCallback(() => {
     router.push('/app/master/contact/add');
   }, [router]);
@@ -269,6 +279,7 @@ export function useMasterContactPage() {
     error,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     items,

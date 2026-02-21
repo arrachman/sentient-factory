@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import {
   useAdministratorPermissionListQuery,
   useCreateAdministratorPermissionMutation,
@@ -24,7 +25,7 @@ export function useAdministratorPermissionPage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -135,6 +136,15 @@ export function useAdministratorPermissionPage() {
     setShowForm(false);
   };
 
+
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+  }, []);
+
   return {
     items,
     form,
@@ -146,6 +156,7 @@ export function useAdministratorPermissionPage() {
     error,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     loading,

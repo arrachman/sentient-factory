@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import type { MasterDataCity, MasterDataWarehouse } from '@/features/master-warehouse/model/types';
 
 type MasterWarehouseListPanelProps = {
@@ -19,6 +20,7 @@ type MasterWarehouseListPanelProps = {
   onEdit: (item: MasterDataWarehouse) => void;
   onDelete: (uuid: string) => void;
   onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
 };
 
 export function MasterWarehouseListPanel({
@@ -36,6 +38,7 @@ export function MasterWarehouseListPanel({
   onEdit,
   onDelete,
   onPageChange,
+  onLimitChange,
 }: MasterWarehouseListPanelProps) {
   return (
     <div className="rounded-lg border p-5">
@@ -113,22 +116,7 @@ export function MasterWarehouseListPanel({
           )}
         </TableBody>
       </Table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Total {totalItems} items • Page {page} of {totalPages}
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={loading || page <= 1}>
-            <ChevronLeft />
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={loading || page >= totalPages}>
-            <ChevronRight />
-            Next
-          </Button>
-        </div>
-      </div>
+      <StandardPagination page={page} limit={limit} totalPages={totalPages} totalItems={totalItems} loading={loading} onPageChange={onPageChange} onLimitChange={onLimitChange} />
     </div>
   );
 }

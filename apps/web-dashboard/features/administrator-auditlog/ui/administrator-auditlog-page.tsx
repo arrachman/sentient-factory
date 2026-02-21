@@ -38,6 +38,7 @@ export default function AdministratorAuditlogPage() {
     applySearch,
     resetSearch,
     changePage,
+    changeLimit,
     refreshList,
   } = useAdministratorAuditlogPage();
 
@@ -78,6 +79,7 @@ export default function AdministratorAuditlogPage() {
               void onDelete(auditLogId);
             }}
             onPageChange={changePage}
+            onLimitChange={changeLimit}
             onError={setError}
           />
         ) : (

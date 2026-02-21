@@ -39,6 +39,7 @@ export default function MasterDataCitySlaPage() {
     applySearch,
     resetSearch,
     changePage,
+    changeLimit,
     openAddRoute,
     openEditRoute,
     onSubmit,
@@ -83,6 +84,7 @@ export default function MasterDataCitySlaPage() {
               void onDelete(uuid);
             }}
             onPageChange={changePage}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterCitySlaFormPanel

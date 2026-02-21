@@ -30,6 +30,7 @@ export default function MasterDataDivisionPage() {
     totalPages,
     totalItems,
     fetchList,
+    changeLimit,
     onSubmit,
     onDelete,
     openAddRoute,
@@ -76,6 +77,7 @@ export default function MasterDataDivisionPage() {
               void onDelete(uuid);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterDivisionFormPanel

@@ -44,6 +44,7 @@ export default function LogisticInboundPage() {
     detailSummary,
     draftItemTotalQty,
     fetchList,
+    changeLimit,
     openAddRoute,
     openEditRoute,
     saveInbound,
@@ -101,6 +102,7 @@ export default function LogisticInboundPage() {
             onSearchChange={setSearch}
             onSearchSubmit={() => fetchList(1)}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
             onEdit={openEditRoute}
             onDelete={(uuid) => {
               void removeInbound(uuid);

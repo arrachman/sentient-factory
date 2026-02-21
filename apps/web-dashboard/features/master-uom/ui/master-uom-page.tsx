@@ -32,6 +32,7 @@ export default function MasterDataUomPage() {
     totalPages,
     totalItems,
     fetchList,
+    changeLimit,
     onSubmit,
     onDelete,
     openCreate,
@@ -82,6 +83,7 @@ export default function MasterDataUomPage() {
             onPageChange={(nextPage) => {
               void fetchList(nextPage);
             }}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterUomFormPanel

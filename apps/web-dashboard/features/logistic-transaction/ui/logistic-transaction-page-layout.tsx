@@ -104,6 +104,7 @@ export function LogisticTransactionPageLayout({ controller }: LogisticTransactio
             onPageChange={(nextPage) => {
               void controller.fetchList(nextPage);
             }}
+            onLimitChange={controller.changeLimit}
             onEditRow={(rowId, item) => {
               if (controller.isOutboundRoute) {
                 const ref = controller.buildEntityRef(rowId, item.createdAt);

@@ -34,6 +34,7 @@ export default function AdministratorMenuPage() {
     parentSelectOptions,
     parentFilterOptions,
     fetchList,
+    changeLimit,
     openAddForm,
     backToList,
     openEditRoute,
@@ -78,6 +79,7 @@ export default function AdministratorMenuPage() {
             onEdit={openEditRoute}
             onDelete={onDelete}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : null}
 

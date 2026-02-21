@@ -37,6 +37,7 @@ export function AdministratorRolePageView() {
     permissionLoading,
     permissionSubmitting,
     fetchList,
+    changeLimit,
     onSubmit,
     onEdit,
     onDelete,
@@ -89,6 +90,7 @@ export function AdministratorRolePageView() {
               void openPermissionDialog(item);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : (
           <AdministratorRoleFormPanel

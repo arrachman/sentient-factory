@@ -35,6 +35,7 @@ export default function AdministratorSessionPage() {
     applySearch,
     resetSearch,
     changePage,
+    changeLimit,
     openCreate,
     onSubmit,
     onEdit,
@@ -79,6 +80,7 @@ export default function AdministratorSessionPage() {
               void onDelete(sessionId);
             }}
             onPageChange={changePage}
+            onLimitChange={changeLimit}
             onError={setError}
           />
         ) : (

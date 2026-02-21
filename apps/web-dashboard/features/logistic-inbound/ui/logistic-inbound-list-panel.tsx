@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import type { InboundListItem } from '@/features/logistic-inbound/model/types';
 import { fmtDate, pickInboundId } from '@/features/logistic-inbound/model/utils';
 
@@ -16,6 +17,7 @@ type LogisticInboundListPanelProps = {
   onSearchChange: (value: string) => void;
   onSearchSubmit: () => void;
   onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
   onEdit: (item: InboundListItem) => void;
   onDelete: (uuid: string) => void;
 };
@@ -31,6 +33,7 @@ export function LogisticInboundListPanel({
   onSearchChange,
   onSearchSubmit,
   onPageChange,
+  onLimitChange,
   onEdit,
   onDelete,
 }: LogisticInboundListPanelProps) {
@@ -140,27 +143,7 @@ export function LogisticInboundListPanel({
           )}
         </TableBody>
       </Table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing page {page} of {totalPages} ({totalItems} rows)
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1 || loading}>
-            <ChevronLeft />
-            Prev
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= totalPages || loading}
-          >
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      <StandardPagination page={page} limit={limit} totalPages={totalPages} totalItems={totalItems} loading={loading} onPageChange={onPageChange} onLimitChange={onLimitChange} />
     </div>
   );
 }

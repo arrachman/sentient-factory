@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import type { MasterDataCitySla } from '@/features/master-city-sla/model/types';
 
 type MasterCitySlaListPanelProps = {
@@ -18,6 +19,7 @@ type MasterCitySlaListPanelProps = {
   onEdit: (item: MasterDataCitySla) => void;
   onDelete: (uuid: string) => void;
   onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
 };
 
 export function MasterCitySlaListPanel({
@@ -34,6 +36,7 @@ export function MasterCitySlaListPanel({
   onEdit,
   onDelete,
   onPageChange,
+  onLimitChange,
 }: MasterCitySlaListPanelProps) {
   return (
     <div className="rounded-lg border p-5">
@@ -113,22 +116,7 @@ export function MasterCitySlaListPanel({
           )}
         </TableBody>
       </Table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing page {page} of {totalPages} ({totalItems} rows)
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1 || loading}>
-            <ChevronLeft />
-            Prev
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages || loading}>
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      <StandardPagination page={page} limit={limit} totalPages={totalPages} totalItems={totalItems} loading={loading} onPageChange={onPageChange} onLimitChange={onLimitChange} />
     </div>
   );
 }

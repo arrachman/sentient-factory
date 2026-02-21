@@ -1,0 +1,24 @@
+flowchart LR
+  subgraph IAM[Identity & Access]
+    users["users\\nPK: UserId"]
+    roles["roles\\nPK: RoleId"]
+    userroles["userroles\\nPK: UserRoleId\\nUserId, RoleId"]
+    rolepermissions["rolepermissions\\nPK: RolePermissionId\\nRoleId"]
+    userpermissions["userpermissions\\nPK: UserPermissionId\\nUserId"]
+    userpreferences["userpreferences\\nPK: UserPreferenceId\\nUserId"]
+
+    users -->|[H] UserId| userroles
+    roles -->|[H] RoleId| userroles
+    roles -->|[H] RoleId| rolepermissions
+    users -->|[H] UserId| userpermissions
+    users -->|[H] UserId| userpreferences
+  end
+
+  subgraph LegacyIAM[Legacy IAM]
+    m0_user["m0_user\\nPK: userid"]
+    m0_role["m0_role\\nPK: rkode"]
+    m0_user_role["m0_user_role\\nPK: userid, role"]
+
+    m0_user -->|[H] userid| m0_user_role
+    m0_role -->|[M] rkode ~= role| m0_user_role
+  end

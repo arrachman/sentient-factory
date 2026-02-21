@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   createCitySla,
@@ -45,7 +46,7 @@ export function useMasterCitySlaPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -67,7 +68,7 @@ export function useMasterCitySlaPage() {
   );
 
   const fetchList = useCallback(
-    async (targetPage = page) => {
+    async (targetPage = page, targetLimit = limit) => {
       const safePage = typeof targetPage === 'number' && Number.isInteger(targetPage) && targetPage > 0 ? targetPage : 1;
 
       setLoading(true);
@@ -275,6 +276,16 @@ export function useMasterCitySlaPage() {
     }
   }, [isAddRoute, isUpdateRoute, router]);
 
+
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+    void fetchList(1, nextLimit);
+  }, [fetchList]);
+
   return {
     items,
     cities,
@@ -295,6 +306,7 @@ export function useMasterCitySlaPage() {
     error,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     refreshList,

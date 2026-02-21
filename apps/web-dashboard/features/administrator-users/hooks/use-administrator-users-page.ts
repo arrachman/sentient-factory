@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import {
   useAdministratorDefaultWarehouseQuery,
   useAdministratorRoleOptionsQuery,
@@ -31,7 +32,7 @@ export function useAdministratorUsersPage() {
   const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [roles, setRoles] = useState<WarehouseOption[]>([]);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [defaultWarehouseId, setDefaultWarehouseId] = useState('');
@@ -209,6 +210,15 @@ export function useAdministratorUsersPage() {
     setSearch('');
   };
 
+
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+  }, []);
+
   return {
     items,
     form,
@@ -223,6 +233,7 @@ export function useAdministratorUsersPage() {
     roles,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     loading,

@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import type { MasterDataContact } from '@/features/master-contact/model/types';
 
 type MasterContactListPanelProps = {
@@ -18,6 +19,7 @@ type MasterContactListPanelProps = {
   onEdit: (item: MasterDataContact) => void;
   onDelete: (uuid: string) => void;
   onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
 };
 
 export function MasterContactListPanel({
@@ -34,6 +36,7 @@ export function MasterContactListPanel({
   onEdit,
   onDelete,
   onPageChange,
+  onLimitChange,
 }: MasterContactListPanelProps) {
   return (
     <div className="rounded-lg border p-5">
@@ -109,22 +112,7 @@ export function MasterContactListPanel({
           )}
         </TableBody>
       </Table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Total {totalItems} items • Page {page} of {totalPages}
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={loading || page <= 1}>
-            <ChevronLeft />
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={loading || page >= totalPages}>
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      <StandardPagination page={page} limit={limit} totalPages={totalPages} totalItems={totalItems} loading={loading} onPageChange={onPageChange} onLimitChange={onLimitChange} />
     </div>
   );
 }

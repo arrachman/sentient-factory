@@ -1,7 +1,8 @@
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import type { AdministratorUser } from '@/features/administrator-users/model/types';
 import { pickUserId } from '@/features/administrator-users/model/utils';
 
@@ -19,6 +20,7 @@ type AdministratorUsersListPanelProps = {
   onEdit: (item: AdministratorUser) => void;
   onDelete: (userId: string) => void;
   onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
   onError: (message: string) => void;
 };
 
@@ -36,6 +38,7 @@ export function AdministratorUsersListPanel({
   onEdit,
   onDelete,
   onPageChange,
+  onLimitChange,
   onError,
 }: AdministratorUsersListPanelProps) {
   return (
@@ -130,22 +133,7 @@ export function AdministratorUsersListPanel({
           )}
         </TableBody>
       </Table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
-          Total {totalItems} items • Page {page} of {totalPages}
-        </p>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={loading || page <= 1}>
-            <ChevronLeft />
-            Previous
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={loading || page >= totalPages}>
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      <StandardPagination page={page} limit={limit} totalPages={totalPages} totalItems={totalItems} loading={loading} onPageChange={onPageChange} onLimitChange={onLimitChange} />
     </div>
   );
 }

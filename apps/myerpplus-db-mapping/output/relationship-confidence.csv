@@ -1,0 +1,26 @@
+domain,from_table,from_column,to_table,to_column,confidence,basis
+IAM,users,UserId,userroles,UserId,HIGH,exact column name
+IAM,roles,RoleId,userroles,RoleId,HIGH,exact column name
+IAM,roles,RoleId,rolepermissions,RoleId,HIGH,exact column name
+IAM,users,UserId,userpermissions,UserId,HIGH,exact column name
+IAM,users,UserId,userpreferences,UserId,HIGH,exact column name
+LegacyIAM,m0_user,userid,m0_user_role,userid,HIGH,exact column name
+LegacyIAM,m0_role,rkode,m0_user_role,role,MEDIUM,semantic key mapping
+MasterData,users,UserId,contacts,UserId,HIGH,exact column name
+MasterData,businessunits,UnitId,businessunits,ParentUnitId,HIGH,self-reference pattern
+ProcureToPay,m4_po,poid,m4_po_detail,idpo,HIGH,header-detail pattern
+ProcureToPay,m4_po,poid,m4_ri,riidpo,MEDIUM,document reference naming
+ProcureToPay,m4_ri,riid,m4_ri_detail,idri,HIGH,header-detail pattern
+ProcureToPay,m4_po_detail,idpodetail,m4_ri_detail,idpodetail,HIGH,detail cross-reference
+ProcureToPay,m1_contact,kid,m4_po,posupplier,MEDIUM,entity name similarity
+ProcureToPay,m1_contact,kid,m4_ri,risupplier,MEDIUM,entity name similarity
+ProcureToPay,m1_item,bid,m4_po_detail,idbarang,HIGH,item id naming pattern
+ProcureToPay,m1_item,bid,m4_ri_detail,idbarang,HIGH,item id naming pattern
+OrderToCash,m5_so,soid,m5_so_detail,idso,HIGH,header-detail pattern
+OrderToCash,m5_so,soid,m5_si,siidso,MEDIUM,document reference naming
+OrderToCash,m5_si,siid,m5_si_detail,idsi,HIGH,header-detail pattern
+OrderToCash,m5_so_detail,idsodetail,m5_si_detail,idsodetail,HIGH,detail cross-reference
+OrderToCash,m1_contact,kid,m5_so,socustomer,MEDIUM,entity name similarity
+OrderToCash,m1_contact,kid,m5_si,sicustomer,MEDIUM,entity name similarity
+OrderToCash,m1_item,bid,m5_so_detail,idbarang,HIGH,item id naming pattern
+OrderToCash,m1_item,bid,m5_si_detail,idbarang,HIGH,item id naming pattern

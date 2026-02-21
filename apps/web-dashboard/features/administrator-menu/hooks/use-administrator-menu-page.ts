@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { buildEntityRef, parseEntityRef } from '@/lib/entity-ref';
 import {
@@ -46,7 +47,7 @@ export function useAdministratorMenuPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [parentOptions, setParentOptions] = useState<Array<{ value: string; label: string }>>([]);
@@ -55,7 +56,7 @@ export function useAdministratorMenuPage() {
   const headers = useMemo(() => buildAuthHeader(token), [token]);
 
   const fetchList = useCallback(
-    async (targetPage = page) => {
+    async (targetPage = page, targetLimit = limit) => {
       const safePage = typeof targetPage === 'number' && Number.isInteger(targetPage) && targetPage > 0 ? targetPage : 1;
 
       setLoading(true);
@@ -63,7 +64,7 @@ export function useAdministratorMenuPage() {
       try {
         const query = new URLSearchParams({
           page: String(safePage),
-          limit: String(limit),
+          limit: String(targetLimit),
           includeInactive: 'true',
         });
 
@@ -308,6 +309,16 @@ export function useAdministratorMenuPage() {
     [parentOptions],
   );
 
+
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+    void fetchList(1, nextLimit);
+  }, [fetchList]);
+
   return {
     items,
     form,
@@ -323,6 +334,7 @@ export function useAdministratorMenuPage() {
     error,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     parentSelectOptions,

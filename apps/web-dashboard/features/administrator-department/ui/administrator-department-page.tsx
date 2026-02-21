@@ -34,6 +34,7 @@ export function AdministratorDepartmentPageView() {
     submitting,
     parentOptions,
     fetchList,
+    changeLimit,
     onSubmit,
     onDelete,
     openCreate,
@@ -86,6 +87,7 @@ export function AdministratorDepartmentPageView() {
               void onDelete(id);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : (
           <AdministratorDepartmentFormPanel

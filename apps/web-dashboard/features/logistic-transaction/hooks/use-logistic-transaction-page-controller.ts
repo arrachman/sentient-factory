@@ -1,5 +1,5 @@
-'use client';
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { type BatchOption } from '@/features/logistic-transaction/ui/batch-multi-select';
 import { type CityOption, type CitySlaOption, type ContactOption, type DeliveryOrderForm, type DeliveryOrderListItem, type DivisionOption, initialDetail, initialForm, type ItemOption, type WarehouseOption } from '@/features/logistic-transaction/model/types';
@@ -52,7 +52,7 @@ export function useLogisticTransactionPageController() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const token = useMemo(() => getTokenFromCookie(), []);
@@ -104,7 +104,7 @@ export function useLogisticTransactionPageController() {
     [cities, customers, citySlaByCityId],
   );
   const fetchList = useCallback(
-    async (targetPage = page) => {
+    async (targetPage = page, targetLimit = limit) => {
       await fetchOutboundList({
         targetPage,
         page,
@@ -265,6 +265,16 @@ export function useLogisticTransactionPageController() {
     });
   }, [fetchBatchOptions, form.details, showForm]);
   const outboundStatusActions = useOutboundStatusActions({ token, page, fetchList, setError });
+
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+    void fetchList(1, nextLimit);
+  }, [fetchList]);
+
   return {
     router,
     isOutboundRoute,
@@ -277,6 +287,7 @@ export function useLogisticTransactionPageController() {
     statusFilter,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     setSearch,

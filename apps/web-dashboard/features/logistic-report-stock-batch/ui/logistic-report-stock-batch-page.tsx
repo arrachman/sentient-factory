@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { Download, RefreshCw } from 'lucide-react';
 import {
   Toolbar,
@@ -9,10 +10,12 @@ import {
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
 import { Button } from '@/components/ui/button';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useReportStockBatch } from '@/features/logistic-stock-report/hooks/use-report-stock-batch';
 import { fmtDate, fmtNumber, formatProductLabel } from '@/features/logistic-stock-report/model/utils';
 import { StockReportFilters } from '@/features/logistic-stock-report/ui/stock-report-filters';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 
 export function LogisticReportStockBatchPage() {
   const {
@@ -32,6 +35,18 @@ export function LogisticReportStockBatchPage() {
     exportToExcel,
     resetFilters,
   } = useReportStockBatch();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
+  const totalPages = Math.max(1, Math.ceil(rows.length / limit));
+
+  useEffect(() => {
+    setPage((current) => Math.min(Math.max(1, current), totalPages));
+  }, [totalPages]);
+
+  const pagedRows = useMemo(() => {
+    const start = (page - 1) * limit;
+    return rows.slice(start, start + limit);
+  }, [limit, page, rows]);
 
   return (
     <div className="container">
@@ -105,11 +120,11 @@ export function LogisticReportStockBatchPage() {
                   </TableRow>
                 ) : null}
 
-                {rows.map((row, index) => (
+                {pagedRows.map((row, index) => (
                   <TableRow
                     key={`${String(row.uuid || '')}-${String(row.batch?.batchNumber || '')}-${String(row.transactionDate || '')}-${index}`}
                   >
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                     <TableCell>{row.warehouse?.name || '-'}</TableCell>
                     <TableCell>{row.supplierNames?.length ? row.supplierNames.join(', ') : '-'}</TableCell>
                     <TableCell>{formatProductLabel(row) || '-'}</TableCell>
@@ -125,6 +140,21 @@ export function LogisticReportStockBatchPage() {
               </TableBody>
             </Table>
           </div>
+          <StandardPagination
+            page={page}
+            limit={limit}
+            totalPages={totalPages}
+            totalItems={rows.length}
+            loading={loading}
+            onPageChange={(nextPage) => setPage(Math.min(Math.max(1, nextPage), totalPages))}
+            onLimitChange={(nextLimit) => {
+              if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+                return;
+              }
+              setLimit(nextLimit);
+              setPage(1);
+            }}
+          />
         </div>
       </div>
     </div>

@@ -1,9 +1,10 @@
-import { ChevronLeft, ChevronRight, Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { StandardPagination } from '@/components/ui/standard-pagination';
 import {
   type CompletedActionState,
   type DeliveredActionState,
@@ -45,6 +46,7 @@ type LogisticTransactionListPanelProps = {
   onSearchSubmit: () => void;
   onSearchReset: () => void;
   onPageChange: (nextPage: number) => void;
+  onLimitChange: (nextLimit: number) => void;
   onEditRow: (rowId: string, item: DeliveryOrderListItem) => void;
   onDeleteRow: (rowId: string) => void;
 };
@@ -75,6 +77,7 @@ export function LogisticTransactionListPanel({
   onSearchSubmit,
   onSearchReset,
   onPageChange,
+  onLimitChange,
   onEditRow,
   onDeleteRow,
 }: LogisticTransactionListPanelProps) {
@@ -229,22 +232,7 @@ export function LogisticTransactionListPanel({
           )}
         </TableBody>
       </Table>
-
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing page {page} of {totalPages} ({totalItems} rows)
-        </p>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1 || loading}>
-            <ChevronLeft />
-            Prev
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages || loading}>
-            Next
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      <StandardPagination page={page} limit={limit} totalPages={totalPages} totalItems={totalItems} loading={loading} onPageChange={onPageChange} onLimitChange={onLimitChange} />
     </div>
   );
 }

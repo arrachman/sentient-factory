@@ -36,6 +36,7 @@ export function MasterContactPageView() {
     resetSearch,
     refreshList,
     changePage,
+    changeLimit,
     openAddRoute,
     openEditRoute,
     onSubmit,
@@ -80,6 +81,7 @@ export function MasterContactPageView() {
               void onDelete(uuid);
             }}
             onPageChange={changePage}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterContactFormPanel

@@ -33,6 +33,7 @@ export function AdministratorUsersPageView() {
     loading,
     submitting,
     fetchList,
+    changeLimit,
     onSubmit,
     onEdit,
     onDelete,
@@ -79,6 +80,7 @@ export function AdministratorUsersPageView() {
               void onDelete(userId);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
             onError={setError}
           />
         ) : (

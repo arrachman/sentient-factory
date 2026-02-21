@@ -35,6 +35,7 @@ export default function MasterDataItemPage() {
     applySearch,
     resetSearch,
     changePage,
+    changeLimit,
     openAddRoute,
     openEditRoute,
     onSubmit,
@@ -79,6 +80,7 @@ export default function MasterDataItemPage() {
               void onDelete(uuid);
             }}
             onPageChange={changePage}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterItemFormPanel

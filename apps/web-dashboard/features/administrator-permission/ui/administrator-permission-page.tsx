@@ -30,6 +30,7 @@ export function AdministratorPermissionPageView() {
     loading,
     submitting,
     fetchList,
+    changeLimit,
     onSubmit,
     onEdit,
     onDelete,
@@ -77,6 +78,7 @@ export function AdministratorPermissionPageView() {
               void onDelete(id);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : (
           <AdministratorPermissionFormPanel

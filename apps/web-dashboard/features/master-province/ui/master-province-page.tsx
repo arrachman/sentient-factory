@@ -32,6 +32,7 @@ export default function MasterDataProvincePage() {
     totalPages,
     totalItems,
     fetchList,
+    changeLimit,
     onSubmit,
     onDelete,
     openCreate,
@@ -82,6 +83,7 @@ export default function MasterDataProvincePage() {
             onPageChange={(nextPage) => {
               void fetchList(nextPage);
             }}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterProvinceFormPanel

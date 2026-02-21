@@ -32,6 +32,7 @@ export default function MasterDataWarehousePage() {
     totalPages,
     totalItems,
     fetchList,
+    changeLimit,
     onSubmit,
     onDelete,
     openAddRoute,
@@ -79,6 +80,7 @@ export default function MasterDataWarehousePage() {
               void onDelete(uuid);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterWarehouseFormPanel

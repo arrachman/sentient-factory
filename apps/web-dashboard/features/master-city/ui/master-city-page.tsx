@@ -32,6 +32,7 @@ export default function MasterDataCityPage() {
     totalPages,
     totalItems,
     fetchList,
+    changeLimit,
     onSubmit,
     onDelete,
     openAddRoute,
@@ -78,6 +79,7 @@ export default function MasterDataCityPage() {
               void onDelete(uuid);
             }}
             onPageChange={fetchList}
+            onLimitChange={changeLimit}
           />
         ) : (
           <MasterCityFormPanel

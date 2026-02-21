@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   deleteInbound,
@@ -61,7 +62,7 @@ export function useLogisticInboundPage() {
   const [error, setError] = useState('');
 
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -93,7 +94,7 @@ export function useLogisticInboundPage() {
   });
 
   const fetchList = useCallback(
-    async (targetPage = page) => {
+    async (targetPage = page, targetLimit = limit) => {
       const safePage = toSafePage(targetPage);
 
       setLoading(true);
@@ -283,6 +284,16 @@ export function useLogisticInboundPage() {
     void openEditForm(updateInboundId);
   }, [isUpdateRoute, loadingOptions, openEditForm, showForm, updateInboundId]);
 
+
+  const changeLimit = useCallback((nextLimit: number) => {
+    if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
+      return;
+    }
+    setLimit(nextLimit);
+    setPage(1);
+    void fetchList(1, nextLimit);
+  }, [fetchList]);
+
   return {
     items,
     suppliers,
@@ -307,6 +318,7 @@ export function useLogisticInboundPage() {
     draftDetail,
     page,
     limit,
+    changeLimit,
     totalPages,
     totalItems,
     itemOptionMap,
