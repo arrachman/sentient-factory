@@ -1,4 +1,23 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-PasswordSuperRahasia123!}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sentient_db}
+      MYSQL_USER: ${MYSQL_USER:-user_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-UserPassword123!}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   postgres:
     image: postgres:16-alpine
     container_name: sentient-postgres-core
@@ -107,6 +126,9 @@ services:
     command: sh -c "npm install && npm run start -- --host 0.0.0.0 --port 3205"
 
 volumes:
+  mysql_data:
+    external: true
+    name: mysql_mysql_data
   postgres_data:
     name: sentient_factory_postgres_data
   redis_data:
@@ -122,5 +144,5 @@ volumes:
 
 networks:
   default:
+    external: true
     name: sentient_factory_isolated_net
-    driver: bridge

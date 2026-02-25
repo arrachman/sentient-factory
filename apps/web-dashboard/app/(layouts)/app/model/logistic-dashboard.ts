@@ -1,114 +1,54 @@
-export type InboundRow = {
-  uuid: string;
-  transactionNo: string;
-  transactionDate: string;
-  status: 'DRAFT' | 'POSTED' | 'CANCELLED';
-  supplier?: {
-    name?: string | null;
-  } | null;
-  _count?: {
-    details?: number;
-  };
-  totalBatches?: number;
-};
-
-export type OutboundRow = {
-  uuid: string;
-  doNumber: string;
-  doDate: string;
-  status: 'DRAFT' | 'SHIPPED' | 'RECEIVED' | 'CLOSED' | 'CANCELLED';
-  customer?: {
-    name?: string | null;
-  } | null;
-  totalKg?: unknown;
-  totalBatches?: number;
-};
-
-type DecimalLike = {
-  s?: number;
-  e?: number;
-  d?: number[];
-};
-
-export type ListResponse<T> = {
-  success?: boolean;
-  data?: T[];
-  meta?: {
-    total?: number;
-  };
-  message?: string;
-};
-
-export type PeriodFilter = 'today' | '7d' | '30d';
+export type PeriodFilter = 'today' | '7d' | '30d' | 'all';
+export type DashboardDomain = 'm1' | 'm' | 'm2r' | 'so';
 
 export const PERIOD_OPTIONS: Array<{ value: PeriodFilter; label: string }> = [
+  { value: 'all', label: 'Semua Data' },
   { value: 'today', label: 'Hari Ini' },
   { value: '7d', label: '7 Hari' },
   { value: '30d', label: '30 Hari' },
 ];
 
-function isDecimalLike(value: unknown): value is DecimalLike {
-  return Boolean(
-    value &&
-      typeof value === 'object' &&
-      Array.isArray((value as DecimalLike).d) &&
-      typeof (value as DecimalLike).e === 'number',
-  );
-}
+export type SummaryRow = {
+  total_rows?: number | string;
+  total_metric?: number | string;
+  avg_metric?: number | string;
+  min_metric?: number | string;
+  max_metric?: number | string;
+};
 
-function decimalLikeToString(value: DecimalLike): string {
-  const digits = Array.isArray(value.d) ? value.d.join('') : '';
-  if (!digits) {
-    return '0';
-  }
+export type TrendRow = {
+  period_date?: string;
+  total_rows?: number | string;
+  total_metric?: number | string;
+};
 
-  const sign = value.s === -1 ? '-' : '';
-  const exponent = typeof value.e === 'number' ? value.e : digits.length - 1;
-  const decimalPos = exponent + 1;
+export type BreakdownRow = {
+  group_key?: string;
+  total_rows?: number | string;
+  total_metric?: number | string;
+};
 
-  if (decimalPos <= 0) {
-    return `${sign}0.${'0'.repeat(Math.abs(decimalPos))}${digits}`.replace(/\.?0+$/, '') || '0';
-  }
-  if (decimalPos >= digits.length) {
-    return `${sign}${digits}${'0'.repeat(decimalPos - digits.length)}`;
-  }
+export type MetadataResponse = {
+  effective?: {
+    groupBy?: string[];
+    sortBy?: string[];
+  };
+};
 
-  return `${sign}${digits.slice(0, decimalPos)}.${digits.slice(decimalPos)}`.replace(/\.?0+$/, '') || '0';
-}
+export type DomainsResponse = {
+  success?: boolean;
+  data?: Array<{
+    domain?: DashboardDomain;
+  }>;
+};
 
-export function normalizeNumber(value: unknown): number {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  if (isDecimalLike(value)) {
-    const parsed = Number(decimalLikeToString(value));
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-export function fmtDate(value?: string | null) {
-  if (!value) {
-    return '-';
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return '-';
-  }
-  return new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
-}
-
-export function fmtKg(value: unknown) {
-  return normalizeNumber(value).toLocaleString('id-ID', { maximumFractionDigits: 3 });
-}
+export type DashboardResponse<T> = {
+  success?: boolean;
+  data?: {
+    rows?: T[];
+  };
+  message?: string;
+};
 
 function toDateOnly(value: Date) {
   return value.toISOString().slice(0, 10);
@@ -119,7 +59,10 @@ export function resolvePeriodRange(period: PeriodFilter) {
   to.setHours(23, 59, 59, 999);
 
   const from = new Date(to);
-  if (period === 'today') {
+  if (period === 'all') {
+    from.setFullYear(2000, 0, 1);
+    from.setHours(0, 0, 0, 0);
+  } else if (period === 'today') {
     from.setHours(0, 0, 0, 0);
   } else if (period === '7d') {
     from.setDate(from.getDate() - 6);
@@ -135,15 +78,39 @@ export function resolvePeriodRange(period: PeriodFilter) {
   };
 }
 
-export function outboundBadgeVariant(status?: OutboundRow['status']) {
-  if (status === 'CLOSED' || status === 'RECEIVED') {
-    return 'success';
+export function toNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
   }
-  if (status === 'CANCELLED') {
-    return 'destructive';
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
-  if (status === 'SHIPPED') {
-    return 'info';
+  return 0;
+}
+
+export function fmtNumber(value: unknown, maximumFractionDigits = 2) {
+  return toNumber(value).toLocaleString('id-ID', { maximumFractionDigits });
+}
+
+export function fmtCompactNumber(value: unknown, maximumFractionDigits = 1) {
+  return toNumber(value).toLocaleString('id-ID', {
+    notation: 'compact',
+    maximumFractionDigits,
+  });
+}
+
+export function fmtDate(value?: string | null) {
+  if (!value) {
+    return '-';
   }
-  return 'secondary';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }

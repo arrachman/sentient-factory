@@ -1,0 +1,1048 @@
+0_ap		0	0	0
+0_ar		0	0	0
+0_barangbaru		0	0	0
+0_coabarang		0	0	0
+0_coacustomer		0	0	0
+0_coasupplier		0	0	0
+0_coasupplier_copy		0	0	0
+0_customer		0	0	0
+0_hppglobal	id	0	0	0
+0_po		0	0	0
+0_po_1		0	0	0
+0_saldoawal		0	0	0
+0_so		0	0	0
+0_so_1		0	0	0
+0_so_update		0	0	0
+0_stokapril2018		0	0	0
+0_stokfebruari2018		0	0	0
+0_stokjanuari2018		0	0	0
+0_stokmaret2018		0	0	0
+0_updatebarangjuni		0	0	0
+0_updatehpp		0	0	0
+0_updatesupplier		0	0	0
+ak_tmp		0	0	0
+businessunits	UnitId	0	0	0
+contacts	ContactId	0	0	0
+dataauditlog	LogId	0	0	0
+dateasset		0	0	0
+exceptions	Id	0	0	0
+languages	Id	0	0	0
+lb_tmp		0	0	0
+lu_tmp		0	0	0
+m0_app	appid	0	0	0
+m0_backup	id	0	0	0
+m0_barcode_next	awalan	1	0	0
+m0_config	cid	0	0	0
+m0_dashboardmail	did	0	0	0
+m0_dummy	dkode	0	0	0
+m0_export	eid	0	0	0
+m0_global_allowance	kode	1	0	0
+m0_group_aq	cabang,lokasi,tahun,bulan	4	0	0
+m0_group_rq	cabang,lokasi,tahun,bulan	4	0	0
+m0_hapusdata	id	0	0	0
+m0_hitungulang_log	huid	0	0	0
+m0_hppaverage	id	0	0	0
+m0_hppsaldo	id	0	0	0
+m0_import_target	itmoduleid,itmenuid	0	0	0
+m0_jenismutasi	jenismutasi	0	0	0
+m0_labarugi	lrurutan	0	0	0
+m0_language	lkode	0	0	0
+m0_language_detail	ldid	0	0	0
+m0_menu	mnmoduleid,mnid	1	0	0
+m0_menu_lang	mnlmoduleid,mnlmnid,mnllanguage	1	0	0
+m0_menu_s	mnmoduleid,mnid	1	0	0
+m0_menu_s_copy1	mnmoduleid,mnid	1	0	0
+m0_menu_s_lang	mnlmoduleid,mnlmnid,mnllanguage	1	0	0
+m0_module	mid	0	0	0
+m0_msmq	id	0	0	0
+m0_msmq_cogs	mcid	0	0	0
+m0_msmq_importdata	miid	0	0	0
+m0_msmq_journal	mjid	0	0	0
+m0_nomor	kodetabel	2	0	0
+m0_nomor_mobile		0	0	0
+m0_nomor_next	cabang,lokasi,kodetabel,tahun,bulan	5	0	0
+m0_nomor_next_failed	id	5	0	0
+m0_nomor_tmp	kodetabel	0	0	0
+m0_notifikasi_email	moduleid,menuid,statusnotifikasi,statusupdate,userid,useridmail	0	0	0
+m0_payment_method	kode	0	0	0
+m0_permissions_custom	pcmodule,pcid	0	0	0
+m0_realization_category	kode	0	0	0
+m0_report	rid	0	0	0
+m0_report_copy	rid	0	0	0
+m0_report_filter	fid	0	0	0
+m0_report_filter_copy1	fid	0	0	0
+m0_report_lang	rlrid,rllanguage	0	0	0
+m0_report_temp	tnama	0	0	0
+m0_role	rkode	0	0	0
+m0_role_custom	rcmoduleid,rcidpc,rcrole	1	0	0
+m0_role_item_category	ricrole,rickategoribarang	0	0	0
+m0_role_menu	rmmoduleid,rmmenuid,rmrole	1	0	0
+m0_role_menu_s	rmid	1	0	0
+m0_role_menu_s_copy1	rmid	1	0	0
+m0_role_report	rrmoduleid,rrmenuid,rritem,rrrole	1	0	0
+m0_role_report_s	rrmoduleid,rrmenuid,rritem,rrrole	1	0	0
+m0_role_s	rkode	0	0	0
+m0_search_packet	spkode	0	0	0
+m0_selling_rate	kode	0	0	0
+m0_sentence	sid	0	0	0
+m0_sentence_s	sid	0	0	0
+m0_sentence_s_copy1	sid	0	0	0
+m0_sentence_stranslate	stid	0	0	0
+m0_sentence_stranslate_copy1	stid	0	0	0
+m0_sentence_translate	stid	0	0	0
+m0_setting	smodule,sgrup,skode	0	0	0
+m0_setting_grup	sgmodule,sggrup	0	0	0
+m0_setting_lang	slmodule,slgrup,slkode,sllanguage	0	0	0
+m0_setting_location	sllokasi,slmodule,slgrup,slkode	0	0	0
+m0_setting_s	smodule,sgrup,skode	0	0	0
+m0_si	siid,siisclose	1	0	0
+m0_si_detail	idsidetail,isclose	1	0	0
+m0_si_pay	idsicarabayar,isclose	0	0	0
+m0_statistic	sid	0	0	0
+m0_status	kode	0	0	0
+m0_status_giro	kode	0	0	0
+m0_status_progress	kode	0	0	0
+m0_status_rq	kode	0	0	0
+m0_struk	id	0	0	0
+m0_table_relation	derivedtable,destinationtable	0	0	0
+m0_table_relation_status	trsid	0	0	0
+m0_translate	tlanguage,tsentence	0	0	0
+m0_user	userid	4	0	0
+m0_user_branch	userid,cabang	0	0	0
+m0_user_coa	userid,norek	0	0	0
+m0_user_location	userid,lokasi	0	0	0
+m0_user_role	userid,role	0	0	0
+m0_user_role_s	userid,role	0	0	0
+m0_user_warehouse	userid,gudang	0	0	0
+m0_usergrup	ugkode	0	0	0
+m0_usergrupmenu	ugmmoduleid,ugmmenuid,ugmusergrup	1	0	0
+m0_userlog	ulid	1	0	0
+m0_userlog_category	kode	0	0	0
+m0_userlogerror	ulid	0	0	0
+m0_userlogin	ulid	0	0	0
+m0_userlogin_copy	ulid	0	0	0
+m0_validitas_data	no	0	0	0
+m0_validitas_data_category	id	0	0	0
+m0_versi_db		0	0	0
+m13_billing_category	bckode	2	0	0
+m13_billing_category_history	bcidhistory	0	0	0
+m13_bl	blid,blisclose	1	0	0
+m13_bl_detail	idbldetail,isclose	2	0	0
+m13_bl_detail_billing		1	0	0
+m13_bl_detail_history	idhistorydetail,isclose	1	0	0
+m13_bl_history	blidhistory,blisclose	0	0	0
+m13_class	ckode	2	0	0
+m13_class_history	cidhistory	0	0	0
+m13_faculty	fkode	2	0	0
+m13_faculty_history	fidhistory	2	0	0
+m13_py	pyid,pyisclose	1	0	0
+m13_py_detail	idpydetail,isclose	2	0	0
+m13_py_detail_bayar		1	0	0
+m13_school_year	sykode	2	0	0
+m13_school_year_history	syidhistory	2	0	0
+m13_si	siid	0	0	0
+m13_si_history	siidhistory	0	0	0
+m13_student_category	scid	3	0	0
+m13_student_category_billing		2	0	0
+m13_student_category_billing_history		0	0	0
+m13_student_category_history	scidhistory	0	0	0
+m13_student_status	sskode	2	0	0
+m13_student_status_history	ssidhistory	2	0	0
+m13_study_program	spkode	2	0	0
+m13_study_program_history	spidhistory	0	0	0
+m14_account	anorek	1	0	0
+m14_account_history	aidhistory	1	0	0
+m14_ang	angid,angisclose	0	0	0
+m14_ang_detail	idangdetail,isclose	2	0	0
+m14_ang_detail_bayar		1	0	0
+m14_collateral	akode	2	0	0
+m14_collateral_history	aidhistory	2	0	0
+m14_deposit	skode	2	0	0
+m14_deposit_history	sidhistory	2	0	0
+m14_loan	pkode	2	0	0
+m14_loan_history	pidhistory	2	0	0
+m14_pjm	pjmid,pjmisclose	1	0	0
+m14_pjm_agunan		1	0	0
+m14_pjm_angsuran		0	0	0
+m14_pjm_detail	idpjmdetail,isclose	2	0	0
+m14_pjm_detail_bayar		1	0	0
+m14_smp	smpid,smpisclose	1	0	0
+m14_smp_detail	idsmpdetail,isclose	2	0	0
+m14_smp_detail_bayar		1	0	0
+m1_accident	akode	2	0	0
+m1_accident_history	aidhistory	2	0	0
+m1_area	akode	2	0	0
+m1_area_history	aidhistory	2	0	0
+m1_bank	bkode	2	0	0
+m1_bank_history	bidhistory	2	0	0
+m1_bed	bkode	2	0	0
+m1_bed_history	bidhistory	2	0	0
+m1_branch	bkode	2	0	0
+m1_branch_history	bidhistory	2	0	0
+m1_checking_category	ccid	1	0	0
+m1_checking_category_history	ccidhistory	2	0	0
+m1_city	ckode	2	0	0
+m1_city_history	cidhistory	2	0	0
+m1_class	ckode	2	0	0
+m1_class_history	cidhistory	2	0	0
+m1_class_product	cpkode	2	0	0
+m1_class_product_history	cpidhistory	2	0	0
+m1_coa	cid	10	0	0
+m1_coa_copy1	cid	10	0	0
+m1_coa_history	cidhistory	10	0	0
+m1_cogs_fifo_in	cfiid	6	0	0
+m1_cogs_fifo_out	cfoid	4	0	0
+m1_cogs_special_in	idhppikm	4	0	0
+m1_cogs_special_out	idhppikk	5	0	0
+m1_colleague	cid	0	0	0
+m1_color	ckode	2	0	0
+m1_color_history	cidhistory	2	0	0
+m1_commission	kmkode	1	0	0
+m1_commission_detail	kmdiddetail	0	0	0
+m1_commission_detail_history	kmdidhistorydetail	0	0	0
+m1_commission_history	kmidhistory	1	0	0
+m1_contact	kid	10	0	0
+m1_contact_attention	kaid	1	0	0
+m1_contact_attention_history	kaidhistory	1	0	0
+m1_contact_category	cckode	2	0	0
+m1_contact_category_history	ccidhistory	2	0	0
+m1_contact_comment	idcc	2	0	0
+m1_contact_comment_history	idhistory	2	0	0
+m1_contact_commission	kkmkodekontak,kkmkodekomisi	2	0	0
+m1_contact_copy	kid	10	0	0
+m1_contact_expedition	ktidkontak,kttipeinvoice	0	0	0
+m1_contact_files	idkontak,namafile	3	0	0
+m1_contact_history	kidhistory	10	0	0
+m1_contact_point	cpidkontak	0	0	0
+m1_contact_price	khidkontak,khidbarang	0	0	0
+m1_contact_price_copy	khidkontak,khidbarang	0	0	0
+m1_contact_price_history	khidhistory	0	0	0
+m1_contact_terms	ktidkontak,kttipeinvoice	0	0	0
+m1_contact_tmp	kid	0	0	0
+m1_cost_center	cckode	2	0	0
+m1_cost_center_history	ccidhistory	2	0	0
+m1_country	ckode	2	0	0
+m1_country_history	cidhistory	2	0	0
+m1_currency	ckode	2	0	0
+m1_currency_history	cidhistory	2	0	0
+m1_customer_category	cckode	2	0	0
+m1_customer_category_history	ccidhistory	2	0	0
+m1_department	dpkode	2	0	0
+m1_department_history	dpidhistory	2	0	0
+m1_designer	dkode	2	0	0
+m1_designer_history	didhistory	2	0	0
+m1_diagnosis	dkode	2	0	0
+m1_division	dkode	2	0	0
+m1_division_history	didhistory	2	0	0
+m1_expedition	ekode	0	0	0
+m1_expedition_history	eidhistory	0	0	0
+m1_files	fsumber,fnamafile	0	0	0
+m1_files_copy	fsumber,fnamafile	0	0	0
+m1_icd	iid	1	0	0
+m1_icd_history	iidhistory	2	0	0
+m1_index_price	ipkode	2	0	0
+m1_index_price_history	ipidhistory	2	0	0
+m1_insurer	iid	2	0	0
+m1_item	bid	16	0	0
+m1_item2	bid	16	0	0
+m1_item_assembly	iaidbarang,iaurutan	0	0	0
+m1_item_assembly_history	iaidhistory	0	0	0
+m1_item_booking	idbarang	0	0	0
+m1_item_booking_po	idbarang	0	0	0
+m1_item_branch_costcenter	ibcid	2	0	0
+m1_item_c	bid	16	0	0
+m1_item_category	ickode	2	0	0
+m1_item_category_history	icidhistory	2	0	0
+m1_item_copy1	bid	16	0	0
+m1_item_copy2	bid	16	0	0
+m1_item_description	ididbarang,idkode,idurutan	2	0	0
+m1_item_flex	bid	16	0	0
+m1_item_hauling	bid	16	0	0
+m1_item_hauling_history	bidhistory	16	0	0
+m1_item_history	bidhistory	16	0	0
+m1_item_location	ilid	3	0	0
+m1_item_location_history	ilidhistory	3	0	0
+m1_item_location_warehouse		2	0	0
+m1_item_location_warehouse_history	blgidhistory	2	0	0
+m1_item_permission	ipkode	0	0	0
+m1_item_permission_history	ipidhistory	0	0	0
+m1_item_picking_list	idbarang,gudang	0	0	0
+m1_item_price	khidbarang,khmatauang	0	0	0
+m1_item_price_history	khidhistory	0	0	0
+m1_item_stock_warehouse	idbarang,kgudang	0	0	0
+m1_item_stock_warehouse_log	id	0	0	0
+m1_item_supplier	isidbarang,isidkontak	2	0	0
+m1_item_supplier_history	isidhistory	2	0	0
+m1_item_transaction	id,kodepa	8	0	0
+m1_item_transaction_history	idhistory,kodepa	8	0	0
+m1_item_type		2	0	0
+m1_item_type_history	itidhistory	2	0	0
+m1_lab_result	lrid	0	0	0
+m1_labour_cost	lckode	2	0	0
+m1_layanan	lkode	2	0	0
+m1_location	lkode	2	0	0
+m1_location_history	lidhistory	2	0	0
+m1_machine	mkode	2	0	0
+m1_machine_history	midhistory	2	0	0
+m1_material	mkode	2	0	0
+m1_material_history	midhistory	2	0	0
+m1_merk	mkode	2	0	0
+m1_merk_history	midhistory	2	0	0
+m1_model	mkode	2	0	0
+m1_model_history	midhistory	2	0	0
+m1_no_batch_in	nbiidbatchin	3	0	0
+m1_no_batch_in_old	nbiidbatchin	3	0	0
+m1_no_batch_out	nboid	3	0	0
+m1_no_batch_transaction	nbtid	2	0	0
+m1_no_batch_transaction_history	nbtidhistory	2	0	0
+m1_no_serial_in	nsiidserialin	3	0	0
+m1_no_serial_in_copy	nsiidserialin	3	0	0
+m1_no_serial_in_old	nsiidserialin	3	0	0
+m1_no_serial_out	nsoid	3	0	0
+m1_no_serial_out_copy	nsoid	3	0	0
+m1_no_serial_transaction	nstid	2	0	0
+m1_no_serial_transaction_history	nstidhistory	2	0	0
+m1_notes	nid	0	0	0
+m1_oem	okode	2	0	0
+m1_oem_history	oidhistory	2	0	0
+m1_other	ojenis,okode	0	0	0
+m1_other_cost	ockode	2	0	0
+m1_other_cost_history	ocidhistory	2	0	0
+m1_other_history	oidhistory	0	0	0
+m1_patient	pid	1	0	0
+m1_patient_category	pckode	2	0	0
+m1_price_category	pckode	2	0	0
+m1_price_category_detail	pcdkategori,pcdidbarang	0	0	0
+m1_price_category_history	pcidhistory	2	0	0
+m1_production_activity	paid	2	0	0
+m1_production_activity_detail	idpadetail	0	0	0
+m1_production_activity_detail_history	idhistorydetail	0	0	0
+m1_production_activity_history	paidhistory	2	0	0
+m1_production_category	pckode	2	0	0
+m1_production_category_history	pcidhistory	2	0	0
+m1_production_route	prid	2	0	0
+m1_production_route_detail	idprdetail	0	0	0
+m1_project	pkode	0	0	0
+m1_project_history	pidhistory	0	0	0
+m1_province	pkode	2	0	0
+m1_province_history	pidhistory	2	0	0
+m1_reference	rid	2	0	0
+m1_region	rkode	2	0	0
+m1_region_history	ridhistory	2	0	0
+m1_room	rkode	2	0	0
+m1_room_history	ridhistory	2	0	0
+m1_salesman_category	sckode	2	0	0
+m1_salesman_category_history	scidhistory	2	0	0
+m1_salesman_commission	scidkontak	0	0	0
+m1_section	skode	2	0	0
+m1_section_history	sidhistory	2	0	0
+m1_selling_point	spid	1	0	0
+m1_selling_point_history	spidhistory	0	0	0
+m1_size	skode	2	0	0
+m1_size_history	sidhistory	2	0	0
+m1_subclass	sckode	2	0	0
+m1_subclass_history	scidhistory	2	0	0
+m1_subdepartment	sdpkode	2	0	0
+m1_subdepartment_history	sdpidhistory	2	0	0
+m1_subdistrict	sdkode	2	0	0
+m1_subdivision	sdkode	2	0	0
+m1_subdivision_history	sdidhistory	2	0	0
+m1_supplier_category	sckode	2	0	0
+m1_supplier_category_history	scidhistory	2	0	0
+m1_tax	tkode	2	0	0
+m1_tax_history	tidhistory	2	0	0
+m1_terms	trkode	1	0	0
+m1_terms_history	tridhistory	1	0	0
+m1_transaction_note	tnsumber,tnkode	0	0	0
+m1_transaction_note_detail	tndkode	0	0	0
+m1_transaction_note_detail_history	tndidhistory	0	0	0
+m1_transaction_note_history	tnidhistory,tnsumber,tnkode	0	0	0
+m1_trm	trmkode	2	0	0
+m1_type_sa		2	0	0
+m1_type_sa_history	tsaidhistory	2	0	0
+m1_unit	ukode	2	0	0
+m1_unit_history	uidhistory	2	0	0
+m1_upline	ukode	2	0	0
+m1_vendor	vkode	2	0	0
+m1_vendor_history	vidhistory	2	0	0
+m1_village	vkode	2	0	0
+m1_warehouse	wkode	2	0	0
+m1_warehouse_history	widhistory	2	0	0
+m1_working_estimate	wekode	2	0	0
+m1_working_estimate_history	weidhistory	2	0	0
+m2_accounting_period	apkode	0	0	0
+m2_aj	ajid	1	0	0
+m2_aj_detail	idajdetail	1	0	0
+m2_aj_detail_history	idhistorydetail	1	0	0
+m2_aj_history	ajidhistory	1	0	0
+m2_bd	bdid	1	0	0
+m2_bd_detail	idbddetail	0	0	0
+m2_bd_detail_history	idhistorydetail	0	0	0
+m2_bd_history	bdidhistory	1	0	0
+m2_cb	cbid	1	0	0
+m2_cb_detail	idcbdetail	0	0	0
+m2_cb_detail_history	idhistorydetail	0	0	0
+m2_cb_history	cbidhistory	1	0	0
+m2_cb_pay	idcbcarabayar	0	0	0
+m2_cb_pay_history	idcarabayarhistory	0	0	0
+m2_cd	cdid	8	0	0
+m2_cd_detail	idcddetail	0	0	0
+m2_cd_detail_history	idhistorydetail	0	0	0
+m2_cd_history	cdidhistory	1	0	0
+m2_cr	crid	8	0	0
+m2_cr_detail	idcrdetail	0	0	0
+m2_cr_detail_history	idhistorydetail	0	0	0
+m2_cr_history	cridhistory	1	0	0
+m2_files	fsumber,fidtransaksi,fnamafile	0	0	0
+m2_giro_list	glnogiro	5	0	0
+m2_gj	gjid	1	0	0
+m2_gj_detail	idgjdetail	0	0	0
+m2_gj_detail_history	idhistorydetail	0	0	0
+m2_gj_history	gjidhistory	1	0	0
+m2_jm	jmid	1	0	0
+m2_jm_detail	idjmdetail	0	0	0
+m2_jm_detail_history	idhistorydetail	0	0	0
+m2_jm_history	jmidhistory	1	0	0
+m2_notes	nid	0	0	0
+m2_pengajuan_dana	tid,tkodetabelangka	3	0	0
+m2_print	idprint	0	0	0
+m2_realization	rtahun,rbulan,rnorek,rkodepa	1	0	0
+m2_realization_branch	rwtahun,rwbulan,rwcabang,rwnorek,rwkodepa	1	0	0
+m2_realization_cost_center	rcctahun,rccbulan,rcccostcenter,rccnorek,rcckodepa	1	0	0
+m2_realization_division	rdtahun,rdbulan,rddivisi,rdnorek,rdkodepa	1	0	0
+m2_realization_location	rltahun,rlbulan,rllokasi,rlnorek,rlkodepa	1	0	0
+m2_realization_project	rptahun,rpbulan,rpproyek,rpnorek,rpkodepa	1	0	0
+m2_realization_subdivision	rsdtahun,rsdbulan,rsdsubdivisi,rsdnorek,rsdkodepa	1	0	0
+m2_rg	rgid	1	0	0
+m2_rg_detail	idrgdetail	0	0	0
+m2_rg_detail_history	idhistorydetail	0	0	0
+m2_rg_history	rgidhistory	1	0	0
+m2_rgc	rgcid	1	0	0
+m2_rgc_detail	idrgcdetail	0	0	0
+m2_rgc_detail_history	idhistorydetail	0	0	0
+m2_rgc_history	rgcidhistory	1	0	0
+m2_rm	rmid	1	0	0
+m2_rm_detail	idrmdetail	0	0	0
+m2_rm_detail_history	idhistorydetail	0	0	0
+m2_rm_history	rmidhistory	1	0	0
+m2_rm_historyjson	rmjid	0	0	0
+m2_rm_pay	idrmcarabayar	0	0	0
+m2_rm_pay_history	idrmcarabayarhistory	0	0	0
+m2_sg	sgid	1	0	0
+m2_sg_detail	idsgdetail	0	0	0
+m2_sg_detail_history	idhistorydetail	0	0	0
+m2_sg_history	sgidhistory	1	0	0
+m2_sgc	sgcid	1	0	0
+m2_sgc_detail	idsgcdetail	0	0	0
+m2_sgc_detail_history	idhistorydetail	0	0	0
+m2_sgc_history	sgcidhistory	1	0	0
+m2_sm	smid	1	0	0
+m2_sm_detail	idsmdetail	0	0	0
+m2_sm_detail_history	idhistorydetail	0	0	0
+m2_sm_history	smidhistory	1	0	0
+m2_sm_pay	idsmcarabayar	0	0	0
+m2_sm_pay_history	idsmcarabayarhistory	0	0	0
+m2_template	tid,tkodetabelangka	0	0	0
+m2_transaction_journal	tid,tkodepa	0	0	0
+m2_transaction_journal_history	tidhistory,tkodepa	4	0	0
+m2r_analisa_penyusutan		0	0	0
+m2r_anggaran		0	0	0
+m2r_ap_card		2	0	0
+m2r_ap_card_detail		2	0	0
+m2r_ap_voucher		2	0	0
+m2r_ap_voucher_aging		2	0	0
+m2r_ap_voucher_aging_detail		2	0	0
+m2r_ap_voucher_detail		2	0	0
+m2r_appostage_card		2	0	0
+m2r_appostage_voucher		2	0	0
+m2r_ar_card		2	0	0
+m2r_ar_card_detail		2	0	0
+m2r_ar_voucher		2	0	0
+m2r_ar_voucher_aging		2	0	0
+m2r_ar_voucher_aging_detail		2	0	0
+m2r_ar_voucher_detail		2	0	0
+m2r_arpostage_card		2	0	0
+m2r_arpostage_voucher		2	0	0
+m2r_aruskas		0	0	0
+m2r_barang_dibawah_margin		0	0	0
+m2r_barcode		0	0	0
+m2r_batch_pertanggal		0	0	0
+m2r_bb_divisi		0	0	0
+m2r_bp_card		2	0	0
+m2r_bukubesar_akunlawan		0	0	0
+m2r_cekfifo	id	2	0	0
+m2r_customer_point		2	0	0
+m2r_general_ledger		2	0	0
+m2r_general_ledger_detail		2	0	0
+m2r_giro_voucher		5	0	0
+m2r_giro_voucher_aging		5	0	0
+m2r_hpp_produksi		0	0	0
+m2r_hppglobalkl	idmsmq,id	0	0	0
+m2r_hppglobalms	idmsmq,id	0	0	0
+m2r_hppglobalsa	idmsmq,id	0	0	0
+m2r_hppglobalsk	idmsmq,id	0	0	0
+m2r_hppgudangsa	idmsmq,id	0	0	0
+m2r_hppgudangsa_jml	idmsmq,gudang,id	0	0	0
+m2r_hppgudangsk	idmsmq,id	0	0	0
+m2r_hppgudangsk_jml	idmsmq,gudang,id	0	0	0
+m2r_inventory_aging		2	0	0
+m2r_ip_card		2	0	0
+m2r_ip_list		2	0	0
+m2r_ip_voucher		2	0	0
+m2r_item_stock_global	idbarang,tgl	0	0	0
+m2r_item_stock_out	idbarang,tahun,bulan	0	0	0
+m2r_kartu_stok		2	0	0
+m2r_kasbank_harian		2	0	0
+m2r_komisi_abd		0	0	0
+m2r_komisi_limo		0	0	0
+m2r_laba_pertahun		0	0	0
+m2r_laporan_harian		0	0	0
+m2r_laporan_penjualan		0	0	0
+m2r_lr_invoice_detail		0	0	0
+m2r_lr_invoice_global		0	0	0
+m2r_lr_per_hari		0	0	0
+m2r_mutasi_keuangan		0	0	0
+m2r_mutasi_stok		2	0	0
+m2r_mutasi_stok_batch		2	0	0
+m2r_mutasi_stok_custom	csumber,ccabang,clokasi,cgudang,ctgl	0	0	0
+m2r_mutasi_stok_detail		2	0	0
+m2r_mutasi_stok_rekap		0	0	0
+m2r_mutasi_stok_sumber		2	0	0
+m2r_neraca_mutasi		0	0	0
+m2r_neraca_mutasi_detail		0	0	0
+m2r_omzet_tagihan		0	0	0
+m2r_penjualan		0	0	0
+m2r_penjualan_barang_pertgl		0	0	0
+m2r_penjualan_per4bulan		0	0	0
+m2r_penjualan_perhari_1		0	0	0
+m2r_penjualan_perhari_2		0	0	0
+m2r_perhitungan_insentive		0	0	0
+m2r_perincian_biaya		0	0	0
+m2r_persediaan		0	0	0
+m2r_persediaan_detail		2	0	0
+m2r_posisi_keuangan		0	0	0
+m2r_posisi_keuangan_detail		0	0	0
+m2r_posisi_keuangan_pertahun		0	0	0
+m2r_posisi_keuangan_t		0	0	0
+m2r_posisi_keuangan_t_detail		0	0	0
+m2r_posisi_keuangan_tahun		0	0	0
+m2r_produksi_vs_penjualan		0	0	0
+m2r_rekap_barang_konsinyasi		2	0	0
+m2r_saldoawal_hutang		0	0	0
+m2r_salesman_point		2	0	0
+m2r_stok		0	0	0
+m2r_stok_coverday		0	0	0
+m2r_stok_covermonth		0	0	0
+m2r_stok_coverweek		0	0	0
+m2r_stok_gagal_upload		0	0	0
+m2r_stok_opname		0	0	0
+m2r_top_10_best_seller_per_store		0	0	0
+m2r_umpembelian_card		2	0	0
+m2r_umpembelian_voucher		2	0	0
+m2r_umpenjualan_card		2	0	0
+m2r_umpenjualan_voucher		2	0	0
+m3_dc	dcid,dcisclose	1	0	0
+m3_dc_check	iddccheck,isclose	0	0	0
+m3_dc_check_history	iddccheckhistory,isclose	0	0	0
+m3_dc_detail	iddcdetail,isclose	0	0	0
+m3_dc_detail_history	iddcdetailhistory,isclose	0	0	0
+m3_dc_history	dcidhistory,dcisclose	1	0	0
+m3_files	fsumber,fidtransaksi,fnamafile	0	0	0
+m3_ib	ibid,ibisclose	3	0	0
+m3_ib_detail	idibdetail,isclose	1	0	0
+m3_ib_detail_history	idhistorydetail,isclose	1	0	0
+m3_ib_history	ibidhistory,ibisclose	3	0	0
+m3_mr	mrid,mrisclose	1	0	0
+m3_mr_detail	idmrdetail,isclose	4	0	0
+m3_mr_detail_history	idhistorydetail,isclose	4	0	0
+m3_mr_history	mridhistory,mrisclose	1	0	0
+m3_notes	nid	0	0	0
+m3_pa	paid,paisclose	3	0	0
+m3_pa_detail	idpadetail,isclose	1	0	0
+m3_pa_detail_history	idhistorydetail,isclose	1	0	0
+m3_pa_history	paidhistory,paisclose	3	0	0
+m3_rf	rfid,rfisclose	1	0	0
+m3_rf_detail	idrfdetail,isclose	4	0	0
+m3_rf_detail_history	idhistorydetail,isclose	4	0	0
+m3_rf_history	rfidhistory,rfisclose	1	0	0
+m3_rs	rsid,rsisclose	3	0	0
+m3_rs_detail	idrsdetail,isclose	1	0	0
+m3_rs_detail_history	idhistorydetail,isclose	1	0	0
+m3_rs_history	rsidhistory,rsisclose	3	0	0
+m3_rw	rwid,rwisclose	1	0	0
+m3_rw_history	rwidhistory,rwisclose	1	0	0
+m3_sa	said,saisclose	3	0	0
+m3_sa_detail	idsadetail,isclose	1	0	0
+m3_sa_detail_history	idhistorydetail,isclose	1	0	0
+m3_sa_history	saidhistory,saisclose	3	0	0
+m3_sp	spid,spisclose	3	0	0
+m3_sp_detail	idspdetail,isclose	1	0	0
+m3_sp_detail_history	idhistorydetail,isclose	1	0	0
+m3_sp_detail_progress	idprogressdetail,isclose	1	0	0
+m3_sp_history	spidhistory,spisclose	3	0	0
+m3_sp_progress	spidprogress,spisclose	3	0	0
+m3_ts	tsid,tsisclose	3	0	0
+m3_ts_detail	idtsdetail,isclose	1	0	0
+m3_ts_detail_history	idhistorydetail,isclose	1	0	0
+m3_ts_history	tsidhistory,tsisclose	3	0	0
+m4_ap	apid,apisclose	1	0	0
+m4_ap_history	apidhistory,apisclose	1	0	0
+m4_ap_pay	idapcarabayar,isclose	0	0	0
+m4_ap_pay_history	idhistorycarabayar,isclose	0	0	0
+m4_bs	bsid,bsisclose	1	0	0
+m4_bs_detail	idbsdetail	0	0	0
+m4_bs_detail_history	idhistorydetail	0	0	0
+m4_bs_history	bsidhistory,bsisclose	1	0	0
+m4_cs	csid,csisclose	2	0	0
+m4_cs_detail	idcsdetail,isclose	0	0	0
+m4_dnr	dnrid,dnrisclose	1	0	0
+m4_dnr_detail	iddnrdetail,isclose	1	0	0
+m4_dnr_detail_history	idhistorydetail,isclose	1	0	0
+m4_dnr_history	dnridhistory,dnrisclose	1	0	0
+m4_files	fsumber,fidtransaksi,fnamafile	0	0	0
+m4_grn	grnid,grnisclose	4	0	0
+m4_grn_cost	idgrncost	0	0	0
+m4_grn_cost_history	idhistorycost	0	0	0
+m4_grn_detail	idgrndetail,isclose	1	0	0
+m4_grn_detail_history	idhistorydetail,isclose	1	0	0
+m4_grn_history	grnidhistory,grnisclose	4	0	0
+m4_ipc	ipcid,ipcisclose	1	0	0
+m4_ipc_detail	idipcdetail,isclose	3	0	0
+m4_notes	nid	0	0	0
+m4_pie	pieid,pieisclose	1	0	0
+m4_pie_detail	idpiedetail,isclose	0	0	0
+m4_pie_detail_history	idhistorydetail	0	0	0
+m4_pie_history	pieidhistory	1	0	0
+m4_po	poid,poisclose	1	0	0
+m4_po_cost	idpocost	0	0	0
+m4_po_cost_history	idhistorycost	0	0	0
+m4_po_detail	idpodetail,isclose	3	0	0
+m4_po_detail_history	idhistorydetail,isclose	3	0	0
+m4_po_history	poidhistory,poisclose	1	0	0
+m4_po_trans	idpotrans,isclose	0	0	0
+m4_po_trans_history	idpotranshistory,isclose	0	0	0
+m4_pp	ppid,ppisclose	1	0	0
+m4_pp_pay	idppcarabayar,isclose	0	0	0
+m4_pr	prid,prisclose	8	0	0
+m4_pr_detail	idprdetail,isclose	4	0	0
+m4_pr_detail_history	idhistorydetail,isclose	4	0	0
+m4_pr_history	pridhistory,prisclose	1	0	0
+m4_pr_trans	idprtrans,isclose	0	0	0
+m4_pr_trans_history	idprtranshistory,isclose	0	0	0
+m4_prt	prtid,prtisclose	1	0	0
+m4_prt_detail	idprtdetail,isclose	1	0	0
+m4_prt_detail_history	idhistorydetail,isclose	1	0	0
+m4_prt_history	prtidhistory,prtisclose	1	0	0
+m4_rfq	rfqid,rfqisclose	1	0	0
+m4_rfq_detail	idrfqdetail,isclose	0	0	0
+m4_rfq_detail_history	idhistorydetail	0	0	0
+m4_rfq_history	rfqidhistory,rfqisclose	1	0	0
+m4_ri	riid,riisclose	1	0	0
+m4_ri_cost	idricost	0	0	0
+m4_ri_cost_history	idhistorycost	0	0	0
+m4_ri_detail	idridetail,isclose	1	0	0
+m4_ri_detail_history	idhistorydetail,isclose	1	0	0
+m4_ri_history	riidhistory,riisclose	1	0	0
+m4_ri_pay	idricarabayar,isclose	0	0	0
+m4_ri_pay_history	idhistorycarabayar,isclose	0	0	0
+m4_rq	rqid,rqisclose	2	0	0
+m4_rq_detail	idrqdetail,isclose	0	0	0
+m4_rq_detail_history	idhistorydetail,isclose	0	0	0
+m4_rq_history	rqidhistory,rqisclose	2	0	0
+m4_vp	vpid,vpisclose	7	0	0
+m4_vp_detail	idvpdetail,isclose	0	0	0
+m4_vp_detail_history	idhistorydetail,isclose	0	0	0
+m4_vp_history	vpidhistory,vpisclose	7	0	0
+m4_vp_pay	idvpcarabayar,isclose	0	0	0
+m4_vp_pay_history	idhistorycarabayar,isclose	0	0	0
+m4_vpp	vppid,vppisclose	9	0	0
+m4_vpp_detail	idvppdetail,isclose	0	0	0
+m4_vpp_detail_history	idhistorydetail,isclose	0	0	0
+m4_vpp_history	vppidhistory,vppisclose	9	0	0
+m4_vpp_pay	idvppcarabayar,isclose	0	0	0
+m4_vpp_pay_history	idhistorycarabayar,isclose	0	0	0
+m5_as	asid,asisclose	1	0	0
+m5_as_history	asidhistory,asisclose	1	0	0
+m5_as_pay	idascarabayar,isclose	0	0	0
+m5_as_pay_history	idhistorycarabayar,isclose	0	0	0
+m5_cl	clid,clisclose	1	0	0
+m5_cl_history	clidhistory,clisclose	1	0	0
+m5_do	doid,doisclose	4	0	0
+m5_do_detail	iddodetail,isclose	1	0	0
+m5_do_detail_history	idhistorydetail,isclose	1	0	0
+m5_do_history	doidhistory,doisclose	4	0	0
+m5_dr	drid,drisclose	4	0	0
+m5_dr_detail	iddrdetail,isclose	1	0	0
+m5_dr_detail_history	idhistorydetail,isclose	1	0	0
+m5_dr_history	dridhistory,drisclose	4	0	0
+m5_files	fsumber,fidtransaksi,fnamafile	0	0	0
+m5_ic	icid,icisclose	9	0	0
+m5_ic_detail	idicdetail,isclose	0	0	0
+m5_ic_detail_history	idhistorydetail,isclose	0	0	0
+m5_ic_history	icidhistory,icisclose	9	0	0
+m5_ip	ipid,ipisclose	1	0	0
+m5_ip_history	ipidhistory,ipisclose	1	0	0
+m5_ip_pay	idipcarabayar,isclose	0	0	0
+m5_ip_pay_history	idhistorycarabayar,isclose	0	0	0
+m5_notes	nid	0	0	0
+m5_pi	piid,piisclose	1	0	0
+m5_pi_detail	idpidetail,isclose	1	0	0
+m5_pi_detail_history	idhistorydetail,isclose	1	0	0
+m5_pi_history	piidhistory,piisclose	1	0	0
+m5_pl	plid,plisclose	1	0	0
+m5_pl_detail	idpldetail,isclose	3	0	0
+m5_pl_detail_history	idhistorydetail,isclose	3	0	0
+m5_pl_history	plidhistory,plisclose	1	0	0
+m5_pl_pack	idplpack,urutan	0	0	0
+m5_pl_pack_history	idhistorypack	0	0	0
+m5_print	psumber,pidtransaksi,pmodul,pmenu,pitem	0	0	0
+m5_pv	pvid,pvisclose	7	0	0
+m5_pv_detail	idpvdetail,isclose	0	0	0
+m5_pv_detail_history	idhistorydetail,isclose	0	0	0
+m5_pv_history	pvidhistory,pvisclose	7	0	0
+m5_rnr	rnrid,rnrisclose	1	0	0
+m5_rnr_detail	idrnrdetail,isclose	1	0	0
+m5_rnr_detail_history	idhistorydetail,isclose	1	0	0
+m5_rnr_history	rnridhistory,rnrisclose	1	0	0
+m5_rp	rpid,rpisclose	1	0	0
+m5_rp_history	rpidhistory,rpisclose	1	0	0
+m5_rp_pay	idrpcarabayar,isclose	0	0	0
+m5_rp_pay_history	idhistorycarabayar,isclose	0	0	0
+m5_si	siid,siisclose	1	0	0
+m5_si_detail	idsidetail,isclose	1	0	0
+m5_si_detail_failed	idsidetail,isclose	1	0	0
+m5_si_detail_history	idhistorydetail,isclose	1	0	0
+m5_si_failed	siid,siisclose	1	0	0
+m5_si_history	siidhistory,siisclose	1	0	0
+m5_si_installment	idsiinstallment,isclose	0	0	0
+m5_si_material	idsimaterial,isclose	1	0	0
+m5_si_material_history	idhistorymaterial,isclose	1	0	0
+m5_si_pay	idsicarabayar,isclose	0	0	0
+m5_si_pay_history	idhistorycarabayar,isclose	0	0	0
+m5_sie	sieid,sieisclose	1	0	0
+m5_sie_detail	idsiedetail,isclose	0	0	0
+m5_sie_detail_history	idhistorydetail	0	0	0
+m5_sie_history	sieidhistory	1	0	0
+m5_so	soid,soisclose	1	0	0
+m5_so_detail	idsodetail,isclose	3	0	0
+m5_so_detail_history	idhistorydetail,isclose	3	0	0
+m5_so_history	soidhistory,soisclose	1	0	0
+m5_spa	spaid	1	0	0
+m5_spa_detail	idspadetail	0	0	0
+m5_spa_detail_history	idhistorydetail	0	0	0
+m5_spa_history	spaidhistory	1	0	0
+m5_sq	sqid,sqisclose	8	0	0
+m5_sq_detail	idsqdetail,isclose	3	0	0
+m5_sq_detail_history	idhistorydetail,isclose	3	0	0
+m5_sq_history	sqidhistory,sqisclose	1	0	0
+m5_sq_out	idsqout,isclose	3	0	0
+m5_sq_out_bahan	idsqout,isclose	3	0	0
+m5_sq_out_bahan1	idsqout,isclose	3	0	0
+m5_sq_shipping	idsqshipping,isclose	3	0	0
+m5_sr	srid,srisclose	1	0	0
+m5_sr_detail	idsrdetail,isclose	1	0	0
+m5_sr_detail_history	idhistorydetail,isclose	1	0	0
+m5_sr_history	sridhistory,srisclose	1	0	0
+m6_bom	bomid	1	0	0
+m6_bom_history	bomidhistory	1	0	0
+m6_bom_in	idbomin	0	0	0
+m6_bom_in_history	idhistoryin	0	0	0
+m6_bom_out	idbomout	0	0	0
+m6_bom_out_history	idhistoryout	0	0	0
+m6_files	fsumber,fidtransaksi,fnamafile	0	0	0
+m6_itembom_in	idbarang	0	0	0
+m6_itembom_out		0	0	0
+m6_mrn	mrnid,mrnisclose	1	0	0
+m6_mrn_history	mrnidhistory,mrnisclose	1	0	0
+m6_mrn_in	idmrnin,isclose	1	0	0
+m6_mrn_in_history	idhistoryin,isclose	1	0	0
+m6_mrn_out	idmrnout,isclose	0	0	0
+m6_mrn_out_history	idhistoryout,isclose	0	0	0
+m6_mrs	mrsid,mrsisclose	1	0	0
+m6_mrs_history	mrsidhistory,mrsisclose	1	0	0
+m6_mrs_in	idmrsin,isclose	1	0	0
+m6_mrs_in_history	idhistoryin,isclose	1	0	0
+m6_mrs_out	idmrsout,isclose	0	0	0
+m6_mrs_out_history	idhistoryout,isclose	0	0	0
+m6_notes	nid	0	0	0
+m6_pd	pdid,pdisclose	1	0	0
+m6_pd_bom		0	0	0
+m6_pd_history	pdidhistory,pdisclose	1	0	0
+m6_pd_in	idpdin,isclose	1	0	0
+m6_pd_in_history	idhistoryin,isclose	1	0	0
+m6_pd_out	idpdout,isclose	1	0	0
+m6_pd_out_history	idhistoryout,isclose	0	0	0
+m6_pdr	pdrid,pdrisclose	1	0	0
+m6_pdr_history	pdridhistory,pdrisclose	1	0	0
+m6_pdr_in	idpdrin,isclose	1	0	0
+m6_pdr_in_history	idhistoryin,isclose	1	0	0
+m6_pdr_out	idpdrout,isclose	0	0	0
+m6_pdr_out_history	idhistoryout,isclose	0	0	0
+m6_wo	woid,woisclose	1	0	0
+m6_wo_activity	idwoactivity	0	0	0
+m6_wo_history	woidhistory,woisclose	1	0	0
+m6_wo_in	idwoin,isclose	1	0	0
+m6_wo_in_history	idhistoryin,isclose	1	0	0
+m6_wo_out	idwoout,isclose	0	0	0
+m6_wo_out_history	idhistoryout,isclose	0	0	0
+m6_wo_route_card	idworoutecard	0	0	0
+m7_ab	abid,abisclose	1	0	0
+m7_ab_detail	idabdetail	0	0	0
+m7_ac	acid	0	0	0
+m7_ac_detail	idacdetail	0	0	0
+m7_ae	aeid,aeisclose	3	0	0
+m7_ae_detail	idaedetail,isclose	1	0	0
+m7_ag	agid,agisclose	2	0	0
+m7_ag_detail	idagdetail,isclose	1	0	0
+m7_ao	aoid,aoisclose	1	0	0
+m7_ao_detail	idaodetail,isclose	2	0	0
+m7_aq	aqid,aqisclose	2	0	0
+m7_aq_detail	idaqdetail,isclose	0	0	0
+m7_ar	arid,arisclose	1	0	0
+m7_ar_detail	idardetail,isclose	3	0	0
+m7_asl	aslid,aslisclose	1	0	0
+m7_asl_detail	idasldetail,isclose	1	0	0
+m7_asr	asrid,asrisclose	1	0	0
+m7_asr_detail	idasrdetail,isclose	1	0	0
+m7_asset	aid	3	0	0
+m7_asset_category	ackode	2	0	0
+m7_asset_category_history	acidhistory	2	0	0
+m7_asset_category_tax	actkode	2	0	0
+m7_asset_category_tax_history	actidhistory	2	0	0
+m7_asset_history	aidhistory	3	0	0
+m7_asset_transaction	atid	3	0	0
+m7_asset_transaction_history	atidhistory	3	0	0
+m7_at	atid,atisclose	7	0	0
+m7_at_detail	idatdetail,isclose	0	0	0
+m7_at_pay	idatcarabayar,isclose	0	0	0
+m7_da	daid,daisclose	3	0	0
+m7_da_detail	iddadetail,isclose	0	0	0
+m7_depreciation_category	kode	0	0	0
+m7_dsa	dsaid,dsaisclose	1	0	0
+m7_dsa_detail	idsidetail,isclose	1	0	0
+m7_dsr	dsrid,dsrisclose	1	0	0
+m7_dsr_detail	iddsrdetail,isclose	1	0	0
+m7_files	fsumber,fidtransaksi,fnamafile	0	0	0
+m7_ia	iaid,iaisclose	0	0	0
+m7_ia_detail	idiadetail,isclose	0	0	0
+m7_ir	irid,irisclose	0	0	0
+m7_ir_detail	idirdetail,isclose	0	0	0
+m7_irt	irtid,irtisclose	0	0	0
+m7_irt_detail	idirtdetail,isclose	0	0	0
+m7_master_asset_category	ackode	0	0	0
+m7_master_asset_department	dpkode	0	0	0
+m7_master_asset_disposal	adkode	0	0	0
+m7_notes	nid	0	0	0
+m7_ra	raid,raisclose	0	0	0
+m7_ra_detail	idradetail,isclose	0	0	0
+m7_ta	taid,taisclose	3	0	0
+m7_ta_detail	idtadetail,isclose	1	0	0
+m7_te	teid,teisclose	3	0	0
+m7_te_detail	idtedetail,isclose	1	0	0
+m7_tr	trid,trisclose	1	0	0
+m7_tr_detail	idtrdetail,isclose	3	0	0
+m7_ua	uaid,uaisclose	2	0	0
+m7_ua_detail	iduadetail,isclose	1	0	0
+m7_ur	urid,urisclose	1	0	0
+m7_ur_detail	idurdetail,isclose	1	0	0
+m7_urt	urtid,urtisclose	1	0	0
+m7_urt_detail	idurtdetail,isclose	1	0	0
+m8_content	ckode	0	0	0
+m8_content_chart	chkode	0	0	0
+m8_content_copy1	ckode	0	0	0
+m8_content_role		0	0	0
+m8_indicator	ikode	0	0	0
+m9_coa	ctahun,cbulan,ckode,cnomor	7	0	0
+m9_coa_konsolidasi		0	0	0
+m9_jenis_eliminasi	kjjenis,kjakun	0	0	0
+m9_konsolidasi_barang	kbid	0	0	0
+m9_konsolidasi_history	khid	0	0	0
+m9_setting_db	dbkodecabang	0	0	0
+m_10_ab	abid	0	0	0
+m_10_ad	adid	0	0	0
+m_10_ad_detail	idaddetail	0	0	0
+m_10_al	alid	0	0	0
+m_10_al_detail	idaldetail	0	0	0
+m_10_at	atid	0	0	0
+m_10_at_detail	idtdetail	0	0	0
+m_10_attendance_status	skid,skkode	0	0	0
+m_10_benefit _and_deduction	ppkode	0	0	0
+m_10_benefits_setting	stkodegolongan	0	0	0
+m_10_cn	cnkode	0	0	0
+m_10_crn	crnid	0	0	0
+m_10_crn_detail	idcrdetail	0	0	0
+m_10_department	dkode	0	0	0
+m_10_ea	eajid	0	0	0
+m_10_ed	edid	0	0	0
+m_10_ed_detail	ideddetail	0	0	0
+m_10_education	pkode	0	0	0
+m_10_em	emid	0	0	0
+m_10_em_detail	idemdetail	0	0	0
+m_10_employee	kid,kkode	0	0	0
+m_10_employee_category	kkkode	0	0	0
+m_10_employee_type	jkkode	0	0	0
+m_10_emr	emrid	0	0	0
+m_10_emr_detail	idppmdetail	0	0	0
+m_10_ep	epid	0	0	0
+m_10_er	erid	0	0	0
+m_10_erg	ergid	0	0	0
+m_10_erl	erlid	0	0	0
+m_10_err	errid	0	0	0
+m_10_es		0	0	0
+m_10_et	etid	0	0	0
+m_10_ets	etsid	0	0	0
+m_10_ets_detail	idetsdetail	0	0	0
+m_10_ew	ewid	0	0	0
+m_10_grade_and_payroll_level	gkode	0	0	0
+m_10_job_test_type	jtkode	0	0	0
+m_10_jp	jpid	0	0	0
+m_10_leave_setting	scidkaryawan	0	0	0
+m_10_leave_type	jckode	0	0	0
+m_10_lr	lrid	0	0	0
+m_10_non_taxable_income	pkode	0	0	0
+m_10_ord	ordlid	0	0	0
+m_10_pc	pcid	0	0	0
+m_10_pc_detail	idpcdetail	0	0	0
+m_10_pe	peid	0	0	0
+m_10_pe_detail	idpedetail	0	0	0
+m_10_position	jkode	0	0	0
+m_10_pp	ppid,ppinputtgl	0	0	0
+m_10_pp_detail	idppdetail	0	0	0
+m_10_rem	remid	0	0	0
+m_10_rem_detail	idremdetail	0	0	0
+m_10_sc	scid	0	0	0
+m_10_sc_detail	idscdetail	0	0	0
+m_10_service_provider	spid,spkode	0	0	0
+m_10_shift	shkode	0	0	0
+m_10_ss	ssid	0	0	0
+m_10_ss_detail	idssdetail	0	0	0
+m_10_termination_type	jpkode	0	0	0
+m_10_tq	tqid	0	0	0
+m_10_wt	wtid	0	0	0
+m_10_wtdetail	idwtdetail	0	0	0
+m_11_ak	akid,akisclose	1	0	0
+m_11_ak_detail	idakdetail,isclose	2	0	0
+m_11_ilo	iloid,iloisclose	1	0	0
+m_11_isk	iskid,iskisclose	1	0	0
+m_11_kj	kjid,kjisclose	1	0	0
+m_11_kj_history	kjidhistory,kjisclose	1	0	0
+m_11_km	kmid,kmisclose	1	0	0
+m_11_km_history	kmidhistory,kmisclose	1	0	0
+m_11_kw	kwid,kwisclose	0	0	0
+m_11_kw_detail	idkwdetail,isclose	0	0	0
+m_11_kw_pay	idkwcarabayar,isclose	0	0	0
+m_11_lb	lbid,lbisclose	1	0	0
+m_11_lb_detail	idlbdetail,isclose	2	0	0
+m_11_lb_hasil	idlbhasil	1	0	0
+m_11_lu	luid,luisclose	1	0	0
+m_11_lu_detail	idludetail,isclose	2	0	0
+m_11_lu_detail_history	idhistorydetail,isclose	2	0	0
+m_11_lu_history	luidhistory,luisclose	1	0	0
+m_11_pb	pvid,pvisclose	7	0	0
+m_11_pb_	pbid,pbisclose	0	0	0
+m_11_pb_detail	idpvdetail,isclose	0	0	0
+m_11_pb_pay	idpbcarabayar,isclose	0	0	0
+m_11_pt	ptid,ptisclose	1	0	0
+m_11_rk	rkid,rkisclose	1	0	0
+m_11_rk_pay	idrkcarabayar,isclose	0	0	0
+m_11_rm	rmid,rmisclose	0	0	0
+m_11_ro	roid,roisclose	1	0	0
+m_11_ro_detail	idrodetail,isclose	2	0	0
+m_11_sk	skid,skisclose	1	0	0
+m_11_ud	udid,udisclose	1	0	0
+m_12_ai	aiid	0	0	0
+m_12_ai_additional	idadditional	0	0	0
+m_12_ai_detail	idaidetail	0	0	0
+m_12_area	akode	2	0	0
+m_12_area_category	ackode	2	0	0
+m_12_area_category_history	acidhistory	2	0	0
+m_12_area_history	aidhistory	2	0	0
+m_12_bi	biid	0	0	0
+m_12_bi_bonus	idbonus	0	0	0
+m_12_bi_bonus_history	idhistorybonus	0	0	0
+m_12_bi_detail	idbidetail	0	0	0
+m_12_bi_detail_history	idhistorydetail	0	0	0
+m_12_bi_history	biidhistory	0	0	0
+m_12_cpa	cpaid	1	0	0
+m_12_cpa_detail	idcpadetail	0	0	0
+m_12_cpa_detail_history	idhistorydetail	0	0	0
+m_12_cpa_history	cpaidhistory	1	0	0
+m_12_di	diid	0	0	0
+m_12_di_detail	iddidetail	0	0	0
+m_12_di_detail_history	idhistorydetail	0	0	0
+m_12_di_history	diidhistory	0	0	0
+m_12_lp	lpid,lpisclose	3	0	0
+m_12_lp_detail	idlpdetail,isclose	1	0	0
+m_12_lp_detail_history	idhistorydetail,isclose	1	0	0
+m_12_lp_history	paidhistory,paisclose	3	0	0
+m_12_pos_additional_item	aiid	0	0	0
+m_12_pos_additional_item_detail	idaidetail	0	0	0
+m_12_pos_bonus_item	biid	0	0	0
+m_12_pos_bonus_item_detail	idbidetail	0	0	0
+m_12_pos_bonus_trans	biid	0	0	0
+m_12_pos_bonus_trans_detail	idbidetail	0	0	0
+m_12_pos_bonus_trans_special_item	idbiitem	0	0	0
+m_12_pos_category	pckode	2	0	0
+m_12_pos_category_history	pcidhistory	2	0	0
+m_12_pos_category_setting	pcskategori,pcsmodule,pcsgrup,pcskode	0	0	0
+m_12_pos_discount_category_customer	dcckategori,dcckategoricustomer,dccoperator,dccjml1,dccjml2	0	0	0
+m_12_pos_discount_category_item	dcikategori,dcikategoribarang,dcioperator,dcijml1,dcijml2	0	0	0
+m_12_pos_discount_item	dikategori,diidbarang,dioperator,dijml1,dijml2	0	0	0
+m_12_pos_hardware	phuserid	0	0	0
+m_12_pos_item	pikategori,piidbarang	0	0	0
+m_12_pos_point_category_item	pcikategori,pcikategoribarang,pcioperator,pcijml1,pcijml2	0	0	0
+m_12_pos_point_item	pikategori,piidbarang,pioperator,pijml1,pijml2	0	0	0
+m_12_pos_point_transaction	ptkategori,ptoperator,ptjml1,ptjml2	0	0	0
+m_12_pos_promo	kode	0	0	0
+m_12_pos_setting	smodule,sgrup,skode	0	0	0
+m_12_pos_special_price	biid	0	0	0
+m_12_pos_special_price_detail	idbidetail	0	0	0
+m_12_pos_special_price_special_item	idbiitem	0	0	0
+m_12_pos_substitution_item	siid	0	0	0
+m_12_pos_substitution_item_detail	idsidetail	0	0	0
+m_12_pos_type	ptkode	2	0	0
+m_12_pos_type_class_product	tipepos,kelasproduk	0	0	0
+m_12_pos_type_class_product_history		0	0	0
+m_12_pos_type_history	ptidhistory	2	0	0
+m_12_pos_voucher_in	viid	2	0	0
+m_12_pos_voucher_out	void	1	0	0
+m_12_ppa	ppaid,ppaisclose	3	0	0
+m_12_ppa_detail	idppadetail,isclose	1	0	0
+m_12_ppa_detail_history	idhistorydetail,isclose	1	0	0
+m_12_ppa_history	paidhistory,paisclose	3	0	0
+m_12_ppv	ppvid,ppvisclose	7	0	0
+m_12_ppv_detail	idppvdetail,isclose	0	0	0
+m_12_ppv_pay	idppvcarabayar,isclose	0	0	0
+m_12_sbi	sbiid	0	0	0
+m_12_sbi_detail	idsbidetail	0	0	0
+m_12_sbi_substitution	idsubstitution	0	0	0
+m_12_st	stid	0	0	0
+m_12_st_detail	idstdetail	0	0	0
+m_12_st_detail_history	idhistorydetail	0	0	0
+m_12_st_history	diidhistory	0	0	0
+m_coba		0	0	0
+meetingagendarelevant	AgendaRelevantId	0	0	0
+meetingagendas	AgendaId	0	0	0
+meetingagendatypes	AgendaTypeId	0	0	0
+meetingattendees	AttendeeId	0	0	0
+meetingdecisionrelevant	DecisionRelevantId	0	0	0
+meetingdecisions	DecisionId	0	0	0
+meetinglocations	LocationId	0	0	0
+meetings	MeetingId	0	0	0
+meetingtypes	MeetingTypeId	0	0	0
+quotes	id	0	0	0
+rk_tmp		0	0	0
+ro_tmp		0	0	0
+rolepermissions	RolePermissionId	0	0	0
+roles	RoleId	0	0	0
+temp_barang		0	0	0
+term_hierarchy_backup		0	0	0
+test	bid	16	0	0
+test1		0	0	0
+test2		0	0	0
+test_new		0	0	0
+userpermissions	UserPermissionId	0	0	0
+userpreferences	UserPreferenceId	0	0	0
+userroles	UserRoleId	0	0	0
+users	UserId	0	0	0
+versioninfo	Version	0	0	0

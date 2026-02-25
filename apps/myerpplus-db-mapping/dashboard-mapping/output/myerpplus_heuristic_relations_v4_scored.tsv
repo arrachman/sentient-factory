@@ -1,0 +1,580 @@
+ak_tmp	akid	ak		m_11_ak	112	core_match	high
+ak_tmp	akid	ak		m_11_ak_detail	108	core_match	medium
+businessunits	ParentUnitId	parentunit	unit	m1_unit	100	alias_core	medium
+businessunits	ParentUnitId	parentunit	unit	m1_unit_history	98	alias_core	medium
+businessunits	UnitId	unit		m1_unit	112	core_match	high
+businessunits	UnitId	unit		m1_unit_history	108	core_match	medium
+contacts	ContactId	contact		m1_contact	112	core_match	high
+contacts	ContactId	contact		m1_contact_copy	108	core_match	medium
+contacts	ContactId	contact		m1_contact_history	108	core_match	medium
+contacts	UserId	user		m0_user	112	core_match	high
+contacts	UserId	user		users	111	token_match	medium
+contacts	UserId	user		m0_user_branch	90	token_match	low
+dataauditlog	LogId	log		m0_hitungulang_log	90	token_match	low
+dataauditlog	LogId	log		m1_item_stock_warehouse_log	90	token_match	low
+dataauditlog	RecordId	record	report	m0_report	100	alias_core	medium
+dataauditlog	RecordId	record	report	m0_report_copy	98	alias_core	medium
+dataauditlog	RecordId	record	report	m0_report_lang	98	alias_core	medium
+dataauditlog	UserId	user		m0_user	112	core_match	high
+dataauditlog	UserId	user		users	111	token_match	medium
+dataauditlog	UserId	user		m0_user_branch	90	token_match	low
+languages	LanguageId	language		m0_language	112	core_match	high
+languages	LanguageId	language		m0_language_detail	108	core_match	medium
+lb_tmp	lbid	lb		m_11_lb	112	core_match	high
+lb_tmp	lbid	lb		m_11_lb_detail	108	core_match	medium
+lu_tmp	luid	lu		m_11_lu	112	core_match	high
+lu_tmp	luid	lu		m_11_lu_detail	108	core_match	medium
+lu_tmp	luid	lu		m_11_lu_detail_history	108	core_match	medium
+m0_config	cwebuserid	cwebuser	user	m0_user	104	alias_exact	high
+m0_config	cwebuserid	cwebuser	user	users	99	token_match	medium
+m0_config	cwebuserid	cwebuser	user	m0_user_branch	90	token_match	low
+m0_import_target	itmenuid	itmenu	menu	m0_menu	104	alias_exact	high
+m0_import_target	itmenuid	itmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_import_target	itmenuid	itmenu	menu	m0_menu_s	101	alias_core	medium
+m0_import_target	itmoduleid	itmodule	module	m0_module	104	alias_exact	high
+m0_menu	mnid	mn	menu	m0_menu_lang	101	alias_core	medium
+m0_menu	mnid	mn	menu	m0_menu_s	101	alias_core	medium
+m0_menu	mnid	mn	menu	m0_menu_s_copy1	101	alias_core	medium
+m0_menu	mnmoduleid	mnmodule	module	m0_module	104	alias_exact	high
+m0_menu_lang	mnlmnid	mnlmn	menu	m0_menu	104	alias_exact	high
+m0_menu_lang	mnlmnid	mnlmn	menu	m0_menu_s	101	alias_core	medium
+m0_menu_lang	mnlmnid	mnlmn	menu	m0_menu_s_copy1	101	alias_core	medium
+m0_menu_lang	mnlmoduleid	mnlmodule	module	m0_module	104	alias_exact	high
+m0_menu_s	mnid	mn	menu	m0_menu	104	alias_exact	high
+m0_menu_s	mnid	mn	menu	m0_menu_lang	101	alias_core	medium
+m0_menu_s	mnid	mn	menu	m0_menu_s_copy1	101	alias_core	medium
+m0_menu_s	mnmoduleid	mnmodule	module	m0_module	104	alias_exact	high
+m0_menu_s_copy1	mnid	mn	menu	m0_menu	104	alias_exact	high
+m0_menu_s_copy1	mnid	mn	menu	m0_menu_lang	101	alias_core	medium
+m0_menu_s_copy1	mnid	mn	menu	m0_menu_s	101	alias_core	medium
+m0_menu_s_copy1	mnmoduleid	mnmodule	module	m0_module	104	alias_exact	high
+m0_menu_s_lang	mnlmnid	mnlmn	menu	m0_menu	104	alias_exact	high
+m0_menu_s_lang	mnlmnid	mnlmn	menu	m0_menu_lang	101	alias_core	medium
+m0_menu_s_lang	mnlmnid	mnlmn	menu	m0_menu_s	101	alias_core	medium
+m0_menu_s_lang	mnlmoduleid	mnlmodule	module	m0_module	104	alias_exact	high
+m0_msmq	userid	user		m0_user	118	direct_exact	high
+m0_msmq	userid	user		users	111	token_match	medium
+m0_msmq	userid	user		m0_user_branch	92	token_match	low
+m0_msmq_cogs	mcuserid	mcuser	user	m0_user	104	alias_exact	high
+m0_msmq_cogs	mcuserid	mcuser	user	users	99	token_match	medium
+m0_msmq_cogs	mcuserid	mcuser	user	m0_user_branch	90	token_match	low
+m0_msmq_importdata	miuserid	miuser	user	m0_user	104	alias_exact	high
+m0_msmq_importdata	miuserid	miuser	user	users	99	token_match	medium
+m0_msmq_importdata	miuserid	miuser	user	m0_user_branch	90	token_match	low
+m0_msmq_journal	mjuserid	mjuser	user	m0_user	104	alias_exact	high
+m0_msmq_journal	mjuserid	mjuser	user	users	99	token_match	medium
+m0_msmq_journal	mjuserid	mjuser	user	m0_user_branch	90	token_match	low
+m0_nomor	menuid	menu		m0_menu	118	direct_exact	high
+m0_nomor	menuid	menu		m0_menu_lang	112	core_match	high
+m0_nomor	menuid	menu		m0_menu_s	112	core_match	high
+m0_nomor	moduleid	module		m0_module	118	direct_exact	high
+m0_nomor_mobile	userid	user		m0_user	118	direct_exact	high
+m0_nomor_mobile	userid	user		users	111	token_match	medium
+m0_nomor_mobile	userid	user		m0_user_branch	92	token_match	low
+m0_notifikasi_email	menuid	menu		m0_menu	118	direct_exact	high
+m0_notifikasi_email	menuid	menu		m0_menu_lang	112	core_match	high
+m0_notifikasi_email	menuid	menu		m0_menu_s	112	core_match	high
+m0_notifikasi_email	moduleid	module		m0_module	118	direct_exact	high
+m0_notifikasi_email	userid	user		m0_user	118	direct_exact	high
+m0_notifikasi_email	userid	user		users	111	token_match	medium
+m0_notifikasi_email	userid	user		m0_user_branch	92	token_match	low
+m0_report	rmenuid	rmenu	menu	m0_menu	104	alias_exact	high
+m0_report	rmenuid	rmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_report	rmenuid	rmenu	menu	m0_menu_s	101	alias_core	medium
+m0_report	rmoduleid	rmodule	module	m0_module	104	alias_exact	high
+m0_report_copy	rmenuid	rmenu	menu	m0_menu	104	alias_exact	high
+m0_report_copy	rmenuid	rmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_report_copy	rmenuid	rmenu	menu	m0_menu_s	101	alias_core	medium
+m0_report_copy	rmoduleid	rmodule	module	m0_module	104	alias_exact	high
+m0_report_lang	rlrmenuid	rlrmenu	menu	m0_menu	104	alias_exact	high
+m0_report_lang	rlrmenuid	rlrmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_report_lang	rlrmenuid	rlrmenu	menu	m0_menu_s	101	alias_core	medium
+m0_report_lang	rlrmoduleid	rlrmodule	module	m0_module	104	alias_exact	high
+m0_role_custom	rcmoduleid	rcmodule	module	m0_module	104	alias_exact	high
+m0_role_menu	rmmenuid	rmmenu	menu	m0_menu	104	alias_exact	high
+m0_role_menu	rmmenuid	rmmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_role_menu	rmmenuid	rmmenu	menu	m0_menu_s	101	alias_core	medium
+m0_role_menu	rmmoduleid	rmmodule	module	m0_module	104	alias_exact	high
+m0_role_menu_s	rmmenuid	rmmenu	menu	m0_menu	104	alias_exact	high
+m0_role_menu_s	rmmenuid	rmmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_role_menu_s	rmmenuid	rmmenu	menu	m0_menu_s	101	alias_core	medium
+m0_role_menu_s	rmmoduleid	rmmodule	module	m0_module	104	alias_exact	high
+m0_role_menu_s_copy1	rmmenuid	rmmenu	menu	m0_menu	104	alias_exact	high
+m0_role_menu_s_copy1	rmmenuid	rmmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_role_menu_s_copy1	rmmenuid	rmmenu	menu	m0_menu_s	101	alias_core	medium
+m0_role_menu_s_copy1	rmmoduleid	rmmodule	module	m0_module	104	alias_exact	high
+m0_role_report	rrmenuid	rrmenu	menu	m0_menu	104	alias_exact	high
+m0_role_report	rrmenuid	rrmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_role_report	rrmenuid	rrmenu	menu	m0_menu_s	101	alias_core	medium
+m0_role_report	rrmoduleid	rrmodule	module	m0_module	104	alias_exact	high
+m0_role_report_s	rrmenuid	rrmenu	menu	m0_menu	104	alias_exact	high
+m0_role_report_s	rrmenuid	rrmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_role_report_s	rrmenuid	rrmenu	menu	m0_menu_s	101	alias_core	medium
+m0_role_report_s	rrmoduleid	rrmodule	module	m0_module	104	alias_exact	high
+m0_sentence_stranslate	stid	st		m_12_st	112	core_match	high
+m0_sentence_stranslate	stid	st		m_12_st_detail	108	core_match	medium
+m0_sentence_stranslate	stid	st		m_12_st_detail_history	108	core_match	medium
+m0_sentence_stranslate_copy1	stid	st		m_12_st	112	core_match	high
+m0_sentence_stranslate_copy1	stid	st		m_12_st_detail	108	core_match	medium
+m0_sentence_stranslate_copy1	stid	st		m_12_st_detail_history	108	core_match	medium
+m0_user_branch	userid	user		m0_user	118	direct_exact	high
+m0_user_branch	userid	user		users	111	token_match	medium
+m0_user_branch	userid	user		m0_user_coa	92	token_match	low
+m0_user_coa	userid	user		m0_user	118	direct_exact	high
+m0_user_coa	userid	user		users	111	token_match	medium
+m0_user_coa	userid	user		m0_user_branch	92	token_match	low
+m0_user_location	userid	user		m0_user	118	direct_exact	high
+m0_user_location	userid	user		users	111	token_match	medium
+m0_user_location	userid	user		m0_user_branch	92	token_match	low
+m0_user_role	userid	user		m0_user	118	direct_exact	high
+m0_user_role	userid	user		users	111	token_match	medium
+m0_user_role	userid	user		m0_user_branch	92	token_match	low
+m0_user_role_s	userid	user		m0_user	118	direct_exact	high
+m0_user_role_s	userid	user		users	111	token_match	medium
+m0_user_role_s	userid	user		m0_user_branch	92	token_match	low
+m0_user_warehouse	userid	user		m0_user	118	direct_exact	high
+m0_user_warehouse	userid	user		users	111	token_match	medium
+m0_user_warehouse	userid	user		m0_user_branch	92	token_match	low
+m0_usergrupmenu	ugmmenuid	ugmmenu	menu	m0_menu	104	alias_exact	high
+m0_usergrupmenu	ugmmenuid	ugmmenu	menu	m0_menu_lang	101	alias_core	medium
+m0_usergrupmenu	ugmmenuid	ugmmenu	menu	m0_menu_s	101	alias_core	medium
+m0_usergrupmenu	ugmmoduleid	ugmmodule	module	m0_module	104	alias_exact	high
+m0_userlog	ulid	ul		m0_user_location	93	acronym_match	medium
+m0_userlog	uluserid	uluser	user	m0_user	104	alias_exact	high
+m0_userlog	uluserid	uluser	user	users	99	token_match	medium
+m0_userlog	uluserid	uluser	user	m0_user_branch	90	token_match	low
+m0_userlogerror	ulid	ul		m0_user_location	93	acronym_match	medium
+m0_userlogerror	uluserid	uluser	user	m0_user	104	alias_exact	high
+m0_userlogerror	uluserid	uluser	user	users	99	token_match	medium
+m0_userlogerror	uluserid	uluser	user	m0_user_branch	90	token_match	low
+m0_userlogin	ulid	ul		m0_user_location	93	acronym_match	medium
+m0_userlogin_copy	ulid	ul		m0_user_location	93	acronym_match	medium
+m2r_analisa_penyusutan	auserid	auser	user	m0_user	100	alias_core	medium
+m2r_analisa_penyusutan	auserid	auser	user	users	99	token_match	medium
+m2r_analisa_penyusutan	auserid	auser	user	m0_user_branch	88	token_match	low
+m2r_anggaran	nmuserid	nmuser	user	m0_user	100	alias_core	medium
+m2r_anggaran	nmuserid	nmuser	user	users	99	token_match	medium
+m2r_anggaran	nmuserid	nmuser	user	m0_user_branch	88	token_match	low
+m2r_ap_card	apid	ap		0_ap	112	core_match	high
+m2r_ap_card	apid	ap		m4_ap	112	core_match	high
+m2r_ap_card	apid	ap		m4_ap_history	108	core_match	medium
+m2r_ap_card	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_ap_card	apuserid	apuser	user	users	99	token_match	medium
+m2r_ap_card	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_ap_card_detail	apid	ap		0_ap	112	core_match	high
+m2r_ap_card_detail	apid	ap		m4_ap	112	core_match	high
+m2r_ap_card_detail	apid	ap		m4_ap_history	108	core_match	medium
+m2r_ap_card_detail	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_ap_card_detail	apuserid	apuser	user	users	99	token_match	medium
+m2r_ap_card_detail	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_ap_voucher	apid	ap		0_ap	112	core_match	high
+m2r_ap_voucher	apid	ap		m4_ap	112	core_match	high
+m2r_ap_voucher	apid	ap		m4_ap_history	108	core_match	medium
+m2r_ap_voucher	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_ap_voucher	apuserid	apuser	user	users	99	token_match	medium
+m2r_ap_voucher	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_ap_voucher_aging	apid	ap		0_ap	112	core_match	high
+m2r_ap_voucher_aging	apid	ap		m4_ap	112	core_match	high
+m2r_ap_voucher_aging	apid	ap		m4_ap_history	108	core_match	medium
+m2r_ap_voucher_aging	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_ap_voucher_aging	apuserid	apuser	user	users	99	token_match	medium
+m2r_ap_voucher_aging	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_ap_voucher_aging_detail	apid	ap		0_ap	112	core_match	high
+m2r_ap_voucher_aging_detail	apid	ap		m4_ap	112	core_match	high
+m2r_ap_voucher_aging_detail	apid	ap		m4_ap_history	108	core_match	medium
+m2r_ap_voucher_aging_detail	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_ap_voucher_aging_detail	apuserid	apuser	user	users	99	token_match	medium
+m2r_ap_voucher_aging_detail	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_ap_voucher_detail	apid	ap		0_ap	112	core_match	high
+m2r_ap_voucher_detail	apid	ap		m4_ap	112	core_match	high
+m2r_ap_voucher_detail	apid	ap		m4_ap_history	108	core_match	medium
+m2r_ap_voucher_detail	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_ap_voucher_detail	apuserid	apuser	user	users	99	token_match	medium
+m2r_ap_voucher_detail	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_appostage_card	apid	ap		0_ap	112	core_match	high
+m2r_appostage_card	apid	ap		m4_ap	112	core_match	high
+m2r_appostage_card	apid	ap		m4_ap_history	108	core_match	medium
+m2r_appostage_card	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_appostage_card	apuserid	apuser	user	users	99	token_match	medium
+m2r_appostage_card	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_appostage_voucher	apid	ap		0_ap	112	core_match	high
+m2r_appostage_voucher	apid	ap		m4_ap	112	core_match	high
+m2r_appostage_voucher	apid	ap		m4_ap_history	108	core_match	medium
+m2r_appostage_voucher	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_appostage_voucher	apuserid	apuser	user	users	99	token_match	medium
+m2r_appostage_voucher	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_ar_card	arid	ar		0_ar	112	core_match	high
+m2r_ar_card	arid	ar		m7_ar	112	core_match	high
+m2r_ar_card	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ar_card	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ar_card	aruserid	aruser	user	users	99	token_match	medium
+m2r_ar_card	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_ar_card_detail	arid	ar		0_ar	112	core_match	high
+m2r_ar_card_detail	arid	ar		m7_ar	112	core_match	high
+m2r_ar_card_detail	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ar_card_detail	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ar_card_detail	aruserid	aruser	user	users	99	token_match	medium
+m2r_ar_card_detail	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_ar_voucher	arid	ar		0_ar	112	core_match	high
+m2r_ar_voucher	arid	ar		m7_ar	112	core_match	high
+m2r_ar_voucher	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ar_voucher	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ar_voucher	aruserid	aruser	user	users	99	token_match	medium
+m2r_ar_voucher	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_ar_voucher_aging	arid	ar		0_ar	112	core_match	high
+m2r_ar_voucher_aging	arid	ar		m7_ar	112	core_match	high
+m2r_ar_voucher_aging	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ar_voucher_aging	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ar_voucher_aging	aruserid	aruser	user	users	99	token_match	medium
+m2r_ar_voucher_aging	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_ar_voucher_aging_detail	arid	ar		0_ar	112	core_match	high
+m2r_ar_voucher_aging_detail	arid	ar		m7_ar	112	core_match	high
+m2r_ar_voucher_aging_detail	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ar_voucher_aging_detail	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ar_voucher_aging_detail	aruserid	aruser	user	users	99	token_match	medium
+m2r_ar_voucher_aging_detail	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_ar_voucher_detail	arid	ar		0_ar	112	core_match	high
+m2r_ar_voucher_detail	arid	ar		m7_ar	112	core_match	high
+m2r_ar_voucher_detail	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ar_voucher_detail	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ar_voucher_detail	aruserid	aruser	user	users	99	token_match	medium
+m2r_ar_voucher_detail	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_arpostage_card	arid	ar		0_ar	112	core_match	high
+m2r_arpostage_card	arid	ar		m7_ar	112	core_match	high
+m2r_arpostage_card	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_arpostage_card	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_arpostage_card	aruserid	aruser	user	users	99	token_match	medium
+m2r_arpostage_card	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_arpostage_voucher	arid	ar		0_ar	112	core_match	high
+m2r_arpostage_voucher	arid	ar		m7_ar	112	core_match	high
+m2r_arpostage_voucher	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_arpostage_voucher	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_arpostage_voucher	aruserid	aruser	user	users	99	token_match	medium
+m2r_arpostage_voucher	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_aruskas	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_aruskas	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_aruskas	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_barang_dibawah_margin	userid	user		m0_user	112	core_match	high
+m2r_barang_dibawah_margin	userid	user		users	111	token_match	medium
+m2r_barang_dibawah_margin	userid	user		m0_user_branch	90	token_match	low
+m2r_barcode	userid	user		m0_user	112	core_match	high
+m2r_barcode	userid	user		users	111	token_match	medium
+m2r_barcode	userid	user		m0_user_branch	90	token_match	low
+m2r_batch_pertanggal	bpuserid	bpuser	user	m0_user	100	alias_core	medium
+m2r_batch_pertanggal	bpuserid	bpuser	user	users	99	token_match	medium
+m2r_batch_pertanggal	bpuserid	bpuser	user	m0_user_branch	88	token_match	low
+m2r_bp_card	bpid	bp		m2r_batch_pertanggal	93	acronym_match	medium
+m2r_bp_card	bpuserid	bpuser	user	m0_user	100	alias_core	medium
+m2r_bp_card	bpuserid	bpuser	user	users	99	token_match	medium
+m2r_bp_card	bpuserid	bpuser	user	m0_user_branch	88	token_match	low
+m2r_bukubesar_akunlawan	kbhuserid	bhuser	user	m0_user	100	alias_core	medium
+m2r_bukubesar_akunlawan	kbhuserid	bhuser	user	users	99	token_match	medium
+m2r_bukubesar_akunlawan	kbhuserid	bhuser	user	m0_user_branch	88	token_match	low
+m2r_customer_point	cpuserid	cpuser	user	m0_user	100	alias_core	medium
+m2r_customer_point	cpuserid	cpuser	user	users	99	token_match	medium
+m2r_customer_point	cpuserid	cpuser	user	m0_user_branch	88	token_match	low
+m2r_general_ledger	gluserid	gluser	user	m0_user	100	alias_core	medium
+m2r_general_ledger	gluserid	gluser	user	users	99	token_match	medium
+m2r_general_ledger	gluserid	gluser	user	m0_user_branch	88	token_match	low
+m2r_general_ledger_detail	bpid	bp		m2r_batch_pertanggal	93	acronym_match	medium
+m2r_general_ledger_detail	bpuserid	bpuser	user	m0_user	100	alias_core	medium
+m2r_general_ledger_detail	bpuserid	bpuser	user	users	99	token_match	medium
+m2r_general_ledger_detail	bpuserid	bpuser	user	m0_user_branch	88	token_match	low
+m2r_giro_voucher	gluserid	gluser	user	m0_user	100	alias_core	medium
+m2r_giro_voucher	gluserid	gluser	user	users	99	token_match	medium
+m2r_giro_voucher	gluserid	gluser	user	m0_user_branch	88	token_match	low
+m2r_giro_voucher_aging	gluserid	gluser	user	m0_user	100	alias_core	medium
+m2r_giro_voucher_aging	gluserid	gluser	user	users	99	token_match	medium
+m2r_giro_voucher_aging	gluserid	gluser	user	m0_user_branch	88	token_match	low
+m2r_hpp_produksi	puserid	puser	user	m0_user	100	alias_core	medium
+m2r_hpp_produksi	puserid	puser	user	users	99	token_match	medium
+m2r_hpp_produksi	puserid	puser	user	m0_user_branch	88	token_match	low
+m2r_inventory_aging	ksuserid	suser	user	m0_user	100	alias_core	medium
+m2r_inventory_aging	ksuserid	suser	user	users	99	token_match	medium
+m2r_inventory_aging	ksuserid	suser	user	m0_user_branch	88	token_match	low
+m2r_ip_card	arid	ar		0_ar	112	core_match	high
+m2r_ip_card	arid	ar		m7_ar	112	core_match	high
+m2r_ip_card	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ip_card	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ip_card	aruserid	aruser	user	users	99	token_match	medium
+m2r_ip_card	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_ip_list	ipid	ip		m5_ip	112	core_match	high
+m2r_ip_list	ipid	ip		m5_ip_history	108	core_match	medium
+m2r_ip_list	ipuserid	ipuser	user	m0_user	100	alias_core	medium
+m2r_ip_list	ipuserid	ipuser	user	users	99	token_match	medium
+m2r_ip_list	ipuserid	ipuser	user	m0_user_branch	88	token_match	low
+m2r_ip_list	pvid	pv		m5_pv	112	core_match	high
+m2r_ip_list	pvid	pv		m5_pv_detail	108	core_match	medium
+m2r_ip_list	pvid	pv		m5_pv_detail_history	108	core_match	medium
+m2r_ip_voucher	arid	ar		0_ar	112	core_match	high
+m2r_ip_voucher	arid	ar		m7_ar	112	core_match	high
+m2r_ip_voucher	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_ip_voucher	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_ip_voucher	aruserid	aruser	user	users	99	token_match	medium
+m2r_ip_voucher	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_kartu_stok	ksuserid	suser	user	m0_user	100	alias_core	medium
+m2r_kartu_stok	ksuserid	suser	user	users	99	token_match	medium
+m2r_kartu_stok	ksuserid	suser	user	m0_user_branch	88	token_match	low
+m2r_kasbank_harian	kbhuserid	bhuser	user	m0_user	100	alias_core	medium
+m2r_kasbank_harian	kbhuserid	bhuser	user	users	99	token_match	medium
+m2r_kasbank_harian	kbhuserid	bhuser	user	m0_user_branch	88	token_match	low
+m2r_komisi_abd	userid	user		m0_user	112	core_match	high
+m2r_komisi_abd	userid	user		users	111	token_match	medium
+m2r_komisi_abd	userid	user		m0_user_branch	90	token_match	low
+m2r_komisi_limo	userid	user		m0_user	112	core_match	high
+m2r_komisi_limo	userid	user		users	111	token_match	medium
+m2r_komisi_limo	userid	user		m0_user_branch	90	token_match	low
+m2r_laba_pertahun	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_laba_pertahun	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_laba_pertahun	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_laporan_harian	lhuserid	lhuser	user	m0_user	100	alias_core	medium
+m2r_laporan_harian	lhuserid	lhuser	user	users	99	token_match	medium
+m2r_laporan_harian	lhuserid	lhuser	user	m0_user_branch	88	token_match	low
+m2r_laporan_penjualan	siid	si		m0_si	112	core_match	high
+m2r_laporan_penjualan	siid	si		m13_si	112	core_match	high
+m2r_laporan_penjualan	siid	si		m5_si	112	core_match	high
+m2r_laporan_penjualan	userid	user		m0_user	112	core_match	high
+m2r_laporan_penjualan	userid	user		users	111	token_match	medium
+m2r_laporan_penjualan	userid	user		m0_user_branch	90	token_match	low
+m2r_mutasi_stok	msuserid	msuser	user	m0_user	100	alias_core	medium
+m2r_mutasi_stok	msuserid	msuser	user	users	99	token_match	medium
+m2r_mutasi_stok	msuserid	msuser	user	m0_user_branch	88	token_match	low
+m2r_mutasi_stok_batch	msbuserid	msbuser	user	m0_user	100	alias_core	medium
+m2r_mutasi_stok_batch	msbuserid	msbuser	user	users	99	token_match	medium
+m2r_mutasi_stok_batch	msbuserid	msbuser	user	m0_user_branch	88	token_match	low
+m2r_mutasi_stok_detail	msuserid	msuser	user	m0_user	100	alias_core	medium
+m2r_mutasi_stok_detail	msuserid	msuser	user	users	99	token_match	medium
+m2r_mutasi_stok_detail	msuserid	msuser	user	m0_user_branch	88	token_match	low
+m2r_mutasi_stok_sumber	msid	ms		m2r_mutasi_stok	93	acronym_match	medium
+m2r_mutasi_stok_sumber	msid	ms		m2r_mutasi_stok_detail	93	acronym_match	medium
+m2r_mutasi_stok_sumber	msuserid	msuser	user	m0_user	100	alias_core	medium
+m2r_mutasi_stok_sumber	msuserid	msuser	user	users	99	token_match	medium
+m2r_mutasi_stok_sumber	msuserid	msuser	user	m0_user_branch	88	token_match	low
+m2r_neraca_mutasi	nmuserid	nmuser	user	m0_user	100	alias_core	medium
+m2r_neraca_mutasi	nmuserid	nmuser	user	users	99	token_match	medium
+m2r_neraca_mutasi	nmuserid	nmuser	user	m0_user_branch	88	token_match	low
+m2r_neraca_mutasi_detail	nmuserid	nmuser	user	m0_user	100	alias_core	medium
+m2r_neraca_mutasi_detail	nmuserid	nmuser	user	users	99	token_match	medium
+m2r_neraca_mutasi_detail	nmuserid	nmuser	user	m0_user_branch	88	token_match	low
+m2r_omzet_tagihan	userid	user		m0_user	112	core_match	high
+m2r_omzet_tagihan	userid	user		users	111	token_match	medium
+m2r_omzet_tagihan	userid	user		m0_user_branch	90	token_match	low
+m2r_penjualan	userid	user		m0_user	112	core_match	high
+m2r_penjualan	userid	user		users	111	token_match	medium
+m2r_penjualan	userid	user		m0_user_branch	90	token_match	low
+m2r_penjualan_barang_pertgl	siid	si		m0_si	112	core_match	high
+m2r_penjualan_barang_pertgl	siid	si		m13_si	112	core_match	high
+m2r_penjualan_barang_pertgl	siid	si		m5_si	112	core_match	high
+m2r_penjualan_per4bulan	userid	user		m0_user	112	core_match	high
+m2r_penjualan_per4bulan	userid	user		users	111	token_match	medium
+m2r_penjualan_per4bulan	userid	user		m0_user_branch	90	token_match	low
+m2r_penjualan_perhari_1	siid	si		m0_si	112	core_match	high
+m2r_penjualan_perhari_1	siid	si		m13_si	112	core_match	high
+m2r_penjualan_perhari_1	siid	si		m5_si	112	core_match	high
+m2r_penjualan_perhari_1	userid	user		m0_user	112	core_match	high
+m2r_penjualan_perhari_1	userid	user		users	111	token_match	medium
+m2r_penjualan_perhari_1	userid	user		m0_user_branch	90	token_match	low
+m2r_penjualan_perhari_2	siid	si		m0_si	112	core_match	high
+m2r_penjualan_perhari_2	siid	si		m13_si	112	core_match	high
+m2r_penjualan_perhari_2	siid	si		m5_si	112	core_match	high
+m2r_penjualan_perhari_2	userid	user		m0_user	112	core_match	high
+m2r_penjualan_perhari_2	userid	user		users	111	token_match	medium
+m2r_penjualan_perhari_2	userid	user		m0_user_branch	90	token_match	low
+m2r_perincian_biaya	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_perincian_biaya	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_perincian_biaya	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_persediaan	puserid	puser	user	m0_user	100	alias_core	medium
+m2r_persediaan	puserid	puser	user	users	99	token_match	medium
+m2r_persediaan	puserid	puser	user	m0_user_branch	88	token_match	low
+m2r_persediaan_detail	pduserid	pduser	user	m0_user	100	alias_core	medium
+m2r_persediaan_detail	pduserid	pduser	user	users	99	token_match	medium
+m2r_persediaan_detail	pduserid	pduser	user	m0_user_branch	88	token_match	low
+m2r_posisi_keuangan	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_posisi_keuangan	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_posisi_keuangan	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_posisi_keuangan_detail	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_posisi_keuangan_detail	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_posisi_keuangan_detail	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_posisi_keuangan_pertahun	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_posisi_keuangan_pertahun	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_posisi_keuangan_pertahun	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_posisi_keuangan_t	userid	user		m0_user	112	core_match	high
+m2r_posisi_keuangan_t	userid	user		users	111	token_match	medium
+m2r_posisi_keuangan_t	userid	user		m0_user_branch	90	token_match	low
+m2r_posisi_keuangan_t_detail	userid	user		m0_user	112	core_match	high
+m2r_posisi_keuangan_t_detail	userid	user		users	111	token_match	medium
+m2r_posisi_keuangan_t_detail	userid	user		m0_user_branch	90	token_match	low
+m2r_posisi_keuangan_tahun	pkuserid	pkuser	user	m0_user	100	alias_core	medium
+m2r_posisi_keuangan_tahun	pkuserid	pkuser	user	users	99	token_match	medium
+m2r_posisi_keuangan_tahun	pkuserid	pkuser	user	m0_user_branch	88	token_match	low
+m2r_produksi_vs_penjualan	pvpuserid	pvpuser	user	m0_user	100	alias_core	medium
+m2r_produksi_vs_penjualan	pvpuserid	pvpuser	user	users	99	token_match	medium
+m2r_produksi_vs_penjualan	pvpuserid	pvpuser	user	m0_user_branch	88	token_match	low
+m2r_rekap_barang_konsinyasi	rbkuserid	rbkuser	user	m0_user	100	alias_core	medium
+m2r_rekap_barang_konsinyasi	rbkuserid	rbkuser	user	users	99	token_match	medium
+m2r_rekap_barang_konsinyasi	rbkuserid	rbkuser	user	m0_user_branch	88	token_match	low
+m2r_saldoawal_hutang	userid	user		m0_user	112	core_match	high
+m2r_saldoawal_hutang	userid	user		users	111	token_match	medium
+m2r_saldoawal_hutang	userid	user		m0_user_branch	90	token_match	low
+m2r_salesman_point	userid	user		m0_user	112	core_match	high
+m2r_salesman_point	userid	user		users	111	token_match	medium
+m2r_salesman_point	userid	user		m0_user_branch	90	token_match	low
+m2r_stok_coverday	scuserid	scuser	user	m0_user	100	alias_core	medium
+m2r_stok_coverday	scuserid	scuser	user	users	99	token_match	medium
+m2r_stok_coverday	scuserid	scuser	user	m0_user_branch	88	token_match	low
+m2r_stok_covermonth	scuserid	scuser	user	m0_user	100	alias_core	medium
+m2r_stok_covermonth	scuserid	scuser	user	users	99	token_match	medium
+m2r_stok_covermonth	scuserid	scuser	user	m0_user_branch	88	token_match	low
+m2r_stok_coverweek	scuserid	scuser	user	m0_user	100	alias_core	medium
+m2r_stok_coverweek	scuserid	scuser	user	users	99	token_match	medium
+m2r_stok_coverweek	scuserid	scuser	user	m0_user_branch	88	token_match	low
+m2r_stok_opname	ksuserid	suser	user	m0_user	100	alias_core	medium
+m2r_stok_opname	ksuserid	suser	user	users	99	token_match	medium
+m2r_stok_opname	ksuserid	suser	user	m0_user_branch	88	token_match	low
+m2r_umpembelian_card	apid	ap		0_ap	112	core_match	high
+m2r_umpembelian_card	apid	ap		m4_ap	112	core_match	high
+m2r_umpembelian_card	apid	ap		m4_ap_history	108	core_match	medium
+m2r_umpembelian_card	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_umpembelian_card	apuserid	apuser	user	users	99	token_match	medium
+m2r_umpembelian_card	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_umpembelian_voucher	apid	ap		0_ap	112	core_match	high
+m2r_umpembelian_voucher	apid	ap		m4_ap	112	core_match	high
+m2r_umpembelian_voucher	apid	ap		m4_ap_history	108	core_match	medium
+m2r_umpembelian_voucher	apuserid	apuser	user	m0_user	100	alias_core	medium
+m2r_umpembelian_voucher	apuserid	apuser	user	users	99	token_match	medium
+m2r_umpembelian_voucher	apuserid	apuser	user	m0_user_branch	88	token_match	low
+m2r_umpenjualan_card	arid	ar		0_ar	112	core_match	high
+m2r_umpenjualan_card	arid	ar		m7_ar	112	core_match	high
+m2r_umpenjualan_card	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_umpenjualan_card	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_umpenjualan_card	aruserid	aruser	user	users	99	token_match	medium
+m2r_umpenjualan_card	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m2r_umpenjualan_voucher	arid	ar		0_ar	112	core_match	high
+m2r_umpenjualan_voucher	arid	ar		m7_ar	112	core_match	high
+m2r_umpenjualan_voucher	arid	ar		m7_ar_detail	108	core_match	medium
+m2r_umpenjualan_voucher	aruserid	aruser	user	m0_user	100	alias_core	medium
+m2r_umpenjualan_voucher	aruserid	aruser	user	users	99	token_match	medium
+m2r_umpenjualan_voucher	aruserid	aruser	user	m0_user_branch	88	token_match	low
+m5_si_failed	siid	si		m5_si	118	direct_exact	high
+m5_si_failed	siid	si		m0_si	112	core_match	high
+m5_si_failed	siid	si		m13_si	112	core_match	high
+m8_content_role	ruserid	ruser	user	m0_user	100	alias_core	medium
+m8_content_role	ruserid	ruser	user	users	99	token_match	medium
+m8_content_role	ruserid	ruser	user	m0_user_branch	88	token_match	low
+m_10_attendance_status	skid	sk		m_11_sk	112	core_match	high
+m_11_pb	pvid	pv		m5_pv	112	core_match	high
+m_11_pb	pvid	pv		m5_pv_detail	108	core_match	medium
+m_11_pb	pvid	pv		m5_pv_detail_history	108	core_match	medium
+m_11_pb_	pbid	pb		m_11_pb	118	direct_exact	high
+m_11_pb_	pbid	pb		m_11_pb_detail	112	core_match	high
+m_12_lp_history	paid	pa		m3_pa	112	core_match	high
+m_12_lp_history	paid	pa		m3_pa_detail	108	core_match	medium
+m_12_lp_history	paid	pa		m3_pa_detail_history	108	core_match	medium
+m_12_pos_additional_item	aiid	ai		m_12_ai	118	direct_exact	high
+m_12_pos_additional_item	aiid	ai		m_12_ai_detail	112	core_match	high
+m_12_pos_bonus_item	biid	bi		m_12_bi	118	direct_exact	high
+m_12_pos_bonus_item	biid	bi		m_12_bi_detail	112	core_match	high
+m_12_pos_bonus_item	biid	bi		m_12_bi_detail_history	112	core_match	high
+m_12_pos_bonus_trans	biid	bi		m_12_bi	118	direct_exact	high
+m_12_pos_bonus_trans	biid	bi		m_12_bi_detail	112	core_match	high
+m_12_pos_bonus_trans	biid	bi		m_12_bi_detail_history	112	core_match	high
+m_12_pos_hardware	phuserid	phuser	user	m0_user	100	alias_core	medium
+m_12_pos_hardware	phuserid	phuser	user	users	99	token_match	medium
+m_12_pos_hardware	phuserid	phuser	user	m0_user_branch	88	token_match	low
+m_12_pos_special_price	biid	bi		m_12_bi	118	direct_exact	high
+m_12_pos_special_price	biid	bi		m_12_bi_detail	112	core_match	high
+m_12_pos_special_price	biid	bi		m_12_bi_detail_history	112	core_match	high
+m_12_pos_substitution_item	siid	si		m0_si	112	core_match	high
+m_12_pos_substitution_item	siid	si		m13_si	112	core_match	high
+m_12_pos_substitution_item	siid	si		m5_si	112	core_match	high
+m_12_ppa_history	paid	pa		m3_pa	112	core_match	high
+m_12_ppa_history	paid	pa		m3_pa_detail	108	core_match	medium
+m_12_ppa_history	paid	pa		m3_pa_detail_history	108	core_match	medium
+m_12_st_history	diid	di		m_12_di	118	direct_exact	high
+m_12_st_history	diid	di		m_12_di_detail	112	core_match	high
+m_12_st_history	diid	di		m_12_di_detail_history	112	core_match	high
+meetingagendarelevant	AgendaId	agenda	meetingagenda	meetingagendas	99	token_match	medium
+meetingagendarelevant	ContactId	contact		m1_contact	112	core_match	high
+meetingagendarelevant	ContactId	contact		contacts	111	token_match	medium
+meetingagendarelevant	ContactId	contact		m1_contact_copy	108	core_match	medium
+meetingagendas	AgendaTypeId	agendatype	meetingagendatype	meetingagendatypes	99	token_match	medium
+meetingagendas	MeetingId	meeting	meetings	meetings	111	alias_exact	high
+meetingagendas	RequestedByContactId	requestedbycontact	contact	m1_contact	100	alias_core	medium
+meetingagendas	RequestedByContactId	requestedbycontact	contact	contacts	99	token_match	medium
+meetingagendas	RequestedByContactId	requestedbycontact	contact	m1_contact_copy	98	alias_core	medium
+meetingattendees	ContactId	contact		m1_contact	112	core_match	high
+meetingattendees	ContactId	contact		contacts	111	token_match	medium
+meetingattendees	ContactId	contact		m1_contact_copy	108	core_match	medium
+meetingattendees	MeetingId	meeting	meetings	meetings	111	alias_exact	high
+meetingdecisionrelevant	ContactId	contact		m1_contact	112	core_match	high
+meetingdecisionrelevant	ContactId	contact		contacts	111	token_match	medium
+meetingdecisionrelevant	ContactId	contact		m1_contact_copy	108	core_match	medium
+meetingdecisionrelevant	DecisionId	decision	meetingdecision	meetingdecisions	99	token_match	medium
+meetingdecisions	AgendaId	agenda	meetingagenda	meetingagendas	99	token_match	medium
+meetingdecisions	MeetingId	meeting	meetings	meetings	111	alias_exact	high
+meetingdecisions	ResponsibleContactId	responsiblecontact	contact	m1_contact	100	alias_core	medium
+meetingdecisions	ResponsibleContactId	responsiblecontact	contact	contacts	99	token_match	medium
+meetingdecisions	ResponsibleContactId	responsiblecontact	contact	m1_contact_copy	98	alias_core	medium
+meetinglocations	LocationId	location	meetinglocations	m1_location	112	core_match	high
+meetinglocations	LocationId	location	meetinglocations	m1_location_history	108	core_match	medium
+meetinglocations	LocationId	location	meetinglocations	m0_setting_location	90	token_match	low
+meetings	InsertUserId	insertuser	user	m0_user	100	alias_core	medium
+meetings	InsertUserId	insertuser	user	users	99	token_match	medium
+meetings	InsertUserId	insertuser	user	m0_user_branch	88	token_match	low
+meetings	LocationId	location	meetinglocations	m1_location	112	core_match	high
+meetings	LocationId	location	meetinglocations	m1_location_history	108	core_match	medium
+meetings	LocationId	location	meetinglocations	meetinglocations	106	alias_exact	high
+meetings	MeetingTypeId	meetingtype	meetingtypes	meetingtypes	111	alias_exact	high
+meetings	OrganizerContactId	organizercontact	contact	m1_contact	100	alias_core	medium
+meetings	OrganizerContactId	organizercontact	contact	contacts	99	token_match	medium
+meetings	OrganizerContactId	organizercontact	contact	m1_contact_copy	98	alias_core	medium
+meetings	ReporterContactId	reportercontact	contact	m1_contact	100	alias_core	medium
+meetings	ReporterContactId	reportercontact	contact	contacts	99	token_match	medium
+meetings	ReporterContactId	reportercontact	contact	m1_contact_copy	98	alias_core	medium
+meetings	UnitId	unit		m1_unit	112	core_match	high
+meetings	UnitId	unit		m1_unit_history	108	core_match	medium
+meetings	UpdateUserId	updateuser	user	m0_user	100	alias_core	medium
+meetings	UpdateUserId	updateuser	user	users	99	token_match	medium
+meetings	UpdateUserId	updateuser	user	m0_user_branch	88	token_match	low
+rk_tmp	rkid	rk		m_11_rk	112	core_match	high
+ro_tmp	roid	ro		m_11_ro	112	core_match	high
+ro_tmp	roid	ro		m_11_ro_detail	108	core_match	medium
+rolepermissions	RoleId	role		m0_role	112	core_match	high
+rolepermissions	RoleId	role		roles	111	token_match	medium
+rolepermissions	RoleId	role		m0_role_s	108	core_match	medium
+rolepermissions	RolePermissionId	rolepermission	role	m0_role	100	alias_core	medium
+rolepermissions	RolePermissionId	rolepermission	role	roles	99	token_match	medium
+rolepermissions	RolePermissionId	rolepermission	role	m0_role_s	98	alias_core	medium
+roles	RoleId	role		m0_role	112	core_match	high
+roles	RoleId	role		m0_role_s	108	core_match	medium
+roles	RoleId	role		m0_role_custom	90	token_match	low
+userpermissions	UserId	user		m0_user	112	core_match	high
+userpermissions	UserId	user		users	111	token_match	medium
+userpermissions	UserId	user		m0_user_branch	90	token_match	low
+userpermissions	UserPermissionId	userpermission	user	m0_user	100	alias_core	medium
+userpermissions	UserPermissionId	userpermission	user	users	99	token_match	medium
+userpermissions	UserPermissionId	userpermission	user	m0_user_branch	88	token_match	low
+userpreferences	UserId	user		m0_user	112	core_match	high
+userpreferences	UserId	user		users	111	token_match	medium
+userpreferences	UserId	user		m0_user_branch	90	token_match	low
+userpreferences	UserPreferenceId	userpreference	user	m0_user	100	alias_core	medium
+userpreferences	UserPreferenceId	userpreference	user	users	99	token_match	medium
+userpreferences	UserPreferenceId	userpreference	user	m0_user_branch	88	token_match	low
+userroles	RoleId	role		m0_role	112	core_match	high
+userroles	RoleId	role		roles	111	token_match	medium
+userroles	RoleId	role		m0_role_s	108	core_match	medium
+userroles	UserId	user		m0_user	112	core_match	high
+userroles	UserId	user		users	111	token_match	medium
+userroles	UserId	user		m0_user_branch	90	token_match	low
+userroles	UserRoleId	userrole	user	m0_user	100	alias_core	medium
+userroles	UserRoleId	userrole	user	users	99	token_match	medium
+userroles	UserRoleId	userrole	user	m0_user_branch	88	token_match	low
+users	InsertUserId	insertuser	user	m0_user	100	alias_core	medium
+users	InsertUserId	insertuser	user	m0_user_branch	88	token_match	low
+users	InsertUserId	insertuser	user	m0_user_coa	88	token_match	low
+users	UpdateUserId	updateuser	user	m0_user	100	alias_core	medium
+users	UpdateUserId	updateuser	user	m0_user_branch	88	token_match	low
+users	UpdateUserId	updateuser	user	m0_user_coa	88	token_match	low
+users	UserId	user		m0_user	112	core_match	high
+users	UserId	user		m0_user_branch	90	token_match	low
+users	UserId	user		m0_user_coa	90	token_match	low

@@ -19,6 +19,7 @@ import { InboundsModule } from './inbounds/inbounds.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { SessionsModule } from './sessions/sessions.module';
     AuditLogsModule,
     DepartmentsModule,
     SessionsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
