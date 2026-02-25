@@ -530,11 +530,47 @@ async function main() {
     {
       key: 'dashboard',
       title: 'Dashboard',
+      path: null,
+      icon: 'LayoutGrid',
+      type: 'COLLAPSE',
+      parentKey: null,
+      sortOrder: 1,
+    },
+    {
+      key: 'dashboard-overview',
+      title: 'Overview',
       path: '/app',
       icon: 'LayoutGrid',
       type: 'ITEM',
-      parentKey: null,
+      parentKey: 'dashboard',
       sortOrder: 1,
+    },
+    {
+      key: 'dashboard-m1',
+      title: 'Dashboard M1',
+      path: '/app?domain=m1',
+      icon: 'BarChart3',
+      type: 'ITEM',
+      parentKey: 'dashboard',
+      sortOrder: 2,
+    },
+    {
+      key: 'dashboard-m',
+      title: 'Dashboard M',
+      path: '/app?domain=m',
+      icon: 'LineChart',
+      type: 'ITEM',
+      parentKey: 'dashboard',
+      sortOrder: 3,
+    },
+    {
+      key: 'dashboard-m2r',
+      title: 'Dashboard M2R',
+      path: '/app?domain=m2r',
+      icon: 'Activity',
+      type: 'ITEM',
+      parentKey: 'dashboard',
+      sortOrder: 4,
     },
     {
       key: 'administrator',
@@ -819,10 +855,46 @@ async function main() {
     await assignMenuToRole(adminRole.id, menuId);
   }
 
-  const dashboardId = menuByKey.get('dashboard');
-  if (dashboardId) {
-    await assignMenuToRole(managerRole.id, dashboardId);
-    await assignMenuToRole(userRole.id, dashboardId);
+  // Admin must always have full menu access, including menus created outside this seed list.
+  const allMenus = await prisma.menu.findMany({
+    where: { deletedAt: null },
+    select: { id: true },
+  });
+  for (const menu of allMenus) {
+    await assignMenuToRole(adminRole.id, menu.id);
+  }
+
+  const operationalMenuKeys = [
+    'dashboard',
+    'dashboard-overview',
+    'dashboard-m1',
+    'dashboard-m',
+    'dashboard-m2r',
+    'master-data',
+    'master-data-contact',
+    'master-data-division',
+    'master-data-item',
+    'master-data-item-stock',
+    'master-data-province',
+    'master-data-city',
+    'master-data-city-sla',
+    'master-data-uom',
+    'master-data-warehouse',
+    'logistic',
+    'logistic-inbound',
+    'logistic-outbound',
+    'logistic-report-monitoring-do',
+    'logistic-report-stock-batch',
+    'logistic-report-stock-mutation',
+  ] as const;
+
+  for (const key of operationalMenuKeys) {
+    const menuId = menuByKey.get(key);
+    if (!menuId) {
+      continue;
+    }
+    await assignMenuToRole(managerRole.id, menuId);
+    await assignMenuToRole(userRole.id, menuId);
   }
 
   const adminUser = await prisma.user.findUnique({

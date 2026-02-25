@@ -15,19 +15,45 @@ import {
 } from '@/components/ui/accordion-menu';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppMenu } from './menu-context';
 
 export function SidebarMenu() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { menus } = useAppMenu();
+  const currentPathWithQuery = searchParams.toString()
+    ? `${pathname}?${searchParams.toString()}`
+    : pathname;
+  const currentQueryString = searchParams.toString();
 
   // Memoize matchPath to prevent unnecessary re-renders
   const matchPath = useCallback(
-    (path: string): boolean =>
-      path === pathname || (path.length > 1 && pathname.startsWith(path) && path !== '/app'),
-    [pathname],
+    (path: string): boolean => {
+      const [pathOnly, queryString] = path.split('?');
+      if (queryString) {
+        if (pathOnly !== pathname) {
+          return false;
+        }
+
+        const expectedParams = new URLSearchParams(queryString);
+        const currentParams = new URLSearchParams(currentQueryString);
+        let isMatch = true;
+        expectedParams.forEach((value, key) => {
+          if (currentParams.get(key) !== value) {
+            isMatch = false;
+          }
+        });
+        return isMatch;
+      }
+
+      return (
+        pathOnly === pathname ||
+        (pathOnly.length > 1 && pathname.startsWith(pathOnly) && pathOnly !== '/app')
+      );
+    },
+    [pathname, currentQueryString],
   );
 
   // Global classNames for consistent styling
@@ -215,7 +241,7 @@ export function SidebarMenu() {
   return (
     <ScrollArea className="flex grow shrink-0 py-5 px-5 lg:h-[calc(100vh-5.5rem)]">
       <AccordionMenu
-        selectedValue={pathname}
+        selectedValue={currentPathWithQuery}
         matchPath={matchPath}
         type="single"
         collapsible
