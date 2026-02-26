@@ -20,7 +20,7 @@ type DashboardTemplateParams = {
   orderDir?: 'ASC' | 'DESC';
 };
 
-type DashboardDomain = 'm1' | 'm' | 'm2r' | 'so';
+type DashboardDomain = 'm1' | 'm' | 'm2' | 'm2r' | 'so';
 
 type HealthResult = {
   templateRoot: string;

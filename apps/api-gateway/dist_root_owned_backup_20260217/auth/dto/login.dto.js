@@ -22,7 +22,7 @@ class LoginDto {
 }
 exports.LoginDto = LoginDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'adm.medan@fr-labs.my.id', description: 'User email' }),
+    (0, swagger_1.ApiProperty)({ example: 'super_admin@fr-labs.my.id', description: 'User email' }),
     (0, class_validator_1.IsEmail)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "email", void 0);

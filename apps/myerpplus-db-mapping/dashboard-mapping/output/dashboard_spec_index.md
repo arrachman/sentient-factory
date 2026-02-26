@@ -4,7 +4,7 @@ Generated at: 2026-02-25 04:54:34 UTC
 
 Top domains selected:
 - 1. m1: dashboard-mapping/output/specs/1_m1_dashboard_spec.md
-- 2. m2: dashboard-mapping/output/specs/2_m2_dashboard_spec.md
+- 2. m2 (Finance & Accounting): dashboard-mapping/output/specs/2_m2_dashboard_spec.md
 - 3. m3: dashboard-mapping/output/specs/3_m3_dashboard_spec.md
 - 4. m4: dashboard-mapping/output/specs/4_m4_dashboard_spec.md
 - 5. m5: dashboard-mapping/output/specs/5_m5_dashboard_spec.md

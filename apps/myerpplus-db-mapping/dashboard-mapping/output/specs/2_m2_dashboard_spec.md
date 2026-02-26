@@ -1,9 +1,10 @@
-# Dashboard Spec - Domain m2
+# Dashboard Spec - Domain m2 (Finance & Accounting)
 
 Generated at: 2026-02-25 04:54:34 UTC
 
 ## Scope
 - Domain prefix: m2
+- Domain name: Finance & Accounting
 - Candidate tables: 75
 
 ## Candidate Tables (Top 15 by Approx Rows)

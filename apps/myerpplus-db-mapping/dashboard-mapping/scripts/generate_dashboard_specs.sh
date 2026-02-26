@@ -12,6 +12,14 @@ FILTER_FILE="$OUT_DIR/dashboard_03_filter_dimensions.tsv"
 TS_FILE="$OUT_DIR/dashboard_04_timeseries_readiness.tsv"
 INDEX_FILE="$OUT_DIR/dashboard_spec_index.md"
 
+domain_label() {
+  local domain="$1"
+  case "$domain" in
+    m2) echo "Finance & Accounting" ;;
+    *) echo "$domain" ;;
+  esac
+}
+
 require_file() {
   local f="$1"
   if [[ ! -f "$f" ]]; then
@@ -76,6 +84,7 @@ for domain in "${top_domains[@]}"; do
   domain="$(echo "$domain" | tr -d '[:space:]')"
   [[ -z "$domain" ]] && continue
   idx=$((idx + 1))
+  domain_name="$(domain_label "$domain")"
 
   spec_file="$SPEC_DIR/${idx}_${domain}_dashboard_spec.md"
   table_file="$(mktemp)"
@@ -96,12 +105,13 @@ for domain in "${top_domains[@]}"; do
   fi
 
   {
-    echo "# Dashboard Spec - Domain $domain"
+    echo "# Dashboard Spec - Domain $domain ($domain_name)"
     echo
     echo "Generated at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
     echo
     echo "## Scope"
     echo "- Domain prefix: $domain"
+    echo "- Domain name: $domain_name"
     echo "- Candidate tables: $table_count"
     echo
 
@@ -153,7 +163,7 @@ for domain in "${top_domains[@]}"; do
     echo "- Jika relasi lintas tabel tidak ada FK, dokumentasikan join key di service layer."
   } > "$spec_file"
 
-  echo "- $idx. $domain: dashboard-mapping/output/specs/$(basename "$spec_file")" >> "$INDEX_FILE"
+  echo "- $idx. $domain ($domain_name): dashboard-mapping/output/specs/$(basename "$spec_file")" >> "$INDEX_FILE"
 
   rm -f "$table_file"
   trap - EXIT

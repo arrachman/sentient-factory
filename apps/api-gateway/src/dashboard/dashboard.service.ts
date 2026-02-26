@@ -4,7 +4,7 @@ import { QueryDashboardRangeDto } from './dto/query-dashboard-range.dto';
 import { QueryDashboardTableDto } from './dto/query-dashboard-table.dto';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 
-const SUPPORTED_DOMAINS = ['m1', 'm', 'm2r', 'so'] as const;
+const SUPPORTED_DOMAINS = ['m1', 'm', 'm2', 'm2r', 'so'] as const;
 type SupportedDomain = (typeof SUPPORTED_DOMAINS)[number];
 
 const DOMAIN_FIELD_ALLOWLIST: Record<
@@ -61,6 +61,21 @@ const DOMAIN_FIELD_ALLOWLIST: Record<
       'aptgl',
     ],
     sortBy: ['nmtahun', 'nmbulan', 'nmsaldo', 'nmdebit', 'nmkredit', 'nmanggaran'],
+  },
+  m2: {
+    groupBy: ['tsumber', 'tcabang', 'tmatauang', 'tstatus', 'tstatuslunas'],
+    sortBy: [
+      'tid',
+      'ttgl',
+      'tinputtgl',
+      'tpostingtgl',
+      'tcabang',
+      'tsumber',
+      'tdebit',
+      'tkredit',
+      'tstatus',
+      'tstatuslunas',
+    ],
   },
   so: {
     groupBy: ['sostatus', 'sostatusrealisasi', 'socustomer', 'sobagianpenjualan'],
@@ -223,6 +238,18 @@ export class DashboardService {
     return this.executePresetBreakdown('so', 'customer', 'breakdown_customer.sql', query);
   }
 
+  async breakdownM2Status(query: QueryDashboardRangeDto) {
+    return this.executePresetBreakdown('m2', 'status', 'breakdown_status.sql', query);
+  }
+
+  async breakdownM2Cashflow(query: QueryDashboardRangeDto) {
+    return this.executePresetBreakdown('m2', 'cashflow', 'breakdown_cashflow.sql', query);
+  }
+
+  async breakdownM2Branch(query: QueryDashboardRangeDto) {
+    return this.executePresetBreakdown('m2', 'branch', 'breakdown_branch.sql', query);
+  }
+
   listDomains() {
     return {
       success: true,
@@ -353,7 +380,7 @@ export class DashboardService {
 
   private async executePresetBreakdown(
     domain: SupportedDomain,
-    type: 'status' | 'realisasi' | 'salesman' | 'customer',
+    type: 'status' | 'realisasi' | 'salesman' | 'customer' | 'cashflow' | 'branch',
     fileName: string,
     query: QueryDashboardRangeDto,
   ) {

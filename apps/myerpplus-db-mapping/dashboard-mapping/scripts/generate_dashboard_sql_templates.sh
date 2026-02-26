@@ -11,6 +11,14 @@ KPI_FILE="$OUT_DIR/dashboard_02_kpi_candidates.tsv"
 FILTER_FILE="$OUT_DIR/dashboard_03_filter_dimensions.tsv"
 TS_FILE="$OUT_DIR/dashboard_04_timeseries_readiness.tsv"
 
+domain_label() {
+  local domain="$1"
+  case "$domain" in
+    m2) echo "Finance & Accounting" ;;
+    *) echo "$domain" ;;
+  esac
+}
+
 require_file() {
   local f="$1"
   if [[ ! -f "$f" ]]; then
@@ -77,6 +85,7 @@ fi
 for domain in "${top_domains[@]}"; do
   domain="$(echo "$domain" | tr -d '[:space:]')"
   [[ -z "$domain" ]] && continue
+  domain_name="$(domain_label "$domain")"
 
   domain_dir="$TEMPLATE_ROOT/$domain"
   mkdir -p "$domain_dir"
@@ -153,7 +162,7 @@ for domain in "${top_domains[@]}"; do
   fi
 
   cat > "$domain_dir/README.md" <<MD
-# SQL Templates - Domain $domain
+# SQL Templates - Domain $domain ($domain_name)
 
 Template SQL ini adalah draft awal dari hasil dashboard mapping otomatis.
 
@@ -171,6 +180,7 @@ Template SQL ini adalah draft awal dari hasil dashboard mapping otomatis.
 - :offset (INT)
 
 ## Current Auto Picks
+- domain_name: $domain_name
 - primary_table: $summary_table
 - metric_source: $metric_table.${metric_col:-<count_only>}
 - trend_source: $trend_table.${trend_metric_col:-<count_only>}

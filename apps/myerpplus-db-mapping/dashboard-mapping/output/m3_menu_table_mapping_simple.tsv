@@ -1,0 +1,11 @@
+table_key	menu_label	transaksi_url	data_url	master_url
+m3_dc	Time Sheet/Daily Check (DC)	mod/m3/m3_TransaksiDC.swf	mod/m3/m3_DataDC.swf	
+m3_ib	Saldo Awal Barang (IB)	mod/m3/m3_TransaksiIB.swf	mod/m3/m3_DataIB.swf	
+m3_mr	Permintaan Barang (MR)	mod/m3/m3_TransaksiMR.swf	mod/m3/m3_DataMR.swf	
+m3_pa	Set Harga Jual (PA)	mod/m3/m3_TransaksiPA.swf	mod/m3/m3_DataPA.swf	
+m3_rf	Pengisian Bahan Bakar (RF)	mod/m3/m3_TransaksiRF.swf	mod/m3/m3_DataRF.swf	
+m3_rs	Terima Mutasi (RS)	mod/m3/m3_TransaksiRS.swf	mod/m3/m3_DataRS.swf	
+m3_rw	Receipt Weigher (RW)	mod/m3/m3_TransaksiRW.swf	mod/m3/m3_DataRW.swf	
+m3_sa	Transaksi Barang (SA)	mod/m3/m3_TransaksiSA.swf	mod/m3/m3_DataSA.swf	
+m3_sp	Stok Opname (SP)	mod/m3/m3_TransaksiSP.swf	mod/m3/m3_DataSP.swf	
+m3_ts	Mutasi Barang (TS)	mod/m3/m3_TransaksiTS.swf	mod/m3/m3_DataTS.swf	

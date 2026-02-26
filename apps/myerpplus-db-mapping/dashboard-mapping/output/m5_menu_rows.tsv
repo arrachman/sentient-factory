@@ -1,0 +1,37 @@
+5	3	Penawaran Penjualan (SQ)	mod/m5/m5_TransaksiSQ.swf	0
+5	4	Order Penjualan (SO)	mod/m5/m5_TransaksiSO.swf	0
+5	5	UM Penjualan (AS)	mod/m5/m5_TransaksiAS.swf	0
+5	6	Packing Barang (PL)	mod/m5/m5_TransaksiPL.swf	0
+5	7	Pengiriman Order (DO)	mod/m5/m5_TransaksiDO.swf	0
+5	8	Hasil Pengiriman Order (DR)	mod/m5/m5_TransaksiDR.swf	0
+5	9	Invoice Sementara (PI)	mod/m5/m5_TransaksiPI.swf	0
+5	10	Invoice Penjualan (SI)	mod/m5/m5_TransaksiSI.swf	0
+5	11	Penerimaan Barang Retur (RNR)	mod/m5/m5_TransaksiRNR.swf	0
+5	12	Retur Penjualan (SR)	mod/m5/m5_TransaksiSR.swf	0
+5	13	Penagihan Piutang (IC)	mod/m5/m5_TransaksiIC.swf	0
+5	14	Pembayaran Piutang (PV)	mod/m5/m5_TransaksiPV.swf	0
+5	16	Penawaran Penjualan (SQ)	mod/m5/m5_DataSQ.swf	3
+5	17	Order Penjualan (SO)	mod/m5/m5_DataSO.swf	4
+5	18	UM Penjualan (AS)	mod/m5/m5_DataAS.swf	5
+5	19	Packing Barang (PL)	mod/m5/m5_DataPL.swf	6
+5	20	Pengiriman Order (DO)	mod/m5/m5_DataDO.swf	7
+5	21	Hasil Pengiriman Order (DR)	mod/m5/m5_DataDR.swf	8
+5	22	Invoice Sementara (PI)	mod/m5/m5_DataPI.swf	9
+5	23	Invoice Penjualan (SI)	mod/m5/m5_DataSI.swf	10
+5	24	Penerimaan Barang Retur (RNR)	mod/m5/m5_DataRNR.swf	11
+5	25	Retur Penjualan (SR)	mod/m5/m5_DataSR.swf	12
+5	26	Penagihan Piutang (IC)	mod/m5/m5_DataIC.swf	13
+5	27	Pembayaran Piutang (PV)	mod/m5/m5_DataPV.swf	14
+5	41	Piutang Ongkos Kirim (RP)	mod/m5/m5_TransaksiRP.swf	0
+5	42	Piutang Ongkos Kirim (RP)	mod/m5/m5_DataRP.swf	41
+5	44	Terima Pembayaran (IP)	mod/m5/m5_TransaksiIP.swf	0
+5	45	Terima Pembayaran (IP)	mod/m5/m5_DataIP.swf	44
+5	49	KPI Sales	mod/m5/m5_KPISales.swf	49
+5	51	Saldo Awal Piutang	mod/m5/m5_TransaksiBalance.swf	0
+5	52	Saldo Awal Piutang	mod/m5/m5_DataBalance.swf	51
+5	54	Penyesuaian Poin Penjualan (SPA)	mod/m5/m5_TransaksiSPA.swf	0
+5	55	Penyesuaian Poin Penjualan (SPA)	mod/m5/m5_DataSPA.swf	54
+5	68	Tukar Faktur Penjualan (SIE)	mod/m5/m5_TransaksiSIE.swf	0
+5	69	Tukar Faktur Penjualan (SIE)	mod/m5/m5_DataSIE.swf	68
+5	78	Complain (CL)	mod/m5/m5_TransaksiCL.swf	0
+5	79	Complain (CL)	mod/m5/m5_DataCL.swf	78

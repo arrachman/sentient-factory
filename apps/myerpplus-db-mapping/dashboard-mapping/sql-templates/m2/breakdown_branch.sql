@@ -1,38 +1,39 @@
 -- Domain: m2 (Finance & Accounting)
--- Widget: Trend bulanan debit vs kredit
+-- Widget: Top cabang by nominal transaksi jurnal
 -- Notes:
--- - Jika tidak ada data dalam rentang tanggal, query mengembalikan dummy trend.
+-- - Metric uses abs(debit-kredit) to represent movement magnitude.
+-- - Dummy rows returned when no data in selected range.
 
 SELECT
-  DATE_FORMAT(j.ttgl, '%Y-%m') AS period_ym,
+  COALESCE(NULLIF(TRIM(j.tcabang), ''), 'UNKNOWN') AS cabang,
   COUNT(*) AS total_trx,
   SUM(COALESCE(j.tdebit, 0)) AS total_debit,
   SUM(COALESCE(j.tkredit, 0)) AS total_kredit,
-  SUM(COALESCE(j.tdebit, 0)) - SUM(COALESCE(j.tkredit, 0)) AS net_cashflow
+  SUM(ABS(COALESCE(j.tdebit, 0) - COALESCE(j.tkredit, 0))) AS movement_amount
 FROM `m2_transaction_journal` j
 WHERE DATE(j.ttgl) BETWEEN :from_date AND :to_date
-GROUP BY period_ym
+GROUP BY cabang
 
 UNION ALL
 
-SELECT '2025-10' AS period_ym, 38 AS total_trx, 91000000 AS total_debit, 76000000 AS total_kredit, 15000000 AS net_cashflow
+SELECT 'JKT' AS cabang, 58 AS total_trx, 120000000 AS total_debit, 93000000 AS total_kredit, 27000000 AS movement_amount
 WHERE NOT EXISTS (
   SELECT 1
   FROM `m2_transaction_journal` x
   WHERE DATE(x.ttgl) BETWEEN :from_date AND :to_date
 )
 UNION ALL
-SELECT '2025-11', 42, 98000000, 88000000, 10000000
+SELECT 'SBY', 34, 76000000, 71000000, 5000000
 WHERE NOT EXISTS (
   SELECT 1
   FROM `m2_transaction_journal` x
   WHERE DATE(x.ttgl) BETWEEN :from_date AND :to_date
 )
 UNION ALL
-SELECT '2025-12', 47, 110000000, 94000000, 16000000
+SELECT 'BDG', 27, 64000000, 58000000, 6000000
 WHERE NOT EXISTS (
   SELECT 1
   FROM `m2_transaction_journal` x
   WHERE DATE(x.ttgl) BETWEEN :from_date AND :to_date
 )
-ORDER BY period_ym ASC;
+ORDER BY movement_amount DESC, total_trx DESC;

@@ -16,7 +16,7 @@ Generated at: 2026-02-25 03:14:54 UTC
 4. `m0` (95 tables, approx_rows=55405, numeric_cols=370, dimension_hints=23)
 5. `m5` (82 tables, approx_rows=1939, numeric_cols=1797, dimension_hints=371)
 6. `m4` (76 tables, approx_rows=2934, numeric_cols=1454, dimension_hints=265)
-7. `m2` (75 tables, approx_rows=3121, numeric_cols=947, dimension_hints=96)
+7. `m2` (Finance & Accounting, 75 tables, approx_rows=3121, numeric_cols=947, dimension_hints=96)
 8. `m7` (61 tables, approx_rows=52, numeric_cols=822, dimension_hints=124)
 9. `m3` (44 tables, approx_rows=2131, numeric_cols=661, dimension_hints=92)
 10. `m6` (43 tables, approx_rows=991, numeric_cols=811, dimension_hints=136)

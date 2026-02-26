@@ -83,6 +83,27 @@ export class DashboardController {
     return this.dashboardService.breakdownCustomer(query);
   }
 
+  @Get('m2/breakdown/status')
+  @ApiOperation({ summary: 'Get m2 breakdown by status' })
+  @ApiResponse({ status: 200, description: 'm2 status breakdown payload' })
+  breakdownM2Status(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.breakdownM2Status(query);
+  }
+
+  @Get('m2/breakdown/cashflow')
+  @ApiOperation({ summary: 'Get m2 cashflow breakdown' })
+  @ApiResponse({ status: 200, description: 'm2 cashflow breakdown payload' })
+  breakdownM2Cashflow(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.breakdownM2Cashflow(query);
+  }
+
+  @Get('m2/breakdown/branch')
+  @ApiOperation({ summary: 'Get m2 branch breakdown' })
+  @ApiResponse({ status: 200, description: 'm2 branch breakdown payload' })
+  breakdownM2Branch(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.breakdownM2Branch(query);
+  }
+
   @Get(':domain/table')
   @ApiOperation({ summary: 'Get dashboard table' })
   @ApiResponse({ status: 200, description: 'Table payload' })

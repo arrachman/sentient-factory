@@ -126,7 +126,7 @@ export default function Page() {
     <div className="container">
       <Toolbar>
         <ToolbarHeading>
-          <ToolbarPageTitle>{`Dashboard MyERPPlus (${domain.toUpperCase()})`}</ToolbarPageTitle>
+          <ToolbarPageTitle>{`Overview`}</ToolbarPageTitle>
           <ToolbarDescription>
             Ringkasan KPI, tren, breakdown, dan sample data dari dashboard mapping SQL templates.
           </ToolbarDescription>

@@ -1,0 +1,37 @@
+2	3	Kas Masuk (CR)	mod/m2/m2_TransaksiCR.swf	0
+2	4	Kas Keluar (CD)	mod/m2/m2_TransaksiCD.swf	0
+2	5	Bank Receipt (RM)	mod/m2/m2_TransaksiRM.swf	0
+2	6	Bank Payment (SM)	mod/m2/m2_TransaksiSM.swf	0
+2	7	Jurnal Umum (GJ)	mod/m2/m2_TransaksiGJ.swf	0
+2	8	Jurnal Penyesuaian (AJ)	mod/m2/m2_TransaksiAJ.swf	0
+2	9	Giro Masuk (RG)	mod/m2/m2_TransaksiRG.swf	0
+2	10	Giro Keluar (SG)	mod/m2/m2_TransaksiSG.swf	0
+2	11	Giro Masuk Batal (RGC)	mod/m2/m2_TransaksiRGC.swf	0
+2	12	Giro Keluar Batal (SGC)	mod/m2/m2_TransaksiSGC.swf	0
+2	13	Revaluasi Valas (RV)	mod/m2/m2_TransaksiRV.swf	0
+2	14	Template Jurnal (TJ)	mod/m2/m2_TransaksiTJ.swf	0
+2	16	Kas Masuk (CR)	mod/m2/m2_DataCR.swf	3
+2	17	Kas Keluar (CD)	mod/m2/m2_DataCD.swf	4
+2	18	Bank Receipt (RM)	mod/m2/m2_DataRM.swf	5
+2	19	Bank Payment (SM)	mod/m2/m2_DataSM.swf	6
+2	20	Jurnal Umum (GJ)	mod/m2/m2_DataGJ.swf	7
+2	21	Jurnal Penyesuaian (AJ)	mod/m2/m2_DataAJ.swf	8
+2	22	Giro Masuk (RG)	mod/m2/m2_DataRG.swf	9
+2	23	Giro Keluar (SG)	mod/m2/m2_DataSG.swf	10
+2	24	Giro Masuk Batal (RGC)	mod/m2/m2_DataRGC.swf	11
+2	25	Giro Keluar Batal (SGC)	mod/m2/m2_DataSGC.swf	12
+2	26	Revaluasi Valas (RV)	mod/m2/m2_DataRV.swf	13
+2	27	Template Jurnal (TJ)	mod/m2/m2_DataTJ.swf	14
+2	65	Saldo Awal Coa (CB)	mod/m2/m2_TransaksiCB.swf	0
+2	66	Saldo Awal Coa (CB)	mod/m2/m2_DataCB.swf	65
+2	88	KPI FA	mod/m2/m2_KPIFA.swf	88
+2	94	Buku Besar	mod/m2/m2_DataBukuBesar.swf	94
+2	95	Data Jurnal	mod/m2/m2_DataJournal.swf	95
+2	96	Data Transaksi Barang	mod/m2/m2_DataItemTransaction.swf	96
+2	97	Buku Besar Per Kontak	mod/m2/m2_DataBukuBesarPerKontak.swf	97
+2	100	Data Giro Masuk	mod/m2/m2_DataGiroMasuk.swf	100
+2	101	Data Giro Keluar	mod/m2/m2_DataGiroKeluar.swf	101
+2	135	Anggaran (BD)	mod/m2/m2_TransaksiBD.swf	0
+2	136	Anggaran (BD)	mod/m2/m2_DataBD.swf	135
+2	138	Jurnal Memorial (JM)	mod/m2/m2_TransaksiJM.swf	0
+2	139	Jurnal Memorial (JM)	mod/m2/m2_DataJM.swf	138

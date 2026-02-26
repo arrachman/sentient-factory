@@ -12,6 +12,14 @@ FILTER_FILE="$OUT_DIR/dashboard_03_filter_dimensions.tsv"
 TS_FILE="$OUT_DIR/dashboard_04_timeseries_readiness.tsv"
 HUB_FILE="$OUT_DIR/dashboard_05_join_hubs.tsv"
 
+domain_label() {
+  local domain="$1"
+  case "$domain" in
+    m2) echo "Finance & Accounting" ;;
+    *) echo "$domain" ;;
+  esac
+}
+
 require_file() {
   local f="$1"
   if [[ ! -f "$f" ]]; then
@@ -52,7 +60,7 @@ mkdir -p "$OUT_DIR"
   echo
 
   echo "## Top Domain Prefixes"
-  awk -F'\t' '
+  top_domain_lines=$(awk -F'\t' '
     NF >= 2 {
       d = $2
       if (d == "" || d == "NULL") d = "unknown"
@@ -66,11 +74,17 @@ mkdir -p "$OUT_DIR"
         printf "%d\t%s\t%d\t%d\t%d\n", c[d], d, approx[d], numeric[d], dimhint[d]
       }
     }
-  ' "$DOMAIN_FILE" | sort -t$'\t' -k1,1nr -k2,2 | awk 'NR <= 10 { print }' | awk -F'\t' '
-    {
-      printf "%d. `%s` (%d tables, approx_rows=%d, numeric_cols=%d, dimension_hints=%d)\n", NR, $2, $1, $3, $4, $5
-    }
-  '
+  ' "$DOMAIN_FILE" | sort -t$'\t' -k1,1nr -k2,2 | awk 'NR <= 10 { print }')
+  if [[ -n "$top_domain_lines" ]]; then
+    rank=0
+    while IFS=$'\t' read -r table_count domain approx_rows numeric_cols dimhint_count; do
+      [[ -z "${domain:-}" ]] && continue
+      rank=$((rank + 1))
+      domain_name="$(domain_label "$domain")"
+      printf "%d. \`%s\` (%s, %d tables, approx_rows=%d, numeric_cols=%d, dimension_hints=%d)\n" \
+        "$rank" "$domain" "$domain_name" "$table_count" "$approx_rows" "$numeric_cols" "$dimhint_count"
+    done <<< "$top_domain_lines"
+  fi
   echo
 
   echo "## KPI Priority"
