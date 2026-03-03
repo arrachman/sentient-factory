@@ -1,8 +1,30 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { RefreshCw } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   Toolbar,
   ToolbarActions,
@@ -10,11 +32,6 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 type DashboardResponse<T> = {
   success?: boolean;
@@ -97,7 +114,8 @@ const FEATURE_COPY: Record<
   }
 > = {
   default: {
-    description: 'Dashboard Finance & Accounting dengan KPI, chart, breakdown, dan list transaksi.',
+    description:
+      'Dashboard Finance & Accounting dengan KPI, chart, breakdown, dan list transaksi.',
     kpi1: 'Total Jurnal',
     kpi2: 'Total Debit',
     kpi3: 'Total Kredit',
@@ -121,7 +139,8 @@ const FEATURE_COPY: Record<
     emptyTableText: 'Tidak ada data tabel.',
   },
   m2_bd: {
-    description: 'Dashboard Anggaran (BD) untuk memantau nilai anggaran, realisasi pergerakan, dan status dokumen.',
+    description:
+      'Dashboard Anggaran (BD) untuk memantau nilai anggaran, realisasi pergerakan, dan status dokumen.',
     kpi1: 'Total Dokumen Anggaran',
     kpi2: 'Total Nilai Anggaran',
     kpi3: 'Total Realisasi Anggaran',
@@ -143,6 +162,31 @@ const FEATURE_COPY: Record<
     emptyAnomalyText: 'Belum ada anomali anggaran.',
     emptyRecommendationText: 'Belum ada rekomendasi anggaran.',
     emptyTableText: 'Tidak ada data dokumen anggaran.',
+  },
+  m2_sgc: {
+    description:
+      'Dashboard Giro Keluar Batal (SGC) untuk memantau pembatalan giro keluar, tren nilai pembatalan, dan distribusi transaksi.',
+    kpi1: 'Total Transaksi Batal',
+    kpi2: 'Total Nilai Giro Batal',
+    kpi3: 'Total Nilai Reversal',
+    kpi4: 'Net Pembatalan',
+    trendTitle: 'Trend Giro Batal vs Reversal',
+    flowTitle: 'Arus Nilai Pembatalan',
+    sourceTitle: 'Komposisi Sumber Giro Batal',
+    branchTitle: 'Top Cabang Pembatalan',
+    statusTitle: 'Ringkasan Status Giro Batal',
+    tableTitle: 'List Transaksi Giro Keluar Batal (Sample)',
+    insightTitle: 'AI Insight Giro Keluar Batal',
+    insightHighlights: 'Ringkasan',
+    insightAnomalies: 'Anomali',
+    insightRecommendations: 'Rekomendasi',
+    totalBranchTitle: 'Total Cabang',
+    totalSourceTitle: 'Total Sumber',
+    emptyStatusText: 'Belum ada data status giro keluar batal.',
+    emptyInsightText: 'Belum ada insight giro keluar batal.',
+    emptyAnomalyText: 'Belum ada anomali giro keluar batal.',
+    emptyRecommendationText: 'Belum ada rekomendasi giro keluar batal.',
+    emptyTableText: 'Tidak ada data transaksi giro keluar batal.',
   },
 };
 
@@ -200,7 +244,12 @@ function isMonetaryColumn(column: string) {
 
 function isIntegerColumn(column: string) {
   const lower = column.toLowerCase();
-  return lower.endsWith('id') || lower.includes('_id') || lower.includes('status') || lower.includes('row');
+  return (
+    lower.endsWith('id') ||
+    lower.includes('_id') ||
+    lower.includes('status') ||
+    lower.includes('row')
+  );
 }
 
 function todayDateOnly() {
@@ -227,30 +276,46 @@ function normalizeInsightConfidence(item: InsightItem): string | null {
   if (!item || typeof item === 'string') {
     return null;
   }
-  if (typeof item.confidence !== 'number' || !Number.isFinite(item.confidence)) {
+  if (
+    typeof item.confidence !== 'number' ||
+    !Number.isFinite(item.confidence)
+  ) {
     return null;
   }
   return `${Math.round(item.confidence * 100)}%`;
 }
 
 function contextualizeInsightText(text: string, feature: string): string {
-  if (feature !== 'm2_bd') {
-    return text;
+  if (feature === 'm2_bd') {
+    return text
+      .replace(/total debit/gi, 'total nilai anggaran')
+      .replace(/total kredit/gi, 'total realisasi anggaran')
+      .replace(/net cashflow/gi, 'selisih anggaran')
+      .replace(/cash in/gi, 'alokasi anggaran')
+      .replace(/cash out/gi, 'realisasi anggaran')
+      .replace(/arus kas agregat/gi, 'ringkasan alokasi vs realisasi')
+      .replace(/outlier net cashflow/gi, 'outlier selisih anggaran');
   }
 
-  return text
-    .replace(/total debit/gi, 'total nilai anggaran')
-    .replace(/total kredit/gi, 'total realisasi anggaran')
-    .replace(/net cashflow/gi, 'selisih anggaran')
-    .replace(/cash in/gi, 'alokasi anggaran')
-    .replace(/cash out/gi, 'realisasi anggaran')
-    .replace(/arus kas agregat/gi, 'ringkasan alokasi vs realisasi')
-    .replace(/outlier net cashflow/gi, 'outlier selisih anggaran');
+  if (feature === 'm2_sgc') {
+    return text
+      .replace(/total debit/gi, 'total giro keluar batal')
+      .replace(/total kredit/gi, 'total nilai reversal')
+      .replace(/net cashflow/gi, 'net pembatalan')
+      .replace(/cash in/gi, 'nilai pembatalan')
+      .replace(/cash out/gi, 'nilai reversal')
+      .replace(/arus kas agregat/gi, 'ringkasan pembatalan giro')
+      .replace(/outlier net cashflow/gi, 'outlier pembatalan giro');
+  }
+
+  return text;
 }
 
 async function fetchRows<T>(url: string): Promise<T[]> {
   const response = await fetch(url, { cache: 'no-store' });
-  const payload = (await response.json().catch(() => null)) as DashboardResponse<T> | null;
+  const payload = (await response
+    .json()
+    .catch(() => null)) as DashboardResponse<T> | null;
   if (!response.ok || !payload?.success) {
     throw new Error(payload?.message || `Request failed: ${response.status}`);
   }
@@ -260,9 +325,11 @@ async function fetchRows<T>(url: string): Promise<T[]> {
 const feature: string = 'm2_sgc';
 
 export default function Page() {
-  const featureLabel = FEATURE_LABELS[feature] ?? `Finance Feature (${feature})`;
+  const featureLabel =
+    FEATURE_LABELS[feature] ?? `Finance Feature (${feature})`;
   const featureCopy = FEATURE_COPY[feature] ?? FEATURE_COPY.default;
   const isBudgetFeature = feature === 'm2_bd';
+  const isCancelledOutgoingGiroFeature = feature === 'm2_sgc';
 
   const [fromDate, setFromDate] = useState(oneYearAgoDateOnly());
   const [toDate, setToDate] = useState(todayDateOnly());
@@ -279,31 +346,56 @@ export default function Page() {
   const [insights, setInsights] = useState<InsightItem[]>([]);
   const [anomalies, setAnomalies] = useState<InsightItem[]>([]);
   const [recommendations, setRecommendations] = useState<InsightItem[]>([]);
-  const [insightModel, setInsightModel] = useState<{ provider?: string; version?: string } | null>(null);
+  const [insightModel, setInsightModel] = useState<{
+    provider?: string;
+    version?: string;
+  } | null>(null);
 
   const load = async () => {
     setLoading(true);
     setError('');
     try {
       const query = new URLSearchParams({ fromDate, toDate, feature });
-      const [summaryRows, trendRows, breakdownRows, cashflowRows, branchRows, statusRows, detailRows] =
-        await Promise.all([
-          fetchRows<SummaryRow>(`/api/dashboard/m2/summary?${query.toString()}`),
-          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/trends?${query.toString()}`),
-          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown?${query.toString()}&groupBy=tsumber`),
-          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown/cashflow?${query.toString()}`),
-          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown/branch?${query.toString()}`),
-          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown/status?${query.toString()}`),
-          fetchRows<Record<string, unknown>>(
-            `/api/dashboard/m2/table?${query.toString()}&page=1&pageSize=20&sortBy=ttgl&sortOrder=desc`,
-          ),
-        ]);
+      const [
+        summaryRows,
+        trendRows,
+        breakdownRows,
+        cashflowRows,
+        branchRows,
+        statusRows,
+        detailRows,
+      ] = await Promise.all([
+        fetchRows<SummaryRow>(`/api/dashboard/m2/summary?${query.toString()}`),
+        fetchRows<Record<string, unknown>>(
+          `/api/dashboard/m2/trends?${query.toString()}`,
+        ),
+        fetchRows<Record<string, unknown>>(
+          `/api/dashboard/m2/breakdown?${query.toString()}&groupBy=tsumber`,
+        ),
+        fetchRows<Record<string, unknown>>(
+          `/api/dashboard/m2/breakdown/cashflow?${query.toString()}`,
+        ),
+        fetchRows<Record<string, unknown>>(
+          `/api/dashboard/m2/breakdown/branch?${query.toString()}`,
+        ),
+        fetchRows<Record<string, unknown>>(
+          `/api/dashboard/m2/breakdown/status?${query.toString()}`,
+        ),
+        fetchRows<Record<string, unknown>>(
+          `/api/dashboard/m2/table?${query.toString()}&page=1&pageSize=20&sortBy=ttgl&sortOrder=desc`,
+        ),
+      ]);
 
       const insightQuery = new URLSearchParams({ fromDate, toDate, feature });
-      const insightResponse = await fetch(`/api/dashboard/m2/insight?${insightQuery.toString()}`, {
-        cache: 'no-store',
-      });
-      const insightPayload = (await insightResponse.json().catch(() => null)) as InsightResponse | null;
+      const insightResponse = await fetch(
+        `/api/dashboard/m2/insight?${insightQuery.toString()}`,
+        {
+          cache: 'no-store',
+        },
+      );
+      const insightPayload = (await insightResponse
+        .json()
+        .catch(() => null)) as InsightResponse | null;
       if (insightResponse.ok && insightPayload?.success) {
         setInsights(insightPayload.data?.insights ?? []);
         setAnomalies(insightPayload.data?.anomalies ?? []);
@@ -376,7 +468,12 @@ export default function Page() {
     const net = toNumber(summary?.net_cashflow);
 
     if (!isBudgetFeature) {
-      return { kpi1: totalRows, kpi2: totalDebit, kpi3: totalKredit, kpi4: net };
+      return {
+        kpi1: totalRows,
+        kpi2: totalDebit,
+        kpi3: totalKredit,
+        kpi4: net,
+      };
     }
 
     return {
@@ -396,7 +493,79 @@ export default function Page() {
     [branch],
   );
 
-  const tableColumns = tableRows.length > 0 ? Object.keys(tableRows[0]).slice(0, 8) : [];
+  const fallbackInsights = useMemo(() => {
+    if (!isCancelledOutgoingGiroFeature) {
+      return {
+        insights: [] as string[],
+        anomalies: [] as string[],
+        recommendations: [] as string[],
+      };
+    }
+
+    const totalCancelled = toNumber(kpiValues.kpi2);
+    const totalReversal = toNumber(kpiValues.kpi3);
+    const netCancellation = toNumber(kpiValues.kpi4);
+    const trxCount = toNumber(kpiValues.kpi1);
+    const reversalPct =
+      totalCancelled > 0 ? (totalReversal / totalCancelled) * 100 : 0;
+
+    const sourceTop = sourceBreakdownData[0];
+    const branchTop = branchChartData[0];
+    const statusTop = status[0];
+    const trendOutlier = trendChartData.find(
+      (item) =>
+        toNumber(item.debit) >
+        (totalCancelled / Math.max(trendChartData.length, 1)) * 2.5,
+    );
+
+    const ins = [
+      `Periode analisis mencatat ${fmt(trxCount)} transaksi giro keluar batal dengan total ${fmtMoney(totalCancelled, 2)}.`,
+      `Total nilai reversal ${fmtMoney(totalReversal, 2)} dengan net pembatalan ${fmtMoney(netCancellation, 2)}.`,
+      sourceTop
+        ? `Sumber pembatalan terbesar saat ini adalah ${sourceTop.label} dengan kontribusi ${fmtMoney(sourceTop.value, 2)}.`
+        : 'Belum ada sumber pembatalan dominan.',
+      branchTop
+        ? `Cabang dengan nilai pembatalan tertinggi: ${branchTop.cabang} (${fmtMoney(branchTop.movement, 2)}).`
+        : 'Belum ada cabang dengan pembatalan dominan.',
+    ];
+
+    const anom = [
+      ...(reversalPct > 80
+        ? [
+            `Rasio reversal mencapai ${fmt(reversalPct, 2)}% dari nilai giro batal; perlu review proses pembatalan.`,
+          ]
+        : []),
+      ...(trendOutlier
+        ? [
+            `Lonjakan giro keluar batal terdeteksi pada periode ${trendOutlier.period}; perlu verifikasi transaksi pembatalan bernilai besar.`,
+          ]
+        : []),
+      ...(statusTop &&
+      String(statusTop.status_label ?? '').startsWith('unknown_')
+        ? [
+            'Terdapat status transaksi giro keluar batal yang belum terpetakan (unknown_*).',
+          ]
+        : []),
+    ];
+
+    const rec = [
+      'Review transaksi pembatalan terbesar berdasarkan sumber dan cabang untuk menemukan akar masalah operasional.',
+      'Validasi dokumen reversal bernilai tinggi agar tidak terjadi pembatalan berulang.',
+      'Pantau tren giro keluar batal mingguan untuk menekan rasio pembatalan yang tidak normal.',
+    ];
+
+    return { insights: ins, anomalies: anom, recommendations: rec };
+  }, [
+    branchChartData,
+    isCancelledOutgoingGiroFeature,
+    kpiValues,
+    sourceBreakdownData,
+    status,
+    trendChartData,
+  ]);
+
+  const tableColumns =
+    tableRows.length > 0 ? Object.keys(tableRows[0]).slice(0, 8) : [];
 
   return (
     <div className="container">
@@ -409,9 +578,23 @@ export default function Page() {
         </ToolbarHeading>
         <ToolbarActions>
           <div className="flex items-center gap-2">
-            <Input type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} className="w-[160px]" />
-            <Input type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} className="w-[160px]" />
-            <Button variant="outline" onClick={() => void load()} disabled={loading}>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+              className="w-[160px]"
+            />
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+              className="w-[160px]"
+            />
+            <Button
+              variant="outline"
+              onClick={() => void load()}
+              disabled={loading}
+            >
               <RefreshCw />
               Refresh
             </Button>
@@ -421,97 +604,141 @@ export default function Page() {
 
       {error ? (
         <Card className="mb-4 border-destructive/30">
-          <CardContent className="pt-6 text-sm text-destructive">{error}</CardContent>
+          <CardContent className="pt-6 text-sm text-destructive">
+            {error}
+          </CardContent>
         </Card>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <Card>
-          <CardHeader><CardTitle>{featureCopy.kpi1}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.kpi1}</CardTitle>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <p className="text-xl font-semibold leading-tight" title={fmt(kpiValues.kpi1)}>
+                <p
+                  className="text-xl font-semibold leading-tight"
+                  title={fmt(kpiValues.kpi1)}
+                >
                   {fmtCompact(kpiValues.kpi1)}
                 </p>
-                <p className="text-xs text-muted-foreground">{fmt(kpiValues.kpi1)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmt(kpiValues.kpi1)}
+                </p>
               </>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>{featureCopy.kpi2}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.kpi2}</CardTitle>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <p className="text-xl font-semibold leading-tight" title={fmtMoney(kpiValues.kpi2, 2)}>
+                <p
+                  className="text-xl font-semibold leading-tight"
+                  title={fmtMoney(kpiValues.kpi2, 2)}
+                >
                   {fmtMoneyCompact(kpiValues.kpi2, 2)}
                 </p>
-                <p className="text-xs text-muted-foreground">{fmtMoney(kpiValues.kpi2, 2)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmtMoney(kpiValues.kpi2, 2)}
+                </p>
               </>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>{featureCopy.kpi3}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.kpi3}</CardTitle>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <p className="text-xl font-semibold leading-tight" title={fmtMoney(kpiValues.kpi3, 2)}>
+                <p
+                  className="text-xl font-semibold leading-tight"
+                  title={fmtMoney(kpiValues.kpi3, 2)}
+                >
                   {fmtMoneyCompact(kpiValues.kpi3, 2)}
                 </p>
-                <p className="text-xs text-muted-foreground">{fmtMoney(kpiValues.kpi3, 2)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmtMoney(kpiValues.kpi3, 2)}
+                </p>
               </>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>{featureCopy.kpi4}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.kpi4}</CardTitle>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <p className="text-xl font-semibold leading-tight" title={fmtMoney(kpiValues.kpi4, 2)}>
+                <p
+                  className="text-xl font-semibold leading-tight"
+                  title={fmtMoney(kpiValues.kpi4, 2)}
+                >
                   {fmtMoneyCompact(kpiValues.kpi4, 2)}
                 </p>
-                <p className="text-xs text-muted-foreground">{fmtMoney(kpiValues.kpi4, 2)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmtMoney(kpiValues.kpi4, 2)}
+                </p>
               </>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>{featureCopy.totalBranchTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.totalBranchTitle}</CardTitle>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <p className="text-xl font-semibold leading-tight" title={fmt(summary?.total_cabang)}>
+                <p
+                  className="text-xl font-semibold leading-tight"
+                  title={fmt(summary?.total_cabang)}
+                >
                   {fmtCompact(summary?.total_cabang)}
                 </p>
-                <p className="text-xs text-muted-foreground">{fmt(summary?.total_cabang)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmt(summary?.total_cabang)}
+                </p>
               </>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>{featureCopy.totalSourceTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.totalSourceTitle}</CardTitle>
+          </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-8 w-24" />
             ) : (
               <>
-                <p className="text-xl font-semibold leading-tight" title={fmt(summary?.total_sumber)}>
+                <p
+                  className="text-xl font-semibold leading-tight"
+                  title={fmt(summary?.total_sumber)}
+                >
                   {fmtCompact(summary?.total_sumber)}
                 </p>
-                <p className="text-xs text-muted-foreground">{fmt(summary?.total_sumber)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmt(summary?.total_sumber)}
+                </p>
               </>
             )}
           </CardContent>
@@ -520,32 +747,58 @@ export default function Page() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>{featureCopy.trendTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.trendTitle}</CardTitle>
+          </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="period" />
-                <YAxis tickFormatter={(value) => fmtMoneyCompact(value, 1)} width={96} />
+                <YAxis
+                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
+                  width={96}
+                />
                 <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
-                <Line dataKey={isBudgetFeature ? 'budget' : 'debit'} stroke="#2563eb" strokeWidth={2} dot={false} />
-                <Line dataKey={isBudgetFeature ? 'realization' : 'kredit'} stroke="#dc2626" strokeWidth={2} dot={false} />
+                <Line
+                  dataKey={isBudgetFeature ? 'budget' : 'debit'}
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  dataKey={isBudgetFeature ? 'realization' : 'kredit'}
+                  stroke="#dc2626"
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>{featureCopy.flowTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.flowTitle}</CardTitle>
+          </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={cashflowChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="period" />
-                <YAxis tickFormatter={(value) => fmtMoneyCompact(value, 1)} width={96} />
+                <YAxis
+                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
+                  width={96}
+                />
                 <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
-                <Bar dataKey={isBudgetFeature ? 'allocation' : 'cashIn'} fill="#16a34a" />
-                <Bar dataKey={isBudgetFeature ? 'realization' : 'cashOut'} fill="#ef4444" />
+                <Bar
+                  dataKey={isBudgetFeature ? 'allocation' : 'cashIn'}
+                  fill="#16a34a"
+                />
+                <Bar
+                  dataKey={isBudgetFeature ? 'realization' : 'cashOut'}
+                  fill="#ef4444"
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -554,13 +807,18 @@ export default function Page() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card>
-          <CardHeader><CardTitle>{featureCopy.sourceTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.sourceTitle}</CardTitle>
+          </CardHeader>
           <CardContent className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sourceBreakdownData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" />
-                <YAxis tickFormatter={(value) => fmtMoneyCompact(value, 1)} width={96} />
+                <YAxis
+                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
+                  width={96}
+                />
                 <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
                 <Bar dataKey="value" fill="#0ea5e9" />
               </BarChart>
@@ -569,13 +827,18 @@ export default function Page() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>{featureCopy.branchTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.branchTitle}</CardTitle>
+          </CardHeader>
           <CardContent className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={branchChartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="cabang" />
-                <YAxis tickFormatter={(value) => fmtMoneyCompact(value, 1)} width={96} />
+                <YAxis
+                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
+                  width={96}
+                />
                 <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
                 <Bar dataKey="movement" fill="#7c3aed" />
               </BarChart>
@@ -584,15 +847,24 @@ export default function Page() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>{featureCopy.statusTitle}</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>{featureCopy.statusTitle}</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-2">
             {status.slice(0, 6).map((row, index) => (
-              <div key={`${row.status_label}-${index}`} className="flex items-center justify-between text-sm">
+              <div
+                key={`${row.status_label}-${index}`}
+                className="flex items-center justify-between text-sm"
+              >
                 <span>{String(row.status_label ?? 'unknown')}</span>
                 <span className="font-medium">{fmt(row.total_trx)}</span>
               </div>
             ))}
-            {status.length === 0 ? <p className="text-sm text-muted-foreground">{featureCopy.emptyStatusText}</p> : null}
+            {status.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {featureCopy.emptyStatusText}
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </div>
@@ -601,54 +873,105 @@ export default function Page() {
         <CardHeader>
           <CardTitle>{featureCopy.insightTitle}</CardTitle>
           <p className="text-xs text-muted-foreground">
-            {insightModel ? `${insightModel.provider ?? 'n/a'} • ${insightModel.version ?? 'n/a'}` : 'No model metadata'}
+            {insightModel
+              ? `${insightModel.provider ?? 'n/a'} • ${insightModel.version ?? 'n/a'}`
+              : 'No model metadata'}
           </p>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-3">
           <div>
-            <p className="mb-2 text-sm font-semibold">{featureCopy.insightHighlights}</p>
+            <p className="mb-2 text-sm font-semibold">
+              {featureCopy.insightHighlights}
+            </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {insights.length === 0 ? <li>{featureCopy.emptyInsightText}</li> : null}
+              {insights.length === 0 &&
+              fallbackInsights.insights.length === 0 ? (
+                <li>{featureCopy.emptyInsightText}</li>
+              ) : null}
               {insights.map((item, idx) => (
                 <li key={`ins-${idx}`}>
-                  - {contextualizeInsightText(normalizeInsightText(item), feature)}
-                  {normalizeInsightConfidence(item) ? ` (${normalizeInsightConfidence(item)})` : ''}
+                  -{' '}
+                  {contextualizeInsightText(
+                    normalizeInsightText(item),
+                    feature,
+                  )}
+                  {normalizeInsightConfidence(item)
+                    ? ` (${normalizeInsightConfidence(item)})`
+                    : ''}
                 </li>
               ))}
+              {insights.length === 0 &&
+                fallbackInsights.insights.map((text, idx) => (
+                  <li key={`ins-fallback-${idx}`}>- {text}</li>
+                ))}
             </ul>
           </div>
           <div>
-            <p className="mb-2 text-sm font-semibold">{featureCopy.insightAnomalies}</p>
+            <p className="mb-2 text-sm font-semibold">
+              {featureCopy.insightAnomalies}
+            </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {anomalies.length === 0 ? <li>{featureCopy.emptyAnomalyText}</li> : null}
+              {anomalies.length === 0 &&
+              fallbackInsights.anomalies.length === 0 ? (
+                <li>{featureCopy.emptyAnomalyText}</li>
+              ) : null}
               {anomalies.map((item, idx) => (
                 <li key={`anom-${idx}`}>
-                  - {contextualizeInsightText(normalizeInsightText(item), feature)}
-                  {normalizeInsightConfidence(item) ? ` (${normalizeInsightConfidence(item)})` : ''}
+                  -{' '}
+                  {contextualizeInsightText(
+                    normalizeInsightText(item),
+                    feature,
+                  )}
+                  {normalizeInsightConfidence(item)
+                    ? ` (${normalizeInsightConfidence(item)})`
+                    : ''}
                 </li>
               ))}
+              {anomalies.length === 0 &&
+                fallbackInsights.anomalies.map((text, idx) => (
+                  <li key={`anom-fallback-${idx}`}>- {text}</li>
+                ))}
             </ul>
           </div>
           <div>
-            <p className="mb-2 text-sm font-semibold">{featureCopy.insightRecommendations}</p>
+            <p className="mb-2 text-sm font-semibold">
+              {featureCopy.insightRecommendations}
+            </p>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              {recommendations.length === 0 ? <li>{featureCopy.emptyRecommendationText}</li> : null}
+              {recommendations.length === 0 &&
+              fallbackInsights.recommendations.length === 0 ? (
+                <li>{featureCopy.emptyRecommendationText}</li>
+              ) : null}
               {recommendations.map((item, idx) => (
                 <li key={`rec-${idx}`}>
-                  - {contextualizeInsightText(normalizeInsightText(item), feature)}
-                  {normalizeInsightConfidence(item) ? ` (${normalizeInsightConfidence(item)})` : ''}
+                  -{' '}
+                  {contextualizeInsightText(
+                    normalizeInsightText(item),
+                    feature,
+                  )}
+                  {normalizeInsightConfidence(item)
+                    ? ` (${normalizeInsightConfidence(item)})`
+                    : ''}
                 </li>
               ))}
+              {recommendations.length === 0 &&
+                fallbackInsights.recommendations.map((text, idx) => (
+                  <li key={`rec-fallback-${idx}`}>- {text}</li>
+                ))}
             </ul>
           </div>
         </CardContent>
       </Card>
 
       <Card className="mt-4">
-        <CardHeader><CardTitle>{featureCopy.tableTitle}</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>{featureCopy.tableTitle}</CardTitle>
+        </CardHeader>
         <CardContent>
           {tableColumns.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{featureCopy.emptyTableText}</p>
+            <p className="text-sm text-muted-foreground">
+              {featureCopy.emptyTableText}
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -664,7 +987,11 @@ export default function Page() {
                     {tableColumns.map((column) => (
                       <TableCell
                         key={`${rowIndex}-${column}`}
-                        className={isNumericLike(row[column]) ? 'text-right font-medium tabular-nums' : 'max-w-[220px] truncate'}
+                        className={
+                          isNumericLike(row[column])
+                            ? 'text-right font-medium tabular-nums'
+                            : 'max-w-[220px] truncate'
+                        }
                         title={String(row[column] ?? '-')}
                       >
                         {isNumericLike(row[column])
