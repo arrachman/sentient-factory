@@ -1,0 +1,54 @@
+model_list:
+  # ==========================================
+  # 1. PATUNGIN CLUSTER (DEFAULT UTAMA)
+  # LiteLLM akan membagi traffic secara seimbang (round-robin) ke akun-akun ini
+  # ==========================================
+  - model_name: model-default
+    litellm_params:
+      model: openai/gpt-5.3-codex
+      api_base: "https://ai.patungin.id/v1"
+      api_key: "patunginXuzSX3bbzETiDFOz"
+      wire_api: "responses"
+  - model_name: model-default
+    litellm_params:
+      model: openai/gpt-5.3-codex
+      api_base: "https://ai.patungin.id/v1"
+      api_key: "patunginaULdOv23UT2cO16e7D7WZg"
+      wire_api: "responses"
+
+  # ==========================================
+  # 2. ANTIGRAVITY CLUSTER (CADANGAN 1)
+  # ==========================================
+  - model_name: antigravity-cluster
+    litellm_params:
+      model: openai/gpt-4o # Sesuaikan dengan nama model dari antigravity
+      api_base: "https://api.antigravity.id/v1"
+      api_key: "antigravity_key_akun_1"
+  - model_name: antigravity-cluster
+    litellm_params:
+      model: openai/gpt-4o
+      api_base: "https://api.antigravity.id/v1"
+      api_key: "antigravity_key_akun_2"
+
+  # ==========================================
+  # 3. DEEPSEEK (CADANGAN 2 / LAST RESORT)
+  # Hanya menyala jika Patungin dan Antigravity tumbang
+  # ==========================================
+  - model_name: deepseek-fallback
+    litellm_params:
+      model: deepseek/deepseek-coder
+      api_key: "sk-8e709ff5918f4082bcb31a9bc94100b6"
+
+router_settings:
+  # Strategi round_robin akan memutar pemakaian key di dalam grup yang sama (misal: memutar 3 key patungin)
+  routing_strategy: round_robin 
+  
+  # URUTAN JATUHNYA (FALLBACKS):
+  # Patungin (model-default) -> Antigravity -> DeepSeek -> Extra
+  fallbacks: 
+    - {"model-default": ["antigravity-cluster"]}
+    - {"antigravity-cluster": ["deepseek-fallback"]}
+    - {"deepseek-fallback": ["extra-fallback"]}
+  
+  num_retries: 2
+  allowed_fails: 1 # Jika 1 request gagal/429, langsung skip ke key/provider berikutnya

@@ -49,7 +49,11 @@ export class AuditLogsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update audit log' })
   @ApiResponse({ status: 200, description: 'Audit log updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAuditLogDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAuditLogDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { JSX, useCallback } from 'react';
+import { JSX, useCallback, useMemo } from 'react';
 import { MenuConfig, MenuItem } from '@/config/types';
 import { cn } from '@/lib/utils';
 import {
@@ -18,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppMenu } from './menu-context';
+import { resolveSidebarSelectedValue } from './sidebar-menu-selection';
 
 export function SidebarMenu() {
   const pathname = usePathname();
@@ -27,6 +28,14 @@ export function SidebarMenu() {
     ? `${pathname}?${searchParams.toString()}`
     : pathname;
   const currentQueryString = searchParams.toString();
+
+  const resolvedSelectedValue = useMemo(() => {
+    return resolveSidebarSelectedValue({
+      menus,
+      pathname,
+      currentQueryString,
+    });
+  }, [menus, pathname, currentQueryString]);
 
   // Memoize matchPath to prevent unnecessary re-renders
   const matchPath = useCallback(
@@ -48,10 +57,9 @@ export function SidebarMenu() {
         return isMatch;
       }
 
-      return (
-        pathOnly === pathname ||
-        (pathOnly.length > 1 && pathname.startsWith(pathOnly) && pathOnly !== '/app')
-      );
+      const samePath = pathOnly === pathname;
+      const isNestedPath = pathOnly.length > 1 && pathname.startsWith(`${pathOnly}/`);
+      return samePath || isNestedPath;
     },
     [pathname, currentQueryString],
   );
@@ -241,7 +249,7 @@ export function SidebarMenu() {
   return (
     <ScrollArea className="flex grow shrink-0 py-5 px-5 lg:h-[calc(100vh-5.5rem)]">
       <AccordionMenu
-        selectedValue={currentPathWithQuery}
+        selectedValue={resolvedSelectedValue ?? currentPathWithQuery}
         matchPath={matchPath}
         type="single"
         collapsible

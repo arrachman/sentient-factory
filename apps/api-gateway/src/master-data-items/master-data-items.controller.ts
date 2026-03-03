@@ -49,7 +49,11 @@ export class MasterDataItemsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update master data item' })
   @ApiResponse({ status: 200, description: 'Master data item updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataItemDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMasterDataItemDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

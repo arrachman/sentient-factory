@@ -2,6 +2,32 @@
 const nextConfig = {
   // Standalone output for Docker deployment
   output: 'standalone',
+  async redirects() {
+    return [
+      {
+        source: '/app/dashboard/finance/:feature',
+        destination: '/app/finance-accounting/:feature',
+        permanent: true,
+      },
+      {
+        source: '/app/dashboard/finance',
+        has: [
+          {
+            type: 'query',
+            key: 'feature',
+            value: '(?<feature>.*)',
+          },
+        ],
+        destination: '/app/finance-accounting/:feature',
+        permanent: true,
+      },
+      {
+        source: '/app/dashboard/finance',
+        destination: '/app/finance-accounting',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const allowedDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS || 'sentient.fr-labs.my.id')

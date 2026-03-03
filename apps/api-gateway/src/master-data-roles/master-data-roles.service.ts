@@ -183,7 +183,9 @@ export class MasterDataRolesService {
       where: { roleId: id, deletedAt: null },
     });
     if (activeUsers > 0) {
-      throw new BadRequestException('Role masih dipakai user. Lepaskan role dari user terlebih dahulu.');
+      throw new BadRequestException(
+        'Role masih dipakai user. Lepaskan role dari user terlebih dahulu.',
+      );
     }
 
     await this.prisma.$transaction([
@@ -246,7 +248,11 @@ export class MasterDataRolesService {
     };
   }
 
-  async updateRolePermissions(id: number, dto: UpdateRolePermissionsDto, actorId?: string | number) {
+  async updateRolePermissions(
+    id: number,
+    dto: UpdateRolePermissionsDto,
+    actorId?: string | number,
+  ) {
     const role = await this.prisma.role.findFirst({
       where: { id, deletedAt: null },
       select: { id: true },

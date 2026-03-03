@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsOptional } from 'class-validator';
+import { IsDateString, IsOptional, IsString } from 'class-validator';
 
 export class QueryDashboardRangeDto {
   @ApiPropertyOptional({
@@ -17,4 +17,12 @@ export class QueryDashboardRangeDto {
   @IsOptional()
   @IsDateString()
   toDate?: string;
+
+  @ApiPropertyOptional({
+    example: 'm2_bd',
+    description: 'Feature code for feature-specific filtering, e.g. m2_bd.',
+  })
+  @IsOptional()
+  @IsString()
+  feature?: string;
 }

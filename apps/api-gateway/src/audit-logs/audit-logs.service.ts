@@ -209,16 +209,14 @@ export class AuditLogsService {
     return value as Prisma.InputJsonValue;
   }
 
-  private serializeItem(
-    item: {
-      user?: {
-        fullName?: string | null;
-        username?: string | null;
-        email?: string | null;
-      } | null;
-      [key: string]: unknown;
-    },
-  ) {
+  private serializeItem(item: {
+    user?: {
+      fullName?: string | null;
+      username?: string | null;
+      email?: string | null;
+    } | null;
+    [key: string]: unknown;
+  }) {
     return {
       ...item,
       userName: item.user?.fullName ?? item.user?.username ?? null,

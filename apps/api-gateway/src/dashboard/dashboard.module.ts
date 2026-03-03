@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
+import { PrismaModule } from '../prisma/prisma.module';
 import { DashboardController } from './dashboard.controller';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardService } from './dashboard.service';
 
 @Module({
+  imports: [PrismaModule],
   controllers: [DashboardController],
   providers: [DashboardService, DashboardMysqlService],
   exports: [DashboardService],

@@ -4,8 +4,10 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 import * as LucideIcons from 'lucide-react';
 import { MENU_SIDEBAR } from '@/config/app.config';
 import { MenuConfig, MenuItem } from '@/config/types';
+import { normalizeFinanceMenus, normalizeFinancePath } from './finance-route';
 
 type SidebarMenuApiItem = {
+  key: string;
   title: string;
   path: string | null;
   icon: string | null;
@@ -50,12 +52,14 @@ function resolveIcon(iconName: string | null | undefined): MenuItem['icon'] {
 }
 
 function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
-  return [...items]
+  return normalizeFinanceMenus(
+    [...items]
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((item) => {
       const mapped: MenuItem = {
+        key: item.key,
         title: item.title,
-        path: item.path ?? undefined,
+        path: normalizeFinancePath(item.path ?? undefined),
         icon: resolveIcon(item.icon),
       };
 
@@ -64,7 +68,8 @@ function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
       }
 
       return mapped;
-    });
+    }),
+  );
 }
 
 function hasTokenCookie() {

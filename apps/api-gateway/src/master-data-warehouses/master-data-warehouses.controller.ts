@@ -49,7 +49,11 @@ export class MasterDataWarehousesController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update master data warehouse' })
   @ApiResponse({ status: 200, description: 'Master data warehouse updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataWarehouseDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMasterDataWarehouseDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

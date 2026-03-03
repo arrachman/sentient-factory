@@ -49,7 +49,11 @@ export class InboundsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update inbound' })
   @ApiResponse({ status: 200, description: 'Inbound updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateInboundDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateInboundDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

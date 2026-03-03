@@ -49,7 +49,11 @@ export class MasterDataContactsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update master data contact' })
   @ApiResponse({ status: 200, description: 'Master data contact updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataContactDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMasterDataContactDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

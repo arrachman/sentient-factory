@@ -18,6 +18,7 @@ type DashboardTemplateParams = {
   groupBy?: string;
   orderBy?: string;
   orderDir?: 'ASC' | 'DESC';
+  sourceCode?: string | null;
 };
 
 type DashboardDomain = 'm1' | 'm' | 'm2' | 'm2r' | 'so';
@@ -124,6 +125,12 @@ export class DashboardMysqlService implements OnModuleDestroy {
     return rows;
   }
 
+  async executeRawQuery(sql: string): Promise<RowDataPacket[]> {
+    const pool = this.getPool();
+    const [rows] = await pool.query<RowDataPacket[]>(sql);
+    return rows;
+  }
+
   async healthCheck(domains: readonly DashboardDomain[]): Promise<HealthResult> {
     const templateRoot = this.resolveTemplateRoot();
     const config = this.getMysqlConfig();
@@ -188,7 +195,9 @@ export class DashboardMysqlService implements OnModuleDestroy {
   }
 
   getTemplatePath(domain: DashboardDomain, fileName: string): string {
-    const root = this.resolveTemplateRoot();
+    const root = fileName
+      ? this.resolveTemplateRootForDomainAndFile(domain, fileName)
+      : this.resolveTemplateRootForDomain(domain);
     return resolve(root, domain, fileName);
   }
 
@@ -250,15 +259,7 @@ export class DashboardMysqlService implements OnModuleDestroy {
   }
 
   private resolveTemplateRoot(): string {
-    const configured = this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT');
-
-    const candidates = [
-      configured,
-      resolve(process.cwd(), 'sql-templates'),
-      resolve(process.cwd(), '../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-      resolve(process.cwd(), '../../apps/myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-      resolve(__dirname, '../../../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-    ].filter((value): value is string => Boolean(value));
+    const candidates = this.getTemplateRootCandidates();
 
     const root = candidates.find((candidate) => existsSync(candidate));
     if (!root) {
@@ -268,6 +269,37 @@ export class DashboardMysqlService implements OnModuleDestroy {
     }
 
     return root;
+  }
+
+  private getTemplateRootCandidates(): string[] {
+    const configured = this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT');
+    return [
+      configured,
+      resolve(process.cwd(), 'sql-templates'),
+      resolve(process.cwd(), '../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
+      resolve(process.cwd(), '../../apps/myerpplus-db-mapping/dashboard-mapping/sql-templates'),
+      resolve(__dirname, '../../../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
+    ].filter((value): value is string => Boolean(value));
+  }
+
+  private resolveTemplateRootForDomain(domain: DashboardDomain): string {
+    const candidates = this.getTemplateRootCandidates();
+    const rootWithDomain = candidates.find((candidate) => existsSync(resolve(candidate, domain)));
+    if (rootWithDomain) {
+      return rootWithDomain;
+    }
+    return this.resolveTemplateRoot();
+  }
+
+  private resolveTemplateRootForDomainAndFile(domain: DashboardDomain, fileName: string): string {
+    const candidates = this.getTemplateRootCandidates();
+    const rootWithFile = candidates.find((candidate) =>
+      existsSync(resolve(candidate, domain, fileName)),
+    );
+    if (rootWithFile) {
+      return rootWithFile;
+    }
+    return this.resolveTemplateRootForDomain(domain);
   }
 
   private bindTemplate(
@@ -299,8 +331,28 @@ export class DashboardMysqlService implements OnModuleDestroy {
       params.orderBy ? this.assertIdentifier(params.orderBy, 'orderBy') : 'created_at',
     );
     sql = sql.replaceAll('__ORDER_DIR__', params.orderDir ?? 'DESC');
+    sql = sql.replaceAll(
+      '__SOURCE_FILTER__',
+      params.sourceCode
+        ? ` AND COALESCE(j.tsumber, '') = ${this.quoteString(params.sourceCode)}`
+        : '',
+    );
+    sql = sql.replaceAll(
+      '__SOURCE_FILTER_X__',
+      params.sourceCode
+        ? ` AND COALESCE(x.tsumber, '') = ${this.quoteString(params.sourceCode)}`
+        : '',
+    );
+    sql = sql.replaceAll(
+      '__SOURCE_CODE_LITERAL__',
+      params.sourceCode ? this.quoteString(params.sourceCode) : 'NULL',
+    );
 
     return sql;
+  }
+
+  private quoteString(value: string): string {
+    return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
   }
 
   private extractFirstSourceTable(templateSql: string): string | null {
@@ -370,7 +422,8 @@ export class DashboardMysqlService implements OnModuleDestroy {
 
     const columns = rows.map((row) => row.COLUMN_NAME.toLowerCase());
     const columnSet = new Set(columns);
-    const pickedExact = DATE_COLUMN_CANDIDATES.find((candidate) => columnSet.has(candidate)) ?? null;
+    const pickedExact =
+      DATE_COLUMN_CANDIDATES.find((candidate) => columnSet.has(candidate)) ?? null;
     const pickedByPattern =
       columns.find((column) => column.endsWith('tgl')) ??
       columns.find((column) => column.includes('date')) ??

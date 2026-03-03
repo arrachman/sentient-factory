@@ -1,7 +1,10 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AskM2InsightDto } from './dto/ask-m2-insight.dto';
 import { QueryDashboardBreakdownDto } from './dto/query-dashboard-breakdown.dto';
+import { QueryDashboardInsightHistoryDto } from './dto/query-dashboard-insight-history.dto';
 import { QueryDashboardRangeDto } from './dto/query-dashboard-range.dto';
 import { QueryDashboardTableDto } from './dto/query-dashboard-table.dto';
 import { DashboardService } from './dashboard.service';
@@ -102,6 +105,85 @@ export class DashboardController {
   @ApiResponse({ status: 200, description: 'm2 branch breakdown payload' })
   breakdownM2Branch(@Query() query: QueryDashboardRangeDto) {
     return this.dashboardService.breakdownM2Branch(query);
+  }
+
+  @Get('m2/insight')
+  @ApiOperation({ summary: 'Get AI insight for m2 dashboard' })
+  @ApiResponse({ status: 200, description: 'm2 insight payload' })
+  insightM2(
+    @Req() req: Request & { user?: { id?: number | string } },
+    @Query() query: QueryDashboardRangeDto,
+  ) {
+    return this.dashboardService.insightM2(query, req.user?.id);
+  }
+
+  @Get('m2/cr/summary')
+  @ApiOperation({ summary: 'Get m2_cr cash-in summary' })
+  @ApiResponse({ status: 200, description: 'm2_cr summary payload' })
+  summaryM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.summaryM2Cr(query);
+  }
+
+  @Get('m2/cr/trends')
+  @ApiOperation({ summary: 'Get m2_cr cash-in trends' })
+  @ApiResponse({ status: 200, description: 'm2_cr trends payload' })
+  trendsM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.trendsM2Cr(query);
+  }
+
+  @Get('m2/cr/breakdown/source')
+  @ApiOperation({ summary: 'Get m2_cr breakdown by source' })
+  @ApiResponse({ status: 200, description: 'm2_cr source breakdown payload' })
+  breakdownSourceM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.breakdownSourceM2Cr(query);
+  }
+
+  @Get('m2/cr/breakdown/status-bayar')
+  @ApiOperation({ summary: 'Get m2_cr breakdown by payment status' })
+  @ApiResponse({ status: 200, description: 'm2_cr payment status breakdown payload' })
+  breakdownStatusBayarM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.breakdownStatusBayarM2Cr(query);
+  }
+
+  @Get('m2/cr/top-contacts')
+  @ApiOperation({ summary: 'Get m2_cr top contacts by nominal cash-in' })
+  @ApiResponse({ status: 200, description: 'm2_cr top contacts payload' })
+  topContactsM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.topContactsM2Cr(query);
+  }
+
+  @Get('m2/cr/table')
+  @ApiOperation({ summary: 'Get m2_cr transaction table' })
+  @ApiResponse({ status: 200, description: 'm2_cr table payload' })
+  tableM2Cr(@Query() query: QueryDashboardTableDto) {
+    return this.dashboardService.tableM2Cr(query);
+  }
+
+  @Get('m2/cr/insight')
+  @ApiOperation({ summary: 'Get AI insight for m2_cr dashboard' })
+  @ApiResponse({ status: 200, description: 'm2_cr insight payload' })
+  insightM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.insightM2Cr(query);
+  }
+
+  @Post('m2/insight/ask')
+  @ApiOperation({ summary: 'Ask AI for m2 dashboard context' })
+  @ApiResponse({ status: 200, description: 'm2 ask insight payload' })
+  askInsightM2(
+    @Req() req: Request & { user?: { id?: number | string } },
+    @Body() dto: AskM2InsightDto,
+  ) {
+    return this.dashboardService.askInsightM2(dto, req.user?.id);
+  }
+
+  @Get('m2/insight/history')
+  @ApiOperation({ summary: 'Get m2 insight history (audit trail)' })
+  @ApiResponse({ status: 200, description: 'm2 insight history payload' })
+  insightHistoryM2(
+    @Req() req: Request & { user?: { id?: number | string } },
+    @Query() query: QueryDashboardInsightHistoryDto,
+  ) {
+    return this.dashboardService.insightHistoryM2(query, req.user?.id);
   }
 
   @Get(':domain/table')

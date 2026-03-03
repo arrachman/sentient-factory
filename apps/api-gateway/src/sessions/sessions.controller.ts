@@ -49,7 +49,11 @@ export class SessionsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update session' })
   @ApiResponse({ status: 200, description: 'Session updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSessionDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSessionDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

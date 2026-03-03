@@ -49,7 +49,11 @@ export class MasterDataPermissionsController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update master data permission' })
   @ApiResponse({ status: 200, description: 'Master data permission updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataPermissionDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMasterDataPermissionDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 

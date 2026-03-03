@@ -49,7 +49,11 @@ export class MasterDataCitySlasController {
   @Patch(':id')
   @ApiOperation({ summary: 'Update master data city SLA' })
   @ApiResponse({ status: 200, description: 'Master data city SLA updated' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateMasterDataCitySlaDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMasterDataCitySlaDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.id);
   }
 
