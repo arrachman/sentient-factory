@@ -152,6 +152,41 @@ export class DashboardController {
     return this.dashboardService.topContactsM2Cr(query);
   }
 
+  @Get('m2/cr/top-outstanding-contacts')
+  @ApiOperation({ summary: 'Get m2_cr top contacts by outstanding amount' })
+  @ApiResponse({ status: 200, description: 'm2_cr top outstanding contacts payload' })
+  topOutstandingContactsM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.topOutstandingContactsM2Cr(query);
+  }
+
+  @Get('m2/cr/top-branches')
+  @ApiOperation({ summary: 'Get m2_cr top branches by nominal cash-in' })
+  @ApiResponse({ status: 200, description: 'm2_cr top branches payload' })
+  topBranchesM2Cr(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.topBranchesM2Cr(query);
+  }
+
+  @Get('m2/cr/contact-drilldown')
+  @ApiOperation({ summary: 'Get m2_cr drill-down detail by contact for outstanding follow up' })
+  @ApiResponse({ status: 200, description: 'm2_cr contact drill-down payload' })
+  contactDrilldownM2Cr(@Query() query: QueryDashboardRangeDto & { kontakId?: string }) {
+    return this.dashboardService.contactDrilldownM2Cr(query);
+  }
+
+  @Get('m2/sm/top-contacts')
+  @ApiOperation({ summary: 'Get m2_sm top contacts by nominal bank payment' })
+  @ApiResponse({ status: 200, description: 'm2_sm top contacts payload' })
+  topContactsM2Sm(@Query() query: QueryDashboardRangeDto) {
+    return this.dashboardService.topContactsM2Sm(query);
+  }
+
+  @Get('m2/sm/contact-drilldown')
+  @ApiOperation({ summary: 'Get m2_sm drill-down detail by contact for follow up' })
+  @ApiResponse({ status: 200, description: 'm2_sm contact drill-down payload' })
+  contactDrilldownM2Sm(@Query() query: QueryDashboardRangeDto & { kontakId?: string }) {
+    return this.dashboardService.contactDrilldownM2Sm(query);
+  }
+
   @Get('m2/cr/table')
   @ApiOperation({ summary: 'Get m2_cr transaction table' })
   @ApiResponse({ status: 200, description: 'm2_cr table payload' })

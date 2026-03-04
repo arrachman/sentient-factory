@@ -12,6 +12,7 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -154,7 +155,7 @@ const FEATURE_COPY: Record<
     trendTitle: 'Trend Kas Masuk per Periode',
     flowTitle: 'Cash In vs Cash Out (Konteks m2)',
     sourceTitle: 'Komposisi Sumber Kas Masuk',
-    branchTitle: 'Top Kontak Kas Masuk',
+    branchTitle: 'Top Cabang Kas Masuk',
     statusTitle: 'Ringkasan Status Bayar',
     tableTitle: 'List Transaksi Kas Masuk (Sample)',
     insightTitle: 'AI Insight Kas Masuk',
@@ -311,8 +312,13 @@ export default function Page() {
   const [breakdown, setBreakdown] = useState<Record<string, unknown>[]>([]);
   const [cashflow, setCashflow] = useState<Record<string, unknown>[]>([]);
   const [branch, setBranch] = useState<Record<string, unknown>[]>([]);
+  const [topOutstandingContacts, setTopOutstandingContacts] = useState<Record<string, unknown>[]>([]);
   const [status, setStatus] = useState<Record<string, unknown>[]>([]);
   const [tableRows, setTableRows] = useState<Record<string, unknown>[]>([]);
+  const [contactDrilldown, setContactDrilldown] = useState<Record<string, unknown>[]>([]);
+  const [activeKontakId, setActiveKontakId] = useState<string>('');
+  const [drilldownOpen, setDrilldownOpen] = useState(false);
+  const [loadingKontak, setLoadingKontak] = useState<string | null>(null);
   const [insights, setInsights] = useState<InsightItem[]>([]);
   const [anomalies, setAnomalies] = useState<InsightItem[]>([]);
   const [recommendations, setRecommendations] = useState<InsightItem[]>([]);
@@ -323,15 +329,16 @@ export default function Page() {
     setError('');
     try {
       const query = new URLSearchParams({ fromDate, toDate, feature });
-      const [summaryRows, trendRows, breakdownRows, statusRows, topContactRows, detailRows] =
+      const [summaryRows, trendRows, breakdownRows, statusRows, topBranchRows, topOutstandingRows, detailRows] =
         await Promise.all([
           fetchRows<SummaryRow>(`/api/dashboard/m2/cr/summary?${query.toString()}`),
           fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/trends?${query.toString()}`),
           fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/breakdown/source?${query.toString()}`),
           fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/breakdown/status-bayar?${query.toString()}`),
-          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/top-contacts?${query.toString()}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/top-branches?${query.toString()}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/top-outstanding-contacts?${query.toString()}`),
           fetchRows<Record<string, unknown>>(
-            `/api/dashboard/m2/cr/table?${query.toString()}&page=1&pageSize=20&sortBy=crtgl&sortOrder=desc`,
+            `/api/dashboard/m2/cr/table?${query.toString()}&page=1&pageSize=20&sortBy=outstanding&sortOrder=desc`,
           ),
         ]);
 
@@ -356,9 +363,13 @@ export default function Page() {
       setTrends(trendRows);
       setBreakdown(breakdownRows);
       setCashflow(trendRows);
-      setBranch(topContactRows);
+      setBranch(topBranchRows);
+      setTopOutstandingContacts(topOutstandingRows);
       setStatus(statusRows);
       setTableRows(detailRows);
+      setContactDrilldown([]);
+      setActiveKontakId('');
+      setDrilldownOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
@@ -473,13 +484,30 @@ export default function Page() {
   const branchChartData = useMemo(
     () =>
       branch.slice(0, 8).map((row) => ({
-        cabang: `Kontak ${String(row.kontak_key ?? 'UNKNOWN')}`,
+        cabang: String(row.cabang ?? 'UNKNOWN'),
         movement: toNumber(row.total_kas_masuk),
       })),
     [branch],
   );
 
   const tableColumns = tableRows.length > 0 ? Object.keys(tableRows[0]).slice(0, 8) : [];
+
+  const openContactDrilldown = async (kontakIdRaw: unknown) => {
+    const kontakId = String(kontakIdRaw ?? '').trim();
+    if (!kontakId) return;
+    setActiveKontakId(kontakId);
+    setDrilldownOpen(true);
+    setLoadingKontak(kontakId);
+    try {
+      const query = new URLSearchParams({ fromDate, toDate, feature, kontakId });
+      const rows = await fetchRows<Record<string, unknown>>(`/api/dashboard/m2/cr/contact-drilldown?${query.toString()}`);
+      setContactDrilldown(rows);
+    } catch {
+      setContactDrilldown([]);
+    } finally {
+      setLoadingKontak(null);
+    }
+  };
 
   return (
     <div className="container">
@@ -635,7 +663,7 @@ export default function Page() {
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader><CardTitle>{featureCopy.sourceTitle}</CardTitle></CardHeader>
           <CardContent className="h-[260px]">
@@ -676,6 +704,19 @@ export default function Page() {
               </div>
             ))}
             {status.length === 0 ? <p className="text-sm text-muted-foreground">{featureCopy.emptyStatusText}</p> : null}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle>Top Kontak Outstanding</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            {topOutstandingContacts.slice(0, 6).map((row, index) => (
+              <div key={`${row.kontak_key}-${index}`} className="flex items-center justify-between text-sm">
+                <span>Kontak {String(row.kontak_key ?? '0')}</span>
+                <span className="font-medium">{fmtMoney(row.total_outstanding, 2)}</span>
+              </div>
+            ))}
+            {topOutstandingContacts.length === 0 ? <p className="text-sm text-muted-foreground">Tidak ada outstanding kontak.</p> : null}
           </CardContent>
         </Card>
       </div>
@@ -755,22 +796,42 @@ export default function Page() {
               </TableHeader>
               <TableBody>
                 {tableRows.slice(0, 20).map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {tableColumns.map((column) => (
-                      <TableCell
-                        key={`${rowIndex}-${column}`}
-                        className={isNumericLike(row[column]) ? 'text-right font-medium tabular-nums' : 'max-w-[220px] truncate'}
-                        title={String(row[column] ?? '-')}
-                      >
-                        {isNumericLike(row[column])
-                          ? isMonetaryColumn(column)
-                            ? fmtMoney(row[column], 2)
-                            : isIntegerColumn(column)
-                              ? fmt(row[column], 0)
-                              : fmt(row[column], 2)
-                          : String(row[column] ?? '-')}
-                      </TableCell>
-                    ))}
+                  <TableRow key={String(row.crid ?? rowIndex)}>
+                    {tableColumns.map((column) => {
+                      if (column === 'kontak_id') {
+                        const kontakId = String(row[column] ?? '').trim();
+                        const hasOutstanding = toNumber(row.outstanding) > 0;
+                        const isLoading = loadingKontak === kontakId;
+                        return (
+                          <TableCell key={`${rowIndex}-${column}`} className="text-right font-medium tabular-nums">
+                            <div className="flex items-center justify-end gap-2">
+                              <span>{fmt(row[column], 0)}</span>
+                              {kontakId && hasOutstanding ? (
+                                <Button variant="outline" size="sm" onClick={() => void openContactDrilldown(kontakId)} disabled={isLoading}>
+                                  {isLoading ? 'Loading...' : 'Drill-down'}
+                                </Button>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                        );
+                      }
+
+                      return (
+                        <TableCell
+                          key={`${rowIndex}-${column}`}
+                          className={isNumericLike(row[column]) ? 'text-right font-medium tabular-nums' : 'max-w-[220px] truncate'}
+                          title={String(row[column] ?? '-')}
+                        >
+                          {isNumericLike(row[column])
+                            ? isMonetaryColumn(column)
+                              ? fmtMoney(row[column], 2)
+                              : isIntegerColumn(column)
+                                ? fmt(row[column], 0)
+                                : fmt(row[column], 2)
+                            : String(row[column] ?? '-')}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 ))}
               </TableBody>
@@ -778,6 +839,33 @@ export default function Page() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={drilldownOpen} onOpenChange={setDrilldownOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Detail Follow-up Outstanding Kontak {activeKontakId || '-'}</DialogTitle>
+            <DialogDescription>Transaksi outstanding terbesar pada periode terpilih.</DialogDescription>
+          </DialogHeader>
+          <DialogBody>
+            {loadingKontak ? (
+              <p className="text-sm text-muted-foreground">Memuat detail kontak...</p>
+            ) : contactDrilldown.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Tidak ada detail kontak untuk periode ini.</p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                {contactDrilldown.slice(0, 20).map((drill, index) => (
+                  <div key={`modal-drill-${index}`} className="flex items-center justify-between gap-2 rounded border p-2">
+                    <span className="truncate">
+                      {String(drill.trx_date ?? '-')} • {String(drill.no_transaksi ?? '-')} • {String(drill.cabang ?? '-')}
+                    </span>
+                    <span className="font-medium tabular-nums">{fmtMoney(drill.outstanding, 2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </DialogBody>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
