@@ -12,11 +12,13 @@ import {
 import { useAdministratorRolePage } from '@/features/administrator-role/hooks/use-administrator-role-page';
 import { AdministratorRoleFormPanel } from '@/features/administrator-role/ui/administrator-role-form-panel';
 import { AdministratorRoleListPanel } from '@/features/administrator-role/ui/administrator-role-list-panel';
+import { AdministratorRoleMenuDialog } from '@/features/administrator-role/ui/administrator-role-menu-dialog';
 import { AdministratorRolePermissionDialog } from '@/features/administrator-role/ui/administrator-role-permission-dialog';
 
 export function AdministratorRolePageView() {
   const {
     items,
+    menus,
     permissions,
     form,
     setForm,
@@ -25,6 +27,9 @@ export function AdministratorRolePageView() {
     permissionDialogRole,
     setPermissionDialogRole,
     selectedPermissionIds,
+    menuDialogRole,
+    setMenuDialogRole,
+    selectedMenuIds,
     searchInput,
     setSearchInput,
     error,
@@ -36,14 +41,20 @@ export function AdministratorRolePageView() {
     submitting,
     permissionLoading,
     permissionSubmitting,
+    menuLoading,
+    menuSubmitting,
     fetchList,
     changeLimit,
     onSubmit,
     onEdit,
     onDelete,
     openPermissionDialog,
+    openMenuDialog,
     togglePermission,
+    toggleMenu,
+    toggleMenusBulk,
     saveRolePermissions,
+    saveRoleMenus,
     openCreate,
     backToList,
     applySearch,
@@ -89,6 +100,9 @@ export function AdministratorRolePageView() {
             onOpenPermissions={(item) => {
               void openPermissionDialog(item);
             }}
+            onOpenMenus={(item) => {
+              void openMenuDialog(item);
+            }}
             onPageChange={fetchList}
             onLimitChange={changeLimit}
           />
@@ -120,6 +134,25 @@ export function AdministratorRolePageView() {
           onTogglePermission={togglePermission}
           onSave={() => {
             void saveRolePermissions();
+          }}
+        />
+
+        <AdministratorRoleMenuDialog
+          open={Boolean(menuDialogRole)}
+          roleName={menuDialogRole?.name || ''}
+          menus={menus}
+          selectedMenuIds={selectedMenuIds}
+          loading={menuLoading}
+          submitting={menuSubmitting}
+          onOpenChange={(open) => {
+            if (!open) {
+              setMenuDialogRole(null);
+            }
+          }}
+          onToggleMenu={toggleMenu}
+          onToggleMenusBulk={toggleMenusBulk}
+          onSave={() => {
+            void saveRoleMenus();
           }}
         />
 

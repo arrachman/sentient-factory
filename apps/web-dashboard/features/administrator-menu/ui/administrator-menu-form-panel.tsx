@@ -1,10 +1,11 @@
 import type { FormEvent } from 'react';
+import type { AdministratorMenuFormState } from '@/features/administrator-menu/model/types';
 import { ArrowLeft, Save } from 'lucide-react';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import type { AdministratorMenuFormState } from '@/features/administrator-menu/model/types';
 
 type AdministratorMenuFormPanelProps = {
   form: AdministratorMenuFormState;
@@ -29,20 +30,32 @@ export function AdministratorMenuFormPanel({
 }: AdministratorMenuFormPanelProps) {
   return (
     <div className="rounded-lg border p-5">
-      <h2 className="mb-4 text-sm font-semibold text-mono">{editingId ? 'Edit Menu' : 'Create Menu'}</h2>
+      <h2 className="mb-4 text-sm font-semibold text-mono">
+        {editingId ? 'Edit Menu' : 'Create Menu'}
+      </h2>
       <form className="space-y-3" onSubmit={onSubmit}>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <div>
             <Label htmlFor="title">
               Title <span className="text-destructive">*</span>
             </Label>
-            <Input id="title" value={form.title} onChange={(e) => onFormChange({ ...form, title: e.target.value })} required />
+            <Input
+              id="title"
+              value={form.title}
+              onChange={(e) => onFormChange({ ...form, title: e.target.value })}
+              required
+            />
           </div>
           <div>
             <Label htmlFor="key">
               Key <span className="text-destructive">*</span>
             </Label>
-            <Input id="key" value={form.key} onChange={(e) => onFormChange({ ...form, key: e.target.value })} required />
+            <Input
+              id="key"
+              value={form.key}
+              onChange={(e) => onFormChange({ ...form, key: e.target.value })}
+              required
+            />
           </div>
         </div>
 
@@ -58,14 +71,21 @@ export function AdministratorMenuFormPanel({
           </div>
           <div>
             <Label htmlFor="icon">Icon (Lucide)</Label>
-            <Input id="icon" value={form.icon} onChange={(e) => onFormChange({ ...form, icon: e.target.value })} placeholder="Users" />
+            <Input
+              id="icon"
+              value={form.icon}
+              onChange={(e) => onFormChange({ ...form, icon: e.target.value })}
+              placeholder="Users"
+            />
           </div>
           <div>
             <Label htmlFor="permissionName">Permission</Label>
             <Input
               id="permissionName"
               value={form.permissionName}
-              onChange={(e) => onFormChange({ ...form, permissionName: e.target.value })}
+              onChange={(e) =>
+                onFormChange({ ...form, permissionName: e.target.value })
+              }
               placeholder="menu.read"
             />
           </div>
@@ -76,7 +96,12 @@ export function AdministratorMenuFormPanel({
             <Label htmlFor="type">
               Type <span className="text-destructive">*</span>
             </Label>
-            <Input id="type" value={form.type} onChange={(e) => onFormChange({ ...form, type: e.target.value })} required />
+            <Input
+              id="type"
+              value={form.type}
+              onChange={(e) => onFormChange({ ...form, type: e.target.value })}
+              required
+            />
           </div>
           <div>
             <Label htmlFor="sortOrder">
@@ -87,7 +112,9 @@ export function AdministratorMenuFormPanel({
               type="number"
               min={0}
               value={form.sortOrder}
-              onChange={(e) => onFormChange({ ...form, sortOrder: e.target.value })}
+              onChange={(e) =>
+                onFormChange({ ...form, sortOrder: e.target.value })
+              }
               required
             />
           </div>
@@ -98,7 +125,9 @@ export function AdministratorMenuFormPanel({
             <Label htmlFor="parentId">Parent Menu</Label>
             <AutocompleteSelect
               value={form.parentId}
-              onValueChange={(value) => onFormChange({ ...form, parentId: value })}
+              onValueChange={(value) =>
+                onFormChange({ ...form, parentId: value })
+              }
               options={parentSelectOptions}
               placeholder="Select parent menu"
               searchPlaceholder="Search parent menu..."
@@ -106,41 +135,25 @@ export function AdministratorMenuFormPanel({
               triggerClassName="h-8.5 text-[0.8125rem]"
             />
           </div>
-          <div>
-            <Label htmlFor="isVisible">
-              Visibility <span className="text-destructive">*</span>
-            </Label>
-            <AutocompleteSelect
-              value={form.isVisible ? 'true' : 'false'}
-              onValueChange={(value) => onFormChange({ ...form, isVisible: value === 'true' })}
-              options={[
-                { value: 'true', label: 'Visible' },
-                { value: 'false', label: 'Hidden' },
-              ]}
-              placeholder="Select visibility"
-              searchPlaceholder="Search visibility..."
-              emptyText="No visibility found."
-              required
-              triggerClassName="h-8.5 text-[0.8125rem]"
+          <div className="flex items-center gap-2 pt-6">
+            <Checkbox
+              id="isVisible"
+              checked={form.isVisible}
+              onCheckedChange={(checked) =>
+                onFormChange({ ...form, isVisible: checked === true })
+              }
             />
+            <Label htmlFor="isVisible">Visible</Label>
           </div>
-          <div>
-            <Label htmlFor="isActive">
-              Status <span className="text-destructive">*</span>
-            </Label>
-            <AutocompleteSelect
-              value={form.isActive ? 'true' : 'false'}
-              onValueChange={(value) => onFormChange({ ...form, isActive: value === 'true' })}
-              options={[
-                { value: 'true', label: 'Active' },
-                { value: 'false', label: 'Inactive' },
-              ]}
-              placeholder="Select status"
-              searchPlaceholder="Search status..."
-              emptyText="No status found."
-              required
-              triggerClassName="h-8.5 text-[0.8125rem]"
+          <div className="flex items-center gap-2 pt-6">
+            <Checkbox
+              id="isActive"
+              checked={form.isActive}
+              onCheckedChange={(checked) =>
+                onFormChange({ ...form, isActive: checked === true })
+              }
             />
+            <Label htmlFor="isActive">Active</Label>
           </div>
         </div>
 

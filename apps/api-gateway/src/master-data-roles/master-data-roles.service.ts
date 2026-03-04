@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateMasterDataRoleDto } from './dto/create-master-data-role.dto';
 import { QueryMasterDataRoleDto } from './dto/query-master-data-role.dto';
 import { UpdateMasterDataRoleDto } from './dto/update-master-data-role.dto';
+import { UpdateRoleMenusDto } from './dto/update-role-menus.dto';
 import { UpdateRolePermissionsDto } from './dto/update-role-permissions.dto';
 
 @Injectable()
@@ -67,6 +68,10 @@ export class MasterDataRolesService {
             where: { deletedAt: null },
             select: { permissionId: true },
           },
+          menus: {
+            where: { deletedAt: null, canView: true },
+            select: { menuId: true },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -80,6 +85,7 @@ export class MasterDataRolesService {
       data: items.map((item) => ({
         ...item,
         permissionCount: item.permissions.length,
+        menuCount: item.menus.length,
       })),
       meta: {
         page,
@@ -334,6 +340,123 @@ export class MasterDataRolesService {
     });
 
     return this.getRolePermissions(id);
+  }
+
+  async getRoleMenus(id: number) {
+    const role = await this.prisma.role.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!role) {
+      throw new NotFoundException('Master data role not found');
+    }
+
+    const rows = await this.prisma.roleMenu.findMany({
+      where: {
+        roleId: id,
+        deletedAt: null,
+        menu: {
+          deletedAt: null,
+        },
+      },
+      select: { menuId: true },
+      orderBy: { menuId: 'asc' },
+    });
+
+    return {
+      success: true,
+      data: {
+        roleId: id,
+        menuIds: rows.map((row) => row.menuId),
+      },
+    };
+  }
+
+  async updateRoleMenus(id: number, dto: UpdateRoleMenusDto, actorId?: string | number) {
+    const role = await this.prisma.role.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!role) {
+      throw new NotFoundException('Master data role not found');
+    }
+
+    const nextMenuIds = Array.from(new Set(dto.menuIds ?? []));
+    if (nextMenuIds.length > 0) {
+      const availableMenus = await this.prisma.menu.findMany({
+        where: { id: { in: nextMenuIds }, deletedAt: null },
+        select: { id: true },
+      });
+      if (availableMenus.length !== nextMenuIds.length) {
+        throw new BadRequestException('One or more menu IDs are invalid.');
+      }
+    }
+
+    const currentRows = await this.prisma.roleMenu.findMany({
+      where: { roleId: id },
+      select: { id: true, menuId: true, deletedAt: true },
+    });
+
+    const currentByMenuId = new Map<number, { id: number; deletedAt: Date | null }>();
+    currentRows.forEach((row) => {
+      currentByMenuId.set(row.menuId, { id: row.id, deletedAt: row.deletedAt });
+    });
+
+    const now = new Date();
+    const toActivate = nextMenuIds.filter((menuId) => {
+      const found = currentByMenuId.get(menuId);
+      return !found || Boolean(found.deletedAt);
+    });
+    const toDeactivate = currentRows
+      .filter((row) => !row.deletedAt && !nextMenuIds.includes(row.menuId))
+      .map((row) => row.menuId);
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const menuId of toActivate) {
+        const existing = currentByMenuId.get(menuId);
+        if (!existing) {
+          await tx.roleMenu.create({
+            data: {
+              roleId: id,
+              menuId,
+              canView: true,
+              createdBy: this.toActor(actorId),
+              updatedBy: this.toActor(actorId),
+            },
+          });
+          continue;
+        }
+
+        await tx.roleMenu.update({
+          where: { id: existing.id },
+          data: {
+            canView: true,
+            deletedAt: null,
+            deletedBy: null,
+            updatedAt: now,
+            updatedBy: this.toActor(actorId),
+          },
+        });
+      }
+
+      for (const menuId of toDeactivate) {
+        const existing = currentByMenuId.get(menuId);
+        if (!existing) {
+          continue;
+        }
+        await tx.roleMenu.update({
+          where: { id: existing.id },
+          data: {
+            canView: false,
+            deletedAt: now,
+            deletedBy: this.toActor(actorId),
+            updatedBy: this.toActor(actorId),
+          },
+        });
+      }
+    });
+
+    return this.getRoleMenus(id);
   }
 
   private toActor(actorId?: string | number): number | null {

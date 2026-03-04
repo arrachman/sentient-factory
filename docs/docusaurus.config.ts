@@ -15,10 +15,10 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: "https://sentient-factory-docs.example.com",
+  url: "https://sentient.fr-labs.my.id",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/",
+  baseUrl: "/docs/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -101,15 +101,15 @@ const config: Config = {
           items: [
             {
               label: "Getting Started",
-              to: "/docs/intro",
+              to: "/docs/docs/intro",
             },
             {
               label: "API Reference",
-              to: "/docs/category/api-reference",
+              to: "/docs/docs/category/api-reference",
             },
             {
               label: "Architecture",
-              to: "/docs/category/architecture",
+              to: "/docs/docs/category/architecture",
             },
           ],
         },
@@ -143,7 +143,7 @@ const config: Config = {
             },
             {
               label: "Contributing",
-              to: "/docs/contributing",
+              to: "/docs/docs/contributing",
             },
           ],
         },

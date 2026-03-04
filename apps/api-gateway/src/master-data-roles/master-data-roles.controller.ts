@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateMasterDataRoleDto } from './dto/create-master-data-role.dto';
 import { QueryMasterDataRoleDto } from './dto/query-master-data-role.dto';
 import { UpdateMasterDataRoleDto } from './dto/update-master-data-role.dto';
+import { UpdateRoleMenusDto } from './dto/update-role-menus.dto';
 import { UpdateRolePermissionsDto } from './dto/update-role-permissions.dto';
 import { MasterDataRolesService } from './master-data-roles.service';
 
@@ -82,5 +83,23 @@ export class MasterDataRolesController {
     @Request() req: any,
   ) {
     return this.service.updateRolePermissions(id, dto, req.user?.id);
+  }
+
+  @Get(':id/menus')
+  @ApiOperation({ summary: 'Get assigned menu IDs by role' })
+  @ApiResponse({ status: 200, description: 'Assigned menu IDs' })
+  getMenus(@Param('id', ParseIntPipe) id: number) {
+    return this.service.getRoleMenus(id);
+  }
+
+  @Put(':id/menus')
+  @ApiOperation({ summary: 'Assign/unassign menus by role (sync)' })
+  @ApiResponse({ status: 200, description: 'Role menus updated' })
+  updateMenus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateRoleMenusDto,
+    @Request() req: any,
+  ) {
+    return this.service.updateRoleMenus(id, dto, req.user?.id);
   }
 }

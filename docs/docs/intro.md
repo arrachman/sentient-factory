@@ -97,4 +97,4 @@ pnpm dev
 - **Dokumentasi**: Jelajahi sidebar untuk panduan detail
 - **Community**: Bergabung dengan [Discord server](https://discord.gg/sentient-factory)
 - **Issues**: Laporkan bugs di [GitHub Issues](https://github.com/sentient-factory/sentient-factory/issues)
-- **Contributing**: Lihat [Contributing Guide](/docs/contributing)
+- **Contributing**: Lihat [Contributing Guide](./contributing.md)

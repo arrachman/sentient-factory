@@ -1,4 +1,4 @@
-import { Pencil, RefreshCw, ShieldCheck, Trash2, X } from 'lucide-react';
+import { MenuSquare, Pencil, RefreshCw, ShieldCheck, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,6 +20,7 @@ type AdministratorRoleListPanelProps = {
   onEdit: (item: RoleItem) => void;
   onDelete: (id: string) => void;
   onOpenPermissions: (item: RoleItem) => void;
+  onOpenMenus: (item: RoleItem) => void;
   onPageChange: (nextPage: number) => void;
   onLimitChange: (nextLimit: number) => void;
 };
@@ -38,6 +39,7 @@ export function AdministratorRoleListPanel({
   onEdit,
   onDelete,
   onOpenPermissions,
+  onOpenMenus,
   onPageChange,
   onLimitChange,
 }: AdministratorRoleListPanelProps) {
@@ -81,18 +83,19 @@ export function AdministratorRoleListPanel({
             <TableHead>Name</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>System</TableHead>
+            <TableHead className="text-right">Menus</TableHead>
             <TableHead className="text-right">Permissions</TableHead>
-            <TableHead className="w-[200px]">Actions</TableHead>
+            <TableHead className="w-[280px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={6}>Loading...</TableCell>
+              <TableCell colSpan={7}>Loading...</TableCell>
             </TableRow>
           ) : items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6}>No role found.</TableCell>
+              <TableCell colSpan={7}>No role found.</TableCell>
             </TableRow>
           ) : (
             items.map((item, index) => {
@@ -103,12 +106,17 @@ export function AdministratorRoleListPanel({
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell className="max-w-[280px] truncate">{item.description || '-'}</TableCell>
                   <TableCell>{item.isSystem ? 'Yes' : 'No'}</TableCell>
+                  <TableCell className="text-right">{item.menuCount ?? 0}</TableCell>
                   <TableCell className="text-right">{item.permissionCount ?? 0}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm" onClick={() => onOpenPermissions(item)}>
                         <ShieldCheck className="size-4" />
                         Permissions
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => onOpenMenus(item)}>
+                        <MenuSquare className="size-4" />
+                        Menus
                       </Button>
                       <Button variant="outline" size="icon" onClick={() => onEdit(item)} aria-label="Edit role">
                         <Pencil />

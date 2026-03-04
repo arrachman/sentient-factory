@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import {
+  useAdministratorRoleMenuOptionsQuery,
   useAdministratorRoleListQuery,
   useAdministratorRolePermissionOptionsQuery,
   useCreateAdministratorRoleMutation,
   useDeleteAdministratorRoleMutation,
+  useFetchRoleMenuIdsMutation,
   useFetchRolePermissionIdsMutation,
   useUpdateAdministratorRoleMutation,
+  useUpdateRoleMenusMutation,
   useUpdateRolePermissionsMutation,
 } from '@/features/administrator-role/hooks/use-administrator-role';
-import { initialRoleForm, type PermissionItem, type RoleFormState, type RoleItem } from '@/features/administrator-role/model/types';
+import {
+  initialRoleForm,
+  type MenuOptionItem,
+  type PermissionItem,
+  type RoleFormState,
+  type RoleItem,
+} from '@/features/administrator-role/model/types';
 import { pickEntityId } from '@/features/administrator-role/model/utils';
 
 function extractMessage(error: unknown, fallback: string): string {
@@ -19,6 +28,7 @@ function extractMessage(error: unknown, fallback: string): string {
 export function useAdministratorRolePage() {
   const [items, setItems] = useState<RoleItem[]>([]);
   const [permissions, setPermissions] = useState<PermissionItem[]>([]);
+  const [menus, setMenus] = useState<MenuOptionItem[]>([]);
 
   const [form, setForm] = useState<RoleFormState>(initialRoleForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -26,6 +36,8 @@ export function useAdministratorRolePage() {
 
   const [permissionDialogRole, setPermissionDialogRole] = useState<{ id: string; name: string } | null>(null);
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
+  const [menuDialogRole, setMenuDialogRole] = useState<{ id: string; name: string } | null>(null);
+  const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>([]);
 
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
@@ -37,16 +49,21 @@ export function useAdministratorRolePage() {
 
   const listQuery = useAdministratorRoleListQuery(page, limit, search);
   const permissionOptionsQuery = useAdministratorRolePermissionOptionsQuery();
+  const menuOptionsQuery = useAdministratorRoleMenuOptionsQuery();
   const createMutation = useCreateAdministratorRoleMutation();
   const updateMutation = useUpdateAdministratorRoleMutation();
   const deleteMutation = useDeleteAdministratorRoleMutation();
   const fetchRolePermissionIdsMutation = useFetchRolePermissionIdsMutation();
   const updateRolePermissionsMutation = useUpdateRolePermissionsMutation();
+  const fetchRoleMenuIdsMutation = useFetchRoleMenuIdsMutation();
+  const updateRoleMenusMutation = useUpdateRoleMenusMutation();
 
   const loading = listQuery.isLoading || listQuery.isFetching;
   const submitting = createMutation.isPending || updateMutation.isPending;
   const permissionLoading = fetchRolePermissionIdsMutation.isPending;
   const permissionSubmitting = updateRolePermissionsMutation.isPending;
+  const menuLoading = fetchRoleMenuIdsMutation.isPending;
+  const menuSubmitting = updateRoleMenusMutation.isPending;
 
   useEffect(() => {
     const data = listQuery.data;
@@ -67,14 +84,24 @@ export function useAdministratorRolePage() {
   }, [permissionOptionsQuery.data]);
 
   useEffect(() => {
+    if (!menuOptionsQuery.data) {
+      return;
+    }
+    setMenus(menuOptionsQuery.data);
+  }, [menuOptionsQuery.data]);
+
+  useEffect(() => {
     const sourceError =
       listQuery.error ||
       permissionOptionsQuery.error ||
+      menuOptionsQuery.error ||
       createMutation.error ||
       updateMutation.error ||
       deleteMutation.error ||
       fetchRolePermissionIdsMutation.error ||
-      updateRolePermissionsMutation.error;
+      updateRolePermissionsMutation.error ||
+      fetchRoleMenuIdsMutation.error ||
+      updateRoleMenusMutation.error;
 
     if (!sourceError) {
       return;
@@ -85,9 +112,12 @@ export function useAdministratorRolePage() {
     createMutation.error,
     deleteMutation.error,
     fetchRolePermissionIdsMutation.error,
+    fetchRoleMenuIdsMutation.error,
     listQuery.error,
+    menuOptionsQuery.error,
     permissionOptionsQuery.error,
     updateMutation.error,
+    updateRoleMenusMutation.error,
     updateRolePermissionsMutation.error,
   ]);
 
@@ -200,6 +230,67 @@ export function useAdministratorRolePage() {
     }
   };
 
+  const openMenuDialog = async (item: RoleItem) => {
+    const roleId = pickEntityId(item);
+    if (!roleId) {
+      setError('Role ID is missing');
+      return;
+    }
+
+    setMenuDialogRole({ id: roleId, name: item.name });
+    setError('');
+    try {
+      const ids = await fetchRoleMenuIdsMutation.mutateAsync(roleId);
+      setSelectedMenuIds(ids);
+    } catch (err) {
+      setError(extractMessage(err, 'Failed to load role menus'));
+      setSelectedMenuIds([]);
+    }
+  };
+
+  const toggleMenu = (menuId: number) => {
+    setSelectedMenuIds((state) =>
+      state.includes(menuId) ? state.filter((id) => id !== menuId) : [...state, menuId],
+    );
+  };
+
+  const toggleMenusBulk = (menuIds: number[], checked: boolean) => {
+    const normalized = Array.from(
+      new Set(menuIds.filter((id) => Number.isInteger(id) && id > 0)),
+    );
+    if (normalized.length === 0) {
+      return;
+    }
+
+    setSelectedMenuIds((state) => {
+      if (checked) {
+        return Array.from(new Set([...state, ...normalized]));
+      }
+      const next = new Set(state);
+      normalized.forEach((id) => next.delete(id));
+      return Array.from(next);
+    });
+  };
+
+  const saveRoleMenus = async () => {
+    if (!menuDialogRole) {
+      return;
+    }
+
+    setError('');
+    try {
+      await updateRoleMenusMutation.mutateAsync({
+        uuid: menuDialogRole.id,
+        menuIds: selectedMenuIds,
+      });
+
+      setMenuDialogRole(null);
+      void listQuery.refetch();
+    } catch (err) {
+      setError(extractMessage(err, 'Failed to update role menus'));
+    }
+  };
+
   const openCreate = () => {
     setEditingId(null);
     setForm(initialRoleForm);
@@ -235,6 +326,7 @@ export function useAdministratorRolePage() {
   return {
     items,
     permissions,
+    menus,
     form,
     setForm,
     editingId,
@@ -242,6 +334,9 @@ export function useAdministratorRolePage() {
     permissionDialogRole,
     setPermissionDialogRole,
     selectedPermissionIds,
+    menuDialogRole,
+    setMenuDialogRole,
+    selectedMenuIds,
     searchInput,
     setSearchInput,
     error,
@@ -255,6 +350,8 @@ export function useAdministratorRolePage() {
     submitting,
     permissionLoading,
     permissionSubmitting,
+    menuLoading,
+    menuSubmitting,
     fetchList,
     onSubmit,
     onEdit,
@@ -262,6 +359,10 @@ export function useAdministratorRolePage() {
     openPermissionDialog,
     togglePermission,
     saveRolePermissions,
+    openMenuDialog,
+    toggleMenu,
+    toggleMenusBulk,
+    saveRoleMenus,
     openCreate,
     backToList,
     applySearch,

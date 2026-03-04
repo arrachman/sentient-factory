@@ -65,6 +65,8 @@ export class MenusService {
       },
     });
 
+    await this.assignMenuToAdminRole(created.id, actorId);
+
     return { success: true, data: this.serializeMenu(created) };
   }
 
@@ -463,6 +465,55 @@ export class MenusService {
       }
       cursor = parentMap.get(cursor) ?? null;
     }
+  }
+
+  private async assignMenuToAdminRole(menuId: number, actorId?: string | number) {
+    const adminRole = await this.prisma.role.findFirst({
+      where: { name: 'admin', deletedAt: null },
+      select: { id: true },
+    });
+    if (!adminRole) {
+      return;
+    }
+
+    const existingRoleMenu = await this.prisma.roleMenu.findFirst({
+      where: { roleId: adminRole.id, menuId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!existingRoleMenu) {
+      await this.prisma.roleMenu.create({
+        data: {
+          roleId: adminRole.id,
+          menuId,
+          canView: true,
+          createdBy: this.toActor(actorId),
+          updatedBy: this.toActor(actorId),
+        },
+      });
+      return;
+    }
+
+    if (existingRoleMenu.deletedAt) {
+      await this.prisma.roleMenu.update({
+        where: { id: existingRoleMenu.id },
+        data: {
+          canView: true,
+          deletedAt: null,
+          deletedBy: null,
+          updatedBy: this.toActor(actorId),
+        },
+      });
+      return;
+    }
+
+    await this.prisma.roleMenu.update({
+      where: { id: existingRoleMenu.id },
+      data: {
+        canView: true,
+        updatedBy: this.toActor(actorId),
+      },
+    });
   }
 
   private toActor(actorId?: string | number): number | null {

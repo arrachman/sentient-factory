@@ -22,13 +22,13 @@ This document outlines the API endpoints required to support the Frontend Admin 
 - [ ] **POST /api/users** (F0005)
   - [ ] Create new user with role assignment.
   - [ ] Trigger welcome email (optional/async).
-- [ ] **GET /api/users/{id}** (F0006)
+- [ ] **`GET /api/users/{id}`** (F0006)
   - [ ] Get user details.
-- [ ] **PUT /api/users/{id}** (F0006)
+- [ ] **`PUT /api/users/{id}`** (F0006)
   - [ ] Update user profile, roles.
-- [ ] **DELETE /api/users/{id}** (F0007)
+- [ ] **`DELETE /api/users/{id}`** (F0007)
   - [ ] Soft delete user.
-- [ ] **PUT /api/users/{id}/restore** (F0007)
+- [ ] **`PUT /api/users/{id}/restore`** (F0007)
   - [ ] Restore soft-deleted user.
 - [ ] **GET /api/profile** (F0008)
   - [ ] Get current user profile (alias for `users/{my-id}`).
@@ -41,13 +41,13 @@ This document outlines the API endpoints required to support the Frontend Admin 
 
 - [ ] **GET /api/roles** (F0009)
   - [ ] List all roles with user counts.
-- [ ] **GET /api/roles/{id}** (F0010)
+- [ ] **`GET /api/roles/{id}`** (F0010)
   - [ ] Get role details and permissions.
 - [ ] **POST /api/roles** (F0010)
   - [ ] Create new role.
-- [ ] **PUT /api/roles/{id}** (F0010)
+- [ ] **`PUT /api/roles/{id}`** (F0010)
   - [ ] Update role details and permissions.
-- [ ] **DELETE /api/roles/{id}** (F0010)
+- [ ] **`DELETE /api/roles/{id}`** (F0010)
   - [ ] Delete role (validate not in use).
 - [ ] **GET /api/permissions** (F0011)
   - [ ] List all available system permissions (grouped by module).

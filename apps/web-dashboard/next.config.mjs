@@ -5,6 +5,26 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/app/dashboard/finance-accounting/:feature',
+        destination: '/app/finance-accounting/:feature',
+        permanent: true,
+      },
+      {
+        source: '/app/dashboard/finance-accounting',
+        destination: '/app/finance-accounting',
+        permanent: true,
+      },
+      {
+        source: '/app/dashboard/sales',
+        destination: '/app?domain=so',
+        permanent: true,
+      },
+      {
+        source: '/app/dashboard/sales/:path*',
+        destination: '/app?domain=so',
+        permanent: true,
+      },
+      {
         source: '/app/dashboard/finance/:feature',
         destination: '/app/finance-accounting/:feature',
         permanent: true,

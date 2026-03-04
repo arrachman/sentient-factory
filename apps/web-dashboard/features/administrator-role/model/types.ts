@@ -5,6 +5,7 @@ export type RoleItem = {
   description?: string | null;
   isSystem: boolean;
   permissionCount?: number;
+  menuCount?: number;
 };
 
 export type PermissionItem = {
@@ -14,6 +15,17 @@ export type PermissionItem = {
   module: string;
   action: string;
   description?: string | null;
+};
+
+export type MenuOptionItem = {
+  id?: string | number;
+  uuid?: string | number;
+  key: string;
+  title: string;
+  path?: string | null;
+  parentId?: string | number | null;
+  parentTitle?: string | null;
+  type?: string;
 };
 
 export type RoleFormState = {
