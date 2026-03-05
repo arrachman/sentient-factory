@@ -1,0 +1,24 @@
+{
+  "id": "ai-agents/training-pipeline",
+  "title": "Training Pipeline",
+  "description": "Overview",
+  "source": "@site/docs/03-ai-agents/training-pipeline.md",
+  "sourceDirName": "03-ai-agents",
+  "slug": "/ai-agents/training-pipeline",
+  "permalink": "/docs/docs/ai-agents/training-pipeline",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/03-ai-agents/training-pipeline.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Machine Learning Models",
+    "permalink": "/docs/docs/ai-agents/ml-models"
+  },
+  "next": {
+    "title": "API Reference",
+    "permalink": "/docs/docs/category/api-reference"
+  }
+}

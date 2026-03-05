@@ -1,0 +1,5 @@
+- name: Patungin Codex
+    provider: openai
+    model: gpt-5.3-codex
+    apiBase: "https://ai.patungin.id/v1"
+    apiKey: "patunginXuzSX3bbzETiDFOz"

@@ -58,15 +58,15 @@ export const MENU_SIDEBAR: MenuConfig = [
       },
       {
         title: 'Dashboard M1',
-        path: '/app?domain=m1',
+        path: '/app/overview?domain=m1',
       },
       {
         title: 'Dashboard M',
-        path: '/app?domain=m',
+        path: '/app/overview?domain=m',
       },
       {
         title: 'Dashboard M2R',
-        path: '/app?domain=m2r',
+        path: '/app/overview?domain=m2r',
       },
     ],
   },

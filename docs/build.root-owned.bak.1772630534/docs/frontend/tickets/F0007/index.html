@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-frontend/tickets/F0007" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.9.2">
+<title data-rh="true">Delete User Functionality | Sentient Factory</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://sentient.fr-labs.my.id/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://sentient.fr-labs.my.id/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://sentient.fr-labs.my.id/docs/docs/frontend/tickets/F0007"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Delete User Functionality | Sentient Factory"><meta data-rh="true" name="description" content="Overview"><meta data-rh="true" property="og:description" content="Overview"><link data-rh="true" rel="icon" href="/docs/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://sentient.fr-labs.my.id/docs/docs/frontend/tickets/F0007"><link data-rh="true" rel="alternate" href="https://sentient.fr-labs.my.id/docs/docs/frontend/tickets/F0007" hreflang="en"><link data-rh="true" rel="alternate" href="https://sentient.fr-labs.my.id/docs/docs/frontend/tickets/F0007" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Frontend","item":"https://sentient.fr-labs.my.id/docs/docs/category/frontend"},{"@type":"ListItem","position":2,"name":"Frontend Admin Module Tickets","item":"https://sentient.fr-labs.my.id/docs/docs/frontend/tickets/"},{"@type":"ListItem","position":3,"name":"Delete User Functionality","item":"https://sentient.fr-labs.my.id/docs/docs/frontend/tickets/F0007"}]}</script><link rel="alternate" type="application/rss+xml" href="/docs/blog/rss.xml" title="Sentient Factory RSS Feed">
+<link rel="alternate" type="application/atom+xml" href="/docs/blog/atom.xml" title="Sentient Factory Atom Feed"><link rel="stylesheet" href="/docs/assets/css/styles.c51ffe61.css">
+<script src="/docs/assets/js/runtime~main.e808ae7b.js" defer="defer"></script>
+<script src="/docs/assets/js/main.4cec3915.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/"><div class="navbar__logo"><img src="/docs/img/logo.svg" alt="Sentient Factory Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/docs/img/logo.svg" alt="Sentient Factory Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">Sentient Factory</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/docs/intro">Documentation</a><a class="navbar__item navbar__link" href="/docs/blog">Blog</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/sentient-factory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/docs/intro"><span title="Sentient Factory Documentation" class="linkLabel_WmDU">Sentient Factory Documentation</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/architecture"><span title="Architecture" class="categoryLinkLabel_W154">Architecture</span></a><button aria-label="Expand sidebar category &#x27;Architecture&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-gateway"><span title="Api Gateway" class="categoryLinkLabel_W154">Api Gateway</span></a><button aria-label="Expand sidebar category &#x27;Api Gateway&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-agents"><span title="Api Agents" class="categoryLinkLabel_W154">Api Agents</span></a><button aria-label="Expand sidebar category &#x27;Api Agents&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-reference"><span title="API Reference" class="categoryLinkLabel_W154">API Reference</span></a><button aria-label="Expand sidebar category &#x27;API Reference&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" href="/docs/docs/category/frontend"><span title="Frontend" class="categoryLinkLabel_W154">Frontend</span></a><button aria-label="Collapse sidebar category &#x27;Frontend&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/dashboard-layout"><span title="Dashboard Layout" class="linkLabel_WmDU">Dashboard Layout</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" tabindex="0" href="/docs/docs/frontend/tickets/"><span title="Frontend Admin Module Tickets" class="categoryLinkLabel_W154">Frontend Admin Module Tickets</span></a><button aria-label="Collapse sidebar category &#x27;Frontend Admin Module Tickets&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0000"><span title="Admin UI Scaffolding (Static)" class="linkLabel_WmDU">Admin UI Scaffolding (Static)</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0001"><span title="Login System Implementation" class="linkLabel_WmDU">Login System Implementation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0002"><span title="Logout System Implementation" class="linkLabel_WmDU">Logout System Implementation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0003"><span title="Protected Routes &amp; Middleware" class="linkLabel_WmDU">Protected Routes &amp; Middleware</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0004"><span title="Users List Page" class="linkLabel_WmDU">Users List Page</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0005"><span title="Create User Functionality" class="linkLabel_WmDU">Create User Functionality</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0006"><span title="Edit User Functionality" class="linkLabel_WmDU">Edit User Functionality</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/docs/frontend/tickets/F0007"><span title="Delete User Functionality" class="linkLabel_WmDU">Delete User Functionality</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0008"><span title="User Profile Management Page" class="linkLabel_WmDU">User Profile Management Page</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0009"><span title="Roles List Page" class="linkLabel_WmDU">Roles List Page</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/F0010"><span title="Role CRUD Operations" class="linkLabel_WmDU">Role CRUD Operations</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/tickets/TEMPLATE"><span title="Tiket Template Structure" class="linkLabel_WmDU">Tiket Template Structure</span></a></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/FRONTEND-INDEX"><span title="Frontend Documentation Index" class="linkLabel_WmDU">Frontend Documentation Index</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/components-architecture"><span title="Components Architecture" class="linkLabel_WmDU">Components Architecture</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/overview"><span title="Frontend Overview" class="linkLabel_WmDU">Frontend Overview</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/state-management"><span title="State Management" class="linkLabel_WmDU">State Management</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/frontend/web-dashboard"><span title="Web Dashboard" class="linkLabel_WmDU">Web Dashboard</span></a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/marketing"><span title="Marketing" class="categoryLinkLabel_W154">Marketing</span></a><button aria-label="Expand sidebar category &#x27;Marketing&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/docs/contributing"><span title="Contributing" class="linkLabel_WmDU">Contributing</span></a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/docs/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/docs/category/frontend"><span>Frontend</span></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/docs/frontend/tickets/"><span>Frontend Admin Module Tickets</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Delete User Functionality</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>F0007: Delete User Functionality</h1></header>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="overview"><strong>Overview</strong><a href="#overview" class="hash-link" aria-label="Direct link to overview" title="Direct link to overview" translate="no">​</a></h2>
+<p>Functionality untuk menghapus user dengan soft delete, confirmation, dan safety checks.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="technical-context"><strong>Technical Context</strong><a href="#technical-context" class="hash-link" aria-label="Direct link to technical-context" title="Direct link to technical-context" translate="no">​</a></h2>
+<ul>
+<li class=""><strong>Location</strong>: <code>apps/web-dashboard/components/users/delete/</code></li>
+<li class=""><strong>Components</strong>: Delete confirmation modal, archive section, undo functionality</li>
+<li class=""><strong>Technologies</strong>: React, Zustand, Toast notifications</li>
+<li class=""><strong>API Integration</strong>: DELETE <code>/api/users/{id}</code>, GET <code>/api/users/archived</code></li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="user-story"><strong>User Story</strong><a href="#user-story" class="hash-link" aria-label="Direct link to user-story" title="Direct link to user-story" translate="no">​</a></h2>
+<p><strong>As an</strong> administrator<br>
+<strong>I want to</strong> delete user accounts when they leave the organization<br>
+<strong>So that</strong> I can maintain system security and data cleanliness</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="acceptance-criteria"><strong>Acceptance Criteria</strong><a href="#acceptance-criteria" class="hash-link" aria-label="Direct link to acceptance-criteria" title="Direct link to acceptance-criteria" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="functional-requirements"><strong>Functional Requirements</strong><a href="#functional-requirements" class="hash-link" aria-label="Direct link to functional-requirements" title="Direct link to functional-requirements" translate="no">​</a></h3>
+<ol>
+<li class=""><strong>AC1</strong>: Delete action menampilkan confirmation modal dengan warning</li>
+<li class=""><strong>AC2</strong>: Soft delete implementation - user dinonaktifkan bukan dihapus permanen</li>
+<li class=""><strong>AC3</strong>: Cascade delete handling untuk user-related data</li>
+<li class=""><strong>AC4</strong>: Deleted users dapat di-restore dari archive</li>
+<li class=""><strong>AC5</strong>: Bulk delete bekerja untuk multiple selected users</li>
+<li class=""><strong>AC6</strong>: Cannot delete own account sebagai safety measure</li>
+<li class=""><strong>AC7</strong>: Audit log mencatat semua delete operations</li>
+<li class=""><strong>AC8</strong>: Success feedback dengan undo option (time-limited)</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="technical-requirements"><strong>Technical Requirements</strong><a href="#technical-requirements" class="hash-link" aria-label="Direct link to technical-requirements" title="Direct link to technical-requirements" translate="no">​</a></h3>
+<ol>
+<li class=""><strong>TR1</strong>: Soft delete implementation dengan status field</li>
+<li class=""><strong>TR2</strong>: Archive section untuk deleted users</li>
+<li class=""><strong>TR3</strong>: Cascade handling untuk related data</li>
+<li class=""><strong>TR4</strong>: Undo functionality dengan 15-second window</li>
+<li class=""><strong>TR5</strong>: Bulk delete API optimization</li>
+<li class=""><strong>TR6</strong>: Safety check untuk prevent self-deletion</li>
+<li class=""><strong>TR7</strong>: Audit logging untuk semua delete operations</li>
+<li class=""><strong>TR8</strong>: Responsive design untuk mobile</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="implementation-details"><strong>Implementation Details</strong><a href="#implementation-details" class="hash-link" aria-label="Direct link to implementation-details" title="Direct link to implementation-details" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="file-structure"><strong>File Structure</strong><a href="#file-structure" class="hash-link" aria-label="Direct link to file-structure" title="Direct link to file-structure" translate="no">​</a></h3>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">apps/web-dashboard/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── components/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   └── users/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│       ├── delete/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│       │   ├── DeleteConfirmationModal.tsx   # Delete confirmation modal</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│       │   ├── BulkDeleteModal.tsx           # Bulk delete modal</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│       │   └── ArchiveSection.tsx            # Archived users section</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│       └── shared/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│           ├── UndoToast.tsx                 # Undo notification</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│           └── DangerButton.tsx              # Danger-styled button</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── app/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   └── users/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│       └── archived/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│           ├── page.tsx                      # Archived users page</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│           └── components/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│               ├── RestoreUserModal.tsx      # User restore modal</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│               └── PermanentDeleteModal.tsx  # Permanent delete modal</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">└── lib/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    └── users/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">        ├── delete-service.ts                 # Delete API calls</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">        └── archive-service.ts                # Archive management</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="component-specifications"><strong>Component Specifications</strong><a href="#component-specifications" class="hash-link" aria-label="Direct link to component-specifications" title="Direct link to component-specifications" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="1-delete-confirmation-modal-componentsusersdeletedeleteconfirmationmodaltsx"><strong>1. Delete Confirmation Modal (<code>components/users/delete/DeleteConfirmationModal.tsx</code>)</strong><a href="#1-delete-confirmation-modal-componentsusersdeletedeleteconfirmationmodaltsx" class="hash-link" aria-label="Direct link to 1-delete-confirmation-modal-componentsusersdeletedeleteconfirmationmodaltsx" title="Direct link to 1-delete-confirmation-modal-componentsusersdeletedeleteconfirmationmodaltsx" translate="no">​</a></h4>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Features:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Warning message dengan user details</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Reason selection dropdown</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Cascade delete options</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Cancel/confirm buttons</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Danger styling</span><br></span></code></pre></div></div>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="2-bulk-delete-modal-componentsusersdeletebulkdeletemodaltsx"><strong>2. Bulk Delete Modal (<code>components/users/delete/BulkDeleteModal.tsx</code>)</strong><a href="#2-bulk-delete-modal-componentsusersdeletebulkdeletemodaltsx" class="hash-link" aria-label="Direct link to 2-bulk-delete-modal-componentsusersdeletebulkdeletemodaltsx" title="Direct link to 2-bulk-delete-modal-componentsusersdeletebulkdeletemodaltsx" translate="no">​</a></h4>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Features:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Display count of selected users</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Warning for admin users</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Progress tracking untuk bulk operations</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Partial success handling</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Summary report setelah completion</span><br></span></code></pre></div></div>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="3-archive-section-componentsusersdeletearchivesectiontsx"><strong>3. Archive Section (<code>components/users/delete/ArchiveSection.tsx</code>)</strong><a href="#3-archive-section-componentsusersdeletearchivesectiontsx" class="hash-link" aria-label="Direct link to 3-archive-section-componentsusersdeletearchivesectiontsx" title="Direct link to 3-archive-section-componentsusersdeletearchivesectiontsx" translate="no">​</a></h4>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Features:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - List of archived users</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Filter by deletion date</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Restore functionality</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Permanent delete option</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Retention period indicator</span><br></span></code></pre></div></div>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="4-undo-toast-componentssharedundotoasttsx"><strong>4. Undo Toast (<code>components/shared/UndoToast.tsx</code>)</strong><a href="#4-undo-toast-componentssharedundotoasttsx" class="hash-link" aria-label="Direct link to 4-undo-toast-componentssharedundotoasttsx" title="Direct link to 4-undo-toast-componentssharedundotoasttsx" translate="no">​</a></h4>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Features:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Countdown timer (15 seconds)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Undo button dengan immediate action</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Success message</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// - Auto-dismiss setelah timeout</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="service-layer"><strong>Service Layer</strong><a href="#service-layer" class="hash-link" aria-label="Direct link to service-layer" title="Direct link to service-layer" translate="no">​</a></h3>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Delete Service</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">interface</span><span class="token plain"> </span><span class="token class-name">DeleteService</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">{</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">softDeleteUser</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">id</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> reason</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">bulkDeleteUsers</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">ids</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">[</span><span class="token punctuation" style="color:#393A34">]</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> reason</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token plain">BulkDeleteResult</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">restoreUser</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">id</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">permanentDeleteUser</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">id</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">getArchivedUsers</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">filters</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> ArchiveFilters</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token plain">User</span><span class="token punctuation" style="color:#393A34">[</span><span class="token punctuation" style="color:#393A34">]</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">undoDelete</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">deleteId</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">}</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// Archive Service</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">interface</span><span class="token plain"> </span><span class="token class-name">ArchiveService</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">{</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">moveToArchive</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">user</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> User</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> reason</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token builtin">string</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">restoreFromArchive</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">archiveId</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">cleanupExpiredArchives</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function" style="color:#d73a49">getArchiveStats</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token plain">ArchiveStats</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">}</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="state-management"><strong>State Management</strong><a href="#state-management" class="hash-link" aria-label="Direct link to state-management" title="Direct link to state-management" translate="no">​</a></h3>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token keyword" style="color:#00009f">interface</span><span class="token plain"> </span><span class="token class-name">DeleteState</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">{</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  pendingDeletes</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">[</span><span class="token punctuation" style="color:#393A34">]</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  archive</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> User</span><span class="token punctuation" style="color:#393A34">[</span><span class="token punctuation" style="color:#393A34">]</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  undoQueue</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> DeleteOperation</span><span class="token punctuation" style="color:#393A34">[</span><span class="token punctuation" style="color:#393A34">]</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  isLoading</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">boolean</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function-variable function" style="color:#d73a49">deleteUser</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">id</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> reason</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function-variable function" style="color:#d73a49">bulkDelete</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">ids</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">[</span><span class="token punctuation" style="color:#393A34">]</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> reason</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function-variable function" style="color:#d73a49">restoreUser</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">id</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token builtin">string</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function-variable function" style="color:#d73a49">undoLastDelete</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token builtin">Promise</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token keyword" style="color:#00009f">void</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token function-variable function" style="color:#d73a49">clearUndoQueue</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">void</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">}</span><br></span></code></pre></div></div>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="subtasks"><strong>Subtasks</strong><a href="#subtasks" class="hash-link" aria-label="Direct link to subtasks" title="Direct link to subtasks" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-01-implement-soft-delete-functionality-di-backend-api"><strong>F0007-01: Implement Soft Delete Functionality di Backend API</strong><a href="#f0007-01-implement-soft-delete-functionality-di-backend-api" class="hash-link" aria-label="Direct link to f0007-01-implement-soft-delete-functionality-di-backend-api" title="Direct link to f0007-01-implement-soft-delete-functionality-di-backend-api" translate="no">​</a></h3>
+<p><strong>Description</strong>: Setup backend soft delete dengan status updates dan archive
+<strong>Estimate</strong>: 4 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/api-gateway/src/modules/users/delete.controller.ts</code></li>
+<li class=""><code>apps/api-gateway/src/modules/users/archive.service.ts</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Soft delete updates user status to &quot;archived&quot;</li>
+<li class="">✅ Archive record created dengan timestamp dan reason</li>
+<li class="">✅ Cascade handling untuk related data</li>
+<li class="">✅ Retention period enforcement (30 days)</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-02-create-delete-confirmation-modal-dengan-danger-styling"><strong>F0007-02: Create Delete Confirmation Modal dengan Danger Styling</strong><a href="#f0007-02-create-delete-confirmation-modal-dengan-danger-styling" class="hash-link" aria-label="Direct link to f0007-02-create-delete-confirmation-modal-dengan-danger-styling" title="Direct link to f0007-02-create-delete-confirmation-modal-dengan-danger-styling" translate="no">​</a></h3>
+<p><strong>Description</strong>: Develop confirmation modal dengan warning dan reason selection
+<strong>Estimate</strong>: 3 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/components/users/delete/DeleteConfirmationModal.tsx</code></li>
+<li class=""><code>apps/web-dashboard/components/shared/DangerButton.tsx</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Modal displays user details dan warning</li>
+<li class="">✅ Reason selection dropdown</li>
+<li class="">✅ Cascade options checkbox</li>
+<li class="">✅ Confirm/cancel buttons dengan proper styling</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-03-setup-cascade-delete-handling-untuk-related-data"><strong>F0007-03: Setup Cascade Delete Handling untuk Related Data</strong><a href="#f0007-03-setup-cascade-delete-handling-untuk-related-data" class="hash-link" aria-label="Direct link to f0007-03-setup-cascade-delete-handling-untuk-related-data" title="Direct link to f0007-03-setup-cascade-delete-handling-untuk-related-data" translate="no">​</a></h3>
+<p><strong>Description</strong>: Implement cascade handling untuk user-related data
+<strong>Estimate</strong>: 4 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/lib/users/cascade-handler.ts</code></li>
+<li class=""><code>apps/web-dashboard/components/users/delete/CascadeOptions.tsx</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Identify all related data (sessions, logs, etc.)</li>
+<li class="">✅ Option to delete atau retain related data</li>
+<li class="">✅ Progress tracking untuk cascade operations</li>
+<li class="">✅ Rollback capability jika failures occur</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-04-add-archive-section-untuk-deleted-users"><strong>F0007-04: Add Archive Section untuk Deleted Users</strong><a href="#f0007-04-add-archive-section-untuk-deleted-users" class="hash-link" aria-label="Direct link to f0007-04-add-archive-section-untuk-deleted-users" title="Direct link to f0007-04-add-archive-section-untuk-deleted-users" translate="no">​</a></h3>
+<p><strong>Description</strong>: Create archive section untuk view dan manage deleted users
+<strong>Estimate</strong>: 5 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/app/users/archived/page.tsx</code></li>
+<li class=""><code>apps/web-dashboard/components/users/delete/ArchiveSection.tsx</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Archived users list dengan filters</li>
+<li class="">✅ Restore functionality</li>
+<li class="">✅ Permanent delete option</li>
+<li class="">✅ Retention period countdown display</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-05-implement-bulk-delete-functionality"><strong>F0007-05: Implement Bulk Delete Functionality</strong><a href="#f0007-05-implement-bulk-delete-functionality" class="hash-link" aria-label="Direct link to f0007-05-implement-bulk-delete-functionality" title="Direct link to f0007-05-implement-bulk-delete-functionality" translate="no">​</a></h3>
+<p><strong>Description</strong>: Add bulk delete untuk multiple selected users
+<strong>Estimate</strong>: 4 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/components/users/delete/BulkDeleteModal.tsx</code></li>
+<li class=""><code>apps/web-dashboard/lib/users/bulk-delete.ts</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Bulk delete modal dengan selected count</li>
+<li class="">✅ Progress bar untuk bulk operations</li>
+<li class="">✅ Partial success handling</li>
+<li class="">✅ Summary report after completion</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-06-add-safety-check-untuk-prevent-self-deletion"><strong>F0007-06: Add Safety Check untuk Prevent Self-Deletion</strong><a href="#f0007-06-add-safety-check-untuk-prevent-self-deletion" class="hash-link" aria-label="Direct link to f0007-06-add-safety-check-untuk-prevent-self-deletion" title="Direct link to f0007-06-add-safety-check-untuk-prevent-self-deletion" translate="no">​</a></h3>
+<p><strong>Description</strong>: Implement safety check untuk prevent users from deleting own account
+<strong>Estimate</strong>: 2 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/lib/users/safety-checks.ts</code></li>
+<li class=""><code>apps/web-dashboard/components/users/delete/SelfDeleteWarning.tsx</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Prevent self-deletion dengan warning message</li>
+<li class="">✅ Admin role protection check</li>
+<li class="">✅ Last admin protection</li>
+<li class="">✅ Emergency override procedure</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-07-create-audit-logging-untuk-delete-operations"><strong>F0007-07: Create Audit Logging untuk Delete Operations</strong><a href="#f0007-07-create-audit-logging-untuk-delete-operations" class="hash-link" aria-label="Direct link to f0007-07-create-audit-logging-untuk-delete-operations" title="Direct link to f0007-07-create-audit-logging-untuk-delete-operations" translate="no">​</a></h3>
+<p><strong>Description</strong>: Implement audit logging untuk semua delete operations
+<strong>Estimate</strong>: 3 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/lib/audit/delete-audit.ts</code></li>
+<li class=""><code>apps/web-dashboard/components/audit/DeleteAuditLog.tsx</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Log semua delete operations</li>
+<li class="">✅ Reason, timestamp, dan user who performed delete</li>
+<li class="">✅ Restore operations logging</li>
+<li class="">✅ Export audit logs functionality</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-08-add-undo-functionality-15-second-window"><strong>F0007-08: Add Undo Functionality (15-second Window)</strong><a href="#f0007-08-add-undo-functionality-15-second-window" class="hash-link" aria-label="Direct link to f0007-08-add-undo-functionality-15-second-window" title="Direct link to f0007-08-add-undo-functionality-15-second-window" translate="no">​</a></h3>
+<p><strong>Description</strong>: Implement undo functionality dengan time-limited window
+<strong>Estimate</strong>: 3 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/components/shared/UndoToast.tsx</code></li>
+<li class=""><code>apps/web-dashboard/lib/users/undo-manager.ts</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ 15-second countdown timer</li>
+<li class="">✅ Undo button dengan immediate restore</li>
+<li class="">✅ Success confirmation</li>
+<li class="">✅ Multiple undo queue management</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="f0007-09-testing--validation"><strong>F0007-09: Testing &amp; Validation</strong><a href="#f0007-09-testing--validation" class="hash-link" aria-label="Direct link to f0007-09-testing--validation" title="Direct link to f0007-09-testing--validation" translate="no">​</a></h3>
+<p><strong>Description</strong>: Write comprehensive tests untuk delete functionality
+<strong>Estimate</strong>: 4 hours
+<strong>Files</strong>:</p>
+<ul>
+<li class=""><code>apps/web-dashboard/components/users/delete/DeleteConfirmationModal.test.tsx</code></li>
+<li class=""><code>apps/web-dashboard/lib/users/delete-service.test.ts</code></li>
+</ul>
+<p><strong>Acceptance</strong>:</p>
+<ul>
+<li class="">✅ Unit tests untuk all components</li>
+<li class="">✅ Integration tests untuk delete flows</li>
+<li class="">✅ Edge case testing (self-delete, bulk delete)</li>
+<li class="">✅ Performance testing untuk bulk operations</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="dependencies"><strong>Dependencies</strong><a href="#dependencies" class="hash-link" aria-label="Direct link to dependencies" title="Direct link to dependencies" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="frontend-dependencies"><strong>Frontend Dependencies</strong><a href="#frontend-dependencies" class="hash-link" aria-label="Direct link to frontend-dependencies" title="Direct link to frontend-dependencies" translate="no">​</a></h3>
+<ul class="contains-task-list containsTaskList_mC6p">
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->F0004: Users List Page (untuk delete actions)</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Zustand state management setup</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Toast notification system</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Modal component library</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="backend-dependencies"><strong>Backend Dependencies</strong><a href="#backend-dependencies" class="hash-link" aria-label="Direct link to backend-dependencies" title="Direct link to backend-dependencies" translate="no">​</a></h3>
+<ul class="contains-task-list containsTaskList_mC6p">
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Soft delete API endpoints</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Archive management API</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Cascade delete handling</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Audit logging API</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="environment-dependencies"><strong>Environment Dependencies</strong><a href="#environment-dependencies" class="hash-link" aria-label="Direct link to environment-dependencies" title="Direct link to environment-dependencies" translate="no">​</a></h3>
+<ul class="contains-task-list containsTaskList_mC6p">
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Archive retention period configured (30 days)</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Backup system untuk emergency recovery</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Monitoring alerts untuk mass deletions</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="testing-strategy"><strong>Testing Strategy</strong><a href="#testing-strategy" class="hash-link" aria-label="Direct link to testing-strategy" title="Direct link to testing-strategy" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="unit-tests"><strong>Unit Tests</strong><a href="#unit-tests" class="hash-link" aria-label="Direct link to unit-tests" title="Direct link to unit-tests" translate="no">​</a></h3>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Test cases:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 1. Delete confirmation modal renders correctly</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 2. Safety checks prevent self-deletion</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 3. Bulk delete handles empty selection</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 4. Undo functionality works within time window</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 5. Archive filtering works correctly</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="integration-tests"><strong>Integration Tests</strong><a href="#integration-tests" class="hash-link" aria-label="Direct link to integration-tests" title="Direct link to integration-tests" translate="no">​</a></h3>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Test flows:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 1. Single user delete flow dengan confirmation</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 2. Bulk delete flow dengan progress tracking</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 3. User restore from archive</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 4. Undo delete within time window</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 5. Permanent delete flow</span><br></span></code></pre></div></div>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="e2e-tests"><strong>E2E Tests</strong><a href="#e2e-tests" class="hash-link" aria-label="Direct link to e2e-tests" title="Direct link to e2e-tests" translate="no">​</a></h3>
+<div class="language-typescript codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-typescript codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">// Cypress tests:</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 1. Delete user dengan confirmation</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 2. Bulk delete multiple users</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 3. Restore user from archive</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 4. Test self-deletion prevention</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">// 5. Test undo functionality</span><br></span></code></pre></div></div>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="security-considerations"><strong>Security Considerations</strong><a href="#security-considerations" class="hash-link" aria-label="Direct link to security-considerations" title="Direct link to security-considerations" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="authorization--safety"><strong>Authorization &amp; Safety</strong><a href="#authorization--safety" class="hash-link" aria-label="Direct link to authorization--safety" title="Direct link to authorization--safety" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Permission Checks</strong>:</p>
+<ul>
+<li class="">Verify user has delete permissions</li>
+<li class="">Role-based delete restrictions</li>
+<li class="">Critical role protection (last admin)</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Safety Measures</strong>:</p>
+<ul>
+<li class="">Self-deletion prevention</li>
+<li class="">Confirmation requirements</li>
+<li class="">Rate limiting untuk delete operations</li>
+<li class="">Emergency stop functionality</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Data Protection</strong>:</p>
+<ul>
+<li class="">Soft delete by default</li>
+<li class="">Archive retention period</li>
+<li class="">Backup verification</li>
+<li class="">GDPR compliance considerations</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="audit--compliance"><strong>Audit &amp; Compliance</strong><a href="#audit--compliance" class="hash-link" aria-label="Direct link to audit--compliance" title="Direct link to audit--compliance" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Complete Audit Trail</strong>:</p>
+<ul>
+<li class="">Log semua delete operations</li>
+<li class="">Reason tracking</li>
+<li class="">User attribution</li>
+<li class="">Timestamp logging</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Compliance Features</strong>:</p>
+<ul>
+<li class="">Data retention policies</li>
+<li class="">Right to be forgotten implementation</li>
+<li class="">Export functionality untuk compliance reports</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="performance-requirements"><strong>Performance Requirements</strong><a href="#performance-requirements" class="hash-link" aria-label="Direct link to performance-requirements" title="Direct link to performance-requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="delete-operations"><strong>Delete Operations</strong><a href="#delete-operations" class="hash-link" aria-label="Direct link to delete-operations" title="Direct link to delete-operations" translate="no">​</a></h3>
+<ul>
+<li class=""><strong>Single Delete</strong>: &lt; 2 seconds</li>
+<li class=""><strong>Bulk Delete (10 users)</strong>: &lt; 10 seconds</li>
+<li class=""><strong>Archive Load</strong>: &lt; 1 second</li>
+<li class=""><strong>Restore Operation</strong>: &lt; 3 seconds</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="optimizations"><strong>Optimizations</strong><a href="#optimizations" class="hash-link" aria-label="Direct link to optimizations" title="Direct link to optimizations" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Batch Operations</strong>:</p>
+<ul>
+<li class="">Bulk API calls untuk multiple deletions</li>
+<li class="">Parallel processing untuk cascade operations</li>
+<li class="">Progress reporting untuk long operations</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Caching Strategy</strong>:</p>
+<ul>
+<li class="">Archive data caching</li>
+<li class="">Delete operation queue management</li>
+<li class="">Undo operation optimization</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="accessibility-requirements"><strong>Accessibility Requirements</strong><a href="#accessibility-requirements" class="hash-link" aria-label="Direct link to accessibility-requirements" title="Direct link to accessibility-requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="wcag-21-aa-compliance"><strong>WCAG 2.1 AA Compliance</strong><a href="#wcag-21-aa-compliance" class="hash-link" aria-label="Direct link to wcag-21-aa-compliance" title="Direct link to wcag-21-aa-compliance" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Keyboard Navigation</strong>:</p>
+<ul>
+<li class="">Tab through all modal controls</li>
+<li class="">Escape to cancel delete</li>
+<li class="">Enter to confirm (with safety delay)</li>
+<li class="">Keyboard shortcuts untuk undo</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Screen Reader Support</strong>:</p>
+<ul>
+<li class="">ARIA labels untuk all delete controls</li>
+<li class="">Warning announcements</li>
+<li class="">Success/failure announcements</li>
+<li class="">Countdown announcements untuk undo</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Visual Accessibility</strong>:</p>
+<ul>
+<li class="">High contrast untuk danger warnings</li>
+<li class="">Clear focus indicators</li>
+<li class="">Responsive design untuk all screen sizes</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="error-handling"><strong>Error Handling</strong><a href="#error-handling" class="hash-link" aria-label="Direct link to error-handling" title="Direct link to error-handling" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="expected-errors"><strong>Expected Errors</strong><a href="#expected-errors" class="hash-link" aria-label="Direct link to expected-errors" title="Direct link to expected-errors" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Permission Errors</strong>:</p>
+<ul>
+<li class="">Insufficient permissions to delete</li>
+<li class="">Cannot delete protected role</li>
+<li class="">Self-deletion attempt</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Data Errors</strong>:</p>
+<ul>
+<li class="">User not found</li>
+<li class="">Already deleted</li>
+<li class="">Archive full</li>
+<li class="">Cascade delete failures</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Network Errors</strong>:</p>
+<ul>
+<li class="">API timeout during delete</li>
+<li class="">Network disconnection</li>
+<li class="">Server errors</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="recovery-strategies"><strong>Recovery Strategies</strong><a href="#recovery-strategies" class="hash-link" aria-label="Direct link to recovery-strategies" title="Direct link to recovery-strategies" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Operation Recovery</strong>:</p>
+<ul>
+<li class="">Undo functionality for failed operations</li>
+<li class="">Retry mechanism for transient failures</li>
+<li class="">Queue management for offline operations</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Data Recovery</strong>:</p>
+<ul>
+<li class="">Archive system for accidental deletions</li>
+<li class="">Backup restoration procedures</li>
+<li class="">Emergency restore functionality</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="monitoring--analytics"><strong>Monitoring &amp; Analytics</strong><a href="#monitoring--analytics" class="hash-link" aria-label="Direct link to monitoring--analytics" title="Direct link to monitoring--analytics" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="metrics-to-track"><strong>Metrics to Track</strong><a href="#metrics-to-track" class="hash-link" aria-label="Direct link to metrics-to-track" title="Direct link to metrics-to-track" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Delete Operations</strong>:</p>
+<ul>
+<li class="">Delete success/failure rate</li>
+<li class="">Average delete time</li>
+<li class="">Bulk delete performance</li>
+<li class="">Undo usage rate</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Safety Metrics</strong>:</p>
+<ul>
+<li class="">Self-deletion prevention triggers</li>
+<li class="">Protected role deletion blocks</li>
+<li class="">Confirmation modal abandonment rate</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Archive Metrics</strong>:</p>
+<ul>
+<li class="">Archive size growth</li>
+<li class="">Restore frequency</li>
+<li class="">Permanent deletion rate</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="alerting"><strong>Alerting</strong><a href="#alerting" class="hash-link" aria-label="Direct link to alerting" title="Direct link to alerting" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Critical Alerts</strong>:</p>
+<ul>
+<li class="">Mass deletion detection</li>
+<li class="">Admin account deletion attempts</li>
+<li class="">Archive near capacity</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Performance Alerts</strong>:</p>
+<ul>
+<li class="">Slow delete operations</li>
+<li class="">High failure rate</li>
+<li class="">Archive restore failures</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="deployment-checklist"><strong>Deployment Checklist</strong><a href="#deployment-checklist" class="hash-link" aria-label="Direct link to deployment-checklist" title="Direct link to deployment-checklist" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="pre-deployment"><strong>Pre-Deployment</strong><a href="#pre-deployment" class="hash-link" aria-label="Direct link to pre-deployment" title="Direct link to pre-deployment" translate="no">​</a></h3>
+<ul class="contains-task-list containsTaskList_mC6p">
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->All tests passing</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Code review completed</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Security audit passed</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Performance testing completed</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Accessibility audit passed</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Backup system verified</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="post-deployment"><strong>Post-Deployment</strong><a href="#post-deployment" class="hash-link" aria-label="Direct link to post-deployment" title="Direct link to post-deployment" translate="no">​</a></h3>
+<ul class="contains-task-list containsTaskList_mC6p">
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Monitor delete success rates</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Track undo functionality usage</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Monitor archive growth</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Collect user feedback</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <!-- -->Verify restore functionality</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="success-metrics"><strong>Success Metrics</strong><a href="#success-metrics" class="hash-link" aria-label="Direct link to success-metrics" title="Direct link to success-metrics" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="technical-metrics"><strong>Technical Metrics</strong><a href="#technical-metrics" class="hash-link" aria-label="Direct link to technical-metrics" title="Direct link to technical-metrics" translate="no">​</a></h3>
+<ul>
+<li class="">✅ Delete success rate &gt; 99%</li>
+<li class="">✅ Average delete time &lt; 2 seconds</li>
+<li class="">✅ Undo utilization rate &gt; 20%</li>
+<li class="">✅ Archive restore success rate &gt; 98%</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="user-metrics"><strong>User Metrics</strong><a href="#user-metrics" class="hash-link" aria-label="Direct link to user-metrics" title="Direct link to user-metrics" translate="no">​</a></h3>
+<ul>
+<li class="">✅ User confidence score &gt; 4/5</li>
+<li class="">✅ Accidental deletion rate &lt; 1%</li>
+<li class="">✅ Admin satisfaction score &gt; 4/5</li>
+<li class="">✅ Feature adoption rate &gt; 90%</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="rollback-plan"><strong>Rollback Plan</strong><a href="#rollback-plan" class="hash-link" aria-label="Direct link to rollback-plan" title="Direct link to rollback-plan" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="if-issues-occur"><strong>If Issues Occur</strong><a href="#if-issues-occur" class="hash-link" aria-label="Direct link to if-issues-occur" title="Direct link to if-issues-occur" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Minor Issues</strong>:</p>
+<ul>
+<li class="">Disable delete functionality via feature flag</li>
+<li class="">Hotfix deployment</li>
+<li class="">Temporary workarounds</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Major Issues</strong>:</p>
+<ul>
+<li class="">Immediate rollback to previous version</li>
+<li class="">Emergency restore from backups</li>
+<li class="">Communication to affected users</li>
+<li class="">Root cause analysis</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="rollback-steps"><strong>Rollback Steps</strong><a href="#rollback-steps" class="hash-link" aria-label="Direct link to rollback-steps" title="Direct link to rollback-steps" translate="no">​</a></h3>
+<ol>
+<li class="">Disable delete functionality via feature flag</li>
+<li class="">Restore any affected data from backups</li>
+<li class="">Revert code changes</li>
+<li class="">Deploy previous stable version</li>
+<li class="">Verify user management functionality</li>
+<li class="">Update stakeholders on status</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="documentation"><strong>Documentation</strong><a href="#documentation" class="hash-link" aria-label="Direct link to documentation" title="Direct link to documentation" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="developer-documentation"><strong>Developer Documentation</strong><a href="#developer-documentation" class="hash-link" aria-label="Direct link to developer-documentation" title="Direct link to developer-documentation" translate="no">​</a></h3>
+<ul>
+<li class="">API integration guide for delete operations</li>
+<li class="">Archive management procedures</li>
+<li class="">Undo functionality implementation</li>
+<li class="">Testing procedures</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="user-documentation"><strong>User Documentation</strong><a href="#user-documentation" class="hash-link" aria-label="Direct link to user-documentation" title="Direct link to user-documentation" translate="no">​</a></h3>
+<ul>
+<li class="">User deletion guide</li>
+<li class="">Archive management instructions</li>
+<li class="">Undo functionality explanation</li>
+<li class="">Troubleshooting common issues</li>
+<li class="">Emergency restore procedures</li>
+</ul>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="revision-history"><strong>Revision History</strong><a href="#revision-history" class="hash-link" aria-label="Direct link to revision-history" title="Direct link to revision-history" translate="no">​</a></h2>
+<table><thead><tr><th>Version</th><th>Date</th><th>Changes</th><th>Author</th></tr></thead><tbody><tr><td>1.0</td><td>2025-02-07</td><td>Initial ticket creation</td><td>System</td></tr><tr><td>1.1</td><td>2025-02-07</td><td>Added technical specifications</td><td>System</td></tr></tbody></table>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="notes"><strong>Notes</strong><a href="#notes" class="hash-link" aria-label="Direct link to notes" title="Direct link to notes" translate="no">​</a></h2>
+<ul>
+<li class="">Implement recycle bin concept dengan 30-day retention period</li>
+<li class="">Add emergency restore functionality untuk accidental deletions</li>
+<li class="">Consider adding deletion scheduling untuk off-hours</li>
+<li class="">Plan for compliance reporting features</li>
+</ul>
+<p><strong>Ticket Owner</strong>: Frontend Team<br>
+<strong>Reviewers</strong>: Backend Team, Security Team, Compliance Team<br>
+<strong>Approval</strong>: Pending</p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href="https://github.com/sentient-factory/docs/tree/main/docs/04-frontend/tickets/F0007.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/docs/frontend/tickets/F0006"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Edit User Functionality</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/docs/frontend/tickets/F0008"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">User Profile Management Page</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#overview" class="table-of-contents__link toc-highlight"><strong>Overview</strong></a></li><li><a href="#technical-context" class="table-of-contents__link toc-highlight"><strong>Technical Context</strong></a></li><li><a href="#user-story" class="table-of-contents__link toc-highlight"><strong>User Story</strong></a></li><li><a href="#acceptance-criteria" class="table-of-contents__link toc-highlight"><strong>Acceptance Criteria</strong></a><ul><li><a href="#functional-requirements" class="table-of-contents__link toc-highlight"><strong>Functional Requirements</strong></a></li><li><a href="#technical-requirements" class="table-of-contents__link toc-highlight"><strong>Technical Requirements</strong></a></li></ul></li><li><a href="#implementation-details" class="table-of-contents__link toc-highlight"><strong>Implementation Details</strong></a><ul><li><a href="#file-structure" class="table-of-contents__link toc-highlight"><strong>File Structure</strong></a></li><li><a href="#component-specifications" class="table-of-contents__link toc-highlight"><strong>Component Specifications</strong></a></li><li><a href="#service-layer" class="table-of-contents__link toc-highlight"><strong>Service Layer</strong></a></li><li><a href="#state-management" class="table-of-contents__link toc-highlight"><strong>State Management</strong></a></li></ul></li><li><a href="#subtasks" class="table-of-contents__link toc-highlight"><strong>Subtasks</strong></a><ul><li><a href="#f0007-01-implement-soft-delete-functionality-di-backend-api" class="table-of-contents__link toc-highlight"><strong>F0007-01: Implement Soft Delete Functionality di Backend API</strong></a></li><li><a href="#f0007-02-create-delete-confirmation-modal-dengan-danger-styling" class="table-of-contents__link toc-highlight"><strong>F0007-02: Create Delete Confirmation Modal dengan Danger Styling</strong></a></li><li><a href="#f0007-03-setup-cascade-delete-handling-untuk-related-data" class="table-of-contents__link toc-highlight"><strong>F0007-03: Setup Cascade Delete Handling untuk Related Data</strong></a></li><li><a href="#f0007-04-add-archive-section-untuk-deleted-users" class="table-of-contents__link toc-highlight"><strong>F0007-04: Add Archive Section untuk Deleted Users</strong></a></li><li><a href="#f0007-05-implement-bulk-delete-functionality" class="table-of-contents__link toc-highlight"><strong>F0007-05: Implement Bulk Delete Functionality</strong></a></li><li><a href="#f0007-06-add-safety-check-untuk-prevent-self-deletion" class="table-of-contents__link toc-highlight"><strong>F0007-06: Add Safety Check untuk Prevent Self-Deletion</strong></a></li><li><a href="#f0007-07-create-audit-logging-untuk-delete-operations" class="table-of-contents__link toc-highlight"><strong>F0007-07: Create Audit Logging untuk Delete Operations</strong></a></li><li><a href="#f0007-08-add-undo-functionality-15-second-window" class="table-of-contents__link toc-highlight"><strong>F0007-08: Add Undo Functionality (15-second Window)</strong></a></li><li><a href="#f0007-09-testing--validation" class="table-of-contents__link toc-highlight"><strong>F0007-09: Testing &amp; Validation</strong></a></li></ul></li><li><a href="#dependencies" class="table-of-contents__link toc-highlight"><strong>Dependencies</strong></a><ul><li><a href="#frontend-dependencies" class="table-of-contents__link toc-highlight"><strong>Frontend Dependencies</strong></a></li><li><a href="#backend-dependencies" class="table-of-contents__link toc-highlight"><strong>Backend Dependencies</strong></a></li><li><a href="#environment-dependencies" class="table-of-contents__link toc-highlight"><strong>Environment Dependencies</strong></a></li></ul></li><li><a href="#testing-strategy" class="table-of-contents__link toc-highlight"><strong>Testing Strategy</strong></a><ul><li><a href="#unit-tests" class="table-of-contents__link toc-highlight"><strong>Unit Tests</strong></a></li><li><a href="#integration-tests" class="table-of-contents__link toc-highlight"><strong>Integration Tests</strong></a></li><li><a href="#e2e-tests" class="table-of-contents__link toc-highlight"><strong>E2E Tests</strong></a></li></ul></li><li><a href="#security-considerations" class="table-of-contents__link toc-highlight"><strong>Security Considerations</strong></a><ul><li><a href="#authorization--safety" class="table-of-contents__link toc-highlight"><strong>Authorization &amp; Safety</strong></a></li><li><a href="#audit--compliance" class="table-of-contents__link toc-highlight"><strong>Audit &amp; Compliance</strong></a></li></ul></li><li><a href="#performance-requirements" class="table-of-contents__link toc-highlight"><strong>Performance Requirements</strong></a><ul><li><a href="#delete-operations" class="table-of-contents__link toc-highlight"><strong>Delete Operations</strong></a></li><li><a href="#optimizations" class="table-of-contents__link toc-highlight"><strong>Optimizations</strong></a></li></ul></li><li><a href="#accessibility-requirements" class="table-of-contents__link toc-highlight"><strong>Accessibility Requirements</strong></a><ul><li><a href="#wcag-21-aa-compliance" class="table-of-contents__link toc-highlight"><strong>WCAG 2.1 AA Compliance</strong></a></li></ul></li><li><a href="#error-handling" class="table-of-contents__link toc-highlight"><strong>Error Handling</strong></a><ul><li><a href="#expected-errors" class="table-of-contents__link toc-highlight"><strong>Expected Errors</strong></a></li><li><a href="#recovery-strategies" class="table-of-contents__link toc-highlight"><strong>Recovery Strategies</strong></a></li></ul></li><li><a href="#monitoring--analytics" class="table-of-contents__link toc-highlight"><strong>Monitoring &amp; Analytics</strong></a><ul><li><a href="#metrics-to-track" class="table-of-contents__link toc-highlight"><strong>Metrics to Track</strong></a></li><li><a href="#alerting" class="table-of-contents__link toc-highlight"><strong>Alerting</strong></a></li></ul></li><li><a href="#deployment-checklist" class="table-of-contents__link toc-highlight"><strong>Deployment Checklist</strong></a><ul><li><a href="#pre-deployment" class="table-of-contents__link toc-highlight"><strong>Pre-Deployment</strong></a></li><li><a href="#post-deployment" class="table-of-contents__link toc-highlight"><strong>Post-Deployment</strong></a></li></ul></li><li><a href="#success-metrics" class="table-of-contents__link toc-highlight"><strong>Success Metrics</strong></a><ul><li><a href="#technical-metrics" class="table-of-contents__link toc-highlight"><strong>Technical Metrics</strong></a></li><li><a href="#user-metrics" class="table-of-contents__link toc-highlight"><strong>User Metrics</strong></a></li></ul></li><li><a href="#rollback-plan" class="table-of-contents__link toc-highlight"><strong>Rollback Plan</strong></a><ul><li><a href="#if-issues-occur" class="table-of-contents__link toc-highlight"><strong>If Issues Occur</strong></a></li><li><a href="#rollback-steps" class="table-of-contents__link toc-highlight"><strong>Rollback Steps</strong></a></li></ul></li><li><a href="#documentation" class="table-of-contents__link toc-highlight"><strong>Documentation</strong></a><ul><li><a href="#developer-documentation" class="table-of-contents__link toc-highlight"><strong>Developer Documentation</strong></a></li><li><a href="#user-documentation" class="table-of-contents__link toc-highlight"><strong>User Documentation</strong></a></li></ul></li><li><a href="#revision-history" class="table-of-contents__link toc-highlight"><strong>Revision History</strong></a></li><li><a href="#notes" class="table-of-contents__link toc-highlight"><strong>Notes</strong></a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/docs/intro">Getting Started</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/category/api-reference">API Reference</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/category/architecture">Architecture</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/sentient-factory/discussions" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub Discussions<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://discord.gg/sentient-factory" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://twitter.com/sentientfactory" target="_blank" rel="noopener noreferrer" class="footer__link-item">Twitter<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/blog">Blog</a></li><li class="footer__item"><a href="https://github.com/sentient-factory" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/contributing">Contributing</a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Sentient Factory Project. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

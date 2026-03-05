@@ -5,6 +5,38 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/app',
+        has: [
+          {
+            type: 'query',
+            key: 'domain',
+            value: 'm1',
+          },
+          {
+            type: 'query',
+            key: 'period',
+            value: 'all',
+          },
+          {
+            type: 'query',
+            key: 'groupBy',
+            value: 'sumber',
+          },
+          {
+            type: 'query',
+            key: 'sortBy',
+            value: 'id',
+          },
+          {
+            type: 'query',
+            key: 'metricView',
+            value: 'totalMetric',
+          },
+        ],
+        destination: '/app/overview',
+        permanent: true,
+      },
+      {
         source: '/app/dashboard/finance-accounting/:feature',
         destination: '/app/finance-accounting/:feature',
         permanent: true,
@@ -16,12 +48,12 @@ const nextConfig = {
       },
       {
         source: '/app/dashboard/sales',
-        destination: '/app?domain=so',
+        destination: '/app/overview?domain=so',
         permanent: true,
       },
       {
         source: '/app/dashboard/sales/:path*',
-        destination: '/app?domain=so',
+        destination: '/app/overview?domain=so',
         permanent: true,
       },
       {

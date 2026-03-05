@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-marketing/tickets/M0001-brand-guidelines/requirements" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.9.2">
+<title data-rh="true">Requirements Specification | Sentient Factory</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://sentient.fr-labs.my.id/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://sentient.fr-labs.my.id/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/M0001-brand-guidelines/requirements"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Requirements Specification | Sentient Factory"><meta data-rh="true" name="description" content="📋 Functional Requirements"><meta data-rh="true" property="og:description" content="📋 Functional Requirements"><link data-rh="true" rel="icon" href="/docs/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/M0001-brand-guidelines/requirements"><link data-rh="true" rel="alternate" href="https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/M0001-brand-guidelines/requirements" hreflang="en"><link data-rh="true" rel="alternate" href="https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/M0001-brand-guidelines/requirements" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Marketing","item":"https://sentient.fr-labs.my.id/docs/docs/category/marketing"},{"@type":"ListItem","position":2,"name":"Marketing Documentation Tickets","item":"https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/"},{"@type":"ListItem","position":3,"name":"M0001 - Brand Guidelines Documentation","item":"https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/M0001-brand-guidelines/"},{"@type":"ListItem","position":4,"name":"Requirements Specification","item":"https://sentient.fr-labs.my.id/docs/docs/marketing/tickets/M0001-brand-guidelines/requirements"}]}</script><link rel="alternate" type="application/rss+xml" href="/docs/blog/rss.xml" title="Sentient Factory RSS Feed">
+<link rel="alternate" type="application/atom+xml" href="/docs/blog/atom.xml" title="Sentient Factory Atom Feed"><link rel="stylesheet" href="/docs/assets/css/styles.c51ffe61.css">
+<script src="/docs/assets/js/runtime~main.e808ae7b.js" defer="defer"></script>
+<script src="/docs/assets/js/main.4cec3915.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/"><div class="navbar__logo"><img src="/docs/img/logo.svg" alt="Sentient Factory Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/docs/img/logo.svg" alt="Sentient Factory Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">Sentient Factory</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/docs/intro">Documentation</a><a class="navbar__item navbar__link" href="/docs/blog">Blog</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/sentient-factory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/docs/intro"><span title="Sentient Factory Documentation" class="linkLabel_WmDU">Sentient Factory Documentation</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/architecture"><span title="Architecture" class="categoryLinkLabel_W154">Architecture</span></a><button aria-label="Expand sidebar category &#x27;Architecture&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-gateway"><span title="Api Gateway" class="categoryLinkLabel_W154">Api Gateway</span></a><button aria-label="Expand sidebar category &#x27;Api Gateway&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-agents"><span title="Api Agents" class="categoryLinkLabel_W154">Api Agents</span></a><button aria-label="Expand sidebar category &#x27;Api Agents&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-reference"><span title="API Reference" class="categoryLinkLabel_W154">API Reference</span></a><button aria-label="Expand sidebar category &#x27;API Reference&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/frontend"><span title="Frontend" class="categoryLinkLabel_W154">Frontend</span></a><button aria-label="Expand sidebar category &#x27;Frontend&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" href="/docs/docs/category/marketing"><span title="Marketing" class="categoryLinkLabel_W154">Marketing</span></a><button aria-label="Collapse sidebar category &#x27;Marketing&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/landing-page-copy"><span title="Landing Page Copy" class="linkLabel_WmDU">Landing Page Copy</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/brand-guidelines"><span title="Brand Guidelines" class="linkLabel_WmDU">Brand Guidelines</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/messaging-framework"><span title="Messaging Framework" class="linkLabel_WmDU">Messaging Framework</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/ticket-list"><span title="Marketing Documentation Tickets" class="linkLabel_WmDU">Marketing Documentation Tickets</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" tabindex="0" href="/docs/docs/marketing/tickets/"><span title="Marketing Documentation Tickets" class="categoryLinkLabel_W154">Marketing Documentation Tickets</span></a><button aria-label="Collapse sidebar category &#x27;Marketing Documentation Tickets&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" tabindex="0" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/"><span title="M0001 - Brand Guidelines Documentation" class="categoryLinkLabel_W154">M0001 - Brand Guidelines Documentation</span></a><button aria-label="Collapse sidebar category &#x27;M0001 - Brand Guidelines Documentation&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/deliverables"><span title="Deliverables List" class="linkLabel_WmDU">Deliverables List</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/requirements"><span title="Requirements Specification" class="linkLabel_WmDU">Requirements Specification</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/user-story"><span title="User Stories &amp; Acceptance Criteria" class="linkLabel_WmDU">User Stories &amp; Acceptance Criteria</span></a></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0002-landing-page-copy/"><span title="M0002 - Landing Page Copy Framework" class="linkLabel_WmDU">M0002 - Landing Page Copy Framework</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0003-messaging-framework/"><span title="M0003 - Messaging Framework Documentation" class="linkLabel_WmDU">M0003 - Messaging Framework Documentation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0004-seo-documentation/"><span title="M0004 - SEO Documentation" class="linkLabel_WmDU">M0004 - SEO Documentation</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0005-social-media-guidelines/"><span title="M0005 - Social Media Guidelines" class="linkLabel_WmDU">M0005 - Social Media Guidelines</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0006-email-marketing-templates/"><span title="M0006 - Email Marketing Templates" class="linkLabel_WmDU">M0006 - Email Marketing Templates</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0007-case-studies-framework/"><span title="M0007 - Case Studies Framework" class="linkLabel_WmDU">M0007 - Case Studies Framework</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/tickets/M0008-analytics-reporting/"><span title="M0008 - Analytics &amp; Reporting" class="linkLabel_WmDU">M0008 - Analytics &amp; Reporting</span></a></li></ul></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/docs/contributing"><span title="Contributing" class="linkLabel_WmDU">Contributing</span></a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/docs/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/docs/category/marketing"><span>Marketing</span></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/docs/marketing/tickets/"><span>Marketing Documentation Tickets</span></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/"><span>M0001 - Brand Guidelines Documentation</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Requirements Specification</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Requirements Specification</h1></header>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="-functional-requirements">📋 Functional Requirements<a href="#-functional-requirements" class="hash-link" aria-label="Direct link to 📋 Functional Requirements" title="Direct link to 📋 Functional Requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-001-brand-philosophy-documentation">FR-001: Brand Philosophy Documentation<a href="#fr-001-brand-philosophy-documentation" class="hash-link" aria-label="Direct link to FR-001: Brand Philosophy Documentation" title="Direct link to FR-001: Brand Philosophy Documentation" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-001<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Document the core brand philosophy including mission, vision, values, and personality.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-001.1</strong>: Create mission statement section</p>
+<ul>
+<li class="">Clear, concise statement of purpose</li>
+<li class="">Maximum 2 sentences</li>
+<li class="">Inspirational and memorable</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-001.2</strong>: Create vision statement section</p>
+<ul>
+<li class="">Future-oriented statement</li>
+<li class="">Desired impact and legacy</li>
+<li class="">Maximum 3 sentences</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-001.3</strong>: Document brand values</p>
+<ul>
+<li class="">3-5 core values</li>
+<li class="">Each value with definition</li>
+<li class="">Behavioral examples for each value</li>
+<li class="">How values guide decision-making</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-001.4</strong>: Define brand personality</p>
+<ul>
+<li class="">3-5 personality traits</li>
+<li class="">Trait descriptions with examples</li>
+<li class="">How personality manifests in communications</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-001.5</strong>: Target audience definition</p>
+<ul>
+<li class="">Primary audience personas</li>
+<li class="">Secondary audience segments</li>
+<li class="">Audience needs and pain points</li>
+<li class="">How brand addresses audience needs</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-002-logo-system">FR-002: Logo System<a href="#fr-002-logo-system" class="hash-link" aria-label="Direct link to FR-002: Logo System" title="Direct link to FR-002: Logo System" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-002<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Comprehensive logo usage guidelines with all variations and rules.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-002.1</strong>: Primary logo specifications</p>
+<ul>
+<li class="">Full-color version (PNG, SVG, PDF)</li>
+<li class="">Black and white version</li>
+<li class="">Minimum size requirements</li>
+<li class="">Clear space requirements (padding)</li>
+<li class="">Incorrect usage examples</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-002.2</strong>: Secondary logo variations</p>
+<ul>
+<li class="">Icon-only version</li>
+<li class="">Wordmark version</li>
+<li class="">Stacked vs. horizontal versions</li>
+<li class="">Usage context for each variation</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-002.3</strong>: Logo usage rules</p>
+<ul>
+<li class="">Background color restrictions</li>
+<li class="">Scaling and proportion rules</li>
+<li class="">Placement guidelines</li>
+<li class="">Digital vs. print specifications</li>
+<li class="">Animation guidelines (if applicable)</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-002.4</strong>: Logo file formats</p>
+<ul>
+<li class="">Vector formats (SVG, AI, EPS)</li>
+<li class="">Raster formats (PNG with transparency)</li>
+<li class="">Print formats (PDF, TIFF)</li>
+<li class="">Web-optimized versions</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-003-color-palette">FR-003: Color Palette<a href="#fr-003-color-palette" class="hash-link" aria-label="Direct link to FR-003: Color Palette" title="Direct link to FR-003: Color Palette" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-003<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Complete color system with primary, secondary, and accent colors.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-003.1</strong>: Primary color specifications</p>
+<ul>
+<li class="">Main brand color (HEX, RGB, CMYK, Pantone)</li>
+<li class="">Dark and light variations</li>
+<li class="">Usage percentage guidelines</li>
+<li class="">Emotional association explanation</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-003.2</strong>: Secondary color palette</p>
+<ul>
+<li class="">3-5 supporting colors</li>
+<li class="">Each with HEX, RGB, CMYK values</li>
+<li class="">Usage context for each color</li>
+<li class="">Color combination examples</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-003.3</strong>: Accent colors</p>
+<ul>
+<li class="">Call-to-action colors</li>
+<li class="">Success/warning/error colors</li>
+<li class="">Data visualization colors</li>
+<li class="">Accessibility contrast ratios</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-003.4</strong>: Color accessibility</p>
+<ul>
+<li class="">WCAG 2.1 compliance guidelines</li>
+<li class="">Minimum contrast ratios</li>
+<li class="">Color blindness considerations</li>
+<li class="">Testing tools and methods</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-004-typography-system">FR-004: Typography System<a href="#fr-004-typography-system" class="hash-link" aria-label="Direct link to FR-004: Typography System" title="Direct link to FR-004: Typography System" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-004<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Complete typography hierarchy and usage guidelines.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-004.1</strong>: Primary typeface</p>
+<ul>
+<li class="">Font family selection</li>
+<li class="">Weights and styles available</li>
+<li class="">Licensing information</li>
+<li class="">Download/installation instructions</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-004.2</strong>: Secondary typefaces</p>
+<ul>
+<li class="">Supporting font families</li>
+<li class="">Usage context for each</li>
+<li class="">Fallback fonts for web</li>
+<li class="">Pairing examples</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-004.3</strong>: Typography hierarchy</p>
+<ul>
+<li class="">Heading levels (H1-H6)</li>
+<li class="">Body text specifications</li>
+<li class="">Caption and label styles</li>
+<li class="">Line height and spacing</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-004.4</strong>: Usage guidelines</p>
+<ul>
+<li class="">Digital vs. print specifications</li>
+<li class="">Responsive typography scales</li>
+<li class="">Readability best practices</li>
+<li class="">Special character usage</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-005-voice--tone-guidelines">FR-005: Voice &amp; Tone Guidelines<a href="#fr-005-voice--tone-guidelines" class="hash-link" aria-label="Direct link to FR-005: Voice &amp; Tone Guidelines" title="Direct link to FR-005: Voice &amp; Tone Guidelines" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-005<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Comprehensive writing guidelines for brand communications.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-005.1</strong>: Brand voice definition</p>
+<ul>
+<li class="">3-5 voice characteristics</li>
+<li class="">Each characteristic with examples</li>
+<li class="">How voice differs from competitors</li>
+<li class="">Voice consistency across channels</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-005.2</strong>: Tone variations</p>
+<ul>
+<li class="">Formal vs. informal contexts</li>
+<li class="">Different audience tones</li>
+<li class="">Channel-specific adaptations</li>
+<li class="">Emotional tone guidelines</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-005.3</strong>: Writing guidelines</p>
+<ul>
+<li class="">Grammar and punctuation rules</li>
+<li class="">Word choice preferences</li>
+<li class="">Sentence structure guidelines</li>
+<li class="">Inclusive language standards</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-005.4</strong>: Content templates</p>
+<ul>
+<li class="">Email templates</li>
+<li class="">Social media post templates</li>
+<li class="">Blog post structure</li>
+<li class="">Case study format</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-006-imagery--photography">FR-006: Imagery &amp; Photography<a href="#fr-006-imagery--photography" class="hash-link" aria-label="Direct link to FR-006: Imagery &amp; Photography" title="Direct link to FR-006: Imagery &amp; Photography" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-006<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Guidelines for visual content including photography and illustrations.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-006.1</strong>: Photography style</p>
+<ul>
+<li class="">Lighting and composition</li>
+<li class="">Subject matter guidelines</li>
+<li class="">Color treatment and filters</li>
+<li class="">Do&#x27;s and don&#x27;ts with examples</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-006.2</strong>: Illustration system</p>
+<ul>
+<li class="">Style characteristics</li>
+<li class="">Color usage in illustrations</li>
+<li class="">Level of detail guidelines</li>
+<li class="">Custom vs. stock illustrations</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-006.3</strong>: Iconography</p>
+<ul>
+<li class="">Icon style guidelines</li>
+<li class="">Size and stroke consistency</li>
+<li class="">Semantic meaning standards</li>
+<li class="">Custom icon library</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-006.4</strong>: Image treatments</p>
+<ul>
+<li class="">Overlays and filters</li>
+<li class="">Cropping and framing</li>
+<li class="">Text overlay guidelines</li>
+<li class="">Accessibility considerations</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-007-layout--spacing">FR-007: Layout &amp; Spacing<a href="#fr-007-layout--spacing" class="hash-link" aria-label="Direct link to FR-007: Layout &amp; Spacing" title="Direct link to FR-007: Layout &amp; Spacing" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-007<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Design system for layout, grid, and spacing consistency.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-007.1</strong>: Grid system</p>
+<ul>
+<li class="">Base grid unit (8px or 4px)</li>
+<li class="">Column layouts for different formats</li>
+<li class="">Breakpoint definitions</li>
+<li class="">Responsive grid behavior</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-007.2</strong>: Spacing scale</p>
+<ul>
+<li class="">Margin and padding values</li>
+<li class="">Consistent spacing units</li>
+<li class="">Vertical rhythm guidelines</li>
+<li class="">White space usage</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-007.3</strong>: Composition principles</p>
+<ul>
+<li class="">Visual hierarchy rules</li>
+<li class="">Balance and alignment</li>
+<li class="">Focal point guidelines</li>
+<li class="">Reading patterns</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-007.4</strong>: Responsive design</p>
+<ul>
+<li class="">Mobile-first approach</li>
+<li class="">Breakpoint-specific layouts</li>
+<li class="">Touch target sizes</li>
+<li class="">Performance considerations</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="fr-008-application-examples">FR-008: Application Examples<a href="#fr-008-application-examples" class="hash-link" aria-label="Direct link to FR-008: Application Examples" title="Direct link to FR-008: Application Examples" translate="no">​</a></h3>
+<p><strong>ID</strong>: FR-008<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Real-world examples of brand application across different mediums.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>FR-008.1</strong>: Digital applications</p>
+<ul>
+<li class="">Website examples</li>
+<li class="">Mobile app screens</li>
+<li class="">Social media templates</li>
+<li class="">Email design examples</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-008.2</strong>: Print applications</p>
+<ul>
+<li class="">Business card design</li>
+<li class="">Letterhead and envelopes</li>
+<li class="">Presentation templates</li>
+<li class="">Brochure and flyer examples</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-008.3</strong>: Environmental design</p>
+<ul>
+<li class="">Office signage examples</li>
+<li class="">Event booth design</li>
+<li class="">Product packaging</li>
+<li class="">Vehicle branding</li>
+</ul>
+</li>
+<li class="">
+<p><strong>FR-008.4</strong>: Good vs. bad examples</p>
+<ul>
+<li class="">Side-by-side comparisons</li>
+<li class="">Common mistakes to avoid</li>
+<li class="">Improvement examples</li>
+<li class="">Before/after transformations</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="-non-functional-requirements">🎨 Non-Functional Requirements<a href="#-non-functional-requirements" class="hash-link" aria-label="Direct link to 🎨 Non-Functional Requirements" title="Direct link to 🎨 Non-Functional Requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="nfr-001-usability">NFR-001: Usability<a href="#nfr-001-usability" class="hash-link" aria-label="Direct link to NFR-001: Usability" title="Direct link to NFR-001: Usability" translate="no">​</a></h3>
+<p><strong>ID</strong>: NFR-001<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Guidelines must be easy to understand and use by all team members.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>NFR-001.1</strong>: Readability</p>
+<ul>
+<li class="">Flesch-Kincaid grade level ≤ 10</li>
+<li class="">Clear section headings</li>
+<li class="">Consistent terminology</li>
+<li class="">Glossary of terms</li>
+</ul>
+</li>
+<li class="">
+<p><strong>NFR-001.2</strong>: Navigation</p>
+<ul>
+<li class="">Table of contents with links</li>
+<li class="">Search functionality</li>
+<li class="">Cross-references between sections</li>
+<li class="">Quick reference guides</li>
+</ul>
+</li>
+<li class="">
+<p><strong>NFR-001.3</strong>: Accessibility</p>
+<ul>
+<li class="">WCAG 2.1 AA compliance</li>
+<li class="">Screen reader compatible</li>
+<li class="">High contrast options</li>
+<li class="">Keyboard navigation support</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="nfr-002-maintainability">NFR-002: Maintainability<a href="#nfr-002-maintainability" class="hash-link" aria-label="Direct link to NFR-002: Maintainability" title="Direct link to NFR-002: Maintainability" translate="no">​</a></h3>
+<p><strong>ID</strong>: NFR-002<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Guidelines must be easy to update and maintain over time.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>NFR-002.1</strong>: Version control</p>
+<ul>
+<li class="">Clear version numbering system</li>
+<li class="">Change log documentation</li>
+<li class="">Archive of previous versions</li>
+<li class="">Update notification process</li>
+</ul>
+</li>
+<li class="">
+<p><strong>NFR-002.2</strong>: Modular structure</p>
+<ul>
+<li class="">Independent sections</li>
+<li class="">Reusable components</li>
+<li class="">Easy to update individual elements</li>
+<li class="">No broken references</li>
+</ul>
+</li>
+<li class="">
+<p><strong>NFR-002.3</strong>: Update process</p>
+<ul>
+<li class="">Clear update workflow</li>
+<li class="">Review and approval process</li>
+<li class="">Communication plan for changes</li>
+<li class="">Training for updates</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="nfr-003-performance">NFR-003: Performance<a href="#nfr-003-performance" class="hash-link" aria-label="Direct link to NFR-003: Performance" title="Direct link to NFR-003: Performance" translate="no">​</a></h3>
+<p><strong>ID</strong>: NFR-003<br>
+<strong>Priority</strong>: Low<br>
+<strong>Description</strong>: Guidelines and assets must load efficiently.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>NFR-003.1</strong>: Load time</p>
+<ul>
+<li class="">Main document loads in &lt; 3 seconds</li>
+<li class="">Images optimized for web</li>
+<li class="">Lazy loading for heavy assets</li>
+<li class="">CDN for asset delivery</li>
+</ul>
+</li>
+<li class="">
+<p><strong>NFR-003.2</strong>: Asset optimization</p>
+<ul>
+<li class="">SVG optimization for logos</li>
+<li class="">WebP format for photographs</li>
+<li class="">Proper image compression</li>
+<li class="">Font subsetting for web fonts</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="nfr-004-security">NFR-004: Security<a href="#nfr-004-security" class="hash-link" aria-label="Direct link to NFR-004: Security" title="Direct link to NFR-004: Security" translate="no">​</a></h3>
+<p><strong>ID</strong>: NFR-004<br>
+<strong>Priority</strong>: Low<br>
+<strong>Description</strong>: Protect brand assets from unauthorized use.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>NFR-004.1</strong>: Access control</p>
+<ul>
+<li class="">Internal vs. external versions</li>
+<li class="">Password protection for sensitive assets</li>
+<li class="">Download tracking</li>
+<li class="">Usage terms and conditions</li>
+</ul>
+</li>
+<li class="">
+<p><strong>NFR-004.2</strong>: Asset protection</p>
+<ul>
+<li class="">Watermarking for preview assets</li>
+<li class="">Low-resolution versions for external use</li>
+<li class="">Copyright notices</li>
+<li class="">Trademark protection guidelines</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="-technical-requirements">📊 Technical Requirements<a href="#-technical-requirements" class="hash-link" aria-label="Direct link to 📊 Technical Requirements" title="Direct link to 📊 Technical Requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="tr-001-file-formats">TR-001: File Formats<a href="#tr-001-file-formats" class="hash-link" aria-label="Direct link to TR-001: File Formats" title="Direct link to TR-001: File Formats" translate="no">​</a></h3>
+<p><strong>ID</strong>: TR-001<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Specific file format requirements for different use cases.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>TR-001.1</strong>: Document formats</p>
+<ul>
+<li class="">Markdown for documentation</li>
+<li class="">PDF for print distribution</li>
+<li class="">HTML for web viewing</li>
+<li class="">Notion for collaborative editing</li>
+</ul>
+</li>
+<li class="">
+<p><strong>TR-001.2</strong>: Image formats</p>
+<ul>
+<li class="">SVG for logos and icons</li>
+<li class="">PNG for web graphics</li>
+<li class="">JPEG for photographs</li>
+<li class="">WebP for optimized delivery</li>
+</ul>
+</li>
+<li class="">
+<p><strong>TR-001.3</strong>: Design files</p>
+<ul>
+<li class="">Figma for design system</li>
+<li class="">Adobe Illustrator for vector assets</li>
+<li class="">Adobe Photoshop for raster assets</li>
+<li class="">Sketch files for Mac users</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="tr-002-asset-organization">TR-002: Asset Organization<a href="#tr-002-asset-organization" class="hash-link" aria-label="Direct link to TR-002: Asset Organization" title="Direct link to TR-002: Asset Organization" translate="no">​</a></h3>
+<p><strong>ID</strong>: TR-002<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Structured organization system for all brand assets.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>TR-002.1</strong>: Folder structure</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">brand-assets/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── logos/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   ├── primary/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   ├── secondary/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   └── variations/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── colors/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   ├── palettes/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   └── swatches/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── typography/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   ├── fonts/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   └── examples/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── imagery/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   ├── photography/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   ├── illustrations/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">│   └── icons/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">└── templates/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    ├── digital/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    ├── print/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">    └── environmental/</span><br></span></code></pre></div></div>
+</li>
+<li class="">
+<p><strong>TR-002.2</strong>: Naming conventions</p>
+<ul>
+<li class="">Consistent file naming</li>
+<li class="">Version numbers in filenames</li>
+<li class="">Descriptive names</li>
+<li class="">Date stamps for updates</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="tr-003-delivery-platform">TR-003: Delivery Platform<a href="#tr-003-delivery-platform" class="hash-link" aria-label="Direct link to TR-003: Delivery Platform" title="Direct link to TR-003: Delivery Platform" translate="no">​</a></h3>
+<p><strong>ID</strong>: TR-003<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Platform requirements for hosting and distributing guidelines.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>TR-003.1</strong>: Hosting platform</p>
+<ul>
+<li class="">GitHub for version control</li>
+<li class="">Notion for collaborative access</li>
+<li class="">Company intranet for internal distribution</li>
+<li class="">Public website for external access</li>
+</ul>
+</li>
+<li class="">
+<p><strong>TR-003.2</strong>: Access requirements</p>
+<ul>
+<li class="">Single sign-on integration</li>
+<li class="">Role-based access control</li>
+<li class="">Mobile responsive access</li>
+<li class="">Offline access capability</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="-integration-requirements">🔧 Integration Requirements<a href="#-integration-requirements" class="hash-link" aria-label="Direct link to 🔧 Integration Requirements" title="Direct link to 🔧 Integration Requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ir-001-design-tool-integration">IR-001: Design Tool Integration<a href="#ir-001-design-tool-integration" class="hash-link" aria-label="Direct link to IR-001: Design Tool Integration" title="Direct link to IR-001: Design Tool Integration" translate="no">​</a></h3>
+<p><strong>ID</strong>: IR-001<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Integration with common design tools.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>IR-001.1</strong>: Figma integration</p>
+<ul>
+<li class="">Design system in Figma</li>
+<li class="">Component library</li>
+<li class="">Style guide sync</li>
+<li class="">Version history</li>
+</ul>
+</li>
+<li class="">
+<p><strong>IR-001.2</strong>: Adobe Creative Cloud</p>
+<ul>
+<li class="">Color swatch files</li>
+<li class="">Character style sheets</li>
+<li class="">Linked asset libraries</li>
+<li class="">Template files</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="ir-002-development-integration">IR-002: Development Integration<a href="#ir-002-development-integration" class="hash-link" aria-label="Direct link to IR-002: Development Integration" title="Direct link to IR-002: Development Integration" translate="no">​</a></h3>
+<p><strong>ID</strong>: IR-002<br>
+<strong>Priority</strong>: Low<br>
+<strong>Description</strong>: Integration with development workflows.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>IR-002.1</strong>: CSS/SCSS variables</p>
+<ul>
+<li class="">Color variables</li>
+<li class="">Typography variables</li>
+<li class="">Spacing variables</li>
+<li class="">Breakpoint variables</li>
+</ul>
+</li>
+<li class="">
+<p><strong>IR-002.2</strong>: Design token system</p>
+<ul>
+<li class="">JSON format for design tokens</li>
+<li class="">Platform-agnostic tokens</li>
+<li class="">Build process integration</li>
+<li class="">Automated updates</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="-quality-requirements">📈 Quality Requirements<a href="#-quality-requirements" class="hash-link" aria-label="Direct link to 📈 Quality Requirements" title="Direct link to 📈 Quality Requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="qr-001-consistency">QR-001: Consistency<a href="#qr-001-consistency" class="hash-link" aria-label="Direct link to QR-001: Consistency" title="Direct link to QR-001: Consistency" translate="no">​</a></h3>
+<p><strong>ID</strong>: QR-001<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Ensure consistency across all brand materials.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>QR-001.1</strong>: Design consistency</p>
+<ul>
+<li class="">95% consistency score across materials</li>
+<li class="">Regular brand audits</li>
+<li class="">Consistency checklist</li>
+<li class="">Automated checking tools</li>
+</ul>
+</li>
+<li class="">
+<p><strong>QR-001.2</strong>: Content consistency</p>
+<ul>
+<li class="">Voice consistency score ≥ 90%</li>
+<li class="">Terminology consistency</li>
+<li class="">Message alignment</li>
+<li class="">Regular content reviews</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="qr-002-completeness">QR-002: Completeness<a href="#qr-002-completeness" class="hash-link" aria-label="Direct link to QR-002: Completeness" title="Direct link to QR-002: Completeness" translate="no">​</a></h3>
+<p><strong>ID</strong>: QR-002<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Ensure all necessary elements are documented.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>QR-002.1</strong>: Coverage completeness</p>
+<ul>
+<li class="">100% of required sections documented</li>
+<li class="">No missing asset types</li>
+<li class="">All use cases covered</li>
+<li class="">Regular gap analysis</li>
+</ul>
+</li>
+<li class="">
+<p><strong>QR-002.2</strong>: Detail completeness</p>
+<ul>
+<li class="">All specifications include measurements</li>
+<li class="">Every rule has examples</li>
+<li class="">All assets have multiple formats</li>
+<li class="">Regular detail reviews</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="-deployment-requirements">🚀 Deployment Requirements<a href="#-deployment-requirements" class="hash-link" aria-label="Direct link to 🚀 Deployment Requirements" title="Direct link to 🚀 Deployment Requirements" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="dr-001-rollout-plan">DR-001: Rollout Plan<a href="#dr-001-rollout-plan" class="hash-link" aria-label="Direct link to DR-001: Rollout Plan" title="Direct link to DR-001: Rollout Plan" translate="no">​</a></h3>
+<p><strong>ID</strong>: DR-001<br>
+<strong>Priority</strong>: High<br>
+<strong>Description</strong>: Structured rollout plan for brand guidelines.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>DR-001.1</strong>: Phased rollout</p>
+<ul>
+<li class="">Phase 1: Core team adoption</li>
+<li class="">Phase 2: Department-wide adoption</li>
+<li class="">Phase 3: Company-wide adoption</li>
+<li class="">Phase 4: External partner adoption</li>
+</ul>
+</li>
+<li class="">
+<p><strong>DR-001.2</strong>: Training program</p>
+<ul>
+<li class="">Onboarding training for new hires</li>
+<li class="">Refresher training for existing staff</li>
+<li class="">Manager training for enforcement</li>
+<li class="">External partner training</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="dr-002-support-requirements">DR-002: Support Requirements<a href="#dr-002-support-requirements" class="hash-link" aria-label="Direct link to DR-002: Support Requirements" title="Direct link to DR-002: Support Requirements" translate="no">​</a></h3>
+<p><strong>ID</strong>: DR-002<br>
+<strong>Priority</strong>: Medium<br>
+<strong>Description</strong>: Support system for brand guideline users.</p>
+<p><strong>Requirements</strong>:</p>
+<ol>
+<li class="">
+<p><strong>DR-002.1</strong>: Help resources</p>
+<ul>
+<li class="">FAQ section</li>
+<li class="">Contact information</li>
+<li class="">Support ticket system</li>
+<li class="">Office hours for questions</li>
+</ul>
+</li>
+<li class="">
+<p><strong>DR-002.2</strong>: Feedback system</p>
+<ul>
+<li class="">Suggestion submission process</li>
+<li class="">Regular feedback collection</li>
+<li class="">Improvement prioritization</li>
+<li class="">Change notification system</li>
+</ul>
+</li>
+</ol></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href="https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0001-brand-guidelines/requirements.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/deliverables"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Deliverables List</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/docs/marketing/tickets/M0001-brand-guidelines/user-story"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">User Stories &amp; Acceptance Criteria</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#-functional-requirements" class="table-of-contents__link toc-highlight">📋 Functional Requirements</a><ul><li><a href="#fr-001-brand-philosophy-documentation" class="table-of-contents__link toc-highlight">FR-001: Brand Philosophy Documentation</a></li><li><a href="#fr-002-logo-system" class="table-of-contents__link toc-highlight">FR-002: Logo System</a></li><li><a href="#fr-003-color-palette" class="table-of-contents__link toc-highlight">FR-003: Color Palette</a></li><li><a href="#fr-004-typography-system" class="table-of-contents__link toc-highlight">FR-004: Typography System</a></li><li><a href="#fr-005-voice--tone-guidelines" class="table-of-contents__link toc-highlight">FR-005: Voice &amp; Tone Guidelines</a></li><li><a href="#fr-006-imagery--photography" class="table-of-contents__link toc-highlight">FR-006: Imagery &amp; Photography</a></li><li><a href="#fr-007-layout--spacing" class="table-of-contents__link toc-highlight">FR-007: Layout &amp; Spacing</a></li><li><a href="#fr-008-application-examples" class="table-of-contents__link toc-highlight">FR-008: Application Examples</a></li></ul></li><li><a href="#-non-functional-requirements" class="table-of-contents__link toc-highlight">🎨 Non-Functional Requirements</a><ul><li><a href="#nfr-001-usability" class="table-of-contents__link toc-highlight">NFR-001: Usability</a></li><li><a href="#nfr-002-maintainability" class="table-of-contents__link toc-highlight">NFR-002: Maintainability</a></li><li><a href="#nfr-003-performance" class="table-of-contents__link toc-highlight">NFR-003: Performance</a></li><li><a href="#nfr-004-security" class="table-of-contents__link toc-highlight">NFR-004: Security</a></li></ul></li><li><a href="#-technical-requirements" class="table-of-contents__link toc-highlight">📊 Technical Requirements</a><ul><li><a href="#tr-001-file-formats" class="table-of-contents__link toc-highlight">TR-001: File Formats</a></li><li><a href="#tr-002-asset-organization" class="table-of-contents__link toc-highlight">TR-002: Asset Organization</a></li><li><a href="#tr-003-delivery-platform" class="table-of-contents__link toc-highlight">TR-003: Delivery Platform</a></li></ul></li><li><a href="#-integration-requirements" class="table-of-contents__link toc-highlight">🔧 Integration Requirements</a><ul><li><a href="#ir-001-design-tool-integration" class="table-of-contents__link toc-highlight">IR-001: Design Tool Integration</a></li><li><a href="#ir-002-development-integration" class="table-of-contents__link toc-highlight">IR-002: Development Integration</a></li></ul></li><li><a href="#-quality-requirements" class="table-of-contents__link toc-highlight">📈 Quality Requirements</a><ul><li><a href="#qr-001-consistency" class="table-of-contents__link toc-highlight">QR-001: Consistency</a></li><li><a href="#qr-002-completeness" class="table-of-contents__link toc-highlight">QR-002: Completeness</a></li></ul></li><li><a href="#-deployment-requirements" class="table-of-contents__link toc-highlight">🚀 Deployment Requirements</a><ul><li><a href="#dr-001-rollout-plan" class="table-of-contents__link toc-highlight">DR-001: Rollout Plan</a></li><li><a href="#dr-002-support-requirements" class="table-of-contents__link toc-highlight">DR-002: Support Requirements</a></li></ul></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/docs/intro">Getting Started</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/category/api-reference">API Reference</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/category/architecture">Architecture</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/sentient-factory/discussions" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub Discussions<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://discord.gg/sentient-factory" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://twitter.com/sentientfactory" target="_blank" rel="noopener noreferrer" class="footer__link-item">Twitter<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/blog">Blog</a></li><li class="footer__item"><a href="https://github.com/sentient-factory" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/contributing">Contributing</a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Sentient Factory Project. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "id": "contributing",
+  "title": "Contributing",
+  "description": "Panduan kontribusi dokumentasi Sentient Factory.",
+  "source": "@site/docs/contributing.md",
+  "sourceDirName": ".",
+  "slug": "/contributing",
+  "permalink": "/docs/docs/contributing",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/contributing.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "M0008 - Analytics & Reporting",
+    "permalink": "/docs/docs/marketing/tickets/M0008-analytics-reporting/"
+  }
+}

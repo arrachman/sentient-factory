@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0002-landing-page-copy/README",
+  "title": "M0002 - Landing Page Copy Framework",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0002-landing-page-copy/README.md",
+  "sourceDirName": "06-marketing/tickets/M0002-landing-page-copy",
+  "slug": "/marketing/tickets/M0002-landing-page-copy/",
+  "permalink": "/docs/docs/marketing/tickets/M0002-landing-page-copy/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0002-landing-page-copy/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "User Stories & Acceptance Criteria",
+    "permalink": "/docs/docs/marketing/tickets/M0001-brand-guidelines/user-story"
+  },
+  "next": {
+    "title": "M0003 - Messaging Framework Documentation",
+    "permalink": "/docs/docs/marketing/tickets/M0003-messaging-framework/"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "frontend/tickets/F0000",
+  "title": "Admin UI Scaffolding (Static)",
+  "description": "Overview",
+  "source": "@site/docs/04-frontend/tickets/F0000.md",
+  "sourceDirName": "04-frontend/tickets",
+  "slug": "/frontend/tickets/F0000",
+  "permalink": "/docs/docs/frontend/tickets/F0000",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/04-frontend/tickets/F0000.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "ticket_id": "F0000",
+    "title": "Admin UI Scaffolding (Static)",
+    "phase": "0 - Initial Setup",
+    "priority": "High",
+    "estimate": "1-2 days",
+    "status": "Completed",
+    "dependencies": "None",
+    "assignee": null,
+    "created_date": "2025-02-08T00:00:00.000Z",
+    "due_date": null
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Frontend Admin Module Tickets",
+    "permalink": "/docs/docs/frontend/tickets/"
+  },
+  "next": {
+    "title": "Login System Implementation",
+    "permalink": "/docs/docs/frontend/tickets/F0001"
+  }
+}

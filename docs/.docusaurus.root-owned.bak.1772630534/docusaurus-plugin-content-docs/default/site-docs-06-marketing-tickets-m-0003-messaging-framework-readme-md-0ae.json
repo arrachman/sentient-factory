@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0003-messaging-framework/README",
+  "title": "M0003 - Messaging Framework Documentation",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0003-messaging-framework/README.md",
+  "sourceDirName": "06-marketing/tickets/M0003-messaging-framework",
+  "slug": "/marketing/tickets/M0003-messaging-framework/",
+  "permalink": "/docs/docs/marketing/tickets/M0003-messaging-framework/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0003-messaging-framework/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "M0002 - Landing Page Copy Framework",
+    "permalink": "/docs/docs/marketing/tickets/M0002-landing-page-copy/"
+  },
+  "next": {
+    "title": "M0004 - SEO Documentation",
+    "permalink": "/docs/docs/marketing/tickets/M0004-seo-documentation/"
+  }
+}

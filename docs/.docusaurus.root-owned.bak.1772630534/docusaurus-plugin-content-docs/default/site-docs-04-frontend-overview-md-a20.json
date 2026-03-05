@@ -1,0 +1,24 @@
+{
+  "id": "frontend/overview",
+  "title": "Frontend Overview",
+  "description": "🎯 Introduction",
+  "source": "@site/docs/04-frontend/overview.md",
+  "sourceDirName": "04-frontend",
+  "slug": "/frontend/overview",
+  "permalink": "/docs/docs/frontend/overview",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/04-frontend/overview.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Components Architecture",
+    "permalink": "/docs/docs/frontend/components-architecture"
+  },
+  "next": {
+    "title": "State Management",
+    "permalink": "/docs/docs/frontend/state-management"
+  }
+}

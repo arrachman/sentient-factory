@@ -1,0 +1,24 @@
+{
+  "id": "api-gateway/details/B0005-user-management",
+  "title": "B0005: User Management Module",
+  "description": "Description",
+  "source": "@site/docs/02-api-gateway/details/B0005-user-management.md",
+  "sourceDirName": "02-api-gateway/details",
+  "slug": "/api-gateway/details/B0005-user-management",
+  "permalink": "/docs/docs/api-gateway/details/B0005-user-management",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/02-api-gateway/details/B0005-user-management.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "B0004: Security Middleware",
+    "permalink": "/docs/docs/api-gateway/details/B0004-security-middleware"
+  },
+  "next": {
+    "title": "B0006: Role & Permission Module",
+    "permalink": "/docs/docs/api-gateway/details/B0006-role-permission"
+  }
+}

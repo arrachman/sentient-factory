@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0001-brand-guidelines/README",
+  "title": "M0001 - Brand Guidelines Documentation",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0001-brand-guidelines/README.md",
+  "sourceDirName": "06-marketing/tickets/M0001-brand-guidelines",
+  "slug": "/marketing/tickets/M0001-brand-guidelines/",
+  "permalink": "/docs/docs/marketing/tickets/M0001-brand-guidelines/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0001-brand-guidelines/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Marketing Documentation Tickets",
+    "permalink": "/docs/docs/marketing/tickets/"
+  },
+  "next": {
+    "title": "Deliverables List",
+    "permalink": "/docs/docs/marketing/tickets/M0001-brand-guidelines/deliverables"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "permalink": "/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu",
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/blog/2026-03-04-rekap-myerpplus-prefix-m3-menu-m0-menu.md",
+  "source": "@site/blog/2026-03-04-rekap-myerpplus-prefix-m3-menu-m0-menu.md",
+  "title": "Rekap Prefix m3_ di MyERPPlus Berdasarkan m0_menu",
+  "description": "Dokumen ini merangkum arti prefix m3* di schema myerpplus berdasarkan data menu pada tabel m0menu.",
+  "date": "2026-03-04T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "myerpplus",
+      "permalink": "/docs/blog/tags/myerpplus"
+    },
+    {
+      "inline": true,
+      "label": "database",
+      "permalink": "/docs/blog/tags/database"
+    },
+    {
+      "inline": true,
+      "label": "mapping",
+      "permalink": "/docs/blog/tags/mapping"
+    },
+    {
+      "inline": true,
+      "label": "warehouse",
+      "permalink": "/docs/blog/tags/warehouse"
+    }
+  ],
+  "readingTime": 1.17,
+  "hasTruncateMarker": false,
+  "authors": [
+    {
+      "name": "Yangshun Tay",
+      "title": "Ex-Meta Staff Engineer, Co-founder GreatFrontEnd",
+      "url": "https://linkedin.com/in/yangshun",
+      "page": {
+        "permalink": "/docs/blog/authors/yangshun"
+      },
+      "socials": {
+        "x": "https://x.com/yangshunz",
+        "linkedin": "https://www.linkedin.com/in/yangshun/",
+        "github": "https://github.com/yangshun",
+        "newsletter": "https://www.greatfrontend.com"
+      },
+      "imageURL": "https://github.com/yangshun.png",
+      "key": "yangshun"
+    }
+  ],
+  "frontMatter": {
+    "slug": "rekap-myerpplus-prefix-m3-menu-m0-menu",
+    "title": "Rekap Prefix m3_ di MyERPPlus Berdasarkan m0_menu",
+    "authors": [
+      "yangshun"
+    ],
+    "tags": [
+      "myerpplus",
+      "database",
+      "mapping",
+      "warehouse"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Pemetaan DB myerpplus Prefix m4_ (Purchasing dan Account Payable)",
+    "permalink": "/docs/blog/myerpplus-m4-purchase"
+  },
+  "nextItem": {
+    "title": "Prompt Fix Dashboard Finance m2_cb (Saldo Awal COA)",
+    "permalink": "/docs/blog/prompt-fix-dashboard-finance-m2-cb"
+  }
+}

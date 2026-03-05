@@ -1,0 +1,1220 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="atom.xsl"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://sentient.fr-labs.my.id/docs/blog</id>
+    <title>Sentient Factory Blog</title>
+    <updated>2026-03-04T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://sentient.fr-labs.my.id/docs/blog"/>
+    <subtitle>Sentient Factory Blog</subtitle>
+    <icon>https://sentient.fr-labs.my.id/docs/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Pemetaan DB myerpplus Prefix m4_ (Purchasing dan Account Payable)]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase"/>
+        <updated>2026-03-04T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Dokumentasi struktur tabel m4_ pada database myerpplus, termasuk domain proses, pola penamaan tabel, dan mapping kode dokumen pembelian.]]></summary>
+        <content type="html"><![CDATA[<p>Artikel ini merangkum hasil pengecekan langsung schema <code>myerpplus</code> untuk semua tabel dengan prefix <code>m4_</code>.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="ringkasan-cepat">Ringkasan Cepat<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#ringkasan-cepat" class="hash-link" aria-label="Direct link to Ringkasan Cepat" title="Direct link to Ringkasan Cepat" translate="no">​</a></h2>
+<ul>
+<li class="">Total tabel prefix <code>m4_</code>: <strong>136 tabel</strong></li>
+<li class="">Domain utama: <strong>Pembelian (Purchasing)</strong> + <strong>Hutang Dagang (Account Payable)</strong></li>
+<li class="">Pola umum per dokumen:<!-- -->
+<ul>
+<li class="">header: <code>m4_&lt;kode&gt;</code></li>
+<li class="">detail: <code>m4_&lt;kode&gt;_detail</code></li>
+<li class="">histori: <code>m4_&lt;kode&gt;_history</code>, <code>m4_&lt;kode&gt;_detail_history</code></li>
+<li class="">enriched view/data: <code>m4_&lt;kode&gt;_v</code>, <code>m4_&lt;kode&gt;_getdata</code></li>
+<li class="">relasi dokumen: <code>m4_&lt;kode&gt;_terkait</code></li>
+<li class="">pembayaran: <code>m4_&lt;kode&gt;_pay</code></li>
+<li class="">biaya tambahan: <code>m4_&lt;kode&gt;_cost</code></li>
+</ul>
+</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="mapping-kode-dokumen-m4_">Mapping Kode Dokumen m4_<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#mapping-kode-dokumen-m4_" class="hash-link" aria-label="Direct link to Mapping Kode Dokumen m4_" title="Direct link to Mapping Kode Dokumen m4_" translate="no">​</a></h2>
+<p>Berdasarkan <code>m0_menu</code> module pembelian (<code>mnmoduleid = 4</code>) dan verifikasi tabel:</p>
+<ul>
+<li class=""><code>pr</code>: Permintaan Pembelian</li>
+<li class=""><code>rfq</code>: Undangan Penawaran</li>
+<li class=""><code>rq</code>: Permintaan Penawaran</li>
+<li class=""><code>bs</code>: Perbandingan Harga</li>
+<li class=""><code>po</code>: Order Pembelian</li>
+<li class=""><code>ap</code>: Uang Muka Pembelian</li>
+<li class=""><code>grn</code>: Penerimaan Barang</li>
+<li class=""><code>ri</code>: Invoice Pembelian</li>
+<li class=""><code>pp</code>: Hutang Ongkos Kirim</li>
+<li class=""><code>dnr</code>: Pengiriman Barang Retur</li>
+<li class=""><code>prt</code>: Retur Pembelian</li>
+<li class=""><code>vpp</code>: Rencana Pembayaran Hutang</li>
+<li class=""><code>vp</code>: Pembayaran Hutang</li>
+<li class=""><code>pie</code>: Tukar Faktur</li>
+<li class=""><code>ipc</code>: Kalkulasi Import</li>
+<li class="">utilitas: <code>m4_files</code>, <code>m4_notes</code></li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="jumlah-tabel-per-kode">Jumlah Tabel per Kode<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#jumlah-tabel-per-kode" class="hash-link" aria-label="Direct link to Jumlah Tabel per Kode" title="Direct link to Jumlah Tabel per Kode" translate="no">​</a></h2>
+<p>Hasil agregasi <code>information_schema.tables</code>:</p>
+<ul>
+<li class=""><code>ap</code>: 7</li>
+<li class=""><code>bs</code>: 7</li>
+<li class=""><code>cs</code>: 2</li>
+<li class=""><code>dnr</code>: 9</li>
+<li class=""><code>files</code>: 1</li>
+<li class=""><code>grn</code>: 12</li>
+<li class=""><code>ipc</code>: 2</li>
+<li class=""><code>notes</code>: 2</li>
+<li class=""><code>pie</code>: 6</li>
+<li class=""><code>po</code>: 15</li>
+<li class=""><code>pp</code>: 3</li>
+<li class=""><code>pr</code>: 11</li>
+<li class=""><code>prt</code>: 7</li>
+<li class=""><code>rfq</code>: 4</li>
+<li class=""><code>ri</code>: 13</li>
+<li class=""><code>rq</code>: 11</li>
+<li class=""><code>vp</code>: 10</li>
+<li class=""><code>vpp</code>: 14</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="ciri-kolom-bisnis-utama">Ciri Kolom Bisnis Utama<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#ciri-kolom-bisnis-utama" class="hash-link" aria-label="Direct link to Ciri Kolom Bisnis Utama" title="Direct link to Ciri Kolom Bisnis Utama" translate="no">​</a></h2>
+<p>Contoh kolom yang muncul berulang di banyak tabel <code>m4_</code>:</p>
+<ul>
+<li class="">pihak dan proses pembelian:<!-- -->
+<ul>
+<li class=""><code>supplier</code>, <code>supplierkontak</code>, <code>bagianpembelian</code>, <code>carabayar</code>, <code>tgljatuhtempo</code></li>
+</ul>
+</li>
+<li class="">barang dan gudang:<!-- -->
+<ul>
+<li class=""><code>lokasi</code>, <code>gudang</code>, <code>idbarang</code>, <code>namabarang</code>, <code>jmlbarang</code>, <code>satuanbarang</code></li>
+</ul>
+</li>
+<li class="">nilai transaksi:<!-- -->
+<ul>
+<li class=""><code>diskon</code>, <code>jmldiskon</code>, <code>pajak1</code>, <code>pajak2</code>, <code>jumlah</code>, <code>jumlahbayar</code>, <code>statusbayar</code></li>
+</ul>
+</li>
+<li class="">akun/rekening:<!-- -->
+<ul>
+<li class="">variasi kolom <code>rek...</code> seperti <code>rekdiskon</code>, <code>rekpajak1</code>, <code>rekpajak2</code>, <code>rekbayar</code></li>
+</ul>
+</li>
+</ul>
+<p>Ini menegaskan bahwa <code>m4_</code> menangani alur end-to-end dari request pembelian sampai pembayaran hutang.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="widget-dashboard-untuk-pr-permintaan-pembelian">Widget Dashboard untuk <code>PR</code> (Permintaan Pembelian)<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#widget-dashboard-untuk-pr-permintaan-pembelian" class="hash-link" aria-label="Direct link to widget-dashboard-untuk-pr-permintaan-pembelian" title="Direct link to widget-dashboard-untuk-pr-permintaan-pembelian" translate="no">​</a></h2>
+<p>Jika ingin membuat dashboard khusus <code>PR</code>, sumber utama yang paling aman adalah:</p>
+<ul>
+<li class="">header: <code>m4_pr</code></li>
+<li class="">detail: <code>m4_pr_detail</code></li>
+<li class="">histori: <code>m4_pr_history</code>, <code>m4_pr_detail_history</code></li>
+<li class="">enriched data: <code>m4_pr_getdata</code>, <code>m4_pr_v</code>, <code>m4_pr_detail_v</code></li>
+</ul>
+<p>Widget yang bisa dibuat:</p>
+<ul>
+<li class="">Total dokumen PR<!-- -->
+<ul>
+<li class="">hitung jumlah baris di <code>m4_pr</code></li>
+</ul>
+</li>
+<li class="">Total item request<!-- -->
+<ul>
+<li class="">hitung jumlah baris di <code>m4_pr_detail</code></li>
+</ul>
+</li>
+<li class="">Total quantity diminta<!-- -->
+<ul>
+<li class="">agregasi <code>SUM(jmlbarang)</code> dari <code>m4_pr_detail</code></li>
+</ul>
+</li>
+<li class="">Total jenis barang diminta<!-- -->
+<ul>
+<li class=""><code>COUNT(DISTINCT idbarang)</code> dari <code>m4_pr_detail</code></li>
+</ul>
+</li>
+<li class="">PR per lokasi<!-- -->
+<ul>
+<li class="">grup berdasarkan <code>prlokasi</code> / <code>lokasinama</code></li>
+</ul>
+</li>
+<li class="">PR per gudang<!-- -->
+<ul>
+<li class="">grup berdasarkan <code>gudang</code> / <code>gudangnama</code></li>
+</ul>
+</li>
+<li class="">Top barang paling sering diminta<!-- -->
+<ul>
+<li class="">urutkan <code>COUNT(*)</code> atau <code>SUM(jmlbarang)</code> per <code>idbarang</code></li>
+</ul>
+</li>
+<li class="">Top barang berdasarkan volume request<!-- -->
+<ul>
+<li class="">urutkan <code>SUM(jmlbarang)</code> tertinggi</li>
+</ul>
+</li>
+<li class="">Distribusi PR per tipe barang<!-- -->
+<ul>
+<li class="">grup berdasarkan <code>tipebarang</code></li>
+</ul>
+</li>
+<li class="">Tren PR harian / mingguan / bulanan<!-- -->
+<ul>
+<li class="">hitung jumlah dokumen per tanggal transaksi</li>
+</ul>
+</li>
+<li class="">Rata-rata item per dokumen PR<!-- -->
+<ul>
+<li class=""><code>COUNT(detail) / COUNT(header)</code></li>
+</ul>
+</li>
+<li class="">Rata-rata quantity per dokumen PR<!-- -->
+<ul>
+<li class=""><code>SUM(jmlbarang) / COUNT(header)</code></li>
+</ul>
+</li>
+<li class="">Status approval / progress PR<!-- -->
+<ul>
+<li class="">jika field status tersedia di header atau view <code>m4_pr_v</code></li>
+</ul>
+</li>
+<li class="">Aging PR yang belum diproses<!-- -->
+<ul>
+<li class="">selisih hari dari tanggal PR sampai hari ini untuk PR yang belum turun ke PO</li>
+</ul>
+</li>
+</ul>
+<p>Chart yang relevan:</p>
+<ul>
+<li class="">bar chart: jumlah PR per lokasi</li>
+<li class="">bar chart: top 10 barang paling sering diminta</li>
+<li class="">line chart: tren PR per hari / per bulan</li>
+<li class="">pie / donut: komposisi PR per tipe barang</li>
+<li class="">stacked bar: PR per lokasi dibagi per tipe barang</li>
+</ul>
+<p>Insight AI yang bisa dibuat:</p>
+<ul>
+<li class="">lokasi dengan request pembelian tertinggi</li>
+<li class="">barang yang paling sering memicu permintaan pembelian</li>
+<li class="">indikasi lonjakan permintaan dibanding periode sebelumnya</li>
+<li class="">item yang sering di-request tetapi belum cepat dikonversi ke PO</li>
+<li class="">potensi bottleneck approval atau proses purchasing</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="query-bantu-verifikasi">Query Bantu Verifikasi<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#query-bantu-verifikasi" class="hash-link" aria-label="Direct link to Query Bantu Verifikasi" title="Direct link to Query Bantu Verifikasi" translate="no">​</a></h2>
+<div class="language-sql codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sql codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic">-- Total tabel m4_</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">SELECT</span><span class="token plain"> </span><span class="token function" style="color:#d73a49">COUNT</span><span class="token punctuation" style="color:#393A34">(</span><span class="token operator" style="color:#393A34">*</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">FROM</span><span class="token plain"> information_schema</span><span class="token punctuation" style="color:#393A34">.</span><span class="token keyword" style="color:#00009f">tables</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">WHERE</span><span class="token plain"> table_schema</span><span class="token operator" style="color:#393A34">=</span><span class="token string" style="color:#e3116c">'myerpplus'</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token operator" style="color:#393A34">AND</span><span class="token plain"> table_name </span><span class="token operator" style="color:#393A34">LIKE</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">'m4\_%'</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">-- Daftar tabel m4_</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">SELECT</span><span class="token plain"> table_name</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">FROM</span><span class="token plain"> information_schema</span><span class="token punctuation" style="color:#393A34">.</span><span class="token keyword" style="color:#00009f">tables</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">WHERE</span><span class="token plain"> table_schema</span><span class="token operator" style="color:#393A34">=</span><span class="token string" style="color:#e3116c">'myerpplus'</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token operator" style="color:#393A34">AND</span><span class="token plain"> table_name </span><span class="token operator" style="color:#393A34">LIKE</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">'m4\_%'</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">ORDER</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">BY</span><span class="token plain"> table_name</span><span class="token punctuation" style="color:#393A34">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic">-- Rekap jumlah tabel per kode dokumen</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">SELECT</span><span class="token plain"> SUBSTRING_INDEX</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">SUBSTRING</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">table_name</span><span class="token punctuation" style="color:#393A34">,</span><span class="token number" style="color:#36acaa">4</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">'_'</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token number" style="color:#36acaa">1</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">AS</span><span class="token plain"> kode</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">       </span><span class="token function" style="color:#d73a49">COUNT</span><span class="token punctuation" style="color:#393A34">(</span><span class="token operator" style="color:#393A34">*</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">AS</span><span class="token plain"> jml_tabel</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">FROM</span><span class="token plain"> information_schema</span><span class="token punctuation" style="color:#393A34">.</span><span class="token keyword" style="color:#00009f">tables</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">WHERE</span><span class="token plain"> table_schema</span><span class="token operator" style="color:#393A34">=</span><span class="token string" style="color:#e3116c">'myerpplus'</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token operator" style="color:#393A34">AND</span><span class="token plain"> table_name </span><span class="token operator" style="color:#393A34">LIKE</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">'m4\_%'</span><span class="token plain"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">GROUP</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">BY</span><span class="token plain"> kode</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token keyword" style="color:#00009f">ORDER</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">BY</span><span class="token plain"> kode</span><span class="token punctuation" style="color:#393A34">;</span><br></span></code></pre></div></div>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="catatan-implementasi">Catatan Implementasi<a href="https://sentient.fr-labs.my.id/docs/blog/myerpplus-m4-purchase#catatan-implementasi" class="hash-link" aria-label="Direct link to Catatan Implementasi" title="Direct link to Catatan Implementasi" translate="no">​</a></h2>
+<p>Untuk integrasi dashboard/BI, pendekatan yang aman:</p>
+<ul>
+<li class="">jadikan tabel header <code>m4_&lt;kode&gt;</code> sebagai sumber status dokumen</li>
+<li class="">gabungkan dengan <code>m4_&lt;kode&gt;_detail</code> untuk item-level quantity dan amount</li>
+<li class="">pakai <code>m4_&lt;kode&gt;_history</code> untuk audit trail perubahan</li>
+<li class="">gunakan <code>m4_&lt;kode&gt;_terkait</code> saat butuh lineage antar dokumen (misalnya PR -&gt; PO -&gt; GRN -&gt; RI -&gt; VP)</li>
+</ul>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <category label="database" term="database"/>
+        <category label="erp" term="erp"/>
+        <category label="mysql" term="mysql"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Rekap Prefix m3_ di MyERPPlus Berdasarkan m0_menu]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu"/>
+        <updated>2026-03-04T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Dokumen ini merangkum arti prefix m3* di schema myerpplus berdasarkan data menu pada tabel m0menu.]]></summary>
+        <content type="html"><![CDATA[<p>Dokumen ini merangkum arti prefix <code>m3_*</code> di schema <code>myerpplus</code> berdasarkan data menu pada tabel <code>m0_menu</code>.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="scope">Scope<a href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu#scope" class="hash-link" aria-label="Direct link to Scope" title="Direct link to Scope" translate="no">​</a></h2>
+<ul>
+<li class="">Sumber mapping nama modul: tabel <code>m0_menu</code> (<code>mnname</code>, <code>mnurl</code>)</li>
+<li class="">Sumber daftar tabel teknis: <code>information_schema.tables</code> untuk <code>TABLE_NAME LIKE 'm3_%'</code></li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="hasil-utama">Hasil Utama<a href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu#hasil-utama" class="hash-link" aria-label="Direct link to Hasil Utama" title="Direct link to Hasil Utama" translate="no">​</a></h2>
+<p>Prefix <code>m3_</code> yang Anda sebutkan memang sesuai menu berikut:</p>
+<ul>
+<li class=""><code>m3_ts</code> = Mutasi Barang (TS)</li>
+<li class=""><code>m3_sp</code> = Stok Opname (SP)</li>
+<li class=""><code>m3_sa</code> = Transaksi Barang (SA)</li>
+<li class=""><code>m3_dc</code> = Time Sheet / Daily Check (DC)</li>
+<li class=""><code>m3_ib</code> = Saldo Awal Barang (IB)</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="bukti-dari-m0_menu">Bukti dari m0_menu<a href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu#bukti-dari-m0_menu" class="hash-link" aria-label="Direct link to Bukti dari m0_menu" title="Direct link to Bukti dari m0_menu" translate="no">​</a></h2>
+<p>Contoh pasangan <code>mnname</code> dan <code>mnurl</code> yang ditemukan:</p>
+<ul>
+<li class=""><code>Mutasi Barang (TS)</code> -&gt; <code>mod/m3/m3_TransaksiTS.swf</code></li>
+<li class=""><code>Stok Opname (SP)</code> -&gt; <code>mod/m3/m3_TransaksiSP.swf</code></li>
+<li class=""><code>Transaksi Barang (SA)</code> -&gt; <code>mod/m3/m3_TransaksiSA.swf</code></li>
+<li class=""><code>Time Sheet/Daily Check (DC)</code> -&gt; <code>mod/m3/m3_TransaksiDC.swf</code></li>
+<li class=""><code>Saldo Awal Barang (IB)</code> -&gt; <code>mod/m3/m3_TransaksiIB.swf</code></li>
+</ul>
+<p>Selain itu, ada juga:</p>
+<ul>
+<li class=""><code>m3_mr</code> = Permintaan Barang (MR)</li>
+<li class=""><code>m3_rs</code> = Terima Mutasi (RS)</li>
+<li class=""><code>m3_pa</code> = Set Harga Jual (PA)</li>
+<li class=""><code>m3_rf</code> = Pengisian Bahan Bakar (RF)</li>
+<li class=""><code>m3_rw</code> = Receipt Weigher (RW)</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="daftar-prefix-m3_-yang-ada-di-db">Daftar Prefix m3_ yang Ada di DB<a href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu#daftar-prefix-m3_-yang-ada-di-db" class="hash-link" aria-label="Direct link to Daftar Prefix m3_ yang Ada di DB" title="Direct link to Daftar Prefix m3_ yang Ada di DB" translate="no">​</a></h2>
+<p>Daftar prefix yang terdeteksi dari objek <code>m3_*</code>:</p>
+<ul>
+<li class=""><code>dc</code></li>
+<li class=""><code>files</code></li>
+<li class=""><code>ib</code></li>
+<li class=""><code>mr</code></li>
+<li class=""><code>notes</code></li>
+<li class=""><code>pa</code></li>
+<li class=""><code>rf</code></li>
+<li class=""><code>rs</code></li>
+<li class=""><code>rw</code></li>
+<li class=""><code>sa</code></li>
+<li class=""><code>sp</code></li>
+<li class=""><code>ts</code></li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="ringkasan-objek-m3_-di-schema-myerpplus">Ringkasan Objek m3_ di Schema myerpplus<a href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu#ringkasan-objek-m3_-di-schema-myerpplus" class="hash-link" aria-label="Direct link to Ringkasan Objek m3_ di Schema myerpplus" title="Direct link to Ringkasan Objek m3_ di Schema myerpplus" translate="no">​</a></h2>
+<ul>
+<li class="">Total objek <code>m3_*</code>: <strong>77</strong></li>
+<li class=""><code>BASE TABLE</code>: <strong>44</strong></li>
+<li class=""><code>VIEW</code>: <strong>33</strong></li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="kepastian-lokasi-blog-dan-infra">Kepastian Lokasi Blog dan Infra<a href="https://sentient.fr-labs.my.id/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu#kepastian-lokasi-blog-dan-infra" class="hash-link" aria-label="Direct link to Kepastian Lokasi Blog dan Infra" title="Direct link to Kepastian Lokasi Blog dan Infra" translate="no">​</a></h2>
+<p>Posting ini ditaruh di:</p>
+<ul>
+<li class=""><code>docs/blog/2026-03-04-rekap-myerpplus-prefix-m3-menu-m0-menu.md</code></li>
+</ul>
+<p>Dan memang ini source yang dipakai website:</p>
+<ul>
+<li class="">Docusaurus config memakai <code>baseUrl: /docs/</code> di <code>docs/docusaurus.config.ts</code></li>
+<li class="">Service <code>sentient-infra-docs</code> me-mount folder <code>../docs:/app</code> di <code>infra/docker-compose.yml</code></li>
+<li class="">URL publik blog: <code>https://sentient.fr-labs.my.id/docs/blog</code></li>
+</ul>]]></content>
+        <author>
+            <name>Yangshun Tay</name>
+            <uri>https://linkedin.com/in/yangshun</uri>
+        </author>
+        <category label="myerpplus" term="myerpplus"/>
+        <category label="database" term="database"/>
+        <category label="mapping" term="mapping"/>
+        <category label="warehouse" term="warehouse"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Prompt Fix Dashboard Finance m2_cb (Saldo Awal COA)]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/prompt-fix-dashboard-finance-m2-cb</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/prompt-fix-dashboard-finance-m2-cb"/>
+        <updated>2026-03-02T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Prompt siap pakai untuk memperbaiki dashboard /app/dashboard/finance/m2_cb agar menampilkan widget, chart, dan AI insight sesuai konteks Saldo Awal COA.]]></summary>
+        <content type="html"><![CDATA[<p>Jika halaman <code>/app/dashboard/finance/m2_cb</code> masih menampilkan konten generik, pakai prompt ini agar implementasi langsung terarah ke konteks Saldo Awal COA.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="prompt-utama-dengan-mapping-wajib">Prompt Utama (Dengan Mapping Wajib)<a href="https://sentient.fr-labs.my.id/docs/blog/prompt-fix-dashboard-finance-m2-cb#prompt-utama-dengan-mapping-wajib" class="hash-link" aria-label="Direct link to Prompt Utama (Dengan Mapping Wajib)" title="Direct link to Prompt Utama (Dengan Mapping Wajib)" translate="no">​</a></h2>
+<div class="language-txt codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-txt codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Kamu adalah senior full-stack engineer di project ini. Tolong FIX halaman dashboard finance untuk route:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- URL: /app/dashboard/finance/m2_cb</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Sumber menu: m0_menu</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Menu code: m2_cb</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Konteks bisnis: Saldo Awal COA (Chart of Accounts Opening Balance)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">TARGET</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Halaman /finance/m2_cb wajib menampilkan konten khusus Saldo Awal COA:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1) Widget KPI</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2) Chart</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3) AI Insight</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Konten generik/non-kontekstual harus diganti.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">MAPPING WAJIB (HARUS ADA)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">A. Menu -&gt; Route -&gt; Page Component</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Pastikan mapping berikut ada dan aktif:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- m0_menu.code: "m2_cb"</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- route.path: "/app/dashboard/finance/m2_cb"</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- route.name/key: "finance.m2_cb" (atau mengikuti naming convention existing)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- component: "FinanceOpeningBalanceDashboardPage" (buat jika belum ada)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Jika project pakai registry map:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- dashboardPageMap["m2_cb"] = FinanceOpeningBalanceDashboardPage</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- aiInsightContextMap["m2_cb"] = "opening_balance_coa"</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- chartPresetMap["m2_cb"] = "opening_balance_coa"</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">B. Data Source Mapping (domain Saldo Awal COA)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Gunakan source data existing (API/store/service) dan map ke model ini:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">OpeningBalanceCOARow:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- coa_id</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- coa_code</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- coa_name</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- category / group</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- normal_balance (debit|credit)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- opening_debit</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- opening_credit</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- opening_balance_signed (opsional, hasil normalisasi)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- is_filled (boolean; true jika ada nilai saldo awal)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Derived aggregates:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- total_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- total_opening_debit</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- total_opening_credit</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- total_opening_net (sesuai aturan akuntansi existing)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- filled_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- unfilled_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- completion_rate</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- debit_credit_gap</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">C. KPI Widget Mapping</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Render minimal 4 widget ini (wajib):</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1. Total Akun COA                -&gt; total_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2. Total Saldo Awal              -&gt; total_opening_net (atau debit-credit sesuai rule existing)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3. Akun Sudah Isi Saldo Awal     -&gt; filled_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4. Akun Belum Isi Saldo Awal     -&gt; unfilled_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Tambahan (jika tersedia):</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">5. Selisih Debit vs Kredit       -&gt; debit_credit_gap</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">6. Persentase Kelengkapan        -&gt; completion_rate</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">D. Chart Mapping</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Minimal 2 chart wajib:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1) Distribusi Saldo per Kategori Akun</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- type: bar/pie</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- x/label: category</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- y/value: sum(opening_balance_signed) atau debit/credit split</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2) Top N Akun dengan Saldo Awal Terbesar</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- type: horizontal bar</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- label: coa_code + coa_name</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- value: abs(opening_balance_signed) atau nilai saldo awal sesuai rule</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Opsional:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3) Komposisi Debit vs Kredit</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- type: donut</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- values: total_opening_debit vs total_opening_credit</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">E. AI Insight Mapping (context-specific)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Context key:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- "opening_balance_coa"</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Input ke generator insight:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- total_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- filled_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- unfilled_accounts</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- completion_rate</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- debit_credit_gap</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- top_accounts_by_balance</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- missing_critical_accounts (jika ada rule akun wajib)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- category_distribution</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Output insight (minimal):</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- summary (1 paragraf)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- key_findings (3-5 poin)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- anomalies (outlier, akun penting kosong, imbalance)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- recommendations (aksi yang bisa dilakukan user)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Jika data kosong:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- tampilkan empty-state insight yang jelas + CTA (contoh: “Lengkapi saldo awal COA terlebih dahulu”).</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">IMPLEMENTATION TASK</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1) Analisis existing</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Telusuri m0_menu -&gt; m2_cb -&gt; router -&gt; page renderer -&gt; data service.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Identifikasi kenapa sekarang masih render konten generik.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2) Implement route-level specialization</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Pastikan m2_cb mengarah ke page/component khusus Saldo Awal COA.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Jangan ubah behavior menu code lain.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3) Implement data adapter</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Buat adapter/selector untuk mapping raw data ke OpeningBalanceCOARow + aggregates.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Hindari hardcode angka final.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4) Implement UI section</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- KPI widget section</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Chart section</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- AI insight section</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Lengkapi loading/error/empty state.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">5) Verification</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Lint/test/build harus lolos.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Manual check URL /app/dashboard/finance/m2_cb:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - tampil widget sesuai data</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - chart relevan</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - ai insight relevan konteks</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">ACCEPTANCE CRITERIA</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- m2_cb tampil sebagai dashboard “Saldo Awal COA”, bukan konten generik.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Semua mapping wajib aktif:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  menu-&gt;route-&gt;component, data-&gt;widget, data-&gt;chart, data-&gt;insight.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Tidak ada regression di menu finance lain.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Sertakan daftar file yang diubah + alasan.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">FORMAT OUTPUT YANG SAYA MAU</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">========================================</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1. Root cause (kenapa sebelumnya mismatch)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2. Mapping table final (yang dipakai di kode)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3. Patch file-by-file</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4. Hasil verifikasi (lint/test/build/manual)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">5. Risiko &amp; follow-up (jika ada endpoint belum ideal)</span><br></span></code></pre></div></div>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <category label="prompt" term="prompt"/>
+        <category label="ai" term="ai"/>
+        <category label="engineering" term="engineering"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Format Prompt untuk Menyusun SOP AGENTS.md]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/format-prompt-sop-agents</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/format-prompt-sop-agents"/>
+        <updated>2026-03-01T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Template prompt siap pakai untuk merumuskan SOP teknis bergaya AGENTS.md secara konsisten dan executable.]]></summary>
+        <content type="html"><![CDATA[<p>Kalau kamu ingin AI menghasilkan SOP teknis yang konsisten, jangan mulai dari prompt umum.
+Pakai format prompt yang memaksa AI mengumpulkan input penting lalu mengubahnya menjadi langkah yang executable.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="prompt-utama-siap-pakai">Prompt Utama (Siap Pakai)<a href="https://sentient.fr-labs.my.id/docs/blog/format-prompt-sop-agents#prompt-utama-siap-pakai" class="hash-link" aria-label="Direct link to Prompt Utama (Siap Pakai)" title="Direct link to Prompt Utama (Siap Pakai)" translate="no">​</a></h2>
+<div class="language-txt codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-txt codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Kamu adalah AI Technical Writer + Engineering Lead.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Tugasmu:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1. Ubah kebutuhan saya menjadi SOP eksekusi teknis bergaya `AGENTS.md`.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2. SOP harus siap dipakai tim dan coding agent (terminal-first).</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3. Jika saya memberikan perintah tambahan, wajib diintegrasikan ke SOP tanpa menghapus aturan inti.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Input dari user:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Tujuan utama: &lt;isi tujuan&gt;</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Scope repo/folder: &lt;isi scope&gt;</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Daftar feature/target: &lt;isi list&gt;</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Perintah wajib tambahan: &lt;isi command tambahan&gt;</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Larangan: &lt;isi larangan&gt;</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Quality gates: &lt;typecheck/lint/test dll&gt;</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Format output wajib:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1. `Purpose`</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2. `Scope`</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3. `Non-Negotiable Rules`</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4. `Runbook` (step-by-step + checklist)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">5. `Commands` (blok command siap copy-paste)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">6. `Acceptance Criteria`</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">7. `Final Report Template`</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">8. `Quick Prompt` (versi singkat untuk menjalankan SOP)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Aturan perumusan:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Bahasa Indonesia teknis, ringkas, tegas.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Wajib gunakan command konkret (rg/sed/cat/apply_patch/npm run ...).</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Jangan ambigu; setiap langkah harus bisa dieksekusi.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Wajib sertakan fallback jika command gagal.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Jangan gunakan nested bullet.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Pastikan ada bagian “perintah tambahan” yang disisipkan eksplisit.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Jangan menghapus proteksi penting:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - no destructive git command</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - no render object langsung ke JSX</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - type-safe/no `any` tanpa alasan</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Sekarang hasilkan SOP lengkap berdasarkan input saya.</span><br></span></code></pre></div></div>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="prompt-interactive-untuk-kebutuhan-dinamis">Prompt Interactive (Untuk Kebutuhan Dinamis)<a href="https://sentient.fr-labs.my.id/docs/blog/format-prompt-sop-agents#prompt-interactive-untuk-kebutuhan-dinamis" class="hash-link" aria-label="Direct link to Prompt Interactive (Untuk Kebutuhan Dinamis)" title="Direct link to Prompt Interactive (Untuk Kebutuhan Dinamis)" translate="no">​</a></h2>
+<div class="language-txt codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-txt codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Kamu adalah AI Technical Writer + Engineering Lead.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Mode kerja: INTERACTIVE SOP BUILDER.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Tugasmu adalah menyusun SOP `AGENTS.md` yang executable dan checklist-based.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Aturan utama:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1. Jangan langsung menyusun SOP final.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2. Mulai dengan mengajukan pertanyaan input wajib (maks 8 pertanyaan, ringkas).</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3. Setelah user menjawab, rangkum input terstruktur.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4. Baru hasilkan SOP final lengkap.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">5. Jika ada perintah tambahan dari user, wajib disisipkan eksplisit ke bagian `Commands` dan `Runbook`.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Input wajib yang harus kamu gali:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Tujuan utama</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Scope repo/folder</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Daftar feature/target</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Perintah wajib tambahan</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Larangan (do/don't)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Quality gates (typecheck/lint/test)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Format laporan akhir yang diinginkan</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Format SOP final wajib:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">1. Purpose</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">2. Scope</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">3. Non-Negotiable Rules</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">4. Runbook (step-by-step + checklist)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">5. Commands (blok command siap copy-paste)</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">6. Acceptance Criteria</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">7. Final Report Template</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">8. Quick Prompt</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Aturan kualitas:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Bahasa Indonesia teknis, tegas, tidak bertele-tele.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Semua langkah harus actionable (bisa dieksekusi).</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Gunakan command nyata (`rg`, `sed`, `cat`, `apply_patch`, `npm run ...`).</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Jangan nested bullet.</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Jangan hilangkan aturan keamanan dasar:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - no destructive git command</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - no render object langsung ke JSX child</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  - no `any` tanpa alasan</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Sekarang mulai dari sesi tanya-jawab input dulu.</span><br></span></code></pre></div></div>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="prompt-singkat-harian">Prompt Singkat Harian<a href="https://sentient.fr-labs.my.id/docs/blog/format-prompt-sop-agents#prompt-singkat-harian" class="hash-link" aria-label="Direct link to Prompt Singkat Harian" title="Direct link to Prompt Singkat Harian" translate="no">​</a></h2>
+<div class="language-txt codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-txt codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Rumuskan kebutuhan ini menjadi SOP AGENTS.md yang executable, checklist-based, terminal-first, dan bisa menampung perintah tambahan tanpa kehilangan aturan inti. Sertakan section: Purpose, Scope, Rules, Runbook, Commands, Acceptance Criteria, Final Report Template, Quick Prompt.</span><br></span></code></pre></div></div>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <category label="prompt" term="prompt"/>
+        <category label="ai" term="ai"/>
+        <category label="engineering" term="engineering"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Cara Bikin Aplikasi Kecil yang Laku Keras di Pasaran]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras"/>
+        <updated>2026-02-20T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Panduan praktis membangun micro-app yang fokus pada masalah spesifik, cepat rilis, mudah dijual, dan menghasilkan revenue konsisten.]]></summary>
+        <content type="html"><![CDATA[<p>Banyak produk gagal bukan karena teknologinya jelek, tapi karena menyelesaikan masalah yang tidak mendesak.
+Kalau targetmu adalah <strong>aplikasi kecil yang laku</strong>, fokusnya bukan “fitur banyak”, tapi <strong>pain point yang mahal kalau dibiarkan</strong>.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="1-pilih-masalah-yang-sempit-tapi-berdarah">1. Pilih masalah yang sempit, tapi berdarah<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#1-pilih-masalah-yang-sempit-tapi-berdarah" class="hash-link" aria-label="Direct link to 1. Pilih masalah yang sempit, tapi berdarah" title="Direct link to 1. Pilih masalah yang sempit, tapi berdarah" translate="no">​</a></h2>
+<p>Cari masalah yang:</p>
+<ul>
+<li class="">Terjadi berulang (harian/mingguan)</li>
+<li class="">Menyita waktu manual</li>
+<li class="">Berhubungan dengan uang, deadline, atau risiko salah</li>
+</ul>
+<p>Contoh yang biasanya cepat laku:</p>
+<ul>
+<li class="">Auto invoice + reminder pembayaran untuk freelancer</li>
+<li class="">Rekap stok sederhana untuk UMKM</li>
+<li class="">Approval cuti/shift ringan untuk tim kecil</li>
+<li class="">Notifikasi jatuh tempo dokumen (kontrak, pajak, lisensi)</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="2-jual-outcome-bukan-fitur">2. Jual outcome, bukan fitur<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#2-jual-outcome-bukan-fitur" class="hash-link" aria-label="Direct link to 2. Jual outcome, bukan fitur" title="Direct link to 2. Jual outcome, bukan fitur" translate="no">​</a></h2>
+<p>User tidak beli “dashboard modern”, user beli:</p>
+<ul>
+<li class="">lebih cepat dibayar</li>
+<li class="">lebih sedikit salah input</li>
+<li class="">lebih hemat waktu operasional</li>
+</ul>
+<p>Ubah copy produk dari:</p>
+<ul>
+<li class="">“Memiliki 20 fitur manajemen”</li>
+</ul>
+<p>Menjadi:</p>
+<ul>
+<li class="">“Kurangi telat bayar client sampai 40% dengan reminder otomatis”</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="3-rilis-versi-kecil-dalam-7-14-hari">3. Rilis versi kecil dalam 7-14 hari<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#3-rilis-versi-kecil-dalam-7-14-hari" class="hash-link" aria-label="Direct link to 3. Rilis versi kecil dalam 7-14 hari" title="Direct link to 3. Rilis versi kecil dalam 7-14 hari" translate="no">​</a></h2>
+<p>Scope MVP harus bisa dipakai untuk pekerjaan nyata hari ini.
+Template scope aman:</p>
+<ul>
+<li class="">1 masalah inti</li>
+<li class="">1 alur utama</li>
+<li class="">1 laporan ringkas</li>
+<li class="">1 integrasi penting (mis. WhatsApp/email/export Excel)</li>
+</ul>
+<p>Kalau belum bisa dipakai harian, berarti masih terlalu besar.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="4-harga-yang-gampang-diputuskan">4. Harga yang gampang diputuskan<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#4-harga-yang-gampang-diputuskan" class="hash-link" aria-label="Direct link to 4. Harga yang gampang diputuskan" title="Direct link to 4. Harga yang gampang diputuskan" translate="no">​</a></h2>
+<p>Untuk app kecil, pricing terlalu rumit bikin orang batal.
+Pakai salah satu:</p>
+<ul>
+<li class="">Flat bulanan: <code>Rp49k - Rp299k</code></li>
+<li class="">Per tim kecil: <code>3 kursi / 10 kursi</code></li>
+<li class="">Sekali bayar + add-on support</li>
+</ul>
+<p>Kunci pricing: masih terasa murah dibanding waktu yang diselamatkan.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="5-channel-jualan-yang-realistis">5. Channel jualan yang realistis<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#5-channel-jualan-yang-realistis" class="hash-link" aria-label="Direct link to 5. Channel jualan yang realistis" title="Direct link to 5. Channel jualan yang realistis" translate="no">​</a></h2>
+<p>Mulai dari channel yang bisa langsung bawa user awal:</p>
+<ul>
+<li class="">Komunitas niche (UMKM, HR, agency, seller)</li>
+<li class="">Konten edukasi problem-solution di TikTok/IG/LinkedIn</li>
+<li class="">Outreach DM ke calon user dengan demo singkat</li>
+<li class="">Partnership dengan konsultan/admin yang sudah pegang banyak klien</li>
+</ul>
+<p>Target 10 user berbayar pertama lebih penting dari 10.000 views.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="6-fokus-ke-retensi-bukan-vanity-metric">6. Fokus ke retensi, bukan vanity metric<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#6-fokus-ke-retensi-bukan-vanity-metric" class="hash-link" aria-label="Direct link to 6. Fokus ke retensi, bukan vanity metric" title="Direct link to 6. Fokus ke retensi, bukan vanity metric" translate="no">​</a></h2>
+<p>Metrik minimum yang wajib dipantau:</p>
+<ul>
+<li class="">Activation: berapa yang benar-benar selesai setup</li>
+<li class="">Weekly Active Users</li>
+<li class="">Churn bulanan</li>
+<li class="">Revenue per customer</li>
+<li class="">Fitur paling sering dipakai</li>
+</ul>
+<p>Kalau user aktif turun, jangan tambah fitur dulu. Perbaiki alur inti.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="7-playbook-iterasi-cepat">7. Playbook iterasi cepat<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#7-playbook-iterasi-cepat" class="hash-link" aria-label="Direct link to 7. Playbook iterasi cepat" title="Direct link to 7. Playbook iterasi cepat" translate="no">​</a></h2>
+<p>Siklus mingguan yang efektif:</p>
+<ol>
+<li class="">Kumpulkan 5 komplain paling sering</li>
+<li class="">Pilih 1 masalah dengan dampak revenue terbesar</li>
+<li class="">Kirim perbaikan dalam 3-5 hari</li>
+<li class="">Follow-up user lama dan ukur perubahan penggunaan</li>
+</ol>
+<p>Produk kecil menang lewat kecepatan feedback loop.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="penutup">Penutup<a href="https://sentient.fr-labs.my.id/docs/blog/aplikasi-kecil-laku-keras#penutup" class="hash-link" aria-label="Direct link to Penutup" title="Direct link to Penutup" translate="no">​</a></h2>
+<p>Aplikasi kecil bisa laku keras kalau kamu disiplin pada 3 hal:</p>
+<ul>
+<li class="">masalahnya nyata,</li>
+<li class="">nilai bisnisnya jelas,</li>
+<li class="">eksekusinya cepat.</li>
+</ul>
+<p>Jangan kejar “aplikasi sempurna”.
+Kejar <strong>aplikasi yang dipakai, dibayar, dan direkomendasikan</strong>.</p>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <category label="Hello" term="Hello"/>
+        <category label="bisnis" term="bisnis"/>
+        <category label="startup" term="startup"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Daftar MCP Server dan Pembuatnya (Kompilasi dari 8 Gambar)]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server"/>
+        <updated>2026-02-20T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Kompilasi lengkap daftar MCP Server beserta pembuatnya dari 8 gambar referensi. Disusun dalam satu list agar mudah dipindai untuk kebutuhan riset tool, integrasi AI agent, dan eksplorasi ekosistem MCP.]]></summary>
+        <content type="html"><![CDATA[<p>Artikel ini berisi kompilasi nama-nama MCP Server beserta pembuatnya, disusun ulang dari 8 gambar yang kamu kirim. Formatnya sengaja dibuat dalam satu list agar cepat dipindai saat mencari server tertentu.</p>
+<p>MCP (Model Context Protocol) Server membantu AI agent terhubung ke tools, data source, dan platform eksternal secara terstruktur. Dengan daftar ini, kamu bisa lebih cepat memetakan opsi integrasi sesuai kebutuhan use case, misalnya untuk development workflow, observability, data platform, automation, atau enterprise operations.</p>
+<p><strong>Catatan:</strong></p>
+<ul>
+<li class="">Nama yang mengandung <code>...</code> mengikuti teks yang tampil di sumber gambar (terpotong).</li>
+<li class="">Penulisan nama server dan pembuat dipertahankan sedekat mungkin dengan sumber asli.</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="daftar-lengkap-mcp-server">Daftar Lengkap MCP Server<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#daftar-lengkap-mcp-server" class="hash-link" aria-label="Direct link to Daftar Lengkap MCP Server" title="Direct link to Daftar Lengkap MCP Server" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="1-mcp-servers-microsoft">1. <strong>MCP Servers</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#1-mcp-servers-microsoft" class="hash-link" aria-label="Direct link to 1-mcp-servers-microsoft" title="Direct link to 1-mcp-servers-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Katalog resmi implementasi MCP dari Microsoft untuk akses data dan integrasi tool berbasis AI agent.<br>
+<strong>Fungsi:</strong> Menyatukan berbagai server Microsoft (misalnya Azure/Fabric) dalam ekosistem yang konsisten untuk host MCP.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Menjalankan agen yang bisa loncat lintas layanan Microsoft dan orchestration cloud tanpa perlu bikin integrasi custom dari nol.<br>
+<strong>Sumber:</strong> <a href="https://github.com/microsoft/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/microsoft/mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="2-netdata-netdata">2. <strong>Netdata</strong> (<code>netdata</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#2-netdata-netdata" class="hash-link" aria-label="Direct link to 2-netdata-netdata" title="Direct link to 2-netdata-netdata" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server observability yang tertanam di Netdata Agent/Parent untuk akses metrik, alert, fungsi sistem, dan log infrastruktur.<br>
+<strong>Fungsi:</strong> Discovery node + metrik, query agregasi, deteksi anomali berbasis ML, sampai root-cause scoring lintas metric correlation.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa investigasi outage otomatis dari sinyal anomali ke log/function execution multi-node dalam satu alur percakapan.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/netdata/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/netdata/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="3-context7-upstash">3. <strong>Context7</strong> (<code>upstash</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#3-context7-upstash" class="hash-link" aria-label="Direct link to 3-context7-upstash" title="Direct link to 3-context7-upstash" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP untuk injeksi dokumentasi dan contoh kode terbaru yang version-specific langsung ke konteks LLM.<br>
+<strong>Fungsi:</strong> Resolve library ID lalu query docs resmi agar output code assistant tidak pakai referensi usang.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Prompt kompleks bisa auto-muat docs library versi tepat (bahkan via OAuth endpoint) sehingga agen menulis patch yang jauh lebih minim halusinasi API.<br>
+<strong>Sumber:</strong> <a href="https://github.com/upstash/context7" target="_blank" rel="noopener noreferrer" class="">https://github.com/upstash/context7</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="4-playwright-microsoft">4. <strong>Playwright</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#4-playwright-microsoft" class="hash-link" aria-label="Direct link to 4-playwright-microsoft" title="Direct link to 4-playwright-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server otomasi browser berbasis Playwright yang bekerja lewat structured accessibility tree (bukan screenshot).<br>
+<strong>Fungsi:</strong> Interaksi web deterministic untuk testing, scraping, dan validasi flow UI tanpa vision model.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa menjalankan E2E journey penuh (login, checkout, validasi state) secara stabil dan dapat direproduksi lintas environment.<br>
+<strong>Sumber:</strong> <a href="https://github.com/microsoft/playwright-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/microsoft/playwright-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="5-github-github">5. <strong>GitHub</strong> (<code>github</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#5-github-github" class="hash-link" aria-label="Direct link to 5-github-github" title="Direct link to 5-github-github" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi GitHub untuk menghubungkan AI agent ke context dan capability GitHub (repo, issue, PR, actions, dst).<br>
+<strong>Fungsi:</strong> Kontrol granular via toolsets/tools, mode <code>--read-only</code> untuk safety, dan <code>--lockdown-mode</code> untuk membatasi konten publik berisiko.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa mengerjakan alur end-to-end dari baca issue -&gt; buat branch -&gt; commit -&gt; buka PR -&gt; pantau checks, sambil tetap dibatasi policy akses.<br>
+<strong>Sumber:</strong> <a href="https://github.com/github/github-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/github/github-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="6-chrome-devtools-mcp-chromedevtools">6. <strong>Chrome DevTools MCP</strong> (<code>ChromeDevTools</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#6-chrome-devtools-mcp-chromedevtools" class="hash-link" aria-label="Direct link to 6-chrome-devtools-mcp-chromedevtools" title="Direct link to 6-chrome-devtools-mcp-chromedevtools" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi untuk memberi agen AI akses langsung ke browser Chrome hidup lewat DevTools protocol, jadi bisa inspeksi, otomasi, dan analisis performa dalam satu alur.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Otomasi browser yang reliable (berbasis Puppeteer) untuk navigasi dan interaksi UI.</li>
+<li class="">Deep debugging: inspeksi request network, console, screenshot, dan state halaman.</li>
+<li class="">Performance analysis: rekam trace dan ambil insight performa yang actionable.</li>
+<li class="">Flexible connection: bisa launch Chrome baru, auto-connect ke Chrome yang sudah jalan, atau connect via <code>--browser-url</code> / <code>--wsEndpoint</code> + custom headers.</li>
+<li class="">Kontrol scope server: category tools bisa diatur (mis. performance/network/emulation) sesuai kebutuhan dan risiko.
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Jalankan “synthetic user journey” lengkap (login -&gt; transaksi -&gt; checkout) sambil throttling network/performance untuk cari bottleneck yang biasanya baru muncul di kondisi buruk.</li>
+<li class="">Bikin agen auto-troubleshooter: saat flow gagal, agen langsung korelasikan network error + console error + screenshot + performance trace dalam satu laporan RCA.</li>
+<li class="">Remote-debug Chrome yang berjalan di host/VM/container berbeda (port forwarding/WebSocket), jadi investigasi bug environment-spesifik bisa langsung dari chat.</li>
+<li class="">Hybrid manual+AI debugging: kamu klik manual di browser yang sama, agen ikut inspeksi state real-time dan lanjutkan langkah investigasi tanpa reset sesi.
+<strong>Sumber:</strong> <a href="https://github.com/mcp/ChromeDevTools/chrome-devtools-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/ChromeDevTools/chrome-devtools-mcp</a><br>
+<strong>Sumber tools/reference:</strong> <a href="https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md" target="_blank" rel="noopener noreferrer" class="">https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/tool-reference.md</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="7-serena-oraios">7. <strong>Serena</strong> (<code>oraios</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#7-serena-oraios" class="hash-link" aria-label="Direct link to 7-serena-oraios" title="Direct link to 7-serena-oraios" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Toolkit coding agent berbasis MCP yang memberi LLM kemampuan IDE-like di level simbol (bukan sekadar baca file full/grep string).<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Semantic retrieval &amp; editing: cari simbol, relasi referensi simbol, dan edit presisi pada entity kode.</li>
+<li class="">Project-based workflow untuk codebase besar, jadi agen bisa navigasi struktur proyek lebih efisien token.</li>
+<li class="">Integrasi fleksibel: bisa dipakai lewat MCP client (Codex/Claude/IDE), via OpenAPI bridge, atau di-embed ke framework agen.</li>
+<li class="">Extensible toolkit: bisa tambah tool custom dan dukung bahasa baru lewat fondasi LSP.
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Refactor lintas banyak file secara “surgical”: agen temukan symbol call graph dulu, lalu patch hanya titik yang benar tanpa brute-force replace.</li>
+<li class="">Bangun agent coding portable lintas model/vendor: backend LLM bisa ganti tanpa nulis ulang lapisan tool coding.</li>
+<li class="">Jalankan “architectural migration” bertahap (rename API, ubah contract, update referensi) dengan jejak perubahan lebih aman karena berbasis simbol.</li>
+<li class="">Kombinasi dengan agent utama (mis. Claude/Codex) untuk mengurangi token burn pada repo besar tapi tetap presisi edit tinggi.
+<strong>Sumber:</strong> <a href="https://github.com/oraios/serena" target="_blank" rel="noopener noreferrer" class="">https://github.com/oraios/serena</a><br>
+<strong>Sumber docs:</strong> <a href="https://oraios.github.io/serena/" target="_blank" rel="noopener noreferrer" class="">https://oraios.github.io/serena/</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="8-unity-coplaydev">8. <strong>Unity</strong> (<code>CoplayDev</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#8-unity-coplaydev" class="hash-link" aria-label="Direct link to 8-unity-coplaydev" title="Direct link to 8-unity-coplaydev" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP bridge yang menghubungkan AI agent ke Unity Editor lewat kombinasi Unity package + local server.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Mengontrol Unity Editor via natural language (asset, scene, material, script, editor actions).</li>
+<li class="">Mengotomasi workflow repetitif game dev langsung dari chat agent.</li>
+<li class="">Menyediakan integrasi praktis dengan client MCP seperti Claude/Cursor.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">“AI technical artist mode”: generate/modify asset pipeline + scene setup secara semi-otomatis.</li>
+<li class="">Auto-prototyping gameplay loop: agent bisa bantu ubah script, trigger test di editor, lalu iterasi cepat.</li>
+<li class="">Bangun workflow CI-like lokal untuk validasi perubahan project Unity berbasis prompt.<br>
+<strong>Sumber:</strong> <a href="https://github.com/CoplayDev/unity-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/CoplayDev/unity-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="9-firecrawl-firecrawl">9. <strong>Firecrawl</strong> (<code>firecrawl</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#9-firecrawl-firecrawl" class="hash-link" aria-label="Direct link to 9-firecrawl-firecrawl" title="Direct link to 9-firecrawl-firecrawl" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Firecrawl untuk scraping, crawling, search, extract, dan deep research web.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Ekstraksi konten skala besar dari web (single URL hingga batch crawl).</li>
+<li class="">Menyediakan mode remote hosted maupun self-hosted.</li>
+<li class="">Memiliki retry, rate-limit handling, credit monitoring, dan logging untuk operasi produksi.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa bikin “web intelligence pipeline” otomatis: map situs -&gt; crawl -&gt; extract -&gt; ranking -&gt; ringkasan.</li>
+<li class="">Deep research lintas ratusan halaman dengan batch scraping tanpa manual copy-paste.</li>
+<li class="">Jalankan knowledge ingestion yang tahan gangguan jaringan/rate-limit berkat retry &amp; backoff bawaan.<br>
+<strong>Sumber:</strong> <a href="https://docs.firecrawl.dev/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://docs.firecrawl.dev/mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="10-desktop-commander-wonderwhy-er">10. <strong>Desktop Commander</strong> (<code>wonderwhy-er</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#10-desktop-commander-wonderwhy-er" class="hash-link" aria-label="Direct link to 10-desktop-commander-wonderwhy-er" title="Direct link to 10-desktop-commander-wonderwhy-er" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP tool untuk memberi AI akses terminal, proses, file operation, dan code editing (search/replace) di level OS.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menjalankan command panjang + kontrol proses interaktif.</li>
+<li class="">Menjelajah file system lintas project dan melakukan perubahan file presisi.</li>
+<li class="">Menyatukan workflow dev-tools dalam satu chat tanpa konteks terfragmentasi.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa orchestration “local DevOps mini”: build, test, restart service, parse log, apply fix dalam loop otomatis.</li>
+<li class="">Cross-project refactor di banyak repo sekaligus dari satu sesi chat.</li>
+<li class="">Menjalankan task otomasi non-IDE (ops + scripting + docs generation) yang biasanya butuh banyak tool terpisah.<br>
+<strong>Sumber:</strong> <a href="https://github.com/wonderwhy-er/DesktopCommanderMCP" target="_blank" rel="noopener noreferrer" class="">https://github.com/wonderwhy-er/DesktopCommanderMCP</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="11-notion-makenotion">11. <strong>Notion</strong> (<code>makenotion</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#11-notion-makenotion" class="hash-link" aria-label="Direct link to 11-notion-makenotion" title="Direct link to 11-notion-makenotion" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Notion API untuk akses page, comment, dan data source dengan transport stdio/http.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Query/update data source (pengganti database tools pada v2+).</li>
+<li class="">Membaca/menulis konten Notion termasuk workflow komentar dan manajemen halaman.</li>
+<li class="">Mendukung konfigurasi auth fleksibel (<code>NOTION_TOKEN</code> atau custom headers).<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa jadi “ops copilot” workspace: auto-update page status, summary meeting, dan knowledge sync ke data source.</li>
+<li class="">Pipeline dokumentasi otomatis: commit code -&gt; generate release note -&gt; publish ke Notion.</li>
+<li class="">Multi-client integration (Cursor, Claude Desktop, HTTP) dengan control keamanan token yang rapi.<br>
+<strong>Sumber:</strong> <a href="https://github.com/makenotion/notion-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/makenotion/notion-mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="12-azure-mcp-server-microsoft">12. <strong>Azure MCP Server</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#12-azure-mcp-server-microsoft" class="hash-link" aria-label="Direct link to 12-azure-mcp-server-microsoft" title="Direct link to 12-azure-mcp-server-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Server MCP resmi Azure untuk menghubungkan AI agent ke layanan Azure dalam satu endpoint tools.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menyediakan kumpulan tools Azure terpadu untuk operasi cloud agentic.</li>
+<li class="">Bisa dipakai standalone atau bersama ekstensi GitHub Copilot for Azure.</li>
+<li class="">Mengikuti perubahan protokol terbaru (transport SSE deprecated; fokus mode kompatibel modern).<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa orkestrasi workflow cloud end-to-end: provision resource, cek status, troubleshooting, dan rekomendasi aksi.</li>
+<li class="">“Cloud copilot in chat”: investigasi environment Azure tanpa harus pindah antar banyak portal/manual steps.</li>
+<li class="">Foundation untuk self-healing ops runbook berbasis prompt + policy guardrail.<br>
+<strong>Sumber:</strong> <a href="https://github.com/Azure/azure-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/Azure/azure-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="13-supabase-supabase-community">13. <strong>Supabase</strong> (<code>supabase-community</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#13-supabase-supabase-community" class="hash-link" aria-label="Direct link to 13-supabase-supabase-community" title="Direct link to 13-supabase-supabase-community" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Supabase untuk menghubungkan AI assistant ke project Supabase (hosted, local CLI, dan self-hosted).<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Mengelola tabel, konfigurasi proyek, dan query data langsung dari agent.</li>
+<li class="">Mendukung endpoint remote <code>https://mcp.supabase.com/mcp</code> dengan login OAuth.</li>
+<li class="">Mendukung mode lokal (<code>http://localhost:54321/mcp</code>) untuk development environment.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa menjalankan alur “database ops copilot”: inspect schema -&gt; generate migration -&gt; validasi query -&gt; cek hasil data.</li>
+<li class="">Workflow fullstack super cepat: dari prompt ke perubahan DB + verifikasi API tanpa bolak-balik tool.</li>
+<li class="">Bisa dipakai aman bertahap dengan praktik security best practices resmi Supabase.<br>
+<strong>Sumber:</strong> <a href="https://github.com/supabase-community/supabase-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/supabase-community/supabase-mcp</a><br>
+<strong>Sumber docs:</strong> <a href="https://supabase.com/docs/guides/getting-started/mcp" target="_blank" rel="noopener noreferrer" class="">https://supabase.com/docs/guides/getting-started/mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="14-dbhub-bytebase">14. <strong>DBHub</strong> (<code>bytebase</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#14-dbhub-bytebase" class="hash-link" aria-label="Direct link to 14-dbhub-bytebase" title="Direct link to 14-dbhub-bytebase" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Universal database MCP gateway dari Bytebase untuk PostgreSQL, MySQL, MariaDB, SQL Server, dan SQLite.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Satu interface MCP untuk banyak engine database sekaligus.</li>
+<li class="">Mendukung secure mode: read-only, SSH tunnel, SSL/TLS, row limit, lock-timeout.</li>
+<li class="">Multi-database config (TOML) untuk mengelola beberapa environment dalam satu server.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa compare schema lintas environment (dev/staging/prod) dari satu endpoint MCP.</li>
+<li class="">Run SQL explain/ops lintas banyak database tanpa ganti tool atau koneksi manual.</li>
+<li class="">Bangun “DB SRE copilot” yang investigasi performa query secara terpusat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/bytebase/dbhub" target="_blank" rel="noopener noreferrer" class="">https://github.com/bytebase/dbhub</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="15-microsoft-learn-microsoftdocs">15. <strong>Microsoft Learn</strong> (<code>MicrosoftDocs</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#15-microsoft-learn-microsoftdocs" class="hash-link" aria-label="Direct link to 15-microsoft-learn-microsoftdocs" title="Direct link to 15-microsoft-learn-microsoftdocs" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP resmi Microsoft Learn untuk memberi LLM akses real-time ke dokumentasi dan sample code Microsoft tepercaya.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Endpoint langsung <code>https://learn.microsoft.com/api/mcp</code> untuk client MCP kompatibel.</li>
+<li class="">Mengurangi halusinasi karena sumber hanya dari dokumen first-party Microsoft.</li>
+<li class="">Tersedia varian endpoint openai-compatible untuk use case tertentu.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen coding bisa auto-ground jawaban ke docs terbaru Microsoft sehingga patch lebih kecil risiko “API salah”.</li>
+<li class="">Bisa dipakai mass coding session tanpa API key untuk riset doc berkapasitas tinggi.</li>
+<li class="">Gabungkan dengan server Azure/DevOps untuk alur learn -&gt; implement -&gt; deploy dalam satu chat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/MicrosoftDocs/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/MicrosoftDocs/mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="16-azure-devops-microsoft">16. <strong>Azure DevOps</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#16-azure-devops-microsoft" class="hash-link" aria-label="Direct link to 16-azure-devops-microsoft" title="Direct link to 16-azure-devops-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Azure DevOps dengan toolset tipis di atas REST API untuk work item, repo, wiki, pipeline, dan domain lain.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Tool domain-based loading (<code>core</code>, <code>work-items</code>, <code>repositories</code>, <code>wiki</code>, <code>pipelines</code>, dll) agar context tetap fokus.</li>
+<li class="">Memungkinkan automation task Azure DevOps langsung dari AI assistant.</li>
+<li class="">Didukung workflow best-practice untuk Copilot/VS Code/Claude/Cursor.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agent PM+Engineer hybrid: auto triage backlog, update work item, sync wiki, dan trigger pipeline dari satu prompt.</li>
+<li class="">“Scoped tool governance”: hanya load domain yang dibutuhkan untuk menekan noise tool dan mengurangi salah aksi.</li>
+<li class="">Integrasi audit-friendly karena setiap aksi mengikuti endpoint DevOps yang jelas.<br>
+<strong>Sumber:</strong> <a href="https://github.com/microsoft/azure-devops-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/microsoft/azure-devops-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="17-stripe-stripe">17. <strong>Stripe</strong> (<code>stripe</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#17-stripe-stripe" class="hash-link" aria-label="Direct link to 17-stripe-stripe" title="Direct link to 17-stripe-stripe" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Stripe (remote dan local) untuk integrasi customer, product, payments, billing, dan operasi finansial via agent.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Endpoint remote resmi <code>https://mcp.stripe.com</code> dengan OAuth.</li>
+<li class="">Opsi local server via <code>npx @stripe/mcp</code> untuk kontrol toolset langsung.</li>
+<li class="">Terintegrasi dalam ekosistem Stripe AI + Agent Toolkit.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa jadi “billing operator”: buat produk/harga, kelola subscription, analisis payment issue, lalu eksekusi perbaikan.</li>
+<li class="">Automasi support-finance: dari ticket pelanggan -&gt; lookup transaksi -&gt; aksi refund/adjustment terkontrol.</li>
+<li class="">Bangun agent commerce end-to-end dengan guardrail tool selection per kebutuhan.<br>
+<strong>Sumber:</strong> <a href="https://github.com/stripe/stripe-agent-toolkit" target="_blank" rel="noopener noreferrer" class="">https://github.com/stripe/stripe-agent-toolkit</a><br>
+<strong>Sumber MCP registry:</strong> <a href="https://github.com/mcp/com.stripe/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/com.stripe/mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="18-terraform-hashicorp">18. <strong>Terraform</strong> (<code>hashicorp</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#18-terraform-hashicorp" class="hash-link" aria-label="Direct link to 18-terraform-hashicorp" title="Direct link to 18-terraform-hashicorp" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Terraform resmi HashiCorp untuk workflow IaC, termasuk baca provider docs, module docs, dan best-practice guidance.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menyediakan tool MCP untuk menemukan dokumentasi provider/module Terraform secara tepat.</li>
+<li class="">Mendukung alur AI-assisted infra planning tanpa harus browsing docs manual.</li>
+<li class="">Bisa dijalankan lokal atau via Docker.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen infra bisa generate draft konfigurasi dengan referensi docs provider real-time, lalu iterasi lebih aman.</li>
+<li class="">IaC troubleshooting lebih cepat karena agent bisa cross-check argumen resource langsung ke docs resmi.</li>
+<li class="">Foundation untuk “policy-aware infra copilot” pada pipeline provisioning.<br>
+<strong>Sumber:</strong> <a href="https://github.com/hashicorp/terraform-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/hashicorp/terraform-mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="19-tavily-tavily-ai">19. <strong>Tavily</strong> (<code>tavily-ai</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#19-tavily-tavily-ai" class="hash-link" aria-label="Direct link to 19-tavily-tavily-ai" title="Direct link to 19-tavily-tavily-ai" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Tavily MCP memberikan akses search web real-time untuk AI agent dengan fokus riset dan retrieval berkualitas tinggi.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Endpoint remote resmi (<code>https://mcp.tavily.com/mcp</code>) dengan OAuth untuk integrasi cepat.</li>
+<li class="">Mendukung use case research agent, fact retrieval, dan context expansion.</li>
+<li class="">Bisa dipakai dari berbagai client MCP (Claude, Cursor, dsb).<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa menjalankan deep research multi-hop (pertanyaan -&gt; search -&gt; refine -&gt; verifikasi) otomatis.</li>
+<li class="">Kombinasi dengan coding agent untuk auto-cite referensi saat menulis dokumentasi teknis.</li>
+<li class="">Pipeline intel ringan real-time untuk monitoring perubahan informasi eksternal.<br>
+<strong>Sumber:</strong> <a href="https://github.com/tavily-ai/tavily-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/tavily-ai/tavily-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="20-mongodb-mongodb-js">20. <strong>Mongodb</strong> (<code>mongodb-js</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#20-mongodb-mongodb-js" class="hash-link" aria-label="Direct link to 20-mongodb-mongodb-js" title="Direct link to 20-mongodb-mongodb-js" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MongoDB MCP server resmi untuk memberi AI assistant akses data MongoDB yang aman dan kontekstual.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Integrasi langsung ke MongoDB deployment untuk query/inspection berbasis agent.</li>
+<li class="">Mendukung mode local process atau remote server sesuai arsitektur tim.</li>
+<li class="">Menyediakan lapisan “secure, controlled access” agar interaksi data tetap terjaga.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen data bisa menjawab pertanyaan bisnis langsung dari collection hidup tanpa export manual.</li>
+<li class="">Workflow debugging aplikasi: trace issue -&gt; query data terkait -&gt; sarankan perbaikan dalam satu sesi.</li>
+<li class="">Fondasi “database copilot” untuk tim support, product, dan engineering secara bersamaan.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mongodb-js/mongodb-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/mongodb-js/mongodb-mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="21-nuxt-antfu">21. <strong>Nuxt</strong> (<code>antfu</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#21-nuxt-antfu" class="hash-link" aria-label="Direct link to 21-nuxt-antfu" title="Direct link to 21-nuxt-antfu" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Nuxt MCP server resmi untuk memberi assistant akses dokumentasi, command, dan utilitas proyek Nuxt.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menyediakan konteks framework-specific agar code suggestion lebih akurat.</li>
+<li class="">Mendukung alur development Nuxt via tool MCP terstruktur.</li>
+<li class="">Integrasi mudah dengan client MCP yang umum dipakai developer.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa bantu migrasi Nuxt version upgrade dengan referensi docs/tooling yang relevan.</li>
+<li class="">“Framework-aware copilot”: saran code, config, dan command lebih minim trial-and-error.</li>
+<li class="">Optimasi onboarding dev baru karena agent bisa menjawab Nuxt-specific workflow secara presisi.<br>
+<strong>Sumber:</strong> <a href="https://github.com/nuxtlabs/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/nuxtlabs/mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="22-apify-apify">22. <strong>Apify</strong> (<code>apify</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#22-apify-apify" class="hash-link" aria-label="Direct link to 22-apify-apify" title="Direct link to 22-apify-apify" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Apify MCP server resmi untuk menjalankan aktor scraping/automation Apify dari AI agent.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menjalankan actor ecosystem Apify langsung via MCP tools.</li>
+<li class="">Mendukung integrasi data extraction berkapasitas besar ke workflow agentic.</li>
+<li class="">Menyederhanakan orkestrasi crawl/scrape tanpa wiring custom API per actor.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa orkestrasi pipeline scraping multi-sumber (news, e-commerce, directory) lalu gabungkan output otomatis.</li>
+<li class="">Build “market intelligence bot” real-time dengan actor yang berbeda per sumber data.</li>
+<li class="">Otomasi monitoring competitor/site change tanpa stack scraper kustom dari nol.<br>
+<strong>Sumber:</strong> <a href="https://github.com/apify/actors-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/apify/actors-mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="23-vercel-next-dev-tools-vercel">23. <strong>Vercel Next Dev Tools</strong> (<code>vercel</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#23-vercel-next-dev-tools-vercel" class="hash-link" aria-label="Direct link to 23-vercel-next-dev-tools-vercel" title="Direct link to 23-vercel-next-dev-tools-vercel" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Next.js dari Vercel yang memberi agent akses tooling build, docs, dan workflow framework-level.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menyediakan context Next.js yang lebih presisi untuk coding assistant.</li>
+<li class="">Mendukung integrasi langsung dengan berbagai client MCP.</li>
+<li class="">Mengurangi trial-and-error saat debugging atau implementasi fitur Next.js.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa bantu refactor route/data-fetching mengikuti praktik Next.js terbaru.</li>
+<li class="">Auto-diagnose error build/runtime dengan konteks framework yang benar.</li>
+<li class="">Setup “Next.js pair programmer” yang fokus framework, bukan generic JS assistant.<br>
+<strong>Sumber:</strong> <a href="https://github.com/vercel/next.js/tree/canary/packages/next/src/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/vercel/next.js/tree/canary/packages/next/src/mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="24-elasticsearch-elastic">24. <strong>Elasticsearch</strong> (<code>elastic</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#24-elasticsearch-elastic" class="hash-link" aria-label="Direct link to 24-elasticsearch-elastic" title="Direct link to 24-elasticsearch-elastic" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Elasticsearch MCP server resmi untuk query/search/ops observability di stack Elastic.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menyambungkan agent ke data Elasticsearch untuk retrieval dan analisis.</li>
+<li class="">Mendukung operasi berbasis MCP terhadap cluster/index yang dikonfigurasi.</li>
+<li class="">Mempercepat investigasi log/search analytics lewat percakapan.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen incident-response bisa langsung query log, korelasi error, lalu usulkan mitigasi.</li>
+<li class="">“Search tuning copilot”: bantu evaluasi query dan struktur indeks dari hasil real-time.</li>
+<li class="">Investigasi data operasional lintas service tanpa pindah dashboard manual.<br>
+<strong>Sumber:</strong> <a href="https://github.com/elastic/mcp-server-elasticsearch" target="_blank" rel="noopener noreferrer" class="">https://github.com/elastic/mcp-server-elasticsearch</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="25-getsentry-sentry-getsentry">25. <strong>Getsentry Sentry</strong> (<code>getsentry</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#25-getsentry-sentry-getsentry" class="hash-link" aria-label="Direct link to 25-getsentry-sentry-getsentry" title="Direct link to 25-getsentry-sentry-getsentry" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Sentry MCP server resmi untuk observability, issue triage, dan insight debugging dari event/error live.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Ambil issue/error context langsung dari Sentry ke agent.</li>
+<li class="">Menyediakan workflow triage yang lebih cepat untuk tim engineering.</li>
+<li class="">Memungkinkan assistant memberikan diagnosis berbasis data incident nyata.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa buat prioritas incident otomatis berdasarkan signal Sentry + dampak user.</li>
+<li class="">Dari error event ke draft fix plan dalam satu chat tanpa manual buka banyak halaman.</li>
+<li class="">Bangun loop “detect -&gt; explain -&gt; patch proposal” dengan konteks stacktrace real-time.<br>
+<strong>Sumber:</strong> <a href="https://github.com/getsentry/sentry-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/getsentry/sentry-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="26-neon-neondatabase">26. <strong>Neon</strong> (<code>neondatabase</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#26-neon-neondatabase" class="hash-link" aria-label="Direct link to 26-neon-neondatabase" title="Direct link to 26-neon-neondatabase" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Neon resmi untuk mengelola project Postgres serverless Neon dari AI agent.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Operasi project/database branch Neon via tool MCP.</li>
+<li class="">Mempermudah workflow development database modern (branching, inspect, manage).</li>
+<li class="">Integrasi aman dengan token/API konfigurasi Neon.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa bikin branch DB ephemeral untuk testing fitur, lalu buang otomatis setelah validasi.</li>
+<li class="">Workflow “schema experiment” cepat tanpa ganggu database utama.</li>
+<li class="">Kombinasi dengan coding agent untuk sinkronisasi app change + DB change lebih aman.<br>
+<strong>Sumber:</strong> <a href="https://github.com/neondatabase-labs/mcp-server-neon" target="_blank" rel="noopener noreferrer" class="">https://github.com/neondatabase-labs/mcp-server-neon</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="27-chroma-chroma-core">27. <strong>Chroma</strong> (<code>chroma-core</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#27-chroma-chroma-core" class="hash-link" aria-label="Direct link to 27-chroma-chroma-core" title="Direct link to 27-chroma-chroma-core" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Chroma MCP server untuk akses vector database Chroma dalam workflow RAG berbasis agent.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Query koleksi embedding dan retrieval konteks semantik via MCP.</li>
+<li class="">Mendukung integrasi pipeline knowledge retrieval untuk LLM apps.</li>
+<li class="">Mempercepat eksperimen RAG tanpa perlu adapter custom kompleks.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa update index knowledge on-the-fly dari dokumen baru lalu langsung dipakai inference.</li>
+<li class="">Build “memory layer” antar-agent dengan retrieval semantik yang konsisten.</li>
+<li class="">Otomasi evaluasi kualitas retrieval sebagai bagian loop improve sistem RAG.<br>
+<strong>Sumber:</strong> <a href="https://github.com/chroma-core/chroma-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/chroma-core/chroma-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="28-sonarsource-sonarqube-sonarsource">28. <strong>SonarSource Sonarqube</strong> (<code>SonarSource</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#28-sonarsource-sonarqube-sonarsource" class="hash-link" aria-label="Direct link to 28-sonarsource-sonarqube-sonarsource" title="Direct link to 28-sonarsource-sonarqube-sonarsource" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> SonarQube MCP server resmi untuk expose analisis kualitas kode, issue, quality gates, dan project insight ke AI agent.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Menyediakan toolset SonarQube (analysis, issues, quality gates, projects) via MCP.</li>
+<li class="">Mendukung koneksi ke SonarQube Cloud maupun SonarQube Server.</li>
+<li class="">Punya opsi read-only dan kontrol toolset untuk governance penggunaan.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa jadi “quality gate enforcer”: cek gate -&gt; jelaskan blocker -&gt; sarankan patch per issue.</li>
+<li class="">Otomasi triage technical debt lintas repository dari satu chat.</li>
+<li class="">Integrasi langsung ke coding agent flow supaya feedback kualitas terjadi sebelum merge.<br>
+<strong>Sumber:</strong> <a href="https://github.com/SonarSource/sonarqube-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/SonarSource/sonarqube-mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="29-monday-mondaycom">29. <strong>Monday</strong> (<code>mondaycom</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#29-monday-mondaycom" class="hash-link" aria-label="Direct link to 29-monday-mondaycom" title="Direct link to 29-monday-mondaycom" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Framework MCP monday.com untuk menghubungkan AI agent ke work OS monday secara aman dan action-oriented.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Hosted MCP + paket API MCP untuk operasi board/item/form/team.</li>
+<li class="">Akses data terstruktur dan aksi operasional (create/update/move item, schema, dst).</li>
+<li class="">Mendukung mode read-only untuk skenario aman.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen PM bisa auto-generate board proyek dari requirement lalu maintain status harian.</li>
+<li class="">Workflow “ops command center”: dari prompt bisa update task, assign owner, dan kirim update progres.</li>
+<li class="">Orkestrasi lintas tim (product/engineering/ops) di satu workspace tanpa manual klik berulang.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mondaycom/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/mondaycom/mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="30-atlassian-atlassian">30. <strong>Atlassian</strong> (<code>atlassian</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#30-atlassian-atlassian" class="hash-link" aria-label="Direct link to 30-atlassian-atlassian" title="Direct link to 30-atlassian-atlassian" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Atlassian remote MCP server resmi untuk koneksi aman ke Jira, Confluence, dan Compass via OAuth 2.1.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Endpoint cloud <code>https://mcp.atlassian.com/v1/mcp</code> untuk client MCP kompatibel.</li>
+<li class="">Menjaga permission sesuai hak akses user Atlassian Cloud.</li>
+<li class="">Data/security model enterprise-friendly (TLS + scoped auth).<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agent knowledge+delivery: tarik context Confluence, update Jira issue, sinkronkan keputusan tim dalam satu flow.</li>
+<li class="">Otomasi “incident-to-postmortem” dari ticket ke documentation tanpa copy-paste manual.</li>
+<li class="">Multi-product context retrieval (Jira + Confluence + Compass) untuk keputusan engineering cepat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/atlassian/atlassian-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/atlassian/atlassian-mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="31-todoist-doist">31. <strong>Todoist</strong> (<code>Doist</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#31-todoist-doist" class="hash-link" aria-label="Direct link to 31-todoist-doist" title="Direct link to 31-todoist-doist" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Todoist AI/MCP SDK resmi dari Doist untuk memberi agent akses baca/tulis task Todoist atas nama pengguna.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Mendukung penggunaan sebagai MCP server maupun sebagai library tools.</li>
+<li class="">Endpoint remote <code>https://ai.todoist.net/mcp</code> untuk integrasi cepat.</li>
+<li class="">Fokus pada workflow task-level yang langsung bisa dieksekusi agent.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen personal ops: ubah obrolan panjang jadi action plan terstruktur di Todoist.</li>
+<li class="">Sync otomatis dari meeting notes ke backlog harian lengkap due-date dan prioritas.</li>
+<li class="">Kombinasi dengan tools coding/dev untuk membuat “engineer daily planner” real-time.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/doist/todoist-ai" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/doist/todoist-ai</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="32-imagesorcery-sunriseapps">32. <strong>Imagesorcery</strong> (<code>sunriseapps</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#32-imagesorcery-sunriseapps" class="hash-link" aria-label="Direct link to 32-imagesorcery-sunriseapps" title="Direct link to 32-imagesorcery-sunriseapps" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP image-processing server yang berjalan lokal untuk blur, crop, OCR, object detection, watermark, dan manipulasi visual lain.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Banyak tool image ops dalam satu server (draw, resize, rotate, detect, OCR, dll).</li>
+<li class="">Mendukung pipeline pemrosesan gambar tanpa kirim data ke server eksternal.</li>
+<li class="">Bisa dijalankan di stdio maupun HTTP transport mode.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa memproses ribuan aset visual otomatis (deteksi objek -&gt; crop -&gt; annotate -&gt; export metadata).</li>
+<li class="">OCR + field detection untuk semi-otomasi ekstraksi form dari gambar dokumen.</li>
+<li class="">Workflow kreatif “prompt-to-batch-edit” untuk marketing asset dalam hitungan menit.<br>
+<strong>Sumber:</strong> <a href="https://github.com/sunriseapps/imagesorcery-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/sunriseapps/imagesorcery-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="33-figma-mcp-server-figma">33. <strong>Figma MCP Server</strong> (<code>figma</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#33-figma-mcp-server-figma" class="hash-link" aria-label="Direct link to 33-figma-mcp-server-figma" title="Direct link to 33-figma-mcp-server-figma" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Server MCP resmi Figma (beta) untuk membawa konteks desain langsung ke coding agent, baik remote maupun local desktop server.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Mengambil konteks frame, komponen, variable, dan layout untuk code generation lebih akurat.</li>
+<li class="">Mendukung endpoint remote (<code>https://mcp.figma.com/mcp</code>) dan local (<code>http://127.0.0.1:3845/mcp</code>).</li>
+<li class="">Membantu menjaga konsistensi implementasi dengan design system.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa konversi selected frame jadi code sambil menjaga struktur komponen.</li>
+<li class="">“Design-to-code QA”: bandingkan intent desain dan implementasi lebih cepat.</li>
+<li class="">Workflow handoff super cepat antara designer dan engineer via satu jalur MCP.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/figma/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/figma/mcp-server</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="34-azure-ai-foundry-microsoft-foundry">34. <strong>Azure AI Foundry</strong> (<code>microsoft-foundry</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#34-azure-ai-foundry-microsoft-foundry" class="hash-link" aria-label="Direct link to 34-azure-ai-foundry-microsoft-foundry" title="Direct link to 34-azure-ai-foundry-microsoft-foundry" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP Foundry untuk Azure AI Foundry yang menyediakan tools terpadu model, knowledge, evaluasi, deployment, dan agent orchestration.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Cloud-hosted interface (preview) tanpa perlu deploy server MCP sendiri.</li>
+<li class="">Identity &amp; access control via Microsoft Entra ID (on-behalf-of flow).</li>
+<li class="">Toolset skenario untuk operasi read/write pada resource Foundry.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Multi-agent orchestration di Foundry dengan kontrol akses enterprise.</li>
+<li class="">Agent lifecycle copilot: dari eksperimen model -&gt; evaluasi -&gt; deployment -&gt; iterasi.</li>
+<li class="">“AI platform operator” berbasis prompt yang tetap mengikuti batas permission user.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/azure-ai-foundry/mcp-foundry" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/azure-ai-foundry/mcp-foundry</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="35-dynatrace-dynatrace-oss">35. <strong>Dynatrace</strong> (<code>dynatrace-oss</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#35-dynatrace-dynatrace-oss" class="hash-link" aria-label="Direct link to 35-dynatrace-dynatrace-oss" title="Direct link to 35-dynatrace-dynatrace-oss" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Dynatrace MCP server untuk membawa observability data (logs/events/metrics/security problems) ke asisten AI secara real-time.<br>
+<strong>Fungsi:</strong></p>
+<ul>
+<li class="">Eksekusi DQL, ambil detail problem, dan investigasi entity dari chat.</li>
+<li class="">Dapat kirim notifikasi Slack / setup workflow otomatis (sesuai tool yang tersedia).</li>
+<li class="">Mendukung stdio maupun HTTP transport untuk deployment fleksibel.<br>
+<strong>Hal gila yang bisa dilakukan:</strong></li>
+<li class="">Agen bisa otomatis bikin timeline insiden dari DQL + entity relation + ownership.</li>
+<li class="">Incident bot yang bukan cuma deteksi, tapi juga trigger workflow notifikasi/eskalasi.</li>
+<li class="">Query observability skala besar dengan warning biaya konsumsi Grail yang terukur.<br>
+<strong>Sumber:</strong> <a href="https://github.com/dynatrace-oss/dynatrace-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/dynatrace-oss/dynatrace-mcp</a></li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="36-hugging-face-huggingface">36. <strong>Hugging Face</strong> (<code>huggingface</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#36-hugging-face-huggingface" class="hash-link" aria-label="Direct link to 36-hugging-face-huggingface" title="Direct link to 36-hugging-face-huggingface" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Hugging Face untuk menghubungkan LLM ke Hub API dan ribuan aplikasi Gradio/Spaces.<br>
+<strong>Fungsi:</strong> Mendukung endpoint remote <code>https://huggingface.co/mcp</code>, mode login/OAuth, dan transport MCP modern untuk berbagai client.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa chaining pencarian model/dataset + panggil Space langsung dari chat untuk prototyping AI super cepat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/huggingface/hf-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/huggingface/hf-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="37-postman-postmanlabs">37. <strong>Postman</strong> (<code>postmanlabs</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#37-postman-postmanlabs" class="hash-link" aria-label="Direct link to 37-postman-postmanlabs" title="Direct link to 37-postman-postmanlabs" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Postman MCP Server resmi untuk menghubungkan agen ke workspace, collection, environment, dan evaluasi API Postman.<br>
+<strong>Fungsi:</strong> Menyediakan mode <code>minimal</code>, <code>code</code>, dan <code>full</code> (100+ tools), termasuk dukungan region US/EU.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa generate client code dari definisi API lalu validasi behavior endpoint di flow yang sama.<br>
+<strong>Sumber:</strong> <a href="https://github.com/postmanlabs/postman-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/postmanlabs/postman-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="38-svelte-mcp-sveltejs">38. <strong>Svelte MCP</strong> (<code>sveltejs</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#38-svelte-mcp-sveltejs" class="hash-link" aria-label="Direct link to 38-svelte-mcp-sveltejs" title="Direct link to 38-svelte-mcp-sveltejs" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi ekosistem Svelte untuk membantu coding assistant memahami docs dan pola Svelte/SvelteKit.<br>
+<strong>Fungsi:</strong> Menyediakan context framework-level agar saran kode lebih sesuai praktik Svelte.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa auto-fix pola anti-pattern Svelte saat refactor komponen dalam batch perubahan besar.<br>
+<strong>Sumber:</strong> <a href="https://github.com/sveltejs/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/sveltejs/mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="39-glean-remote-mcp-server-gleanwork">39. <strong>Glean Remote MCP Server</strong> (<code>gleanwork</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#39-glean-remote-mcp-server-gleanwork" class="hash-link" aria-label="Direct link to 39-glean-remote-mcp-server-gleanwork" title="Direct link to 39-glean-remote-mcp-server-gleanwork" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Glean menyediakan remote MCP connectivity untuk membawa tool pihak ketiga ke Assistant/Agents dengan kontrol admin terpusat.<br>
+<strong>Fungsi:</strong> Admin dapat mengatur server MCP yang tersedia, termasuk human-in-the-loop untuk write tools.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Bangun “enterprise super-agent” yang menggabungkan knowledge internal + tool eksternal dari satu antarmuka Glean.<br>
+<strong>Sumber:</strong> <a href="https://docs.glean.com/administration/actions/connect-remote-mcp-servers-to-glean" target="_blank" rel="noopener noreferrer" class="">https://docs.glean.com/administration/actions/connect-remote-mcp-servers-to-glean</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="40-logfire-pydantic">40. <strong>Logfire</strong> (<code>pydantic</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#40-logfire-pydantic" class="hash-link" aria-label="Direct link to 40-logfire-pydantic" title="Direct link to 40-logfire-pydantic" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Logfire untuk akses trace/metric OpenTelemetry dari project Logfire.<br>
+<strong>Fungsi:</strong> Tool utama mencakup pencarian exception, arbitrary query, schema reference, dan deep link trace.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa melakukan RCA otomatis dengan query telemetry lalu langsung menunjuk file/sumber error paling relevan.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/pydantic/logfire-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/pydantic/logfire-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="41-azure-kubernetes-service-azure">41. <strong>Azure Kubernetes Service</strong> (<code>Azure</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#41-azure-kubernetes-service-azure" class="hash-link" aria-label="Direct link to 41-azure-kubernetes-service-azure" title="Direct link to 41-azure-kubernetes-service-azure" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Implementasi MCP Kubernetes dari Azure untuk interaksi natural-language ke cluster Kubernetes/AKS.<br>
+<strong>Fungsi:</strong> Mendukung unified <code>call_kubectl</code>, mode tools legacy, serta access level <code>readonly/readwrite/admin</code>.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent SRE bisa diagnose pod bermasalah + jalankan perintah remediasi terkontrol dari satu percakapan.<br>
+<strong>Sumber:</strong> <a href="https://github.com/Azure/mcp-kubernetes" target="_blank" rel="noopener noreferrer" class="">https://github.com/Azure/mcp-kubernetes</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="42-webflow-webflow">42. <strong>Webflow</strong> (<code>webflow</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#42-webflow-webflow" class="hash-link" aria-label="Direct link to 42-webflow-webflow" title="Direct link to 42-webflow-webflow" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Webflow untuk interaksi AI dengan Webflow API + koneksi bridge app ke Designer.<br>
+<strong>Fungsi:</strong> Mendukung remote OAuth dan local installation untuk editing/publishing workflow berbasis AI.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa generate/update konten + struktur halaman langsung dari insight SEO/editorial prompt.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/webflow/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/webflow/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="43-octopus-deploy-octopusdeploy">43. <strong>Octopus Deploy</strong> (<code>OctopusDeploy</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#43-octopus-deploy-octopusdeploy" class="hash-link" aria-label="Direct link to 43-octopus-deploy-octopusdeploy" title="Direct link to 43-octopus-deploy-octopusdeploy" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Octopus untuk inspect, query, dan diagnosis deployment/release di instance Octopus.<br>
+<strong>Fungsi:</strong> Tersedia banyak tools read-only untuk project, release, target, certificate, account, hingga live status Kubernetes.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen DevOps bisa menjawab “kenapa deploy gagal” dengan menelusuri data rilis, target, dan log operasional otomatis.<br>
+<strong>Sumber:</strong> <a href="https://github.com/OctopusDeploy/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/OctopusDeploy/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="44-fabric-real-time-intelligen-microsoft">44. <strong>Fabric Real-Time Intelligen...</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#44-fabric-real-time-intelligen-microsoft" class="hash-link" aria-label="Direct link to 44-fabric-real-time-intelligen-microsoft" title="Direct link to 44-fabric-real-time-intelligen-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Fabric RTI (preview) untuk query/analis data real-time di Eventhouse dan Azure Data Explorer.<br>
+<strong>Fungsi:</strong> Menjembatani natural language ke KQL serta discovery skema/metadata melalui tool MCP.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen analitik bisa menjalankan investigasi near real-time terhadap event stream tanpa perlu pindah tool manual.<br>
+<strong>Sumber:</strong> <a href="https://learn.microsoft.com/en-us/fabric/real-time-intelligence/mcp-overview" target="_blank" rel="noopener noreferrer" class="">https://learn.microsoft.com/en-us/fabric/real-time-intelligence/mcp-overview</a><br>
+<strong>Sumber repo:</strong> <a href="https://github.com/microsoft/fabric-rti-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/microsoft/fabric-rti-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="45-snyk-snyk">45. <strong>Snyk</strong> (<code>snyk</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#45-snyk-snyk" class="hash-link" aria-label="Direct link to 45-snyk-snyk" title="Direct link to 45-snyk-snyk" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP integration untuk security scanning berbasis Snyk digunakan untuk membuka insight kerentanan langsung ke agen.<br>
+<strong>Fungsi:</strong> Fokus pada vulnerability intelligence dan remediation guidance dalam workflow coding/security review.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent security bisa melakukan pre-merge dependency risk triage sebelum perubahan masuk branch utama.<br>
+<strong>Sumber:</strong> <a href="https://docs.snyk.io/" target="_blank" rel="noopener noreferrer" class="">https://docs.snyk.io/</a><br>
+<strong>Catatan:</strong> repositori MCP resmi dari Snyk tidak ditemukan secara eksplisit saat riset ini.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="46-sonatype-dependency-ma-sonatype">46. <strong>Sonatype Dependency Ma...</strong> (<code>sonatype</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#46-sonatype-dependency-ma-sonatype" class="hash-link" aria-label="Direct link to 46-sonatype-dependency-ma-sonatype" title="Direct link to 46-sonatype-dependency-ma-sonatype" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Sonatype MCP server resmi untuk dependency intelligence, license compliance, dan vulnerability governance.<br>
+<strong>Fungsi:</strong> Mendukung tools pemilihan versi, security advisories, dan rekomendasi upgrade komponen.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa menolak dependency berisiko dan mengusulkan versi upgrade paling aman secara otomatis.<br>
+<strong>Sumber:</strong> <a href="https://github.com/sonatype/dependency-management-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/sonatype/dependency-management-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="47-pgedge-postgres-pgedge">47. <strong>pgEdge Postgres</strong> (<code>pgEdge</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#47-pgedge-postgres-pgedge" class="hash-link" aria-label="Direct link to 47-pgedge-postgres-pgedge" title="Direct link to 47-pgedge-postgres-pgedge" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server pgEdge untuk akses Postgres ops dengan fokus observability skema/performa dan keamanan koneksi.<br>
+<strong>Fungsi:</strong> Menyediakan schema introspection, metrics performa, dan dukungan multi-database pada implementasi toolkit pgEdge.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent DB dapat membandingkan dev/staging/prod dan menemukan query lambat tanpa setup tooling tambahan.<br>
+<strong>Sumber:</strong> <a href="https://www.pgedge.com/blog/introducing-the-pgedge-postgres-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://www.pgedge.com/blog/introducing-the-pgedge-postgres-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="48-ui5-ui5">48. <strong>UI5</strong> (<code>UI5</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#48-ui5-ui5" class="hash-link" aria-label="Direct link to 48-ui5-ui5" title="Direct link to 48-ui5-ui5" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> UI5 MCP server resmi untuk bantu pengembangan aplikasi UI5 dengan tools framework-specific.<br>
+<strong>Fungsi:</strong> Mendukung scaffolding app, API reference, guideline best-practice, linting, dan project info retrieval.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa auto-bootstrap app UI5 lalu lint+fix issue framework secara iteratif dari chat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/UI5/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/UI5/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="49-deepwiki-cognitionai">49. <strong>DeepWiki</strong> (<code>CognitionAI</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#49-deepwiki-cognitionai" class="hash-link" aria-label="Direct link to 49-deepwiki-cognitionai" title="Direct link to 49-deepwiki-cognitionai" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> DeepWiki MCP server menyediakan dokumen dan tanya-jawab repo GitHub publik via layanan DeepWiki.<br>
+<strong>Fungsi:</strong> Tool utama mencakup <code>ask_question</code>, <code>read_wiki_structure</code>, dan <code>read_wiki_contents</code>.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa “ngobrol” dengan codebase publik besar tanpa cloning lokal repo.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/cognitionai/deepwiki" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/cognitionai/deepwiki</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="50-clarity-microsoft">50. <strong>Clarity</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#50-clarity-microsoft" class="hash-link" aria-label="Direct link to 50-clarity-microsoft" title="Direct link to 50-clarity-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi Microsoft Clarity untuk analytics dashboard, session recordings, dan docs query.<br>
+<strong>Fungsi:</strong> Menyediakan query natural-language ke metrik traffic/behavior + filtering dimensi secara langsung.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent growth bisa menemukan friction UX dari rekaman sesi dan langsung usulkan eksperimen perbaikan.<br>
+<strong>Sumber:</strong> <a href="https://github.com/microsoft/clarity-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/microsoft/clarity-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="51-scrapegraphai-scrapegraph-scrapegraphai">51. <strong>ScrapeGraphAI Scrapegraph</strong> (<code>ScrapeGraphAI</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#51-scrapegraphai-scrapegraph-scrapegraphai" class="hash-link" aria-label="Direct link to 51-scrapegraphai-scrapegraph-scrapegraphai" title="Direct link to 51-scrapegraphai-scrapegraph-scrapegraphai" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> ScrapeGraph MCP server untuk web scraping berbasis AI dengan tool crawling, markdownify, dan extraction schema-aware.<br>
+<strong>Fungsi:</strong> Mendukung async crawling, infinite scroll, JS-heavy pages, serta agentic multi-step scraping.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen riset bisa crawl multi-domain lalu hasilkan dataset terstruktur siap analisis otomatis.<br>
+<strong>Sumber:</strong> <a href="https://github.com/ScrapeGraphAI/scrapegraph-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/ScrapeGraphAI/scrapegraph-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="52-arm-mcp-server-arm">52. <strong>Arm MCP Server</strong> (<code>arm</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#52-arm-mcp-server-arm" class="hash-link" aria-label="Direct link to 52-arm-mcp-server-arm" title="Direct link to 52-arm-mcp-server-arm" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Integrasi MCP bertema ARM dipakai untuk menghadirkan konteks tooling/ekosistem ARM ke agent workflow.<br>
+<strong>Fungsi:</strong> Umumnya diposisikan untuk assist pengembangan/perencanaan terkait platform ARM.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa bantu pemetaan kompatibilitas stack aplikasi terhadap target ARM secara conversational.<br>
+<strong>Catatan:</strong> sumber resmi terpusat belum ditemukan saat riset ini.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="53-miro-miroapp">53. <strong>Miro</strong> (<code>miroapp</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#53-miro-miroapp" class="hash-link" aria-label="Direct link to 53-miro-miroapp" title="Direct link to 53-miro-miroapp" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Miro menyediakan hosted MCP server untuk akses board organisasi dengan OAuth 2.1.<br>
+<strong>Fungsi:</strong> Memungkinkan AI membaca konteks board, menghasilkan diagram, dan bantu transform board jadi implementasi.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Ubah PRD/GitHub URL menjadi diagram arsitektur Miro otomatis lalu lanjut jadi backlog implementasi.<br>
+<strong>Sumber:</strong> <a href="https://developers.miro.com/docs/miro-mcp" target="_blank" rel="noopener noreferrer" class="">https://developers.miro.com/docs/miro-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="54-codacy-codacy">54. <strong>Codacy</strong> (<code>codacy</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#54-codacy-codacy" class="hash-link" aria-label="Direct link to 54-codacy-codacy" title="Direct link to 54-codacy-codacy" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Codacy MCP server resmi untuk akses repository quality, coverage, security findings, dan PR analysis.<br>
+<strong>Fungsi:</strong> Menyediakan tool quality/security lintas organisasi/repo termasuk analisis issue detail.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen reviewer bisa menjalankan audit PR otomatis berbasis issue + diff coverage sebelum merge.<br>
+<strong>Sumber:</strong> <a href="https://github.com/codacy/codacy-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/codacy/codacy-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="55-pagerduty-pagerduty">55. <strong>PagerDuty</strong> (<code>PagerDuty</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#55-pagerduty-pagerduty" class="hash-link" aria-label="Direct link to 55-pagerduty-pagerduty" title="Direct link to 55-pagerduty-pagerduty" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi PagerDuty untuk incident, service, schedule, dan event orchestration operations.<br>
+<strong>Fungsi:</strong> Default read-only, bisa aktifkan write tools dengan flag khusus (<code>--enable-write-tools</code>).<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent on-call dapat triage incident, buat override jadwal, dan orkestrasi eskalasi tanpa keluar dari IDE/chat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/PagerDuty/pagerduty-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/PagerDuty/pagerduty-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="56-amplitude-amplitude">56. <strong>Amplitude</strong> (<code>amplitude</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#56-amplitude-amplitude" class="hash-link" aria-label="Direct link to 56-amplitude-amplitude" title="Direct link to 56-amplitude-amplitude" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Amplitude MCP menghubungkan AI tool ke behavioral analytics Amplitude melalui OAuth dan permission account yang ada.<br>
+<strong>Fungsi:</strong> Bisa query insight, membuat chart/dashboard/cohort, dan akses data eksperimen/feature flag.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Product agent bisa menganalisis funnel lalu langsung usulkan eksperimen dari hasil data real-time.<br>
+<strong>Sumber:</strong> <a href="https://amplitude.com/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://amplitude.com/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="57-microsoft-mcp-server-for--microsoft">57. <strong>Microsoft MCP Server for ...</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#57-microsoft-mcp-server-for--microsoft" class="hash-link" aria-label="Direct link to 57-microsoft-mcp-server-for--microsoft" title="Direct link to 57-microsoft-mcp-server-for--microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Label ini merujuk pada varian server Microsoft spesifik yang tidak tampil utuh di sumber gambar (<code>...</code>).<br>
+<strong>Fungsi:</strong> Secara umum dipakai untuk membuka kapabilitas layanan Microsoft tertentu ke agentic workflow.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Integrasi lintas layanan Microsoft dengan kontrol identitas dan policy enterprise.<br>
+<strong>Sumber referensi:</strong> <a href="https://github.com/microsoft/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/microsoft/mcp</a><br>
+<strong>Catatan:</strong> nama produk lengkap tidak terlihat pada data gambar.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="58-pubnub-mcp-server-pubnub">58. <strong>PubNub MCP Server</strong> (<code>pubnub</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#58-pubnub-mcp-server-pubnub" class="hash-link" aria-label="Direct link to 58-pubnub-mcp-server-pubnub" title="Direct link to 58-pubnub-mcp-server-pubnub" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server PubNub resmi yang expose docs SDK/API dan operasi real-time messaging PubNub.<br>
+<strong>Fungsi:</strong> Mendukung publish/subscribe, history, presence, dan account/app management via tool MCP.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa menjalankan simulasi sistem chat/event real-time end-to-end dari prompt.<br>
+<strong>Sumber:</strong> <a href="https://github.com/pubnub/pubnub-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/pubnub/pubnub-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="59-justcall-mcp-server-saaslabsco">59. <strong>JustCall MCP Server</strong> (<code>saaslabsco</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#59-justcall-mcp-server-saaslabsco" class="hash-link" aria-label="Direct link to 59-justcall-mcp-server-saaslabsco" title="Direct link to 59-justcall-mcp-server-saaslabsco" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> JustCall MCP server membawa kapabilitas voice/SMS JustCall ke agen LLM.<br>
+<strong>Fungsi:</strong> Mendukung koneksi remote MCP untuk workflow telephony berbasis API JustCall.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> AI assistant bisa trigger call/SMS operasional dari alur support atau outbound otomatis.<br>
+<strong>Sumber:</strong> <a href="https://mcpservers.org/servers/saaslabsco/justcall-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://mcpservers.org/servers/saaslabsco/justcall-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="60-contextstream-mcp-server-contextstream">60. <strong>ContextStream MCP Server</strong> (<code>contextstream</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#60-contextstream-mcp-server-contextstream" class="hash-link" aria-label="Direct link to 60-contextstream-mcp-server-contextstream" title="Direct link to 60-contextstream-mcp-server-contextstream" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> ContextStream adalah MCP server untuk indexing docs/codebase agar mudah dicari AI assistant.<br>
+<strong>Fungsi:</strong> Hybrid search (BM25 + semantic), integrasi MCP, dan opsi self-host/cloud untuk kontrol data.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent coding bisa pakai “context pack” internal sehingga prompt lebih kecil tapi tetap kaya referensi proyek.<br>
+<strong>Sumber:</strong> <a href="https://contextstream.dev/" target="_blank" rel="noopener noreferrer" class="">https://contextstream.dev/</a><br>
+<strong>Sumber docs:</strong> <a href="https://contextstream.io/docs/mcp" target="_blank" rel="noopener noreferrer" class="">https://contextstream.io/docs/mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="61-promptschat-mcp-server-f">61. <strong>prompts.chat MCP Server</strong> (<code>f</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#61-promptschat-mcp-server-f" class="hash-link" aria-label="Direct link to 61-promptschat-mcp-server-f" title="Direct link to 61-promptschat-mcp-server-f" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> prompts.chat menyediakan API MCP-first untuk search/discovery prompt secara terstruktur.<br>
+<strong>Fungsi:</strong> Endpoint <code>https://prompts.chat/api/mcp</code>, dukungan key opsional, dan filter by user/category/tag.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent bisa menarik prompt library siap pakai lalu compose workflow prompt chaining otomatis.<br>
+<strong>Sumber:</strong> <a href="https://prompts.chat/docs/api" target="_blank" rel="noopener noreferrer" class="">https://prompts.chat/docs/api</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="62-the-mcp-server-for-gorel-goreleaser">62. <strong>The MCP server for GoRel...</strong> (<code>goreleaser</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#62-the-mcp-server-for-gorel-goreleaser" class="hash-link" aria-label="Direct link to 62-the-mcp-server-for-gorel-goreleaser" title="Direct link to 62-the-mcp-server-for-gorel-goreleaser" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> GoReleaser mendukung pembuatan/publikasi manifest MCP server (<code>server.json</code>) sebagai bagian pipeline release.<br>
+<strong>Fungsi:</strong> Konfigurasi <code>mcp</code> pada <code>.goreleaser.yaml</code> untuk membuat server discoverable di MCP Registry.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Satu pipeline dapat build binary + publish release + publish manifest MCP otomatis sekaligus.<br>
+<strong>Sumber:</strong> <a href="https://goreleaser.com/customization/mcp/" target="_blank" rel="noopener noreferrer" class="">https://goreleaser.com/customization/mcp/</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="63-launchdarkly-launchdarkly">63. <strong>Launchdarkly</strong> (<code>launchdarkly</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#63-launchdarkly-launchdarkly" class="hash-link" aria-label="Direct link to 63-launchdarkly-launchdarkly" title="Direct link to 63-launchdarkly-launchdarkly" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server resmi LaunchDarkly untuk operasi feature flags/AI configs melalui agent.<br>
+<strong>Fungsi:</strong> Mendukung create/update/list/get status flag lintas environment dengan opsi endpoint commercial/EU/Federal.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen release manager bisa rollout bertahap + observasi dampak + rollback flag dari chat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/launchdarkly/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/launchdarkly/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="64-zapier-zapier">64. <strong>Zapier</strong> (<code>zapier</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#64-zapier-zapier" class="hash-link" aria-label="Direct link to 64-zapier-zapier" title="Direct link to 64-zapier-zapier" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Zapier MCP menghubungkan AI ke ribuan aplikasi Zapier melalui actions siap pakai.<br>
+<strong>Fungsi:</strong> Mendukung ribuan app connection, puluhan ribu actions, dan integrasi ke banyak MCP client resmi.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa menjalankan automasi lintas CRM, support, marketing, dan ops tanpa coding connector manual.<br>
+<strong>Sumber:</strong> <a href="https://docs.zapier.com/mcp/home" target="_blank" rel="noopener noreferrer" class="">https://docs.zapier.com/mcp/home</a><br>
+<strong>Sumber clients:</strong> <a href="https://docs.zapier.com/mcp/clients" target="_blank" rel="noopener noreferrer" class="">https://docs.zapier.com/mcp/clients</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="65-dynatrace-managed-dynatrace-oss">65. <strong>Dynatrace Managed</strong> (<code>dynatrace-oss</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#65-dynatrace-managed-dynatrace-oss" class="hash-link" aria-label="Direct link to 65-dynatrace-managed-dynatrace-oss" title="Direct link to 65-dynatrace-managed-dynatrace-oss" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Varian penggunaan Dynatrace MCP untuk lingkungan managed/enterprise deployment.<br>
+<strong>Fungsi:</strong> Tetap memanfaatkan tool observability Dynatrace (query, problem analysis, integrations) via MCP.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent ops enterprise bisa jalankan incident diagnostics lintas tenant/environment managed.<br>
+<strong>Sumber:</strong> <a href="https://github.com/dynatrace-oss/dynatrace-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/dynatrace-oss/dynatrace-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="66-port-port-labs">66. <strong>Port</strong> (<code>port-labs</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#66-port-port-labs" class="hash-link" aria-label="Direct link to 66-port-port-labs" title="Direct link to 66-port-port-labs" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Port MCP Server resmi untuk internal developer portal, catalog, scorecard, dan RBAC operations.<br>
+<strong>Fungsi:</strong> Menyediakan tools untuk entity insights, compliance scorecards, hingga create rules/permission policy.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent platform dapat memetakan ownership service + compliance gap lalu generate action plan tim.<br>
+<strong>Sumber:</strong> <a href="https://github.com/port-labs/port-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/port-labs/port-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="67-rigour-rigour-labs">67. <strong>Rigour</strong> (<code>rigour-labs</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#67-rigour-rigour-labs" class="hash-link" aria-label="Direct link to 67-rigour-rigour-labs" title="Direct link to 67-rigour-rigour-labs" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Rigour dipakai sebagai server quality/risk checks untuk mendukung pengambilan keputusan engineering berbasis AI.<br>
+<strong>Fungsi:</strong> Membantu validasi kualitas dan risiko pada workflow delivery secara terstruktur.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent governance bisa menolak perubahan berisiko tinggi sebelum masuk release train.<br>
+<strong>Catatan:</strong> dokumentasi/repo resmi publik untuk MCP-nya belum ditemukan saat riset ini.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="68-dev-box-microsoft">68. <strong>Dev Box</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#68-dev-box-microsoft" class="hash-link" aria-label="Direct link to 68-dev-box-microsoft" title="Direct link to 68-dev-box-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Microsoft Dev Box MCP Server menghubungkan AI agent ke operasi Dev Box via natural language.<br>
+<strong>Fungsi:</strong> Mendukung lifecycle dev box, discovery pool/project, scheduling, customization, dan diagnostics tools.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent dapat otomatis menyiapkan, memperbaiki, dan menyesuaikan dev environment tim tanpa portal hopping.<br>
+<strong>Sumber:</strong> <a href="https://learn.microsoft.com/en-us/azure/dev-box/overview-what-is-dev-box-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://learn.microsoft.com/en-us/azure/dev-box/overview-what-is-dev-box-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="69-axiom-axiomhq">69. <strong>Axiom</strong> (<code>axiomhq</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#69-axiom-axiomhq" class="hash-link" aria-label="Direct link to 69-axiom-axiomhq" title="Direct link to 69-axiom-axiomhq" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Axiom MCP server resmi untuk query observability data Axiom langsung dari agent.<br>
+<strong>Fungsi:</strong> Mendukung dataset/schema/APL query dan guidance penggunaan via dokumentasi resmi Axiom.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen bisa menjalankan analisis log anomaly real-time dan menyiapkan rekomendasi mitigasi cepat.<br>
+<strong>Sumber:</strong> <a href="https://github.com/axiomhq/mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/axiomhq/mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="70-stack-overflow-mcp-server-stackexchange">70. <strong>Stack Overflow MCP Server</strong> (<code>StackExchange</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#70-stack-overflow-mcp-server-stackexchange" class="hash-link" aria-label="Direct link to 70-stack-overflow-mcp-server-stackexchange" title="Direct link to 70-stack-overflow-mcp-server-stackexchange" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> MCP server Stack Overflow resmi untuk akses trusted developer knowledge dari Stack Overflow.<br>
+<strong>Fungsi:</strong> Remote server dengan auth akun Stack Exchange dan kuota harian untuk query retrieval.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen coding bisa grounding jawaban ke knowledge Q&amp;A produksi skala besar agar solusi lebih realistis.<br>
+<strong>Sumber:</strong> <a href="https://api.stackexchange.com/docs/mcp-server" target="_blank" rel="noopener noreferrer" class="">https://api.stackexchange.com/docs/mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="71-wix-wix">71. <strong>Wix</strong> (<code>wix</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#71-wix-wix" class="hash-link" aria-label="Direct link to 71-wix-wix" title="Direct link to 71-wix-wix" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Wix MCP server resmi untuk docs search, code assist, dan API calls pada Wix sites.<br>
+<strong>Fungsi:</strong> Endpoint remote <code>https://mcp.wix.com/sse</code> dengan tool docs + site management APIs.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent bisa bantu bangun fitur Wix end-to-end dari docs retrieval sampai API invocation.<br>
+<strong>Sumber:</strong> <a href="https://github.com/wix/wix-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/wix/wix-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="72-stackhawk-stackhawk">72. <strong>Stackhawk</strong> (<code>stackhawk</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#72-stackhawk-stackhawk" class="hash-link" aria-label="Direct link to 72-stackhawk-stackhawk" title="Direct link to 72-stackhawk-stackhawk" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> StackHawk MCP server mengintegrasikan DAST runtime security testing ke AI coding workflow.<br>
+<strong>Fungsi:</strong> Menyediakan security analytics, YAML validation, threat surface checks, dan anti-hallucination helpers.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agen security bisa jalankan test runtime lalu memandu fix vulnerability langsung di editor.<br>
+<strong>Sumber:</strong> <a href="https://docs.stackhawk.com/model-context-protocol/" target="_blank" rel="noopener noreferrer" class="">https://docs.stackhawk.com/model-context-protocol/</a><br>
+<strong>Sumber repo:</strong> <a href="https://github.com/mcp/stackhawk/stackhawk-mcp" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/stackhawk/stackhawk-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="73-intercom-intercom">73. <strong>Intercom</strong> (<code>intercom</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#73-intercom-intercom" class="hash-link" aria-label="Direct link to 73-intercom-intercom" title="Direct link to 73-intercom-intercom" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Intercom remote MCP server resmi untuk akses conversation/contact data secara aman via OAuth/token.<br>
+<strong>Fungsi:</strong> Tool utama mencakup search/fetch universal plus API tools untuk percakapan dan kontak.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent support bisa triage inbox berbasis konteks pelanggan tanpa buka dashboard terpisah.<br>
+<strong>Sumber:</strong> <a href="https://github.com/intercom/intercom-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/intercom/intercom-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="74-vercel-vercel">74. <strong>Vercel</strong> (<code>vercel</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#74-vercel-vercel" class="hash-link" aria-label="Direct link to 74-vercel-vercel" title="Direct link to 74-vercel-vercel" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Vercel MCP resmi (beta) untuk mengelola project/deployment, log analysis, dan docs navigation via OAuth remote MCP.<br>
+<strong>Fungsi:</strong> Endpoint <code>https://mcp.vercel.com</code> dengan tools publik + terautentikasi untuk operasi Vercel.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent release bisa pantau deploy health, baca logs, dan sarankan rollback/fix tanpa keluar chat.<br>
+<strong>Sumber:</strong> <a href="https://vercel.com/docs/ai-tooling/vercel-mcp" target="_blank" rel="noopener noreferrer" class="">https://vercel.com/docs/ai-tooling/vercel-mcp</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="75-jfrog-remote-mcp-server-jfrog">75. <strong>JFrog Remote MCP Server</strong> (<code>jfrog</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#75-jfrog-remote-mcp-server-jfrog" class="hash-link" aria-label="Direct link to 75-jfrog-remote-mcp-server-jfrog" title="Direct link to 75-jfrog-remote-mcp-server-jfrog" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> JFrog Remote MCP server resmi untuk akses platform JFrog (resource, artifact search, catalog/curation, security insights).<br>
+<strong>Fungsi:</strong> Hosted remote + OAuth untuk integrasi langsung ke IDE/assistant tanpa kelola API key manual.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent supply-chain bisa cek paket approved, CVE status, dan repo policy sebelum build/release.<br>
+<strong>Sumber:</strong> <a href="https://github.com/jfrog/jfrog-mcp-server" target="_blank" rel="noopener noreferrer" class="">https://github.com/jfrog/jfrog-mcp-server</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="76-livecheck-ai-qualityclouds">76. <strong>LiveCheck AI</strong> (<code>qualityclouds</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#76-livecheck-ai-qualityclouds" class="hash-link" aria-label="Direct link to 76-livecheck-ai-qualityclouds" title="Direct link to 76-livecheck-ai-qualityclouds" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> LivecheckAI dari Quality Clouds menambahkan governance layer untuk validasi kode AI-generated secara real-time.<br>
+<strong>Fungsi:</strong> Menegakkan standard kualitas, keamanan, dan compliance platform-specific pada alur coding assistant.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent coding dapat auto-fix/flag pelanggaran policy sebelum PR dibuat, bukan sesudah CI gagal.<br>
+<strong>Sumber:</strong> <a href="https://qualityclouds.com/documentation/qc/livecheckai-via-mcp/quality-clouds-mcp-for-salesforce/" target="_blank" rel="noopener noreferrer" class="">https://qualityclouds.com/documentation/qc/livecheckai-via-mcp/quality-clouds-mcp-for-salesforce/</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="77-holomodular-servicebricks-holomodular">77. <strong>Holomodular Servicebricks</strong> (<code>holomodular</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#77-holomodular-servicebricks-holomodular" class="hash-link" aria-label="Direct link to 77-holomodular-servicebricks-holomodular" title="Direct link to 77-holomodular-servicebricks-holomodular" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> ServiceBricks berfokus pada generasi microservice .NET berbasis prompt dan digunakan dalam workflow AI-first engineering.<br>
+<strong>Fungsi:</strong> Membantu pembentukan fondasi service/API yang cepat untuk dilanjutkan di IDE/agent coding.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent dapat menghasilkan baseline microservice lengkap lalu meneruskan kustomisasi fitur secara iteratif.<br>
+<strong>Sumber:</strong> <a href="https://servicebricks.com/" target="_blank" rel="noopener noreferrer" class="">https://servicebricks.com/</a><br>
+<strong>Sumber perusahaan:</strong> <a href="https://holomodular.com/" target="_blank" rel="noopener noreferrer" class="">https://holomodular.com/</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="78-box-box">78. <strong>Box</strong> (<code>box</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#78-box-box" class="hash-link" aria-label="Direct link to 78-box-box" title="Direct link to 78-box-box" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Box remote MCP server resmi untuk akses content Box dan Box AI tanpa memindahkan data dari Box.<br>
+<strong>Fungsi:</strong> Endpoint <code>https://mcp.box.com</code> dengan OAuth, file/folder ops, search, dan Box AI capabilities.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent enterprise bisa QA dokumen internal skala besar sambil tetap patuh kontrol akses Box.<br>
+<strong>Sumber:</strong> <a href="https://github.com/mcp/box/mcp-server-box-remote" target="_blank" rel="noopener noreferrer" class="">https://github.com/mcp/box/mcp-server-box-remote</a><br>
+<strong>Sumber docs:</strong> <a href="https://developer.box.com/guides/box-mcp/remote/" target="_blank" rel="noopener noreferrer" class="">https://developer.box.com/guides/box-mcp/remote/</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="79-guru-remote-mcp-server-guruhq">79. <strong>Guru Remote MCP Server</strong> (<code>guruhq</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#79-guru-remote-mcp-server-guruhq" class="hash-link" aria-label="Direct link to 79-guru-remote-mcp-server-guruhq" title="Direct link to 79-guru-remote-mcp-server-guruhq" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Guru MCP server menghubungkan AI tools ke knowledge base Guru dan knowledge agents perusahaan.<br>
+<strong>Fungsi:</strong> Mendukung search, Q&amp;A, create/update card, dengan OAuth/API token serta RBAC enforcement.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent internal knowledge dapat membuat/update kartu dokumentasi langsung dari percakapan kerja tim.<br>
+<strong>Sumber:</strong> <a href="https://developer.getguru.com/docs/guru-mcp-server-overview" target="_blank" rel="noopener noreferrer" class="">https://developer.getguru.com/docs/guru-mcp-server-overview</a><br>
+<strong>Sumber auth:</strong> <a href="https://developer.getguru.com/docs/authentication-connection-setup" target="_blank" rel="noopener noreferrer" class="">https://developer.getguru.com/docs/authentication-connection-setup</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="80-microsoft-sentinel-data-explor-microsoft">80. <strong>Microsoft Sentinel Data Explor...</strong> (<code>microsoft</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#80-microsoft-sentinel-data-explor-microsoft" class="hash-link" aria-label="Direct link to 80-microsoft-sentinel-data-explor-microsoft" title="Direct link to 80-microsoft-sentinel-data-explor-microsoft" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Tool collection MCP Microsoft Sentinel untuk eksplorasi data lake keamanan dan investigasi ancaman.<br>
+<strong>Fungsi:</strong> Mendukung semantic table search + query data via endpoint data-exploration MCP yang di-host Microsoft.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> SOC agent bisa jalankan hunting awal berbasis natural language sebelum pivot ke investigasi mendalam.<br>
+<strong>Sumber overview:</strong> <a href="https://learn.microsoft.com/en-us/azure/sentinel/datalake/sentinel-mcp-overview" target="_blank" rel="noopener noreferrer" class="">https://learn.microsoft.com/en-us/azure/sentinel/datalake/sentinel-mcp-overview</a><br>
+<strong>Sumber data exploration:</strong> <a href="https://learn.microsoft.com/en-us/azure/sentinel/datalake/sentinel-mcp-data-exploration-tool" target="_blank" rel="noopener noreferrer" class="">https://learn.microsoft.com/en-us/azure/sentinel/datalake/sentinel-mcp-data-exploration-tool</a></p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="81-anima-mcp-server-animaapp">81. <strong>Anima MCP Server</strong> (<code>AnimaApp</code>)<a href="https://sentient.fr-labs.my.id/docs/blog/daftar-mcp-server#81-anima-mcp-server-animaapp" class="hash-link" aria-label="Direct link to 81-anima-mcp-server-animaapp" title="Direct link to 81-anima-mcp-server-animaapp" translate="no">​</a></h3>
+<p><strong>Deskripsi:</strong> Anima MCP menghubungkan coding agent ke Anima Playground, Figma design, dan design system tim.<br>
+<strong>Fungsi:</strong> Endpoint publik <code>https://public-api.animaapp.com/v1/mcp</code> untuk handoff design-to-code berbasis AI.<br>
+<strong>Hal gila yang bisa dilakukan:</strong> Agent bisa ambil playground/Figma lalu implement komponen production-ready sesuai pola codebase lokal.<br>
+<strong>Sumber:</strong> <a href="https://docs.animaapp.com/docs/anima-mcp" target="_blank" rel="noopener noreferrer" class="">https://docs.animaapp.com/docs/anima-mcp</a></p>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <category label="mcp" term="mcp"/>
+        <category label="ai-agents" term="ai-agents"/>
+        <category label="tools" term="tools"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Welcome]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/welcome</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/welcome"/>
+        <updated>2021-08-26T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Docusaurus blogging features are powered by the blog plugin.]]></summary>
+        <content type="html"><![CDATA[<p><a href="https://docusaurus.io/docs/blog" target="_blank" rel="noopener noreferrer" class="">Docusaurus blogging features</a> are powered by the <a href="https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-blog" target="_blank" rel="noopener noreferrer" class="">blog plugin</a>.</p>
+<p>Here are a few tips you might find useful.</p>
+<p>Simply add Markdown files (or folders) to the <code>blog</code> directory.</p>
+<p>Regular blog authors can be added to <code>authors.yml</code>.</p>
+<p>The blog post date can be extracted from filenames, such as:</p>
+<ul>
+<li class=""><code>2019-05-30-welcome.md</code></li>
+<li class=""><code>2019-05-30-welcome/index.md</code></li>
+</ul>
+<p>A blog post folder can be convenient to co-locate blog post images:</p>
+<p><img decoding="async" loading="lazy" alt="Docusaurus Plushie" src="https://sentient.fr-labs.my.id/docs/assets/images/docusaurus-plushie-banner-a60f7593abca1e3eef26a9afa244e4fb.jpeg" width="1500" height="500" class="img_ev3q"></p>
+<p>The blog supports tags as well!</p>
+<p><strong>And if you don't want a blog</strong>: just delete this directory, and use <code>blog: false</code> in your Docusaurus config.</p>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <author>
+            <name>Yangshun Tay</name>
+            <uri>https://linkedin.com/in/yangshun</uri>
+        </author>
+        <category label="Facebook" term="Facebook"/>
+        <category label="Hello" term="Hello"/>
+        <category label="Docusaurus" term="Docusaurus"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[MDX Blog Post]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/mdx-blog-post</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/mdx-blog-post"/>
+        <updated>2021-08-01T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Blog posts support Docusaurus Markdown features, such as MDX.]]></summary>
+        <content type="html"><![CDATA[<p>Blog posts support <a href="https://docusaurus.io/docs/markdown-features" target="_blank" rel="noopener noreferrer" class="">Docusaurus Markdown features</a>, such as <a href="https://mdxjs.com/" target="_blank" rel="noopener noreferrer" class="">MDX</a>.</p>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>Use the power of React to create interactive blog posts.</p></div></div>
+<!-- -->
+<p>For example, use JSX to create an interactive button:</p>
+<div class="language-js codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-js codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token operator" style="color:#393A34">&lt;</span><span class="token plain">button onClick</span><span class="token operator" style="color:#393A34">=</span><span class="token punctuation" style="color:#393A34">{</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token arrow operator" style="color:#393A34">=&gt;</span><span class="token plain"> </span><span class="token function" style="color:#d73a49">alert</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">'button clicked!'</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">}</span><span class="token operator" style="color:#393A34">&gt;</span><span class="token maybe-class-name">Click</span><span class="token plain"> me</span><span class="token operator" style="color:#393A34">!</span><span class="token operator" style="color:#393A34">&lt;</span><span class="token operator" style="color:#393A34">/</span><span class="token plain">button</span><span class="token operator" style="color:#393A34">&gt;</span><br></span></code></pre></div></div>
+<button>Click me!</button>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <category label="Docusaurus" term="Docusaurus"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Long Blog Post]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/long-blog-post</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/long-blog-post"/>
+        <updated>2019-05-29T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[This is the summary of a very long blog post,]]></summary>
+        <content type="html"><![CDATA[<p>This is the summary of a very long blog post,</p>
+<p>Use a <code>&lt;!--</code> <code>truncate</code> <code>--&gt;</code> comment to limit blog post size in the list view.</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
+        <author>
+            <name>Yangshun Tay</name>
+            <uri>https://linkedin.com/in/yangshun</uri>
+        </author>
+        <category label="Hello" term="Hello"/>
+        <category label="Docusaurus" term="Docusaurus"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[First Blog Post]]></title>
+        <id>https://sentient.fr-labs.my.id/docs/blog/first-blog-post</id>
+        <link href="https://sentient.fr-labs.my.id/docs/blog/first-blog-post"/>
+        <updated>2019-05-28T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Lorem ipsum dolor sit amet...]]></summary>
+        <content type="html"><![CDATA[<p>Lorem ipsum dolor sit amet...</p>
+<p>...consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
+        <author>
+            <name>Sébastien Lorber</name>
+            <uri>https://sebastienlorber.com</uri>
+        </author>
+        <author>
+            <name>Yangshun Tay</name>
+            <uri>https://linkedin.com/in/yangshun</uri>
+        </author>
+        <category label="Hola" term="Hola"/>
+        <category label="Docusaurus" term="Docusaurus"/>
+    </entry>
+</feed>

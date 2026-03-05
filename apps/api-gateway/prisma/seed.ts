@@ -548,7 +548,7 @@ async function main() {
     {
       key: 'dashboard-m1',
       title: 'Dashboard M1',
-      path: '/app?domain=m1',
+      path: '/app/overview?domain=m1',
       icon: 'BarChart3',
       type: 'ITEM',
       parentKey: 'dashboard',
@@ -557,7 +557,7 @@ async function main() {
     {
       key: 'dashboard-m',
       title: 'Dashboard M',
-      path: '/app?domain=m',
+      path: '/app/overview?domain=m',
       icon: 'LineChart',
       type: 'ITEM',
       parentKey: 'dashboard',
@@ -584,7 +584,7 @@ async function main() {
     {
       key: 'dashboard-m2r',
       title: 'Dashboard M2R',
-      path: '/app?domain=m2r',
+      path: '/app/overview?domain=m2r',
       icon: 'Activity',
       type: 'ITEM',
       parentKey: 'dashboard',

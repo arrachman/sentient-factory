@@ -1,0 +1,24 @@
+{
+  "id": "ai-agents/ml-models",
+  "title": "Machine Learning Models",
+  "description": "Overview",
+  "source": "@site/docs/03-ai-agents/ml-models.md",
+  "sourceDirName": "03-ai-agents",
+  "slug": "/ai-agents/ml-models",
+  "permalink": "/docs/docs/ai-agents/ml-models",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/03-ai-agents/ml-models.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "AI Agent Roles",
+    "permalink": "/docs/docs/ai-agents/agent-roles"
+  },
+  "next": {
+    "title": "Training Pipeline",
+    "permalink": "/docs/docs/ai-agents/training-pipeline"
+  }
+}

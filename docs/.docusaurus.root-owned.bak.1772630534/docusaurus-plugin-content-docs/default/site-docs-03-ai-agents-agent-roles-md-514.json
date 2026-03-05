@@ -1,0 +1,27 @@
+{
+  "id": "ai-agents/agent-roles",
+  "title": "AI Agent Roles",
+  "description": "Overview of AI agents in Sentient Factory system.",
+  "source": "@site/docs/03-ai-agents/agent-roles.md",
+  "sourceDirName": "03-ai-agents",
+  "slug": "/ai-agents/agent-roles",
+  "permalink": "/docs/docs/ai-agents/agent-roles",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/03-ai-agents/agent-roles.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Api Agents",
+    "permalink": "/docs/docs/category/api-agents"
+  },
+  "next": {
+    "title": "Machine Learning Models",
+    "permalink": "/docs/docs/ai-agents/ml-models"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "frontend/tickets/F0007",
+  "title": "Delete User Functionality",
+  "description": "Overview",
+  "source": "@site/docs/04-frontend/tickets/F0007.md",
+  "sourceDirName": "04-frontend/tickets",
+  "slug": "/frontend/tickets/F0007",
+  "permalink": "/docs/docs/frontend/tickets/F0007",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/04-frontend/tickets/F0007.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "ticket_id": "F0007",
+    "title": "Delete User Functionality",
+    "phase": "2 - User Management Module",
+    "priority": "Medium",
+    "estimate": "1-2 days",
+    "status": "Pending",
+    "dependencies": "F0004 (Users List Page)",
+    "assignee": null,
+    "created_date": "2025-02-07T00:00:00.000Z",
+    "due_date": null
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Edit User Functionality",
+    "permalink": "/docs/docs/frontend/tickets/F0006"
+  },
+  "next": {
+    "title": "User Profile Management Page",
+    "permalink": "/docs/docs/frontend/tickets/F0008"
+  }
+}

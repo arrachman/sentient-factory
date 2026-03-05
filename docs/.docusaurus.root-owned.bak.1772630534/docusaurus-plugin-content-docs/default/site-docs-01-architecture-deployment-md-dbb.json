@@ -1,0 +1,27 @@
+{
+  "id": "architecture/deployment",
+  "title": "Deployment Guide",
+  "description": "Panduan ini mencakup opsi deployment untuk Sentient Factory, dari development hingga production.",
+  "source": "@site/docs/01-architecture/deployment.md",
+  "sourceDirName": "01-architecture",
+  "slug": "/architecture/deployment",
+  "permalink": "/docs/docs/architecture/deployment",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/01-architecture/deployment.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Architecture Overview",
+    "permalink": "/docs/docs/architecture/overview"
+  },
+  "next": {
+    "title": "Api Gateway",
+    "permalink": "/docs/docs/category/api-gateway"
+  }
+}

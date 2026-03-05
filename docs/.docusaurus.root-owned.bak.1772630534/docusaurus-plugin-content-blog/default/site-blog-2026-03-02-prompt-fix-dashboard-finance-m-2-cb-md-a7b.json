@@ -1,0 +1,67 @@
+{
+  "permalink": "/docs/blog/prompt-fix-dashboard-finance-m2-cb",
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/blog/2026-03-02-prompt-fix-dashboard-finance-m2-cb.md",
+  "source": "@site/blog/2026-03-02-prompt-fix-dashboard-finance-m2-cb.md",
+  "title": "Prompt Fix Dashboard Finance m2_cb (Saldo Awal COA)",
+  "description": "Prompt siap pakai untuk memperbaiki dashboard /app/dashboard/finance/m2_cb agar menampilkan widget, chart, dan AI insight sesuai konteks Saldo Awal COA.",
+  "date": "2026-03-02T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "prompt",
+      "permalink": "/docs/blog/tags/prompt"
+    },
+    {
+      "inline": true,
+      "label": "ai",
+      "permalink": "/docs/blog/tags/ai"
+    },
+    {
+      "inline": true,
+      "label": "engineering",
+      "permalink": "/docs/blog/tags/engineering"
+    }
+  ],
+  "readingTime": 2.78,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Sébastien Lorber",
+      "title": "Docusaurus maintainer",
+      "url": "https://sebastienlorber.com",
+      "page": {
+        "permalink": "/docs/blog/authors/all-sebastien-lorber-articles"
+      },
+      "socials": {
+        "x": "https://x.com/sebastienlorber",
+        "linkedin": "https://www.linkedin.com/in/sebastienlorber/",
+        "github": "https://github.com/slorber",
+        "newsletter": "https://thisweekinreact.com"
+      },
+      "imageURL": "https://github.com/slorber.png",
+      "key": "slorber"
+    }
+  ],
+  "frontMatter": {
+    "slug": "prompt-fix-dashboard-finance-m2-cb",
+    "title": "Prompt Fix Dashboard Finance m2_cb (Saldo Awal COA)",
+    "description": "Prompt siap pakai untuk memperbaiki dashboard /app/dashboard/finance/m2_cb agar menampilkan widget, chart, dan AI insight sesuai konteks Saldo Awal COA.",
+    "authors": [
+      "slorber"
+    ],
+    "tags": [
+      "prompt",
+      "ai",
+      "engineering"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Rekap Prefix m3_ di MyERPPlus Berdasarkan m0_menu",
+    "permalink": "/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu"
+  },
+  "nextItem": {
+    "title": "Format Prompt untuk Menyusun SOP AGENTS.md",
+    "permalink": "/docs/blog/format-prompt-sop-agents"
+  }
+}

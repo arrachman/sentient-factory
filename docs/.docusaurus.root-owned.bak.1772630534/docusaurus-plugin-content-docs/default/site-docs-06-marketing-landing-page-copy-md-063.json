@@ -1,0 +1,27 @@
+{
+  "id": "marketing/landing-page-copy",
+  "title": "Landing Page Copy",
+  "description": "Marketing content for Sentient Factory website.",
+  "source": "@site/docs/06-marketing/landing-page-copy.md",
+  "sourceDirName": "06-marketing",
+  "slug": "/marketing/landing-page-copy",
+  "permalink": "/docs/docs/marketing/landing-page-copy",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/landing-page-copy.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Marketing",
+    "permalink": "/docs/docs/category/marketing"
+  },
+  "next": {
+    "title": "Brand Guidelines",
+    "permalink": "/docs/docs/marketing/brand-guidelines"
+  }
+}

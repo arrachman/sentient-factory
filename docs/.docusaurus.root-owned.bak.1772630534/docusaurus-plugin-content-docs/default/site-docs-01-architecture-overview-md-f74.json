@@ -1,0 +1,27 @@
+{
+  "id": "architecture/overview",
+  "title": "Architecture Overview",
+  "description": "Sentient Factory adalah platform manufaktur cerdas yang dibangun dengan arsitektur microservices modern menggunakan monorepo dengan pnpm workspaces dan TurboRepo untuk skalabilitas, keandalan, dan kemudahan pengembangan.",
+  "source": "@site/docs/01-architecture/overview.md",
+  "sourceDirName": "01-architecture",
+  "slug": "/architecture/overview",
+  "permalink": "/docs/docs/architecture/overview",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/01-architecture/overview.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Architecture",
+    "permalink": "/docs/docs/category/architecture"
+  },
+  "next": {
+    "title": "Deployment Guide",
+    "permalink": "/docs/docs/architecture/deployment"
+  }
+}

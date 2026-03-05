@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0006-email-marketing-templates/README",
+  "title": "M0006 - Email Marketing Templates",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0006-email-marketing-templates/README.md",
+  "sourceDirName": "06-marketing/tickets/M0006-email-marketing-templates",
+  "slug": "/marketing/tickets/M0006-email-marketing-templates/",
+  "permalink": "/docs/docs/marketing/tickets/M0006-email-marketing-templates/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0006-email-marketing-templates/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "M0005 - Social Media Guidelines",
+    "permalink": "/docs/docs/marketing/tickets/M0005-social-media-guidelines/"
+  },
+  "next": {
+    "title": "M0007 - Case Studies Framework",
+    "permalink": "/docs/docs/marketing/tickets/M0007-case-studies-framework/"
+  }
+}

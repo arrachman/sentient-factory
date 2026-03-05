@@ -1,0 +1,27 @@
+{
+  "id": "api-gateway/implementation-tickets",
+  "title": "Implementation Tickets - API Gateway",
+  "description": "Project Overview",
+  "source": "@site/docs/02-api-gateway/implementation-tickets.md",
+  "sourceDirName": "02-api-gateway",
+  "slug": "/api-gateway/implementation-tickets",
+  "permalink": "/docs/docs/api-gateway/implementation-tickets",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/02-api-gateway/implementation-tickets.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Task List - API Gateway (Backend)",
+    "permalink": "/docs/docs/api-gateway/task-list"
+  },
+  "next": {
+    "title": "Database Schema",
+    "permalink": "/docs/docs/api-gateway/database-schema"
+  }
+}

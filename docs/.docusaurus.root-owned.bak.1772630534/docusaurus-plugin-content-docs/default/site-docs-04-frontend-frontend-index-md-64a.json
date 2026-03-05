@@ -1,0 +1,24 @@
+{
+  "id": "frontend/FRONTEND-INDEX",
+  "title": "Frontend Documentation Index",
+  "description": "Dokumentasi lengkap untuk pengembangan frontend web-dashboard Sentient Factory.",
+  "source": "@site/docs/04-frontend/FRONTEND-INDEX.md",
+  "sourceDirName": "04-frontend",
+  "slug": "/frontend/FRONTEND-INDEX",
+  "permalink": "/docs/docs/frontend/FRONTEND-INDEX",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/04-frontend/FRONTEND-INDEX.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Tiket Template Structure",
+    "permalink": "/docs/docs/frontend/tickets/TEMPLATE"
+  },
+  "next": {
+    "title": "Components Architecture",
+    "permalink": "/docs/docs/frontend/components-architecture"
+  }
+}

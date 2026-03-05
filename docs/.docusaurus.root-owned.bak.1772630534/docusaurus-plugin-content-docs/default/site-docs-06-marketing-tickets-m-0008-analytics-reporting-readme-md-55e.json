@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0008-analytics-reporting/README",
+  "title": "M0008 - Analytics & Reporting",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0008-analytics-reporting/README.md",
+  "sourceDirName": "06-marketing/tickets/M0008-analytics-reporting",
+  "slug": "/marketing/tickets/M0008-analytics-reporting/",
+  "permalink": "/docs/docs/marketing/tickets/M0008-analytics-reporting/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0008-analytics-reporting/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "M0007 - Case Studies Framework",
+    "permalink": "/docs/docs/marketing/tickets/M0007-case-studies-framework/"
+  },
+  "next": {
+    "title": "Contributing",
+    "permalink": "/docs/docs/contributing"
+  }
+}

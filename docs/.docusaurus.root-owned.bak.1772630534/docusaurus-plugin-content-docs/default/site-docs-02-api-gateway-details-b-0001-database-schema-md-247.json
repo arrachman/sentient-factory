@@ -1,0 +1,24 @@
+{
+  "id": "api-gateway/details/B0001-database-schema",
+  "title": "B0001: Database Schema Design",
+  "description": "Description",
+  "source": "@site/docs/02-api-gateway/details/B0001-database-schema.md",
+  "sourceDirName": "02-api-gateway/details",
+  "slug": "/api-gateway/details/B0001-database-schema",
+  "permalink": "/docs/docs/api-gateway/details/B0001-database-schema",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/02-api-gateway/details/B0001-database-schema.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Database Schema",
+    "permalink": "/docs/docs/api-gateway/database-schema"
+  },
+  "next": {
+    "title": "B0002: Database Setup & Migration",
+    "permalink": "/docs/docs/api-gateway/details/B0002-db-connection"
+  }
+}

@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-marketing/messaging-framework" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.9.2">
+<title data-rh="true">Messaging Framework | Sentient Factory</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://sentient.fr-labs.my.id/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://sentient.fr-labs.my.id/docs/img/docusaurus-social-card.jpg"><meta data-rh="true" property="og:url" content="https://sentient.fr-labs.my.id/docs/docs/marketing/messaging-framework"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Messaging Framework | Sentient Factory"><meta data-rh="true" name="description" content="Overview"><meta data-rh="true" property="og:description" content="Overview"><link data-rh="true" rel="icon" href="/docs/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://sentient.fr-labs.my.id/docs/docs/marketing/messaging-framework"><link data-rh="true" rel="alternate" href="https://sentient.fr-labs.my.id/docs/docs/marketing/messaging-framework" hreflang="en"><link data-rh="true" rel="alternate" href="https://sentient.fr-labs.my.id/docs/docs/marketing/messaging-framework" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Marketing","item":"https://sentient.fr-labs.my.id/docs/docs/category/marketing"},{"@type":"ListItem","position":2,"name":"Messaging Framework","item":"https://sentient.fr-labs.my.id/docs/docs/marketing/messaging-framework"}]}</script><link rel="alternate" type="application/rss+xml" href="/docs/blog/rss.xml" title="Sentient Factory RSS Feed">
+<link rel="alternate" type="application/atom+xml" href="/docs/blog/atom.xml" title="Sentient Factory Atom Feed"><link rel="stylesheet" href="/docs/assets/css/styles.c51ffe61.css">
+<script src="/docs/assets/js/runtime~main.e808ae7b.js" defer="defer"></script>
+<script src="/docs/assets/js/main.4cec3915.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")),document.documentElement.setAttribute("data-theme-choice",t||"system")}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/docs/"><div class="navbar__logo"><img src="/docs/img/logo.svg" alt="Sentient Factory Logo" class="themedComponent_mlkZ themedComponent--light_NVdE"><img src="/docs/img/logo.svg" alt="Sentient Factory Logo" class="themedComponent_mlkZ themedComponent--dark_xIcU"></div><b class="navbar__title text--truncate">Sentient Factory</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/docs/intro">Documentation</a><a class="navbar__item navbar__link" href="/docs/blog">Blog</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a href="https://github.com/sentient-factory" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/docs/intro"><span title="Sentient Factory Documentation" class="linkLabel_WmDU">Sentient Factory Documentation</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/architecture"><span title="Architecture" class="categoryLinkLabel_W154">Architecture</span></a><button aria-label="Expand sidebar category &#x27;Architecture&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-gateway"><span title="Api Gateway" class="categoryLinkLabel_W154">Api Gateway</span></a><button aria-label="Expand sidebar category &#x27;Api Gateway&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-agents"><span title="Api Agents" class="categoryLinkLabel_W154">Api Agents</span></a><button aria-label="Expand sidebar category &#x27;Api Agents&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/api-reference"><span title="API Reference" class="categoryLinkLabel_W154">API Reference</span></a><button aria-label="Expand sidebar category &#x27;API Reference&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" href="/docs/docs/category/frontend"><span title="Frontend" class="categoryLinkLabel_W154">Frontend</span></a><button aria-label="Expand sidebar category &#x27;Frontend&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" href="/docs/docs/category/marketing"><span title="Marketing" class="categoryLinkLabel_W154">Marketing</span></a><button aria-label="Collapse sidebar category &#x27;Marketing&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/landing-page-copy"><span title="Landing Page Copy" class="linkLabel_WmDU">Landing Page Copy</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/brand-guidelines"><span title="Brand Guidelines" class="linkLabel_WmDU">Brand Guidelines</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/docs/marketing/messaging-framework"><span title="Messaging Framework" class="linkLabel_WmDU">Messaging Framework</span></a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/docs/marketing/ticket-list"><span title="Marketing Documentation Tickets" class="linkLabel_WmDU">Marketing Documentation Tickets</span></a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="categoryLink_byQd menu__link menu__link--sublist" tabindex="0" href="/docs/docs/marketing/tickets/"><span title="Marketing Documentation Tickets" class="categoryLinkLabel_W154">Marketing Documentation Tickets</span></a><button aria-label="Expand sidebar category &#x27;Marketing Documentation Tickets&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/docs/contributing"><span title="Contributing" class="linkLabel_WmDU">Contributing</span></a></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="Breadcrumbs"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a aria-label="Home page" class="breadcrumbs__link" href="/docs/"><svg viewBox="0 0 24 24" class="breadcrumbHomeIcon_YNFT"><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill="currentColor"></path></svg></a></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/docs/category/marketing"><span>Marketing</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Messaging Framework</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Messaging Framework</h1></header>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="overview">Overview<a href="#overview" class="hash-link" aria-label="Direct link to Overview" title="Direct link to Overview" translate="no">​</a></h2>
+<p>This messaging framework provides consistent communication guidelines for all Sentient Factory marketing materials, sales conversations, and customer interactions.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="core-messaging">Core Messaging<a href="#core-messaging" class="hash-link" aria-label="Direct link to Core Messaging" title="Direct link to Core Messaging" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="elevator-pitch-30-seconds">Elevator Pitch (30 seconds)<a href="#elevator-pitch-30-seconds" class="hash-link" aria-label="Direct link to Elevator Pitch (30 seconds)" title="Direct link to Elevator Pitch (30 seconds)" translate="no">​</a></h3>
+<p>&quot;Sentient Factory is an AI-powered manufacturing platform that transforms traditional factories into intelligent, self-optimizing production systems. We use machine learning and real-time data analytics to predict equipment failures, optimize production workflows, and ensure consistent product quality—helping manufacturers increase efficiency by 30% while reducing costs.&quot;</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="problem-statement">Problem Statement<a href="#problem-statement" class="hash-link" aria-label="Direct link to Problem Statement" title="Direct link to Problem Statement" translate="no">​</a></h3>
+<p>Manufacturers today face significant challenges:</p>
+<ul>
+<li class=""><strong>Unplanned Downtime</strong>: Equipment failures cost millions in lost production</li>
+<li class=""><strong>Quality Issues</strong>: Defects lead to waste, rework, and customer dissatisfaction</li>
+<li class=""><strong>Inefficient Operations</strong>: Manual processes and lack of visibility hinder optimization</li>
+<li class=""><strong>Rising Costs</strong>: Labor, materials, and energy expenses continue to increase</li>
+<li class=""><strong>Skills Gap</strong>: Difficulty finding and retaining technical expertise</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="solution-statement">Solution Statement<a href="#solution-statement" class="hash-link" aria-label="Direct link to Solution Statement" title="Direct link to Solution Statement" translate="no">​</a></h3>
+<p>Sentient Factory addresses these challenges by:</p>
+<ul>
+<li class=""><strong>Predictive Intelligence</strong>: AI algorithms that anticipate equipment failures before they happen</li>
+<li class=""><strong>Real-time Visibility</strong>: Comprehensive dashboards showing every aspect of production</li>
+<li class=""><strong>Automated Quality Control</strong>: Computer vision and sensor fusion for defect detection</li>
+<li class=""><strong>Production Optimization</strong>: AI-driven recommendations for workflow improvements</li>
+<li class=""><strong>Scalable Platform</strong>: Cloud-based solution that grows with your operations</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="value-proposition">Value Proposition<a href="#value-proposition" class="hash-link" aria-label="Direct link to Value Proposition" title="Direct link to Value Proposition" translate="no">​</a></h3>
+<p>&quot;Transform your manufacturing operations with AI-powered intelligence that delivers measurable results: 30% higher efficiency, 50% less downtime, and 25% better quality.&quot;</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="audience-specific-messaging">Audience-Specific Messaging<a href="#audience-specific-messaging" class="hash-link" aria-label="Direct link to Audience-Specific Messaging" title="Direct link to Audience-Specific Messaging" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-c-level-executives-ceo-cfo-coo">For C-Level Executives (CEO, CFO, COO)<a href="#for-c-level-executives-ceo-cfo-coo" class="hash-link" aria-label="Direct link to For C-Level Executives (CEO, CFO, COO)" title="Direct link to For C-Level Executives (CEO, CFO, COO)" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-concerns">Key Concerns<a href="#key-concerns" class="hash-link" aria-label="Direct link to Key Concerns" title="Direct link to Key Concerns" translate="no">​</a></h4>
+<ul>
+<li class="">ROI and business impact</li>
+<li class="">Competitive advantage</li>
+<li class="">Risk mitigation</li>
+<li class="">Strategic alignment</li>
+<li class="">Scalability and growth</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="messaging-focus">Messaging Focus<a href="#messaging-focus" class="hash-link" aria-label="Direct link to Messaging Focus" title="Direct link to Messaging Focus" translate="no">​</a></h4>
+<p><strong>Financial Impact</strong>: &quot;Sentient Factory delivers a 12-month ROI through increased production efficiency, reduced downtime, and lower maintenance costs.&quot;</p>
+<p><strong>Strategic Advantage</strong>: &quot;Gain a competitive edge with AI-powered manufacturing that adapts to market demands and optimizes operations in real-time.&quot;</p>
+<p><strong>Risk Management</strong>: &quot;Proactively manage operational risks with predictive insights that prevent costly equipment failures and quality issues.&quot;</p>
+<p><strong>Sample Talking Points</strong>:</p>
+<ul>
+<li class="">&quot;Our platform typically pays for itself within 12 months through efficiency gains&quot;</li>
+<li class="">&quot;You&#x27;ll see a 30% improvement in overall equipment effectiveness (OEE)&quot;</li>
+<li class="">&quot;Reduce unplanned downtime by up to 50% with predictive maintenance&quot;</li>
+<li class="">&quot;Improve product quality consistency by 25% with automated inspection&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-operations-directors--plant-managers">For Operations Directors &amp; Plant Managers<a href="#for-operations-directors--plant-managers" class="hash-link" aria-label="Direct link to For Operations Directors &amp; Plant Managers" title="Direct link to For Operations Directors &amp; Plant Managers" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-concerns-1">Key Concerns<a href="#key-concerns-1" class="hash-link" aria-label="Direct link to Key Concerns" title="Direct link to Key Concerns" translate="no">​</a></h4>
+<ul>
+<li class="">Production targets and KPIs</li>
+<li class="">Equipment reliability</li>
+<li class="">Quality standards</li>
+<li class="">Team productivity</li>
+<li class="">Process optimization</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="messaging-focus-1">Messaging Focus<a href="#messaging-focus-1" class="hash-link" aria-label="Direct link to Messaging Focus" title="Direct link to Messaging Focus" translate="no">​</a></h4>
+<p><strong>Operational Excellence</strong>: &quot;Achieve consistent production targets with AI-driven insights that optimize every aspect of your manufacturing process.&quot;</p>
+<p><strong>Equipment Reliability</strong>: &quot;Transform reactive maintenance into proactive care with predictive analytics that identify issues before they cause downtime.&quot;</p>
+<p><strong>Quality Assurance</strong>: &quot;Ensure every product meets specifications with automated quality control that detects defects in real-time.&quot;</p>
+<p><strong>Sample Talking Points</strong>:</p>
+<ul>
+<li class="">&quot;Get real-time visibility into every production line from any device&quot;</li>
+<li class="">&quot;Receive automated alerts when equipment shows signs of potential failure&quot;</li>
+<li class="">&quot;Reduce quality-related waste by up to 40% with AI-powered inspection&quot;</li>
+<li class="">&quot;Optimize production schedules based on real-time capacity and demand&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-maintenance-managers--engineers">For Maintenance Managers &amp; Engineers<a href="#for-maintenance-managers--engineers" class="hash-link" aria-label="Direct link to For Maintenance Managers &amp; Engineers" title="Direct link to For Maintenance Managers &amp; Engineers" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-concerns-2">Key Concerns<a href="#key-concerns-2" class="hash-link" aria-label="Direct link to Key Concerns" title="Direct link to Key Concerns" translate="no">​</a></h4>
+<ul>
+<li class="">Equipment uptime</li>
+<li class="">Maintenance costs</li>
+<li class="">Spare parts inventory</li>
+<li class="">Technician efficiency</li>
+<li class="">Safety compliance</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="messaging-focus-2">Messaging Focus<a href="#messaging-focus-2" class="hash-link" aria-label="Direct link to Messaging Focus" title="Direct link to Messaging Focus" translate="no">​</a></h4>
+<p><strong>Predictive Maintenance</strong>: &quot;Shift from scheduled to condition-based maintenance with AI that predicts equipment failures with 95% accuracy.&quot;</p>
+<p><strong>Cost Optimization</strong>: &quot;Reduce maintenance costs by 20-30% through optimized scheduling and reduced emergency repairs.&quot;</p>
+<p><strong>Technician Empowerment</strong>: &quot;Give your team the tools they need to work smarter with mobile access to equipment health data and repair recommendations.&quot;</p>
+<p><strong>Sample Talking Points</strong>:</p>
+<ul>
+<li class="">&quot;Predict equipment failures 7-30 days in advance with 95% accuracy&quot;</li>
+<li class="">&quot;Reduce emergency maintenance calls by 60% with proactive alerts&quot;</li>
+<li class="">&quot;Optimize spare parts inventory with usage predictions&quot;</li>
+<li class="">&quot;Provide technicians with step-by-step repair guidance based on AI analysis&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-quality-managers">For Quality Managers<a href="#for-quality-managers" class="hash-link" aria-label="Direct link to For Quality Managers" title="Direct link to For Quality Managers" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-concerns-3">Key Concerns<a href="#key-concerns-3" class="hash-link" aria-label="Direct link to Key Concerns" title="Direct link to Key Concerns" translate="no">​</a></h4>
+<ul>
+<li class="">Defect rates</li>
+<li class="">Customer satisfaction</li>
+<li class="">Compliance requirements</li>
+<li class="">Inspection efficiency</li>
+<li class="">Continuous improvement</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="messaging-focus-3">Messaging Focus<a href="#messaging-focus-3" class="hash-link" aria-label="Direct link to Messaging Focus" title="Direct link to Messaging Focus" translate="no">​</a></h4>
+<p><strong>Automated Quality Control</strong>: &quot;Detect defects in real-time with AI-powered vision systems that are 10x faster and more accurate than manual inspection.&quot;</p>
+<p><strong>Consistent Standards</strong>: &quot;Ensure every product meets quality standards with automated inspection that never gets tired or distracted.&quot;</p>
+<p><strong>Data-Driven Improvement</strong>: &quot;Identify root causes of quality issues with analytics that trace defects back to specific process parameters.&quot;</p>
+<p><strong>Sample Talking Points</strong>:</p>
+<ul>
+<li class="">&quot;Reduce defect escape rate by 90% with automated visual inspection&quot;</li>
+<li class="">&quot;Identify quality trends and patterns with AI-powered analytics&quot;</li>
+<li class="">&quot;Document every inspection automatically for compliance and traceability&quot;</li>
+<li class="">&quot;Reduce inspection time by 80% while improving accuracy&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-ittechnology-decision-makers">For IT/Technology Decision Makers<a href="#for-ittechnology-decision-makers" class="hash-link" aria-label="Direct link to For IT/Technology Decision Makers" title="Direct link to For IT/Technology Decision Makers" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-concerns-4">Key Concerns<a href="#key-concerns-4" class="hash-link" aria-label="Direct link to Key Concerns" title="Direct link to Key Concerns" translate="no">​</a></h4>
+<ul>
+<li class="">System integration</li>
+<li class="">Data security</li>
+<li class="">Scalability</li>
+<li class="">IT resource requirements</li>
+<li class="">Future-proofing</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="messaging-focus-4">Messaging Focus<a href="#messaging-focus-4" class="hash-link" aria-label="Direct link to Messaging Focus" title="Direct link to Messaging Focus" translate="no">​</a></h4>
+<p><strong>Seamless Integration</strong>: &quot;Connect with your existing systems through open APIs and standard protocols (OPC UA, MQTT, REST).&quot;</p>
+<p><strong>Enterprise-Grade Security</strong>: &quot;Protect your data with enterprise-grade security, including encryption, access controls, and compliance certifications.&quot;</p>
+<p><strong>Scalable Architecture</strong>: &quot;Start small and grow with our cloud-native platform that scales to support thousands of sensors and production lines.&quot;</p>
+<p><strong>Sample Talking Points</strong>:</p>
+<ul>
+<li class="">&quot;Integrate with your existing ERP, MES, and CMMS systems&quot;</li>
+<li class="">&quot;Deploy in your preferred environment: cloud, on-premise, or hybrid&quot;</li>
+<li class="">&quot;Scale from a single production line to multiple factories worldwide&quot;</li>
+<li class="">&quot;Meet industry security standards including ISO 27001 and SOC 2&quot;</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="product-feature-messaging">Product Feature Messaging<a href="#product-feature-messaging" class="hash-link" aria-label="Direct link to Product Feature Messaging" title="Direct link to Product Feature Messaging" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="predictive-maintenance">Predictive Maintenance<a href="#predictive-maintenance" class="hash-link" aria-label="Direct link to Predictive Maintenance" title="Direct link to Predictive Maintenance" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="core-message">Core Message<a href="#core-message" class="hash-link" aria-label="Direct link to Core Message" title="Direct link to Core Message" translate="no">​</a></h4>
+<p>&quot;Anticipate equipment failures before they happen and schedule maintenance proactively.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-benefits">Key Benefits<a href="#key-benefits" class="hash-link" aria-label="Direct link to Key Benefits" title="Direct link to Key Benefits" translate="no">​</a></h4>
+<ul>
+<li class=""><strong>95% Prediction Accuracy</strong>: AI algorithms identify failure patterns with high precision</li>
+<li class=""><strong>7-30 Day Advance Warning</strong>: Get notified weeks before equipment fails</li>
+<li class=""><strong>Reduced Downtime</strong>: Cut unplanned downtime by up to 50%</li>
+<li class=""><strong>Lower Maintenance Costs</strong>: Reduce emergency repair costs by 40%</li>
+<li class=""><strong>Extended Equipment Life</strong>: Optimize maintenance for longer asset lifespan</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="supporting-data">Supporting Data<a href="#supporting-data" class="hash-link" aria-label="Direct link to Supporting Data" title="Direct link to Supporting Data" translate="no">​</a></h4>
+<ul>
+<li class="">&quot;Manufacturers using predictive maintenance see 25-30% reduction in maintenance costs&quot;</li>
+<li class="">&quot;Equipment downtime decreases by 35-45% with proactive maintenance&quot;</li>
+<li class="">&quot;ROI typically achieved within 8-14 months&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="real-time-monitoring">Real-time Monitoring<a href="#real-time-monitoring" class="hash-link" aria-label="Direct link to Real-time Monitoring" title="Direct link to Real-time Monitoring" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="core-message-1">Core Message<a href="#core-message-1" class="hash-link" aria-label="Direct link to Core Message" title="Direct link to Core Message" translate="no">​</a></h4>
+<p>&quot;Gain complete visibility into your production operations with live data and analytics.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-benefits-1">Key Benefits<a href="#key-benefits-1" class="hash-link" aria-label="Direct link to Key Benefits" title="Direct link to Key Benefits" translate="no">​</a></h4>
+<ul>
+<li class=""><strong>Unified Dashboard</strong>: View all production lines, equipment, and metrics in one place</li>
+<li class=""><strong>Live Alerts</strong>: Get notified immediately of anomalies or issues</li>
+<li class=""><strong>Historical Analysis</strong>: Compare current performance with historical trends</li>
+<li class=""><strong>Mobile Access</strong>: Monitor operations from anywhere, on any device</li>
+<li class=""><strong>Custom Reports</strong>: Create tailored reports for different stakeholders</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="supporting-data-1">Supporting Data<a href="#supporting-data-1" class="hash-link" aria-label="Direct link to Supporting Data" title="Direct link to Supporting Data" translate="no">​</a></h4>
+<ul>
+<li class="">&quot;Real-time monitoring reduces response time to issues by 80%&quot;</li>
+<li class="">&quot;Operations teams save 10-15 hours per week on manual data collection&quot;</li>
+<li class="">&quot;Decision-making speed improves by 60% with instant access to data&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="quality-control-ai">Quality Control AI<a href="#quality-control-ai" class="hash-link" aria-label="Direct link to Quality Control AI" title="Direct link to Quality Control AI" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="core-message-2">Core Message<a href="#core-message-2" class="hash-link" aria-label="Direct link to Core Message" title="Direct link to Core Message" translate="no">​</a></h4>
+<p>&quot;Automatically detect defects and ensure consistent product quality with AI-powered inspection.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-benefits-2">Key Benefits<a href="#key-benefits-2" class="hash-link" aria-label="Direct link to Key Benefits" title="Direct link to Key Benefits" translate="no">​</a></h4>
+<ul>
+<li class=""><strong>High Accuracy</strong>: 99.5% defect detection rate</li>
+<li class=""><strong>Real-time Detection</strong>: Identify issues as they occur, not after the fact</li>
+<li class=""><strong>Multiple Inspection Types</strong>: Visual, dimensional, surface, and assembly checks</li>
+<li class=""><strong>Reduced Waste</strong>: Cut quality-related scrap and rework by 40%</li>
+<li class=""><strong>Compliance Ready</strong>: Automated documentation for quality audits</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="supporting-data-2">Supporting Data<a href="#supporting-data-2" class="hash-link" aria-label="Direct link to Supporting Data" title="Direct link to Supporting Data" translate="no">​</a></h4>
+<ul>
+<li class="">&quot;AI inspection is 10x faster than manual methods&quot;</li>
+<li class="">&quot;Defect escape rates drop from 5% to 0.5%&quot;</li>
+<li class="">&quot;Quality inspection costs reduced by 70%&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="production-optimization">Production Optimization<a href="#production-optimization" class="hash-link" aria-label="Direct link to Production Optimization" title="Direct link to Production Optimization" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="core-message-3">Core Message<a href="#core-message-3" class="hash-link" aria-label="Direct link to Core Message" title="Direct link to Core Message" translate="no">​</a></h4>
+<p>&quot;Optimize workflows, resource allocation, and production schedules with AI-driven recommendations.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-benefits-3">Key Benefits<a href="#key-benefits-3" class="hash-link" aria-label="Direct link to Key Benefits" title="Direct link to Key Benefits" translate="no">​</a></h4>
+<ul>
+<li class=""><strong>Efficiency Gains</strong>: Increase overall equipment effectiveness (OEE) by 20-30%</li>
+<li class=""><strong>Resource Optimization</strong>: Better utilization of materials, energy, and labor</li>
+<li class=""><strong>Schedule Optimization</strong>: AI-generated production schedules that maximize output</li>
+<li class=""><strong>Bottleneck Identification</strong>: Pinpoint and resolve production constraints</li>
+<li class=""><strong>What-if Analysis</strong>: Simulate different scenarios to find optimal configurations</li>
+</ul>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="supporting-data-3">Supporting Data<a href="#supporting-data-3" class="hash-link" aria-label="Direct link to Supporting Data" title="Direct link to Supporting Data" translate="no">​</a></h4>
+<ul>
+<li class="">&quot;Production throughput increases by 15-25% with AI optimization&quot;</li>
+<li class="">&quot;Energy consumption decreases by 10-15% through optimized operations&quot;</li>
+<li class="">&quot;Changeover times reduced by 30-40% with AI scheduling&quot;</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="competitive-differentiation">Competitive Differentiation<a href="#competitive-differentiation" class="hash-link" aria-label="Direct link to Competitive Differentiation" title="Direct link to Competitive Differentiation" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="vs-traditional-mesmom-systems">vs. Traditional MES/MOM Systems<a href="#vs-traditional-mesmom-systems" class="hash-link" aria-label="Direct link to vs. Traditional MES/MOM Systems" title="Direct link to vs. Traditional MES/MOM Systems" translate="no">​</a></h3>
+<p><strong>Sentient Factory Advantage</strong>:</p>
+<ul>
+<li class=""><strong>AI-Powered</strong>: Traditional systems collect data; we analyze and act on it</li>
+<li class=""><strong>Predictive vs Reactive</strong>: We anticipate problems before they occur</li>
+<li class=""><strong>Ease of Use</strong>: Modern interface vs complex, legacy systems</li>
+<li class=""><strong>Rapid ROI</strong>: Weeks to value vs months or years</li>
+<li class=""><strong>Scalability</strong>: Cloud-native vs on-premise limitations</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="vs-point-solutions">vs. Point Solutions<a href="#vs-point-solutions" class="hash-link" aria-label="Direct link to vs. Point Solutions" title="Direct link to vs. Point Solutions" translate="no">​</a></h3>
+<p><strong>Sentient Factory Advantage</strong>:</p>
+<ul>
+<li class=""><strong>Integrated Platform</strong>: One solution vs multiple disconnected tools</li>
+<li class=""><strong>Holistic View</strong>: End-to-end visibility vs siloed data</li>
+<li class=""><strong>Cross-functional Insights</strong>: Connect maintenance, quality, and production data</li>
+<li class=""><strong>Lower TCO</strong>: Single platform vs multiple licenses and integrations</li>
+<li class=""><strong>Future-proof</strong>: Continuous updates vs stagnant point solutions</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="vs-diy-ai-solutions">vs. DIY AI Solutions<a href="#vs-diy-ai-solutions" class="hash-link" aria-label="Direct link to vs. DIY AI Solutions" title="Direct link to vs. DIY AI Solutions" translate="no">​</a></h3>
+<p><strong>Sentient Factory Advantage</strong>:</p>
+<ul>
+<li class=""><strong>Manufacturing Expertise</strong>: Built specifically for factory operations</li>
+<li class=""><strong>Proven Results</strong>: Tested and validated in real manufacturing environments</li>
+<li class=""><strong>Faster Implementation</strong>: Weeks vs months or years of development</li>
+<li class=""><strong>Lower Risk</strong>: Managed service vs building and maintaining in-house</li>
+<li class=""><strong>Continuous Innovation</strong>: Regular updates with new AI capabilities</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="proof-points--social-proof">Proof Points &amp; Social Proof<a href="#proof-points--social-proof" class="hash-link" aria-label="Direct link to Proof Points &amp; Social Proof" title="Direct link to Proof Points &amp; Social Proof" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="quantitative-results">Quantitative Results<a href="#quantitative-results" class="hash-link" aria-label="Direct link to Quantitative Results" title="Direct link to Quantitative Results" translate="no">​</a></h3>
+<ul>
+<li class=""><strong>30% Average Efficiency Improvement</strong> across all customers</li>
+<li class=""><strong>50% Reduction in Unplanned Downtime</strong> for predictive maintenance users</li>
+<li class=""><strong>25% Improvement in Product Quality</strong> with AI inspection</li>
+<li class=""><strong>12-Month Average ROI</strong> with payback often in 8-10 months</li>
+<li class=""><strong>99.5% Platform Uptime</strong> with enterprise-grade reliability</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="customer-testimonials">Customer Testimonials<a href="#customer-testimonials" class="hash-link" aria-label="Direct link to Customer Testimonials" title="Direct link to Customer Testimonials" translate="no">​</a></h3>
+<p><strong>Manufacturing Director, AutoParts Inc.</strong>:
+&quot;Sentient Factory transformed our maintenance from reactive to predictive. We&#x27;ve reduced unplanned downtime by 55% and saved over $2M in the first year.&quot;</p>
+<p><strong>Quality Manager, Precision Manufacturing</strong>:
+&quot;The AI quality inspection caught defects our human inspectors missed. Our defect rate dropped from 3% to 0.5% in six months.&quot;</p>
+<p><strong>Operations Director, Consumer Electronics</strong>:
+&quot;Real-time monitoring gave us visibility we never had before. We increased production output by 22% without adding equipment.&quot;</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="case-study-highlights">Case Study Highlights<a href="#case-study-highlights" class="hash-link" aria-label="Direct link to Case Study Highlights" title="Direct link to Case Study Highlights" translate="no">​</a></h3>
+<p><strong>Case Study 1: Automotive Supplier</strong></p>
+<ul>
+<li class=""><strong>Challenge</strong>: High defect rates and frequent press breakdowns</li>
+<li class=""><strong>Solution</strong>: Implemented predictive maintenance and quality AI</li>
+<li class=""><strong>Results</strong>: 40% defect reduction, 60% less downtime, 18-month ROI</li>
+</ul>
+<p><strong>Case Study 2: Food &amp; Beverage</strong></p>
+<ul>
+<li class=""><strong>Challenge</strong>: Inconsistent product quality and high waste</li>
+<li class=""><strong>Solution</strong>: Deployed AI quality control and production optimization</li>
+<li class=""><strong>Results</strong>: 35% waste reduction, 25% quality improvement, 10-month ROI</li>
+</ul>
+<p><strong>Case Study 3: Industrial Equipment</strong></p>
+<ul>
+<li class=""><strong>Challenge</strong>: Lack of visibility into production bottlenecks</li>
+<li class=""><strong>Solution</strong>: Implemented real-time monitoring and analytics</li>
+<li class=""><strong>Results</strong>: 28% throughput increase, 20% efficiency gain, 14-month ROI</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="objection-handling">Objection Handling<a href="#objection-handling" class="hash-link" aria-label="Direct link to Objection Handling" title="Direct link to Objection Handling" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="common-objections--responses">Common Objections &amp; Responses<a href="#common-objections--responses" class="hash-link" aria-label="Direct link to Common Objections &amp; Responses" title="Direct link to Common Objections &amp; Responses" translate="no">​</a></h3>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="were-not-ready-for-aiiot">&quot;We&#x27;re not ready for AI/IoT&quot;<a href="#were-not-ready-for-aiiot" class="hash-link" aria-label="Direct link to &quot;We&#x27;re not ready for AI/IoT&quot;" title="Direct link to &quot;We&#x27;re not ready for AI/IoT&quot;" translate="no">​</a></h4>
+<p><strong>Response</strong>: &quot;Many of our customers start with just a few sensors on critical equipment. Our platform scales from a single machine to entire factories. Let&#x27;s start with a pilot on one production line to demonstrate value with minimal risk.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="we-already-have-systems-in-place">&quot;We already have systems in place&quot;<a href="#we-already-have-systems-in-place" class="hash-link" aria-label="Direct link to &quot;We already have systems in place&quot;" title="Direct link to &quot;We already have systems in place&quot;" translate="no">​</a></h4>
+<p><strong>Response</strong>: &quot;Sentient Factory complements your existing investments. We integrate with ERP, MES, and CMMS systems to enhance their capabilities with AI and real-time analytics. Think of us as the intelligence layer that makes your current systems smarter.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="too-expensivecant-justify-the-cost">&quot;Too expensive/Can&#x27;t justify the cost&quot;<a href="#too-expensivecant-justify-the-cost" class="hash-link" aria-label="Direct link to &quot;Too expensive/Can&#x27;t justify the cost&quot;" title="Direct link to &quot;Too expensive/Can&#x27;t justify the cost&quot;" translate="no">​</a></h4>
+<p><strong>Response</strong>: &quot;Our typical ROI is 8-14 months. Let me show you a cost-benefit analysis based on your specific operations. Most customers see payback through reduced downtime alone within the first year.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="our-data-is-sensitivewe-have-security-concerns">&quot;Our data is sensitive/We have security concerns&quot;<a href="#our-data-is-sensitivewe-have-security-concerns" class="hash-link" aria-label="Direct link to &quot;Our data is sensitive/We have security concerns&quot;" title="Direct link to &quot;Our data is sensitive/We have security concerns&quot;" translate="no">​</a></h4>
+<p><strong>Response</strong>: &quot;We take data security seriously with enterprise-grade encryption, access controls, and compliance certifications. We can deploy in your preferred environment—cloud, on-premise, or hybrid—to meet your security requirements.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="implementation-will-be-disruptive">&quot;Implementation will be disruptive&quot;<a href="#implementation-will-be-disruptive" class="hash-link" aria-label="Direct link to &quot;Implementation will be disruptive&quot;" title="Direct link to &quot;Implementation will be disruptive&quot;" translate="no">​</a></h4>
+<p><strong>Response</strong>: &quot;Our phased implementation approach minimizes disruption. We start with non-critical equipment and expand gradually. Most customers see value within weeks, not months.&quot;</p>
+<h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="our-team-doesnt-have-the-skills">&quot;Our team doesn&#x27;t have the skills&quot;<a href="#our-team-doesnt-have-the-skills" class="hash-link" aria-label="Direct link to &quot;Our team doesn&#x27;t have the skills&quot;" title="Direct link to &quot;Our team doesn&#x27;t have the skills&quot;" translate="no">​</a></h4>
+<p><strong>Response</strong>: &quot;We provide comprehensive training and ongoing support. Our platform is designed for manufacturing professionals, not data scientists. Your team will be up and running quickly with our guided implementation.&quot;</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="conversation-starters">Conversation Starters<a href="#conversation-starters" class="hash-link" aria-label="Direct link to Conversation Starters" title="Direct link to Conversation Starters" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-initial-discovery">For Initial Discovery<a href="#for-initial-discovery" class="hash-link" aria-label="Direct link to For Initial Discovery" title="Direct link to For Initial Discovery" translate="no">​</a></h3>
+<ul>
+<li class="">&quot;What&#x27;s your biggest manufacturing challenge right now?&quot;</li>
+<li class="">&quot;How much unplanned downtime are you experiencing monthly?&quot;</li>
+<li class="">&quot;What percentage of production is lost to quality issues?&quot;</li>
+<li class="">&quot;How are you currently monitoring equipment health?&quot;</li>
+<li class="">&quot;What metrics are most important to your leadership team?&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-value-demonstration">For Value Demonstration<a href="#for-value-demonstration" class="hash-link" aria-label="Direct link to For Value Demonstration" title="Direct link to For Value Demonstration" translate="no">​</a></h3>
+<ul>
+<li class="">&quot;What would a 30% reduction in downtime mean for your operations?&quot;</li>
+<li class="">&quot;How much could you save by reducing quality defects by 25%?&quot;</li>
+<li class="">&quot;What&#x27;s the business impact of a 20% efficiency improvement?&quot;</li>
+<li class="">&quot;How would real-time visibility change your decision-making?&quot;</li>
+<li class="">&quot;What&#x27;s the cost of one hour of unplanned downtime?&quot;</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="for-next-steps">For Next Steps<a href="#for-next-steps" class="hash-link" aria-label="Direct link to For Next Steps" title="Direct link to For Next Steps" translate="no">​</a></h3>
+<ul>
+<li class="">&quot;Would a pilot on one production line make sense to demonstrate value?&quot;</li>
+<li class="">&quot;Can we schedule a demo with your operations team?&quot;</li>
+<li class="">&quot;Would you like to see a case study from a similar manufacturer?&quot;</li>
+<li class="">&quot;Can I put together a ROI analysis for your specific situation?&quot;</li>
+<li class="">&quot;When would be a good time to review this with your leadership team?&quot;</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="email-templates">Email Templates<a href="#email-templates" class="hash-link" aria-label="Direct link to Email Templates" title="Direct link to Email Templates" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="initial-outreach">Initial Outreach<a href="#initial-outreach" class="hash-link" aria-label="Direct link to Initial Outreach" title="Direct link to Initial Outreach" translate="no">​</a></h3>
+<p><strong>Subject</strong>: Increasing manufacturing efficiency with AI</p>
+<p>Hi [Name],</p>
+<p>I noticed [Company Name] is in the [Industry] manufacturing space and wanted to share how Sentient Factory is helping similar companies increase production efficiency by 30% while reducing downtime and quality issues.</p>
+<p>Our AI-powered platform provides:</p>
+<ul>
+<li class="">Predictive maintenance to anticipate equipment failures</li>
+<li class="">Real-time monitoring of all production operations</li>
+<li class="">Automated quality control with computer vision</li>
+<li class="">Production optimization for maximum efficiency</li>
+</ul>
+<p>Would you be open to a brief 15-minute call next week to discuss how we might help [Company Name] achieve similar results?</p>
+<p>Best regards,
+[Your Name]</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="follow-up-after-meeting">Follow-up After Meeting<a href="#follow-up-after-meeting" class="hash-link" aria-label="Direct link to Follow-up After Meeting" title="Direct link to Follow-up After Meeting" translate="no">​</a></h3>
+<p><strong>Subject</strong>: Following up on our conversation about manufacturing efficiency</p>
+<p>Hi [Name],</p>
+<p>Great speaking with you earlier about the challenges [Company Name] is facing with [specific challenge mentioned].</p>
+<p>As discussed, Sentient Factory could help by:</p>
+<ul>
+<li class="">[Specific solution 1 based on conversation]</li>
+<li class="">[Specific solution 2 based on conversation]</li>
+<li class="">[Specific solution 3 based on conversation]</li>
+</ul>
+<p>I&#x27;ve attached a case study from [similar company] that achieved [specific result] using our platform.</p>
+<p>Would you be available for a demo next week to see the platform in action?</p>
+<p>Best regards,
+[Your Name]</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="post-demo-follow-up">Post-Demo Follow-up<a href="#post-demo-follow-up" class="hash-link" aria-label="Direct link to Post-Demo Follow-up" title="Direct link to Post-Demo Follow-up" translate="no">​</a></h3>
+<p><strong>Subject</strong>: Next steps after your Sentient Factory demo</p>
+<p>Hi [Name],</p>
+<p>Thank you for the demo today. Based on our discussion, I believe Sentient Factory could help [Company Name] achieve:</p>
+<ol>
+<li class="">[Benefit 1 specific to their situation]</li>
+<li class="">[Benefit 2 specific to their situation]</li>
+<li class="">[Benefit 3 specific to their situation]</li>
+</ol>
+<p>I&#x27;ve prepared a preliminary ROI analysis showing potential savings of [amount] based on reducing [specific cost] by [percentage].</p>
+<p>What would be the best next step? Options include:</p>
+<ul>
+<li class="">A pilot program on one production line</li>
+<li class="">A meeting with your technical team</li>
+<li class="">A presentation to your leadership team</li>
+</ul>
+<p>Let me know what works best for you.</p>
+<p>Best regards,
+[Your Name]</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="presentation-guidelines">Presentation Guidelines<a href="#presentation-guidelines" class="hash-link" aria-label="Direct link to Presentation Guidelines" title="Direct link to Presentation Guidelines" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="executive-presentation-10-15-minutes">Executive Presentation (10-15 minutes)<a href="#executive-presentation-10-15-minutes" class="hash-link" aria-label="Direct link to Executive Presentation (10-15 minutes)" title="Direct link to Executive Presentation (10-15 minutes)" translate="no">​</a></h3>
+<p><strong>Slide 1: Title Slide</strong></p>
+<ul>
+<li class="">Company name and logo</li>
+<li class="">Presenter name and title</li>
+<li class="">Date</li>
+</ul>
+<p><strong>Slide 2: The Manufacturing Challenge</strong></p>
+<ul>
+<li class="">Industry trends and pressures</li>
+<li class="">Specific challenges (downtime, quality, efficiency)</li>
+<li class="">Impact on business (costs, competitiveness)</li>
+</ul>
+<p><strong>Slide 3: Our Solution</strong></p>
+<ul>
+<li class="">Sentient Factory overview</li>
+<li class="">Key capabilities (predictive, monitoring, quality, optimization)</li>
+<li class="">How it works (AI + IoT + analytics)</li>
+</ul>
+<p><strong>Slide 4: Business Impact</strong></p>
+<ul>
+<li class="">Quantitative results (30% efficiency, 50% downtime reduction, etc.)</li>
+<li class="">ROI timeline (typical 12-month payback)</li>
+<li class="">Competitive advantages</li>
+</ul>
+<p><strong>Slide 5: Customer Success</strong></p>
+<ul>
+<li class="">Brief case study highlights</li>
+<li class="">Testimonial quotes</li>
+<li class="">Before/after metrics</li>
+</ul>
+<p><strong>Slide 6: Next Steps</strong></p>
+<ul>
+<li class="">Implementation approach (phased, minimal disruption)</li>
+<li class="">Suggested pilot program</li>
+<li class="">Timeline and investment</li>
+</ul>
+<p><strong>Slide 7: Q&amp;A</strong></p>
+<ul>
+<li class="">Contact information</li>
+<li class="">Additional resources</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="technical-deep-dive-30-45-minutes">Technical Deep Dive (30-45 minutes)<a href="#technical-deep-dive-30-45-minutes" class="hash-link" aria-label="Direct link to Technical Deep Dive (30-45 minutes)" title="Direct link to Technical Deep Dive (30-45 minutes)" translate="no">​</a></h3>
+<p><strong>Section 1: Platform Architecture</strong> (10 minutes)</p>
+<ul>
+<li class="">Technology stack overview</li>
+<li class="">Data flow and integration</li>
+<li class="">Security and compliance</li>
+</ul>
+<p><strong>Section 2: AI Capabilities</strong> (15 minutes)</p>
+<ul>
+<li class="">Machine learning models</li>
+<li class="">Predictive algorithms</li>
+<li class="">Quality inspection AI</li>
+<li class="">Optimization engines</li>
+</ul>
+<p><strong>Section 3: Implementation</strong> (10 minutes)</p>
+<ul>
+<li class="">Integration options</li>
+<li class="">Deployment models</li>
+<li class="">Training and support</li>
+<li class="">Success metrics</li>
+</ul>
+<p><strong>Section 4: Demo</strong> (10 minutes)</p>
+<ul>
+<li class="">Live platform demonstration</li>
+<li class="">Key features walkthrough</li>
+<li class="">Q&amp;A</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="training--enablement">Training &amp; Enablement<a href="#training--enablement" class="hash-link" aria-label="Direct link to Training &amp; Enablement" title="Direct link to Training &amp; Enablement" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="sales-training-modules">Sales Training Modules<a href="#sales-training-modules" class="hash-link" aria-label="Direct link to Sales Training Modules" title="Direct link to Sales Training Modules" translate="no">​</a></h3>
+<ol>
+<li class="">
+<p><strong>Product Fundamentals</strong> (2 hours)</p>
+<ul>
+<li class="">Platform overview and capabilities</li>
+<li class="">Key features and benefits</li>
+<li class="">Competitive differentiation</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Solution Selling</strong> (3 hours)</p>
+<ul>
+<li class="">Identifying customer pain points</li>
+<li class="">Mapping solutions to challenges</li>
+<li class="">ROI calculation and justification</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Technical Knowledge</strong> (4 hours)</p>
+<ul>
+<li class="">Platform architecture</li>
+<li class="">Integration options</li>
+<li class="">Security and compliance</li>
+</ul>
+</li>
+<li class="">
+<p><strong>Objection Handling</strong> (2 hours)</p>
+<ul>
+<li class="">Common objections and responses</li>
+<li class="">Competitive positioning</li>
+<li class="">Value demonstration</li>
+</ul>
+</li>
+</ol>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="sales-enablement-materials">Sales Enablement Materials<a href="#sales-enablement-materials" class="hash-link" aria-label="Direct link to Sales Enablement Materials" title="Direct link to Sales Enablement Materials" translate="no">​</a></h3>
+<ul>
+<li class=""><strong>Battle Cards</strong>: Competitive comparisons</li>
+<li class=""><strong>ROI Calculator</strong>: Customizable spreadsheet</li>
+<li class=""><strong>Demo Scripts</strong>: Step-by-step demonstration guides</li>
+<li class=""><strong>Case Studies</strong>: Customer success stories</li>
+<li class=""><strong>Presentation Templates</strong>: Customizable decks</li>
+<li class=""><strong>Email Templates</strong>: Pre-written sequences</li>
+<li class=""><strong>Data Sheets</strong>: Product feature summaries</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="certification-program">Certification Program<a href="#certification-program" class="hash-link" aria-label="Direct link to Certification Program" title="Direct link to Certification Program" translate="no">​</a></h3>
+<p><strong>Level 1: Product Specialist</strong></p>
+<ul>
+<li class="">Complete foundational training</li>
+<li class="">Pass product knowledge assessment</li>
+<li class="">Conduct supervised demo</li>
+</ul>
+<p><strong>Level 2: Solution Expert</strong></p>
+<ul>
+<li class="">Complete advanced training modules</li>
+<li class="">Pass solution selling assessment</li>
+<li class="">Submit successful case study</li>
+</ul>
+<p><strong>Level 3: Master Consultant</strong></p>
+<ul>
+<li class="">Complete technical certification</li>
+<li class="">Lead complex implementations</li>
+<li class="">Mentor other team members</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="measurement--optimization">Measurement &amp; Optimization<a href="#measurement--optimization" class="hash-link" aria-label="Direct link to Measurement &amp; Optimization" title="Direct link to Measurement &amp; Optimization" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="key-performance-indicators">Key Performance Indicators<a href="#key-performance-indicators" class="hash-link" aria-label="Direct link to Key Performance Indicators" title="Direct link to Key Performance Indicators" translate="no">​</a></h3>
+<ul>
+<li class=""><strong>Lead Generation</strong>: Number of qualified leads</li>
+<li class=""><strong>Conversion Rate</strong>: Lead to opportunity to closed</li>
+<li class=""><strong>Sales Cycle</strong>: Time from lead to close</li>
+<li class=""><strong>Average Deal Size</strong>: Revenue per customer</li>
+<li class=""><strong>Customer Acquisition Cost</strong>: Cost to acquire new customers</li>
+<li class=""><strong>Customer Lifetime Value</strong>: Total revenue per customer</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="message-testing">Message Testing<a href="#message-testing" class="hash-link" aria-label="Direct link to Message Testing" title="Direct link to Message Testing" translate="no">​</a></h3>
+<p><strong>A/B Testing Areas</strong>:</p>
+<ul>
+<li class="">Email subject lines</li>
+<li class="">Landing page headlines</li>
+<li class="">Call-to-action wording</li>
+<li class="">Value proposition statements</li>
+<li class="">Case study formats</li>
+</ul>
+<p><strong>Testing Methodology</strong>:</p>
+<ul>
+<li class="">Test one variable at a time</li>
+<li class="">Statistical significance (95% confidence)</li>
+<li class="">Minimum sample size per variation</li>
+<li class="">Document learnings and apply insights</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="continuous-improvement">Continuous Improvement<a href="#continuous-improvement" class="hash-link" aria-label="Direct link to Continuous Improvement" title="Direct link to Continuous Improvement" translate="no">​</a></h3>
+<p><strong>Monthly Review</strong>:</p>
+<ul>
+<li class="">Analyze messaging performance</li>
+<li class="">Review competitive landscape</li>
+<li class="">Update objection handling</li>
+<li class="">Refresh case studies and testimonials</li>
+<li class="">Train on new features and capabilities</li>
+</ul>
+<p><strong>Quarterly Strategy Session</strong>:</p>
+<ul>
+<li class="">Review overall messaging framework</li>
+<li class="">Assess market trends and shifts</li>
+<li class="">Update competitive positioning</li>
+<li class="">Plan new content and campaigns</li>
+<li class="">Set goals for next quarter</li>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href="https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/messaging-framework.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/docs/marketing/brand-guidelines"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Brand Guidelines</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/docs/marketing/ticket-list"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Marketing Documentation Tickets</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#overview" class="table-of-contents__link toc-highlight">Overview</a></li><li><a href="#core-messaging" class="table-of-contents__link toc-highlight">Core Messaging</a><ul><li><a href="#elevator-pitch-30-seconds" class="table-of-contents__link toc-highlight">Elevator Pitch (30 seconds)</a></li><li><a href="#problem-statement" class="table-of-contents__link toc-highlight">Problem Statement</a></li><li><a href="#solution-statement" class="table-of-contents__link toc-highlight">Solution Statement</a></li><li><a href="#value-proposition" class="table-of-contents__link toc-highlight">Value Proposition</a></li></ul></li><li><a href="#audience-specific-messaging" class="table-of-contents__link toc-highlight">Audience-Specific Messaging</a><ul><li><a href="#for-c-level-executives-ceo-cfo-coo" class="table-of-contents__link toc-highlight">For C-Level Executives (CEO, CFO, COO)</a></li><li><a href="#for-operations-directors--plant-managers" class="table-of-contents__link toc-highlight">For Operations Directors &amp; Plant Managers</a></li><li><a href="#for-maintenance-managers--engineers" class="table-of-contents__link toc-highlight">For Maintenance Managers &amp; Engineers</a></li><li><a href="#for-quality-managers" class="table-of-contents__link toc-highlight">For Quality Managers</a></li><li><a href="#for-ittechnology-decision-makers" class="table-of-contents__link toc-highlight">For IT/Technology Decision Makers</a></li></ul></li><li><a href="#product-feature-messaging" class="table-of-contents__link toc-highlight">Product Feature Messaging</a><ul><li><a href="#predictive-maintenance" class="table-of-contents__link toc-highlight">Predictive Maintenance</a></li><li><a href="#real-time-monitoring" class="table-of-contents__link toc-highlight">Real-time Monitoring</a></li><li><a href="#quality-control-ai" class="table-of-contents__link toc-highlight">Quality Control AI</a></li><li><a href="#production-optimization" class="table-of-contents__link toc-highlight">Production Optimization</a></li></ul></li><li><a href="#competitive-differentiation" class="table-of-contents__link toc-highlight">Competitive Differentiation</a><ul><li><a href="#vs-traditional-mesmom-systems" class="table-of-contents__link toc-highlight">vs. Traditional MES/MOM Systems</a></li><li><a href="#vs-point-solutions" class="table-of-contents__link toc-highlight">vs. Point Solutions</a></li><li><a href="#vs-diy-ai-solutions" class="table-of-contents__link toc-highlight">vs. DIY AI Solutions</a></li></ul></li><li><a href="#proof-points--social-proof" class="table-of-contents__link toc-highlight">Proof Points &amp; Social Proof</a><ul><li><a href="#quantitative-results" class="table-of-contents__link toc-highlight">Quantitative Results</a></li><li><a href="#customer-testimonials" class="table-of-contents__link toc-highlight">Customer Testimonials</a></li><li><a href="#case-study-highlights" class="table-of-contents__link toc-highlight">Case Study Highlights</a></li></ul></li><li><a href="#objection-handling" class="table-of-contents__link toc-highlight">Objection Handling</a><ul><li><a href="#common-objections--responses" class="table-of-contents__link toc-highlight">Common Objections &amp; Responses</a></li></ul></li><li><a href="#conversation-starters" class="table-of-contents__link toc-highlight">Conversation Starters</a><ul><li><a href="#for-initial-discovery" class="table-of-contents__link toc-highlight">For Initial Discovery</a></li><li><a href="#for-value-demonstration" class="table-of-contents__link toc-highlight">For Value Demonstration</a></li><li><a href="#for-next-steps" class="table-of-contents__link toc-highlight">For Next Steps</a></li></ul></li><li><a href="#email-templates" class="table-of-contents__link toc-highlight">Email Templates</a><ul><li><a href="#initial-outreach" class="table-of-contents__link toc-highlight">Initial Outreach</a></li><li><a href="#follow-up-after-meeting" class="table-of-contents__link toc-highlight">Follow-up After Meeting</a></li><li><a href="#post-demo-follow-up" class="table-of-contents__link toc-highlight">Post-Demo Follow-up</a></li></ul></li><li><a href="#presentation-guidelines" class="table-of-contents__link toc-highlight">Presentation Guidelines</a><ul><li><a href="#executive-presentation-10-15-minutes" class="table-of-contents__link toc-highlight">Executive Presentation (10-15 minutes)</a></li><li><a href="#technical-deep-dive-30-45-minutes" class="table-of-contents__link toc-highlight">Technical Deep Dive (30-45 minutes)</a></li></ul></li><li><a href="#training--enablement" class="table-of-contents__link toc-highlight">Training &amp; Enablement</a><ul><li><a href="#sales-training-modules" class="table-of-contents__link toc-highlight">Sales Training Modules</a></li><li><a href="#sales-enablement-materials" class="table-of-contents__link toc-highlight">Sales Enablement Materials</a></li><li><a href="#certification-program" class="table-of-contents__link toc-highlight">Certification Program</a></li></ul></li><li><a href="#measurement--optimization" class="table-of-contents__link toc-highlight">Measurement &amp; Optimization</a><ul><li><a href="#key-performance-indicators" class="table-of-contents__link toc-highlight">Key Performance Indicators</a></li><li><a href="#message-testing" class="table-of-contents__link toc-highlight">Message Testing</a></li><li><a href="#continuous-improvement" class="table-of-contents__link toc-highlight">Continuous Improvement</a></li></ul></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/docs/intro">Getting Started</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/category/api-reference">API Reference</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/category/architecture">Architecture</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/sentient-factory/discussions" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub Discussions<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://discord.gg/sentient-factory" target="_blank" rel="noopener noreferrer" class="footer__link-item">Discord<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://twitter.com/sentientfactory" target="_blank" rel="noopener noreferrer" class="footer__link-item">Twitter<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/blog">Blog</a></li><li class="footer__item"><a href="https://github.com/sentient-factory" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a class="footer__link-item" href="/docs/docs/contributing">Contributing</a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Sentient Factory Project. Built with Docusaurus.</div></div></div></footer></div>
+</body>
+</html>

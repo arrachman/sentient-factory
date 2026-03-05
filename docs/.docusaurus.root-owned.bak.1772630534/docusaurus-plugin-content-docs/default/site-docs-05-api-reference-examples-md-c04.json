@@ -1,0 +1,24 @@
+{
+  "id": "api-reference/examples",
+  "title": "API Examples",
+  "description": "Overview",
+  "source": "@site/docs/05-api-reference/examples.md",
+  "sourceDirName": "05-api-reference",
+  "slug": "/api-reference/examples",
+  "permalink": "/docs/docs/api-reference/examples",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/05-api-reference/examples.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "API Endpoints",
+    "permalink": "/docs/docs/api-reference/endpoints"
+  },
+  "next": {
+    "title": "Role & Permission Management API",
+    "permalink": "/docs/docs/api-reference/role-management"
+  }
+}

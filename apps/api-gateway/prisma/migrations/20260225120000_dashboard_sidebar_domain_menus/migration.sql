@@ -54,7 +54,7 @@ INSERT INTO "m0_menu" (
 VALUES (
   'dashboard-m1',
   'Dashboard M1',
-  '/app?domain=m1',
+  '/app/overview?domain=m1',
   'BarChart3',
   'ITEM',
   (SELECT "id" FROM "m0_menu" WHERE "key" = 'dashboard'),
@@ -82,7 +82,7 @@ INSERT INTO "m0_menu" (
 VALUES (
   'dashboard-m',
   'Dashboard M',
-  '/app?domain=m',
+  '/app/overview?domain=m',
   'LineChart',
   'ITEM',
   (SELECT "id" FROM "m0_menu" WHERE "key" = 'dashboard'),
@@ -110,7 +110,7 @@ INSERT INTO "m0_menu" (
 VALUES (
   'dashboard-m2r',
   'Dashboard M2R',
-  '/app?domain=m2r',
+  '/app/overview?domain=m2r',
   'Activity',
   'ITEM',
   (SELECT "id" FROM "m0_menu" WHERE "key" = 'dashboard'),

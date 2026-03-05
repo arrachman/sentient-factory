@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0004-seo-documentation/README",
+  "title": "M0004 - SEO Documentation",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0004-seo-documentation/README.md",
+  "sourceDirName": "06-marketing/tickets/M0004-seo-documentation",
+  "slug": "/marketing/tickets/M0004-seo-documentation/",
+  "permalink": "/docs/docs/marketing/tickets/M0004-seo-documentation/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0004-seo-documentation/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "M0003 - Messaging Framework Documentation",
+    "permalink": "/docs/docs/marketing/tickets/M0003-messaging-framework/"
+  },
+  "next": {
+    "title": "M0005 - Social Media Guidelines",
+    "permalink": "/docs/docs/marketing/tickets/M0005-social-media-guidelines/"
+  }
+}

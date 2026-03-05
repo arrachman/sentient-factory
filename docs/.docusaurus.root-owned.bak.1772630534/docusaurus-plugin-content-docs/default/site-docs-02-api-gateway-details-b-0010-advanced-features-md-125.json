@@ -1,0 +1,24 @@
+{
+  "id": "api-gateway/details/B0010-advanced-features",
+  "title": "B0010: Advanced Features",
+  "description": "Description",
+  "source": "@site/docs/02-api-gateway/details/B0010-advanced-features.md",
+  "sourceDirName": "02-api-gateway/details",
+  "slug": "/api-gateway/details/B0010-advanced-features",
+  "permalink": "/docs/docs/api-gateway/details/B0010-advanced-features",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/02-api-gateway/details/B0010-advanced-features.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "B0009: Audit Logging System",
+    "permalink": "/docs/docs/api-gateway/details/B0009-audit-logging"
+  },
+  "next": {
+    "title": "B0011: Testing & Documentation",
+    "permalink": "/docs/docs/api-gateway/details/B0011-testing-docs"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "permalink": "/docs/blog/myerpplus-m4-purchase",
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/blog/2026-03-04-myerpplus-m4-purchase.md",
+  "source": "@site/blog/2026-03-04-myerpplus-m4-purchase.md",
+  "title": "Pemetaan DB myerpplus Prefix m4_ (Purchasing dan Account Payable)",
+  "description": "Dokumentasi struktur tabel m4_ pada database myerpplus, termasuk domain proses, pola penamaan tabel, dan mapping kode dokumen pembelian.",
+  "date": "2026-03-04T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "database",
+      "permalink": "/docs/blog/tags/database"
+    },
+    {
+      "inline": true,
+      "label": "erp",
+      "permalink": "/docs/blog/tags/erp"
+    },
+    {
+      "inline": true,
+      "label": "mysql",
+      "permalink": "/docs/blog/tags/mysql"
+    }
+  ],
+  "readingTime": 3.8,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Sébastien Lorber",
+      "title": "Docusaurus maintainer",
+      "url": "https://sebastienlorber.com",
+      "page": {
+        "permalink": "/docs/blog/authors/all-sebastien-lorber-articles"
+      },
+      "socials": {
+        "x": "https://x.com/sebastienlorber",
+        "linkedin": "https://www.linkedin.com/in/sebastienlorber/",
+        "github": "https://github.com/slorber",
+        "newsletter": "https://thisweekinreact.com"
+      },
+      "imageURL": "https://github.com/slorber.png",
+      "key": "slorber"
+    }
+  ],
+  "frontMatter": {
+    "slug": "myerpplus-m4-purchase",
+    "title": "Pemetaan DB myerpplus Prefix m4_ (Purchasing dan Account Payable)",
+    "description": "Dokumentasi struktur tabel m4_ pada database myerpplus, termasuk domain proses, pola penamaan tabel, dan mapping kode dokumen pembelian.",
+    "authors": [
+      "slorber"
+    ],
+    "tags": [
+      "database",
+      "erp",
+      "mysql"
+    ]
+  },
+  "unlisted": false,
+  "nextItem": {
+    "title": "Rekap Prefix m3_ di MyERPPlus Berdasarkan m0_menu",
+    "permalink": "/docs/blog/rekap-myerpplus-prefix-m3-menu-m0-menu"
+  }
+}

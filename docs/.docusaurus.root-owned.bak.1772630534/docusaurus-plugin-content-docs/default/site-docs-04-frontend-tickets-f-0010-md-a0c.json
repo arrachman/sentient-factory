@@ -1,0 +1,35 @@
+{
+  "id": "frontend/tickets/F0010",
+  "title": "Role CRUD Operations",
+  "description": "Overview",
+  "source": "@site/docs/04-frontend/tickets/F0010.md",
+  "sourceDirName": "04-frontend/tickets",
+  "slug": "/frontend/tickets/F0010",
+  "permalink": "/docs/docs/frontend/tickets/F0010",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/04-frontend/tickets/F0010.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "ticket_id": "F0010",
+    "title": "Role CRUD Operations",
+    "phase": "3 - Role & Permission Management",
+    "priority": "High",
+    "estimate": "2-3 days",
+    "status": "Pending",
+    "dependencies": "F0009 (Roles List Page), F0011 (Permission System Implementation)",
+    "assignee": null,
+    "created_date": "2025-02-07T00:00:00.000Z",
+    "due_date": null
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Roles List Page",
+    "permalink": "/docs/docs/frontend/tickets/F0009"
+  },
+  "next": {
+    "title": "Tiket Template Structure",
+    "permalink": "/docs/docs/frontend/tickets/TEMPLATE"
+  }
+}

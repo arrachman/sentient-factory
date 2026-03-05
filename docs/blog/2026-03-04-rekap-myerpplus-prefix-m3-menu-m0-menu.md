@@ -1,7 +1,7 @@
 ---
 slug: rekap-myerpplus-prefix-m3-menu-m0-menu
 title: Rekap Prefix m3_ di MyERPPlus Berdasarkan m0_menu
-authors: [default]
+authors: [yangshun]
 tags: [myerpplus, database, mapping, warehouse]
 ---
 
@@ -74,4 +74,3 @@ Dan memang ini source yang dipakai website:
 - Docusaurus config memakai `baseUrl: /docs/` di `docs/docusaurus.config.ts`
 - Service `sentient-infra-docs` me-mount folder `../docs:/app` di `infra/docker-compose.yml`
 - URL publik blog: `https://sentient.fr-labs.my.id/docs/blog`
-

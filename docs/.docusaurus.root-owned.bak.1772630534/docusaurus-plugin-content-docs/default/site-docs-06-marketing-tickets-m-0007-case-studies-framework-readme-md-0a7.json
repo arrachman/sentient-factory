@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/M0007-case-studies-framework/README",
+  "title": "M0007 - Case Studies Framework",
+  "description": "📋 Ticket Information",
+  "source": "@site/docs/06-marketing/tickets/M0007-case-studies-framework/README.md",
+  "sourceDirName": "06-marketing/tickets/M0007-case-studies-framework",
+  "slug": "/marketing/tickets/M0007-case-studies-framework/",
+  "permalink": "/docs/docs/marketing/tickets/M0007-case-studies-framework/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/M0007-case-studies-framework/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "M0006 - Email Marketing Templates",
+    "permalink": "/docs/docs/marketing/tickets/M0006-email-marketing-templates/"
+  },
+  "next": {
+    "title": "M0008 - Analytics & Reporting",
+    "permalink": "/docs/docs/marketing/tickets/M0008-analytics-reporting/"
+  }
+}

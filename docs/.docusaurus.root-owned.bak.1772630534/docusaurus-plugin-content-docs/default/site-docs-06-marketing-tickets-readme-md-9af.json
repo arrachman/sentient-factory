@@ -1,0 +1,24 @@
+{
+  "id": "marketing/tickets/README",
+  "title": "Marketing Documentation Tickets",
+  "description": "📁 Folder Structure",
+  "source": "@site/docs/06-marketing/tickets/README.md",
+  "sourceDirName": "06-marketing/tickets",
+  "slug": "/marketing/tickets/",
+  "permalink": "/docs/docs/marketing/tickets/",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/06-marketing/tickets/README.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Marketing Documentation Tickets",
+    "permalink": "/docs/docs/marketing/ticket-list"
+  },
+  "next": {
+    "title": "M0001 - Brand Guidelines Documentation",
+    "permalink": "/docs/docs/marketing/tickets/M0001-brand-guidelines/"
+  }
+}

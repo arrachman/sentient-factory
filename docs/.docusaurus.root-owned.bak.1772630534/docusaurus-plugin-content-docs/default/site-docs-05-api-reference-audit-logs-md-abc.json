@@ -1,0 +1,24 @@
+{
+  "id": "api-reference/audit-logs",
+  "title": "Audit Logs API",
+  "description": "API endpoints for accessing system audit logs.",
+  "source": "@site/docs/05-api-reference/audit-logs.md",
+  "sourceDirName": "05-api-reference",
+  "slug": "/api-reference/audit-logs",
+  "permalink": "/docs/docs/api-reference/audit-logs",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/sentient-factory/docs/tree/main/docs/05-api-reference/audit-logs.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Authentication API",
+    "permalink": "/docs/docs/api-reference/authentication"
+  },
+  "next": {
+    "title": "Backend API Development Tasks",
+    "permalink": "/docs/docs/api-reference/backend-api-tasks"
+  }
+}

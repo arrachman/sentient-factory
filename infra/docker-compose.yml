@@ -64,7 +64,7 @@ services:
     ports:
       - "3203:3203"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3203
       CHOKIDAR_USEPOLLING: "true"
     volumes:
@@ -75,7 +75,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: sh -c "npm install && npx prisma generate && npm run dev"
+    command: sh -c "npm install --include=dev && npx prisma generate && npm run dev"
 
   web-dashboard:
     image: node:20-alpine
@@ -118,7 +118,7 @@ services:
     ports:
       - "3205:3205"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
     volumes:
       - ../docs:/app
