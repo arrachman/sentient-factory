@@ -5,7 +5,7 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/app',
+        source: '/app/overview',
         has: [
           {
             type: 'query',
@@ -34,48 +34,6 @@ const nextConfig = {
           },
         ],
         destination: '/app/overview',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/finance-accounting/:feature',
-        destination: '/app/finance-accounting/:feature',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/finance-accounting',
-        destination: '/app/finance-accounting',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/sales',
-        destination: '/app/overview?domain=so',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/sales/:path*',
-        destination: '/app/overview?domain=so',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/finance/:feature',
-        destination: '/app/finance-accounting/:feature',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/finance',
-        has: [
-          {
-            type: 'query',
-            key: 'feature',
-            value: '(?<feature>.*)',
-          },
-        ],
-        destination: '/app/finance-accounting/:feature',
-        permanent: true,
-      },
-      {
-        source: '/app/dashboard/finance',
-        destination: '/app/finance-accounting',
         permanent: true,
       },
     ];

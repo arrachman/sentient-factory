@@ -6,7 +6,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 const inputVariants = cva(
   `
     flex w-full bg-background border border-input shadow-xs shadow-black/5 transition-[color,box-shadow] text-foreground placeholder:text-muted-foreground/80 
-    focus-visible:ring-ring/30  focus-visible:border-ring focus-visible:outline-none focus-visible:ring-[3px]     
+    focus-visible:ring-ring/25  focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2
     disabled:cursor-not-allowed disabled:opacity-60 
     [&[readonly]]:bg-muted/80 [&[readonly]]:cursor-not-allowed
     file:h-full [&[type=file]]:py-0 file:border-solid file:border-input file:bg-transparent 
@@ -22,7 +22,7 @@ const inputVariants = cva(
       },
     },
     defaultVariants: {
-      variant: 'md',
+      variant: 'sm',
     },
   },
 );
@@ -42,7 +42,7 @@ const inputAddonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: 'md',
+      variant: 'sm',
       mode: 'default',
     },
   },
@@ -111,7 +111,7 @@ const inputWrapperVariants = cva(
       },
     },
     defaultVariants: {
-      variant: 'md',
+      variant: 'sm',
     },
   },
 );

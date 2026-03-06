@@ -4,7 +4,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
+import { CompactInput } from '@/components/ui/compact-input';
 import { Label } from '@/components/ui/label';
 
 type AdministratorMenuFormPanelProps = {
@@ -29,25 +29,22 @@ export function AdministratorMenuFormPanel({
   onBackToList,
 }: AdministratorMenuFormPanelProps) {
   return (
-    <div className="rounded-lg border p-5">
-      <h2 className="mb-1 text-sm font-semibold text-mono">
+    <div className="rounded-lg border p-4">
+      <h2 className="mb-0.5 text-sm font-semibold text-mono">
         {editingId ? 'Edit Menu' : 'Create Menu'}
       </h2>
-      <p className="mb-4 text-xs text-muted-foreground">
-        Fill required fields first, then optional settings. This structure makes the menu easier to configure.
-      </p>
+      <p className="mb-3 text-[11px] text-muted-foreground">Compact mode: more fields in one screen.</p>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
-        <section className="space-y-3 rounded-md border p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Basic Information
-          </h3>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <form className="space-y-2.5" onSubmit={onSubmit}>
+        <section className="space-y-2 rounded-md border p-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Basic</h3>
+
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-4">
             <div>
-              <Label htmlFor="title">
+              <Label htmlFor="title" className="text-xs">
                 Title <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <CompactInput
                 id="title"
                 value={form.title}
                 onChange={(e) => onFormChange({ ...form, title: e.target.value })}
@@ -56,75 +53,64 @@ export function AdministratorMenuFormPanel({
               />
             </div>
             <div>
-              <Label htmlFor="key">
+              <Label htmlFor="key" className="text-xs">
                 Key <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <CompactInput
                 id="key"
                 value={form.key}
                 onChange={(e) => onFormChange({ ...form, key: e.target.value })}
                 placeholder="administrator.users"
                 required
               />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Use a unique key for role-menu mapping.
-              </p>
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             <div>
-              <Label htmlFor="type">
+              <Label htmlFor="type" className="text-xs">
                 Type <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <CompactInput
                 id="type"
                 value={form.type}
                 onChange={(e) => onFormChange({ ...form, type: e.target.value })}
-                placeholder="ITEM / COLLAPSE"
+                placeholder="ITEM"
                 required
               />
             </div>
             <div>
-              <Label htmlFor="parentId">Parent Menu</Label>
-              <AutocompleteSelect
-                value={form.parentId}
-                onValueChange={(value) =>
-                  onFormChange({ ...form, parentId: value })
-                }
-                options={parentSelectOptions}
-                placeholder="Select parent menu"
-                searchPlaceholder="Search parent menu..."
-                emptyText="No menu found."
-                triggerClassName="h-8.5 text-[0.8125rem]"
-              />
-            </div>
-            <div>
-              <Label htmlFor="sortOrder">
+              <Label htmlFor="sortOrder" className="text-xs">
                 Sort Order <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <CompactInput
                 id="sortOrder"
                 type="number"
                 min={0}
                 value={form.sortOrder}
-                onChange={(e) =>
-                  onFormChange({ ...form, sortOrder: e.target.value })
-                }
+                onChange={(e) => onFormChange({ ...form, sortOrder: e.target.value })}
                 required
               />
             </div>
           </div>
         </section>
 
-        <section className="space-y-3 rounded-md border p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Navigation & Access (Optional)
-          </h3>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <section className="space-y-2 rounded-md border p-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Navigation</h3>
+
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-4">
             <div>
-              <Label htmlFor="path">Path</Label>
-              <Input
+              <Label htmlFor="parentId" className="text-xs">Parent Menu</Label>
+              <AutocompleteSelect
+                value={form.parentId}
+                onValueChange={(value) => onFormChange({ ...form, parentId: value })}
+                options={parentSelectOptions}
+                placeholder="No Parent"
+                searchPlaceholder="Search parent menu..."
+                emptyText="No menu found."
+                triggerClassName="h-7 text-xs"
+              />
+            </div>
+            <div>
+              <Label htmlFor="path" className="text-xs">Path</Label>
+              <CompactInput
                 id="path"
                 value={form.path}
                 onChange={(e) => onFormChange({ ...form, path: e.target.value })}
@@ -132,8 +118,8 @@ export function AdministratorMenuFormPanel({
               />
             </div>
             <div>
-              <Label htmlFor="icon">Icon (Lucide)</Label>
-              <Input
+              <Label htmlFor="icon" className="text-xs">Icon</Label>
+              <CompactInput
                 id="icon"
                 value={form.icon}
                 onChange={(e) => onFormChange({ ...form, icon: e.target.value })}
@@ -141,44 +127,37 @@ export function AdministratorMenuFormPanel({
               />
             </div>
             <div>
-              <Label htmlFor="permissionName">Permission</Label>
-              <Input
+              <Label htmlFor="permissionName" className="text-xs">Permission</Label>
+              <CompactInput
                 id="permissionName"
                 value={form.permissionName}
-                onChange={(e) =>
-                  onFormChange({ ...form, permissionName: e.target.value })
-                }
+                onChange={(e) => onFormChange({ ...form, permissionName: e.target.value })}
                 placeholder="menu.read"
               />
             </div>
           </div>
         </section>
 
-        <section className="space-y-3 rounded-md border p-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Visibility & Status
-          </h3>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+        <section className="rounded-md border p-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="inline-flex items-center gap-2 text-xs font-medium text-foreground">
               <Checkbox
                 id="isVisible"
+                size="sm"
                 checked={form.isVisible}
-                onCheckedChange={(checked) =>
-                  onFormChange({ ...form, isVisible: checked === true })
-                }
+                onCheckedChange={(checked) => onFormChange({ ...form, isVisible: checked === true })}
               />
-              <Label htmlFor="isVisible">Visible in sidebar menu</Label>
-            </div>
-            <div className="flex items-center gap-2 rounded-md border px-3 py-2">
+              <span>Visible in sidebar</span>
+            </label>
+            <label className="inline-flex items-center gap-2 text-xs font-medium text-foreground">
               <Checkbox
                 id="isActive"
+                size="sm"
                 checked={form.isActive}
-                onCheckedChange={(checked) =>
-                  onFormChange({ ...form, isActive: checked === true })
-                }
+                onCheckedChange={(checked) => onFormChange({ ...form, isActive: checked === true })}
               />
-              <Label htmlFor="isActive">Active (can be used)</Label>
-            </div>
+              <span>Active</span>
+            </label>
           </div>
         </section>
 

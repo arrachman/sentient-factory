@@ -59,10 +59,10 @@ export function AutocompleteSelect({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
-            className={cn('h-10 w-full justify-between font-normal', triggerClassName)}
+            className={cn('h-7 w-full justify-between px-2.5 text-xs font-normal', triggerClassName)}
           >
             <span className="truncate text-left">{selectedLabel || placeholder}</span>
-            <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="ml-2 size-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">

@@ -1,13 +1,6 @@
 'use client';
 
 import { Plus, RefreshCw } from 'lucide-react';
-import {
-  Toolbar,
-  ToolbarActions,
-  ToolbarDescription,
-  ToolbarHeading,
-  ToolbarPageTitle,
-} from '@/components/layouts/app/components/toolbar';
 import { Button } from '@/components/ui/button';
 import { AdministratorMenuFormPanel } from '@/features/administrator-menu/ui/administrator-menu-form-panel';
 import { AdministratorMenuListPanel } from '@/features/administrator-menu/ui/administrator-menu-list-panel';
@@ -44,12 +37,13 @@ export default function AdministratorMenuPage() {
 
   return (
     <div className="container">
-      <Toolbar>
-        <ToolbarHeading>
-          <ToolbarPageTitle>Administrator Menu</ToolbarPageTitle>
-          <ToolbarDescription>Manage sidebar menu structure and visibility.</ToolbarDescription>
-        </ToolbarHeading>
-        <ToolbarActions>
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+        <div className="space-y-0.5">
+          <h1 className="text-xl font-medium leading-tight text-mono">Administrator Menu</h1>
+          <p className="text-sm text-secondary-foreground">Manage sidebar menu structure and visibility.</p>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Button onClick={openAddForm}>
             <Plus />
             Add Menu
@@ -58,10 +52,10 @@ export default function AdministratorMenuPage() {
             <RefreshCw />
             Refresh
           </Button>
-        </ToolbarActions>
-      </Toolbar>
+        </div>
+      </div>
 
-      <div className="space-y-5">
+      <div className="space-y-2.5">
         {!showForm ? (
           <AdministratorMenuListPanel
             items={items}

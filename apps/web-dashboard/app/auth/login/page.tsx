@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Lock, LogIn, Mail } from 'lucide-react';
 
 const TOKEN_COOKIE = 'sf_token';
@@ -16,6 +16,9 @@ function hasAuthCookie() {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
+  const safeReturnTo = returnTo?.startsWith('/') ? returnTo : '/app';
   const [email, setEmail] = useState('super_admin@fr-labs.my.id');
   const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,9 +27,9 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (hasAuthCookie()) {
-      router.replace('/app');
+      router.replace(safeReturnTo);
     }
-  }, [router]);
+  }, [router, safeReturnTo]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,7 +55,7 @@ export default function LoginPage() {
       }
 
       document.cookie = `${TOKEN_COOKIE}=${encodeURIComponent(payload.data.token)}; Path=/; Max-Age=604800; SameSite=Lax`;
-      window.location.assign('/app');
+      window.location.assign(safeReturnTo);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         setError('Request login timeout. Pastikan API berjalan di port 3103.');
