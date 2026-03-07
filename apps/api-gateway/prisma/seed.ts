@@ -591,6 +591,15 @@ async function main() {
       sortOrder: 6,
     },
     {
+      key: 'dashboard-delivery',
+      title: 'Delivery',
+      path: '/app',
+      icon: 'Truck',
+      type: 'ITEM',
+      parentKey: 'dashboard',
+      sortOrder: 7,
+    },
+    {
       key: 'administrator',
       title: 'Administrator',
       path: null,
@@ -899,6 +908,7 @@ async function main() {
     'dashboard-m2',
     'dashboard-so',
     'dashboard-m2r',
+    'dashboard-delivery',
     'master-data',
     'master-data-contact',
     'master-data-division',

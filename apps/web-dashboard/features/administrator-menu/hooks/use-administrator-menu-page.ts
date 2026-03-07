@@ -25,6 +25,8 @@ type MenuMutationResponse = {
   message?: string;
 };
 
+type BatchSortDraft = Record<number, string>;
+
 export function useAdministratorMenuPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -42,15 +44,19 @@ export function useAdministratorMenuPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
+  const [groupFilter, setGroupFilter] = useState('all');
   const [parentFilter, setParentFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [batchSorting, setBatchSorting] = useState(false);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [parentOptions, setParentOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [groupOptions, setGroupOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [sortDrafts, setSortDrafts] = useState<BatchSortDraft>({});
 
   const token = useMemo(() => getClientToken(), []);
   const headers = useMemo(() => buildAuthHeader(token), [token]);
@@ -71,6 +77,9 @@ export function useAdministratorMenuPage() {
         if (search.trim()) {
           query.set('search', search.trim());
         }
+        if (groupFilter !== 'all') {
+          query.set('groupId', groupFilter);
+        }
         if (parentFilter !== 'all') {
           query.set('parentId', parentFilter);
         }
@@ -86,6 +95,11 @@ export function useAdministratorMenuPage() {
         }
 
         setItems(Array.isArray(payload.data) ? payload.data : []);
+        setSortDrafts(
+          Object.fromEntries(
+            (Array.isArray(payload.data) ? payload.data : []).map((item) => [item.id, String(item.sortOrder ?? 0)]),
+          ),
+        );
         setPage(typeof payload.meta?.page === 'number' ? payload.meta.page : safePage);
         setTotalPages(typeof payload.meta?.totalPages === 'number' ? payload.meta.totalPages : 1);
         setTotalItems(typeof payload.meta?.total === 'number' ? payload.meta.total : 0);
@@ -95,7 +109,7 @@ export function useAdministratorMenuPage() {
         setLoading(false);
       }
     },
-    [headers, limit, page, parentFilter, search],
+    [groupFilter, headers, limit, page, parentFilter, search],
   );
 
   const fetchParentOptions = useCallback(async () => {
@@ -115,8 +129,14 @@ export function useAdministratorMenuPage() {
         label: `${item.title} (${item.key})`,
       }));
       setParentOptions(options);
+      setGroupOptions(
+        (Array.isArray(payload.data) ? payload.data : [])
+          .filter((item) => item.parentId === null)
+          .map((item) => ({ value: String(item.id), label: `${item.title} (${item.key})` })),
+      );
     } catch {
       setParentOptions([]);
+      setGroupOptions([]);
     }
   }, [headers]);
 
@@ -309,6 +329,64 @@ export function useAdministratorMenuPage() {
     [parentOptions],
   );
 
+  const groupFilterOptions = useMemo(
+    () => [{ value: 'all', label: 'All Group' }, ...groupOptions],
+    [groupOptions],
+  );
+
+  const changeSortDraft = useCallback((id: number, value: string) => {
+    setSortDrafts((current) => ({ ...current, [id]: value }));
+  }, []);
+
+  const dirtySortCount = useMemo(
+    () =>
+      items.filter((item) => String(item.sortOrder ?? 0) !== (sortDrafts[item.id] ?? String(item.sortOrder ?? 0))).length,
+    [items, sortDrafts],
+  );
+
+  const resetSortDrafts = useCallback(() => {
+    setSortDrafts(Object.fromEntries(items.map((item) => [item.id, String(item.sortOrder ?? 0)])));
+  }, [items]);
+
+  const submitBatchSort = useCallback(async () => {
+    const changedItems = items
+      .map((item) => ({
+        id: item.id,
+        originalSortOrder: item.sortOrder ?? 0,
+        nextSortOrder: Number(sortDrafts[item.id] ?? item.sortOrder ?? 0),
+      }))
+      .filter((item) => Number.isInteger(item.nextSortOrder) && item.nextSortOrder >= 0)
+      .filter((item) => item.originalSortOrder !== item.nextSortOrder)
+      .map((item) => ({ id: item.id, sortOrder: item.nextSortOrder }));
+
+    if (changedItems.length === 0) {
+      return;
+    }
+
+    setBatchSorting(true);
+    setError('');
+    try {
+      const response = await fetch('/api/menus/sort-batch', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(headers ?? {}),
+        },
+        body: JSON.stringify({ items: changedItems }),
+      });
+      const result = (await response.json().catch(() => null)) as MenuMutationResponse | null;
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to update menu sort order');
+      }
+
+      await fetchList(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update menu sort order');
+    } finally {
+      setBatchSorting(false);
+    }
+  }, [fetchList, headers, items, page, sortDrafts]);
+
 
   const changeLimit = useCallback((nextLimit: number) => {
     if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
@@ -327,10 +405,13 @@ export function useAdministratorMenuPage() {
     showForm,
     search,
     setSearch,
+    groupFilter,
+    setGroupFilter,
     parentFilter,
     setParentFilter,
     loading,
     submitting,
+    batchSorting,
     error,
     page,
     limit,
@@ -338,12 +419,18 @@ export function useAdministratorMenuPage() {
     totalPages,
     totalItems,
     parentSelectOptions,
+    groupFilterOptions,
     parentFilterOptions,
+    sortDrafts,
+    dirtySortCount,
     fetchList,
+    changeSortDraft,
     openAddForm,
     backToList,
     openEditRoute,
     onDelete,
+    resetSortDrafts,
+    submitBatchSort,
     submitForm,
   };
 }

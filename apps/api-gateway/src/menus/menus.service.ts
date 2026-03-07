@@ -4,6 +4,7 @@ import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { QueryMenuDto } from './dto/query-menu.dto';
+import { UpdateMenuSortBatchDto } from './dto/update-menu-sort-batch.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 
 type SidebarMenuItem = {
@@ -77,15 +78,21 @@ export class MenusService {
     const keyword = query.search?.trim();
     const includeInactive = query.includeInactive ?? false;
     const parentFilter = query.parentId?.trim();
+    const groupFilter = query.groupId?.trim();
     const normalizedParentId =
       parentFilter && parentFilter !== 'null' ? Number(parentFilter) : undefined;
+    const normalizedGroupId = groupFilter ? Number(groupFilter) : undefined;
     const hasParentFilter =
       parentFilter === 'null' ||
       (Number.isInteger(normalizedParentId) && Number(normalizedParentId) > 0);
+    const hasGroupFilter = Number.isInteger(normalizedGroupId) && Number(normalizedGroupId) > 0;
+
+    const groupMenuIds = hasGroupFilter ? await this.resolveGroupMenuIds(Number(normalizedGroupId)) : null;
 
     const where = {
       deletedAt: null as Date | null,
       ...(includeInactive ? {} : { isActive: true }),
+      ...(groupMenuIds ? { id: { in: groupMenuIds } } : {}),
       ...(hasParentFilter
         ? {
             parentId: parentFilter === 'null' ? null : Number(normalizedParentId),
@@ -213,6 +220,41 @@ export class MenusService {
     });
 
     return { success: true, data: this.serializeMenu(updated) };
+  }
+
+  async updateSortBatch(dto: UpdateMenuSortBatchDto, actorId?: string | number) {
+    const ids = dto.items.map((item) => item.id);
+    const uniqueIds = new Set(ids);
+
+    if (uniqueIds.size !== ids.length) {
+      throw new BadRequestException('Duplicate menu ID in batch update');
+    }
+
+    const existingMenus = await this.prisma.menu.findMany({
+      where: {
+        id: { in: ids },
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+
+    if (existingMenus.length !== ids.length) {
+      throw new NotFoundException('One or more menus were not found');
+    }
+
+    await this.prisma.$transaction(
+      dto.items.map((item) =>
+        this.prisma.menu.update({
+          where: { id: item.id },
+          data: {
+            sortOrder: item.sortOrder,
+            updatedBy: this.toActor(actorId),
+          },
+        }),
+      ),
+    );
+
+    return { success: true, message: 'Menu sort order updated' };
   }
 
   async remove(id: number, actorId?: string | number) {
@@ -555,5 +597,41 @@ export class MenusService {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
     };
+  }
+
+  private async resolveGroupMenuIds(groupId: number): Promise<number[]> {
+    const menus = await this.prisma.menu.findMany({
+      where: { deletedAt: null },
+      select: { id: true, parentId: true },
+    });
+
+    const idSet = new Set(menus.map((item) => item.id));
+    if (!idSet.has(groupId)) {
+      throw new NotFoundException('Group menu not found');
+    }
+
+    const childrenByParent = new Map<number | null, number[]>();
+    for (const menu of menus) {
+      const list = childrenByParent.get(menu.parentId) ?? [];
+      list.push(menu.id);
+      childrenByParent.set(menu.parentId, list);
+    }
+
+    const queue = [groupId];
+    const descendants: number[] = [];
+    const visited = new Set<number>();
+
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current || visited.has(current)) {
+        continue;
+      }
+      visited.add(current);
+      descendants.push(current);
+      const children = childrenByParent.get(current) ?? [];
+      queue.push(...children);
+    }
+
+    return descendants;
   }
 }

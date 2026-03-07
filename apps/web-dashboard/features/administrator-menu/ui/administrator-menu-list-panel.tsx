@@ -1,4 +1,4 @@
-import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Pencil, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Input } from '@/components/ui/input';
@@ -15,10 +15,19 @@ type AdministratorMenuListPanelProps = {
   totalItems: number;
   search: string;
   onSearchChange: (value: string) => void;
+  groupFilter: string;
+  onGroupFilterChange: (value: string) => void;
+  groupFilterOptions: Array<{ value: string; label: string }>;
   parentFilter: string;
   onParentFilterChange: (value: string) => void;
-  parentFilterOptions: Array<{ value: string; label: string }>;
+  parentFilterOptions: Array<{ value: string; label: string }>; 
   onApplyFilter: () => void;
+  sortDrafts: Record<number, string>;
+  dirtySortCount: number;
+  batchSorting: boolean;
+  onSortDraftChange: (id: number, value: string) => void;
+  onResetBatchSort: () => void;
+  onSubmitBatchSort: () => void;
   onEdit: (item: AdministratorMenu) => void;
   onDelete: (id: number) => void;
   onPageChange: (nextPage: number) => void;
@@ -34,10 +43,19 @@ export function AdministratorMenuListPanel({
   totalItems,
   search,
   onSearchChange,
+  groupFilter,
+  onGroupFilterChange,
+  groupFilterOptions,
   parentFilter,
   onParentFilterChange,
   parentFilterOptions,
   onApplyFilter,
+  sortDrafts,
+  dirtySortCount,
+  batchSorting,
+  onSortDraftChange,
+  onResetBatchSort,
+  onSubmitBatchSort,
   onEdit,
   onDelete,
   onPageChange,
@@ -45,7 +63,7 @@ export function AdministratorMenuListPanel({
 }: AdministratorMenuListPanelProps) {
   return (
     <div className="rounded-lg border p-5">
-      <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_260px_auto]">
+      <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_220px_260px_auto]">
         <div className="relative flex-1">
           <Input
             placeholder="Search by key, title, path, icon..."
@@ -75,6 +93,16 @@ export function AdministratorMenuListPanel({
         </div>
 
         <AutocompleteSelect
+          value={groupFilter}
+          onValueChange={(value) => onGroupFilterChange(value || 'all')}
+          options={groupFilterOptions}
+          placeholder="Filter group"
+          searchPlaceholder="Search group..."
+          emptyText="No group found."
+          triggerClassName="h-9 text-sm"
+        />
+
+        <AutocompleteSelect
           value={parentFilter}
           onValueChange={(value) => onParentFilterChange(value || 'all')}
           options={parentFilterOptions}
@@ -90,12 +118,29 @@ export function AdministratorMenuListPanel({
         </Button>
       </div>
 
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3">
+        <p className="text-sm text-muted-foreground">
+          Batch sort current page. Changed rows: <span className="font-medium text-foreground">{dirtySortCount}</span>
+        </p>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onResetBatchSort} disabled={batchSorting || dirtySortCount === 0}>
+            <RefreshCw />
+            Reset Sort
+          </Button>
+          <Button onClick={onSubmitBatchSort} disabled={batchSorting || dirtySortCount === 0}>
+            <Save />
+            {batchSorting ? 'Saving...' : 'Save Sort'}
+          </Button>
+        </div>
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[60px]">No</TableHead>
             <TableHead>Title</TableHead>
             <TableHead>Key</TableHead>
+            <TableHead className="w-[120px]">Sort</TableHead>
             <TableHead>Path</TableHead>
             <TableHead>Parent</TableHead>
             <TableHead>Status</TableHead>
@@ -105,11 +150,11 @@ export function AdministratorMenuListPanel({
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={7}>Loading...</TableCell>
+              <TableCell colSpan={8}>Loading...</TableCell>
             </TableRow>
           ) : items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7}>No menu data found.</TableCell>
+              <TableCell colSpan={8}>No menu data found.</TableCell>
             </TableRow>
           ) : (
             items.map((item, index) => (
@@ -117,6 +162,15 @@ export function AdministratorMenuListPanel({
                 <TableCell>{(page - 1) * limit + index + 1}</TableCell>
                 <TableCell>{item.title}</TableCell>
                 <TableCell>{item.key}</TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={sortDrafts[item.id] ?? String(item.sortOrder ?? 0)}
+                    onChange={(e) => onSortDraftChange(item.id, e.target.value)}
+                    className="h-8"
+                  />
+                </TableCell>
                 <TableCell>{item.path || '-'}</TableCell>
                 <TableCell>{item.parentTitle || '-'}</TableCell>
                 <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>

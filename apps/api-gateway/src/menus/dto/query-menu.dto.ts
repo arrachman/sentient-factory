@@ -46,4 +46,12 @@ export class QueryMenuDto {
   @IsOptional()
   @IsString()
   parentId?: string;
+
+  @ApiPropertyOptional({
+    example: '1',
+    description: 'Filter by top-level group/root menu ID including all descendants.',
+  })
+  @IsOptional()
+  @IsString()
+  groupId?: string;
 }

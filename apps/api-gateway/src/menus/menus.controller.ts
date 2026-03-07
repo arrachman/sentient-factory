@@ -15,6 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { QueryMenuDto } from './dto/query-menu.dto';
+import { UpdateMenuSortBatchDto } from './dto/update-menu-sort-batch.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { MenusService } from './menus.service';
 
@@ -57,6 +58,13 @@ export class MenusController {
   @ApiResponse({ status: 200, description: 'Menu detail' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.menusService.findOne(id);
+  }
+
+  @Patch('sort-batch')
+  @ApiOperation({ summary: 'Batch update menu sort order' })
+  @ApiResponse({ status: 200, description: 'Menu sort order updated' })
+  updateSortBatch(@Body() dto: UpdateMenuSortBatchDto, @Request() req: any) {
+    return this.menusService.updateSortBatch(dto, req.user?.id);
   }
 
   @Patch(':id')

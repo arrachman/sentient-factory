@@ -7,6 +7,7 @@ export type AdministratorMenu = {
   type: string;
   parentId: number | null;
   parentTitle: string | null;
+  updatedAt?: string;
   sortOrder: number;
   isVisible: boolean;
   isActive: boolean;
