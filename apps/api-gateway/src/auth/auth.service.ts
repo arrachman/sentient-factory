@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -8,6 +9,8 @@ import { hashPassword, verifyPassword } from './password-hasher';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private usersService: UsersService,
@@ -31,6 +34,7 @@ export class AuthService {
   }
 
   async login(user: any, meta?: { ipAddress?: string | null; userAgent?: string | null }) {
+    const sessionKey = randomUUID();
     const roles = await this.usersService.getActiveRoleNamesByUserId(user.id);
     const warehouse = await this.usersService.getWarehouseMetaByUserUuid(user.id);
     const payload = {
@@ -39,21 +43,31 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       roles: roles,
+      sid: sessionKey,
     };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token: accessToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        ipAddress: meta?.ipAddress ?? null,
-        userAgent: meta?.userAgent ?? null,
-        createdBy: user.id,
-        updatedBy: user.id,
-      },
-    });
+    const ipAddress = this.normalizeHeaderValue(meta?.ipAddress);
+    const userAgent = this.normalizeHeaderValue(meta?.userAgent);
+
+    try {
+      await this.prisma.session.create({
+        data: {
+          userId: user.id,
+          token: accessToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          ipAddress,
+          userAgent,
+          createdBy: user.id,
+          updatedBy: user.id,
+        },
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Session tracking failed for user ${user.id}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     return {
       success: true,
@@ -79,18 +93,24 @@ export class AuthService {
 
   async logout(authUser: any, token?: string | null) {
     if (authUser?.id && token) {
-      await this.prisma.session.updateMany({
-        where: {
-          userId: authUser.id,
-          token,
-          deletedAt: null,
-        },
-        data: {
-          deletedAt: new Date(),
-          deletedBy: authUser.id,
-          updatedBy: authUser.id,
-        },
-      });
+      try {
+        await this.prisma.session.updateMany({
+          where: {
+            userId: authUser.id,
+            token,
+            deletedAt: null,
+          },
+          data: {
+            deletedAt: new Date(),
+            deletedBy: authUser.id,
+            updatedBy: authUser.id,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Session logout tracking failed for user ${authUser.id}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
     }
 
     return {
@@ -174,5 +194,14 @@ export class AuthService {
         roles,
       },
     };
+  }
+
+  private normalizeHeaderValue(value: string | null | undefined): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
   }
 }

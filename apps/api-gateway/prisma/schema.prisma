@@ -590,15 +590,15 @@ model Session {
   id        Int       @id @default(autoincrement())
   userId    Int       @map("user_id")
   token     String    @unique
-  expiresAt DateTime  @map("expires_at_tz") @db.Timestamptz(3)
+  expiresAt DateTime  @map("expires_at") @db.Timestamp(3)
   ipAddress String?   @map("ip_address")
   userAgent String?   @map("user_agent")
   createdAt DateTime  @default(now()) @map("created_at")
-  createdBy Int?   @map("created_by")
+  createdBy Int?      @map("created_by")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy Int?   @map("updated_by")
+  updatedBy Int?      @map("updated_by")
   deletedAt DateTime? @map("deleted_at")
-  deletedBy Int?   @map("deleted_by")
+  deletedBy Int?      @map("deleted_by")
 
   user User @relation(fields: [userId], references: [id])
 
