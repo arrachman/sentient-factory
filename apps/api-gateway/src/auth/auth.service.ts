@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { throwDuplicate } from '../common/errors/duplicate.util';
@@ -8,6 +9,7 @@ import { hashPassword, verifyPassword } from './password-hasher';
 @Injectable()
 export class AuthService {
   constructor(
+    private prisma: PrismaService,
     private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
@@ -28,7 +30,7 @@ export class AuthService {
     return null;
   }
 
-  async login(user: any) {
+  async login(user: any, meta?: { ipAddress?: string | null; userAgent?: string | null }) {
     const roles = await this.usersService.getActiveRoleNamesByUserId(user.id);
     const warehouse = await this.usersService.getWarehouseMetaByUserUuid(user.id);
     const payload = {
@@ -40,6 +42,18 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    await this.prisma.session.create({
+      data: {
+        userId: user.id,
+        token: accessToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        ipAddress: meta?.ipAddress ?? null,
+        userAgent: meta?.userAgent ?? null,
+        createdBy: user.id,
+        updatedBy: user.id,
+      },
+    });
 
     return {
       success: true,
@@ -60,6 +74,28 @@ export class AuthService {
         },
       },
       message: 'Login successful',
+    };
+  }
+
+  async logout(authUser: any, token?: string | null) {
+    if (authUser?.id && token) {
+      await this.prisma.session.updateMany({
+        where: {
+          userId: authUser.id,
+          token,
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date(),
+          deletedBy: authUser.id,
+          updatedBy: authUser.id,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Logged out successfully',
     };
   }
 

@@ -1,19 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import {
-  createSession,
   deleteSession,
   fetchSessions,
-  fetchSessionUsers,
-  updateSession,
 } from '@/features/administrator-session/api/administrator-session.api';
 import {
   type AdministratorSession,
-  initialSessionForm,
-  type SessionFormState,
-  type UserOption,
+  type SessionUser,
 } from '@/features/administrator-session/model/types';
-import { formatUserLabel, pickSessionId, toDatetimeLocal, toEntityId } from '@/features/administrator-session/model/utils';
+import { pickSessionId } from '@/features/administrator-session/model/utils';
+import { requestJson } from '@/shared/api/http';
 
 function extractMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
@@ -21,19 +17,17 @@ function extractMessage(error: unknown, fallback: string): string {
 
 export function useAdministratorSessionPage() {
   const [items, setItems] = useState<AdministratorSession[]>([]);
-  const [form, setForm] = useState<SessionFormState>(initialSessionForm);
-  const [editingUuid, setEditingUuid] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [users, setUsers] = useState<UserOption[]>([]);
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(MIN_PAGE_LIMIT);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  const currentUserId = currentUser?.id != null ? String(currentUser.id) : '';
 
   const fetchList = useCallback(
     async (targetPage = page, targetLimit = limit) => {
@@ -46,6 +40,7 @@ export function useAdministratorSessionPage() {
           page: safePage,
           limit: targetLimit,
           search,
+          userId: currentUserId,
         });
 
         if (!result.success) {
@@ -68,82 +63,37 @@ export function useAdministratorSessionPage() {
         setLoading(false);
       }
     },
-    [limit, page, search],
+    [currentUserId, limit, page, search],
   );
 
   useEffect(() => {
-    void fetchList(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchCurrentUser = async () => {
       try {
-        const result = await fetchSessionUsers();
-        if (!result.success) {
-          return;
+        const result = await requestJson<{ id?: string | number; email?: string; username?: string; fullName?: string | null }>('/api/auth/me');
+        if (!result.success || !result.data?.id) {
+          throw new Error(result.message || 'Failed to load current user');
         }
-
-        const options = (Array.isArray(result.data) ? result.data : [])
-          .map((item) => {
-            const id = toEntityId(item.id ?? item.uuid);
-            if (!id) {
-              return null;
-            }
-            return {
-              value: id,
-              label: formatUserLabel(item),
-            };
-          })
-          .filter((item): item is UserOption => Boolean(item));
-
-        setUsers(options);
-      } catch {
-        setUsers([]);
+        setCurrentUser({
+          id: result.data.id,
+          email: result.data.email,
+          username: result.data.username,
+          fullName: result.data.fullName ?? null,
+        });
+      } catch (err) {
+        setError(extractMessage(err, 'Failed to load current user'));
       }
     };
 
-    void fetchUsers();
+    void fetchCurrentUser();
   }, []);
 
-  const onSubmit = useCallback(async () => {
-    setSubmitting(true);
-    setError('');
-
-    try {
-      const result = editingUuid ? await updateSession(editingUuid, form) : await createSession(form);
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to save session');
-      }
-
-      setForm(initialSessionForm);
-      setEditingUuid(null);
-      setShowForm(false);
-      await fetchList(page);
-    } catch (err) {
-      setError(extractMessage(err, 'Failed to save session'));
-    } finally {
-      setSubmitting(false);
-    }
-  }, [editingUuid, fetchList, form, page]);
-
-  const onEdit = useCallback((item: AdministratorSession) => {
-    const sessionId = pickSessionId(item);
-    if (!sessionId) {
-      setError('Session ID is missing');
+  useEffect(() => {
+    if (!currentUserId) {
       return;
     }
-
-    setEditingUuid(sessionId);
-    setShowForm(true);
-    setForm({
-      userId: toEntityId(item.userId),
-      token: item.token ?? '',
-      expiresAt: toDatetimeLocal(item.expiresAt),
-      ipAddress: item.ipAddress ?? '',
-      userAgent: item.userAgent ?? '',
-    });
-  }, []);
+    void fetchList(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUserId, fetchList]);
 
   const onDelete = useCallback(
     async (sessionId: string) => {
@@ -159,18 +109,12 @@ export function useAdministratorSessionPage() {
           throw new Error(result.message || 'Failed to delete session');
         }
 
-        if (editingUuid === sessionId) {
-          setEditingUuid(null);
-          setForm(initialSessionForm);
-          setShowForm(false);
-        }
-
         await fetchList(page);
       } catch (err) {
         setError(extractMessage(err, 'Failed to delete session'));
       }
     },
-    [editingUuid, fetchList, page],
+    [fetchList, page],
   );
 
   const refreshList = useCallback(async () => {
@@ -198,19 +142,6 @@ export function useAdministratorSessionPage() {
     [fetchList],
   );
 
-  const openCreate = useCallback(() => {
-    setEditingUuid(null);
-    setForm(initialSessionForm);
-    setShowForm(true);
-  }, []);
-
-  const backToList = useCallback(() => {
-    setEditingUuid(null);
-    setForm(initialSessionForm);
-    setShowForm(false);
-  }, []);
-
-
   const changeLimit = useCallback((nextLimit: number) => {
     if (!PAGE_LIMIT_OPTIONS.includes(nextLimit as (typeof PAGE_LIMIT_OPTIONS)[number])) {
       return;
@@ -222,17 +153,12 @@ export function useAdministratorSessionPage() {
 
   return {
     items,
-    form,
-    setForm,
-    editingUuid,
-    showForm,
+    currentUser,
     searchInput,
     setSearchInput,
     loading,
-    submitting,
     error,
     setError,
-    users,
     page,
     limit,
     changeLimit,
@@ -242,10 +168,6 @@ export function useAdministratorSessionPage() {
     applySearch,
     resetSearch,
     changePage,
-    openCreate,
-    onSubmit,
-    onEdit,
     onDelete,
-    backToList,
   };
 }

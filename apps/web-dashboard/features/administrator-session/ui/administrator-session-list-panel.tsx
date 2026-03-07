@@ -1,4 +1,4 @@
-import { Pencil, RefreshCw, Trash2, X } from 'lucide-react';
+import { Monitor, RefreshCw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,10 +14,9 @@ type AdministratorSessionListPanelProps = {
   limit: number;
   totalPages: number;
   totalItems: number;
+  currentUserLabel?: string;
   onSearchInputChange: (value: string) => void;
-  onSearchSubmit: () => void;
   onSearchReset: () => void;
-  onEdit: (item: AdministratorSession) => void;
   onDelete: (sessionId: string) => void;
   onPageChange: (nextPage: number) => void;
   onLimitChange: (nextLimit: number) => void;
@@ -32,10 +31,9 @@ export function AdministratorSessionListPanel({
   limit,
   totalPages,
   totalItems,
+  currentUserLabel,
   onSearchInputChange,
-  onSearchSubmit,
   onSearchReset,
-  onEdit,
   onDelete,
   onPageChange,
   onLimitChange,
@@ -49,12 +47,6 @@ export function AdministratorSessionListPanel({
             placeholder="Search by user, token, IP, or user agent..."
             value={searchInput}
             onChange={(e) => onSearchInputChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onSearchSubmit();
-              }
-            }}
             className="pr-8"
           />
           {searchInput ? (
@@ -68,10 +60,10 @@ export function AdministratorSessionListPanel({
             </button>
           ) : null}
         </div>
-        <Button variant="outline" onClick={onSearchSubmit} disabled={loading}>
-          <RefreshCw />
-          Search
-        </Button>
+        <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-muted-foreground">
+          <Monitor className="size-4" />
+          <span>{currentUserLabel || 'Current user sessions'}</span>
+        </div>
       </div>
 
       <Table>
@@ -82,17 +74,18 @@ export function AdministratorSessionListPanel({
             <TableHead>Token</TableHead>
             <TableHead>IP Address</TableHead>
             <TableHead>Expires At</TableHead>
-            <TableHead className="w-[150px]">Actions</TableHead>
+            <TableHead>User Agent</TableHead>
+            <TableHead className="w-[90px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={6}>Loading...</TableCell>
+              <TableCell colSpan={7}>Loading...</TableCell>
             </TableRow>
           ) : items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6}>No sessions found.</TableCell>
+              <TableCell colSpan={7}>No sessions found.</TableCell>
             </TableRow>
           ) : (
             items.map((item, index) => {
@@ -106,11 +99,9 @@ export function AdministratorSessionListPanel({
                   <TableCell className="font-mono text-xs">{tokenPreview || '-'}</TableCell>
                   <TableCell>{item.ipAddress || '-'}</TableCell>
                   <TableCell>{formatDate(item.expiresAt)}</TableCell>
+                  <TableCell className="max-w-[280px] truncate">{item.userAgent || '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="icon" aria-label="Edit session" onClick={() => onEdit(item)}>
-                        <Pencil />
-                      </Button>
                       <Button
                         variant="destructive"
                         size="icon"

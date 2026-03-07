@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Toolbar,
@@ -11,50 +11,36 @@ import {
 } from '@/components/layouts/app/components/toolbar';
 import { useAdministratorSessionPage } from '@/features/administrator-session/hooks/use-administrator-session-page';
 import { AdministratorSessionListPanel } from '@/features/administrator-session/ui/administrator-session-list-panel';
-import { AdministratorSessionFormPanel } from '@/features/administrator-session/ui/administrator-session-form-panel';
 
 export default function AdministratorSessionPage() {
   const {
     items,
-    form,
-    setForm,
-    editingUuid,
-    showForm,
+    currentUser,
     searchInput,
     setSearchInput,
     loading,
-    submitting,
-    error,
     setError,
-    users,
     page,
     limit,
     totalPages,
     totalItems,
     refreshList,
-    applySearch,
     resetSearch,
     changePage,
     changeLimit,
-    openCreate,
-    onSubmit,
-    onEdit,
     onDelete,
-    backToList,
   } = useAdministratorSessionPage();
+
+  const currentUserLabel = currentUser?.fullName || currentUser?.username || currentUser?.email || 'Current login user';
 
   return (
     <div className="container">
       <Toolbar>
         <ToolbarHeading>
           <ToolbarPageTitle>Administrator Sessions</ToolbarPageTitle>
-          <ToolbarDescription>Manage active and historical login sessions.</ToolbarDescription>
+          <ToolbarDescription>Monitor login sessions for the currently authenticated user.</ToolbarDescription>
         </ToolbarHeading>
         <ToolbarActions>
-          <Button onClick={openCreate}>
-            <Plus />
-            Add Session
-          </Button>
           <Button variant="outline" onClick={() => void refreshList()} disabled={loading}>
             <RefreshCw />
             Refresh
@@ -63,40 +49,24 @@ export default function AdministratorSessionPage() {
       </Toolbar>
 
       <div className="space-y-5">
-        {!showForm ? (
-          <AdministratorSessionListPanel
-            items={items}
-            loading={loading}
-            searchInput={searchInput}
-            page={page}
-            limit={limit}
-            totalPages={totalPages}
-            totalItems={totalItems}
-            onSearchInputChange={setSearchInput}
-            onSearchSubmit={applySearch}
-            onSearchReset={resetSearch}
-            onEdit={onEdit}
-            onDelete={(sessionId) => {
-              void onDelete(sessionId);
-            }}
-            onPageChange={changePage}
-            onLimitChange={changeLimit}
-            onError={setError}
-          />
-        ) : (
-          <AdministratorSessionFormPanel
-            form={form}
-            users={users}
-            editingUuid={editingUuid}
-            submitting={submitting}
-            error={error}
-            onFormChange={setForm}
-            onSubmit={() => {
-              void onSubmit();
-            }}
-            onBack={backToList}
-          />
-        )}
+        <AdministratorSessionListPanel
+          items={items}
+          loading={loading}
+          searchInput={searchInput}
+          page={page}
+          limit={limit}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          currentUserLabel={currentUserLabel}
+          onSearchInputChange={setSearchInput}
+          onSearchReset={resetSearch}
+          onDelete={(sessionId) => {
+            void onDelete(sessionId);
+          }}
+          onPageChange={changePage}
+          onLimitChange={changeLimit}
+          onError={setError}
+        />
       </div>
     </div>
   );

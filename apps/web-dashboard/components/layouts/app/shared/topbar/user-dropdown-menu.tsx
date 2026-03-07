@@ -27,10 +27,17 @@ export function UserDropdownMenu({ trigger }: { trigger: ReactNode }) {
     setTheme(checked ? 'dark' : 'light');
   };
 
-  const handleLogout = () => {
-    document.cookie = 'sf_token=; Path=/; Max-Age=0; SameSite=Lax';
-    router.replace('/auth/login');
-    router.refresh();
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } finally {
+      document.cookie = 'sf_token=; Path=/; Max-Age=0; SameSite=Lax';
+      router.replace('/auth/login');
+      router.refresh();
+    }
   };
 
   return (

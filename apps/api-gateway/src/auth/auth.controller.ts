@@ -32,7 +32,10 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Login successful' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async login(@Request() req: any) {
-    return this.authService.login(req.user);
+    return this.authService.login(req.user, {
+      ipAddress: req.ip ?? req.headers['x-forwarded-for'] ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    });
   }
 
   @Post('register')
@@ -48,11 +51,12 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  async logout(@Request() _req: any) {
-    return {
-      success: true,
-      message: 'Logged out successfully',
-    };
+  async logout(@Request() req: any) {
+    const authHeader = req.headers?.authorization ?? '';
+    const token = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+    return this.authService.logout(req.user, token);
   }
 
   @UseGuards(JwtAuthGuard)
