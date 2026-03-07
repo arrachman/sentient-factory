@@ -63,8 +63,8 @@ pnpm dev
    ```
    DB_HOST=127.0.0.1
    DB_PORT=3307
-   DB_USER=root
-   DB_PASSWORD=PasswordSuperRahasia123!
+   DB_USER=app_user
+   DB_PASSWORD=change_me
    DB_NAME=myerpplus
    ```
 

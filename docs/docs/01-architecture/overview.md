@@ -104,8 +104,8 @@ graph TB
 - **Credentials**:
   - Host: `127.0.0.1`
   - Port: `3307`
-  - User: `root`
-  - Password: `PasswordSuperRahasia123!`
+  - User: `app_user`
+  - Password: `change_me`
 - **Use Cases**: User management, production orders, inventory, transactions
 
 ### Redis (Port: 6379)

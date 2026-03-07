@@ -22,8 +22,8 @@ Buat file `.env` di root project berdasarkan `.env.example`:
 # Database Configuration
 DB_HOST=127.0.0.1
 DB_PORT=3307
-DB_USER=root
-DB_PASSWORD=PasswordSuperRahasia123!
+DB_USER=app_user
+DB_PASSWORD=change_me
 DB_NAME=myerpplus
 DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
 
@@ -73,8 +73,8 @@ services:
     image: postgres:14-alpine
     environment:
       POSTGRES_DB: myerpplus
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: PasswordSuperRahasia123!
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: change_me
     ports:
       - "3307:5432"
     volumes:
@@ -285,7 +285,7 @@ Setelah semua service berjalan, akses aplikasi melalui:
 | API Documentation   | http://localhost:3103/docs                                          | 3103  | -                               |
 | AI Engine           | http://localhost:3104                                               | 3104  | -                               |
 | Documentation       | http://localhost:3105                                               | 3105  | -                               |
-| PostgreSQL          | postgresql://root:PasswordSuperRahasia123!@localhost:3307/myerpplus | 3307  | root / PasswordSuperRahasia123! |
+| PostgreSQL          | postgresql://app_user:change_me@localhost:3307/myerpplus | 3307  | app_user / change_me |
 | Redis CLI           | redis-cli -h localhost -p 6379                                      | 6379  | -                               |
 | InfluxDB UI         | http://localhost:8086                                               | 8086  | admin / changeme                |
 | MinIO Console       | http://localhost:9001                                               | 9001  | admin / changeme                |

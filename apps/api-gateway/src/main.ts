@@ -4,8 +4,10 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BigIntSerializerInterceptor } from './common/interceptors/bigint-serializer.interceptor';
+import { loadVaultSecrets } from './config/vault';
 
 async function bootstrap() {
+  await loadVaultSecrets();
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 

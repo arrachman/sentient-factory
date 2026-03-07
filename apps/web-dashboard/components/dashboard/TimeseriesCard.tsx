@@ -12,6 +12,7 @@ export function TimeseriesCard({
   title,
   subtitle,
   filterLabel,
+  headerAction,
   data,
   series,
   variant = 'line',
@@ -36,6 +37,7 @@ export function TimeseriesCard({
   title: string;
   subtitle: string;
   filterLabel?: string;
+  headerAction?: React.ReactNode;
   data: TimeseriesDatum[];
   series: TimeseriesSeries[];
   variant?: 'line' | 'area';
@@ -80,7 +82,7 @@ export function TimeseriesCard({
             </CardTitle>
             <p className="text-sm font-medium text-muted-foreground">{subtitle}</p>
           </div>
-          {filterLabel ? (
+          {headerAction ? headerAction : filterLabel ? (
             <button
               type="button"
               className="inline-flex h-10 items-center gap-2 rounded-lg border border-border/80 px-3.5 text-sm font-medium text-muted-foreground"

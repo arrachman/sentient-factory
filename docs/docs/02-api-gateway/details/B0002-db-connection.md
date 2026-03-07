@@ -14,7 +14,7 @@ Configure the connection to the PostgreSQL database and establish the initial mi
 
 ## Technical Details
 
-- **Env Var:** `DATABASE_URL=postgresql://root:PasswordSuperRahasia123!@localhost:3308/sentient_factory`
+- **Env Var:** `DATABASE_URL=postgresql://app_user:change_me@localhost:3308/sentient_factory`
 - **Commands:**
   - `npx prisma migrate dev --name init`
   - `npx prisma generate`

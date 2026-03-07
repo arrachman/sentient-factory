@@ -166,11 +166,92 @@ pnpm start
 ## 🛡️ Security
 
 - Environment variables for secrets
+- HashiCorp Vault bootstrap script for local secret scoping
 - JWT authentication
 - Role-based access control
 - Input validation
 - Rate limiting
 - Security headers
+
+## 🔐 Vault Setup
+
+For local development, the repo now includes a Vault dev service plus a bootstrap flow that uses the root token once, then creates a read-only AppRole for the shared dev paths.
+
+```bash
+# 0. Provide the dev root token locally, never in git
+export VAULT_DEV_ROOT_TOKEN_ID='<your-local-root-token>'
+
+# 1. Start Vault locally
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d vault
+
+# 2. Bootstrap KV + policy + AppRole using the temporary root token
+export VAULT_ADDR=http://127.0.0.1:8200
+export VAULT_TOKEN="$VAULT_DEV_ROOT_TOKEN_ID"
+npm run vault:bootstrap:dev
+
+# 3. Exchange AppRole credentials for a short-lived token
+export ROLE_ID=<printed-role-id>
+export SECRET_ID=<printed-secret-id>
+export VAULT_TOKEN="$(./scripts/vault-approle-login.sh)"
+
+# Or mint a fresh AppRole token automatically from the local dev root token
+export VAULT_TOKEN="$(npm run --silent vault:login:dev)"
+
+# 4a. Render env files for apps that still consume env files directly
+npm run vault:render:root
+npm run vault:render:api
+npm run vault:render:web
+npm run vault:render:myerp
+
+# Or render + start Docker services in one command
+npm run docker:up:vault
+
+# 4b. Start api-gateway with direct Vault loading
+cd apps/api-gateway
+VAULT_ENABLED=true \
+VAULT_ADDR=http://127.0.0.1:8200 \
+VAULT_KV_MOUNT=secret \
+VAULT_SECRETS_PATH=sentient-factory/dev/api-gateway \
+npm run start:dev
+```
+
+Vault paths used by default:
+
+- `secret/sentient-factory/dev/shared`
+- `secret/sentient-factory/dev/api-gateway`
+- `secret/sentient-factory/dev/web-dashboard`
+- `secret/sentient-factory/dev/myerpplus-db-mapping`
+
+The `api-gateway` loads secrets from Vault before Nest boots. Other apps can render `.env.vault` from Vault with the helper scripts, while `.env.example` files stay committed as safe templates.
+
+`infra/docker-compose.yml` now reads `.env.vault` overlays when present, so Vault-rendered values override the plain `.env` fallback without committing secrets.
+
+`infra/docker-compose.yml` no longer contains a fallback root token. Set `VAULT_DEV_ROOT_TOKEN_ID` only in your local shell or an ignored local env file before starting Vault.
+
+Recommended local-only pattern:
+
+```bash
+cp infra/.env.vault.local.example infra/.env.vault.local
+# edit infra/.env.vault.local with your own root token
+set -a
+. infra/.env.vault.local
+set +a
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d vault
+```
+
+If you want to remove plaintext secrets from local env files after migrating them to Vault:
+
+```bash
+npm run env:cleanup:plain
+```
+
+That command creates timestamped backups first, then replaces `.env` files with the corresponding safe `.env.example` templates.
+
+To export all login variables in one shot for your current shell:
+
+```bash
+eval "$(./scripts/vault-login-dev.sh --export)"
+```
 
 ## 📈 Monitoring & Observability
 
