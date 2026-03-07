@@ -7,6 +7,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CompactInput } from '@/components/ui/compact-input';
 import { Label } from '@/components/ui/label';
 
+const ICON_RECOMMENDATIONS = [
+  { value: 'LayoutGrid', label: 'LayoutGrid — Dashboard' },
+  { value: 'BarChart3', label: 'BarChart3 — Analytics' },
+  { value: 'LineChart', label: 'LineChart — Trend' },
+  { value: 'Activity', label: 'Activity — Monitoring' },
+  { value: 'Truck', label: 'Truck — Delivery / Logistic' },
+  { value: 'Package', label: 'Package — Item / Stock' },
+  { value: 'Boxes', label: 'Boxes — Warehouse' },
+  { value: 'Users', label: 'Users — User list' },
+  { value: 'UserCheck', label: 'UserCheck — Approval / Roles' },
+  { value: 'Shield', label: 'Shield — Administrator' },
+  { value: 'ShieldCheck', label: 'ShieldCheck — Permissions' },
+  { value: 'Building', label: 'Building — Department / Branch' },
+  { value: 'MapPinned', label: 'MapPinned — City / Area' },
+  { value: 'Wallet', label: 'Wallet — Finance' },
+  { value: 'TrendingUp', label: 'TrendingUp — Sales' },
+  { value: 'Settings', label: 'Settings — Configuration' },
+  { value: 'FileText', label: 'FileText — Report / Document' },
+  { value: 'ClipboardList', label: 'ClipboardList — Transaction list' },
+  { value: 'Database', label: 'Database — Master data' },
+  { value: 'Menu', label: 'Menu — Generic menu' },
+];
+
 type AdministratorMenuFormPanelProps = {
   form: AdministratorMenuFormState;
   editingId: string | null;
@@ -119,11 +142,16 @@ export function AdministratorMenuFormPanel({
             </div>
             <div>
               <Label htmlFor="icon" className="text-xs">Icon</Label>
-              <CompactInput
-                id="icon"
+              <AutocompleteSelect
                 value={form.icon}
-                onChange={(e) => onFormChange({ ...form, icon: e.target.value })}
-                placeholder="Users"
+                onValueChange={(value) => onFormChange({ ...form, icon: value })}
+                options={ICON_RECOMMENDATIONS}
+                placeholder="Choose icon"
+                searchPlaceholder="Search icon name..."
+                emptyText="No icon found."
+                clearable
+                clearText="Clear icon"
+                triggerClassName="h-7 text-xs"
               />
             </div>
             <div>
