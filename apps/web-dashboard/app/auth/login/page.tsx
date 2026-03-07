@@ -18,7 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
-  const safeReturnTo = returnTo?.startsWith('/') ? returnTo : '/app';
+  const safeReturnTo = returnTo?.startsWith('/') ? returnTo : '/app/overview';
   const [email, setEmail] = useState('super_admin@fr-labs.my.id');
   const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);

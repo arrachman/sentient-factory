@@ -108,7 +108,7 @@ export function useLogisticTransactionPageController() {
       await fetchOutboundList({
         targetPage,
         page,
-        limit,
+        limit: targetLimit,
         search,
         statusFilter,
         token,

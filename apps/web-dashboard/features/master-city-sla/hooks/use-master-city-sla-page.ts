@@ -76,7 +76,7 @@ export function useMasterCitySlaPage() {
       try {
         const result = await fetchCitySlaList({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
         });
 

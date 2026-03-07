@@ -50,7 +50,7 @@ export function useMasterProvincePage() {
       try {
         const response = await fetchMasterProvinceList({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
           token,
         });

@@ -102,7 +102,7 @@ export function useLogisticInboundPage() {
       try {
         const result = await fetchInboundList({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
           headers,
         });

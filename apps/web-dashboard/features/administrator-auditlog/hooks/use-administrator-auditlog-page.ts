@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import {
   createAuditLog,
@@ -41,7 +41,7 @@ export function useAdministratorAuditlogPage() {
       try {
         const result = await fetchAuditLogs({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
         });
 

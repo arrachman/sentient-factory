@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { createCity, deleteCity, fetchCities, fetchProvinces, updateCity } from '@/features/master-city/api/master-city.api';
@@ -45,7 +45,7 @@ export function useMasterCityPage() {
       try {
         const result = await fetchCities({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
         });
 

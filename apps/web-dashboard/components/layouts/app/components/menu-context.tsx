@@ -4,7 +4,6 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 import * as LucideIcons from 'lucide-react';
 import { MENU_SIDEBAR } from '@/config/app.config';
 import { MenuConfig, MenuItem } from '@/config/types';
-import { normalizeFinanceMenus, normalizeFinancePath } from './finance-route';
 
 type SidebarMenuApiItem = {
   key: string;
@@ -52,14 +51,13 @@ function resolveIcon(iconName: string | null | undefined): MenuItem['icon'] {
 }
 
 function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
-  return normalizeFinanceMenus(
-    [...items]
+  return [...items]
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((item) => {
       const mapped: MenuItem = {
         key: item.key,
         title: item.title,
-        path: normalizeFinancePath(item.path ?? undefined),
+        path: item.path ?? undefined,
         icon: resolveIcon(item.icon),
       };
 
@@ -68,8 +66,7 @@ function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
       }
 
       return mapped;
-    }),
-  );
+    });
 }
 
 function hasTokenCookie() {

@@ -1,5 +1,5 @@
-  model = "gpt-5.3-codex"
-  model_provider = "patungin03"
+  model = "gpt-5.2-codex"
+  model_provider = "patungin02"
   model_reasoning_effort = "low"
 
   [model_providers.patungin01]

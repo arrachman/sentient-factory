@@ -57,7 +57,7 @@ export function useMasterItemPage() {
       try {
         const result = await fetchMasterItems({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
         });
 

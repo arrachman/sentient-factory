@@ -42,7 +42,7 @@ export function useMasterUomPage() {
       try {
         const response = await fetchMasterUomList({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
           token,
         });

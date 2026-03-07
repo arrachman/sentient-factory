@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MIN_PAGE_LIMIT, PAGE_LIMIT_OPTIONS } from '@/shared/constants/pagination';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -56,7 +56,7 @@ export function useMasterWarehousePage() {
       try {
         const result = await fetchWarehouses({
           page: safePage,
-          limit,
+          limit: targetLimit,
           search,
         });
 

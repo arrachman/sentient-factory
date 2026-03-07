@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap');
 /* Tailwind Core */
 @import 'tailwindcss';
 
@@ -147,6 +148,10 @@ html {
   scroll-behavior: smooth;
 }
 
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
 /** Custom Containers **/
 @utility container {
   @apply mx-auto max-w-none px-4 lg:px-5;
@@ -158,6 +163,12 @@ html {
 
 @utility container-fluid {
   @apply w-full mx-auto px-4 lg:px-5;
+}
+
+@layer utilities {
+  .font-roboto {
+    font-family: 'Roboto', sans-serif;
+  }
 }
 
 /* Metronic Configs */

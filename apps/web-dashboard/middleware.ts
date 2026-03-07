@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
     if (returnTo && returnTo.startsWith('/')) {
       return NextResponse.redirect(new URL(returnTo, request.url));
     }
-    return NextResponse.redirect(new URL('/app', request.url));
+    return NextResponse.redirect(new URL('/app/overview', request.url));
   }
 
   return NextResponse.next();

@@ -40,10 +40,23 @@ const nextConfig = {
   },
 };
 
-const allowedDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS || 'sentient.fr-labs.my.id')
+const defaultDevOrigins = [
+  '192.168.1.17',
+  '192.168.1.17:3201',
+  'localhost',
+  'localhost:3201',
+  '127.0.0.1',
+  '127.0.0.1:3201',
+];
+
+const envDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+const allowedDevOrigins = Array.from(
+  new Set([...defaultDevOrigins, ...envDevOrigins, 'sentient.fr-labs.my.id'])
+);
 
 if (allowedDevOrigins.length > 0) {
   nextConfig.allowedDevOrigins = allowedDevOrigins;

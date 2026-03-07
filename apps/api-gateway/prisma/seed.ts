@@ -654,6 +654,15 @@ async function main() {
       sortOrder: 6,
     },
     {
+      key: 'administrator-dashboard-manager',
+      title: 'Dashboard Manager',
+      path: '/app/dashboard/manager',
+      icon: 'LayoutDashboard',
+      type: 'ITEM',
+      parentKey: 'administrator',
+      sortOrder: 7,
+    },
+    {
       key: 'master-data',
       title: 'Master Data',
       path: null,
