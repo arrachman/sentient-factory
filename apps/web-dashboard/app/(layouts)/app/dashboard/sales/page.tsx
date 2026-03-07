@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Eye, Link2, Paperclip } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import {
   Toolbar,
   ToolbarDescription,
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -17,14 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   KpiGrid,
+  OutstandingOverdueTableCard,
   OrderStatusCard,
   TimeseriesCard,
   TopAgingCard,
   type AgingRow,
   type KpiCard,
+  type OutstandingTableRow,
   type StatusItem,
   type TimeseriesDatum,
   type TimeseriesSeries,
@@ -285,6 +284,30 @@ const salesOrderRows: SalesOrderRow[] = [
   },
 ];
 
+const salesOrderTableRows: OutstandingTableRow[] = salesOrderRows.map((row, index) => {
+  const flags: string[] = [];
+  if (row.flagLink > 0) {
+    flags.push('R1');
+  }
+  if (row.flagDoc > 0) {
+    flags.push('D1');
+  }
+  if (flags.length === 0) {
+    flags.push('N1');
+  }
+
+  return {
+    location: row.customer,
+    referenceNumber: row.soNumber,
+    orderDate: row.orderDate,
+    dueDate: row.deliveryDate === '-' ? row.createdDate : row.deliveryDate,
+    quantity: 120 + index * 4,
+    unit: 'pcs',
+    flags,
+    status: row.status === 'Close' ? 'Close' : 'In Process',
+  };
+});
+
 const topMaterialsRaw = [
   { material: 'MaterialA001 - Material Name with 1000 {pcs} stock available', amount: 1320 },
   { material: 'MaterialA002 - Material Name with 1000 {pcs} stock available', amount: 1299 },
@@ -302,44 +325,6 @@ const topMaterials: AgingRow[] = topMaterialsRaw.map((row) => ({ label: row.mate
 
 const topMaterialsAxisMax = 1400;
 const topMaterialsTicks = Array.from({ length: 8 }, (_, index) => index * 200);
-
-function StatusBadge({ status }: { status: SalesOrderRow['status'] }) {
-  if (status === 'DO Created') {
-    return (
-      <Badge variant="info" appearance="light" className="rounded-md px-2 py-0.5 text-sm font-semibold">
-        DO Created
-      </Badge>
-    );
-  }
-
-  return (
-    <Badge variant="secondary" appearance="light" className="rounded-md px-2 py-0.5 text-sm font-semibold">
-      Close
-    </Badge>
-  );
-}
-
-function FlagBadges({ linkCount, docCount }: { linkCount: number; docCount: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      {linkCount > 0 && (
-        <Badge variant="success" appearance="light" className="rounded-full px-2 py-0.5 text-xs font-semibold">
-          <Link2 className="size-3.5" />
-          {linkCount}
-        </Badge>
-      )}
-      {docCount > 0 && (
-        <Badge variant="destructive" appearance="light" className="rounded-full px-2 py-0.5 text-xs font-semibold">
-          <Paperclip className="size-3.5" />
-          {docCount}
-        </Badge>
-      )}
-      <Badge variant="info" appearance="light" className="rounded-full p-1">
-        <Paperclip className="size-3.5" />
-      </Badge>
-    </div>
-  );
-}
 
 export default function SalesDashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(topFilters.month[0]);
@@ -443,102 +428,14 @@ export default function SalesDashboardPage() {
         </div>
       </div>
 
-      <Card className="rounded-xl border-border/80">
-        <CardHeader>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-3xl font-semibold lg:text-4xl">Sales Order List</CardTitle>
-              <p className="text-lg text-muted-foreground">{selectedMonth}</p>
-            </div>
-            <Select defaultValue="allFlag">
-              <SelectTrigger className="h-10 w-[160px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="allFlag">All Flag</SelectItem>
-                <SelectItem value="linkOnly">Link Only</SelectItem>
-                <SelectItem value="docOnly">Doc Only</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="overflow-x-auto rounded-xl border border-border/70">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">SO Number</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">PO Customer</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Order Date</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Created Date</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Delivery Date</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Code Cust.</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Customer</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Total Price</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Flag</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Status</TableHead>
-                  <TableHead className="text-[13px] font-semibold uppercase tracking-wide">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {salesOrderRows.map((row) => (
-                  <TableRow key={row.soNumber}>
-                    <TableCell>{row.soNumber}</TableCell>
-                    <TableCell className={row.poCustomer === 'POC00131' ? 'font-semibold text-violet-600 underline' : ''}>
-                      {row.poCustomer}
-                    </TableCell>
-                    <TableCell>{row.orderDate}</TableCell>
-                    <TableCell>{row.createdDate}</TableCell>
-                    <TableCell>{row.deliveryDate}</TableCell>
-                    <TableCell>{row.codeCustomer}</TableCell>
-                    <TableCell>{row.customer}</TableCell>
-                    <TableCell>{row.totalPrice}</TableCell>
-                    <TableCell>
-                      <FlagBadges linkCount={row.flagLink} docCount={row.flagDoc} />
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={row.status} />
-                    </TableCell>
-                    <TableCell>
-                      <button type="button" className="text-primary">
-                        <Eye className="size-4" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="mt-5 flex items-center justify-between text-sm text-muted-foreground">
-            <p>Showing 1 to 5 of 100 entries</p>
-            <div className="flex items-center gap-2">
-              <button type="button" className="rounded border border-border px-2 py-1">
-                <ChevronLeft className="size-4" />
-              </button>
-              <button type="button" className="rounded bg-primary px-3 py-1 text-primary-foreground">
-                1
-              </button>
-              <button type="button" className="rounded px-2 py-1">
-                2
-              </button>
-              <button type="button" className="rounded px-2 py-1">
-                3
-              </button>
-              <button type="button" className="rounded px-2 py-1">
-                4
-              </button>
-              <button type="button" className="rounded px-2 py-1">
-                5
-              </button>
-              <button type="button" className="rounded border border-border px-2 py-1">
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <OutstandingOverdueTableCard
+        title="Sales Order List"
+        subtitle={selectedMonth}
+        rows={salesOrderTableRows}
+        actionLabel="Filter Flag"
+        overdueLabel="SO"
+        filterOptions={['All Flag', 'Link Only', 'Doc Only']}
+      />
 
       <TopAgingCard
         title="Top 10 Ordered Material"

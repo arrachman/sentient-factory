@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { StatusItem } from './types';
 
+const RADIAN = Math.PI / 180;
+
 export function OrderStatusCard({
   title,
   subtitle,
@@ -39,7 +41,23 @@ export function OrderStatusCard({
                 outerRadius={92}
                 paddingAngle={3}
                 strokeWidth={4}
-                label={false}
+                label={({ cx, cy, midAngle, innerRadius, outerRadius, value }) => {
+                  if (typeof value !== 'number' || value <= 0) return null;
+                  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="fill-white text-[10px] font-semibold"
+                    >
+                      {value}
+                    </text>
+                  );
+                }}
                 labelLine={false}
               >
                 {items.map((slice) => (

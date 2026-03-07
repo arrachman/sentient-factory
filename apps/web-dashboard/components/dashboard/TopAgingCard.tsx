@@ -76,7 +76,7 @@ export function TopAgingCard({
               return (
                 <div
                   key={row.label}
-                  className={cn(index === 0 ? 'rounded-md bg-blue-100/55 px-2 py-1' : 'px-2 py-1')}
+                  className="group rounded-md px-2 py-1 transition-colors hover:bg-blue-100/55"
                 >
                   <div
                     className="grid items-center gap-2.5"
@@ -84,7 +84,7 @@ export function TopAgingCard({
                   >
                     <div className="relative h-8 rounded-md">
                       <div
-                        className="flex h-full items-center rounded-md bg-[#4776d8] px-2.5 text-[11px] font-medium text-white lg:text-xs"
+                        className="flex h-full items-center rounded-md bg-[#4776d8] px-2.5 text-[11px] font-medium text-white transition-colors group-hover:bg-[#2f5fcd] lg:text-xs"
                         style={{ width: `${width}%` }}
                       >
                         <span className="line-clamp-1">{row.label}</span>

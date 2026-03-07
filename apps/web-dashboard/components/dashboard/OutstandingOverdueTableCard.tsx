@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDown, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { OutstandingTableRow } from './types';
@@ -37,13 +38,18 @@ export function OutstandingOverdueTableCard({
   subtitle,
   rows,
   actionLabel,
+  overdueLabel = 'PO',
+  filterOptions,
 }: {
   title: string;
   subtitle: string;
   rows: OutstandingTableRow[];
   actionLabel: string;
+  overdueLabel?: string;
+  filterOptions?: string[];
 }) {
   const [isCompact, setIsCompact] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState(filterOptions?.[0] ?? actionLabel);
   const overdueCount = rows.filter((row) => row.flags.includes('D1')).length;
 
   return (
@@ -62,13 +68,28 @@ export function OutstandingOverdueTableCard({
             >
               {isCompact ? 'Comfortable' : 'Compact'}
             </button>
-            <button
-              type="button"
-              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border/80 px-3.5 text-sm font-medium text-muted-foreground"
-            >
-              {actionLabel}
-              <ChevronDown className="size-4" />
-            </button>
+            {filterOptions?.length ? (
+              <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                <SelectTrigger className="h-10 w-[160px] text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {filterOptions.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <button
+                type="button"
+                className="inline-flex h-10 items-center gap-2 rounded-lg border border-border/80 px-3.5 text-sm font-medium text-muted-foreground"
+              >
+                {actionLabel}
+                <ChevronDown className="size-4" />
+              </button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -78,7 +99,7 @@ export function OutstandingOverdueTableCard({
             <Badge variant="destructive" appearance="light" size="xs">
               Overdue
             </Badge>
-            {overdueCount} PO melewati jatuh tempo. Prioritaskan tindak lanjut.
+            {overdueCount} {overdueLabel} melewati jatuh tempo. Prioritaskan tindak lanjut.
           </div>
         ) : null}
         <div className="overflow-x-auto rounded-xl border border-border/70">
