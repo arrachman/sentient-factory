@@ -27,7 +27,7 @@ export function getClientToken(): string {
 }
 
 export function buildAuthHeader(token?: string): HeadersInit | undefined {
-  const resolvedToken = token?.trim();
+  const resolvedToken = (token?.trim() || getClientToken().trim());
   if (!resolvedToken) {
     return undefined;
   }
