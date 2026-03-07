@@ -245,7 +245,6 @@ _metronic_source/
 
 apps/web-dashboard/node_modules
 backups/
-.aider*
 
 # Test artifacts
 apps/web-dashboard/test-results/
