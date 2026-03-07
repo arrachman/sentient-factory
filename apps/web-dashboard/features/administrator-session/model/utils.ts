@@ -49,6 +49,37 @@ export function formatDate(value?: string): string {
   return date.toLocaleString();
 }
 
+export function formatRemainingTime(value?: string): string {
+  if (!value) {
+    return '-';
+  }
+
+  const expiresAt = new Date(value);
+  if (Number.isNaN(expiresAt.getTime())) {
+    return '-';
+  }
+
+  const diffMs = expiresAt.getTime() - Date.now();
+  if (diffMs <= 0) {
+    return 'Expired';
+  }
+
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}h ${hours}j ${minutes}m`;
+  }
+
+  if (hours > 0) {
+    return `${hours}j ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
+
 export function formatUserLabel(user: UserApiItem): string {
   const fullName = user.fullName?.trim();
   const username = user.username?.trim();

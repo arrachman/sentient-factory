@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StandardPagination } from '@/components/ui/standard-pagination';
 import type { AdministratorSession } from '@/features/administrator-session/model/types';
-import { formatDate, pickSessionId } from '@/features/administrator-session/model/utils';
+import { formatDate, formatRemainingTime, pickSessionId } from '@/features/administrator-session/model/utils';
 
 type AdministratorSessionListPanelProps = {
   items: AdministratorSession[];
@@ -74,6 +74,7 @@ export function AdministratorSessionListPanel({
             <TableHead>Token</TableHead>
             <TableHead>IP Address</TableHead>
             <TableHead>Expires At</TableHead>
+            <TableHead>Sisa Expired</TableHead>
             <TableHead>User Agent</TableHead>
             <TableHead className="w-[90px]">Actions</TableHead>
           </TableRow>
@@ -81,11 +82,11 @@ export function AdministratorSessionListPanel({
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={7}>Loading...</TableCell>
+              <TableCell colSpan={8}>Loading...</TableCell>
             </TableRow>
           ) : items.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7}>No sessions found.</TableCell>
+              <TableCell colSpan={8}>No sessions found.</TableCell>
             </TableRow>
           ) : (
             items.map((item, index) => {
@@ -99,6 +100,7 @@ export function AdministratorSessionListPanel({
                   <TableCell className="font-mono text-xs">{tokenPreview || '-'}</TableCell>
                   <TableCell>{item.ipAddress || '-'}</TableCell>
                   <TableCell>{formatDate(item.expiresAt)}</TableCell>
+                  <TableCell>{formatRemainingTime(item.expiresAt)}</TableCell>
                   <TableCell className="max-w-[280px] truncate">{item.userAgent || '-'}</TableCell>
                   <TableCell>
                     <div className="flex gap-2">
