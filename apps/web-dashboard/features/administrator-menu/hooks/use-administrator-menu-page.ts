@@ -25,7 +25,7 @@ type MenuMutationResponse = {
   message?: string;
 };
 
-type BatchSortDraft = Record<number, string>;
+type BatchEditDraft = Record<number, string>;
 
 export function useAdministratorMenuPage() {
   const router = useRouter();
@@ -44,7 +44,6 @@ export function useAdministratorMenuPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
-  const [groupFilter, setGroupFilter] = useState('all');
   const [parentFilter, setParentFilter] = useState('all');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -55,8 +54,8 @@ export function useAdministratorMenuPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [parentOptions, setParentOptions] = useState<Array<{ value: string; label: string }>>([]);
-  const [groupOptions, setGroupOptions] = useState<Array<{ value: string; label: string }>>([]);
-  const [sortDrafts, setSortDrafts] = useState<BatchSortDraft>({});
+  const [sortDrafts, setSortDrafts] = useState<BatchEditDraft>({});
+  const [pathDrafts, setPathDrafts] = useState<BatchEditDraft>({});
 
   const token = useMemo(() => getClientToken(), []);
   const headers = useMemo(() => buildAuthHeader(token), [token]);
@@ -77,11 +76,8 @@ export function useAdministratorMenuPage() {
         if (search.trim()) {
           query.set('search', search.trim());
         }
-        if (groupFilter !== 'all') {
-          query.set('groupId', groupFilter);
-        }
         if (parentFilter !== 'all') {
-          query.set('parentId', parentFilter);
+          query.set('groupId', parentFilter);
         }
 
         const response = await fetch(`/api/menus?${query.toString()}`, {
@@ -100,6 +96,11 @@ export function useAdministratorMenuPage() {
             (Array.isArray(payload.data) ? payload.data : []).map((item) => [item.id, String(item.sortOrder ?? 0)]),
           ),
         );
+        setPathDrafts(
+          Object.fromEntries(
+            (Array.isArray(payload.data) ? payload.data : []).map((item) => [item.id, item.path ?? '']),
+          ),
+        );
         setPage(typeof payload.meta?.page === 'number' ? payload.meta.page : safePage);
         setTotalPages(typeof payload.meta?.totalPages === 'number' ? payload.meta.totalPages : 1);
         setTotalItems(typeof payload.meta?.total === 'number' ? payload.meta.total : 0);
@@ -109,7 +110,7 @@ export function useAdministratorMenuPage() {
         setLoading(false);
       }
     },
-    [groupFilter, headers, limit, page, parentFilter, search],
+    [headers, limit, page, parentFilter, search],
   );
 
   const fetchParentOptions = useCallback(async () => {
@@ -128,15 +129,13 @@ export function useAdministratorMenuPage() {
         value: String(item.id),
         label: `${item.title} (${item.key})`,
       }));
-      setParentOptions(options);
-      setGroupOptions(
+      setParentOptions(
         (Array.isArray(payload.data) ? payload.data : [])
           .filter((item) => item.parentId === null)
           .map((item) => ({ value: String(item.id), label: `${item.title} (${item.key})` })),
       );
     } catch {
       setParentOptions([]);
-      setGroupOptions([]);
     }
   }, [headers]);
 
@@ -145,6 +144,10 @@ export function useAdministratorMenuPage() {
     fetchParentOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    void fetchList(1);
+  }, [search, parentFilter, fetchList]);
 
   const openAddForm = useCallback(() => {
     setEditingId(null);
@@ -321,17 +324,8 @@ export function useAdministratorMenuPage() {
   }, [editingId, parentOptions]);
 
   const parentFilterOptions = useMemo(
-    () => [
-      { value: 'all', label: 'All Parent' },
-      { value: 'null', label: 'No Parent' },
-      ...parentOptions,
-    ],
+    () => [{ value: 'all', label: 'All Group' }, ...parentOptions],
     [parentOptions],
-  );
-
-  const groupFilterOptions = useMemo(
-    () => [{ value: 'all', label: 'All Group' }, ...groupOptions],
-    [groupOptions],
   );
 
   const changeSortDraft = useCallback((id: number, value: string) => {
@@ -340,13 +334,22 @@ export function useAdministratorMenuPage() {
 
   const dirtySortCount = useMemo(
     () =>
-      items.filter((item) => String(item.sortOrder ?? 0) !== (sortDrafts[item.id] ?? String(item.sortOrder ?? 0))).length,
-    [items, sortDrafts],
+      items.filter((item) => {
+        const sortChanged = String(item.sortOrder ?? 0) !== (sortDrafts[item.id] ?? String(item.sortOrder ?? 0));
+        const pathChanged = (item.path ?? '') !== (pathDrafts[item.id] ?? (item.path ?? ''));
+        return sortChanged || pathChanged;
+      }).length,
+    [items, pathDrafts, sortDrafts],
   );
 
   const resetSortDrafts = useCallback(() => {
     setSortDrafts(Object.fromEntries(items.map((item) => [item.id, String(item.sortOrder ?? 0)])));
+    setPathDrafts(Object.fromEntries(items.map((item) => [item.id, item.path ?? ''])));
   }, [items]);
+
+  const changePathDraft = useCallback((id: number, value: string) => {
+    setPathDrafts((current) => ({ ...current, [id]: value }));
+  }, []);
 
   const submitBatchSort = useCallback(async () => {
     const changedItems = items
@@ -354,10 +357,12 @@ export function useAdministratorMenuPage() {
         id: item.id,
         originalSortOrder: item.sortOrder ?? 0,
         nextSortOrder: Number(sortDrafts[item.id] ?? item.sortOrder ?? 0),
+        originalPath: item.path ?? '',
+        nextPath: pathDrafts[item.id] ?? item.path ?? '',
       }))
       .filter((item) => Number.isInteger(item.nextSortOrder) && item.nextSortOrder >= 0)
-      .filter((item) => item.originalSortOrder !== item.nextSortOrder)
-      .map((item) => ({ id: item.id, sortOrder: item.nextSortOrder }));
+      .filter((item) => item.originalSortOrder !== item.nextSortOrder || item.originalPath !== item.nextPath)
+      .map((item) => ({ id: item.id, sortOrder: item.nextSortOrder, path: item.nextPath }));
 
     if (changedItems.length === 0) {
       return;
@@ -385,7 +390,7 @@ export function useAdministratorMenuPage() {
     } finally {
       setBatchSorting(false);
     }
-  }, [fetchList, headers, items, page, sortDrafts]);
+  }, [fetchList, headers, items, page, pathDrafts, sortDrafts]);
 
 
   const changeLimit = useCallback((nextLimit: number) => {
@@ -405,8 +410,6 @@ export function useAdministratorMenuPage() {
     showForm,
     search,
     setSearch,
-    groupFilter,
-    setGroupFilter,
     parentFilter,
     setParentFilter,
     loading,
@@ -419,11 +422,12 @@ export function useAdministratorMenuPage() {
     totalPages,
     totalItems,
     parentSelectOptions,
-    groupFilterOptions,
     parentFilterOptions,
+    pathDrafts,
     sortDrafts,
     dirtySortCount,
     fetchList,
+    changePathDraft,
     changeSortDraft,
     openAddForm,
     backToList,

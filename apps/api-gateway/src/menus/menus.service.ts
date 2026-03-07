@@ -248,13 +248,14 @@ export class MenusService {
           where: { id: item.id },
           data: {
             sortOrder: item.sortOrder,
+            path: item.path === undefined ? undefined : item.path || null,
             updatedBy: this.toActor(actorId),
           },
         }),
       ),
     );
 
-    return { success: true, message: 'Menu sort order updated' };
+    return { success: true, message: 'Menu list updated' };
   }
 
   async remove(id: number, actorId?: string | number) {

@@ -15,16 +15,14 @@ type AdministratorMenuListPanelProps = {
   totalItems: number;
   search: string;
   onSearchChange: (value: string) => void;
-  groupFilter: string;
-  onGroupFilterChange: (value: string) => void;
-  groupFilterOptions: Array<{ value: string; label: string }>;
   parentFilter: string;
   onParentFilterChange: (value: string) => void;
   parentFilterOptions: Array<{ value: string; label: string }>; 
-  onApplyFilter: () => void;
+  pathDrafts: Record<number, string>;
   sortDrafts: Record<number, string>;
   dirtySortCount: number;
   batchSorting: boolean;
+  onPathDraftChange: (id: number, value: string) => void;
   onSortDraftChange: (id: number, value: string) => void;
   onResetBatchSort: () => void;
   onSubmitBatchSort: () => void;
@@ -43,16 +41,14 @@ export function AdministratorMenuListPanel({
   totalItems,
   search,
   onSearchChange,
-  groupFilter,
-  onGroupFilterChange,
-  groupFilterOptions,
   parentFilter,
   onParentFilterChange,
   parentFilterOptions,
-  onApplyFilter,
+  pathDrafts,
   sortDrafts,
   dirtySortCount,
   batchSorting,
+  onPathDraftChange,
   onSortDraftChange,
   onResetBatchSort,
   onSubmitBatchSort,
@@ -63,28 +59,19 @@ export function AdministratorMenuListPanel({
 }: AdministratorMenuListPanelProps) {
   return (
     <div className="rounded-lg border p-5">
-      <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_220px_260px_auto]">
+      <div className="mb-3 grid grid-cols-1 gap-2 md:grid-cols-[1fr_260px]">
         <div className="relative flex-1">
           <Input
             placeholder="Search by key, title, path, icon..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                onApplyFilter();
-              }
-            }}
             className="pr-8"
           />
           {search ? (
             <button
               type="button"
               aria-label="Reset search"
-              onClick={() => {
-                onSearchChange('');
-                onApplyFilter();
-              }}
+              onClick={() => onSearchChange('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               <X className="size-4" />
@@ -93,43 +80,28 @@ export function AdministratorMenuListPanel({
         </div>
 
         <AutocompleteSelect
-          value={groupFilter}
-          onValueChange={(value) => onGroupFilterChange(value || 'all')}
-          options={groupFilterOptions}
+          value={parentFilter}
+          onValueChange={(value) => onParentFilterChange(value || 'all')}
+          options={parentFilterOptions}
           placeholder="Filter group"
           searchPlaceholder="Search group..."
           emptyText="No group found."
           triggerClassName="h-9 text-sm"
         />
-
-        <AutocompleteSelect
-          value={parentFilter}
-          onValueChange={(value) => onParentFilterChange(value || 'all')}
-          options={parentFilterOptions}
-          placeholder="Filter parent"
-          searchPlaceholder="Search parent..."
-          emptyText="No parent found."
-          triggerClassName="h-9 text-sm"
-        />
-
-        <Button variant="outline" onClick={onApplyFilter} disabled={loading}>
-          <RefreshCw />
-          Apply
-        </Button>
       </div>
 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3">
         <p className="text-sm text-muted-foreground">
-          Batch sort current page. Changed rows: <span className="font-medium text-foreground">{dirtySortCount}</span>
+          Bulk edit current page. Changed rows: <span className="font-medium text-foreground">{dirtySortCount}</span>
         </p>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onResetBatchSort} disabled={batchSorting || dirtySortCount === 0}>
             <RefreshCw />
-            Reset Sort
+            Reset
           </Button>
           <Button onClick={onSubmitBatchSort} disabled={batchSorting || dirtySortCount === 0}>
             <Save />
-            {batchSorting ? 'Saving...' : 'Save Sort'}
+            {batchSorting ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </div>
@@ -141,7 +113,7 @@ export function AdministratorMenuListPanel({
             <TableHead>Title</TableHead>
             <TableHead>Key</TableHead>
             <TableHead className="w-[120px]">Sort</TableHead>
-            <TableHead>Path</TableHead>
+            <TableHead className="min-w-[240px]">Path</TableHead>
             <TableHead>Parent</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[150px]">Actions</TableHead>
@@ -171,7 +143,14 @@ export function AdministratorMenuListPanel({
                     className="h-8"
                   />
                 </TableCell>
-                <TableCell>{item.path || '-'}</TableCell>
+                <TableCell>
+                  <Input
+                    value={pathDrafts[item.id] ?? item.path ?? ''}
+                    onChange={(e) => onPathDraftChange(item.id, e.target.value)}
+                    placeholder="/app/..."
+                    className="h-8 min-w-[220px]"
+                  />
+                </TableCell>
                 <TableCell>{item.parentTitle || '-'}</TableCell>
                 <TableCell>{item.isActive ? 'Active' : 'Inactive'}</TableCell>
                 <TableCell>

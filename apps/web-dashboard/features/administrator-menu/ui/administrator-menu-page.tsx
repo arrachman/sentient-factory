@@ -15,8 +15,6 @@ export default function AdministratorMenuPage() {
     showForm,
     search,
     setSearch,
-    groupFilter,
-    setGroupFilter,
     parentFilter,
     setParentFilter,
     loading,
@@ -28,11 +26,12 @@ export default function AdministratorMenuPage() {
     totalPages,
     totalItems,
     parentSelectOptions,
-    groupFilterOptions,
     parentFilterOptions,
+    pathDrafts,
     sortDrafts,
     dirtySortCount,
     fetchList,
+    changePathDraft,
     changeLimit,
     changeSortDraft,
     resetSortDrafts,
@@ -75,16 +74,14 @@ export default function AdministratorMenuPage() {
             totalItems={totalItems}
             search={search}
             onSearchChange={setSearch}
-            groupFilter={groupFilter}
-            onGroupFilterChange={setGroupFilter}
-            groupFilterOptions={groupFilterOptions}
             parentFilter={parentFilter}
             onParentFilterChange={setParentFilter}
             parentFilterOptions={parentFilterOptions}
-            onApplyFilter={() => fetchList(1)}
+            pathDrafts={pathDrafts}
             sortDrafts={sortDrafts}
             dirtySortCount={dirtySortCount}
             batchSorting={batchSorting}
+            onPathDraftChange={changePathDraft}
             onSortDraftChange={changeSortDraft}
             onResetBatchSort={resetSortDrafts}
             onSubmitBatchSort={submitBatchSort}

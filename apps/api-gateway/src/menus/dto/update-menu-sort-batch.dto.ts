@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsInt, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 
 class UpdateMenuSortItemDto {
   @ApiProperty({ example: 10 })
@@ -12,6 +12,12 @@ class UpdateMenuSortItemDto {
   @Type(() => Number)
   @IsInt()
   sortOrder!: number;
+
+  @ApiPropertyOptional({ example: '/app/administrator/menu' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  path?: string | null;
 }
 
 export class UpdateMenuSortBatchDto {
