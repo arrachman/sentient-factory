@@ -252,3 +252,6 @@ test-results/
 
 # Temporary files
 temp/
+
+# Continue local config
+.continue/
