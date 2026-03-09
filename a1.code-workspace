@@ -5,6 +5,7 @@
 		}
 	],
 	"settings": {
-		"terminal.integrated.copyOnSelection": true
+		"terminal.integrated.copyOnSelection": true,
+		"editor.fontSize": 14
 	}
 }

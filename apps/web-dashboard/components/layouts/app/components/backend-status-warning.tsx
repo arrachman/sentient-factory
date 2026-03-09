@@ -6,7 +6,11 @@ import { Alert, AlertContent, AlertDescription, AlertIcon, AlertTitle } from '@/
 import { Button } from '@/components/ui/button';
 
 const BACKEND_DOWN_STATUSES = new Set([502, 503, 504]);
-const DEFAULT_CHECK_INTERVAL_MS = 30000;
+const DEFAULT_CHECK_INTERVAL_MS = 300000;
+
+let lastCheckAt = 0;
+let lastCheckResult = false;
+let inflightCheck: Promise<boolean> | null = null;
 
 function getCheckIntervalMs() {
   const configured = Number(process.env.NEXT_PUBLIC_BACKEND_STATUS_CHECK_INTERVAL_MS);
@@ -34,6 +38,31 @@ async function checkBackendDown(): Promise<boolean> {
   }
 }
 
+async function checkBackendDownShared(force = false): Promise<boolean> {
+  const intervalMs = getCheckIntervalMs();
+  const now = Date.now();
+
+  if (!force && now - lastCheckAt < intervalMs) {
+    return lastCheckResult;
+  }
+
+  if (inflightCheck) {
+    return inflightCheck;
+  }
+
+  inflightCheck = checkBackendDown()
+    .then((result) => {
+      lastCheckAt = Date.now();
+      lastCheckResult = result;
+      return result;
+    })
+    .finally(() => {
+      inflightCheck = null;
+    });
+
+  return inflightCheck;
+}
+
 export function BackendStatusWarning() {
   const [isBackendDown, setIsBackendDown] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
@@ -46,7 +75,7 @@ export function BackendStatusWarning() {
       if (mountedRef.current) {
         setIsChecking(true);
       }
-      const down = await checkBackendDown();
+      const down = await checkBackendDownShared();
       if (mountedRef.current) {
         setIsBackendDown(down);
         setIsChecking(false);
@@ -90,7 +119,7 @@ export function BackendStatusWarning() {
               }
 
               setIsChecking(true);
-              void checkBackendDown()
+              void checkBackendDownShared(true)
                 .then((down) => {
                   if (mountedRef.current) {
                     setIsBackendDown(down);

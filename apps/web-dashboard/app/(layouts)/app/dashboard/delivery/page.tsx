@@ -134,7 +134,7 @@ export default function DeliveryDashboardPage() {
   const selectedSubtitle = useMemo(() => `${month} · ${period}`, [month, period]);
 
   return (
-    <div className="space-y-6">
+    <div className="container space-y-7 pb-10">
       <Toolbar>
         <div>
           <ToolbarHeading>
@@ -155,7 +155,7 @@ export default function DeliveryDashboardPage() {
         </Select>
       </div>
 
-      <KpiGrid cards={kpiCards} />
+      <KpiGrid cards={kpiCards} className="xl:grid-cols-2" />
 
       <div className="grid gap-4 lg:grid-cols-12">
         <div className="lg:col-span-4">
