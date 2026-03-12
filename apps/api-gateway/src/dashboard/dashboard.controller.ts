@@ -30,6 +30,13 @@ export class DashboardController {
     return this.dashboardService.health();
   }
 
+  @Get('manager/kpis')
+  @ApiOperation({ summary: 'Get manager dashboard KPI cards' })
+  @ApiResponse({ status: 200, description: 'Manager KPI payload' })
+  managerKpis() {
+    return this.dashboardService.managerKpis();
+  }
+
   @Get(':domain/metadata')
   @ApiOperation({ summary: 'Get dashboard metadata (tables, columns, effective allow-list)' })
   @ApiResponse({ status: 200, description: 'Dashboard metadata payload' })

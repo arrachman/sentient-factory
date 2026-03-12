@@ -150,7 +150,7 @@ vault_cmd kv put "$VAULT_KV_MOUNT/$VAULT_CDC_PATH" \
   CDC_MYSQL_PASSWORD="replace-me" \
   CDC_MYSQL_DATABASE="myerpplus" \
   CDC_MYSQL_SERVER_ID="184054" \
-  CDC_MYSQL_TABLE_INCLUDE_LIST="myerpplus.orders,myerpplus.order_items,myerpplus.customers" \
+  CDC_MYSQL_TABLE_INCLUDE_LIST="myerpplus.orders,myerpplus.order_items,myerpplus.customers,myerpplus.m1_currency" \
   KAFKA_BOOTSTRAP_SERVERS="kafka:9092" \
   DEBEZIUM_CONNECT_URL="http://debezium-connect:8083"
 

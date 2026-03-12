@@ -36,12 +36,20 @@ def healthcheck() -> dict[str, object]:
 
 
 @app.get("/api/schema/semantic")
-def get_semantic_schema(include_samples: bool = False) -> dict[str, object]:
+def get_semantic_schema(
+    include_samples: bool = False,
+    schema_key: str | None = None,
+    query: str | None = None,
+) -> dict[str, object]:
     schema = build_semantic_schema(
         database_url=settings.database_url,
         table_limit=settings.semantic_schema_table_limit,
         sample_limit=settings.semantic_schema_sample_limit,
         include_samples=include_samples,
+        schema_source=settings.semantic_schema_source,
+        schema_key=schema_key or settings.semantic_schema_key,
+        manifest_path=settings.semantic_schema_manifest_path,
+        query_text=query,
     )
     return {"success": True, "data": schema.model_dump(mode="json")}
 
@@ -57,6 +65,10 @@ async def chat_query(payload: ChatRequest) -> dict[str, object]:
                 table_limit=settings.semantic_schema_table_limit,
                 sample_limit=settings.semantic_schema_sample_limit,
                 include_samples=payload.include_samples,
+                schema_source=settings.semantic_schema_source,
+                schema_key=payload.schema_key or settings.semantic_schema_key,
+                manifest_path=settings.semantic_schema_manifest_path,
+                query_text=payload.question,
             )
             schema_prompt = schema_to_prompt_text(schema.model_dump(mode="json"))
 

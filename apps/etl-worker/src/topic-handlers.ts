@@ -18,6 +18,8 @@ export function buildDomainUpserts(event: CdcEnvelope): DomainUpsert[] {
   const row = event.payload as CdcRow;
 
   switch (event.topic) {
+    case 'myerpplus.myerpplus.m1_currency':
+      return [mapCurrency(row)];
     case 'myerpplus.myerpplus.users':
       return [mapUser(row)];
     case 'myerpplus.myerpplus.roles':
@@ -91,6 +93,34 @@ function mapContact(row: CdcRow): DomainUpsert {
       created_at: new Date(),
       updated_at: new Date(),
       deleted_at: isDeleted(row) ? new Date() : null,
+    },
+  };
+}
+
+function mapCurrency(row: CdcRow): DomainUpsert {
+  const code = toStringValue(row.ckode);
+  if (!code) {
+    throw new Error('Missing currency code (ckode) for m1_currency event');
+  }
+
+  const insertedAt = toDateValue(row.cinputtgl) ?? new Date();
+  const updatedAt = toDateValue(row.cmodifikasitgl) ?? insertedAt;
+
+  return {
+    tableName: 'cdc_myerpplus_currencies',
+    primaryKey: 'currency_code',
+    row: {
+      currency_code: code,
+      currency_name: toStringValue(row.cnama) ?? code,
+      currency_symbol: toStringValue(row.csimbol),
+      exchange_rate: toNullableNumber(row.ckurs),
+      notes: toStringValue(row.ccatatan),
+      is_active: toBooleanValue(row.caktif),
+      created_by: toNullableNumber(row.cinputuser),
+      created_at: insertedAt,
+      updated_by: toNullableNumber(row.cmodifikasiuser),
+      updated_at: updatedAt,
+      deleted_at: isDeleted(row) ? updatedAt : null,
     },
   };
 }

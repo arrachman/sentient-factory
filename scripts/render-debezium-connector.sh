@@ -16,9 +16,15 @@ if [[ ! -f "$ENV_FILE" ]]; then
   exit 1
 fi
 
-set -a
-source "$ENV_FILE"
-set +a
+while IFS= read -r line || [[ -n "$line" ]]; do
+  if [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]]; then
+    continue
+  fi
+
+  key="${line%%=*}"
+  value="${line#*=}"
+  export "$key=$value"
+done < "$ENV_FILE"
 
 mkdir -p "$(dirname "$OUTPUT_FILE")"
 

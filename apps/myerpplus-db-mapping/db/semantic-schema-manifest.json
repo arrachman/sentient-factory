@@ -1,0 +1,109 @@
+{
+  "schemas": [
+    {
+      "key": "master",
+      "domain": "master_data",
+      "description": "Master data dan referensi utama lintas modul ERP.",
+      "file": "semantic-schema-master.json",
+      "table_prefixes": [
+        "m0",
+        "m1"
+      ]
+    },
+    {
+      "key": "finance",
+      "domain": "finance_accounting",
+      "description": "Finance, accounting, jurnal, kas, bank, giro, dan saldo awal COA.",
+      "file": "semantic-schema-finance.json",
+      "table_prefixes": [
+        "m2"
+      ]
+    },
+    {
+      "key": "inventory",
+      "domain": "inventory_warehouse",
+      "description": "Inventory, gudang, mutasi stok, stok opname, dan saldo awal barang.",
+      "file": "semantic-schema-inventory.json",
+      "table_prefixes": [
+        "m3"
+      ]
+    },
+    {
+      "key": "purchasing",
+      "domain": "purchasing_account_payable",
+      "description": "Purchasing, penerimaan barang, invoice pembelian, retur pembelian, dan hutang.",
+      "file": "semantic-schema-purchasing.json",
+      "table_prefixes": [
+        "m4"
+      ]
+    },
+    {
+      "key": "sales",
+      "domain": "sales_account_receivable",
+      "description": "Sales, delivery, invoice penjualan, retur penjualan, dan piutang.",
+      "file": "semantic-schema-sales.json",
+      "table_prefixes": [
+        "m5"
+      ]
+    },
+    {
+      "key": "m1",
+      "domain": "prefix_m1",
+      "description": "Schema semantic khusus tabel prefix m1.",
+      "file": "semantic-schema-m1.json",
+      "table_prefixes": [
+        "m1"
+      ]
+    },
+    {
+      "key": "m2",
+      "domain": "prefix_m2",
+      "description": "Schema semantic khusus tabel prefix m2.",
+      "file": "semantic-schema-m2.json",
+      "table_prefixes": [
+        "m2"
+      ]
+    },
+    {
+      "key": "m3",
+      "domain": "prefix_m3",
+      "description": "Schema semantic khusus tabel prefix m3.",
+      "file": "semantic-schema-m3.json",
+      "table_prefixes": [
+        "m3"
+      ]
+    },
+    {
+      "key": "m4",
+      "domain": "prefix_m4",
+      "description": "Schema semantic khusus tabel prefix m4.",
+      "file": "semantic-schema-m4.json",
+      "table_prefixes": [
+        "m4"
+      ]
+    },
+    {
+      "key": "m5",
+      "domain": "prefix_m5",
+      "description": "Schema semantic khusus tabel prefix m5.",
+      "file": "semantic-schema-m5.json",
+      "table_prefixes": [
+        "m5"
+      ]
+    },
+    {
+      "key": "all",
+      "domain": "all_business_domains",
+      "description": "Schema semantic gabungan untuk seluruh domain yang sudah difilter.",
+      "file": "semantic-schema.json",
+      "table_prefixes": [
+        "m0",
+        "m1",
+        "m2",
+        "m3",
+        "m4",
+        "m5"
+      ]
+    }
+  ]
+}

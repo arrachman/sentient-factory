@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     codex_config_path: Path = Field(default=Path.home() / ".codex" / "config.toml", alias="CODEX_CONFIG_PATH")
     semantic_schema_table_limit: int = Field(default=12, alias="SEMANTIC_SCHEMA_TABLE_LIMIT")
     semantic_schema_sample_limit: int = Field(default=3, alias="SEMANTIC_SCHEMA_SAMPLE_LIMIT")
+    semantic_schema_source: str = Field(default="myerpplus_file", alias="SEMANTIC_SCHEMA_SOURCE")
+    semantic_schema_key: str = Field(default="all", alias="SEMANTIC_SCHEMA_KEY")
+    semantic_schema_manifest_path: Path = Field(
+        default=Path("apps/myerpplus-db-mapping/db/semantic-schema-manifest.json"),
+        alias="SEMANTIC_SCHEMA_MANIFEST_PATH",
+    )
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
@@ -26,4 +32,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

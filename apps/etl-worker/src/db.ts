@@ -69,6 +69,22 @@ export async function ensureWorkerTables(db: Client) {
   `);
 
   await db.query(`
+    CREATE TABLE IF NOT EXISTS cdc_myerpplus_currencies (
+      currency_code TEXT PRIMARY KEY,
+      currency_name TEXT NOT NULL,
+      currency_symbol TEXT,
+      exchange_rate DOUBLE PRECISION,
+      notes TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_by BIGINT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_by BIGINT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      deleted_at TIMESTAMPTZ
+    )
+  `);
+
+  await db.query(`
     CREATE TABLE IF NOT EXISTS cdc_myerpplus_user_core_map (
       source_user_id BIGINT PRIMARY KEY,
       core_user_id INTEGER NOT NULL UNIQUE,

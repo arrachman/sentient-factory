@@ -1,0 +1,15 @@
+[Unit]
+Description=Sentient Factory Docker Compose stack
+After=default.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/rania/apps/sentient-factory
+ExecStart=/home/rania/apps/sentient-factory/scripts/start-infra-on-boot.sh
+ExecStop=/home/rania/apps/sentient-factory/scripts/stop-infra-on-boot.sh
+RemainAfterExit=yes
+TimeoutStartSec=0
+
+[Install]
+WantedBy=default.target

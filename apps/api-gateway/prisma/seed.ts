@@ -526,6 +526,75 @@ async function main() {
     });
   }
 
+  const managerUser = await prisma.user.findUnique({
+    where: { email: 'manager.eng@example.com' },
+    select: { id: true },
+  });
+  if (!managerUser) {
+    throw new Error('Manager seed user not found');
+  }
+
+  await prisma.managerInsight.deleteMany({});
+  await prisma.managerRisk.deleteMany({});
+  await prisma.managerDataFreshness.deleteMany({});
+
+  const now = new Date();
+  const hourAgo = (hours: number) => new Date(now.getTime() - hours * 60 * 60 * 1000);
+  const dayAgo = (days: number, hour = 9, minute = 0) => {
+    const d = new Date(now);
+    d.setUTCDate(d.getUTCDate() - days);
+    d.setUTCHours(hour, minute, 0, 0);
+    return d;
+  };
+
+  await prisma.managerInsight.createMany({
+    data: [
+      { title: 'Backlog outbound wave-2', question: 'Kenapa backlog outbound naik pagi ini?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(0, 8, 0), decisionAt: dayAgo(0, 8, 11), decisionNote: 'Tambah picker shift pagi' },
+      { title: 'Stockout risk fast moving', question: 'SKU mana paling berisiko stockout?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(0, 9, 10), decisionAt: dayAgo(0, 9, 22), decisionNote: 'Prioritaskan replenishment' },
+      { title: 'Receiving slowdown', question: 'Apa penyebab receiving lambat?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(0, 10, 5), decisionAt: dayAgo(0, 10, 16), decisionNote: 'Buka lane tambahan' },
+      { title: 'Carrier SLA risk', question: 'Pengiriman mana paling riskan terlambat?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(1, 8, 0), decisionAt: dayAgo(1, 8, 14), decisionNote: 'Re-route order prioritas' },
+      { title: 'Picking congestion', question: 'Area picking mana paling padat?', status: 'rejected', managerUserId: managerUser.id, insightCreatedAt: dayAgo(1, 11, 0), decisionAt: dayAgo(1, 11, 19), decisionNote: 'Data kurang lengkap' },
+      { title: 'Cycle count anomaly', question: 'Apakah ada selisih inventori kritis?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(2, 8, 30), decisionAt: dayAgo(2, 8, 45), decisionNote: 'Audit SKU prioritas' },
+      { title: 'Inbound dock overload', question: 'Dock mana berpotensi overload?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(3, 9, 0), decisionAt: dayAgo(3, 9, 18), decisionNote: 'Alihkan slot unloading' },
+      { title: 'Late dispatch cluster', question: 'Klaster keterlambatan dispatch terbesar?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(4, 10, 0), decisionAt: dayAgo(4, 10, 14), decisionNote: 'Escalate ke supervisor' },
+      { title: 'Data quality exception', question: 'Apakah exception master data memengaruhi SLA?', status: 'rejected', managerUserId: managerUser.id, insightCreatedAt: dayAgo(5, 13, 0), decisionAt: dayAgo(5, 13, 21), decisionNote: 'Perlu validasi manual' },
+      { title: 'Replenishment urgency', question: 'Prioritas replenishment hari ini?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(6, 7, 45), decisionAt: dayAgo(6, 7, 59), decisionNote: 'Resequence tasks' },
+      { title: 'Last week baseline A', question: 'Baseline pekan lalu A', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(7, 8, 0), decisionAt: dayAgo(7, 8, 20), decisionNote: 'Baseline' },
+      { title: 'Last week baseline B', question: 'Baseline pekan lalu B', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(7, 9, 0), decisionAt: dayAgo(7, 9, 25), decisionNote: 'Baseline' },
+      { title: 'Last week baseline C', question: 'Baseline pekan lalu C', status: 'rejected', managerUserId: managerUser.id, insightCreatedAt: dayAgo(8, 10, 0), decisionAt: dayAgo(8, 10, 32), decisionNote: 'Baseline' },
+      { title: 'Last week baseline D', question: 'Baseline pekan lalu D', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(9, 11, 0), decisionAt: dayAgo(9, 11, 29), decisionNote: 'Baseline' },
+    ],
+  });
+
+  await prisma.managerRisk.createMany({
+    data: [
+      { title: 'Outbound wave-2 backlog', domain: 'outbound', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(2) },
+      { title: 'Stockout SKU AX-44', domain: 'inventory', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(3) },
+      { title: 'Receiving mart stale data', domain: 'inbound', severity: 'critical', status: 'in_progress', managerUserId: managerUser.id, openedAt: hourAgo(6) },
+      { title: 'Late dispatch cluster north', domain: 'delivery', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(8) },
+      { title: 'Cycle count mismatch', domain: 'inventory', severity: 'critical', status: 'in_progress', managerUserId: managerUser.id, openedAt: hourAgo(12) },
+      { title: 'Carrier cut-off breach', domain: 'delivery', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(18) },
+      { title: 'Picking queue saturation', domain: 'outbound', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(20) },
+      { title: 'Resolved dock issue', domain: 'inbound', severity: 'critical', status: 'closed', managerUserId: managerUser.id, openedAt: dayAgo(1, 7, 0), resolvedAt: dayAgo(0, 1, 0) },
+      { title: 'Medium stock variance', domain: 'inventory', severity: 'medium', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(4) },
+    ],
+  });
+
+  await prisma.managerDataFreshness.createMany({
+    data: [
+      { domain: 'outbound', datasetName: 'outbound_wave_hourly', slaMinutes: 30, lastRefreshAt: hourAgo(0.2) },
+      { domain: 'outbound', datasetName: 'picker_queue_live', slaMinutes: 15, lastRefreshAt: hourAgo(0.1) },
+      { domain: 'inventory', datasetName: 'stock_position_near_real_time', slaMinutes: 20, lastRefreshAt: hourAgo(0.25) },
+      { domain: 'inventory', datasetName: 'cycle_count_variance', slaMinutes: 60, lastRefreshAt: hourAgo(0.5) },
+      { domain: 'inbound', datasetName: 'receiving_hourly', slaMinutes: 30, lastRefreshAt: hourAgo(0.3) },
+      { domain: 'delivery', datasetName: 'dispatch_sla_hourly', slaMinutes: 30, lastRefreshAt: hourAgo(0.4) },
+      { domain: 'delivery', datasetName: 'carrier_delay_prediction', slaMinutes: 45, lastRefreshAt: hourAgo(0.6) },
+      { domain: 'quality', datasetName: 'master_data_exceptions', slaMinutes: 120, lastRefreshAt: hourAgo(1.1) },
+      { domain: 'inbound', datasetName: 'receiving_mart', slaMinutes: 30, lastRefreshAt: hourAgo(0.9) },
+      { domain: 'inventory', datasetName: 'replenishment_priority', slaMinutes: 30, lastRefreshAt: hourAgo(0.2) },
+    ],
+  });
+
   const menuSeeds: MenuSeed[] = [
     {
       key: 'dashboard',
@@ -934,6 +1003,255 @@ async function main() {
     }
     await assignMenuToRole(managerRole.id, menuId);
     await assignMenuToRole(userRole.id, menuId);
+  }
+
+  const managerUser = await prisma.user.findUnique({
+    where: { email: 'manager.eng@example.com' },
+    select: { id: true },
+  });
+  if (!managerUser) {
+    throw new Error('Manager seed user not found');
+  }
+
+  const insightSeeds = [
+    {
+      title: 'Triage backlog outbound wave 2',
+      question: 'Kenapa antrean outbound wave 2 naik pagi ini?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-11T08:00:00Z'),
+      decisionAt: new Date('2026-03-11T08:09:00Z'),
+      decisionNote: 'Tambah picker 1 shift.',
+    },
+    {
+      title: 'Replenishment aisle B',
+      question: 'Apakah replenishment aisle B perlu dipindah ke malam?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-11T08:25:00Z'),
+      decisionAt: new Date('2026-03-11T08:39:00Z'),
+      decisionNote: 'Geser ke shift malam.',
+    },
+    {
+      title: 'Receiving dock risk',
+      question: 'Apakah receiving dock perlu buka lane tambahan?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-11T09:10:00Z'),
+      decisionAt: new Date('2026-03-11T09:19:00Z'),
+      decisionNote: 'Buka lane 3 untuk prioritas ASN.',
+    },
+    {
+      title: 'Stockout fast moving',
+      question: 'Apa penyebab risiko stockout SKU fast moving?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-11T09:40:00Z'),
+      decisionAt: new Date('2026-03-11T09:53:00Z'),
+      decisionNote: 'Prioritaskan cycle count dan top-up.',
+    },
+    {
+      title: 'Picker productivity gap',
+      question: 'Kenapa produktivitas picker shift pagi turun?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-11T10:05:00Z'),
+      decisionAt: new Date('2026-03-11T10:14:00Z'),
+      decisionNote: 'Rotasi picker senior ke zone high volume.',
+    },
+    {
+      title: 'Carrier handoff delay',
+      question: 'Apakah delay handoff carrier perlu escalation?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-11T10:30:00Z'),
+      decisionAt: new Date('2026-03-11T10:42:00Z'),
+      decisionNote: 'Escalate ke vendor transport.',
+    },
+    {
+      title: 'Data quality receiving',
+      question: 'Apakah mismatch ASN memerlukan hold sementara?',
+      status: 'rejected',
+      insightCreatedAt: new Date('2026-03-11T11:00:00Z'),
+      decisionAt: new Date('2026-03-11T11:11:00Z'),
+      decisionNote: 'Belum perlu, cukup sampling manual.',
+    },
+    {
+      title: 'Wave planning rebalance',
+      question: 'Perlukah rebalance wave planning siang ini?',
+      status: 'pending',
+      insightCreatedAt: new Date('2026-03-11T11:20:00Z'),
+      decisionAt: null,
+      decisionNote: null,
+    },
+    {
+      title: 'Slotting review fast pick',
+      question: 'Apakah slotting fast pick perlu revisi?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-10T08:00:00Z'),
+      decisionAt: new Date('2026-03-10T08:19:00Z'),
+      decisionNote: 'Re-slot 12 SKU prioritas.',
+    },
+    {
+      title: 'Labor sharing inbound outbound',
+      question: 'Bisakah labor sharing antar shift menurunkan backlog?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-09T08:15:00Z'),
+      decisionAt: new Date('2026-03-09T08:33:00Z'),
+      decisionNote: 'Setujui sharing 2 operator.',
+    },
+    {
+      title: 'Cycle count anomaly',
+      question: 'Apakah anomali cycle count perlu recount penuh?',
+      status: 'rejected',
+      insightCreatedAt: new Date('2026-03-08T08:40:00Z'),
+      decisionAt: new Date('2026-03-08T09:00:00Z'),
+      decisionNote: 'Cukup recount sampel.',
+    },
+    {
+      title: 'Cross-docking candidate',
+      question: 'SKU mana yang cocok untuk cross-docking?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-07T07:55:00Z'),
+      decisionAt: new Date('2026-03-07T08:14:00Z'),
+      decisionNote: 'Aktifkan 8 SKU kandidat.',
+    },
+    {
+      title: 'Late ASN supplier',
+      question: 'Supplier mana paling sering telat ASN?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-06T08:05:00Z'),
+      decisionAt: new Date('2026-03-06T08:22:00Z'),
+      decisionNote: 'Kirim corrective action request.',
+    },
+    {
+      title: 'Backorder prioritization',
+      question: 'Perlu ubah aturan prioritas backorder?',
+      status: 'accepted',
+      insightCreatedAt: new Date('2026-03-05T08:50:00Z'),
+      decisionAt: new Date('2026-03-05T09:08:00Z'),
+      decisionNote: 'Prioritaskan VIP customer.',
+    },
+    {
+      title: 'Packing station overtime',
+      question: 'Apakah packing station perlu overtime?',
+      status: 'rejected',
+      insightCreatedAt: new Date('2026-03-04T09:20:00Z'),
+      decisionAt: new Date('2026-03-04T09:41:00Z'),
+      decisionNote: 'Tidak perlu, cukup ubah sequencing.',
+    },
+  ] as const;
+
+  for (const insight of insightSeeds) {
+    await prisma.managerInsight.upsert({
+      where: {
+        managerUserId_title_insightCreatedAt: {
+          managerUserId: managerUser.id,
+          title: insight.title,
+          insightCreatedAt: insight.insightCreatedAt,
+        },
+      },
+      update: {
+        question: insight.question,
+        status: insight.status,
+        decisionAt: insight.decisionAt,
+        decisionNote: insight.decisionNote,
+      },
+      create: {
+        managerUserId: managerUser.id,
+        title: insight.title,
+        question: insight.question,
+        status: insight.status,
+        insightCreatedAt: insight.insightCreatedAt,
+        decisionAt: insight.decisionAt,
+        decisionNote: insight.decisionNote,
+      },
+    });
+  }
+
+  const riskSeeds = [
+    ['Predictive bottleneck outbound', 'outbound', 'critical', 'open', '2026-03-11T06:30:00Z', null],
+    ['Receiving mart freshness issue', 'inbound', 'critical', 'in_progress', '2026-03-11T07:10:00Z', null],
+    ['Fast moving stockout risk', 'inventory', 'critical', 'open', '2026-03-11T07:25:00Z', null],
+    ['Wave picking queue overflow', 'outbound', 'critical', 'open', '2026-03-11T08:00:00Z', null],
+    ['Carrier late pickup cluster', 'delivery', 'critical', 'in_progress', '2026-03-11T08:20:00Z', null],
+    ['Cycle count variance hotspot', 'inventory', 'critical', 'open', '2026-03-11T09:00:00Z', null],
+    ['Supplier ASN mismatch', 'inbound', 'critical', 'open', '2026-03-11T09:25:00Z', null],
+    ['Packing material low stock', 'inventory', 'warning', 'open', '2026-03-11T09:40:00Z', null],
+    ['Forklift battery maintenance', 'warehouse', 'critical', 'resolved', '2026-03-10T06:00:00Z', '2026-03-10T09:00:00Z'],
+  ] as const;
+
+  for (const [title, domain, severity, status, openedAt, resolvedAt] of riskSeeds) {
+    await prisma.managerRisk.upsert({
+      where: {
+        title_openedAt: {
+          title,
+          openedAt: new Date(openedAt),
+        },
+      },
+      update: {
+        domain,
+        severity,
+        status,
+        resolvedAt: resolvedAt ? new Date(resolvedAt) : null,
+        managerUserId: managerUser.id,
+      },
+      create: {
+        title,
+        domain,
+        severity,
+        status,
+        openedAt: new Date(openedAt),
+        resolvedAt: resolvedAt ? new Date(resolvedAt) : null,
+        managerUserId: managerUser.id,
+      },
+    });
+  }
+
+  const freshnessSeeds = [
+    ['outbound', 'outbound_wave_dashboard', 30, '2026-03-11T11:46:00Z'],
+    ['inventory', 'stockout_risk_model', 60, '2026-03-11T11:18:00Z'],
+    ['inventory', 'replenishment_urgency', 45, '2026-03-11T11:32:00Z'],
+    ['inbound', 'receiving_control_tower', 30, '2026-03-11T11:40:00Z'],
+    ['delivery', 'carrier_handoff_monitor', 30, '2026-03-11T11:44:00Z'],
+    ['warehouse', 'labor_productivity_shift', 60, '2026-03-11T11:00:00Z'],
+    ['quality', 'asn_data_quality_check', 20, '2026-03-11T11:47:00Z'],
+    ['finance', 'cost_to_serve_snapshot', 180, '2026-03-11T10:35:00Z'],
+    ['procurement', 'supplier_fill_rate', 120, '2026-03-11T11:15:00Z'],
+    ['inbound', 'receiving_mart', 30, '2026-03-11T10:59:00Z'],
+    ['outbound', 'pick_queue_monitor', 15, '2026-03-11T11:48:00Z'],
+    ['inventory', 'cycle_count_exception', 90, '2026-03-11T10:00:00Z'],
+    ['delivery', 'delivery_sla_risk', 45, '2026-03-11T11:30:00Z'],
+    ['warehouse', 'dock_utilization', 30, '2026-03-11T11:43:00Z'],
+    ['sales', 'priority_order_feed', 20, '2026-03-11T11:46:00Z'],
+    ['returns', 'reverse_logistics_queue', 120, '2026-03-11T09:30:00Z'],
+    ['planning', 'wave_plan_snapshot', 60, '2026-03-11T11:10:00Z'],
+    ['inventory', 'bin_capacity_heatmap', 45, '2026-03-11T11:26:00Z'],
+    ['quality', 'damage_claim_tracker', 60, '2026-03-11T11:05:00Z'],
+    ['procurement', 'supplier_eta_monitor', 30, '2026-03-11T11:38:00Z'],
+    ['delivery', 'route_exception_feed', 30, '2026-03-11T11:41:00Z'],
+    ['warehouse', 'equipment_health', 120, '2026-03-11T10:20:00Z'],
+    ['outbound', 'order_backlog_ageing', 30, '2026-03-11T11:20:00Z'],
+    ['inbound', 'putaway_capacity_tracker', 60, '2026-03-11T11:12:00Z'],
+    ['inventory', 'location_accuracy_score', 30, '2026-03-11T10:55:00Z'],
+    ['planning', 'labor_rebalance_suggester', 30, '2026-03-11T11:49:00Z'],
+    ['returns', 'return_putaway_sla', 90, '2026-03-11T11:14:00Z'],
+    ['quality', 'temperature_compliance_feed', 30, '2026-03-11T11:39:00Z'],
+  ] as const;
+
+  for (const [domain, datasetName, slaMinutes, lastRefreshAt] of freshnessSeeds) {
+    await prisma.managerDataFreshness.upsert({
+      where: {
+        domain_datasetName: {
+          domain,
+          datasetName,
+        },
+      },
+      update: {
+        slaMinutes,
+        lastRefreshAt: new Date(lastRefreshAt),
+      },
+      create: {
+        domain,
+        datasetName,
+        slaMinutes,
+        lastRefreshAt: new Date(lastRefreshAt),
+      },
+    });
   }
 
   const adminUser = await prisma.user.findUnique({

@@ -7,7 +7,7 @@ Worker ini mengonsumsi topic CDC Debezium dengan prefix `myerpplus`, lalu melaku
 - subscribe topic regex `^myerpplus\\..*`
 - simpan event mentah ke `cdc_events`
 - upsert current state per record ke `cdc_current_state`
-- sink domain-specific aman ke tabel mirror `cdc_myerpplus_users`, `cdc_myerpplus_roles`, `cdc_myerpplus_contacts`
+- sink domain-specific aman ke tabel mirror `cdc_myerpplus_users`, `cdc_myerpplus_roles`, `cdc_myerpplus_contacts`, `cdc_myerpplus_currencies`
 - sediakan hook transform per-topic untuk sink lanjutan ke tabel aplikasi inti bila sudah siap
 
 ## Menjalankan lokal

@@ -1,4 +1,0 @@
-mnmoduleid	mnid	mnname	mnurl	mnidtransaksi	code_from_name	code_from_url	mapped_table	table_exists	mapping_source	notes
-4	49	KPI Purchasing	mod/m4/m4_KPIPurchasing.swf	49				NO		no_direct_mapping
-4	51	Saldo Awal Hutang	mod/m4/m4_TransaksiBalance.swf	0		BALANCE		NO		url_code_not_found
-4	52	Saldo Awal Hutang	mod/m4/m4_DataBalance.swf	51		BALANCE		NO		url_code_not_found

@@ -31,6 +31,8 @@ model User {
   auditLogs        AuditLog[]
   warehouse        MasterDataWarehouse? @relation(fields: [warehouseId], references: [id])
   inventoryLedgers InventoryLedger[]
+  managerInsights  ManagerInsight[]
+  managerRisks     ManagerRisk[]
 
   @@index([warehouseId])
   @@map("m0_users")
@@ -625,4 +627,59 @@ model AuditLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("m0_auditlog")
+}
+
+model ManagerInsight {
+  id               Int       @id @default(autoincrement())
+  managerUserId    Int?      @map("manager_user_id")
+  title            String
+  question         String?
+  status           String
+  insightCreatedAt DateTime  @map("insight_created_at") @db.Timestamptz(3)
+  decisionAt       DateTime? @map("decision_at") @db.Timestamptz(3)
+  decisionNote     String?   @map("decision_note")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  managerUser User? @relation(fields: [managerUserId], references: [id])
+
+  @@index([insightCreatedAt])
+  @@index([status, insightCreatedAt])
+  @@index([managerUserId, insightCreatedAt])
+  @@unique([managerUserId, title, insightCreatedAt])
+  @@map("m0_manager_insight")
+}
+
+model ManagerRisk {
+  id            Int       @id @default(autoincrement())
+  managerUserId Int?      @map("manager_user_id")
+  title         String
+  domain        String
+  severity      String
+  status        String
+  openedAt      DateTime  @map("opened_at") @db.Timestamptz(3)
+  resolvedAt    DateTime? @map("resolved_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  managerUser User? @relation(fields: [managerUserId], references: [id])
+
+  @@index([severity, status])
+  @@index([openedAt])
+  @@unique([title, openedAt])
+  @@map("m0_manager_risk")
+}
+
+model ManagerDataFreshness {
+  id            Int      @id @default(autoincrement())
+  domain        String
+  datasetName   String   @map("dataset_name")
+  slaMinutes    Int      @map("sla_minutes")
+  lastRefreshAt DateTime @map("last_refresh_at") @db.Timestamptz(3)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([domain, datasetName])
+  @@index([lastRefreshAt])
+  @@map("m0_manager_data_freshness")
 }

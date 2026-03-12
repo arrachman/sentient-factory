@@ -1,0 +1,17 @@
+[Unit]
+Description=Sentient Factory Docker Stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=rania
+WorkingDirectory=/home/rania/apps/sentient-factory
+ExecStart=/home/rania/apps/sentient-factory/scripts/start-infra-on-boot.sh
+ExecStop=/home/rania/apps/sentient-factory/scripts/stop-infra-on-boot.sh
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

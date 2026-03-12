@@ -70,4 +70,15 @@ export const MENU_SIDEBAR: MenuConfig = [
       },
     ],
   },
+  {
+    title: 'Administrator',
+    icon: Users,
+    children: [
+      {
+        title: 'Notification',
+        icon: Bell,
+        path: '/app/administrator/notification',
+      },
+    ],
+  },
 ];
