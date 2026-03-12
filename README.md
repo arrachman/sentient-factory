@@ -218,9 +218,70 @@ npm run start:dev
 Vault paths used by default:
 
 - `secret/sentient-factory/dev/shared`
+
+## AI Manager Dashboard
+
+Untuk menyalakan AI engine yang dipakai halaman manager dashboard:
+
+```bash
+export VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d llm-router ai-engine web-dashboard
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:3206/health
+curl http://127.0.0.1:8001/health
+```
+
+Smoke test route dashboard:
+
+```bash
+curl -X POST http://127.0.0.1:3201/api/ai/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Tabel apa yang relevan untuk user dan role?","include_schema":true,"include_samples":false}'
+```
+
+Halaman yang mengonsumsi AI engine:
+
+```text
+http://127.0.0.1:3201/app/dashboard/manager
+```
+
+## AI Manager Runbook
+
+Manager dashboard AI memakai tiga service:
+
+- `sentient-infra-llm-router`
+- `sentient-infra-ai-engine`
+- `sentient-infra-web-dashboard`
+
+Start cepat:
+
+```bash
+VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only \
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d llm-router ai-engine web-dashboard
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:3206/health
+curl http://127.0.0.1:8001/health
+curl -X POST http://127.0.0.1:3201/api/ai/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Tabel apa yang relevan untuk user dan role?","include_schema":true,"include_samples":false}'
+```
+
+URL utama:
+
+- Manager dashboard: `http://127.0.0.1:3201/app/dashboard/manager`
+- Kafka UI: `http://127.0.0.1:3210`
 - `secret/sentient-factory/dev/api-gateway`
 - `secret/sentient-factory/dev/web-dashboard`
 - `secret/sentient-factory/dev/myerpplus-db-mapping`
+- local CDC overlay file for Debezium: `infra/.env.vault.cdc` (ignored by git)
 
 The `api-gateway` loads secrets from Vault before Nest boots. Other apps can render `.env.vault` from Vault with the helper scripts, while `.env.example` files stay committed as safe templates.
 
