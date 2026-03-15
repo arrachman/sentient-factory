@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-function getAiBaseUrl() {
-  return process.env.AI_ENGINE_URL || 'http://172.17.0.1:8001';
-}
+import { getAiBaseUrl } from '@/shared/ai/ai-base-url';
 
 export async function GET(request: NextRequest) {
   try {

@@ -14,7 +14,7 @@ function getRequestId(request: NextRequest) {
 
 function postJson(body: string, requestId: string): Promise<{ statusCode: number; payload: string }> {
   return new Promise((resolve, reject) => {
-    const target = new URL('/api/chat/query', getAiBaseUrl());
+    const target = new URL('/api/chat/test', getAiBaseUrl());
     const transport = target.protocol === 'https:' ? httpsRequest : httpRequest;
     const upstream = transport(
       target,
@@ -54,8 +54,13 @@ export async function POST(request: NextRequest) {
   try {
     const requestId = getRequestId(request);
     const requestPayload = await request.json().catch(() => null);
+    const prompt =
+      requestPayload && typeof requestPayload === 'object' && 'prompt' in requestPayload
+        ? String(requestPayload.prompt ?? '')
+        : '';
+
     const body = JSON.stringify({
-      ...(requestPayload && typeof requestPayload === 'object' ? requestPayload : {}),
+      prompt,
       request_id: requestId,
     });
 

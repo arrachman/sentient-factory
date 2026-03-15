@@ -733,7 +733,7 @@ async function main() {
     },
     {
       key: 'administrator-dashboard-manager',
-      title: 'Dashboard Manager',
+      title: 'Manager AI',
       path: '/app/dashboard/manager',
       icon: 'LayoutDashboard',
       type: 'ITEM',

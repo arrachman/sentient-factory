@@ -8,13 +8,23 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+type WorkflowTestRequestPayload = {
+  prompt?: unknown;
+  question?: unknown;
+  messages?: unknown;
+  include_schema?: unknown;
+  include_samples?: unknown;
+  execute_read_only_query?: unknown;
+  schema_key?: unknown;
+};
+
 function getRequestId(request: NextRequest) {
   return request.headers.get('x-request-id') || crypto.randomUUID();
 }
 
 function postJson(body: string, requestId: string): Promise<{ statusCode: number; payload: string }> {
   return new Promise((resolve, reject) => {
-    const target = new URL('/api/chat/query', getAiBaseUrl());
+    const target = new URL('/api/chat/query/trigger', getAiBaseUrl());
     const transport = target.protocol === 'https:' ? httpsRequest : httpRequest;
     const upstream = transport(
       target,
@@ -25,7 +35,7 @@ function postJson(body: string, requestId: string): Promise<{ statusCode: number
           'Content-Length': Buffer.byteLength(body).toString(),
           'x-request-id': requestId,
         },
-        timeout: 180_000,
+        timeout: 10_000,
       },
       (response) => {
         const chunks: Buffer[] = [];
@@ -50,20 +60,44 @@ function postJson(body: string, requestId: string): Promise<{ statusCode: number
   });
 }
 
+function toBoolean(value: unknown, fallback: boolean) {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+function toNonEmptyString(value: unknown) {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const requestId = getRequestId(request);
-    const requestPayload = await request.json().catch(() => null);
-    const body = JSON.stringify({
-      ...(requestPayload && typeof requestPayload === 'object' ? requestPayload : {}),
-      request_id: requestId,
-    });
+    const requestPayload = (await request.json().catch(() => null)) as WorkflowTestRequestPayload | null;
+    const question =
+      toNonEmptyString(requestPayload?.question) || toNonEmptyString(requestPayload?.prompt) || '';
 
-    const response = await postJson(body, requestId);
+    const bodyPayload = {
+      question,
+      messages: Array.isArray(requestPayload?.messages) ? requestPayload.messages : [],
+      include_schema: toBoolean(requestPayload?.include_schema, true),
+      include_samples: toBoolean(requestPayload?.include_samples, false),
+      execute_read_only_query: toBoolean(requestPayload?.execute_read_only_query, false),
+      schema_key: toNonEmptyString(requestPayload?.schema_key),
+      request_id: requestId,
+    };
+
+    const response = await postJson(JSON.stringify(bodyPayload), requestId);
     const responsePayload = JSON.parse(response.payload || '{}') as unknown;
+    const status =
+      response.statusCode >= 200 &&
+      response.statusCode < 300 &&
+      responsePayload &&
+      typeof responsePayload === 'object' &&
+      'data' in responsePayload
+        ? 202
+        : response.statusCode;
 
     return NextResponse.json(responsePayload, {
-      status: response.statusCode,
+      status,
       headers: {
         'x-request-id': requestId,
       },

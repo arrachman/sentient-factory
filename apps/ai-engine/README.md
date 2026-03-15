@@ -25,6 +25,9 @@ python3 -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001
 - `LLM_API_BASE_URL` opsional, default fallback ke `~/.codex/config.toml`
 - `LLM_MODEL` opsional, default fallback ke `~/.codex/config.toml`
 - `LLM_API_KEY` opsional, default fallback ke `~/.codex/config.toml`
+- `AI_AGENT_WORKFLOW_MAX_PASSES` untuk jumlah langkah agent. Rekomendasi operasional workflow: `2`
+- `LLM_REQUEST_TIMEOUT_SECONDS` untuk timeout per call ke provider LLM. Rekomendasi workflow: `120` atau `180`
+- `LLM_REQUEST_MAX_RETRIES` untuk retry call provider. Default aman: `3`
 
 ## Integrasi dashboard
 
@@ -49,6 +52,12 @@ curl http://127.0.0.1:8001/health
 curl -X POST http://127.0.0.1:3201/api/ai/chat \
   -H 'Content-Type: application/json' \
   -d '{"question":"Tabel apa yang relevan untuk user dan role?","include_schema":true,"include_samples":false}'
+```
+
+Jika workflow sering gagal dengan `ReadTimeout`, restart `ai-engine` setelah menaikkan timeout:
+
+```bash
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d --force-recreate ai-engine
 ```
 
 ## Catatan model provider

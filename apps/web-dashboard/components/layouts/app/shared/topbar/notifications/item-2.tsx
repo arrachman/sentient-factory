@@ -37,7 +37,7 @@ export default function Item2() {
           <span className="flex items-center text-xs font-medium text-muted-foreground">
             53 mins ago
             <span className="rounded-full size-1 bg-mono/30 mx-1.5"></span>
-            ACME
+            Sentient
           </span>
         </div>
 

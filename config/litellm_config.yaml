@@ -40,15 +40,15 @@ model_list:
       api_key: "os.environ/DEEPSEEK_API_KEY"
 
 router_settings:
-  # Strategi round_robin akan memutar pemakaian key di dalam grup yang sama (misal: memutar 3 key patungin)
-  routing_strategy: round_robin 
+  # LiteLLM versi yang dipakai tidak menerima `round_robin`; `simple-shuffle`
+  # tetap menyebarkan trafik antar deployment dalam grup model yang sama.
+  routing_strategy: simple-shuffle
   
   # URUTAN JATUHNYA (FALLBACKS):
-  # Patungin (model-default) -> Antigravity -> DeepSeek -> Extra
+  # Patungin (model-default) -> Antigravity -> DeepSeek
   fallbacks: 
     - {"model-default": ["antigravity-cluster"]}
     - {"antigravity-cluster": ["deepseek-fallback"]}
-    - {"deepseek-fallback": ["extra-fallback"]}
-  
+
   num_retries: 2
   allowed_fails: 1 # Jika 1 request gagal/429, langsung skip ke key/provider berikutnya

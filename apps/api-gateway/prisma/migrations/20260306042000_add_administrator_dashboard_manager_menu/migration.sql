@@ -1,4 +1,4 @@
--- Add Administrator > Dashboard Manager menu and grant access to admin role only.
+-- Add Administrator > Manager AI menu and grant access to admin role only.
 -- Idempotent: upsert menu by key and upsert role-menu relation.
 
 INSERT INTO "m0_menu" (
@@ -6,7 +6,7 @@ INSERT INTO "m0_menu" (
 )
 VALUES (
   'administrator-dashboard-manager',
-  'Dashboard Manager',
+  'Manager AI',
   '/app/dashboard/manager',
   'LayoutDashboard',
   'ITEM',

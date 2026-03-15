@@ -1,43 +1,21 @@
 'use client';
 
-import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   ArrowRight,
   BrainCircuit,
-  ChartColumn,
-  CircleAlert,
-  Clock3,
-  LayoutDashboard,
-  RefreshCcw,
   ScanSearch,
   Send,
   Sparkles,
+  Copy,
   WandSparkles,
 } from 'lucide-react';
-import {
-  KpiGrid,
-  TimeseriesCard,
-  TopAmountCard,
-  WarehouseAlertCard,
-  type KpiCard,
-  type TimeseriesDatum,
-  type TimeseriesSeries,
-  type TopAmountRow,
-} from '@/components/dashboard';
-import {
-  Toolbar,
-  ToolbarActions,
-  ToolbarDescription,
-  ToolbarHeading,
-  ToolbarPageTitle,
-} from '@/components/layouts/app/components/toolbar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardHeading,
   CardTitle,
@@ -75,6 +53,75 @@ type RunHistoryItem = {
   pinned: boolean;
 };
 
+type StepType =
+  | 'thought'
+  | 'commentary'
+  | 'read_query'
+  | 'generate_query'
+  | 'chart_insight'
+  | 'ai_insight'
+  | 'summary';
+
+interface BaseStep {
+  type: StepType;
+}
+
+interface ThoughtStep extends BaseStep {
+  type: 'thought';
+  content: string;
+}
+
+interface CommentaryStep extends BaseStep {
+  type: 'commentary';
+  content: string;
+}
+
+interface ReadQueryStep extends BaseStep {
+  type: 'read_query';
+  target: string;
+  description?: string;
+}
+
+interface GenerateQueryStep extends BaseStep {
+  type: 'generate_query';
+  query_string: string;
+  description: string;
+  rows_affected?: number;
+}
+
+interface ChartInsightStep extends BaseStep {
+  type: 'chart_insight';
+  chart_type: string;
+  title: string;
+  description: string;
+}
+
+interface AiInsightSpecificStep extends BaseStep {
+  type: 'ai_insight';
+  finding: string;
+  recommendation?: string;
+}
+
+interface SummaryStep extends BaseStep {
+  type: 'summary';
+  content: string;
+}
+
+type AiInsightStep =
+  | ThoughtStep
+  | CommentaryStep
+  | ReadQueryStep
+  | GenerateQueryStep
+  | ChartInsightStep
+  | AiInsightSpecificStep
+  | SummaryStep;
+
+interface AiInsightLog {
+  id: number;
+  user_prompt: string;
+  steps: AiInsightStep[];
+}
+
 type AiSchemaTable = {
   schema: string;
   name: string;
@@ -88,11 +135,25 @@ type AiSchemaTable = {
 };
 
 type AiChatResult = {
+  request_id?: string;
   answer: string;
   model: string;
   provider: string;
+  data_source?: string | null;
+  workflow_mode?: string;
+  workflow_passes?: number;
+  schema_key?: string;
+  schema_source?: string;
   semantic_schema?: {
     tables: AiSchemaTable[];
+  } | null;
+  query_result?: {
+    sql: string;
+    row_count: number;
+    columns: Array<{
+      name: string;
+    }>;
+    rows: Array<Record<string, string | number | boolean | null>>;
   } | null;
   suggested_queries?: Array<{
     sql: string;
@@ -101,6 +162,27 @@ type AiChatResult = {
   }>;
 };
 
+type WorkflowStepStatus = 'pending' | 'active' | 'done';
+
+type WorkflowStep = {
+  key: string;
+  title: string;
+  detail: string;
+  status: WorkflowStepStatus;
+};
+
+type WorkflowEventName =
+  | 'started'
+  | 'schema_selected'
+  | 'analysis_started'
+  | 'analysis_done'
+  | 'draft_started'
+  | 'draft_done'
+  | 'review_started'
+  | 'review_done'
+  | 'completed'
+  | 'failed';
+
 type RecommendedAction = {
   title: string;
   detail: string;
@@ -108,137 +190,265 @@ type RecommendedAction = {
 };
 
 type ActionStatus = RecommendedAction['status'];
+type ModuleTabKey = 'finance' | 'inventory' | 'purchase' | 'sales' | 'analytics';
+type ResultViewKey = 'table' | 'chart';
 
 const RUN_HISTORY_STORAGE_KEY = 'manager-dashboard-ai-history';
 const ACTION_STATUS_STORAGE_KEY = 'manager-dashboard-ai-action-status';
 const ACTION_STATUS_FLOW: ActionStatus[] = ['Open', 'In Progress', 'Done'];
+const moduleTabs: Array<{ key: ModuleTabKey; label: string }> = [
+  { key: 'analytics', label: 'Data Analytics' },
+  { key: 'finance', label: 'Finance' },
+  { key: 'inventory', label: 'Inventory' },
+  { key: 'purchase', label: 'Purchase' },
+  { key: 'sales', label: 'Sales' },
+];
 
-const promptLibrary = [
+const schemaKeyByModule: Record<ModuleTabKey, string> = {
+  analytics: 'all',
+  finance: 'finance',
+  inventory: 'inventory',
+  purchase: 'purchasing',
+  sales: 'sales',
+};
+
+function TableResultIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden="true" className={className}>
+      <rect x="1.5" y="2" width="15" height="14" rx="3" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" />
+      <rect x="3.25" y="4" width="11.5" height="2.5" rx="1.25" fill="#2563eb" />
+      <rect x="3.25" y="7.5" width="3.2" height="2.75" rx="0.8" fill="#34d399" />
+      <rect x="7.4" y="7.5" width="3.2" height="2.75" rx="0.8" fill="#f59e0b" />
+      <rect x="11.55" y="7.5" width="3.2" height="2.75" rx="0.8" fill="#fb7185" />
+      <rect x="3.25" y="11.15" width="3.2" height="2.75" rx="0.8" fill="#22c55e" />
+      <rect x="7.4" y="11.15" width="3.2" height="2.75" rx="0.8" fill="#38bdf8" />
+      <rect x="11.55" y="11.15" width="3.2" height="2.75" rx="0.8" fill="#a78bfa" />
+    </svg>
+  );
+}
+
+function ChartResultIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden="true" className={className}>
+      <rect x="1.5" y="1.5" width="15" height="15" rx="3" fill="#ffffff" stroke="#94a3b8" strokeWidth="1" />
+      <path d="M4 12.5L6.9 9.6L9.1 11.2L13.7 6.6" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="4" cy="12.5" r="1.1" fill="#34d399" />
+      <circle cx="6.9" cy="9.6" r="1.1" fill="#f59e0b" />
+      <circle cx="9.1" cy="11.2" r="1.1" fill="#fb7185" />
+      <circle cx="13.7" cy="6.6" r="1.1" fill="#8b5cf6" />
+      <path d="M4 14.5H14" stroke="#cbd5e1" strokeWidth="1.1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const resultViews: Array<{ key: ResultViewKey; label: string; icon: typeof TableResultIcon }> = [
+  { key: 'table', label: 'Table', icon: TableResultIcon },
+  { key: 'chart', label: 'Chart', icon: ChartResultIcon },
+];
+
+const financeInsightLogs: AiInsightLog[] = [
   {
-    label: 'Kenapa SLA turun?',
-    value: 'Apa penyebab utama outbound delay minggu ini?',
-    mode: 'ask' as const,
+    id: 1,
+    user_prompt: 'Tolong analisis komponen ARR bulan ini dan tampilkan perbandingannya dengan bulan lalu, khusus untuk segmen Enterprise.',
+    steps: [
+      {
+        type: 'thought',
+        content:
+          'User wants an ARR analysis comparing the current month with the previous month, specifically filtered for the Enterprise segment. I need to query the gross new, expansion, contraction, and churned ARR from the monthly_arr_metrics table.',
+      },
+      {
+        type: 'commentary',
+        content:
+          'Saya akan menarik data komponen ARR (Gross New, Expansion, Contraction, Churn) untuk bulan ini dan membandingkannya dengan bulan sebelumnya khusus pada pelanggan Enterprise.',
+      },
+      {
+        type: 'read_query',
+        target: 'finance_db.monthly_arr_metrics',
+        description: 'Membaca skema tabel metrik ARR bulanan untuk memastikan ketersediaan kolom segmen pelanggan.',
+      },
+      {
+        type: 'generate_query',
+        query_string:
+          "SELECT month, gross_new, expansion, contraction, churn FROM finance_db.monthly_arr_metrics WHERE customer_segment = 'Enterprise' AND month >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') ORDER BY month ASC;",
+        description: 'Mengambil agregasi data komponen ARR untuk 2 bulan terakhir pada segmen Enterprise.',
+        rows_affected: 2,
+      },
+      {
+        type: 'chart_insight',
+        chart_type: 'waterfall',
+        title: 'Enterprise ARR Components (Current vs Previous Month)',
+        description:
+          'Visualisasi waterfall untuk menunjukkan penambahan dari Gross New dan Expansion, dikurangi Contraction dan Churn untuk memvisualisasikan Net New ARR.',
+      },
+      {
+        type: 'ai_insight',
+        finding:
+          'Expansion ARR naik 15% dibandingkan bulan lalu, namun angka Churn juga terdeteksi meningkat tajam sebesar 8% pada pelanggan Enterprise.',
+        recommendation:
+          'Perlu dilakukan investigasi segera bersama tim Customer Success mengenai alasan tingginya churn pada segmen Enterprise agar Net New ARR bulan depan tidak negatif.',
+      },
+      {
+        type: 'summary',
+        content:
+          'Analisis komponen ARR telah selesai dimuat. Secara keseluruhan, pertumbuhan pendapatan dari klien yang sudah ada (Expansion) sangat baik, namun lonjakan churn di segmen Enterprise menjadi anomali yang perlu ditindaklanjuti segera.',
+      },
+    ],
   },
   {
-    label: 'Buat dashboard SLA',
-    value: 'Buat dashboard SLA outbound per jam dengan top penyebab delay.',
-    mode: 'transform' as const,
+    id: 2,
+    user_prompt: 'Berapa rasio biaya operasional terhadap pendapatan (Opex to Revenue Ratio) kuartal ini?',
+    steps: [
+      {
+        type: 'thought',
+        content:
+          "Need to calculate the Opex to Revenue ratio for the current quarter. I'll need to sum all operational expenses and divide it by the total gross revenue for Q1.",
+      },
+      {
+        type: 'commentary',
+        content: 'Menghitung rasio Biaya Operasional (Opex) terhadap Pendapatan untuk kuartal berjalan.',
+      },
+      {
+        type: 'read_query',
+        target: 'finance_db.general_ledger',
+        description: 'Memeriksa pemetaan akun (Chart of Accounts) untuk membedakan beban operasional dan pendapatan kotor.',
+      },
+      {
+        type: 'generate_query',
+        query_string:
+          "SELECT SUM(CASE WHEN account_type = 'Opex' THEN amount ELSE 0 END) / SUM(CASE WHEN account_type = 'Revenue' THEN amount ELSE 0 END) AS opex_ratio FROM finance_db.general_ledger WHERE quarter = 'Q1_2026';",
+        description: 'Menghitung rasio pembagian total Opex dengan total Revenue pada Kuartal 1.',
+        rows_affected: 1,
+      },
+      {
+        type: 'chart_insight',
+        chart_type: 'gauge',
+        title: 'Opex to Revenue Ratio (Q1 2026)',
+        description: 'Gauge chart untuk menampilkan rasio Opex, dengan zona hijau di bawah 40%, kuning 40-60%, dan merah di atas 60%.',
+      },
+      {
+        type: 'ai_insight',
+        finding:
+          'Rasio Opex terhadap Pendapatan saat ini berada di angka 42%, sedikit melebihi target ideal perusahaan yaitu 40%.',
+        recommendation:
+          'Disarankan untuk melakukan efisiensi pada pos pengeluaran marketing dan software subscription yang tidak terpakai (underutilized) untuk menekan angka rasio.',
+      },
+      {
+        type: 'summary',
+        content:
+          'Data Rasio Opex terhadap Pendapatan telah divisualisasikan. Angkanya terpantau sedikit di atas batas ideal. Anda dapat melihat rincian pengeluaran operasional terbesar di tabel detail di bawah.',
+      },
+    ],
+  },
+];
+
+const promptLibrary: Array<{ label: string; value: string; mode: AiModeKey; logId: number }> = [
+  {
+    label: 'ARR Enterprise',
+    value: financeInsightLogs[0].user_prompt,
+    mode: 'transform',
+    logId: 1,
   },
   {
-    label: 'Risiko hari ini',
-    value: 'Prioritaskan action dengan dampak operasional tertinggi hari ini.',
-    mode: 'monitor' as const,
+    label: 'Opex Ratio',
+    value: financeInsightLogs[1].user_prompt,
+    mode: 'ask',
+    logId: 2,
   },
-  {
-    label: 'Stockout 7 hari',
-    value: 'SKU mana yang paling berisiko stockout dalam 7 hari ke depan?',
-    mode: 'ask' as const,
-  },
-  {
-    label: 'Dashboard stok kritis',
-    value: 'Buat dashboard stok kritis per gudang dan prediksi habis 7 hari.',
-    mode: 'transform' as const,
-  },
-  {
-    label: 'Bottleneck picking',
-    value: 'Tampilkan risiko bottleneck picking untuk 48 jam ke depan.',
-    mode: 'monitor' as const,
-  },
-] as const;
+];
 
 const modeCopy = {
   ask: {
     title: 'AI Analyst Response',
-    description: 'Jawaban natural language untuk diagnosis cepat dan keputusan harian manager.',
+    description: 'Jawaban natural language untuk analisis finance, rasio, dan anomali pendapatan.',
     insightTitle: 'Jawaban AI',
     insightSummary:
-      'Risiko tertinggi saat ini ada pada tiga SKU cold-storage dengan laju outbound naik 18% selama 5 hari terakhir, sementara replenishment inbound terlambat rata-rata 11 jam. Akar masalah terbesar berasal dari putaway malam yang tidak selesai penuh dan ketimpangan distribusi stok antar gudang.',
+      'Rasio biaya operasional terhadap pendapatan kuartal ini berada sedikit di atas batas ideal. Dari dummy source `finance_db.general_ledger`, beban terbesar masih terkonsentrasi pada `account_type = Opex`, sementara pertumbuhan `Revenue` belum cukup cepat untuk menurunkan rasio secara natural.\n\nKesenjangan utamanya tidak datang dari satu pos tunggal, tetapi dari akumulasi biaya marketing, subscription software, dan overhead operasional yang tumbuh lebih cepat dibanding revenue run-rate.\n\nArea yang paling layak dicek lebih dulu adalah `amount`, `account_type`, `quarter`, dan mapping akun biaya yang underutilized.',
     insights: [
-      'WH Bekasi dan WH Surabaya menyumbang 74% potensi stockout 7 hari.',
-      'Shift malam memiliki backlog putaway 26 pallet di zona frozen.',
-      'SKU seasoning mix memiliki coverage 4,8 hari dengan demand volatility tertinggi.',
+      'Opex to Revenue Ratio saat ini berada di 42%, di atas target internal 40%.',
+      'Pos marketing dan software subscription menyumbang kenaikan biaya paling besar pada kuartal berjalan.',
+      'Revenue masih tumbuh, tetapi belum cukup cepat untuk menutup lonjakan operating expense.',
     ],
     actions: [
       {
-        title: 'Transfer order seasoning mix',
-        detail: 'Buat transfer order dummy `TO-WH-0326-014` untuk memindahkan 120 box Seasoning Mix dari WH Medan ke WH Bekasi sebelum pukul 16:00.',
+        title: 'Audit software subscriptions',
+        detail: 'Review subscription dummy yang underutilized dan tandai service yang dapat dihentikan pada bulan berjalan.',
         status: 'Open',
       },
       {
-        title: 'Shift reinforcement frozen',
-        detail: 'Assign dummy shift plan `SHIFT-FRZ-EXTRA-02` untuk menambah 1 team lead dan 2 picker di zona frozen selama 3 hari ke depan.',
+        title: 'Review spend marketing',
+        detail: 'Bandingkan spend marketing dummy terhadap pipeline conversion untuk menekan channel dengan ROI terendah.',
         status: 'In Progress',
       },
       {
-        title: 'Urgent receiving PO bahan baku',
-        detail: 'Ubah prioritas PO dummy `PO-RM-240311-09` menjadi `urgent receiving` agar bahan seasoning dan packaging masuk gelombang receiving pagi.',
+        title: 'Reforecast revenue buffer',
+        detail: 'Tambahkan scenario buffer pada forecast dummy agar rasio Opex dapat kembali ke bawah 40% pada kuartal berikutnya.',
         status: 'Done',
       },
     ],
-    panelTitle: 'Analysis pattern',
-    panelDescription: 'Pertanyaan ad hoc yang paling sering dibawa manager ke AI.',
+    panelTitle: 'Finance analysis pattern',
+    panelDescription: 'Pertanyaan ad hoc yang paling sering dibawa finance manager ke AI insight.',
   },
   transform: {
     title: 'Generated Dashboard Plan',
-    description: 'Intent dashboard diterjemahkan menjadi KPI, dimensi, visual, dan publish checklist.',
+    description: 'Prompt finance diterjemahkan menjadi KPI ARR, komponen revenue, dan visual embedded insight.',
     insightTitle: 'Rencana Dashboard',
     insightSummary:
-      'Sistem menyarankan komposisi dashboard 6 blok: KPI SLA, heatmap per jam, top delay reason, warehouse exception list, tren 14 hari, dan panel rekomendasi aksi. Struktur ini cocok untuk rapat operasional pagi karena langsung menghubungkan status, penyebab, dan tindakan.',
+      'Sistem menyarankan komposisi dashboard ARR dengan blok `Net New ARR`, `Gross New`, `Expansion`, `Contraction`, dan `Churn`, plus perbandingan actual vs plan. Struktur ini cocok untuk review finance bulanan karena langsung menghubungkan sumber pertumbuhan, loss, dan gap terhadap target.',
     insights: [
-      'Visual utama: timeseries SLA dan panel top exceptions.',
-      'Dimensi prioritas: warehouse, shift, delay reason, carrier, dan customer segment.',
-      'Filter default: last 14 days, active warehouses, outbound orders only.',
+      'Visual utama: waterfall ARR components dan summary card actual vs plan.',
+      'Dimensi prioritas: customer segment, month, product line, dan revenue motion.',
+      'Filter default: current month vs previous month, Enterprise segment.',
     ],
     actions: [
       {
-        title: 'Publish template dashboard',
-        detail: 'Simpan hasil sebagai template dummy `Outbound SLA Morning Review` dan bagikan ke role supervisor outbound.',
+        title: 'Publish ARR review dashboard',
+        detail: 'Simpan hasil sebagai template dummy `ARR Monthly Review` dan bagikan ke finance leadership.',
         status: 'Open',
       },
       {
-        title: 'Aktifkan drill-down KPI',
-        detail: 'Tambahkan aksi drill-down dummy dari KPI `Delay Rate` ke daftar order overdue dan alasan keterlambatan per shift.',
+        title: 'Aktifkan drill-down ARR components',
+        detail: 'Tambahkan drill-down dummy dari `Net New ARR` ke `gross_new`, `expansion`, `contraction`, dan `churn` per segment.',
         status: 'In Progress',
       },
       {
-        title: 'Jadwalkan snapshot harian',
-        detail: 'Jadwalkan snapshot dashboard dummy otomatis setiap pukul 07:00 dengan penerima email `ops.manager@dummy.local`.',
+        title: 'Jadwalkan snapshot bulanan',
+        detail: 'Jadwalkan snapshot dashboard dummy otomatis setiap awal bulan untuk finance review.',
         status: 'Done',
       },
     ],
-    panelTitle: 'Dashboard blueprint',
-    panelDescription: 'Blok dashboard yang dihasilkan dari prompt.',
+    panelTitle: 'Finance dashboard blueprint',
+    panelDescription: 'Blok dashboard yang dihasilkan dari prompt ARR finance.',
   },
   monitor: {
     title: 'Predictive Risk Brief',
-    description: 'Pengawasan berkelanjutan untuk alert, freshness, dan prioritas tindakan.',
+    description: 'Pengawasan finance untuk risiko churn, contraction, dan tekanan efisiensi biaya.',
     insightTitle: 'Prioritas Hari Ini',
     insightSummary:
-      'Prediksi menunjukkan potensi bottleneck picking meningkat pada shift siang karena volume retail order diperkirakan naik 22%, sementara kapasitas picker aktif hanya tumbuh 8%. Jika dibiarkan, SLA outbound hari ini berpotensi turun ke 91,8% dari target 96%.',
+      'Prediksi menunjukkan tekanan terbesar bulan ini datang dari kombinasi kenaikan churn dan rasio Opex yang belum turun. Jika tidak dikoreksi, Net New ARR berisiko tertahan walaupun gross new dan expansion masih tumbuh positif.',
     insights: [
-      'Kemungkinan SLA breach tertinggi terjadi pukul 13:00-16:00.',
-      'Dataset stock movement masih fresh 9 menit, dataset shift capacity fresh 18 menit.',
-      'Simulasi terbaik adalah memindahkan 4 picker dari replenishment ke outbound wave-2.',
+      'Kenaikan churn Enterprise menjadi sinyal risiko utama terhadap target ARR bulanan.',
+      'Rasio Opex yang stabil di atas target mempersempit ruang perbaikan margin.',
+      'Mitigasi tercepat adalah kombinasi retensi account besar dan efisiensi spend non-esensial.',
     ],
     actions: [
       {
-        title: 'Reschedule replenishment',
-        detail: 'Pindahkan replenishment non-kritis batch dummy `REP-240311-C` ke shift malam agar kapasitas siang fokus ke outbound wave-2.',
+        title: 'Escalate churn review',
+        detail: 'Jadwalkan review dummy bersama Customer Success untuk akun Enterprise yang berisiko churn tinggi.',
         status: 'Open',
       },
       {
-        title: 'Aktifkan queue alert',
-        detail: 'Aktifkan alert dummy `ALERT-PICK-QUEUE-180` yang mengirim notifikasi jika antrean picking melebihi 180 line item.',
+        title: 'Aktifkan alert spend variance',
+        detail: 'Aktifkan alert dummy bila spend bulanan melewati batas variance yang disetujui finance.',
         status: 'In Progress',
       },
       {
-        title: 'Distribusi ringkasan tindakan',
-        detail: 'Kirim ringkasan tindakan dummy ke supervisor outbound dan planner melalui channel `Ops Daily Control Tower` sebelum pukul 12:30.',
+        title: 'Distribusi finance control brief',
+        detail: 'Kirim ringkasan tindakan dummy ke finance lead dan revenue ops untuk tindak lanjut mingguan.',
         status: 'Done',
       },
     ],
-    panelTitle: 'Risk queue',
-    panelDescription: 'Prioritas berbasis dampak dan urgensi operasional.',
+    panelTitle: 'Finance risk queue',
+    panelDescription: 'Prioritas berbasis dampak revenue dan urgensi efisiensi.',
   },
 } satisfies Record<
   AiModeKey,
@@ -254,85 +464,32 @@ const modeCopy = {
   }
 >;
 
-const managerKpis: KpiCard[] = [
-  { title: 'Decision Latency', subtitle: 'Hari ini', value: '11 menit', delta: -24, deltaLabel: 'vs minggu lalu', status: 'good' },
-  { title: 'AI Insight Accepted', subtitle: '7 hari', value: '68%', delta: 12, deltaLabel: 'vs minggu lalu', status: 'good' },
-  { title: 'Critical Risk Open', subtitle: 'Live', value: '7', delta: 2, deltaLabel: 'vs kemarin', status: 'warn' },
-  { title: 'Data Freshness SLA', subtitle: 'Lintas domain', value: '96.4%', delta: 3, deltaLabel: 'vs kemarin', status: 'good' },
-];
-
-const cockpitSeries: TimeseriesSeries[] = [
-  { key: 'questions', label: 'Ask', color: '#2563EB' },
-  { key: 'dashboards', label: 'Transform', color: '#14B8A6' },
-  { key: 'actions', label: 'Monitor', color: '#F59E0B' },
-];
-
-const cockpitData: TimeseriesDatum[] = [
-  { date: '04/03', questions: 18, dashboards: 4, actions: 9 },
-  { date: '05/03', questions: 21, dashboards: 5, actions: 11 },
-  { date: '06/03', questions: 17, dashboards: 3, actions: 8 },
-  { date: '07/03', questions: 24, dashboards: 6, actions: 13 },
-  { date: '08/03', questions: 19, dashboards: 5, actions: 10 },
-  { date: '09/03', questions: 27, dashboards: 7, actions: 14 },
-  { date: '10/03', questions: 23, dashboards: 6, actions: 12 },
-];
-
-const topThemes: TopAmountRow[] = [
-  { initials: 'OD', name: 'Outbound Delay', code: '26 pertanyaan', amount: '39% dari semua analisis' },
-  { initials: 'SR', name: 'Stockout Risk', code: '18 pertanyaan', amount: '27% dari semua analisis' },
-  { initials: 'WF', name: 'Workforce Load', code: '13 pertanyaan', amount: '19% dari semua analisis' },
-  { initials: 'DQ', name: 'Data Quality', code: '6 pertanyaan', amount: '9% dari semua analisis' },
-];
-
-const managerAlerts = [
-  {
-    title: 'Predictive bottleneck',
-    warehouse: 'Outbound wave-2',
-    detail: 'Model mendeteksi risiko backlog 22% lebih tinggi pada shift siang jika kapasitas picker tidak ditambah.',
-    severity: 'critical' as const,
-  },
-  {
-    title: 'Freshness risk',
-    warehouse: 'Inbound receiving mart',
-    detail: 'Refresh terakhir 47 menit lalu. Dampak utama ada pada dashboard stockout risk dan replenishment urgency.',
-    severity: 'warning' as const,
-  },
-  {
-    title: 'Instant dashboard ready',
-    warehouse: 'Supervisor outbound',
-    detail: 'Template dashboard SLA per jam siap dipublikasikan ke tim operasional pagi ini.',
-    severity: 'info' as const,
-  },
-];
-
 const modeSignals: Record<AiModeKey, Array<{ term: string; weight: number }>> = {
   ask: [
     { term: 'apa', weight: 1 },
-    { term: 'kenapa', weight: 3 },
-    { term: 'mengapa', weight: 3 },
-    { term: 'penyebab', weight: 3 },
     { term: 'berapa', weight: 2 },
     { term: 'mana', weight: 2 },
     { term: 'analisis', weight: 2 },
     { term: 'ringkas', weight: 2 },
     { term: 'jelaskan', weight: 3 },
-    { term: 'akar masalah', weight: 4 },
-    { term: 'stockout', weight: 2 },
-    { term: 'delay', weight: 2 },
-    { term: 'produktifitas', weight: 2 },
-    { term: 'produktivitas', weight: 2 },
+    { term: 'rasio', weight: 4 },
+    { term: 'opex', weight: 5 },
+    { term: 'revenue', weight: 4 },
+    { term: 'pendapatan', weight: 3 },
+    { term: 'quarter', weight: 2 },
+    { term: 'kuartal', weight: 2 },
   ],
   transform: [
-    { term: 'buat', weight: 2 },
     { term: 'dashboard', weight: 5 },
     { term: 'grafik', weight: 3 },
     { term: 'chart', weight: 3 },
     { term: 'visual', weight: 3 },
-    { term: 'template', weight: 3 },
-    { term: 'layout', weight: 3 },
-    { term: 'tampilan', weight: 2 },
-    { term: 'kpi', weight: 2 },
-    { term: 'heatmap', weight: 4 },
+    { term: 'arr', weight: 5 },
+    { term: 'gross new', weight: 4 },
+    { term: 'expansion', weight: 4 },
+    { term: 'contraction', weight: 4 },
+    { term: 'churn', weight: 4 },
+    { term: 'actual vs plan', weight: 5 },
     { term: 'drill-down', weight: 3 },
     { term: 'publish', weight: 2 },
   ],
@@ -341,15 +498,15 @@ const modeSignals: Record<AiModeKey, Array<{ term: string; weight: number }>> = 
     { term: 'alert', weight: 4 },
     { term: 'monitor', weight: 4 },
     { term: 'prioritas', weight: 3 },
-    { term: 'freshness', weight: 4 },
-    { term: 'bottleneck', weight: 4 },
     { term: 'warning', weight: 3 },
     { term: 'urgent', weight: 3 },
-    { term: 'hari ini', weight: 2 },
-    { term: '48 jam', weight: 2 },
     { term: 'prediksi', weight: 4 },
     { term: 'prediktif', weight: 4 },
     { term: 'pantau', weight: 3 },
+    { term: 'churn', weight: 4 },
+    { term: 'losses', weight: 4 },
+    { term: 'loss', weight: 3 },
+    { term: 'variance', weight: 3 },
   ],
 };
 
@@ -383,19 +540,24 @@ function detectMode(prompt: string): { mode: AiModeKey; confidence: number; reas
     });
   });
 
+  if (normalized.includes('arr') && (normalized.includes('components') || normalized.includes('actual vs plan'))) {
+    baseScores.transform += 5;
+    reasons.transform.push('arr+components/plan');
+  }
+
+  if (normalized.includes('opex') && normalized.includes('revenue')) {
+    baseScores.ask += 4;
+    reasons.ask.push('opex+revenue');
+  }
+
   if (normalized.includes('buat') && normalized.includes('dashboard')) {
     baseScores.transform += 4;
     reasons.transform.push('buat+dashboard');
   }
 
-  if ((normalized.includes('risiko') || normalized.includes('alert')) && normalized.includes('hari ini')) {
+  if ((normalized.includes('risiko') || normalized.includes('alert')) && (normalized.includes('churn') || normalized.includes('variance'))) {
     baseScores.monitor += 3;
-    reasons.monitor.push('risiko/alert+hari ini');
-  }
-
-  if ((normalized.includes('kenapa') || normalized.includes('mengapa')) && normalized.includes('delay')) {
-    baseScores.ask += 3;
-    reasons.ask.push('kenapa+delay');
+    reasons.monitor.push('risiko/alert+finance');
   }
 
   const ranking = (Object.entries(baseScores) as Array<[AiModeKey, number]>).sort((left, right) => {
@@ -423,7 +585,214 @@ function detectMode(prompt: string): { mode: AiModeKey; confidence: number; reas
   };
 }
 
+function buildWorkflowSteps(activeIndex: number): WorkflowStep[] {
+  const steps = [
+    {
+      key: 'schema',
+      title: 'Schema Routing',
+      detail: 'Memilih semantic schema yang paling relevan untuk pertanyaan manager.',
+    },
+    {
+      key: 'analysis',
+      title: 'Analysis',
+      detail: 'Mengurai intent bisnis, tabel inti, join, filter, dan potensi ambigu.',
+    },
+    {
+      key: 'draft',
+      title: 'Draft Answer',
+      detail: 'Menyusun jawaban kerja awal dan kandidat SQL read-only bila perlu.',
+    },
+    {
+      key: 'review',
+      title: 'Review',
+      detail: 'Memeriksa konsistensi schema, risiko halusinasi, dan kualitas jawaban.',
+    },
+    {
+      key: 'final',
+      title: 'Final Response',
+      detail: 'Menghasilkan jawaban akhir yang ringkas, matang, dan aman untuk user.',
+    },
+  ];
+
+  return steps.map((step, index) => ({
+    ...step,
+    status: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending',
+  }));
+}
+
+function applyWorkflowEventToSteps(eventName: WorkflowEventName): WorkflowStep[] {
+  if (eventName === 'started' || eventName === 'schema_selected') {
+    return buildWorkflowSteps(0);
+  }
+  if (eventName === 'analysis_started' || eventName === 'analysis_done') {
+    return buildWorkflowSteps(1);
+  }
+  if (eventName === 'draft_started' || eventName === 'draft_done') {
+    return buildWorkflowSteps(2);
+  }
+  if (eventName === 'review_started' || eventName === 'review_done') {
+    return buildWorkflowSteps(3);
+  }
+  if (eventName === 'completed') {
+    return buildWorkflowSteps(5);
+  }
+
+  return buildWorkflowSteps(0);
+}
+
+function getStepTone(stepType: StepType) {
+  const tones: Record<StepType, { badge: string; card: string }> = {
+    thought: {
+      badge: 'bg-slate-100 text-slate-700 border-slate-200',
+      card: 'bg-slate-50/80',
+    },
+    commentary: {
+      badge: 'bg-sky-100 text-sky-700 border-sky-200',
+      card: 'bg-sky-50/70',
+    },
+    read_query: {
+      badge: 'bg-violet-100 text-violet-700 border-violet-200',
+      card: 'bg-violet-50/70',
+    },
+    generate_query: {
+      badge: 'bg-amber-100 text-amber-700 border-amber-200',
+      card: 'bg-amber-50/70',
+    },
+    chart_insight: {
+      badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      card: 'bg-emerald-50/70',
+    },
+    ai_insight: {
+      badge: 'bg-rose-100 text-rose-700 border-rose-200',
+      card: 'bg-rose-50/70',
+    },
+    summary: {
+      badge: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+      card: 'bg-zinc-50/80',
+    },
+  };
+
+  return tones[stepType];
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
+
+  return parts.filter(Boolean).map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={`strong-${index}`} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
+    }
+
+    if (part.startsWith('`') && part.endsWith('`')) {
+      return (
+        <code key={`code-${index}`} className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.95em] text-foreground">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+
+    return part;
+  });
+}
+
+function renderMarkdownBlocks(markdown: string): ReactNode[] {
+  const normalized = markdown.replace(/\r\n/g, '\n').trim();
+
+  if (!normalized) {
+    return [];
+  }
+
+  const blocks = normalized.split(/\n\n+/);
+
+  return blocks.map((block, blockIndex) => {
+    const trimmed = block.trim();
+    const lines = trimmed.split('\n').map((line) => line.trim()).filter(Boolean);
+
+    const fencedCodeMatch = trimmed.match(/^```(?:\w+)?\n([\s\S]*?)\n```$/);
+    if (fencedCodeMatch) {
+      return (
+        <pre
+          key={`codeblock-${blockIndex}`}
+          className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 px-3 py-3 text-xs leading-6 text-slate-100"
+        >
+          <code>{fencedCodeMatch[1]}</code>
+        </pre>
+      );
+    }
+
+    if (lines.length === 1 && /^#{1,3}\s/.test(lines[0])) {
+      const headingText = lines[0].replace(/^#{1,3}\s/, '');
+      const headingLevel = (lines[0].match(/^#{1,3}/)?.[0].length ?? 1);
+      const headingClassName =
+        headingLevel === 1
+          ? 'text-base font-semibold text-foreground'
+          : headingLevel === 2
+            ? 'text-sm font-semibold text-foreground'
+            : 'text-xs font-semibold uppercase tracking-[0.14em] text-foreground/75';
+
+      return (
+        <p key={`heading-${blockIndex}`} className={headingClassName}>
+          {renderInlineMarkdown(headingText)}
+        </p>
+      );
+    }
+
+    if (lines.every((line) => line.startsWith('> '))) {
+      return (
+        <blockquote
+          key={`blockquote-${blockIndex}`}
+          className="rounded-r-xl border-l-4 border-sky-200 bg-sky-50/60 px-3 py-2 text-sm leading-6 text-foreground/85"
+        >
+          {lines.map((line, lineIndex) => (
+            <p key={`blockquote-line-${blockIndex}-${lineIndex}`}>
+              {renderInlineMarkdown(line.slice(2).trim())}
+            </p>
+          ))}
+        </blockquote>
+      );
+    }
+
+    if (lines.every((line) => line.startsWith('- '))) {
+      return (
+        <ul key={`list-${blockIndex}`} className="space-y-2 pl-5 text-sm leading-6 text-foreground/85 list-disc">
+          {lines.map((line, lineIndex) => (
+            <li key={`list-item-${blockIndex}-${lineIndex}`}>{renderInlineMarkdown(line.slice(2).trim())}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    if (lines.every((line) => /^\d+\.\s/.test(line))) {
+      return (
+        <ol key={`ordered-list-${blockIndex}`} className="space-y-2 pl-5 text-sm leading-6 text-foreground/85 list-decimal">
+          {lines.map((line, lineIndex) => (
+            <li key={`ordered-list-item-${blockIndex}-${lineIndex}`}>{renderInlineMarkdown(line.replace(/^\d+\.\s/, ''))}</li>
+          ))}
+        </ol>
+      );
+    }
+
+    return (
+      <p key={`paragraph-${blockIndex}`} className="text-sm leading-6 text-foreground/85">
+        {renderInlineMarkdown(trimmed)}
+      </p>
+    );
+  });
+}
+
+function getAiWorkflowWebSocketUrl(requestId: string) {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.hostname;
+  return `${protocol}//${host}:8001/api/chat/progress/ws/${requestId}`;
+}
+
 export default function ManagerDashboardPage() {
+  const [activeModule, setActiveModule] = useState<ModuleTabKey>('finance');
+  const [resultView, setResultView] = useState<ResultViewKey>('chart');
   const [prompt, setPrompt] = useState<string>(promptLibrary[0].value);
   const [submittedPrompt, setSubmittedPrompt] = useState<string>(promptLibrary[0].value);
   const [submittedAt, setSubmittedAt] = useState<string>('Belum dijalankan');
@@ -432,16 +801,43 @@ export default function ManagerDashboardPage() {
   const [isRunningAi, setIsRunningAi] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiResult, setAiResult] = useState<AiChatResult | null>(null);
-  const deferredPrompt = useDeferredValue(prompt);
-  const isPreviewUpdating = prompt !== deferredPrompt;
-  const detection = useMemo(() => detectMode(deferredPrompt), [deferredPrompt]);
+  const [workflowSteps, setWorkflowSteps] = useState<WorkflowStep[]>([]);
+  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const [showPrimaryInsightDetail, setShowPrimaryInsightDetail] = useState(false);
+  const [showSecondaryInsightDetail, setShowSecondaryInsightDetail] = useState(false);
+  const [copiedQueryIndex, setCopiedQueryIndex] = useState<number | null>(null);
+  const detection = useMemo(() => detectMode(prompt), [prompt]);
   const detectedMode = detection.mode;
   const content = useMemo(() => modeCopy[detectedMode], [detectedMode]);
   const submittedDetection = useMemo(() => detectMode(submittedPrompt), [submittedPrompt]);
   const submittedContent = useMemo(() => modeCopy[submittedDetection.mode], [submittedDetection]);
-  const detectedMeta = aiModes.find((mode) => mode.key === detectedMode) ?? aiModes[0];
-  const DetectedIcon = detectedMeta.icon;
   const displayContent = submittedAt === 'Belum dijalankan' ? content : submittedContent;
+  const activeInsightLog = useMemo(
+    () => financeInsightLogs.find((log) => log.user_prompt === (submittedAt === 'Belum dijalankan' ? prompt : submittedPrompt)) ?? financeInsightLogs[0],
+    [prompt, submittedAt, submittedPrompt],
+  );
+  const activeChartStep = activeInsightLog.steps.find((step): step is ChartInsightStep => step.type === 'chart_insight');
+  const activeInsightStep = activeInsightLog.steps.find((step): step is AiInsightSpecificStep => step.type === 'ai_insight');
+  const activeSummaryStep = activeInsightLog.steps.find((step): step is SummaryStep => step.type === 'summary');
+  const activeReadTargets = activeInsightLog.steps.filter((step): step is ReadQueryStep => step.type === 'read_query');
+  const activeGenerateQuerySteps = activeInsightLog.steps.filter((step): step is GenerateQueryStep => step.type === 'generate_query');
+  const activeChartSeries = useMemo(() => {
+    if (activeInsightLog.id === 1) {
+      return {
+        title: activeChartStep?.title ?? 'Enterprise ARR Components (Current vs Previous Month)',
+        legend: ['Current Month', 'Previous Month'],
+        pointsA: [2.6, 3.1, 3.3, 3.8, 4.2, 4.4, 4.7, 5.0],
+        pointsB: [2.9, 3.0, 3.2, 3.6, 3.9, 4.1, 4.3, 4.6],
+      };
+    }
+
+    return {
+      title: activeChartStep?.title ?? 'Opex to Revenue Ratio (Q1 2026)',
+      legend: ['Actual Ratio', 'Target Ratio'],
+      pointsA: [44, 43, 42, 41, 43, 42, 42, 41],
+      pointsB: [40, 40, 40, 40, 40, 40, 40, 40],
+    };
+  }, [activeChartStep, activeInsightLog.id]);
 
   const getActionStatus = (mode: AiModeKey, title: string, fallback: ActionStatus) =>
     actionStatusOverrides[`${mode}:${title}`] ?? fallback;
@@ -458,19 +854,22 @@ export default function ManagerDashboardPage() {
 
   const handleRunAtm = async () => {
     const runTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    setSubmittedPrompt(deferredPrompt);
+    setSubmittedPrompt(prompt);
     setSubmittedAt(runTime);
     setAiError(null);
+    setAiResult(null);
     setIsRunningAi(true);
+    setWorkflowSteps(buildWorkflowSteps(0));
+    setCurrentRequestId(null);
     setRunHistory((current) => [
       {
-        prompt: deferredPrompt,
+        prompt,
         mode: detection.mode,
         confidence: detection.confidence,
         time: runTime,
-        pinned: current.find((item) => item.prompt === deferredPrompt)?.pinned ?? false,
+        pinned: current.find((item) => item.prompt === prompt)?.pinned ?? false,
       },
-      ...current.filter((item) => item.prompt !== deferredPrompt),
+      ...current.filter((item) => item.prompt !== prompt),
     ]
       .sort((left, right) => Number(right.pinned) - Number(left.pinned))
       .slice(0, 5));
@@ -482,9 +881,11 @@ export default function ManagerDashboardPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: deferredPrompt,
+          question: prompt,
           include_schema: true,
           include_samples: false,
+          execute_read_only_query: false,
+          schema_key: schemaKeyByModule[activeModule],
         }),
       });
 
@@ -497,19 +898,43 @@ export default function ManagerDashboardPage() {
       }
 
       const result = payload.data;
-      startTransition(() => {
-        setAiResult(result ?? null);
-      });
+      const responseRequestId = payload.data.request_id || response.headers.get('x-request-id');
+
+      setAiResult(result ?? null);
+      if (responseRequestId) {
+        setCurrentRequestId(responseRequestId);
+      } else {
+        setWorkflowSteps(buildWorkflowSteps(5));
+        setIsRunningAi(false);
+      }
     } catch (error) {
       setAiError(error instanceof Error ? error.message : 'Gagal menghubungi AI engine.');
       setAiResult(null);
-    } finally {
+      setWorkflowSteps(buildWorkflowSteps(0));
       setIsRunningAi(false);
     }
   };
 
   const displaySchemaTables = aiResult?.semantic_schema?.tables?.slice(0, 4) ?? [];
   const displayQueries = aiResult?.suggested_queries?.slice(0, 3) ?? [];
+  const queryResultColumns = aiResult?.query_result?.columns ?? [];
+  const queryResultRows = aiResult?.query_result?.rows ?? [];
+  const renderedAnswer = aiResult?.answer ? renderMarkdownBlocks(aiResult.answer) : null;
+  const answerHighlights = aiResult?.answer
+    ? aiResult.answer
+        .split('\n')
+        .map((item) => item.replace(/[*`#-]/g, '').trim())
+        .filter((item) => item.length > 0)
+        .slice(0, 3)
+    : displayContent.insights.slice(0, 3);
+  const chartSeries = activeChartSeries;
+  const applyWorkflowEvent = (eventName: WorkflowEventName) => {
+    setWorkflowSteps(applyWorkflowEventToSteps(eventName));
+
+    if (eventName === 'completed' || eventName === 'failed') {
+      setIsRunningAi(false);
+    }
+  };
 
   const togglePinnedRun = (promptToToggle: string) => {
     setRunHistory((current) =>
@@ -525,6 +950,18 @@ export default function ManagerDashboardPage() {
 
   const clearRunHistory = () => {
     setRunHistory([]);
+  };
+
+  const handleCopyQuery = async (sql: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(sql);
+      setCopiedQueryIndex(index);
+      window.setTimeout(() => {
+        setCopiedQueryIndex((current) => (current === index ? null : current));
+      }, 1800);
+    } catch {
+      setCopiedQueryIndex(null);
+    }
   };
 
   useEffect(() => {
@@ -569,505 +1006,402 @@ export default function ManagerDashboardPage() {
     window.localStorage.setItem(ACTION_STATUS_STORAGE_KEY, JSON.stringify(actionStatusOverrides));
   }, [actionStatusOverrides]);
 
+  useEffect(() => {
+    if (!currentRequestId) {
+      return;
+    }
+
+    const socket = new WebSocket(getAiWorkflowWebSocketUrl(currentRequestId));
+
+    socket.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data) as { event?: WorkflowEventName };
+        const eventName = payload.event;
+        if (!eventName) {
+          return;
+        }
+
+        applyWorkflowEvent(eventName);
+
+        if (eventName === 'completed' || eventName === 'failed') {
+          socket.close();
+        }
+      } catch {
+        socket.close();
+        setIsRunningAi(false);
+      }
+    };
+
+    socket.onerror = () => {
+      socket.close();
+      setIsRunningAi(false);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [currentRequestId]);
+
   return (
-    <div className="container space-y-7 pb-10">
-      <Toolbar>
-        <ToolbarHeading>
-          <div className="flex items-center gap-3">
-            <ToolbarPageTitle>Dashboard Manager</ToolbarPageTitle>
-            <Badge variant="primary" appearance="light">Dashboard AI</Badge>
-            <Badge variant="success" appearance="light">Single Input</Badge>
-          </div>
-          <ToolbarDescription>
-            Manager cukup menulis kebutuhan dalam satu input. Sistem akan otomatis memahami apakah permintaan tersebut berupa analisis data, pembuatan dashboard, atau pemantauan risiko.
-          </ToolbarDescription>
-        </ToolbarHeading>
-        <ToolbarActions>
-          <Button variant="ghost" className="gap-2 border border-border/80 bg-background hover:bg-muted/60">
-            <RefreshCcw className="size-4" />
-            Refresh Signals
-          </Button>
-        </ToolbarActions>
-      </Toolbar>
+    <div className="container space-y-3 pb-8">
+      <div className="flex flex-wrap overflow-hidden rounded-t-2xl border border-b-0 border-border/80 bg-muted/40">
+        {moduleTabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveModule(tab.key)}
+            className={`border-r border-border/80 px-4 py-2 text-xs transition cursor-pointer ${
+              activeModule === tab.key ? 'bg-background font-semibold text-primary' : 'text-secondary-foreground hover:bg-background/70'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-      <KpiGrid cards={managerKpis} />
-
-      <Card className="overflow-hidden border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.14),_transparent_28%),linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(242,247,255,0.94))]">
-        <CardContent className="space-y-6 p-6 lg:p-7">
-          <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className="space-y-5">
-              <div className="space-y-3">
-                <Badge variant="info" appearance="light" className="gap-1.5">
-                  <Sparkles className="size-3.5" />
-                  AI Analytics Teammate
-                </Badge>
-                <div className="space-y-2">
-                  <h2 className="max-w-3xl text-2xl font-semibold tracking-tight text-mono lg:text-3xl">
-                    Satu command bar untuk tanya data, minta dashboard, dan memantau risiko.
-                  </h2>
-                  <p className="max-w-3xl text-sm text-secondary-foreground lg:text-base">
-                    UI ini sengaja dibuat tanpa kategori utama. User tinggal mengetik, lalu sistem mengarahkan output ke mode yang paling relevan.
-                  </p>
-                </div>
-              </div>
-
-              <Card className="border-border/70 bg-background/90">
-                <CardHeader>
-                  <CardHeading>
-                    <CardTitle>AI Command Bar</CardTitle>
-                    <CardDescription>Tulis kebutuhan manager dengan bahasa biasa. Intent akan terdeteksi otomatis.</CardDescription>
-                  </CardHeading>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    {promptLibrary.map((item) => (
-                      <button
-                        key={item.value}
-                        type="button"
-                        onClick={() => setPrompt(item.value)}
-                        className={`rounded-full border px-3 py-2 text-xs transition ${
-                          prompt === item.value
-                            ? 'border-primary bg-primary/8 text-primary'
-                            : 'border-border bg-background text-secondary-foreground hover:border-primary/30 hover:text-primary'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <Textarea
-                    value={prompt}
-                    onChange={(event) => setPrompt(event.target.value)}
-                    className="min-h-32 resize-none border-border/80 bg-background"
-                    placeholder="Contoh: buat dashboard SLA outbound per jam, atau apa risiko terbesar hari ini?"
-                  />
-
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-secondary-foreground">
-                      <Badge variant="primary" appearance="light" className="gap-1.5">
-                        <DetectedIcon className="size-3.5" />
-                        Detected: {detectedMeta.title}
-                      </Badge>
-                      <Badge variant="success" appearance="light">Confidence {detection.confidence.toFixed(2)}</Badge>
-                      <Badge variant="secondary" appearance="light">Freshness 9 menit</Badge>
-                      {detection.reasons.length > 0 ? (
-                        <Badge variant="info" appearance="light">Signal: {detection.reasons.join(', ')}</Badge>
-                      ) : null}
-                      {isPreviewUpdating ? (
-                        <Badge variant="warning" appearance="light">Updating preview...</Badge>
-                      ) : null}
-                    </div>
-                    <Button className="gap-2" onClick={() => void handleRunAtm()} disabled={isRunningAi || !deferredPrompt.trim()}>
-                      <Send className="size-4" />
-                      {isRunningAi ? 'Menjalankan...' : 'Jalankan AI'}
-                    </Button>
-                  </div>
-
-                  <div className="rounded-2xl border border-border/80 bg-muted/30 p-3 text-xs text-secondary-foreground">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="success" appearance="light">Last Run</Badge>
-                      <span>{submittedAt}</span>
-                      {submittedAt !== 'Belum dijalankan' ? <span className="font-medium text-mono">Prompt finalized</span> : <span>Belum ada hasil final</span>}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm font-semibold text-mono">Recent Runs</div>
-                      <div className="flex items-center gap-2">
-                        <div className="text-xs text-secondary-foreground">Simpan 5 prompt terakhir</div>
-                        {runHistory.length > 0 ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-7 border border-border/80 px-2 text-xs"
-                            onClick={clearRunHistory}
-                          >
-                            Clear History
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
-                    {runHistory.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-border p-3 text-xs text-secondary-foreground">
-                        Belum ada riwayat run. Klik `Jalankan AI` untuk menyimpan hasil.
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {runHistory.map((item) => (
-                          <div
-                            key={`${item.time}-${item.prompt}`}
-                            className="w-full rounded-2xl border border-border/80 bg-background px-3 py-3 text-left transition hover:border-primary/40 hover:bg-primary/5"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-2 text-xs">
-                                <Badge variant="primary" appearance="light">{item.mode}</Badge>
-                                {item.pinned ? <Badge variant="warning" appearance="light">Pinned</Badge> : null}
-                                <span className="text-secondary-foreground">{item.time}</span>
-                                <span className="text-secondary-foreground">Confidence {item.confidence.toFixed(2)}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    togglePinnedRun(item.prompt);
-                                  }}
-                                  className="text-xs font-medium text-secondary-foreground hover:text-primary"
-                                >
-                                  {item.pinned ? 'Unpin' : 'Pin'}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setPrompt(item.prompt)}
-                                  className="text-xs font-medium text-primary"
-                                >
-                                  Load
-                                </button>
-                              </div>
-                            </div>
-                            <p className="mt-2 line-clamp-2 text-sm text-mono">{item.prompt}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-3 md:grid-cols-3">
-                {aiModes.map((mode) => {
-                  const Icon = mode.icon;
-                  const active = detectedMode === mode.key;
-
-                  return (
-                    <div
-                      key={mode.key}
-                      className={`rounded-2xl border p-4 ${
-                        active
-                          ? 'border-primary bg-primary/5 shadow-sm'
-                          : 'border-border/70 bg-background/80'
-                      }`}
-                    >
-                      <div className="mb-3 flex items-center justify-between">
-                        <span className="inline-flex size-10 items-center justify-center rounded-xl bg-background text-primary shadow-sm">
-                          <Icon className="size-5" />
-                        </span>
-                        {active ? <Badge variant="primary" appearance="light">Detected</Badge> : null}
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="text-sm font-semibold text-mono">{mode.title}</div>
-                        <p className="text-xs leading-5 text-secondary-foreground">{mode.subtitle}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+      <div className="grid gap-0 overflow-hidden rounded-b-2xl border border-border/80 bg-background lg:grid-cols-[0.96fr_1.04fr]">
+        <div className="border-r border-border/80">
+          <div className="space-y-3 p-3">
+            <div className="space-y-2">
+              <h2 className="max-w-xl text-l font-semibold tracking-tight text-mono">
+                {submittedPrompt}
+              </h2>
             </div>
 
-            <Card className="border-border/70 bg-slate-950 text-white shadow-sm">
-              <CardHeader className={`border-white/10 transition-opacity ${isPreviewUpdating ? 'opacity-75' : 'opacity-100'}`}>
-                <CardHeading>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CardTitle className="text-white">{displayContent.title}</CardTitle>
-                    <Badge variant={submittedAt === 'Belum dijalankan' ? 'warning' : 'success'} appearance="light">
-                      {submittedAt === 'Belum dijalankan' ? 'Live Preview' : 'Final Result'}
-                    </Badge>
-                  </div>
-                  <CardDescription className="text-slate-300">{displayContent.description}</CardDescription>
-                </CardHeading>
-              </CardHeader>
-              <CardContent className={`space-y-5 transition-all ${isPreviewUpdating ? 'translate-y-0.5 opacity-80' : 'translate-y-0 opacity-100'}`}>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
-                  <Badge variant="success">Fresh</Badge>
-                  <Badge variant="info">Explainable</Badge>
-                  <Badge variant="warning">Priority Action</Badge>
-                </div>
+            <div className="space-y-2 rounded-2xl border border-border/80 bg-muted/20 p-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-mono">
+                <span className="inline-flex size-6 items-center justify-center rounded-md bg-gradient-to-br from-fuchsia-500 via-violet-500 to-sky-500 text-white shadow-sm">
+                  ∞
+                </span>
+                Sentient {moduleTabs.find((tab) => tab.key === activeModule)?.label.split(' ')[0] ?? 'Data'} agent
+              </div>
+              {renderedAnswer && renderedAnswer.length > 0 ? renderedAnswer : (
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground/85">{activeSummaryStep?.content ?? displayContent.insightSummary}</p>
+              )}
 
-                {submittedAt !== 'Belum dijalankan' ? (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-slate-300">
-                    <div className="mb-1 font-semibold text-white">Prompt final</div>
-                    <p>{submittedPrompt}</p>
-                  </div>
-                ) : null}
-
-                {aiError ? (
-                  <div className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-xs text-rose-100">
-                    <div className="mb-1 font-semibold">AI engine error</div>
-                    <p>{aiError}</p>
-                  </div>
-                ) : null}
-
+              {!aiResult?.answer ? (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <ScanSearch className="size-4 text-cyan-300" />
-                    {displayContent.insightTitle}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrimaryInsightDetail((current) => !current)}
+                    className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-border/80 bg-background px-3 py-2 text-left transition hover:bg-background/90"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChartResultIcon className="size-5 shrink-0" />
+                      <span className="text-sm font-medium text-foreground">{activeChartStep?.title ?? 'Net new ARR (Actual vs Plan)'}</span>
+                    </div>
+                    <span className="text-xs font-medium text-secondary-foreground">{showPrimaryInsightDetail ? 'Hide' : 'View'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowSecondaryInsightDetail((current) => !current)}
+                    className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-border/80 bg-background px-3 py-2 text-left transition hover:bg-background/90"
+                  >
+                    <div className="flex items-center gap-2">
+                      <ChartResultIcon className="size-5 shrink-0" />
+                      <span className="text-sm font-medium text-foreground">ARR components (gross new, expansion, losses)</span>
+                    </div>
+                    <span className="text-xs font-medium text-secondary-foreground">{showSecondaryInsightDetail ? 'Hide' : 'View'}</span>
+                  </button>
+                </div>
+              ) : null}
+
+              {!aiResult?.answer ? (
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {activeReadTargets.map((step) => step.target).slice(0, 4).map((field) => (
+                    <span
+                      key={field}
+                      className="inline-flex items-center rounded-full border border-border/70 bg-background px-2.5 py-1 text-[10px] font-medium text-secondary-foreground"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setShowPrimaryInsightDetail((current) => !current)}
+                    className="inline-flex cursor-pointer items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100"
+                  >
+                    {showPrimaryInsightDetail ? 'Hide' : 'View'}
+                  </button>
+                </div>
+              ) : null}
+
+              {!aiResult?.answer && showPrimaryInsightDetail ? (
+                <div className="rounded-xl border border-border/70 bg-background/80 p-3 text-xs text-secondary-foreground">
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/70">chart_insight</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground">Gross New + Expansion</div>
+                      <div className="mt-1 leading-5">{activeChartStep?.description ?? 'Visualisasi komponen ARR untuk membandingkan actual vs plan.'}</div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/70">ai_insight</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground">Key finding</div>
+                      <div className="mt-1 leading-5">{activeInsightStep?.finding ?? 'Belum ada temuan utama.'}</div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/70">recommendation</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground">Recommended action</div>
+                      <div className="mt-1 leading-5">{activeInsightStep?.recommendation ?? 'Belum ada rekomendasi tambahan.'}</div>
+                    </div>
                   </div>
-                  <p className="text-sm leading-6 text-slate-300">{aiResult?.answer ?? displayContent.insightSummary}</p>
-                  {aiResult ? (
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                      <Badge variant="secondary">Model {aiResult.model}</Badge>
-                      <Badge variant="secondary">Provider active</Badge>
-                      <span className="max-w-full truncate">{aiResult.provider}</span>
+                </div>
+              ) : null}
+
+              {!aiResult?.answer && showSecondaryInsightDetail ? (
+                <div className="rounded-xl border border-border/70 bg-background/80 p-3 text-xs text-secondary-foreground">
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/70">gross_new</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground">Primary acquisition</div>
+                      <div className="mt-1 leading-5">Komponen revenue baru yang masuk dari pelanggan baru pada periode berjalan.</div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/70">expansion</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground">Upsell growth</div>
+                      <div className="mt-1 leading-5">Pendapatan tambahan dari account existing yang meningkatkan kontrak atau seat count.</div>
+                    </div>
+                    <div className="rounded-lg border border-border/60 bg-muted/40 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground/70">losses</div>
+                      <div className="mt-1 text-sm font-semibold text-foreground">Contraction + churn</div>
+                      <div className="mt-1 leading-5">Komponen pengurang ARR yang paling perlu dimonitor untuk menjaga net new ARR tetap positif.</div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {answerHighlights.map((item) => (
+                <p key={item} className="text-xs leading-6 text-secondary-foreground">
+                  {item}
+                </p>
+              ))}
+            </div>
+
+            <div className="relative rounded-2xl border border-border/80 bg-background p-3 shadow-sm">
+              <div className="pointer-events-none absolute left-3 bottom-3">
+                <span className="inline-flex items-center rounded-full border border-border/80 bg-muted/80 px-2 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-secondary-foreground/80">
+                  MyERPPlus
+                </span>
+              </div>
+              <div className="pointer-events-none absolute right-3 bottom-3 flex justify-end">
+                <Button
+                  size="icon"
+                  className="pointer-events-auto rounded-full shadow-sm"
+                  onClick={() => void handleRunAtm()}
+                  disabled={isRunningAi || !prompt.trim()}
+                  aria-label={isRunningAi ? 'Running AI request' : 'Send prompt'}
+                  title={isRunningAi ? 'Running...' : 'Send'}
+                >
+                  <Send className="size-4 text-emerald-500" />
+                </Button>
+              </div>
+
+              <div className="border-t border-border/70 pt-3">
+                <Textarea
+                  value={prompt}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  className="min-h-16 resize-none border-0 bg-transparent px-1 pb-12 pr-12 text-xs shadow-none focus-visible:ring-0"
+                  placeholder="Ask anything about ARR, churn, opex ratio, expansion, or finance variance."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 bg-muted/20 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="inline-flex rounded-xl border border-border/80 bg-background p-1">
+              {resultViews.map((view) => (
+                <button
+                  key={view.key}
+                  type="button"
+                  onClick={() => setResultView(view.key)}
+                  className={`inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition ${
+                    resultView === view.key ? 'bg-muted font-medium text-foreground' : 'text-secondary-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  <view.icon className={`size-4 shrink-0 ${resultView === view.key ? 'opacity-100' : 'opacity-85'}`} />
+                  {view.label}
+                </button>
+              ))}
+            </div>
+            <Button variant="ghost" className="gap-2 border border-border/80 bg-background text-xs">
+              <Sparkles className="size-4 text-amber-500" />
+              Pin to dashboard
+            </Button>
+          </div>
+
+          <Card className="min-h-[260px] border-border/80 bg-background">
+            <CardHeader>
+              <CardHeading>
+                <CardTitle className="text-sm">{chartSeries.title}</CardTitle>
+              </CardHeading>
+            </CardHeader>
+            <CardContent>
+              {resultView === 'chart' ? (
+                <div className="space-y-3">
+                  <svg viewBox="0 0 640 280" className="h-[180px] w-full overflow-visible rounded-xl bg-muted/20">
+                    {[0, 1, 2, 3, 4].map((line) => (
+                      <line key={line} x1="40" y1={40 + line * 48} x2="610" y2={40 + line * 48} stroke="#d4d4d8" strokeDasharray="4 6" />
+                    ))}
+                    {chartSeries.pointsA.map((_, index) => (
+                      <text key={`x-${index}`} x={55 + index * 78} y="260" fontSize="12" fill="#71717a">
+                        Wk {index + 1}
+                      </text>
+                    ))}
+                    <polyline
+                      fill="none"
+                      stroke="#4f86f7"
+                      strokeWidth="3"
+                      points={chartSeries.pointsA.map((value, index) => `${55 + index * 78},${225 - value * 3.2}`).join(' ')}
+                    />
+                    <polyline
+                      fill="none"
+                      stroke="#55a44e"
+                      strokeWidth="3"
+                      points={chartSeries.pointsB.map((value, index) => `${55 + index * 78},${225 - value * 3.2}`).join(' ')}
+                    />
+                  </svg>
+                  <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-secondary-foreground">
+                    <div className="flex items-center gap-2"><span className="size-3 rounded-full bg-[#4f86f7]" />{chartSeries.legend[0]}</div>
+                    <div className="flex items-center gap-2"><span className="size-3 rounded-full bg-[#55a44e]" />{chartSeries.legend[1]}</div>
+                  </div>
+                </div>
+              ) : null}
+
+              {resultView === 'table' ? (
+                <div className="space-y-3">
+                  {aiResult?.query_result ? (
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-700">Live Query Result</div>
+                            <div className="mt-1 text-sm font-semibold text-emerald-950">
+                              Source: {aiResult.data_source ?? 'myerpplus'}
+                            </div>
+                          </div>
+                          <span className="rounded-full border border-emerald-300 bg-white/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                            {aiResult.query_result.row_count} rows
+                          </span>
+                        </div>
+                        <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 px-3 py-3 text-xs leading-6 text-slate-100">
+                          <code>{aiResult.query_result.sql}</code>
+                        </pre>
+                      </div>
+
+                      {queryResultColumns.length > 0 ? (
+                        <div className="overflow-hidden rounded-xl border border-border/80 bg-background">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-border/70 text-xs">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  {queryResultColumns.map((column) => (
+                                    <th
+                                      key={column.name}
+                                      className="whitespace-nowrap px-3 py-2 text-left font-semibold uppercase tracking-[0.12em] text-secondary-foreground"
+                                    >
+                                      {column.name}
+                                    </th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border/60">
+                                {queryResultRows.map((row, rowIndex) => (
+                                  <tr key={`query-row-${rowIndex}`} className="bg-background">
+                                    {queryResultColumns.map((column) => (
+                                      <td key={`${rowIndex}-${column.name}`} className="whitespace-nowrap px-3 py-2 text-foreground">
+                                        {String(row[column.name] ?? '-')}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
-                </div>
 
-                <div className="space-y-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Key Insights</div>
-                  {(aiResult?.answer
-                    ? aiResult.answer
-                        .split('\n')
-                        .map((item) => item.trim())
-                        .filter((item) => item.length > 0)
-                        .slice(0, 4)
-                    : displayContent.insights).map((item) => (
-                    <div key={item} className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                      <ChartColumn className="mt-0.5 size-4 shrink-0 text-cyan-300" />
-                      <p className="text-sm leading-6 text-slate-200">{item}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {displayQueries.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Suggested Queries</div>
-                    {displayQueries.map((item) => (
-                      <div key={item.sql} className="rounded-xl border border-sky-400/20 bg-sky-400/10 p-3">
-                        <div className="mb-2 flex items-center gap-2">
-                          <Badge variant="info" appearance="light">{item.safety}</Badge>
-                          <span className="text-[11px] text-sky-100/80">{item.rationale}</span>
-                        </div>
-                        <pre className="overflow-x-auto whitespace-pre-wrap break-words text-xs leading-6 text-sky-50">{item.sql}</pre>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
-                {displaySchemaTables.length > 0 ? (
-                  <div className="space-y-3">
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Semantic Schema Snapshot</div>
-                    <div className="grid gap-3">
-                      {displaySchemaTables.map((table) => (
-                        <div key={`${table.schema}.${table.name}`} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-semibold text-white">{table.schema}.{table.name}</p>
-                            {table.primary_key.length > 0 ? <Badge variant="warning">PK {table.primary_key.join(', ')}</Badge> : null}
-                            {typeof table.row_count_estimate === 'number' ? <Badge variant="secondary">~{table.row_count_estimate} rows</Badge> : null}
+                  {displayQueries.length > 0 ? (
+                    <div className="space-y-3">
+                      {displayQueries.map((query, index) => (
+                        <div key={`${query.sql}-${index}`} className="rounded-xl border border-border/80 bg-background p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary-foreground">Example Query {index + 1}</div>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                                {query.safety.replace('_', ' ')}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void handleCopyQuery(query.sql, index)}
+                                className="inline-flex items-center gap-1 rounded-full border border-border/80 bg-muted/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-secondary-foreground transition hover:bg-muted"
+                              >
+                                <Copy className="size-3.5" />
+                                {copiedQueryIndex === index ? 'Copied' : 'Copy SQL'}
+                              </button>
+                            </div>
                           </div>
-                          <p className="mt-2 text-xs leading-6 text-slate-300">
-                            {table.columns.slice(0, 6).map((column) => `${column.name}:${column.data_type}`).join(' | ')}
+                          <p className="mt-2 text-xs leading-5 text-secondary-foreground">{query.rationale}</p>
+                          <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 px-3 py-3 text-xs leading-6 text-slate-100">
+                            <code>{query.sql}</code>
+                          </pre>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  {displaySchemaTables.length > 0 ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {displaySchemaTables.map((table) => (
+                        <div key={`${table.schema}.${table.name}`} className="rounded-xl border border-border/80 bg-background p-3">
+                          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary-foreground">Schema Table</div>
+                          <div className="mt-1 text-sm font-semibold text-foreground">{table.schema}.{table.name}</div>
+                          <p className="mt-2 text-xs leading-5 text-secondary-foreground">
+                            PK: {table.primary_key.join(', ') || '-'}
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-secondary-foreground">
+                            Kolom: {table.columns.slice(0, 5).map((column) => column.name).join(', ')}
                           </p>
                         </div>
                       ))}
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                <div className="space-y-3">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Recommended Actions</div>
-                  {displayContent.actions.map((item) => {
-                    const currentStatus = getActionStatus(
-                      submittedAt === 'Belum dijalankan' ? detectedMode : submittedDetection.mode,
-                      item.title,
-                      item.status,
-                    );
-
-                    return (
-                    <div key={item.title} className="flex items-start justify-between gap-3 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3">
-                      <div className="space-y-1.5">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-semibold text-emerald-50">{item.title}</p>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              cycleActionStatus(
-                                submittedAt === 'Belum dijalankan' ? detectedMode : submittedDetection.mode,
-                                item.title,
-                                currentStatus,
-                              )
-                            }
-                          >
-                            <Badge
-                              variant={
-                                currentStatus === 'Done'
-                                  ? 'success'
-                                  : currentStatus === 'In Progress'
-                                    ? 'warning'
-                                    : 'secondary'
-                              }
-                              appearance="light"
-                              className="cursor-pointer"
-                            >
-                              {currentStatus}
-                            </Badge>
-                          </button>
+                  {activeInsightLog.steps.map((step, index) => (
+                    <div key={`${activeInsightLog.id}-${index}-${step.type}`} className={`rounded-xl border border-border/80 p-3 ${getStepTone(step.type).card}`}>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${getStepTone(step.type).badge}`}>
+                          {step.type}
                         </div>
-                        <p className="text-sm leading-6 text-emerald-100/90">{item.detail}</p>
-                        <p className="text-[11px] text-emerald-100/70">Klik badge status untuk mengubah progres aksi.</p>
+                        <div className="text-[10px] uppercase tracking-[0.14em] text-secondary-foreground">step {index + 1}</div>
                       </div>
-                      <ArrowRight className="mt-1 size-4 shrink-0 text-emerald-200" />
+                      <div className="mt-2 text-xs leading-6 text-secondary-foreground">
+                        {'content' in step ? step.content : null}
+                        {'target' in step ? `${step.target}${step.description ? ` - ${step.description}` : ''}` : null}
+                        {'query_string' in step ? `${step.description} Query: ${step.query_string}` : null}
+                        {'chart_type' in step ? `${step.title} - ${step.description}` : null}
+                        {'finding' in step ? `${step.finding}${step.recommendation ? ` Recommendation: ${step.recommendation}` : ''}` : null}
+                      </div>
                     </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+                  ))}
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <TimeseriesCard
-          title="Dashboard AI usage trend"
-          subtitle="Volume analisis manager selama 7 hari terakhir"
-          data={cockpitData}
-          series={cockpitSeries}
-        />
-        <TopAmountCard
-          title="Top analysis themes"
-          subtitle="Topik yang paling sering dianalisis manager"
-          rows={topThemes}
-        />
+                  {activeGenerateQuerySteps.length > 0 ? (
+                    <div className="rounded-xl border border-border/80 bg-slate-950 p-3 text-slate-100">
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Generated Query</div>
+                      <pre className="whitespace-pre-wrap break-words text-xs leading-6">{activeGenerateQuerySteps[0].query_string}</pre>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {detectedMode === 'transform' ? (
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <Card>
-            <CardHeader>
-              <CardHeading>
-                <CardTitle>{content.panelTitle}</CardTitle>
-                <CardDescription>{content.panelDescription}</CardDescription>
-              </CardHeading>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                {[
-                  'KPI strip: SLA, delay rate, order at risk, backlog',
-                  'Heatmap outbound per jam dan per warehouse',
-                  'Top delay reasons dan exception order table',
-                  'Action panel untuk supervisor dan planner',
-                ].map((item, index) => (
-                  <div key={item} className="rounded-2xl border border-dashed border-border p-4">
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-mono">
-                      <LayoutDashboard className="size-4 text-primary" />
-                      Block {index + 1}
-                    </div>
-                    <p className="text-sm leading-6 text-secondary-foreground">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardHeading>
-                <CardTitle>Publish checklist</CardTitle>
-                <CardDescription>Guardrail sebelum dashboard dibagikan ke tim.</CardDescription>
-              </CardHeading>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                ['Metric mapping', 'Semua KPI sudah terhubung ke definisi operasional.'],
-                ['Filter defaults', 'Last 14 days, active WH, outbound orders.'],
-                ['Drill-down', 'KPI dapat ditelusuri sampai level order dan shift.'],
-                ['Audience', 'Template ditargetkan untuk supervisor outbound.'],
-              ].map(([title, desc]) => (
-                <div key={title} className="rounded-xl border border-border p-3">
-                  <div className="text-sm font-medium text-mono">{title}</div>
-                  <p className="mt-1 text-sm text-secondary-foreground">{desc}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {detectedMode === 'monitor' ? (
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Card>
-            <CardHeader>
-              <CardHeading>
-                <CardTitle>{content.panelTitle}</CardTitle>
-                <CardDescription>{content.panelDescription}</CardDescription>
-              </CardHeading>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                ['SLA breach', 'High', 'Prediksi turun ke 91,8% pada shift siang.', 'critical'],
-                ['Stockout', 'Medium', '2 SKU bumbu kritis habis dalam 5 hari.', 'warning'],
-                ['Freshness drift', 'Medium', 'Receiving mart terlambat 47 menit.', 'warning'],
-                ['Labor imbalance', 'High', 'Outbound wave-2 kekurangan 4 picker.', 'critical'],
-              ].map(([title, level, desc, tone]) => (
-                <div key={title} className="rounded-xl border border-border p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-medium text-mono">{title}</div>
-                    <Badge variant={tone === 'critical' ? 'destructive' : 'warning'} appearance="light">{level}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-secondary-foreground">{desc}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6">
-            <WarehouseAlertCard title="Manager alerts" subtitle="Alert operasional, freshness, dan publishing" rows={managerAlerts} />
-            <Card>
-              <CardHeader>
-                <CardHeading>
-                  <CardTitle>Operational cadence</CardTitle>
-                  <CardDescription>Waktu respons harian untuk loop analisis ke tindakan.</CardDescription>
-                </CardHeading>
-              </CardHeader>
-              <CardContent className="grid gap-3 md:grid-cols-3">
-                {[
-                  { title: 'Detect', value: '09 menit', icon: Clock3 },
-                  { title: 'Explain', value: '04 menit', icon: BrainCircuit },
-                  { title: 'Act', value: '11 menit', icon: CircleAlert },
-                ].map((item) => {
-                  const CurrentIcon = item.icon;
-
-                  return (
-                    <div key={item.title} className="rounded-2xl border border-border p-4">
-                      <CurrentIcon className="mb-3 size-5 text-primary" />
-                      <div className="text-sm font-medium text-secondary-foreground">{item.title}</div>
-                      <div className="mt-1 text-2xl font-semibold text-mono">{item.value}</div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      ) : null}
-
-      {detectedMode === 'ask' ? (
-        <Card>
-          <CardHeader>
-            <CardHeading>
-              <CardTitle>{content.panelTitle}</CardTitle>
-              <CardDescription>{content.panelDescription}</CardDescription>
-            </CardHeading>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
-            {[
-              'Kenapa overtime shift malam naik minggu ini?',
-              'Gudang mana yang paling sering menjadi sumber delay?',
-              'Apa faktor utama yang mendorong stockout risk tertinggi?',
-            ].map((item) => (
-              <div key={item} className="rounded-2xl border border-border p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-medium text-mono">
-                  <BrainCircuit className="size-4 text-primary" />
-                  Suggested ask
-                </div>
-                <p className="text-sm leading-6 text-secondary-foreground">{item}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }

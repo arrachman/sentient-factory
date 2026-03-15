@@ -113,13 +113,19 @@ services:
       POSTGRES_PORT: 3208
       POSTGRES_USER: root
       POSTGRES_DB: sentient_factory
+      AI_AUDIT_DATABASE_URL: postgresql://root:PasswordSuperRahasia123!@host.docker.internal:3208/sentient_factory
+      MYERPPLUS_DATABASE_URL: mysql+pymysql://dashboard:PwdDash)(*@103.125.36.54:20406/myerpplus_dashboard
       AI_ENGINE_HOST: 0.0.0.0
       AI_ENGINE_PORT: 8001
       CODEX_CONFIG_PATH: /codex/config.toml
+      AI_AGENT_WORKFLOW_MAX_PASSES: 2
+      LLM_REQUEST_TIMEOUT_SECONDS: 120
+      LLM_REQUEST_MAX_RETRIES: 3
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ../apps/ai-engine:/app:ro
+      - ../apps/myerpplus-db-mapping:/myerpplus-db-mapping:ro
       - /home/rania/.codex:/codex:ro
     depends_on:
       postgres:
@@ -133,8 +139,8 @@ services:
       retries: 5
     command: >
       sh -c "export DATABASE_URL=\"postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$${POSTGRES_HOST}:$${POSTGRES_PORT}/$${POSTGRES_DB}\" &&
-      pip install --no-cache-dir fastapi 'uvicorn[standard]' pydantic-settings httpx psycopg2-binary tomli &&
-      python -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001"
+      pip install --no-cache-dir fastapi 'uvicorn[standard]' pydantic-settings httpx psycopg2-binary pymysql cryptography tomli redis &&
+      python -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001 --reload"
 
   web-dashboard:
     image: node:20-alpine

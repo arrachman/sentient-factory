@@ -99,7 +99,7 @@ Register a new user account.
   "email": "newuser@example.com",
   "password": "securepassword123",
   "name": "Jane Smith",
-  "company": "Acme Corp"
+  "company": "Sentient Corp"
 }
 ```
 
