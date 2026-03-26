@@ -1,6 +1,6 @@
 'use client';
 
-import { JSX, useCallback, useMemo } from 'react';
+import { JSX, MouseEvent, useCallback, useMemo } from 'react';
 import { MenuConfig, MenuItem } from '@/config/types';
 import { cn } from '@/lib/utils';
 import {
@@ -19,11 +19,20 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppMenu } from './menu-context';
 import { resolveSidebarSelectedValue } from './sidebar-menu-selection';
+import { useLayout } from './context';
 
 export function SidebarMenu() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { menus } = useAppMenu();
+  const {
+    sidebarCollapse,
+    setSidebarCollapse,
+    sidebarHoverExpand,
+    setSidebarHoverExpand,
+    sidebarTheme,
+  } = useLayout();
+  const isDarkSidebar = sidebarTheme === 'dark' || pathname.includes('dark-sidebar');
   const currentPathWithQuery = searchParams.toString()
     ? `${pathname}?${searchParams.toString()}`
     : pathname;
@@ -68,15 +77,26 @@ export function SidebarMenu() {
   const classNames: AccordionMenuClassNames = {
     root: 'lg:ps-1 space-y-3',
     group: 'gap-px',
-    label:
-      'uppercase text-xs font-medium text-muted-foreground/70 pt-2.25 pb-px',
+    label: cn(
+      'pt-2.25 pb-px text-[11px] font-semibold uppercase tracking-[0.14em]',
+      isDarkSidebar ? 'text-[#565674]' : 'text-[#A1A5B7]',
+    ),
     separator: '',
-    item: 'h-8 hover:bg-transparent text-accent-foreground hover:text-primary data-[selected=true]:text-primary data-[selected=true]:bg-muted data-[selected=true]:font-medium',
+    item: cn(
+      "h-10 rounded-xl px-3 text-[13px] font-medium transition before:pointer-events-none before:absolute before:start-0 before:top-2 before:h-[calc(100%-1rem)] before:w-[3px] before:rounded-full before:bg-transparent [&_svg]:stroke-[1.75]",
+      isDarkSidebar
+        ? 'text-[#A1A5B7] hover:bg-[#1B1B28] hover:text-white data-[selected=true]:bg-[#1B84FF]/15 data-[selected=true]:font-semibold data-[selected=true]:text-white data-[selected=true]:before:bg-[#1B84FF]'
+        : 'text-[#5E6278] hover:bg-white hover:text-[#009EF7] hover:shadow-[0px_0px_20px_0px_rgba(76,87,125,0.03)] data-[selected=true]:bg-[#009EF7]/10 data-[selected=true]:font-semibold data-[selected=true]:text-[#009EF7] data-[selected=true]:shadow-none data-[selected=true]:before:bg-[#009EF7]',
+    ),
     sub: '',
-    subTrigger:
-      'h-8 hover:bg-transparent text-accent-foreground hover:text-primary data-[selected=true]:text-primary data-[selected=true]:bg-muted data-[selected=true]:font-medium',
-    subContent: 'py-0',
-    indicator: '',
+    subTrigger: cn(
+      "h-10 rounded-xl px-3 text-[13px] font-medium transition before:pointer-events-none before:absolute before:start-0 before:top-2 before:h-[calc(100%-1rem)] before:w-[3px] before:rounded-full before:bg-transparent [&_svg]:stroke-[1.75]",
+      isDarkSidebar
+        ? 'text-[#A1A5B7] hover:bg-[#1B1B28] hover:text-white data-[selected=true]:bg-[#1B84FF]/15 data-[selected=true]:font-semibold data-[selected=true]:text-white data-[selected=true]:before:bg-[#1B84FF]'
+        : 'text-[#5E6278] hover:bg-white hover:text-[#009EF7] hover:shadow-[0px_0px_20px_0px_rgba(76,87,125,0.03)] data-[selected=true]:bg-[#009EF7]/10 data-[selected=true]:font-semibold data-[selected=true]:text-[#009EF7] data-[selected=true]:shadow-none data-[selected=true]:before:bg-[#009EF7]',
+    ),
+    subContent: 'py-0 ps-3',
+    indicator: isDarkSidebar ? 'text-[#565674]' : '',
   };
 
   const buildMenu = (items: MenuConfig): JSX.Element[] => {
@@ -246,8 +266,33 @@ export function SidebarMenu() {
     return <AccordionMenuLabel key={index}>{item.heading}</AccordionMenuLabel>;
   };
 
+  const handleMenuClickCapture = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    const clickedLink = target.closest('a[href]') as HTMLAnchorElement | null;
+
+    if (
+      clickedLink &&
+      clickedLink.getAttribute('href') !== '#' &&
+      sidebarCollapse &&
+      sidebarHoverExpand
+    ) {
+      requestAnimationFrame(() => {
+        setSidebarHoverExpand(false);
+        setSidebarCollapse(true);
+      });
+      return;
+    }
+
+    if (!sidebarCollapse) {
+      return;
+    }
+  };
+
   return (
-    <ScrollArea className="flex grow shrink-0 py-5 px-5 lg:h-[calc(100vh-5.5rem)]">
+    <ScrollArea
+      className="flex grow shrink-0 px-5 py-5 lg:h-[calc(100vh-5.5rem)]"
+      onClickCapture={handleMenuClickCapture}
+    >
       <AccordionMenu
         selectedValue={resolvedSelectedValue ?? currentPathWithQuery}
         matchPath={matchPath}

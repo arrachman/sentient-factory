@@ -8,7 +8,7 @@ import { BackendStatusWarning } from './backend-status-warning';
 
 export function Main({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  const { sidebarCollapse } = useLayout();
+  const { sidebarCollapse, sidebarHoverExpand } = useLayout();
 
   useEffect(() => {
     const bodyClass = document.body.classList;
@@ -19,6 +19,16 @@ export function Main({ children }: { children: React.ReactNode }) {
       bodyClass.remove('sidebar-collapse');
     }
   }, [sidebarCollapse]);
+
+  useEffect(() => {
+    const bodyClass = document.body.classList;
+
+    if (sidebarCollapse && sidebarHoverExpand) {
+      bodyClass.add('sidebar-hover-expand');
+    } else {
+      bodyClass.remove('sidebar-hover-expand');
+    }
+  }, [sidebarCollapse, sidebarHoverExpand]);
 
   useEffect(() => {
     const bodyClass = document.body.classList;
@@ -37,6 +47,7 @@ export function Main({ children }: { children: React.ReactNode }) {
       bodyClass.remove('demo1');
       bodyClass.remove('sidebar-fixed');
       bodyClass.remove('sidebar-collapse');
+      bodyClass.remove('sidebar-hover-expand');
       bodyClass.remove('header-fixed');
       bodyClass.remove('layout-initialized');
       clearTimeout(timer);

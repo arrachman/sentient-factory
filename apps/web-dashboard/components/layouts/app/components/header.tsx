@@ -4,9 +4,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { toAbsoluteUrl } from '@/lib/helpers';
-import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useScrollPosition } from '@/hooks/use-scroll-position';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -18,6 +16,7 @@ import {
 import { NotificationsSheet } from '@/components/layouts/app/shared/topbar/notifications-sheet';
 import { UserDropdownMenu } from '@/components/layouts/app/shared/topbar/user-dropdown-menu';
 import { SidebarMenu } from './sidebar-menu';
+import { useLayout } from './context';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -26,9 +25,7 @@ export function Header() {
 
   const pathname = usePathname();
   const mobileMode = useIsMobile();
-
-  const scrollPosition = useScrollPosition();
-  const headerSticky: boolean = scrollPosition > 0;
+  const { sidebarCollapse, setSidebarCollapse } = useLayout();
 
   // Close sheet when route changes
   useEffect(() => {
@@ -37,12 +34,22 @@ export function Header() {
 
   return (
     <header
-      className={cn(
-        'header fixed top-0 z-10 start-0 flex items-stretch shrink-0 border-b border-transparent bg-background end-0 pe-[var(--removed-body-scroll-bar-size,0px)]',
-        headerSticky && 'border-b border-border',
-      )}
+      className="header fixed top-0 z-10 start-0 end-0 flex shrink-0 items-stretch border-b border-border bg-background pe-[var(--removed-body-scroll-bar-size,0px)]"
     >
       <div className="container-fluid flex justify-between items-stretch lg:gap-4">
+        <div className="hidden lg:flex items-center">
+          {sidebarCollapse && (
+            <Button
+              variant="ghost"
+              mode="icon"
+              aria-label="Show sidebar"
+              onClick={() => setSidebarCollapse(false)}
+            >
+              <Menu className="text-muted-foreground/70" />
+            </Button>
+          )}
+        </div>
+
         {/* HeaderLogo */}
         <div className="flex lg:hidden items-center gap-2.5">
           <Link href="/" className="shrink-0">

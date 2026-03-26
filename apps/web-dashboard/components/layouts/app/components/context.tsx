@@ -1,4 +1,7 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+'use client';
+
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { useTheme } from 'next-themes';
 
 type SidebarTheme = 'dark' | 'light';
 
@@ -6,6 +9,8 @@ type SidebarTheme = 'dark' | 'light';
 interface LayoutState {
   sidebarCollapse: boolean;
   setSidebarCollapse: (open: boolean) => void;
+  sidebarHoverExpand: boolean;
+  setSidebarHoverExpand: (open: boolean) => void;
   sidebarTheme: SidebarTheme;
   setSidebarTheme: (theme: SidebarTheme) => void;
 }
@@ -19,14 +24,22 @@ interface LayoutProviderProps {
 }
 
 export function LayoutProvider({ children }: LayoutProviderProps) {
+  const { resolvedTheme } = useTheme();
   const [sidebarCollapse, setSidebarCollapse] = useState(false);
+  const [sidebarHoverExpand, setSidebarHoverExpand] = useState(false);
   const [sidebarTheme, setSidebarTheme] = useState<SidebarTheme>('light');
+
+  useEffect(() => {
+    setSidebarTheme(resolvedTheme === 'dark' ? 'dark' : 'light');
+  }, [resolvedTheme]);
 
   return (
     <LayoutContext.Provider
       value={{
         sidebarCollapse,
         setSidebarCollapse,
+        sidebarHoverExpand,
+        setSidebarHoverExpand,
         sidebarTheme,
         setSidebarTheme,
       }}
