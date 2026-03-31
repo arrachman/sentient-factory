@@ -250,9 +250,9 @@ def _resolve_existing_path(configured_path: Path) -> Path:
     if configured_path.name == "semantic-schema-sales.json":
         candidates.extend(
             [
-                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-sales.json"),
-                Path("/myerpplus-db-mapping/db/semantic-schema-sales.json"),
-                Path("apps/myerpplus-db-mapping/db/semantic-schema-sales.json"),
+                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
+                Path("/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
+                Path("apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
             ]
         )
     if configured_path.name == "semantic-schema.json":

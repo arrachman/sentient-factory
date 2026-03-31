@@ -14,7 +14,7 @@
       "key": "finance",
       "domain": "finance_accounting",
       "description": "Finance, accounting, jurnal, kas, bank, giro, dan saldo awal COA.",
-      "file": "semantic-schema-finance.json",
+      "file": "m2 - finance/semantic-schema-finance.json",
       "table_prefixes": [
         "m2"
       ]
@@ -23,7 +23,7 @@
       "key": "inventory",
       "domain": "inventory_warehouse",
       "description": "Inventory, gudang, mutasi stok, stok opname, dan saldo awal barang.",
-      "file": "semantic-schema-inventory.json",
+      "file": "m3 - inventory/semantic-schema-inventory.json",
       "table_prefixes": [
         "m3"
       ]
@@ -32,7 +32,7 @@
       "key": "purchasing",
       "domain": "purchasing_account_payable",
       "description": "Purchasing, penerimaan barang, invoice pembelian, retur pembelian, dan hutang.",
-      "file": "semantic-schema-purchasing.json",
+      "file": "m4 - purchasing/semantic-schema-m4.json",
       "table_prefixes": [
         "m4"
       ]
@@ -41,7 +41,7 @@
       "key": "obt",
       "domain": "obt",
       "description": "OBT untuk transaksi m5: sales, delivery, invoice penjualan, retur penjualan, dan piutang.",
-      "file": "semantic-schema-sales.json",
+      "file": "m5 - sales/semantic-schema-sales.json",
       "table_prefixes": [
         "m5"
       ]
@@ -50,7 +50,7 @@
       "key": "m1",
       "domain": "prefix_m1",
       "description": "Schema semantic khusus tabel prefix m1.",
-      "file": "semantic-schema-m1.json",
+      "file": "m1 - master data/semantic-schema-m1.json",
       "table_prefixes": [
         "m1"
       ]
@@ -59,7 +59,7 @@
       "key": "m2",
       "domain": "prefix_m2",
       "description": "Schema semantic khusus tabel prefix m2.",
-      "file": "semantic-schema-m2.json",
+      "file": "m2 - finance/semantic-schema-m2.json",
       "table_prefixes": [
         "m2"
       ]
@@ -68,7 +68,7 @@
       "key": "m3",
       "domain": "prefix_m3",
       "description": "Schema semantic khusus tabel prefix m3.",
-      "file": "semantic-schema-m3.json",
+      "file": "m3 - inventory/semantic-schema-m3.json",
       "table_prefixes": [
         "m3"
       ]
@@ -77,7 +77,7 @@
       "key": "m4",
       "domain": "prefix_m4",
       "description": "Schema semantic khusus tabel prefix m4.",
-      "file": "semantic-schema-m4.json",
+      "file": "m4 - purchasing/semantic-schema-m4.json",
       "table_prefixes": [
         "m4"
       ]
@@ -86,9 +86,72 @@
       "key": "m5",
       "domain": "prefix_m5",
       "description": "Schema semantic khusus tabel prefix m5.",
-      "file": "semantic-schema-m5.json",
+      "file": "m5 - sales/semantic-schema-m5.json",
       "table_prefixes": [
         "m5"
+      ]
+    },
+    {
+      "key": "m6",
+      "domain": "prefix_m6",
+      "description": "Schema semantic khusus tabel prefix m6.",
+      "file": "m6 - manufacturing/semantic-schema-m6.json",
+      "table_prefixes": [
+        "m6"
+      ]
+    },
+    {
+      "key": "m7",
+      "domain": "prefix_m7",
+      "description": "Schema semantic khusus tabel prefix m7.",
+      "file": "m7 - procurement advanced/semantic-schema-m7.json",
+      "table_prefixes": [
+        "m7"
+      ]
+    },
+    {
+      "key": "m8",
+      "domain": "prefix_m8",
+      "description": "Schema semantic khusus tabel prefix m8.",
+      "file": "m8 - analytics content/semantic-schema-m8.json",
+      "table_prefixes": [
+        "m8"
+      ]
+    },
+    {
+      "key": "m9",
+      "domain": "prefix_m9",
+      "description": "Schema semantic khusus tabel prefix m9.",
+      "file": "m9 - pending/semantic-schema-m9.json",
+      "table_prefixes": [
+        "m9"
+      ]
+    },
+    {
+      "key": "m10",
+      "domain": "prefix_m10",
+      "description": "Schema semantic khusus tabel prefix m10.",
+      "file": "m10 - pending/semantic-schema-m10.json",
+      "table_prefixes": [
+        "m10"
+      ]
+    },
+    {
+      "key": "m11",
+      "domain": "prefix_m11",
+      "description": "Schema semantic khusus tabel prefix m11.",
+      "file": "m11 - healthcare/semantic-schema-m11.json",
+      "table_prefixes": [
+        "m11"
+      ]
+    },
+    {
+      "key": "m12",
+      "domain": "prefix_m12",
+      "description": "Schema semantic khusus tabel prefix m12.",
+      "file": "m12 - pos/semantic-schema-m12.json",
+      "table_prefixes": [
+        "m12"
       ]
     },
     {
@@ -102,7 +165,14 @@
         "m2",
         "m3",
         "m4",
-        "m5"
+        "m5",
+        "m6",
+        "m7",
+        "m8",
+        "m9",
+        "m10",
+        "m11",
+        "m12"
       ]
     }
   ]

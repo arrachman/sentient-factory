@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         alias="SEMANTIC_SCHEMA_MANIFEST_PATH",
     )
     semantic_query_schema_sales_path: Path = Field(
-        default=Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-sales.json"),
+        default=Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
         alias="SEMANTIC_QUERY_SCHEMA_SALES_PATH",
     )
     ai_chat_workflow_mode: str = Field(default="agent", alias="AI_CHAT_WORKFLOW_MODE")

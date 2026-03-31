@@ -318,7 +318,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--semantic-sales-schema",
-        default="apps/myerpplus-db-mapping/db/semantic-schema-sales.json",
+        default="apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json",
         help="Path to semantic sales schema JSON",
     )
     parser.add_argument(

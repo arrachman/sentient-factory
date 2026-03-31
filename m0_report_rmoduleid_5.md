@@ -1,6 +1,6 @@
 # M0 Report Reference for `rmoduleid = 5`
 
-Dokumen ini merangkum metadata report `m0_report` untuk `rmoduleid = 5` dan ditujukan sebagai sumber bantu saat merapikan semantic schema di [`apps/myerpplus-db-mapping/db/semantic-schema-m5.json`](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m5.json).
+Dokumen ini merangkum metadata report `m0_report` untuk `rmoduleid = 5` dan ditujukan sebagai sumber bantu saat merapikan semantic schema di [`semantic-schema-m5.json`](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5.json).
 
 Fokus dokumen:
 - menjelaskan fungsi bisnis tabel `m5_*` dari sudut pandang report legacy

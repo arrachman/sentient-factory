@@ -1,7 +1,7 @@
 {
   "title": "Semantic Schema M4 Summary",
-  "source_markdown": "semantic-schema-m4-summary.md",
-  "source_schema_json": "apps/myerpplus-db-mapping/db/semantic-schema-m4.json",
+  "source_markdown": "apps/myerpplus-db-mapping/db/m4 - purchasing/semantic-schema-m4-summary.md",
+  "source_schema_json": "apps/myerpplus-db-mapping/db/m4 - purchasing/semantic-schema-m4.json",
   "source_queries_json": "m4-queries.json",
   "totals": {
     "schema_tables": 35,
@@ -2951,5 +2951,6 @@
         "cross_module_refs": 4
       }
     }
-  ]
+  ],
+  "notes": []
 }

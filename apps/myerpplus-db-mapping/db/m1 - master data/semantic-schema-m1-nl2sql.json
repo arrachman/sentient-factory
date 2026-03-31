@@ -1,0 +1,208 @@
+{
+  "domain": "myerpplus_master_m1",
+  "description": "Machine-friendly NL2SQL guide untuk modul M1 master data. Berisi tabel utama, sinonim bisnis, join hints, relasi referensi, dan aturan query generation.",
+  "source_files": [
+    "semantic-schema-m1.json",
+    "semantic-schema-m1-summary.md",
+    "m1-queries.md",
+    "m1-queries-by-type.md"
+  ],
+  "business_terms": {
+    "CONTACT": [
+      "kontak",
+      "customer",
+      "supplier",
+      "salesman",
+      "rekanan"
+    ],
+    "ITEM": [
+      "barang",
+      "produk",
+      "item",
+      "sku"
+    ],
+    "WAREHOUSE": [
+      "gudang"
+    ],
+    "COA": [
+      "chart of accounts",
+      "akun",
+      "rekening",
+      "coa"
+    ],
+    "BRANCH": [
+      "cabang"
+    ],
+    "LOCATION": [
+      "lokasi"
+    ],
+    "TERMS": [
+      "termin pembayaran",
+      "terms"
+    ],
+    "TAX": [
+      "pajak"
+    ],
+    "PRICE_CATEGORY": [
+      "kategori harga",
+      "price category"
+    ],
+    "TRANSACTION_NOTE": [
+      "catatan transaksi",
+      "transaction note"
+    ]
+  },
+  "table_groups": {
+    "core_masters": [
+      "m1_contact",
+      "m1_item",
+      "m1_warehouse",
+      "m1_coa",
+      "m1_branch",
+      "m1_location",
+      "m1_division",
+      "m1_department",
+      "m1_subdepartment",
+      "m1_subdivision",
+      "m1_section",
+      "m1_project",
+      "m1_cost_center"
+    ],
+    "commercial_masters": [
+      "m1_terms",
+      "m1_tax",
+      "m1_currency",
+      "m1_bank",
+      "m1_expedition",
+      "m1_customer_category",
+      "m1_supplier_category",
+      "m1_salesman_category",
+      "m1_contact_category",
+      "m1_contact_terms",
+      "m1_contact_price"
+    ],
+    "item_related_masters": [
+      "m1_item_category",
+      "m1_item_type",
+      "m1_item_price",
+      "m1_item_supplier",
+      "m1_item_stock_warehouse",
+      "m1_item_location",
+      "m1_item_location_warehouse",
+      "m1_item_permission",
+      "m1_item_transaction",
+      "m1_class_product",
+      "m1_price_category",
+      "m1_price_category_detail",
+      "m1_material",
+      "m1_merk",
+      "m1_model",
+      "m1_size",
+      "m1_type_sa",
+      "m1_unit",
+      "m1_other_cost"
+    ],
+    "supporting_tables": [
+      "m1_country",
+      "m1_province",
+      "m1_city",
+      "m1_transaction_note",
+      "m1_transaction_note_detail"
+    ]
+  },
+  "join_hints": [
+    {
+      "name": "contact_commercial_hierarchy",
+      "description": "Relasi contact dengan kategori dan salesman.",
+      "joins": [
+        "m1_contact.kkategori = m1_contact_category.cckode",
+        "m1_contact.kkategoricustomer = m1_customer_category.cckode",
+        "m1_contact.kkategorisupplier = m1_supplier_category.sckode",
+        "m1_contact.kkategorisalesman = m1_salesman_category.sckode",
+        "m1_contact.ksalesman = m1_contact.kid"
+      ]
+    },
+    {
+      "name": "item_classification_flow",
+      "description": "Relasi item dengan klasifikasi dan atribut komersialnya.",
+      "joins": [
+        "m1_item.bkelasproduk = m1_class_product.cpkode",
+        "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
+        "m1_item.bkomisi = m1_selling_point.spid"
+      ]
+    },
+    {
+      "name": "warehouse_organization_flow",
+      "description": "Relasi gudang dengan struktur organisasi dan lokasi.",
+      "joins": [
+        "m1_warehouse.wdivisi = m1_division.dkode",
+        "m1_warehouse.wlokasi = m1_location.lkode",
+        "m1_location.lcabang = m1_branch.bkode"
+      ]
+    },
+    {
+      "name": "coa_reference_flow",
+      "description": "Relasi akun dengan parent akun dan dimensi organisasi.",
+      "joins": [
+        "m1_coa.cparent = m1_coa.cnomor",
+        "m1_coa.ccabang = m1_branch.bkode",
+        "m1_coa.clokasi = m1_location.lkode",
+        "m1_coa.cdivisi = m1_division.dkode",
+        "m1_coa.ckodebank = m1_bank.bkode",
+        "m1_coa.cmatauang = m1_currency.ckode"
+      ]
+    },
+    {
+      "name": "transaction_note_flow",
+      "description": "Relasi catatan transaksi ke detail catatan per sumber.",
+      "joins": [
+        "m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode",
+        "m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber"
+      ]
+    }
+  ],
+  "polymorphic_relationships": [],
+  "important_rules": [
+    "Gunakan m1_contact untuk pertanyaan customer, supplier, salesman, atau relasi kontak bisnis.",
+    "Gunakan m1_item untuk pertanyaan barang, produk, setup item, dan klasifikasi item.",
+    "Gunakan m1_coa untuk pertanyaan akun, parent akun, saldo awal, dan dimensi organisasi akun.",
+    "Gunakan m1_warehouse, m1_location, m1_branch, dan m1_division untuk struktur gudang dan organisasi.",
+    "Gunakan tabel detail seperti m1_price_category_detail dan m1_transaction_note_detail bila user meminta isi baris atau setup per sumber.",
+    "M1 adalah domain master data, bukan alur dokumen transaksi bertahap.",
+    "Hindari field custom* kecuali benar-benar diminta user atau report."
+  ],
+  "query_patterns": [
+    {
+      "name": "master_listing",
+      "description": "Listing master data dasar.",
+      "pattern": "Gunakan tabel inti seperti m1_contact, m1_item, m1_warehouse, m1_coa, atau m1_branch untuk daftar master."
+    },
+    {
+      "name": "reference_lookup",
+      "description": "Lookup referensi dan relasi kategori.",
+      "pattern": "Join master utama ke kategori, organisasi, atau referensi pendukung sesuai kebutuhan."
+    },
+    {
+      "name": "item_classification_lookup",
+      "description": "Lookup item dan klasifikasi produk.",
+      "pattern": "Gunakan m1_item lalu join ke class product, subdepartment, atau selling point bila perlu."
+    },
+    {
+      "name": "coa_hierarchy_lookup",
+      "description": "Lookup akun dan parent-child akun.",
+      "pattern": "Gunakan m1_coa dan self-join ke cparent bila user meminta hierarki akun."
+    },
+    {
+      "name": "transaction_note_lookup",
+      "description": "Lookup catatan transaksi per sumber dokumen.",
+      "pattern": "Gunakan m1_transaction_note dan m1_transaction_note_detail dengan pasangan tnkode dan tnsumber."
+    }
+  ],
+  "caution_areas": [
+    "Pertanyaan yang mencampur master contact dengan transaksi bisnis lintas domain.",
+    "Pertanyaan item yang sebenarnya membutuhkan domain transaksi inventory, purchasing, atau sales.",
+    "Pertanyaan akun yang sebenarnya meminta saldo transaksi, bukan master akun.",
+    "Pertanyaan yang menganggap semua kategori contact ada di satu tabel saja.",
+    "Pertanyaan yang mengandalkan custom*."
+  ]
+}

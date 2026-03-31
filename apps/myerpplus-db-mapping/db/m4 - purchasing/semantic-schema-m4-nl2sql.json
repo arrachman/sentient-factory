@@ -1,0 +1,340 @@
+{
+  "domain": "myerpplus_purchasing_m4",
+  "description": "Machine-friendly NL2SQL guide untuk modul M4 purchasing. Berisi tabel utama, sinonim bisnis, join hints, relasi polymorphic, dan aturan penting untuk query generation.",
+  "source_files": [
+    "semantic-schema-m4.json",
+    "semantic-schema-m4-summary.md",
+    "m4-queries.md"
+  ],
+  "business_terms": {
+    "PR": [
+      "purchase request",
+      "permintaan pembelian"
+    ],
+    "RQ": [
+      "request quotation",
+      "permintaan penawaran"
+    ],
+    "RFQ": [
+      "request for quotation",
+      "rfq",
+      "permintaan penawaran supplier"
+    ],
+    "CS": [
+      "comparative sheet",
+      "perbandingan supplier"
+    ],
+    "BS": [
+      "bid selection",
+      "seleksi penawaran vendor"
+    ],
+    "PO": [
+      "purchase order",
+      "order pembelian"
+    ],
+    "GRN": [
+      "goods receipt note",
+      "penerimaan barang"
+    ],
+    "RI": [
+      "receive invoice",
+      "invoice pembelian",
+      "tagihan pembelian"
+    ],
+    "DNR": [
+      "debit note return",
+      "nota debit retur pembelian"
+    ],
+    "PRT": [
+      "purchase return",
+      "retur pembelian"
+    ],
+    "AP": [
+      "advance purchase",
+      "uang muka pembelian"
+    ],
+    "PP": [
+      "purchase payment",
+      "pembayaran pembelian"
+    ],
+    "VPP": [
+      "vendor payment proposal",
+      "proposal pembayaran vendor"
+    ],
+    "VP": [
+      "vendor payment",
+      "pembayaran vendor"
+    ],
+    "IPC": [
+      "incoming purchase cost",
+      "biaya pembelian masuk"
+    ],
+    "PIE": [
+      "purchase invoice exchange",
+      "tukar faktur pembelian"
+    ]
+  },
+  "table_groups": {
+    "document_headers": [
+      "m4_pr",
+      "m4_rq",
+      "m4_rfq",
+      "m4_cs",
+      "m4_bs",
+      "m4_po",
+      "m4_grn",
+      "m4_ri",
+      "m4_dnr",
+      "m4_prt",
+      "m4_ap",
+      "m4_pp",
+      "m4_vpp",
+      "m4_vp",
+      "m4_ipc",
+      "m4_pie"
+    ],
+    "document_details": [
+      "m4_pr_detail",
+      "m4_rq_detail",
+      "m4_rfq_detail",
+      "m4_cs_detail",
+      "m4_bs_detail",
+      "m4_po_detail",
+      "m4_grn_detail",
+      "m4_ri_detail",
+      "m4_dnr_detail",
+      "m4_prt_detail",
+      "m4_vpp_detail",
+      "m4_vp_detail",
+      "m4_ipc_detail",
+      "m4_pie_detail"
+    ],
+    "payment_details": [
+      "m4_ap_pay",
+      "m4_pp_pay",
+      "m4_ri_pay",
+      "m4_vp_pay",
+      "m4_vpp_pay"
+    ],
+    "supporting_tables": [
+      "m4_ipc",
+      "m4_ipc_detail",
+      "m4_pie",
+      "m4_pie_detail"
+    ],
+    "history_tables": [
+      "m4_ap_history",
+      "m4_ap_pay_history",
+      "m4_bs_history",
+      "m4_bs_detail_history",
+      "m4_dnr_history",
+      "m4_dnr_detail_history",
+      "m4_grn_history",
+      "m4_grn_detail_history",
+      "m4_pie_history",
+      "m4_pie_detail_history",
+      "m4_po_history",
+      "m4_po_detail_history",
+      "m4_pr_history",
+      "m4_pr_detail_history",
+      "m4_prt_history",
+      "m4_prt_detail_history",
+      "m4_rfq_history",
+      "m4_rfq_detail_history",
+      "m4_ri_history",
+      "m4_ri_detail_history",
+      "m4_ri_pay_history",
+      "m4_rq_history",
+      "m4_rq_detail_history",
+      "m4_vp_history",
+      "m4_vp_detail_history",
+      "m4_vp_pay_history",
+      "m4_vpp_history",
+      "m4_vpp_detail_history",
+      "m4_vpp_pay_history"
+    ]
+  },
+  "join_hints": [
+    {
+      "name": "purchase_request_to_order_flow",
+      "description": "Alur permintaan pembelian sampai pembentukan purchase order.",
+      "joins": [
+        "m4_pr.prid = m4_pr_detail.idpr",
+        "m4_pr_detail.idprdetail = m4_rq_detail.idprdetail",
+        "m4_rq.rqid = m4_rq_detail.idrq",
+        "m4_rq_detail.idrqdetail = m4_bs_detail.idrqdetail",
+        "m4_bs.bsid = m4_bs_detail.idbs",
+        "m4_po.poid = m4_po_detail.idpo"
+      ]
+    },
+    {
+      "name": "purchase_order_receipt_invoice_flow",
+      "description": "Alur purchase order ke penerimaan barang sampai tagihan pembelian.",
+      "joins": [
+        "m4_po.poid = m4_po_detail.idpo",
+        "m4_po_detail.idpodetail = m4_grn_detail.idpodetail",
+        "m4_grn.grnid = m4_grn_detail.idgrn",
+        "m4_grn_detail.idgrndetail = m4_ri_detail.idgrndetail",
+        "m4_ri.riid = m4_ri_detail.idri"
+      ]
+    },
+    {
+      "name": "purchase_return_flow",
+      "description": "Alur retur pembelian dari invoice atau receipt ke debit note dan return.",
+      "joins": [
+        "m4_ri.riid = m4_ri_detail.idri",
+        "m4_ri_detail.idridetail = m4_dnr_detail.idridetail",
+        "m4_dnr.dnrid = m4_dnr_detail.iddnr",
+        "m4_dnr_detail.iddnrdetail = m4_prt_detail.iddnrdetail",
+        "m4_prt.prtid = m4_prt_detail.idprt"
+      ]
+    },
+    {
+      "name": "purchase_advance_payment_flow",
+      "description": "Relasi uang muka pembelian dan dokumen order atau invoice terkait.",
+      "joins": [
+        "m4_po.poid = m4_ap.apidpo",
+        "m4_ap.apid = m4_ap_pay.idap",
+        "m4_ri.riidap = m4_ap.apid",
+        "m4_pp.ppid = m4_pp_pay.idpp"
+      ]
+    },
+    {
+      "name": "purchase_vendor_payment_flow",
+      "description": "Alur proposal pembayaran vendor dan realisasi pembayaran ke dokumen target.",
+      "joins": [
+        "m4_vpp.vppid = m4_vpp_detail.idvpp",
+        "m4_vp.vpid = m4_vp_detail.idvp",
+        "m4_vpp_pay.idvpp = m4_vpp.vppid",
+        "m4_vp_pay.idvp = m4_vp.vpid",
+        "m4_vpp_detail.idtransaksi = m4_ap.apid when sumber = AP",
+        "m4_vpp_detail.idtransaksi = m4_ri.riid when sumber = RI",
+        "m4_vpp_detail.idtransaksi = m4_prt.prtid when sumber = PRT"
+      ]
+    },
+    {
+      "name": "purchase_comparison_flow",
+      "description": "Relasi comparative sheet, request quotation, dan hasil perbandingan vendor.",
+      "joins": [
+        "m4_pr.prid = m4_cs.csidpr",
+        "m4_cs.csid = m4_cs_detail.idcs",
+        "m4_rq.rqid = m4_rq_detail.idrq",
+        "m4_rq.idcs = m4_cs.csid",
+        "m4_bs_detail.idrqdetail = m4_rq_detail.idrqdetail"
+      ]
+    },
+    {
+      "name": "purchase_invoice_exchange_flow",
+      "description": "Relasi tukar faktur pembelian ke dokumen sumber pembelian.",
+      "joins": [
+        "m4_pie.pieid = m4_pie_detail.idpie",
+        "m4_pie.idri = m4_ri.riid",
+        "m4_pie_detail.idtransaksi = target purchase document by sumber"
+      ]
+    }
+  ],
+  "polymorphic_relationships": [
+    {
+      "table_name": "m4_vpp_detail",
+      "id_column": "idtransaksi",
+      "discriminator_column": "sumber",
+      "description": "Relasi polymorphic ke dokumen purchasing berdasarkan kolom sumber pada vendor payment proposal.",
+      "mappings": [
+        {
+          "source_value": "AP",
+          "target_table": "m4_ap",
+          "target_column": "apid"
+        },
+        {
+          "source_value": "RI",
+          "target_table": "m4_ri",
+          "target_column": "riid"
+        },
+        {
+          "source_value": "PRT",
+          "target_table": "m4_prt",
+          "target_column": "prtid"
+        }
+      ]
+    },
+    {
+      "table_name": "m4_vp_detail",
+      "id_column": "idtransaksi",
+      "discriminator_column": "sumber",
+      "description": "Relasi polymorphic ke dokumen purchasing berdasarkan kolom sumber pada vendor payment.",
+      "mappings": [
+        {
+          "source_value": "AP",
+          "target_table": "m4_ap",
+          "target_column": "apid"
+        },
+        {
+          "source_value": "RI",
+          "target_table": "m4_ri",
+          "target_column": "riid"
+        },
+        {
+          "source_value": "PRT",
+          "target_table": "m4_prt",
+          "target_column": "prtid"
+        }
+      ]
+    },
+    {
+      "table_name": "m4_pie_detail",
+      "id_column": "idtransaksi",
+      "discriminator_column": "sumber",
+      "description": "Relasi polymorphic ke dokumen purchasing sumber pada transaksi tukar faktur pembelian.",
+      "mappings": [
+        {
+          "source_value": "BY_SOURCE",
+          "target_table": "purchase_document_by_sumber",
+          "target_column": "document_id"
+        }
+      ]
+    }
+  ],
+  "important_rules": [
+    "Kolom idtransaksi pada m4_vpp_detail, m4_vp_detail, dan m4_pie_detail tidak boleh di-join langsung tanpa memeriksa kolom sumber.",
+    "Gunakan tabel header untuk nomor dokumen, tanggal, supplier, status, dan total transaksi.",
+    "Gunakan tabel detail untuk item, kuantitas, harga, vendor comparison, dan progres barang.",
+    "Bedakan proposal pembayaran vendor (m4_vpp) dan realisasi pembayaran vendor (m4_vp).",
+    "Gunakan m4_cs dan m4_bs untuk analitik evaluasi vendor atau seleksi penawaran.",
+    "Gunakan m4_ipc untuk biaya tambahan pembelian atau landed cost.",
+    "Hindari field custom* kecuali benar-benar diminta user atau report."
+  ],
+  "query_patterns": [
+    {
+      "name": "document_summary",
+      "description": "Ringkasan dokumen purchasing berbasis header.",
+      "pattern": "Gunakan tabel header seperti m4_po, m4_ri, atau m4_ap untuk nomor transaksi, tanggal, supplier, status, dan total."
+    },
+    {
+      "name": "document_items",
+      "description": "Detail item per dokumen purchasing.",
+      "pattern": "Join header ke detail, misalnya m4_po -> m4_po_detail atau m4_ri -> m4_ri_detail."
+    },
+    {
+      "name": "purchase_flow_trace",
+      "description": "Tracing alur pembelian dari permintaan sampai invoice.",
+      "pattern": "Mulai dari detail: PR -> PR_DETAIL -> RQ_DETAIL -> BS_DETAIL -> PO_DETAIL -> GRN_DETAIL -> RI_DETAIL."
+    },
+    {
+      "name": "purchase_return_trace",
+      "description": "Tracing retur pembelian dari invoice ke debit note atau return.",
+      "pattern": "RI -> RI_DETAIL -> DNR_DETAIL -> PRT_DETAIL."
+    },
+    {
+      "name": "vendor_payment_trace",
+      "description": "Tracing proposal dan realisasi pembayaran vendor.",
+      "pattern": "VPP -> VPP_DETAIL -> VP_DETAIL -> VP dengan pemeriksaan sumber pada idtransaksi."
+    }
+  ],
+  "caution_areas": [
+    "Pertanyaan lintas AP, RI, dan PRT melalui m4_vpp_detail.",
+    "Pertanyaan pembayaran vendor yang memakai m4_vp_detail.idtransaksi.",
+    "Pertanyaan tukar faktur pembelian yang memakai m4_pie_detail.idtransaksi.",
+    "Pertanyaan histori yang mencampur tabel aktif dan history.",
+    "Pertanyaan yang mengandalkan custom* tanpa referensi report yang jelas."
+  ]
+}
