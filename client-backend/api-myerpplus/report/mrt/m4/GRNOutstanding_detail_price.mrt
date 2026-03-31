@@ -1,0 +1,1274 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiReport">
+  <Dictionary Ref="1" type="Dictionary" isKey="true">
+    <BusinessObjects isList="true" count="0" />
+    <Databases isList="true" count="1">
+      <myerpplus Ref="2" type="Stimulsoft.Report.Dictionary.StiOdbcDatabase" isKey="true">
+        <Alias>myerpplus</Alias>
+        <ConnectionString>dsn=myerpplus-product</ConnectionString>
+        <Name>myerpplus</Name>
+      </myerpplus>
+    </Databases>
+    <DataSources isList="true" count="4">
+      <DS1 Ref="3" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>DS1</Alias>
+        <Columns isList="true" count="27">
+          <value>grnnotransaksi,System.String</value>
+          <value>grnid,System.Int64</value>
+          <value>grntgl,System.DateTime</value>
+          <value>grnsupplier,System.String</value>
+          <value>gudang,System.String</value>
+          <value>grnuraian,System.String</value>
+          <value>grnstatus,System.String</value>
+          <value>bkode,System.String</value>
+          <value>namabarang,System.String</value>
+          <value>catatan,System.String</value>
+          <value>jml,System.Double</value>
+          <value>harga,System.Double</value>
+          <value>satuan,System.String</value>
+          <value>total,System.Double</value>
+          <value>jmldiskon,System.Double</value>
+          <value>totalpajak,System.Double</value>
+          <value>totaltransaksi,System.Double</value>
+          <value>kurs,System.Double</value>
+          <value>totalfungsional,System.Double</value>
+          <value>jmldiskonfungsional,System.Double</value>
+          <value>totalpajakfungsional,System.Double</value>
+          <value>totaltransaksifungsional,System.Double</value>
+          <value>jmlrealisasi,System.Double</value>
+          <value>sisa,System.Double</value>
+          <value>kkategorisupplier,System.String</value>
+          <value>rinotransaksi,System.String</value>
+          <value>prtgldipakai,System.DateTime</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>DS1</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT 
+
+	grn.grnnotransaksi , 
+	grn.grnid , 
+	grn.grntgl , 
+	ks.knama AS grnsupplier ,
+	w.wnama as gudang , 
+	grn.grnuraian , 
+	st.nama AS grnstatus , 
+
+	b.bkode , 
+	grnd.namabarang , 
+	grnd.catatan , 
+	grnd.jml , 
+	grnd.harga,
+	grnd.satuan , 
+	grnd.jml * grnd.harga AS total,
+	grnd.jmldiskon,
+	grnd.jmlpajak1 + grnd.jmlpajak2 AS totalpajak,
+	((grnd.jml * grnd.harga) - grnd.jmldiskon + (grnd.jmlpajak1 + grnd.jmlpajak2)) AS totaltransaksi ,
+	grnd.kurs,
+	((grnd.jml - ifnull(SUM(rid.jml),0)) * grnd.harga * grnd.kurs) AS totalfungsional,
+	(((grnd.jmldiskon * grnd.kurs) / grnd.jml) * (grnd.jml - ifnull(SUM(rid.jml),0))) as jmldiskonfungsional,
+	((((grnd.jmlpajak1 + grnd.jmlpajak2) * grnd.kurs) / grnd.jml) * (grnd.jml - ifnull(SUM(rid.jml),0))) AS totalpajakfungsional,
+	((grnd.jml - ifnull(SUM(rid.jml),0)) * grnd.harga * grnd.kurs) - (((grnd.jmldiskon * grnd.kurs) / grnd.jml) * (grnd.jml - ifnull(SUM(rid.jml),0))) + ((((grnd.jmlpajak1 + grnd.jmlpajak2) * grnd.kurs) / grnd.jml) * (grnd.jml - ifnull(SUM(rid.jml),0))) AS totaltransaksifungsional ,
+
+	ifnull(SUM(rid.jml),0) AS jmlrealisasi , 
+	(grnd.jml - ifnull(SUM(rid.jml),0)) as sisa , 
+	ks.kkategorisupplier , 
+
+	IFNULL(ri.rinotransaksi,'') as rinotransaksi,
+	pr.prtgldipakai
+
+
+	FROM
+	m4_grn grn
+JOIN m4_grn_detail grnd ON grn.grnid = grnd.idgrn
+JOIN m1_contact ks ON grn.grnsupplier = ks.kid
+JOIN m1_item b ON grnd.idbarang = b.bid
+JOIN m1_warehouse w ON grn.grngudang = w.wkode
+JOIN m0_status st ON grn.grnstatus = st.kode
+
+LEFT JOIN m1_supplier_category sc ON ks.kkategorisupplier = sc.sckode
+
+LEFT JOIN m4_ri_detail rid ON grnd.idgrndetail = rid.idgrndetail 
+LEFT JOIN m4_ri ri ON rid.idri = ri.riid 
+
+LEFT JOIN m4_po_detail pod ON grnd.idpodetail = pod.idpodetail
+LEFT JOIN m4_pr_detail prd ON pod.idprdetail = prd.idprdetail
+LEFT JOIN m4_pr pr ON prd.idpr = pr.prid
+
+WHERE
+grn.grnstatus IN (2,3)	
+
+GROUP BY grnd.idgrndetail	
+ORDER BY grn.grntgl , grn.grnid , grn.grnnotransaksi , grnd.urutan
+</SqlCommand>
+      </DS1>
+      <formatTgl Ref="4" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatTgl</Alias>
+        <Columns isList="true" count="2">
+          <value>snilai,System.String</value>
+          <value>format,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatTgl</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai , CONCAT('{0:',(replace(
+	REPLACE(
+	REPLACE(snilai,'D','d'),'m','M'),'Y','y') ) ,'}')
+	as format
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatTanggalReport"</SqlCommand>
+      </formatTgl>
+      <formatQty Ref="5" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatQty</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatQty</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatJmlReport"</SqlCommand>
+      </formatQty>
+      <formatMinus Ref="6" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatMinus</Alias>
+        <Columns isList="true" count="4">
+          <value>skode,System.String</value>
+          <value>snilai,System.String</value>
+          <value>kiri,System.String</value>
+          <value>kanan,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatMinus</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , snilai , 
+	SUBSTR(snilai FROM 1 FOR 1) AS kiri , 
+	SUBSTR(snilai FROM 2 FOR 1) AS kanan 
+	
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatMinusReport"</SqlCommand>
+      </formatMinus>
+    </DataSources>
+    <Relations isList="true" count="0" />
+    <Report isRef="0" />
+    <Variables isList="true" count="0" />
+  </Dictionary>
+  <EngineVersion>EngineV2</EngineVersion>
+  <GlobalizationStrings isList="true" count="0" />
+  <MetaTags isList="true" count="0" />
+  <Pages isList="true" count="1">
+    <Page1 Ref="7" type="Page" isKey="true">
+      <Border>None;Black;2;Solid;False;4;Black</Border>
+      <Brush>Transparent</Brush>
+      <Components isList="true" count="7">
+        <PageHeaderBand1 Ref="8" type="PageHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,0.2,7.8,1.08</ClientRectangle>
+          <Components isList="true" count="18">
+            <PTNAMA Ref="9" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0,7.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>PTNAMA</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>NAMA PERUSAHAAN</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </PTNAMA>
+            <RTITLE Ref="10" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.2,7.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <Guid>a0e45ba2ab14a32f518a8bb06bddcd2d</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>RTITLE</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>NAMA REPORT</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </RTITLE>
+            <PARAM1 Ref="11" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.4,7.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <Guid>74887726392be63947f18bb08a077d84</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>PARAM1</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>30 September 2012  s.d. 30 Oktober 2012</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </PARAM1>
+            <LBLNOTRANSAKSI Ref="12" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.65,1.1,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLNOTRANSAKSI</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>No Transaksi</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLNOTRANSAKSI>
+            <LBLSUPPLIER Ref="13" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>1.83,0.65,1.77,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>ce457c8555ab956c167b8c14990583e6</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLSUPPLIER</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Supplier</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLSUPPLIER>
+            <LBLSTATUS Ref="14" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>6.81,0.65,0.99,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>375721c67d978f28d98e8c14ae58023c</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLSTATUS</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Progress</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLSTATUS>
+            <LBLKODEBRG Ref="15" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.1,0.84,0.81,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>0a98f7fae472e9940d618c14ffe54b02</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLKODEBRG</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Kode Barang</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLKODEBRG>
+            <LBLNAMABRG Ref="16" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.91,0.84,1.57,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>afb00b6807218bffc7898c14ffe59053</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLNAMABRG</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Nama Barang</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLNAMABRG>
+            <LBLCATATAN Ref="17" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>2.48,0.84,1.41,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>4a1ca96020f93c1f35528c14ffe5a656</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLCATATAN</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Catatan</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLCATATAN>
+            <LBLJUMLAH Ref="18" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>3.9,0.84,0.67,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>b53f048ef2759d559bc28c14ffe5a707</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLJUMLAH</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Jumlah</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLJUMLAH>
+            <LBLJUMLAHREALISASI Ref="19" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>6.29,0.84,0.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>25cb5b559fa14a4892dc89848919120f</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLJUMLAHREALISASI</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Jml Realisasi</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLJUMLAHREALISASI>
+            <LBLJUMLAHSISA Ref="20" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>7.1,0.84,0.7,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>0f3c9d840d614a28a14e5961e417d239</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLJUMLAHSISA</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Jml Sisa</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLJUMLAHSISA>
+            <LBLGUDANG Ref="21" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>3.6,0.65,1.26,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>a57e0179e4c446c4a5ac89c542b06fea</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLGUDANG</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Gudang</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLGUDANG>
+            <Text1 Ref="22" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.57,0.84,0.83,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>c56cb4814aa24b8398ce9b6c0580eff0</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text1</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Harga</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text1>
+            <Text17 Ref="23" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.41,0.84,0.88,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>b1b157d6d62a46ffb5443370b62fb3ba</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text17</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <Text>Tgl Dibutuhkan</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text17>
+            <HorizontalLinePrimitive2 Ref="24" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,0.65,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="25" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Name>HorizontalLinePrimitive2</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <StartCap Ref="26" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+              <Style>Dot</Style>
+            </HorizontalLinePrimitive2>
+            <HorizontalLinePrimitive4 Ref="27" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,0.84,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="28" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>64fcc23827940b2a14098c15436332f8</Guid>
+              <Name>HorizontalLinePrimitive4</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <StartCap Ref="29" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+              <Style>Dot</Style>
+            </HorizontalLinePrimitive4>
+            <HorizontalLinePrimitive5 Ref="30" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,1.04,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="31" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>2590b3d230e15854b2688c154de66d51</Guid>
+              <Name>HorizontalLinePrimitive5</Name>
+              <Page isRef="7" />
+              <Parent isRef="8" />
+              <StartCap Ref="32" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+              <Style>Dot</Style>
+            </HorizontalLinePrimitive5>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>PageHeaderBand1</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+        </PageHeaderBand1>
+        <PageFooterBand2 Ref="33" type="PageFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,10.45,7.8,0.2</ClientRectangle>
+          <Components isList="true" count="3">
+            <Text35 Ref="34" type="Text" isKey="true">
+              <Border>None;Black;1;Dot;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0,2.79,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,8</Font>
+              <Guid>2a5956e5acf5c098d94d15fb7e5d45ea</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text35</Name>
+              <Page isRef="7" />
+              <Parent isRef="33" />
+              <Text>{Time}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="35" type="CustomFormat" isKey="true">
+                <StringFormat>dd/MM/yyyy HH:mm:ss</StringFormat>
+              </TextFormat>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text35>
+            <LBLHALAMAN Ref="36" type="Text" isKey="true">
+              <Border>None;Black;1;Dot;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.68,0,2.11,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,8</Font>
+              <Guid>6074e9533ebc73e22a2d15fb7e5df93c</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLHALAMAN</Name>
+              <Page isRef="7" />
+              <Parent isRef="33" />
+              <Text>Halaman {PageNumber} / {TotalPageCount}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLHALAMAN>
+            <HorizontalLinePrimitive3 Ref="37" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,0,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="38" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>656acbc1e1096ffccdfb15fb7e5da44a</Guid>
+              <Name>HorizontalLinePrimitive3</Name>
+              <Page isRef="7" />
+              <Parent isRef="33" />
+              <StartCap Ref="39" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+              <Style>Dot</Style>
+            </HorizontalLinePrimitive3>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Guid>cf4a33c3acabd507ce4a15fb7e5d2c70</Guid>
+          <Name>PageFooterBand2</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+        </PageFooterBand2>
+        <GroupHeaderBand2 Ref="40" type="GroupHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,1.68,7.8,0</ClientRectangle>
+          <Components isList="true" count="0" />
+          <Conditions isList="true" count="0" />
+          <Name>GroupHeaderBand2</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+          <SortDirection>None</SortDirection>
+        </GroupHeaderBand2>
+        <GroupHeaderBand1 Ref="41" type="GroupHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,2.08,7.8,0.2</ClientRectangle>
+          <Components isList="true" count="6">
+            <Text19 Ref="42" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.1,0,0.72,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>d463a7600ffd4e6cb587c3879dd14f59</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text19</Name>
+              <Page isRef="7" />
+              <Parent isRef="41" />
+              <Text>{Format(formatTgl.format,DS1.grntgl)}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text19>
+            <Text21 Ref="43" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.83,0,1.77,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>9481ba5bfecc485f815349ffdcb34ce2</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text21</Name>
+              <Page isRef="7" />
+              <Parent isRef="41" />
+              <Text>{DS1.grnsupplier}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text21>
+            <Text23 Ref="44" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.87,0,1.94,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>de81103774fb4cf3a82cba89e9fe875d</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text23</Name>
+              <Page isRef="7" />
+              <Parent isRef="41" />
+              <Text>{DS1.grnuraian}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text23>
+            <Text24 Ref="45" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.81,0,0.99,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>f3af32c568bd4ef79ebadcb83161637d</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text24</Name>
+              <Page isRef="7" />
+              <Parent isRef="41" />
+              <Text>{DS1.grnstatus}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text24>
+            <Text4 Ref="46" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0,0,1.1,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>9fb1e36598dd42f29430449a20eedbf7</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text4</Name>
+              <Page isRef="7" />
+              <Parent isRef="41" />
+              <Text>{DS1.grnnotransaksi}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text4>
+            <Text5 Ref="47" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>3.6,0,1.26,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>1be7f00272a6458abf241c7db1611ad6</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text5</Name>
+              <Page isRef="7" />
+              <Parent isRef="41" />
+              <Text>{DS1.gudang}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text5>
+          </Components>
+          <Condition>{DS1.grnnotransaksi}</Condition>
+          <Conditions isList="true" count="0" />
+          <Name>GroupHeaderBand1</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+          <SortDirection>None</SortDirection>
+        </GroupHeaderBand1>
+        <DataBand1 Ref="48" type="DataBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <BusinessObjectGuid isNull="true" />
+          <ClientRectangle>0,2.68,7.8,0.2</ClientRectangle>
+          <Components isList="true" count="8">
+            <Text26 Ref="49" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0.1,0,0.81,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>2a3d1d54bc8743c38859092a0203de74</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text26</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{DS1.bkode}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text26>
+            <Text28 Ref="50" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0.91,0,1.57,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>2daeeefb0c6d42eebd69c786dfb96fc3</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text28</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{DS1.namabarang}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text28>
+            <Text29 Ref="51" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>2.48,0,1.41,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>6947e0fe64df4b26845ed0a5aaaa9f3c</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text29</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{DS1.catatan}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text29>
+            <Text30 Ref="52" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>3.9,0,0.67,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>2caffe85f5714e3da40e076a60eaac16</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text30</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{IIF((DS1.jml) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.jml) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.jml))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.jml))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF((DS1.jml) &lt; 0 ,formatMinus.kanan,"")} {DS1.satuan}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text30>
+            <Text34 Ref="53" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6.29,0,0.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>2cb3c0175e3a4c38aa4f126a83eff506</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text34</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{IIF((DS1.jmlrealisasi) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.jmlrealisasi) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.jmlrealisasi))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.jmlrealisasi))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF((DS1.jmlrealisasi) &lt; 0 ,formatMinus.kanan,"")} </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text34>
+            <Text36 Ref="54" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>7.1,0,0.7,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>10679ddea18041deb12437842253e2f1</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text36</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{IIF((DS1.sisa) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.sisa) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.sisa))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.sisa))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF((DS1.sisa) &lt; 0 ,formatMinus.kanan,"")} </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text36>
+            <Text2 Ref="55" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>4.57,0,0.83,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>c2e651c3ebe94b5c87529668a0cb0f51</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text2</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{IIF((DS1.harga) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.harga) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.harga))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.harga))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF((DS1.harga) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text2>
+            <Text18 Ref="56" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.39,0,0.89,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>dcae08bba71143d2a80527158f3a110a</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text18</Name>
+              <Page isRef="7" />
+              <Parent isRef="48" />
+              <Text>{Format(formatTgl.format,DS1.prtgldipakai)}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text18>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <DataRelationName isNull="true" />
+          <DataSourceName>DS1</DataSourceName>
+          <Filters isList="true" count="0" />
+          <Name>DataBand1</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+          <Sort isList="true" count="0" />
+        </DataBand1>
+        <GroupFooterBand1 Ref="57" type="GroupFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.28,7.8,0.05</ClientRectangle>
+          <Components isList="true" count="1">
+            <HorizontalLinePrimitive1 Ref="58" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,0,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="59" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Name>HorizontalLinePrimitive1</Name>
+              <Page isRef="7" />
+              <Parent isRef="57" />
+              <StartCap Ref="60" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+              <Style>Dot</Style>
+            </HorizontalLinePrimitive1>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>GroupFooterBand1</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+        </GroupFooterBand1>
+        <GroupFooterBand2 Ref="61" type="GroupFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.73,7.8,0.87</ClientRectangle>
+          <Components isList="true" count="12">
+            <Text3 Ref="62" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.99,0,1.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>ce4936d9bb844ea393f4513a24a77397</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text3</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>{IIF(SumIf((DS1.totalfungsional)) &lt; 0,formatMinus.kiri,"")}{IIF(SumIf((DS1.totalfungsional)) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.totalfungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.totalfungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(SumIf((DS1.totalfungsional)) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text3>
+            <Text6 Ref="63" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.82,0,0.18,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>ca320884e8694459bc4f2e9122766c60</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text6</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text6>
+            <Text7 Ref="64" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.84,0.19,0.98,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>483951634ebc4e05990267aff994b02e</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text7</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>Diskon</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text7>
+            <Text8 Ref="65" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6,0.19,1.79,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>2100b1df378d4b2591dd386ad5d75e01</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text8</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>{IIF(SumIf((DS1.jmldiskonfungsional)) &lt; 0,formatMinus.kiri,"")}{IIF(SumIf((DS1.jmldiskonfungsional)) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.jmldiskonfungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.jmldiskonfungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(SumIf((DS1.jmldiskonfungsional)) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text8>
+            <Text9 Ref="66" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.82,0.19,0.18,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>4997a139acf442a8ab659f69356f2730</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text9</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text9>
+            <Text10 Ref="67" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.84,0.4,0.98,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>efd82923406c4eed99671e3fd9ab7ba9</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text10</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>Pajak</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text10>
+            <Text11 Ref="68" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6,0.4,1.79,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>1f6ff5d7941c4932865a2f277a69883a</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text11</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>{IIF(SumIf((DS1.totalpajakfungsional)) &lt; 0,formatMinus.kiri,"")}{IIF(SumIf((DS1.totalpajakfungsional)) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.totalpajakfungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.totalpajakfungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(SumIf((DS1.totalpajakfungsional)) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text11>
+            <Text12 Ref="69" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.82,0.4,0.18,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>7ad4f16e3c734b8985859e2c4bff0773</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text12</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text12>
+            <Text13 Ref="70" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.84,0.6,0.98,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>50a10dd19e2c476b83fab83cb31113ec</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text13</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>Total Transaksi</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text13>
+            <Text14 Ref="71" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6,0.6,1.79,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>80b28e9729f247a3aef508bc7e2f826b</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text14</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>{IIF(SumIf((DS1.totaltransaksifungsional)) &lt; 0,formatMinus.kiri,"")}{IIF(SumIf((DS1.totaltransaksifungsional)) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.totaltransaksifungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, SumIf(DS1.totaltransaksifungsional)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(SumIf((DS1.totaltransaksifungsional)) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text14>
+            <Text15 Ref="72" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.82,0.6,0.18,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>58c0a406a4eb4e699d86c61578067d29</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text15</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text15>
+            <Text16 Ref="73" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.84,0,0.98,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,9</Font>
+              <Guid>5b851af8ea074c17b72138b38bf3c94e</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text16</Name>
+              <Page isRef="7" />
+              <Parent isRef="61" />
+              <Text>Total</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text16>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>GroupFooterBand2</Name>
+          <Page isRef="7" />
+          <Parent isRef="7" />
+        </GroupFooterBand2>
+      </Components>
+      <Conditions isList="true" count="0" />
+      <Guid>3914aa25d9dc8bced1e28ba881bc9eb3</Guid>
+      <Margins>0.3,0.1,0.2,0.15</Margins>
+      <Name>Page1</Name>
+      <PageHeight>11</PageHeight>
+      <PageWidth>8.2</PageWidth>
+      <PaperSize>Letter</PaperSize>
+      <Report isRef="0" />
+      <Watermark Ref="74" type="Stimulsoft.Report.Components.StiWatermark" isKey="true">
+        <Font>Arial,100</Font>
+        <TextBrush>[50:0:0:0]</TextBrush>
+      </Watermark>
+    </Page1>
+  </Pages>
+  <PrinterSettings Ref="75" type="Stimulsoft.Report.Print.StiPrinterSettings" isKey="true" />
+  <ReferencedAssemblies isList="true" count="8">
+    <value>System.Dll</value>
+    <value>System.Drawing.Dll</value>
+    <value>System.Windows.Forms.Dll</value>
+    <value>System.Data.Dll</value>
+    <value>System.Xml.Dll</value>
+    <value>Stimulsoft.Controls.Dll</value>
+    <value>Stimulsoft.Base.Dll</value>
+    <value>Stimulsoft.Report.Dll</value>
+  </ReferencedAssemblies>
+  <ReportAlias>Report</ReportAlias>
+  <ReportChanged>6/4/2018 10:29:10 AM</ReportChanged>
+  <ReportCreated>3/20/2013 11:35:09 PM</ReportCreated>
+  <ReportFile>E:\Kawata\report\mrt\m4\GRNOutstanding_detail_price.mrt</ReportFile>
+  <ReportGuid>aca72af90cdd4084937016a8b391bef3</ReportGuid>
+  <ReportName>Report</ReportName>
+  <ReportUnit>Inches</ReportUnit>
+  <ReportVersion>2012.2.1304</ReportVersion>
+  <Script>using System;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Data;
+using Stimulsoft.Controls;
+using Stimulsoft.Base.Drawing;
+using Stimulsoft.Report;
+using Stimulsoft.Report.Dialogs;
+using Stimulsoft.Report.Components;
+
+namespace Reports
+{
+    public class Report : Stimulsoft.Report.StiReport
+    {
+        public Report()        {
+            this.InitializeComponent();
+        }
+
+        #region StiReport Designer generated code - do not modify
+		#endregion StiReport Designer generated code - do not modify
+    }
+}
+</Script>
+  <ScriptLanguage>CSharp</ScriptLanguage>
+  <Styles isList="true" count="0" />
+</StiSerializer>

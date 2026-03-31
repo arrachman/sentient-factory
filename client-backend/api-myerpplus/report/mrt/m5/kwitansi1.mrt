@@ -1,0 +1,765 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiReport">
+  <Dictionary Ref="1" type="Dictionary" isKey="true">
+    <BusinessObjects isList="true" count="0" />
+    <Databases isList="true" count="1">
+      <myerpplus Ref="2" type="Stimulsoft.Report.Dictionary.StiOdbcDatabase" isKey="true">
+        <Alias>myerpplus</Alias>
+        <ConnectionString>dsn=myerpplus_fatkur_product</ConnectionString>
+        <Name>myerpplus</Name>
+      </myerpplus>
+    </Databases>
+    <DataSources isList="true" count="8">
+      <DS1 Ref="3" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>DS1</Alias>
+        <Columns isList="true" count="6">
+          <value>sinotransaksi,System.String</value>
+          <value>sicustomer,System.String</value>
+          <value>sitotaltransaksi,System.Double</value>
+          <value>siuraian,System.String</value>
+          <value>sicatatan,System.String</value>
+          <value>terbilang,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>DS1</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	ri.rinotransaksi AS sinotransaksi, 
+	k.knama AS sicustomer , 
+	ri.ritotaltransaksi AS sitotaltransaksi, 
+	ri.riuraian AS siuraian , 
+	ri.ricatatan AS sicatatan , 
+	f_nominal(ri.ritotaltransaksi , ri.rimatauang) AS terbilang 
+
+
+	FROM m4_ri ri 
+JOIN m1_contact k ON ri.ribagianpembelian = k.kid
+
+ORDER BY ri.ritgl ASC , ri.riid ASC</SqlCommand>
+      </DS1>
+      <formatTgl Ref="4" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatTgl</Alias>
+        <Columns isList="true" count="2">
+          <value>snilai,System.String</value>
+          <value>format,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatTgl</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai , CONCAT('{0:',(replace(
+	REPLACE(
+	REPLACE(snilai,'D','d'),'m','M'),'Y','y') ) ,'}')
+	as format
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatTanggalReport"</SqlCommand>
+      </formatTgl>
+      <formatQty Ref="5" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatQty</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatQty</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatJmlReport"</SqlCommand>
+      </formatQty>
+      <formatMinus Ref="6" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatMinus</Alias>
+        <Columns isList="true" count="4">
+          <value>skode,System.String</value>
+          <value>snilai,System.String</value>
+          <value>kiri,System.String</value>
+          <value>kanan,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatMinus</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , snilai , 
+	SUBSTR(snilai FROM 1 FOR 1) AS kiri , 
+	SUBSTR(snilai FROM 2 FOR 1) AS kanan 
+	
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatMinusReport"</SqlCommand>
+      </formatMinus>
+      <formatNominal Ref="7" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatNominal</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatNominal</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatNominalReport"</SqlCommand>
+      </formatNominal>
+      <logo Ref="8" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>logo</Alias>
+        <Columns isList="true" count="1">
+          <value>snilai,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>logo</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai 
+	
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "LogoPerusahaan"</SqlCommand>
+      </logo>
+      <AlamatPerusahaan Ref="9" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>AlamatPerusahaan</Alias>
+        <Columns isList="true" count="1">
+          <value>snilai,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>AlamatPerusahaan</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai 
+	
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "AlamatPerusahaan"</SqlCommand>
+      </AlamatPerusahaan>
+      <NoTLP Ref="10" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>NoTLP</Alias>
+        <Columns isList="true" count="1">
+          <value>snilai,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>NoTLP</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai 
+	
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "NoTlp"</SqlCommand>
+      </NoTLP>
+    </DataSources>
+    <Relations isList="true" count="0" />
+    <Report isRef="0" />
+    <Variables isList="true" count="0" />
+  </Dictionary>
+  <EngineVersion>EngineV2</EngineVersion>
+  <GlobalizationStrings isList="true" count="0" />
+  <MetaTags isList="true" count="0" />
+  <Pages isList="true" count="1">
+    <Page1 Ref="11" type="Page" isKey="true">
+      <Border>None;Black;2;Solid;False;4;Black</Border>
+      <Brush>Transparent</Brush>
+      <Components isList="true" count="5">
+        <PageHeaderBand1 Ref="12" type="PageHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,0.2,7.8,1.34</ClientRectangle>
+          <Components isList="true" count="7">
+            <PTNAMA Ref="13" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>1.2,0,6.62,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11,Bold</Font>
+              <Guid>baac5b75ccd7494ea8ff857ca4f60dc1</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>PTNAMA</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <Text>CV. BAINATI JANNATI (BAJA)</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </PTNAMA>
+            <Image1 Ref="14" type="Image" isKey="true">
+              <Border>None;Black;1;Double;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.01,0,1.17,0.66</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Guid>932626b84f4942398d4003617f8c63e0</Guid>
+              <Image>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</Image>
+              <ImageURL>{logo.snilai}</ImageURL>
+              <Name>Image1</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <VertAlignment>Center</VertAlignment>
+            </Image1>
+            <Text7 Ref="15" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>1.2,0.4,6.62,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <Guid>c77e27e99a5641b2a60a82b96de94ca3</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text7</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <Text>{NoTLP.snilai}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>DataColumn</Type>
+            </Text7>
+            <RTITLE Ref="16" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.01,0.61,7.79,0.49</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,30,Underline</Font>
+              <Guid>7bb1312f42be493591235082bf82e469</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>RTITLE</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <Text>KWITANSI</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </RTITLE>
+            <kdf Ref="17" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>1.2,0.2,6.62,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <Guid>39f2c0e9f0c94fbcb28a125e40dd83ff</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>kdf</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <Text>{AlamatPerusahaan.snilai}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>DataColumn</Type>
+            </kdf>
+            <Text18 Ref="18" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0.01,1.06,7.79,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>3be86e5bde7d48eda5c849d5a8bbe3f2</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text18</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <Text>{DS1.sinotransaksi}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text18>
+            <HorizontalLinePrimitive1 Ref="19" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>1.2,0.59,6.62,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="20" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Name>HorizontalLinePrimitive1</Name>
+              <Page isRef="11" />
+              <Parent isRef="12" />
+              <StartCap Ref="21" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive1>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Guid>7b9704e0389347019cf005f202c3537a</Guid>
+          <Name>PageHeaderBand1</Name>
+          <Page isRef="11" />
+          <Parent isRef="11" />
+        </PageHeaderBand1>
+        <GroupHeaderBand1 Ref="22" type="GroupHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <CanBreak>True</CanBreak>
+          <ClientRectangle>0,1.94,7.8,0.73</ClientRectangle>
+          <Components isList="true" count="9">
+            <LBLTANGGAL Ref="23" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0,0,1.39,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>23b20c58bf4e4f889208bd0d41ea0154</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLTANGGAL</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>Sudah Terima Dari</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLTANGGAL>
+            <LBLSALESMAN Ref="24" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0,0.49,1.39,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>e0682d593d5e445f8c9889419ebb7711</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLSALESMAN</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>Untuk Pembayaran</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLSALESMAN>
+            <LBLNOTRANSAKSI Ref="25" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0,0.24,1.39,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>87d128f3dbb940b796789234f163f0b3</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLNOTRANSAKSI</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>Uang Sejumlah</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLNOTRANSAKSI>
+            <Text19 Ref="26" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.54,0,6.24,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>6401265208f04e77acffeceb53b5f4f7</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text19</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>{DS1.sicustomer}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="27" type="CustomFormat" isKey="true">
+                <StringFormat>dd/MM/yyyy</StringFormat>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text19>
+            <Text36 Ref="28" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.54,0.24,6.24,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>98633a3e96a849fcbf410a6eadc9a82a</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text36</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>{DS1.terbilang}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text36>
+            <Text24 Ref="29" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.54,0.49,6.24,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>affe09ba33124bfea0e40fc8b80f71dc</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text24</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>{DS1.siuraian}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text24>
+            <Text23 Ref="30" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.39,0,0.15,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>6b2a4a58a6a640e981d9a60d729e65c0</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text23</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text23>
+            <Text41 Ref="31" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.39,0.49,0.15,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>d5bcbbacf8a84903ac0996801927c4d6</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text41</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text41>
+            <Text43 Ref="32" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.39,0.24,0.15,0.24</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>fb56854fcd0c497081095ed166b41ab4</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text43</Name>
+              <Page isRef="11" />
+              <Parent isRef="22" />
+              <Text>:</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text43>
+          </Components>
+          <Condition>{DS1.sinotransaksi}</Condition>
+          <Conditions isList="true" count="0" />
+          <KeepGroupTogether>True</KeepGroupTogether>
+          <Name>GroupHeaderBand1</Name>
+          <NewPageBefore>True</NewPageBefore>
+          <Page isRef="11" />
+          <Parent isRef="11" />
+          <PrintOnAllPages>True</PrintOnAllPages>
+          <ResetPageNumber>True</ResetPageNumber>
+          <SortDirection>None</SortDirection>
+        </GroupHeaderBand1>
+        <DataBand1 Ref="33" type="DataBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <BusinessObjectGuid isNull="true" />
+          <CanBreak>True</CanBreak>
+          <CanShrink>True</CanShrink>
+          <ClientRectangle>0,3.07,7.8,0</ClientRectangle>
+          <Components isList="true" count="0" />
+          <Conditions isList="true" count="0" />
+          <DataRelationName isNull="true" />
+          <DataSourceName>DS1</DataSourceName>
+          <Filters isList="true" count="0" />
+          <Name>DataBand1</Name>
+          <Page isRef="11" />
+          <Parent isRef="11" />
+          <Sort isList="true" count="0" />
+        </DataBand1>
+        <GroupFooterBand1 Ref="34" type="GroupFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.47,7.8,0.89</ClientRectangle>
+          <Components isList="true" count="8">
+            <LBLPAJAK Ref="35" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>5.41,0,0.75,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>a16ff8c2ec6743039fbe281bfb5dcd05</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLPAJAK</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <Text>Denpasar,</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </LBLPAJAK>
+            <LBLCATATAN Ref="36" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0.11,0.05,0.72,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,10</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>4cbfb4c04e25433fb90a671a45bf63d0</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLCATATAN</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <Text>Terbilang : </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </LBLCATATAN>
+            <Text9 Ref="37" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0.84,0.05,2.77,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,14</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>65c4bbb659bb423193f63966ce3bb9d5</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text9</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <Text>{IIF(DS1.sitotaltransaksi &lt; 0,formatMinus.kiri,"")}{IIF(DS1.sitotaltransaksi &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, DS1.sitotaltransaksi))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal)
+,"-","")
+), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, DS1.sitotaltransaksi))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal))
+}{IIF(DS1.sitotaltransaksi &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text9>
+            <Text1 Ref="38" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>5.41,0.2,2.08,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>79cdba47019243a4a72c6428733cd4c1</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text1</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <Text>Yang Menerima, </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text1>
+            <Text2 Ref="39" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>5.41,0.66,2.08,0.21</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>f41a43b94567491cb383d3b4de06834d</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text2</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <Text>(- - - - - - - - - - - - - - - - )</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text2>
+            <Text3 Ref="40" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.19,0,1.29,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Enabled>False</Enabled>
+              <Font>Microsoft Sans Serif,11</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>1ab63a542f594eb8b03a2d6b5b3f451d</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text3</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <Text>{Today}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="41" type="CustomFormat" isKey="true">
+                <StringFormat>dd MMMM yyyy</StringFormat>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text3>
+            <StartPointPrimitive1 Ref="42" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>0.04,0.04,0,0</ClientRectangle>
+              <Name>StartPointPrimitive1</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <ReferenceToGuid>848823c772d1491b887a7a16f040c5ec</ReferenceToGuid>
+            </StartPointPrimitive1>
+            <EndPointPrimitive1 Ref="43" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>3.69,0.36,0,0</ClientRectangle>
+              <Name>EndPointPrimitive1</Name>
+              <Page isRef="11" />
+              <Parent isRef="34" />
+              <ReferenceToGuid>848823c772d1491b887a7a16f040c5ec</ReferenceToGuid>
+            </EndPointPrimitive1>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>GroupFooterBand1</Name>
+          <Page isRef="11" />
+          <Parent isRef="11" />
+          <PrintAtBottom>True</PrintAtBottom>
+        </GroupFooterBand1>
+        <RectanglePrimitive1 Ref="44" type="RectanglePrimitive" isKey="true">
+          <ClientRectangle>0.04,3.51,3.65,0.32</ClientRectangle>
+          <Color>Black</Color>
+          <Guid>848823c772d1491b887a7a16f040c5ec</Guid>
+          <Name>RectanglePrimitive1</Name>
+          <Page isRef="11" />
+          <Parent isRef="11" />
+        </RectanglePrimitive1>
+      </Components>
+      <Conditions isList="true" count="0" />
+      <Guid>34d0e5491a3d462eb0b7625885cc9fc9</Guid>
+      <Margins>0.3,0.1,0.2,0.15</Margins>
+      <Name>Page1</Name>
+      <PageHeight>3.6</PageHeight>
+      <PageWidth>8.2</PageWidth>
+      <PaperSize>Letter</PaperSize>
+      <Report isRef="0" />
+      <Watermark Ref="45" type="Stimulsoft.Report.Components.StiWatermark" isKey="true">
+        <Font>Arial,100</Font>
+        <TextBrush>[50:0:0:0]</TextBrush>
+      </Watermark>
+    </Page1>
+  </Pages>
+  <PrinterSettings Ref="46" type="Stimulsoft.Report.Print.StiPrinterSettings" isKey="true" />
+  <ReferencedAssemblies isList="true" count="8">
+    <value>System.Dll</value>
+    <value>System.Drawing.Dll</value>
+    <value>System.Windows.Forms.Dll</value>
+    <value>System.Data.Dll</value>
+    <value>System.Xml.Dll</value>
+    <value>Stimulsoft.Controls.Dll</value>
+    <value>Stimulsoft.Base.Dll</value>
+    <value>Stimulsoft.Report.Dll</value>
+  </ReferencedAssemblies>
+  <ReportAlias>Report</ReportAlias>
+  <ReportChanged>5/18/2018 9:50:26 AM</ReportChanged>
+  <ReportCreated>4/10/2013 4:32:53 PM</ReportCreated>
+  <ReportFile>D:\myerpplus\App_berliando\report\mrt\m5\kwitansi1.mrt</ReportFile>
+  <ReportGuid>40b8a3d378bd4d8fab7818c874ffa960</ReportGuid>
+  <ReportName>Report</ReportName>
+  <ReportUnit>Inches</ReportUnit>
+  <ReportVersion>2012.2.1304</ReportVersion>
+  <Script>using System;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Data;
+using Stimulsoft.Controls;
+using Stimulsoft.Base.Drawing;
+using Stimulsoft.Report;
+using Stimulsoft.Report.Dialogs;
+using Stimulsoft.Report.Components;
+
+namespace Reports
+{
+    public class Report : Stimulsoft.Report.StiReport
+    {
+        public Report()        {
+            this.InitializeComponent();
+        }
+
+        #region StiReport Designer generated code - do not modify
+		#endregion StiReport Designer generated code - do not modify
+    }
+}</Script>
+  <ScriptLanguage>CSharp</ScriptLanguage>
+  <Styles isList="true" count="1">
+    <Style1 Ref="47" type="Stimulsoft.Report.StiStyle" isKey="true">
+      <Brush>Transparent</Brush>
+      <Conditions isList="true" count="0" />
+      <Description />
+      <Font>Microsoft Sans Serif,9,Regular,Point,False,0</Font>
+      <Name>Style1</Name>
+      <TextBrush>Black</TextBrush>
+    </Style1>
+  </Styles>
+</StiSerializer>

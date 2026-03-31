@@ -1,0 +1,102 @@
+{
+  "results": [
+    {
+      "id": "dashboard_001_customer_receivable",
+      "title": "Dashboard Piutang Customer",
+      "question": "Tampilkan dashboard piutang customer berisi daftar invoice belum lunas, total outstanding per customer, aging bucket, dan customer dengan risiko keterlambatan tertinggi.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"Membuat dashboard piutang customer yang mencakup daftar invoice penjualan yang belum lunas, ringkasan outstanding per customer, distribusi aging piutang, dan customer dengan risiko keterlambatan tertinggi.\", \"tables_used\": [\"m5_si\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini wajib mode dashboard karena menggabungkan daftar detail, agregasi per customer, distribusi aging bucket, dan ranking risiko. Entitas paling tepat adalah invoice penjualan (m5_si) karena default 'piutang' pada domain sales mengacu ke sales invoice/faktur penjualan. Untuk customer dipakai m1_contact melalui relasi m5_si.sicustomer = m1_contact.kid. Filter wajib schema pada m5_si yaitu siisclose = 0 diterapkan. Status belum lunas diinterpretasikan dari kolom sistatuslunas bila tersedia, dan outstanding dihitung aman sebagai sitotaltransaksi - COALESCE(sijmlbayar,0). Aging dihitung dari selisih hari CURDATE() terhadap sitgljatuhtempo, lalu dibucket dengan CASE. Risiko keterlambatan tertinggi diprioritaskan ke customer yang punya overdue amount terbesar, invoice overdue terbanyak, dan hari overdue maksimum tertinggi. Query 1 menggabungkan detail invoice belum lunas sekaligus agregat total outstanding per customer via subquery agar tetap informatif. Query 2 khusus aging bucket untuk visual distribusi. Query 3 khusus ranking customer risiko tertinggi agar dashboard tidak duplikatif dan tetap fokus.\", \"ai_metrics\": {\"confidence_score\": 0.88, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query detail invoice belum lunas dapat memindai banyak data jika volume invoice besar karena tidak ada filter periode.\", \"Penggunaan CURDATE() membuat hasil aging bersifat dinamis per tanggal eksekusi.\"]}, \"queries\": [{\"id\": \"q_invoice_unpaid_detail\", \"name\": \"Daftar Invoice Belum Lunas\", \"purpose\": \"Menampilkan daftar invoice penjualan yang belum lunas beserta outstanding invoice dan total outstanding customer.\", \"query\": \"SELECT si.siid AS invoice_id, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, si.sitgljatuhtempo AS tanggal_jatuh_tempo, c.kkode AS kode_customer, c.knama AS nama_customer, si.simatauang AS mata_uang, si.sitotaltransaksi AS total_invoice, COALESCE(si.sijmlbayar, 0) AS total_terbayar, (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS outstanding_invoice, DATEDIFF(CURDATE(), si.sitgljatuhtempo) AS hari_lewat_jatuh_tempo, cust_outstanding.total_outstanding_customer AS total_outstanding_customer FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid INNER JOIN ( SELECT si2.sicustomer, SUM(si2.sitotaltransaksi - COALESCE(si2.sijmlbayar, 0)) AS total_outstanding_customer FROM m5_si si2 WHERE si2.siisclose = 0 AND (COALESCE(si2.sistatuslunas, '') <> 'LUNAS' OR (si2.sitotaltransaksi - COALESCE(si2.sijmlbayar, 0)) > 0) GROUP BY si2.sicustomer ) cust_outstanding ON cust_outstanding.sicustomer = si.sicustomer WHERE si.siisclose = 0 AND (COALESCE(si.sistatuslunas, '') <> 'LUNAS' OR (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0) ORDER BY outstanding_invoice DESC, hari_lewat_jatuh_tempo DESC, si.sitgl ASC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_aging_bucket\", \"name\": \"Aging Bucket Piutang\", \"purpose\": \"Menampilkan distribusi outstanding piutang ke dalam bucket umur piutang berdasarkan tanggal jatuh tempo.\", \"query\": \"SELECT CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) <= 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 1 AND 30 THEN '1-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END AS aging_bucket, COUNT(si.siid) AS jumlah_invoice, SUM(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS total_outstanding FROM m5_si si WHERE si.siisclose = 0 AND (COALESCE(si.sistatuslunas, '') <> 'LUNAS' OR (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0) GROUP BY CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) <= 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 1 AND 30 THEN '1-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END ORDER BY CASE aging_bucket WHEN 'Belum Jatuh Tempo' THEN 1 WHEN '1-30 Hari' THEN 2 WHEN '31-60 Hari' THEN 3 WHEN '61-90 Hari' THEN 4 ELSE 5 END\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_customer_risk\", \"name\": \"Customer Risiko Tertinggi\", \"purpose\": \"Merangking customer dengan risiko keterlambatan tertinggi berdasarkan outstanding overdue, jumlah invoice overdue, dan maksimum hari overdue.\", \"query\": \"SELECT c.kkode AS kode_customer, c.knama AS nama_customer, COUNT(si.siid) AS jumlah_invoice_belum_lunas, SUM(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS total_outstanding, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS outstanding_overdue, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN 1 ELSE 0 END) AS jumlah_invoice_overdue, MAX(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS maksimum_hari_overdue FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND (COALESCE(si.sistatuslunas, '') <> 'LUNAS' OR (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0) GROUP BY c.kkode, c.knama ORDER BY outstanding_overdue DESC, jumlah_invoice_overdue DESC, maksimum_hari_overdue DESC LIMIT 100\", \"result_kind\": \"bar_chart\"}], \"visualizations\": [{\"id\": \"v_invoice_unpaid_detail\", \"query_id\": \"q_invoice_unpaid_detail\", \"title\": \"Daftar Invoice Belum Lunas\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"total_invoice\", \"total_terbayar\", \"outstanding_invoice\", \"hari_lewat_jatuh_tempo\", \"total_outstanding_customer\"]}, {\"id\": \"v_aging_bucket\", \"query_id\": \"q_aging_bucket\", \"title\": \"Distribusi Aging Bucket Piutang\", \"chart_type\": \"bar\", \"x_axis\": \"aging_bucket\", \"y_axis\": [\"total_outstanding\", \"jumlah_invoice\"]}, {\"id\": \"v_customer_risk\", \"query_id\": \"q_customer_risk\", \"title\": \"Customer dengan Risiko Keterlambatan Tertinggi\", \"chart_type\": \"bar\", \"x_axis\": \"nama_customer\", \"y_axis\": [\"outstanding_overdue\", \"jumlah_invoice_overdue\", \"maksimum_hari_overdue\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "Membuat dashboard piutang customer yang mencakup daftar invoice penjualan yang belum lunas, ringkasan outstanding per customer, distribusi aging piutang, dan customer dengan risiko keterlambatan tertinggi.",
+          "tables_used": [
+            "m5_si",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini wajib mode dashboard karena menggabungkan daftar detail, agregasi per customer, distribusi aging bucket, dan ranking risiko. Entitas paling tepat adalah invoice penjualan (m5_si) karena default 'piutang' pada domain sales mengacu ke sales invoice/faktur penjualan. Untuk customer dipakai m1_contact melalui relasi m5_si.sicustomer = m1_contact.kid. Filter wajib schema pada m5_si yaitu siisclose = 0 diterapkan. Status belum lunas diinterpretasikan dari kolom sistatuslunas bila tersedia, dan outstanding dihitung aman sebagai sitotaltransaksi - COALESCE(sijmlbayar,0). Aging dihitung dari selisih hari CURDATE() terhadap sitgljatuhtempo, lalu dibucket dengan CASE. Risiko keterlambatan tertinggi diprioritaskan ke customer yang punya overdue amount terbesar, invoice overdue terbanyak, dan hari overdue maksimum tertinggi. Query 1 menggabungkan detail invoice belum lunas sekaligus agregat total outstanding per customer via subquery agar tetap informatif. Query 2 khusus aging bucket untuk visual distribusi. Query 3 khusus ranking customer risiko tertinggi agar dashboard tidak duplikatif dan tetap fokus.",
+          "ai_metrics": {
+            "confidence_score": 0.88,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query detail invoice belum lunas dapat memindai banyak data jika volume invoice besar karena tidak ada filter periode.",
+            "Penggunaan CURDATE() membuat hasil aging bersifat dinamis per tanggal eksekusi."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_invoice_unpaid_detail",
+            "name": "Daftar Invoice Belum Lunas",
+            "purpose": "Menampilkan daftar invoice penjualan yang belum lunas beserta outstanding invoice dan total outstanding customer.",
+            "query": "SELECT si.siid AS invoice_id, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, si.sitgljatuhtempo AS tanggal_jatuh_tempo, c.kkode AS kode_customer, c.knama AS nama_customer, si.simatauang AS mata_uang, si.sitotaltransaksi AS total_invoice, COALESCE(si.sijmlbayar, 0) AS total_terbayar, (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS outstanding_invoice, DATEDIFF(CURDATE(), si.sitgljatuhtempo) AS hari_lewat_jatuh_tempo, cust_outstanding.total_outstanding_customer AS total_outstanding_customer FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid INNER JOIN ( SELECT si2.sicustomer, SUM(si2.sitotaltransaksi - COALESCE(si2.sijmlbayar, 0)) AS total_outstanding_customer FROM m5_si si2 WHERE si2.siisclose = 0 AND (COALESCE(si2.sistatuslunas, '') <> 'LUNAS' OR (si2.sitotaltransaksi - COALESCE(si2.sijmlbayar, 0)) > 0) GROUP BY si2.sicustomer ) cust_outstanding ON cust_outstanding.sicustomer = si.sicustomer WHERE si.siisclose = 0 AND (COALESCE(si.sistatuslunas, '') <> 'LUNAS' OR (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0) ORDER BY outstanding_invoice DESC, hari_lewat_jatuh_tempo DESC, si.sitgl ASC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_aging_bucket",
+            "name": "Aging Bucket Piutang",
+            "purpose": "Menampilkan distribusi outstanding piutang ke dalam bucket umur piutang berdasarkan tanggal jatuh tempo.",
+            "query": "SELECT CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) <= 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 1 AND 30 THEN '1-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END AS aging_bucket, COUNT(si.siid) AS jumlah_invoice, SUM(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS total_outstanding FROM m5_si si WHERE si.siisclose = 0 AND (COALESCE(si.sistatuslunas, '') <> 'LUNAS' OR (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0) GROUP BY CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) <= 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 1 AND 30 THEN '1-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END ORDER BY CASE aging_bucket WHEN 'Belum Jatuh Tempo' THEN 1 WHEN '1-30 Hari' THEN 2 WHEN '31-60 Hari' THEN 3 WHEN '61-90 Hari' THEN 4 ELSE 5 END",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_customer_risk",
+            "name": "Customer Risiko Tertinggi",
+            "purpose": "Merangking customer dengan risiko keterlambatan tertinggi berdasarkan outstanding overdue, jumlah invoice overdue, dan maksimum hari overdue.",
+            "query": "SELECT c.kkode AS kode_customer, c.knama AS nama_customer, COUNT(si.siid) AS jumlah_invoice_belum_lunas, SUM(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS total_outstanding, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS outstanding_overdue, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN 1 ELSE 0 END) AS jumlah_invoice_overdue, MAX(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS maksimum_hari_overdue FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND (COALESCE(si.sistatuslunas, '') <> 'LUNAS' OR (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0) GROUP BY c.kkode, c.knama ORDER BY outstanding_overdue DESC, jumlah_invoice_overdue DESC, maksimum_hari_overdue DESC LIMIT 100",
+            "result_kind": "bar_chart"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_invoice_unpaid_detail",
+            "query_id": "q_invoice_unpaid_detail",
+            "title": "Daftar Invoice Belum Lunas",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "total_invoice",
+              "total_terbayar",
+              "outstanding_invoice",
+              "hari_lewat_jatuh_tempo",
+              "total_outstanding_customer"
+            ]
+          },
+          {
+            "id": "v_aging_bucket",
+            "query_id": "q_aging_bucket",
+            "title": "Distribusi Aging Bucket Piutang",
+            "chart_type": "bar",
+            "x_axis": "aging_bucket",
+            "y_axis": [
+              "total_outstanding",
+              "jumlah_invoice"
+            ]
+          },
+          {
+            "id": "v_customer_risk",
+            "query_id": "q_customer_risk",
+            "title": "Customer dengan Risiko Keterlambatan Tertinggi",
+            "chart_type": "bar",
+            "x_axis": "nama_customer",
+            "y_axis": [
+              "outstanding_overdue",
+              "jumlah_invoice_overdue",
+              "maksimum_hari_overdue"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    }
+  ]
+}

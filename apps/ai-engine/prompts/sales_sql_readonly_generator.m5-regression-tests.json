@@ -1,0 +1,125 @@
+{
+  "suite_name": "sales_sql_readonly_generator_m5",
+  "description": "Regression tests untuk prompt generator SQL readonly domain sales M5.",
+  "tests": [
+    {
+      "id": "m5_001_sq_header_list",
+      "question": "Daftar 20 penawaran penjualan terbaru beserta customer dan total transaksinya",
+      "intent": "listing header SQ",
+      "must_use_tables": ["m5_sq"],
+      "should_use_tables": ["m1_contact"],
+      "must_not_use_tables": ["m5_sq_detail"],
+      "must_have_joins": [],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_sq LEFT JOIN m1_contact ... ORDER BY sqtgl DESC LIMIT 20"
+    },
+    {
+      "id": "m5_002_so_item_detail",
+      "question": "Tampilkan item barang pada sales order tertentu beserta qty dan harga",
+      "intent": "detail item SO",
+      "must_use_tables": ["m5_so", "m5_so_detail"],
+      "should_use_tables": ["m1_item"],
+      "must_not_use_tables": [],
+      "must_have_joins": ["m5_so.soid = m5_so_detail.idso"],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_so JOIN m5_so_detail ON sod.idso = so.soid WHERE so.sonotransaksi = ?"
+    },
+    {
+      "id": "m5_003_sq_so_do_trace",
+      "question": "Tampilkan progres dokumen dari quotation ke sales order dan delivery order untuk setiap item quotation",
+      "intent": "document tracing SQ -> SO -> DO",
+      "must_use_tables": ["m5_sq_detail", "m5_so_detail", "m5_do_detail"],
+      "should_use_tables": [],
+      "must_not_use_tables": [],
+      "must_have_joins": [
+        "m5_sq_detail.idsqdetail = m5_so_detail.idsqdetail",
+        "m5_so_detail.idsodetail = m5_do_detail.idsodetail"
+      ],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_sq_detail LEFT JOIN m5_so_detail ... LEFT JOIN m5_do_detail ..."
+    },
+    {
+      "id": "m5_004_si_open_invoice",
+      "question": "Daftar invoice penjualan yang belum lunas beserta nilai total dan jumlah pembayarannya",
+      "intent": "open sales invoice",
+      "must_use_tables": ["m5_si"],
+      "should_use_tables": [],
+      "must_not_use_tables": ["m5_si_detail"],
+      "must_have_joins": [],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_si WHERE sijmlbayar < sitotaltransaksi"
+    },
+    {
+      "id": "m5_005_ic_poly_si",
+      "question": "Daftar tagihan invoice collection yang berasal dari sales invoice",
+      "intent": "IC detail polymorphic to SI",
+      "must_use_tables": ["m5_ic_detail", "m5_si"],
+      "should_use_tables": [],
+      "must_not_use_tables": [],
+      "must_have_joins": ["m5_ic_detail.idtransaksi = m5_si.siid"],
+      "must_have_conditions": ["m5_ic_detail.sumber = 'SI'"],
+      "expected_sql_shape": "SELECT ... FROM m5_ic_detail JOIN m5_si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid"
+    },
+    {
+      "id": "m5_006_pv_poly_sr",
+      "question": "Daftar payment voucher yang membayar sales return",
+      "intent": "PV detail polymorphic to SR",
+      "must_use_tables": ["m5_pv", "m5_pv_detail", "m5_sr"],
+      "should_use_tables": [],
+      "must_not_use_tables": [],
+      "must_have_joins": [
+        "m5_pv.pvid = m5_pv_detail.idpv",
+        "m5_pv_detail.idtransaksi = m5_sr.srid"
+      ],
+      "must_have_conditions": ["m5_pv_detail.sumber = 'SR'"],
+      "expected_sql_shape": "SELECT ... FROM m5_pv JOIN m5_pv_detail ... JOIN m5_sr ON pvd.sumber = 'SR' AND pvd.idtransaksi = sr.srid"
+    },
+    {
+      "id": "m5_007_sie_poly_source",
+      "question": "Tampilkan dokumen tukar faktur penjualan beserta invoice dan retur sumbernya",
+      "intent": "SIE polymorphic source",
+      "must_use_tables": ["m5_sie", "m5_sie_detail"],
+      "should_use_tables": ["m5_si", "m5_sr"],
+      "must_not_use_tables": [],
+      "must_have_joins": ["m5_sie.sieid = m5_sie_detail.idsie"],
+      "must_have_conditions": ["m5_sie_detail.sumber checked before joining to target document"],
+      "expected_sql_shape": "SELECT ... FROM m5_sie JOIN m5_sie_detail ... LEFT JOIN m5_si ... LEFT JOIN m5_sr ..."
+    },
+    {
+      "id": "m5_008_spa_points",
+      "question": "Daftar customer dengan penyesuaian poin penjualan terbesar",
+      "intent": "SPA with contact join",
+      "must_use_tables": ["m5_spa", "m5_spa_detail"],
+      "should_use_tables": ["m1_contact"],
+      "must_not_use_tables": [],
+      "must_have_joins": [
+        "m5_spa.spaid = m5_spa_detail.idspa",
+        "m5_spa_detail.kontak = m1_contact.kid"
+      ],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_spa JOIN m5_spa_detail LEFT JOIN m1_contact ... ORDER BY poinbaru DESC LIMIT 100"
+    },
+    {
+      "id": "m5_009_rp_si_join",
+      "question": "Daftar piutang ongkos kirim per invoice penjualan",
+      "intent": "RP to SI join",
+      "must_use_tables": ["m5_rp", "m5_si"],
+      "should_use_tables": [],
+      "must_not_use_tables": [],
+      "must_have_joins": ["m5_rp.rpidsi = m5_si.siid"],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_rp JOIN m5_si ON rp.rpidsi = si.siid"
+    },
+    {
+      "id": "m5_010_cl_realization_status",
+      "question": "Tampilkan status realisasi per item customer dari sales order sampai invoice",
+      "intent": "status realization via CL",
+      "must_use_tables": ["m5_cl"],
+      "should_use_tables": ["m5_so", "m1_contact", "m1_item"],
+      "must_not_use_tables": ["m5_cl_history"],
+      "must_have_joins": [],
+      "must_have_conditions": [],
+      "expected_sql_shape": "SELECT ... FROM m5_cl LEFT JOIN m5_so ... LEFT JOIN m1_contact ... LEFT JOIN m1_item ..."
+    }
+  ]
+}

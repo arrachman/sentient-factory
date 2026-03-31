@@ -225,13 +225,12 @@ Untuk menyalakan AI engine yang dipakai halaman manager dashboard:
 
 ```bash
 export VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only
-docker compose -p sentient_factory -f infra/docker-compose.yml up -d llm-router ai-engine web-dashboard
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d ai-engine web-dashboard
 ```
 
 Health check:
 
 ```bash
-curl http://127.0.0.1:3206/health
 curl http://127.0.0.1:8001/health
 ```
 
@@ -251,9 +250,8 @@ http://127.0.0.1:3201/app/dashboard/manager
 
 ## AI Manager Runbook
 
-Manager dashboard AI memakai tiga service:
+Manager dashboard AI memakai dua service:
 
-- `sentient-infra-llm-router`
 - `sentient-infra-ai-engine`
 - `sentient-infra-web-dashboard`
 
@@ -261,13 +259,12 @@ Start cepat:
 
 ```bash
 VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only \
-docker compose -p sentient_factory -f infra/docker-compose.yml up -d llm-router ai-engine web-dashboard
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d ai-engine web-dashboard
 ```
 
 Health check:
 
 ```bash
-curl http://127.0.0.1:3206/health
 curl http://127.0.0.1:8001/health
 curl -X POST http://127.0.0.1:3201/api/ai/chat \
   -H 'Content-Type: application/json' \

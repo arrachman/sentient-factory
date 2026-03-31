@@ -1,0 +1,15 @@
+{
+  "suite": "sales_sql_readonly_generator_m5",
+  "generated_at": "20260330T051622Z",
+  "total": 1,
+  "failed": 0,
+  "passed": 1,
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/m5-regression-outputs-20260330T051622Z.json",
+  "results": [
+    {
+      "id": "m5_005_ic_poly_si",
+      "status": "PASSED",
+      "validation_errors": []
+    }
+  ]
+}

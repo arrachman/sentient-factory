@@ -1,0 +1,30 @@
+{
+  "results": [
+    {
+      "id": "dashboard_001_customer_receivable",
+      "title": "Dashboard Piutang Customer",
+      "question": "Tampilkan dashboard piutang customer berisi daftar invoice belum lunas, total outstanding per customer, aging bucket, dan customer dengan risiko keterlambatan tertinggi.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "",
+      "output": {},
+      "status": "FAILED",
+      "errors": [
+        "unexpected error: URLError: <urlopen error [Errno 1] Operation not permitted>"
+      ]
+    },
+    {
+      "id": "dashboard_002_sales_funnel",
+      "title": "Funnel Dokumen Penjualan",
+      "question": "Tampilkan funnel konversi penjualan dari sales quotation ke sales order, delivery order, delivery report, lalu sales invoice per bulan.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "",
+      "output": {},
+      "status": "FAILED",
+      "errors": [
+        "unexpected error: URLError: <urlopen error [Errno 1] Operation not permitted>"
+      ]
+    }
+  ]
+}

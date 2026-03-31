@@ -1,0 +1,130 @@
+# M4_PP Queries
+
+## Query 1
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+DELETE FROM M2_Transaction_Journal WHERE tsumber = 'PP' AND tidtransaksi = '{idtransaksi}' AND tnotransaksi = '{notransaksi}'
+```
+
+## Query 2
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+DELETE FROM M4_Pp WHERE ppid = '{idtransaksi}'
+```
+
+## Query 3
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+DELETE FROM M4_Pp_Pay WHERE idpp = '{idtransaksi}'
+```
+
+## Query 4
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+DELETE FROM m2_giro_list WHERE glsumber = 'PP' AND glidtransaksi = '{idtransaksi}' AND glnotransaksi = '{notransaksi}'
+```
+
+## Query 5
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Delete from M4_Pp_Pay where idpp = '{result_4}'
+```
+
+## Query 6
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Insert into M0_Msmq_Journal(mjid, mjsumber, mjidtransaksi, mjprogress, mjpesan, mjtglantrian, mjtglselesai, mjuserid) values ('{mjid}', '{sumber}', '{result_4}', '{0}', '', NOW(), '1971-01-01 00:00:00', '{userid}')
+```
+
+## Query 7
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Insert into M0_Userlog (uluserid, ulidmodule, ulidmenu, uljenisaktivitas, ulaktivitas, ultgl, ulkodepa) values({userid}, {mdlid}, {mnid}, {jnsaktivitas}, '{notransaksi}', NOW(), {0})
+```
+
+## Query 8
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Insert into M2_Giro_List(glnogiro, glsumber, glidtransaksi, glnotransaksi, glkontak, glrekbank, glrekgiro, gljenis, glbank, glnoacbank, glmatauang, glkurs, gljumlah, gljumlahvalas, gltgljthtempo, gltglcair, glstatus, glstatussebelumnya, glurutan) values{strGiro.ToString}
+```
+
+## Query 9
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Insert into M4_Pp (ppcabang, pplokasi, ppjenis, ppsumber, ppautonotransaksi, ppnotransaksi, pptgl, ppkodepa, ppkontak, ppkontakperson, pp1alamat1, pp1alamat2, pp1alamat3, pp2alamat1, pp2alamat2, pp2alamat3, ppbagianpembayaran, pptermin, pptgljatuhtempo, ppidri, ppnorek, ppuraian, ppcatatan, ppnoref, pptglnoref, ppmatauang, ppkurs, ppjumlah, ppjumlahvalas, ppjumlahbayar, ppjumlahbayarvalas, ppstatusbayar, pptgllunas, ppcostcenter, ppdivisi, ppsubdivisi, ppproyek, ppstatus, ppstatussebelumnya, ppjmlrevisi, ppcetakanke, ppinputuser, ppinputtgl, ppmodifikasiuser, ppmodifikasitgl, ppposting, ppisclose, ppcustomtext1, ppcustomtext2, ppcustomtext3, ppcustomtext4, ppcustomtext5, ppcustomint1, ppcustomint2, ppcustomint3, ppcustomdbl1, ppcustomdbl2, ppcustomdbl3, ppcustomdate1, ppcustomdate2, ppcustomdate3) values('{ppcabang}', '{pplokasi}', {ppjenis}, '{ppsumber}', {ppautonotransaksi}, '{notransaksi}', '{pptgl}', {ppkodepa}, {ppkontak}, '{ppkontakperson}', '{pp1alamat1}', '{pp1alamat2}', '{pp1alamat3}', '{pp2alamat1}', '{pp2alamat2}', '{pp2alamat3}', {ppbagianpembayaran}, '{pptermin}', '{pptgljatuhtempo}', {ppidri}, '{ppnorek}', '{ppuraian}', '{ppcatatan}', '{ppnoref}', '{pptglnoref}', '{ppmatauang}', '{ppkurs}', '{ppjumlah}', '{ppjumlahvalas}', '{ppjumlahbayar}', '{ppjumlahbayarvalas}', {ppstatusbayar}, '{pptgllunas}', '{ppcostcenter}', '{ppdivisi}', '{ppsubdivisi}', '{ppproyek}', {ppstatus}, {ppstatussebelumnya}, {ppjmlrevisi}, {ppcetakanke}, {ppinputuser}, NOW(), {ppmodifikasiuser}, '1971-01-01 00:00:00', 0, {ppisclose}, '{ppcustomtext1}', '{ppcustomtext2}', '{ppcustomtext3}', '{ppcustomtext4}', '{ppcustomtext5}', {ppcustomint1}, {ppcustomint2}, {ppcustomint3}, '{ppcustomdbl1}', '{ppcustomdbl2}', '{ppcustomdbl3}', '{ppcustomdate1}', '{ppcustomdate2}', '{ppcustomdate3}')
+```
+
+## Query 10
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Insert into M4_Pp_Pay(idppcarabayar, idpp, carabayar, matauang, kurs, jumlah, jumlahvalas, nogiro, tgljt, bank, noacbank, rekbank, rekgiro, catatan, urutan, isclose) values{strValue2.ToString}
+```
+
+## Query 11
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+SELECT ppcabang, pplokasi, ppsumber, ppautonotransaksi, ppnotransaksi, pptgl FROM M4_pp WHERE ppid = '{idtransaksi}'
+```
+
+## Query 12
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+UPDATE m4_Pp SET Ppstatus = {nilaiStatus}, Ppmodifikasiuser='{userid}', Ppmodifikasitgl = NOW(), Ppposting = 0, Pppostingtgl = '1971-01-01 00:00:00', Ppjmlrevisi = Ppjmlrevisi + 1 WHERE Ppid = '{idtransaksi}'
+```
+
+## Query 13
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_pp.vb`
+
+```sql
+Update M4_Pp set ppcabang = '{ppcabang}', pplokasi = '{pplokasi}', ppjenis = {ppjenis}, ppsumber = '{ppsumber}', ppautonotransaksi = {ppautonotransaksi}, ppnotransaksi = '{notransaksi}', pptgl = '{pptgl}', ppkodepa = {ppkodepa}, ppkontak = {ppkontak}, ppkontakperson = '{ppkontakperson}', pp1alamat1 = '{pp1alamat1}', pp1alamat2 = '{pp1alamat2}', pp1alamat3 = '{pp1alamat3}', pp2alamat1 = '{pp2alamat1}', pp2alamat2 = '{pp2alamat2}', pp2alamat3 = '{pp2alamat3}', ppbagianpembayaran = {ppbagianpembayaran}, pptermin = '{pptermin}', pptgljatuhtempo = '{pptgljatuhtempo}', ppidri = {ppidri}, ppnorek = '{ppnorek}', ppuraian = '{ppuraian}', ppcatatan = '{ppcatatan}', ppnoref = '{ppnoref}', pptglnoref = '{pptglnoref}', ppmatauang = '{ppmatauang}', ppkurs = '{ppkurs}', ppjumlah = '{ppjumlah}', ppjumlahvalas = '{ppjumlahvalas}', ppjumlahbayar = '{ppjumlahbayar}', ppjumlahbayarvalas = '{ppjumlahbayarvalas}', ppstatusbayar = {ppstatusbayar}, pptgllunas = '{pptgllunas}', ppcostcenter = '{ppcostcenter}', ppdivisi = '{ppdivisi}', ppsubdivisi = '{ppsubdivisi}', ppproyek = '{ppproyek}', ppstatus = {ppstatus}, ppstatussebelumnya = {ppstatussebelumnya}, ppjmlrevisi = ppjmlrevisi+1, ppcetakanke = {ppcetakanke}, ppmodifikasiuser = {ppmodifikasiuser}, ppmodifikasitgl = NOW(), ppposting = 0, ppcustomtext1 = '{ppcustomtext1}', ppcustomtext2 = '{ppcustomtext2}', ppcustomtext3 = '{ppcustomtext3}', ppcustomtext4 = '{ppcustomtext4}', ppcustomtext5 = '{ppcustomtext5}', ppcustomint1 = {ppcustomint1}, ppcustomint2 = {ppcustomint2}, ppcustomint3 = {ppcustomint3}, ppcustomdbl1 = '{ppcustomdbl1}', ppcustomdbl2 = '{ppcustomdbl2}', ppcustomdbl3 = '{ppcustomdbl3}', ppcustomdate1 = '{ppcustomdate1}', ppcustomdate2 = '{ppcustomdate2}', ppcustomdate3 = '{ppcustomdate3}' where ppid = '{ppid}'
+```
+
+## Query 14
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_pp_v`
+
+```sql
+select `pp`.`ppid` AS `ppid`,`pp`.`ppcabang` AS `ppcabang`,`pp`.`pplokasi` AS `pplokasi`,`pp`.`ppjenis` AS `ppjenis`,`pp`.`ppsumber` AS `ppsumber`,`pp`.`ppautonotransaksi` AS `ppautonotransaksi`,`pp`.`ppnotransaksi` AS `ppnotransaksi`,`pp`.`pptgl` AS `pptgl`,`pp`.`ppkodepa` AS `ppkodepa`,`pp`.`ppkontak` AS `ppkontak`,`pp`.`ppkontakperson` AS `ppkontakperson`,`pp`.`pp1alamat1` AS `pp1alamat1`,`pp`.`pp1alamat2` AS `pp1alamat2`,`pp`.`pp1alamat3` AS `pp1alamat3`,`pp`.`pp2alamat1` AS `pp2alamat1`,`pp`.`pp2alamat2` AS `pp2alamat2`,`pp`.`pp2alamat3` AS `pp2alamat3`,`pp`.`ppbagianpembayaran` AS `ppbagianpembayaran`,`pp`.`pptermin` AS `pptermin`,`pp`.`pptgljatuhtempo` AS `pptgljatuhtempo`,`pp`.`ppidri` AS `ppidri`,`pp`.`ppnorek` AS `ppnorek`,`pp`.`ppuraian` AS `ppuraian`,`pp`.`ppcatatan` AS `ppcatatan`,`pp`.`ppnoref` AS `ppnoref`,`pp`.`pptglnoref` AS `pptglnoref`,`pp`.`ppmatauang` AS `ppmatauang`,`pp`.`ppkurs` AS `ppkurs`,`pp`.`ppjumlah` AS `ppjumlah`,`pp`.`ppjumlahvalas` AS `ppjumlahvalas`,`pp`.`ppjumlahbayar` AS `ppjumlahbayar`,`pp`.`ppjumlahbayarvalas` AS `ppjumlahbayarvalas`,`pp`.`ppstatusbayar` AS `ppstatusbayar`,`pp`.`pptgllunas` AS `pptgllunas`,`pp`.`ppcostcenter` AS `ppcostcenter`,`pp`.`ppdivisi` AS `ppdivisi`,`pp`.`ppsubdivisi` AS `ppsubdivisi`,`pp`.`ppproyek` AS `ppproyek`,`pp`.`ppstatus` AS `ppstatus`,`pp`.`ppstatussebelumnya` AS `ppstatussebelumnya`,`pp`.`ppjmlrevisi` AS `ppjmlrevisi`,`pp`.`ppcetakanke` AS `ppcetakanke`,`pp`.`ppinputuser` AS `ppinputuser`,`pp`.`ppinputtgl` AS `ppinputtgl`,`pp`.`ppmodifikasiuser` AS `ppmodifikasiuser`,`pp`.`ppmodifikasitgl` AS `ppmodifikasitgl`,`pp`.`ppposting` AS `ppposting`,`pp`.`pppostingtgl` AS `pppostingtgl`,`pp`.`ppisclose` AS `ppisclose`,`br`.`bnama` AS `ppcabangnama`,`lc`.`lnama` AS `pplokasinama`,(case `pp`.`ppjenis` when 0 then 'Down Payment' when 1 then 'Deposit' else 'Unknown' end) AS `ppjenisnama`,`c1`.`kkode` AS `ppkontakkode`,`c1`.`knama` AS `ppkontaknama`,`c2`.`kkode` AS `ppbagianpembayarankode`,`c2`.`knama` AS `ppbagianpembayarannama`,`ri`.`rinotransaksi` AS `rinotransaksi`,`coa`.`cnama` AS `ppnoreknama`,`st1`.`nama` AS `ppstatusnama`,`st2`.`nama` AS `ppstatussebelumnyanama`,`u1`.`unama` AS `ppinputusernama`,`u2`.`unama` AS `ppmodifikasiusernama` from ((((((((((`m4_pp` `pp` left join `m1_branch` `br` on((`pp`.`ppcabang` = `br`.`bkode`))) left join `m1_location` `lc` on((`pp`.`pplokasi` = `lc`.`lkode`))) left join `m1_contact` `c1` on((`pp`.`ppkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`pp`.`ppbagianpembayaran` = `c2`.`kid`))) left join `m4_ri` `ri` on((`pp`.`ppidri` = `ri`.`riid`))) left join `m1_coa` `coa` on((`pp`.`ppnorek` = `coa`.`cnomor`))) left join `m0_status` `st1` on((`pp`.`ppstatus` = `st1`.`kode`))) left join `m0_status` `st2` on((`pp`.`ppstatussebelumnya` = `st2`.`kode`))) left join `m0_user` `u1` on((`pp`.`ppinputuser` = `u1`.`userid`))) left join `m0_user` `u2` on((`pp`.`ppmodifikasiuser` = `u2`.`userid`)))
+```
+
+## Query 15
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_pp_getdata`
+
+```sql
+select `pp`.`ppid` AS `ppid`,`pp`.`ppcabang` AS `ppcabang`,`pp`.`pplokasi` AS `pplokasi`,`pp`.`ppjenis` AS `ppjenis`,`pp`.`ppsumber` AS `ppsumber`,`pp`.`ppautonotransaksi` AS `ppautonotransaksi`,`pp`.`ppnotransaksi` AS `ppnotransaksi`,`pp`.`pptgl` AS `pptgl`,`pp`.`ppkodepa` AS `ppkodepa`,`pp`.`ppkontak` AS `ppkontak`,`pp`.`ppkontakperson` AS `ppkontakperson`,`pp`.`pp1alamat1` AS `pp1alamat1`,`pp`.`pp1alamat2` AS `pp1alamat2`,`pp`.`pp1alamat3` AS `pp1alamat3`,`pp`.`pp2alamat1` AS `pp2alamat1`,`pp`.`pp2alamat2` AS `pp2alamat2`,`pp`.`pp2alamat3` AS `pp2alamat3`,`pp`.`ppbagianpembayaran` AS `ppbagianpembayaran`,`pp`.`pptermin` AS `pptermin`,`pp`.`pptgljatuhtempo` AS `pptgljatuhtempo`,`pp`.`ppidri` AS `ppidri`,`pp`.`ppnorek` AS `ppnorek`,`pp`.`ppuraian` AS `ppuraian`,`pp`.`ppcatatan` AS `ppcatatan`,`pp`.`ppnoref` AS `ppnoref`,`pp`.`pptglnoref` AS `pptglnoref`,`pp`.`ppmatauang` AS `ppmatauang`,`pp`.`ppkurs` AS `ppkurs`,`pp`.`ppjumlah` AS `ppjumlah`,`pp`.`ppjumlahvalas` AS `ppjumlahvalas`,`pp`.`ppjumlahbayar` AS `ppjumlahbayar`,`pp`.`ppjumlahbayarvalas` AS `ppjumlahbayarvalas`,`pp`.`ppstatusbayar` AS `ppstatusbayar`,`pp`.`pptgllunas` AS `pptgllunas`,`pp`.`ppcostcenter` AS `ppcostcenter`,`pp`.`ppdivisi` AS `ppdivisi`,`pp`.`ppsubdivisi` AS `ppsubdivisi`,`pp`.`ppproyek` AS `ppproyek`,`pp`.`ppstatus` AS `ppstatus`,`pp`.`ppstatussebelumnya` AS `ppstatussebelumnya`,`pp`.`ppjmlrevisi` AS `ppjmlrevisi`,`pp`.`ppcetakanke` AS `ppcetakanke`,`pp`.`ppinputuser` AS `ppinputuser`,`pp`.`ppinputtgl` AS `ppinputtgl`,`pp`.`ppmodifikasiuser` AS `ppmodifikasiuser`,`pp`.`ppmodifikasitgl` AS `ppmodifikasitgl`,`pp`.`ppposting` AS `ppposting`,`pp`.`pppostingtgl` AS `pppostingtgl`,`pp`.`ppisclose` AS `ppisclose`,`pp`.`ppcustomtext1` AS `ppcustomtext1`,`pp`.`ppcustomtext2` AS `ppcustomtext2`,`pp`.`ppcustomtext3` AS `ppcustomtext3`,`pp`.`ppcustomtext4` AS `ppcustomtext4`,`pp`.`ppcustomtext5` AS `ppcustomtext5`,`pp`.`ppcustomint1` AS `ppcustomint1`,`pp`.`ppcustomint2` AS `ppcustomint2`,`pp`.`ppcustomint3` AS `ppcustomint3`,`pp`.`ppcustomdbl1` AS `ppcustomdbl1`,`pp`.`ppcustomdbl2` AS `ppcustomdbl2`,`pp`.`ppcustomdbl3` AS `ppcustomdbl3`,`pp`.`ppcustomdate1` AS `ppcustomdate1`,`pp`.`ppcustomdate2` AS `ppcustomdate2`,`pp`.`ppcustomdate3` AS `ppcustomdate3`,`br`.`bnama` AS `ppcabangnama`,`lc`.`lnama` AS `pplokasinama`,`c1`.`kkode` AS `ppkontakkode`,`c1`.`knama` AS `ppkontaknama`,`c2`.`kkode` AS `ppbagianpembayarankode`,`c2`.`knama` AS `ppbagianpembayarannama`,`tr`.`trnama` AS `ppterminnama`,`tr`.`trharijatuhtempo` AS `ppterminharijatuhtempo`,`ri`.`rinotransaksi` AS `rinotransaksi`,`coa`.`cnama` AS `ppnoreknama`,`cc`.`ccnama` AS `ppcostcenternama`,`d`.`dnama` AS `ppdivisinama`,`sd`.`sdnama` AS `ppsubdivisinama`,`p`.`pnama` AS `ppproyeknama`,`st1`.`nama` AS `ppstatusnama`,`st2`.`nama` AS `ppstatussebelumnyanama`,`u1`.`unama` AS `ppinputusernama`,`u2`.`unama` AS `ppmodifikasiusernama`,`ppp`.`idppcarabayar` AS `idppcarabayar`,`ppp`.`idpp` AS `idpp`,`ppp`.`carabayar` AS `carabayar`,`ppp`.`matauang` AS `matauang`,`ppp`.`kurs` AS `kurs`,`ppp`.`jumlah` AS `jumlah`,`ppp`.`jumlahvalas` AS `jumlahvalas`,`ppp`.`nogiro` AS `nogiro`,`ppp`.`tgljt` AS `tgljt`,`ppp`.`bank` AS `bank`,`ppp`.`noacbank` AS `noacbank`,`ppp`.`rekbank` AS `rekbank`,`ppp`.`rekgiro` AS `rekgiro`,`ppp`.`catatan` AS `catatan`,`ppp`.`urutan` AS `urutan`,`ppp`.`isclose` AS `isclose`,`pm`.`nama` AS `carabayarnama`,`b`.`bnama` AS `banknama`,`coa1`.`cnama` AS `rekbanknama`,`coa2`.`cnama` AS `rekgironama`, c1.kpkp from ((((((((((((((((((((`m4_pp` `pp` join `m4_pp_pay` `ppp` on((`pp`.`ppid` = `ppp`.`idpp`))) left join `m1_branch` `br` on((`pp`.`ppcabang` = `br`.`bkode`))) left join `m1_location` `lc` on((`pp`.`pplokasi` = `lc`.`lkode`))) left join `m1_contact` `c1` on((`pp`.`ppkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`pp`.`ppbagianpembayaran` = `c2`.`kid`))) left join `m1_terms` `tr` on((`pp`.`pptermin` = `tr`.`trkode`))) left join `m4_ri` `ri` on((`pp`.`ppidri` = `ri`.`riid`))) left join `m1_coa` `coa` on((`pp`.`ppnorek` = `coa`.`cnomor`))) left join `m1_cost_center` `cc` on((`pp`.`ppcostcenter` = `cc`.`cckode`))) left join `m1_division` `d` on((`pp`.`ppdivisi` = `d`.`dkode`))) left join `m1_subdivision` `sd` on((`pp`.`ppsubdivisi` = `sd`.`sdkode`))) left join `m1_project` `p` on((`pp`.`ppproyek` = `p`.`pkode`))) left join `m0_status` `st1` on((`pp`.`ppstatus` = `st1`.`kode`))) left join `m0_status` `st2` on((`pp`.`ppstatussebelumnya` = `st2`.`kode`))) left join `m0_user` `u1` on((`pp`.`ppinputuser` = `u1`.`userid`))) left join `m0_user` `u2` on((`pp`.`ppmodifikasiuser` = `u2`.`userid`))) left join `m0_payment_method` `pm` on((`ppp`.`carabayar` = `pm`.`kode`))) left join `m1_bank` `b` on((`ppp`.`bank` = `b`.`bkode`))) left join `m1_coa` `coa1` on((`ppp`.`rekbank` = `coa1`.`cnomor`))) left join `m1_coa` `coa2` on((`ppp`.`rekgiro` = `coa2`.`cnomor`)))
+```
+
+## Query 16
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_pp_terkait`
+
+```sql
+select `pp`.`ppid` AS `ppid`,`pp`.`ppnotransaksi` AS `ppnotransaksi`,`ri`.`risumber` AS `sumber`,`ri`.`riid` AS `idterkait`,`ri`.`rinotransaksi` AS `noterkait`,`ri`.`ritgl` AS `tglterkait`,`ri`.`riinputtgl` AS `inputtglterkait`,`ri`.`rimodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (`m4_ri` `ri` join `m4_pp` `pp` on((`ri`.`riid` = `pp`.`ppidri`))) where (`pp`.`ppid` = 'validtransaksi') group by `ri`.`riid`,`pp`.`ppid` union all select `pp`.`ppid` AS `ppid`,`pp`.`ppnotransaksi` AS `ppnotransaksi`,`vpp`.`vppsumber` AS `sumber`,`vpp`.`vppid` AS `idterkait`,`vpp`.`vppnotransaksi` AS `noterkait`,`vpp`.`vpptgl` AS `tglterkait`,`vpp`.`vppinputtgl` AS `inputtglterkait`,`vpp`.`vppmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from ((`m4_vpp_detail` `vppd` join `m4_vpp` `vpp` on((`vppd`.`idvpp` = `vpp`.`vppid`))) join `m4_pp` `pp` on((`vppd`.`idtransaksi` = `pp`.`ppid`))) where ((`vppd`.`sumber` = 'PP') and ((`vpp`.`vppstatus` = 2) or (`vpp`.`vppstatus` = 3) or (`vpp`.`vppstatus` = 4) or (`vpp`.`vppstatus` = 7)) and (`pp`.`ppid` = 'validtransaksi')) group by `vpp`.`vppid`,`pp`.`ppid` union all select `pp`.`ppid` AS `ppid`,`pp`.`ppnotransaksi` AS `ppnotransaksi`,`vp`.`vpsumber` AS `sumber`,`vp`.`vpid` AS `idterkait`,`vp`.`vpnotransaksi` AS `noterkait`,`vp`.`vptgl` AS `tglterkait`,`vp`.`vpinputtgl` AS `inputtglterkait`,`vp`.`vpmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from ((`m4_vp_detail` `vpd` join `m4_vp` `vp` on((`vpd`.`idvp` = `vp`.`vpid`))) join `m4_pp` `pp` on((`vpd`.`idtransaksi` = `pp`.`ppid`))) where ((`vpd`.`sumber` = 'PP') and ((`vp`.`vpstatus` = 2) or (`vp`.`vpstatus` = 3) or (`vp`.`vpstatus` = 4) or (`vp`.`vpstatus` = 7)) and (`pp`.`ppid` = 'validtransaksi')) group by `vp`.`vpid`,`pp`.`ppid`
+```
+

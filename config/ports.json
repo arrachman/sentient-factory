@@ -26,18 +26,10 @@
     },
     "ai-engine": {
       "name": "AI Engine",
-      "port": 3104,
-      "type": "node",
+      "port": 8001,
+      "type": "python",
       "envVar": "AI_ENGINE_PORT",
       "description": "AI processing service",
-      "isActive": false
-    },
-    "llm-router": {
-      "name": "LLM Router",
-      "port": 3206,
-      "type": "litellm",
-      "envVar": "LLM_ROUTER_PORT",
-      "description": "LLM routing and load balancing service",
       "isActive": true
     }
   },

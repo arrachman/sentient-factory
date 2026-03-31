@@ -1,0 +1,106 @@
+{
+  "results": [
+    {
+      "id": "dashboard_002_sales_funnel",
+      "title": "Funnel Dokumen Penjualan",
+      "question": "Tampilkan funnel konversi penjualan dari sales quotation ke sales order, delivery order, delivery report, lalu sales invoice per bulan.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta dashboard funnel konversi penjualan bulanan lintas tahap dokumen M5 dari sales quotation (SQ) ke sales order (SO), delivery order (DO), delivery report (DR), lalu sales invoice (SI), termasuk ringkasan stage, metrik konversi antar tahap, dan tren per bulan.\", \"tables_used\": [\"m5_sq\", \"m5_so\", \"m5_do\", \"m5_dr\", \"m5_si\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini wajib mode dashboard karena meminta funnel, conversion per tahap, dan per bulan dalam satu jawaban. Untuk menghitung funnel per bulan yang konsisten lintas tahap, saya gunakan tabel header dokumen karena user meminta status konversi dokumen, bukan analisis item. Bulan dasar diambil dari SQ karena funnel dimulai dari quotation. Join utama mengikuti relasi header yang memang tersedia di schema: SO mereferensikan SQ lewat soidsq, DO bisa mereferensikan SO lewat doidso, DR mereferensikan DO lewat driddo, dan SI mereferensikan DO/DR/SO melalui siiddo, siiddr, atau siidso. Semua tabel M5 yang punya always_apply_filters wajib diterapkan: m5_sq.sqisclose = 0, m5_so.soisclose = 0, m5_do.doisclose = 0, dan m5_si.siisclose = 0. Untuk m5_dr tidak ada always_apply_filters di schema sehingga tidak saya tambahkan filter default. Query pertama merangkum jumlah dokumen unik per stage per bulan dari cohort SQ. Query kedua menghitung rasio konversi antar tahap per bulan dengan pembagi yang sesuai. Query ketiga memberi tren bulanan funnel dalam format lebar agar mudah divisualisasikan sebagai line chart multi-series. Saya memakai subquery agregat per bulan agar tidak terjadi duplikasi akibat one-to-many saat satu SQ punya banyak SO atau satu SO punya banyak DO.\", \"ai_metrics\": {\"confidence_score\": 0.84, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query funnel bulanan melakukan full scan pada tabel header M5 bila tidak ada filter periode dari user.\", \"Join SI menggunakan OR pada relasi referensi (siiddr / siiddo / siidso) sehingga performa dapat lebih berat pada data besar.\"]}, \"queries\": [{\"id\": \"q_funnel_stage_monthly\", \"name\": \"Funnel Stage Bulanan\", \"purpose\": \"Menampilkan jumlah dokumen unik pada tiap tahap funnel penjualan per bulan berbasis cohort sales quotation.\", \"query\": \"SELECT base.bulan AS bulan, 'SQ' AS stage, base.sq_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'SO' AS stage, base.so_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'DO' AS stage, base.do_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'DR' AS stage, base.dr_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'SI' AS stage, base.si_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base ORDER BY bulan, FIELD(stage, 'SQ', 'SO', 'DO', 'DR', 'SI')\", \"result_kind\": \"stacked_bar_chart\"}, {\"id\": \"q_conversion_rate_monthly\", \"name\": \"Conversion Rate Bulanan\", \"purpose\": \"Menghitung conversion rate antar tahap funnel per bulan.\", \"query\": \"SELECT base.bulan AS bulan, base.sq_count AS jumlah_sq, base.so_count AS jumlah_so, base.do_count AS jumlah_do, base.dr_count AS jumlah_dr, base.si_count AS jumlah_si, ROUND((base.so_count / NULLIF(base.sq_count, 0)) * 100, 2) AS conversion_sq_to_so_pct, ROUND((base.do_count / NULLIF(base.so_count, 0)) * 100, 2) AS conversion_so_to_do_pct, ROUND((base.dr_count / NULLIF(base.do_count, 0)) * 100, 2) AS conversion_do_to_dr_pct, ROUND((base.si_count / NULLIF(base.dr_count, 0)) * 100, 2) AS conversion_dr_to_si_pct, ROUND((base.si_count / NULLIF(base.sq_count, 0)) * 100, 2) AS conversion_sq_to_si_pct FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base ORDER BY base.bulan\", \"result_kind\": \"table\"}, {\"id\": \"q_trend_monthly_funnel\", \"name\": \"Trend Funnel Bulanan\", \"purpose\": \"Menampilkan tren jumlah dokumen di setiap tahap funnel per bulan.\", \"query\": \"SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS jumlah_sq, COUNT(DISTINCT so.soid) AS jumlah_so, COUNT(DISTINCT dox.doid) AS jumlah_do, COUNT(DISTINCT dr.drid) AS jumlah_dr, COUNT(DISTINCT si.siid) AS jumlah_si FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m') ORDER BY bulan\", \"result_kind\": \"line_chart\"}], \"visualizations\": [{\"id\": \"v_funnel_stage_monthly\", \"query_id\": \"q_funnel_stage_monthly\", \"title\": \"Funnel Penjualan per Bulan per Stage\", \"chart_type\": \"stacked_bar\", \"x_axis\": \"bulan\", \"y_axis\": [\"jumlah_dokumen\"]}, {\"id\": \"v_conversion_rate_monthly\", \"query_id\": \"q_conversion_rate_monthly\", \"title\": \"Conversion Rate Funnel Penjualan per Bulan\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"conversion_sq_to_so_pct\", \"conversion_so_to_do_pct\", \"conversion_do_to_dr_pct\", \"conversion_dr_to_si_pct\", \"conversion_sq_to_si_pct\"]}, {\"id\": \"v_trend_monthly_funnel\", \"query_id\": \"q_trend_monthly_funnel\", \"title\": \"Tren Jumlah Dokumen Funnel Penjualan per Bulan\", \"chart_type\": \"line\", \"x_axis\": \"bulan\", \"y_axis\": [\"jumlah_sq\", \"jumlah_so\", \"jumlah_do\", \"jumlah_dr\", \"jumlah_si\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta dashboard funnel konversi penjualan bulanan lintas tahap dokumen M5 dari sales quotation (SQ) ke sales order (SO), delivery order (DO), delivery report (DR), lalu sales invoice (SI), termasuk ringkasan stage, metrik konversi antar tahap, dan tren per bulan.",
+          "tables_used": [
+            "m5_sq",
+            "m5_so",
+            "m5_do",
+            "m5_dr",
+            "m5_si"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini wajib mode dashboard karena meminta funnel, conversion per tahap, dan per bulan dalam satu jawaban. Untuk menghitung funnel per bulan yang konsisten lintas tahap, saya gunakan tabel header dokumen karena user meminta status konversi dokumen, bukan analisis item. Bulan dasar diambil dari SQ karena funnel dimulai dari quotation. Join utama mengikuti relasi header yang memang tersedia di schema: SO mereferensikan SQ lewat soidsq, DO bisa mereferensikan SO lewat doidso, DR mereferensikan DO lewat driddo, dan SI mereferensikan DO/DR/SO melalui siiddo, siiddr, atau siidso. Semua tabel M5 yang punya always_apply_filters wajib diterapkan: m5_sq.sqisclose = 0, m5_so.soisclose = 0, m5_do.doisclose = 0, dan m5_si.siisclose = 0. Untuk m5_dr tidak ada always_apply_filters di schema sehingga tidak saya tambahkan filter default. Query pertama merangkum jumlah dokumen unik per stage per bulan dari cohort SQ. Query kedua menghitung rasio konversi antar tahap per bulan dengan pembagi yang sesuai. Query ketiga memberi tren bulanan funnel dalam format lebar agar mudah divisualisasikan sebagai line chart multi-series. Saya memakai subquery agregat per bulan agar tidak terjadi duplikasi akibat one-to-many saat satu SQ punya banyak SO atau satu SO punya banyak DO.",
+          "ai_metrics": {
+            "confidence_score": 0.84,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query funnel bulanan melakukan full scan pada tabel header M5 bila tidak ada filter periode dari user.",
+            "Join SI menggunakan OR pada relasi referensi (siiddr / siiddo / siidso) sehingga performa dapat lebih berat pada data besar."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_funnel_stage_monthly",
+            "name": "Funnel Stage Bulanan",
+            "purpose": "Menampilkan jumlah dokumen unik pada tiap tahap funnel penjualan per bulan berbasis cohort sales quotation.",
+            "query": "SELECT base.bulan AS bulan, 'SQ' AS stage, base.sq_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'SO' AS stage, base.so_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'DO' AS stage, base.do_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'DR' AS stage, base.dr_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base UNION ALL SELECT base.bulan AS bulan, 'SI' AS stage, base.si_count AS jumlah_dokumen FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base ORDER BY bulan, FIELD(stage, 'SQ', 'SO', 'DO', 'DR', 'SI')",
+            "result_kind": "stacked_bar_chart"
+          },
+          {
+            "id": "q_conversion_rate_monthly",
+            "name": "Conversion Rate Bulanan",
+            "purpose": "Menghitung conversion rate antar tahap funnel per bulan.",
+            "query": "SELECT base.bulan AS bulan, base.sq_count AS jumlah_sq, base.so_count AS jumlah_so, base.do_count AS jumlah_do, base.dr_count AS jumlah_dr, base.si_count AS jumlah_si, ROUND((base.so_count / NULLIF(base.sq_count, 0)) * 100, 2) AS conversion_sq_to_so_pct, ROUND((base.do_count / NULLIF(base.so_count, 0)) * 100, 2) AS conversion_so_to_do_pct, ROUND((base.dr_count / NULLIF(base.do_count, 0)) * 100, 2) AS conversion_do_to_dr_pct, ROUND((base.si_count / NULLIF(base.dr_count, 0)) * 100, 2) AS conversion_dr_to_si_pct, ROUND((base.si_count / NULLIF(base.sq_count, 0)) * 100, 2) AS conversion_sq_to_si_pct FROM (SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS sq_count, COUNT(DISTINCT so.soid) AS so_count, COUNT(DISTINCT dox.doid) AS do_count, COUNT(DISTINCT dr.drid) AS dr_count, COUNT(DISTINCT si.siid) AS si_count FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m')) base ORDER BY base.bulan",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_trend_monthly_funnel",
+            "name": "Trend Funnel Bulanan",
+            "purpose": "Menampilkan tren jumlah dokumen di setiap tahap funnel per bulan.",
+            "query": "SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS bulan, COUNT(DISTINCT sq.sqid) AS jumlah_sq, COUNT(DISTINCT so.soid) AS jumlah_so, COUNT(DISTINCT dox.doid) AS jumlah_do, COUNT(DISTINCT dr.drid) AS jumlah_dr, COUNT(DISTINCT si.siid) AS jumlah_si FROM m5_sq sq LEFT JOIN m5_so so ON so.soidsq = sq.sqid AND so.soisclose = 0 LEFT JOIN m5_do dox ON dox.doidso = so.soid AND dox.doisclose = 0 LEFT JOIN m5_dr dr ON dr.driddo = dox.doid LEFT JOIN m5_si si ON ((si.siiddr = dr.drid) OR (si.siiddo = dox.doid) OR (si.siidso = so.soid)) AND si.siisclose = 0 WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m') ORDER BY bulan",
+            "result_kind": "line_chart"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_funnel_stage_monthly",
+            "query_id": "q_funnel_stage_monthly",
+            "title": "Funnel Penjualan per Bulan per Stage",
+            "chart_type": "stacked_bar",
+            "x_axis": "bulan",
+            "y_axis": [
+              "jumlah_dokumen"
+            ]
+          },
+          {
+            "id": "v_conversion_rate_monthly",
+            "query_id": "q_conversion_rate_monthly",
+            "title": "Conversion Rate Funnel Penjualan per Bulan",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "conversion_sq_to_so_pct",
+              "conversion_so_to_do_pct",
+              "conversion_do_to_dr_pct",
+              "conversion_dr_to_si_pct",
+              "conversion_sq_to_si_pct"
+            ]
+          },
+          {
+            "id": "v_trend_monthly_funnel",
+            "query_id": "q_trend_monthly_funnel",
+            "title": "Tren Jumlah Dokumen Funnel Penjualan per Bulan",
+            "chart_type": "line",
+            "x_axis": "bulan",
+            "y_axis": [
+              "jumlah_sq",
+              "jumlah_so",
+              "jumlah_do",
+              "jumlah_dr",
+              "jumlah_si"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    }
+  ]
+}

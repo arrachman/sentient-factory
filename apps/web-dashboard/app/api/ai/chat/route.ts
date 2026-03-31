@@ -14,7 +14,7 @@ function getRequestId(request: NextRequest) {
 
 function postJson(body: string, requestId: string): Promise<{ statusCode: number; payload: string }> {
   return new Promise((resolve, reject) => {
-    const target = new URL('/api/chat/query', getAiBaseUrl());
+    const target = new URL('/api/chat/query/trigger', getAiBaseUrl());
     const transport = target.protocol === 'https:' ? httpsRequest : httpRequest;
     const upstream = transport(
       target,
@@ -25,7 +25,7 @@ function postJson(body: string, requestId: string): Promise<{ statusCode: number
           'Content-Length': Buffer.byteLength(body).toString(),
           'x-request-id': requestId,
         },
-        timeout: 180_000,
+        timeout: 10_000,
       },
       (response) => {
         const chunks: Buffer[] = [];
@@ -57,13 +57,22 @@ export async function POST(request: NextRequest) {
     const body = JSON.stringify({
       ...(requestPayload && typeof requestPayload === 'object' ? requestPayload : {}),
       request_id: requestId,
+      model_profile: 'fast',
     });
 
     const response = await postJson(body, requestId);
     const responsePayload = JSON.parse(response.payload || '{}') as unknown;
+    const status =
+      response.statusCode >= 200 &&
+      response.statusCode < 300 &&
+      responsePayload &&
+      typeof responsePayload === 'object' &&
+      'data' in responsePayload
+        ? 202
+        : response.statusCode;
 
     return NextResponse.json(responsePayload, {
-      status: response.statusCode,
+      status,
       headers: {
         'x-request-id': requestId,
       },

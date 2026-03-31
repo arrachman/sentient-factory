@@ -1,0 +1,1030 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiReport">
+  <Dictionary Ref="1" type="Dictionary" isKey="true">
+    <BusinessObjects isList="true" count="0" />
+    <Databases isList="true" count="1">
+      <myerpplus Ref="2" type="Stimulsoft.Report.Dictionary.StiOdbcDatabase" isKey="true">
+        <Alias>myerpplus</Alias>
+        <ConnectionString>dsn=myerpplus-product</ConnectionString>
+        <Name>myerpplus</Name>
+      </myerpplus>
+    </Databases>
+    <DataSources isList="true" count="5">
+      <DS1 Ref="3" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>DS1</Alias>
+        <Columns isList="true" count="60">
+          <value>idlogin,System.String</value>
+          <value>ksnourut,System.Int64</value>
+          <value>ksid,System.Int64</value>
+          <value>ksgudang,System.String</value>
+          <value>ksgudangnama,System.String</value>
+          <value>kskategoribarang,System.String</value>
+          <value>kskategoribarangnama,System.String</value>
+          <value>ksidbarang,System.Int64</value>
+          <value>kskodebarang,System.String</value>
+          <value>kstipebarang,System.String</value>
+          <value>ksnamabarang,System.String</value>
+          <value>kssatuanbarang,System.String</value>
+          <value>kstgl,System.DateTime</value>
+          <value>kssumber,System.String</value>
+          <value>ksnotransaksi,System.String</value>
+          <value>kskontak,System.Int64</value>
+          <value>kskontakkode,System.String</value>
+          <value>kskontaknama,System.String</value>
+          <value>ksuraian,System.String</value>
+          <value>kscatatan,System.String</value>
+          <value>kscatatandetail,System.String</value>
+          <value>ksmatauang,System.String</value>
+          <value>kskurs,System.Double</value>
+          <value>ksharga,System.Double</value>
+          <value>ksdiskon,System.String</value>
+          <value>ksjmldiskon,System.Double</value>
+          <value>ksjenismutasi,System.Int16</value>
+          <value>ksjmlmasuk,System.Double</value>
+          <value>kshargamasuk,System.Double</value>
+          <value>ksnilaimasuk,System.Double</value>
+          <value>ksjmlkeluar,System.Double</value>
+          <value>kshargakeluar,System.Double</value>
+          <value>ksnilaikeluar,System.Double</value>
+          <value>kssaldojml,System.Double</value>
+          <value>kssaldohpp,System.Double</value>
+          <value>kssaldonilai,System.Double</value>
+          <value>kspostingtgl,System.DateTime</value>
+          <value>ksinputtgl,System.DateTime</value>
+          <value>idmsmq,System.String</value>
+          <value>ksuserid,System.Int64</value>
+          <value>kscustomtext1,System.String</value>
+          <value>kscustomtext2,System.String</value>
+          <value>kscustomtext3,System.String</value>
+          <value>kscustomtext4,System.String</value>
+          <value>kscustomtext5,System.String</value>
+          <value>kscustomint1,System.Int32</value>
+          <value>kscustomint2,System.Int32</value>
+          <value>kscustomint3,System.Int32</value>
+          <value>kscustomint4,System.Int32</value>
+          <value>kscustomint5,System.Int32</value>
+          <value>kscustomdbl1,System.Double</value>
+          <value>kscustomdbl2,System.Double</value>
+          <value>kscustomdbl3,System.Double</value>
+          <value>kscustomdbl4,System.Double</value>
+          <value>kscustomdbl5,System.Double</value>
+          <value>kscustomdate1,System.DateTime</value>
+          <value>kscustomdate2,System.DateTime</value>
+          <value>kscustomdate3,System.DateTime</value>
+          <value>kscustomdate4,System.DateTime</value>
+          <value>kscustomdate5,System.DateTime</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>DS1</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT *
+from
+	m2r_kartu_stok
+order by kskategoribarang ASC, kskodebarang ASC
+</SqlCommand>
+      </DS1>
+      <formatTgl Ref="4" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatTgl</Alias>
+        <Columns isList="true" count="2">
+          <value>snilai,System.String</value>
+          <value>format,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatTgl</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai , CONCAT('{0:',(replace(
+	REPLACE(
+	REPLACE(snilai,'D','d'),'m','M'),'Y','y') ) ,'}')
+	as format
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatTanggalReport"</SqlCommand>
+      </formatTgl>
+      <formatNominal Ref="5" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatNominal</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatNominal</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatNominalReport"</SqlCommand>
+      </formatNominal>
+      <formatMinus Ref="6" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatMinus</Alias>
+        <Columns isList="true" count="4">
+          <value>skode,System.String</value>
+          <value>snilai,System.String</value>
+          <value>kiri,System.String</value>
+          <value>kanan,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatMinus</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , snilai , 
+	SUBSTR(snilai FROM 1 FOR 1) AS kiri , 
+	SUBSTR(snilai FROM 2 FOR 1) AS kanan 
+	
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatMinusReport"	</SqlCommand>
+      </formatMinus>
+      <formatQty Ref="7" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatQty</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatQty</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatJmlReport"</SqlCommand>
+      </formatQty>
+    </DataSources>
+    <Relations isList="true" count="0" />
+    <Report isRef="0" />
+    <Variables isList="true" count="0" />
+  </Dictionary>
+  <EngineVersion>EngineV2</EngineVersion>
+  <GlobalizationStrings isList="true" count="0" />
+  <MetaTags isList="true" count="0" />
+  <Pages isList="true" count="1">
+    <Page1 Ref="8" type="Page" isKey="true">
+      <Border>None;Black;2;Solid;False;4;Black</Border>
+      <Brush>Transparent</Brush>
+      <Components isList="true" count="7">
+        <PageHeaderBand1 Ref="9" type="PageHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,0.2,7.8,0.6</ClientRectangle>
+          <Components isList="true" count="3">
+            <PTNAMA Ref="10" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0,7.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,10</Font>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>PTNAMA</Name>
+              <Page isRef="8" />
+              <Parent isRef="9" />
+              <Text>PT. KAWATA INDONESIA</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </PTNAMA>
+            <rtitle Ref="11" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.2,7.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,10</Font>
+              <Guid>9deb17c2b5a81eaa6efe647c211dfc5d</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>rtitle</Name>
+              <Page isRef="8" />
+              <Parent isRef="9" />
+              <Text>Inventory Aging</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </rtitle>
+            <Text13 Ref="12" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.4,7.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,10</Font>
+              <Guid>1057e40bc2c74358a502d2e070cb76ec</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text13</Name>
+              <Page isRef="8" />
+              <Parent isRef="9" />
+              <Text>{Format(formatTgl.format,DS1.kstgl)}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text13>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>PageHeaderBand1</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </PageHeaderBand1>
+        <PageFooterBand1 Ref="13" type="PageFooterBand" isKey="true">
+          <Border>Top;Black;1;Dot;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,10.45,7.8,0.2</ClientRectangle>
+          <Components isList="true" count="2">
+            <Text14 Ref="14" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0,1.61,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text14</Name>
+              <Page isRef="8" />
+              <Parent isRef="13" />
+              <Text>{Time}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="15" type="CustomFormat" isKey="true">
+                <StringFormat>dd/MM/yyyy HH:mm:ss</StringFormat>
+              </TextFormat>
+              <Type>SystemVariables</Type>
+            </Text14>
+            <LBLHALAMAN Ref="16" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.61,0,2.18,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>c05f2484cf12f5ffdd806485700f5716</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLHALAMAN</Name>
+              <Page isRef="8" />
+              <Parent isRef="13" />
+              <Text>Halaman {PageNumber} / {TotalPageCount}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </LBLHALAMAN>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>PageFooterBand1</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </PageFooterBand1>
+        <GroupHeaderBand2 Ref="17" type="GroupHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,1.2,7.8,0</ClientRectangle>
+          <Components isList="true" count="0" />
+          <Conditions isList="true" count="0" />
+          <Name>GroupHeaderBand2</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+          <SortDirection>None</SortDirection>
+        </GroupHeaderBand2>
+        <GroupHeaderBand1 Ref="18" type="GroupHeaderBand" isKey="true">
+          <Border>Bottom;Black;1;Dot;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,1.6,7.8,0.63</ClientRectangle>
+          <Components isList="true" count="12">
+            <Text1 Ref="19" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.01,0,7.43,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>c27f4ebaebce4a2cbf4ae9bf206e152b</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text1</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Category       : {DS1.kskategoribarang}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text1>
+            <LBLKODEBRG Ref="20" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.01,0.41,1.09,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>e814dd26d9ee3686b6d1647e82fce48f</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLKODEBRG</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Item Code</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLKODEBRG>
+            <LBLNAMABRG Ref="21" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>1.12,0.41,1.86,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>8e4b38eaf4639709cb41647ed6309af8</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLNAMABRG</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Description</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLNAMABRG>
+            <LBLSTOK Ref="22" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>3.02,0.41,0.67,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>2602c80b7f1d45f6a003cb7c70051931</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLSTOK</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Qty</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLSTOK>
+            <LBLSATUAN Ref="23" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>3.71,0.41,0.49,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>b4961ab2da4c49b8964f7ff35e2914be</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLSATUAN</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>UoM</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLSATUAN>
+            <Text6 Ref="24" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.69,0.41,0.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>cc7fa87592424b35b80fefcb93bae1d2</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text6</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Last Date In</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text6>
+            <Text10 Ref="25" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>7.3,0.41,0.49,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>e76c745018cd4caf82a73a249424ec61</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text10</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Days In</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text10>
+            <Text3 Ref="26" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>6.5,0.41,0.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>0a1354bdba3f4f17ad8ab8f9790c7b1f</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text3</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Last Date Out</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text3>
+            <Text12 Ref="27" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.2,7.43,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>cc6638c80e6742e3842202ee32cd0fa7</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text12</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Warehouse   : {DS1.ksgudangnama}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text12>
+            <Text15 Ref="28" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.84,0.41,0.73,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>30af58d7150046b48c38d7c83483d301</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text15</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Total</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text15>
+            <Text17 Ref="29" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>4.22,0.41,0.6,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>b40950d6734047329d6e9ce999231911</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text17</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <Text>Price</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text17>
+            <HorizontalLinePrimitive2 Ref="30" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,0.41,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="31" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Name>HorizontalLinePrimitive2</Name>
+              <Page isRef="8" />
+              <Parent isRef="18" />
+              <StartCap Ref="32" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+              <Style>Dot</Style>
+            </HorizontalLinePrimitive2>
+          </Components>
+          <Condition>{DS1.kskategoribarang}</Condition>
+          <Conditions isList="true" count="0" />
+          <Name>GroupHeaderBand1</Name>
+          <NewPageBefore>True</NewPageBefore>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+          <PrintOnAllPages>True</PrintOnAllPages>
+          <SortDirection>None</SortDirection>
+        </GroupHeaderBand1>
+        <DataBand1 Ref="33" type="DataBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <BusinessObjectGuid isNull="true" />
+          <CanShrink>True</CanShrink>
+          <ClientRectangle>0,2.63,7.8,0.19</ClientRectangle>
+          <Components isList="true" count="9">
+            <Text2 Ref="34" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>0.01,0,1.09,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>56d77ba15ef742798a242d8e7cc57bca</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text2</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{DS1.kskodebarang}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text2>
+            <Text4 Ref="35" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>1.12,0,1.86,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>dc0ccdf16fef41519068703e0976a2e7</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text4</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{DS1.ksnamabarang}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text4>
+            <Text5 Ref="36" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>3.01,0.01,0.67,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>633c689fa2d54dc7a755b9b1288b33dd</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text5</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{IIF(DS1.kssaldojml &lt; 0,formatMinus.kiri,"")}{IIF(DS1.kssaldojml &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.kssaldojml))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.kssaldojml))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(DS1.kssaldojml &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text5>
+            <Text7 Ref="37" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>3.71,0,0.49,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>ff873d247eb6445f830ca1afddea7806</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text7</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{DS1.kssatuanbarang}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text7>
+            <Text9 Ref="38" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>5.69,0,0.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>3fb45a0147054fd6b91e8d099631cbdb</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text9</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{DS1.kscustomtext1}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text9>
+            <Text11 Ref="39" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>7.3,0,0.49,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>5c5178ff0fe64f0cadfc660753377df7</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text11</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{IIF(DS1.kscustomdbl1 &lt; 0,formatMinus.kiri,"")}{IIF(DS1.kscustomdbl1 &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.kscustomdbl1))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.kscustomdbl1))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(DS1.kscustomdbl1 &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text11>
+            <Text8 Ref="40" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.5,0,0.8,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>4c2ce7c481f1495d97dcdc966a80e215</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text8</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{DS1.kscustomtext2}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text8>
+            <Text16 Ref="41" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.84,0,0.73,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>f73a74e9025d48a2b64ef443858ac308</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text16</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{IIF((DS1.kssaldonilai) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.kssaldonilai) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, DS1.kssaldonilai))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal)
+,"-","")
+), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, DS1.kssaldonilai))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal))
+}{IIF((DS1.kssaldonilai) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text16>
+            <Text18 Ref="42" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.22,0,0.6,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>549a288de5234d7ead05bd17f7721fa6</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text18</Name>
+              <Page isRef="8" />
+              <Parent isRef="33" />
+              <Text>{IIF((DS1.kssaldohpp) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.kssaldohpp) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, DS1.kssaldohpp))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal)
+,"-","")
+), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, DS1.kssaldohpp))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal))
+}{IIF((DS1.kssaldohpp) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text18>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <DataSourceName>DS1</DataSourceName>
+          <Filters isList="true" count="0" />
+          <Name>DataBand1</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+          <Sort isList="true" count="0" />
+        </DataBand1>
+        <GroupFooterBand1 Ref="43" type="GroupFooterBand" isKey="true">
+          <Border>Top;Black;1;Dot;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.22,7.8,0.25</ClientRectangle>
+          <Components isList="true" count="3">
+            <Text19 Ref="44" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.01,0,2.18,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>ec1a77c9aca94816b256d4e7a4e25467</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text19</Name>
+              <Page isRef="8" />
+              <Parent isRef="43" />
+              <Text>Total {DS1.kskategoribarang} : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text19>
+            <Text20 Ref="45" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>2.6,0,1.08,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>628c3c2df45749b9a3c64b2b137aaec9</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text20</Name>
+              <Page isRef="8" />
+              <Parent isRef="43" />
+              <Text>{IIF(Sum(DS1.kssaldojml) &lt; 0,formatMinus.kiri,"")}{IIF(Sum(DS1.kssaldojml) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, Sum(DS1.kssaldojml)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, Sum(DS1.kssaldojml)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(Sum(DS1.kssaldojml) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text20>
+            <Text21 Ref="46" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.41,0,1.17,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>495ec8d41c354a1bad6cf84b4ea90da4</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text21</Name>
+              <Page isRef="8" />
+              <Parent isRef="43" />
+              <Text>{IIF(Sum(DS1.kssaldonilai) &lt; 0,formatMinus.kiri,"")}{IIF(Sum(DS1.kssaldonilai) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, Sum(DS1.kssaldonilai)))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal)
+,"-","")
+), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, Sum(DS1.kssaldonilai)))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal))
+}{IIF(Sum(DS1.kssaldonilai) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text21>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Guid>4409fc5ecd614cdcabe9a3e053f03b3f</Guid>
+          <Name>GroupFooterBand1</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </GroupFooterBand1>
+        <GroupFooterBand2 Ref="47" type="GroupFooterBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.87,7.8,0.3</ClientRectangle>
+          <Components isList="true" count="3">
+            <Text22 Ref="48" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0,0.03,2.2,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>96ac0cc0dac6494dad56537d66ef7501</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text22</Name>
+              <Page isRef="8" />
+              <Parent isRef="47" />
+              <Text>Total       : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text22>
+            <Text23 Ref="49" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>2.6,0.03,1.1,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>4a537917ff0a43cfac62f087ba35f1ba</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text23</Name>
+              <Page isRef="8" />
+              <Parent isRef="47" />
+              <Text>{IIF(Sum(DS1.kssaldojml) &lt; 0,formatMinus.kiri,"")}{IIF(Sum(DS1.kssaldojml) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, Sum(DS1.kssaldojml)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, Sum(DS1.kssaldojml)))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF(Sum(DS1.kssaldojml) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text23>
+            <Text24 Ref="50" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.4,0.03,1.2,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>1527927761664d6eba3eb1e6720ce660</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text24</Name>
+              <Page isRef="8" />
+              <Parent isRef="47" />
+              <Text>{IIF(Sum(DS1.kssaldonilai) &lt; 0,formatMinus.kiri,"")}{IIF(Sum(DS1.kssaldonilai) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, Sum(DS1.kssaldonilai)))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal)
+,"-","")
+), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatNominal.fromat, Sum(DS1.kssaldonilai)))
+,",","RB")
+,".","DS")
+,"RB",formatNominal.digitGrup)
+,"DS",formatNominal.pemisahDesimal))
+}{IIF(Sum(DS1.kssaldonilai) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+            </Text24>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>GroupFooterBand2</Name>
+          <Page isRef="8" />
+          <Parent isRef="8" />
+        </GroupFooterBand2>
+      </Components>
+      <Conditions isList="true" count="0" />
+      <Guid>d0ac47caebc847a3b36c1f2447043748</Guid>
+      <Margins>0.3,0.1,0.2,0.15</Margins>
+      <Name>Page1</Name>
+      <PageHeight>11</PageHeight>
+      <PageWidth>8.2</PageWidth>
+      <PaperSize>Letter</PaperSize>
+      <Report isRef="0" />
+      <Watermark Ref="51" type="Stimulsoft.Report.Components.StiWatermark" isKey="true">
+        <Font>Arial,100</Font>
+        <TextBrush>[50:0:0:0]</TextBrush>
+      </Watermark>
+    </Page1>
+  </Pages>
+  <PrinterSettings Ref="52" type="Stimulsoft.Report.Print.StiPrinterSettings" isKey="true" />
+  <ReferencedAssemblies isList="true" count="8">
+    <value>System.Dll</value>
+    <value>System.Drawing.Dll</value>
+    <value>System.Windows.Forms.Dll</value>
+    <value>System.Data.Dll</value>
+    <value>System.Xml.Dll</value>
+    <value>Stimulsoft.Controls.Dll</value>
+    <value>Stimulsoft.Base.Dll</value>
+    <value>Stimulsoft.Report.Dll</value>
+  </ReferencedAssemblies>
+  <ReportAlias>Report</ReportAlias>
+  <ReportChanged>12/5/2017 10:45:59 AM</ReportChanged>
+  <ReportCreated>5/2/2013 3:57:02 PM</ReportCreated>
+  <ReportFile>C:\Users\Administrator\Downloads\inventoryaging.mrt</ReportFile>
+  <ReportGuid>d3c6c5f0620443f0abb181b2714cf300</ReportGuid>
+  <ReportName>Report</ReportName>
+  <ReportUnit>Inches</ReportUnit>
+  <ReportVersion>2012.2.1304</ReportVersion>
+  <Script>using System;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Data;
+using Stimulsoft.Controls;
+using Stimulsoft.Base.Drawing;
+using Stimulsoft.Report;
+using Stimulsoft.Report.Dialogs;
+using Stimulsoft.Report.Components;
+
+namespace Reports
+{
+    public class Report : Stimulsoft.Report.StiReport
+    {
+        public Report()        {
+            this.InitializeComponent();
+        }
+
+        #region StiReport Designer generated code - do not modify
+		#endregion StiReport Designer generated code - do not modify
+    }
+}</Script>
+  <ScriptLanguage>CSharp</ScriptLanguage>
+  <Styles isList="true" count="0" />
+</StiSerializer>

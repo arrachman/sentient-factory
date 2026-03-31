@@ -1,0 +1,15 @@
+{
+  "suite": "dashboard_multi_query_regression",
+  "timestamp": "20260331T043958Z",
+  "total": 1,
+  "failed": 0,
+  "passed": 1,
+  "results": [
+    {
+      "id": "dashboard_002_sales_funnel",
+      "status": "PASSED",
+      "errors": []
+    }
+  ],
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T043958Z.json"
+}

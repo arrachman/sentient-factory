@@ -117,7 +117,8 @@ services:
       MYERPPLUS_DATABASE_URL: mysql+pymysql://dashboard:PwdDash)(*@103.125.36.54:20406/myerpplus_dashboard
       AI_ENGINE_HOST: 0.0.0.0
       AI_ENGINE_PORT: 8001
-      CODEX_CONFIG_PATH: /codex/config.toml
+      AI_ENGINE_RELOAD: "true"
+      CODEX_CONFIG_PATH: /codex-cli/config.toml
       AI_AGENT_WORKFLOW_MAX_PASSES: 2
       LLM_REQUEST_TIMEOUT_SECONDS: 120
       LLM_REQUEST_MAX_RETRIES: 3
@@ -126,12 +127,10 @@ services:
     volumes:
       - ../apps/ai-engine:/app:ro
       - ../apps/myerpplus-db-mapping:/myerpplus-db-mapping:ro
-      - /home/rania/.codex:/codex:ro
+      - /home/rania/apps/sentient-factory/.codex-cli:/codex-cli:ro
     depends_on:
       postgres:
         condition: service_healthy
-      llm-router:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=5).read()\""]
       interval: 20s
@@ -140,7 +139,11 @@ services:
     command: >
       sh -c "export DATABASE_URL=\"postgresql://$${POSTGRES_USER}:$${POSTGRES_PASSWORD}@$${POSTGRES_HOST}:$${POSTGRES_PORT}/$${POSTGRES_DB}\" &&
       pip install --no-cache-dir fastapi 'uvicorn[standard]' pydantic-settings httpx psycopg2-binary pymysql cryptography tomli redis &&
-      python -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001 --reload"
+      if [ \"$${AI_ENGINE_RELOAD}\" = \"true\" ]; then
+        python -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001 --reload;
+      else
+        python -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001;
+      fi"
 
   web-dashboard:
     image: node:20-alpine
@@ -204,19 +207,6 @@ services:
       else
         npm run start -- --host 0.0.0.0 --port 3205;
       fi"
-
-  llm-router:
-    image: ghcr.io/berriai/litellm:main-latest
-    container_name: sentient-infra-llm-router
-    restart: unless-stopped
-    env_file:
-      - ../.env
-      - ../.env.vault
-    ports:
-      - "3206:4000"
-    volumes:
-      - ../config/litellm_config.yaml:/app/config.yaml
-    command: ["--config", "/app/config.yaml", "--port", "4000"]
 
   kafka:
     image: apache/kafka:3.9.1

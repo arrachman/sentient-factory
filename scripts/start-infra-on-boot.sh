@@ -11,7 +11,6 @@ containers=(
   sentient-infra-ai-engine
   sentient-infra-web-dashboard
   sentient-infra-docs
-  sentient-infra-llm-router
   sentient-infra-etl-worker
 )
 for container in "${containers[@]}"; do

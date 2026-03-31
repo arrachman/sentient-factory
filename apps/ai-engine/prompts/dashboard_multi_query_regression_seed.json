@@ -1,0 +1,112 @@
+[
+  {
+    "id": "dashboard_001_customer_receivable",
+    "title": "Dashboard Piutang Customer",
+    "question": "Tampilkan dashboard piutang customer berisi daftar invoice belum lunas, total outstanding per customer, aging bucket, dan customer dengan risiko keterlambatan tertinggi.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_si", "m1_contact"],
+    "required_widget_keywords": ["invoice", "outstanding", "aging"],
+    "notes": "Harus menghasilkan kombinasi detail invoice dan agregasi customer/aging."
+  },
+  {
+    "id": "dashboard_002_sales_funnel",
+    "title": "Funnel Dokumen Penjualan",
+    "question": "Tampilkan funnel konversi penjualan dari sales quotation ke sales order, delivery order, delivery report, lalu sales invoice per bulan.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_sq", "m5_so", "m5_do", "m5_dr", "m5_si"],
+    "required_widget_keywords": ["funnel", "conversion", "trend"],
+    "notes": "Harus menampilkan alur lintas tahap dokumen M5."
+  },
+  {
+    "id": "dashboard_003_customer_360_sales",
+    "title": "Customer 360 Sales",
+    "question": "Tampilkan dashboard customer 360 untuk customer dengan outstanding invoice terbesar, mencakup ringkasan invoice, invoice belum lunas, riwayat collection, payment voucher, dan retur penjualan.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m1_contact", "m5_si", "m5_ic", "m5_pv", "m5_sr"],
+    "required_widget_keywords": ["invoice", "collection", "retur"],
+    "notes": "Dashboard harus memadukan summary customer dan histori transaksi."
+  },
+  {
+    "id": "dashboard_004_fulfillment_monitoring",
+    "title": "Monitoring Fulfillment",
+    "question": "Tampilkan item sales order yang belum menjadi delivery order, delivery order yang belum menjadi delivery report, dan delivery report yang belum menjadi invoice.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_so_detail", "m5_do_detail", "m5_dr_detail"],
+    "required_widget_keywords": ["backlog", "bottleneck", "summary"],
+    "notes": "Harus fokus ke pending progress per tahap fulfillment."
+  },
+  {
+    "id": "dashboard_005_outstanding_vs_collection",
+    "title": "Analisis Outstanding dan Collection",
+    "question": "Bandingkan outstanding sales invoice dengan invoice collection dan payment voucher untuk melihat invoice yang belum tertagih, sudah tertagih, atau sudah dibayar sebagian.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_si", "m5_ic", "m5_ic_detail", "m5_pv", "m5_pv_detail"],
+    "required_widget_keywords": ["outstanding", "collection", "payment"],
+    "notes": "Perlu membedakan status belum tertagih vs sudah dibayar sebagian."
+  },
+  {
+    "id": "dashboard_006_aging_and_cash_collection",
+    "title": "Aging dan Cash Collection",
+    "question": "Tampilkan aging invoice per customer, tren pembayaran mingguan, dan rasio collection terhadap invoice jatuh tempo dalam 90 hari terakhir.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_si", "m1_contact"],
+    "required_widget_keywords": ["aging", "payment", "ratio"],
+    "notes": "Harus menghasilkan kombinasi aging, trend, dan rasio."
+  },
+  {
+    "id": "dashboard_007_profitability_per_customer",
+    "title": "Profitability per Customer",
+    "question": "Tampilkan customer dengan margin bersih tertinggi dan terendah berdasarkan invoice penjualan, biaya invoice, retur, dan diskon.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_si", "m5_si_detail", "m5_si_cost", "m5_sr"],
+    "required_widget_keywords": ["margin", "ranking", "alerts"],
+    "notes": "Harus mengarah ke analisis margin bersih, bukan sekadar total sales."
+  },
+  {
+    "id": "dashboard_008_return_and_invoice_exchange",
+    "title": "Retur dan Tukar Faktur",
+    "question": "Tampilkan hubungan sales invoice, sales return, dan tukar faktur untuk melihat pola retur dan penggantian dokumen per customer.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_si", "m5_sr", "m5_sie", "m5_sie_detail"],
+    "required_widget_keywords": ["return", "invoice", "customer"],
+    "notes": "Harus menangkap relasi invoice, retur, dan tukar faktur."
+  },
+  {
+    "id": "dashboard_009_sales_points_adjustment",
+    "title": "Poin Loyalty dan Penyesuaian Penjualan",
+    "question": "Tampilkan saldo poin customer, mutasi poin masuk-keluar, dan penyesuaian poin manual per bulan.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_spa", "m5_spa_detail", "m1_contact"],
+    "required_widget_keywords": ["poin", "mutasi", "customer"],
+    "notes": "Harus menampilkan ledger poin dan tren per periode."
+  },
+  {
+    "id": "dashboard_010_executive_risk",
+    "title": "Executive Risk Dashboard",
+    "question": "Tampilkan customer berisiko berdasarkan kombinasi outstanding tinggi, aging panjang, retur tinggi, collection lambat, dan fulfillment yang macet.",
+    "expected_mode": "multi_query_dashboard",
+    "expected_query_count": 3,
+    "expected_visualization_count": 3,
+    "required_tables": ["m5_si", "m5_sr", "m5_so", "m1_contact"],
+    "required_widget_keywords": ["risk", "aging", "fulfillment"],
+    "notes": "Harus menggabungkan sinyal risiko lintas domain penjualan."
+  }
+]

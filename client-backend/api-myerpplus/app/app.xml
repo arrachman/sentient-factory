@@ -1,0 +1,6 @@
+<setting>
+    <url>http://api.serenity.myerpplus.com</url>
+    <namapt>Serenity Dev</namapt>
+    <kodeapp>myerpplus_serenity</kodeapp>
+    <SqlServiceName>mysql</SqlServiceName>
+</setting>

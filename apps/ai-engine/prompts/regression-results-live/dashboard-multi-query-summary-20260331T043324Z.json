@@ -1,0 +1,24 @@
+{
+  "suite": "dashboard_multi_query_regression",
+  "timestamp": "20260331T043324Z",
+  "total": 2,
+  "failed": 2,
+  "passed": 0,
+  "results": [
+    {
+      "id": "dashboard_001_customer_receivable",
+      "status": "FAILED",
+      "errors": [
+        "unexpected error: URLError: <urlopen error [Errno -3] Temporary failure in name resolution>"
+      ]
+    },
+    {
+      "id": "dashboard_002_sales_funnel",
+      "status": "FAILED",
+      "errors": [
+        "unexpected error: URLError: <urlopen error [Errno -3] Temporary failure in name resolution>"
+      ]
+    }
+  ],
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T043324Z.json"
+}

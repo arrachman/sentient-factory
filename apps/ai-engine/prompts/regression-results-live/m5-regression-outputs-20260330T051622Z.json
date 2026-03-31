@@ -1,0 +1,40 @@
+{
+  "suite": "sales_sql_readonly_generator_m5",
+  "generated_at": "20260330T051622Z",
+  "results": [
+    {
+      "id": "m5_005_ic_poly_si",
+      "query": "SELECT ic.icnotransaksi AS nomor_invoice_collection, ic.ictgl AS tanggal_invoice_collection, icd.idicdetail AS id_detail_invoice_collection, icd.sumber AS sumber_tagihan, si.sinotransaksi AS nomor_sales_invoice, si.sitgl AS tanggal_sales_invoice, c.knama AS nama_customer, icd.totaltransaksi AS total_tagihan, icd.terbayar AS total_terbayar, icd.sisa AS sisa_tagihan, icd.jmlbayar AS jumlah_bayar, icd.diskontermin AS diskon_termin, icd.catatan AS catatan_detail FROM m5_ic_detail AS icd INNER JOIN m5_ic AS ic ON icd.idic = ic.icid INNER JOIN m5_si AS si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid LEFT JOIN m1_contact AS c ON ic.iccustomer = c.kid WHERE icd.sumber = 'SI' ORDER BY ic.ictgl DESC, ic.icnotransaksi DESC, icd.urutan ASC LIMIT 100",
+      "status": "SUCCESS",
+      "raw_answer": "{\"status\":\"SUCCESS\",\"debug_info\":{\"intent_user\":\"Menampilkan daftar tagihan pada dokumen invoice collection (IC detail) yang sumber transaksinya berasal dari sales invoice (SI).\",\"tables_used\":[\"m5_ic\",\"m5_ic_detail\",\"m5_si\",\"m1_contact\"],\"tables_missing\":[],\"reasoning\":\"Tabel utama yang paling tepat adalah m5_ic_detail karena user meminta daftar tagihan invoice collection, dan level detail menyimpan baris transaksi yang ditagih. Karena user spesifik meminta yang berasal dari sales invoice, digunakan relasi polymorphic m5_ic_detail dengan filter sumber = 'SI' lalu join ke m5_si melalui idtransaksi = siid. Header m5_ic dipakai untuk menampilkan nomor dan tanggal invoice collection. m1_contact dipakai untuk menampilkan nama customer dari header IC melalui relationship m5_ic.iccustomer = m1_contact.kid. Tidak ada always_apply_filters pada tabel-tabel yang dipakai di area ini, sehingga tidak ada filter default tambahan selain sumber = 'SI'. Karena ini permintaan daftar tanpa batas eksplisit, ditambahkan LIMIT 100 sesuai aturan.\",\"ai_metrics\":{\"confidence_score\":\"0.95\",\"schema_version_used\":\"Semantic Query Schema OBT\"}},\"execution_context\":{\"is_syntax_valid_prediction\":true,\"linting_warnings\":[\"Query daftar tanpa filter periode dapat membaca banyak data, namun sudah dibatasi LIMIT 100.\"]},\"query\":\"SELECT ic.icnotransaksi AS nomor_invoice_collection, ic.ictgl AS tanggal_invoice_collection, icd.idicdetail AS id_detail_invoice_collection, icd.sumber AS sumber_tagihan, si.sinotransaksi AS nomor_sales_invoice, si.sitgl AS tanggal_sales_invoice, c.knama AS nama_customer, icd.totaltransaksi AS total_tagihan, icd.terbayar AS total_terbayar, icd.sisa AS sisa_tagihan, icd.jmlbayar AS jumlah_bayar, icd.diskontermin AS diskon_termin, icd.catatan AS catatan_detail FROM m5_ic_detail AS icd INNER JOIN m5_ic AS ic ON icd.idic = ic.icid INNER JOIN m5_si AS si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid LEFT JOIN m1_contact AS c ON ic.iccustomer = c.kid WHERE icd.sumber = 'SI' ORDER BY ic.ictgl DESC, ic.icnotransaksi DESC, icd.urutan ASC LIMIT 100\",\"error_message\":null}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar tagihan pada dokumen invoice collection (IC detail) yang sumber transaksinya berasal dari sales invoice (SI).",
+          "tables_used": [
+            "m5_ic",
+            "m5_ic_detail",
+            "m5_si",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "Tabel utama yang paling tepat adalah m5_ic_detail karena user meminta daftar tagihan invoice collection, dan level detail menyimpan baris transaksi yang ditagih. Karena user spesifik meminta yang berasal dari sales invoice, digunakan relasi polymorphic m5_ic_detail dengan filter sumber = 'SI' lalu join ke m5_si melalui idtransaksi = siid. Header m5_ic dipakai untuk menampilkan nomor dan tanggal invoice collection. m1_contact dipakai untuk menampilkan nama customer dari header IC melalui relationship m5_ic.iccustomer = m1_contact.kid. Tidak ada always_apply_filters pada tabel-tabel yang dipakai di area ini, sehingga tidak ada filter default tambahan selain sumber = 'SI'. Karena ini permintaan daftar tanpa batas eksplisit, ditambahkan LIMIT 100 sesuai aturan.",
+          "ai_metrics": {
+            "confidence_score": "0.95",
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query daftar tanpa filter periode dapat membaca banyak data, namun sudah dibatasi LIMIT 100."
+          ]
+        },
+        "query": "SELECT ic.icnotransaksi AS nomor_invoice_collection, ic.ictgl AS tanggal_invoice_collection, icd.idicdetail AS id_detail_invoice_collection, icd.sumber AS sumber_tagihan, si.sinotransaksi AS nomor_sales_invoice, si.sitgl AS tanggal_sales_invoice, c.knama AS nama_customer, icd.totaltransaksi AS total_tagihan, icd.terbayar AS total_terbayar, icd.sisa AS sisa_tagihan, icd.jmlbayar AS jumlah_bayar, icd.diskontermin AS diskon_termin, icd.catatan AS catatan_detail FROM m5_ic_detail AS icd INNER JOIN m5_ic AS ic ON icd.idic = ic.icid INNER JOIN m5_si AS si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid LEFT JOIN m1_contact AS c ON ic.iccustomer = c.kid WHERE icd.sumber = 'SI' ORDER BY ic.ictgl DESC, ic.icnotransaksi DESC, icd.urutan ASC LIMIT 100",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    }
+  ]
+}

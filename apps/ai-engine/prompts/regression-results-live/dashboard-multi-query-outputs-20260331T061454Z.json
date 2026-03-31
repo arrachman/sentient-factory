@@ -1,0 +1,987 @@
+{
+  "results": [
+    {
+      "id": "dashboard_001_customer_receivable",
+      "title": "Dashboard Piutang Customer",
+      "question": "Tampilkan dashboard piutang customer berisi daftar invoice belum lunas, total outstanding per customer, aging bucket, dan customer dengan risiko keterlambatan tertinggi.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta dashboard piutang customer yang menggabungkan daftar invoice penjualan yang belum lunas, ringkasan outstanding per customer, distribusi aging bucket, dan customer dengan risiko keterlambatan paling tinggi. Karena ini kombinasi detail + agregasi + distribusi, mode dashboard multi-query wajib dipakai.\", \"tables_used\": [\"m5_si\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"1) Entitas utama yang paling tepat adalah invoice penjualan final pada m5_si karena istilah 'piutang customer' default mengacu ke sales invoice, dan schema menyediakan field nilai invoice, customer, status lunas, tanggal invoice, tanggal jatuh tempo, serta jumlah bayar. 2) Untuk daftar invoice belum lunas, dipakai m5_si sebagai tabel header karena user meminta data per dokumen invoice. Kolom yang relevan: sinotransaksi, sitgl, sitgljatuhtempo, sicustomer, sitotaltransaksi, sijmlbayar, sistatuslunas. Outstanding dihitung konservatif sebagai COALESCE(sitotaltransaksi,0) - COALESCE(sijmlbayar,0). Filter belum lunas menggunakan kombinasi outstanding > 0 agar tidak tergantung penuh pada kode status yang mungkin bervariasi. 3) Untuk total outstanding per customer sekaligus aging bucket dan risiko keterlambatan, m5_si digabung ke m1_contact melalui relationship m5_si.sicustomer = m1_contact.kid agar nama customer tersedia. Filter always_apply_filters wajib diterapkan: m5_si.siisclose = 0 dan m1_contact.kaktif = 1. 4) Aging bucket dihitung dari selisih hari antara CURDATE() dan sitgljatuhtempo, lalu dikelompokkan menjadi Belum Jatuh Tempo, 0-30, 31-60, 61-90, dan >90 hari. Ini kompatibel dengan MySQL/MariaDB menggunakan DATEDIFF. 5) Query risiko keterlambatan memakai agregasi per customer dengan fokus pada overdue outstanding, invoice overdue, umur overdue maksimum, dan weighted overdue days untuk membantu mengidentifikasi customer paling berisiko. Pengurutan diprioritaskan ke overdue amount terbesar lalu umur overdue maksimum tertinggi. 6) Karena user eksplisit meminta dashboard berisi beberapa blok analitik berbeda, dibuat 3 query: detail invoice, ringkasan per customer, dan distribusi aging.\", \"ai_metrics\": {\"confidence_score\": 0.89, \"schema_version_used\": \"Semantic Query Schema OBT + semantic schema utama M5 sales\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Perhitungan outstanding diasumsikan dari sitotaltransaksi - sijmlbayar karena schema tidak menyediakan field saldo piutang eksplisit per invoice.\", \"DATEDIFF(CURDATE(), sitgljatuhtempo) memakai tanggal sistem database saat eksekusi; hasil aging akan berubah harian.\", \"Query detail invoice menggunakan LIMIT 100 sesuai aturan ranking/list tanpa batas eksplisit.\"]}, \"queries\": [{\"id\": \"q_invoice_belum_lunas\", \"name\": \"Daftar Invoice Belum Lunas\", \"purpose\": \"Menampilkan daftar invoice penjualan yang masih memiliki outstanding per customer.\", \"query\": \"SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, si.sitgljatuhtempo AS tanggal_jatuh_tempo, c.knama AS nama_customer, si.simatauang AS mata_uang, COALESCE(si.sitotaltransaksi, 0) AS total_invoice, COALESCE(si.sijmlbayar, 0) AS total_terbayar, (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) AS outstanding, CASE WHEN si.sitgljatuhtempo IS NULL THEN NULL WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) < 0 THEN 0 ELSE DATEDIFF(CURDATE(), si.sitgljatuhtempo) END AS hari_terlambat, si.sistatuslunas AS status_lunas FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 AND (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) > 0 ORDER BY outstanding DESC, si.sitgljatuhtempo ASC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_outstanding_customer_risk\", \"name\": \"Outstanding per Customer & Risiko\", \"purpose\": \"Merangkum total outstanding per customer dan mengidentifikasi customer dengan risiko keterlambatan tertinggi.\", \"query\": \"SELECT c.knama AS nama_customer, COUNT(si.siid) AS jumlah_invoice_belum_lunas, SUM(COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) AS total_outstanding, SUM(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) ELSE 0 END) AS overdue_outstanding, SUM(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN 1 ELSE 0 END) AS jumlah_invoice_overdue, MAX(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS maksimum_hari_overdue, SUM(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) * DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS skor_risiko_keterlambatan FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 AND (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) > 0 GROUP BY c.kid, c.knama ORDER BY overdue_outstanding DESC, maksimum_hari_overdue DESC, total_outstanding DESC LIMIT 100\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_aging_bucket\", \"name\": \"Distribusi Aging Bucket\", \"purpose\": \"Mengelompokkan outstanding invoice ke bucket umur piutang untuk analisis aging.\", \"query\": \"SELECT CASE WHEN si.sitgljatuhtempo IS NULL THEN 'Tanpa Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) < 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 0 AND 30 THEN '0-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END AS aging_bucket, COUNT(si.siid) AS jumlah_invoice, SUM(COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) AS total_outstanding FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 AND (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) > 0 GROUP BY CASE WHEN si.sitgljatuhtempo IS NULL THEN 'Tanpa Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) < 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 0 AND 30 THEN '0-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END ORDER BY CASE aging_bucket WHEN 'Tanpa Jatuh Tempo' THEN 1 WHEN 'Belum Jatuh Tempo' THEN 2 WHEN '0-30 Hari' THEN 3 WHEN '31-60 Hari' THEN 4 WHEN '61-90 Hari' THEN 5 ELSE 6 END\", \"result_kind\": \"bar_chart\"}], \"visualizations\": [{\"id\": \"v_invoice_belum_lunas\", \"query_id\": \"q_invoice_belum_lunas\", \"title\": \"Daftar Invoice Belum Lunas\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": []}, {\"id\": \"v_outstanding_customer_risk\", \"query_id\": \"q_outstanding_customer_risk\", \"title\": \"Outstanding per Customer & Risiko Keterlambatan\", \"chart_type\": \"bar\", \"x_axis\": \"nama_customer\", \"y_axis\": [\"total_outstanding\", \"overdue_outstanding\"]}, {\"id\": \"v_aging_bucket\", \"query_id\": \"q_aging_bucket\", \"title\": \"Distribusi Aging Bucket Piutang\", \"chart_type\": \"bar\", \"x_axis\": \"aging_bucket\", \"y_axis\": [\"total_outstanding\", \"jumlah_invoice\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta dashboard piutang customer yang menggabungkan daftar invoice penjualan yang belum lunas, ringkasan outstanding per customer, distribusi aging bucket, dan customer dengan risiko keterlambatan paling tinggi. Karena ini kombinasi detail + agregasi + distribusi, mode dashboard multi-query wajib dipakai.",
+          "tables_used": [
+            "m5_si",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Entitas utama yang paling tepat adalah invoice penjualan final pada m5_si karena istilah 'piutang customer' default mengacu ke sales invoice, dan schema menyediakan field nilai invoice, customer, status lunas, tanggal invoice, tanggal jatuh tempo, serta jumlah bayar. 2) Untuk daftar invoice belum lunas, dipakai m5_si sebagai tabel header karena user meminta data per dokumen invoice. Kolom yang relevan: sinotransaksi, sitgl, sitgljatuhtempo, sicustomer, sitotaltransaksi, sijmlbayar, sistatuslunas. Outstanding dihitung konservatif sebagai COALESCE(sitotaltransaksi,0) - COALESCE(sijmlbayar,0). Filter belum lunas menggunakan kombinasi outstanding > 0 agar tidak tergantung penuh pada kode status yang mungkin bervariasi. 3) Untuk total outstanding per customer sekaligus aging bucket dan risiko keterlambatan, m5_si digabung ke m1_contact melalui relationship m5_si.sicustomer = m1_contact.kid agar nama customer tersedia. Filter always_apply_filters wajib diterapkan: m5_si.siisclose = 0 dan m1_contact.kaktif = 1. 4) Aging bucket dihitung dari selisih hari antara CURDATE() dan sitgljatuhtempo, lalu dikelompokkan menjadi Belum Jatuh Tempo, 0-30, 31-60, 61-90, dan >90 hari. Ini kompatibel dengan MySQL/MariaDB menggunakan DATEDIFF. 5) Query risiko keterlambatan memakai agregasi per customer dengan fokus pada overdue outstanding, invoice overdue, umur overdue maksimum, dan weighted overdue days untuk membantu mengidentifikasi customer paling berisiko. Pengurutan diprioritaskan ke overdue amount terbesar lalu umur overdue maksimum tertinggi. 6) Karena user eksplisit meminta dashboard berisi beberapa blok analitik berbeda, dibuat 3 query: detail invoice, ringkasan per customer, dan distribusi aging.",
+          "ai_metrics": {
+            "confidence_score": 0.89,
+            "schema_version_used": "Semantic Query Schema OBT + semantic schema utama M5 sales"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Perhitungan outstanding diasumsikan dari sitotaltransaksi - sijmlbayar karena schema tidak menyediakan field saldo piutang eksplisit per invoice.",
+            "DATEDIFF(CURDATE(), sitgljatuhtempo) memakai tanggal sistem database saat eksekusi; hasil aging akan berubah harian.",
+            "Query detail invoice menggunakan LIMIT 100 sesuai aturan ranking/list tanpa batas eksplisit."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_invoice_belum_lunas",
+            "name": "Daftar Invoice Belum Lunas",
+            "purpose": "Menampilkan daftar invoice penjualan yang masih memiliki outstanding per customer.",
+            "query": "SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, si.sitgljatuhtempo AS tanggal_jatuh_tempo, c.knama AS nama_customer, si.simatauang AS mata_uang, COALESCE(si.sitotaltransaksi, 0) AS total_invoice, COALESCE(si.sijmlbayar, 0) AS total_terbayar, (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) AS outstanding, CASE WHEN si.sitgljatuhtempo IS NULL THEN NULL WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) < 0 THEN 0 ELSE DATEDIFF(CURDATE(), si.sitgljatuhtempo) END AS hari_terlambat, si.sistatuslunas AS status_lunas FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 AND (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) > 0 ORDER BY outstanding DESC, si.sitgljatuhtempo ASC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_outstanding_customer_risk",
+            "name": "Outstanding per Customer & Risiko",
+            "purpose": "Merangkum total outstanding per customer dan mengidentifikasi customer dengan risiko keterlambatan tertinggi.",
+            "query": "SELECT c.knama AS nama_customer, COUNT(si.siid) AS jumlah_invoice_belum_lunas, SUM(COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) AS total_outstanding, SUM(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) ELSE 0 END) AS overdue_outstanding, SUM(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN 1 ELSE 0 END) AS jumlah_invoice_overdue, MAX(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS maksimum_hari_overdue, SUM(CASE WHEN si.sitgljatuhtempo IS NOT NULL AND DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 0 THEN (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) * DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS skor_risiko_keterlambatan FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 AND (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) > 0 GROUP BY c.kid, c.knama ORDER BY overdue_outstanding DESC, maksimum_hari_overdue DESC, total_outstanding DESC LIMIT 100",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_aging_bucket",
+            "name": "Distribusi Aging Bucket",
+            "purpose": "Mengelompokkan outstanding invoice ke bucket umur piutang untuk analisis aging.",
+            "query": "SELECT CASE WHEN si.sitgljatuhtempo IS NULL THEN 'Tanpa Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) < 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 0 AND 30 THEN '0-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END AS aging_bucket, COUNT(si.siid) AS jumlah_invoice, SUM(COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) AS total_outstanding FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 AND (COALESCE(si.sitotaltransaksi, 0) - COALESCE(si.sijmlbayar, 0)) > 0 GROUP BY CASE WHEN si.sitgljatuhtempo IS NULL THEN 'Tanpa Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) < 0 THEN 'Belum Jatuh Tempo' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 0 AND 30 THEN '0-30 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN '31-60 Hari' WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN '61-90 Hari' ELSE '>90 Hari' END ORDER BY CASE aging_bucket WHEN 'Tanpa Jatuh Tempo' THEN 1 WHEN 'Belum Jatuh Tempo' THEN 2 WHEN '0-30 Hari' THEN 3 WHEN '31-60 Hari' THEN 4 WHEN '61-90 Hari' THEN 5 ELSE 6 END",
+            "result_kind": "bar_chart"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_invoice_belum_lunas",
+            "query_id": "q_invoice_belum_lunas",
+            "title": "Daftar Invoice Belum Lunas",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": []
+          },
+          {
+            "id": "v_outstanding_customer_risk",
+            "query_id": "q_outstanding_customer_risk",
+            "title": "Outstanding per Customer & Risiko Keterlambatan",
+            "chart_type": "bar",
+            "x_axis": "nama_customer",
+            "y_axis": [
+              "total_outstanding",
+              "overdue_outstanding"
+            ]
+          },
+          {
+            "id": "v_aging_bucket",
+            "query_id": "q_aging_bucket",
+            "title": "Distribusi Aging Bucket Piutang",
+            "chart_type": "bar",
+            "x_axis": "aging_bucket",
+            "y_axis": [
+              "total_outstanding",
+              "jumlah_invoice"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_002_sales_funnel",
+      "title": "Funnel Dokumen Penjualan",
+      "question": "Tampilkan funnel konversi penjualan dari sales quotation ke sales order, delivery order, delivery report, lalu sales invoice per bulan.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta analitik funnel konversi penjualan bulanan lintas tahap dokumen M5 dari sales quotation (SQ) ke sales order (SO), delivery order (DO), delivery report (DR), dan sales invoice (SI), beserta metrik konversinya.\", \"tables_used\": [\"m5_sq\", \"m5_so\", \"m5_do\", \"m5_dr\", \"m5_si\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini wajib mode dashboard karena meminta funnel konversi lintas tahap dan per bulan. Untuk menghitung funnel per bulan secara aman tanpa asumsi join detail yang kompleks, saya memakai tabel header tiap dokumen dan mengagregasi jumlah dokumen per bulan, lalu menyatukannya berdasarkan periode bulanan dengan UNION ALL. Ini sesuai intent funnel tahap SQ -> SO -> DO -> DR -> SI per bulan. Saya menerapkan always_apply_filters yang tersedia pada schema: m5_sq.sqisclose = 0, m5_so.soisclose = 0, m5_do.doisclose = 0, dan m5_si.siisclose = 0. Tabel m5_dr tidak memiliki always_apply_filters eksplisit sehingga tidak saya tambahkan filter default buatan sendiri. Query pertama merangkum jumlah dokumen per tahap per bulan untuk visual funnel/tren bertumpuk. Query kedua menghitung metrik konversi antar tahap per bulan dengan membandingkan total dokumen setiap tahap dalam bulan yang sama. Query ketiga memberi summary total lintas periode agar dashboard punya KPI ringkas konversi keseluruhan. Karena schema tidak menyediakan relasi header langsung yang lengkap untuk semua tahap dalam bentuk funnel by originating document bulanan, pendekatan yang paling aman adalah funnel volume per bulan per stage, bukan conversion by exact originating document lineage.\", \"ai_metrics\": {\"confidence_score\": 0.87, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Funnel yang dihasilkan adalah funnel volume dokumen per bulan per tahap, bukan tracing konversi exact document lineage dari SQ yang sama ke SO/DO/DR/SI.\", \"Query agregasi bulanan melakukan full scan pada tabel transaksi jika tidak ada filter periode tambahan dari user.\"]}, \"queries\": [{\"id\": \"q_funnel_stage_monthly\", \"name\": \"monthly_sales_funnel_stage\", \"purpose\": \"Menampilkan jumlah dokumen per tahap funnel penjualan per bulan untuk SQ, SO, DO, DR, dan SI.\", \"query\": \"SELECT t.periode, SUM(t.jml_sq) AS jml_sq, SUM(t.jml_so) AS jml_so, SUM(t.jml_do) AS jml_do, SUM(t.jml_dr) AS jml_dr, SUM(t.jml_si) AS jml_si FROM ( SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS periode, COUNT(sq.sqid) AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_sq sq WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(so.sotgl, '%Y-%m') AS periode, 0 AS jml_sq, COUNT(so.soid) AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_so so WHERE so.soisclose = 0 GROUP BY DATE_FORMAT(so.sotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(doct.dotgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, COUNT(doct.doid) AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_do doct WHERE doct.doisclose = 0 GROUP BY DATE_FORMAT(doct.dotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(dr.drtgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, COUNT(dr.drid) AS jml_dr, 0 AS jml_si FROM m5_dr dr GROUP BY DATE_FORMAT(dr.drtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, COUNT(si.siid) AS jml_si FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ) t GROUP BY t.periode ORDER BY t.periode ASC\", \"result_kind\": \"stacked_bar_chart\"}, {\"id\": \"q_conversion_rate_monthly\", \"name\": \"monthly_sales_conversion_rate\", \"purpose\": \"Menghitung conversion rate antar tahap funnel penjualan per bulan.\", \"query\": \"SELECT f.periode, f.jml_sq, f.jml_so, f.jml_do, f.jml_dr, f.jml_si, CASE WHEN f.jml_sq > 0 THEN ROUND((f.jml_so / f.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_so, CASE WHEN f.jml_so > 0 THEN ROUND((f.jml_do / f.jml_so) * 100, 2) ELSE NULL END AS pct_so_to_do, CASE WHEN f.jml_do > 0 THEN ROUND((f.jml_dr / f.jml_do) * 100, 2) ELSE NULL END AS pct_do_to_dr, CASE WHEN f.jml_dr > 0 THEN ROUND((f.jml_si / f.jml_dr) * 100, 2) ELSE NULL END AS pct_dr_to_si, CASE WHEN f.jml_sq > 0 THEN ROUND((f.jml_si / f.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_si FROM ( SELECT t.periode, SUM(t.jml_sq) AS jml_sq, SUM(t.jml_so) AS jml_so, SUM(t.jml_do) AS jml_do, SUM(t.jml_dr) AS jml_dr, SUM(t.jml_si) AS jml_si FROM ( SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS periode, COUNT(sq.sqid) AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_sq sq WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(so.sotgl, '%Y-%m') AS periode, 0 AS jml_sq, COUNT(so.soid) AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_so so WHERE so.soisclose = 0 GROUP BY DATE_FORMAT(so.sotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(doct.dotgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, COUNT(doct.doid) AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_do doct WHERE doct.doisclose = 0 GROUP BY DATE_FORMAT(doct.dotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(dr.drtgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, COUNT(dr.drid) AS jml_dr, 0 AS jml_si FROM m5_dr dr GROUP BY DATE_FORMAT(dr.drtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, COUNT(si.siid) AS jml_si FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ) t GROUP BY t.periode ) f ORDER BY f.periode ASC\", \"result_kind\": \"line_chart\"}, {\"id\": \"q_conversion_summary\", \"name\": \"sales_conversion_summary\", \"purpose\": \"Memberikan ringkasan total funnel dan conversion rate keseluruhan lintas semua periode.\", \"query\": \"SELECT s.jml_sq, s.jml_so, s.jml_do, s.jml_dr, s.jml_si, CASE WHEN s.jml_sq > 0 THEN ROUND((s.jml_so / s.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_so, CASE WHEN s.jml_so > 0 THEN ROUND((s.jml_do / s.jml_so) * 100, 2) ELSE NULL END AS pct_so_to_do, CASE WHEN s.jml_do > 0 THEN ROUND((s.jml_dr / s.jml_do) * 100, 2) ELSE NULL END AS pct_do_to_dr, CASE WHEN s.jml_dr > 0 THEN ROUND((s.jml_si / s.jml_dr) * 100, 2) ELSE NULL END AS pct_dr_to_si, CASE WHEN s.jml_sq > 0 THEN ROUND((s.jml_si / s.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_si FROM ( SELECT (SELECT COUNT(sq.sqid) FROM m5_sq sq WHERE sq.sqisclose = 0) AS jml_sq, (SELECT COUNT(so.soid) FROM m5_so so WHERE so.soisclose = 0) AS jml_so, (SELECT COUNT(doct.doid) FROM m5_do doct WHERE doct.doisclose = 0) AS jml_do, (SELECT COUNT(dr.drid) FROM m5_dr dr) AS jml_dr, (SELECT COUNT(si.siid) FROM m5_si si WHERE si.siisclose = 0) AS jml_si ) s\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"v_funnel_stage_monthly\", \"query_id\": \"q_funnel_stage_monthly\", \"title\": \"Funnel Penjualan per Bulan\", \"chart_type\": \"stacked_bar\", \"x_axis\": \"periode\", \"y_axis\": [\"jml_sq\", \"jml_so\", \"jml_do\", \"jml_dr\", \"jml_si\"]}, {\"id\": \"v_conversion_rate_monthly\", \"query_id\": \"q_conversion_rate_monthly\", \"title\": \"Conversion Rate Penjualan per Bulan\", \"chart_type\": \"line\", \"x_axis\": \"periode\", \"y_axis\": [\"pct_sq_to_so\", \"pct_so_to_do\", \"pct_do_to_dr\", \"pct_dr_to_si\", \"pct_sq_to_si\"]}, {\"id\": \"v_conversion_summary\", \"query_id\": \"q_conversion_summary\", \"title\": \"Ringkasan Funnel dan Konversi Keseluruhan\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"jml_sq\", \"jml_so\", \"jml_do\", \"jml_dr\", \"jml_si\", \"pct_sq_to_so\", \"pct_so_to_do\", \"pct_do_to_dr\", \"pct_dr_to_si\", \"pct_sq_to_si\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta analitik funnel konversi penjualan bulanan lintas tahap dokumen M5 dari sales quotation (SQ) ke sales order (SO), delivery order (DO), delivery report (DR), dan sales invoice (SI), beserta metrik konversinya.",
+          "tables_used": [
+            "m5_sq",
+            "m5_so",
+            "m5_do",
+            "m5_dr",
+            "m5_si"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini wajib mode dashboard karena meminta funnel konversi lintas tahap dan per bulan. Untuk menghitung funnel per bulan secara aman tanpa asumsi join detail yang kompleks, saya memakai tabel header tiap dokumen dan mengagregasi jumlah dokumen per bulan, lalu menyatukannya berdasarkan periode bulanan dengan UNION ALL. Ini sesuai intent funnel tahap SQ -> SO -> DO -> DR -> SI per bulan. Saya menerapkan always_apply_filters yang tersedia pada schema: m5_sq.sqisclose = 0, m5_so.soisclose = 0, m5_do.doisclose = 0, dan m5_si.siisclose = 0. Tabel m5_dr tidak memiliki always_apply_filters eksplisit sehingga tidak saya tambahkan filter default buatan sendiri. Query pertama merangkum jumlah dokumen per tahap per bulan untuk visual funnel/tren bertumpuk. Query kedua menghitung metrik konversi antar tahap per bulan dengan membandingkan total dokumen setiap tahap dalam bulan yang sama. Query ketiga memberi summary total lintas periode agar dashboard punya KPI ringkas konversi keseluruhan. Karena schema tidak menyediakan relasi header langsung yang lengkap untuk semua tahap dalam bentuk funnel by originating document bulanan, pendekatan yang paling aman adalah funnel volume per bulan per stage, bukan conversion by exact originating document lineage.",
+          "ai_metrics": {
+            "confidence_score": 0.87,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Funnel yang dihasilkan adalah funnel volume dokumen per bulan per tahap, bukan tracing konversi exact document lineage dari SQ yang sama ke SO/DO/DR/SI.",
+            "Query agregasi bulanan melakukan full scan pada tabel transaksi jika tidak ada filter periode tambahan dari user."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_funnel_stage_monthly",
+            "name": "monthly_sales_funnel_stage",
+            "purpose": "Menampilkan jumlah dokumen per tahap funnel penjualan per bulan untuk SQ, SO, DO, DR, dan SI.",
+            "query": "SELECT t.periode, SUM(t.jml_sq) AS jml_sq, SUM(t.jml_so) AS jml_so, SUM(t.jml_do) AS jml_do, SUM(t.jml_dr) AS jml_dr, SUM(t.jml_si) AS jml_si FROM ( SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS periode, COUNT(sq.sqid) AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_sq sq WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(so.sotgl, '%Y-%m') AS periode, 0 AS jml_sq, COUNT(so.soid) AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_so so WHERE so.soisclose = 0 GROUP BY DATE_FORMAT(so.sotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(doct.dotgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, COUNT(doct.doid) AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_do doct WHERE doct.doisclose = 0 GROUP BY DATE_FORMAT(doct.dotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(dr.drtgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, COUNT(dr.drid) AS jml_dr, 0 AS jml_si FROM m5_dr dr GROUP BY DATE_FORMAT(dr.drtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, COUNT(si.siid) AS jml_si FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ) t GROUP BY t.periode ORDER BY t.periode ASC",
+            "result_kind": "stacked_bar_chart"
+          },
+          {
+            "id": "q_conversion_rate_monthly",
+            "name": "monthly_sales_conversion_rate",
+            "purpose": "Menghitung conversion rate antar tahap funnel penjualan per bulan.",
+            "query": "SELECT f.periode, f.jml_sq, f.jml_so, f.jml_do, f.jml_dr, f.jml_si, CASE WHEN f.jml_sq > 0 THEN ROUND((f.jml_so / f.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_so, CASE WHEN f.jml_so > 0 THEN ROUND((f.jml_do / f.jml_so) * 100, 2) ELSE NULL END AS pct_so_to_do, CASE WHEN f.jml_do > 0 THEN ROUND((f.jml_dr / f.jml_do) * 100, 2) ELSE NULL END AS pct_do_to_dr, CASE WHEN f.jml_dr > 0 THEN ROUND((f.jml_si / f.jml_dr) * 100, 2) ELSE NULL END AS pct_dr_to_si, CASE WHEN f.jml_sq > 0 THEN ROUND((f.jml_si / f.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_si FROM ( SELECT t.periode, SUM(t.jml_sq) AS jml_sq, SUM(t.jml_so) AS jml_so, SUM(t.jml_do) AS jml_do, SUM(t.jml_dr) AS jml_dr, SUM(t.jml_si) AS jml_si FROM ( SELECT DATE_FORMAT(sq.sqtgl, '%Y-%m') AS periode, COUNT(sq.sqid) AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_sq sq WHERE sq.sqisclose = 0 GROUP BY DATE_FORMAT(sq.sqtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(so.sotgl, '%Y-%m') AS periode, 0 AS jml_sq, COUNT(so.soid) AS jml_so, 0 AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_so so WHERE so.soisclose = 0 GROUP BY DATE_FORMAT(so.sotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(doct.dotgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, COUNT(doct.doid) AS jml_do, 0 AS jml_dr, 0 AS jml_si FROM m5_do doct WHERE doct.doisclose = 0 GROUP BY DATE_FORMAT(doct.dotgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(dr.drtgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, COUNT(dr.drid) AS jml_dr, 0 AS jml_si FROM m5_dr dr GROUP BY DATE_FORMAT(dr.drtgl, '%Y-%m') UNION ALL SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS periode, 0 AS jml_sq, 0 AS jml_so, 0 AS jml_do, 0 AS jml_dr, COUNT(si.siid) AS jml_si FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ) t GROUP BY t.periode ) f ORDER BY f.periode ASC",
+            "result_kind": "line_chart"
+          },
+          {
+            "id": "q_conversion_summary",
+            "name": "sales_conversion_summary",
+            "purpose": "Memberikan ringkasan total funnel dan conversion rate keseluruhan lintas semua periode.",
+            "query": "SELECT s.jml_sq, s.jml_so, s.jml_do, s.jml_dr, s.jml_si, CASE WHEN s.jml_sq > 0 THEN ROUND((s.jml_so / s.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_so, CASE WHEN s.jml_so > 0 THEN ROUND((s.jml_do / s.jml_so) * 100, 2) ELSE NULL END AS pct_so_to_do, CASE WHEN s.jml_do > 0 THEN ROUND((s.jml_dr / s.jml_do) * 100, 2) ELSE NULL END AS pct_do_to_dr, CASE WHEN s.jml_dr > 0 THEN ROUND((s.jml_si / s.jml_dr) * 100, 2) ELSE NULL END AS pct_dr_to_si, CASE WHEN s.jml_sq > 0 THEN ROUND((s.jml_si / s.jml_sq) * 100, 2) ELSE NULL END AS pct_sq_to_si FROM ( SELECT (SELECT COUNT(sq.sqid) FROM m5_sq sq WHERE sq.sqisclose = 0) AS jml_sq, (SELECT COUNT(so.soid) FROM m5_so so WHERE so.soisclose = 0) AS jml_so, (SELECT COUNT(doct.doid) FROM m5_do doct WHERE doct.doisclose = 0) AS jml_do, (SELECT COUNT(dr.drid) FROM m5_dr dr) AS jml_dr, (SELECT COUNT(si.siid) FROM m5_si si WHERE si.siisclose = 0) AS jml_si ) s",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_funnel_stage_monthly",
+            "query_id": "q_funnel_stage_monthly",
+            "title": "Funnel Penjualan per Bulan",
+            "chart_type": "stacked_bar",
+            "x_axis": "periode",
+            "y_axis": [
+              "jml_sq",
+              "jml_so",
+              "jml_do",
+              "jml_dr",
+              "jml_si"
+            ]
+          },
+          {
+            "id": "v_conversion_rate_monthly",
+            "query_id": "q_conversion_rate_monthly",
+            "title": "Conversion Rate Penjualan per Bulan",
+            "chart_type": "line",
+            "x_axis": "periode",
+            "y_axis": [
+              "pct_sq_to_so",
+              "pct_so_to_do",
+              "pct_do_to_dr",
+              "pct_dr_to_si",
+              "pct_sq_to_si"
+            ]
+          },
+          {
+            "id": "v_conversion_summary",
+            "query_id": "q_conversion_summary",
+            "title": "Ringkasan Funnel dan Konversi Keseluruhan",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "jml_sq",
+              "jml_so",
+              "jml_do",
+              "jml_dr",
+              "jml_si",
+              "pct_sq_to_so",
+              "pct_so_to_do",
+              "pct_do_to_dr",
+              "pct_dr_to_si",
+              "pct_sq_to_si"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "FAILED",
+      "errors": [
+        "missing widget keyword in visualization titles: trend"
+      ]
+    },
+    {
+      "id": "dashboard_003_customer_360_sales",
+      "title": "Customer 360 Sales",
+      "question": "Tampilkan dashboard customer 360 untuk customer dengan outstanding invoice terbesar, mencakup ringkasan invoice, invoice belum lunas, riwayat collection, payment voucher, dan retur penjualan.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"Menampilkan dashboard customer 360 untuk customer dengan outstanding invoice penjualan terbesar, lalu menampilkan ringkasan invoice, daftar invoice belum lunas, riwayat penagihan/collection dan payment voucher, serta retur penjualan customer tersebut.\", \"tables_used\": [\"m5_si\", \"m1_contact\", \"m5_ic\", \"m5_ic_detail\", \"m5_pv\", \"m5_pv_detail\", \"m5_sr\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini jelas mode dashboard karena user meminta beberapa blok analitik berbeda: ringkasan invoice, outstanding detail, riwayat collection, payment voucher, dan retur. Untuk mencari customer dengan outstanding invoice terbesar, tabel utama yang paling tepat adalah m5_si karena 'penjualan' default berarti sales invoice. Filter wajib schema m5_si adalah siisclose = 0, sehingga diterapkan. Outstanding dihitung dari sitotaltransaksi - sijmlbayar karena schema menyediakan total transaksi dan jumlah bayar di header invoice. Query pertama merangkum customer teratas berdasarkan outstanding dan sekaligus menghitung metrik invoice, outstanding, invoice belum lunas, collection, payment voucher, dan retur lewat subquery terpisah agar tidak terjadi duplikasi agregasi akibat join many-to-many. Query kedua menampilkan detail invoice belum lunas untuk customer terpilih, tetap memakai m5_si dan m1_contact dengan filter siisclose = 0 dan outstanding > 0. Query ketiga menampilkan riwayat collection, payment voucher, dan retur dalam satu timeline seragam menggunakan UNION ALL dari m5_ic/m5_ic_detail, m5_pv/m5_pv_detail, dan m5_sr. Untuk area M5 receivable, join mengikuti join_hints sales_receivable_collection dan polymorphic rules: m5_ic_detail serta m5_pv_detail tidak dijoin langsung ke dokumen sumber via idtransaksi karena tidak diperlukan untuk intent ini; cukup lewat relasi aman ke header IC/PV dan customer di header. Karena user meminta customer dengan outstanding terbesar tanpa periode, tidak ditambahkan filter tanggal.\", \"ai_metrics\": {\"confidence_score\": 0.87, \"schema_version_used\": \"Semantic Query Schema OBT + Semantic schema utama M5 sales\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query dashboard menggunakan beberapa subquery agregat dan repeated scalar subquery untuk memilih customer outstanding terbesar; ini valid namun bisa cukup berat bila data sangat besar.\", \"Query 3 menggunakan UNION ALL untuk menggabungkan collection, payment voucher, dan retur; pastikan tipe kolom numerik kompatibel antar SELECT.\"]}, \"queries\": [{\"id\": \"q_customer360_summary\", \"name\": \"Customer 360 Summary\", \"purpose\": \"Menentukan customer dengan outstanding invoice terbesar dan menampilkan ringkasan KPI invoice, collection, payment voucher, dan retur penjualan.\", \"query\": \"SELECT c.kid AS customer_id, c.kkode AS kode_customer, c.knama AS nama_customer, si_agg.total_invoice_count, si_agg.total_invoice_amount, si_agg.total_paid_amount, si_agg.total_outstanding_amount, si_agg.unpaid_invoice_count, COALESCE(ic_agg.collection_count, 0) AS collection_count, COALESCE(ic_agg.collection_amount, 0) AS collection_amount, COALESCE(pv_agg.payment_voucher_count, 0) AS payment_voucher_count, COALESCE(pv_agg.payment_voucher_amount, 0) AS payment_voucher_amount, COALESCE(sr_agg.sales_return_count, 0) AS sales_return_count, COALESCE(sr_agg.sales_return_amount, 0) AS sales_return_amount FROM ( SELECT s.sicustomer, COUNT(*) AS total_invoice_count, SUM(s.sitotaltransaksi) AS total_invoice_amount, SUM(s.sijmlbayar) AS total_paid_amount, SUM(s.sitotaltransaksi - s.sijmlbayar) AS total_outstanding_amount, SUM(CASE WHEN (s.sitotaltransaksi - s.sijmlbayar) > 0 THEN 1 ELSE 0 END) AS unpaid_invoice_count FROM m5_si s WHERE s.siisclose = 0 GROUP BY s.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) si_agg INNER JOIN m1_contact c ON c.kid = si_agg.sicustomer AND c.kaktif = 1 LEFT JOIN ( SELECT i.iccustomer, COUNT(DISTINCT i.icid) AS collection_count, SUM(d.jmlbayar) AS collection_amount FROM m5_ic i INNER JOIN m5_ic_detail d ON d.idic = i.icid WHERE i.iccustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) GROUP BY i.iccustomer ) ic_agg ON ic_agg.iccustomer = si_agg.sicustomer LEFT JOIN ( SELECT p.pvcustomer, COUNT(DISTINCT p.pvid) AS payment_voucher_count, SUM(d.jmlbayar) AS payment_voucher_amount FROM m5_pv p INNER JOIN m5_pv_detail d ON d.idpv = p.pvid WHERE p.pvcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) GROUP BY p.pvcustomer ) pv_agg ON pv_agg.pvcustomer = si_agg.sicustomer LEFT JOIN ( SELECT r.srcustomer, COUNT(*) AS sales_return_count, SUM(r.srtotaltransaksi) AS sales_return_amount FROM m5_sr r WHERE r.srcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) GROUP BY r.srcustomer ) sr_agg ON sr_agg.srcustomer = si_agg.sicustomer\", \"result_kind\": \"table\"}, {\"id\": \"q_customer360_unpaid_invoices\", \"name\": \"Outstanding Invoices\", \"purpose\": \"Menampilkan daftar invoice penjualan yang belum lunas milik customer dengan outstanding terbesar.\", \"query\": \"SELECT si.siid AS invoice_id, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, si.sitgljatuhtempo AS tanggal_jatuh_tempo, c.kkode AS kode_customer, c.knama AS nama_customer, si.simatauang AS mata_uang, si.sitotaltransaksi AS total_invoice, si.sijmlbayar AS total_terbayar, (si.sitotaltransaksi - si.sijmlbayar) AS outstanding_invoice, si.sistatuslunas AS status_lunas, si.sistatus AS status_dokumen FROM m5_si si INNER JOIN m1_contact c ON c.kid = si.sicustomer AND c.kaktif = 1 WHERE si.siisclose = 0 AND si.sicustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) AND (si.sitotaltransaksi - si.sijmlbayar) > 0 ORDER BY outstanding_invoice DESC, si.sitgl DESC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_customer360_timeline\", \"name\": \"Collection Payment Return Timeline\", \"purpose\": \"Menampilkan riwayat collection, payment voucher, dan retur penjualan customer dengan outstanding terbesar.\", \"query\": \"SELECT t.event_type, t.transaction_id, t.document_number, t.transaction_date, t.reference_source, t.reference_transaction_id, t.amount, t.notes, t.status_document FROM ( SELECT 'COLLECTION' AS event_type, ic.icid AS transaction_id, ic.icnotransaksi AS document_number, ic.ictgl AS transaction_date, d.sumber AS reference_source, d.idtransaksi AS reference_transaction_id, d.jmlbayar AS amount, COALESCE(d.catatan, ic.iccatatan) AS notes, ic.icstatus AS status_document, d.urutan AS sort_order FROM m5_ic ic INNER JOIN m5_ic_detail d ON d.idic = ic.icid WHERE ic.iccustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) UNION ALL SELECT 'PAYMENT_VOUCHER' AS event_type, pv.pvid AS transaction_id, pv.pvnotransaksi AS document_number, pv.pvtgl AS transaction_date, d.sumber AS reference_source, d.idtransaksi AS reference_transaction_id, d.jmlbayar AS amount, COALESCE(d.catatan, pv.pvcatatan) AS notes, pv.pvstatus AS status_document, d.urutan AS sort_order FROM m5_pv pv INNER JOIN m5_pv_detail d ON d.idpv = pv.pvid WHERE pv.pvcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) UNION ALL SELECT 'SALES_RETURN' AS event_type, sr.srid AS transaction_id, sr.srnotransaksi AS document_number, sr.srtgl AS transaction_date, 'SR' AS reference_source, sr.srid AS reference_transaction_id, sr.srtotaltransaksi AS amount, sr.srcatatan AS notes, sr.srstatus AS status_document, 0 AS sort_order FROM m5_sr sr WHERE sr.srcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) ) t ORDER BY t.transaction_date DESC, t.event_type, t.document_number LIMIT 100\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"v_customer360_summary\", \"query_id\": \"q_customer360_summary\", \"title\": \"Customer 360 Summary - Outstanding Terbesar\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"total_invoice_count\", \"total_invoice_amount\", \"total_paid_amount\", \"total_outstanding_amount\", \"unpaid_invoice_count\", \"collection_count\", \"collection_amount\", \"payment_voucher_count\", \"payment_voucher_amount\", \"sales_return_count\", \"sales_return_amount\"]}, {\"id\": \"v_customer360_unpaid_invoices\", \"query_id\": \"q_customer360_unpaid_invoices\", \"title\": \"Daftar Invoice Belum Lunas\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"total_invoice\", \"total_terbayar\", \"outstanding_invoice\"]}, {\"id\": \"v_customer360_timeline\", \"query_id\": \"q_customer360_timeline\", \"title\": \"Riwayat Collection, Payment Voucher, dan Retur\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"amount\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "Menampilkan dashboard customer 360 untuk customer dengan outstanding invoice penjualan terbesar, lalu menampilkan ringkasan invoice, daftar invoice belum lunas, riwayat penagihan/collection dan payment voucher, serta retur penjualan customer tersebut.",
+          "tables_used": [
+            "m5_si",
+            "m1_contact",
+            "m5_ic",
+            "m5_ic_detail",
+            "m5_pv",
+            "m5_pv_detail",
+            "m5_sr"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini jelas mode dashboard karena user meminta beberapa blok analitik berbeda: ringkasan invoice, outstanding detail, riwayat collection, payment voucher, dan retur. Untuk mencari customer dengan outstanding invoice terbesar, tabel utama yang paling tepat adalah m5_si karena 'penjualan' default berarti sales invoice. Filter wajib schema m5_si adalah siisclose = 0, sehingga diterapkan. Outstanding dihitung dari sitotaltransaksi - sijmlbayar karena schema menyediakan total transaksi dan jumlah bayar di header invoice. Query pertama merangkum customer teratas berdasarkan outstanding dan sekaligus menghitung metrik invoice, outstanding, invoice belum lunas, collection, payment voucher, dan retur lewat subquery terpisah agar tidak terjadi duplikasi agregasi akibat join many-to-many. Query kedua menampilkan detail invoice belum lunas untuk customer terpilih, tetap memakai m5_si dan m1_contact dengan filter siisclose = 0 dan outstanding > 0. Query ketiga menampilkan riwayat collection, payment voucher, dan retur dalam satu timeline seragam menggunakan UNION ALL dari m5_ic/m5_ic_detail, m5_pv/m5_pv_detail, dan m5_sr. Untuk area M5 receivable, join mengikuti join_hints sales_receivable_collection dan polymorphic rules: m5_ic_detail serta m5_pv_detail tidak dijoin langsung ke dokumen sumber via idtransaksi karena tidak diperlukan untuk intent ini; cukup lewat relasi aman ke header IC/PV dan customer di header. Karena user meminta customer dengan outstanding terbesar tanpa periode, tidak ditambahkan filter tanggal.",
+          "ai_metrics": {
+            "confidence_score": 0.87,
+            "schema_version_used": "Semantic Query Schema OBT + Semantic schema utama M5 sales"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query dashboard menggunakan beberapa subquery agregat dan repeated scalar subquery untuk memilih customer outstanding terbesar; ini valid namun bisa cukup berat bila data sangat besar.",
+            "Query 3 menggunakan UNION ALL untuk menggabungkan collection, payment voucher, dan retur; pastikan tipe kolom numerik kompatibel antar SELECT."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_customer360_summary",
+            "name": "Customer 360 Summary",
+            "purpose": "Menentukan customer dengan outstanding invoice terbesar dan menampilkan ringkasan KPI invoice, collection, payment voucher, dan retur penjualan.",
+            "query": "SELECT c.kid AS customer_id, c.kkode AS kode_customer, c.knama AS nama_customer, si_agg.total_invoice_count, si_agg.total_invoice_amount, si_agg.total_paid_amount, si_agg.total_outstanding_amount, si_agg.unpaid_invoice_count, COALESCE(ic_agg.collection_count, 0) AS collection_count, COALESCE(ic_agg.collection_amount, 0) AS collection_amount, COALESCE(pv_agg.payment_voucher_count, 0) AS payment_voucher_count, COALESCE(pv_agg.payment_voucher_amount, 0) AS payment_voucher_amount, COALESCE(sr_agg.sales_return_count, 0) AS sales_return_count, COALESCE(sr_agg.sales_return_amount, 0) AS sales_return_amount FROM ( SELECT s.sicustomer, COUNT(*) AS total_invoice_count, SUM(s.sitotaltransaksi) AS total_invoice_amount, SUM(s.sijmlbayar) AS total_paid_amount, SUM(s.sitotaltransaksi - s.sijmlbayar) AS total_outstanding_amount, SUM(CASE WHEN (s.sitotaltransaksi - s.sijmlbayar) > 0 THEN 1 ELSE 0 END) AS unpaid_invoice_count FROM m5_si s WHERE s.siisclose = 0 GROUP BY s.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) si_agg INNER JOIN m1_contact c ON c.kid = si_agg.sicustomer AND c.kaktif = 1 LEFT JOIN ( SELECT i.iccustomer, COUNT(DISTINCT i.icid) AS collection_count, SUM(d.jmlbayar) AS collection_amount FROM m5_ic i INNER JOIN m5_ic_detail d ON d.idic = i.icid WHERE i.iccustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) GROUP BY i.iccustomer ) ic_agg ON ic_agg.iccustomer = si_agg.sicustomer LEFT JOIN ( SELECT p.pvcustomer, COUNT(DISTINCT p.pvid) AS payment_voucher_count, SUM(d.jmlbayar) AS payment_voucher_amount FROM m5_pv p INNER JOIN m5_pv_detail d ON d.idpv = p.pvid WHERE p.pvcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) GROUP BY p.pvcustomer ) pv_agg ON pv_agg.pvcustomer = si_agg.sicustomer LEFT JOIN ( SELECT r.srcustomer, COUNT(*) AS sales_return_count, SUM(r.srtotaltransaksi) AS sales_return_amount FROM m5_sr r WHERE r.srcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) GROUP BY r.srcustomer ) sr_agg ON sr_agg.srcustomer = si_agg.sicustomer",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_customer360_unpaid_invoices",
+            "name": "Outstanding Invoices",
+            "purpose": "Menampilkan daftar invoice penjualan yang belum lunas milik customer dengan outstanding terbesar.",
+            "query": "SELECT si.siid AS invoice_id, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, si.sitgljatuhtempo AS tanggal_jatuh_tempo, c.kkode AS kode_customer, c.knama AS nama_customer, si.simatauang AS mata_uang, si.sitotaltransaksi AS total_invoice, si.sijmlbayar AS total_terbayar, (si.sitotaltransaksi - si.sijmlbayar) AS outstanding_invoice, si.sistatuslunas AS status_lunas, si.sistatus AS status_dokumen FROM m5_si si INNER JOIN m1_contact c ON c.kid = si.sicustomer AND c.kaktif = 1 WHERE si.siisclose = 0 AND si.sicustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) AND (si.sitotaltransaksi - si.sijmlbayar) > 0 ORDER BY outstanding_invoice DESC, si.sitgl DESC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_customer360_timeline",
+            "name": "Collection Payment Return Timeline",
+            "purpose": "Menampilkan riwayat collection, payment voucher, dan retur penjualan customer dengan outstanding terbesar.",
+            "query": "SELECT t.event_type, t.transaction_id, t.document_number, t.transaction_date, t.reference_source, t.reference_transaction_id, t.amount, t.notes, t.status_document FROM ( SELECT 'COLLECTION' AS event_type, ic.icid AS transaction_id, ic.icnotransaksi AS document_number, ic.ictgl AS transaction_date, d.sumber AS reference_source, d.idtransaksi AS reference_transaction_id, d.jmlbayar AS amount, COALESCE(d.catatan, ic.iccatatan) AS notes, ic.icstatus AS status_document, d.urutan AS sort_order FROM m5_ic ic INNER JOIN m5_ic_detail d ON d.idic = ic.icid WHERE ic.iccustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) UNION ALL SELECT 'PAYMENT_VOUCHER' AS event_type, pv.pvid AS transaction_id, pv.pvnotransaksi AS document_number, pv.pvtgl AS transaction_date, d.sumber AS reference_source, d.idtransaksi AS reference_transaction_id, d.jmlbayar AS amount, COALESCE(d.catatan, pv.pvcatatan) AS notes, pv.pvstatus AS status_document, d.urutan AS sort_order FROM m5_pv pv INNER JOIN m5_pv_detail d ON d.idpv = pv.pvid WHERE pv.pvcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) UNION ALL SELECT 'SALES_RETURN' AS event_type, sr.srid AS transaction_id, sr.srnotransaksi AS document_number, sr.srtgl AS transaction_date, 'SR' AS reference_source, sr.srid AS reference_transaction_id, sr.srtotaltransaksi AS amount, sr.srcatatan AS notes, sr.srstatus AS status_document, 0 AS sort_order FROM m5_sr sr WHERE sr.srcustomer = ( SELECT x.sicustomer FROM ( SELECT s2.sicustomer, SUM(s2.sitotaltransaksi - s2.sijmlbayar) AS total_outstanding_amount FROM m5_si s2 WHERE s2.siisclose = 0 GROUP BY s2.sicustomer ORDER BY total_outstanding_amount DESC LIMIT 1 ) x ) ) t ORDER BY t.transaction_date DESC, t.event_type, t.document_number LIMIT 100",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_customer360_summary",
+            "query_id": "q_customer360_summary",
+            "title": "Customer 360 Summary - Outstanding Terbesar",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "total_invoice_count",
+              "total_invoice_amount",
+              "total_paid_amount",
+              "total_outstanding_amount",
+              "unpaid_invoice_count",
+              "collection_count",
+              "collection_amount",
+              "payment_voucher_count",
+              "payment_voucher_amount",
+              "sales_return_count",
+              "sales_return_amount"
+            ]
+          },
+          {
+            "id": "v_customer360_unpaid_invoices",
+            "query_id": "q_customer360_unpaid_invoices",
+            "title": "Daftar Invoice Belum Lunas",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "total_invoice",
+              "total_terbayar",
+              "outstanding_invoice"
+            ]
+          },
+          {
+            "id": "v_customer360_timeline",
+            "query_id": "q_customer360_timeline",
+            "title": "Riwayat Collection, Payment Voucher, dan Retur",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "amount"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_004_fulfillment_monitoring",
+      "title": "Monitoring Fulfillment",
+      "question": "Tampilkan item sales order yang belum menjadi delivery order, delivery order yang belum menjadi delivery report, dan delivery report yang belum menjadi invoice.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta 3 blok analitik/detail outstanding per tahap alur penjualan M5: item sales order yang belum menjadi delivery order, item delivery order yang belum menjadi delivery report, dan item delivery report yang belum menjadi invoice penjualan.\", \"tables_used\": [\"m5_so\", \"m5_so_detail\", \"m5_do\", \"m5_do_detail\", \"m5_dr\", \"m5_dr_detail\", \"m1_contact\", \"m1_item\"], \"tables_missing\": [], \"reasoning\": \"Permintaan bersifat lintas tahap status dan secara eksplisit meminta beberapa blok detail berbeda, jadi wajib mode dashboard. Untuk blok pertama dipakai m5_so_detail karena user meminta item sales order; outstanding terhadap DO tersedia langsung di kolom jmldo/statusdo pada detail SO, lalu join ke m5_so untuk nomor/tanggal dokumen dan m1_contact/m1_item untuk nama customer dan item. Untuk blok kedua dipakai m5_do_detail karena outstanding DO ke DR tersedia langsung di kolom jmldr/statusdr pada detail DO; join ke m5_do, m1_contact, dan m1_item. Untuk blok ketiga dipakai m5_dr_detail karena outstanding DR ke invoice tersedia langsung di kolom jmlsi/statussi pada detail DR; join ke m5_dr, m1_contact, dan m1_item. Saya menerapkan always_apply_filters yang tersedia di schema: m5_so.soisclose = 0, m5_do.doisclose = 0, dan m5_si tidak dipakai; pada detail SO ada always_apply_filters isclose = 0. Detail DO/DR tidak memiliki always_apply_filters eksplisit di schema, tetapi saya tetap memfilter detail.isclose = 0 untuk menghindari baris tertutup karena kolom tersebut tersedia dan konsisten dengan pola detail transaksi. Kondisi outstanding dibuat aman dengan membandingkan kuantitas sumber versus kuantitas turunan: COALESCE(jmlbarang turunan,0) < COALESCE(jmlbarang sumber,0). Saya juga menambahkan cek status yang null atau bukan LUNAS/SELESAI agar hasil lebih semantik sebagai belum lanjut penuh. Karena user meminta listing dan tidak memberi batas, setiap query diberi LIMIT 100 sesuai aturan.\", \"ai_metrics\": {\"confidence_score\": 0.89, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query menggunakan filter status berbasis string (mis. 'SELESAI'/'LUNAS') yang mungkin bergantung pada implementasi nilai status di data aktual.\", \"Perbandingan outstanding mengandalkan kolom jmlbarang dan kolom progres antar tahap pada tabel detail; jika sebagian implementasi memakai field jml, hasil bisa berbeda dari ekspektasi bisnis tertentu.\"]}, \"queries\": [{\"id\": \"q_so_belum_do\", \"name\": \"SO belum menjadi DO\", \"purpose\": \"Menampilkan item sales order yang belum sepenuhnya direalisasikan menjadi delivery order.\", \"query\": \"SELECT so.sonotransaksi AS nomor_sales_order, so.sotgl AS tanggal_sales_order, c.knama AS nama_customer, i.bkode AS kode_barang, sod.namabarang AS nama_barang, sod.satuanbarang AS satuan_barang, sod.jmlbarang AS qty_so, COALESCE(sod.jmldo, 0) AS qty_sudah_do, (COALESCE(sod.jmlbarang, 0) - COALESCE(sod.jmldo, 0)) AS qty_belum_do, sod.statusdo AS status_do, sod.statusrealisasi AS status_realisasi FROM m5_so_detail sod INNER JOIN m5_so so ON sod.idso = so.soid LEFT JOIN m1_contact c ON so.socustomer = c.kid AND c.kaktif = 1 LEFT JOIN m1_item i ON sod.idbarang = i.bid AND i.baktif = 1 WHERE so.soisclose = 0 AND sod.isclose = 0 AND COALESCE(sod.jmlbarang, 0) > COALESCE(sod.jmldo, 0) AND (sod.statusdo IS NULL OR sod.statusdo NOT IN ('SELESAI', 'LUNAS')) ORDER BY qty_belum_do DESC, so.sotgl DESC, so.sonotransaksi DESC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_do_belum_dr\", \"name\": \"DO belum menjadi DR\", \"purpose\": \"Menampilkan item delivery order yang belum sepenuhnya direalisasikan menjadi delivery report.\", \"query\": \"SELECT doo.donotransaksi AS nomor_delivery_order, doo.dotgl AS tanggal_delivery_order, c.knama AS nama_customer, i.bkode AS kode_barang, dod.namabarang AS nama_barang, dod.satuanbarang AS satuan_barang, dod.jmlbarang AS qty_do, COALESCE(dod.jmldr, 0) AS qty_sudah_dr, (COALESCE(dod.jmlbarang, 0) - COALESCE(dod.jmldr, 0)) AS qty_belum_dr, dod.statusdr AS status_dr, dod.statusrealisasi AS status_realisasi FROM m5_do_detail dod INNER JOIN m5_do doo ON dod.iddo = doo.doid LEFT JOIN m1_contact c ON doo.docustomer = c.kid AND c.kaktif = 1 LEFT JOIN m1_item i ON dod.idbarang = i.bid AND i.baktif = 1 WHERE doo.doisclose = 0 AND dod.isclose = 0 AND COALESCE(dod.jmlbarang, 0) > COALESCE(dod.jmldr, 0) AND (dod.statusdr IS NULL OR dod.statusdr NOT IN ('SELESAI', 'LUNAS')) ORDER BY qty_belum_dr DESC, doo.dotgl DESC, doo.donotransaksi DESC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_dr_belum_si\", \"name\": \"DR belum menjadi Invoice\", \"purpose\": \"Menampilkan item delivery report yang belum sepenuhnya direalisasikan menjadi sales invoice.\", \"query\": \"SELECT dr.drnotransaksi AS nomor_delivery_report, dr.drtgl AS tanggal_delivery_report, c.knama AS nama_customer, i.bkode AS kode_barang, drd.namabarang AS nama_barang, drd.satuanbarang AS satuan_barang, drd.jmlbarang AS qty_dr, COALESCE(drd.jmlsi, 0) AS qty_sudah_invoice, (COALESCE(drd.jmlbarang, 0) - COALESCE(drd.jmlsi, 0)) AS qty_belum_invoice, drd.statussi AS status_invoice, drd.statusrealisasi AS status_realisasi FROM m5_dr_detail drd INNER JOIN m5_dr dr ON drd.iddr = dr.drid LEFT JOIN m1_contact c ON dr.drcustomer = c.kid AND c.kaktif = 1 LEFT JOIN m1_item i ON drd.idbarang = i.bid AND i.baktif = 1 WHERE drd.isclose = 0 AND COALESCE(drd.jmlbarang, 0) > COALESCE(drd.jmlsi, 0) AND (drd.statussi IS NULL OR drd.statussi NOT IN ('SELESAI', 'LUNAS')) ORDER BY qty_belum_invoice DESC, dr.drtgl DESC, dr.drnotransaksi DESC LIMIT 100\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"v_so_belum_do\", \"query_id\": \"q_so_belum_do\", \"title\": \"Item Sales Order Belum Menjadi DO\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"qty_so\", \"qty_sudah_do\", \"qty_belum_do\"]}, {\"id\": \"v_do_belum_dr\", \"query_id\": \"q_do_belum_dr\", \"title\": \"Item DO Belum Menjadi DR\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"qty_do\", \"qty_sudah_dr\", \"qty_belum_dr\"]}, {\"id\": \"v_dr_belum_si\", \"query_id\": \"q_dr_belum_si\", \"title\": \"Item DR Belum Menjadi Invoice\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"qty_dr\", \"qty_sudah_invoice\", \"qty_belum_invoice\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta 3 blok analitik/detail outstanding per tahap alur penjualan M5: item sales order yang belum menjadi delivery order, item delivery order yang belum menjadi delivery report, dan item delivery report yang belum menjadi invoice penjualan.",
+          "tables_used": [
+            "m5_so",
+            "m5_so_detail",
+            "m5_do",
+            "m5_do_detail",
+            "m5_dr",
+            "m5_dr_detail",
+            "m1_contact",
+            "m1_item"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan bersifat lintas tahap status dan secara eksplisit meminta beberapa blok detail berbeda, jadi wajib mode dashboard. Untuk blok pertama dipakai m5_so_detail karena user meminta item sales order; outstanding terhadap DO tersedia langsung di kolom jmldo/statusdo pada detail SO, lalu join ke m5_so untuk nomor/tanggal dokumen dan m1_contact/m1_item untuk nama customer dan item. Untuk blok kedua dipakai m5_do_detail karena outstanding DO ke DR tersedia langsung di kolom jmldr/statusdr pada detail DO; join ke m5_do, m1_contact, dan m1_item. Untuk blok ketiga dipakai m5_dr_detail karena outstanding DR ke invoice tersedia langsung di kolom jmlsi/statussi pada detail DR; join ke m5_dr, m1_contact, dan m1_item. Saya menerapkan always_apply_filters yang tersedia di schema: m5_so.soisclose = 0, m5_do.doisclose = 0, dan m5_si tidak dipakai; pada detail SO ada always_apply_filters isclose = 0. Detail DO/DR tidak memiliki always_apply_filters eksplisit di schema, tetapi saya tetap memfilter detail.isclose = 0 untuk menghindari baris tertutup karena kolom tersebut tersedia dan konsisten dengan pola detail transaksi. Kondisi outstanding dibuat aman dengan membandingkan kuantitas sumber versus kuantitas turunan: COALESCE(jmlbarang turunan,0) < COALESCE(jmlbarang sumber,0). Saya juga menambahkan cek status yang null atau bukan LUNAS/SELESAI agar hasil lebih semantik sebagai belum lanjut penuh. Karena user meminta listing dan tidak memberi batas, setiap query diberi LIMIT 100 sesuai aturan.",
+          "ai_metrics": {
+            "confidence_score": 0.89,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query menggunakan filter status berbasis string (mis. 'SELESAI'/'LUNAS') yang mungkin bergantung pada implementasi nilai status di data aktual.",
+            "Perbandingan outstanding mengandalkan kolom jmlbarang dan kolom progres antar tahap pada tabel detail; jika sebagian implementasi memakai field jml, hasil bisa berbeda dari ekspektasi bisnis tertentu."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_so_belum_do",
+            "name": "SO belum menjadi DO",
+            "purpose": "Menampilkan item sales order yang belum sepenuhnya direalisasikan menjadi delivery order.",
+            "query": "SELECT so.sonotransaksi AS nomor_sales_order, so.sotgl AS tanggal_sales_order, c.knama AS nama_customer, i.bkode AS kode_barang, sod.namabarang AS nama_barang, sod.satuanbarang AS satuan_barang, sod.jmlbarang AS qty_so, COALESCE(sod.jmldo, 0) AS qty_sudah_do, (COALESCE(sod.jmlbarang, 0) - COALESCE(sod.jmldo, 0)) AS qty_belum_do, sod.statusdo AS status_do, sod.statusrealisasi AS status_realisasi FROM m5_so_detail sod INNER JOIN m5_so so ON sod.idso = so.soid LEFT JOIN m1_contact c ON so.socustomer = c.kid AND c.kaktif = 1 LEFT JOIN m1_item i ON sod.idbarang = i.bid AND i.baktif = 1 WHERE so.soisclose = 0 AND sod.isclose = 0 AND COALESCE(sod.jmlbarang, 0) > COALESCE(sod.jmldo, 0) AND (sod.statusdo IS NULL OR sod.statusdo NOT IN ('SELESAI', 'LUNAS')) ORDER BY qty_belum_do DESC, so.sotgl DESC, so.sonotransaksi DESC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_do_belum_dr",
+            "name": "DO belum menjadi DR",
+            "purpose": "Menampilkan item delivery order yang belum sepenuhnya direalisasikan menjadi delivery report.",
+            "query": "SELECT doo.donotransaksi AS nomor_delivery_order, doo.dotgl AS tanggal_delivery_order, c.knama AS nama_customer, i.bkode AS kode_barang, dod.namabarang AS nama_barang, dod.satuanbarang AS satuan_barang, dod.jmlbarang AS qty_do, COALESCE(dod.jmldr, 0) AS qty_sudah_dr, (COALESCE(dod.jmlbarang, 0) - COALESCE(dod.jmldr, 0)) AS qty_belum_dr, dod.statusdr AS status_dr, dod.statusrealisasi AS status_realisasi FROM m5_do_detail dod INNER JOIN m5_do doo ON dod.iddo = doo.doid LEFT JOIN m1_contact c ON doo.docustomer = c.kid AND c.kaktif = 1 LEFT JOIN m1_item i ON dod.idbarang = i.bid AND i.baktif = 1 WHERE doo.doisclose = 0 AND dod.isclose = 0 AND COALESCE(dod.jmlbarang, 0) > COALESCE(dod.jmldr, 0) AND (dod.statusdr IS NULL OR dod.statusdr NOT IN ('SELESAI', 'LUNAS')) ORDER BY qty_belum_dr DESC, doo.dotgl DESC, doo.donotransaksi DESC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_dr_belum_si",
+            "name": "DR belum menjadi Invoice",
+            "purpose": "Menampilkan item delivery report yang belum sepenuhnya direalisasikan menjadi sales invoice.",
+            "query": "SELECT dr.drnotransaksi AS nomor_delivery_report, dr.drtgl AS tanggal_delivery_report, c.knama AS nama_customer, i.bkode AS kode_barang, drd.namabarang AS nama_barang, drd.satuanbarang AS satuan_barang, drd.jmlbarang AS qty_dr, COALESCE(drd.jmlsi, 0) AS qty_sudah_invoice, (COALESCE(drd.jmlbarang, 0) - COALESCE(drd.jmlsi, 0)) AS qty_belum_invoice, drd.statussi AS status_invoice, drd.statusrealisasi AS status_realisasi FROM m5_dr_detail drd INNER JOIN m5_dr dr ON drd.iddr = dr.drid LEFT JOIN m1_contact c ON dr.drcustomer = c.kid AND c.kaktif = 1 LEFT JOIN m1_item i ON drd.idbarang = i.bid AND i.baktif = 1 WHERE drd.isclose = 0 AND COALESCE(drd.jmlbarang, 0) > COALESCE(drd.jmlsi, 0) AND (drd.statussi IS NULL OR drd.statussi NOT IN ('SELESAI', 'LUNAS')) ORDER BY qty_belum_invoice DESC, dr.drtgl DESC, dr.drnotransaksi DESC LIMIT 100",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_so_belum_do",
+            "query_id": "q_so_belum_do",
+            "title": "Item Sales Order Belum Menjadi DO",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "qty_so",
+              "qty_sudah_do",
+              "qty_belum_do"
+            ]
+          },
+          {
+            "id": "v_do_belum_dr",
+            "query_id": "q_do_belum_dr",
+            "title": "Item DO Belum Menjadi DR",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "qty_do",
+              "qty_sudah_dr",
+              "qty_belum_dr"
+            ]
+          },
+          {
+            "id": "v_dr_belum_si",
+            "query_id": "q_dr_belum_si",
+            "title": "Item DR Belum Menjadi Invoice",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "qty_dr",
+              "qty_sudah_invoice",
+              "qty_belum_invoice"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_005_outstanding_vs_collection",
+      "title": "Analisis Outstanding dan Collection",
+      "question": "Bandingkan outstanding sales invoice dengan invoice collection dan payment voucher untuk melihat invoice yang belum tertagih, sudah tertagih, atau sudah dibayar sebagian.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"Membandingkan status sales invoice terhadap proses penagihan (invoice collection) dan pembayaran (payment voucher) agar terlihat invoice yang belum tertagih, sudah tertagih, dan sudah dibayar sebagian.\", \"tables_used\": [\"m5_si\", \"m1_contact\", \"m5_ic_detail\", \"m5_pv_detail\"], \"tables_missing\": [], \"reasoning\": \"Permintaan user membutuhkan kombinasi summary status, distribusi nominal, dan daftar detail invoice sehingga wajib memakai mode dashboard. Entitas utama yang paling tepat adalah header sales invoice m5_si karena user meminta outstanding invoice. Untuk menghubungkan invoice ke invoice collection dan payment voucher di area M5, saya mengikuti polymorphic_relationships/join_hints dan hanya join m5_ic_detail serta m5_pv_detail dengan filter sumber = 'SI', bukan menghubungkan idtransaksi secara langsung tanpa discriminator. Query 1 membuat segmentasi status invoice berdasarkan ada/tidaknya record IC dan total pembayaran PV dibanding total invoice, sehingga bisa mengklasifikasikan belum tertagih, sudah tertagih belum dibayar, dibayar sebagian, dan lunas. Query 2 merangkum nominal invoice per status agar perbandingan outstanding secara nilai terlihat. Query 3 memberikan daftar detail invoice dengan customer, nomor invoice, nilai invoice, total tertagih di IC, total dibayar di PV, sisa outstanding, dan status analitik. Filter default schema yang wajib diterapkan adalah m5_si.siisclose = 0 dan m1_contact.kaktif = 1. Saya tidak menambah filter periode karena user tidak memberi periode.\", \"ai_metrics\": {\"confidence_score\": 0.85, \"schema_version_used\": \"Semantic Query Schema OBT + semantic schema utama M5 sales\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query agregasi dashboard akan melakukan scan pada m5_si serta subquery agregat m5_ic_detail dan m5_pv_detail jika tanpa filter periode.\", \"Klasifikasi 'sudah tertagih' ditentukan dari keberadaan/alokasi nilai di m5_ic_detail sumber SI; jika implementasi bisnis memakai field header lain, hasil bisa sedikit berbeda.\"]}, \"queries\": [{\"id\": \"q_status_summary\", \"name\": \"Ringkasan Status Invoice\", \"purpose\": \"Mengelompokkan sales invoice menjadi belum tertagih, sudah tertagih belum dibayar, dibayar sebagian, atau lunas berdasarkan IC dan PV.\", \"query\": \"SELECT status_invoice, COUNT(*) AS jumlah_invoice FROM ( SELECT si.siid, CASE WHEN IFNULL(ic.total_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN IFNULL(pv.total_dibayar, 0) = 0 THEN 'Sudah Tertagih, Belum Dibayar' WHEN IFNULL(pv.total_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lunas / Terbayar Penuh' END AS status_invoice FROM m5_si si LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_tertagih FROM m5_ic_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) ic ON ic.idtransaksi = si.siid LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_dibayar FROM m5_pv_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) pv ON pv.idtransaksi = si.siid WHERE si.siisclose = 0 ) x GROUP BY status_invoice ORDER BY jumlah_invoice DESC\", \"result_kind\": \"pie_chart\"}, {\"id\": \"q_value_summary\", \"name\": \"Ringkasan Nilai per Status\", \"purpose\": \"Membandingkan nilai total invoice, nilai tertagih, nilai dibayar, dan outstanding per status invoice.\", \"query\": \"SELECT status_invoice, COUNT(*) AS jumlah_invoice, SUM(total_invoice) AS total_invoice, SUM(total_tertagih) AS total_tertagih, SUM(total_dibayar) AS total_dibayar, SUM(outstanding) AS total_outstanding FROM ( SELECT si.siid, CASE WHEN IFNULL(ic.total_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN IFNULL(pv.total_dibayar, 0) = 0 THEN 'Sudah Tertagih, Belum Dibayar' WHEN IFNULL(pv.total_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lunas / Terbayar Penuh' END AS status_invoice, si.sitotaltransaksi AS total_invoice, IFNULL(ic.total_tertagih, 0) AS total_tertagih, IFNULL(pv.total_dibayar, 0) AS total_dibayar, (si.sitotaltransaksi - IFNULL(pv.total_dibayar, 0)) AS outstanding FROM m5_si si LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_tertagih FROM m5_ic_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) ic ON ic.idtransaksi = si.siid LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_dibayar FROM m5_pv_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) pv ON pv.idtransaksi = si.siid WHERE si.siisclose = 0 ) x GROUP BY status_invoice ORDER BY total_outstanding DESC\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_invoice_detail\", \"name\": \"Detail Invoice Outstanding\", \"purpose\": \"Menampilkan daftar invoice beserta customer, nilai invoice, nilai tertagih, nilai dibayar, outstanding, dan status analitik.\", \"query\": \"SELECT si.siid AS id_invoice, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS total_invoice, IFNULL(ic.total_tertagih, 0) AS total_tertagih, IFNULL(pv.total_dibayar, 0) AS total_dibayar, (si.sitotaltransaksi - IFNULL(pv.total_dibayar, 0)) AS outstanding, CASE WHEN IFNULL(ic.total_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN IFNULL(pv.total_dibayar, 0) = 0 THEN 'Sudah Tertagih, Belum Dibayar' WHEN IFNULL(pv.total_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lunas / Terbayar Penuh' END AS status_invoice FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid AND c.kaktif = 1 LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_tertagih FROM m5_ic_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) ic ON ic.idtransaksi = si.siid LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_dibayar FROM m5_pv_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) pv ON pv.idtransaksi = si.siid WHERE si.siisclose = 0 ORDER BY outstanding DESC, si.sitgl DESC LIMIT 100\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"v_status_summary\", \"query_id\": \"q_status_summary\", \"title\": \"Distribusi Status Sales Invoice\", \"chart_type\": \"pie\", \"x_axis\": \"status_invoice\", \"y_axis\": [\"jumlah_invoice\"]}, {\"id\": \"v_value_summary\", \"query_id\": \"q_value_summary\", \"title\": \"Perbandingan Nilai Invoice, Tertagih, Dibayar, dan Outstanding\", \"chart_type\": \"bar\", \"x_axis\": \"status_invoice\", \"y_axis\": [\"total_invoice\", \"total_tertagih\", \"total_dibayar\", \"total_outstanding\"]}, {\"id\": \"v_invoice_detail\", \"query_id\": \"q_invoice_detail\", \"title\": \"Daftar Detail Invoice Outstanding\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"nomor_invoice\", \"tanggal_invoice\", \"nama_customer\", \"total_invoice\", \"total_tertagih\", \"total_dibayar\", \"outstanding\", \"status_invoice\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "Membandingkan status sales invoice terhadap proses penagihan (invoice collection) dan pembayaran (payment voucher) agar terlihat invoice yang belum tertagih, sudah tertagih, dan sudah dibayar sebagian.",
+          "tables_used": [
+            "m5_si",
+            "m1_contact",
+            "m5_ic_detail",
+            "m5_pv_detail"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan user membutuhkan kombinasi summary status, distribusi nominal, dan daftar detail invoice sehingga wajib memakai mode dashboard. Entitas utama yang paling tepat adalah header sales invoice m5_si karena user meminta outstanding invoice. Untuk menghubungkan invoice ke invoice collection dan payment voucher di area M5, saya mengikuti polymorphic_relationships/join_hints dan hanya join m5_ic_detail serta m5_pv_detail dengan filter sumber = 'SI', bukan menghubungkan idtransaksi secara langsung tanpa discriminator. Query 1 membuat segmentasi status invoice berdasarkan ada/tidaknya record IC dan total pembayaran PV dibanding total invoice, sehingga bisa mengklasifikasikan belum tertagih, sudah tertagih belum dibayar, dibayar sebagian, dan lunas. Query 2 merangkum nominal invoice per status agar perbandingan outstanding secara nilai terlihat. Query 3 memberikan daftar detail invoice dengan customer, nomor invoice, nilai invoice, total tertagih di IC, total dibayar di PV, sisa outstanding, dan status analitik. Filter default schema yang wajib diterapkan adalah m5_si.siisclose = 0 dan m1_contact.kaktif = 1. Saya tidak menambah filter periode karena user tidak memberi periode.",
+          "ai_metrics": {
+            "confidence_score": 0.85,
+            "schema_version_used": "Semantic Query Schema OBT + semantic schema utama M5 sales"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query agregasi dashboard akan melakukan scan pada m5_si serta subquery agregat m5_ic_detail dan m5_pv_detail jika tanpa filter periode.",
+            "Klasifikasi 'sudah tertagih' ditentukan dari keberadaan/alokasi nilai di m5_ic_detail sumber SI; jika implementasi bisnis memakai field header lain, hasil bisa sedikit berbeda."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_status_summary",
+            "name": "Ringkasan Status Invoice",
+            "purpose": "Mengelompokkan sales invoice menjadi belum tertagih, sudah tertagih belum dibayar, dibayar sebagian, atau lunas berdasarkan IC dan PV.",
+            "query": "SELECT status_invoice, COUNT(*) AS jumlah_invoice FROM ( SELECT si.siid, CASE WHEN IFNULL(ic.total_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN IFNULL(pv.total_dibayar, 0) = 0 THEN 'Sudah Tertagih, Belum Dibayar' WHEN IFNULL(pv.total_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lunas / Terbayar Penuh' END AS status_invoice FROM m5_si si LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_tertagih FROM m5_ic_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) ic ON ic.idtransaksi = si.siid LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_dibayar FROM m5_pv_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) pv ON pv.idtransaksi = si.siid WHERE si.siisclose = 0 ) x GROUP BY status_invoice ORDER BY jumlah_invoice DESC",
+            "result_kind": "pie_chart"
+          },
+          {
+            "id": "q_value_summary",
+            "name": "Ringkasan Nilai per Status",
+            "purpose": "Membandingkan nilai total invoice, nilai tertagih, nilai dibayar, dan outstanding per status invoice.",
+            "query": "SELECT status_invoice, COUNT(*) AS jumlah_invoice, SUM(total_invoice) AS total_invoice, SUM(total_tertagih) AS total_tertagih, SUM(total_dibayar) AS total_dibayar, SUM(outstanding) AS total_outstanding FROM ( SELECT si.siid, CASE WHEN IFNULL(ic.total_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN IFNULL(pv.total_dibayar, 0) = 0 THEN 'Sudah Tertagih, Belum Dibayar' WHEN IFNULL(pv.total_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lunas / Terbayar Penuh' END AS status_invoice, si.sitotaltransaksi AS total_invoice, IFNULL(ic.total_tertagih, 0) AS total_tertagih, IFNULL(pv.total_dibayar, 0) AS total_dibayar, (si.sitotaltransaksi - IFNULL(pv.total_dibayar, 0)) AS outstanding FROM m5_si si LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_tertagih FROM m5_ic_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) ic ON ic.idtransaksi = si.siid LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_dibayar FROM m5_pv_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) pv ON pv.idtransaksi = si.siid WHERE si.siisclose = 0 ) x GROUP BY status_invoice ORDER BY total_outstanding DESC",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_invoice_detail",
+            "name": "Detail Invoice Outstanding",
+            "purpose": "Menampilkan daftar invoice beserta customer, nilai invoice, nilai tertagih, nilai dibayar, outstanding, dan status analitik.",
+            "query": "SELECT si.siid AS id_invoice, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS total_invoice, IFNULL(ic.total_tertagih, 0) AS total_tertagih, IFNULL(pv.total_dibayar, 0) AS total_dibayar, (si.sitotaltransaksi - IFNULL(pv.total_dibayar, 0)) AS outstanding, CASE WHEN IFNULL(ic.total_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN IFNULL(pv.total_dibayar, 0) = 0 THEN 'Sudah Tertagih, Belum Dibayar' WHEN IFNULL(pv.total_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lunas / Terbayar Penuh' END AS status_invoice FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid AND c.kaktif = 1 LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_tertagih FROM m5_ic_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) ic ON ic.idtransaksi = si.siid LEFT JOIN ( SELECT idtransaksi, SUM(jmlbayar) AS total_dibayar FROM m5_pv_detail WHERE sumber = 'SI' GROUP BY idtransaksi ) pv ON pv.idtransaksi = si.siid WHERE si.siisclose = 0 ORDER BY outstanding DESC, si.sitgl DESC LIMIT 100",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_status_summary",
+            "query_id": "q_status_summary",
+            "title": "Distribusi Status Sales Invoice",
+            "chart_type": "pie",
+            "x_axis": "status_invoice",
+            "y_axis": [
+              "jumlah_invoice"
+            ]
+          },
+          {
+            "id": "v_value_summary",
+            "query_id": "q_value_summary",
+            "title": "Perbandingan Nilai Invoice, Tertagih, Dibayar, dan Outstanding",
+            "chart_type": "bar",
+            "x_axis": "status_invoice",
+            "y_axis": [
+              "total_invoice",
+              "total_tertagih",
+              "total_dibayar",
+              "total_outstanding"
+            ]
+          },
+          {
+            "id": "v_invoice_detail",
+            "query_id": "q_invoice_detail",
+            "title": "Daftar Detail Invoice Outstanding",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "nomor_invoice",
+              "tanggal_invoice",
+              "nama_customer",
+              "total_invoice",
+              "total_tertagih",
+              "total_dibayar",
+              "outstanding",
+              "status_invoice"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_006_aging_and_cash_collection",
+      "title": "Aging dan Cash Collection",
+      "question": "Tampilkan aging invoice per customer, tren pembayaran mingguan, dan rasio collection terhadap invoice jatuh tempo dalam 90 hari terakhir.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta dashboard piutang penjualan yang mencakup 3 blok analitik: aging invoice per customer, tren pembayaran mingguan, dan rasio collection dibanding invoice yang jatuh tempo dalam 90 hari terakhir.\", \"tables_used\": [\"m5_si\", \"m1_contact\", \"m5_pv\", \"m5_pv_detail\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini wajib mode dashboard karena menggabungkan aging, trend, dan rasio lintas metrik. Untuk aging invoice per customer, tabel utama yang paling tepat adalah header invoice penjualan m5_si karena user meminta invoice per customer dan status piutang per dokumen/customer; saya join ke m1_contact untuk nama customer dan memakai always_apply_filters m5_si.siisclose = 0 serta m1_contact.kaktif = 1. Aging dihitung dari invoice yang masih punya saldo outstanding dengan formula sitotaltransaksi - sijmlbayar, lalu bucket umur dihitung dari selisih CURDATE() dan sitgljatuhtempo. Untuk tren pembayaran mingguan, tabel utama yang paling tepat adalah m5_pv_detail karena metrik pembayaran ada pada detail alokasi pembayaran; saya join ke m5_pv header agar bisa filter tanggal voucher pembayaran pvtgl dan memakai join polymorphic yang aman melalui sumber = 'SI' sebelum mengaitkan ke m5_si. Ini mengikuti aturan M5 agar tidak join idtransaksi langsung tanpa memeriksa sumber. Untuk rasio collection terhadap invoice jatuh tempo 90 hari terakhir, saya buat agregat mingguan berdasarkan tanggal jatuh tempo invoice dari m5_si, lalu saya bandingkan dengan pembayaran yang dialokasikan ke invoice yang sama dari m5_pv_detail + m5_pv dengan sumber = 'SI'. Karena MySQL tanpa window function, saya gunakan subquery agregat lalu LEFT JOIN per minggu. Periode 90 hari terakhir diterapkan hanya karena user eksplisit memintanya. Saya tidak memakai status lunas tekstual karena schema menyediakan nilai numerik yang lebih andal: sitotaltransaksi, sijmlbayar, jmlbayar. Query ranking/list tanpa batas tidak berlaku untuk widget agregat dashboard.\", \"ai_metrics\": {\"confidence_score\": 0.83, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query aging berpotensi scan cukup besar karena agregasi per customer tanpa filter branch/lokasi.\", \"Query tren pembayaran dan rasio menggunakan subquery agregat yang dapat berat jika volume PV/SI tinggi dalam 90 hari.\"]}, \"queries\": [{\"id\": \"q1_aging_customer_invoice\", \"name\": \"Aging Invoice per Customer\", \"purpose\": \"Menampilkan saldo outstanding invoice per customer beserta bucket aging berdasarkan jatuh tempo.\", \"query\": \"SELECT c.kid AS customer_id, c.knama AS customer_name, COUNT(si.siid) AS total_invoice_outstanding, SUM(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS outstanding_total, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) <= 0 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_belum_jatuh_tempo, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 1 AND 30 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_1_30_hari, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_31_60_hari, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_61_90_hari, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 90 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_diatas_90_hari FROM m5_si AS si INNER JOIN m1_contact AS c ON si.sicustomer = c.kid WHERE siisclose = 0 AND c.kaktif = 1 AND si.sitgl >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) AND (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0 GROUP BY c.kid, c.knama ORDER BY outstanding_total DESC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q2_weekly_payment_trend\", \"name\": \"Tren Pembayaran Mingguan\", \"purpose\": \"Menampilkan tren pembayaran mingguan yang dialokasikan ke invoice penjualan dalam 90 hari terakhir.\", \"query\": \"SELECT YEARWEEK(pv.pvtgl, 3) AS yearweek_iso, DATE_SUB(DATE(pv.pvtgl), INTERVAL WEEKDAY(pv.pvtgl) DAY) AS week_start_date, SUM(COALESCE(pvd.jmlbayar, 0)) AS payment_amount FROM m5_pv_detail AS pvd INNER JOIN m5_pv AS pv ON pvd.idpv = pv.pvid INNER JOIN m5_si AS si ON pvd.sumber = 'SI' AND pvd.idtransaksi = si.siid WHERE pv.pvtgl >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) AND siisclose = 0 GROUP BY YEARWEEK(pv.pvtgl, 3), DATE_SUB(DATE(pv.pvtgl), INTERVAL WEEKDAY(pv.pvtgl) DAY) ORDER BY week_start_date ASC\", \"result_kind\": \"line_chart\"}, {\"id\": \"q3_collection_ratio_due90\", \"name\": \"Rasio Collection vs Due Invoice\", \"purpose\": \"Menghitung rasio collection dibanding nilai invoice yang jatuh tempo per minggu dalam 90 hari terakhir.\", \"query\": \"SELECT d.yearweek_iso, d.week_start_date, d.due_invoice_amount, COALESCE(p.collected_amount, 0) AS collected_amount, CASE WHEN d.due_invoice_amount = 0 THEN 0 ELSE ROUND(COALESCE(p.collected_amount, 0) / d.due_invoice_amount, 4) END AS collection_ratio FROM (SELECT YEARWEEK(si.sitgljatuhtempo, 3) AS yearweek_iso, DATE_SUB(DATE(si.sitgljatuhtempo), INTERVAL WEEKDAY(si.sitgljatuhtempo) DAY) AS week_start_date, SUM(si.sitotaltransaksi) AS due_invoice_amount FROM m5_si AS si WHERE si.siitclose IS NULL) d LEFT JOIN (SELECT YEARWEEK(si.sitgljatuhtempo, 3) AS yearweek_iso, DATE_SUB(DATE(si.sitgljatuhtempo), INTERVAL WEEKDAY(si.sitgljatuhtempo) DAY) AS week_start_date, SUM(COALESCE(pvd.jmlbayar, 0)) AS collected_amount FROM m5_pv_detail AS pvd INNER JOIN m5_pv AS pv ON pvd.idpv = pv.pvid INNER JOIN m5_si AS si ON pvd.sumber = 'SI' AND pvd.idtransaksi = si.siid WHERE pv.pvtgl >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) AND siisclose = 0 AND si.sitgljatuhtempo >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) GROUP BY YEARWEEK(si.sitgljatuhtempo, 3), DATE_SUB(DATE(si.sitgljatuhtempo), INTERVAL WEEKDAY(si.sitgljatuhtempo) DAY)) p ON d.yearweek_iso = p.yearweek_iso AND d.week_start_date = p.week_start_date WHERE d.week_start_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) ORDER BY d.week_start_date ASC\", \"result_kind\": \"bar_chart\"}], \"visualizations\": [{\"id\": \"v1_aging_table\", \"query_id\": \"q1_aging_customer_invoice\", \"title\": \"Aging Invoice per Customer\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"total_invoice_outstanding\", \"outstanding_total\", \"bucket_belum_jatuh_tempo\", \"bucket_1_30_hari\", \"bucket_31_60_hari\", \"bucket_61_90_hari\", \"bucket_diatas_90_hari\"]}, {\"id\": \"v2_payment_trend\", \"query_id\": \"q2_weekly_payment_trend\", \"title\": \"Tren Pembayaran Mingguan 90 Hari Terakhir\", \"chart_type\": \"line\", \"x_axis\": \"week_start_date\", \"y_axis\": [\"payment_amount\"]}, {\"id\": \"v3_collection_ratio\", \"query_id\": \"q3_collection_ratio_due90\", \"title\": \"Rasio Collection terhadap Invoice Jatuh Tempo\", \"chart_type\": \"bar\", \"x_axis\": \"week_start_date\", \"y_axis\": [\"due_invoice_amount\", \"collected_amount\", \"collection_ratio\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta dashboard piutang penjualan yang mencakup 3 blok analitik: aging invoice per customer, tren pembayaran mingguan, dan rasio collection dibanding invoice yang jatuh tempo dalam 90 hari terakhir.",
+          "tables_used": [
+            "m5_si",
+            "m1_contact",
+            "m5_pv",
+            "m5_pv_detail"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini wajib mode dashboard karena menggabungkan aging, trend, dan rasio lintas metrik. Untuk aging invoice per customer, tabel utama yang paling tepat adalah header invoice penjualan m5_si karena user meminta invoice per customer dan status piutang per dokumen/customer; saya join ke m1_contact untuk nama customer dan memakai always_apply_filters m5_si.siisclose = 0 serta m1_contact.kaktif = 1. Aging dihitung dari invoice yang masih punya saldo outstanding dengan formula sitotaltransaksi - sijmlbayar, lalu bucket umur dihitung dari selisih CURDATE() dan sitgljatuhtempo. Untuk tren pembayaran mingguan, tabel utama yang paling tepat adalah m5_pv_detail karena metrik pembayaran ada pada detail alokasi pembayaran; saya join ke m5_pv header agar bisa filter tanggal voucher pembayaran pvtgl dan memakai join polymorphic yang aman melalui sumber = 'SI' sebelum mengaitkan ke m5_si. Ini mengikuti aturan M5 agar tidak join idtransaksi langsung tanpa memeriksa sumber. Untuk rasio collection terhadap invoice jatuh tempo 90 hari terakhir, saya buat agregat mingguan berdasarkan tanggal jatuh tempo invoice dari m5_si, lalu saya bandingkan dengan pembayaran yang dialokasikan ke invoice yang sama dari m5_pv_detail + m5_pv dengan sumber = 'SI'. Karena MySQL tanpa window function, saya gunakan subquery agregat lalu LEFT JOIN per minggu. Periode 90 hari terakhir diterapkan hanya karena user eksplisit memintanya. Saya tidak memakai status lunas tekstual karena schema menyediakan nilai numerik yang lebih andal: sitotaltransaksi, sijmlbayar, jmlbayar. Query ranking/list tanpa batas tidak berlaku untuk widget agregat dashboard.",
+          "ai_metrics": {
+            "confidence_score": 0.83,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query aging berpotensi scan cukup besar karena agregasi per customer tanpa filter branch/lokasi.",
+            "Query tren pembayaran dan rasio menggunakan subquery agregat yang dapat berat jika volume PV/SI tinggi dalam 90 hari."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q1_aging_customer_invoice",
+            "name": "Aging Invoice per Customer",
+            "purpose": "Menampilkan saldo outstanding invoice per customer beserta bucket aging berdasarkan jatuh tempo.",
+            "query": "SELECT c.kid AS customer_id, c.knama AS customer_name, COUNT(si.siid) AS total_invoice_outstanding, SUM(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) AS outstanding_total, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) <= 0 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_belum_jatuh_tempo, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 1 AND 30 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_1_30_hari, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 31 AND 60 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_31_60_hari, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) BETWEEN 61 AND 90 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_61_90_hari, SUM(CASE WHEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) > 90 THEN si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0) ELSE 0 END) AS bucket_diatas_90_hari FROM m5_si AS si INNER JOIN m1_contact AS c ON si.sicustomer = c.kid WHERE siisclose = 0 AND c.kaktif = 1 AND si.sitgl >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) AND (si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0)) > 0 GROUP BY c.kid, c.knama ORDER BY outstanding_total DESC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q2_weekly_payment_trend",
+            "name": "Tren Pembayaran Mingguan",
+            "purpose": "Menampilkan tren pembayaran mingguan yang dialokasikan ke invoice penjualan dalam 90 hari terakhir.",
+            "query": "SELECT YEARWEEK(pv.pvtgl, 3) AS yearweek_iso, DATE_SUB(DATE(pv.pvtgl), INTERVAL WEEKDAY(pv.pvtgl) DAY) AS week_start_date, SUM(COALESCE(pvd.jmlbayar, 0)) AS payment_amount FROM m5_pv_detail AS pvd INNER JOIN m5_pv AS pv ON pvd.idpv = pv.pvid INNER JOIN m5_si AS si ON pvd.sumber = 'SI' AND pvd.idtransaksi = si.siid WHERE pv.pvtgl >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) AND siisclose = 0 GROUP BY YEARWEEK(pv.pvtgl, 3), DATE_SUB(DATE(pv.pvtgl), INTERVAL WEEKDAY(pv.pvtgl) DAY) ORDER BY week_start_date ASC",
+            "result_kind": "line_chart"
+          },
+          {
+            "id": "q3_collection_ratio_due90",
+            "name": "Rasio Collection vs Due Invoice",
+            "purpose": "Menghitung rasio collection dibanding nilai invoice yang jatuh tempo per minggu dalam 90 hari terakhir.",
+            "query": "SELECT d.yearweek_iso, d.week_start_date, d.due_invoice_amount, COALESCE(p.collected_amount, 0) AS collected_amount, CASE WHEN d.due_invoice_amount = 0 THEN 0 ELSE ROUND(COALESCE(p.collected_amount, 0) / d.due_invoice_amount, 4) END AS collection_ratio FROM (SELECT YEARWEEK(si.sitgljatuhtempo, 3) AS yearweek_iso, DATE_SUB(DATE(si.sitgljatuhtempo), INTERVAL WEEKDAY(si.sitgljatuhtempo) DAY) AS week_start_date, SUM(si.sitotaltransaksi) AS due_invoice_amount FROM m5_si AS si WHERE si.siitclose IS NULL) d LEFT JOIN (SELECT YEARWEEK(si.sitgljatuhtempo, 3) AS yearweek_iso, DATE_SUB(DATE(si.sitgljatuhtempo), INTERVAL WEEKDAY(si.sitgljatuhtempo) DAY) AS week_start_date, SUM(COALESCE(pvd.jmlbayar, 0)) AS collected_amount FROM m5_pv_detail AS pvd INNER JOIN m5_pv AS pv ON pvd.idpv = pv.pvid INNER JOIN m5_si AS si ON pvd.sumber = 'SI' AND pvd.idtransaksi = si.siid WHERE pv.pvtgl >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) AND siisclose = 0 AND si.sitgljatuhtempo >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) GROUP BY YEARWEEK(si.sitgljatuhtempo, 3), DATE_SUB(DATE(si.sitgljatuhtempo), INTERVAL WEEKDAY(si.sitgljatuhtempo) DAY)) p ON d.yearweek_iso = p.yearweek_iso AND d.week_start_date = p.week_start_date WHERE d.week_start_date >= DATE_SUB(CURDATE(), INTERVAL 90 DAY) ORDER BY d.week_start_date ASC",
+            "result_kind": "bar_chart"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v1_aging_table",
+            "query_id": "q1_aging_customer_invoice",
+            "title": "Aging Invoice per Customer",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "total_invoice_outstanding",
+              "outstanding_total",
+              "bucket_belum_jatuh_tempo",
+              "bucket_1_30_hari",
+              "bucket_31_60_hari",
+              "bucket_61_90_hari",
+              "bucket_diatas_90_hari"
+            ]
+          },
+          {
+            "id": "v2_payment_trend",
+            "query_id": "q2_weekly_payment_trend",
+            "title": "Tren Pembayaran Mingguan 90 Hari Terakhir",
+            "chart_type": "line",
+            "x_axis": "week_start_date",
+            "y_axis": [
+              "payment_amount"
+            ]
+          },
+          {
+            "id": "v3_collection_ratio",
+            "query_id": "q3_collection_ratio_due90",
+            "title": "Rasio Collection terhadap Invoice Jatuh Tempo",
+            "chart_type": "bar",
+            "x_axis": "week_start_date",
+            "y_axis": [
+              "due_invoice_amount",
+              "collected_amount",
+              "collection_ratio"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_007_profitability_per_customer",
+      "title": "Profitability per Customer",
+      "question": "Tampilkan customer dengan margin bersih tertinggi dan terendah berdasarkan invoice penjualan, biaya invoice, retur, dan diskon.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"debug_info\": {\"intent_user\": \"Menampilkan customer dengan margin bersih tertinggi dan terendah dari transaksi invoice penjualan, dengan mempertimbangkan nilai penjualan invoice, biaya invoice tambahan, retur penjualan, dan diskon.\", \"tables_used\": [\"m5_si\", \"m5_si_detail\", \"m5_si_cost\", \"m5_sr\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"Saya memilih m5_si sebagai header invoice penjualan karena sesuai pedoman 'penjualan' default berarti sales invoice. Untuk nilai invoice dan diskon saya gunakan m5_si_detail agar perhitungan berbasis detail item dan sesuai metric schema. Margin bersih saya bentuk sebagai penjualan bersih invoice detail dikurangi biaya invoice dari m5_si_cost dan dikurangi nilai retur penjualan dari m5_sr. Karena relasi langsung retur ke invoice per customer tersedia di header melalui customer, agregasi retur dilakukan per customer. Saya join ke m1_contact untuk menampilkan nama customer dan menerapkan always_apply_filters yang wajib: m5_si.siisclose = 0, m5_si_detail.isclose = 0, dan m1_contact.kaktif = 1. Karena user meminta customer dengan margin tertinggi dan terendah sekaligus, saya buat satu query gabungan menggunakan UNION ALL atas dua hasil ranking: satu DESC untuk tertinggi dan satu ASC untuk terendah. Saya tidak memakai window function sesuai aturan.\", \"ai_metrics\": {\"confidence_score\": 0.79, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Perhitungan retur menggunakan agregasi per customer dari m5_sr header, bukan detail retur per invoice, karena schema tidak menyediakan relasi langsung yang aman untuk alokasi retur bersih ke customer+invoice tanpa asumsi tambahan.\", \"Perhitungan biaya invoice menggunakan agregasi m5_si_cost per invoice; jika ada logika biaya tertentu di legacy report yang lebih spesifik, hasil bisa berbeda dari definisi bisnis internal.\"]}, \"query\": \"SELECT ranked.margin_rank_type, ranked.customer_code, ranked.customer_name, ranked.net_sales_amount, ranked.invoice_cost_amount, ranked.sales_return_amount, ranked.net_margin_amount FROM ( SELECT 'TERTINGGI' AS margin_rank_type, c.kkode AS customer_code, c.knama AS customer_name, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) AS net_sales_amount, SUM(COALESCE(sic.total_cost, 0)) AS invoice_cost_amount, COALESCE(sr.total_return_amount, 0) AS sales_return_amount, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) - SUM(COALESCE(sic.total_cost, 0)) - COALESCE(sr.total_return_amount, 0) AS net_margin_amount FROM m5_si si INNER JOIN m5_si_detail sid ON sid.idsi = si.siid AND sid.isclose = 0 INNER JOIN m1_contact c ON c.kid = si.sicustomer AND c.kaktif = 1 LEFT JOIN ( SELECT sc.idsi, SUM(sc.jumlah) AS total_cost FROM m5_si_cost sc GROUP BY sc.idsi ) sic ON sic.idsi = si.siid LEFT JOIN ( SELECT sr.srcustomer, SUM(sr.srtotaltransaksi) AS total_return_amount FROM m5_sr sr GROUP BY sr.srcustomer ) sr ON sr.srcustomer = si.sicustomer WHERE si.siisclose = 0 GROUP BY c.kid, c.kkode, c.knama, sr.total_return_amount ORDER BY net_margin_amount DESC LIMIT 1 ) ranked UNION ALL SELECT ranked.margin_rank_type, ranked.customer_code, ranked.customer_name, ranked.net_sales_amount, ranked.invoice_cost_amount, ranked.sales_return_amount, ranked.net_margin_amount FROM ( SELECT 'TERENDAH' AS margin_rank_type, c.kkode AS customer_code, c.knama AS customer_name, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) AS net_sales_amount, SUM(COALESCE(sic.total_cost, 0)) AS invoice_cost_amount, COALESCE(sr.total_return_amount, 0) AS sales_return_amount, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) - SUM(COALESCE(sic.total_cost, 0)) - COALESCE(sr.total_return_amount, 0) AS net_margin_amount FROM m5_si si INNER JOIN m5_si_detail sid ON sid.idsi = si.siid AND sid.isclose = 0 INNER JOIN m1_contact c ON c.kid = si.sicustomer AND c.kaktif = 1 LEFT JOIN ( SELECT sc.idsi, SUM(sc.jumlah) AS total_cost FROM m5_si_cost sc GROUP BY sc.idsi ) sic ON sic.idsi = si.siid LEFT JOIN ( SELECT sr.srcustomer, SUM(sr.srtotaltransaksi) AS total_return_amount FROM m5_sr sr GROUP BY sr.srcustomer ) sr ON sr.srcustomer = si.sicustomer WHERE si.siisclose = 0 GROUP BY c.kid, c.kkode, c.knama, sr.total_return_amount ORDER BY net_margin_amount ASC LIMIT 1 ) ranked\", \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan customer dengan margin bersih tertinggi dan terendah dari transaksi invoice penjualan, dengan mempertimbangkan nilai penjualan invoice, biaya invoice tambahan, retur penjualan, dan diskon.",
+          "tables_used": [
+            "m5_si",
+            "m5_si_detail",
+            "m5_si_cost",
+            "m5_sr",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "Saya memilih m5_si sebagai header invoice penjualan karena sesuai pedoman 'penjualan' default berarti sales invoice. Untuk nilai invoice dan diskon saya gunakan m5_si_detail agar perhitungan berbasis detail item dan sesuai metric schema. Margin bersih saya bentuk sebagai penjualan bersih invoice detail dikurangi biaya invoice dari m5_si_cost dan dikurangi nilai retur penjualan dari m5_sr. Karena relasi langsung retur ke invoice per customer tersedia di header melalui customer, agregasi retur dilakukan per customer. Saya join ke m1_contact untuk menampilkan nama customer dan menerapkan always_apply_filters yang wajib: m5_si.siisclose = 0, m5_si_detail.isclose = 0, dan m1_contact.kaktif = 1. Karena user meminta customer dengan margin tertinggi dan terendah sekaligus, saya buat satu query gabungan menggunakan UNION ALL atas dua hasil ranking: satu DESC untuk tertinggi dan satu ASC untuk terendah. Saya tidak memakai window function sesuai aturan.",
+          "ai_metrics": {
+            "confidence_score": 0.79,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Perhitungan retur menggunakan agregasi per customer dari m5_sr header, bukan detail retur per invoice, karena schema tidak menyediakan relasi langsung yang aman untuk alokasi retur bersih ke customer+invoice tanpa asumsi tambahan.",
+            "Perhitungan biaya invoice menggunakan agregasi m5_si_cost per invoice; jika ada logika biaya tertentu di legacy report yang lebih spesifik, hasil bisa berbeda dari definisi bisnis internal."
+          ]
+        },
+        "query": "SELECT ranked.margin_rank_type, ranked.customer_code, ranked.customer_name, ranked.net_sales_amount, ranked.invoice_cost_amount, ranked.sales_return_amount, ranked.net_margin_amount FROM ( SELECT 'TERTINGGI' AS margin_rank_type, c.kkode AS customer_code, c.knama AS customer_name, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) AS net_sales_amount, SUM(COALESCE(sic.total_cost, 0)) AS invoice_cost_amount, COALESCE(sr.total_return_amount, 0) AS sales_return_amount, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) - SUM(COALESCE(sic.total_cost, 0)) - COALESCE(sr.total_return_amount, 0) AS net_margin_amount FROM m5_si si INNER JOIN m5_si_detail sid ON sid.idsi = si.siid AND sid.isclose = 0 INNER JOIN m1_contact c ON c.kid = si.sicustomer AND c.kaktif = 1 LEFT JOIN ( SELECT sc.idsi, SUM(sc.jumlah) AS total_cost FROM m5_si_cost sc GROUP BY sc.idsi ) sic ON sic.idsi = si.siid LEFT JOIN ( SELECT sr.srcustomer, SUM(sr.srtotaltransaksi) AS total_return_amount FROM m5_sr sr GROUP BY sr.srcustomer ) sr ON sr.srcustomer = si.sicustomer WHERE si.siisclose = 0 GROUP BY c.kid, c.kkode, c.knama, sr.total_return_amount ORDER BY net_margin_amount DESC LIMIT 1 ) ranked UNION ALL SELECT ranked.margin_rank_type, ranked.customer_code, ranked.customer_name, ranked.net_sales_amount, ranked.invoice_cost_amount, ranked.sales_return_amount, ranked.net_margin_amount FROM ( SELECT 'TERENDAH' AS margin_rank_type, c.kkode AS customer_code, c.knama AS customer_name, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) AS net_sales_amount, SUM(COALESCE(sic.total_cost, 0)) AS invoice_cost_amount, COALESCE(sr.total_return_amount, 0) AS sales_return_amount, SUM((sid.jmlbarang * sid.harga) - sid.jmldiskon + sid.jmlpajak1 + sid.jmlpajak2) - SUM(COALESCE(sic.total_cost, 0)) - COALESCE(sr.total_return_amount, 0) AS net_margin_amount FROM m5_si si INNER JOIN m5_si_detail sid ON sid.idsi = si.siid AND sid.isclose = 0 INNER JOIN m1_contact c ON c.kid = si.sicustomer AND c.kaktif = 1 LEFT JOIN ( SELECT sc.idsi, SUM(sc.jumlah) AS total_cost FROM m5_si_cost sc GROUP BY sc.idsi ) sic ON sic.idsi = si.siid LEFT JOIN ( SELECT sr.srcustomer, SUM(sr.srtotaltransaksi) AS total_return_amount FROM m5_sr sr GROUP BY sr.srcustomer ) sr ON sr.srcustomer = si.sicustomer WHERE si.siisclose = 0 GROUP BY c.kid, c.kkode, c.knama, sr.total_return_amount ORDER BY net_margin_amount ASC LIMIT 1 ) ranked",
+        "error_message": null
+      },
+      "status": "FAILED",
+      "errors": [
+        "expected mode multi_query_dashboard, got None",
+        "expected 3 queries, got 0",
+        "expected 3 visualizations, got 0",
+        "missing required table in generated queries: m5_si",
+        "missing required table in generated queries: m5_si_detail",
+        "missing required table in generated queries: m5_si_cost",
+        "missing required table in generated queries: m5_sr",
+        "missing widget keyword in visualization titles: margin",
+        "missing widget keyword in visualization titles: ranking",
+        "missing widget keyword in visualization titles: alerts"
+      ]
+    },
+    {
+      "id": "dashboard_008_return_and_invoice_exchange",
+      "title": "Retur dan Tukar Faktur",
+      "question": "Tampilkan hubungan sales invoice, sales return, dan tukar faktur untuk melihat pola retur dan penggantian dokumen per customer.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User ingin melihat hubungan antara sales invoice (SI), sales return (SR), dan tukar faktur (SIE) untuk menganalisis pola retur serta penggantian/pertukaran dokumen per customer, sehingga perlu ringkasan per customer, distribusi hubungan dokumen, dan daftar detail dokumen terkait.\", \"tables_used\": [\"m5_si\", \"m5_sr\", \"m5_sie\", \"m5_sie_detail\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"1) Permintaan ini membutuhkan lebih dari satu sudut pandang: ringkasan customer, distribusi sumber dokumen yang masuk ke tukar faktur, dan daftar detail relasi dokumen, sehingga mode dashboard dipakai. 2) Untuk penjualan default berarti invoice penjualan, maka tabel utama SI dipilih. Untuk retur digunakan SR. Untuk tukar faktur digunakan SIE dan SIE_DETAIL. 3) Karena SIE_DETAIL bersifat polymorphic, join ke SI dan SR wajib memakai kolom sumber agar tidak salah relasi; ini mengikuti aturan M5 dan polymorphic_relationships. 4) Relasi customer untuk SI dan SR tersedia langsung ke m1_contact, sehingga ringkasan per customer bisa dihitung dengan aman. 5) Untuk menghubungkan SIE ke customer, dipakai agregasi dari SIE_DETAIL ke SI/SR lalu diturunkan customer-nya dari dokumen sumber. Bila dalam satu SIE ada lebih dari satu customer, pendekatan ini tetap menghasilkan hitungan customer-based exchange occurrence dari dokumen sumber yang terlibat. 6) Always apply filters diterapkan pada m5_si (siisclose = 0) dan m1_contact (kaktif = 1). Tabel SR dan SIE tidak memiliki always_apply_filters eksplisit di schema, sehingga tidak ditambahkan filter penutupan otomatis pada keduanya. 7) Query detail dibatasi LIMIT 100 karena user meminta tampilan hubungan/list tanpa batas eksplisit.\", \"ai_metrics\": {\"confidence_score\": 0.84, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query ringkasan dan distribusi menggunakan UNION ALL + subquery agregat sehingga dapat memindai banyak baris jika data besar.\", \"Query detail menggunakan LEFT JOIN ke beberapa tabel dan agregasi subquery; performa bergantung pada index id dokumen dan sumber.\", \"Pada hubungan customer untuk tukar faktur, satu dokumen SIE yang memuat lebih dari satu customer sumber akan dihitung berdasarkan dokumen sumber terkait, bukan satu customer header tunggal karena header SIE tidak memiliki relasi customer eksplisit.\"]}, \"queries\": [{\"id\": \"q_customer_pattern\", \"name\": \"Pola SI SR SIE per Customer\", \"purpose\": \"Merangkum jumlah sales invoice, sales return, nilai transaksi, dan frekuensi tukar faktur per customer untuk melihat pola retur dan penggantian dokumen.\", \"query\": \"SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, COALESCE(si_agg.total_sales_invoice, 0) AS total_sales_invoice, COALESCE(si_agg.total_nilai_invoice, 0) AS total_nilai_invoice, COALESCE(sr_agg.total_sales_return, 0) AS total_sales_return, COALESCE(sr_agg.total_nilai_return, 0) AS total_nilai_return, COALESCE(sie_agg.total_tukar_faktur, 0) AS total_tukar_faktur, CASE WHEN COALESCE(si_agg.total_sales_invoice, 0) > 0 THEN ROUND(COALESCE(sr_agg.total_sales_return, 0) / si_agg.total_sales_invoice * 100, 2) ELSE 0 END AS return_rate_by_doc_pct FROM m1_contact c LEFT JOIN ( SELECT si.sicustomer AS customer_id, COUNT(DISTINCT si.siid) AS total_sales_invoice, SUM(si.sitotaltransaksi) AS total_nilai_invoice FROM m5_si si WHERE si.siisclose = 0 GROUP BY si.sicustomer ) si_agg ON si_agg.customer_id = c.kid LEFT JOIN ( SELECT sr.srcustomer AS customer_id, COUNT(DISTINCT sr.srid) AS total_sales_return, SUM(sr.srtotaltransaksi) AS total_nilai_return FROM m5_sr sr GROUP BY sr.srcustomer ) sr_agg ON sr_agg.customer_id = c.kid LEFT JOIN ( SELECT x.customer_id, COUNT(DISTINCT x.sieid) AS total_tukar_faktur FROM ( SELECT sd.idsie AS sieid, si.sicustomer AS customer_id FROM m5_sie_detail sd INNER JOIN m5_si si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid WHERE si.siisclose = 0 UNION ALL SELECT sd.idsie AS sieid, sr.srcustomer AS customer_id FROM m5_sie_detail sd INNER JOIN m5_sr sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid ) x GROUP BY x.customer_id ) sie_agg ON sie_agg.customer_id = c.kid WHERE c.kaktif = 1 AND (COALESCE(si_agg.total_sales_invoice, 0) > 0 OR COALESCE(sr_agg.total_sales_return, 0) > 0 OR COALESCE(sie_agg.total_tukar_faktur, 0) > 0) ORDER BY total_sales_return DESC, total_tukar_faktur DESC, total_nilai_return DESC LIMIT 100\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_exchange_distribution\", \"name\": \"Distribusi Sumber Tukar Faktur\", \"purpose\": \"Menunjukkan komposisi dokumen sumber yang masuk ke tukar faktur, dipisahkan antara sales invoice dan sales return.\", \"query\": \"SELECT sd.sumber AS sumber_dokumen, COUNT(DISTINCT sd.idsie) AS jumlah_dokumen_tukar_faktur, COUNT(*) AS jumlah_baris_sumber, COUNT(DISTINCT sd.idtransaksi) AS jumlah_dokumen_sumber_unik FROM m5_sie_detail sd WHERE sd.sumber IN ('SI', 'SR') GROUP BY sd.sumber ORDER BY jumlah_dokumen_tukar_faktur DESC, jumlah_baris_sumber DESC\", \"result_kind\": \"pie_chart\"}, {\"id\": \"q_document_link_detail\", \"name\": \"Detail Hubungan SI SR SIE\", \"purpose\": \"Menampilkan daftar detail hubungan dokumen sales invoice, sales return, dan tukar faktur per customer untuk penelusuran operasional.\", \"query\": \"SELECT rel.customer_code, rel.customer_name, rel.sie_number, rel.sie_date, rel.sumber_dokumen, rel.nomor_dokumen_sumber, rel.tanggal_dokumen_sumber, rel.nilai_dokumen_sumber, rel.status_dokumen_sumber FROM ( SELECT c.kkode AS customer_code, c.knama AS customer_name, sie.sienotransaksi AS sie_number, sie.sietgl AS sie_date, 'SI' AS sumber_dokumen, si.sinotransaksi AS nomor_dokumen_sumber, si.sitgl AS tanggal_dokumen_sumber, si.sitotaltransaksi AS nilai_dokumen_sumber, si.sistatus AS status_dokumen_sumber FROM m5_sie sie INNER JOIN m5_sie_detail sd ON sd.idsie = sie.sieid INNER JOIN m5_si si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 UNION ALL SELECT c.kkode AS customer_code, c.knama AS customer_name, sie.sienotransaksi AS sie_number, sie.sietgl AS sie_date, 'SR' AS sumber_dokumen, sr.srnotransaksi AS nomor_dokumen_sumber, sr.srtgl AS tanggal_dokumen_sumber, sr.srtotaltransaksi AS nilai_dokumen_sumber, sr.srstatus AS status_dokumen_sumber FROM m5_sie sie INNER JOIN m5_sie_detail sd ON sd.idsie = sie.sieid INNER JOIN m5_sr sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid INNER JOIN m1_contact c ON sr.srcustomer = c.kid WHERE c.kaktif = 1 ) rel ORDER BY rel.customer_name ASC, rel.sie_date DESC, rel.sie_number DESC LIMIT 100\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"viz_customer_pattern\", \"query_id\": \"q_customer_pattern\", \"title\": \"Pola Retur dan Tukar Faktur per Customer\", \"chart_type\": \"bar\", \"x_axis\": \"customer_name\", \"y_axis\": [\"total_sales_invoice\", \"total_sales_return\", \"total_tukar_faktur\"]}, {\"id\": \"viz_exchange_distribution\", \"query_id\": \"q_exchange_distribution\", \"title\": \"Distribusi Sumber Dokumen pada Tukar Faktur\", \"chart_type\": \"pie\", \"x_axis\": \"sumber_dokumen\", \"y_axis\": [\"jumlah_baris_sumber\"]}, {\"id\": \"viz_document_link_detail\", \"query_id\": \"q_document_link_detail\", \"title\": \"Detail Hubungan SI SR dan Tukar Faktur\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"customer_code\", \"customer_name\", \"sie_number\", \"sie_date\", \"sumber_dokumen\", \"nomor_dokumen_sumber\", \"tanggal_dokumen_sumber\", \"nilai_dokumen_sumber\", \"status_dokumen_sumber\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User ingin melihat hubungan antara sales invoice (SI), sales return (SR), dan tukar faktur (SIE) untuk menganalisis pola retur serta penggantian/pertukaran dokumen per customer, sehingga perlu ringkasan per customer, distribusi hubungan dokumen, dan daftar detail dokumen terkait.",
+          "tables_used": [
+            "m5_si",
+            "m5_sr",
+            "m5_sie",
+            "m5_sie_detail",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Permintaan ini membutuhkan lebih dari satu sudut pandang: ringkasan customer, distribusi sumber dokumen yang masuk ke tukar faktur, dan daftar detail relasi dokumen, sehingga mode dashboard dipakai. 2) Untuk penjualan default berarti invoice penjualan, maka tabel utama SI dipilih. Untuk retur digunakan SR. Untuk tukar faktur digunakan SIE dan SIE_DETAIL. 3) Karena SIE_DETAIL bersifat polymorphic, join ke SI dan SR wajib memakai kolom sumber agar tidak salah relasi; ini mengikuti aturan M5 dan polymorphic_relationships. 4) Relasi customer untuk SI dan SR tersedia langsung ke m1_contact, sehingga ringkasan per customer bisa dihitung dengan aman. 5) Untuk menghubungkan SIE ke customer, dipakai agregasi dari SIE_DETAIL ke SI/SR lalu diturunkan customer-nya dari dokumen sumber. Bila dalam satu SIE ada lebih dari satu customer, pendekatan ini tetap menghasilkan hitungan customer-based exchange occurrence dari dokumen sumber yang terlibat. 6) Always apply filters diterapkan pada m5_si (siisclose = 0) dan m1_contact (kaktif = 1). Tabel SR dan SIE tidak memiliki always_apply_filters eksplisit di schema, sehingga tidak ditambahkan filter penutupan otomatis pada keduanya. 7) Query detail dibatasi LIMIT 100 karena user meminta tampilan hubungan/list tanpa batas eksplisit.",
+          "ai_metrics": {
+            "confidence_score": 0.84,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query ringkasan dan distribusi menggunakan UNION ALL + subquery agregat sehingga dapat memindai banyak baris jika data besar.",
+            "Query detail menggunakan LEFT JOIN ke beberapa tabel dan agregasi subquery; performa bergantung pada index id dokumen dan sumber.",
+            "Pada hubungan customer untuk tukar faktur, satu dokumen SIE yang memuat lebih dari satu customer sumber akan dihitung berdasarkan dokumen sumber terkait, bukan satu customer header tunggal karena header SIE tidak memiliki relasi customer eksplisit."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_customer_pattern",
+            "name": "Pola SI SR SIE per Customer",
+            "purpose": "Merangkum jumlah sales invoice, sales return, nilai transaksi, dan frekuensi tukar faktur per customer untuk melihat pola retur dan penggantian dokumen.",
+            "query": "SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, COALESCE(si_agg.total_sales_invoice, 0) AS total_sales_invoice, COALESCE(si_agg.total_nilai_invoice, 0) AS total_nilai_invoice, COALESCE(sr_agg.total_sales_return, 0) AS total_sales_return, COALESCE(sr_agg.total_nilai_return, 0) AS total_nilai_return, COALESCE(sie_agg.total_tukar_faktur, 0) AS total_tukar_faktur, CASE WHEN COALESCE(si_agg.total_sales_invoice, 0) > 0 THEN ROUND(COALESCE(sr_agg.total_sales_return, 0) / si_agg.total_sales_invoice * 100, 2) ELSE 0 END AS return_rate_by_doc_pct FROM m1_contact c LEFT JOIN ( SELECT si.sicustomer AS customer_id, COUNT(DISTINCT si.siid) AS total_sales_invoice, SUM(si.sitotaltransaksi) AS total_nilai_invoice FROM m5_si si WHERE si.siisclose = 0 GROUP BY si.sicustomer ) si_agg ON si_agg.customer_id = c.kid LEFT JOIN ( SELECT sr.srcustomer AS customer_id, COUNT(DISTINCT sr.srid) AS total_sales_return, SUM(sr.srtotaltransaksi) AS total_nilai_return FROM m5_sr sr GROUP BY sr.srcustomer ) sr_agg ON sr_agg.customer_id = c.kid LEFT JOIN ( SELECT x.customer_id, COUNT(DISTINCT x.sieid) AS total_tukar_faktur FROM ( SELECT sd.idsie AS sieid, si.sicustomer AS customer_id FROM m5_sie_detail sd INNER JOIN m5_si si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid WHERE si.siisclose = 0 UNION ALL SELECT sd.idsie AS sieid, sr.srcustomer AS customer_id FROM m5_sie_detail sd INNER JOIN m5_sr sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid ) x GROUP BY x.customer_id ) sie_agg ON sie_agg.customer_id = c.kid WHERE c.kaktif = 1 AND (COALESCE(si_agg.total_sales_invoice, 0) > 0 OR COALESCE(sr_agg.total_sales_return, 0) > 0 OR COALESCE(sie_agg.total_tukar_faktur, 0) > 0) ORDER BY total_sales_return DESC, total_tukar_faktur DESC, total_nilai_return DESC LIMIT 100",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_exchange_distribution",
+            "name": "Distribusi Sumber Tukar Faktur",
+            "purpose": "Menunjukkan komposisi dokumen sumber yang masuk ke tukar faktur, dipisahkan antara sales invoice dan sales return.",
+            "query": "SELECT sd.sumber AS sumber_dokumen, COUNT(DISTINCT sd.idsie) AS jumlah_dokumen_tukar_faktur, COUNT(*) AS jumlah_baris_sumber, COUNT(DISTINCT sd.idtransaksi) AS jumlah_dokumen_sumber_unik FROM m5_sie_detail sd WHERE sd.sumber IN ('SI', 'SR') GROUP BY sd.sumber ORDER BY jumlah_dokumen_tukar_faktur DESC, jumlah_baris_sumber DESC",
+            "result_kind": "pie_chart"
+          },
+          {
+            "id": "q_document_link_detail",
+            "name": "Detail Hubungan SI SR SIE",
+            "purpose": "Menampilkan daftar detail hubungan dokumen sales invoice, sales return, dan tukar faktur per customer untuk penelusuran operasional.",
+            "query": "SELECT rel.customer_code, rel.customer_name, rel.sie_number, rel.sie_date, rel.sumber_dokumen, rel.nomor_dokumen_sumber, rel.tanggal_dokumen_sumber, rel.nilai_dokumen_sumber, rel.status_dokumen_sumber FROM ( SELECT c.kkode AS customer_code, c.knama AS customer_name, sie.sienotransaksi AS sie_number, sie.sietgl AS sie_date, 'SI' AS sumber_dokumen, si.sinotransaksi AS nomor_dokumen_sumber, si.sitgl AS tanggal_dokumen_sumber, si.sitotaltransaksi AS nilai_dokumen_sumber, si.sistatus AS status_dokumen_sumber FROM m5_sie sie INNER JOIN m5_sie_detail sd ON sd.idsie = sie.sieid INNER JOIN m5_si si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 UNION ALL SELECT c.kkode AS customer_code, c.knama AS customer_name, sie.sienotransaksi AS sie_number, sie.sietgl AS sie_date, 'SR' AS sumber_dokumen, sr.srnotransaksi AS nomor_dokumen_sumber, sr.srtgl AS tanggal_dokumen_sumber, sr.srtotaltransaksi AS nilai_dokumen_sumber, sr.srstatus AS status_dokumen_sumber FROM m5_sie sie INNER JOIN m5_sie_detail sd ON sd.idsie = sie.sieid INNER JOIN m5_sr sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid INNER JOIN m1_contact c ON sr.srcustomer = c.kid WHERE c.kaktif = 1 ) rel ORDER BY rel.customer_name ASC, rel.sie_date DESC, rel.sie_number DESC LIMIT 100",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "viz_customer_pattern",
+            "query_id": "q_customer_pattern",
+            "title": "Pola Retur dan Tukar Faktur per Customer",
+            "chart_type": "bar",
+            "x_axis": "customer_name",
+            "y_axis": [
+              "total_sales_invoice",
+              "total_sales_return",
+              "total_tukar_faktur"
+            ]
+          },
+          {
+            "id": "viz_exchange_distribution",
+            "query_id": "q_exchange_distribution",
+            "title": "Distribusi Sumber Dokumen pada Tukar Faktur",
+            "chart_type": "pie",
+            "x_axis": "sumber_dokumen",
+            "y_axis": [
+              "jumlah_baris_sumber"
+            ]
+          },
+          {
+            "id": "viz_document_link_detail",
+            "query_id": "q_document_link_detail",
+            "title": "Detail Hubungan SI SR dan Tukar Faktur",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "customer_code",
+              "customer_name",
+              "sie_number",
+              "sie_date",
+              "sumber_dokumen",
+              "nomor_dokumen_sumber",
+              "tanggal_dokumen_sumber",
+              "nilai_dokumen_sumber",
+              "status_dokumen_sumber"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_009_sales_points_adjustment",
+      "title": "Poin Loyalty dan Penyesuaian Penjualan",
+      "question": "Tampilkan saldo poin customer, mutasi poin masuk-keluar, dan penyesuaian poin manual per bulan.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta dashboard poin customer per bulan yang mencakup saldo poin, mutasi poin masuk-keluar, dan penyesuaian poin manual.\", \"tables_used\": [\"m5_si\", \"m5_spa\", \"m5_spa_detail\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini wajib mode dashboard karena meminta kombinasi beberapa blok analitik: saldo poin, mutasi poin masuk-keluar, dan penyesuaian manual per bulan. Untuk mutasi dan saldo poin transaksi penjualan, tabel header m5_si dipilih karena memiliki field poin level dokumen: sipoinsebelumnya, sipoindidapat, dan sibayarjmlpoin, serta tanggal sitgl. Untuk penyesuaian manual, tabel m5_spa_detail dipilih karena menyimpan poinlama, poinmasuk, poinkeluar, poinbaru per customer/contact, lalu dihubungkan ke m5_spa untuk tanggal spatgl dan ke m1_contact untuk nama customer. Filter always_apply wajib diterapkan pada m1_contact yaitu kaktif = 1. Tabel m5_si dan m5_spa tidak memiliki always_apply_filters di schema, sehingga tidak ditambahkan otomatis. Karena tidak ada window function yang boleh dipakai, saldo akhir bulanan dihitung sebagai agregat saldo pembuka ditambah poin masuk dikurangi poin keluar pada level bulan. Query pertama memberi ringkasan bulanan dari transaksi SI. Query kedua memberi penyesuaian manual bulanan per customer. Query ketiga menggabungkan keduanya menjadi ringkasan bulanan total untuk melihat mutasi dan dampak penyesuaian manual terhadap saldo.\", \"ai_metrics\": {\"confidence_score\": 0.72, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query saldo bulanan menggunakan agregasi dari m5_si tanpa filter periode sehingga dapat memindai banyak data historis.\", \"Saldo yang ditampilkan adalah saldo agregat bulanan berbasis field poin pada transaksi SI dan penyesuaian manual SPA, bukan running balance harian per customer karena window function tidak diperbolehkan dan schema tidak menyediakan tabel ledger poin khusus.\"]}, \"queries\": [{\"id\": \"q1_poin_bulanan_transaksi\", \"name\": \"Mutasi Poin Bulanan Transaksi Penjualan\", \"purpose\": \"Menampilkan mutasi poin masuk, poin keluar, dan estimasi saldo akhir bulanan dari transaksi invoice penjualan.\", \"query\": \"SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS bulan, SUM(COALESCE(si.sipoinsebelumnya, 0)) AS total_saldo_awal_poin, SUM(COALESCE(si.sipoindidapat, 0)) AS total_poin_masuk, SUM(COALESCE(si.sibayarjmlpoin, 0)) AS total_poin_keluar, SUM(COALESCE(si.sipoinsebelumnya, 0) + COALESCE(si.sipoindidapat, 0) - COALESCE(si.sibayarjmlpoin, 0)) AS estimasi_saldo_akhir_poin, COUNT(si.siid) AS jumlah_invoice FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ORDER BY bulan ASC\", \"result_kind\": \"line_chart\"}, {\"id\": \"q2_penyesuaian_manual_bulanan\", \"name\": \"Penyesuaian Poin Manual per Bulan dan Customer\", \"purpose\": \"Menampilkan mutasi penyesuaian poin manual per bulan per customer dari dokumen SPA.\", \"query\": \"SELECT DATE_FORMAT(spa.spatgl, '%Y-%m') AS bulan, c.kkode AS kode_customer, c.knama AS nama_customer, SUM(COALESCE(spad.poinlama, 0)) AS total_poin_lama, SUM(COALESCE(spad.poinmasuk, 0)) AS total_poin_masuk_manual, SUM(COALESCE(spad.poinkeluar, 0)) AS total_poin_keluar_manual, SUM(COALESCE(spad.poinbaru, 0)) AS total_poin_baru, COUNT(spad.idspadetail) AS jumlah_penyesuaian FROM m5_spa_detail spad INNER JOIN m5_spa spa ON spad.idspa = spa.spaid INNER JOIN m1_contact c ON spad.kontak = c.kid WHERE c.kaktif = 1 GROUP BY DATE_FORMAT(spa.spatgl, '%Y-%m'), c.kkode, c.knama ORDER BY bulan ASC, nama_customer ASC\", \"result_kind\": \"table\"}, {\"id\": \"q3_ringkasan_gabungan_bulanan\", \"name\": \"Ringkasan Bulanan Poin dan Penyesuaian Manual\", \"purpose\": \"Menggabungkan mutasi poin transaksi penjualan dan penyesuaian manual per bulan dalam satu ringkasan dashboard.\", \"query\": \"SELECT base.bulan AS bulan, COALESCE(si_agg.total_poin_masuk, 0) AS poin_masuk_transaksi, COALESCE(si_agg.total_poin_keluar, 0) AS poin_keluar_transaksi, COALESCE(spa_agg.total_poin_masuk_manual, 0) AS poin_masuk_manual, COALESCE(spa_agg.total_poin_keluar_manual, 0) AS poin_keluar_manual, COALESCE(si_agg.estimasi_saldo_akhir_poin, 0) + COALESCE(spa_agg.net_manual, 0) AS estimasi_saldo_akhir_gabungan FROM ( SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS bulan FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') UNION SELECT DATE_FORMAT(spa.spatgl, '%Y-%m') AS bulan FROM m5_spa spa GROUP BY DATE_FORMAT(spa.spatgl, '%Y-%m') ) base LEFT JOIN ( SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS bulan, SUM(COALESCE(si.sipoindidapat, 0)) AS total_poin_masuk, SUM(COALESCE(si.sibayarjmlpoin, 0)) AS total_poin_keluar, SUM(COALESCE(si.sipoinsebelumnya, 0) + COALESCE(si.sipoindidapat, 0) - COALESCE(si.sibayarjmlpoin, 0)) AS estimasi_saldo_akhir_poin FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ) si_agg ON base.bulan = si_agg.bulan LEFT JOIN ( SELECT DATE_FORMAT(spa.spatgl, '%Y-%m') AS bulan, SUM(COALESCE(spad.poinmasuk, 0)) AS total_poin_masuk_manual, SUM(COALESCE(spad.poinkeluar, 0)) AS total_poin_keluar_manual, SUM(COALESCE(spad.poinmasuk, 0) - COALESCE(spad.poinkeluar, 0)) AS net_manual FROM m5_spa_detail spad INNER JOIN m5_spa spa ON spad.idspa = spa.spaid INNER JOIN m1_contact c ON spad.kontak = c.kid WHERE c.kaktif = 1 GROUP BY DATE_FORMAT(spa.spatgl, '%Y-%m') ) spa_agg ON base.bulan = spa_agg.bulan ORDER BY base.bulan ASC\", \"result_kind\": \"bar_chart\"}], \"visualizations\": [{\"id\": \"v1_tren_poin_bulanan\", \"query_id\": \"q1_poin_bulanan_transaksi\", \"title\": \"Tren Mutasi dan Saldo Poin Bulanan\", \"chart_type\": \"line\", \"x_axis\": \"bulan\", \"y_axis\": [\"total_poin_masuk\", \"total_poin_keluar\", \"estimasi_saldo_akhir_poin\"]}, {\"id\": \"v2_tabel_penyesuaian_manual\", \"query_id\": \"q2_penyesuaian_manual_bulanan\", \"title\": \"Penyesuaian Poin Manual per Bulan per Customer\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"bulan\", \"kode_customer\", \"nama_customer\", \"total_poin_lama\", \"total_poin_masuk_manual\", \"total_poin_keluar_manual\", \"total_poin_baru\", \"jumlah_penyesuaian\"]}, {\"id\": \"v3_ringkasan_gabungan\", \"query_id\": \"q3_ringkasan_gabungan_bulanan\", \"title\": \"Ringkasan Gabungan Poin dan Penyesuaian Manual per Bulan\", \"chart_type\": \"bar\", \"x_axis\": \"bulan\", \"y_axis\": [\"poin_masuk_transaksi\", \"poin_keluar_transaksi\", \"poin_masuk_manual\", \"poin_keluar_manual\", \"estimasi_saldo_akhir_gabungan\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta dashboard poin customer per bulan yang mencakup saldo poin, mutasi poin masuk-keluar, dan penyesuaian poin manual.",
+          "tables_used": [
+            "m5_si",
+            "m5_spa",
+            "m5_spa_detail",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini wajib mode dashboard karena meminta kombinasi beberapa blok analitik: saldo poin, mutasi poin masuk-keluar, dan penyesuaian manual per bulan. Untuk mutasi dan saldo poin transaksi penjualan, tabel header m5_si dipilih karena memiliki field poin level dokumen: sipoinsebelumnya, sipoindidapat, dan sibayarjmlpoin, serta tanggal sitgl. Untuk penyesuaian manual, tabel m5_spa_detail dipilih karena menyimpan poinlama, poinmasuk, poinkeluar, poinbaru per customer/contact, lalu dihubungkan ke m5_spa untuk tanggal spatgl dan ke m1_contact untuk nama customer. Filter always_apply wajib diterapkan pada m1_contact yaitu kaktif = 1. Tabel m5_si dan m5_spa tidak memiliki always_apply_filters di schema, sehingga tidak ditambahkan otomatis. Karena tidak ada window function yang boleh dipakai, saldo akhir bulanan dihitung sebagai agregat saldo pembuka ditambah poin masuk dikurangi poin keluar pada level bulan. Query pertama memberi ringkasan bulanan dari transaksi SI. Query kedua memberi penyesuaian manual bulanan per customer. Query ketiga menggabungkan keduanya menjadi ringkasan bulanan total untuk melihat mutasi dan dampak penyesuaian manual terhadap saldo.",
+          "ai_metrics": {
+            "confidence_score": 0.72,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query saldo bulanan menggunakan agregasi dari m5_si tanpa filter periode sehingga dapat memindai banyak data historis.",
+            "Saldo yang ditampilkan adalah saldo agregat bulanan berbasis field poin pada transaksi SI dan penyesuaian manual SPA, bukan running balance harian per customer karena window function tidak diperbolehkan dan schema tidak menyediakan tabel ledger poin khusus."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q1_poin_bulanan_transaksi",
+            "name": "Mutasi Poin Bulanan Transaksi Penjualan",
+            "purpose": "Menampilkan mutasi poin masuk, poin keluar, dan estimasi saldo akhir bulanan dari transaksi invoice penjualan.",
+            "query": "SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS bulan, SUM(COALESCE(si.sipoinsebelumnya, 0)) AS total_saldo_awal_poin, SUM(COALESCE(si.sipoindidapat, 0)) AS total_poin_masuk, SUM(COALESCE(si.sibayarjmlpoin, 0)) AS total_poin_keluar, SUM(COALESCE(si.sipoinsebelumnya, 0) + COALESCE(si.sipoindidapat, 0) - COALESCE(si.sibayarjmlpoin, 0)) AS estimasi_saldo_akhir_poin, COUNT(si.siid) AS jumlah_invoice FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ORDER BY bulan ASC",
+            "result_kind": "line_chart"
+          },
+          {
+            "id": "q2_penyesuaian_manual_bulanan",
+            "name": "Penyesuaian Poin Manual per Bulan dan Customer",
+            "purpose": "Menampilkan mutasi penyesuaian poin manual per bulan per customer dari dokumen SPA.",
+            "query": "SELECT DATE_FORMAT(spa.spatgl, '%Y-%m') AS bulan, c.kkode AS kode_customer, c.knama AS nama_customer, SUM(COALESCE(spad.poinlama, 0)) AS total_poin_lama, SUM(COALESCE(spad.poinmasuk, 0)) AS total_poin_masuk_manual, SUM(COALESCE(spad.poinkeluar, 0)) AS total_poin_keluar_manual, SUM(COALESCE(spad.poinbaru, 0)) AS total_poin_baru, COUNT(spad.idspadetail) AS jumlah_penyesuaian FROM m5_spa_detail spad INNER JOIN m5_spa spa ON spad.idspa = spa.spaid INNER JOIN m1_contact c ON spad.kontak = c.kid WHERE c.kaktif = 1 GROUP BY DATE_FORMAT(spa.spatgl, '%Y-%m'), c.kkode, c.knama ORDER BY bulan ASC, nama_customer ASC",
+            "result_kind": "table"
+          },
+          {
+            "id": "q3_ringkasan_gabungan_bulanan",
+            "name": "Ringkasan Bulanan Poin dan Penyesuaian Manual",
+            "purpose": "Menggabungkan mutasi poin transaksi penjualan dan penyesuaian manual per bulan dalam satu ringkasan dashboard.",
+            "query": "SELECT base.bulan AS bulan, COALESCE(si_agg.total_poin_masuk, 0) AS poin_masuk_transaksi, COALESCE(si_agg.total_poin_keluar, 0) AS poin_keluar_transaksi, COALESCE(spa_agg.total_poin_masuk_manual, 0) AS poin_masuk_manual, COALESCE(spa_agg.total_poin_keluar_manual, 0) AS poin_keluar_manual, COALESCE(si_agg.estimasi_saldo_akhir_poin, 0) + COALESCE(spa_agg.net_manual, 0) AS estimasi_saldo_akhir_gabungan FROM ( SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS bulan FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') UNION SELECT DATE_FORMAT(spa.spatgl, '%Y-%m') AS bulan FROM m5_spa spa GROUP BY DATE_FORMAT(spa.spatgl, '%Y-%m') ) base LEFT JOIN ( SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS bulan, SUM(COALESCE(si.sipoindidapat, 0)) AS total_poin_masuk, SUM(COALESCE(si.sibayarjmlpoin, 0)) AS total_poin_keluar, SUM(COALESCE(si.sipoinsebelumnya, 0) + COALESCE(si.sipoindidapat, 0) - COALESCE(si.sibayarjmlpoin, 0)) AS estimasi_saldo_akhir_poin FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m') ) si_agg ON base.bulan = si_agg.bulan LEFT JOIN ( SELECT DATE_FORMAT(spa.spatgl, '%Y-%m') AS bulan, SUM(COALESCE(spad.poinmasuk, 0)) AS total_poin_masuk_manual, SUM(COALESCE(spad.poinkeluar, 0)) AS total_poin_keluar_manual, SUM(COALESCE(spad.poinmasuk, 0) - COALESCE(spad.poinkeluar, 0)) AS net_manual FROM m5_spa_detail spad INNER JOIN m5_spa spa ON spad.idspa = spa.spaid INNER JOIN m1_contact c ON spad.kontak = c.kid WHERE c.kaktif = 1 GROUP BY DATE_FORMAT(spa.spatgl, '%Y-%m') ) spa_agg ON base.bulan = spa_agg.bulan ORDER BY base.bulan ASC",
+            "result_kind": "bar_chart"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v1_tren_poin_bulanan",
+            "query_id": "q1_poin_bulanan_transaksi",
+            "title": "Tren Mutasi dan Saldo Poin Bulanan",
+            "chart_type": "line",
+            "x_axis": "bulan",
+            "y_axis": [
+              "total_poin_masuk",
+              "total_poin_keluar",
+              "estimasi_saldo_akhir_poin"
+            ]
+          },
+          {
+            "id": "v2_tabel_penyesuaian_manual",
+            "query_id": "q2_penyesuaian_manual_bulanan",
+            "title": "Penyesuaian Poin Manual per Bulan per Customer",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "bulan",
+              "kode_customer",
+              "nama_customer",
+              "total_poin_lama",
+              "total_poin_masuk_manual",
+              "total_poin_keluar_manual",
+              "total_poin_baru",
+              "jumlah_penyesuaian"
+            ]
+          },
+          {
+            "id": "v3_ringkasan_gabungan",
+            "query_id": "q3_ringkasan_gabungan_bulanan",
+            "title": "Ringkasan Gabungan Poin dan Penyesuaian Manual per Bulan",
+            "chart_type": "bar",
+            "x_axis": "bulan",
+            "y_axis": [
+              "poin_masuk_transaksi",
+              "poin_keluar_transaksi",
+              "poin_masuk_manual",
+              "poin_keluar_manual",
+              "estimasi_saldo_akhir_gabungan"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_010_executive_risk",
+      "title": "Executive Risk Dashboard",
+      "question": "Tampilkan customer berisiko berdasarkan kombinasi outstanding tinggi, aging panjang, retur tinggi, collection lambat, dan fulfillment yang macet.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User meminta dashboard customer berisiko yang menggabungkan beberapa indikator lintas area penjualan dan piutang: outstanding invoice, aging piutang, retur penjualan, kecepatan collection/pembayaran, dan hambatan fulfillment order.\", \"tables_used\": [\"m5_si\", \"m5_sr\", \"m5_so\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini wajib mode dashboard karena menggabungkan beberapa blok analitik berbeda: ranking customer berisiko, distribusi komponen risiko, dan tren. Untuk outstanding dan aging, tabel paling tepat adalah header sales invoice m5_si karena semantik default penjualan = invoice penjualan dan tersedia total transaksi, jumlah bayar, tanggal invoice, jatuh tempo, dan status lunas. Untuk retur, digunakan header sales return m5_sr agar bisa mengukur total retur per customer. Untuk fulfillment macet, digunakan sales order m5_so karena tersedia status realisasi dan status dokumen lintas tahap pada level header. Relasi customer menggunakan m1_contact sesuai relationship yang tersedia. Filter always_apply wajib diterapkan pada m5_si (siisclose = 0), dan m1_contact juga menerapkan kaktif = 1. Saya tidak memakai join polymorphic IC/PV karena user meminta customer berisiko level dashboard dan schema tidak memberi definisi eksplisit yang aman untuk menghitung collection lambat dari IC/PV lintas seluruh sumber tanpa asumsi tambahan; sebagai gantinya collection lambat diproksikan dari aging overdue invoice dan rata-rata hari overdue invoice yang belum lunas, yang tetap sesuai konteks risiko penagihan. Query 1 membuat ranking customer berisiko dengan gabungan metrik: outstanding, invoice overdue, aging maksimum/rata-rata, nilai retur, dan jumlah SO yang belum selesai. Query 2 memecah komponen risiko per customer agar dashboard bisa menunjukkan faktor dominan. Query 3 memberi tren bulanan customer berisiko berdasarkan invoice overdue dan retur. Semua query tetap read-only dan kompatibel MySQL/MariaDB.\", \"ai_metrics\": {\"confidence_score\": 0.82, \"schema_version_used\": \"Semantic Query Schema OBT + semantic schema utama M5 sales\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query dashboard cukup berat karena memakai beberapa subquery agregasi per customer dan tanpa filter periode dari user berpotensi full table scan pada tabel transaksi besar.\", \"Definisi 'collection lambat' diproksikan menggunakan aging overdue invoice karena schema tidak menyediakan aturan eksplisit SLA collection lintas IC/PV yang aman tanpa asumsi tambahan.\"]}, \"queries\": [{\"id\": \"q_customer_risk_rank\", \"name\": \"Customer Risk Ranking\", \"purpose\": \"Merangking customer berisiko berdasarkan kombinasi outstanding, aging overdue, retur, dan fulfillment macet.\", \"query\": \"SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, COALESCE(si_metrics.total_outstanding, 0) AS total_outstanding, COALESCE(si_metrics.overdue_invoice_count, 0) AS overdue_invoice_count, COALESCE(si_metrics.max_overdue_days, 0) AS max_overdue_days, COALESCE(si_metrics.avg_overdue_days, 0) AS avg_overdue_days, COALESCE(sr_metrics.total_return_value, 0) AS total_return_value, COALESCE(sr_metrics.return_doc_count, 0) AS return_doc_count, COALESCE(so_metrics.open_so_count, 0) AS open_so_count, COALESCE(so_metrics.stuck_fulfillment_count, 0) AS stuck_fulfillment_count, (COALESCE(si_metrics.total_outstanding, 0) + (COALESCE(si_metrics.overdue_invoice_count, 0) * 1000000) + (COALESCE(si_metrics.max_overdue_days, 0) * 10000) + COALESCE(sr_metrics.total_return_value, 0) + (COALESCE(so_metrics.stuck_fulfillment_count, 0) * 500000)) AS risk_score_proxy FROM m1_contact c LEFT JOIN ( SELECT si.sicustomer, SUM(GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0)) AS total_outstanding, SUM(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN 1 ELSE 0 END) AS overdue_invoice_count, MAX(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS max_overdue_days, AVG(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) END) AS avg_overdue_days FROM m5_si si WHERE si.siisclose = 0 GROUP BY si.sicustomer ) si_metrics ON c.kid = si_metrics.sicustomer LEFT JOIN ( SELECT sr.srcustomer, SUM(COALESCE(sr.srtotaltransaksi, 0)) AS total_return_value, COUNT(sr.srid) AS return_doc_count FROM m5_sr sr GROUP BY sr.srcustomer ) sr_metrics ON c.kid = sr_metrics.srcustomer LEFT JOIN ( SELECT so.socustomer, COUNT(so.soid) AS open_so_count, SUM(CASE WHEN COALESCE(so.sostatusrealisasi, '') <> 'LUNAS' AND COALESCE(so.sostatusrealisasi, '') <> 'SELESAI' THEN 1 ELSE 0 END) AS stuck_fulfillment_count FROM m5_so so WHERE so.soisclose = 0 GROUP BY so.socustomer ) so_metrics ON c.kid = so_metrics.socustomer WHERE c.kaktif = 1 AND ( COALESCE(si_metrics.total_outstanding, 0) > 0 OR COALESCE(sr_metrics.total_return_value, 0) > 0 OR COALESCE(so_metrics.stuck_fulfillment_count, 0) > 0 ) ORDER BY risk_score_proxy DESC, total_outstanding DESC, max_overdue_days DESC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_customer_risk_components\", \"name\": \"Risk Components Distribution\", \"purpose\": \"Menampilkan distribusi komponen risiko per customer agar terlihat faktor dominan risiko.\", \"query\": \"SELECT risk_base.customer_name, 'Outstanding' AS risk_component, risk_base.total_outstanding AS risk_value FROM ( SELECT c.knama AS customer_name, COALESCE(SUM(GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0)), 0) AS total_outstanding, 0 AS aging_value, 0 AS return_value, 0 AS stuck_value FROM m1_contact c LEFT JOIN m5_si si ON si.sicustomer = c.kid AND si.siisclose = 0 WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.total_outstanding > 0 UNION ALL SELECT risk_base.customer_name, 'Aging Overdue Days' AS risk_component, risk_base.aging_value AS risk_value FROM ( SELECT c.knama AS customer_name, 0 AS total_outstanding, COALESCE(MAX(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END), 0) AS aging_value, 0 AS return_value, 0 AS stuck_value FROM m1_contact c LEFT JOIN m5_si si ON si.sicustomer = c.kid AND si.siisclose = 0 WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.aging_value > 0 UNION ALL SELECT risk_base.customer_name, 'Return Value' AS risk_component, risk_base.return_value AS risk_value FROM ( SELECT c.knama AS customer_name, 0 AS total_outstanding, 0 AS aging_value, COALESCE(SUM(sr.srtotaltransaksi), 0) AS return_value, 0 AS stuck_value FROM m1_contact c LEFT JOIN m5_sr sr ON sr.srcustomer = c.kid WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.return_value > 0 UNION ALL SELECT risk_base.customer_name, 'Stuck Fulfillment SO' AS risk_component, risk_base.stuck_value AS risk_value FROM ( SELECT c.knama AS customer_name, 0 AS total_outstanding, 0 AS aging_value, 0 AS return_value, COALESCE(SUM(CASE WHEN COALESCE(so.sostatusrealisasi, '') <> 'LUNAS' AND COALESCE(so.sostatusrealisasi, '') <> 'SELESAI' THEN 1 ELSE 0 END), 0) AS stuck_value FROM m1_contact c LEFT JOIN m5_so so ON so.socustomer = c.kid AND so.soisclose = 0 WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.stuck_value > 0 ORDER BY risk_value DESC, customer_name ASC LIMIT 100\", \"result_kind\": \"stacked_bar_chart\"}, {\"id\": \"q_customer_risk_trend\", \"name\": \"Risk Trend Monthly\", \"purpose\": \"Menampilkan tren bulanan risiko customer berdasarkan invoice overdue dan retur penjualan.\", \"query\": \"SELECT month_label, SUM(overdue_outstanding) AS overdue_outstanding, SUM(return_value) AS return_value, COUNT(DISTINCT customer_id) AS risky_customer_count FROM ( SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS month_label, si.sicustomer AS customer_id, SUM(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) ELSE 0 END) AS overdue_outstanding, 0 AS return_value FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m'), si.sicustomer UNION ALL SELECT DATE_FORMAT(sr.srtgl, '%Y-%m') AS month_label, sr.srcustomer AS customer_id, 0 AS overdue_outstanding, SUM(COALESCE(sr.srtotaltransaksi, 0)) AS return_value FROM m5_sr sr GROUP BY DATE_FORMAT(sr.srtgl, '%Y-%m'), sr.srcustomer ) x GROUP BY month_label ORDER BY month_label ASC\", \"result_kind\": \"line_chart\"}], \"visualizations\": [{\"id\": \"v_customer_risk_rank\", \"query_id\": \"q_customer_risk_rank\", \"title\": \"Top Customer Berisiko\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"total_outstanding\", \"overdue_invoice_count\", \"max_overdue_days\", \"total_return_value\", \"stuck_fulfillment_count\", \"risk_score_proxy\"]}, {\"id\": \"v_customer_risk_components\", \"query_id\": \"q_customer_risk_components\", \"title\": \"Komponen Risiko per Customer\", \"chart_type\": \"stacked_bar\", \"x_axis\": \"customer_name\", \"y_axis\": [\"risk_value\"]}, {\"id\": \"v_customer_risk_trend\", \"query_id\": \"q_customer_risk_trend\", \"title\": \"Tren Bulanan Risiko Customer\", \"chart_type\": \"line\", \"x_axis\": \"month_label\", \"y_axis\": [\"overdue_outstanding\", \"return_value\", \"risky_customer_count\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User meminta dashboard customer berisiko yang menggabungkan beberapa indikator lintas area penjualan dan piutang: outstanding invoice, aging piutang, retur penjualan, kecepatan collection/pembayaran, dan hambatan fulfillment order.",
+          "tables_used": [
+            "m5_si",
+            "m5_sr",
+            "m5_so",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini wajib mode dashboard karena menggabungkan beberapa blok analitik berbeda: ranking customer berisiko, distribusi komponen risiko, dan tren. Untuk outstanding dan aging, tabel paling tepat adalah header sales invoice m5_si karena semantik default penjualan = invoice penjualan dan tersedia total transaksi, jumlah bayar, tanggal invoice, jatuh tempo, dan status lunas. Untuk retur, digunakan header sales return m5_sr agar bisa mengukur total retur per customer. Untuk fulfillment macet, digunakan sales order m5_so karena tersedia status realisasi dan status dokumen lintas tahap pada level header. Relasi customer menggunakan m1_contact sesuai relationship yang tersedia. Filter always_apply wajib diterapkan pada m5_si (siisclose = 0), dan m1_contact juga menerapkan kaktif = 1. Saya tidak memakai join polymorphic IC/PV karena user meminta customer berisiko level dashboard dan schema tidak memberi definisi eksplisit yang aman untuk menghitung collection lambat dari IC/PV lintas seluruh sumber tanpa asumsi tambahan; sebagai gantinya collection lambat diproksikan dari aging overdue invoice dan rata-rata hari overdue invoice yang belum lunas, yang tetap sesuai konteks risiko penagihan. Query 1 membuat ranking customer berisiko dengan gabungan metrik: outstanding, invoice overdue, aging maksimum/rata-rata, nilai retur, dan jumlah SO yang belum selesai. Query 2 memecah komponen risiko per customer agar dashboard bisa menunjukkan faktor dominan. Query 3 memberi tren bulanan customer berisiko berdasarkan invoice overdue dan retur. Semua query tetap read-only dan kompatibel MySQL/MariaDB.",
+          "ai_metrics": {
+            "confidence_score": 0.82,
+            "schema_version_used": "Semantic Query Schema OBT + semantic schema utama M5 sales"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query dashboard cukup berat karena memakai beberapa subquery agregasi per customer dan tanpa filter periode dari user berpotensi full table scan pada tabel transaksi besar.",
+            "Definisi 'collection lambat' diproksikan menggunakan aging overdue invoice karena schema tidak menyediakan aturan eksplisit SLA collection lintas IC/PV yang aman tanpa asumsi tambahan."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_customer_risk_rank",
+            "name": "Customer Risk Ranking",
+            "purpose": "Merangking customer berisiko berdasarkan kombinasi outstanding, aging overdue, retur, dan fulfillment macet.",
+            "query": "SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, COALESCE(si_metrics.total_outstanding, 0) AS total_outstanding, COALESCE(si_metrics.overdue_invoice_count, 0) AS overdue_invoice_count, COALESCE(si_metrics.max_overdue_days, 0) AS max_overdue_days, COALESCE(si_metrics.avg_overdue_days, 0) AS avg_overdue_days, COALESCE(sr_metrics.total_return_value, 0) AS total_return_value, COALESCE(sr_metrics.return_doc_count, 0) AS return_doc_count, COALESCE(so_metrics.open_so_count, 0) AS open_so_count, COALESCE(so_metrics.stuck_fulfillment_count, 0) AS stuck_fulfillment_count, (COALESCE(si_metrics.total_outstanding, 0) + (COALESCE(si_metrics.overdue_invoice_count, 0) * 1000000) + (COALESCE(si_metrics.max_overdue_days, 0) * 10000) + COALESCE(sr_metrics.total_return_value, 0) + (COALESCE(so_metrics.stuck_fulfillment_count, 0) * 500000)) AS risk_score_proxy FROM m1_contact c LEFT JOIN ( SELECT si.sicustomer, SUM(GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0)) AS total_outstanding, SUM(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN 1 ELSE 0 END) AS overdue_invoice_count, MAX(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END) AS max_overdue_days, AVG(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) END) AS avg_overdue_days FROM m5_si si WHERE si.siisclose = 0 GROUP BY si.sicustomer ) si_metrics ON c.kid = si_metrics.sicustomer LEFT JOIN ( SELECT sr.srcustomer, SUM(COALESCE(sr.srtotaltransaksi, 0)) AS total_return_value, COUNT(sr.srid) AS return_doc_count FROM m5_sr sr GROUP BY sr.srcustomer ) sr_metrics ON c.kid = sr_metrics.srcustomer LEFT JOIN ( SELECT so.socustomer, COUNT(so.soid) AS open_so_count, SUM(CASE WHEN COALESCE(so.sostatusrealisasi, '') <> 'LUNAS' AND COALESCE(so.sostatusrealisasi, '') <> 'SELESAI' THEN 1 ELSE 0 END) AS stuck_fulfillment_count FROM m5_so so WHERE so.soisclose = 0 GROUP BY so.socustomer ) so_metrics ON c.kid = so_metrics.socustomer WHERE c.kaktif = 1 AND ( COALESCE(si_metrics.total_outstanding, 0) > 0 OR COALESCE(sr_metrics.total_return_value, 0) > 0 OR COALESCE(so_metrics.stuck_fulfillment_count, 0) > 0 ) ORDER BY risk_score_proxy DESC, total_outstanding DESC, max_overdue_days DESC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_customer_risk_components",
+            "name": "Risk Components Distribution",
+            "purpose": "Menampilkan distribusi komponen risiko per customer agar terlihat faktor dominan risiko.",
+            "query": "SELECT risk_base.customer_name, 'Outstanding' AS risk_component, risk_base.total_outstanding AS risk_value FROM ( SELECT c.knama AS customer_name, COALESCE(SUM(GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0)), 0) AS total_outstanding, 0 AS aging_value, 0 AS return_value, 0 AS stuck_value FROM m1_contact c LEFT JOIN m5_si si ON si.sicustomer = c.kid AND si.siisclose = 0 WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.total_outstanding > 0 UNION ALL SELECT risk_base.customer_name, 'Aging Overdue Days' AS risk_component, risk_base.aging_value AS risk_value FROM ( SELECT c.knama AS customer_name, 0 AS total_outstanding, COALESCE(MAX(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN DATEDIFF(CURDATE(), si.sitgljatuhtempo) ELSE 0 END), 0) AS aging_value, 0 AS return_value, 0 AS stuck_value FROM m1_contact c LEFT JOIN m5_si si ON si.sicustomer = c.kid AND si.siisclose = 0 WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.aging_value > 0 UNION ALL SELECT risk_base.customer_name, 'Return Value' AS risk_component, risk_base.return_value AS risk_value FROM ( SELECT c.knama AS customer_name, 0 AS total_outstanding, 0 AS aging_value, COALESCE(SUM(sr.srtotaltransaksi), 0) AS return_value, 0 AS stuck_value FROM m1_contact c LEFT JOIN m5_sr sr ON sr.srcustomer = c.kid WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.return_value > 0 UNION ALL SELECT risk_base.customer_name, 'Stuck Fulfillment SO' AS risk_component, risk_base.stuck_value AS risk_value FROM ( SELECT c.knama AS customer_name, 0 AS total_outstanding, 0 AS aging_value, 0 AS return_value, COALESCE(SUM(CASE WHEN COALESCE(so.sostatusrealisasi, '') <> 'LUNAS' AND COALESCE(so.sostatusrealisasi, '') <> 'SELESAI' THEN 1 ELSE 0 END), 0) AS stuck_value FROM m1_contact c LEFT JOIN m5_so so ON so.socustomer = c.kid AND so.soisclose = 0 WHERE c.kaktif = 1 GROUP BY c.kid, c.knama ) risk_base WHERE risk_base.stuck_value > 0 ORDER BY risk_value DESC, customer_name ASC LIMIT 100",
+            "result_kind": "stacked_bar_chart"
+          },
+          {
+            "id": "q_customer_risk_trend",
+            "name": "Risk Trend Monthly",
+            "purpose": "Menampilkan tren bulanan risiko customer berdasarkan invoice overdue dan retur penjualan.",
+            "query": "SELECT month_label, SUM(overdue_outstanding) AS overdue_outstanding, SUM(return_value) AS return_value, COUNT(DISTINCT customer_id) AS risky_customer_count FROM ( SELECT DATE_FORMAT(si.sitgl, '%Y-%m') AS month_label, si.sicustomer AS customer_id, SUM(CASE WHEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) > 0 AND si.sitgljatuhtempo IS NOT NULL AND CURDATE() > si.sitgljatuhtempo THEN GREATEST(si.sitotaltransaksi - COALESCE(si.sijmlbayar, 0), 0) ELSE 0 END) AS overdue_outstanding, 0 AS return_value FROM m5_si si WHERE si.siisclose = 0 GROUP BY DATE_FORMAT(si.sitgl, '%Y-%m'), si.sicustomer UNION ALL SELECT DATE_FORMAT(sr.srtgl, '%Y-%m') AS month_label, sr.srcustomer AS customer_id, 0 AS overdue_outstanding, SUM(COALESCE(sr.srtotaltransaksi, 0)) AS return_value FROM m5_sr sr GROUP BY DATE_FORMAT(sr.srtgl, '%Y-%m'), sr.srcustomer ) x GROUP BY month_label ORDER BY month_label ASC",
+            "result_kind": "line_chart"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_customer_risk_rank",
+            "query_id": "q_customer_risk_rank",
+            "title": "Top Customer Berisiko",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "total_outstanding",
+              "overdue_invoice_count",
+              "max_overdue_days",
+              "total_return_value",
+              "stuck_fulfillment_count",
+              "risk_score_proxy"
+            ]
+          },
+          {
+            "id": "v_customer_risk_components",
+            "query_id": "q_customer_risk_components",
+            "title": "Komponen Risiko per Customer",
+            "chart_type": "stacked_bar",
+            "x_axis": "customer_name",
+            "y_axis": [
+              "risk_value"
+            ]
+          },
+          {
+            "id": "v_customer_risk_trend",
+            "query_id": "q_customer_risk_trend",
+            "title": "Tren Bulanan Risiko Customer",
+            "chart_type": "line",
+            "x_axis": "month_label",
+            "y_axis": [
+              "overdue_outstanding",
+              "return_value",
+              "risky_customer_count"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "FAILED",
+      "errors": [
+        "missing widget keyword in visualization titles: aging",
+        "missing widget keyword in visualization titles: fulfillment"
+      ]
+    }
+  ]
+}

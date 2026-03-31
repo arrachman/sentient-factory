@@ -38,9 +38,9 @@
       ]
     },
     {
-      "key": "sales",
-      "domain": "sales_account_receivable",
-      "description": "Sales, delivery, invoice penjualan, retur penjualan, dan piutang.",
+      "key": "obt",
+      "domain": "obt",
+      "description": "OBT untuk transaksi m5: sales, delivery, invoice penjualan, retur penjualan, dan piutang.",
       "file": "semantic-schema-sales.json",
       "table_prefixes": [
         "m5"

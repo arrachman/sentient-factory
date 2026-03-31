@@ -19,8 +19,8 @@ export function TopAmountCard({
   return (
     <Card className="lg:col-span-4 h-full rounded-2xl border-border/80 shadow-xs">
       <CardHeader className="px-5 py-4">
-        <CardTitle className="text-lg font-semibold tracking-tight">{title}</CardTitle>
-        {minimal ? null : <p className="text-sm font-medium text-muted-foreground">{subtitle}</p>}
+        <CardTitle className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">{title}</CardTitle>
+        {minimal ? null : <p className="text-sm font-normal text-slate-500 dark:text-slate-400">{subtitle}</p>}
       </CardHeader>
       <CardContent className={cn('px-5 pb-3 pt-2.5 flex flex-col', minimal ? 'gap-1' : 'gap-1.5')}>
         <div className={cn('flex flex-1 flex-col', minimal ? 'gap-1 justify-between' : 'gap-1.5')}>
@@ -34,11 +34,11 @@ export function TopAmountCard({
                   {supplier.initials}
                 </div>
                 <div>
-                  <p className="text-[13px] font-medium">{supplier.name}</p>
-                  {minimal ? null : <p className="text-[11px] text-muted-foreground">{supplier.code}</p>}
+                  <p className="text-[13px] font-medium text-slate-800 dark:text-slate-100">{supplier.name}</p>
+                  {minimal ? null : <p className="text-[11px] text-slate-500 dark:text-slate-400">{supplier.code}</p>}
                 </div>
               </div>
-              <Badge variant="info" appearance="outline" size="xs">
+              <Badge variant="info" appearance="outline" size="xs" className="tabular-nums">
                 {supplier.amount}
               </Badge>
             </div>

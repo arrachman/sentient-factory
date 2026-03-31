@@ -1,0 +1,138 @@
+# M4_BS Queries
+
+## Query 1
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+DELETE FROM M4_Bs WHERE bsid ='{idtransaksi}'
+```
+
+## Query 2
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+DELETE FROM M4_Bs_Detail WHERE idbs ='{idtransaksi}'
+```
+
+## Query 3
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+Delete from M4_Bs_Detail where idbs = '{result_4}'
+```
+
+## Query 4
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs_history.vb`
+
+```sql
+INSERT INTO m4_bs_detail_history (SELECT 0, '{result_4}', bs.* FROM m4_bs_detail bs WHERE bs.idbs = '{idtransaksi}' )
+```
+
+## Query 5
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs_history.vb`
+
+```sql
+INSERT INTO m4_bs_history(SELECT 0, bs.* FROM m4_bs bs WHERE bs.bsid = '{idtransaksi}')
+```
+
+## Query 6
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+Insert into M0_Userlog (uluserid, ulidmodule, ulidmenu, uljenisaktivitas, ulaktivitas, ultgl, ulkodepa) values({userid}, {mdlid}, {mnid}, {jnsaktivitas}, '{notransaksi}', NOW(), {0})
+```
+
+## Query 7
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+Insert into M4_Bs (bscabang, bslokasi, bsgudang, bsasalbarang, bsasalbarangkategori, bsjenispembelian, bsjenispembeliankategori, bscarabayar, bssumber, bsnogrup, bsautonotransaksi, bsnotransaksi, bstgl, bskodepa, bsbagianperbandingan, bsbagianperbandingankontak, bsuraian, bscatatan, bsnoref, bstglnoref, bstglpenutupan, bsmatauang, bsidrq1, bsidrq2, bsidrq3, bsidrq4, bsidrq5, bsidrq1statuspo, bsidrq2statuspo, bsidrq3statuspo, bsidrq4statuspo, bsidrq5statuspo, bsstatus, bsstatussebelumnya, bsjmlrevisi, bscetakanke, bsinputuser, bsinputtgl, bsmodifikasiuser, bsmodifikasitgl, bsisclose, bscustomtext1, bscustomtext2, bscustomtext3, bscustomtext4, bscustomtext5, bscustomint1, bscustomint2, bscustomint3, bscustomdbl1, bscustomdbl2, bscustomdbl3, bscustomdate1, bscustomdate2, bscustomdate3) values('{bscabang}', '{bslokasi}', '{bsgudang}', '{bsasalbarang}', {bsasalbarangkategori}, '{bsjenispembelian}', {bsjenispembeliankategori}, {bscarabayar}, '{bssumber}', '{bsnogrup}', {bsautonotransaksi}, '{notransaksi}', '{bstgl}', {bskodepa}, {bsbagianperbandingan}, '{bsbagianperbandingankontak}', '{bsuraian}', '{bscatatan}', '{bsnoref}', '{bstglnoref}', '{bstglpenutupan}', '{bsmatauang}', {bsidrq1}, {bsidrq2}, {bsidrq3}, {bsidrq4}, {bsidrq5}, {bsidrq1statuspo}, {bsidrq2statuspo}, {bsidrq3statuspo}, {bsidrq4statuspo}, {bsidrq5statuspo}, {bsstatus}, {bsstatussebelumnya}, {bsjmlrevisi}, {bscetakanke}, {bsinputuser}, NOW(), {bsmodifikasiuser}, '1971-01-01 00:00:00', {bsisclose}, '{bscustomtext1}', '{bscustomtext2}', '{bscustomtext3}', '{bscustomtext4}', '{bscustomtext5}', {bscustomint1}, {bscustomint2}, {bscustomint3}, '{bscustomdbl1}', '{bscustomdbl2}', '{bscustomdbl3}', '{bscustomdate1}', '{bscustomdate2}', '{bscustomdate3}')
+```
+
+## Query 8
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+Insert into M4_Bs_Detail(idbsdetail, idbs, idrqdetail, terpilih, hargake, catatan, urutan) values{strValue2.ToString}
+```
+
+## Query 9
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+SELECT bscabang, bslokasi, bssumber, bsautonotransaksi, bsnotransaksi, bstgl FROM M4_bs WHERE bsid = '{idtransaksi}'
+```
+
+## Query 10
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs_history.vb`
+
+```sql
+SELECT bsidhistory FROM m4_bs_history WHERE bsid = '{idtransaksi}' ORDER BY bsmodifikasitgl DESC LIMIT 1
+```
+
+## Query 11
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+UPDATE M4_Bs SET Bsstatus = {nilaiStatus}, Bsmodifikasiuser='{userid}', Bsmodifikasitgl = NOW(), Bsjmlrevisi = Bsjmlrevisi + 1 WHERE Bsid = '{idtransaksi}'
+```
+
+## Query 12
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_bs.vb`
+
+```sql
+Update M4_Bs set bscabang = '{bscabang}', bslokasi = '{bslokasi}', bsgudang = '{bsgudang}', bsasalbarang = '{bsasalbarang}', bsasalbarangkategori = {bsasalbarangkategori}, bsjenispembelian = '{bsjenispembelian}', bsjenispembeliankategori = {bsjenispembeliankategori}, bscarabayar = {bscarabayar}, bssumber = '{bssumber}', bsnogrup = '{bsnogrup}', bsautonotransaksi = {bsautonotransaksi}, bsnotransaksi = '{notransaksi}', bstgl = '{bstgl}', bskodepa = {bskodepa}, bsbagianperbandingan = {bsbagianperbandingan}, bsbagianperbandingankontak = '{bsbagianperbandingankontak}', bsuraian = '{bsuraian}', bscatatan = '{bscatatan}', bsnoref = '{bsnoref}', bstglnoref = '{bstglnoref}', bstglpenutupan = '{bstglpenutupan}', bsmatauang = '{bsmatauang}', bsidrq1 = {bsidrq1}, bsidrq2 = {bsidrq2}, bsidrq3 = {bsidrq3}, bsidrq4 = {bsidrq4}, bsidrq5 = {bsidrq5}, bsidrq1statuspo = {bsidrq1statuspo}, bsidrq2statuspo = {bsidrq2statuspo}, bsidrq3statuspo = {bsidrq3statuspo}, bsidrq4statuspo = {bsidrq4statuspo}, bsidrq5statuspo = {bsidrq5statuspo}, bsstatus = {bsstatus}, bsstatussebelumnya = {bsstatussebelumnya}, bsjmlrevisi = bsjmlrevisi+1, bscetakanke = {bscetakanke}, bsmodifikasiuser = {bsmodifikasiuser}, bsmodifikasitgl = NOW(), bscustomtext1 = '{bscustomtext1}', bscustomtext2 = '{bscustomtext2}', bscustomtext3 = '{bscustomtext3}', bscustomtext4 = '{bscustomtext4}', bscustomtext5 = '{bscustomtext5}', bscustomint1 = {bscustomint1}, bscustomint2 = {bscustomint2}, bscustomint3 = {bscustomint3}, bscustomdbl1 = '{bscustomdbl1}', bscustomdbl2 = '{bscustomdbl2}', bscustomdbl3 = '{bscustomdbl3}', bscustomdate1 = '{bscustomdate1}', bscustomdate2 = '{bscustomdate2}', bscustomdate3 = '{bscustomdate3}' where bsid = '{bsid}'
+```
+
+## Query 13
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_bs_v`
+
+```sql
+select `bs`.`bsid` AS `bsid`,`bs`.`bscabang` AS `bscabang`,`bs`.`bslokasi` AS `bslokasi`,`bs`.`bsgudang` AS `bsgudang`,`bs`.`bsasalbarang` AS `bsasalbarang`,`bs`.`bsasalbarangkategori` AS `bsasalbarangkategori`,`bs`.`bsjenispembelian` AS `bsjenispembelian`,`bs`.`bsjenispembeliankategori` AS `bsjenispembeliankategori`,`bs`.`bscarabayar` AS `bscarabayar`,`bs`.`bssumber` AS `bssumber`,`bs`.`bsnogrup` AS `bsnogrup`,`bs`.`bsautonotransaksi` AS `bsautonotransaksi`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`bs`.`bstgl` AS `bstgl`,`bs`.`bskodepa` AS `bskodepa`,`bs`.`bsbagianperbandingan` AS `bsbagianperbandingan`,`bs`.`bsbagianperbandingankontak` AS `bsbagianperbandingankontak`,`bs`.`bsuraian` AS `bsuraian`,`bs`.`bscatatan` AS `bscatatan`,`bs`.`bsnoref` AS `bsnoref`,`bs`.`bstglnoref` AS `bstglnoref`,`bs`.`bstglpenutupan` AS `bstglpenutupan`,`bs`.`bsmatauang` AS `bsmatauang`,`bs`.`bsidrq1` AS `bsidrq1`,`bs`.`bsidrq2` AS `bsidrq2`,`bs`.`bsidrq3` AS `bsidrq3`,`bs`.`bsidrq4` AS `bsidrq4`,`bs`.`bsidrq5` AS `bsidrq5`,`bs`.`bsidrq1statuspo` AS `bsidrq1statuspo`,`bs`.`bsidrq2statuspo` AS `bsidrq2statuspo`,`bs`.`bsidrq3statuspo` AS `bsidrq3statuspo`,`bs`.`bsidrq4statuspo` AS `bsidrq4statuspo`,`bs`.`bsidrq5statuspo` AS `bsidrq5statuspo`,`bs`.`bsstatus` AS `bsstatus`,`bs`.`bsstatussebelumnya` AS `bsstatussebelumnya`,`bs`.`bsjmlrevisi` AS `bsjmlrevisi`,`bs`.`bscetakanke` AS `bscetakanke`,`bs`.`bsinputuser` AS `bsinputuser`,`bs`.`bsinputtgl` AS `bsinputtgl`,`bs`.`bsmodifikasiuser` AS `bsmodifikasiuser`,`bs`.`bsmodifikasitgl` AS `bsmodifikasitgl`,`bs`.`bsisclose` AS `bsisclose`,`br`.`bnama` AS `bscabangnama`,`lc`.`lnama` AS `bslokasinama`,`wh`.`wnama` AS `bsgudangnama`,`c1`.`kkode` AS `bsbagianperbandingankode`,`c1`.`knama` AS `bsbagianperbandingannama`,`rq1`.`rqnotransaksi` AS `bsnotransaksirq1`,`rq2`.`rqnotransaksi` AS `bsnotransaksirq2`,`rq3`.`rqnotransaksi` AS `bsnotransaksirq3`,`rq4`.`rqnotransaksi` AS `bsnotransaksirq4`,`rq5`.`rqnotransaksi` AS `bsnotransaksirq5`,`st1`.`nama` AS `bsstatusnama`,`st2`.`nama` AS `bsstatussebelumnyanama`,`u1`.`unama` AS `bsinputusernama`,`u2`.`unama` AS `bsmodifikasiusernama` from (((((((((((((`m4_bs` `bs` left join `m1_branch` `br` on((`br`.`bkode` = `bs`.`bscabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `bs`.`bslokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `bs`.`bsgudang`))) left join `m1_contact` `c1` on((`c1`.`kid` = `bs`.`bsbagianperbandingan`))) left join `m4_rq` `rq1` on((`bs`.`bsidrq1` = `rq1`.`rqid`))) left join `m4_rq` `rq2` on((`bs`.`bsidrq2` = `rq2`.`rqid`))) left join `m4_rq` `rq3` on((`bs`.`bsidrq3` = `rq3`.`rqid`))) left join `m4_rq` `rq4` on((`bs`.`bsidrq4` = `rq4`.`rqid`))) left join `m4_rq` `rq5` on((`bs`.`bsidrq5` = `rq5`.`rqid`))) left join `m0_status` `st1` on((`st1`.`kode` = `bs`.`bsstatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `bs`.`bsstatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `bs`.`bsinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `bs`.`bsmodifikasiuser`)))
+```
+
+## Query 14
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_bs_getdata`
+
+```sql
+select `bs`.`bsid` AS `bsid`,`bs`.`bscabang` AS `bscabang`,`bs`.`bslokasi` AS `bslokasi`,`bs`.`bsgudang` AS `bsgudang`,`bs`.`bsasalbarang` AS `bsasalbarang`,`bs`.`bsasalbarangkategori` AS `bsasalbarangkategori`,`bs`.`bsjenispembelian` AS `bsjenispembelian`,`bs`.`bsjenispembeliankategori` AS `bsjenispembeliankategori`,`bs`.`bscarabayar` AS `bscarabayar`,`bs`.`bssumber` AS `bssumber`,`bs`.`bsnogrup` AS `bsnogrup`,`bs`.`bsautonotransaksi` AS `bsautonotransaksi`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`bs`.`bstgl` AS `bstgl`,`bs`.`bskodepa` AS `bskodepa`,`bs`.`bsbagianperbandingan` AS `bsbagianperbandingan`,`bs`.`bsbagianperbandingankontak` AS `bsbagianperbandingankontak`,`bs`.`bsuraian` AS `bsuraian`,`bs`.`bscatatan` AS `bscatatan`,`bs`.`bsnoref` AS `bsnoref`,`bs`.`bstglnoref` AS `bstglnoref`,`bs`.`bstglpenutupan` AS `bstglpenutupan`,`bs`.`bsmatauang` AS `bsmatauang`,`bs`.`bsidrq1` AS `bsidrq1`,`bs`.`bsidrq2` AS `bsidrq2`,`bs`.`bsidrq3` AS `bsidrq3`,`bs`.`bsidrq4` AS `bsidrq4`,`bs`.`bsidrq5` AS `bsidrq5`,`bs`.`bsidrq1statuspo` AS `bsidrq1statuspo`,`bs`.`bsidrq2statuspo` AS `bsidrq2statuspo`,`bs`.`bsidrq3statuspo` AS `bsidrq3statuspo`,`bs`.`bsidrq4statuspo` AS `bsidrq4statuspo`,`bs`.`bsidrq5statuspo` AS `bsidrq5statuspo`,`bs`.`bsstatus` AS `bsstatus`,`bs`.`bsstatussebelumnya` AS `bsstatussebelumnya`,`bs`.`bsjmlrevisi` AS `bsjmlrevisi`,`bs`.`bscetakanke` AS `bscetakanke`,`bs`.`bsinputuser` AS `bsinputuser`,`bs`.`bsinputtgl` AS `bsinputtgl`,`bs`.`bsmodifikasiuser` AS `bsmodifikasiuser`,`bs`.`bsmodifikasitgl` AS `bsmodifikasitgl`,`bs`.`bsisclose` AS `bsisclose`,`bs`.`bscustomtext1` AS `bscustomtext1`,`bs`.`bscustomtext2` AS `bscustomtext2`,`bs`.`bscustomtext3` AS `bscustomtext3`,`bs`.`bscustomtext4` AS `bscustomtext4`,`bs`.`bscustomtext5` AS `bscustomtext5`,`bs`.`bscustomint1` AS `bscustomint1`,`bs`.`bscustomint2` AS `bscustomint2`,`bs`.`bscustomint3` AS `bscustomint3`,`bs`.`bscustomdbl1` AS `bscustomdbl1`,`bs`.`bscustomdbl2` AS `bscustomdbl2`,`bs`.`bscustomdbl3` AS `bscustomdbl3`,`bs`.`bscustomdate1` AS `bscustomdate1`,`bs`.`bscustomdate2` AS `bscustomdate2`,`bs`.`bscustomdate3` AS `bscustomdate3`,`br`.`bnama` AS `bscabangnama`,`lc`.`lnama` AS `bslokasinama`,`wh`.`wnama` AS `bsgudangnama`,`c`.`kkode` AS `bsbagianperbandingankode`,`c`.`knama` AS `bsbagianperbandingannama`,`rq1`.`rqnotransaksi` AS `bsnotransaksirq1`,`rq1`.`rqsupplier` AS `bssupplierrq1`,`c1`.`kkode` AS `bssupplierkoderq1`,`c1`.`knama` AS `bssuppliernamarq1`,`rq1`.`rqtermin` AS `bsterminrq1`,`tr1`.`trnama` AS `bsterminnamarq1`,`tr1`.`trharijatuhtempo` AS `bsterminharijatuhtemporq1`,`rq2`.`rqnotransaksi` AS `bsnotransaksirq2`,`rq2`.`rqsupplier` AS `bssupplierrq2`,`c2`.`kkode` AS `bssupplierkoderq2`,`c2`.`knama` AS `bssuppliernamarq2`,`rq2`.`rqtermin` AS `bsterminrq2`,`tr2`.`trnama` AS `bsterminnamarq2`,`tr2`.`trharijatuhtempo` AS `bsterminharijatuhtemporq2`,`rq3`.`rqnotransaksi` AS `bsnotransaksirq3`,`rq3`.`rqsupplier` AS `bssupplierrq3`,`c3`.`kkode` AS `bssupplierkoderq3`,`c3`.`knama` AS `bssuppliernamarq3`,`rq3`.`rqtermin` AS `bsterminrq3`,`tr3`.`trnama` AS `bsterminnamarq3`,`tr3`.`trharijatuhtempo` AS `bsterminharijatuhtemporq3`,`rq4`.`rqnotransaksi` AS `bsnotransaksirq4`,`rq4`.`rqsupplier` AS `bssupplierrq4`,`c4`.`kkode` AS `bssupplierkoderq4`,`c4`.`knama` AS `bssuppliernamarq4`,`rq4`.`rqtermin` AS `bsterminrq4`,`tr4`.`trnama` AS `bsterminnamarq4`,`tr4`.`trharijatuhtempo` AS `bsterminharijatuhtemporq4`,`rq5`.`rqnotransaksi` AS `bsnotransaksirq5`,`rq5`.`rqsupplier` AS `bssupplierrq5`,`c5`.`kkode` AS `bssupplierkoderq5`,`c5`.`knama` AS `bssuppliernamarq5`,`rq5`.`rqtermin` AS `bsterminrq5`,`tr5`.`trnama` AS `bsterminnamarq5`,`tr5`.`trharijatuhtempo` AS `bsterminharijatuhtemporq5`,`st1`.`nama` AS `bsstatusnama`,`st2`.`nama` AS `bsstatussebelumnyanama`,`u1`.`unama` AS `bsinputusernama`,`u2`.`unama` AS `bsmodifikasiusernama`,`bsd`.`idbsdetail` AS `idbsdetail`,`bsd`.`idbs` AS `idbs`,`bsd`.`idrqdetail` AS `idrqdetail`,`bsd`.`terpilih` AS `terpilih`,`bsd`.`hargake` AS `hargake`,`bsd`.`catatan` AS `catatan`,`bsd`.`urutan` AS `urutan`,`rqd`.`idrq` AS `idrq`,`rqd`.`idbarang` AS `idbarang`,`rqd`.`namabarang` AS `namabarang`,`rqd`.`tipebarang` AS `tipebarang`,`rqd`.`jml` AS `jml`,`rqd`.`satuan` AS `satuan`,`rqd`.`nilaisatuan` AS `nilaisatuan`,`rqd`.`jmlbarang` AS `jmlbarang`,`rqd`.`satuanbarang` AS `satuanbarang`,`rqd`.`matauang` AS `matauang`,`rqd`.`kurs` AS `kurs`,`rqd`.`harga` AS `harga`,`rqd`.`diskon` AS `diskon`,`rqd`.`jmldiskon` AS `jmldiskon`,`rqd`.`pajak1` AS `pajak1`,`rqd`.`jmlpajak1` AS `jmlpajak1`,`rqd`.`pajak2` AS `pajak2`,`rqd`.`jmlpajak2` AS `jmlpajak2`,`i`.`bkode` AS `kodebarang`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai` from ((((((((((((((((((((((((((((`m4_bs` `bs` left join `m1_branch` `br` on((`br`.`bkode` = `bs`.`bscabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `bs`.`bslokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `bs`.`bsgudang`))) left join `m1_contact` `c` on((`c`.`kid` = `bs`.`bsbagianperbandingan`))) left join `m4_rq` `rq1` on((`bs`.`bsidrq1` = `rq1`.`rqid`))) left join `m4_rq` `rq2` on((`bs`.`bsidrq2` = `rq2`.`rqid`))) left join `m4_rq` `rq3` on((`bs`.`bsidrq3` = `rq3`.`rqid`))) left join `m4_rq` `rq4` on((`bs`.`bsidrq4` = `rq4`.`rqid`))) left join `m4_rq` `rq5` on((`bs`.`bsidrq5` = `rq5`.`rqid`))) left join `m1_contact` `c1` on((`c1`.`kid` = `rq1`.`rqsupplier`))) left join `m1_contact` `c2` on((`c2`.`kid` = `rq2`.`rqsupplier`))) left join `m1_contact` `c3` on((`c3`.`kid` = `rq3`.`rqsupplier`))) left join `m1_contact` `c4` on((`c4`.`kid` = `rq4`.`rqsupplier`))) left join `m1_contact` `c5` on((`c5`.`kid` = `rq5`.`rqsupplier`))) left join `m1_terms` `tr1` on((`rq1`.`rqtermin` = `tr1`.`trkode`))) left join `m1_terms` `tr2` on((`rq2`.`rqtermin` = `tr2`.`trkode`))) left join `m1_terms` `tr3` on((`rq3`.`rqtermin` = `tr3`.`trkode`))) left join `m1_terms` `tr4` on((`rq4`.`rqtermin` = `tr4`.`trkode`))) left join `m1_terms` `tr5` on((`rq5`.`rqtermin` = `tr5`.`trkode`))) left join `m0_status` `st1` on((`st1`.`kode` = `bs`.`bsstatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `bs`.`bsstatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `bs`.`bsinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `bs`.`bsmodifikasiuser`))) join `m4_bs_detail` `bsd` on((`bs`.`bsid` = `bsd`.`idbs`))) left join `m4_rq_detail` `rqd` on((`bsd`.`idrqdetail` = `rqd`.`idrqdetail`))) left join `m1_item` `i` on((`i`.`bid` = `rqd`.`idbarang`))) left join `m1_tax` `t1` on((`rqd`.`pajak1` = `t1`.`tkode`))) left join `m1_tax` `t2` on((`rqd`.`pajak2` = `t2`.`tkode`)))
+```
+
+## Query 15
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_bs_terkait`
+
+```sql
+select `bs`.`bsid` AS `bsid`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`rq`.`rqsumber` AS `sumber`,`rq`.`rqid` AS `idterkait`,`rq`.`rqnotransaksi` AS `noterkait`,`rq`.`rqtgl` AS `tglterkait`,`rq`.`rqinputtgl` AS `inputtglterkait`,`rq`.`rqmodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (((`m4_bs_detail` `bsd` join `m4_bs` `bs` on((`bsd`.`idbs` = `bs`.`bsid`))) join `m4_rq_detail` `rqd` on((`bsd`.`idrqdetail` = `rqd`.`idrqdetail`))) join `m4_rq` `rq` on((`rqd`.`idrq` = `rq`.`rqid`))) where (`bs`.`bsid` = 'validtransaksi') group by `rq`.`rqid`,`bs`.`bsid` union all select `bs`.`bsid` AS `bsid`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`po`.`posumber` AS `sumber`,`po`.`poid` AS `idterkait`,`po`.`ponotransaksi` AS `noterkait`,`po`.`potgl` AS `tglterkait`,`po`.`poinputtgl` AS `inputtglterkait`,`po`.`pomodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (`m4_bs` `bs` join `m4_po` `po` on((`bs`.`bsid` = `po`.`poidbs`))) where (((`po`.`postatus` = 2) or (`po`.`postatus` = 3) or (`po`.`postatus` = 4) or (`po`.`postatus` = 7)) and (`bs`.`bsid` = 'validtransaksi')) group by `po`.`poid`,`bs`.`bsid`
+```
+
+## Query 16
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_bs_v_history`
+
+```sql
+select `bs`.`bsidhistory` AS `bsidhistory`,`bs`.`bsid` AS `bsid`,`bs`.`bscabang` AS `bscabang`,`bs`.`bslokasi` AS `bslokasi`,`bs`.`bsgudang` AS `bsgudang`,`bs`.`bsasalbarang` AS `bsasalbarang`,`bs`.`bsasalbarangkategori` AS `bsasalbarangkategori`,`bs`.`bsjenispembelian` AS `bsjenispembelian`,`bs`.`bsjenispembeliankategori` AS `bsjenispembeliankategori`,`bs`.`bscarabayar` AS `bscarabayar`,`bs`.`bssumber` AS `bssumber`,`bs`.`bsnogrup` AS `bsnogrup`,`bs`.`bsautonotransaksi` AS `bsautonotransaksi`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`bs`.`bstgl` AS `bstgl`,`bs`.`bskodepa` AS `bskodepa`,`bs`.`bsbagianperbandingan` AS `bsbagianperbandingan`,`bs`.`bsbagianperbandingankontak` AS `bsbagianperbandingankontak`,`bs`.`bsuraian` AS `bsuraian`,`bs`.`bscatatan` AS `bscatatan`,`bs`.`bsnoref` AS `bsnoref`,`bs`.`bstglnoref` AS `bstglnoref`,`bs`.`bstglpenutupan` AS `bstglpenutupan`,`bs`.`bsmatauang` AS `bsmatauang`,`bs`.`bsidrq1` AS `bsidrq1`,`bs`.`bsidrq2` AS `bsidrq2`,`bs`.`bsidrq3` AS `bsidrq3`,`bs`.`bsidrq4` AS `bsidrq4`,`bs`.`bsidrq5` AS `bsidrq5`,`bs`.`bsidrq1statuspo` AS `bsidrq1statuspo`,`bs`.`bsidrq2statuspo` AS `bsidrq2statuspo`,`bs`.`bsidrq3statuspo` AS `bsidrq3statuspo`,`bs`.`bsidrq4statuspo` AS `bsidrq4statuspo`,`bs`.`bsidrq5statuspo` AS `bsidrq5statuspo`,`bs`.`bsstatus` AS `bsstatus`,`bs`.`bsstatussebelumnya` AS `bsstatussebelumnya`,`bs`.`bsjmlrevisi` AS `bsjmlrevisi`,`bs`.`bscetakanke` AS `bscetakanke`,`bs`.`bsinputuser` AS `bsinputuser`,`bs`.`bsinputtgl` AS `bsinputtgl`,`bs`.`bsmodifikasiuser` AS `bsmodifikasiuser`,`bs`.`bsmodifikasitgl` AS `bsmodifikasitgl`,`bs`.`bsisclose` AS `bsisclose`,`br`.`bnama` AS `bscabangnama`,`lc`.`lnama` AS `bslokasinama`,`wh`.`wnama` AS `bsgudangnama`,`c1`.`kkode` AS `bsbagianperbandingankode`,`c1`.`knama` AS `bsbagianperbandingannama`,`rq1`.`rqnotransaksi` AS `bsnotransaksirq1`,`rq2`.`rqnotransaksi` AS `bsnotransaksirq2`,`rq3`.`rqnotransaksi` AS `bsnotransaksirq3`,`rq4`.`rqnotransaksi` AS `bsnotransaksirq4`,`rq5`.`rqnotransaksi` AS `bsnotransaksirq5`,`st1`.`nama` AS `bsstatusnama`,`st2`.`nama` AS `bsstatussebelumnyanama`,`u1`.`unama` AS `bsinputusernama`,`u2`.`unama` AS `bsmodifikasiusernama` from (((((((((((((`m4_bs_history` `bs` left join `m1_branch` `br` on((`br`.`bkode` = `bs`.`bscabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `bs`.`bslokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `bs`.`bsgudang`))) left join `m1_contact` `c1` on((`c1`.`kid` = `bs`.`bsbagianperbandingan`))) left join `m4_rq` `rq1` on((`bs`.`bsidrq1` = `rq1`.`rqid`))) left join `m4_rq` `rq2` on((`bs`.`bsidrq2` = `rq2`.`rqid`))) left join `m4_rq` `rq3` on((`bs`.`bsidrq3` = `rq3`.`rqid`))) left join `m4_rq` `rq4` on((`bs`.`bsidrq4` = `rq4`.`rqid`))) left join `m4_rq` `rq5` on((`bs`.`bsidrq5` = `rq5`.`rqid`))) left join `m0_status` `st1` on((`st1`.`kode` = `bs`.`bsstatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `bs`.`bsstatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `bs`.`bsinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `bs`.`bsmodifikasiuser`)))
+```
+
+## Query 17
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_bs_getdata_history`
+
+```sql
+select `bs`.`bsidhistory` AS `bsidhistory`,`bs`.`bsid` AS `bsid`,`bs`.`bscabang` AS `bscabang`,`bs`.`bslokasi` AS `bslokasi`,`bs`.`bsgudang` AS `bsgudang`,`bs`.`bsasalbarang` AS `bsasalbarang`,`bs`.`bsasalbarangkategori` AS `bsasalbarangkategori`,`bs`.`bsjenispembelian` AS `bsjenispembelian`,`bs`.`bsjenispembeliankategori` AS `bsjenispembeliankategori`,`bs`.`bscarabayar` AS `bscarabayar`,`bs`.`bssumber` AS `bssumber`,`bs`.`bsnogrup` AS `bsnogrup`,`bs`.`bsautonotransaksi` AS `bsautonotransaksi`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`bs`.`bstgl` AS `bstgl`,`bs`.`bskodepa` AS `bskodepa`,`bs`.`bsbagianperbandingan` AS `bsbagianperbandingan`,`bs`.`bsbagianperbandingankontak` AS `bsbagianperbandingankontak`,`bs`.`bsuraian` AS `bsuraian`,`bs`.`bscatatan` AS `bscatatan`,`bs`.`bsnoref` AS `bsnoref`,`bs`.`bstglnoref` AS `bstglnoref`,`bs`.`bstglpenutupan` AS `bstglpenutupan`,`bs`.`bsmatauang` AS `bsmatauang`,`bs`.`bsidrq1` AS `bsidrq1`,`bs`.`bsidrq2` AS `bsidrq2`,`bs`.`bsidrq3` AS `bsidrq3`,`bs`.`bsidrq4` AS `bsidrq4`,`bs`.`bsidrq5` AS `bsidrq5`,`bs`.`bsidrq1statuspo` AS `bsidrq1statuspo`,`bs`.`bsidrq2statuspo` AS `bsidrq2statuspo`,`bs`.`bsidrq3statuspo` AS `bsidrq3statuspo`,`bs`.`bsidrq4statuspo` AS `bsidrq4statuspo`,`bs`.`bsidrq5statuspo` AS `bsidrq5statuspo`,`bs`.`bsstatus` AS `bsstatus`,`bs`.`bsstatussebelumnya` AS `bsstatussebelumnya`,`bs`.`bsjmlrevisi` AS `bsjmlrevisi`,`bs`.`bscetakanke` AS `bscetakanke`,`bs`.`bsinputuser` AS `bsinputuser`,`bs`.`bsinputtgl` AS `bsinputtgl`,`bs`.`bsmodifikasiuser` AS `bsmodifikasiuser`,`bs`.`bsmodifikasitgl` AS `bsmodifikasitgl`,`bs`.`bsisclose` AS `bsisclose`,`bs`.`bscustomtext1` AS `bscustomtext1`,`bs`.`bscustomtext2` AS `bscustomtext2`,`bs`.`bscustomtext3` AS `bscustomtext3`,`bs`.`bscustomtext4` AS `bscustomtext4`,`bs`.`bscustomtext5` AS `bscustomtext5`,`bs`.`bscustomint1` AS `bscustomint1`,`bs`.`bscustomint2` AS `bscustomint2`,`bs`.`bscustomint3` AS `bscustomint3`,`bs`.`bscustomdbl1` AS `bscustomdbl1`,`bs`.`bscustomdbl2` AS `bscustomdbl2`,`bs`.`bscustomdbl3` AS `bscustomdbl3`,`bs`.`bscustomdate1` AS `bscustomdate1`,`bs`.`bscustomdate2` AS `bscustomdate2`,`bs`.`bscustomdate3` AS `bscustomdate3`,`br`.`bnama` AS `bscabangnama`,`lc`.`lnama` AS `bslokasinama`,`wh`.`wnama` AS `bsgudangnama`,`c`.`kkode` AS `bsbagianperbandingankode`,`c`.`knama` AS `bsbagianperbandingannama`,`rq1`.`rqnotransaksi` AS `bsnotransaksirq1`,`rq1`.`rqsupplier` AS `bssupplierrq1`,`c1`.`kkode` AS `bssupplierkoderq1`,`c1`.`knama` AS `bssuppliernamarq1`,`rq1`.`rqtermin` AS `bsterminrq1`,`tr1`.`trnama` AS `bsterminnamarq1`,`tr1`.`trharijatuhtempo` AS `bsterminharijatuhtemporq1`,`rq2`.`rqnotransaksi` AS `bsnotransaksirq2`,`rq2`.`rqsupplier` AS `bssupplierrq2`,`c2`.`kkode` AS `bssupplierkoderq2`,`c2`.`knama` AS `bssuppliernamarq2`,`rq2`.`rqtermin` AS `bsterminrq2`,`tr2`.`trnama` AS `bsterminnamarq2`,`tr2`.`trharijatuhtempo` AS `bsterminharijatuhtemporq2`,`rq3`.`rqnotransaksi` AS `bsnotransaksirq3`,`rq3`.`rqsupplier` AS `bssupplierrq3`,`c3`.`kkode` AS `bssupplierkoderq3`,`c3`.`knama` AS `bssuppliernamarq3`,`rq3`.`rqtermin` AS `bsterminrq3`,`tr3`.`trnama` AS `bsterminnamarq3`,`tr3`.`trharijatuhtempo` AS `bsterminharijatuhtemporq3`,`rq4`.`rqnotransaksi` AS `bsnotransaksirq4`,`rq4`.`rqsupplier` AS `bssupplierrq4`,`c4`.`kkode` AS `bssupplierkoderq4`,`c4`.`knama` AS `bssuppliernamarq4`,`rq4`.`rqtermin` AS `bsterminrq4`,`tr4`.`trnama` AS `bsterminnamarq4`,`tr4`.`trharijatuhtempo` AS `bsterminharijatuhtemporq4`,`rq5`.`rqnotransaksi` AS `bsnotransaksirq5`,`rq5`.`rqsupplier` AS `bssupplierrq5`,`c5`.`kkode` AS `bssupplierkoderq5`,`c5`.`knama` AS `bssuppliernamarq5`,`rq5`.`rqtermin` AS `bsterminrq5`,`tr5`.`trnama` AS `bsterminnamarq5`,`tr5`.`trharijatuhtempo` AS `bsterminharijatuhtemporq5`,`st1`.`nama` AS `bsstatusnama`,`st2`.`nama` AS `bsstatussebelumnyanama`,`u1`.`unama` AS `bsinputusernama`,`u2`.`unama` AS `bsmodifikasiusernama`,`bsd`.`idhistorydetail` AS `idhistorydetail`,`bsd`.`idhistory` AS `idhistory`,`bsd`.`idbsdetail` AS `idbsdetail`,`bsd`.`idbs` AS `idbs`,`bsd`.`idrqdetail` AS `idrqdetail`,`bsd`.`terpilih` AS `terpilih`,`bsd`.`hargake` AS `hargake`,`bsd`.`catatan` AS `catatan`,`bsd`.`urutan` AS `urutan`,`rqd`.`idrq` AS `idrq`,`rqd`.`idbarang` AS `idbarang`,`rqd`.`namabarang` AS `namabarang`,`rqd`.`tipebarang` AS `tipebarang`,`rqd`.`jml` AS `jml`,`rqd`.`satuan` AS `satuan`,`rqd`.`nilaisatuan` AS `nilaisatuan`,`rqd`.`jmlbarang` AS `jmlbarang`,`rqd`.`satuanbarang` AS `satuanbarang`,`rqd`.`matauang` AS `matauang`,`rqd`.`kurs` AS `kurs`,`rqd`.`harga` AS `harga`,`rqd`.`diskon` AS `diskon`,`rqd`.`jmldiskon` AS `jmldiskon`,`rqd`.`pajak1` AS `pajak1`,`rqd`.`jmlpajak1` AS `jmlpajak1`,`rqd`.`pajak2` AS `pajak2`,`rqd`.`jmlpajak2` AS `jmlpajak2`,`i`.`bkode` AS `kodebarang`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai` from ((((((((((((((((((((((((((((`m4_bs_history` `bs` left join `m1_branch` `br` on((`br`.`bkode` = `bs`.`bscabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `bs`.`bslokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `bs`.`bsgudang`))) left join `m1_contact` `c` on((`c`.`kid` = `bs`.`bsbagianperbandingan`))) left join `m4_rq` `rq1` on((`bs`.`bsidrq1` = `rq1`.`rqid`))) left join `m4_rq` `rq2` on((`bs`.`bsidrq2` = `rq2`.`rqid`))) left join `m4_rq` `rq3` on((`bs`.`bsidrq3` = `rq3`.`rqid`))) left join `m4_rq` `rq4` on((`bs`.`bsidrq4` = `rq4`.`rqid`))) left join `m4_rq` `rq5` on((`bs`.`bsidrq5` = `rq5`.`rqid`))) left join `m1_contact` `c1` on((`c1`.`kid` = `rq1`.`rqsupplier`))) left join `m1_contact` `c2` on((`c2`.`kid` = `rq2`.`rqsupplier`))) left join `m1_contact` `c3` on((`c3`.`kid` = `rq3`.`rqsupplier`))) left join `m1_contact` `c4` on((`c4`.`kid` = `rq4`.`rqsupplier`))) left join `m1_contact` `c5` on((`c5`.`kid` = `rq5`.`rqsupplier`))) left join `m1_terms` `tr1` on((`rq1`.`rqtermin` = `tr1`.`trkode`))) left join `m1_terms` `tr2` on((`rq2`.`rqtermin` = `tr2`.`trkode`))) left join `m1_terms` `tr3` on((`rq3`.`rqtermin` = `tr3`.`trkode`))) left join `m1_terms` `tr4` on((`rq4`.`rqtermin` = `tr4`.`trkode`))) left join `m1_terms` `tr5` on((`rq5`.`rqtermin` = `tr5`.`trkode`))) left join `m0_status` `st1` on((`st1`.`kode` = `bs`.`bsstatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `bs`.`bsstatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `bs`.`bsinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `bs`.`bsmodifikasiuser`))) join `m4_bs_detail_history` `bsd` on((`bs`.`bsidhistory` = `bsd`.`idhistory`))) left join `m4_rq_detail` `rqd` on((`bsd`.`idrqdetail` = `rqd`.`idrqdetail`))) left join `m1_item` `i` on((`i`.`bid` = `rqd`.`idbarang`))) left join `m1_tax` `t1` on((`rqd`.`pajak1` = `t1`.`tkode`))) left join `m1_tax` `t2` on((`rqd`.`pajak2` = `t2`.`tkode`)))
+```
+

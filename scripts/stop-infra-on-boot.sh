@@ -2,7 +2,6 @@
 set -euo pipefail
 containers=(
   sentient-infra-etl-worker
-  sentient-infra-llm-router
   sentient-infra-ai-engine
   sentient-infra-docs
   sentient-infra-web-dashboard

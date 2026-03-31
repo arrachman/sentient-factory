@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiStylesSheet">
+  <Styles isList="true" count="1">
+    <Tre_x0020_Reg_x0020_9 Ref="1" type="Stimulsoft.Report.StiStyle" isKey="true">
+      <Brush>Transparent</Brush>
+      <Conditions isList="true" count="0" />
+      <Description />
+      <Font>Lao UI,9,Bold,Point,False,0</Font>
+      <Name>Tre Reg 9</Name>
+      <TextBrush>Black</TextBrush>
+    </Tre_x0020_Reg_x0020_9>
+  </Styles>
+</StiSerializer>

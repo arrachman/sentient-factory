@@ -1,0 +1,324 @@
+{
+  "suite": "sales_sql_readonly_generator_m5",
+  "generated_at": "20260330T054914Z",
+  "results": [
+    {
+      "id": "m5_001_sq_header_list",
+      "query": "SELECT sq.sqid AS id_penawaran, sq.sqnotransaksi AS nomor_penawaran, sq.sqtgl AS tanggal_penawaran, c.knama AS nama_customer, sq.sqtotaltransaksi AS total_transaksi FROM m5_sq AS sq LEFT JOIN m1_contact AS c ON sq.sqcustomer = c.kid AND c.kaktif = 1 WHERE sq.sqisclose = 0 ORDER BY sq.sqtgl DESC, sq.sqnotransaksi DESC LIMIT 20;",
+      "status": "SUCCESS",
+      "raw_answer": "{\"status\":\"SUCCESS\",\"debug_info\":{\"intent_user\":\"Menampilkan 20 dokumen penawaran penjualan (sales quotation/SQ) terbaru beserta nama customer dan nilai total transaksinya.\",\"tables_used\":[\"m5_sq\",\"m1_contact\"],\"tables_missing\":[],\"reasoning\":\"1) Tabel utama yang paling tepat adalah m5_sq karena user meminta daftar penawaran penjualan terbaru, yaitu dokumen header SQ. 2) Untuk nama customer digunakan join relasi yang tersedia dari m5_sq.sqcustomer ke m1_contact.kid. 3) Nilai total transaksi diambil dari kolom header m5_sq.sqtotaltransaksi karena user meminta total transaksi per dokumen, bukan analitik per item. 4) Filter default/always_apply_filters pada m5_sq adalah sqisclose = 0, sehingga wajib diterapkan. 5) Karena user meminta daftar 20 terbaru, data diurutkan berdasarkan tanggal transaksi menurun lalu nomor transaksi menurun sebagai tie-breaker, dan dibatasi LIMIT 20.\",\"ai_metrics\":{\"confidence_score\":\"0.99\",\"schema_version_used\":\"Semantic Query Schema OBT\"}},\"execution_context\":{\"is_syntax_valid_prediction\":true,\"linting_warnings\":[]},\"query\":\"SELECT sq.sqid AS id_penawaran, sq.sqnotransaksi AS nomor_penawaran, sq.sqtgl AS tanggal_penawaran, c.knama AS nama_customer, sq.sqtotaltransaksi AS total_transaksi FROM m5_sq AS sq LEFT JOIN m1_contact AS c ON sq.sqcustomer = c.kid AND c.kaktif = 1 WHERE sq.sqisclose = 0 ORDER BY sq.sqtgl DESC, sq.sqnotransaksi DESC LIMIT 20;\",\"error_message\":null}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan 20 dokumen penawaran penjualan (sales quotation/SQ) terbaru beserta nama customer dan nilai total transaksinya.",
+          "tables_used": [
+            "m5_sq",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Tabel utama yang paling tepat adalah m5_sq karena user meminta daftar penawaran penjualan terbaru, yaitu dokumen header SQ. 2) Untuk nama customer digunakan join relasi yang tersedia dari m5_sq.sqcustomer ke m1_contact.kid. 3) Nilai total transaksi diambil dari kolom header m5_sq.sqtotaltransaksi karena user meminta total transaksi per dokumen, bukan analitik per item. 4) Filter default/always_apply_filters pada m5_sq adalah sqisclose = 0, sehingga wajib diterapkan. 5) Karena user meminta daftar 20 terbaru, data diurutkan berdasarkan tanggal transaksi menurun lalu nomor transaksi menurun sebagai tie-breaker, dan dibatasi LIMIT 20.",
+          "ai_metrics": {
+            "confidence_score": "0.99",
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT sq.sqid AS id_penawaran, sq.sqnotransaksi AS nomor_penawaran, sq.sqtgl AS tanggal_penawaran, c.knama AS nama_customer, sq.sqtotaltransaksi AS total_transaksi FROM m5_sq AS sq LEFT JOIN m1_contact AS c ON sq.sqcustomer = c.kid AND c.kaktif = 1 WHERE sq.sqisclose = 0 ORDER BY sq.sqtgl DESC, sq.sqnotransaksi DESC LIMIT 20;",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_002_so_item_detail",
+      "query": "SELECT i.bkode AS kode_barang, i.bnama AS nama_barang, sd.jmlbarang AS qty_order, sd.satuanbarang AS satuan_barang, sd.harga AS harga_satuan, sd.jmldiskon AS jumlah_diskon, sd.jmlpajak1 AS pajak1, sd.jmlpajak2 AS pajak2 FROM m5_so_detail sd INNER JOIN m1_item i ON sd.idbarang = i.bid WHERE sd.isclose = 0 AND i.baktif = 1 AND EXISTS (SELECT 1 FROM m5_so so WHERE so.soid = sd.idso AND so.soisclose = 0 AND so.sonotransaksi = :so_no) ORDER BY sd.urutan ASC",
+      "status": "SUCCESS",
+      "raw_answer": "{\n  \"status\": \"SUCCESS\",\n  \"debug_info\": {\n    \"intent_user\": \"Menampilkan daftar item/barang pada suatu sales order tertentu beserta kuantitas dan harga per item.\",\n    \"tables_used\": [\"m5_so_detail\", \"m1_item\"],\n    \"tables_missing\": [],\n    \"reasoning\": \"1) Karena user meminta item barang, qty, dan harga pada sales order, tabel utama yang paling tepat adalah tabel detail m5_so_detail, bukan header m5_so. 2) Untuk nama/kode barang yang lebih rapi dan terstandar, m5_so_detail di-join ke m1_item melalui relasi yang tersedia m5_so_detail.idbarang = m1_item.bid. 3) Kolom qty diambil dari m5_so_detail.jmlbarang karena metric schema untuk SO detail juga menggunakan jmlbarang sebagai kuantitas order. Harga diambil dari m5_so_detail.harga. 4) Always apply filter wajib diterapkan pada m5_so_detail yaitu isclose = 0 dan pada m1_item yaitu baktif = 1. 5) User menyebut sales order tertentu, tetapi tidak memberikan nomor/id SO spesifik pada prompt ini, sehingga query disusun sebagai template dengan placeholder filter pada nomor transaksi sales order di header menggunakan EXISTS ke m5_so agar tetap sesuai entitas 'sales order tertentu' dan tetap menjaga penggunaan detail sebagai basis utama.\",\n    \"ai_metrics\": {\n      \"confidence_score\": 0.89,\n      \"schema_version_used\": \"Semantic Query Schema OBT\"\n    }\n  },\n  \"execution_context\": {\n    \"is_syntax_valid_prediction\": true,\n    \"linting_warnings\": [\"Query memerlukan penggantian placeholder :so_no dengan nomor sales order yang dimaksud user sebelum dieksekusi.\"]\n  },\n  \"query\": \"SELECT i.bkode AS kode_barang, i.bnama AS nama_barang, sd.jmlbarang AS qty_order, sd.satuanbarang AS satuan_barang, sd.harga AS harga_satuan, sd.jmldiskon AS jumlah_diskon, sd.jmlpajak1 AS pajak1, sd.jmlpajak2 AS pajak2 FROM m5_so_detail sd INNER JOIN m1_item i ON sd.idbarang = i.bid WHERE sd.isclose = 0 AND i.baktif = 1 AND EXISTS (SELECT 1 FROM m5_so so WHERE so.soid = sd.idso AND so.soisclose = 0 AND so.sonotransaksi = :so_no) ORDER BY sd.urutan ASC\",\n  \"error_message\": null\n}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar item/barang pada suatu sales order tertentu beserta kuantitas dan harga per item.",
+          "tables_used": [
+            "m5_so_detail",
+            "m1_item"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Karena user meminta item barang, qty, dan harga pada sales order, tabel utama yang paling tepat adalah tabel detail m5_so_detail, bukan header m5_so. 2) Untuk nama/kode barang yang lebih rapi dan terstandar, m5_so_detail di-join ke m1_item melalui relasi yang tersedia m5_so_detail.idbarang = m1_item.bid. 3) Kolom qty diambil dari m5_so_detail.jmlbarang karena metric schema untuk SO detail juga menggunakan jmlbarang sebagai kuantitas order. Harga diambil dari m5_so_detail.harga. 4) Always apply filter wajib diterapkan pada m5_so_detail yaitu isclose = 0 dan pada m1_item yaitu baktif = 1. 5) User menyebut sales order tertentu, tetapi tidak memberikan nomor/id SO spesifik pada prompt ini, sehingga query disusun sebagai template dengan placeholder filter pada nomor transaksi sales order di header menggunakan EXISTS ke m5_so agar tetap sesuai entitas 'sales order tertentu' dan tetap menjaga penggunaan detail sebagai basis utama.",
+          "ai_metrics": {
+            "confidence_score": 0.89,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query memerlukan penggantian placeholder :so_no dengan nomor sales order yang dimaksud user sebelum dieksekusi."
+          ]
+        },
+        "query": "SELECT i.bkode AS kode_barang, i.bnama AS nama_barang, sd.jmlbarang AS qty_order, sd.satuanbarang AS satuan_barang, sd.harga AS harga_satuan, sd.jmldiskon AS jumlah_diskon, sd.jmlpajak1 AS pajak1, sd.jmlpajak2 AS pajak2 FROM m5_so_detail sd INNER JOIN m1_item i ON sd.idbarang = i.bid WHERE sd.isclose = 0 AND i.baktif = 1 AND EXISTS (SELECT 1 FROM m5_so so WHERE so.soid = sd.idso AND so.soisclose = 0 AND so.sonotransaksi = :so_no) ORDER BY sd.urutan ASC",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_003_sq_so_do_trace",
+      "query": "SELECT sq.sqnotransaksi AS nomor_quotation, sq.sqtgl AS tanggal_quotation, qd.idsqdetail AS id_detail_quotation, i.bkode AS kode_barang, COALESCE(i.bnama, qd.namabarang) AS nama_barang, qd.jmlbarang AS qty_quotation, qd.satuanbarang AS satuan_barang, qd.harga AS harga_quotation, qd.jmldiskon AS diskon_quotation, qd.jmlpajak1 AS pajak1_quotation, qd.jmlpajak2 AS pajak2_quotation, qd.jmlso AS qty_progres_so, qd.statusso AS status_so, COUNT(DISTINCT sod.idsodetail) AS jumlah_detail_so, COALESCE(SUM(dod.jmlbarang), 0) AS qty_progres_do, COUNT(DISTINCT dod.iddodetail) AS jumlah_detail_do, CASE WHEN COUNT(DISTINCT dod.iddodetail) > 0 THEN 'SUDAH DO' WHEN COUNT(DISTINCT sod.idsodetail) > 0 THEN 'SUDAH SO' ELSE 'BELUM SO/DO' END AS status_progres_dokumen FROM m5_sq_detail qd INNER JOIN m5_sq sq ON qd.idsq = sq.sqid LEFT JOIN m5_so_detail sod ON qd.idsqdetail = sod.idsqdetail AND sod.isclose = 0 LEFT JOIN m5_do_detail dod ON sod.idsodetail = dod.idsodetail LEFT JOIN m1_item i ON qd.idbarang = i.bid AND i.baktif = 1 WHERE sq.sqisclose = 0 GROUP BY sq.sqnotransaksi, sq.sqtgl, qd.idsqdetail, i.bkode, COALESCE(i.bnama, qd.namabarang), qd.jmlbarang, qd.satuanbarang, qd.harga, qd.jmldiskon, qd.jmlpajak1, qd.jmlpajak2, qd.jmlso, qd.statusso ORDER BY sq.sqtgl DESC, sq.sqnotransaksi DESC, qd.idsqdetail DESC",
+      "status": "SUCCESS",
+      "raw_answer": "{\n  \"status\": \"SUCCESS\",\n  \"debug_info\": {\n    \"intent_user\": \"Menampilkan progres alur dokumen penjualan dari sales quotation ke sales order lalu ke delivery order untuk setiap item/baris quotation.\",\n    \"tables_used\": [\"m5_sq\", \"m5_sq_detail\", \"m5_so_detail\", \"m5_do_detail\", \"m1_item\"],\n    \"tables_missing\": [],\n    \"reasoning\": \"1) Karena user meminta progres dokumen per item quotation, tabel utama yang paling tepat adalah m5_sq_detail sebagai detail item quotation. 2) Untuk mendapatkan identitas dokumen quotation, query join ke m5_sq melalui relasi m5_sq_detail.idsq = m5_sq.sqid. 3) Untuk progres ke sales order, digunakan join_hints sales_document_flow yaitu m5_sq_detail.idsqdetail = m5_so_detail.idsqdetail. 4) Untuk progres ke delivery order, digunakan join_hints yang sama melalui m5_so_detail.idsodetail = m5_do_detail.idsodetail. Ini lebih aman dan sesuai schema dibanding mengarang join dari header. 5) Join ke m1_item dipakai untuk menampilkan kode/nama item yang lebih konsisten, dengan filter wajib m1_item.baktif = 1. 6) Filter wajib schema juga diterapkan: m5_sq.sqisclose = 0, m5_so_detail.isclose = 0, dan m5_si_detail tidak dipakai. 7) Karena satu item quotation bisa terealisasi ke banyak SO/DO, maka digunakan GROUP BY per item quotation dan agregasi COUNT(DISTINCT ...) serta SUM(...) pada kuantitas progres. 8) Kolom status progres memanfaatkan field native pada quotation detail yaitu jmlso/statusso dan menjumlahkan baris DO aktual dari relasi lanjutannya.\",\n    \"ai_metrics\": {\n      \"confidence_score\": 0.92,\n      \"schema_version_used\": \"Semantic Query Schema OBT\"\n    }\n  },\n  \"execution_context\": {\n    \"is_syntax_valid_prediction\": true,\n    \"linting_warnings\": []\n  },\n  \"query\": \"SELECT sq.sqnotransaksi AS nomor_quotation, sq.sqtgl AS tanggal_quotation, qd.idsqdetail AS id_detail_quotation, i.bkode AS kode_barang, COALESCE(i.bnama, qd.namabarang) AS nama_barang, qd.jmlbarang AS qty_quotation, qd.satuanbarang AS satuan_barang, qd.harga AS harga_quotation, qd.jmldiskon AS diskon_quotation, qd.jmlpajak1 AS pajak1_quotation, qd.jmlpajak2 AS pajak2_quotation, qd.jmlso AS qty_progres_so, qd.statusso AS status_so, COUNT(DISTINCT sod.idsodetail) AS jumlah_detail_so, COALESCE(SUM(dod.jmlbarang), 0) AS qty_progres_do, COUNT(DISTINCT dod.iddodetail) AS jumlah_detail_do, CASE WHEN COUNT(DISTINCT dod.iddodetail) > 0 THEN 'SUDAH DO' WHEN COUNT(DISTINCT sod.idsodetail) > 0 THEN 'SUDAH SO' ELSE 'BELUM SO/DO' END AS status_progres_dokumen FROM m5_sq_detail qd INNER JOIN m5_sq sq ON qd.idsq = sq.sqid LEFT JOIN m5_so_detail sod ON qd.idsqdetail = sod.idsqdetail AND sod.isclose = 0 LEFT JOIN m5_do_detail dod ON sod.idsodetail = dod.idsodetail LEFT JOIN m1_item i ON qd.idbarang = i.bid AND i.baktif = 1 WHERE sq.sqisclose = 0 GROUP BY sq.sqnotransaksi, sq.sqtgl, qd.idsqdetail, i.bkode, COALESCE(i.bnama, qd.namabarang), qd.jmlbarang, qd.satuanbarang, qd.harga, qd.jmldiskon, qd.jmlpajak1, qd.jmlpajak2, qd.jmlso, qd.statusso ORDER BY sq.sqtgl DESC, sq.sqnotransaksi DESC, qd.idsqdetail DESC\",\n  \"error_message\": null\n}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan progres alur dokumen penjualan dari sales quotation ke sales order lalu ke delivery order untuk setiap item/baris quotation.",
+          "tables_used": [
+            "m5_sq",
+            "m5_sq_detail",
+            "m5_so_detail",
+            "m5_do_detail",
+            "m1_item"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Karena user meminta progres dokumen per item quotation, tabel utama yang paling tepat adalah m5_sq_detail sebagai detail item quotation. 2) Untuk mendapatkan identitas dokumen quotation, query join ke m5_sq melalui relasi m5_sq_detail.idsq = m5_sq.sqid. 3) Untuk progres ke sales order, digunakan join_hints sales_document_flow yaitu m5_sq_detail.idsqdetail = m5_so_detail.idsqdetail. 4) Untuk progres ke delivery order, digunakan join_hints yang sama melalui m5_so_detail.idsodetail = m5_do_detail.idsodetail. Ini lebih aman dan sesuai schema dibanding mengarang join dari header. 5) Join ke m1_item dipakai untuk menampilkan kode/nama item yang lebih konsisten, dengan filter wajib m1_item.baktif = 1. 6) Filter wajib schema juga diterapkan: m5_sq.sqisclose = 0, m5_so_detail.isclose = 0, dan m5_si_detail tidak dipakai. 7) Karena satu item quotation bisa terealisasi ke banyak SO/DO, maka digunakan GROUP BY per item quotation dan agregasi COUNT(DISTINCT ...) serta SUM(...) pada kuantitas progres. 8) Kolom status progres memanfaatkan field native pada quotation detail yaitu jmlso/statusso dan menjumlahkan baris DO aktual dari relasi lanjutannya.",
+          "ai_metrics": {
+            "confidence_score": 0.92,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT sq.sqnotransaksi AS nomor_quotation, sq.sqtgl AS tanggal_quotation, qd.idsqdetail AS id_detail_quotation, i.bkode AS kode_barang, COALESCE(i.bnama, qd.namabarang) AS nama_barang, qd.jmlbarang AS qty_quotation, qd.satuanbarang AS satuan_barang, qd.harga AS harga_quotation, qd.jmldiskon AS diskon_quotation, qd.jmlpajak1 AS pajak1_quotation, qd.jmlpajak2 AS pajak2_quotation, qd.jmlso AS qty_progres_so, qd.statusso AS status_so, COUNT(DISTINCT sod.idsodetail) AS jumlah_detail_so, COALESCE(SUM(dod.jmlbarang), 0) AS qty_progres_do, COUNT(DISTINCT dod.iddodetail) AS jumlah_detail_do, CASE WHEN COUNT(DISTINCT dod.iddodetail) > 0 THEN 'SUDAH DO' WHEN COUNT(DISTINCT sod.idsodetail) > 0 THEN 'SUDAH SO' ELSE 'BELUM SO/DO' END AS status_progres_dokumen FROM m5_sq_detail qd INNER JOIN m5_sq sq ON qd.idsq = sq.sqid LEFT JOIN m5_so_detail sod ON qd.idsqdetail = sod.idsqdetail AND sod.isclose = 0 LEFT JOIN m5_do_detail dod ON sod.idsodetail = dod.idsodetail LEFT JOIN m1_item i ON qd.idbarang = i.bid AND i.baktif = 1 WHERE sq.sqisclose = 0 GROUP BY sq.sqnotransaksi, sq.sqtgl, qd.idsqdetail, i.bkode, COALESCE(i.bnama, qd.namabarang), qd.jmlbarang, qd.satuanbarang, qd.harga, qd.jmldiskon, qd.jmlpajak1, qd.jmlpajak2, qd.jmlso, qd.statusso ORDER BY sq.sqtgl DESC, sq.sqnotransaksi DESC, qd.idsqdetail DESC",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_004_si_open_invoice",
+      "query": "SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS total_invoice, si.sijmlbayar AS jumlah_pembayaran, si.sistatuslunas AS status_lunas FROM m5_si AS si LEFT JOIN m1_contact AS c ON si.sicustomer = c.kid AND c.kaktif = 1 WHERE si.siisclose = 0 AND si.sistatuslunas <> 'LUNAS' ORDER BY si.sitgl DESC, si.sinotransaksi DESC LIMIT 100;",
+      "status": "SUCCESS",
+      "raw_answer": "{\"status\":\"SUCCESS\",\"debug_info\":{\"intent_user\":\"Menampilkan daftar invoice penjualan yang masih belum lunas, disertai nilai total invoice dan jumlah pembayaran yang sudah tercatat.\",\"tables_used\":[\"m5_si\"],\"tables_missing\":[],\"reasoning\":\"1) Tabel utama yang paling tepat adalah m5_si karena user meminta daftar invoice penjualan per dokumen, sehingga header invoice penjualan diprioritaskan. 2) Kolom yang dipakai: sinotransaksi untuk nomor invoice, sitgl untuk tanggal invoice, sicustomer untuk referensi customer, sitotaltransaksi untuk nilai total invoice, sijmlbayar untuk jumlah pembayaran, dan sistatuslunas untuk menentukan invoice belum lunas. 3) Join ke m1_contact dipakai untuk menampilkan nama customer melalui relasi m5_si.sicustomer = m1_contact.kid. 4) Filter default schema wajib diterapkan pada m5_si yaitu siisclose = 0, dan pada m1_contact yaitu kaktif = 1. 5) Karena user meminta invoice yang belum lunas, filter menggunakan sistatuslunas <> 'LUNAS'. Ini mengikuti field status lunas yang memang tersedia di schema dan lebih aman dibanding mengarang logika pembayaran dari tabel lain. 6) Karena ini permintaan daftar/list tanpa batas eksplisit, ditambahkan LIMIT 100 sesuai aturan.\",\"ai_metrics\":{\"confidence_score\":\"0.95\",\"schema_version_used\":\"Semantic Query Schema OBT\"}},\"execution_context\":{\"is_syntax_valid_prediction\":true,\"linting_warnings\":[]},\"query\":\"SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS total_invoice, si.sijmlbayar AS jumlah_pembayaran, si.sistatuslunas AS status_lunas FROM m5_si AS si LEFT JOIN m1_contact AS c ON si.sicustomer = c.kid AND c.kaktif = 1 WHERE si.siisclose = 0 AND si.sistatuslunas <> 'LUNAS' ORDER BY si.sitgl DESC, si.sinotransaksi DESC LIMIT 100;\",\"error_message\":null}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar invoice penjualan yang masih belum lunas, disertai nilai total invoice dan jumlah pembayaran yang sudah tercatat.",
+          "tables_used": [
+            "m5_si"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Tabel utama yang paling tepat adalah m5_si karena user meminta daftar invoice penjualan per dokumen, sehingga header invoice penjualan diprioritaskan. 2) Kolom yang dipakai: sinotransaksi untuk nomor invoice, sitgl untuk tanggal invoice, sicustomer untuk referensi customer, sitotaltransaksi untuk nilai total invoice, sijmlbayar untuk jumlah pembayaran, dan sistatuslunas untuk menentukan invoice belum lunas. 3) Join ke m1_contact dipakai untuk menampilkan nama customer melalui relasi m5_si.sicustomer = m1_contact.kid. 4) Filter default schema wajib diterapkan pada m5_si yaitu siisclose = 0, dan pada m1_contact yaitu kaktif = 1. 5) Karena user meminta invoice yang belum lunas, filter menggunakan sistatuslunas <> 'LUNAS'. Ini mengikuti field status lunas yang memang tersedia di schema dan lebih aman dibanding mengarang logika pembayaran dari tabel lain. 6) Karena ini permintaan daftar/list tanpa batas eksplisit, ditambahkan LIMIT 100 sesuai aturan.",
+          "ai_metrics": {
+            "confidence_score": "0.95",
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS total_invoice, si.sijmlbayar AS jumlah_pembayaran, si.sistatuslunas AS status_lunas FROM m5_si AS si LEFT JOIN m1_contact AS c ON si.sicustomer = c.kid AND c.kaktif = 1 WHERE si.siisclose = 0 AND si.sistatuslunas <> 'LUNAS' ORDER BY si.sitgl DESC, si.sinotransaksi DESC LIMIT 100;",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_005_ic_poly_si",
+      "query": "SELECT ic.icnotransaksi AS nomor_invoice_collection, ic.ictgl AS tanggal_invoice_collection, c.knama AS nama_customer, icd.idicdetail AS id_detail_tagihan, icd.sumber AS sumber_tagihan, si.sinotransaksi AS nomor_sales_invoice, si.sitgl AS tanggal_sales_invoice, icd.totaltransaksi AS total_tagihan, icd.terbayar AS total_terbayar, icd.sisa AS sisa_tagihan, icd.jmlbayar AS jumlah_bayar_di_ic, icd.diskontermin AS diskon_termin, icd.catatan AS catatan_tagihan FROM m5_ic_detail AS icd INNER JOIN m5_ic AS ic ON icd.idic = ic.icid INNER JOIN m5_si AS si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid INNER JOIN m1_contact AS c ON ic.iccustomer = c.kid WHERE c.kaktif = 1 AND si.siisclose = 0 ORDER BY ic.ictgl DESC, ic.icnotransaksi DESC, icd.urutan ASC LIMIT 100",
+      "status": "SUCCESS",
+      "raw_answer": "{\n  \"status\": \"SUCCESS\",\n  \"debug_info\": {\n    \"intent_user\": \"Menampilkan daftar tagihan pada invoice collection yang sumber tagihannya berasal dari sales invoice.\",\n    \"tables_used\": [\"m5_ic\", \"m5_ic_detail\", \"m5_si\", \"m1_contact\"],\n    \"tables_missing\": [],\n    \"reasoning\": \"1) Tabel utama yang paling tepat adalah m5_ic_detail karena user meminta daftar tagihan invoice collection, dan tiap baris tagihan disimpan di detail IC. 2) Untuk memastikan hanya tagihan yang berasal dari sales invoice, dipakai relasi polymorphic resmi dengan filter m5_ic_detail.sumber = 'SI' lalu join ke m5_si melalui m5_ic_detail.idtransaksi = m5_si.siid. Ini mengikuti aturan M5 agar tidak join idtransaksi langsung tanpa memeriksa kolom sumber. 3) Header invoice collection m5_ic dipakai untuk menampilkan nomor dan tanggal dokumen IC. 4) m1_contact dipakai lewat relasi m5_ic.iccustomer = m1_contact.kid untuk menampilkan nama customer, sekaligus menerapkan always_apply_filters master kontak yaitu kaktif = 1. 5) m5_si memiliki always_apply_filters siisclose = 0 sehingga hanya invoice penjualan aktif/open secara schema yang ditampilkan. Tidak ada always_apply_filters pada m5_ic/m5_ic_detail di schema yang wajib ditambahkan. 6) Karena user meminta daftar/list tanpa batas, ditambahkan LIMIT 100 sesuai aturan.\",\n    \"ai_metrics\": {\n      \"confidence_score\": 0.96,\n      \"schema_version_used\": \"Semantic Query Schema OBT\"\n    }\n  },\n  \"execution_context\": {\n    \"is_syntax_valid_prediction\": true,\n    \"linting_warnings\": []\n  },\n  \"query\": \"SELECT ic.icnotransaksi AS nomor_invoice_collection, ic.ictgl AS tanggal_invoice_collection, c.knama AS nama_customer, icd.idicdetail AS id_detail_tagihan, icd.sumber AS sumber_tagihan, si.sinotransaksi AS nomor_sales_invoice, si.sitgl AS tanggal_sales_invoice, icd.totaltransaksi AS total_tagihan, icd.terbayar AS total_terbayar, icd.sisa AS sisa_tagihan, icd.jmlbayar AS jumlah_bayar_di_ic, icd.diskontermin AS diskon_termin, icd.catatan AS catatan_tagihan FROM m5_ic_detail AS icd INNER JOIN m5_ic AS ic ON icd.idic = ic.icid INNER JOIN m5_si AS si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid INNER JOIN m1_contact AS c ON ic.iccustomer = c.kid WHERE c.kaktif = 1 AND si.siisclose = 0 ORDER BY ic.ictgl DESC, ic.icnotransaksi DESC, icd.urutan ASC LIMIT 100\",\n  \"error_message\": null\n}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar tagihan pada invoice collection yang sumber tagihannya berasal dari sales invoice.",
+          "tables_used": [
+            "m5_ic",
+            "m5_ic_detail",
+            "m5_si",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Tabel utama yang paling tepat adalah m5_ic_detail karena user meminta daftar tagihan invoice collection, dan tiap baris tagihan disimpan di detail IC. 2) Untuk memastikan hanya tagihan yang berasal dari sales invoice, dipakai relasi polymorphic resmi dengan filter m5_ic_detail.sumber = 'SI' lalu join ke m5_si melalui m5_ic_detail.idtransaksi = m5_si.siid. Ini mengikuti aturan M5 agar tidak join idtransaksi langsung tanpa memeriksa kolom sumber. 3) Header invoice collection m5_ic dipakai untuk menampilkan nomor dan tanggal dokumen IC. 4) m1_contact dipakai lewat relasi m5_ic.iccustomer = m1_contact.kid untuk menampilkan nama customer, sekaligus menerapkan always_apply_filters master kontak yaitu kaktif = 1. 5) m5_si memiliki always_apply_filters siisclose = 0 sehingga hanya invoice penjualan aktif/open secara schema yang ditampilkan. Tidak ada always_apply_filters pada m5_ic/m5_ic_detail di schema yang wajib ditambahkan. 6) Karena user meminta daftar/list tanpa batas, ditambahkan LIMIT 100 sesuai aturan.",
+          "ai_metrics": {
+            "confidence_score": 0.96,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT ic.icnotransaksi AS nomor_invoice_collection, ic.ictgl AS tanggal_invoice_collection, c.knama AS nama_customer, icd.idicdetail AS id_detail_tagihan, icd.sumber AS sumber_tagihan, si.sinotransaksi AS nomor_sales_invoice, si.sitgl AS tanggal_sales_invoice, icd.totaltransaksi AS total_tagihan, icd.terbayar AS total_terbayar, icd.sisa AS sisa_tagihan, icd.jmlbayar AS jumlah_bayar_di_ic, icd.diskontermin AS diskon_termin, icd.catatan AS catatan_tagihan FROM m5_ic_detail AS icd INNER JOIN m5_ic AS ic ON icd.idic = ic.icid INNER JOIN m5_si AS si ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid INNER JOIN m1_contact AS c ON ic.iccustomer = c.kid WHERE c.kaktif = 1 AND si.siisclose = 0 ORDER BY ic.ictgl DESC, ic.icnotransaksi DESC, icd.urutan ASC LIMIT 100",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_006_pv_poly_sr",
+      "query": "SELECT pv.pvid AS payment_voucher_id, pv.pvnotransaksi AS nomor_payment_voucher, pv.pvtgl AS tanggal_payment_voucher, c.knama AS nama_customer, sr.srid AS sales_return_id, sr.srnotransaksi AS nomor_sales_return, sr.srtgl AS tanggal_sales_return, pvd.totaltransaksi AS total_sales_return, pvd.terbayar AS total_terbayar_sebelumnya, pvd.jmlbayar AS jumlah_dibayar, pvd.diskontermin AS diskon_termin, pvd.jmldiskontermin AS jumlah_diskon_termin, pvd.sisa AS sisa_transaksi, pv.pvstatus AS status_payment_voucher FROM m5_pv AS pv INNER JOIN m5_pv_detail AS pvd ON pvd.idpv = pv.pvid INNER JOIN m5_sr AS sr ON pvd.sumber = 'SR' AND pvd.idtransaksi = sr.srid LEFT JOIN m1_contact AS c ON pv.pvcustomer = c.kid AND c.kaktif = 1 WHERE pvd.sumber = 'SR' ORDER BY pv.pvtgl DESC, pv.pvnotransaksi DESC LIMIT 100",
+      "status": "SUCCESS",
+      "raw_answer": "{\n  \"status\": \"SUCCESS\",\n  \"debug_info\": {\n    \"intent_user\": \"User ingin melihat daftar dokumen payment voucher (PV) yang dipakai untuk membayar atau mengompensasikan transaksi sales return (SR).\",\n    \"tables_used\": [\"m5_pv\", \"m5_pv_detail\", \"m5_sr\", \"m1_contact\"],\n    \"tables_missing\": [],\n    \"reasoning\": \"1) Entitas utama adalah payment voucher, jadi tabel header m5_pv dipilih untuk daftar dokumen PV. 2) Karena user spesifik meminta PV yang membayar sales return, maka detail pembayaran m5_pv_detail wajib dipakai dan difilter dengan sumber = 'SR' sesuai polymorphic_relationships sales_receivable_polymorphic_targets. 3) Untuk mendapatkan nomor dan tanggal sales return yang dibayar, m5_pv_detail di-join ke m5_sr memakai syarat polymorphic yang benar: pvd.sumber = 'SR' AND pvd.idtransaksi = sr.srid. Ini mengikuti aturan M5 agar tidak join idtransaksi langsung tanpa memeriksa kolom sumber. 4) Customer diambil dari header PV melalui relationship m5_pv.pvcustomer = m1_contact.kid agar daftar lebih informatif. 5) Tidak ada always_apply_filters di m5_pv dan m5_pv_detail, tetapi m1_contact punya always_apply_filters kaktif = 1 sehingga filter itu diterapkan wajib. 6) Karena user meminta daftar/list dan tidak memberi batas, ditambahkan LIMIT 100 sesuai aturan.\",\n    \"ai_metrics\": {\n      \"confidence_score\": 0.96,\n      \"schema_version_used\": \"Semantic Query Schema OBT\"\n    }\n  },\n  \"execution_context\": {\n    \"is_syntax_valid_prediction\": true,\n    \"linting_warnings\": []\n  },\n  \"query\": \"SELECT pv.pvid AS payment_voucher_id, pv.pvnotransaksi AS nomor_payment_voucher, pv.pvtgl AS tanggal_payment_voucher, c.knama AS nama_customer, sr.srid AS sales_return_id, sr.srnotransaksi AS nomor_sales_return, sr.srtgl AS tanggal_sales_return, pvd.totaltransaksi AS total_sales_return, pvd.terbayar AS total_terbayar_sebelumnya, pvd.jmlbayar AS jumlah_dibayar, pvd.diskontermin AS diskon_termin, pvd.jmldiskontermin AS jumlah_diskon_termin, pvd.sisa AS sisa_transaksi, pv.pvstatus AS status_payment_voucher FROM m5_pv AS pv INNER JOIN m5_pv_detail AS pvd ON pvd.idpv = pv.pvid INNER JOIN m5_sr AS sr ON pvd.sumber = 'SR' AND pvd.idtransaksi = sr.srid LEFT JOIN m1_contact AS c ON pv.pvcustomer = c.kid AND c.kaktif = 1 WHERE pvd.sumber = 'SR' ORDER BY pv.pvtgl DESC, pv.pvnotransaksi DESC LIMIT 100\",\n  \"error_message\": null\n}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "User ingin melihat daftar dokumen payment voucher (PV) yang dipakai untuk membayar atau mengompensasikan transaksi sales return (SR).",
+          "tables_used": [
+            "m5_pv",
+            "m5_pv_detail",
+            "m5_sr",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Entitas utama adalah payment voucher, jadi tabel header m5_pv dipilih untuk daftar dokumen PV. 2) Karena user spesifik meminta PV yang membayar sales return, maka detail pembayaran m5_pv_detail wajib dipakai dan difilter dengan sumber = 'SR' sesuai polymorphic_relationships sales_receivable_polymorphic_targets. 3) Untuk mendapatkan nomor dan tanggal sales return yang dibayar, m5_pv_detail di-join ke m5_sr memakai syarat polymorphic yang benar: pvd.sumber = 'SR' AND pvd.idtransaksi = sr.srid. Ini mengikuti aturan M5 agar tidak join idtransaksi langsung tanpa memeriksa kolom sumber. 4) Customer diambil dari header PV melalui relationship m5_pv.pvcustomer = m1_contact.kid agar daftar lebih informatif. 5) Tidak ada always_apply_filters di m5_pv dan m5_pv_detail, tetapi m1_contact punya always_apply_filters kaktif = 1 sehingga filter itu diterapkan wajib. 6) Karena user meminta daftar/list dan tidak memberi batas, ditambahkan LIMIT 100 sesuai aturan.",
+          "ai_metrics": {
+            "confidence_score": 0.96,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT pv.pvid AS payment_voucher_id, pv.pvnotransaksi AS nomor_payment_voucher, pv.pvtgl AS tanggal_payment_voucher, c.knama AS nama_customer, sr.srid AS sales_return_id, sr.srnotransaksi AS nomor_sales_return, sr.srtgl AS tanggal_sales_return, pvd.totaltransaksi AS total_sales_return, pvd.terbayar AS total_terbayar_sebelumnya, pvd.jmlbayar AS jumlah_dibayar, pvd.diskontermin AS diskon_termin, pvd.jmldiskontermin AS jumlah_diskon_termin, pvd.sisa AS sisa_transaksi, pv.pvstatus AS status_payment_voucher FROM m5_pv AS pv INNER JOIN m5_pv_detail AS pvd ON pvd.idpv = pv.pvid INNER JOIN m5_sr AS sr ON pvd.sumber = 'SR' AND pvd.idtransaksi = sr.srid LEFT JOIN m1_contact AS c ON pv.pvcustomer = c.kid AND c.kaktif = 1 WHERE pvd.sumber = 'SR' ORDER BY pv.pvtgl DESC, pv.pvnotransaksi DESC LIMIT 100",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_007_sie_poly_source",
+      "query": "SELECT s.sieid AS id_tukar_faktur, s.sienotransaksi AS no_tukar_faktur, s.sietgl AS tgl_tukar_faktur, sd.idsiedetail AS id_detail_tukar_faktur, sd.sumber AS tipe_dokumen_sumber, CASE WHEN sd.sumber = 'SI' THEN si.siinotransaksi ELSE NULL END AS no_invoice_sumber, CASE WHEN sd.sumber = 'SI' THEN si.sitgl ELSE NULL END AS tgl_invoice_sumber, CASE WHEN sd.sumber = 'SR' THEN sr.srnotransaksi ELSE NULL END AS no_retur_sumber, CASE WHEN sd.sumber = 'SR' THEN sr.srtgl ELSE NULL END AS tgl_retur_sumber, sd.catatan AS catatan_detail_sumber FROM m5_sie AS s INNER JOIN m5_sie_detail AS sd ON sd.idsie = s.sieid LEFT JOIN m5_si AS si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid LEFT JOIN m5_sr AS sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid ORDER BY s.sietgl DESC, s.sienotransaksi DESC, sd.urutan ASC LIMIT 100",
+      "status": "SUCCESS",
+      "raw_answer": "{\n  \"status\": \"SUCCESS\",\n  \"debug_info\": {\n    \"intent_user\": \"Menampilkan daftar dokumen tukar faktur penjualan (SIE) beserta dokumen sumber yang terlibat, yaitu invoice penjualan (SI) dan retur penjualan (SR).\",\n    \"tables_used\": [\n      \"m5_sie\",\n      \"m5_sie_detail\",\n      \"m5_si\",\n      \"m5_sr\"\n    ],\n    \"tables_missing\": [],\n    \"reasoning\": \"1) Tabel utama dipilih m5_sie karena user meminta dokumen tukar faktur penjualan. 2) Untuk mendapatkan dokumen sumbernya, digunakan m5_sie_detail karena tabel ini memang menyimpan daftar transaksi sumber dengan kolom polymorphic sumber dan idtransaksi. 3) Karena aturan M5 melarang join langsung idtransaksi tanpa memeriksa sumber pada m5_sie_detail, maka join ke m5_si dan m5_sr dibuat dengan kondisi discriminator: sd.sumber = 'SI' ke m5_si.siid dan sd.sumber = 'SR' ke m5_sr.srid. 4) Kolom yang ditampilkan mencakup nomor dan tanggal dokumen SIE, tipe sumber, lalu nomor/tanggal invoice atau retur sumber sesuai jenisnya. 5) Tidak ada always_apply_filters yang didefinisikan pada m5_sie maupun m5_sie_detail di schema, jadi tidak ada filter default tambahan yang wajib diterapkan. 6) Karena user meminta tampilan daftar dokumen dan tidak memberi batas, ditambahkan LIMIT 100 sesuai aturan ranking/list tanpa batas.\",\n    \"ai_metrics\": {\n      \"confidence_score\": 0.96,\n      \"schema_version_used\": \"Semantic Query Schema OBT\"\n    }\n  },\n  \"execution_context\": {\n    \"is_syntax_valid_prediction\": true,\n    \"linting_warnings\": []\n  },\n  \"query\": \"SELECT s.sieid AS id_tukar_faktur, s.sienotransaksi AS no_tukar_faktur, s.sietgl AS tgl_tukar_faktur, sd.idsiedetail AS id_detail_tukar_faktur, sd.sumber AS tipe_dokumen_sumber, CASE WHEN sd.sumber = 'SI' THEN si.siinotransaksi ELSE NULL END AS no_invoice_sumber, CASE WHEN sd.sumber = 'SI' THEN si.sitgl ELSE NULL END AS tgl_invoice_sumber, CASE WHEN sd.sumber = 'SR' THEN sr.srnotransaksi ELSE NULL END AS no_retur_sumber, CASE WHEN sd.sumber = 'SR' THEN sr.srtgl ELSE NULL END AS tgl_retur_sumber, sd.catatan AS catatan_detail_sumber FROM m5_sie AS s INNER JOIN m5_sie_detail AS sd ON sd.idsie = s.sieid LEFT JOIN m5_si AS si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid LEFT JOIN m5_sr AS sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid ORDER BY s.sietgl DESC, s.sienotransaksi DESC, sd.urutan ASC LIMIT 100\",\n  \"error_message\": null\n}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar dokumen tukar faktur penjualan (SIE) beserta dokumen sumber yang terlibat, yaitu invoice penjualan (SI) dan retur penjualan (SR).",
+          "tables_used": [
+            "m5_sie",
+            "m5_sie_detail",
+            "m5_si",
+            "m5_sr"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Tabel utama dipilih m5_sie karena user meminta dokumen tukar faktur penjualan. 2) Untuk mendapatkan dokumen sumbernya, digunakan m5_sie_detail karena tabel ini memang menyimpan daftar transaksi sumber dengan kolom polymorphic sumber dan idtransaksi. 3) Karena aturan M5 melarang join langsung idtransaksi tanpa memeriksa sumber pada m5_sie_detail, maka join ke m5_si dan m5_sr dibuat dengan kondisi discriminator: sd.sumber = 'SI' ke m5_si.siid dan sd.sumber = 'SR' ke m5_sr.srid. 4) Kolom yang ditampilkan mencakup nomor dan tanggal dokumen SIE, tipe sumber, lalu nomor/tanggal invoice atau retur sumber sesuai jenisnya. 5) Tidak ada always_apply_filters yang didefinisikan pada m5_sie maupun m5_sie_detail di schema, jadi tidak ada filter default tambahan yang wajib diterapkan. 6) Karena user meminta tampilan daftar dokumen dan tidak memberi batas, ditambahkan LIMIT 100 sesuai aturan ranking/list tanpa batas.",
+          "ai_metrics": {
+            "confidence_score": 0.96,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT s.sieid AS id_tukar_faktur, s.sienotransaksi AS no_tukar_faktur, s.sietgl AS tgl_tukar_faktur, sd.idsiedetail AS id_detail_tukar_faktur, sd.sumber AS tipe_dokumen_sumber, CASE WHEN sd.sumber = 'SI' THEN si.siinotransaksi ELSE NULL END AS no_invoice_sumber, CASE WHEN sd.sumber = 'SI' THEN si.sitgl ELSE NULL END AS tgl_invoice_sumber, CASE WHEN sd.sumber = 'SR' THEN sr.srnotransaksi ELSE NULL END AS no_retur_sumber, CASE WHEN sd.sumber = 'SR' THEN sr.srtgl ELSE NULL END AS tgl_retur_sumber, sd.catatan AS catatan_detail_sumber FROM m5_sie AS s INNER JOIN m5_sie_detail AS sd ON sd.idsie = s.sieid LEFT JOIN m5_si AS si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid LEFT JOIN m5_sr AS sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid ORDER BY s.sietgl DESC, s.sienotransaksi DESC, sd.urutan ASC LIMIT 100",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_008_spa_points",
+      "query": "SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, SUM(COALESCE(sd.poinmasuk, 0) - COALESCE(sd.poinkeluar, 0)) AS total_penyesuaian_poin, SUM(COALESCE(sd.poinmasuk, 0)) AS total_poin_masuk, SUM(COALESCE(sd.poinkeluar, 0)) AS total_poin_keluar, COUNT(*) AS jumlah_baris_penyesuaian FROM m5_spa_detail sd INNER JOIN m5_spa s ON sd.idspa = s.spaid INNER JOIN m1_contact c ON sd.kontak = c.kid WHERE c.kaktif = 1 GROUP BY c.kid, c.kkode, c.knama ORDER BY total_penyesuaian_poin DESC, c.knama ASC LIMIT 100;",
+      "status": "SUCCESS",
+      "raw_answer": "{\"status\":\"SUCCESS\",\"debug_info\":{\"intent_user\":\"Menampilkan daftar customer dengan total penyesuaian poin penjualan terbesar, diurutkan dari yang paling besar berdasarkan perubahan poin pada detail SPA.\",\"tables_used\":[\"m5_spa\",\"m5_spa_detail\",\"m1_contact\"],\"tables_missing\":[],\"reasoning\":\"1) Entitas utama yang paling tepat adalah penyesuaian poin penjualan, sehingga tabel utama dipilih m5_spa_detail karena user meminta daftar/ranking customer dan nilai penyesuaian poin ada di level detail per kontak. 2) Tabel m5_spa dipakai untuk memastikan relasi dokumen header-detail valid. 3) Tabel m1_contact dipakai untuk menampilkan identitas customer/kontak, dan karena schema m1_contact memiliki always_apply_filters maka filter kaktif = 1 wajib diterapkan. 4) Nilai penyesuaian poin paling representatif dihitung sebagai SUM(poinmasuk - poinkeluar), karena schema menjelaskan poin masuk adalah penambahan dan poin keluar adalah pengurangan. 5) Karena user meminta daftar terbesar tanpa batas, ditambahkan LIMIT 100 sesuai aturan. 6) Tidak ada always_apply_filters pada m5_spa atau m5_spa_detail di schema utama, jadi hanya filter wajib dari m1_contact yang diterapkan.\",\"ai_metrics\":{\"confidence_score\":\"0.95\",\"schema_version_used\":\"Semantic Query Schema OBT\"}},\"execution_context\":{\"is_syntax_valid_prediction\":true,\"linting_warnings\":[\"Query melakukan agregasi seluruh data penyesuaian poin tanpa filter periode sehingga bisa melakukan full scan pada tabel detail jika datanya besar.\"]},\"query\":\"SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, SUM(COALESCE(sd.poinmasuk, 0) - COALESCE(sd.poinkeluar, 0)) AS total_penyesuaian_poin, SUM(COALESCE(sd.poinmasuk, 0)) AS total_poin_masuk, SUM(COALESCE(sd.poinkeluar, 0)) AS total_poin_keluar, COUNT(*) AS jumlah_baris_penyesuaian FROM m5_spa_detail sd INNER JOIN m5_spa s ON sd.idspa = s.spaid INNER JOIN m1_contact c ON sd.kontak = c.kid WHERE c.kaktif = 1 GROUP BY c.kid, c.kkode, c.knama ORDER BY total_penyesuaian_poin DESC, c.knama ASC LIMIT 100;\",\"error_message\":null}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar customer dengan total penyesuaian poin penjualan terbesar, diurutkan dari yang paling besar berdasarkan perubahan poin pada detail SPA.",
+          "tables_used": [
+            "m5_spa",
+            "m5_spa_detail",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Entitas utama yang paling tepat adalah penyesuaian poin penjualan, sehingga tabel utama dipilih m5_spa_detail karena user meminta daftar/ranking customer dan nilai penyesuaian poin ada di level detail per kontak. 2) Tabel m5_spa dipakai untuk memastikan relasi dokumen header-detail valid. 3) Tabel m1_contact dipakai untuk menampilkan identitas customer/kontak, dan karena schema m1_contact memiliki always_apply_filters maka filter kaktif = 1 wajib diterapkan. 4) Nilai penyesuaian poin paling representatif dihitung sebagai SUM(poinmasuk - poinkeluar), karena schema menjelaskan poin masuk adalah penambahan dan poin keluar adalah pengurangan. 5) Karena user meminta daftar terbesar tanpa batas, ditambahkan LIMIT 100 sesuai aturan. 6) Tidak ada always_apply_filters pada m5_spa atau m5_spa_detail di schema utama, jadi hanya filter wajib dari m1_contact yang diterapkan.",
+          "ai_metrics": {
+            "confidence_score": "0.95",
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query melakukan agregasi seluruh data penyesuaian poin tanpa filter periode sehingga bisa melakukan full scan pada tabel detail jika datanya besar."
+          ]
+        },
+        "query": "SELECT c.kid AS customer_id, c.kkode AS customer_code, c.knama AS customer_name, SUM(COALESCE(sd.poinmasuk, 0) - COALESCE(sd.poinkeluar, 0)) AS total_penyesuaian_poin, SUM(COALESCE(sd.poinmasuk, 0)) AS total_poin_masuk, SUM(COALESCE(sd.poinkeluar, 0)) AS total_poin_keluar, COUNT(*) AS jumlah_baris_penyesuaian FROM m5_spa_detail sd INNER JOIN m5_spa s ON sd.idspa = s.spaid INNER JOIN m1_contact c ON sd.kontak = c.kid WHERE c.kaktif = 1 GROUP BY c.kid, c.kkode, c.knama ORDER BY total_penyesuaian_poin DESC, c.knama ASC LIMIT 100;",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_009_rp_si_join",
+      "query": "SELECT rp.rpnotransaksi AS nomor_piutang_ongkos_kirim, rp.rptgl AS tanggal_piutang_ongkos_kirim, si.sinotransaksi AS nomor_invoice_penjualan, si.sitgl AS tanggal_invoice_penjualan, c.knama AS nama_customer, rp.rpjumlah AS nilai_piutang_ongkos_kirim, rp.rpjumlahbayar AS nilai_terbayar, rp.rpstatusbayar AS status_bayar_piutang, rp.rptgllunas AS tanggal_lunas_piutang, rp.rpuraian AS uraian_piutang, rp.rpcatatan AS catatan_piutang FROM m5_rp rp INNER JOIN m5_si si ON rp.rpidsi = si.siid INNER JOIN m1_contact c ON rp.rpkontak = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 ORDER BY si.sitgl DESC, si.sinotransaksi DESC, rp.rptgl DESC, rp.rpnotransaksi DESC LIMIT 100",
+      "status": "SUCCESS",
+      "raw_answer": "{\"status\":\"SUCCESS\",\"debug_info\":{\"intent_user\":\"Menampilkan daftar piutang ongkos kirim yang dikaitkan per invoice penjualan, sehingga tiap dokumen RP ditampilkan bersama invoice penjualan sumbernya.\",\"tables_used\":[\"m5_rp\",\"m5_si\",\"m1_contact\"],\"tables_missing\":[],\"reasoning\":\"1) Entitas utama yang diminta adalah piutang ongkos kirim, jadi tabel utama dipilih m5_rp. 2) Karena user meminta per invoice penjualan, digunakan relasi schema m5_rp.rpidsi = m5_si.siid untuk mengambil nomor dan tanggal invoice penjualan. 3) Untuk menampilkan customer secara lebih informatif, digunakan relasi m5_rp.rpkontak = m1_contact.kid yang tersedia di schema. 4) Tidak ada always_apply_filters pada m5_rp, tetapi pada m5_si ada always_apply_filters siisclose = 0 sehingga filter itu wajib diterapkan. Pada m1_contact juga ada always_apply_filters kaktif = 1 sehingga ikut diterapkan. 5) Karena user meminta daftar/list tanpa batas eksplisit, ditambahkan LIMIT 100 sesuai aturan. 6) Query disusun sebagai listing dokumen, bukan agregasi, karena frasa 'daftar ... per invoice penjualan' lebih cocok menampilkan baris per dokumen RP dan invoice terkait.\",\"ai_metrics\":{\"confidence_score\":0.97,\"schema_version_used\":\"Semantic Query Schema OBT\"}},\"execution_context\":{\"is_syntax_valid_prediction\":true,\"linting_warnings\":[\"Query listing tanpa filter tanggal dapat membaca banyak data historis, namun sudah dibatasi LIMIT 100.\"]},\"query\":\"SELECT rp.rpnotransaksi AS nomor_piutang_ongkos_kirim, rp.rptgl AS tanggal_piutang_ongkos_kirim, si.sinotransaksi AS nomor_invoice_penjualan, si.sitgl AS tanggal_invoice_penjualan, c.knama AS nama_customer, rp.rpjumlah AS nilai_piutang_ongkos_kirim, rp.rpjumlahbayar AS nilai_terbayar, rp.rpstatusbayar AS status_bayar_piutang, rp.rptgllunas AS tanggal_lunas_piutang, rp.rpuraian AS uraian_piutang, rp.rpcatatan AS catatan_piutang FROM m5_rp rp INNER JOIN m5_si si ON rp.rpidsi = si.siid INNER JOIN m1_contact c ON rp.rpkontak = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 ORDER BY si.sitgl DESC, si.sinotransaksi DESC, rp.rptgl DESC, rp.rpnotransaksi DESC LIMIT 100\",\"error_message\":null}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan daftar piutang ongkos kirim yang dikaitkan per invoice penjualan, sehingga tiap dokumen RP ditampilkan bersama invoice penjualan sumbernya.",
+          "tables_used": [
+            "m5_rp",
+            "m5_si",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "1) Entitas utama yang diminta adalah piutang ongkos kirim, jadi tabel utama dipilih m5_rp. 2) Karena user meminta per invoice penjualan, digunakan relasi schema m5_rp.rpidsi = m5_si.siid untuk mengambil nomor dan tanggal invoice penjualan. 3) Untuk menampilkan customer secara lebih informatif, digunakan relasi m5_rp.rpkontak = m1_contact.kid yang tersedia di schema. 4) Tidak ada always_apply_filters pada m5_rp, tetapi pada m5_si ada always_apply_filters siisclose = 0 sehingga filter itu wajib diterapkan. Pada m1_contact juga ada always_apply_filters kaktif = 1 sehingga ikut diterapkan. 5) Karena user meminta daftar/list tanpa batas eksplisit, ditambahkan LIMIT 100 sesuai aturan. 6) Query disusun sebagai listing dokumen, bukan agregasi, karena frasa 'daftar ... per invoice penjualan' lebih cocok menampilkan baris per dokumen RP dan invoice terkait.",
+          "ai_metrics": {
+            "confidence_score": 0.97,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query listing tanpa filter tanggal dapat membaca banyak data historis, namun sudah dibatasi LIMIT 100."
+          ]
+        },
+        "query": "SELECT rp.rpnotransaksi AS nomor_piutang_ongkos_kirim, rp.rptgl AS tanggal_piutang_ongkos_kirim, si.sinotransaksi AS nomor_invoice_penjualan, si.sitgl AS tanggal_invoice_penjualan, c.knama AS nama_customer, rp.rpjumlah AS nilai_piutang_ongkos_kirim, rp.rpjumlahbayar AS nilai_terbayar, rp.rpstatusbayar AS status_bayar_piutang, rp.rptgllunas AS tanggal_lunas_piutang, rp.rpuraian AS uraian_piutang, rp.rpcatatan AS catatan_piutang FROM m5_rp rp INNER JOIN m5_si si ON rp.rpidsi = si.siid INNER JOIN m1_contact c ON rp.rpkontak = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 ORDER BY si.sitgl DESC, si.sinotransaksi DESC, rp.rptgl DESC, rp.rpnotransaksi DESC LIMIT 100",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    },
+    {
+      "id": "m5_010_cl_realization_status",
+      "query": "SELECT cl.clnotransaksi AS nomor_closing_sales, so.sonotransaksi AS nomor_sales_order, so.sotgl AS tanggal_sales_order, c.kkode AS kode_customer, c.knama AS nama_customer, i.bkode AS kode_barang, i.bnama AS nama_barang, cl.cljml AS qty_transaksi, cl.clsatuan AS satuan_transaksi, cl.cljmlbarang AS qty_barang, cl.clsatuanbarang AS satuan_barang, cl.clstatuspi AS status_pi, cl.clstatuspl AS status_pl, cl.clstatusdo AS status_do, cl.clstatusdr AS status_dr, cl.clstatussi AS status_si, cl.clstatusrealisasi AS status_realisasi, cl.clstatus AS status_dokumen FROM m5_cl cl INNER JOIN m1_contact c ON cl.clcustomer = c.kid INNER JOIN m1_item i ON cl.clidbarang = i.bid LEFT JOIN m5_so so ON cl.clidso = so.soid WHERE c.kaktif = 1 AND i.baktif = 1 ORDER BY c.knama ASC, i.bnama ASC, so.sotgl DESC LIMIT 100",
+      "status": "SUCCESS",
+      "raw_answer": "{\"status\":\"SUCCESS\",\"debug_info\":{\"intent_user\":\"Menampilkan status realisasi per item dan customer berdasarkan alur penjualan dari sales order hingga invoice, dengan fokus pada progres item SO menuju PI/PL/DO/DR/SI.\",\"tables_used\":[\"m5_cl\",\"m1_contact\",\"m1_item\",\"m5_so\"],\"tables_missing\":[],\"reasoning\":\"Saya memilih tabel m5_cl karena schema menjelaskan bahwa tabel ini adalah closing sales/status realisasi penjualan per item/customer dan memang dipakai untuk memantau status lanjutan sales order ke PI, PL, DO, DR, dan SI pada level item. Ini paling sesuai dengan permintaan 'status realisasi per item customer dari sales order sampai invoice'. Saya join ke m1_contact untuk menampilkan nama customer melalui relasi m5_cl.clcustomer = m1_contact.kid, dan ke m1_item untuk menampilkan kode/nama item melalui relasi m5_cl.clidbarang = m1_item.bid. Saya juga join ke m5_so untuk menampilkan nomor dan tanggal sales order asal melalui relasi m5_cl.clidso = m5_so.soid. Tidak ada always_apply_filters pada m5_cl, tetapi m1_contact memiliki always_apply_filters kaktif = 1 dan m1_item memiliki always_apply_filters baktif = 1, sehingga filter tersebut diterapkan wajib di WHERE. Karena user meminta tampilan/list tanpa batas eksplisit, saya tambahkan LIMIT 100 sesuai aturan. Kolom status yang dipakai adalah clstatuspi, clstatuspl, clstatusdo, clstatusdr, clstatussi, dan clstatusrealisasi karena ini merepresentasikan progres dari SO sampai invoice pada level item/customer.\",\"ai_metrics\":{\"confidence_score\":0.95,\"schema_version_used\":\"Semantic Query Schema OBT\"}},\"execution_context\":{\"is_syntax_valid_prediction\":true,\"linting_warnings\":[]},\"query\":\"SELECT cl.clnotransaksi AS nomor_closing_sales, so.sonotransaksi AS nomor_sales_order, so.sotgl AS tanggal_sales_order, c.kkode AS kode_customer, c.knama AS nama_customer, i.bkode AS kode_barang, i.bnama AS nama_barang, cl.cljml AS qty_transaksi, cl.clsatuan AS satuan_transaksi, cl.cljmlbarang AS qty_barang, cl.clsatuanbarang AS satuan_barang, cl.clstatuspi AS status_pi, cl.clstatuspl AS status_pl, cl.clstatusdo AS status_do, cl.clstatusdr AS status_dr, cl.clstatussi AS status_si, cl.clstatusrealisasi AS status_realisasi, cl.clstatus AS status_dokumen FROM m5_cl cl INNER JOIN m1_contact c ON cl.clcustomer = c.kid INNER JOIN m1_item i ON cl.clidbarang = i.bid LEFT JOIN m5_so so ON cl.clidso = so.soid WHERE c.kaktif = 1 AND i.baktif = 1 ORDER BY c.knama ASC, i.bnama ASC, so.sotgl DESC LIMIT 100\",\"error_message\":null}",
+      "parsed_answer": {
+        "status": "SUCCESS",
+        "debug_info": {
+          "intent_user": "Menampilkan status realisasi per item dan customer berdasarkan alur penjualan dari sales order hingga invoice, dengan fokus pada progres item SO menuju PI/PL/DO/DR/SI.",
+          "tables_used": [
+            "m5_cl",
+            "m1_contact",
+            "m1_item",
+            "m5_so"
+          ],
+          "tables_missing": [],
+          "reasoning": "Saya memilih tabel m5_cl karena schema menjelaskan bahwa tabel ini adalah closing sales/status realisasi penjualan per item/customer dan memang dipakai untuk memantau status lanjutan sales order ke PI, PL, DO, DR, dan SI pada level item. Ini paling sesuai dengan permintaan 'status realisasi per item customer dari sales order sampai invoice'. Saya join ke m1_contact untuk menampilkan nama customer melalui relasi m5_cl.clcustomer = m1_contact.kid, dan ke m1_item untuk menampilkan kode/nama item melalui relasi m5_cl.clidbarang = m1_item.bid. Saya juga join ke m5_so untuk menampilkan nomor dan tanggal sales order asal melalui relasi m5_cl.clidso = m5_so.soid. Tidak ada always_apply_filters pada m5_cl, tetapi m1_contact memiliki always_apply_filters kaktif = 1 dan m1_item memiliki always_apply_filters baktif = 1, sehingga filter tersebut diterapkan wajib di WHERE. Karena user meminta tampilan/list tanpa batas eksplisit, saya tambahkan LIMIT 100 sesuai aturan. Kolom status yang dipakai adalah clstatuspi, clstatuspl, clstatusdo, clstatusdr, clstatussi, dan clstatusrealisasi karena ini merepresentasikan progres dari SO sampai invoice pada level item/customer.",
+          "ai_metrics": {
+            "confidence_score": 0.95,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": []
+        },
+        "query": "SELECT cl.clnotransaksi AS nomor_closing_sales, so.sonotransaksi AS nomor_sales_order, so.sotgl AS tanggal_sales_order, c.kkode AS kode_customer, c.knama AS nama_customer, i.bkode AS kode_barang, i.bnama AS nama_barang, cl.cljml AS qty_transaksi, cl.clsatuan AS satuan_transaksi, cl.cljmlbarang AS qty_barang, cl.clsatuanbarang AS satuan_barang, cl.clstatuspi AS status_pi, cl.clstatuspl AS status_pl, cl.clstatusdo AS status_do, cl.clstatusdr AS status_dr, cl.clstatussi AS status_si, cl.clstatusrealisasi AS status_realisasi, cl.clstatus AS status_dokumen FROM m5_cl cl INNER JOIN m1_contact c ON cl.clcustomer = c.kid INNER JOIN m1_item i ON cl.clidbarang = i.bid LEFT JOIN m5_so so ON cl.clidso = so.soid WHERE c.kaktif = 1 AND i.baktif = 1 ORDER BY c.knama ASC, i.bnama ASC, so.sotgl DESC LIMIT 100",
+        "error_message": null
+      },
+      "validation_errors": [],
+      "resolved_model": "gpt-5.4"
+    }
+  ]
+}

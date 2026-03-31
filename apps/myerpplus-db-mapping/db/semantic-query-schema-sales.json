@@ -1,6 +1,6 @@
 {
-  "domain": "sales",
-  "description": "Schema query read-only untuk analitik dan tanya-jawab domain penjualan berdasarkan semantic-schema sales.",
+  "domain": "obt",
+  "description": "Schema query read-only untuk analitik dan tanya-jawab domain OBT berdasarkan semantic-schema m5.",
   "default_rules": {
     "read_only": true,
     "sql_dialect": "mysql",

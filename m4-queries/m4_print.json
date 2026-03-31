@@ -1,0 +1,125 @@
+{
+  "title": "M4_PRINT Queries",
+  "module": "m4_print",
+  "source_markdown": "m4-queries/m4_print.md",
+  "unique_queries": 13,
+  "queries": [
+    {
+      "index": 1,
+      "sql": "UPDATE M4_AP SET APcetakanke=APcetakanke+1 WHERE APid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "sql": "UPDATE M4_BS SET BScetakanke=BScetakanke+1 WHERE BSid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "sql": "UPDATE M4_CS SET CScetakanke=CScetakanke+1 WHERE CSid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "sql": "UPDATE M4_DNR SET DNRcetakanke=DNRcetakanke+1 WHERE DNRid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "sql": "UPDATE M4_GRN SET GRNcetakanke=GRNcetakanke+1 WHERE GRNid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "sql": "UPDATE M4_IPC SET IPCcetakanke=IPCcetakanke+1 WHERE IPCid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "sql": "UPDATE M4_PO SET POcetakanke=POcetakanke+1 WHERE POid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "sql": "UPDATE M4_PR SET PRcetakanke=PRcetakanke+1 WHERE PRid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "sql": "UPDATE M4_PRT SET PRTcetakanke=PRTcetakanke+1 WHERE PRTid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "sql": "UPDATE M4_RI SET RIcetakanke=RIcetakanke+1 WHERE RIid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "sql": "UPDATE M4_RQ SET RQcetakanke=RQcetakanke+1 WHERE RQid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "sql": "UPDATE M4_VP SET VPcetakanke=VPcetakanke+1 WHERE VPid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "sql": "UPDATE M4_VPP SET VPPcetakanke=VPPcetakanke+1 WHERE VPPid='{idtransaksi}'",
+      "sources": [
+        {
+          "path": "client-backend/api-myerpplus/app_code/ws/m4/m4_print.vb"
+        }
+      ]
+    }
+  ]
+}

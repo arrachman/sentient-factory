@@ -9,10 +9,13 @@ from typing import Any
 class ProgressStreamBroker:
     def __init__(self) -> None:
         self._listeners: dict[str, list[asyncio.Queue[dict[str, Any]]]] = defaultdict(list)
+        self._history: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
     def subscribe(self, request_id: str) -> asyncio.Queue[dict[str, Any]]:
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._listeners[request_id].append(queue)
+        for message in self._history.get(request_id, []):
+            queue.put_nowait(message)
         return queue
 
     def unsubscribe(self, request_id: str, queue: asyncio.Queue[dict[str, Any]]) -> None:
@@ -29,8 +32,15 @@ class ProgressStreamBroker:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             **payload,
         }
+        history = self._history[request_id]
+        history.append(message)
+        if len(history) > 16:
+            del history[:-16]
         for queue in list(self._listeners.get(request_id, [])):
             await queue.put(message)
+
+        if event in {"completed", "failed"}:
+            self._listeners.pop(request_id, None)
 
 
 broker = ProgressStreamBroker()

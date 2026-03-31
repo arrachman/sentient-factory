@@ -1,0 +1,20 @@
+{
+  "suite": "dashboard_multi_query_regression",
+  "timestamp": "20260331T061316Z",
+  "total": 2,
+  "failed": 0,
+  "passed": 2,
+  "results": [
+    {
+      "id": "dashboard_004_fulfillment_monitoring",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_007_profitability_per_customer",
+      "status": "PASSED",
+      "errors": []
+    }
+  ],
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T061316Z.json"
+}

@@ -3,6 +3,10 @@ const path = require('path');
 
 const DB_DIR = path.resolve(__dirname, '../db');
 const MANIFEST_PATH = path.join(DB_DIR, 'semantic-schema-manifest.json');
+const SCHEMA_KEY_ALIASES = {
+  sales: 'obt',
+  sales_account_receivable: 'obt',
+};
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -18,7 +22,10 @@ function resolveSchemaFile(fileName) {
 
 function loadSchemaByKey(key) {
   const manifest = loadManifest();
-  const entry = manifest.schemas.find((schema) => schema.key === key || schema.domain === key);
+  const normalizedKey = SCHEMA_KEY_ALIASES[key] || key;
+  const entry = manifest.schemas.find(
+    (schema) => schema.key === normalizedKey || schema.domain === normalizedKey,
+  );
   if (!entry) {
     throw new Error(`Unknown semantic schema key: ${key}`);
   }
@@ -37,7 +44,7 @@ function inferSchemaKeyFromQuery(query) {
   const tokens = new Set(compact.trim().split(/\s+/).filter(Boolean));
 
   const rules = [
-    { key: 'sales', keywords: ['sales', 'penjualan', 'piutang', 'invoice', 'faktur', 'so', 'do', 'quotation'] },
+    { key: 'obt', keywords: ['obt', 'sales', 'penjualan', 'piutang', 'invoice', 'faktur', 'so', 'do', 'quotation'] },
     { key: 'purchasing', keywords: ['purchasing', 'pembelian', 'hutang', 'supplier', 'po', 'grn', 'rfq', 'pr'] },
     { key: 'inventory', keywords: ['inventory', 'gudang', 'stok', 'mutasi', 'warehouse', 'opname', 'barang masuk'] },
     { key: 'finance', keywords: ['finance', 'accounting', 'jurnal', 'buku besar', 'kas', 'bank', 'giro', 'coa', 'saldo awal'] },

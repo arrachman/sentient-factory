@@ -138,31 +138,18 @@ def _build_input_messages(
     system_prompt: str,
     additional_system_messages: list[str],
 ) -> list[dict]:
-    inputs: list[dict] = [
-        {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]},
-    ]
+    def build_message(role: str, text: str) -> dict:
+        return {"role": role, "content": [{"type": "input_text", "text": text}]}
+
+    inputs: list[dict] = [build_message("system", system_prompt)]
 
     if semantic_schema_text.strip():
-        inputs.append(
-            {
-                "role": "system",
-                "content": [{"type": "input_text", "text": f"Semantic schema:\n{semantic_schema_text}"}],
-            }
-        )
+        inputs.append(build_message("system", f"Semantic schema:\n{semantic_schema_text}"))
 
-    for extra in additional_system_messages:
-        inputs.append(
-            {
-                "role": "system",
-                "content": [{"type": "input_text", "text": extra}],
-            }
-        )
+    inputs.extend(build_message("system", extra) for extra in additional_system_messages)
 
-    inputs.extend(
-        {"role": item.role, "content": [{"type": "input_text", "text": item.content}]}
-        for item in messages
-    )
-    inputs.append({"role": "user", "content": [{"type": "input_text", "text": question}]})
+    inputs.extend(build_message(item.role, item.content) for item in messages)
+    inputs.append(build_message("user", question))
     return inputs
 
 

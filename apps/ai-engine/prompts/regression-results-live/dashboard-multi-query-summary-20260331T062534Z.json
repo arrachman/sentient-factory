@@ -1,0 +1,64 @@
+{
+  "suite": "dashboard_multi_query_regression",
+  "timestamp": "20260331T062534Z",
+  "total": 10,
+  "failed": 2,
+  "passed": 8,
+  "results": [
+    {
+      "id": "dashboard_001_customer_receivable",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_002_sales_funnel",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_003_customer_360_sales",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_004_fulfillment_monitoring",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_005_outstanding_vs_collection",
+      "status": "FAILED",
+      "errors": [
+        "missing widget keyword in visualization titles: collection"
+      ]
+    },
+    {
+      "id": "dashboard_006_aging_and_cash_collection",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_007_profitability_per_customer",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_008_return_and_invoice_exchange",
+      "status": "FAILED",
+      "errors": [
+        "missing widget keyword in visualization titles: return"
+      ]
+    },
+    {
+      "id": "dashboard_009_sales_points_adjustment",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_010_executive_risk",
+      "status": "PASSED",
+      "errors": []
+    }
+  ],
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T062534Z.json"
+}

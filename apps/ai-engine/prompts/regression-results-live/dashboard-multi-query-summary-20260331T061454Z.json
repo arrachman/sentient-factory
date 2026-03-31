@@ -1,0 +1,76 @@
+{
+  "suite": "dashboard_multi_query_regression",
+  "timestamp": "20260331T061454Z",
+  "total": 10,
+  "failed": 3,
+  "passed": 7,
+  "results": [
+    {
+      "id": "dashboard_001_customer_receivable",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_002_sales_funnel",
+      "status": "FAILED",
+      "errors": [
+        "missing widget keyword in visualization titles: trend"
+      ]
+    },
+    {
+      "id": "dashboard_003_customer_360_sales",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_004_fulfillment_monitoring",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_005_outstanding_vs_collection",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_006_aging_and_cash_collection",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_007_profitability_per_customer",
+      "status": "FAILED",
+      "errors": [
+        "expected mode multi_query_dashboard, got None",
+        "expected 3 queries, got 0",
+        "expected 3 visualizations, got 0",
+        "missing required table in generated queries: m5_si",
+        "missing required table in generated queries: m5_si_detail",
+        "missing required table in generated queries: m5_si_cost",
+        "missing required table in generated queries: m5_sr",
+        "missing widget keyword in visualization titles: margin",
+        "missing widget keyword in visualization titles: ranking",
+        "missing widget keyword in visualization titles: alerts"
+      ]
+    },
+    {
+      "id": "dashboard_008_return_and_invoice_exchange",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_009_sales_points_adjustment",
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_010_executive_risk",
+      "status": "FAILED",
+      "errors": [
+        "missing widget keyword in visualization titles: aging",
+        "missing widget keyword in visualization titles: fulfillment"
+      ]
+    }
+  ],
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T061454Z.json"
+}

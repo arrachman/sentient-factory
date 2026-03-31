@@ -20,6 +20,7 @@ export function TimeseriesCard({
   showGrid = true,
   yAxisDomain = [0, 1000],
   yAxisWidth = 36,
+  yAxisTickFormatter,
   chartHeightClass = 'h-[360px]',
   metricValue,
   metricDelta,
@@ -45,6 +46,7 @@ export function TimeseriesCard({
   showGrid?: boolean;
   yAxisDomain?: [number | 'dataMin' | 'dataMax', number | 'dataMin' | 'dataMax'];
   yAxisWidth?: number;
+  yAxisTickFormatter?: (value: number) => string;
   chartHeightClass?: string;
   metricValue?: string;
   metricDelta?: number;
@@ -70,17 +72,14 @@ export function TimeseriesCard({
   const showDelta = typeof metricDelta === 'number' && metricDeltaLabel;
 
   return (
-    <Card className={cn("lg:col-span-9 rounded-2xl border-border/80 shadow-xs", cardClassName)}>
-      <CardHeader className={cn("px-5 py-4", headerClassName)}>
+    <Card className={cn('lg:col-span-9 rounded-2xl border-border/80 shadow-xs', cardClassName)}>
+      <CardHeader className={cn('px-5 py-4', headerClassName)}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle
-              className="text-[16px] font-medium leading-[26px] tracking-[0%]"
-              style={{ fontFamily: 'Roboto, sans-serif' }}
-            >
+            <CardTitle className="text-base font-semibold leading-6 tracking-tight text-slate-800 dark:text-slate-100">
               {title}
             </CardTitle>
-            <p className="text-sm font-medium text-muted-foreground">{subtitle}</p>
+            <p className="text-sm font-normal text-slate-500 dark:text-slate-400">{subtitle}</p>
           </div>
           {headerAction ? headerAction : filterLabel ? (
             <button
@@ -96,10 +95,7 @@ export function TimeseriesCard({
       <CardContent className={cn("space-y-4 px-5 pb-5 pt-3", contentClassName)}>
         {showMetric ? (
           <div className="flex flex-wrap items-center gap-3">
-            <p
-              className="text-[32px] font-semibold leading-[42px] tracking-[0%] text-center"
-              style={{ fontFamily: 'Roboto, sans-serif' }}
-            >
+            <p className="text-center text-[32px] font-semibold leading-[42px] tracking-tight text-slate-800 tabular-nums dark:text-slate-100">
               {metricValue}
             </p>
             {showDelta ? (
@@ -136,6 +132,7 @@ export function TimeseriesCard({
                 axisLine={false}
                 domain={yAxisDomain}
                 width={yAxisWidth}
+                tickFormatter={yAxisTickFormatter}
                 hide={!showYAxis}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
@@ -160,6 +157,7 @@ export function TimeseriesCard({
                 axisLine={false}
                 domain={yAxisDomain}
                 width={yAxisWidth}
+                tickFormatter={yAxisTickFormatter}
                 hide={!showYAxis}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
@@ -180,7 +178,7 @@ export function TimeseriesCard({
         {showLegend ? (
           <div
             className={cn(
-              'flex flex-wrap items-center gap-4 pt-2 text-xs font-medium text-muted-foreground lg:gap-6 lg:text-sm',
+              'flex flex-wrap items-center gap-4 pt-2 text-xs font-medium text-slate-500 dark:text-slate-400 lg:gap-6 lg:text-sm',
               legendAlign === 'between'
                 ? 'w-full justify-between'
                 : legendAlign === 'start'

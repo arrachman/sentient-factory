@@ -45,6 +45,10 @@ export type SemanticSchemaContext = {
 export class SemanticSchemaService {
   private readonly dbRoot = this.resolveDbRoot();
   private readonly manifestPath = resolve(this.dbRoot, 'semantic-schema-manifest.json');
+  private readonly schemaKeyAliases: Record<string, string> = {
+    sales: 'obt',
+    sales_account_receivable: 'obt',
+  };
 
   getAvailableSchemas(): SemanticSchemaEntry[] {
     return this.loadManifest().schemas;
@@ -52,7 +56,10 @@ export class SemanticSchemaService {
 
   loadSchemaByKey(key: string): SemanticSchemaContext {
     const manifest = this.loadManifest();
-    const entry = manifest.schemas.find((schema) => schema.key === key || schema.domain === key);
+    const normalizedKey = this.schemaKeyAliases[key] ?? key;
+    const entry = manifest.schemas.find(
+      (schema) => schema.key === normalizedKey || schema.domain === normalizedKey,
+    );
     if (!entry) {
       throw new Error(`Unknown semantic schema key: ${key}`);
     }
@@ -76,7 +83,7 @@ export class SemanticSchemaService {
     const tokens = new Set(compact.trim().split(/\s+/).filter(Boolean));
 
     const rules = [
-      { key: 'sales', keywords: ['sales', 'penjualan', 'piutang', 'invoice', 'faktur', 'so', 'do', 'quotation'] },
+      { key: 'obt', keywords: ['obt', 'sales', 'penjualan', 'piutang', 'invoice', 'faktur', 'so', 'do', 'quotation'] },
       { key: 'purchasing', keywords: ['purchasing', 'pembelian', 'hutang', 'supplier', 'po', 'grn', 'rfq', 'pr'] },
       { key: 'inventory', keywords: ['inventory', 'gudang', 'stok', 'mutasi', 'warehouse', 'opname', 'barang masuk'] },
       { key: 'finance', keywords: ['finance', 'accounting', 'jurnal', 'buku besar', 'kas', 'bank', 'giro', 'coa', 'saldo awal'] },

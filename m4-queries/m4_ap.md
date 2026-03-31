@@ -1,0 +1,186 @@
+# M4_AP Queries
+
+## Query 1
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+DELETE FROM M2_Transaction_Journal WHERE tsumber = 'AP' AND tidtransaksi = '{idtransaksi}' AND tnotransaksi = '{notransaksi}'
+```
+
+## Query 2
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+DELETE FROM M4_Ap WHERE apid = '{idtransaksi}'
+```
+
+## Query 3
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+DELETE FROM M4_Ap_Pay WHERE idap = '{idtransaksi}'
+```
+
+## Query 4
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+DELETE FROM m2_giro_list WHERE glsumber = 'AP' AND glidtransaksi = '{idtransaksi}' AND glnotransaksi = '{notransaksi}'
+```
+
+## Query 5
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Delete from M4_Ap_Pay where idap = '{result_4}'
+```
+
+## Query 6
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap_history.vb`
+
+```sql
+INSERT INTO m4_ap_history(SELECT 0, ap.* FROM m4_ap ap WHERE ap.apid = '{idtransaksi}')
+```
+
+## Query 7
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap_history.vb`
+
+```sql
+INSERT INTO m4_ap_pay_history (SELECT 0, '{result_4}', ap.* FROM m4_ap_pay ap WHERE ap.idap = '{idtransaksi}' )
+```
+
+## Query 8
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Insert into M0_Msmq_Journal(mjid, mjsumber, mjidtransaksi, mjprogress, mjpesan, mjtglantrian, mjtglselesai, mjuserid) values ('{mjid}', '{sumber}', '{result_4}', '{0}', '', NOW(), '1971-01-01 00:00:00', '{userid}')
+```
+
+## Query 9
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Insert into M0_Userlog (uluserid, ulidmodule, ulidmenu, uljenisaktivitas, ulaktivitas, ultgl, ulkodepa) values({userid}, {mdlid}, {mnid}, {jnsaktivitas}, '{notransaksi}', NOW(), {0})
+```
+
+## Query 10
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Insert into M2_Giro_List(glnogiro, glsumber, glidtransaksi, glnotransaksi, glkontak, glrekbank, glrekgiro, gljenis, glbank, glnoacbank, glmatauang, glkurs, gljumlah, gljumlahvalas, gltgljthtempo, gltglcair, glstatus, glstatussebelumnya, glurutan) values{strGiro.ToString}
+```
+
+## Query 11
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Insert into M4_Ap (apcabang, aplokasi, apjenis, apsumber, apautonotransaksi, apnotransaksi, aptgl, apkodepa, apkontak, apkontakperson, ap1alamat1, ap1alamat2, ap1alamat3, ap2alamat1, ap2alamat2, ap2alamat3, apbagianpembayaran, aptermin, aptgljatuhtempo, apidpo, apnorek, apuraian, apcatatan, apnoref, aptglnoref, apmatauang, apkurs, apjumlah, apjumlahvalas, apjumlahbayar, apjumlahbayarvalas, apstatusbayar, aptgllunas, apcostcenter, apdivisi, apsubdivisi, approyek, apstatus, apstatussebelumnya, apjmlrevisi, apcetakanke, apinputuser, apinputtgl, apmodifikasiuser, apmodifikasitgl, apposting, apisclose, apcustomtext1, apcustomtext2, apcustomtext3, apcustomtext4, apcustomtext5, apcustomint1, apcustomint2, apcustomint3, apcustomdbl1, apcustomdbl2, apcustomdbl3, apcustomdate1, apcustomdate2, apcustomdate3) values('{apcabang}', '{aplokasi}', {apjenis}, '{apsumber}', {apautonotransaksi}, '{notransaksi}', '{aptgl}', {apkodepa}, {apkontak}, '{apkontakperson}', '{ap1alamat1}', '{ap1alamat2}', '{ap1alamat3}', '{ap2alamat1}', '{ap2alamat2}', '{ap2alamat3}', {apbagianpembayaran}, '{aptermin}', '{aptgljatuhtempo}', {apidpo}, '{apnorek}', '{apuraian}', '{apcatatan}', '{apnoref}', '{aptglnoref}', '{apmatauang}', '{apkurs}', '{apjumlah}', '{apjumlahvalas}', '{apjumlahbayar}', '{apjumlahbayarvalas}', {apstatusbayar}, '{aptgllunas}', '{apcostcenter}', '{apdivisi}', '{apsubdivisi}', '{approyek}', {apstatus}, {apstatussebelumnya}, {apjmlrevisi}, {apcetakanke}, {apinputuser}, NOW(), {apmodifikasiuser}, '1971-01-01 00:00:00', 0, {apisclose}, '{apcustomtext1}', '{apcustomtext2}', '{apcustomtext3}', '{apcustomtext4}', '{apcustomtext5}', {apcustomint1}, {apcustomint2}, {apcustomint3}, '{apcustomdbl1}', '{apcustomdbl2}', '{apcustomdbl3}', '{apcustomdate1}', '{apcustomdate2}', '{apcustomdate3}')
+```
+
+## Query 12
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Insert into M4_Ap_Pay(idapcarabayar, idap, carabayar, matauang, kurs, jumlah, jumlahvalas, nogiro, tgljt, bank, noacbank, rekbank, rekgiro, catatan, urutan, isclose) values{strValue2.ToString}
+```
+
+## Query 13
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+SELECT apcabang, aplokasi, apsumber, apautonotransaksi, apnotransaksi, aptgl FROM M4_ap WHERE apid = '{idtransaksi}'
+```
+
+## Query 14
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap_history.vb`
+
+```sql
+SELECT apidhistory FROM m4_ap_history WHERE apid = '{idtransaksi}' ORDER BY apmodifikasitgl DESC LIMIT 1
+```
+
+## Query 15
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+UPDATE m4_Ap SET Apstatus = {nilaiStatus}, Apmodifikasiuser='{userid}', Apmodifikasitgl = NOW(), Apposting = 0, Appostingtgl = '1971-01-01 00:00:00', Apjmlrevisi = Apjmlrevisi + 1 WHERE Apid = '{idtransaksi}'
+```
+
+## Query 16
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+Update M4_Ap set apcabang = '{apcabang}', aplokasi = '{aplokasi}', apjenis = {apjenis}, apsumber = '{apsumber}', apautonotransaksi = {apautonotransaksi}, apnotransaksi = '{notransaksi}', aptgl = '{aptgl}', apkodepa = {apkodepa}, apkontak = {apkontak}, apkontakperson = '{apkontakperson}', ap1alamat1 = '{ap1alamat1}', ap1alamat2 = '{ap1alamat2}', ap1alamat3 = '{ap1alamat3}', ap2alamat1 = '{ap2alamat1}', ap2alamat2 = '{ap2alamat2}', ap2alamat3 = '{ap2alamat3}', apbagianpembayaran = {apbagianpembayaran}, aptermin = '{aptermin}', aptgljatuhtempo = '{aptgljatuhtempo}', apidpo = {apidpo}, apnorek = '{apnorek}', apuraian = '{apuraian}', apcatatan = '{apcatatan}', apnoref = '{apnoref}', aptglnoref = '{aptglnoref}', apmatauang = '{apmatauang}', apkurs = '{apkurs}', apjumlah = '{apjumlah}', apjumlahvalas = '{apjumlahvalas}', apjumlahbayar = '{apjumlahbayar}', apjumlahbayarvalas = '{apjumlahbayarvalas}', apstatusbayar = {apstatusbayar}, aptgllunas = '{aptgllunas}', apcostcenter = '{apcostcenter}', apdivisi = '{apdivisi}', apsubdivisi = '{apsubdivisi}', approyek = '{approyek}', apstatus = {apstatus}, apstatussebelumnya = {apstatussebelumnya}, apjmlrevisi = apjmlrevisi+1, apcetakanke = {apcetakanke}, apmodifikasiuser = {apmodifikasiuser}, apmodifikasitgl = NOW(), apposting = 0, apcustomtext1 = '{apcustomtext1}', apcustomtext2 = '{apcustomtext2}', apcustomtext3 = '{apcustomtext3}', apcustomtext4 = '{apcustomtext4}', apcustomtext5 = '{apcustomtext5}', apcustomint1 = {apcustomint1}, apcustomint2 = {apcustomint2}, apcustomint3 = {apcustomint3}, apcustomdbl1 = '{apcustomdbl1}', apcustomdbl2 = '{apcustomdbl2}', apcustomdbl3 = '{apcustomdbl3}', apcustomdate1 = '{apcustomdate1}', apcustomdate2 = '{apcustomdate2}', apcustomdate3 = '{apcustomdate3}' where apid = '{apid}'
+```
+
+## Query 17
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_caridata.vb` `CdM4_Ap`
+
+```sql
+select `Ap`.`Apid` AS `Apid`,`Ap`.`Apcabang` AS `Apcabang`,`Ap`.`Aplokasi` AS `Aplokasi`,`Ap`.`Apnotransaksi` AS `Apnotransaksi`,`Ap`.`Aptgl` AS `Aptgl`,`Ap`.`Apkontak` AS `Apkontak`,`Ap`.`Apkontakperson` AS `Apkontakperson`,`Ap`.`apbagianpembayaran` AS `apbagianpembayaran`,`Ap`.`Aptermin` AS `Aptermin`,`Ap`.`Apnorek` AS `Apnorek`,`Ap`.`Apuraian` AS `Apuraian`,`Ap`.`Apcatatan` AS `Apcatatan`,`Ap`.`Apmatauang` AS `Apmatauang`,`Ap`.`Apkurs` AS `Apkurs`,`Ap`.`Apjumlah` AS `Apjumlah`,`Ap`.`Apjumlahvalas` AS `Apjumlahvalas`,`Ap`.`Apjumlahbayar` AS `Apjumlahbayar`,`Ap`.`Apjumlahbayarvalas` AS `Apjumlahbayarvalas`,(`Ap`.`Apjumlah` - `Ap`.`Apjumlahbayar`) AS `Apsisa`,(`Ap`.`Apjumlahvalas` - `Ap`.`Apjumlahbayarvalas`) AS `Apsisavalas`,`c1`.`kkode` As `Apkontakkode`,`c1`.`knama` AS `Apkontaknama`,`c2`.`kkode` AS `apbagianpembayarankode`,`c2`.`knama` AS `apbagianpembayarannama`,`coa`.`cnama` AS `Apnoreknama` from (((`M4_Ap` `Ap` left join `m1_contact` `c1` on((`Ap`.`Apkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`Ap`.`apbagianpembayaran` = `c2`.`kid`))) left join `m1_coa` `coa` on((`Ap`.`Apnorek` = `coa`.`cnomor`)))
+```
+
+## Query 18
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_ap_getdata`
+
+```sql
+select `ap`.`apid` AS `apid`,`ap`.`apcabang` AS `apcabang`,`ap`.`aplokasi` AS `aplokasi`,`ap`.`apjenis` AS `apjenis`,`ap`.`apsumber` AS `apsumber`,`ap`.`apautonotransaksi` AS `apautonotransaksi`,`ap`.`apnotransaksi` AS `apnotransaksi`,`ap`.`aptgl` AS `aptgl`,`ap`.`apkodepa` AS `apkodepa`,`ap`.`apkontak` AS `apkontak`,`ap`.`apkontakperson` AS `apkontakperson`,`ap`.`ap1alamat1` AS `ap1alamat1`,`ap`.`ap1alamat2` AS `ap1alamat2`,`ap`.`ap1alamat3` AS `ap1alamat3`,`ap`.`ap2alamat1` AS `ap2alamat1`,`ap`.`ap2alamat2` AS `ap2alamat2`,`ap`.`ap2alamat3` AS `ap2alamat3`,`ap`.`apbagianpembayaran` AS `apbagianpembayaran`,`ap`.`aptermin` AS `aptermin`,`ap`.`aptgljatuhtempo` AS `aptgljatuhtempo`,`ap`.`apidpo` AS `apidpo`,`ap`.`apnorek` AS `apnorek`,`ap`.`apuraian` AS `apuraian`,`ap`.`apcatatan` AS `apcatatan`,`ap`.`apnoref` AS `apnoref`,`ap`.`aptglnoref` AS `aptglnoref`,`ap`.`apmatauang` AS `apmatauang`,`ap`.`apkurs` AS `apkurs`,`ap`.`apjumlah` AS `apjumlah`,`ap`.`apjumlahvalas` AS `apjumlahvalas`,`ap`.`apjumlahbayar` AS `apjumlahbayar`,`ap`.`apjumlahbayarvalas` AS `apjumlahbayarvalas`,`ap`.`apstatusbayar` AS `apstatusbayar`,`ap`.`aptgllunas` AS `aptgllunas`,`ap`.`apcostcenter` AS `apcostcenter`,`ap`.`apdivisi` AS `apdivisi`,`ap`.`apsubdivisi` AS `apsubdivisi`,`ap`.`approyek` AS `approyek`,`ap`.`apstatus` AS `apstatus`,`ap`.`apstatussebelumnya` AS `apstatussebelumnya`,`ap`.`apjmlrevisi` AS `apjmlrevisi`,`ap`.`apcetakanke` AS `apcetakanke`,`ap`.`apinputuser` AS `apinputuser`,`ap`.`apinputtgl` AS `apinputtgl`,`ap`.`apmodifikasiuser` AS `apmodifikasiuser`,`ap`.`apmodifikasitgl` AS `apmodifikasitgl`,`ap`.`apposting` AS `apposting`,`ap`.`appostingtgl` AS `appostingtgl`,`ap`.`apisclose` AS `apisclose`,`ap`.`apcustomtext1` AS `apcustomtext1`,`ap`.`apcustomtext2` AS `apcustomtext2`,`ap`.`apcustomtext3` AS `apcustomtext3`,`ap`.`apcustomtext4` AS `apcustomtext4`,`ap`.`apcustomtext5` AS `apcustomtext5`,`ap`.`apcustomint1` AS `apcustomint1`,`ap`.`apcustomint2` AS `apcustomint2`,`ap`.`apcustomint3` AS `apcustomint3`,`ap`.`apcustomdbl1` AS `apcustomdbl1`,`ap`.`apcustomdbl2` AS `apcustomdbl2`,`ap`.`apcustomdbl3` AS `apcustomdbl3`,`ap`.`apcustomdate1` AS `apcustomdate1`,`ap`.`apcustomdate2` AS `apcustomdate2`,`ap`.`apcustomdate3` AS `apcustomdate3`,`br`.`bnama` AS `apcabangnama`,`lc`.`lnama` AS `aplokasinama`,`c1`.`kkode` AS `apkontakkode`,`c1`.`knama` AS `apkontaknama`,`c2`.`kkode` AS `apbagianpembayarankode`,`c2`.`knama` AS `apbagianpembayarannama`,`tr`.`trnama` AS `apterminnama`,`tr`.`trharijatuhtempo` AS `apterminharijatuhtempo`,`po`.`ponotransaksi` AS `ponotransaksi`,`coa`.`cnama` AS `apnoreknama`,`cc`.`ccnama` AS `apcostcenternama`,`d`.`dnama` AS `apdivisinama`,`sd`.`sdnama` AS `apsubdivisinama`,`p`.`pnama` AS `approyeknama`,`st1`.`nama` AS `apstatusnama`,`st2`.`nama` AS `apstatussebelumnyanama`,`u1`.`unama` AS `apinputusernama`,`u2`.`unama` AS `apmodifikasiusernama`,`app`.`idapcarabayar` AS `idapcarabayar`,`app`.`idap` AS `idap`,`app`.`carabayar` AS `carabayar`,`app`.`matauang` AS `matauang`,`app`.`kurs` AS `kurs`,`app`.`jumlah` AS `jumlah`,`app`.`jumlahvalas` AS `jumlahvalas`,`app`.`nogiro` AS `nogiro`,`app`.`tgljt` AS `tgljt`,`app`.`bank` AS `bank`,`app`.`noacbank` AS `noacbank`,`app`.`rekbank` AS `rekbank`,`app`.`rekgiro` AS `rekgiro`,`app`.`catatan` AS `catatan`,`app`.`urutan` AS `urutan`,`app`.`isclose` AS `isclose`,`pm`.`nama` AS `carabayarnama`,`b`.`bnama` AS `banknama`,`coa1`.`cnama` AS `rekbanknama`,`coa2`.`cnama` AS `rekgironama`, c1.kpkp from ((((((((((((((((((((`m4_ap` `ap` join `m4_ap_pay` `app` on((`ap`.`apid` = `app`.`idap`))) left join `m1_branch` `br` on((`ap`.`apcabang` = `br`.`bkode`))) left join `m1_location` `lc` on((`ap`.`aplokasi` = `lc`.`lkode`))) left join `m1_contact` `c1` on((`ap`.`apkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`ap`.`apbagianpembayaran` = `c2`.`kid`))) left join `m1_terms` `tr` on((`ap`.`aptermin` = `tr`.`trkode`))) left join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) left join `m1_coa` `coa` on((`ap`.`apnorek` = `coa`.`cnomor`))) left join `m1_cost_center` `cc` on((`ap`.`apcostcenter` = `cc`.`cckode`))) left join `m1_division` `d` on((`ap`.`apdivisi` = `d`.`dkode`))) left join `m1_subdivision` `sd` on((`ap`.`apsubdivisi` = `sd`.`sdkode`))) left join `m1_project` `p` on((`ap`.`approyek` = `p`.`pkode`))) left join `m0_status` `st1` on((`ap`.`apstatus` = `st1`.`kode`))) left join `m0_status` `st2` on((`ap`.`apstatussebelumnya` = `st2`.`kode`))) left join `m0_user` `u1` on((`ap`.`apinputuser` = `u1`.`userid`))) left join `m0_user` `u2` on((`ap`.`apmodifikasiuser` = `u2`.`userid`))) left join `m0_payment_method` `pm` on((`app`.`carabayar` = `pm`.`kode`))) left join `m1_bank` `b` on((`app`.`bank` = `b`.`bkode`))) left join `m1_coa` `coa1` on((`app`.`rekbank` = `coa1`.`cnomor`))) left join `m1_coa` `coa2` on((`app`.`rekgiro` = `coa2`.`cnomor`)))
+```
+
+## Query 19
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_ap_v`
+
+```sql
+select `ap`.`apid` AS `apid`,`ap`.`apcabang` AS `apcabang`,`ap`.`aplokasi` AS `aplokasi`,`ap`.`apjenis` AS `apjenis`,`ap`.`apsumber` AS `apsumber`,`ap`.`apautonotransaksi` AS `apautonotransaksi`,`ap`.`apnotransaksi` AS `apnotransaksi`,`ap`.`aptgl` AS `aptgl`,`ap`.`apkodepa` AS `apkodepa`,`ap`.`apkontak` AS `apkontak`,`ap`.`apkontakperson` AS `apkontakperson`,`ap`.`ap1alamat1` AS `ap1alamat1`,`ap`.`ap1alamat2` AS `ap1alamat2`,`ap`.`ap1alamat3` AS `ap1alamat3`,`ap`.`ap2alamat1` AS `ap2alamat1`,`ap`.`ap2alamat2` AS `ap2alamat2`,`ap`.`ap2alamat3` AS `ap2alamat3`,`ap`.`apbagianpembayaran` AS `apbagianpembayaran`,`ap`.`aptermin` AS `aptermin`,`ap`.`aptgljatuhtempo` AS `aptgljatuhtempo`,`ap`.`apidpo` AS `apidpo`,`ap`.`apnorek` AS `apnorek`,`ap`.`apuraian` AS `apuraian`,`ap`.`apcatatan` AS `apcatatan`,`ap`.`apnoref` AS `apnoref`,`ap`.`aptglnoref` AS `aptglnoref`,`ap`.`apmatauang` AS `apmatauang`,`ap`.`apkurs` AS `apkurs`,`ap`.`apjumlah` AS `apjumlah`,`ap`.`apjumlahvalas` AS `apjumlahvalas`,`ap`.`apjumlahbayar` AS `apjumlahbayar`,`ap`.`apjumlahbayarvalas` AS `apjumlahbayarvalas`,`ap`.`apstatusbayar` AS `apstatusbayar`,`ap`.`aptgllunas` AS `aptgllunas`,`ap`.`apcostcenter` AS `apcostcenter`,`ap`.`apdivisi` AS `apdivisi`,`ap`.`apsubdivisi` AS `apsubdivisi`,`ap`.`approyek` AS `approyek`,`ap`.`apstatus` AS `apstatus`,`ap`.`apstatussebelumnya` AS `apstatussebelumnya`,`ap`.`apjmlrevisi` AS `apjmlrevisi`,`ap`.`apcetakanke` AS `apcetakanke`,`ap`.`apinputuser` AS `apinputuser`,`ap`.`apinputtgl` AS `apinputtgl`,`ap`.`apmodifikasiuser` AS `apmodifikasiuser`,`ap`.`apmodifikasitgl` AS `apmodifikasitgl`,`ap`.`apposting` AS `apposting`,`ap`.`appostingtgl` AS `appostingtgl`,`ap`.`apisclose` AS `apisclose`,`br`.`bnama` AS `apcabangnama`,`lc`.`lnama` AS `aplokasinama`,(case `ap`.`apjenis` when 0 then 'Down Payment' when 1 then 'Deposit' else 'Unknown' end) AS `apjenisnama`,`c1`.`kkode` AS `apkontakkode`,`c1`.`knama` AS `apkontaknama`,`c2`.`kkode` AS `apbagianpembayarankode`,`c2`.`knama` AS `apbagianpembayarannama`,`po`.`ponotransaksi` AS `ponotransaksi`,`coa`.`cnama` AS `apnoreknama`,`st1`.`nama` AS `apstatusnama`,`st2`.`nama` AS `apstatussebelumnyanama`,`u1`.`unama` AS `apinputusernama`,`u2`.`unama` AS `apmodifikasiusernama` from ((((((((((`m4_ap` `ap` left join `m1_branch` `br` on((`ap`.`apcabang` = `br`.`bkode`))) left join `m1_location` `lc` on((`ap`.`aplokasi` = `lc`.`lkode`))) left join `m1_contact` `c1` on((`ap`.`apkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`ap`.`apbagianpembayaran` = `c2`.`kid`))) left join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) left join `m1_coa` `coa` on((`ap`.`apnorek` = `coa`.`cnomor`))) left join `m0_status` `st1` on((`ap`.`apstatus` = `st1`.`kode`))) left join `m0_status` `st2` on((`ap`.`apstatussebelumnya` = `st2`.`kode`))) left join `m0_user` `u1` on((`ap`.`apinputuser` = `u1`.`userid`))) left join `m0_user` `u2` on((`ap`.`apmodifikasiuser` = `u2`.`userid`)))
+```
+
+## Query 20
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_ap_terkait`
+
+```sql
+select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`po`.`posumber` AS `sumber`,`po`.`poid` AS `idterkait`,`po`.`ponotransaksi` AS `noterkait`,`po`.`potgl` AS `tglterkait`,`po`.`poinputtgl` AS `inputtglterkait`,`po`.`pomodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (`m4_ap` `ap` join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) where (`ap`.`apid` = 'validtransaksi') group by `po`.`poid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`vpp`.`vppsumber` AS `sumber`,`vpp`.`vppid` AS `idterkait`,`vpp`.`vppnotransaksi` AS `noterkait`,`vpp`.`vpptgl` AS `tglterkait`,`vpp`.`vppinputtgl` AS `inputtglterkait`,`vpp`.`vppmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from ((`m4_vpp_detail` `vppd` join `m4_vpp` `vpp` on((`vppd`.`idvpp` = `vpp`.`vppid`))) join `m4_ap` `ap` on((`vppd`.`idtransaksi` = `ap`.`apid`))) where ((`vppd`.`sumber` = 'AP') and ((`vpp`.`vppstatus` = 2) or (`vpp`.`vppstatus` = 3) or (`vpp`.`vppstatus` = 4) or (`vpp`.`vppstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `vpp`.`vppid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`vp`.`vpsumber` AS `sumber`,`vp`.`vpid` AS `idterkait`,`vp`.`vpnotransaksi` AS `noterkait`,`vp`.`vptgl` AS `tglterkait`,`vp`.`vpinputtgl` AS `inputtglterkait`,`vp`.`vpmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from ((`m4_vp_detail` `vpd` join `m4_vp` `vp` on((`vpd`.`idvp` = `vp`.`vpid`))) join `m4_ap` `ap` on((`vpd`.`idtransaksi` = `ap`.`apid`))) where ((`vpd`.`sumber` = 'AP') and ((`vp`.`vpstatus` = 2) or (`vp`.`vpstatus` = 3) or (`vp`.`vpstatus` = 4) or (`vp`.`vpstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `vp`.`vpid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`sg`.`sgsumber` AS `sumber`,`sg`.`sgid` AS `idterkait`,`sg`.`sgnotransaksi` AS `noterkait`,`sg`.`sgtgl` AS `tglterkait`,`sg`.`sginputtgl` AS `inputtglterkait`,`sg`.`sgmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_ap` `ap` join `m2_giro_list` `gl` on((`ap`.`apnotransaksi` = `gl`.`glnotransaksi`))) join `m2_sg_detail` `sgd` on((`gl`.`glnogiro` = `sgd`.`nogiro`))) join `m2_sg` `sg` on((`sgd`.`idsg` = `sg`.`sgid`))) where (((`sg`.`sgstatus` = 2) or (`sg`.`sgstatus` = 3) or (`sg`.`sgstatus` = 4) or (`sg`.`sgstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `sg`.`sgid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`sgc`.`sgcsumber` AS `sumber`,`sgc`.`sgcid` AS `idterkait`,`sgc`.`sgcnotransaksi` AS `noterkait`,`sgc`.`sgctgl` AS `tglterkait`,`sgc`.`sgcinputtgl` AS `inputtglterkait`,`sgc`.`sgcmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_ap` `ap` join `m2_giro_list` `gl` on((`ap`.`apnotransaksi` = `gl`.`glnotransaksi`))) join `m2_sgc_detail` `sgcd` on((`gl`.`glnogiro` = `sgcd`.`nogiro`))) join `m2_sgc` `sgc` on((`sgcd`.`idsgc` = `sgc`.`sgcid`))) where (((`sgc`.`sgcstatus` = 2) or (`sgc`.`sgcstatus` = 3) or (`sgc`.`sgcstatus` = 4) or (`sgc`.`sgcstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `sgc`.`sgcid`,`ap`.`apid`
+```
+
+## Query 21
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_ap.vb`
+
+```sql
+select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`po`.`posumber` AS `sumber`,`po`.`poid` AS `idterkait`,`po`.`ponotransaksi` AS `noterkait`,`po`.`potgl` AS `tglterkait`,`po`.`poinputtgl` AS `inputtglterkait`,`po`.`pomodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (`m4_ap` `ap` join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) where (`ap`.`apid` = 'validtransaksi') group by `po`.`poid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`vpp`.`vppsumber` AS `sumber`,`vpp`.`vppid` AS `idterkait`,`vpp`.`vppnotransaksi` AS `noterkait`,`vpp`.`vpptgl` AS `tglterkait`,`vpp`.`vppinputtgl` AS `inputtglterkait`,`vpp`.`vppmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from ((`m4_vpp_detail` `vppd` join `m4_vpp` `vpp` on((`vppd`.`idvpp` = `vpp`.`vppid`))) join `m4_ap` `ap` on((`vppd`.`idtransaksi` = `ap`.`apid`))) where ((`vppd`.`sumber` = 'AP') and ((`vpp`.`vppstatus` = 2) or (`vpp`.`vppstatus` = 3) or (`vpp`.`vppstatus` = 4) or (`vpp`.`vppstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `vpp`.`vppid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`vp`.`vpsumber` AS `sumber`,`vp`.`vpid` AS `idterkait`,`vp`.`vpnotransaksi` AS `noterkait`,`vp`.`vptgl` AS `tglterkait`,`vp`.`vpinputtgl` AS `inputtglterkait`,`vp`.`vpmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from ((`m4_vp_detail` `vpd` join `m4_vp` `vp` on((`vpd`.`idvp` = `vp`.`vpid`))) join `m4_ap` `ap` on((`vpd`.`idtransaksi` = `ap`.`apid`))) where ((`vpd`.`sumber` = 'AP') and ((`vp`.`vpstatus` = 2) or (`vp`.`vpstatus` = 3) or (`vp`.`vpstatus` = 4) or (`vp`.`vpstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `vp`.`vpid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`sg`.`sgsumber` AS `sumber`,`sg`.`sgid` AS `idterkait`,`sg`.`sgnotransaksi` AS `noterkait`,`sg`.`sgtgl` AS `tglterkait`,`sg`.`sginputtgl` AS `inputtglterkait`,`sg`.`sgmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_ap` `ap` join `m2_giro_list` `gl` on((`ap`.`apnotransaksi` = `gl`.`glnotransaksi`))) join `m2_sg_detail` `sgd` on((`gl`.`glnogiro` = `sgd`.`nogiro`))) join `m2_sg` `sg` on((`sgd`.`idsg` = `sg`.`sgid`))) where (((`sg`.`sgstatus` = 2) or (`sg`.`sgstatus` = 3) or (`sg`.`sgstatus` = 4) or (`sg`.`sgstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `sg`.`sgid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`,`ap`.`apnotransaksi` AS `apnotransaksi`,`sgc`.`sgcsumber` AS `sumber`,`sgc`.`sgcid` AS `idterkait`,`sgc`.`sgcnotransaksi` AS `noterkait`,`sgc`.`sgctgl` AS `tglterkait`,`sgc`.`sgcinputtgl` AS `inputtglterkait`,`sgc`.`sgcmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_ap` `ap` join `m2_giro_list` `gl` on((`ap`.`apnotransaksi` = `gl`.`glnotransaksi`))) join `m2_sgc_detail` `sgcd` on((`gl`.`glnogiro` = `sgcd`.`nogiro`))) join `m2_sgc` `sgc` on((`sgcd`.`idsgc` = `sgc`.`sgcid`))) where (((`sgc`.`sgcstatus` = 2) or (`sgc`.`sgcstatus` = 3) or (`sgc`.`sgcstatus` = 4) or (`sgc`.`sgcstatus` = 7)) and (`ap`.`apid` = 'validtransaksi')) group by `sgc`.`sgcid`,`ap`.`apid` union all select `ap`.`apid` AS `apid`, `ap`.`apnotransaksi` AS `apnotransaksi`, `ri`.`risumber` AS `sumber`, `ri`.`riid` AS `idterkait`, `ri`.`rinotransaksi` AS `noterkait`, `ri`.`ritgl` AS `tglterkait`, `ri`.`riinputtgl` AS `inputtglterkait`, `ri`.`rimodifikasitgl` AS `modifikasitglterkait`, 1 AS `jenisterkait` from `m4_ri` `ri` join `m4_ap` `ap` on `ri`.`riidap` = `ap`.`apid` where ((`ri`.`ristatus` = 2) or (`ri`.`ristatus` = 3) or (`ri`.`ristatus` = 4) or (`ri`.`ristatus` = 7)) and (`ap`.`apid` = 'validtransaksi') group by `ri`.`riid`,`ap`.`apid`
+```
+
+## Query 22
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_ap_getdata_history`
+
+```sql
+select `ap`.`apidhistory` AS `apidhistory`,`ap`.`apid` AS `apid`,`ap`.`apcabang` AS `apcabang`,`ap`.`aplokasi` AS `aplokasi`,`ap`.`apjenis` AS `apjenis`,`ap`.`apsumber` AS `apsumber`,`ap`.`apautonotransaksi` AS `apautonotransaksi`,`ap`.`apnotransaksi` AS `apnotransaksi`,`ap`.`aptgl` AS `aptgl`,`ap`.`apkodepa` AS `apkodepa`,`ap`.`apkontak` AS `apkontak`,`ap`.`apkontakperson` AS `apkontakperson`,`ap`.`ap1alamat1` AS `ap1alamat1`,`ap`.`ap1alamat2` AS `ap1alamat2`,`ap`.`ap1alamat3` AS `ap1alamat3`,`ap`.`ap2alamat1` AS `ap2alamat1`,`ap`.`ap2alamat2` AS `ap2alamat2`,`ap`.`ap2alamat3` AS `ap2alamat3`,`ap`.`apbagianpembayaran` AS `apbagianpembayaran`,`ap`.`aptermin` AS `aptermin`,`ap`.`aptgljatuhtempo` AS `aptgljatuhtempo`,`ap`.`apidpo` AS `apidpo`,`ap`.`apnorek` AS `apnorek`,`ap`.`apuraian` AS `apuraian`,`ap`.`apcatatan` AS `apcatatan`,`ap`.`apnoref` AS `apnoref`,`ap`.`aptglnoref` AS `aptglnoref`,`ap`.`apmatauang` AS `apmatauang`,`ap`.`apkurs` AS `apkurs`,`ap`.`apjumlah` AS `apjumlah`,`ap`.`apjumlahvalas` AS `apjumlahvalas`,`ap`.`apjumlahbayar` AS `apjumlahbayar`,`ap`.`apjumlahbayarvalas` AS `apjumlahbayarvalas`,`ap`.`apstatusbayar` AS `apstatusbayar`,`ap`.`aptgllunas` AS `aptgllunas`,`ap`.`apcostcenter` AS `apcostcenter`,`ap`.`apdivisi` AS `apdivisi`,`ap`.`apsubdivisi` AS `apsubdivisi`,`ap`.`approyek` AS `approyek`,`ap`.`apstatus` AS `apstatus`,`ap`.`apstatussebelumnya` AS `apstatussebelumnya`,`ap`.`apjmlrevisi` AS `apjmlrevisi`,`ap`.`apcetakanke` AS `apcetakanke`,`ap`.`apinputuser` AS `apinputuser`,`ap`.`apinputtgl` AS `apinputtgl`,`ap`.`apmodifikasiuser` AS `apmodifikasiuser`,`ap`.`apmodifikasitgl` AS `apmodifikasitgl`,`ap`.`apposting` AS `apposting`,`ap`.`appostingtgl` AS `appostingtgl`,`ap`.`apisclose` AS `apisclose`,`ap`.`apcustomtext1` AS `apcustomtext1`,`ap`.`apcustomtext2` AS `apcustomtext2`,`ap`.`apcustomtext3` AS `apcustomtext3`,`ap`.`apcustomtext4` AS `apcustomtext4`,`ap`.`apcustomtext5` AS `apcustomtext5`,`ap`.`apcustomint1` AS `apcustomint1`,`ap`.`apcustomint2` AS `apcustomint2`,`ap`.`apcustomint3` AS `apcustomint3`,`ap`.`apcustomdbl1` AS `apcustomdbl1`,`ap`.`apcustomdbl2` AS `apcustomdbl2`,`ap`.`apcustomdbl3` AS `apcustomdbl3`,`ap`.`apcustomdate1` AS `apcustomdate1`,`ap`.`apcustomdate2` AS `apcustomdate2`,`ap`.`apcustomdate3` AS `apcustomdate3`,`br`.`bnama` AS `apcabangnama`,`lc`.`lnama` AS `aplokasinama`,`c1`.`kkode` AS `apkontakkode`,`c1`.`knama` AS `apkontaknama`,`c2`.`kkode` AS `apbagianpembayarankode`,`c2`.`knama` AS `apbagianpembayarannama`,`tr`.`trnama` AS `apterminnama`,`tr`.`trharijatuhtempo` AS `apterminharijatuhtempo`,`po`.`ponotransaksi` AS `ponotransaksi`,`coa`.`cnama` AS `apnoreknama`,`cc`.`ccnama` AS `apcostcenternama`,`d`.`dnama` AS `apdivisinama`,`sd`.`sdnama` AS `apsubdivisinama`,`p`.`pnama` AS `approyeknama`,`st1`.`nama` AS `apstatusnama`,`st2`.`nama` AS `apstatussebelumnyanama`,`u1`.`unama` AS `apinputusernama`,`u2`.`unama` AS `apmodifikasiusernama`,`app`.`idhistorycarabayar` AS `idhistorycarabayar`,`app`.`idhistory` AS `idhistory`,`app`.`idapcarabayar` AS `idapcarabayar`,`app`.`idap` AS `idap`,`app`.`carabayar` AS `carabayar`,`app`.`matauang` AS `matauang`,`app`.`kurs` AS `kurs`,`app`.`jumlah` AS `jumlah`,`app`.`jumlahvalas` AS `jumlahvalas`,`app`.`nogiro` AS `nogiro`,`app`.`tgljt` AS `tgljt`,`app`.`bank` AS `bank`,`app`.`noacbank` AS `noacbank`,`app`.`rekbank` AS `rekbank`,`app`.`rekgiro` AS `rekgiro`,`app`.`catatan` AS `catatan`,`app`.`urutan` AS `urutan`,`app`.`isclose` AS `isclose`,`pm`.`nama` AS `carabayarnama`,`b`.`bnama` AS `banknama`,`coa1`.`cnama` AS `rekbanknama`,`coa2`.`cnama` AS `rekgironama` from ((((((((((((((((((((`m4_ap_history` `ap` join `m4_ap_pay_history` `app` on((`ap`.`apidhistory` = `app`.`idhistory`))) left join `m1_branch` `br` on((`ap`.`apcabang` = `br`.`bkode`))) left join `m1_location` `lc` on((`ap`.`aplokasi` = `lc`.`lkode`))) left join `m1_contact` `c1` on((`ap`.`apkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`ap`.`apbagianpembayaran` = `c2`.`kid`))) left join `m1_terms` `tr` on((`ap`.`aptermin` = `tr`.`trkode`))) left join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) left join `m1_coa` `coa` on((`ap`.`apnorek` = `coa`.`cnomor`))) left join `m1_cost_center` `cc` on((`ap`.`apcostcenter` = `cc`.`cckode`))) left join `m1_division` `d` on((`ap`.`apdivisi` = `d`.`dkode`))) left join `m1_subdivision` `sd` on((`ap`.`apsubdivisi` = `sd`.`sdkode`))) left join `m1_project` `p` on((`ap`.`approyek` = `p`.`pkode`))) left join `m0_status` `st1` on((`ap`.`apstatus` = `st1`.`kode`))) left join `m0_status` `st2` on((`ap`.`apstatussebelumnya` = `st2`.`kode`))) left join `m0_user` `u1` on((`ap`.`apinputuser` = `u1`.`userid`))) left join `m0_user` `u2` on((`ap`.`apmodifikasiuser` = `u2`.`userid`))) left join `m0_payment_method` `pm` on((`app`.`carabayar` = `pm`.`kode`))) left join `m1_bank` `b` on((`app`.`bank` = `b`.`bkode`))) left join `m1_coa` `coa1` on((`app`.`rekbank` = `coa1`.`cnomor`))) left join `m1_coa` `coa2` on((`app`.`rekgiro` = `coa2`.`cnomor`)))
+```
+
+## Query 23
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_ap_v_history`
+
+```sql
+select `ap`.`apidhistory` AS `apidhistory`,`ap`.`apid` AS `apid`,`ap`.`apcabang` AS `apcabang`,`ap`.`aplokasi` AS `aplokasi`,`ap`.`apjenis` AS `apjenis`,`ap`.`apsumber` AS `apsumber`,`ap`.`apautonotransaksi` AS `apautonotransaksi`,`ap`.`apnotransaksi` AS `apnotransaksi`,`ap`.`aptgl` AS `aptgl`,`ap`.`apkodepa` AS `apkodepa`,`ap`.`apkontak` AS `apkontak`,`ap`.`apkontakperson` AS `apkontakperson`,`ap`.`ap1alamat1` AS `ap1alamat1`,`ap`.`ap1alamat2` AS `ap1alamat2`,`ap`.`ap1alamat3` AS `ap1alamat3`,`ap`.`ap2alamat1` AS `ap2alamat1`,`ap`.`ap2alamat2` AS `ap2alamat2`,`ap`.`ap2alamat3` AS `ap2alamat3`,`ap`.`apbagianpembayaran` AS `apbagianpembayaran`,`ap`.`aptermin` AS `aptermin`,`ap`.`aptgljatuhtempo` AS `aptgljatuhtempo`,`ap`.`apidpo` AS `apidpo`,`ap`.`apnorek` AS `apnorek`,`ap`.`apuraian` AS `apuraian`,`ap`.`apcatatan` AS `apcatatan`,`ap`.`apnoref` AS `apnoref`,`ap`.`aptglnoref` AS `aptglnoref`,`ap`.`apmatauang` AS `apmatauang`,`ap`.`apkurs` AS `apkurs`,`ap`.`apjumlah` AS `apjumlah`,`ap`.`apjumlahvalas` AS `apjumlahvalas`,`ap`.`apjumlahbayar` AS `apjumlahbayar`,`ap`.`apjumlahbayarvalas` AS `apjumlahbayarvalas`,`ap`.`apstatusbayar` AS `apstatusbayar`,`ap`.`aptgllunas` AS `aptgllunas`,`ap`.`apcostcenter` AS `apcostcenter`,`ap`.`apdivisi` AS `apdivisi`,`ap`.`apsubdivisi` AS `apsubdivisi`,`ap`.`approyek` AS `approyek`,`ap`.`apstatus` AS `apstatus`,`ap`.`apstatussebelumnya` AS `apstatussebelumnya`,`ap`.`apjmlrevisi` AS `apjmlrevisi`,`ap`.`apcetakanke` AS `apcetakanke`,`ap`.`apinputuser` AS `apinputuser`,`ap`.`apinputtgl` AS `apinputtgl`,`ap`.`apmodifikasiuser` AS `apmodifikasiuser`,`ap`.`apmodifikasitgl` AS `apmodifikasitgl`,`ap`.`apposting` AS `apposting`,`ap`.`appostingtgl` AS `appostingtgl`,`ap`.`apisclose` AS `apisclose`,`br`.`bnama` AS `apcabangnama`,`lc`.`lnama` AS `aplokasinama`,(case `ap`.`apjenis` when 0 then 'Down Payment' when 1 then 'Deposit' else 'Unknown' end) AS `apjenisnama`,`c1`.`kkode` AS `apkontakkode`,`c1`.`knama` AS `apkontaknama`,`c2`.`kkode` AS `apbagianpembayarankode`,`c2`.`knama` AS `apbagianpembayarannama`,`po`.`ponotransaksi` AS `ponotransaksi`,`coa`.`cnama` AS `apnoreknama`,`st1`.`nama` AS `apstatusnama`,`st2`.`nama` AS `apstatussebelumnyanama`,`u1`.`unama` AS `apinputusernama`,`u2`.`unama` AS `apmodifikasiusernama` from ((((((((((`m4_ap_history` `ap` left join `m1_branch` `br` on((`ap`.`apcabang` = `br`.`bkode`))) left join `m1_location` `lc` on((`ap`.`aplokasi` = `lc`.`lkode`))) left join `m1_contact` `c1` on((`ap`.`apkontak` = `c1`.`kid`))) left join `m1_contact` `c2` on((`ap`.`apbagianpembayaran` = `c2`.`kid`))) left join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) left join `m1_coa` `coa` on((`ap`.`apnorek` = `coa`.`cnomor`))) left join `m0_status` `st1` on((`ap`.`apstatus` = `st1`.`kode`))) left join `m0_status` `st2` on((`ap`.`apstatussebelumnya` = `st2`.`kode`))) left join `m0_user` `u1` on((`ap`.`apinputuser` = `u1`.`userid`))) left join `m0_user` `u2` on((`ap`.`apmodifikasiuser` = `u2`.`userid`)))
+```
+

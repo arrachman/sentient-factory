@@ -1,0 +1,212 @@
+{
+  "results": [
+    {
+      "id": "dashboard_005_outstanding_vs_collection",
+      "title": "Analisis Outstanding dan Collection",
+      "question": "Bandingkan outstanding sales invoice dengan invoice collection dan payment voucher untuk melihat invoice yang belum tertagih, sudah tertagih, atau sudah dibayar sebagian.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User ingin membandingkan invoice penjualan (SI) terhadap progres penagihan (IC) dan pembayaran (PV) agar terlihat invoice mana yang belum tertagih, sudah tertagih, atau sudah dibayar sebagian.\", \"tables_used\": [\"m5_si\", \"m1_contact\", \"m5_ic_detail\", \"m5_ic\", \"m5_pv_detail\", \"m5_pv\"], \"tables_missing\": [], \"reasoning\": \"Permintaan ini secara alami membutuhkan kombinasi status lintas tahap dan detail + agregasi, sehingga wajib memakai mode dashboard. Entitas utama adalah sales invoice dari m5_si karena istilah 'sales invoice' menurut pedoman berarti invoice penjualan final. Untuk penagihan dipakai alur IC -> IC_DETAIL, dan untuk pembayaran dipakai alur PV -> PV_DETAIL sesuai join_hints sales_receivable_collection dan polymorphic target sales_receivable_polymorphic_targets. Karena m5_ic_detail dan m5_pv_detail bersifat polymorphic, join ke sales invoice harus memakai filter sumber = 'SI' dan tidak boleh join idtransaksi secara langsung tanpa discriminator. Untuk customer dipakai m1_contact lewat relasi m5_si.sicustomer = m1_contact.kid. Filter always_apply_filters pada m5_si yaitu siisclose = 0 wajib diterapkan. Query pertama memberi ringkasan status komparatif per invoice dengan menghitung nilai invoice, nilai tertagih dari IC, dan nilai dibayar dari PV lalu mengklasifikasikan invoice menjadi belum tertagih, sudah tertagih belum dibayar, atau dibayar sebagian/sudah dibayar. Query kedua memberi distribusi jumlah invoice dan nilai invoice per status agar mudah dibandingkan secara agregat. Query ketiga memberi daftar detail invoice yang masih outstanding agar user bisa menindaklanjuti invoice tertentu. Perhitungan outstanding pembayaran memakai sitotaltransaksi dikurangi total bayar PV; nilai tertagih memakai agregasi jmlbayar pada IC detail sumber SI, dan nilai dibayar memakai agregasi jmlbayar pada PV detail sumber SI.\", \"ai_metrics\": {\"confidence_score\": 0.86, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query agregasi menggunakan subquery atas m5_ic_detail dan m5_pv_detail sehingga performa dapat bergantung pada indeks kolom sumber, idtransaksi, dan foreign key header.\", \"Query detail tidak diberi filter periode karena user tidak menyebut periode; hasil dapat besar namun sudah dibatasi LIMIT 100.\"]}, \"queries\": [{\"id\": \"q_status_per_invoice\", \"name\": \"Status Invoice vs Tagih vs Bayar\", \"purpose\": \"Menampilkan status per invoice untuk melihat invoice belum tertagih, sudah tertagih, atau sudah dibayar sebagian.\", \"query\": \"SELECT si.siid AS invoice_id, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS nilai_invoice, COALESCE(ic_agg.nilai_tertagih, 0) AS nilai_tertagih, COALESCE(pv_agg.nilai_dibayar, 0) AS nilai_dibayar, (si.sitotaltransaksi - COALESCE(ic_agg.nilai_tertagih, 0)) AS sisa_belum_tertagih, (si.sitotaltransaksi - COALESCE(pv_agg.nilai_dibayar, 0)) AS sisa_belum_dibayar, CASE WHEN COALESCE(ic_agg.nilai_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN COALESCE(ic_agg.nilai_tertagih, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) = 0 THEN 'Sudah Tertagih Belum Dibayar' WHEN COALESCE(pv_agg.nilai_dibayar, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' WHEN COALESCE(pv_agg.nilai_dibayar, 0) >= si.sitotaltransaksi THEN 'Sudah Dibayar/Lunas' ELSE 'Status Lain' END AS status_invoice FROM m5_si si LEFT JOIN m1_contact c ON si.sicustomer = c.kid AND c.kaktif = 1 LEFT JOIN ( SELECT icd.idtransaksi, SUM(icd.jmlbayar) AS nilai_tertagih FROM m5_ic_detail icd INNER JOIN m5_ic ic ON icd.idic = ic.icid WHERE icd.sumber = 'SI' GROUP BY icd.idtransaksi ) ic_agg ON ic_agg.idtransaksi = si.siid LEFT JOIN ( SELECT pvd.idtransaksi, SUM(pvd.jmlbayar) AS nilai_dibayar FROM m5_pv_detail pvd INNER JOIN m5_pv pv ON pvd.idpv = pv.pvid WHERE pvd.sumber = 'SI' GROUP BY pvd.idtransaksi ) pv_agg ON pv_agg.idtransaksi = si.siid WHERE si.siisclose = 0 ORDER BY si.sitgl DESC, si.sinotransaksi DESC LIMIT 100\", \"result_kind\": \"table\"}, {\"id\": \"q_distribution_status\", \"name\": \"Distribusi Status Invoice\", \"purpose\": \"Merangkum jumlah invoice dan total nilai invoice per status tagih/bayar.\", \"query\": \"SELECT status_invoice, COUNT(*) AS jumlah_invoice, SUM(nilai_invoice) AS total_nilai_invoice, SUM(nilai_tertagih) AS total_nilai_tertagih, SUM(nilai_dibayar) AS total_nilai_dibayar, SUM(sisa_belum_tertagih) AS total_sisa_belum_tertagih, SUM(sisa_belum_dibayar) AS total_sisa_belum_dibayar FROM ( SELECT si.siid, si.sitotaltransaksi AS nilai_invoice, COALESCE(ic_agg.nilai_tertagih, 0) AS nilai_tertagih, COALESCE(pv_agg.nilai_dibayar, 0) AS nilai_dibayar, (si.sitotaltransaksi - COALESCE(ic_agg.nilai_tertagih, 0)) AS sisa_belum_tertagih, (si.sitotaltransaksi - COALESCE(pv_agg.nilai_dibayar, 0)) AS sisa_belum_dibayar, CASE WHEN COALESCE(ic_agg.nilai_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN COALESCE(ic_agg.nilai_tertagih, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) = 0 THEN 'Sudah Tertagih Belum Dibayar' WHEN COALESCE(pv_agg.nilai_dibayar, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' WHEN COALESCE(pv_agg.nilai_dibayar, 0) >= si.sitotaltransaksi THEN 'Sudah Dibayar/Lunas' ELSE 'Status Lain' END AS status_invoice FROM m5_si si LEFT JOIN ( SELECT icd.idtransaksi, SUM(icd.jmlbayar) AS nilai_tertagih FROM m5_ic_detail icd INNER JOIN m5_ic ic ON icd.idic = ic.icid WHERE icd.sumber = 'SI' GROUP BY icd.idtransaksi ) ic_agg ON ic_agg.idtransaksi = si.siid LEFT JOIN ( SELECT pvd.idtransaksi, SUM(pvd.jmlbayar) AS nilai_dibayar FROM m5_pv_detail pvd INNER JOIN m5_pv pv ON pvd.idpv = pv.pvid WHERE pvd.sumber = 'SI' GROUP BY pvd.idtransaksi ) pv_agg ON pv_agg.idtransaksi = si.siid WHERE si.siisclose = 0 ) x GROUP BY status_invoice ORDER BY total_nilai_invoice DESC\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_outstanding_followup\", \"name\": \"Outstanding Invoice Follow Up\", \"purpose\": \"Menampilkan invoice yang masih perlu ditindaklanjuti karena belum tertagih atau baru dibayar sebagian.\", \"query\": \"SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS nilai_invoice, COALESCE(ic_agg.nilai_tertagih, 0) AS nilai_tertagih, COALESCE(pv_agg.nilai_dibayar, 0) AS nilai_dibayar, (si.sitotaltransaksi - COALESCE(ic_agg.nilai_tertagih, 0)) AS sisa_belum_tertagih, (si.sitotaltransaksi - COALESCE(pv_agg.nilai_dibayar, 0)) AS sisa_belum_dibayar, CASE WHEN COALESCE(ic_agg.nilai_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN COALESCE(ic_agg.nilai_tertagih, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) = 0 THEN 'Sudah Tertagih Belum Dibayar' WHEN COALESCE(pv_agg.nilai_dibayar, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lainnya' END AS status_followup FROM m5_si si LEFT JOIN m1_contact c ON si.sicustomer = c.kid AND c.kaktif = 1 LEFT JOIN ( SELECT icd.idtransaksi, SUM(icd.jmlbayar) AS nilai_tertagih FROM m5_ic_detail icd INNER JOIN m5_ic ic ON icd.idic = ic.icid WHERE icd.sumber = 'SI' GROUP BY icd.idtransaksi ) ic_agg ON ic_agg.idtransaksi = si.siid LEFT JOIN ( SELECT pvd.idtransaksi, SUM(pvd.jmlbayar) AS nilai_dibayar FROM m5_pv_detail pvd INNER JOIN m5_pv pv ON pvd.idpv = pv.pvid WHERE pvd.sumber = 'SI' GROUP BY pvd.idtransaksi ) pv_agg ON pv_agg.idtransaksi = si.siid WHERE si.siisclose = 0 AND (COALESCE(ic_agg.nilai_tertagih, 0) < si.sitotaltransaksi OR COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi) ORDER BY sisa_belum_dibayar DESC, sisa_belum_tertagih DESC, si.sitgl DESC LIMIT 100\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"v_status_per_invoice\", \"query_id\": \"q_status_per_invoice\", \"title\": \"Perbandingan Outstanding SI vs IC vs PV per Invoice\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"nilai_invoice\", \"nilai_tertagih\", \"nilai_dibayar\", \"sisa_belum_tertagih\", \"sisa_belum_dibayar\"]}, {\"id\": \"v_distribution_status\", \"query_id\": \"q_distribution_status\", \"title\": \"Distribusi Nilai Invoice per Status Tagih/Bayar\", \"chart_type\": \"bar\", \"x_axis\": \"status_invoice\", \"y_axis\": [\"total_nilai_invoice\", \"total_nilai_tertagih\", \"total_nilai_dibayar\"]}, {\"id\": \"v_outstanding_followup\", \"query_id\": \"q_outstanding_followup\", \"title\": \"Daftar Invoice Outstanding untuk Follow Up\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"nilai_invoice\", \"nilai_tertagih\", \"nilai_dibayar\", \"sisa_belum_tertagih\", \"sisa_belum_dibayar\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User ingin membandingkan invoice penjualan (SI) terhadap progres penagihan (IC) dan pembayaran (PV) agar terlihat invoice mana yang belum tertagih, sudah tertagih, atau sudah dibayar sebagian.",
+          "tables_used": [
+            "m5_si",
+            "m1_contact",
+            "m5_ic_detail",
+            "m5_ic",
+            "m5_pv_detail",
+            "m5_pv"
+          ],
+          "tables_missing": [],
+          "reasoning": "Permintaan ini secara alami membutuhkan kombinasi status lintas tahap dan detail + agregasi, sehingga wajib memakai mode dashboard. Entitas utama adalah sales invoice dari m5_si karena istilah 'sales invoice' menurut pedoman berarti invoice penjualan final. Untuk penagihan dipakai alur IC -> IC_DETAIL, dan untuk pembayaran dipakai alur PV -> PV_DETAIL sesuai join_hints sales_receivable_collection dan polymorphic target sales_receivable_polymorphic_targets. Karena m5_ic_detail dan m5_pv_detail bersifat polymorphic, join ke sales invoice harus memakai filter sumber = 'SI' dan tidak boleh join idtransaksi secara langsung tanpa discriminator. Untuk customer dipakai m1_contact lewat relasi m5_si.sicustomer = m1_contact.kid. Filter always_apply_filters pada m5_si yaitu siisclose = 0 wajib diterapkan. Query pertama memberi ringkasan status komparatif per invoice dengan menghitung nilai invoice, nilai tertagih dari IC, dan nilai dibayar dari PV lalu mengklasifikasikan invoice menjadi belum tertagih, sudah tertagih belum dibayar, atau dibayar sebagian/sudah dibayar. Query kedua memberi distribusi jumlah invoice dan nilai invoice per status agar mudah dibandingkan secara agregat. Query ketiga memberi daftar detail invoice yang masih outstanding agar user bisa menindaklanjuti invoice tertentu. Perhitungan outstanding pembayaran memakai sitotaltransaksi dikurangi total bayar PV; nilai tertagih memakai agregasi jmlbayar pada IC detail sumber SI, dan nilai dibayar memakai agregasi jmlbayar pada PV detail sumber SI.",
+          "ai_metrics": {
+            "confidence_score": 0.86,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query agregasi menggunakan subquery atas m5_ic_detail dan m5_pv_detail sehingga performa dapat bergantung pada indeks kolom sumber, idtransaksi, dan foreign key header.",
+            "Query detail tidak diberi filter periode karena user tidak menyebut periode; hasil dapat besar namun sudah dibatasi LIMIT 100."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_status_per_invoice",
+            "name": "Status Invoice vs Tagih vs Bayar",
+            "purpose": "Menampilkan status per invoice untuk melihat invoice belum tertagih, sudah tertagih, atau sudah dibayar sebagian.",
+            "query": "SELECT si.siid AS invoice_id, si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS nilai_invoice, COALESCE(ic_agg.nilai_tertagih, 0) AS nilai_tertagih, COALESCE(pv_agg.nilai_dibayar, 0) AS nilai_dibayar, (si.sitotaltransaksi - COALESCE(ic_agg.nilai_tertagih, 0)) AS sisa_belum_tertagih, (si.sitotaltransaksi - COALESCE(pv_agg.nilai_dibayar, 0)) AS sisa_belum_dibayar, CASE WHEN COALESCE(ic_agg.nilai_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN COALESCE(ic_agg.nilai_tertagih, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) = 0 THEN 'Sudah Tertagih Belum Dibayar' WHEN COALESCE(pv_agg.nilai_dibayar, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' WHEN COALESCE(pv_agg.nilai_dibayar, 0) >= si.sitotaltransaksi THEN 'Sudah Dibayar/Lunas' ELSE 'Status Lain' END AS status_invoice FROM m5_si si LEFT JOIN m1_contact c ON si.sicustomer = c.kid AND c.kaktif = 1 LEFT JOIN ( SELECT icd.idtransaksi, SUM(icd.jmlbayar) AS nilai_tertagih FROM m5_ic_detail icd INNER JOIN m5_ic ic ON icd.idic = ic.icid WHERE icd.sumber = 'SI' GROUP BY icd.idtransaksi ) ic_agg ON ic_agg.idtransaksi = si.siid LEFT JOIN ( SELECT pvd.idtransaksi, SUM(pvd.jmlbayar) AS nilai_dibayar FROM m5_pv_detail pvd INNER JOIN m5_pv pv ON pvd.idpv = pv.pvid WHERE pvd.sumber = 'SI' GROUP BY pvd.idtransaksi ) pv_agg ON pv_agg.idtransaksi = si.siid WHERE si.siisclose = 0 ORDER BY si.sitgl DESC, si.sinotransaksi DESC LIMIT 100",
+            "result_kind": "table"
+          },
+          {
+            "id": "q_distribution_status",
+            "name": "Distribusi Status Invoice",
+            "purpose": "Merangkum jumlah invoice dan total nilai invoice per status tagih/bayar.",
+            "query": "SELECT status_invoice, COUNT(*) AS jumlah_invoice, SUM(nilai_invoice) AS total_nilai_invoice, SUM(nilai_tertagih) AS total_nilai_tertagih, SUM(nilai_dibayar) AS total_nilai_dibayar, SUM(sisa_belum_tertagih) AS total_sisa_belum_tertagih, SUM(sisa_belum_dibayar) AS total_sisa_belum_dibayar FROM ( SELECT si.siid, si.sitotaltransaksi AS nilai_invoice, COALESCE(ic_agg.nilai_tertagih, 0) AS nilai_tertagih, COALESCE(pv_agg.nilai_dibayar, 0) AS nilai_dibayar, (si.sitotaltransaksi - COALESCE(ic_agg.nilai_tertagih, 0)) AS sisa_belum_tertagih, (si.sitotaltransaksi - COALESCE(pv_agg.nilai_dibayar, 0)) AS sisa_belum_dibayar, CASE WHEN COALESCE(ic_agg.nilai_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN COALESCE(ic_agg.nilai_tertagih, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) = 0 THEN 'Sudah Tertagih Belum Dibayar' WHEN COALESCE(pv_agg.nilai_dibayar, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' WHEN COALESCE(pv_agg.nilai_dibayar, 0) >= si.sitotaltransaksi THEN 'Sudah Dibayar/Lunas' ELSE 'Status Lain' END AS status_invoice FROM m5_si si LEFT JOIN ( SELECT icd.idtransaksi, SUM(icd.jmlbayar) AS nilai_tertagih FROM m5_ic_detail icd INNER JOIN m5_ic ic ON icd.idic = ic.icid WHERE icd.sumber = 'SI' GROUP BY icd.idtransaksi ) ic_agg ON ic_agg.idtransaksi = si.siid LEFT JOIN ( SELECT pvd.idtransaksi, SUM(pvd.jmlbayar) AS nilai_dibayar FROM m5_pv_detail pvd INNER JOIN m5_pv pv ON pvd.idpv = pv.pvid WHERE pvd.sumber = 'SI' GROUP BY pvd.idtransaksi ) pv_agg ON pv_agg.idtransaksi = si.siid WHERE si.siisclose = 0 ) x GROUP BY status_invoice ORDER BY total_nilai_invoice DESC",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_outstanding_followup",
+            "name": "Outstanding Invoice Follow Up",
+            "purpose": "Menampilkan invoice yang masih perlu ditindaklanjuti karena belum tertagih atau baru dibayar sebagian.",
+            "query": "SELECT si.sinotransaksi AS nomor_invoice, si.sitgl AS tanggal_invoice, c.knama AS nama_customer, si.sitotaltransaksi AS nilai_invoice, COALESCE(ic_agg.nilai_tertagih, 0) AS nilai_tertagih, COALESCE(pv_agg.nilai_dibayar, 0) AS nilai_dibayar, (si.sitotaltransaksi - COALESCE(ic_agg.nilai_tertagih, 0)) AS sisa_belum_tertagih, (si.sitotaltransaksi - COALESCE(pv_agg.nilai_dibayar, 0)) AS sisa_belum_dibayar, CASE WHEN COALESCE(ic_agg.nilai_tertagih, 0) = 0 THEN 'Belum Tertagih' WHEN COALESCE(ic_agg.nilai_tertagih, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) = 0 THEN 'Sudah Tertagih Belum Dibayar' WHEN COALESCE(pv_agg.nilai_dibayar, 0) > 0 AND COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi THEN 'Sudah Dibayar Sebagian' ELSE 'Lainnya' END AS status_followup FROM m5_si si LEFT JOIN m1_contact c ON si.sicustomer = c.kid AND c.kaktif = 1 LEFT JOIN ( SELECT icd.idtransaksi, SUM(icd.jmlbayar) AS nilai_tertagih FROM m5_ic_detail icd INNER JOIN m5_ic ic ON icd.idic = ic.icid WHERE icd.sumber = 'SI' GROUP BY icd.idtransaksi ) ic_agg ON ic_agg.idtransaksi = si.siid LEFT JOIN ( SELECT pvd.idtransaksi, SUM(pvd.jmlbayar) AS nilai_dibayar FROM m5_pv_detail pvd INNER JOIN m5_pv pv ON pvd.idpv = pv.pvid WHERE pvd.sumber = 'SI' GROUP BY pvd.idtransaksi ) pv_agg ON pv_agg.idtransaksi = si.siid WHERE si.siisclose = 0 AND (COALESCE(ic_agg.nilai_tertagih, 0) < si.sitotaltransaksi OR COALESCE(pv_agg.nilai_dibayar, 0) < si.sitotaltransaksi) ORDER BY sisa_belum_dibayar DESC, sisa_belum_tertagih DESC, si.sitgl DESC LIMIT 100",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "v_status_per_invoice",
+            "query_id": "q_status_per_invoice",
+            "title": "Perbandingan Outstanding SI vs IC vs PV per Invoice",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "nilai_invoice",
+              "nilai_tertagih",
+              "nilai_dibayar",
+              "sisa_belum_tertagih",
+              "sisa_belum_dibayar"
+            ]
+          },
+          {
+            "id": "v_distribution_status",
+            "query_id": "q_distribution_status",
+            "title": "Distribusi Nilai Invoice per Status Tagih/Bayar",
+            "chart_type": "bar",
+            "x_axis": "status_invoice",
+            "y_axis": [
+              "total_nilai_invoice",
+              "total_nilai_tertagih",
+              "total_nilai_dibayar"
+            ]
+          },
+          {
+            "id": "v_outstanding_followup",
+            "query_id": "q_outstanding_followup",
+            "title": "Daftar Invoice Outstanding untuk Follow Up",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "nilai_invoice",
+              "nilai_tertagih",
+              "nilai_dibayar",
+              "sisa_belum_tertagih",
+              "sisa_belum_dibayar"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    },
+    {
+      "id": "dashboard_008_return_and_invoice_exchange",
+      "title": "Retur dan Tukar Faktur",
+      "question": "Tampilkan hubungan sales invoice, sales return, dan tukar faktur untuk melihat pola retur dan penggantian dokumen per customer.",
+      "prompt_source": "http://127.0.0.1:8001/api/chat/dashboard-query",
+      "resolved_model": "gpt-5.4",
+      "raw_answer": "{\"status\": \"SUCCESS\", \"mode\": \"multi_query_dashboard\", \"debug_info\": {\"intent_user\": \"User ingin melihat hubungan antara sales invoice (SI), sales return (SR), dan tukar faktur (SIE) untuk menganalisis pola retur serta penggantian dokumen per customer. Karena ini meminta hubungan lintas dokumen dan pola analitik per customer, mode dashboard lebih tepat.\", \"tables_used\": [\"m5_si\", \"m5_sr\", \"m5_sie\", \"m5_sie_detail\", \"m1_contact\"], \"tables_missing\": [], \"reasoning\": \"Saya memilih m5_si dan m5_sr sebagai dokumen inti karena user secara eksplisit meminta sales invoice dan sales return. Saya memilih m5_sie serta m5_sie_detail untuk menangkap hubungan tukar faktur, karena tabel detail SIE menyimpan daftar dokumen sumber yang ikut dalam proses tukar faktur. Saya memakai m1_contact untuk menampilkan customer, dengan filter wajib m1_contact.kaktif = 1. Untuk SI saya juga menerapkan always_apply_filters siisclose = 0. Untuk pola per customer, query pertama merangkum jumlah dan nilai SI/SR per customer. Query kedua memetakan aktivitas tukar faktur per customer berdasarkan dokumen sumber SI maupun SR yang masuk ke SIE. Query ketiga menampilkan daftar detail hubungan dokumen agar user bisa menelusuri invoice mana yang diretur dan/atau ikut tukar faktur. Join polymorphic pada SIE saya lakukan dengan aman menggunakan kolom sumber dan idtransaksi, sesuai aturan schema M5.\", \"ai_metrics\": {\"confidence_score\": 0.82, \"schema_version_used\": \"Semantic Query Schema OBT\"}}, \"execution_context\": {\"is_syntax_valid_prediction\": true, \"linting_warnings\": [\"Query agregasi dapat melakukan scan besar bila data transaksi sangat banyak karena user tidak memberi filter periode.\", \"Query detail menggunakan UNION ALL dari dua sumber dokumen sehingga hasil bisa besar; ditambahkan LIMIT 100 untuk menjaga ukuran hasil.\"]}, \"queries\": [{\"id\": \"q_customer_si_sr_summary\", \"name\": \"Ringkasan SI dan SR per Customer\", \"purpose\": \"Melihat pola nilai invoice dan retur penjualan per customer.\", \"query\": \"SELECT c.kid AS customer_id, c.knama AS customer_nama, COALESCE(si_agg.jumlah_invoice, 0) AS jumlah_sales_invoice, COALESCE(si_agg.total_invoice, 0) AS total_sales_invoice, COALESCE(sr_agg.jumlah_retur, 0) AS jumlah_sales_return, COALESCE(sr_agg.total_retur, 0) AS total_sales_return, COALESCE(si_agg.total_invoice, 0) - COALESCE(sr_agg.total_retur, 0) AS net_sales_setelah_retur FROM m1_contact c LEFT JOIN ( SELECT si.sicustomer AS customer_id, COUNT(si.siid) AS jumlah_invoice, SUM(si.sitotaltransaksi) AS total_invoice FROM m5_si si WHERE si.siisclose = 0 GROUP BY si.sicustomer ) si_agg ON c.kid = si_agg.customer_id LEFT JOIN ( SELECT sr.srcustomer AS customer_id, COUNT(sr.srid) AS jumlah_retur, SUM(sr.srtotaltransaksi) AS total_retur FROM m5_sr sr GROUP BY sr.srcustomer ) sr_agg ON c.kid = sr_agg.customer_id WHERE c.kaktif = 1 AND (COALESCE(si_agg.jumlah_invoice, 0) > 0 OR COALESCE(sr_agg.jumlah_retur, 0) > 0) ORDER BY total_sales_return DESC, total_sales_invoice DESC LIMIT 100\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_customer_sie_activity\", \"name\": \"Aktivitas Tukar Faktur per Customer\", \"purpose\": \"Melihat customer mana yang paling sering memiliki dokumen SI/SR yang masuk proses tukar faktur.\", \"query\": \"SELECT x.customer_id, x.customer_nama, COUNT(DISTINCT x.sie_id) AS jumlah_dokumen_tukar_faktur, SUM(CASE WHEN x.sumber = 'SI' THEN 1 ELSE 0 END) AS jumlah_referensi_invoice_di_sie, SUM(CASE WHEN x.sumber = 'SR' THEN 1 ELSE 0 END) AS jumlah_referensi_return_di_sie FROM ( SELECT si.sicustomer AS customer_id, c.knama AS customer_nama, sd.idsie AS sie_id, sd.sumber AS sumber FROM m5_sie_detail sd INNER JOIN m5_si si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 UNION ALL SELECT sr.srcustomer AS customer_id, c.knama AS customer_nama, sd.idsie AS sie_id, sd.sumber AS sumber FROM m5_sie_detail sd INNER JOIN m5_sr sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid INNER JOIN m1_contact c ON sr.srcustomer = c.kid WHERE c.kaktif = 1 ) x GROUP BY x.customer_id, x.customer_nama ORDER BY jumlah_dokumen_tukar_faktur DESC, jumlah_referensi_return_di_sie DESC, jumlah_referensi_invoice_di_sie DESC LIMIT 100\", \"result_kind\": \"bar_chart\"}, {\"id\": \"q_document_relation_detail\", \"name\": \"Detail Hubungan SI SR dan SIE\", \"purpose\": \"Menampilkan daftar detail hubungan invoice, retur, dan tukar faktur per customer untuk penelusuran dokumen.\", \"query\": \"SELECT rel.customer_id, rel.customer_nama, rel.doc_type, rel.doc_id, rel.nomor_dokumen, rel.tanggal_dokumen, rel.total_dokumen, rel.status_dokumen, rel.id_tukar_faktur, rel.nomor_tukar_faktur, rel.tanggal_tukar_faktur FROM ( SELECT si.sicustomer AS customer_id, c.knama AS customer_nama, 'SI' AS doc_type, si.siid AS doc_id, si.sinotransaksi AS nomor_dokumen, si.sitgl AS tanggal_dokumen, si.sitotaltransaksi AS total_dokumen, si.sistatus AS status_dokumen, sie.sieid AS id_tukar_faktur, sie.sienotransaksi AS nomor_tukar_faktur, sie.sietgl AS tanggal_tukar_faktur FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid LEFT JOIN m5_sie_detail sd ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid LEFT JOIN m5_sie sie ON sd.idsie = sie.sieid WHERE si.siisclose = 0 AND c.kaktif = 1 UNION ALL SELECT sr.srcustomer AS customer_id, c.knama AS customer_nama, 'SR' AS doc_type, sr.srid AS doc_id, sr.srnotransaksi AS nomor_dokumen, sr.srtgl AS tanggal_dokumen, sr.srtotaltransaksi AS total_dokumen, sr.srstatus AS status_dokumen, sie.sieid AS id_tukar_faktur, sie.sienotransaksi AS nomor_tukar_faktur, sie.sietgl AS tanggal_tukar_faktur FROM m5_sr sr INNER JOIN m1_contact c ON sr.srcustomer = c.kid LEFT JOIN m5_sie_detail sd ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid LEFT JOIN m5_sie sie ON sd.idsie = sie.sieid WHERE c.kaktif = 1 ) rel ORDER BY rel.customer_nama ASC, rel.tanggal_dokumen DESC, rel.doc_type ASC LIMIT 100\", \"result_kind\": \"table\"}], \"visualizations\": [{\"id\": \"viz_customer_si_sr_summary\", \"query_id\": \"q_customer_si_sr_summary\", \"title\": \"Pola Sales Invoice vs Sales Return per Customer\", \"chart_type\": \"bar\", \"x_axis\": \"customer_nama\", \"y_axis\": [\"total_sales_invoice\", \"total_sales_return\", \"net_sales_setelah_retur\"]}, {\"id\": \"viz_customer_sie_activity\", \"query_id\": \"q_customer_sie_activity\", \"title\": \"Aktivitas Tukar Faktur per Customer\", \"chart_type\": \"bar\", \"x_axis\": \"customer_nama\", \"y_axis\": [\"jumlah_dokumen_tukar_faktur\", \"jumlah_referensi_invoice_di_sie\", \"jumlah_referensi_return_di_sie\"]}, {\"id\": \"viz_document_relation_detail\", \"query_id\": \"q_document_relation_detail\", \"title\": \"Detail Relasi Dokumen SI SR dan SIE\", \"chart_type\": \"table\", \"x_axis\": null, \"y_axis\": [\"customer_nama\", \"doc_type\", \"nomor_dokumen\", \"tanggal_dokumen\", \"total_dokumen\", \"nomor_tukar_faktur\"]}], \"query\": null, \"error_message\": null}",
+      "output": {
+        "status": "SUCCESS",
+        "mode": "multi_query_dashboard",
+        "debug_info": {
+          "intent_user": "User ingin melihat hubungan antara sales invoice (SI), sales return (SR), dan tukar faktur (SIE) untuk menganalisis pola retur serta penggantian dokumen per customer. Karena ini meminta hubungan lintas dokumen dan pola analitik per customer, mode dashboard lebih tepat.",
+          "tables_used": [
+            "m5_si",
+            "m5_sr",
+            "m5_sie",
+            "m5_sie_detail",
+            "m1_contact"
+          ],
+          "tables_missing": [],
+          "reasoning": "Saya memilih m5_si dan m5_sr sebagai dokumen inti karena user secara eksplisit meminta sales invoice dan sales return. Saya memilih m5_sie serta m5_sie_detail untuk menangkap hubungan tukar faktur, karena tabel detail SIE menyimpan daftar dokumen sumber yang ikut dalam proses tukar faktur. Saya memakai m1_contact untuk menampilkan customer, dengan filter wajib m1_contact.kaktif = 1. Untuk SI saya juga menerapkan always_apply_filters siisclose = 0. Untuk pola per customer, query pertama merangkum jumlah dan nilai SI/SR per customer. Query kedua memetakan aktivitas tukar faktur per customer berdasarkan dokumen sumber SI maupun SR yang masuk ke SIE. Query ketiga menampilkan daftar detail hubungan dokumen agar user bisa menelusuri invoice mana yang diretur dan/atau ikut tukar faktur. Join polymorphic pada SIE saya lakukan dengan aman menggunakan kolom sumber dan idtransaksi, sesuai aturan schema M5.",
+          "ai_metrics": {
+            "confidence_score": 0.82,
+            "schema_version_used": "Semantic Query Schema OBT"
+          }
+        },
+        "execution_context": {
+          "is_syntax_valid_prediction": true,
+          "linting_warnings": [
+            "Query agregasi dapat melakukan scan besar bila data transaksi sangat banyak karena user tidak memberi filter periode.",
+            "Query detail menggunakan UNION ALL dari dua sumber dokumen sehingga hasil bisa besar; ditambahkan LIMIT 100 untuk menjaga ukuran hasil."
+          ]
+        },
+        "queries": [
+          {
+            "id": "q_customer_si_sr_summary",
+            "name": "Ringkasan SI dan SR per Customer",
+            "purpose": "Melihat pola nilai invoice dan retur penjualan per customer.",
+            "query": "SELECT c.kid AS customer_id, c.knama AS customer_nama, COALESCE(si_agg.jumlah_invoice, 0) AS jumlah_sales_invoice, COALESCE(si_agg.total_invoice, 0) AS total_sales_invoice, COALESCE(sr_agg.jumlah_retur, 0) AS jumlah_sales_return, COALESCE(sr_agg.total_retur, 0) AS total_sales_return, COALESCE(si_agg.total_invoice, 0) - COALESCE(sr_agg.total_retur, 0) AS net_sales_setelah_retur FROM m1_contact c LEFT JOIN ( SELECT si.sicustomer AS customer_id, COUNT(si.siid) AS jumlah_invoice, SUM(si.sitotaltransaksi) AS total_invoice FROM m5_si si WHERE si.siisclose = 0 GROUP BY si.sicustomer ) si_agg ON c.kid = si_agg.customer_id LEFT JOIN ( SELECT sr.srcustomer AS customer_id, COUNT(sr.srid) AS jumlah_retur, SUM(sr.srtotaltransaksi) AS total_retur FROM m5_sr sr GROUP BY sr.srcustomer ) sr_agg ON c.kid = sr_agg.customer_id WHERE c.kaktif = 1 AND (COALESCE(si_agg.jumlah_invoice, 0) > 0 OR COALESCE(sr_agg.jumlah_retur, 0) > 0) ORDER BY total_sales_return DESC, total_sales_invoice DESC LIMIT 100",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_customer_sie_activity",
+            "name": "Aktivitas Tukar Faktur per Customer",
+            "purpose": "Melihat customer mana yang paling sering memiliki dokumen SI/SR yang masuk proses tukar faktur.",
+            "query": "SELECT x.customer_id, x.customer_nama, COUNT(DISTINCT x.sie_id) AS jumlah_dokumen_tukar_faktur, SUM(CASE WHEN x.sumber = 'SI' THEN 1 ELSE 0 END) AS jumlah_referensi_invoice_di_sie, SUM(CASE WHEN x.sumber = 'SR' THEN 1 ELSE 0 END) AS jumlah_referensi_return_di_sie FROM ( SELECT si.sicustomer AS customer_id, c.knama AS customer_nama, sd.idsie AS sie_id, sd.sumber AS sumber FROM m5_sie_detail sd INNER JOIN m5_si si ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid INNER JOIN m1_contact c ON si.sicustomer = c.kid WHERE si.siisclose = 0 AND c.kaktif = 1 UNION ALL SELECT sr.srcustomer AS customer_id, c.knama AS customer_nama, sd.idsie AS sie_id, sd.sumber AS sumber FROM m5_sie_detail sd INNER JOIN m5_sr sr ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid INNER JOIN m1_contact c ON sr.srcustomer = c.kid WHERE c.kaktif = 1 ) x GROUP BY x.customer_id, x.customer_nama ORDER BY jumlah_dokumen_tukar_faktur DESC, jumlah_referensi_return_di_sie DESC, jumlah_referensi_invoice_di_sie DESC LIMIT 100",
+            "result_kind": "bar_chart"
+          },
+          {
+            "id": "q_document_relation_detail",
+            "name": "Detail Hubungan SI SR dan SIE",
+            "purpose": "Menampilkan daftar detail hubungan invoice, retur, dan tukar faktur per customer untuk penelusuran dokumen.",
+            "query": "SELECT rel.customer_id, rel.customer_nama, rel.doc_type, rel.doc_id, rel.nomor_dokumen, rel.tanggal_dokumen, rel.total_dokumen, rel.status_dokumen, rel.id_tukar_faktur, rel.nomor_tukar_faktur, rel.tanggal_tukar_faktur FROM ( SELECT si.sicustomer AS customer_id, c.knama AS customer_nama, 'SI' AS doc_type, si.siid AS doc_id, si.sinotransaksi AS nomor_dokumen, si.sitgl AS tanggal_dokumen, si.sitotaltransaksi AS total_dokumen, si.sistatus AS status_dokumen, sie.sieid AS id_tukar_faktur, sie.sienotransaksi AS nomor_tukar_faktur, sie.sietgl AS tanggal_tukar_faktur FROM m5_si si INNER JOIN m1_contact c ON si.sicustomer = c.kid LEFT JOIN m5_sie_detail sd ON sd.sumber = 'SI' AND sd.idtransaksi = si.siid LEFT JOIN m5_sie sie ON sd.idsie = sie.sieid WHERE si.siisclose = 0 AND c.kaktif = 1 UNION ALL SELECT sr.srcustomer AS customer_id, c.knama AS customer_nama, 'SR' AS doc_type, sr.srid AS doc_id, sr.srnotransaksi AS nomor_dokumen, sr.srtgl AS tanggal_dokumen, sr.srtotaltransaksi AS total_dokumen, sr.srstatus AS status_dokumen, sie.sieid AS id_tukar_faktur, sie.sienotransaksi AS nomor_tukar_faktur, sie.sietgl AS tanggal_tukar_faktur FROM m5_sr sr INNER JOIN m1_contact c ON sr.srcustomer = c.kid LEFT JOIN m5_sie_detail sd ON sd.sumber = 'SR' AND sd.idtransaksi = sr.srid LEFT JOIN m5_sie sie ON sd.idsie = sie.sieid WHERE c.kaktif = 1 ) rel ORDER BY rel.customer_nama ASC, rel.tanggal_dokumen DESC, rel.doc_type ASC LIMIT 100",
+            "result_kind": "table"
+          }
+        ],
+        "visualizations": [
+          {
+            "id": "viz_customer_si_sr_summary",
+            "query_id": "q_customer_si_sr_summary",
+            "title": "Pola Sales Invoice vs Sales Return per Customer",
+            "chart_type": "bar",
+            "x_axis": "customer_nama",
+            "y_axis": [
+              "total_sales_invoice",
+              "total_sales_return",
+              "net_sales_setelah_retur"
+            ]
+          },
+          {
+            "id": "viz_customer_sie_activity",
+            "query_id": "q_customer_sie_activity",
+            "title": "Aktivitas Tukar Faktur per Customer",
+            "chart_type": "bar",
+            "x_axis": "customer_nama",
+            "y_axis": [
+              "jumlah_dokumen_tukar_faktur",
+              "jumlah_referensi_invoice_di_sie",
+              "jumlah_referensi_return_di_sie"
+            ]
+          },
+          {
+            "id": "viz_document_relation_detail",
+            "query_id": "q_document_relation_detail",
+            "title": "Detail Relasi Dokumen SI SR dan SIE",
+            "chart_type": "table",
+            "x_axis": null,
+            "y_axis": [
+              "customer_nama",
+              "doc_type",
+              "nomor_dokumen",
+              "tanggal_dokumen",
+              "total_dokumen",
+              "nomor_tukar_faktur"
+            ]
+          }
+        ],
+        "query": null,
+        "error_message": null
+      },
+      "status": "PASSED",
+      "errors": []
+    }
+  ]
+}

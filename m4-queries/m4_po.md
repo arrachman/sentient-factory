@@ -1,0 +1,354 @@
+# M4_PO Queries
+
+## Query 1
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+DELETE FROM M4_Po WHERE poid = '{idtransaksi}'
+```
+
+## Query 2
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+DELETE FROM M4_Po_Detail WHERE idpo = '{idtransaksi}'
+```
+
+## Query 3
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+DELETE FROM M4_po_Cost WHERE idpo ='{idtransaksi}'
+```
+
+## Query 4
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+DELETE FROM M4_po_Trans WHERE idpo ='{idtransaksi}'
+```
+
+## Query 5
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Delete from M4_Po_Cost where idpo = {result_4}
+```
+
+## Query 6
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Delete from M4_Po_Detail where idpo = '{result_4}'
+```
+
+## Query 7
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Delete from M4_po_Trans where idpo = '{result_4}'
+```
+
+## Query 8
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+INSERT INTO m1_item_booking_po (idbarang, gudang, jmlbooking) VALUES {updStokBooking} ON DUPLICATE KEY UPDATE jmlbooking = jmlbooking + VALUES(jmlbooking)
+```
+
+## Query 9
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po_history.vb`
+
+```sql
+INSERT INTO m4_po_cost_history (SELECT 0, '{result_4}', po.* FROM m4_po_cost po WHERE po.idpo = '{idtransaksi}' )
+```
+
+## Query 10
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po_history.vb`
+
+```sql
+INSERT INTO m4_po_detail_history (SELECT 0, '{result_4}', po.* FROM m4_po_detail po WHERE po.idpo = '{idtransaksi}' )
+```
+
+## Query 11
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po_history.vb`
+
+```sql
+INSERT INTO m4_po_history(SELECT 0, po.* FROM m4_po po WHERE po.poid = '{idtransaksi}')
+```
+
+## Query 12
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Insert into M0_Userlog (uluserid, ulidmodule, ulidmenu, uljenisaktivitas, ulaktivitas, ultgl, ulkodepa) values({userid}, {mdlid}, {mnid}, {jnsaktivitas}, '{notransaksi}', NOW(), {0})
+```
+
+## Query 13
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Insert into M4_Po (pocabang, polokasi, pogudang, poasalbarang, poasalbarangkategori, pojenispembelian, pojenispembeliankategori, pocarabayar, posumber, poautonotransaksi, ponotransaksi, potgl, pokodepa, posupplier, posupplierkontak, po1alamat1, po1alamat2, po1alamat3, po2alamat1, po2alamat2, po2alamat3, pobagianpembelian, potgldipenuhi, potermin, potgljatuhtempo, pouraian, pocatatan, ponoref, potglnoref, potglpenutupan, pomatauang, pokurs, pohargatermasukpajak, pototal, podiskonpersen, pojmldiskon, pototalpajak1detail, pototalpajak2detail, pobiayalainpersen, pobiayalain, pototaltransaksi, pojmlbayar, porekdiskon, porekpajak1, porekpajak2, porekbiayalain, porekbayar, poidpr, poidcs, poidrq, poidbs, postatusipc, postatusgrn, postatusri, postatusdnr, postatusprt, postatus, postatussebelumnya, pojmlrevisi, pocetakanke, poinputuser, poinputtgl, pomodifikasiuser, pomodifikasitgl, poisclose, pocustomtext1, pocustomtext2, pocustomtext3, pocustomtext4, pocustomtext5, pocustomint1, pocustomint2, pocustomint3, pocustomdbl1, pocustomdbl2, pocustomdbl3, pocustomdate1, pocustomdate2, pocustomdate3) values('{pocabang}', '{polokasi}', '{pogudang}', '{poasalbarang}', {poasalbarangkategori}, '{pojenispembelian}', {pojenispembeliankategori}, {pocarabayar}, '{posumber}', {poautonotransaksi}, '{notransaksi}', '{potgl}', {pokodepa}, {posupplier}, '{posupplierkontak}', '{po1alamat1}', '{po1alamat2}', '{po1alamat3}', '{po2alamat1}', '{po2alamat2}', '{po2alamat3}', {pobagianpembelian}, '{potgldipenuhi}', '{potermin}', '{potgljatuhtempo}', '{pouraian}', '{pocatatan}', '{ponoref}', '{potglnoref}', '{potglpenutupan}', '{pomatauang}', '{pokurs}', {pohargatermasukpajak}, '{pototal}', '{podiskonpersen}', '{pojmldiskon}', '{pototalpajak1detail}', '{pototalpajak2detail}', '{pobiayalainpersen}', '{pobiayalain}', '{pototaltransaksi}', '{pojmlbayar}', '{porekdiskon}', '{porekpajak1}', '{porekpajak2}', '{porekbiayalain}', '{porekbayar}', {poidpr}, {poidcs}, {poidrq}, {poidbs}, {postatusipc}, {postatusgrn}, {postatusri}, {postatusdnr}, {postatusprt}, {postatus}, {postatussebelumnya}, {pojmlrevisi}, {pocetakanke}, {poinputuser}, NOW(), {pomodifikasiuser}, '1971-01-01 00:00:00', {poisclose}, '{pocustomtext1}', '{pocustomtext2}', '{pocustomtext3}', '{pocustomtext4}', '{pocustomtext5}', {pocustomint1}, {pocustomint2}, {pocustomint3}, '{pocustomdbl1}', '{pocustomdbl2}', '{pocustomdbl3}', '{pocustomdate1}', '{pocustomdate2}', '{pocustomdate3}')
+```
+
+## Query 14
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Insert into M4_Po_Cost(idpocost, idpo, kodecost, matauang, kurs, jumlah, rekdebit, rekkredit, kontak, termasukhpp, catatan, costcenter, divisi, subdivisi, proyek, urutan, idprcost, idcscost, idrqcost, idbscost, jumlahipc, statusipc, jumlahgrn, statusgrn, jumlahri, statusri, jumlahbayar, statusbayar, isclose, customtext1, customtext2, customtext3, customdbl1, customdbl2, customdbl3, customdate1, customdate2, customdate3) values{strValue2.ToString}
+```
+
+## Query 15
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Insert into M4_Po_Detail(idpodetail, idpo, idbarang, namabarang, tipebarang, jml, satuan, nilaisatuan, jmlbarang, satuanbarang, matauang, kurs, hargafix, harga, diskon, jmldiskon, pajak1, jmlpajak1, pajak2, jmlpajak2, cabang, lokasi, gudang, costcenter, divisi, subdivisi, proyek, catatan, urutan, idprdetail, idcsdetail, idrqdetail, idbsdetail, jmlipc, statusipc, jmlgrn, statusgrn, jmlri, statusri, jmldnr, statusdnr, jmlprt, statusprt, isclose, customtext1, customtext2, customtext3, customdbl1, customdbl2, customdbl3, customdate1, customdate2, customdate3) values{strValue2.ToString}
+```
+
+## Query 16
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Insert into M4_po_Trans(idpotrans, idpo, sumber, idtransaksi, catatan, urutan, isclose, customtext1, customtext2, customtext3, customtext4, customtext5, customdbl1, customdbl2, customdbl3, customdbl4, customdbl5, customdate1, customdate2, customdate3, customdate4, customdate5) values{strValue2.ToString}
+```
+
+## Query 17
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT i.bid, '{pomatauang}' as matauang, IFNULL(ip.khhargabeli,0) as hargabeli FROM m1_item i LEFT JOIN m1_item_price ip ON i.bid = ip.khidbarang AND ip.khmatauang = '{pomatauang}' WHERE {ftBarang}
+```
+
+## Query 18
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT i.bkode, rqd.idrqdetail, rq.rqnotransaksi as notransaksi, (CASE rq.rqhargatermasukpajak WHEN 0 THEN '(Exclude Tax)' ELSE '(Include Tax)' END) as termasukpajak FROM m4_rq_detail rqd JOIN m4_rq rq ON rqd.idrq = rq.rqid JOIN m1_item i ON rqd.idbarang = i.bid WHERE ({ftRQ}) AND rq.rqhargatermasukpajak <> {termasukPajak} ORDER BY rqd.urutan
+```
+
+## Query 19
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po_history.vb`
+
+```sql
+SELECT poc.idhistorycost, poc.idhistory, poc.idpocost, poc.idpo, poc.kodecost, poc.matauang, poc.kurs, poc.jumlah, poc.rekdebit, poc.rekkredit, poc.kontak, poc.termasukhpp, poc.catatan, poc.costcenter, poc.divisi, poc.subdivisi, poc.proyek, poc.urutan, poc.idprcost, poc.idcscost, poc.idrqcost, poc.idbscost, poc.jumlahipc, poc.statusipc, poc.jumlahgrn, poc.statusgrn, poc.jumlahri, poc.statusri, poc.jumlahbayar, poc.statusbayar, poc.isclose, poc.customtext1, poc.customtext2, poc.customtext3, poc.customdbl1, poc.customdbl2, poc.customdbl3, poc.customdate1, poc.customdate2, poc.customdate3, oc.ocnama as kodecostnama, coa1.cnama as rekdebitnama, coa2.cnama as rekkreditnama, c.kkode as kontakkode, c.knama as kontaknama, cc.ccnama as costcenternama, d.dnama as divisinama, sd.sddivisi as subdivisinama FROM m4_po_cost_history poc JOIN m4_po_history po ON poc.idhistory = po.poidhistory LEFT JOIN m1_other_cost oc ON poc.kodecost = oc.ockode LEFT JOIN m1_coa coa1 ON poc.rekdebit = coa1.cnomor LEFT JOIN m1_coa coa2 ON poc.rekkredit = coa2.cnomor LEFT JOIN m1_contact c ON poc.kontak = c.kid LEFT JOIN m1_cost_center cc ON poc.costcenter = cc.cckode LEFT JOIN m1_division d ON poc.divisi = d.dkode LEFT JOIN m1_subdivision sd ON poc.subdivisi = sd.sdkode
+```
+
+## Query 20
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT poc.idpocost, poc.idpo, poc.kodecost, poc.matauang, poc.kurs, poc.jumlah, poc.rekdebit, poc.rekkredit, poc.kontak, poc.termasukhpp, poc.catatan, poc.costcenter, poc.divisi, poc.subdivisi, poc.proyek, poc.urutan, poc.idprcost, poc.idcscost, poc.idrqcost, poc.idbscost, poc.jumlahipc, poc.statusipc, poc.jumlahgrn, poc.statusgrn, poc.jumlahri, poc.statusri, poc.jumlahbayar, poc.statusbayar, poc.isclose, poc.customtext1, poc.customtext2, poc.customtext3, poc.customdbl1, poc.customdbl2, poc.customdbl3, poc.customdate1, poc.customdate2, poc.customdate3, oc.ocnama as kodecostnama, coa1.cnama as rekdebitnama, coa2.cnama as rekkreditnama, c.kkode as kontakkode, c.knama as kontaknama, cc.ccnama as costcenternama, d.dnama as divisinama, sd.sddivisi as subdivisinama FROM m4_po_cost poc JOIN m4_po po ON poc.idpo = po.poid LEFT JOIN m1_other_cost oc ON poc.kodecost = oc.ockode LEFT JOIN m1_coa coa1 ON poc.rekdebit = coa1.cnomor LEFT JOIN m1_coa coa2 ON poc.rekkredit = coa2.cnomor LEFT JOIN m1_contact c ON poc.kontak = c.kid LEFT JOIN m1_cost_center cc ON poc.costcenter = cc.cckode LEFT JOIN m1_division d ON poc.divisi = d.dkode LEFT JOIN m1_subdivision sd ON poc.subdivisi = sd.sdkode
+```
+
+## Query 21
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT pocabang, polokasi, posumber, poautonotransaksi, ponotransaksi, potgl FROM M4_po WHERE poid = '{idtransaksi}'
+```
+
+## Query 22
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po_history.vb`
+
+```sql
+SELECT poidhistory FROM m4_po_history WHERE poid = '{idtransaksi}' ORDER BY pomodifikasitgl DESC LIMIT 1
+```
+
+## Query 23
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT potrans.idpotrans, potrans.idpo, potrans.sumber, potrans.idtransaksi, potrans.catatan, potrans.urutan, potrans.isclose, potrans.customtext1, potrans.customtext2, potrans.customtext3, potrans.customtext4, potrans.customtext5, potrans.customdbl1, potrans.customdbl2, potrans.customdbl3, potrans.customdbl4, potrans.customdbl5, potrans.customdate1, potrans.customdate2, potrans.customdate3, potrans.customdate4, potrans.customdate5, m5si.sinotransaksi as notransaksi, m5si.sitgl as tgltransaksi, m5si.sicustomer as kontak, c.kkode as kontakkode, c.knama as kontaknama FROM m4_po_trans potrans LEFT JOIN m5_si m5si ON potrans.sumber = m5si.sisumber AND potrans.idtransaksi = m5si.siid LEFT JOIN m1_contact c ON m5si.sicustomer = c.kid
+```
+
+## Query 24
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT prd.idprdetail, (prd.jmlbarang - prd.jmlrealisasi) as sisarealisasi, i.bid, i.bkode FROM m4_pr_detail AS prd INNER JOIN m1_item AS i ON prd.idbarang = i.bid WHERE {ftOutstandingPR}
+```
+
+## Query 25
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT rq.rqnotransaksi as notransaksi, (CASE rq.rqhargatermasukpajak WHEN 0 THEN '(Exclude Tax)' ELSE '(Include Tax)' END) as termasukpajak FROM m4_rq_detail rqd JOIN m4_rq rq ON rqd.idrq = rq.rqid WHERE {ftRQ} GROUP BY rq.rqhargatermasukpajak
+```
+
+## Query 26
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT rqd.idrqdetail, (rqd.jmlbarang - rqd.jmlrealisasi) as sisarealisasi, i.bid, i.bkode FROM m4_rq_detail AS rqd INNER JOIN m1_item AS i ON rqd.idbarang = i.bid WHERE {ftOutstandingRQ}
+```
+
+## Query 27
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+SELECT snilai FROM m0_setting WHERE smodule = 4 AND sgrup = 'options' AND skode = 'POWajibPR'
+```
+
+## Query 28
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+UPDATE M4_Po SET Postatus = {nilaiStatus}, Pomodifikasiuser='{userid}', Pomodifikasitgl = NOW(), Poposting = 0, Popostingtgl = '1971-01-01 00:00:00', Pojmlrevisi = Pojmlrevisi + 1 WHERE Poid = '{idtransaksi}'
+```
+
+## Query 29
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+UPDATE m4_pr SET prstatusrealisasi = (CASE prid {updNilaiPR} ELSE prstatusrealisasi END) WHERE {updFilterPR}
+```
+
+## Query 30
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+UPDATE m4_pr_detail SET jmlrealisasi = (CASE idprdetail {updNilaiPR} ELSE jmlrealisasi END) WHERE {updFilterPR}
+```
+
+## Query 31
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+UPDATE m4_rq SET rqstatusrealisasi = (CASE rqid {updNilaiRQ} ELSE rqstatusrealisasi END) WHERE {updFilterRQ}
+```
+
+## Query 32
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+UPDATE m4_rq_detail SET jmlrealisasi = (CASE idrqdetail {updNilaiRQ} ELSE jmlrealisasi END) WHERE {updFilterRQ}
+```
+
+## Query 33
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+Update M4_Po set pocabang = '{pocabang}', polokasi = '{polokasi}', pogudang = '{pogudang}', poasalbarang = '{poasalbarang}', poasalbarangkategori = {poasalbarangkategori}, pojenispembelian = '{pojenispembelian}', pojenispembeliankategori = {pojenispembeliankategori}, pocarabayar = {pocarabayar}, posumber = '{posumber}', poautonotransaksi = {poautonotransaksi}, ponotransaksi = '{notransaksi}', potgl = '{potgl}', pokodepa = {pokodepa}, posupplier = {posupplier}, posupplierkontak = '{posupplierkontak}', po1alamat1 = '{po1alamat1}', po1alamat2 = '{po1alamat2}', po1alamat3 = '{po1alamat3}', po2alamat1 = '{po2alamat1}', po2alamat2 = '{po2alamat2}', po2alamat3 = '{po2alamat3}', pobagianpembelian = {pobagianpembelian}, potgldipenuhi = '{potgldipenuhi}', potermin = '{potermin}', potgljatuhtempo = '{potgljatuhtempo}', pouraian = '{pouraian}', pocatatan = '{pocatatan}', ponoref = '{ponoref}', potglnoref = '{potglnoref}', potglpenutupan = '{potglpenutupan}', pomatauang = '{pomatauang}', pokurs = '{pokurs}', pohargatermasukpajak = {pohargatermasukpajak}, pototal = '{pototal}', podiskonpersen = '{podiskonpersen}', pojmldiskon = '{pojmldiskon}', pototalpajak1detail = '{pototalpajak1detail}', pototalpajak2detail = '{pototalpajak2detail}', pobiayalainpersen = '{pobiayalainpersen}', pobiayalain = '{pobiayalain}', pototaltransaksi = '{pototaltransaksi}', pojmlbayar = '{pojmlbayar}', porekdiskon = '{porekdiskon}', porekpajak1 = '{porekpajak1}', porekpajak2 = '{porekpajak2}', porekbiayalain = '{porekbiayalain}', porekbayar = '{porekbayar}', poidpr = {poidpr}, poidcs = {poidcs}, poidrq = {poidrq}, poidbs = {poidbs}, postatusipc = {postatusipc}, postatusgrn = {postatusgrn}, postatusri = {postatusri}, postatusdnr = {postatusdnr}, postatusprt = {postatusprt}, postatus = {postatus}, postatussebelumnya = {postatussebelumnya}, pojmlrevisi = pojmlrevisi+1, pocetakanke = {pocetakanke}, pomodifikasiuser = {pomodifikasiuser}, pomodifikasitgl = NOW(), pocustomtext1 = '{pocustomtext1}', pocustomtext2 = '{pocustomtext2}', pocustomtext3 = '{pocustomtext3}', pocustomtext4 = '{pocustomtext4}', pocustomtext5 = '{pocustomtext5}', pocustomint1 = {pocustomint1}, pocustomint2 = {pocustomint2}, pocustomint3 = {pocustomint3}, pocustomdbl1 = '{pocustomdbl1}', pocustomdbl2 = '{pocustomdbl2}', pocustomdbl3 = '{pocustomdbl3}', pocustomdate1 = '{pocustomdate1}', pocustomdate2 = '{pocustomdate2}', pocustomdate3 = '{pocustomdate3}' where poid = '{poid}'
+```
+
+## Query 34
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_v`
+
+```sql
+select `po`.`poid` AS `poid`,`po`.`pocabang` AS `pocabang`,`po`.`polokasi` AS `polokasi`,`po`.`pogudang` AS `pogudang`,`po`.`poasalbarang` AS `poasalbarang`,`po`.`poasalbarangkategori` AS `poasalbarangkategori`,`po`.`pojenispembelian` AS `pojenispembelian`,`po`.`pojenispembeliankategori` AS `pojenispembeliankategori`,`po`.`pocarabayar` AS `pocarabayar`,`po`.`posumber` AS `posumber`,`po`.`poautonotransaksi` AS `poautonotransaksi`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`potgl` AS `potgl`,`po`.`pokodepa` AS `pokodepa`,`po`.`posupplier` AS `posupplier`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`po`.`potgldipenuhi` AS `potgldipenuhi`,`po`.`potermin` AS `potermin`,`po`.`potgljatuhtempo` AS `potgljatuhtempo`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potglnoref` AS `potglnoref`,`po`.`potglpenutupan` AS `potglpenutupan`,`po`.`pomatauang` AS `pomatauang`,`po`.`pokurs` AS `pokurs`,`po`.`pohargatermasukpajak` AS `pohargatermasukpajak`,`po`.`pototal` AS `pototal`,`po`.`podiskonpersen` AS `podiskonpersen`,`po`.`pojmldiskon` AS `pojmldiskon`,`po`.`pototalpajak1detail` AS `pototalpajak1detail`,`po`.`pototalpajak2detail` AS `pototalpajak2detail`,`po`.`pobiayalainpersen` AS `pobiayalainpersen`,`po`.`pobiayalain` AS `pobiayalain`,`po`.`pototaltransaksi` AS `pototaltransaksi`,`po`.`pojmlbayar` AS `pojmlbayar`,`po`.`porekdiskon` AS `porekdiskon`,`po`.`porekpajak1` AS `porekpajak1`,`po`.`porekpajak2` AS `porekpajak2`,`po`.`porekbiayalain` AS `porekbiayalain`,`po`.`porekbayar` AS `porekbayar`,`po`.`poidpr` AS `poidpr`,`po`.`poidcs` AS `poidcs`,`po`.`poidrq` AS `poidrq`,`po`.`poidbs` AS `poidbs`,`po`.`postatusipc` AS `postatusipc`,`po`.`postatusgrn` AS `postatusgrn`,`po`.`postatusri` AS `postatusri`,`po`.`postatusdnr` AS `postatusdnr`,`po`.`postatusprt` AS `postatusprt`,`po`.`postatusrealisasi` AS `postatusrealisasi`,`po`.`postatus` AS `postatus`,`po`.`postatussebelumnya` AS `postatussebelumnya`,`po`.`pojmlrevisi` AS `pojmlrevisi`,`po`.`pocetakanke` AS `pocetakanke`,`po`.`poinputuser` AS `poinputuser`,`po`.`poinputtgl` AS `poinputtgl`,`po`.`pomodifikasiuser` AS `pomodifikasiuser`,`po`.`pomodifikasitgl` AS `pomodifikasitgl`,`po`.`poposting` AS `poposting`,`po`.`popostingtgl` AS `popostingtgl`,`po`.`poisclose` AS `poisclose`,`br`.`bnama` AS `pocabangnama`,`lc`.`lnama` AS `polokasinama`,`wh`.`wnama` AS `pogudangnama`,`c1`.`kkode` AS `posupplierkode`,`c1`.`knama` AS `posuppliernama`,`c2`.`kkode` AS `pobagianpembeliankode`,`c2`.`knama` AS `pobagianpembeliannama`,`pr`.`prnotransaksi` AS `prnotransaksi`,`cs`.`csnotransaksi` AS `csnotransaksi`,`rq`.`rqnotransaksi` AS `rqnotransaksi`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`st1`.`nama` AS `postatusnama`,`st2`.`nama` AS `postatussebelumnyanama`,`u1`.`unama` AS `poinputusernama`,`u2`.`unama` AS `pomodifikasiusernama` from (((((((((((((`m4_po` `po` left join `m1_branch` `br` on((`br`.`bkode` = `po`.`pocabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `po`.`polokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `po`.`pogudang`))) left join `m1_contact` `c1` on((`c1`.`kid` = `po`.`posupplier`))) left join `m1_contact` `c2` on((`c2`.`kid` = `po`.`pobagianpembelian`))) left join `m4_pr` `pr` on((`po`.`poidpr` = `pr`.`prid`))) left join `m4_cs` `cs` on((`po`.`poidcs` = `cs`.`csid`))) left join `m4_rq` `rq` on((`po`.`poidrq` = `rq`.`rqid`))) left join `m4_bs` `bs` on((`po`.`poidbs` = `bs`.`bsid`))) left join `m0_status` `st1` on((`st1`.`kode` = `po`.`postatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `po`.`postatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `po`.`poinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `po`.`pomodifikasiuser`)))
+```
+
+## Query 35
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_getdata`
+
+```sql
+select `po`.`poid` AS `poid`,`po`.`pocabang` AS `pocabang`,`po`.`polokasi` AS `polokasi`,`po`.`pogudang` AS `pogudang`,`po`.`poasalbarang` AS `poasalbarang`,`po`.`poasalbarangkategori` AS `poasalbarangkategori`,`po`.`pojenispembelian` AS `pojenispembelian`,`po`.`pojenispembeliankategori` AS `pojenispembeliankategori`,`po`.`pocarabayar` AS `pocarabayar`,`po`.`posumber` AS `posumber`,`po`.`poautonotransaksi` AS `poautonotransaksi`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`potgl` AS `potgl`,`po`.`pokodepa` AS `pokodepa`,`po`.`posupplier` AS `posupplier`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`po`.`potgldipenuhi` AS `potgldipenuhi`,`po`.`potermin` AS `potermin`,`po`.`potgljatuhtempo` AS `potgljatuhtempo`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potglnoref` AS `potglnoref`,`po`.`potglpenutupan` AS `potglpenutupan`,`po`.`pomatauang` AS `pomatauang`,`po`.`pokurs` AS `pokurs`,`po`.`pohargatermasukpajak` AS `pohargatermasukpajak`,`po`.`pototal` AS `pototal`,`po`.`podiskonpersen` AS `podiskonpersen`,`po`.`pojmldiskon` AS `pojmldiskon`,`po`.`pototalpajak1detail` AS `pototalpajak1detail`,`po`.`pototalpajak2detail` AS `pototalpajak2detail`,`po`.`pobiayalainpersen` AS `pobiayalainpersen`,`po`.`pobiayalain` AS `pobiayalain`,`po`.`pototaltransaksi` AS `pototaltransaksi`,`po`.`pojmlbayar` AS `pojmlbayar`,`po`.`porekdiskon` AS `porekdiskon`,`po`.`porekpajak1` AS `porekpajak1`,`po`.`porekpajak2` AS `porekpajak2`,`po`.`porekbiayalain` AS `porekbiayalain`,`po`.`porekbayar` AS `porekbayar`,`po`.`poidpr` AS `poidpr`,`po`.`poidcs` AS `poidcs`,`po`.`poidrq` AS `poidrq`,`po`.`poidbs` AS `poidbs`,`po`.`postatusipc` AS `postatusipc`,`po`.`postatusgrn` AS `postatusgrn`,`po`.`postatusri` AS `postatusri`,`po`.`postatusdnr` AS `postatusdnr`,`po`.`postatusprt` AS `postatusprt`,`po`.`postatusrealisasi` AS `postatusrealisasi`,`po`.`postatus` AS `postatus`,`po`.`postatussebelumnya` AS `postatussebelumnya`,`po`.`pojmlrevisi` AS `pojmlrevisi`,`po`.`pocetakanke` AS `pocetakanke`,`po`.`poinputuser` AS `poinputuser`,`po`.`poinputtgl` AS `poinputtgl`,`po`.`pomodifikasiuser` AS `pomodifikasiuser`,`po`.`pomodifikasitgl` AS `pomodifikasitgl`,`po`.`poposting` AS `poposting`,`po`.`popostingtgl` AS `popostingtgl`,`po`.`poisclose` AS `poisclose`,`po`.`pocustomtext1` AS `pocustomtext1`,`po`.`pocustomtext2` AS `pocustomtext2`,`po`.`pocustomtext3` AS `pocustomtext3`,`po`.`pocustomtext4` AS `pocustomtext4`,`po`.`pocustomtext5` AS `pocustomtext5`,`po`.`pocustomint1` AS `pocustomint1`,`po`.`pocustomint2` AS `pocustomint2`,`po`.`pocustomint3` AS `pocustomint3`,`po`.`pocustomdbl1` AS `pocustomdbl1`,`po`.`pocustomdbl2` AS `pocustomdbl2`,`po`.`pocustomdbl3` AS `pocustomdbl3`,`po`.`pocustomdate1` AS `pocustomdate1`,`po`.`pocustomdate2` AS `pocustomdate2`,`po`.`pocustomdate3` AS `pocustomdate3`,`br`.`bnama` AS `pocabangnama`,`lc`.`lnama` AS `polokasinama`,`wh`.`wnama` AS `pogudangnama`,`c1`.`kkode` AS `posupplierkode`,`c1`.`knama` AS `posuppliernama`,`c2`.`kkode` AS `pobagianpembeliankode`,`c2`.`knama` AS `pobagianpembeliannama`,`tr`.`trnama` AS `poterminnama`,`tr`.`trharijatuhtempo` AS `poterminharijatuhtempo`,`coa1`.`cnama` AS `porekdiskonnama`,`coa2`.`cnama` AS `porekpajak1nama`,`coa3`.`cnama` AS `porekpajak2nama`,`coa4`.`cnama` AS `porekbiayalainnama`,`coa5`.`cnama` AS `porekbayarnama`,`pr`.`prnotransaksi` AS `ponotransaksipr`,`cs`.`csnotransaksi` AS `ponotransaksics`,`rq`.`rqnotransaksi` AS `ponotransaksirq`,`bs`.`bsnotransaksi` AS `ponotransaksibs`,`st1`.`nama` AS `postatusnama`,`st2`.`nama` AS `postatussebelumnyanama`,`u1`.`unama` AS `poinputusernama`,`u2`.`unama` AS `pomodifikasiusernama`,`pod`.`idpodetail` AS `idpodetail`,`pod`.`idpo` AS `idpo`,`pod`.`idbarang` AS `idbarang`,`pod`.`namabarang` AS `namabarang`,`pod`.`tipebarang` AS `tipebarang`,`pod`.`jml` AS `jml`,`pod`.`satuan` AS `satuan`,`pod`.`nilaisatuan` AS `nilaisatuan`,`pod`.`jmlbarang` AS `jmlbarang`,`pod`.`satuanbarang` AS `satuanbarang`,`pod`.`matauang` AS `matauang`,`pod`.`kurs` AS `kurs`,`pod`.`hargafix` AS `hargafix`,`pod`.`harga` AS `harga`,`pod`.`diskon` AS `diskon`,`pod`.`jmldiskon` AS `jmldiskon`,`pod`.`pajak1` AS `pajak1`,`pod`.`jmlpajak1` AS `jmlpajak1`,`pod`.`pajak2` AS `pajak2`,`pod`.`jmlpajak2` AS `jmlpajak2`,`pod`.`cabang` AS `cabang`,`pod`.`lokasi` AS `lokasi`,`pod`.`gudang` AS `gudang`,`pod`.`costcenter` AS `costcenter`,`pod`.`divisi` AS `divisi`,`pod`.`subdivisi` AS `subdivisi`,`pod`.`proyek` AS `proyek`,`pod`.`catatan` AS `catatan`,`pod`.`urutan` AS `urutan`,`pod`.`idprdetail` AS `idprdetail`,`pod`.`idcsdetail` AS `idcsdetail`,`pod`.`idrqdetail` AS `idrqdetail`,`pod`.`idbsdetail` AS `idbsdetail`,`pod`.`jmlipc` AS `jmlipc`,`pod`.`statusipc` AS `statusipc`,`pod`.`jmlgrn` AS `jmlgrn`,`pod`.`statusgrn` AS `statusgrn`,`pod`.`jmlri` AS `jmlri`,`pod`.`statusri` AS `statusri`,`pod`.`jmldnr` AS `jmldnr`,`pod`.`statusdnr` AS `statusdnr`,`pod`.`jmlprt` AS `jmlprt`,`pod`.`statusprt` AS `statusprt`,`pod`.`jmlrealisasi` AS `jmlrealisasi`,`pod`.`statusrealisasi` AS `statusrealisasi`,`pod`.`isclose` AS `isclose`,`pod`.`customtext1` AS `customtext1`,`pod`.`customtext2` AS `customtext2`,`pod`.`customtext3` AS `customtext3`,`pod`.`customdbl1` AS `customdbl1`,`pod`.`customdbl2` AS `customdbl2`,`pod`.`customdbl3` AS `customdbl3`,`pod`.`customdate1` AS `customdate1`,`pod`.`customdate2` AS `customdate2`,`pod`.`customdate3` AS `customdate3`,`i`.`bkode` AS `kodebarang`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai`,`brd`.`bnama` AS `cabangnama`,`lcd`.`lnama` AS `lokasinama`,`whd`.`wnama` AS `gudangnama`,`cc`.`ccnama` AS `costcenternama`,`d`.`dnama` AS `divisinama`,`sd`.`sdnama` AS `subdivisinama`,`p`.`pnama` AS `proyeknama`,`pr2`.`prnotransaksi` AS `prnotransaksi`,`cs2`.`csnotransaksi` AS `csnotransaksi`,`rq2`.`rqnotransaksi` AS `rqnotransaksi`,`bs2`.`bsnotransaksi` AS `bsnotransaksi`, c1.kpkp, i.bapanjang, i.balebar, i.batinggi, i.bjmllapangan, i.bsatuanlapangan from ((((((((((((((((((((((((((((((((((((((`m4_po` `po` join `m4_po_detail` `pod` on((`po`.`poid` = `pod`.`idpo`))) left join `m1_branch` `br` on((`br`.`bkode` = `po`.`pocabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `po`.`polokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `po`.`pogudang`))) left join `m1_contact` `c1` on((`c1`.`kid` = `po`.`posupplier`))) left join `m1_contact` `c2` on((`c2`.`kid` = `po`.`pobagianpembelian`))) left join `m1_terms` `tr` on((`po`.`potermin` = `tr`.`trkode`))) left join `m1_coa` `coa1` on((`po`.`porekdiskon` = `coa1`.`cnomor`))) left join `m1_coa` `coa2` on((`po`.`porekpajak1` = `coa2`.`cnomor`))) left join `m1_coa` `coa3` on((`po`.`porekpajak2` = `coa3`.`cnomor`))) left join `m1_coa` `coa4` on((`po`.`porekbiayalain` = `coa4`.`cnomor`))) left join `m1_coa` `coa5` on((`po`.`porekbayar` = `coa5`.`cnomor`))) left join `m4_pr` `pr` on((`po`.`poidpr` = `pr`.`prid`))) left join `m4_cs` `cs` on((`po`.`poidcs` = `cs`.`csid`))) left join `m4_rq` `rq` on((`po`.`poidrq` = `rq`.`rqid`))) left join `m4_bs` `bs` on((`po`.`poidbs` = `bs`.`bsid`))) left join `m0_status` `st1` on((`st1`.`kode` = `po`.`postatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `po`.`postatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `po`.`poinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `po`.`pomodifikasiuser`))) left join `m1_item` `i` on((`i`.`bid` = `pod`.`idbarang`))) left join `m1_tax` `t1` on((`pod`.`pajak1` = `t1`.`tkode`))) left join `m1_tax` `t2` on((`pod`.`pajak2` = `t2`.`tkode`))) left join `m1_branch` `brd` on((`pod`.`cabang` = `brd`.`bkode`))) left join `m1_location` `lcd` on((`pod`.`lokasi` = `lcd`.`lkode`))) left join `m1_warehouse` `whd` on((`pod`.`gudang` = `whd`.`wkode`))) left join `m1_cost_center` `cc` on((`pod`.`costcenter` = `cc`.`cckode`))) left join `m1_division` `d` on((`pod`.`divisi` = `d`.`dkode`))) left join `m1_subdivision` `sd` on((`pod`.`subdivisi` = `sd`.`sdkode`))) left join `m1_project` `p` on((`pod`.`proyek` = `p`.`pkode`))) left join `m4_pr_detail` `prd` on((`pod`.`idprdetail` = `prd`.`idprdetail`))) left join `m4_pr` `pr2` on((`prd`.`idpr` = `pr2`.`prid`))) left join `m4_bs_detail` `bsd` on((`pod`.`idbsdetail` = `bsd`.`idbsdetail`))) left join `m4_bs` `bs2` on((`bsd`.`idbs` = `bs2`.`bsid`))) left join `m4_cs_detail` `csd` on((`pod`.`idcsdetail` = `csd`.`idcsdetail`))) left join `m4_cs` `cs2` on((`csd`.`idcs` = `cs2`.`csid`))) left join `m4_rq_detail` `rqd` on((`pod`.`idrqdetail` = `rqd`.`idrqdetail`))) left join `m4_rq` `rq2` on((`rqd`.`idrq` = `rq2`.`rqid`)))
+```
+
+## Query 36
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_terkait`
+
+```sql
+select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`pr`.`prsumber` AS `sumber`,`pr`.`prid` AS `idterkait`,`pr`.`prnotransaksi` AS `noterkait`,`pr`.`prtgl` AS `tglterkait`,`pr`.`prinputtgl` AS `inputtglterkait`,`pr`.`prmodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (((`m4_pr_detail` `prd` join `m4_pr` `pr` on((`prd`.`idpr` = `pr`.`prid`))) join `m4_po_detail` `pod` on((`prd`.`idprdetail` = `pod`.`idprdetail`))) join `m4_po` `po` on((`pod`.`idpo` = `po`.`poid`))) where (`po`.`poid` = 'validtransaksi') group by `pr`.`prid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`rq`.`rqsumber` AS `sumber`,`rq`.`rqid` AS `idterkait`,`rq`.`rqnotransaksi` AS `noterkait`,`rq`.`rqtgl` AS `tglterkait`,`rq`.`rqinputtgl` AS `inputtglterkait`,`rq`.`rqmodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (((`m4_rq_detail` `rqd` join `m4_rq` `rq` on((`rqd`.`idrq` = `rq`.`rqid`))) join `m4_po_detail` `pod` on((`rqd`.`idrqdetail` = `pod`.`idrqdetail`))) join `m4_po` `po` on((`pod`.`idpo` = `po`.`poid`))) where (`po`.`poid` = 'validtransaksi') group by `rq`.`rqid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`bs`.`bssumber` AS `sumber`,`bs`.`bsid` AS `idterkait`,`bs`.`bsnotransaksi` AS `noterkait`,`bs`.`bstgl` AS `tglterkait`,`bs`.`bsinputtgl` AS `inputtglterkait`,`bs`.`bsmodifikasitgl` AS `modifikasitglterkait`,0 AS `jenisterkait` from (`m4_bs` `bs` join `m4_po` `po` on((`bs`.`bsid` = `po`.`poidbs`))) where (`po`.`poid` = 'validtransaksi') group by `bs`.`bsid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`ap`.`apsumber` AS `sumber`,`ap`.`apid` AS `idterkait`,`ap`.`apnotransaksi` AS `noterkait`,`ap`.`aptgl` AS `tglterkait`,`ap`.`apinputtgl` AS `inputtglterkait`,`ap`.`apmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (`m4_ap` `ap` join `m4_po` `po` on((`ap`.`apidpo` = `po`.`poid`))) where (((`ap`.`apstatus` = 2) or (`ap`.`apstatus` = 3) or (`ap`.`apstatus` = 4) or (`ap`.`apstatus` = 7)) and (`po`.`poid` = 'validtransaksi')) group by `ap`.`apid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`grn`.`grnsumber` AS `sumber`,`grn`.`grnid` AS `idterkait`,`grn`.`grnnotransaksi` AS `noterkait`,`grn`.`grntgl` AS `tglterkait`,`grn`.`grninputtgl` AS `inputtglterkait`,`grn`.`grnmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_grn_detail` `grnd` join `m4_grn` `grn` on((`grnd`.`idgrn` = `grn`.`grnid`))) join `m4_po_detail` `pod` on((`pod`.`idpodetail` = `grnd`.`idpodetail`))) join `m4_po` `po` on((`po`.`poid` = `pod`.`idpo`))) where (((`grn`.`grnstatus` = 2) or (`grn`.`grnstatus` = 3) or (`grn`.`grnstatus` = 4) or (`grn`.`grnstatus` = 7)) and (`po`.`poid` = 'validtransaksi')) group by `grn`.`grnid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`ri`.`risumber` AS `sumber`,`ri`.`riid` AS `idterkait`,`ri`.`rinotransaksi` AS `noterkait`,`ri`.`ritgl` AS `tglterkait`,`ri`.`riinputtgl` AS `inputtglterkait`,`ri`.`rimodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_ri_detail` `rid` join `m4_ri` `ri` on((`rid`.`idri` = `ri`.`riid`))) join `m4_po_detail` `pod` on((`pod`.`idpodetail` = `rid`.`idpodetail`))) join `m4_po` `po` on((`po`.`poid` = `pod`.`idpo`))) where (((`ri`.`ristatus` = 2) or (`ri`.`ristatus` = 3) or (`ri`.`ristatus` = 4) or (`ri`.`ristatus` = 7)) and (`po`.`poid` = 'validtransaksi')) group by `ri`.`riid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`dnr`.`dnrsumber` AS `sumber`,`dnr`.`dnrid` AS `idterkait`,`dnr`.`dnrnotransaksi` AS `noterkait`,`dnr`.`dnrtgl` AS `tglterkait`,`dnr`.`dnrinputtgl` AS `inputtglterkait`,`dnr`.`dnrmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_dnr_detail` `dnrd` join `m4_dnr` `dnr` on((`dnrd`.`iddnr` = `dnr`.`dnrid`))) join `m4_po_detail` `pod` on((`pod`.`idpodetail` = `dnrd`.`idpodetail`))) join `m4_po` `po` on((`po`.`poid` = `pod`.`idpo`))) where (((`dnr`.`dnrstatus` = 2) or (`dnr`.`dnrstatus` = 3) or (`dnr`.`dnrstatus` = 4) or (`dnr`.`dnrstatus` = 7)) and (`po`.`poid` = 'validtransaksi')) group by `dnr`.`dnrid`,`po`.`poid` union all select `po`.`poid` AS `poid`,`po`.`ponotransaksi` AS `ponotransaksi`,`prt`.`prtsumber` AS `sumber`,`prt`.`prtid` AS `idterkait`,`prt`.`prtnotransaksi` AS `noterkait`,`prt`.`prttgl` AS `tglterkait`,`prt`.`prtinputtgl` AS `inputtglterkait`,`prt`.`prtmodifikasitgl` AS `modifikasitglterkait`,1 AS `jenisterkait` from (((`m4_prt_detail` `prtd` join `m4_prt` `prt` on((`prtd`.`idprt` = `prt`.`prtid`))) join `m4_po_detail` `pod` on((`pod`.`idpodetail` = `prtd`.`idpodetail`))) join `m4_po` `po` on((`po`.`poid` = `pod`.`idpo`))) where (((`prt`.`prtstatus` = 2) or (`prt`.`prtstatus` = 3) or (`prt`.`prtstatus` = 4) or (`prt`.`prtstatus` = 7)) and (`po`.`poid` = 'validtransaksi')) group by `prt`.`prtid`,`po`.`poid`
+```
+
+## Query 37
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_v_history`
+
+```sql
+select `po`.`poidhistory` AS `poidhistory`,`po`.`poid` AS `poid`,`po`.`pocabang` AS `pocabang`,`po`.`polokasi` AS `polokasi`,`po`.`pogudang` AS `pogudang`,`po`.`poasalbarang` AS `poasalbarang`,`po`.`poasalbarangkategori` AS `poasalbarangkategori`,`po`.`pojenispembelian` AS `pojenispembelian`,`po`.`pojenispembeliankategori` AS `pojenispembeliankategori`,`po`.`pocarabayar` AS `pocarabayar`,`po`.`posumber` AS `posumber`,`po`.`poautonotransaksi` AS `poautonotransaksi`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`potgl` AS `potgl`,`po`.`pokodepa` AS `pokodepa`,`po`.`posupplier` AS `posupplier`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`po`.`potgldipenuhi` AS `potgldipenuhi`,`po`.`potermin` AS `potermin`,`po`.`potgljatuhtempo` AS `potgljatuhtempo`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potglnoref` AS `potglnoref`,`po`.`potglpenutupan` AS `potglpenutupan`,`po`.`pomatauang` AS `pomatauang`,`po`.`pokurs` AS `pokurs`,`po`.`pohargatermasukpajak` AS `pohargatermasukpajak`,`po`.`pototal` AS `pototal`,`po`.`podiskonpersen` AS `podiskonpersen`,`po`.`pojmldiskon` AS `pojmldiskon`,`po`.`pototalpajak1detail` AS `pototalpajak1detail`,`po`.`pototalpajak2detail` AS `pototalpajak2detail`,`po`.`pobiayalainpersen` AS `pobiayalainpersen`,`po`.`pobiayalain` AS `pobiayalain`,`po`.`pototaltransaksi` AS `pototaltransaksi`,`po`.`pojmlbayar` AS `pojmlbayar`,`po`.`porekdiskon` AS `porekdiskon`,`po`.`porekpajak1` AS `porekpajak1`,`po`.`porekpajak2` AS `porekpajak2`,`po`.`porekbiayalain` AS `porekbiayalain`,`po`.`porekbayar` AS `porekbayar`,`po`.`poidpr` AS `poidpr`,`po`.`poidcs` AS `poidcs`,`po`.`poidrq` AS `poidrq`,`po`.`poidbs` AS `poidbs`,`po`.`postatusipc` AS `postatusipc`,`po`.`postatusgrn` AS `postatusgrn`,`po`.`postatusri` AS `postatusri`,`po`.`postatusdnr` AS `postatusdnr`,`po`.`postatusprt` AS `postatusprt`,`po`.`postatusrealisasi` AS `postatusrealisasi`,`po`.`postatus` AS `postatus`,`po`.`postatussebelumnya` AS `postatussebelumnya`,`po`.`pojmlrevisi` AS `pojmlrevisi`,`po`.`pocetakanke` AS `pocetakanke`,`po`.`poinputuser` AS `poinputuser`,`po`.`poinputtgl` AS `poinputtgl`,`po`.`pomodifikasiuser` AS `pomodifikasiuser`,`po`.`pomodifikasitgl` AS `pomodifikasitgl`,`po`.`poposting` AS `poposting`,`po`.`popostingtgl` AS `popostingtgl`,`po`.`poisclose` AS `poisclose`,`br`.`bnama` AS `pocabangnama`,`lc`.`lnama` AS `polokasinama`,`wh`.`wnama` AS `pogudangnama`,`c1`.`kkode` AS `posupplierkode`,`c1`.`knama` AS `posuppliernama`,`c2`.`kkode` AS `pobagianpembeliankode`,`c2`.`knama` AS `pobagianpembeliannama`,`pr`.`prnotransaksi` AS `prnotransaksi`,`cs`.`csnotransaksi` AS `csnotransaksi`,`rq`.`rqnotransaksi` AS `rqnotransaksi`,`bs`.`bsnotransaksi` AS `bsnotransaksi`,`st1`.`nama` AS `postatusnama`,`st2`.`nama` AS `postatussebelumnyanama`,`u1`.`unama` AS `poinputusernama`,`u2`.`unama` AS `pomodifikasiusernama` from (((((((((((((`m4_po_history` `po` left join `m1_branch` `br` on((`br`.`bkode` = `po`.`pocabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `po`.`polokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `po`.`pogudang`))) left join `m1_contact` `c1` on((`c1`.`kid` = `po`.`posupplier`))) left join `m1_contact` `c2` on((`c2`.`kid` = `po`.`pobagianpembelian`))) left join `m4_pr` `pr` on((`po`.`poidpr` = `pr`.`prid`))) left join `m4_cs` `cs` on((`po`.`poidcs` = `cs`.`csid`))) left join `m4_rq` `rq` on((`po`.`poidrq` = `rq`.`rqid`))) left join `m4_bs` `bs` on((`po`.`poidbs` = `bs`.`bsid`))) left join `m0_status` `st1` on((`st1`.`kode` = `po`.`postatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `po`.`postatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `po`.`poinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `po`.`pomodifikasiuser`)))
+```
+
+## Query 38
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_getdata_history`
+
+```sql
+select `po`.`poidhistory` AS `poidhistory`,`po`.`poid` AS `poid`,`po`.`pocabang` AS `pocabang`,`po`.`polokasi` AS `polokasi`,`po`.`pogudang` AS `pogudang`,`po`.`poasalbarang` AS `poasalbarang`,`po`.`poasalbarangkategori` AS `poasalbarangkategori`,`po`.`pojenispembelian` AS `pojenispembelian`,`po`.`pojenispembeliankategori` AS `pojenispembeliankategori`,`po`.`pocarabayar` AS `pocarabayar`,`po`.`posumber` AS `posumber`,`po`.`poautonotransaksi` AS `poautonotransaksi`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`potgl` AS `potgl`,`po`.`pokodepa` AS `pokodepa`,`po`.`posupplier` AS `posupplier`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`po`.`potgldipenuhi` AS `potgldipenuhi`,`po`.`potermin` AS `potermin`,`po`.`potgljatuhtempo` AS `potgljatuhtempo`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potglnoref` AS `potglnoref`,`po`.`potglpenutupan` AS `potglpenutupan`,`po`.`pomatauang` AS `pomatauang`,`po`.`pokurs` AS `pokurs`,`po`.`pohargatermasukpajak` AS `pohargatermasukpajak`,`po`.`pototal` AS `pototal`,`po`.`podiskonpersen` AS `podiskonpersen`,`po`.`pojmldiskon` AS `pojmldiskon`,`po`.`pototalpajak1detail` AS `pototalpajak1detail`,`po`.`pototalpajak2detail` AS `pototalpajak2detail`,`po`.`pobiayalainpersen` AS `pobiayalainpersen`,`po`.`pobiayalain` AS `pobiayalain`,`po`.`pototaltransaksi` AS `pototaltransaksi`,`po`.`pojmlbayar` AS `pojmlbayar`,`po`.`porekdiskon` AS `porekdiskon`,`po`.`porekpajak1` AS `porekpajak1`,`po`.`porekpajak2` AS `porekpajak2`,`po`.`porekbiayalain` AS `porekbiayalain`,`po`.`porekbayar` AS `porekbayar`,`po`.`poidpr` AS `poidpr`,`po`.`poidcs` AS `poidcs`,`po`.`poidrq` AS `poidrq`,`po`.`poidbs` AS `poidbs`,`po`.`postatusipc` AS `postatusipc`,`po`.`postatusgrn` AS `postatusgrn`,`po`.`postatusri` AS `postatusri`,`po`.`postatusdnr` AS `postatusdnr`,`po`.`postatusprt` AS `postatusprt`,`po`.`postatusrealisasi` AS `postatusrealisasi`,`po`.`postatus` AS `postatus`,`po`.`postatussebelumnya` AS `postatussebelumnya`,`po`.`pojmlrevisi` AS `pojmlrevisi`,`po`.`pocetakanke` AS `pocetakanke`,`po`.`poinputuser` AS `poinputuser`,`po`.`poinputtgl` AS `poinputtgl`,`po`.`pomodifikasiuser` AS `pomodifikasiuser`,`po`.`pomodifikasitgl` AS `pomodifikasitgl`,`po`.`poposting` AS `poposting`,`po`.`popostingtgl` AS `popostingtgl`,`po`.`poisclose` AS `poisclose`,`po`.`pocustomtext1` AS `pocustomtext1`,`po`.`pocustomtext2` AS `pocustomtext2`,`po`.`pocustomtext3` AS `pocustomtext3`,`po`.`pocustomtext4` AS `pocustomtext4`,`po`.`pocustomtext5` AS `pocustomtext5`,`po`.`pocustomint1` AS `pocustomint1`,`po`.`pocustomint2` AS `pocustomint2`,`po`.`pocustomint3` AS `pocustomint3`,`po`.`pocustomdbl1` AS `pocustomdbl1`,`po`.`pocustomdbl2` AS `pocustomdbl2`,`po`.`pocustomdbl3` AS `pocustomdbl3`,`po`.`pocustomdate1` AS `pocustomdate1`,`po`.`pocustomdate2` AS `pocustomdate2`,`po`.`pocustomdate3` AS `pocustomdate3`,`br`.`bnama` AS `pocabangnama`,`lc`.`lnama` AS `polokasinama`,`wh`.`wnama` AS `pogudangnama`,`c1`.`kkode` AS `posupplierkode`,`c1`.`knama` AS `posuppliernama`,`c2`.`kkode` AS `pobagianpembeliankode`,`c2`.`knama` AS `pobagianpembeliannama`,`tr`.`trnama` AS `poterminnama`,`tr`.`trharijatuhtempo` AS `poterminharijatuhtempo`,`coa1`.`cnama` AS `porekdiskonnama`,`coa2`.`cnama` AS `porekpajak1nama`,`coa3`.`cnama` AS `porekpajak2nama`,`coa4`.`cnama` AS `porekbiayalainnama`,`coa5`.`cnama` AS `porekbayarnama`,`pr`.`prnotransaksi` AS `ponotransaksipr`,`cs`.`csnotransaksi` AS `ponotransaksics`,`rq`.`rqnotransaksi` AS `ponotransaksirq`,`bs`.`bsnotransaksi` AS `ponotransaksibs`,`st1`.`nama` AS `postatusnama`,`st2`.`nama` AS `postatussebelumnyanama`,`u1`.`unama` AS `poinputusernama`,`u2`.`unama` AS `pomodifikasiusernama`,`pod`.`idhistorydetail` AS `idhistorydetail`,`pod`.`idhistory` AS `idhistory`,`pod`.`idpodetail` AS `idpodetail`,`pod`.`idpo` AS `idpo`,`pod`.`idbarang` AS `idbarang`,`pod`.`namabarang` AS `namabarang`,`pod`.`tipebarang` AS `tipebarang`,`pod`.`jml` AS `jml`,`pod`.`satuan` AS `satuan`,`pod`.`nilaisatuan` AS `nilaisatuan`,`pod`.`jmlbarang` AS `jmlbarang`,`pod`.`satuanbarang` AS `satuanbarang`,`pod`.`matauang` AS `matauang`,`pod`.`kurs` AS `kurs`,`pod`.`hargafix` AS `hargafix`,`pod`.`harga` AS `harga`,`pod`.`diskon` AS `diskon`,`pod`.`jmldiskon` AS `jmldiskon`,`pod`.`pajak1` AS `pajak1`,`pod`.`jmlpajak1` AS `jmlpajak1`,`pod`.`pajak2` AS `pajak2`,`pod`.`jmlpajak2` AS `jmlpajak2`,`pod`.`cabang` AS `cabang`,`pod`.`lokasi` AS `lokasi`,`pod`.`gudang` AS `gudang`,`pod`.`costcenter` AS `costcenter`,`pod`.`divisi` AS `divisi`,`pod`.`subdivisi` AS `subdivisi`,`pod`.`proyek` AS `proyek`,`pod`.`catatan` AS `catatan`,`pod`.`urutan` AS `urutan`,`pod`.`idprdetail` AS `idprdetail`,`pod`.`idcsdetail` AS `idcsdetail`,`pod`.`idrqdetail` AS `idrqdetail`,`pod`.`idbsdetail` AS `idbsdetail`,`pod`.`jmlipc` AS `jmlipc`,`pod`.`statusipc` AS `statusipc`,`pod`.`jmlgrn` AS `jmlgrn`,`pod`.`statusgrn` AS `statusgrn`,`pod`.`jmlri` AS `jmlri`,`pod`.`statusri` AS `statusri`,`pod`.`jmldnr` AS `jmldnr`,`pod`.`statusdnr` AS `statusdnr`,`pod`.`jmlprt` AS `jmlprt`,`pod`.`statusprt` AS `statusprt`,`pod`.`jmlrealisasi` AS `jmlrealisasi`,`pod`.`statusrealisasi` AS `statusrealisasi`,`pod`.`isclose` AS `isclose`,`pod`.`customtext1` AS `customtext1`,`pod`.`customtext2` AS `customtext2`,`pod`.`customtext3` AS `customtext3`,`pod`.`customdbl1` AS `customdbl1`,`pod`.`customdbl2` AS `customdbl2`,`pod`.`customdbl3` AS `customdbl3`,`pod`.`customdate1` AS `customdate1`,`pod`.`customdate2` AS `customdate2`,`pod`.`customdate3` AS `customdate3`,`i`.`bkode` AS `kodebarang`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai`,`brd`.`bnama` AS `cabangnama`,`lcd`.`lnama` AS `lokasinama`,`whd`.`wnama` AS `gudangnama`,`cc`.`ccnama` AS `costcenternama`,`d`.`dnama` AS `divisinama`,`sd`.`sdnama` AS `subdivisinama`,`p`.`pnama` AS `proyeknama`,`pr2`.`prnotransaksi` AS `prnotransaksi`,`cs2`.`csnotransaksi` AS `csnotransaksi`,`rq2`.`rqnotransaksi` AS `rqnotransaksi`,`bs2`.`bsnotransaksi` AS `bsnotransaksi`, i.bapanjang, i.balebar, i.batinggi, i.bjmllapangan, i.bsatuanlapangan from ((((((((((((((((((((((((((((((((((((((`m4_po_history` `po` join `m4_po_detail_history` `pod` on((`po`.`poidhistory` = `pod`.`idhistory`))) left join `m1_branch` `br` on((`br`.`bkode` = `po`.`pocabang`))) left join `m1_location` `lc` on((`lc`.`lkode` = `po`.`polokasi`))) left join `m1_warehouse` `wh` on((`wh`.`wkode` = `po`.`pogudang`))) left join `m1_contact` `c1` on((`c1`.`kid` = `po`.`posupplier`))) left join `m1_contact` `c2` on((`c2`.`kid` = `po`.`pobagianpembelian`))) left join `m1_terms` `tr` on((`po`.`potermin` = `tr`.`trkode`))) left join `m1_coa` `coa1` on((`po`.`porekdiskon` = `coa1`.`cnomor`))) left join `m1_coa` `coa2` on((`po`.`porekpajak1` = `coa2`.`cnomor`))) left join `m1_coa` `coa3` on((`po`.`porekpajak2` = `coa3`.`cnomor`))) left join `m1_coa` `coa4` on((`po`.`porekbiayalain` = `coa4`.`cnomor`))) left join `m1_coa` `coa5` on((`po`.`porekbayar` = `coa5`.`cnomor`))) left join `m4_pr` `pr` on((`po`.`poidpr` = `pr`.`prid`))) left join `m4_cs` `cs` on((`po`.`poidcs` = `cs`.`csid`))) left join `m4_rq` `rq` on((`po`.`poidrq` = `rq`.`rqid`))) left join `m4_bs` `bs` on((`po`.`poidbs` = `bs`.`bsid`))) left join `m0_status` `st1` on((`st1`.`kode` = `po`.`postatus`))) left join `m0_status` `st2` on((`st2`.`kode` = `po`.`postatussebelumnya`))) left join `m0_user` `u1` on((`u1`.`userid` = `po`.`poinputuser`))) left join `m0_user` `u2` on((`u2`.`userid` = `po`.`pomodifikasiuser`))) left join `m1_item` `i` on((`i`.`bid` = `pod`.`idbarang`))) left join `m1_tax` `t1` on((`pod`.`pajak1` = `t1`.`tkode`))) left join `m1_tax` `t2` on((`pod`.`pajak2` = `t2`.`tkode`))) left join `m1_branch` `brd` on((`pod`.`cabang` = `brd`.`bkode`))) left join `m1_location` `lcd` on((`pod`.`lokasi` = `lcd`.`lkode`))) left join `m1_warehouse` `whd` on((`pod`.`gudang` = `whd`.`wkode`))) left join `m1_cost_center` `cc` on((`pod`.`costcenter` = `cc`.`cckode`))) left join `m1_division` `d` on((`pod`.`divisi` = `d`.`dkode`))) left join `m1_subdivision` `sd` on((`pod`.`subdivisi` = `sd`.`sdkode`))) left join `m1_project` `p` on((`pod`.`proyek` = `p`.`pkode`))) left join `m4_pr_detail` `prd` on((`pod`.`idprdetail` = `prd`.`idprdetail`))) left join `m4_pr` `pr2` on((`prd`.`idpr` = `pr2`.`prid`))) left join `m4_bs_detail` `bsd` on((`pod`.`idbsdetail` = `bsd`.`idbsdetail`))) left join `m4_bs` `bs2` on((`bsd`.`idbs` = `bs2`.`bsid`))) left join `m4_cs_detail` `csd` on((`pod`.`idcsdetail` = `csd`.`idcsdetail`))) left join `m4_cs` `cs2` on((`csd`.`idcs` = `cs2`.`csid`))) left join `m4_rq_detail` `rqd` on((`pod`.`idrqdetail` = `rqd`.`idrqdetail`))) left join `m4_rq` `rq2` on((`rqd`.`idrq` = `rq2`.`rqid`)))
+```
+
+## Query 39
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+select `pod`.`idpodetail` AS `idpodetail`,`pod`.`idpo` AS `idpo`,`pod`.`idbarang` AS `idbarang`,`pod`.`namabarang` AS `namabarang`,`pod`.`tipebarang` AS `tipebarang`,`pod`.`jml` AS `jml`,`pod`.`satuan` AS `satuan`,`pod`.`nilaisatuan` AS `nilaisatuan`,`pod`.`jmlbarang` AS `jmlbarang`,`pod`.`satuanbarang` AS `satuanbarang`,`pod`.`matauang` AS `matauang`,`pod`.`kurs` AS `kurs`,`pod`.`hargafix` AS `hargafix`,`pod`.`harga` AS `harga`,`pod`.`diskon` AS `diskon`,`pod`.`jmldiskon` AS `jmldiskon`,`pod`.`pajak1` AS `pajak1`,`pod`.`jmlpajak1` AS `jmlpajak1`,`pod`.`pajak2` AS `pajak2`,`pod`.`jmlpajak2` AS `jmlpajak2`,`pod`.`cabang` AS `cabang`,`pod`.`lokasi` AS `lokasi`,`pod`.`gudang` AS `gudang`,`pod`.`costcenter` AS `costcenter`,`pod`.`divisi` AS `divisi`,`pod`.`subdivisi` AS `subdivisi`,`pod`.`proyek` AS `proyek`,`pod`.`catatan` AS `catatan`,`pod`.`urutan` AS `urutan`,`pod`.`idprdetail` AS `idprdetail`,`pod`.`idcsdetail` AS `idcsdetail`,`pod`.`idrqdetail` AS `idrqdetail`,`pod`.`idbsdetail` AS `idbsdetail`,`pod`.`jmlipc` AS `jmlipc`,`pod`.`statusipc` AS `statusipc`,`pod`.`jmlgrn` AS `jmlgrn`,`pod`.`statusgrn` AS `statusgrn`,`pod`.`jmlri` AS `jmlri`,`pod`.`statusri` AS `statusri`,`pod`.`jmldnr` AS `jmldnr`,`pod`.`statusdnr` AS `statusdnr`,`pod`.`jmlprt` AS `jmlprt`,`pod`.`statusrealisasi` AS `statusrealisasi`,`pod`.`jmlrealisasi` AS `jmlrealisasi`,`pod`.`statusprt` AS `statusprt`,`pod`.`isclose` AS `isclose`,`pod`.`customtext1` AS `customtext1`,`pod`.`customtext2` AS `customtext2`,`pod`.`customtext3` AS `customtext3`,`pod`.`customdbl1` AS `customdbl1`,`pod`.`customdbl2` AS `customdbl2`,`pod`.`customdbl3` AS `customdbl3`,`pod`.`customdate1` AS `customdate1`,`pod`.`customdate2` AS `customdate2`,`pod`.`customdate3` AS `customdate3`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potgl` AS `potgl`,`po`.`potglnoref` AS `potglnoref`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`potermin` AS `potermin`,`tr`.`trnama` AS `poterminnama`,`tr`.`trharijatuhtempo` AS `poterminharijatuhtempo`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`c1`.`kkode` AS `pobagianpembeliankode`,`c1`.`knama` AS `pobagianpembeliannama`,`i`.`bkode` AS `kodebarang`,`i`.`bhpp` AS `bhpp`,`i`.`bjenis` AS `bjenis`,`i`.`brekpersediaan` AS `brekpersediaan`,`i`.`brekdiskonpembelian` AS `brekdiskonpembelian`,`i`.`bserial` AS `bserial`,`i`.`bbatch` AS `bbatch`,`i`.`basset` AS `basset`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai`,((`pod`.`jmlbarang` - `pod`.`jmlipc`) / `pod`.`nilaisatuan`) AS `jmlsisaipc`,((`pod`.`jmlbarang` - `pod`.`jmlgrn`) / `pod`.`nilaisatuan`) AS `jmlsisagrn`,((`pod`.`jmlbarang` - `pod`.`jmlri`) / `pod`.`nilaisatuan`) AS `jmlsisari`,((`pod`.`jmlbarang` - `pod`.`jmlrealisasi`) / `pod`.`nilaisatuan`) AS `jmlsisarealisasi`,`po`.`posupplier` AS `posupplier`,`c`.`kkode` AS `posupplierkode`,`c`.`knama` AS `posuppliernama`, i.bjmllapangan, i.bsatuanlapangan, po.pohargatermasukpajak, po.pocustomtext1, po.pocustomtext2, t1.takunbeli as pajak1akunbeli, t1c1.cnama as pajak1akunbelinama, t1.takunjual as pajak1akunjual, t1c2.cnama as pajak1akunjualnama, t2.takunbeli as pajak2akunbeli, t2c1.cnama as pajak2akunbelinama, t2.takunjual as pajak2akunjual, t2c2.cnama as pajak2akunjualnama , d.dnama AS divisinama, sd.sdnama AS subdivisinama, cc.ccnama AS costcenternama, p.pnama AS proyeknama from `m4_po_detail` `pod` join `m4_po` `po` on `pod`.`idpo` = `po`.`poid` left join `m1_terms` `tr` on `po`.`potermin` = `tr`.`trkode` left join `m1_contact` `c1` on `po`.`pobagianpembelian` = `c1`.`kid` left join `m1_item` `i` on `pod`.`idbarang` = `i`.`bid` left join `m1_tax` `t1` on `pod`.`pajak1` = `t1`.`tkode` left join `m1_tax` `t2` on `pod`.`pajak2` = `t2`.`tkode` left join `m1_contact` `c` on `po`.`posupplier` = `c`.`kid` left join m1_coa t1c1 on t1.takunbeli = t1c1.cnomor left join m1_coa t1c2 on t1.takunjual = t1c2.cnomor left join m1_coa t2c1 on t2.takunbeli = t2c1.cnomor left join m1_coa t2c2 on t2.takunjual = t2c2.cnomor LEFT JOIN m1_division d ON d.dkode = pod.divisi LEFT JOIN m1_subdivision sd ON sd.sdkode = pod.subdivisi LEFT JOIN m1_cost_center cc ON cc.cckode = pod.costcenter LEFT JOIN m1_project p ON p.pkode = pod.proyek
+```
+
+## Query 40
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m4/m4_po.vb`
+
+```sql
+select `pod`.`idpodetail` AS `idpodetail`,`pod`.`idpo` AS `idpo`,`pod`.`idbarang` AS `idbarang`,`pod`.`namabarang` AS `namabarang`,`pod`.`tipebarang` AS `tipebarang`,`pod`.`jml` AS `jml`,`pod`.`satuan` AS `satuan`,`pod`.`nilaisatuan` AS `nilaisatuan`,`pod`.`jmlbarang` AS `jmlbarang`,`pod`.`satuanbarang` AS `satuanbarang`,`pod`.`matauang` AS `matauang`,`pod`.`kurs` AS `kurs`,`pod`.`hargafix` AS `hargafix`,`pod`.`harga` AS `harga`,`pod`.`diskon` AS `diskon`,`pod`.`jmldiskon` AS `jmldiskon`,`pod`.`pajak1` AS `pajak1`,`pod`.`jmlpajak1` AS `jmlpajak1`,`pod`.`pajak2` AS `pajak2`,`pod`.`jmlpajak2` AS `jmlpajak2`,`pod`.`cabang` AS `cabang`,`pod`.`lokasi` AS `lokasi`,`pod`.`gudang` AS `gudang`,`pod`.`costcenter` AS `costcenter`,`pod`.`divisi` AS `divisi`,`pod`.`subdivisi` AS `subdivisi`,`pod`.`proyek` AS `proyek`,`pod`.`catatan` AS `catatan`,`pod`.`urutan` AS `urutan`,`pod`.`idprdetail` AS `idprdetail`,`pod`.`idcsdetail` AS `idcsdetail`,`pod`.`idrqdetail` AS `idrqdetail`,`pod`.`idbsdetail` AS `idbsdetail`,`pod`.`jmlipc` AS `jmlipc`,`pod`.`statusipc` AS `statusipc`,`pod`.`jmlgrn` AS `jmlgrn`,`pod`.`statusgrn` AS `statusgrn`,`pod`.`jmlri` AS `jmlri`,`pod`.`statusri` AS `statusri`,`pod`.`jmldnr` AS `jmldnr`,`pod`.`statusdnr` AS `statusdnr`,`pod`.`jmlprt` AS `jmlprt`,`pod`.`statusrealisasi` AS `statusrealisasi`,`pod`.`jmlrealisasi` AS `jmlrealisasi`,`pod`.`statusprt` AS `statusprt`,`pod`.`isclose` AS `isclose`,`pod`.`customtext1` AS `customtext1`,`pod`.`customtext2` AS `customtext2`,`pod`.`customtext3` AS `customtext3`,`pod`.`customdbl1` AS `customdbl1`,`pod`.`customdbl2` AS `customdbl2`,`pod`.`customdbl3` AS `customdbl3`,`pod`.`customdate1` AS `customdate1`,`pod`.`customdate2` AS `customdate2`,`pod`.`customdate3` AS `customdate3`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potgl` AS `potgl`,`po`.`potglnoref` AS `potglnoref`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`potermin` AS `potermin`,`tr`.`trnama` AS `poterminnama`,`tr`.`trharijatuhtempo` AS `poterminharijatuhtempo`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`c1`.`kkode` AS `pobagianpembeliankode`,`c1`.`knama` AS `pobagianpembeliannama`,`i`.`bkode` AS `kodebarang`,`i`.`bhpp` AS `bhpp`,`i`.`bjenis` AS `bjenis`,`i`.`brekpersediaan` AS `brekpersediaan`,`i`.`brekdiskonpembelian` AS `brekdiskonpembelian`,`i`.`bserial` AS `bserial`,`i`.`bbatch` AS `bbatch`,`i`.`basset` AS `basset`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai`,((`pod`.`jmlbarang` - `pod`.`jmlipc`) / `pod`.`nilaisatuan`) AS `jmlsisaipc`,((`pod`.`jmlbarang` - `pod`.`jmlgrn`) / `pod`.`nilaisatuan`) AS `jmlsisagrn`,((`pod`.`jmlbarang` - `pod`.`jmlri`) / `pod`.`nilaisatuan`) AS `jmlsisari`,((`pod`.`jmlbarang` - `pod`.`jmlrealisasi`) / `pod`.`nilaisatuan`) AS `jmlsisarealisasi`,`po`.`posupplier` AS `posupplier`,`c`.`kkode` AS `posupplierkode`,`c`.`knama` AS `posuppliernama`, i.bjmllapangan, i.bsatuanlapangan, po.pohargatermasukpajak, po.pocustomtext1, po.pocustomtext2, t1.takunbeli as pajak1akunbeli, t1c1.cnama as pajak1akunbelinama, t1.takunjual as pajak1akunjual, t1c2.cnama as pajak1akunjualnama, t2.takunbeli as pajak2akunbeli, t2c1.cnama as pajak2akunbelinama, t2.takunjual as pajak2akunjual, t2c2.cnama as pajak2akunjualnama from `m4_po_detail` `pod` join `m4_po` `po` on `pod`.`idpo` = `po`.`poid` left join `m1_terms` `tr` on `po`.`potermin` = `tr`.`trkode` left join `m1_contact` `c1` on `po`.`pobagianpembelian` = `c1`.`kid` left join `m1_item` `i` on `pod`.`idbarang` = `i`.`bid` left join `m1_tax` `t1` on `pod`.`pajak1` = `t1`.`tkode` left join `m1_tax` `t2` on `pod`.`pajak2` = `t2`.`tkode` left join `m1_contact` `c` on `po`.`posupplier` = `c`.`kid` left join m1_coa t1c1 on t1.takunbeli = t1c1.cnomor left join m1_coa t1c2 on t1.takunjual = t1c2.cnomor left join m1_coa t2c1 on t2.takunbeli = t2c1.cnomor left join m1_coa t2c2 on t2.takunjual = t2c2.cnomor
+```
+
+## Query 41
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_detail_v`
+
+```sql
+select `pod`.`idpodetail` AS `idpodetail`,`pod`.`idpo` AS `idpo`,`pod`.`idbarang` AS `idbarang`,`pod`.`namabarang` AS `namabarang`,`pod`.`tipebarang` AS `tipebarang`,`pod`.`jml` AS `jml`,`pod`.`satuan` AS `satuan`,`pod`.`nilaisatuan` AS `nilaisatuan`,`pod`.`jmlbarang` AS `jmlbarang`,`pod`.`satuanbarang` AS `satuanbarang`,`pod`.`matauang` AS `matauang`,`pod`.`kurs` AS `kurs`,`pod`.`hargafix` AS `hargafix`,`pod`.`harga` AS `harga`,`pod`.`diskon` AS `diskon`,`pod`.`jmldiskon` AS `jmldiskon`,`pod`.`pajak1` AS `pajak1`,`pod`.`jmlpajak1` AS `jmlpajak1`,`pod`.`pajak2` AS `pajak2`,`pod`.`jmlpajak2` AS `jmlpajak2`,`pod`.`cabang` AS `cabang`,`pod`.`lokasi` AS `lokasi`,`pod`.`gudang` AS `gudang`,`pod`.`costcenter` AS `costcenter`,`pod`.`divisi` AS `divisi`,`pod`.`subdivisi` AS `subdivisi`,`pod`.`proyek` AS `proyek`,`pod`.`catatan` AS `catatan`,`pod`.`urutan` AS `urutan`,`pod`.`idprdetail` AS `idprdetail`,`pod`.`idcsdetail` AS `idcsdetail`,`pod`.`idrqdetail` AS `idrqdetail`,`pod`.`idbsdetail` AS `idbsdetail`,`pod`.`jmlipc` AS `jmlipc`,`pod`.`statusipc` AS `statusipc`,`pod`.`jmlgrn` AS `jmlgrn`,`pod`.`statusgrn` AS `statusgrn`,`pod`.`jmlri` AS `jmlri`,`pod`.`statusri` AS `statusri`,`pod`.`jmldnr` AS `jmldnr`,`pod`.`statusdnr` AS `statusdnr`,`pod`.`jmlprt` AS `jmlprt`,`pod`.`statusrealisasi` AS `statusrealisasi`,`pod`.`jmlrealisasi` AS `jmlrealisasi`,`pod`.`statusprt` AS `statusprt`,`pod`.`isclose` AS `isclose`,`pod`.`customtext1` AS `customtext1`,`pod`.`customtext2` AS `customtext2`,`pod`.`customtext3` AS `customtext3`,`pod`.`customdbl1` AS `customdbl1`,`pod`.`customdbl2` AS `customdbl2`,`pod`.`customdbl3` AS `customdbl3`,`pod`.`customdate1` AS `customdate1`,`pod`.`customdate2` AS `customdate2`,`pod`.`customdate3` AS `customdate3`,`po`.`ponotransaksi` AS `ponotransaksi`,`po`.`pouraian` AS `pouraian`,`po`.`pocatatan` AS `pocatatan`,`po`.`ponoref` AS `ponoref`,`po`.`potgl` AS `potgl`,`po`.`potglnoref` AS `potglnoref`,`po`.`posupplierkontak` AS `posupplierkontak`,`po`.`po1alamat1` AS `po1alamat1`,`po`.`po1alamat2` AS `po1alamat2`,`po`.`po1alamat3` AS `po1alamat3`,`po`.`po2alamat1` AS `po2alamat1`,`po`.`po2alamat2` AS `po2alamat2`,`po`.`po2alamat3` AS `po2alamat3`,`po`.`potermin` AS `potermin`,`tr`.`trnama` AS `poterminnama`,`tr`.`trharijatuhtempo` AS `poterminharijatuhtempo`,`po`.`pobagianpembelian` AS `pobagianpembelian`,`c1`.`kkode` AS `pobagianpembeliankode`,`c1`.`knama` AS `pobagianpembeliannama`,`i`.`bkode` AS `kodebarang`,`i`.`bhpp` AS `bhpp`,`i`.`bjenis` AS `bjenis`,`i`.`brekpersediaan` AS `brekpersediaan`,`i`.`brekdiskonpembelian` AS `brekdiskonpembelian`,`i`.`bserial` AS `bserial`,`i`.`bbatch` AS `bbatch`,`t1`.`tnama` AS `pajak1nama`,`t1`.`tnilai` AS `pajak1nilai`,`t2`.`tnama` AS `pajak2nama`,`t2`.`tnilai` AS `pajak2nilai`,((`pod`.`jmlbarang` - `pod`.`jmlipc`) / `pod`.`nilaisatuan`) AS `jmlsisaipc`,((`pod`.`jmlbarang` - `pod`.`jmlgrn`) / `pod`.`nilaisatuan`) AS `jmlsisagrn`,((`pod`.`jmlbarang` - `pod`.`jmlri`) / `pod`.`nilaisatuan`) AS `jmlsisari`,((`pod`.`jmlbarang` - `pod`.`jmlrealisasi`) / `pod`.`nilaisatuan`) AS `jmlsisarealisasi`,`po`.`posupplier` AS `posupplier`,`c`.`kkode` AS `posupplierkode`,`c`.`knama` AS `posuppliernama`, i.bjmllapangan, i.bsatuanlapangan from (((((((`m4_po_detail` `pod` left join `m4_po` `po` on((`pod`.`idpo` = `po`.`poid`))) left join `m1_terms` `tr` on((`po`.`potermin` = `tr`.`trkode`))) left join `m1_contact` `c1` on((`po`.`pobagianpembelian` = `c1`.`kid`))) left join `m1_item` `i` on((`pod`.`idbarang` = `i`.`bid`))) left join `m1_tax` `t1` on((`pod`.`pajak1` = `t1`.`tkode`))) left join `m1_tax` `t2` on((`pod`.`pajak2` = `t2`.`tkode`))) left join `m1_contact` `c` on((`po`.`posupplier` = `c`.`kid`)))
+```
+
+## Query 42
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_detail_cd`
+
+```sql
+select `pod`.`idpodetail` AS `idpodetail`,`pod`.`idpo` AS `idpo`,`pod`.`idbarang` AS `idbarang`,`pod`.`namabarang` AS `namabarang`,`pod`.`tipebarang` AS `tipebarang`,`pod`.`jml` AS `jml`,`pod`.`satuan` AS `satuan`,`pod`.`nilaisatuan` AS `nilaisatuan`,`pod`.`jmlbarang` AS `jmlbarang`,`pod`.`satuanbarang` AS `satuanbarang`,`pod`.`matauang` AS `matauang`,`pod`.`kurs` AS `kurs`,`pod`.`hargafix` AS `hargafix`,`pod`.`harga` AS `harga`,`pod`.`diskon` AS `diskon`,`pod`.`jmldiskon` AS `jmldiskon`,`pod`.`pajak1` AS `pajak1`,`pod`.`pajak2` AS `pajak2`,`pod`.`catatan` AS `catatan`,`po`.`ponotransaksi` AS `ponotransaksi`,`i`.`bkode` AS `kodebarang`,((`pod`.`jmlbarang` - `pod`.`jmlipc`) / `pod`.`nilaisatuan`) AS `jmlsisaipc`,((`pod`.`jmlbarang` - `pod`.`jmlgrn`) / `pod`.`nilaisatuan`) AS `jmlsisagrn`,((`pod`.`jmlbarang` - `pod`.`jmlri`) / `pod`.`nilaisatuan`) AS `jmlsisari`,((`pod`.`jmlbarang` - `pod`.`jmlrealisasi`) / `pod`.`nilaisatuan`) AS `jmlsisarealisasi` from ((`m4_po_detail` `pod` left join `m4_po` `po` on((`pod`.`idpo` = `po`.`poid`))) left join `m1_item` `i` on((`pod`.`idbarang` = `i`.`bid`)))
+```
+
+## Query 43
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb` `m4_po_cd`
+
+```sql
+select po.poid AS poid,po.pocabang AS pocabang,po.polokasi AS polokasi,po.pogudang AS pogudang,po.ponotransaksi AS ponotransaksi,po.potgl AS potgl,po.posupplier AS posupplier,po.posupplierkontak AS posupplierkontak,po.pobagianpembelian AS pobagianpembelian,po.potermin AS potermin,po.pouraian AS pouraian,po.pocatatan AS pocatatan,po.pomatauang AS pomatauang,po.pokurs AS pokurs,po.pototal AS pototal,po.podiskonpersen AS podiskonpersen,po.pojmldiskon AS pojmldiskon,po.pototalpajak1detail AS pototalpajak1detail,po.pototalpajak2detail AS pototalpajak2detail,po.pobiayalainpersen AS pobiayalainpersen,po.pobiayalain AS pobiayalain,po.pototaltransaksi AS pototaltransaksi,po.pojmlbayar AS pojmlbayar,c1.kkode AS posupplierkode,c1.knama AS posuppliernama,c2.kkode AS pobagianpembeliankode,c2.knama AS pobagianpembeliannama from m4_po po join m4_po_detail pod on po.poid = pod.idpo join m1_item i on pod.idbarang = i.bid left join m1_contact c1 on po.posupplier = c1.kid left join m1_contact c2 on po.pobagianpembelian = c2.kid
+```
+
+## Query 44
+
+Sources: `client-backend/api-myerpplus/app_code/ws/m0/m0_caridata.vb` `CdM4_Po`
+
+```sql
+select po.poid AS poid,po.pocabang AS pocabang,po.polokasi AS polokasi,po.pogudang AS pogudang,po.ponotransaksi AS ponotransaksi,po.potgl AS potgl,po.posupplier AS posupplier,po.posupplierkontak AS posupplierkontak,po.pobagianpembelian AS pobagianpembelian,po.potermin AS potermin,po.pouraian AS pouraian,po.pocatatan AS pocatatan,po.pomatauang AS pomatauang,po.pokurs AS pokurs,po.pototal AS pototal,po.podiskonpersen AS podiskonpersen,po.pojmldiskon AS pojmldiskon,po.pototalpajak1detail AS pototalpajak1detail,po.pototalpajak2detail AS pototalpajak2detail,po.pobiayalainpersen AS pobiayalainpersen,po.pobiayalain AS pobiayalain,po.pototaltransaksi AS pototaltransaksi,po.pojmlbayar AS pojmlbayar,c1.kkode AS posupplierkode,c1.knama AS posuppliernama,c2.kkode AS pobagianpembeliankode,c2.knama AS pobagianpembeliannama, po.pocustomtext1, po.pocustomtext2, po.po1alamat1, po.po2alamat1, tr.trnama as poterminnama, tr.trharijatuhtempo as poterminharijatuhtempo, SUM(IFNULL(ap.apjumlah,0)) as jmlap, SUM(IFNULL(ap.apjumlahvalas,0)) as jmlapvalas, (CASE po.pomatauang WHEN s.snilai THEN po.pototaltransaksi - SUM(IFNULL(ap.apjumlah,0)) ELSE po.pototaltransaksi - SUM(IFNULL(ap.apjumlahvalas,0)) END) as sisaap from m4_po po join m4_po_detail pod on po.poid = pod.idpo join m1_item i on pod.idbarang = i.bid join m0_setting s on s.smodule = 0 and s.sgrup = 'accounting' and s.skode = 'MataUangFungsional' left join m1_contact c1 on po.posupplier = c1.kid left join m1_contact c2 on po.pobagianpembelian = c2.kid left join m1_terms tr on po.potermin = tr.trkode left join m4_ap ap on po.poid = ap.apidpo and ap.apstatus in(2,3,4,7)
+```
+

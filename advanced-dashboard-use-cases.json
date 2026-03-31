@@ -1,0 +1,182 @@
+[
+  {
+    "id": "uc_001_customer_receivable_dashboard",
+    "title": "Dashboard Piutang Customer",
+    "question": "Tampilkan dashboard piutang customer berisi daftar invoice belum lunas, total outstanding per customer, aging bucket, dan customer dengan risiko keterlambatan tertinggi.",
+    "expected_widgets": [
+      "table invoice",
+      "bar outstanding per customer",
+      "aging chart",
+      "risk ranking"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": ["m5_si", "m1_contact"]
+  },
+  {
+    "id": "uc_002_sales_document_funnel",
+    "title": "Funnel Dokumen Penjualan",
+    "question": "Tampilkan funnel konversi penjualan dari sales quotation ke sales order, delivery order, delivery report, lalu sales invoice per bulan.",
+    "expected_widgets": [
+      "stage summary",
+      "conversion chart",
+      "trend bulanan"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_sq",
+      "m5_sq_detail",
+      "m5_so",
+      "m5_so_detail",
+      "m5_do",
+      "m5_do_detail",
+      "m5_dr",
+      "m5_dr_detail",
+      "m5_si",
+      "m5_si_detail"
+    ]
+  },
+  {
+    "id": "uc_003_customer_360_sales",
+    "title": "Customer 360 Sales",
+    "question": "Untuk customer tertentu, tampilkan ringkasan invoice, invoice belum lunas, riwayat collection, payment voucher, dan retur penjualan.",
+    "expected_widgets": [
+      "customer summary",
+      "invoice table",
+      "payment collection table",
+      "return chart"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m1_contact",
+      "m5_si",
+      "m5_ic",
+      "m5_ic_detail",
+      "m5_pv",
+      "m5_pv_detail",
+      "m5_sr"
+    ]
+  },
+  {
+    "id": "uc_004_fulfillment_monitoring",
+    "title": "Monitoring Fulfillment",
+    "question": "Tampilkan item sales order yang belum menjadi delivery order, delivery order yang belum menjadi delivery report, dan delivery report yang belum menjadi invoice.",
+    "expected_widgets": [
+      "backlog table per stage",
+      "bottleneck chart",
+      "summary cards"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_so_detail",
+      "m5_do_detail",
+      "m5_dr_detail",
+      "m5_si_detail"
+    ]
+  },
+  {
+    "id": "uc_005_outstanding_vs_collection",
+    "title": "Analisis Outstanding dan Collection",
+    "question": "Bandingkan outstanding sales invoice dengan invoice collection dan payment voucher untuk melihat invoice yang belum tertagih, sudah tertagih, atau sudah dibayar sebagian.",
+    "expected_widgets": [
+      "status matrix",
+      "outstanding table",
+      "collection payment chart"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_si",
+      "m5_ic",
+      "m5_ic_detail",
+      "m5_pv",
+      "m5_pv_detail"
+    ]
+  },
+  {
+    "id": "uc_006_aging_and_cash_collection",
+    "title": "Aging dan Cash Collection",
+    "question": "Tampilkan aging invoice per customer, tren pembayaran mingguan, dan rasio collection terhadap invoice jatuh tempo dalam 90 hari terakhir.",
+    "expected_widgets": [
+      "aging bucket chart",
+      "payment trend line",
+      "collection ratio table"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_si",
+      "m5_ic",
+      "m5_ic_detail",
+      "m1_contact"
+    ]
+  },
+  {
+    "id": "uc_007_profitability_per_customer",
+    "title": "Profitability per Customer",
+    "question": "Tampilkan customer dengan margin bersih tertinggi dan terendah berdasarkan invoice penjualan, biaya invoice, retur, dan diskon.",
+    "expected_widgets": [
+      "ranking table",
+      "margin bar chart",
+      "negative-margin alerts"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_si",
+      "m5_si_detail",
+      "m5_si_cost",
+      "m5_sr"
+    ]
+  },
+  {
+    "id": "uc_008_return_and_invoice_exchange",
+    "title": "Retur dan Tukar Faktur",
+    "question": "Tampilkan hubungan sales invoice, sales return, dan tukar faktur untuk melihat pola retur dan penggantian dokumen per customer.",
+    "expected_widgets": [
+      "linked document table",
+      "return trend chart",
+      "customer impact summary"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_si",
+      "m5_sr",
+      "m5_sie",
+      "m5_sie_detail"
+    ]
+  },
+  {
+    "id": "uc_009_sales_points_adjustment",
+    "title": "Poin Loyalty dan Penyesuaian Penjualan",
+    "question": "Tampilkan saldo poin customer, mutasi poin masuk-keluar, dan penyesuaian poin manual per bulan.",
+    "expected_widgets": [
+      "point ledger table",
+      "point trend chart",
+      "top adjusted customers"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_spa",
+      "m5_spa_detail",
+      "m1_contact"
+    ]
+  },
+  {
+    "id": "uc_010_executive_risk_dashboard",
+    "title": "Executive Risk Dashboard",
+    "question": "Tampilkan customer berisiko berdasarkan kombinasi outstanding tinggi, aging panjang, retur tinggi, collection lambat, dan fulfillment yang macet.",
+    "expected_widgets": [
+      "risk ranking",
+      "heatmap status chart",
+      "issue drilldown table"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "m5_si",
+      "m5_sr",
+      "m5_ic",
+      "m5_ic_detail",
+      "m5_so",
+      "m5_do",
+      "m5_dr",
+      "m1_contact"
+    ]
+  }
+]

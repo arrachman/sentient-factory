@@ -1,0 +1,51 @@
+11/2/2022 2:11:08 PM : Hitung Ulang Start ... 
+11/2/2022 2:11:09 PM : Data Utama Done 6 *SA
+11/2/2022 2:11:09 PM : Data Detail Done 13
+11/2/2022 2:11:09 PM : Hitung Ulang data ke 6 - 6
+11/2/2022 2:11:09 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:09 PM : SA ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'SA' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:09 PM : SA ke n(1 - 1)
+11/2/2022 2:11:09 PM : Data Utama Done 8 *GRN
+11/2/2022 2:11:09 PM : Data Detail Done 17
+11/2/2022 2:11:09 PM : Data Cost Done 0
+11/2/2022 2:11:09 PM : Hitung Ulang data ke 8 - 8
+11/2/2022 2:11:09 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:09 PM : GRN ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'GRN' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:09 PM : GRN ke n(1 - 1)
+11/2/2022 2:11:09 PM : Data Utama Done 14 *RI
+11/2/2022 2:11:09 PM : Data Detail Done 23
+11/2/2022 2:11:09 PM : Data PAY Done 0
+11/2/2022 2:11:09 PM : Data COST Done 0
+11/2/2022 2:11:09 PM : Hitung Ulang data ke 14 - 14
+11/2/2022 2:11:09 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:09 PM : RI ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'RI' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:09 PM : RI ke n(1 - 1)
+11/2/2022 2:11:09 PM : Data Utama Done 8 *PRT
+11/2/2022 2:11:09 PM : Data Detail Done 13
+11/2/2022 2:11:09 PM : Hitung Ulang data ke 8 - 8
+11/2/2022 2:11:09 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:09 PM : PRT ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'PRT' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:09 PM : PRT ke n(1 - 1)
+11/2/2022 2:11:09 PM : Data Utama Done 21 *SI
+11/2/2022 2:11:09 PM : Data Detail Done 31
+11/2/2022 2:11:09 PM : Data PAY Done 0
+11/2/2022 2:11:09 PM : Data MATERIAL Done 0
+11/2/2022 2:11:10 PM : Hitung Ulang data ke 21 - 21
+11/2/2022 2:11:10 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:10 PM : SI ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'SI' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:10 PM : SI ke n(1 - 1)
+11/2/2022 2:11:10 PM : Data Utama Done 8 *SR
+11/2/2022 2:11:10 PM : Data Detail Done 10
+11/2/2022 2:11:10 PM : Hitung Ulang data ke 8 - 8
+11/2/2022 2:11:10 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:10 PM : SR ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'SR' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:10 PM : SR ke n(1 - 1)
+11/2/2022 2:11:10 PM : Data Utama Done 19 *PD
+11/2/2022 2:11:10 PM : Data Detail IN Done 23
+11/2/2022 2:11:10 PM : Data Detail OUT Done 50
+11/2/2022 2:11:10 PM : Hitung Ulang data ke 19 - 19
+11/2/2022 2:11:10 PM : Proses Hitung Ulang Done ...
+11/2/2022 2:11:10 PM : PD ke n(0 - 1) : DELETE FROM M2_Transaction_Journal WHERE tsumber = 'PD' AND ttgl BETWEEN '2022-10-01' AND '2022-11-02';
+11/2/2022 2:11:10 PM : PD ke n(1 - 1)
+11/2/2022 2:11:10 PM : Info : Object reference not set to an instance of an object.
+11/2/2022 2:11:10 PM : Hitung Ulang Done ... 

@@ -1,0 +1,66 @@
+{
+  "suite": "sales_sql_readonly_generator_m5",
+  "generated_at": "20260330T054551Z",
+  "total": 10,
+  "failed": 3,
+  "passed": 7,
+  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/m5-regression-outputs-20260330T054551Z.json",
+  "results": [
+    {
+      "id": "m5_001_sq_header_list",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_002_so_item_detail",
+      "status": "FAILED",
+      "validation_errors": [
+        "missing required join/condition: m5_so.soid = m5_so_detail.idso"
+      ]
+    },
+    {
+      "id": "m5_003_sq_so_do_trace",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_004_si_open_invoice",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_005_ic_poly_si",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_006_pv_poly_sr",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_007_sie_poly_source",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_008_spa_points",
+      "status": "FAILED",
+      "validation_errors": [
+        "missing required join/condition: m5_spa.spaid = m5_spa_detail.idspa"
+      ]
+    },
+    {
+      "id": "m5_009_rp_si_join",
+      "status": "PASSED",
+      "validation_errors": []
+    },
+    {
+      "id": "m5_010_cl_realization_status",
+      "status": "FAILED",
+      "validation_errors": [
+        "missing required table: m5_cl"
+      ]
+    }
+  ]
+}

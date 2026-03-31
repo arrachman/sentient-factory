@@ -16,8 +16,13 @@ class ChatRequest(BaseModel):
     include_schema: bool = True
     include_samples: bool = False
     execute_read_only_query: bool = False
+    response_mode: Literal["single", "dashboard"] | None = None
     schema_key: str | None = None
     request_id: str | None = None
+    session_key: str | None = None
+    channel: str | None = None
+    ui_mode: str | None = None
+    model_profile: Literal["fast", "pro"] | None = None
 
 
 class ModelTestRequest(BaseModel):
@@ -32,6 +37,33 @@ class QueryResultColumn(BaseModel):
 class QueryResultSet(BaseModel):
     sql: str
     row_count: int
+    columns: list[QueryResultColumn] = Field(default_factory=list)
+    rows: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class GeneratedQuery(BaseModel):
+    id: str = Field(min_length=1)
+    name: str | None = None
+    purpose: str = Field(min_length=1)
+    query: str = Field(min_length=1)
+    result_kind: str | None = None
+
+
+class VisualizationSpec(BaseModel):
+    id: str = Field(min_length=1)
+    query_id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    chart_type: Literal["table", "bar", "line", "pie", "stacked_bar"]
+    x_axis: str | None = None
+    y_axis: list[str] = Field(default_factory=list)
+
+
+class PerQueryExecutionResult(BaseModel):
+    query_id: str
+    sql: str
+    success: bool
+    error_message: str | None = None
+    row_count: int = 0
     columns: list[QueryResultColumn] = Field(default_factory=list)
     rows: list[dict[str, Any]] = Field(default_factory=list)
 
@@ -77,6 +109,10 @@ class ChatResponseData(BaseModel):
     provider: str
     data_source: str | None = None
     semantic_schema: SemanticSchemaResponse | None = None
+    execution_status: Literal["SUCCESS", "PARTIAL_SUCCESS", "FAILED"] | None = None
+    generated_queries: list[GeneratedQuery] = Field(default_factory=list)
+    query_results: list[PerQueryExecutionResult] = Field(default_factory=list)
+    visualizations: list[VisualizationSpec] = Field(default_factory=list)
     query_result: QueryResultSet | None = None
     suggested_queries: list[SuggestedQuery] = Field(default_factory=list)
     workflow_mode: str | None = None

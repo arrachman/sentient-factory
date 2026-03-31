@@ -1,0 +1,1911 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<StiSerializer version="1.02" type="Net" application="StiReport">
+  <Dictionary Ref="1" type="Dictionary" isKey="true">
+    <BusinessObjects isList="true" count="0" />
+    <Databases isList="true" count="1">
+      <myerpplus Ref="2" type="Stimulsoft.Report.Dictionary.StiOdbcDatabase" isKey="true">
+        <Alias>myerpplus</Alias>
+        <ConnectionString>dsn=myerpplus_fatkur_product</ConnectionString>
+        <Name>myerpplus</Name>
+      </myerpplus>
+    </Databases>
+    <DataSources isList="true" count="6">
+      <DS1 Ref="3" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>DS1</Alias>
+        <Columns isList="true" count="30">
+          <value>terbilang,System.String</value>
+          <value>pototaltransaksi,System.Double</value>
+          <value>potermin,System.String</value>
+          <value>potgljatuhtempo,System.DateTime</value>
+          <value>pohargatermasukpajak,System.Int16</value>
+          <value>caption,System.String</value>
+          <value>matauang,System.String</value>
+          <value>k1alamat1,System.String</value>
+          <value>k1notelp1,System.String</value>
+          <value>po1alamat1,System.String</value>
+          <value>alamatkirim,System.String</value>
+          <value>kkontakperson,System.String</value>
+          <value>posupplier,System.String</value>
+          <value>pomatauang,System.String</value>
+          <value>pokurs,System.Double</value>
+          <value>potgl,System.DateTime</value>
+          <value>ponotransaksi,System.String</value>
+          <value>postatus,System.String</value>
+          <value>pouraian,System.String</value>
+          <value>pocatatan,System.String</value>
+          <value>bkode,System.String</value>
+          <value>namabarang,System.String</value>
+          <value>jml,System.Double</value>
+          <value>satuan,System.String</value>
+          <value>diskon,System.String</value>
+          <value>harga,System.Double</value>
+          <value>total,System.Double</value>
+          <value>pojmldiskon,System.Double</value>
+          <value>pototalpajak1detail,System.Double</value>
+          <value>pobiayalain,System.Double</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>DS1</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	f_nominal(po.pototaltransaksi, po.pomatauang) AS terbilang , 
+	po.pototaltransaksi , 
+	po.potermin , po.potgljatuhtempo , 
+
+	pohargatermasukpajak, 
+	CASE pohargatermasukpajak
+	WHEN 0 THEN "Belum Termasuk Pajak"
+	WHEN 1 THEN "Sudah Termasuk Pajak"
+END AS "caption" , 
+pod.matauang , 
+
+ksup.k1alamat1 , 
+ksup.k1notelp1 , 
+po.po1alamat1 , 
+po.po2alamat1 AS alamatkirim , 
+ksup.kkontakperson , 
+
+ksup.knama AS posupplier, 
+po.pomatauang, 
+po.pokurs, 
+po.potgl, 
+po.ponotransaksi, 
+st.nama AS postatus, 
+po.pouraian , 
+po.pocatatan , 
+
+b.bkode, 
+pod.namabarang , 
+pod.jml, 
+pod.satuan, 
+pod.diskon, 
+pod.harga, 
+((pod.jml * pod.harga) - pod.jmldiskon) as total , 
+
+po.pojmldiskon, 
+po.pototalpajak1detail, 
+po.pobiayalain
+
+FROM m4_po po
+JOIN m4_po_detail pod ON po.poid = pod.idpo
+JOIN m1_item b ON pod.idbarang = b.bid
+JOIN m1_contact ksup ON po.posupplier = ksup.kid
+JOIN m0_status st ON po.postatus = st.kode
+
+ORDER BY po.potgl, po.ponotransaksi, pod.urutan</SqlCommand>
+      </DS1>
+      <formatTgl Ref="4" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatTgl</Alias>
+        <Columns isList="true" count="2">
+          <value>snilai,System.String</value>
+          <value>format,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatTgl</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+
+	snilai , CONCAT('{0:',(replace(
+	REPLACE(
+	REPLACE(snilai,'D','d'),'m','M'),'Y','y') ) ,'}')
+	as format
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatTanggalReport"</SqlCommand>
+      </formatTgl>
+      <formatQty Ref="5" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatQty</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatQty</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatJmlReport"</SqlCommand>
+      </formatQty>
+      <formatMinus Ref="6" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatMinus</Alias>
+        <Columns isList="true" count="4">
+          <value>skode,System.String</value>
+          <value>snilai,System.String</value>
+          <value>kiri,System.String</value>
+          <value>kanan,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatMinus</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , snilai , 
+	SUBSTR(snilai FROM 1 FOR 1) AS kiri , 
+	SUBSTR(snilai FROM 2 FOR 1) AS kanan 
+	
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatMinusReport"</SqlCommand>
+      </formatMinus>
+      <formatNominal Ref="7" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>formatNominal</Alias>
+        <Columns isList="true" count="6">
+          <value>skode,System.String</value>
+          <value>digitGrup,System.String</value>
+          <value>pemisahDesimal,System.String</value>
+          <value>digitDesimal,System.Decimal</value>
+          <value>snilai,System.String</value>
+          <value>fromat,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>formatNominal</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 1), '|', -1) as digitGrup,
+	SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 2), '|', -1) as pemisahDesimal,
+	CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED) as digitDesimal,
+	snilai , 
+	CONCAT('{0:N',(CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(snilai, '|', 3), '|', -1) as UNSIGNED)),'}') AS fromat
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "FormatNominalReport"</SqlCommand>
+      </formatNominal>
+      <catatan Ref="8" type="Stimulsoft.Report.Dictionary.StiOdbcSource" isKey="true">
+        <Alias>catatan</Alias>
+        <Columns isList="true" count="2">
+          <value>skode,System.String</value>
+          <value>snilai,System.String</value>
+        </Columns>
+        <CommandTimeout>30</CommandTimeout>
+        <Dictionary isRef="1" />
+        <Name>catatan</Name>
+        <NameInSource>myerpplus</NameInSource>
+        <Parameters isList="true" count="0" />
+        <SqlCommand>SELECT
+	skode , 
+	snilai 
+
+	FROM m0_setting 
+
+	WHERE smodule = 0 AND sgrup = "company" AND skode = "catatan"</SqlCommand>
+      </catatan>
+    </DataSources>
+    <Relations isList="true" count="0" />
+    <Report isRef="0" />
+    <Variables isList="true" count="0" />
+  </Dictionary>
+  <EngineVersion>EngineV2</EngineVersion>
+  <GlobalizationStrings isList="true" count="0" />
+  <MetaTags isList="true" count="0" />
+  <Pages isList="true" count="1">
+    <Page1 Ref="9" type="Page" isKey="true">
+      <Border>None;Black;2;Solid;False;4;Black</Border>
+      <Brush>Transparent</Brush>
+      <Components isList="true" count="12">
+        <PageHeaderBand1 Ref="10" type="PageHeaderBand" isKey="true">
+          <Border>All;Black;1;Solid;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,0.2,7.8,2.07</ClientRectangle>
+          <Components isList="true" count="19">
+            <RTITLE Ref="11" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>3.67,0,2.29,0.4</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,12,Bold</Font>
+              <Guid>5443e5949d8b46afb556ee867c4d4334</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>RTITLE</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>PURCHASE ORDER (PO)</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </RTITLE>
+            <Image1 Ref="12" type="Image" isKey="true">
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.05,0.04,2.52,1.13</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Image>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</Image>
+              <Name>Image1</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+            </Image1>
+            <Text5 Ref="13" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>5.95,0,1.85,0.4</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,12,Bold</Font>
+              <Guid>abbe9088602c4f05a2cd9bfd5c7c687c</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text5</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>{DS1.ponotransaksi}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>DataColumn</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text5>
+            <Text8 Ref="14" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>3.67,0.4,4.13,0.29</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,10</Font>
+              <Guid>c8ba27c7ff0e44f4aed17ce9da79ee45</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text8</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Nomor : {DS1.pouraian}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text8>
+            <Text24 Ref="15" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>3.67,0.69,4.13,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>d2c3e3788f73efc1363483e66334f074</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text24</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>{Format(formatTgl.format,DS1.potgl)}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="16" type="DateFormat" isKey="true">
+                <StringFormat>dd/MM/yyyy</StringFormat>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text24>
+            <Text2 Ref="17" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>3.67,0.89,4.13,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text2</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Kepada : </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text2>
+            <Text9 Ref="18" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.24,1.08,3.56,0.65</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>0b2eb6afd9544f28a8d92ae97ca6fd7f</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text9</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>{DS1.posupplier}
+{DS1.po1alamat1}
+{DS1.k1notelp1}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text9>
+            <LBLKODEBRG Ref="19" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0.31,1.77,1.49,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>88fe95845cf071b270bc83e7233622c3</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLKODEBRG</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Kode Barang</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLKODEBRG>
+            <LBLNAMABRG Ref="20" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>1.8,1.77,2,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>8c1a394f8ae9b2aaa14383e72d594ac6</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLNAMABRG</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Nama Barang</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLNAMABRG>
+            <LBLHARGA Ref="21" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>4.87,1.77,1.02,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>7c17d6cc2b40a048d2fb83e73fae6c42</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLHARGA</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Harga (Rp)</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLHARGA>
+            <LBLTOTAL Ref="22" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.9,1.77,1.9,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>b16be838d85e69e41d2883e74acaf36b</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLTOTAL</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Jumlah Harga (Rp)</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLTOTAL>
+            <LBLJUMLAH Ref="23" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>3.8,1.77,1.07,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>8ab67cdd63614282ad90dce8c2a46217</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLJUMLAH</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Jumlah</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLJUMLAH>
+            <LBLNO Ref="24" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0,1.77,0.31,0.3</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>222046e4560e5e1d12e083e71ce1ce70</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLNO</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>No</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLNO>
+            <Text3 Ref="25" type="Text" isKey="true">
+              <Border>None;Black;1;Dot;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <ClientRectangle>0.06,1.09,3.48,0.59</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,11</Font>
+              <Guid>6a53a390e1244df796d3e11b72095c8c</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text3</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <Text>Jl. Pahlawan Seribu Ruko BSD Blok RK VII No. 14 
+Kel. Lengkong Wetan Kec. Serpong - Tangsel 
+Telp. 021.5371033 Fax : 53151070</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text3>
+            <HorizontalLinePrimitive1 Ref="26" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>0,1.77,7.8,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="27" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Name>HorizontalLinePrimitive1</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <StartCap Ref="28" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive1>
+            <StartPointPrimitive3 Ref="29" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>3.66,0,0,0</ClientRectangle>
+              <Name>StartPointPrimitive3</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <ReferenceToGuid>62828a9542f94d77baaa847467912e39</ReferenceToGuid>
+            </StartPointPrimitive3>
+            <EndPointPrimitive3 Ref="30" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>3.66,1.77,0,0</ClientRectangle>
+              <Name>EndPointPrimitive3</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <ReferenceToGuid>62828a9542f94d77baaa847467912e39</ReferenceToGuid>
+            </EndPointPrimitive3>
+            <StartPointPrimitive10 Ref="31" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>5.95,0.01,0,0</ClientRectangle>
+              <Name>StartPointPrimitive10</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <ReferenceToGuid>491bd0f1f7bf46b9ae49dd1ef9fc8de0</ReferenceToGuid>
+            </StartPointPrimitive10>
+            <EndPointPrimitive10 Ref="32" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>5.95,0.4,0,0</ClientRectangle>
+              <Name>EndPointPrimitive10</Name>
+              <Page isRef="9" />
+              <Parent isRef="10" />
+              <ReferenceToGuid>491bd0f1f7bf46b9ae49dd1ef9fc8de0</ReferenceToGuid>
+            </EndPointPrimitive10>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Guid>f64dbabf01784037906d2aa57cdcf999</Guid>
+          <Name>PageHeaderBand1</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+        </PageHeaderBand1>
+        <Text40 Ref="33" type="Text" isKey="true">
+          <Border>None;Black;1;Solid;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>8.8,3.07,1,0.2</ClientRectangle>
+          <Conditions isList="true" count="0" />
+          <Font>Lao UI,9</Font>
+          <HorAlignment>Right</HorAlignment>
+          <Margins>0,0,0,0</Margins>
+          <Name>Text40</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <Text>{formatNominal.digitDesimal}</Text>
+          <TextBrush>[0:0:0]</TextBrush>
+          <Type>DataColumn</Type>
+        </Text40>
+        <GroupHeaderBand1 Ref="34" type="GroupHeaderBand" isKey="true">
+          <Brush>Transparent</Brush>
+          <CanBreak>True</CanBreak>
+          <ClientRectangle>0,2.67,7.8,0</ClientRectangle>
+          <Components isList="true" count="0" />
+          <Condition>{DS1.ponotransaksi}</Condition>
+          <Conditions isList="true" count="0" />
+          <KeepGroupTogether>True</KeepGroupTogether>
+          <Name>GroupHeaderBand1</Name>
+          <NewPageBefore>True</NewPageBefore>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <PrintOnAllPages>True</PrintOnAllPages>
+          <ResetPageNumber>True</ResetPageNumber>
+          <SortDirection>None</SortDirection>
+        </GroupHeaderBand1>
+        <DataBand1 Ref="35" type="DataBand" isKey="true">
+          <Border>Left, Right, Bottom;Black;1;Solid;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <BusinessObjectGuid isNull="true" />
+          <CanBreak>True</CanBreak>
+          <CanShrink>True</CanShrink>
+          <ClientRectangle>0,3.07,7.8,0.2</ClientRectangle>
+          <Components isList="true" count="9">
+            <Text59 Ref="36" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0.31,0,1.49,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>df6c18fc71a0ac1c704d3ac4890ed861</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text59</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.bkode}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text59>
+            <Text45 Ref="37" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>1.8,0,2,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>a65a18502b97df5795563ac4890eb1c4</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text45</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.namabarang}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text45>
+            <Text54 Ref="38" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>3.8,0,0.56,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>763cd06028cc44f03c643ac4890ec114</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text54</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{IIF((DS1.jml) &lt; 0,formatMinus.kiri,"")}{IIF((DS1.jml) &lt; 0,(Replace(
+Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.jml))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal)
+,"-","")), Replace(
+Replace(
+Replace(
+Replace(
+(Format(formatQty.fromat, DS1.jml))
+,",","RB")
+,".","DS")
+,"RB",formatQty.digitGrup)
+,"DS",formatQty.pemisahDesimal))
+}{IIF((DS1.jml) &lt; 0 ,formatMinus.kanan,"")}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text54>
+            <Text55 Ref="39" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.12,0,0.77,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>7abec93cd451d3cd1d353ac4890ebda0</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text55</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.harga}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextFormat Ref="40" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text55>
+            <Text57 Ref="41" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6.27,0,1.53,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>fcd6c82428e63296d09f3ac4890ec0cf</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text57</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.total}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextFormat Ref="42" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text57>
+            <Text58 Ref="43" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0,0,0.31,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>f41cbb8e525a57d4c06e3ac4890ea5d9</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text58</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{Line}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text58>
+            <Text1 Ref="44" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>4.87,0,0.25,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>814196ffc11f443391623361deed5bf6</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text1</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.matauang}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text1>
+            <Text6 Ref="45" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.9,0,0.37,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>7f0ca2f795d949489b005d0b58011a20</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text6</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.matauang}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text6>
+            <Text7 Ref="46" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>4.36,0,0.51,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>0143839ae05847ab94a7f2b61560a80b</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text7</Name>
+              <Page isRef="9" />
+              <Parent isRef="35" />
+              <Text>{DS1.satuan}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text7>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <DataSourceName>DS1</DataSourceName>
+          <Filters isList="true" count="0" />
+          <Name>DataBand1</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <Sort isList="true" count="0" />
+        </DataBand1>
+        <EmptyBand1 Ref="47" type="Stimulsoft.Report.Components.StiEmptyBand" isKey="true">
+          <Border>Left, Right, Bottom;Black;1;Solid;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,3.67,7.8,0.2</ClientRectangle>
+          <Components isList="true" count="9">
+            <Text13 Ref="48" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0.31,0,1.49,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>5fff48bbd308496490ae2c651ba23922</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text13</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text13>
+            <Text14 Ref="49" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>1.8,0,2,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>fbcc24e231654bf0b595f615c34eb6ea</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text14</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text14>
+            <Text15 Ref="50" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>3.8,0,0.56,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>0bdc796a70d4460a8a389d91396adfda</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text15</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text15>
+            <Text16 Ref="51" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.12,0,0.77,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>8393f8b947a3444fb058fa7168ea057e</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text16</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text16>
+            <Text17 Ref="52" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6.27,0,1.53,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>55ce2994669347818bc488f464bd3687</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text17</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text17>
+            <Text18 Ref="53" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>0,0,0.31,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>b55c3fb70f134061afdd839f44dab095</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text18</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text18>
+            <Text20 Ref="54" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>4.87,0,0.25,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>5488fd5401314b67813b312ceac66545</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text20</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text20>
+            <Text21 Ref="55" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>5.9,0,0.37,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>683e6e8aba0843bdbef99ad74ca40b8b</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text21</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text21>
+            <Text22 Ref="56" type="Text" isKey="true">
+              <Border>Right;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>4.36,0,0.51,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>38b18f9a56344b70b9ea5fcf7f7d5819</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text22</Name>
+              <Page isRef="9" />
+              <Parent isRef="47" />
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text22>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Name>EmptyBand1</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+        </EmptyBand1>
+        <GroupFooterBand1 Ref="57" type="GroupFooterBand" isKey="true">
+          <Border>Left, Right;Black;1;Solid;False;4;Black</Border>
+          <Brush>Transparent</Brush>
+          <ClientRectangle>0,4.27,7.8,3.63</ClientRectangle>
+          <Components isList="true" count="49">
+            <LBLADMINISTRASI Ref="58" type="Text" isKey="true">
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,1.04,5.03,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>30513e1e835c45babd1495bb887a4e31</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLADMINISTRASI</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Syarat - syarat Pesanan : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLADMINISTRASI>
+            <LBLSUPERVISOR Ref="59" type="Text" isKey="true">
+              <Border>Top, Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,1.24,3.9,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>cac910f99e544ef7b40671344a092a84</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLSUPERVISOR</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Penyerahan : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLSUPERVISOR>
+            <LBLDIREKSI Ref="60" type="Text" isKey="true">
+              <Border>Top, Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,1.24,3.9,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>79a3322a58a249a4aa74d3442602507f</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLDIREKSI</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Termin Pembayaran : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </LBLDIREKSI>
+            <LBLTOTAL1 Ref="61" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.87,0,1.64,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>f6744f4b29ba4b1e827634a3b3c46600</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLTOTAL1</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Total </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLTOTAL1>
+            <LBLDISKON Ref="62" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.87,0.2,1.64,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>76487c374f50458091c7bf1e4d51016e</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLDISKON</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Diskon</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLDISKON>
+            <LBLPAJAK Ref="63" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.87,0.4,1.64,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>cb72fd84f3874065a121d4f0c49f7306</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLPAJAK</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Pajak</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLPAJAK>
+            <LBLBIAYALAIN Ref="64" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.87,0.6,1.64,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>a4b9ea494ffd4cc49645df62c3f15ec3</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLBIAYALAIN</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Biaya Lain</Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLBIAYALAIN>
+            <LBLTOTALTRANSAKSI Ref="65" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>4.87,0.79,1.64,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>df2de65a287641a0bedbdf7124089955</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>LBLTOTALTRANSAKSI</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Total Transaksi </Text>
+              <TextBrush>Black</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </LBLTOTALTRANSAKSI>
+            <Text39 Ref="66" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.76,0,1.04,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>062ad0426e1447e4bcc3b8073abdd642</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text39</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{Sum(DS1.total)}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="67" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text39>
+            <Text41 Ref="68" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.51,0.4,1.29,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>5557ab8edd454c88b531caa9b268bf00</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text41</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pototalpajak1detail}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="69" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text41>
+            <Text43 Ref="70" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.51,0.6,1.29,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>78c8fc8a530f4832a2aeb38fcfd3d558</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text43</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pobiayalain}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="71" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text43>
+            <Text46 Ref="72" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.51,0.2,1.29,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>500620a115d147558ef640bda7cbe1b3</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text46</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pojmldiskon}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="73" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>Expression</Type>
+            </Text46>
+            <Text4 Ref="74" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <CanShrink>True</CanShrink>
+              <ClientRectangle>6.77,0.79,1.03,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>9d29e9b711964b769312eb807d3f4672</Guid>
+              <HorAlignment>Right</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text4</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pototaltransaksi}</Text>
+              <TextBrush>Black</TextBrush>
+              <TextFormat Ref="75" type="CurrencyFormat" isKey="true">
+                <DecimalDigits>0</DecimalDigits>
+                <DecimalSeparator>,</DecimalSeparator>
+                <GroupSeparator>.</GroupSeparator>
+                <NegativePattern>0</NegativePattern>
+                <PositivePattern>0</PositivePattern>
+                <Symbol />
+                <UseLocalSetting>False</UseLocalSetting>
+              </TextFormat>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <Type>DataColumn</Type>
+            </Text4>
+            <Text11 Ref="76" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6.51,0,0.26,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>d594adcbca39449b92a13593c37ee21e</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text11</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pomatauang}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text11>
+            <Text12 Ref="77" type="Text" isKey="true">
+              <Border>None;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanGrow>True</CanGrow>
+              <ClientRectangle>6.51,0.79,0.26,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <GrowToHeight>True</GrowToHeight>
+              <Guid>c7588f4b0fbc4237a6d6a49afb9af794</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text12</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pomatauang}</Text>
+              <TextBrush>[0:0:0]</TextBrush>
+              <TextOptions>HotkeyPrefix=None, LineLimit=False, RightToLeft=False, Trimming=None, WordWrap=True, Angle=0, FirstTabOffset=40, DistanceBetweenTabs=20,</TextOptions>
+              <TextQuality>Wysiwyg</TextQuality>
+              <Type>DataColumn</Type>
+            </Text12>
+            <Text23 Ref="78" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,1.44,3.9,0.47</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>da15407fae4e4418bfae3c236876d80e</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text23</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.pocatatan}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text23>
+            <Text25 Ref="79" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,1.44,3.9,0.47</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>1633244832cc4cd6b0f6da03cab6dc39</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text25</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.potermin}({Format(formatTgl.format,DS1.potgljatuhtempo)})</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Bottom</VertAlignment>
+            </Text25>
+            <Text26 Ref="80" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,1.91,3.9,0.19</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>27bb974c16084766be273b013117c759</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text26</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Lain - Lain : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text26>
+            <Text27 Ref="81" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,1.91,3.9,0.19</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>6dc9ee9c9a2a4b76b45b1ec3e3ac6363</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text27</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Tempat Penyerahan / Pengiriman</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text27>
+            <Text28 Ref="82" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,2.1,3.9,0.51</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>7c62670e90f3435d96a9b71502d2fbfc</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text28</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{catatan.snilai}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>DataColumn</Type>
+            </Text28>
+            <Text29 Ref="83" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,2.1,3.9,0.51</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>1fa2223e916146f38601c004a432460d</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text29</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.alamatkirim}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text29>
+            <Text30 Ref="84" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,2.61,3.9,0.19</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>3a97659a10684e0da21eefab89335cf3</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text30</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Diterima Oleh  : </Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text30>
+            <Text31 Ref="85" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,2.8,3.9,0.61</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>1006a18ce3a84792b8007b206703f293</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text31</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.posupplier}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text31>
+            <Text32 Ref="86" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,2.61,1.96,0.19</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>c2f4f1fcdbc94e48a490a89e5be55cf3</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text32</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Dibuat Oleh</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text32>
+            <Text33 Ref="87" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,2.8,1.96,0.61</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>1a92a0a27cc34854bc9d328ce12036ed</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text33</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text33>
+            <Text34 Ref="88" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>5.85,2.61,1.95,0.19</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>ef3f8c0d1d5d40b1bfafaa3a5e15bd8d</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text34</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Disetujui Oleh</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text34>
+            <Text35 Ref="89" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>5.85,2.8,1.95,0.61</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9</Font>
+              <Guid>d9e4f699940047c1aaf6a2f3568d2ea4</Guid>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text35</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+            </Text35>
+            <Text36 Ref="90" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>0,3.42,3.9,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>b31f89e0849b40c18fc18569d5b01809</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text36</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>{DS1.kkontakperson}</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>DataColumn</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text36>
+            <Text37 Ref="91" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>3.9,3.42,1.96,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>c3669969d3ad46748e982bc80d598450</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text37</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Mgr Pembelian</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text37>
+            <Text38 Ref="92" type="Text" isKey="true">
+              <Border>Bottom;Black;1;Solid;False;4;Black</Border>
+              <Brush>Transparent</Brush>
+              <CanBreak>True</CanBreak>
+              <ClientRectangle>5.85,3.42,1.95,0.2</ClientRectangle>
+              <Conditions isList="true" count="0" />
+              <Font>Lao UI,9,Bold</Font>
+              <Guid>68f3238d497a423aab9cb3697b363aba</Guid>
+              <HorAlignment>Center</HorAlignment>
+              <Margins>0,0,0,0</Margins>
+              <Name>Text38</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <Text>Fandy</Text>
+              <TextBrush>Black</TextBrush>
+              <Type>Expression</Type>
+              <VertAlignment>Center</VertAlignment>
+            </Text38>
+            <StartPointPrimitive5 Ref="93" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>2.52,0.71,0,0</ClientRectangle>
+              <Name>StartPointPrimitive5</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>5463fc6562fa4f0fa424e192ec233fa8</ReferenceToGuid>
+            </StartPointPrimitive5>
+            <EndPointPrimitive5 Ref="94" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>5.97,1.25,0,0</ClientRectangle>
+              <Name>EndPointPrimitive5</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>5463fc6562fa4f0fa424e192ec233fa8</ReferenceToGuid>
+            </EndPointPrimitive5>
+            <StartPointPrimitive6 Ref="95" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>3.68,0.71,0,0</ClientRectangle>
+              <Name>StartPointPrimitive6</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>fbc48fc36c5540038ae58a04e0b8ff87</ReferenceToGuid>
+            </StartPointPrimitive6>
+            <EndPointPrimitive6 Ref="96" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>3.68,1.25,0,0</ClientRectangle>
+              <Name>EndPointPrimitive6</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>fbc48fc36c5540038ae58a04e0b8ff87</ReferenceToGuid>
+            </EndPointPrimitive6>
+            <StartPointPrimitive7 Ref="97" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>4.86,0.71,0,0</ClientRectangle>
+              <Name>StartPointPrimitive7</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>f8c246b2247b4385a4d55eb408dc42e5</ReferenceToGuid>
+            </StartPointPrimitive7>
+            <EndPointPrimitive7 Ref="98" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>4.86,1.25,0,0</ClientRectangle>
+              <Name>EndPointPrimitive7</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>f8c246b2247b4385a4d55eb408dc42e5</ReferenceToGuid>
+            </EndPointPrimitive7>
+            <StartPointPrimitive1 Ref="99" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>4.87,0,0,0</ClientRectangle>
+              <Name>StartPointPrimitive1</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>7ed57d876ae642ebad3c23a6d5e168f5</ReferenceToGuid>
+            </StartPointPrimitive1>
+            <EndPointPrimitive1 Ref="100" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>4.87,0.98,0,0</ClientRectangle>
+              <Name>EndPointPrimitive1</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>7ed57d876ae642ebad3c23a6d5e168f5</ReferenceToGuid>
+            </EndPointPrimitive1>
+            <StartPointPrimitive2 Ref="101" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>6.51,0,0,0</ClientRectangle>
+              <Name>StartPointPrimitive2</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>7edd8c5048a84f7e92c28106171ba52a</ReferenceToGuid>
+            </StartPointPrimitive2>
+            <EndPointPrimitive2 Ref="102" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>6.51,0.99,0,0</ClientRectangle>
+              <Name>EndPointPrimitive2</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>7edd8c5048a84f7e92c28106171ba52a</ReferenceToGuid>
+            </EndPointPrimitive2>
+            <HorizontalLinePrimitive3 Ref="103" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>4.88,0.99,2.92,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="104" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>38a7f547d86f4372a83b00199f3c4024</Guid>
+              <Name>HorizontalLinePrimitive3</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <StartCap Ref="105" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive3>
+            <HorizontalLinePrimitive4 Ref="106" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>4.88,0.79,2.92,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="107" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>889fbc111f3c4db7bc951d069997a041</Guid>
+              <Name>HorizontalLinePrimitive4</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <StartCap Ref="108" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive4>
+            <HorizontalLinePrimitive5 Ref="109" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>4.88,0.6,2.92,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="110" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>4cbf9fbfd20e467a87178d161d8341b2</Guid>
+              <Name>HorizontalLinePrimitive5</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <StartCap Ref="111" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive5>
+            <HorizontalLinePrimitive6 Ref="112" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>4.88,0.4,2.92,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="113" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>fea2ec03914b4288b553cf9313a6d42f</Guid>
+              <Name>HorizontalLinePrimitive6</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <StartCap Ref="114" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive6>
+            <HorizontalLinePrimitive7 Ref="115" type="HorizontalLinePrimitive" isKey="true">
+              <ClientRectangle>4.88,0.2,2.92,0.01</ClientRectangle>
+              <Color>Black</Color>
+              <EndCap Ref="116" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </EndCap>
+              <Guid>b4010c8e1c1e43f0984a88682c2b2aa9</Guid>
+              <Name>HorizontalLinePrimitive7</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <StartCap Ref="117" type="Cap" isKey="true">
+                <Color>Black</Color>
+              </StartCap>
+            </HorizontalLinePrimitive7>
+            <StartPointPrimitive8 Ref="118" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>3.9,1.24,0,0</ClientRectangle>
+              <Name>StartPointPrimitive8</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>f82db458f4594f6aba5d5aff32f9ba2f</ReferenceToGuid>
+            </StartPointPrimitive8>
+            <EndPointPrimitive8 Ref="119" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>3.9,3.62,0,0</ClientRectangle>
+              <Name>EndPointPrimitive8</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>f82db458f4594f6aba5d5aff32f9ba2f</ReferenceToGuid>
+            </EndPointPrimitive8>
+            <StartPointPrimitive9 Ref="120" type="Stimulsoft.Report.Components.StiStartPointPrimitive" isKey="true">
+              <ClientRectangle>5.86,2.61,0,0</ClientRectangle>
+              <Name>StartPointPrimitive9</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>b155f6a62c504fe2bcc223840e963ae6</ReferenceToGuid>
+            </StartPointPrimitive9>
+            <EndPointPrimitive9 Ref="121" type="Stimulsoft.Report.Components.StiEndPointPrimitive" isKey="true">
+              <ClientRectangle>5.86,3.62,0,0</ClientRectangle>
+              <Name>EndPointPrimitive9</Name>
+              <Page isRef="9" />
+              <Parent isRef="57" />
+              <ReferenceToGuid>b155f6a62c504fe2bcc223840e963ae6</ReferenceToGuid>
+            </EndPointPrimitive9>
+          </Components>
+          <Conditions isList="true" count="0" />
+          <Guid>5da95e23b7684ab8824e111551865cfc</Guid>
+          <Name>GroupFooterBand1</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <PrintAtBottom>True</PrintAtBottom>
+        </GroupFooterBand1>
+        <VerticalLinePrimitive1 Ref="122" type="VerticalLinePrimitive" isKey="true">
+          <ClientRectangle>4.87,4.27,0.01,0.98</ClientRectangle>
+          <Color>Black</Color>
+          <EndCap Ref="123" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </EndCap>
+          <Guid>7ed57d876ae642ebad3c23a6d5e168f5</Guid>
+          <Name>VerticalLinePrimitive1</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <StartCap Ref="124" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </StartCap>
+        </VerticalLinePrimitive1>
+        <VerticalLinePrimitive2 Ref="125" type="VerticalLinePrimitive" isKey="true">
+          <ClientRectangle>6.51,4.27,0.01,0.99</ClientRectangle>
+          <Color>Black</Color>
+          <EndCap Ref="126" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </EndCap>
+          <Guid>7edd8c5048a84f7e92c28106171ba52a</Guid>
+          <Name>VerticalLinePrimitive2</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <StartCap Ref="127" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </StartCap>
+        </VerticalLinePrimitive2>
+        <VerticalLinePrimitive5 Ref="128" type="VerticalLinePrimitive" isKey="true">
+          <ClientRectangle>3.9,5.51,0.01,2.38</ClientRectangle>
+          <Color>Black</Color>
+          <EndCap Ref="129" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </EndCap>
+          <Guid>f82db458f4594f6aba5d5aff32f9ba2f</Guid>
+          <Name>VerticalLinePrimitive5</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <StartCap Ref="130" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </StartCap>
+        </VerticalLinePrimitive5>
+        <VerticalLinePrimitive6 Ref="131" type="VerticalLinePrimitive" isKey="true">
+          <ClientRectangle>5.86,6.88,0.01,1.01</ClientRectangle>
+          <Color>Black</Color>
+          <EndCap Ref="132" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </EndCap>
+          <Guid>b155f6a62c504fe2bcc223840e963ae6</Guid>
+          <Name>VerticalLinePrimitive6</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <StartCap Ref="133" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </StartCap>
+        </VerticalLinePrimitive6>
+        <VerticalLinePrimitive4 Ref="134" type="VerticalLinePrimitive" isKey="true">
+          <ClientRectangle>3.66,0.2,0.01,1.77</ClientRectangle>
+          <Color>Black</Color>
+          <EndCap Ref="135" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </EndCap>
+          <Guid>62828a9542f94d77baaa847467912e39</Guid>
+          <Name>VerticalLinePrimitive4</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <StartCap Ref="136" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </StartCap>
+        </VerticalLinePrimitive4>
+        <VerticalLinePrimitive7 Ref="137" type="VerticalLinePrimitive" isKey="true">
+          <ClientRectangle>5.95,0.21,0.01,0.39</ClientRectangle>
+          <Color>Black</Color>
+          <EndCap Ref="138" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </EndCap>
+          <Guid>491bd0f1f7bf46b9ae49dd1ef9fc8de0</Guid>
+          <Name>VerticalLinePrimitive7</Name>
+          <Page isRef="9" />
+          <Parent isRef="9" />
+          <StartCap Ref="139" type="Cap" isKey="true">
+            <Color>Black</Color>
+          </StartCap>
+        </VerticalLinePrimitive7>
+      </Components>
+      <Conditions isList="true" count="0" />
+      <Guid>739e1daa9d90e5b31d8083d9c9cc09ce</Guid>
+      <Margins>0.3,0.1,0.2,0.15</Margins>
+      <Name>Page1</Name>
+      <PageHeight>11</PageHeight>
+      <PageWidth>8.2</PageWidth>
+      <Report isRef="0" />
+      <Watermark Ref="140" type="Stimulsoft.Report.Components.StiWatermark" isKey="true">
+        <Font>Arial,100</Font>
+        <TextBrush>[50:0:0:0]</TextBrush>
+      </Watermark>
+    </Page1>
+  </Pages>
+  <PrinterSettings Ref="141" type="Stimulsoft.Report.Print.StiPrinterSettings" isKey="true" />
+  <ReferencedAssemblies isList="true" count="8">
+    <value>System.Dll</value>
+    <value>System.Drawing.Dll</value>
+    <value>System.Windows.Forms.Dll</value>
+    <value>System.Data.Dll</value>
+    <value>System.Xml.Dll</value>
+    <value>Stimulsoft.Controls.Dll</value>
+    <value>Stimulsoft.Base.Dll</value>
+    <value>Stimulsoft.Report.Dll</value>
+  </ReferencedAssemblies>
+  <ReportAlias>Report</ReportAlias>
+  <ReportChanged>8/21/2015 4:11:10 AM</ReportChanged>
+  <ReportCreated>3/19/2013 11:12:01 AM</ReportCreated>
+  <ReportFile>\\192.168.1.36\myerpplus\App_induk\report\mrt\m4\PurchaseOrderDetail3_medipro.mrt</ReportFile>
+  <ReportGuid>2dd84e7df04a43a9a08dc50975d8125a</ReportGuid>
+  <ReportName>Report</ReportName>
+  <ReportUnit>Inches</ReportUnit>
+  <ReportVersion>2012.2.1304</ReportVersion>
+  <Script>using System;
+using System.Drawing;
+using System.Windows.Forms;
+using System.Data;
+using Stimulsoft.Controls;
+using Stimulsoft.Base.Drawing;
+using Stimulsoft.Report;
+using Stimulsoft.Report.Dialogs;
+using Stimulsoft.Report.Components;
+
+namespace Reports
+{
+    public class Report : Stimulsoft.Report.StiReport
+    {
+        public Report()        {
+            this.InitializeComponent();
+        }
+
+        #region StiReport Designer generated code - do not modify
+		#endregion StiReport Designer generated code - do not modify
+    }
+}</Script>
+  <ScriptLanguage>CSharp</ScriptLanguage>
+  <Styles isList="true" count="1">
+    <Style1 Ref="142" type="Stimulsoft.Report.StiStyle" isKey="true">
+      <Brush>Transparent</Brush>
+      <Conditions isList="true" count="0" />
+      <Description />
+      <Font>Lao UI,9,Regular,Point,False,0</Font>
+      <Name>Style1</Name>
+      <TextBrush>Black</TextBrush>
+    </Style1>
+  </Styles>
+</StiSerializer>
