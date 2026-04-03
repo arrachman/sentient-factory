@@ -196,9 +196,15 @@ services:
     environment:
       NODE_ENV: development
       CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
     volumes:
       - ../docs:/app
       - docs_node_modules:/app/node_modules
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3205/docs/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
     command: >
       sh -c "npm install &&
       if [ \"$${NODE_ENV}\" = \"production\" ]; then

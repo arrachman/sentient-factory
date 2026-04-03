@@ -58,7 +58,7 @@ tickets/
 | M0007     | Case Studies Framework            | 📝 Todo | Medium   | 2.5 days | Content Team         |
 | M0008     | Analytics & Reporting             | 📝 Todo | Low      | 1.5 days | Analytics Team       |
 
-## 🔄 Workflow Process
+## 🔄 Workflow Process {#workflow-process}
 
 ### 1. Ticket Assignment
 
@@ -87,7 +87,7 @@ tickets/
 - Archive completed work
 - Update team metrics
 
-## 🛠️ Tools & Resources
+## 🛠️ Tools & Resources {#tools--resources}
 
 ### Project Management
 
@@ -172,7 +172,7 @@ tickets/
 
 ### For New Team Members
 
-1. Review the [ticket list](./ticket-list.md)
+1. Review the [ticket list](../ticket-list.md)
 2. Understand the [workflow process](#workflow-process)
 3. Set up required [tools and resources](#tools--resources)
 4. Attend team onboarding session
@@ -194,9 +194,9 @@ tickets/
 
 ## 📚 Additional Resources
 
-- [Marketing Documentation Style Guide](../style-guide.md)
+- [Marketing Documentation Ticket List](../ticket-list.md)
 - [Brand Guidelines](../brand-guidelines.md)
-- [Content Strategy Framework](../content-strategy.md)
+- [Messaging Framework](../messaging-framework.md)
 - [Performance Metrics Dashboard](https://lookerstudio.google.com/...)
 
 ---

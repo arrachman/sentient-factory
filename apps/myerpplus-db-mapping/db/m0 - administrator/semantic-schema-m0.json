@@ -1,0 +1,1033 @@
+{
+  "tables": [
+    {
+      "table_name": "m0_app",
+      "alias": "administrator_app",
+      "description": "Master aplikasi atau client integration key/secret.",
+      "synonyms": [],
+      "columns": {
+        "appactive": "Kolom bisnis appactive.",
+        "appcreated": "Kolom bisnis appcreated.",
+        "appid": "Identitas unik data atau relasi ke tabel lain.",
+        "appkey": "Kode bisnis, key, atau identifier konfigurasi.",
+        "appname": "Nama atau label bisnis yang ditampilkan ke user.",
+        "appsecret": "Informasi kredensial atau rahasia sistem."
+      }
+    },
+    {
+      "table_name": "m0_backup",
+      "alias": "administrator_backup",
+      "description": "Log dan status proses backup.",
+      "synonyms": [],
+      "columns": {
+        "id": "Identitas unik data atau relasi ke tabel lain.",
+        "keterangan": "Catatan atau keterangan tambahan.",
+        "namafile": "Nama atau label bisnis yang ditampilkan ke user.",
+        "status": "Status proses, status dokumen, atau status konfigurasi.",
+        "tglmulai": "Tanggal atau waktu terkait proses bisnis/sistem."
+      }
+    },
+    {
+      "table_name": "m0_barcode_next",
+      "alias": "administrator_barcode_next",
+      "description": "Counter nomor barcode berikutnya untuk proses generate barcode internal.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_files",
+      "alias": "administrator_files",
+      "description": "Lampiran/file attachment modul administrator.",
+      "synonyms": [],
+      "columns": {
+        "fcatatan": "Catatan atau keterangan tambahan.",
+        "fidtransaksi": "Kolom bisnis fidtransaksi.",
+        "fnamafile": "Nama atau label bisnis yang ditampilkan ke user.",
+        "fsumber": "Kolom bisnis fsumber.",
+        "ftanggal": "Kolom bisnis ftanggal.",
+        "fukuranfile": "Kolom bisnis fukuranfile.",
+        "furutan": "Kolom bisnis furutan."
+      }
+    },
+    {
+      "table_name": "m0_form_custom_text",
+      "alias": "administrator_form_custom_text",
+      "description": "Konfigurasi custom text per modul dan menu untuk label/form UI.",
+      "synonyms": [],
+      "columns": {
+        "customdetailen": "Kolom bisnis customdetailen.",
+        "customdetailin": "Kolom bisnis customdetailin.",
+        "customutamaen": "Kolom bisnis customutamaen.",
+        "customutamain": "Kolom bisnis customutamain.",
+        "menu": "Referensi menu atau struktur navigasi aplikasi.",
+        "module": "Referensi modul aplikasi."
+      }
+    },
+    {
+      "table_name": "m0_form_setting_global",
+      "alias": "administrator_form_setting_global",
+      "description": "Konfigurasi tampilan form global per modul dan menu.",
+      "synonyms": [],
+      "columns": {
+        "formsetting": "Kolom bisnis formsetting.",
+        "menu": "Referensi menu atau struktur navigasi aplikasi.",
+        "module": "Referensi modul aplikasi."
+      }
+    },
+    {
+      "table_name": "m0_form_setting_search",
+      "alias": "administrator_form_setting_search",
+      "description": "Konfigurasi field pencarian dan properti search form per modul/menu.",
+      "synonyms": [],
+      "columns": {
+        "kode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "menu": "Referensi menu atau struktur navigasi aplikasi.",
+        "module": "Referensi modul aplikasi.",
+        "nama": "Nama atau label bisnis yang ditampilkan ke user.",
+        "searchsetting": "Kolom bisnis searchsetting."
+      }
+    },
+    {
+      "table_name": "m0_form_setting_user",
+      "alias": "administrator_form_setting_user",
+      "description": "Konfigurasi preferensi form per user pada modul/menu tertentu.",
+      "synonyms": [],
+      "columns": {
+        "formsetting": "Kolom bisnis formsetting.",
+        "menu": "Referensi menu atau struktur navigasi aplikasi.",
+        "module": "Referensi modul aplikasi.",
+        "user": "Referensi user atau identitas pengguna aplikasi."
+      }
+    },
+    {
+      "table_name": "m0_group_aq",
+      "alias": "administrator_group_aq",
+      "description": "Counter nomor grup AQ per cabang, lokasi, bulan, dan tahun.",
+      "synonyms": [],
+      "columns": {
+        "bulan": "Kolom bisnis bulan.",
+        "cabang": "Kolom bisnis cabang.",
+        "lokasi": "Kolom bisnis lokasi.",
+        "noberikutnya": "Kolom bisnis noberikutnya.",
+        "tahun": "Kolom bisnis tahun."
+      }
+    },
+    {
+      "table_name": "m0_group_rq",
+      "alias": "administrator_group_rq",
+      "description": "Counter nomor grup RQ per cabang, lokasi, bulan, dan tahun.",
+      "synonyms": [],
+      "columns": {
+        "bulan": "Kolom bisnis bulan.",
+        "cabang": "Kolom bisnis cabang.",
+        "lokasi": "Kolom bisnis lokasi.",
+        "noberikutnya": "Kolom bisnis noberikutnya.",
+        "tahun": "Kolom bisnis tahun."
+      }
+    },
+    {
+      "table_name": "m0_hapusdata",
+      "alias": "administrator_hapusdata",
+      "description": "Log atau target data yang ditandai untuk proses penghapusan/cleanup.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_hitungulang_log",
+      "alias": "administrator_hitungulang_log",
+      "description": "Log proses hitung ulang data, saldo, atau kalkulasi sistem.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_hppaverage",
+      "alias": "administrator_hppaverage",
+      "description": "Tabel kerja/perantara untuk proses hitung HPP average.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_hppsaldo",
+      "alias": "administrator_hppsaldo",
+      "description": "Tabel kerja/perantara untuk saldo HPP atau rekalkulasi persediaan.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_jenismutasi",
+      "alias": "administrator_jenismutasi",
+      "description": "Master jenis mutasi/transaksi yang dipakai sistem sebagai referensi proses.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_language",
+      "alias": "administrator_language",
+      "description": "Master bahasa aplikasi.",
+      "synonyms": [
+        "language",
+        "bahasa"
+      ],
+      "columns": {
+        "laktif": "Penanda aktif/nonaktif atau flag kondisi sistem.",
+        "lgambar": "Kolom bisnis lgambar.",
+        "lkode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "lnama": "Nama atau label bisnis yang ditampilkan ke user."
+      }
+    },
+    {
+      "table_name": "m0_language_detail",
+      "alias": "administrator_language_detail",
+      "description": "Detail resource bahasa atau pasangan key-translation per bahasa.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_menu",
+      "alias": "administrator_menu",
+      "description": "Master menu aplikasi dan struktur navigasi.",
+      "synonyms": [
+        "menu",
+        "navigasi"
+      ],
+      "columns": {
+        "mnactive": "Kolom bisnis mnactive.",
+        "mnid": "Identitas unik data atau relasi ke tabel lain.",
+        "mnidtransaksi": "Kolom bisnis mnidtransaksi.",
+        "mnlebar": "Kolom bisnis mnlebar.",
+        "mnlevel": "Kolom bisnis mnlevel.",
+        "mnmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "mnname": "Nama atau label bisnis yang ditampilkan ke user.",
+        "mnparent": "Kolom bisnis mnparent.",
+        "mnpopup": "Kolom bisnis mnpopup.",
+        "mntinggi": "Kolom bisnis mntinggi.",
+        "mntype": "Kolom bisnis mntype.",
+        "mnurl": "Kolom bisnis mnurl.",
+        "mnurutan": "Kolom bisnis mnurutan.",
+        "mnviewopening": "Kolom bisnis mnviewopening."
+      }
+    },
+    {
+      "table_name": "m0_menu_lang",
+      "alias": "administrator_menu_lang",
+      "description": "Terjemahan nama menu per bahasa.",
+      "synonyms": [],
+      "columns": {
+        "mnllanguage": "Kode bahasa atau preferensi bahasa.",
+        "mnlmnid": "Identitas unik data atau relasi ke tabel lain.",
+        "mnlmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "mnltranslate": "Kolom bisnis mnltranslate."
+      }
+    },
+    {
+      "table_name": "m0_menu_s",
+      "alias": "administrator_menu_s",
+      "description": "Varian atau struktur menu tambahan untuk mode/scope khusus sistem.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_menu_s_lang",
+      "alias": "administrator_menu_s_lang",
+      "description": "Terjemahan menu varian `m0_menu_s` per bahasa.",
+      "synonyms": [],
+      "columns": {
+        "mnllanguage": "Kode bahasa atau preferensi bahasa.",
+        "mnlmnid": "Identitas unik data atau relasi ke tabel lain.",
+        "mnlmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "mnltranslate": "Kolom bisnis mnltranslate."
+      }
+    },
+    {
+      "table_name": "m0_module",
+      "alias": "administrator_module",
+      "description": "Master modul aplikasi MyERPPlus.",
+      "synonyms": [
+        "module master"
+      ],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_msmq",
+      "alias": "administrator_msmq",
+      "description": "Antrian proses background berbasis MSMQ untuk report, print, export, atau task sistem.",
+      "synonyms": [
+        "background queue",
+        "task queue"
+      ],
+      "columns": {
+        "fileformat": "Kolom bisnis fileformat.",
+        "filename": "Nama atau label bisnis yang ditampilkan ke user.",
+        "filter": "Kolom bisnis filter.",
+        "groupby": "Kolom bisnis groupby.",
+        "id": "Identitas unik data atau relasi ke tabel lain.",
+        "idtransaksi": "Identitas unik data atau relasi ke tabel lain.",
+        "item": "Kolom bisnis item.",
+        "jmldata": "Kolom bisnis jmldata.",
+        "menu": "Referensi menu atau struktur navigasi aplikasi.",
+        "module": "Referensi modul aplikasi.",
+        "param1": "Kolom bisnis param1.",
+        "param2": "Kolom bisnis param2.",
+        "param3": "Kolom bisnis param3.",
+        "param4": "Kolom bisnis param4.",
+        "param5": "Kolom bisnis param5.",
+        "pesan": "Kolom bisnis pesan.",
+        "print": "Kolom bisnis print.",
+        "progress": "Kolom bisnis progress.",
+        "progresspersen": "Kolom bisnis progresspersen.",
+        "sort": "Kolom bisnis sort.",
+        "sumber": "Kolom bisnis sumber.",
+        "tglantrian": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "tglselesai": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_msmq_cogs",
+      "alias": "administrator_msmq_cogs",
+      "description": "Antrian proses background khusus kalkulasi COGS/HPP.",
+      "synonyms": [],
+      "columns": {
+        "mcid": "Identitas unik data atau relasi ke tabel lain.",
+        "mcidtransaksi": "Kolom bisnis mcidtransaksi.",
+        "mcpesan": "Kolom bisnis mcpesan.",
+        "mcprogress": "Kolom bisnis mcprogress.",
+        "mcsumber": "Kolom bisnis mcsumber.",
+        "mctglantrian": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "mctglselesai": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "mcuserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_msmq_importdata",
+      "alias": "administrator_msmq_importdata",
+      "description": "Antrian proses background untuk import data.",
+      "synonyms": [],
+      "columns": {
+        "miid": "Identitas unik data atau relasi ke tabel lain.",
+        "minamafile": "Nama atau label bisnis yang ditampilkan ke user.",
+        "mipaket": "Kolom bisnis mipaket.",
+        "mipesan": "Kolom bisnis mipesan.",
+        "miprogress": "Kolom bisnis miprogress.",
+        "miprogresspersen": "Kolom bisnis miprogresspersen.",
+        "misumber": "Kolom bisnis misumber.",
+        "mitglantrian": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "mitglselesai": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "miuserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_msmq_journal",
+      "alias": "administrator_msmq_journal",
+      "description": "Antrian proses background untuk pembentukan atau posting journal.",
+      "synonyms": [],
+      "columns": {
+        "mjid": "Identitas unik data atau relasi ke tabel lain.",
+        "mjidtransaksi": "Kolom bisnis mjidtransaksi.",
+        "mjpesan": "Kolom bisnis mjpesan.",
+        "mjprogress": "Kolom bisnis mjprogress.",
+        "mjsumber": "Kolom bisnis mjsumber.",
+        "mjtglantrian": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "mjtglselesai": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "mjuserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_nomor",
+      "alias": "administrator_nomor",
+      "description": "Pengaturan penomoran dokumen/transaksi.",
+      "synonyms": [
+        "nomor",
+        "auto numbering"
+      ],
+      "columns": {
+        "awalan": "Kolom bisnis awalan.",
+        "jmldigit": "Kolom bisnis jmldigit.",
+        "kodetabel": "Kode bisnis, key, atau identifier konfigurasi.",
+        "menuid": "Identitas unik data atau relasi ke tabel lain.",
+        "moduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "transaksibarang": "Kolom bisnis transaksibarang.",
+        "transaksifa": "Kolom bisnis transaksifa.",
+        "transaksihpp": "Kolom bisnis transaksihpp.",
+        "uraian": "Kolom bisnis uraian."
+      }
+    },
+    {
+      "table_name": "m0_nomor_mobile",
+      "alias": "administrator_nomor_mobile",
+      "description": "Pemetaan user ke identitas device/mobile untuk penomoran atau akses mobile.",
+      "synonyms": [],
+      "columns": {
+        "macaddress": "Kolom bisnis macaddress.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_nomor_next",
+      "alias": "administrator_nomor_next",
+      "description": "Counter nomor dokumen berikutnya per tabel, cabang, lokasi, bulan, dan tahun.",
+      "synonyms": [
+        "counter nomor",
+        "running number"
+      ],
+      "columns": {
+        "bulan": "Kolom bisnis bulan.",
+        "cabang": "Kolom bisnis cabang.",
+        "kodetabel": "Kode bisnis, key, atau identifier konfigurasi.",
+        "lokasi": "Kolom bisnis lokasi.",
+        "noberikutnya": "Kolom bisnis noberikutnya.",
+        "tahun": "Kolom bisnis tahun."
+      }
+    },
+    {
+      "table_name": "m0_notes",
+      "alias": "administrator_notes",
+      "description": "Catatan bebas atau note tambahan pada transaksi/konfigurasi administrator.",
+      "synonyms": [],
+      "columns": {
+        "ncatatan": "Catatan atau keterangan tambahan.",
+        "nidtransaksi": "Kolom bisnis nidtransaksi.",
+        "nsumber": "Kolom bisnis nsumber."
+      }
+    },
+    {
+      "table_name": "m0_notifikasi_email",
+      "alias": "administrator_notifikasi_email",
+      "description": "Pengaturan notifikasi email per modul/menu/user.",
+      "synonyms": [
+        "email notification",
+        "notifikasi email"
+      ],
+      "columns": {
+        "email": "Alamat email atau identitas email terkait notifikasi.",
+        "emailpengirim": "Alamat email atau identitas email terkait notifikasi.",
+        "menuid": "Identitas unik data atau relasi ke tabel lain.",
+        "moduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "namamenu": "Referensi menu atau struktur navigasi aplikasi.",
+        "passwordpengirim": "Informasi kredensial atau rahasia sistem.",
+        "statusnotifikasi": "Status proses, status dokumen, atau status konfigurasi.",
+        "statusupdate": "Status proses, status dokumen, atau status konfigurasi.",
+        "userid": "Identitas unik data atau relasi ke tabel lain.",
+        "useridmail": "Referensi user atau identitas pengguna aplikasi."
+      }
+    },
+    {
+      "table_name": "m0_payment_method",
+      "alias": "administrator_payment_method",
+      "description": "Master metode pembayaran yang dipakai lintas modul.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_permissions_custom",
+      "alias": "administrator_permissions_custom",
+      "description": "Override permission granular di luar mapping role standar.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_report",
+      "alias": "administrator_report",
+      "description": "Definisi report, template, dan metadata laporan.",
+      "synonyms": [
+        "report",
+        "laporan"
+      ],
+      "columns": {
+        "raktif": "Penanda aktif/nonaktif atau flag kondisi sistem.",
+        "rcetak": "Kolom bisnis rcetak.",
+        "rdata": "Kolom bisnis rdata.",
+        "rdefault": "Kolom bisnis rdefault.",
+        "rfilename": "Nama atau label bisnis yang ditampilkan ke user.",
+        "rfilter": "Kolom bisnis rfilter.",
+        "rfrom": "Kolom bisnis rfrom.",
+        "rgroupby": "Kolom bisnis rgroupby.",
+        "rid": "Identitas unik data atau relasi ke tabel lain.",
+        "rinputtgl": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "ritem": "Kolom bisnis ritem.",
+        "rmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "rmodiftgl": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "rmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rorderby": "Kolom bisnis rorderby.",
+        "rparam1": "Kolom bisnis rparam1.",
+        "rparam2": "Kolom bisnis rparam2.",
+        "rparam3": "Kolom bisnis rparam3.",
+        "rparam4": "Kolom bisnis rparam4.",
+        "rparam5": "Kolom bisnis rparam5.",
+        "rpembuat": "Kolom bisnis rpembuat.",
+        "rquery": "Kolom bisnis rquery.",
+        "rreportname": "Referensi report, template, atau metadata laporan.",
+        "rselesai": "Kolom bisnis rselesai.",
+        "rsql": "Kolom bisnis rsql.",
+        "rtitle": "Kolom bisnis rtitle.",
+        "rurutan": "Kolom bisnis rurutan."
+      }
+    },
+    {
+      "table_name": "m0_report_filter",
+      "alias": "administrator_report_filter",
+      "description": "Definisi filter input untuk report builder atau runtime report.",
+      "synonyms": [
+        "report filter"
+      ],
+      "columns": {
+        "fdatasource": "Kolom bisnis fdatasource.",
+        "ffield": "Kolom bisnis ffield.",
+        "fid": "Identitas unik data atau relasi ke tabel lain.",
+        "fitem": "Kolom bisnis fitem.",
+        "flabel": "Kolom bisnis flabel.",
+        "fmenu": "Referensi menu atau struktur navigasi aplikasi.",
+        "fmodule": "Referensi modul aplikasi.",
+        "fpanjang": "Kolom bisnis fpanjang.",
+        "fparam1": "Kolom bisnis fparam1.",
+        "fparam2": "Kolom bisnis fparam2.",
+        "fparam3": "Kolom bisnis fparam3.",
+        "fparam4": "Kolom bisnis fparam4.",
+        "fparam5": "Kolom bisnis fparam5.",
+        "fproperty": "Kolom bisnis fproperty.",
+        "fsd": "Kolom bisnis fsd.",
+        "ftipe": "Kolom bisnis ftipe.",
+        "fwajib": "Kolom bisnis fwajib."
+      }
+    },
+    {
+      "table_name": "m0_report_label",
+      "alias": "administrator_report_label",
+      "description": "Master label/teks tampilan pada report.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_report_label_translate",
+      "alias": "administrator_report_label_translate",
+      "description": "Terjemahan label report per bahasa.",
+      "synonyms": [],
+      "columns": {
+        "ltid": "Identitas unik data atau relasi ke tabel lain.",
+        "ltlabel": "Kolom bisnis ltlabel.",
+        "ltlanguage": "Kode bahasa atau preferensi bahasa.",
+        "lttranslate": "Kolom bisnis lttranslate."
+      }
+    },
+    {
+      "table_name": "m0_report_lang",
+      "alias": "administrator_report_lang",
+      "description": "Terjemahan nama report dan judul report per bahasa.",
+      "synonyms": [],
+      "columns": {
+        "rllanguage": "Kode bahasa atau preferensi bahasa.",
+        "rlrid": "Identitas unik data atau relasi ke tabel lain.",
+        "rlritem": "Kolom bisnis rlritem.",
+        "rlrmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "rlrmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rltranslaterreportname": "Referensi report, template, atau metadata laporan.",
+        "rltranslatertitle": "Kolom bisnis rltranslatertitle."
+      }
+    },
+    {
+      "table_name": "m0_report_temp",
+      "alias": "administrator_report_temp",
+      "description": "Tabel sementara/kerja untuk proses report.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_role",
+      "alias": "administrator_role",
+      "description": "Master role atau peran akses sistem.",
+      "synonyms": [
+        "role",
+        "hak akses",
+        "permission role"
+      ],
+      "columns": {
+        "rkode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "rnama": "Nama atau label bisnis yang ditampilkan ke user."
+      }
+    },
+    {
+      "table_name": "m0_role_custom",
+      "alias": "administrator_role_custom",
+      "description": "Override akses custom per role untuk permission spesifik.",
+      "synonyms": [],
+      "columns": {
+        "rcakses": "Kolom bisnis rcakses.",
+        "rcidpc": "Kolom bisnis rcidpc.",
+        "rcmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rcrole": "Referensi role atau peran akses."
+      }
+    },
+    {
+      "table_name": "m0_role_item_category",
+      "alias": "administrator_role_item_category",
+      "description": "Mapping role ke kategori barang yang boleh diakses.",
+      "synonyms": [],
+      "columns": {
+        "rickategoribarang": "Kolom bisnis rickategoribarang.",
+        "ricrole": "Referensi role atau peran akses."
+      }
+    },
+    {
+      "table_name": "m0_role_menu",
+      "alias": "administrator_role_menu",
+      "description": "Mapping role ke menu dan hak akses navigasi.",
+      "synonyms": [],
+      "columns": {
+        "rmakses": "Kolom bisnis rmakses.",
+        "rmfavourite": "Kolom bisnis rmfavourite.",
+        "rmmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "rmmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rmrole": "Referensi role atau peran akses."
+      }
+    },
+    {
+      "table_name": "m0_role_menu_s",
+      "alias": "administrator_role_menu_s",
+      "description": "Mapping role ke menu varian/scope khusus.",
+      "synonyms": [],
+      "columns": {
+        "rmakses": "Kolom bisnis rmakses.",
+        "rmid": "Identitas unik data atau relasi ke tabel lain.",
+        "rmmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "rmmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rmrole": "Referensi role atau peran akses."
+      }
+    },
+    {
+      "table_name": "m0_role_report",
+      "alias": "administrator_role_report",
+      "description": "Mapping role ke report dan hak akses report.",
+      "synonyms": [],
+      "columns": {
+        "rrakses": "Kolom bisnis rrakses.",
+        "rritem": "Kolom bisnis rritem.",
+        "rrmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "rrmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rrrole": "Referensi role atau peran akses."
+      }
+    },
+    {
+      "table_name": "m0_role_report_s",
+      "alias": "administrator_role_report_s",
+      "description": "Mapping role ke report varian/scope khusus.",
+      "synonyms": [],
+      "columns": {
+        "rrakses": "Kolom bisnis rrakses.",
+        "rritem": "Kolom bisnis rritem.",
+        "rrmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "rrmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "rrrole": "Referensi role atau peran akses."
+      }
+    },
+    {
+      "table_name": "m0_role_s",
+      "alias": "administrator_role_s",
+      "description": "Varian role untuk scope atau mode akses tertentu.",
+      "synonyms": [],
+      "columns": {
+        "rkode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "rnama": "Nama atau label bisnis yang ditampilkan ke user."
+      }
+    },
+    {
+      "table_name": "m0_search_packet",
+      "alias": "administrator_search_packet",
+      "description": "Paket definisi search/filter reusable untuk lookup sistem.",
+      "synonyms": [],
+      "columns": {
+        "spfilter": "Kolom bisnis spfilter.",
+        "spfilterby": "Kolom bisnis spfilterby.",
+        "spkode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "spsort": "Kolom bisnis spsort."
+      }
+    },
+    {
+      "table_name": "m0_selling_rate",
+      "alias": "administrator_selling_rate",
+      "description": "Master tingkat harga jual atau selling rate.",
+      "synonyms": [],
+      "columns": {
+        "kode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "nama": "Nama atau label bisnis yang ditampilkan ke user."
+      }
+    },
+    {
+      "table_name": "m0_sentence",
+      "alias": "administrator_sentence",
+      "description": "Master kalimat atau text resource aplikasi.",
+      "synonyms": [
+        "sentence",
+        "text resource"
+      ],
+      "columns": {
+        "sid": "Identitas unik data atau relasi ke tabel lain.",
+        "sjenis": "Kolom bisnis sjenis.",
+        "ssentence": "Kolom bisnis ssentence."
+      }
+    },
+    {
+      "table_name": "m0_sentence_s",
+      "alias": "administrator_sentence_s",
+      "description": "Varian sentence/text resource untuk scope tertentu.",
+      "synonyms": [],
+      "columns": {
+        "sid": "Identitas unik data atau relasi ke tabel lain.",
+        "sjenis": "Kolom bisnis sjenis.",
+        "ssentence": "Kolom bisnis ssentence."
+      }
+    },
+    {
+      "table_name": "m0_sentence_stranslate",
+      "alias": "administrator_sentence_stranslate",
+      "description": "Terjemahan sentence varian per bahasa.",
+      "synonyms": [],
+      "columns": {
+        "stid": "Identitas unik data atau relasi ke tabel lain.",
+        "stlanguage": "Kode bahasa atau preferensi bahasa.",
+        "stsentence": "Kolom bisnis stsentence.",
+        "sttranslate": "Kolom bisnis sttranslate."
+      }
+    },
+    {
+      "table_name": "m0_sentence_translate",
+      "alias": "administrator_sentence_translate",
+      "description": "Terjemahan sentence/text resource utama per bahasa.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_setting",
+      "alias": "administrator_setting",
+      "description": "Parameter dan konfigurasi global sistem.",
+      "synonyms": [
+        "setting",
+        "konfigurasi"
+      ],
+      "columns": {
+        "scombodata": "Kolom bisnis scombodata.",
+        "sgrup": "Kolom bisnis sgrup.",
+        "sjenisinputan": "Kolom bisnis sjenisinputan.",
+        "skode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "smodule": "Referensi modul aplikasi.",
+        "snama": "Nama atau label bisnis yang ditampilkan ke user.",
+        "snilai": "Kolom bisnis snilai.",
+        "stipedata": "Kolom bisnis stipedata.",
+        "suraian": "Kolom bisnis suraian.",
+        "surutan": "Kolom bisnis surutan."
+      }
+    },
+    {
+      "table_name": "m0_setting_lang",
+      "alias": "administrator_setting_lang",
+      "description": "Terjemahan setting atau label setting per bahasa.",
+      "synonyms": [],
+      "columns": {
+        "slgrup": "Kolom bisnis slgrup.",
+        "slkode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "sllanguage": "Kode bahasa atau preferensi bahasa.",
+        "slmodule": "Referensi modul aplikasi.",
+        "sltranslate": "Kolom bisnis sltranslate."
+      }
+    },
+    {
+      "table_name": "m0_setting_location",
+      "alias": "administrator_setting_location",
+      "description": "Override setting berdasarkan lokasi operasional.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_status",
+      "alias": "administrator_status",
+      "description": "Master status umum yang dipakai lintas dokumen/modul.",
+      "synonyms": [
+        "status master"
+      ],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_status_giro",
+      "alias": "administrator_status_giro",
+      "description": "Master status khusus giro atau alat bayar giro.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_status_progress",
+      "alias": "administrator_status_progress",
+      "description": "Master status progress untuk proses/background task.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_status_rq",
+      "alias": "administrator_status_rq",
+      "description": "Master status khusus workflow request quotation atau request terkait.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_table_relation",
+      "alias": "administrator_table_relation",
+      "description": "Metadata relasi tabel untuk helper query, import, atau validasi.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_translate",
+      "alias": "administrator_translate",
+      "description": "Dictionary terjemahan teks umum aplikasi.",
+      "synonyms": [
+        "translation",
+        "terjemahan"
+      ],
+      "columns": {
+        "tlanguage": "Kode bahasa atau preferensi bahasa.",
+        "tsentence": "Kolom bisnis tsentence.",
+        "ttranslate": "Kolom bisnis ttranslate."
+      }
+    },
+    {
+      "table_name": "m0_user",
+      "alias": "administrator_user",
+      "description": "Master user aplikasi, identitas login, profil, dan pengaturan akses pengguna.",
+      "synonyms": [
+        "user",
+        "pengguna",
+        "account"
+      ],
+      "columns": {
+        "uaktif": "Penanda aktif/nonaktif atau flag kondisi sistem.",
+        "ubahasa": "Kode bahasa atau preferensi bahasa.",
+        "ucabang": "Kolom bisnis ucabang.",
+        "udefaultview": "Kolom bisnis udefaultview.",
+        "ugambar": "Kolom bisnis ugambar.",
+        "ugrup": "Kolom bisnis ugrup.",
+        "ugudang": "Kolom bisnis ugudang.",
+        "ukode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "ukontak": "Kolom bisnis ukontak.",
+        "ukota": "Kolom bisnis ukota.",
+        "ulevel": "Kolom bisnis ulevel.",
+        "ulokasi": "Kolom bisnis ulokasi.",
+        "unama": "Nama atau label bisnis yang ditampilkan ke user.",
+        "upassword": "Informasi kredensial atau rahasia sistem.",
+        "userid": "Identitas unik data atau relasi ke tabel lain.",
+        "utglexpired": "Tanggal atau waktu terkait proses bisnis/sistem."
+      }
+    },
+    {
+      "table_name": "m0_user_branch",
+      "alias": "administrator_user_branch",
+      "description": "Mapping user ke cabang yang boleh diakses.",
+      "synonyms": [],
+      "columns": {
+        "cabang": "Kolom bisnis cabang.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_user_coa",
+      "alias": "administrator_user_coa",
+      "description": "Mapping user ke rekening/COA yang boleh diakses.",
+      "synonyms": [],
+      "columns": {
+        "norek": "Kolom bisnis norek.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_user_location",
+      "alias": "administrator_user_location",
+      "description": "Mapping user ke lokasi yang boleh diakses.",
+      "synonyms": [],
+      "columns": {
+        "lokasi": "Kolom bisnis lokasi.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_user_role",
+      "alias": "administrator_user_role",
+      "description": "Mapping user ke role akses.",
+      "synonyms": [],
+      "columns": {
+        "role": "Referensi role atau peran akses.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_user_role_s",
+      "alias": "administrator_user_role_s",
+      "description": "Mapping user ke role varian/scope khusus.",
+      "synonyms": [],
+      "columns": {
+        "role": "Referensi role atau peran akses.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_user_warehouse",
+      "alias": "administrator_user_warehouse",
+      "description": "Mapping user ke gudang yang boleh diakses.",
+      "synonyms": [],
+      "columns": {
+        "gudang": "Kolom bisnis gudang.",
+        "userid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_usercustom",
+      "alias": "administrator_usercustom",
+      "description": "Override akses custom per user di luar role standar.",
+      "synonyms": [],
+      "columns": {
+        "urakses": "Kolom bisnis urakses.",
+        "uridpc": "Kolom bisnis uridpc.",
+        "urmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "uruserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_usergrup",
+      "alias": "administrator_usergrup",
+      "description": "Master grup user.",
+      "synonyms": [
+        "user group",
+        "grup user"
+      ],
+      "columns": {
+        "ugkode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "ugnama": "Nama atau label bisnis yang ditampilkan ke user."
+      }
+    },
+    {
+      "table_name": "m0_usergrupmenu",
+      "alias": "administrator_usergrupmenu",
+      "description": "Mapping grup user ke menu dan hak akses.",
+      "synonyms": [],
+      "columns": {
+        "ugmakses": "Kolom bisnis ugmakses.",
+        "ugmmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "ugmmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "ugmusergrup": "Referensi user atau identitas pengguna aplikasi."
+      }
+    },
+    {
+      "table_name": "m0_userlog",
+      "alias": "administrator_userlog",
+      "description": "Audit log aktivitas user.",
+      "synonyms": [
+        "audit log",
+        "user activity"
+      ],
+      "columns": {
+        "ulaktivitas": "Kolom bisnis ulaktivitas.",
+        "ulidmenu": "Referensi menu atau struktur navigasi aplikasi.",
+        "ulidmodule": "Referensi modul aplikasi.",
+        "uljenisaktivitas": "Kolom bisnis uljenisaktivitas.",
+        "ulkodepa": "Kode bisnis, key, atau identifier konfigurasi.",
+        "ultgl": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "uluserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_userlog_category",
+      "alias": "administrator_userlog_category",
+      "description": "Master kategori aktivitas untuk audit log user.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m0_userlogerror",
+      "alias": "administrator_userlogerror",
+      "description": "Log error aplikasi yang dikaitkan ke user atau paket proses.",
+      "synonyms": [],
+      "columns": {
+        "ulerrtodev": "Kolom bisnis ulerrtodev.",
+        "ulerrtouser": "Referensi user atau identitas pengguna aplikasi.",
+        "uljenis": "Kolom bisnis uljenis.",
+        "ulketerangan": "Catatan atau keterangan tambahan.",
+        "ulpaket": "Kolom bisnis ulpaket.",
+        "ultgl": "Tanggal atau waktu terkait proses bisnis/sistem.",
+        "uluserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_userlogin",
+      "alias": "administrator_userlogin",
+      "description": "Session atau jejak login user.",
+      "synonyms": [
+        "login",
+        "session",
+        "user login",
+        "login trace"
+      ],
+      "columns": {
+        "ulid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_usermenu",
+      "alias": "administrator_usermenu",
+      "description": "Override akses menu langsung per user.",
+      "synonyms": [
+        "user menu access"
+      ],
+      "columns": {
+        "umakses": "Kolom bisnis umakses.",
+        "umfavorite": "Kolom bisnis umfavorite.",
+        "ummenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "ummoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "umuserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_userreport",
+      "alias": "administrator_userreport",
+      "description": "Override akses report langsung per user.",
+      "synonyms": [
+        "user report access"
+      ],
+      "columns": {
+        "urakses": "Kolom bisnis urakses.",
+        "uritem": "Kolom bisnis uritem.",
+        "urmenuid": "Identitas unik data atau relasi ke tabel lain.",
+        "urmoduleid": "Identitas unik data atau relasi ke tabel lain.",
+        "uruserid": "Identitas unik data atau relasi ke tabel lain."
+      }
+    },
+    {
+      "table_name": "m0_validitas_data",
+      "alias": "administrator_validitas_data",
+      "description": "Status validitas atau hasil pengecekan data periodik.",
+      "synonyms": [],
+      "columns": {
+        "bulan": "Kolom bisnis bulan.",
+        "keterangan": "Catatan atau keterangan tambahan.",
+        "kode": "Kode bisnis, key, atau identifier konfigurasi.",
+        "status": "Status proses, status dokumen, atau status konfigurasi.",
+        "tahun": "Kolom bisnis tahun.",
+        "tgl_cek": "Tanggal atau waktu terkait proses bisnis/sistem."
+      }
+    }
+  ],
+  "metadata": {
+    "module": "m0-administrator",
+    "generated_from": [
+      "apps/myerpplus-db-mapping/db/m0 - administrator/m0-queries.md",
+      "apps/myerpplus-db-mapping/db/m0 - administrator/m0-queries-by-type.md"
+    ],
+    "query_counts": {
+      "SELECT": 626,
+      "INSERT": 79,
+      "UPDATE": 52,
+      "DELETE": 75
+    },
+    "table_count": 79,
+    "notes": [
+      "Schema ini di-infer dari query source administrator, bukan dari DDL database asli.",
+      "Kolom hanya dimasukkan jika bisa diturunkan secara cukup aman dari pola SQL yang ada.",
+      "Fokus utama schema ini adalah coverage tabel m0_* aktif untuk semantic mapping dan AI retrieval."
+    ]
+  }
+}

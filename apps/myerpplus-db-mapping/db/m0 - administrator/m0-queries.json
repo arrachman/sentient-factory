@@ -1,0 +1,22 @@
+{
+  "title": "M0 Queries",
+  "module": "m0-administrator",
+  "source_markdown": "m0-queries.md",
+  "generated_from": "apps/myerpplus-db-mapping/db/m0 - administrator/m0-queries.md",
+  "purpose": "Index JSON ringan untuk query legacy administrator yang sudah dikumpulkan dari dispatch target app_code/ws/m0.",
+  "total_queries": 832,
+  "source_scope": {
+    "dispatcher": "client-backend/api-myerpplus/app_code/ws/myerpplus.vb",
+    "target_prefix": "app_code/ws/m0",
+    "notes": [
+      "Markdown tetap menjadi artefak utama berisi blok SQL lengkap.",
+      "JSON ini dipakai sebagai manifest cepat untuk agent, validator, atau pipeline indexing."
+    ]
+  },
+  "query_types": {
+    "SELECT": 626,
+    "INSERT": 79,
+    "UPDATE": 52,
+    "DELETE": 75
+  }
+}

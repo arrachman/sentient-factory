@@ -109,12 +109,12 @@ const config: Config = {
               to: "/docs/docs/intro",
             },
             {
-              label: "API Reference",
-              to: "/docs/docs/category/api-reference",
+              label: "Marketing",
+              to: "/docs/docs/marketing",
             },
             {
-              label: "Architecture",
-              to: "/docs/docs/category/architecture",
+              label: "Contributing",
+              to: "/docs/docs/contributing",
             },
           ],
         },

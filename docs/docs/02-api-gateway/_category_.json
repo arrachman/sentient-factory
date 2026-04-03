@@ -1,8 +1,0 @@
-{
-  "label": "Api Gateway",
-  "position": 2,
-  "link": {
-    "type": "generated-index",
-    "description": "Complete API Gateway documentation for Sentient Factory services"
-  }
-}

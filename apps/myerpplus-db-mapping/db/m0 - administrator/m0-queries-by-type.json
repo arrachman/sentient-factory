@@ -1,0 +1,19 @@
+{
+  "title": "M0 Queries By Type",
+  "module": "m0-administrator",
+  "source_markdown": "m0-queries-by-type.md",
+  "generated_from": "apps/myerpplus-db-mapping/db/m0 - administrator/m0-queries-by-type.md",
+  "purpose": "Ringkasan machine-readable query administrator berdasarkan tipe statement SQL.",
+  "totals": {
+    "SELECT": 626,
+    "INSERT": 79,
+    "UPDATE": 52,
+    "DELETE": 75
+  },
+  "agent_pov": {
+    "SELECT": "Dipakai agent untuk use case retrieval, lookup, dashboard, dan audit readonly.",
+    "INSERT": "Menandai area write-path administrator seperti setup, import, dan logging.",
+    "UPDATE": "Menunjukkan titik perubahan konfigurasi, role, menu, dan parameter sistem.",
+    "DELETE": "Menandai operasi destruktif yang harus diperlakukan sebagai high-risk dan tidak boleh muncul pada SQL readonly."
+  }
+}
