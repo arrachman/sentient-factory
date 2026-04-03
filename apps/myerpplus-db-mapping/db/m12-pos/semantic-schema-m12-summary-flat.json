@@ -1,0 +1,703 @@
+{
+  "title": "Semantic Schema M12 Summary Flat",
+  "source_json": "semantic-schema-m12-summary.json",
+  "count": 126,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_area",
+      "description": "Master area operasional POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_area_category",
+      "description": "Master kategori area POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_category",
+      "description": "Master kategori POS untuk grouping item/program."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_category_setting",
+      "description": "Pengaturan tambahan per kategori POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_hardware",
+      "description": "Konfigurasi perangkat keras POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_item",
+      "description": "Daftar item yang diizinkan per kategori POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_setting",
+      "description": "Konfigurasi utama perilaku POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_type",
+      "description": "Master tipe POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_SETUP",
+      "table_name": "m_12_pos_type_class_product",
+      "description": "Map tipe POS ke class product."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_additional_item",
+      "description": "Master additional item aktif per kategori POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_additional_item_detail",
+      "description": "Detail barang tambahan untuk master additional item."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_bonus_item",
+      "description": "Master bonus item aktif per kategori POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_bonus_item_detail",
+      "description": "Detail barang bonus untuk master bonus item."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_bonus_trans",
+      "description": "Catatan bonus yang terpakai pada transaksi POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_bonus_trans_detail",
+      "description": "Detail barang bonus pada transaksi POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_discount_category_customer",
+      "description": "Master diskon berdasarkan kategori customer POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_discount_category_item",
+      "description": "Master diskon berdasarkan kategori item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_discount_item",
+      "description": "Master diskon item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_point_category_item",
+      "description": "Master point reward per kategori item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_point_item",
+      "description": "Master point reward per item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_point_transaction",
+      "description": "Pencatatan point yang dihasilkan transaksi POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_substitution_item",
+      "description": "Master substitution item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_substitution_item_detail",
+      "description": "Detail substitution item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_voucher_in",
+      "description": "Voucher masuk atau penerimaan voucher POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "PROMO_LOYALTY",
+      "table_name": "m_12_pos_voucher_out",
+      "description": "Voucher keluar atau pemakaian voucher POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_ai",
+      "description": "Header promo additional item untuk kategori POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_bi",
+      "description": "Header promo bonus item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_cpa",
+      "description": "Header pengaturan atau approval kategori harga POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_di",
+      "description": "Header promo discount item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_lp",
+      "description": "Header loyalty program atau point transaksi POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_ppa",
+      "description": "Header promo atau pengaturan POS tambahan tingkat lanjut."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_ppv",
+      "description": "Header voucher POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_sbi",
+      "description": "Header substitution atau special bonus item POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_HEADERS",
+      "table_name": "m_12_st",
+      "description": "Header transaksi penjualan POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_ai_additional",
+      "description": "Daftar item tambahan yang diberikan dari promo AI."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_ai_detail",
+      "description": "Aturan item utama pemicu promo additional item."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_bi_bonus",
+      "description": "Daftar barang bonus dari promo BI."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_bi_detail",
+      "description": "Aturan item utama pemicu bonus item."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_cpa_detail",
+      "description": "Detail item atau aturan pada CPA."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_di_detail",
+      "description": "Aturan item utama pemicu diskon item."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_lp_cetak",
+      "description": "Riwayat cetak dokumen loyalty/POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_lp_detail",
+      "description": "Detail per item atau akumulasi pada loyalty program."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_ppa_detail",
+      "description": "Detail item/aturan untuk PPA."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_ppv_detail",
+      "description": "Detail voucher POS per item atau kategori."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_ppv_pay",
+      "description": "Relasi voucher POS terhadap pembayaran/transaksi."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_sbi_detail",
+      "description": "Aturan item utama pada substitution bonus."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_sbi_substitution",
+      "description": "Daftar item substitusi dari program SBI."
+    },
+    {
+      "type": "owned_table",
+      "module": "TRANSACTION_DETAILS",
+      "table_name": "m_12_st_detail",
+      "description": "Detail item transaksi penjualan POS."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_area_category_history",
+      "description": "Riwayat perubahan untuk m_12_area_category."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_area_history",
+      "description": "Riwayat perubahan untuk m_12_area."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_bi_bonus_history",
+      "description": "Riwayat perubahan untuk m_12_bi_bonus."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_bi_detail_history",
+      "description": "Riwayat perubahan untuk m_12_bi_detail."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_bi_history",
+      "description": "Riwayat perubahan untuk m_12_bi."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_cpa_detail_history",
+      "description": "Riwayat perubahan untuk m_12_cpa_detail."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_cpa_history",
+      "description": "Riwayat perubahan untuk m_12_cpa."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_di_detail_history",
+      "description": "Riwayat perubahan untuk m_12_di_detail."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_di_history",
+      "description": "Riwayat perubahan untuk m_12_di."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_pos_category_history",
+      "description": "Riwayat perubahan untuk m_12_pos_category."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_pos_type_class_product_history",
+      "description": "Riwayat perubahan untuk m_12_pos_type_class_product."
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY",
+      "table_name": "m_12_pos_type_history",
+      "description": "Riwayat perubahan untuk m_12_pos_type."
+    },
+    {
+      "type": "relation",
+      "module": "GLOBAL",
+      "name": "sales_transaction_flow",
+      "description": "Relasi header transaksi POS ke detail item penjualan."
+    },
+    {
+      "type": "relation",
+      "module": "GLOBAL",
+      "name": "promo_additional_flow",
+      "description": "Relasi promo additional item dari header ke rule dan item tambahan."
+    },
+    {
+      "type": "relation",
+      "module": "GLOBAL",
+      "name": "promo_bonus_flow",
+      "description": "Relasi promo bonus item dari header ke rule dan bonus."
+    },
+    {
+      "type": "relation",
+      "module": "GLOBAL",
+      "name": "voucher_flow",
+      "description": "Relasi voucher POS ke detail voucher dan pembayaran transaksi."
+    },
+    {
+      "type": "relation",
+      "module": "GLOBAL",
+      "name": "area_and_category_flow",
+      "description": "Relasi area POS ke kategori area dan kategori POS."
+    },
+    {
+      "type": "relation",
+      "module": "GLOBAL",
+      "name": "type_and_class_product_flow",
+      "description": "Relasi tipe POS ke class product."
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_area"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_area_category"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_category"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_category_setting"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_hardware"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_item"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_setting"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_type"
+    },
+    {
+      "type": "function",
+      "module": "MASTER_SETUP",
+      "name": "m_12_pos_type_class_product"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_additional_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_additional_item_detail"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_bonus_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_bonus_item_detail"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_bonus_trans"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_bonus_trans_detail"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_discount_category_customer"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_discount_category_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_discount_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_point_category_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_point_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_point_transaction"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_substitution_item"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_substitution_item_detail"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_voucher_in"
+    },
+    {
+      "type": "function",
+      "module": "PROMO_LOYALTY",
+      "name": "m_12_pos_voucher_out"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_ai"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_bi"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_cpa"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_di"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_lp"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_ppa"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_ppv"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_sbi"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_HEADERS",
+      "name": "m_12_st"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_ai_additional"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_ai_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_bi_bonus"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_bi_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_cpa_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_di_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_lp_cetak"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_lp_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_ppa_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_ppv_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_ppv_pay"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_sbi_detail"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_sbi_substitution"
+    },
+    {
+      "type": "function",
+      "module": "TRANSACTION_DETAILS",
+      "name": "m_12_st_detail"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_area_category_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_area_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_bi_bonus_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_bi_detail_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_bi_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_cpa_detail_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_cpa_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_di_detail_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_di_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_pos_category_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_pos_type_class_product_history"
+    },
+    {
+      "type": "function",
+      "module": "HISTORY",
+      "name": "m_12_pos_type_history"
+    }
+  ]
+}

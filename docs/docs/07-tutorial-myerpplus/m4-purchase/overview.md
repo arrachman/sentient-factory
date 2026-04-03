@@ -1,16 +1,24 @@
 ---
 title: Overview
 sidebar_position: 1
-description: Pengantar modul purchase MyERPPlus.
+description: Introduction to the MyERPPlus purchase module.
 ---
 
 # m4-purchase
 
-Kategori ini berisi tutorial untuk alur purchase MyERPPlus.
+This category contains tutorials for MyERPPlus purchasing flows.
 
-## Cakupan
+## Coverage
 
-- PR, RQ, RFQ, PO
-- GRN dan invoice purchase
-- Relasi purchase lintas modul
+- PR, RQ, RFQ, and PO
+- GRN and purchase invoices
+- cross-module purchase relations
 
+## Main Documents
+
+- [Purchase Query Artifacts](./query-artifacts.md)
+- [M4 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
+
+## Notes
+
+M4 has a long document flow and several polymorphic relations. For AI agents, separating document stages and the main join flow is critical so the resulting query does not target the wrong document layer.

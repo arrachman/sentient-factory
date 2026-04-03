@@ -1,47 +1,47 @@
 # M0 NL2SQL Guide
 
-Sumber utama:
+Primary sources:
 - `semantic-schema-m0.json`
 - `semantic-schema-m0-summary.md`
 - `m0-queries.md`
 - `m0-queries-by-type.md`
 
-Tujuan:
-- membantu pemilihan tabel administrator yang tepat
-- membantu membedakan area readonly dan write-path
-- memberi sinonim bisnis natural untuk retrieval
-- menandai join aman untuk user, role, menu, report, setting, dan audit log
+Purpose:
+- help select the correct administrator tables
+- distinguish read-only lookup areas from write-path administration tables
+- provide natural business synonyms for retrieval
+- mark safe joins for user, role, menu, report, setting, numbering, queue, and audit use cases
 
-## Cakupan Tabel Utama
+## Main Table Coverage
 
-- Aplikasi dan integrasi: `m0_app`
-- Backup dan maintenance: `m0_backup`, `m0_hapusdata`, `m0_hitungulang_log`, `m0_hppaverage`, `m0_hppsaldo`, `m0_validitas_data`
-- Konfigurasi form UI: `m0_form_custom_text`, `m0_form_setting_global`, `m0_form_setting_search`, `m0_form_setting_user`
-- Bahasa dan translation resource: `m0_language`, `m0_language_detail`, `m0_sentence`, `m0_sentence_s`, `m0_sentence_translate`, `m0_sentence_stranslate`, `m0_translate`
-- Menu dan modul: `m0_module`, `m0_menu`, `m0_menu_lang`, `m0_menu_s`, `m0_menu_s_lang`
-- Background queue / MSMQ: `m0_msmq`, `m0_msmq_cogs`, `m0_msmq_importdata`, `m0_msmq_journal`
-- Penomoran dokumen: `m0_nomor`, `m0_nomor_next`, `m0_nomor_mobile`, `m0_barcode_next`, `m0_group_aq`, `m0_group_rq`
-- Lampiran dan notes: `m0_files`, `m0_notes`
-- Notifikasi: `m0_notifikasi_email`
-- Report dan metadata report: `m0_report`, `m0_report_filter`, `m0_report_label`, `m0_report_label_translate`, `m0_report_lang`, `m0_report_temp`
-- Role dan permission: `m0_role`, `m0_role_s`, `m0_role_custom`, `m0_role_item_category`, `m0_role_menu`, `m0_role_menu_s`, `m0_role_report`, `m0_role_report_s`, ...
-- Lookup dan setting bisnis: `m0_search_packet`, `m0_selling_rate`, `m0_setting`, `m0_setting_lang`, `m0_setting_location`, `m0_payment_method`, `m0_jenismutasi`, `m0_status`, ...
-- User, group, akses, session, dan audit: `m0_user`, `m0_user_branch`, `m0_user_coa`, `m0_user_location`, `m0_user_role`, `m0_user_role_s`, `m0_user_warehouse`, `m0_usercustom`, ...
+- application and integration: `m0_app`
+- backup and maintenance: `m0_backup`, `m0_hapusdata`, `m0_hitungulang_log`, `m0_hppaverage`, `m0_hppsaldo`, `m0_validitas_data`
+- UI form configuration: `m0_form_custom_text`, `m0_form_setting_global`, `m0_form_setting_search`, `m0_form_setting_user`
+- language and translation resources: `m0_language`, `m0_language_detail`, `m0_sentence`, `m0_sentence_s`, `m0_sentence_translate`, `m0_sentence_stranslate`, `m0_translate`
+- menu and module metadata: `m0_module`, `m0_menu`, `m0_menu_lang`, `m0_menu_s`, `m0_menu_s_lang`
+- background queue and MSMQ: `m0_msmq`, `m0_msmq_cogs`, `m0_msmq_importdata`, `m0_msmq_journal`
+- document numbering: `m0_nomor`, `m0_nomor_next`, `m0_nomor_mobile`, `m0_barcode_next`, `m0_group_aq`, `m0_group_rq`
+- attachments and notes: `m0_files`, `m0_notes`
+- notifications: `m0_notifikasi_email`
+- reports and report metadata: `m0_report`, `m0_report_filter`, `m0_report_label`, `m0_report_label_translate`, `m0_report_lang`, `m0_report_temp`
+- roles and permissions: `m0_role`, `m0_role_s`, `m0_role_custom`, `m0_role_item_category`, `m0_role_menu`, `m0_role_menu_s`, `m0_role_report`, `m0_role_report_s`, ...
+- lookup and business settings: `m0_search_packet`, `m0_selling_rate`, `m0_setting`, `m0_setting_lang`, `m0_setting_location`, `m0_payment_method`, `m0_jenismutasi`, `m0_status`, ...
+- users, groups, access, sessions, and audit: `m0_user`, `m0_user_branch`, `m0_user_coa`, `m0_user_location`, `m0_user_role`, `m0_user_role_s`, `m0_user_warehouse`, `m0_usercustom`, ...
 
-## Sinonim Bisnis
+## Business Synonyms
 
-- `USER`: user, pengguna, account, akun login
-- `ROLE`: role, hak akses, permission
-- `MENU`: menu, navigasi, sidebar
-- `REPORT`: report, laporan, template report
-- `SETTING`: setting, konfigurasi, parameter sistem
-- `NUMBERING`: nomor dokumen, auto numbering, running number
-- `QUEUE`: background queue, antrian proses, MSMQ
-- `LANGUAGE`: bahasa, translation, terjemahan UI
-- `NOTIFICATION`: email notification, notifikasi email
-- `USERLOG`: audit log, aktivitas user, jejak user
+- `USER`: user, account, login account
+- `ROLE`: role, access right, permission
+- `MENU`: menu, navigation, sidebar
+- `REPORT`: report, report template
+- `SETTING`: setting, configuration, system parameter
+- `NUMBERING`: document number, auto numbering, running number
+- `QUEUE`: background queue, process queue, MSMQ
+- `LANGUAGE`: language, translation, UI translation
+- `NOTIFICATION`: email notification
+- `USERLOG`: audit log, user activity, user trace
 
-## Join Hints Utama
+## Primary Join Hints
 
 ### user_role_access_flow
 
@@ -114,62 +114,62 @@ m0_userlog.ulidmodule = m0_menu.mnmoduleid
 m0_userlog.ulidmenu = m0_menu.mnid
 ```
 
-## Aturan Pemilihan Tabel
+## Table Selection Rules
 
-- Gunakan `m0_user`, `m0_role`, `m0_user_role`, `m0_role_menu`, `m0_usermenu` bila pertanyaan fokus pada siapa boleh mengakses apa.
-- Gunakan `m0_menu` dan `m0_menu_lang` bila pertanyaan fokus pada struktur navigasi atau label menu per bahasa.
-- Gunakan `m0_report`, `m0_report_filter`, `m0_report_lang`, `m0_role_report`, `m0_userreport` bila pertanyaan fokus pada report dan hak akses report.
-- Gunakan `m0_setting`, `m0_setting_lang`, `m0_setting_location` bila pertanyaan fokus pada parameter sistem.
-- Gunakan `m0_nomor` dan `m0_nomor_next` bila pertanyaan fokus pada format nomor dokumen atau counter berikutnya.
-- Gunakan `m0_userlogin`, `m0_userlog`, `m0_userlogerror` bila pertanyaan fokus pada login, audit trail, atau error log.
-- Gunakan `m0_msmq*` bila pertanyaan fokus pada queue background, progress, import, COGS, atau journal task.
-- Gunakan tabel yang mengandung `custom`, `override`, atau `_s` hanya jika pertanyaan memang spesifik ke varian atau override akses.
+- Use `m0_user`, `m0_role`, `m0_user_role`, `m0_role_menu`, and `m0_usermenu` when the question is about who can access what.
+- Use `m0_menu` and `m0_menu_lang` when the question is about navigation structure or translated menu labels.
+- Use `m0_report`, `m0_report_filter`, `m0_report_lang`, `m0_role_report`, and `m0_userreport` when the question is about reports and report access.
+- Use `m0_setting`, `m0_setting_lang`, and `m0_setting_location` when the question is about system parameters.
+- Use `m0_nomor` and `m0_nomor_next` when the question is about document-number format or the next counter.
+- Use `m0_userlogin`, `m0_userlog`, and `m0_userlogerror` when the question is about login, audit trail, or error logs.
+- Use `m0_msmq*` when the question is about background queues, progress, imports, COGS, or journal tasks.
+- Use tables containing `custom`, `override`, or `_s` only when the request is explicitly about variants or override access.
 
-## Aturan Penting
+## Important Rules
 
-- M0 mengandung banyak write-path administrasi. Untuk NL2SQL readonly, hindari menghasilkan `INSERT`, `UPDATE`, atau `DELETE`.
-- Jika user meminta “hak akses”, tentukan dulu apakah levelnya role-based atau user override.
-- Jika user meminta “menu yang muncul”, prioritaskan join antara user/role/menu dan jangan hanya membaca `m0_menu` sendiri.
-- Jika user meminta “setting”, cek apakah konteksnya global, lokasi, atau terjemahan setting.
-- Jika user meminta “audit”, bedakan aktivitas normal (`m0_userlog`) dan error (`m0_userlogerror`).
-- Field seperti password, secret, dan kredensial sensitif hanya boleh dipakai untuk audit struktur, bukan ditampilkan apa adanya.
-- Tabel temporary/queue seperti `m0_report_temp` atau `m0_msmq*` lebih cocok untuk monitoring operasional daripada source of truth bisnis.
+- M0 contains many administration write paths. For NL2SQL, avoid generating `INSERT`, `UPDATE`, or `DELETE`.
+- If the user asks about access rights, determine whether the answer is role-based or user-specific override first.
+- If the user asks which menus appear, prioritize joins across user, role, and menu instead of reading `m0_menu` alone.
+- If the user asks about settings, check whether the context is global, location-specific, or translated labels.
+- If the user asks about audit, distinguish normal activity (`m0_userlog`) from errors (`m0_userlogerror`).
+- Sensitive fields such as passwords, secrets, and sender credentials may be inspected structurally but should not be exposed directly.
+- Temporary or queue tables such as `m0_report_temp` or `m0_msmq*` are better suited for operational monitoring than for business truth.
 
-## Pola Query Aman
+## Safe Query Patterns
 
 ### role_access_summary
 
-Gunakan `m0_role`, `m0_role_menu`, `m0_menu` untuk melihat menu yang dibuka oleh suatu role.
+Use `m0_role`, `m0_role_menu`, and `m0_menu` to see which menus are available to a role.
 
 ### user_access_override
 
-Gunakan `m0_user`, `m0_user_role`, `m0_usermenu`, `m0_userreport` untuk override akses user tertentu.
+Use `m0_user`, `m0_user_role`, `m0_usermenu`, and `m0_userreport` for user-specific access overrides.
 
 ### report_catalog
 
-Gunakan `m0_report` dan `m0_report_filter` untuk katalog report dan parameter filternya.
+Use `m0_report` and `m0_report_filter` for report catalogs and filter parameters.
 
 ### setting_lookup
 
-Gunakan `m0_setting` dan `m0_setting_lang` untuk lookup setting dan label-nya.
+Use `m0_setting` and `m0_setting_lang` for settings and translated labels.
 
 ### audit_login_trace
 
-Gunakan `m0_userlogin`, `m0_userlog`, dan `m0_userlogerror` untuk audit login dan aktivitas.
+Use `m0_userlogin`, `m0_userlog`, and `m0_userlogerror` for login and activity audit.
 
-## Query yang Perlu Extra Caution
+## Queries That Need Extra Caution
 
-- Pertanyaan yang berpotensi menampilkan password, secret, atau kredensial email pengirim.
-- Pertanyaan yang meminta perubahan setting atau permission; M0 penuh write-path dan harus tetap readonly.
-- Pertanyaan yang mencampur role access dan user override tanpa membedakan keduanya.
-- Pertanyaan report yang sebenarnya menyentuh SQL mentah di metadata report.
-- Pertanyaan background queue yang memakai tabel operasional sementara sebagai source of truth.
+- Questions that could expose passwords, secrets, or sender email credentials.
+- Questions that imply changing settings or permissions. M0 is write-heavy and must remain read-only here.
+- Questions that mix role access with user overrides without separating the two models.
+- Report questions that actually touch raw SQL stored in report metadata.
+- Background-queue questions that treat temporary operational tables as the business source of truth.
 
-## Checklist NL2SQL M0
+## NL2SQL Checklist for M0
 
-- pastikan query readonly
-- pilih area dulu: user, role, menu, report, setting, numbering, queue, atau audit
-- cek apakah kebutuhan akses bersifat role-based atau user-specific override
-- pakai table translation/lang hanya bila user butuh label multibahasa
-- jangan expose kolom sensitif secara langsung
-- untuk monitoring proses gunakan tabel queue/log, bukan asumsi dari master saja
+- ensure the query stays read-only
+- choose the area first: user, role, menu, report, setting, numbering, queue, or audit
+- check whether access needs are role-based or user-specific overrides
+- use translation and language tables only when the user needs multilingual labels
+- do not expose sensitive columns directly
+- for process monitoring, use queue and log tables instead of relying on master data alone

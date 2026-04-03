@@ -1,6 +1,6 @@
 {
   "domain": "myerpplus_inventory_m3",
-  "description": "Machine-friendly NL2SQL guide untuk modul M3 inventory. Berisi tabel utama, sinonim bisnis, join hints, relasi penting, dan aturan query generation.",
+  "description": "Machine-friendly NL2SQL guide for the M3 inventory module. Covers main tables, business synonyms, join hints, key relations, and query-generation rules.",
   "source_files": [
     "semantic-schema-m3.json",
     "semantic-schema-m3-summary.md",
@@ -109,7 +109,7 @@
   "join_hints": [
     {
       "name": "inventory_request_to_transfer_flow",
-      "description": "Alur permintaan barang ke mutasi stok.",
+      "description": "Flow from material requests to stock transfers.",
       "joins": [
         "m3_mr.mrid = m3_mr_detail.idmr",
         "m3_mr_detail.idmrdetail = m3_ts_detail.idmrdetail",
@@ -118,7 +118,7 @@
     },
     {
       "name": "inventory_request_to_receipt_flow",
-      "description": "Alur permintaan barang ke terima mutasi.",
+      "description": "Flow from material requests to stock receipts.",
       "joins": [
         "m3_mr.mrid = m3_mr_detail.idmr",
         "m3_mr_detail.idmrdetail = m3_rs_detail.idmrdetail",
@@ -127,7 +127,7 @@
     },
     {
       "name": "transfer_to_receipt_flow",
-      "description": "Alur mutasi stok ke penerimaan mutasi.",
+      "description": "Flow from stock transfers to stock receipts.",
       "joins": [
         "m3_ts.tsid = m3_ts_detail.idts",
         "m3_ts_detail.idtsdetail = m3_rs_detail.idtsdetail",
@@ -136,7 +136,7 @@
     },
     {
       "name": "stock_opname_adjustment_flow",
-      "description": "Alur stok opname ke transaksi barang atau penyesuaian saldo.",
+      "description": "Flow from stock opname to stock transactions or balance adjustments.",
       "joins": [
         "m3_sp.spid = m3_sp_detail.idsp",
         "m3_sp_detail.idspdetail = m3_sa_detail.idspdetail",
@@ -145,54 +145,108 @@
     },
     {
       "name": "opening_balance_inventory_flow",
-      "description": "Relasi saldo awal barang dengan detail saldo awal.",
+      "description": "Relationship from inventory opening-balance headers to opening-balance details.",
       "joins": [
         "m3_ib.ibid = m3_ib_detail.idib"
       ]
     }
   ],
+  "detail_lineage_keys": [
+    {
+      "name": "ts_detail_to_mr",
+      "source_table": "m3_ts_detail",
+      "source_column": "idmrdetail",
+      "target_table": "m3_mr_detail",
+      "target_column": "idmrdetail",
+      "next_hop": {
+        "table": "m3_mr",
+        "via_column": "idmr",
+        "target_column": "mrid"
+      },
+      "business_meaning": "Trace a transfer-stock line back to the originating material request."
+    },
+    {
+      "name": "rs_detail_to_mr",
+      "source_table": "m3_rs_detail",
+      "source_column": "idmrdetail",
+      "target_table": "m3_mr_detail",
+      "target_column": "idmrdetail",
+      "next_hop": {
+        "table": "m3_mr",
+        "via_column": "idmr",
+        "target_column": "mrid"
+      },
+      "business_meaning": "Trace a receive-stock line back to the originating material request."
+    },
+    {
+      "name": "rs_detail_to_ts",
+      "source_table": "m3_rs_detail",
+      "source_column": "idtsdetail",
+      "target_table": "m3_ts_detail",
+      "target_column": "idtsdetail",
+      "next_hop": {
+        "table": "m3_ts",
+        "via_column": "idts",
+        "target_column": "tsid"
+      },
+      "business_meaning": "Trace a receive-stock line back to the originating stock transfer."
+    },
+    {
+      "name": "sa_detail_to_sp",
+      "source_table": "m3_sa_detail",
+      "source_column": "idspdetail",
+      "target_table": "m3_sp_detail",
+      "target_column": "idspdetail",
+      "next_hop": {
+        "table": "m3_sp",
+        "via_column": "idsp",
+        "target_column": "spid"
+      },
+      "business_meaning": "Trace a stock-adjustment line back to the originating stock opname."
+    }
+  ],
   "polymorphic_relationships": [],
   "important_rules": [
-    "Gunakan tabel header untuk nomor dokumen, tanggal, gudang, dan status transaksi inventory.",
-    "Gunakan tabel detail untuk item, kuantitas, satuan, stok terakhir, dan progres realisasi.",
-    "Untuk tracing proses inventory, mulai dari detail agar alur antar tahap lebih akurat.",
-    "Untuk daily check, bedakan m3_dc_detail dan m3_dc_check sesuai kebutuhan data unit atau checklist.",
-    "Gunakan m3_sp dan m3_sa untuk analitik stock opname dan penyesuaian stok.",
-    "Gunakan m1_item untuk barang umum dan m1_item_hauling untuk konteks daily check hauling.",
-    "Hindari field custom* kecuali benar-benar diminta user atau report."
+    "Use header tables for document numbers, dates, warehouses, and inventory transaction status.",
+    "Use detail tables for items, quantities, units, latest stock values, and realization progress.",
+    "For inventory-flow tracing, start from detail tables so the stage-to-stage flow stays accurate.",
+    "For daily-check questions, distinguish between `m3_dc_detail` and `m3_dc_check` depending on whether the user needs unit data or checklist data.",
+    "Use `m3_sp` and `m3_sa` for stock-opname and stock-adjustment analytics.",
+    "Use `m1_item` for general items and `m1_item_hauling` for hauling daily-check context.",
+    "Avoid `custom*` fields unless the user or report explicitly requires them."
   ],
   "query_patterns": [
     {
       "name": "document_summary",
-      "description": "Ringkasan dokumen inventory berbasis header.",
-      "pattern": "Gunakan tabel header seperti m3_mr, m3_ts, m3_rs, m3_sp, atau m3_ib untuk nomor transaksi, tanggal, gudang, dan status."
+      "description": "Header-based inventory-document summary.",
+      "pattern": "Use header tables such as `m3_mr`, `m3_ts`, `m3_rs`, `m3_sp`, or `m3_ib` for transaction numbers, dates, warehouses, and statuses."
     },
     {
       "name": "document_items",
-      "description": "Detail item per dokumen inventory.",
-      "pattern": "Join header ke detail, misalnya m3_ts -> m3_ts_detail atau m3_ib -> m3_ib_detail."
+      "description": "Inventory document line items.",
+      "pattern": "Join header to detail, for example `m3_ts -> m3_ts_detail` or `m3_ib -> m3_ib_detail`."
     },
     {
       "name": "inventory_flow_trace",
-      "description": "Tracing alur inventory dari permintaan ke mutasi dan penerimaan.",
-      "pattern": "Mulai dari detail: MR -> MR_DETAIL -> TS_DETAIL -> RS_DETAIL."
+      "description": "Trace inventory flow from request to transfer and receipt.",
+      "pattern": "Start from detail tables: `MR -> MR_DETAIL -> TS_DETAIL -> RS_DETAIL`."
     },
     {
       "name": "stock_opname_trace",
-      "description": "Tracing stok opname ke transaksi penyesuaian.",
-      "pattern": "SP -> SP_DETAIL -> SA_DETAIL."
+      "description": "Trace stock opname to adjustment transactions.",
+      "pattern": "`SP -> SP_DETAIL -> SA_DETAIL`."
     },
     {
       "name": "opening_balance_trace",
-      "description": "Tracing saldo awal inventory.",
-      "pattern": "IB -> IB_DETAIL."
+      "description": "Trace inventory opening balances.",
+      "pattern": "`IB -> IB_DETAIL`."
     }
   ],
   "caution_areas": [
-    "Pertanyaan yang mencampur MR, TS, dan RS pada level header tanpa detail.",
-    "Pertanyaan stock opname yang sebenarnya membutuhkan tabel progress.",
-    "Pertanyaan daily check yang perlu membedakan data checklist dan detail operasional.",
-    "Pertanyaan histori yang mencampur tabel aktif dan history.",
-    "Pertanyaan yang mengandalkan custom*."
+    "Questions that mix MR, TS, and RS only at header level without detail context.",
+    "Stock-opname questions that actually require progress tables.",
+    "Daily-check questions that need a distinction between checklist data and operational detail.",
+    "History questions that mix active tables and history tables.",
+    "Questions that rely on `custom*` fields."
   ]
 }

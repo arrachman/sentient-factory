@@ -1,0 +1,355 @@
+{
+  "title": "Semantic Schema M11 Summary Flat",
+  "source_json": "semantic-schema-m11-summary.json",
+  "count": 37,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_ak",
+      "alias": "healthcare_ak",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Tagihan atau akun kunjungan pasien.",
+      "column_count": 122
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_ilo",
+      "alias": "healthcare_ilo",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Inpatient log/order terkait rawat inap.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_isk",
+      "alias": "healthcare_isk",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Tindakan atau dokumen klinis rawat inap tertentu.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_kj",
+      "alias": "healthcare_kj",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Kunjungan pasien atau kunjungan medis sebagai header episode layanan healthcare.",
+      "column_count": 140
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_km",
+      "alias": "healthcare_km",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Kemoterapi/medical module terkait kunjungan pasien.",
+      "column_count": 122
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_kw",
+      "alias": "healthcare_kw",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Kwitansi atau pembayaran kunjungan/layanan healthcare.",
+      "column_count": 70
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_lb",
+      "alias": "healthcare_lb",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Laboratorium / hasil pemeriksaan lab header.",
+      "column_count": 119
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_lu",
+      "alias": "healthcare_lu",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Layanan umum / tindakan medis header.",
+      "column_count": 115
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_pb",
+      "alias": "healthcare_pb",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Pembayaran/penagihan healthcare header.",
+      "column_count": 65
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_pt",
+      "alias": "healthcare_pt",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Pendaftaran/perawatan pasien atau parameter treatment.",
+      "column_count": 32
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_rk",
+      "alias": "healthcare_rk",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Rekam/riwayat kunjungan atau rawat kesehatan header.",
+      "column_count": 62
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_rm",
+      "alias": "healthcare_rm",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Rekam medis atau resume medis pasien.",
+      "column_count": 83
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_ro",
+      "alias": "healthcare_ro",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Resep obat atau order obat header.",
+      "column_count": 116
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m_11_ud",
+      "alias": "healthcare_ud",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Unit/departemen healthcare.",
+      "column_count": 28
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "kunjungan_to_tagihan_flow",
+      "description": "Relasi kunjungan pasien ke tagihan dan detail tagihan.",
+      "joins": [
+        "m_11_kj.kjid = m_11_kj_detail.idkj",
+        "m_11_ak.akidkj = m_11_kj.kjid",
+        "m_11_ak.akid = m_11_ak_detail.idak"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "kunjungan_to_layanan_flow",
+      "description": "Relasi kunjungan pasien ke layanan umum/lab/resep.",
+      "joins": [
+        "m_11_kj.kjid = m_11_lu.luidkj",
+        "m_11_kj.kjid = m_11_lb.lbidkj",
+        "m_11_kj.kjid = m_11_ro.roidkj"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "kunjungan_to_pembayaran_flow",
+      "description": "Relasi kunjungan pasien ke dokumen pembayaran/kwitansi.",
+      "joins": [
+        "m_11_kj.kjid = m_11_kw_detail.idtransaksi when sumber = KJ",
+        "m_11_kj.kjid = m_11_rk.rkidkj",
+        "m_11_kj.kjid = m_11_rm.rmidkj"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "layanan_history_flow",
+      "description": "Relasi layanan umum aktif ke histori perubahan.",
+      "joins": [
+        "m_11_lu.luid = m_11_lu_history.luid",
+        "m_11_lu_detail.idludetail = m_11_lu_detail_history.idludetail"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "tagihan_item_flow",
+      "description": "Relasi tagihan ke layanan/barang detail.",
+      "joins": [
+        "m_11_ak.akid = m_11_ak_detail.idak",
+        "m_11_ak_detail.idlayanan = m1_item.bid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_ak_detail",
+      "alias": "healthcare_ak_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail layanan/barang pada tagihan kunjungan.",
+      "column_count": 103
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_kw_detail",
+      "alias": "healthcare_kw_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail alokasi pembayaran pada kwitansi healthcare.",
+      "column_count": 37
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_lb_detail",
+      "alias": "healthcare_lb_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail item pemeriksaan laboratorium.",
+      "column_count": 98
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_lb_hasil",
+      "alias": "healthcare_lb_hasil",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Hasil pemeriksaan laboratorium.",
+      "column_count": 11
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_lu_detail",
+      "alias": "healthcare_lu_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail layanan umum / tindakan medis.",
+      "column_count": 98
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_pb_detail",
+      "alias": "healthcare_pb_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail penagihan atau item pembayaran healthcare.",
+      "column_count": 34
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_pb_pay",
+      "alias": "healthcare_pb_pay",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Alokasi pembayaran pada dokumen penagihan healthcare.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_rk_pay",
+      "alias": "healthcare_rk_pay",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Alokasi pembayaran pada rekam/rawat kesehatan.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m_11_ro_detail",
+      "alias": "healthcare_ro_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail obat/layanan pada resep/order obat.",
+      "column_count": 103
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "kunjungan_to_tagihan_flow",
+      "description": "Relasi kunjungan pasien ke tagihan dan detail tagihan.",
+      "joins": [
+        "m_11_kj.kjid = m_11_kj_detail.idkj",
+        "m_11_ak.akidkj = m_11_kj.kjid",
+        "m_11_ak.akid = m_11_ak_detail.idak"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "kunjungan_to_pembayaran_flow",
+      "description": "Relasi kunjungan pasien ke dokumen pembayaran/kwitansi.",
+      "joins": [
+        "m_11_kj.kjid = m_11_kw_detail.idtransaksi when sumber = KJ",
+        "m_11_kj.kjid = m_11_rk.rkidkj",
+        "m_11_kj.kjid = m_11_rm.rmidkj"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "layanan_history_flow",
+      "description": "Relasi layanan umum aktif ke histori perubahan.",
+      "joins": [
+        "m_11_lu.luid = m_11_lu_history.luid",
+        "m_11_lu_detail.idludetail = m_11_lu_detail_history.idludetail"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "tagihan_item_flow",
+      "description": "Relasi tagihan ke layanan/barang detail.",
+      "joins": [
+        "m_11_ak.akid = m_11_ak_detail.idak",
+        "m_11_ak_detail.idlayanan = m1_item.bid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m_11_kj_history",
+      "alias": "healthcare_kj_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat perubahan kunjungan pasien.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m_11_km_history",
+      "alias": "healthcare_km_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat perubahan modul KM.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m_11_lu_detail_history",
+      "alias": "healthcare_lu_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat detail layanan umum.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m_11_lu_history",
+      "alias": "healthcare_lu_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat perubahan layanan umum.",
+      "column_count": 0
+    },
+    {
+      "type": "relation",
+      "module": "HISTORY_TABLES",
+      "name": "layanan_history_flow",
+      "description": "Relasi layanan umum aktif ke histori perubahan.",
+      "joins": [
+        "m_11_lu.luid = m_11_lu_history.luid",
+        "m_11_lu_detail.idludetail = m_11_lu_detail_history.idludetail"
+      ]
+    }
+  ]
+}

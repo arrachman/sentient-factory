@@ -1,61 +1,63 @@
 # M5 NL2SQL Guide
 
-Sumber utama:
+Primary sources:
+
 - `semantic-schema-m5.json`
 - `m0_report_rmoduleid_5.md`
 - `m5-queries.md`
 
-Tujuan:
-- membantu pemilihan tabel M5
-- membantu pemilihan join yang aman
-- menandai relasi polymorphic yang harus ditangani dengan `sumber`
-- memberi sinonim bisnis yang natural untuk retrieval
+Purpose:
 
-## Cakupan Tabel Utama
+- help choose the correct M5 tables
+- help choose safe joins
+- mark polymorphic relations that must be interpreted together with `sumber`
+- provide natural business synonyms for retrieval and prompting
 
-- `m5_sq`, `m5_sq_detail`: penawaran penjualan, sales quotation
-- `m5_so`, `m5_so_detail`: order penjualan, sales order
-- `m5_pl`, `m5_pl_detail`, `m5_pl_pack`: packing list, persiapan barang
-- `m5_do`, `m5_do_detail`: delivery order, surat jalan
-- `m5_dr`, `m5_dr_detail`: delivery report, hasil pengiriman
+## Main Table Coverage
+
+- `m5_sq`, `m5_sq_detail`: sales quotation
+- `m5_so`, `m5_so_detail`: sales order
+- `m5_pl`, `m5_pl_detail`, `m5_pl_pack`: packing list and packing preparation
+- `m5_do`, `m5_do_detail`: delivery order
+- `m5_dr`, `m5_dr_detail`: delivery receipt / delivery result
 - `m5_pi`, `m5_pi_detail`: proforma invoice
-- `m5_si`, `m5_si_detail`, `m5_si_pay`, `m5_si_installment`, `m5_si_material`, `m5_si_cost`: sales invoice final dan turunannya
-- `m5_rnr`, `m5_rnr_detail`: penerimaan barang retur
-- `m5_sr`, `m5_sr_detail`: retur penjualan
-- `m5_as`, `m5_as_pay`: uang muka penjualan
-- `m5_ip`, `m5_ip_pay`: penerimaan pembayaran
-- `m5_ic`, `m5_ic_detail`: penagihan piutang, invoice collection
+- `m5_si`, `m5_si_detail`, `m5_si_pay`, `m5_si_installment`, `m5_si_material`, `m5_si_cost`: final sales invoice and related tables
+- `m5_rnr`, `m5_rnr_detail`: returned goods receipt
+- `m5_sr`, `m5_sr_detail`: sales return
+- `m5_as`, `m5_as_pay`: advance sales
+- `m5_ip`, `m5_ip_pay`: incoming payment
+- `m5_ic`, `m5_ic_detail`: invoice collection / receivable collection
 - `m5_pv`, `m5_pv_detail`: payment voucher
-- `m5_rp`, `m5_rp_pay`: piutang ongkos kirim atau tagihan tambahan
-- `m5_spa`, `m5_spa_detail`: penyesuaian poin penjualan
-- `m5_sie`, `m5_sie_detail`: tukar faktur penjualan
-- `m5_cl`: closing sales, status realisasi penjualan
-- `m5_files`: lampiran transaksi
-- `m5_notes`: catatan transaksi
+- `m5_rp`, `m5_rp_pay`: shipping-charge receivable or additional receivable
+- `m5_spa`, `m5_spa_detail`: sales point adjustment
+- `m5_sie`, `m5_sie_detail`: sales invoice exchange
+- `m5_cl`: sales closing / sales realization status
+- `m5_files`: attachment tables
+- `m5_notes`: transaction notes
 
-## Sinonim Bisnis
+## Business Synonyms
 
-- `SQ`: sales quotation, penawaran penjualan
-- `SO`: sales order, order penjualan
-- `PL`: packing list, daftar packing
-- `DO`: delivery order, surat jalan, pengiriman
-- `DR`: delivery report, hasil pengiriman
-- `PI`: proforma invoice, invoice sementara
-- `SI`: sales invoice, faktur penjualan
-- `RNR`: receipt note return, penerimaan barang retur
-- `SR`: sales return, retur penjualan
-- `AS`: advance sales, uang muka penjualan
-- `IP`: incoming payment, penerimaan pembayaran
-- `IC`: invoice collection, penagihan piutang
-- `PV`: payment voucher, voucher pembayaran piutang
-- `RP`: piutang ongkos kirim, shipping charge receivable
-- `SPA`: sales point adjustment, penyesuaian poin penjualan
-- `SIE`: sales invoice exchange, tukar faktur penjualan
-- `CL`: closing sales, penutupan penjualan, status realisasi penjualan
+- `SQ`: sales quotation
+- `SO`: sales order
+- `PL`: packing list
+- `DO`: delivery order
+- `DR`: delivery receipt / delivery result
+- `PI`: proforma invoice
+- `SI`: sales invoice
+- `RNR`: receipt note return
+- `SR`: sales return
+- `AS`: advance sales
+- `IP`: incoming payment
+- `IC`: invoice collection
+- `PV`: payment voucher
+- `RP`: shipping charge receivable
+- `SPA`: sales point adjustment
+- `SIE`: sales invoice exchange
+- `CL`: sales closing / sales realization status
 
-## Join Hints Utama
+## Primary Join Hints
 
-### Alur dokumen penjualan
+### Sales document flow
 
 ```sql
 m5_sq.sqid = m5_sq_detail.idsq
@@ -72,7 +74,113 @@ m5_rnr.rnrid = m5_rnr_detail.idrnr
 m5_sr.srid = m5_sr_detail.idsr
 ```
 
-### Relasi silang detail dokumen
+## Cross-Document Lineage Keys
+
+This section is important for the AI agent. In M5, document relations are often not safe enough when read only from headers. Many traces should start from **foreign keys stored in detail tables**.
+
+### General rules
+
+- if the question says "which SO did this invoice come from", start from `m5_si_detail`, not `m5_si`
+- if the question says "which PI or SO did this delivery come from", start from `m5_do_detail`
+- if the question says "which invoice or receipt did this return come from", start from `m5_sr_detail` or `m5_rnr_detail`
+- if one detail row has multiple lineage columns, prioritize the column closest to the document explicitly asked by the user
+
+### Sales invoice to sales order
+
+```sql
+m5_si_detail.idsodetail -> m5_so_detail.idsodetail
+m5_so_detail.idso -> m5_so.soid
+```
+
+Business meaning:
+
+- one sales invoice row can be traced back to its source sales-order row
+- to get the SO number, do not join `m5_si` directly to `m5_so`
+- the safe route is `m5_si_detail -> m5_so_detail -> m5_so`
+
+### Sales invoice to delivery order
+
+```sql
+m5_si_detail.iddodetail -> m5_do_detail.iddodetail
+m5_do_detail.iddo -> m5_do.doid
+```
+
+Business meaning:
+
+- if the invoice is formed from shipment, the DO number is usually traced from invoice detail
+- use this for questions such as "which delivery order was used by this invoice"
+
+### Sales invoice to packing list
+
+```sql
+m5_si_detail.idpldetail -> m5_pl_detail.idpldetail
+m5_pl_detail.idpl -> m5_pl.plid
+```
+
+### Sales invoice to proforma invoice
+
+```sql
+m5_si_detail.idpidetail -> m5_pi_detail.idpidetail
+m5_pi_detail.idpi -> m5_pi.piid
+```
+
+### Sales invoice to delivery receipt
+
+```sql
+m5_si_detail.iddrdetail -> m5_dr_detail.iddrdetail
+m5_dr_detail.iddr -> m5_dr.drid
+```
+
+### Delivery order to sales order
+
+```sql
+m5_do_detail.idsodetail -> m5_so_detail.idsodetail
+m5_so_detail.idso -> m5_so.soid
+```
+
+### Delivery order to proforma invoice
+
+```sql
+m5_do_detail.idpidetail -> m5_pi_detail.idpidetail
+m5_pi_detail.idpi -> m5_pi.piid
+```
+
+### Delivery receipt to delivery order
+
+```sql
+m5_dr_detail.iddodetail -> m5_do_detail.iddodetail
+m5_do_detail.iddo -> m5_do.doid
+```
+
+### Delivery receipt to sales invoice
+
+```sql
+m5_dr_detail.idsidetail -> m5_si_detail.idsidetail
+m5_si_detail.idsi -> m5_si.siid
+```
+
+### Receipt note return to sales invoice
+
+```sql
+m5_rnr_detail.idsidetail -> m5_si_detail.idsidetail
+m5_si_detail.idsi -> m5_si.siid
+```
+
+### Sales return to sales invoice
+
+```sql
+m5_sr_detail.idsidetail -> m5_si_detail.idsidetail
+m5_si_detail.idsi -> m5_si.siid
+```
+
+### Sales return to receipt note return
+
+```sql
+m5_sr_detail.idrnrdetail -> m5_rnr_detail.idrnrdetail
+m5_rnr_detail.idrnr -> m5_rnr.rnrid
+```
+
+## Detail-Level Cross References
 
 ```sql
 m5_pi_detail.idsqdetail = m5_sq_detail.idsqdetail
@@ -86,7 +194,7 @@ m5_sr_detail.idsidetail = m5_si_detail.idsidetail
 m5_sr_detail.idrnrdetail = m5_rnr_detail.idrnrdetail
 ```
 
-### Piutang dan pembayaran
+## Receivable And Payment Flow
 
 ```sql
 m5_ic.icid = m5_ic_detail.idic
@@ -100,7 +208,7 @@ m5_as.asidip = m5_ip.ipid
 m5_si.siidas = m5_as.asid
 ```
 
-### Customer dan item master
+## Master Data Cross-Module Relations
 
 ```sql
 m5_sq.sqcustomer = m1_contact.kid
@@ -130,117 +238,54 @@ m5_rnr_detail.idbarang = m1_item.bid
 m5_sr_detail.idbarang = m1_item.bid
 ```
 
-## Relasi Polymorphic
-
-### `m5_ic_detail`
-
-Gunakan `sumber` untuk menentukan target `idtransaksi`:
+## POS To Formal Sales Invoice
 
 ```sql
-sumber = 'AS' -> m5_as.asid
-sumber = 'SI' -> m5_si.siid
-sumber = 'SR' -> m5_sr.srid
+m_12_pos_voucher_out.voidtransaksi = m5_si.siid
 ```
 
-Contoh aman:
+Business meaning:
 
-```sql
-LEFT JOIN m5_as a
-  ON icd.sumber = 'AS' AND icd.idtransaksi = a.asid
-LEFT JOIN m5_si si
-  ON icd.sumber = 'SI' AND icd.idtransaksi = si.siid
-LEFT JOIN m5_sr sr
-  ON icd.sumber = 'SR' AND icd.idtransaksi = sr.srid
-```
+- a POS voucher that is truly consumed by a formal sales invoice points to `m5_si`
+- use this relation when the user asks which sales invoice consumed a POS voucher
 
-### `m5_pv_detail`
+## Sales Boundary To Finance
 
-Gunakan `sumber` untuk menentukan target `idtransaksi`:
+- M5 is the domain of commercial sales documents and operational receivables
+- if the user asks about posting journals, cash/bank, or ledger impact, identify the relevant M5 document first and then move to M2
+- do not invent one direct global join `M5 -> M2` when the active source does not provide an explicit FK
 
-```sql
-sumber = 'SI' -> m5_si.siid
-sumber = 'SR' -> m5_sr.srid
-```
+## Sales Boundary To Inventory
 
-### `m5_sie_detail`
+- DO, DR, RNR, and SR are operational document sources for outbound goods, customer receipt, returned goods, and goods coming back
+- if the user asks about stock movement, warehouse balance, or inventory impact, identify the relevant sales document first and then move to M3
+- do not use M5 alone to answer formal inventory-balance questions
 
-Gunakan `sumber` untuk menentukan target `idtransaksi`:
+## Table Selection Rules
 
-```sql
-sumber = 'SI' -> m5_si.siid
-sumber = 'SR' -> m5_sr.srid
-```
+- use header tables for document number, date, customer, warehouse, status, and commercial context
+- use detail tables for item rows, quantity, price, lineage tracing, and document conversion analysis
+- use `_pay` and collection tables for receivable settlement or payment allocation
+- use `_history` tables only when the user explicitly asks for audit trail or document history
+- always prefer detail-to-detail lineage over guessed header-to-header joins
 
-## Aturan Pemilihan Tabel
+## Safe Query Patterns
 
-- Gunakan tabel header bila pertanyaan fokus pada nomor dokumen, tanggal, customer, status, total, atau ringkasan transaksi.
-- Gunakan tabel detail bila pertanyaan fokus pada item, kuantitas, harga, diskon, progres realisasi, atau gudang.
-- Gunakan tabel `_history` hanya bila user eksplisit meminta histori, perubahan, audit trail, atau versi lama dokumen.
-- Gunakan `m5_cl` bila pertanyaan fokus pada status lintas dokumen atau progres realisasi per item/customer.
-- Gunakan `m5_spa` bila pertanyaan fokus pada poin customer.
-- Gunakan `m5_sie` bila pertanyaan fokus pada tukar faktur, regrouping invoice, atau pengaitan ulang invoice/retur.
+### Sales document flow lookup
 
-## Aturan Penting
+Start from the detail table closest to the requested document, then climb to the needed header.
 
-- Kolom `idtransaksi` pada `m5_ic_detail`, `m5_pv_detail`, dan `m5_sie_detail` tidak boleh di-join langsung tanpa memeriksa `sumber`.
-- Kolom `carabayar` berarti metode pembayaran, bukan nilai nominal.
-- Kolom `asalbarang` berarti asal atau sumber barang, bukan identitas barang utama.
-- Kolom `kodepa` adalah kode referensi PA internal; jangan diasumsikan sebagai foreign key pasti tanpa bukti query tambahan.
-- Kolom `customtext*`, `customint*`, `customdbl*`, `customdate*` adalah field tambahan. Hindari memakainya kecuali user atau report memang merujuk field tersebut.
+### Receivable aging
 
-## Pola Query Aman
+Start from `m5_si`, optionally join settlement tables such as `m5_ic_detail`, `m5_pv_detail`, `m5_as_pay`, or `m5_ip_pay` only when the question truly needs collection or payment context.
 
-### Ringkasan dokumen
+### Return tracing
 
-Gunakan header saja:
+Start from `m5_sr_detail` or `m5_rnr_detail`, then trace back to `m5_si_detail`, and only then move to the invoice header.
 
-```sql
-SELECT sqnotransaksi, sqtgl, sqcustomer, sqstatus, sqtotaltransaksi
-FROM m5_sq
-```
+## Extra Caution
 
-### Item per dokumen
-
-Join header ke detail:
-
-```sql
-SELECT so.sonotransaksi, sod.idbarang, sod.namabarang, sod.jmlbarang
-FROM m5_so so
-JOIN m5_so_detail sod ON sod.idso = so.soid
-```
-
-### Tracing alur dokumen
-
-Mulai dari detail:
-
-```sql
-SQ -> SQ_DETAIL -> SO_DETAIL -> PL_DETAIL / DO_DETAIL -> DR_DETAIL
-```
-
-### Penagihan dan pembayaran
-
-```sql
-IC -> IC_DETAIL -> PV_DETAIL -> PV
-```
-
-### Invoice dan retur
-
-```sql
-SI -> SI_DETAIL -> RNR_DETAIL -> SR_DETAIL
-```
-
-## Query yang Perlu Extra Caution
-
-- pertanyaan lintas `SI`, `SR`, `AS` melalui `m5_ic_detail`
-- pertanyaan pembayaran yang memakai `m5_pv_detail.idtransaksi`
-- pertanyaan tukar faktur yang memakai `m5_sie_detail.idtransaksi`
-- pertanyaan histori yang mencampur tabel aktif dan `_history`
-- pertanyaan yang mengandalkan `custom*`
-
-## Checklist NL2SQL M5
-
-- pilih header vs detail lebih dulu
-- cek apakah relasi perlu `sumber`
-- gunakan join dari `join_hints` bila tersedia
-- pakai master `m1_contact`, `m1_item`, `m0_payment_method` hanya saat butuh label/nama
-- hindari asumsi foreign key untuk `kodepa` dan `custom*`
+- questions that mix sales document flow with finance posting impact in one jump
+- questions that ask for source-document lineage but only mention header numbers
+- questions that assume one invoice always comes from one SO header without checking detail lineage
+- questions that combine POS vouchers with sales invoices without using `m_12_pos_voucher_out`

@@ -1,88 +1,107 @@
 # Semantic Schema M3 Summary
 
-Sumber schema: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m3.json`
-Sumber function/query: `/home/rania/apps/sentient-factory/m3-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_3.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
+Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m3.json`
+Function/query source: `/home/rania/apps/sentient-factory/m3-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_3.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
 
-Total tabel M3 di schema: **43**
-Total tabel M3 terdeteksi di query aktif: **43**
+Total M3 tables in schema: **43**
+Total M3 tables detected in active queries: **43**
 Total function M3: **44**
 Total polymorphic relationships: **0**
 Total join hints: **5**
 
-Dokumen ini merangkum alias, deskripsi, struktur tabel, relasi utama, join hints, dan function semantic utama untuk modul inventory M3.
-Schema JSON sudah disinkronkan terhadap query aktif dan report M3, sehingga tabel history/progress/auxiliary yang muncul di source kini ikut tercatat di schema.
+This document summarizes aliases, descriptions, table structure, main relationships, join hints, and primary semantic functions for M3 Inventory.
+The schema JSON has been synchronized with active M3 queries and reports, so history, progress, and auxiliary tables detected in source queries are now included in the schema.
 
 ## Join Hints
 
-- `inventory_request_to_transfer_flow`: Alur permintaan barang ke mutasi stok.
+- `inventory_request_to_transfer_flow`: Material-request flow into stock transfer.
   `m3_mr.mrid = m3_mr_detail.idmr`
   `m3_mr_detail.idmrdetail = m3_ts_detail.idmrdetail`
   `m3_ts.tsid = m3_ts_detail.idts`
-- `inventory_request_to_receipt_flow`: Alur permintaan barang ke terima mutasi.
+- `inventory_request_to_receipt_flow`: Material-request flow into stock receipt.
   `m3_mr.mrid = m3_mr_detail.idmr`
   `m3_mr_detail.idmrdetail = m3_rs_detail.idmrdetail`
   `m3_rs.rsid = m3_rs_detail.idrs`
-- `transfer_to_receipt_flow`: Alur mutasi stok ke penerimaan mutasi.
+- `transfer_to_receipt_flow`: Transfer-stock flow into receipt processing.
   `m3_ts.tsid = m3_ts_detail.idts`
   `m3_ts_detail.idtsdetail = m3_rs_detail.idtsdetail`
   `m3_rs.rsid = m3_rs_detail.idrs`
-- `stock_opname_adjustment_flow`: Alur stok opname ke transaksi barang/saldo penyesuaian.
+- `stock_opname_adjustment_flow`: Stock-opname flow into stock-adjustment transactions.
   `m3_sp.spid = m3_sp_detail.idsp`
   `m3_sp_detail.idspdetail = m3_sa_detail.idspdetail`
   `m3_sa.said = m3_sa_detail.idsa`
-- `opening_balance_inventory_flow`: Relasi saldo awal barang dengan detail saldo awal.
+- `opening_balance_inventory_flow`: Opening inventory balance relationship with opening-balance detail rows.
   `m3_ib.ibid = m3_ib_detail.idib`
+
+## Detail-Level Relation Keys
+
+This section is important for the AI agent because M3 inventory tracing often has to start from lineage keys stored in detail tables.
+
+- `m3_ts_detail.idmrdetail -> m3_mr_detail.idmrdetail -> m3_mr.mrid`
+  Used when a transfer-stock line must be traced back to its originating material request.
+- `m3_rs_detail.idmrdetail -> m3_mr_detail.idmrdetail -> m3_mr.mrid`
+  Used when a receive-stock line must be traced back to its originating material request.
+- `m3_rs_detail.idtsdetail -> m3_ts_detail.idtsdetail -> m3_ts.tsid`
+  Used when a receive-stock line must be traced back to its originating transfer stock.
+- `m3_sa_detail.idspdetail -> m3_sp_detail.idspdetail -> m3_sp.spid`
+  Used when a stock-adjustment line must be traced back to the stock opname source.
+
+Practical rules:
+
+- for inventory lineage questions, starting from detail is safer than starting from headers
+- move to the header only after the source line is identified
+- the most stable lineage paths are `MR -> TS -> RS` and `SP -> SA`, both read from detail-level keys
 
 ## Polymorphic Relationships
 
-- Tidak ada relasi polymorphic eksplisit yang terdeteksi pada schema/query M3 aktif.
+- No explicit polymorphic relationships were detected in the active M3 schema/query set.
 
-## Ringkasan Modul
+## Module Overview
 
-- **MR**: Material Request / Permintaan Barang | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 2
-- **TS**: Transfer Stock / Mutasi Barang | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 3
-- **RS**: Receive Stock / Terima Mutasi | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 3
-- **SA**: Transaksi Barang | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 1
-- **SP**: Stock Opname | tabel schema: 6 | header: 1 | detail: 1 | history/progress: 4 | relasi: 1
-- **PA**: Set Harga Jual | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 1
-- **IB**: Saldo Awal Barang | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 1
-- **RF**: Pengisian Bahan Bakar | tabel schema: 4 | header: 1 | detail: 1 | history/progress: 2 | relasi: 1
-- **DC**: Daily Check / Time Sheet | tabel schema: 6 | header: 1 | detail: 2 | history/progress: 3 | relasi: 2
-- **RW**: Warehouse Transaction RW | tabel schema: 1 | header: 1 | detail: 0 | history/progress: 0 | relasi: 0
-- **NOTES**: Catatan Transaksi Inventory | tabel schema: 1 | header: 0 | detail: 0 | history/progress: 0 | relasi: 0
-- **FILES**: Lampiran Transaksi Inventory | tabel schema: 1 | header: 0 | detail: 0 | history/progress: 0 | relasi: 0
+- **MR**: Material Request | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 2
+- **TS**: Transfer Stock | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 3
+- **RS**: Receive Stock | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 3
+- **SA**: Stock Adjustment Transaction | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 1
+- **SP**: Stock Opname | schema tables: 6 | header: 1 | detail: 1 | history/progress: 4 | relations: 1
+- **PA**: Selling Price Setup | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 1
+- **IB**: Opening Inventory Balance | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 1
+- **RF**: Fuel Refill | schema tables: 4 | header: 1 | detail: 1 | history/progress: 2 | relations: 1
+- **DC**: Daily Check / Timesheet | schema tables: 6 | header: 1 | detail: 2 | history/progress: 3 | relations: 2
+- **RW**: Warehouse Transaction RW | schema tables: 1 | header: 1 | detail: 0 | history/progress: 0 | relations: 0
+- **NOTES**: Inventory Notes | schema tables: 1 | header: 0 | detail: 0 | history/progress: 0 | relations: 0
+- **FILES**: Inventory Attachments | schema tables: 1 | header: 0 | detail: 0 | history/progress: 0 | relations: 0
 
 ## MR - Material Request / Permintaan Barang
 
-Permintaan barang antar gudang atau kebutuhan internal.
+Material request across warehouses or for internal needs.
 
-### Tabel
+### Tables
 
-- `m3_mr` | alias: `inventory_mr` | tipe: Header | kolom: 28
-  Transaksi inventory atau gudang untuk mr.
-- `m3_mr_detail` | alias: `inventory_mr_detail` | tipe: Detail | kolom: 32
-  Tabel detail untuk item/baris transaksi mr detail.
-- `m3_mr_detail_history` | alias: `inventory_mr_detail` | tipe: History | kolom: 32
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_mr_history` | alias: `inventory_mr` | tipe: History | kolom: 28
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_mr` | alias: `inventory_mr` | type: Header | columns: 28
+  Inventory or warehouse transaction for mr.
+- `m3_mr_detail` | alias: `inventory_mr_detail` | type: Detail | columns: 32
+  Detail table for transaction item/row mr detail.
+- `m3_mr_detail_history` | alias: `inventory_mr_detail` | type: History | columns: 32
+  History/archive table detected from active M3 query sources.
+- `m3_mr_history` | alias: `inventory_mr` | type: History | columns: 28
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `mrid`: Kolom bisnis mrid.
-- `mrgudangasal`: Referensi gudang asal/tujuan transaksi.
-- `mrgudangtujuan`: Referensi gudang asal/tujuan transaksi.
-- `mrautonotransaksi`: Nomor dokumen/transaksi unik.
-- `mrnotransaksi`: Nomor dokumen/transaksi unik.
-- `mrtgl`: Tanggal transaksi atau tanggal referensi.
-- `mrkodepa`: Kolom bisnis mrkodepa.
-- `mrdimintaolehkontak`: Referensi kontak atau contact person.
-- `mrtgldipakai`: Kolom bisnis mrtgldipakai.
-- `mrtglnoref`: Kolom bisnis mrtglnoref.
-- `mrstatusts`: Status proses atau status dokumen.
-- `mrstatusrs`: Status proses atau status dokumen.
+- `mrid`: Business column mrid.
+- `mrguandgasal`: Source/destination warehouse reference.
+- `mrguandgtujuan`: Source/destination warehouse reference.
+- `mrautonotransaksi`: Unique document/transaction number.
+- `mrnotransaksi`: Unique document/transaction number.
+- `mrtgl`: Transaction date or reference date.
+- `mrkodepa`: Business column mrkodepa.
+- `mrdimintaolehkontak`: Contact reference or contact person.
+- `mrtgldipakai`: Business column mrtgldipakai.
+- `mrtglnoref`: Business column mrtglnoref.
+- `mrstatusts`: Process status or document status.
+- `mrstatusrs`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_mr_detail` -> `m3_mr`: `m3_mr_detail.idmr = m3_mr.mrid`
 - `m3_mr_detail` -> `m3_ts_detail`: `m3_mr_detail.idmrdetail = m3_ts_detail.idmrdetail`
@@ -90,46 +109,46 @@ Permintaan barang antar gudang atau kebutuhan internal.
 
 ### Functions
 
-- `m3_mr_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_mr_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_mr_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_mr_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m3_mr_detail_cd`: Menyediakan lookup/detail compact untuk kebutuhan picker atau dropdown.
-- `m3_mr_detail_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_mr_terkait1`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
-- `m3_mr_terkait`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
+- `m3_mr_v`: Provides document listing or search.
+- `m3_mr_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_mr_v_history`: Provides document status-change history listing.
+- `m3_mr_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m3_mr_detail_cd`: Provides compact lookup/detail data for picker or dropdown use cases.
+- `m3_mr_detail_v`: Provides document listing or search.
+- `m3_mr_terkait1`: Retrieves document linkage with other inventory documents.
+- `m3_mr_terkait`: Retrieves document linkage with other inventory documents.
 
 ## TS - Transfer Stock / Mutasi Barang
 
-Mutasi stok antar gudang termasuk transit.
+Stock transfer across warehouses, including transit movement.
 
-### Tabel
+### Tables
 
-- `m3_ts` | alias: `inventory_ts` | tipe: Header | kolom: 28
-  Transaksi inventory atau gudang untuk ts.
-- `m3_ts_detail` | alias: `inventory_ts_detail` | tipe: Detail | kolom: 29
-  Tabel detail untuk item/baris transaksi ts detail.
-- `m3_ts_detail_history` | alias: `inventory_ts_detail` | tipe: History | kolom: 29
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_ts_history` | alias: `inventory_ts` | tipe: History | kolom: 28
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_ts` | alias: `inventory_ts` | type: Header | columns: 28
+  Inventory or warehouse transaction for ts.
+- `m3_ts_detail` | alias: `inventory_ts_detail` | type: Detail | columns: 29
+  Detail table for transaction item/row ts detail.
+- `m3_ts_detail_history` | alias: `inventory_ts_detail` | type: History | columns: 29
+  History/archive table detected from active M3 query sources.
+- `m3_ts_history` | alias: `inventory_ts` | type: History | columns: 28
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `tsid`: Kolom bisnis tsid.
-- `tsgudangasal`: Referensi gudang asal/tujuan transaksi.
-- `tsgudangtransit`: Referensi gudang asal/tujuan transaksi.
-- `tsgudangtujuan`: Referensi gudang asal/tujuan transaksi.
-- `tsautonotransaksi`: Nomor dokumen/transaksi unik.
-- `tsnotransaksi`: Nomor dokumen/transaksi unik.
-- `tstgl`: Tanggal transaksi atau tanggal referensi.
-- `tskodepa`: Kolom bisnis tskodepa.
-- `tsbagianmutasikontak`: Referensi kontak atau contact person.
-- `tstglnoref`: Kolom bisnis tstglnoref.
-- `tsidmr`: Kolom bisnis tsidmr.
-- `tsstatusrs`: Status proses atau status dokumen.
+- `tsid`: Business column tsid.
+- `tsguandgasal`: Source/destination warehouse reference.
+- `tsguandgtransit`: Source/destination warehouse reference.
+- `tsguandgtujuan`: Source/destination warehouse reference.
+- `tsautonotransaksi`: Unique document/transaction number.
+- `tsnotransaksi`: Unique document/transaction number.
+- `tstgl`: Transaction date or reference date.
+- `tskodepa`: Business column tskodepa.
+- `tsbagiantransferkontak`: Contact reference or contact person.
+- `tstglnoref`: Business column tstglnoref.
+- `tsidmr`: Business column tsidmr.
+- `tsstatusrs`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_ts_detail` -> `m3_ts`: `m3_ts_detail.idts = m3_ts.tsid`
 - `m3_ts_detail` -> `m3_mr_detail`: `m3_ts_detail.idmrdetail = m3_mr_detail.idmrdetail`
@@ -137,45 +156,45 @@ Mutasi stok antar gudang termasuk transit.
 
 ### Functions
 
-- `m3_ts_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_ts_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_ts_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_ts_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m3_ts_detail_cd`: Menyediakan lookup/detail compact untuk kebutuhan picker atau dropdown.
-- `m3_ts_detail_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_ts_terkait`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
+- `m3_ts_v`: Provides document listing or search.
+- `m3_ts_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_ts_v_history`: Provides document status-change history listing.
+- `m3_ts_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m3_ts_detail_cd`: Provides compact lookup/detail data for picker or dropdown use cases.
+- `m3_ts_detail_v`: Provides document listing or search.
+- `m3_ts_terkait`: Retrieves document linkage with other inventory documents.
 
 ## RS - Receive Stock / Terima Mutasi
 
-Penerimaan barang hasil mutasi atau proses transfer.
+Receipt of goods produced by transfer or stock-move processing.
 
-### Tabel
+### Tables
 
-- `m3_rs` | alias: `inventory_rs` | tipe: Header | kolom: 26
-  Transaksi inventory atau gudang untuk rs.
-- `m3_rs_detail` | alias: `inventory_rs_detail` | tipe: Detail | kolom: 24
-  Tabel detail untuk item/baris transaksi rs detail.
-- `m3_rs_detail_history` | alias: `inventory_rs_detail` | tipe: History | kolom: 24
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_rs_history` | alias: `inventory_rs` | tipe: History | kolom: 26
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_rs` | alias: `inventory_rs` | type: Header | columns: 26
+  Inventory or warehouse transaction for rs.
+- `m3_rs_detail` | alias: `inventory_rs_detail` | type: Detail | columns: 24
+  Detail table for transaction item/row rs detail.
+- `m3_rs_detail_history` | alias: `inventory_rs_detail` | type: History | columns: 24
+  History/archive table detected from active M3 query sources.
+- `m3_rs_history` | alias: `inventory_rs` | type: History | columns: 26
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rsid`: Kolom bisnis rsid.
-- `rsgudangasal`: Referensi gudang asal/tujuan transaksi.
-- `rsgudangtransit`: Referensi gudang asal/tujuan transaksi.
-- `rsgudangtujuan`: Referensi gudang asal/tujuan transaksi.
-- `rsautonotransaksi`: Nomor dokumen/transaksi unik.
-- `rsnotransaksi`: Nomor dokumen/transaksi unik.
-- `rstgl`: Tanggal transaksi atau tanggal referensi.
-- `rskodepa`: Kolom bisnis rskodepa.
-- `rsbagianterimakontak`: Referensi kontak atau contact person.
-- `rstglnoref`: Kolom bisnis rstglnoref.
-- `rsidmr`: Kolom bisnis rsidmr.
-- `rsidts`: Kolom bisnis rsidts.
+- `rsid`: Business column rsid.
+- `rsguandgasal`: Source/destination warehouse reference.
+- `rsguandgtransit`: Source/destination warehouse reference.
+- `rsguandgtujuan`: Source/destination warehouse reference.
+- `rsautonotransaksi`: Unique document/transaction number.
+- `rsnotransaksi`: Unique document/transaction number.
+- `rstgl`: Transaction date or reference date.
+- `rskodepa`: Business column rskodepa.
+- `rsbagianterimakontak`: Contact reference or contact person.
+- `rstglnoref`: Business column rstglnoref.
+- `rsidmr`: Business column rsidmr.
+- `rsidts`: Business column rsidts.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_rs_detail` -> `m3_rs`: `m3_rs_detail.idrs = m3_rs.rsid`
 - `m3_rs_detail` -> `m3_ts_detail`: `m3_rs_detail.idtsdetail = m3_ts_detail.idtsdetail`
@@ -183,90 +202,90 @@ Penerimaan barang hasil mutasi atau proses transfer.
 
 ### Functions
 
-- `m3_rs_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_rs_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_rs_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_rs_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m3_rs_terkait`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
+- `m3_rs_v`: Provides document listing or search.
+- `m3_rs_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_rs_v_history`: Provides document status-change history listing.
+- `m3_rs_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m3_rs_terkait`: Retrieves document linkage with other inventory documents.
 
 ## SA - Transaksi Barang
 
-Pergerakan stok umum / stock adjustment.
+General stock movement / stock adjustment.
 
-### Tabel
+### Tables
 
-- `m3_sa` | alias: `inventory_sa` | tipe: Header | kolom: 26
-  Transaksi inventory atau gudang untuk sa.
-- `m3_sa_detail` | alias: `inventory_sa_detail` | tipe: Detail | kolom: 28
-  Tabel detail untuk item/baris transaksi sa detail.
-- `m3_sa_detail_history` | alias: `inventory_sa_detail` | tipe: History | kolom: 28
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_sa_history` | alias: `inventory_sa` | tipe: History | kolom: 26
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_sa` | alias: `inventory_sa` | type: Header | columns: 26
+  Inventory or warehouse transaction for sa.
+- `m3_sa_detail` | alias: `inventory_sa_detail` | type: Detail | columns: 28
+  Detail table for transaction item/row sa detail.
+- `m3_sa_detail_history` | alias: `inventory_sa_detail` | type: History | columns: 28
+  History/archive table detected from active M3 query sources.
+- `m3_sa_history` | alias: `inventory_sa` | type: History | columns: 26
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `said`: Kolom bisnis said.
-- `sagudang`: Referensi gudang asal/tujuan transaksi.
-- `saautonotransaksi`: Nomor dokumen/transaksi unik.
-- `sanotransaksi`: Nomor dokumen/transaksi unik.
-- `satgl`: Tanggal transaksi atau tanggal referensi.
-- `sakodepa`: Kolom bisnis sakodepa.
-- `sabagiansakontak`: Referensi kontak atau contact person.
-- `satglnoref`: Kolom bisnis satglnoref.
-- `saidsp`: Kolom bisnis saidsp.
-- `sastatus`: Status proses atau status dokumen.
-- `sastatussebelumnya`: Status proses atau status dokumen.
-- `sapostingtgl`: Tanggal transaksi atau tanggal referensi.
+- `said`: Business column said.
+- `saguandg`: Source/destination warehouse reference.
+- `saautonotransaksi`: Unique document/transaction number.
+- `sanotransaksi`: Unique document/transaction number.
+- `satgl`: Transaction date or reference date.
+- `sakodepa`: Business column sakodepa.
+- `sabagiansakontak`: Contact reference or contact person.
+- `satglnoref`: Business column satglnoref.
+- `saidsp`: Business column saidsp.
+- `sastatus`: Process status or document status.
+- `sastatussebelumnya`: Process status or document status.
+- `sapostingtgl`: Transaction date or reference date.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_sa_detail` -> `m3_sa`: `m3_sa_detail.idsa = m3_sa.said`
-- `m3_sa_detail` -> `m3_sp_detail`: `m3_sa_detail.idspdetail = m3_sp_detail.idspdetail` when adjustment berasal dari stock opname
+- `m3_sa_detail` -> `m3_sp_detail`: `m3_sa_detail.idspdetail = m3_sp_detail.idspdetail` when the adjustment is sourced from stock counting
 
 ### Functions
 
-- `m3_sa_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_sa_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_sa_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_sa_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m3_sa_terkait`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
+- `m3_sa_v`: Provides document listing or search.
+- `m3_sa_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_sa_v_history`: Provides document status-change history listing.
+- `m3_sa_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m3_sa_terkait`: Retrieves document linkage with other inventory documents.
 
 ## SP - Stock Opname
 
-Pencatatan fisik stok, selisih, dan progres opname.
+Physical stock counting notes, variance tracking, and counting progress.
 
-### Tabel
+### Tables
 
-- `m3_sp` | alias: `inventory_sp` | tipe: Header | kolom: 26
-  Transaksi inventory atau gudang untuk sp.
-- `m3_sp_detail` | alias: `inventory_sp_detail` | tipe: Detail | kolom: 31
-  Tabel detail untuk item/baris transaksi sp detail.
-- `m3_sp_detail_history` | alias: `inventory_sp_detail` | tipe: History | kolom: 31
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_sp_detail_progress` | alias: `inferred_from_query` | tipe: Progress | kolom: 0
-  Tabel progress/proses yang terdeteksi dari query aktif modul M3.
-- `m3_sp_history` | alias: `inventory_sp` | tipe: History | kolom: 26
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_sp_progress` | alias: `inferred_from_query` | tipe: Progress | kolom: 0
-  Tabel progress/proses yang terdeteksi dari query aktif modul M3.
+- `m3_sp` | alias: `inventory_sp` | type: Header | columns: 26
+  Inventory or warehouse transaction for sp.
+- `m3_sp_detail` | alias: `inventory_sp_detail` | type: Detail | columns: 31
+  Detail table for transaction item/row sp detail.
+- `m3_sp_detail_history` | alias: `inventory_sp_detail` | type: History | columns: 31
+  History/archive table detected from active M3 query sources.
+- `m3_sp_detail_progress` | alias: `inferred_from_query` | type: Progress | columns: 0
+  Progress/process table detected from active M3 query sources.
+- `m3_sp_history` | alias: `inventory_sp` | type: History | columns: 26
+  History/archive table detected from active M3 query sources.
+- `m3_sp_progress` | alias: `inferred_from_query` | type: Progress | columns: 0
+  Progress/process table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `spid`: Kolom bisnis spid.
-- `spgudang`: Referensi gudang asal/tujuan transaksi.
-- `spautonotransaksi`: Nomor dokumen/transaksi unik.
-- `spnotransaksi`: Nomor dokumen/transaksi unik.
-- `sptgl`: Tanggal transaksi atau tanggal referensi.
-- `spkodepa`: Kolom bisnis spkodepa.
-- `spbagianspkontak`: Referensi kontak atau contact person.
-- `sptglnoref`: Kolom bisnis sptglnoref.
-- `spstatussa`: Status proses atau status dokumen.
-- `spstatus`: Status proses atau status dokumen.
-- `spstatussebelumnya`: Status proses atau status dokumen.
-- `sppostingtgl`: Tanggal transaksi atau tanggal referensi.
+- `spid`: Business column spid.
+- `spguandg`: Source/destination warehouse reference.
+- `spautonotransaksi`: Unique document/transaction number.
+- `spnotransaksi`: Unique document/transaction number.
+- `sptgl`: Transaction date or reference date.
+- `spkodepa`: Business column spkodepa.
+- `spbagianspkontak`: Contact reference or contact person.
+- `sptglnoref`: Business column sptglnoref.
+- `spstatussa`: Process status or document status.
+- `spstatus`: Process status or document status.
+- `spstatussebelumnya`: Process status or document status.
+- `sppostingtgl`: Transaction date or reference date.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_sp_detail` -> `m3_sp`: `m3_sp_detail.idsp = m3_sp.spid`
 - `m3_sp_detail_progress` -> `m3_sp_detail`: `m3_sp_detail_progress.idspdetail = m3_sp_detail.idspdetail` (inferred)
@@ -274,216 +293,216 @@ Pencatatan fisik stok, selisih, dan progres opname.
 
 ### Functions
 
-- `m3_sp_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_sp_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_sp_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_sp_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m3_sp_detail_cd`: Menyediakan lookup/detail compact untuk kebutuhan picker atau dropdown.
-- `m3_sp_detail_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_sp_terkait`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
+- `m3_sp_v`: Provides document listing or search.
+- `m3_sp_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_sp_v_history`: Provides document status-change history listing.
+- `m3_sp_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m3_sp_detail_cd`: Provides compact lookup/detail data for picker or dropdown use cases.
+- `m3_sp_detail_v`: Provides document listing or search.
+- `m3_sp_terkait`: Retrieves document linkage with other inventory documents.
 
-## PA - Set Harga Jual
+## PA - Sales Price Setup
 
-Penetapan atau update harga jual barang.
+Sales-price setup or update for goods.
 
-### Tabel
+### Tables
 
-- `m3_pa` | alias: `inventory_pa` | tipe: Header | kolom: 28
-  Transaksi inventory atau gudang untuk pa.
-- `m3_pa_detail` | alias: `inventory_pa_detail` | tipe: Detail | kolom: 60
-  Tabel detail untuk item/baris transaksi pa detail.
-- `m3_pa_detail_history` | alias: `inventory_pa_detail` | tipe: History | kolom: 60
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_pa_history` | alias: `inventory_pa` | tipe: History | kolom: 28
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_pa` | alias: `inventory_pa` | type: Header | columns: 28
+  Inventory or warehouse transaction for pa.
+- `m3_pa_detail` | alias: `inventory_pa_detail` | type: Detail | columns: 60
+  Detail table for transaction item/row pa detail.
+- `m3_pa_detail_history` | alias: `inventory_pa_detail` | type: History | columns: 60
+  History/archive table detected from active M3 query sources.
+- `m3_pa_history` | alias: `inventory_pa` | type: History | columns: 28
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `paid`: Kolom bisnis paid.
-- `pagudang`: Referensi gudang asal/tujuan transaksi.
-- `paautonotransaksi`: Nomor dokumen/transaksi unik.
-- `panotransaksi`: Nomor dokumen/transaksi unik.
-- `patgl`: Tanggal transaksi atau tanggal referensi.
-- `patglberlakusampai`: Kolom bisnis patglberlakusampai.
-- `pakodepa`: Kolom bisnis pakodepa.
-- `pabagianpakontak`: Referensi kontak atau contact person.
-- `pamatauang`: Informasi mata uang dan kurs transaksi.
-- `pakurs`: Informasi mata uang dan kurs transaksi.
-- `patglnoref`: Kolom bisnis patglnoref.
-- `pastatus`: Status proses atau status dokumen.
+- `paid`: Business column paid.
+- `paguandg`: Source/destination warehouse reference.
+- `paautonotransaksi`: Unique document/transaction number.
+- `panotransaksi`: Unique document/transaction number.
+- `patgl`: Transaction date or reference date.
+- `patglberlakusampai`: Business column patglberlakusampai.
+- `pakodepa`: Business column pakodepa.
+- `pabagianpakontak`: Contact reference or contact person.
+- `pamorang`: Currency and exchange-rate information.
+- `pakurs`: Currency and exchange-rate information.
+- `patglnoref`: Business column patglnoref.
+- `pastatus`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_pa_detail` -> `m3_pa`: `m3_pa_detail.idpa = m3_pa.paid`
 
 ### Functions
 
-- `m3_pa_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_pa_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_pa_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_pa_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
+- `m3_pa_v`: Provides document listing or search.
+- `m3_pa_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_pa_v_history`: Provides document status-change history listing.
+- `m3_pa_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
 
 ## IB - Saldo Awal Barang
 
-Inisialisasi saldo awal stok barang.
+Initial opening balance for inventory goods.
 
-### Tabel
+### Tables
 
-- `m3_ib` | alias: `saldo_awal_barang` | tipe: Header | kolom: 26
-  Header transaksi saldo awal barang per gudang pada awal periode. Dipakai untuk membentuk posisi stok awal sebelum transaksi gudang berjalan.
-- `m3_ib_detail` | alias: `saldo_awal_barang_detail` | tipe: Detail | kolom: 25
-  Detail item untuk transaksi saldo awal barang. Setiap baris menyimpan qty awal, satuan, HPP, dan akun persediaan item.
-- `m3_ib_detail_history` | alias: `saldo_awal_barang_detail` | tipe: History | kolom: 25
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_ib_history` | alias: `saldo_awal_barang` | tipe: History | kolom: 26
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_ib` | alias: `saldo_awal_goods` | type: Header | columns: 26
+  Opening item-balance header per warehouse at the start of the period. Used to establish opening stock position before warehouse transactions begin.
+- `m3_ib_detail` | alias: `saldo_awal_goods_detail` | type: Detail | columns: 25
+  Opening item-balance detail rows. Each row stores opening quantity, unit, cost, and inventory account mapping.
+- `m3_ib_detail_history` | alias: `saldo_awal_goods_detail` | type: History | columns: 25
+  History/archive table detected from active M3 query sources.
+- `m3_ib_history` | alias: `saldo_awal_goods` | type: History | columns: 26
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `ibid`: Primary key baris data.
-- `ibgudang`: Referensi gudang asal/tujuan transaksi.
-- `ibautonotransaksi`: Nomor dokumen/transaksi unik.
-- `ibnotransaksi`: Nomor dokumen/transaksi unik.
-- `ibtgl`: Tanggal transaksi atau tanggal referensi.
-- `ibkodepa`: Kolom bisnis ibkodepa.
-- `ibbagianibkontak`: Referensi kontak atau contact person.
-- `ibmatauang`: Informasi mata uang dan kurs transaksi.
-- `ibkurs`: Informasi mata uang dan kurs transaksi.
-- `ibtglnoref`: Kolom bisnis ibtglnoref.
-- `ibstatus`: Status proses atau status dokumen.
-- `ibstatussebelumnya`: Status proses atau status dokumen.
+- `ibid`: Primary key for the row.
+- `ibguandg`: Source/destination warehouse reference.
+- `ibautonotransaksi`: Unique document/transaction number.
+- `ibnotransaksi`: Unique document/transaction number.
+- `ibtgl`: Transaction date or reference date.
+- `ibkodepa`: Business column ibkodepa.
+- `ibbagianibkontak`: Contact reference or contact person.
+- `ibmorang`: Currency and exchange-rate information.
+- `ibkurs`: Currency and exchange-rate information.
+- `ibtglnoref`: Business column ibtglnoref.
+- `ibstatus`: Process status or document status.
+- `ibstatussebelumnya`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_ib_detail` -> `m3_ib`: `m3_ib_detail.idib = m3_ib.ibid`
 
 ### Functions
 
-- `m3_ib_v`: Menyediakan listing atau pencarian data dokumen.
-- `m3_ib_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m3_ib_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m3_ib_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m3_ib_terkait`: Mengambil keterkaitan dokumen dengan dokumen inventory lain.
+- `m3_ib_v`: Provides document listing or search.
+- `m3_ib_getdata`: Retrieves header and detail data for a single transaction document.
+- `m3_ib_v_history`: Provides document status-change history listing.
+- `m3_ib_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m3_ib_terkait`: Retrieves document linkage with other inventory documents.
 
 ## RF - Pengisian Bahan Bakar
 
-Transaksi fuel/refuel untuk unit atau alat.
+Transaksi fuel/refuel for unit or alat.
 
-### Tabel
+### Tables
 
-- `m3_rf` | alias: `inventory_rf` | tipe: Header | kolom: 28
-  Transaksi inventory atau gudang untuk rf.
-- `m3_rf_detail` | alias: `inventory_rf_detail` | tipe: Detail | kolom: 32
-  Tabel detail untuk item/baris transaksi rf detail.
-- `m3_rf_detail_history` | alias: `inventory_rf_detail` | tipe: History | kolom: 32
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_rf_history` | alias: `inventory_rf` | tipe: History | kolom: 28
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_rf` | alias: `inventory_rf` | type: Header | columns: 28
+  Inventory or warehouse transaction for rf.
+- `m3_rf_detail` | alias: `inventory_rf_detail` | type: Detail | columns: 32
+  Detail table for transaction item/row rf detail.
+- `m3_rf_detail_history` | alias: `inventory_rf_detail` | type: History | columns: 32
+  History/archive table detected from active M3 query sources.
+- `m3_rf_history` | alias: `inventory_rf` | type: History | columns: 28
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rfid`: Kolom bisnis rfid.
-- `rfgudangasal`: Referensi gudang asal/tujuan transaksi.
-- `rfgudangtujuan`: Referensi gudang asal/tujuan transaksi.
-- `rfautonotransaksi`: Nomor dokumen/transaksi unik.
-- `rfnotransaksi`: Nomor dokumen/transaksi unik.
-- `rftgl`: Tanggal transaksi atau tanggal referensi.
-- `rfkodepa`: Kolom bisnis rfkodepa.
-- `rfdimintaolehkontak`: Referensi kontak atau contact person.
-- `rftgldipakai`: Kolom bisnis rftgldipakai.
-- `rftglnoref`: Kolom bisnis rftglnoref.
-- `rfstatusts`: Status proses atau status dokumen.
-- `rfstatusrs`: Status proses atau status dokumen.
+- `rfid`: Business column rfid.
+- `rfguandgasal`: Source/destination warehouse reference.
+- `rfguandgtujuan`: Source/destination warehouse reference.
+- `rfautonotransaksi`: Unique document/transaction number.
+- `rfnotransaksi`: Unique document/transaction number.
+- `rftgl`: Transaction date or reference date.
+- `rfkodepa`: Business column rfkodepa.
+- `rfdimintaolehkontak`: Contact reference or contact person.
+- `rftgldipakai`: Business column rftgldipakai.
+- `rftglnoref`: Business column rftglnoref.
+- `rfstatusts`: Process status or document status.
+- `rfstatusrs`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_rf_detail` -> `m3_rf`: `m3_rf_detail.idrf = m3_rf.rfid`
 
 ## DC - Daily Check / Time Sheet
 
-Operasional checklist harian, jam kerja alat, dan pemeriksaan unit.
+Operasional checklist harian, jam kerja alat, and pemeriksaan unit.
 
-### Tabel
+### Tables
 
-- `m3_dc` | alias: `inventory_dc` | tipe: Header | kolom: 35
-  Transaksi inventory atau gudang untuk dc.
-- `m3_dc_check` | alias: `inventory_dc_check` | tipe: Detail | kolom: 7
-  Transaksi inventory atau gudang untuk dc check.
-- `m3_dc_check_history` | alias: `inventory_dc_check` | tipe: History | kolom: 7
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_dc_detail` | alias: `inventory_dc_detail` | tipe: Detail | kolom: 25
-  Tabel detail untuk item/baris transaksi dc detail.
-- `m3_dc_detail_history` | alias: `inventory_dc_detail` | tipe: History | kolom: 25
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
-- `m3_dc_history` | alias: `inventory_dc` | tipe: History | kolom: 35
-  Tabel histori/arsip yang terdeteksi dari query aktif modul M3.
+- `m3_dc` | alias: `inventory_dc` | type: Header | columns: 35
+  Inventory or warehouse transaction for dc.
+- `m3_dc_check` | alias: `inventory_dc_check` | type: Detail | columns: 7
+  Inventory or warehouse transaction for dc check.
+- `m3_dc_check_history` | alias: `inventory_dc_check` | type: History | columns: 7
+  History/archive table detected from active M3 query sources.
+- `m3_dc_detail` | alias: `inventory_dc_detail` | type: Detail | columns: 25
+  Detail table for transaction item/row dc detail.
+- `m3_dc_detail_history` | alias: `inventory_dc_detail` | type: History | columns: 25
+  History/archive table detected from active M3 query sources.
+- `m3_dc_history` | alias: `inventory_dc` | type: History | columns: 35
+  History/archive table detected from active M3 query sources.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `dcid`: Kolom bisnis dcid.
-- `dcgudangasal`: Referensi gudang asal/tujuan transaksi.
-- `dcgudangtujuan`: Referensi gudang asal/tujuan transaksi.
-- `dcautonotransaksi`: Nomor dokumen/transaksi unik.
-- `dcnotransaksi`: Nomor dokumen/transaksi unik.
-- `dctgl`: Tanggal transaksi atau tanggal referensi.
-- `dckodepa`: Kolom bisnis dckodepa.
-- `dcdimintaolehkontak`: Referensi kontak atau contact person.
-- `dctgldipakai`: Kolom bisnis dctgldipakai.
-- `dcidbarang`: Referensi barang atau nama barang transaksi.
-- `dctglnoref`: Kolom bisnis dctglnoref.
-- `dcstatusts`: Status proses atau status dokumen.
+- `dcid`: Business column dcid.
+- `dcguandgasal`: Source/destination warehouse reference.
+- `dcguandgtujuan`: Source/destination warehouse reference.
+- `dcautonotransaksi`: Unique document/transaction number.
+- `dcnotransaksi`: Unique document/transaction number.
+- `dctgl`: Transaction date or reference date.
+- `dckodepa`: Business column dckodepa.
+- `dcdimintaolehkontak`: Contact reference or contact person.
+- `dctgldipakai`: Business column dctgldipakai.
+- `dcidgoods`: Goods reference or transaction goods name.
+- `dctglnoref`: Business column dctglnoref.
+- `dcstatusts`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m3_dc_detail` -> `m3_dc`: `m3_dc_detail.iddc = m3_dc.dcid`
 - `m3_dc_check` -> `m3_dc`: `m3_dc_check.iddc = m3_dc.dcid`
 
 ## RW - Warehouse Transaction RW
 
-Transaksi inventory internal yang muncul di service layer namun minim jejak query aktif.
+Transaksi inventory internal that muncul di service layer namun minim jejak query aktif.
 
-### Tabel
+### Tables
 
-- `m3_rw` | alias: `inventory_rw` | tipe: Header | kolom: 29
-  Transaksi inventory atau gudang untuk rw.
+- `m3_rw` | alias: `inventory_rw` | type: Header | columns: 29
+  Inventory or warehouse transaction for rw.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rwid`: Kolom bisnis rwid.
-- `rwautonotransaksi`: Nomor dokumen/transaksi unik.
-- `rwnotransaksi`: Nomor dokumen/transaksi unik.
-- `rwtgl`: Tanggal transaksi atau tanggal referensi.
-- `rwkodepa`: Kolom bisnis rwkodepa.
-- `rwbid`: Kolom bisnis rwbid.
-- `rwkid`: Kolom bisnis rwkid.
-- `rwtglbruto`: Kolom bisnis rwtglbruto.
-- `rwtgltara`: Kolom bisnis rwtgltara.
-- `rwtglnoref`: Kolom bisnis rwtglnoref.
-- `rwstatus`: Status proses atau status dokumen.
-- `rwstatussebelumnya`: Status proses atau status dokumen.
+- `rwid`: Business column rwid.
+- `rwautonotransaksi`: Unique document/transaction number.
+- `rwnotransaksi`: Unique document/transaction number.
+- `rwtgl`: Transaction date or reference date.
+- `rwkodepa`: Business column rwkodepa.
+- `rwbid`: Business column rwbid.
+- `rwkid`: Business column rwkid.
+- `rwtglbruto`: Business column rwtglbruto.
+- `rwtgltara`: Business column rwtgltara.
+- `rwtglnoref`: Business column rwtglnoref.
+- `rwstatus`: Process status or document status.
+- `rwstatussebelumnya`: Process status or document status.
 
-## NOTES - Catatan Transaksi Inventory
+## NOTES - Notes Transaksi Inventory
 
-Catatan teks untuk dokumen inventory.
+Notes teks for document inventory.
 
-### Tabel
+### Tables
 
-- `m3_notes` | alias: `inventory_notes` | tipe: Auxiliary | kolom: 0
-  Tabel auxiliary yang terdeteksi dari query aktif modul M3.
-
-### Functions
-
-- `m3_notes_v`: Menyediakan listing atau pencarian data dokumen.
-
-## FILES - Lampiran Transaksi Inventory
-
-Lampiran file untuk dokumen inventory.
-
-### Tabel
-
-- `m3_files` | alias: `inventory_files` | tipe: Auxiliary | kolom: 0
-  Tabel auxiliary yang terdeteksi dari query aktif modul M3.
+- `m3_notes` | alias: `inventory_notes` | type: Auxiliary | columns: 0
+  Auxiliary table detected from active M3 query sources.
 
 ### Functions
 
-- `m3_files_v`: Menyediakan listing atau pencarian data dokumen.
+- `m3_notes_v`: Provides document listing or search.
+
+## FILES - Attachments Transaksi Inventory
+
+Attachments file for document inventory.
+
+### Tables
+
+- `m3_files` | alias: `inventory_files` | type: Auxiliary | columns: 0
+  Auxiliary table detected from active M3 query sources.
+
+### Functions
+
+- `m3_files_v`: Provides document listing or search.

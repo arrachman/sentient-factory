@@ -1,0 +1,9 @@
+{
+  "label": "m6-manufacturing",
+  "position": 7,
+  "link": {
+    "type": "generated-index",
+    "title": "m6-manufacturing",
+    "description": "Tutorials for the MyERPPlus manufacturing module."
+  }
+}

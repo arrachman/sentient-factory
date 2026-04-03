@@ -1,16 +1,24 @@
 ---
 title: Overview
 sidebar_position: 1
-description: Pengantar modul finance MyERPPlus.
+description: Introduction to the MyERPPlus finance module.
 ---
 
 # m2-finance
 
-Kategori ini berisi tutorial untuk proses finance MyERPPlus.
+This category contains tutorials for MyERPPlus finance processes.
 
-## Cakupan
+## Coverage
 
-- Cash dan bank
-- Receivable dan payable
-- Journal dan transaksi finance
+- cash and bank
+- receivable and payable
+- journals and finance transactions
 
+## Main Documents
+
+- [Finance Query Artifacts](./query-artifacts.md)
+- [M2 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
+
+## Notes
+
+M2 is a sensitive transaction domain. For AI agents, the separation between header, detail, payment allocation, history, and posted journal must remain explicit so query results do not become misleading.

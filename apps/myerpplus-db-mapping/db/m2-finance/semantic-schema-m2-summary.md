@@ -1,774 +1,814 @@
 # Semantic Schema M2 Summary
 
-Sumber schema: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m2.json`
-Sumber function/query: `/home/rania/apps/sentient-factory/m2-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_2.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
+Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m2.json`
+Function/query source: `/home/rania/apps/sentient-factory/m2-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_2.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
 
-Total tabel M2 di schema: **70**
-Total tabel M2 terdeteksi di query aktif: **70**
+Total M2 tables in schema: **70**
+Total M2 tables detected in active queries: **70**
 Total function M2: **72**
 Total polymorphic relationships: **0**
 Total join hints: **9**
 
-Dokumen ini merangkum alias, deskripsi, struktur tabel, relasi utama, join hints, dan function semantic utama untuk modul finance M2.
-Schema JSON sudah dicocokkan dengan query service dan report aktif, sehingga tabel di schema sekarang sinkron dengan sumber operasional yang sedang dipakai.
+This document summarizes aliases, descriptions, table structure, main relationships, join hints, and primary semantic functions for M2 Finance.
+The schema JSON has been matched against active service queries and reports, so the schema tables are aligned with the operational sources currently in use.
 
 ## Join Hints
 
-- `cash_receipt_flow`: Alur penerimaan kas dan detail jurnalnya.
+- `cash_receipt_flow`: Cash-receipt flow and its accounting detail lines.
   `m2_cr.crid = m2_cr_detail.idcr`
-- `cash_disbursement_flow`: Alur pengeluaran kas dan detail jurnalnya.
+- `cash_disbursement_flow`: Cash-disbursement flow and its accounting detail lines.
   `m2_cd.cdid = m2_cd_detail.idcd`
-- `bank_disbursement_flow`: Alur pengeluaran bank dan detail jurnalnya.
+- `bank_disbursement_flow`: Bank-disbursement flow and its accounting detail lines.
   `m2_bd.bdid = m2_bd_detail.idbd`
-- `receipt_memo_payment_flow`: Relasi memo penerimaan dengan payment allocation.
+- `receipt_memo_payment_flow`: Receipt-memo relationship with payment allocation.
   `m2_rm.rmid = m2_rm_detail.idrm`
   `m2_rm.rmid = m2_rm_pay.idrm`
-- `send_memo_payment_flow`: Relasi memo pengeluaran dengan payment allocation.
+- `send_memo_payment_flow`: Send-memo relationship with payment allocation.
   `m2_sm.smid = m2_sm_detail.idsm`
   `m2_sm.smid = m2_sm_pay.idsm`
-- `cashbank_transfer_flow`: Relasi transaksi CB dengan detail dan payment allocation.
+- `cashbank_transfer_flow`: Cash/bank transfer relationship with detail and payment allocation.
   `m2_cb.cbid = m2_cb_detail.idcb`
   `m2_cb.cbid = m2_cb_pay.idcb`
-- `giro_receipt_flow`: Alur giro masuk dan pencairannya.
+- `giro_receipt_flow`: Receipt-giro flow and its clearing document.
   `m2_rg.rgid = m2_rg_detail.idrg`
   `m2_rgc.rgcid = m2_rgc_detail.idrgc`
-- `giro_send_flow`: Alur giro keluar dan pencairannya.
+- `giro_send_flow`: Send-giro flow and its clearing document.
   `m2_sg.sgid = m2_sg_detail.idsg`
   `m2_sgc.sgcid = m2_sgc_detail.idsgc`
-- `journal_posting_flow`: Relasi dokumen finance ke jurnal transaksi terposting.
+- `journal_posting_flow`: Relationship from finance documents to posted transaction journals.
   `m2_transaction_journal.tidtransaksi = finance document id`
-  `m2_transaction_journal.tsumber = kode sumber dokumen finance`
+  `m2_transaction_journal.tsumber = finance document source code`
 
 ## Polymorphic Relationships
 
-- Tidak ada relasi polymorphic eksplisit yang dimodelkan pada schema/query M2 aktif.
+- No explicit polymorphic relationships are modeled in the active M2 schema/query set.
 
-## Ringkasan Modul
+## Detail-Level Relation Keys
 
-- **ACCOUNTING**: Accounting Period | tabel schema: 1 | header: 1 | detail: 0 | history: 0 | payment: 0 | relasi: 0
-- **CR**: Cash Receipt | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **CD**: Cash Disbursement | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **RM**: Receipt Memo | tabel schema: 6 | header: 1 | detail: 1 | history: 3 | payment: 1 | relasi: 2
-- **SM**: Send Memo | tabel schema: 6 | header: 1 | detail: 1 | history: 3 | payment: 1 | relasi: 2
-- **GJ**: General Journal | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **AJ**: Adjustment Journal | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **RG**: Receipt Giro | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **SG**: Send Giro | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **RGC**: Receipt Giro Cair | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **SGC**: Send Giro Cair | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **CB**: Cash/Bank In Transfer | tabel schema: 6 | header: 1 | detail: 1 | history: 3 | payment: 1 | relasi: 2
-- **BD**: Bank Disbursement | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **JM**: Memorial Journal | tabel schema: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relasi: 1
-- **GIRO**: Giro List | tabel schema: 1 | header: 1 | detail: 0 | history: 0 | payment: 0 | relasi: 0
-- **TRANSACTION**: Transaction Journal | tabel schema: 1 | header: 1 | detail: 0 | history: 0 | payment: 0 | relasi: 1
-- **REALIZATION**: Budget Realization | tabel schema: 7 | header: 7 | detail: 0 | history: 0 | payment: 0 | relasi: 1
-- **NOTES**: Catatan Finance | tabel schema: 1 | header: 0 | detail: 0 | history: 0 | payment: 0 | relasi: 0
-- **FILES**: Lampiran Finance | tabel schema: 1 | header: 0 | detail: 0 | history: 0 | payment: 0 | relasi: 0
+This section is important for the AI agent because finance queries often fail when header, detail, allocation, and posted-journal layers are not separated.
+
+- `m2_cr_detail.idcr -> m2_cr.crid`
+  Used when cash-receipt detail rows must be lifted to the cash-receipt header.
+- `m2_cd_detail.idcd -> m2_cd.cdid`
+  Used when cash-disbursement detail rows must be lifted to the cash-disbursement header.
+- `m2_bd_detail.idbd -> m2_bd.bdid`
+  Used when bank-disbursement detail rows must be lifted to the bank-disbursement header.
+- `m2_rm_detail.idrm -> m2_rm.rmid`
+  Used when receipt-memo accounting lines are traced from detail to header.
+- `m2_rm_pay.idrm -> m2_rm.rmid`
+  Used when receipt-memo allocation rows are traced to the header.
+- `m2_sm_detail.idsm -> m2_sm.smid`
+  Used when send-memo accounting lines are traced from detail to header.
+- `m2_sm_pay.idsm -> m2_sm.smid`
+  Used when send-memo allocation rows are traced to the header.
+- `m2_cb_detail.idcb -> m2_cb.cbid`
+  Used when cash/bank transfer detail rows are traced to the transfer header.
+- `m2_cb_pay.idcb -> m2_cb.cbid`
+  Used when cash/bank transfer allocation rows are traced to the transfer header.
+- `m2_rg_detail.idrg -> m2_rg.rgid`
+  Used when receipt-giro rows are traced from detail to the giro header.
+- `m2_rgc_detail.idrgc -> m2_rgc.rgcid`
+  Used when receipt-giro clearing rows are traced to the clearing header.
+- `m2_sg_detail.idsg -> m2_sg.sgid`
+  Used when send-giro rows are traced from detail to the giro header.
+- `m2_sgc_detail.idsgc -> m2_sgc.sgcid`
+  Used when send-giro clearing rows are traced to the clearing header.
+- `m2_transaction_journal.tidtransaksi + m2_transaction_journal.tsumber -> finance document header`
+  Used when a posted journal must be traced back to its source document.
+
+Practical rules:
+
+- start from detail tables or `_pay` tables when the question is about amount distribution or allocation
+- move to the header only after the document foreign key is identified
+- for posted journals, always read `tidtransaksi` together with `tsumber`
+- do not mix `_detail` and `_pay` unless the analytical goal is explicit
+
+## Module Overview
+
+- **ACCOUNTING**: Accounting Period | schema tables: 1 | header: 1 | detail: 0 | history: 0 | payment: 0 | relations: 0
+- **CR**: Cash Receipt | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **CD**: Cash Disbursement | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **RM**: Receipt Memo | schema tables: 6 | header: 1 | detail: 1 | history: 3 | payment: 1 | relations: 2
+- **SM**: Send Memo | schema tables: 6 | header: 1 | detail: 1 | history: 3 | payment: 1 | relations: 2
+- **GJ**: General Journal | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **AJ**: Adjustment Journal | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **RG**: Receipt Giro | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **SG**: Send Giro | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **RGC**: Receipt Giro Clearing | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **SGC**: Send Giro Clearing | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **CB**: Cash/Bank Transfer | schema tables: 6 | header: 1 | detail: 1 | history: 3 | payment: 1 | relations: 2
+- **BD**: Bank Disbursement | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **JM**: Memorial Journal | schema tables: 4 | header: 1 | detail: 1 | history: 2 | payment: 0 | relations: 1
+- **GIRO**: Giro List | schema tables: 1 | header: 1 | detail: 0 | history: 0 | payment: 0 | relations: 0
+- **TRANSACTION**: Transaction Journal | schema tables: 1 | header: 1 | detail: 0 | history: 0 | payment: 0 | relations: 1
+- **REALIZATION**: Budget Realization | schema tables: 7 | header: 7 | detail: 0 | history: 0 | payment: 0 | relations: 1
+- **NOTES**: Finance Notes | schema tables: 1 | header: 0 | detail: 0 | history: 0 | payment: 0 | relations: 0
+- **FILES**: Finance Attachments | schema tables: 1 | header: 0 | detail: 0 | history: 0 | payment: 0 | relations: 0
 
 ## ACCOUNTING - Accounting Period
 
-Master periode akuntansi untuk kontrol buka/tutup periode.
+Accounting-period master used to control open and closed periods.
 
-### Tabel
+### Tables
 
-- `m2_accounting_period` | alias: `finance_accounting_period` | tipe: Header | kolom: 5
-  Transaksi atau referensi finance untuk accounting period.
+- `m2_accounting_period` | alias: `finance_accounting_period` | type: Header | columns: 5
+  Finance transaction or reference row for accounting period.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `apkode`: Kolom bisnis apkode.
-- `aptahun`: Kolom bisnis aptahun.
-- `apbulan`: Kolom bisnis apbulan.
-- `apaktif`: Kolom bisnis apaktif.
-- `aptutupperiode`: Kolom bisnis aptutupperiode.
+- `apkode`: Business column apkode.
+- `aptahun`: Business column aptahun.
+- `apbulan`: Business column apbulan.
+- `apaktif`: Business column apaktif.
+- `aptutupperiod`: Business column aptutupperiod.
 
 ### Functions
 
-- `m2_accounting_period_v`: Menyediakan listing atau pencarian data dokumen.
+- `m2_accounting_period_v`: Provides document listing or search.
 
 ## CR - Cash Receipt
 
-Penerimaan kas.
+Cash receipt.
 
-### Tabel
+### Tables
 
-- `m2_cr` | alias: `finance_cr` | tipe: Header | kolom: 28
-  Transaksi atau referensi finance untuk cr.
-- `m2_cr_detail` | alias: `finance_cr_detail` | tipe: Detail | kolom: 14
-  Tabel detail untuk item/baris transaksi cr detail.
-- `m2_cr_detail_history` | alias: `finance_cr_detail_history` | tipe: History | kolom: 16
-  Tabel histori detail finance untuk cr.
-- `m2_cr_history` | alias: `finance_cr_history` | tipe: History | kolom: 29
-  Tabel histori finance untuk cr.
+- `m2_cr` | alias: `finance_cr` | type: Header | columns: 28
+  Finance transaction or reference row for cr.
+- `m2_cr_detail` | alias: `finance_cr_detail` | type: Detail | columns: 14
+  Detail table for transaction item/row cr detail.
+- `m2_cr_detail_history` | alias: `finance_cr_detail_history` | type: History | columns: 16
+  Finance detail history table for cr.
+- `m2_cr_history` | alias: `finance_cr_history` | type: History | columns: 29
+  Finance history table for cr.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `crid`: Kolom bisnis crid.
-- `crautonotransaksi`: Nomor dokumen/transaksi unik.
-- `crnotransaksi`: Nomor dokumen/transaksi unik.
-- `crtgl`: Tanggal transaksi atau tanggal referensi.
-- `crkodepa`: Kolom bisnis crkodepa.
-- `crkontak`: Referensi kontak atau contact person.
-- `crkontakperson`: Referensi kontak atau contact person.
-- `crnorek`: Kolom bisnis crnorek.
-- `crmatauang`: Informasi mata uang dan kurs transaksi.
-- `crkurs`: Informasi mata uang dan kurs transaksi.
-- `crjumlahbayar`: Nilai nominal transaksi.
-- `crjumlahbayarvalas`: Nilai nominal transaksi.
+- `crid`: Business column crid.
+- `crautonotransaksi`: Unique document/transaction number.
+- `crnotransaksi`: Unique document/transaction number.
+- `crtgl`: Transaction date or reference date.
+- `crkodepa`: Business column crkodepa.
+- `crkontak`: Contact reference or contact person.
+- `crkontakperson`: Contact reference or contact person.
+- `crnorek`: Business column crnorek.
+- `crmorang`: Currency and exchange-rate information.
+- `crkurs`: Currency and exchange-rate information.
+- `crjumlahbayar`: Transaction amount.
+- `crjumlahbayarvalas`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_cr_detail` -> `m2_cr`: `m2_cr_detail.idcr = m2_cr.crid`
 
 ### Functions
 
-- `m2_cr_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_cr_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_cr_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_cr_h_getdata`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
+- `m2_cr_v`: Provides document listing or search.
+- `m2_cr_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_cr_v_history`: Provides document status-change history listing.
+- `m2_cr_h_getdata`: Retrieves header/detail status-change history for a single transaction document.
 
 ## CD - Cash Disbursement
 
-Pengeluaran kas.
+Cash disbursement.
 
-### Tabel
+### Tables
 
-- `m2_cd` | alias: `finance_cd` | tipe: Header | kolom: 42
-  Transaksi atau referensi finance untuk cd.
-- `m2_cd_detail` | alias: `finance_cd_detail` | tipe: Detail | kolom: 23
-  Tabel detail untuk item/baris transaksi cd.
-- `m2_cd_detail_history` | alias: `finance_cd_detail_history` | tipe: History | kolom: 25
-  Tabel histori detail finance untuk cd.
-- `m2_cd_history` | alias: `finance_cd_history` | tipe: History | kolom: 43
-  Tabel histori finance untuk cd.
+- `m2_cd` | alias: `finance_cd` | type: Header | columns: 42
+  Finance transaction or reference row for cd.
+- `m2_cd_detail` | alias: `finance_cd_detail` | type: Detail | columns: 23
+  Detail table for transaction item/row cd.
+- `m2_cd_detail_history` | alias: `finance_cd_detail_history` | type: History | columns: 25
+  Finance detail history table for cd.
+- `m2_cd_history` | alias: `finance_cd_history` | type: History | columns: 43
+  Finance history table for cd.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `cdid`: Kolom bisnis cdid.
-- `cdautonotransaksi`: Nomor dokumen/transaksi unik.
-- `cdnotransaksi`: Nomor dokumen/transaksi unik.
-- `cdtgl`: Tanggal transaksi atau tanggal referensi.
-- `cdkodepa`: Kolom bisnis cdkodepa.
-- `cdkontak`: Referensi kontak atau contact person.
-- `cdkontakperson`: Referensi kontak atau contact person.
-- `cdnorek`: Kolom bisnis cdnorek.
-- `cdmatauang`: Informasi mata uang dan kurs transaksi.
-- `cdkurs`: Kolom bisnis cdkurs.
-- `cdjumlahbayar`: Nilai nominal transaksi.
-- `cdjumlahbayarvalas`: Nilai nominal transaksi.
+- `cdid`: Business column cdid.
+- `cdautonotransaksi`: Unique document/transaction number.
+- `cdnotransaksi`: Unique document/transaction number.
+- `cdtgl`: Transaction date or reference date.
+- `cdkodepa`: Business column cdkodepa.
+- `cdkontak`: Contact reference or contact person.
+- `cdkontakperson`: Contact reference or contact person.
+- `cdnorek`: Business column cdnorek.
+- `cdmorang`: Currency and exchange-rate information.
+- `cdkurs`: Business column cdkurs.
+- `cdjumlahbayar`: Transaction amount.
+- `cdjumlahbayarvalas`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_cd_detail` -> `m2_cd`: `m2_cd_detail.idcd = m2_cd.cdid`
 
 ### Functions
 
-- `m2_cd_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_cd_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_cd_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_cd_h_getdata`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
+- `m2_cd_v`: Provides document listing or search.
+- `m2_cd_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_cd_v_history`: Provides document status-change history listing.
+- `m2_cd_h_getdata`: Retrieves header/detail status-change history for a single transaction document.
 
 ## RM - Receipt Memo
 
-Penerimaan memorial / receivable memo dengan payment allocation.
+Receipt memo / receivable memo with payment allocation.
 
-### Tabel
+### Tables
 
-- `m2_rm` | alias: `finance_rm` | tipe: Header | kolom: 29
-  Transaksi atau referensi finance untuk rm.
-- `m2_rm_detail` | alias: `finance_rm_detail` | tipe: Detail | kolom: 14
-  Tabel detail untuk item/baris transaksi rm detail.
-- `m2_rm_detail_history` | alias: `finance_rm_detail_history` | tipe: History | kolom: 16
-  Tabel histori detail finance untuk rm.
-- `m2_rm_history` | alias: `finance_rm_history` | tipe: History | kolom: 30
-  Tabel histori finance untuk rm.
-- `m2_rm_pay` | alias: `finance_rm_pay` | tipe: Payment/Allocation | kolom: 15
-  Data pembayaran terkait rm pay.
-- `m2_rm_pay_history` | alias: `finance_rm_pay_history` | tipe: History | kolom: 17
-  Tabel histori pembayaran/alokasi finance untuk rm_pay.
+- `m2_rm` | alias: `finance_rm` | type: Header | columns: 29
+  Finance transaction or reference row for rm.
+- `m2_rm_detail` | alias: `finance_rm_detail` | type: Detail | columns: 14
+  Detail table for transaction item/row rm detail.
+- `m2_rm_detail_history` | alias: `finance_rm_detail_history` | type: History | columns: 16
+  Finance detail history table for rm.
+- `m2_rm_history` | alias: `finance_rm_history` | type: History | columns: 30
+  Finance history table for rm.
+- `m2_rm_pay` | alias: `finance_rm_pay` | type: Payment/Allocation | columns: 15
+  Payment/allocation data related to rm pay.
+- `m2_rm_pay_history` | alias: `finance_rm_pay_history` | type: History | columns: 17
+  Finance payment/allocation history table for `rm_pay`.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rmid`: Kolom bisnis rmid.
-- `rmautonotransaksi`: Nomor dokumen/transaksi unik.
-- `rmnotransaksi`: Nomor dokumen/transaksi unik.
-- `rmtgl`: Tanggal transaksi atau tanggal referensi.
-- `rmkodepa`: Kolom bisnis rmkodepa.
-- `rmcarabayar`: Nilai nominal transaksi.
-- `rmkontak`: Referensi kontak atau contact person.
-- `rmkontakperson`: Referensi kontak atau contact person.
-- `rmnorek`: Kolom bisnis rmnorek.
-- `rmmatauang`: Informasi mata uang dan kurs transaksi.
-- `rmkurs`: Informasi mata uang dan kurs transaksi.
-- `rmjumlahbayar`: Nilai nominal transaksi.
+- `rmid`: Business column rmid.
+- `rmautonotransaksi`: Unique document/transaction number.
+- `rmnotransaksi`: Unique document/transaction number.
+- `rmtgl`: Transaction date or reference date.
+- `rmkodepa`: Business column rmkodepa.
+- `rmcarabayar`: Transaction amount.
+- `rmkontak`: Contact reference or contact person.
+- `rmkontakperson`: Contact reference or contact person.
+- `rmnorek`: Business column rmnorek.
+- `rmmorang`: Currency and exchange-rate information.
+- `rmkurs`: Currency and exchange-rate information.
+- `rmjumlahbayar`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_rm_detail` -> `m2_rm`: `m2_rm_detail.idrm = m2_rm.rmid`
 - `m2_rm_pay` -> `m2_rm`: `m2_rm_pay.idrm = m2_rm.rmid`
 
 ### Functions
 
-- `m2_rm_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_rm_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_rm_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_rm_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_rm_pay_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_rm_pay_history`: Menyediakan data payment/allocation untuk dokumen finance.
-- `m2_rm_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_rm_v`: Provides document listing or search.
+- `m2_rm_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_rm_v_history`: Provides document status-change history listing.
+- `m2_rm_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_rm_pay_v`: Provides document listing or search.
+- `m2_rm_pay_history`: Menyediakan data payment/allocation for document finance.
+- `m2_rm_terkait`: Retrieves linkage with other finance documents.
 
 ## SM - Send Memo
 
-Pengeluaran memorial / payable memo dengan payment allocation.
+Send memo / payable memo with payment allocation.
 
-### Tabel
+### Tables
 
-- `m2_sm` | alias: `finance_sm` | tipe: Header | kolom: 29
-  Transaksi atau referensi finance untuk sm.
-- `m2_sm_detail` | alias: `finance_sm_detail` | tipe: Detail | kolom: 14
-  Tabel detail untuk item/baris transaksi sm detail.
-- `m2_sm_detail_history` | alias: `finance_sm_detail_history` | tipe: History | kolom: 16
-  Tabel histori detail finance untuk sm.
-- `m2_sm_history` | alias: `finance_sm_history` | tipe: History | kolom: 30
-  Tabel histori finance untuk sm.
-- `m2_sm_pay` | alias: `finance_sm_pay` | tipe: Payment/Allocation | kolom: 15
-  Data pembayaran terkait sm pay.
-- `m2_sm_pay_history` | alias: `finance_sm_pay_history` | tipe: History | kolom: 17
-  Tabel histori pembayaran/alokasi finance untuk sm_pay.
+- `m2_sm` | alias: `finance_sm` | type: Header | columns: 29
+  Finance transaction or reference row for sm.
+- `m2_sm_detail` | alias: `finance_sm_detail` | type: Detail | columns: 14
+  Detail table for transaction item/row sm detail.
+- `m2_sm_detail_history` | alias: `finance_sm_detail_history` | type: History | columns: 16
+  Finance detail history table for sm.
+- `m2_sm_history` | alias: `finance_sm_history` | type: History | columns: 30
+  Finance history table for sm.
+- `m2_sm_pay` | alias: `finance_sm_pay` | type: Payment/Allocation | columns: 15
+  Payment/allocation data related to sm pay.
+- `m2_sm_pay_history` | alias: `finance_sm_pay_history` | type: History | columns: 17
+  Finance payment/allocation history table for `sm_pay`.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `smid`: Kolom bisnis smid.
-- `smautonotransaksi`: Nomor dokumen/transaksi unik.
-- `smnotransaksi`: Nomor dokumen/transaksi unik.
-- `smtgl`: Tanggal transaksi atau tanggal referensi.
-- `smkodepa`: Kolom bisnis smkodepa.
-- `smcarabayar`: Nilai nominal transaksi.
-- `smkontak`: Referensi kontak atau contact person.
-- `smkontakperson`: Referensi kontak atau contact person.
-- `smnorek`: Kolom bisnis smnorek.
-- `smmatauang`: Informasi mata uang dan kurs transaksi.
-- `smkurs`: Informasi mata uang dan kurs transaksi.
-- `smjumlahbayar`: Nilai nominal transaksi.
+- `smid`: Business column smid.
+- `smautonotransaksi`: Unique document/transaction number.
+- `smnotransaksi`: Unique document/transaction number.
+- `smtgl`: Transaction date or reference date.
+- `smkodepa`: Business column smkodepa.
+- `smcarabayar`: Transaction amount.
+- `smkontak`: Contact reference or contact person.
+- `smkontakperson`: Contact reference or contact person.
+- `smnorek`: Business column smnorek.
+- `smmorang`: Currency and exchange-rate information.
+- `smkurs`: Currency and exchange-rate information.
+- `smjumlahbayar`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_sm_detail` -> `m2_sm`: `m2_sm_detail.idsm = m2_sm.smid`
 - `m2_sm_pay` -> `m2_sm`: `m2_sm_pay.idsm = m2_sm.smid`
 
 ### Functions
 
-- `m2_sm_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_sm_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_sm_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_sm_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_sm_pay_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_sm_pay_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_sm_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_sm_v`: Provides document listing or search.
+- `m2_sm_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_sm_v_history`: Provides document status-change history listing.
+- `m2_sm_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_sm_pay_v`: Provides document listing or search.
+- `m2_sm_pay_v_history`: Provides document status-change history listing.
+- `m2_sm_terkait`: Retrieves linkage with other finance documents.
 
 ## GJ - General Journal
 
-Jurnal umum.
+General journal.
 
-### Tabel
+### Tables
 
-- `m2_gj` | alias: `finance_gj` | tipe: Header | kolom: 29
-  Transaksi atau referensi finance untuk gj.
-- `m2_gj_detail` | alias: `finance_gj_detail` | tipe: Detail | kolom: 16
-  Tabel detail untuk item/baris transaksi gj detail.
-- `m2_gj_detail_history` | alias: `finance_gj_detail_history` | tipe: History | kolom: 18
-  Tabel histori detail finance untuk gj.
-- `m2_gj_history` | alias: `finance_gj_history` | tipe: History | kolom: 30
-  Tabel histori finance untuk gj.
+- `m2_gj` | alias: `finance_gj` | type: Header | columns: 29
+  Finance transaction or reference row for gj.
+- `m2_gj_detail` | alias: `finance_gj_detail` | type: Detail | columns: 16
+  Detail table for transaction item/row gj detail.
+- `m2_gj_detail_history` | alias: `finance_gj_detail_history` | type: History | columns: 18
+  Finance detail history table for gj.
+- `m2_gj_history` | alias: `finance_gj_history` | type: History | columns: 30
+  Finance history table for gj.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `gjid`: Kolom bisnis gjid.
-- `gjautonotransaksi`: Nomor dokumen/transaksi unik.
-- `gjnotransaksi`: Nomor dokumen/transaksi unik.
-- `gjtgl`: Tanggal transaksi atau tanggal referensi.
-- `gjkodepa`: Kolom bisnis gjkodepa.
-- `gjkontak`: Referensi kontak atau contact person.
-- `gjkontakperson`: Referensi kontak atau contact person.
-- `gjmatauang`: Informasi mata uang dan kurs transaksi.
-- `gjkurs`: Informasi mata uang dan kurs transaksi.
-- `gjjumlahbayar`: Nilai nominal transaksi.
-- `gjjumlahbayarvalas`: Nilai nominal transaksi.
-- `gjstatusbayar`: Nilai nominal transaksi.
+- `gjid`: Business column gjid.
+- `gjautonotransaksi`: Unique document/transaction number.
+- `gjnotransaksi`: Unique document/transaction number.
+- `gjtgl`: Transaction date or reference date.
+- `gjkodepa`: Business column gjkodepa.
+- `gjkontak`: Contact reference or contact person.
+- `gjkontakperson`: Contact reference or contact person.
+- `gjmorang`: Currency and exchange-rate information.
+- `gjkurs`: Currency and exchange-rate information.
+- `gjjumlahbayar`: Transaction amount.
+- `gjjumlahbayarvalas`: Transaction amount.
+- `gjstatusbayar`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_gj_detail` -> `m2_gj`: `m2_gj_detail.idgj = m2_gj.gjid`
 
 ### Functions
 
-- `m2_gj_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_gj_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_gj_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_gj_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
+- `m2_gj_v`: Provides document listing or search.
+- `m2_gj_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_gj_v_history`: Provides document status-change history listing.
+- `m2_gj_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
 
 ## AJ - Adjustment Journal
 
-Jurnal penyesuaian manual untuk koreksi akuntansi.
+Adjustment journal manual for koreksi akuntansi.
 
-### Tabel
+### Tables
 
-- `m2_aj` | alias: `finance_aj` | tipe: Header | kolom: 29
-  Transaksi atau referensi finance untuk aj.
-- `m2_aj_detail` | alias: `finance_aj_detail` | tipe: Detail | kolom: 16
-  Tabel detail untuk item/baris transaksi aj detail.
-- `m2_aj_detail_history` | alias: `finance_aj_detail_history` | tipe: History | kolom: 18
-  Tabel histori detail finance untuk aj.
-- `m2_aj_history` | alias: `finance_aj_history` | tipe: History | kolom: 30
-  Tabel histori finance untuk aj.
+- `m2_aj` | alias: `finance_aj` | type: Header | columns: 29
+  Finance transaction or reference row for aj.
+- `m2_aj_detail` | alias: `finance_aj_detail` | type: Detail | columns: 16
+  Detail table for transaction item/row aj detail.
+- `m2_aj_detail_history` | alias: `finance_aj_detail_history` | type: History | columns: 18
+  Finance detail history table for aj.
+- `m2_aj_history` | alias: `finance_aj_history` | type: History | columns: 30
+  Finance history table for aj.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `ajid`: Kolom bisnis ajid.
-- `ajautonotransaksi`: Nomor dokumen/transaksi unik.
-- `ajnotransaksi`: Nomor dokumen/transaksi unik.
-- `ajtgl`: Tanggal transaksi atau tanggal referensi.
-- `ajkodepa`: Kolom bisnis ajkodepa.
-- `ajkontak`: Referensi kontak atau contact person.
-- `ajkontakperson`: Referensi kontak atau contact person.
-- `ajmatauang`: Informasi mata uang dan kurs transaksi.
-- `ajkurs`: Informasi mata uang dan kurs transaksi.
-- `ajjumlahbayar`: Nilai nominal transaksi.
-- `ajjumlahbayarvalas`: Nilai nominal transaksi.
-- `ajstatusbayar`: Nilai nominal transaksi.
+- `ajid`: Business column ajid.
+- `ajautonotransaksi`: Unique document/transaction number.
+- `ajnotransaksi`: Unique document/transaction number.
+- `ajtgl`: Transaction date or reference date.
+- `ajkodepa`: Business column ajkodepa.
+- `ajkontak`: Contact reference or contact person.
+- `ajkontakperson`: Contact reference or contact person.
+- `ajmorang`: Currency and exchange-rate information.
+- `ajkurs`: Currency and exchange-rate information.
+- `ajjumlahbayar`: Transaction amount.
+- `ajjumlahbayarvalas`: Transaction amount.
+- `ajstatusbayar`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_aj_detail` -> `m2_aj`: `m2_aj_detail.idaj = m2_aj.ajid`
 
 ### Functions
 
-- `m2_aj_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_aj_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_aj_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_aj_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
+- `m2_aj_v`: Provides document listing or search.
+- `m2_aj_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_aj_v_history`: Provides document status-change history listing.
+- `m2_aj_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
 
 ## RG - Receipt Giro
 
-Penerimaan giro.
+Incoming giro receipt.
 
-### Tabel
+### Tables
 
-- `m2_rg` | alias: `finance_rg` | tipe: Header | kolom: 24
-  Transaksi atau referensi finance untuk rg.
-- `m2_rg_detail` | alias: `finance_rg_detail` | tipe: Detail | kolom: 18
-  Tabel detail untuk item/baris transaksi rg detail.
-- `m2_rg_detail_history` | alias: `finance_rg_detail_history` | tipe: History | kolom: 20
-  Tabel histori detail finance untuk rg.
-- `m2_rg_history` | alias: `finance_rg_history` | tipe: History | kolom: 25
-  Tabel histori finance untuk rg.
+- `m2_rg` | alias: `finance_rg` | type: Header | columns: 24
+  Finance transaction or reference row for rg.
+- `m2_rg_detail` | alias: `finance_rg_detail` | type: Detail | columns: 18
+  Detail table for transaction item/row rg detail.
+- `m2_rg_detail_history` | alias: `finance_rg_detail_history` | type: History | columns: 20
+  Finance detail history table for rg.
+- `m2_rg_history` | alias: `finance_rg_history` | type: History | columns: 25
+  Finance history table for rg.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rgid`: Kolom bisnis rgid.
-- `rgautonotransaksi`: Nomor dokumen/transaksi unik.
-- `rgnotransaksi`: Nomor dokumen/transaksi unik.
-- `rgtgl`: Tanggal transaksi atau tanggal referensi.
-- `rgkodepa`: Kolom bisnis rgkodepa.
-- `rgkontak`: Referensi kontak atau contact person.
-- `rgkontakperson`: Referensi kontak atau contact person.
-- `rgmatauang`: Informasi mata uang dan kurs transaksi.
-- `rgkurs`: Informasi mata uang dan kurs transaksi.
-- `rgstatusrgc`: Status proses atau status dokumen.
-- `rgstatus`: Status proses atau status dokumen.
-- `rgstatussebelumnya`: Status proses atau status dokumen.
+- `rgid`: Business column rgid.
+- `rgautonotransaksi`: Unique document/transaction number.
+- `rgnotransaksi`: Unique document/transaction number.
+- `rgtgl`: Transaction date or reference date.
+- `rgkodepa`: Business column rgkodepa.
+- `rgkontak`: Contact reference or contact person.
+- `rgkontakperson`: Contact reference or contact person.
+- `rgmorang`: Currency and exchange-rate information.
+- `rgkurs`: Currency and exchange-rate information.
+- `rgstatusrgc`: Process status or document status.
+- `rgstatus`: Process status or document status.
+- `rgstatussebelumnya`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_rg_detail` -> `m2_rg`: `m2_rg_detail.idrg = m2_rg.rgid`
 
 ### Functions
 
-- `m2_rg_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_rg_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_rg_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_rg_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_rg_detail_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_rg_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
-- `m2_rgc_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_rgc_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_rgc_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_rgc_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_rgc_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_rg_v`: Provides document listing or search.
+- `m2_rg_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_rg_v_history`: Provides document status-change history listing.
+- `m2_rg_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_rg_detail_v`: Provides document listing or search.
+- `m2_rg_terkait`: Retrieves linkage with other finance documents.
+- `m2_rgc_v`: Provides document listing or search.
+- `m2_rgc_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_rgc_v_history`: Provides document status-change history listing.
+- `m2_rgc_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_rgc_terkait`: Retrieves linkage with other finance documents.
 
 ## SG - Send Giro
 
-Pengeluaran / penyerahan giro.
+Giro issue / giro handover.
 
-### Tabel
+### Tables
 
-- `m2_sg` | alias: `finance_sg` | tipe: Header | kolom: 24
-  Transaksi atau referensi finance untuk sg.
-- `m2_sg_detail` | alias: `finance_sg_detail` | tipe: Detail | kolom: 18
-  Tabel detail untuk item/baris transaksi sg detail.
-- `m2_sg_detail_history` | alias: `finance_sg_detail_history` | tipe: History | kolom: 20
-  Tabel histori detail finance untuk sg.
-- `m2_sg_history` | alias: `finance_sg_history` | tipe: History | kolom: 25
-  Tabel histori finance untuk sg.
+- `m2_sg` | alias: `finance_sg` | type: Header | columns: 24
+  Finance transaction or reference row for sg.
+- `m2_sg_detail` | alias: `finance_sg_detail` | type: Detail | columns: 18
+  Detail table for transaction item/row sg detail.
+- `m2_sg_detail_history` | alias: `finance_sg_detail_history` | type: History | columns: 20
+  Finance detail history table for sg.
+- `m2_sg_history` | alias: `finance_sg_history` | type: History | columns: 25
+  Finance history table for sg.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `sgid`: Kolom bisnis sgid.
-- `sgautonotransaksi`: Nomor dokumen/transaksi unik.
-- `sgnotransaksi`: Nomor dokumen/transaksi unik.
-- `sgtgl`: Tanggal transaksi atau tanggal referensi.
-- `sgkodepa`: Kolom bisnis sgkodepa.
-- `sgkontak`: Referensi kontak atau contact person.
-- `sgkontakperson`: Referensi kontak atau contact person.
-- `sgmatauang`: Informasi mata uang dan kurs transaksi.
-- `sgkurs`: Informasi mata uang dan kurs transaksi.
-- `sgstatussgc`: Status proses atau status dokumen.
-- `sgstatus`: Status proses atau status dokumen.
-- `sgstatussebelumnya`: Status proses atau status dokumen.
+- `sgid`: Business column sgid.
+- `sgautonotransaksi`: Unique document/transaction number.
+- `sgnotransaksi`: Unique document/transaction number.
+- `sgtgl`: Transaction date or reference date.
+- `sgkodepa`: Business column sgkodepa.
+- `sgkontak`: Contact reference or contact person.
+- `sgkontakperson`: Contact reference or contact person.
+- `sgmorang`: Currency and exchange-rate information.
+- `sgkurs`: Currency and exchange-rate information.
+- `sgstatussgc`: Process status or document status.
+- `sgstatus`: Process status or document status.
+- `sgstatussebelumnya`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_sg_detail` -> `m2_sg`: `m2_sg_detail.idsg = m2_sg.sgid`
 
 ### Functions
 
-- `m2_sg_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_sg_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_sg_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_sg_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_sg_detail_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_sg_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
-- `m2_sgc_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_sgc_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_sgc_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_sgc_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_sgc_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_sg_v`: Provides document listing or search.
+- `m2_sg_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_sg_v_history`: Provides document status-change history listing.
+- `m2_sg_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_sg_detail_v`: Provides document listing or search.
+- `m2_sg_terkait`: Retrieves linkage with other finance documents.
+- `m2_sgc_v`: Provides document listing or search.
+- `m2_sgc_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_sgc_v_history`: Provides document status-change history listing.
+- `m2_sgc_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_sgc_terkait`: Retrieves linkage with other finance documents.
 
 ## RGC - Receipt Giro Cair
 
-Pencairan giro masuk.
+Incoming giro clearing.
 
-### Tabel
+### Tables
 
-- `m2_rgc` | alias: `finance_rgc` | tipe: Header | kolom: 25
-  Transaksi atau referensi finance untuk rgc.
-- `m2_rgc_detail` | alias: `finance_rgc_detail` | tipe: Detail | kolom: 18
-  Tabel detail untuk item/baris transaksi rgc detail.
-- `m2_rgc_detail_history` | alias: `finance_rgc_detail_history` | tipe: History | kolom: 20
-  Tabel histori detail finance untuk rgc.
-- `m2_rgc_history` | alias: `finance_rgc_history` | tipe: History | kolom: 26
-  Tabel histori finance untuk rgc.
+- `m2_rgc` | alias: `finance_rgc` | type: Header | columns: 25
+  Finance transaction or reference row for rgc.
+- `m2_rgc_detail` | alias: `finance_rgc_detail` | type: Detail | columns: 18
+  Detail table for transaction item/row rgc detail.
+- `m2_rgc_detail_history` | alias: `finance_rgc_detail_history` | type: History | columns: 20
+  Finance detail history table for rgc.
+- `m2_rgc_history` | alias: `finance_rgc_history` | type: History | columns: 26
+  Finance history table for rgc.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rgcid`: Kolom bisnis rgcid.
-- `rgcautonotransaksi`: Nomor dokumen/transaksi unik.
-- `rgcnotransaksi`: Nomor dokumen/transaksi unik.
-- `rgctgl`: Tanggal transaksi atau tanggal referensi.
-- `rgckodepa`: Kolom bisnis rgckodepa.
-- `rgckontak`: Referensi kontak atau contact person.
-- `rgckontakperson`: Referensi kontak atau contact person.
-- `rgcmatauang`: Informasi mata uang dan kurs transaksi.
-- `rgckurs`: Informasi mata uang dan kurs transaksi.
-- `rgcidrg`: Kolom bisnis rgcidrg.
-- `rgcstatus`: Status proses atau status dokumen.
-- `rgcstatussebelumnya`: Status proses atau status dokumen.
+- `rgcid`: Business column rgcid.
+- `rgcautonotransaksi`: Unique document/transaction number.
+- `rgcnotransaksi`: Unique document/transaction number.
+- `rgctgl`: Transaction date or reference date.
+- `rgckodepa`: Business column rgckodepa.
+- `rgckontak`: Contact reference or contact person.
+- `rgckontakperson`: Contact reference or contact person.
+- `rgcmorang`: Currency and exchange-rate information.
+- `rgckurs`: Currency and exchange-rate information.
+- `rgcidrg`: Business column rgcidrg.
+- `rgcstatus`: Process status or document status.
+- `rgcstatussebelumnya`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_rgc_detail` -> `m2_rgc`: `m2_rgc_detail.idrgc = m2_rgc.rgcid`
 
 ### Functions
 
-- `m2_rgc_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_rgc_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_rgc_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_rgc_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_rgc_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_rgc_v`: Provides document listing or search.
+- `m2_rgc_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_rgc_v_history`: Provides document status-change history listing.
+- `m2_rgc_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_rgc_terkait`: Retrieves linkage with other finance documents.
 
 ## SGC - Send Giro Cair
 
-Pencairan giro keluar.
+Outgoing giro clearing.
 
-### Tabel
+### Tables
 
-- `m2_sgc` | alias: `finance_sgc` | tipe: Header | kolom: 25
-  Transaksi atau referensi finance untuk sgc.
-- `m2_sgc_detail` | alias: `finance_sgc_detail` | tipe: Detail | kolom: 18
-  Tabel detail untuk item/baris transaksi sgc detail.
-- `m2_sgc_detail_history` | alias: `finance_sgc_detail_history` | tipe: History | kolom: 20
-  Tabel histori detail finance untuk sgc.
-- `m2_sgc_history` | alias: `finance_sgc_history` | tipe: History | kolom: 26
-  Tabel histori finance untuk sgc.
+- `m2_sgc` | alias: `finance_sgc` | type: Header | columns: 25
+  Finance transaction or reference row for sgc.
+- `m2_sgc_detail` | alias: `finance_sgc_detail` | type: Detail | columns: 18
+  Detail table for transaction item/row sgc detail.
+- `m2_sgc_detail_history` | alias: `finance_sgc_detail_history` | type: History | columns: 20
+  Finance detail history table for sgc.
+- `m2_sgc_history` | alias: `finance_sgc_history` | type: History | columns: 26
+  Finance history table for sgc.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `sgcid`: Kolom bisnis sgcid.
-- `sgcautonotransaksi`: Nomor dokumen/transaksi unik.
-- `sgcnotransaksi`: Nomor dokumen/transaksi unik.
-- `sgctgl`: Tanggal transaksi atau tanggal referensi.
-- `sgckodepa`: Kolom bisnis sgckodepa.
-- `sgckontak`: Referensi kontak atau contact person.
-- `sgckontakperson`: Referensi kontak atau contact person.
-- `sgcmatauang`: Informasi mata uang dan kurs transaksi.
-- `sgckurs`: Informasi mata uang dan kurs transaksi.
-- `sgcidsg`: Kolom bisnis sgcidsg.
-- `sgcstatus`: Status proses atau status dokumen.
-- `sgcstatussebelumnya`: Status proses atau status dokumen.
+- `sgcid`: Business column sgcid.
+- `sgcautonotransaksi`: Unique document/transaction number.
+- `sgcnotransaksi`: Unique document/transaction number.
+- `sgctgl`: Transaction date or reference date.
+- `sgckodepa`: Business column sgckodepa.
+- `sgckontak`: Contact reference or contact person.
+- `sgckontakperson`: Contact reference or contact person.
+- `sgcmorang`: Currency and exchange-rate information.
+- `sgckurs`: Currency and exchange-rate information.
+- `sgcidsg`: Business column sgcidsg.
+- `sgcstatus`: Process status or document status.
+- `sgcstatussebelumnya`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_sgc_detail` -> `m2_sgc`: `m2_sgc_detail.idsgc = m2_sgc.sgcid`
 
 ### Functions
 
-- `m2_sgc_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_sgc_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_sgc_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_sgc_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_sgc_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_sgc_v`: Provides document listing or search.
+- `m2_sgc_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_sgc_v_history`: Provides document status-change history listing.
+- `m2_sgc_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_sgc_terkait`: Retrieves linkage with other finance documents.
 
 ## CB - Cash/Bank In Transfer
 
-Transaksi penerimaan atau perpindahan kas/bank dengan allocation payment.
+Cash/bank receipt or transfer transaction with payment allocation.
 
-### Tabel
+### Tables
 
-- `m2_cb` | alias: `saldo_awal_coa` | tipe: Header | kolom: 29
-  Header transaksi saldo awal akun/COA pada awal periode. Dipakai untuk membentuk opening balance sebelum transaksi jurnal berjalan.
-- `m2_cb_detail` | alias: `saldo_awal_coa_detail` | tipe: Detail | kolom: 16
-  Detail akun debit dan kredit untuk transaksi saldo awal COA. Setiap baris mewakili akun yang dibuka pada awal periode.
-- `m2_cb_detail_history` | alias: `finance_cb_detail_history` | tipe: History | kolom: 18
-  Tabel histori detail finance untuk cb.
-- `m2_cb_history` | alias: `finance_cb_history` | tipe: History | kolom: 30
-  Tabel histori finance untuk cb.
-- `m2_cb_pay` | alias: `finance_cb_pay` | tipe: Payment/Allocation | kolom: 15
-  Data pembayaran terkait cb pay.
-- `m2_cb_pay_history` | alias: `finance_cb_pay_history` | tipe: History | kolom: 17
-  Tabel histori pembayaran/alokasi finance untuk cb_pay.
+- `m2_cb` | alias: `saldo_awal_coa` | type: Header | columns: 29
+  Opening-balance header for accounts/COA at the start of the period. Used to establish balances before journal transactions begin.
+- `m2_cb_detail` | alias: `saldo_awal_coa_detail` | type: Detail | columns: 16
+  Debit/credit account detail for COA opening-balance transactions. Each row represents an account opened at the start of the period.
+- `m2_cb_detail_history` | alias: `finance_cb_detail_history` | type: History | columns: 18
+  Finance detail history table for cb.
+- `m2_cb_history` | alias: `finance_cb_history` | type: History | columns: 30
+  Finance history table for cb.
+- `m2_cb_pay` | alias: `finance_cb_pay` | type: Payment/Allocation | columns: 15
+  Payment/allocation data related to cb pay.
+- `m2_cb_pay_history` | alias: `finance_cb_pay_history` | type: History | columns: 17
+  Finance payment/allocation history table for `cb_pay`.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `cbid`: Primary key baris data.
-- `cbautonotransaksi`: Nomor dokumen/transaksi unik.
-- `cbnotransaksi`: Nomor dokumen/transaksi unik.
-- `cbtgl`: Tanggal transaksi atau tanggal referensi.
-- `cbkodepa`: Kolom bisnis cbkodepa.
-- `cbkontak`: Referensi kontak atau contact person.
-- `cbkontakperson`: Referensi kontak atau contact person.
-- `cbmatauang`: Informasi mata uang dan kurs transaksi.
-- `cbkurs`: Informasi mata uang dan kurs transaksi.
-- `cbjumlahbayar`: Nilai nominal transaksi.
-- `cbjumlahbayarvalas`: Nilai nominal transaksi.
-- `cbstatusbayar`: Nilai nominal transaksi.
+- `cbid`: Primary key for the row.
+- `cbautonotransaksi`: Unique document/transaction number.
+- `cbnotransaksi`: Unique document/transaction number.
+- `cbtgl`: Transaction date or reference date.
+- `cbkodepa`: Business column cbkodepa.
+- `cbkontak`: Contact reference or contact person.
+- `cbkontakperson`: Contact reference or contact person.
+- `cbmorang`: Currency and exchange-rate information.
+- `cbkurs`: Currency and exchange-rate information.
+- `cbjumlahbayar`: Transaction amount.
+- `cbjumlahbayarvalas`: Transaction amount.
+- `cbstatusbayar`: Transaction amount.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_cb_detail` -> `m2_cb`: `m2_cb_detail.idcb = m2_cb.cbid`
 - `m2_cb_pay` -> `m2_cb`: `m2_cb_pay.idcb = m2_cb.cbid`
 
 ### Functions
 
-- `m2_cb_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_cb_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_cb_pay_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_cb_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_cb_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
-- `m2_cb_pay_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_cb_terkait`: Mengambil keterkaitan dokumen dengan transaksi finance lain.
+- `m2_cb_v`: Provides document listing or search.
+- `m2_cb_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_cb_pay_v`: Provides document listing or search.
+- `m2_cb_v_history`: Provides document status-change history listing.
+- `m2_cb_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
+- `m2_cb_pay_v_history`: Provides document status-change history listing.
+- `m2_cb_terkait`: Retrieves linkage with other finance documents.
 
 ## BD - Bank Disbursement
 
-Pengeluaran bank / pembayaran melalui bank.
+Bank disbursement / payment through bank.
 
-### Tabel
+### Tables
 
-- `m2_bd` | alias: `finance_bd` | tipe: Header | kolom: 29
-  Transaksi atau referensi finance untuk bd.
-- `m2_bd_detail` | alias: `finance_bd_detail` | tipe: Detail | kolom: 14
-  Tabel detail untuk item/baris transaksi bd detail.
-- `m2_bd_detail_history` | alias: `finance_bd_detail_history` | tipe: History | kolom: 16
-  Tabel histori detail finance untuk bd.
-- `m2_bd_history` | alias: `finance_bd_history` | tipe: History | kolom: 30
-  Tabel histori finance untuk bd.
+- `m2_bd` | alias: `finance_bd` | type: Header | columns: 29
+  Finance transaction or reference row for bd.
+- `m2_bd_detail` | alias: `finance_bd_detail` | type: Detail | columns: 14
+  Detail table for transaction item/row bd detail.
+- `m2_bd_detail_history` | alias: `finance_bd_detail_history` | type: History | columns: 16
+  Finance detail history table for bd.
+- `m2_bd_history` | alias: `finance_bd_history` | type: History | columns: 30
+  Finance history table for bd.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `bdid`: Kolom bisnis bdid.
-- `bdautonotransaksi`: Nomor dokumen/transaksi unik.
-- `bdnotransaksi`: Nomor dokumen/transaksi unik.
-- `bdtgl`: Tanggal transaksi atau tanggal referensi.
-- `bdtglanggaran`: Kolom bisnis bdtglanggaran.
-- `bdkodepa`: Kolom bisnis bdkodepa.
-- `bdkontak`: Referensi kontak atau contact person.
-- `bdkontakperson`: Referensi kontak atau contact person.
-- `bdmatauang`: Informasi mata uang dan kurs transaksi.
-- `bdkurs`: Informasi mata uang dan kurs transaksi.
-- `bdstatus`: Status proses atau status dokumen.
-- `bdstatussebelumnya`: Status proses atau status dokumen.
+- `bdid`: Business column bdid.
+- `bdautonotransaksi`: Unique document/transaction number.
+- `bdnotransaksi`: Unique document/transaction number.
+- `bdtgl`: Transaction date or reference date.
+- `bdtglanggaran`: Business column bdtglanggaran.
+- `bdkodepa`: Business column bdkodepa.
+- `bdkontak`: Contact reference or contact person.
+- `bdkontakperson`: Contact reference or contact person.
+- `bdmorang`: Currency and exchange-rate information.
+- `bdkurs`: Currency and exchange-rate information.
+- `bdstatus`: Process status or document status.
+- `bdstatussebelumnya`: Process status or document status.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_bd_detail` -> `m2_bd`: `m2_bd_detail.idbd = m2_bd.bdid`
 
 ## JM - Memorial Journal
 
-Jurnal memorial.
+Memorial journal.
 
-### Tabel
+### Tables
 
-- `m2_jm` | alias: `finance_jm` | tipe: Header | kolom: 28
-  Transaksi atau referensi finance untuk jm.
-- `m2_jm_detail` | alias: `finance_jm_detail` | tipe: Detail | kolom: 17
-  Tabel detail untuk item/baris transaksi jm detail.
-- `m2_jm_detail_history` | alias: `finance_jm_detail_history` | tipe: History | kolom: 19
-  Tabel histori detail finance untuk jm.
-- `m2_jm_history` | alias: `finance_jm_history` | tipe: History | kolom: 29
-  Tabel histori finance untuk jm.
+- `m2_jm` | alias: `finance_jm` | type: Header | columns: 28
+  Finance transaction or reference row for jm.
+- `m2_jm_detail` | alias: `finance_jm_detail` | type: Detail | columns: 17
+  Detail table for transaction item/row jm detail.
+- `m2_jm_detail_history` | alias: `finance_jm_detail_history` | type: History | columns: 19
+  Finance detail history table for jm.
+- `m2_jm_history` | alias: `finance_jm_history` | type: History | columns: 29
+  Finance history table for jm.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `jmid`: Kolom bisnis jmid.
-- `jmautonotransaksi`: Nomor dokumen/transaksi unik.
-- `jmnotransaksi`: Nomor dokumen/transaksi unik.
-- `jmtgl`: Tanggal transaksi atau tanggal referensi.
-- `jmkodepa`: Kolom bisnis jmkodepa.
-- `jmkontakperson`: Referensi kontak atau contact person.
-- `jmmatauang`: Informasi mata uang dan kurs transaksi.
-- `jmkurs`: Informasi mata uang dan kurs transaksi.
-- `jmjumlahbayar`: Nilai nominal transaksi.
-- `jmjumlahbayarvalas`: Nilai nominal transaksi.
-- `jmstatusbayar`: Nilai nominal transaksi.
-- `jmtgllunas`: Tanggal transaksi atau tanggal referensi.
+- `jmid`: Business column jmid.
+- `jmautonotransaksi`: Unique document/transaction number.
+- `jmnotransaksi`: Unique document/transaction number.
+- `jmtgl`: Transaction date or reference date.
+- `jmkodepa`: Business column jmkodepa.
+- `jmkontakperson`: Contact reference or contact person.
+- `jmmorang`: Currency and exchange-rate information.
+- `jmkurs`: Currency and exchange-rate information.
+- `jmjumlahbayar`: Transaction amount.
+- `jmjumlahbayarvalas`: Transaction amount.
+- `jmstatusbayar`: Transaction amount.
+- `jmtgllunas`: Transaction date or reference date.
 
-### Relasi Utama
+### Main Relationships
 
 - `m2_jm_detail` -> `m2_jm`: `m2_jm_detail.idjm = m2_jm.jmid`
 
 ### Functions
 
-- `m2_jm_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_jm_getdata`: Mengambil data header dan detail untuk satu dokumen transaksi.
-- `m2_jm_v_history`: Menyediakan listing riwayat perubahan dokumen.
-- `m2_jm_getdata_history`: Mengambil riwayat perubahan header/detail untuk satu dokumen transaksi.
+- `m2_jm_v`: Provides document listing or search.
+- `m2_jm_getdata`: Retrieves header and detail data for a single transaction document.
+- `m2_jm_v_history`: Provides document status-change history listing.
+- `m2_jm_getdata_history`: Retrieves header/detail status-change history for a single transaction document.
 
 ## GIRO - Giro List
 
-Daftar giro masuk/keluar dan statusnya.
+List of incoming/outgoing giro documents and their statuses.
 
-### Tabel
+### Tables
 
-- `m2_giro_list` | alias: `finance_giro_list` | tipe: Header | kolom: 19
-  Transaksi atau referensi finance untuk giro list.
+- `m2_giro_list` | alias: `finance_giro_list` | type: Header | columns: 19
+  Finance transaction or reference row for giro list.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `glidtransaksi`: Kolom bisnis glidtransaksi.
-- `glnotransaksi`: Nomor dokumen/transaksi unik.
-- `glkontak`: Referensi kontak atau contact person.
-- `glmatauang`: Informasi mata uang dan kurs transaksi.
-- `glkurs`: Informasi mata uang dan kurs transaksi.
-- `gltgljthtempo`: Kolom bisnis gltgljthtempo.
-- `gltglcair`: Kolom bisnis gltglcair.
-- `glstatus`: Status proses atau status dokumen.
-- `glstatussebelumnya`: Status proses atau status dokumen.
-- `glnogiro`: Kolom bisnis glnogiro.
+- `glidtransaction`: Business column glidtransaction.
+- `glnotransaksi`: Unique document/transaction number.
+- `glkontak`: Contact reference or contact person.
+- `glmorang`: Currency and exchange-rate information.
+- `glkurs`: Currency and exchange-rate information.
+- `gltgljthtempo`: Business column gltgljthtempo.
+- `gltglcair`: Business column gltglcair.
+- `glstatus`: Process status or document status.
+- `glstatussebelumnya`: Process status or document status.
+- `glnogiro`: Business column glnogiro.
 
 ### Functions
 
-- `m2_giro_list_v`: Menyediakan listing atau pencarian data dokumen.
-- `m2_giro_list_app`: Function semantic finance dari layer query.
-- `m2_giro_list_cd`: Function semantic finance dari layer query.
+- `m2_giro_list_v`: Provides document listing or search.
+- `m2_giro_list_app`: Finance semantic function from the query layer.
+- `m2_giro_list_cd`: Finance semantic function from the query layer.
 
 ## TRANSACTION - Transaction Journal
 
-Ledger/jurnal transaksi terposting untuk finance.
+Posted ledger/journal transaction table for finance.
 
-### Tabel
+### Tables
 
-- `m2_transaction_journal` | alias: `finance_transaction_journal` | tipe: Header | kolom: 45
-  Transaksi atau referensi finance untuk transaction journal.
+- `m2_transaction_journal` | alias: `finance_transaction_journal` | type: Header | columns: 45
+  Finance transaction or reference row for transaction journal.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `tid`: Kolom bisnis tid.
-- `tkodetabelangka`: Kolom bisnis tkodetabelangka.
-- `tidtransaksi`: Kolom bisnis tidtransaksi.
-- `tnotransaksi`: Nomor dokumen/transaksi unik.
-- `ttgl`: Tanggal transaksi atau tanggal referensi.
-- `tkodepa`: Kolom bisnis tkodepa.
-- `tkontak`: Referensi kontak atau contact person.
-- `tnorek`: Kolom bisnis tnorek.
-- `tmatauang`: Informasi mata uang dan kurs transaksi.
-- `tkurs`: Informasi mata uang dan kurs transaksi.
-- `tcarabayar`: Nilai nominal transaksi.
-- `ttgljatuhtempo`: Kolom bisnis ttgljatuhtempo.
+- `tid`: Business column tid.
+- `tkodetabelangka`: Business column tkodetabelangka.
+- `tidtransaksi`: Business column tidtransaksi.
+- `tnotransaksi`: Unique document/transaction number.
+- `ttgl`: Transaction date or reference date.
+- `tkodepa`: Business column tkodepa.
+- `tkontak`: Contact reference or contact person.
+- `tnorek`: Business column tnorek.
+- `tmorang`: Currency and exchange-rate information.
+- `tkurs`: Currency and exchange-rate information.
+- `tcarabayar`: Transaction amount.
+- `ttgljatuhtempo`: Business column ttgljatuhtempo.
 
-### Relasi Utama
+### Main Relationships
 
-- `m2_transaction_journal` menyimpan jurnal posting lintas sumber dokumen finance melalui `tsumber`, `tidtransaksi`, dan `tnotransaksi`.
+- `m2_transaction_journal` stores posted journals across finance document sources using `tsumber`, `tidtransaksi`, and `tnotransaksi`.
 
 ### Functions
 
-- `m2_transaction_journal_voucher`: Function semantic finance dari layer query.
+- `m2_transaction_journal_voucher`: Finance semantic function from the query layer.
 
 ## REALIZATION - Budget Realization
 
-Tabel agregat realisasi untuk branch/cost center/division/project/subdivision.
+Aggregate realization tables for branch, cost center, division, project, and subdivision reporting.
 
-### Tabel
+### Tables
 
-- `m2_realization` | alias: `finance_realization` | tipe: Header | kolom: 7
-  Transaksi atau referensi finance untuk realization.
-- `m2_realization_branch` | alias: `finance_realization_branch` | tipe: Header | kolom: 8
-  Transaksi atau referensi finance untuk realization branch.
-- `m2_realization_cost_center` | alias: `finance_realization_cost_center` | tipe: Header | kolom: 8
-  Transaksi atau referensi finance untuk realization cost center.
-- `m2_realization_division` | alias: `finance_realization_division` | tipe: Header | kolom: 8
-  Transaksi atau referensi finance untuk realization division.
-- `m2_realization_location` | alias: `finance_realization_location` | tipe: Header | kolom: 8
-  Transaksi atau referensi finance untuk realization location.
-- `m2_realization_project` | alias: `finance_realization_project` | tipe: Header | kolom: 8
-  Transaksi atau referensi finance untuk realization project.
-- `m2_realization_subdivision` | alias: `finance_realization_subdivision` | tipe: Header | kolom: 8
-  Transaksi atau referensi finance untuk realization subdivision.
+- `m2_realization` | alias: `finance_realization` | type: Header | columns: 7
+  Finance transaction or reference row for realization.
+- `m2_realization_branch` | alias: `finance_realization_branch` | type: Header | columns: 8
+  Finance transaction or reference row for realization branch.
+- `m2_realization_cost_center` | alias: `finance_realization_cost_center` | type: Header | columns: 8
+  Finance transaction or reference row for realization cost center.
+- `m2_realization_division` | alias: `finance_realization_division` | type: Header | columns: 8
+  Finance transaction or reference row for realization division.
+- `m2_realization_location` | alias: `finance_realization_location` | type: Header | columns: 8
+  Finance transaction or reference row for realization location.
+- `m2_realization_project` | alias: `finance_realization_project` | type: Header | columns: 8
+  Finance transaction or reference row for realization project.
+- `m2_realization_subdivision` | alias: `finance_realization_subdivision` | type: Header | columns: 8
+  Finance transaction or reference row for realization subdivision.
 
-### Kolom Header Penting
+### Important Header Columns
 
-- `rnorek`: Kolom bisnis rnorek.
-- `rkodepa`: Kolom bisnis rkodepa.
-- `rtahun`: Kolom bisnis rtahun.
-- `rbulan`: Kolom bisnis rbulan.
-- `rjmldebit`: Nilai nominal transaksi.
-- `rjmlkredit`: Nilai nominal transaksi.
-- `ranggaran`: Kolom bisnis ranggaran.
+- `rnorek`: Business column rnorek.
+- `rkodepa`: Business column rkodepa.
+- `rtahun`: Business column rtahun.
+- `rbulan`: Business column rbulan.
+- `rjmldebit`: Transaction amount.
+- `rjmlkredit`: Transaction amount.
+- `ranggaran`: Business column ranggaran.
 
-### Relasi Utama
+### Main Relationships
 
-- `m2_realization_*` menyimpan agregasi realisasi per dimensi organisasi seperti branch, cost center, division, location, project, dan subdivision.
+- `m2_realization_*` menyimpan agregasi realization per dimensi organisasi seperti branch, cost center, division, location, project, and subdivision.
 
-## NOTES - Catatan Finance
+## NOTES - Notes Finance
 
-Catatan teks untuk transaksi finance.
+Notes teks for transaction finance.
 
-### Tabel
+### Tables
 
-- `m2_notes` | alias: `finance_notes` | tipe: Auxiliary | kolom: 8
-  Tabel utilitas/catatan finance untuk notes.
-
-### Functions
-
-- `m2_notes_v`: Menyediakan listing atau pencarian data dokumen.
-
-## FILES - Lampiran Finance
-
-Lampiran file transaksi finance.
-
-### Tabel
-
-- `m2_files` | alias: `finance_files` | tipe: Auxiliary | kolom: 8
-  Tabel utilitas/lampiran finance untuk files.
+- `m2_notes` | alias: `finance_notes` | type: Auxiliary | columns: 8
+  Tables utilitas/notes finance for notes.
 
 ### Functions
 
-- `m2_files_v`: Menyediakan listing atau pencarian data dokumen.
+- `m2_notes_v`: Provides document listing or search.
+
+## FILES - Attachments Finance
+
+Attachments file transaction finance.
+
+### Tables
+
+- `m2_files` | alias: `finance_files` | type: Auxiliary | columns: 8
+  Tables utilitas/attachments finance for files.
+
+### Functions
+
+- `m2_files_v`: Provides document listing or search.

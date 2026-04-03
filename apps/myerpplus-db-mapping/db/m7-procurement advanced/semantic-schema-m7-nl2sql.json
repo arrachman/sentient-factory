@@ -1,0 +1,233 @@
+{
+  "domain": "myerpplus_asset_m7",
+  "description": "Machine-friendly NL2SQL guide for the M7 asset/procurement-advanced module.",
+  "source_files": [
+    "semantic-schema-m7.json",
+    "semantic-schema-m7-summary.md",
+    "m7-queries.md",
+    "m0_report_rmoduleid_7.sql"
+  ],
+  "business_terms": {
+    "AR": [
+      "asset request",
+      "permintaan asset"
+    ],
+    "AQ": [
+      "asset quotation request",
+      "permintaan penawaran asset"
+    ],
+    "AO": [
+      "asset order",
+      "order pengadaan asset"
+    ],
+    "AE": [
+      "asset entry",
+      "perolehan asset"
+    ],
+    "AG": [
+      "asset disposal",
+      "penghapusan asset"
+    ],
+    "AT": [
+      "asset transfer",
+      "transfer asset"
+    ],
+    "DA": [
+      "depreciation asset",
+      "penyusutan asset"
+    ],
+    "ASSET": [
+      "fixed asset",
+      "asset tetap"
+    ]
+  },
+  "table_groups": {
+    "document_headers": [
+      "m7_ab",
+      "m7_ae",
+      "m7_ag",
+      "m7_ao",
+      "m7_aq",
+      "m7_ar",
+      "m7_asset",
+      "m7_at",
+      "m7_da"
+    ],
+    "document_details": [
+      "m7_ab_detail",
+      "m7_ae_detail",
+      "m7_ag_detail",
+      "m7_ao_detail",
+      "m7_aq_detail",
+      "m7_ar_detail",
+      "m7_at_detail",
+      "m7_at_pay",
+      "m7_da_detail"
+    ],
+    "master_tables": [
+      "m7_asset_category",
+      "m7_asset_category_tax",
+      "m7_depreciation_category"
+    ],
+    "supporting_tables": [
+      "m7_files",
+      "m7_notes"
+    ],
+    "history_tables": [
+      "m7_asset_category_history",
+      "m7_asset_category_tax_history",
+      "m7_asset_history"
+    ]
+  },
+  "join_hints": [
+    {
+      "name": "asset_category_tax_flow",
+      "description": "Relationship from assets to asset categories and category-tax records.",
+      "joins": [
+        "m7_asset.akategori = m7_asset_category.ackode",
+        "m7_asset_category.ackode = m7_asset_category_tax.actkode"
+      ]
+    },
+    {
+      "name": "asset_request_to_quotation_flow",
+      "description": "Flow from asset requests to asset quotation requests.",
+      "joins": [
+        "m7_ar.arid = m7_ar_detail.idar",
+        "m7_ar_detail.idardetail = m7_aq_detail.idardetail",
+        "m7_aq.aqid = m7_aq_detail.idaq"
+      ]
+    },
+    {
+      "name": "asset_quotation_to_order_flow",
+      "description": "Flow from asset quotation requests to asset procurement orders.",
+      "joins": [
+        "m7_aq.aqid = m7_aq_detail.idaq",
+        "m7_aq_detail.idaqdetail = m7_ao_detail.idaqdetail",
+        "m7_ao.aoid = m7_ao_detail.idao"
+      ]
+    },
+    {
+      "name": "asset_order_to_entry_flow",
+      "description": "Flow from asset orders to asset-entry/acquisition records.",
+      "joins": [
+        "m7_ao.aoid = m7_ao_detail.idao",
+        "m7_ao_detail.idaodetail = m7_ae_detail.idaodetail",
+        "m7_ae.aeid = m7_ae_detail.idae"
+      ]
+    },
+    {
+      "name": "asset_lifecycle_finance_flow",
+      "description": "Relationship from assets to depreciation methods, asset accounts, and progress status.",
+      "joins": [
+        "m7_asset.ametode = m7_depreciation_category.kode",
+        "m7_asset.arekasset = m1_coa.cnomor",
+        "m7_asset.arekakumdepresiasi = m1_coa.cnomor",
+        "m7_asset.arekdepresiasi = m1_coa.cnomor"
+      ]
+    }
+  ],
+  "polymorphic_relationships": [],
+  "detail_lineage_keys": [
+    {
+      "from_table": "m7_ab_detail",
+      "from_column": "idab",
+      "to_table": "m7_ab",
+      "to_column": "abid",
+      "usage": "Trace booking/approval lines to the AB header."
+    },
+    {
+      "from_table": "m7_ar_detail",
+      "from_column": "idar",
+      "to_table": "m7_ar",
+      "to_column": "arid",
+      "usage": "Trace asset-request lines to the AR header."
+    },
+    {
+      "from_table": "m7_aq_detail",
+      "from_column": "idardetail",
+      "to_table": "m7_ar_detail",
+      "to_column": "idardetail",
+      "header_table": "m7_ar",
+      "header_column": "arid",
+      "header_join_column": "idar",
+      "usage": "Trace quotation requests back to the originating asset request."
+    },
+    {
+      "from_table": "m7_ao_detail",
+      "from_column": "idaqdetail",
+      "to_table": "m7_aq_detail",
+      "to_column": "idaqdetail",
+      "header_table": "m7_aq",
+      "header_column": "aqid",
+      "header_join_column": "idaq",
+      "usage": "Trace asset orders back to the originating quotation request."
+    },
+    {
+      "from_table": "m7_ae_detail",
+      "from_column": "idaodetail",
+      "to_table": "m7_ao_detail",
+      "to_column": "idaodetail",
+      "header_table": "m7_ao",
+      "header_column": "aoid",
+      "header_join_column": "idao",
+      "usage": "Trace asset entry/acquisition records back to the originating asset order."
+    },
+    {
+      "from_table": "m7_ag_detail",
+      "from_column": "idag",
+      "to_table": "m7_ag",
+      "to_column": "agid",
+      "usage": "Trace asset-disposal lines to the AG header."
+    },
+    {
+      "from_table": "m7_at_detail",
+      "from_column": "idat",
+      "to_table": "m7_at",
+      "to_column": "atid",
+      "usage": "Trace asset-transfer lines to the AT header."
+    },
+    {
+      "from_table": "m7_at_pay",
+      "from_column": "idat",
+      "to_table": "m7_at",
+      "to_column": "atid",
+      "usage": "Trace asset-transfer allocation/payment lines to the AT header."
+    },
+    {
+      "from_table": "m7_da_detail",
+      "from_column": "idda",
+      "to_table": "m7_da",
+      "to_column": "daid",
+      "usage": "Trace depreciation lines to the DA header."
+    }
+  ],
+  "important_rules": [
+    "Use header tables for document numbers, dates, statuses, and asset-lifecycle references.",
+    "Use detail tables for asset/item rows per procurement or disposal document.",
+    "Use asset/category/depreciation masters when the question focuses on fixed-asset setup rather than document flow.",
+    "Use history tables only when the user explicitly asks for asset history or audit trails.",
+    "Because this domain is asset-heavy, do not assume every M7 table is a generic procurement table."
+  ],
+  "query_patterns": [
+    {
+      "name": "asset_master_lookup",
+      "description": "Lookup fixed-asset masters and categories.",
+      "pattern": "Use `m7_asset`, `m7_asset_category`, and `m7_depreciation_category`."
+    },
+    {
+      "name": "asset_procurement_flow",
+      "description": "Trace asset-procurement flow.",
+      "pattern": "`AR -> AR_DETAIL -> AQ_DETAIL -> AO_DETAIL -> AE_DETAIL`."
+    },
+    {
+      "name": "asset_depreciation_trace",
+      "description": "Trace depreciation setup and depreciation journals.",
+      "pattern": "Use `m7_asset`, `m7_depreciation_category`, `m7_da`, and `m7_da_detail`."
+    }
+  ],
+  "caution_areas": [
+    "Questions that mix asset procurement with fixed-asset masters without separating documents from masters.",
+    "Questions that rely on the folder name and ignore that the active source is dominated by asset lifecycle.",
+    "Questions that use history tables together with active tables without a clear audit purpose."
+  ]
+}

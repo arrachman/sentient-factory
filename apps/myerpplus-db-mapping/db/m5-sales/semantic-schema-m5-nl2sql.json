@@ -1,6 +1,6 @@
 {
   "domain": "myerpplus_sales_m5",
-  "description": "Machine-friendly NL2SQL guide untuk modul M5 sales. Berisi tabel utama, sinonim bisnis, join hints, relasi polymorphic, dan aturan penting untuk query generation.",
+  "description": "Machine-friendly NL2SQL guide for the M5 sales module. Contains core tables, business synonyms, join hints, polymorphic relationships, and important rules for query generation.",
   "source_files": [
     "semantic-schema-m5.json",
     "m0_report_rmoduleid_5.md",
@@ -152,7 +152,7 @@
   "join_hints": [
     {
       "name": "sales_document_flow",
-      "description": "Alur utama dokumen penjualan dari quotation sampai return.",
+      "description": "Primary sales-document flow from quotation through return.",
       "joins": [
         "m5_sq.sqid = m5_sq_detail.idsq",
         "m5_sq_detail.idsqdetail = m5_so_detail.idsqdetail",
@@ -170,7 +170,7 @@
     },
     {
       "name": "sales_document_cross_refs",
-      "description": "Relasi silang detail antar dokumen penjualan untuk tracing progres dokumen.",
+      "description": "Cross-detail relationships among sales documents for document-progress tracing.",
       "joins": [
         "m5_pi_detail.idsqdetail = m5_sq_detail.idsqdetail",
         "m5_pi_detail.idsodetail = m5_so_detail.idsodetail",
@@ -185,7 +185,7 @@
     },
     {
       "name": "sales_receivable_collection",
-      "description": "Alur penagihan dan pembayaran piutang penjualan.",
+      "description": "Sales receivable collection and payment flow.",
       "joins": [
         "m5_ic.icid = m5_ic_detail.idic",
         "m5_pv.pvid = m5_pv_detail.idpv",
@@ -194,7 +194,7 @@
     },
     {
       "name": "sales_invoice_exchange",
-      "description": "Relasi tukar faktur penjualan terhadap dokumen sumber invoice dan return.",
+      "description": "Sales invoice-exchange relationship to source invoice and return documents.",
       "joins": [
         "m5_sie.sieid = m5_sie_detail.idsie",
         "m5_sie_detail.sumber = m5_si.sisumber AND m5_sie_detail.idtransaksi = m5_si.siid",
@@ -203,7 +203,7 @@
     },
     {
       "name": "sales_advance_and_payment",
-      "description": "Relasi uang muka, penerimaan pembayaran, dan invoice terkait.",
+      "description": "Relationship among advances, payment receipts, and related invoices.",
       "joins": [
         "m5_as.asid = m5_as_pay.idas",
         "m5_ip.ipid = m5_ip_pay.idip",
@@ -213,11 +213,209 @@
     },
     {
       "name": "sales_shipping_receivable",
-      "description": "Relasi piutang ongkos kirim dengan invoice penjualan dan detail pembayarannya.",
+      "description": "Relationship between shipping receivables, sales invoices, and payment detail.",
       "joins": [
         "m5_rp.rpid = m5_rp_pay.idrp",
         "m5_rp.rpidsi = m5_si.siid"
       ]
+    }
+  ],
+  "detail_lineage_keys": [
+    {
+      "name": "si_detail_to_so",
+      "source_table": "m5_si_detail",
+      "source_column": "idsodetail",
+      "target_table": "m5_so_detail",
+      "target_column": "idsodetail",
+      "next_hop": {
+        "table": "m5_so",
+        "via_column": "idso",
+        "target_column": "soid"
+      },
+      "business_meaning": "Trace sales-invoice rows back to the source sales-order row and header."
+    },
+    {
+      "name": "si_detail_to_do",
+      "source_table": "m5_si_detail",
+      "source_column": "iddodetail",
+      "target_table": "m5_do_detail",
+      "target_column": "iddodetail",
+      "next_hop": {
+        "table": "m5_do",
+        "via_column": "iddo",
+        "target_column": "doid"
+      },
+      "business_meaning": "Trace sales-invoice rows back to the source delivery order."
+    },
+    {
+      "name": "si_detail_to_pl",
+      "source_table": "m5_si_detail",
+      "source_column": "idpldetail",
+      "target_table": "m5_pl_detail",
+      "target_column": "idpldetail",
+      "next_hop": {
+        "table": "m5_pl",
+        "via_column": "idpl",
+        "target_column": "plid"
+      },
+      "business_meaning": "Trace sales-invoice rows back to the source packing list."
+    },
+    {
+      "name": "si_detail_to_pi",
+      "source_table": "m5_si_detail",
+      "source_column": "idpidetail",
+      "target_table": "m5_pi_detail",
+      "target_column": "idpidetail",
+      "next_hop": {
+        "table": "m5_pi",
+        "via_column": "idpi",
+        "target_column": "piid"
+      },
+      "business_meaning": "Trace sales-invoice rows back to the source proforma invoice."
+    },
+    {
+      "name": "si_detail_to_dr",
+      "source_table": "m5_si_detail",
+      "source_column": "iddrdetail",
+      "target_table": "m5_dr_detail",
+      "target_column": "iddrdetail",
+      "next_hop": {
+        "table": "m5_dr",
+        "via_column": "iddr",
+        "target_column": "drid"
+      },
+      "business_meaning": "Trace sales-invoice rows back to the source delivery report."
+    },
+    {
+      "name": "do_detail_to_so",
+      "source_table": "m5_do_detail",
+      "source_column": "idsodetail",
+      "target_table": "m5_so_detail",
+      "target_column": "idsodetail",
+      "next_hop": {
+        "table": "m5_so",
+        "via_column": "idso",
+        "target_column": "soid"
+      },
+      "business_meaning": "Trace delivery-order rows back to the source sales order."
+    },
+    {
+      "name": "dr_detail_to_do",
+      "source_table": "m5_dr_detail",
+      "source_column": "iddodetail",
+      "target_table": "m5_do_detail",
+      "target_column": "iddodetail",
+      "next_hop": {
+        "table": "m5_do",
+        "via_column": "iddo",
+        "target_column": "doid"
+      },
+      "business_meaning": "Trace delivery-report rows back to the source delivery order."
+    },
+    {
+      "name": "rnr_detail_to_si",
+      "source_table": "m5_rnr_detail",
+      "source_column": "idsidetail",
+      "target_table": "m5_si_detail",
+      "target_column": "idsidetail",
+      "next_hop": {
+        "table": "m5_si",
+        "via_column": "idsi",
+        "target_column": "siid"
+      },
+      "business_meaning": "Trace receipt-note-return rows back to the source sales invoice."
+    },
+    {
+      "name": "sr_detail_to_si",
+      "source_table": "m5_sr_detail",
+      "source_column": "idsidetail",
+      "target_table": "m5_si_detail",
+      "target_column": "idsidetail",
+      "next_hop": {
+        "table": "m5_si",
+        "via_column": "idsi",
+        "target_column": "siid"
+      },
+      "business_meaning": "Trace sales-return rows back to the source sales invoice."
+    },
+    {
+      "name": "sr_detail_to_rnr",
+      "source_table": "m5_sr_detail",
+      "source_column": "idrnrdetail",
+      "target_table": "m5_rnr_detail",
+      "target_column": "idrnrdetail",
+      "next_hop": {
+        "table": "m5_rnr",
+        "via_column": "idrnr",
+        "target_column": "rnrid"
+      },
+      "business_meaning": "Trace sales-return rows back to the source receipt-note return."
+    }
+  ],
+  "cross_module_relations": [
+    {
+      "name": "sales_customer_to_master_contact",
+      "relation_type": "master_dimension",
+      "from_patterns": [
+        "m5_sq.sqcustomer",
+        "m5_so.socustomer",
+        "m5_do.docustomer",
+        "m5_dr.drcustomer",
+        "m5_pi.picustomer",
+        "m5_si.sicustomer",
+        "m5_rnr.rnrcustomer",
+        "m5_sr.srcustomer",
+        "m5_ic.iccustomer",
+        "m5_pv.pvcustomer",
+        "m5_rp.rpkontak"
+      ],
+      "to_table": "m1_contact",
+      "to_column": "kid",
+      "business_meaning": "Cross-module customer/contact master for sales documents."
+    },
+    {
+      "name": "sales_item_to_master_item",
+      "relation_type": "master_dimension",
+      "from_patterns": [
+        "m5_sq_detail.idbarang",
+        "m5_so_detail.idbarang",
+        "m5_pl_detail.idbarang",
+        "m5_do_detail.idbarang",
+        "m5_dr_detail.idbarang",
+        "m5_pi_detail.idbarang",
+        "m5_si_detail.idbarang",
+        "m5_si_material.idbarang",
+        "m5_rnr_detail.idbarang",
+        "m5_sr_detail.idbarang"
+      ],
+      "to_table": "m1_item",
+      "to_column": "bid",
+      "business_meaning": "Cross-module item master for all sales-transaction lines."
+    },
+    {
+      "name": "pos_voucher_to_sales_invoice",
+      "relation_type": "cross_module_foreign_key",
+      "from_table": "m_12_pos_voucher_out",
+      "from_column": "voidtransaksi",
+      "to_table": "m5_si",
+      "to_column": "siid",
+      "business_meaning": "POS voucher used on a formal sales invoice."
+    },
+    {
+      "name": "sales_to_finance_boundary",
+      "relation_type": "semantic_boundary",
+      "from_module": "m5",
+      "to_module": "m2",
+      "business_meaning": "Use M5 for sales/AR commercial documents, then switch to M2 when the user asks for posting journals, cash/bank, or the general ledger.",
+      "join_rule": "Do not assume a stable direct M5-to-M2 foreign key if active query sources do not show one."
+    },
+    {
+      "name": "sales_to_inventory_boundary",
+      "relation_type": "semantic_boundary",
+      "from_module": "m5",
+      "to_module": "m3",
+      "business_meaning": "DO, DR, RNR, and SR are the sales-side business anchors for inventory processes, but stable direct FKs to M3 documents are not exposed in the active schema.",
+      "join_rule": "Use M5 documents as the business anchor; switch to M3 only when the question explicitly asks about stock or warehouse movement."
     }
   ],
   "polymorphic_relationships": [
@@ -225,7 +423,7 @@
       "table_name": "m5_ic_detail",
       "id_column": "idtransaksi",
       "discriminator_column": "sumber",
-      "description": "Relasi polymorphic ke dokumen yang ditagih dalam invoice collection.",
+      "description": "Polymorphic relationship to documents billed in invoice collection.",
       "mappings": [
         {
           "source_value": "AS",
@@ -248,7 +446,7 @@
       "table_name": "m5_pv_detail",
       "id_column": "idtransaksi",
       "discriminator_column": "sumber",
-      "description": "Relasi polymorphic ke dokumen yang dibayar melalui payment voucher.",
+      "description": "Polymorphic relationship to documents paid through payment vouchers.",
       "mappings": [
         {
           "source_value": "SI",
@@ -266,7 +464,7 @@
       "table_name": "m5_sie_detail",
       "id_column": "idtransaksi",
       "discriminator_column": "sumber",
-      "description": "Relasi polymorphic ke dokumen sumber yang ikut dalam tukar faktur penjualan.",
+      "description": "Polymorphic relationship to source documents included in sales invoice exchange.",
       "mappings": [
         {
           "source_value": "SI",
@@ -282,36 +480,36 @@
     }
   ],
   "important_rules": [
-    "Gunakan tabel header untuk nomor dokumen, tanggal, customer, status, dan total transaksi.",
-    "Gunakan tabel detail untuk item, kuantitas, harga, diskon, gudang, dan progres realisasi.",
-    "Jangan join kolom idtransaksi pada m5_ic_detail, m5_pv_detail, atau m5_sie_detail tanpa memeriksa kolom sumber.",
-    "Kolom carabayar berarti metode pembayaran, bukan nominal.",
-    "Kolom customtext, customint, customdbl, customdate adalah field tambahan dan sebaiknya dihindari kecuali diminta eksplisit.",
-    "Kolom kodepa adalah referensi internal PA dan tidak boleh diasumsikan sebagai foreign key pasti.",
-    "Gunakan tabel history hanya jika pertanyaan memang meminta histori, audit trail, atau perubahan dokumen."
+    "Use header tables for document numbers, dates, customers, statuses, and total transaction values.",
+    "Use detail tables for items, quantities, prices, discounts, warehouses, and realization progress.",
+    "Do not join the idtransaksi column on m5_ic_detail, m5_pv_detail, or m5_sie_detail without checking the sumber column.",
+    "The carabayar column means payment method, not amount.",
+    "customtext, customint, customdbl, and customdate are extension fields and should be avoided unless explicitly requested.",
+    "kodepa is an internal PA reference and must not be assumed to be a guaranteed foreign key.",
+    "Use history tables only when the question explicitly asks for history, audit trails, or document changes."
   ],
   "query_patterns": {
-    "summary": [
-      "Gunakan header table saja."
+      "summary": [
+      "Use header tables only."
     ],
     "items_per_document": [
-      "Join header ke detail dengan foreign key utama idheader."
+      "Join headers to detail using the primary header foreign key."
     ],
     "document_tracing": [
-      "Mulai dari detail table dan ikuti join_hints sales_document_flow atau sales_document_cross_refs."
+      "Start from detail tables and follow sales_document_flow or sales_document_cross_refs join hints."
     ],
     "receivable_collection": [
-      "Gunakan IC -> IC_DETAIL -> PV_DETAIL -> PV."
+      "Use IC -> IC_DETAIL -> PV_DETAIL -> PV."
     ],
     "invoice_return_chain": [
-      "Gunakan SI -> SI_DETAIL -> RNR_DETAIL -> SR_DETAIL."
+      "Use SI -> SI_DETAIL -> RNR_DETAIL -> SR_DETAIL."
     ]
   },
   "caution_areas": [
-    "Pertanyaan lintas SI, SR, AS melalui m5_ic_detail.",
-    "Pertanyaan pembayaran yang memakai m5_pv_detail.idtransaksi.",
-    "Pertanyaan tukar faktur yang memakai m5_sie_detail.idtransaksi.",
-    "Pertanyaan histori yang mencampur tabel aktif dan history.",
-    "Pertanyaan yang sangat bergantung pada field custom."
+    "Questions spanning SI, SR, and AS through m5_ic_detail.",
+    "Payment questions that use m5_pv_detail.idtransaksi.",
+    "Invoice-exchange questions that use m5_sie_detail.idtransaksi.",
+    "History questions that mix active and history tables.",
+    "Questions that depend heavily on custom fields."
   ]
 }

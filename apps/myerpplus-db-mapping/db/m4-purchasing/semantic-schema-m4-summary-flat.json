@@ -1,0 +1,889 @@
+{
+  "title": "Semantic Schema M4 Summary Flat",
+  "source_json": "semantic-schema-m4-summary.json",
+  "count": 87,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_pr",
+      "alias": "purchase_pr",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk pr.",
+      "column_count": 56
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_rq",
+      "alias": "purchase_rq",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk rq.",
+      "column_count": 60
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_rfq",
+      "alias": "purchase_rfq",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk rfq.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_cs",
+      "alias": "purchase_cs",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk cs.",
+      "column_count": 60
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_bs",
+      "alias": "purchase_bs",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk bs.",
+      "column_count": 38
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_po",
+      "alias": "order_pembelian",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Header order pembelian ke supplier. Menjadi dasar proses penerimaan barang, invoice pembelian, dan kontrol outstanding pembelian.",
+      "column_count": 65
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_grn",
+      "alias": "penerimaan_barang",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Header penerimaan barang dari supplier atau dari order pembelian. Menjadi dasar update stok dan verifikasi barang datang.",
+      "column_count": 66
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_ri",
+      "alias": "invoice_pembelian",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Header invoice pembelian dari supplier. Dipakai untuk pencatatan hutang usaha dan dasar pembayaran hutang.",
+      "column_count": 77
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_dnr",
+      "alias": "purchase_dnr",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk dnr.",
+      "column_count": 70
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_prt",
+      "alias": "purchase_prt",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk prt.",
+      "column_count": 76
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_ap",
+      "alias": "purchase_ap",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk ap.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_pp",
+      "alias": "purchase_pp",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk pp.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_vpp",
+      "alias": "purchase_vpp",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk vpp.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_vp",
+      "alias": "purchase_vp",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk vp.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_ipc",
+      "alias": "purchase_ipc",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk ipc.",
+      "column_count": 65
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m4_pie",
+      "alias": "purchase_pie",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi purchasing atau hutang untuk pie.",
+      "column_count": 27
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_request_to_order_flow",
+      "description": "Alur permintaan pembelian sampai pembentukan purchase order.",
+      "joins": [
+        "m4_pr.prid = m4_pr_detail.idpr",
+        "m4_pr_detail.idprdetail = m4_rq_detail.idprdetail",
+        "m4_rq.rqid = m4_rq_detail.idrq",
+        "m4_rq_detail.idrqdetail = m4_bs_detail.idrqdetail",
+        "m4_bs.bsid = m4_bs_detail.idbs",
+        "m4_po.poid = m4_po_detail.idpo"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_order_receipt_invoice_flow",
+      "description": "Alur purchase order ke penerimaan barang sampai tagihan pembelian.",
+      "joins": [
+        "m4_po.poid = m4_po_detail.idpo",
+        "m4_po_detail.idpodetail = m4_grn_detail.idpodetail",
+        "m4_grn.grnid = m4_grn_detail.idgrn",
+        "m4_grn_detail.idgrndetail = m4_ri_detail.idgrndetail",
+        "m4_ri.riid = m4_ri_detail.idri"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_return_flow",
+      "description": "Alur retur pembelian dari invoice atau receipt ke debit note dan return.",
+      "joins": [
+        "m4_ri.riid = m4_ri_detail.idri",
+        "m4_ri_detail.idridetail = m4_dnr_detail.idridetail",
+        "m4_dnr.dnrid = m4_dnr_detail.iddnr",
+        "m4_dnr_detail.iddnrdetail = m4_prt_detail.iddnrdetail",
+        "m4_prt.prtid = m4_prt_detail.idprt"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_advance_payment_flow",
+      "description": "Relasi uang muka pembelian dan dokumen order atau invoice terkait.",
+      "joins": [
+        "m4_po.poid = m4_ap.apidpo",
+        "m4_ap.apid = m4_ap_pay.idap",
+        "m4_ri.riidap = m4_ap.apid",
+        "m4_pp.ppid = m4_pp_pay.idpp"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_vendor_payment_flow",
+      "description": "Alur proposal pembayaran vendor dan realisasi pembayaran ke dokumen target.",
+      "joins": [
+        "m4_vpp.vppid = m4_vpp_detail.idvpp",
+        "m4_vp.vpid = m4_vp_detail.idvp",
+        "m4_vpp_pay.idvpp = m4_vpp.vppid",
+        "m4_vp_pay.idvp = m4_vp.vpid",
+        "m4_vpp_detail.idtransaksi = m4_ap.apid when sumber = AP",
+        "m4_vpp_detail.idtransaksi = m4_ri.riid when sumber = RI",
+        "m4_vpp_detail.idtransaksi = m4_prt.prtid when sumber = PRT"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_comparison_flow",
+      "description": "Relasi comparative sheet, request quotation, dan hasil perbandingan vendor.",
+      "joins": [
+        "m4_pr.prid = m4_cs.csidpr",
+        "m4_cs.csid = m4_cs_detail.idcs",
+        "m4_rq.rqid = m4_rq_detail.idrq",
+        "m4_rq.idcs = m4_cs.csid",
+        "m4_bs_detail.idrqdetail = m4_rq_detail.idrqdetail"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "purchase_invoice_exchange_flow",
+      "description": "Relasi tukar faktur pembelian ke dokumen sumber pembelian.",
+      "joins": [
+        "m4_pie.pieid = m4_pie_detail.idpie",
+        "m4_pie.idri = m4_ri.riid",
+        "m4_pie_detail.idtransaksi = target purchase document by sumber"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_pr_detail",
+      "alias": "purchase_pr_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi pr detail.",
+      "column_count": 53
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_rq_detail",
+      "alias": "purchase_rq_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rq detail.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_rfq_detail",
+      "alias": "purchase_rfq_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rfq detail.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_cs_detail",
+      "alias": "purchase_cs_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi cs detail.",
+      "column_count": 44
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_bs_detail",
+      "alias": "purchase_bs_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi bs detail.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_po_detail",
+      "alias": "order_pembelian_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail item untuk order pembelian. Menyimpan barang, qty, harga, diskon, pajak, dan referensi proses lanjut pembelian.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_grn_detail",
+      "alias": "purchase_grn_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi grn detail.",
+      "column_count": 49
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_ri_detail",
+      "alias": "purchase_ri_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi ri detail.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_dnr_detail",
+      "alias": "purchase_dnr_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi dnr detail.",
+      "column_count": 51
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_prt_detail",
+      "alias": "purchase_prt_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi prt detail.",
+      "column_count": 48
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_vpp_detail",
+      "alias": "purchase_vpp_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi vpp detail.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_vp_detail",
+      "alias": "purchase_vp_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi vp detail.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_ipc_detail",
+      "alias": "purchase_ipc_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi ipc detail.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m4_pie_detail",
+      "alias": "purchase_pie_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi pie detail.",
+      "column_count": 7
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "purchase_request_to_order_flow",
+      "description": "Alur permintaan pembelian sampai pembentukan purchase order.",
+      "joins": [
+        "m4_pr.prid = m4_pr_detail.idpr",
+        "m4_pr_detail.idprdetail = m4_rq_detail.idprdetail",
+        "m4_rq.rqid = m4_rq_detail.idrq",
+        "m4_rq_detail.idrqdetail = m4_bs_detail.idrqdetail",
+        "m4_bs.bsid = m4_bs_detail.idbs",
+        "m4_po.poid = m4_po_detail.idpo"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "purchase_order_receipt_invoice_flow",
+      "description": "Alur purchase order ke penerimaan barang sampai tagihan pembelian.",
+      "joins": [
+        "m4_po.poid = m4_po_detail.idpo",
+        "m4_po_detail.idpodetail = m4_grn_detail.idpodetail",
+        "m4_grn.grnid = m4_grn_detail.idgrn",
+        "m4_grn_detail.idgrndetail = m4_ri_detail.idgrndetail",
+        "m4_ri.riid = m4_ri_detail.idri"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "purchase_return_flow",
+      "description": "Alur retur pembelian dari invoice atau receipt ke debit note dan return.",
+      "joins": [
+        "m4_ri.riid = m4_ri_detail.idri",
+        "m4_ri_detail.idridetail = m4_dnr_detail.idridetail",
+        "m4_dnr.dnrid = m4_dnr_detail.iddnr",
+        "m4_dnr_detail.iddnrdetail = m4_prt_detail.iddnrdetail",
+        "m4_prt.prtid = m4_prt_detail.idprt"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "purchase_vendor_payment_flow",
+      "description": "Alur proposal pembayaran vendor dan realisasi pembayaran ke dokumen target.",
+      "joins": [
+        "m4_vpp.vppid = m4_vpp_detail.idvpp",
+        "m4_vp.vpid = m4_vp_detail.idvp",
+        "m4_vpp_pay.idvpp = m4_vpp.vppid",
+        "m4_vp_pay.idvp = m4_vp.vpid",
+        "m4_vpp_detail.idtransaksi = m4_ap.apid when sumber = AP",
+        "m4_vpp_detail.idtransaksi = m4_ri.riid when sumber = RI",
+        "m4_vpp_detail.idtransaksi = m4_prt.prtid when sumber = PRT"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "purchase_comparison_flow",
+      "description": "Relasi comparative sheet, request quotation, dan hasil perbandingan vendor.",
+      "joins": [
+        "m4_pr.prid = m4_cs.csidpr",
+        "m4_cs.csid = m4_cs_detail.idcs",
+        "m4_rq.rqid = m4_rq_detail.idrq",
+        "m4_rq.idcs = m4_cs.csid",
+        "m4_bs_detail.idrqdetail = m4_rq_detail.idrqdetail"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "purchase_invoice_exchange_flow",
+      "description": "Relasi tukar faktur pembelian ke dokumen sumber pembelian.",
+      "joins": [
+        "m4_pie.pieid = m4_pie_detail.idpie",
+        "m4_pie.idri = m4_ri.riid",
+        "m4_pie_detail.idtransaksi = target purchase document by sumber"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_DETAILS",
+      "table_name": "m4_ap_pay",
+      "alias": "purchase_ap_pay",
+      "owner_module": "PAYMENT_DETAILS",
+      "description": "Data pembayaran terkait ap pay.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_DETAILS",
+      "table_name": "m4_pp_pay",
+      "alias": "purchase_pp_pay",
+      "owner_module": "PAYMENT_DETAILS",
+      "description": "Data pembayaran terkait pp pay.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_DETAILS",
+      "table_name": "m4_ri_pay",
+      "alias": "purchase_ri_pay",
+      "owner_module": "PAYMENT_DETAILS",
+      "description": "Data pembayaran terkait ri pay.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_DETAILS",
+      "table_name": "m4_vp_pay",
+      "alias": "purchase_vp_pay",
+      "owner_module": "PAYMENT_DETAILS",
+      "description": "Data pembayaran terkait vp pay.",
+      "column_count": 17
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_DETAILS",
+      "table_name": "m4_vpp_pay",
+      "alias": "purchase_vpp_pay",
+      "owner_module": "PAYMENT_DETAILS",
+      "description": "Data pembayaran terkait vpp pay.",
+      "column_count": 19
+    },
+    {
+      "type": "relation",
+      "module": "PAYMENT_DETAILS",
+      "name": "purchase_advance_payment_flow",
+      "description": "Relasi uang muka pembelian dan dokumen order atau invoice terkait.",
+      "joins": [
+        "m4_po.poid = m4_ap.apidpo",
+        "m4_ap.apid = m4_ap_pay.idap",
+        "m4_ri.riidap = m4_ap.apid",
+        "m4_pp.ppid = m4_pp_pay.idpp"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "PAYMENT_DETAILS",
+      "name": "purchase_vendor_payment_flow",
+      "description": "Alur proposal pembayaran vendor dan realisasi pembayaran ke dokumen target.",
+      "joins": [
+        "m4_vpp.vppid = m4_vpp_detail.idvpp",
+        "m4_vp.vpid = m4_vp_detail.idvp",
+        "m4_vpp_pay.idvpp = m4_vpp.vppid",
+        "m4_vp_pay.idvp = m4_vp.vpid",
+        "m4_vpp_detail.idtransaksi = m4_ap.apid when sumber = AP",
+        "m4_vpp_detail.idtransaksi = m4_ri.riid when sumber = RI",
+        "m4_vpp_detail.idtransaksi = m4_prt.prtid when sumber = PRT"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m4_ipc",
+      "alias": "purchase_ipc",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi purchasing atau hutang untuk ipc.",
+      "column_count": 65
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m4_ipc_detail",
+      "alias": "purchase_ipc_detail",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel detail untuk item/baris transaksi ipc detail.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m4_pie",
+      "alias": "purchase_pie",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi purchasing atau hutang untuk pie.",
+      "column_count": 27
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m4_pie_detail",
+      "alias": "purchase_pie_detail",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel detail untuk item/baris transaksi pie detail.",
+      "column_count": 7
+    },
+    {
+      "type": "relation",
+      "module": "SUPPORTING_TABLES",
+      "name": "purchase_invoice_exchange_flow",
+      "description": "Relasi tukar faktur pembelian ke dokumen sumber pembelian.",
+      "joins": [
+        "m4_pie.pieid = m4_pie_detail.idpie",
+        "m4_pie.idri = m4_ri.riid",
+        "m4_pie_detail.idtransaksi = target purchase document by sumber"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_ap_history",
+      "alias": "purchase_ap",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_ap_pay_history",
+      "alias": "purchase_ap_pay",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori payment/allocation yang terdeteksi dari query aktif modul M4.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_bs_history",
+      "alias": "purchase_bs",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 38
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_bs_detail_history",
+      "alias": "purchase_bs_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_dnr_history",
+      "alias": "purchase_dnr",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 70
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_dnr_detail_history",
+      "alias": "purchase_dnr_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 51
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_grn_history",
+      "alias": "penerimaan_barang",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 66
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_grn_detail_history",
+      "alias": "purchase_grn_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 49
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_pie_history",
+      "alias": "purchase_pie",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 27
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_pie_detail_history",
+      "alias": "purchase_pie_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_po_history",
+      "alias": "order_pembelian",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 65
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_po_detail_history",
+      "alias": "order_pembelian_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_pr_history",
+      "alias": "purchase_pr",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 56
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_pr_detail_history",
+      "alias": "purchase_pr_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 53
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_prt_history",
+      "alias": "purchase_prt",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 76
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_prt_detail_history",
+      "alias": "purchase_prt_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 48
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_rfq_history",
+      "alias": "purchase_rfq",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_rfq_detail_history",
+      "alias": "purchase_rfq_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_ri_history",
+      "alias": "invoice_pembelian",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 77
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_ri_detail_history",
+      "alias": "purchase_ri_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_ri_pay_history",
+      "alias": "purchase_ri_pay",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori payment/allocation yang terdeteksi dari query aktif modul M4.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_rq_history",
+      "alias": "purchase_rq",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 60
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_rq_detail_history",
+      "alias": "purchase_rq_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_vp_history",
+      "alias": "purchase_vp",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_vp_detail_history",
+      "alias": "purchase_vp_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_vp_pay_history",
+      "alias": "purchase_vp_pay",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori payment/allocation yang terdeteksi dari query aktif modul M4.",
+      "column_count": 17
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_vpp_history",
+      "alias": "purchase_vpp",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M4.",
+      "column_count": 45
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_vpp_detail_history",
+      "alias": "purchase_vpp_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail yang terdeteksi dari query aktif modul M4.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m4_vpp_pay_history",
+      "alias": "purchase_vpp_pay",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori payment/allocation yang terdeteksi dari query aktif modul M4.",
+      "column_count": 19
+    },
+    {
+      "type": "polymorphic_relationship",
+      "table_name": "m4_vpp_detail",
+      "id_column": "idtransaksi",
+      "discriminator_column": "sumber",
+      "description": "Relasi polymorphic ke dokumen purchasing berdasarkan kolom sumber pada vendor payment proposal.",
+      "mappings": [
+        {
+          "source_value": "AP",
+          "target_table": "m4_ap",
+          "target_column": "apid"
+        },
+        {
+          "source_value": "RI",
+          "target_table": "m4_ri",
+          "target_column": "riid"
+        },
+        {
+          "source_value": "PRT",
+          "target_table": "m4_prt",
+          "target_column": "prtid"
+        }
+      ]
+    },
+    {
+      "type": "polymorphic_relationship",
+      "table_name": "m4_vp_detail",
+      "id_column": "idtransaksi",
+      "discriminator_column": "sumber",
+      "description": "Relasi polymorphic ke dokumen purchasing berdasarkan kolom sumber pada vendor payment.",
+      "mappings": [
+        {
+          "source_value": "AP",
+          "target_table": "m4_ap",
+          "target_column": "apid"
+        },
+        {
+          "source_value": "RI",
+          "target_table": "m4_ri",
+          "target_column": "riid"
+        },
+        {
+          "source_value": "PRT",
+          "target_table": "m4_prt",
+          "target_column": "prtid"
+        }
+      ]
+    },
+    {
+      "type": "polymorphic_relationship",
+      "table_name": "m4_pie_detail",
+      "id_column": "idtransaksi",
+      "discriminator_column": "sumber",
+      "description": "Relasi polymorphic ke dokumen purchasing sumber pada transaksi tukar faktur pembelian.",
+      "mappings": [
+        {
+          "source_value": "BY_SOURCE",
+          "target_table": "purchase_document_by_sumber",
+          "target_column": "document_id"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,500 @@
+{
+  "title": "Semantic Schema M3 Summary Flat",
+  "source_json": "semantic-schema-m3-summary.json",
+  "count": 53,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_mr",
+      "alias": "inventory_mr",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk mr.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_ts",
+      "alias": "inventory_ts",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk ts.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_rs",
+      "alias": "inventory_rs",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk rs.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_sa",
+      "alias": "inventory_sa",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk sa.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_sp",
+      "alias": "inventory_sp",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk sp.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_ib",
+      "alias": "saldo_awal_barang",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Header transaksi saldo awal barang per gudang pada awal periode. Dipakai untuk membentuk posisi stok awal sebelum transaksi gudang berjalan.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_pa",
+      "alias": "inventory_pa",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk pa.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_rf",
+      "alias": "inventory_rf",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk rf.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_dc",
+      "alias": "inventory_dc",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk dc.",
+      "column_count": 35
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m3_rw",
+      "alias": "inventory_rw",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi inventory atau gudang untuk rw.",
+      "column_count": 29
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "inventory_request_to_transfer_flow",
+      "description": "Alur permintaan barang ke mutasi stok.",
+      "joins": [
+        "m3_mr.mrid = m3_mr_detail.idmr",
+        "m3_mr_detail.idmrdetail = m3_ts_detail.idmrdetail",
+        "m3_ts.tsid = m3_ts_detail.idts"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "inventory_request_to_receipt_flow",
+      "description": "Alur permintaan barang ke terima mutasi.",
+      "joins": [
+        "m3_mr.mrid = m3_mr_detail.idmr",
+        "m3_mr_detail.idmrdetail = m3_rs_detail.idmrdetail",
+        "m3_rs.rsid = m3_rs_detail.idrs"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "transfer_to_receipt_flow",
+      "description": "Alur mutasi stok ke penerimaan mutasi.",
+      "joins": [
+        "m3_ts.tsid = m3_ts_detail.idts",
+        "m3_ts_detail.idtsdetail = m3_rs_detail.idtsdetail",
+        "m3_rs.rsid = m3_rs_detail.idrs"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "stock_opname_adjustment_flow",
+      "description": "Alur stok opname ke transaksi barang atau penyesuaian saldo.",
+      "joins": [
+        "m3_sp.spid = m3_sp_detail.idsp",
+        "m3_sp_detail.idspdetail = m3_sa_detail.idspdetail",
+        "m3_sa.said = m3_sa_detail.idsa"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "opening_balance_inventory_flow",
+      "description": "Relasi saldo awal barang dengan detail saldo awal.",
+      "joins": [
+        "m3_ib.ibid = m3_ib_detail.idib"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_mr_detail",
+      "alias": "inventory_mr_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi mr detail.",
+      "column_count": 32
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_ts_detail",
+      "alias": "inventory_ts_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi ts detail.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_rs_detail",
+      "alias": "inventory_rs_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rs detail.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_sa_detail",
+      "alias": "inventory_sa_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi sa detail.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_sp_detail",
+      "alias": "inventory_sp_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi sp detail.",
+      "column_count": 31
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_ib_detail",
+      "alias": "saldo_awal_barang_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail item untuk transaksi saldo awal barang. Setiap baris menyimpan qty awal, satuan, HPP, dan akun persediaan item.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_pa_detail",
+      "alias": "inventory_pa_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi pa detail.",
+      "column_count": 60
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_rf_detail",
+      "alias": "inventory_rf_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rf detail.",
+      "column_count": 32
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_dc_detail",
+      "alias": "inventory_dc_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi dc detail.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m3_dc_check",
+      "alias": "inventory_dc_check",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Transaksi inventory atau gudang untuk dc check.",
+      "column_count": 7
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "inventory_request_to_transfer_flow",
+      "description": "Alur permintaan barang ke mutasi stok.",
+      "joins": [
+        "m3_mr.mrid = m3_mr_detail.idmr",
+        "m3_mr_detail.idmrdetail = m3_ts_detail.idmrdetail",
+        "m3_ts.tsid = m3_ts_detail.idts"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "inventory_request_to_receipt_flow",
+      "description": "Alur permintaan barang ke terima mutasi.",
+      "joins": [
+        "m3_mr.mrid = m3_mr_detail.idmr",
+        "m3_mr_detail.idmrdetail = m3_rs_detail.idmrdetail",
+        "m3_rs.rsid = m3_rs_detail.idrs"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "transfer_to_receipt_flow",
+      "description": "Alur mutasi stok ke penerimaan mutasi.",
+      "joins": [
+        "m3_ts.tsid = m3_ts_detail.idts",
+        "m3_ts_detail.idtsdetail = m3_rs_detail.idtsdetail",
+        "m3_rs.rsid = m3_rs_detail.idrs"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "stock_opname_adjustment_flow",
+      "description": "Alur stok opname ke transaksi barang atau penyesuaian saldo.",
+      "joins": [
+        "m3_sp.spid = m3_sp_detail.idsp",
+        "m3_sp_detail.idspdetail = m3_sa_detail.idspdetail",
+        "m3_sa.said = m3_sa_detail.idsa"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "opening_balance_inventory_flow",
+      "description": "Relasi saldo awal barang dengan detail saldo awal.",
+      "joins": [
+        "m3_ib.ibid = m3_ib_detail.idib"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m3_files",
+      "alias": "inventory_files",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel auxiliary yang terdeteksi dari query aktif modul M3.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m3_notes",
+      "alias": "inventory_notes",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel auxiliary yang terdeteksi dari query aktif modul M3.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m3_sp_progress",
+      "alias": "inferred_from_query",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel progress/proses yang terdeteksi dari query aktif modul M3.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m3_sp_detail_progress",
+      "alias": "inferred_from_query",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel progress/proses yang terdeteksi dari query aktif modul M3.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_dc_check_history",
+      "alias": "inventory_dc_check",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_dc_detail_history",
+      "alias": "inventory_dc_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_dc_history",
+      "alias": "inventory_dc",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 35
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_ib_detail_history",
+      "alias": "saldo_awal_barang_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_ib_history",
+      "alias": "saldo_awal_barang",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_mr_detail_history",
+      "alias": "inventory_mr_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 32
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_mr_history",
+      "alias": "inventory_mr",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_pa_detail_history",
+      "alias": "inventory_pa_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 60
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_pa_history",
+      "alias": "inventory_pa",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_rf_detail_history",
+      "alias": "inventory_rf_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 32
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_rf_history",
+      "alias": "inventory_rf",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_rs_detail_history",
+      "alias": "inventory_rs_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_rs_history",
+      "alias": "inventory_rs",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_sa_detail_history",
+      "alias": "inventory_sa_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_sa_history",
+      "alias": "inventory_sa",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_sp_detail_history",
+      "alias": "inventory_sp_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 31
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_sp_history",
+      "alias": "inventory_sp",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_ts_detail_history",
+      "alias": "inventory_ts_detail",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m3_ts_history",
+      "alias": "inventory_ts",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori/arsip yang terdeteksi dari query aktif modul M3.",
+      "column_count": 28
+    }
+  ]
+}

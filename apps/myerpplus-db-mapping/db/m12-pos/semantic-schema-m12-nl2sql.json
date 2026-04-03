@@ -1,0 +1,204 @@
+{
+  "title": "Semantic Schema M12 NL2SQL",
+  "domain": "m12-pos",
+  "mode": "readonly",
+  "areas": [
+    "MASTER_SETUP",
+    "PROMO_LOYALTY",
+    "TRANSACTION_HEADERS",
+    "TRANSACTION_DETAILS",
+    "HISTORY"
+  ],
+  "join_hints": [
+    {
+      "name": "sales_transaction_flow",
+      "description": "Relationship from POS transaction headers to sales-item details.",
+      "joins": [
+        "m_12_st.stid = m_12_st_detail.idst"
+      ]
+    },
+    {
+      "name": "promo_additional_flow",
+      "description": "Relationship from additional-item promotion headers to rules and additional items.",
+      "joins": [
+        "m_12_ai.aiid = m_12_ai_detail.idai",
+        "m_12_ai.aiid = m_12_ai_additional.idai"
+      ]
+    },
+    {
+      "name": "promo_bonus_flow",
+      "description": "Relationship from bonus-item promotion headers to rules and bonus items.",
+      "joins": [
+        "m_12_bi.biid = m_12_bi_detail.idbi",
+        "m_12_bi.biid = m_12_bi_bonus.idbi"
+      ]
+    },
+    {
+      "name": "voucher_flow",
+      "description": "Relationship from POS vouchers to voucher details and transaction payments.",
+      "joins": [
+        "m_12_ppv.ppvid = m_12_ppv_detail.idppv",
+        "m_12_ppv.ppvid = m_12_ppv_pay.idppv"
+      ]
+    },
+    {
+      "name": "area_and_category_flow",
+      "description": "Relationship from POS areas to area categories and POS categories.",
+      "joins": [
+        "m_12_area.akategori = m_12_area_category.ackode",
+        "m_12_pos_item.pikategori = m_12_pos_category.pckode"
+      ]
+    },
+    {
+      "name": "type_and_class_product_flow",
+      "description": "Relationship from POS types to product classes.",
+      "joins": [
+        "m_12_pos_type.ptkode = m_12_pos_type_class_product.idpostype"
+      ]
+    }
+  ],
+  "detail_lineage_keys": [
+    {
+      "name": "st_detail_to_st",
+      "source_table": "m_12_st_detail",
+      "source_column": "idst",
+      "target_table": "m_12_st",
+      "target_column": "stid",
+      "business_meaning": "Trace POS transaction details back to the cashier-transaction header."
+    },
+    {
+      "name": "ai_detail_to_ai",
+      "source_table": "m_12_ai_detail",
+      "source_column": "idai",
+      "target_table": "m_12_ai",
+      "target_column": "aiid",
+      "business_meaning": "Trace additional-item rules back to the AI promotion header."
+    },
+    {
+      "name": "ai_additional_to_ai",
+      "source_table": "m_12_ai_additional",
+      "source_column": "idai",
+      "target_table": "m_12_ai",
+      "target_column": "aiid",
+      "business_meaning": "Trace additional items back to the AI promotion header."
+    },
+    {
+      "name": "bi_detail_to_bi",
+      "source_table": "m_12_bi_detail",
+      "source_column": "idbi",
+      "target_table": "m_12_bi",
+      "target_column": "biid",
+      "business_meaning": "Trace bonus-item rules back to the BI promotion header."
+    },
+    {
+      "name": "bi_bonus_to_bi",
+      "source_table": "m_12_bi_bonus",
+      "source_column": "idbi",
+      "target_table": "m_12_bi",
+      "target_column": "biid",
+      "business_meaning": "Trace bonus items back to the BI promotion header."
+    },
+    {
+      "name": "ppv_detail_to_ppv",
+      "source_table": "m_12_ppv_detail",
+      "source_column": "idppv",
+      "target_table": "m_12_ppv",
+      "target_column": "ppvid",
+      "business_meaning": "Trace POS voucher details back to the voucher header."
+    },
+    {
+      "name": "ppv_pay_to_ppv",
+      "source_table": "m_12_ppv_pay",
+      "source_column": "idppv",
+      "target_table": "m_12_ppv",
+      "target_column": "ppvid",
+      "business_meaning": "Trace voucher-payment relations back to the POS-voucher header."
+    },
+    {
+      "name": "voucher_out_to_sales_invoice",
+      "source_table": "m_12_pos_voucher_out",
+      "source_column": "voidtransaksi",
+      "target_table": "m5_si",
+      "target_column": "siid",
+      "business_meaning": "Trace consumed POS vouchers to the formal sales invoice."
+    }
+  ],
+  "cross_module_relations": [
+    {
+      "name": "pos_transaction_to_master_contact",
+      "relation_type": "master_dimension",
+      "from_table": "m_12_st",
+      "from_column": "stkontak",
+      "to_table": "m1_contact",
+      "to_column": "kid",
+      "business_meaning": "Customer/contact master reference for POS transactions."
+    },
+    {
+      "name": "pos_voucher_to_master_contact",
+      "relation_type": "master_dimension",
+      "from_table": "m_12_ppv",
+      "from_column": "ppvcustomer",
+      "to_table": "m1_contact",
+      "to_column": "kid",
+      "business_meaning": "Customer/contact master reference for POS vouchers."
+    },
+    {
+      "name": "pos_transaction_item_to_master_item",
+      "relation_type": "master_dimension",
+      "from_table": "m_12_st_detail",
+      "from_column": "idbarang",
+      "to_table": "m1_item",
+      "to_column": "bid",
+      "business_meaning": "Item master reference for POS sales-transaction lines."
+    },
+    {
+      "name": "pos_setup_item_to_master_item",
+      "relation_type": "master_dimension",
+      "from_table": "m_12_pos_item",
+      "from_column": "piidbarang",
+      "to_table": "m1_item",
+      "to_column": "bid",
+      "business_meaning": "Item master reference for POS item setup."
+    },
+    {
+      "name": "pos_voucher_to_sales_invoice",
+      "relation_type": "cross_module_foreign_key",
+      "from_table": "m_12_pos_voucher_out",
+      "from_column": "voidtransaksi",
+      "to_table": "m5_si",
+      "to_column": "siid",
+      "business_meaning": "POS vouchers consumed by the formal sales invoice."
+    },
+    {
+      "name": "pos_to_finance_boundary",
+      "relation_type": "semantic_boundary",
+      "from_module": "m12",
+      "to_module": "m2",
+      "business_meaning": "Use M12 for POS/promotion transactions, then move to M2 when the user asks for journal posting, cash-bank, or general-ledger context.",
+      "join_rule": "Do not assume a single stable direct foreign key from M12 to M2 unless the active source explicitly shows it."
+    },
+    {
+      "name": "pos_to_inventory_boundary",
+      "relation_type": "semantic_boundary",
+      "from_module": "m12",
+      "to_module": "m3",
+      "business_meaning": "Use M12 for retail transactions and POS items, then move to M3 when the user asks for stock or warehouse-mutation context.",
+      "join_rule": "Do not assume a single stable direct foreign key from M12 to M3 unless the active source explicitly shows it."
+    }
+  ],
+  "key_tables": [
+    "m_12_st",
+    "m_12_st_detail",
+    "m_12_pos_item",
+    "m_12_pos_category",
+    "m_12_ppv",
+    "m_12_ppv_detail",
+    "m_12_ppv_pay"
+  ],
+  "guardrails": [
+    "SELECT only",
+    "Prefer transaction tables for sales analysis",
+    "Use history tables only for audit/history requests",
+    "Do not infer accounting postings unless source query explicitly supports it"
+  ]
+}

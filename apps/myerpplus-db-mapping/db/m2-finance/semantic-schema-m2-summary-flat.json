@@ -1,0 +1,831 @@
+{
+  "title": "Semantic Schema M2 Summary Flat",
+  "source_json": "semantic-schema-m2-summary.json",
+  "count": 90,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_cr",
+      "alias": "finance_cr",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk cr.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_cd",
+      "alias": "finance_cd",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk cd.",
+      "column_count": 42
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_bd",
+      "alias": "finance_bd",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk bd.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_cb",
+      "alias": "saldo_awal_coa",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Header transaksi saldo awal akun/COA pada awal periode. Dipakai untuk membentuk opening balance sebelum transaksi jurnal berjalan.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_rm",
+      "alias": "finance_rm",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk rm.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_sm",
+      "alias": "finance_sm",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk sm.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_rg",
+      "alias": "finance_rg",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk rg.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_rgc",
+      "alias": "finance_rgc",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk rgc.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_sg",
+      "alias": "finance_sg",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk sg.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_sgc",
+      "alias": "finance_sgc",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk sgc.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_gj",
+      "alias": "finance_gj",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk gj.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_aj",
+      "alias": "finance_aj",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk aj.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_jm",
+      "alias": "finance_jm",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk jm.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_accounting_period",
+      "alias": "finance_accounting_period",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk accounting period.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_giro_list",
+      "alias": "finance_giro_list",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk giro list.",
+      "column_count": 19
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m2_transaction_journal",
+      "alias": "finance_transaction_journal",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Transaksi atau referensi finance untuk transaction journal.",
+      "column_count": 45
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "cash_receipt_flow",
+      "description": "Alur penerimaan kas dan detail jurnalnya.",
+      "joins": [
+        "m2_cr.crid = m2_cr_detail.idcr"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "cash_disbursement_flow",
+      "description": "Alur pengeluaran kas dan detail jurnalnya.",
+      "joins": [
+        "m2_cd.cdid = m2_cd_detail.idcd"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "bank_disbursement_flow",
+      "description": "Alur pengeluaran bank dan detail jurnalnya.",
+      "joins": [
+        "m2_bd.bdid = m2_bd_detail.idbd"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "receipt_memo_payment_flow",
+      "description": "Relasi memo penerimaan dengan detail dan payment allocation.",
+      "joins": [
+        "m2_rm.rmid = m2_rm_detail.idrm",
+        "m2_rm.rmid = m2_rm_pay.idrm"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "send_memo_payment_flow",
+      "description": "Relasi memo pengeluaran dengan detail dan payment allocation.",
+      "joins": [
+        "m2_sm.smid = m2_sm_detail.idsm",
+        "m2_sm.smid = m2_sm_pay.idsm"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "cashbank_transfer_flow",
+      "description": "Relasi transaksi transfer kas bank dengan detail dan allocation.",
+      "joins": [
+        "m2_cb.cbid = m2_cb_detail.idcb",
+        "m2_cb.cbid = m2_cb_pay.idcb"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "giro_receipt_flow",
+      "description": "Alur giro masuk dan pencairannya.",
+      "joins": [
+        "m2_rg.rgid = m2_rg_detail.idrg",
+        "m2_rgc.rgcid = m2_rgc_detail.idrgc"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "giro_send_flow",
+      "description": "Alur giro keluar dan pencairannya.",
+      "joins": [
+        "m2_sg.sgid = m2_sg_detail.idsg",
+        "m2_sgc.sgcid = m2_sgc_detail.idsgc"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "journal_posting_flow",
+      "description": "Relasi dokumen finance ke jurnal transaksi terposting.",
+      "joins": [
+        "m2_transaction_journal.tidtransaksi = finance document id",
+        "m2_transaction_journal.tsumber = kode sumber dokumen finance"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_cr_detail",
+      "alias": "finance_cr_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi cr detail.",
+      "column_count": 14
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_cd_detail",
+      "alias": "finance_cd_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi cd.",
+      "column_count": 23
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_bd_detail",
+      "alias": "finance_bd_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi bd detail.",
+      "column_count": 14
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_cb_detail",
+      "alias": "saldo_awal_coa_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail akun debit dan kredit untuk transaksi saldo awal COA. Setiap baris mewakili akun yang dibuka pada awal periode.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_rm_detail",
+      "alias": "finance_rm_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rm detail.",
+      "column_count": 14
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_sm_detail",
+      "alias": "finance_sm_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi sm detail.",
+      "column_count": 14
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_rg_detail",
+      "alias": "finance_rg_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rg detail.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_rgc_detail",
+      "alias": "finance_rgc_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi rgc detail.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_sg_detail",
+      "alias": "finance_sg_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi sg detail.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_sgc_detail",
+      "alias": "finance_sgc_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi sgc detail.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_gj_detail",
+      "alias": "finance_gj_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi gj detail.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_aj_detail",
+      "alias": "finance_aj_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi aj detail.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m2_jm_detail",
+      "alias": "finance_jm_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Tabel detail untuk item/baris transaksi jm detail.",
+      "column_count": 17
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "cash_receipt_flow",
+      "description": "Alur penerimaan kas dan detail jurnalnya.",
+      "joins": [
+        "m2_cr.crid = m2_cr_detail.idcr"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "cash_disbursement_flow",
+      "description": "Alur pengeluaran kas dan detail jurnalnya.",
+      "joins": [
+        "m2_cd.cdid = m2_cd_detail.idcd"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "bank_disbursement_flow",
+      "description": "Alur pengeluaran bank dan detail jurnalnya.",
+      "joins": [
+        "m2_bd.bdid = m2_bd_detail.idbd"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "receipt_memo_payment_flow",
+      "description": "Relasi memo penerimaan dengan detail dan payment allocation.",
+      "joins": [
+        "m2_rm.rmid = m2_rm_detail.idrm",
+        "m2_rm.rmid = m2_rm_pay.idrm"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "send_memo_payment_flow",
+      "description": "Relasi memo pengeluaran dengan detail dan payment allocation.",
+      "joins": [
+        "m2_sm.smid = m2_sm_detail.idsm",
+        "m2_sm.smid = m2_sm_pay.idsm"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "cashbank_transfer_flow",
+      "description": "Relasi transaksi transfer kas bank dengan detail dan allocation.",
+      "joins": [
+        "m2_cb.cbid = m2_cb_detail.idcb",
+        "m2_cb.cbid = m2_cb_pay.idcb"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "giro_receipt_flow",
+      "description": "Alur giro masuk dan pencairannya.",
+      "joins": [
+        "m2_rg.rgid = m2_rg_detail.idrg",
+        "m2_rgc.rgcid = m2_rgc_detail.idrgc"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "giro_send_flow",
+      "description": "Alur giro keluar dan pencairannya.",
+      "joins": [
+        "m2_sg.sgid = m2_sg_detail.idsg",
+        "m2_sgc.sgcid = m2_sgc_detail.idsgc"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_TABLES",
+      "table_name": "m2_cb_pay",
+      "alias": "finance_cb_pay",
+      "owner_module": "PAYMENT_TABLES",
+      "description": "Data pembayaran terkait cb pay.",
+      "column_count": 15
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_TABLES",
+      "table_name": "m2_rm_pay",
+      "alias": "finance_rm_pay",
+      "owner_module": "PAYMENT_TABLES",
+      "description": "Data pembayaran terkait rm pay.",
+      "column_count": 15
+    },
+    {
+      "type": "owned_table",
+      "module": "PAYMENT_TABLES",
+      "table_name": "m2_sm_pay",
+      "alias": "finance_sm_pay",
+      "owner_module": "PAYMENT_TABLES",
+      "description": "Data pembayaran terkait sm pay.",
+      "column_count": 15
+    },
+    {
+      "type": "relation",
+      "module": "PAYMENT_TABLES",
+      "name": "receipt_memo_payment_flow",
+      "description": "Relasi memo penerimaan dengan detail dan payment allocation.",
+      "joins": [
+        "m2_rm.rmid = m2_rm_detail.idrm",
+        "m2_rm.rmid = m2_rm_pay.idrm"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "PAYMENT_TABLES",
+      "name": "send_memo_payment_flow",
+      "description": "Relasi memo pengeluaran dengan detail dan payment allocation.",
+      "joins": [
+        "m2_sm.smid = m2_sm_detail.idsm",
+        "m2_sm.smid = m2_sm_pay.idsm"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "PAYMENT_TABLES",
+      "name": "cashbank_transfer_flow",
+      "description": "Relasi transaksi transfer kas bank dengan detail dan allocation.",
+      "joins": [
+        "m2_cb.cbid = m2_cb_detail.idcb",
+        "m2_cb.cbid = m2_cb_pay.idcb"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_files",
+      "alias": "finance_files",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel utilitas/lampiran finance untuk files.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_notes",
+      "alias": "finance_notes",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel utilitas/catatan finance untuk notes.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization",
+      "alias": "finance_realization",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization_branch",
+      "alias": "finance_realization_branch",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization branch.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization_cost_center",
+      "alias": "finance_realization_cost_center",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization cost center.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization_division",
+      "alias": "finance_realization_division",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization division.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization_location",
+      "alias": "finance_realization_location",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization location.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization_project",
+      "alias": "finance_realization_project",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization project.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m2_realization_subdivision",
+      "alias": "finance_realization_subdivision",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Transaksi atau referensi finance untuk realization subdivision.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_aj_detail_history",
+      "alias": "finance_aj_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk aj.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_aj_history",
+      "alias": "finance_aj_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk aj.",
+      "column_count": 30
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_bd_detail_history",
+      "alias": "finance_bd_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk bd.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_bd_history",
+      "alias": "finance_bd_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk bd.",
+      "column_count": 30
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cb_detail_history",
+      "alias": "finance_cb_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk cb.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cb_history",
+      "alias": "finance_cb_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk cb.",
+      "column_count": 30
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cb_pay_history",
+      "alias": "finance_cb_pay_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori pembayaran/alokasi finance untuk cb_pay.",
+      "column_count": 17
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cd_detail_history",
+      "alias": "finance_cd_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk cd.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cd_history",
+      "alias": "finance_cd_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk cd.",
+      "column_count": 43
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cr_detail_history",
+      "alias": "finance_cr_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk cr.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_cr_history",
+      "alias": "finance_cr_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk cr.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_gj_detail_history",
+      "alias": "finance_gj_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk gj.",
+      "column_count": 18
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_gj_history",
+      "alias": "finance_gj_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk gj.",
+      "column_count": 30
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_jm_detail_history",
+      "alias": "finance_jm_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk jm.",
+      "column_count": 19
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_jm_history",
+      "alias": "finance_jm_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk jm.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rg_detail_history",
+      "alias": "finance_rg_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk rg.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rg_history",
+      "alias": "finance_rg_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk rg.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rgc_detail_history",
+      "alias": "finance_rgc_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk rgc.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rgc_history",
+      "alias": "finance_rgc_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk rgc.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rm_detail_history",
+      "alias": "finance_rm_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk rm.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rm_history",
+      "alias": "finance_rm_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk rm.",
+      "column_count": 30
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_rm_pay_history",
+      "alias": "finance_rm_pay_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori pembayaran/alokasi finance untuk rm_pay.",
+      "column_count": 17
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sg_detail_history",
+      "alias": "finance_sg_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk sg.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sg_history",
+      "alias": "finance_sg_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk sg.",
+      "column_count": 25
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sgc_detail_history",
+      "alias": "finance_sgc_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk sgc.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sgc_history",
+      "alias": "finance_sgc_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk sgc.",
+      "column_count": 26
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sm_detail_history",
+      "alias": "finance_sm_detail_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori detail finance untuk sm.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sm_history",
+      "alias": "finance_sm_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori finance untuk sm.",
+      "column_count": 30
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m2_sm_pay_history",
+      "alias": "finance_sm_pay_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel histori pembayaran/alokasi finance untuk sm_pay.",
+      "column_count": 17
+    }
+  ]
+}

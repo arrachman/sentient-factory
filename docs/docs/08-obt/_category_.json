@@ -1,0 +1,9 @@
+{
+  "label": "OBT",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "title": "OBT",
+    "description": "Konsep dan blueprint semantic OBT lintas modul MyERPPlus."
+  }
+}

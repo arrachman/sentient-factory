@@ -1,0 +1,255 @@
+{
+  "domain": "myerpplus_manufacturing_m6",
+  "description": "Machine-friendly NL2SQL guide for the M6 manufacturing module.",
+  "source_files": [
+    "semantic-schema-m6.json",
+    "semantic-schema-m6-summary.md",
+    "m6-queries.md",
+    "m0_report_rmoduleid_6.sql"
+  ],
+  "business_terms": {
+    "BOM": [
+      "bill of materials",
+      "bom",
+      "formula produksi"
+    ],
+    "MRS": [
+      "material request slip",
+      "permintaan material produksi"
+    ],
+    "MRN": [
+      "material receipt note",
+      "realisasi material"
+    ],
+    "PD": [
+      "production document",
+      "dokumen produksi"
+    ],
+    "PDR": [
+      "production result",
+      "hasil produksi"
+    ],
+    "WO": [
+      "work order",
+      "surat perintah kerja"
+    ]
+  },
+  "table_groups": {
+    "document_headers": [
+      "m6_bom",
+      "m6_mrn",
+      "m6_mrs",
+      "m6_pd",
+      "m6_pdr",
+      "m6_wo"
+    ],
+    "document_details": [
+      "m6_bom_in",
+      "m6_bom_out",
+      "m6_mrn_in",
+      "m6_mrn_out",
+      "m6_mrs_in",
+      "m6_mrs_out",
+      "m6_pd_bom",
+      "m6_pd_in",
+      "m6_pd_out",
+      "m6_pdr_in",
+      "m6_pdr_out",
+      "m6_wo_activity",
+      "m6_wo_in",
+      "m6_wo_out",
+      "m6_wo_route_card"
+    ],
+    "supporting_tables": [
+      "m6_files",
+      "m6_itembom_in",
+      "m6_itembom_out",
+      "m6_machine_plotting",
+      "m6_notes",
+      "m6_production_planning"
+    ],
+    "history_tables": [
+      "m6_bom_history",
+      "m6_bom_in_history",
+      "m6_bom_out_history",
+      "m6_mrn_history",
+      "m6_mrn_out_history",
+      "m6_mrs_history",
+      "m6_mrs_out_history",
+      "m6_pd_history",
+      "m6_pd_in_history",
+      "m6_pd_out_history",
+      "m6_pdr_history",
+      "m6_pdr_in_history",
+      "m6_pdr_out_history",
+      "m6_wo_history",
+      "m6_wo_in_history",
+      "m6_wo_out_history"
+    ]
+  },
+  "join_hints": [
+    {
+      "name": "bom_structure_flow",
+      "description": "Relationship from the BOM header to input and output components.",
+      "joins": [
+        "m6_bom.bomid = m6_bom_in.idbom",
+        "m6_bom.bomid = m6_bom_out.idbom"
+      ]
+    },
+    {
+      "name": "mrs_to_mrn_flow",
+      "description": "Relationship from material request slips to material receipt notes.",
+      "joins": [
+        "m6_mrs.mrsid = m6_mrs_out.idmrs",
+        "m6_mrs_out.idmrsout = m6_mrn_out.idmrsout",
+        "m6_mrn.mrnid = m6_mrn_out.idmrn"
+      ]
+    },
+    {
+      "name": "mrs_to_pd_flow",
+      "description": "Relationship from material request slips to production documents.",
+      "joins": [
+        "m6_mrs.mrsid = m6_mrs_out.idmrs",
+        "m6_mrs_out.idmrsout = m6_pd_out.idmrsout",
+        "m6_pd.pdid = m6_pd_out.idpd"
+      ]
+    },
+    {
+      "name": "bom_pdr_wo_reference_flow",
+      "description": "Relationship among manufacturing documents that cross-reference BOM, PDR, and WO.",
+      "joins": [
+        "m6_mrs.mrsidbom = m6_bom.bomid",
+        "m6_mrs.mrsidpdr = m6_pdr.pdrid",
+        "m6_mrs.mrsidwo = m6_wo.woid",
+        "m6_mrn.mrnidbom = m6_bom.bomid",
+        "m6_mrn.mrnidpdr = m6_pdr.pdrid",
+        "m6_mrn.mrnidwo = m6_wo.woid"
+      ]
+    },
+    {
+      "name": "workorder_material_output_flow",
+      "description": "Relationship from work orders to input detail, output detail, activity, and route cards.",
+      "joins": [
+        "m6_wo.woid = m6_wo_in.idwo",
+        "m6_wo.woid = m6_wo_out.idwo",
+        "m6_wo.woid = m6_wo_activity.idwo",
+        "m6_wo.woid = m6_wo_route_card.idwo"
+      ]
+    }
+  ],
+  "polymorphic_relationships": [],
+  "detail_lineage_keys": [
+    {
+      "from_table": "m6_bom_in",
+      "from_column": "idbom",
+      "to_table": "m6_bom",
+      "to_column": "bomid",
+      "usage": "Trace input components to the BOM header."
+    },
+    {
+      "from_table": "m6_bom_out",
+      "from_column": "idbom",
+      "to_table": "m6_bom",
+      "to_column": "bomid",
+      "usage": "Trace output/result rows to the BOM header."
+    },
+    {
+      "from_table": "m6_mrs_out",
+      "from_column": "idmrs",
+      "to_table": "m6_mrs",
+      "to_column": "mrsid",
+      "usage": "Trace consumed material to the MRS header."
+    },
+    {
+      "from_table": "m6_mrn_out",
+      "from_column": "idmrsout",
+      "to_table": "m6_mrs_out",
+      "to_column": "idmrsout",
+      "header_table": "m6_mrs",
+      "header_column": "mrsid",
+      "header_join_column": "idmrs",
+      "usage": "Trace MRN material realization back to the source MRS."
+    },
+    {
+      "from_table": "m6_pd_out",
+      "from_column": "idmrsout",
+      "to_table": "m6_mrs_out",
+      "to_column": "idmrsout",
+      "header_table": "m6_mrs",
+      "header_column": "mrsid",
+      "header_join_column": "idmrs",
+      "usage": "Trace production-document output back to the source MRS."
+    },
+    {
+      "from_table": "m6_pdr_in",
+      "from_column": "idpdr",
+      "to_table": "m6_pdr",
+      "to_column": "pdrid",
+      "usage": "Trace input production-result lines to the PDR header."
+    },
+    {
+      "from_table": "m6_pdr_out",
+      "from_column": "idpdr",
+      "to_table": "m6_pdr",
+      "to_column": "pdrid",
+      "usage": "Trace output production-result lines to the PDR header."
+    },
+    {
+      "from_table": "m6_wo_in",
+      "from_column": "idwo",
+      "to_table": "m6_wo",
+      "to_column": "woid",
+      "usage": "Trace material-requirement lines to the work-order header."
+    },
+    {
+      "from_table": "m6_wo_out",
+      "from_column": "idwo",
+      "to_table": "m6_wo",
+      "to_column": "woid",
+      "usage": "Trace finished-output lines to the work-order header."
+    },
+    {
+      "from_table": "m6_wo_activity",
+      "from_column": "idwo",
+      "to_table": "m6_wo",
+      "to_column": "woid",
+      "usage": "Trace process-activity lines to the work-order header."
+    },
+    {
+      "from_table": "m6_wo_route_card",
+      "from_column": "idwo",
+      "to_table": "m6_wo",
+      "to_column": "woid",
+      "usage": "Trace route-card lines to the work-order header."
+    }
+  ],
+  "important_rules": [
+    "Use header tables for document numbers, dates, warehouses, statuses, and process references.",
+    "Use `_in` and `_out` detail tables for material inputs, finished outputs, and realized quantities.",
+    "Use history tables only when the user explicitly asks for document history or audit changes.",
+    "For production-flow tracing, start from detail tables when the question concerns material realization or output.",
+    "M6 documents reference BOM, PDR, and WO heavily; make sure the source-process context is not mixed up."
+  ],
+  "query_patterns": [
+    {
+      "name": "bom_structure",
+      "description": "BOM input and output structure.",
+      "pattern": "Use `m6_bom` together with `m6_bom_in` and `m6_bom_out`."
+    },
+    {
+      "name": "material_realization_trace",
+      "description": "Trace material requirements to realization.",
+      "pattern": "Start from `m6_mrs_out` and connect it to `m6_mrn_out` or `m6_pd_out`."
+    },
+    {
+      "name": "work_order_trace",
+      "description": "Trace work orders and their activities.",
+      "pattern": "Use `m6_wo`, `m6_wo_in`, `m6_wo_out`, `m6_wo_activity`, and `m6_wo_route_card`."
+    }
+  ],
+  "caution_areas": [
+    "Questions that mix BOM, WO, PDR, and PD without a clear document relationship.",
+    "Questions that combine history tables with active tables without a clear audit purpose.",
+    "Questions that rely on `custom*` fields or snapshot tables such as `m6_itembom_in/out` without context."
+  ]
+}

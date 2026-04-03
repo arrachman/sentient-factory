@@ -1,6 +1,6 @@
 {
   "domain": "myerpplus_finance_m2",
-  "description": "Machine-friendly NL2SQL guide untuk modul M2 finance/accounting. Berisi tabel utama, sinonim bisnis, join hints, relasi penting, dan aturan query generation.",
+  "description": "Machine-friendly NL2SQL guide for the M2 finance/accounting module. Contains core tables, business synonyms, join hints, important relationships, and rules for query generation.",
   "source_files": [
     "semantic-schema-m2.json",
     "semantic-schema-m2-summary.md",
@@ -151,28 +151,28 @@
   "join_hints": [
     {
       "name": "cash_receipt_flow",
-      "description": "Alur penerimaan kas dan detail jurnalnya.",
+      "description": "Cash-receipt flow and its journal detail.",
       "joins": [
         "m2_cr.crid = m2_cr_detail.idcr"
       ]
     },
     {
       "name": "cash_disbursement_flow",
-      "description": "Alur pengeluaran kas dan detail jurnalnya.",
+      "description": "Cash-disbursement flow and its journal detail.",
       "joins": [
         "m2_cd.cdid = m2_cd_detail.idcd"
       ]
     },
     {
       "name": "bank_disbursement_flow",
-      "description": "Alur pengeluaran bank dan detail jurnalnya.",
+      "description": "Bank-disbursement flow and its journal detail.",
       "joins": [
         "m2_bd.bdid = m2_bd_detail.idbd"
       ]
     },
     {
       "name": "receipt_memo_payment_flow",
-      "description": "Relasi memo penerimaan dengan detail dan payment allocation.",
+      "description": "Relationship from receipt memos to detail rows and payment allocation.",
       "joins": [
         "m2_rm.rmid = m2_rm_detail.idrm",
         "m2_rm.rmid = m2_rm_pay.idrm"
@@ -180,7 +180,7 @@
     },
     {
       "name": "send_memo_payment_flow",
-      "description": "Relasi memo pengeluaran dengan detail dan payment allocation.",
+      "description": "Relationship from send memos to detail rows and payment allocation.",
       "joins": [
         "m2_sm.smid = m2_sm_detail.idsm",
         "m2_sm.smid = m2_sm_pay.idsm"
@@ -188,7 +188,7 @@
     },
     {
       "name": "cashbank_transfer_flow",
-      "description": "Relasi transaksi transfer kas bank dengan detail dan allocation.",
+      "description": "Relationship from cash/bank transfers to detail rows and allocation.",
       "joins": [
         "m2_cb.cbid = m2_cb_detail.idcb",
         "m2_cb.cbid = m2_cb_pay.idcb"
@@ -196,7 +196,7 @@
     },
     {
       "name": "giro_receipt_flow",
-      "description": "Alur giro masuk dan pencairannya.",
+      "description": "Incoming-giro flow and its clearing process.",
       "joins": [
         "m2_rg.rgid = m2_rg_detail.idrg",
         "m2_rgc.rgcid = m2_rgc_detail.idrgc"
@@ -204,7 +204,7 @@
     },
     {
       "name": "giro_send_flow",
-      "description": "Alur giro keluar dan pencairannya.",
+      "description": "Outgoing-giro flow and its clearing process.",
       "joins": [
         "m2_sg.sgid = m2_sg_detail.idsg",
         "m2_sgc.sgcid = m2_sgc_detail.idsgc"
@@ -212,55 +212,155 @@
     },
     {
       "name": "journal_posting_flow",
-      "description": "Relasi dokumen finance ke jurnal transaksi terposting.",
+      "description": "Relationship from finance documents to posted transaction journals.",
       "joins": [
         "m2_transaction_journal.tidtransaksi = finance document id",
-        "m2_transaction_journal.tsumber = kode sumber dokumen finance"
+        "m2_transaction_journal.tsumber = finance document source code"
       ]
     }
   ],
   "polymorphic_relationships": [],
+  "detail_lineage_keys": [
+    {
+      "from_table": "m2_cr_detail",
+      "from_column": "idcr",
+      "to_table": "m2_cr",
+      "to_column": "crid",
+      "usage": "Trace cash-receipt detail rows to the cash-receipt header."
+    },
+    {
+      "from_table": "m2_cd_detail",
+      "from_column": "idcd",
+      "to_table": "m2_cd",
+      "to_column": "cdid",
+      "usage": "Trace cash-disbursement detail rows to the cash-disbursement header."
+    },
+    {
+      "from_table": "m2_bd_detail",
+      "from_column": "idbd",
+      "to_table": "m2_bd",
+      "to_column": "bdid",
+      "usage": "Trace bank-disbursement detail rows to the bank-disbursement header."
+    },
+    {
+      "from_table": "m2_rm_detail",
+      "from_column": "idrm",
+      "to_table": "m2_rm",
+      "to_column": "rmid",
+      "usage": "Trace receipt-memo lines to the receipt-memo header."
+    },
+    {
+      "from_table": "m2_rm_pay",
+      "from_column": "idrm",
+      "to_table": "m2_rm",
+      "to_column": "rmid",
+      "usage": "Trace payment-allocation rows to the receipt-memo header."
+    },
+    {
+      "from_table": "m2_sm_detail",
+      "from_column": "idsm",
+      "to_table": "m2_sm",
+      "to_column": "smid",
+      "usage": "Trace send-memo lines to the send-memo header."
+    },
+    {
+      "from_table": "m2_sm_pay",
+      "from_column": "idsm",
+      "to_table": "m2_sm",
+      "to_column": "smid",
+      "usage": "Trace payment-allocation rows to the send-memo header."
+    },
+    {
+      "from_table": "m2_cb_detail",
+      "from_column": "idcb",
+      "to_table": "m2_cb",
+      "to_column": "cbid",
+      "usage": "Trace cash/bank transfer detail rows to the transfer header."
+    },
+    {
+      "from_table": "m2_cb_pay",
+      "from_column": "idcb",
+      "to_table": "m2_cb",
+      "to_column": "cbid",
+      "usage": "Trace cash/bank transfer allocation rows to the transfer header."
+    },
+    {
+      "from_table": "m2_rg_detail",
+      "from_column": "idrg",
+      "to_table": "m2_rg",
+      "to_column": "rgid",
+      "usage": "Trace incoming-giro detail rows to the receipt-giro header."
+    },
+    {
+      "from_table": "m2_rgc_detail",
+      "from_column": "idrgc",
+      "to_table": "m2_rgc",
+      "to_column": "rgcid",
+      "usage": "Trace incoming-giro clearing detail rows to the clearing header."
+    },
+    {
+      "from_table": "m2_sg_detail",
+      "from_column": "idsg",
+      "to_table": "m2_sg",
+      "to_column": "sgid",
+      "usage": "Trace outgoing-giro detail rows to the send-giro header."
+    },
+    {
+      "from_table": "m2_sgc_detail",
+      "from_column": "idsgc",
+      "to_table": "m2_sgc",
+      "to_column": "sgcid",
+      "usage": "Trace outgoing-giro clearing detail rows to the clearing header."
+    },
+    {
+      "from_table": "m2_transaction_journal",
+      "from_column": "tidtransaksi + tsumber",
+      "to_table": "finance_document_by_source",
+      "to_column": "document_id",
+      "usage": "Trace a posted journal back to the source finance document using the source code."
+    }
+  ],
   "important_rules": [
-    "Gunakan tabel header untuk nomor dokumen, tanggal, kontak, rekening, mata uang, dan nilai total transaksi finance.",
-    "Gunakan tabel detail untuk akun, nominal per baris, memo detail, distribusi jurnal, dan rincian transaksi.",
-    "Gunakan tabel _pay untuk alokasi pembayaran memo atau transfer agar nilai allocation tidak salah diambil dari header.",
-    "Gunakan tabel _history hanya bila user meminta histori, perubahan, atau audit trail.",
-    "Bedakan dokumen giro dengan dokumen pencairan giro.",
-    "Bedakan jurnal input manual dengan m2_transaction_journal sebagai jurnal hasil posting.",
-    "Hindari field custom* kecuali benar-benar diminta user atau report."
+    "Use header tables for document numbers, dates, contacts, accounts, currencies, and total finance values.",
+    "Use detail tables for accounts, row-level amounts, memo detail, journal distribution, and transaction detail.",
+    "Use _pay tables for memo or transfer allocation so allocation values are not incorrectly taken from headers.",
+    "Use _history tables only when the user asks for history, changes, or audit trails.",
+    "Distinguish giro documents from giro-clearing documents.",
+    "Distinguish manually entered journals from m2_transaction_journal as the posted-journal result table.",
+    "Avoid custom* fields unless the user or report explicitly requires them."
   ],
   "query_patterns": [
     {
       "name": "document_summary",
-      "description": "Ringkasan dokumen finance berbasis header.",
-      "pattern": "Gunakan tabel header seperti m2_cr, m2_cd, m2_bd, m2_rm, m2_sm, m2_rg, m2_sg, m2_gj, m2_aj, atau m2_jm untuk nomor transaksi, tanggal, kontak, dan nilai transaksi."
+      "description": "Header-based finance document summary.",
+      "pattern": "Use header tables such as m2_cr, m2_cd, m2_bd, m2_rm, m2_sm, m2_rg, m2_sg, m2_gj, m2_aj, or m2_jm for transaction numbers, dates, contacts, and document values."
     },
     {
       "name": "journal_distribution",
-      "description": "Distribusi akun per dokumen finance atau jurnal.",
-      "pattern": "Join header ke detail, misalnya m2_gj -> m2_gj_detail atau m2_cd -> m2_cd_detail."
+      "description": "Account distribution per finance document or journal.",
+      "pattern": "Join headers to detail, for example m2_gj -> m2_gj_detail or m2_cd -> m2_cd_detail."
     },
     {
       "name": "memo_payment_trace",
-      "description": "Tracing memo dan alokasi pembayarannya.",
-      "pattern": "Gunakan alur RM -> RM_DETAIL -> RM_PAY, SM -> SM_DETAIL -> SM_PAY, atau CB -> CB_DETAIL -> CB_PAY."
+      "description": "Trace memos and their payment allocation.",
+      "pattern": "Use RM -> RM_DETAIL -> RM_PAY, SM -> SM_DETAIL -> SM_PAY, or CB -> CB_DETAIL -> CB_PAY."
     },
     {
       "name": "giro_clearance_trace",
-      "description": "Tracing giro dan pencairannya.",
-      "pattern": "Gunakan RG -> RG_DETAIL, RGC -> RGC_DETAIL, SG -> SG_DETAIL, atau SGC -> SGC_DETAIL sesuai konteks."
+      "description": "Trace giro documents and their clearing.",
+      "pattern": "Use RG -> RG_DETAIL, RGC -> RGC_DETAIL, SG -> SG_DETAIL, or SGC -> SGC_DETAIL depending on context."
     },
     {
       "name": "posted_journal_trace",
-      "description": "Tracing dokumen finance ke jurnal transaksi terposting.",
-      "pattern": "Hubungkan dokumen sumber ke m2_transaction_journal dengan tidtransaksi dan tsumber."
+      "description": "Trace finance documents to posted transaction journals.",
+      "pattern": "Connect the source document to m2_transaction_journal using tidtransaksi and tsumber."
     }
   ],
   "caution_areas": [
-    "Pertanyaan yang mencampur header memo dengan payment allocation tetapi tidak memakai tabel _pay.",
-    "Pertanyaan giro yang mencampur dokumen giro dan pencairannya tanpa membedakan RG/RGC atau SG/SGC.",
-    "Pertanyaan jurnal yang mencampur GJ, AJ, JM, dan m2_transaction_journal.",
-    "Pertanyaan histori yang mencampur tabel aktif dan history.",
-    "Pertanyaan yang mengandalkan custom*."
+    "Questions that mix memo headers with payment allocation but do not use _pay tables.",
+    "Questions about giro that mix giro documents and clearing documents without distinguishing RG/RGC or SG/SGC.",
+    "Questions about journals that mix GJ, AJ, JM, and m2_transaction_journal.",
+    "History questions that mix active and history tables.",
+    "Questions that rely on custom* fields."
   ]
 }

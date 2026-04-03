@@ -1,0 +1,9 @@
+{
+  "label": "m11-healthcare",
+  "position": 10,
+  "link": {
+    "type": "generated-index",
+    "title": "m11-healthcare",
+    "description": "Tutorials for the MyERPPlus healthcare module."
+  }
+}

@@ -1,13 +1,13 @@
 # Semantic Schema M0 Summary
 
-Sumber schema: `semantic-schema-m0.json`
-Sumber query: `m0-queries.md`, `m0-queries-by-type.md`
+Schema source: `semantic-schema-m0.json`
+Query source: `m0-queries.md`, `m0-queries-by-type.md`
 
-Total tabel M0 di schema: **79**
-Total tabel M0 terdeteksi di query aktif: **79**
+Total M0 tables in schema: **79**
+Total M0 tables detected in active queries: **79**
 Total query SELECT: **626** | INSERT: **79** | UPDATE: **52** | DELETE: **75**
 
-Dokumen ini merangkum tabel administrator yang aktif dari query source, fokus pada konfigurasi sistem, user-access, report, numbering, translation, dan background queue.
+This document summarizes administrator tables active in query sources, with a focus on system configuration, user access, reports, numbering, translation, and background queues.
 
 ## Join Hints
 
@@ -47,407 +47,406 @@ Dokumen ini merangkum tabel administrator yang aktif dari query source, fokus pa
   `m0_userlog.ulidmodule = m0_menu.mnmoduleid`
   `m0_userlog.ulidmenu = m0_menu.mnid`
 
-## Ringkasan Area
+## Overview Area
 
-- **APP**: Aplikasi dan integrasi | tabel: 1
-- **BACKUP**: Backup dan maintenance | tabel: 6
-- **FORM**: Konfigurasi form UI | tabel: 4
-- **LANGUAGE**: Bahasa dan translation resource | tabel: 7
-- **MENU**: Menu dan modul | tabel: 5
-- **QUEUE**: Background queue / MSMQ | tabel: 4
-- **NUMBERING**: Penomoran dokumen | tabel: 6
-- **NOTES_FILES**: Lampiran dan notes | tabel: 2
-- **NOTIFICATION**: Notifikasi | tabel: 1
-- **REPORT**: Report dan metadata report | tabel: 6
-- **ROLE**: Role dan permission | tabel: 9
-- **SEARCH_SETTING**: Lookup dan setting bisnis | tabel: 12
-- **USER**: User, group, akses, session, dan audit | tabel: 16
+- **APP**: Applications and integrations | tables: 1
+- **BACKUP**: Backup and maintenance | tables: 6
+- **FORM**: UI form configuration | tables: 4
+- **LANGUAGE**: Language and translation resources | tables: 7
+- **MENU**: Menus and modules | tables: 5
+- **QUEUE**: Background queue / MSMQ | tables: 4
+- **NUMBERING**: Document numbering | tables: 6
+- **NOTES_FILES**: Attachments and notes | tables: 2
+- **NOTIFICATION**: Notifications | tables: 1
+- **REPORT**: Reports and report metadata | tables: 6
+- **ROLE**: Roles and permissions | tables: 9
+- **SEARCH_SETTING**: Lookups and business settings | tables: 12
+- **USER**: Users, groups, access, sessions, and audit | tables: 16
 
-## APP - Aplikasi dan integrasi
+## APP - Applications and Integrations
 
-### Tabel
+### Tables
 
-- `m0_app` | alias: `administrator_app` | kolom: 6
-  Master aplikasi atau client integration key/secret.
+- `m0_app` | alias: `administrator_app` | columns: 6
+  Application master or client-integration key/secret store.
 
-### Kolom Penting
+### Important Columns
 
-- `appactive`: Kolom bisnis appactive.
-- `appcreated`: Kolom bisnis appcreated.
-- `appid`: Identitas unik data atau relasi ke tabel lain.
-- `appkey`: Kode bisnis, key, atau identifier konfigurasi.
-- `appname`: Nama atau label bisnis yang ditampilkan ke user.
+- `appactive`: Business column appactive.
+- `appcreated`: Business column appcreated.
+- `appid`: Unique record identifier or relation to other tables.
+- `appkey`: Business code, key, or configuration identifier.
+- `appname`: Business name or label shown to the user.
 
-## BACKUP - Backup dan maintenance
+## BACKUP - Backup and maintenance
 
-### Tabel
+### Tables
 
-- `m0_backup` | alias: `administrator_backup` | kolom: 5
-  Log dan status proses backup.
-- `m0_hapusdata` | alias: `administrator_hapusdata` | kolom: 0
-  Log atau target data yang ditandai untuk proses penghapusan/cleanup.
-- `m0_hitungulang_log` | alias: `administrator_hitungulang_log` | kolom: 0
-  Log proses hitung ulang data, saldo, atau kalkulasi sistem.
-- `m0_hppaverage` | alias: `administrator_hppaverage` | kolom: 0
-  Tabel kerja/perantara untuk proses hitung HPP average.
-- `m0_hppsaldo` | alias: `administrator_hppsaldo` | kolom: 0
-  Tabel kerja/perantara untuk saldo HPP atau rekalkulasi persediaan.
-- `m0_validitas_data` | alias: `administrator_validitas_data` | kolom: 6
-  Status validitas atau hasil pengecekan data periodik.
+- `m0_backup` | alias: `administrator_backup` | columns: 5
+  Backup-process log and status.
+- `m0_hapusdata` | alias: `administrator_hapusdata` | columns: 0
+  Log or target data marked for deletion or cleanup processes.
+- `m0_hitungulang_log` | alias: `administrator_hitungulang_log` | columns: 0
+  Log of data recalculation, balance recalculation, or system calculation processes.
+- `m0_hppaverage` | alias: `administrator_hppaverage` | columns: 0
+  Working/intermediate table for average-cost recalculation processes.
+- `m0_hppsaldo` | alias: `administrator_hppsaldo` | columns: 0
+  Working/intermediate table for inventory-cost balance or inventory recalculation processes.
+- `m0_validitas_data` | alias: `administrator_validitas_data` | columns: 6
+  Validity status or periodic data-check result.
 
-### Kolom Penting
+### Important Columns
 
-- `bulan`: Kolom bisnis bulan.
-- `keterangan`: Catatan atau keterangan tambahan.
-- `kode`: Kode bisnis, key, atau identifier konfigurasi.
-- `status`: Status proses, status dokumen, atau status konfigurasi.
-- `tahun`: Kolom bisnis tahun.
-- `id`: Identitas unik data atau relasi ke tabel lain.
-- `namafile`: Nama atau label bisnis yang ditampilkan ke user.
-- `tglmulai`: Tanggal atau waktu terkait proses bisnis/sistem.
+- `bulan`: Business column bulan.
+- `keterangan`: Notes or additional description.
+- `kode`: Business code, key, or configuration identifier.
+- `status`: Process status, document status, or configuration status.
+- `tahun`: Business column tahun.
+- `id`: Unique record identifier or relation to other tables.
+- `namafile`: Business name or label shown to the user.
+- `tglmulai`: Date or time related to the business/system process.
 
-## FORM - Konfigurasi form UI
+## FORM - UI Form Configuration
 
-### Tabel
+### Tables
 
-- `m0_form_custom_text` | alias: `administrator_form_custom_text` | kolom: 6
-  Konfigurasi custom text per modul dan menu untuk label/form UI.
-- `m0_form_setting_global` | alias: `administrator_form_setting_global` | kolom: 3
-  Konfigurasi tampilan form global per modul dan menu.
-- `m0_form_setting_search` | alias: `administrator_form_setting_search` | kolom: 5
-  Konfigurasi field pencarian dan properti search form per modul/menu.
-- `m0_form_setting_user` | alias: `administrator_form_setting_user` | kolom: 4
-  Konfigurasi preferensi form per user pada modul/menu tertentu.
+- `m0_form_custom_text` | alias: `administrator_form_custom_text` | columns: 6
+  Custom text configuration per module and menu for labels and form UI.
+- `m0_form_setting_global` | alias: `administrator_form_setting_global` | columns: 3
+  Global form-display configuration per module and menu.
+- `m0_form_setting_search` | alias: `administrator_form_setting_search` | columns: 5
+  Search-field and search-form property configuration per module/menu.
+- `m0_form_setting_user` | alias: `administrator_form_setting_user` | columns: 4
+  Per-user form preference configuration for specific modules/menus.
 
-### Kolom Penting
+### Important Columns
 
-- `customdetailen`: Kolom bisnis customdetailen.
-- `customdetailin`: Kolom bisnis customdetailin.
-- `customutamaen`: Kolom bisnis customutamaen.
-- `customutamain`: Kolom bisnis customutamain.
-- `menu`: Referensi menu atau struktur navigasi aplikasi.
-- `kode`: Kode bisnis, key, atau identifier konfigurasi.
-- `module`: Referensi modul aplikasi.
-- `nama`: Nama atau label bisnis yang ditampilkan ke user.
-- `searchsetting`: Kolom bisnis searchsetting.
-- `formsetting`: Kolom bisnis formsetting.
-- `user`: Referensi user atau identitas pengguna aplikasi.
+- `customdetailen`: Business column customdetailen.
+- `customdetailin`: Business column customdetailin.
+- `customutamaen`: Business column customutamaen.
+- `customutamain`: Business column customutamain.
+- `menu`: Menu reference or application navigation structure.
+- `kode`: Business code, key, or configuration identifier.
+- `module`: Application module reference.
+- `nama`: Business name or label shown to the user.
+- `searchsetting`: Business column searchsetting.
+- `formsetting`: Business column formsetting.
+- `user`: User reference or application user identity.
 
-## LANGUAGE - Bahasa dan translation resource
+## LANGUAGE - Language and Translation Resources
 
-### Tabel
+### Tables
 
-- `m0_language` | alias: `administrator_language` | kolom: 4
-  Master bahasa aplikasi.
-- `m0_language_detail` | alias: `administrator_language_detail` | kolom: 0
-  Detail resource bahasa atau pasangan key-translation per bahasa.
-- `m0_sentence` | alias: `administrator_sentence` | kolom: 3
-  Master kalimat atau text resource aplikasi.
-- `m0_sentence_s` | alias: `administrator_sentence_s` | kolom: 3
-  Varian sentence/text resource untuk scope tertentu.
-- `m0_sentence_translate` | alias: `administrator_sentence_translate` | kolom: 0
-  Terjemahan sentence/text resource utama per bahasa.
-- `m0_sentence_stranslate` | alias: `administrator_sentence_stranslate` | kolom: 4
-  Terjemahan sentence varian per bahasa.
-- `m0_translate` | alias: `administrator_translate` | kolom: 3
-  Dictionary terjemahan teks umum aplikasi.
+- `m0_language` | alias: `administrator_language` | columns: 4
+  Application language master table.
+- `m0_language_detail` | alias: `administrator_language_detail` | columns: 0
+  Language-resource detail or key-translation pair per language.
+- `m0_sentence` | alias: `administrator_sentence` | columns: 3
+  Application sentence or text-resource master.
+- `m0_sentence_s` | alias: `administrator_sentence_s` | columns: 3
+  Sentence/text-resource variant for specific scopes.
+- `m0_sentence_translate` | alias: `administrator_sentence_translate` | columns: 0
+  Main sentence/text-resource translation per language.
+- `m0_sentence_stranslate` | alias: `administrator_sentence_stranslate` | columns: 4
+  Variant-sentence translation per language.
+- `m0_translate` | alias: `administrator_translate` | columns: 3
+  General application text-translation dictionary.
 
-### Kolom Penting
+### Important Columns
 
-- `laktif`: Penanda aktif/nonaktif atau flag kondisi sistem.
-- `lgambar`: Kolom bisnis lgambar.
-- `lkode`: Kode bisnis, key, atau identifier konfigurasi.
-- `lnama`: Nama atau label bisnis yang ditampilkan ke user.
-- `stid`: Identitas unik data atau relasi ke tabel lain.
-- `stlanguage`: Kode bahasa atau preferensi bahasa.
-- `stsentence`: Kolom bisnis stsentence.
-- `sttranslate`: Kolom bisnis sttranslate.
-- `sid`: Identitas unik data atau relasi ke tabel lain.
-- `sjenis`: Kolom bisnis sjenis.
-- `ssentence`: Kolom bisnis ssentence.
+- `laktif`: Active/inactive marker or system-state flag.
+- `lgambar`: Business column lgambar.
+- `lkode`: Business code, key, or configuration identifier.
+- `lnama`: Business name or label shown to the user.
+- `stid`: Unique record identifier or relation to other tables.
+- `stlanguage`: Language code or language preference.
+- `stsentence`: Business column stsentence.
+- `sttranslate`: Business column sttranslate.
+- `sid`: Unique record identifier or relation to other tables.
+- `sjenis`: Business column sjenis.
+- `ssentence`: Business column ssentence.
 
-## MENU - Menu dan modul
+## MENU - Menu and Module
 
-### Tabel
+### Tables
 
-- `m0_module` | alias: `administrator_module` | kolom: 0
-  Master modul aplikasi MyERPPlus.
-- `m0_menu` | alias: `administrator_menu` | kolom: 14
-  Master menu aplikasi dan struktur navigasi.
-- `m0_menu_lang` | alias: `administrator_menu_lang` | kolom: 4
-  Terjemahan nama menu per bahasa.
-- `m0_menu_s` | alias: `administrator_menu_s` | kolom: 0
-  Varian atau struktur menu tambahan untuk mode/scope khusus sistem.
-- `m0_menu_s_lang` | alias: `administrator_menu_s_lang` | kolom: 4
-  Terjemahan menu varian `m0_menu_s` per bahasa.
+- `m0_module` | alias: `administrator_module` | columns: 0
+  MyERPPlus application-module master.
+- `m0_menu` | alias: `administrator_menu` | columns: 14
+  Application-menu master and navigation structure.
+- `m0_menu_lang` | alias: `administrator_menu_lang` | columns: 4
+  Menu-name translation per language.
+- `m0_menu_s` | alias: `administrator_menu_s` | columns: 0
+  Additional menu variant or menu structure for a specific system scope/mode.
+- `m0_menu_s_lang` | alias: `administrator_menu_s_lang` | columns: 4
+  Translation table for `m0_menu_s` menu variants.
 
-### Kolom Penting
+### Important Columns
 
-- `mnactive`: Kolom bisnis mnactive.
-- `mnid`: Identitas unik data atau relasi ke tabel lain.
-- `mnidtransaksi`: Kolom bisnis mnidtransaksi.
-- `mnlebar`: Kolom bisnis mnlebar.
-- `mnlevel`: Kolom bisnis mnlevel.
-- `mnllanguage`: Kode bahasa atau preferensi bahasa.
-- `mnlmnid`: Identitas unik data atau relasi ke tabel lain.
-- `mnlmoduleid`: Identitas unik data atau relasi ke tabel lain.
-- `mnltranslate`: Kolom bisnis mnltranslate.
+- `mnactive`: Business column mnactive.
+- `mnid`: Unique record identifier or relation to other tables.
+- `mnidtransaction`: Business column mnidtransaction.
+- `mnlebar`: Business column mnlebar.
+- `mnlevel`: Business column mnlevel.
+- `mnllanguage`: Language code or language preference.
+- `mnlmnid`: Unique record identifier or relation to other tables.
+- `mnlmoduleid`: Unique record identifier or relation to other tables.
+- `mnltranslate`: Business column mnltranslate.
 
 ## QUEUE - Background queue / MSMQ
 
-### Tabel
+### Tables
 
-- `m0_msmq` | alias: `administrator_msmq` | kolom: 24
-  Antrian proses background berbasis MSMQ untuk report, print, export, atau task sistem.
-- `m0_msmq_cogs` | alias: `administrator_msmq_cogs` | kolom: 8
-  Antrian proses background khusus kalkulasi COGS/HPP.
-- `m0_msmq_importdata` | alias: `administrator_msmq_importdata` | kolom: 10
-  Antrian proses background untuk import data.
-- `m0_msmq_journal` | alias: `administrator_msmq_journal` | kolom: 8
-  Antrian proses background untuk pembentukan atau posting journal.
+- `m0_msmq` | alias: `administrator_msmq` | columns: 24
+  MSMQ-based background-process queue for reports, printing, exports, or system tasks.
+- `m0_msmq_cogs` | alias: `administrator_msmq_cogs` | columns: 8
+  Background-process queue dedicated to COGS or cost-of-goods recalculation.
+- `m0_msmq_importdata` | alias: `administrator_msmq_importdata` | columns: 10
+  Background-process queue for data imports.
+- `m0_msmq_journal` | alias: `administrator_msmq_journal` | columns: 8
+  Background-process queue for journal generation or journal posting.
 
-### Kolom Penting
+### Important Columns
 
-- `fileformat`: Kolom bisnis fileformat.
-- `filename`: Nama atau label bisnis yang ditampilkan ke user.
-- `filter`: Kolom bisnis filter.
-- `groupby`: Kolom bisnis groupby.
-- `id`: Identitas unik data atau relasi ke tabel lain.
-- `miid`: Identitas unik data atau relasi ke tabel lain.
-- `minamafile`: Nama atau label bisnis yang ditampilkan ke user.
-- `mipaket`: Kolom bisnis mipaket.
-- `mipesan`: Kolom bisnis mipesan.
-- `miprogress`: Kolom bisnis miprogress.
-- `mcid`: Identitas unik data atau relasi ke tabel lain.
-- `mcidtransaksi`: Kolom bisnis mcidtransaksi.
+- `fileformat`: Business column fileformat.
+- `filename`: Business name or label shown to the user.
+- `filter`: Business column filter.
+- `groupby`: Business column groupby.
+- `id`: Unique record identifier or relation to other tables.
+- `miid`: Unique record identifier or relation to other tables.
+- `minamafile`: Business name or label shown to the user.
+- `mipaket`: Business column mipaket.
+- `mipesan`: Business column mipesan.
+- `miprogress`: Business column miprogress.
+- `mcid`: Unique record identifier or relation to other tables.
+- `mcidtransaction`: Business column mcidtransaction.
 
-## NUMBERING - Penomoran dokumen
+## NUMBERING - Document Numbering
 
-### Tabel
+### Tables
 
-- `m0_nomor` | alias: `administrator_nomor` | kolom: 9
-  Pengaturan penomoran dokumen/transaksi.
-- `m0_nomor_next` | alias: `administrator_nomor_next` | kolom: 6
-  Counter nomor dokumen berikutnya per tabel, cabang, lokasi, bulan, dan tahun.
-- `m0_nomor_mobile` | alias: `administrator_nomor_mobile` | kolom: 2
-  Pemetaan user ke identitas device/mobile untuk penomoran atau akses mobile.
-- `m0_barcode_next` | alias: `administrator_barcode_next` | kolom: 0
-  Counter nomor barcode berikutnya untuk proses generate barcode internal.
-- `m0_group_aq` | alias: `administrator_group_aq` | kolom: 5
-  Counter nomor grup AQ per cabang, lokasi, bulan, dan tahun.
-- `m0_group_rq` | alias: `administrator_group_rq` | kolom: 5
-  Counter nomor grup RQ per cabang, lokasi, bulan, dan tahun.
+- `m0_nomor` | alias: `administrator_nomor` | columns: 9
+  Document or transaction numbering configuration.
+- `m0_nomor_next` | alias: `administrator_nomor_next` | columns: 6
+  Next document-number counter per table, branch, location, month, and year.
+- `m0_nomor_mobile` | alias: `administrator_nomor_mobile` | columns: 2
+  Mapping of users to device/mobile identities for numbering or mobile access.
+- `m0_barcode_next` | alias: `administrator_barcode_next` | columns: 0
+  Next barcode-number counter for internal barcode generation.
+- `m0_group_aq` | alias: `administrator_group_aq` | columns: 5
+  AQ group-number counter per branch, location, month, and year.
+- `m0_group_rq` | alias: `administrator_group_rq` | columns: 5
+  RQ group-number counter per branch, location, month, and year.
 
-### Kolom Penting
+### Important Columns
 
-- `awalan`: Kolom bisnis awalan.
-- `jmldigit`: Kolom bisnis jmldigit.
-- `kodetabel`: Kode bisnis, key, atau identifier konfigurasi.
-- `menuid`: Identitas unik data atau relasi ke tabel lain.
-- `moduleid`: Identitas unik data atau relasi ke tabel lain.
-- `bulan`: Kolom bisnis bulan.
-- `cabang`: Kolom bisnis cabang.
-- `lokasi`: Kolom bisnis lokasi.
-- `noberikutnya`: Kolom bisnis noberikutnya.
-- `tahun`: Kolom bisnis tahun.
+- `awalan`: Business column awalan.
+- `jmldigit`: Business column jmldigit.
+- `kodetabel`: Business code, key, or configuration identifier.
+- `menuid`: Unique record identifier or relation to other tables.
+- `moduleid`: Unique record identifier or relation to other tables.
+- `bulan`: Business column bulan.
+- `cabang`: Business column cabang.
+- `lokasi`: Business column lokasi.
+- `noberikutnya`: Business column noberikutnya.
+- `tahun`: Business column tahun.
 
-## NOTES_FILES - Lampiran dan notes
+## NOTES_FILES - Attachments and notes
 
-### Tabel
+### Tables
 
-- `m0_files` | alias: `administrator_files` | kolom: 7
-  Lampiran/file attachment modul administrator.
-- `m0_notes` | alias: `administrator_notes` | kolom: 3
-  Catatan bebas atau note tambahan pada transaksi/konfigurasi administrator.
+- `m0_files` | alias: `administrator_files` | columns: 7
+  Attachment/file table for administrator modules.
+- `m0_notes` | alias: `administrator_notes` | columns: 3
+  Free-form notes on administrator transactions or administrator configuration.
 
-### Kolom Penting
+### Important Columns
 
-- `fcatatan`: Catatan atau keterangan tambahan.
-- `fidtransaksi`: Kolom bisnis fidtransaksi.
-- `fnamafile`: Nama atau label bisnis yang ditampilkan ke user.
-- `fsumber`: Kolom bisnis fsumber.
-- `ftanggal`: Kolom bisnis ftanggal.
-- `ncatatan`: Catatan atau keterangan tambahan.
-- `nidtransaksi`: Kolom bisnis nidtransaksi.
-- `nsumber`: Kolom bisnis nsumber.
+- `fnotes`: Notes or additional description.
+- `fidtransaction`: Business column fidtransaction.
+- `fnamafile`: Business name or label shown to the user.
+- `fsumber`: Business column fsumber.
+- `fdate`: Business column fdate.
+- `nnotes`: Notes or additional description.
+- `nidtransaction`: Business column nidtransaction.
+- `nsumber`: Business column nsumber.
 
-## NOTIFICATION - Notifikasi
+## NOTIFICATION - Notifications
 
-### Tabel
+### Tables
 
-- `m0_notifikasi_email` | alias: `administrator_notifikasi_email` | kolom: 10
-  Pengaturan notifikasi email per modul/menu/user.
+- `m0_notifikasi_email` | alias: `administrator_notifikasi_email` | columns: 10
+  Email-notification settings per module/menu/user.
 
-### Kolom Penting
+### Important Columns
 
-- `email`: Alamat email atau identitas email terkait notifikasi.
-- `emailpengirim`: Alamat email atau identitas email terkait notifikasi.
-- `menuid`: Identitas unik data atau relasi ke tabel lain.
-- `moduleid`: Identitas unik data atau relasi ke tabel lain.
-- `namamenu`: Referensi menu atau struktur navigasi aplikasi.
+- `email`: Email address or email identity used in notifications.
+- `emailpengirim`: Sender email address or sender email identity.
+- `menuid`: Unique record identifier or relation to other tables.
+- `moduleid`: Unique record identifier or relation to other tables.
+- `namamenu`: Menu reference or application navigation structure.
 
-## REPORT - Report dan metadata report
+## REPORT - Reports and Report Metadata
 
-### Tabel
+### Tables
 
-- `m0_report` | alias: `administrator_report` | kolom: 27
-  Definisi report, template, dan metadata laporan.
-- `m0_report_filter` | alias: `administrator_report_filter` | kolom: 17
-  Definisi filter input untuk report builder atau runtime report.
-- `m0_report_label` | alias: `administrator_report_label` | kolom: 0
-  Master label/teks tampilan pada report.
-- `m0_report_label_translate` | alias: `administrator_report_label_translate` | kolom: 4
-  Terjemahan label report per bahasa.
-- `m0_report_lang` | alias: `administrator_report_lang` | kolom: 7
-  Terjemahan nama report dan judul report per bahasa.
-- `m0_report_temp` | alias: `administrator_report_temp` | kolom: 0
-  Tabel sementara/kerja untuk proses report.
+- `m0_report` | alias: `administrator_report` | columns: 27
+  Report definition, template, and report metadata.
+- `m0_report_filter` | alias: `administrator_report_filter` | columns: 17
+  Input-filter definition for the report builder or runtime report.
+- `m0_report_label` | alias: `administrator_report_label` | columns: 0
+  Master table for labels/display text on reports.
+- `m0_report_label_translate` | alias: `administrator_report_label_translate` | columns: 4
+  Report-label translation per language.
+- `m0_report_lang` | alias: `administrator_report_lang` | columns: 7
+  Report-name and report-title translation per language.
+- `m0_report_temp` | alias: `administrator_report_temp` | columns: 0
+  Temporary/working table for report processes.
 
-### Kolom Penting
+### Important Columns
 
-- `raktif`: Penanda aktif/nonaktif atau flag kondisi sistem.
-- `rcetak`: Kolom bisnis rcetak.
-- `rdata`: Kolom bisnis rdata.
-- `rdefault`: Kolom bisnis rdefault.
-- `rfilename`: Nama atau label bisnis yang ditampilkan ke user.
-- `fdatasource`: Kolom bisnis fdatasource.
-- `ffield`: Kolom bisnis ffield.
-- `fid`: Identitas unik data atau relasi ke tabel lain.
-- `fitem`: Kolom bisnis fitem.
-- `flabel`: Kolom bisnis flabel.
-- `rllanguage`: Kode bahasa atau preferensi bahasa.
-- `rlrid`: Identitas unik data atau relasi ke tabel lain.
+- `raktif`: Active/inactive marker or system-state flag.
+- `rcetak`: Business column rcetak.
+- `rdata`: Business column rdata.
+- `rdefault`: Business column rdefault.
+- `rfilename`: Business name or label shown to the user.
+- `fdatasource`: Business column fdatasource.
+- `ffield`: Business column ffield.
+- `fid`: Unique record identifier or relation to other tables.
+- `fitem`: Business column fitem.
+- `flabel`: Business column flabel.
+- `rllanguage`: Language code or language preference.
+- `rlrid`: Unique record identifier or relation to other tables.
 
-## ROLE - Role dan permission
+## ROLE - Role and permission
 
-### Tabel
+### Tables
 
-- `m0_role` | alias: `administrator_role` | kolom: 2
-  Master role atau peran akses sistem.
-- `m0_role_s` | alias: `administrator_role_s` | kolom: 2
-  Varian role untuk scope atau mode akses tertentu.
-- `m0_role_custom` | alias: `administrator_role_custom` | kolom: 4
-  Override akses custom per role untuk permission spesifik.
-- `m0_role_item_category` | alias: `administrator_role_item_category` | kolom: 2
-  Mapping role ke kategori barang yang boleh diakses.
-- `m0_role_menu` | alias: `administrator_role_menu` | kolom: 5
-  Mapping role ke menu dan hak akses navigasi.
-- `m0_role_menu_s` | alias: `administrator_role_menu_s` | kolom: 5
-  Mapping role ke menu varian/scope khusus.
-- `m0_role_report` | alias: `administrator_role_report` | kolom: 5
-  Mapping role ke report dan hak akses report.
-- `m0_role_report_s` | alias: `administrator_role_report_s` | kolom: 5
-  Mapping role ke report varian/scope khusus.
-- `m0_permissions_custom` | alias: `administrator_permissions_custom` | kolom: 0
-  Override permission granular di luar mapping role standar.
+- `m0_role` | alias: `administrator_role` | columns: 2
+  System role master or access-role master.
+- `m0_role_s` | alias: `administrator_role_s` | columns: 2
+  Role variant for specific access scopes or modes.
+- `m0_role_custom` | alias: `administrator_role_custom` | columns: 4
+  Custom access override per role for specific permissions.
+- `m0_role_item_category` | alias: `administrator_role_item_category` | columns: 2
+  Mapping of roles to accessible item categories.
+- `m0_role_menu` | alias: `administrator_role_menu` | columns: 5
+  Mapping of roles to menus and navigation access rights.
+- `m0_role_menu_s` | alias: `administrator_role_menu_s` | columns: 5
+  Mapping of roles to menu variants or special scopes.
+- `m0_role_report` | alias: `administrator_role_report` | columns: 5
+  Mapping of roles to reports and report-access rights.
+- `m0_role_report_s` | alias: `administrator_role_report_s` | columns: 5
+  Mapping of roles to report variants or special scopes.
+- `m0_permissions_custom` | alias: `administrator_permissions_custom` | columns: 0
+  Granular permission override outside standard role mappings.
 
-### Kolom Penting
+### Important Columns
 
-- `rmakses`: Kolom bisnis rmakses.
-- `rmfavourite`: Kolom bisnis rmfavourite.
-- `rmmenuid`: Identitas unik data atau relasi ke tabel lain.
-- `rmmoduleid`: Identitas unik data atau relasi ke tabel lain.
-- `rmrole`: Referensi role atau peran akses.
-- `rmid`: Identitas unik data atau relasi ke tabel lain.
-- `rrakses`: Kolom bisnis rrakses.
-- `rritem`: Kolom bisnis rritem.
-- `rrmenuid`: Identitas unik data atau relasi ke tabel lain.
-- `rrmoduleid`: Identitas unik data atau relasi ke tabel lain.
-- `rrrole`: Referensi role atau peran akses.
+- `rmakses`: Business column rmakses.
+- `rmfavourite`: Business column rmfavourite.
+- `rmmenuid`: Unique record identifier or relation to other tables.
+- `rmmoduleid`: Unique record identifier or relation to other tables.
+- `rmrole`: Role reference or access-role assignment.
+- `rmid`: Unique record identifier or relation to other tables.
+- `rrakses`: Business column rrakses.
+- `rritem`: Business column rritem.
+- `rrmenuid`: Unique record identifier or relation to other tables.
+- `rrmoduleid`: Unique record identifier or relation to other tables.
+- `rrrole`: Role reference or access-role assignment.
 
-## SEARCH_SETTING - Lookup dan setting bisnis
+## SEARCH_SETTING - Lookup and Business Settings
 
-### Tabel
+### Tables
 
-- `m0_search_packet` | alias: `administrator_search_packet` | kolom: 4
-  Paket definisi search/filter reusable untuk lookup sistem.
-- `m0_selling_rate` | alias: `administrator_selling_rate` | kolom: 2
-  Master tingkat harga jual atau selling rate.
-- `m0_setting` | alias: `administrator_setting` | kolom: 10
-  Parameter dan konfigurasi global sistem.
-- `m0_setting_lang` | alias: `administrator_setting_lang` | kolom: 5
-  Terjemahan setting atau label setting per bahasa.
-- `m0_setting_location` | alias: `administrator_setting_location` | kolom: 0
-  Override setting berdasarkan lokasi operasional.
-- `m0_payment_method` | alias: `administrator_payment_method` | kolom: 0
-  Master metode pembayaran yang dipakai lintas modul.
-- `m0_jenismutasi` | alias: `administrator_jenismutasi` | kolom: 0
-  Master jenis mutasi/transaksi yang dipakai sistem sebagai referensi proses.
-- `m0_status` | alias: `administrator_status` | kolom: 0
-  Master status umum yang dipakai lintas dokumen/modul.
-- `m0_status_giro` | alias: `administrator_status_giro` | kolom: 0
-  Master status khusus giro atau alat bayar giro.
-- `m0_status_progress` | alias: `administrator_status_progress` | kolom: 0
-  Master status progress untuk proses/background task.
-- `m0_status_rq` | alias: `administrator_status_rq` | kolom: 0
-  Master status khusus workflow request quotation atau request terkait.
-- `m0_table_relation` | alias: `administrator_table_relation` | kolom: 0
-  Metadata relasi tabel untuk helper query, import, atau validasi.
+- `m0_search_packet` | alias: `administrator_search_packet` | columns: 4
+  Reusable search/filter definition package for system lookups.
+- `m0_selling_rate` | alias: `administrator_selling_rate` | columns: 2
+  Selling-rate or sales-price-level master table.
+- `m0_setting` | alias: `administrator_setting` | columns: 10
+  Global system parameters and configuration.
+- `m0_setting_lang` | alias: `administrator_setting_lang` | columns: 5
+  Setting translation or setting-label translation per language.
+- `m0_setting_location` | alias: `administrator_setting_location` | columns: 0
+  Setting override by operational location.
+- `m0_payment_method` | alias: `administrator_payment_method` | columns: 0
+  Payment-method master used across modules.
+- `m0_jenismutasi` | alias: `administrator_jenismutasi` | columns: 0
+  Transaction/mutation-type master used by the system as a process reference.
+- `m0_status` | alias: `administrator_status` | columns: 0
+  General-status master used across documents/modules.
+- `m0_status_giro` | alias: `administrator_status_giro` | columns: 0
+  Special-status master for giro or giro payment instruments.
+- `m0_status_progress` | alias: `administrator_status_progress` | columns: 0
+  Progress-status master for processes/background tasks.
+- `m0_status_rq` | alias: `administrator_status_rq` | columns: 0
+  Special-status master for request-quotation workflows or related requests.
+- `m0_table_relation` | alias: `administrator_table_relation` | columns: 0
+  Table-relation metadata for helper queries, imports, or validation.
 
-### Kolom Penting
+### Important Columns
 
-- `scombodata`: Kolom bisnis scombodata.
-- `sgrup`: Kolom bisnis sgrup.
-- `sjenisinputan`: Kolom bisnis sjenisinputan.
-- `skode`: Kode bisnis, key, atau identifier konfigurasi.
-- `smodule`: Referensi modul aplikasi.
-- `slgrup`: Kolom bisnis slgrup.
-- `slkode`: Kode bisnis, key, atau identifier konfigurasi.
-- `sllanguage`: Kode bahasa atau preferensi bahasa.
-- `slmodule`: Referensi modul aplikasi.
-- `sltranslate`: Kolom bisnis sltranslate.
-- `spfilter`: Kolom bisnis spfilter.
-- `spfilterby`: Kolom bisnis spfilterby.
+- `scombodata`: Business column scombodata.
+- `sgrup`: Business column sgrup.
+- `sjenisinputan`: Business column sjenisinputan.
+- `skode`: Business code, key, or configuration identifier.
+- `smodule`: Application module reference.
+- `slgrup`: Business column slgrup.
+- `slkode`: Business code, key, or configuration identifier.
+- `sllanguage`: Language code or language preference.
+- `slmodule`: Application module reference.
+- `sltranslate`: Business column sltranslate.
+- `spfilter`: Business column spfilter.
+- `spfilterby`: Business column spfilterby.
 
-## USER - User, group, akses, session, dan audit
+## USER - User, Group, Access, Session, and Audit
 
-### Tabel
+### Tables
 
-- `m0_user` | alias: `administrator_user` | kolom: 16
-  Master user aplikasi, identitas login, profil, dan pengaturan akses pengguna.
-- `m0_user_branch` | alias: `administrator_user_branch` | kolom: 2
-  Mapping user ke cabang yang boleh diakses.
-- `m0_user_coa` | alias: `administrator_user_coa` | kolom: 2
-  Mapping user ke rekening/COA yang boleh diakses.
-- `m0_user_location` | alias: `administrator_user_location` | kolom: 2
-  Mapping user ke lokasi yang boleh diakses.
-- `m0_user_role` | alias: `administrator_user_role` | kolom: 2
-  Mapping user ke role akses.
-- `m0_user_role_s` | alias: `administrator_user_role_s` | kolom: 2
-  Mapping user ke role varian/scope khusus.
-- `m0_user_warehouse` | alias: `administrator_user_warehouse` | kolom: 2
-  Mapping user ke gudang yang boleh diakses.
-- `m0_usercustom` | alias: `administrator_usercustom` | kolom: 4
-  Override akses custom per user di luar role standar.
-- `m0_usergrup` | alias: `administrator_usergrup` | kolom: 2
-  Master grup user.
-- `m0_usergrupmenu` | alias: `administrator_usergrupmenu` | kolom: 4
-  Mapping grup user ke menu dan hak akses.
-- `m0_userlogin` | alias: `administrator_userlogin` | kolom: 1
-  Session atau jejak login user.
-- `m0_userlog` | alias: `administrator_userlog` | kolom: 7
-  Audit log aktivitas user.
-- `m0_userlog_category` | alias: `administrator_userlog_category` | kolom: 0
-  Master kategori aktivitas untuk audit log user.
-- `m0_userlogerror` | alias: `administrator_userlogerror` | kolom: 7
-  Log error aplikasi yang dikaitkan ke user atau paket proses.
-- `m0_usermenu` | alias: `administrator_usermenu` | kolom: 5
-  Override akses menu langsung per user.
-- `m0_userreport` | alias: `administrator_userreport` | kolom: 5
-  Override akses report langsung per user.
+- `m0_user` | alias: `administrator_user` | columns: 16
+  Application user master, including login identity, profile, and access settings.
+- `m0_user_branch` | alias: `administrator_user_branch` | columns: 2
+  Mapping of users to accessible branches.
+- `m0_user_coa` | alias: `administrator_user_coa` | columns: 2
+  Mapping of users to accessible accounts/COA.
+- `m0_user_location` | alias: `administrator_user_location` | columns: 2
+  Mapping of users to accessible locations.
+- `m0_user_role` | alias: `administrator_user_role` | columns: 2
+  Mapping of users to access roles.
+- `m0_user_role_s` | alias: `administrator_user_role_s` | columns: 2
+  Mapping of users to variant roles or special scopes.
+- `m0_user_warehouse` | alias: `administrator_user_warehouse` | columns: 2
+  Mapping of users to accessible warehouses.
+- `m0_usercustom` | alias: `administrator_usercustom` | columns: 4
+  Per-user custom access override outside standard roles.
+- `m0_usergrup` | alias: `administrator_usergrup` | columns: 2
+  User-group master table.
+- `m0_usergrupmenu` | alias: `administrator_usergrupmenu` | columns: 4
+  Mapping of user groups to menus and access rights.
+- `m0_userlogin` | alias: `administrator_userlogin` | columns: 1
+  User session or login trace.
+- `m0_userlog` | alias: `administrator_userlog` | columns: 7
+  User activity audit log.
+- `m0_userlog_category` | alias: `administrator_userlog_category` | columns: 0
+  Activity-category master for user audit logs.
+- `m0_userlogerror` | alias: `administrator_userlogerror` | columns: 7
+  Application error log linked to a user or process batch.
+- `m0_usermenu` | alias: `administrator_usermenu` | columns: 5
+  Direct menu-access override per user.
+- `m0_userreport` | alias: `administrator_userreport` | columns: 5
+  Direct report-access override per user.
 
-### Kolom Penting
+### Important Columns
 
-- `uaktif`: Penanda aktif/nonaktif atau flag kondisi sistem.
-- `ubahasa`: Kode bahasa atau preferensi bahasa.
-- `ucabang`: Kolom bisnis ucabang.
-- `udefaultview`: Kolom bisnis udefaultview.
-- `ugambar`: Kolom bisnis ugambar.
-- `ulaktivitas`: Kolom bisnis ulaktivitas.
-- `ulidmenu`: Referensi menu atau struktur navigasi aplikasi.
-- `ulidmodule`: Referensi modul aplikasi.
-- `uljenisaktivitas`: Kolom bisnis uljenisaktivitas.
-- `ulkodepa`: Kode bisnis, key, atau identifier konfigurasi.
-- `ulerrtodev`: Kolom bisnis ulerrtodev.
-- `ulerrtouser`: Referensi user atau identitas pengguna aplikasi.
-
+- `uaktif`: Active/inactive marker or system-state flag.
+- `ubahasa`: Language code or language preference.
+- `ucabang`: Business column ucabang.
+- `udefaultview`: Business column udefaultview.
+- `ugambar`: Business column ugambar.
+- `ulaktivitas`: Business column ulaktivitas.
+- `ulidmenu`: Menu reference or application navigation structure.
+- `ulidmodule`: Application module reference.
+- `uljenisaktivitas`: Business column uljenisaktivitas.
+- `ulkodepa`: Business code, key, or configuration identifier.
+- `ulerrtodev`: Business column ulerrtodev.
+- `ulerrtouser`: User reference or application user identity.

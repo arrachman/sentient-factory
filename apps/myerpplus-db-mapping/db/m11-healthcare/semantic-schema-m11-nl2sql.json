@@ -1,0 +1,260 @@
+{
+  "domain": "myerpplus_healthcare_m11",
+  "description": "Machine-friendly NL2SQL guide for the M11 healthcare module.",
+  "source_files": [
+    "semantic-schema-m11.json",
+    "semantic-schema-m11-summary.md",
+    "m11-queries.md",
+    "m0_report_rmoduleid_11.sql"
+  ],
+  "business_terms": {
+    "KJ": [
+      "kunjungan pasien",
+      "kunjungan medis"
+    ],
+    "AK": [
+      "tagihan kunjungan",
+      "akun kunjungan"
+    ],
+    "LB": [
+      "laboratorium",
+      "hasil lab"
+    ],
+    "LU": [
+      "layanan umum",
+      "tindakan medis"
+    ],
+    "RO": [
+      "resep obat",
+      "order obat"
+    ],
+    "KW": [
+      "kwitansi",
+      "pembayaran"
+    ],
+    "RM": [
+      "rekam medis"
+    ],
+    "RK": [
+      "rawat/rekap kunjungan"
+    ]
+  },
+  "table_groups": {
+    "document_headers": [
+      "m_11_ak",
+      "m_11_ilo",
+      "m_11_isk",
+      "m_11_kj",
+      "m_11_km",
+      "m_11_kw",
+      "m_11_lb",
+      "m_11_lu",
+      "m_11_pb",
+      "m_11_pt",
+      "m_11_rk",
+      "m_11_rm",
+      "m_11_ro",
+      "m_11_ud"
+    ],
+    "document_details": [
+      "m_11_ak_detail",
+      "m_11_kw_detail",
+      "m_11_lb_detail",
+      "m_11_lb_hasil",
+      "m_11_lu_detail",
+      "m_11_pb_detail",
+      "m_11_pb_pay",
+      "m_11_rk_pay",
+      "m_11_ro_detail"
+    ],
+    "history_tables": [
+      "m_11_kj_history",
+      "m_11_km_history",
+      "m_11_lu_detail_history",
+      "m_11_lu_history"
+    ]
+  },
+  "join_hints": [
+    {
+      "name": "kunjungan_to_tagihan_flow",
+      "description": "Relationship from patient visits to billing headers and billing details.",
+      "joins": [
+        "m_11_kj.kjid = m_11_kj_detail.idkj",
+        "m_11_ak.akidkj = m_11_kj.kjid",
+        "m_11_ak.akid = m_11_ak_detail.idak"
+      ]
+    },
+    {
+      "name": "kunjungan_to_layanan_flow",
+      "description": "Relationship from patient visits to general-service, lab, and prescription documents.",
+      "joins": [
+        "m_11_kj.kjid = m_11_lu.luidkj",
+        "m_11_kj.kjid = m_11_lb.lbidkj",
+        "m_11_kj.kjid = m_11_ro.roidkj"
+      ]
+    },
+    {
+      "name": "kunjungan_to_pembayaran_flow",
+      "description": "Relationship from patient visits to payment/receipt documents.",
+      "joins": [
+        "m_11_kj.kjid = m_11_kw_detail.idtransaksi when sumber = KJ",
+        "m_11_kj.kjid = m_11_rk.rkidkj",
+        "m_11_kj.kjid = m_11_rm.rmidkj"
+      ]
+    },
+    {
+      "name": "layanan_history_flow",
+      "description": "Relationship from active general-service records to their change history.",
+      "joins": [
+        "m_11_lu.luid = m_11_lu_history.luid",
+        "m_11_lu_detail.idludetail = m_11_lu_detail_history.idludetail"
+      ]
+    },
+    {
+      "name": "tagihan_item_flow",
+      "description": "Relationship from billing headers to service/item details.",
+      "joins": [
+        "m_11_ak.akid = m_11_ak_detail.idak",
+        "m_11_ak_detail.idlayanan = m1_item.bid"
+      ]
+    }
+  ],
+  "polymorphic_relationships": [],
+  "detail_lineage_keys": [
+    {
+      "from_table": "m_11_ak",
+      "from_column": "akidkj",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "usage": "Trace visit-billing records to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_lu",
+      "from_column": "luidkj",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "usage": "Trace general-service records to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_lb",
+      "from_column": "lbidkj",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "usage": "Trace laboratory records to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_ro",
+      "from_column": "roidkj",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "usage": "Trace prescription/medicine-order records to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_rk",
+      "from_column": "rkidkj",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "usage": "Trace care/visit-summary records to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_rm",
+      "from_column": "rmidkj",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "usage": "Trace medical-record entries to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_ak_detail",
+      "from_column": "idak",
+      "to_table": "m_11_ak",
+      "to_column": "akid",
+      "usage": "Trace billing-detail lines to the billing header."
+    },
+    {
+      "from_table": "m_11_kw_detail",
+      "from_column": "idkw",
+      "to_table": "m_11_kw",
+      "to_column": "kwid",
+      "usage": "Trace receipt-detail lines to the payment header."
+    },
+    {
+      "from_table": "m_11_kw_detail",
+      "from_column": "idtransaksi",
+      "to_table": "m_11_kj",
+      "to_column": "kjid",
+      "condition": "sumber = KJ",
+      "usage": "Trace receipts to the patient-visit episode."
+    },
+    {
+      "from_table": "m_11_lb_detail",
+      "from_column": "idlb",
+      "to_table": "m_11_lb",
+      "to_column": "lbid",
+      "usage": "Trace laboratory-detail lines to the lab header."
+    },
+    {
+      "from_table": "m_11_lb_hasil",
+      "from_column": "idlb",
+      "to_table": "m_11_lb",
+      "to_column": "lbid",
+      "usage": "Trace lab-result lines to the lab header."
+    },
+    {
+      "from_table": "m_11_lu_detail",
+      "from_column": "idlu",
+      "to_table": "m_11_lu",
+      "to_column": "luid",
+      "usage": "Trace general-service detail lines to the service header."
+    },
+    {
+      "from_table": "m_11_pb_detail",
+      "from_column": "idpv",
+      "to_table": "m_11_pb",
+      "to_column": "pvid",
+      "usage": "Trace healthcare billing/payment detail lines to the PB header."
+    },
+    {
+      "from_table": "m_11_rk_pay",
+      "from_column": "idrk",
+      "to_table": "m_11_rk",
+      "to_column": "rkid",
+      "usage": "Trace care/summary payment-allocation lines to the RK header."
+    },
+    {
+      "from_table": "m_11_ro_detail",
+      "from_column": "idro",
+      "to_table": "m_11_ro",
+      "to_column": "roid",
+      "usage": "Trace prescription detail lines to the medicine-order header."
+    }
+  ],
+  "important_rules": [
+    "Use header tables for document numbers, dates, patient identity, service status, and care context.",
+    "Use detail tables for service items, medicines, or medical procedures per document.",
+    "Use history tables only when the user explicitly asks for service history or audit changes.",
+    "Many M11 documents revolve around patient visits; check the relationship to `KJ` first when the context is a service episode.",
+    "Because healthcare is sensitive, readonly query output must avoid unsupported clinical assumptions."
+  ],
+  "query_patterns": [
+    {
+      "name": "kunjungan_lookup",
+      "description": "Lookup patient visits and visit status.",
+      "pattern": "Use `m_11_kj` and, when needed, `m_11_kj_detail`."
+    },
+    {
+      "name": "billing_trace",
+      "description": "Trace patient visits to service billing.",
+      "pattern": "Use `m_11_kj -> m_11_ak -> m_11_ak_detail`."
+    },
+    {
+      "name": "clinical_service_trace",
+      "description": "Trace clinical-service, lab, or prescription flows.",
+      "pattern": "Use `m_11_kj` to `m_11_lu`, `m_11_lb`, or `m_11_ro` as needed."
+    }
+  ],
+  "caution_areas": [
+    "Questions that mix billing, medical records, and clinical services without separating the source document.",
+    "Questions that use history tables together with active tables without a clear audit purpose.",
+    "Sensitive healthcare questions that risk extrapolating clinical meaning beyond the structured data."
+  ]
+}

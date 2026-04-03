@@ -1,23 +1,24 @@
 ---
 title: Overview
 sidebar_position: 1
-description: Pengantar modul administrator MyERPPlus.
+description: Introduction to the MyERPPlus administrator module.
 ---
 
 # m0-administrator
 
-Kategori ini berisi tutorial untuk area administrator MyERPPlus.
+This category contains tutorials for the MyERPPlus administrator area.
 
-## Cakupan
+## Coverage
 
-- Konfigurasi dasar sistem
-- Pengaturan user dan role
-- Maintenance menu dan report
+- core system configuration
+- user and role management
+- menu and report maintenance
 
-## Dokumen Utama
+## Main Documents
 
-- [Artefak Query Administrator](./artefak-query-administrator.md)
+- [Administrator Query Artifacts](./query-artifacts.md)
+- [M0 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
 
-## Catatan
+## Notes
 
-Source `m0` yang tersedia saat ini masih dominan berupa koleksi query. JSON yang ditambahkan di tahap ini berfungsi sebagai index ringan dari source Markdown yang sudah ada.
+The currently available `m0` source is still dominated by query collections. The JSON artifacts added here act as lightweight indexes over the existing Markdown sources.

@@ -1,0 +1,351 @@
+{
+  "title": "Semantic Schema M7 Summary Flat",
+  "source_json": "semantic-schema-m7-summary.json",
+  "count": 36,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_ab",
+      "alias": "asset_ab",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset booking / budget/approval asset.",
+      "column_count": 56
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_ae",
+      "alias": "asset_ae",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset entry / pencatatan perolehan asset.",
+      "column_count": 77
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_ag",
+      "alias": "asset_ag",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset disposal / penghapusan atau pelepasan asset.",
+      "column_count": 42
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_ao",
+      "alias": "asset_ao",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset order atau order pengadaan asset.",
+      "column_count": 72
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_aq",
+      "alias": "asset_aq",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset quotation request / permintaan penawaran asset.",
+      "column_count": 67
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_ar",
+      "alias": "asset_ar",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset request atau permintaan asset.",
+      "column_count": 59
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_asset",
+      "alias": "asset_asset",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Master asset/fixed asset beserta atribut penyusutan, akun, dan status lifecycle asset.",
+      "column_count": 69
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_at",
+      "alias": "asset_at",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Asset transfer atau transaksi perpindahan asset.",
+      "column_count": 58
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m7_da",
+      "alias": "asset_da",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Depreciation asset / jurnal penyusutan asset.",
+      "column_count": 43
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "asset_category_tax_flow",
+      "description": "Relasi asset ke kategori dan pajak kategori asset.",
+      "joins": [
+        "m7_asset.akategori = m7_asset_category.ackode",
+        "m7_asset_category.ackode = m7_asset_category_tax.actkode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "asset_request_to_quotation_flow",
+      "description": "Alur asset request ke asset quotation request.",
+      "joins": [
+        "m7_ar.arid = m7_ar_detail.idar",
+        "m7_ar_detail.idardetail = m7_aq_detail.idardetail",
+        "m7_aq.aqid = m7_aq_detail.idaq"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "asset_quotation_to_order_flow",
+      "description": "Alur permintaan penawaran asset ke order pengadaan asset.",
+      "joins": [
+        "m7_aq.aqid = m7_aq_detail.idaq",
+        "m7_aq_detail.idaqdetail = m7_ao_detail.idaqdetail",
+        "m7_ao.aoid = m7_ao_detail.idao"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "asset_order_to_entry_flow",
+      "description": "Alur order asset ke pencatatan perolehan asset.",
+      "joins": [
+        "m7_ao.aoid = m7_ao_detail.idao",
+        "m7_ao_detail.idaodetail = m7_ae_detail.idaodetail",
+        "m7_ae.aeid = m7_ae_detail.idae"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "asset_lifecycle_finance_flow",
+      "description": "Relasi asset ke metode penyusutan, akun asset, dan status progress.",
+      "joins": [
+        "m7_asset.ametode = m7_depreciation_category.kode",
+        "m7_asset.arekasset = m1_coa.cnomor",
+        "m7_asset.arekakumdepresiasi = m1_coa.cnomor",
+        "m7_asset.arekdepresiasi = m1_coa.cnomor"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_ab_detail",
+      "alias": "asset_ab_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail asset pada booking/approval.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_ae_detail",
+      "alias": "asset_ae_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail asset hasil pencatatan perolehan.",
+      "column_count": 39
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_ag_detail",
+      "alias": "asset_ag_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail asset pada disposal/penghapusan.",
+      "column_count": 28
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_ao_detail",
+      "alias": "asset_ao_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail asset pada order pengadaan asset.",
+      "column_count": 39
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_aq_detail",
+      "alias": "asset_aq_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail asset pada permintaan penawaran asset.",
+      "column_count": 39
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_ar_detail",
+      "alias": "asset_ar_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail item/asset pada asset request.",
+      "column_count": 40
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_at_detail",
+      "alias": "asset_at_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail asset pada transfer.",
+      "column_count": 32
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_at_pay",
+      "alias": "asset_at_pay",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail pembayaran/alokasi terkait transaksi asset transfer atau akuisisi.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m7_da_detail",
+      "alias": "asset_da_detail",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail perhitungan atau baris penyusutan asset.",
+      "column_count": 24
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "asset_request_to_quotation_flow",
+      "description": "Alur asset request ke asset quotation request.",
+      "joins": [
+        "m7_ar.arid = m7_ar_detail.idar",
+        "m7_ar_detail.idardetail = m7_aq_detail.idardetail",
+        "m7_aq.aqid = m7_aq_detail.idaq"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "asset_quotation_to_order_flow",
+      "description": "Alur permintaan penawaran asset ke order pengadaan asset.",
+      "joins": [
+        "m7_aq.aqid = m7_aq_detail.idaq",
+        "m7_aq_detail.idaqdetail = m7_ao_detail.idaqdetail",
+        "m7_ao.aoid = m7_ao_detail.idao"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "asset_order_to_entry_flow",
+      "description": "Alur order asset ke pencatatan perolehan asset.",
+      "joins": [
+        "m7_ao.aoid = m7_ao_detail.idao",
+        "m7_ao_detail.idaodetail = m7_ae_detail.idaodetail",
+        "m7_ae.aeid = m7_ae_detail.idae"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_TABLES",
+      "table_name": "m7_asset_category",
+      "alias": "asset_asset_category",
+      "owner_module": "MASTER_TABLES",
+      "description": "Master kategori asset/fixed asset.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_TABLES",
+      "table_name": "m7_asset_category_tax",
+      "alias": "asset_asset_category_tax",
+      "owner_module": "MASTER_TABLES",
+      "description": "Mapping kategori asset ke konfigurasi pajak terkait.",
+      "column_count": 23
+    },
+    {
+      "type": "owned_table",
+      "module": "MASTER_TABLES",
+      "table_name": "m7_depreciation_category",
+      "alias": "asset_depreciation_category",
+      "owner_module": "MASTER_TABLES",
+      "description": "Master metode atau kategori penyusutan asset.",
+      "column_count": 0
+    },
+    {
+      "type": "relation",
+      "module": "MASTER_TABLES",
+      "name": "asset_category_tax_flow",
+      "description": "Relasi asset ke kategori dan pajak kategori asset.",
+      "joins": [
+        "m7_asset.akategori = m7_asset_category.ackode",
+        "m7_asset_category.ackode = m7_asset_category_tax.actkode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "MASTER_TABLES",
+      "name": "asset_lifecycle_finance_flow",
+      "description": "Relasi asset ke metode penyusutan, akun asset, dan status progress.",
+      "joins": [
+        "m7_asset.ametode = m7_depreciation_category.kode",
+        "m7_asset.arekasset = m1_coa.cnomor",
+        "m7_asset.arekakumdepresiasi = m1_coa.cnomor",
+        "m7_asset.arekdepresiasi = m1_coa.cnomor"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m7_files",
+      "alias": "asset_files",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Lampiran dokumen asset.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m7_notes",
+      "alias": "asset_notes",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Catatan dokumen asset.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m7_asset_category_history",
+      "alias": "asset_asset_category_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat perubahan kategori asset.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m7_asset_category_tax_history",
+      "alias": "asset_asset_category_tax_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat perubahan mapping pajak kategori asset.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m7_asset_history",
+      "alias": "asset_asset_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Riwayat perubahan master asset/fixed asset.",
+      "column_count": 0
+    }
+  ]
+}

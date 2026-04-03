@@ -1,15 +1,15 @@
 # Semantic Schema M1 Summary
 
-Sumber schema: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m1.json`
-Sumber function/query: `/home/rania/apps/sentient-factory/m1-queries.md`, `/home/rania/apps/sentient-factory/m1-queries-by-type.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_1.sql`
+Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m1.json`
+Function/query source: `/home/rania/apps/sentient-factory/m1-queries.md`, `/home/rania/apps/sentient-factory/m1-queries-by-type.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_1.sql`
 
-Total tabel M1 di schema: **49**
-Total join hints eksplisit di schema: **0**
+Total M1 tables in schema: **49**
+Total explicit join hints in schema: **0**
 Total polymorphic relationships: **0**
 
-Dokumen ini merangkum struktur domain master data `M1`. Fokus utamanya adalah contact, item, warehouse, branch, location, pricing, tax, COA, dan tabel referensi lintas domain lain.
+This document summarizes the `M1` master-data domain. Its main focus is contact, item, warehouse, branch, location, pricing, tax, COA, and reference tables used across other domains.
 
-## Ringkasan Domain
+## Overview Domain
 
 - **MASTER CONTACT**: `m1_contact`, `m1_contact_category`, `m1_contact_terms`, `m1_contact_price`
 - **MASTER ITEM**: `m1_item`, `m1_item_category`, `m1_item_type`, `m1_item_price`, `m1_item_supplier`, `m1_item_stock_warehouse`, `m1_item_location`, `m1_item_location_warehouse`, `m1_item_permission`, `m1_item_transaction`
@@ -21,91 +21,91 @@ Dokumen ini merangkum struktur domain master data `M1`. Fokus utamanya adalah co
 - **MASTER WAREHOUSE**: `m1_warehouse`
 - **MASTER NOTE**: `m1_transaction_note`, `m1_transaction_note_detail`
 
-## Tabel Inti
+## Core Tables
 
 ### `m1_contact`
 
-Master kontak bisnis untuk customer, supplier, salesman, dan rekanan lain.
+Business contact master for customers, suppliers, salesmen, and other counterparties.
 
-Kolom penting yang terlihat dari query aktif:
+Important columns visible in active queries:
 - `kid`, `kkode`, `knama`
-- `kkategori`
-- `kcabang`, `klokasi`, `kgudang`
-- `kkategoricustomer`, `kkategorisupplier`, `kkategorisalesman`
+- `kcategory`
+- `kcabang`, `klokasi`, `kguandg`
+- `kcategorycustomer`, `kcategorysupplier`, `kcategorysalesman`
 - `ksalesman`
 - `kterminbeli`, `kterminjual`
 - `ktingkatjual`
 - `kaktif`
 
-Join yang sering terlihat:
-- `m1_contact.kkategori -> m1_contact_category.cckode`
-- `m1_contact.kkategoricustomer -> m1_customer_category.cckode`
-- `m1_contact.kkategorisupplier -> m1_supplier_category.sckode`
-- `m1_contact.kkategorisalesman -> m1_salesman_category.sckode`
+Joins commonly seen:
+- `m1_contact.kcategory -> m1_contact_category.cckode`
+- `m1_contact.kcategorycustomer -> m1_customer_category.cckode`
+- `m1_contact.kcategorysupplier -> m1_supplier_category.sckode`
+- `m1_contact.kcategorysalesman -> m1_salesman_category.sckode`
 - `m1_contact.ksalesman -> m1_contact.kid`
 - `m1_contact.karea -> m1_area.akode`
 
 ### `m1_item`
 
-Master barang/jasa lintas inventory, purchasing, dan sales.
+Cross-domain item/service master for inventory, purchasing, and sales.
 
-Kolom penting yang terlihat dari schema dan query:
+Important columns visible in schema and queries:
 - `bid`, `bkode`, `bnama`
-- `bkategori`, `btipe`
+- `bcategory`, `btipe`
 - `bsatuan`
 - `bkelasproduk`
 - `bsubdepartemen`
 - `bkomisi`
-- akun-akun referensi pembelian, penjualan, dan persediaan
+- purchasing, sales, and inventory reference accounts
 
-Join yang sering terlihat:
+Joins commonly seen:
 - `m1_item.bkelasproduk -> m1_class_product.cpkode`
 - `m1_item.bsubdepartemen -> m1_subdepartment.sdpkode`
 - `m1_item.bkomisi -> m1_selling_point.spid`
 
 ### `m1_warehouse`
 
-Master gudang yang dipakai oleh domain inventory, purchasing, dan sales.
+Warehouse master used by inventory, purchasing, and sales domains.
 
-Kolom penting:
+Key columns:
 - `wkode`, `wnama`
 - `wdivisi`, `wlokasi`
 - `waktif`
 - `wbookingstok`
 
-Join yang sering terlihat:
+Joins commonly seen:
 - `m1_warehouse.wdivisi -> m1_division.dkode`
 - `m1_warehouse.wlokasi -> m1_location.lkode`
 
 ### `m1_coa`
 
-Chart of accounts untuk semua transaksi keuangan.
+Chart of accounts for all financial transactions.
 
-Kolom penting:
+Key columns:
 - `cid`, `cnomor`, `cnama`
 - `ctipe`, `cdc`
 - `cparent`
 - `ccabang`, `clokasi`, `cdivisi`
-- `cmatauang`, `ckodebank`
+- `cmorang`, `ckodebank`
 - `csaldoawal`, `csaldoberjalan`
 
-Join yang sering terlihat:
+Joins commonly seen:
 - `m1_coa.cparent -> m1_coa.cnomor`
 - `m1_coa.ccabang -> m1_branch.bkode`
 - `m1_coa.clokasi -> m1_location.lkode`
 - `m1_coa.cdivisi -> m1_division.dkode`
 - `m1_coa.ckodebank -> m1_bank.bkode`
-- `m1_coa.cmatauang -> m1_currency.ckode`
+- `m1_coa.cmorang -> m1_currency.ckode`
 
-## Relasi Penting
+## Important Relations
 
 ### Contact hierarchy and commercial setup
 
 ```sql
-m1_contact.kkategori = m1_contact_category.cckode
-m1_contact.kkategoricustomer = m1_customer_category.cckode
-m1_contact.kkategorisupplier = m1_supplier_category.sckode
-m1_contact.kkategorisalesman = m1_salesman_category.sckode
+m1_contact.kcategory = m1_contact_category.cckode
+m1_contact.kcategorycustomer = m1_customer_category.cckode
+m1_contact.kcategorysupplier = m1_supplier_category.sckode
+m1_contact.kcategorysalesman = m1_salesman_category.sckode
 m1_contact.ksalesman = m1_contact.kid
 ```
 
@@ -134,7 +134,7 @@ m1_coa.ccabang = m1_branch.bkode
 m1_coa.clokasi = m1_location.lkode
 m1_coa.cdivisi = m1_division.dkode
 m1_coa.ckodebank = m1_bank.bkode
-m1_coa.cmatauang = m1_currency.ckode
+m1_coa.cmorang = m1_currency.ckode
 ```
 
 ### Transaction note
@@ -144,9 +144,9 @@ m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode
 m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber
 ```
 
-## Catatan Domain
+## Notes Domain
 
-- M1 adalah domain master data. Banyak tabelnya dipakai lintas domain lain.
-- M1 umumnya tidak punya alur dokumen bertahap seperti M4 atau M5.
-- Fokus utama NL2SQL di M1 adalah lookup, listing, relasi referensi, klasifikasi, dan master setup.
-- Risiko utama M1 bukan polymorphic relationship, tetapi salah memilih tabel master yang terlalu mirip atau salah menangkap hierarki organisasi dan item.
+- M1 is the master-data domain. Many of its tables are used across other domains.
+- M1 generally does not have staged document flows like M4 or M5.
+- The main NL2SQL focus in M1 is lookup, listing, reference relationships, classification, and master setup.
+- The main risk in M1 is not polymorphic relationships, but choosing overly similar master tables or misreading organization and item hierarchies.

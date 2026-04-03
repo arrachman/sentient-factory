@@ -1,0 +1,1364 @@
+{
+  "title": "Semantic Schema M0 Summary",
+  "source_json": "semantic-schema-m0.json",
+  "source_summary_markdown": "semantic-schema-m0-summary.md",
+  "totals": {
+    "schema_tables": 79,
+    "active_tables": 79,
+    "modules": 13,
+    "join_hints": 9
+  },
+  "join_hints": [
+    {
+      "name": "user_role_access_flow",
+      "description": "Relationship from users to access roles.",
+      "joins": [
+        "m0_user.userid = m0_user_role.userid",
+        "m0_user_role.role = m0_role.rkode"
+      ]
+    },
+    {
+      "name": "role_menu_access_flow",
+      "description": "Relationship from roles to application menus.",
+      "joins": [
+        "m0_role.rkode = m0_role_menu.rmrole",
+        "m0_role_menu.rmmoduleid = m0_menu.mnmoduleid",
+        "m0_role_menu.rmmenuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "name": "user_menu_override_flow",
+      "description": "Relationship for user-level menu access overrides.",
+      "joins": [
+        "m0_user.userid = m0_usermenu.umuserid",
+        "m0_usermenu.ummoduleid = m0_menu.mnmoduleid",
+        "m0_usermenu.ummenuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "name": "role_report_access_flow",
+      "description": "Relationship from roles to reports and report access.",
+      "joins": [
+        "m0_role.rkode = m0_role_report.rrrole",
+        "m0_role_report.rrmoduleid = m0_report.rmoduleid",
+        "m0_role_report.rrmenuid = m0_report.rmenuid"
+      ]
+    },
+    {
+      "name": "user_report_override_flow",
+      "description": "Relationship for user-level report access overrides.",
+      "joins": [
+        "m0_user.userid = m0_userreport.uruserid",
+        "m0_userreport.urmoduleid = m0_report.rmoduleid",
+        "m0_userreport.urmenuid = m0_report.rmenuid"
+      ]
+    },
+    {
+      "name": "menu_translation_flow",
+      "description": "Relationship from menus to menu translations.",
+      "joins": [
+        "m0_menu.mnmoduleid = m0_menu_lang.mnlmoduleid",
+        "m0_menu.mnid = m0_menu_lang.mnlmnid"
+      ]
+    },
+    {
+      "name": "setting_translation_flow",
+      "description": "Relationship from settings to setting translations.",
+      "joins": [
+        "m0_setting.smodule = m0_setting_lang.slmodule",
+        "m0_setting.sgrup = m0_setting_lang.slgrup",
+        "m0_setting.skode = m0_setting_lang.slkode"
+      ]
+    },
+    {
+      "name": "notification_user_flow",
+      "description": "Relationship from email notifications to users and menus.",
+      "joins": [
+        "m0_notifikasi_email.userid = m0_user.userid",
+        "m0_notifikasi_email.useridmail = m0_user.userid",
+        "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+        "m0_notifikasi_email.menuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "name": "userlog_activity_flow",
+      "description": "Relationship from audit logs to users and menus.",
+      "joins": [
+        "m0_userlog.uluserid = m0_user.userid",
+        "m0_userlog.ulidmodule = m0_menu.mnmoduleid",
+        "m0_userlog.ulidmenu = m0_menu.mnid"
+      ]
+    }
+  ],
+  "notes": [
+    "The M0 schema and summary are inferred from administrator query sources, not from original DDL."
+  ],
+  "modules": [
+    {
+      "module": "APP",
+      "title": "Applications and Integrations",
+      "table_counts": {
+        "owned": 1
+      },
+      "tables": [
+        {
+          "table_name": "m0_app",
+          "alias": "administrator_app",
+          "description": "Application master or client-integration key/secret store.",
+          "owner_module": "APP",
+          "columns": [
+            "appactive",
+            "appcreated",
+            "appid",
+            "appkey",
+            "appname",
+            "appsecret"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "BACKUP",
+      "title": "Backup and Maintenance",
+      "table_counts": {
+        "owned": 6
+      },
+      "tables": [
+        {
+          "table_name": "m0_backup",
+          "alias": "administrator_backup",
+          "description": "Backup process log and status.",
+          "owner_module": "BACKUP",
+          "columns": [
+            "id",
+            "keterangan",
+            "namafile",
+            "status",
+            "tglmulai"
+          ]
+        },
+        {
+          "table_name": "m0_hapusdata",
+          "alias": "administrator_hapusdata",
+          "description": "Log or target dataset flagged for deletion/cleanup processes.",
+          "owner_module": "BACKUP",
+          "columns": []
+        },
+        {
+          "table_name": "m0_hitungulang_log",
+          "alias": "administrator_hitungulang_log",
+          "description": "Log for recalculation of data, balances, or system calculations.",
+          "owner_module": "BACKUP",
+          "columns": []
+        },
+        {
+          "table_name": "m0_hppaverage",
+          "alias": "administrator_hppaverage",
+          "description": "Working/intermediate table for average-cost (HPP) calculations.",
+          "owner_module": "BACKUP",
+          "columns": []
+        },
+        {
+          "table_name": "m0_hppsaldo",
+          "alias": "administrator_hppsaldo",
+          "description": "Working/intermediate table for inventory-cost balances or recalculation.",
+          "owner_module": "BACKUP",
+          "columns": []
+        },
+        {
+          "table_name": "m0_validitas_data",
+          "alias": "administrator_validitas_data",
+          "description": "Status validitas atau hasil pengecekan data periodik.",
+          "owner_module": "BACKUP",
+          "columns": [
+            "bulan",
+            "keterangan",
+            "kode",
+            "status",
+            "tahun",
+            "tgl_cek"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "FORM",
+      "title": "UI Form Configuration",
+      "table_counts": {
+        "owned": 4
+      },
+      "tables": [
+        {
+          "table_name": "m0_form_custom_text",
+          "alias": "administrator_form_custom_text",
+          "description": "Custom text configuration per module and menu for labels and form UI.",
+          "owner_module": "FORM",
+          "columns": [
+            "customdetailen",
+            "customdetailin",
+            "customutamaen",
+            "customutamain",
+            "menu",
+            "module"
+          ]
+        },
+        {
+          "table_name": "m0_form_setting_global",
+          "alias": "administrator_form_setting_global",
+          "description": "Global form-display configuration per module and menu.",
+          "owner_module": "FORM",
+          "columns": [
+            "formsetting",
+            "menu",
+            "module"
+          ]
+        },
+        {
+          "table_name": "m0_form_setting_search",
+          "alias": "administrator_form_setting_search",
+          "description": "Search-field and search-form property configuration per module/menu.",
+          "owner_module": "FORM",
+          "columns": [
+            "kode",
+            "menu",
+            "module",
+            "nama",
+            "searchsetting"
+          ]
+        },
+        {
+          "table_name": "m0_form_setting_user",
+          "alias": "administrator_form_setting_user",
+          "description": "Per-user form preference configuration for specific modules/menus.",
+          "owner_module": "FORM",
+          "columns": [
+            "formsetting",
+            "menu",
+            "module",
+            "user"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "LANGUAGE",
+      "title": "Language and Translation Resources",
+      "table_counts": {
+        "owned": 7
+      },
+      "tables": [
+        {
+          "table_name": "m0_language",
+          "alias": "administrator_language",
+          "description": "Application language master table.",
+          "owner_module": "LANGUAGE",
+          "columns": [
+            "laktif",
+            "lgambar",
+            "lkode",
+            "lnama"
+          ]
+        },
+        {
+          "table_name": "m0_language_detail",
+          "alias": "administrator_language_detail",
+          "description": "Language-resource detail or key-translation pair per language.",
+          "owner_module": "LANGUAGE",
+          "columns": []
+        },
+        {
+          "table_name": "m0_sentence",
+          "alias": "administrator_sentence",
+          "description": "Application sentence or text-resource master.",
+          "owner_module": "LANGUAGE",
+          "columns": [
+            "sid",
+            "sjenis",
+            "ssentence"
+          ]
+        },
+        {
+          "table_name": "m0_sentence_s",
+          "alias": "administrator_sentence_s",
+          "description": "Sentence/text-resource variant for specific scopes.",
+          "owner_module": "LANGUAGE",
+          "columns": [
+            "sid",
+            "sjenis",
+            "ssentence"
+          ]
+        },
+        {
+          "table_name": "m0_sentence_translate",
+          "alias": "administrator_sentence_translate",
+          "description": "Main sentence/text-resource translation per language.",
+          "owner_module": "LANGUAGE",
+          "columns": []
+        },
+        {
+          "table_name": "m0_sentence_stranslate",
+          "alias": "administrator_sentence_stranslate",
+          "description": "Variant-sentence translation per language.",
+          "owner_module": "LANGUAGE",
+          "columns": [
+            "stid",
+            "stlanguage",
+            "stsentence",
+            "sttranslate"
+          ]
+        },
+        {
+          "table_name": "m0_translate",
+          "alias": "administrator_translate",
+          "description": "General application text-translation dictionary.",
+          "owner_module": "LANGUAGE",
+          "columns": [
+            "tlanguage",
+            "tsentence",
+            "ttranslate"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "MENU",
+      "title": "Menus and Modules",
+      "table_counts": {
+        "owned": 5
+      },
+      "tables": [
+        {
+          "table_name": "m0_module",
+          "alias": "administrator_module",
+          "description": "MyERPPlus application module master.",
+          "owner_module": "MENU",
+          "columns": []
+        },
+        {
+          "table_name": "m0_menu",
+          "alias": "administrator_menu",
+          "description": "Application menu master and navigation structure.",
+          "owner_module": "MENU",
+          "columns": [
+            "mnactive",
+            "mnid",
+            "mnidtransaksi",
+            "mnlebar",
+            "mnlevel",
+            "mnmoduleid",
+            "mnname",
+            "mnparent",
+            "mnpopup",
+            "mntinggi",
+            "mntype",
+            "mnurl",
+            "mnurutan",
+            "mnviewopening"
+          ]
+        },
+        {
+          "table_name": "m0_menu_lang",
+          "alias": "administrator_menu_lang",
+          "description": "Menu-name translation per language.",
+          "owner_module": "MENU",
+          "columns": [
+            "mnllanguage",
+            "mnlmnid",
+            "mnlmoduleid",
+            "mnltranslate"
+          ]
+        },
+        {
+          "table_name": "m0_menu_s",
+          "alias": "administrator_menu_s",
+          "description": "Additional menu variant or structure for a specific system scope/mode.",
+          "owner_module": "MENU",
+          "columns": []
+        },
+        {
+          "table_name": "m0_menu_s_lang",
+          "alias": "administrator_menu_s_lang",
+          "description": "Translation of variant menus in `m0_menu_s` per language.",
+          "owner_module": "MENU",
+          "columns": [
+            "mnllanguage",
+            "mnlmnid",
+            "mnlmoduleid",
+            "mnltranslate"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "role_menu_access_flow",
+          "description": "Relationship from roles to application menus.",
+          "joins": [
+            "m0_role.rkode = m0_role_menu.rmrole",
+            "m0_role_menu.rmmoduleid = m0_menu.mnmoduleid",
+            "m0_role_menu.rmmenuid = m0_menu.mnid"
+          ]
+        },
+        {
+          "name": "user_menu_override_flow",
+          "description": "Relationship for user-level menu access overrides.",
+          "joins": [
+            "m0_user.userid = m0_usermenu.umuserid",
+            "m0_usermenu.ummoduleid = m0_menu.mnmoduleid",
+            "m0_usermenu.ummenuid = m0_menu.mnid"
+          ]
+        },
+        {
+          "name": "menu_translation_flow",
+          "description": "Relationship from menus to menu translations.",
+          "joins": [
+            "m0_menu.mnmoduleid = m0_menu_lang.mnlmoduleid",
+            "m0_menu.mnid = m0_menu_lang.mnlmnid"
+          ]
+        },
+        {
+          "name": "notification_user_flow",
+          "description": "Relationship from email notifications to users and menus.",
+          "joins": [
+            "m0_notifikasi_email.userid = m0_user.userid",
+            "m0_notifikasi_email.useridmail = m0_user.userid",
+            "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+            "m0_notifikasi_email.menuid = m0_menu.mnid"
+          ]
+        },
+        {
+          "name": "userlog_activity_flow",
+          "description": "Relationship from audit logs to users and menus.",
+          "joins": [
+            "m0_userlog.uluserid = m0_user.userid",
+            "m0_userlog.ulidmodule = m0_menu.mnmoduleid",
+            "m0_userlog.ulidmenu = m0_menu.mnid"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "QUEUE",
+      "title": "Background queue / MSMQ",
+      "table_counts": {
+        "owned": 4
+      },
+      "tables": [
+        {
+          "table_name": "m0_msmq",
+          "alias": "administrator_msmq",
+          "description": "MSMQ-based background-processing queue for reports, printing, exports, or system tasks.",
+          "owner_module": "QUEUE",
+          "columns": [
+            "fileformat",
+            "filename",
+            "filter",
+            "groupby",
+            "id",
+            "idtransaksi",
+            "item",
+            "jmldata",
+            "menu",
+            "module",
+            "param1",
+            "param2",
+            "param3",
+            "param4",
+            "param5",
+            "pesan",
+            "print",
+            "progress",
+            "progresspersen",
+            "sort",
+            "sumber",
+            "tglantrian",
+            "tglselesai",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_msmq_cogs",
+          "alias": "administrator_msmq_cogs",
+          "description": "Background queue dedicated to COGS/HPP calculations.",
+          "owner_module": "QUEUE",
+          "columns": [
+            "mcid",
+            "mcidtransaksi",
+            "mcpesan",
+            "mcprogress",
+            "mcsumber",
+            "mctglantrian",
+            "mctglselesai",
+            "mcuserid"
+          ]
+        },
+        {
+          "table_name": "m0_msmq_importdata",
+          "alias": "administrator_msmq_importdata",
+          "description": "Background queue for data-import jobs.",
+          "owner_module": "QUEUE",
+          "columns": [
+            "miid",
+            "minamafile",
+            "mipaket",
+            "mipesan",
+            "miprogress",
+            "miprogresspersen",
+            "misumber",
+            "mitglantrian",
+            "mitglselesai",
+            "miuserid"
+          ]
+        },
+        {
+          "table_name": "m0_msmq_journal",
+          "alias": "administrator_msmq_journal",
+          "description": "Background queue for journal generation or posting jobs.",
+          "owner_module": "QUEUE",
+          "columns": [
+            "mjid",
+            "mjidtransaksi",
+            "mjpesan",
+            "mjprogress",
+            "mjsumber",
+            "mjtglantrian",
+            "mjtglselesai",
+            "mjuserid"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "NUMBERING",
+      "title": "Document Numbering",
+      "table_counts": {
+        "owned": 6
+      },
+      "tables": [
+        {
+          "table_name": "m0_nomor",
+          "alias": "administrator_nomor",
+          "description": "Document/transaction numbering configuration.",
+          "owner_module": "NUMBERING",
+          "columns": [
+            "awalan",
+            "jmldigit",
+            "kodetabel",
+            "menuid",
+            "moduleid",
+            "transaksibarang",
+            "transaksifa",
+            "transaksihpp",
+            "uraian"
+          ]
+        },
+        {
+          "table_name": "m0_nomor_next",
+          "alias": "administrator_nomor_next",
+          "description": "Next document-number counter by table, branch, location, month, and year.",
+          "owner_module": "NUMBERING",
+          "columns": [
+            "bulan",
+            "cabang",
+            "kodetabel",
+            "lokasi",
+            "noberikutnya",
+            "tahun"
+          ]
+        },
+        {
+          "table_name": "m0_nomor_mobile",
+          "alias": "administrator_nomor_mobile",
+          "description": "Mapping from users to device/mobile identities for numbering or mobile access.",
+          "owner_module": "NUMBERING",
+          "columns": [
+            "macaddress",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_barcode_next",
+          "alias": "administrator_barcode_next",
+          "description": "Next barcode-number counter for internal barcode generation.",
+          "owner_module": "NUMBERING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_group_aq",
+          "alias": "administrator_group_aq",
+          "description": "AQ group-number counter by branch, location, month, and year.",
+          "owner_module": "NUMBERING",
+          "columns": [
+            "bulan",
+            "cabang",
+            "lokasi",
+            "noberikutnya",
+            "tahun"
+          ]
+        },
+        {
+          "table_name": "m0_group_rq",
+          "alias": "administrator_group_rq",
+          "description": "RQ group-number counter by branch, location, month, and year.",
+          "owner_module": "NUMBERING",
+          "columns": [
+            "bulan",
+            "cabang",
+            "lokasi",
+            "noberikutnya",
+            "tahun"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "NOTES_FILES",
+      "title": "Files and Notes",
+      "table_counts": {
+        "owned": 2
+      },
+      "tables": [
+        {
+          "table_name": "m0_files",
+          "alias": "administrator_files",
+          "description": "File attachments for administrator-module records.",
+          "owner_module": "NOTES_FILES",
+          "columns": [
+            "fcatatan",
+            "fidtransaksi",
+            "fnamafile",
+            "fsumber",
+            "ftanggal",
+            "fukuranfile",
+            "furutan"
+          ]
+        },
+        {
+          "table_name": "m0_notes",
+          "alias": "administrator_notes",
+          "description": "Free-form notes attached to administrator transactions or configurations.",
+          "owner_module": "NOTES_FILES",
+          "columns": [
+            "ncatatan",
+            "nidtransaksi",
+            "nsumber"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    },
+    {
+      "module": "NOTIFICATION",
+      "title": "Notifications",
+      "table_counts": {
+        "owned": 1
+      },
+      "tables": [
+        {
+          "table_name": "m0_notifikasi_email",
+          "alias": "administrator_notifikasi_email",
+          "description": "Email-notification settings per module/menu/user.",
+          "owner_module": "NOTIFICATION",
+          "columns": [
+            "email",
+            "emailpengirim",
+            "menuid",
+            "moduleid",
+            "namamenu",
+            "passwordpengirim",
+            "statusnotifikasi",
+            "statusupdate",
+            "userid",
+            "useridmail"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "notification_user_flow",
+          "description": "Relationship from email notifications to users and menus.",
+          "joins": [
+            "m0_notifikasi_email.userid = m0_user.userid",
+            "m0_notifikasi_email.useridmail = m0_user.userid",
+            "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+            "m0_notifikasi_email.menuid = m0_menu.mnid"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "REPORT",
+      "title": "Reports and Report Metadata",
+      "table_counts": {
+        "owned": 6
+      },
+      "tables": [
+        {
+          "table_name": "m0_report",
+          "alias": "administrator_report",
+          "description": "Report definition, template, and report metadata.",
+          "owner_module": "REPORT",
+          "columns": [
+            "raktif",
+            "rcetak",
+            "rdata",
+            "rdefault",
+            "rfilename",
+            "rfilter",
+            "rfrom",
+            "rgroupby",
+            "rid",
+            "rinputtgl",
+            "ritem",
+            "rmenuid",
+            "rmodiftgl",
+            "rmoduleid",
+            "rorderby",
+            "rparam1",
+            "rparam2",
+            "rparam3",
+            "rparam4",
+            "rparam5",
+            "rpembuat",
+            "rquery",
+            "rreportname",
+            "rselesai",
+            "rsql",
+            "rtitle",
+            "rurutan"
+          ]
+        },
+        {
+          "table_name": "m0_report_filter",
+          "alias": "administrator_report_filter",
+          "description": "Input-filter definition for the report builder or runtime report.",
+          "owner_module": "REPORT",
+          "columns": [
+            "fdatasource",
+            "ffield",
+            "fid",
+            "fitem",
+            "flabel",
+            "fmenu",
+            "fmodule",
+            "fpanjang",
+            "fparam1",
+            "fparam2",
+            "fparam3",
+            "fparam4",
+            "fparam5",
+            "fproperty",
+            "fsd",
+            "ftipe",
+            "fwajib"
+          ]
+        },
+        {
+          "table_name": "m0_report_label",
+          "alias": "administrator_report_label",
+          "description": "Master table for labels/display text on reports.",
+          "owner_module": "REPORT",
+          "columns": []
+        },
+        {
+          "table_name": "m0_report_label_translate",
+          "alias": "administrator_report_label_translate",
+          "description": "Report-label translation per language.",
+          "owner_module": "REPORT",
+          "columns": [
+            "ltid",
+            "ltlabel",
+            "ltlanguage",
+            "lttranslate"
+          ]
+        },
+        {
+          "table_name": "m0_report_lang",
+          "alias": "administrator_report_lang",
+          "description": "Report-name and report-title translation per language.",
+          "owner_module": "REPORT",
+          "columns": [
+            "rllanguage",
+            "rlrid",
+            "rlritem",
+            "rlrmenuid",
+            "rlrmoduleid",
+            "rltranslaterreportname",
+            "rltranslatertitle"
+          ]
+        },
+        {
+          "table_name": "m0_report_temp",
+          "alias": "administrator_report_temp",
+          "description": "Temporary/working table for report processes.",
+          "owner_module": "REPORT",
+          "columns": []
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "role_report_access_flow",
+          "description": "Relationship from roles to reports and report access.",
+          "joins": [
+            "m0_role.rkode = m0_role_report.rrrole",
+            "m0_role_report.rrmoduleid = m0_report.rmoduleid",
+            "m0_role_report.rrmenuid = m0_report.rmenuid"
+          ]
+        },
+        {
+          "name": "user_report_override_flow",
+          "description": "Relationship for user-level report access overrides.",
+          "joins": [
+            "m0_user.userid = m0_userreport.uruserid",
+            "m0_userreport.urmoduleid = m0_report.rmoduleid",
+            "m0_userreport.urmenuid = m0_report.rmenuid"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "ROLE",
+      "title": "Roles and Permissions",
+      "table_counts": {
+        "owned": 9
+      },
+      "tables": [
+        {
+          "table_name": "m0_role",
+          "alias": "administrator_role",
+          "description": "Access-role master for the system.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rkode",
+            "rnama"
+          ]
+        },
+        {
+          "table_name": "m0_role_s",
+          "alias": "administrator_role_s",
+          "description": "Role variant for a specific scope or access mode.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rkode",
+            "rnama"
+          ]
+        },
+        {
+          "table_name": "m0_role_custom",
+          "alias": "administrator_role_custom",
+          "description": "Custom access override per role for specific permissions.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rcakses",
+            "rcidpc",
+            "rcmoduleid",
+            "rcrole"
+          ]
+        },
+        {
+          "table_name": "m0_role_item_category",
+          "alias": "administrator_role_item_category",
+          "description": "Mapping from roles to accessible item categories.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rickategoribarang",
+            "ricrole"
+          ]
+        },
+        {
+          "table_name": "m0_role_menu",
+          "alias": "administrator_role_menu",
+          "description": "Mapping from roles to menus and navigation permissions.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rmakses",
+            "rmfavourite",
+            "rmmenuid",
+            "rmmoduleid",
+            "rmrole"
+          ]
+        },
+        {
+          "table_name": "m0_role_menu_s",
+          "alias": "administrator_role_menu_s",
+          "description": "Mapping from roles to menu variants for specific scopes.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rmakses",
+            "rmid",
+            "rmmenuid",
+            "rmmoduleid",
+            "rmrole"
+          ]
+        },
+        {
+          "table_name": "m0_role_report",
+          "alias": "administrator_role_report",
+          "description": "Mapping from roles to reports and report-access permissions.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rrakses",
+            "rritem",
+            "rrmenuid",
+            "rrmoduleid",
+            "rrrole"
+          ]
+        },
+        {
+          "table_name": "m0_role_report_s",
+          "alias": "administrator_role_report_s",
+          "description": "Mapping from roles to report variants for specific scopes.",
+          "owner_module": "ROLE",
+          "columns": [
+            "rrakses",
+            "rritem",
+            "rrmenuid",
+            "rrmoduleid",
+            "rrrole"
+          ]
+        },
+        {
+          "table_name": "m0_permissions_custom",
+          "alias": "administrator_permissions_custom",
+          "description": "Granular permission override outside standard role mappings.",
+          "owner_module": "ROLE",
+          "columns": []
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "user_role_access_flow",
+          "description": "Relationship from users to access roles.",
+          "joins": [
+            "m0_user.userid = m0_user_role.userid",
+            "m0_user_role.role = m0_role.rkode"
+          ]
+        },
+        {
+          "name": "role_menu_access_flow",
+          "description": "Relationship from roles to application menus.",
+          "joins": [
+            "m0_role.rkode = m0_role_menu.rmrole",
+            "m0_role_menu.rmmoduleid = m0_menu.mnmoduleid",
+            "m0_role_menu.rmmenuid = m0_menu.mnid"
+          ]
+        },
+        {
+          "name": "role_report_access_flow",
+          "description": "Relationship from roles to reports and report access.",
+          "joins": [
+            "m0_role.rkode = m0_role_report.rrrole",
+            "m0_role_report.rrmoduleid = m0_report.rmoduleid",
+            "m0_role_report.rrmenuid = m0_report.rmenuid"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "SEARCH_SETTING",
+      "title": "Lookup and Business Settings",
+      "table_counts": {
+        "owned": 12
+      },
+      "tables": [
+        {
+          "table_name": "m0_search_packet",
+          "alias": "administrator_search_packet",
+          "description": "Reusable search/filter definition package for system lookups.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": [
+            "spfilter",
+            "spfilterby",
+            "spkode",
+            "spsort"
+          ]
+        },
+        {
+          "table_name": "m0_selling_rate",
+          "alias": "administrator_selling_rate",
+          "description": "Selling-rate or sales-price-level master table.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": [
+            "kode",
+            "nama"
+          ]
+        },
+        {
+          "table_name": "m0_setting",
+          "alias": "administrator_setting",
+          "description": "Global system parameters and configuration.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": [
+            "scombodata",
+            "sgrup",
+            "sjenisinputan",
+            "skode",
+            "smodule",
+            "snama",
+            "snilai",
+            "stipedata",
+            "suraian",
+            "surutan"
+          ]
+        },
+        {
+          "table_name": "m0_setting_lang",
+          "alias": "administrator_setting_lang",
+          "description": "Setting translation or setting-label translation per language.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": [
+            "slgrup",
+            "slkode",
+            "sllanguage",
+            "slmodule",
+            "sltranslate"
+          ]
+        },
+        {
+          "table_name": "m0_setting_location",
+          "alias": "administrator_setting_location",
+          "description": "Setting override by operational location.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_payment_method",
+          "alias": "administrator_payment_method",
+          "description": "Payment-method master used across modules.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_jenismutasi",
+          "alias": "administrator_jenismutasi",
+          "description": "Transaction/mutation-type master used by the system as a process reference.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_status",
+          "alias": "administrator_status",
+          "description": "General-status master used across documents/modules.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_status_giro",
+          "alias": "administrator_status_giro",
+          "description": "Special-status master for giro or giro payment instruments.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_status_progress",
+          "alias": "administrator_status_progress",
+          "description": "Progress-status master for processes/background tasks.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_status_rq",
+          "alias": "administrator_status_rq",
+          "description": "Special-status master for request-quotation workflows or related requests.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        },
+        {
+          "table_name": "m0_table_relation",
+          "alias": "administrator_table_relation",
+          "description": "Table-relation metadata for helper queries, imports, or validation.",
+          "owner_module": "SEARCH_SETTING",
+          "columns": []
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "setting_translation_flow",
+          "description": "Relationship from settings to setting translations.",
+          "joins": [
+            "m0_setting.smodule = m0_setting_lang.slmodule",
+            "m0_setting.sgrup = m0_setting_lang.slgrup",
+            "m0_setting.skode = m0_setting_lang.slkode"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "USER",
+      "title": "Users, Groups, Access, Sessions, and Audit",
+      "table_counts": {
+        "owned": 16
+      },
+      "tables": [
+        {
+          "table_name": "m0_user",
+          "alias": "administrator_user",
+          "description": "Application-user master containing login identity, profile, and access settings.",
+          "owner_module": "USER",
+          "columns": [
+            "uaktif",
+            "ubahasa",
+            "ucabang",
+            "udefaultview",
+            "ugambar",
+            "ugrup",
+            "ugudang",
+            "ukode",
+            "ukontak",
+            "ukota",
+            "ulevel",
+            "ulokasi",
+            "unama",
+            "upassword",
+            "userid",
+            "utglexpired"
+          ]
+        },
+        {
+          "table_name": "m0_user_branch",
+          "alias": "administrator_user_branch",
+          "description": "Mapping from users to accessible branches.",
+          "owner_module": "USER",
+          "columns": [
+            "cabang",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_user_coa",
+          "alias": "administrator_user_coa",
+          "description": "Mapping from users to accessible accounts/COA records.",
+          "owner_module": "USER",
+          "columns": [
+            "norek",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_user_location",
+          "alias": "administrator_user_location",
+          "description": "Mapping from users to accessible locations.",
+          "owner_module": "USER",
+          "columns": [
+            "lokasi",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_user_role",
+          "alias": "administrator_user_role",
+          "description": "Mapping from users to access roles.",
+          "owner_module": "USER",
+          "columns": [
+            "role",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_user_role_s",
+          "alias": "administrator_user_role_s",
+          "description": "Mapping from users to role variants for specific scopes.",
+          "owner_module": "USER",
+          "columns": [
+            "role",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_user_warehouse",
+          "alias": "administrator_user_warehouse",
+          "description": "Mapping from users to accessible warehouses.",
+          "owner_module": "USER",
+          "columns": [
+            "gudang",
+            "userid"
+          ]
+        },
+        {
+          "table_name": "m0_usercustom",
+          "alias": "administrator_usercustom",
+          "description": "Custom access override per user outside standard role mappings.",
+          "owner_module": "USER",
+          "columns": [
+            "urakses",
+            "uridpc",
+            "urmoduleid",
+            "uruserid"
+          ]
+        },
+        {
+          "table_name": "m0_usergrup",
+          "alias": "administrator_usergrup",
+          "description": "User-group master.",
+          "owner_module": "USER",
+          "columns": [
+            "ugkode",
+            "ugnama"
+          ]
+        },
+        {
+          "table_name": "m0_usergrupmenu",
+          "alias": "administrator_usergrupmenu",
+          "description": "Mapping from user groups to menus and access permissions.",
+          "owner_module": "USER",
+          "columns": [
+            "ugmakses",
+            "ugmmenuid",
+            "ugmmoduleid",
+            "ugmusergrup"
+          ]
+        },
+        {
+          "table_name": "m0_userlogin",
+          "alias": "administrator_userlogin",
+          "description": "User session or login trail.",
+          "owner_module": "USER",
+          "columns": [
+            "ulid"
+          ]
+        },
+        {
+          "table_name": "m0_userlog",
+          "alias": "administrator_userlog",
+          "description": "Audit log of user activity.",
+          "owner_module": "USER",
+          "columns": [
+            "ulaktivitas",
+            "ulidmenu",
+            "ulidmodule",
+            "uljenisaktivitas",
+            "ulkodepa",
+            "ultgl",
+            "uluserid"
+          ]
+        },
+        {
+          "table_name": "m0_userlog_category",
+          "alias": "administrator_userlog_category",
+          "description": "Activity-category master for user audit logs.",
+          "owner_module": "USER",
+          "columns": []
+        },
+        {
+          "table_name": "m0_userlogerror",
+          "alias": "administrator_userlogerror",
+          "description": "Application error log associated with a user or processing package.",
+          "owner_module": "USER",
+          "columns": [
+            "ulerrtodev",
+            "ulerrtouser",
+            "uljenis",
+            "ulketerangan",
+            "ulpaket",
+            "ultgl",
+            "uluserid"
+          ]
+        },
+        {
+          "table_name": "m0_usermenu",
+          "alias": "administrator_usermenu",
+          "description": "Direct menu-access override per user.",
+          "owner_module": "USER",
+          "columns": [
+            "umakses",
+            "umfavorite",
+            "ummenuid",
+            "ummoduleid",
+            "umuserid"
+          ]
+        },
+        {
+          "table_name": "m0_userreport",
+          "alias": "administrator_userreport",
+          "description": "Direct report-access override per user.",
+          "owner_module": "USER",
+          "columns": [
+            "urakses",
+            "uritem",
+            "urmenuid",
+            "urmoduleid",
+            "uruserid"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "user_role_access_flow",
+          "description": "Relationship from users to access roles.",
+          "joins": [
+            "m0_user.userid = m0_user_role.userid",
+            "m0_user_role.role = m0_role.rkode"
+          ]
+        },
+        {
+          "name": "user_menu_override_flow",
+          "description": "Relationship for user-level menu access overrides.",
+          "joins": [
+            "m0_user.userid = m0_usermenu.umuserid",
+            "m0_usermenu.ummoduleid = m0_menu.mnmoduleid",
+            "m0_usermenu.ummenuid = m0_menu.mnid"
+          ]
+        },
+        {
+          "name": "user_report_override_flow",
+          "description": "Relationship for user-level report access overrides.",
+          "joins": [
+            "m0_user.userid = m0_userreport.uruserid",
+            "m0_userreport.urmoduleid = m0_report.rmoduleid",
+            "m0_userreport.urmenuid = m0_report.rmenuid"
+          ]
+        },
+        {
+          "name": "notification_user_flow",
+          "description": "Relationship from email notifications to users and menus.",
+          "joins": [
+            "m0_notifikasi_email.userid = m0_user.userid",
+            "m0_notifikasi_email.useridmail = m0_user.userid",
+            "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+            "m0_notifikasi_email.menuid = m0_menu.mnid"
+          ]
+        },
+        {
+          "name": "userlog_activity_flow",
+          "description": "Relationship from audit logs to users and menus.",
+          "joins": [
+            "m0_userlog.uluserid = m0_user.userid",
+            "m0_userlog.ulidmodule = m0_menu.mnmoduleid",
+            "m0_userlog.ulidmenu = m0_menu.mnid"
+          ]
+        }
+      ],
+      "functions": []
+    }
+  ]
+}

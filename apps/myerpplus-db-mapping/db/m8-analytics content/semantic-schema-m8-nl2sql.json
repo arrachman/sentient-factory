@@ -1,0 +1,110 @@
+{
+  "domain": "myerpplus_analytics_content_m8",
+  "description": "Machine-friendly NL2SQL guide for the M8 analytics-content module.",
+  "source_files": [
+    "semantic-schema-m8.json",
+    "semantic-schema-m8-summary.md",
+    "m8-queries.md",
+    "m0_report_rmoduleid_8.sql"
+  ],
+  "business_terms": {
+    "CONTENT": [
+      "dashboard content",
+      "analytic content",
+      "content metric"
+    ],
+    "INDICATOR": [
+      "indicator",
+      "threshold",
+      "kpi threshold"
+    ],
+    "CHART": [
+      "chart",
+      "visualization"
+    ],
+    "METRIC": [
+      "financial metric",
+      "financial ratio",
+      "dashboard metric"
+    ]
+  },
+  "table_groups": {
+    "content_tables": [
+      "m8_content",
+      "m8_content_chart",
+      "m8_indicator"
+    ],
+    "metric_tables": [
+      "m8_f_capex",
+      "m8_f_dpo",
+      "m8_f_dsi",
+      "m8_f_dso",
+      "m8_f_dte",
+      "m8_f_ebtida",
+      "m8_f_eva",
+      "m8_f_gpm",
+      "m8_f_np",
+      "m8_f_npm",
+      "m8_f_opm",
+      "m8_f_rgr",
+      "m8_f_roa",
+      "m8_f_roce",
+      "m8_f_roe",
+      "m8_f_roi",
+      "m8_f_wctr"
+    ]
+  },
+  "join_hints": [
+    {
+      "name": "content_indicator_flow",
+      "description": "Relationship from analytics content to indicator thresholds.",
+      "joins": [
+        "m8_content.ckode = m8_indicator.ikode"
+      ]
+    },
+    {
+      "name": "content_chart_flow",
+      "description": "Relationship from analytics content to chart configuration.",
+      "joins": [
+        "m8_content.ckode = m8_content_chart.chkode"
+      ]
+    },
+    {
+      "name": "content_module_flow",
+      "description": "Relationship from analytics content to module master data.",
+      "joins": [
+        "m8_content.cmodule = m0_module.mid"
+      ]
+    }
+  ],
+  "polymorphic_relationships": [],
+  "important_rules": [
+    "Use m8_content for dashboard-content definitions and indicator formulas.",
+    "Use m8_indicator for thresholds/comparators, not for the main content formula.",
+    "Use m8_content_chart when the user asks for visualization or chart configuration.",
+    "m8_f_* tables are better treated as specific analytics metric/fact tables, not as general content masters.",
+    "M8 is primarily a readonly analytics-setup domain; avoid write paths unless the user explicitly asks about indicator maintenance."
+  ],
+  "query_patterns": [
+    {
+      "name": "content_catalog",
+      "description": "Lookup daftar content analytics.",
+      "pattern": "Gunakan m8_content dan join ke m8_indicator bila perlu threshold."
+    },
+    {
+      "name": "chart_configuration_lookup",
+      "description": "Lookup konfigurasi chart per content.",
+      "pattern": "Gunakan m8_content_chart lalu join ke m8_content."
+    },
+    {
+      "name": "metric_specific_lookup",
+      "description": "Lookup metric analytics spesifik.",
+      "pattern": "Gunakan tabel m8_f_* yang sesuai nama metric yang diminta user."
+    }
+  ],
+  "caution_areas": [
+    "Pertanyaan yang mencampur master content dengan tabel metric spesifik tanpa tujuan jelas.",
+    "Pertanyaan yang menganggap m8_indicator menyimpan formula utama content.",
+    "Pertanyaan yang mencoba mengubah threshold/indicator padahal konteks user hanya analisis readonly."
+  ]
+}

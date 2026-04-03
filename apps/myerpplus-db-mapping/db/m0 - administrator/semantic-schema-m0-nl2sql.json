@@ -1,6 +1,6 @@
 {
   "domain": "myerpplus_administrator_m0",
-  "description": "Machine-friendly NL2SQL guide untuk modul M0 administrator. Berisi area tabel utama, sinonim bisnis, join hints, dan aturan query generation readonly.",
+  "description": "Machine-friendly NL2SQL guide for the M0 administrator module. Covers major table areas, business synonyms, join hints, and readonly query-generation rules.",
   "source_files": [
     "semantic-schema-m0.json",
     "semantic-schema-m0-summary.md",
@@ -250,45 +250,45 @@
   ],
   "polymorphic_relationships": [],
   "important_rules": [
-    "M0 mengandung banyak write-path administrasi. Untuk NL2SQL readonly, hindari menghasilkan `INSERT`, `UPDATE`, atau `DELETE`.",
-    "Jika user meminta “hak akses”, tentukan dulu apakah levelnya role-based atau user override.",
-    "Jika user meminta “menu yang muncul”, prioritaskan join antara user/role/menu dan jangan hanya membaca `m0_menu` sendiri.",
-    "Jika user meminta “setting”, cek apakah konteksnya global, lokasi, atau terjemahan setting.",
-    "Jika user meminta “audit”, bedakan aktivitas normal (`m0_userlog`) dan error (`m0_userlogerror`).",
-    "Field seperti password, secret, dan kredensial sensitif hanya boleh dipakai untuk audit struktur, bukan ditampilkan apa adanya.",
-    "Tabel temporary/queue seperti `m0_report_temp` atau `m0_msmq*` lebih cocok untuk monitoring operasional daripada source of truth bisnis."
+    "M0 contains many administrative write paths. For readonly NL2SQL, never generate `INSERT`, `UPDATE`, or `DELETE`.",
+    "If the user asks about access rights, first determine whether the question is role-based or a user-level override.",
+    "If the user asks which menus appear, prioritize joins among users, roles, and menus instead of reading only `m0_menu`.",
+    "If the user asks about settings, determine whether the context is global, location-specific, or setting translation.",
+    "If the user asks for audit data, distinguish between normal activity logs (`m0_userlog`) and error logs (`m0_userlogerror`).",
+    "Fields such as passwords, secrets, and other sensitive credentials may be used only for structural auditing, never returned verbatim.",
+    "Temporary/queue tables such as `m0_report_temp` or `m0_msmq*` are better suited for operational monitoring than as business source-of-truth tables."
   ],
   "query_patterns": [
     {
       "name": "role_access_summary",
-      "description": "Gunakan `m0_role`, `m0_role_menu`, `m0_menu` untuk melihat menu yang dibuka oleh suatu role.",
-      "pattern": "Gunakan `m0_role`, `m0_role_menu`, `m0_menu` untuk melihat menu yang dibuka oleh suatu role."
+      "description": "Use `m0_role`, `m0_role_menu`, and `m0_menu` to inspect which menus are opened by a role.",
+      "pattern": "Use `m0_role`, `m0_role_menu`, and `m0_menu` to inspect which menus are opened by a role."
     },
     {
       "name": "user_access_override",
-      "description": "Gunakan `m0_user`, `m0_user_role`, `m0_usermenu`, `m0_userreport` untuk override akses user tertentu.",
-      "pattern": "Gunakan `m0_user`, `m0_user_role`, `m0_usermenu`, `m0_userreport` untuk override akses user tertentu."
+      "description": "Use `m0_user`, `m0_user_role`, `m0_usermenu`, and `m0_userreport` for user-specific access overrides.",
+      "pattern": "Use `m0_user`, `m0_user_role`, `m0_usermenu`, and `m0_userreport` for user-specific access overrides."
     },
     {
       "name": "report_catalog",
-      "description": "Gunakan `m0_report` dan `m0_report_filter` untuk katalog report dan parameter filternya.",
-      "pattern": "Gunakan `m0_report` dan `m0_report_filter` untuk katalog report dan parameter filternya."
+      "description": "Use `m0_report` and `m0_report_filter` for report catalogs and report-filter parameters.",
+      "pattern": "Use `m0_report` and `m0_report_filter` for report catalogs and report-filter parameters."
     },
     {
       "name": "setting_lookup",
-      "description": "Gunakan `m0_setting` dan `m0_setting_lang` untuk lookup setting dan label-nya.",
-      "pattern": "Gunakan `m0_setting` dan `m0_setting_lang` untuk lookup setting dan label-nya."
+      "description": "Use `m0_setting` and `m0_setting_lang` to look up settings and their labels.",
+      "pattern": "Use `m0_setting` and `m0_setting_lang` to look up settings and their labels."
     },
     {
       "name": "audit_login_trace",
-      "description": "Gunakan `m0_userlogin`, `m0_userlog`, dan `m0_userlogerror` untuk audit login dan aktivitas.",
-      "pattern": "Gunakan `m0_userlogin`, `m0_userlog`, dan `m0_userlogerror` untuk audit login dan aktivitas."
+      "description": "Use `m0_userlogin`, `m0_userlog`, and `m0_userlogerror` for login and activity auditing.",
+      "pattern": "Use `m0_userlogin`, `m0_userlog`, and `m0_userlogerror` for login and activity auditing."
     }
   ],
   "caution_areas": [
-    "Query yang berpotensi menampilkan kredensial atau field sensitif.",
-    "Query yang seharusnya write-path tetapi dipaksa menjadi readonly.",
-    "Pencampuran role-based access dan user override tanpa pemisahan yang jelas.",
-    "Pemakaian metadata report atau queue table sebagai source of truth bisnis."
+    "Queries that may expose credentials or other sensitive fields.",
+    "Queries that should be write-path operations but are forced into readonly mode.",
+    "Mixing role-based access with user overrides without a clear separation.",
+    "Using report metadata or queue tables as business source-of-truth tables."
   ]
 }

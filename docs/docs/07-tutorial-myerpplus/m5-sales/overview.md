@@ -1,24 +1,24 @@
 ---
 title: Overview
 sidebar_position: 1
-description: Pengantar modul sales MyERPPlus.
+description: Introduction to the MyERPPlus sales module.
 ---
 
 # m5-sales
 
-Kategori ini berisi tutorial untuk alur sales MyERPPlus.
+This category contains tutorials for MyERPPlus sales flows.
 
-## Cakupan
+## Coverage
 
-- SQ, SO, DO, SI
-- Tracking order sampai invoice
-- Query dan semantic mapping sales
+- SQ, SO, DO, and SI
+- order-to-invoice tracking
+- sales queries and semantic mapping
 
-## Dokumen Utama
+## Main Documents
 
-- [Tutorial Lengkap Siklus Penjualan dan Piutang](./siklus-penjualan-dan-piutang.md)
-- [Artefak Schema dan AI SQL M5](./artefak-schema-dan-ai-sql.md)
+- [Complete Sales and Receivable Lifecycle Tutorial](./sales-and-receivable-lifecycle.md)
+- [M5 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
 
-## Catatan
+## Notes
 
-Halaman di kategori ini menggunakan pendekatan operasional bisnis dan artefak teknis sekaligus, agar alur user dan alur data tetap terbaca dalam satu tempat.
+Pages in this category combine business-operational explanation with technical artifacts so both user flow and data flow remain readable in one place.

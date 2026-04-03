@@ -1,119 +1,119 @@
 # M2 NL2SQL Guide
 
-Sumber utama:
+Primary sources:
 - `semantic-schema-m2.json`
 - `semantic-schema-m2-summary.md`
 - `m2-queries.md`
 
-Tujuan:
-- membantu pemilihan tabel M2 finance/accounting
-- membantu pemilihan join yang aman
-- memberi sinonim bisnis yang natural untuk retrieval
-- menandai alur transaksi kas, bank, giro, memo, dan jurnal yang paling sering dipakai
+Purpose:
+- help select the correct M2 finance and accounting tables
+- clarify safe joins across cash, bank, giro, memo, and journal documents
+- provide natural business synonyms for retrieval
+- make header, detail, allocation, and posted-journal boundaries explicit
 
-## Cakupan Tabel Utama
+## Main Table Coverage
 
-- `m2_cr`, `m2_cr_detail`: cash receipt, penerimaan kas
-- `m2_cd`, `m2_cd_detail`: cash disbursement, pengeluaran kas
-- `m2_bd`, `m2_bd_detail`: bank disbursement, pengeluaran bank
-- `m2_cb`, `m2_cb_detail`, `m2_cb_pay`: cash bank transfer, transfer kas bank dan alokasi pembayaran
-- `m2_rm`, `m2_rm_detail`, `m2_rm_pay`: receipt memo, memorial penerimaan dan payment allocation
-- `m2_sm`, `m2_sm_detail`, `m2_sm_pay`: send memo, memorial pengeluaran dan payment allocation
-- `m2_rg`, `m2_rg_detail`: receipt giro, giro masuk
-- `m2_rgc`, `m2_rgc_detail`: receipt giro cair, pencairan giro masuk
-- `m2_sg`, `m2_sg_detail`: send giro, giro keluar
-- `m2_sgc`, `m2_sgc_detail`: send giro cair, pencairan giro keluar
-- `m2_gj`, `m2_gj_detail`: general journal, jurnal umum
-- `m2_aj`, `m2_aj_detail`: adjustment journal, jurnal penyesuaian
-- `m2_jm`, `m2_jm_detail`: memorial journal, jurnal memorial
-- `m2_transaction_journal`: jurnal transaksi terposting
-- `m2_accounting_period`: periode akuntansi
-- `m2_realization*`: realisasi budget per dimensi
-- `m2_files`: lampiran transaksi finance
-- `m2_notes`: catatan transaksi finance
+- `m2_cr`, `m2_cr_detail`: cash receipt
+- `m2_cd`, `m2_cd_detail`: cash disbursement
+- `m2_bd`, `m2_bd_detail`: bank disbursement
+- `m2_cb`, `m2_cb_detail`, `m2_cb_pay`: cash and bank transfer plus payment allocation
+- `m2_rm`, `m2_rm_detail`, `m2_rm_pay`: receipt memo plus payment allocation
+- `m2_sm`, `m2_sm_detail`, `m2_sm_pay`: send memo plus payment allocation
+- `m2_rg`, `m2_rg_detail`: receipt giro
+- `m2_rgc`, `m2_rgc_detail`: clearing of receipt giro
+- `m2_sg`, `m2_sg_detail`: send giro
+- `m2_sgc`, `m2_sgc_detail`: clearing of send giro
+- `m2_gj`, `m2_gj_detail`: general journal
+- `m2_aj`, `m2_aj_detail`: adjustment journal
+- `m2_jm`, `m2_jm_detail`: memorial journal
+- `m2_transaction_journal`: posted transaction journal
+- `m2_accounting_period`: accounting period
+- `m2_realization*`: budget realization by dimension
+- `m2_files`: finance transaction attachments
+- `m2_notes`: finance transaction notes
 
-## Sinonim Bisnis
+## Business Synonyms
 
-- `CR`: cash receipt, penerimaan kas
-- `CD`: cash disbursement, pengeluaran kas
-- `BD`: bank disbursement, pengeluaran bank
-- `CB`: cash bank transfer, transfer kas bank
-- `RM`: receipt memo, memo penerimaan, memorial penerimaan
-- `SM`: send memo, memo pengeluaran, memorial pengeluaran
-- `RG`: receipt giro, giro masuk
-- `RGC`: receipt giro cair, pencairan giro masuk
-- `SG`: send giro, giro keluar
-- `SGC`: send giro cair, pencairan giro keluar
-- `GJ`: general journal, jurnal umum
-- `AJ`: adjustment journal, jurnal penyesuaian
-- `JM`: memorial journal, jurnal memorial
-- `AP`: accounting period, periode akuntansi
+- `CR`: cash receipt
+- `CD`: cash disbursement
+- `BD`: bank disbursement
+- `CB`: cash bank transfer
+- `RM`: receipt memo
+- `SM`: send memo
+- `RG`: receipt giro
+- `RGC`: receipt giro clearing
+- `SG`: send giro
+- `SGC`: send giro clearing
+- `GJ`: general journal
+- `AJ`: adjustment journal
+- `JM`: memorial journal
+- `AP`: accounting period
 
-## Join Hints Utama
+## Primary Join Hints
 
-### Alur penerimaan kas
+### cash_receipt_flow
 
 ```sql
 m2_cr.crid = m2_cr_detail.idcr
 ```
 
-### Alur pengeluaran kas
+### cash_disbursement_flow
 
 ```sql
 m2_cd.cdid = m2_cd_detail.idcd
 ```
 
-### Alur pengeluaran bank
+### bank_disbursement_flow
 
 ```sql
 m2_bd.bdid = m2_bd_detail.idbd
 ```
 
-### Relasi receipt memo dan alokasi pembayaran
+### receipt_memo_allocation_flow
 
 ```sql
 m2_rm.rmid = m2_rm_detail.idrm
 m2_rm.rmid = m2_rm_pay.idrm
 ```
 
-### Relasi send memo dan alokasi pembayaran
+### send_memo_allocation_flow
 
 ```sql
 m2_sm.smid = m2_sm_detail.idsm
 m2_sm.smid = m2_sm_pay.idsm
 ```
 
-### Relasi cash bank transfer
+### cash_bank_transfer_flow
 
 ```sql
 m2_cb.cbid = m2_cb_detail.idcb
 m2_cb.cbid = m2_cb_pay.idcb
 ```
 
-### Alur giro masuk dan pencairannya
+### receipt_giro_flow
 
 ```sql
 m2_rg.rgid = m2_rg_detail.idrg
 m2_rgc.rgcid = m2_rgc_detail.idrgc
 ```
 
-### Alur giro keluar dan pencairannya
+### send_giro_flow
 
 ```sql
 m2_sg.sgid = m2_sg_detail.idsg
 m2_sgc.sgcid = m2_sgc_detail.idsgc
 ```
 
-### Relasi jurnal transaksi terposting
+### posted_journal_flow
 
 ```sql
 m2_transaction_journal.tidtransaksi = finance document id
-m2_transaction_journal.tsumber = kode sumber dokumen finance
+m2_transaction_journal.tsumber = finance source code
 ```
 
-## Relasi Penting Tambahan
+## Important Additional Relations
 
-### Kontak, rekening, dan akun
+### contact_reference
 
 ```sql
 m2_cr.crkontak = m1_contact.kid
@@ -125,6 +125,8 @@ m2_rg.rgkontak = m1_contact.kid
 m2_sg.sgkontak = m1_contact.kid
 ```
 
+### account_reference
+
 ```sql
 m2_cr_detail.idcoa = m0_chart_of_account.raid
 m2_cd_detail.idcoa = m0_chart_of_account.raid
@@ -134,42 +136,82 @@ m2_aj_detail.idcoa = m0_chart_of_account.raid
 m2_jm_detail.idcoa = m0_chart_of_account.raid
 ```
 
-## Relasi Polymorphic
+## Polymorphic Relations
 
-- Tidak ada relasi polymorphic eksplisit yang terdeteksi dari schema dan query aktif M2.
+- No explicit polymorphic relationships were detected in active M2 schema and queries.
 
-## Aturan Pemilihan Tabel
+## Cross-Document Lineage Keys
 
-- Gunakan tabel header bila pertanyaan fokus pada nomor dokumen, tanggal, kontak, rekening, mata uang, nilai total, atau status posting.
-- Gunakan tabel detail bila pertanyaan fokus pada akun, nominal per baris, memo detail, distribusi jurnal, atau rincian alokasi.
-- Gunakan tabel `_pay` bila pertanyaan fokus pada payment allocation, pelunasan, atau alokasi pembayaran memo dan transfer.
-- Gunakan tabel `_history` hanya bila user eksplisit meminta histori, perubahan, audit trail, atau versi lama dokumen.
-- Gunakan `m2_transaction_journal` bila pertanyaan fokus pada jurnal hasil posting dari dokumen finance.
-- Gunakan `m2_realization*` bila pertanyaan fokus pada realisasi budget per cabang, lokasi, divisi, project, atau cost center.
+This section is important for the AI agent because M2 questions often depend on a strict separation between header rows, accounting detail rows, allocation rows, and posted journals.
 
-## Aturan Penting
+- `m2_cr_detail.idcr -> m2_cr.crid`
+  Used when cash-receipt detail lines must be traced to the document header.
+- `m2_cd_detail.idcd -> m2_cd.cdid`
+  Used when cash-disbursement detail lines must be traced to the document header.
+- `m2_bd_detail.idbd -> m2_bd.bdid`
+  Used when bank-disbursement detail lines must be traced to the document header.
+- `m2_rm_detail.idrm -> m2_rm.rmid`
+  Used when receipt-memo accounting lines must be traced to the memo header.
+- `m2_rm_pay.idrm -> m2_rm.rmid`
+  Used when receipt-memo payment allocations must be traced to the memo header.
+- `m2_sm_detail.idsm -> m2_sm.smid`
+  Used when send-memo accounting lines must be traced to the memo header.
+- `m2_sm_pay.idsm -> m2_sm.smid`
+  Used when send-memo payment allocations must be traced to the memo header.
+- `m2_cb_detail.idcb -> m2_cb.cbid`
+  Used when cash-bank transfer detail lines must be traced to the transfer header.
+- `m2_cb_pay.idcb -> m2_cb.cbid`
+  Used when transfer allocation rows must be traced to the transfer header.
+- `m2_rg_detail.idrg -> m2_rg.rgid`
+  Used when receipt-giro lines must be traced to the giro header.
+- `m2_rgc_detail.idrgc -> m2_rgc.rgcid`
+  Used when receipt-giro clearing lines must be traced to the clearing header.
+- `m2_sg_detail.idsg -> m2_sg.sgid`
+  Used when send-giro lines must be traced to the giro header.
+- `m2_sgc_detail.idsgc -> m2_sgc.sgcid`
+  Used when send-giro clearing lines must be traced to the clearing header.
+- `m2_transaction_journal.tidtransaksi + m2_transaction_journal.tsumber -> finance document header`
+  Used when a posted journal must be traced back to its source document.
 
-- M2 tidak punya relasi polymorphic eksplisit; prioritaskan foreign key langsung yang terlihat di join aktif.
-- Untuk analitik kas dan bank, mulai dari header lalu join ke detail bila user meminta akun atau distribusi nominal.
-- Untuk analitik pembayaran memo atau transfer, gunakan tabel `_pay` agar nilai alokasi tidak salah diambil dari header.
-- Untuk giro, bedakan dokumen giro (`RG`, `SG`) dengan dokumen pencairan (`RGC`, `SGC`).
-- Untuk jurnal, bedakan jurnal input manual (`GJ`, `AJ`, `JM`) dengan jurnal transaksi terposting (`m2_transaction_journal`).
-- Field `customtext*`, `customint*`, `customdbl*`, `customdate*` adalah field tambahan. Hindari memakainya kecuali user atau report memang merujuk field tersebut.
+Practical rules:
 
-## Pola Query Aman
+- start from detail tables or `_pay` tables when the question is about distribution, allocation, or line-level amounts
+- move to the header only after the source document foreign key is known
+- for posted journals, do not rely on `tidtransaksi` alone; always read `tsumber`
+- do not mix memo detail and payment allocation without separating `_detail` from `_pay`
 
-### Ringkasan dokumen finance
+## Table Selection Rules
 
-Gunakan header saja:
+- Use header tables when the question is about document number, date, contact, bank or cash account, currency, total amount, or posting status.
+- Use detail tables when the question is about accounts, per-line amounts, journal distribution, or memo detail.
+- Use `_pay` tables when the question is about payment allocation, settlement, or memo transfer allocation.
+- Use `_history` tables only when the user explicitly asks for document history, audit changes, or older versions.
+- Use `m2_transaction_journal` when the question is about posted journals produced by finance documents.
+- Use `m2_realization*` tables when the question is about budget realization by branch, location, division, project, or cost center.
+
+## Important Rules
+
+- M2 does not have explicit polymorphic relationships. Prefer direct foreign keys visible in active joins.
+- For cash and bank analysis, start from headers and join details only when the user needs account or distribution breakdown.
+- For memo or transfer allocation analysis, use `_pay` tables so allocation values are not mistaken for header totals.
+- For giro analysis, distinguish the giro document (`RG`, `SG`) from its clearing document (`RGC`, `SGC`).
+- For journals, distinguish manual journal input (`GJ`, `AJ`, `JM`) from posted transaction journals (`m2_transaction_journal`).
+- `customtext*`, `customint*`, `customdbl*`, and `customdate*` are extension fields. Avoid them unless explicitly requested.
+
+## Safe Query Patterns
+
+### finance_document_overview
+
+Use only the header table:
 
 ```sql
 SELECT crnotransaksi, crtgl, crkontak, crjumlahbayar
 FROM m2_cr
 ```
 
-### Distribusi akun per dokumen
+### account_distribution_per_document
 
-Join header ke detail:
+Join header to detail:
 
 ```sql
 SELECT gj.gjnotransaksi, gjd.idcoa, gjd.jmldebet, gjd.jmlkredit
@@ -177,9 +219,9 @@ FROM m2_gj gj
 JOIN m2_gj_detail gjd ON gjd.idgj = gj.gjid
 ```
 
-### Memo dengan alokasi pembayaran
+### memo_with_allocation
 
-Mulai dari header dan tambahkan tabel pay:
+Use:
 
 ```sql
 RM -> RM_DETAIL -> RM_PAY
@@ -187,7 +229,9 @@ SM -> SM_DETAIL -> SM_PAY
 CB -> CB_DETAIL -> CB_PAY
 ```
 
-### Giro dan pencairannya
+### giro_and_clearing
+
+Use:
 
 ```sql
 RG -> RG_DETAIL
@@ -196,25 +240,27 @@ SG -> SG_DETAIL
 SGC -> SGC_DETAIL
 ```
 
-### Jurnal transaksi terposting
+### posted_journal_trace
+
+Use:
 
 ```sql
 DOCUMENT -> m2_transaction_journal
 ```
 
-## Query yang Perlu Extra Caution
+## Queries That Need Extra Caution
 
-- pertanyaan yang mencampur header memo dengan allocation pay tetapi tidak memakai tabel `_pay`
-- pertanyaan giro yang mencampur dokumen giro dan pencairannya tanpa membedakan `RG/RGC` atau `SG/SGC`
-- pertanyaan jurnal yang mencampur `GJ`, `AJ`, `JM`, dan `m2_transaction_journal`
-- pertanyaan histori yang mencampur tabel aktif dan `_history`
-- pertanyaan yang mengandalkan `custom*`
+- questions that mix memo headers with payment allocation but do not use `_pay`
+- questions that mix giro documents with clearing documents without separating `RG/RGC` or `SG/SGC`
+- questions that mix `GJ`, `AJ`, `JM`, and `m2_transaction_journal`
+- questions that mix active tables and `_history`
+- questions that rely on `custom*`
 
-## Checklist NL2SQL M2
+## NL2SQL Checklist for M2
 
-- pilih header vs detail lebih dulu
-- cek apakah butuh tabel `_pay` atau cukup header/detail
-- bedakan dokumen kas, bank, giro, memo, dan jurnal
-- pakai `m1_contact`, `m0_chart_of_account`, `m1_branch`, `m1_location`, `m1_division`, `m1_project` saat butuh label master
-- untuk pencairan giro, gunakan tabel pencairan khusus, bukan hanya dokumen giro asal
-- untuk audit trail, pindah ke tabel `_history`
+- decide header vs detail first
+- check whether `_pay` tables are required
+- distinguish cash, bank, giro, memo, and journal documents
+- use `m1_contact`, `m0_chart_of_account`, `m1_branch`, `m1_location`, `m1_division`, and `m1_project` when master labels are needed
+- for giro clearing, use the dedicated clearing tables instead of the original giro document alone
+- for audit history, move to `_history` tables

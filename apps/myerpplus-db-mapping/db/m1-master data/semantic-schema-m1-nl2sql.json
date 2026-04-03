@@ -1,6 +1,6 @@
 {
   "domain": "myerpplus_master_m1",
-  "description": "Machine-friendly NL2SQL guide untuk modul M1 master data. Berisi tabel utama, sinonim bisnis, join hints, relasi referensi, dan aturan query generation.",
+  "description": "Machine-friendly NL2SQL guide for the M1 master-data module. Covers main tables, business synonyms, join hints, reference relations, and query-generation rules.",
   "source_files": [
     "semantic-schema-m1.json",
     "semantic-schema-m1-summary.md",
@@ -113,7 +113,7 @@
   "join_hints": [
     {
       "name": "contact_commercial_hierarchy",
-      "description": "Relasi contact dengan kategori dan salesman.",
+      "description": "Relationship from contacts to categories and assigned salespeople.",
       "joins": [
         "m1_contact.kkategori = m1_contact_category.cckode",
         "m1_contact.kkategoricustomer = m1_customer_category.cckode",
@@ -124,7 +124,7 @@
     },
     {
       "name": "item_classification_flow",
-      "description": "Relasi item dengan klasifikasi dan atribut komersialnya.",
+      "description": "Relationship from items to classifications and commercial attributes.",
       "joins": [
         "m1_item.bkelasproduk = m1_class_product.cpkode",
         "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
@@ -133,7 +133,7 @@
     },
     {
       "name": "warehouse_organization_flow",
-      "description": "Relasi gudang dengan struktur organisasi dan lokasi.",
+      "description": "Relationship from warehouses to organizational structure and location.",
       "joins": [
         "m1_warehouse.wdivisi = m1_division.dkode",
         "m1_warehouse.wlokasi = m1_location.lkode",
@@ -142,7 +142,7 @@
     },
     {
       "name": "coa_reference_flow",
-      "description": "Relasi akun dengan parent akun dan dimensi organisasi.",
+      "description": "Relationship from accounts to parent accounts and organizational dimensions.",
       "joins": [
         "m1_coa.cparent = m1_coa.cnomor",
         "m1_coa.ccabang = m1_branch.bkode",
@@ -154,7 +154,7 @@
     },
     {
       "name": "transaction_note_flow",
-      "description": "Relasi catatan transaksi ke detail catatan per sumber.",
+      "description": "Relationship from transaction-note headers to note details by source.",
       "joins": [
         "m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode",
         "m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber"
@@ -163,46 +163,46 @@
   ],
   "polymorphic_relationships": [],
   "important_rules": [
-    "Gunakan m1_contact untuk pertanyaan customer, supplier, salesman, atau relasi kontak bisnis.",
-    "Gunakan m1_item untuk pertanyaan barang, produk, setup item, dan klasifikasi item.",
-    "Gunakan m1_coa untuk pertanyaan akun, parent akun, saldo awal, dan dimensi organisasi akun.",
-    "Gunakan m1_warehouse, m1_location, m1_branch, dan m1_division untuk struktur gudang dan organisasi.",
-    "Gunakan tabel detail seperti m1_price_category_detail dan m1_transaction_note_detail bila user meminta isi baris atau setup per sumber.",
-    "M1 adalah domain master data, bukan alur dokumen transaksi bertahap.",
-    "Hindari field custom* kecuali benar-benar diminta user atau report."
+    "Use `m1_contact` for questions about customers, suppliers, salespeople, or business-contact relationships.",
+    "Use `m1_item` for questions about items, products, item setup, and item classification.",
+    "Use `m1_coa` for questions about accounts, parent accounts, opening balances, and account organization dimensions.",
+    "Use `m1_warehouse`, `m1_location`, `m1_branch`, and `m1_division` for warehouse and organization structure.",
+    "Use detail tables such as `m1_price_category_detail` and `m1_transaction_note_detail` when the user asks for row-level setup or source-specific content.",
+    "M1 is a master-data domain, not a staged transaction-document flow.",
+    "Avoid `custom*` fields unless they are explicitly requested by the user or required by a report."
   ],
   "query_patterns": [
     {
       "name": "master_listing",
-      "description": "Listing master data dasar.",
-      "pattern": "Gunakan tabel inti seperti m1_contact, m1_item, m1_warehouse, m1_coa, atau m1_branch untuk daftar master."
+      "description": "Basic master-data listing.",
+      "pattern": "Use core tables such as `m1_contact`, `m1_item`, `m1_warehouse`, `m1_coa`, or `m1_branch` for master listings."
     },
     {
       "name": "reference_lookup",
-      "description": "Lookup referensi dan relasi kategori.",
-      "pattern": "Join master utama ke kategori, organisasi, atau referensi pendukung sesuai kebutuhan."
+      "description": "Reference lookup and category relationships.",
+      "pattern": "Join primary master tables to categories, organization dimensions, or supporting references as needed."
     },
     {
       "name": "item_classification_lookup",
-      "description": "Lookup item dan klasifikasi produk.",
-      "pattern": "Gunakan m1_item lalu join ke class product, subdepartment, atau selling point bila perlu."
+      "description": "Item lookup and product classification.",
+      "pattern": "Use `m1_item` and then join to class-product, subdepartment, or selling-point references when needed."
     },
     {
       "name": "coa_hierarchy_lookup",
-      "description": "Lookup akun dan parent-child akun.",
-      "pattern": "Gunakan m1_coa dan self-join ke cparent bila user meminta hierarki akun."
+      "description": "Account lookup and parent-child account hierarchy.",
+      "pattern": "Use `m1_coa` and self-join on `cparent` when the user asks for account hierarchy."
     },
     {
       "name": "transaction_note_lookup",
-      "description": "Lookup catatan transaksi per sumber dokumen.",
-      "pattern": "Gunakan m1_transaction_note dan m1_transaction_note_detail dengan pasangan tnkode dan tnsumber."
+      "description": "Transaction-note lookup by source document.",
+      "pattern": "Use `m1_transaction_note` and `m1_transaction_note_detail` with the `tnkode` and `tnsumber` pair."
     }
   ],
   "caution_areas": [
-    "Pertanyaan yang mencampur master contact dengan transaksi bisnis lintas domain.",
-    "Pertanyaan item yang sebenarnya membutuhkan domain transaksi inventory, purchasing, atau sales.",
-    "Pertanyaan akun yang sebenarnya meminta saldo transaksi, bukan master akun.",
-    "Pertanyaan yang menganggap semua kategori contact ada di satu tabel saja.",
-    "Pertanyaan yang mengandalkan custom*."
+    "Questions that mix contact master data with cross-domain business transactions.",
+    "Item questions that actually require inventory, purchasing, or sales transaction domains.",
+    "Account questions that really ask for transaction balances rather than account masters.",
+    "Questions that assume all contact categories live in a single table.",
+    "Questions that rely on `custom*` fields."
   ]
 }

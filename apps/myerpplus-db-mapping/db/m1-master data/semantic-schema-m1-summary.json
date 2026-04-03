@@ -1,0 +1,1240 @@
+{
+  "title": "Semantic Schema M1 Summary",
+  "source_json": "semantic-schema-m1.json",
+  "source_summary_markdown": "semantic-schema-m1-summary.md",
+  "totals": {
+    "schema_tables": 49,
+    "active_tables": 49,
+    "modules": 4,
+    "join_hints": 5
+  },
+  "join_hints": [
+    {
+      "name": "contact_commercial_hierarchy",
+      "description": "Relationship from contacts to categories and assigned salespeople.",
+      "joins": [
+        "m1_contact.kkategori = m1_contact_category.cckode",
+        "m1_contact.kkategoricustomer = m1_customer_category.cckode",
+        "m1_contact.kkategorisupplier = m1_supplier_category.sckode",
+        "m1_contact.kkategorisalesman = m1_salesman_category.sckode",
+        "m1_contact.ksalesman = m1_contact.kid"
+      ]
+    },
+    {
+      "name": "item_classification_flow",
+      "description": "Relationship from items to classifications and commercial attributes.",
+      "joins": [
+        "m1_item.bkelasproduk = m1_class_product.cpkode",
+        "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
+        "m1_item.bkomisi = m1_selling_point.spid"
+      ]
+    },
+    {
+      "name": "warehouse_organization_flow",
+      "description": "Relationship from warehouses to organizational structure and location.",
+      "joins": [
+        "m1_warehouse.wdivisi = m1_division.dkode",
+        "m1_warehouse.wlokasi = m1_location.lkode",
+        "m1_location.lcabang = m1_branch.bkode"
+      ]
+    },
+    {
+      "name": "coa_reference_flow",
+      "description": "Relationship from accounts to parent accounts and organizational dimensions.",
+      "joins": [
+        "m1_coa.cparent = m1_coa.cnomor",
+        "m1_coa.ccabang = m1_branch.bkode",
+        "m1_coa.clokasi = m1_location.lkode",
+        "m1_coa.cdivisi = m1_division.dkode",
+        "m1_coa.ckodebank = m1_bank.bkode",
+        "m1_coa.cmatauang = m1_currency.ckode"
+      ]
+    },
+    {
+      "name": "transaction_note_flow",
+      "description": "Relationship from transaction-note headers to note details by source.",
+      "joins": [
+        "m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode",
+        "m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber"
+      ]
+    }
+  ],
+  "notes": [
+    "M1 is the master-data domain; its tables are widely used across other modules for lookup and reference."
+  ],
+  "modules": [
+    {
+      "module": "CORE_MASTERS",
+      "title": "Core Masters",
+      "table_counts": {
+        "owned": 13
+      },
+      "tables": [
+        {
+          "table_name": "m1_contact",
+          "alias": "master_kontak",
+          "description": "Business-contact master that stores customers, suppliers, salespeople, and other counterparties. This table is a primary reference for purchasing and sales transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "kid",
+            "kkode",
+            "knama",
+            "kkategori",
+            "kkategorinama",
+            "kcabang",
+            "kcabangnama",
+            "klokasi",
+            "klokasinama",
+            "kgudang",
+            "kgudangnama",
+            "kkategorisalesman",
+            "kkategorisalesmannama",
+            "karea",
+            "kareanama",
+            "kkategoricustomer",
+            "kkategoricustomernama",
+            "kkategorisupplier",
+            "kkategorisuppliernama",
+            "kdivisi",
+            "kdivisinama",
+            "ksubdivisi",
+            "ksubdivisinama",
+            "ksalesman",
+            "ksalesmannama",
+            "kkontakperson",
+            "kterminglobal",
+            "kaktif",
+            "kaktiftgl",
+            "k1alamat1",
+            "k1alamat2",
+            "k1alamat3",
+            "k1alamat4",
+            "k1alamat5",
+            "k1kota",
+            "k1propinsi",
+            "k1kodepos",
+            "k1negara",
+            "k1kontakperson",
+            "k1kontaknohp",
+            "k1kontakemail",
+            "k1notelp1",
+            "k1notelp2",
+            "k1nofax",
+            "k1email",
+            "k1website",
+            "k2alamat1",
+            "k2alamat2",
+            "k2alamat3",
+            "k2alamat4",
+            "k2alamat5",
+            "k2propinsi",
+            "k2kota",
+            "k2kodepos",
+            "k2negara",
+            "k2kontakperson",
+            "k2kontaknohp",
+            "k2kontakemail",
+            "k2notelp1",
+            "k2notelp2",
+            "k2nofax",
+            "k2email",
+            "k2website",
+            "k3alamat1",
+            "k3alamat2",
+            "k3alamat3",
+            "k3alamat4",
+            "k3alamat5",
+            "k3kota",
+            "k3propinsi",
+            "k3kodepos",
+            "k3negara",
+            "k3kontakperson",
+            "k3kontaknohp",
+            "k3kontakemail",
+            "k3notelp1",
+            "k3notelp2",
+            "k3nofax",
+            "k3email",
+            "k3website",
+            "k4alamat1",
+            "k4alamat2",
+            "k4alamat3",
+            "k4alamat4",
+            "k4alamat5",
+            "k4kota",
+            "k4propinsi",
+            "k4kodepos",
+            "k4negara",
+            "k4kontakperson",
+            "k4kontaknohp",
+            "k4kontakemail",
+            "k4notelp1",
+            "k4notelp2",
+            "k4nofax",
+            "k4email",
+            "k4website",
+            "knpwp",
+            "kpkp",
+            "kbatashutang",
+            "kterminbeli",
+            "krekhutang",
+            "kbagpembelian",
+            "kfobbeli",
+            "kviabeli",
+            "kbataspiutang",
+            "kterminjual",
+            "krekpiutang",
+            "kbagpenjualan",
+            "ktingkatjual",
+            "kfobjual",
+            "kviajual",
+            "ktglkontrak",
+            "kbank",
+            "knorekening",
+            "kjeniskelamin",
+            "kmatauang",
+            "ktgllahir",
+            "ktglnikah",
+            "kkomisikode",
+            "kkomisipenjualan",
+            "kcatatan",
+            "ksinkron",
+            "kdownloaded",
+            "khargacustom",
+            "kpajakcustom",
+            "ktotalpiutang",
+            "ktotalhutang"
+          ]
+        },
+        {
+          "table_name": "m1_item",
+          "alias": "master_barang",
+          "description": "Item/service master used in inventory, purchasing, and sales transactions. Stores item identity, units, stock attributes, prices, and inventory accounts.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "bid",
+            "bkode",
+            "bnama",
+            "bnamaalias1",
+            "bnamaalias2",
+            "bnamaalias3",
+            "bnamaalias4",
+            "bnamaalias5",
+            "btipe",
+            "bjenis",
+            "bjenisdetail",
+            "bkategori",
+            "bkelasproduk",
+            "bretur",
+            "btag",
+            "bketerangan",
+            "bsatuan",
+            "bnilaisatuan",
+            "bsatuandefault",
+            "bnilaisatuandefault",
+            "bhpp",
+            "bcabang",
+            "blokasi",
+            "bdivisi",
+            "bsubdivisi",
+            "bdepartemen",
+            "bsubdepartemen",
+            "bgudang",
+            "bproyek",
+            "bsubitem",
+            "bsubitemdari",
+            "bbarcode",
+            "bsuplier",
+            "baktif",
+            "baktiftgl",
+            "bstokminimal",
+            "bstokmaksimal",
+            "breorder",
+            "bminorder",
+            "bjmlorderbeli",
+            "bjmlorderjual",
+            "bkategoriumur",
+            "bstatusmoving",
+            "bsifatharga",
+            "bpromo",
+            "bpromoberlaku",
+            "bkl",
+            "bkp",
+            "bpajakbeli",
+            "bpajakjual",
+            "bhargabeli",
+            "bhppaverage",
+            "bhargajual1",
+            "bhargajual2",
+            "bhargajual3",
+            "bhargajual4",
+            "bhargajual5",
+            "bdiskonjual1",
+            "bdiskonjual2",
+            "bdiskonjual3",
+            "bdiskonjual4",
+            "bdiskonjual5",
+            "bstok",
+            "bkomisi",
+            "bmarginminimal",
+            "brekpersediaan",
+            "brekpenjualan",
+            "brekreturpenjualan",
+            "brekdiskonpenjualan",
+            "brekhargapokok",
+            "brekreturpembelian",
+            "brekdiskonpembelian",
+            "brekkonsinyasi",
+            "bapanjang",
+            "balebar",
+            "batinggi",
+            "baberat",
+            "bavolume",
+            "bawarna",
+            "baoem",
+            "bamerk",
+            "baukuran",
+            "bamodel",
+            "bakelas",
+            "bserial",
+            "bbatch",
+            "bpengganti",
+            "bgambar",
+            "burutan",
+            "bcustom1",
+            "bcustom2",
+            "bcustom3",
+            "bcustom4",
+            "bcustom5",
+            "bcustom6",
+            "bcustom7",
+            "bcustom8",
+            "bcustom9",
+            "bcustom10",
+            "bcustom11",
+            "bcustom12",
+            "bcustom13",
+            "bcustom14",
+            "bcustom15",
+            "bcatatan",
+            "bedithpp",
+            "bmobile",
+            "bassembly",
+            "bdownloaded",
+            "bjmllapangan",
+            "bsatuanlapangan",
+            "bsubkelas",
+            "bmaterial",
+            "bsection",
+            "bvendor",
+            "bdesigner",
+            "basset",
+            "bhargajual6",
+            "bhargajual7",
+            "bhargajual8",
+            "bhargajual9",
+            "bhargajual10",
+            "bdiskonjual6",
+            "bdiskonjual7",
+            "bdiskonjual8",
+            "bdiskonjual9",
+            "bdiskonjual10",
+            "bavolumevarchar"
+          ]
+        },
+        {
+          "table_name": "m1_warehouse",
+          "alias": "master_gudang",
+          "description": "Warehouse/storage-location master used by all stock-in, stock-out, transfer, and opening-balance transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "wkode",
+            "wnama",
+            "wdivisi",
+            "wlokasi",
+            "walamat1",
+            "walamat2",
+            "wkota",
+            "wkodepos",
+            "wnotelp",
+            "wnofax",
+            "wketerangan",
+            "waktif",
+            "wmodifikasitanggal",
+            "wbookingstok"
+          ]
+        },
+        {
+          "table_name": "m1_coa",
+          "alias": "master_akun",
+          "description": "Chart of accounts for all financial postings. Defines account numbers, account names, categories, and running balances.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "cid",
+            "cnomor",
+            "ctipe",
+            "ckategori",
+            "cdc",
+            "curutan",
+            "caktif",
+            "cnama",
+            "cnamaalias1",
+            "cnamaalias2",
+            "cnamaalias3",
+            "cgd",
+            "clevel",
+            "csubdari",
+            "cparent",
+            "clevel1",
+            "clevel2",
+            "clevel3",
+            "clevel4",
+            "clevel5",
+            "cjenisaruskas",
+            "cbukupembantu",
+            "ccabang",
+            "clokasi",
+            "cdivisi",
+            "cmatauang",
+            "ckodebank",
+            "cnorekbank",
+            "cjenis",
+            "csaldoawal",
+            "csaldoberjalan",
+            "ccatatan",
+            "ccostcenter"
+          ]
+        },
+        {
+          "table_name": "m1_branch",
+          "alias": "master_branch",
+          "description": "Branch master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "bkode",
+            "bnama",
+            "balamat1",
+            "balamat2",
+            "bkota",
+            "bkodepos",
+            "bnotelp",
+            "bnofax",
+            "bcatatan",
+            "baktif"
+          ]
+        },
+        {
+          "table_name": "m1_location",
+          "alias": "master_location",
+          "description": "Location master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "lkode",
+            "lnama",
+            "lkodetransaksi",
+            "lcabang",
+            "lkategoripos",
+            "laktif",
+            "lalamat1",
+            "lalamat2",
+            "lkota",
+            "lkodepos",
+            "lnotelp",
+            "lnofax",
+            "lluas",
+            "lcatatan",
+            "lmodifikasitanggal"
+          ]
+        },
+        {
+          "table_name": "m1_division",
+          "alias": "master_division",
+          "description": "Division master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "dkode",
+            "dnama",
+            "dcatatan",
+            "daktif",
+            "dindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_department",
+          "alias": "master_department",
+          "description": "Department master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "dpkode",
+            "dpnama",
+            "dpdivisi",
+            "dpsubdivisi",
+            "dpcatatan",
+            "dpaktif",
+            "dpindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_subdepartment",
+          "alias": "master_subdepartment",
+          "description": "Subdepartment master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "sdpkode",
+            "sdpnama",
+            "sdpdepartemen",
+            "sdpdivisi",
+            "sdpsubdivisi",
+            "sdpcatatan",
+            "sdpaktif",
+            "sdpindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_subdivision",
+          "alias": "master_subdivision",
+          "description": "Subdivision master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "sdkode",
+            "sddivisi",
+            "sdnama",
+            "sdcatatan",
+            "sdaktif",
+            "sdindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_section",
+          "alias": "master_section",
+          "description": "Section master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "skode",
+            "snama",
+            "scatatan",
+            "saktif",
+            "sindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_project",
+          "alias": "master_project",
+          "description": "Project master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "pkode",
+            "pnama",
+            "pkategori",
+            "paktif",
+            "ptglorder",
+            "ptglmulairencana",
+            "ptglmulairealisasi",
+            "ptglselesairencana",
+            "ptglselesairealisasi",
+            "pprioritas",
+            "pselesai",
+            "pkontak",
+            "pkontakperson",
+            "ppimpinanproyek",
+            "pdivisi",
+            "pketerangan",
+            "ptglkontrak",
+            "pnokontrak",
+            "pnilaikontrak",
+            "psubdari",
+            "pparent",
+            "plevel",
+            "pcustom1",
+            "pcustom2",
+            "pcustom3",
+            "pcustom4",
+            "pcustom5",
+            "pgd",
+            "pstatus"
+          ]
+        },
+        {
+          "table_name": "m1_cost_center",
+          "alias": "master_cost_center",
+          "description": "Cost-center master used across ERP transactions.",
+          "owner_module": "CORE_MASTERS",
+          "columns": [
+            "cckode",
+            "ccnama",
+            "ccdivisi",
+            "ccakun",
+            "ccaktif",
+            "cccatatan",
+            "ccsubdepartemen"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "contact_commercial_hierarchy",
+          "description": "Relationship from contacts to categories and assigned salespeople.",
+          "joins": [
+            "m1_contact.kkategori = m1_contact_category.cckode",
+            "m1_contact.kkategoricustomer = m1_customer_category.cckode",
+            "m1_contact.kkategorisupplier = m1_supplier_category.sckode",
+            "m1_contact.kkategorisalesman = m1_salesman_category.sckode",
+            "m1_contact.ksalesman = m1_contact.kid"
+          ]
+        },
+        {
+          "name": "item_classification_flow",
+          "description": "Relationship from items to classifications and commercial attributes.",
+          "joins": [
+            "m1_item.bkelasproduk = m1_class_product.cpkode",
+            "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
+            "m1_item.bkomisi = m1_selling_point.spid"
+          ]
+        },
+        {
+          "name": "warehouse_organization_flow",
+          "description": "Relationship from warehouses to organizational structure and location.",
+          "joins": [
+            "m1_warehouse.wdivisi = m1_division.dkode",
+            "m1_warehouse.wlokasi = m1_location.lkode",
+            "m1_location.lcabang = m1_branch.bkode"
+          ]
+        },
+        {
+          "name": "coa_reference_flow",
+          "description": "Relationship from accounts to parent accounts and organizational dimensions.",
+          "joins": [
+            "m1_coa.cparent = m1_coa.cnomor",
+            "m1_coa.ccabang = m1_branch.bkode",
+            "m1_coa.clokasi = m1_location.lkode",
+            "m1_coa.cdivisi = m1_division.dkode",
+            "m1_coa.ckodebank = m1_bank.bkode",
+            "m1_coa.cmatauang = m1_currency.ckode"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "COMMERCIAL_MASTERS",
+      "title": "Commercial Masters",
+      "table_counts": {
+        "owned": 11
+      },
+      "tables": [
+        {
+          "table_name": "m1_terms",
+          "alias": "master_terms",
+          "description": "Payment-terms master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "trkode",
+            "trnama",
+            "trdiskon1",
+            "trharidiskon1",
+            "trdiskon2",
+            "trharidiskon2",
+            "trdenda",
+            "trharijatuhtempo",
+            "trdendaper",
+            "trcatatan",
+            "traktif"
+          ]
+        },
+        {
+          "table_name": "m1_tax",
+          "alias": "master_tax",
+          "description": "Tax master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "tkode",
+            "tnama",
+            "tnilai",
+            "tcatatan",
+            "taktif",
+            "takunbeli",
+            "takunjual"
+          ]
+        },
+        {
+          "table_name": "m1_currency",
+          "alias": "master_currency",
+          "description": "Currency master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "ckode",
+            "cnama",
+            "csimbol",
+            "ckurs",
+            "ccatatan",
+            "caktif"
+          ]
+        },
+        {
+          "table_name": "m1_bank",
+          "alias": "master_bank",
+          "description": "Bank master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "bkode",
+            "bnama",
+            "balamat",
+            "bkota",
+            "bnotelp",
+            "bnofax",
+            "bcatatan",
+            "baktif"
+          ]
+        },
+        {
+          "table_name": "m1_expedition",
+          "alias": "master_expedition",
+          "description": "Expedition/carrier master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "ekode",
+            "enama",
+            "ealamat",
+            "ekota",
+            "etelp",
+            "efax",
+            "ecatatan",
+            "ekontakperson",
+            "eemail",
+            "eaktif"
+          ]
+        },
+        {
+          "table_name": "m1_customer_category",
+          "alias": "master_customer_category",
+          "description": "Customer-category master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "cckode",
+            "ccnama",
+            "cccatatan",
+            "cctingkatjual",
+            "ccaktif"
+          ]
+        },
+        {
+          "table_name": "m1_supplier_category",
+          "alias": "master_supplier_category",
+          "description": "Supplier-category master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "sckode",
+            "scnama",
+            "sccatatan",
+            "scaktif"
+          ]
+        },
+        {
+          "table_name": "m1_salesman_category",
+          "alias": "master_salesman_category",
+          "description": "Salesman-category master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "sckode",
+            "scnama",
+            "scarea",
+            "sccatatan",
+            "scaktif"
+          ]
+        },
+        {
+          "table_name": "m1_contact_category",
+          "alias": "master_contact_category",
+          "description": "Contact-category master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "cckode",
+            "ccnama",
+            "cccatatan"
+          ]
+        },
+        {
+          "table_name": "m1_contact_terms",
+          "alias": "master_contact_terms",
+          "description": "Contact payment-terms mapping used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "ktidkontak",
+            "kttipeinvoice",
+            "kttermin"
+          ]
+        },
+        {
+          "table_name": "m1_contact_price",
+          "alias": "master_contact_price",
+          "description": "Contact-specific pricing master used across ERP transactions.",
+          "owner_module": "COMMERCIAL_MASTERS",
+          "columns": [
+            "khidkontak",
+            "khidbarang",
+            "khsatuan",
+            "khkomisi",
+            "khhargabeli",
+            "khhargajual",
+            "khberlakudari",
+            "khberlakusampai",
+            "khcatatan"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "contact_commercial_hierarchy",
+          "description": "Relationship from contacts to categories and assigned salespeople.",
+          "joins": [
+            "m1_contact.kkategori = m1_contact_category.cckode",
+            "m1_contact.kkategoricustomer = m1_customer_category.cckode",
+            "m1_contact.kkategorisupplier = m1_supplier_category.sckode",
+            "m1_contact.kkategorisalesman = m1_salesman_category.sckode",
+            "m1_contact.ksalesman = m1_contact.kid"
+          ]
+        },
+        {
+          "name": "coa_reference_flow",
+          "description": "Relationship from accounts to parent accounts and organizational dimensions.",
+          "joins": [
+            "m1_coa.cparent = m1_coa.cnomor",
+            "m1_coa.ccabang = m1_branch.bkode",
+            "m1_coa.clokasi = m1_location.lkode",
+            "m1_coa.cdivisi = m1_division.dkode",
+            "m1_coa.ckodebank = m1_bank.bkode",
+            "m1_coa.cmatauang = m1_currency.ckode"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "ITEM_RELATED_MASTERS",
+      "title": "Item Related Masters",
+      "table_counts": {
+        "owned": 19
+      },
+      "tables": [
+        {
+          "table_name": "m1_item_category",
+          "alias": "master_item_category",
+          "description": "Item-category master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "ickode",
+            "icnama",
+            "icdivisi",
+            "icsubdivisi",
+            "icdepartemen",
+            "icsubdepartemen",
+            "icrekpersediaan",
+            "icrekhargapokok",
+            "icrekpenjualan",
+            "iccatatan",
+            "icaktif",
+            "icindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_item_type",
+          "alias": "master_item_type",
+          "description": "Item-type master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "itkode",
+            "itnama",
+            "itcatatan",
+            "itaktif"
+          ]
+        },
+        {
+          "table_name": "m1_item_price",
+          "alias": "master_item_price",
+          "description": "Item-price master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "khidbarang",
+            "khmatauang",
+            "khhargabeli",
+            "khhargajual",
+            "khcatatan"
+          ]
+        },
+        {
+          "table_name": "m1_item_supplier",
+          "alias": "master_item_supplier",
+          "description": "Item-supplier mapping used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "isidbarang",
+            "isidkontak",
+            "iscatatan",
+            "isurutan"
+          ]
+        },
+        {
+          "table_name": "m1_item_stock_warehouse",
+          "alias": "master_item_stock_warehouse",
+          "description": "Item stock by warehouse reference used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "idbarang",
+            "kgudang",
+            "stok"
+          ]
+        },
+        {
+          "table_name": "m1_item_location",
+          "alias": "master_item_location",
+          "description": "Item-location master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "ilid",
+            "ilkode",
+            "ilnama",
+            "ilgudang"
+          ]
+        },
+        {
+          "table_name": "m1_item_location_warehouse",
+          "alias": "master_item_location_warehouse",
+          "description": "Item-location-by-warehouse mapping used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "blgidbarang",
+            "blgkodebarang",
+            "blggudang",
+            "blgidlokasi",
+            "blgkodelokasi",
+            "blgnamalokasi"
+          ]
+        },
+        {
+          "table_name": "m1_item_permission",
+          "alias": "master_item_permission",
+          "description": "Item-permission master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "ipkode",
+            "ipnama",
+            "ipcatatan",
+            "ipjual",
+            "ipmutasipusat",
+            "ippermintaanmutasi",
+            "ipmutasicabang",
+            "ipretursupplier",
+            "ippermintaanpembelian"
+          ]
+        },
+        {
+          "table_name": "m1_item_transaction",
+          "alias": "master_item_transaction",
+          "description": "Item-transaction reference table used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "id",
+            "cabang",
+            "lokasi",
+            "gudang",
+            "kodepa",
+            "jenismutasi",
+            "sumber",
+            "idutama",
+            "iddetail",
+            "notransaksi",
+            "tgl",
+            "kontak",
+            "idbarang",
+            "namabarang",
+            "tipebarang",
+            "tipehpp",
+            "jml",
+            "satuan",
+            "jmlbarang",
+            "satuanbarang",
+            "matauang",
+            "kurs",
+            "harga",
+            "diskon",
+            "jmldiskon",
+            "idhppikm",
+            "idhppikk",
+            "idhppfifo",
+            "hpp",
+            "uraian",
+            "catatan",
+            "catatandetail",
+            "costcenter",
+            "divisi",
+            "subdivisi",
+            "proyek",
+            "saldojml",
+            "saldohpp",
+            "saldonilai",
+            "postingtgl",
+            "updatehpp",
+            "postinghpp",
+            "hppfix",
+            "postingjurnal",
+            "jurnalfix",
+            "tutupperiode",
+            "isclose"
+          ]
+        },
+        {
+          "table_name": "m1_class_product",
+          "alias": "master_class_product",
+          "description": "Product-class master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "cpkode",
+            "cpnama",
+            "cpcatatan",
+            "cpaktif"
+          ]
+        },
+        {
+          "table_name": "m1_price_category",
+          "alias": "master_price_category",
+          "description": "Price-category master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "pckode",
+            "pcnama",
+            "pccatatan",
+            "pcaktif"
+          ]
+        },
+        {
+          "table_name": "m1_price_category_detail",
+          "alias": "master_price_category_detail",
+          "description": "Detail table for item rows within price-category definitions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "pcdkategori",
+            "pcdidbarang",
+            "pcdstokminimal",
+            "pcdstokmaksimal",
+            "pcdstokreorder",
+            "pcdstokminorder",
+            "pcdhargajual1",
+            "pcdhargajual2",
+            "pcdhargajual3",
+            "pcdhargajual4",
+            "pcdhargajual5",
+            "pcddiskonjual1",
+            "pcddiskonjual2",
+            "pcddiskonjual3",
+            "pcddiskonjual4",
+            "pcddiskonjual5",
+            "pcddownloaded",
+            "pcdhargajual6",
+            "pcdhargajual7",
+            "pcdhargajual8",
+            "pcdhargajual9",
+            "pcdhargajual10",
+            "pcddiskonjual6",
+            "pcddiskonjual7",
+            "pcddiskonjual8",
+            "pcddiskonjual9",
+            "pcddiskonjual10"
+          ]
+        },
+        {
+          "table_name": "m1_material",
+          "alias": "master_material",
+          "description": "Material master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "mkode",
+            "mnama",
+            "mcatatan",
+            "maktif",
+            "mindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_merk",
+          "alias": "master_merk",
+          "description": "Brand master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "mkode",
+            "mnama",
+            "mcatatan",
+            "maktif",
+            "mindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_model",
+          "alias": "master_model",
+          "description": "Model master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "mkode",
+            "mnama",
+            "mcatatan",
+            "maktif",
+            "mindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_size",
+          "alias": "master_size",
+          "description": "Size master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "skode",
+            "snama",
+            "scatatan",
+            "saktif",
+            "sindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_type_sa",
+          "alias": "master_type_sa",
+          "description": "SA-type master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "tsakode",
+            "tsanama",
+            "tsarek",
+            "tsacatatan",
+            "tsaaktif"
+          ]
+        },
+        {
+          "table_name": "m1_unit",
+          "alias": "master_unit",
+          "description": "Unit master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "ukode",
+            "unama",
+            "unilai",
+            "uketerangan",
+            "uaktif",
+            "uindexbarcode"
+          ]
+        },
+        {
+          "table_name": "m1_other_cost",
+          "alias": "master_other_cost",
+          "description": "Other-cost master used across ERP transactions.",
+          "owner_module": "ITEM_RELATED_MASTERS",
+          "columns": [
+            "ockode",
+            "ocnama",
+            "ocrekdebit",
+            "ocrekkredit",
+            "ockontak",
+            "octermasukhpp",
+            "occatatan"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "item_classification_flow",
+          "description": "Relationship from items to classifications and commercial attributes.",
+          "joins": [
+            "m1_item.bkelasproduk = m1_class_product.cpkode",
+            "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
+            "m1_item.bkomisi = m1_selling_point.spid"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "SUPPORTING_TABLES",
+      "title": "Supporting Tables",
+      "table_counts": {
+        "owned": 5
+      },
+      "tables": [
+        {
+          "table_name": "m1_country",
+          "alias": "master_country",
+          "description": "Country master used across ERP transactions.",
+          "owner_module": "SUPPORTING_TABLES",
+          "columns": [
+            "ckode",
+            "cnama",
+            "ccatatan",
+            "caktif"
+          ]
+        },
+        {
+          "table_name": "m1_province",
+          "alias": "master_province",
+          "description": "Province master used across ERP transactions.",
+          "owner_module": "SUPPORTING_TABLES",
+          "columns": [
+            "pkode",
+            "pnama",
+            "pcatatan",
+            "paktif",
+            "pnegara"
+          ]
+        },
+        {
+          "table_name": "m1_city",
+          "alias": "master_city",
+          "description": "City master used across ERP transactions.",
+          "owner_module": "SUPPORTING_TABLES",
+          "columns": [
+            "ckode",
+            "cnama",
+            "cpropinsi",
+            "ccatatan",
+            "caktif",
+            "cnegara"
+          ]
+        },
+        {
+          "table_name": "m1_transaction_note",
+          "alias": "master_transaction_note",
+          "description": "Transaction-note master used across ERP transactions.",
+          "owner_module": "SUPPORTING_TABLES",
+          "columns": [
+            "tnsumber",
+            "tnkode",
+            "tncatatan",
+            "tnaktif"
+          ]
+        },
+        {
+          "table_name": "m1_transaction_note_detail",
+          "alias": "master_transaction_note_detail",
+          "description": "Detail table for transaction-note line items.",
+          "owner_module": "SUPPORTING_TABLES",
+          "columns": [
+            "tndkode",
+            "tndsumber",
+            "tndcatatan",
+            "tndaktif"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "transaction_note_flow",
+          "description": "Relationship from transaction-note headers to note details by source.",
+          "joins": [
+            "m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode",
+            "m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber"
+          ]
+        }
+      ],
+      "functions": []
+    }
+  ]
+}

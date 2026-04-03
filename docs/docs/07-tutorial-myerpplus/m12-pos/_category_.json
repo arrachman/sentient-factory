@@ -1,0 +1,9 @@
+{
+  "label": "m12-pos",
+  "position": 12,
+  "link": {
+    "type": "generated-index",
+    "title": "m12-pos",
+    "description": "Tutorials and schema artifacts for POS or retail transaction flow."
+  }
+}

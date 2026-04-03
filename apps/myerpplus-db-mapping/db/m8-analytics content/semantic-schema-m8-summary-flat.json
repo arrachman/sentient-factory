@@ -1,0 +1,214 @@
+{
+  "title": "Semantic Schema M8 Summary Flat",
+  "source_json": "semantic-schema-m8-summary.json",
+  "count": 23,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "CONTENT_TABLES",
+      "table_name": "m8_content",
+      "alias": "analytics_content",
+      "owner_module": "CONTENT_TABLES",
+      "description": "Master content analytics/dashboard yang mendefinisikan formula, format, periode, dan metadata indikator tampilan.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "CONTENT_TABLES",
+      "table_name": "m8_content_chart",
+      "alias": "analytics_content_chart",
+      "owner_module": "CONTENT_TABLES",
+      "description": "Konfigurasi chart/visualisasi untuk content analytics tertentu.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "CONTENT_TABLES",
+      "table_name": "m8_indicator",
+      "alias": "analytics_indicator",
+      "owner_module": "CONTENT_TABLES",
+      "description": "Threshold, comparator, dan nilai indikator untuk analytics content.",
+      "column_count": 10
+    },
+    {
+      "type": "relation",
+      "module": "CONTENT_TABLES",
+      "name": "content_indicator_flow",
+      "description": "Relasi content analytics ke threshold indikator.",
+      "joins": [
+        "m8_content.ckode = m8_indicator.ikode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "CONTENT_TABLES",
+      "name": "content_chart_flow",
+      "description": "Relasi content analytics ke konfigurasi chart.",
+      "joins": [
+        "m8_content.ckode = m8_content_chart.chkode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "CONTENT_TABLES",
+      "name": "content_module_flow",
+      "description": "Relasi content analytics ke master module.",
+      "joins": [
+        "m8_content.cmodule = m0_module.mid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_capex",
+      "alias": "analytics_f_capex",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk CAPEX.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_dpo",
+      "alias": "analytics_f_dpo",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk days payable outstanding.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_dsi",
+      "alias": "analytics_f_dsi",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk days sales of inventory.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_dso",
+      "alias": "analytics_f_dso",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk days sales outstanding.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_dte",
+      "alias": "analytics_f_dte",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk debt to equity.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_ebtida",
+      "alias": "analytics_f_ebtida",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk EBITDA.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_eva",
+      "alias": "analytics_f_eva",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk EVA.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_gpm",
+      "alias": "analytics_f_gpm",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk gross profit margin.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_np",
+      "alias": "analytics_f_np",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk net profit.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_npm",
+      "alias": "analytics_f_npm",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk net profit margin.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_opm",
+      "alias": "analytics_f_opm",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk operating profit margin.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_rgr",
+      "alias": "analytics_f_rgr",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk revenue growth rate.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_roa",
+      "alias": "analytics_f_roa",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk return on assets.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_roce",
+      "alias": "analytics_f_roce",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk return on capital employed.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_roe",
+      "alias": "analytics_f_roe",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk return on equity.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_roi",
+      "alias": "analytics_f_roi",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk return on investment.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "METRIC_TABLES",
+      "table_name": "m8_f_wctr",
+      "alias": "analytics_f_wctr",
+      "owner_module": "METRIC_TABLES",
+      "description": "Fact/metric analytics untuk working capital turnover.",
+      "column_count": 0
+    }
+  ]
+}

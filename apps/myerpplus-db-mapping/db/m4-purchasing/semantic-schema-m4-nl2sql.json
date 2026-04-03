@@ -1,6 +1,6 @@
 {
   "domain": "myerpplus_purchasing_m4",
-  "description": "Machine-friendly NL2SQL guide untuk modul M4 purchasing. Berisi tabel utama, sinonim bisnis, join hints, relasi polymorphic, dan aturan penting untuk query generation.",
+  "description": "Machine-friendly NL2SQL guide for the M4 purchasing module. Contains core tables, business synonyms, join hints, polymorphic relationships, and important rules for query generation.",
   "source_files": [
     "semantic-schema-m4.json",
     "semantic-schema-m4-summary.md",
@@ -157,7 +157,7 @@
   "join_hints": [
     {
       "name": "purchase_request_to_order_flow",
-      "description": "Alur permintaan pembelian sampai pembentukan purchase order.",
+      "description": "Purchase-request flow through purchase-order creation.",
       "joins": [
         "m4_pr.prid = m4_pr_detail.idpr",
         "m4_pr_detail.idprdetail = m4_rq_detail.idprdetail",
@@ -169,7 +169,7 @@
     },
     {
       "name": "purchase_order_receipt_invoice_flow",
-      "description": "Alur purchase order ke penerimaan barang sampai tagihan pembelian.",
+      "description": "Purchase-order flow through goods receipt to purchase invoicing.",
       "joins": [
         "m4_po.poid = m4_po_detail.idpo",
         "m4_po_detail.idpodetail = m4_grn_detail.idpodetail",
@@ -180,7 +180,7 @@
     },
     {
       "name": "purchase_return_flow",
-      "description": "Alur retur pembelian dari invoice atau receipt ke debit note dan return.",
+      "description": "Purchase-return flow from invoice or receipt to debit-note and return documents.",
       "joins": [
         "m4_ri.riid = m4_ri_detail.idri",
         "m4_ri_detail.idridetail = m4_dnr_detail.idridetail",
@@ -191,7 +191,7 @@
     },
     {
       "name": "purchase_advance_payment_flow",
-      "description": "Relasi uang muka pembelian dan dokumen order atau invoice terkait.",
+      "description": "Relationship among purchase advances and related order/invoice documents.",
       "joins": [
         "m4_po.poid = m4_ap.apidpo",
         "m4_ap.apid = m4_ap_pay.idap",
@@ -201,7 +201,7 @@
     },
     {
       "name": "purchase_vendor_payment_flow",
-      "description": "Alur proposal pembayaran vendor dan realisasi pembayaran ke dokumen target.",
+      "description": "Vendor-payment-proposal flow and realized payment against target documents.",
       "joins": [
         "m4_vpp.vppid = m4_vpp_detail.idvpp",
         "m4_vp.vpid = m4_vp_detail.idvp",
@@ -214,7 +214,7 @@
     },
     {
       "name": "purchase_comparison_flow",
-      "description": "Relasi comparative sheet, request quotation, dan hasil perbandingan vendor.",
+      "description": "Relationship among comparative sheets, request quotations, and vendor comparison results.",
       "joins": [
         "m4_pr.prid = m4_cs.csidpr",
         "m4_cs.csid = m4_cs_detail.idcs",
@@ -225,7 +225,7 @@
     },
     {
       "name": "purchase_invoice_exchange_flow",
-      "description": "Relasi tukar faktur pembelian ke dokumen sumber pembelian.",
+      "description": "Relationship from purchase invoice exchange to source purchasing documents.",
       "joins": [
         "m4_pie.pieid = m4_pie_detail.idpie",
         "m4_pie.idri = m4_ri.riid",
@@ -233,12 +233,92 @@
       ]
     }
   ],
+  "detail_lineage_keys": [
+    {
+      "name": "rq_detail_to_pr",
+      "source_table": "m4_rq_detail",
+      "source_column": "idprdetail",
+      "target_table": "m4_pr_detail",
+      "target_column": "idprdetail",
+      "next_hop": {
+        "table": "m4_pr",
+        "via_column": "idpr",
+        "target_column": "prid"
+      },
+      "business_meaning": "Trace request-quotation rows back to the source purchase request."
+    },
+    {
+      "name": "bs_detail_to_rq",
+      "source_table": "m4_bs_detail",
+      "source_column": "idrqdetail",
+      "target_table": "m4_rq_detail",
+      "target_column": "idrqdetail",
+      "next_hop": {
+        "table": "m4_rq",
+        "via_column": "idrq",
+        "target_column": "rqid"
+      },
+      "business_meaning": "Trace bid-selection rows back to the source request quotation."
+    },
+    {
+      "name": "grn_detail_to_po",
+      "source_table": "m4_grn_detail",
+      "source_column": "idpodetail",
+      "target_table": "m4_po_detail",
+      "target_column": "idpodetail",
+      "next_hop": {
+        "table": "m4_po",
+        "via_column": "idpo",
+        "target_column": "poid"
+      },
+      "business_meaning": "Trace goods-receipt rows back to the source purchase order."
+    },
+    {
+      "name": "ri_detail_to_grn",
+      "source_table": "m4_ri_detail",
+      "source_column": "idgrndetail",
+      "target_table": "m4_grn_detail",
+      "target_column": "idgrndetail",
+      "next_hop": {
+        "table": "m4_grn",
+        "via_column": "idgrn",
+        "target_column": "grnid"
+      },
+      "business_meaning": "Trace receive-invoice rows back to the source goods receipt."
+    },
+    {
+      "name": "dnr_detail_to_ri",
+      "source_table": "m4_dnr_detail",
+      "source_column": "idridetail",
+      "target_table": "m4_ri_detail",
+      "target_column": "idridetail",
+      "next_hop": {
+        "table": "m4_ri",
+        "via_column": "idri",
+        "target_column": "riid"
+      },
+      "business_meaning": "Trace debit-note-return rows back to the source receive invoice."
+    },
+    {
+      "name": "prt_detail_to_dnr",
+      "source_table": "m4_prt_detail",
+      "source_column": "iddnrdetail",
+      "target_table": "m4_dnr_detail",
+      "target_column": "iddnrdetail",
+      "next_hop": {
+        "table": "m4_dnr",
+        "via_column": "iddnr",
+        "target_column": "dnrid"
+      },
+      "business_meaning": "Trace purchase-return rows back to the source debit-note return."
+    }
+  ],
   "polymorphic_relationships": [
     {
       "table_name": "m4_vpp_detail",
       "id_column": "idtransaksi",
       "discriminator_column": "sumber",
-      "description": "Relasi polymorphic ke dokumen purchasing berdasarkan kolom sumber pada vendor payment proposal.",
+      "description": "Polymorphic relationship to purchasing documents based on the sumber column in vendor payment proposals.",
       "mappings": [
         {
           "source_value": "AP",
@@ -261,7 +341,7 @@
       "table_name": "m4_vp_detail",
       "id_column": "idtransaksi",
       "discriminator_column": "sumber",
-      "description": "Relasi polymorphic ke dokumen purchasing berdasarkan kolom sumber pada vendor payment.",
+      "description": "Polymorphic relationship to purchasing documents based on the sumber column in vendor payments.",
       "mappings": [
         {
           "source_value": "AP",
@@ -284,7 +364,7 @@
       "table_name": "m4_pie_detail",
       "id_column": "idtransaksi",
       "discriminator_column": "sumber",
-      "description": "Relasi polymorphic ke dokumen purchasing sumber pada transaksi tukar faktur pembelian.",
+      "description": "Polymorphic relationship to source purchasing documents in purchase invoice exchange transactions.",
       "mappings": [
         {
           "source_value": "BY_SOURCE",
@@ -295,46 +375,46 @@
     }
   ],
   "important_rules": [
-    "Kolom idtransaksi pada m4_vpp_detail, m4_vp_detail, dan m4_pie_detail tidak boleh di-join langsung tanpa memeriksa kolom sumber.",
-    "Gunakan tabel header untuk nomor dokumen, tanggal, supplier, status, dan total transaksi.",
-    "Gunakan tabel detail untuk item, kuantitas, harga, vendor comparison, dan progres barang.",
-    "Bedakan proposal pembayaran vendor (m4_vpp) dan realisasi pembayaran vendor (m4_vp).",
-    "Gunakan m4_cs dan m4_bs untuk analitik evaluasi vendor atau seleksi penawaran.",
-    "Gunakan m4_ipc untuk biaya tambahan pembelian atau landed cost.",
-    "Hindari field custom* kecuali benar-benar diminta user atau report."
+    "Do not directly join idtransaksi on m4_vpp_detail, m4_vp_detail, or m4_pie_detail without checking the sumber column.",
+    "Use header tables for document numbers, dates, suppliers, statuses, and total transaction values.",
+    "Use detail tables for items, quantities, prices, vendor comparison, and goods progress.",
+    "Distinguish vendor payment proposals (m4_vpp) from realized vendor payments (m4_vp).",
+    "Use m4_cs and m4_bs for vendor-evaluation or quotation-selection analytics.",
+    "Use m4_ipc for additional purchasing cost or landed cost.",
+    "Avoid custom* fields unless they are explicitly required by the user or report."
   ],
   "query_patterns": [
     {
       "name": "document_summary",
-      "description": "Ringkasan dokumen purchasing berbasis header.",
-      "pattern": "Gunakan tabel header seperti m4_po, m4_ri, atau m4_ap untuk nomor transaksi, tanggal, supplier, status, dan total."
+      "description": "Header-based purchasing document summary.",
+      "pattern": "Use header tables such as m4_po, m4_ri, or m4_ap for transaction numbers, dates, suppliers, statuses, and totals."
     },
     {
       "name": "document_items",
-      "description": "Detail item per dokumen purchasing.",
-      "pattern": "Join header ke detail, misalnya m4_po -> m4_po_detail atau m4_ri -> m4_ri_detail."
+      "description": "Item detail per purchasing document.",
+      "pattern": "Join headers to detail, for example m4_po -> m4_po_detail or m4_ri -> m4_ri_detail."
     },
     {
       "name": "purchase_flow_trace",
-      "description": "Tracing alur pembelian dari permintaan sampai invoice.",
-      "pattern": "Mulai dari detail: PR -> PR_DETAIL -> RQ_DETAIL -> BS_DETAIL -> PO_DETAIL -> GRN_DETAIL -> RI_DETAIL."
+      "description": "Trace the purchasing flow from request to invoice.",
+      "pattern": "Start from detail: PR -> PR_DETAIL -> RQ_DETAIL -> BS_DETAIL -> PO_DETAIL -> GRN_DETAIL -> RI_DETAIL."
     },
     {
       "name": "purchase_return_trace",
-      "description": "Tracing retur pembelian dari invoice ke debit note atau return.",
+      "description": "Trace purchase returns from invoice to debit note or return.",
       "pattern": "RI -> RI_DETAIL -> DNR_DETAIL -> PRT_DETAIL."
     },
     {
       "name": "vendor_payment_trace",
-      "description": "Tracing proposal dan realisasi pembayaran vendor.",
-      "pattern": "VPP -> VPP_DETAIL -> VP_DETAIL -> VP dengan pemeriksaan sumber pada idtransaksi."
+      "description": "Trace vendor payment proposals and realized vendor payments.",
+      "pattern": "VPP -> VPP_DETAIL -> VP_DETAIL -> VP, with sumber checks on idtransaksi."
     }
   ],
   "caution_areas": [
-    "Pertanyaan lintas AP, RI, dan PRT melalui m4_vpp_detail.",
-    "Pertanyaan pembayaran vendor yang memakai m4_vp_detail.idtransaksi.",
-    "Pertanyaan tukar faktur pembelian yang memakai m4_pie_detail.idtransaksi.",
-    "Pertanyaan histori yang mencampur tabel aktif dan history.",
-    "Pertanyaan yang mengandalkan custom* tanpa referensi report yang jelas."
+    "Questions spanning AP, RI, and PRT through m4_vpp_detail.",
+    "Vendor payment questions that use m4_vp_detail.idtransaksi.",
+    "Purchase-invoice-exchange questions that use m4_pie_detail.idtransaksi.",
+    "History questions that mix active and history tables.",
+    "Questions that rely on custom* fields without a clear report reference."
   ]
 }

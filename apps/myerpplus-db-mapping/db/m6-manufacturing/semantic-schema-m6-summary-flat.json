@@ -1,0 +1,496 @@
+{
+  "title": "Semantic Schema M6 Summary Flat",
+  "source_json": "semantic-schema-m6-summary.json",
+  "count": 52,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m6_bom",
+      "alias": "manufacturing_bom",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Header bill of materials atau formula produksi.",
+      "column_count": 50
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m6_mrn",
+      "alias": "manufacturing_mrn",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Material receipt note untuk realisasi material produksi.",
+      "column_count": 58
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m6_mrs",
+      "alias": "manufacturing_mrs",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Material request slip untuk kebutuhan produksi.",
+      "column_count": 60
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m6_pd",
+      "alias": "manufacturing_pd",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Production document / proses produksi utama.",
+      "column_count": 58
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m6_pdr",
+      "alias": "manufacturing_pdr",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Production result atau production realization document.",
+      "column_count": 64
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_HEADERS",
+      "table_name": "m6_wo",
+      "alias": "manufacturing_wo",
+      "owner_module": "DOCUMENT_HEADERS",
+      "description": "Work order produksi.",
+      "column_count": 63
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "bom_structure_flow",
+      "description": "Relasi header BOM ke komponen input dan output.",
+      "joins": [
+        "m6_bom.bomid = m6_bom_in.idbom",
+        "m6_bom.bomid = m6_bom_out.idbom"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "mrs_to_mrn_flow",
+      "description": "Relasi material request slip ke material receipt note.",
+      "joins": [
+        "m6_mrs.mrsid = m6_mrs_out.idmrs",
+        "m6_mrs_out.idmrsout = m6_mrn_out.idmrsout",
+        "m6_mrn.mrnid = m6_mrn_out.idmrn"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "mrs_to_pd_flow",
+      "description": "Relasi material request slip ke production document.",
+      "joins": [
+        "m6_mrs.mrsid = m6_mrs_out.idmrs",
+        "m6_mrs_out.idmrsout = m6_pd_out.idmrsout",
+        "m6_pd.pdid = m6_pd_out.idpd"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "bom_pdr_wo_reference_flow",
+      "description": "Relasi dokumen manufacturing yang saling mereferensikan BOM, PDR, dan WO.",
+      "joins": [
+        "m6_mrs.mrsidbom = m6_bom.bomid",
+        "m6_mrs.mrsidpdr = m6_pdr.pdrid",
+        "m6_mrs.mrsidwo = m6_wo.woid",
+        "m6_mrn.mrnidbom = m6_bom.bomid",
+        "m6_mrn.mrnidpdr = m6_pdr.pdrid",
+        "m6_mrn.mrnidwo = m6_wo.woid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_HEADERS",
+      "name": "workorder_material_output_flow",
+      "description": "Relasi work order ke detail input, output, aktivitas, dan route card.",
+      "joins": [
+        "m6_wo.woid = m6_wo_in.idwo",
+        "m6_wo.woid = m6_wo_out.idwo",
+        "m6_wo.woid = m6_wo_activity.idwo",
+        "m6_wo.woid = m6_wo_route_card.idwo"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_bom_in",
+      "alias": "manufacturing_bom_in",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail input material/komponen untuk BOM.",
+      "column_count": 36
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_bom_out",
+      "alias": "manufacturing_bom_out",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail output/hasil produksi pada BOM.",
+      "column_count": 37
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_mrn_in",
+      "alias": "manufacturing_mrn_in",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail material masuk pada MRN.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_mrn_out",
+      "alias": "manufacturing_mrn_out",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail material keluar pada MRN.",
+      "column_count": 44
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_mrs_in",
+      "alias": "manufacturing_mrs_in",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail material masuk pada MRS.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_mrs_out",
+      "alias": "manufacturing_mrs_out",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail material keluar/consumption pada MRS.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_pd_bom",
+      "alias": "manufacturing_pd_bom",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Relasi production document ke BOM yang dipakai.",
+      "column_count": 1
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_pd_in",
+      "alias": "manufacturing_pd_in",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail input material pada production document.",
+      "column_count": 42
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_pd_out",
+      "alias": "manufacturing_pd_out",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail output hasil produksi pada production document.",
+      "column_count": 43
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_pdr_in",
+      "alias": "manufacturing_pdr_in",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail input pada production result.",
+      "column_count": 47
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_pdr_out",
+      "alias": "manufacturing_pdr_out",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail output pada production result.",
+      "column_count": 48
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_wo_activity",
+      "alias": "manufacturing_wo_activity",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Aktivitas atau step proses pada work order.",
+      "column_count": 20
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_wo_in",
+      "alias": "manufacturing_wo_in",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail kebutuhan material pada work order.",
+      "column_count": 46
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_wo_out",
+      "alias": "manufacturing_wo_out",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Detail output hasil pada work order.",
+      "column_count": 47
+    },
+    {
+      "type": "owned_table",
+      "module": "DOCUMENT_DETAILS",
+      "table_name": "m6_wo_route_card",
+      "alias": "manufacturing_wo_route_card",
+      "owner_module": "DOCUMENT_DETAILS",
+      "description": "Route card atau urutan proses kerja work order.",
+      "column_count": 20
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "bom_structure_flow",
+      "description": "Relasi header BOM ke komponen input dan output.",
+      "joins": [
+        "m6_bom.bomid = m6_bom_in.idbom",
+        "m6_bom.bomid = m6_bom_out.idbom"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "mrs_to_mrn_flow",
+      "description": "Relasi material request slip ke material receipt note.",
+      "joins": [
+        "m6_mrs.mrsid = m6_mrs_out.idmrs",
+        "m6_mrs_out.idmrsout = m6_mrn_out.idmrsout",
+        "m6_mrn.mrnid = m6_mrn_out.idmrn"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "mrs_to_pd_flow",
+      "description": "Relasi material request slip ke production document.",
+      "joins": [
+        "m6_mrs.mrsid = m6_mrs_out.idmrs",
+        "m6_mrs_out.idmrsout = m6_pd_out.idmrsout",
+        "m6_pd.pdid = m6_pd_out.idpd"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "DOCUMENT_DETAILS",
+      "name": "workorder_material_output_flow",
+      "description": "Relasi work order ke detail input, output, aktivitas, dan route card.",
+      "joins": [
+        "m6_wo.woid = m6_wo_in.idwo",
+        "m6_wo.woid = m6_wo_out.idwo",
+        "m6_wo.woid = m6_wo_activity.idwo",
+        "m6_wo.woid = m6_wo_route_card.idwo"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m6_files",
+      "alias": "manufacturing_files",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Lampiran dokumen manufacturing.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m6_itembom_in",
+      "alias": "manufacturing_itembom_in",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Snapshot komponen input BOM per barang hasil.",
+      "column_count": 1
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m6_itembom_out",
+      "alias": "manufacturing_itembom_out",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Snapshot komponen output BOM per barang hasil.",
+      "column_count": 1
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m6_machine_plotting",
+      "alias": "manufacturing_machine_plotting",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Mapping mesin/plotting untuk proses manufaktur.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m6_notes",
+      "alias": "manufacturing_notes",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Catatan dokumen manufacturing.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m6_production_planning",
+      "alias": "manufacturing_production_planning",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Data perencanaan produksi.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_bom_history",
+      "alias": "manufacturing_bom_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk bom history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_bom_in_history",
+      "alias": "manufacturing_bom_in_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk bom in history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_bom_out_history",
+      "alias": "manufacturing_bom_out_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk bom out history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_mrn_history",
+      "alias": "manufacturing_mrn_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk mrn history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_mrn_out_history",
+      "alias": "manufacturing_mrn_out_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk mrn out history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_mrs_history",
+      "alias": "manufacturing_mrs_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk mrs history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_mrs_out_history",
+      "alias": "manufacturing_mrs_out_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk mrs out history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_pd_history",
+      "alias": "manufacturing_pd_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk pd history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_pd_in_history",
+      "alias": "manufacturing_pd_in_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk pd in history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_pd_out_history",
+      "alias": "manufacturing_pd_out_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk pd out history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_pdr_history",
+      "alias": "manufacturing_pdr_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk pdr history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_pdr_in_history",
+      "alias": "manufacturing_pdr_in_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk pdr in history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_pdr_out_history",
+      "alias": "manufacturing_pdr_out_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk pdr out history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_wo_history",
+      "alias": "manufacturing_wo_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk wo history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_wo_in_history",
+      "alias": "manufacturing_wo_in_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk wo in history.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "HISTORY_TABLES",
+      "table_name": "m6_wo_out_history",
+      "alias": "manufacturing_wo_out_history",
+      "owner_module": "HISTORY_TABLES",
+      "description": "Tabel manufacturing untuk wo out history.",
+      "column_count": 0
+    }
+  ]
+}

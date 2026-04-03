@@ -1,0 +1,236 @@
+{
+  "title": "Semantic Schema M8 Summary",
+  "source_json": "semantic-schema-m8.json",
+  "source_summary_markdown": "semantic-schema-m8-summary.md",
+  "totals": {
+    "schema_tables": 20,
+    "active_tables": 20,
+    "modules": 2,
+    "join_hints": 3
+  },
+  "join_hints": [
+    {
+      "name": "content_indicator_flow",
+      "description": "Relationship from analytics content to indicator thresholds.",
+      "joins": [
+        "m8_content.ckode = m8_indicator.ikode"
+      ]
+    },
+    {
+      "name": "content_chart_flow",
+      "description": "Relationship from analytics content to chart configuration.",
+      "joins": [
+        "m8_content.ckode = m8_content_chart.chkode"
+      ]
+    },
+    {
+      "name": "content_module_flow",
+      "description": "Relationship from analytics content to module master data.",
+      "joins": [
+        "m8_content.cmodule = m0_module.mid"
+      ]
+    }
+  ],
+  "notes": [
+    "M8 artifacts were inferred from query/report sources because the initial schema was empty."
+  ],
+  "modules": [
+    {
+      "module": "CONTENT_TABLES",
+      "title": "Content Tables",
+      "table_counts": {
+        "owned": 3
+      },
+      "tables": [
+        {
+          "table_name": "m8_content",
+          "alias": "analytics_content",
+          "description": "Analytics/dashboard content master that defines formulas, formats, periods, and display-indicator metadata.",
+          "owner_module": "CONTENT_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_content_chart",
+          "alias": "analytics_content_chart",
+          "description": "Chart/visualization configuration for specific analytics content.",
+          "owner_module": "CONTENT_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_indicator",
+          "alias": "analytics_indicator",
+          "description": "Threshold, comparator, and indicator value for analytics content.",
+          "owner_module": "CONTENT_TABLES",
+          "columns": [
+            "amodifikasitgl",
+            "igreater",
+            "iinputtgl",
+            "iinputuser",
+            "ikode",
+            "imodifikasitgl",
+            "imodifikasiuser",
+            "ivalue1",
+            "ivalue2",
+            "ivalue3"
+          ]
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [
+        {
+          "name": "content_indicator_flow",
+          "description": "Relationship from analytics content to indicator thresholds.",
+          "joins": [
+            "m8_content.ckode = m8_indicator.ikode"
+          ]
+        },
+        {
+          "name": "content_chart_flow",
+          "description": "Relationship from analytics content to chart configuration.",
+          "joins": [
+            "m8_content.ckode = m8_content_chart.chkode"
+          ]
+        },
+        {
+          "name": "content_module_flow",
+          "description": "Relationship from analytics content to module master data.",
+          "joins": [
+            "m8_content.cmodule = m0_module.mid"
+          ]
+        }
+      ],
+      "functions": []
+    },
+    {
+      "module": "METRIC_TABLES",
+      "title": "Metric Tables",
+      "table_counts": {
+        "owned": 17
+      },
+      "tables": [
+        {
+          "table_name": "m8_f_capex",
+          "alias": "analytics_f_capex",
+          "description": "Fact/metric analytics for CAPEX.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_dpo",
+          "alias": "analytics_f_dpo",
+          "description": "Fact/metric analytics for days payable outstanding.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_dsi",
+          "alias": "analytics_f_dsi",
+          "description": "Fact/metric analytics for days sales of inventory.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_dso",
+          "alias": "analytics_f_dso",
+          "description": "Fact/metric analytics for days sales outstanding.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_dte",
+          "alias": "analytics_f_dte",
+          "description": "Fact/metric analytics for debt to equity.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_ebtida",
+          "alias": "analytics_f_ebtida",
+          "description": "Fact/metric analytics for EBITDA.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_eva",
+          "alias": "analytics_f_eva",
+          "description": "Fact/metric analytics for EVA.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_gpm",
+          "alias": "analytics_f_gpm",
+          "description": "Fact/metric analytics for gross profit margin.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_np",
+          "alias": "analytics_f_np",
+          "description": "Fact/metric analytics for net profit.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_npm",
+          "alias": "analytics_f_npm",
+          "description": "Fact/metric analytics for net profit margin.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_opm",
+          "alias": "analytics_f_opm",
+          "description": "Fact/metric analytics for operating profit margin.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_rgr",
+          "alias": "analytics_f_rgr",
+          "description": "Fact/metric analytics for revenue growth rate.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_roa",
+          "alias": "analytics_f_roa",
+          "description": "Fact/metric analytics for return on assets.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_roce",
+          "alias": "analytics_f_roce",
+          "description": "Fact/metric analytics for return on capital employed.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_roe",
+          "alias": "analytics_f_roe",
+          "description": "Fact/metric analytics for return on equity.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_roi",
+          "alias": "analytics_f_roi",
+          "description": "Fact/metric analytics for return on investment.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        },
+        {
+          "table_name": "m8_f_wctr",
+          "alias": "analytics_f_wctr",
+          "description": "Fact/metric analytics for working capital turnover.",
+          "owner_module": "METRIC_TABLES",
+          "columns": []
+        }
+      ],
+      "cross_module_refs": [],
+      "relations": [],
+      "functions": []
+    }
+  ]
+}

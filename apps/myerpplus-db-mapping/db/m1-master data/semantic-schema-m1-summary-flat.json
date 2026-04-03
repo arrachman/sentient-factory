@@ -1,0 +1,536 @@
+{
+  "title": "Semantic Schema M1 Summary Flat",
+  "source_json": "semantic-schema-m1-summary.json",
+  "count": 56,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_contact",
+      "alias": "master_kontak",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master kontak bisnis yang menampung customer, supplier, salesman, dan rekanan lain. Tabel ini menjadi referensi utama transaksi pembelian dan penjualan.",
+      "column_count": 128
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_item",
+      "alias": "master_barang",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master barang/jasa yang dipakai pada transaksi inventory, purchasing, dan sales. Menyimpan identitas item, satuan, stok, harga, dan akun persediaan.",
+      "column_count": 128
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_warehouse",
+      "alias": "master_gudang",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master gudang/lokasi penyimpanan stok. Dipakai sebagai referensi semua transaksi barang masuk, keluar, mutasi, dan saldo awal barang.",
+      "column_count": 14
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_coa",
+      "alias": "master_akun",
+      "owner_module": "CORE_MASTERS",
+      "description": "Chart of accounts untuk pencatatan seluruh transaksi keuangan. Tabel ini mendefinisikan nomor akun, nama akun, kategori, dan saldo berjalan.",
+      "column_count": 33
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_branch",
+      "alias": "master_branch",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data branch yang dipakai lintas transaksi ERP.",
+      "column_count": 10
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_location",
+      "alias": "master_location",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data location yang dipakai lintas transaksi ERP.",
+      "column_count": 15
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_division",
+      "alias": "master_division",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data division yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_department",
+      "alias": "master_department",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data department yang dipakai lintas transaksi ERP.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_subdepartment",
+      "alias": "master_subdepartment",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data subdepartment yang dipakai lintas transaksi ERP.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_subdivision",
+      "alias": "master_subdivision",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data subdivision yang dipakai lintas transaksi ERP.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_section",
+      "alias": "master_section",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data section yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_project",
+      "alias": "master_project",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data project yang dipakai lintas transaksi ERP.",
+      "column_count": 29
+    },
+    {
+      "type": "owned_table",
+      "module": "CORE_MASTERS",
+      "table_name": "m1_cost_center",
+      "alias": "master_cost_center",
+      "owner_module": "CORE_MASTERS",
+      "description": "Master data cost center yang dipakai lintas transaksi ERP.",
+      "column_count": 7
+    },
+    {
+      "type": "relation",
+      "module": "CORE_MASTERS",
+      "name": "contact_commercial_hierarchy",
+      "description": "Relasi contact dengan kategori dan salesman.",
+      "joins": [
+        "m1_contact.kkategori = m1_contact_category.cckode",
+        "m1_contact.kkategoricustomer = m1_customer_category.cckode",
+        "m1_contact.kkategorisupplier = m1_supplier_category.sckode",
+        "m1_contact.kkategorisalesman = m1_salesman_category.sckode",
+        "m1_contact.ksalesman = m1_contact.kid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "CORE_MASTERS",
+      "name": "item_classification_flow",
+      "description": "Relasi item dengan klasifikasi dan atribut komersialnya.",
+      "joins": [
+        "m1_item.bkelasproduk = m1_class_product.cpkode",
+        "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
+        "m1_item.bkomisi = m1_selling_point.spid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "CORE_MASTERS",
+      "name": "warehouse_organization_flow",
+      "description": "Relasi gudang dengan struktur organisasi dan lokasi.",
+      "joins": [
+        "m1_warehouse.wdivisi = m1_division.dkode",
+        "m1_warehouse.wlokasi = m1_location.lkode",
+        "m1_location.lcabang = m1_branch.bkode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "CORE_MASTERS",
+      "name": "coa_reference_flow",
+      "description": "Relasi akun dengan parent akun dan dimensi organisasi.",
+      "joins": [
+        "m1_coa.cparent = m1_coa.cnomor",
+        "m1_coa.ccabang = m1_branch.bkode",
+        "m1_coa.clokasi = m1_location.lkode",
+        "m1_coa.cdivisi = m1_division.dkode",
+        "m1_coa.ckodebank = m1_bank.bkode",
+        "m1_coa.cmatauang = m1_currency.ckode"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_terms",
+      "alias": "master_terms",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data terms yang dipakai lintas transaksi ERP.",
+      "column_count": 11
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_tax",
+      "alias": "master_tax",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data tax yang dipakai lintas transaksi ERP.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_currency",
+      "alias": "master_currency",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data currency yang dipakai lintas transaksi ERP.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_bank",
+      "alias": "master_bank",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data bank yang dipakai lintas transaksi ERP.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_expedition",
+      "alias": "master_expedition",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data expedition yang dipakai lintas transaksi ERP.",
+      "column_count": 10
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_customer_category",
+      "alias": "master_customer_category",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data customer category yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_supplier_category",
+      "alias": "master_supplier_category",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data supplier category yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_salesman_category",
+      "alias": "master_salesman_category",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data salesman category yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_contact_category",
+      "alias": "master_contact_category",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data contact category yang dipakai lintas transaksi ERP.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_contact_terms",
+      "alias": "master_contact_terms",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data contact terms yang dipakai lintas transaksi ERP.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "COMMERCIAL_MASTERS",
+      "table_name": "m1_contact_price",
+      "alias": "master_contact_price",
+      "owner_module": "COMMERCIAL_MASTERS",
+      "description": "Master data contact price yang dipakai lintas transaksi ERP.",
+      "column_count": 9
+    },
+    {
+      "type": "relation",
+      "module": "COMMERCIAL_MASTERS",
+      "name": "contact_commercial_hierarchy",
+      "description": "Relasi contact dengan kategori dan salesman.",
+      "joins": [
+        "m1_contact.kkategori = m1_contact_category.cckode",
+        "m1_contact.kkategoricustomer = m1_customer_category.cckode",
+        "m1_contact.kkategorisupplier = m1_supplier_category.sckode",
+        "m1_contact.kkategorisalesman = m1_salesman_category.sckode",
+        "m1_contact.ksalesman = m1_contact.kid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "COMMERCIAL_MASTERS",
+      "name": "coa_reference_flow",
+      "description": "Relasi akun dengan parent akun dan dimensi organisasi.",
+      "joins": [
+        "m1_coa.cparent = m1_coa.cnomor",
+        "m1_coa.ccabang = m1_branch.bkode",
+        "m1_coa.clokasi = m1_location.lkode",
+        "m1_coa.cdivisi = m1_division.dkode",
+        "m1_coa.ckodebank = m1_bank.bkode",
+        "m1_coa.cmatauang = m1_currency.ckode"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_category",
+      "alias": "master_item_category",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item category yang dipakai lintas transaksi ERP.",
+      "column_count": 12
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_type",
+      "alias": "master_item_type",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item type yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_price",
+      "alias": "master_item_price",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item price yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_supplier",
+      "alias": "master_item_supplier",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item supplier yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_stock_warehouse",
+      "alias": "master_item_stock_warehouse",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item stock warehouse yang dipakai lintas transaksi ERP.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_location",
+      "alias": "master_item_location",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item location yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_location_warehouse",
+      "alias": "master_item_location_warehouse",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item location warehouse yang dipakai lintas transaksi ERP.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_permission",
+      "alias": "master_item_permission",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item permission yang dipakai lintas transaksi ERP.",
+      "column_count": 9
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_item_transaction",
+      "alias": "master_item_transaction",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data item transaction yang dipakai lintas transaksi ERP.",
+      "column_count": 47
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_class_product",
+      "alias": "master_class_product",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data class product yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_price_category",
+      "alias": "master_price_category",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data price category yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_price_category_detail",
+      "alias": "master_price_category_detail",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Tabel detail untuk item/baris transaksi price category detail.",
+      "column_count": 27
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_material",
+      "alias": "master_material",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data material yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_merk",
+      "alias": "master_merk",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data merk yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_model",
+      "alias": "master_model",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data model yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_size",
+      "alias": "master_size",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data size yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_type_sa",
+      "alias": "master_type_sa",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data type sa yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_unit",
+      "alias": "master_unit",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data unit yang dipakai lintas transaksi ERP.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "ITEM_RELATED_MASTERS",
+      "table_name": "m1_other_cost",
+      "alias": "master_other_cost",
+      "owner_module": "ITEM_RELATED_MASTERS",
+      "description": "Master data other cost yang dipakai lintas transaksi ERP.",
+      "column_count": 7
+    },
+    {
+      "type": "relation",
+      "module": "ITEM_RELATED_MASTERS",
+      "name": "item_classification_flow",
+      "description": "Relasi item dengan klasifikasi dan atribut komersialnya.",
+      "joins": [
+        "m1_item.bkelasproduk = m1_class_product.cpkode",
+        "m1_item.bsubdepartemen = m1_subdepartment.sdpkode",
+        "m1_item.bkomisi = m1_selling_point.spid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m1_country",
+      "alias": "master_country",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Master data country yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m1_province",
+      "alias": "master_province",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Master data province yang dipakai lintas transaksi ERP.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m1_city",
+      "alias": "master_city",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Master data city yang dipakai lintas transaksi ERP.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m1_transaction_note",
+      "alias": "master_transaction_note",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Master data transaction note yang dipakai lintas transaksi ERP.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "SUPPORTING_TABLES",
+      "table_name": "m1_transaction_note_detail",
+      "alias": "master_transaction_note_detail",
+      "owner_module": "SUPPORTING_TABLES",
+      "description": "Tabel detail untuk item/baris transaksi transaction note detail.",
+      "column_count": 4
+    },
+    {
+      "type": "relation",
+      "module": "SUPPORTING_TABLES",
+      "name": "transaction_note_flow",
+      "description": "Relasi catatan transaksi ke detail catatan per sumber.",
+      "joins": [
+        "m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode",
+        "m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber"
+      ]
+    }
+  ]
+}

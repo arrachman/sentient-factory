@@ -1,3 +1,174 @@
 {
-  "tables": []
+  "tables": [
+    {
+      "table_name": "m8_content",
+      "alias": "analytics_content",
+      "description": "Master content analytics/dashboard yang mendefinisikan formula, format, periode, dan metadata indikator tampilan.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_content_chart",
+      "alias": "analytics_content_chart",
+      "description": "Konfigurasi chart/visualisasi untuk content analytics tertentu.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_capex",
+      "alias": "analytics_f_capex",
+      "description": "Fact/metric analytics untuk CAPEX.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_dpo",
+      "alias": "analytics_f_dpo",
+      "description": "Fact/metric analytics untuk days payable outstanding.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_dsi",
+      "alias": "analytics_f_dsi",
+      "description": "Fact/metric analytics untuk days sales of inventory.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_dso",
+      "alias": "analytics_f_dso",
+      "description": "Fact/metric analytics untuk days sales outstanding.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_dte",
+      "alias": "analytics_f_dte",
+      "description": "Fact/metric analytics untuk debt to equity.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_ebtida",
+      "alias": "analytics_f_ebtida",
+      "description": "Fact/metric analytics untuk EBITDA.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_eva",
+      "alias": "analytics_f_eva",
+      "description": "Fact/metric analytics untuk EVA.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_gpm",
+      "alias": "analytics_f_gpm",
+      "description": "Fact/metric analytics untuk gross profit margin.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_np",
+      "alias": "analytics_f_np",
+      "description": "Fact/metric analytics untuk net profit.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_npm",
+      "alias": "analytics_f_npm",
+      "description": "Fact/metric analytics untuk net profit margin.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_opm",
+      "alias": "analytics_f_opm",
+      "description": "Fact/metric analytics untuk operating profit margin.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_rgr",
+      "alias": "analytics_f_rgr",
+      "description": "Fact/metric analytics untuk revenue growth rate.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_roa",
+      "alias": "analytics_f_roa",
+      "description": "Fact/metric analytics untuk return on assets.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_roce",
+      "alias": "analytics_f_roce",
+      "description": "Fact/metric analytics untuk return on capital employed.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_roe",
+      "alias": "analytics_f_roe",
+      "description": "Fact/metric analytics untuk return on equity.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_roi",
+      "alias": "analytics_f_roi",
+      "description": "Fact/metric analytics untuk return on investment.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_f_wctr",
+      "alias": "analytics_f_wctr",
+      "description": "Fact/metric analytics untuk working capital turnover.",
+      "synonyms": [],
+      "columns": {}
+    },
+    {
+      "table_name": "m8_indicator",
+      "alias": "analytics_indicator",
+      "description": "Threshold, comparator, dan nilai indikator untuk analytics content.",
+      "synonyms": [],
+      "columns": {
+        "amodifikasitgl": "Tanggal atau waktu pembuatan/perubahan data analytics.",
+        "igreater": "Comparator/arah evaluasi threshold indikator.",
+        "iinputtgl": "Tanggal atau waktu pembuatan/perubahan data analytics.",
+        "iinputuser": "User yang membuat atau memodifikasi setting analytics.",
+        "ikode": "Identitas unik atau kode referensi untuk content/indicator analytics.",
+        "imodifikasitgl": "Tanggal atau waktu pembuatan/perubahan data analytics.",
+        "imodifikasiuser": "User yang membuat atau memodifikasi setting analytics.",
+        "ivalue1": "Nilai threshold atau parameter indikator.",
+        "ivalue2": "Nilai threshold atau parameter indikator.",
+        "ivalue3": "Nilai threshold atau parameter indikator."
+      }
+    }
+  ],
+  "metadata": {
+    "module": "m8-analytics content",
+    "generated_from": [
+      "m8-queries.md",
+      "m8-queries-by-type.md",
+      "m0_report_rmoduleid_8.sql"
+    ],
+    "query_counts": {
+      "SELECT": 7,
+      "INSERT": 1,
+      "UPDATE": 1,
+      "DELETE": 0
+    },
+    "table_count": 20,
+    "notes": [
+      "Schema M8 di-infer dari query dan report source karena schema awal masih kosong.",
+      "Domain M8 aktif berfokus pada content, chart, indicator, dan metric analytics dashboard."
+    ]
+  }
 }

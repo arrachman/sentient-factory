@@ -1,0 +1,214 @@
+{
+  "title": "Semantic Cross-Module Lineage",
+  "mode": "readonly",
+  "description": "Summary of the safest cross-module MyERPPlus relationships for a readonly AI agent. Focuses on high-confidence relations, semantic boundaries, and cross-domain tracing patterns.",
+  "modules": [
+    {
+      "module": "m1",
+      "name": "master_data",
+      "role": "shared_dimension",
+      "business_meaning": "Cross-module foundation for contacts, items, branches, locations, projects, and other dimension labels."
+    },
+    {
+      "module": "m2",
+      "name": "finance",
+      "role": "finance_boundary",
+      "business_meaning": "Used when the question moves into cash/bank, payment allocation, posted journals, or accounting impact."
+    },
+    {
+      "module": "m3",
+      "name": "inventory",
+      "role": "inventory_boundary",
+      "business_meaning": "Used when the question moves into stock, warehouse movement, transfer, receive stock, or adjustment."
+    },
+    {
+      "module": "m5",
+      "name": "sales",
+      "role": "commercial_document_domain",
+      "business_meaning": "Sales commercial documents and operational receivable documents such as SO, DO, DR, SI, SR, AS, IC, and PV."
+    },
+    {
+      "module": "m12",
+      "name": "pos",
+      "role": "retail_transaction_domain",
+      "business_meaning": "Retail/POS transactions, promotions, vouchers, loyalty, and operational cashier flows."
+    }
+  ],
+  "high_confidence_relations": [
+    {
+      "name": "m5_sales_to_m1_contact",
+      "relation_type": "master_dimension",
+      "from_patterns": [
+        "m5_*customer"
+      ],
+      "to_table": "m1_contact",
+      "to_column": "kid",
+      "business_meaning": "Label customer pada dokumen sales diambil dari master contact."
+    },
+    {
+      "name": "m5_sales_to_m1_item",
+      "relation_type": "master_dimension",
+      "from_patterns": [
+        "m5_*_detail.idbarang"
+      ],
+      "to_table": "m1_item",
+      "to_column": "bid",
+      "business_meaning": "Label item pada line dokumen sales diambil dari master item."
+    },
+    {
+      "name": "m12_pos_to_m1_contact",
+      "relation_type": "master_dimension",
+      "from_patterns": [
+        "m_12_st.stkontak",
+        "m_12_ppv.ppvcustomer"
+      ],
+      "to_table": "m1_contact",
+      "to_column": "kid",
+      "business_meaning": "Label customer/contact POS diambil dari master contact."
+    },
+    {
+      "name": "m12_pos_to_m1_item",
+      "relation_type": "master_dimension",
+      "from_patterns": [
+        "m_12_st_detail.idbarang",
+        "m_12_pos_item.piidbarang"
+      ],
+      "to_table": "m1_item",
+      "to_column": "bid",
+      "business_meaning": "Label item POS dan setup POS diambil dari master item."
+    },
+    {
+      "name": "m12_pos_to_m5_sales_invoice",
+      "relation_type": "cross_module_foreign_key",
+      "from_table": "m_12_pos_voucher_out",
+      "from_column": "voidtransaksi",
+      "to_table": "m5_si",
+      "to_column": "siid",
+      "business_meaning": "POS voucher used on a formal sales invoice."
+    }
+  ],
+  "semantic_boundaries": [
+    {
+      "name": "m5_to_m2_finance_boundary",
+      "from_module": "m5",
+      "to_module": "m2",
+      "trigger_intents": [
+        "jurnal posting invoice",
+        "cash bank receipt",
+        "allocation payment",
+        "buku besar",
+        "account movement"
+      ],
+      "guidance": "Gunakan M5 sebagai anchor dokumen sales, lalu pindah ke M2 saat intent user sudah finance/accounting.",
+      "anti_pattern": "Jangan asumsi satu direct foreign key stabil M5 ke M2 jika source aktif tidak menunjukkannya."
+    },
+    {
+      "name": "m5_to_m3_inventory_boundary",
+      "from_module": "m5",
+      "to_module": "m3",
+      "trigger_intents": [
+        "stok gudang",
+        "mutasi keluar masuk",
+        "barang transit",
+        "adjustment",
+        "opname"
+      ],
+      "guidance": "Gunakan M5 sebagai anchor dokumen sales/logistik komersial, lalu pindah ke M3 saat intent user sudah inventory.",
+      "anti_pattern": "Jangan memaksa join langsung M5 ke M3 jika source aktif tidak menunjukkan FK stabil."
+    },
+    {
+      "name": "m12_to_m2_finance_boundary",
+      "from_module": "m12",
+      "to_module": "m2",
+      "trigger_intents": [
+        "jurnal posting POS",
+        "cash bank accounting impact",
+        "buku besar retail"
+      ],
+      "guidance": "Gunakan M12 untuk transaksi retail/POS, lalu pindah ke M2 saat intent user sudah finance/accounting.",
+      "anti_pattern": "Jangan asumsi satu direct foreign key stabil M12 ke M2 jika source aktif tidak menunjukkannya."
+    },
+    {
+      "name": "m12_to_m3_inventory_boundary",
+      "from_module": "m12",
+      "to_module": "m3",
+      "trigger_intents": [
+        "stok sisa",
+        "mutasi gudang item POS",
+        "inventory effect retail"
+      ],
+      "guidance": "Gunakan M12 untuk transaksi retail dan item POS, lalu pindah ke M3 saat intent user sudah inventory.",
+      "anti_pattern": "Jangan asumsi satu direct foreign key stabil M12 ke M3 jika source aktif tidak menunjukkannya."
+    }
+  ],
+  "tracing_patterns": [
+    {
+      "name": "voucher_pos_to_formal_invoice",
+      "steps": [
+        "m_12_pos_voucher_out.voidtransaksi -> m5_si.siid",
+        "m5_si.sicustomer -> m1_contact.kid",
+        "m5_si_detail.idbarang -> m1_item.bid"
+      ],
+      "business_meaning": "Menelusuri voucher POS ke invoice penjualan formal, lalu ke customer dan item master."
+    },
+    {
+      "name": "sales_invoice_to_master_labels",
+      "steps": [
+        "m5_si.sicustomer -> m1_contact.kid",
+        "m5_si_detail.idbarang -> m1_item.bid"
+      ],
+      "business_meaning": "Menambahkan label customer dan item ke invoice penjualan."
+    },
+    {
+      "name": "sales_invoice_to_origin_documents",
+      "steps": [
+        "m5_si_detail -> m5_so_detail",
+        "m5_si_detail -> m5_do_detail",
+        "m5_si_detail -> m5_pl_detail",
+        "m5_si_detail -> m5_pi_detail",
+        "m5_si_detail -> m5_dr_detail"
+      ],
+      "business_meaning": "Menelusuri invoice penjualan ke dokumen asal di level detail."
+    },
+    {
+      "name": "pos_transaction_to_master_labels",
+      "steps": [
+        "m_12_st.stkontak -> m1_contact.kid",
+        "m_12_st_detail.idbarang -> m1_item.bid"
+      ],
+      "business_meaning": "Menambahkan label customer/contact dan item ke transaksi POS."
+    },
+    {
+      "name": "domain_switch_to_finance",
+      "steps": [
+        "Tentukan anchor dokumen di M5 atau M12",
+        "Validasi bahwa intent user memang meminta accounting impact",
+        "Pindah ke M2"
+      ],
+      "business_meaning": "Pola aman untuk berpindah dari domain commercial/retail ke domain finance."
+    },
+    {
+      "name": "domain_switch_to_inventory",
+      "steps": [
+        "Tentukan anchor dokumen di M5 atau M12",
+        "Validasi bahwa intent user memang meminta stok atau mutasi gudang",
+        "Pindah ke M3"
+      ],
+      "business_meaning": "Pola aman untuk berpindah dari domain commercial/retail ke domain inventory."
+    }
+  ],
+  "what_not_to_do": [
+    "Jangan join M5 ke M2 hanya karena user menyebut invoice dan jurnal dalam satu kalimat.",
+    "Jangan join M12 ke M3 hanya karena user menyebut item dan stok tanpa memastikan intent inventory.",
+    "Jangan pakai M12 sebagai master barang utama; gunakan M1.",
+    "Jangan pakai M5 atau M12 untuk menebak posted journal jika M2 dibutuhkan.",
+    "Jangan membuat join header-ke-header lintas modul bila relasi stabilnya ada di detail atau hanya berupa semantic boundary."
+  ],
+  "recommended_agent_strategy": [
+    "Pilih dulu domain utama pertanyaan: M5, M12, M3, atau M2.",
+    "Jika perlu label master, tarik M1.",
+    "Jika perlu accounting impact, pindah ke M2.",
+    "Jika perlu stok atau mutasi gudang, pindah ke M3.",
+    "Jika perlu relasi POS ke invoice formal, gunakan M12 -> M5."
+  ]
+}

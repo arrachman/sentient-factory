@@ -1,43 +1,43 @@
 # M1 NL2SQL Guide
 
-Sumber utama:
+Primary sources:
 - `semantic-schema-m1.json`
 - `semantic-schema-m1-summary.md`
 - `m1-queries.md`
 - `m1-queries-by-type.md`
 
-Tujuan:
-- membantu pemilihan tabel master data M1
-- membantu pemilihan join referensi yang aman
-- memberi sinonim bisnis yang natural untuk retrieval
-- menandai relasi master yang paling sering dipakai lintas domain
+Purpose:
+- help select the correct M1 master-data tables
+- help choose safe reference joins
+- provide natural business synonyms for retrieval
+- highlight the master relationships most frequently used across domains
 
-## Cakupan Tabel Utama
+## Main Table Coverage
 
-- `m1_contact`, `m1_contact_category`, `m1_contact_terms`, `m1_contact_price`: master kontak dan setup komersial kontak
-- `m1_item`, `m1_item_category`, `m1_item_type`, `m1_item_price`, `m1_item_supplier`, `m1_item_stock_warehouse`, `m1_item_location`, `m1_item_location_warehouse`, `m1_item_permission`, `m1_item_transaction`: master item dan setup barang
-- `m1_warehouse`: master gudang
-- `m1_branch`, `m1_location`, `m1_division`, `m1_department`, `m1_subdepartment`, `m1_subdivision`, `m1_section`, `m1_project`, `m1_cost_center`: struktur organisasi
-- `m1_coa`: master akun
-- `m1_terms`, `m1_tax`, `m1_currency`, `m1_bank`, `m1_expedition`: master referensi komersial dan keuangan
-- `m1_country`, `m1_province`, `m1_city`: master geografis
-- `m1_class_product`, `m1_price_category`, `m1_price_category_detail`, `m1_material`, `m1_merk`, `m1_model`, `m1_size`, `m1_type_sa`, `m1_unit`, `m1_other_cost`: atribut produk dan klasifikasi
-- `m1_transaction_note`, `m1_transaction_note_detail`: catatan transaksi per sumber dokumen
+- `m1_contact`, `m1_contact_category`, `m1_contact_terms`, `m1_contact_price`: contact master and commercial setup
+- `m1_item`, `m1_item_category`, `m1_item_type`, `m1_item_price`, `m1_item_supplier`, `m1_item_stock_warehouse`, `m1_item_location`, `m1_item_location_warehouse`, `m1_item_permission`, `m1_item_transaction`: item master and product setup
+- `m1_warehouse`: warehouse master
+- `m1_branch`, `m1_location`, `m1_division`, `m1_department`, `m1_subdepartment`, `m1_subdivision`, `m1_section`, `m1_project`, `m1_cost_center`: organization structure
+- `m1_coa`: account master
+- `m1_terms`, `m1_tax`, `m1_currency`, `m1_bank`, `m1_expedition`: commercial and finance reference masters
+- `m1_country`, `m1_province`, `m1_city`: geography master
+- `m1_class_product`, `m1_price_category`, `m1_price_category_detail`, `m1_material`, `m1_merk`, `m1_model`, `m1_size`, `m1_type_sa`, `m1_unit`, `m1_other_cost`: product attributes and classification
+- `m1_transaction_note`, `m1_transaction_note_detail`: transaction notes by document source
 
-## Sinonim Bisnis
+## Business Synonyms
 
-- `CONTACT`: kontak, customer, supplier, salesman, rekanan
-- `ITEM`: barang, produk, item, SKU
-- `WAREHOUSE`: gudang
-- `COA`: chart of accounts, akun, rekening
-- `BRANCH`: cabang
-- `LOCATION`: lokasi
-- `TERMS`: termin pembayaran
-- `TAX`: pajak
-- `PRICE CATEGORY`: kategori harga
-- `TRANSACTION NOTE`: catatan transaksi, note per sumber dokumen
+- `CONTACT`: contact, customer, supplier, salesman, business partner
+- `ITEM`: goods, product, item, SKU
+- `WAREHOUSE`: warehouse
+- `COA`: chart of accounts, account, ledger account
+- `BRANCH`: branch
+- `LOCATION`: location
+- `TERMS`: payment terms
+- `TAX`: tax
+- `PRICE CATEGORY`: price category
+- `TRANSACTION NOTE`: transaction notes, notes by document source
 
-## Join Hints Utama
+## Primary Join Hints
 
 ### Contact commercial hierarchy
 
@@ -73,7 +73,7 @@ m1_coa.ccabang = m1_branch.bkode
 m1_coa.clokasi = m1_location.lkode
 m1_coa.cdivisi = m1_division.dkode
 m1_coa.ckodebank = m1_bank.bkode
-m1_coa.cmatauang = m1_currency.ckode
+m1_coa.cmorang = m1_currency.ckode
 ```
 
 ### Transaction note
@@ -83,53 +83,53 @@ m1_transaction_note.tnkode = m1_transaction_note_detail.tndkode
 m1_transaction_note.tnsumber = m1_transaction_note_detail.tndsumber
 ```
 
-## Relasi Polymorphic
+## Polymorphic Relations
 
-- Tidak ada relasi polymorphic eksplisit yang terdeteksi pada M1.
+- No explicit polymorphic relationships were detected in M1.
 
-## Aturan Pemilihan Tabel
+## Table Selection Rules
 
-- Gunakan `m1_contact` untuk pertanyaan customer, supplier, salesman, atau relasi kontak bisnis.
-- Gunakan `m1_item` untuk pertanyaan barang, produk, setup item, klasifikasi item, dan atribut penjualan/pembelian.
-- Gunakan `m1_warehouse`, `m1_branch`, `m1_location`, `m1_division` untuk struktur organisasi dan gudang.
-- Gunakan `m1_coa` untuk lookup akun, saldo awal, parent-child akun, atau referensi akun transaksi.
-- Gunakan tabel detail seperti `m1_price_category_detail` atau `m1_transaction_note_detail` bila user meminta isi baris atau setup per item/per sumber.
-- Gunakan tabel referensi seperti `m1_terms`, `m1_tax`, `m1_currency`, `m1_bank` bila user meminta termin, pajak, mata uang, atau bank.
+- Use `m1_contact` for customer, supplier, salesman, or business-contact questions.
+- Use `m1_item` for products, items, item setup, item classification, and selling or purchasing attributes.
+- Use `m1_warehouse`, `m1_branch`, `m1_location`, and `m1_division` for organization and warehouse structure.
+- Use `m1_coa` for account lookup, opening balance structure, parent-child accounts, or transaction-account references.
+- Use detail tables such as `m1_price_category_detail` or `m1_transaction_note_detail` when the user needs row-level setup by item or source.
+- Use reference tables such as `m1_terms`, `m1_tax`, `m1_currency`, and `m1_bank` when the user asks for payment terms, tax, currency, or bank setup.
 
-## Aturan Penting
+## Important Rules
 
-- M1 adalah domain master data, bukan domain alur dokumen bertahap.
-- Sebagian besar query M1 adalah listing, lookup, setup, dan relasi referensi.
-- Hindari mengasumsikan foreign key yang tidak terlihat dari query aktif.
-- Jika pertanyaan menyebut customer/supplier/salesman, mulai dari `m1_contact`, lalu join ke kategori atau salesman bila perlu.
-- Jika pertanyaan menyebut produk/barang, mulai dari `m1_item`, lalu join ke klasifikasi item bila perlu.
-- Jika pertanyaan menyebut akun, gunakan `m1_coa` dan perhatikan parent-child serta dimensi organisasi.
-- `custom*` fields adalah field tambahan; hindari kecuali benar-benar diminta.
+- M1 is a master-data domain, not a staged document-flow domain.
+- Most M1 queries are listings, lookups, setup, and reference joins.
+- Avoid assuming foreign keys that are not visible in active queries.
+- If the question is about customers, suppliers, or salesmen, start from `m1_contact` and join categories or salesman references only when needed.
+- If the question is about products or items, start from `m1_item` and then join classification tables as needed.
+- If the question is about accounts, use `m1_coa` and pay attention to parent-child hierarchy and organizational dimensions.
+- `custom*` fields are extension fields. Avoid them unless explicitly requested.
 
-## Pola Query Aman
+## Safe Query Patterns
 
-### Listing master kontak
+### Contact master listing
 
 ```sql
 SELECT kkode, knama, kkategori, kaktif
 FROM m1_contact
 ```
 
-### Listing master item
+### Item master listing
 
 ```sql
 SELECT bkode, bnama, bkategori, btipe
 FROM m1_item
 ```
 
-### Lookup akun dan parent akun
+### Account lookup and parent hierarchy
 
 ```sql
 SELECT cnomor, cnama, cparent
 FROM m1_coa
 ```
 
-### Gudang per lokasi dan divisi
+### Warehouses by location and division
 
 ```sql
 SELECT w.wkode, w.wnama, l.lnama, d.dnama
@@ -138,7 +138,7 @@ JOIN m1_location l ON w.wlokasi = l.lkode
 JOIN m1_division d ON w.wdivisi = d.dkode
 ```
 
-### Transaction note per sumber
+### Transaction note by source
 
 ```sql
 SELECT tn.tnsumber, tn.tnkode, tnd.tndcatatan
@@ -148,18 +148,18 @@ JOIN m1_transaction_note_detail tnd
  AND tn.tnsumber = tnd.tndsumber
 ```
 
-## Query yang Perlu Extra Caution
+## Queries That Need Extra Caution
 
-- pertanyaan yang mencampur master contact dan transaksi bisnis, karena M1 hanya domain master
-- pertanyaan yang menganggap semua kategori contact ada di satu tabel saja
-- pertanyaan item yang sebenarnya butuh domain transaksi inventory, purchasing, atau sales
-- pertanyaan akun yang sebenarnya meminta saldo transaksi, bukan master akun
-- pertanyaan yang mengandalkan `custom*`
+- questions that mix contact master data with business transactions, because M1 is only the master domain
+- questions that assume every contact category lives in one table
+- item questions that actually belong to inventory, purchasing, or sales transaction domains
+- account questions that actually ask for transactional balances instead of the account master
+- questions that rely on `custom*`
 
-## Checklist NL2SQL M1
+## NL2SQL Checklist for M1
 
-- pastikan pertanyaan memang domain master data, bukan domain transaksi
-- pilih tabel master inti lebih dulu: contact, item, warehouse, coa, atau organization
-- cek apakah butuh tabel kategori/detail
-- gunakan join referensi yang jelas dan langsung
-- hindari asumsi flow dokumen karena M1 bukan domain document flow
+- ensure the request is truly master-data scope, not a transaction-domain question
+- choose the primary master table first: contact, item, warehouse, coa, or organization
+- check whether category or detail tables are needed
+- use clear and direct reference joins
+- avoid document-flow assumptions because M1 is not a document-flow domain

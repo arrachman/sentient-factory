@@ -1,0 +1,905 @@
+{
+  "title": "Semantic Schema M0 Summary Flat",
+  "source_json": "semantic-schema-m0-summary.json",
+  "count": 96,
+  "records": [
+    {
+      "type": "owned_table",
+      "module": "APP",
+      "table_name": "m0_app",
+      "alias": "administrator_app",
+      "owner_module": "APP",
+      "description": "Master aplikasi atau client integration key/secret.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "BACKUP",
+      "table_name": "m0_backup",
+      "alias": "administrator_backup",
+      "owner_module": "BACKUP",
+      "description": "Log dan status proses backup.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "BACKUP",
+      "table_name": "m0_hapusdata",
+      "alias": "administrator_hapusdata",
+      "owner_module": "BACKUP",
+      "description": "Log atau target data yang ditandai untuk proses penghapusan/cleanup.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "BACKUP",
+      "table_name": "m0_hitungulang_log",
+      "alias": "administrator_hitungulang_log",
+      "owner_module": "BACKUP",
+      "description": "Log proses hitung ulang data, saldo, atau kalkulasi sistem.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "BACKUP",
+      "table_name": "m0_hppaverage",
+      "alias": "administrator_hppaverage",
+      "owner_module": "BACKUP",
+      "description": "Tabel kerja/perantara untuk proses hitung HPP average.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "BACKUP",
+      "table_name": "m0_hppsaldo",
+      "alias": "administrator_hppsaldo",
+      "owner_module": "BACKUP",
+      "description": "Tabel kerja/perantara untuk saldo HPP atau rekalkulasi persediaan.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "BACKUP",
+      "table_name": "m0_validitas_data",
+      "alias": "administrator_validitas_data",
+      "owner_module": "BACKUP",
+      "description": "Status validitas atau hasil pengecekan data periodik.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "FORM",
+      "table_name": "m0_form_custom_text",
+      "alias": "administrator_form_custom_text",
+      "owner_module": "FORM",
+      "description": "Konfigurasi custom text per modul dan menu untuk label/form UI.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "FORM",
+      "table_name": "m0_form_setting_global",
+      "alias": "administrator_form_setting_global",
+      "owner_module": "FORM",
+      "description": "Konfigurasi tampilan form global per modul dan menu.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "FORM",
+      "table_name": "m0_form_setting_search",
+      "alias": "administrator_form_setting_search",
+      "owner_module": "FORM",
+      "description": "Konfigurasi field pencarian dan properti search form per modul/menu.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "FORM",
+      "table_name": "m0_form_setting_user",
+      "alias": "administrator_form_setting_user",
+      "owner_module": "FORM",
+      "description": "Konfigurasi preferensi form per user pada modul/menu tertentu.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_language",
+      "alias": "administrator_language",
+      "owner_module": "LANGUAGE",
+      "description": "Master bahasa aplikasi.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_language_detail",
+      "alias": "administrator_language_detail",
+      "owner_module": "LANGUAGE",
+      "description": "Detail resource bahasa atau pasangan key-translation per bahasa.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_sentence",
+      "alias": "administrator_sentence",
+      "owner_module": "LANGUAGE",
+      "description": "Master kalimat atau text resource aplikasi.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_sentence_s",
+      "alias": "administrator_sentence_s",
+      "owner_module": "LANGUAGE",
+      "description": "Varian sentence/text resource untuk scope tertentu.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_sentence_translate",
+      "alias": "administrator_sentence_translate",
+      "owner_module": "LANGUAGE",
+      "description": "Terjemahan sentence/text resource utama per bahasa.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_sentence_stranslate",
+      "alias": "administrator_sentence_stranslate",
+      "owner_module": "LANGUAGE",
+      "description": "Terjemahan sentence varian per bahasa.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "LANGUAGE",
+      "table_name": "m0_translate",
+      "alias": "administrator_translate",
+      "owner_module": "LANGUAGE",
+      "description": "Dictionary terjemahan teks umum aplikasi.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "MENU",
+      "table_name": "m0_module",
+      "alias": "administrator_module",
+      "owner_module": "MENU",
+      "description": "Master modul aplikasi MyERPPlus.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "MENU",
+      "table_name": "m0_menu",
+      "alias": "administrator_menu",
+      "owner_module": "MENU",
+      "description": "Master menu aplikasi dan struktur navigasi.",
+      "column_count": 14
+    },
+    {
+      "type": "owned_table",
+      "module": "MENU",
+      "table_name": "m0_menu_lang",
+      "alias": "administrator_menu_lang",
+      "owner_module": "MENU",
+      "description": "Terjemahan nama menu per bahasa.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "MENU",
+      "table_name": "m0_menu_s",
+      "alias": "administrator_menu_s",
+      "owner_module": "MENU",
+      "description": "Varian atau struktur menu tambahan untuk mode/scope khusus sistem.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "MENU",
+      "table_name": "m0_menu_s_lang",
+      "alias": "administrator_menu_s_lang",
+      "owner_module": "MENU",
+      "description": "Terjemahan menu varian `m0_menu_s` per bahasa.",
+      "column_count": 4
+    },
+    {
+      "type": "relation",
+      "module": "MENU",
+      "name": "role_menu_access_flow",
+      "description": "Relasi role ke menu aplikasi.",
+      "joins": [
+        "m0_role.rkode = m0_role_menu.rmrole",
+        "m0_role_menu.rmmoduleid = m0_menu.mnmoduleid",
+        "m0_role_menu.rmmenuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "MENU",
+      "name": "user_menu_override_flow",
+      "description": "Relasi override akses menu di level user.",
+      "joins": [
+        "m0_user.userid = m0_usermenu.umuserid",
+        "m0_usermenu.ummoduleid = m0_menu.mnmoduleid",
+        "m0_usermenu.ummenuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "MENU",
+      "name": "menu_translation_flow",
+      "description": "Relasi menu ke terjemahan menu.",
+      "joins": [
+        "m0_menu.mnmoduleid = m0_menu_lang.mnlmoduleid",
+        "m0_menu.mnid = m0_menu_lang.mnlmnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "MENU",
+      "name": "notification_user_flow",
+      "description": "Relasi notifikasi email ke user dan menu.",
+      "joins": [
+        "m0_notifikasi_email.userid = m0_user.userid",
+        "m0_notifikasi_email.useridmail = m0_user.userid",
+        "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+        "m0_notifikasi_email.menuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "MENU",
+      "name": "userlog_activity_flow",
+      "description": "Relasi audit log ke user dan menu.",
+      "joins": [
+        "m0_userlog.uluserid = m0_user.userid",
+        "m0_userlog.ulidmodule = m0_menu.mnmoduleid",
+        "m0_userlog.ulidmenu = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "QUEUE",
+      "table_name": "m0_msmq",
+      "alias": "administrator_msmq",
+      "owner_module": "QUEUE",
+      "description": "Antrian proses background berbasis MSMQ untuk report, print, export, atau task sistem.",
+      "column_count": 24
+    },
+    {
+      "type": "owned_table",
+      "module": "QUEUE",
+      "table_name": "m0_msmq_cogs",
+      "alias": "administrator_msmq_cogs",
+      "owner_module": "QUEUE",
+      "description": "Antrian proses background khusus kalkulasi COGS/HPP.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "QUEUE",
+      "table_name": "m0_msmq_importdata",
+      "alias": "administrator_msmq_importdata",
+      "owner_module": "QUEUE",
+      "description": "Antrian proses background untuk import data.",
+      "column_count": 10
+    },
+    {
+      "type": "owned_table",
+      "module": "QUEUE",
+      "table_name": "m0_msmq_journal",
+      "alias": "administrator_msmq_journal",
+      "owner_module": "QUEUE",
+      "description": "Antrian proses background untuk pembentukan atau posting journal.",
+      "column_count": 8
+    },
+    {
+      "type": "owned_table",
+      "module": "NUMBERING",
+      "table_name": "m0_nomor",
+      "alias": "administrator_nomor",
+      "owner_module": "NUMBERING",
+      "description": "Pengaturan penomoran dokumen/transaksi.",
+      "column_count": 9
+    },
+    {
+      "type": "owned_table",
+      "module": "NUMBERING",
+      "table_name": "m0_nomor_next",
+      "alias": "administrator_nomor_next",
+      "owner_module": "NUMBERING",
+      "description": "Counter nomor dokumen berikutnya per tabel, cabang, lokasi, bulan, dan tahun.",
+      "column_count": 6
+    },
+    {
+      "type": "owned_table",
+      "module": "NUMBERING",
+      "table_name": "m0_nomor_mobile",
+      "alias": "administrator_nomor_mobile",
+      "owner_module": "NUMBERING",
+      "description": "Pemetaan user ke identitas device/mobile untuk penomoran atau akses mobile.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "NUMBERING",
+      "table_name": "m0_barcode_next",
+      "alias": "administrator_barcode_next",
+      "owner_module": "NUMBERING",
+      "description": "Counter nomor barcode berikutnya untuk proses generate barcode internal.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "NUMBERING",
+      "table_name": "m0_group_aq",
+      "alias": "administrator_group_aq",
+      "owner_module": "NUMBERING",
+      "description": "Counter nomor grup AQ per cabang, lokasi, bulan, dan tahun.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "NUMBERING",
+      "table_name": "m0_group_rq",
+      "alias": "administrator_group_rq",
+      "owner_module": "NUMBERING",
+      "description": "Counter nomor grup RQ per cabang, lokasi, bulan, dan tahun.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "NOTES_FILES",
+      "table_name": "m0_files",
+      "alias": "administrator_files",
+      "owner_module": "NOTES_FILES",
+      "description": "Lampiran/file attachment modul administrator.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "NOTES_FILES",
+      "table_name": "m0_notes",
+      "alias": "administrator_notes",
+      "owner_module": "NOTES_FILES",
+      "description": "Catatan bebas atau note tambahan pada transaksi/konfigurasi administrator.",
+      "column_count": 3
+    },
+    {
+      "type": "owned_table",
+      "module": "NOTIFICATION",
+      "table_name": "m0_notifikasi_email",
+      "alias": "administrator_notifikasi_email",
+      "owner_module": "NOTIFICATION",
+      "description": "Pengaturan notifikasi email per modul/menu/user.",
+      "column_count": 10
+    },
+    {
+      "type": "relation",
+      "module": "NOTIFICATION",
+      "name": "notification_user_flow",
+      "description": "Relasi notifikasi email ke user dan menu.",
+      "joins": [
+        "m0_notifikasi_email.userid = m0_user.userid",
+        "m0_notifikasi_email.useridmail = m0_user.userid",
+        "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+        "m0_notifikasi_email.menuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "REPORT",
+      "table_name": "m0_report",
+      "alias": "administrator_report",
+      "owner_module": "REPORT",
+      "description": "Definisi report, template, dan metadata laporan.",
+      "column_count": 27
+    },
+    {
+      "type": "owned_table",
+      "module": "REPORT",
+      "table_name": "m0_report_filter",
+      "alias": "administrator_report_filter",
+      "owner_module": "REPORT",
+      "description": "Definisi filter input untuk report builder atau runtime report.",
+      "column_count": 17
+    },
+    {
+      "type": "owned_table",
+      "module": "REPORT",
+      "table_name": "m0_report_label",
+      "alias": "administrator_report_label",
+      "owner_module": "REPORT",
+      "description": "Master label/teks tampilan pada report.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "REPORT",
+      "table_name": "m0_report_label_translate",
+      "alias": "administrator_report_label_translate",
+      "owner_module": "REPORT",
+      "description": "Terjemahan label report per bahasa.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "REPORT",
+      "table_name": "m0_report_lang",
+      "alias": "administrator_report_lang",
+      "owner_module": "REPORT",
+      "description": "Terjemahan nama report dan judul report per bahasa.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "REPORT",
+      "table_name": "m0_report_temp",
+      "alias": "administrator_report_temp",
+      "owner_module": "REPORT",
+      "description": "Tabel sementara/kerja untuk proses report.",
+      "column_count": 0
+    },
+    {
+      "type": "relation",
+      "module": "REPORT",
+      "name": "role_report_access_flow",
+      "description": "Relasi role ke report dan akses report.",
+      "joins": [
+        "m0_role.rkode = m0_role_report.rrrole",
+        "m0_role_report.rrmoduleid = m0_report.rmoduleid",
+        "m0_role_report.rrmenuid = m0_report.rmenuid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "REPORT",
+      "name": "user_report_override_flow",
+      "description": "Relasi override akses report di level user.",
+      "joins": [
+        "m0_user.userid = m0_userreport.uruserid",
+        "m0_userreport.urmoduleid = m0_report.rmoduleid",
+        "m0_userreport.urmenuid = m0_report.rmenuid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role",
+      "alias": "administrator_role",
+      "owner_module": "ROLE",
+      "description": "Master role atau peran akses sistem.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_s",
+      "alias": "administrator_role_s",
+      "owner_module": "ROLE",
+      "description": "Varian role untuk scope atau mode akses tertentu.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_custom",
+      "alias": "administrator_role_custom",
+      "owner_module": "ROLE",
+      "description": "Override akses custom per role untuk permission spesifik.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_item_category",
+      "alias": "administrator_role_item_category",
+      "owner_module": "ROLE",
+      "description": "Mapping role ke kategori barang yang boleh diakses.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_menu",
+      "alias": "administrator_role_menu",
+      "owner_module": "ROLE",
+      "description": "Mapping role ke menu dan hak akses navigasi.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_menu_s",
+      "alias": "administrator_role_menu_s",
+      "owner_module": "ROLE",
+      "description": "Mapping role ke menu varian/scope khusus.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_report",
+      "alias": "administrator_role_report",
+      "owner_module": "ROLE",
+      "description": "Mapping role ke report dan hak akses report.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_role_report_s",
+      "alias": "administrator_role_report_s",
+      "owner_module": "ROLE",
+      "description": "Mapping role ke report varian/scope khusus.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "ROLE",
+      "table_name": "m0_permissions_custom",
+      "alias": "administrator_permissions_custom",
+      "owner_module": "ROLE",
+      "description": "Override permission granular di luar mapping role standar.",
+      "column_count": 0
+    },
+    {
+      "type": "relation",
+      "module": "ROLE",
+      "name": "user_role_access_flow",
+      "description": "Relasi user ke role akses.",
+      "joins": [
+        "m0_user.userid = m0_user_role.userid",
+        "m0_user_role.role = m0_role.rkode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "ROLE",
+      "name": "role_menu_access_flow",
+      "description": "Relasi role ke menu aplikasi.",
+      "joins": [
+        "m0_role.rkode = m0_role_menu.rmrole",
+        "m0_role_menu.rmmoduleid = m0_menu.mnmoduleid",
+        "m0_role_menu.rmmenuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "ROLE",
+      "name": "role_report_access_flow",
+      "description": "Relasi role ke report dan akses report.",
+      "joins": [
+        "m0_role.rkode = m0_role_report.rrrole",
+        "m0_role_report.rrmoduleid = m0_report.rmoduleid",
+        "m0_role_report.rrmenuid = m0_report.rmenuid"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_search_packet",
+      "alias": "administrator_search_packet",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Paket definisi search/filter reusable untuk lookup sistem.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_selling_rate",
+      "alias": "administrator_selling_rate",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master tingkat harga jual atau selling rate.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_setting",
+      "alias": "administrator_setting",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Parameter dan konfigurasi global sistem.",
+      "column_count": 10
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_setting_lang",
+      "alias": "administrator_setting_lang",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Terjemahan setting atau label setting per bahasa.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_setting_location",
+      "alias": "administrator_setting_location",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Override setting berdasarkan lokasi operasional.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_payment_method",
+      "alias": "administrator_payment_method",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master metode pembayaran yang dipakai lintas modul.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_jenismutasi",
+      "alias": "administrator_jenismutasi",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master jenis mutasi/transaksi yang dipakai sistem sebagai referensi proses.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_status",
+      "alias": "administrator_status",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master status umum yang dipakai lintas dokumen/modul.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_status_giro",
+      "alias": "administrator_status_giro",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master status khusus giro atau alat bayar giro.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_status_progress",
+      "alias": "administrator_status_progress",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master status progress untuk proses/background task.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_status_rq",
+      "alias": "administrator_status_rq",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Master status khusus workflow request quotation atau request terkait.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "SEARCH_SETTING",
+      "table_name": "m0_table_relation",
+      "alias": "administrator_table_relation",
+      "owner_module": "SEARCH_SETTING",
+      "description": "Metadata relasi tabel untuk helper query, import, atau validasi.",
+      "column_count": 0
+    },
+    {
+      "type": "relation",
+      "module": "SEARCH_SETTING",
+      "name": "setting_translation_flow",
+      "description": "Relasi setting ke terjemahan setting.",
+      "joins": [
+        "m0_setting.smodule = m0_setting_lang.slmodule",
+        "m0_setting.sgrup = m0_setting_lang.slgrup",
+        "m0_setting.skode = m0_setting_lang.slkode"
+      ]
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user",
+      "alias": "administrator_user",
+      "owner_module": "USER",
+      "description": "Master user aplikasi, identitas login, profil, dan pengaturan akses pengguna.",
+      "column_count": 16
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user_branch",
+      "alias": "administrator_user_branch",
+      "owner_module": "USER",
+      "description": "Mapping user ke cabang yang boleh diakses.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user_coa",
+      "alias": "administrator_user_coa",
+      "owner_module": "USER",
+      "description": "Mapping user ke rekening/COA yang boleh diakses.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user_location",
+      "alias": "administrator_user_location",
+      "owner_module": "USER",
+      "description": "Mapping user ke lokasi yang boleh diakses.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user_role",
+      "alias": "administrator_user_role",
+      "owner_module": "USER",
+      "description": "Mapping user ke role akses.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user_role_s",
+      "alias": "administrator_user_role_s",
+      "owner_module": "USER",
+      "description": "Mapping user ke role varian/scope khusus.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_user_warehouse",
+      "alias": "administrator_user_warehouse",
+      "owner_module": "USER",
+      "description": "Mapping user ke gudang yang boleh diakses.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_usercustom",
+      "alias": "administrator_usercustom",
+      "owner_module": "USER",
+      "description": "Override akses custom per user di luar role standar.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_usergrup",
+      "alias": "administrator_usergrup",
+      "owner_module": "USER",
+      "description": "Master grup user.",
+      "column_count": 2
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_usergrupmenu",
+      "alias": "administrator_usergrupmenu",
+      "owner_module": "USER",
+      "description": "Mapping grup user ke menu dan hak akses.",
+      "column_count": 4
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_userlogin",
+      "alias": "administrator_userlogin",
+      "owner_module": "USER",
+      "description": "Session atau jejak login user.",
+      "column_count": 1
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_userlog",
+      "alias": "administrator_userlog",
+      "owner_module": "USER",
+      "description": "Audit log aktivitas user.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_userlog_category",
+      "alias": "administrator_userlog_category",
+      "owner_module": "USER",
+      "description": "Master kategori aktivitas untuk audit log user.",
+      "column_count": 0
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_userlogerror",
+      "alias": "administrator_userlogerror",
+      "owner_module": "USER",
+      "description": "Log error aplikasi yang dikaitkan ke user atau paket proses.",
+      "column_count": 7
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_usermenu",
+      "alias": "administrator_usermenu",
+      "owner_module": "USER",
+      "description": "Override akses menu langsung per user.",
+      "column_count": 5
+    },
+    {
+      "type": "owned_table",
+      "module": "USER",
+      "table_name": "m0_userreport",
+      "alias": "administrator_userreport",
+      "owner_module": "USER",
+      "description": "Override akses report langsung per user.",
+      "column_count": 5
+    },
+    {
+      "type": "relation",
+      "module": "USER",
+      "name": "user_role_access_flow",
+      "description": "Relasi user ke role akses.",
+      "joins": [
+        "m0_user.userid = m0_user_role.userid",
+        "m0_user_role.role = m0_role.rkode"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "USER",
+      "name": "user_menu_override_flow",
+      "description": "Relasi override akses menu di level user.",
+      "joins": [
+        "m0_user.userid = m0_usermenu.umuserid",
+        "m0_usermenu.ummoduleid = m0_menu.mnmoduleid",
+        "m0_usermenu.ummenuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "USER",
+      "name": "user_report_override_flow",
+      "description": "Relasi override akses report di level user.",
+      "joins": [
+        "m0_user.userid = m0_userreport.uruserid",
+        "m0_userreport.urmoduleid = m0_report.rmoduleid",
+        "m0_userreport.urmenuid = m0_report.rmenuid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "USER",
+      "name": "notification_user_flow",
+      "description": "Relasi notifikasi email ke user dan menu.",
+      "joins": [
+        "m0_notifikasi_email.userid = m0_user.userid",
+        "m0_notifikasi_email.useridmail = m0_user.userid",
+        "m0_notifikasi_email.moduleid = m0_menu.mnmoduleid",
+        "m0_notifikasi_email.menuid = m0_menu.mnid"
+      ]
+    },
+    {
+      "type": "relation",
+      "module": "USER",
+      "name": "userlog_activity_flow",
+      "description": "Relasi audit log ke user dan menu.",
+      "joins": [
+        "m0_userlog.uluserid = m0_user.userid",
+        "m0_userlog.ulidmodule = m0_menu.mnmoduleid",
+        "m0_userlog.ulidmenu = m0_menu.mnid"
+      ]
+    }
+  ]
+}

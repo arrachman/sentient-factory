@@ -1,18 +1,18 @@
 ---
 title: Getting Started
-description: Pengantar kategori Tutorial MyERPPlus.
+description: Introduction to the Tutorial MyERPPlus category.
 ---
 
 # Getting Started
 
-Kategori ini menampung tutorial MyERPPlus.
+This category contains MyERPPlus tutorials.
 
-## Ruang Lingkup
+## Scope
 
-- Struktur modul dan prefix.
-- Query, schema, dan semantic mapping.
-- Alur operasional dan troubleshooting.
+- module structure and prefixes
+- queries, schemas, and semantic mapping
+- operational flows and troubleshooting
 
-## Langkah Berikutnya
+## Next Step
 
-Tambahkan dokumen tutorial MyERPPlus lain di folder ini agar otomatis muncul di sidebar.
+Add more MyERPPlus tutorial documents to this folder and they will appear automatically in the sidebar.

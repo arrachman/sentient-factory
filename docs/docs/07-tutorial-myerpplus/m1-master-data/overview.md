@@ -1,16 +1,24 @@
 ---
 title: Overview
 sidebar_position: 1
-description: Pengantar modul master data MyERPPlus.
+description: Introduction to the MyERPPlus master data module.
 ---
 
 # m1-master data
 
-Kategori ini berisi tutorial untuk pengelolaan master data MyERPPlus.
+This category contains tutorials for MyERPPlus master data management.
 
-## Cakupan
+## Coverage
 
-- Data referensi utama
-- Data customer, supplier, dan item
-- Relasi master lintas modul
+- core reference data
+- customer, supplier, and item master data
+- cross-module master relations
 
+## Main Documents
+
+- [Master Data Query Artifacts](./query-artifacts.md)
+- [M1 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
+
+## Notes
+
+M1 is the cross-module foundation. Questions that look like inventory, purchasing, sales, or finance questions still often require lookup into M1 master tables.
