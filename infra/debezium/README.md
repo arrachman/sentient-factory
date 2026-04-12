@@ -58,7 +58,7 @@ CDC_MYSQL_USER=dashboard
 CDC_MYSQL_PASSWORD=<isi-password-client>
 CDC_MYSQL_DATABASE=myerpplus_dashboard
 CDC_MYSQL_SERVER_ID=54061
-CDC_MYSQL_TABLE_INCLUDE_LIST=myerpplus_dashboard.m0_users,myerpplus_dashboard.m0_role,myerpplus_dashboard.m0_menu,myerpplus_dashboard.m1_currency
+CDC_MYSQL_TABLE_INCLUDE_LIST=myerpplus_dashboard.m0_user,myerpplus_dashboard.m0_role,myerpplus_dashboard.m0_user_role,myerpplus_dashboard.m0_menu,myerpplus_dashboard.m0_role_menu,myerpplus_dashboard.m0_userlog,myerpplus_dashboard.m0_nomor,myerpplus_dashboard.m1_currency
 KAFKA_BOOTSTRAP_SERVERS=kafka:9092
 ```
 

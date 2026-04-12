@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   DockQueueCard,
   InventoryCoverageCard,
@@ -28,13 +28,6 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 const periodOptions = ['Maret 2026', 'Februari 2026', 'Januari 2026'] as const;
 const regionOptions = ['Semua Region', 'Jabodetabek', 'Jawa Timur', 'Sumatera'] as const;
@@ -275,14 +268,353 @@ const inboundOutboundStatus = {
   ],
 };
 
-export default function WarehouseDashboardPage() {
-  const [period, setPeriod] = useState<(typeof periodOptions)[number]>('Maret 2026');
-  const [region, setRegion] = useState<(typeof regionOptions)[number]>('Semua Region');
-  const [warehouse, setWarehouse] = useState<(typeof warehouseOptions)[number]>('Semua Warehouse');
+type WarehouseWidgetKind =
+  | 'kpi_grid'
+  | 'order_status'
+  | 'open_close_bar'
+  | 'top_aging'
+  | 'timeseries'
+  | 'top_amount'
+  | 'inventory_coverage'
+  | 'warehouse_alert'
+  | 'rack_utilization'
+  | 'inventory_movement'
+  | 'dock_queue'
+  | 'outstanding_watchlist';
 
+type WarehouseDashboardWidgetSchema = {
+  id: string;
+  kind: WarehouseWidgetKind;
+  title: string;
+  spanClassName: string;
+  subtitleSource: 'context';
+  dataKey:
+    | 'kpiCards'
+    | 'warehouseStatus'
+    | 'inboundOutboundStatus'
+    | 'occupancyRows'
+    | 'trendRows'
+    | 'topWarehouseRows'
+    | 'inventoryCoverageRows'
+    | 'warehouseAlerts'
+    | 'rackUtilizationRows'
+    | 'inventoryMovementMetrics'
+    | 'dockQueueRows'
+    | 'agingRows'
+    | 'activityRows';
+  axisMax?: number;
+  ticks?: number[];
+  chartHeightClass?: string;
+  legendAlign?: 'start' | 'center' | 'end';
+  actionLabel?: string;
+  overdueLabel?: string;
+};
+
+type WarehouseDashboardSectionSchema = {
+  id: string;
+  className: string;
+  widgets: WarehouseDashboardWidgetSchema[];
+};
+
+export const warehouseDashboardSections: WarehouseDashboardSectionSchema[] = [
+  {
+    id: 'warehouse-kpis',
+    className: '',
+    widgets: [
+      {
+        id: 'warehouse-kpi-grid',
+        kind: 'kpi_grid',
+        title: 'Warehouse KPIs',
+        spanClassName: 'lg:col-span-12',
+        subtitleSource: 'context',
+        dataKey: 'kpiCards',
+      },
+    ],
+  },
+  {
+    id: 'warehouse-overview',
+    className: 'grid gap-4 lg:grid-cols-12',
+    widgets: [
+      {
+        id: 'warehouse-health-status',
+        kind: 'order_status',
+        title: 'Warehouse Health Status',
+        spanClassName: 'lg:col-span-4',
+        subtitleSource: 'context',
+        dataKey: 'warehouseStatus',
+      },
+      {
+        id: 'warehouse-inbound-outbound',
+        kind: 'open_close_bar',
+        title: 'Inbound vs Outbound',
+        spanClassName: 'lg:col-span-4',
+        subtitleSource: 'context',
+        dataKey: 'inboundOutboundStatus',
+      },
+      {
+        id: 'warehouse-occupancy-distribution',
+        kind: 'top_aging',
+        title: 'Occupancy Distribution',
+        spanClassName: 'lg:col-span-4',
+        subtitleSource: 'context',
+        dataKey: 'occupancyRows',
+        axisMax: 8,
+        ticks: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      },
+    ],
+  },
+  {
+    id: 'warehouse-flow-trend',
+    className: 'grid gap-4 lg:grid-cols-12',
+    widgets: [
+      {
+        id: 'warehouse-flow-stock-trend',
+        kind: 'timeseries',
+        title: 'Warehouse Flow & Stock Trend',
+        spanClassName: 'lg:col-span-8',
+        subtitleSource: 'context',
+        dataKey: 'trendRows',
+        chartHeightClass: 'h-[320px]',
+        legendAlign: 'center',
+      },
+      {
+        id: 'warehouse-top-utilization',
+        kind: 'top_amount',
+        title: 'Top Warehouse Utilization',
+        spanClassName: 'lg:col-span-4',
+        subtitleSource: 'context',
+        dataKey: 'topWarehouseRows',
+      },
+    ],
+  },
+  {
+    id: 'warehouse-coverage-alerts',
+    className: 'grid gap-4 lg:grid-cols-12',
+    widgets: [
+      {
+        id: 'warehouse-inventory-coverage',
+        kind: 'inventory_coverage',
+        title: 'Inventory Coverage',
+        spanClassName: 'lg:col-span-5',
+        subtitleSource: 'context',
+        dataKey: 'inventoryCoverageRows',
+      },
+      {
+        id: 'warehouse-alerts-actions',
+        kind: 'warehouse_alert',
+        title: 'Warehouse Alerts & Actions',
+        spanClassName: 'lg:col-span-7',
+        subtitleSource: 'context',
+        dataKey: 'warehouseAlerts',
+      },
+    ],
+  },
+  {
+    id: 'warehouse-utilization-movement',
+    className: 'grid gap-4 lg:grid-cols-12',
+    widgets: [
+      {
+        id: 'warehouse-rack-utilization-heatmap',
+        kind: 'rack_utilization',
+        title: 'Rack Utilization Heatmap',
+        spanClassName: 'lg:col-span-5',
+        subtitleSource: 'context',
+        dataKey: 'rackUtilizationRows',
+      },
+      {
+        id: 'warehouse-inventory-movement-summary',
+        kind: 'inventory_movement',
+        title: 'Inventory Movement Summary',
+        spanClassName: 'lg:col-span-7',
+        subtitleSource: 'context',
+        dataKey: 'inventoryMovementMetrics',
+      },
+    ],
+  },
+  {
+    id: 'warehouse-dock-queue',
+    className: 'grid gap-4 lg:grid-cols-12',
+    widgets: [
+      {
+        id: 'warehouse-dock-queue-widget',
+        kind: 'dock_queue',
+        title: 'Inbound / Outbound Dock Queue',
+        spanClassName: 'lg:col-span-12',
+        subtitleSource: 'context',
+        dataKey: 'dockQueueRows',
+      },
+    ],
+  },
+  {
+    id: 'warehouse-aging-watchlist',
+    className: 'grid gap-4 lg:grid-cols-12',
+    widgets: [
+      {
+        id: 'warehouse-batch-aging-risk',
+        kind: 'top_aging',
+        title: 'Batch Aging Risk',
+        spanClassName: 'lg:col-span-4',
+        subtitleSource: 'context',
+        dataKey: 'agingRows',
+        axisMax: 20,
+        ticks: [0, 5, 10, 15, 20],
+      },
+      {
+        id: 'warehouse-activity-watchlist',
+        kind: 'outstanding_watchlist',
+        title: 'Warehouse Activity Watchlist',
+        spanClassName: 'lg:col-span-8',
+        subtitleSource: 'context',
+        dataKey: 'activityRows',
+        actionLabel: 'Lihat Detail',
+        overdueLabel: 'aktivitas',
+      },
+    ],
+  },
+];
+
+export const warehouseDashboardListSchema = warehouseDashboardSections.flatMap((section) =>
+  section.widgets.map((widget) => ({
+    sectionId: section.id,
+    widgetId: widget.id,
+    widgetKind: widget.kind,
+    title: widget.title,
+    spanClassName: widget.spanClassName,
+    subtitleSource: widget.subtitleSource,
+    dataKey: widget.dataKey,
+  })),
+);
+
+export default function WarehouseDashboardPage() {
+  const period: (typeof periodOptions)[number] = 'Maret 2026';
+  const region: (typeof regionOptions)[number] = 'Semua Region';
+  const warehouse: (typeof warehouseOptions)[number] = 'Semua Warehouse';
   const kpiCards = useMemo(() => kpiByPeriod[period], [period]);
   const trendRows = useMemo(() => timeseriesByWarehouse[warehouse], [warehouse]);
   const subtitle = useMemo(() => `${period} · ${region}`, [period, region]);
+  const widgetData = useMemo(
+    () => ({
+      kpiCards,
+      warehouseStatus,
+      inboundOutboundStatus,
+      occupancyRows,
+      trendRows,
+      topWarehouseRows,
+      inventoryCoverageRows,
+      warehouseAlerts,
+      rackUtilizationRows,
+      inventoryMovementMetrics,
+      dockQueueRows,
+      agingRows,
+      activityRows,
+    }),
+    [kpiCards, trendRows],
+  );
+
+  const renderWidget = (widget: WarehouseDashboardWidgetSchema) => {
+    switch (widget.kind) {
+      case 'kpi_grid':
+        return <KpiGrid cards={widgetData.kpiCards} />;
+      case 'order_status':
+        return (
+          <OrderStatusCard
+            title={widget.title}
+            subtitle={subtitle}
+            items={widgetData.warehouseStatus}
+          />
+        );
+      case 'open_close_bar':
+        return (
+          <OpenCloseBarCard
+            title={widget.title}
+            subtitle={subtitle}
+            data={widgetData.inboundOutboundStatus.series}
+          />
+        );
+      case 'top_aging':
+        return (
+          <TopAgingCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widget.dataKey === 'occupancyRows' ? widgetData.occupancyRows : widgetData.agingRows}
+            axisMax={widget.axisMax}
+            ticks={widget.ticks}
+          />
+        );
+      case 'timeseries':
+        return (
+          <TimeseriesCard
+            title={widget.title}
+            subtitle={subtitle}
+            data={widgetData.trendRows}
+            series={timeseriesSeries}
+            chartHeightClass={widget.chartHeightClass}
+            legendAlign={widget.legendAlign}
+          />
+        );
+      case 'top_amount':
+        return (
+          <TopAmountCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widgetData.topWarehouseRows}
+          />
+        );
+      case 'inventory_coverage':
+        return (
+          <InventoryCoverageCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widgetData.inventoryCoverageRows}
+            maxDays={30}
+          />
+        );
+      case 'warehouse_alert':
+        return (
+          <WarehouseAlertCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widgetData.warehouseAlerts}
+          />
+        );
+      case 'rack_utilization':
+        return (
+          <RackUtilizationCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widgetData.rackUtilizationRows}
+          />
+        );
+      case 'inventory_movement':
+        return (
+          <InventoryMovementCard
+            title={widget.title}
+            subtitle={subtitle}
+            metrics={widgetData.inventoryMovementMetrics}
+          />
+        );
+      case 'dock_queue':
+        return (
+          <DockQueueCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widgetData.dockQueueRows}
+          />
+        );
+      case 'outstanding_watchlist':
+        return (
+          <OutstandingOverdueTableCard
+            title={widget.title}
+            subtitle={subtitle}
+            rows={widgetData.activityRows}
+            actionLabel={widget.actionLabel}
+            overdueLabel={widget.overdueLabel}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="container space-y-7 pb-10">
@@ -297,93 +629,18 @@ export default function WarehouseDashboardPage() {
         </div>
       </Toolbar>
 
-      <div className="flex flex-wrap gap-3">
-        <Select value={period} onValueChange={(value) => setPeriod(value as (typeof periodOptions)[number])}>
-          <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{periodOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={region} onValueChange={(value) => setRegion(value as (typeof regionOptions)[number])}>
-          <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{regionOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
-        </Select>
-        <Select value={warehouse} onValueChange={(value) => setWarehouse(value as (typeof warehouseOptions)[number])}>
-          <SelectTrigger className="w-[190px]"><SelectValue /></SelectTrigger>
-          <SelectContent>{warehouseOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
-        </Select>
-      </div>
-
-      <KpiGrid cards={kpiCards} />
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-4">
-          <OrderStatusCard title="Warehouse Health Status" subtitle={subtitle} items={warehouseStatus} />
+      {warehouseDashboardSections.slice(0).map((section) => (
+        <div
+          key={section.id}
+          className={section.className || undefined}
+        >
+          {section.widgets.slice(0).map((widget) => (
+            <div key={widget.id} className={section.className ? widget.spanClassName : undefined}>
+              {renderWidget(widget)}
+            </div>
+          ))}
         </div>
-        <div className="lg:col-span-4">
-          <OpenCloseBarCard
-            title={inboundOutboundStatus.title}
-            subtitle={subtitle}
-            data={inboundOutboundStatus.series}
-          />
-        </div>
-        <div className="lg:col-span-4">
-          <TopAgingCard title="Occupancy Distribution" subtitle={subtitle} rows={occupancyRows} axisMax={8} ticks={[0, 1, 2, 3, 4, 5, 6, 7, 8]} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-8">
-          <TimeseriesCard
-            title="Warehouse Flow & Stock Trend"
-            subtitle={subtitle}
-            data={trendRows}
-            series={timeseriesSeries}
-            chartHeightClass="h-[320px]"
-            legendAlign="center"
-          />
-        </div>
-        <div className="lg:col-span-4">
-          <TopAmountCard title="Top Warehouse Utilization" subtitle={subtitle} rows={topWarehouseRows} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <InventoryCoverageCard title="Inventory Coverage" subtitle={subtitle} rows={inventoryCoverageRows} maxDays={30} />
-        </div>
-        <div className="lg:col-span-7">
-          <WarehouseAlertCard title="Warehouse Alerts & Actions" subtitle={subtitle} rows={warehouseAlerts} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-5">
-          <RackUtilizationCard title="Rack Utilization Heatmap" subtitle={subtitle} rows={rackUtilizationRows} />
-        </div>
-        <div className="lg:col-span-7">
-          <InventoryMovementCard title="Inventory Movement Summary" subtitle={subtitle} metrics={inventoryMovementMetrics} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-12">
-          <DockQueueCard title="Inbound / Outbound Dock Queue" subtitle={subtitle} rows={dockQueueRows} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-4">
-          <TopAgingCard title="Batch Aging Risk" subtitle={subtitle} rows={agingRows} axisMax={20} ticks={[0, 5, 10, 15, 20]} />
-        </div>
-        <div className="lg:col-span-8">
-          <OutstandingOverdueTableCard
-            title="Warehouse Activity Watchlist"
-            subtitle={subtitle}
-            rows={activityRows}
-            actionLabel="Lihat Detail"
-            overdueLabel="aktivitas"
-          />
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

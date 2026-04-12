@@ -40,6 +40,10 @@ apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_create_table_obt_p
 apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_insert_obt_purchase_line_flow.sql
 apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_insert_obt_sales_line_flow.sql
 apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_insert_obt_pos_to_sales.sql
+apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_check_obt_source_readiness.sql
+apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_check_obt_cdc_coverage.sql
+apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_create_table_obt_portfolio.sql
+apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_check_obt_portfolio_tables.sql
 ```
 
 ## Skeleton Strategy
@@ -93,6 +97,10 @@ apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_insert_obt_pos_to_
 - several enrichment fields are intentionally left `NULL` when the current semantic schema does not publish the physical source columns yet
 - `pg_create_table_*.sql` is the PostgreSQL table-first path when you are not allowed to create views on the source/client database
 - `pg_insert_*.sql` should only be executed after the required MyERPPlus source tables are already available in PostgreSQL
+- `pg_check_obt_cdc_coverage.sql` should be executed before landing creation, to confirm the transactional topics already exist in `cdc_events` and `cdc_current_state`
+- `pg_check_obt_source_readiness.sql` gives a concrete readiness list of required source tables before the insert stage
+- `pg_create_table_obt_portfolio.sql` is the concept-wide bootstrap path when you want all currently documented `obt_*` targets created in PostgreSQL immediately
+- `pg_check_obt_portfolio_tables.sql` verifies the full concept-derived OBT portfolio is present in PostgreSQL
 - validate status columns and any optional branch or location joins in your environment
 - if you materialize them as tables, preserve the same semantic grain
 - do not widen the cross-module joins beyond what `semantic-cross-module-lineage.md` currently supports
@@ -101,7 +109,15 @@ apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_insert_obt_pos_to_
 
 - the three OBT tables were successfully created in PostgreSQL at `127.0.0.1:3208`
 - at the time of execution, the expected source tables such as `m4_po_detail`, `m5_si_detail`, and `m_12_pos_voucher_out` were not present in that PostgreSQL instance yet
+- the current readiness check shows only partial master tables such as `m1_contact` and `m1_item` are present; the transactional source set is still missing
 - because of that, only the `pg_create_table_*` step was executed; the `pg_insert_*` step is intentionally deferred until source replication or staging is ready
+- the new CDC coverage gate also makes the earlier blocker explicit: transaction topics for `m4`, `m5`, and `m12` are still missing from the current PostgreSQL CDC sink
+- the concept-derived OBT portfolio tables have now been created in PostgreSQL `127.0.0.1:3208` as empty ETL targets using a shared bootstrap contract
+
+For the concrete landing prerequisites, continue with:
+
+- [`/obt/minimum-landing-contract-for-obt-etl`](/docs/obt/minimum-landing-contract-for-obt-etl)
+- [`/obt/cdc-to-landing-materialization-for-obt`](/docs/obt/cdc-to-landing-materialization-for-obt)
 
 ## Recommended Next Step
 

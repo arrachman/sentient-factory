@@ -163,7 +163,7 @@ def _extract_output_text(data: dict) -> str:
                 texts.append(str(text))
     if texts:
         return "\n".join(texts).strip()
-    return str(data.get("output_text") or "Maaf, model tidak mengembalikan jawaban.")
+    return str(data.get("output_text") or "").strip()
 
 
 def _extract_suggested_queries(answer: str) -> list[SuggestedQuery]:

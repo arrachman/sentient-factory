@@ -16,6 +16,7 @@ This category contains tutorials for MyERPPlus purchasing flows.
 
 ## Main Documents
 
+- [Panduan Input Purchasing](./input-flow.md)
 - [Purchase Query Artifacts](./query-artifacts.md)
 - [M4 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
 

@@ -1,9 +1,9 @@
 {
-  "label": "m6-manufacturing",
+  "label": "production",
   "position": 7,
   "link": {
     "type": "generated-index",
-    "title": "m6-manufacturing",
-    "description": "Tutorials for the MyERPPlus manufacturing module."
+    "title": "production",
+    "description": "Panduan modul production MYERPPlus."
   }
 }

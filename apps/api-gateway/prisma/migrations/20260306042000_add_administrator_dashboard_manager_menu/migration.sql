@@ -1,4 +1,4 @@
--- Add Administrator > Manager AI menu and grant access to admin role only.
+-- Add Administrator > Senti AI menu and grant access to admin role only.
 -- Idempotent: upsert menu by key and upsert role-menu relation.
 
 INSERT INTO "m0_menu" (
@@ -6,8 +6,8 @@ INSERT INTO "m0_menu" (
 )
 VALUES (
   'administrator-dashboard-manager',
-  'Manager AI',
-  '/app/dashboard/manager',
+  'Senti AI',
+  '/app/senti-ai',
   'LayoutDashboard',
   'ITEM',
   (SELECT "id" FROM "m0_menu" WHERE "key" = 'administrator' AND "deleted_at" IS NULL),

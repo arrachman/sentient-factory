@@ -733,8 +733,8 @@ async function main() {
     },
     {
       key: 'administrator-dashboard-manager',
-      title: 'Manager AI',
-      path: '/app/dashboard/manager',
+      title: 'Senti AI',
+      path: '/app/senti-ai',
       icon: 'LayoutDashboard',
       type: 'ITEM',
       parentKey: 'administrator',
@@ -875,6 +875,15 @@ async function main() {
       parentKey: 'logistic',
       sortOrder: 5,
     },
+    {
+      key: 'logistic-dashboard-warehouse',
+      title: 'Dashboard Warehouse',
+      path: '/app/dashboard/warehouse',
+      icon: 'Warehouse',
+      type: 'ITEM',
+      parentKey: 'logistic',
+      sortOrder: 6,
+    },
   ];
 
   const menuByKey = new Map<string, number>();
@@ -958,15 +967,6 @@ async function main() {
 
   for (const menuId of menuByKey.values()) {
     await assignMenuToRole(adminRole.id, menuId);
-  }
-
-  // Admin must always have full menu access, including menus created outside this seed list.
-  const allMenus = await prisma.menu.findMany({
-    where: { deletedAt: null },
-    select: { id: true },
-  });
-  for (const menu of allMenus) {
-    await assignMenuToRole(adminRole.id, menu.id);
   }
 
   const operationalMenuKeys = [

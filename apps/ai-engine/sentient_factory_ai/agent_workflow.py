@@ -209,11 +209,11 @@ def build_first_step_prompt(user_prompt: str) -> tuple[str, str]:
 
     semantic_schema_json = _read_required_text(
         _resolve_existing_path(settings.semantic_schema_manifest_path),
-        "semantic schema utama",
+        "obt agent mapping",
     )
     semantic_query_schema_sales_json = _read_required_text(
         _resolve_existing_path(settings.semantic_query_schema_sales_path),
-        "semantic query schema OBT",
+        "semantic query schema dashboard OBT",
     )
 
     prompt_with_context = (
@@ -247,12 +247,31 @@ def _resolve_existing_path(configured_path: Path) -> Path:
                 Path("apps/myerpplus-db-mapping/db/semantic-query-schema-sales.json"),
             ]
         )
+    if configured_path.name == "semantic-query-schema-dashboard-obt.json":
+        candidates.extend(
+            [
+                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
+                Path("/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
+                Path("apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
+            ]
+        )
     if configured_path.name == "semantic-schema-sales.json":
         candidates.extend(
             [
+                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
+                Path("/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
+                Path("apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
                 Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
                 Path("/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
                 Path("apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
+            ]
+        )
+    if configured_path.name == "obt-agent-mapping.json":
+        candidates.extend(
+            [
+                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/obt-agent-mapping.json"),
+                Path("/myerpplus-db-mapping/db/obt-agent-mapping.json"),
+                Path("apps/myerpplus-db-mapping/db/obt-agent-mapping.json"),
             ]
         )
     if configured_path.name == "semantic-schema.json":

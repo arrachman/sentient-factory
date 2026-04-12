@@ -18,9 +18,9 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
-  const safeReturnTo = returnTo?.startsWith('/') ? returnTo : '/app/overview';
+  const safeReturnTo = returnTo?.startsWith('/') ? returnTo : '/app/senti-ai';
   const [email, setEmail] = useState('super_admin@fr-labs.my.id');
-  const [password, setPassword] = useState('123456');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

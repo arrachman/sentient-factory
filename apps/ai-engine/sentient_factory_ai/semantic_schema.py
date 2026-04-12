@@ -40,6 +40,8 @@ def build_semantic_schema(
 def _build_from_file(manifest_path: str | Path | None) -> SemanticSchemaResponse:
     schema_file = _resolve_schema_file_path(manifest_path)
     payload = json.loads(schema_file.read_text(encoding="utf-8"))
+    if payload.get("artifact") == "obt-agent-mapping":
+        return _build_from_obt_agent_mapping(payload)
     semantic_tables: list[SemanticTable] = []
 
     for table in payload.get("tables", []):
@@ -68,18 +70,117 @@ def _build_from_file(manifest_path: str | Path | None) -> SemanticSchemaResponse
     )
 
 
+def _build_from_obt_agent_mapping(payload: dict[str, object]) -> SemanticSchemaResponse:
+    semantic_tables: list[SemanticTable] = []
+
+    for obt in payload.get("canonical_obts", []):
+        if not isinstance(obt, dict):
+            continue
+        name = str(obt.get("name", ""))
+        if not name:
+            continue
+
+        columns = [
+            SemanticColumn(name="domain", description=str(obt.get("domain", ""))),
+            SemanticColumn(name="business_grain", description=str(obt.get("business_grain", ""))),
+            SemanticColumn(name="status", description=str(obt.get("status", ""))),
+            SemanticColumn(
+                name="current_row_count",
+                data_type="integer",
+                nullable=True,
+                description=f"Current rollout row count for {name}.",
+            ),
+            SemanticColumn(
+                name="physical_targets",
+                data_type="json",
+                nullable=True,
+                description="Physical PostgreSQL targets that currently implement this canonical OBT.",
+            ),
+            SemanticColumn(
+                name="source_tables",
+                data_type="json",
+                nullable=True,
+                description="Primary source families used to build this canonical OBT.",
+            ),
+            SemanticColumn(
+                name="safe_join_path",
+                data_type="json",
+                nullable=True,
+                description="Safe join hints for agent usage.",
+            ),
+            SemanticColumn(name="notes", description=str(obt.get("notes", ""))),
+        ]
+
+        semantic_tables.append(
+            SemanticTable(
+                schema="obt",
+                name=name,
+                alias=name,
+                table_description=str(obt.get("business_grain", "")),
+                synonyms=[str(obt.get("domain", "")), str(obt.get("status", ""))],
+                columns=columns,
+                metrics={"current_row_count": str(obt.get("current_row_count", 0))},
+                relationships=[
+                    {"type": "physical_target", "target": target}
+                    for target in obt.get("physical_targets", [])
+                    if isinstance(target, str)
+                ],
+            )
+        )
+
+    for output in payload.get("active_physical_outputs", []):
+        if not isinstance(output, dict):
+            continue
+        name = str(output.get("name", ""))
+        if not name:
+            continue
+        semantic_tables.append(
+            SemanticTable(
+                schema="obt_physical",
+                name=name,
+                alias=name,
+                table_description=f"Active physical OBT output mapped to {output.get('canonical_parent', '')}",
+                columns=[
+                    SemanticColumn(name="domain", description=str(output.get("domain", ""))),
+                    SemanticColumn(name="canonical_parent", description=str(output.get("canonical_parent", ""))),
+                    SemanticColumn(
+                        name="current_row_count",
+                        data_type="integer",
+                        nullable=True,
+                        description=f"Current row count for active physical output {name}.",
+                    ),
+                ],
+                metrics={"current_row_count": str(output.get("current_row_count", 0))},
+                relationships=[
+                    {"type": "canonical_parent", "target": str(output.get("canonical_parent", ""))}
+                ],
+            )
+        )
+
+    return SemanticSchemaResponse(
+        generated_at=datetime.now(timezone.utc).isoformat(),
+        source="myerpplus_file:obt-agent-mapping.json",
+        tables=semantic_tables,
+    )
+
+
 def _resolve_schema_file_path(manifest_path: str | Path | None) -> Path:
     candidates: list[Path] = []
     if manifest_path is not None:
         candidates.append(Path(manifest_path))
 
     module_path = Path(__file__).resolve()
+    candidates.append(Path("apps/myerpplus-db-mapping/db/obt-agent-mapping.json"))
     candidates.append(Path("apps/myerpplus-db-mapping/db/semantic-schema.json"))
+    candidates.append(Path("/tmp/myerpplus-db-mapping/db/obt-agent-mapping.json"))
     candidates.append(Path("/tmp/myerpplus-db-mapping/db/semantic-schema.json"))
+    candidates.append(Path("/myerpplus-db-mapping/db/obt-agent-mapping.json"))
     candidates.append(Path("/myerpplus-db-mapping/db/semantic-schema.json"))
 
     for parent in module_path.parents:
+        candidates.append(parent / "apps/myerpplus-db-mapping/db/obt-agent-mapping.json")
         candidates.append(parent / "apps/myerpplus-db-mapping/db/semantic-schema.json")
+        candidates.append(parent / "myerpplus-db-mapping/db/obt-agent-mapping.json")
         candidates.append(parent / "myerpplus-db-mapping/db/semantic-schema.json")
 
     for candidate in candidates:
@@ -87,7 +188,7 @@ def _resolve_schema_file_path(manifest_path: str | Path | None) -> Path:
         if resolved.exists():
             return resolved
 
-    raise FileNotFoundError("Unable to locate semantic-schema.json")
+    raise FileNotFoundError("Unable to locate obt-agent-mapping.json or semantic-schema.json")
 
 
 def _build_from_postgres(

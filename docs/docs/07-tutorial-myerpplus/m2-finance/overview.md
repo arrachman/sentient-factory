@@ -16,6 +16,7 @@ This category contains tutorials for MyERPPlus finance processes.
 
 ## Main Documents
 
+- [Panduan Input Finance](./input-flow.md)
 - [Finance Query Artifacts](./query-artifacts.md)
 - [M2 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
 

@@ -14,11 +14,11 @@ WITH voucher_usage AS (
     SELECT
         'm12' AS source_module,
         'POS_VOUCHER_USAGE' AS source_doc_type,
-        vo.voidvi AS source_header_id,
+        vo.voidvi::bigint AS source_header_id,
         vo.void AS source_detail_id,
         vi.vikode AS doc_no,
-        vi.vitglbuat AS doc_date,
-        vi.viisclose AS doc_status_code,
+        vi.vitglbuat::timestamp AS doc_date,
+        vi.viisclose::bigint AS doc_status_code,
         CASE vi.viisclose
             WHEN 1 THEN 'Closed'
             ELSE 'Available'
@@ -30,7 +30,7 @@ WITH voucher_usage AS (
         vi.vikategori AS pos_category_code,
         pc.pcnama AS pos_category_name,
         vo.vosumber AS voucher_source,
-        NULLIF(vo.voidtransaksi, 0) AS sales_invoice_id,
+        NULLIF(vo.voidtransaksi, '')::bigint AS sales_invoice_id,
         vi.vimatauang AS voucher_currency_code,
         vi.vijml AS voucher_nominal_amount,
         vi.vijmlvalas AS voucher_nominal_amount_foreign,
@@ -42,13 +42,13 @@ WITH voucher_usage AS (
         vo.vojmlbayar AS voucher_usage_amount,
         vo.vojmlbayarvalas AS voucher_usage_amount_foreign,
         vo.voisclose AS voucher_usage_closed,
-        vi.vitglbuat AS voucher_issue_date,
+        vi.vitglbuat::timestamp AS voucher_issue_date,
         vi.vitglexpired AS voucher_expiry_date,
         vi.vitgllunas AS voucher_paid_off_date,
         vi.viisclose AS voucher_master_closed
     FROM m_12_pos_voucher_out vo
     LEFT JOIN m_12_pos_voucher_in vi
-        ON vi.viid = vo.voidvi
+        ON vi.viid = vo.voidvi::bigint
     LEFT JOIN m_12_pos_category pc
         ON pc.pckode = vi.vikategori
     LEFT JOIN m1_branch br
@@ -61,16 +61,16 @@ sales_invoice AS (
         si.siid,
         si.sinotransaksi AS invoice_no,
         si.sitgl AS invoice_date,
-        si.sistatus AS invoice_status_code,
+        si.sistatus::bigint AS invoice_status_code,
         NULL AS invoice_status_name,
         si.sicabang AS invoice_branch_code,
         br.bnama AS invoice_branch_name,
         si.silokasi AS invoice_location_code,
         lc.lnama AS invoice_location_name,
-        si.sicustomer AS contact_id,
+        si.sicustomer::bigint AS contact_id,
         cust.kkode AS contact_code,
         cust.knama AS contact_name,
-        si.sibagianpenjualan AS sales_contact_id,
+        si.sibagianpenjualan::bigint AS sales_contact_id,
         sales.kkode AS sales_contact_code,
         sales.knama AS sales_contact_name,
         si.sitermin AS terms_code,
@@ -78,9 +78,9 @@ sales_invoice AS (
         si.sitotaltransaksi AS invoice_total,
         si.simatauang AS invoice_currency_code,
         si.sikurs AS invoice_exchange_rate,
-        NULL AS input_user_id,
+        NULL::bigint AS input_user_id,
         NULL AS input_user_name,
-        si.simodifikasiuser AS modified_user_id,
+        si.simodifikasiuser::bigint AS modified_user_id,
         user_mod.unama AS modified_user_name
     FROM m5_si si
     LEFT JOIN m1_branch br
@@ -120,17 +120,17 @@ SELECT
     v.branch_name,
     v.location_code,
     v.location_name,
-    NULL AS contact_id,
-    NULL AS contact_code,
-    NULL AS contact_name,
-    NULL AS item_id,
-    NULL AS item_code,
-    NULL AS item_name,
-    NULL AS uom_code,
-    NULL AS qty,
+    NULL::bigint AS contact_id,
+    NULL::text AS contact_code,
+    NULL::text AS contact_name,
+    NULL::bigint AS item_id,
+    NULL::text AS item_code,
+    NULL::text AS item_name,
+    NULL::text AS uom_code,
+    NULL::numeric AS qty,
     v.voucher_usage_amount AS amount,
     v.voucher_usage_currency_code AS currency_code,
-    NULL AS exchange_rate,
+    NULL::numeric AS exchange_rate,
     v.voucher_source,
     v.pos_category_code,
     v.pos_category_name,

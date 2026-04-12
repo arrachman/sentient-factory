@@ -29,11 +29,11 @@ class Settings(BaseSettings):
     semantic_schema_source: str = Field(default="myerpplus_file", alias="SEMANTIC_SCHEMA_SOURCE")
     semantic_schema_key: str = Field(default="all", alias="SEMANTIC_SCHEMA_KEY")
     semantic_schema_manifest_path: Path = Field(
-        default=Path("apps/myerpplus-db-mapping/db/semantic-schema.json"),
+        default=Path("apps/myerpplus-db-mapping/db/obt-agent-mapping.json"),
         alias="SEMANTIC_SCHEMA_MANIFEST_PATH",
     )
     semantic_query_schema_sales_path: Path = Field(
-        default=Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
+        default=Path("apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
         alias="SEMANTIC_QUERY_SCHEMA_SALES_PATH",
     )
     ai_chat_workflow_mode: str = Field(default="agent", alias="AI_CHAT_WORKFLOW_MODE")
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     )
     llm_request_timeout_seconds: float = Field(default=60.0, alias="LLM_REQUEST_TIMEOUT_SECONDS")
     llm_request_max_retries: int = Field(default=3, alias="LLM_REQUEST_MAX_RETRIES")
-    dashboard_max_queries: int = Field(default=3, alias="AI_DASHBOARD_MAX_QUERIES")
+    dashboard_max_queries: int = Field(default=5, alias="AI_DASHBOARD_MAX_QUERIES")
     redis_url: str = Field(default="redis://redis:6379", alias="REDIS_URL")
     ai_workflow_queue_key: str = Field(default="ai:workflow:queue", alias="AI_WORKFLOW_QUEUE_KEY")
 

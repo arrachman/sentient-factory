@@ -35,6 +35,10 @@ File utama:
 - `pgsql-tables/pg_insert_obt_purchase_line_flow.sql`
 - `pgsql-tables/pg_insert_obt_sales_line_flow.sql`
 - `pgsql-tables/pg_insert_obt_pos_to_sales.sql`
+- `pgsql-tables/pg_check_obt_source_readiness.sql`
+- `pgsql-tables/pg_check_obt_cdc_coverage.sql`
+- `pgsql-tables/pg_create_table_obt_portfolio.sql`
+- `pgsql-tables/pg_check_obt_portfolio_tables.sql`
 
 Finalized candidates:
 
@@ -60,5 +64,23 @@ PostgreSQL table-first artifacts:
 
 - `pgsql-tables/pg_create_table_*.sql` membuat struktur tabel OBT kosong beserta index dasar
 - `pgsql-tables/pg_insert_*.sql` menyiapkan `INSERT ... SELECT` untuk bootstrap load setelah source tables tersedia di PostgreSQL
+- `pgsql-tables/pg_check_obt_source_readiness.sql` mengecek tabel sumber minimum yang dibutuhkan sebelum tahap insert dijalankan
+- `pgsql-tables/pg_check_obt_cdc_coverage.sql` mengecek apakah `cdc_events` dan `cdc_current_state` sudah membawa source table transaksi yang dibutuhkan
+- `pgsql-tables/pg_create_table_obt_portfolio.sql` membuat seluruh tabel `obt_*` yang diterbitkan oleh dokumen konsep dengan shared bootstrap contract
+- `pgsql-tables/pg_check_obt_portfolio_tables.sql` memverifikasi bahwa seluruh tabel OBT dari konsep plus output `dim_contact` dan `dim_item` yang aktif sudah ada di PostgreSQL target
 - `scripts/render-pg-obt-tables.py` merender artifacts PostgreSQL dari finalized view candidates
-- `scripts/run-pg-obt-table-sql.py` mengeksekusi artifacts PostgreSQL langsung ke instance target tanpa bergantung pada `psql`
+- `scripts/render-pg-obt-portfolio.py` merender bootstrap create-table SQL langsung dari `docs/docs/08-obt/konsep-obt-m0-m12.md`
+- `scripts/run-pg-obt-table-sql.py` mengeksekusi artifacts PostgreSQL langsung ke instance target tanpa bergantung pada `psql`, termasuk mode `check` dan `check-cdc`
+
+Dokumen operasional pendamping:
+
+- `docs/docs/08-obt/minimum-landing-contract-for-obt-etl.md`
+  - kontrak landing minimum sebelum `pg_insert_obt_*` boleh dijalankan
+- `docs/docs/08-obt/cdc-to-landing-materialization-for-obt.md`
+  - bridge dari `cdc_current_state` ke relational landing tables bernama `m0_*`, `m1_*`, `m4_*`, `m5_*`, dan `m_12_*`
+
+Prepared CDC-to-landing artifacts:
+
+- `pgsql-landing/pg_create_myerpplus_landing_tables.sql`
+- `pgsql-landing/pg_upsert_myerpplus_landing_tables_from_cdc.sql`
+- `scripts/render-pg-landing-from-semantic.py`

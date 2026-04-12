@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS public.dim_inventory_price_setup (
+    price_setup_key text PRIMARY KEY,
+    doc_no text,
+    doc_date timestamptz,
+    valid_to timestamptz,
+    category_code text,
+    branch_code text,
+    location_code text,
+    warehouse_code text,
+    item_id text,
+    contact_id text,
+    uom_code text,
+    currency_code text,
+    price_1 numeric(20,6),
+    price_2 numeric(20,6),
+    price_3 numeric(20,6),
+    price_4 numeric(20,6),
+    price_5 numeric(20,6),
+    source_payload jsonb,
+    etl_batch_id text,
+    etl_loaded_at timestamptz NOT NULL DEFAULT now(),
+    etl_updated_at timestamptz NOT NULL DEFAULT now()
+);

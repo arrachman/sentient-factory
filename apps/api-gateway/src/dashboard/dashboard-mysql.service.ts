@@ -275,6 +275,7 @@ export class DashboardMysqlService implements OnModuleDestroy {
     const configured = this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT');
     return [
       configured,
+      resolve('/myerpplus-db-mapping/dashboard-mapping/sql-templates'),
       resolve(process.cwd(), 'sql-templates'),
       resolve(process.cwd(), '../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
       resolve(process.cwd(), '../../apps/myerpplus-db-mapping/dashboard-mapping/sql-templates'),

@@ -350,7 +350,7 @@ def main() -> int:
     prompt_template_path = repo_root / "apps/ai-engine/prompts/sales_sql_readonly_generator.prompt.md"
     semantic_schema_path = repo_root / "apps/myerpplus-db-mapping/db/semantic-schema.json"
     semantic_query_schema_sales_path = (
-        repo_root / "apps/myerpplus-db-mapping/db/semantic-query-schema-sales.json"
+        repo_root / "apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"
     )
 
     tests_path = repo_root / args.tests

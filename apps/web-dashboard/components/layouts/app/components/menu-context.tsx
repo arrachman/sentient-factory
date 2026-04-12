@@ -54,10 +54,15 @@ function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
   return [...items]
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((item) => {
+      const isLegacyManagerAiMenu =
+        item.key === 'administrator-dashboard-manager' ||
+        item.path === '/app/dashboard/manager';
       const mapped: MenuItem = {
         key: item.key,
-        title: item.title,
-        path: item.path ?? undefined,
+        title: isLegacyManagerAiMenu ? 'Senti AI' : item.title,
+        path: isLegacyManagerAiMenu
+          ? '/app/senti-ai'
+          : item.path ?? undefined,
         icon: resolveIcon(item.icon),
       };
 

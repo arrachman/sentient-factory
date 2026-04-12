@@ -448,7 +448,7 @@ Operasional checklist harian, jam kerja alat, and pemeriksaan unit.
 - `dckodepa`: Business column dckodepa.
 - `dcdimintaolehkontak`: Contact reference or contact person.
 - `dctgldipakai`: Business column dctgldipakai.
-- `dcidgoods`: Goods reference or transaction goods name.
+- `dcidbarang`: Goods reference or transaction goods name.
 - `dctglnoref`: Business column dctglnoref.
 - `dcstatusts`: Process status or document status.
 

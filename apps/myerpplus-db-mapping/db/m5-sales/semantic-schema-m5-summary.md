@@ -91,7 +91,7 @@ This section is important so the AI agent does not invent unstable cross-module 
 
 - `m5_*customer -> m1_contact.kid`
   Used when sales documents need customer labels from master data.
-- `m5_*_detail.idgoods -> m1_item.bid`
+- `m5_*_detail.idbarang -> m1_item.bid`
   Used when sales transaction lines need item labels from master data.
 - `m_12_pos_voucher_out.voidtransaction -> m5_si.siid`
   Used when a POS voucher must be traced to a formal sales invoice.

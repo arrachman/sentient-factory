@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -35,6 +35,93 @@ export class DashboardController {
   @ApiResponse({ status: 200, description: 'Manager KPI payload' })
   managerKpis() {
     return this.dashboardService.managerKpis();
+  }
+
+  @Get('custom-db/pin-targets')
+  @ApiOperation({ summary: 'List custom dashboard pin targets' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard pin targets payload' })
+  customDbPinTargets() {
+    return this.dashboardService.customDbPinTargets();
+  }
+
+  @Get('custom-db/:dashboardKey')
+  @ApiOperation({ summary: 'Get custom dashboard catalog' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard catalog payload' })
+  customDbCatalog(@Param('dashboardKey') dashboardKey: string) {
+    return this.dashboardService.customDbCatalog(dashboardKey);
+  }
+
+  @Patch('custom-db/:dashboardKey')
+  @ApiOperation({ summary: 'Update custom dashboard metadata' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard update result' })
+  updateCustomDbCatalog(
+    @Param('dashboardKey') dashboardKey: string,
+    @Body() body: { title?: string; description?: string | null },
+  ) {
+    return this.dashboardService.updateCustomDbCatalog(dashboardKey, body);
+  }
+
+  @Post('custom-db/:dashboardKey/query/:queryKey')
+  @ApiOperation({ summary: 'Execute custom dashboard widget query' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard query result' })
+  executeCustomDbQuery(
+    @Param('dashboardKey') dashboardKey: string,
+    @Param('queryKey') queryKey: string,
+    @Body() body: { params?: Record<string, unknown> },
+  ) {
+    return this.dashboardService.executeCustomDbQuery(dashboardKey, queryKey, body?.params || {});
+  }
+
+  @Post('custom-db/pin')
+  @ApiOperation({ summary: 'Pin a widget into a custom dashboard' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard pin result' })
+  pinCustomDbWidget(
+    @Body()
+    body: {
+      dashboardKey?: string;
+      title?: string;
+      description?: string | null;
+      widgetKind?: string;
+      chartType?: string | null;
+      spanClassName?: string | null;
+      sqlTemplate?: string;
+      outputColumns?: string[];
+      queryLabel?: string;
+    },
+  ) {
+    return this.dashboardService.pinCustomDbWidget(body);
+  }
+
+  @Patch('custom-db/widget/:widgetId')
+  @ApiOperation({ summary: 'Update custom dashboard widget' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard widget update result' })
+  updateCustomDbWidget(
+    @Param('widgetId') widgetId: string,
+    @Body()
+    body: {
+      title?: string;
+      description?: string | null;
+      spanClassName?: string | null;
+      widgetOrder?: number | null;
+      chartType?: string | null;
+      defaultLimit?: number | null;
+    },
+  ) {
+    return this.dashboardService.updateCustomDbWidget(widgetId, body);
+  }
+
+  @Post('custom-db/widget/:widgetId/duplicate')
+  @ApiOperation({ summary: 'Duplicate custom dashboard widget' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard widget duplicate result' })
+  duplicateCustomDbWidget(@Param('widgetId') widgetId: string) {
+    return this.dashboardService.duplicateCustomDbWidget(widgetId);
+  }
+
+  @Delete('custom-db/widget/:widgetId')
+  @ApiOperation({ summary: 'Delete custom dashboard widget' })
+  @ApiResponse({ status: 200, description: 'Custom dashboard widget delete result' })
+  deleteCustomDbWidget(@Param('widgetId') widgetId: string) {
+    return this.dashboardService.deleteCustomDbWidget(widgetId);
   }
 
   @Get(':domain/metadata')

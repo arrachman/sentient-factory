@@ -18,6 +18,13 @@ yang berisi artefak berikut:
 - `semantic-schema-<prefix>-nl2sql.json`
 - `README.md`
 
+Selain artefak per-domain, folder `db/` juga boleh memiliki artefak lintas-domain untuk kebutuhan agent atau semantic orchestration, misalnya:
+
+- `semantic-schema.json`
+- `semantic-schema-manifest.json`
+- `semantic-cross-module-lineage.json`
+- `obt-agent-mapping.json`
+
 ## Tujuan
 
 Setiap folder domain harus menjadi tempat kumpul artefak yang:
@@ -26,6 +33,23 @@ Setiap folder domain harus menjadi tempat kumpul artefak yang:
 2. punya source of truth schema
 3. punya ringkasan audit untuk manusia
 4. punya guide operasional untuk AI/NL2SQL
+
+Di level root `db/`, artefak lintas-domain dipakai saat agent perlu:
+
+1. memilih domain yang benar sebelum query
+2. memahami relasi antar-modul yang aman
+3. memilih canonical `obt_*` atau physical target PostgreSQL yang sesuai
+
+Artifact lintas-domain yang sekarang penting untuk agent:
+
+- `semantic-schema.json`
+  fungsi: schema gabungan lintas domain
+- `semantic-schema-manifest.json`
+  fungsi: manifest domain semantic yang tersedia
+- `semantic-cross-module-lineage.json`
+  fungsi: guardrail relasi lintas modul yang aman
+- `obt-agent-mapping.json`
+  fungsi: peta canonical OBT, grain bisnis, source tables, safe join path, physical target, dan status rollout aktual
 
 ## Contoh Referensi
 

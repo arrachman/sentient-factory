@@ -61,15 +61,18 @@ export function useAdministratorMenuPage() {
   const headers = useMemo(() => buildAuthHeader(token), [token]);
 
   const fetchList = useCallback(
-    async (targetPage = page, targetLimit = limit) => {
-      const safePage = typeof targetPage === 'number' && Number.isInteger(targetPage) && targetPage > 0 ? targetPage : 1;
+    async (targetPage?: number, targetLimit?: number) => {
+      const resolvedPage =
+        typeof targetPage === 'number' && Number.isInteger(targetPage) && targetPage > 0 ? targetPage : page;
+      const resolvedLimit =
+        typeof targetLimit === 'number' && Number.isInteger(targetLimit) && targetLimit > 0 ? targetLimit : limit;
 
       setLoading(true);
       setError('');
       try {
         const query = new URLSearchParams({
-          page: String(safePage),
-          limit: String(targetLimit),
+          page: String(resolvedPage),
+          limit: String(resolvedLimit),
           includeInactive: 'true',
         });
 
@@ -101,7 +104,7 @@ export function useAdministratorMenuPage() {
             (Array.isArray(payload.data) ? payload.data : []).map((item) => [item.id, item.path ?? '']),
           ),
         );
-        setPage(typeof payload.meta?.page === 'number' ? payload.meta.page : safePage);
+        setPage(typeof payload.meta?.page === 'number' ? payload.meta.page : resolvedPage);
         setTotalPages(typeof payload.meta?.totalPages === 'number' ? payload.meta.totalPages : 1);
         setTotalItems(typeof payload.meta?.total === 'number' ? payload.meta.total : 0);
       } catch (err) {
@@ -146,8 +149,8 @@ export function useAdministratorMenuPage() {
   }, []);
 
   useEffect(() => {
-    void fetchList(1);
-  }, [search, parentFilter, fetchList]);
+    void fetchList(1, limit);
+  }, [search, parentFilter, limit]);
 
   const openAddForm = useCallback(() => {
     setEditingId(null);
@@ -212,12 +215,44 @@ export function useAdministratorMenuPage() {
     }
 
     const item = items.find((row) => row.id === id);
-    if (!item) {
+    if (item) {
+      onEdit(item);
       return;
     }
 
-    onEdit(item);
-  }, [isUpdateRoute, items, onEdit, showForm, updateId]);
+    let cancelled = false;
+
+    async function fetchMenuDetail() {
+      setError('');
+      try {
+        const response = await fetch(`/api/menus/${id}`, {
+          cache: 'no-store',
+          headers,
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { success?: boolean; message?: string; data?: AdministratorMenu }
+          | null;
+
+        if (!response.ok || !payload?.success || !payload?.data) {
+          throw new Error(payload?.message || 'Failed to load menu detail');
+        }
+
+        if (!cancelled) {
+          onEdit(payload.data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to load menu detail');
+        }
+      }
+    }
+
+    void fetchMenuDetail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [headers, isUpdateRoute, items, onEdit, showForm, updateId]);
 
   const submitForm = useCallback(async () => {
     setSubmitting(true);

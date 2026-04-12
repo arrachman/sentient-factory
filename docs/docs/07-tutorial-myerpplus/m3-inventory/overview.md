@@ -16,6 +16,7 @@ This category contains tutorials for MyERPPlus inventory operations.
 
 ## Main Documents
 
+- [Panduan Input Inventory](./input-flow.md)
 - [Inventory Query Artifacts](./query-artifacts.md)
 - [M3 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
 

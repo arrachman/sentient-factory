@@ -1,9 +1,9 @@
 {
-  "label": "m7-procurement advanced",
+  "label": "fixed",
   "position": 8,
   "link": {
     "type": "generated-index",
-    "title": "m7-procurement advanced",
-    "description": "Tutorials for the MyERPPlus procurement advanced / asset lifecycle module."
+    "title": "fixed",
+    "description": "Panduan modul fixed MYERPPlus."
   }
 }

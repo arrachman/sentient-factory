@@ -1,0 +1,2064 @@
+{
+  "domain": "myerpplus_obt_dashboard",
+  "description": "Machine-friendly semantic query schema for dashboard generation on PostgreSQL OBT and dimension tables. Use this as the primary queryable schema for analytics and dashboard requests.",
+  "sql_dialect": "postgresql",
+  "query_target": "postgresql://127.0.0.1:3208/sentient_factory",
+  "preferred_schema": "public",
+  "source_files": [
+    "obt-agent-mapping.json",
+    "advanced-dashboard-use-cases.json"
+  ],
+  "business_terms": {
+    "OBT": [
+      "one big table",
+      "analytical output table",
+      "tabel analitik"
+    ],
+    "SO": [
+      "sales order",
+      "order penjualan"
+    ],
+    "SI": [
+      "sales invoice",
+      "faktur penjualan"
+    ],
+    "CR": [
+      "cash receipt",
+      "kas masuk"
+    ],
+    "CD": [
+      "cash disbursement",
+      "kas keluar"
+    ],
+    "RM": [
+      "receipt money",
+      "penerimaan pembayaran"
+    ],
+    "GJ": [
+      "general journal",
+      "jurnal umum"
+    ],
+    "PO": [
+      "purchase order",
+      "order pembelian"
+    ],
+    "GRN": [
+      "goods receipt note",
+      "penerimaan barang"
+    ],
+    "RI": [
+      "receive invoice",
+      "invoice pembelian"
+    ],
+    "SA": [
+      "stock adjustment",
+      "penyesuaian stok"
+    ],
+    "TS": [
+      "transfer stock",
+      "mutasi stok"
+    ],
+    "MR": [
+      "material request",
+      "permintaan barang"
+    ],
+    "RS": [
+      "receive stock",
+      "terima mutasi"
+    ],
+    "SP": [
+      "stock opname",
+      "opname stok"
+    ],
+    "IB": [
+      "saldo awal barang",
+      "initial stock"
+    ],
+    "RF": [
+      "pengisian bahan bakar",
+      "fuel refill"
+    ],
+    "DC": [
+      "daily check",
+      "time sheet"
+    ],
+    "RW": [
+      "warehouse transaction rw",
+      "warehouse rw"
+    ],
+    "PA": [
+      "sales price setup",
+      "price adjustment inventory"
+    ],
+    "PR": [
+      "purchase request",
+      "permintaan pembelian"
+    ],
+    "RQ": [
+      "request quotation",
+      "permintaan penawaran"
+    ],
+    "BS": [
+      "bid selection",
+      "seleksi penawaran"
+    ],
+    "DNR": [
+      "debit note return",
+      "retur pembelian finansial"
+    ],
+    "PRT": [
+      "purchase return",
+      "retur pembelian"
+    ],
+    "AP": [
+      "advance purchase",
+      "uang muka pembelian"
+    ],
+    "VP": [
+      "vendor payment",
+      "pembayaran vendor"
+    ],
+    "VPP": [
+      "vendor payment proposal",
+      "proposal pembayaran vendor"
+    ],
+    "PIE": [
+      "purchase invoice exchange",
+      "tukar faktur pembelian"
+    ],
+    "SQ": [
+      "sales quotation",
+      "penawaran penjualan"
+    ],
+    "PI": [
+      "proforma invoice",
+      "proforma penjualan"
+    ],
+    "PL": [
+      "packing list",
+      "daftar kemasan"
+    ],
+    "DO": [
+      "delivery order",
+      "surat jalan"
+    ],
+    "DR": [
+      "delivery report",
+      "laporan pengiriman"
+    ],
+    "RNR": [
+      "receipt note return",
+      "nota retur penerimaan"
+    ],
+    "SR": [
+      "sales return",
+      "retur penjualan"
+    ],
+    "IC": [
+      "invoice collection",
+      "penagihan invoice"
+    ],
+    "PV": [
+      "payment voucher",
+      "voucher pembayaran"
+    ],
+    "RP": [
+      "shipping receivable",
+      "piutang pengiriman"
+    ],
+    "SIE": [
+      "sales invoice exchange",
+      "tukar faktur penjualan"
+    ],
+    "SPA": [
+      "sales point adjustment",
+      "penyesuaian poin penjualan"
+    ],
+    "BOM": [
+      "bill of materials",
+      "formula produksi"
+    ],
+    "MRS": [
+      "material request slip",
+      "permintaan material produksi"
+    ],
+    "MRN": [
+      "material receipt note",
+      "realisasi material produksi"
+    ],
+    "PD": [
+      "production document",
+      "dokumen produksi"
+    ],
+    "PDR": [
+      "production result",
+      "hasil produksi"
+    ],
+    "WO": [
+      "work order",
+      "perintah kerja"
+    ],
+    "ASSET": [
+      "fixed asset",
+      "aset tetap"
+    ],
+    "AQ": [
+      "asset quotation",
+      "permintaan penawaran aset"
+    ],
+    "AO": [
+      "asset order",
+      "order pengadaan aset"
+    ],
+    "AE": [
+      "asset entry",
+      "pencatatan aset"
+    ],
+    "AT": [
+      "asset transfer",
+      "mutasi aset"
+    ],
+    "AG": [
+      "asset disposal",
+      "pelepasan aset"
+    ],
+    "DA": [
+      "asset depreciation",
+      "penyusutan aset"
+    ],
+    "AB": [
+      "asset booking",
+      "budget approval aset"
+    ]
+  },
+  "table_groups": {
+    "dimensions": [
+      "dim_branch",
+      "dim_class_product",
+      "dim_department",
+      "dim_subdepartment",
+      "dim_section",
+      "dim_contact_terms",
+      "dim_contact_price",
+      "dim_contact_category",
+      "dim_customer_category",
+      "dim_country",
+      "dim_province",
+      "dim_city",
+      "dim_location",
+      "dim_warehouse",
+      "dim_currency",
+      "dim_bank",
+      "dim_coa",
+      "dim_tax",
+      "dim_terms",
+      "dim_division",
+      "dim_project",
+      "dim_cost_center",
+      "dim_supplier_category",
+      "dim_salesman_category",
+      "dim_item_category",
+      "dim_item_location",
+      "dim_item_location_warehouse",
+      "dim_item_price",
+      "dim_item_supplier",
+      "dim_item_type",
+      "dim_item_permission",
+      "dim_item_transaction",
+      "dim_unit",
+      "dim_expedition",
+      "dim_material",
+      "dim_merk",
+      "dim_model",
+      "dim_size",
+      "dim_type_sa",
+      "dim_other_cost",
+      "dim_price_category",
+      "dim_price_category_detail",
+      "dim_transaction_note",
+      "dim_transaction_note_detail",
+      "dim_contact",
+      "dim_item",
+      "dim_item_warehouse_stock"
+    ],
+    "sales": [
+      "dim_sales_note",
+      "dim_sales_attachment",
+      "obt_sales_invoice_exchange_event",
+      "obt_sales_point_adjustment_event",
+      "obt_sales_closing_snapshot",
+      "obt_sales_forecast_event",
+      "obt_sales_receivable",
+      "obt_sales_line_flow",
+      "obt_sales_order_line_flow"
+    ],
+    "finance": [
+      "obt_profit_loss_line",
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "obt_cash_receipt_line_flow",
+      "obt_cash_disbursement_line_flow",
+      "obt_receipt_money_line_flow"
+    ],
+    "inventory": [
+      "obt_inventory_movement_line",
+      "obt_inventory_request_event",
+      "dim_inventory_price_setup",
+      "dim_inventory_refuel_event",
+      "dim_inventory_daily_check",
+      "dim_inventory_rw",
+      "dim_inventory_note",
+      "dim_inventory_attachment"
+    ],
+    "purchasing": [
+      "dim_purchase_note",
+      "dim_purchase_attachment",
+      "obt_purchase_comparative_event",
+      "obt_purchase_invoice_exchange_event",
+      "obt_purchase_line_flow",
+      "obt_purchase_payment",
+      "obt_purchase_document_line_event"
+    ],
+    "manufacturing": [
+      "obt_bom_route_snapshot",
+      "obt_manufacturing_execution",
+      "dim_manufacturing_note",
+      "dim_manufacturing_attachment"
+    ],
+    "asset": [
+      "obt_asset_lifecycle",
+      "obt_asset_depreciation_event",
+      "obt_asset_mutation",
+      "dim_asset_note",
+      "dim_asset_attachment"
+    ]
+  },
+  "tables": [
+    {
+      "name": "dim_contact_terms",
+      "grain": "one row per contact and invoice type terms override",
+      "key_columns": ["contact_id", "invoice_type"],
+      "common_columns": ["contact_id", "invoice_type", "terms_code"]
+    },
+    {
+      "name": "dim_contact_price",
+      "grain": "one row per contact-item-uom price override",
+      "key_columns": ["contact_id", "item_id", "uom_code"],
+      "common_columns": ["contact_id", "item_id", "uom_code", "buy_price", "sell_price", "effective_from", "effective_to", "notes"]
+    },
+    {
+      "name": "dim_contact_category",
+      "grain": "one row per contact category master",
+      "key_columns": ["category_code"],
+      "common_columns": ["category_code", "category_name", "notes"]
+    },
+    {
+      "name": "dim_customer_category",
+      "grain": "one row per customer category master",
+      "key_columns": ["category_code"],
+      "common_columns": ["category_code", "category_name", "sales_level", "is_active", "notes"]
+    },
+    {
+      "name": "dim_supplier_category",
+      "grain": "one row per supplier category master",
+      "key_columns": ["category_code"],
+      "common_columns": ["category_code", "category_name", "is_active", "notes"]
+    },
+    {
+      "name": "dim_salesman_category",
+      "grain": "one row per salesman category master",
+      "key_columns": ["category_code"],
+      "common_columns": ["category_code", "category_name", "area_code", "is_active", "notes"]
+    },
+    {
+      "name": "dim_item_category",
+      "grain": "one row per item category master",
+      "key_columns": ["category_code"],
+      "common_columns": ["category_code", "category_name", "division_code", "subdivision_code", "inventory_account_code", "cogs_account_code", "sales_account_code", "is_active", "notes"]
+    },
+    {
+      "name": "dim_item_location",
+      "grain": "one row per item location master",
+      "key_columns": ["item_location_id"],
+      "common_columns": ["item_location_id", "location_code", "location_name", "warehouse_code"]
+    },
+    {
+      "name": "dim_item_location_warehouse",
+      "grain": "one row per item, warehouse, and item-location mapping",
+      "key_columns": ["item_id", "warehouse_code", "item_location_id"],
+      "common_columns": ["item_id", "warehouse_code", "item_location_id", "item_code", "location_code", "location_name"]
+    },
+    {
+      "name": "dim_item_price",
+      "grain": "one row per item and currency price",
+      "key_columns": ["item_id", "currency_code"],
+      "common_columns": ["item_id", "currency_code", "buy_price", "sell_price", "notes"]
+    },
+    {
+      "name": "dim_item_supplier",
+      "grain": "one row per item-supplier relation",
+      "key_columns": ["item_id", "contact_id"],
+      "common_columns": ["item_id", "contact_id", "supplier_order", "notes"]
+    },
+    {
+      "name": "dim_item_type",
+      "grain": "one row per item type master",
+      "key_columns": ["item_type_code"],
+      "common_columns": ["item_type_code", "item_type_name", "is_active", "notes"]
+    },
+    {
+      "name": "dim_unit",
+      "grain": "one row per unit master",
+      "key_columns": ["unit_code"],
+      "common_columns": ["unit_code", "unit_name", "conversion_value", "is_active", "notes"]
+    },
+    {
+      "name": "dim_tax",
+      "grain": "one row per tax master",
+      "key_columns": ["tax_code"],
+      "common_columns": ["tax_code", "tax_name", "tax_rate", "purchase_account_code", "sales_account_code", "is_active", "notes"]
+    },
+    {
+      "name": "dim_currency",
+      "grain": "one row per currency master",
+      "key_columns": ["currency_code"],
+      "common_columns": ["currency_code", "currency_name", "symbol", "exchange_rate", "is_active", "notes"]
+    },
+    {
+      "name": "dim_bank",
+      "grain": "one row per bank master",
+      "key_columns": ["bank_code"],
+      "common_columns": ["bank_code", "bank_name", "city", "is_active", "notes"]
+    },
+    {
+      "name": "dim_expedition",
+      "grain": "one row per expedition master",
+      "key_columns": ["expedition_code"],
+      "common_columns": ["expedition_code", "expedition_name", "city", "contact_person", "email", "is_active", "notes"]
+    },
+    {
+      "name": "dim_class_product",
+      "grain": "one row per class product master",
+      "key_columns": ["class_product_code"],
+      "common_columns": ["class_product_code", "class_product_name", "is_active", "notes"]
+    },
+    {
+      "name": "dim_price_category",
+      "grain": "one row per price category master",
+      "key_columns": ["price_category_code"],
+      "common_columns": ["price_category_code", "price_category_name", "is_active", "notes"]
+    },
+    {
+      "name": "dim_price_category_detail",
+      "grain": "one row per price category and item",
+      "key_columns": ["price_category_code", "item_id"],
+      "common_columns": ["price_category_code", "item_id", "min_stock", "max_stock", "reorder_stock", "min_order_stock", "sell_price_1", "sell_price_2", "sell_price_3", "sell_price_4", "sell_price_5"]
+    },
+    {
+      "name": "dim_branch",
+      "grain": "one row per branch master",
+      "key_columns": ["branch_code"],
+      "common_columns": [
+        "branch_code",
+        "branch_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_location",
+      "grain": "one row per location master",
+      "key_columns": ["location_code"],
+      "common_columns": [
+        "location_code",
+        "location_name",
+        "branch_code",
+        "branch_name",
+        "pos_category_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_warehouse",
+      "grain": "one row per warehouse master",
+      "key_columns": ["warehouse_code"],
+      "common_columns": [
+        "warehouse_code",
+        "warehouse_name",
+        "division_code",
+        "division_name",
+        "location_code",
+        "location_name",
+        "branch_code",
+        "branch_name",
+        "booking_stock_enabled",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_coa",
+      "grain": "one row per chart of accounts code",
+      "key_columns": ["account_code"],
+      "common_columns": [
+        "account_code",
+        "account_name",
+        "account_type",
+        "debit_credit_flag",
+        "parent_account_code",
+        "branch_code",
+        "location_code",
+        "division_code",
+        "is_active"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_terms",
+      "grain": "one row per payment terms master",
+      "key_columns": ["terms_code"],
+      "common_columns": [
+        "terms_code",
+        "terms_name",
+        "due_days",
+        "discount_days_1",
+        "discount_percent_1",
+        "discount_days_2",
+        "discount_percent_2",
+        "penalty_percent",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_division",
+      "grain": "one row per division master",
+      "key_columns": ["division_code"],
+      "common_columns": [
+        "division_code",
+        "division_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_project",
+      "grain": "one row per project master",
+      "key_columns": ["project_code"],
+      "common_columns": [
+        "project_code",
+        "project_name",
+        "category_code",
+        "contact_id",
+        "project_manager_id",
+        "division_code",
+        "contract_no",
+        "contract_value",
+        "is_active",
+        "is_finished",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_cost_center",
+      "grain": "one row per cost center master",
+      "key_columns": ["cost_center_code"],
+      "common_columns": [
+        "cost_center_code",
+        "cost_center_name",
+        "division_code",
+        "account_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_contact",
+      "grain": "one row per contact master",
+      "key_columns": ["contact_id"],
+      "common_columns": [
+        "contact_id",
+        "contact_code",
+        "contact_name",
+        "branch_code",
+        "branch_name",
+        "location_code",
+        "location_name",
+        "currency_code",
+        "is_active",
+        "total_receivable",
+        "total_payable"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_item",
+      "grain": "one row per item master",
+      "key_columns": ["item_id"],
+      "common_columns": [
+        "item_id",
+        "item_code",
+        "item_name",
+        "item_type",
+        "item_category_code",
+        "default_uom_code",
+        "inventory_account_code",
+        "sales_account_code",
+        "is_active",
+        "current_stock",
+        "average_cost"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_item_warehouse_stock",
+      "grain": "one row per item per warehouse stock position",
+      "key_columns": ["item_id", "warehouse_code"],
+      "common_columns": [
+        "item_id",
+        "item_code",
+        "item_name",
+        "item_type",
+        "item_category_code",
+        "default_uom_code",
+        "sales_uom_code",
+        "branch_code",
+        "branch_name",
+        "location_code",
+        "location_name",
+        "warehouse_code",
+        "warehouse_name",
+        "supplier_id",
+        "is_active",
+        "current_stock",
+        "average_cost"
+      ],
+      "typical_filters": [
+        "is_active = 1",
+        "current_stock > 0"
+      ]
+    },
+    {
+      "name": "dim_department",
+      "grain": "one row per department master",
+      "key_columns": ["department_code"],
+      "common_columns": [
+        "department_code",
+        "department_name",
+        "division_code",
+        "subdivision_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_subdepartment",
+      "grain": "one row per subdepartment master",
+      "key_columns": ["subdepartment_code"],
+      "common_columns": [
+        "subdepartment_code",
+        "subdepartment_name",
+        "department_code",
+        "division_code",
+        "subdivision_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_section",
+      "grain": "one row per section master",
+      "key_columns": ["section_code"],
+      "common_columns": [
+        "section_code",
+        "section_name",
+        "department_code",
+        "subdepartment_code",
+        "division_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_country",
+      "grain": "one row per country master",
+      "key_columns": ["country_code"],
+      "common_columns": [
+        "country_code",
+        "country_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_province",
+      "grain": "one row per province master",
+      "key_columns": ["province_code"],
+      "common_columns": [
+        "province_code",
+        "province_name",
+        "country_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_city",
+      "grain": "one row per city master",
+      "key_columns": ["city_code"],
+      "common_columns": [
+        "city_code",
+        "city_name",
+        "province_code",
+        "country_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_material",
+      "grain": "one row per material master",
+      "key_columns": ["material_code"],
+      "common_columns": [
+        "material_code",
+        "material_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_merk",
+      "grain": "one row per merk master",
+      "key_columns": ["merk_code"],
+      "common_columns": [
+        "merk_code",
+        "merk_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_model",
+      "grain": "one row per model master",
+      "key_columns": ["model_code"],
+      "common_columns": [
+        "model_code",
+        "model_name",
+        "merk_code",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_size",
+      "grain": "one row per size master",
+      "key_columns": ["size_code"],
+      "common_columns": [
+        "size_code",
+        "size_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_type_sa",
+      "grain": "one row per type-sa master",
+      "key_columns": ["type_sa_code"],
+      "common_columns": [
+        "type_sa_code",
+        "type_sa_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_other_cost",
+      "grain": "one row per other cost master",
+      "key_columns": ["other_cost_code"],
+      "common_columns": [
+        "other_cost_code",
+        "other_cost_name",
+        "is_active",
+        "notes"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_item_permission",
+      "grain": "one row per item permission profile",
+      "key_columns": ["permission_code"],
+      "common_columns": [
+        "permission_code",
+        "permission_name",
+        "can_sell",
+        "can_transfer_hq",
+        "can_transfer_request",
+        "can_branch_transfer",
+        "can_supplier_return",
+        "can_purchase_request",
+        "notes"
+      ]
+    },
+    {
+      "name": "dim_transaction_note",
+      "grain": "one row per transaction source and note code",
+      "key_columns": ["source_code", "note_code"],
+      "common_columns": [
+        "source_code",
+        "note_code",
+        "notes",
+        "is_active"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_transaction_note_detail",
+      "grain": "one row per transaction source, note code, and note detail payload",
+      "key_columns": ["source_code", "note_code"],
+      "common_columns": [
+        "source_code",
+        "note_code",
+        "note_detail",
+        "is_active"
+      ],
+      "typical_filters": [
+        "is_active = 1"
+      ]
+    },
+    {
+      "name": "dim_item_transaction",
+      "grain": "one row per item transaction snapshot event",
+      "key_columns": ["transaction_id"],
+      "common_columns": [
+        "transaction_id",
+        "branch_code",
+        "location_code",
+        "warehouse_code",
+        "mutation_type",
+        "source_code",
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "item_id",
+        "item_name",
+        "item_type",
+        "qty",
+        "uom_code",
+        "amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_sales_receivable",
+      "grain": "one row per sales invoice, receivable target, or collection allocation",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "due_date",
+        "doc_status_name",
+        "payment_status_code",
+        "payment_status_name",
+        "contact_id",
+        "contact_code",
+        "contact_name",
+        "item_id",
+        "item_code",
+        "item_name",
+        "upstream_doc_no",
+        "downstream_doc_no",
+        "qty",
+        "amount",
+        "invoice_amount",
+        "paid_amount",
+        "outstanding_amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_sales_line_flow",
+      "grain": "one row per sales invoice line with upstream and downstream document lineage",
+      "key_columns": ["source_detail_id"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "contact_name",
+        "sales_contact_id",
+        "item_id",
+        "item_name",
+        "qty",
+        "amount",
+        "sq_no",
+        "so_no",
+        "pi_no",
+        "pl_no",
+        "do_no",
+        "dr_no"
+      ]
+    },
+    {
+      "name": "obt_sales_order_line_flow",
+      "grain": "one row per sales order line with downstream realization summary",
+      "key_columns": ["source_detail_id"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "contact_name",
+        "item_id",
+        "item_name",
+        "qty",
+        "qty_realized",
+        "amount",
+        "sq_no",
+        "pi_doc_count",
+        "pl_doc_count",
+        "do_doc_count",
+        "si_doc_count",
+        "dr_doc_count",
+        "amount_si"
+      ]
+    },
+    {
+      "name": "obt_finance_document",
+      "grain": "one row per finance document header",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "doc_status_name",
+        "branch_code",
+        "branch_name",
+        "location_code",
+        "location_name",
+        "contact_id",
+        "contact_name",
+        "amount",
+        "currency_code",
+        "exchange_rate"
+      ]
+    },
+    {
+      "name": "obt_finance_document_line",
+      "grain": "one row per finance document line",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "contact_name",
+        "item_id",
+        "item_name",
+        "amount",
+        "currency_code",
+        "upstream_doc_no",
+        "downstream_doc_no"
+      ]
+    },
+    {
+      "name": "obt_profit_loss_line",
+      "grain": "one row per journal line classified into profit and loss categories",
+      "key_columns": ["pl_line_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "fiscal_year",
+        "fiscal_month",
+        "branch_code",
+        "branch_name",
+        "location_code",
+        "location_name",
+        "contact_id",
+        "contact_name",
+        "account_code",
+        "account_name",
+        "account_type",
+        "normal_balance",
+        "pnl_category",
+        "pnl_group",
+        "debit_amount",
+        "credit_amount",
+        "net_amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_cash_receipt_line_flow",
+      "grain": "one row per cash receipt detail line",
+      "key_columns": ["source_detail_id"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "doc_source",
+        "contact_id",
+        "contact_name",
+        "cash_account_code",
+        "cash_account_name",
+        "line_account_code",
+        "line_account_name",
+        "amount",
+        "total_amount",
+        "division_code",
+        "cost_center_code",
+        "project_code"
+      ]
+    },
+    {
+      "name": "obt_cash_disbursement_line_flow",
+      "grain": "one row per cash disbursement detail line",
+      "key_columns": ["source_detail_id"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "doc_source",
+        "contact_id",
+        "contact_name",
+        "cash_account_code",
+        "cash_account_name",
+        "line_account_code",
+        "line_account_name",
+        "amount",
+        "total_amount",
+        "division_code",
+        "cost_center_code",
+        "project_code"
+      ]
+    },
+    {
+      "name": "obt_receipt_money_line_flow",
+      "grain": "one row per receipt money detail line",
+      "key_columns": ["source_detail_id"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "payment_method_code",
+        "contact_id",
+        "contact_name",
+        "cash_account_code",
+        "cash_account_name",
+        "line_account_code",
+        "line_account_name",
+        "amount",
+        "total_amount",
+        "division_code",
+        "cost_center_code",
+        "project_code"
+      ]
+    },
+    {
+      "name": "obt_inventory_movement_line",
+      "grain": "one row per inventory movement line event",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "item_id",
+        "item_code",
+        "item_name",
+        "uom_code",
+        "upstream_doc_no",
+        "downstream_doc_no",
+        "qty",
+        "amount"
+      ]
+    },
+    {
+      "name": "obt_inventory_request_event",
+      "grain": "one row per material request or receiving slip header event",
+      "key_columns": ["request_event_key"],
+      "common_columns": [
+        "source_doc_type",
+        "source_header_id",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "warehouse_from_code",
+        "warehouse_to_code",
+        "description",
+        "notes"
+      ]
+    },
+    {
+      "name": "dim_inventory_price_setup",
+      "grain": "one row per inventory price setup detail",
+      "key_columns": ["price_setup_key"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "valid_to",
+        "category_code",
+        "branch_code",
+        "location_code",
+        "warehouse_code",
+        "item_id",
+        "contact_id",
+        "uom_code",
+        "currency_code",
+        "price_1",
+        "price_2",
+        "price_3",
+        "price_4",
+        "price_5"
+      ]
+    },
+    {
+      "name": "dim_inventory_refuel_event",
+      "grain": "one row per inventory refuel detail",
+      "key_columns": ["refuel_event_key"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "warehouse_from_code",
+        "warehouse_to_code",
+        "item_id",
+        "item_name",
+        "qty",
+        "amount",
+        "notes"
+      ]
+    },
+    {
+      "name": "dim_inventory_daily_check",
+      "grain": "one row per daily check header/detail/check combination",
+      "key_columns": ["daily_check_key"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "shift_code",
+        "item_id",
+        "item_name",
+        "check_category_id",
+        "check_status",
+        "notes"
+      ]
+    },
+    {
+      "name": "dim_inventory_rw",
+      "grain": "one row per RW warehouse document",
+      "key_columns": ["rw_key"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "vehicle_no",
+        "driver_name",
+        "gross_weight",
+        "tare_weight",
+        "net_weight",
+        "price",
+        "notes"
+      ]
+    },
+    {
+      "name": "dim_inventory_note",
+      "grain": "one row per inventory note entry",
+      "key_columns": ["note_key"],
+      "common_columns": [
+        "source_doc_type",
+        "source_header_id",
+        "source_detail_id",
+        "note_code",
+        "note_text",
+        "note_date"
+      ]
+    },
+    {
+      "name": "dim_inventory_attachment",
+      "grain": "one row per inventory attachment entry",
+      "key_columns": ["attachment_key"],
+      "common_columns": [
+        "source_doc_type",
+        "source_header_id",
+        "source_detail_id",
+        "file_name",
+        "file_path",
+        "file_date"
+      ]
+    },
+    {
+      "name": "obt_bom_route_snapshot",
+      "grain": "one row per BOM input or output component snapshot",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "item_id",
+        "qty",
+        "amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_manufacturing_execution",
+      "grain": "one row per work order input, output, activity, or route-card event",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "item_id",
+        "qty",
+        "amount",
+        "currency_code",
+        "downstream_doc_no"
+      ]
+    },
+    {
+      "name": "dim_manufacturing_note",
+      "grain": "one row per manufacturing note entry",
+      "key_columns": ["note_key"],
+      "common_columns": ["source_doc_type", "source_header_id", "note_text", "note_date", "input_user_id"]
+    },
+    {
+      "name": "dim_manufacturing_attachment",
+      "grain": "one row per manufacturing attachment entry",
+      "key_columns": ["attachment_key"],
+      "common_columns": ["source_doc_type", "source_header_id", "file_name", "file_date", "note_text", "input_user_id"]
+    },
+    {
+      "name": "obt_asset_lifecycle",
+      "grain": "one row per asset lifecycle event",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "item_id",
+        "item_name",
+        "qty",
+        "amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_asset_depreciation_event",
+      "grain": "one row per asset depreciation detail event",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "item_id",
+        "qty",
+        "amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_asset_mutation",
+      "grain": "one row per asset transfer or disposal event",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "branch_code",
+        "location_code",
+        "item_id",
+        "item_name",
+        "qty",
+        "amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "dim_asset_note",
+      "grain": "one row per asset note entry",
+      "key_columns": ["note_key"],
+      "common_columns": ["source_doc_type", "source_header_id", "note_text", "note_date", "input_user_id"]
+    },
+    {
+      "name": "dim_asset_attachment",
+      "grain": "one row per asset attachment entry",
+      "key_columns": ["attachment_key"],
+      "common_columns": ["source_doc_type", "source_header_id", "file_name", "file_date", "note_text", "input_user_id"]
+    },
+    {
+      "name": "obt_purchase_line_flow",
+      "grain": "one row per purchase order line with downstream purchasing lineage",
+      "key_columns": ["source_detail_id"],
+      "common_columns": [
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "contact_name",
+        "buyer_contact_id",
+        "item_id",
+        "item_name",
+        "qty",
+        "amount",
+        "grn_doc_count",
+        "ri_doc_count",
+        "dnr_doc_count",
+        "prt_doc_count",
+        "amount_grn",
+        "amount_ri",
+        "amount_dnr"
+      ]
+    },
+    {
+      "name": "obt_purchase_payment",
+      "grain": "one row per purchase payment or vendor payment line outcome",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "contact_name",
+        "upstream_doc_no",
+        "downstream_doc_no",
+        "amount",
+        "currency_code"
+      ]
+    },
+    {
+      "name": "obt_purchase_document_line_event",
+      "grain": "one row per purchase-side document line event such as PO or RI",
+      "key_columns": ["obt_id"],
+      "common_columns": [
+        "source_doc_type",
+        "doc_no",
+        "doc_date",
+        "contact_id",
+        "contact_name",
+        "item_id",
+        "item_name",
+        "qty",
+        "amount",
+        "upstream_doc_no",
+        "downstream_doc_no"
+      ]
+    },
+    {
+      "name": "dim_purchase_note",
+      "grain": "one row per purchasing note entry",
+      "key_columns": ["note_id"],
+      "common_columns": ["source_code", "source_header_id", "notes", "input_user_id", "modified_user_id"]
+    },
+    {
+      "name": "dim_purchase_attachment",
+      "grain": "one row per purchasing attachment entry",
+      "key_columns": ["source_code", "source_header_id", "file_name", "file_date"],
+      "common_columns": ["source_code", "source_header_id", "file_name", "file_date", "notes", "file_size_bytes", "input_user_id"]
+    },
+    {
+      "name": "obt_purchase_comparative_event",
+      "grain": "one row per purchasing comparative-sheet supplier-item line",
+      "key_columns": ["obt_id"],
+      "common_columns": ["source_doc_type", "doc_no", "doc_date", "contact_id", "contact_name", "item_id", "item_name", "qty", "amount"]
+    },
+    {
+      "name": "obt_purchase_invoice_exchange_event",
+      "grain": "one row per purchase invoice exchange detail relation",
+      "key_columns": ["obt_id"],
+      "common_columns": ["source_doc_type", "doc_no", "doc_date", "contact_id", "contact_name", "upstream_doc_no", "lineage_path"]
+    },
+    {
+      "name": "dim_sales_note",
+      "grain": "one row per sales note entry",
+      "key_columns": ["note_id"],
+      "common_columns": ["source_code", "source_header_id", "notes", "input_user_id", "modified_user_id"]
+    },
+    {
+      "name": "dim_sales_attachment",
+      "grain": "one row per sales attachment entry",
+      "key_columns": ["source_code", "source_header_id", "file_name", "file_date"],
+      "common_columns": ["source_code", "source_header_id", "file_name", "file_date", "notes", "file_size_bytes", "input_user_id"]
+    },
+    {
+      "name": "obt_sales_invoice_exchange_event",
+      "grain": "one row per sales invoice exchange detail relation",
+      "key_columns": ["obt_id"],
+      "common_columns": ["source_doc_type", "doc_no", "doc_date", "contact_id", "contact_name", "upstream_doc_no", "lineage_path"]
+    },
+    {
+      "name": "obt_sales_point_adjustment_event",
+      "grain": "one row per sales point adjustment detail",
+      "key_columns": ["obt_id"],
+      "common_columns": ["source_doc_type", "doc_no", "doc_date", "contact_id", "contact_name", "qty", "amount"]
+    },
+    {
+      "name": "obt_sales_closing_snapshot",
+      "grain": "one row per sales closing header snapshot",
+      "key_columns": ["obt_id"],
+      "common_columns": ["source_doc_type", "doc_no", "doc_date", "contact_id", "contact_name", "doc_status_code"]
+    },
+    {
+      "name": "obt_sales_forecast_event",
+      "grain": "one row per sales forecast detail line",
+      "key_columns": ["obt_id"],
+      "common_columns": ["source_doc_type", "doc_no", "doc_date", "contact_id", "contact_name", "item_id", "item_name", "qty", "amount"]
+    }
+  ],
+  "join_hints": [
+    {
+      "name": "location_branch_dimension",
+      "description": "Join location to branch by branch_code.",
+      "joins": [
+        "dim_location.branch_code = dim_branch.branch_code"
+      ]
+    },
+    {
+      "name": "warehouse_location_dimension",
+      "description": "Join warehouse to location and branch by location_code and branch_code.",
+      "joins": [
+        "dim_warehouse.location_code = dim_location.location_code",
+        "dim_warehouse.branch_code = dim_branch.branch_code"
+      ]
+    },
+    {
+      "name": "division_cost_center_dimension",
+      "description": "Join cost center and warehouse to division by division_code.",
+      "joins": [
+        "dim_cost_center.division_code = dim_division.division_code",
+        "dim_warehouse.division_code = dim_division.division_code",
+        "dim_project.division_code = dim_division.division_code"
+      ]
+    },
+    {
+      "name": "coa_cost_center_dimension",
+      "description": "Join cost center and finance lines to COA by account code.",
+      "joins": [
+        "dim_cost_center.account_code = dim_coa.account_code",
+        "obt_finance_document_line.line_account_code = dim_coa.account_code",
+        "obt_cash_receipt_line_flow.line_account_code = dim_coa.account_code",
+        "obt_cash_disbursement_line_flow.line_account_code = dim_coa.account_code",
+        "obt_receipt_money_line_flow.line_account_code = dim_coa.account_code"
+      ]
+    },
+    {
+      "name": "profit_loss_coa_dimension",
+      "description": "Join profit and loss lines to COA by account code.",
+      "joins": [
+        "obt_profit_loss_line.account_code = dim_coa.account_code",
+        "obt_profit_loss_line.branch_code = dim_branch.branch_code",
+        "obt_profit_loss_line.location_code = dim_location.location_code",
+        "NULLIF(obt_profit_loss_line.contact_id, '')::bigint = dim_contact.contact_id"
+      ]
+    },
+    {
+      "name": "sales_contact_dimension",
+      "description": "Join sales OBT tables to contact dimension by contact_id.",
+      "joins": [
+        "NULLIF(obt_sales_receivable.contact_id, '')::bigint = dim_contact.contact_id",
+        "obt_sales_line_flow.contact_id = dim_contact.contact_id",
+        "obt_sales_order_line_flow.contact_id = dim_contact.contact_id"
+      ]
+    },
+    {
+      "name": "sales_item_dimension",
+      "description": "Join sales OBT line tables to item dimension by item_id.",
+      "joins": [
+        "obt_sales_line_flow.item_id = dim_item.item_id",
+        "obt_sales_order_line_flow.item_id = dim_item.item_id"
+      ]
+    },
+    {
+      "name": "finance_contact_dimension",
+      "description": "Join finance OBT tables to contact dimension by contact_id.",
+      "joins": [
+        "obt_finance_document.contact_id = dim_contact.contact_id",
+        "obt_finance_document_line.contact_id = dim_contact.contact_id",
+        "obt_cash_receipt_line_flow.contact_id = dim_contact.contact_id",
+        "obt_cash_disbursement_line_flow.contact_id = dim_contact.contact_id",
+        "obt_receipt_money_line_flow.contact_id = dim_contact.contact_id"
+      ]
+    },
+    {
+      "name": "inventory_item_dimension",
+      "description": "Join inventory and purchasing tables to item dimension by item_id.",
+      "joins": [
+        "obt_inventory_movement_line.item_id = dim_item.item_id",
+        "obt_purchase_line_flow.item_id = dim_item.item_id",
+        "obt_purchase_document_line_event.item_id = dim_item.item_id"
+      ]
+    },
+    {
+      "name": "warehouse_stock_item_dimension",
+      "description": "Join warehouse stock dimension to item dimension by item_id.",
+      "joins": [
+        "dim_item_warehouse_stock.item_id = dim_item.item_id"
+      ]
+    },
+    {
+      "name": "organization_department_dimension",
+      "description": "Join section and subdepartment hierarchy back to department and division.",
+      "joins": [
+        "dim_section.department_code = dim_department.department_code",
+        "dim_subdepartment.department_code = dim_department.department_code",
+        "dim_department.division_code = dim_division.division_code"
+      ]
+    },
+    {
+      "name": "geography_city_dimension",
+      "description": "Join city to province and country geography dimensions.",
+      "joins": [
+        "dim_city.province_code = dim_province.province_code",
+        "dim_province.country_code = dim_country.country_code"
+      ]
+    },
+    {
+      "name": "item_attribute_dimension",
+      "description": "Join item master and item transaction snapshots to product attribute dimensions.",
+      "joins": [
+        "dim_item.item_category_code = dim_item_category.category_code",
+        "dim_item.item_type = dim_item_type.item_type_code",
+        "dim_item_transaction.item_id = dim_item.item_id"
+      ]
+    },
+    {
+      "name": "purchase_contact_dimension",
+      "description": "Join purchasing tables to contact dimension by contact_id.",
+      "joins": [
+        "obt_purchase_line_flow.contact_id = dim_contact.contact_id",
+        "obt_purchase_payment.contact_id = dim_contact.contact_id",
+        "obt_purchase_document_line_event.contact_id = dim_contact.contact_id"
+      ]
+    },
+    {
+      "name": "sales_to_receivable_doc_bridge",
+      "description": "Relate sales flow to receivable by invoice document number.",
+      "joins": [
+        "obt_sales_line_flow.doc_no = obt_sales_receivable.doc_no",
+        "obt_sales_order_line_flow.si_doc_nos ILIKE '%' || obt_sales_receivable.doc_no || '%'"
+      ]
+    },
+    {
+      "name": "finance_doc_header_line",
+      "description": "Relate finance header and line tables by document number and type.",
+      "joins": [
+        "obt_finance_document.doc_no = obt_finance_document_line.doc_no",
+        "obt_finance_document.source_doc_type = obt_finance_document_line.source_doc_type"
+      ]
+    },
+    {
+      "name": "finance_cash_receipt_bridge",
+      "description": "Relate cash receipt lines to canonical finance document tables by document number.",
+      "joins": [
+        "obt_cash_receipt_line_flow.doc_no = obt_finance_document.doc_no",
+        "obt_cash_receipt_line_flow.doc_no = obt_finance_document_line.doc_no"
+      ]
+    },
+    {
+      "name": "finance_cash_disbursement_bridge",
+      "description": "Relate cash disbursement lines to canonical finance document tables by document number.",
+      "joins": [
+        "obt_cash_disbursement_line_flow.doc_no = obt_finance_document.doc_no",
+        "obt_cash_disbursement_line_flow.doc_no = obt_finance_document_line.doc_no"
+      ]
+    },
+    {
+      "name": "finance_receipt_money_bridge",
+      "description": "Relate receipt money lines to canonical finance document tables by document number.",
+      "joins": [
+        "obt_receipt_money_line_flow.doc_no = obt_finance_document.doc_no",
+        "obt_receipt_money_line_flow.doc_no = obt_finance_document_line.doc_no"
+      ]
+    },
+    {
+      "name": "inventory_finance_reconciliation",
+      "description": "Soft reconciliation bridge between inventory movement and finance posting.",
+      "joins": [
+        "obt_inventory_movement_line.doc_no = obt_finance_document.doc_no",
+        "obt_inventory_movement_line.upstream_doc_no = obt_finance_document.doc_no",
+        "obt_inventory_movement_line.item_id = dim_item.item_id"
+      ]
+    },
+    {
+      "name": "inventory_document_lineage",
+      "description": "Use movement document numbers and lineage fields to analyze MR, TS, RS, SP, and SA style flow without falling back to raw M3 tables.",
+      "joins": [
+        "obt_inventory_movement_line.item_id = dim_item.item_id",
+        "obt_inventory_movement_line.branch_code = dim_branch.branch_code",
+        "obt_inventory_movement_line.location_code = dim_location.location_code",
+        "obt_inventory_movement_line.upstream_doc_no = obt_inventory_movement_line.doc_no"
+      ]
+    },
+    {
+      "name": "inventory_request_bridge",
+      "description": "Use canonical request events for MR and RS header-level dashboards.",
+      "joins": [
+        "obt_inventory_request_event.branch_code = dim_branch.branch_code",
+        "obt_inventory_request_event.location_code = dim_location.location_code",
+        "obt_inventory_request_event.warehouse_from_code = dim_warehouse.warehouse_code",
+        "obt_inventory_request_event.warehouse_to_code = dim_warehouse.warehouse_code"
+      ]
+    },
+    {
+      "name": "inventory_setup_and_check_bridge",
+      "description": "Use dedicated dimensions for PA, RF, DC, and RW families before considering raw M3 tables.",
+      "joins": [
+        "dim_inventory_price_setup.item_id = dim_item.item_id",
+        "dim_inventory_price_setup.contact_id = dim_contact.contact_id",
+        "dim_inventory_refuel_event.item_id = dim_item.item_id",
+        "dim_inventory_daily_check.branch_code = dim_branch.branch_code",
+        "dim_inventory_rw.location_code = dim_location.location_code"
+      ]
+    },
+    {
+      "name": "purchase_document_flow",
+      "description": "Use canonical purchasing outputs for PR/RQ/BS/PO/GRN/RI/DNR/PRT and payment-side questions.",
+      "joins": [
+        "obt_purchase_line_flow.contact_id = dim_contact.contact_id",
+        "obt_purchase_line_flow.item_id = dim_item.item_id",
+        "obt_purchase_payment.doc_no = obt_purchase_line_flow.doc_no"
+      ]
+    },
+    {
+      "name": "sales_document_lineage",
+      "description": "Use canonical sales outputs for SQ/SO/PI/PL/DO/DR/SI/RNR/SR and collection-side questions.",
+      "joins": [
+        "obt_sales_order_line_flow.contact_id = dim_contact.contact_id",
+        "obt_sales_order_line_flow.item_id = dim_item.item_id",
+        "obt_sales_line_flow.contact_id = dim_contact.contact_id",
+        "obt_sales_line_flow.item_id = dim_item.item_id",
+        "obt_sales_receivable.contact_id = dim_contact.contact_id"
+      ]
+    },
+    {
+      "name": "manufacturing_execution_bridge",
+      "description": "Use manufacturing canonical outputs for BOM, work order, and execution dashboards.",
+      "joins": [
+        "obt_bom_route_snapshot.item_id = dim_item.item_id",
+        "obt_manufacturing_execution.item_id = dim_item.item_id",
+        "obt_manufacturing_execution.branch_code = dim_branch.branch_code",
+        "dim_manufacturing_note.source_header_id = obt_manufacturing_execution.source_header_id"
+      ]
+    },
+    {
+      "name": "asset_lifecycle_bridge",
+      "description": "Use asset canonical outputs for procurement-to-depreciation and mutation dashboards.",
+      "joins": [
+        "obt_asset_lifecycle.item_id = dim_item.item_id",
+        "obt_asset_depreciation_event.item_id = obt_asset_lifecycle.item_id",
+        "obt_asset_mutation.item_id = obt_asset_lifecycle.item_id",
+        "dim_asset_note.source_header_id = obt_asset_lifecycle.source_header_id"
+      ]
+    }
+  ],
+  "important_rules": [
+    "For dashboard and analytics requests, prioritize obt_* and dim_* tables over raw m* source tables.",
+    "Generated SQL must target PostgreSQL and should be executable against the public schema on port 3208.",
+    "Use dim_contact, dim_item, dim_item_warehouse_stock, dim_branch, dim_location, dim_warehouse, dim_coa, dim_terms, dim_division, dim_project, dim_cost_center, dim_department, dim_section, dim_country, dim_province, dim_city, dim_material, dim_model, dim_size, dim_type_sa, dim_item_permission, dim_transaction_note, and dim_item_transaction as the preferred descriptive dimensions for M1 master attributes.",
+    "When joining obt_sales_receivable.contact_id to dim_contact.contact_id, cast text contact_id using NULLIF(contact_id, '')::bigint.",
+    "Use dim_item_warehouse_stock when the user explicitly asks for stock per warehouse, warehouse availability, or item stock distribution across warehouses.",
+    "Use dim_item_transaction for mutation history, stock-card drilldown, and item movement snapshots when a canonical OBT is not a better fit.",
+    "For M3 inventory analytics, prefer obt_inventory_movement_line for TS, SP, and SA flows, and use dim_item_transaction plus dim_item_warehouse_stock for stock-card and warehouse balance style questions.",
+    "For M4 purchasing analytics, prefer obt_purchase_line_flow and obt_purchase_document_line_event for document lineage, and use obt_purchase_payment for advance, vendor payment, and payment proposal questions.",
+    "For M4 CS and PIE questions, prefer obt_purchase_comparative_event and obt_purchase_invoice_exchange_event; use dim_purchase_note and dim_purchase_attachment for auxiliary note/file requests.",
+    "For M5 sales analytics, prefer obt_sales_order_line_flow for SO-centered questions, obt_sales_line_flow for invoice-centered flow, and obt_sales_receivable for collection, voucher, and outstanding analysis.",
+    "For M5 SIE, SPA, CL, SF, notes, and files, prefer obt_sales_invoice_exchange_event, obt_sales_point_adjustment_event, obt_sales_closing_snapshot, obt_sales_forecast_event, dim_sales_note, and dim_sales_attachment.",
+    "For M6 manufacturing analytics, prefer obt_manufacturing_execution and obt_bom_route_snapshot; use dim_manufacturing_note and dim_manufacturing_attachment for note or file requests.",
+    "For M7 asset analytics, prefer obt_asset_lifecycle, obt_asset_depreciation_event, and obt_asset_mutation; use dim_asset_note and dim_asset_attachment for note or file requests.",
+    "For MR and RS header questions, prefer obt_inventory_request_event before attempting any raw M3 request tables.",
+    "For PA, RF, DC, RW, notes, and files, prefer dim_inventory_price_setup, dim_inventory_refuel_event, dim_inventory_daily_check, dim_inventory_rw, dim_inventory_note, and dim_inventory_attachment.",
+    "Do not query raw M3 source tables or M3 history tables from dashboards; if a requested M3 family is still source-empty in the canonical output, explain that the semantic output exists but is currently not populated.",
+    "Use dim_transaction_note and dim_transaction_note_detail for source-specific note vocabularies and transaction annotation lookup.",
+    "When computing aging from due_date, use CURRENT_DATE - due_date::date rather than subtracting timestamptz directly.",
+    "For cross-domain reconciliation, prefer joins by stable business keys such as contact_id, item_id, doc_no, and source_doc_type before using fuzzy lineage fields.",
+    "Use line-level OBT tables for item, quantity, account, and detailed flow analysis.",
+    "Use canonical finance tables for document mix and COA analysis; use cash receipt, cash disbursement, and receipt money tables for cash movement analysis.",
+    "For laba rugi or profit and loss questions, prefer obt_profit_loss_line and aggregate net_amount by pnl_category or pnl_group within the requested fiscal year or period.",
+    "Classify P&L from obt_profit_loss_line using pnl_category values REVENUE, COGS, OPERATING_EXPENSE, OTHER_INCOME, and OTHER_EXPENSE.",
+    "Do not assume every dashboard needs source-table fallback. Fail safely if the OBT query schema does not expose enough columns."
+  ],
+  "query_patterns": [
+    {
+      "name": "customer_receivable_dashboard",
+      "preferred_tables": [
+        "obt_sales_receivable",
+        "dim_contact"
+      ]
+    },
+    {
+      "name": "sales_funnel_and_fulfillment",
+      "preferred_tables": [
+        "obt_sales_order_line_flow",
+        "obt_sales_line_flow",
+        "dim_contact",
+        "dim_item"
+      ]
+    },
+    {
+      "name": "purchase_funnel_dashboard",
+      "preferred_tables": [
+        "obt_purchase_line_flow",
+        "obt_purchase_document_line_event",
+        "dim_contact",
+        "dim_item",
+        "dim_branch",
+        "dim_location",
+        "dim_warehouse"
+      ]
+    },
+    {
+      "name": "purchase_vendor_payment_dashboard",
+      "preferred_tables": [
+        "obt_purchase_payment",
+        "obt_purchase_line_flow",
+        "dim_contact",
+        "dim_terms",
+        "dim_branch"
+      ]
+    },
+    {
+      "name": "purchase_comparison_dashboard",
+      "preferred_tables": [
+        "obt_purchase_comparative_event",
+        "dim_contact",
+        "dim_item",
+        "dim_branch",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "purchase_invoice_exchange_dashboard",
+      "preferred_tables": [
+        "obt_purchase_invoice_exchange_event",
+        "dim_contact",
+        "dim_branch",
+        "dim_location",
+        "dim_purchase_note",
+        "dim_purchase_attachment"
+      ]
+    },
+    {
+      "name": "sales_document_lineage_dashboard",
+      "preferred_tables": [
+        "obt_sales_order_line_flow",
+        "obt_sales_line_flow",
+        "dim_contact",
+        "dim_item",
+        "dim_branch",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "sales_collection_dashboard",
+      "preferred_tables": [
+        "obt_sales_receivable",
+        "obt_finance_document",
+        "dim_contact",
+        "dim_terms"
+      ]
+    },
+    {
+      "name": "sales_invoice_exchange_dashboard",
+      "preferred_tables": [
+        "obt_sales_invoice_exchange_event",
+        "dim_contact",
+        "dim_branch",
+        "dim_location",
+        "dim_sales_note",
+        "dim_sales_attachment"
+      ]
+    },
+    {
+      "name": "sales_point_adjustment_dashboard",
+      "preferred_tables": [
+        "obt_sales_point_adjustment_event",
+        "dim_contact",
+        "dim_branch",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "sales_forecast_dashboard",
+      "preferred_tables": [
+        "obt_sales_forecast_event",
+        "obt_sales_closing_snapshot",
+        "dim_contact",
+        "dim_item",
+        "dim_branch",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "finance_cash_dashboard",
+      "preferred_tables": [
+        "obt_cash_receipt_line_flow",
+        "obt_cash_disbursement_line_flow",
+        "obt_receipt_money_line_flow",
+        "obt_finance_document",
+        "obt_finance_document_line",
+        "dim_contact"
+      ]
+    },
+    {
+      "name": "profit_loss_dashboard",
+      "preferred_tables": [
+        "obt_profit_loss_line",
+        "dim_coa",
+        "dim_branch",
+        "dim_location",
+        "dim_contact"
+      ]
+    },
+    {
+      "name": "inventory_finance_reconciliation",
+      "preferred_tables": [
+        "obt_inventory_movement_line",
+        "obt_finance_document",
+        "obt_finance_document_line",
+        "dim_item",
+        "dim_item_warehouse_stock"
+      ]
+    },
+    {
+      "name": "organization_master_dashboard",
+      "preferred_tables": [
+        "dim_branch",
+        "dim_location",
+        "dim_warehouse",
+        "dim_department",
+        "dim_section",
+        "dim_division",
+        "dim_cost_center",
+        "dim_project"
+      ]
+    },
+    {
+      "name": "finance_reference_dashboard",
+      "preferred_tables": [
+        "dim_coa",
+        "dim_terms",
+        "dim_cost_center",
+        "dim_project",
+        "dim_division"
+      ]
+    },
+    {
+      "name": "warehouse_stock_dashboard",
+      "preferred_tables": [
+        "dim_item_warehouse_stock",
+        "dim_item",
+        "dim_item_transaction",
+        "dim_warehouse",
+        "dim_location",
+        "dim_branch"
+      ]
+    },
+    {
+      "name": "inventory_lineage_dashboard",
+      "preferred_tables": [
+        "obt_inventory_movement_line",
+        "dim_item",
+        "dim_warehouse",
+        "dim_location",
+        "dim_branch"
+      ]
+    },
+    {
+      "name": "material_request_transfer_dashboard",
+      "preferred_tables": [
+        "obt_inventory_request_event",
+        "obt_inventory_movement_line",
+        "dim_item_transaction",
+        "dim_item",
+        "dim_warehouse",
+        "dim_location",
+        "dim_branch"
+      ]
+    },
+    {
+      "name": "stock_opname_adjustment_dashboard",
+      "preferred_tables": [
+        "obt_inventory_movement_line",
+        "dim_item_warehouse_stock",
+        "dim_item_transaction",
+        "dim_item",
+        "dim_warehouse"
+      ]
+    },
+    {
+      "name": "inventory_setup_dashboard",
+      "preferred_tables": [
+        "dim_inventory_price_setup",
+        "dim_item",
+        "dim_contact",
+        "dim_branch",
+        "dim_location",
+        "dim_warehouse",
+        "dim_currency"
+      ]
+    },
+    {
+      "name": "inventory_refuel_and_rw_dashboard",
+      "preferred_tables": [
+        "dim_inventory_refuel_event",
+        "dim_inventory_rw",
+        "dim_branch",
+        "dim_location",
+        "dim_warehouse",
+        "dim_item"
+      ]
+    },
+    {
+      "name": "inventory_daily_check_dashboard",
+      "preferred_tables": [
+        "dim_inventory_daily_check",
+        "dim_branch",
+        "dim_location",
+        "dim_item",
+        "dim_inventory_note",
+        "dim_inventory_attachment"
+      ]
+    },
+    {
+      "name": "manufacturing_execution_dashboard",
+      "preferred_tables": [
+        "obt_manufacturing_execution",
+        "obt_bom_route_snapshot",
+        "dim_item",
+        "dim_branch",
+        "dim_location",
+        "dim_warehouse",
+        "dim_manufacturing_note",
+        "dim_manufacturing_attachment"
+      ]
+    },
+    {
+      "name": "asset_lifecycle_dashboard",
+      "preferred_tables": [
+        "obt_asset_lifecycle",
+        "obt_asset_depreciation_event",
+        "obt_asset_mutation",
+        "dim_asset_note",
+        "dim_asset_attachment",
+        "dim_branch",
+        "dim_location"
+      ]
+    },
+    {
+      "name": "item_master_attribute_dashboard",
+      "preferred_tables": [
+        "dim_item",
+        "dim_item_category",
+        "dim_item_type",
+        "dim_material",
+        "dim_merk",
+        "dim_model",
+        "dim_size",
+        "dim_type_sa",
+        "dim_item_permission"
+      ]
+    },
+    {
+      "name": "organization_geography_dashboard",
+      "preferred_tables": [
+        "dim_branch",
+        "dim_location",
+        "dim_warehouse",
+        "dim_department",
+        "dim_subdepartment",
+        "dim_section",
+        "dim_country",
+        "dim_province",
+        "dim_city"
+      ]
+    },
+    {
+      "name": "transaction_annotation_dashboard",
+      "preferred_tables": [
+        "dim_transaction_note",
+        "dim_transaction_note_detail",
+        "dim_item_transaction"
+      ]
+    }
+  ],
+  "caution_areas": [
+    "Several reconciliation use cases across finance and inventory rely on document-number bridges and may need additional business filters such as source_doc_type or date range.",
+    "Cross-table joins using doc_nos text aggregations like si_doc_nos are soft lineage hints and should be used conservatively.",
+    "Use explicit date casting or DATE_TRUNC in PostgreSQL when building time-series dashboards.",
+    "If a requested domain is not covered by the tables above, return FAILED rather than inventing raw-source joins."
+  ]
+}

@@ -129,6 +129,35 @@ All services run in Docker containers for consistency:
 - MinIO (object storage)
 - Prometheus + Grafana (monitoring)
 
+### MySQL Access
+The local MySQL container is defined in `infra/docker-compose.yml` and is exposed as `127.0.0.1:3307 -> container:3306`.
+
+Use the repo helper instead of installing a separate client first:
+
+```bash
+./scripts/mysql-access.sh list-db
+./scripts/mysql-access.sh shell
+./scripts/mysql-access.sh query "SHOW DATABASES;"
+```
+
+If you prefer npm scripts:
+
+```bash
+npm run db:mysql:list
+npm run db:mysql
+```
+
+Default credentials follow the Compose file:
+
+```text
+MYSQL_USER=root
+MYSQL_PASSWORD=change_me
+MYSQL_PORT=3307
+MYSQL_CONTAINER_NAME=mysql
+```
+
+When present, `.env` and `.env.vault` are loaded automatically before those defaults are used.
+
 ### Production Deployment
 - Kubernetes manifests in `infra/k8s/`
 - Terraform configurations (coming soon)

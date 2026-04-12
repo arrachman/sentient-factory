@@ -125,16 +125,21 @@ export class SemanticSchemaService {
   }
 
   private resolveDbRoot(): string {
+    const configured = process.env.MYERPPLUS_DB_MAPPING_ROOT;
     const candidates = [
+      configured,
+      resolve('/myerpplus-db-mapping/db'),
       resolve(process.cwd(), '../myerpplus-db-mapping/db'),
       resolve(process.cwd(), '../../apps/myerpplus-db-mapping/db'),
       resolve(__dirname, '../../../myerpplus-db-mapping/db'),
       resolve(__dirname, '../../../../apps/myerpplus-db-mapping/db'),
-    ];
+    ].filter((value): value is string => Boolean(value));
 
     const match = candidates.find((candidate) => existsSync(candidate));
     if (!match) {
-      throw new Error('Unable to locate myerpplus semantic schema directory');
+      throw new Error(
+        `Unable to locate myerpplus semantic schema directory. Checked: ${candidates.join(', ')}`,
+      );
     }
 
     return match;

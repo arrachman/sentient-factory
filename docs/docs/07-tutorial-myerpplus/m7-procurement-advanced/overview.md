@@ -1,24 +1,25 @@
 ---
 title: Overview
 sidebar_position: 1
-description: Introduction to the MyERPPlus procurement advanced and asset lifecycle module.
+description: Pengantar modul fixed MYERPPlus.
 ---
 
-# m7-procurement advanced
+# fixed
 
-This category contains tutorials for the `M7` domain.
+Kategori ini berisi panduan domain `M7` yang paling kuat terkait modul fixed dan asset lifecycle.
 
 ## Coverage
 
-- asset procurement
-- fixed asset master data and asset categories
-- depreciation, transfer, and asset disposal
+- kategori aset dan kategori pajak aktiva
+- master aktiva tetap
+- depresiasi, transfer, dan disposal aset
 
 ## Main Documents
 
+- [Panduan Input Fixed](./input-flow.md)
 - [M7 Query Artifacts](./query-artifacts.md)
 - [M7 Schema and AI SQL Artifacts](./schema-and-ai-sql-artifacts.md)
 
 ## Notes
 
-Even though the folder uses the term `procurement advanced`, the active queries point more strongly to asset and fixed-asset workflows. Because of that, M7 artifacts in these docs are explained from the asset lifecycle perspective.
+Walaupun folder memakai istilah `procurement advanced`, query aktif di repo menunjukkan domain ini lebih kuat dipakai untuk modul fixed. Karena itu, dokumentasi M7 dijelaskan dari sudut pandang pengelolaan aset tetap dan penyusutannya.

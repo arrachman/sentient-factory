@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
     request.nextUrl.searchParams.get('metricView') === 'totalMetric';
 
   if (isLegacyOverviewQuery) {
-    return NextResponse.redirect(new URL('/app/overview', request.url));
+    return NextResponse.redirect(new URL('/app/senti-ai', request.url));
   }
 
   if (pathname.startsWith('/app') && !token) {
@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
     if (returnTo && returnTo.startsWith('/')) {
       return NextResponse.redirect(new URL(returnTo, request.url));
     }
-    return NextResponse.redirect(new URL('/app/overview', request.url));
+    return NextResponse.redirect(new URL('/app/senti-ai', request.url));
   }
 
   return NextResponse.next();

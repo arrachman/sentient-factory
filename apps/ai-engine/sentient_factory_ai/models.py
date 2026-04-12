@@ -10,9 +10,23 @@ class ChatMessage(BaseModel):
     content: str = Field(min_length=1)
 
 
+class ChatAttachment(BaseModel):
+    name: str = Field(min_length=1)
+    media_type: str | None = None
+    size_bytes: int | None = None
+    extension: str | None = None
+    extraction_status: Literal["ready", "metadata-only", "failed"] | None = None
+    content: str | None = None
+    preview: str | None = None
+    warning: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
 class ChatRequest(BaseModel):
     question: str = Field(min_length=1)
     messages: list[ChatMessage] = Field(default_factory=list)
+    attachments: list[ChatAttachment] = Field(default_factory=list)
+    attachment_context: str | None = None
     include_schema: bool = True
     include_samples: bool = False
     execute_read_only_query: bool = False

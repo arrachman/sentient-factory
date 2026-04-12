@@ -10,7 +10,7 @@
       "risk ranking"
     ],
     "expected_query_count": 3,
-    "tables_involved": ["m5_si", "m1_contact"]
+    "tables_involved": ["obt_sales_receivable", "dim_contact"]
   },
   {
     "id": "uc_002_sales_document_funnel",
@@ -23,16 +23,8 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_sq",
-      "m5_sq_detail",
-      "m5_so",
-      "m5_so_detail",
-      "m5_do",
-      "m5_do_detail",
-      "m5_dr",
-      "m5_dr_detail",
-      "m5_si",
-      "m5_si_detail"
+      "obt_sales_order_line_flow",
+      "obt_sales_line_flow"
     ]
   },
   {
@@ -47,13 +39,9 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m1_contact",
-      "m5_si",
-      "m5_ic",
-      "m5_ic_detail",
-      "m5_pv",
-      "m5_pv_detail",
-      "m5_sr"
+      "dim_contact",
+      "obt_sales_receivable",
+      "obt_sales_line_flow"
     ]
   },
   {
@@ -67,10 +55,8 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_so_detail",
-      "m5_do_detail",
-      "m5_dr_detail",
-      "m5_si_detail"
+      "obt_sales_order_line_flow",
+      "obt_sales_line_flow"
     ]
   },
   {
@@ -84,11 +70,7 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_si",
-      "m5_ic",
-      "m5_ic_detail",
-      "m5_pv",
-      "m5_pv_detail"
+      "obt_sales_receivable"
     ]
   },
   {
@@ -102,10 +84,8 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_si",
-      "m5_ic",
-      "m5_ic_detail",
-      "m1_contact"
+      "obt_sales_receivable",
+      "dim_contact"
     ]
   },
   {
@@ -119,11 +99,10 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_si",
-      "m5_si_detail",
-      "m5_si_cost",
-      "m5_sr"
-    ]
+      "obt_sales_line_flow",
+      "dim_contact"
+    ],
+    "coverage_note": "Biaya invoice detail seperti m5_si_cost belum punya OBT khusus, jadi profitability bersih penuh masih butuh perluasan OBT atau fallback source terbatas."
   },
   {
     "id": "uc_008_return_and_invoice_exchange",
@@ -136,11 +115,10 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_si",
-      "m5_sr",
-      "m5_sie",
-      "m5_sie_detail"
-    ]
+      "obt_sales_line_flow",
+      "dim_contact"
+    ],
+    "coverage_note": "Tukar faktur belum punya OBT khusus, jadi linkage penuh untuk m5_sie masih perlu perluasan OBT."
   },
   {
     "id": "uc_009_sales_points_adjustment",
@@ -153,10 +131,9 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_spa",
-      "m5_spa_detail",
-      "m1_contact"
-    ]
+      "dim_contact"
+    ],
+    "coverage_note": "OBT loyalty atau poin belum ada; use case ini masih blocked sampai canonical OBT m5 untuk poin dibuat."
   },
   {
     "id": "uc_010_executive_risk_dashboard",
@@ -169,14 +146,365 @@
     ],
     "expected_query_count": 3,
     "tables_involved": [
-      "m5_si",
-      "m5_sr",
-      "m5_ic",
-      "m5_ic_detail",
-      "m5_so",
-      "m5_do",
-      "m5_dr",
-      "m1_contact"
+      "obt_sales_receivable",
+      "obt_sales_order_line_flow",
+      "obt_sales_line_flow",
+      "dim_contact"
     ]
+  },
+  {
+    "id": "uc_011_cash_receipt_dashboard",
+    "title": "Dashboard Kas Masuk",
+    "question": "Tampilkan dashboard kas masuk berisi tren penerimaan kas, daftar transaksi kas masuk terbaru, distribusi penerimaan per kontak, dan rekening penerimaan yang paling aktif.",
+    "expected_widgets": [
+      "daily trend line",
+      "latest transactions table",
+      "top contacts bar chart",
+      "account distribution donut"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_cash_receipt_line_flow",
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "dim_contact"
+    ]
+  },
+  {
+    "id": "uc_012_cash_disbursement_dashboard",
+    "title": "Dashboard Kas Keluar",
+    "question": "Tampilkan dashboard kas keluar berisi tren pengeluaran kas, daftar pembayaran terbaru, distribusi pengeluaran per kontak, dan rekening beban atau kas yang paling sering dipakai.",
+    "expected_widgets": [
+      "daily trend line",
+      "payment table",
+      "top payees bar chart",
+      "account usage chart"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_cash_disbursement_line_flow",
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "dim_contact"
+    ]
+  },
+  {
+    "id": "uc_013_cash_position_and_daily_flow",
+    "title": "Cash Position dan Arus Kas Harian",
+    "question": "Tampilkan posisi kas harian dari total kas masuk, kas keluar, dan net cashflow per hari atau per minggu.",
+    "expected_widgets": [
+      "inflow vs outflow line chart",
+      "net cashflow bar chart",
+      "summary cards"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_cash_receipt_line_flow",
+      "obt_cash_disbursement_line_flow"
+    ]
+  },
+  {
+    "id": "uc_014_receipt_money_monitoring",
+    "title": "Monitoring Receipt Money",
+    "question": "Tampilkan dashboard receipt money untuk melihat penerimaan pembayaran, kontak pembayar terbesar, rekening tujuan, dan tren penerimaan per periode.",
+    "expected_widgets": [
+      "receipt trend line",
+      "top payers table",
+      "destination account chart",
+      "summary cards"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_receipt_money_line_flow",
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "dim_contact"
+    ]
+  },
+  {
+    "id": "uc_015_finance_document_monitoring",
+    "title": "Monitoring Dokumen Finance",
+    "question": "Tampilkan jumlah dan nilai dokumen finance per tipe dokumen seperti CR, CD, RM, SM, CB, dan GJ per bulan.",
+    "expected_widgets": [
+      "document count by type",
+      "value by type stacked bar",
+      "monthly trend chart"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_finance_document",
+      "obt_finance_document_line"
+    ]
+  },
+  {
+    "id": "uc_016_finance_coa_analysis",
+    "title": "Analisis Rekening dan COA Finance",
+    "question": "Tampilkan rekening atau COA yang paling aktif berdasarkan jumlah line transaksi, total nominal debit atau kredit, dan sebaran per tipe dokumen.",
+    "expected_widgets": [
+      "top account ranking",
+      "coa mix chart",
+      "detail ledger table"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_finance_document_line"
+    ]
+  },
+  {
+    "id": "uc_017_general_journal_and_adjustment_monitoring",
+    "title": "Jurnal Umum dan Adjustment Monitoring",
+    "question": "Tampilkan tren jurnal umum, line adjustment terbesar, dan rekening yang paling sering terkena jurnal penyesuaian.",
+    "expected_widgets": [
+      "trend line",
+      "largest adjustment table",
+      "top adjusted account chart"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_finance_document",
+      "obt_finance_document_line"
+    ],
+    "coverage_note": "Saat ini coverage kuat untuk GJ; family adjustment lain tetap mengikuti ketersediaan source."
+  },
+  {
+    "id": "uc_018_cash_flow_per_contact",
+    "title": "Cash Flow per Kontak",
+    "question": "Tampilkan arus kas masuk dan keluar per kontak untuk melihat customer atau vendor dengan pengaruh kas terbesar dalam periode tertentu.",
+    "expected_widgets": [
+      "net flow ranking",
+      "inflow outflow comparison chart",
+      "contact drilldown table"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_cash_receipt_line_flow",
+      "obt_cash_disbursement_line_flow",
+      "obt_receipt_money_line_flow",
+      "dim_contact"
+    ]
+  },
+  {
+    "id": "uc_019_finance_executive_dashboard",
+    "title": "Dashboard Finance Executive",
+    "question": "Tampilkan ringkasan finance executive berisi total kas masuk, total kas keluar, net flow, distribusi dokumen finance, dan top account movement bulan berjalan.",
+    "expected_widgets": [
+      "executive summary cards",
+      "finance mix chart",
+      "trend line",
+      "top account table"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "obt_cash_receipt_line_flow",
+      "obt_cash_disbursement_line_flow",
+      "obt_receipt_money_line_flow"
+    ]
+  },
+  {
+    "id": "uc_020_payment_allocation_monitoring",
+    "title": "Monitoring Alokasi Pembayaran",
+    "question": "Tampilkan dashboard alokasi pembayaran untuk melihat distribusi payment ke dokumen target, outstanding allocation, dan dokumen yang belum teralokasi penuh.",
+    "expected_widgets": [
+      "allocation summary",
+      "unmatched document table",
+      "allocation coverage chart"
+    ],
+    "expected_query_count": 3,
+    "tables_involved": [
+      "obt_finance_allocation",
+      "obt_finance_document",
+      "obt_finance_document_line"
+    ],
+    "coverage_note": "Canonical obt_finance_allocation masih source-empty karena tabel _pay belum berisi data."
+  },
+  {
+    "id": "uc_021_sales_to_cash_conversion",
+    "title": "Sales to Cash Conversion",
+    "question": "Tampilkan konversi end-to-end dari sales order menjadi invoice lalu collection atau cash receipt untuk melihat lead time dan leakage per customer.",
+    "expected_widgets": [
+      "conversion funnel",
+      "lead time distribution",
+      "leakage table",
+      "customer drilldown"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_sales_order_line_flow",
+      "obt_sales_line_flow",
+      "obt_sales_receivable",
+      "obt_cash_receipt_line_flow",
+      "dim_contact"
+    ],
+    "coverage_note": "Use case ini menghubungkan flow order, invoice, receivable, dan cash realization lintas OBT."
+  },
+  {
+    "id": "uc_022_purchase_to_payment_cycle",
+    "title": "Purchase to Payment Cycle",
+    "question": "Tampilkan siklus pembelian dari purchase order sampai receipt atau invoice lalu pembayaran vendor untuk melihat lead time proses dan outstanding payment per vendor.",
+    "expected_widgets": [
+      "cycle time chart",
+      "vendor outstanding table",
+      "stage bottleneck chart",
+      "payment coverage summary"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_purchase_line_flow",
+      "obt_purchase_document_line_event",
+      "obt_purchase_payment",
+      "dim_contact",
+      "dim_item"
+    ],
+    "coverage_note": "Use case ini menggabungkan flow dokumen purchasing dengan payment realization."
+  },
+  {
+    "id": "uc_023_inventory_movement_vs_sales_demand",
+    "title": "Inventory Movement versus Sales Demand",
+    "question": "Bandingkan pergerakan inventory dengan demand penjualan untuk melihat item yang cepat habis, item overstock, dan item dengan penjualan tinggi tapi movement masuk rendah.",
+    "expected_widgets": [
+      "item velocity table",
+      "demand vs movement scatter plot",
+      "stock risk alerts"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_inventory_movement_line",
+      "obt_sales_order_line_flow",
+      "obt_sales_line_flow",
+      "dim_item"
+    ],
+    "coverage_note": "Analisis membutuhkan relasi item lintas inventory dan sales flow dalam grain line item."
+  },
+  {
+    "id": "uc_024_customer_exposure_and_collection_risk",
+    "title": "Customer Exposure and Collection Risk",
+    "question": "Tampilkan eksposur customer berdasarkan nilai sales invoice, outstanding receivable, cash collection aktual, dan retur agar terlihat customer yang penjualannya tinggi tetapi realisasi kasnya lemah.",
+    "expected_widgets": [
+      "exposure ranking",
+      "receivable vs cash matrix",
+      "return adjusted risk chart"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_sales_receivable",
+      "obt_sales_line_flow",
+      "obt_cash_receipt_line_flow",
+      "dim_contact"
+    ],
+    "coverage_note": "Use case ini mengombinasikan revenue-side flow dengan cash realization per customer."
+  },
+  {
+    "id": "uc_025_finance_and_operational_reconciliation",
+    "title": "Finance and Operational Reconciliation",
+    "question": "Tampilkan rekonsiliasi antara dokumen operasional penjualan atau pembelian dengan posting finance untuk melihat dokumen yang nilai operasionalnya tidak sinkron dengan nilai finance line.",
+    "expected_widgets": [
+      "reconciliation exceptions table",
+      "variance summary",
+      "document type comparison chart"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_sales_line_flow",
+      "obt_purchase_line_flow",
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "dim_contact"
+    ],
+    "coverage_note": "Rekonsiliasi dilakukan dengan key dokumen, kontak, tanggal, dan nominal terdekat; coverage akan lebih kuat jika mapping jurnal per dokumen ditambahkan eksplisit."
+  },
+  {
+    "id": "uc_026_working_capital_radar",
+    "title": "Working Capital Radar",
+    "question": "Tampilkan radar modal kerja yang menggabungkan receivable aging, purchase payment pressure, cash inflow-outflow, dan pergerakan inventory agar terlihat area tekanan likuiditas utama.",
+    "expected_widgets": [
+      "working capital scorecards",
+      "liquidity radar",
+      "aging buckets",
+      "pressure hotspot table"
+    ],
+    "expected_query_count": 5,
+    "tables_involved": [
+      "obt_sales_receivable",
+      "obt_purchase_payment",
+      "obt_cash_receipt_line_flow",
+      "obt_cash_disbursement_line_flow",
+      "obt_inventory_movement_line",
+      "dim_contact",
+      "dim_item"
+    ],
+    "coverage_note": "Ini adalah use case lintas domain finance, purchasing, sales, dan inventory."
+  },
+  {
+    "id": "uc_027_inventory_valuation_vs_finance_posting",
+    "title": "Inventory Valuation versus Finance Posting",
+    "question": "Tampilkan perbandingan antara nilai pergerakan inventory dengan nilai posting finance untuk melihat item atau dokumen yang valuation inventory-nya tidak sinkron dengan jurnal finance.",
+    "expected_widgets": [
+      "valuation variance table",
+      "item level variance chart",
+      "document reconciliation summary"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_inventory_movement_line",
+      "obt_finance_document",
+      "obt_finance_document_line",
+      "dim_item"
+    ],
+    "coverage_note": "Rekonsiliasi dilakukan melalui dokumen referensi, item, tanggal, dan nominal terdekat; hasil akan lebih kuat jika nanti ada canonical OBT khusus inventory accounting bridge."
+  },
+  {
+    "id": "uc_028_stock_adjustment_financial_impact",
+    "title": "Stock Adjustment Financial Impact",
+    "question": "Tampilkan dampak finansial dari stock adjustment untuk melihat adjustment inventory terbesar, akun finance yang terpengaruh, dan tren nilai adjustment per periode.",
+    "expected_widgets": [
+      "adjustment impact table",
+      "monthly impact trend",
+      "affected account chart"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_inventory_movement_line",
+      "obt_finance_document_line",
+      "dim_item"
+    ],
+    "coverage_note": "Use case ini menghubungkan event SA_LINE di inventory dengan line finance yang merepresentasikan dampak nominalnya."
+  },
+  {
+    "id": "uc_029_inventory_shrinkage_and_expense_correlation",
+    "title": "Inventory Shrinkage and Expense Correlation",
+    "question": "Tampilkan korelasi antara inventory shrinkage atau adjustment negatif dengan beban atau akun expense di finance untuk mengidentifikasi area kehilangan stok yang paling mahal.",
+    "expected_widgets": [
+      "shrinkage heatmap",
+      "expense correlation table",
+      "item loss ranking"
+    ],
+    "expected_query_count": 4,
+    "tables_involved": [
+      "obt_inventory_movement_line",
+      "obt_finance_document_line",
+      "dim_item"
+    ],
+    "coverage_note": "Perlu aturan klasifikasi movement keluar atau adjustment negatif pada inventory dan pemetaan akun expense di finance line."
+  },
+  {
+    "id": "uc_030_warehouse_cash_and_stock_pressure",
+    "title": "Warehouse Cash and Stock Pressure",
+    "question": "Tampilkan tekanan operasional per gudang berdasarkan movement inventory, pengeluaran kas terkait pembelian, dan penjualan item keluar agar terlihat gudang dengan tekanan modal terbesar.",
+    "expected_widgets": [
+      "warehouse pressure ranking",
+      "cash vs movement matrix",
+      "outbound trend chart"
+    ],
+    "expected_query_count": 5,
+    "tables_involved": [
+      "obt_inventory_movement_line",
+      "obt_purchase_payment",
+      "obt_cash_disbursement_line_flow",
+      "obt_sales_line_flow",
+      "dim_item"
+    ],
+    "coverage_note": "Analisis per gudang bergantung pada konsistensi atribut gudang dan lokasi di OBT inventory serta linkage dokumen pembelian dan penjualan."
   }
 ]

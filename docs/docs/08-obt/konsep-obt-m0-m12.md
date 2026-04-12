@@ -139,6 +139,80 @@ This matrix should be read together with:
 - cross-module boundaries in `semantic-cross-module-lineage.md`
 - polymorphic rules in `m4` and `m5` payment or exchange flows
 
+## AI-Agent-Friendly OBT Column Contract
+
+For AI agents, the concept page is easier to interpret when each physical `obt_*` table follows a shared minimum column contract.
+
+The semantic matrix above already explains:
+
+- what one row means
+- which source tables are the semantic truth
+- which enrichments are safe
+- which tables should stay separate by default
+
+What the page did not state explicitly before is the recommended physical column shape.
+
+At minimum, each physical `obt_*` table should try to expose these columns when the grain allows it:
+
+- source identity:
+  - `source_module`
+  - `source_doc_type`
+  - `source_header_id`
+  - `source_detail_id`
+  - `source_allocation_id` when the grain is allocation or payment
+- business document:
+  - `doc_no`
+  - `doc_date`
+  - `doc_status_code`
+  - `doc_status_name`
+- organizational scope:
+  - `branch_code`
+  - `branch_name`
+  - `location_code`
+  - `location_name`
+- party scope:
+  - `contact_id`
+  - `contact_code`
+  - `contact_name`
+- item scope:
+  - `item_id`
+  - `item_code`
+  - `item_name`
+  - `uom_code`
+- process scope:
+  - `upstream_doc_no`
+  - `downstream_doc_no`
+  - `lineage_path`
+- measures:
+  - `qty`
+  - `amount`
+  - `currency_code`
+  - `exchange_rate`
+- governance:
+  - `input_user_id`
+  - `input_user_name`
+  - `modified_user_id`
+  - `modified_user_name`
+- ETL traceability:
+  - `source_payload`
+  - `etl_batch_id`
+  - `etl_loaded_at`
+  - `etl_updated_at`
+
+Notes for AI-agent understanding:
+
+- these columns do not mean every OBT must populate every field
+- some columns can be `NULL` if the grain is not item-based, not payment-based, or not document-based
+- stable names matter more than forcing every module to have identical business content
+- AI agents reason more reliably when the same semantic role always uses the same column name across OBTs
+
+In practice:
+
+- `obt_sales_line_flow`, `obt_purchase_line_flow`, and `obt_pos_transaction_line` should populate most of the contract
+- `dim_item` and `dim_contact` are not process OBTs, so they should not be forced to mimic full transactional columns
+- allocation tables such as `obt_finance_allocation`, `obt_purchase_payment`, and `obt_sales_receivable` should populate `source_allocation_id` and may leave item-line columns empty
+- snapshot-style tables such as `obt_metric_snapshot` may use the governance and source identity columns more heavily than document-flow columns
+
 For physical implementation guidance, see:
 
 - [Semantic To Physical OBT Mapping](./semantic-to-physical-obt-mapping.md)

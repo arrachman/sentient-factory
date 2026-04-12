@@ -1,0 +1,86 @@
+-- Canonical menu authorization OBT from m0 role-menu access matrix.
+
+INSERT INTO public.obt_menu_authorization (
+    obt_name,
+    source_module,
+    source_doc_type,
+    source_header_id,
+    source_detail_id,
+    source_allocation_id,
+    doc_no,
+    doc_date,
+    doc_status_code,
+    doc_status_name,
+    branch_code,
+    branch_name,
+    location_code,
+    location_name,
+    contact_id,
+    contact_code,
+    contact_name,
+    item_id,
+    item_code,
+    item_name,
+    uom_code,
+    upstream_doc_no,
+    downstream_doc_no,
+    lineage_path,
+    qty,
+    amount,
+    currency_code,
+    exchange_rate,
+    input_user_id,
+    input_user_name,
+    modified_user_id,
+    modified_user_name,
+    source_payload,
+    etl_batch_id,
+    etl_loaded_at,
+    etl_updated_at
+)
+SELECT
+    'obt_menu_authorization',
+    'm0',
+    'ROLE_MENU_ACCESS',
+    rm.rmrole::text,
+    (rm.rmmoduleid::text || ':' || rm.rmmenuid::text),
+    NULL::text,
+    mn.mnname,
+    NULL::timestamptz,
+    rm.rmakses,
+    CASE WHEN rm.rmfavourite = 1 THEN 'favourite' ELSE 'standard' END,
+    NULL::text,
+    NULL::text,
+    NULL::text,
+    NULL::text,
+    NULL::text,
+    rm.rmrole,
+    r.rnama,
+    NULL::text,
+    mn.mnid::text,
+    mn.mnurl,
+    NULL::text,
+    rm.rmmoduleid::text,
+    rm.rmmenuid::text,
+    'ADMIN>MENU_AUTH',
+    NULL::numeric(20,6),
+    NULL::numeric(20,6),
+    NULL::text,
+    NULL::numeric(20,6),
+    NULL::text,
+    NULL::text,
+    NULL::text,
+    NULL::text,
+    rm._cdc_payload,
+    'baseline-m0-menu-auth-v1',
+    clock_timestamp(),
+    clock_timestamp()
+FROM m0_role_menu rm
+JOIN m0_role r
+  ON r.rkode = rm.rmrole
+JOIN m0_menu mn
+  ON mn.mnmoduleid = rm.rmmoduleid
+ AND mn.mnid = rm.rmmenuid
+WHERE COALESCE(rm._cdc_deleted, false) = false
+  AND COALESCE(r._cdc_deleted, false) = false
+  AND COALESCE(mn._cdc_deleted, false) = false;

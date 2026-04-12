@@ -1,6 +1,6 @@
 # AI Engine
 
-Service ini menyediakan endpoint tanya jawab untuk `apps/web-dashboard` dengan konteks semantic schema dari Postgres.
+Service ini menyediakan endpoint tanya jawab untuk `apps/web-dashboard` dengan konteks `obt-agent-mapping.json` sebagai semantic OBT mapping utama, plus semantic query schema dashboard OBT. Query read-only untuk AI dashboard sekarang ditargetkan ke PostgreSQL OBT pada `127.0.0.1:3208`.
 
 ## Endpoint
 
@@ -27,6 +27,12 @@ python3 -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001
 ## Env penting
 
 - `DATABASE_URL`
+- `AI_DASHBOARD_MAX_QUERIES`
+  default sekarang `5`
+- `SEMANTIC_SCHEMA_MANIFEST_PATH`
+  default sekarang mengarah ke `apps/myerpplus-db-mapping/db/obt-agent-mapping.json`
+- `SEMANTIC_QUERY_SCHEMA_SALES_PATH`
+  default sekarang mengarah ke `apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json`
 - `LLM_API_BASE_URL` opsional, default fallback ke `.codex-cli/config.toml`
 - `LLM_MODEL` opsional, default fallback ke `.codex-cli/config.toml`
 - `LLM_API_KEY` opsional, default fallback ke `.codex-cli/config.toml`
@@ -169,8 +175,26 @@ curl -X POST http://127.0.0.1:3201/api/ai/chat \
   -d '{"question":"Tabel apa yang relevan untuk user dan role?","include_schema":true,"include_samples":false}'
 ```
 
-UI manager dashboard:
+UI Senti AI:
 
 ```text
-http://127.0.0.1:3201/app/dashboard/manager
+http://127.0.0.1:3201/app/senti-ai
 ```
+
+## OCR attachment
+
+OCR attachment server-side untuk `pdf` dan `image` membutuhkan binary sistem berikut di host atau container `ai-engine`:
+
+```bash
+apt-get update
+apt-get install -y tesseract-ocr tesseract-ocr-ind tesseract-ocr-eng poppler-utils
+```
+
+Dependency Python OCR sudah didaftarkan di [pyproject.toml](/home/rania/apps/sentient-factory/apps/ai-engine/pyproject.toml):
+- `pytesseract`
+- `Pillow`
+- `pypdf`
+- `openpyxl`
+- `python-docx`
+
+Jika binary OCR belum tersedia, upload attachment tetap diterima, tetapi file terkait akan fallback ke `metadata-only` atau `failed` dengan warning yang menjelaskan penyebabnya.

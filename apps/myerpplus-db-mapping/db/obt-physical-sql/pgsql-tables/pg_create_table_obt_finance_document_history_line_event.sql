@@ -1,0 +1,50 @@
+CREATE TABLE IF NOT EXISTS public.obt_finance_document_history_line_event (
+    history_line_event_key text PRIMARY KEY,
+    obt_name text NOT NULL DEFAULT 'obt_finance_document_history_line_event',
+    source_module text NOT NULL,
+    source_doc_type text NOT NULL,
+    source_history_id text NOT NULL,
+    source_header_id text,
+    source_detail_id text,
+    doc_no text,
+    doc_date timestamptz,
+    doc_status_code text,
+    previous_status_code text,
+    branch_code text,
+    branch_name text,
+    location_code text,
+    location_name text,
+    contact_id text,
+    contact_code text,
+    contact_name text,
+    account_code text,
+    account_name text,
+    currency_code text,
+    exchange_rate numeric(20,6),
+    amount numeric(20,6),
+    amount_foreign numeric(20,6),
+    debit_amount numeric(20,6),
+    debit_amount_foreign numeric(20,6),
+    credit_amount numeric(20,6),
+    credit_amount_foreign numeric(20,6),
+    notes text,
+    cost_center_code text,
+    cost_center_name text,
+    division_code text,
+    division_name text,
+    subdivision_code text,
+    project_code text,
+    project_name text,
+    line_order bigint,
+    is_closed boolean,
+    source_payload jsonb,
+    etl_batch_id text,
+    etl_loaded_at timestamptz NOT NULL DEFAULT now(),
+    etl_updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_obt_fin_doc_hist_line_doc
+    ON public.obt_finance_document_history_line_event (source_doc_type, doc_no, doc_date);
+
+CREATE INDEX IF NOT EXISTS idx_obt_fin_doc_hist_line_keys
+    ON public.obt_finance_document_history_line_event (source_doc_type, source_header_id, source_detail_id, source_history_id);
