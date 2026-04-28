@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { Kafka } from 'kafkajs';
 import { Client } from 'pg';
 import { ensureWorkerTables } from './db';
-import { mergeCoreFromUpsert } from './merge-helpers';
 import { buildDomainUpserts } from './topic-handlers';
 
 type JsonObject = Record<string, unknown>;
@@ -64,7 +63,6 @@ async function main() {
         const domainUpserts = buildDomainUpserts({ topic, key, payload });
         for (const upsert of domainUpserts) {
           await upsertDomainRow(db, upsert.tableName, upsert.primaryKey, upsert.row);
-          await mergeCoreFromUpsert(db, upsert.tableName, upsert.row);
         }
 
         await db.query('COMMIT');

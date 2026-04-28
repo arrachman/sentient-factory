@@ -1,13 +1,15 @@
 'use client';
 
+import { memo } from 'react';
 import { Cell, Pie, PieChart } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { StatusItem } from './types';
+import { useLazyChartVisibility } from './use-lazy-chart-visibility';
 
 const DONUT_THRESHOLD = 6;
 
-export function OrderStatusCard({
+export const OrderStatusCard = memo(function OrderStatusCard({
   title,
   subtitle,
   items,
@@ -21,45 +23,51 @@ export function OrderStatusCard({
   const total = items.reduce((sum, row) => sum + row.value, 0);
   const safeItems = items.filter((item) => item.value > 0);
   const useCompactDonut = safeItems.length >= DONUT_THRESHOLD;
+  const [chartRef, chartVisible] = useLazyChartVisibility({ enabled: useCompactDonut });
 
   return (
-    <Card className="lg:col-span-3 h-full rounded-2xl border-border/80 shadow-xs">
-      <CardHeader className="px-5 py-4">
+    <div ref={chartRef}>
+      <Card className="lg:col-span-3 h-full rounded-2xl border-border/80 shadow-xs">
+        <CardHeader className="px-5 py-4">
         <CardTitle className="text-base font-semibold tracking-tight text-slate-800 dark:text-slate-100">
           {title}
         </CardTitle>
         <p className="text-sm font-normal text-slate-500 dark:text-slate-400">{subtitle}</p>
       </CardHeader>
-      <CardContent className="flex h-full flex-col gap-4 px-5 pb-5 pt-2">
+        <CardContent className="flex h-full flex-col gap-4 px-5 pb-5 pt-2">
         {useCompactDonut ? (
           <>
             <div className="flex justify-center">
               <div className="relative h-[220px] w-full max-w-[220px]">
-                <ChartContainer
-                  className="h-full w-full"
-                  config={Object.fromEntries(
-                    safeItems.map((item) => [item.key, { label: item.label, color: item.color }]),
-                  )}
-                >
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
-                    <Pie
-                      data={safeItems}
-                      dataKey="value"
-                      nameKey="label"
-                      innerRadius={54}
-                      outerRadius={80}
-                      paddingAngle={2}
-                      strokeWidth={3}
-                      label={false}
-                      labelLine={false}
-                    >
-                      {safeItems.map((slice) => (
-                        <Cell key={slice.key} fill={slice.color} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
+                {chartVisible ? (
+                  <ChartContainer
+                    className="h-full w-full"
+                    config={Object.fromEntries(
+                      safeItems.map((item) => [item.key, { label: item.label, color: item.color }]),
+                    )}
+                  >
+                    <PieChart>
+                      <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
+                      <Pie
+                        data={safeItems}
+                        dataKey="value"
+                        nameKey="label"
+                        innerRadius={54}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        strokeWidth={3}
+                        label={false}
+                        labelLine={false}
+                      >
+                        {safeItems.map((slice) => (
+                          <Cell key={slice.key} fill={slice.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="h-full w-full rounded-full border border-dashed border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/30" />
+                )}
 
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
@@ -157,7 +165,8 @@ export function OrderStatusCard({
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+});

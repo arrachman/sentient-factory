@@ -8,7 +8,7 @@ type MenuSeed = {
   title: string;
   path: string | null;
   icon: string | null;
-  type: 'GROUP' | 'ITEM';
+  type: 'GROUP' | 'ITEM' | 'COLLAPSE';
   parentKey: string | null;
   sortOrder: number;
   isVisible?: boolean;
@@ -526,11 +526,11 @@ async function main() {
     });
   }
 
-  const managerUser = await prisma.user.findUnique({
+  const managerDashboardUser = await prisma.user.findUnique({
     where: { email: 'manager.eng@example.com' },
     select: { id: true },
   });
-  if (!managerUser) {
+  if (!managerDashboardUser) {
     throw new Error('Manager seed user not found');
   }
 
@@ -549,34 +549,34 @@ async function main() {
 
   await prisma.managerInsight.createMany({
     data: [
-      { title: 'Backlog outbound wave-2', question: 'Kenapa backlog outbound naik pagi ini?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(0, 8, 0), decisionAt: dayAgo(0, 8, 11), decisionNote: 'Tambah picker shift pagi' },
-      { title: 'Stockout risk fast moving', question: 'SKU mana paling berisiko stockout?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(0, 9, 10), decisionAt: dayAgo(0, 9, 22), decisionNote: 'Prioritaskan replenishment' },
-      { title: 'Receiving slowdown', question: 'Apa penyebab receiving lambat?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(0, 10, 5), decisionAt: dayAgo(0, 10, 16), decisionNote: 'Buka lane tambahan' },
-      { title: 'Carrier SLA risk', question: 'Pengiriman mana paling riskan terlambat?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(1, 8, 0), decisionAt: dayAgo(1, 8, 14), decisionNote: 'Re-route order prioritas' },
-      { title: 'Picking congestion', question: 'Area picking mana paling padat?', status: 'rejected', managerUserId: managerUser.id, insightCreatedAt: dayAgo(1, 11, 0), decisionAt: dayAgo(1, 11, 19), decisionNote: 'Data kurang lengkap' },
-      { title: 'Cycle count anomaly', question: 'Apakah ada selisih inventori kritis?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(2, 8, 30), decisionAt: dayAgo(2, 8, 45), decisionNote: 'Audit SKU prioritas' },
-      { title: 'Inbound dock overload', question: 'Dock mana berpotensi overload?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(3, 9, 0), decisionAt: dayAgo(3, 9, 18), decisionNote: 'Alihkan slot unloading' },
-      { title: 'Late dispatch cluster', question: 'Klaster keterlambatan dispatch terbesar?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(4, 10, 0), decisionAt: dayAgo(4, 10, 14), decisionNote: 'Escalate ke supervisor' },
-      { title: 'Data quality exception', question: 'Apakah exception master data memengaruhi SLA?', status: 'rejected', managerUserId: managerUser.id, insightCreatedAt: dayAgo(5, 13, 0), decisionAt: dayAgo(5, 13, 21), decisionNote: 'Perlu validasi manual' },
-      { title: 'Replenishment urgency', question: 'Prioritas replenishment hari ini?', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(6, 7, 45), decisionAt: dayAgo(6, 7, 59), decisionNote: 'Resequence tasks' },
-      { title: 'Last week baseline A', question: 'Baseline pekan lalu A', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(7, 8, 0), decisionAt: dayAgo(7, 8, 20), decisionNote: 'Baseline' },
-      { title: 'Last week baseline B', question: 'Baseline pekan lalu B', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(7, 9, 0), decisionAt: dayAgo(7, 9, 25), decisionNote: 'Baseline' },
-      { title: 'Last week baseline C', question: 'Baseline pekan lalu C', status: 'rejected', managerUserId: managerUser.id, insightCreatedAt: dayAgo(8, 10, 0), decisionAt: dayAgo(8, 10, 32), decisionNote: 'Baseline' },
-      { title: 'Last week baseline D', question: 'Baseline pekan lalu D', status: 'accepted', managerUserId: managerUser.id, insightCreatedAt: dayAgo(9, 11, 0), decisionAt: dayAgo(9, 11, 29), decisionNote: 'Baseline' },
+      { title: 'Backlog outbound wave-2', question: 'Kenapa backlog outbound naik pagi ini?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(0, 8, 0), decisionAt: dayAgo(0, 8, 11), decisionNote: 'Tambah picker shift pagi' },
+      { title: 'Stockout risk fast moving', question: 'SKU mana paling berisiko stockout?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(0, 9, 10), decisionAt: dayAgo(0, 9, 22), decisionNote: 'Prioritaskan replenishment' },
+      { title: 'Receiving slowdown', question: 'Apa penyebab receiving lambat?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(0, 10, 5), decisionAt: dayAgo(0, 10, 16), decisionNote: 'Buka lane tambahan' },
+      { title: 'Carrier SLA risk', question: 'Pengiriman mana paling riskan terlambat?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(1, 8, 0), decisionAt: dayAgo(1, 8, 14), decisionNote: 'Re-route order prioritas' },
+      { title: 'Picking congestion', question: 'Area picking mana paling padat?', status: 'rejected', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(1, 11, 0), decisionAt: dayAgo(1, 11, 19), decisionNote: 'Data kurang lengkap' },
+      { title: 'Cycle count anomaly', question: 'Apakah ada selisih inventori kritis?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(2, 8, 30), decisionAt: dayAgo(2, 8, 45), decisionNote: 'Audit SKU prioritas' },
+      { title: 'Inbound dock overload', question: 'Dock mana berpotensi overload?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(3, 9, 0), decisionAt: dayAgo(3, 9, 18), decisionNote: 'Alihkan slot unloading' },
+      { title: 'Late dispatch cluster', question: 'Klaster keterlambatan dispatch terbesar?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(4, 10, 0), decisionAt: dayAgo(4, 10, 14), decisionNote: 'Escalate ke supervisor' },
+      { title: 'Data quality exception', question: 'Apakah exception master data memengaruhi SLA?', status: 'rejected', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(5, 13, 0), decisionAt: dayAgo(5, 13, 21), decisionNote: 'Perlu validasi manual' },
+      { title: 'Replenishment urgency', question: 'Prioritas replenishment hari ini?', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(6, 7, 45), decisionAt: dayAgo(6, 7, 59), decisionNote: 'Resequence tasks' },
+      { title: 'Last week baseline A', question: 'Baseline pekan lalu A', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(7, 8, 0), decisionAt: dayAgo(7, 8, 20), decisionNote: 'Baseline' },
+      { title: 'Last week baseline B', question: 'Baseline pekan lalu B', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(7, 9, 0), decisionAt: dayAgo(7, 9, 25), decisionNote: 'Baseline' },
+      { title: 'Last week baseline C', question: 'Baseline pekan lalu C', status: 'rejected', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(8, 10, 0), decisionAt: dayAgo(8, 10, 32), decisionNote: 'Baseline' },
+      { title: 'Last week baseline D', question: 'Baseline pekan lalu D', status: 'accepted', managerUserId: managerDashboardUser.id, insightCreatedAt: dayAgo(9, 11, 0), decisionAt: dayAgo(9, 11, 29), decisionNote: 'Baseline' },
     ],
   });
 
   await prisma.managerRisk.createMany({
     data: [
-      { title: 'Outbound wave-2 backlog', domain: 'outbound', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(2) },
-      { title: 'Stockout SKU AX-44', domain: 'inventory', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(3) },
-      { title: 'Receiving mart stale data', domain: 'inbound', severity: 'critical', status: 'in_progress', managerUserId: managerUser.id, openedAt: hourAgo(6) },
-      { title: 'Late dispatch cluster north', domain: 'delivery', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(8) },
-      { title: 'Cycle count mismatch', domain: 'inventory', severity: 'critical', status: 'in_progress', managerUserId: managerUser.id, openedAt: hourAgo(12) },
-      { title: 'Carrier cut-off breach', domain: 'delivery', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(18) },
-      { title: 'Picking queue saturation', domain: 'outbound', severity: 'critical', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(20) },
-      { title: 'Resolved dock issue', domain: 'inbound', severity: 'critical', status: 'closed', managerUserId: managerUser.id, openedAt: dayAgo(1, 7, 0), resolvedAt: dayAgo(0, 1, 0) },
-      { title: 'Medium stock variance', domain: 'inventory', severity: 'medium', status: 'open', managerUserId: managerUser.id, openedAt: hourAgo(4) },
+      { title: 'Outbound wave-2 backlog', domain: 'outbound', severity: 'critical', status: 'open', managerUserId: managerDashboardUser.id, openedAt: hourAgo(2) },
+      { title: 'Stockout SKU AX-44', domain: 'inventory', severity: 'critical', status: 'open', managerUserId: managerDashboardUser.id, openedAt: hourAgo(3) },
+      { title: 'Receiving mart stale data', domain: 'inbound', severity: 'critical', status: 'in_progress', managerUserId: managerDashboardUser.id, openedAt: hourAgo(6) },
+      { title: 'Late dispatch cluster north', domain: 'delivery', severity: 'critical', status: 'open', managerUserId: managerDashboardUser.id, openedAt: hourAgo(8) },
+      { title: 'Cycle count mismatch', domain: 'inventory', severity: 'critical', status: 'in_progress', managerUserId: managerDashboardUser.id, openedAt: hourAgo(12) },
+      { title: 'Carrier cut-off breach', domain: 'delivery', severity: 'critical', status: 'open', managerUserId: managerDashboardUser.id, openedAt: hourAgo(18) },
+      { title: 'Picking queue saturation', domain: 'outbound', severity: 'critical', status: 'open', managerUserId: managerDashboardUser.id, openedAt: hourAgo(20) },
+      { title: 'Resolved dock issue', domain: 'inbound', severity: 'critical', status: 'closed', managerUserId: managerDashboardUser.id, openedAt: dayAgo(1, 7, 0), resolvedAt: dayAgo(0, 1, 0) },
+      { title: 'Medium stock variance', domain: 'inventory', severity: 'medium', status: 'open', managerUserId: managerDashboardUser.id, openedAt: hourAgo(4) },
     ],
   });
 
@@ -608,7 +608,7 @@ async function main() {
     {
       key: 'dashboard-overview',
       title: 'Overview',
-      path: '/app',
+      path: '/app/overview',
       icon: 'LayoutGrid',
       type: 'ITEM',
       parentKey: 'dashboard',
@@ -669,13 +669,76 @@ async function main() {
       sortOrder: 7,
     },
     {
+      key: 'alerting',
+      title: 'Alerting',
+      path: null,
+      icon: 'BellRing',
+      type: 'GROUP',
+      parentKey: null,
+      sortOrder: 2,
+    },
+    {
+      key: 'alerting-center',
+      title: 'Alert Center',
+      path: '/app/alerting/center',
+      icon: 'BadgeAlert',
+      type: 'ITEM',
+      parentKey: 'alerting',
+      sortOrder: 1,
+    },
+    {
+      key: 'alerting-rules',
+      title: 'Alert Rules',
+      path: '/app/alerting/rules',
+      icon: 'ShieldAlert',
+      type: 'ITEM',
+      parentKey: 'alerting',
+      sortOrder: 2,
+    },
+    {
+      key: 'alerting-templates',
+      title: 'Alert Templates',
+      path: '/app/alerting/templates',
+      icon: 'LayoutTemplate',
+      type: 'ITEM',
+      parentKey: 'alerting',
+      sortOrder: 3,
+    },
+    {
+      key: 'alerting-channels',
+      title: 'Notification Channels',
+      path: '/app/alerting/channels',
+      icon: 'MessageSquareMore',
+      type: 'ITEM',
+      parentKey: 'alerting',
+      sortOrder: 4,
+    },
+    {
+      key: 'alerting-logs',
+      title: 'Notification Logs',
+      path: '/app/alerting/logs',
+      icon: 'History',
+      type: 'ITEM',
+      parentKey: 'alerting',
+      sortOrder: 5,
+    },
+    {
+      key: 'alerting-settings',
+      title: 'Settings',
+      path: '/app/alerting/settings',
+      icon: 'Settings2',
+      type: 'ITEM',
+      parentKey: 'alerting',
+      sortOrder: 6,
+    },
+    {
       key: 'administrator',
       title: 'Administrator',
       path: null,
       icon: 'Shield',
       type: 'GROUP',
       parentKey: null,
-      sortOrder: 2,
+      sortOrder: 3,
     },
     {
       key: 'administrator-users',
@@ -747,7 +810,7 @@ async function main() {
       icon: 'Database',
       type: 'GROUP',
       parentKey: null,
-      sortOrder: 3,
+      sortOrder: 4,
     },
     {
       key: 'master-data-contact',
@@ -828,7 +891,7 @@ async function main() {
       icon: 'Truck',
       type: 'GROUP',
       parentKey: null,
-      sortOrder: 4,
+      sortOrder: 5,
     },
     {
       key: 'logistic-inbound',
@@ -978,6 +1041,13 @@ async function main() {
     'dashboard-so',
     'dashboard-m2r',
     'dashboard-delivery',
+    'alerting',
+    'alerting-center',
+    'alerting-rules',
+    'alerting-templates',
+    'alerting-channels',
+    'alerting-logs',
+    'alerting-settings',
     'master-data',
     'master-data-contact',
     'master-data-division',
@@ -1140,7 +1210,7 @@ async function main() {
     await prisma.managerInsight.upsert({
       where: {
         managerUserId_title_insightCreatedAt: {
-          managerUserId: managerUser.id,
+          managerUserId: managerDashboardUser.id,
           title: insight.title,
           insightCreatedAt: insight.insightCreatedAt,
         },
@@ -1152,7 +1222,7 @@ async function main() {
         decisionNote: insight.decisionNote,
       },
       create: {
-        managerUserId: managerUser.id,
+        managerUserId: managerDashboardUser.id,
         title: insight.title,
         question: insight.question,
         status: insight.status,
@@ -1188,7 +1258,7 @@ async function main() {
         severity,
         status,
         resolvedAt: resolvedAt ? new Date(resolvedAt) : null,
-        managerUserId: managerUser.id,
+        managerUserId: managerDashboardUser.id,
       },
       create: {
         title,
@@ -1197,7 +1267,7 @@ async function main() {
         status,
         openedAt: new Date(openedAt),
         resolvedAt: resolvedAt ? new Date(resolvedAt) : null,
-        managerUserId: managerUser.id,
+        managerUserId: managerDashboardUser.id,
       },
     });
   }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
   Bell,
   Menu,
@@ -11,6 +12,7 @@ import {
   SheetBody,
   SheetContent,
   SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { NotificationsSheet } from '@/components/layouts/app/shared/topbar/notifications-sheet';
@@ -19,6 +21,8 @@ import { SidebarMenu } from './sidebar-menu';
 import { useLayout } from './context';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useMenu } from '@/hooks/use-menu';
+import { useAppMenu } from './menu-context';
 
 export function Header() {
   const [isSidebarSheetOpen, setIsSidebarSheetOpen] = useState(false);
@@ -26,6 +30,10 @@ export function Header() {
   const pathname = usePathname();
   const mobileMode = useIsMobile();
   const { sidebarCollapse, setSidebarCollapse } = useLayout();
+  const { menus } = useAppMenu();
+  const { getCurrentItem } = useMenu(pathname);
+  const currentItem = getCurrentItem(menus);
+  const pageTitle = currentItem?.title || '';
 
   // Close sheet when route changes
   useEffect(() => {
@@ -75,7 +83,11 @@ export function Header() {
                   side="left"
                   close={false}
                 >
-                  <SheetHeader className="p-0 space-y-0" />
+                  <SheetHeader className="p-0 space-y-0">
+                    <VisuallyHidden asChild>
+                      <SheetTitle>Navigasi Sidebar</SheetTitle>
+                    </VisuallyHidden>
+                  </SheetHeader>
                   <SheetBody className="p-0 overflow-y-auto">
                     <SidebarMenu />
                   </SheetBody>
@@ -85,7 +97,12 @@ export function Header() {
           </div>
         </div>
 
-        <div className="ms-auto flex items-center gap-3">
+        <div className="ms-auto flex min-w-0 items-center gap-3">
+          <div className="hidden min-w-0 flex-1 items-center lg:flex">
+            <div className="min-w-0 truncate text-lg font-semibold leading-none text-mono xl:text-xl">
+              {pageTitle}
+            </div>
+          </div>
           <NotificationsSheet
             trigger={
               <Button

@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "ts-node src/index.ts",
-    "merge:core": "ts-node src/merge-core.ts",
     "start": "node dist/index.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit --incremental false"

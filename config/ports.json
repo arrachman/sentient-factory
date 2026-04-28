@@ -42,13 +42,61 @@
       "description": "Project documentation",
       "isActive": true
     },
+    "hr-marketing": {
+      "name": "HR Marketing",
+      "port": 3209,
+      "type": "static",
+      "description": "Static marketing page for HR module",
+      "isActive": true
+    },
+    "sentient-marketing": {
+      "name": "Sentient Marketing",
+      "port": 3210,
+      "type": "static",
+      "description": "Static marketing page for Sentient Factory",
+      "isActive": true
+    },
+    "tarik-data-digital": {
+      "name": "Tarik Data Digital",
+      "port": 3211,
+      "type": "static",
+      "description": "Static company profile page for Tarik Data Digital",
+      "isActive": true
+    },
+    "kafka-ui": {
+      "name": "Kafka UI",
+      "port": 3212,
+      "type": "kafka-ui",
+      "description": "Kafka cluster web interface",
+      "isActive": true
+    },
     "postgres": {
       "port": 3208,
       "description": "PostgreSQL database"
     },
     "redis": {
-      "port": 3209,
+      "port": 3213,
       "description": "Redis cache"
+    },
+    "mysql": {
+      "port": 3307,
+      "description": "MySQL database"
+    },
+    "vault": {
+      "port": 8200,
+      "description": "HashiCorp Vault dev server"
+    },
+    "kafka": {
+      "port": 9092,
+      "description": "Apache Kafka broker"
+    },
+    "kafka-external": {
+      "port": 29092,
+      "description": "Apache Kafka external listener"
+    },
+    "debezium-connect": {
+      "port": 8083,
+      "description": "Debezium Kafka Connect service"
     },
     "influxdb": {
       "port": 8086,

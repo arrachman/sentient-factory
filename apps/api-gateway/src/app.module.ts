@@ -20,6 +20,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     DepartmentsModule,
     SessionsModule,
     DashboardModule,
+    HrAttendanceModule,
   ],
 })
 export class AppModule {}

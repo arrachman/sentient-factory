@@ -537,8 +537,8 @@ export default function WarehouseDashboardPage() {
             title={widget.title}
             subtitle={subtitle}
             rows={widget.dataKey === 'occupancyRows' ? widgetData.occupancyRows : widgetData.agingRows}
-            axisMax={widget.axisMax}
-            ticks={widget.ticks}
+            axisMax={widget.axisMax ?? 0}
+            ticks={widget.ticks ?? []}
           />
         );
       case 'timeseries':
@@ -549,7 +549,7 @@ export default function WarehouseDashboardPage() {
             data={widgetData.trendRows}
             series={timeseriesSeries}
             chartHeightClass={widget.chartHeightClass}
-            legendAlign={widget.legendAlign}
+            legendAlign={widget.legendAlign === 'end' ? 'center' : widget.legendAlign}
           />
         );
       case 'top_amount':
@@ -607,7 +607,7 @@ export default function WarehouseDashboardPage() {
             title={widget.title}
             subtitle={subtitle}
             rows={widgetData.activityRows}
-            actionLabel={widget.actionLabel}
+            actionLabel={widget.actionLabel ?? 'Lihat Detail'}
             overdueLabel={widget.overdueLabel}
           />
         );

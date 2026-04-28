@@ -22,4 +22,24 @@
       }
     }
   }
+
+  .geofence-map-canvas {
+    background: #0f172a;
+
+    & .leaflet-tile {
+      filter: grayscale(0.75) contrast(0.92) brightness(0.88) saturate(0.75);
+    }
+
+    & .leaflet-control-zoom {
+      overflow: hidden;
+      border: 1px solid rgb(226 232 240 / 0.9) !important;
+      border-radius: 0.75rem;
+      box-shadow: 0 12px 24px rgb(15 23 42 / 0.14);
+    }
+
+    & .leaflet-control-zoom a {
+      border-bottom-color: rgb(226 232 240 / 0.9) !important;
+      color: #0f172a;
+    }
+  }
 }

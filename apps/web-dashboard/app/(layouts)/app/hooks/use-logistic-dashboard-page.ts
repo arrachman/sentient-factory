@@ -133,6 +133,14 @@ function resolveBreakdownEndpoint(domain: DashboardDomain, groupBy: string) {
   return { path: '/api/dashboard/so/breakdown/status', includeGroupBy: false };
 }
 
+function isDefaultGroupBy(domain: DashboardDomain, groupBy: string) {
+  return DOMAIN_PREFERRED_GROUP_BY[domain][0] === groupBy;
+}
+
+function isDefaultSortBy(domain: DashboardDomain, sortBy: string) {
+  return DOMAIN_PREFERRED_SORT_BY[domain][0] === sortBy;
+}
+
 export function useLogisticDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -195,23 +203,29 @@ export function useLogisticDashboardPage() {
       return;
     }
 
-    const query = new URLSearchParams(window.location.search);
-    query.set('domain', domain);
-    query.set('period', period);
-    if (groupBy) {
-      query.set('groupBy', groupBy);
-    } else {
-      query.delete('groupBy');
-    }
-    if (sortBy) {
-      query.set('sortBy', sortBy);
-    } else {
-      query.delete('sortBy');
-    }
-    query.set('metricView', metricView);
+    const query = new URLSearchParams();
 
-    const nextUrl = `${window.location.pathname}?${query.toString()}`;
-    window.history.replaceState(null, '', nextUrl);
+    if (domain !== DEFAULT_DOMAIN) {
+      query.set('domain', domain);
+    }
+    if (period !== 'all') {
+      query.set('period', period);
+    }
+    if (groupBy && !isDefaultGroupBy(domain, groupBy)) {
+      query.set('groupBy', groupBy);
+    }
+    if (sortBy && !isDefaultSortBy(domain, sortBy)) {
+      query.set('sortBy', sortBy);
+    }
+    if (metricView !== 'totalMetric') {
+      query.set('metricView', metricView);
+    }
+
+    const nextQuery = query.toString();
+    const nextUrl = nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname;
+    if (nextUrl !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, '', nextUrl);
+    }
   }, [domain, period, groupBy, sortBy, metricView]);
 
   const resetFilters = () => {

@@ -1,4 +1,4 @@
-import { Fragment, ReactNode } from 'react';
+import { Fragment, ReactNode, isValidElement } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { MenuItem } from '@/config/types';
 import { cn } from '@/lib/utils';
@@ -12,7 +12,45 @@ export interface ToolbarHeadingProps {
   description?: string | ReactNode;
 }
 
+function hasVisibleToolbarChild(node: ReactNode): boolean {
+  if (node === null || node === undefined || typeof node === 'boolean') {
+    return false;
+  }
+
+  if (typeof node === 'string') {
+    return node.trim().length > 0;
+  }
+
+  if (Array.isArray(node)) {
+    return node.some((child) => hasVisibleToolbarChild(child));
+  }
+
+  if (!isValidElement(node)) {
+    return true;
+  }
+
+  const props = node.props as { children?: ReactNode };
+
+  if (node.type === Fragment) {
+    return hasVisibleToolbarChild(props.children);
+  }
+
+  if (node.type === ToolbarPageTitle) {
+    return false;
+  }
+
+  if (node.type === ToolbarHeading) {
+    return hasVisibleToolbarChild(props.children);
+  }
+
+  return true;
+}
+
 function Toolbar({ children, className }: { children?: ReactNode; className?: string }) {
+  if (!hasVisibleToolbarChild(children)) {
+    return null;
+  }
+
   return (
     <div className={cn('flex flex-wrap items-center justify-between gap-5 pb-7.5', className)}>
       {children}
@@ -74,20 +112,15 @@ function ToolbarBreadcrumbs() {
 }
 
 function ToolbarHeading ({ children }: { children: ReactNode }) {
+  if (!hasVisibleToolbarChild(children)) {
+    return null;
+  }
+
   return <div className="flex flex-col justify-center gap-2">{children}</div>;
 }
 
 function ToolbarPageTitle ({ children }: { children?: string }) {
-  const pathname = usePathname();
-  const { menus } = useAppMenu();
-  const { getCurrentItem } = useMenu(pathname);
-  const item = getCurrentItem(menus);
-
-  return (
-    <h1 className="text-xl font-medium leading-none text-mono">
-      {children ? children : item?.title || 'Untitled'}
-    </h1>
-  );
+  return null;
 };
 
 function ToolbarDescription ({ children }: { children: ReactNode }) {

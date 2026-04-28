@@ -1,0 +1,384 @@
+.attendanceShellScanning {
+  box-shadow: 0 16px 48px rgba(14, 165, 233, 0.14);
+}
+
+.attendanceShellSuccess {
+  box-shadow: 0 18px 52px rgba(16, 185, 129, 0.18);
+}
+
+.attendanceShellFailure {
+  box-shadow: 0 18px 52px rgba(244, 63, 94, 0.14);
+}
+
+.reticleOverlay {
+  background:
+    linear-gradient(rgba(34, 211, 238, 0.08), rgba(34, 211, 238, 0.02)),
+    radial-gradient(circle at center, transparent 36%, rgba(15, 23, 42, 0.2) 100%);
+}
+
+.reticleOverlay::before,
+.reticleOverlay::after {
+  content: '';
+  position: absolute;
+  inset: 7%;
+  border: 1px solid rgba(226, 232, 240, 0.16);
+  border-radius: 28px;
+}
+
+.reticleOverlay::after {
+  inset: 16%;
+  border-style: dashed;
+  border-color: rgba(34, 211, 238, 0.24);
+  border-radius: 9999px;
+}
+
+.scanLine {
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(34, 211, 238, 0.95), transparent);
+  box-shadow: 0 0 18px rgba(34, 211, 238, 0.65);
+  animation: scanLineSweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.scanGuide {
+  width: min(58vw, 228px);
+  height: min(76vw, 292px);
+  max-width: 228px;
+  max-height: 292px;
+  border: 2px dashed rgba(255, 255, 255, 0.48);
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08) inset;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.scanGuideActive {
+  border-color: rgba(34, 197, 94, 0.92);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.14) inset,
+    0 0 28px rgba(16, 185, 129, 0.24);
+  background-color: rgba(16, 185, 129, 0.06);
+}
+
+.scanGuideSuccess {
+  border-color: rgba(255, 255, 255, 0.96);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.16) inset,
+    0 0 32px rgba(255, 255, 255, 0.22);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.scanGuideNear {
+  border-color: rgba(251, 191, 36, 0.92);
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.2);
+}
+
+.scanGuideOff {
+  border-color: rgba(248, 250, 252, 0.52);
+  transform: scale(0.98);
+}
+
+.scanGuideLockPulse {
+  animation: guidePulse 520ms ease-out;
+}
+
+.enrollSilhouetteGuide {
+  width: min(54vw, 196px);
+  height: min(70vw, 248px);
+  max-width: 196px;
+  max-height: 248px;
+  border: 2px dashed currentColor;
+  border-radius: 9999px;
+  opacity: 0.96;
+  box-shadow:
+    0 0 0 999px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.16) inset;
+}
+
+.faceBoxIdle,
+.faceBoxScanning,
+.faceBoxSuccess,
+.faceBoxLow,
+.faceBoxUnknown {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16) inset;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.faceBoxIdle {
+  border-color: rgba(226, 232, 240, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 0 16px rgba(15, 23, 42, 0.18);
+}
+
+.faceBoxScanning {
+  border-color: rgba(56, 189, 248, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(125, 211, 252, 0.3) inset,
+    0 0 24px rgba(56, 189, 248, 0.34);
+}
+
+.faceBoxSuccess {
+  border-color: rgba(34, 197, 94, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(187, 247, 208, 0.28) inset,
+    0 0 28px rgba(34, 197, 94, 0.36);
+}
+
+.faceBoxLow {
+  border-color: rgba(251, 191, 36, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(253, 224, 71, 0.24) inset,
+    0 0 24px rgba(251, 191, 36, 0.28);
+}
+
+.faceBoxUnknown {
+  border-color: rgba(244, 63, 94, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(253, 164, 175, 0.18) inset,
+    0 0 26px rgba(244, 63, 94, 0.32);
+}
+
+.faceCorner {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: currentColor;
+  border-style: solid;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.faceCornerTl {
+  top: -1px;
+  left: -1px;
+  border-width: 3px 0 0 3px;
+  border-top-left-radius: 18px;
+}
+
+.faceCornerTr {
+  top: -1px;
+  right: -1px;
+  border-width: 3px 3px 0 0;
+  border-top-right-radius: 18px;
+}
+
+.faceCornerBl {
+  bottom: -1px;
+  left: -1px;
+  border-width: 0 0 3px 3px;
+  border-bottom-left-radius: 18px;
+}
+
+.faceCornerBr {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 3px 3px 0;
+  border-bottom-right-radius: 18px;
+}
+
+.faceTag {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  max-width: min(90vw, 280px);
+  padding: 0.45rem 0.8rem;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.28);
+}
+
+.glitchOverlay {
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.glitchOverlaySuccess {
+  animation: successGlitch 220ms steps(2, end);
+  background:
+    linear-gradient(90deg, rgba(16, 185, 129, 0.14) 0%, transparent 45%, rgba(16, 185, 129, 0.16) 100%),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 6px);
+}
+
+.glitchOverlayFailure {
+  animation: failureGlitch 320ms steps(3, end);
+  background:
+    linear-gradient(90deg, rgba(244, 63, 94, 0.22) 0%, transparent 40%, rgba(244, 63, 94, 0.18) 100%),
+    repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0 2px, transparent 2px 5px);
+}
+
+.mapStageShake {
+  animation: mapShake 280ms ease-in-out;
+}
+
+.gpsLinkStream {
+  position: absolute;
+  inset: auto 14% 16px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.95), transparent);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.44);
+  animation: dataFlow 1.1s linear infinite;
+}
+
+.primarySubmitSuccess {
+  box-shadow: 0 14px 32px rgba(16, 185, 129, 0.3);
+  animation: buttonConfirm 260ms ease-out;
+}
+
+.primarySubmitDisabled {
+  box-shadow: none;
+}
+
+.retryButton {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 14px 28px rgba(239, 68, 68, 0.22);
+}
+
+.retryButton:hover {
+  filter: brightness(1.02);
+}
+
+@keyframes scanLineSweep {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  88% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(380px);
+    opacity: 0;
+  }
+}
+
+@keyframes guidePulse {
+  0% {
+    transform: scale(0.98);
+  }
+
+  65% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes successGlitch {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translate3d(-3px, 0, 0);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: translate3d(3px, 0, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes failureGlitch {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate3d(-5px, 2px, 0);
+  }
+
+  40% {
+    transform: translate3d(5px, -2px, 0);
+  }
+
+  70% {
+    opacity: 0.95;
+    transform: translate3d(-2px, 1px, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes mapShake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(4px, 0, 0);
+  }
+
+  75% {
+    transform: translate3d(-2px, 0, 0);
+  }
+}
+
+@keyframes dataFlow {
+  0% {
+    opacity: 0.2;
+    transform: translateX(-10px);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.2;
+    transform: translateX(10px);
+  }
+}
+
+@keyframes buttonConfirm {
+  0% {
+    transform: scale(0.98);
+  }
+
+  70% {
+    transform: scale(1.02);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}

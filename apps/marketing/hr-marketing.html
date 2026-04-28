@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sentient Factory – HR Module</title>
+  <link rel="icon" href="/media/app/favicon.ico" sizes="any" />
+  <link rel="shortcut icon" href="/media/app/favicon.ico" />
+  <link rel="apple-touch-icon" href="/media/app/favicon.ico" />
+  <style>
+    :root {
+      --blue: #2563EB;
+      --blue-light: #3B82F6;
+      --blue-dark: #1E3A8A;
+      --gray: #F8FAFC;
+      --dark: #0F172A;
+      --text: #334155;
+      --accent: #10B981;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; color: var(--text); background: #fff; }
+
+    /* ─── NAVBAR ─── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; height: 68px;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid #E2E8F0;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .logo-icon img {
+      height: 38px;
+      object-fit: contain;
+      display: block;
+    }
+    .logo-text { font-size: 1.2rem; font-weight: 800; color: var(--dark);
+      letter-spacing: -.5px; }
+    .logo-text span { color: var(--blue); }
+    nav a {
+      text-decoration: none; color: var(--text);
+      font-size: .9rem; font-weight: 500; margin-left: 28px;
+      transition: color .2s;
+    }
+    nav a:hover { color: var(--blue); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--blue); color: white !important;
+      padding: 9px 22px; border-radius: 8px; font-weight: 600 !important;
+      transition: background .2s !important;
+      white-space: nowrap;
+      min-height: 44px;
+    }
+    .nav-cta:hover { background: var(--blue-dark) !important; }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 50%, #2563EB 100%);
+      color: white; text-align: center;
+      padding: 100px 5% 90px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-block; background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 100px; padding: 6px 20px;
+      font-size: .82rem; font-weight: 600; letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      font-weight: 800; line-height: 1.15;
+      margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto;
+    }
+    .hero h1 span { color: #60A5FA; }
+    .hero p {
+      font-size: 1.15rem; color: rgba(255,255,255,0.8);
+      max-width: 600px; margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: white; color: var(--blue);
+      padding: 14px 32px; border-radius: 10px;
+      font-weight: 700; font-size: 1rem; text-decoration: none;
+      transition: transform .2s, box-shadow .2s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .btn-outline {
+      border: 2px solid rgba(255,255,255,0.5); color: white;
+      padding: 14px 32px; border-radius: 10px;
+      font-weight: 600; font-size: 1rem; text-decoration: none;
+      transition: background .2s, border-color .2s;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: white; }
+
+    /* ─── STATS BAR ─── */
+    .stats-bar {
+      background: var(--dark); color: white;
+      display: flex; justify-content: center; flex-wrap: wrap; gap: 0;
+      padding: 0;
+    }
+    .stat-item {
+      flex: 1; min-width: 150px; text-align: center;
+      padding: 28px 20px; border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num { font-size: 2rem; font-weight: 800; color: #60A5FA; }
+    .stat-label { font-size: .82rem; color: rgba(255,255,255,0.5); margin-top: 4px; }
+
+    /* ─── SECTION WRAPPER ─── */
+    section { padding: 80px 5%; }
+    .section-tag {
+      display: inline-block; background: #EFF6FF; color: var(--blue);
+      border-radius: 100px; padding: 5px 16px;
+      font-size: .78rem; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 800; color: var(--dark);
+      margin-bottom: 14px; line-height: 1.2;
+    }
+    .section-sub {
+      font-size: 1rem; color: #64748B; max-width: 560px; line-height: 1.7;
+    }
+    .centered { text-align: center; }
+    .centered .section-sub { margin: 0 auto; }
+
+    /* ─── FEATURES GRID ─── */
+    #features { background: var(--gray); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px; margin-top: 52px;
+    }
+    .feature-card {
+      background: white; border-radius: 16px;
+      padding: 32px; border: 1px solid #E2E8F0;
+      transition: transform .25s, box-shadow .25s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, var(--blue), #60A5FA);
+    }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(37,99,235,.12); }
+    .feature-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 20px;
+    }
+    .icon-blue { background: #EFF6FF; }
+    .icon-green { background: #F0FDF4; }
+    .icon-purple { background: #F5F3FF; }
+    .icon-orange { background: #FFF7ED; }
+    .icon-red { background: #FFF1F2; }
+    .icon-teal { background: #F0FDFA; }
+    .feature-num {
+      position: absolute; top: 20px; right: 24px;
+      font-size: .75rem; font-weight: 700; color: #CBD5E1;
+      letter-spacing: 1px;
+    }
+    .feature-card h3 { font-size: 1.15rem; font-weight: 700; color: var(--dark); margin-bottom: 10px; }
+    .feature-card p { font-size: .9rem; color: #64748B; line-height: 1.7; margin-bottom: 18px; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      background: #F1F5F9; color: #475569;
+      font-size: .75rem; font-weight: 600;
+      padding: 4px 12px; border-radius: 100px;
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    #how { background: white; }
+    .steps {
+      display: flex; gap: 0; margin-top: 52px;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .step {
+      flex: 1; min-width: 200px; max-width: 260px;
+      text-align: center; padding: 24px 20px;
+      position: relative;
+    }
+    .step:not(:last-child)::after {
+      content: '→';
+      position: absolute; top: 34px; right: -12px;
+      font-size: 1.4rem; color: #CBD5E1;
+    }
+    .step-circle {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #60A5FA);
+      color: white; font-size: 1.4rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; box-shadow: 0 8px 20px rgba(37,99,235,.3);
+    }
+    .step h4 { font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .step p { font-size: .88rem; color: #64748B; line-height: 1.6; }
+
+    /* ─── HIGHLIGHT FEATURE ─── */
+    .highlight {
+      background: linear-gradient(135deg, #0F172A, #1E3A8A);
+      color: white; border-radius: 24px;
+      padding: 60px; display: flex; gap: 60px;
+      align-items: center; flex-wrap: wrap;
+      margin: 60px 0;
+    }
+    .highlight-text { flex: 1; min-width: 260px; }
+    .highlight-text h2 { font-size: 2rem; font-weight: 800; margin-bottom: 16px; }
+    .highlight-text p { color: rgba(255,255,255,0.75); line-height: 1.8; margin-bottom: 24px; }
+    .highlight-list { list-style: none; }
+    .highlight-list li {
+      padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; gap: 12px;
+      font-size: .92rem; color: rgba(255,255,255,0.85);
+    }
+    .highlight-list li:last-child { border-bottom: none; }
+    .check { color: #34D399; font-size: 1.1rem; }
+    .highlight-visual {
+      flex: 1; min-width: 260px;
+      background: rgba(255,255,255,0.06); border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 28px;
+    }
+    .score-card { text-align: center; margin-bottom: 20px; }
+    .score-circle {
+      width: 100px; height: 100px; border-radius: 50%;
+      border: 6px solid #34D399;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 1.8rem; font-weight: 800; color: #34D399;
+    }
+    .score-label { font-size: .82rem; color: rgba(255,255,255,0.6); }
+    .metric-row {
+      display: flex; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: .85rem;
+    }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-name { color: rgba(255,255,255,0.6); }
+    .metric-val { font-weight: 700; color: #60A5FA; }
+
+    /* ─── DASHBOARD PREVIEW ─── */
+    #dashboard { background: var(--gray); }
+    .dashboard-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px; margin-top: 40px;
+    }
+    .dash-card {
+      background: white; border-radius: 14px; padding: 24px;
+      border: 1px solid #E2E8F0; text-align: center;
+    }
+    .dash-card .dash-icon { font-size: 2rem; margin-bottom: 12px; }
+    .dash-card h4 { font-size: .85rem; color: #64748B; margin-bottom: 6px; }
+    .dash-card .dash-val { font-size: 1.8rem; font-weight: 800; color: var(--dark); }
+    .dash-card .dash-desc { font-size: .78rem; color: #94A3B8; margin-top: 4px; }
+    .dash-card.blue .dash-val { color: var(--blue); }
+    .dash-card.green .dash-val { color: #10B981; }
+    .dash-card.orange .dash-val { color: #F59E0B; }
+    .dash-card.red .dash-val { color: #EF4444; }
+
+    /* ─── TESTIMONIAL ─── */
+    #testimonials { background: white; }
+    .testimonials-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; margin-top: 48px;
+    }
+    .testi-card {
+      background: var(--gray); border-radius: 16px; padding: 28px;
+      border: 1px solid #E2E8F0; position: relative;
+    }
+    .testi-card::before {
+      content: '"'; font-size: 5rem; line-height: 1;
+      color: #DBEAFE; font-family: Georgia, serif;
+      position: absolute; top: 10px; left: 20px;
+    }
+    .testi-text {
+      font-size: .93rem; color: var(--text); line-height: 1.7;
+      margin-bottom: 20px; padding-top: 30px;
+    }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), #60A5FA);
+      color: white; font-weight: 700; font-size: .9rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .testi-name { font-weight: 700; color: var(--dark); font-size: .9rem; }
+    .testi-role { font-size: .78rem; color: #94A3B8; }
+    .stars { color: #F59E0B; font-size: .9rem; margin-bottom: 4px; }
+
+    /* ─── PRICING ─── */
+    #pricing { background: var(--gray); }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px; margin-top: 48px; align-items: start;
+    }
+    .price-card {
+      background: white; border-radius: 20px; padding: 36px;
+      border: 2px solid #E2E8F0; position: relative;
+    }
+    .price-card.popular {
+      border-color: var(--blue);
+      box-shadow: 0 20px 50px rgba(37,99,235,.2);
+    }
+    .popular-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--blue); color: white;
+      padding: 5px 20px; border-radius: 100px;
+      font-size: .78rem; font-weight: 700; white-space: nowrap;
+    }
+    .price-plan { font-size: .82rem; font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .price-amount { font-size: 2.2rem; font-weight: 800; color: var(--dark); }
+    .price-period { font-size: .85rem; color: #94A3B8; margin-bottom: 6px; }
+    .price-desc { font-size: .85rem; color: #64748B; margin-bottom: 24px; line-height: 1.6; }
+    .price-features { list-style: none; margin-bottom: 28px; }
+    .price-features li {
+      padding: 8px 0; border-bottom: 1px solid #F1F5F9;
+      font-size: .88rem; color: var(--text);
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .price-features li:last-child { border-bottom: none; }
+    .pcheck { color: #10B981; font-weight: 800; flex-shrink: 0; }
+    .btn-plan {
+      display: block; text-align: center; padding: 13px;
+      border-radius: 10px; font-weight: 700; font-size: .95rem;
+      text-decoration: none; transition: all .2s;
+    }
+    .btn-plan-primary {
+      background: var(--blue); color: white;
+    }
+    .btn-plan-primary:hover { background: var(--blue-dark); }
+    .btn-plan-outline {
+      border: 2px solid var(--blue); color: var(--blue);
+    }
+    .btn-plan-outline:hover { background: #EFF6FF; }
+
+    /* ─── CTA FINAL ─── */
+    .cta-section {
+      background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+      color: white; text-align: center;
+      padding: 90px 5%;
+    }
+    .cta-section h2 { font-size: 2.2rem; font-weight: 800; margin-bottom: 16px; }
+    .cta-section p { font-size: 1.05rem; color: rgba(255,255,255,0.8); margin-bottom: 36px; max-width: 500px; margin-left: auto; margin-right: auto; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--dark); color: rgba(255,255,255,0.5);
+      text-align: center; padding: 30px 5%;
+      font-size: .85rem;
+    }
+    footer span { color: white; font-weight: 700; }
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width: 768px) {
+      .highlight { padding: 36px 24px; gap: 36px; }
+      .step::after { display: none; }
+      nav {
+        gap: 16px;
+        padding: 14px 20px;
+        height: auto;
+        align-items: center;
+      }
+      .logo {
+        min-width: 0;
+        flex: 1 1 auto;
+      }
+      .logo-text {
+        font-size: 1rem;
+        line-height: 1.05;
+      }
+      .nav-links {
+        flex: 0 0 auto;
+      }
+      nav a:not(.nav-cta) { display: none; }
+      .nav-cta {
+        margin-left: 0;
+        padding: 10px 16px;
+        font-size: .95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">
+      <img src="/media/app/favicon.ico" alt="Sentient Factory">
+    </div>
+    <span class="logo-text"><span>SENTIENT</span> FACTORY</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Fitur</a>
+    <a href="#how">Cara Kerja</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#pricing">Harga</a>
+    <a href="https://sentient.fr-labs.my.id/app/hr/attendance-dashboard" class="nav-cta">Coba Gratis</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🚀 HR Module — Powered by AI</div>
+  <h1>Kelola Absensi Pegawai<br/><span>Cerdas, Akurat & Real-Time</span></h1>
+  <p>Sentient Factory HR hadir dengan teknologi pengenalan wajah AI, geofencing GPS, dan dashboard analitik terpadu — semua dalam satu platform yang mudah digunakan.</p>
+  <div class="hero-btns">
+    <a href="https://sentient.fr-labs.my.id/app/hr/attendance-dashboard" class="btn-primary">🎯 Mulai Demo Gratis</a>
+    <a href="#features" class="btn-outline">Lihat Semua Fitur →</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">99%</div>
+    <div class="stat-label">Akurasi Pengenalan Wajah</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">&lt;3 detik</div>
+    <div class="stat-label">Waktu Verifikasi Absen</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">Real-Time</div>
+    <div class="stat-label">Data Kehadiran</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">Multi-Site</div>
+    <div class="stat-label">Kelola Banyak Lokasi</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">AI-Powered</div>
+    <div class="stat-label">Validasi Otomatis</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="centered">
+    <span class="section-tag">✨ Fitur Unggulan</span>
+    <h2 class="section-title">Semua Yang Anda Butuhkan<br/>untuk Kelola SDM Modern</h2>
+    <p class="section-sub">6 modul terintegrasi yang dirancang untuk memudahkan tim HR dalam mengelola kehadiran pegawai secara efisien dan transparan.</p>
+  </div>
+
+  <div class="features-grid">
+
+    <!-- 1. Attendance Dashboard -->
+    <div class="feature-card">
+      <span class="feature-num">01</span>
+      <div class="feature-icon icon-blue">📊</div>
+      <h3>Attendance Dashboard</h3>
+      <p>Pantau kehadiran seluruh pegawai secara real-time dalam satu layar. Lihat ringkasan tenaga kerja, jangkauan operasional, dan statistik absensi harian sekaligus.</p>
+      <div class="tag-list">
+        <span class="tag">Real-Time Monitor</span>
+        <span class="tag">KPI Harian</span>
+        <span class="tag">Produktivitas Agregat</span>
+        <span class="tag">Aktivitas Terbaru</span>
+      </div>
+    </div>
+
+    <!-- 2. Face Enrollment -->
+    <div class="feature-card">
+      <span class="feature-num">02</span>
+      <div class="feature-icon icon-green">🤖</div>
+      <h3>Face Enrollment Management</h3>
+      <p>Daftarkan data wajah pegawai dengan teknologi AI canggih. Sistem otomatis mendeteksi kualitas foto, skor liveness, dan kemiripan wajah untuk keamanan maksimal.</p>
+      <div class="tag-list">
+        <span class="tag">AI Face Recognition</span>
+        <span class="tag">Liveness Detection</span>
+        <span class="tag">Kualitas 99/100</span>
+        <span class="tag">Anti-Spoofing</span>
+      </div>
+    </div>
+
+    <!-- 3. Attendance History -->
+    <div class="feature-card">
+      <span class="feature-num">03</span>
+      <div class="feature-icon icon-purple">📋</div>
+      <h3>Attendance History</h3>
+      <p>Akses riwayat kehadiran lengkap untuk setiap pegawai. Filter berdasarkan tanggal, nama, atau lokasi kerja. Tersedia quick filter harian, mingguan, dan bulanan.</p>
+      <div class="tag-list">
+        <span class="tag">Filter Fleksibel</span>
+        <span class="tag">Export Data</span>
+        <span class="tag">Jam Masuk/Pulang</span>
+        <span class="tag">Durasi Kerja</span>
+      </div>
+    </div>
+
+    <!-- 4. Attendance Reviews -->
+    <div class="feature-card">
+      <span class="feature-num">04</span>
+      <div class="feature-icon icon-orange">🔍</div>
+      <h3>Attendance Reviews</h3>
+      <p>Verifikasi dan validasi absensi yang mencurigakan. Tangani kasus di luar radius, GPS ditolak, atau kegagalan pengenalan wajah dengan alur review yang terstruktur.</p>
+      <div class="tag-list">
+        <span class="tag">Review Antrian</span>
+        <span class="tag">Klarifikasi Pegawai</span>
+        <span class="tag">Persetujuan/Tolak</span>
+        <span class="tag">Filter Status</span>
+      </div>
+    </div>
+
+    <!-- 5. Worksites & Geofences -->
+    <div class="feature-card">
+      <span class="feature-num">05</span>
+      <div class="feature-icon icon-red">📍</div>
+      <h3>Worksites & Geofences</h3>
+      <p>Tentukan area kerja dengan presisi GPS dan radius geofencing yang bisa dikustomisasi. Assign pegawai ke lokasi kerja spesifik untuk kontrol kehadiran yang ketat.</p>
+      <div class="tag-list">
+        <span class="tag">GPS Geofencing</span>
+        <span class="tag">Multi Lokasi</span>
+        <span class="tag">Radius Kustom</span>
+        <span class="tag">Penugasan Pegawai</span>
+      </div>
+    </div>
+
+    <!-- 6. Personal Attendance -->
+    <div class="feature-card">
+      <span class="feature-num">06</span>
+      <div class="feature-icon icon-teal">👤</div>
+      <h3>Personal Attendance Portal</h3>
+      <p>Dashboard pribadi untuk setiap pegawai — absen masuk/pulang, lihat riwayat kehadiran, status kepatuhan, dan review klarifikasi langsung dari perangkat mobile.</p>
+      <div class="tag-list">
+        <span class="tag">Self-Service</span>
+        <span class="tag">Mobile Friendly</span>
+        <span class="tag">Kehadiran & Kepatuhan</span>
+        <span class="tag">Review & Klarifikasi</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="centered">
+    <span class="section-tag">⚙️ Cara Kerja</span>
+    <h2 class="section-title">Absensi Modern dalam 4 Langkah Mudah</h2>
+    <p class="section-sub">Dari pendaftaran hingga laporan — semua otomatis dan transparan.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-circle">1</div>
+      <h4>Daftarkan Wajah</h4>
+      <p>HR mendaftarkan foto wajah pegawai. AI memvalidasi kualitas dan keautentikan secara otomatis.</p>
+    </div>
+    <div class="step">
+      <div class="step-circle">2</div>
+      <h4>Atur Lokasi Kerja</h4>
+      <p>Tambahkan worksite dengan koordinat GPS dan radius geofence yang sesuai kebutuhan perusahaan.</p>
+    </div>
+    <div class="step">
+      <div class="step-circle">3</div>
+      <h4>Pegawai Absen</h4>
+      <p>Pegawai scan wajah dari smartphone. Sistem verifikasi identitas dan lokasi secara real-time.</p>
+    </div>
+    <div class="step">
+      <div class="step-circle">4</div>
+      <h4>Monitor & Laporan</h4>
+      <p>Dashboard otomatis menampilkan kehadiran, produktivitas, dan anomali yang perlu ditindaklanjuti.</p>
+    </div>
+  </div>
+</section>
+
+<!-- AI HIGHLIGHT -->
+<section style="padding: 40px 5%;">
+  <div class="highlight">
+    <div class="highlight-text">
+      <span class="section-tag" style="background:rgba(255,255,255,0.12);color:#60A5FA;">🧠 AI Technology</span>
+      <h2>Keamanan Absensi<br/>Berlapis dengan AI</h2>
+      <p>Sistem validasi wajah Sentient Factory menggunakan algoritma pengenalan wajah generasi terbaru dengan kemampuan liveness detection — mencegah kecurangan absensi menggunakan foto atau video.</p>
+      <ul class="highlight-list">
+        <li><span class="check">✓</span> Deteksi wajah palsu (anti-spoofing)</li>
+        <li><span class="check">✓</span> Skor kualitas pendaftaran real-time</li>
+        <li><span class="check">✓</span> Kemiripan wajah berbasis deep learning</li>
+        <li><span class="check">✓</span> Skor liveness untuk mencegah foto/video</li>
+        <li><span class="check">✓</span> Validasi GPS + Wajah secara bersamaan</li>
+      </ul>
+    </div>
+    <div class="highlight-visual">
+      <div class="score-card">
+        <div class="score-circle">99</div>
+        <div class="score-label">Rata-rata Skor Kualitas Wajah</div>
+      </div>
+      <div class="metric-row">
+        <span class="metric-name">Akurasi Pengenalan</span>
+        <span class="metric-val">99.8%</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-name">Liveness Detection</span>
+        <span class="metric-val">Aktif</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-name">Anti-Spoofing</span>
+        <span class="metric-val">✓ Enabled</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-name">Waktu Verifikasi</span>
+        <span class="metric-val">&lt; 3 detik</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-name">Model AI</span>
+        <span class="metric-val">v2 Deep Learning</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD PREVIEW -->
+<section id="dashboard">
+  <div class="centered">
+    <span class="section-tag">📈 Dashboard Analytics</span>
+    <h2 class="section-title">Semua Data Kehadiran<br/>dalam Satu Layar</h2>
+    <p class="section-sub">Ringkasan eksekutif yang komprehensif membantu manajer membuat keputusan berdasarkan data nyata.</p>
+  </div>
+  <div class="dashboard-grid">
+    <div class="dash-card blue">
+      <div class="dash-icon">👥</div>
+      <h4>Total Pegawai Aktif</h4>
+      <div class="dash-val">15</div>
+      <div class="dash-desc">Terpantau real-time</div>
+    </div>
+    <div class="dash-card green">
+      <div class="dash-icon">✅</div>
+      <h4>Sudah Terdaftar</h4>
+      <div class="dash-val">1</div>
+      <div class="dash-desc">Wajah terverifikasi AI</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-icon">📍</div>
+      <h4>Lokasi Kerja Aktif</h4>
+      <div class="dash-val">4</div>
+      <div class="dash-desc">Dengan geofencing GPS</div>
+    </div>
+    <div class="dash-card orange">
+      <div class="dash-icon">⏱️</div>
+      <h4>Absen Masuk Hari Ini</h4>
+      <div class="dash-val">Real-Time</div>
+      <div class="dash-desc">Update setiap menit</div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-icon">📊</div>
+      <h4>Tingkat Partisipasi</h4>
+      <div class="dash-val">%</div>
+      <div class="dash-desc">Kalkulasi otomatis harian</div>
+    </div>
+    <div class="dash-card red">
+      <div class="dash-icon">🔔</div>
+      <h4>Antrian Review</h4>
+      <div class="dash-val">5</div>
+      <div class="dash-desc">Butuh verifikasi HR</div>
+    </div>
+    <div class="dash-card green">
+      <div class="dash-icon">🕐</div>
+      <h4>Rata-rata Jam Kerja</h4>
+      <div class="dash-val">Otomatis</div>
+      <div class="dash-desc">Per pegawai per hari</div>
+    </div>
+    <div class="dash-card blue">
+      <div class="dash-icon">🛡️</div>
+      <h4>Validasi Wajah</h4>
+      <div class="dash-val">99/100</div>
+      <div class="dash-desc">Kualitas pendaftaran</div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section id="testimonials">
+  <div class="centered">
+    <span class="section-tag">💬 Testimoni</span>
+    <h2 class="section-title">Dipercaya Tim HR<br/>di Berbagai Perusahaan</h2>
+    <p class="section-sub">Apa kata mereka yang sudah menggunakan Sentient Factory HR Module.</p>
+  </div>
+
+  <div class="testimonials-grid">
+
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">Sejak pakai Sentient Factory, kasus titip absen di pabrik kami turun drastis. Sistem pengenalan wajah AI-nya benar-benar anti-bolong. HR kami hemat 3 jam per hari hanya dari rekap absensi!</p>
+      <div class="testi-author">
+        <div class="testi-avatar">RA</div>
+        <div>
+          <div class="testi-name">Rizky Aditya</div>
+          <div class="testi-role">HR Manager · PT. Maju Bersama Industri</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">Geofencing-nya sangat akurat. Pegawai lapangan kami tersebar di 4 cabang, tapi semua bisa dipantau dari satu dashboard. Review absensi anomali juga sangat mudah — tinggal klik approve atau reject.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">DW</div>
+        <div>
+          <div class="testi-name">Dewi Wulandari</div>
+          <div class="testi-role">Operational Director · CV. Logistik Nusantara</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card">
+      <div class="stars">★★★★★</div>
+      <p class="testi-text">Dashboard real-time-nya luar biasa. Saya bisa langsung tahu siapa yang belum masuk tanpa harus telepon satu-satu. Liveness detection-nya juga bekerja sempurna — tidak bisa diakali dengan foto selfie.</p>
+      <div class="testi-author">
+        <div class="testi-avatar">FH</div>
+        <div>
+          <div class="testi-name">Fajar Hidayat</div>
+          <div class="testi-role">GM People & Culture · Startup Teknologi Jakarta</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="centered">
+    <span class="section-tag">💰 Harga</span>
+    <h2 class="section-title">Pilih Paket yang Sesuai<br/>Kebutuhan Bisnis Anda</h2>
+    <p class="section-sub">Semua paket sudah termasuk fitur HR Module lengkap. Tidak ada biaya tersembunyi.</p>
+  </div>
+
+  <div class="pricing-grid">
+
+    <!-- STARTER -->
+    <div class="price-card">
+      <div class="price-plan">Starter</div>
+      <div class="price-amount">Gratis</div>
+      <div class="price-period">untuk 30 hari pertama</div>
+      <div class="price-desc">Cocok untuk bisnis kecil yang baru ingin mulai digitalisasi absensi.</div>
+      <ul class="price-features">
+        <li><span class="pcheck">✓</span> Hingga 15 pegawai</li>
+        <li><span class="pcheck">✓</span> Face Enrollment Management</li>
+        <li><span class="pcheck">✓</span> Attendance Dashboard</li>
+        <li><span class="pcheck">✓</span> 1 lokasi kerja / geofence</li>
+        <li><span class="pcheck">✓</span> Riwayat absensi 30 hari</li>
+        <li><span class="pcheck">✓</span> Support via email</li>
+      </ul>
+      <a href="https://sentient.fr-labs.my.id" class="btn-plan btn-plan-outline">Mulai Gratis</a>
+    </div>
+
+    <!-- PROFESSIONAL (POPULAR) -->
+    <div class="price-card popular">
+      <div class="popular-badge">⭐ Paling Populer</div>
+      <div class="price-plan">Professional</div>
+      <div class="price-amount">Hubungi Kami</div>
+      <div class="price-period">harga custom per perusahaan</div>
+      <div class="price-desc">Solusi lengkap untuk perusahaan menengah dengan banyak cabang dan pegawai.</div>
+      <ul class="price-features">
+        <li><span class="pcheck">✓</span> Pegawai tidak terbatas</li>
+        <li><span class="pcheck">✓</span> Semua 6 modul HR lengkap</li>
+        <li><span class="pcheck">✓</span> Multi-site & Geofencing tak terbatas</li>
+        <li><span class="pcheck">✓</span> AI Face Recognition v2</li>
+        <li><span class="pcheck">✓</span> Attendance Reviews & Validasi</li>
+        <li><span class="pcheck">✓</span> Riwayat absensi tidak terbatas</li>
+        <li><span class="pcheck">✓</span> Export laporan (Excel/PDF)</li>
+        <li><span class="pcheck">✓</span> Senti AI Assistant</li>
+        <li><span class="pcheck">✓</span> Alerting & Notifikasi otomatis</li>
+        <li><span class="pcheck">✓</span> Dedicated support & onboarding</li>
+      </ul>
+      <a href="https://sentient.fr-labs.my.id" class="btn-plan btn-plan-primary">Konsultasi Sekarang</a>
+    </div>
+
+    <!-- ENTERPRISE -->
+    <div class="price-card">
+      <div class="price-plan">Enterprise</div>
+      <div class="price-amount">Custom</div>
+      <div class="price-period">solusi skala enterprise</div>
+      <div class="price-desc">Untuk korporasi besar dengan kebutuhan kustomisasi tinggi dan integrasi sistem HR existing.</div>
+      <ul class="price-features">
+        <li><span class="pcheck">✓</span> Semua fitur Professional</li>
+        <li><span class="pcheck">✓</span> Integrasi API ke HRIS/ERP</li>
+        <li><span class="pcheck">✓</span> White-label tersedia</li>
+        <li><span class="pcheck">✓</span> On-premise deployment</li>
+        <li><span class="pcheck">✓</span> SLA 99.9% uptime</li>
+        <li><span class="pcheck">✓</span> Dedicated account manager</li>
+        <li><span class="pcheck">✓</span> Training & implementasi penuh</li>
+      </ul>
+      <a href="https://sentient.fr-labs.my.id" class="btn-plan btn-plan-outline">Hubungi Sales</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- FAQ -->
+<section style="background: white; padding: 80px 5%;">
+  <div class="centered">
+    <span class="section-tag">❓ FAQ</span>
+    <h2 class="section-title">Pertanyaan yang Sering Ditanyakan</h2>
+  </div>
+  <div style="max-width: 720px; margin: 48px auto 0;">
+
+    <details style="border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
+      <summary style="padding: 20px 24px; cursor: pointer; font-weight: 700; color: #0F172A; font-size: .95rem; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+        Apakah data wajah pegawai aman tersimpan? <span style="color:#2563EB;">+</span>
+      </summary>
+      <p style="padding: 0 24px 20px; color: #64748B; line-height: 1.7; font-size: .9rem;">Ya. Data wajah dienkripsi dan disimpan menggunakan standar keamanan enterprise. Tidak ada foto mentah yang disimpan — hanya vektor biometrik yang tidak bisa direkonstruksi menjadi wajah asli.</p>
+    </details>
+
+    <details style="border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
+      <summary style="padding: 20px 24px; cursor: pointer; font-weight: 700; color: #0F172A; font-size: .95rem; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+        Bisakah pegawai absen tanpa internet? <span style="color:#2563EB;">+</span>
+      </summary>
+      <p style="padding: 0 24px 20px; color: #64748B; line-height: 1.7; font-size: .9rem;">Absensi memerlukan koneksi internet untuk verifikasi real-time dan validasi GPS. Namun sistem dirancang ringan sehingga berjalan baik di koneksi 4G/LTE standar.</p>
+    </details>
+
+    <details style="border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
+      <summary style="padding: 20px 24px; cursor: pointer; font-weight: 700; color: #0F172A; font-size: .95rem; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+        Apakah bisa diintegrasikan dengan sistem payroll? <span style="color:#2563EB;">+</span>
+      </summary>
+      <p style="padding: 0 24px 20px; color: #64748B; line-height: 1.7; font-size: .9rem;">Paket Enterprise menyediakan REST API lengkap yang bisa diintegrasikan dengan sistem payroll, HRIS, atau ERP yang sudah ada. Tim kami siap membantu proses integrasi.</p>
+    </details>
+
+    <details style="border: 1px solid #E2E8F0; border-radius: 12px; margin-bottom: 12px; overflow: hidden;">
+      <summary style="padding: 20px 24px; cursor: pointer; font-weight: 700; color: #0F172A; font-size: .95rem; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+        Berapa lama proses setup dan onboarding? <span style="color:#2563EB;">+</span>
+      </summary>
+      <p style="padding: 0 24px 20px; color: #64748B; line-height: 1.7; font-size: .9rem;">Untuk paket Starter, Anda bisa langsung aktif segera. Paket Professional dilengkapi onboarding 1-2 hari kerja termasuk training HR admin dan pendaftaran wajah pegawai pertama.</p>
+    </details>
+
+    <details style="border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden;">
+      <summary style="padding: 20px 24px; cursor: pointer; font-weight: 700; color: #0F172A; font-size: .95rem; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+        Apakah bisa kelola banyak cabang sekaligus? <span style="color:#2563EB;">+</span>
+      </summary>
+      <p style="padding: 0 24px 20px; color: #64748B; line-height: 1.7; font-size: .9rem;">Ya! Fitur Worksites & Geofences memungkinkan Anda mengelola cabang tak terbatas dari satu dashboard terpusat. Setiap lokasi bisa diatur radius geofence-nya secara independen.</p>
+    </details>
+
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section">
+  <span class="section-tag" style="background:rgba(255,255,255,0.15); color:white; margin-bottom:20px;">🚀 Mulai Sekarang</span>
+  <h2>Siap Transformasi HR<br/>Perusahaan Anda?</h2>
+  <p>Bergabunglah dengan ratusan perusahaan yang sudah membuktikan efisiensi absensi berbasis AI. Demo gratis, tidak perlu kartu kredit.</p>
+  <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+    <a href="https://sentient.fr-labs.my.id/app/hr/attendance-dashboard"
+       style="background:white; color:#2563EB; padding:15px 36px; border-radius:10px;
+              font-weight:800; font-size:1rem; text-decoration:none;
+              box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+              transition: transform .2s;"
+       onmouseover="this.style.transform='translateY(-2px)'"
+       onmouseout="this.style.transform='translateY(0)'">
+      🎯 Coba Demo Gratis
+    </a>
+    <a href="mailto:sales@sentientfactory.id"
+       style="border: 2px solid rgba(255,255,255,0.6); color:white;
+              padding:15px 36px; border-radius:10px;
+              font-weight:600; font-size:1rem; text-decoration:none;">
+      📩 Hubungi Tim Sales
+    </a>
+  </div>
+  <p style="margin-top:24px; font-size:.82rem; color:rgba(255,255,255,0.5);">
+    ✓ Setup instant &nbsp;·&nbsp; ✓ Tanpa kartu kredit &nbsp;·&nbsp; ✓ Support bahasa Indonesia
+  </p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px;">
+    <div style="width:32px;height:32px; 
+                border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+      <img src="/media/app/favicon.ico" alt="Sentient Factory" style="height:32px;object-fit:contain;display:block;" />
+    </div>
+    <span style="font-size:1rem; font-weight:800; color:white;">SENTIENT <span style="color:#60A5FA;">FACTORY</span></span>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-bottom:20px;">
+    <a href="#features" style="color:rgba(255,255,255,0.5); text-decoration:none; font-size:.85rem;">Fitur</a>
+    <a href="#how" style="color:rgba(255,255,255,0.5); text-decoration:none; font-size:.85rem;">Cara Kerja</a>
+    <a href="#dashboard" style="color:rgba(255,255,255,0.5); text-decoration:none; font-size:.85rem;">Dashboard</a>
+    <a href="#pricing" style="color:rgba(255,255,255,0.5); text-decoration:none; font-size:.85rem;">Harga</a>
+    <a href="https://sentient.fr-labs.my.id" style="color:rgba(255,255,255,0.5); text-decoration:none; font-size:.85rem;">Login Aplikasi</a>
+  </div>
+  <p>© 2026 <span>Sentient Factory</span>. Hak cipta dilindungi.</p>
+</footer>
+
+</body>
+</html>

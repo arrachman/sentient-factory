@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Eye, GripVertical, LoaderCircle, Pencil, SquarePen, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, BellRing, Copy, Eye, GripVertical, LoaderCircle, Pencil, SquarePen, Trash2 } from 'lucide-react';
 import {
   Area,
   AreaChart,
@@ -99,6 +100,8 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
   const [savingWidgetId, setSavingWidgetId] = useState<string | null>(null);
   const [resizingWidgetId, setResizingWidgetId] = useState<string | null>(null);
   const [resizePreview, setResizePreview] = useState<{ widgetId: string; size: '25' | '50' | '75' | '100' } | null>(null);
+  const resizePreviewFrameRef = useRef<number | null>(null);
+  const silentRefreshTimeoutRef = useRef<number | null>(null);
   async function loadQueryResults(
     nextCatalog: DashboardCatalog,
     options?: { signal?: { cancelled: boolean }; silent?: boolean },
@@ -185,17 +188,52 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
     }
   }
 
+  function scheduleSilentRefresh(delayMs = 220) {
+    if (typeof document !== 'undefined' && document.hidden) {
+      return;
+    }
+
+    if (silentRefreshTimeoutRef.current !== null) {
+      window.clearTimeout(silentRefreshTimeoutRef.current);
+    }
+
+    silentRefreshTimeoutRef.current = window.setTimeout(() => {
+      silentRefreshTimeoutRef.current = null;
+      void loadCatalog({ silent: true });
+    }, delayMs);
+  }
+
   useEffect(() => {
     const signal = { cancelled: false };
     void loadCatalog({ signal });
 
     const intervalId = window.setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        return;
+      }
       void loadCatalog({ signal, silent: true });
     }, REFRESH_INTERVAL_MS);
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void loadCatalog({ signal, silent: true });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       signal.cancelled = true;
       window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (resizePreviewFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizePreviewFrameRef.current);
+        resizePreviewFrameRef.current = null;
+      }
+      if (silentRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(silentRefreshTimeoutRef.current);
+        silentRefreshTimeoutRef.current = null;
+      }
     };
   }, [dashboardKey]);
 
@@ -228,7 +266,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
       if (!response.ok || !payload?.success) {
         throw new Error(payload?.message || 'Failed to delete widget.');
       }
-      await loadCatalog({ silent: true });
+      scheduleSilentRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete widget.');
     } finally {
@@ -248,7 +286,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
       if (!response.ok || !payload?.success) {
         throw new Error(payload?.message || 'Failed to duplicate widget.');
       }
-      await loadCatalog({ silent: true });
+      scheduleSilentRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to duplicate widget.');
     } finally {
@@ -304,7 +342,34 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
         throw new Error(payload?.message || 'Failed to update widget.');
       }
       setEditingWidget(null);
-      await loadCatalog({ silent: true });
+      setCatalog((current) =>
+        current
+          ? {
+              ...current,
+              widgets: current.widgets.map((widget) =>
+                widget.widget_id === editingWidget.widget_id
+                  ? {
+                      ...widget,
+                      title: editTitle.trim(),
+                      description: editDescription.trim(),
+                      span_class_name: editSpanClassName,
+                      chart_type: editingWidget.widget_kind === 'chart' ? editChartType : widget.chart_type,
+                      queries: widget.queries.map((query, index) =>
+                        index === 0
+                          ? {
+                              ...query,
+                              default_limit:
+                                editingWidget.widget_kind === 'chart' ? nextDefaultLimit : query.default_limit,
+                            }
+                          : query,
+                      ),
+                    }
+                  : widget,
+              ),
+            }
+          : current,
+      );
+      scheduleSilentRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update widget.');
     } finally {
@@ -357,8 +422,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
       if (!secondResponse.ok || !secondPayload?.success) {
         throw new Error(secondPayload?.message || 'Failed to reorder widget.');
       }
-
-      await loadCatalog({ silent: true });
+      scheduleSilentRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reorder widget.');
     } finally {
@@ -421,6 +485,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
       if (failed) {
         throw new Error(failed.payload?.message || 'Failed to reorder widget.');
       }
+      scheduleSilentRefresh();
     } catch (err) {
       await loadCatalog({ silent: true });
       setError(err instanceof Error ? err.message : 'Failed to reorder widget.');
@@ -464,7 +529,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
       if (!response.ok || !payload?.success) {
         throw new Error(payload?.message || 'Failed to resize widget.');
       }
-      await loadCatalog({ silent: true });
+      scheduleSilentRefresh();
     } catch (err) {
       await loadCatalog({ silent: true });
       setError(err instanceof Error ? err.message : 'Failed to resize widget.');
@@ -490,12 +555,25 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
     const handlePointerMove = (pointerMoveEvent: PointerEvent) => {
       const deltaX = pointerMoveEvent.clientX - startX;
       const nextPreset = resolveResizePresetFromDelta(currentPreset, deltaX);
-      setResizePreview({ widgetId: widget.widget_id, size: nextPreset });
+      if (resizePreviewFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizePreviewFrameRef.current);
+      }
+      resizePreviewFrameRef.current = window.requestAnimationFrame(() => {
+        setResizePreview((current) =>
+          current?.widgetId === widget.widget_id && current.size === nextPreset
+            ? current
+            : { widgetId: widget.widget_id, size: nextPreset },
+        );
+      });
     };
 
     const handlePointerUp = (pointerUpEvent: PointerEvent) => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
+      if (resizePreviewFrameRef.current !== null) {
+        window.cancelAnimationFrame(resizePreviewFrameRef.current);
+        resizePreviewFrameRef.current = null;
+      }
       const deltaX = pointerUpEvent.clientX - startX;
       const nextPreset = resolveResizePresetFromDelta(currentPreset, deltaX);
       if (nextPreset !== currentPreset) {
@@ -533,10 +611,14 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
     return null;
   }
 
-  const sortedWidgets = [...catalog.widgets].sort(
-    (left, right) => (left.widget_order ?? 0) - (right.widget_order ?? 0),
+  const sortedWidgets = useMemo(
+    () =>
+      [...catalog.widgets].sort(
+        (left, right) => (left.widget_order ?? 0) - (right.widget_order ?? 0),
+      ),
+    [catalog.widgets],
   );
-  const widgetRows = buildWidgetRows(sortedWidgets);
+  const widgetRows = useMemo(() => buildWidgetRows(sortedWidgets), [sortedWidgets]);
 
   return (
     <div className="space-y-6 p-6">
@@ -591,8 +673,10 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
               )} transition-all duration-200 ease-out will-change-[grid-column]`}
             >
               <WidgetChartCard
+                dashboardKey={dashboardKey}
                 widget={widget}
                 result={queryResults[widget.widget_id]}
+                lazyRender={false}
                 deleting={deletingWidgetId === widget.widget_id}
                 duplicating={duplicatingWidgetId === widget.widget_id}
                 saving={savingWidgetId === widget.widget_id}
@@ -626,8 +710,10 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
                     className={`${resolveWidgetSpanClass(widget.span_class_name)} transition-all duration-200 ease-out will-change-[grid-column]`}
                   >
                     <WidgetChartCard
+                      dashboardKey={dashboardKey}
                       widget={widget}
                       result={queryResults[widget.widget_id]}
+                      lazyRender
                       deleting={deletingWidgetId === widget.widget_id}
                       duplicating={duplicatingWidgetId === widget.widget_id}
                       saving={savingWidgetId === widget.widget_id}
@@ -801,6 +887,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
                 </div>
                 {editingWidget ? (
                   <WidgetChartCard
+                    dashboardKey={dashboardKey}
                     widget={{
                       ...editingWidget,
                       title: editTitle.trim() || editingWidget.title,
@@ -822,6 +909,7 @@ export function CustomDashboardPage({ dashboardKey = 'custom-db-1' }: { dashboar
                       ),
                     }}
                     result={queryResults[editingWidget.widget_id]}
+                    lazyRender={false}
                     showActions={false}
                     resizeEnabled={false}
                     resizing={false}
@@ -880,8 +968,10 @@ function DashboardMessage({ text }: { text: string }) {
 type ChartType = 'bar' | 'vertical_bar' | 'horizontal_bar' | 'line' | 'area' | 'pie' | 'donut' | 'scatter';
 
 function WidgetChartCard({
+  dashboardKey,
   widget,
   result,
+  lazyRender = false,
   deleting,
   duplicating,
   saving,
@@ -899,8 +989,10 @@ function WidgetChartCard({
   onDuplicate,
   onDelete,
 }: {
+  dashboardKey: string;
   widget: DashboardWidget;
   result?: QueryResult;
+  lazyRender?: boolean;
   deleting?: boolean;
   duplicating?: boolean;
   saving?: boolean;
@@ -918,21 +1010,50 @@ function WidgetChartCard({
   onDuplicate: () => void;
   onDelete: () => void;
 }) {
-  const chartData = result ? buildChartData(result.columns, result.rows) : null;
   const chartType = normalizeChartType(widget.chart_type);
   const primaryQuery = widget.queries[0];
   const chartDataLimit = resolveChartDataLimit(chartType, primaryQuery?.default_limit);
   const prefersTable = widget.widget_kind === 'table' || widget.widget_kind === 'list' || widget.widget_kind === 'summary' || widget.widget_kind === 'metric';
+  const createAlertHref = `/app/alerting/rules/create?sourceType=dashboard-widget&dashboardKey=${encodeURIComponent(dashboardKey)}&widgetId=${encodeURIComponent(widget.widget_id)}&widgetTitle=${encodeURIComponent(widget.title)}`;
+  const [cardRef, isVisible] = useViewportVisibility({
+    enabled: lazyRender,
+    rootMargin: '240px 0px',
+  });
+  const shouldRenderVisualization = !lazyRender || isVisible;
+  const chartData = useMemo(() => {
+    if (!result || prefersTable || !shouldRenderVisualization) {
+      return null;
+    }
+
+    return buildChartData(result.columns, result.rows);
+  }, [prefersTable, result, shouldRenderVisualization]);
+  const limitedChartData = useMemo(() => {
+    if (!chartData?.length) {
+      return null;
+    }
+
+    return limitChartData(chartData, chartType, chartDataLimit);
+  }, [chartData, chartDataLimit, chartType]);
 
   return (
     <article
+      ref={cardRef}
       className={`relative rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition data-[dragging=true]:rotate-[1deg] data-[dragging=true]:border-[#009EF7]/60 data-[dragging=true]:shadow-[0_20px_60px_-25px_rgba(0,158,247,0.45)] dark:border-slate-800 dark:bg-slate-950 dark:data-[dragging=true]:border-sky-500/50 ${
         resizing ? 'border-[#009EF7]/60 shadow-[0_20px_60px_-25px_rgba(0,158,247,0.35)]' : ''
       }`}
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{widget.title}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{widget.title}</h2>
+            <Link
+              href={createAlertHref}
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-medium text-amber-700 transition hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50"
+            >
+              <BellRing className="size-3.5" />
+              Create Alert
+            </Link>
+          </div>
           {widget.description ? <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{widget.description}</p> : null}
         </div>
         {showActions ? (
@@ -1001,6 +1122,10 @@ function WidgetChartCard({
         <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
           Widget is not available yet.
         </div>
+      ) : !shouldRenderVisualization ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+          Scroll to render this widget.
+        </div>
       ) : prefersTable ? (
         <TableRenderer result={result} />
       ) : !chartData?.length ? (
@@ -1008,7 +1133,7 @@ function WidgetChartCard({
           Not enough data to visualize this chart.
         </div>
       ) : (
-        <ChartRenderer chartType={chartType} data={limitChartData(chartData, chartType, chartDataLimit)} />
+        <MemoizedChartRenderer chartType={chartType} data={limitedChartData ?? []} />
       )}
       {resizeEnabled ? (
         <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1">
@@ -1031,6 +1156,50 @@ function WidgetChartCard({
       ) : null}
     </article>
   );
+}
+
+function useViewportVisibility({
+  enabled,
+  rootMargin = '0px',
+}: {
+  enabled: boolean;
+  rootMargin?: string;
+}) {
+  const elementRef = useRef<HTMLElement | null>(null);
+  const [isVisible, setIsVisible] = useState(!enabled);
+
+  useEffect(() => {
+    if (!enabled) {
+      setIsVisible(true);
+      return;
+    }
+
+    const node = elementRef.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin,
+      },
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [enabled, rootMargin]);
+
+  return [elementRef, isVisible] as const;
 }
 
 function resolveWidgetSpanClass(value?: string) {
@@ -1257,7 +1426,7 @@ function TableRenderer({ result }: { result: QueryResult }) {
   );
 }
 
-function ChartRenderer({
+const MemoizedChartRenderer = memo(function ChartRenderer({
   chartType,
   data,
 }: {
@@ -1309,16 +1478,9 @@ function ChartRenderer({
             cornerRadius={chartType === 'donut' ? 12 : 4}
             cx="50%"
             cy="52%"
-            shape={
-              chartType === 'pie'
-                ? (shapeProps) => renderRoseSliceShape(shapeProps, maxValue)
-                : undefined
-            }
             labelLine={chartType === 'donut' || chartType === 'pie' ? false : {
               stroke: '#94a3b8',
               strokeWidth: 1,
-              length: 14,
-              length2: 10,
             }}
             label={(props) => {
               if (!props.percent || props.percent < 0.04) {
@@ -1497,7 +1659,7 @@ function ChartRenderer({
             dataKey="value"
             stroke="url(#lineSpectrum)"
             strokeWidth={4}
-            dot={(props) => {
+            dot={(props: any) => {
               const color = lineColors[props.index % lineColors.length] ?? CHART_COLORS[0];
               return (
                 <circle
@@ -1511,7 +1673,7 @@ function ChartRenderer({
                 />
               );
             }}
-            activeDot={(props) => {
+            activeDot={(props: any) => {
               const color = lineColors[props.index % lineColors.length] ?? CHART_COLORS[0];
               return (
                 <circle
@@ -1538,9 +1700,10 @@ function ChartRenderer({
               dataKey="value"
               position="top"
               formatter={(value: number) => formatChartNumber(Number(value))}
-              content={(props) => {
+              content={(props: any) => {
                 const value = Number(props.value ?? 0);
-                const color = lineColors[props.index % lineColors.length] ?? '#0f172a';
+                const pointIndex = typeof props.index === 'number' ? props.index : 0;
+                const color = lineColors[pointIndex % lineColors.length] ?? '#0f172a';
                 return (
                   <text
                     x={props.x}
@@ -1614,7 +1777,7 @@ function ChartRenderer({
             fill="url(#areaFillSpectrum)"
             fillOpacity={1}
             strokeWidth={4}
-            dot={(props) => {
+            dot={(props: any) => {
               const color = areaColors[props.index % areaColors.length] ?? CHART_COLORS[0];
               return (
                 <circle
@@ -1628,7 +1791,7 @@ function ChartRenderer({
                 />
               );
             }}
-            activeDot={(props) => {
+            activeDot={(props: any) => {
               const color = areaColors[props.index % areaColors.length] ?? CHART_COLORS[0];
               return (
                 <circle
@@ -1655,7 +1818,7 @@ function ChartRenderer({
             <LabelList
               dataKey="value"
               position="top"
-              content={(props) => {
+              content={(props: any) => {
                 const value = Number(props.value ?? 0);
                 const color = areaColors[props.index % areaColors.length] ?? '#0f172a';
                 return (
@@ -1702,7 +1865,7 @@ function ChartRenderer({
       <HorizontalBarRenderer data={normalizedData} />
     </ChartContainer>
   );
-}
+});
 
 type NormalizedBarDatum = {
   label: string;
@@ -2040,7 +2203,7 @@ function buildChartData(columns: string[], rows: Array<Record<string, unknown>>)
           y,
         };
       })
-      .filter((entry): entry is ChartDatum => Boolean(entry));
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
     if (scatterData.length) {
       return scatterData;

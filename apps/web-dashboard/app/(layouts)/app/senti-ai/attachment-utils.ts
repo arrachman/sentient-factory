@@ -17,6 +17,8 @@ export type PromptAttachment = {
   metadata: Record<string, string | number | boolean | null>;
 };
 
+type ParsedAttachmentPayload = Omit<PromptAttachment, 'previewUrl'>;
+
 const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 const PREVIEW_LIMIT = 240;
 const CONTENT_LIMIT = 12_000;
@@ -78,6 +80,34 @@ function createAttachmentId() {
     return crypto.randomUUID();
   }
   return `att-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function canUseAttachmentParserWorker(file: File, extension: string) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (file.type.startsWith('image/') || ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'].includes(extension)) {
+    return false;
+  }
+
+  return (
+    file.type.startsWith('text/') ||
+    ['txt', 'csv', 'json', 'md', 'xml', 'html', 'xlsx', 'xlsm', 'docx', 'pdf'].includes(extension) ||
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    file.type === 'application/pdf'
+  );
+}
+
+async function parsePromptAttachmentWithWorker(file: File, attachmentId: string): Promise<PromptAttachment> {
+  const { parsePromptAttachment } = await import('./attachment-parser');
+  const parsed = (await parsePromptAttachment(file, attachmentId)) as ParsedAttachmentPayload;
+
+  return {
+    ...parsed,
+    previewUrl: null,
+  };
 }
 
 async function extractTextFromSpreadsheet(file: File) {
@@ -149,25 +179,28 @@ async function extractTextFromDocx(file: File) {
 async function extractTextFromPdf(file: File) {
   const raw = new TextDecoder('latin1').decode(await file.arrayBuffer());
   const parts: string[] = [];
-  const directMatches = raw.matchAll(/\(([^()]*(?:\\.[^()]*)*)\)\s*Tj/g);
-  const arrayMatches = raw.matchAll(/\[(.*?)\]\s*TJ/gms);
+  const directPattern = /\(([^()]*(?:\\.[^()]*)*)\)\s*Tj/g;
+  const arrayPattern = /\[([\s\S]*?)\]\s*TJ/gm;
+  const tokenPattern = /\(([^()]*(?:\\.[^()]*)*)\)/g;
 
-  for (const match of directMatches) {
+  let match: RegExpExecArray | null;
+  while ((match = directPattern.exec(raw)) !== null) {
     const value = decodePdfLiteralString(match[1] ?? '').trim();
     if (value.length > 0) {
       parts.push(value);
     }
   }
 
-  for (const match of arrayMatches) {
+  while ((match = arrayPattern.exec(raw)) !== null) {
     const content = match[1] ?? '';
-    const tokens = content.matchAll(/\(([^()]*(?:\\.[^()]*)*)\)/g);
-    for (const token of tokens) {
+    let token: RegExpExecArray | null;
+    while ((token = tokenPattern.exec(content)) !== null) {
       const value = decodePdfLiteralString(token[1] ?? '').trim();
       if (value.length > 0) {
         parts.push(value);
       }
     }
+    tokenPattern.lastIndex = 0;
   }
 
   if (parts.length === 0) {
@@ -368,5 +401,23 @@ export async function parsePromptAttachment(file: File, attachmentId?: string): 
       warning: error instanceof Error ? error.message : 'File gagal diproses.',
       metadata: {},
     };
+  }
+}
+
+export async function parsePromptAttachmentOffMainThread(
+  file: File,
+  attachmentId?: string,
+): Promise<PromptAttachment> {
+  const nextAttachmentId = attachmentId ?? createAttachmentId();
+  const extension = getExtension(file);
+
+  if (!canUseAttachmentParserWorker(file, extension)) {
+    return parsePromptAttachment(file, nextAttachmentId);
+  }
+
+  try {
+    return await parsePromptAttachmentWithWorker(file, nextAttachmentId);
+  } catch {
+    return parsePromptAttachment(file, nextAttachmentId);
   }
 }

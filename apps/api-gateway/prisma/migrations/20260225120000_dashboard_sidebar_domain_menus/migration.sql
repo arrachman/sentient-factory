@@ -26,7 +26,7 @@ INSERT INTO "m0_menu" (
 VALUES (
   'dashboard-overview',
   'Overview',
-  '/app',
+  '/app/overview',
   'LayoutGrid',
   'ITEM',
   (SELECT "id" FROM "m0_menu" WHERE "key" = 'dashboard'),

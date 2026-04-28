@@ -210,6 +210,7 @@ export function FinanceEditableWidgetGrid({
   const [resizingId, setResizingId] = useState<string | null>(null);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
+  const persistLayoutTimeoutRef = useRef<number | null>(null);
   const layoutRef = useRef<CanvasLayoutItem[]>([]);
   const hasMountedRef = useRef(false);
   const dragStateRef = useRef<{
@@ -328,10 +329,24 @@ export function FinanceEditableWidgetGrid({
     layoutRef.current = layout;
     if (!layout.length) return;
 
-    window.localStorage.setItem(
-      storageKey,
-      JSON.stringify(layout.map(({ id, x, y, width, height }) => ({ id, x, y, width, height }))),
-    );
+    if (persistLayoutTimeoutRef.current !== null) {
+      window.clearTimeout(persistLayoutTimeoutRef.current);
+    }
+
+    persistLayoutTimeoutRef.current = window.setTimeout(() => {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(layout.map(({ id, x, y, width, height }) => ({ id, x, y, width, height }))),
+      );
+      persistLayoutTimeoutRef.current = null;
+    }, 180);
+
+    return () => {
+      if (persistLayoutTimeoutRef.current !== null) {
+        window.clearTimeout(persistLayoutTimeoutRef.current);
+        persistLayoutTimeoutRef.current = null;
+      }
+    };
   }, [layout, storageKey]);
 
   useEffect(() => {

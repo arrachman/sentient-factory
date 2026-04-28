@@ -74,7 +74,7 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import {
   buildAttachmentContext,
-  parsePromptAttachment,
+  parsePromptAttachmentOffMainThread,
   type PromptAttachment,
 } from './attachment-utils';
 
@@ -365,6 +365,8 @@ const RUN_HISTORY_LIMIT = 12;
 const MIN_PANEL_WIDTH_PERCENT = 32;
 const MAX_PANEL_WIDTH_PERCENT = 100;
 const MIN_RIGHT_PANEL_WIDTH_PX = 300;
+const SESSION_SIDEBAR_ROW_HEIGHT = 72;
+const SESSION_SIDEBAR_OVERSCAN = 6;
 function createManagerSessionKey() {
   if (typeof window === 'undefined') {
     return `mgr-${Date.now()}`;
@@ -874,6 +876,8 @@ function formatWorkflowStreamPayload(payload: WorkflowStreamPayload) {
   return JSON.stringify(nextPayload, null, 2);
 }
 
+const APP_TIME_ZONE = 'Asia/Jakarta';
+
 function createWorkflowStreamEntry(eventName: string, payload: string): WorkflowStreamEntry {
   const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
@@ -881,6 +885,7 @@ function createWorkflowStreamEntry(eventName: string, payload: string): Workflow
     id: `${eventName}-${uniqueSuffix}`,
     event: eventName,
     receivedAt: new Date().toLocaleTimeString('id-ID', {
+      timeZone: APP_TIME_ZONE,
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
@@ -897,6 +902,7 @@ function createUserPromptEntry(prompt: string): WorkflowStreamEntry {
     id: `user-${uniqueSuffix}`,
     event: 'user',
     receivedAt: new Date().toLocaleTimeString('id-ID', {
+      timeZone: APP_TIME_ZONE,
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
@@ -918,11 +924,13 @@ function createHistoryWorkflowEntry(
     event: eventName,
     receivedAt: receivedAtIso
       ? new Date(receivedAtIso).toLocaleTimeString('id-ID', {
+          timeZone: APP_TIME_ZONE,
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
         })
       : new Date().toLocaleTimeString('id-ID', {
+          timeZone: APP_TIME_ZONE,
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
@@ -998,6 +1006,7 @@ function formatSessionAbsoluteTime(value?: string | null) {
   }
 
   return date.toLocaleString('id-ID', {
+    timeZone: APP_TIME_ZONE,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -1035,98 +1044,9 @@ function WordSafeSingleLineText({
   text: string;
   className?: string;
 }) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [displayText, setDisplayText] = useState(text);
-
-  useLayoutEffect(() => {
-    const element = containerRef.current;
-    if (!element) {
-      setDisplayText(text);
-      return;
-    }
-
-    const compact = text.replace(/\s+/g, ' ').trim();
-    if (!compact) {
-      setDisplayText('');
-      return;
-    }
-
-    const computedStyle = window.getComputedStyle(element);
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      setDisplayText(compact);
-      return;
-    }
-
-    context.font = computedStyle.font;
-    const availableWidth = element.clientWidth;
-    const words = compact.split(' ');
-
-    const fits = (value: string) => context.measureText(value).width <= availableWidth;
-
-    if (fits(compact)) {
-      setDisplayText(compact);
-      return;
-    }
-
-    let low = 1;
-    let high = words.length;
-    let best = words[0] ?? '';
-
-    while (low <= high) {
-      const middle = Math.floor((low + high) / 2);
-      const candidate = words.slice(0, middle).join(' ');
-
-      if (fits(candidate)) {
-        best = candidate;
-        low = middle + 1;
-      } else {
-        high = middle - 1;
-      }
-    }
-
-    setDisplayText(best);
-
-    const resizeObserver = new ResizeObserver(() => {
-      const nextWidth = element.clientWidth;
-      context.font = window.getComputedStyle(element).font;
-
-      if (fits(compact)) {
-        setDisplayText(compact);
-        return;
-      }
-
-      let resizeLow = 1;
-      let resizeHigh = words.length;
-      let resizeBest = words[0] ?? '';
-
-      while (resizeLow <= resizeHigh) {
-        const middle = Math.floor((resizeLow + resizeHigh) / 2);
-        const candidate = words.slice(0, middle).join(' ');
-
-        if (context.measureText(candidate).width <= nextWidth) {
-          resizeBest = candidate;
-          resizeLow = middle + 1;
-        } else {
-          resizeHigh = middle - 1;
-        }
-      }
-
-      setDisplayText(resizeBest);
-    });
-
-    resizeObserver.observe(element);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [text]);
-
   return (
-    <div ref={containerRef} className={className}>
-      {displayText}
+    <div className={className} title={text}>
+      <span className="block truncate">{text.replace(/\s+/g, ' ').trim()}</span>
     </div>
   );
 }
@@ -1253,6 +1173,7 @@ function buildRunHistoryFromPromptDetail(
     mode,
     confidence: 1,
     time: new Date(prompt.prompt_created_at).toLocaleTimeString('id-ID', {
+      timeZone: APP_TIME_ZONE,
       hour: '2-digit',
       minute: '2-digit',
     }),
@@ -1265,7 +1186,7 @@ function buildRunHistoryFromPromptDetail(
   };
 }
 
-function getWorkflowStreamDisplayPayload(payload: string) {
+function getWorkflowStreamDisplayPayload(payload: string): WorkflowStreamDisplayPayload {
   try {
     const parsed = JSON.parse(payload) as {
       event?: unknown;
@@ -1318,16 +1239,27 @@ function getWorkflowStreamDisplayPayload(payload: string) {
         dataAnswer.length > 0 &&
         typeof parsed.response !== 'object';
 
-      const kind =
+      const kind: WorkflowStreamDisplayPayload['kind'] =
         parsed.type === 'insight'
-          ? 'insight' as const
-          : isCompletedInsight
-            ? 'insight' as const
-          : 'data' as const;
+          ? 'insight'
+          : parsed.type === 'explanation'
+            ? 'explanation'
+            : isCompletedInsight
+              ? 'insight'
+              : isDataPayload
+                ? 'data'
+                : 'raw';
 
-      if (kind !== 'insight' && !isDataPayload) {
+      if (kind === 'raw' && !isDataPayload) {
         return {
-          kind: 'none' as const,
+          kind: 'raw',
+          text: resolvedText,
+        };
+      }
+
+      if (kind !== 'insight' && kind !== 'explanation' && !isDataPayload) {
+        return {
+          kind: 'none',
           text: '',
         };
       }
@@ -1378,6 +1310,13 @@ type WorkflowStreamPayload = {
   response?: unknown;
   data?: AiChatResult;
 };
+
+type WorkflowStreamDisplayPayload =
+  | { kind: 'none'; text: string }
+  | { kind: 'data'; text: string }
+  | { kind: 'insight'; text: string }
+  | { kind: 'explanation'; text: string }
+  | { kind: 'raw'; text: string };
 
 type SelectedStreamTable = {
   title: string;
@@ -2155,6 +2094,8 @@ export default function ManagerDashboardPage() {
   const [pinWidgetTitle, setPinWidgetTitle] = useState('');
   const [pinWidgetSpan, setPinWidgetSpan] = useState('lg:col-span-6');
   const [pinTargetTitle, setPinTargetTitle] = useState('');
+  const [sessionSidebarViewportHeight, setSessionSidebarViewportHeight] = useState(0);
+  const [sessionSidebarScrollTop, setSessionSidebarScrollTop] = useState(0);
 
   const navigateToSession = (sessionId: string | null) => {
     const nextPath = sessionId ? `/app/senti-ai/${sessionId}` : '/app/senti-ai';
@@ -2174,9 +2115,14 @@ export default function ManagerDashboardPage() {
   const splitLayoutRef = useRef<HTMLDivElement | null>(null);
   const splitHandleRef = useRef<HTMLDivElement | null>(null);
   const sessionSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const sessionSidebarScrollRef = useRef<HTMLDivElement | null>(null);
+  const runHistoryPersistTimeoutRef = useRef<number | null>(null);
   const activeRequestIdRef = useRef<string | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const requestAbortControllerRef = useRef<AbortController | null>(null);
+  const workflowStreamEntriesRef = useRef<WorkflowStreamEntry[]>([]);
+  const selectedStreamTableRef = useRef<SelectedStreamTable | null>(null);
+  const selectedStreamChartRef = useRef<SelectedStreamChart | null>(null);
   const activePromptDraftRef = useRef('');
   const attachmentsRef = useRef<PromptAttachment[]>([]);
   const skipNextRouteSessionRestoreRef = useRef(false);
@@ -2263,6 +2209,18 @@ export default function ManagerDashboardPage() {
   useEffect(() => {
     attachmentsRef.current = attachments;
   }, [attachments]);
+
+  useEffect(() => {
+    workflowStreamEntriesRef.current = workflowStreamEntries;
+  }, [workflowStreamEntries]);
+
+  useEffect(() => {
+    selectedStreamTableRef.current = selectedStreamTable;
+  }, [selectedStreamTable]);
+
+  useEffect(() => {
+    selectedStreamChartRef.current = selectedStreamChart;
+  }, [selectedStreamChart]);
   useEffect(() => {
     let cancelled = false;
 
@@ -2396,6 +2354,33 @@ export default function ManagerDashboardPage() {
     },
     [historySessions, normalizedSessionSearchQuery, runHistory],
   );
+  const sessionSidebarVisibleRange = useMemo(() => {
+    if (filteredHistorySessions.length === 0) {
+      return {
+        topSpacerHeight: 0,
+        bottomSpacerHeight: 0,
+        items: [] as HistorySessionItem[],
+      };
+    }
+
+    const viewportHeight = Math.max(sessionSidebarViewportHeight, SESSION_SIDEBAR_ROW_HEIGHT * 6);
+    const visibleCount = Math.ceil(viewportHeight / SESSION_SIDEBAR_ROW_HEIGHT);
+    const startIndex = Math.max(
+      0,
+      Math.floor(sessionSidebarScrollTop / SESSION_SIDEBAR_ROW_HEIGHT) - SESSION_SIDEBAR_OVERSCAN,
+    );
+    const endIndex = Math.min(
+      filteredHistorySessions.length,
+      startIndex + visibleCount + SESSION_SIDEBAR_OVERSCAN * 2,
+    );
+
+    return {
+      topSpacerHeight: startIndex * SESSION_SIDEBAR_ROW_HEIGHT,
+      bottomSpacerHeight:
+        Math.max(0, filteredHistorySessions.length - endIndex) * SESSION_SIDEBAR_ROW_HEIGHT,
+      items: filteredHistorySessions.slice(startIndex, endIndex),
+    };
+  }, [filteredHistorySessions, sessionSidebarScrollTop, sessionSidebarViewportHeight]);
   const activeHistorySession = useMemo(
     () =>
       historySessions.find((item) => item.id === activeSessionRouteId) ??
@@ -2412,6 +2397,29 @@ export default function ManagerDashboardPage() {
       current >= rightPanelCollapseThresholdPercent ? 58 : current,
     );
   }, [rightPanelCollapseThresholdPercent]);
+
+  useEffect(() => {
+    const container = sessionSidebarScrollRef.current;
+    if (!container) {
+      return;
+    }
+
+    const syncViewport = () => {
+      setSessionSidebarViewportHeight(container.clientHeight);
+      setSessionSidebarScrollTop(container.scrollTop);
+    };
+
+    syncViewport();
+
+    const resizeObserver = new ResizeObserver(() => {
+      window.requestAnimationFrame(syncViewport);
+    });
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [filteredHistorySessions.length, isSessionSidebarExpanded]);
 
   const clampPanelWidth = (value: number) => {
     if (value >= rightPanelCollapseThresholdPercent) {
@@ -2604,9 +2612,18 @@ export default function ManagerDashboardPage() {
             : `att-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
           file,
         }));
-        const parsedFiles = await Promise.all(
-          selectedFiles.map((entry) => parsePromptAttachment(entry.file, entry.id)),
-        );
+        const parsedFiles: PromptAttachment[] = [];
+        for (let index = 0; index < selectedFiles.length; index += 1) {
+          const entry = selectedFiles[index];
+          parsedFiles.push(await parsePromptAttachmentOffMainThread(entry.file, entry.id));
+
+          // Yield between files so large attachment batches do not monopolize the main thread.
+          if (index < selectedFiles.length - 1) {
+            await new Promise<void>((resolve) => {
+              window.setTimeout(resolve, 0);
+            });
+          }
+        }
         const validAttachmentIds = new Set(
           parsedFiles
             .filter((attachment) => attachment.status !== 'failed')
@@ -2710,7 +2727,11 @@ export default function ManagerDashboardPage() {
   }, []);
 
   const handleRunAtm = async () => {
-    const runTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const runTime = new Date().toLocaleTimeString('id-ID', {
+      timeZone: APP_TIME_ZONE,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
     const nextPrompt = prompt;
     const nextAttachments = attachments.filter((attachment) => attachment.status !== 'failed');
     const nextAttachmentFiles = attachmentFiles;
@@ -3219,7 +3240,21 @@ export default function ManagerDashboardPage() {
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(RUN_HISTORY_STORAGE_KEY, JSON.stringify(runHistory));
+    if (runHistoryPersistTimeoutRef.current !== null) {
+      window.clearTimeout(runHistoryPersistTimeoutRef.current);
+    }
+
+    runHistoryPersistTimeoutRef.current = window.setTimeout(() => {
+      window.localStorage.setItem(RUN_HISTORY_STORAGE_KEY, JSON.stringify(runHistory));
+      runHistoryPersistTimeoutRef.current = null;
+    }, 180);
+
+    return () => {
+      if (runHistoryPersistTimeoutRef.current !== null) {
+        window.clearTimeout(runHistoryPersistTimeoutRef.current);
+        runHistoryPersistTimeoutRef.current = null;
+      }
+    };
   }, [runHistory]);
 
   useEffect(() => {
@@ -3385,11 +3420,6 @@ export default function ManagerDashboardPage() {
       const rawEventName = event.type || 'message';
       const rawPayload = event.data;
 
-      setWorkflowStreamEntries((current) => [
-        ...current,
-        createWorkflowStreamEntry(rawEventName, rawPayload),
-      ]);
-
       let payload: WorkflowStreamPayload | null = null;
 
       try {
@@ -3400,8 +3430,18 @@ export default function ManagerDashboardPage() {
 
       const nextLiveTable = parseStreamDataTable(rawPayload);
       const nextLiveChart = parseStreamDataChart(rawPayload);
+      const streamEntry = createWorkflowStreamEntry(
+        rawEventName,
+        payload ? formatWorkflowStreamPayload(payload) : rawPayload,
+      );
+      const nextStreamEntries = [...workflowStreamEntriesRef.current, streamEntry];
+
+      workflowStreamEntriesRef.current = nextStreamEntries;
+      setWorkflowStreamEntries(nextStreamEntries);
 
       if (nextLiveTable) {
+        selectedStreamTableRef.current = nextLiveTable;
+        selectedStreamChartRef.current = nextLiveChart;
         setSelectedStreamTable(nextLiveTable);
         setSelectedStreamChart(nextLiveChart);
         if (nextLiveTable || nextLiveChart) {
@@ -3431,29 +3471,17 @@ export default function ManagerDashboardPage() {
         return;
       }
 
-      setWorkflowStreamEntries((current) => {
-        const next = [...current];
-        const lastIndex = next.length - 1;
-
-        if (lastIndex >= 0 && next[lastIndex]?.event === rawEventName) {
-          next[lastIndex] = {
-            ...next[lastIndex],
-            payload: formatWorkflowStreamPayload(payload),
-          };
-        }
-
-        return next;
-      });
-
       applyWorkflowEvent(eventName);
 
       if (eventName === 'completed' && payload.data) {
         setAiResult(payload.data);
         setAiError(null);
-        const nextTable = nextLiveTable;
-        const nextChart = nextLiveChart;
+        const nextTable = nextLiveTable ?? selectedStreamTableRef.current;
+        const nextChart = nextLiveTable ? nextLiveChart : selectedStreamChartRef.current;
 
         if (nextTable) {
+          selectedStreamTableRef.current = nextTable;
+          selectedStreamChartRef.current = nextChart;
           setSelectedStreamTable(nextTable);
           setSelectedStreamChart(nextChart);
           if (nextTable || nextChart) {
@@ -3472,7 +3500,7 @@ export default function ManagerDashboardPage() {
             result: payload.data,
             table: nextTable ?? existing.table ?? null,
             chart: nextTable ? nextChart : (existing.chart ?? null),
-            streamEntries: [...workflowStreamEntries, createWorkflowStreamEntry(rawEventName, formatWorkflowStreamPayload(payload))],
+            streamEntries: nextStreamEntries,
             error: null,
           });
         });
@@ -3493,7 +3521,7 @@ export default function ManagerDashboardPage() {
           return upsertRunHistory(current, {
             ...existing,
             error: typeof payload.error === 'string' ? payload.error : 'Workflow failed.',
-            streamEntries: [...workflowStreamEntries, createWorkflowStreamEntry(rawEventName, formatWorkflowStreamPayload(payload))],
+            streamEntries: nextStreamEntries,
           });
         });
       }
@@ -3547,8 +3575,6 @@ export default function ManagerDashboardPage() {
       if (eventSourceRef.current === eventSource) {
         eventSourceRef.current = null;
       }
-
-            console.log("FR: error apa?" );
 
       setIsRunningAi(false);
     };
@@ -4023,6 +4049,10 @@ export default function ManagerDashboardPage() {
                 </div>
               </div>
               <div
+                ref={sessionSidebarScrollRef}
+                onScroll={(event) => {
+                  setSessionSidebarScrollTop(event.currentTarget.scrollTop);
+                }}
                 className={`flex-1 overflow-y-auto ${isSessionSidebarExpanded ? 'p-4' : 'p-2'}`}
               >
                 <div
@@ -4039,7 +4069,11 @@ export default function ManagerDashboardPage() {
                       <Skeleton key={index} className="h-14 rounded-lg" />
                     ))
                   ) : filteredHistorySessions.length > 0 ? (
-                    filteredHistorySessions.map((session) => (
+                    <>
+                      {sessionSidebarVisibleRange.topSpacerHeight > 0 ? (
+                        <div style={{ height: sessionSidebarVisibleRange.topSpacerHeight }} aria-hidden="true" />
+                      ) : null}
+                      {sessionSidebarVisibleRange.items.map((session) => (
                       <div
                         key={session.id}
                         className={`group rounded-xl border px-3 py-3 transition ${
@@ -4087,7 +4121,11 @@ export default function ManagerDashboardPage() {
                           </DropdownMenu>
                         </div>
                       </div>
-                    ))
+                      ))}
+                      {sessionSidebarVisibleRange.bottomSpacerHeight > 0 ? (
+                        <div style={{ height: sessionSidebarVisibleRange.bottomSpacerHeight }} aria-hidden="true" />
+                      ) : null}
+                    </>
                   ) : (
                     <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
                       {normalizedSessionSearchQuery ? 'Tidak ada session yang cocok.' : 'Belum ada history session.'}

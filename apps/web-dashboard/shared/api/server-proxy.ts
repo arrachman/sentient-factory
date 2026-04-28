@@ -101,6 +101,8 @@ export function createEntityProxy(path: string, paramName = 'uuid') {
   return {
     GET: (request: NextRequest, context: { params: Promise<Record<string, string>> }) =>
       proxyToApi(request, 'GET', path, { params: withParams(context) }),
+    POST: (request: NextRequest, context: { params: Promise<Record<string, string>> }) =>
+      proxyToApi(request, 'POST', path, { params: withParams(context) }),
     PATCH: (request: NextRequest, context: { params: Promise<Record<string, string>> }) =>
       proxyToApi(request, 'PATCH', path, { params: withParams(context) }),
     PUT: (request: NextRequest, context: { params: Promise<Record<string, string>> }) =>

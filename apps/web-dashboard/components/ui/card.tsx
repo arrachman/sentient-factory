@@ -84,17 +84,18 @@ const cardFooterVariants = cva('flex items-center px-5 min-h-14', {
 });
 
 // Card Component
-function Card({
-  className,
-  variant = 'default',
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof cardVariants>) {
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof cardVariants>>(function Card(
+  { className, variant = 'default', ...props },
+  ref,
+) {
   return (
     <CardContext.Provider value={{ variant: variant || 'default' }}>
-      <div data-slot="card" className={cn(cardVariants({ variant }), className)} {...props} />
+      <div ref={ref} data-slot="card" className={cn(cardVariants({ variant }), className)} {...props} />
     </CardContext.Provider>
   );
-}
+});
+
+Card.displayName = 'Card';
 
 // CardHeader Component
 function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

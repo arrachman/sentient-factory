@@ -61,7 +61,7 @@ services:
       - ../.env
       - ../.env.vault
     ports:
-      - "3209:6379"
+      - "3213:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -89,9 +89,11 @@ services:
       DATABASE_URL: postgresql://root:PasswordSuperRahasia123!@postgres:5432/sentient_factory
       MYERPPLUS_DB_MAPPING_ROOT: /myerpplus-db-mapping/db
       DASHBOARD_SQL_TEMPLATE_ROOT: /myerpplus-db-mapping/dashboard-mapping/sql-templates
+      HR_ATTENDANCE_STORAGE_PATH: /app/temp/hr-attendance
     volumes:
       - ../apps/api-gateway:/app
       - ../apps/myerpplus-db-mapping:/myerpplus-db-mapping:ro
+      - ../temp/hr-attendance:/app/temp/hr-attendance
       - api_gateway_node_modules:/app/node_modules
     depends_on:
       postgres:
@@ -172,7 +174,8 @@ services:
       NEXT_PUBLIC_API_URL: https://sentient.fr-labs.my.id
       NEXT_PUBLIC_WS_URL: wss://sentient.fr-labs.my.id
       NEXT_ALLOWED_DEV_ORIGINS: 192.168.1.17,192.168.1.17:3201,localhost,localhost:3201,127.0.0.1,127.0.0.1:3201,sentient.fr-labs.my.id,http://192.168.1.17,http://192.168.1.17:3201,http://localhost,http://localhost:3201,http://127.0.0.1,http://127.0.0.1:3201,https://sentient.fr-labs.my.id
-      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_USEPOLLING: "false"
+      WATCHPACK_POLLING: "false"
     volumes:
       - ../apps/web-dashboard:/app
       - web_dashboard_node_modules:/app/node_modules
@@ -180,17 +183,18 @@ services:
     depends_on:
       - api-gateway
       - ai-engine
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3201/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
     command: >
-      sh -c "npm install --include=dev &&
-      if [ \"$${NODE_ENV}\" = \"production\" ]; then
-        npm run build &&
-        mkdir -p .next/standalone/.next &&
-        cp -r .next/static .next/standalone/.next/static &&
-        cp -r public .next/standalone/public &&
-        HOSTNAME=0.0.0.0 PORT=3201 node .next/standalone/server.js;
-      else
-        npm run dev -- -H 0.0.0.0 -p 3201;
-      fi"
+      sh -c "if [ ! -f node_modules/.package-lock.stamp ] || ! cmp -s package-lock.json node_modules/.package-lock.stamp; then
+        npm install --include=dev &&
+        cp package-lock.json node_modules/.package-lock.stamp;
+      fi &&
+      npm run dev -- -H 0.0.0.0 -p 3201"
 
   docs:
     image: node:20-alpine
@@ -222,6 +226,123 @@ services:
       else
         npm run start -- --host 0.0.0.0 --port 3205;
       fi"
+
+  hr-marketing:
+    image: nginx:alpine
+    container_name: sentient-infra-hr-marketing
+    restart: unless-stopped
+    ports:
+      - "3209:80"
+    volumes:
+      - ../apps/marketing/hr-marketing.html:/tmp/hr-marketing-source.html:ro
+      - ../apps/web-dashboard/public/media/app/favicon.ico:/tmp/favicon.ico:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    command: >
+      /bin/sh -c "mkdir -p /usr/share/nginx/html/media/app &&
+      sync_assets() {
+        awk 'found || /^<!DOCTYPE html>/{found=1; print}' /tmp/hr-marketing-source.html > /usr/share/nginx/html/index.html.tmp &&
+        mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html &&
+        cp /tmp/favicon.ico /usr/share/nginx/html/media/app/favicon.ico;
+      } &&
+      sync_assets &&
+      (
+        last_state='' ;
+        while true; do
+          next_state=\"$$(stat -c '%Y:%s' /tmp/hr-marketing-source.html /tmp/favicon.ico 2>/dev/null | tr '\n' '|')\" ;
+          if [ \"$$next_state\" != \"$$last_state\" ]; then
+            sync_assets ;
+            last_state=\"$$next_state\" ;
+          fi ;
+          sleep 1 ;
+        done
+      ) &
+      exec nginx -g 'daemon off;'"
+
+  sentient-marketing:
+    image: nginx:alpine
+    container_name: sentient-infra-sentient-marketing
+    restart: unless-stopped
+    ports:
+      - "3210:80"
+    volumes:
+      - ../apps/marketing/sentient-marketing.html:/tmp/sentient-marketing-source.html:ro
+      - ../apps/marketing/sentient-marketing-robots.txt:/tmp/robots.txt:ro
+      - ../apps/marketing/sentient-marketing-sitemap.xml:/tmp/sitemap.xml:ro
+      - ../apps/marketing/sentient-factory-og.svg:/tmp/og-image.svg:ro
+      - ../apps/web-dashboard/public/media/app/favicon.ico:/tmp/favicon.ico:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    command: >
+      /bin/sh -c "mkdir -p /usr/share/nginx/html/media/app /usr/share/nginx/html/og &&
+      sync_assets() {
+        awk 'found || /^<!DOCTYPE html>/{found=1; print}' /tmp/sentient-marketing-source.html > /usr/share/nginx/html/index.html.tmp &&
+        mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html &&
+        cp /tmp/favicon.ico /usr/share/nginx/html/media/app/favicon.ico &&
+        cp /tmp/robots.txt /usr/share/nginx/html/robots.txt &&
+        cp /tmp/sitemap.xml /usr/share/nginx/html/sitemap.xml &&
+        cp /tmp/og-image.svg /usr/share/nginx/html/og/sentient-factory-og.svg;
+      } &&
+      sync_assets &&
+      (
+        last_state='' ;
+        while true; do
+          next_state=\"$$(stat -c '%Y:%s' /tmp/sentient-marketing-source.html /tmp/favicon.ico /tmp/robots.txt /tmp/sitemap.xml /tmp/og-image.svg 2>/dev/null | tr '\n' '|')\" ;
+          if [ \"$$next_state\" != \"$$last_state\" ]; then
+            sync_assets ;
+            last_state=\"$$next_state\" ;
+          fi ;
+          sleep 1 ;
+        done
+      ) &
+      exec nginx -g 'daemon off;'"
+
+  tarik-data-digital:
+    image: nginx:alpine
+    container_name: sentient-infra-tarik-data-digital
+    restart: unless-stopped
+    ports:
+      - "3211:80"
+    volumes:
+      - ../apps/marketing/tarik-data-digital.html:/tmp/tarik-data-digital-source.html:ro
+      - ../apps/marketing/tarik-data-digital-robots.txt:/tmp/robots.txt:ro
+      - ../apps/marketing/tarik-data-digital-sitemap.xml:/tmp/sitemap.xml:ro
+      - ../apps/marketing/tarik-data-digital-og.svg:/tmp/og-image.svg:ro
+      - ../apps/web-dashboard/public/media/app/favicon.ico:/tmp/favicon.ico:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    command: >
+      /bin/sh -c "mkdir -p /usr/share/nginx/html/media/app /usr/share/nginx/html/og &&
+      sync_assets() {
+        awk 'found || /^<!DOCTYPE html>/{found=1; print}' /tmp/tarik-data-digital-source.html > /usr/share/nginx/html/index.html.tmp &&
+        mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html &&
+        cp /tmp/favicon.ico /usr/share/nginx/html/media/app/favicon.ico &&
+        cp /tmp/robots.txt /usr/share/nginx/html/robots.txt &&
+        cp /tmp/sitemap.xml /usr/share/nginx/html/sitemap.xml &&
+        cp /tmp/og-image.svg /usr/share/nginx/html/og/tarik-data-digital-og.svg;
+      } &&
+      sync_assets &&
+      (
+        last_state='' ;
+        while true; do
+          next_state=\"$$(stat -c '%Y:%s' /tmp/tarik-data-digital-source.html /tmp/favicon.ico /tmp/robots.txt /tmp/sitemap.xml /tmp/og-image.svg 2>/dev/null | tr '\n' '|')\" ;
+          if [ \"$$next_state\" != \"$$last_state\" ]; then
+            sync_assets ;
+            last_state=\"$$next_state\" ;
+          fi ;
+          sleep 1 ;
+        done
+      ) &
+      exec nginx -g 'daemon off;'"
 
   kafka:
     image: apache/kafka:3.9.1
@@ -255,7 +376,7 @@ services:
     container_name: sentient-infra-kafka-ui
     restart: unless-stopped
     ports:
-      - "3210:8080"
+      - "3212:8080"
     environment:
       KAFKA_CLUSTERS_0_NAME: sentient-factory
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092

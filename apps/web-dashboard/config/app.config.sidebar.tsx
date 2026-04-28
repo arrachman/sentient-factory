@@ -55,7 +55,7 @@ export const MENU_SIDEBAR: MenuConfig = [
     children: [
       {
         title: 'Overview',
-        path: '/app',
+        path: '/app/overview',
       },
       {
         title: 'Dashboard M1',
