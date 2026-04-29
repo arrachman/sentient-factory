@@ -61,7 +61,7 @@ services:
       - ../.env
       - ../.env.vault
     ports:
-      - "3213:6379"
+      - "3214:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
@@ -70,6 +70,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  apps-mockup:
+    image: python:3.12-alpine
+    container_name: sentient-infra-apps-mockup
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "3213:3213"
+    volumes:
+      - ../apps/apps-mockup:/app:ro
+    command: python -m http.server 3213 --bind 0.0.0.0
 
   api-gateway:
     image: node:20-bullseye
@@ -273,9 +284,10 @@ services:
       - ../apps/marketing/sentient-marketing-robots.txt:/tmp/robots.txt:ro
       - ../apps/marketing/sentient-marketing-sitemap.xml:/tmp/sitemap.xml:ro
       - ../apps/marketing/sentient-factory-og.svg:/tmp/og-image.svg:ro
+      - ../apps/marketing/sentient-marketing-nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ../apps/web-dashboard/public/media/app/favicon.ico:/tmp/favicon.ico:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5

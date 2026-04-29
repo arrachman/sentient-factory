@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Sentient Factory — Mobile Canvas</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css"/>
+  <link rel="stylesheet" href="mobile-tokens.css"/>
+  <style>
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="shell.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="android-frame.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="mobile/ui.jsx"></script>
+  <script type="text/babel" src="mobile/shell.jsx"></script>
+  <script type="text/babel" src="mobile/screens-1.jsx"></script>
+  <script type="text/babel" src="mobile/screens-2.jsx"></script>
+  <script type="text/babel" src="mobile/screens-3.jsx"></script>
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "dark": false,
+      "labels": true,
+      "compact": false
+    }/*EDITMODE-END*/;
+
+    const getRequestedScreenId = () => {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("screen") || params.get("page") || window.location.hash.replace("#", "");
+    };
+
+    const getRequestedDevice = () => {
+      const params = new URLSearchParams(window.location.search);
+      const device = (params.get("device") || "both").toLowerCase();
+      return ["ios", "android", "both"].includes(device) ? device : "both";
+    };
+
+    const App = () => {
+      const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+      const { dark, labels, compact } = tweaks;
+      const density = compact ? "compact" : "comfortable";
+
+      const screens = [
+        { id: "home", label: "01 · Home", tab: "home", nav: "home", title: "Home", sub: <><span style={{ width: 6, height: 6, borderRadius: 50, background: "#17c653", display: "inline-block" }}/> Realtime · 30s</>, body: <MHome/> },
+        { id: "senti-empty", label: "02 · Senti AI — Workspace", tab: "senti", nav: "senti", title: "Senti AI", sub: "Tanya apa saja", hideFab: true, body: <MSentiEmpty/> },
+        { id: "senti-results", label: "03 · Senti AI — Streaming Results", tab: "senti", nav: "senti", title: "Senti AI", hideFab: true, body: <MSentiResults/> },
+        { id: "finance", label: "04 · Finance Dashboard", tab: "more", nav: "finance", title: "Finance", sub: "March 2026 · realtime", body: <MFinance/> },
+        { id: "warehouse", label: "05 · Warehouse Dashboard", tab: "more", nav: "warehouse", title: "Warehouse", sub: "Live inventory", body: <MWarehouse/> },
+        { id: "purchase", label: "06 · Purchase Dashboard", tab: "more", nav: "purchase", title: "Purchase", sub: "184 active POs", body: <MPurchase/> },
+        { id: "sales", label: "07 · Sales Dashboard", tab: "more", nav: "sales", title: "Sales", sub: "MTD · March 2026", body: <MSales/> },
+        { id: "production", label: "08 · Production Dashboard", tab: "more", nav: "production", title: "Production", sub: "5 lines · 1 stopped", body: <MProduction/> },
+        { id: "alerts", label: "09 · Alert Center", tab: "alerts", nav: "alerts", title: "Alert Center", sub: "7 active", body: <MAlertCenter/> },
+        { id: "rules", label: "10 · Alert Rules", tab: "alerts", nav: "rules", title: "Alert Rules", body: <MAlertRules/> },
+        { id: "templates", label: "11 · Alert Templates", tab: "alerts", nav: "templates", title: "Templates", body: <MAlertTemplates/> },
+        { id: "channels", label: "12 · Channels", tab: "alerts", nav: "channels", title: "Channels", body: <MChannels/> },
+        { id: "logs", label: "13 · Notification Logs", tab: "alerts", nav: "logs", title: "Notification Logs", body: <MLogs/> },
+        { id: "settings", label: "14 · Settings", tab: "more", nav: "settings", title: "Settings", body: <MSettings/> },
+      ];
+
+      const renderShell = (s) => (
+        <MobileShell
+          active={s.tab} activeNav={s.nav}
+          title={s.title} sub={s.sub}
+          dark={dark} density={density} labels={labels}
+          hideFab={s.hideFab}
+        >
+          {s.body}
+        </MobileShell>
+      );
+
+      // Each artboard shows iOS + Android side-by-side
+      const ART_W = 880;
+      const ART_H = 920;
+      const PHONE_W = 380;
+      const PHONE_H = 820;
+
+      const renderDevice = (s, device) => {
+        const DeviceFrame = device === "ios" ? IOSDevice : AndroidDevice;
+        return (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#78808f", textTransform: "uppercase" }}>{device}</div>
+            <DeviceFrame width={PHONE_W} height={PHONE_H} dark={dark}>
+              {renderShell(s)}
+            </DeviceFrame>
+          </div>
+        );
+      };
+
+      const renderArtboard = (s) => (
+        <div style={{ width: ART_W, height: ART_H, display: "flex", gap: 30, alignItems: "center", justifyContent: "center", padding: 20, background: "#f4f6fa" }}>
+          {renderDevice(s, "ios")}
+          {renderDevice(s, "android")}
+        </div>
+      );
+
+      const tweaksPanel = (
+        <TweaksPanel title="Mobile Tweaks">
+          <TweakSection title="Appearance">
+            <TweakToggle label="Dark mode" value={dark} onChange={v => setTweak("dark", v)}/>
+            <TweakToggle label="Tab bar labels" value={labels} onChange={v => setTweak("labels", v)}/>
+            <TweakToggle label="Compact density" value={compact} onChange={v => setTweak("compact", v)}/>
+          </TweakSection>
+        </TweaksPanel>
+      );
+
+      const requestedScreenId = getRequestedScreenId();
+      const selectedScreen = requestedScreenId ? screens.find(s => s.id === requestedScreenId) : null;
+      const requestedDevice = getRequestedDevice();
+
+      if (selectedScreen) {
+        return (
+          <>
+            <div style={{ minHeight: "100vh", background: "#f4f6fa", display: "flex", gap: 30, alignItems: "flex-start", justifyContent: "center", padding: 24 }}>
+              {requestedDevice !== "android" && renderDevice(selectedScreen, "ios")}
+              {requestedDevice !== "ios" && renderDevice(selectedScreen, "android")}
+            </div>
+            {tweaksPanel}
+          </>
+        );
+      }
+
+      return (
+        <>
+          <DesignCanvas title="Sentient Factory · Mobile Views"
+                        subtitle="14 screens · iOS + Android side-by-side · bottom tabs + drawer + Senti AI FAB">
+            <DCSection id="workspace" title="Workspace & Senti AI">
+              {screens.slice(0,3).map(s => (
+                <DCArtboard key={s.id} id={s.id} label={s.label} width={ART_W} height={ART_H}>{renderArtboard(s)}</DCArtboard>
+              ))}
+            </DCSection>
+            <DCSection id="dashboards" title="Module Dashboards">
+              {screens.slice(3,8).map(s => (
+                <DCArtboard key={s.id} id={s.id} label={s.label} width={ART_W} height={ART_H}>{renderArtboard(s)}</DCArtboard>
+              ))}
+            </DCSection>
+            <DCSection id="alerting" title="Alerting & Settings">
+              {screens.slice(8).map(s => (
+                <DCArtboard key={s.id} id={s.id} label={s.label} width={ART_W} height={ART_H}>{renderArtboard(s)}</DCArtboard>
+              ))}
+            </DCSection>
+          </DesignCanvas>
+
+          {tweaksPanel}
+        </>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

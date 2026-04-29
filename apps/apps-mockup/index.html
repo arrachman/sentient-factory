@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Sentient Factory — Redesign Canvas</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css"/>
+  <style>
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="shell.jsx"></script>
+  <script type="text/babel" src="screens/home.jsx"></script>
+  <script type="text/babel" src="screens/senti-ai-empty.jsx"></script>
+  <script type="text/babel" src="screens/senti-ai-results.jsx"></script>
+  <script type="text/babel" src="screens/finance.jsx"></script>
+  <script type="text/babel" src="screens/warehouse.jsx"></script>
+  <script type="text/babel" src="screens/purchase.jsx"></script>
+  <script type="text/babel" src="screens/sales.jsx"></script>
+  <script type="text/babel" src="screens/production.jsx"></script>
+  <script type="text/babel" src="screens/alert-center.jsx"></script>
+  <script type="text/babel" src="screens/alert-mgmt.jsx"></script>
+  <script type="text/babel">
+    const { Sidebar, Topbar } = SF;
+
+    const Frame = ({ active, title, crumbs, children, actions }) => (
+      <div className="app">
+        <Sidebar active={active} />
+        <div className="main">
+          <Topbar title={title} crumbs={crumbs} actions={actions} />
+          {children}
+        </div>
+      </div>
+    );
+
+    const ART_W = 1440;
+
+    const realtimeActions = (
+      <>
+        <button className="btn outline sm"><span style={{width:8,height:8,borderRadius:50,background:"#17c653",display:"inline-block"}}></span> Realtime · 30s</button>
+        <button className="btn outline sm">Reset Layout</button>
+        <select style={{padding:"6px 10px",border:"1px solid var(--border-strong)",borderRadius:7,fontSize:12,background:"var(--surface-2)"}}><option>March 2026</option></select>
+      </>
+    );
+
+    const screens = [
+      { id: "home", label: "01 · Home — Operations Overview", w: ART_W, h: 940,
+        node: <Frame active="home" title="Home" crumbs={["Workspace","Home"]} actions={realtimeActions}><HomeOverview/></Frame> },
+      { id: "senti-empty", label: "02 · Senti AI — Workspace", w: ART_W, h: 920,
+        node: <Frame active="senti" title="Senti AI" crumbs={["Workspace","Senti AI"]}><SentiAIEmpty/></Frame> },
+      { id: "senti-results", label: "03 · Senti AI — Live Streaming Results", w: ART_W, h: 920,
+        node: <Frame active="senti" title="Senti AI" crumbs={["Workspace","Senti AI","top sales by customer"]}><SentiAIResults/></Frame> },
+      { id: "finance", label: "04 · Dashboard — Finance (Realtime)", w: ART_W, h: 1900,
+        node: <Frame active="finance" title="Finance Dashboard" crumbs={["Dashboard","Finance"]} actions={realtimeActions}><FinanceDashboard/></Frame> },
+      { id: "warehouse", label: "05 · Dashboard — Warehouse", w: ART_W, h: 1080,
+        node: <Frame active="warehouse" title="Warehouse Dashboard" crumbs={["Dashboard","Warehouse"]} actions={realtimeActions}><WarehouseDashboard/></Frame> },
+      { id: "purchase", label: "06 · Dashboard — Purchase", w: ART_W, h: 980,
+        node: <Frame active="purchase" title="Purchase Dashboard" crumbs={["Dashboard","Purchase"]} actions={realtimeActions}><PurchaseDashboard/></Frame> },
+      { id: "sales", label: "07 · Dashboard — Sales", w: ART_W, h: 980,
+        node: <Frame active="sales" title="Sales Dashboard" crumbs={["Dashboard","Sales"]} actions={realtimeActions}><SalesDashboard/></Frame> },
+      { id: "production", label: "08 · Dashboard — Production", w: ART_W, h: 1100,
+        node: <Frame active="production" title="Production Dashboard" crumbs={["Dashboard","Production"]} actions={realtimeActions}><ProductionDashboard/></Frame> },
+      { id: "alert-center", label: "09 · Alert Center", w: ART_W, h: 1640,
+        node: <Frame active="alert-center" title="Alert Center" crumbs={["Alerting","Alert Center"]}
+                actions={<><button className="btn outline sm">Open Ops</button><button className="btn primary sm"><span style={{fontSize:14}}>+</span> Create Rule</button></>}><AlertCenter/></Frame> },
+      { id: "alert-rules", label: "10 · Alert Rules", w: ART_W, h: 600,
+        node: <Frame active="alert-rules" title="Alert Rules" crumbs={["Alerting","Alert Rules"]}
+                actions={<><select style={{padding:"6px 10px",border:"1px solid var(--border-strong)",borderRadius:7,fontSize:12}}><option>All Modules</option></select><button className="btn primary sm">+ Create Rule</button></>}><AlertRules/></Frame> },
+      { id: "alert-templates", label: "11 · Alert Templates", w: ART_W, h: 920,
+        node: <Frame active="alert-templates" title="Alert Templates"
+                crumbs={["Alerting","Alert Templates"]}><AlertTemplates/></Frame> },
+      { id: "notif-channels", label: "12 · Notification Channels", w: ART_W, h: 760,
+        node: <Frame active="notif-channels" title="Notification Channels"
+                crumbs={["Alerting","Notification Channels"]}><NotificationChannels/></Frame> },
+      { id: "notif-logs", label: "13 · Notification Logs", w: ART_W, h: 1320,
+        node: <Frame active="notif-logs" title="Notification Logs"
+                crumbs={["Alerting","Notification Logs"]}
+                actions={<><button className="btn outline sm">Open Triage</button><button className="btn outline sm">Open Alert Ops</button></>}><NotificationLogs/></Frame> },
+      { id: "settings", label: "14 · Alerting Settings", w: ART_W, h: 880,
+        node: <Frame active="alert-settings" title="Settings"
+                crumbs={["Alerting","Settings"]}
+                actions={<><button className="btn outline sm">Escalation Policy</button><button className="btn outline sm">Open Alert Ops</button></>}><AlertSettings/></Frame> },
+    ];
+
+    const getRequestedScreenId = () => {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("screen") || params.get("page") || window.location.hash.replace("#", "");
+    };
+
+    const App = () => {
+      const requestedScreenId = getRequestedScreenId();
+      const selectedScreen = requestedScreenId ? screens.find(s => s.id === requestedScreenId) : null;
+
+      if (selectedScreen) {
+        return (
+          <div style={{ minWidth: selectedScreen.w, minHeight: "100vh", background: "var(--bg)" }}>
+            {selectedScreen.node}
+          </div>
+        );
+      }
+
+      return (
+        <DesignCanvas title="Sentient Factory · UI/UX Redesign"
+                      subtitle="Metronic-inspired enterprise dashboard system · 14 screens · Inter + JetBrains Mono · Slate / Sentient Blue palette">
+          <DCSection id="overview" title="Workspace & Senti AI">
+            {screens.slice(0,3).map(s => (
+              <DCArtboard key={s.id} id={s.id} label={s.label} width={s.w} height={s.h}>{s.node}</DCArtboard>
+            ))}
+          </DCSection>
+          <DCSection id="dashboards" title="Realtime Module Dashboards">
+            {screens.slice(3,8).map(s => (
+              <DCArtboard key={s.id} id={s.id} label={s.label} width={s.w} height={s.h}>{s.node}</DCArtboard>
+            ))}
+          </DCSection>
+          <DCSection id="alerting" title="Alerting & Notification Operations">
+            {screens.slice(8).map(s => (
+              <DCArtboard key={s.id} id={s.id} label={s.label} width={s.w} height={s.h}>{s.node}</DCArtboard>
+            ))}
+          </DCSection>
+        </DesignCanvas>
+      );
+    };
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
