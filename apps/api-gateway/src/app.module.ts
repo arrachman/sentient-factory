@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
@@ -34,6 +35,7 @@ import { ClinicUsersModule } from './clinic-users/clinic-users.module';
 import { ClinicBookingModule } from './clinic-booking/clinic-booking.module';
 import { ClinicPaymentModule } from './clinic-payment/clinic-payment.module';
 import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-note.module';
+import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
 
 @Module({
   imports: [
@@ -43,6 +45,7 @@ import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-no
     }),
     // Rate limit: 60 requests / 60 seconds default (override per-route via @Throttle decorator)
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
     AuthModule,
@@ -76,6 +79,7 @@ import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-no
     ClinicBookingModule,
     ClinicPaymentModule,
     ClinicSessionNoteModule,
+    ClinicSettingsModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)

@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
   IsBoolean,
   IsDateString,
   IsIn,
@@ -10,6 +13,7 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 export const BOOKING_STATUSES = [
@@ -179,4 +183,74 @@ export class QueryBookingDto {
   })
   @IsBoolean()
   includeCancelled?: boolean;
+}
+
+/**
+ * Single session entry untuk multi-session package booking.
+ * Optional override psikolog/room per sesi (default = base).
+ */
+export class PackageSessionDto {
+  @ApiProperty({ example: '2026-05-15T09:00:00+07:00' })
+  @IsDateString()
+  scheduledStart!: string;
+
+  @ApiProperty({ example: '2026-05-15T10:00:00+07:00' })
+  @IsDateString()
+  scheduledEnd!: string;
+
+  @ApiPropertyOptional({ description: 'Override psikolog (default: base)' })
+  @IsOptional()
+  @IsInt()
+  psikologUserId?: number;
+
+  @ApiPropertyOptional({ description: 'Override room (default: base)' })
+  @IsOptional()
+  @IsInt()
+  roomId?: number;
+}
+
+/**
+ * Create N bookings sekaligus untuk package service (sessionCount > 1).
+ * Semua share packageGroupId, sessionN auto-increment 1..N.
+ *
+ * Atomic — kalau salah satu sesi gagal validation, semua rollback.
+ */
+export class CreatePackageBookingDto {
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  clientId!: number;
+
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  serviceId!: number;
+
+  @ApiProperty({ example: 147, description: 'Default psikolog untuk semua sesi' })
+  @IsInt()
+  psikologUserId!: number;
+
+  @ApiProperty({ example: 1, description: 'Default room untuk semua sesi' })
+  @IsInt()
+  roomId!: number;
+
+  @ApiProperty({
+    type: [PackageSessionDto],
+    description: 'Array sesi (length harus = service.sessionCount)',
+  })
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => PackageSessionDto)
+  sessions!: PackageSessionDto[];
+
+  @ApiPropertyOptional({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  bufferOverride?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
 }

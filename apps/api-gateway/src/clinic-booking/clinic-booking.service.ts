@@ -14,6 +14,7 @@ import {
   type BookingStatus,
   CancelBookingDto,
   CreateBookingDto,
+  CreatePackageBookingDto,
   QueryBookingDto,
   RescheduleBookingDto,
   UpdateBookingDto,
@@ -106,6 +107,138 @@ export class ClinicBookingService {
     this.events.emit({ type: 'created', bookingId: booking.id, status: booking.status });
 
     return { success: true, data: booking, message: 'Booking created' };
+  }
+
+  /**
+   * Create N bookings sekaligus untuk multi-session package.
+   * Atomic — semua sesi divalidasi (FK + conflict + operating hours)
+   * sebelum any insert. Kalau salah satu fail, throw + rollback.
+   *
+   * Use case: paket "Terapi Anak Lengkap (10 sesi)" — admin pilih
+   * client + service + base psikolog/room, lalu input 10 jadwal.
+   */
+  async createPackage(dto: CreatePackageBookingDto, actorId?: number) {
+    if (dto.sessions.length < 2) {
+      throw new BadRequestException('Package booking butuh minimal 2 sesi');
+    }
+
+    // Validate FKs once (client/service/psikolog/room) untuk default
+    await this.assertEntitiesExist(
+      dto.clientId,
+      dto.serviceId,
+      dto.psikologUserId,
+      dto.roomId,
+    );
+
+    // Validate service is multi-session
+    const service = await this.prisma.clinicService.findFirst({
+      where: { id: dto.serviceId, deletedAt: null, isActive: true },
+      select: { id: true, sessionCount: true, name: true, durationMinutes: true },
+    });
+    if (!service) throw new NotFoundException(`Service ${dto.serviceId} not found`);
+    if (service.sessionCount < 2) {
+      throw new BadRequestException(
+        `Service '${service.name}' adalah single-session (sessionCount=${service.sessionCount}). Pakai POST /clinic/booking biasa.`,
+      );
+    }
+    if (dto.sessions.length !== service.sessionCount) {
+      throw new BadRequestException(
+        `Jumlah sesi (${dto.sessions.length}) harus = service.sessionCount (${service.sessionCount})`,
+      );
+    }
+
+    // Pre-validate semua sesi (FKs override + conflict + hours)
+    const parsedSessions = dto.sessions.map((s, idx) => {
+      const start = new Date(s.scheduledStart);
+      const end = new Date(s.scheduledEnd);
+      if (!(start.getTime() < end.getTime())) {
+        throw new BadRequestException(
+          `Sesi ${idx + 1}: scheduledStart harus sebelum scheduledEnd`,
+        );
+      }
+      return {
+        index: idx,
+        start,
+        end,
+        psikologUserId: s.psikologUserId ?? dto.psikologUserId,
+        roomId: s.roomId ?? dto.roomId,
+      };
+    });
+
+    // Validate per-session FKs (kalau override)
+    for (const s of parsedSessions) {
+      if (s.psikologUserId !== dto.psikologUserId || s.roomId !== dto.roomId) {
+        await this.assertEntitiesExist(dto.clientId, dto.serviceId, s.psikologUserId, s.roomId);
+      }
+      // Conflict check kecuali bufferOverride
+      if (!dto.bufferOverride) {
+        await this.assertNoConflict({
+          psikologUserId: s.psikologUserId,
+          roomId: s.roomId,
+          scheduledStart: s.start,
+          scheduledEnd: s.end,
+          excludeBookingId: null,
+        });
+        // Operating hours check
+        await this.assertWithinOperatingHours(s.start, s.end);
+      }
+    }
+
+    // Cross-session internal conflict check (e.g., 2 sesi overlap dalam 1 paket)
+    for (let i = 0; i < parsedSessions.length; i++) {
+      for (let j = i + 1; j < parsedSessions.length; j++) {
+        const a = parsedSessions[i];
+        const b = parsedSessions[j];
+        if (
+          (a.psikologUserId === b.psikologUserId || a.roomId === b.roomId) &&
+          a.start < b.end &&
+          a.end > b.start
+        ) {
+          throw new ConflictException({
+            message: `Sesi ${a.index + 1} dan ${b.index + 1} dalam paket ini overlap`,
+            conflictType: a.psikologUserId === b.psikologUserId ? 'psikolog' : 'room',
+          });
+        }
+      }
+    }
+
+    // All validated — create N bookings dalam transaction
+    const packageGroupId = randomUUID();
+    const created = await this.prisma.$transaction(
+      parsedSessions.map((s) =>
+        this.prisma.clinicBooking.create({
+          data: {
+            clientId: dto.clientId,
+            serviceId: dto.serviceId,
+            psikologUserId: s.psikologUserId,
+            roomId: s.roomId,
+            scheduledStart: s.start,
+            scheduledEnd: s.end,
+            sessionN: s.index + 1,
+            sessionTotal: dto.sessions.length,
+            packageGroupId,
+            status: 'awaiting_dp',
+            bufferOverride: dto.bufferOverride ?? false,
+            createdViaWalkIn: false,
+            notes: dto.notes,
+            createdBy: actorId,
+            updatedBy: actorId,
+          },
+          include: this.includeRelations(),
+        }),
+      ),
+    );
+
+    // Emit SSE for each
+    for (const b of created) {
+      this.events.emit({ type: 'created', bookingId: b.id, status: b.status });
+    }
+
+    return {
+      success: true,
+      data: { packageGroupId, sessionCount: created.length, bookings: created },
+      message: `Package created: ${created.length} sessions`,
+    };
   }
 
   async findAll(query: QueryBookingDto) {

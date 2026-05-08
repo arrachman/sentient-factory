@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
+import { PengaturanPage } from '@/features/admin-pengaturan/ui/pengaturan-page';
 
 export const metadata: Metadata = { title: 'Pengaturan' };
 
-export default function AdminPengaturanPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="h1">Pengaturan</h1>
-      {/* TODO: features/admin-pengaturan/ui — global settings */}
-    </div>
-  );
+export default function AdminPengaturanRoute() {
+  return <PengaturanPage />;
 }

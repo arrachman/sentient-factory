@@ -89,6 +89,52 @@ export class ClinicPaymentService {
     return { success: true, data: updated, message: `Payment status: ${status}` };
   }
 
+  /**
+   * Refund payment — set status='refunded' + reset paidAmount kalau full refund.
+   * Tidak hapus history; audit-tracked via interceptor.
+   */
+  async refund(
+    id: number,
+    args: { amount?: number; reason?: string; full?: boolean },
+    actorId?: number,
+  ) {
+    const existing = await this.prisma.clinicPayment.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException(`Payment ${id} not found`);
+    if (existing.status === 'refunded') {
+      throw new BadRequestException('Payment sudah di-refund');
+    }
+    if (existing.status === 'pending') {
+      throw new BadRequestException('Payment belum dibayar, tidak perlu refund (cancel saja)');
+    }
+
+    const refundAmount = args.full
+      ? existing.paidAmount
+      : new Prisma.Decimal(args.amount ?? existing.paidAmount);
+    if (refundAmount.gt(existing.paidAmount)) {
+      throw new BadRequestException(
+        `Refund (${refundAmount}) > dibayar (${existing.paidAmount})`,
+      );
+    }
+
+    const newPaid = existing.paidAmount.minus(refundAmount);
+    const updated = await this.prisma.clinicPayment.update({
+      where: { id },
+      data: {
+        status: 'refunded',
+        paidAmount: newPaid,
+        notes: [existing.notes, `[REFUND ${refundAmount}] ${args.reason ?? '-'}`]
+          .filter(Boolean)
+          .join('\n'),
+        updatedBy: actorId,
+      },
+    });
+    return {
+      success: true,
+      data: updated,
+      message: `Refunded ${refundAmount.toString()}`,
+    };
+  }
+
   async findByBooking(bookingId: number) {
     const payment = await this.prisma.clinicPayment.findUnique({ where: { bookingId } });
     if (!payment) throw new NotFoundException(`No payment for booking ${bookingId}`);

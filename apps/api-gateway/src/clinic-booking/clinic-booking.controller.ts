@@ -9,6 +9,7 @@ import { ClinicBookingService } from './clinic-booking.service';
 import {
   CancelBookingDto,
   CreateBookingDto,
+  CreatePackageBookingDto,
   QueryBookingDto,
   RescheduleBookingDto,
   UpdateBookingDto,
