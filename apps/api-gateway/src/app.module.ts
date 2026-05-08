@@ -28,6 +28,7 @@ import { ClinicServiceModule } from './clinic-service/clinic-service.module';
 import { ClinicRoomModule } from './clinic-room/clinic-room.module';
 import { ClinicClientModule } from './clinic-client/clinic-client.module';
 import { ClinicUsersModule } from './clinic-users/clinic-users.module';
+import { ClinicBookingModule } from './clinic-booking/clinic-booking.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { ClinicUsersModule } from './clinic-users/clinic-users.module';
     ClinicRoomModule,
     ClinicClientModule,
     ClinicUsersModule,
+    ClinicBookingModule,
   ],
 })
 export class AppModule {}

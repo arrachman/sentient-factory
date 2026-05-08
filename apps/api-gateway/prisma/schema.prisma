@@ -34,6 +34,7 @@ model User {
   managerInsights       ManagerInsight[]
   managerRisks          ManagerRisk[]
   clinicPsikologProfile ClinicPsikologProfile?
+  clinicBookings        ClinicBooking[]        @relation("BookingPsikolog")
 
   @@index([warehouseId])
   @@map("m0_users")
@@ -765,6 +766,8 @@ model ClinicService {
   deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
   deletedBy       Int?      @map("deleted_by")
 
+  bookings ClinicBooking[]
+
   @@index([category, isActive])
   @@map("clinic_service")
 }
@@ -785,6 +788,8 @@ model ClinicRoom {
   updatedBy   Int?      @map("updated_by")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
   deletedBy   Int?      @map("deleted_by")
+
+  bookings ClinicBooking[]
 
   @@index([type, isActive])
   @@map("clinic_room")
@@ -812,7 +817,56 @@ model ClinicClient {
   deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(3)
   deletedBy            Int?      @map("deleted_by")
 
+  bookings ClinicBooking[]
+
   @@index([phoneWa])
   @@index([name])
   @@map("clinic_client")
+}
+
+/// Booking sesi psikolog. State machine:
+///   awaiting_dp → confirmed → checked_in → in_progress → completed
+///                  ↓             ↓              ↓
+///              cancelled    cancelled    (rare cancel)
+/// See ADR 008 (booking constraints).
+model ClinicBooking {
+  id                Int       @id @default(autoincrement())
+  clientId          Int       @map("client_id")
+  serviceId         Int       @map("service_id")
+  psikologUserId    Int       @map("psikolog_user_id") // FK ke User (clinic-psikolog)
+  roomId            Int       @map("room_id")
+  scheduledStart    DateTime  @map("scheduled_start") @db.Timestamptz(3)
+  scheduledEnd      DateTime  @map("scheduled_end") @db.Timestamptz(3)
+  sessionN          Int       @default(1) @map("session_n")
+  sessionTotal      Int       @default(1) @map("session_total")
+  packageGroupId    String?   @map("package_group_id")
+  status            String    @default("awaiting_dp")
+  bufferOverride    Boolean   @default(false) @map("buffer_override")
+  createdViaWalkIn  Boolean   @default(false) @map("created_via_walk_in")
+  confirmedAt       DateTime? @map("confirmed_at") @db.Timestamptz(3)
+  checkedInAt       DateTime? @map("checked_in_at") @db.Timestamptz(3)
+  startedAt         DateTime? @map("started_at") @db.Timestamptz(3)
+  completedAt       DateTime? @map("completed_at") @db.Timestamptz(3)
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason      String?   @map("cancel_reason") @db.Text
+  rescheduleHistory Json      @default("[]") @map("reschedule_history")
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy         Int?      @map("created_by")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy         Int?      @map("updated_by")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy         Int?      @map("deleted_by")
+
+  client   ClinicClient  @relation(fields: [clientId], references: [id])
+  service  ClinicService @relation(fields: [serviceId], references: [id])
+  psikolog User          @relation("BookingPsikolog", fields: [psikologUserId], references: [id])
+  room     ClinicRoom    @relation(fields: [roomId], references: [id])
+
+  @@index([scheduledStart, scheduledEnd])
+  @@index([psikologUserId, scheduledStart])
+  @@index([roomId, scheduledStart])
+  @@index([status])
+  @@index([packageGroupId])
+  @@map("clinic_booking")
 }

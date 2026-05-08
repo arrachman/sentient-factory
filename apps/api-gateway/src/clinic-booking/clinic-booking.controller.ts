@@ -1,0 +1,101 @@
+import {
+  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ClinicBookingService } from './clinic-booking.service';
+import {
+  CancelBookingDto,
+  CreateBookingDto,
+  QueryBookingDto,
+  RescheduleBookingDto,
+  UpdateBookingDto,
+} from './dto/clinic-booking.dto';
+import { AuditAction } from '../clinic-audit/decorators/audit-action.decorator';
+
+const READ_ROLES = [
+  'clinic-admin',
+  'clinic-psikolog',
+  'clinic-resepsionis',
+  'clinic-owner',
+];
+const WRITE_ROLES = ['clinic-admin', 'clinic-resepsionis'];
+
+@ApiTags('Clinic — Booking')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('clinic/booking')
+export class ClinicBookingController {
+  constructor(private readonly service: ClinicBookingService) {}
+
+  @Post()
+  @Roles(...WRITE_ROLES)
+  @ApiOperation({ summary: 'Create booking' })
+  create(@Body() dto: CreateBookingDto, @Request() req: any) {
+    return this.service.create(dto, req.user?.sub ?? req.user?.id);
+  }
+
+  @Get()
+  @Roles(...READ_ROLES)
+  findAll(@Query() query: QueryBookingDto) { return this.service.findAll(query); }
+
+  @Get(':id')
+  @Roles(...READ_ROLES)
+  findOne(@Param('id', ParseIntPipe) id: number) { return this.service.findOne(id); }
+
+  @Patch(':id')
+  @Roles(...WRITE_ROLES)
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBookingDto, @Request() req: any) {
+    return this.service.update(id, dto, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/confirm')
+  @Roles(...WRITE_ROLES)
+  @AuditAction('confirm')
+  @ApiOperation({ summary: 'Mark booking as confirmed (DP paid)' })
+  confirm(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.confirm(id, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/check-in')
+  @Roles(...WRITE_ROLES)
+  @AuditAction('check_in')
+  @ApiOperation({ summary: 'Receptionist check-in client' })
+  checkIn(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.checkIn(id, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/start')
+  @Roles('clinic-admin', 'clinic-psikolog')
+  @AuditAction('start')
+  @ApiOperation({ summary: 'Mark session started (psikolog)' })
+  start(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.start(id, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/complete')
+  @Roles('clinic-admin', 'clinic-psikolog')
+  @AuditAction('complete')
+  @ApiOperation({ summary: 'Mark session complete (psikolog)' })
+  complete(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.service.complete(id, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/cancel')
+  @Roles(...WRITE_ROLES)
+  @AuditAction('cancel')
+  @ApiOperation({ summary: 'Cancel booking' })
+  cancel(@Param('id', ParseIntPipe) id: number, @Body() dto: CancelBookingDto, @Request() req: any) {
+    return this.service.cancel(id, dto, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/reschedule')
+  @Roles(...WRITE_ROLES)
+  @AuditAction('reschedule')
+  @ApiOperation({ summary: 'Reschedule booking (slot/psikolog/room)' })
+  reschedule(@Param('id', ParseIntPipe) id: number, @Body() dto: RescheduleBookingDto, @Request() req: any) {
+    return this.service.reschedule(id, dto, req.user?.sub ?? req.user?.id);
+  }
+}
