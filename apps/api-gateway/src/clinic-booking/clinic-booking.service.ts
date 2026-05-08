@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
 import {
   BOOKING_STATUSES,
   type BookingStatus,
@@ -37,7 +38,10 @@ const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
 
 @Injectable()
 export class ClinicBookingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly wa: ClinicWaService,
+  ) {}
 
   // ---------------------------------------------------------------------------
   // CRUD
@@ -90,6 +94,12 @@ export class ClinicBookingService {
       },
       include: this.includeRelations(),
     });
+
+    // Slice 9: WA event trigger — kirim konfirmasi kalau langsung confirmed (walk-in)
+    if (booking.status === 'confirmed') {
+      void this.notifyBookingEvent(booking, 'Konfirmasi Booking');
+    }
+
     return { success: true, data: booking, message: 'Booking created' };
   }
 
@@ -181,6 +191,14 @@ export class ClinicBookingService {
       data,
       include: this.includeRelations(),
     });
+
+    // Slice 9: WA event triggers per status
+    if (target === 'confirmed') {
+      void this.notifyBookingEvent(updated, 'Konfirmasi Booking');
+    } else if (target === 'completed') {
+      void this.notifyBookingEvent(updated, 'Follow-up Post Session');
+    }
+
     return { success: true, data: updated, message: `Booking → ${target}` };
   }
 
@@ -205,6 +223,9 @@ export class ClinicBookingService {
       },
       include: this.includeRelations(),
     });
+
+    void this.notifyBookingEvent(updated, 'Cancel Booking', { alasan: dto.reason ?? '-' });
+
     return { success: true, data: updated, message: 'Booking cancelled' };
   }
 
@@ -255,6 +276,15 @@ export class ClinicBookingService {
       },
       include: this.includeRelations(),
     });
+
+    void this.notifyBookingEvent(updated, 'Reschedule Booking', {
+      tanggal_lama: existing.data.scheduledStart.toISOString(),
+      waktu_lama: existing.data.scheduledStart.toISOString().slice(11, 16),
+      tanggal_baru: newStart.toISOString(),
+      waktu_baru: newStart.toISOString().slice(11, 16),
+      alasan: dto.reason ?? '-',
+    });
+
     return { success: true, data: updated, message: 'Booking rescheduled' };
   }
 
@@ -383,5 +413,47 @@ export class ClinicBookingService {
       },
       room: { select: { id: true, name: true, type: true } },
     } satisfies Prisma.ClinicBookingInclude;
+  }
+
+  /**
+   * Slice 9: WA event trigger helper. Fire-and-forget — error tidak block transition.
+   * Resolve template name + send ke recipient (klien default, optional psikolog juga).
+   */
+  private async notifyBookingEvent(
+    booking: {
+      id: number;
+      scheduledStart: Date;
+      scheduledEnd: Date;
+      client: { name: string; phoneWa: string };
+      service: { name: string; basePrice: unknown };
+      psikolog: { fullName: string | null };
+      room: { name: string };
+    },
+    templateName: string,
+    extraVars: Record<string, string | number> = {},
+  ) {
+    try {
+      const variables = {
+        nama_klien: booking.client.name,
+        nama_psikolog: booking.psikolog.fullName ?? 'Psikolog Althea',
+        tanggal: booking.scheduledStart.toISOString().slice(0, 10),
+        waktu: booking.scheduledStart.toISOString().slice(11, 16),
+        ruang: booking.room.name,
+        layanan: booking.service.name,
+        total: String(booking.service.basePrice),
+        ...extraVars,
+      };
+      // Send to klien
+      await this.wa.dispatch({
+        templateName,
+        recipientType: 'klien',
+        recipientPhone: booking.client.phoneWa,
+        variables,
+        bookingId: booking.id,
+      });
+    } catch (err) {
+      // Tidak boleh block transition — log saja
+      console.error(`[notifyBookingEvent] template=${templateName} bookingId=${booking.id}:`, err);
+    }
   }
 }

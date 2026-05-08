@@ -1,21 +1,20 @@
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from '../prisma/prisma.module';
+import { ClinicAuditController } from './clinic-audit.controller';
 import { ClinicAuditInterceptor } from './clinic-audit.interceptor';
+import { ClinicAuditService } from './clinic-audit.service';
 
-/**
- * Registers ClinicAuditInterceptor as a global interceptor.
- * Auto-tracks mutating requests to /clinic/* into existing AuditLog table.
- *
- * See ADR 005.
- */
 @Module({
   imports: [PrismaModule],
+  controllers: [ClinicAuditController],
   providers: [
+    ClinicAuditService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ClinicAuditInterceptor,
     },
   ],
+  exports: [ClinicAuditService],
 })
 export class ClinicAuditModule {}

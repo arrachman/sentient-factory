@@ -1,0 +1,10 @@
+{
+  "name": "@sentient-factory/psychology-design",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Althea Psychology — design prototype (HTML + React UMD + Babel standalone)",
+  "scripts": {
+    "dev": "npx --yes serve -l 3210 .",
+    "start": "npx --yes serve -l 3210 ."
+  }
+}

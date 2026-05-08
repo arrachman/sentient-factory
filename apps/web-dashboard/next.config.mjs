@@ -41,8 +41,8 @@ const nextConfig = {
 };
 
 const defaultDevOrigins = [
-  '192.168.1.17',
-  '192.168.1.17:3201',
+  '192.168.1.150',
+  '192.168.1.150:3201',
   'localhost',
   'localhost:3201',
   '127.0.0.1',

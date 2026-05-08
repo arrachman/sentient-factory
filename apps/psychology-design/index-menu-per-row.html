@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Althea Psychology — Menu per-row</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="althea.css" />
+<style>
+  html, body { height: 100%; }
+  body { margin: 0; }
+  #root { height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="althea-data.jsx"></script>
+<script type="text/babel" src="AdminShell.jsx"></script>
+<script type="text/babel" src="DesktopAdmin.jsx"></script>
+<script type="text/babel" src="AdminClients.jsx"></script>
+<script type="text/babel" src="AdminRooms.jsx"></script>
+<script type="text/babel" src="AdminPsikolog.jsx"></script>
+<script type="text/babel" src="AdminLayanan.jsx"></script>
+<script type="text/babel" src="AdminNotifWA.jsx"></script>
+<script type="text/babel" src="BookingWizard.jsx"></script>
+<script type="text/babel" src="MobileViews.jsx"></script>
+<script type="text/babel" src="AdminDialogs1.jsx"></script>
+<script type="text/babel" src="AdminDialogs2.jsx"></script>
+<script type="text/babel" src="MobileAdmin.jsx"></script>
+<script type="text/babel" src="MobilePsikolog.jsx"></script>
+<script type="text/babel" src="PsikologDashboard.jsx"></script>
+<script type="text/babel" src="PsikologJadwalSaya.jsx"></script>
+<script type="text/babel" src="PsikologScreens.jsx"></script>
+<script type="text/babel" src="AdminPengaturan.jsx"></script>
+<script type="text/babel" src="AdminAuditLog.jsx"></script>
+<script type="text/babel" src="MenuPerRow.jsx"></script>
+<script type="text/babel" src="AdminUsersRoles.jsx"></script>
+<script type="text/babel" src="RoleDashboards.jsx"></script>
+<script type="text/babel" src="AdminDialogs3.jsx"></script>
+<script type="text/babel" src="MobileExtra.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState } = React;
+
+function Phone({ children }) {
+  return (
+    <IOSDevice>
+      <div style={{ height: '100%', overflow: 'hidden', borderRadius: 50 }}>
+        {children}
+      </div>
+    </IOSDevice>
+  );
+}
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="menu" title="Menu · Navigasi per-baris" subtitle="Daftar semua page, satu section per menu — artboard ke samping = state/kondisi lain dari page itu">
+        <DCArtboard id="menu-per-row" label="Menu navigasi · per-baris ke semua artboard" width={1100} height={880}>
+          <MenuPerRow />
+        </DCArtboard>
+      </DCSection>
+
+      {/* === ADMIN · OPERASIONAL === */}
+
+      <DCSection id="page-penjadwalan" title="Penjadwalan" subtitle="Default view + wizard klien baru + detail booking + reschedule + cancel">
+        <DCArtboard id="admin-schedule" label="Default · Jadwal harian" width={1280} height={880}>
+          <DesktopAdmin />
+        </DCArtboard>
+        <DCArtboard id="admin-wizard" label="State · Wizard klien baru" width={480} height={880}>
+          <BookingWizard />
+        </DCArtboard>
+        <DCArtboard id="dlg-booking-detail" label="State · Klik booking → detail sesi" width={760} height={820}>
+          <DialogBookingDetail />
+        </DCArtboard>
+        <DCArtboard id="dlg-reschedule" label="State · Reschedule sesi (US-A07)" width={1280} height={760}>
+          <DialogReschedule />
+        </DCArtboard>
+        <DCArtboard id="dlg-cancel" label="State · Batalkan sesi (US-A07)" width={1280} height={760}>
+          <DialogCancel />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-klien" title="Klien" subtitle="Default list + filter + sortir + form tambah">
+        <DCArtboard id="admin-clients" label="Default · Daftar & detail klien" width={1280} height={880}>
+          <AdminClients />
+        </DCArtboard>
+        <DCArtboard id="dlg-filter-klien" label="State · Filter (popover)" width={1280} height={760}>
+          <DialogFilterKlien />
+        </DCArtboard>
+        <DCArtboard id="dlg-sortir" label="State · Sortir (dropdown)" width={1280} height={760}>
+          <DialogSortir />
+        </DCArtboard>
+        <DCArtboard id="dlg-add-klien" label="State · Tambah klien baru" width={720} height={820}>
+          <DialogAddKlien />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-ruangan" title="Ruangan" subtitle="Timeline harian + form tambah ruangan">
+        <DCArtboard id="admin-rooms" label="Default · Timeline harian" width={1280} height={880}>
+          <AdminRooms />
+        </DCArtboard>
+        <DCArtboard id="dlg-add-ruangan" label="State · Tambah ruangan" width={660} height={820}>
+          <DialogAddRuangan />
+        </DCArtboard>
+      </DCSection>
+
+      {/* === ADMIN · MANAJEMEN === */}
+
+      <DCSection id="page-psikolog" title="Psikolog" subtitle="Tim & profil + form tambah psikolog">
+        <DCArtboard id="admin-psikolog" label="Default · Tim & profil" width={1280} height={880}>
+          <AdminPsikolog />
+        </DCArtboard>
+        <DCArtboard id="dlg-add-psikolog" label="State · Tambah psikolog" width={760} height={820}>
+          <DialogAddPsikolog />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-layanan" title="Layanan" subtitle="Katalog + form tambah layanan">
+        <DCArtboard id="admin-layanan" label="Default · Katalog layanan" width={1280} height={880}>
+          <AdminLayanan />
+        </DCArtboard>
+        <DCArtboard id="dlg-add-layanan" label="State · Tambah layanan" width={720} height={820}>
+          <DialogAddLayanan />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-notif" title="Notifikasi WA" subtitle="Template & log + form template baru + notif center (panel bell)">
+        <DCArtboard id="admin-notif" label="Default · Template & log" width={1280} height={880}>
+          <AdminNotifWA />
+        </DCArtboard>
+        <DCArtboard id="dlg-new-template" label="State · Template WhatsApp baru" width={780} height={820}>
+          <DialogNewTemplate />
+        </DCArtboard>
+        <DCArtboard id="dlg-notif" label="State · Notifikasi center (panel bell)" width={1280} height={760}>
+          <DialogNotifikasi />
+        </DCArtboard>
+      </DCSection>
+
+      {/* === ADMIN · SISTEM === */}
+
+      <DCSection id="page-pengaturan" title="Pengaturan" subtitle="Profil klinik, jam operasional, notifikasi, pembayaran, keamanan">
+        <DCArtboard id="admin-pengaturan" label="Default · Tab Profil Klinik" width={1280} height={880}>
+          <AdminPengaturan />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-audit" title="Audit log" subtitle="Aktivitas sistem — akses klien, jadwal, perubahan role">
+        <DCArtboard id="admin-audit" label="Default · Audit log" width={1280} height={880}>
+          <AdminAuditLog />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-users-roles" title="User & Role" subtitle="Daftar user + matriks permission (6 role)">
+        <DCArtboard id="admin-users-roles" label="Default · User & Role + matriks permission" width={1280} height={880}>
+          <AdminUsersRoles />
+        </DCArtboard>
+      </DCSection>
+
+      {/* === ROLE LAIN (OWNER, RESEPSIONIS, MARKETING) === */}
+
+      <DCSection id="page-owner" title="Owner · Dashboard" subtitle="Ringkasan operasional & performa untuk pemilik klinik">
+        <DCArtboard id="owner-dashboard" label="Default · Ringkasan operasional & performa" width={1280} height={880}>
+          <OwnerDashboard />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-resepsionis" title="Resepsionis · Dashboard" subtitle="Klien hari ini & check-in (US-O02)">
+        <DCArtboard id="resep-dashboard" label="Default · Klien hari ini & check-in" width={1280} height={880}>
+          <ResepsionisDashboard />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-marketing" title="Marketing · Dashboard" subtitle="Insight layanan & kapasitas">
+        <DCArtboard id="marketing-dashboard" label="Default · Insight layanan & kapasitas" width={1280} height={880}>
+          <MarketingDashboard />
+        </DCArtboard>
+      </DCSection>
+
+      {/* === ROLE STAFF PSIKOLOG (DESKTOP) === */}
+
+      <DCSection id="page-psk-dashboard" title="Psikolog · Dashboard" subtitle="Landing dashboard pribadi staff psikolog">
+        <DCArtboard id="psk-dashboard" label="Default · Dashboard psikolog" width={1280} height={880}>
+          <PsikologDashboard />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-psk-jadwal" title="Psikolog · Jadwal saya" subtitle="Jadwal sesi pribadi minggu ini">
+        <DCArtboard id="psk-jadwal" label="Default · Jadwal saya minggu ini" width={1280} height={880}>
+          <PsikologJadwalSaya />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-psk-klien" title="Psikolog · Klien saya" subtitle="Klien yang ditangani sendiri">
+        <DCArtboard id="psk-klien" label="Default · Klien saya · daftar & detail" width={1280} height={880}>
+          <PsikologKlienSaya />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-psk-catatan" title="Psikolog · Catatan klinis" subtitle="Editor SOAP per-sesi">
+        <DCArtboard id="psk-catatan" label="Default · Editor SOAP" width={1280} height={880}>
+          <PsikologCatatan />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-psk-profil" title="Psikolog · Profil & availability" subtitle="Profil pribadi + atur jam available mingguan">
+        <DCArtboard id="psk-profil" label="Default · Profil & availability" width={1280} height={880}>
+          <PsikologProfil />
+        </DCArtboard>
+      </DCSection>
+
+      {/* === MOBILE · ADMIN KLINIK === */}
+
+      <DCSection id="page-ma-schedule" title="Mobile Admin · Penjadwalan" subtitle="Pantau jadwal hari ini di mobile">
+        <DCArtboard id="ma-schedule" label="Default · Penjadwalan hari ini" width={390} height={844}>
+          <Phone><MobileAdminSchedule /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-ma-clients" title="Mobile Admin · Klien" subtitle="Daftar klien di mobile">
+        <DCArtboard id="ma-clients" label="Default · Daftar klien" width={390} height={844}>
+          <Phone><MobileAdminClients /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-ma-rooms" title="Mobile Admin · Ruangan" subtitle="Status ruangan saat ini">
+        <DCArtboard id="ma-rooms" label="Default · Status ruangan sekarang" width={390} height={844}>
+          <Phone><MobileAdminRooms /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-ma-notif" title="Mobile Admin · Notifikasi WA" subtitle="Log & template WA di mobile">
+        <DCArtboard id="ma-notif" label="Default · Log & template" width={390} height={844}>
+          <Phone><MobileAdminNotifWA /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      {/* === MOBILE · STAFF PSIKOLOG === */}
+
+      <DCSection id="page-mp-today" title="Mobile Psikolog · Hari ini" subtitle="Landing — sesi hari ini">
+        <DCArtboard id="m-today" label="Default · Hari ini" width={390} height={844}>
+          <Phone><MobileToday /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-mp-klien" title="Mobile Psikolog · Klien saya" subtitle="Daftar klien yang ditangani (v2 · search + state + BR-04 banner)">
+        <DCArtboard id="mp-klien" label="Default · Klien saya (v2 · search + state + BR-04 banner)" width={390} height={844}>
+          <Phone><MobilePsikologKlien /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-mp-jadwal" title="Mobile Psikolog · Jadwal mingguan" subtitle="View jadwal mingguan untuk staff psikolog di mobile">
+        <DCArtboard id="mp-jadwal" label="Default · Jadwal mingguan" width={390} height={844}>
+          <Phone><MobilePsikologJadwal /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-mp-detail" title="Mobile Psikolog · Detail klien & catatan" subtitle="Profil klien + catatan klinis ringkas">
+        <DCArtboard id="mp-detail" label="Default · Detail klien & catatan" width={390} height={844}>
+          <Phone><MobilePsikologDetail /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-mp-availability" title="Mobile Psikolog · Availability" subtitle="Atur jam available mingguan">
+        <DCArtboard id="m-availability" label="Default · Availability mingguan" width={390} height={844}>
+          <Phone><MobileAvailability /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-mp-profil" title="Mobile Psikolog · Profil saya" subtitle="Profil pribadi staff psikolog">
+        <DCArtboard id="mp-profil" label="Default · Profil saya" width={390} height={844}>
+          <Phone><MobilePsikologProfil /></Phone>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="page-mp-login" title="Mobile Psikolog · Login" subtitle="Layar masuk + flow lupa kata sandi (4 step)">
+        <DCArtboard id="m-login" label="Default · Login" width={390} height={844}>
+          <Phone><MobileLogin /></Phone>
+        </DCArtboard>
+        <DCArtboard id="m-forgot" label="State · Lupa kata sandi (4-step recovery)" width={390} height={844}>
+          <Phone><MobileForgotPassword /></Phone>
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

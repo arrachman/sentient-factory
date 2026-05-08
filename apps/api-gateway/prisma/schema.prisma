@@ -925,3 +925,27 @@ model ClinicWaLog {
   @@index([createdAt])
   @@map("clinic_wa_log")
 }
+
+/// Payment record per booking. DP + lunas tracking.
+/// See ADR 007 (pricing & payment model).
+model ClinicPayment {
+  id            Int       @id @default(autoincrement())
+  bookingId     Int       @unique @map("booking_id")
+  totalAmount   Decimal   @map("total_amount") @db.Decimal(12, 2)
+  taxAmount     Decimal   @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  dpAmount      Decimal   @default(0) @map("dp_amount") @db.Decimal(12, 2)
+  paidAmount    Decimal   @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  status        String    @default("pending") // 'pending' | 'dp_paid' | 'lunas' | 'refunded'
+  dpPaidAt      DateTime? @map("dp_paid_at") @db.Timestamptz(3)
+  lunasAt       DateTime? @map("lunas_at") @db.Timestamptz(3)
+  paymentMethod String?   @map("payment_method") // 'cash' | 'transfer' | TBD
+  receiptUrl    String?   @map("receipt_url") @db.Text
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy     Int?      @map("created_by")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy     Int?      @map("updated_by")
+
+  @@index([status])
+  @@map("clinic_payment")
+}

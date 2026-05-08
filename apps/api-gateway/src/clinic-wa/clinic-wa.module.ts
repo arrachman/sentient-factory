@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PrismaModule } from '../prisma/prisma.module';
+import { ClinicWaController } from './clinic-wa.controller';
+import { ClinicWaService } from './clinic-wa.service';
 import { FonnteProvider } from './providers/fonnte.provider';
 import { MockWAProvider } from './providers/mock.provider';
+import { WA_PROVIDER } from './wa.tokens';
 
-export const WA_PROVIDER = 'WA_PROVIDER';
+export { WA_PROVIDER };
 
 /**
  * WhatsApp gateway module.
@@ -12,13 +16,11 @@ export const WA_PROVIDER = 'WA_PROVIDER';
  * - FONNTE_API_TOKEN set → use FonnteProvider (real Fonnte API)
  * - else → use MockWAProvider (no-op, for dev/testing)
  *
- * Consumers inject via:
- *   constructor(@Inject(WA_PROVIDER) private wa: WAProvider) {}
- *
- * See ADR 004.
+ * Exports `ClinicWaService` untuk dipakai modul lain (e.g., booking event hooks).
  */
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, PrismaModule],
+  controllers: [ClinicWaController],
   providers: [
     MockWAProvider,
     FonnteProvider,
@@ -30,7 +32,8 @@ export const WA_PROVIDER = 'WA_PROVIDER';
       },
       inject: [ConfigService, MockWAProvider, FonnteProvider],
     },
+    ClinicWaService,
   ],
-  exports: [WA_PROVIDER],
+  exports: [WA_PROVIDER, ClinicWaService],
 })
 export class ClinicWaModule {}

@@ -26,19 +26,19 @@ codex-local login --device-auth
 
   Full canvas tetap:
 
-  http://192.168.1.17:3213/
+  http://192.168.1.150:3213/
 
   Desktop per page:
 
-  http://192.168.1.17:3213/?screen=finance
-  http://192.168.1.17:3213/?screen=alert-rules
-  http://192.168.1.17:3213/#production
+  http://192.168.1.150:3213/?screen=finance
+  http://192.168.1.150:3213/?screen=alert-rules
+  http://192.168.1.150:3213/#production
 
   Mobile per page:
 
-  http://192.168.1.17:3213/index-mobile.html?screen=finance
-  http://192.168.1.17:3213/index-mobile.html?screen=finance&device=ios
-  http://192.168.1.17:3213/index-mobile.html?screen=finance&device=android
+  http://192.168.1.150:3213/index-mobile.html?screen=finance
+  http://192.168.1.150:3213/index-mobile.html?screen=finance&device=ios
+  http://192.168.1.150:3213/index-mobile.html?screen=finance&device=android
 
   Screen ID yang bisa dipakai: home, senti-empty, senti-results, finance, warehouse, purchase, sales, production, alert-center,
   alert-rules, alert-templates, notif-channels, notif-logs, settings.

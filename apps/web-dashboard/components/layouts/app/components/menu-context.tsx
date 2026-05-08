@@ -27,6 +27,13 @@ type AppMenuContextValue = {
 const AppMenuContext = createContext<AppMenuContextValue | undefined>(undefined);
 
 const iconMap = LucideIcons as unknown as Record<string, NonNullable<MenuItem['icon']>>;
+const sidebarIconOverrides: Record<string, string> = {
+  home: 'Home',
+  'administrator-dashboard-manager': 'Sparkles',
+  dashboard: 'LayoutGrid',
+  alerting: 'Bell',
+  administrator: 'Shield',
+};
 
 function resolveIcon(iconName: string | null | undefined): MenuItem['icon'] {
   if (!iconName) {
@@ -70,7 +77,7 @@ function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
         path: isLegacyManagerAiMenu
           ? '/app/senti-ai'
           : item.path ?? undefined,
-        icon: resolveIcon(item.icon),
+        icon: resolveIcon(sidebarIconOverrides[item.key] ?? item.icon),
       };
 
       if (Array.isArray(item.children) && item.children.length > 0) {

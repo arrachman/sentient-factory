@@ -1,5 +1,4 @@
-import { ChevronFirst } from 'lucide-react';
-import { toAbsoluteUrl } from '@/lib/helpers';
+import { ChevronFirst, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useLayout } from './context';
@@ -13,31 +12,18 @@ export function SidebarHeader() {
   };
 
   return (
-    <div className="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0">
-      <Link href="/app">
-        <div className="dark:hidden">
-          <img
-            src={toAbsoluteUrl('/media/app/default-logo.svg')}
-            className="default-logo pl-[20px] mt-[10px] h-[65px] max-w-none"
-            alt="Default Logo"
-          />
-          <img
-            src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-            className="small-logo h-[46px] max-w-none"
-            alt="Mini Logo"
-          />
+    <div className="sidebar-header hidden shrink-0 items-center justify-between border-b border-[#1e2330] px-5 lg:flex">
+      <Link href="/app/home" className="sidebar-logo flex min-w-0 items-center gap-3">
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#3e97ff] to-[#7239ea] text-white shadow-[0_4px_12px_rgba(62,151,255,0.4)]">
+          <ShieldCheck className="size-6 stroke-[2.4]" />
         </div>
-        <div className="hidden dark:block">
-          <img
-            src={toAbsoluteUrl('/media/app/default-logo-dark.svg')}
-            className="default-logo pl-[20px] mt-[10px] h-[65px] max-w-none"
-            alt="Default Dark Logo"
-          />
-          <img
-            src={toAbsoluteUrl('/media/app/mini-logo.svg')}
-            className="small-logo h-[46px] max-w-none"
-            alt="Mini Logo"
-          />
+        <div className="brand-text min-w-0 leading-none">
+          <strong className="block text-[14px] font-bold tracking-[0.02em] text-white">
+            SENTIENT
+          </strong>
+          <span className="mt-1 block text-[10px] uppercase tracking-[0.14em] text-[#6c7280]">
+            Factory OS
+          </span>
         </div>
       </Link>
       <Button
@@ -46,7 +32,7 @@ export function SidebarHeader() {
         mode="icon"
         variant="outline"
         className={cn(
-          'size-7 absolute z-30 start-full top-2/4 rtl:translate-x-2/4 -translate-x-2/4 -translate-y-2/4',
+          'absolute start-full top-2/4 z-30 size-7 -translate-x-2/4 -translate-y-2/4 border-[#1e2330] bg-[#181c25] text-[#b6bcc9] hover:bg-[#1d2330] hover:text-white rtl:translate-x-2/4',
           sidebarCollapse ? 'ltr:rotate-180' : 'rtl:rotate-180',
         )}
       >

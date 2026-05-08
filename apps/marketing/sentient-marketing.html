@@ -337,7 +337,13 @@ img { max-width: 100%; display: block; }
 
 /* Hero visual */
 .hero-visual {
-  position: relative; height: 420px; display: flex; align-items: center; justify-content: center;
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
 }
 .hero-card-main {
   width: 100%; max-width: 420px;
@@ -357,7 +363,14 @@ img { max-width: 100%; display: block; }
   padding: 12px 16px; margin-bottom: 16px; display: flex; gap: 10px; align-items: center;
 }
 .hc-ai-icon { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, #2536A0, var(--blue)); display: flex; align-items: center; justify-content: center; font-size: .8rem; flex-shrink: 0; }
-.hc-ai-text { font-size: .78rem; color: var(--muted); font-family: var(--font-mono); }
+.hc-ai-text {
+  min-width: 0;
+  flex: 1;
+  font-size: .78rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  line-height: 1.45;
+}
 .hc-ai-text strong { color: var(--fg); display: block; font-weight: 600; font-size: .8rem; }
 .hc-metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .hc-metric {
@@ -380,21 +393,23 @@ img { max-width: 100%; display: block; }
   position: absolute; background: var(--surface); border: 1px solid var(--border2);
   border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow);
   display: flex; align-items: center; gap: 8px; font-size: .78rem; font-weight: 600;
-  animation: floatBadge 4s ease infinite;
+  animation: floatBadge 4s ease infinite; z-index: 2; pointer-events: none;
 }
 @keyframes floatBadge { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
 .fb-icon { font-size: 1rem; }
-.fb-left  { left: -30px; top: 30px; animation-delay: 0s; }
-.fb-right { right: -20px; bottom: 50px; animation-delay: 1.5s; }
-.fb-top   { right: 20px; top: -10px; animation-delay: .8s; }
+.fb-left  { left: -42px; top: 70px; animation-delay: 0s; }
+.fb-right { right: -42px; bottom: 86px; animation-delay: 1.5s; }
+.fb-top   { right: -36px; top: 44px; animation-delay: .8s; }
 
 /* ERP integration badge */
 .erp-badge {
-  position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+  position: static;
   background: linear-gradient(135deg, rgba(16,232,160,.15), rgba(79,127,255,.15));
   border: 1px solid rgba(16,232,160,.3); border-radius: 12px;
   padding: 10px 20px; display: flex; align-items: center; gap: 12px;
   white-space: nowrap;
+  max-width: calc(100% - 28px);
+  box-shadow: 0 10px 32px rgba(0,0,0,.35);
 }
 .erp-badge-text { font-size: .78rem; color: var(--muted); }
 .erp-badge-text strong { color: var(--emerald); font-weight: 700; }
@@ -833,9 +848,17 @@ footer {
 .hc-tab:hover:not(.active) { background: rgba(255,255,255,.04); color: var(--fg); }
 
 /* ═══ HERO TYPING ═══ */
-.hc-ai-text .typing-text { display: inline; }
+.hc-ai-text .typing-text {
+  display: -webkit-box;
+  max-width: 100%;
+  min-height: calc(1em * 1.45 * 2);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
 .typing-cursor {
-  display: inline-block; width: 2px; height: 0.9em; background: var(--blue);
+  display: none; width: 2px; height: 0.9em; background: var(--blue);
   animation: blink .7s ease infinite; margin-left: 1px; vertical-align: text-bottom;
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
@@ -920,27 +943,6 @@ footer {
 .senti-typing-dot:nth-child(2) { animation-delay: .2s; }
 .senti-typing-dot:nth-child(3) { animation-delay: .4s; }
 @keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
-
-/* ═══ ALERT TOAST ═══ */
-#alert-toast {
-  position: fixed; bottom: 28px; right: 28px; z-index: 9999;
-  background: var(--bg2); border: 1px solid rgba(16,232,160,.4);
-  border-radius: var(--radius); padding: 14px 18px;
-  display: flex; align-items: flex-start; gap: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(16,232,160,.1);
-  max-width: 300px; opacity: 0; transform: translateX(320px);
-  transition: all .45s cubic-bezier(.34,1.56,.64,1);
-}
-#alert-toast.show { opacity: 1; transform: translateX(0); }
-#alert-toast.hide { opacity: 0; transform: translateX(320px); transition: all .3s ease; }
-.toast-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
-.toast-title { font-size: .82rem; font-weight: 700; color: var(--emerald); margin-bottom: 3px; }
-.toast-body  { font-size: .76rem; color: var(--muted); line-height: 1.5; }
-.toast-close {
-  position: absolute; top: 8px; right: 8px; background: none; border: none;
-  color: var(--dim); font-size: .8rem; cursor: pointer; padding: 2px 5px; border-radius: 4px;
-}
-.toast-close:hover { color: var(--fg); background: rgba(255,255,255,.05); }
 
 /* ═══ DASHBOARD INTERACTIVE SECTION ═══ */
 .dash-demo-section {
@@ -1521,40 +1523,6 @@ footer {
     </div>
   </div>
 
-  <!-- Testimonials -->
-  <div class="sec">
-    <div class="center-text" style="margin-bottom:52px;">
-      <span class="tag">⭐ Testimoni</span>
-      <h2 class="sec-heading" style="margin-top:16px;">Dipercaya bisnis yang berkembang</h2>
-    </div>
-    <div class="testi-grid">
-      <div class="testi-card">
-        <div class="tc-stars">⭐⭐⭐⭐⭐</div>
-        <div class="tc-quote">"Dengan Senti AI kita bisa langsung tanya 'cashflow bulan ini vs bulan lalu' dan hasilnya muncul dalam hitungan detik. Jauh lebih efisien dari laporan manual."</div>
-        <div class="tc-author">
-          <div class="tc-avatar" style="background:linear-gradient(135deg,#1E3A8A,var(--blue));">👨‍💼</div>
-          <div><div class="tc-name">Budi Santoso</div><div class="tc-role">Finance Manager · PT Kawata Indonesia</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="tc-stars">⭐⭐⭐⭐⭐</div>
-        <div class="tc-quote">"Dashboard warehouse-nya real-time dan terintegrasi langsung ke ERP kami. Stock on hand, inbound/outbound — semua terpantau tanpa perlu buka laporan terpisah."</div>
-        <div class="tc-author">
-          <div class="tc-avatar" style="background:linear-gradient(135deg,#065F46,var(--emerald));">👩‍💼</div>
-          <div><div class="tc-name">Ratna Dewi</div><div class="tc-role">Operations Director · PT Supa Surya Niaga</div></div>
-        </div>
-      </div>
-      <div class="testi-card">
-        <div class="tc-stars">⭐⭐⭐⭐⭐</div>
-        <div class="tc-quote">"Proses audit tahunan yang biasanya butuh 3 minggu sekarang bisa selesai dalam seminggu. Data trail sudah rapi, laporan sudah siap dari Audit Readiness."</div>
-        <div class="tc-author">
-          <div class="tc-avatar" style="background:linear-gradient(135deg,#92400E,var(--amber));">👨‍💻</div>
-          <div><div class="tc-name">Ahmad Rizki</div><div class="tc-role">CEO · PT Topla Abadi Jaya</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- CTA Final -->
   <div class="cta-section">
     <div class="cta-inner">
@@ -1604,7 +1572,7 @@ footer {
       </div>
 
       <div class="bundle-cta-row">
-        <a href="https://wa.me/6281315842172?text=Halo,%20saya%20tertarik%20paket%20bundling%20SF%20x%20MyERPPlus%20x%20Jasa%20Audit" target="_blank">
+        <a href="https://wa.me/6281315842172?text=Halo,%20saya%20ingin%20konsultasi%20paket%20bundling%20SF%20x%20MyERPPlus%20x%20Jasa%20Audit" target="_blank">
           <button class="btn-primary" style="font-size:1rem;padding:13px 32px;">🎁 Dapatkan Penawaran Bundling</button>
         </a>
         <a href="mailto:sales@sentientfactory.id?subject=Tanya%20Paket%20Bundling">
@@ -1674,7 +1642,7 @@ footer {
           <div>
             <div class="bc-label" style="color:var(--amber)">AUDIT &amp; COMPLIANCE</div>
             <div class="bc-name">Jasa Audit</div>
-            <div class="bc-link" style="color:var(--muted);font-size:.72rem;">by PT. Tarik Data Digital</div>
+            <div class="bc-link" style="color:var(--muted);font-size:.72rem;">Audit readiness service</div>
           </div>
         </div>
         <div class="bc-features">
@@ -2067,8 +2035,8 @@ footer {
     </div>
     <div class="faq-list">
       <details class="faq-item">
-        <summary>Apakah ini product page atau company profile? <span class="faq-icon">+</span></summary>
-        <div class="faq-body">sentientfactory.id difokuskan sebagai website produk Sentient Factory. Company profile tetap berada di tarikdata.digital.</div>
+        <summary>Apa fokus website Sentient Factory? <span class="faq-icon">+</span></summary>
+        <div class="faq-body">sentientfactory.id difokuskan sebagai website produk Sentient Factory untuk AI Business Intelligence, dashboard monitoring, HR Attendance, dan audit readiness.</div>
       </details>
       <details class="faq-item">
         <summary>Apakah MyERPPlus wajib digunakan? <span class="faq-icon">+</span></summary>
@@ -2080,7 +2048,7 @@ footer {
       </details>
       <details class="faq-item">
         <summary>Bagaimana cara Senti AI mengambil data? <span class="faq-icon">+</span></summary>
-        <div class="faq-body">Senti AI terhubung langsung ke source data yang Anda tentukan — paling optimal melalui MyERPPlus sebagai sumber transaksi utama. Data ditarik secara real-time sehingga setiap pertanyaan yang diajukan mendapat jawaban dari data terkini.</div>
+        <div class="faq-body">Senti AI terhubung langsung ke source data yang Anda tentukan — paling optimal melalui MyERPPlus sebagai sumber transaksi utama. Data diambil secara real-time sehingga setiap pertanyaan yang diajukan mendapat jawaban dari data terkini.</div>
       </details>
       <details class="faq-item">
         <summary>Apakah paket bundling lebih hemat? <span class="faq-icon">+</span></summary>
@@ -2112,7 +2080,7 @@ footer {
         <div class="nav-logo-icon">🧠</div>
         <div style="font-family:var(--font-display);font-size:.95rem;font-weight:800;">SENTIENT FACTORY</div>
       </div>
-      <div class="footer-tagline">Platform AI Business Intelligence terintegrasi dengan ERP. Produk by PT. Tarik Data Digital.</div>
+      <div class="footer-tagline">Platform AI Business Intelligence terintegrasi dengan ERP untuk monitoring KPI, HR Attendance, dan audit readiness.</div>
       <div class="footer-socials">
         <a class="social-btn" href="mailto:sales@sentientfactory.id" title="Email">✉️</a>
         <a class="social-btn" href="https://wa.me/6281315842172" target="_blank" title="WhatsApp">💬</a>
@@ -2156,24 +2124,13 @@ footer {
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copyright">© 2026 Sentient Factory · Product by PT. Tarik Data Digital</div>
+    <div class="footer-copyright">© 2026 Sentient Factory</div>
     <div class="footer-legal">
       <a href="#">Privacy</a>
       <a href="#">Terms</a>
-      <a href="https://tarikdata.digital" target="_blank">tarikdata.digital</a>
     </div>
   </div>
 </footer>
-
-<!-- Alert Toast -->
-<div id="alert-toast">
-  <button class="toast-close" onclick="this.parentElement.classList.add('hide')">✕</button>
-  <div class="toast-icon">🔔</div>
-  <div>
-    <div class="toast-title">Alerting Otomatis</div>
-    <div class="toast-body" id="toast-body">Revenue hari ini: Rp 5,4M<br/>↑ +6% vs kemarin — melebihi target!</div>
-  </div>
-</div>
 
 <!-- ═══════════════════════════════════════════════
      JAVASCRIPT
@@ -2357,17 +2314,17 @@ document.addEventListener('click', e => {
 // ═══════════════════════════════════════════════════════════════════════
 const heroData = {
   finance: {
-    queries: ['Tampilkan cashflow 30 hari terakhir…', 'Berapa total piutang outstanding?', 'Bandingkan revenue Q3 vs Q2…'],
+    queries: ['Tampilkan cashflow 30 hari terakhir…', 'Berapa piutang outstanding bulan ini?', 'Bandingkan net cashflow Q3 vs Q2…'],
     metrics: [
       { l:'Total Inflow',    v:'Rp 5,4M',  t:'↑ +6% vs bulan lalu',  tc:'up',   c:'var(--emerald)' },
       { l:'Total Outflow',   v:'Rp 3,8M',  t:'↑ +4% vs bulan lalu',  tc:'up',   c:'var(--blue)' },
       { l:'Net Cashflow',    v:'Rp 1,6M',  t:'↑ +9% vs bulan lalu',  tc:'up',   c:'var(--violet)' },
-      { l:'Outstanding',     v:'Rp 845Jt', t:'↓ -3% vs bulan lalu',  tc:'down', c:'var(--amber)' },
+      { l:'Piutang Outstanding', v:'Rp 845Jt', t:'↓ -3% vs bulan lalu',  tc:'down', c:'var(--amber)' },
     ],
     bars: [40,55,35,65,45,75], color: '#10E8A0',
   },
   sales: {
-    queries: ['Top 3 customer by revenue bulan ini?', 'Berapa sales order yang pending?', 'Tampilkan trend penjualan 6 bulan…'],
+    queries: ['Siapa top customer by revenue bulan ini?', 'Berapa total sales order bulan ini?', 'Tampilkan trend penjualan 6 bulan…'],
     metrics: [
       { l:'Total Revenue',  v:'Rp 54,3Jt', t:'↓ -2% vs bulan lalu', tc:'down', c:'var(--rose)' },
       { l:'Sales Orders',   v:'1.508',      t:'↑ +2% vs bulan lalu', tc:'up',   c:'var(--blue)' },
@@ -2377,7 +2334,7 @@ const heroData = {
     bars: [60,45,70,55,80,65], color: '#4F7FFF',
   },
   warehouse: {
-    queries: ['Warehouse mana yang utilisasinya paling tinggi?', 'Tampilkan aging risk batch…', 'Stock on hand semua gudang?'],
+    queries: ['Berapa utilization warehouse bulan ini?', 'Tampilkan aging risk batch…', 'Stock on hand semua gudang?'],
     metrics: [
       { l:'Aktif Gudang',   v:'24',          t:'↑ +2 vs bulan lalu', tc:'up',   c:'var(--blue)' },
       { l:'Stock On Hand',  v:'18.420 box',  t:'↑ +4% vs bulan lalu',tc:'up',   c:'var(--emerald)' },
@@ -2387,7 +2344,7 @@ const heroData = {
     bars: [70,80,65,55,75,85], color: '#9B7BFF',
   },
   delivery: {
-    queries: ['Berapa persen pengiriman on-time hari ini?', 'Delivery mana yang overdue?', 'Tampilkan rute aktif sekarang…'],
+    queries: ['Berapa persen pengiriman on-time hari ini?', 'Berapa pengiriman aktif sekarang?', 'Berapa return rate bulan ini?'],
     metrics: [
       { l:'Aktif Pengiriman', v:'89',    t:'Dalam proses',          tc:'flat', c:'var(--blue)' },
       { l:'On-Time Rate',     v:'94%',   t:'↑ +2% vs bulan lalu',  tc:'up',   c:'var(--emerald)' },
@@ -2400,8 +2357,54 @@ const heroData = {
 
 let currentModule = 'finance';
 let heroTypingInterval, heroTypingTimeout, heroAutoSwitch;
+const HERO_TYPE_SPEED_MS = 36;
+const HERO_QUERY_HOLD_MS = 3200;
+const HERO_QUERY_GAP_MS = 400;
+const HERO_MODULE_GAP_MS = 900;
+
+function clearHeroTimers() {
+  clearInterval(heroTypingInterval);
+  clearTimeout(heroTypingTimeout);
+  clearTimeout(heroAutoSwitch);
+}
+
+function typeHeroQuery(text, onComplete) {
+  const el = document.getElementById('hero-typing-text');
+  if (!el) return;
+  clearInterval(heroTypingInterval);
+  let i = 0;
+  el.textContent = '';
+  heroTypingInterval = setInterval(() => {
+    el.textContent = text.slice(0, ++i);
+    if (i >= text.length) {
+      clearInterval(heroTypingInterval);
+      if (onComplete) onComplete();
+    }
+  }, HERO_TYPE_SPEED_MS);
+}
+
+function playHeroQueries(queries, index = 0) {
+  if (!queries || !queries.length) return;
+  typeHeroQuery(queries[index], () => {
+    heroTypingTimeout = setTimeout(() => {
+      const nextIndex = index + 1;
+      if (nextIndex < queries.length) {
+        heroTypingTimeout = setTimeout(() => playHeroQueries(queries, nextIndex), HERO_QUERY_GAP_MS);
+        return;
+      }
+      heroAutoSwitch = setTimeout(showNextHeroModule, HERO_MODULE_GAP_MS);
+    }, HERO_QUERY_HOLD_MS);
+  });
+}
+
+function showNextHeroModule() {
+  const mods = Object.keys(heroData);
+  const idx = Math.max(0, mods.indexOf(currentModule));
+  renderHeroModule(mods[(idx + 1) % mods.length]);
+}
 
 function renderHeroModule(mod) {
+  clearHeroTimers();
   currentModule = mod;
   const d = heroData[mod];
   if (!d) return;
@@ -2441,45 +2444,21 @@ function renderHeroModule(mod) {
   }
 
   // Typing animation
-  clearTimeout(heroTypingTimeout); clearInterval(heroTypingInterval);
-  const queries = d.queries;
-  let qi = 0;
-  function typeQuery(text) {
-    const el = document.getElementById('hero-typing-text');
-    if (!el) return;
-    let i = 0; el.textContent = '';
-    heroTypingInterval = setInterval(() => {
-      el.textContent = text.slice(0, ++i);
-      if (i >= text.length) { clearInterval(heroTypingInterval); }
-    }, 36);
-  }
-  typeQuery(queries[qi]);
-  heroTypingTimeout = setInterval(() => {
-    qi = (qi + 1) % queries.length;
-    setTimeout(() => typeQuery(queries[qi]), 400);
-  }, 4500);
+  playHeroQueries(d.queries);
 }
 
 // Hero tab click
 document.querySelectorAll('.hc-tab').forEach(t => {
   t.addEventListener('click', () => {
-    clearInterval(heroAutoSwitch);
     renderHeroModule(t.dataset.module);
-    startHeroAutoSwitch();
   });
 });
 
 function startHeroAutoSwitch() {
-  const mods = Object.keys(heroData);
-  let idx = mods.indexOf(currentModule);
-  heroAutoSwitch = setInterval(() => {
-    idx = (idx + 1) % mods.length;
-    renderHeroModule(mods[idx]);
-  }, 6000);
+  heroAutoSwitch = setTimeout(showNextHeroModule, HERO_MODULE_GAP_MS);
 }
 
 renderHeroModule('finance');
-startHeroAutoSwitch();
 
 // ═══════════════════════════════════════════════════════════════════════
 //  INTERACTIVE DASHBOARD SECTION (BERANDA)
@@ -2697,28 +2676,6 @@ function sentiSend() {
   sentiAsk(input.value.trim());
   input.value = '';
 }
-
-// ═══════════════════════════════════════════════════════════════════════
-//  ALERT TOAST DEMO
-// ═══════════════════════════════════════════════════════════════════════
-const toasts = [
-  { body: 'Revenue hari ini: Rp 5,4M<br/>↑ +6% vs kemarin — melebihi target!' },
-  { body: 'Stock Gudang Bekasi 1 kritis!<br/>SKU BB-2471 tersisa 12 pcs (min 50)' },
-  { body: 'PO Overdue terdeteksi<br/>7 purchase order melewati due date' },
-  { body: 'HR Alert: 12 karyawan belum absen<br/>Hari ini pukul 09.15 WIB' },
-];
-let toastIdx = 0;
-function showToast() {
-  const t = document.getElementById('alert-toast');
-  const b = document.getElementById('toast-body');
-  if (!t || !b) return;
-  b.innerHTML = toasts[toastIdx % toasts.length].body;
-  toastIdx++;
-  t.classList.remove('hide'); t.classList.add('show');
-  setTimeout(() => { t.classList.remove('show'); t.classList.add('hide'); }, 6000);
-  setTimeout(showToast, 18000);
-}
-setTimeout(showToast, 3500);
 
 // ═══════════════════════════════════════════════════════════════════════
 //  FAQ TOGGLES

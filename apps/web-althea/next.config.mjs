@@ -6,8 +6,8 @@ const nextConfig = {
 const PORT = process.env.WEB_ALTHEA_PORT || '3202';
 
 const defaultDevOrigins = [
-  '192.168.1.17',
-  `192.168.1.17:${PORT}`,
+  '192.168.1.150',
+  `192.168.1.150:${PORT}`,
   'localhost',
   `localhost:${PORT}`,
   '127.0.0.1',

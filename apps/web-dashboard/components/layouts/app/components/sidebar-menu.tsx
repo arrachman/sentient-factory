@@ -30,9 +30,7 @@ export function SidebarMenu() {
     setSidebarCollapse,
     sidebarHoverExpand,
     setSidebarHoverExpand,
-    sidebarTheme,
   } = useLayout();
-  const isDarkSidebar = sidebarTheme === 'dark' || pathname.includes('dark-sidebar');
   const currentPathWithQuery = searchParams.toString()
     ? `${pathname}?${searchParams.toString()}`
     : pathname;
@@ -75,28 +73,16 @@ export function SidebarMenu() {
 
   // Global classNames for consistent styling
   const classNames: AccordionMenuClassNames = {
-    root: 'lg:ps-1 space-y-3',
+    root: 'space-y-1',
     group: 'gap-px',
-    label: cn(
-      'pt-2.25 pb-px text-[11px] font-semibold uppercase tracking-[0.14em]',
-      isDarkSidebar ? 'text-[#565674]' : 'text-[#A1A5B7]',
-    ),
+    label: 'px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6c7280]',
     separator: '',
-    item: cn(
-      "h-10 rounded-xl px-3 text-[13px] font-medium transition before:pointer-events-none before:absolute before:start-0 before:top-2 before:h-[calc(100%-1rem)] before:w-[3px] before:rounded-full before:bg-transparent [&_svg]:stroke-[1.75]",
-      isDarkSidebar
-        ? 'text-[#A1A5B7] hover:bg-[#1B1B28] hover:text-white data-[selected=true]:bg-[#1B84FF]/15 data-[selected=true]:font-semibold data-[selected=true]:text-white data-[selected=true]:before:bg-[#1B84FF]'
-        : 'text-[#5E6278] hover:bg-white hover:text-[#009EF7] hover:shadow-[0px_0px_20px_0px_rgba(76,87,125,0.03)] data-[selected=true]:bg-[#009EF7]/10 data-[selected=true]:font-semibold data-[selected=true]:text-[#009EF7] data-[selected=true]:shadow-none data-[selected=true]:before:bg-[#009EF7]',
-    ),
+    item: "h-[38px] rounded-md px-3 text-[13px] font-medium text-[#b6bcc9] transition before:pointer-events-none before:absolute before:start-[-12px] before:top-2 before:bottom-2 before:w-[3px] before:rounded-r-sm before:bg-transparent hover:bg-[#181c25] hover:text-white data-[selected=true]:bg-[rgba(62,151,255,0.12)] data-[selected=true]:font-medium data-[selected=true]:text-white data-[selected=true]:before:bg-[#3e97ff] [&_svg]:size-[18px] [&_svg]:stroke-[1.8] [&_svg]:opacity-85 data-[selected=true]:[&_svg]:text-[#3e97ff] data-[selected=true]:[&_svg]:opacity-100",
     sub: '',
-    subTrigger: cn(
-      "h-10 rounded-xl px-3 text-[13px] font-medium transition before:pointer-events-none before:absolute before:start-0 before:top-2 before:h-[calc(100%-1rem)] before:w-[3px] before:rounded-full before:bg-transparent [&_svg]:stroke-[1.75]",
-      isDarkSidebar
-        ? 'text-[#A1A5B7] hover:bg-[#1B1B28] hover:text-white data-[selected=true]:bg-[#1B84FF]/15 data-[selected=true]:font-semibold data-[selected=true]:text-white data-[selected=true]:before:bg-[#1B84FF]'
-        : 'text-[#5E6278] hover:bg-white hover:text-[#009EF7] hover:shadow-[0px_0px_20px_0px_rgba(76,87,125,0.03)] data-[selected=true]:bg-[#009EF7]/10 data-[selected=true]:font-semibold data-[selected=true]:text-[#009EF7] data-[selected=true]:shadow-none data-[selected=true]:before:bg-[#009EF7]',
-    ),
-    subContent: 'py-0 ps-3',
-    indicator: isDarkSidebar ? 'text-[#565674]' : '',
+    subTrigger: "h-[38px] rounded-md px-3 text-[13px] font-medium text-[#b6bcc9] transition before:pointer-events-none before:absolute before:start-[-12px] before:top-2 before:bottom-2 before:w-[3px] before:rounded-r-sm before:bg-transparent hover:bg-[#181c25] hover:text-white data-[state=open]:bg-[rgba(62,151,255,0.08)] data-[state=open]:text-white [&_svg]:size-[18px] [&_svg]:stroke-[1.8] [&_svg]:opacity-85",
+    subContent: 'py-0 ps-[30px]',
+    subWrapper: 'border-s border-[#1e2330] ps-2 py-1',
+    indicator: 'text-[#6c7280]',
   };
 
   const buildMenu = (items: MenuConfig): JSX.Element[] => {
@@ -115,7 +101,7 @@ export function SidebarMenu() {
     if (item.children) {
       return (
         <AccordionMenuSub key={index} value={item.path || `root-${index}`}>
-          <AccordionMenuSubTrigger className="text-sm font-medium">
+          <AccordionMenuSubTrigger>
             {item.icon && <item.icon data-slot="accordion-menu-icon" />}
             <span data-slot="accordion-menu-title">{item.title}</span>
           </AccordionMenuSubTrigger>
@@ -123,7 +109,6 @@ export function SidebarMenu() {
             type="single"
             collapsible
             parentValue={item.path || `root-${index}`}
-            className="ps-6"
           >
             <AccordionMenuGroup>
               {buildMenuItemChildren(item.children, 1)}
@@ -133,11 +118,7 @@ export function SidebarMenu() {
       );
     } else {
       return (
-        <AccordionMenuItem
-          key={index}
-          value={item.path || ''}
-          className="text-sm font-medium"
-        >
+        <AccordionMenuItem key={index} value={item.path || ''}>
           <Link
             href={item.path || '#'}
             className="flex items-center justify-start grow gap-2 text-left"
@@ -155,11 +136,7 @@ export function SidebarMenu() {
     index: number,
   ): JSX.Element => {
     return (
-      <AccordionMenuItem
-        key={index}
-        value={`disabled-${index}`}
-        className="text-sm font-medium"
-      >
+        <AccordionMenuItem key={index} value={`disabled-${index}`}>
         {item.icon && <item.icon data-slot="accordion-menu-icon" />}
         <span data-slot="accordion-menu-title">{item.title}</span>
         {item.disabled && (
@@ -195,7 +172,7 @@ export function SidebarMenu() {
           key={index}
           value={item.path || `child-${level}-${index}`}
         >
-          <AccordionMenuSubTrigger className="text-[13px]">
+          <AccordionMenuSubTrigger>
             {item.collapse ? (
               <span className="text-muted-foreground">
                 <span className="hidden [[data-state=open]>span>&]:inline">
@@ -214,7 +191,7 @@ export function SidebarMenu() {
             collapsible
             parentValue={item.path || `child-${level}-${index}`}
             className={cn(
-              'ps-4',
+              'ps-2',
               !item.collapse && 'relative',
               !item.collapse && (level > 0 ? '' : ''),
             )}
@@ -230,11 +207,7 @@ export function SidebarMenu() {
       );
     } else {
       return (
-        <AccordionMenuItem
-          key={index}
-          value={item.path || ''}
-          className="text-[13px]"
-        >
+        <AccordionMenuItem key={index} value={item.path || ''}>
           <Link href={item.path || '#'}>{item.title}</Link>
         </AccordionMenuItem>
       );
@@ -250,7 +223,6 @@ export function SidebarMenu() {
       <AccordionMenuItem
         key={index}
         value={`disabled-child-${level}-${index}`}
-        className="text-[13px]"
       >
         <span data-slot="accordion-menu-title">{item.title}</span>
         {item.disabled && (
@@ -290,9 +262,12 @@ export function SidebarMenu() {
 
   return (
     <ScrollArea
-      className="flex grow shrink-0 px-5 py-5 lg:h-[calc(100vh-5.5rem)]"
+      className="flex h-full grow shrink-0 px-3 py-4"
       onClickCapture={handleMenuClickCapture}
     >
+      <div className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#6c7280]">
+        Workspace
+      </div>
       <AccordionMenu
         selectedValue={resolvedSelectedValue ?? currentPathWithQuery}
         matchPath={matchPath}

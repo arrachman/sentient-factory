@@ -1,19 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
 import { useLayout } from './context';
 import { SidebarHeader } from './sidebar-header';
 import { SidebarMenu } from './sidebar-menu';
-import { usePathname } from 'next/navigation';
 
 export function Sidebar() {
   const {
     sidebarCollapse,
     sidebarHoverExpand,
     setSidebarHoverExpand,
-    sidebarTheme,
   } = useLayout();
-  const pathname = usePathname();
-  const isDarkSidebar = sidebarTheme === 'dark' || pathname.includes('dark-sidebar');
   const hoverOpenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoverCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -75,19 +70,23 @@ export function Sidebar() {
       )}
 
       <div
-        className={cn(
-          'sidebar lg:fixed lg:top-0 lg:bottom-0 lg:z-20 lg:flex shrink-0 flex-col items-stretch lg:border-e',
-          isDarkSidebar
-            ? 'dark bg-[#1E1E2D] lg:border-[#2B2B40]'
-            : 'bg-[#F5F8FA] lg:border-slate-200/80',
-        )}
+        className="sidebar dark shrink-0 flex-col items-stretch bg-[#11141b] text-[#b6bcc9] lg:fixed lg:top-0 lg:bottom-0 lg:z-20 lg:flex lg:border-e lg:border-[#1e2330]"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <SidebarHeader />
-        <div className="overflow-hidden">
-          <div className="w-(--sidebar-default-width)">
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <div className="h-full w-(--sidebar-default-width)">
             <SidebarMenu />
+          </div>
+        </div>
+        <div className="sidebar-footer flex shrink-0 items-center gap-2.5 border-t border-[#1e2330] px-3.5 py-3.5 text-xs">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#50cd89] to-[#17c653] text-xs font-bold text-white">
+            N
+          </div>
+          <div className="min-w-0 leading-tight">
+            <strong className="block truncate font-semibold text-white">Nadia Pratama</strong>
+            <span className="block truncate text-[11px] text-[#6c7280]">Factory Admin</span>
           </div>
         </div>
       </div>

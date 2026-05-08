@@ -14,6 +14,22 @@ export const metadata: Metadata = {
   },
   description:
     'Booking sesi psikolog & terapi — konseling, terapi anak, tes psikologi.',
+  applicationName: 'Althea Psychology',
+  keywords: ['psikolog', 'klinik', 'terapi', 'konseling', 'tes psikologi'],
+  authors: [{ name: 'Althea Psychology' }],
+  formatDetection: { telephone: false },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Althea',
+  },
+};
+
+export const viewport = {
+  themeColor: '#5b8a66',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
