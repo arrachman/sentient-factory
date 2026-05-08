@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
+import { BookingEventsService } from './booking-events.service';
 import {
   BOOKING_STATUSES,
   type BookingStatus,
@@ -41,6 +42,7 @@ export class ClinicBookingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly wa: ClinicWaService,
+    private readonly events: BookingEventsService,
   ) {}
 
   // ---------------------------------------------------------------------------
@@ -95,10 +97,13 @@ export class ClinicBookingService {
       include: this.includeRelations(),
     });
 
-    // Slice 9: WA event trigger — kirim konfirmasi kalau langsung confirmed (walk-in)
+    // Slice 9: WA event trigger
     if (booking.status === 'confirmed') {
       void this.notifyBookingEvent(booking, 'Konfirmasi Booking');
     }
+
+    // Slice 11: emit SSE event untuk realtime updates di resepsionis dashboard
+    this.events.emit({ type: 'created', bookingId: booking.id, status: booking.status });
 
     return { success: true, data: booking, message: 'Booking created' };
   }
@@ -198,6 +203,9 @@ export class ClinicBookingService {
     } else if (target === 'completed') {
       void this.notifyBookingEvent(updated, 'Follow-up Post Session');
     }
+
+    // Slice 11: emit SSE event
+    this.events.emit({ type: 'transition', bookingId: id, status: target });
 
     return { success: true, data: updated, message: `Booking → ${target}` };
   }

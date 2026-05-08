@@ -858,10 +858,11 @@ model ClinicBooking {
   deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
   deletedBy         Int?      @map("deleted_by")
 
-  client   ClinicClient  @relation(fields: [clientId], references: [id])
-  service  ClinicService @relation(fields: [serviceId], references: [id])
-  psikolog User          @relation("BookingPsikolog", fields: [psikologUserId], references: [id])
-  room     ClinicRoom    @relation(fields: [roomId], references: [id])
+  client   ClinicClient   @relation(fields: [clientId], references: [id])
+  service  ClinicService  @relation(fields: [serviceId], references: [id])
+  psikolog User           @relation("BookingPsikolog", fields: [psikologUserId], references: [id])
+  room     ClinicRoom     @relation(fields: [roomId], references: [id])
+  payment  ClinicPayment?
 
   @@index([scheduledStart, scheduledEnd])
   @@index([psikologUserId, scheduledStart])
@@ -945,6 +946,8 @@ model ClinicPayment {
   createdBy     Int?      @map("created_by")
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
   updatedBy     Int?      @map("updated_by")
+
+  booking ClinicBooking @relation(fields: [bookingId], references: [id])
 
   @@index([status])
   @@map("clinic_payment")
