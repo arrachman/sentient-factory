@@ -9,12 +9,14 @@ import {
   Request,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
 import {
   ClinicPaymentService,
   type CreatePaymentDto,
@@ -30,14 +32,16 @@ export class ClinicPaymentController {
 
   @Post()
   @Roles('clinic-admin', 'clinic-resepsionis')
-  @ApiOperation({ summary: 'Create payment record untuk booking' })
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Create payment record untuk booking (supports Idempotency-Key)' })
   create(@Body() dto: CreatePaymentDto, @Request() req: any) {
     return this.service.create(dto, req.user?.sub ?? req.user?.id);
   }
 
   @Post(':id/record')
   @Roles('clinic-admin', 'clinic-resepsionis')
-  @ApiOperation({ summary: 'Record payment installment (DP atau lunas)' })
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Record payment installment (DP atau lunas, supports Idempotency-Key)' })
   record(@Param('id', ParseIntPipe) id: number, @Body() dto: RecordPaymentDto, @Request() req: any) {
     return this.service.record(id, dto, req.user?.sub ?? req.user?.id);
   }

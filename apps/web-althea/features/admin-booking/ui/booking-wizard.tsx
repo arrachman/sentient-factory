@@ -95,7 +95,10 @@ export function BookingWizard({ open, onClose }: Props) {
 
   const createMut = useMutation({
     mutationFn: async (payload: object) => {
-      return apiClient.post<{ success: boolean; data: { id: number } }>('/booking', payload);
+      const idempotencyKey = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/[^a-zA-Z0-9_-]/g, '');
+      return apiClient.post<{ success: boolean; data: { id: number } }>('/booking', payload, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+      });
     },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['clinic', 'booking'] });

@@ -1,10 +1,11 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards,
+  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards, UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
 import { ClinicBookingService } from './clinic-booking.service';
 import {
   CancelBookingDto,
@@ -33,9 +34,19 @@ export class ClinicBookingController {
 
   @Post()
   @Roles(...WRITE_ROLES)
-  @ApiOperation({ summary: 'Create booking' })
+  @UseInterceptors(IdempotencyInterceptor)
+  @ApiOperation({ summary: 'Create booking (supports Idempotency-Key header)' })
   create(@Body() dto: CreateBookingDto, @Request() req: any) {
     return this.service.create(dto, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post('package')
+  @Roles(...WRITE_ROLES)
+  @UseInterceptors(IdempotencyInterceptor)
+  @AuditAction('create-package')
+  @ApiOperation({ summary: 'Create multi-session package booking (atomic, all-or-nothing)' })
+  createPackage(@Body() dto: CreatePackageBookingDto, @Request() req: any) {
+    return this.service.createPackage(dto, req.user?.sub ?? req.user?.id);
   }
 
   @Get()

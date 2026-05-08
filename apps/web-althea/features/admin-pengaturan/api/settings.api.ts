@@ -16,6 +16,8 @@ export type ClinicSettings = {
   dpPercentage: string | number;
   waSendEnabled: boolean;
   waCountryCode: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type UpdateSettingsInput = Partial<{

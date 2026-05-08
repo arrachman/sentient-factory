@@ -20,7 +20,32 @@ export type LoginResponse = {
   message?: string;
 };
 
+/**
+ * Login goes through Next.js Route Handler (`/api/auth/login` di SAME origin
+ * web-althea, NOT api-gateway directly). The handler proxies ke api-gateway
+ * dan set HttpOnly cookie sf_token (XSS-safe).
+ *
+ * Logout pakai Route Handler `/api/auth/logout` untuk clear cookie + notify
+ * upstream session invalidation.
+ */
 export const authApi = {
-  login: (input: LoginInput) =>
-    apiClient.post<LoginResponse>('/auth/login', input, { skipNamespace: true }),
+  login: async (input: LoginInput): Promise<LoginResponse> => {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+      credentials: 'include',
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.message || `Login failed: ${res.status}`);
+    }
+    return data as LoginResponse;
+  },
+  logout: async (): Promise<void> => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+  },
 };

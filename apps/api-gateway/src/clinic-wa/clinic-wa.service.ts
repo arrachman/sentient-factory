@@ -1,5 +1,8 @@
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { renderTemplate } from './template-renderer';
 import {
@@ -12,6 +15,12 @@ import {
 } from './dto/wa.dto';
 import type { WAProvider } from './wa.interface';
 import { WA_PROVIDER } from './wa.tokens';
+import {
+  WA_JOB_DEFAULTS,
+  WA_JOB_SEND,
+  WA_QUEUE_NAME,
+  type WaSendJobData,
+} from './queue/wa-queue.constants';
 
 /**
  * Service yang handle:
@@ -21,17 +30,25 @@ import { WA_PROVIDER } from './wa.tokens';
  * - Webhook receiver (update delivery status dari Fonnte)
  * - Internal: dispatch(templateName, recipientPhone, variables) — dipakai Slice 9
  *
- * NOTE: belum pakai Bull queue. Send langsung sync ke Fonnte. Untuk volume kecil OK.
- * Future: pindah ke Bull queue async dengan retry.
+ * Queue mode: WA_QUEUE_ENABLED=true → enqueue ke BullMQ untuk async + retry 3×.
+ * Default sync (langsung kirim) — backward-compat.
  */
 @Injectable()
 export class ClinicWaService {
   private readonly logger = new Logger(ClinicWaService.name);
+  private readonly queueEnabled: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
     @Inject(WA_PROVIDER) private readonly wa: WAProvider,
-  ) {}
+    private readonly config: ConfigService,
+    @InjectQueue(WA_QUEUE_NAME) private readonly waQueue: Queue<WaSendJobData>,
+  ) {
+    this.queueEnabled = this.config.get<string>('WA_QUEUE_ENABLED') === 'true';
+    if (this.queueEnabled) {
+      this.logger.log('WA queue mode ENABLED (BullMQ async + retry 3×)');
+    }
+  }
 
   // ----- Template CRUD -----
 
@@ -195,7 +212,30 @@ export class ClinicWaService {
       },
     });
 
-    // Kirim via provider (sync)
+    if (this.queueEnabled) {
+      try {
+        await this.waQueue.add(
+          WA_JOB_SEND,
+          {
+            logId: log.id,
+            recipientPhone: args.recipientPhone,
+            body: args.body,
+            metadata: args.metadata,
+          },
+          WA_JOB_DEFAULTS,
+        );
+        return {
+          success: true,
+          data: { logId: log.id, status: 'queued' },
+          message: 'Enqueued for async send',
+        };
+      } catch (e) {
+        this.logger.error(`Failed to enqueue WA job, falling back to sync: ${(e as Error).message}`);
+        // fall through to sync path
+      }
+    }
+
+    // Sync path (default / fallback)
     const result = await this.wa.send({
       toPhone: args.recipientPhone,
       body: args.body,
@@ -203,7 +243,6 @@ export class ClinicWaService {
       metadata: { logId: log.id, ...args.metadata },
     });
 
-    // Update log dengan hasil
     const status = result.status === 'sent' ? 'terkirim' : result.status === 'queued' ? 'queued' : 'gagal';
     await this.prisma.clinicWaLog.update({
       where: { id: log.id },

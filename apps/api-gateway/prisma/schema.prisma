@@ -972,3 +972,18 @@ model ClinicSessionNote {
   @@index([psikologUserId])
   @@map("clinic_session_note")
 }
+
+
+/// Idempotency key cache untuk POST mutations (booking/payment/package).
+/// Client kirim header `Idempotency-Key: <uuid>` → response cached 24h supaya
+/// retry safe (network blip tidak duplicate booking).
+model ClinicIdempotencyKey {
+  key        String   @id // composite: METHOD:path|user-key
+  response   Json     // cached JSON response body
+  statusCode Int      @map("status_code")
+  actorId    Int?     @map("actor_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([createdAt])
+  @@map("clinic_idempotency_key")
+}
