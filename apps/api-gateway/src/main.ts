@@ -21,10 +21,32 @@ async function bootstrap() {
     }),
   );
 
-  // Enable CORS
+  // Enable CORS — credentials=true requires explicit origin (browser rejects wildcard)
+  const corsOriginEnv = configService.get<string>('CORS_ORIGIN', '');
+  const explicitOrigins = corsOriginEnv
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', '*'),
+    origin: (origin, cb) => {
+      // Allow no-origin requests (curl, server-to-server, healthchecks)
+      if (!origin) return cb(null, true);
+      // Explicit allowlist via env
+      if (explicitOrigins.length > 0 && explicitOrigins.includes(origin)) {
+        return cb(null, true);
+      }
+      // Dev defaults: localhost + LAN 192.168.x.x + clinic prod domain
+      const devAllowed =
+        /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(
+          origin,
+        );
+      const prodAllowed = /^https?:\/\/althea\.fr-labs\.my\.id(:\d+)?$/.test(origin);
+      if (devAllowed || prodAllowed) return cb(null, true);
+      return cb(new Error(`CORS: origin ${origin} not allowed`), false);
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
   // Global validation pipe

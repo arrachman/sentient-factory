@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import { AppQueryProvider } from '@/shared/providers/query-provider';
+import { ServiceWorkerRegister } from '@/components/pwa/sw-register';
 import { cn } from '@/lib/utils';
 import '@/styles/globals.css';
 
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <TooltipProvider delayDuration={0}>
               <Suspense>{children}</Suspense>
               <Toaster />
+              <ServiceWorkerRegister />
             </TooltipProvider>
           </AppQueryProvider>
         </ThemeProvider>

@@ -33,6 +33,7 @@ import { ClinicClientModule } from './clinic-client/clinic-client.module';
 import { ClinicUsersModule } from './clinic-users/clinic-users.module';
 import { ClinicBookingModule } from './clinic-booking/clinic-booking.module';
 import { ClinicPaymentModule } from './clinic-payment/clinic-payment.module';
+import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-note.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { ClinicPaymentModule } from './clinic-payment/clinic-payment.module';
     ClinicUsersModule,
     ClinicBookingModule,
     ClinicPaymentModule,
+    ClinicSessionNoteModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)
