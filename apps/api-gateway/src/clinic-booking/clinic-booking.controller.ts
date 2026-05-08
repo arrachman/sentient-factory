@@ -98,4 +98,23 @@ export class ClinicBookingController {
   reschedule(@Param('id', ParseIntPipe) id: number, @Body() dto: RescheduleBookingDto, @Request() req: any) {
     return this.service.reschedule(id, dto, req.user?.sub ?? req.user?.id);
   }
+
+  @Post(':id/note')
+  @Roles('clinic-admin', 'clinic-psikolog')
+  @AuditAction('note')
+  @ApiOperation({ summary: 'Tambah clinical note untuk booking (psikolog only)' })
+  addNote(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { noteText: string },
+    @Request() req: any,
+  ) {
+    return this.service.addNote(id, dto.noteText, req.user?.sub ?? req.user?.id);
+  }
+
+  @Get(':id/note')
+  @Roles('clinic-admin', 'clinic-psikolog')
+  @ApiOperation({ summary: 'List clinical notes untuk booking' })
+  listNotes(@Param('id', ParseIntPipe) id: number) {
+    return this.service.listNotes(id);
+  }
 }

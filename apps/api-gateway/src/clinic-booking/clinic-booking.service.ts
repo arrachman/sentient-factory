@@ -207,6 +207,43 @@ export class ClinicBookingService {
   async start(id: number, actorId?: number) { return this.transition(id, 'in_progress', actorId); }
   async complete(id: number, actorId?: number) { return this.transition(id, 'completed', actorId); }
 
+  /**
+   * Slice 10: Tambah clinical note untuk booking. Linked ke psikolog yang login.
+   * Booking harus exist dan tidak deleted. Note bisa disimpan kapan saja
+   * (sebelum/saat/setelah sesi).
+   */
+  async addNote(bookingId: number, noteText: string, actorId?: number) {
+    if (!noteText.trim()) {
+      throw new BadRequestException('noteText tidak boleh kosong');
+    }
+    const booking = await this.prisma.clinicBooking.findFirst({
+      where: { id: bookingId, deletedAt: null },
+      select: { id: true, psikologUserId: true },
+    });
+    if (!booking) {
+      throw new NotFoundException(`Booking ${bookingId} tidak ditemukan`);
+    }
+    const note = await this.prisma.clinicSessionNote.create({
+      data: {
+        bookingId: booking.id,
+        psikologUserId: actorId ?? booking.psikologUserId,
+        noteText: noteText.trim(),
+        isPrivate: true,
+        createdBy: actorId,
+        updatedBy: actorId,
+      },
+    });
+    return { success: true, data: note, message: 'Note saved' };
+  }
+
+  async listNotes(bookingId: number) {
+    const notes = await this.prisma.clinicSessionNote.findMany({
+      where: { bookingId, deletedAt: null },
+      orderBy: [{ createdAt: 'desc' }],
+    });
+    return { success: true, data: notes };
+  }
+
   async cancel(id: number, dto: CancelBookingDto, actorId?: number) {
     const existing = await this.findOne(id);
     const current = existing.data.status as BookingStatus;

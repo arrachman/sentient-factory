@@ -949,3 +949,23 @@ model ClinicPayment {
   @@index([status])
   @@map("clinic_payment")
 }
+
+/// Clinical note dari psikolog post-session. Private by default.
+/// Linked ke booking + psikolog user.
+model ClinicSessionNote {
+  id             Int       @id @default(autoincrement())
+  bookingId      Int       @map("booking_id")
+  psikologUserId Int       @map("psikolog_user_id")
+  noteText       String    @map("note_text") @db.Text
+  isPrivate      Boolean   @default(true) @map("is_private")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?      @map("created_by")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy      Int?      @map("updated_by")
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy      Int?      @map("deleted_by")
+
+  @@index([bookingId])
+  @@index([psikologUserId])
+  @@map("clinic_session_note")
+}
