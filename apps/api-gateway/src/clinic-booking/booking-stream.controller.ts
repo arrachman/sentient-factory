@@ -15,14 +15,18 @@ import { BookingEventsService, type BookingEvent } from './booking-events.servic
  *   const es = new EventSource('/api/clinic/booking/stream');
  *   es.onmessage = (e) => { const event = JSON.parse(e.data); ... };
  */
+/**
+ * Path `/clinic/stream/booking` (bukan `/clinic/booking/stream`) untuk hindari
+ * collision dengan `GET /clinic/booking/:id` ParseIntPipe ("stream" tidak numeric).
+ */
 @ApiTags('Clinic — Booking Stream (SSE)')
 @ApiBearerAuth()
-@Controller('clinic/booking')
+@Controller('clinic/stream')
 @SkipAudit()
 export class BookingStreamController {
   constructor(private readonly events: BookingEventsService) {}
 
-  @Sse('stream')
+  @Sse('booking')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('clinic-admin', 'clinic-resepsionis', 'clinic-psikolog', 'clinic-owner')
   @ApiOperation({ summary: 'SSE stream untuk realtime booking events' })

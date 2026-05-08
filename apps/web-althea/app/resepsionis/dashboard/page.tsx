@@ -6,6 +6,7 @@ import {
   useBookingList,
   useCheckInBooking,
 } from '@/features/admin-booking/hooks/use-booking';
+import { useBookingStream } from '@/features/admin-booking/hooks/use-booking-stream';
 import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
 import {
   STATUS_BADGE_CLASS,
@@ -20,7 +21,7 @@ function todayKey(): string {
 
 export default function ResepsionisDashboardPage() {
   const [wizardOpen, setWizardOpen] = useState(false);
-  // Polling 10s untuk pseudo-realtime check-in updates
+  useBookingStream();
   const list = useBookingList({ date: todayKey(), limit: 100 });
   const checkInMut = useCheckInBooking();
 

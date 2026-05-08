@@ -14,11 +14,11 @@ Status: 🔵 Not started · 🟡 In progress · 🟢 Done · 🔴 Blocked
 | 7 | Schedule grid + conflict detection | 🟢 | 1 | 6 | ✅ Psikolog × 6 time slots, navigable date, service-type colors |
 | 8 | WA templates + dispatcher | 🟢 | 2 | 0 | ✅ FonnteProvider + 18 templates seeded + WA service + webhook + send-test + admin UI (CRUD + log viewer) |
 | 9 | WA event triggers | 🟢 | 0.5 | 6, 8 | ✅ Hook ke booking lifecycle (confirm/complete/cancel/reschedule auto-trigger templates) |
-| 10 | Psikolog workflow | 🟡 | 1 | 6 | ✅ Dashboard + sessions + start/complete + patients view; ❌ user-filtered queries (butuh /auth/me) + clinical notes persistence |
-| 11 | Receptionist check-in | 🟡 | 0.5 | 6 | ✅ Status board 4-column + walk-in via wizard + check-in transition (polling 10s); ❌ true real-time SSE/WS |
+| 10 | Psikolog workflow | 🟢 | 1 | 6 | ✅ Dashboard + sessions + start/complete + patients view + ClinicSessionNote backend (CRUD + private flag) + /auth/me filter |
+| 11 | Receptionist check-in | 🟢 | 0.5 | 6 | ✅ Status board 4-column + walk-in via wizard + check-in transition + **SSE realtime** (`/clinic/stream/booking` + RxJS Subject pub-sub + `useBookingStream` hook) |
 | 12 | Audit + Owner dashboard | 🟢 | 1 | 0 | ✅ Owner KPI dashboard + audit log viewer dengan filter |
-| 13 | Payment receipt + PDF | 🟡 | 0.5 | 6 | ✅ ClinicPayment model + DP/lunas + simple HTML receipt; ❌ proper PDF library + WA send integration |
-| 14 | Polish: PWA + mobile + perf | 🟡 | 0.5 | semua | ✅ PWA manifest + viewport + theme color + Apple Web App; ❌ icons (need design assets) + service worker + mobile QA |
+| 13 | Payment receipt + PDF | 🟢 | 0.5 | 6 | ✅ ClinicPayment model + DP/lunas + **pdfkit receipt** (`GET /payment/:id/receipt.pdf`) + **WA send** (`POST /payment/:id/send-receipt`) + manual reminder dispatch |
+| 14 | Polish: PWA + mobile + perf | 🟢 | 0.5 | semua | ✅ PWA manifest + viewport + theme color + Apple Web App + SVG icons (any + maskable) + Service Worker (cache-first static, network /api+SSE) + sw-register client; ⏳ mobile QA on real devices pending |
 
 **Total estimate**: 17-26 sessions Claude Code (asumsi 1 session ~2 jam aktif).
 
