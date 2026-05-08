@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test e2e/auth-flow.spec.ts e2e/role-dashboards.spec.ts e2e/admin-booking.spec.ts",
     "check": "npm run lint && npm run typecheck && npm run test",
     "format": "prettier --write ."
   },
