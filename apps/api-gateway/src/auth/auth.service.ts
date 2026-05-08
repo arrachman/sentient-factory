@@ -23,9 +23,14 @@ export class AuthService {
       if (!user.isActive) {
         return null;
       }
-      const hasWarehouse = await this.usersService.hasWarehouse(user.id);
-      if (!hasWarehouse) {
-        return null;
+      const roles = await this.usersService.getActiveRoleNamesByUserId(user.id);
+      const isClinicUser = roles.some((r) => r.startsWith('clinic-'));
+      if (!isClinicUser) {
+        // ERP users must have a warehouse assignment; clinic users skip this gate.
+        const hasWarehouse = await this.usersService.hasWarehouse(user.id);
+        if (!hasWarehouse) {
+          return null;
+        }
       }
       const { passwordHash: _passwordHash, ...result } = user;
       return result;

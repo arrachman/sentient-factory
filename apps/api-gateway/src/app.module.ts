@@ -21,6 +21,13 @@ import { DepartmentsModule } from './departments/departments.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
+import { ClinicAuditModule } from './clinic-audit/clinic-audit.module';
+import { ClinicWaModule } from './clinic-wa/clinic-wa.module';
+import { ClinicPsikologModule } from './clinic-psikolog/clinic-psikolog.module';
+import { ClinicServiceModule } from './clinic-service/clinic-service.module';
+import { ClinicRoomModule } from './clinic-room/clinic-room.module';
+import { ClinicClientModule } from './clinic-client/clinic-client.module';
+import { ClinicUsersModule } from './clinic-users/clinic-users.module';
 
 @Module({
   imports: [
@@ -49,6 +56,14 @@ import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
     SessionsModule,
     DashboardModule,
     HrAttendanceModule,
+    // Clinic domain (Althea Psychology) — see .planning/ADRs/002, 005, 006
+    ClinicAuditModule,
+    ClinicWaModule,
+    ClinicPsikologModule,
+    ClinicServiceModule,
+    ClinicRoomModule,
+    ClinicClientModule,
+    ClinicUsersModule,
   ],
 })
 export class AppModule {}

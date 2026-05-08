@@ -1,0 +1,117 @@
+import { z } from 'zod';
+
+/**
+ * Psikolog response shape from api-gateway `/clinic/psikolog`.
+ * Mirror of `ClinicPsikologService.mapToResponse()`.
+ */
+export const psikologSchema = z.object({
+  id: z.number().int(),
+  userId: z.number().int(),
+  email: z.string().email(),
+  username: z.string(),
+  fullName: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  isActive: z.boolean(),
+  title: z.string().nullable(),
+  specialty: z.array(z.string()),
+  color: z.string().nullable(),
+  license: z.string().nullable(),
+  defaultSlots: z.number().int(),
+  bio: z.string().nullable(),
+  lastLogin: z.string().nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type Psikolog = z.infer<typeof psikologSchema>;
+
+/**
+ * Form schema untuk create.
+ * - Required: email, fullName
+ * - Optional pakai `.optional()` (input/output sama → compat react-hook-form)
+ * - Tidak pakai `.default()` (kasih default di form `defaultValues`)
+ */
+export const createPsikologSchema = z.object({
+  email: z.string().email('Email tidak valid'),
+  fullName: z.string().min(2, 'Nama minimal 2 karakter').max(255),
+  username: z.string().max(120).optional(),
+  password: z
+    .string()
+    .max(120)
+    .refine((v) => !v || v.length >= 8, { message: 'Password minimal 8 karakter' })
+    .optional(),
+  title: z.string().max(80).optional(),
+  specialty: z.array(z.string()).max(10).optional(),
+  color: z.string().max(20).optional(),
+  license: z.string().max(80).optional(),
+  defaultSlots: z.number().int().min(0).max(20).optional(),
+  bio: z.string().max(2000).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type CreatePsikologInput = z.infer<typeof createPsikologSchema>;
+
+/**
+ * Update schema = create minus immutable fields, semua optional.
+ */
+export const updatePsikologSchema = createPsikologSchema
+  .omit({ email: true, username: true, password: true })
+  .partial();
+
+export type UpdatePsikologInput = z.infer<typeof updatePsikologSchema>;
+
+/**
+ * Specialty options (sesuai mockup althea-data.jsx).
+ */
+export const SPECIALTY_OPTIONS = [
+  'klinis_dewasa',
+  'anak_remaja',
+  'pasangan',
+  'keluarga',
+  'tes_psikologi',
+  'terapi_anak',
+  'tumbuh_kembang',
+] as const;
+
+/**
+ * Specialty label dalam Bahasa Indonesia.
+ */
+export const SPECIALTY_LABEL: Record<string, string> = {
+  klinis_dewasa: 'Klinis Dewasa',
+  anak_remaja: 'Anak & Remaja',
+  pasangan: 'Pasangan',
+  keluarga: 'Keluarga',
+  tes_psikologi: 'Tes Psikologi',
+  terapi_anak: 'Terapi Anak',
+  tumbuh_kembang: 'Tumbuh Kembang',
+};
+
+/**
+ * Default avatar color palette (sage spectrum).
+ */
+export const COLOR_PALETTE = [
+  '#5b8a66',
+  '#7aa382',
+  '#c97a5d',
+  '#6f8aa3',
+  '#9c7c3c',
+  '#3a4f4f',
+  '#e3a895',
+];
+
+export type ListResponse = {
+  success: boolean;
+  data: Psikolog[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
+
+export type SingleResponse = {
+  success: boolean;
+  data: Psikolog;
+  message?: string;
+};

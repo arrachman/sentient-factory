@@ -19,20 +19,21 @@ model User {
   isActive     Boolean   @default(true) @map("is_active")
   lastLogin    DateTime? @map("last_login_tz") @db.Timestamptz(3)
   createdAt    DateTime  @default(now()) @map("created_at")
-  createdBy    Int?   @map("created_by")
+  createdBy    Int?      @map("created_by")
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy    Int?   @map("updated_by")
+  updatedBy    Int?      @map("updated_by")
   deletedAt    DateTime? @map("deleted_at")
-  deletedBy    Int?   @map("deleted_by")
+  deletedBy    Int?      @map("deleted_by")
 
-  roles            UserRole[]
-  departments      UserDepartment[]
-  sessions         Session[]
-  auditLogs        AuditLog[]
-  warehouse        MasterDataWarehouse? @relation(fields: [warehouseId], references: [id])
-  inventoryLedgers InventoryLedger[]
-  managerInsights  ManagerInsight[]
-  managerRisks     ManagerRisk[]
+  roles                 UserRole[]
+  departments           UserDepartment[]
+  sessions              Session[]
+  auditLogs             AuditLog[]
+  warehouse             MasterDataWarehouse?   @relation(fields: [warehouseId], references: [id])
+  inventoryLedgers      InventoryLedger[]
+  managerInsights       ManagerInsight[]
+  managerRisks          ManagerRisk[]
+  clinicPsikologProfile ClinicPsikologProfile?
 
   @@index([warehouseId])
   @@map("m0_users")
@@ -44,11 +45,11 @@ model Role {
   description String?
   isSystem    Boolean   @default(false) @map("is_system")
   createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   Int?   @map("created_by")
+  createdBy   Int?      @map("created_by")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy   Int?   @map("updated_by")
+  updatedBy   Int?      @map("updated_by")
   deletedAt   DateTime? @map("deleted_at")
-  deletedBy   Int?   @map("deleted_by")
+  deletedBy   Int?      @map("deleted_by")
 
   permissions RolePermission[]
   users       UserRole[]
@@ -70,11 +71,11 @@ model Menu {
   isActive       Boolean   @default(true) @map("is_active")
   permissionName String?   @map("permission_name")
   createdAt      DateTime  @default(now()) @map("created_at")
-  createdBy      Int?   @map("created_by")
+  createdBy      Int?      @map("created_by")
   updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy      Int?   @map("updated_by")
+  updatedBy      Int?      @map("updated_by")
   deletedAt      DateTime? @map("deleted_at")
-  deletedBy      Int?   @map("deleted_by")
+  deletedBy      Int?      @map("deleted_by")
 
   parent   Menu?      @relation("MenuHierarchy", fields: [parentId], references: [id])
   children Menu[]     @relation("MenuHierarchy")
@@ -91,11 +92,11 @@ model RoleMenu {
   canView    Boolean   @default(true) @map("can_view")
   assignedAt DateTime  @default(now()) @map("assigned_at")
   createdAt  DateTime  @default(now()) @map("created_at")
-  createdBy  Int?   @map("created_by")
+  createdBy  Int?      @map("created_by")
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy  Int?   @map("updated_by")
+  updatedBy  Int?      @map("updated_by")
   deletedAt  DateTime? @map("deleted_at")
-  deletedBy  Int?   @map("deleted_by")
+  deletedBy  Int?      @map("deleted_by")
 
   role Role @relation(fields: [roleId], references: [id])
   menu Menu @relation(fields: [menuId], references: [id])
@@ -111,11 +112,11 @@ model Permission {
   module      String
   action      String
   createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   Int?   @map("created_by")
+  createdBy   Int?      @map("created_by")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy   Int?   @map("updated_by")
+  updatedBy   Int?      @map("updated_by")
   deletedAt   DateTime? @map("deleted_at")
-  deletedBy   Int?   @map("deleted_by")
+  deletedBy   Int?      @map("deleted_by")
 
   roles RolePermission[]
 
@@ -128,11 +129,11 @@ model RolePermission {
   permissionId Int       @map("permission_id")
   assignedAt   DateTime  @default(now()) @map("assigned_at")
   createdAt    DateTime  @default(now()) @map("created_at")
-  createdBy    Int?   @map("created_by")
+  createdBy    Int?      @map("created_by")
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy    Int?   @map("updated_by")
+  updatedBy    Int?      @map("updated_by")
   deletedAt    DateTime? @map("deleted_at")
-  deletedBy    Int?   @map("deleted_by")
+  deletedBy    Int?      @map("deleted_by")
 
   role       Role       @relation(fields: [roleId], references: [id])
   permission Permission @relation(fields: [permissionId], references: [id])
@@ -149,11 +150,11 @@ model Department {
   parentId    Int?      @map("parent_id")
   managerId   String?   @map("manager_id")
   createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   Int?   @map("created_by")
+  createdBy   Int?      @map("created_by")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy   Int?   @map("updated_by")
+  updatedBy   Int?      @map("updated_by")
   deletedAt   DateTime? @map("deleted_at")
-  deletedBy   Int?   @map("deleted_by")
+  deletedBy   Int?      @map("deleted_by")
 
   parent   Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
   children Department[]     @relation("DepartmentHierarchy")
@@ -168,11 +169,11 @@ model UserRole {
   roleId     Int       @map("role_id")
   assignedAt DateTime  @default(now()) @map("assigned_at")
   createdAt  DateTime  @default(now()) @map("created_at")
-  createdBy  Int?   @map("created_by")
+  createdBy  Int?      @map("created_by")
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy  Int?   @map("updated_by")
+  updatedBy  Int?      @map("updated_by")
   deletedAt  DateTime? @map("deleted_at")
-  deletedBy  Int?   @map("deleted_by")
+  deletedBy  Int?      @map("deleted_by")
 
   user User @relation(fields: [userId], references: [id])
   role Role @relation(fields: [roleId], references: [id])
@@ -187,11 +188,11 @@ model UserDepartment {
   departmentId Int       @map("department_id")
   joinedAt     DateTime  @default(now()) @map("joined_at")
   createdAt    DateTime  @default(now()) @map("created_at")
-  createdBy    Int?   @map("created_by")
+  createdBy    Int?      @map("created_by")
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy    Int?   @map("updated_by")
+  updatedBy    Int?      @map("updated_by")
   deletedAt    DateTime? @map("deleted_at")
-  deletedBy    Int?   @map("deleted_by")
+  deletedBy    Int?      @map("deleted_by")
 
   user       User       @relation(fields: [userId], references: [id])
   department Department @relation(fields: [departmentId], references: [id])
@@ -216,11 +217,11 @@ model MasterDataContact {
   contactEmail     String?         @map("contact_email")
   contactPhone     String?         @map("contact_phone")
   createdAt        DateTime        @default(now()) @map("created_at")
-  createdBy        Int?         @map("created_by")
+  createdBy        Int?            @map("created_by")
   updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?         @map("updated_by")
+  updatedBy        Int?            @map("updated_by")
   deletedAt        DateTime?       @map("deleted_at")
-  deletedBy        Int?         @map("deleted_by")
+  deletedBy        Int?            @map("deleted_by")
   deliveryOrders   DeliveryOrder[]
   inbounds         Inbound[]       @relation("InboundSupplier")
 
@@ -233,11 +234,11 @@ model MasterDataUom {
   name             String
   type             String
   createdAt        DateTime          @default(now()) @map("created_at")
-  createdBy        Int?           @map("created_by")
+  createdBy        Int?              @map("created_by")
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?           @map("updated_by")
+  updatedBy        Int?              @map("updated_by")
   deletedAt        DateTime?         @map("deleted_at")
-  deletedBy        Int?           @map("deleted_by")
+  deletedBy        Int?              @map("deleted_by")
   items            MasterDataItem[]
   inventoryLedgers InventoryLedger[]
 
@@ -251,11 +252,11 @@ model MasterDataDivision {
   description String?
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at")
-  createdBy   Int?   @map("created_by")
+  createdBy   Int?      @map("created_by")
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy   Int?   @map("updated_by")
+  updatedBy   Int?      @map("updated_by")
   deletedAt   DateTime? @map("deleted_at")
-  deletedBy   Int?   @map("deleted_by")
+  deletedBy   Int?      @map("deleted_by")
 
   @@map("m1_division")
 }
@@ -265,11 +266,11 @@ model MasterDataProvince {
   name      String
   isoCode   String           @unique @map("iso_code")
   createdAt DateTime         @default(now()) @map("created_at")
-  createdBy Int?          @map("created_by")
+  createdBy Int?             @map("created_by")
   updatedAt DateTime         @default(now()) @updatedAt @map("updated_at")
-  updatedBy Int?          @map("updated_by")
+  updatedBy Int?             @map("updated_by")
   deletedAt DateTime?        @map("deleted_at")
-  deletedBy Int?          @map("deleted_by")
+  deletedBy Int?             @map("deleted_by")
   cities    MasterDataCity[]
 
   @@map("m1_province")
@@ -281,11 +282,11 @@ model MasterDataCity {
   name       String
   postalCode String    @map("postal_code")
   createdAt  DateTime  @default(now()) @map("created_at")
-  createdBy  Int?   @map("created_by")
+  createdBy  Int?      @map("created_by")
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy  Int?   @map("updated_by")
+  updatedBy  Int?      @map("updated_by")
   deletedAt  DateTime? @map("deleted_at")
-  deletedBy  Int?   @map("deleted_by")
+  deletedBy  Int?      @map("deleted_by")
 
   province       MasterDataProvince    @relation(fields: [provinceId], references: [id])
   warehouses     MasterDataWarehouse[]
@@ -301,11 +302,11 @@ model MasterDataCitySla {
   stdLeadTimeDays Int       @default(0) @map("std_lead_time_days")
   stdReturnDoDays Int       @default(0) @map("std_return_do_days")
   createdAt       DateTime  @default(now()) @map("created_at")
-  createdBy       Int?   @map("created_by")
+  createdBy       Int?      @map("created_by")
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy       Int?   @map("updated_by")
+  updatedBy       Int?      @map("updated_by")
   deletedAt       DateTime? @map("deleted_at")
-  deletedBy       Int?   @map("deleted_by")
+  deletedBy       Int?      @map("deleted_by")
 
   city MasterDataCity @relation(fields: [cityId], references: [id])
 
@@ -320,11 +321,11 @@ model MasterDataWarehouse {
   locationName     String?           @map("location_name")
   addressDetail    String?           @map("address_detail")
   createdAt        DateTime          @default(now()) @map("created_at")
-  createdBy        Int?           @map("created_by")
+  createdBy        Int?              @map("created_by")
   updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?           @map("updated_by")
+  updatedBy        Int?              @map("updated_by")
   deletedAt        DateTime?         @map("deleted_at")
-  deletedBy        Int?           @map("deleted_by")
+  deletedBy        Int?              @map("deleted_by")
   city             MasterDataCity    @relation(fields: [cityId], references: [id])
   deliveryOrders   DeliveryOrder[]
   inbounds         Inbound[]
@@ -343,11 +344,11 @@ model MasterDataItem {
   itemType  String    @map("item_type")
   isActive  Boolean   @default(true) @map("is_active")
   createdAt DateTime  @default(now()) @map("created_at")
-  createdBy Int?   @map("created_by")
+  createdBy Int?      @map("created_by")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy Int?   @map("updated_by")
+  updatedBy Int?      @map("updated_by")
   deletedAt DateTime? @map("deleted_at")
-  deletedBy Int?   @map("deleted_by")
+  deletedBy Int?      @map("deleted_by")
 
   uom              MasterDataUom         @relation(fields: [uomId], references: [id])
   doDetails        DeliveryOrderDetail[]
@@ -385,11 +386,11 @@ model DeliveryOrder {
   notes                String?
   status               String    @default("DRAFT")
   createdAt            DateTime  @default(now()) @map("created_at")
-  createdBy            Int?   @map("created_by")
+  createdBy            Int?      @map("created_by")
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy            Int?   @map("updated_by")
+  updatedBy            Int?      @map("updated_by")
   deletedAt            DateTime? @map("deleted_at")
-  deletedBy            Int?   @map("deleted_by")
+  deletedBy            Int?      @map("deleted_by")
 
   customer        MasterDataContact     @relation(fields: [customerId], references: [id])
   warehouse       MasterDataWarehouse?  @relation(fields: [warehouseId], references: [id])
@@ -415,11 +416,11 @@ model DeliveryOrderDetail {
   uomCodeSnapshot  String?   @map("uom_code_snapshot")
   notes            String?
   createdAt        DateTime  @default(now()) @map("created_at")
-  createdBy        Int?   @map("created_by")
+  createdBy        Int?      @map("created_by")
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?   @map("updated_by")
+  updatedBy        Int?      @map("updated_by")
   deletedAt        DateTime? @map("deleted_at")
-  deletedBy        Int?   @map("deleted_by")
+  deletedBy        Int?      @map("deleted_by")
 
   deliveryOrder DeliveryOrder         @relation(fields: [doId], references: [id])
   item          MasterDataItem        @relation(fields: [itemId], references: [id])
@@ -441,11 +442,11 @@ model OutboundDetailBatch {
   expiredDate      DateTime? @map("expired_date") @db.Date
   notes            String?
   createdAt        DateTime  @default(now()) @map("created_at")
-  createdBy        Int?   @map("created_by")
+  createdBy        Int?      @map("created_by")
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?   @map("updated_by")
+  updatedBy        Int?      @map("updated_by")
   deletedAt        DateTime? @map("deleted_at")
-  deletedBy        Int?   @map("deleted_by")
+  deletedBy        Int?      @map("deleted_by")
 
   outboundDetail DeliveryOrderDetail @relation(fields: [outboundDetailId], references: [id])
 
@@ -464,11 +465,11 @@ model Inbound {
   notes           String?
   status          String    @default("DRAFT")
   createdAt       DateTime  @default(now()) @map("created_at")
-  createdBy       Int?   @map("created_by")
+  createdBy       Int?      @map("created_by")
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy       Int?   @map("updated_by")
+  updatedBy       Int?      @map("updated_by")
   deletedAt       DateTime? @map("deleted_at")
-  deletedBy       Int?   @map("deleted_by")
+  deletedBy       Int?      @map("deleted_by")
 
   supplier  MasterDataContact   @relation("InboundSupplier", fields: [supplierId], references: [id])
   warehouse MasterDataWarehouse @relation(fields: [warehouseId], references: [id])
@@ -491,11 +492,11 @@ model InboundDetail {
   itemNameSnapshot String?   @map("item_name_snapshot")
   notes            String?
   createdAt        DateTime  @default(now()) @map("created_at")
-  createdBy        Int?   @map("created_by")
+  createdBy        Int?      @map("created_by")
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?   @map("updated_by")
+  updatedBy        Int?      @map("updated_by")
   deletedAt        DateTime? @map("deleted_at")
-  deletedBy        Int?   @map("deleted_by")
+  deletedBy        Int?      @map("deleted_by")
 
   inbound Inbound              @relation(fields: [inboundId], references: [id])
   item    MasterDataItem       @relation(fields: [itemId], references: [id])
@@ -516,11 +517,11 @@ model InboundDetailBatch {
   expiredDate     DateTime? @map("expired_date") @db.Date
   notes           String?
   createdAt       DateTime  @default(now()) @map("created_at")
-  createdBy       Int?   @map("created_by")
+  createdBy       Int?      @map("created_by")
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy       Int?   @map("updated_by")
+  updatedBy       Int?      @map("updated_by")
   deletedAt       DateTime? @map("deleted_at")
-  deletedBy       Int?   @map("deleted_by")
+  deletedBy       Int?      @map("deleted_by")
 
   inboundDetail InboundDetail @relation(fields: [inboundDetailId], references: [id])
 
@@ -530,16 +531,16 @@ model InboundDetailBatch {
 }
 
 model InventoryBatch {
-  id                Int       @id @default(autoincrement())
-  itemId            Int       @map("item_id")
-  batchNumber       String    @map("batch_number")
-  expiryDate        DateTime? @map("expiry_date") @db.Date
-  createdAt         DateTime  @default(now()) @map("created_at")
-  createdBy         Int?   @map("created_by")
-  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy         Int?   @map("updated_by")
-  deletedAt         DateTime? @map("deleted_at")
-  deletedBy         Int?   @map("deleted_by")
+  id          Int       @id @default(autoincrement())
+  itemId      Int       @map("item_id")
+  batchNumber String    @map("batch_number")
+  expiryDate  DateTime? @map("expiry_date") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+  createdBy   Int?      @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy   Int?      @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at")
+  deletedBy   Int?      @map("deleted_by")
 
   item   MasterDataItem    @relation(fields: [itemId], references: [id])
   ledger InventoryLedger[]
@@ -568,11 +569,11 @@ model InventoryLedger {
   userId           Int?      @map("user_id")
   notes            String?
   createdAt        DateTime  @default(now()) @map("created_at")
-  createdBy        Int?   @map("created_by")
+  createdBy        Int?      @map("created_by")
   updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy        Int?   @map("updated_by")
+  updatedBy        Int?      @map("updated_by")
   deletedAt        DateTime? @map("deleted_at")
-  deletedBy        Int?   @map("deleted_by")
+  deletedBy        Int?      @map("deleted_by")
 
   item      MasterDataItem      @relation(fields: [itemId], references: [id])
   warehouse MasterDataWarehouse @relation(fields: [warehouseId], references: [id])
@@ -618,11 +619,11 @@ model AuditLog {
   ipAddress  String?   @map("ip_address")
   userAgent  String?   @map("user_agent")
   createdAt  DateTime  @default(now()) @map("created_at")
-  createdBy  Int?   @map("created_by")
+  createdBy  Int?      @map("created_by")
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
-  updatedBy  Int?   @map("updated_by")
+  updatedBy  Int?      @map("updated_by")
   deletedAt  DateTime? @map("deleted_at")
-  deletedBy  Int?   @map("deleted_by")
+  deletedBy  Int?      @map("deleted_by")
 
   user User? @relation(fields: [userId], references: [id])
 
@@ -643,10 +644,10 @@ model ManagerInsight {
 
   managerUser User? @relation(fields: [managerUserId], references: [id])
 
+  @@unique([managerUserId, title, insightCreatedAt])
   @@index([insightCreatedAt])
   @@index([status, insightCreatedAt])
   @@index([managerUserId, insightCreatedAt])
-  @@unique([managerUserId, title, insightCreatedAt])
   @@map("m0_manager_insight")
 }
 
@@ -664,9 +665,9 @@ model ManagerRisk {
 
   managerUser User? @relation(fields: [managerUserId], references: [id])
 
+  @@unique([title, openedAt])
   @@index([severity, status])
   @@index([openedAt])
-  @@unique([title, openedAt])
   @@map("m0_manager_risk")
 }
 
@@ -682,4 +683,136 @@ model ManagerDataFreshness {
   @@unique([domain, datasetName])
   @@index([lastRefreshAt])
   @@map("m0_manager_data_freshness")
+}
+
+// ============================================================================
+// CLINIC DOMAIN — Althea Psychology booking system
+// Prefix: clinic_*
+// See: .planning/ADRs/006-table-prefix-clinic.md
+// ============================================================================
+
+/// Single-row config table untuk clinic operational settings.
+/// Lihat ADR 007 (pricing) + ADR 008 (booking constraints) untuk semantic.
+model ClinicSettings {
+  id             Int      @id @default(1)
+  clinicName     String   @default("Althea Psychology") @map("clinic_name")
+  address        String?  @db.Text
+  timezone       String   @default("Asia/Jakarta")
+  currency       String   @default("IDR")
+  // Operating hours per day (JSON: { monday: { open, close, isOpen }, ... })
+  operatingHours Json     @default("{}") @map("operating_hours")
+  holidays       Json     @default("[]") // list of ISO date strings
+  // Booking constraints (ADR 008)
+  bufferMinutes  Int      @default(15) @map("buffer_minutes")
+  // Pricing & payment (ADR 007)
+  taxEnabled     Boolean  @default(true) @map("tax_enabled")
+  taxPercentage  Decimal  @default(11.00) @map("tax_percentage") @db.Decimal(5, 2)
+  dpPercentage   Decimal  @default(50.00) @map("dp_percentage") @db.Decimal(5, 2)
+  // WA settings (ADR 004)
+  waSendEnabled  Boolean  @default(false) @map("wa_send_enabled")
+  waCountryCode  String   @default("+62") @map("wa_country_code")
+  // Audit fields
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?     @map("created_by")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy      Int?     @map("updated_by")
+
+  @@map("clinic_settings")
+}
+
+/// Profile extension untuk user dengan role `clinic-psikolog`.
+/// 1-to-1 dengan User (m0_users). User table tetap source of truth untuk auth.
+model ClinicPsikologProfile {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique @map("user_id")
+  title        String? // e.g., "M.Psi", "Psikolog"
+  specialty    String[] // ["klinis_dewasa", "anak_remaja", "pasangan"]
+  color        String? // hex code untuk avatar/badge (e.g., "#5b8a66")
+  license      String? // SIPP nomor (Surat Izin Praktik Psikolog)
+  defaultSlots Int       @default(4) @map("default_slots") // slot per hari default
+  bio          String?   @db.Text
+  isActive     Boolean   @default(true) @map("is_active")
+  // Audit fields
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy    Int?      @map("created_by")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy    Int?      @map("updated_by")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy    Int?      @map("deleted_by")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([isActive])
+  @@map("clinic_psikolog_profile")
+}
+
+/// Service catalog — konseling/terapi/tes types.
+/// Lihat ADR 007 (pricing model).
+model ClinicService {
+  id              Int       @id @default(autoincrement())
+  name            String
+  category        String // 'konseling' | 'terapi' | 'tes'
+  sessionCount    Int       @default(1) @map("session_count")
+  durationMinutes Int       @map("duration_minutes")
+  basePrice       Decimal   @map("base_price") @db.Decimal(12, 2)
+  description     String?   @db.Text
+  isActive        Boolean   @default(true) @map("is_active")
+  // Audit fields
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy       Int?      @map("created_by")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy       Int?      @map("updated_by")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy       Int?      @map("deleted_by")
+
+  @@index([category, isActive])
+  @@map("clinic_service")
+}
+
+/// Physical/virtual rooms tempat sesi berlangsung.
+/// 11 rooms per PRD: konseling (Sky/Sage/Forest/Sunset/Mint), anak (Terapi 1-3 + Playground), Tes, Seminar.
+model ClinicRoom {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  type        String // 'konseling' | 'anak' | 'tes' | 'seminar'
+  capacity    Int       @default(1)
+  description String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  // Audit fields
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy   Int?      @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy   Int?      @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy   Int?      @map("deleted_by")
+
+  @@index([type, isActive])
+  @@map("clinic_room")
+}
+
+/// Pasien (klien klinik). Standalone entity — TIDAK login ke app, hanya recipient WA notification.
+/// See ADR 003.
+model ClinicClient {
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  gender               String // 'L' | 'P'
+  age                  Int?
+  phoneWa              String    @map("phone_wa")
+  medicalRecordNumber  String?   @unique @map("medical_record_number")
+  preferredServiceType String?   @map("preferred_service_type")
+  email                String?
+  address              String?   @db.Text
+  notes                String?   @db.Text
+  waOptedOut           Boolean   @default(false) @map("wa_opted_out")
+  // Audit fields
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy            Int?      @map("created_by")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy            Int?      @map("updated_by")
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy            Int?      @map("deleted_by")
+
+  @@index([phoneWa])
+  @@index([name])
+  @@map("clinic_client")
 }

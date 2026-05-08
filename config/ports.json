@@ -8,6 +8,15 @@
       "description": "Main administration dashboard",
       "isActive": true
     },
+    "web-althea": {
+      "name": "Web Althea",
+      "port": 3202,
+      "type": "nextjs",
+      "envVar": "WEB_ALTHEA_PORT",
+      "description": "Althea Psychology booking app (6 internal staff roles)",
+      "productionUrl": "http://althea.fr-labs.my.id/",
+      "isActive": true
+    },
     "landing-page": {
       "name": "Landing Page",
       "port": 3102,
@@ -21,7 +30,8 @@
       "port": 3203,
       "type": "nestjs",
       "envVar": "API_GATEWAY_PORT",
-      "description": "Backend API server",
+      "description": "Backend API server (shared ERP + Clinic via /clinic/* namespace)",
+      "productionUrl": "http://althea.fr-labs.my.id/api",
       "isActive": true
     },
     "ai-engine": {

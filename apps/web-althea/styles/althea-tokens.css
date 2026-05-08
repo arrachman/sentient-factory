@@ -1,0 +1,191 @@
+/* =====================================================================
+   Althea Psychology — Brand Design Tokens
+   Therapeutic, calm, warm. Sage primary, soft cream surface, deep teal text.
+   Ported from apps/psychology-design/althea.css.
+   Used as Tailwind v4 @theme source-of-truth via styles/globals.css.
+   ===================================================================== */
+
+:root {
+  /* ------------------------------------------------------------------
+     Type — Lora (warm, book-like serif used in editorial/wellness contexts)
+     untuk wordmark + headlines; Nunito Sans (soft, approachable humanist
+     sans yang umum di UI Indonesia) untuk body & UI.
+     ------------------------------------------------------------------ */
+  --font-sans: 'Nunito Sans', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  --font-serif: 'Lora', ui-serif, Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ------------------------------------------------------------------
+     Brand palette — sage + cream + deep teal
+     ------------------------------------------------------------------ */
+  --sage-50: #f1f5f1;
+  --sage-100: #e1ebe2;
+  --sage-200: #c5d8c8;
+  --sage-300: #9ebca3;
+  --sage-400: #7aa382;
+  --sage-500: #5b8a66; /* primary brand */
+  --sage-600: #467053;
+  --sage-700: #385a43;
+  --sage-800: #2d4736;
+  --sage-900: #243a2c;
+
+  --cream-50: #fbfaf6; /* page background */
+  --cream-100: #f5f2e9; /* subtle surfaces */
+  --cream-200: #ece6d3; /* cards on cream */
+  --cream-300: #ddd2b3;
+
+  --teal-700: #1f3a3a; /* primary text */
+  --teal-800: #142828;
+  --teal-900: #0b1a1a;
+
+  --rose-100: #f7e9e3; /* warm accent — terapi anak */
+  --rose-300: #e3a895;
+  --rose-500: #c97a5d;
+
+  --amber-100: #fef3c7;
+  --amber-500: #d97706;
+
+  --neutral-50: #faf9f6;
+  --neutral-100: #f0eee8;
+  --neutral-200: #e3e0d6;
+  --neutral-300: #cbc7b8;
+  --neutral-400: #a39e8e;
+  --neutral-500: #75716a;
+  --neutral-600: #54514c;
+  --neutral-700: #3a3833;
+  --neutral-800: #232220;
+
+  /* ------------------------------------------------------------------
+     Semantic tokens — what components consume
+     ------------------------------------------------------------------ */
+  --bg: var(--cream-50);
+  --bg-elev: #ffffff;
+  --bg-muted: var(--cream-100);
+  --fg: var(--teal-800);
+  --fg-muted: var(--neutral-500);
+  --fg-subtle: var(--neutral-400);
+  --border: #e6e1d2;
+  --border-strong: #d4ccb6;
+
+  --primary: var(--sage-500);
+  --primary-fg: #ffffff;
+  --primary-soft: var(--sage-100);
+
+  --success: #4f8c5b;
+  --success-soft: #e1efe2;
+  --warning: var(--amber-500);
+  --warning-soft: var(--amber-100);
+  --danger: #b3493b;
+  --danger-soft: #f5dfd9;
+  --info: #4a7090;
+  --info-soft: #e1ecf3;
+
+  /* ------------------------------------------------------------------
+     Service-type colors
+     Schedule cards: 4px left bar + soft fill background
+     ------------------------------------------------------------------ */
+  --svc-konseling: var(--sage-500);
+  --svc-konseling-soft: var(--sage-100);
+  --svc-terapi: #6f8aa3;
+  --svc-terapi-soft: #e3eaf1;
+  --svc-anak: var(--rose-500);
+  --svc-anak-soft: var(--rose-100);
+  --svc-tes: #9c7c3c;
+  --svc-tes-soft: #f3eada;
+
+  /* ------------------------------------------------------------------
+     Type scale
+     ------------------------------------------------------------------ */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-2sm: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ------------------------------------------------------------------
+     Radii / shadows / motion
+     ------------------------------------------------------------------ */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-xs: 0 1px 1px rgb(20 40 40 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(20 40 40 / 0.05),
+    0 1px 3px rgb(20 40 40 / 0.04);
+  --shadow-md: 0 6px 14px -6px rgb(20 40 40 / 0.10),
+    0 2px 4px rgb(20 40 40 / 0.04);
+  --shadow-lg: 0 16px 40px -12px rgb(20 40 40 / 0.16);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* ------------------------------------------------------------------
+     Layout
+     ------------------------------------------------------------------ */
+  --sidebar-width: 260px;
+  --sidebar-width-collapse: 72px;
+  --header-height: 64px;
+  --tabbar-height: 76px; /* mobile bottom nav */
+
+  /* ------------------------------------------------------------------
+     ShadCN-compatible aliases
+     Komponen ShadCN/Radix expect tokens dengan nama tertentu.
+     Kita map ke palette althea biar reusable.
+     ------------------------------------------------------------------ */
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg-elev);
+  --card-foreground: var(--fg);
+  --popover: var(--bg-elev);
+  --popover-foreground: var(--fg);
+  --primary-foreground: var(--primary-fg);
+  --secondary: var(--cream-100);
+  --secondary-foreground: var(--teal-800);
+  --muted: var(--cream-100);
+  --muted-foreground: var(--fg-muted);
+  --accent: var(--sage-100);
+  --accent-foreground: var(--sage-800);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--border-strong);
+  --ring: var(--sage-300);
+}
+
+/* ----- Dark mode (placeholder, refine saat implement dark theme) ----- */
+.dark {
+  --bg: var(--teal-900);
+  --bg-elev: var(--teal-800);
+  --bg-muted: var(--teal-700);
+  --fg: var(--cream-50);
+  --fg-muted: var(--neutral-300);
+  --fg-subtle: var(--neutral-400);
+  --border: #2a3d3d;
+  --border-strong: #3a4f4f;
+
+  --background: var(--bg);
+  --foreground: var(--fg);
+  --card: var(--bg-elev);
+  --card-foreground: var(--fg);
+  --popover: var(--bg-elev);
+  --popover-foreground: var(--fg);
+  --secondary: var(--teal-800);
+  --secondary-foreground: var(--cream-50);
+  --muted: var(--teal-800);
+  --muted-foreground: var(--neutral-400);
+  --accent: var(--sage-700);
+  --accent-foreground: var(--cream-50);
+  --input: #3a4f4f;
+  --ring: var(--sage-400);
+}

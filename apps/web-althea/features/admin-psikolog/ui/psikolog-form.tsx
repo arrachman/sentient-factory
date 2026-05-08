@@ -1,0 +1,268 @@
+'use client';
+
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { X } from 'lucide-react';
+import {
+  COLOR_PALETTE,
+  SPECIALTY_LABEL,
+  SPECIALTY_OPTIONS,
+  createPsikologSchema,
+  type CreatePsikologInput,
+  type Psikolog,
+} from '../model/types';
+
+type Props = {
+  open: boolean;
+  initial: Psikolog | null;
+  submitting: boolean;
+  onSubmit: (input: CreatePsikologInput) => void;
+  onClose: () => void;
+};
+
+const EMPTY_FORM: CreatePsikologInput = {
+  email: '',
+  fullName: '',
+  username: '',
+  password: '',
+  title: '',
+  specialty: [],
+  color: '',
+  license: '',
+  defaultSlots: 4,
+  bio: '',
+  isActive: true,
+};
+
+export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: Props) {
+  const isEdit = initial !== null;
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<CreatePsikologInput>({
+    resolver: zodResolver(createPsikologSchema),
+    defaultValues: EMPTY_FORM,
+  });
+
+  // Hydrate form ketika initial berubah (open edit dialog)
+  useEffect(() => {
+    if (initial) {
+      reset({
+        email: initial.email,
+        fullName: initial.fullName ?? '',
+        username: initial.username,
+        password: '',
+        title: initial.title ?? '',
+        specialty: initial.specialty,
+        color: initial.color ?? '',
+        license: initial.license ?? '',
+        defaultSlots: initial.defaultSlots,
+        bio: initial.bio ?? '',
+        isActive: initial.isActive,
+      });
+    } else {
+      reset(EMPTY_FORM);
+    }
+  }, [initial, reset]);
+
+  const selectedSpecialty = watch('specialty') ?? [];
+  const selectedColor = watch('color') ?? '';
+
+  if (!open) return null;
+
+  function toggleSpecialty(s: string) {
+    if (selectedSpecialty.includes(s)) {
+      setValue(
+        'specialty',
+        selectedSpecialty.filter((x) => x !== s),
+      );
+    } else {
+      setValue('specialty', [...selectedSpecialty, s]);
+    }
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="card-althea w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="h2">{isEdit ? 'Edit Psikolog' : 'Tambah Psikolog'}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-ghost btn-icon"
+            aria-label="Close dialog"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-6 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="caption mb-1 block">Email *</label>
+              <input
+                type="email"
+                {...register('email')}
+                disabled={isEdit}
+                className="input-althea"
+                placeholder="psikolog@althea.local"
+              />
+              {errors.email && (
+                <p className="caption mt-1 text-danger">{errors.email.message}</p>
+              )}
+            </div>
+            <div>
+              <label className="caption mb-1 block">Nama Lengkap *</label>
+              <input {...register('fullName')} className="input-althea" />
+              {errors.fullName && (
+                <p className="caption mt-1 text-danger">{errors.fullName.message}</p>
+              )}
+            </div>
+          </div>
+
+          {!isEdit && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="caption mb-1 block">Username (opsional)</label>
+                <input
+                  {...register('username')}
+                  className="input-althea"
+                  placeholder="auto dari nama"
+                />
+              </div>
+              <div>
+                <label className="caption mb-1 block">Password (opsional)</label>
+                <input
+                  type="password"
+                  {...register('password')}
+                  className="input-althea"
+                  placeholder="default Test1234!"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="caption mb-1 block">Title</label>
+              <input
+                {...register('title')}
+                className="input-althea"
+                placeholder="M.Psi"
+              />
+            </div>
+            <div>
+              <label className="caption mb-1 block">License (SIPP)</label>
+              <input
+                {...register('license')}
+                className="input-althea"
+                placeholder="SIPP-12345"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="caption mb-1 block">Spesialisasi</label>
+            <div className="flex flex-wrap gap-2">
+              {SPECIALTY_OPTIONS.map((s) => {
+                const active = selectedSpecialty.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleSpecialty(s)}
+                    className={`badge cursor-pointer transition ${
+                      active ? 'badge-sage' : 'badge-neutral'
+                    }`}
+                  >
+                    {SPECIALTY_LABEL[s]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="caption mb-1 block">Warna Avatar</label>
+            <div className="flex flex-wrap gap-2">
+              {COLOR_PALETTE.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setValue('color', c)}
+                  className={`h-8 w-8 rounded-full border-2 transition ${
+                    selectedColor === c ? 'border-teal-800 ring-2 ring-sage-300' : 'border-border'
+                  }`}
+                  style={{ backgroundColor: c }}
+                  aria-label={`Warna ${c}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="caption mb-1 block">Slot per hari (default)</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                {...register('defaultSlots', { valueAsNumber: true })}
+                className="input-althea"
+              />
+            </div>
+            <div className="flex items-end gap-2 pb-2">
+              <Controller
+                name="isActive"
+                control={control}
+                render={({ field }) => (
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm">Aktif</span>
+                  </label>
+                )}
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="caption mb-1 block">Bio</label>
+            <textarea
+              {...register('bio')}
+              rows={3}
+              className="input-althea h-auto py-2"
+              placeholder="Lulusan ..., fokus pada ..."
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+            <button type="button" onClick={onClose} className="btn btn-outline">
+              Batal
+            </button>
+            <button type="submit" disabled={submitting} className="btn btn-primary">
+              {submitting ? 'Menyimpan...' : isEdit ? 'Simpan' : 'Tambah Psikolog'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
