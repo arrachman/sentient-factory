@@ -32,7 +32,12 @@ export function useLogin() {
       setAuthCookie(res.data.token);
       toast.success(`Selamat datang, ${res.data.user.fullName || res.data.user.username}`);
       const returnTo = params.get('returnTo');
-      router.push(returnTo && returnTo.startsWith('/') ? returnTo : '/dashboard');
+      // Pick first clinic-* role to determine landing route
+      const clinicRoles = res.data.user.roles.filter((r) => r.startsWith('clinic-'));
+      const role = clinicRoles[0] ?? 'clinic-admin';
+      const roleSlug = role.replace(/^clinic-/, '');
+      const landing = `/${roleSlug}/dashboard`;
+      router.push(returnTo && returnTo.startsWith('/') ? returnTo : landing);
       router.refresh();
     },
     onError: (err: Error) => {

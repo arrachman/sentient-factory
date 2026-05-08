@@ -4,7 +4,7 @@
 @import './althea-tokens.css';
 @import './althea-components.css';
 
-@plugin 'tw-animate-css';
+/* @plugin 'tw-animate-css' — disabled: incompatible export field with Tailwind v4 PostCSS resolver */
 
 @custom-variant dark (&:is(.dark *));
 

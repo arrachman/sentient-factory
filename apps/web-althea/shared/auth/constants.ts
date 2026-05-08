@@ -35,41 +35,30 @@ export const ALL_ROLES: Role[] = [
 
 /**
  * Default landing route per role setelah login.
+ *
+ * URL convention: prefixed dengan role slug (mis. /admin/dashboard) supaya
+ * URL distinct antar role — Next.js tidak allow parallel pages dengan path sama.
  */
 export const ROLE_DEFAULT_ROUTE: Record<Role, string> = {
-  'clinic-admin': '/dashboard',
-  'clinic-psikolog': '/dashboard',
-  'clinic-owner': '/dashboard',
-  'clinic-resepsionis': '/dashboard',
-  'clinic-marketing': '/dashboard',
-  'clinic-intern': '/dashboard',
+  'clinic-admin': '/admin/dashboard',
+  'clinic-psikolog': '/psikolog/dashboard',
+  'clinic-owner': '/owner/dashboard',
+  'clinic-resepsionis': '/resepsionis/dashboard',
+  'clinic-marketing': '/marketing/dashboard',
+  'clinic-intern': '/intern/dashboard',
 };
 
 /**
  * Mapping route prefix → role yang boleh akses.
  * Admin bypass (akses semua) di-handle terpisah di middleware.
- *
- * Route group syntax `(name)` di Next.js tidak mempengaruhi URL —
- * semua role landing di `/dashboard`, route group menentukan layout
- * & components yang dirender.
  */
 export const ROLE_ROUTE_PREFIXES: Record<Role, string[]> = {
-  'clinic-admin': [
-    '/dashboard',
-    '/psikolog',
-    '/layanan',
-    '/rooms',
-    '/clients',
-    '/users-roles',
-    '/notif-wa',
-    '/audit-log',
-    '/pengaturan',
-  ],
-  'clinic-psikolog': ['/dashboard', '/schedule', '/sessions', '/patients'],
-  'clinic-owner': ['/dashboard'],
-  'clinic-resepsionis': ['/dashboard'],
-  'clinic-marketing': ['/dashboard'],
-  'clinic-intern': ['/dashboard'],
+  'clinic-admin': ['/admin'],
+  'clinic-psikolog': ['/psikolog'],
+  'clinic-owner': ['/owner'],
+  'clinic-resepsionis': ['/resepsionis'],
+  'clinic-marketing': ['/marketing'],
+  'clinic-intern': ['/intern'],
 };
 
 /**
