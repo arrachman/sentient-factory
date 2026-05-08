@@ -29,7 +29,7 @@ export function PsikologList({ data, loading, onEdit, onDelete }: Props) {
   }
 
   return (
-    <div className="card-althea overflow-hidden">
+    <div className="card-althea overflow-x-auto">
       <table className="w-full text-left text-sm">
         <thead className="bg-cream-100 border-b border-border">
           <tr>

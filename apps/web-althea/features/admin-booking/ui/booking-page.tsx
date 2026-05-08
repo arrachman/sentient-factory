@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import {
+  CalendarPlus,
   Check,
   CheckCircle2,
   Play,
+  RotateCw,
   UserCheck,
   X,
 } from 'lucide-react';
@@ -23,6 +25,8 @@ import {
   type Booking,
   type BookingStatus,
 } from '../model/types';
+import { BookingWizard } from './booking-wizard';
+import { RescheduleDialog } from './reschedule-dialog';
 
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
@@ -50,6 +54,8 @@ function nextActions(status: BookingStatus): BookingStatus[] {
 export function BookingPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [rescheduling, setRescheduling] = useState<Booking | null>(null);
 
   const list = useBookingList({
     status: statusFilter || undefined,
@@ -80,16 +86,17 @@ export function BookingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="h1">Booking</h1>
-        <p className="caption mt-1">
-          Daftar booking sesi. State machine: awaiting_dp → confirmed → checked_in →
-          in_progress → completed.
-        </p>
-        <p className="caption mt-1 text-fg-muted">
-          ⚠️ Booking wizard 4-step belum di-implement di session ini. Untuk create
-          booking, pakai API langsung via Swagger atau curl.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="h1">Booking</h1>
+          <p className="caption mt-1">
+            Daftar booking sesi. State machine: awaiting_dp → confirmed → checked_in →
+            in_progress → completed.
+          </p>
+        </div>
+        <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
+          <CalendarPlus className="h-4 w-4" /> Booking Baru
+        </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -103,7 +110,7 @@ export function BookingPage() {
         </button>
       </div>
 
-      <div className="card-althea overflow-hidden">
+      <div className="card-althea overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-cream-100 border-b border-border text-left">
             <tr>
@@ -157,7 +164,19 @@ export function BookingPage() {
                   {b.createdViaWalkIn && <div className="caption mt-1">walk-in</div>}
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <div className="flex justify-end gap-1">
+                  <div className="flex justify-end gap-1 flex-wrap">
+                    {/* Reschedule (kecuali sudah cancelled/completed/in_progress) */}
+                    {!['cancelled', 'completed', 'in_progress'].includes(b.status) && (
+                      <button
+                        type="button"
+                        onClick={() => setRescheduling(b)}
+                        className="btn btn-sm btn-outline"
+                        title="Reschedule"
+                      >
+                        <RotateCw className="h-3.5 w-3.5" />
+                        <span className="ml-1">Ubah Jadwal</span>
+                      </button>
+                    )}
                     {nextActions(b.status).map((act) => {
                       const icon = act === 'confirmed' ? <Check className="h-3.5 w-3.5" />
                         : act === 'checked_in' ? <UserCheck className="h-3.5 w-3.5" />
@@ -191,6 +210,9 @@ export function BookingPage() {
       <div className="caption text-right">
         Total: {list.data?.meta?.total ?? 0} booking
       </div>
+
+      <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
+      <RescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} />
     </div>
   );
 }

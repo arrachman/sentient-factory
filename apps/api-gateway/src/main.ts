@@ -3,13 +3,23 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { BigIntSerializerInterceptor } from './common/interceptors/bigint-serializer.interceptor';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { loadVaultSecrets } from './config/vault';
 
 async function bootstrap() {
   await loadVaultSecrets();
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  // Security headers
+  app.use(
+    helmet({
+      contentSecurityPolicy: configService.get('NODE_ENV') === 'production' ? undefined : false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
 
   // Enable CORS
   app.enableCors({
@@ -26,6 +36,7 @@ async function bootstrap() {
     }),
   );
   app.useGlobalInterceptors(new BigIntSerializerInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global prefix
   app.setGlobalPrefix('api');

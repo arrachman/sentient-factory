@@ -83,7 +83,7 @@ export function ClientsPage() {
           onChange={(e) => setSearch(e.target.value)} className="input-althea pl-9" />
       </div>
 
-      <div className="card-althea overflow-hidden">
+      <div className="card-althea overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-cream-100 border-b border-border text-left">
             <tr>

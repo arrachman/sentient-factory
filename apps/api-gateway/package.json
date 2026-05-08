@@ -19,6 +19,7 @@
     "db:generate": "prisma generate",
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:clinic": "ts-node prisma/seed-clinic.ts",
+    "db:seed:clinic:wa": "ts-node prisma/seed-clinic-wa.ts",
     "db:ensure-system-user": "ts-node prisma/ensure-system-user.ts",
     "db:backfill:inventory-ledger": "ts-node prisma/backfill-inventory-ledger.ts",
     "db:studio": "prisma studio",
@@ -26,6 +27,17 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "json", "ts"],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": ["**/*.(t|j)s"],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -35,12 +47,14 @@
     "@nestjs/passport": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.4.2",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^5.22.0",
     "@types/nodemailer": "^8.0.0",
     "@whiskeysockets/baileys": "^7.0.0-rc.9",
     "class-transformer": "^0.5.0",
     "class-validator": "^0.14.0",
     "dotenv": "^16.0.0",
+    "helmet": "^8.1.0",
     "mysql2": "^3.17.4",
     "nodemailer": "^8.0.5",
     "passport": "^0.7.0",

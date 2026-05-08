@@ -90,7 +90,7 @@ export function LayananPage() {
         return (
           <div key={cat} className="space-y-2">
             <h2 className="h2">{SERVICE_CATEGORY_LABEL[cat]}</h2>
-            <div className="card-althea overflow-hidden">
+            <div className="card-althea overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-cream-100 border-b border-border text-left">
                   <tr>
