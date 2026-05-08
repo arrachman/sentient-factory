@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { ROLE_DEFAULT_ROUTE, type Role } from '@/shared/auth/constants';
 import { authApi, type LoginInput } from '../api/login.api';
 
 /**
@@ -21,10 +22,9 @@ export function useLogin() {
     onSuccess: (res) => {
       toast.success(`Selamat datang, ${res.data.user.fullName || res.data.user.username}`);
       const returnTo = params.get('returnTo');
-      const clinicRoles = res.data.user.roles.filter((r) => r.startsWith('clinic-'));
+      const clinicRoles = res.data.user.roles.filter((r) => r.startsWith('clinic-')) as Role[];
       const role = clinicRoles[0] ?? 'clinic-admin';
-      const roleSlug = role.replace(/^clinic-/, '');
-      const landing = `/${roleSlug}/dashboard`;
+      const landing = ROLE_DEFAULT_ROUTE[role] ?? '/admin/schedule';
       router.push(returnTo && returnTo.startsWith('/') ? returnTo : landing);
       router.refresh();
     },

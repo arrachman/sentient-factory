@@ -40,7 +40,9 @@ export const ALL_ROLES: Role[] = [
  * URL distinct antar role — Next.js tidak allow parallel pages dengan path sama.
  */
 export const ROLE_DEFAULT_ROUTE: Record<Role, string> = {
-  'clinic-admin': '/admin/dashboard',
+  // Admin lands ke Penjadwalan (item pertama di group Operasional) — sidebar
+  // tidak punya Dashboard menu (mengikuti mockup).
+  'clinic-admin': '/admin/schedule',
   'clinic-psikolog': '/psikolog/dashboard',
   'clinic-owner': '/owner/dashboard',
   'clinic-resepsionis': '/resepsionis/dashboard',
