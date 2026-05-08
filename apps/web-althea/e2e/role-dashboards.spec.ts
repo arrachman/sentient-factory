@@ -29,7 +29,14 @@ test.describe('role dashboards (smoke)', () => {
       await setupApiProxy(page);
       await loginAs(page, role);
       await page.goto(`/${role}/dashboard`);
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      // domcontentloaded (NOT networkidle) — resepsionis dashboard punya SSE
+      // connection yang long-lived; networkidle tidak akan pernah trigger.
+      await page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+
+      // Wait for h1 dashboard heading (key marker bahwa role-aware shell render)
+      await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible({
+        timeout: 5000,
+      });
 
       // At least one role-relevant text should be visible
       const body = await page.locator('body').textContent();
