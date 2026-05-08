@@ -141,6 +141,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Exception: web app lib/ (TS/JS code, not Python venv)
+!apps/*/lib/
+!apps/*/lib/**
+
 # PyInstaller
 *.manifest
 *.spec

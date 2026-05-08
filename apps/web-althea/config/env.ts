@@ -15,7 +15,8 @@ function optional(value: string | undefined, fallback: string): string {
 }
 
 export const ENV = {
-  API_URL: optional(process.env.NEXT_PUBLIC_API_URL, 'http://localhost:3203'),
+  // Include `/api` global prefix from NestJS api-gateway
+  API_URL: optional(process.env.NEXT_PUBLIC_API_URL, 'http://localhost:3203/api'),
   APP_URL: optional(process.env.NEXT_PUBLIC_APP_URL, 'http://localhost:3202'),
   NODE_ENV: optional(process.env.NODE_ENV, 'development'),
 } as const;
