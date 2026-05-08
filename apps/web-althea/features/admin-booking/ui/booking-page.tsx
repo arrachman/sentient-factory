@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  CalendarDays,
   CalendarPlus,
   Check,
   CheckCircle2,
+  Eye,
   Play,
   RotateCw,
+  Search,
   UserCheck,
   X,
 } from 'lucide-react';
@@ -25,6 +28,7 @@ import {
   type Booking,
   type BookingStatus,
 } from '../model/types';
+import { BookingDetailDialog } from './booking-detail-dialog';
 import { BookingWizard } from './booking-wizard';
 import { RescheduleDialog } from './reschedule-dialog';
 
@@ -51,16 +55,37 @@ function nextActions(status: BookingStatus): BookingStatus[] {
   return map[status] || [];
 }
 
+type QuickFilter = 'all' | 'today' | 'tomorrow' | 'week' | 'past';
+
+function dateForQuickFilter(qf: QuickFilter): string | undefined {
+  const today = new Date();
+  if (qf === 'today') return today.toISOString().slice(0, 10);
+  if (qf === 'tomorrow') {
+    const t = new Date(today);
+    t.setDate(t.getDate() + 1);
+    return t.toISOString().slice(0, 10);
+  }
+  return undefined;
+}
+
 export function BookingPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+  const [search, setSearch] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
+  const [detailing, setDetailing] = useState<Booking | null>(null);
+
+  const effectiveDate =
+    quickFilter === 'today' || quickFilter === 'tomorrow'
+      ? dateForQuickFilter(quickFilter)
+      : dateFilter || undefined;
 
   const list = useBookingList({
     status: statusFilter || undefined,
-    date: dateFilter || undefined,
-    limit: 100,
+    date: effectiveDate,
+    limit: 200,
     includeCancelled: !statusFilter,
   });
 
@@ -82,16 +107,46 @@ export function BookingPage() {
     else if (action === 'completed') completeMut.mutate(id);
   }
 
-  const items = list.data?.data ?? [];
+  const filteredItems = useMemo(() => {
+    const all = list.data?.data ?? [];
+    const now = new Date();
+    const weekFromNow = new Date(now);
+    weekFromNow.setDate(now.getDate() + 7);
+
+    return all.filter((b: Booking) => {
+      if (quickFilter === 'week') {
+        const start = new Date(b.scheduledStart);
+        if (start < now || start > weekFromNow) return false;
+      }
+      if (quickFilter === 'past') {
+        const start = new Date(b.scheduledStart);
+        if (start >= now) return false;
+      }
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        const haystack = [
+          b.client?.name,
+          b.client?.phoneWa,
+          b.service?.name,
+          b.psikolog?.fullName,
+          b.room?.name,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [list.data?.data, quickFilter, search]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="h1">Booking</h1>
           <p className="caption mt-1">
-            Daftar booking sesi. State machine: awaiting_dp → confirmed → checked_in →
-            in_progress → completed.
+            Kelola booking sesi: konfirmasi, check-in, mulai sesi, reschedule, payment & WA reminder.
           </p>
         </div>
         <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
@@ -99,14 +154,71 @@ export function BookingPage() {
         </button>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            { id: 'all', label: 'Semua' },
+            { id: 'today', label: 'Hari ini' },
+            { id: 'tomorrow', label: 'Besok' },
+            { id: 'week', label: '7 hari ke depan' },
+            { id: 'past', label: 'Lewat' },
+          ] as Array<{ id: QuickFilter; label: string }>
+        ).map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => {
+              setQuickFilter(f.id);
+              if (f.id !== 'all') setDateFilter('');
+            }}
+            className={`btn btn-sm ${quickFilter === f.id ? 'btn-primary' : 'btn-outline'}`}
+          >
+            <CalendarDays className="h-3.5 w-3.5" /> {f.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input-althea max-w-[200px]">
+        <div className="relative flex-1 min-w-[240px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-muted" />
+          <input
+            type="search"
+            placeholder="Cari nama klien, no HP, layanan, psikolog..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-althea pl-9"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="input-althea max-w-[200px]"
+        >
           <option value="">Semua status</option>
-          {BOOKING_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+          {BOOKING_STATUSES.map((s) => (
+            <option key={s} value={s}>
+              {STATUS_LABEL[s]}
+            </option>
+          ))}
         </select>
-        <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="input-althea max-w-[180px]" />
-        <button type="button" onClick={() => { setStatusFilter(''); setDateFilter(''); }} className="btn btn-ghost">
-          Reset filter
+        <input
+          type="date"
+          value={dateFilter}
+          disabled={quickFilter !== 'all'}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="input-althea max-w-[180px] disabled:opacity-50"
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setStatusFilter('');
+            setDateFilter('');
+            setSearch('');
+            setQuickFilter('all');
+          }}
+          className="btn btn-ghost"
+        >
+          Reset
         </button>
       </div>
 
@@ -124,13 +236,21 @@ export function BookingPage() {
             </tr>
           </thead>
           <tbody>
-            {items.map((b: Booking) => (
-              <tr key={b.id} className="border-b border-border last:border-b-0 hover:bg-cream-50">
+            {filteredItems.map((b: Booking) => (
+              <tr
+                key={b.id}
+                className="border-b border-border last:border-b-0 hover:bg-cream-50 cursor-pointer"
+                onClick={() => setDetailing(b)}
+              >
                 <td className="px-4 py-2">
                   <div className="font-medium">{formatDateTime(b.scheduledStart)}</div>
-                  <div className="caption">→ {formatDateTime(b.scheduledEnd).split(' ').slice(-2).join(' ')}</div>
+                  <div className="caption">
+                    → {formatDateTime(b.scheduledEnd).split(' ').slice(-2).join(' ')}
+                  </div>
                   {b.sessionTotal > 1 && (
-                    <div className="caption text-fg-muted">Sesi {b.sessionN}/{b.sessionTotal}</div>
+                    <div className="caption text-fg-muted">
+                      Sesi {b.sessionN}/{b.sessionTotal}
+                    </div>
                   )}
                 </td>
                 <td className="px-4 py-2">
@@ -163,9 +283,16 @@ export function BookingPage() {
                   </span>
                   {b.createdViaWalkIn && <div className="caption mt-1">walk-in</div>}
                 </td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-end gap-1 flex-wrap">
-                    {/* Reschedule (kecuali sudah cancelled/completed/in_progress) */}
+                    <button
+                      type="button"
+                      onClick={() => setDetailing(b)}
+                      className="btn btn-sm btn-ghost"
+                      title="Lihat detail"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
                     {!['cancelled', 'completed', 'in_progress'].includes(b.status) && (
                       <button
                         type="button"
@@ -174,15 +301,21 @@ export function BookingPage() {
                         title="Reschedule"
                       >
                         <RotateCw className="h-3.5 w-3.5" />
-                        <span className="ml-1">Ubah Jadwal</span>
                       </button>
                     )}
                     {nextActions(b.status).map((act) => {
-                      const icon = act === 'confirmed' ? <Check className="h-3.5 w-3.5" />
-                        : act === 'checked_in' ? <UserCheck className="h-3.5 w-3.5" />
-                        : act === 'in_progress' ? <Play className="h-3.5 w-3.5" />
-                        : act === 'completed' ? <CheckCircle2 className="h-3.5 w-3.5" />
-                        : <X className="h-3.5 w-3.5" />;
+                      const icon =
+                        act === 'confirmed' ? (
+                          <Check className="h-3.5 w-3.5" />
+                        ) : act === 'checked_in' ? (
+                          <UserCheck className="h-3.5 w-3.5" />
+                        ) : act === 'in_progress' ? (
+                          <Play className="h-3.5 w-3.5" />
+                        ) : act === 'completed' ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : (
+                          <X className="h-3.5 w-3.5" />
+                        );
                       return (
                         <button
                           key={act}
@@ -192,7 +325,6 @@ export function BookingPage() {
                           title={STATUS_LABEL[act]}
                         >
                           {icon}
-                          <span className="ml-1">{STATUS_LABEL[act]}</span>
                         </button>
                       );
                     })}
@@ -200,19 +332,30 @@ export function BookingPage() {
                 </td>
               </tr>
             ))}
-            {items.length === 0 && !list.isLoading && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-fg-muted">Belum ada booking.</td></tr>
+            {filteredItems.length === 0 && !list.isLoading && (
+              <tr>
+                <td colSpan={7} className="px-4 py-8 text-center text-fg-muted">
+                  {search || statusFilter || dateFilter || quickFilter !== 'all'
+                    ? 'Tidak ada booking sesuai filter.'
+                    : 'Belum ada booking.'}
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
       <div className="caption text-right">
-        Total: {list.data?.meta?.total ?? 0} booking
+        Menampilkan {filteredItems.length}
+        {list.data?.meta?.total !== undefined && filteredItems.length !== list.data.meta.total && (
+          <> dari {list.data.meta.total}</>
+        )}{' '}
+        booking
       </div>
 
       <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
       <RescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} />
+      <BookingDetailDialog booking={detailing} onClose={() => setDetailing(null)} />
     </div>
   );
 }

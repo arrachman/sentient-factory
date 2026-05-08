@@ -252,6 +252,44 @@ export class ClinicBookingService {
     return { success: true, data: notes };
   }
 
+  /**
+   * Manual WA reminder dispatch. Used by admin/resepsionis untuk re-send
+   * reminder kalau klien belum baca atau ingin remind ulang.
+   */
+  async sendReminder(id: number, templateName: string, actorId?: number) {
+    const booking = await this.findOne(id);
+    const b = booking.data;
+    if (b.status === 'cancelled' || b.status === 'completed') {
+      throw new BadRequestException(
+        `Booking ${b.status} — reminder hanya untuk booking aktif`,
+      );
+    }
+    const phone = b.client?.phoneWa;
+    if (!phone) {
+      throw new BadRequestException('Klien tidak punya nomor WhatsApp');
+    }
+    const result = await this.wa.dispatch({
+      templateName,
+      recipientType: 'klien',
+      recipientPhone: phone,
+      variables: {
+        nama_klien: b.client?.name ?? '',
+        layanan: b.service?.name ?? '',
+        psikolog: b.psikolog?.fullName ?? '',
+        ruang: b.room?.name ?? '',
+        tanggal: new Date(b.scheduledStart).toLocaleString('id-ID', {
+          weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+        }),
+        waktu: new Date(b.scheduledStart).toLocaleTimeString('id-ID', {
+          hour: '2-digit', minute: '2-digit',
+        }),
+      },
+      bookingId: id,
+    });
+    void actorId;
+    return { success: true, data: result, message: `Reminder '${templateName}' dispatched` };
+  }
+
   async cancel(id: number, dto: CancelBookingDto, actorId?: number) {
     const existing = await this.findOne(id);
     const current = existing.data.status as BookingStatus;

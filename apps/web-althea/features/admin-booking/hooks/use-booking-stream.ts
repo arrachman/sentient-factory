@@ -6,8 +6,11 @@ import { ENV } from '@/config/env';
 import { TOKEN_COOKIE } from '@/shared/auth/constants';
 
 /**
- * Subscribe ke SSE stream `/clinic/booking/stream` untuk realtime booking updates.
+ * Subscribe ke SSE stream `/clinic/stream/booking` untuk realtime booking updates.
  * On event, invalidate booking list query → auto-refetch list.
+ *
+ * Path `/clinic/stream/booking` (bukan `/clinic/booking/stream`) untuk hindari
+ * collision dengan `GET /clinic/booking/:id` ParseIntPipe.
  *
  * Auth: SSE include cookie via credentials. Pastikan sf_token cookie ter-set
  * di same-origin (atau CORS allow credentials).
@@ -26,7 +29,7 @@ export function useBookingStream() {
       .some((c) => c.trim().startsWith(`${TOKEN_COOKIE}=`));
     if (!hasToken) return;
 
-    const url = `${ENV.API_URL}/clinic/booking/stream`;
+    const url = `${ENV.API_URL}/clinic/stream/booking`;
     let es: EventSource | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 

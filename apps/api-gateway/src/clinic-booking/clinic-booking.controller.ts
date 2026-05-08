@@ -117,4 +117,20 @@ export class ClinicBookingController {
   listNotes(@Param('id', ParseIntPipe) id: number) {
     return this.service.listNotes(id);
   }
+
+  @Post(':id/send-reminder')
+  @Roles(...WRITE_ROLES)
+  @AuditAction('send_reminder')
+  @ApiOperation({ summary: 'Send manual WA reminder ke klien (template Pengingat H-1 atau 30-min)' })
+  sendReminder(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: { templateName?: string },
+    @Request() req: any,
+  ) {
+    return this.service.sendReminder(
+      id,
+      dto?.templateName ?? 'Pengingat H-1',
+      req.user?.sub ?? req.user?.id,
+    );
+  }
 }

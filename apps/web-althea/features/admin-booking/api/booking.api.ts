@@ -26,6 +26,29 @@ function qs(p: ListParams): string {
   return s ? `?${s}` : '';
 }
 
+export type ClinicalNote = {
+  id: number;
+  bookingId: number;
+  psikologUserId: number;
+  noteText: string;
+  isPrivate: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Payment = {
+  id: number;
+  bookingId: number;
+  totalAmount: string | number;
+  taxAmount: string | number;
+  dpAmount: string | number;
+  paidAmount: string | number;
+  status: 'pending' | 'dp_paid' | 'lunas' | 'refunded';
+  paymentMethod: string | null;
+  dpPaidAt: string | null;
+  lunasAt: string | null;
+};
+
 export const bookingApi = {
   list: (p: ListParams = {}) => apiClient.get<ListResponse>(`/booking${qs(p)}`),
   getById: (id: number) => apiClient.get<{ success: boolean; data: Booking }>(`/booking/${id}`),
@@ -35,4 +58,15 @@ export const bookingApi = {
   start: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/start`),
   complete: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/complete`),
   cancel: (id: number, reason?: string) => apiClient.post<{ success: boolean }>(`/booking/${id}/cancel`, { reason }),
+  listNotes: (id: number) => apiClient.get<{ success: boolean; data: ClinicalNote[] }>(`/booking/${id}/note`),
+  sendReminder: (id: number, templateName?: string) =>
+    apiClient.post<{ success: boolean; message: string }>(`/booking/${id}/send-reminder`, { templateName }),
+  getPaymentByBooking: (bookingId: number) =>
+    apiClient.get<{ success: boolean; data: Payment }>(`/payment/booking/${bookingId}`).catch(() => null),
+  recordPayment: (paymentId: number, paidAmount: number, paymentMethod?: string) =>
+    apiClient.post<{ success: boolean; data: Payment }>(`/payment/${paymentId}/record`, { paidAmount, paymentMethod }),
+  createPayment: (bookingId: number, totalAmount: number, dpAmount: number, taxAmount: number) =>
+    apiClient.post<{ success: boolean; data: Payment }>('/payment', { bookingId, totalAmount, dpAmount, taxAmount }),
+  sendReceipt: (paymentId: number) =>
+    apiClient.post<{ success: boolean; message: string }>(`/payment/${paymentId}/send-receipt`),
 };
