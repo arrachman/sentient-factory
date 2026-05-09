@@ -52,9 +52,35 @@ export class ClinicServiceService {
       this.prisma.clinicService.count({ where }),
     ]);
 
+    // Enrich dengan bookedThisMonth per service (single groupBy query)
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+    const ids = items.map((s) => s.id);
+    const bookedAgg =
+      ids.length === 0
+        ? []
+        : await this.prisma.clinicBooking.groupBy({
+            by: ['serviceId'],
+            where: {
+              serviceId: { in: ids },
+              status: { not: 'cancelled' },
+              deletedAt: null,
+              scheduledStart: { gte: monthStart },
+            },
+            _count: { _all: true },
+          });
+    const bookedMap = new Map<number, number>(
+      bookedAgg.map((row) => [row.serviceId, row._count._all]),
+    );
+    const enriched = items.map((s) => ({
+      ...s,
+      bookedThisMonth: bookedMap.get(s.id) ?? 0,
+    }));
+
     return {
       success: true,
-      data: items,
+      data: enriched,
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
