@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useState } from 'react';
 import {
+  Bell,
   CalendarDays,
   ClipboardList,
   Clock,
@@ -13,9 +14,9 @@ import {
   LogOut,
   Menu,
   MessageSquare,
+  Search,
   Settings,
   Stethoscope,
-  User,
   UserSquare,
   Users,
   X,
@@ -25,9 +26,14 @@ import { useMe } from '@/features/auth/hooks/use-me';
 
 type NavItem = {
   href: string;
-  label: string;
+  label: string; // sidebar label (mis. "Notifikasi WA")
   icon: ReactNode;
   badge?: string; // mis. "aktif"
+  /**
+   * Override page title di top header. Defaults ke `label`.
+   * Contoh: menu "Notifikasi WA" → top title "WhatsApp Otomatis".
+   */
+  pageTitle?: string;
 };
 
 type NavGroup = {
@@ -42,31 +48,77 @@ const ADMIN_NAV: NavGroup[] = [
   {
     category: 'Operasional',
     items: [
-      { href: '/admin/schedule', label: 'Penjadwalan', icon: <CalendarDays className="h-4 w-4" /> },
-      { href: '/admin/clients', label: 'Klien', icon: <UserSquare className="h-4 w-4" /> },
-      { href: '/admin/rooms', label: 'Ruangan', icon: <DoorOpen className="h-4 w-4" /> },
+      {
+        href: '/admin/schedule',
+        label: 'Penjadwalan',
+        icon: <CalendarDays className="h-4 w-4" />,
+        pageTitle: 'Jadwal Sesi',
+      },
+      {
+        href: '/admin/clients',
+        label: 'Klien',
+        icon: <UserSquare className="h-4 w-4" />,
+        pageTitle: 'Daftar Klien',
+      },
+      {
+        href: '/admin/rooms',
+        label: 'Ruangan',
+        icon: <DoorOpen className="h-4 w-4" />,
+        pageTitle: 'Timeline Ruangan',
+      },
     ],
   },
   {
     category: 'Manajemen',
     items: [
-      { href: '/admin/psikolog', label: 'Psikolog', icon: <Stethoscope className="h-4 w-4" /> },
-      { href: '/admin/layanan', label: 'Layanan', icon: <List className="h-4 w-4" /> },
+      {
+        href: '/admin/psikolog',
+        label: 'Psikolog',
+        icon: <Stethoscope className="h-4 w-4" />,
+        pageTitle: 'Tim Psikolog',
+      },
+      {
+        href: '/admin/layanan',
+        label: 'Layanan',
+        icon: <List className="h-4 w-4" />,
+        pageTitle: 'Katalog Layanan',
+      },
       {
         href: '/admin/notif-wa',
         label: 'Notifikasi WA',
         icon: <MessageSquare className="h-4 w-4" />,
         badge: 'aktif',
+        pageTitle: 'WhatsApp Otomatis',
       },
     ],
   },
   {
     category: 'Sistem',
     items: [
-      { href: '/admin/booking', label: 'Daftar booking', icon: <FileText className="h-4 w-4" /> },
-      { href: '/admin/audit-log', label: 'Audit log', icon: <Clock className="h-4 w-4" /> },
-      { href: '/admin/users-roles', label: 'User & Role', icon: <Users className="h-4 w-4" /> },
-      { href: '/admin/pengaturan', label: 'Pengaturan', icon: <Settings className="h-4 w-4" /> },
+      {
+        href: '/admin/booking',
+        label: 'Daftar booking',
+        icon: <FileText className="h-4 w-4" />,
+        pageTitle: 'Daftar Booking',
+      },
+      {
+        href: '/admin/audit-log',
+        label: 'Audit log',
+        icon: <Clock className="h-4 w-4" />,
+        pageTitle: 'Audit Log',
+      },
+      {
+        href: '/admin/users-roles',
+        label: 'User & Role',
+        icon: <Users className="h-4 w-4" />,
+        pageTitle: 'Pengelolaan User & Role',
+      },
+      {
+        href: '/admin/pengaturan',
+        label: 'Pengaturan',
+        icon: <Settings className="h-4 w-4" />,
+        pageTitle: 'Pengaturan Klinik',
+      },
     ],
   },
 ];
@@ -123,12 +175,36 @@ function userInitial(name: string | null | undefined, fallback: string): string 
   return n.charAt(0).toUpperCase();
 }
 
+/**
+ * Resolve breadcrumb + page title dari pathname + nav config.
+ * Mis. /admin/notif-wa → { category: 'Manajemen', label: 'Notifikasi WA',
+ *                          title: 'WhatsApp Otomatis' }
+ */
+function resolvePageMeta(
+  pathname: string,
+  nav: NavGroup[],
+): { category: string; label: string; title: string } | null {
+  for (const group of nav) {
+    for (const item of group.items) {
+      if (pathname === item.href || pathname.startsWith(`${item.href}/`)) {
+        return {
+          category: group.category,
+          label: item.label,
+          title: item.pageTitle ?? item.label,
+        };
+      }
+    }
+  }
+  return null;
+}
+
 export function AdminShell({ role, children }: { role: ShellRole; children: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const nav = NAV_BY_ROLE[role];
   const meQuery = useMe();
   const me = meQuery.data?.data;
+  const meta = resolvePageMeta(pathname, nav);
 
   function isActive(href: string): boolean {
     return pathname === href || pathname.startsWith(`${href}/`);
@@ -137,6 +213,15 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
   const userName = me?.fullName || me?.username || ROLE_LABEL[role].short;
   const userRole = ROLE_LABEL[role].short;
   const initial = userInitial(me?.fullName ?? me?.username, ROLE_LABEL[role].short);
+
+  const searchPlaceholder =
+    role === 'admin'
+      ? 'Cari klien, psikolog…'
+      : role === 'psikolog'
+      ? 'Cari klien saya…'
+      : role === 'resepsionis'
+      ? 'Cari booking hari ini…'
+      : 'Cari…';
 
   return (
     <div className="min-h-screen flex bg-background">
@@ -343,6 +428,7 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+        {/* Mobile topbar */}
         <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-border bg-card px-4 lg:hidden">
           <button
             type="button"
@@ -354,6 +440,71 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
           </button>
           <span className="brand-mark text-lg text-teal-800">Althea</span>
           <span className="badge badge-sage ml-auto">{ROLE_LABEL[role].short}</span>
+        </header>
+
+        {/* Desktop top header — breadcrumb + title + search + bell + avatar */}
+        <header
+          className="hidden lg:flex sticky top-0 z-20 items-center justify-between border-b border-border bg-card"
+          style={{ height: 64, padding: '0 28px' }}
+        >
+          <div className="flex flex-col leading-tight">
+            {meta && (
+              <span className="caption" style={{ fontSize: 12 }}>
+                {meta.category} · {meta.label}
+              </span>
+            )}
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-serif)',
+                fontSize: 22,
+                fontWeight: 500,
+                color: 'var(--teal-800)',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {meta?.title ?? 'Althea Psychology'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <div style={{ position: 'relative', width: 240 }}>
+              <span style={{ position: 'absolute', left: 11, top: 10 }}>
+                <Search size={15} style={{ color: 'var(--fg-muted)' }} />
+              </span>
+              <input
+                className="input-althea"
+                placeholder={searchPlaceholder}
+                style={{ paddingLeft: 34, height: 36, fontSize: 13 }}
+                aria-label="Cari"
+              />
+            </div>
+            <button
+              type="button"
+              className="btn btn-icon btn-ghost"
+              aria-label="Notifikasi"
+              title="Notifikasi"
+            >
+              <Bell size={17} />
+            </button>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 999,
+                background: 'var(--cream-300)',
+                color: 'var(--teal-800)',
+                display: 'grid',
+                placeItems: 'center',
+                fontWeight: 700,
+                fontSize: 14,
+                flexShrink: 0,
+              }}
+              title={userName}
+              aria-label={`Akun: ${userName}`}
+            >
+              {initial}
+            </div>
+          </div>
         </header>
 
         <main className="flex-1 p-4 lg:p-8">{children}</main>

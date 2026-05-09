@@ -1013,7 +1013,7 @@ export function PengaturanPage() {
 
   return (
     <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 100px)' }}>
-      {/* Header bar: status + actions */}
+      {/* Header bar: status + actions (title provided by AdminShell top header) */}
       <div
         style={{
           padding: '18px 28px 0',
@@ -1022,13 +1022,10 @@ export function PengaturanPage() {
           alignItems: 'center',
         }}
       >
-        <div className="flex flex-col">
-          <h1 className="h1">Pengaturan Klinik</h1>
-          <span className="caption" style={{ marginTop: 4 }}>
-            Perubahan disimpan saat klik tombol · terakhir{' '}
-            <strong style={{ color: 'var(--teal-800)' }}>{lastSaved}</strong>
-          </span>
-        </div>
+        <span className="caption">
+          Perubahan disimpan saat klik tombol · terakhir{' '}
+          <strong style={{ color: 'var(--teal-800)' }}>{lastSaved}</strong>
+        </span>
         <div className="flex gap-2">
           <button
             type="button"
