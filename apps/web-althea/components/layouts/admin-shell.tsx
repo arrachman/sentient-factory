@@ -10,13 +10,16 @@ import {
   Clock,
   DoorOpen,
   FileText,
+  Home,
   List,
   LogOut,
   Menu,
   MessageSquare,
+  Notebook,
   Search,
   Settings,
   Stethoscope,
+  UserCircle2,
   UserSquare,
   Users,
   X,
@@ -124,14 +127,55 @@ const ADMIN_NAV: NavGroup[] = [
 ];
 
 // Other roles — flat list (single section)
+// PSIKOLOG_NAV — 3 groups (Praktik / Klinis / Akun) sesuai mockup AdminShell.jsx.
+// Privacy: psikolog hanya melihat data sendiri (BR-04) — tidak ada Tim/Kelola.
 const PSIKOLOG_NAV: NavGroup[] = [
   {
     category: 'Praktik',
     items: [
-      { href: '/psikolog/dashboard', label: 'Dashboard', icon: <ClipboardList className="h-4 w-4" /> },
-      { href: '/psikolog/schedule', label: 'Jadwal Saya', icon: <CalendarDays className="h-4 w-4" /> },
-      { href: '/psikolog/sessions', label: 'Sesi', icon: <ClipboardList className="h-4 w-4" /> },
-      { href: '/psikolog/patients', label: 'Pasien', icon: <UserSquare className="h-4 w-4" /> },
+      {
+        href: '/psikolog/dashboard',
+        label: 'Dashboard',
+        icon: <Home className="h-4 w-4" />,
+      },
+      {
+        href: '/psikolog/schedule',
+        label: 'Jadwal saya',
+        icon: <CalendarDays className="h-4 w-4" />,
+        pageTitle: 'Jadwal saya · Minggu ini',
+      },
+      {
+        href: '/psikolog/patients',
+        label: 'Klien saya',
+        icon: <UserSquare className="h-4 w-4" />,
+      },
+    ],
+  },
+  {
+    category: 'Klinis',
+    items: [
+      {
+        href: '/psikolog/sessions',
+        label: 'Catatan klinis',
+        icon: <Notebook className="h-4 w-4" />,
+        pageTitle: 'Catatan klinis (SOAP)',
+      },
+      {
+        href: '/psikolog/rooms',
+        label: 'Ruangan',
+        icon: <DoorOpen className="h-4 w-4" />,
+        pageTitle: 'Ruangan klinik',
+      },
+    ],
+  },
+  {
+    category: 'Akun',
+    items: [
+      {
+        href: '/psikolog/profile',
+        label: 'Profil saya',
+        icon: <UserCircle2 className="h-4 w-4" />,
+      },
     ],
   },
 ];
@@ -156,13 +200,57 @@ const NAV_BY_ROLE: Record<ShellRole, NavGroup[]> = {
   intern: SINGLE_DASHBOARD_NAV('/intern'),
 };
 
-const ROLE_LABEL: Record<ShellRole, { full: string; short: string }> = {
-  admin: { full: 'ADMIN · KLINIK', short: 'Admin' },
-  psikolog: { full: 'PSIKOLOG', short: 'Psikolog' },
-  owner: { full: 'OWNER · KLINIK', short: 'Owner' },
-  resepsionis: { full: 'RESEPSIONIS', short: 'Resepsionis' },
-  marketing: { full: 'MARKETING', short: 'Marketing' },
-  intern: { full: 'INTERN', short: 'Intern' },
+type RolePillStyle = {
+  full: string;
+  short: string;
+  bg: string;
+  border: string;
+  dot: string;
+};
+
+const ROLE_LABEL: Record<ShellRole, RolePillStyle> = {
+  admin: {
+    full: 'ADMIN · KLINIK',
+    short: 'Admin',
+    bg: 'var(--sage-50)',
+    border: 'var(--sage-200)',
+    dot: 'var(--sage-500)',
+  },
+  psikolog: {
+    full: 'STAFF PSIKOLOG',
+    short: 'Psikolog',
+    bg: 'var(--cream-100)',
+    border: 'var(--border)',
+    dot: 'var(--teal-700)',
+  },
+  owner: {
+    full: 'OWNER · KLINIK',
+    short: 'Owner',
+    bg: 'var(--sage-50)',
+    border: 'var(--sage-200)',
+    dot: 'var(--sage-500)',
+  },
+  resepsionis: {
+    full: 'RESEPSIONIS',
+    short: 'Resepsionis',
+    bg: 'var(--cream-100)',
+    border: 'var(--border)',
+    dot: 'var(--teal-700)',
+  },
+  marketing: {
+    full: 'MARKETING',
+    short: 'Marketing',
+    bg: 'var(--cream-100)',
+    border: 'var(--border)',
+    dot: 'var(--teal-700)',
+  },
+  intern: {
+    full: 'INTERN',
+    short: 'Intern',
+    bg: 'var(--cream-100)',
+    border: 'var(--border)',
+    dot: 'var(--teal-700)',
+  },
 };
 
 function logout() {
@@ -288,15 +376,15 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
           </button>
         </div>
 
-        {/* Role pill — green dot + ADMIN · KLINIK */}
+        {/* Role pill — color tint per role (sage untuk admin/owner, cream untuk psikolog/dll) */}
         <div className="px-3 pt-3">
           <div
             className="flex items-center gap-2"
             style={{
               padding: '8px 12px',
-              border: '1px solid var(--sage-200)',
+              border: '1px solid ' + ROLE_LABEL[role].border,
               borderRadius: 8,
-              background: 'var(--sage-50)',
+              background: ROLE_LABEL[role].bg,
             }}
           >
             <span
@@ -304,8 +392,7 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
                 width: 7,
                 height: 7,
                 borderRadius: 999,
-                background: 'var(--sage-500)',
-                boxShadow: '0 0 0 3px rgba(91,138,102,0.18)',
+                background: ROLE_LABEL[role].dot,
                 flexShrink: 0,
               }}
             />
