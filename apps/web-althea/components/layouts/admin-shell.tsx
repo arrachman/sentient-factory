@@ -507,7 +507,8 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-8">{children}</main>
+        {/* No padding di <main> — pages mengelola padding sendiri (sesuai mockup) */}
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );

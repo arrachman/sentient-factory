@@ -802,6 +802,7 @@ model ClinicClient {
   name                 String
   gender               String // 'L' | 'P'
   age                  Int?
+  category             String?   // 'dewasa' | 'remaja' | 'anak' | 'pasangan' | 'keluarga'
   phoneWa              String    @map("phone_wa")
   medicalRecordNumber  String?   @unique @map("medical_record_number")
   preferredServiceType String?   @map("preferred_service_type")

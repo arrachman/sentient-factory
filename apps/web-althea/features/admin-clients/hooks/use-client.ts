@@ -11,6 +11,14 @@ export function useClientList(params: Parameters<typeof clientApi.list>[0] = {})
   return useQuery({ queryKey: [...KEY, 'list', params], queryFn: () => clientApi.list(params) });
 }
 
+export function useClientDetail(id: number | null) {
+  return useQuery({
+    queryKey: [...KEY, 'detail', id],
+    queryFn: () => clientApi.get(id as number),
+    enabled: id !== null,
+  });
+}
+
 export function useCreateClient() {
   const qc = useQueryClient();
   return useMutation({

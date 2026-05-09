@@ -28,7 +28,7 @@ export default function PsikologSchedulePage() {
   const items = list.data?.data ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 lg:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="h1">Jadwal Saya</h1>

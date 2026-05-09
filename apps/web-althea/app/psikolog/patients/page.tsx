@@ -32,7 +32,7 @@ export default function PsikologPatientsPage() {
   }, [list.data]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 lg:p-8">
       <div>
         <h1 className="h1">Pasien Saya</h1>
         <p className="caption mt-1">Pasien yang pernah/akan ada sesi dengan {me.data?.data.fullName ?? 'Anda'}.</p>

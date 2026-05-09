@@ -5,6 +5,12 @@ import { IsBoolean, IsEmail, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, 
 export const GENDERS = ['L', 'P'] as const;
 export type Gender = (typeof GENDERS)[number];
 
+export const CLIENT_CATEGORIES = ['dewasa', 'remaja', 'anak', 'pasangan', 'keluarga'] as const;
+export type ClientCategory = (typeof CLIENT_CATEGORIES)[number];
+
+export const CLIENT_STATUSES = ['baru', 'aktif', 'selesai'] as const;
+export type ClientStatus = (typeof CLIENT_STATUSES)[number];
+
 export class CreateClientDto {
   @ApiProperty({ example: 'Andi Wijaya' })
   @IsString()
@@ -21,6 +27,11 @@ export class CreateClientDto {
   @Min(0)
   @Max(120)
   age?: number;
+
+  @ApiPropertyOptional({ enum: CLIENT_CATEGORIES, example: 'dewasa' })
+  @IsOptional()
+  @IsIn(CLIENT_CATEGORIES)
+  category?: ClientCategory;
 
   @ApiProperty({ example: '+6281234567890', description: 'WhatsApp E.164' })
   @IsString()
@@ -90,6 +101,16 @@ export class QueryClientDto {
   @IsOptional()
   @IsIn(GENDERS)
   gender?: Gender;
+
+  @ApiPropertyOptional({ enum: CLIENT_CATEGORIES })
+  @IsOptional()
+  @IsIn(CLIENT_CATEGORIES)
+  category?: ClientCategory;
+
+  @ApiPropertyOptional({ enum: CLIENT_STATUSES, description: 'Derived dari booking activity' })
+  @IsOptional()
+  @IsIn(CLIENT_STATUSES)
+  status?: ClientStatus;
 
   @ApiPropertyOptional()
   @IsOptional()
