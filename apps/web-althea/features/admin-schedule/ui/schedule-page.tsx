@@ -7,7 +7,7 @@ import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
 import type { Booking } from '@/features/admin-booking/model/types';
-import type { Psikolog } from '@/features/admin-psikolog/model/types';
+import { SPECIALTY_LABEL, type Psikolog } from '@/features/admin-psikolog/model/types';
 
 // ============================================================================
 // Constants
@@ -92,7 +92,9 @@ function findBookingForSlot(
 
 function PsikologHeader({ p }: { p: Psikolog }) {
   const initial = (p.fullName ?? p.email).slice(0, 2).toUpperCase();
-  const specialty = Array.isArray(p.specialty) && p.specialty.length > 0 ? p.specialty[0] : p.title;
+  const rawSpecialty =
+    Array.isArray(p.specialty) && p.specialty.length > 0 ? p.specialty[0] : null;
+  const specialty = rawSpecialty ? SPECIALTY_LABEL[rawSpecialty] ?? rawSpecialty : p.title;
   return (
     <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
       <span
