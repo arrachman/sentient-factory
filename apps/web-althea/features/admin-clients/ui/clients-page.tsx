@@ -122,8 +122,26 @@ export function ClientsPage() {
   }
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (editing) updateMut.mutate({ id: editing.id, input: form }, { onSuccess: close });
-    else createMut.mutate(form, { onSuccess: close });
+    // Sanitize: backend reject empty string untuk field opsional yang punya
+    // validation strict (mis. email harus valid email format atau absent).
+    // Convert string-kosong → undefined supaya field optional benar-benar
+    // tidak terkirim, bukan dikirim sebagai "" yang gagal validation.
+    const payload: CreateClientInput = {
+      ...form,
+      email: form.email && form.email.trim() ? form.email.trim() : undefined,
+      medicalRecordNumber:
+        form.medicalRecordNumber && form.medicalRecordNumber.trim()
+          ? form.medicalRecordNumber.trim()
+          : undefined,
+      preferredServiceType:
+        form.preferredServiceType && form.preferredServiceType.trim()
+          ? form.preferredServiceType.trim()
+          : undefined,
+      address: form.address && form.address.trim() ? form.address.trim() : undefined,
+      notes: form.notes && form.notes.trim() ? form.notes.trim() : undefined,
+    };
+    if (editing) updateMut.mutate({ id: editing.id, input: payload }, { onSuccess: close });
+    else createMut.mutate(payload, { onSuccess: close });
   }
   function handleDelete(c: Client) {
     if (!confirm(`Hapus klien "${c.name}"?`)) return;
