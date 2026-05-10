@@ -6,6 +6,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Filter, Plus, X } from 'lucide
 import { bookingApi } from '@/features/admin-booking/api/booking.api';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
+import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
 import {
   BOOKING_STATUSES,
@@ -48,11 +49,26 @@ const DAY_LABELS_SHORT = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 type ViewMode = 'Hari' | 'Minggu' | 'Bulan';
 
+type TimeOfDay = 'pagi' | 'siang' | 'sore';
+type SesiType = 'all' | 'tunggal' | 'multi' | 'last';
+
+const TIME_OF_DAY_LABEL: Record<TimeOfDay, { label: string; range: string }> = {
+  pagi: { label: 'Pagi', range: '08–12' },
+  siang: { label: 'Siang', range: '13–16' },
+  sore: { label: 'Sore', range: '17–21' },
+};
+
 type Filters = {
+  // Basic
   psikologIds: Set<number>;
   categories: Set<string>;
   roomIds: Set<number>;
   statuses: Set<BookingStatus>;
+  // Advanced
+  clientQuery: string;
+  timeOfDay: Set<TimeOfDay>;
+  serviceIds: Set<number>;
+  sesiType: SesiType;
 };
 
 const EMPTY_FILTERS: Filters = {
@@ -60,6 +76,10 @@ const EMPTY_FILTERS: Filters = {
   categories: new Set(),
   roomIds: new Set(),
   statuses: new Set(),
+  clientQuery: '',
+  timeOfDay: new Set(),
+  serviceIds: new Set(),
+  sesiType: 'all',
 };
 
 // ============================================================================
@@ -164,21 +184,46 @@ function findBookingForSlot(
   );
 }
 
+function timeOfDayOf(b: Booking): TimeOfDay {
+  const hour = new Date(b.scheduledStart).getHours();
+  if (hour < 13) return 'pagi'; // 08-12
+  if (hour < 17) return 'siang'; // 13-16
+  return 'sore'; // 17-21
+}
+
 function applyFilters(bookings: Booking[], filters: Filters): Booking[] {
-  const { psikologIds, categories, roomIds, statuses } = filters;
-  if (
-    psikologIds.size === 0 &&
-    categories.size === 0 &&
-    roomIds.size === 0 &&
-    statuses.size === 0
-  ) {
-    return bookings;
-  }
+  const {
+    psikologIds,
+    categories,
+    roomIds,
+    statuses,
+    clientQuery,
+    timeOfDay,
+    serviceIds,
+    sesiType,
+  } = filters;
+  const q = clientQuery.trim().toLowerCase();
+  const hasAny =
+    psikologIds.size > 0 ||
+    categories.size > 0 ||
+    roomIds.size > 0 ||
+    statuses.size > 0 ||
+    q.length > 0 ||
+    timeOfDay.size > 0 ||
+    serviceIds.size > 0 ||
+    sesiType !== 'all';
+  if (!hasAny) return bookings;
   return bookings.filter((b) => {
     if (psikologIds.size > 0 && !psikologIds.has(b.psikologUserId)) return false;
     if (categories.size > 0 && !categories.has(b.service.category)) return false;
     if (roomIds.size > 0 && !roomIds.has(b.room.id)) return false;
     if (statuses.size > 0 && !statuses.has(b.status)) return false;
+    if (q && !b.client.name.toLowerCase().includes(q)) return false;
+    if (timeOfDay.size > 0 && !timeOfDay.has(timeOfDayOf(b))) return false;
+    if (serviceIds.size > 0 && !serviceIds.has(b.service.id)) return false;
+    if (sesiType === 'tunggal' && b.sessionTotal > 1) return false;
+    if (sesiType === 'multi' && b.sessionTotal <= 1) return false;
+    if (sesiType === 'last' && b.sessionN !== b.sessionTotal) return false;
     return true;
   });
 }
@@ -188,7 +233,11 @@ function filterCount(filters: Filters): number {
     filters.psikologIds.size +
     filters.categories.size +
     filters.roomIds.size +
-    filters.statuses.size
+    filters.statuses.size +
+    (filters.clientQuery.trim() ? 1 : 0) +
+    filters.timeOfDay.size +
+    filters.serviceIds.size +
+    (filters.sesiType !== 'all' ? 1 : 0)
   );
 }
 
@@ -314,6 +363,7 @@ function FilterPopover({
   onChange,
   psikologs,
   rooms,
+  services,
 }: {
   open: boolean;
   onClose: () => void;
@@ -321,6 +371,7 @@ function FilterPopover({
   onChange: (next: Filters) => void;
   psikologs: Psikolog[];
   rooms: Array<{ id: number; name: string; type: string }>;
+  services: Array<{ id: number; name: string; category: string }>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -498,7 +549,7 @@ function FilterPopover({
 
       {/* Room */}
       {rooms.length > 0 && (
-        <div>
+        <div style={{ marginBottom: 14 }}>
           <span className="caption" style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>
             Ruangan ({filters.roomIds.size}/{rooms.length})
           </span>
@@ -524,6 +575,187 @@ function FilterPopover({
                 >
                   {r.name}
                 </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ===== Lanjutan ===== */}
+      <div
+        style={{
+          marginTop: 4,
+          marginBottom: 8,
+          paddingTop: 12,
+          borderTop: '1px solid var(--border)',
+        }}
+      >
+        <span className="eyebrow" style={{ fontSize: 10.5 }}>
+          Lanjutan
+        </span>
+      </div>
+
+      {/* Client name search */}
+      <div style={{ marginBottom: 14 }}>
+        <span className="caption" style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>
+          Cari nama klien
+        </span>
+        <input
+          type="search"
+          value={filters.clientQuery}
+          onChange={(e) => onChange({ ...filters, clientQuery: e.target.value })}
+          placeholder="ketik nama klien..."
+          className="input-althea"
+          style={{ height: 30, fontSize: 12.5 }}
+        />
+      </div>
+
+      {/* Time of day */}
+      <div style={{ marginBottom: 14 }}>
+        <span className="caption" style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>
+          Waktu sesi
+        </span>
+        <div className="flex flex-wrap" style={{ gap: 6 }}>
+          {(['pagi', 'siang', 'sore'] as TimeOfDay[]).map((t) => {
+            const active = filters.timeOfDay.has(t);
+            const meta = TIME_OF_DAY_LABEL[t];
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() =>
+                  onChange({ ...filters, timeOfDay: toggle(filters.timeOfDay, t) })
+                }
+                className="btn btn-sm"
+                style={{
+                  height: 24,
+                  padding: '0 10px',
+                  fontSize: 11.5,
+                  background: active ? 'var(--sage-500)' : 'var(--cream-100)',
+                  color: active ? '#fff' : 'var(--fg)',
+                  border: '1px solid ' + (active ? 'var(--sage-500)' : 'var(--border)'),
+                }}
+                title={`${meta.label} (${meta.range})`}
+              >
+                {meta.label}
+                <span style={{ opacity: 0.7, marginLeft: 4, fontSize: 10 }}>{meta.range}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Sesi type */}
+      <div style={{ marginBottom: 14 }}>
+        <span className="caption" style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>
+          Tipe sesi
+        </span>
+        <div
+          style={{
+            display: 'inline-flex',
+            background: 'var(--cream-100)',
+            borderRadius: 6,
+            padding: 2,
+          }}
+        >
+          {(
+            [
+              ['all', 'Semua'],
+              ['tunggal', 'Tunggal'],
+              ['multi', 'Paket'],
+              ['last', 'Sesi akhir'],
+            ] as Array<[SesiType, string]>
+          ).map(([k, label]) => {
+            const active = filters.sesiType === k;
+            return (
+              <button
+                key={k}
+                type="button"
+                onClick={() => onChange({ ...filters, sesiType: k })}
+                className="btn btn-sm"
+                style={{
+                  height: 24,
+                  padding: '0 10px',
+                  fontSize: 11.5,
+                  background: active ? 'var(--bg-elev, #fff)' : 'transparent',
+                  boxShadow: active ? 'var(--shadow-xs, 0 1px 2px rgba(0,0,0,0.05))' : 'none',
+                  color: active ? 'var(--teal-800)' : 'var(--fg-muted)',
+                  fontWeight: active ? 600 : 500,
+                }}
+                title={
+                  k === 'tunggal'
+                    ? 'Hanya sesi 1×'
+                    : k === 'multi'
+                    ? 'Paket multi-sesi'
+                    : k === 'last'
+                    ? 'Sesi terakhir di paket (sesiN === sesiTotal)'
+                    : 'Semua tipe'
+                }
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Service-specific multi-select */}
+      {services.length > 0 && (
+        <div>
+          <span className="caption" style={{ fontWeight: 600, display: 'block', marginBottom: 6 }}>
+            Layanan spesifik ({filters.serviceIds.size}/{services.length})
+          </span>
+          <div
+            className="flex flex-col"
+            style={{ gap: 2, maxHeight: 140, overflowY: 'auto' }}
+          >
+            {services.map((s) => {
+              const active = filters.serviceIds.has(s.id);
+              const c = SVC_COLOR[s.category] ?? SVC_COLOR.konseling;
+              return (
+                <label
+                  key={s.id}
+                  className="flex items-center gap-2 cursor-pointer"
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    background: active ? 'var(--sage-50)' : 'transparent',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={() =>
+                      onChange({
+                        ...filters,
+                        serviceIds: toggle(filters.serviceIds, s.id),
+                      })
+                    }
+                    className="h-3.5 w-3.5"
+                  />
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 2,
+                      background: c.bar,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={s.name}
+                  >
+                    {s.name}
+                  </span>
+                </label>
               );
             })}
           </div>
@@ -917,9 +1149,11 @@ export function SchedulePage() {
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
+  const serviceList = useServiceList({ limit: 200 });
 
   const psikologs = psikologList.data?.data ?? [];
   const rooms = roomList.data?.data ?? [];
+  const services = serviceList.data?.data ?? [];
 
   // Determine date range to fetch based on view
   const datesToFetch = useMemo(() => {
@@ -1152,6 +1386,7 @@ export function SchedulePage() {
               onChange={setFilters}
               psikologs={psikologs}
               rooms={rooms}
+              services={services}
             />
           </div>
         </div>
