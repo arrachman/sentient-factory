@@ -144,13 +144,17 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
                 />
               </div>
               <div>
-                <label className="caption mb-1 block">Password (opsional)</label>
+                <label className="caption mb-1 block">Password *</label>
                 <input
                   type="password"
                   {...register('password')}
                   className="input-althea"
-                  placeholder="default Test1234!"
+                  placeholder="minimal 8 karakter"
+                  autoComplete="new-password"
                 />
+                {errors.password && (
+                  <p className="caption mt-1 text-danger">{errors.password.message}</p>
+                )}
               </div>
             </div>
           )}

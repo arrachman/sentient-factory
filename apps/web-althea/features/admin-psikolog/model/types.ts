@@ -35,11 +35,13 @@ export const createPsikologSchema = z.object({
   email: z.string().email('Email tidak valid'),
   fullName: z.string().min(2, 'Nama minimal 2 karakter').max(255),
   username: z.string().max(120).optional(),
+  // Password wajib saat tambah psikolog baru — minimal 8 karakter.
+  // Update schema (lihat updatePsikologSchema below) drop field ini, jadi
+  // edit mode tidak butuh isi ulang password.
   password: z
     .string()
-    .max(120)
-    .refine((v) => !v || v.length >= 8, { message: 'Password minimal 8 karakter' })
-    .optional(),
+    .min(8, 'Password minimal 8 karakter')
+    .max(120, 'Password maksimal 120 karakter'),
   title: z.string().max(80).optional(),
   specialty: z.array(z.string()).max(10).optional(),
   color: z.string().max(20).optional(),
