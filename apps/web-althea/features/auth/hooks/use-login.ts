@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@tanstack/react-query';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ROLE_DEFAULT_ROUTE, type Role } from '@/shared/auth/constants';
 import { authApi, type LoginInput } from '../api/login.api';
@@ -12,9 +12,17 @@ import { authApi, type LoginInput } from '../api/login.api';
  * cookie client-side.
  *
  * Middleware membaca cookie HttpOnly via request.cookies.
+ *
+ * Navigation strategy: pakai hard navigation (window.location.assign)
+ * SETELAH login sukses. Alasan:
+ *   1. RSC cache dari halaman login (rendered SEBELUM cookie ada) bisa
+ *      stale — router.push() + router.refresh() kadang race dan tidak
+ *      navigate, user stuck di /login.
+ *   2. Hard navigation memastikan middleware run server-side dengan
+ *      cookie yang baru di-set, sehingga role-based routing fresh.
+ *   3. Login adalah one-time event — overhead full reload acceptable.
  */
 export function useLogin() {
-  const router = useRouter();
   const params = useSearchParams();
 
   return useMutation({
@@ -25,8 +33,9 @@ export function useLogin() {
       const clinicRoles = res.data.user.roles.filter((r) => r.startsWith('clinic-')) as Role[];
       const role = clinicRoles[0] ?? 'clinic-admin';
       const landing = ROLE_DEFAULT_ROUTE[role] ?? '/admin/schedule';
-      router.push(returnTo && returnTo.startsWith('/') ? returnTo : landing);
-      router.refresh();
+      const target = returnTo && returnTo.startsWith('/') ? returnTo : landing;
+      // Hard navigation — bypass RSC cache, biarin middleware run dengan cookie fresh
+      window.location.assign(target);
     },
     onError: (err: Error) => {
       toast.error('Login gagal', { description: err.message });
@@ -35,13 +44,13 @@ export function useLogin() {
 }
 
 export function useLogout() {
-  const router = useRouter();
   return useMutation({
     mutationFn: () => authApi.logout(),
     onSuccess: () => {
       toast.success('Logged out');
-      router.push('/login');
-      router.refresh();
+      // Hard navigation: cookie sudah di-clear server-side, paksa reload
+      // supaya RSC cache user-context ikut bersih.
+      window.location.assign('/login');
     },
   });
 }
