@@ -9,6 +9,7 @@ import { useClientList } from '@/features/admin-clients/hooks/use-client';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 
 type Props = {
   open: boolean;
@@ -19,46 +20,39 @@ type WizardState = {
   step: 1 | 2 | 3 | 4;
   clientId: number | null;
   serviceId: number | null;
-  scheduledStart: string;
-  scheduledEnd: string;
+  /** YYYY-MM-DD format (date input) */
+  date: string;
+  /** Slot index in clinic settings slotsOfDay; null = belum pilih */
+  slotIdx: number | null;
   psikologUserId: number | null;
   roomId: number | null;
   bufferOverride: boolean;
   notes: string;
 };
 
+function pad(n: number) { return String(n).padStart(2, '0'); }
+
+function tomorrowDateStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 const INIT: WizardState = {
   step: 1,
   clientId: null,
   serviceId: null,
-  scheduledStart: '',
-  scheduledEnd: '',
+  date: tomorrowDateStr(),
+  slotIdx: null,
   psikologUserId: null,
   roomId: null,
   bufferOverride: false,
   notes: '',
 };
 
-function pad(n: number) { return String(n).padStart(2, '0'); }
-
-function defaultStartIso(): string {
-  // Tomorrow 09:00 local
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(9, 0, 0, 0);
-  // Local ISO without TZ shift (datetime-local format YYYY-MM-DDTHH:mm)
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function addMinutes(iso: string, minutes: number): string {
-  const d = new Date(iso);
-  d.setMinutes(d.getMinutes() + minutes);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function isoToBackend(local: string): string {
-  // Convert local datetime string (without TZ) ke backend ISO with timezone
-  const d = new Date(local);
+function buildIso(dateStr: string, timeHHMM: string): string {
+  // Local datetime → ISO with timezone
+  const d = new Date(`${dateStr}T${timeHHMM}:00`);
   return d.toISOString();
 }
 
@@ -69,7 +63,7 @@ export function BookingWizard({ open, onClose }: Props) {
   // Reset saat dialog dibuka
   useEffect(() => {
     if (open) {
-      setS({ ...INIT, scheduledStart: defaultStartIso() });
+      setS({ ...INIT });
     }
   }, [open]);
 
@@ -77,21 +71,16 @@ export function BookingWizard({ open, onClose }: Props) {
   const serviceList = useServiceList({ limit: 200, isActive: true });
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
+  const settingsQuery = useSettings();
 
   const selectedService = useMemo(
     () => serviceList.data?.data.find((sv) => sv.id === s.serviceId),
     [serviceList.data, s.serviceId],
   );
-
-  // Auto-set scheduledEnd berdasarkan service duration
-  useEffect(() => {
-    if (selectedService && s.scheduledStart) {
-      setS((prev) => ({
-        ...prev,
-        scheduledEnd: addMinutes(prev.scheduledStart, selectedService.durationMinutes),
-      }));
-    }
-  }, [selectedService, s.scheduledStart]);
+  const slots = settingsQuery.data?.data.slotsOfDay ?? [];
+  const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
+  const selectedSlot = s.slotIdx !== null ? slots[s.slotIdx] : null;
+  const isClosedDay = closedDays.includes(new Date(`${s.date}T00:00:00`).getDay());
 
   const createMut = useMutation({
     mutationFn: async (payload: object) => {
@@ -126,20 +115,20 @@ export function BookingWizard({ open, onClose }: Props) {
   function canNext(): boolean {
     if (s.step === 1) return s.clientId !== null;
     if (s.step === 2) return s.serviceId !== null;
-    if (s.step === 3) return Boolean(s.scheduledStart && s.scheduledEnd);
+    if (s.step === 3) return Boolean(s.date && s.slotIdx !== null);
     if (s.step === 4) return s.psikologUserId !== null && s.roomId !== null;
     return false;
   }
 
   function submit() {
-    if (!s.clientId || !s.serviceId || !s.psikologUserId || !s.roomId) return;
+    if (!s.clientId || !s.serviceId || !s.psikologUserId || !s.roomId || !selectedSlot) return;
     createMut.mutate({
       clientId: s.clientId,
       serviceId: s.serviceId,
       psikologUserId: s.psikologUserId,
       roomId: s.roomId,
-      scheduledStart: isoToBackend(s.scheduledStart),
-      scheduledEnd: isoToBackend(s.scheduledEnd),
+      scheduledStart: buildIso(s.date, selectedSlot.start),
+      scheduledEnd: buildIso(s.date, selectedSlot.end),
       sessionN: 1,
       sessionTotal: selectedService?.sessionCount ?? 1,
       bufferOverride: s.bufferOverride,
@@ -237,35 +226,94 @@ export function BookingWizard({ open, onClose }: Props) {
           {s.step === 3 && (
             <div className="space-y-3">
               <div>
-                <label className="caption mb-1 block">Jadwal mulai</label>
+                <label className="caption mb-1 block">Tanggal</label>
                 <input
-                  type="datetime-local"
-                  value={s.scheduledStart}
-                  onChange={(e) => setS({ ...s, scheduledStart: e.target.value })}
-                  className="input-althea"
+                  type="date"
+                  value={s.date}
+                  onChange={(e) => setS({ ...s, date: e.target.value })}
+                  className="input-althea max-w-[220px]"
                 />
+                {isClosedDay && !s.bufferOverride && (
+                  <p className="caption mt-1 text-amber-700">
+                    ⚠ Klinik tutup di hari ini. Centang override di bawah, atau pilih tanggal lain.
+                  </p>
+                )}
               </div>
+
               <div>
-                <label className="caption mb-1 block">Jadwal selesai (auto dari durasi layanan)</label>
-                <input
-                  type="datetime-local"
-                  value={s.scheduledEnd}
-                  onChange={(e) => setS({ ...s, scheduledEnd: e.target.value })}
-                  className="input-althea"
-                />
+                <label className="caption mb-1 block">Pilih Slot</label>
+                {slots.length === 0 ? (
+                  <p className="caption italic text-fg-muted">
+                    Belum ada slot operasional. Set di Pengaturan → Slot Operasional dulu.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {slots.map((slot, i) => {
+                      const active = s.slotIdx === i;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setS({ ...s, slotIdx: i })}
+                          className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors text-left ${
+                            active
+                              ? 'bg-sage-50 border-sage-500 text-teal-800'
+                              : 'bg-card border-border text-fg hover:border-sage-300'
+                          }`}
+                        >
+                          <div className="font-semibold">
+                            {slot.start} – {slot.end}
+                          </div>
+                          {slot.label && (
+                            <div className="caption mt-0.5">{slot.label}</div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={s.bufferOverride}
-                  onChange={(e) => setS({ ...s, bufferOverride: e.target.checked })}
-                  className="h-4 w-4"
-                />
-                <span>
-                  Buffer override (skip 15-min buffer + jam operasional check). Pakai untuk back-to-back atau
-                  emergency walk-in.
-                </span>
-              </label>
+
+              {selectedService && selectedSlot && (
+                <p className="caption text-fg-muted">
+                  💡 Slot {selectedSlot.start}–{selectedSlot.end} ={' '}
+                  {(() => {
+                    const [sh, sm] = selectedSlot.start.split(':').map(Number);
+                    const [eh, em] = selectedSlot.end.split(':').map(Number);
+                    return eh * 60 + em - (sh * 60 + sm);
+                  })()}{' '}
+                  menit. Durasi layanan {selectedService.name}: {selectedService.durationMinutes}{' '}
+                  menit.
+                  {selectedService.durationMinutes !==
+                    (() => {
+                      const [sh, sm] = selectedSlot.start.split(':').map(Number);
+                      const [eh, em] = selectedSlot.end.split(':').map(Number);
+                      return eh * 60 + em - (sh * 60 + sm);
+                    })() && ' (Slot lebih panjang dari durasi — masih OK, sesi akan selesai lebih cepat dari slot.)'}
+                </p>
+              )}
+
+              <div className="rounded-md border border-border p-3 bg-cream-50">
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={s.bufferOverride}
+                    onChange={(e) => setS({ ...s, bufferOverride: e.target.checked })}
+                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                  />
+                  <span className="flex flex-col gap-1">
+                    <span className="font-medium text-teal-800">
+                      Lewati validasi jeda &amp; jam buka klinik
+                    </span>
+                    <span className="caption">
+                      Sistem biasanya menolak booking yang berhimpit kurang dari 15 menit dari sesi
+                      lain, atau di hari tutup. Centang HANYA untuk kasus khusus: walk-in darurat,
+                      sesi beruntun yang disengaja, atau sesi di hari libur. Semua override
+                      tercatat di audit log.
+                    </span>
+                  </span>
+                </label>
+              </div>
             </div>
           )}
 

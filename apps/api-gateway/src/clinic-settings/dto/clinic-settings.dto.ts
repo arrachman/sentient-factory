@@ -3,7 +3,6 @@ import {
   IsArray,
   IsBoolean,
   IsNumber,
-  IsObject,
   IsOptional,
   IsString,
   Max,
@@ -37,16 +36,32 @@ export class UpdateSettingsDto {
   currency?: string;
 
   @ApiPropertyOptional({
-    description: 'Operating hours per day { monday: { open, close, isOpen }, ... }',
-    type: 'object',
-    additionalProperties: true,
+    description:
+      'Slot operasional klinik (terdefinisi). Booking harus pas dengan salah satu slot. Format: [{ start: "HH:MM", end: "HH:MM", label?: string }, ...]',
+    example: [
+      { start: '08:30', end: '10:00', label: 'Pagi 1' },
+      { start: '10:00', end: '11:30', label: 'Pagi 2' },
+    ],
   })
   @IsOptional()
-  @IsObject()
-  operatingHours?: Record<string, { open: string | null; close: string | null; isOpen: boolean }>;
+  @IsArray()
+  slotsOfDay?: Array<{ start: string; end: string; label?: string }>;
 
   @ApiPropertyOptional({
-    description: 'List ISO date holidays (YYYY-MM-DD)',
+    description:
+      'Hari tutup (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: [0] (Minggu tutup).',
+    example: [0],
+    type: [Number],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Min(0, { each: true })
+  @Max(6, { each: true })
+  closedDayOfWeek?: number[];
+
+  @ApiPropertyOptional({
+    description: 'List ISO date holidays (YYYY-MM-DD) — tanggal libur ad-hoc',
     type: [String],
   })
   @IsOptional()

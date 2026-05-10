@@ -27,8 +27,10 @@ export class ClinicSettingsService {
     if (dto.address !== undefined) data.address = dto.address;
     if (dto.timezone !== undefined) data.timezone = dto.timezone;
     if (dto.currency !== undefined) data.currency = dto.currency;
-    if (dto.operatingHours !== undefined)
-      data.operatingHours = dto.operatingHours as Prisma.InputJsonValue;
+    if (dto.slotsOfDay !== undefined)
+      data.slotsOfDay = dto.slotsOfDay as Prisma.InputJsonValue;
+    if (dto.closedDayOfWeek !== undefined)
+      data.closedDayOfWeek = dto.closedDayOfWeek as Prisma.InputJsonValue;
     if (dto.holidays !== undefined) data.holidays = dto.holidays as Prisma.InputJsonValue;
     if (dto.bufferMinutes !== undefined) data.bufferMinutes = dto.bufferMinutes;
     if (dto.taxEnabled !== undefined) data.taxEnabled = dto.taxEnabled;

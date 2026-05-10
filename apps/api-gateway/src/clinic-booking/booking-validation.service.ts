@@ -128,48 +128,61 @@ export class BookingValidationService {
   }
 
   /**
-   * Cek apakah booking di dalam jam operasional klinik + bukan tanggal libur.
+   * Cek booking valid against slot operasional klinik:
+   *  1. Hari tidak masuk closedDayOfWeek (mis. Minggu)
+   *  2. Tanggal tidak masuk holidays ad-hoc
+   *  3. Start/end persis cocok dengan salah satu slotsOfDay (HH:MM match)
+   *
    * Bisa di-bypass dengan `bufferOverride` di caller.
+   *
+   * Mengganti `assertWithinOperatingHours` lama (operatingHours window per hari).
    */
-  async assertWithinOperatingHours(start: Date, end: Date): Promise<void> {
+  async assertSlotMatch(start: Date, end: Date): Promise<void> {
     const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
-    if (!settings) return; // no settings, allow
+    if (!settings) return; // no settings, allow (bootstrap mode)
 
-    const opHours = settings.operatingHours as Record<
-      string,
-      { open: string | null; close: string | null; isOpen: boolean }
-    >;
-    const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
-      start.getDay()
-    ];
-    const day = opHours?.[dayName];
-    if (!day || !day.isOpen) {
+    const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dow = start.getDay(); // 0=Sun..6=Sat
+
+    // 1. Closed day check
+    const closed = (settings.closedDayOfWeek as number[]) || [];
+    if (closed.includes(dow)) {
       throw new BadRequestException(
-        `Klinik tutup di hari ${dayName}. Pakai bufferOverride / walk-in untuk override.`,
+        `Klinik tutup di hari ${DAY_NAMES[dow]}. Aktifkan "Lewati validasi jeda & jam buka" untuk override.`,
       );
     }
 
-    if (day.open && day.close) {
-      const [oH, oM] = day.open.split(':').map(Number);
-      const [cH, cM] = day.close.split(':').map(Number);
-      const dayStart = new Date(start);
-      dayStart.setHours(oH, oM, 0, 0);
-      const dayEnd = new Date(start);
-      dayEnd.setHours(cH, cM, 0, 0);
-      if (start < dayStart || end > dayEnd) {
-        throw new BadRequestException(
-          `Booking di luar jam operasional ${day.open}-${day.close}. Pakai bufferOverride untuk override.`,
-        );
-      }
-    }
-
-    // Holiday check
+    // 2. Holiday check
     const holidays = (settings.holidays as string[]) || [];
     const dateStr = start.toISOString().slice(0, 10);
     if (holidays.includes(dateStr)) {
       throw new BadRequestException(
-        `Tanggal ${dateStr} adalah hari libur. Pakai bufferOverride untuk override.`,
+        `Tanggal ${dateStr} adalah hari libur. Aktifkan "Lewati validasi jeda & jam buka" untuk override.`,
       );
     }
+
+    // 3. Slot match check
+    const slots = (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
+    if (slots.length === 0) return; // belum di-config, allow (bootstrap mode)
+
+    const fmt = (d: Date) =>
+      `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const startHM = fmt(start);
+    const endHM = fmt(end);
+    const matched = slots.find((s) => s.start === startHM && s.end === endHM);
+    if (!matched) {
+      const available = slots.map((s) => `${s.start}-${s.end}`).join(', ');
+      throw new BadRequestException(
+        `Booking ${startHM}-${endHM} tidak cocok dengan slot operasional klinik. Slot tersedia: ${available}.`,
+      );
+    }
+  }
+
+  /**
+   * @deprecated Use `assertSlotMatch` instead. Stub kept for back-compat agar
+   * caller existing tidak crash sampai semua di-migrasi.
+   */
+  async assertWithinOperatingHours(start: Date, end: Date): Promise<void> {
+    return this.assertSlotMatch(start, end);
   }
 }

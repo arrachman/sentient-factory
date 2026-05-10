@@ -5,6 +5,7 @@ import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { SPECIALTY_LABEL, type Psikolog } from '@/features/admin-psikolog/model/types';
 import { RoomUsageGrid, RoomUsageLegend } from '@/components/clinic/room-usage-grid';
 
@@ -58,8 +59,9 @@ const ROOM_GROUP_COLOR: Record<string, string> = {
   seminar: '#4a7090',
 };
 
-// Slots per psikolog per hari (matches admin/schedule)
-const SLOTS_PER_DAY = 6;
+// Default fallback (kalau settings belum di-load atau slot kosong).
+// Real value diambil dari ClinicSettings.slotsOfDay.length (lihat OwnerDashboardPage).
+const DEFAULT_SLOTS_PER_DAY = 6;
 
 // ============================================================================
 // Sub-components
@@ -96,12 +98,14 @@ function PsikologRow({
   p,
   todayCount,
   totalActive,
+  slotsPerDay,
 }: {
   p: Psikolog;
   todayCount: number;
   totalActive: number;
+  slotsPerDay: number;
 }) {
-  const max = SLOTS_PER_DAY;
+  const max = slotsPerDay;
   const pct = Math.min(100, (todayCount / max) * 100);
   const color = p.color ?? DEFAULT_PSIKOLOG_COLOR;
   const initial = (p.fullName ?? p.email).slice(0, 2).toUpperCase();
@@ -268,6 +272,9 @@ export default function OwnerDashboardPage() {
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
   const serviceList = useServiceList({ limit: 200, isActive: true });
+  const settingsQuery = useSettings();
+  const slotsPerDay =
+    settingsQuery.data?.data.slotsOfDay?.length || DEFAULT_SLOTS_PER_DAY;
   // Last 30 days bookings untuk revenue & 7-day trend (best effort dengan endpoint yg ada)
   const monthBookings = useBookingList({ limit: 500, includeCancelled: false });
 
@@ -280,7 +287,7 @@ export default function OwnerDashboardPage() {
   // ------------- KPI computations -------------
   const kpi = useMemo(() => {
     const sesiToday = todayBookings.length;
-    const totalSlots = psikologs.length * SLOTS_PER_DAY;
+    const totalSlots = psikologs.length * slotsPerDay;
     const utilPsikolog = totalSlots > 0 ? Math.round((sesiToday / totalSlots) * 100) : 0;
 
     const usedRoomIds = new Set(todayBookings.map((b) => b.room.id));
@@ -302,7 +309,7 @@ export default function OwnerDashboardPage() {
       usedRoomCount: usedRoomIds.size,
       totalRoomCount: rooms.length,
     };
-  }, [todayBookings, psikologs.length, rooms, allBookings]);
+  }, [todayBookings, psikologs.length, rooms, allBookings, slotsPerDay]);
 
   // ------------- Performa psikolog -------------
   const psikologPerf = useMemo(() => {
@@ -315,12 +322,12 @@ export default function OwnerDashboardPage() {
       ).size;
       return { p, todayCount, totalActive };
     });
-  }, [psikologs, todayBookings, allBookings]);
+  }, [psikologs, todayBookings, allBookings, slotsPerDay]);
 
   // Owner notes (auto-generated based on underutilized psikolog)
   const ownerNote = useMemo(() => {
     const under = psikologPerf
-      .filter((row) => row.todayCount / SLOTS_PER_DAY <= 0.3 && row.totalActive < 5)
+      .filter((row) => row.todayCount / slotsPerDay <= 0.3 && row.totalActive < 5)
       .map((row) => row.p.fullName ?? row.p.email);
     if (under.length === 0) {
       return 'Semua psikolog di atas threshold utilisasi 30% — kapasitas merata hari ini.';
@@ -353,12 +360,12 @@ export default function OwnerDashboardPage() {
     for (const r of rooms) {
       const t = r.type ?? 'konseling';
       if (!byType[t]) byType[t] = { used: 0, max: 0 };
-      byType[t].max += SLOTS_PER_DAY;
+      byType[t].max += slotsPerDay;
       const usedSlotsForRoom = todayBookings.filter((b) => b.room.id === r.id).length;
       byType[t].used += usedSlotsForRoom;
     }
     return byType;
-  }, [rooms, todayBookings]);
+  }, [rooms, todayBookings, slotsPerDay]);
 
   // ------------- Top services this month -------------
   const topServices = useMemo(() => {
@@ -391,7 +398,7 @@ export default function OwnerDashboardPage() {
         <KpiCard
           label="Utilisasi psikolog"
           value={`${kpi.utilPsikolog}%`}
-          sub={`${kpi.activePsikologCount} psikolog · rata-rata ${SLOTS_PER_DAY} slot`}
+          sub={`${kpi.activePsikologCount} psikolog · rata-rata ${slotsPerDay} slot`}
         />
         <KpiCard
           label="Utilisasi ruangan"
@@ -435,6 +442,7 @@ export default function OwnerDashboardPage() {
                   p={row.p}
                   todayCount={row.todayCount}
                   totalActive={row.totalActive}
+                  slotsPerDay={slotsPerDay}
                 />
               ))
             )}

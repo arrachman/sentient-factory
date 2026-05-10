@@ -700,9 +700,14 @@ model ClinicSettings {
   address        String?  @db.Text
   timezone       String   @default("Asia/Jakarta")
   currency       String   @default("IDR")
-  // Operating hours per day (JSON: { monday: { open, close, isOpen }, ... })
-  operatingHours Json     @default("{}") @map("operating_hours")
-  holidays       Json     @default("[]") // list of ISO date strings
+  // Slot operasional klinik — array jam terdefinisi (booking harus pas dengan
+  // salah satu slot). Ganti `operatingHours` lama (per-day open/close window)
+  // supaya satu source of truth.
+  // [{ start: "08:30", end: "10:00", label: "Pagi 1" }, ...]
+  slotsOfDay      Json     @default("[]") @map("slots_of_day")
+  // Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: Minggu tutup.
+  closedDayOfWeek Json     @default("[0]") @map("closed_day_of_week")
+  holidays        Json     @default("[]") // list of ISO date strings (tanggal libur ad-hoc)
   // Booking constraints (ADR 008)
   bufferMinutes  Int      @default(15) @map("buffer_minutes")
   // Pricing & payment (ADR 007)

@@ -1,6 +1,6 @@
 import { apiClient } from '@/lib/api-client';
 
-export type DayHours = { open: string | null; close: string | null; isOpen: boolean };
+export type SlotDef = { start: string; end: string; label?: string };
 
 export type ClinicSettings = {
   id: number;
@@ -8,7 +8,10 @@ export type ClinicSettings = {
   address: string | null;
   timezone: string;
   currency: string;
-  operatingHours: Record<string, DayHours>;
+  /** Slot operasional klinik (booking harus pas dengan salah satu). */
+  slotsOfDay: SlotDef[];
+  /** Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). */
+  closedDayOfWeek: number[];
   holidays: string[];
   bufferMinutes: number;
   taxEnabled: boolean;
@@ -25,7 +28,8 @@ export type UpdateSettingsInput = Partial<{
   address: string;
   timezone: string;
   currency: string;
-  operatingHours: Record<string, DayHours>;
+  slotsOfDay: SlotDef[];
+  closedDayOfWeek: number[];
   holidays: string[];
   bufferMinutes: number;
   taxEnabled: boolean;

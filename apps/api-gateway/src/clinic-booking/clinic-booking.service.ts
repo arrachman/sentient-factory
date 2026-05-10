@@ -88,7 +88,7 @@ export class ClinicBookingService {
     }
 
     if (!dto.createdViaWalkIn && !dto.bufferOverride) {
-      await this.validation.assertWithinOperatingHours(start, end);
+      await this.validation.assertSlotMatch(start, end);
     }
 
     const booking = await this.prisma.clinicBooking.create({

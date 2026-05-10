@@ -113,7 +113,7 @@ export class BookingPackageService {
           scheduledEnd: s.end,
           excludeBookingId: null,
         });
-        await this.validation.assertWithinOperatingHours(s.start, s.end);
+        await this.validation.assertSlotMatch(s.start, s.end);
       }
     }
   }
