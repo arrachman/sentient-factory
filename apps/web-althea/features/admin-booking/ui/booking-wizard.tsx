@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient, ApiError } from '@/lib/api-client';
+import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { useClientList } from '@/features/admin-clients/hooks/use-client';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
@@ -82,6 +83,33 @@ export function BookingWizard({ open, onClose }: Props) {
   const selectedSlot = s.slotIdx !== null ? slots[s.slotIdx] : null;
   const isClosedDay = closedDays.includes(new Date(`${s.date}T00:00:00`).getDay());
 
+  // Fetch booking psikolog di tanggal terpilih (untuk filter slot yang sudah
+  // dipakai). Selalu di-call (rules-of-hooks), tapi backend cuma return
+  // berarti ketika psikologUserId + date both set.
+  const psikologDayBookings = useBookingList({
+    psikologUserId: s.psikologUserId ?? undefined,
+    date: s.psikologUserId && s.date ? s.date : undefined,
+    limit: 50,
+    includeCancelled: false,
+  });
+
+  // Set of slot indices yang konflik dengan booking psikolog di tanggal tsb.
+  const unavailableSlotIdx = useMemo(() => {
+    if (!s.psikologUserId || !s.date) return new Set<number>();
+    const bookings = psikologDayBookings.data?.data ?? [];
+    const taken = new Set<number>();
+    for (const b of bookings) {
+      const bStart = new Date(b.scheduledStart).getTime();
+      const bEnd = new Date(b.scheduledEnd).getTime();
+      slots.forEach((slot, idx) => {
+        const slotStart = new Date(`${s.date}T${slot.start}:00`).getTime();
+        const slotEnd = new Date(`${s.date}T${slot.end}:00`).getTime();
+        if (bStart < slotEnd && bEnd > slotStart) taken.add(idx);
+      });
+    }
+    return taken;
+  }, [psikologDayBookings.data, slots, s.date, s.psikologUserId]);
+
   const createMut = useMutation({
     mutationFn: async (payload: object) => {
       const idempotencyKey = (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/[^a-zA-Z0-9_-]/g, '');
@@ -115,8 +143,8 @@ export function BookingWizard({ open, onClose }: Props) {
   function canNext(): boolean {
     if (s.step === 1) return s.clientId !== null;
     if (s.step === 2) return s.serviceId !== null;
-    if (s.step === 3) return Boolean(s.date && s.slotIdx !== null);
-    if (s.step === 4) return s.psikologUserId !== null && s.roomId !== null;
+    if (s.step === 3) return s.psikologUserId !== null;
+    if (s.step === 4) return Boolean(s.date && s.slotIdx !== null && s.roomId !== null);
     return false;
   }
 
@@ -164,7 +192,7 @@ export function BookingWizard({ open, onClose }: Props) {
                 s.step === n ? 'bg-sage-100 text-sage-800' : s.step > n ? 'bg-success-soft text-success' : 'text-fg-muted'
               }`}
             >
-              {n}. {n === 1 ? 'Klien' : n === 2 ? 'Layanan' : n === 3 ? 'Jadwal' : 'Psikolog & Ruang'}
+              {n}. {n === 1 ? 'Klien' : n === 2 ? 'Layanan' : n === 3 ? 'Psikolog' : 'Jadwal & Ruang'}
             </div>
           ))}
         </div>
@@ -223,14 +251,78 @@ export function BookingWizard({ open, onClose }: Props) {
             </div>
           )}
 
+          {/* Step 3: Pilih Psikolog */}
           {s.step === 3 && (
+            <div className="space-y-3">
+              <div>
+                <label className="caption mb-1 block">Pilih Psikolog</label>
+                {psikologList.isLoading ? (
+                  <div className="text-fg-muted">Memuat psikolog...</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {(psikologList.data?.data ?? []).map((p) => {
+                      const active = s.psikologUserId === p.userId;
+                      const initial = (p.fullName ?? p.email).slice(0, 2).toUpperCase();
+                      return (
+                        <button
+                          key={p.userId}
+                          type="button"
+                          onClick={() => setS({ ...s, psikologUserId: p.userId })}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-md border text-left transition-colors ${
+                            active
+                              ? 'bg-sage-50 border-sage-500'
+                              : 'bg-card border-border hover:border-sage-300'
+                          }`}
+                        >
+                          <span
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 999,
+                              background: p.color ?? 'var(--sage-500)',
+                              color: '#fff',
+                              display: 'grid',
+                              placeItems: 'center',
+                              fontSize: 12,
+                              fontWeight: 700,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {initial}
+                          </span>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[13.5px] font-semibold text-teal-800 truncate">
+                              {p.fullName ?? p.email}
+                            </span>
+                            <span className="caption truncate">
+                              {p.title ?? '—'}
+                              {p.specialty && p.specialty.length > 0
+                                ? ` · ${p.specialty.length} spesialisasi`
+                                : ''}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="caption mt-2 text-fg-muted">
+                  Tahap berikutnya akan tampil slot yang masih kosong untuk psikolog ini di
+                  tanggal yang kamu pilih.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Tanggal + Slot (filtered) + Ruang + Override */}
+          {s.step === 4 && (
             <div className="space-y-3">
               <div>
                 <label className="caption mb-1 block">Tanggal</label>
                 <input
                   type="date"
                   value={s.date}
-                  onChange={(e) => setS({ ...s, date: e.target.value })}
+                  onChange={(e) => setS({ ...s, date: e.target.value, slotIdx: null })}
                   className="input-althea max-w-[220px]"
                 />
                 {isClosedDay && !s.bufferOverride && (
@@ -241,7 +333,13 @@ export function BookingWizard({ open, onClose }: Props) {
               </div>
 
               <div>
-                <label className="caption mb-1 block">Pilih Slot</label>
+                <label className="caption mb-1 block">
+                  Slot tersedia untuk{' '}
+                  <strong className="text-teal-800">
+                    {psikologList.data?.data.find((p) => p.userId === s.psikologUserId)?.fullName ??
+                      'psikolog'}
+                  </strong>
+                </label>
                 {slots.length === 0 ? (
                   <p className="caption italic text-fg-muted">
                     Belum ada slot operasional. Set di Pengaturan → Slot Operasional dulu.
@@ -250,49 +348,73 @@ export function BookingWizard({ open, onClose }: Props) {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {slots.map((slot, i) => {
                       const active = s.slotIdx === i;
+                      const taken = unavailableSlotIdx.has(i);
+                      const disabled = taken && !s.bufferOverride;
                       return (
                         <button
                           key={i}
                           type="button"
-                          onClick={() => setS({ ...s, slotIdx: i })}
+                          onClick={() => !disabled && setS({ ...s, slotIdx: i })}
+                          disabled={disabled}
                           className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors text-left ${
                             active
                               ? 'bg-sage-50 border-sage-500 text-teal-800'
-                              : 'bg-card border-border text-fg hover:border-sage-300'
+                              : taken
+                                ? 'bg-cream-100 border-border text-fg-muted line-through cursor-not-allowed opacity-70'
+                                : 'bg-card border-border text-fg hover:border-sage-300'
                           }`}
+                          title={taken ? 'Sudah ada booking lain di slot ini' : undefined}
                         >
                           <div className="font-semibold">
                             {slot.start} – {slot.end}
                           </div>
-                          {slot.label && (
-                            <div className="caption mt-0.5">{slot.label}</div>
-                          )}
+                          <div className="caption mt-0.5">
+                            {taken ? 'sudah penuh' : slot.label || 'tersedia'}
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 )}
+                {psikologDayBookings.isLoading && (
+                  <p className="caption mt-1 text-fg-muted">Mengecek slot kosong…</p>
+                )}
+                {!psikologDayBookings.isLoading &&
+                  unavailableSlotIdx.size > 0 &&
+                  slots.length > 0 && (
+                    <p className="caption mt-1 text-fg-muted">
+                      {slots.length - unavailableSlotIdx.size} dari {slots.length} slot tersedia
+                      di tanggal ini.
+                    </p>
+                  )}
               </div>
 
               {selectedService && selectedSlot && (
                 <p className="caption text-fg-muted">
-                  💡 Slot {selectedSlot.start}–{selectedSlot.end} ={' '}
-                  {(() => {
+                  💡 Slot {selectedSlot.start}–{selectedSlot.end} = {(() => {
                     const [sh, sm] = selectedSlot.start.split(':').map(Number);
                     const [eh, em] = selectedSlot.end.split(':').map(Number);
                     return eh * 60 + em - (sh * 60 + sm);
                   })()}{' '}
-                  menit. Durasi layanan {selectedService.name}: {selectedService.durationMinutes}{' '}
-                  menit.
-                  {selectedService.durationMinutes !==
-                    (() => {
-                      const [sh, sm] = selectedSlot.start.split(':').map(Number);
-                      const [eh, em] = selectedSlot.end.split(':').map(Number);
-                      return eh * 60 + em - (sh * 60 + sm);
-                    })() && ' (Slot lebih panjang dari durasi — masih OK, sesi akan selesai lebih cepat dari slot.)'}
+                  menit. Durasi {selectedService.name}: {selectedService.durationMinutes} menit.
                 </p>
               )}
 
+              <div>
+                <label className="caption mb-1 block">Pilih Ruang</label>
+                <select
+                  value={s.roomId ?? ''}
+                  onChange={(e) => setS({ ...s, roomId: e.target.value ? Number(e.target.value) : null })}
+                  className="input-althea"
+                >
+                  <option value="">-- pilih ruang --</option>
+                  {(roomList.data?.data ?? []).map((r) => (
+                    <option key={r.id} value={r.id}>
+                      [{r.type}] {r.name} (kapasitas {r.capacity})
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="rounded-md border border-border p-3 bg-cream-50">
                 <label className="flex items-start gap-2 text-sm cursor-pointer">
                   <input
@@ -314,41 +436,7 @@ export function BookingWizard({ open, onClose }: Props) {
                   </span>
                 </label>
               </div>
-            </div>
-          )}
 
-          {s.step === 4 && (
-            <div className="space-y-3">
-              <div>
-                <label className="caption mb-1 block">Pilih Psikolog</label>
-                <select
-                  value={s.psikologUserId ?? ''}
-                  onChange={(e) => setS({ ...s, psikologUserId: e.target.value ? Number(e.target.value) : null })}
-                  className="input-althea"
-                >
-                  <option value="">-- pilih psikolog --</option>
-                  {(psikologList.data?.data ?? []).map((p) => (
-                    <option key={p.userId} value={p.userId}>
-                      {p.fullName ?? p.email} {p.title ? `(${p.title})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="caption mb-1 block">Pilih Ruang</label>
-                <select
-                  value={s.roomId ?? ''}
-                  onChange={(e) => setS({ ...s, roomId: e.target.value ? Number(e.target.value) : null })}
-                  className="input-althea"
-                >
-                  <option value="">-- pilih ruang --</option>
-                  {(roomList.data?.data ?? []).map((r) => (
-                    <option key={r.id} value={r.id}>
-                      [{r.type}] {r.name} (kapasitas {r.capacity})
-                    </option>
-                  ))}
-                </select>
-              </div>
               <div>
                 <label className="caption mb-1 block">Catatan (opsional)</label>
                 <textarea
