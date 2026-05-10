@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import {
+  BellOff,
   Calendar,
-  Filter,
   MessageCircle,
   Pencil,
   Plus,
@@ -434,8 +434,12 @@ export function ClientsPage() {
                   )}
 
                   {sel.waOptedOut && (
-                    <div className="rounded-md p-2.5 bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-2">
-                      <Filter className="h-3.5 w-3.5" /> Klien opt-out dari notifikasi WA
+                    <div className="rounded-md p-2.5 bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
+                      <BellOff className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <div className="font-semibold">Notifikasi WhatsApp dimatikan</div>
+                        <div className="mt-0.5">Klien minta tidak menerima WA — hubungi manual untuk reminder & konfirmasi.</div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -511,10 +515,26 @@ export function ClientsPage() {
                 <label className="caption mb-1 block">Catatan</label>
                 <textarea value={form.notes ?? ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="input-althea h-auto py-2" />
               </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.waOptedOut ?? false} onChange={(e) => setForm({ ...form, waOptedOut: e.target.checked })} className="h-4 w-4" />
-                Klien opt-out dari notifikasi WA
-              </label>
+              <div className="rounded-md border border-border p-3 bg-cream-50">
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.waOptedOut ?? false}
+                    onChange={(e) => setForm({ ...form, waOptedOut: e.target.checked })}
+                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                  />
+                  <span className="flex flex-col gap-1">
+                    <span className="font-medium text-teal-800">
+                      Jangan kirim notifikasi WhatsApp ke klien ini
+                    </span>
+                    <span className="caption">
+                      Centang kalau klien minta tidak menerima WA dari klinik (mis. alasan privasi).
+                      Sistem akan skip semua reminder, konfirmasi booking, dan kiriman struk via WA —
+                      admin perlu hubungi manual lewat telpon/email.
+                    </span>
+                  </span>
+                </label>
+              </div>
               <div className="flex justify-end gap-2 border-t border-border pt-3">
                 <button type="button" onClick={close} className="btn btn-outline">Batal</button>
                 <button type="submit" disabled={submitting} className="btn btn-primary">
