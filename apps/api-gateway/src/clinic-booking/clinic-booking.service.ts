@@ -1,16 +1,17 @@
 import {
   BadRequestException,
-  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
-import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
 import { BookingEventsService } from './booking-events.service';
+import { BookingNotesService } from './booking-notes.service';
+import { BookingNotificationService } from './booking-notification.service';
+import { BookingPackageService } from './booking-package.service';
+import { BookingValidationService } from './booking-validation.service';
 import {
-  BOOKING_STATUSES,
   type BookingStatus,
   CancelBookingDto,
   CreateBookingDto,
@@ -38,11 +39,23 @@ const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   cancelled: [],
 };
 
+/**
+ * Booking domain orchestrator. Handles CRUD + state machine + reschedule.
+ *
+ * Sub-concerns delegated:
+ * - {@link BookingValidationService} — FK exist + conflict + operating hours
+ * - {@link BookingNotificationService} — WA dispatch (notify + manual reminder)
+ * - {@link BookingNotesService} — clinical notes CRUD
+ * - {@link BookingEventsService} — SSE pub-sub untuk realtime UI
+ */
 @Injectable()
 export class ClinicBookingService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly wa: ClinicWaService,
+    private readonly validation: BookingValidationService,
+    private readonly notifier: BookingNotificationService,
+    private readonly notes: BookingNotesService,
+    private readonly packageService: BookingPackageService,
     private readonly events: BookingEventsService,
   ) {}
 
@@ -57,12 +70,15 @@ export class ClinicBookingService {
       throw new BadRequestException('scheduledStart harus sebelum scheduledEnd');
     }
 
-    // Validate FKs exist
-    await this.assertEntitiesExist(dto.clientId, dto.serviceId, dto.psikologUserId, dto.roomId);
+    await this.validation.assertEntitiesExist(
+      dto.clientId,
+      dto.serviceId,
+      dto.psikologUserId,
+      dto.roomId,
+    );
 
-    // Conflict detection (kecuali bufferOverride dan walk-in)
     if (!dto.bufferOverride) {
-      await this.assertNoConflict({
+      await this.validation.assertNoConflict({
         psikologUserId: dto.psikologUserId,
         roomId: dto.roomId,
         scheduledStart: start,
@@ -71,9 +87,8 @@ export class ClinicBookingService {
       });
     }
 
-    // Operating hours check (skip kalau walk-in atau buffer override)
     if (!dto.createdViaWalkIn && !dto.bufferOverride) {
-      await this.assertWithinOperatingHours(start, end);
+      await this.validation.assertWithinOperatingHours(start, end);
     }
 
     const booking = await this.prisma.clinicBooking.create({
@@ -86,7 +101,9 @@ export class ClinicBookingService {
         scheduledEnd: end,
         sessionN: dto.sessionN ?? 1,
         sessionTotal: dto.sessionTotal ?? 1,
-        packageGroupId: dto.packageGroupId ?? (dto.sessionTotal && dto.sessionTotal > 1 ? randomUUID() : null),
+        packageGroupId:
+          dto.packageGroupId ??
+          (dto.sessionTotal && dto.sessionTotal > 1 ? randomUUID() : null),
         status: dto.createdViaWalkIn ? 'confirmed' : 'awaiting_dp',
         bufferOverride: dto.bufferOverride ?? false,
         createdViaWalkIn: dto.createdViaWalkIn ?? false,
@@ -100,10 +117,10 @@ export class ClinicBookingService {
 
     // Slice 9: WA event trigger
     if (booking.status === 'confirmed') {
-      void this.notifyBookingEvent(booking, 'Konfirmasi Booking');
+      void this.notifier.notify(booking, 'Konfirmasi Booking');
     }
 
-    // Slice 11: emit SSE event untuk realtime updates di resepsionis dashboard
+    // Slice 11: SSE event untuk realtime updates di resepsionis dashboard
     this.events.emit({ type: 'created', bookingId: booking.id, status: booking.status });
 
     return { success: true, data: booking, message: 'Booking created' };
@@ -111,134 +128,11 @@ export class ClinicBookingService {
 
   /**
    * Create N bookings sekaligus untuk multi-session package.
-   * Atomic — semua sesi divalidasi (FK + conflict + operating hours)
-   * sebelum any insert. Kalau salah satu fail, throw + rollback.
-   *
-   * Use case: paket "Terapi Anak Lengkap (10 sesi)" — admin pilih
-   * client + service + base psikolog/room, lalu input 10 jadwal.
+   * Delegated ke {@link BookingPackageService} — logic 100+ baris dengan
+   * cross-session validation, dipisah supaya orchestrator tetap focused.
    */
-  async createPackage(dto: CreatePackageBookingDto, actorId?: number) {
-    if (dto.sessions.length < 2) {
-      throw new BadRequestException('Package booking butuh minimal 2 sesi');
-    }
-
-    // Validate FKs once (client/service/psikolog/room) untuk default
-    await this.assertEntitiesExist(
-      dto.clientId,
-      dto.serviceId,
-      dto.psikologUserId,
-      dto.roomId,
-    );
-
-    // Validate service is multi-session
-    const service = await this.prisma.clinicService.findFirst({
-      where: { id: dto.serviceId, deletedAt: null, isActive: true },
-      select: { id: true, sessionCount: true, name: true, durationMinutes: true },
-    });
-    if (!service) throw new NotFoundException(`Service ${dto.serviceId} not found`);
-    if (service.sessionCount < 2) {
-      throw new BadRequestException(
-        `Service '${service.name}' adalah single-session (sessionCount=${service.sessionCount}). Pakai POST /clinic/booking biasa.`,
-      );
-    }
-    if (dto.sessions.length !== service.sessionCount) {
-      throw new BadRequestException(
-        `Jumlah sesi (${dto.sessions.length}) harus = service.sessionCount (${service.sessionCount})`,
-      );
-    }
-
-    // Pre-validate semua sesi (FKs override + conflict + hours)
-    const parsedSessions = dto.sessions.map((s, idx) => {
-      const start = new Date(s.scheduledStart);
-      const end = new Date(s.scheduledEnd);
-      if (!(start.getTime() < end.getTime())) {
-        throw new BadRequestException(
-          `Sesi ${idx + 1}: scheduledStart harus sebelum scheduledEnd`,
-        );
-      }
-      return {
-        index: idx,
-        start,
-        end,
-        psikologUserId: s.psikologUserId ?? dto.psikologUserId,
-        roomId: s.roomId ?? dto.roomId,
-      };
-    });
-
-    // Validate per-session FKs (kalau override)
-    for (const s of parsedSessions) {
-      if (s.psikologUserId !== dto.psikologUserId || s.roomId !== dto.roomId) {
-        await this.assertEntitiesExist(dto.clientId, dto.serviceId, s.psikologUserId, s.roomId);
-      }
-      // Conflict check kecuali bufferOverride
-      if (!dto.bufferOverride) {
-        await this.assertNoConflict({
-          psikologUserId: s.psikologUserId,
-          roomId: s.roomId,
-          scheduledStart: s.start,
-          scheduledEnd: s.end,
-          excludeBookingId: null,
-        });
-        // Operating hours check
-        await this.assertWithinOperatingHours(s.start, s.end);
-      }
-    }
-
-    // Cross-session internal conflict check (e.g., 2 sesi overlap dalam 1 paket)
-    for (let i = 0; i < parsedSessions.length; i++) {
-      for (let j = i + 1; j < parsedSessions.length; j++) {
-        const a = parsedSessions[i];
-        const b = parsedSessions[j];
-        if (
-          (a.psikologUserId === b.psikologUserId || a.roomId === b.roomId) &&
-          a.start < b.end &&
-          a.end > b.start
-        ) {
-          throw new ConflictException({
-            message: `Sesi ${a.index + 1} dan ${b.index + 1} dalam paket ini overlap`,
-            conflictType: a.psikologUserId === b.psikologUserId ? 'psikolog' : 'room',
-          });
-        }
-      }
-    }
-
-    // All validated — create N bookings dalam transaction
-    const packageGroupId = randomUUID();
-    const created = await this.prisma.$transaction(
-      parsedSessions.map((s) =>
-        this.prisma.clinicBooking.create({
-          data: {
-            clientId: dto.clientId,
-            serviceId: dto.serviceId,
-            psikologUserId: s.psikologUserId,
-            roomId: s.roomId,
-            scheduledStart: s.start,
-            scheduledEnd: s.end,
-            sessionN: s.index + 1,
-            sessionTotal: dto.sessions.length,
-            packageGroupId,
-            status: 'awaiting_dp',
-            bufferOverride: dto.bufferOverride ?? false,
-            createdViaWalkIn: false,
-            notes: dto.notes,
-            createdBy: actorId,
-            updatedBy: actorId,
-          },
-          include: this.includeRelations(),
-        }),
-      ),
-    );
-
-    // Emit SSE for each
-    for (const b of created) {
-      this.events.emit({ type: 'created', bookingId: b.id, status: b.status });
-    }
-
-    return {
-      success: true,
-      data: { packageGroupId, sessionCount: created.length, bookings: created },
-      message: `Package created: ${created.length} sessions`,
-    };
+  createPackage(dto: CreatePackageBookingDto, actorId?: number) {
+    return this.packageService.create(dto, actorId);
   }
 
   async findAll(query: QueryBookingDto) {
@@ -255,8 +149,10 @@ export class ClinicBookingService {
     if (query.date) {
       const day = new Date(query.date);
       if (isNaN(day.getTime())) throw new BadRequestException('date harus YYYY-MM-DD');
-      const dayStart = new Date(day); dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(day); dayEnd.setHours(23, 59, 59, 999);
+      const dayStart = new Date(day);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(day);
+      dayEnd.setHours(23, 59, 59, 999);
       where.scheduledStart = { gte: dayStart, lte: dayEnd };
     }
 
@@ -290,7 +186,9 @@ export class ClinicBookingService {
   async update(id: number, dto: UpdateBookingDto, actorId?: number) {
     const existing = await this.findOne(id);
     if (existing.data.status === 'cancelled' || existing.data.status === 'completed') {
-      throw new BadRequestException(`Booking sudah ${existing.data.status}, tidak bisa update`);
+      throw new BadRequestException(
+        `Booking sudah ${existing.data.status}, tidak bisa update`,
+      );
     }
     const data: Prisma.ClinicBookingUpdateInput = { updatedBy: actorId };
     if (dto.notes !== undefined) data.notes = dto.notes;
@@ -332,95 +230,27 @@ export class ClinicBookingService {
 
     // Slice 9: WA event triggers per status
     if (target === 'confirmed') {
-      void this.notifyBookingEvent(updated, 'Konfirmasi Booking');
+      void this.notifier.notify(updated, 'Konfirmasi Booking');
     } else if (target === 'completed') {
-      void this.notifyBookingEvent(updated, 'Follow-up Post Session');
+      void this.notifier.notify(updated, 'Follow-up Post Session');
     }
 
-    // Slice 11: emit SSE event
     this.events.emit({ type: 'transition', bookingId: id, status: target });
 
     return { success: true, data: updated, message: `Booking → ${target}` };
   }
 
-  async confirm(id: number, actorId?: number) { return this.transition(id, 'confirmed', actorId); }
-  async checkIn(id: number, actorId?: number) { return this.transition(id, 'checked_in', actorId); }
-  async start(id: number, actorId?: number) { return this.transition(id, 'in_progress', actorId); }
-  async complete(id: number, actorId?: number) { return this.transition(id, 'completed', actorId); }
-
-  /**
-   * Slice 10: Tambah clinical note untuk booking. Linked ke psikolog yang login.
-   * Booking harus exist dan tidak deleted. Note bisa disimpan kapan saja
-   * (sebelum/saat/setelah sesi).
-   */
-  async addNote(bookingId: number, noteText: string, actorId?: number) {
-    if (!noteText.trim()) {
-      throw new BadRequestException('noteText tidak boleh kosong');
-    }
-    const booking = await this.prisma.clinicBooking.findFirst({
-      where: { id: bookingId, deletedAt: null },
-      select: { id: true, psikologUserId: true },
-    });
-    if (!booking) {
-      throw new NotFoundException(`Booking ${bookingId} tidak ditemukan`);
-    }
-    const note = await this.prisma.clinicSessionNote.create({
-      data: {
-        bookingId: booking.id,
-        psikologUserId: actorId ?? booking.psikologUserId,
-        noteText: noteText.trim(),
-        isPrivate: true,
-        createdBy: actorId,
-        updatedBy: actorId,
-      },
-    });
-    return { success: true, data: note, message: 'Note saved' };
+  async confirm(id: number, actorId?: number) {
+    return this.transition(id, 'confirmed', actorId);
   }
-
-  async listNotes(bookingId: number) {
-    const notes = await this.prisma.clinicSessionNote.findMany({
-      where: { bookingId, deletedAt: null },
-      orderBy: [{ createdAt: 'desc' }],
-    });
-    return { success: true, data: notes };
+  async checkIn(id: number, actorId?: number) {
+    return this.transition(id, 'checked_in', actorId);
   }
-
-  /**
-   * Manual WA reminder dispatch. Used by admin/resepsionis untuk re-send
-   * reminder kalau klien belum baca atau ingin remind ulang.
-   */
-  async sendReminder(id: number, templateName: string, actorId?: number) {
-    const booking = await this.findOne(id);
-    const b = booking.data;
-    if (b.status === 'cancelled' || b.status === 'completed') {
-      throw new BadRequestException(
-        `Booking ${b.status} — reminder hanya untuk booking aktif`,
-      );
-    }
-    const phone = b.client?.phoneWa;
-    if (!phone) {
-      throw new BadRequestException('Klien tidak punya nomor WhatsApp');
-    }
-    const result = await this.wa.dispatch({
-      templateName,
-      recipientType: 'klien',
-      recipientPhone: phone,
-      variables: {
-        nama_klien: b.client?.name ?? '',
-        layanan: b.service?.name ?? '',
-        psikolog: b.psikolog?.fullName ?? '',
-        ruang: b.room?.name ?? '',
-        tanggal: new Date(b.scheduledStart).toLocaleString('id-ID', {
-          weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
-        }),
-        waktu: new Date(b.scheduledStart).toLocaleTimeString('id-ID', {
-          hour: '2-digit', minute: '2-digit',
-        }),
-      },
-      bookingId: id,
-    });
-    void actorId;
-    return { success: true, data: result, message: `Reminder '${templateName}' dispatched` };
+  async start(id: number, actorId?: number) {
+    return this.transition(id, 'in_progress', actorId);
+  }
+  async complete(id: number, actorId?: number) {
+    return this.transition(id, 'completed', actorId);
   }
 
   async cancel(id: number, dto: CancelBookingDto, actorId?: number) {
@@ -440,7 +270,7 @@ export class ClinicBookingService {
       include: this.includeRelations(),
     });
 
-    void this.notifyBookingEvent(updated, 'Cancel Booking', { alasan: dto.reason ?? '-' });
+    void this.notifier.notify(updated, 'Cancel Booking', { alasan: dto.reason ?? '-' });
 
     return { success: true, data: updated, message: 'Booking cancelled' };
   }
@@ -462,7 +292,7 @@ export class ClinicBookingService {
     const newRoomId = dto.roomId ?? existing.data.roomId;
 
     if (!dto.bufferOverride) {
-      await this.assertNoConflict({
+      await this.validation.assertNoConflict({
         psikologUserId: newPsikologUserId,
         roomId: newRoomId,
         scheduledStart: newStart,
@@ -473,8 +303,18 @@ export class ClinicBookingService {
 
     const history = (existing.data.rescheduleHistory as unknown[]) || [];
     history.push({
-      from: { start: existing.data.scheduledStart, end: existing.data.scheduledEnd, roomId: existing.data.roomId, psikologUserId: existing.data.psikologUserId },
-      to: { start: newStart, end: newEnd, roomId: newRoomId, psikologUserId: newPsikologUserId },
+      from: {
+        start: existing.data.scheduledStart,
+        end: existing.data.scheduledEnd,
+        roomId: existing.data.roomId,
+        psikologUserId: existing.data.psikologUserId,
+      },
+      to: {
+        start: newStart,
+        end: newEnd,
+        roomId: newRoomId,
+        psikologUserId: newPsikologUserId,
+      },
       reason: dto.reason ?? null,
       by: actorId ?? null,
       at: new Date(),
@@ -493,7 +333,7 @@ export class ClinicBookingService {
       include: this.includeRelations(),
     });
 
-    void this.notifyBookingEvent(updated, 'Reschedule Booking', {
+    void this.notifier.notify(updated, 'Reschedule Booking', {
       tanggal_lama: existing.data.scheduledStart.toISOString(),
       waktu_lama: existing.data.scheduledStart.toISOString().slice(11, 16),
       tanggal_baru: newStart.toISOString(),
@@ -505,120 +345,49 @@ export class ClinicBookingService {
   }
 
   // ---------------------------------------------------------------------------
-  // Validation helpers
+  // Notes (delegated)
   // ---------------------------------------------------------------------------
 
-  private async assertEntitiesExist(clientId: number, serviceId: number, psikologUserId: number, roomId: number) {
-    const [client, service, psikolog, room] = await Promise.all([
-      this.prisma.clinicClient.findFirst({ where: { id: clientId, deletedAt: null }, select: { id: true } }),
-      this.prisma.clinicService.findFirst({ where: { id: serviceId, deletedAt: null, isActive: true }, select: { id: true } }),
-      this.prisma.user.findFirst({
-        where: {
-          id: psikologUserId,
-          deletedAt: null,
-          isActive: true,
-          roles: { some: { deletedAt: null, role: { name: 'clinic-psikolog' } } },
-        },
-        select: { id: true },
-      }),
-      this.prisma.clinicRoom.findFirst({ where: { id: roomId, deletedAt: null, isActive: true }, select: { id: true } }),
-    ]);
-    if (!client) throw new NotFoundException(`Client ${clientId} not found / deleted`);
-    if (!service) throw new NotFoundException(`Service ${serviceId} not found / inactive`);
-    if (!psikolog) throw new NotFoundException(`Psikolog user ${psikologUserId} not found / not active clinic-psikolog`);
-    if (!room) throw new NotFoundException(`Room ${roomId} not found / inactive`);
+  addNote(bookingId: number, noteText: string, actorId?: number) {
+    return this.notes.addNote(bookingId, noteText, actorId);
   }
 
-  private async assertNoConflict(args: {
-    psikologUserId: number;
-    roomId: number;
-    scheduledStart: Date;
-    scheduledEnd: Date;
-    excludeBookingId: number | null;
-  }) {
-    const { psikologUserId, roomId, scheduledStart, scheduledEnd, excludeBookingId } = args;
-
-    // Buffer 15 menit (default) — overlap dengan +15 min margin
-    const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
-    const bufferMs = (settings?.bufferMinutes ?? 15) * 60 * 1000;
-    const slotStart = new Date(scheduledStart.getTime() - bufferMs);
-    const slotEnd = new Date(scheduledEnd.getTime() + bufferMs);
-
-    const overlapWhere: Prisma.ClinicBookingWhereInput = {
-      deletedAt: null,
-      status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
-      // Overlap: existing.scheduledStart < slotEnd AND existing.scheduledEnd > slotStart
-      scheduledStart: { lt: slotEnd },
-      scheduledEnd: { gt: slotStart },
-    };
-    if (excludeBookingId) overlapWhere.id = { not: excludeBookingId };
-
-    const [psikologConflict, roomConflict] = await Promise.all([
-      this.prisma.clinicBooking.findFirst({
-        where: { ...overlapWhere, psikologUserId },
-        select: { id: true, scheduledStart: true, scheduledEnd: true },
-      }),
-      this.prisma.clinicBooking.findFirst({
-        where: { ...overlapWhere, roomId },
-        select: { id: true, scheduledStart: true, scheduledEnd: true },
-      }),
-    ]);
-
-    if (psikologConflict) {
-      throw new ConflictException({
-        message: 'Psikolog conflict',
-        conflictType: 'psikolog',
-        conflictBookingId: psikologConflict.id,
-        scheduledStart: psikologConflict.scheduledStart,
-        scheduledEnd: psikologConflict.scheduledEnd,
-      });
-    }
-    if (roomConflict) {
-      throw new ConflictException({
-        message: 'Room conflict',
-        conflictType: 'room',
-        conflictBookingId: roomConflict.id,
-        scheduledStart: roomConflict.scheduledStart,
-        scheduledEnd: roomConflict.scheduledEnd,
-      });
-    }
+  listNotes(bookingId: number) {
+    return this.notes.listNotes(bookingId);
   }
 
-  private async assertWithinOperatingHours(start: Date, end: Date) {
-    const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
-    if (!settings) return; // no settings, allow
+  // ---------------------------------------------------------------------------
+  // Manual WA reminder (delegated)
+  // ---------------------------------------------------------------------------
 
-    const opHours = settings.operatingHours as Record<string, { open: string | null; close: string | null; isOpen: boolean }>;
-    const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][start.getDay()];
-    const day = opHours?.[dayName];
-    if (!day || !day.isOpen) {
-      throw new BadRequestException(`Klinik tutup di hari ${dayName}. Pakai bufferOverride / walk-in untuk override.`);
-    }
-
-    if (day.open && day.close) {
-      const [oH, oM] = day.open.split(':').map(Number);
-      const [cH, cM] = day.close.split(':').map(Number);
-      const dayStart = new Date(start); dayStart.setHours(oH, oM, 0, 0);
-      const dayEnd = new Date(start); dayEnd.setHours(cH, cM, 0, 0);
-      if (start < dayStart || end > dayEnd) {
-        throw new BadRequestException(
-          `Booking di luar jam operasional ${day.open}-${day.close}. Pakai bufferOverride untuk override.`,
-        );
-      }
-    }
-
-    // Holiday check
-    const holidays = (settings.holidays as string[]) || [];
-    const dateStr = start.toISOString().slice(0, 10);
-    if (holidays.includes(dateStr)) {
-      throw new BadRequestException(`Tanggal ${dateStr} adalah hari libur. Pakai bufferOverride untuk override.`);
-    }
+  /**
+   * Manual reminder dispatch — admin/resepsionis kirim ulang reminder
+   * kalau klien belum baca atau ingin remind ulang.
+   */
+  async sendReminder(id: number, templateName: string, actorId?: number) {
+    const booking = await this.findOne(id);
+    void actorId;
+    const result = await this.notifier.sendManualReminder(booking.data, templateName);
+    return { success: true, data: result, message: `Reminder '${templateName}' dispatched` };
   }
+
+  // ---------------------------------------------------------------------------
+  // Internal
+  // ---------------------------------------------------------------------------
 
   private includeRelations() {
     return {
       client: { select: { id: true, name: true, gender: true, phoneWa: true } },
-      service: { select: { id: true, name: true, category: true, sessionCount: true, durationMinutes: true, basePrice: true } },
+      service: {
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          sessionCount: true,
+          durationMinutes: true,
+          basePrice: true,
+        },
+      },
       psikolog: {
         select: {
           id: true,
@@ -629,47 +398,5 @@ export class ClinicBookingService {
       },
       room: { select: { id: true, name: true, type: true } },
     } satisfies Prisma.ClinicBookingInclude;
-  }
-
-  /**
-   * Slice 9: WA event trigger helper. Fire-and-forget — error tidak block transition.
-   * Resolve template name + send ke recipient (klien default, optional psikolog juga).
-   */
-  private async notifyBookingEvent(
-    booking: {
-      id: number;
-      scheduledStart: Date;
-      scheduledEnd: Date;
-      client: { name: string; phoneWa: string };
-      service: { name: string; basePrice: unknown };
-      psikolog: { fullName: string | null };
-      room: { name: string };
-    },
-    templateName: string,
-    extraVars: Record<string, string | number> = {},
-  ) {
-    try {
-      const variables = {
-        nama_klien: booking.client.name,
-        nama_psikolog: booking.psikolog.fullName ?? 'Psikolog Althea',
-        tanggal: booking.scheduledStart.toISOString().slice(0, 10),
-        waktu: booking.scheduledStart.toISOString().slice(11, 16),
-        ruang: booking.room.name,
-        layanan: booking.service.name,
-        total: String(booking.service.basePrice),
-        ...extraVars,
-      };
-      // Send to klien
-      await this.wa.dispatch({
-        templateName,
-        recipientType: 'klien',
-        recipientPhone: booking.client.phoneWa,
-        variables,
-        bookingId: booking.id,
-      });
-    } catch (err) {
-      // Tidak boleh block transition — log saja
-      console.error(`[notifyBookingEvent] template=${templateName} bookingId=${booking.id}:`, err);
-    }
   }
 }
