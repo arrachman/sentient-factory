@@ -20,7 +20,7 @@ function isAllowedForRole(pathname: string, role: Role): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const token = request.cookies.get(TOKEN_COOKIE)?.value;
   const role = extractRoleFromToken(token);

@@ -31,6 +31,28 @@ Service types: konseling (5), terapi dewasa & anak (4), tes psikologi (7) — to
 ## Port
 3202 (env `WEB_ALTHEA_PORT`). Lihat `config/ports.json` di root monorepo. Jangan hardcode.
 
+## Deployment URL Mapping
+
+| Public URL | Routes ke (internal) |
+|---|---|
+| **`https://althea.fr-labs.my.id/`** | `http://192.168.1.150:3202/` (web-althea, this app) |
+| **`https://althea.fr-labs.my.id/api`** | `http://192.168.1.150:3203/api` (api-gateway, NestJS) |
+
+Reverse proxy: NPM (Nginx Proxy Manager) di server, Let's Encrypt SSL aktif. DNS A record di Cloudflare `althea` → `202.59.200.26`. Same-origin strategy → `NEXT_PUBLIC_API_URL=/api` (relative). Detail di `.planning/ADRs/009-deployment-url-mapping.md`.
+
+LAN direct fallback (skip NPM): `http://192.168.1.150:3202/` (web), `http://192.168.1.150:3203/api/*` (api).
+
+### Client-side vs Server-side API URLs
+
+Two separate env vars — pick correct one per context:
+
+| Var | Used in | Format | Example |
+|---|---|---|---|
+| `NEXT_PUBLIC_API_URL` (`ENV.API_URL`) | **Browser fetch** (lib/api-client, hooks) | Relative atau absolute | `/api` (same-origin via NPM) |
+| `API_URL_INTERNAL` (`ENV.API_URL_INTERNAL`) | **Server-side fetch** (Route Handler `app/api/**/route.ts`, SSR) | **Wajib absolute** (Node fetch tidak punya base) | `http://localhost:3203/api` |
+
+⚠️ **Gotcha**: Kalau Route Handler proxy ke api-gateway pakai `ENV.API_URL` (relative `/api`) → 502 Bad Gateway karena Node fetch reject relative URL. Selalu pakai `ENV.API_URL_INTERNAL` di server-side.
+
 ## Perintah
 ```bash
 npm run dev            # next dev di port 3202
@@ -63,7 +85,7 @@ config/                        # Konstanta runtime (urls, paths, dll)
 shared/                        # auth/, api/, providers/, constants/, utils/, types/
 styles/                        # globals.css (Tailwind + tokens) + althea palette
 public/                        # Static assets (logo, images)
-middleware.ts                  # Auth guard + role-based redirect
+proxy.ts                       # Auth guard + role-based redirect (Next.js 16 proxy convention; was middleware.ts)
 types/                         # Type definitions global
 ```
 
@@ -84,7 +106,7 @@ features/<feature-name>/
 - **Form**: `react-hook-form` + zod schema. Jangan controlled state manual untuk form panjang.
 - **Style**: Tailwind utility-first. Variant pakai `class-variance-authority`. Token dari `styles/althea-tokens.css` (sage/cream/teal palette).
 - **Import alias**: `@/*` → root (lihat `tsconfig.json`).
-- **Auth**: cookie `sf_token` (sama dengan web-dashboard) di-set oleh `api-gateway`. Cek `middleware.ts` untuk guard.
+- **Auth**: cookie `sf_token` (sama dengan web-dashboard) di-set oleh `api-gateway`. Cek `proxy.ts` untuk guard.
 - **JANGAN** masukkan API key ke `NEXT_PUBLIC_*` kecuali memang public.
 
 ## Design System
@@ -133,7 +155,7 @@ Future migration: **extract ke `api-althea` service** (port 3204, slot reserved)
 
 ## Role-based routing
 
-`middleware.ts` cek cookie + role claim dari JWT (`roles: string[]`), pick first `clinic-*` role, redirect ke route group sesuai:
+`proxy.ts` cek cookie + role claim dari JWT (`roles: string[]`), pick first `clinic-*` role, redirect ke route group sesuai:
 
 | Role                   | Route group prefix    | Default landing |
 |------------------------|----------------------|-----------------|
@@ -171,7 +193,7 @@ Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO).
 
 ## Jangan disentuh tanpa diminta
 - `next.config.mjs` — sudah dituning untuk Docker standalone & dev origins.
-- `middleware.ts` — logic auth/role global. Ubah hati-hati.
+- `proxy.ts` — logic auth/role global. Ubah hati-hati.
 - Tema ShadCN core di `components/ui/*` yang upstream — modifikasi via `cva` variant, bukan edit langsung.
 - Port di `config/ports.json` — koordinasi dengan tim dulu sebelum ubah.
 

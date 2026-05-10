@@ -48,7 +48,7 @@ components/         UI primitives (ShadCN-style)
 lib/                Utilities, api-client
 shared/             Auth, providers, types, utils, constants
 styles/             globals.css, althea-tokens.css, althea-components.css
-middleware.ts       Auth guard + role-based routing
+proxy.ts            Auth guard + role-based routing (Next.js 16 proxy)
 ```
 
 ## Design System
@@ -77,4 +77,4 @@ Lihat [`CLAUDE.md`](./CLAUDE.md) section "Design System" untuk detail.
 | admin        | `/(admin)/*`          | `/dashboard`    |
 | (anonymous)  | `/(auth)/*`           | `/login`        |
 
-Route group syntax `(name)` di Next.js tidak mempengaruhi URL — middleware yang resolve ke route group sesuai role.
+Route group syntax `(name)` di Next.js tidak mempengaruhi URL — `proxy.ts` yang resolve ke route group sesuai role.
