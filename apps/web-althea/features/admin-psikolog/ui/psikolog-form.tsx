@@ -6,10 +6,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import {
   COLOR_PALETTE,
+  DAY_KEYS,
+  DAY_LABEL,
   SPECIALTY_LABEL,
   SPECIALTY_OPTIONS,
   createPsikologSchema,
   type CreatePsikologInput,
+  type DayAvailability,
+  type DayKey,
   type Psikolog,
 } from '../model/types';
 
@@ -19,6 +23,17 @@ type Props = {
   submitting: boolean;
   onSubmit: (input: CreatePsikologInput) => void;
   onClose: () => void;
+};
+
+/** Default seed weekly availability: Sen-Jum buka, Sab+Min tutup. */
+const DEFAULT_WEEKLY: Record<DayKey, DayAvailability> = {
+  monday: { isOpen: true },
+  tuesday: { isOpen: true },
+  wednesday: { isOpen: true },
+  thursday: { isOpen: true },
+  friday: { isOpen: true },
+  saturday: { isOpen: false },
+  sunday: { isOpen: false },
 };
 
 const EMPTY_FORM: CreatePsikologInput = {
@@ -31,6 +46,7 @@ const EMPTY_FORM: CreatePsikologInput = {
   color: '',
   license: '',
   defaultSlots: 4,
+  weeklyAvailability: DEFAULT_WEEKLY,
   bio: '',
   isActive: true,
 };
@@ -53,6 +69,12 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
   // Hydrate form ketika initial berubah (open edit dialog)
   useEffect(() => {
     if (initial) {
+      // Kalau psikolog existing belum punya weeklyAvailability (legacy / new),
+      // seed dengan default Sen-Jum buka supaya admin bisa langsung edit.
+      const existingWA =
+        initial.weeklyAvailability && Object.keys(initial.weeklyAvailability).length > 0
+          ? initial.weeklyAvailability
+          : DEFAULT_WEEKLY;
       reset({
         email: initial.email,
         fullName: initial.fullName ?? '',
@@ -63,6 +85,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
         color: initial.color ?? '',
         license: initial.license ?? '',
         defaultSlots: initial.defaultSlots,
+        weeklyAvailability: existingWA as Record<DayKey, DayAvailability>,
         bio: initial.bio ?? '',
         isActive: initial.isActive,
       });
@@ -245,6 +268,66 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
                 )}
               />
             </div>
+          </div>
+
+          <div>
+            <div className="flex items-baseline justify-between mb-1">
+              <label className="caption">Jadwal Mingguan *</label>
+              <span className="caption text-fg-muted">Wajib diisi supaya psikolog bisa di-booking</span>
+            </div>
+            <Controller
+              name="weeklyAvailability"
+              control={control}
+              render={({ field }) => {
+                const wa = (field.value ?? {}) as Record<DayKey, DayAvailability>;
+                const allEmpty = Object.keys(wa).length === 0;
+                return (
+                  <div className="rounded-md border border-border bg-cream-50 p-3 flex flex-col gap-1.5">
+                    {allEmpty && (
+                      <div className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mb-1">
+                        ⚠ Psikolog ini belum punya jadwal — admin tidak akan bisa booking sampai
+                        diisi minimal 1 hari kerja.
+                      </div>
+                    )}
+                    {DAY_KEYS.map((day) => {
+                      const dayCfg: DayAvailability = wa[day] ?? { isOpen: false };
+                      return (
+                        <label
+                          key={day}
+                          className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-card cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={dayCfg.isOpen}
+                            onChange={(e) =>
+                              field.onChange({
+                                ...wa,
+                                [day]: { ...dayCfg, isOpen: e.target.checked },
+                              })
+                            }
+                            className="h-4 w-4"
+                          />
+                          <span
+                            className={`text-sm font-medium w-20 ${
+                              dayCfg.isOpen ? 'text-teal-800' : 'text-fg-muted'
+                            }`}
+                          >
+                            {DAY_LABEL[day]}
+                          </span>
+                          <span className="caption">
+                            {dayCfg.isOpen ? 'praktik' : 'libur'}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                );
+              }}
+            />
+            <p className="caption mt-1.5 text-fg-muted">
+              💡 Tahap selanjutnya nanti bisa filter slot per hari (mis. Sabtu hanya ambil slot
+              Pagi). Untuk MVP, centang hari kerja saja.
+            </p>
           </div>
 
           <div>

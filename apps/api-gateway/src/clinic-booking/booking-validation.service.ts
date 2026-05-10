@@ -185,4 +185,71 @@ export class BookingValidationService {
   async assertWithinOperatingHours(start: Date, end: Date): Promise<void> {
     return this.assertSlotMatch(start, end);
   }
+
+  /**
+   * Cek psikolog available di hari `start.getDay()` berdasarkan
+   * `weeklyAvailability` di ClinicPsikologProfile.
+   *
+   *  - Empty {} → psikolog belum set jadwal → reject (admin harus set dulu)
+   *  - Hari `isOpen: false` → reject
+   *  - `slotIndices` opsional: kalau ada, slotIdx harus masuk list
+   *  - Bisa di-bypass dengan bufferOverride di caller
+   *
+   * Param `slotIdx` = index slot di ClinicSettings.slotsOfDay yang di-pick.
+   * Lewatkan null kalau caller tidak tahu (skip slotIndices check).
+   */
+  async assertPsikologAvailable(
+    psikologUserId: number,
+    start: Date,
+    slotIdx: number | null = null,
+  ): Promise<void> {
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId: psikologUserId, deletedAt: null },
+      select: { weeklyAvailability: true, user: { select: { fullName: true, email: true } } },
+    });
+    if (!profile) {
+      throw new NotFoundException(
+        `Psikolog profile untuk user ${psikologUserId} tidak ditemukan.`,
+      );
+    }
+    const availability = (profile.weeklyAvailability ?? {}) as Record<
+      string,
+      { isOpen: boolean; slotIndices?: number[] }
+    >;
+    const psikologName = profile.user.fullName ?? profile.user.email;
+
+    // Empty = belum set
+    if (Object.keys(availability).length === 0) {
+      throw new BadRequestException(
+        `Psikolog ${psikologName} belum mengatur jadwal mingguan. Set dulu di menu Psikolog → Edit → Jadwal Mingguan.`,
+      );
+    }
+
+    const DAY_KEYS = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ];
+    const DAY_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dow = start.getDay();
+    const dayCfg = availability[DAY_KEYS[dow]];
+
+    if (!dayCfg || !dayCfg.isOpen) {
+      throw new BadRequestException(
+        `Psikolog ${psikologName} tidak praktik di hari ${DAY_ID[dow]}. Pilih psikolog atau hari lain.`,
+      );
+    }
+
+    if (slotIdx !== null && Array.isArray(dayCfg.slotIndices) && dayCfg.slotIndices.length > 0) {
+      if (!dayCfg.slotIndices.includes(slotIdx)) {
+        throw new BadRequestException(
+          `Slot terpilih tidak masuk jadwal ${psikologName} di hari ${DAY_ID[dow]}.`,
+        );
+      }
+    }
+  }
 }

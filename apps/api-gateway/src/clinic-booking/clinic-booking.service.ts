@@ -89,6 +89,7 @@ export class ClinicBookingService {
 
     if (!dto.createdViaWalkIn && !dto.bufferOverride) {
       await this.validation.assertSlotMatch(start, end);
+      await this.validation.assertPsikologAvailable(dto.psikologUserId, start);
     }
 
     const booking = await this.prisma.clinicBooking.create({

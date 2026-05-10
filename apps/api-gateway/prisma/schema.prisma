@@ -735,7 +735,12 @@ model ClinicPsikologProfile {
   specialty    String[] // ["klinis_dewasa", "anak_remaja", "pasangan"]
   color        String? // hex code untuk avatar/badge (e.g., "#5b8a66")
   license      String? // SIPP nomor (Surat Izin Praktik Psikolog)
-  defaultSlots Int       @default(4) @map("default_slots") // slot per hari default
+  defaultSlots Int       @default(4) @map("default_slots") // max sesi per hari (kuota)
+  // Jadwal mingguan psikolog. Format:
+  //   { "monday": { "isOpen": true, "slotIndices"?: [0,1,2] }, ..., "sunday": { "isOpen": false } }
+  // Empty {} = belum set → admin tidak bisa booking psikolog ini.
+  // slotIndices opsional (kalau tidak ada → semua slot di slotsOfDay tersedia di hari itu).
+  weeklyAvailability Json @default("{}") @map("weekly_availability")
   bio          String?   @db.Text
   isActive     Boolean   @default(true) @map("is_active")
   // Audit fields

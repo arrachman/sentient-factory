@@ -4,6 +4,40 @@ import { z } from 'zod';
  * Psikolog response shape from api-gateway `/clinic/psikolog`.
  * Mirror of `ClinicPsikologService.mapToResponse()`.
  */
+export const dayAvailabilitySchema = z.object({
+  isOpen: z.boolean(),
+  slotIndices: z.array(z.number().int()).optional(),
+});
+export type DayAvailability = z.infer<typeof dayAvailabilitySchema>;
+
+export const DAY_KEYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+export type DayKey = (typeof DAY_KEYS)[number];
+
+export const DAY_LABEL: Record<DayKey, string> = {
+  monday: 'Senin',
+  tuesday: 'Selasa',
+  wednesday: 'Rabu',
+  thursday: 'Kamis',
+  friday: 'Jumat',
+  saturday: 'Sabtu',
+  sunday: 'Minggu',
+};
+
+/** Helper: cek apakah jadwal mingguan sudah pernah di-set (non-empty). */
+export function hasWeeklyAvailability(
+  wa: Record<string, DayAvailability> | null | undefined,
+): boolean {
+  return !!wa && Object.keys(wa).length > 0;
+}
+
 export const psikologSchema = z.object({
   id: z.number().int(),
   userId: z.number().int(),
@@ -17,6 +51,7 @@ export const psikologSchema = z.object({
   color: z.string().nullable(),
   license: z.string().nullable(),
   defaultSlots: z.number().int(),
+  weeklyAvailability: z.record(z.string(), dayAvailabilitySchema).default({}),
   bio: z.string().nullable(),
   lastLogin: z.string().nullable(),
   createdAt: z.string(),
@@ -47,6 +82,7 @@ export const createPsikologSchema = z.object({
   color: z.string().max(20).optional(),
   license: z.string().max(80).optional(),
   defaultSlots: z.number().int().min(0).max(20).optional(),
+  weeklyAvailability: z.record(z.string(), dayAvailabilitySchema).optional(),
   bio: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
 });

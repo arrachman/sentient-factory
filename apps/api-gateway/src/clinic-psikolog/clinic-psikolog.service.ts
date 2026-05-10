@@ -73,6 +73,8 @@ export class ClinicPsikologService {
           color: dto.color,
           license: dto.license,
           defaultSlots: dto.defaultSlots ?? 4,
+          weeklyAvailability:
+            (dto.weeklyAvailability as Prisma.InputJsonValue | undefined) ?? {},
           bio: dto.bio,
           isActive: dto.isActive ?? true,
           createdBy: actorId,
@@ -184,6 +186,8 @@ export class ClinicPsikologService {
       if (dto.color !== undefined) profileUpdates.color = dto.color;
       if (dto.license !== undefined) profileUpdates.license = dto.license;
       if (dto.defaultSlots !== undefined) profileUpdates.defaultSlots = dto.defaultSlots;
+      if (dto.weeklyAvailability !== undefined)
+        profileUpdates.weeklyAvailability = dto.weeklyAvailability as Prisma.InputJsonValue;
       if (dto.bio !== undefined) profileUpdates.bio = dto.bio;
       if (dto.isActive !== undefined) profileUpdates.isActive = dto.isActive;
       profileUpdates.updatedBy = actorId;
@@ -288,6 +292,7 @@ export class ClinicPsikologService {
       color: string | null;
       license: string | null;
       defaultSlots: number;
+      weeklyAvailability?: unknown;
       bio: string | null;
       isActive: boolean;
       createdAt: Date;
@@ -307,6 +312,10 @@ export class ClinicPsikologService {
       color: profile.color,
       license: profile.license,
       defaultSlots: profile.defaultSlots,
+      weeklyAvailability: (profile.weeklyAvailability ?? {}) as Record<
+        string,
+        { isOpen: boolean; slotIndices?: number[] }
+      >,
       bio: profile.bio,
       lastLogin: user.lastLogin,
       createdAt: profile.createdAt,

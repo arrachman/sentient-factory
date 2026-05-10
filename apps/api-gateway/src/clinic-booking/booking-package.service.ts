@@ -114,6 +114,7 @@ export class BookingPackageService {
           excludeBookingId: null,
         });
         await this.validation.assertSlotMatch(s.start, s.end);
+        await this.validation.assertPsikologAvailable(s.psikologUserId, s.start);
       }
     }
   }

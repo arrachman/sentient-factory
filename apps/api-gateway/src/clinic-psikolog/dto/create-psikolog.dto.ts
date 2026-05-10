@@ -81,6 +81,17 @@ export class CreatePsikologDto {
   @Max(20)
   defaultSlots?: number;
 
+  @ApiPropertyOptional({
+    description:
+      'Jadwal mingguan psikolog. Format: { "monday": { isOpen: true, slotIndices?: [0,1,2] }, ..., "sunday": { isOpen: false } }. Empty {} = belum set → admin tidak bisa booking.',
+    example: { monday: { isOpen: true }, tuesday: { isOpen: true } },
+  })
+  @IsOptional()
+  weeklyAvailability?: Record<
+    string,
+    { isOpen: boolean; slotIndices?: number[] }
+  >;
+
   @ApiPropertyOptional({ example: 'Lulusan Universitas Indonesia, fokus...' })
   @IsOptional()
   @IsString()
