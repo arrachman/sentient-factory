@@ -217,18 +217,12 @@ export function LayananPage() {
                     >
                       <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-[13.5px] font-semibold text-teal-800 truncate">
+                          <span
+                            className="text-[13.5px] font-semibold text-teal-800 truncate"
+                            title={s.description ?? undefined}
+                          >
                             {s.name}
                           </span>
-                          {s.description && s.description.length > 0 && (
-                            <span
-                              className="px-1.5 py-[1px] rounded text-[10px] font-medium"
-                              style={{ background: '#d4e3ee', color: '#2c4a60', height: 16, lineHeight: '14px' }}
-                              title={s.description}
-                            >
-                              flex
-                            </span>
-                          )}
                           {!s.isActive && (
                             <span className="badge badge-neutral text-[10px] h-[18px]">nonaktif</span>
                           )}
@@ -333,10 +327,9 @@ export function LayananPage() {
                   value={form.description ?? ''}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={2}
-                  placeholder="Catatan opsional (mis. 'opsi paket 1 atau 2 sesi')"
+                  placeholder="Catatan opsional"
                   className="input-althea h-auto py-2"
                 />
-                <p className="caption mt-1">Layanan dengan deskripsi non-kosong otomatis dapat badge <em>flex</em>.</p>
               </div>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={form.isActive ?? true} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="h-4 w-4" />
