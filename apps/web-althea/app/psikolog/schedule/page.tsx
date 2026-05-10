@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import type { Booking } from '@/features/admin-booking/model/types';
@@ -204,10 +204,17 @@ function BookingBlock({ b, slotIdx, span }: { b: Booking; slotIdx: number; span:
 export default function PsikologSchedulePage() {
   const me = useMe();
   const myUserId = me.data?.data.id;
-  const [anchor, setAnchor] = useState<string>(todayKey());
+  // Anchor di-init '' supaya SSR + client hydration konsisten (todayKey()
+  // calls new Date() yang nilai-nya beda di server vs client → hydration
+  // mismatch). Set ke today setelah mount via useEffect.
+  const [anchor, setAnchor] = useState<string>('');
   const [view, setView] = useState<'Hari' | 'Minggu' | 'Bulan'>('Minggu');
 
-  const start = useMemo(() => weekStart(anchor), [anchor]);
+  useEffect(() => {
+    if (!anchor) setAnchor(todayKey());
+  }, [anchor]);
+
+  const start = useMemo(() => (anchor ? weekStart(anchor) : new Date()), [anchor]);
   const days = useMemo<Date[]>(() => {
     const arr: Date[] = [];
     for (let i = 0; i < 6; i++) {
@@ -240,6 +247,17 @@ export default function PsikologSchedulePage() {
   const totalBooked = allBookings.length;
   const totalSlots = 6 * SLOTS.length;
   const utilisation = totalSlots > 0 ? Math.round((totalBooked / totalSlots) * 100) : 0;
+
+  // Render skeleton sampai anchor terisi (post-mount). Mencegah hydration
+  // mismatch antara SSR (todayKey() di server time) vs CSR (todayKey() di
+  // client time) — timestamp bisa beda hari kalau page cached.
+  if (!anchor) {
+    return (
+      <div style={{ padding: 24 }}>
+        <div className="caption">Memuat jadwal...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24 }}>
