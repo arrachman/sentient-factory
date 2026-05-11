@@ -18,7 +18,13 @@ function formatJoined(iso: string): string {
   });
 }
 
-export function ProfileCard({ p }: { p: Psikolog }) {
+export function ProfileCard({
+  p,
+  onEdit,
+}: {
+  p: Psikolog;
+  onEdit?: () => void;
+}) {
   const specialtyLabel =
     Array.isArray(p.specialty) && p.specialty.length > 0
       ? (SPECIALTY_LABEL[p.specialty[0]] ?? p.specialty[0])
@@ -64,10 +70,11 @@ export function ProfileCard({ p }: { p: Psikolog }) {
         </span>
         <button
           type="button"
+          onClick={onEdit}
+          disabled={!onEdit}
           className="btn btn-outline btn-sm"
           style={{ marginTop: 10 }}
-          disabled
-          title="Edit profil dasar via admin — ke /admin/psikolog"
+          title="Edit nama, title, bio, & warna avatar"
         >
           Edit profil
         </button>

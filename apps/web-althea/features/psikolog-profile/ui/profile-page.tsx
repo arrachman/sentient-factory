@@ -1,21 +1,31 @@
 'use client';
 
-import { usePsikologMe, useUpdateAvailability } from '../hooks/use-profile';
+import { useState } from 'react';
+import {
+  usePsikologMe,
+  usePsikologStats,
+  useUpdateAvailability,
+  useUpdateProfile,
+} from '../hooks/use-profile';
 import { AvailabilityGrid } from './availability-grid';
 import { CapacityCard } from './capacity-card';
 import { ProfileCard } from './profile-card';
+import { ProfileEditDialog } from './profile-edit-dialog';
 import { StatsCard } from './stats-card';
 
 /**
  * Psikolog · Profil Saya — own profile + availability editor.
  *
  * Layout 1fr 2fr:
- *   - Left: ProfileCard + StatsCard
+ *   - Left: ProfileCard (clickable Edit) + StatsCard (live data)
  *   - Right: AvailabilityGrid + CapacityCard
  */
 export function ProfilePage() {
   const meQuery = usePsikologMe();
-  const updateMut = useUpdateAvailability();
+  const statsQuery = usePsikologStats();
+  const availMut = useUpdateAvailability();
+  const profileMut = useUpdateProfile();
+  const [editOpen, setEditOpen] = useState(false);
 
   if (meQuery.isLoading) {
     return (
@@ -57,14 +67,10 @@ export function ProfilePage() {
       >
         {/* Left column */}
         <div className="flex flex-col" style={{ gap: 12 }}>
-          <ProfileCard p={p} />
+          <ProfileCard p={p} onEdit={() => setEditOpen(true)} />
           <StatsCard
-            stats={[
-              { value: '—', label: 'Sesi 30 hari' },
-              { value: '—', label: 'Klien aktif' },
-              { value: '—', label: 'Kehadiran' },
-              { value: '—', label: 'Rating klien' },
-            ]}
+            stats={statsQuery.data?.data}
+            isLoading={statsQuery.isLoading}
           />
         </div>
 
@@ -72,12 +78,24 @@ export function ProfilePage() {
         <div className="flex flex-col" style={{ gap: 0 }}>
           <AvailabilityGrid
             initial={p.weeklyAvailability ?? {}}
-            saving={updateMut.isPending}
-            onSave={(wa) => updateMut.mutate(wa)}
+            saving={availMut.isPending}
+            onSave={(wa) => availMut.mutate(wa)}
           />
           <CapacityCard defaultSlots={p.defaultSlots} />
         </div>
       </div>
+
+      <ProfileEditDialog
+        open={editOpen}
+        initial={p}
+        submitting={profileMut.isPending}
+        onClose={() => setEditOpen(false)}
+        onSubmit={(input) =>
+          profileMut.mutate(input, {
+            onSuccess: () => setEditOpen(false),
+          })
+        }
+      />
     </div>
   );
 }

@@ -66,6 +66,40 @@ export class ClinicPsikologController {
     return this.service.findByUserId(userId);
   }
 
+  @Get('me/stats')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Statistik 30 hari terakhir untuk psikolog yang login',
+    description:
+      'Return { sesi30Hari, klienAktif, kehadiran, ratingKlien? }. Source: clinic_booking aggregations.',
+  })
+  myStats(@Request() req: AuthRequest) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) {
+      throw new BadRequestException('Unauthorized — userId tidak ada di JWT');
+    }
+    return this.service.getMyStats(userId);
+  }
+
+  @Patch('me')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Edit own profile (subset: fullName, title, bio, color)',
+    description:
+      'Psikolog hanya boleh edit field non-sensitive sendiri. Email/license/' +
+      'defaultSlots/specialty/isActive admin-only (via PATCH /:id).',
+  })
+  updateMe(
+    @Body() body: { fullName?: string; title?: string; bio?: string; color?: string },
+    @Request() req: AuthRequest,
+  ) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) {
+      throw new BadRequestException('Unauthorized — userId tidak ada di JWT');
+    }
+    return this.service.updateMe(userId, body);
+  }
+
   @Get(':id')
   @Roles(
     'clinic-admin',

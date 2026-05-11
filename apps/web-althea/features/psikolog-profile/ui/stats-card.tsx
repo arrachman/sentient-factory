@@ -1,11 +1,42 @@
 'use client';
 
-type Stat = {
-  label: string;
-  value: string | number;
-};
+import type { ProfileStats } from '../api/profile.api';
 
-export function StatsCard({ stats }: { stats: Stat[] }) {
+export function StatsCard({
+  stats,
+  isLoading,
+}: {
+  stats: ProfileStats | undefined;
+  isLoading: boolean;
+}) {
+  // Derive display values
+  const items: Array<{ value: string | number; label: string; note?: string }> =
+    [
+      {
+        value: isLoading ? '—' : (stats?.sesi30Hari ?? 0),
+        label: 'Sesi selesai (30 hari)',
+      },
+      {
+        value: isLoading ? '—' : (stats?.klienAktif ?? 0),
+        label: 'Klien aktif',
+        note: '90 hari terakhir',
+      },
+      {
+        value: isLoading
+          ? '—'
+          : stats?.kehadiran !== null && stats?.kehadiran !== undefined
+            ? `${stats.kehadiran}%`
+            : '—',
+        label: 'Kehadiran',
+        note: 'completed vs cancelled (30 hari)',
+      },
+      {
+        value: isLoading ? '—' : (stats?.ratingKlien ?? '—'),
+        label: 'Rating klien',
+        note: 'endpoint belum tersedia',
+      },
+    ];
+
   return (
     <div className="card-althea" style={{ padding: 18 }}>
       <span className="eyebrow">Statistik · 30 hari</span>
@@ -17,7 +48,7 @@ export function StatsCard({ stats }: { stats: Stat[] }) {
           marginTop: 10,
         }}
       >
-        {stats.map((s) => (
+        {items.map((s) => (
           <div key={s.label} className="flex flex-col">
             <span
               style={{
@@ -32,12 +63,14 @@ export function StatsCard({ stats }: { stats: Stat[] }) {
             <span className="caption" style={{ fontSize: 11 }}>
               {s.label}
             </span>
+            {s.note && (
+              <span className="caption" style={{ fontSize: 10, marginTop: 1, opacity: 0.7 }}>
+                {s.note}
+              </span>
+            )}
           </div>
         ))}
       </div>
-      <p className="caption" style={{ marginTop: 10, fontSize: 10.5 }}>
-        Stub — endpoint stats psikolog belum tersedia.
-      </p>
     </div>
   );
 }
