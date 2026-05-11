@@ -5,7 +5,6 @@ const ITEMS: Array<{
   color: string;
   border: string;
   borderStyle?: 'dashed';
-  pattern?: 'libur';
   label: string;
 }> = [
   { color: '#5b8a66', border: '#385a43', label: '● Berlangsung' },
@@ -26,9 +25,8 @@ const ITEMS: Array<{
     label: '+ Tersedia · siap di-booking',
   },
   {
-    color: '#f5ede0',
-    border: '#d4bf9a',
-    pattern: 'libur',
+    color: '#eeece6',
+    border: '#d8d4c8',
     label: '— Libur / di luar jadwal',
   },
 ];
@@ -51,10 +49,7 @@ export function ScheduleLegend() {
               width: 18,
               height: 14,
               borderRadius: 3,
-              background:
-                it.pattern === 'libur'
-                  ? 'repeating-linear-gradient(45deg, #f5ede0, #f5ede0 4px, #ead9bf 4px, #ead9bf 8px)'
-                  : it.color,
+              background: it.color,
               border: `${it.borderStyle === 'dashed' ? '1.5px dashed' : '1px solid'} ${it.border}`,
               flexShrink: 0,
             }}

@@ -196,17 +196,16 @@ function LiburCell({ cellHeight, reason }: { cellHeight: number; reason: string 
         margin: 2,
         padding: '6px 8px',
         borderRadius: 6,
-        // Warm cream stripe — clearly "not available", warning-ish
-        background:
-          'repeating-linear-gradient(45deg, #f5ede0, #f5ede0 5px, #ead9bf 5px, #ead9bf 10px)',
-        border: '1px solid #d4bf9a',
-        color: '#7a5a2a',
+        // Disabled gray — clearly "not interactive", neutral non-attention
+        background: '#eeece6',
+        border: '1px solid #d8d4c8',
+        color: '#9a9588',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,
         fontSize: 11,
-        fontWeight: 600,
+        fontWeight: 500,
       }}
     >
       <span style={{ fontSize: 11 }}>—</span>
