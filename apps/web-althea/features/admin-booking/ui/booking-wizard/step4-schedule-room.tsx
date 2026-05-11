@@ -241,26 +241,30 @@ function DateStrip({
           const selected = key === selectedDate;
           const isToday = key === todayKey;
           const dow = d.getDay();
+          const unbookable = status !== 'available';
           return (
             <button
               key={key}
               type="button"
-              onClick={() => onChangeDate(key)}
+              onClick={() => !unbookable && onChangeDate(key)}
+              disabled={unbookable}
               className={`flex flex-col items-center px-1 py-2 rounded-md border text-xs transition-colors ${
                 selected
                   ? 'bg-sage-500 border-sage-500 text-white shadow-sm'
-                  : `${info.bg} ${info.border} ${info.fg} hover:border-sage-300`
+                  : unbookable
+                    ? `${info.bg} ${info.border} ${info.fg} cursor-not-allowed`
+                    : `${info.bg} ${info.border} ${info.fg} hover:border-sage-300 cursor-pointer`
               } ${isToday && !selected ? 'ring-1 ring-sage-300' : ''}`}
               title={
                 status === 'available'
                   ? 'Tersedia'
                   : status === 'klinik-closed'
-                    ? 'Klinik tutup'
+                    ? 'Klinik tutup — tidak bisa dipilih'
                     : status === 'holiday'
-                      ? 'Tanggal libur'
+                      ? 'Tanggal libur — tidak bisa dipilih'
                       : status === 'psikolog-off'
-                        ? `${psikolog?.fullName ?? 'Psikolog'} tidak praktik`
-                        : 'Psikolog belum set jadwal'
+                        ? `${psikolog?.fullName ?? 'Psikolog'} tidak praktik — tidak bisa dipilih`
+                        : 'Psikolog belum set jadwal — tidak bisa dipilih'
               }
             >
               <span className="text-[10px] uppercase tracking-wider opacity-80">
