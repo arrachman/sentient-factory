@@ -67,11 +67,71 @@ export function useUpdateMyAvailability() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: QUERY_KEY });
       qc.invalidateQueries({ queryKey: ['auth', 'me'] });
-      toast.success('Jadwal availability tersimpan');
+      toast.success('Jadwal mingguan tersimpan');
     },
     onError: (err: Error) => {
       toast.error('Gagal simpan jadwal', { description: err.message });
     },
+  });
+}
+
+const OVERRIDES_KEY = ['clinic', 'psikolog', 'my-date-overrides'] as const;
+
+export function useMyDateOverrides(range?: { from?: string; to?: string }) {
+  return useQuery({
+    queryKey: [...OVERRIDES_KEY, range],
+    queryFn: () => psikologApi.listMyDateOverrides(range),
+  });
+}
+
+export function useUpsertMyDateOverride() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      date: string;
+      isOpen: boolean;
+      slotIndices?: number[] | null;
+      reason?: string | null;
+    }) => psikologApi.upsertMyDateOverride(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: OVERRIDES_KEY });
+      qc.invalidateQueries({ queryKey: ['clinic', 'booking'] });
+      toast.success('Override tanggal tersimpan');
+    },
+    onError: (err: Error) => {
+      toast.error('Gagal simpan override', { description: err.message });
+    },
+  });
+}
+
+export function useDeleteMyDateOverride() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (date: string) => psikologApi.deleteMyDateOverride(date),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: OVERRIDES_KEY });
+      qc.invalidateQueries({ queryKey: ['clinic', 'booking'] });
+      toast.success('Override dihapus, kembali ke jadwal mingguan');
+    },
+    onError: (err: Error) => {
+      toast.error('Gagal hapus override', { description: err.message });
+    },
+  });
+}
+
+/**
+ * Resolve effective availability psikolog di tanggal tertentu.
+ * Backend merge date override (priority) + weeklyAvailability (fallback).
+ * Dipakai booking wizard untuk filter slot picker.
+ */
+export function usePsikologAvailabilityForDate(
+  userId: number | null,
+  date: string,
+) {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'availability-for-date', userId, date],
+    queryFn: () => psikologApi.availabilityForDate(userId as number, date),
+    enabled: !!userId && !!date,
   });
 }
 

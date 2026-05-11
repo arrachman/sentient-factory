@@ -188,12 +188,16 @@ export class BookingValidationService {
   }
 
   /**
-   * Cek psikolog available di hari `start.getDay()` berdasarkan
-   * `weeklyAvailability` di ClinicPsikologProfile.
+   * Cek psikolog available di tanggal `start` berdasarkan dua sumber:
+   *   1. **Date override** di ClinicPsikologDateOverride (PRIORITAS) —
+   *      override per tanggal spesifik (cuti, makeup, jadwal khusus)
+   *   2. **Weekly availability** di ClinicPsikologProfile (fallback) —
+   *      pola berulang per day-of-week
    *
-   *  - Empty {} → psikolog belum set jadwal → reject (admin harus set dulu)
-   *  - Hari `isOpen: false` → reject
-   *  - `slotIndices` opsional: kalau ada, slotIdx harus masuk list
+   *  - Empty weekly {} & no override → psikolog belum set jadwal → reject
+   *  - Override `isOpen: false` → reject (cuti)
+   *  - Weekly day `isOpen: false` & no override → reject (libur rutin)
+   *  - `slotIndices` (override > weekly): kalau ada, slotIdx harus masuk list
    *  - Bisa di-bypass dengan bufferOverride di caller
    *
    * Param `slotIdx` = index slot di ClinicSettings.slotsOfDay yang di-pick.
@@ -211,30 +215,55 @@ export class BookingValidationService {
     if (!profile) {
       throw new NotFoundException(`Psikolog profile untuk user ${psikologUserId} tidak ditemukan.`);
     }
+    const psikologName = profile.user.fullName ?? profile.user.email;
+    const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const DAY_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dow = start.getDay();
+    const dateOnly = new Date(start);
+    dateOnly.setHours(0, 0, 0, 0);
+
+    // 1. PRIORITAS: cek date override untuk tanggal spesifik
+    const override = await this.prisma.clinicPsikologDateOverride.findUnique({
+      where: { psikologUserId_date: { psikologUserId, date: dateOnly } },
+    });
+    if (override) {
+      if (!override.isOpen) {
+        throw new BadRequestException(
+          override.reason
+            ? `${psikologName} tidak praktik di tanggal ini (${override.reason}).`
+            : `${psikologName} tidak praktik di tanggal ini (override jadwal).`,
+        );
+      }
+      const overrideSlots = (override.slotIndices ?? null) as number[] | null;
+      if (
+        slotIdx !== null &&
+        Array.isArray(overrideSlots) &&
+        overrideSlots.length > 0 &&
+        !overrideSlots.includes(slotIdx)
+      ) {
+        throw new BadRequestException(
+          `Slot terpilih tidak masuk jadwal khusus ${psikologName} di tanggal ini.`,
+        );
+      }
+      return; // Override matched, skip weekly check
+    }
+
+    // 2. FALLBACK: weekly availability
     const availability = (profile.weeklyAvailability ?? {}) as Record<
       string,
       { isOpen: boolean; slotIndices?: number[] }
     >;
-    const psikologName = profile.user.fullName ?? profile.user.email;
-
-    // Empty = belum set
     if (Object.keys(availability).length === 0) {
       throw new BadRequestException(
         `Psikolog ${psikologName} belum mengatur jadwal mingguan. Set dulu di menu Psikolog → Edit → Jadwal Mingguan.`,
       );
     }
-
-    const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const DAY_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const dow = start.getDay();
     const dayCfg = availability[DAY_KEYS[dow]];
-
     if (!dayCfg || !dayCfg.isOpen) {
       throw new BadRequestException(
         `Psikolog ${psikologName} tidak praktik di hari ${DAY_ID[dow]}. Pilih psikolog atau hari lain.`,
       );
     }
-
     if (slotIdx !== null && Array.isArray(dayCfg.slotIndices) && dayCfg.slotIndices.length > 0) {
       if (!dayCfg.slotIndices.includes(slotIdx)) {
         throw new BadRequestException(

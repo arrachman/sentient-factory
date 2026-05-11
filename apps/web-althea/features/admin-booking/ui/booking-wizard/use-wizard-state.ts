@@ -15,7 +15,10 @@ import { apiClient, ApiError } from '@/lib/api-client';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { useClientList } from '@/features/admin-clients/hooks/use-client';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
-import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
+import {
+  usePsikologList,
+  usePsikologAvailabilityForDate,
+} from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 
@@ -98,39 +101,47 @@ export function useWizardState({
     includeCancelled: false,
   });
 
-  // Selected psikolog (untuk akses weeklyAvailability)
+  // Selected psikolog (untuk akses weeklyAvailability fallback)
   const selectedPsikolog = useMemo(
     () => psikologList.data?.data.find((p) => p.userId === s.psikologUserId),
     [psikologList.data, s.psikologUserId],
   );
 
-  // Cek apakah psikolog tidak praktik di hari `s.date` (weeklyAvailability).
+  // Resolve effective availability dari backend (merge date override + weekly).
+  // Single source of truth — sama dengan logic assertPsikologAvailable.
+  const availabilityQuery = usePsikologAvailabilityForDate(
+    s.psikologUserId,
+    s.date,
+  );
+  const resolvedAvailability = availabilityQuery.data?.data;
+
+  // Cek apakah psikolog tidak praktik di hari `s.date`.
   const psikologClosedToday = useMemo(() => {
-    if (!selectedPsikolog || !s.date) return false;
-    const wa = selectedPsikolog.weeklyAvailability ?? {};
-    if (Object.keys(wa).length === 0) return true; // belum set jadwal
-    const DAY_KEYS = [
-      'sunday',
-      'monday',
-      'tuesday',
-      'wednesday',
-      'thursday',
-      'friday',
-      'saturday',
-    ];
-    const dow = new Date(`${s.date}T00:00:00`).getDay();
-    const dayCfg = wa[DAY_KEYS[dow]];
-    return !dayCfg || !dayCfg.isOpen;
-  }, [selectedPsikolog, s.date]);
+    if (!s.psikologUserId || !s.date) return false;
+    if (!resolvedAvailability) return false; // still loading — don't gate
+    return !resolvedAvailability.isOpen;
+  }, [resolvedAvailability, s.psikologUserId, s.date]);
 
   const unavailableSlotIdx = useMemo(() => {
     if (!s.psikologUserId || !s.date) return new Set<number>();
-    // Kalau psikolog libur hari itu → semua slot tidak tersedia.
     if (psikologClosedToday) {
+      // Psikolog libur (weekly off / override closed) → semua slot disabled.
       return new Set<number>(slots.map((_, i) => i));
     }
-    const bookings = psikologDayBookings.data?.data ?? [];
     const taken = new Set<number>();
+
+    // 1. Slot di luar window availability psikolog (weeklyAvailability slotIndices /
+    //    override slotIndices). null = "semua slot OK kalau isOpen".
+    const allowed = resolvedAvailability?.slotIndices;
+    if (allowed !== null && allowed !== undefined) {
+      const allowedSet = new Set(allowed);
+      slots.forEach((_, idx) => {
+        if (!allowedSet.has(idx)) taken.add(idx);
+      });
+    }
+
+    // 2. Slot yang sudah di-booking psikolog di tanggal tsb (overlap).
+    const bookings = psikologDayBookings.data?.data ?? [];
     for (const b of bookings) {
       const bStart = new Date(b.scheduledStart).getTime();
       const bEnd = new Date(b.scheduledEnd).getTime();
@@ -141,7 +152,14 @@ export function useWizardState({
       });
     }
     return taken;
-  }, [psikologDayBookings.data, slots, s.date, s.psikologUserId, psikologClosedToday]);
+  }, [
+    psikologDayBookings.data,
+    slots,
+    s.date,
+    s.psikologUserId,
+    psikologClosedToday,
+    resolvedAvailability,
+  ]);
 
   const createMut = useMutation({
     mutationFn: async (payload: object) => {
@@ -228,6 +246,8 @@ export function useWizardState({
     selectedSlot,
     isClosedDay,
     psikologDayBookings,
+    availabilityQuery,
+    resolvedAvailability,
     unavailableSlotIdx,
     submitting: createMut.isPending,
     next,

@@ -752,9 +752,39 @@ model ClinicPsikologProfile {
   deletedBy    Int?      @map("deleted_by")
 
   user User @relation(fields: [userId], references: [id])
+  dateOverrides ClinicPsikologDateOverride[]
 
   @@index([isActive])
   @@map("clinic_psikolog_profile")
+}
+
+/// Override jadwal psikolog per tanggal spesifik (mengganti weeklyAvailability
+/// untuk tanggal tsb). Use case:
+///   - Cuti/leave (isOpen=false di tanggal yang biasanya kerja)
+///   - Makeup session (isOpen=true di tanggal yang biasanya libur)
+///   - Reduced availability (slotIndices subset di tanggal tsb)
+///
+/// Lookup: PRIORITAS override > weeklyAvailability. Kalau ada row untuk
+/// (psikologUserId, date) → pakai itu; kalau tidak → fallback weekly.
+model ClinicPsikologDateOverride {
+  id              Int       @id @default(autoincrement())
+  psikologUserId  Int       @map("psikolog_user_id")
+  date            DateTime  @db.Date // tanggal spesifik (bukan datetime)
+  isOpen          Boolean   @map("is_open")
+  // slotIndices opsional. null/undefined → kalau isOpen=true berarti semua slot.
+  slotIndices     Json?     @map("slot_indices")
+  reason          String?   // optional note: "cuti tahunan", "makeup", dll
+  // Audit
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy       Int?      @map("created_by")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy       Int?      @map("updated_by")
+
+  profile ClinicPsikologProfile @relation(fields: [psikologUserId], references: [userId], onDelete: Cascade)
+
+  @@unique([psikologUserId, date])
+  @@index([date])
+  @@map("clinic_psikolog_date_override")
 }
 
 /// Service catalog — konseling/terapi/tes types.

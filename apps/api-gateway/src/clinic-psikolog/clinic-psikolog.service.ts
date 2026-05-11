@@ -207,6 +207,88 @@ export class ClinicPsikologService {
     };
   }
 
+  // -------------------- Self-service: Date overrides --------------------
+
+  /** List override psikolog dalam range tanggal. Dipakai psikolog di dialog. */
+  async listOwnDateOverrides(userId: number, from?: string, to?: string) {
+    const where: Prisma.ClinicPsikologDateOverrideWhereInput = {
+      psikologUserId: userId,
+    };
+    if (from || to) {
+      where.date = {};
+      if (from) (where.date as Prisma.DateTimeFilter).gte = new Date(from);
+      if (to) (where.date as Prisma.DateTimeFilter).lte = new Date(to);
+    }
+    const items = await this.prisma.clinicPsikologDateOverride.findMany({
+      where,
+      orderBy: [{ date: 'asc' }],
+    });
+    return { success: true, data: items };
+  }
+
+  /** Upsert override (create kalau belum ada untuk (userId,date), else update). */
+  async upsertOwnDateOverride(
+    userId: number,
+    input: {
+      date: string;
+      isOpen: boolean;
+      slotIndices?: number[] | null;
+      reason?: string | null;
+    },
+  ) {
+    // Pastikan psikolog profile ada
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId, deletedAt: null },
+      select: { userId: true },
+    });
+    if (!profile) {
+      throw new NotFoundException(`Profile psikolog tidak ditemukan untuk user ${userId}.`);
+    }
+    const dateObj = new Date(input.date);
+    if (isNaN(dateObj.getTime())) {
+      throw new ConflictException(`Tanggal '${input.date}' bukan format ISO YYYY-MM-DD.`);
+    }
+    const slotIndicesValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+      input.slotIndices === undefined || input.slotIndices === null
+        ? Prisma.DbNull
+        : (input.slotIndices as Prisma.InputJsonValue);
+    const upserted = await this.prisma.clinicPsikologDateOverride.upsert({
+      where: { psikologUserId_date: { psikologUserId: userId, date: dateObj } },
+      create: {
+        psikologUserId: userId,
+        date: dateObj,
+        isOpen: input.isOpen,
+        slotIndices: slotIndicesValue,
+        reason: input.reason ?? null,
+        createdBy: userId,
+        updatedBy: userId,
+      },
+      update: {
+        isOpen: input.isOpen,
+        slotIndices: slotIndicesValue,
+        reason: input.reason ?? null,
+        updatedBy: userId,
+      },
+    });
+    return { success: true, data: upserted, message: 'Override tersimpan' };
+  }
+
+  /** Hapus override → psikolog kembali ikut weeklyAvailability di tanggal tsb. */
+  async deleteOwnDateOverride(userId: number, dateStr: string) {
+    const dateObj = new Date(dateStr);
+    if (isNaN(dateObj.getTime())) {
+      throw new ConflictException(`Tanggal '${dateStr}' bukan format ISO YYYY-MM-DD.`);
+    }
+    await this.prisma.clinicPsikologDateOverride
+      .delete({
+        where: { psikologUserId_date: { psikologUserId: userId, date: dateObj } },
+      })
+      .catch(() => {
+        throw new NotFoundException(`Override tanggal ${dateStr} tidak ditemukan.`);
+      });
+    return { success: true, message: 'Override dihapus, kembali ke jadwal mingguan' };
+  }
+
   /**
    * Psikolog update jadwal availability sendiri (self-service).
    * Lookup profile by userId (bukan profileId) dari JWT.
@@ -236,6 +318,90 @@ export class ClinicPsikologService {
       success: true,
       data: this.mapToResponse(updated.user, updated),
       message: 'Jadwal availability tersimpan',
+    };
+  }
+
+  // -------------------- Resolve availability for booking wizard --------------------
+
+  /**
+   * Resolve effective availability untuk psikolog di tanggal tertentu.
+   *
+   * Priority:
+   *   1. ClinicPsikologDateOverride (kalau ada untuk tanggal exact)
+   *   2. weeklyAvailability[dayOfWeek] (fallback recurring)
+   *   3. Belum set sama sekali → isOpen=false, source='unset'
+   *
+   * Dipakai oleh booking wizard untuk preview slot mana yang available
+   * sebelum admin submit (mirror logic backend `assertPsikologAvailable`).
+   *
+   * Endpoint: GET /clinic/psikolog/:userId/availability-for-date?date=YYYY-MM-DD
+   */
+  async resolveAvailabilityForDate(psikologUserId: number, dateStr: string) {
+    const dateObj = new Date(`${dateStr}T00:00:00`);
+    if (isNaN(dateObj.getTime())) {
+      throw new ConflictException(`Tanggal '${dateStr}' bukan format ISO YYYY-MM-DD.`);
+    }
+
+    const [override, profile] = await Promise.all([
+      this.prisma.clinicPsikologDateOverride.findUnique({
+        where: { psikologUserId_date: { psikologUserId, date: dateObj } },
+      }),
+      this.prisma.clinicPsikologProfile.findFirst({
+        where: { userId: psikologUserId, deletedAt: null },
+        select: {
+          weeklyAvailability: true,
+          user: { select: { fullName: true, email: true } },
+        },
+      }),
+    ]);
+
+    if (!profile) {
+      throw new NotFoundException(`Profile psikolog untuk user ${psikologUserId} tidak ditemukan.`);
+    }
+
+    // 1. Override priority
+    if (override) {
+      return {
+        success: true,
+        data: {
+          isOpen: override.isOpen,
+          slotIndices: (override.slotIndices as number[] | null) ?? null, // null = semua slot (kalau isOpen)
+          source: 'override' as const,
+          reason: override.reason,
+          psikologName: profile.user.fullName ?? profile.user.email,
+        },
+      };
+    }
+
+    // 2. Weekly fallback
+    const wa = (profile.weeklyAvailability ?? {}) as Record<
+      string,
+      { isOpen: boolean; slotIndices?: number[] }
+    >;
+    if (Object.keys(wa).length === 0) {
+      return {
+        success: true,
+        data: {
+          isOpen: false,
+          slotIndices: [] as number[],
+          source: 'unset' as const,
+          reason: null,
+          psikologName: profile.user.fullName ?? profile.user.email,
+        },
+      };
+    }
+
+    const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayCfg = wa[DAY_KEYS[dateObj.getDay()]];
+    return {
+      success: true,
+      data: {
+        isOpen: !!dayCfg?.isOpen,
+        slotIndices: dayCfg?.slotIndices ?? null, // null = semua slot (kalau isOpen)
+        source: 'weekly' as const,
+        reason: null,
+        psikologName: profile.user.fullName ?? profile.user.email,
+      },
     };
   }
 

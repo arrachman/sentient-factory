@@ -45,6 +45,61 @@ export const psikologApi = {
   /** Self-service: psikolog update jadwal availability sendiri. */
   updateMyAvailability: (weeklyAvailability: Record<string, DayAvailability>) =>
     apiClient.patch<SingleResponse>('/psikolog/me/availability', { weeklyAvailability }),
+
+  // ----- Self-service: Date overrides -----
+
+  listMyDateOverrides: (range?: { from?: string; to?: string }) => {
+    const usp = new URLSearchParams();
+    if (range?.from) usp.set('from', range.from);
+    if (range?.to) usp.set('to', range.to);
+    const qs = usp.toString();
+    return apiClient.get<{
+      success: boolean;
+      data: Array<{
+        id: number;
+        date: string;
+        isOpen: boolean;
+        slotIndices: number[] | null;
+        reason: string | null;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+    }>(`/psikolog/me/date-overrides${qs ? `?${qs}` : ''}`);
+  },
+
+  upsertMyDateOverride: (input: {
+    date: string;
+    isOpen: boolean;
+    slotIndices?: number[] | null;
+    reason?: string | null;
+  }) =>
+    apiClient.post<{ success: boolean; data: unknown; message: string }>(
+      '/psikolog/me/date-overrides',
+      input,
+    ),
+
+  deleteMyDateOverride: (date: string) =>
+    apiClient.delete<{ success: boolean; message: string }>(
+      `/psikolog/me/date-overrides/${encodeURIComponent(date)}`,
+    ),
+
+  /**
+   * Resolve effective availability untuk psikolog tertentu di tanggal tertentu.
+   * Merge date override (priority) + weeklyAvailability (fallback).
+   * Dipakai booking wizard untuk preview slot mana yang available.
+   */
+  availabilityForDate: (userId: number, date: string) =>
+    apiClient.get<{
+      success: boolean;
+      data: {
+        isOpen: boolean;
+        /** null = semua slot tersedia (kalau isOpen). Empty = tidak ada. */
+        slotIndices: number[] | null;
+        source: 'override' | 'weekly' | 'unset';
+        reason: string | null;
+        psikologName: string;
+      };
+    }>(`/psikolog/by-user/${userId}/availability-for-date?date=${encodeURIComponent(date)}`),
 };
 
 // Re-export Psikolog type untuk konsumen yang import dari sini

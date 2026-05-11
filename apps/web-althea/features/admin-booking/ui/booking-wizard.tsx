@@ -70,6 +70,7 @@ export function BookingWizard({
               unavailableSlotIdx={w.unavailableSlotIdx}
               isClosedDay={w.isClosedDay}
               psikologClosedToday={w.psikologClosedToday}
+              resolvedAvailability={w.resolvedAvailability}
               selectedService={w.selectedService}
               selectedSlot={w.selectedSlot}
               psikologList={w.psikologList}

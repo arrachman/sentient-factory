@@ -20,7 +20,7 @@
  * isOpen=true dengan slotIndices → hanya slot di list yang tersedia
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Save, X } from 'lucide-react';
+import { Calendar, CalendarDays, Save, X } from 'lucide-react';
 import { useUpdateMyAvailability } from '@/features/admin-psikolog/hooks/use-psikolog';
 import {
   DAY_KEYS,
@@ -29,6 +29,9 @@ import {
   type DayKey,
 } from '@/features/admin-psikolog/model/types';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
+import { AvailabilityOverridesSection } from './availability-overrides-section';
+
+type TabKey = 'weekly' | 'overrides';
 
 type Props = {
   open: boolean;
@@ -52,7 +55,13 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
   const updateMut = useUpdateMyAvailability();
   const slots = settingsQuery.data?.data.slotsOfDay ?? [];
 
+  const [tab, setTab] = useState<TabKey>('weekly');
   const [draft, setDraft] = useState<Record<DayKey, DayAvailability>>(DEFAULT_FALLBACK);
+
+  // Reset tab tiap dialog dibuka
+  useEffect(() => {
+    if (open) setTab('weekly');
+  }, [open]);
 
   // Hydrate draft saat dialog dibuka / initial berubah
   useEffect(() => {
@@ -141,8 +150,9 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
           <div>
             <h2 className="h2">Atur Jadwal Saya</h2>
             <p className="caption mt-1">
-              Centang slot mana di hari mana kamu siap menerima sesi. Admin hanya bisa booking
-              kamu di slot yang dicentang. Total: <strong>{totalActiveSlots} slot/minggu</strong>.
+              {tab === 'weekly'
+                ? <>Centang slot mana di hari mana kamu siap menerima sesi. Total: <strong>{totalActiveSlots} slot/minggu</strong>.</>
+                : <>Override jadwal mingguan untuk tanggal spesifik (cuti, makeup, jadwal khusus).</>}
             </p>
           </div>
           <button
@@ -155,9 +165,37 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
           </button>
         </div>
 
+        {/* Tab nav */}
+        <div className="flex border-b border-border px-6">
+          <button
+            type="button"
+            onClick={() => setTab('weekly')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
+              tab === 'weekly'
+                ? 'border-sage-500 text-teal-800'
+                : 'border-transparent text-fg-muted hover:text-teal-800'
+            }`}
+          >
+            <CalendarDays className="h-4 w-4" /> Jadwal Mingguan
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('overrides')}
+            className={`flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
+              tab === 'overrides'
+                ? 'border-sage-500 text-teal-800'
+                : 'border-transparent text-fg-muted hover:text-teal-800'
+            }`}
+          >
+            <Calendar className="h-4 w-4" /> Override per Tanggal
+          </button>
+        </div>
+
         {/* Body */}
         <div className="px-6 py-4">
-          {settingsQuery.isLoading ? (
+          {tab === 'overrides' ? (
+            <AvailabilityOverridesSection />
+          ) : settingsQuery.isLoading ? (
             <div className="caption text-fg-muted py-6">Memuat slot operasional…</div>
           ) : slots.length === 0 ? (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">

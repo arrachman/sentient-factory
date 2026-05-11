@@ -25,6 +25,7 @@ export function Step4ScheduleRoom({
   unavailableSlotIdx,
   isClosedDay,
   psikologClosedToday,
+  resolvedAvailability,
   selectedService,
   selectedSlot,
   psikologList,
@@ -37,6 +38,13 @@ export function Step4ScheduleRoom({
   unavailableSlotIdx: Set<number>;
   isClosedDay: boolean;
   psikologClosedToday: boolean;
+  resolvedAvailability?: {
+    isOpen: boolean;
+    slotIndices: number[] | null;
+    source: 'override' | 'weekly' | 'unset';
+    reason: string | null;
+    psikologName: string;
+  };
   selectedService: Service | undefined;
   selectedSlot: Slot | null;
   psikologList: ReturnType<typeof usePsikologList>;
@@ -46,6 +54,8 @@ export function Step4ScheduleRoom({
   const psikologName =
     psikologList.data?.data.find((p) => p.userId === state.psikologUserId)
       ?.fullName ?? null;
+  const overrideReason =
+    resolvedAvailability?.source === 'override' ? resolvedAvailability.reason : null;
   return (
     <div className="space-y-3">
       <DateField
@@ -58,9 +68,18 @@ export function Step4ScheduleRoom({
       />
       {psikologClosedToday && !state.bufferOverride && (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          ⚠ <strong>{psikologName}</strong> tidak praktik di hari ini
-          (sesuai jadwal mingguan psikolog). Pilih tanggal lain, ganti psikolog
-          di step sebelumnya, atau centang override di bawah.
+          ⚠ <strong>{psikologName}</strong> tidak praktik di tanggal ini
+          {resolvedAvailability?.source === 'override'
+            ? ' (override khusus tanggal ini'
+            : ' (sesuai jadwal mingguan psikolog'}
+          {overrideReason ? `: ${overrideReason}` : ''}). Pilih tanggal lain,
+          ganti psikolog di step sebelumnya, atau centang override di bawah.
+        </div>
+      )}
+      {!psikologClosedToday && resolvedAvailability?.source === 'override' && (
+        <div className="rounded-md border border-sage-200 bg-sage-50 px-3 py-2 text-xs text-sage-800">
+          ℹ Tanggal ini pakai <strong>jadwal khusus</strong> psikolog (override)
+          {overrideReason ? ` — ${overrideReason}` : ''}.
         </div>
       )}
       <SlotGrid

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -77,9 +78,75 @@ export class ClinicPsikologController {
   ) {
     const userId = req.user?.sub ?? req.user?.id;
     if (!userId) {
-      throw new Error('Unauthorized — userId tidak ada di JWT');
+      throw new BadRequestException('Unauthorized — userId tidak ada di JWT');
     }
     return this.service.updateOwnAvailability(userId, body.weeklyAvailability ?? {});
+  }
+
+  @Get('me/date-overrides')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'List override per-tanggal psikolog (self-service)',
+    description:
+      'Query: ?from=YYYY-MM-DD&to=YYYY-MM-DD untuk batasi range. Kalau kosong, return semua.',
+  })
+  listMyDateOverrides(
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+    @Request() req: AuthRequest,
+  ) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) throw new BadRequestException('Unauthorized');
+    return this.service.listOwnDateOverrides(userId, from, to);
+  }
+
+  @Post('me/date-overrides')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Upsert override per-tanggal (psikolog set cuti / makeup / jadwal khusus)',
+    description:
+      'Body: { date: "YYYY-MM-DD", isOpen: bool, slotIndices?: number[]|null, reason?: string }',
+  })
+  upsertMyDateOverride(
+    @Body()
+    body: {
+      date: string;
+      isOpen: boolean;
+      slotIndices?: number[] | null;
+      reason?: string | null;
+    },
+    @Request() req: AuthRequest,
+  ) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) throw new BadRequestException('Unauthorized');
+    if (!body?.date) throw new BadRequestException('Field "date" wajib (format YYYY-MM-DD)');
+    return this.service.upsertOwnDateOverride(userId, body);
+  }
+
+  @Delete('me/date-overrides/:date')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Hapus override per-tanggal (revert ke weeklyAvailability)',
+  })
+  deleteMyDateOverride(@Param('date') date: string, @Request() req: AuthRequest) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) throw new BadRequestException('Unauthorized');
+    return this.service.deleteOwnDateOverride(userId, date);
+  }
+
+  @Get('by-user/:userId/availability-for-date')
+  @Roles('clinic-admin', 'clinic-resepsionis', 'clinic-psikolog', 'clinic-owner')
+  @ApiOperation({
+    summary: 'Resolve effective availability untuk psikolog di tanggal tertentu',
+    description:
+      'Merge date override (priority) + weeklyAvailability (fallback). Dipakai booking wizard untuk preview slot mana yang available. Query: ?date=YYYY-MM-DD',
+  })
+  getAvailabilityForDate(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Query('date') date: string,
+  ) {
+    if (!date) throw new BadRequestException('Query param "date" wajib (format YYYY-MM-DD)');
+    return this.service.resolveAvailabilityForDate(userId, date);
   }
 
   @Patch(':id')
