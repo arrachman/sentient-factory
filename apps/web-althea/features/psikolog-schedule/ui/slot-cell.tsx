@@ -59,9 +59,11 @@ function BookedCell({ booking, cellHeight }: { booking: Booking; cellHeight: num
   const cat = booking.service.category;
   const bar = SVC_BAR[cat] ?? SVC_BAR.konseling;
 
-  let bg = '#cfdfd1'; // sage-200 ish — lebih gelap dari sage-100, kontras vs cream
-  let borderColor = '#7aa382'; // sage-400
-  let textColor = '#2d4736'; // sage-800
+  // Booked default: sage SATURATED (lebih gelap dari Tersedia tint) +
+  // strong dark border. Bedanya jelas dari Tersedia yang almost-white.
+  let bg = '#a9c8b0'; // mid-sage saturated
+  let borderColor = '#5b8a66'; // sage-500
+  let textColor = '#1f3a25'; // sage-900
   let opacity = 1;
   let badge: string | null = null;
   let badgeBg = '';
@@ -166,10 +168,11 @@ function AvailableCell({ cellHeight }: { cellHeight: number }) {
         margin: 2,
         padding: '6px 8px',
         borderRadius: 6,
-        // Soft sage tint background — clearly "available", inviting click
-        background: '#e8f0e8',
-        border: '1px solid #7aa382',
-        color: '#2d4736',
+        // Almost-white card dengan hint sage — clearly "empty / placeholder",
+        // beda jelas dari Booked (saturated) atau Libur (gray).
+        background: '#fafdf7',
+        border: '1px solid #c5d8c8',
+        color: '#5b8a66',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
