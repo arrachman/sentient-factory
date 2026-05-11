@@ -15,8 +15,18 @@ export class ClinicSettingsController {
   constructor(private readonly service: ClinicSettingsService) {}
 
   @Get()
-  @Roles('clinic-admin', 'clinic-owner')
-  @ApiOperation({ summary: 'Get clinic settings (single row)' })
+  @Roles(
+    'clinic-admin',
+    'clinic-owner',
+    'clinic-psikolog',
+    'clinic-resepsionis',
+    'clinic-marketing',
+  )
+  @ApiOperation({
+    summary: 'Get clinic settings (single row, read-only untuk semua clinic role)',
+    description:
+      'Semua clinic-* role butuh baca settings: admin/owner (CRUD/dashboard), psikolog (set jadwal availability — perlu lihat slot), resepsionis (booking wizard — perlu lihat slot), marketing (context). Hanya admin yang boleh PATCH.',
+  })
   get() {
     return this.service.get();
   }
