@@ -142,8 +142,12 @@ share/python-wheels/
 MANIFEST
 
 # Exception: web app lib/ (TS/JS code, not Python venv)
+# Covers both top-level apps/*/lib/ dan nested feature lib/ (e.g.
+# apps/web-althea/features/<feature>/lib/).
 !apps/*/lib/
 !apps/*/lib/**
+!apps/*/**/lib/
+!apps/*/**/lib/**
 
 # PyInstaller
 *.manifest
