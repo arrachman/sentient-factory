@@ -60,7 +60,8 @@ export class FonnteProvider implements WAProvider {
 
       const json = (await response.json()) as {
         status?: boolean;
-        id?: string | string[];
+        // Fonnte API kembalikan id sebagai number/string/array (per target).
+        id?: number | string | Array<number | string>;
         reason?: string;
         detail?: string;
       };
@@ -74,7 +75,12 @@ export class FonnteProvider implements WAProvider {
         };
       }
 
-      const messageId = Array.isArray(json.id) ? json.id[0] : (json.id ?? `fonnte_${Date.now()}`);
+      // Normalisasi ke string — schema Prisma `messageId String?` reject number.
+      const rawId = Array.isArray(json.id) ? json.id[0] : json.id;
+      const messageId =
+        rawId !== undefined && rawId !== null
+          ? String(rawId)
+          : `fonnte_${Date.now()}`;
       return {
         messageId,
         status: 'sent',
