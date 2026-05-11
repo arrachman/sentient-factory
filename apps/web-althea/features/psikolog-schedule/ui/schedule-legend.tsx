@@ -4,36 +4,13 @@
 const ITEMS: Array<{
   color: string;
   border: string;
-  borderStyle?: 'dashed';
-  emoji: string;
   label: string;
 }> = [
-  { color: '#5b8a66', border: '#385a43', emoji: '🟢', label: 'Berlangsung' },
-  {
-    color: '#cfdfd1',
-    border: '#7aa382',
-    emoji: '📌',
-    label: 'Booked (akan datang)',
-  },
-  {
-    color: '#ece6d3',
-    border: '#c9bfa1',
-    emoji: '✅',
-    label: 'Selesai',
-  },
-  {
-    color: '#e8f0e8',
-    border: '#5b8a66',
-    borderStyle: 'dashed',
-    emoji: '✨',
-    label: 'Tersedia · siap di-booking',
-  },
-  {
-    color: '#eeece6',
-    border: '#d8d4c8',
-    emoji: '💤',
-    label: 'Libur / di luar jadwal',
-  },
+  { color: '#5b8a66', border: '#385a43', label: 'Berlangsung' },
+  { color: '#cfdfd1', border: '#7aa382', label: 'Booked (akan datang)' },
+  { color: '#ece6d3', border: '#c9bfa1', label: 'Selesai' },
+  { color: '#e8f0e8', border: '#7aa382', label: 'Tersedia · siap di-booking' },
+  { color: '#eeece6', border: '#d8d4c8', label: 'Libur / di luar jadwal' },
 ];
 
 export function ScheduleLegend() {

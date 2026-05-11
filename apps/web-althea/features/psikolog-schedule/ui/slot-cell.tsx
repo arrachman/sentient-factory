@@ -70,24 +70,24 @@ function BookedCell({ booking, cellHeight }: { booking: Booking; cellHeight: num
     bg = '#5b8a66'; // sage-500 solid
     borderColor = '#385a43'; // sage-700
     textColor = '#fff';
-    badge = '🟢 Berlangsung';
+    badge = 'BERLANGSUNG';
     badgeBg = 'rgba(255,255,255,0.3)';
   } else if (tone === 'done') {
     bg = '#ece6d3'; // cream-200
     borderColor = '#c9bfa1';
     textColor = '#6b6047';
     opacity = 0.85;
-    badge = '✅ Selesai';
+    badge = 'SELESAI';
     badgeBg = 'rgba(0,0,0,0.08)';
   } else if (tone === 'cancelled') {
     bg = '#f5f2e9'; // cream-100
     borderColor = 'var(--border)';
     textColor = 'var(--fg-muted)';
     opacity = 0.55;
-    badge = '❌ Batal';
+    badge = 'BATAL';
     badgeBg = 'rgba(181,65,65,0.12)';
   } else {
-    badge = '📌 Booked';
+    badge = 'BOOKED';
     badgeBg = 'rgba(91,138,102,0.28)';
   }
 
@@ -164,21 +164,20 @@ function AvailableCell({ cellHeight }: { cellHeight: number }) {
       style={{
         height: cellHeight - 4,
         margin: 2,
-        padding: '4px 6px',
+        padding: '6px 8px',
         borderRadius: 6,
         // Soft sage tint background — clearly "available", inviting click
         background: '#e8f0e8',
-        border: '2px dashed #5b8a66',
+        border: '1px solid #7aa382',
         color: '#2d4736',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1,
+        fontSize: 12,
+        fontWeight: 600,
       }}
     >
-      <span style={{ fontSize: 18, lineHeight: 1 }}>✨</span>
-      <span style={{ fontSize: 10.5, fontWeight: 600 }}>Tersedia</span>
+      Tersedia
     </div>
   );
 }
@@ -190,21 +189,20 @@ function LiburCell({ cellHeight, reason }: { cellHeight: number; reason: string 
       style={{
         height: cellHeight - 4,
         margin: 2,
-        padding: '4px 6px',
+        padding: '6px 8px',
         borderRadius: 6,
         // Disabled gray — clearly "not interactive", neutral non-attention
         background: '#eeece6',
         border: '1px solid #d8d4c8',
         color: '#9a9588',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1,
+        fontSize: 12,
+        fontWeight: 500,
       }}
     >
-      <span style={{ fontSize: 18, lineHeight: 1, opacity: 0.6 }}>💤</span>
-      <span style={{ fontSize: 10.5, fontWeight: 500 }}>Libur</span>
+      Libur
     </div>
   );
 }
