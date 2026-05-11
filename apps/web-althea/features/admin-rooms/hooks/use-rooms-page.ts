@@ -17,7 +17,10 @@
  * page.tsx tipis.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
+import {
+  useBookingList,
+  useRescheduleBooking,
+} from '@/features/admin-booking/hooks/use-booking';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { EMPTY_ROOM, SLOTS } from '../model/constants';
 import { shortName, todayKey } from '../model/utils';
@@ -102,7 +105,12 @@ export function useRoomsPage() {
   const createMut = useCreateRoom();
   const updateMut = useUpdateRoom();
   const deleteMut = useDeleteRoom();
+  const rescheduleMut = useRescheduleBooking();
   const submitting = createMut.isPending || updateMut.isPending;
+
+  // Reassign-booking dialog state (pindah booking di slot terpilih ke ruangan
+  // lain — pakai endpoint /booking/:id/reschedule dengan slot waktu yang sama).
+  const [reassignBooking, setReassignBooking] = useState<Booking | null>(null);
 
   // ----- Handlers -----
 
@@ -179,6 +187,35 @@ export function useRoomsPage() {
     });
   }
 
+  function startReassign() {
+    if (!picked?.booking) return;
+    setReassignBooking(picked.booking);
+  }
+  function cancelReassign() {
+    setReassignBooking(null);
+  }
+  function submitReassign(newRoomId: number, reason?: string) {
+    if (!reassignBooking) return;
+    rescheduleMut.mutate(
+      {
+        id: reassignBooking.id,
+        input: {
+          // Slot waktu tetap — yang berubah cuma roomId.
+          scheduledStart: reassignBooking.scheduledStart,
+          scheduledEnd: reassignBooking.scheduledEnd,
+          roomId: newRoomId,
+          reason,
+        },
+      },
+      {
+        onSuccess: () => {
+          setReassignBooking(null);
+          clearPicked();
+        },
+      },
+    );
+  }
+
   return {
     // state
     date,
@@ -204,5 +241,11 @@ export function useRoomsPage() {
     closeCrud,
     submitForm,
     deleteRoom,
+    // reassign-booking handlers
+    reassignBooking,
+    startReassign,
+    cancelReassign,
+    submitReassign,
+    reassignSubmitting: rescheduleMut.isPending,
   };
 }

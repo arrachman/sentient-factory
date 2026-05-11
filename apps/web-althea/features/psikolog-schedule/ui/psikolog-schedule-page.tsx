@@ -131,6 +131,9 @@ export function PsikologSchedulePage() {
           anchor={page.anchor}
           bookings={page.allBookings}
           isLoading={page.isLoading}
+          weeklyAvailability={page.weeklyAvailability}
+          overrides={page.overrides}
+          slotsOfDay={page.slotsOfDay}
           onDayClick={(d) => {
             page.setAnchor(d);
             page.setView('Hari');

@@ -215,6 +215,9 @@ export function usePsikologSchedule() {
     // Slot definitions + availability per day (untuk render slot states)
     slotsOfDay,
     dayAvailability,
+    // Raw availability sources untuk view yang punya range custom (mis. Bulan)
+    weeklyAvailability: myProfile?.weeklyAvailability ?? null,
+    overrides: overrides.data?.data ?? [],
     // Stats
     totalBooked,
     utilisation,

@@ -6,10 +6,15 @@
  *   - Ikon kotak warna tipe ruangan + nama (Lora 20px) + badge type/kap/active
  *   - Sesi pada slot terpilih (psikolog avatar + klien + layanan + sesi N/total),
  *     atau placeholder "slot kosong"
- *   - Fasilitas → badges (dari `room.description` atau default by type)
- *   - Action: Edit ruangan / Hapus
+ *   - Fasilitas → badges (dari `room.facilities` array, legacy CSV, atau default)
+ *   - Action:
+ *       - "Edit ruangan" (cuma muncul kalau ada booking) → pindah booking ini
+ *         ke ruangan lain di jam yang sama
+ *       - "Edit master ruangan" → edit metadata ruangan (nama, tipe, fasilitas,
+ *         dll) — TIDAK pengaruh ke booking yang sudah ada
+ *       - "Hapus" → hapus ruangan dari sistem
  */
-import { Pencil, Trash2, X } from 'lucide-react';
+import { ArrowRightLeft, Pencil, Trash2, X } from 'lucide-react';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { DEFAULT_FACILITIES, ROOM_TYPE_STYLE, type SlotDef } from '../model/constants';
 import { ROOM_TYPE_LABEL, type Room } from '../model/types';
@@ -19,15 +24,20 @@ export function RoomDetailPanel({
   slot,
   booking,
   onClose,
-  onEdit,
+  onEditMaster,
   onDelete,
+  onReassignBooking,
 }: {
   room: Room;
   slot: SlotDef;
   booking: Booking | null;
   onClose: () => void;
-  onEdit: () => void;
+  /** Edit metadata ruangan (nama, tipe, kapasitas, fasilitas) — buka CRUD drawer */
+  onEditMaster: () => void;
+  /** Hapus ruangan dari sistem */
   onDelete: () => void;
+  /** Pindahkan booking di slot ini ke ruangan lain (cuma dipakai kalau ada booking) */
+  onReassignBooking: () => void;
 }) {
   const style = ROOM_TYPE_STYLE[room.type];
   const Icon = style.icon;
@@ -137,23 +147,39 @@ export function RoomDetailPanel({
 
       <Hr />
 
-      <div className="row gap-2">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="btn btn-outline btn-sm"
-          style={{ flex: 1 }}
-        >
-          <Pencil size={13} /> Edit ruangan
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="btn btn-ghost btn-sm"
-          style={{ flex: 1, color: 'var(--danger)' }}
-        >
-          <Trash2 size={13} /> Hapus
-        </button>
+      {/* Action group:
+          - "Edit ruangan" (reassign booking) cuma muncul kalau slot terisi
+          - "Edit master ruangan" + "Hapus" selalu ada (operasi level ruangan) */}
+      <div className="col gap-2">
+        {booking ? (
+          <button
+            type="button"
+            onClick={onReassignBooking}
+            className="btn btn-primary btn-sm"
+            title="Pindahkan booking ini ke ruangan lain di jam yang sama"
+          >
+            <ArrowRightLeft size={13} /> Edit ruangan
+          </button>
+        ) : null}
+        <div className="row gap-2">
+          <button
+            type="button"
+            onClick={onEditMaster}
+            className="btn btn-outline btn-sm"
+            style={{ flex: 1 }}
+            title="Edit metadata ruangan (nama, tipe, kapasitas, fasilitas)"
+          >
+            <Pencil size={13} /> Edit master ruangan
+          </button>
+          <button
+            type="button"
+            onClick={onDelete}
+            className="btn btn-ghost btn-sm"
+            style={{ flex: 1, color: 'var(--danger)' }}
+          >
+            <Trash2 size={13} /> Hapus
+          </button>
+        </div>
       </div>
     </aside>
   );

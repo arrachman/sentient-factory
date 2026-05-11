@@ -58,6 +58,21 @@ export const bookingApi = {
   start: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/start`),
   complete: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/complete`),
   cancel: (id: number, reason?: string) => apiClient.post<{ success: boolean }>(`/booking/${id}/cancel`, { reason }),
+  reschedule: (
+    id: number,
+    input: {
+      scheduledStart: string;
+      scheduledEnd: string;
+      roomId?: number;
+      psikologUserId?: number;
+      reason?: string;
+      bufferOverride?: boolean;
+    },
+  ) =>
+    apiClient.post<{ success: boolean; data: Booking; message?: string }>(
+      `/booking/${id}/reschedule`,
+      input,
+    ),
   listNotes: (id: number) => apiClient.get<{ success: boolean; data: ClinicalNote[] }>(`/booking/${id}/note`),
   sendReminder: (id: number, templateName?: string) =>
     apiClient.post<{ success: boolean; message: string }>(`/booking/${id}/send-reminder`, { templateName }),

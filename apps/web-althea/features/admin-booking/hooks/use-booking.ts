@@ -34,3 +34,17 @@ export function useCancelBooking() {
     onError: (e: Error) => toast.error('Gagal cancel', { description: e.message }),
   });
 }
+
+export function useRescheduleBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: number; input: Parameters<typeof bookingApi.reschedule>[1] }) =>
+      bookingApi.reschedule(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      toast.success('Booking di-reschedule');
+    },
+    onError: (e: Error) =>
+      toast.error('Gagal reschedule', { description: e.message }),
+  });
+}
