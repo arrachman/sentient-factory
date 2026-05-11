@@ -51,3 +51,69 @@ npm run db:studio
 - `prisma/migrations/` (yang sudah ada).
 - File backup `*_backup_*`, `*_locked_*`.
 - `reset-db.ts` — destruktif.
+
+## Clinic domain (Althea Psychology)
+
+Module `src/clinic-*/` adalah backend untuk app `apps/web-althea/`. ADR refs:
+- ADR 003 — 6-actor role model (`clinic-admin/psikolog/owner/resepsionis/marketing/intern`)
+- ADR 004 — WhatsApp via Fonnte + BullMQ retry queue
+- ADR 005 — Audit log via NestJS interceptor (auto)
+- ADR 007 — Pricing model (DP 50%, PPN 11%, package total)
+- ADR 008 — Booking constraints (slot operasional + TZ rule)
+- ADR 010 — Psikolog availability (weekly + override + service junction)
+- ADR 011 — Booking wizard UX (frontend, referensi flow)
+
+### Timezone rule (critical — ADR 008)
+
+Container Docker biasanya `TZ=UTC`. **JANGAN pakai `start.getHours()` / `start.getDay()`** untuk validasi clinical data — clinic slot dan availability di-define di TZ klinik (default `Asia/Jakarta`).
+
+Pakai helper di `src/clinic-booking/timezone.util.ts`:
+
+```ts
+import { localPartsInTimezone, localDateAtMidnight } from './timezone.util';
+
+const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
+const tz = settings?.timezone || 'Asia/Jakarta';
+
+// Get dow / dateStr / hhmm di TZ klinik
+const { dow, dateStr, hhmm } = localPartsInTimezone(start, tz);
+
+// Convert YYYY-MM-DD → Date midnight di TZ klinik (untuk lookup .date column)
+const dateObj = localDateAtMidnight('2026-05-12', tz);
+```
+
+Bug history: commit `14f9c49` fix booking slot 08:30 WIB salah parse jadi 01:30 UTC.
+
+### Booking validation order
+
+`BookingValidationService` di `src/clinic-booking/booking-validation.service.ts`:
+
+1. `assertEntitiesExist(clientId, serviceId, psikologUserId, roomId)` — FK + active
+2. `assertNoConflict({...})` — psikolog/room overlap dengan buffer
+3. `assertSlotMatch(start, end)` — slot HH:MM exact match (TZ klinik)
+4. `assertPsikologAvailable(psikologUserId, start, slotIdx?)` — weekly + override
+   (skip kalau `bufferOverride: true`)
+
+Caller: `ClinicBookingService.create` + `BookingPackageService.create`.
+
+### Junction tables (Althea)
+
+| Table | Purpose | Default behavior |
+|---|---|---|
+| `clinic_psikolog_service` | psikolog handle service apa | Kosong = handle semua |
+| `clinic_psikolog_date_override` | override jadwal per-tanggal | Lookup priority sebelum weekly |
+| `clinic_idempotency_key` | dedup POST mutation | TTL 24h, cleanup via cron future |
+
+### Self-service endpoints (psikolog only)
+
+Prefix `/clinic/psikolog/me/*`:
+- `GET /me` — own profile
+- `PATCH /me` — edit subset (fullName/title/bio/color)
+- `PATCH /me/availability` — set weeklyAvailability
+- `GET /me/date-overrides?from=&to=`
+- `POST /me/date-overrides` — upsert
+- `DELETE /me/date-overrides/:date`
+- `GET /me/stats` — sesi 30 hari + klien aktif
+
+Resolve untuk booking wizard (admin-accessible):
+- `GET /clinic/psikolog/by-user/:userId/availability-for-date?date=` — merge override + weekly

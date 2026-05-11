@@ -185,6 +185,30 @@ Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO).
 - Import dari `apps/psychology-design/*.jsx` langsung — itu **mockup**, bukan source-of-truth. Re-implement di `features/`/`components/`.
 - Hardcode port 3202 — pakai env `WEB_ALTHEA_PORT` atau `process.env.PORT`.
 - Lupa role check di middleware → patient bisa akses route admin.
+- **SSR hydration mismatch** dari `new Date()` / `Date.now()` di first render → defer ke `useEffect`. Pattern: `useState('')` + `useEffect(() => setX(todayKey()))`. Lihat `app/psikolog/schedule/page.tsx`.
+- **Lupa filter psikolog by `serviceIds`** di custom flow — kalau bikin booking flow baru, pakai `psikologListFiltered` dari `use-wizard-state` atau replicate logic (ADR 010).
+
+## Domain konvensi (Althea-specific)
+
+### Booking flow (ADR 008 + 010 + 011)
+- **Single source of truth slot**: `ClinicSettings.slotsOfDay` (6 slot harian, WIB). Booking harus pas dengan slot — backend enforce via `assertSlotMatch`. Frontend `DateStrip` + slot picker mirror logic ini.
+- **Psikolog availability cascade**:
+  1. Date override (`ClinicPsikologDateOverride`) — priority untuk tanggal exact
+  2. Weekly recurring (`ClinicPsikologProfile.weeklyAvailability`) — fallback
+  3. Empty `{}` → "belum set" → block booking
+- **Service ↔ Psikolog**: junction `ClinicPsikologService`. Kosong = handle semua. Filter di booking wizard via `psikologListFiltered`.
+- **Timezone**: semua HH:MM/dow comparison di TZ klinik (`Asia/Jakarta`), bukan server TZ. Backend pakai `localPartsInTimezone()`. Frontend: tampilkan `Date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })` kalau butuh display.
+
+### Booking wizard pattern (ADR 011)
+- Single-page form (4 section vertical scroll, no step navigation)
+- Auto-scroll cascade saat user pick (via `useEffect` + `ref.scrollIntoView`)
+- Searchable combobox untuk client, chip grid untuk service, card grid untuk psikolog, DateStrip + slot button grid untuk jadwal
+- `Idempotency-Key` header per submit (`apiClient` set otomatis untuk mutation)
+
+### Override flag
+- Satu checkbox `bufferOverride` skip semua validation (jam, hari libur, conflict buffer, psikolog availability)
+- Pakai HANYA untuk walk-in darurat, audit-logged otomatis
+- UI copy: wrap dalam card cream + helper text panjang supaya admin paham resikonya
 
 ## Testing
 - **Vitest** untuk util pure + hook deterministik.

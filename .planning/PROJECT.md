@@ -91,7 +91,10 @@ ADRs di `.planning/ADRs/`:
 - **005**: Audit log via NestJS interceptor (auto-track all mutations)
 - **006**: Table prefix `clinic_*` (domain-focused, bukan brand-coupled)
 - **007**: Pricing & payment model — rate card per service, package total price, DP 50%, PPN 11% configurable
-- **008**: Booking constraints — uniform working hours, buffer 15min default + override, walk-in allowed, reschedule fleksibel
+- **008**: Booking constraints — **slot operasional terdefinisi** (replaces operatingHours window), buffer 15min default + single override flag, walk-in allowed, TZ-aware validation (helper `localPartsInTimezone`)
+- **009**: Deployment URL mapping (althea.fr-labs.my.id)
+- **010**: Psikolog availability model — `weeklyAvailability` (recurring) + `ClinicPsikologDateOverride` (per-tanggal) + `ClinicPsikologService` junction (filter booking by layanan)
+- **011**: Booking wizard UX — single-page form (zero step nav), searchable client combobox, service chip grid, horizontal DateStrip color-coded, slot picker available-only
 
 ## Workflow
 
@@ -132,3 +135,35 @@ Artifacts persist per phase di `.planning/phases/<slice>/` agar resumable cross-
 | WA provider | Fonnte (https://fonnte.com) — env `FONNTE_API_TOKEN` |
 | Tenant model | Single-tenant (no tenantId) |
 | Deployment | Self-host VPS via `infra/docker-compose.yml` |
+| Timezone | `Asia/Jakarta` (default, dari `ClinicSettings.timezone`) — semua validation pakai TZ helper, **bukan** `Date.getHours()` server-local |
+| Slot operasional | 6 slot harian (08:30-18:15 WIB, 90 menit/slot) — `ClinicSettings.slotsOfDay`, editable di `/admin/pengaturan` |
+| Hari tutup default | Minggu (`closedDayOfWeek: [0]`) |
+| Booking flow | Single-page wizard 4 section (klien → layanan → psikolog → jadwal+ruang); slot picker hanya tampil yang available; DateStrip 7-day horizontal |
+
+## Domain flow (booking — end-to-end)
+
+```
+Admin pilih klien (search nama/WA/MRN)
+     ↓
+Pilih layanan (chip by category)
+     ↓
+Pilih psikolog (filtered by service ↔ junction ADR 010)
+     ↓ wizard auto-scroll
+Pilih tanggal di DateStrip 7-hari (chip disabled kalau libur/tutup/psikolog-off)
+     ↓
+Pilih slot (filter intersection: bookings + weekly + override)
+     ↓
+Pilih ruang + override toggle (kalau perlu)
+     ↓
+Submit → backend validate:
+  1. assertEntitiesExist
+  2. assertNoConflict (psikolog + room + buffer)
+  3. assertSlotMatch (TZ klinik HH:MM exact match)
+  4. assertPsikologAvailable (override priority > weekly fallback)
+     ↓
+ClinicBooking row created (status=awaiting_dp)
+     ↓
+WA notif via Bull queue (template "Konfirmasi Booking")
+     ↓
+SSE event ke resepsionis dashboard
+```
