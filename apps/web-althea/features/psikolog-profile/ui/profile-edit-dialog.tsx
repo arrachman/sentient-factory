@@ -105,8 +105,8 @@ export function ProfileEditDialog({
               lineHeight: 1.5,
             }}
           >
-            ℹ️ Email, lisensi SIPP, slot harian default, dan spesialisasi dikelola
-            oleh admin. Hubungi admin klinik untuk perubahan field tsb.
+            ℹ️ Email, lisensi SIPP, dan spesialisasi dikelola oleh admin.
+            Hubungi admin klinik untuk perubahan field tsb.
           </p>
 
           <div>

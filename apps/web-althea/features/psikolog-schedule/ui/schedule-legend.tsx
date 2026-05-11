@@ -5,6 +5,8 @@ const ITEMS: Array<{
   color: string;
   border: string;
   label: string;
+  borderStyle?: 'solid' | 'dashed';
+  emoji?: string;
 }> = [
   { color: '#5b8a66', border: '#385a43', label: 'Berlangsung' },
   { color: '#cfdfd1', border: '#7aa382', label: 'Booked (akan datang)' },
