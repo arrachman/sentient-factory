@@ -1,6 +1,17 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export const ROOM_TYPES = ['konseling', 'anak', 'tes', 'seminar'] as const;
 export type RoomType = (typeof ROOM_TYPES)[number];
@@ -22,7 +33,21 @@ export class CreateRoomDto {
   @Max(50)
   capacity?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: 'Daftar fasilitas (mis. ["Sofa","Meja","AC","Tisu"]). Max 30.',
+    example: ['Sofa', 'Meja', 'AC', 'Tisu'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @IsString({ each: true })
+  @MaxLength(60, { each: true })
+  facilities?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Catatan freeform admin (mis. "AC service 2026-02-01")',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2000)

@@ -844,6 +844,14 @@ model ClinicRoom {
   name        String    @unique
   type        String // 'konseling' | 'anak' | 'tes' | 'seminar'
   capacity    Int       @default(1)
+  /// Daftar fasilitas terstruktur (mis. ["Sofa","Meja","AC","Tisu"]). Dipakai
+  /// RoomDetailPanel & booking wizard. Empty array → UI fallback ke default
+  /// per type. Diperkenalkan setelah description (legacy, dipakai sebagai
+  /// catatan freeform admin).
+  facilities  String[]  @default([])
+  /// Catatan freeform admin (mis. "AC service 2026-02-01"). Sebelumnya
+  /// juga dipakai sebagai comma-separated facilities — backfilled ke
+  /// `facilities` di migration, sekarang murni notes.
   description String?   @db.Text
   isActive    Boolean   @default(true) @map("is_active")
   // Audit fields

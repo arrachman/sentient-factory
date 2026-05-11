@@ -15,6 +15,9 @@ export const roomSchema = z.object({
   name: z.string(),
   type: z.enum(ROOM_TYPES),
   capacity: z.number().int(),
+  /** Daftar fasilitas terstruktur (default []) — fallback ke DEFAULT_FACILITIES kalau kosong */
+  facilities: z.array(z.string()).default([]),
+  /** Catatan freeform admin (notes only — bukan lagi facilities source) */
   description: z.string().nullable(),
   isActive: z.boolean(),
   createdAt: z.string(),
@@ -26,6 +29,7 @@ export const createRoomSchema = z.object({
   name: z.string().min(1).max(120),
   type: z.enum(ROOM_TYPES),
   capacity: z.number().int().min(1).max(50).optional(),
+  facilities: z.array(z.string().max(60)).max(30).optional(),
   description: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
 });

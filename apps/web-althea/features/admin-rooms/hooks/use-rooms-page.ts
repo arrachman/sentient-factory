@@ -120,11 +120,31 @@ export function useRoomsPage() {
   }
   function startEdit(room: Room) {
     setEditing(room);
+    // Legacy: kalau facilities kosong tapi description punya comma-separated
+    // values (room lama sebelum migration), parse description ke facilities
+    // supaya admin lihat data terstruktur saat edit.
+    const facilities =
+      room.facilities && room.facilities.length > 0
+        ? room.facilities
+        : room.description && room.description.includes(',')
+          ? room.description
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
     setForm({
       name: room.name,
       type: room.type,
       capacity: room.capacity,
-      description: room.description ?? '',
+      facilities,
+      // Kalau description ter-parsing ke facilities, kosongkan supaya
+      // tidak duplikat. Else preserve sebagai notes.
+      description:
+        facilities.length > 0 &&
+        room.description &&
+        room.description.includes(',')
+          ? ''
+          : (room.description ?? ''),
       isActive: room.isActive,
     });
     setCrudOpen(true);
