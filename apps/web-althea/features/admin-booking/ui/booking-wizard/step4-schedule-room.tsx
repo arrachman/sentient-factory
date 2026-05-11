@@ -180,40 +180,57 @@ function SlotGrid({
           Belum ada slot operasional. Set di Pengaturan → Slot Operasional
           dulu.
         </p>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {slots.map((slot, i) => {
-            const active = slotIdx === i;
-            const taken = unavailableSlotIdx.has(i);
-            const disabled = taken && !bufferOverride;
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => !disabled && onPick(i)}
-                disabled={disabled}
-                className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors text-left ${
-                  active
-                    ? 'bg-sage-50 border-sage-500 text-teal-800'
-                    : taken
-                      ? 'bg-cream-100 border-border text-fg-muted line-through cursor-not-allowed opacity-70'
-                      : 'bg-card border-border text-fg hover:border-sage-300'
-                }`}
-                title={
-                  taken ? 'Sudah ada booking lain di slot ini' : undefined
-                }
-              >
-                <div className="font-semibold">
-                  {slot.start} – {slot.end}
-                </div>
-                <div className="caption mt-0.5">
-                  {taken ? 'sudah penuh' : slot.label || 'tersedia'}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      ) : (() => {
+        // Tampilkan hanya slot yang available (kecuali bufferOverride aktif —
+        // admin perlu lihat semua slot termasuk yang penuh, untuk emergency).
+        const visibleSlots = slots
+          .map((slot, i) => ({ slot, i }))
+          .filter(({ i }) => bufferOverride || !unavailableSlotIdx.has(i));
+
+        if (visibleSlots.length === 0) {
+          return (
+            <p className="caption italic text-fg-muted px-3 py-3 rounded-md bg-amber-50 border border-amber-200">
+              Tidak ada slot tersedia di tanggal ini. Pilih tanggal lain, ganti
+              psikolog, atau aktifkan override di bawah untuk paksa booking.
+            </p>
+          );
+        }
+
+        return (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {visibleSlots.map(({ slot, i }) => {
+              const active = slotIdx === i;
+              const taken = unavailableSlotIdx.has(i);
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onPick(i)}
+                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors text-left ${
+                    active
+                      ? 'bg-sage-50 border-sage-500 text-teal-800'
+                      : taken
+                        ? 'bg-cream-100 border-border text-fg-muted line-through opacity-80'
+                        : 'bg-card border-border text-fg hover:border-sage-300'
+                  }`}
+                  title={
+                    taken
+                      ? 'Sudah penuh — bisa dipilih karena override aktif'
+                      : undefined
+                  }
+                >
+                  <div className="font-semibold">
+                    {slot.start} – {slot.end}
+                  </div>
+                  <div className="caption mt-0.5">
+                    {taken ? 'sudah penuh (override)' : slot.label || 'tersedia'}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
       {isLoadingBookings ? (
         <p className="caption mt-1 text-fg-muted">
           Mengecek slot kosong…
