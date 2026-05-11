@@ -2,8 +2,9 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
-import { Controller, useForm, type Control } from 'react-hook-form';
+import { Controller, useForm, type Control, type Resolver } from 'react-hook-form';
 import { X } from 'lucide-react';
+import { z } from 'zod';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import {
   COLOR_PALETTE,
@@ -15,6 +16,17 @@ import {
   type DayKey,
   type Psikolog,
 } from '../model/types';
+
+/**
+ * Edit-mode schema: password field disembunyikan di UI tapi tetap ada di
+ * form state (default `''`). Required-min-8 dari create schema akan fail
+ * silently → submit terblok. Solusi: override password ke optional di
+ * edit mode supaya zod tidak gagal walaupun empty. Parent submit handler
+ * akan drop password sebelum kirim ke API.
+ */
+const editPsikologSchema = createPsikologSchema.extend({
+  password: z.string().optional().or(z.literal('')),
+});
 
 type Props = {
   open: boolean;
@@ -66,7 +78,13 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
     setValue,
     formState: { errors },
   } = useForm<CreatePsikologInput>({
-    resolver: zodResolver(createPsikologSchema),
+    // Cast: editPsikologSchema infer type wider (password optional) — cast
+    // ke Resolver<CreatePsikologInput> aman karena empty password tetap
+    // valid string `''` di runtime, dan parent submit handler drop password
+    // sebelum kirim ke API saat edit.
+    resolver: zodResolver(
+      isEdit ? editPsikologSchema : createPsikologSchema,
+    ) as Resolver<CreatePsikologInput>,
     defaultValues: EMPTY_FORM,
   });
 
