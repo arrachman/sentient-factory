@@ -52,6 +52,8 @@ export const psikologSchema = z.object({
   license: z.string().nullable(),
   defaultSlots: z.number().int(),
   weeklyAvailability: z.record(z.string(), dayAvailabilitySchema).default({}),
+  /** Layanan yang ditangani psikolog. Kosong = handle semua (default). */
+  serviceIds: z.array(z.number().int()).default([]),
   bio: z.string().nullable(),
   lastLogin: z.string().nullable(),
   createdAt: z.string(),
@@ -83,6 +85,8 @@ export const createPsikologSchema = z.object({
   license: z.string().max(80).optional(),
   defaultSlots: z.number().int().min(0).max(20).optional(),
   weeklyAvailability: z.record(z.string(), dayAvailabilitySchema).optional(),
+  /** Layanan yang ditangani. Kosong/undefined = handle semua. */
+  serviceIds: z.array(z.number().int()).optional(),
   bio: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
 });

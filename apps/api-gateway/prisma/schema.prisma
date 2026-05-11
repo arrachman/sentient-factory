@@ -35,6 +35,7 @@ model User {
   managerRisks          ManagerRisk[]
   clinicPsikologProfile ClinicPsikologProfile?
   clinicBookings        ClinicBooking[]        @relation("BookingPsikolog")
+  clinicPsikologServices ClinicPsikologService[] @relation("PsikologServices")
 
   @@index([warehouseId])
   @@map("m0_users")
@@ -807,9 +808,33 @@ model ClinicService {
   deletedBy       Int?      @map("deleted_by")
 
   bookings ClinicBooking[]
+  psikologs ClinicPsikologService[]
 
   @@index([category, isActive])
   @@map("clinic_service")
+}
+
+/// Junction table psikolog ↔ service.
+///
+/// Default behavior:
+///   - Psikolog TANPA entry di sini → handle semua service (legacy / new psikolog)
+///   - Psikolog DENGAN entry → hanya handle service yang di-list
+///
+/// Dipakai booking wizard untuk filter psikolog by service yang di-pick.
+model ClinicPsikologService {
+  id             Int      @id @default(autoincrement())
+  psikologUserId Int      @map("psikolog_user_id")
+  serviceId      Int      @map("service_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?     @map("created_by")
+
+  psikolog User          @relation("PsikologServices", fields: [psikologUserId], references: [id], onDelete: Cascade)
+  service  ClinicService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([psikologUserId, serviceId])
+  @@index([serviceId])
+  @@index([psikologUserId])
+  @@map("clinic_psikolog_service")
 }
 
 /// Physical/virtual rooms tempat sesi berlangsung.

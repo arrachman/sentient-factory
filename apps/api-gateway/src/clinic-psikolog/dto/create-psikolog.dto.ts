@@ -89,6 +89,17 @@ export class CreatePsikologDto {
   @IsOptional()
   weeklyAvailability?: Record<string, { isOpen: boolean; slotIndices?: number[] }>;
 
+  @ApiPropertyOptional({
+    description:
+      'Layanan yang ditangani psikolog (service IDs). Kosong/undefined = handle SEMUA layanan (default). Filled = hanya layanan yang di-list.',
+    example: [1, 3, 5],
+    type: [Number],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  serviceIds?: number[];
+
   @ApiPropertyOptional({ example: 'Lulusan Universitas Indonesia, fokus...' })
   @IsOptional()
   @IsString()

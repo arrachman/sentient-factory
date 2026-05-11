@@ -207,9 +207,109 @@ export class ClinicPsikologService {
     if (!profile) {
       throw new NotFoundException(`Psikolog profile untuk user ${userId} tidak ditemukan`);
     }
+    const serviceIds = await this.findServiceIds(profile.userId);
     return {
       success: true,
-      data: this.mapToResponse(profile.user, profile),
+      data: this.mapToResponse(profile.user, profile, serviceIds),
+    };
+  }
+
+  /**
+   * Self-edit subset profile (safe fields only). Psikolog tidak boleh edit
+   * email/license/defaultSlots/specialty/isActive — admin-only via update().
+   */
+  async updateMe(
+    userId: number,
+    dto: { fullName?: string; title?: string; bio?: string; color?: string },
+  ) {
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId, deletedAt: null },
+      include: { user: { select: { id: true } } },
+    });
+    if (!profile) {
+      throw new NotFoundException(`Psikolog profile untuk user ${userId} tidak ditemukan`);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // User.fullName self-update OK
+      if (dto.fullName !== undefined) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { fullName: dto.fullName, updatedBy: userId },
+        });
+      }
+
+      // Profile self-editable subset
+      const profileUpdates: Prisma.ClinicPsikologProfileUpdateInput = {};
+      if (dto.title !== undefined) profileUpdates.title = dto.title;
+      if (dto.bio !== undefined) profileUpdates.bio = dto.bio;
+      if (dto.color !== undefined) profileUpdates.color = dto.color;
+
+      if (Object.keys(profileUpdates).length > 0) {
+        profileUpdates.updatedBy = userId;
+        await tx.clinicPsikologProfile.update({
+          where: { id: profile.id },
+          data: profileUpdates,
+        });
+      }
+    });
+
+    return this.findByUserId(userId);
+  }
+
+  /**
+   * Statistik 30 hari untuk own profile page.
+   * - sesi30Hari   : count completed bookings (30d window)
+   * - klienAktif   : distinct clientId with booking di 90d (lebih inklusif)
+   * - kehadiran    : completed / (completed + no_show + cancelled) dalam %.
+   *                  No 'no_show' status di schema → pakai (cancelled / total) sebagai proxy.
+   * - ratingKlien  : null (belum ada rating endpoint)
+   */
+  async getMyStats(userId: number) {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+    const [completed30d, cancelled30d, distinctClients] = await Promise.all([
+      this.prisma.clinicBooking.count({
+        where: {
+          psikologUserId: userId,
+          status: 'completed',
+          scheduledStart: { gte: thirtyDaysAgo, lte: now },
+          deletedAt: null,
+        },
+      }),
+      this.prisma.clinicBooking.count({
+        where: {
+          psikologUserId: userId,
+          status: 'cancelled',
+          scheduledStart: { gte: thirtyDaysAgo, lte: now },
+          deletedAt: null,
+        },
+      }),
+      this.prisma.clinicBooking.findMany({
+        where: {
+          psikologUserId: userId,
+          status: { not: 'cancelled' },
+          scheduledStart: { gte: ninetyDaysAgo },
+          deletedAt: null,
+        },
+        select: { clientId: true },
+        distinct: ['clientId'],
+      }),
+    ]);
+
+    const total30d = completed30d + cancelled30d;
+    const kehadiran = total30d > 0 ? Math.round((completed30d / total30d) * 100) : null;
+
+    return {
+      success: true,
+      data: {
+        sesi30Hari: completed30d,
+        klienAktif: distinctClients.length,
+        kehadiran, // % atau null kalau tidak ada data
+        ratingKlien: null, // endpoint belum ada
+      },
     };
   }
 

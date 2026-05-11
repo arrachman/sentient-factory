@@ -87,6 +87,24 @@ export function useWizardState({
     () => serviceList.data?.data.find((sv) => sv.id === s.serviceId),
     [serviceList.data, s.serviceId],
   );
+
+  /**
+   * Filtered list psikolog berdasarkan layanan terpilih.
+   * Logic:
+   *   - serviceId belum dipilih → tampil semua psikolog
+   *   - psikolog.serviceIds kosong → handle SEMUA layanan, tetap muncul
+   *   - psikolog.serviceIds includes serviceId → muncul
+   *   - selain itu → di-filter out
+   */
+  const psikologListFiltered = useMemo(() => {
+    const all = psikologList.data?.data ?? [];
+    if (!s.serviceId) return all;
+    return all.filter((p) => {
+      const ids = p.serviceIds ?? [];
+      return ids.length === 0 || ids.includes(s.serviceId as number);
+    });
+  }, [psikologList.data, s.serviceId]);
+
   const slots = settingsQuery.data?.data.slotsOfDay ?? [];
   const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
   const selectedSlot = s.slotIdx !== null ? slots[s.slotIdx] : null;
@@ -238,6 +256,7 @@ export function useWizardState({
     clientList,
     serviceList,
     psikologList,
+    psikologListFiltered,
     roomList,
     selectedService,
     selectedPsikolog,

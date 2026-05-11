@@ -112,8 +112,12 @@ export function BookingWizard({
           >
             <Step3Psikolog
               psikologList={w.psikologList}
+              filteredItems={w.psikologListFiltered}
               selectedId={s.psikologUserId}
               onChange={(psikologUserId) => setS({ ...s, psikologUserId })}
+              serviceFilterActive={!!s.serviceId}
+              totalPsikolog={w.psikologList.data?.data.length ?? 0}
+              selectedServiceName={w.selectedService?.name}
             />
           </Section>
 
