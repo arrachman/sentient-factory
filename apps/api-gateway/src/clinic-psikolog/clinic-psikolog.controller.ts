@@ -51,6 +51,21 @@ export class ClinicPsikologController {
     return this.service.findAll(query);
   }
 
+  @Get('me')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Get own psikolog profile (lookup by JWT userId)',
+    description:
+      'Dipakai oleh /psikolog/profile page supaya psikolog tidak perlu tahu psikolog.id sendiri.',
+  })
+  findMe(@Request() req: AuthRequest) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) {
+      throw new BadRequestException('Unauthorized — userId tidak ada di JWT');
+    }
+    return this.service.findByUserId(userId);
+  }
+
   @Get(':id')
   @Roles(
     'clinic-admin',

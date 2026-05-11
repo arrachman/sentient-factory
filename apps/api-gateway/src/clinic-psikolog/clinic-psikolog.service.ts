@@ -81,12 +81,24 @@ export class ClinicPsikologService {
         },
       });
 
+      // Sync serviceIds junction (kosong = handle semua, filled = subset)
+      if (dto.serviceIds && dto.serviceIds.length > 0) {
+        await tx.clinicPsikologService.createMany({
+          data: dto.serviceIds.map((serviceId) => ({
+            psikologUserId: user.id,
+            serviceId,
+            createdBy: actorId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
       return { user, profile };
     });
 
     return {
       success: true,
-      data: this.mapToResponse(created.user, created.profile),
+      data: this.mapToResponse(created.user, created.profile, dto.serviceIds ?? []),
       message: 'Psikolog created',
     };
   }
@@ -130,9 +142,27 @@ export class ClinicPsikologService {
       this.prisma.clinicPsikologProfile.count({ where }),
     ]);
 
+    // Batch-load serviceIds junction untuk avoid N+1
+    const userIds = profiles.map((p) => p.userId);
+    const junctionRows =
+      userIds.length === 0
+        ? []
+        : await this.prisma.clinicPsikologService.findMany({
+            where: { psikologUserId: { in: userIds } },
+            select: { psikologUserId: true, serviceId: true },
+          });
+    const serviceIdsByUser = new Map<number, number[]>();
+    for (const r of junctionRows) {
+      const arr = serviceIdsByUser.get(r.psikologUserId) ?? [];
+      arr.push(r.serviceId);
+      serviceIdsByUser.set(r.psikologUserId, arr);
+    }
+
     return {
       success: true,
-      data: profiles.map((p) => this.mapToResponse(p.user, p)),
+      data: profiles.map((p) =>
+        this.mapToResponse(p.user, p, serviceIdsByUser.get(p.userId) ?? []),
+      ),
       meta: {
         page,
         limit,
@@ -149,6 +179,33 @@ export class ClinicPsikologService {
     });
     if (!profile) {
       throw new NotFoundException(`Psikolog with id ${id} tidak ditemukan`);
+    }
+    const serviceIds = await this.findServiceIds(profile.userId);
+    return {
+      success: true,
+      data: this.mapToResponse(profile.user, profile, serviceIds),
+    };
+  }
+
+  private async findServiceIds(psikologUserId: number): Promise<number[]> {
+    const rows = await this.prisma.clinicPsikologService.findMany({
+      where: { psikologUserId },
+      select: { serviceId: true },
+    });
+    return rows.map((r) => r.serviceId);
+  }
+
+  /**
+   * Lookup psikolog by JWT userId. Dipakai oleh GET /clinic/psikolog/me
+   * sebagai self-fetch endpoint untuk `/psikolog/profile` page.
+   */
+  async findByUserId(userId: number) {
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId, deletedAt: null },
+      include: { user: this.userSelect() },
+    });
+    if (!profile) {
+      throw new NotFoundException(`Psikolog profile untuk user ${userId} tidak ditemukan`);
     }
     return {
       success: true,
@@ -197,12 +254,31 @@ export class ClinicPsikologService {
         include: { user: this.userSelect() },
       });
 
+      // Sync junction kalau dto.serviceIds di-provide (replace all).
+      // undefined → biarkan apa adanya. [] → hapus (default "handle semua").
+      if (dto.serviceIds !== undefined) {
+        await tx.clinicPsikologService.deleteMany({
+          where: { psikologUserId: profile.userId },
+        });
+        if (dto.serviceIds.length > 0) {
+          await tx.clinicPsikologService.createMany({
+            data: dto.serviceIds.map((serviceId) => ({
+              psikologUserId: profile.userId,
+              serviceId,
+              createdBy: actorId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
       return profile;
     });
 
+    const finalServiceIds = await this.findServiceIds(updated.userId);
     return {
       success: true,
-      data: this.mapToResponse(updated.user, updated),
+      data: this.mapToResponse(updated.user, updated, finalServiceIds),
       message: 'Psikolog updated',
     };
   }
@@ -495,6 +571,7 @@ export class ClinicPsikologService {
       createdAt: Date;
       updatedAt: Date;
     },
+    serviceIds: number[] = [],
   ) {
     return {
       id: profile.id,
@@ -513,6 +590,11 @@ export class ClinicPsikologService {
         string,
         { isOpen: boolean; slotIndices?: number[] }
       >,
+      /**
+       * Layanan yang ditangani psikolog. Kosong = handle SEMUA service
+       * (default). Filled = hanya subset yang di-list.
+       */
+      serviceIds,
       bio: profile.bio,
       lastLogin: user.lastLogin,
       createdAt: profile.createdAt,
