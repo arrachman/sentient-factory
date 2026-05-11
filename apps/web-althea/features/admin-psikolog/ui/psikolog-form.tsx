@@ -340,9 +340,6 @@ function ServicesSection({ control }: { control: Control<CreatePsikologInput> })
     <div>
       <div className="flex items-baseline justify-between mb-1">
         <label className="caption">Layanan yang ditangani</label>
-        <span className="caption text-fg-muted">
-          Kosong = handle semua layanan
-        </span>
       </div>
       <Controller
         name="serviceIds"
@@ -372,22 +369,14 @@ function ServicesSection({ control }: { control: Control<CreatePsikologInput> })
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => field.onChange([])}
-                      className="btn btn-ghost btn-sm text-xs"
-                      disabled={value.length === 0}
-                    >
-                      Kosongkan (handle semua)
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => field.onChange(allSelected ? [] : allIds)}
                       className="btn btn-ghost btn-sm text-xs"
                     >
-                      {allSelected ? 'Batal pilih semua' : 'Pilih semua eksplisit'}
+                      {allSelected ? 'Batal pilih semua' : 'Pilih semua'}
                     </button>
                     <span className="caption ml-auto">
                       {value.length === 0
-                        ? `Default: handle ${services.length} layanan`
+                        ? 'Belum ada layanan dipilih'
                         : `${value.length} dari ${services.length} layanan dipilih`}
                     </span>
                   </div>
@@ -426,9 +415,9 @@ function ServicesSection({ control }: { control: Control<CreatePsikologInput> })
         }}
       />
       <p className="caption mt-1.5 text-fg-muted">
-        💡 Default psikolog baru handle semua layanan. Centang chip kalau psikolog ini cuma
-        menangani subset tertentu (mis. specialist anak hanya konseling anak + terapi anak).
-        Filter ini dipakai di booking wizard untuk hide psikolog yang tidak relevan.
+        💡 Centang chip untuk layanan yang ditangani psikolog ini (mis. specialist anak hanya
+        konseling anak + terapi anak). Filter ini dipakai di booking wizard untuk hide psikolog
+        yang tidak relevan.
       </p>
     </div>
   );
