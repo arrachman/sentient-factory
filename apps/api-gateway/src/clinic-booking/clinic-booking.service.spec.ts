@@ -13,7 +13,9 @@ import { ClinicBookingService } from './clinic-booking.service';
  * For full integration tests, pakai @nestjs/testing + supertest.
  */
 
-type Mock<T extends (...args: any) => any> = jest.Mock<ReturnType<T>, Parameters<T>>;
+// Reserved for future spec utilities — kept inert untuk dipakai saat ekspand spec coverage.
+type _Mock<T extends (...args: any) => any> = jest.Mock<ReturnType<T>, Parameters<T>>;
+void (null as unknown as _Mock<() => void>);
 
 function makePrismaMock() {
   const transaction = jest.fn();

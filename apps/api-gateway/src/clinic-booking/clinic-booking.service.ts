@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -103,8 +99,7 @@ export class ClinicBookingService {
         sessionN: dto.sessionN ?? 1,
         sessionTotal: dto.sessionTotal ?? 1,
         packageGroupId:
-          dto.packageGroupId ??
-          (dto.sessionTotal && dto.sessionTotal > 1 ? randomUUID() : null),
+          dto.packageGroupId ?? (dto.sessionTotal && dto.sessionTotal > 1 ? randomUUID() : null),
         status: dto.createdViaWalkIn ? 'confirmed' : 'awaiting_dp',
         bufferOverride: dto.bufferOverride ?? false,
         createdViaWalkIn: dto.createdViaWalkIn ?? false,
@@ -187,9 +182,7 @@ export class ClinicBookingService {
   async update(id: number, dto: UpdateBookingDto, actorId?: number) {
     const existing = await this.findOne(id);
     if (existing.data.status === 'cancelled' || existing.data.status === 'completed') {
-      throw new BadRequestException(
-        `Booking sudah ${existing.data.status}, tidak bisa update`,
-      );
+      throw new BadRequestException(`Booking sudah ${existing.data.status}, tidak bisa update`);
     }
     const data: Prisma.ClinicBookingUpdateInput = { updatedBy: actorId };
     if (dto.notes !== undefined) data.notes = dto.notes;

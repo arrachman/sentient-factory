@@ -79,7 +79,12 @@ export class ClinicWaService {
       ];
     }
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.clinicWaTemplate.findMany({ where, orderBy: [{ category: 'asc' }, { name: 'asc' }], skip, take: limit }),
+      this.prisma.clinicWaTemplate.findMany({
+        where,
+        orderBy: [{ category: 'asc' }, { name: 'asc' }],
+        skip,
+        take: limit,
+      }),
       this.prisma.clinicWaTemplate.count({ where }),
     ]);
     return {
@@ -90,7 +95,9 @@ export class ClinicWaService {
   }
 
   async findOneTemplate(id: number) {
-    const template = await this.prisma.clinicWaTemplate.findFirst({ where: { id, deletedAt: null } });
+    const template = await this.prisma.clinicWaTemplate.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!template) throw new NotFoundException(`Template ${id} not found`);
     return { success: true, data: template };
   }
@@ -230,7 +237,9 @@ export class ClinicWaService {
           message: 'Enqueued for async send',
         };
       } catch (e) {
-        this.logger.error(`Failed to enqueue WA job, falling back to sync: ${(e as Error).message}`);
+        this.logger.error(
+          `Failed to enqueue WA job, falling back to sync: ${(e as Error).message}`,
+        );
         // fall through to sync path
       }
     }
@@ -243,7 +252,8 @@ export class ClinicWaService {
       metadata: { logId: log.id, ...args.metadata },
     });
 
-    const status = result.status === 'sent' ? 'terkirim' : result.status === 'queued' ? 'queued' : 'gagal';
+    const status =
+      result.status === 'sent' ? 'terkirim' : result.status === 'queued' ? 'queued' : 'gagal';
     await this.prisma.clinicWaLog.update({
       where: { id: log.id },
       data: {

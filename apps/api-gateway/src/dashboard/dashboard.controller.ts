@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -71,20 +82,14 @@ export class DashboardController {
   @Get('alerting/insights')
   @ApiOperation({ summary: 'List metric insight snapshots for alert center' })
   @ApiResponse({ status: 200, description: 'Metric insight snapshot payload' })
-  alertingInsights(
-    @Query('module') moduleKey?: string,
-    @Query('snapshotId') snapshotId?: string,
-  ) {
+  alertingInsights(@Query('module') moduleKey?: string, @Query('snapshotId') snapshotId?: string) {
     return this.dashboardService.alertingInsights(moduleKey, snapshotId);
   }
 
   @Get('alerting/saved-queries')
   @ApiOperation({ summary: 'List saved AI queries for alerting' })
   @ApiResponse({ status: 200, description: 'Saved query payload' })
-  alertingSavedQueries(
-    @Query('channel') channel?: string,
-    @Query('limit') limit?: string,
-  ) {
+  alertingSavedQueries(@Query('channel') channel?: string, @Query('limit') limit?: string) {
     return this.dashboardService.alertingSavedQueries(channel, limit);
   }
 
@@ -109,7 +114,10 @@ export class DashboardController {
     @Param('ruleId') ruleId: string,
     @Req() req: Request & { user?: { username?: string; email?: string } },
   ) {
-    return this.dashboardService.runAlertingRule(ruleId, req.user?.username || req.user?.email || 'system');
+    return this.dashboardService.runAlertingRule(
+      ruleId,
+      req.user?.username || req.user?.email || 'system',
+    );
   }
 
   @Post('alerting/scheduler/run')
@@ -118,16 +126,18 @@ export class DashboardController {
   runAlertingSchedulerCycle(
     @Req() req: Request & { user?: { username?: string; email?: string } },
   ) {
-    return this.dashboardService.runAlertingSchedulerCycle(req.user?.username || req.user?.email || 'system');
+    return this.dashboardService.runAlertingSchedulerCycle(
+      req.user?.username || req.user?.email || 'system',
+    );
   }
 
   @Post('alerting/delivery/run')
   @ApiOperation({ summary: 'Execute queued alert delivery logs' })
   @ApiResponse({ status: 200, description: 'Alert delivery worker result' })
-  runAlertDeliveryCycle(
-    @Req() req: Request & { user?: { username?: string; email?: string } },
-  ) {
-    return this.dashboardService.runAlertDeliveryCycle(req.user?.username || req.user?.email || 'system');
+  runAlertDeliveryCycle(@Req() req: Request & { user?: { username?: string; email?: string } }) {
+    return this.dashboardService.runAlertDeliveryCycle(
+      req.user?.username || req.user?.email || 'system',
+    );
   }
 
   @Post('alerting/rules')
@@ -137,7 +147,10 @@ export class DashboardController {
     @Req() req: Request & { user?: { username?: string; email?: string } },
     @Body() body: Record<string, unknown>,
   ) {
-    return this.dashboardService.createAlertingRule(body, req.user?.username || req.user?.email || 'system');
+    return this.dashboardService.createAlertingRule(
+      body,
+      req.user?.username || req.user?.email || 'system',
+    );
   }
 
   @Patch('alerting/rules/:ruleId')
@@ -312,7 +325,10 @@ export class DashboardController {
     @Req() req: Request & { user?: { username?: string; email?: string } },
     @Body() body: Record<string, unknown>,
   ) {
-    return this.dashboardService.createAlertingTemplate(body, req.user?.username || req.user?.email || 'system');
+    return this.dashboardService.createAlertingTemplate(
+      body,
+      req.user?.username || req.user?.email || 'system',
+    );
   }
 
   @Get('alerting/templates/:templateId')
@@ -372,7 +388,10 @@ export class DashboardController {
     @Req() req: Request & { user?: { username?: string; email?: string } },
     @Body() body: Record<string, unknown>,
   ) {
-    return this.dashboardService.createAlertingChannel(body, req.user?.username || req.user?.email || 'system');
+    return this.dashboardService.createAlertingChannel(
+      body,
+      req.user?.username || req.user?.email || 'system',
+    );
   }
 
   @Patch('alerting/channels/:channelId')
@@ -507,9 +526,7 @@ export class DashboardController {
   @Get('alerting/triage-saved-views')
   @ApiOperation({ summary: 'List triage saved views' })
   @ApiResponse({ status: 200, description: 'Triage saved view payload' })
-  alertingTriageSavedViews(
-    @Req() req: Request & { user?: { username?: string; email?: string } },
-  ) {
+  alertingTriageSavedViews(@Req() req: Request & { user?: { username?: string; email?: string } }) {
     return this.dashboardService.alertingTriageSavedViews(
       req.user?.username || req.user?.email || 'system',
     );

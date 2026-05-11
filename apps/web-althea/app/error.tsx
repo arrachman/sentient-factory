@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { RefreshCcw } from 'lucide-react';
 
@@ -15,7 +16,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // eslint-disable-next-line no-console
+     
     console.error('App error:', error);
   }, [error]);
 
@@ -40,9 +41,9 @@ export default function GlobalError({
           <button type="button" onClick={() => reset()} className="btn btn-primary">
             <RefreshCcw className="h-4 w-4" /> Coba lagi
           </button>
-          <a href="/" className="btn btn-outline">
+          <Link href="/" className="btn btn-outline">
             Ke Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </main>

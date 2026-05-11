@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { mkdir, readFile, writeFile } from 'fs/promises';
 import * as path from 'path';
@@ -77,7 +82,10 @@ function normalizeHrDates<T>(value: T): T {
 
   if (value && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [key, normalizeHrDates(entry)]),
+      Object.entries(value as Record<string, unknown>).map(([key, entry]) => [
+        key,
+        normalizeHrDates(entry),
+      ]),
     ) as T;
   }
 
@@ -90,14 +98,16 @@ export class HrAttendanceService {
 
   private async getAssignedWorksites(hrUserId: number) {
     const [primaryRows, extraRows] = await Promise.all([
-      this.prisma.$queryRaw<Array<{
-        id: number;
-        name: string;
-        code: string;
-        latitude: number;
-        longitude: number;
-        radiusMeters: number;
-      }>>(Prisma.sql`
+      this.prisma.$queryRaw<
+        Array<{
+          id: number;
+          name: string;
+          code: string;
+          latitude: number;
+          longitude: number;
+          radiusMeters: number;
+        }>
+      >(Prisma.sql`
         SELECT
           w.id,
           w.name,
@@ -112,14 +122,16 @@ export class HrAttendanceService {
           AND w.deleted_at IS NULL
         LIMIT 1
       `),
-      this.prisma.$queryRaw<Array<{
-        id: number;
-        name: string;
-        code: string;
-        latitude: number;
-        longitude: number;
-        radiusMeters: number;
-      }>>(Prisma.sql`
+      this.prisma.$queryRaw<
+        Array<{
+          id: number;
+          name: string;
+          code: string;
+          latitude: number;
+          longitude: number;
+          radiusMeters: number;
+        }>
+      >(Prisma.sql`
         SELECT
           w.id,
           w.name,
@@ -164,20 +176,24 @@ export class HrAttendanceService {
   }
 
   private async getAssignedWorksiteMap(hrUserIds: number[]) {
-    const uniqueHrUserIds = Array.from(new Set(hrUserIds.filter((value) => Number.isFinite(value) && value > 0)));
+    const uniqueHrUserIds = Array.from(
+      new Set(hrUserIds.filter((value) => Number.isFinite(value) && value > 0)),
+    );
     if (uniqueHrUserIds.length === 0) {
       return new Map<number, HrAssignedWorksite[]>();
     }
 
-    const rows = await this.prisma.$queryRaw<Array<{
-      hrUserId: number;
-      worksiteId: number;
-      worksiteName: string;
-      worksiteCode: string;
-      radiusMeters: number;
-      isPrimary: boolean;
-      assignedAt: Date | string | null;
-    }>>(Prisma.sql`
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        hrUserId: number;
+        worksiteId: number;
+        worksiteName: string;
+        worksiteCode: string;
+        radiusMeters: number;
+        isPrimary: boolean;
+        assignedAt: Date | string | null;
+      }>
+    >(Prisma.sql`
       WITH assigned AS (
         SELECT
           hu.id AS "hrUserId",
@@ -252,7 +268,9 @@ export class HrAttendanceService {
     worksiteIds: number[],
     actorId: number | null,
   ) {
-    const uniqueWorksiteIds = Array.from(new Set(worksiteIds.filter((value) => Number.isFinite(value) && value > 0)));
+    const uniqueWorksiteIds = Array.from(
+      new Set(worksiteIds.filter((value) => Number.isFinite(value) && value > 0)),
+    );
     if (uniqueWorksiteIds.length === 0) {
       throw new BadRequestException('Pilih minimal satu tempat kerja.');
     }
@@ -346,7 +364,9 @@ export class HrAttendanceService {
           faceDetectionMode: dto.faceDetectionMode ?? null,
         },
       });
-      throw new BadRequestException('Verifikasi wajah asli belum berhasil. Kedipkan mata sekali lalu coba lagi.');
+      throw new BadRequestException(
+        'Verifikasi wajah asli belum berhasil. Kedipkan mata sekali lalu coba lagi.',
+      );
     }
 
     const existingActiveEnrollment = await this.hasActiveFaceEnrollment(targetProfile.hrUserId);
@@ -480,7 +500,9 @@ export class HrAttendanceService {
       ORDER BY coalesce(u.full_name, u.username) ASC, u.username ASC
     `);
 
-    const assignedWorksites = await this.getAssignedWorksiteMap(rows.map((row) => Number(row.hrUserId)));
+    const assignedWorksites = await this.getAssignedWorksiteMap(
+      rows.map((row) => Number(row.hrUserId)),
+    );
 
     return {
       success: true,
@@ -519,9 +541,15 @@ export class HrAttendanceService {
     };
   }
 
-  async updateUserWorksites(authUser: AuthUser, targetAppUserId: number, dto: { worksiteIds: number[] }) {
+  async updateUserWorksites(
+    authUser: AuthUser,
+    targetAppUserId: number,
+    dto: { worksiteIds: number[] },
+  ) {
     if (!this.isPrivileged(authUser.roles)) {
-      throw new BadRequestException('Mengubah tempat kerja hanya tersedia untuk manager atau admin.');
+      throw new BadRequestException(
+        'Mengubah tempat kerja hanya tersedia untuk manager atau admin.',
+      );
     }
 
     const profile = await this.getHrProfileByAppUserId(targetAppUserId);
@@ -549,7 +577,9 @@ export class HrAttendanceService {
 
   async getFaceEnrollmentManagement(authUser: AuthUser) {
     if (!this.isPrivileged(authUser.roles)) {
-      throw new BadRequestException('Manajemen pendaftaran wajah hanya tersedia untuk manager atau admin.');
+      throw new BadRequestException(
+        'Manajemen pendaftaran wajah hanya tersedia untuk manager atau admin.',
+      );
     }
 
     const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
@@ -596,7 +626,9 @@ export class HrAttendanceService {
         u.username ASC
     `);
 
-    const assignedWorksites = await this.getAssignedWorksiteMap(rows.map((row) => Number(row.hrUserId)));
+    const assignedWorksites = await this.getAssignedWorksiteMap(
+      rows.map((row) => Number(row.hrUserId)),
+    );
 
     return {
       success: true,
@@ -647,7 +679,10 @@ export class HrAttendanceService {
 
     const matches = rows
       .map((row) => {
-        const similarity = this.compareFaceEmbedding(this.requireFaceEmbedding(row.embeddingJson), inputEmbedding);
+        const similarity = this.compareFaceEmbedding(
+          this.requireFaceEmbedding(row.embeddingJson),
+          inputEmbedding,
+        );
         return {
           hrUserId: row.hrUserId,
           appUserId: row.appUserId,
@@ -669,17 +704,18 @@ export class HrAttendanceService {
         threshold: identifyThreshold,
         currentUserHrId: profile.hrUserId,
         currentUserAppId: profile.appUserId,
-        candidate: matched && bestMatch
-          ? {
-              hrUserId: bestMatch.hrUserId,
-              appUserId: bestMatch.appUserId,
-              employeeCode: bestMatch.employeeCode,
-              username: bestMatch.username,
-              fullName: bestMatch.fullName,
-              similarity: Number(bestMatch.similarity.toFixed(4)),
-              isCurrentUser: bestMatch.appUserId === profile.appUserId,
-            }
-          : null,
+        candidate:
+          matched && bestMatch
+            ? {
+                hrUserId: bestMatch.hrUserId,
+                appUserId: bestMatch.appUserId,
+                employeeCode: bestMatch.employeeCode,
+                username: bestMatch.username,
+                fullName: bestMatch.fullName,
+                similarity: Number(bestMatch.similarity.toFixed(4)),
+                isCurrentUser: bestMatch.appUserId === profile.appUserId,
+              }
+            : null,
         topMatches: matches.slice(0, 3).map((match) => ({
           hrUserId: match.hrUserId,
           appUserId: match.appUserId,
@@ -736,7 +772,9 @@ export class HrAttendanceService {
         metadata: dto.metadata,
       });
 
-      throw new BadRequestException('Current user already has an active attendance session for today.');
+      throw new BadRequestException(
+        'Current user already has an active attendance session for today.',
+      );
     }
 
     if ((dto.livenessScore ?? 0) < livenessThreshold) {
@@ -757,7 +795,9 @@ export class HrAttendanceService {
           faceDetectionMode: dto.faceDetectionMode ?? null,
         },
       });
-      throw new BadRequestException('Verifikasi wajah asli belum berhasil. Kedipkan mata sekali lalu coba lagi.');
+      throw new BadRequestException(
+        'Verifikasi wajah asli belum berhasil. Kedipkan mata sekali lalu coba lagi.',
+      );
     }
 
     const activeEnrollment = await this.requireActiveFaceEnrollment(profile.hrUserId);
@@ -786,12 +826,16 @@ export class HrAttendanceService {
     }
 
     const assignedWorksites = await this.getAssignedWorksites(profile.hrUserId);
-    const worksiteResolution = this.resolveWorksiteForCoordinates(assignedWorksites, dto.latitude, dto.longitude);
+    const worksiteResolution = this.resolveWorksiteForCoordinates(
+      assignedWorksites,
+      dto.latitude,
+      dto.longitude,
+    );
     const worksite = worksiteResolution.worksite;
     const distanceMeters = worksiteResolution.distanceMeters;
     const insideGeofence = worksiteResolution.insideGeofence;
     const clockInStatus = insideGeofence ? 'success' : 'manual_review';
-    const reasonCode = insideGeofence ? dto.reasonCode ?? null : 'outside_geofence';
+    const reasonCode = insideGeofence ? (dto.reasonCode ?? null) : 'outside_geofence';
 
     const inserted = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
       INSERT INTO public.hr_attendance_sessions (
@@ -878,7 +922,9 @@ export class HrAttendanceService {
       ? await this.persistSnapshot('clock-out', `user-${authUser.id}`, dto.snapshotDataUrl)
       : null;
 
-    const activeSessionRows = await this.prisma.$queryRaw<Array<{ id: number; clock_in_at: Date | string | null }>>(Prisma.sql`
+    const activeSessionRows = await this.prisma.$queryRaw<
+      Array<{ id: number; clock_in_at: Date | string | null }>
+    >(Prisma.sql`
       SELECT id, clock_in_at
       FROM public.hr_attendance_sessions
       WHERE user_id = ${profile.hrUserId}
@@ -926,7 +972,9 @@ export class HrAttendanceService {
           faceDetectionMode: dto.faceDetectionMode ?? null,
         },
       });
-      throw new BadRequestException('Verifikasi wajah asli belum berhasil. Kedipkan mata sekali lalu coba lagi.');
+      throw new BadRequestException(
+        'Verifikasi wajah asli belum berhasil. Kedipkan mata sekali lalu coba lagi.',
+      );
     }
 
     const activeEnrollment = await this.requireActiveFaceEnrollment(profile.hrUserId);
@@ -955,12 +1003,16 @@ export class HrAttendanceService {
     }
 
     const assignedWorksites = await this.getAssignedWorksites(profile.hrUserId);
-    const worksiteResolution = this.resolveWorksiteForCoordinates(assignedWorksites, dto.latitude, dto.longitude);
+    const worksiteResolution = this.resolveWorksiteForCoordinates(
+      assignedWorksites,
+      dto.latitude,
+      dto.longitude,
+    );
     const worksite = worksiteResolution.worksite;
     const distanceMeters = worksiteResolution.distanceMeters;
     const insideGeofence = worksiteResolution.insideGeofence;
     const clockOutStatus = insideGeofence ? 'success' : 'manual_review';
-    const reasonCode = insideGeofence ? dto.reasonCode ?? null : 'outside_geofence';
+    const reasonCode = insideGeofence ? (dto.reasonCode ?? null) : 'outside_geofence';
 
     const minutesWorked = this.diffMinutes(activeSession.clock_in_at);
 
@@ -1097,7 +1149,11 @@ export class HrAttendanceService {
       LIMIT 5
     `);
 
-    const autoSubmitEnabled = await this.getBooleanSetting('attendance', 'auto_submit_enabled', true);
+    const autoSubmitEnabled = await this.getBooleanSetting(
+      'attendance',
+      'auto_submit_enabled',
+      true,
+    );
     const autoSubmitConfidenceThreshold = await this.getNumberSetting(
       'attendance',
       'auto_submit_confidence_threshold',
@@ -1139,9 +1195,7 @@ export class HrAttendanceService {
     const offset = (page - 1) * limit;
     const privileged = this.isPrivileged(authUser.roles);
     const search = query.search?.trim() ?? '';
-    const targetAppUserId = query.userId
-      ? (privileged ? query.userId : authUser.id)
-      : null;
+    const targetAppUserId = query.userId ? (privileged ? query.userId : authUser.id) : null;
 
     let targetHrUserId: number | null = null;
     if (targetAppUserId !== null) {
@@ -1167,9 +1221,7 @@ export class HrAttendanceService {
     }
 
     const hrUserScopeSql =
-      targetHrUserId !== null
-        ? Prisma.sql`AND s.user_id = ${targetHrUserId}`
-        : Prisma.empty;
+      targetHrUserId !== null ? Prisma.sql`AND s.user_id = ${targetHrUserId}` : Prisma.empty;
     const searchSql =
       search.length > 0
         ? Prisma.sql`
@@ -1246,7 +1298,11 @@ export class HrAttendanceService {
       throw new ForbiddenException('Dashboard absensi hanya tersedia untuk admin.');
     }
 
-    const autoSubmitEnabled = await this.getBooleanSetting('attendance', 'auto_submit_enabled', true);
+    const autoSubmitEnabled = await this.getBooleanSetting(
+      'attendance',
+      'auto_submit_enabled',
+      true,
+    );
     const autoSubmitConfidenceThreshold = await this.getNumberSetting(
       'attendance',
       'auto_submit_confidence_threshold',
@@ -1429,35 +1485,43 @@ export class HrAttendanceService {
       success: true,
       data: {
         mode: 'admin',
-        summary: normalizeHrDates(summaryRows[0] ?? {
-          total_employees: 0,
-          active_worksites: 0,
-          enrolled_employees: 0,
-          employees_without_worksite: 0,
-          clocked_in_today: 0,
-          clocked_out_today: 0,
-          exception_sessions: 0,
-          validation_success_today: 0,
-          validation_low_confidence_today: 0,
-          validation_failure_today: 0,
-        }),
-        qualityOverview: normalizeHrDates(qualityRows[0] ?? {
-          avg_face_score_today: null,
-          avg_enrollment_quality: null,
-          avg_match_similarity_today: null,
-          avg_liveness_score_today: null,
-        }),
-        reviewOverview: normalizeHrDates(reviewRows[0] ?? {
-          pending_review_count: 0,
-          clarification_count: 0,
-          approved_today_count: 0,
-          rejected_today_count: 0,
-          avg_resolution_minutes: null,
-        }),
-        productivityOverview: normalizeHrDates(productivityRows[0] ?? {
-          total_work_minutes_today: 0,
-          avg_work_minutes_today: null,
-        }),
+        summary: normalizeHrDates(
+          summaryRows[0] ?? {
+            total_employees: 0,
+            active_worksites: 0,
+            enrolled_employees: 0,
+            employees_without_worksite: 0,
+            clocked_in_today: 0,
+            clocked_out_today: 0,
+            exception_sessions: 0,
+            validation_success_today: 0,
+            validation_low_confidence_today: 0,
+            validation_failure_today: 0,
+          },
+        ),
+        qualityOverview: normalizeHrDates(
+          qualityRows[0] ?? {
+            avg_face_score_today: null,
+            avg_enrollment_quality: null,
+            avg_match_similarity_today: null,
+            avg_liveness_score_today: null,
+          },
+        ),
+        reviewOverview: normalizeHrDates(
+          reviewRows[0] ?? {
+            pending_review_count: 0,
+            clarification_count: 0,
+            approved_today_count: 0,
+            rejected_today_count: 0,
+            avg_resolution_minutes: null,
+          },
+        ),
+        productivityOverview: normalizeHrDates(
+          productivityRows[0] ?? {
+            total_work_minutes_today: 0,
+            avg_work_minutes_today: null,
+          },
+        ),
         recentSessions: normalizeHrDates(recentSessions),
         exceptionEvents: normalizeHrDates(exceptionEvents),
         settings: {
@@ -1475,7 +1539,11 @@ export class HrAttendanceService {
       throw new BadRequestException('HR settings are only available to privileged roles.');
     }
 
-    const autoSubmitEnabled = await this.getBooleanSetting('attendance', 'auto_submit_enabled', true);
+    const autoSubmitEnabled = await this.getBooleanSetting(
+      'attendance',
+      'auto_submit_enabled',
+      true,
+    );
     const autoSubmitConfidenceThreshold = await this.getNumberSetting(
       'attendance',
       'auto_submit_confidence_threshold',
@@ -1551,7 +1619,9 @@ export class HrAttendanceService {
 
   async getAttendanceReviews(authUser: AuthUser, query: QueryHrAttendanceReviewDto) {
     if (!this.isPrivileged(authUser.roles)) {
-      throw new BadRequestException('Attendance review queue is only available to privileged roles.');
+      throw new BadRequestException(
+        'Attendance review queue is only available to privileged roles.',
+      );
     }
 
     const page = query.page ?? 1;
@@ -1644,7 +1714,9 @@ export class HrAttendanceService {
 
   async getAttendanceReviewDetail(authUser: AuthUser, eventId: number) {
     if (!this.isPrivileged(authUser.roles)) {
-      throw new BadRequestException('Attendance review detail is only available to privileged roles.');
+      throw new BadRequestException(
+        'Attendance review detail is only available to privileged roles.',
+      );
     }
 
     const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
@@ -1725,17 +1797,21 @@ export class HrAttendanceService {
     note?: string,
   ) {
     if (!this.isPrivileged(authUser.roles)) {
-      throw new BadRequestException('Attendance review action is only available to privileged roles.');
+      throw new BadRequestException(
+        'Attendance review action is only available to privileged roles.',
+      );
     }
 
     const actorId = toAuditUserId(authUser.id);
-    const rows = await this.prisma.$queryRaw<Array<{
-      id: number;
-      sessionId: number | null;
-      eventType: string;
-      result: string;
-      reviewStatus: string | null;
-    }>>(Prisma.sql`
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        id: number;
+        sessionId: number | null;
+        eventType: string;
+        result: string;
+        reviewStatus: string | null;
+      }>
+    >(Prisma.sql`
       SELECT
         e.id,
         e.session_id AS "sessionId",
@@ -1820,10 +1896,10 @@ export class HrAttendanceService {
         nextStatus === 'pending'
           ? 'Attendance review reopened and returned to pending queue.'
           : nextStatus === 'approved'
-          ? 'Attendance review approved.'
-          : nextStatus === 'rejected'
-            ? 'Attendance review rejected.'
-            : 'Attendance review clarification requested.',
+            ? 'Attendance review approved.'
+            : nextStatus === 'rejected'
+              ? 'Attendance review rejected.'
+              : 'Attendance review clarification requested.',
       data: {
         eventId,
         reviewStatus: nextStatus,
@@ -1833,7 +1909,9 @@ export class HrAttendanceService {
 
   async getAttendanceEventSnapshot(authUser: AuthUser, eventId: number) {
     const privileged = this.isPrivileged(authUser.roles);
-    const rows = await this.prisma.$queryRaw<Array<{ snapshot_url: string | null; user_id: number }>>(Prisma.sql`
+    const rows = await this.prisma.$queryRaw<
+      Array<{ snapshot_url: string | null; user_id: number }>
+    >(Prisma.sql`
       SELECT e.snapshot_url, e.user_id
       FROM public.hr_attendance_events e
       JOIN public.hr_users hu ON hu.id = e.user_id
@@ -1856,7 +1934,9 @@ export class HrAttendanceService {
     const resolvedBase = path.resolve(baseDir);
 
     if (!resolvedFile.startsWith(resolvedBase + path.sep) && resolvedFile !== resolvedBase) {
-      throw new BadRequestException('Attendance snapshot path is outside the allowed storage root.');
+      throw new BadRequestException(
+        'Attendance snapshot path is outside the allowed storage root.',
+      );
     }
 
     const buffer = await readFile(resolvedFile).catch(() => null);
@@ -1876,7 +1956,9 @@ export class HrAttendanceService {
 
   async getFaceEnrollmentSnapshot(authUser: AuthUser, enrollmentId: number) {
     const privileged = this.isPrivileged(authUser.roles);
-    const rows = await this.prisma.$queryRaw<Array<{ snapshot_url: string | null; app_user_id: number }>>(Prisma.sql`
+    const rows = await this.prisma.$queryRaw<
+      Array<{ snapshot_url: string | null; app_user_id: number }>
+    >(Prisma.sql`
       SELECT hfe.snapshot_url, hu.user_id AS app_user_id
       FROM public.hr_face_enrollments hfe
       JOIN public.hr_users hu ON hu.id = hfe.user_id
@@ -1899,7 +1981,9 @@ export class HrAttendanceService {
     const resolvedBase = path.resolve(baseDir);
 
     if (!resolvedFile.startsWith(resolvedBase + path.sep) && resolvedFile !== resolvedBase) {
-      throw new BadRequestException('Face enrollment snapshot path is outside the allowed storage root.');
+      throw new BadRequestException(
+        'Face enrollment snapshot path is outside the allowed storage root.',
+      );
     }
 
     const buffer = await readFile(resolvedFile).catch(() => null);
@@ -2039,7 +2123,8 @@ export class HrAttendanceService {
     if (typeof dto.code !== 'undefined') sets.push(Prisma.sql`code = ${dto.code}`);
     if (typeof dto.latitude !== 'undefined') sets.push(Prisma.sql`latitude = ${dto.latitude}`);
     if (typeof dto.longitude !== 'undefined') sets.push(Prisma.sql`longitude = ${dto.longitude}`);
-    if (typeof dto.radiusMeters !== 'undefined') sets.push(Prisma.sql`radius_meters = ${dto.radiusMeters}`);
+    if (typeof dto.radiusMeters !== 'undefined')
+      sets.push(Prisma.sql`radius_meters = ${dto.radiusMeters}`);
     if (typeof dto.isActive !== 'undefined') sets.push(Prisma.sql`is_active = ${dto.isActive}`);
     sets.push(Prisma.sql`updated_at = now()`);
     sets.push(Prisma.sql`updated_by = ${toAuditUserId(authUser.id)}`);
@@ -2147,7 +2232,12 @@ export class HrAttendanceService {
     const scored = worksites
       .map((worksite) => ({
         worksite,
-        distanceMeters: this.calculateDistanceMeters(latitude, longitude, worksite.latitude, worksite.longitude),
+        distanceMeters: this.calculateDistanceMeters(
+          latitude,
+          longitude,
+          worksite.latitude,
+          worksite.longitude,
+        ),
       }))
       .sort((a, b) => a.distanceMeters - b.distanceMeters);
 
@@ -2165,7 +2255,9 @@ export class HrAttendanceService {
     }
 
     if (!this.isPrivileged(authUser.roles)) {
-      throw new BadRequestException('Hanya manager atau admin yang boleh mendaftarkan wajah pegawai lain.');
+      throw new BadRequestException(
+        'Hanya manager atau admin yang boleh mendaftarkan wajah pegawai lain.',
+      );
     }
 
     return this.requireHrProfileByAppUserId(targetAppUserId);
@@ -2270,7 +2362,10 @@ export class HrAttendanceService {
     `);
 
     for (const row of rows) {
-      const similarity = this.compareFaceEmbedding(this.requireFaceEmbedding(row.embeddingJson), inputEmbedding);
+      const similarity = this.compareFaceEmbedding(
+        this.requireFaceEmbedding(row.embeddingJson),
+        inputEmbedding,
+      );
       if (similarity >= threshold) {
         return {
           hrUserId: row.hrUserId,
@@ -2451,7 +2546,8 @@ export class HrAttendanceService {
 
   private getAttendanceStorageBaseDir() {
     return (
-      process.env.HR_ATTENDANCE_STORAGE_PATH || path.resolve(process.cwd(), '../../temp/hr-attendance')
+      process.env.HR_ATTENDANCE_STORAGE_PATH ||
+      path.resolve(process.cwd(), '../../temp/hr-attendance')
     );
   }
 

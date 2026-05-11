@@ -24,7 +24,9 @@ export class WaQueueProcessor extends WorkerHost {
     const { logId, recipientPhone, body, metadata } = job.data;
     const attempt = job.attemptsMade + 1;
 
-    this.logger.log(`Processing WA job ${job.id} (logId=${logId}) attempt ${attempt}/${job.opts.attempts ?? 1}`);
+    this.logger.log(
+      `Processing WA job ${job.id} (logId=${logId}) attempt ${attempt}/${job.opts.attempts ?? 1}`,
+    );
 
     const result = await this.wa.send({
       toPhone: recipientPhone,

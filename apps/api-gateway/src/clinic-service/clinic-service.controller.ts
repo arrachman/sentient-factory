@@ -1,5 +1,15 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,21 +33,37 @@ export class ClinicServiceController {
   }
 
   @Get()
-  @Roles('clinic-admin', 'clinic-psikolog', 'clinic-owner', 'clinic-resepsionis', 'clinic-marketing')
+  @Roles(
+    'clinic-admin',
+    'clinic-psikolog',
+    'clinic-owner',
+    'clinic-resepsionis',
+    'clinic-marketing',
+  )
   @ApiOperation({ summary: 'List services' })
   findAll(@Query() query: QueryServiceDto) {
     return this.service.findAll(query);
   }
 
   @Get(':id')
-  @Roles('clinic-admin', 'clinic-psikolog', 'clinic-owner', 'clinic-resepsionis', 'clinic-marketing')
+  @Roles(
+    'clinic-admin',
+    'clinic-psikolog',
+    'clinic-owner',
+    'clinic-resepsionis',
+    'clinic-marketing',
+  )
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }
 
   @Patch(':id')
   @Roles('clinic-admin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateServiceDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateServiceDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.sub ?? req.user?.id);
   }
 

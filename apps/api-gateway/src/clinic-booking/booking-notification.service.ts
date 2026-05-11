@@ -58,10 +58,7 @@ export class BookingNotificationService {
         bookingId: booking.id,
       });
     } catch (err) {
-      console.error(
-        `[BookingNotification] template=${templateName} bookingId=${booking.id}:`,
-        err,
-      );
+      console.error(`[BookingNotification] template=${templateName} bookingId=${booking.id}:`, err);
     }
   }
 

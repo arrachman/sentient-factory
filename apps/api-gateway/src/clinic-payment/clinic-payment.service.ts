@@ -30,7 +30,9 @@ export class ClinicPaymentService {
 
   /** Create payment record untuk booking — biasanya saat booking confirmed. */
   async create(dto: CreatePaymentDto, actorId?: number) {
-    const existing = await this.prisma.clinicPayment.findUnique({ where: { bookingId: dto.bookingId } });
+    const existing = await this.prisma.clinicPayment.findUnique({
+      where: { bookingId: dto.bookingId },
+    });
     if (existing) throw new BadRequestException(`Payment untuk booking ${dto.bookingId} sudah ada`);
 
     const total = new Prisma.Decimal(dto.totalAmount);
@@ -111,9 +113,7 @@ export class ClinicPaymentService {
       ? existing.paidAmount
       : new Prisma.Decimal(args.amount ?? existing.paidAmount);
     if (refundAmount.gt(existing.paidAmount)) {
-      throw new BadRequestException(
-        `Refund (${refundAmount}) > dibayar (${existing.paidAmount})`,
-      );
+      throw new BadRequestException(`Refund (${refundAmount}) > dibayar (${existing.paidAmount})`);
     }
 
     const newPaid = existing.paidAmount.minus(refundAmount);
@@ -206,7 +206,10 @@ h1{color:#5b8a66}table{width:100%;border-collapse:collapse}td{padding:8px;border
         ['Telp WA', payment.booking?.client?.phoneWa ?? '—'],
         ['Layanan', payment.booking?.service?.name ?? '—'],
         ['Psikolog', payment.booking?.psikolog?.fullName ?? '—'],
-        ['Tanggal Sesi', payment.booking?.scheduledStart?.toISOString().slice(0, 16).replace('T', ' ') ?? '—'],
+        [
+          'Tanggal Sesi',
+          payment.booking?.scheduledStart?.toISOString().slice(0, 16).replace('T', ' ') ?? '—',
+        ],
         ['Total', this.formatRupiah(payment.totalAmount)],
         ['PPN', this.formatRupiah(payment.taxAmount)],
         ['DP', this.formatRupiah(payment.dpAmount)],

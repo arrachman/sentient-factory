@@ -161,7 +161,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
   }
 
   async alertingBusinessMetrics(moduleKey?: string) {
-    const where = ["deleted_at IS NULL", 'is_active = true'];
+    const where = ['deleted_at IS NULL', 'is_active = true'];
     if (moduleKey && moduleKey !== 'all') {
       where.push(`module_key = '${this.escapeSqlLiteral(moduleKey)}'`);
     }
@@ -196,7 +196,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
   }
 
   async alertingSystemMetrics(moduleKey?: string) {
-    const where = ["deleted_at IS NULL", 'is_active = true'];
+    const where = ['deleted_at IS NULL', 'is_active = true'];
     if (moduleKey && moduleKey !== 'all') {
       where.push(`module_key = '${this.escapeSqlLiteral(moduleKey)}'`);
     }
@@ -699,9 +699,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
             eventKey: String(row.event_key || ''),
             eventTitle: String(row.event_title || ''),
             message:
-              String(row.message_template || '').trim()
-              || String(row.event_description || '').trim()
-              || String(row.event_title || '').trim(),
+              String(row.message_template || '').trim() ||
+              String(row.event_description || '').trim() ||
+              String(row.event_title || '').trim(),
             eventPayload: this.asJson(row.event_payload, {}),
           });
 
@@ -723,7 +723,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
           let autoClosedTriage = false;
           if (triageRecoveryConfig.enabled && dispatchResult.deliveryStatus !== 'failed') {
-            const triageBeforeRows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+            const triageBeforeRows = await this.prisma.$queryRawUnsafe<
+              Array<Record<string, unknown>>
+            >(`
               SELECT triage_status, acknowledged_at, assigned_to, note
               FROM public.alert_dead_letter_triage
               WHERE delivery_id = ${deliveryId}
@@ -748,13 +750,21 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
               await this.createAlertDeadLetterTriageAudit({
                 deliveryId,
                 actionType: 'auto-resolve',
-                previousTriageStatus: previous?.triage_status ? String(previous.triage_status) : null,
+                previousTriageStatus: previous?.triage_status
+                  ? String(previous.triage_status)
+                  : null,
                 nextTriageStatus: 'resolved',
-                previousAcknowledgedAt: previous?.acknowledged_at ? String(previous.acknowledged_at) : null,
-                nextAcknowledgedAt: previous?.acknowledged_at ? String(previous.acknowledged_at) : null,
+                previousAcknowledgedAt: previous?.acknowledged_at
+                  ? String(previous.acknowledged_at)
+                  : null,
+                nextAcknowledgedAt: previous?.acknowledged_at
+                  ? String(previous.acknowledged_at)
+                  : null,
                 previousAssignedTo: previous?.assigned_to ? String(previous.assigned_to) : null,
                 nextAssignedTo: previous?.assigned_to ? String(previous.assigned_to) : null,
-                noteSnapshot: previous?.note ? String(previous.note) : 'Auto-resolved after successful delivery recovery.',
+                noteSnapshot: previous?.note
+                  ? String(previous.note)
+                  : 'Auto-resolved after successful delivery recovery.',
                 detailPayload: {
                   trigger: 'delivery-recovery',
                 },
@@ -783,13 +793,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
             SET
               delivery_status = '${shouldRetry ? 'queued' : 'dead-lettered'}',
               error_message = '${this.escapeSqlLiteral(message)}',
-              response_payload = '${this.escapeSqlLiteral(JSON.stringify({
-                worker: 'delivery',
-                status: shouldRetry ? 'queued_for_retry' : 'dead_lettered',
-                retry_count: nextRetryCount,
-                max_retries: maxRetries,
-                retry_backoff_minutes: shouldRetry ? backoffMinutes : null,
-              }))}'::jsonb,
+              response_payload = '${this.escapeSqlLiteral(
+                JSON.stringify({
+                  worker: 'delivery',
+                  status: shouldRetry ? 'queued_for_retry' : 'dead_lettered',
+                  retry_count: nextRetryCount,
+                  max_retries: maxRetries,
+                  retry_backoff_minutes: shouldRetry ? backoffMinutes : null,
+                }),
+              )}'::jsonb,
               retry_count = ${nextRetryCount},
               last_attempt_at = NOW(),
               next_retry_at = ${shouldRetry ? `NOW() + INTERVAL '${backoffMinutes} minutes'` : 'NULL'},
@@ -843,18 +855,27 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const ruleKey = `rule-${this.slugify(ruleName)}-${Date.now()}`;
     const description = typeof body.description === 'string' ? body.description.trim() : '';
     const sourceRef = typeof body.sourceRef === 'string' ? body.sourceRef.trim() : '';
-    const systemMetricRef = typeof body.systemMetricRef === 'string' ? body.systemMetricRef.trim() : '';
+    const systemMetricRef =
+      typeof body.systemMetricRef === 'string' ? body.systemMetricRef.trim() : '';
     const semanticRef = typeof body.semanticRef === 'string' ? body.semanticRef.trim() : '';
-    const conditionMappingKey = typeof body.conditionMappingKey === 'string' ? body.conditionMappingKey.trim() : '';
-    const conditionOperatorKey = typeof body.conditionOperatorKey === 'string' ? body.conditionOperatorKey.trim() : '';
-    const comparisonType = typeof body.comparisonType === 'string' ? body.comparisonType.trim() : '';
+    const conditionMappingKey =
+      typeof body.conditionMappingKey === 'string' ? body.conditionMappingKey.trim() : '';
+    const conditionOperatorKey =
+      typeof body.conditionOperatorKey === 'string' ? body.conditionOperatorKey.trim() : '';
+    const comparisonType =
+      typeof body.comparisonType === 'string' ? body.comparisonType.trim() : '';
     const valueType = typeof body.valueType === 'string' ? body.valueType.trim() : '';
-    const scheduleType = typeof body.scheduleType === 'string' ? body.scheduleType.trim() : 'preset';
-    const scheduleValue = typeof body.scheduleValue === 'string' ? body.scheduleValue.trim() : '15m';
+    const scheduleType =
+      typeof body.scheduleType === 'string' ? body.scheduleType.trim() : 'preset';
+    const scheduleValue =
+      typeof body.scheduleValue === 'string' ? body.scheduleValue.trim() : '15m';
     const severity = typeof body.severity === 'string' ? body.severity.trim() : 'critical';
-    const primaryChannel = typeof body.primaryChannel === 'string' ? body.primaryChannel.trim() : 'wa-group';
-    const conditionSummary = typeof body.conditionSummary === 'string' ? body.conditionSummary.trim() : '';
-    const messageTemplate = typeof body.messageTemplate === 'string' ? body.messageTemplate.trim() : '';
+    const primaryChannel =
+      typeof body.primaryChannel === 'string' ? body.primaryChannel.trim() : 'wa-group';
+    const conditionSummary =
+      typeof body.conditionSummary === 'string' ? body.conditionSummary.trim() : '';
+    const messageTemplate =
+      typeof body.messageTemplate === 'string' ? body.messageTemplate.trim() : '';
     const conditionConfig = this.asJson(body.conditionConfig, {});
     const sourceContext = this.asJson(body.sourceContext, {});
 
@@ -952,18 +973,27 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const recipients = Array.isArray(body.recipients) ? body.recipients : [];
     const description = typeof body.description === 'string' ? body.description.trim() : '';
     const sourceRef = typeof body.sourceRef === 'string' ? body.sourceRef.trim() : '';
-    const systemMetricRef = typeof body.systemMetricRef === 'string' ? body.systemMetricRef.trim() : '';
+    const systemMetricRef =
+      typeof body.systemMetricRef === 'string' ? body.systemMetricRef.trim() : '';
     const semanticRef = typeof body.semanticRef === 'string' ? body.semanticRef.trim() : '';
-    const conditionMappingKey = typeof body.conditionMappingKey === 'string' ? body.conditionMappingKey.trim() : '';
-    const conditionOperatorKey = typeof body.conditionOperatorKey === 'string' ? body.conditionOperatorKey.trim() : '';
-    const comparisonType = typeof body.comparisonType === 'string' ? body.comparisonType.trim() : '';
+    const conditionMappingKey =
+      typeof body.conditionMappingKey === 'string' ? body.conditionMappingKey.trim() : '';
+    const conditionOperatorKey =
+      typeof body.conditionOperatorKey === 'string' ? body.conditionOperatorKey.trim() : '';
+    const comparisonType =
+      typeof body.comparisonType === 'string' ? body.comparisonType.trim() : '';
     const valueType = typeof body.valueType === 'string' ? body.valueType.trim() : '';
-    const scheduleType = typeof body.scheduleType === 'string' ? body.scheduleType.trim() : 'preset';
-    const scheduleValue = typeof body.scheduleValue === 'string' ? body.scheduleValue.trim() : '15m';
+    const scheduleType =
+      typeof body.scheduleType === 'string' ? body.scheduleType.trim() : 'preset';
+    const scheduleValue =
+      typeof body.scheduleValue === 'string' ? body.scheduleValue.trim() : '15m';
     const severity = typeof body.severity === 'string' ? body.severity.trim() : 'critical';
-    const primaryChannel = typeof body.primaryChannel === 'string' ? body.primaryChannel.trim() : 'wa-group';
-    const conditionSummary = typeof body.conditionSummary === 'string' ? body.conditionSummary.trim() : '';
-    const messageTemplate = typeof body.messageTemplate === 'string' ? body.messageTemplate.trim() : '';
+    const primaryChannel =
+      typeof body.primaryChannel === 'string' ? body.primaryChannel.trim() : 'wa-group';
+    const conditionSummary =
+      typeof body.conditionSummary === 'string' ? body.conditionSummary.trim() : '';
+    const messageTemplate =
+      typeof body.messageTemplate === 'string' ? body.messageTemplate.trim() : '';
     const conditionConfig = this.asJson(body.conditionConfig, {});
     const sourceContext = this.asJson(body.sourceContext, {});
 
@@ -1219,10 +1249,14 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         ${snapshot ? 1 : 0},
         ${eventPayload ? 1 : 0},
         '{"trigger":"manual-run","actor":"${this.escapeSqlLiteral(actor)}"}'::jsonb,
-        '${this.escapeSqlLiteral(JSON.stringify({
-          snapshot_id: snapshot ? Number(snapshot.snapshot_id) : null,
-          event_id: eventPayload ? Number((eventPayload as Record<string, unknown>).event_id || 0) : null,
-        }))}'::jsonb,
+        '${this.escapeSqlLiteral(
+          JSON.stringify({
+            snapshot_id: snapshot ? Number(snapshot.snapshot_id) : null,
+            event_id: eventPayload
+              ? Number((eventPayload as Record<string, unknown>).event_id || 0)
+              : null,
+          }),
+        )}'::jsonb,
         NOW(),
         NOW()
       )
@@ -1387,7 +1421,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       throw new NotFoundException('Alert delivery log not found.');
     }
 
-    const currentStatus = String(existingRows[0].delivery_status || '').trim().toLowerCase();
+    const currentStatus = String(existingRows[0].delivery_status || '')
+      .trim()
+      .toLowerCase();
     if (!['failed', 'dead-lettered'].includes(currentStatus)) {
       throw new BadRequestException('Only failed or dead-lettered deliveries can be requeued.');
     }
@@ -1450,7 +1486,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       actionType: 'requeue',
       previousTriageStatus: triageBefore?.triage_status ? String(triageBefore.triage_status) : null,
       nextTriageStatus: 'requeued',
-      previousAcknowledgedAt: triageBefore?.acknowledged_at ? String(triageBefore.acknowledged_at) : null,
+      previousAcknowledgedAt: triageBefore?.acknowledged_at
+        ? String(triageBefore.acknowledged_at)
+        : null,
       nextAcknowledgedAt: null,
       previousAssignedTo: triageBefore?.assigned_to ? String(triageBefore.assigned_to) : null,
       nextAssignedTo: actor,
@@ -1483,20 +1521,26 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : null;
     };
     const deliveryIdFilter = normalizeNullableNumber(query.deliveryId || query.delivery_id);
-    const triageStatusFilter = normalizeString(query.triageStatus || query.triage_status)?.toLowerCase() || 'all';
+    const triageStatusFilter =
+      normalizeString(query.triageStatus || query.triage_status)?.toLowerCase() || 'all';
     const acknowledgedFilterRaw = normalizeString(query.acknowledged)?.toLowerCase() || 'all';
-    const acknowledgedFilter = ['acknowledged', 'unacknowledged', 'all'].includes(acknowledgedFilterRaw)
+    const acknowledgedFilter = ['acknowledged', 'unacknowledged', 'all'].includes(
+      acknowledgedFilterRaw,
+    )
       ? acknowledgedFilterRaw
       : acknowledgedFilterRaw === 'true'
         ? 'acknowledged'
         : acknowledgedFilterRaw === 'false'
           ? 'unacknowledged'
           : 'all';
-    const slaStatusFilter = normalizeString(query.slaStatus || query.sla_status)?.toLowerCase() || 'all';
-    const moduleFilter = normalizeString(query.moduleKey || query.module_key)?.toLowerCase() || 'all';
+    const slaStatusFilter =
+      normalizeString(query.slaStatus || query.sla_status)?.toLowerCase() || 'all';
+    const moduleFilter =
+      normalizeString(query.moduleKey || query.module_key)?.toLowerCase() || 'all';
     const stageFilter = normalizeString(query.stage)?.toLowerCase() || 'all';
     const searchFilter = normalizeString(query.search)?.toLowerCase() || '';
-    const sortByRaw = normalizeString(query.sortBy || query.sort_by)?.toLowerCase() || 'dead_lettered_at';
+    const sortByRaw =
+      normalizeString(query.sortBy || query.sort_by)?.toLowerCase() || 'dead_lettered_at';
     const sortBy = [
       'dead_lettered_at',
       'age_minutes',
@@ -1507,7 +1551,12 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     ].includes(sortByRaw)
       ? sortByRaw
       : 'dead_lettered_at';
-    const sortOrder = String(query.sortOrder || query.sort_order || 'desc').trim().toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const sortOrder =
+      String(query.sortOrder || query.sort_order || 'desc')
+        .trim()
+        .toLowerCase() === 'asc'
+        ? 'asc'
+        : 'desc';
 
     const [policy, escalationPolicies] = await Promise.all([
       this.getAlertingTriagePolicy(),
@@ -1624,10 +1673,24 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         requested_at: row.requested_at || null,
         delivered_at: row.delivered_at || null,
         error_message: row.error_message || null,
-        stage_index: Number(this.asJson<Record<string, unknown>>(row.response_payload, {})['escalation_stage_index'] || 0),
-        stage_priority: Number(this.asJson<Record<string, unknown>>(row.response_payload, {})['escalation_stage_priority'] || 0),
-        routing_source: String(this.asJson<Record<string, unknown>>(row.response_payload, {})['escalation_routing_source'] || ''),
-        repeating_final_stage: Boolean(this.asJson<Record<string, unknown>>(row.response_payload, {})['repeating_final_stage']),
+        stage_index: Number(
+          this.asJson<Record<string, unknown>>(row.response_payload, {})[
+            'escalation_stage_index'
+          ] || 0,
+        ),
+        stage_priority: Number(
+          this.asJson<Record<string, unknown>>(row.response_payload, {})[
+            'escalation_stage_priority'
+          ] || 0,
+        ),
+        routing_source: String(
+          this.asJson<Record<string, unknown>>(row.response_payload, {})[
+            'escalation_routing_source'
+          ] || '',
+        ),
+        repeating_final_stage: Boolean(
+          this.asJson<Record<string, unknown>>(row.response_payload, {})['repeating_final_stage'],
+        ),
       });
     }
 
@@ -1640,9 +1703,13 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       auditByDeliveryId.get(sourceDeliveryId)?.push({
         audit_id: Number(row.audit_id || 0),
         action_type: String(row.action_type || ''),
-        previous_triage_status: row.previous_triage_status ? String(row.previous_triage_status) : null,
+        previous_triage_status: row.previous_triage_status
+          ? String(row.previous_triage_status)
+          : null,
         next_triage_status: row.next_triage_status ? String(row.next_triage_status) : null,
-        previous_acknowledged_at: row.previous_acknowledged_at ? String(row.previous_acknowledged_at) : null,
+        previous_acknowledged_at: row.previous_acknowledged_at
+          ? String(row.previous_acknowledged_at)
+          : null,
         next_acknowledged_at: row.next_acknowledged_at ? String(row.next_acknowledged_at) : null,
         previous_assigned_to: row.previous_assigned_to ? String(row.previous_assigned_to) : null,
         next_assigned_to: row.next_assigned_to ? String(row.next_assigned_to) : null,
@@ -1706,7 +1773,10 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         if (deliveryIdFilter && item.delivery_id !== deliveryIdFilter) {
           return false;
         }
-        if (triageStatusFilter !== 'all' && String(item.triage_status || '').toLowerCase() !== triageStatusFilter) {
+        if (
+          triageStatusFilter !== 'all' &&
+          String(item.triage_status || '').toLowerCase() !== triageStatusFilter
+        ) {
           return false;
         }
         if (acknowledgedFilter === 'acknowledged' && !item.acknowledged_at) {
@@ -1715,10 +1785,16 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         if (acknowledgedFilter === 'unacknowledged' && item.acknowledged_at) {
           return false;
         }
-        if (slaStatusFilter !== 'all' && String(item.sla_status || '').toLowerCase() !== slaStatusFilter) {
+        if (
+          slaStatusFilter !== 'all' &&
+          String(item.sla_status || '').toLowerCase() !== slaStatusFilter
+        ) {
           return false;
         }
-        if (moduleFilter !== 'all' && String(item.module_key || '').toLowerCase() !== moduleFilter) {
+        if (
+          moduleFilter !== 'all' &&
+          String(item.module_key || '').toLowerCase() !== moduleFilter
+        ) {
           return false;
         }
         if (stageFilter === 'none' && Number(item.stage_count || 0) > 0) {
@@ -1812,7 +1888,8 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       total_items: filteredItems.length,
       open_items: filteredItems.filter((item) => item.triage_status === 'open').length,
       acknowledged_items: filteredItems.filter((item) => Boolean(item.acknowledged_at)).length,
-      investigating_items: filteredItems.filter((item) => item.triage_status === 'investigating').length,
+      investigating_items: filteredItems.filter((item) => item.triage_status === 'investigating')
+        .length,
       requeued_items: filteredItems.filter((item) => item.triage_status === 'requeued').length,
       resolved_items: filteredItems.filter((item) => item.triage_status === 'resolved').length,
       overdue_items: filteredItems.filter((item) => item.sla_status === 'overdue').length,
@@ -1824,10 +1901,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     };
 
     const auditEntries = filteredItems.flatMap((item) => item.triage_audit_timeline || []);
-    const latestAuditTimestamp = auditEntries
-      .map((entry) => String(entry.created_at || ''))
-      .filter(Boolean)
-      .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] || null;
+    const latestAuditTimestamp =
+      auditEntries
+        .map((entry) => String(entry.created_at || ''))
+        .filter(Boolean)
+        .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] || null;
     const actionCounts = new Map<string, number>();
     const actorCounts = new Map<string, number>();
     const activityByDay = new Map<string, number>();
@@ -1850,20 +1928,31 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     }
     const auditSummary = {
       total_entries: auditEntries.length,
-      acknowledge_actions: auditEntries.filter((entry) => entry.action_type === 'acknowledge').length,
-      unacknowledge_actions: auditEntries.filter((entry) => entry.action_type === 'unacknowledge').length,
-      status_change_actions: auditEntries.filter((entry) => entry.action_type === 'status-change').length,
+      acknowledge_actions: auditEntries.filter((entry) => entry.action_type === 'acknowledge')
+        .length,
+      unacknowledge_actions: auditEntries.filter((entry) => entry.action_type === 'unacknowledge')
+        .length,
+      status_change_actions: auditEntries.filter((entry) => entry.action_type === 'status-change')
+        .length,
       assignment_actions: auditEntries.filter((entry) => entry.action_type === 'assign').length,
-      note_change_actions: auditEntries.filter((entry) => entry.action_type === 'note-change').length,
+      note_change_actions: auditEntries.filter((entry) => entry.action_type === 'note-change')
+        .length,
       requeue_actions: auditEntries.filter((entry) => entry.action_type === 'requeue').length,
-      auto_resolve_actions: auditEntries.filter((entry) => entry.action_type === 'auto-resolve').length,
+      auto_resolve_actions: auditEntries.filter((entry) => entry.action_type === 'auto-resolve')
+        .length,
       latest_action_at: latestAuditTimestamp,
       action_breakdown: Array.from(actionCounts.entries())
         .map(([action_type, count]) => ({ action_type, count }))
-        .sort((left, right) => right.count - left.count || left.action_type.localeCompare(right.action_type)),
+        .sort(
+          (left, right) =>
+            right.count - left.count || left.action_type.localeCompare(right.action_type),
+        ),
       top_actors: Array.from(actorCounts.entries())
         .map(([actor, action_count]) => ({ actor, action_count }))
-        .sort((left, right) => right.action_count - left.action_count || left.actor.localeCompare(right.actor))
+        .sort(
+          (left, right) =>
+            right.action_count - left.action_count || left.actor.localeCompare(right.actor),
+        )
         .slice(0, 5),
       activity_last_7d: Array.from(activityByDay.entries())
         .map(([date, count]) => ({ date, count }))
@@ -1901,12 +1990,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('Invalid delivery id.');
     }
 
-    const triageStatus = String(body.triageStatus || body.triage_status || '').trim().toLowerCase();
-    const assignedTo = typeof body.assignedTo === 'string'
-      ? body.assignedTo.trim()
-      : typeof body.assigned_to === 'string'
-        ? body.assigned_to.trim()
-        : '';
+    const triageStatus = String(body.triageStatus || body.triage_status || '')
+      .trim()
+      .toLowerCase();
+    const assignedTo =
+      typeof body.assignedTo === 'string'
+        ? body.assignedTo.trim()
+        : typeof body.assigned_to === 'string'
+          ? body.assigned_to.trim()
+          : '';
     const note = typeof body.note === 'string' ? body.note.trim() : '';
     const acknowledge = Boolean(body.acknowledge ?? body.acknowledged ?? false);
     const unacknowledge = Boolean(body.unacknowledge ?? false);
@@ -1967,18 +2059,18 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
             ? 'COALESCE(public.alert_dead_letter_triage.acknowledged_at, NOW())'
             : unacknowledge
               ? 'NULL'
-            : triageStatus === 'open' || triageStatus === 'requeued'
-              ? 'NULL'
-              : 'public.alert_dead_letter_triage.acknowledged_at'
+              : triageStatus === 'open' || triageStatus === 'requeued'
+                ? 'NULL'
+                : 'public.alert_dead_letter_triage.acknowledged_at'
         },
         acknowledged_by = ${
           acknowledge
             ? `COALESCE(public.alert_dead_letter_triage.acknowledged_by, '${this.escapeSqlLiteral(actor)}')`
             : unacknowledge
               ? 'NULL'
-            : triageStatus === 'open' || triageStatus === 'requeued'
-              ? 'NULL'
-              : 'public.alert_dead_letter_triage.acknowledged_by'
+              : triageStatus === 'open' || triageStatus === 'requeued'
+                ? 'NULL'
+                : 'public.alert_dead_letter_triage.acknowledged_by'
         },
         assigned_to = ${assignedTo ? `'${this.escapeSqlLiteral(assignedTo)}'` : 'NULL'},
         note = ${note ? `'${this.escapeSqlLiteral(note)}'` : 'NULL'},
@@ -1987,22 +2079,27 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     `);
 
     const previousStatus = existing?.triage_status ? String(existing.triage_status) : null;
-    const previousAcknowledgedAt = existing?.acknowledged_at ? String(existing.acknowledged_at) : null;
+    const previousAcknowledgedAt = existing?.acknowledged_at
+      ? String(existing.acknowledged_at)
+      : null;
     const previousAssignedTo = existing?.assigned_to ? String(existing.assigned_to) : null;
     const previousNote = existing?.note ? String(existing.note) : null;
-    const nextAcknowledgedAt =
-      acknowledge
-        ? previousAcknowledgedAt || new Date().toISOString()
-        : unacknowledge || triageStatus === 'open' || triageStatus === 'requeued'
-          ? null
-          : previousAcknowledgedAt;
-    const actionType =
-      acknowledge ? 'acknowledge'
-      : unacknowledge ? 'unacknowledge'
-      : previousStatus !== triageStatus ? 'status-change'
-      : previousAssignedTo !== (assignedTo || null) ? 'assign'
-      : previousNote !== (note || null) ? 'note-change'
-      : 'update';
+    const nextAcknowledgedAt = acknowledge
+      ? previousAcknowledgedAt || new Date().toISOString()
+      : unacknowledge || triageStatus === 'open' || triageStatus === 'requeued'
+        ? null
+        : previousAcknowledgedAt;
+    const actionType = acknowledge
+      ? 'acknowledge'
+      : unacknowledge
+        ? 'unacknowledge'
+        : previousStatus !== triageStatus
+          ? 'status-change'
+          : previousAssignedTo !== (assignedTo || null)
+            ? 'assign'
+            : previousNote !== (note || null)
+              ? 'note-change'
+              : 'update';
 
     await this.createAlertDeadLetterTriageAudit({
       deliveryId: normalizedDeliveryId,
@@ -2068,7 +2165,10 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
   async runAlertingTriageEscalationCycle(actor = 'system-triage-escalation') {
     if (this.alertTriageEscalationRunning) {
-      return { success: true, data: { processed_item_count: 0, escalated_count: 0, skipped: true, results: [] } };
+      return {
+        success: true,
+        data: { processed_item_count: 0, escalated_count: 0, skipped: true, results: [] },
+      };
     }
 
     this.alertTriageEscalationRunning = true;
@@ -2105,7 +2205,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         }
 
         const escalationLevel = slaStatus === 'critical' ? 'critical' : 'warning';
-        const lastEscalatedAt = item.last_escalated_at ? new Date(String(item.last_escalated_at)).getTime() : 0;
+        const lastEscalatedAt = item.last_escalated_at
+          ? new Date(String(item.last_escalated_at)).getTime()
+          : 0;
         const lastEscalationLevel = String(item.last_escalation_level || '');
         const cooldownElapsed = !lastEscalatedAt || nowMs - lastEscalatedAt >= cooldownMs;
         const severityChanged = lastEscalationLevel !== escalationLevel;
@@ -2133,7 +2235,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           `SLA status: ${slaStatus}`,
           `Age: ${Number(item.age_minutes || 0)} minutes`,
           item.dead_letter_reason ? `Reason: ${String(item.dead_letter_reason)}` : null,
-        ].filter(Boolean).join(' | ');
+        ]
+          .filter(Boolean)
+          .join(' | ');
 
         const escalationTargetResult = await this.resolveAlertingTriageEscalationTargets(
           escalationConfig.channel_key,
@@ -2149,7 +2253,10 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           results.push({
             delivery_id: deliveryId,
             escalated: false,
-            reason: escalationTargetResult.stage_priority === null ? 'no-target-channel' : 'stage-target-not-found',
+            reason:
+              escalationTargetResult.stage_priority === null
+                ? 'no-target-channel'
+                : 'stage-target-not-found',
             escalation_level: escalationLevel,
             escalation_stage_index: escalationTargetResult.stage_index,
             escalation_stage_priority: escalationTargetResult.stage_priority,
@@ -2183,13 +2290,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
             '${this.escapeSqlLiteral(severity)}',
             'open',
             'dead-letter-triage',
-            '${this.escapeSqlLiteral(JSON.stringify({
-              triage_delivery_id: deliveryId,
-              triage_status: triageStatus,
-              escalation_level: escalationLevel,
-              source_event_id: Number(item.event_id || 0),
-              source_event_key: item.event_key || null,
-            }))}'::jsonb,
+            '${this.escapeSqlLiteral(
+              JSON.stringify({
+                triage_delivery_id: deliveryId,
+                triage_status: triageStatus,
+                escalation_level: escalationLevel,
+                source_event_id: Number(item.event_id || 0),
+                source_event_key: item.event_key || null,
+              }),
+            )}'::jsonb,
             NOW(),
             '${this.escapeSqlLiteral(actor)}',
             '${this.escapeSqlLiteral(actor)}'
@@ -2220,17 +2329,19 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
               '${this.escapeSqlLiteral(String(target.target_value || ''))}',
               'triage-escalation',
               'queued',
-              '${this.escapeSqlLiteral(JSON.stringify({
-                trigger: 'triage-escalation',
-                source_delivery_id: deliveryId,
-                escalation_level: escalationLevel,
-                escalation_channel_key: String(target.channel_key || ''),
-                escalation_owner_label: target.owner_label || null,
-                escalation_stage_index: escalationTargetResult.stage_index,
-                escalation_stage_priority: escalationTargetResult.stage_priority,
-                escalation_routing_source: target.routing_source || null,
-                repeating_final_stage: escalationTargetResult.repeating_final_stage,
-              }))}'::jsonb,
+              '${this.escapeSqlLiteral(
+                JSON.stringify({
+                  trigger: 'triage-escalation',
+                  source_delivery_id: deliveryId,
+                  escalation_level: escalationLevel,
+                  escalation_channel_key: String(target.channel_key || ''),
+                  escalation_owner_label: target.owner_label || null,
+                  escalation_stage_index: escalationTargetResult.stage_index,
+                  escalation_stage_priority: escalationTargetResult.stage_priority,
+                  escalation_routing_source: target.routing_source || null,
+                  repeating_final_stage: escalationTargetResult.repeating_final_stage,
+                }),
+              )}'::jsonb,
               NOW(),
               NULL
             )
@@ -2282,7 +2393,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           escalation_event_id: escalationEventId,
           escalation_delivery_ids: insertedDeliveries,
           channel_keys: targets.map((target) => String(target.channel_key || '')),
-          routed_to_owner: targets.some((target) => String(target.routing_source || '') === 'assigned-owner'),
+          routed_to_owner: targets.some(
+            (target) => String(target.routing_source || '') === 'assigned-owner',
+          ),
         });
       }
 
@@ -2589,7 +2702,8 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const triageSummary = (triage.summary as Record<string, unknown> | undefined) || {};
     const triagePolicy = (triage.policy as Record<string, unknown> | undefined) || {};
     const summary = (analyticsData.summary as Record<string, unknown> | undefined) || {};
-    const observabilitySummary = (observabilityData.summary as Record<string, unknown> | undefined) || {};
+    const observabilitySummary =
+      (observabilityData.summary as Record<string, unknown> | undefined) || {};
     const channels = Array.isArray(deliveryStatusData.channels)
       ? (deliveryStatusData.channels as Array<Record<string, unknown>>)
       : [];
@@ -2610,8 +2724,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           open_events: Number(summary.open_events || 0),
           dead_lettered_logs: Number(observabilitySummary.dead_lettered_logs || 0),
           configured_channels: channels.filter((channel) => Boolean(channel.is_configured)).length,
-          dry_run_channels: channels.filter((channel) => String(channel.provider_mode || '') === 'dry-run').length,
-          overdue_triage_items: Number(triageSummary.overdue_items || 0) + Number(triageSummary.critical_items || 0),
+          dry_run_channels: channels.filter(
+            (channel) => String(channel.provider_mode || '') === 'dry-run',
+          ).length,
+          overdue_triage_items:
+            Number(triageSummary.overdue_items || 0) + Number(triageSummary.critical_items || 0),
         },
       },
     };
@@ -2633,25 +2750,34 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         channels: [
           {
             channel_type: 'wa-group',
-            provider_mode: baileysConfig.enabled ? 'baileys' : (waGroup.url ? 'webhook' : 'dry-run'),
+            provider_mode: baileysConfig.enabled ? 'baileys' : waGroup.url ? 'webhook' : 'dry-run',
             provider_name: baileysConfig.enabled ? 'baileys' : waGroup.providerName,
             is_configured: Boolean(baileysConfig.enabled || waGroup.url),
           },
           {
             channel_type: 'wa-personal',
-            provider_mode: baileysConfig.enabled ? 'baileys' : (waPersonal.url ? 'webhook' : 'dry-run'),
+            provider_mode: baileysConfig.enabled
+              ? 'baileys'
+              : waPersonal.url
+                ? 'webhook'
+                : 'dry-run',
             provider_name: baileysConfig.enabled ? 'baileys' : waPersonal.providerName,
             is_configured: Boolean(baileysConfig.enabled || waPersonal.url),
           },
           {
             channel_type: 'email',
-            provider_mode: smtpConfig.host && smtpConfig.port && smtpConfig.from
-              ? 'smtp'
-              : (emailWebhook.url ? 'webhook' : 'dry-run'),
-            provider_name: smtpConfig.host && smtpConfig.port && smtpConfig.from ? 'smtp' : emailWebhook.providerName,
+            provider_mode:
+              smtpConfig.host && smtpConfig.port && smtpConfig.from
+                ? 'smtp'
+                : emailWebhook.url
+                  ? 'webhook'
+                  : 'dry-run',
+            provider_name:
+              smtpConfig.host && smtpConfig.port && smtpConfig.from
+                ? 'smtp'
+                : emailWebhook.providerName,
             is_configured: Boolean(
-              (smtpConfig.host && smtpConfig.port && smtpConfig.from)
-              || emailWebhook.url,
+              (smtpConfig.host && smtpConfig.port && smtpConfig.from) || emailWebhook.url,
             ),
           },
         ],
@@ -2677,7 +2803,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       lastDisconnectedAt: !baileys.session_ready ? new Date() : null,
       actor: 'system',
     });
-    const recentPairingAttempts = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+    const recentPairingAttempts = await this.prisma.$queryRawUnsafe<
+      Array<Record<string, unknown>>
+    >(`
       SELECT
         audit_id,
         provider_name,
@@ -2888,7 +3016,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         };
 
         const timeout = setTimeout(() => {
-          finish(() => reject(new Error('Baileys pairing timed out before QR or pairing code was generated.')));
+          finish(() =>
+            reject(new Error('Baileys pairing timed out before QR or pairing code was generated.')),
+          );
         }, 30000);
 
         socket.ev.on('connection.update', (update: Record<string, unknown>) => {
@@ -2918,7 +3048,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           }
 
           if (connection === 'close') {
-            finish(() => reject(new Error('Baileys connection closed before pairing data was generated.')));
+            finish(() =>
+              reject(new Error('Baileys connection closed before pairing data was generated.')),
+            );
           }
         });
 
@@ -3077,7 +3209,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         LIMIT 1
       `);
       if (!rows[0]) {
-        throw new BadRequestException(`Template source_ref "${sourceRef}" was not found in metric_business_registry.`);
+        throw new BadRequestException(
+          `Template source_ref "${sourceRef}" was not found in metric_business_registry.`,
+        );
       }
     }
 
@@ -3091,7 +3225,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         LIMIT 1
       `);
       if (!rows[0]) {
-        throw new BadRequestException(`Template source_ref "${sourceRef}" was not found in metric_system_registry.`);
+        throw new BadRequestException(
+          `Template source_ref "${sourceRef}" was not found in metric_system_registry.`,
+        );
       }
     }
   }
@@ -3114,16 +3250,24 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     if (normalizedType === 'wa-personal') {
       const digits = normalizedTarget.replace(/\D/g, '');
       if (!normalizedTarget.includes('@') && digits.length < 8) {
-        throw new BadRequestException('WhatsApp personal target must be a phone number or WhatsApp JID.');
+        throw new BadRequestException(
+          'WhatsApp personal target must be a phone number or WhatsApp JID.',
+        );
       }
       return;
     }
 
     if (normalizedType === 'wa-group') {
-      if (normalizedTarget.includes('@g.us') || /^\d+-\d+$/.test(normalizedTarget) || /^\d+$/.test(normalizedTarget)) {
+      if (
+        normalizedTarget.includes('@g.us') ||
+        /^\d+-\d+$/.test(normalizedTarget) ||
+        /^\d+$/.test(normalizedTarget)
+      ) {
         return;
       }
-      throw new BadRequestException('WhatsApp group target must be a valid group JID or numeric group identifier.');
+      throw new BadRequestException(
+        'WhatsApp group target must be a valid group JID or numeric group identifier.',
+      );
     }
   }
 
@@ -3186,7 +3330,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
   async createAlertingTemplate(body: Record<string, unknown>, actor: string) {
     const name = String(body.name || '').trim();
     const moduleKey = String(body.moduleKey || body.module_key || '').trim();
-    const severity = String(body.severity || 'medium').trim().toLowerCase();
+    const severity = String(body.severity || 'medium')
+      .trim()
+      .toLowerCase();
     if (!name || !moduleKey) {
       throw new BadRequestException('name and moduleKey are required.');
     }
@@ -3335,7 +3481,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
     const name = String(body.name || '').trim();
     const moduleKey = String(body.moduleKey || body.module_key || '').trim();
-    const severity = String(body.severity || 'medium').trim().toLowerCase();
+    const severity = String(body.severity || 'medium')
+      .trim()
+      .toLowerCase();
     if (!name || !moduleKey) {
       throw new BadRequestException('name and moduleKey are required.');
     }
@@ -3399,7 +3547,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingTemplates(moduleKey);
   }
 
-  async updateAlertingTemplateState(templateId: string, body: Record<string, unknown>, actor: string) {
+  async updateAlertingTemplateState(
+    templateId: string,
+    body: Record<string, unknown>,
+    actor: string,
+  ) {
     const normalizedTemplateId = Number(templateId);
     if (!Number.isFinite(normalizedTemplateId) || normalizedTemplateId <= 0) {
       throw new BadRequestException('Invalid template id.');
@@ -3545,7 +3697,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingChannels(channelType);
   }
 
-  async updateAlertingChannelState(channelId: string, body: Record<string, unknown>, actor: string) {
+  async updateAlertingChannelState(
+    channelId: string,
+    body: Record<string, unknown>,
+    actor: string,
+  ) {
     const normalizedChannelId = Number(channelId);
     if (!Number.isFinite(normalizedChannelId) || normalizedChannelId <= 0) {
       throw new BadRequestException('Invalid channel id.');
@@ -3655,12 +3811,14 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         'low',
         'open',
         '${this.escapeSqlLiteral(String(channel.channel_key || 'manual-test'))}',
-        '${this.escapeSqlLiteral(JSON.stringify({
-          test_send: true,
-          channel_id: normalizedChannelId,
-          channel_type: String(channel.channel_type || ''),
-          target_value: String(channel.target_value || ''),
-        }))}'::jsonb,
+        '${this.escapeSqlLiteral(
+          JSON.stringify({
+            test_send: true,
+            channel_id: normalizedChannelId,
+            channel_type: String(channel.channel_type || ''),
+            target_value: String(channel.target_value || ''),
+          }),
+        )}'::jsonb,
         NOW(),
         '${this.escapeSqlLiteral(actor)}',
         '${this.escapeSqlLiteral(actor)}'
@@ -3831,7 +3989,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         LIMIT 1
       `);
       if (!rows[0]) {
-        throw new BadRequestException(`Escalation target_ref "${targetRef}" was not found in alert_notification_channel.`);
+        throw new BadRequestException(
+          `Escalation target_ref "${targetRef}" was not found in alert_notification_channel.`,
+        );
       }
     } else if (targetType === 'role') {
       const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
@@ -3842,7 +4002,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         LIMIT 1
       `);
       if (!rows[0]) {
-        throw new BadRequestException(`Escalation target_ref "${targetRef}" was not found in alert_routing_role.`);
+        throw new BadRequestException(
+          `Escalation target_ref "${targetRef}" was not found in alert_routing_role.`,
+        );
       }
     } else if (targetType === 'team') {
       const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
@@ -3853,15 +4015,23 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         LIMIT 1
       `);
       if (!rows[0]) {
-        throw new BadRequestException(`Escalation target_ref "${targetRef}" was not found in alert_routing_team.`);
+        throw new BadRequestException(
+          `Escalation target_ref "${targetRef}" was not found in alert_routing_team.`,
+        );
       }
     }
   }
 
   async createAlertingEscalationPolicy(body: Record<string, unknown>, actor: string) {
-    const moduleKey = String(body.moduleKey || body.module_key || '').trim().toLowerCase();
-    const escalationLevel = String(body.escalationLevel || body.escalation_level || '').trim().toLowerCase();
-    const targetType = String(body.targetType || body.target_type || 'channel').trim().toLowerCase();
+    const moduleKey = String(body.moduleKey || body.module_key || '')
+      .trim()
+      .toLowerCase();
+    const escalationLevel = String(body.escalationLevel || body.escalation_level || '')
+      .trim()
+      .toLowerCase();
+    const targetType = String(body.targetType || body.target_type || 'channel')
+      .trim()
+      .toLowerCase();
     const targetRef = String(body.targetRef || body.target_ref || '').trim();
     const priority = Number.parseInt(String(body.priority ?? 10), 10);
 
@@ -3869,7 +4039,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('moduleKey, escalationLevel, and targetRef are required.');
     }
     if (!['all', 'sales', 'finance', 'warehouse', 'purchasing'].includes(moduleKey)) {
-      throw new BadRequestException('moduleKey must be all, sales, finance, warehouse, or purchasing.');
+      throw new BadRequestException(
+        'moduleKey must be all, sales, finance, warehouse, or purchasing.',
+      );
     }
     if (!['warning', 'critical'].includes(escalationLevel)) {
       throw new BadRequestException('escalationLevel must be warning or critical.');
@@ -3910,15 +4082,25 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingEscalationPolicies('all', 'all');
   }
 
-  async updateAlertingEscalationPolicy(policyId: string, body: Record<string, unknown>, actor: string) {
+  async updateAlertingEscalationPolicy(
+    policyId: string,
+    body: Record<string, unknown>,
+    actor: string,
+  ) {
     const normalizedPolicyId = Number(policyId);
     if (!Number.isFinite(normalizedPolicyId) || normalizedPolicyId <= 0) {
       throw new BadRequestException('Invalid escalation policy id.');
     }
 
-    const moduleKey = String(body.moduleKey || body.module_key || '').trim().toLowerCase();
-    const escalationLevel = String(body.escalationLevel || body.escalation_level || '').trim().toLowerCase();
-    const targetType = String(body.targetType || body.target_type || 'channel').trim().toLowerCase();
+    const moduleKey = String(body.moduleKey || body.module_key || '')
+      .trim()
+      .toLowerCase();
+    const escalationLevel = String(body.escalationLevel || body.escalation_level || '')
+      .trim()
+      .toLowerCase();
+    const targetType = String(body.targetType || body.target_type || 'channel')
+      .trim()
+      .toLowerCase();
     const targetRef = String(body.targetRef || body.target_ref || '').trim();
     const priority = Number.parseInt(String(body.priority ?? 10), 10);
 
@@ -3926,7 +4108,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('moduleKey, escalationLevel, and targetRef are required.');
     }
     if (!['all', 'sales', 'finance', 'warehouse', 'purchasing'].includes(moduleKey)) {
-      throw new BadRequestException('moduleKey must be all, sales, finance, warehouse, or purchasing.');
+      throw new BadRequestException(
+        'moduleKey must be all, sales, finance, warehouse, or purchasing.',
+      );
     }
     if (!['warning', 'critical'].includes(escalationLevel)) {
       throw new BadRequestException('escalationLevel must be warning or critical.');
@@ -3960,7 +4144,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingEscalationPolicies('all', 'all');
   }
 
-  async updateAlertingEscalationPolicyState(policyId: string, body: Record<string, unknown>, actor: string) {
+  async updateAlertingEscalationPolicyState(
+    policyId: string,
+    body: Record<string, unknown>,
+    actor: string,
+  ) {
     const normalizedPolicyId = Number(policyId);
     if (!Number.isFinite(normalizedPolicyId) || normalizedPolicyId <= 0) {
       throw new BadRequestException('Invalid escalation policy id.');
@@ -4062,13 +4250,28 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const isShared = Boolean(body.isShared ?? body.is_shared ?? false);
     const isDefault = Boolean(body.isDefault ?? body.is_default ?? false);
     const filtersJson = this.asJson(body.filtersJson ?? body.filters_json, {});
-    const sortBy = String(body.sortBy || body.sort_by || 'dead_lettered_at').trim() || 'dead_lettered_at';
-    const sortOrder = String(body.sortOrder || body.sort_order || 'desc').trim().toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const sortBy =
+      String(body.sortBy || body.sort_by || 'dead_lettered_at').trim() || 'dead_lettered_at';
+    const sortOrder =
+      String(body.sortOrder || body.sort_order || 'desc')
+        .trim()
+        .toLowerCase() === 'asc'
+        ? 'asc'
+        : 'desc';
 
     if (!name) {
       throw new BadRequestException('name is required.');
     }
-    if (!['dead_lettered_at', 'age_minutes', 'sla_due_at', 'triage_updated_at', 'escalation_count', 'event_title'].includes(sortBy)) {
+    if (
+      ![
+        'dead_lettered_at',
+        'age_minutes',
+        'sla_due_at',
+        'triage_updated_at',
+        'escalation_count',
+        'event_title',
+      ].includes(sortBy)
+    ) {
       throw new BadRequestException('sortBy is invalid.');
     }
 
@@ -4131,7 +4334,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingTriageSavedViews(normalizedActor);
   }
 
-  async updateAlertingTriageSavedView(viewId: string, body: Record<string, unknown>, actor: string) {
+  async updateAlertingTriageSavedView(
+    viewId: string,
+    body: Record<string, unknown>,
+    actor: string,
+  ) {
     const normalizedViewId = Number(viewId);
     if (!Number.isFinite(normalizedViewId) || normalizedViewId <= 0) {
       throw new BadRequestException('Invalid saved view id.');
@@ -4183,7 +4390,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingTriageSavedViews(normalizedActor);
   }
 
-  async updateAlertingTriageSavedViewState(viewId: string, body: Record<string, unknown>, actor: string) {
+  async updateAlertingTriageSavedViewState(
+    viewId: string,
+    body: Record<string, unknown>,
+    actor: string,
+  ) {
     const normalizedViewId = Number(viewId);
     if (!Number.isFinite(normalizedViewId) || normalizedViewId <= 0) {
       throw new BadRequestException('Invalid saved view id.');
@@ -4233,17 +4444,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return this.alertingTriageSavedViews(normalizedActor);
   }
 
-  async updateAlertingEvent(
-    eventId: string,
-    body: { status?: string },
-    actor: string,
-  ) {
+  async updateAlertingEvent(eventId: string, body: { status?: string }, actor: string) {
     const normalizedEventId = Number(eventId);
     if (!Number.isFinite(normalizedEventId) || normalizedEventId <= 0) {
       throw new BadRequestException('Invalid event id.');
     }
 
-    const status = String(body?.status || '').trim().toLowerCase();
+    const status = String(body?.status || '')
+      .trim()
+      .toLowerCase();
     if (!['acknowledged', 'resolved', 'open', 'muted'].includes(status)) {
       throw new BadRequestException('Invalid event status.');
     }
@@ -4260,7 +4469,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       throw new NotFoundException('Alert event not found.');
     }
 
-    const currentStatus = String(existingRows[0].status || '').trim().toLowerCase();
+    const currentStatus = String(existingRows[0].status || '')
+      .trim()
+      .toLowerCase();
     const allowedTransitions: Record<string, string[]> = {
       open: ['acknowledged', 'resolved', 'muted'],
       acknowledged: ['resolved', 'muted', 'open'],
@@ -4269,10 +4480,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     };
 
     if (currentStatus !== status && !(allowedTransitions[currentStatus] || []).includes(status)) {
-      throw new BadRequestException(`Invalid event transition from "${currentStatus}" to "${status}".`);
+      throw new BadRequestException(
+        `Invalid event transition from "${currentStatus}" to "${status}".`,
+      );
     }
 
-    const updates = [`status = '${this.escapeSqlLiteral(status)}'`, `updated_by = '${this.escapeSqlLiteral(actor)}'`];
+    const updates = [
+      `status = '${this.escapeSqlLiteral(status)}'`,
+      `updated_by = '${this.escapeSqlLiteral(actor)}'`,
+    ];
     if (status === 'acknowledged') {
       updates.push('acknowledged_at = NOW()');
     }
@@ -4390,15 +4606,25 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           query_params: this.asJson(query.query_params, []),
           output_columns: this.asJson(query.output_columns, []),
           default_limit:
-            typeof query.default_limit === 'number' ? query.default_limit : query.default_limit ? Number(query.default_limit) : null,
+            typeof query.default_limit === 'number'
+              ? query.default_limit
+              : query.default_limit
+                ? Number(query.default_limit)
+                : null,
         })),
     }));
 
     const filtersWithOptions: Array<Record<string, unknown>> = [];
     for (const filter of filters) {
       let options: unknown[] = this.asJson(filter.static_options, []);
-      if (filter.source_type === 'query' && typeof filter.source_query === 'string' && filter.source_query.trim()) {
-        const optionRows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(filter.source_query);
+      if (
+        filter.source_type === 'query' &&
+        typeof filter.source_query === 'string' &&
+        filter.source_query.trim()
+      ) {
+        const optionRows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+          filter.source_query,
+        );
         options = optionRows
           .map((row) => row[Object.keys(row)[0] as keyof typeof row])
           .filter(Boolean);
@@ -4432,7 +4658,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
   ) {
     const title = typeof body?.title === 'string' ? body.title.trim() : '';
     const description =
-      typeof body?.description === 'string' ? body.description.trim() : body?.description === null ? '' : '';
+      typeof body?.description === 'string'
+        ? body.description.trim()
+        : body?.description === null
+          ? ''
+          : '';
 
     if (!title && body?.description === undefined) {
       throw new BadRequestException('Tidak ada perubahan yang dikirim.');
@@ -4446,7 +4676,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       updates.push(`short_label = '${this.escapeSqlLiteral(title.slice(0, 48))}'`);
     }
     if (body?.description !== undefined) {
-      updates.push(description ? `description = '${this.escapeSqlLiteral(description)}'` : 'description = NULL');
+      updates.push(
+        description
+          ? `description = '${this.escapeSqlLiteral(description)}'`
+          : 'description = NULL',
+      );
     }
 
     await this.prisma.$executeRawUnsafe(`
@@ -4488,7 +4722,8 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('Only SELECT query is allowed.');
     }
 
-    const resultRows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(normalizedSql);
+    const resultRows =
+      await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(normalizedSql);
     const declaredColumns = this.asJson(row.output_columns, []);
     const columns = resultRows.length ? Object.keys(resultRows[0]) : declaredColumns;
 
@@ -4522,7 +4757,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const spanClassName = (body?.spanClassName || 'lg:col-span-6').trim() || 'lg:col-span-6';
     const sqlTemplate = (body?.sqlTemplate || '').trim();
     const outputColumns = Array.isArray(body?.outputColumns)
-      ? body.outputColumns.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      ? body.outputColumns.filter(
+          (value): value is string => typeof value === 'string' && value.trim().length > 0,
+        )
       : [];
     const queryLabel = (body?.queryLabel || title || 'Pinned Widget Query').trim();
 
@@ -4537,10 +4774,16 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const baseKey = this.slugify(title) || 'pinned-widget';
     const widgetKey = `${baseKey}-${nowSuffix}`;
     const queryKey = `${widgetKey}-main`;
-    const normalizedWidgetKind = ['chart', 'table', 'list', 'summary', 'metric'].includes(widgetKind) ? widgetKind : 'table';
+    const normalizedWidgetKind = ['chart', 'table', 'list', 'summary', 'metric'].includes(
+      widgetKind,
+    )
+      ? widgetKind
+      : 'table';
     const normalizedChartType =
       normalizedWidgetKind === 'chart' &&
-      ['bar', 'vertical_bar', 'line', 'pie', 'donut', 'area', 'horizontal_bar', 'scatter'].includes(chartType)
+      ['bar', 'vertical_bar', 'line', 'pie', 'donut', 'area', 'horizontal_bar', 'scatter'].includes(
+        chartType,
+      )
         ? chartType
         : normalizedWidgetKind === 'chart'
           ? 'bar'
@@ -4553,7 +4796,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       WHERE dashboard_id = ${dashboardId}
     `);
     const widgetOrder = Number(orderRows[0]?.next_widget_order || 1);
-    const uiConfigJson = JSON.stringify({ component: normalizedWidgetKind === 'chart' ? 'PinnedChartCard' : 'PinnedTableCard' });
+    const uiConfigJson = JSON.stringify({
+      component: normalizedWidgetKind === 'chart' ? 'PinnedChartCard' : 'PinnedTableCard',
+    });
 
     const insertedRows = await this.prisma.$queryRawUnsafe<Array<{ widget_id: string }>>(`
       INSERT INTO public.dashboard_widget (
@@ -4645,9 +4890,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const widgetIdSql = this.escapeSqlLiteral(widgetId);
     const title = typeof body?.title === 'string' ? body.title.trim() : '';
     const description =
-      typeof body?.description === 'string' ? body.description.trim() : body?.description === null ? '' : '';
+      typeof body?.description === 'string'
+        ? body.description.trim()
+        : body?.description === null
+          ? ''
+          : '';
     const spanClassName =
-      typeof body?.spanClassName === 'string' && body.spanClassName.trim() ? body.spanClassName.trim() : null;
+      typeof body?.spanClassName === 'string' && body.spanClassName.trim()
+        ? body.spanClassName.trim()
+        : null;
     const widgetOrder =
       typeof body?.widgetOrder === 'number' && Number.isFinite(body.widgetOrder)
         ? Math.max(1, Math.floor(body.widgetOrder))
@@ -4692,7 +4943,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       updates.push(`short_label = '${this.escapeSqlLiteral(title.slice(0, 48))}'`);
     }
     if (body?.description !== undefined) {
-      updates.push(description ? `description = '${this.escapeSqlLiteral(description)}'` : 'description = NULL');
+      updates.push(
+        description
+          ? `description = '${this.escapeSqlLiteral(description)}'`
+          : 'description = NULL',
+      );
     }
     if (spanClassName) {
       updates.push(`span_class_name = '${this.escapeSqlLiteral(spanClassName)}'`);
@@ -4701,10 +4956,21 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       updates.push(`widget_order = ${widgetOrder}`);
     }
     if (chartType !== null) {
-      const normalizedChartType = ['bar', 'vertical_bar', 'line', 'pie', 'donut', 'area', 'horizontal_bar', 'scatter'].includes(chartType)
+      const normalizedChartType = [
+        'bar',
+        'vertical_bar',
+        'line',
+        'pie',
+        'donut',
+        'area',
+        'horizontal_bar',
+        'scatter',
+      ].includes(chartType)
         ? chartType
         : '';
-      updates.push(normalizedChartType ? `chart_type = '${normalizedChartType}'` : 'chart_type = NULL');
+      updates.push(
+        normalizedChartType ? `chart_type = '${normalizedChartType}'` : 'chart_type = NULL',
+      );
       updates.push(
         normalizedChartType
           ? "widget_kind = CASE WHEN widget_kind IN ('table', 'list', 'summary', 'metric') THEN widget_kind ELSE 'chart' END"
@@ -5150,8 +5416,14 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getAiBaseUrl() {
-    const candidates = [process.env.AI_ENGINE_URL, process.env.AI_ENGINE_BASE_URL, 'http://ai-engine:8001'];
-    const configuredUrl = candidates.find((value) => typeof value === 'string' && value.trim().length > 0);
+    const candidates = [
+      process.env.AI_ENGINE_URL,
+      process.env.AI_ENGINE_BASE_URL,
+      'http://ai-engine:8001',
+    ];
+    const configuredUrl = candidates.find(
+      (value) => typeof value === 'string' && value.trim().length > 0,
+    );
     return configuredUrl?.trim().replace(/\/$/, '') || 'http://ai-engine:8001';
   }
 
@@ -5161,9 +5433,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       headers: { 'x-request-id': requestId },
       cache: 'no-store',
     });
-    const payload = (await response.json().catch(() => null)) as
-      | { success?: boolean; data?: T; message?: string }
-      | null;
+    const payload = (await response.json().catch(() => null)) as {
+      success?: boolean;
+      data?: T;
+      message?: string;
+    } | null;
 
     if (!response.ok || !payload?.success) {
       throw new InternalServerErrorException(payload?.message || 'Failed to fetch saved queries.');
@@ -5427,14 +5701,20 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       priority: Number(policy.priority || 0),
     }));
 
-    const stagePriorities = Array.from(new Set(matchingPolicies.map((policy) => policy.priority))).sort((a, b) => a - b);
+    const stagePriorities = Array.from(
+      new Set(matchingPolicies.map((policy) => policy.priority)),
+    ).sort((a, b) => a - b);
     const requestedStageIndex = severityChanged ? 0 : Math.max(0, escalationCount);
-    const repeatingFinalStage = stagePriorities.length > 0 && requestedStageIndex >= stagePriorities.length;
+    const repeatingFinalStage =
+      stagePriorities.length > 0 && requestedStageIndex >= stagePriorities.length;
     const stageIndex = repeatingFinalStage ? stagePriorities.length - 1 : requestedStageIndex;
     const currentStagePriority = stagePriorities[stageIndex] ?? null;
     const includeBaselineTargets = stageIndex === 0;
 
-    const resolved = new Map<string, Record<string, unknown> & { routing_source?: string; stage_priority?: number | null }>();
+    const resolved = new Map<
+      string,
+      Record<string, unknown> & { routing_source?: string; stage_priority?: number | null }
+    >();
 
     const pushTarget = (
       target: Record<string, unknown>,
@@ -5455,8 +5735,12 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       const normalizedRoleRef = roleRef.trim().toLowerCase();
       const matchingRoleKeys = roles
         .filter((role) => {
-          const roleKey = String(role.role_key || '').trim().toLowerCase();
-          const roleLabel = String(role.label || '').trim().toLowerCase();
+          const roleKey = String(role.role_key || '')
+            .trim()
+            .toLowerCase();
+          const roleLabel = String(role.label || '')
+            .trim()
+            .toLowerCase();
           return roleKey === normalizedRoleRef || roleLabel === normalizedRoleRef;
         })
         .map((role) => String(role.role_key || ''));
@@ -5464,7 +5748,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       const directRegistryChannels = roleChannels
         .filter((mapping) => matchingRoleKeys.includes(String(mapping.role_key || '')))
         .flatMap((mapping) =>
-          channels.filter((channel) => String(channel.channel_key || '') === String(mapping.channel_key || '')),
+          channels.filter(
+            (channel) => String(channel.channel_key || '') === String(mapping.channel_key || ''),
+          ),
         );
 
       if (directRegistryChannels.length) {
@@ -5474,7 +5760,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       return channels.filter(
         (channel) =>
           String(channel.ownership_type || '') === 'internal_user' &&
-          String(channel.owner_label || '').trim().toLowerCase() === normalizedRoleRef,
+          String(channel.owner_label || '')
+            .trim()
+            .toLowerCase() === normalizedRoleRef,
       );
     };
 
@@ -5482,8 +5770,12 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       const normalizedTeamRef = teamRef.trim().toLowerCase();
       const matchingTeamKeys = teams
         .filter((team) => {
-          const teamKey = String(team.team_key || '').trim().toLowerCase();
-          const teamLabel = String(team.label || '').trim().toLowerCase();
+          const teamKey = String(team.team_key || '')
+            .trim()
+            .toLowerCase();
+          const teamLabel = String(team.label || '')
+            .trim()
+            .toLowerCase();
           return teamKey === normalizedTeamRef || teamLabel === normalizedTeamRef;
         })
         .map((team) => String(team.team_key || ''));
@@ -5491,7 +5783,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       const directRegistryChannels = teamChannels
         .filter((mapping) => matchingTeamKeys.includes(String(mapping.team_key || '')))
         .flatMap((mapping) =>
-          channels.filter((channel) => String(channel.channel_key || '') === String(mapping.channel_key || '')),
+          channels.filter(
+            (channel) => String(channel.channel_key || '') === String(mapping.channel_key || ''),
+          ),
         );
 
       if (directRegistryChannels.length) {
@@ -5500,7 +5794,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
       return channels.filter((channel) => {
         const metadata = this.asJson(channel.metadata, {}) as Record<string, unknown>;
-        return String(metadata['team'] || '').trim().toLowerCase() === normalizedTeamRef;
+        return (
+          String(metadata['team'] || '')
+            .trim()
+            .toLowerCase() === normalizedTeamRef
+        );
       });
     };
 
@@ -5513,24 +5811,29 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       }
 
       if (normalizedAssignedTo) {
-        resolveRoleChannels(normalizedAssignedTo)
-          .forEach((channel) => pushTarget(channel, 'assigned-owner', null));
+        resolveRoleChannels(normalizedAssignedTo).forEach((channel) =>
+          pushTarget(channel, 'assigned-owner', null),
+        );
       }
     }
 
     if (currentStagePriority !== null) {
-      const currentStagePolicies = matchingPolicies.filter((policy) => policy.priority === currentStagePriority);
+      const currentStagePolicies = matchingPolicies.filter(
+        (policy) => policy.priority === currentStagePriority,
+      );
       for (const policy of currentStagePolicies) {
         if (policy.target_type === 'channel') {
           channels
             .filter((channel) => String(channel.channel_key || '') === policy.target_ref)
             .forEach((channel) => pushTarget(channel, 'policy-channel', currentStagePriority));
         } else if (policy.target_type === 'role') {
-          resolveRoleChannels(policy.target_ref)
-            .forEach((channel) => pushTarget(channel, 'policy-role', currentStagePriority));
+          resolveRoleChannels(policy.target_ref).forEach((channel) =>
+            pushTarget(channel, 'policy-role', currentStagePriority),
+          );
         } else if (policy.target_type === 'team') {
-          resolveTeamChannels(policy.target_ref)
-            .forEach((channel) => pushTarget(channel, 'policy-team', currentStagePriority));
+          resolveTeamChannels(policy.target_ref).forEach((channel) =>
+            pushTarget(channel, 'policy-team', currentStagePriority),
+          );
         }
       }
     }
@@ -5764,12 +6067,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
     this.alertDeliveryTimer = setInterval(() => {
       void this.runAlertDeliveryCycle().catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown alert delivery worker error.';
+        const message =
+          error instanceof Error ? error.message : 'Unknown alert delivery worker error.';
         this.logger.error(`Alert delivery cycle failed: ${message}`);
       });
     }, this.alertDeliveryIntervalMs);
 
-    this.logger.log(`Alert delivery worker started with interval ${this.alertDeliveryIntervalMs}ms`);
+    this.logger.log(
+      `Alert delivery worker started with interval ${this.alertDeliveryIntervalMs}ms`,
+    );
   }
 
   private startAlertTriageEscalationWorker() {
@@ -5784,7 +6090,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       });
     }, this.alertTriageEscalationIntervalMs);
 
-    this.logger.log(`Alert triage escalation worker started with interval ${this.alertTriageEscalationIntervalMs}ms`);
+    this.logger.log(
+      `Alert triage escalation worker started with interval ${this.alertTriageEscalationIntervalMs}ms`,
+    );
   }
 
   private parseAlertScheduleToMs(scheduleValue: string) {
@@ -5892,9 +6200,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const providerMessageId =
       parsedPayload && typeof parsedPayload === 'object'
         ? String(
-            (parsedPayload as Record<string, unknown>).message_id
-            || (parsedPayload as Record<string, unknown>).id
-            || '',
+            (parsedPayload as Record<string, unknown>).message_id ||
+              (parsedPayload as Record<string, unknown>).id ||
+              '',
           ).trim() || null
         : null;
 
@@ -5946,7 +6254,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           return;
         }
         if (typeof update.qr === 'string' && update.qr.trim()) {
-          this.logger.warn('Baileys session requires QR pairing before WhatsApp delivery can be used.');
+          this.logger.warn(
+            'Baileys session requires QR pairing before WhatsApp delivery can be used.',
+          );
         }
         if (connection === 'close') {
           clearTimeout(timeout);
@@ -6067,7 +6377,10 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
   private getBaileysConfig() {
     const authDir = (process.env.ALERTING_WA_BAILEYS_AUTH_DIR || '').trim();
     return {
-      enabled: String(process.env.ALERTING_WA_BAILEYS_ENABLED || '').trim().toLowerCase() === 'true',
+      enabled:
+        String(process.env.ALERTING_WA_BAILEYS_ENABLED || '')
+          .trim()
+          .toLowerCase() === 'true',
       authDir: authDir ? path.resolve(authDir) : '',
     };
   }
@@ -6198,7 +6511,14 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     providerName: string;
     channelType: 'wa-group' | 'wa-personal' | 'email';
     sessionKey: string;
-    sessionStatus: 'disabled' | 'disconnected' | 'pairing-required' | 'pairing-in-progress' | 'ready' | 'connected' | 'error';
+    sessionStatus:
+      | 'disabled'
+      | 'disconnected'
+      | 'pairing-required'
+      | 'pairing-in-progress'
+      | 'ready'
+      | 'connected'
+      | 'error';
     pairingMode?: string | null;
     phoneNumber?: string | null;
     authDir?: string | null;
@@ -6274,7 +6594,10 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         AND setting_key IN ('triage_sla_minutes', 'triage_escalation_policy')
     `);
 
-    const settings = new Map<string, { value_text: string | null; value_json: Record<string, unknown> }>();
+    const settings = new Map<
+      string,
+      { value_text: string | null; value_json: Record<string, unknown> }
+    >();
     for (const row of rows) {
       settings.set(String(row.setting_key || ''), {
         value_text: typeof row.value_text === 'string' ? row.value_text : null,
@@ -6286,21 +6609,25 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     const escalationSetting = settings.get('triage_escalation_policy');
     const configuredSla = Number(
       (slaSetting?.value_json?.minutes as number | string | undefined) ||
-      (slaSetting?.value_text ? Number.parseInt(slaSetting.value_text, 10) : NaN),
+        (slaSetting?.value_text ? Number.parseInt(slaSetting.value_text, 10) : NaN),
     );
     const warningAfterMinutes = Number(
       (escalationSetting?.value_json?.warning_after_minutes as number | string | undefined) ||
-      configuredSla,
+        configuredSla,
     );
     const criticalAfterMinutes = Number(
       (escalationSetting?.value_json?.critical_after_minutes as number | string | undefined) ||
-      (Number.isFinite(warningAfterMinutes) ? warningAfterMinutes * 2 : NaN),
+        (Number.isFinite(warningAfterMinutes) ? warningAfterMinutes * 2 : NaN),
     );
 
     return {
       sla_minutes: Number.isFinite(configuredSla) && configuredSla > 0 ? configuredSla : 60,
-      warning_after_minutes: Number.isFinite(warningAfterMinutes) && warningAfterMinutes > 0 ? warningAfterMinutes : 60,
-      critical_after_minutes: Number.isFinite(criticalAfterMinutes) && criticalAfterMinutes > 0 ? criticalAfterMinutes : 120,
+      warning_after_minutes:
+        Number.isFinite(warningAfterMinutes) && warningAfterMinutes > 0 ? warningAfterMinutes : 60,
+      critical_after_minutes:
+        Number.isFinite(criticalAfterMinutes) && criticalAfterMinutes > 0
+          ? criticalAfterMinutes
+          : 120,
     };
   }
 
@@ -6312,7 +6639,10 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         AND setting_key IN ('triage_escalation_channel_key', 'triage_escalation_cooldown_minutes')
     `);
 
-    const settings = new Map<string, { value_text: string | null; value_json: Record<string, unknown> }>();
+    const settings = new Map<
+      string,
+      { value_text: string | null; value_json: Record<string, unknown> }
+    >();
     for (const row of rows) {
       settings.set(String(row.setting_key || ''), {
         value_text: typeof row.value_text === 'string' ? row.value_text : null,
@@ -6322,19 +6652,21 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
     const channelSetting = settings.get('triage_escalation_channel_key');
     const cooldownSetting = settings.get('triage_escalation_cooldown_minutes');
-    const channelKey = String(
-      channelSetting?.value_json?.channel_key ||
-      channelSetting?.value_text ||
-      'channel-ops-alert-group',
-    ).trim() || 'channel-ops-alert-group';
+    const channelKey =
+      String(
+        channelSetting?.value_json?.channel_key ||
+          channelSetting?.value_text ||
+          'channel-ops-alert-group',
+      ).trim() || 'channel-ops-alert-group';
     const cooldownMinutes = Number(
       (cooldownSetting?.value_json?.minutes as number | string | undefined) ||
-      (cooldownSetting?.value_text ? Number.parseInt(cooldownSetting.value_text, 10) : NaN),
+        (cooldownSetting?.value_text ? Number.parseInt(cooldownSetting.value_text, 10) : NaN),
     );
 
     return {
       channel_key: channelKey,
-      cooldown_minutes: Number.isFinite(cooldownMinutes) && cooldownMinutes > 0 ? cooldownMinutes : 60,
+      cooldown_minutes:
+        Number.isFinite(cooldownMinutes) && cooldownMinutes > 0 ? cooldownMinutes : 60,
     };
   }
 
@@ -6349,7 +6681,8 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
 
     const row = rows[0];
     const valueJson = this.asJson<Record<string, unknown>>(row?.value_json, {});
-    const valueText = typeof row?.value_text === 'string' ? row.value_text.trim().toLowerCase() : '';
+    const valueText =
+      typeof row?.value_text === 'string' ? row.value_text.trim().toLowerCase() : '';
     const enabled =
       typeof valueJson['enabled'] === 'boolean'
         ? Boolean(valueJson['enabled'])
@@ -6368,9 +6701,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       return null;
     };
     const baseTimestamp =
-      normalizeTimestamp(item.dead_lettered_at)
-      || normalizeTimestamp(item.last_action_at)
-      || normalizeTimestamp(item.triage_updated_at);
+      normalizeTimestamp(item.dead_lettered_at) ||
+      normalizeTimestamp(item.last_action_at) ||
+      normalizeTimestamp(item.triage_updated_at);
 
     if (!baseTimestamp) {
       return {
@@ -6454,7 +6787,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         stage_count: 0,
         has_next_stage: false,
         is_final_stage: false,
-        next_stage_targets: [] as Array<{ target_type: string; target_ref: string; priority: number }>,
+        next_stage_targets: [] as Array<{
+          target_type: string;
+          target_ref: string;
+          priority: number;
+        }>,
       };
     }
 
@@ -6472,7 +6809,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           (policy.module_key === moduleKey || policy.module_key === 'all'),
       );
 
-    const stagePriorities = Array.from(new Set(matchingPolicies.map((policy) => policy.priority))).sort((a, b) => a - b);
+    const stagePriorities = Array.from(
+      new Set(matchingPolicies.map((policy) => policy.priority)),
+    ).sort((a, b) => a - b);
     if (!stagePriorities.length) {
       return {
         current_stage_index: null,
@@ -6482,7 +6821,11 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         stage_count: 0,
         has_next_stage: false,
         is_final_stage: false,
-        next_stage_targets: [] as Array<{ target_type: string; target_ref: string; priority: number }>,
+        next_stage_targets: [] as Array<{
+          target_type: string;
+          target_ref: string;
+          priority: number;
+        }>,
       };
     }
 
@@ -6491,7 +6834,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
         ? Math.min(Math.max(escalationCount - 1, 0), stagePriorities.length - 1)
         : null;
     const currentStagePriority =
-      currentStageIndex !== null ? stagePriorities[currentStageIndex] ?? null : null;
+      currentStageIndex !== null ? (stagePriorities[currentStageIndex] ?? null) : null;
     const nextStageIndex =
       currentStageIndex === null
         ? 0
@@ -6499,7 +6842,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           ? currentStageIndex + 1
           : null;
     const nextStagePriority =
-      nextStageIndex !== null ? stagePriorities[nextStageIndex] ?? null : null;
+      nextStageIndex !== null ? (stagePriorities[nextStageIndex] ?? null) : null;
     const nextStageTargets =
       nextStagePriority !== null
         ? matchingPolicies
@@ -6541,7 +6884,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       if (/^\d+-\d+$/.test(normalizedTarget) || /^\d+$/.test(normalizedTarget)) {
         return `${normalizedTarget}@g.us`;
       }
-      throw new BadRequestException('WhatsApp group target must be a valid group JID or numeric group identifier.');
+      throw new BadRequestException(
+        'WhatsApp group target must be a valid group JID or numeric group identifier.',
+      );
     }
 
     if (normalizedTarget.includes('@')) {
@@ -6549,7 +6894,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     }
     const digits = normalizedTarget.replace(/\D/g, '');
     if (!digits) {
-      throw new BadRequestException('WhatsApp personal target must be a phone number or WhatsApp JID.');
+      throw new BadRequestException(
+        'WhatsApp personal target must be a phone number or WhatsApp JID.',
+      );
     }
     return `${digits}@s.whatsapp.net`;
   }
@@ -6562,9 +6909,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       user: (process.env.ALERTING_EMAIL_SMTP_USER || process.env.SMTP_USER || '').trim(),
       pass: (process.env.ALERTING_EMAIL_SMTP_PASS || process.env.SMTP_PASS || '').trim(),
       secure:
-        String(process.env.ALERTING_EMAIL_SMTP_SECURE || process.env.SMTP_SECURE || '').trim().toLowerCase() === 'true'
-        || port === 465,
-      from: (process.env.ALERTING_EMAIL_FROM || process.env.SMTP_FROM || process.env.SMTP_USER || '').trim(),
+        String(process.env.ALERTING_EMAIL_SMTP_SECURE || process.env.SMTP_SECURE || '')
+          .trim()
+          .toLowerCase() === 'true' || port === 465,
+      from: (
+        process.env.ALERTING_EMAIL_FROM ||
+        process.env.SMTP_FROM ||
+        process.env.SMTP_USER ||
+        ''
+      ).trim(),
     };
   }
 
@@ -6987,7 +7340,8 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       'crstatus',
       'crstatusbayar',
     ]);
-    const sortBy = query.sortBy && allowedSortColumns.has(query.sortBy) ? query.sortBy : 'outstanding';
+    const sortBy =
+      query.sortBy && allowedSortColumns.has(query.sortBy) ? query.sortBy : 'outstanding';
     const orderByExpression =
       sortBy === 'outstanding' ? '(COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0))' : sortBy;
 
@@ -7317,7 +7671,14 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           AND "insight_created_at" >= date_trunc('day', now())
           AND "insight_created_at" < date_trunc('day', now()) + interval '1 day'
       `,
-      this.prisma.$queryRaw<Array<{ accepted_count: bigint; total_count: bigint; accepted_pct: number | null; previous_pct: number | null }>>`
+      this.prisma.$queryRaw<
+        Array<{
+          accepted_count: bigint;
+          total_count: bigint;
+          accepted_pct: number | null;
+          previous_pct: number | null;
+        }>
+      >`
         WITH current_window AS (
           SELECT
             SUM(CASE WHEN "status" = 'accepted' THEN 1 ELSE 0 END) AS accepted_count,
@@ -7354,10 +7715,15 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           severity: 'critical',
           status: { in: ['open', 'in_progress'] },
           openedAt: { lt: new Date(new Date().toISOString().slice(0, 10)) },
-          OR: [{ resolvedAt: null }, { resolvedAt: { gte: new Date(new Date().toISOString().slice(0, 10)) } }],
+          OR: [
+            { resolvedAt: null },
+            { resolvedAt: { gte: new Date(new Date().toISOString().slice(0, 10)) } },
+          ],
         },
       }),
-      this.prisma.$queryRaw<Array<{ compliant_count: bigint; total_count: bigint; compliance_pct: number | null }>>`
+      this.prisma.$queryRaw<
+        Array<{ compliant_count: bigint; total_count: bigint; compliance_pct: number | null }>
+      >`
         SELECT
           SUM(
             CASE
@@ -7377,7 +7743,14 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
           ) AS compliance_pct
         FROM "m0_manager_data_freshness"
       `,
-      this.prisma.$queryRaw<Array<{ domain: string; dataset_count: bigint; compliant_count: bigint; compliance_pct: number | null }>>`
+      this.prisma.$queryRaw<
+        Array<{
+          domain: string;
+          dataset_count: bigint;
+          compliant_count: bigint;
+          compliance_pct: number | null;
+        }>
+      >`
         SELECT
           "domain",
           COUNT(*) AS dataset_count,

@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import {
-  DeliveryStatus,
-  SendMessageParams,
-  SendResult,
-  WAProvider,
-} from '../wa.interface';
+import { DeliveryStatus, SendMessageParams, SendResult, WAProvider } from '../wa.interface';
 
 /**
  * No-op WA provider for development & testing.

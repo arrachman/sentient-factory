@@ -43,26 +43,27 @@ export class PermissionsGuard implements CanActivate {
     const userId = Number(user?.id);
     if (!Number.isInteger(userId)) return false;
 
-    const userWithPermissions: UserWithRolesAndPermissions | null = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        roles: {
-          include: {
-            role: {
-              include: {
-                permissions: {
-                  include: {
-                    permission: true,
+    const userWithPermissions: UserWithRolesAndPermissions | null =
+      await this.prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+        include: {
+          roles: {
+            include: {
+              role: {
+                include: {
+                  permissions: {
+                    include: {
+                      permission: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
 
     if (!userWithPermissions) return false;
 

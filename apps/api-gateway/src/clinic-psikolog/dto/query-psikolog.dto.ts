@@ -10,13 +10,13 @@ export class QueryPsikologDto {
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ example: 10, default: 10 })
+  @ApiPropertyOptional({ example: 50, default: 50 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
-  limit?: number = 10;
+  @Max(200)
+  limit?: number = 50;
 
   @ApiPropertyOptional({ example: 'farah', description: 'Search by name/email/license' })
   @IsOptional()
@@ -37,7 +37,10 @@ export class QueryPsikologDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ example: 'klinis_dewasa', description: 'Filter by specialty (single match)' })
+  @ApiPropertyOptional({
+    example: 'klinis_dewasa',
+    description: 'Filter by specialty (single match)',
+  })
   @IsOptional()
   @IsString()
   specialty?: string;

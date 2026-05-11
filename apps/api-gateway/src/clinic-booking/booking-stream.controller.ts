@@ -31,8 +31,6 @@ export class BookingStreamController {
   @Roles('clinic-admin', 'clinic-resepsionis', 'clinic-psikolog', 'clinic-owner')
   @ApiOperation({ summary: 'SSE stream untuk realtime booking events' })
   stream(): Observable<{ data: BookingEvent }> {
-    return this.events.asObservable().pipe(
-      map((event) => ({ data: event })),
-    );
+    return this.events.asObservable().pipe(map((event) => ({ data: event })));
   }
 }

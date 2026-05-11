@@ -73,8 +73,7 @@ export class ClinicPsikologService {
           color: dto.color,
           license: dto.license,
           defaultSlots: dto.defaultSlots ?? 4,
-          weeklyAvailability:
-            (dto.weeklyAvailability as Prisma.InputJsonValue | undefined) ?? {},
+          weeklyAvailability: (dto.weeklyAvailability as Prisma.InputJsonValue | undefined) ?? {},
           bio: dto.bio,
           isActive: dto.isActive ?? true,
           createdBy: actorId,

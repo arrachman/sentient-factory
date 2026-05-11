@@ -55,11 +55,7 @@ export class BookingReminderScheduler {
 
   // -----------------------------------------------------------------
 
-  private async findBookingsInWindow(
-    start: Date,
-    end: Date,
-    flag: 'h1' | 'm30',
-  ) {
+  private async findBookingsInWindow(start: Date, end: Date, flag: 'h1' | 'm30') {
     // Find bookings dalam window yang belum di-reminder
     const bookings = await this.prisma.clinicBooking.findMany({
       where: {
@@ -115,7 +111,10 @@ export class BookingReminderScheduler {
           psikolog: booking.psikolog?.fullName ?? '',
           ruang: booking.room?.name ?? '',
           tanggal: date.toLocaleString('id-ID', {
-            weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
           }),
           waktu: date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
         },
@@ -137,7 +136,9 @@ export class BookingReminderScheduler {
           },
         });
       }
-      this.logger.log(`[reminder-${flag}] sent booking ${booking.id} → ${result.success ? 'OK' : 'fail'}`);
+      this.logger.log(
+        `[reminder-${flag}] sent booking ${booking.id} → ${result.success ? 'OK' : 'fail'}`,
+      );
     } catch (err) {
       this.logger.warn(
         `[reminder-${flag}] failed booking ${booking.id}: ${err instanceof Error ? err.message : err}`,

@@ -162,7 +162,8 @@ export class BookingValidationService {
     }
 
     // 3. Slot match check
-    const slots = (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
+    const slots =
+      (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
     if (slots.length === 0) return; // belum di-config, allow (bootstrap mode)
 
     const fmt = (d: Date) =>
@@ -208,9 +209,7 @@ export class BookingValidationService {
       select: { weeklyAvailability: true, user: { select: { fullName: true, email: true } } },
     });
     if (!profile) {
-      throw new NotFoundException(
-        `Psikolog profile untuk user ${psikologUserId} tidak ditemukan.`,
-      );
+      throw new NotFoundException(`Psikolog profile untuk user ${psikologUserId} tidak ditemukan.`);
     }
     const availability = (profile.weeklyAvailability ?? {}) as Record<
       string,
@@ -225,15 +224,7 @@ export class BookingValidationService {
       );
     }
 
-    const DAY_KEYS = [
-      'sunday',
-      'monday',
-      'tuesday',
-      'wednesday',
-      'thursday',
-      'friday',
-      'saturday',
-    ];
+    const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const DAY_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
     const dow = start.getDay();
     const dayCfg = availability[DAY_KEYS[dow]];

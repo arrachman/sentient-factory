@@ -1,11 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  DeliveryStatus,
-  SendMessageParams,
-  SendResult,
-  WAProvider,
-} from '../wa.interface';
+import { DeliveryStatus, SendMessageParams, SendResult, WAProvider } from '../wa.interface';
 
 /**
  * Fonnte WhatsApp Gateway provider.

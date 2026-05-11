@@ -49,9 +49,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const route = (req as unknown as { route?: { path?: string } }).route?.path ?? req.path;
     const composite = `${req.method}:${route}|${actorId}|${key}`;
 
-    return from(
-      this.prisma.clinicIdempotencyKey.findUnique({ where: { key: composite } }),
-    ).pipe(
+    return from(this.prisma.clinicIdempotencyKey.findUnique({ where: { key: composite } })).pipe(
       switchMap((cached) => {
         if (cached) {
           const age = Date.now() - cached.createdAt.getTime();

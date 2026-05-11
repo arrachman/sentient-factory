@@ -87,10 +87,7 @@ export class CreatePsikologDto {
     example: { monday: { isOpen: true }, tuesday: { isOpen: true } },
   })
   @IsOptional()
-  weeklyAvailability?: Record<
-    string,
-    { isOpen: boolean; slotIndices?: number[] }
-  >;
+  weeklyAvailability?: Record<string, { isOpen: boolean; slotIndices?: number[] }>;
 
   @ApiPropertyOptional({ example: 'Lulusan Universitas Indonesia, fokus...' })
   @IsOptional()

@@ -1,4 +1,4 @@
-import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreatePsikologDto } from './create-psikolog.dto';
 
 /**

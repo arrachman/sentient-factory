@@ -48,8 +48,7 @@ export class UpdateSettingsDto {
   slotsOfDay?: Array<{ start: string; end: string; label?: string }>;
 
   @ApiPropertyOptional({
-    description:
-      'Hari tutup (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: [0] (Minggu tutup).',
+    description: 'Hari tutup (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: [0] (Minggu tutup).',
     example: [0],
     type: [Number],
   })

@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -59,10 +55,7 @@ export class ClinicSessionNoteService {
 
     // Privacy filter: non-admin only sees own notes OR public notes from others
     if (!isAdmin && actorId) {
-      where.OR = [
-        { psikologUserId: actorId },
-        { isPrivate: false },
-      ];
+      where.OR = [{ psikologUserId: actorId }, { isPrivate: false }];
     }
 
     const [items, total] = await this.prisma.$transaction([
@@ -111,12 +104,7 @@ export class ClinicSessionNoteService {
     return { success: true, data: note };
   }
 
-  async update(
-    id: number,
-    dto: UpdateSessionNoteDto,
-    actorId?: number,
-    actorRoles: string[] = [],
-  ) {
+  async update(id: number, dto: UpdateSessionNoteDto, actorId?: number, actorRoles: string[] = []) {
     const existing = await this.findOne(id, actorId, actorRoles);
 
     const isAdmin = actorRoles.includes('clinic-admin');

@@ -9,7 +9,11 @@ type ThrowDuplicateOptions = {
   type?: DuplicateExceptionType;
 };
 
-export function duplicateMessage(fieldLabel: string, value?: string, isSoftDeleted = false): string {
+export function duplicateMessage(
+  fieldLabel: string,
+  value?: string,
+  isSoftDeleted = false,
+): string {
   const normalizedValue = typeof value === 'string' ? value.trim() : '';
   const hasValue = normalizedValue.length > 0;
   if (isSoftDeleted) {
@@ -17,7 +21,9 @@ export function duplicateMessage(fieldLabel: string, value?: string, isSoftDelet
       ? `${fieldLabel} '${normalizedValue}' has been used before and cannot be reused`
       : `${fieldLabel} has been used before and cannot be reused`;
   }
-  return hasValue ? `${fieldLabel} '${normalizedValue}' already exists` : `${fieldLabel} already exists`;
+  return hasValue
+    ? `${fieldLabel} '${normalizedValue}' already exists`
+    : `${fieldLabel} already exists`;
 }
 
 export function throwDuplicate({

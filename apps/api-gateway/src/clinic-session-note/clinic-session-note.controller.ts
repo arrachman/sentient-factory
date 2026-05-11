@@ -33,22 +33,14 @@ export class ClinicSessionNoteController {
   @Roles('clinic-admin', 'clinic-psikolog')
   @ApiOperation({ summary: 'Create clinical session note' })
   create(@Body() dto: CreateSessionNoteDto, @Request() req: any) {
-    return this.service.create(
-      dto,
-      req.user?.sub ?? req.user?.id,
-      req.user?.roles ?? [],
-    );
+    return this.service.create(dto, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Get()
   @Roles('clinic-admin', 'clinic-psikolog')
   @ApiOperation({ summary: 'List session notes (privacy-filtered)' })
   findAll(@Query() query: QuerySessionNoteDto, @Request() req: any) {
-    return this.service.findAll(
-      query,
-      req.user?.sub ?? req.user?.id,
-      req.user?.roles ?? [],
-    );
+    return this.service.findAll(query, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Get('booking/:bookingId')
@@ -65,11 +57,7 @@ export class ClinicSessionNoteController {
   @Get(':id')
   @Roles('clinic-admin', 'clinic-psikolog')
   findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.service.findOne(
-      id,
-      req.user?.sub ?? req.user?.id,
-      req.user?.roles ?? [],
-    );
+    return this.service.findOne(id, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Patch(':id')
@@ -79,21 +67,12 @@ export class ClinicSessionNoteController {
     @Body() dto: UpdateSessionNoteDto,
     @Request() req: any,
   ) {
-    return this.service.update(
-      id,
-      dto,
-      req.user?.sub ?? req.user?.id,
-      req.user?.roles ?? [],
-    );
+    return this.service.update(id, dto, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Delete(':id')
   @Roles('clinic-admin', 'clinic-psikolog')
   remove(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.service.remove(
-      id,
-      req.user?.sub ?? req.user?.id,
-      req.user?.roles ?? [],
-    );
+    return this.service.remove(id, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 }

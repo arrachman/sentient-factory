@@ -1,5 +1,15 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -49,7 +59,11 @@ export class ClinicWaController {
   @Patch('template/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('clinic-admin')
-  updateTemplate(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTemplateDto, @Request() req: any) {
+  updateTemplate(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTemplateDto,
+    @Request() req: any,
+  ) {
     return this.service.updateTemplate(id, dto, req.user?.sub ?? req.user?.id);
   }
 

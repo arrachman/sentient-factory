@@ -26,4 +26,3 @@ export class AskM2InsightDto {
   @MaxLength(64)
   feature?: string;
 }
-

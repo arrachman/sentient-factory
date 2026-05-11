@@ -101,10 +101,12 @@ export function usePsikologSchedule() {
     })),
   });
 
+  // Stable signature: ganti tiap day query selesai refetch.
+  const dayQueriesSignature = dayQueries.map((q) => q.dataUpdatedAt).join(',');
   const dayBookings = useMemo<Booking[][]>(
     () => dayQueries.map((q) => q.data?.data ?? []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dayQueries.map((q) => q.dataUpdatedAt).join(','), filters],
+    [dayQueriesSignature, filters],
   );
 
   // Apply filters per day

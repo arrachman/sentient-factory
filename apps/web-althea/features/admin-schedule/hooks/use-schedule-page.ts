@@ -86,11 +86,12 @@ export function useSchedulePage() {
   const isLoading =
     dayQueries.some((q) => q.isLoading) || psikologList.isLoading;
 
+  // Stable signature: ganti tiap day query selesai refetch.
+  const dayQueriesSignature = dayQueries.map((q) => q.dataUpdatedAt).join(',');
   const allBookings = useMemo<Booking[]>(
     () => dayQueries.flatMap((q) => q.data?.data ?? []),
-    // dataUpdatedAt joined as a stable signature
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dayQueries.map((q) => q.dataUpdatedAt).join(',')],
+    [dayQueriesSignature],
   );
 
   const filteredBookings = useMemo(

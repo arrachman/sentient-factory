@@ -42,7 +42,11 @@ export class ClinicPaymentController {
   @Roles('clinic-admin', 'clinic-resepsionis')
   @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Record payment installment (DP atau lunas, supports Idempotency-Key)' })
-  record(@Param('id', ParseIntPipe) id: number, @Body() dto: RecordPaymentDto, @Request() req: any) {
+  record(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RecordPaymentDto,
+    @Request() req: any,
+  ) {
     return this.service.record(id, dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -69,10 +73,7 @@ export class ClinicPaymentController {
   @Get(':id/receipt.pdf')
   @Roles('clinic-admin', 'clinic-resepsionis')
   @ApiOperation({ summary: 'Receipt PDF (binary download via pdfkit)' })
-  async receiptPdf(
-    @Param('id', ParseIntPipe) id: number,
-    @Res() res: Response,
-  ): Promise<void> {
+  async receiptPdf(@Param('id', ParseIntPipe) id: number, @Res() res: Response): Promise<void> {
     const buffer = await this.service.receiptPdf(id);
     res.set({
       'Content-Type': 'application/pdf',

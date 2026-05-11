@@ -36,7 +36,13 @@ export class ClinicPsikologController {
   }
 
   @Get()
-  @Roles('clinic-admin', 'clinic-psikolog', 'clinic-owner', 'clinic-resepsionis', 'clinic-marketing')
+  @Roles(
+    'clinic-admin',
+    'clinic-psikolog',
+    'clinic-owner',
+    'clinic-resepsionis',
+    'clinic-marketing',
+  )
   @ApiOperation({ summary: 'List psikolog (paginated)' })
   @ApiResponse({ status: 200, description: 'List of psikolog' })
   findAll(@Query() query: QueryPsikologDto) {
@@ -44,7 +50,13 @@ export class ClinicPsikologController {
   }
 
   @Get(':id')
-  @Roles('clinic-admin', 'clinic-psikolog', 'clinic-owner', 'clinic-resepsionis', 'clinic-marketing')
+  @Roles(
+    'clinic-admin',
+    'clinic-psikolog',
+    'clinic-owner',
+    'clinic-resepsionis',
+    'clinic-marketing',
+  )
   @ApiOperation({ summary: 'Get one psikolog detail' })
   @ApiResponse({ status: 200, description: 'Psikolog detail' })
   findOne(@Param('id', ParseIntPipe) id: number) {

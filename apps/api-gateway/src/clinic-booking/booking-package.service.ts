@@ -77,9 +77,7 @@ export class BookingPackageService {
       const start = new Date(s.scheduledStart);
       const end = new Date(s.scheduledEnd);
       if (!(start.getTime() < end.getTime())) {
-        throw new BadRequestException(
-          `Sesi ${idx + 1}: scheduledStart harus sebelum scheduledEnd`,
-        );
+        throw new BadRequestException(`Sesi ${idx + 1}: scheduledStart harus sebelum scheduledEnd`);
       }
       return {
         index: idx,

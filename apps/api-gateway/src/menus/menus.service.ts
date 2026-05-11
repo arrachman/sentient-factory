@@ -87,7 +87,9 @@ export class MenusService {
       (Number.isInteger(normalizedParentId) && Number(normalizedParentId) > 0);
     const hasGroupFilter = Number.isInteger(normalizedGroupId) && Number(normalizedGroupId) > 0;
 
-    const groupMenuIds = hasGroupFilter ? await this.resolveGroupMenuIds(Number(normalizedGroupId)) : null;
+    const groupMenuIds = hasGroupFilter
+      ? await this.resolveGroupMenuIds(Number(normalizedGroupId))
+      : null;
 
     const where = {
       deletedAt: null as Date | null,

@@ -1,5 +1,15 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards, UseInterceptors,
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,12 +27,7 @@ import {
 } from './dto/clinic-booking.dto';
 import { AuditAction } from '../clinic-audit/decorators/audit-action.decorator';
 
-const READ_ROLES = [
-  'clinic-admin',
-  'clinic-psikolog',
-  'clinic-resepsionis',
-  'clinic-owner',
-];
+const READ_ROLES = ['clinic-admin', 'clinic-psikolog', 'clinic-resepsionis', 'clinic-owner'];
 const WRITE_ROLES = ['clinic-admin', 'clinic-resepsionis'];
 
 @ApiTags('Clinic — Booking')
@@ -51,15 +56,23 @@ export class ClinicBookingController {
 
   @Get()
   @Roles(...READ_ROLES)
-  findAll(@Query() query: QueryBookingDto) { return this.service.findAll(query); }
+  findAll(@Query() query: QueryBookingDto) {
+    return this.service.findAll(query);
+  }
 
   @Get(':id')
   @Roles(...READ_ROLES)
-  findOne(@Param('id', ParseIntPipe) id: number) { return this.service.findOne(id); }
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
+  }
 
   @Patch(':id')
   @Roles(...WRITE_ROLES)
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBookingDto, @Request() req: any) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateBookingDto,
+    @Request() req: any,
+  ) {
     return this.service.update(id, dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -99,7 +112,11 @@ export class ClinicBookingController {
   @Roles(...WRITE_ROLES)
   @AuditAction('cancel')
   @ApiOperation({ summary: 'Cancel booking' })
-  cancel(@Param('id', ParseIntPipe) id: number, @Body() dto: CancelBookingDto, @Request() req: any) {
+  cancel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CancelBookingDto,
+    @Request() req: any,
+  ) {
     return this.service.cancel(id, dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -107,7 +124,11 @@ export class ClinicBookingController {
   @Roles(...WRITE_ROLES)
   @AuditAction('reschedule')
   @ApiOperation({ summary: 'Reschedule booking (slot/psikolog/room)' })
-  reschedule(@Param('id', ParseIntPipe) id: number, @Body() dto: RescheduleBookingDto, @Request() req: any) {
+  reschedule(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RescheduleBookingDto,
+    @Request() req: any,
+  ) {
     return this.service.reschedule(id, dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -133,7 +154,9 @@ export class ClinicBookingController {
   @Post(':id/send-reminder')
   @Roles(...WRITE_ROLES)
   @AuditAction('send_reminder')
-  @ApiOperation({ summary: 'Send manual WA reminder ke klien (template Pengingat H-1 atau 30-min)' })
+  @ApiOperation({
+    summary: 'Send manual WA reminder ke klien (template Pengingat H-1 atau 30-min)',
+  })
   sendReminder(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: { templateName?: string },

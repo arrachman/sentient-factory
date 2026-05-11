@@ -33,10 +33,19 @@ export class ClinicRoomService {
       ];
     }
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.clinicRoom.findMany({ where, orderBy: [{ type: 'asc' }, { name: 'asc' }], skip, take: limit }),
+      this.prisma.clinicRoom.findMany({
+        where,
+        orderBy: [{ type: 'asc' }, { name: 'asc' }],
+        skip,
+        take: limit,
+      }),
       this.prisma.clinicRoom.count({ where }),
     ]);
-    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      success: true,
+      data: items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findOne(id: number) {

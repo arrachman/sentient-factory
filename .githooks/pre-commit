@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Pre-commit gate untuk Althea (clinic-*) modules.
+#
+# Cek lint + typecheck untuk staged changes di api-gateway & web-althea.
+# Skip dengan SKIP_ALTHEA_CHECK=1 git commit ... kalau emergency.
+#
+# Install: otomatis via `npm install` (root package.json prepare script
+# set `git config core.hooksPath .githooks`).
+set -euo pipefail
+
+if [ "${SKIP_ALTHEA_CHECK:-0}" = "1" ]; then
+  echo "[pre-commit] SKIP_ALTHEA_CHECK=1 — bypass lint+typecheck gate"
+  exit 0
+fi
+
+# Hanya jalankan kalau ada perubahan di scope Althea
+CHANGED=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(apps/api-gateway/src|apps/web-althea/(app|features|components|shared|lib|styles|public|proxy\.ts))' || true)
+
+if [ -z "$CHANGED" ]; then
+  exit 0
+fi
+
+echo "[pre-commit] Althea changes detected, running lint + typecheck..."
+
+# Use root package.json script (configured untuk @sentient-factory/api-gateway + web-althea)
+if ! npm run check:althea --silent; then
+  echo ""
+  echo "[pre-commit] ❌ check:althea failed. Fix errors atau bypass dengan:"
+  echo "  SKIP_ALTHEA_CHECK=1 git commit ..."
+  exit 1
+fi
+
+echo "[pre-commit] ✓ check:althea pass"

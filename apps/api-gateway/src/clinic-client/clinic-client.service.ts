@@ -205,9 +205,7 @@ export class ClinicClientService {
         packageGroupId: b.packageGroupId,
         status: b.status,
         service: b.service,
-        psikolog: b.psikolog
-          ? { fullName: b.psikolog.fullName, email: b.psikolog.email }
-          : null,
+        psikolog: b.psikolog ? { fullName: b.psikolog.fullName, email: b.psikolog.email } : null,
       };
       const arr = byClient.get(b.clientId) ?? [];
       arr.push(slim);
@@ -215,10 +213,12 @@ export class ClinicClientService {
     }
 
     return clients.map((c) => {
-      const cb = (c as ClientEnriched & { gender: string });
+      const cb = c as ClientEnriched & { gender: string };
       const all = byClient.get(c.id) ?? [];
       const upcoming = all
-        .filter((b) => b.status !== 'cancelled' && b.status !== 'completed' && b.scheduledStart > now)
+        .filter(
+          (b) => b.status !== 'cancelled' && b.status !== 'completed' && b.scheduledStart > now,
+        )
         .sort((a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime());
       const past = all
         .filter((b) => b.status === 'completed')

@@ -83,11 +83,46 @@ export class SemanticSchemaService {
     const tokens = new Set(compact.trim().split(/\s+/).filter(Boolean));
 
     const rules = [
-      { key: 'obt', keywords: ['obt', 'sales', 'penjualan', 'piutang', 'invoice', 'faktur', 'so', 'do', 'quotation'] },
-      { key: 'purchasing', keywords: ['purchasing', 'pembelian', 'hutang', 'supplier', 'po', 'grn', 'rfq', 'pr'] },
-      { key: 'inventory', keywords: ['inventory', 'gudang', 'stok', 'mutasi', 'warehouse', 'opname', 'barang masuk'] },
-      { key: 'finance', keywords: ['finance', 'accounting', 'jurnal', 'buku besar', 'kas', 'bank', 'giro', 'coa', 'saldo awal'] },
-      { key: 'master', keywords: ['master', 'referensi', 'kontak', 'barang', 'item', 'akun', 'customer', 'vendor'] },
+      {
+        key: 'obt',
+        keywords: [
+          'obt',
+          'sales',
+          'penjualan',
+          'piutang',
+          'invoice',
+          'faktur',
+          'so',
+          'do',
+          'quotation',
+        ],
+      },
+      {
+        key: 'purchasing',
+        keywords: ['purchasing', 'pembelian', 'hutang', 'supplier', 'po', 'grn', 'rfq', 'pr'],
+      },
+      {
+        key: 'inventory',
+        keywords: ['inventory', 'gudang', 'stok', 'mutasi', 'warehouse', 'opname', 'barang masuk'],
+      },
+      {
+        key: 'finance',
+        keywords: [
+          'finance',
+          'accounting',
+          'jurnal',
+          'buku besar',
+          'kas',
+          'bank',
+          'giro',
+          'coa',
+          'saldo awal',
+        ],
+      },
+      {
+        key: 'master',
+        keywords: ['master', 'referensi', 'kontak', 'barang', 'item', 'akun', 'customer', 'vendor'],
+      },
       { key: 'm1', keywords: ['m1_'] },
       { key: 'm2', keywords: ['m2_'] },
       { key: 'm3', keywords: ['m3_'] },

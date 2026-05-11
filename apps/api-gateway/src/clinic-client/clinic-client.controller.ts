@@ -1,5 +1,15 @@
 import {
-  Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Request, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -24,11 +34,15 @@ export class ClinicClientController {
 
   @Get()
   @Roles('clinic-admin', 'clinic-psikolog', 'clinic-resepsionis')
-  findAll(@Query() query: QueryClientDto) { return this.service.findAll(query); }
+  findAll(@Query() query: QueryClientDto) {
+    return this.service.findAll(query);
+  }
 
   @Get(':id')
   @Roles('clinic-admin', 'clinic-psikolog', 'clinic-resepsionis')
-  findOne(@Param('id', ParseIntPipe) id: number) { return this.service.findOne(id); }
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.service.findOne(id);
+  }
 
   @Patch(':id')
   @Roles('clinic-admin', 'clinic-resepsionis')

@@ -228,9 +228,7 @@ export class ClinicUsersService {
       isActive: user.isActive,
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
-      roles: user.roles
-        .map((r) => r.role)
-        .filter((r) => r.name.startsWith('clinic-')),
+      roles: user.roles.map((r) => r.role).filter((r) => r.name.startsWith('clinic-')),
     };
   }
 }
