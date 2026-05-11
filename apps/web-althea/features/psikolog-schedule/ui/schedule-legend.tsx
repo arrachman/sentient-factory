@@ -5,29 +5,34 @@ const ITEMS: Array<{
   color: string;
   border: string;
   borderStyle?: 'dashed';
+  emoji: string;
   label: string;
 }> = [
-  { color: '#5b8a66', border: '#385a43', label: '● Berlangsung' },
+  { color: '#5b8a66', border: '#385a43', emoji: '🟢', label: 'Berlangsung' },
   {
     color: '#cfdfd1',
     border: '#7aa382',
-    label: '◷ Booked (akan datang)',
+    emoji: '📌',
+    label: 'Booked (akan datang)',
   },
   {
     color: '#ece6d3',
     border: '#c9bfa1',
-    label: '✓ Selesai',
+    emoji: '✅',
+    label: 'Selesai',
   },
   {
     color: '#e8f0e8',
     border: '#5b8a66',
     borderStyle: 'dashed',
-    label: '+ Tersedia · siap di-booking',
+    emoji: '✨',
+    label: 'Tersedia · siap di-booking',
   },
   {
     color: '#eeece6',
     border: '#d8d4c8',
-    label: '— Libur / di luar jadwal',
+    emoji: '💤',
+    label: 'Libur / di luar jadwal',
   },
 ];
 
@@ -46,14 +51,20 @@ export function ScheduleLegend() {
         <div key={it.label} className="flex items-center gap-1.5">
           <span
             style={{
-              width: 18,
-              height: 14,
+              width: 22,
+              height: 16,
               borderRadius: 3,
               background: it.color,
               border: `${it.borderStyle === 'dashed' ? '1.5px dashed' : '1px solid'} ${it.border}`,
               flexShrink: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
             }}
-          />
+          >
+            {it.emoji}
+          </span>
           <span>{it.label}</span>
         </div>
       ))}
