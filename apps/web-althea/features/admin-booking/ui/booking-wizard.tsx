@@ -1,19 +1,28 @@
 'use client';
 
 /**
- * Booking Wizard — orchestrator slim.
+ * Booking Wizard — single-page form.
  *
- * Layout: header dialog → 4-step stepper → step body (switches by step) →
- * footer (prev/cancel/next-or-submit). Logic via `useWizardState()`.
+ * Sebelumnya 4-step wizard dengan Next/Prev — admin harus klik 3-4×
+ * untuk submit 1 booking. Now: semua section visible in one scroll,
+ * fill top-to-bottom, klik "Buat Booking" sekali.
+ *
+ * Sections (urut, prereq cascading):
+ *   1. Klien (combobox searchable)
+ *   2. Layanan (button grid grouped by category) — unlock after klien dipilih
+ *   3. Psikolog (card grid) — unlock after layanan dipilih
+ *   4. Jadwal & Ruang (date + slot picker + room) — unlock after psikolog dipilih
+ *
+ * Auto-scroll ke section selanjutnya saat user pick. Sections dengan
+ * prereq belum terpenuhi → disabled overlay + hint message.
  */
-import { X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Check, X } from 'lucide-react';
 import { Step1Client } from './booking-wizard/step1-client';
 import { Step2Service } from './booking-wizard/step2-service';
 import { Step3Psikolog } from './booking-wizard/step3-psikolog';
 import { Step4ScheduleRoom } from './booking-wizard/step4-schedule-room';
 import { useWizardState } from './booking-wizard/use-wizard-state';
-import { WizardFooter } from './booking-wizard/wizard-footer';
-import { WizardStepper } from './booking-wizard/wizard-stepper';
 
 export function BookingWizard({
   open,
@@ -23,8 +32,33 @@ export function BookingWizard({
   onClose: () => void;
 }) {
   const w = useWizardState({ open, onClose });
+  const sec2Ref = useRef<HTMLDivElement>(null);
+  const sec3Ref = useRef<HTMLDivElement>(null);
+  const sec4Ref = useRef<HTMLDivElement>(null);
+  const s = w.state;
+  const setS = w.setState;
+
+  // Auto-scroll cascade: saat user pick di section sebelumnya, gulir ke section berikutnya.
+  useEffect(() => {
+    if (!open) return;
+    if (s.clientId && !s.serviceId) {
+      sec2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (s.serviceId && !s.psikologUserId) {
+      sec3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else if (s.psikologUserId && s.slotIdx === null) {
+      sec4Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [open, s.clientId, s.serviceId, s.psikologUserId, s.slotIdx]);
+
   if (!open) return null;
-  const { state: s, setState: setS } = w;
+
+  const canSubmit =
+    !!s.clientId &&
+    !!s.serviceId &&
+    !!s.psikologUserId &&
+    !!s.roomId &&
+    s.slotIdx !== null &&
+    !w.submitting;
 
   return (
     <div
@@ -35,34 +69,62 @@ export function BookingWizard({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="card-althea w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-card">
-        <DialogHeader step={s.step} onClose={onClose} />
-        <WizardStepper step={s.step} />
+      <div className="card-althea w-full max-w-2xl max-h-[92vh] overflow-hidden bg-card flex flex-col">
+        <DialogHeader onClose={onClose} />
 
-        <div className="px-6 py-4 space-y-4 min-h-[280px]">
-          {s.step === 1 ? (
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+          <Section
+            stepNum={1}
+            title="Klien"
+            filled={!!s.clientId}
+            disabled={false}
+          >
             <Step1Client
               clientList={w.clientList}
               selectedId={s.clientId}
               onChange={(clientId) => setS({ ...s, clientId })}
             />
-          ) : null}
-          {s.step === 2 ? (
+          </Section>
+
+          <Section
+            ref={sec2Ref}
+            stepNum={2}
+            title="Layanan"
+            filled={!!s.serviceId}
+            disabled={!s.clientId}
+            disabledHint="Pilih klien dulu."
+          >
             <Step2Service
               serviceList={w.serviceList}
               selectedId={s.serviceId}
               selectedService={w.selectedService}
               onChange={(serviceId) => setS({ ...s, serviceId })}
             />
-          ) : null}
-          {s.step === 3 ? (
+          </Section>
+
+          <Section
+            ref={sec3Ref}
+            stepNum={3}
+            title="Psikolog"
+            filled={!!s.psikologUserId}
+            disabled={!s.serviceId}
+            disabledHint="Pilih layanan dulu."
+          >
             <Step3Psikolog
               psikologList={w.psikologList}
               selectedId={s.psikologUserId}
               onChange={(psikologUserId) => setS({ ...s, psikologUserId })}
             />
-          ) : null}
-          {s.step === 4 ? (
+          </Section>
+
+          <Section
+            ref={sec4Ref}
+            stepNum={4}
+            title="Jadwal & Ruang"
+            filled={s.slotIdx !== null && !!s.roomId}
+            disabled={!s.psikologUserId}
+            disabledHint="Pilih psikolog dulu."
+          >
             <Step4ScheduleRoom
               state={s}
               setState={setS}
@@ -77,35 +139,35 @@ export function BookingWizard({
               roomList={w.roomList}
               psikologDayBookings={w.psikologDayBookings}
             />
-          ) : null}
+          </Section>
         </div>
 
-        <WizardFooter
-          step={s.step}
-          canNext={w.canNext()}
-          submitting={w.submitting}
-          onPrev={w.prev}
-          onNext={w.next}
-          onSubmit={w.submit}
-          onCancel={onClose}
-        />
+        <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
+          <button type="button" onClick={onClose} className="btn btn-ghost">
+            Batal
+          </button>
+          <button
+            type="button"
+            onClick={() => w.submit()}
+            disabled={!canSubmit}
+            className="btn btn-primary disabled:opacity-50"
+          >
+            {w.submitting ? 'Menyimpan...' : 'Buat Booking'}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function DialogHeader({
-  step,
-  onClose,
-}: {
-  step: number;
-  onClose: () => void;
-}) {
+function DialogHeader({ onClose }: { onClose: () => void }) {
   return (
-    <div className="flex items-center justify-between border-b border-border px-6 py-4">
+    <div className="flex items-center justify-between border-b border-border px-6 py-4 flex-shrink-0">
       <div>
-        <h2 className="h2">Booking Wizard</h2>
-        <p className="caption mt-1">Step {step} dari 4</p>
+        <h2 className="h2">Booking Baru</h2>
+        <p className="caption mt-1">
+          Isi klien, layanan, psikolog, lalu pilih slot.
+        </p>
       </div>
       <button
         type="button"
@@ -118,3 +180,47 @@ function DialogHeader({
     </div>
   );
 }
+
+const Section = ({
+  ref,
+  stepNum,
+  title,
+  filled,
+  disabled,
+  disabledHint,
+  children,
+}: {
+  ref?: React.Ref<HTMLDivElement>;
+  stepNum: number;
+  title: string;
+  filled: boolean;
+  disabled: boolean;
+  disabledHint?: string;
+  children: React.ReactNode;
+}) => {
+  return (
+    <div
+      ref={ref}
+      className={`rounded-lg border bg-card transition-opacity ${
+        disabled ? 'opacity-50 pointer-events-none' : 'opacity-100'
+      } ${filled ? 'border-sage-300' : 'border-border'}`}
+    >
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
+        <span
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold ${
+            filled
+              ? 'bg-sage-500 text-white'
+              : 'bg-cream-100 text-fg-muted'
+          }`}
+        >
+          {filled ? <Check className="h-3.5 w-3.5" /> : stepNum}
+        </span>
+        <span className="text-sm font-semibold text-teal-800">{title}</span>
+        {disabled && disabledHint ? (
+          <span className="ml-auto caption text-fg-muted italic">{disabledHint}</span>
+        ) : null}
+      </div>
+      <div className="px-4 py-3">{children}</div>
+    </div>
+  );
+};
