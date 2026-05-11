@@ -13,6 +13,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { bookingApi } from '@/features/admin-booking/api/booking.api';
 import { useMe } from '@/features/auth/hooks/use-me';
+import {
+  useMyDateOverrides,
+  usePsikologList,
+} from '@/features/admin-psikolog/hooks/use-psikolog';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import type { Booking } from '@/features/admin-booking/model/types';
 import {
   EMPTY_FILTERS,
@@ -20,6 +25,7 @@ import {
   type ScheduleFilters,
   type ViewMode,
 } from '../model/constants';
+import { resolveDayAvailability, type DayAvailability } from '../model/availability';
 import {
   addDays,
   addMonths,
@@ -123,14 +129,44 @@ export function usePsikologSchedule() {
   const isLoading = dayQueries.some((q) => q.isLoading);
 
   // ---------------------------------------------------------------------
+  // Slot definitions + per-day availability (untuk visualisasi cell state)
+  // ---------------------------------------------------------------------
+  const settingsQuery = useSettings();
+  const slotsOfDay = settingsQuery.data?.data.slotsOfDay ?? [];
+  const psikologList = usePsikologList({ limit: 200 });
+  const myProfile = psikologList.data?.data.find((p) => p.userId === myUserId);
+  const overrides = useMyDateOverrides();
+
+  const dayAvailability = useMemo<DayAvailability[]>(
+    () =>
+      days.map((d) =>
+        resolveDayAvailability(
+          d,
+          myProfile?.weeklyAvailability ?? null,
+          overrides.data?.data ?? [],
+        ),
+      ),
+    [days, myProfile?.weeklyAvailability, overrides.data?.data],
+  );
+
+  // ---------------------------------------------------------------------
   // Stats
   // ---------------------------------------------------------------------
 
   const todayIdx = days.findIndex((d) => toDateKey(d) === todayKey());
   const totalBooked = allBookings.length;
-  const totalSlots = days.length * SLOTS.length;
+  // Total slot tersedia = sum across days dari slot yang isOpen + slotIndex valid.
+  const totalAvailableSlots = useMemo(() => {
+    if (slotsOfDay.length === 0) return days.length * SLOTS.length; // fallback
+    let n = 0;
+    for (const av of dayAvailability) {
+      if (!av.isOpen) continue;
+      n += av.slotIndices ? av.slotIndices.length : slotsOfDay.length;
+    }
+    return n;
+  }, [dayAvailability, slotsOfDay.length, days.length]);
   const utilisation =
-    totalSlots > 0 ? Math.round((totalBooked / totalSlots) * 100) : 0;
+    totalAvailableSlots > 0 ? Math.round((totalBooked / totalAvailableSlots) * 100) : 0;
 
   // ---------------------------------------------------------------------
   // Date navigation (view-aware)
@@ -175,6 +211,9 @@ export function usePsikologSchedule() {
     dayBookings: filteredDayBookings,
     allBookings,
     isLoading,
+    // Slot definitions + availability per day (untuk render slot states)
+    slotsOfDay,
+    dayAvailability,
     // Stats
     totalBooked,
     utilisation,

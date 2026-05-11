@@ -1,28 +1,44 @@
 'use client';
 
 /**
- * Hari view — single day timeline (1 kolom × 10 slot).
- * Untuk fokus harian, lebih besar/detail daripada Minggu mode.
+ * Hari view — single day timeline (1 kolom × N slot dari ClinicSettings).
+ * Lebih besar/detail daripada Minggu mode.
  */
 import type { Booking } from '@/features/admin-booking/model/types';
-import { SLOTS, SLOT_HEIGHT } from '../model/constants';
-import { bookingPositionInDay, formatDateLong } from '../model/format';
-import { BookingBlock } from './booking-block';
+import type { ClinicSettings } from '@/features/admin-pengaturan/api/settings.api';
+import { formatDateLong } from '../model/format';
+import { bookingForSlot, type DayAvailability } from '../model/availability';
+import { SlotCell } from './slot-cell';
+
+const CELL_HEIGHT = 88;
 
 export function HariView({
   date,
   bookings,
   isLoading,
+  slotsOfDay,
+  availability,
 }: {
   date: string;
   bookings: Booking[];
   isLoading: boolean;
+  slotsOfDay: ClinicSettings['slotsOfDay'];
+  availability: DayAvailability;
 }) {
   const dayDate = new Date(date);
+
+  if (slotsOfDay.length === 0) {
+    return (
+      <div className="card-althea p-8 text-center text-fg-muted">
+        Slot operasional klinik belum di-set. Hubungi admin.
+      </div>
+    );
+  }
+
   return (
-    <div className="card-althea" style={{ padding: 0, overflow: 'hidden' }}>
-      {/* Header */}
+    <div className="card-althea overflow-hidden" style={{ padding: 0 }}>
       <div
+        className="flex items-baseline gap-2"
         style={{
           padding: '12px 18px',
           background: 'var(--sage-50)',
@@ -39,12 +55,25 @@ export function HariView({
         >
           {formatDateLong(date)}
         </span>
-        <span className="caption" style={{ marginLeft: 8 }}>
-          · {bookings.length} sesi
-        </span>
+        <span className="caption">· {bookings.length} sesi</span>
+        {!availability.isOpen && (
+          <span
+            className="ml-auto px-2 py-0.5 rounded text-[10.5px] font-semibold uppercase tracking-wider"
+            style={{ background: '#f7d9b7', color: '#8a4a00' }}
+          >
+            {availability.source === 'override' ? 'Cuti override' : 'Libur'}
+          </span>
+        )}
+        {availability.isOpen && availability.source === 'override' && (
+          <span
+            className="ml-auto px-2 py-0.5 rounded text-[10.5px] font-semibold uppercase tracking-wider"
+            style={{ background: '#dde9d8', color: '#3a5b3f' }}
+          >
+            Jadwal khusus
+          </span>
+        )}
       </div>
 
-      {/* Grid */}
       <div style={{ position: 'relative' }}>
         {isLoading ? (
           <div
@@ -61,78 +90,67 @@ export function HariView({
             Memuat jadwal...
           </div>
         ) : null}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '70px 1fr',
-          }}
-        >
-          {/* Time column */}
-          <div className="flex flex-col">
-            {SLOTS.map((t) => (
+
+        {slotsOfDay.map((slot, slotIdx) => {
+          const booking = bookingForSlot(bookings, dayDate, slot.start, slot.end);
+          return (
+            <div
+              key={slotIdx}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '90px 1fr',
+                borderTop: '1px solid var(--border)',
+              }}
+            >
               <div
-                key={t}
                 style={{
-                  height: SLOT_HEIGHT,
-                  padding: '6px 10px',
-                  borderTop: '1px solid var(--border)',
-                  textAlign: 'right',
+                  background: 'var(--cream-50)',
+                  padding: '8px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  borderRight: '1px solid var(--border)',
                 }}
               >
                 <span
-                  className="caption"
-                  style={{ fontSize: 11, fontVariantNumeric: 'tabular-nums' }}
+                  className="font-mono"
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: 'var(--teal-800)',
+                  }}
                 >
-                  {t}
+                  {slot.start}
                 </span>
+                <span style={{ fontSize: 10.5, color: 'var(--fg-muted)' }}>
+                  {slot.end}
+                </span>
+                {slot.label && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: 'var(--fg-muted)',
+                      marginTop: 2,
+                    }}
+                  >
+                    {slot.label}
+                  </span>
+                )}
               </div>
-            ))}
-          </div>
-
-          {/* Day column */}
-          <div
-            style={{
-              position: 'relative',
-              borderLeft: '1px solid var(--border)',
-            }}
-          >
-            {SLOTS.map((_, si) => (
-              <div
-                key={si}
-                style={{
-                  height: SLOT_HEIGHT,
-                  borderTop: '1px solid var(--border)',
-                }}
-              />
-            ))}
-            {bookings.map((b) => {
-              const pos = bookingPositionInDay(b, dayDate);
-              if (!pos) return null;
-              return (
-                <BookingBlock
-                  key={b.id}
-                  b={b}
-                  slotIdx={pos.slotIdx}
-                  span={pos.span}
+              <div>
+                <SlotCell
+                  date={dayDate}
+                  slotIdx={slotIdx}
+                  slotStart={slot.start}
+                  slotEnd={slot.end}
+                  booking={booking}
+                  availability={availability}
+                  cellHeight={CELL_HEIGHT}
                 />
-              );
-            })}
-            {bookings.length === 0 && !isLoading && (
-              <div
-                className="caption"
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'grid',
-                  placeItems: 'center',
-                  pointerEvents: 'none',
-                }}
-              >
-                Tidak ada sesi hari ini.
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

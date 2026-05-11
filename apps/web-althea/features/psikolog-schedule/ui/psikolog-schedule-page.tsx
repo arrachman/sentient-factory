@@ -108,6 +108,14 @@ export function PsikologSchedulePage() {
           date={page.anchor}
           bookings={page.dayBookings[0] ?? []}
           isLoading={page.isLoading}
+          slotsOfDay={page.slotsOfDay}
+          availability={
+            page.dayAvailability[0] ?? {
+              isOpen: false,
+              slotIndices: null,
+              source: 'unset',
+            }
+          }
         />
       ) : page.view === 'Minggu' ? (
         <WeekGrid
@@ -115,6 +123,8 @@ export function PsikologSchedulePage() {
           todayIdx={page.todayIdx}
           dayBookings={page.dayBookings}
           isLoading={page.isLoading}
+          slotsOfDay={page.slotsOfDay}
+          dayAvailability={page.dayAvailability}
         />
       ) : (
         <BulanView

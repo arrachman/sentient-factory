@@ -1,13 +1,14 @@
 /**
- * Legend untuk grid Jadwal Saya — 4 status visual booking blocks.
+ * Legend untuk grid Jadwal Saya — 5 state visual cell.
  */
 const ITEMS: Array<{
   color: string;
   border: string;
   borderStyle?: 'dashed';
+  pattern?: boolean;
   label: string;
 }> = [
-  { color: 'var(--sage-500)', border: 'var(--sage-500)', label: 'Berlangsung' },
+  { color: 'var(--sage-500)', border: 'var(--sage-700)', label: 'Berlangsung' },
   {
     color: 'var(--sage-100)',
     border: 'var(--sage-300)',
@@ -15,14 +16,20 @@ const ITEMS: Array<{
   },
   {
     color: 'var(--cream-200)',
-    border: 'var(--border-strong)',
+    border: 'var(--border-strong, #d4cfc1)',
     label: 'Selesai',
   },
   {
-    color: 'var(--bg-elev, #fff)',
-    border: 'var(--sage-400)',
+    color: 'transparent',
+    border: '#9ebca3',
     borderStyle: 'dashed',
-    label: 'Tersedia · belum ada klien',
+    label: 'Tersedia · siap di-booking',
+  },
+  {
+    color: 'transparent',
+    border: 'var(--border)',
+    pattern: true,
+    label: 'Libur / di luar jadwal',
   },
 ];
 
@@ -44,7 +51,9 @@ export function ScheduleLegend() {
               width: 14,
               height: 14,
               borderRadius: 3,
-              background: it.color,
+              background: it.pattern
+                ? 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 6px)'
+                : it.color,
               border: `${it.borderStyle === 'dashed' ? '1.5px dashed' : '1px solid'} ${it.border}`,
             }}
           />
