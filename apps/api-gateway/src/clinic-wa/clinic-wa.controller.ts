@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { SkipAudit } from '../clinic-audit/decorators/skip-audit.decorator';
@@ -38,7 +39,7 @@ export class ClinicWaController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('clinic-admin')
   @ApiOperation({ summary: 'Create WA template' })
-  createTemplate(@Body() dto: CreateTemplateDto, @Request() req: any) {
+  createTemplate(@Body() dto: CreateTemplateDto, @Request() req: AuthRequest) {
     return this.service.createTemplate(dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -62,7 +63,7 @@ export class ClinicWaController {
   updateTemplate(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTemplateDto,
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.updateTemplate(id, dto, req.user?.sub ?? req.user?.id);
   }
@@ -70,7 +71,7 @@ export class ClinicWaController {
   @Delete('template/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('clinic-admin')
-  removeTemplate(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  removeTemplate(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.removeTemplate(id, req.user?.sub ?? req.user?.id);
   }
 
@@ -89,7 +90,7 @@ export class ClinicWaController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('clinic-admin')
   @ApiOperation({ summary: 'Test send WA via Fonnte (admin only, untuk debug)' })
-  sendTest(@Body() dto: SendTestDto, @Request() req: any) {
+  sendTest(@Body() dto: SendTestDto, @Request() req: AuthRequest) {
     return this.service.sendTest(dto, req.user?.sub ?? req.user?.id);
   }
 

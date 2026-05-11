@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ClinicSettingsService } from './clinic-settings.service';
@@ -23,7 +24,7 @@ export class ClinicSettingsController {
   @Patch()
   @Roles('clinic-admin')
   @ApiOperation({ summary: 'Update clinic settings (partial)' })
-  update(@Body() dto: UpdateSettingsDto, @Request() req: any) {
+  update(@Body() dto: UpdateSettingsDto, @Request() req: AuthRequest) {
     return this.service.update(dto, req.user?.sub ?? req.user?.id);
   }
 }

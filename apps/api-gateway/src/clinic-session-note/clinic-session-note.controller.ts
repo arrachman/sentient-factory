@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ClinicSessionNoteService } from './clinic-session-note.service';
@@ -32,21 +33,21 @@ export class ClinicSessionNoteController {
   @Post()
   @Roles('clinic-admin', 'clinic-psikolog')
   @ApiOperation({ summary: 'Create clinical session note' })
-  create(@Body() dto: CreateSessionNoteDto, @Request() req: any) {
+  create(@Body() dto: CreateSessionNoteDto, @Request() req: AuthRequest) {
     return this.service.create(dto, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Get()
   @Roles('clinic-admin', 'clinic-psikolog')
   @ApiOperation({ summary: 'List session notes (privacy-filtered)' })
-  findAll(@Query() query: QuerySessionNoteDto, @Request() req: any) {
+  findAll(@Query() query: QuerySessionNoteDto, @Request() req: AuthRequest) {
     return this.service.findAll(query, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Get('booking/:bookingId')
   @Roles('clinic-admin', 'clinic-psikolog')
   @ApiOperation({ summary: 'Get all notes for a booking' })
-  findByBooking(@Param('bookingId', ParseIntPipe) bookingId: number, @Request() req: any) {
+  findByBooking(@Param('bookingId', ParseIntPipe) bookingId: number, @Request() req: AuthRequest) {
     return this.service.findByBooking(
       bookingId,
       req.user?.sub ?? req.user?.id,
@@ -56,7 +57,7 @@ export class ClinicSessionNoteController {
 
   @Get(':id')
   @Roles('clinic-admin', 'clinic-psikolog')
-  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  findOne(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.findOne(id, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
@@ -65,14 +66,14 @@ export class ClinicSessionNoteController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSessionNoteDto,
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.update(id, dto, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 
   @Delete(':id')
   @Roles('clinic-admin', 'clinic-psikolog')
-  remove(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  remove(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.remove(id, req.user?.sub ?? req.user?.id, req.user?.roles ?? []);
   }
 }

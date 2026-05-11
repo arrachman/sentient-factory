@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
@@ -41,7 +42,7 @@ export class ClinicBookingController {
   @Roles(...WRITE_ROLES)
   @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Create booking (supports Idempotency-Key header)' })
-  create(@Body() dto: CreateBookingDto, @Request() req: any) {
+  create(@Body() dto: CreateBookingDto, @Request() req: AuthRequest) {
     return this.service.create(dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -50,7 +51,7 @@ export class ClinicBookingController {
   @UseInterceptors(IdempotencyInterceptor)
   @AuditAction('create-package')
   @ApiOperation({ summary: 'Create multi-session package booking (atomic, all-or-nothing)' })
-  createPackage(@Body() dto: CreatePackageBookingDto, @Request() req: any) {
+  createPackage(@Body() dto: CreatePackageBookingDto, @Request() req: AuthRequest) {
     return this.service.createPackage(dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -71,7 +72,7 @@ export class ClinicBookingController {
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateBookingDto,
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.update(id, dto, req.user?.sub ?? req.user?.id);
   }
@@ -80,7 +81,7 @@ export class ClinicBookingController {
   @Roles(...WRITE_ROLES)
   @AuditAction('confirm')
   @ApiOperation({ summary: 'Mark booking as confirmed (DP paid)' })
-  confirm(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  confirm(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.confirm(id, req.user?.sub ?? req.user?.id);
   }
 
@@ -88,7 +89,7 @@ export class ClinicBookingController {
   @Roles(...WRITE_ROLES)
   @AuditAction('check_in')
   @ApiOperation({ summary: 'Receptionist check-in client' })
-  checkIn(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  checkIn(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.checkIn(id, req.user?.sub ?? req.user?.id);
   }
 
@@ -96,7 +97,7 @@ export class ClinicBookingController {
   @Roles('clinic-admin', 'clinic-psikolog')
   @AuditAction('start')
   @ApiOperation({ summary: 'Mark session started (psikolog)' })
-  start(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  start(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.start(id, req.user?.sub ?? req.user?.id);
   }
 
@@ -104,7 +105,7 @@ export class ClinicBookingController {
   @Roles('clinic-admin', 'clinic-psikolog')
   @AuditAction('complete')
   @ApiOperation({ summary: 'Mark session complete (psikolog)' })
-  complete(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  complete(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.complete(id, req.user?.sub ?? req.user?.id);
   }
 
@@ -115,7 +116,7 @@ export class ClinicBookingController {
   cancel(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CancelBookingDto,
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.cancel(id, dto, req.user?.sub ?? req.user?.id);
   }
@@ -127,7 +128,7 @@ export class ClinicBookingController {
   reschedule(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RescheduleBookingDto,
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.reschedule(id, dto, req.user?.sub ?? req.user?.id);
   }
@@ -139,7 +140,7 @@ export class ClinicBookingController {
   addNote(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: { noteText: string },
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.addNote(id, dto.noteText, req.user?.sub ?? req.user?.id);
   }
@@ -160,7 +161,7 @@ export class ClinicBookingController {
   sendReminder(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: { templateName?: string },
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.sendReminder(
       id,

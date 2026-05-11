@@ -14,6 +14,7 @@ import {
 import { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
@@ -34,7 +35,7 @@ export class ClinicPaymentController {
   @Roles('clinic-admin', 'clinic-resepsionis')
   @UseInterceptors(IdempotencyInterceptor)
   @ApiOperation({ summary: 'Create payment record untuk booking (supports Idempotency-Key)' })
-  create(@Body() dto: CreatePaymentDto, @Request() req: any) {
+  create(@Body() dto: CreatePaymentDto, @Request() req: AuthRequest) {
     return this.service.create(dto, req.user?.sub ?? req.user?.id);
   }
 
@@ -45,7 +46,7 @@ export class ClinicPaymentController {
   record(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RecordPaymentDto,
-    @Request() req: any,
+    @Request() req: AuthRequest,
   ) {
     return this.service.record(id, dto, req.user?.sub ?? req.user?.id);
   }
@@ -86,7 +87,7 @@ export class ClinicPaymentController {
   @Post(':id/send-receipt')
   @Roles('clinic-admin', 'clinic-resepsionis')
   @ApiOperation({ summary: 'Send receipt notification to client via WhatsApp' })
-  sendReceipt(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+  sendReceipt(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
     return this.service.sendReceiptViaWa(id, req.user?.sub ?? req.user?.id);
   }
 }

@@ -131,7 +131,10 @@ export class ClinicAuditInterceptor implements NestInterceptor {
   /**
    * Try to extract entity id from URL params or response body.
    */
-  private extractEntityId(req: any, response: any): string | undefined {
+  private extractEntityId(
+    req: { params?: { id?: string | number } },
+    response: unknown,
+  ): string | undefined {
     if (req?.params?.id) {
       return String(req.params.id);
     }
@@ -144,7 +147,10 @@ export class ClinicAuditInterceptor implements NestInterceptor {
     return undefined;
   }
 
-  private extractIp(req: any): string | null {
+  private extractIp(req: {
+    headers?: Record<string, string | string[] | undefined>;
+    ip?: string;
+  }): string | null {
     const forwarded = req?.headers?.['x-forwarded-for'];
     if (typeof forwarded === 'string') {
       return forwarded.split(',')[0].trim();
