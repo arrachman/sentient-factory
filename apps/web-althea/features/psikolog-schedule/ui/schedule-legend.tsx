@@ -5,31 +5,31 @@ const ITEMS: Array<{
   color: string;
   border: string;
   borderStyle?: 'dashed';
-  pattern?: boolean;
+  pattern?: 'libur';
   label: string;
 }> = [
-  { color: 'var(--sage-500)', border: 'var(--sage-700)', label: 'Berlangsung' },
+  { color: '#5b8a66', border: '#385a43', label: '● Berlangsung' },
   {
-    color: 'var(--sage-100)',
-    border: 'var(--sage-300)',
-    label: 'Booked (akan datang)',
+    color: '#cfdfd1',
+    border: '#7aa382',
+    label: '◷ Booked (akan datang)',
   },
   {
-    color: 'var(--cream-200)',
-    border: 'var(--border-strong, #d4cfc1)',
-    label: 'Selesai',
+    color: '#ece6d3',
+    border: '#c9bfa1',
+    label: '✓ Selesai',
   },
   {
-    color: 'transparent',
-    border: '#9ebca3',
+    color: '#e8f0e8',
+    border: '#5b8a66',
     borderStyle: 'dashed',
-    label: 'Tersedia · siap di-booking',
+    label: '+ Tersedia · siap di-booking',
   },
   {
-    color: 'transparent',
-    border: 'var(--border)',
-    pattern: true,
-    label: 'Libur / di luar jadwal',
+    color: '#f5ede0',
+    border: '#d4bf9a',
+    pattern: 'libur',
+    label: '— Libur / di luar jadwal',
   },
 ];
 
@@ -45,16 +45,18 @@ export function ScheduleLegend() {
       }}
     >
       {ITEMS.map((it) => (
-        <div key={it.label} className="flex items-center gap-1">
+        <div key={it.label} className="flex items-center gap-1.5">
           <span
             style={{
-              width: 14,
+              width: 18,
               height: 14,
               borderRadius: 3,
-              background: it.pattern
-                ? 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 6px)'
-                : it.color,
+              background:
+                it.pattern === 'libur'
+                  ? 'repeating-linear-gradient(45deg, #f5ede0, #f5ede0 4px, #ead9bf 4px, #ead9bf 8px)'
+                  : it.color,
               border: `${it.borderStyle === 'dashed' ? '1.5px dashed' : '1px solid'} ${it.border}`,
+              flexShrink: 0,
             }}
           />
           <span>{it.label}</span>

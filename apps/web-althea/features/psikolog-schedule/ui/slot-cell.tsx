@@ -59,36 +59,39 @@ function BookedCell({ booking, cellHeight }: { booking: Booking; cellHeight: num
   const cat = booking.service.category;
   const bar = SVC_BAR[cat] ?? SVC_BAR.konseling;
 
-  let bg = 'var(--sage-100)';
-  let borderColor = 'var(--sage-300)';
-  let textColor = 'var(--sage-800)';
+  let bg = '#cfdfd1'; // sage-200 ish — lebih gelap dari sage-100, kontras vs cream
+  let borderColor = '#7aa382'; // sage-400
+  let textColor = '#2d4736'; // sage-800
   let opacity = 1;
   let badge: string | null = null;
   let badgeBg = '';
 
   if (tone === 'now') {
-    bg = 'var(--sage-500)';
-    borderColor = 'var(--sage-700)';
+    bg = '#5b8a66'; // sage-500 solid
+    borderColor = '#385a43'; // sage-700
     textColor = '#fff';
     badge = '● BERLANGSUNG';
-    badgeBg = 'rgba(255,255,255,0.25)';
+    badgeBg = 'rgba(255,255,255,0.3)';
   } else if (tone === 'done') {
-    bg = 'var(--cream-200)';
-    borderColor = 'var(--border-strong, #d4cfc1)';
-    textColor = 'var(--fg-muted)';
-    opacity = 0.75;
-    badge = 'SELESAI';
-    badgeBg = 'rgba(0,0,0,0.06)';
+    // Cream-warm so it reads as "history" vs the sage-tinted "live" states
+    bg = '#ece6d3'; // cream-200
+    borderColor = '#c9bfa1';
+    textColor = '#6b6047';
+    opacity = 0.85;
+    badge = '✓ SELESAI';
+    badgeBg = 'rgba(0,0,0,0.08)';
   } else if (tone === 'cancelled') {
-    bg = 'var(--cream-100)';
+    bg = '#f5f2e9'; // cream-100
     borderColor = 'var(--border)';
     textColor = 'var(--fg-muted)';
-    opacity = 0.5;
-    badge = 'BATAL';
-    badgeBg = 'rgba(0,0,0,0.06)';
+    opacity = 0.55;
+    badge = '✕ BATAL';
+    badgeBg = 'rgba(181,65,65,0.12)';
   } else {
-    badge = 'BOOKED';
-    badgeBg = 'rgba(91,138,102,0.18)';
+    badge = '◷ BOOKED';
+    badgeBg = '#5b8a66';
+    // override badgeBg below: lighter sage with darker text for read
+    badgeBg = 'rgba(91,138,102,0.28)';
   }
 
   return (
@@ -166,17 +169,19 @@ function AvailableCell({ cellHeight }: { cellHeight: number }) {
         margin: 2,
         padding: '6px 8px',
         borderRadius: 6,
-        background: 'transparent',
-        border: '1.5px dashed #9ebca3',
-        color: '#5b8a66',
+        // Soft sage tint background — clearly "available", inviting click
+        background: '#e8f0e8',
+        border: '2px dashed #5b8a66',
+        color: '#2d4736',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 10.5,
-        fontWeight: 500,
-        opacity: 0.65,
+        gap: 4,
+        fontSize: 11,
+        fontWeight: 600,
       }}
     >
+      <span style={{ fontSize: 12 }}>+</span>
       Tersedia
     </div>
   );
@@ -191,18 +196,21 @@ function LiburCell({ cellHeight, reason }: { cellHeight: number; reason: string 
         margin: 2,
         padding: '6px 8px',
         borderRadius: 6,
-        background: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.025) 4px, rgba(0,0,0,0.025) 8px)',
-        border: '1px solid var(--border)',
-        color: 'var(--fg-muted)',
+        // Warm cream stripe — clearly "not available", warning-ish
+        background:
+          'repeating-linear-gradient(45deg, #f5ede0, #f5ede0 5px, #ead9bf 5px, #ead9bf 10px)',
+        border: '1px solid #d4bf9a',
+        color: '#7a5a2a',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 10,
-        fontWeight: 500,
-        fontStyle: 'italic',
+        gap: 4,
+        fontSize: 11,
+        fontWeight: 600,
       }}
     >
-      libur
+      <span style={{ fontSize: 11 }}>—</span>
+      Libur
     </div>
   );
 }
@@ -213,7 +221,9 @@ function PastEmptyCell({ cellHeight }: { cellHeight: number }) {
       style={{
         height: cellHeight - 4,
         margin: 2,
-        background: 'transparent',
+        borderRadius: 6,
+        background: 'rgba(0,0,0,0.015)',
+        border: '1px dashed rgba(0,0,0,0.06)',
       }}
     />
   );
