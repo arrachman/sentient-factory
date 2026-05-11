@@ -3,11 +3,16 @@
 /**
  * Psikolog · Jadwal Saya — orchestrator.
  *
- * Layout: toolbar (date nav + view toggle + filter button + stats) → legend →
- * view (Hari/Minggu/Bulan) → footnote.
+ * Layout: toolbar (date nav + view toggle + filter button + stats + Set Jadwal) →
+ * legend → view (Hari/Minggu/Bulan) → footnote.
  */
-import { Bell } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, CalendarClock } from 'lucide-react';
+import { useMe } from '@/features/auth/hooks/use-me';
+import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
+import { hasWeeklyAvailability } from '@/features/admin-psikolog/model/types';
 import { usePsikologSchedule } from '../hooks/use-psikolog-schedule';
+import { AvailabilityDialog } from './availability-dialog';
 import { BulanView } from './bulan-view';
 import { FilterPopover } from './filter-popover';
 import { HariView } from './hari-view';
@@ -17,6 +22,15 @@ import { WeekGrid } from './week-grid';
 
 export function PsikologSchedulePage() {
   const page = usePsikologSchedule();
+  const me = useMe();
+  // List psikolog buat cari profile self (untuk pre-populate dialog).
+  const psikologList = usePsikologList({ limit: 200 });
+  const myProfile = psikologList.data?.data.find(
+    (p) => p.userId === me.data?.data.id,
+  );
+  const myWeekly = myProfile?.weeklyAvailability ?? null;
+  const needsSetup = myProfile && !hasWeeklyAvailability(myWeekly);
+  const [availabilityOpen, setAvailabilityOpen] = useState(false);
 
   // Skeleton sampai anchor terisi (post-mount). Mencegah hydration
   // mismatch antara SSR (todayKey() di server time) vs CSR (client time).
@@ -30,6 +44,21 @@ export function PsikologSchedulePage() {
 
   return (
     <div style={{ padding: 24 }}>
+      {needsSetup && (
+        <div
+          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 flex items-start gap-2"
+          style={{ marginBottom: 12 }}
+        >
+          <CalendarClock size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+          <div className="flex-1">
+            <div className="font-semibold">Kamu belum atur jadwal availability</div>
+            <div className="caption mt-0.5" style={{ color: '#8a4a00' }}>
+              Admin tidak bisa booking kamu sampai jadwal di-set. Klik tombol <strong>Set Jadwal</strong> di kanan atas.
+            </div>
+          </div>
+        </div>
+      )}
+
       <ScheduleToolbar
         anchor={page.anchor}
         view={page.view}
@@ -50,6 +79,24 @@ export function PsikologSchedulePage() {
             onChange={page.setFilters}
           />
         }
+        actionExtra={
+          <button
+            type="button"
+            onClick={() => setAvailabilityOpen(true)}
+            disabled={!myProfile}
+            className="btn btn-primary btn-sm"
+            style={{ height: 32 }}
+            title="Atur slot availability mingguan kamu"
+          >
+            <CalendarClock size={14} /> Set Jadwal
+          </button>
+        }
+      />
+
+      <AvailabilityDialog
+        open={availabilityOpen}
+        onClose={() => setAvailabilityOpen(false)}
+        initial={myWeekly}
       />
 
       {/* Legend visible only for grid views (Hari & Minggu) */}

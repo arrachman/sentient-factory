@@ -64,6 +64,24 @@ export class ClinicPsikologController {
     return this.service.findOne(id);
   }
 
+  @Patch('me/availability')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Psikolog set jadwal availability sendiri (self-service)',
+    description: 'Body: { weeklyAvailability: { monday: { isOpen, slotIndices? }, ... } }',
+  })
+  updateMyAvailability(
+    @Body()
+    body: { weeklyAvailability: Record<string, { isOpen: boolean; slotIndices?: number[] }> },
+    @Request() req: AuthRequest,
+  ) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) {
+      throw new Error('Unauthorized — userId tidak ada di JWT');
+    }
+    return this.service.updateOwnAvailability(userId, body.weeklyAvailability ?? {});
+  }
+
   @Patch(':id')
   @Roles('clinic-admin')
   @ApiOperation({ summary: 'Update psikolog' })

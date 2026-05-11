@@ -207,6 +207,38 @@ export class ClinicPsikologService {
     };
   }
 
+  /**
+   * Psikolog update jadwal availability sendiri (self-service).
+   * Lookup profile by userId (bukan profileId) dari JWT.
+   */
+  async updateOwnAvailability(
+    userId: number,
+    weeklyAvailability: Record<string, { isOpen: boolean; slotIndices?: number[] }>,
+  ) {
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!profile) {
+      throw new NotFoundException(
+        `Profile psikolog tidak ditemukan untuk user ${userId}. Hubungi admin.`,
+      );
+    }
+    const updated = await this.prisma.clinicPsikologProfile.update({
+      where: { id: profile.id },
+      data: {
+        weeklyAvailability: weeklyAvailability as Prisma.InputJsonValue,
+        updatedBy: userId,
+      },
+      include: { user: this.userSelect() },
+    });
+    return {
+      success: true,
+      data: this.mapToResponse(updated.user, updated),
+      message: 'Jadwal availability tersimpan',
+    };
+  }
+
   async remove(id: number, actorId?: number) {
     const existing = await this.prisma.clinicPsikologProfile.findFirst({
       where: { id, deletedAt: null },

@@ -3,7 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { psikologApi, type ListParams } from '../api/psikolog.api';
-import type { CreatePsikologInput, UpdatePsikologInput } from '../model/types';
+import type {
+  CreatePsikologInput,
+  DayAvailability,
+  UpdatePsikologInput,
+} from '../model/types';
 
 const QUERY_KEY = ['clinic', 'psikolog'] as const;
 
@@ -47,6 +51,26 @@ export function useUpdatePsikolog() {
     },
     onError: (err: Error) => {
       toast.error('Gagal update psikolog', { description: err.message });
+    },
+  });
+}
+
+/**
+ * Self-service untuk role psikolog: update jadwal availability sendiri.
+ * Endpoint: PATCH /clinic/psikolog/me/availability (role-guarded clinic-psikolog).
+ */
+export function useUpdateMyAvailability() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (weeklyAvailability: Record<string, DayAvailability>) =>
+      psikologApi.updateMyAvailability(weeklyAvailability),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY });
+      qc.invalidateQueries({ queryKey: ['auth', 'me'] });
+      toast.success('Jadwal availability tersimpan');
+    },
+    onError: (err: Error) => {
+      toast.error('Gagal simpan jadwal', { description: err.message });
     },
   });
 }

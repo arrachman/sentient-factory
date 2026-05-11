@@ -23,6 +23,7 @@ export function ScheduleToolbar({
   totalBooked,
   utilisation,
   filterChildren,
+  actionExtra,
 }: {
   anchor: string;
   view: ViewMode;
@@ -36,6 +37,8 @@ export function ScheduleToolbar({
   totalBooked: number;
   utilisation: number;
   filterChildren?: ReactNode;
+  /** Slot tambahan di kanan (mis. tombol "Set Jadwal Saya"). */
+  actionExtra?: ReactNode;
 }) {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -217,6 +220,8 @@ export function ScheduleToolbar({
         </button>
         {filterChildren}
       </div>
+
+      {actionExtra}
     </div>
   );
 }

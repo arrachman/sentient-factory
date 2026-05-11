@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api-client';
 import type {
   CreatePsikologInput,
+  DayAvailability,
   ListResponse,
   Psikolog,
   SingleResponse,
@@ -40,6 +41,10 @@ export const psikologApi = {
 
   remove: (id: number) =>
     apiClient.delete<{ success: boolean; message: string }>(`/psikolog/${id}`),
+
+  /** Self-service: psikolog update jadwal availability sendiri. */
+  updateMyAvailability: (weeklyAvailability: Record<string, DayAvailability>) =>
+    apiClient.patch<SingleResponse>('/psikolog/me/availability', { weeklyAvailability }),
 };
 
 // Re-export Psikolog type untuk konsumen yang import dari sini
