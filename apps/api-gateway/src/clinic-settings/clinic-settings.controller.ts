@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Patch, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -22,6 +23,7 @@ export class ClinicSettingsController {
     'clinic-resepsionis',
     'clinic-marketing',
   )
+  @SkipThrottle()
   @ApiOperation({
     summary: 'Get clinic settings (single row, read-only untuk semua clinic role)',
     description:

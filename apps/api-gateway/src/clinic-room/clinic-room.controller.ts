@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -43,12 +44,14 @@ export class ClinicRoomController {
 
   @Get()
   @Roles(...ALL_ROLES)
+  @SkipThrottle()
   findAll(@Query() query: QueryRoomDto) {
     return this.service.findAll(query);
   }
 
   @Get(':id')
   @Roles(...ALL_ROLES)
+  @SkipThrottle()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }

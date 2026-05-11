@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthRequest } from '../auth/types/auth-request';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -41,6 +42,7 @@ export class ClinicServiceController {
     'clinic-resepsionis',
     'clinic-marketing',
   )
+  @SkipThrottle()
   @ApiOperation({ summary: 'List services' })
   findAll(@Query() query: QueryServiceDto) {
     return this.service.findAll(query);
@@ -54,6 +56,7 @@ export class ClinicServiceController {
     'clinic-resepsionis',
     'clinic-marketing',
   )
+  @SkipThrottle()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }

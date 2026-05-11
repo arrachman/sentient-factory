@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -43,8 +43,20 @@ import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    // Rate limit: 60 requests / 60 seconds default (override per-route via @Throttle decorator)
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
+    // Rate limit: env-tunable (default 600 req / 60s). Internal staff
+    // dashboard fires 10+ parallel queries on load (today, week-range,
+    // settings, rooms, services), jadi global 60/min terlalu tight dan
+    // bikin 429. Per-route override via @Throttle / @SkipThrottle decorator.
+    // Override prod via THROTTLE_LIMIT=N / THROTTLE_TTL=ms di .env.
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (cfg: ConfigService) => [
+        {
+          ttl: cfg.get<number>('THROTTLE_TTL', 60_000),
+          limit: cfg.get<number>('THROTTLE_LIMIT', 600),
+        },
+      ],
+    }),
     ScheduleModule.forRoot(),
     PrismaModule,
     HealthModule,
