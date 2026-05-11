@@ -66,6 +66,8 @@ Status: 🔵 Not started · 🟡 In progress · 🟢 Done · 🔴 Blocked
 - 2026-05-11 — **Slice 10 extended**: `/psikolog/dashboard` real-data — endpoint baru `GET /clinic/psikolog/me/dashboard-stats` (today + week + queue, TZ Asia/Jakarta). Frontend stat cards + week chart + clickable action queue
 - 2026-05-11 — Avatar upload psikolog (base64 data URL, client-side canvas resize, validasi backend ~1MB)
 - 2026-05-11 — Booking validator fix: pakai TZ klinik (Asia/Jakarta) bukan server UTC saat compute `dow + hhmm` untuk slot lookup
+- 2026-05-11 — **Slice 07 UX iterations**: schedule grid Minggu 6→7 hari penuh (Sen-Min), slot-cell 5-state contrast tuning (Booked saturated vs Tersedia almost-white), libur cell amber zebra → flat gray disabled, emoji eksperimen → revert text-only minimal, copy "Libur"→"Kosong", Bulan view cell color sesuai state (sage gradient by count)
+- 2026-05-11 — Planning docs sync: ADR 010+011 added, ADR 008 revised slot/TZ/validation cascade, slice 6+7 SPEC filled (post-MVP iterations documented), CHANGELOG.md daily entries
 
 ## Outstanding for Production-Ready
 

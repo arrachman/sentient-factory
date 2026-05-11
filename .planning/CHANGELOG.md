@@ -26,6 +26,37 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
   - Fix: pakai `localPartsInTimezone(scheduledStart, tz)` untuk `dow` + `hhmm`
 - **`d248651`** `feat(althea): /psikolog/schedule view Bulan — color cell sesuai state`
 
+### Slice 07 · Schedule grid (UX iterations Mei 11)
+
+Serangkaian polish iteratif berdasarkan feedback user real-time saat sesi review.
+
+- **`6ba1573`** `fix(althea): /psikolog/schedule cell colors lebih kontras antar state`
+  - Tersedia: transparent + 1.5px dashed sage-400 → sage tint + 2px dashed sage-500
+  - Libur: stripe tipis abu-abu → amber stripe + amber-300 border + amber-700 text
+  - Booked: sage-100 pucat → sage-200 `#cfdfd1` + sage-400 border
+  - Selesai/Batal/Past: contrast + icon prefix (●◷✓+—) untuk a11y
+- **`31a76b3`** `fix(althea): libur cell pakai gray disabled, bukan corak zebra amber`
+  - User feedback: corak zebra terlalu noisy untuk libur (semantik: passive bg, bukan attention)
+  - Background: amber stripe → flat `#eeece6` gray + 1px border `#d8d4c8`
+- **`8e73dd4`** `fix(althea): /psikolog/schedule grid Minggu tampil 7 hari penuh (Sen-Min)`
+  - `DAY_LABELS` 6 → 7 entry. `gridTemplateColumns` `repeat(6, 1fr)` → `repeat(7, 1fr)`
+  - Loop `i<6` → `i<7` di hook untuk days array
+  - Hari Minggu kalau ada override BUKA → render Tersedia/Booked normal
+- **`a52a19e`** `feat(althea): horizontal DateStrip + slot picker selalu hide unavailable`
+  - Booking wizard step 4: date picker → horizontal chip strip 7 hari (color-coded libur/tutup/available)
+  - Slot picker: hapus disabled slot dengan line-through, tampilkan **hanya yang available**
+- **`47bd35b`** `feat(althea): /psikolog/schedule pakai emoji di cell + legend`
+  - Eksperimen emoji: 🟢 Berlangsung, 📌 Booked, ✅ Selesai, ✨ Tersedia, 💤 Libur
+- **`48894f5`** `fix(althea): /psikolog/schedule cell — hapus emoji + dashed border`
+  - User feedback: emoji + dashed terlalu noisy. Revert emoji, dashed → solid 1px
+  - Tetap pakai 5-state color contrast saja
+- **`1c6dbab`** `fix(althea): kontras tinggi Booked vs Tersedia di /psikolog/schedule`
+  - User feedback: Booked `#cfdfd1` pale vs Tersedia `#e8f0e8` pale → mirip
+  - Booked → `#a9c8b0` SATURATED + sage-500 border + sage-900 text (terbaca solid card)
+  - Tersedia → `#fafdf7` ALMOST WHITE + sage-200 border tipis (terbaca empty placeholder)
+- **`3e75290`** `chore(althea): copy "Libur / di luar jadwal" → "Kosong"`
+  - Lebih netral & singkat — "Libur" mengasumsikan ada alasan personal, "Kosong" lebih akurat untuk default closed/off-window
+
 ### Slice 03 · Master Data Rooms (extended)
 
 - **`b97f84a`** `feat(althea): fasilitas ruangan terstruktur (array) + chip editor`
