@@ -12,7 +12,7 @@ const ITEMS: Array<{
   { color: '#a9c8b0', border: '#5b8a66', label: 'Booked (akan datang)' },
   { color: '#ece6d3', border: '#c9bfa1', label: 'Selesai' },
   { color: '#fafdf7', border: '#c5d8c8', label: 'Tersedia · siap di-booking' },
-  { color: '#eeece6', border: '#d8d4c8', label: 'Libur / di luar jadwal' },
+  { color: '#eeece6', border: '#d8d4c8', label: 'Kosong' },
 ];
 
 export function ScheduleLegend() {

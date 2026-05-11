@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { localDateAtMidnight, localPartsInTimezone } from './timezone.util';
 
 /**
  * Validation helpers untuk booking operations.
@@ -142,39 +143,41 @@ export class BookingValidationService {
     if (!settings) return; // no settings, allow (bootstrap mode)
 
     const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const dow = start.getDay(); // 0=Sun..6=Sat
+    // Pakai TZ klinik (default Asia/Jakarta) supaya konsisten dengan slot list
+    // dan weeklyAvailability yang format-nya TZ klinik. Container biasanya UTC
+    // jadi start.getHours()/getDay() tidak boleh dipakai langsung.
+    const tz = settings.timezone || 'Asia/Jakarta';
+    const startParts = localPartsInTimezone(start, tz);
+    const endParts = localPartsInTimezone(end, tz);
 
-    // 1. Closed day check
+    // 1. Closed day check (pakai dow di TZ klinik)
     const closed = (settings.closedDayOfWeek as number[]) || [];
-    if (closed.includes(dow)) {
+    if (closed.includes(startParts.dow)) {
       throw new BadRequestException(
-        `Klinik tutup di hari ${DAY_NAMES[dow]}. Aktifkan "Lewati validasi jeda & jam buka" untuk override.`,
+        `Klinik tutup di hari ${DAY_NAMES[startParts.dow]}. Aktifkan "Lewati validasi jeda & jam buka" untuk override.`,
       );
     }
 
-    // 2. Holiday check
+    // 2. Holiday check (pakai date di TZ klinik, bukan UTC)
     const holidays = (settings.holidays as string[]) || [];
-    const dateStr = start.toISOString().slice(0, 10);
-    if (holidays.includes(dateStr)) {
+    if (holidays.includes(startParts.dateStr)) {
       throw new BadRequestException(
-        `Tanggal ${dateStr} adalah hari libur. Aktifkan "Lewati validasi jeda & jam buka" untuk override.`,
+        `Tanggal ${startParts.dateStr} adalah hari libur. Aktifkan "Lewati validasi jeda & jam buka" untuk override.`,
       );
     }
 
-    // 3. Slot match check
+    // 3. Slot match check (pakai HH:MM di TZ klinik)
     const slots =
       (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
     if (slots.length === 0) return; // belum di-config, allow (bootstrap mode)
 
-    const fmt = (d: Date) =>
-      `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-    const startHM = fmt(start);
-    const endHM = fmt(end);
-    const matched = slots.find((s) => s.start === startHM && s.end === endHM);
+    const matched = slots.find(
+      (s) => s.start === startParts.hhmm && s.end === endParts.hhmm,
+    );
     if (!matched) {
       const available = slots.map((s) => `${s.start}-${s.end}`).join(', ');
       throw new BadRequestException(
-        `Booking ${startHM}-${endHM} tidak cocok dengan slot operasional klinik. Slot tersedia: ${available}.`,
+        `Booking ${startParts.hhmm}-${endParts.hhmm} tidak cocok dengan slot operasional klinik. Slot tersedia: ${available}.`,
       );
     }
   }
@@ -215,12 +218,19 @@ export class BookingValidationService {
     if (!profile) {
       throw new NotFoundException(`Psikolog profile untuk user ${psikologUserId} tidak ditemukan.`);
     }
+    const settings = await this.prisma.clinicSettings.findFirst({
+      where: { id: 1 },
+      select: { timezone: true },
+    });
+    const tz = settings?.timezone || 'Asia/Jakarta';
     const psikologName = profile.user.fullName ?? profile.user.email;
     const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const DAY_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const dow = start.getDay();
-    const dateOnly = new Date(start);
-    dateOnly.setHours(0, 0, 0, 0);
+    // Pakai TZ klinik supaya dow + dateOnly konsisten dengan
+    // weeklyAvailability + date overrides (yang dianggap WIB).
+    const startParts = localPartsInTimezone(start, tz);
+    const dow = startParts.dow;
+    const dateOnly = localDateAtMidnight(startParts.dateStr, tz);
 
     // 1. PRIORITAS: cek date override untuk tanggal spesifik
     const override = await this.prisma.clinicPsikologDateOverride.findUnique({

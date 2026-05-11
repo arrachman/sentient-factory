@@ -188,7 +188,7 @@ function AvailableCell({ cellHeight }: { cellHeight: number }) {
 function LiburCell({ cellHeight, reason }: { cellHeight: number; reason: string | null }) {
   return (
     <div
-      title={reason ? `Libur: ${reason}` : 'Libur (luar jadwal mingguan / cuti)'}
+      title={reason ? `Kosong: ${reason}` : 'Kosong (luar jadwal mingguan / cuti)'}
       style={{
         height: cellHeight - 4,
         margin: 2,
@@ -205,7 +205,7 @@ function LiburCell({ cellHeight, reason }: { cellHeight: number; reason: string 
         fontWeight: 500,
       }}
     >
-      Libur
+      Kosong
     </div>
   );
 }
