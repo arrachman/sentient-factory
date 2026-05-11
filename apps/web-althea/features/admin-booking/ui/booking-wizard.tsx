@@ -142,6 +142,8 @@ export function BookingWizard({
               psikologList={w.psikologList}
               roomList={w.roomList}
               psikologDayBookings={w.psikologDayBookings}
+              closedDayOfWeek={w.closedDayOfWeek}
+              holidays={w.holidays}
             />
           </Section>
         </div>

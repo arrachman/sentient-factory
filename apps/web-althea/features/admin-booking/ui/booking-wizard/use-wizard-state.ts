@@ -107,6 +107,7 @@ export function useWizardState({
 
   const slots = settingsQuery.data?.data.slotsOfDay ?? [];
   const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
+  const holidays = settingsQuery.data?.data.holidays ?? [];
   const selectedSlot = s.slotIdx !== null ? slots[s.slotIdx] : null;
   const isClosedDay = closedDays.includes(
     new Date(`${s.date}T00:00:00`).getDay(),
@@ -262,6 +263,8 @@ export function useWizardState({
     selectedPsikolog,
     psikologClosedToday,
     slots,
+    closedDayOfWeek: closedDays,
+    holidays,
     selectedSlot,
     isClosedDay,
     psikologDayBookings,
