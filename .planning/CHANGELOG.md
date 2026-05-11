@@ -1,0 +1,108 @@
+# Web-Althea Changelog
+
+Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan commit SHA pendek.
+
+> Riwayat sebelum 2026-05-09 ada di `.planning/phases/00-foundation/VERIFICATION.md` (Slice 0) dan `.planning/phases/SLICES-2-5-SUMMARY.md` (Slices 1-5). Roadmap-level history di `.planning/ROADMAP.md`.
+
+---
+
+## 2026-05-11
+
+### Slice 10 · Psikolog Workflow (extended)
+
+- **`6c44618`** `feat(althea): fungsikan /psikolog/dashboard end-to-end`
+  - Backend: endpoint baru `GET /api/clinic/psikolog/me/dashboard-stats` di `ClinicPsikologController` + service method `getDashboardStats(userId)`
+  - Compute di Asia/Jakarta via `localPartsInTimezone` + `localDateAtMidnight`
+  - Payload: `today` (5 status bucket) + `week` (7-day Sen→Min) + `klienAktif` (30d distinct) + `catatanTertunda` + `pendingNotes[]` + `packageEndingSoon[]` + `anchorDate`
+  - Frontend: `psikolog-workflow/api/dashboard.api.ts` typed wrapper, hook rewrite ke single endpoint
+  - UI: 4 stat card real-data, `WeekMiniChart` highlight hari ini + tooltip, `ActionQueueCard` clickable per item (chevron + href)
+- **`4c254f6`** `feat(althea): foto profil psikolog (avatar upload)`
+  - Field `User.avatarUrl text` (nullable)
+  - Client-side canvas resize ke 256×256, JPEG q=0.85, base64 data URL
+  - Backend validasi data-URL + max ~1MB
+  - Render di sidebar nav + profile card
+- **`14f9c49`** `fix(althea): booking validator pakai TZ klinik (bukan server TZ)`
+  - Cabang bug: `start.getHours()` return jam UTC server, jadi slot lookup mismatch
+  - Fix: pakai `localPartsInTimezone(scheduledStart, tz)` untuk `dow` + `hhmm`
+- **`d248651`** `feat(althea): /psikolog/schedule view Bulan — color cell sesuai state`
+
+### Slice 03 · Master Data Rooms (extended)
+
+- **`b97f84a`** `feat(althea): fasilitas ruangan terstruktur (array) + chip editor`
+  - Schema: `clinic_room.facilities text[] @default([])`
+  - Migration `20260511_002_clinic_room_facilities` dengan SQL backfill (parse legacy CSV description → array)
+  - Backend DTO: `@IsArray() @ArrayMaxSize(30) @IsString({each:true}) @MaxLength(60, {each:true})`
+  - Frontend: `FacilitiesEditor` chip selector (suggestions per type, custom input, dedupe case-insensitive, max 30)
+  - `RoomDetailPanel` fallback chain: array → CSV legacy → `DEFAULT_FACILITIES` per type
+  - `description` jadi field "Catatan internal" terpisah (notes only)
+  - `startEdit` pre-fill cerdas: auto-migrate room lama ke chips saat dibuka untuk edit
+
+---
+
+## 2026-05-10
+
+### Slice 08 · WA Templates + Dispatcher (hardened)
+
+- **`feb3855`** `feat(wa): harden Fonnte integration — phone normalize, queue, webhook fallback`
+  - Util `apps/api-gateway/src/common/utils/phone.util.ts`:
+    - `normalizePhoneId('08xxx' | '+62xxx' | '62xxx' | '8xxx') → '62xxx'`
+    - `formatPhoneDisplay(id) → '+62 856-0755-0989'`
+  - BullMQ retry queue (max 3 attempts, backoff)
+  - Webhook fallback: kalau payload tidak ada `status`, default ke `terkirim`
+  - Indonesian date/time format di template render (`toLocaleString id-ID` + `timeZone: Asia/Jakarta`)
+- **`e1ab066`** `fix(api): Fonnte messageId number → string normalization`
+  - `String(rawId)` cast karena Fonnte kadang return number
+- **`d2364e1`** `chore(api): replace @Request() req: any → AuthRequest typed (10 clinic controllers)`
+
+### Slice 10 · Psikolog Profile
+
+- **`2cf0941`** `feat(psikolog-profile): functional edit dialog + live statistik counting`
+  - Endpoint: `GET /me`, `GET /me/stats`, `PATCH /me`
+  - Service: `findByUserId`, `updateMe`, `getMyStats` (30d completed, 90d distinct clients, kehadiran %)
+  - Frontend dialog: fullName, title, bio, color picker
+- **`b08b28f`** `feat(psikolog): /psikolog/profile page — own profile + availability editor`
+- **`b56827a`** `feat(althea): calendar UX untuk override availability — input cepat tanpa form`
+- **`e3c136b`** `feat(althea): psikolog self-service set jadwal availability per slot/day`
+- **`173f2a4`** `feat(althea): psikolog set jadwal per-tanggal (override) + booking wizard merge`
+
+### Slice 06 · Booking Wizard
+
+- **`d28415b`** `feat(althea): psikolog weekly availability — block booking kalau jadwal belum di-set`
+- **`3f0570b`** `feat(althea): booking wizard pilih psikolog dulu, slot di-filter availability`
+- **`e869852`** `feat(althea): wizard slot picker hanya tampilkan slot available`
+- **`8b981c8`** `fix(althea): wizard DateStrip — tanggal libur/tutup tidak bisa dipilih`
+
+### Slice 07 · Admin Schedule
+
+- **`aeae6b5`** `feat(althea): advanced filter di /admin/schedule — client search, time-of-day, sesi, layanan`
+- **`33e63bd`** `feat(althea): functional filter + view toggle (Hari/Minggu/Bulan) + date picker`
+- **`f31a8ce`** `feat(althea): /psikolog/schedule full filter + view toggle (Hari/Minggu/Bulan)`
+- **`5021528`** `fix(althea): SSR hydration mismatch — defer todayKey() ke useEffect`
+- **`645968b`** `feat(althea): master slot system — replace operatingHours dengan slotsOfDay`
+
+---
+
+## 2026-05-09
+
+### Auth flow fixes
+
+- **`8682443`** `fix(althea): set sf_token cookie client-side — NPM bypass Route Handler`
+  - Root cause: NPM (Nginx Proxy Manager) proxy bypass `/api/auth/login` Route Handler, jadi HttpOnly cookie tidak ter-set
+  - Fix: client-side `document.cookie = 'sf_token=...; path=/; max-age=...'` setelah login response
+- **`a4777d2`** `fix(althea): login redirect — hard navigation via window.location.assign`
+  - `router.push()` kadang preserve old session state → fix dengan hard nav
+
+### UX & validation
+
+- **`9569fd5`** `feat(althea): logout confirmation modal sebelum sign out`
+- **`d895144`** `feat(althea): wajibkan password saat tambah psikolog`
+- **`be3c91a`** `fix(althea): empty optional fields → undefined sebelum POST /clinic/client`
+  - Bug: class-validator `@IsOptional()` tidak skip empty string → "must be email" error
+- **`2051d9a`** `fix(althea): copy WA opt-out di form Tambah Klien lebih jelas untuk admin`
+- **`3219391`** `chore(althea): rename middleware.ts → proxy.ts (Next.js 16 convention)`
+
+---
+
+## Earlier (pre-2026-05-09)
+
+Lihat ROADMAP.md History section untuk fase Slice 0-14 initial delivery (semua 14 slice closed pada 2026-05-08).

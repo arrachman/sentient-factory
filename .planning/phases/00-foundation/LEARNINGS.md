@@ -146,3 +146,22 @@ Password hash di api-gateway pakai pbkdf2 dengan parameter spesifik (iterations 
 - Audit log auto-track for `/clinic/*` mutations — tinggal write controller, audit auto
 - 7 sample psikolog sudah ada di seed → Slice 1 tinggal show di UI list
 - `clinic_psikolog_profile` table sudah ada — Slice 1 query/mutate di sana
+
+## Cross-cutting helpers yang muncul belakangan (post-MVP)
+
+Ditambahkan setelah Slice 0 closed — dipakai oleh banyak slice:
+
+- **`apps/api-gateway/src/clinic-booking/timezone.util.ts`**
+  - `localPartsInTimezone(date, tz='Asia/Jakarta')` → `{ dow, dateStr, hhmm }`
+  - `localDateAtMidnight(dateStr, tz)` → Date object (00:00 di TZ klinik sebagai UTC instant)
+  - **Lesson**: container backend run di UTC, tapi semua slot/availability/booking diukur di WIB. Selalu pakai helper ini untuk konversi — jangan `date.getHours()` langsung (return UTC).
+  - Dipakai: booking-validator, psikolog dashboard-stats, scheduler-reminder
+
+- **`apps/api-gateway/src/common/utils/phone.util.ts`**
+  - `normalizePhoneId(raw)` — universal format `08xxx/+62xxx/8xxx/62xxx` → `62xxx`
+  - `formatPhoneDisplay(id)` — `'+62 856-0755-0989'`
+  - Dipakai: Fonnte provider, send-test dialog, WA log lookup, webhook callback matcher
+
+- **Pattern: aggregate endpoint untuk dashboard**
+  - Bukan compose 4-5 useQuery di frontend, satu endpoint `/me/dashboard-stats` return semua bucket (today + week + queue) — cuts roundtrip, simpler caching, TZ logic centralized server-side
+  - Dipakai: psikolog dashboard (Slice 10). Owner dashboard (Slice 12) bisa adopt pattern sama kalau perlu rewrite.

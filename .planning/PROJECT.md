@@ -87,7 +87,7 @@ ADRs di `.planning/ADRs/`:
 - **001**: Vertical slicing per feature (DB → API → UI → Test)
 - **002**: Extend api-gateway dengan namespace `/clinic/*` (vs. separate api-clinic service)
 - **003**: 6-actor role model — extend existing User+Role+Permission, tambah `clinic-*` roles, drop patient self-service
-- **004**: WhatsApp provider — **Fonnte** (Indonesian gateway), abstraction tetap pakai `WAProvider` interface
+- **004**: WhatsApp provider — **Fonnte** (Indonesian gateway), hardened: phone normalize util, BullMQ retry queue, webhook fallback, ID date/time WIB
 - **005**: Audit log via NestJS interceptor (auto-track all mutations)
 - **006**: Table prefix `clinic_*` (domain-focused, bukan brand-coupled)
 - **007**: Pricing & payment model — rate card per service, package total price, DP 50%, PPN 11% configurable
@@ -96,6 +96,8 @@ ADRs di `.planning/ADRs/`:
 ## Workflow
 
 Lihat `.planning/ROADMAP.md` untuk slice list & status.
+Lihat `.planning/CHANGELOG.md` untuk riwayat perubahan harian (commit SHA).
+Lihat `.planning/UAT-CHECKLIST.md` untuk test scenarios per role.
 
 Per slice rhythm:
 ```
@@ -117,8 +119,12 @@ Artifacts persist per phase di `.planning/phases/<slice>/` agar resumable cross-
 | DB models | `apps/api-gateway/prisma/schema.prisma` (model `Clinic*`, table `clinic_*`) |
 | Port (web) | 3202 (`WEB_ALTHEA_PORT`) |
 | Port (api) | 3203 (`API_GATEWAY_PORT`) |
-| Prod URL (web) | http://althea.fr-labs.my.id/ → reverse-proxy ke port 3202 |
-| Prod URL (api) | http://althea.fr-labs.my.id/api → reverse-proxy ke port 3203 |
+| Prod URL (web) | **https://althea.fr-labs.my.id/** → reverse-proxy ke `http://192.168.1.150:3202/` |
+| Prod URL (api) | **https://althea.fr-labs.my.id/api** → reverse-proxy ke `http://192.168.1.150:3203/api` |
+| Reverse proxy | NPM (Nginx Proxy Manager) di server, Let's Encrypt SSL aktif |
+| LAN direct (fallback) | `http://192.168.1.150:3202/` (web), `http://192.168.1.150:3203/api` (api) |
+| DNS | A record `althea` → `202.59.200.26` (public IP MyRepublic) di Cloudflare, "DNS only" |
+| NPM custom location | `/api/*` → forward `192.168.1.150:3203` (selain itu → `:3202`) |
 | Branch | `work/superpowers-trial` (kerja saat ini) |
 | Design ref | `apps/psychology-design/` (read-only mockup) |
 | PRD | `apps/psychology-design/JAWABAN-PERTANYAAN-KLIEN-2026-05-07.md` |
