@@ -263,34 +263,75 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="caption mb-1 block">Slot per hari (default)</label>
-              <input
-                type="number"
-                min={0}
-                max={20}
-                {...register('defaultSlots', { valueAsNumber: true })}
-                className="input-althea"
-              />
-            </div>
-            <div className="flex items-end gap-2 pb-2">
-              <Controller
-                name="isActive"
-                control={control}
-                render={({ field }) => (
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="h-4 w-4"
-                    />
-                    <span className="text-sm">Aktif</span>
-                  </label>
-                )}
-              />
-            </div>
+          <div>
+            <label className="caption mb-1 block">Slot per hari (default)</label>
+            <input
+              type="number"
+              min={0}
+              max={20}
+              {...register('defaultSlots', { valueAsNumber: true })}
+              className="input-althea max-w-[160px]"
+            />
+            <p className="caption mt-1 text-fg-muted">
+              Maksimal jumlah klien per hari yang bisa di-booking ke psikolog ini (BR-01).
+            </p>
+          </div>
+
+          {/* Status psikolog — section terpisah supaya jelas bukan modifier slot per hari */}
+          <div className="rounded-md border border-border bg-cream-50 p-3">
+            <label className="caption block mb-2 font-semibold">
+              Status Psikolog
+            </label>
+            <Controller
+              name="isActive"
+              control={control}
+              render={({ field }) => {
+                const isActive = field.value;
+                return (
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isActive}
+                      onClick={() => field.onChange(!isActive)}
+                      className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors"
+                      style={{
+                        background: isActive
+                          ? 'var(--sage-500)'
+                          : 'var(--cream-300)',
+                      }}
+                    >
+                      <span
+                        className="inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform"
+                        style={{
+                          transform: isActive
+                            ? 'translateX(22px)'
+                            : 'translateX(2px)',
+                          marginTop: 2,
+                        }}
+                      />
+                    </button>
+                    <div className="flex flex-col">
+                      <span
+                        className="text-sm font-medium"
+                        style={{
+                          color: isActive
+                            ? 'var(--teal-800)'
+                            : 'var(--fg-muted)',
+                        }}
+                      >
+                        {isActive ? 'Aktif — menerima booking' : 'Nonaktif — tidak menerima booking'}
+                      </span>
+                      <span className="caption mt-0.5">
+                        {isActive
+                          ? 'Psikolog tampil di booking wizard dan bisa di-jadwalkan sesi baru.'
+                          : 'Psikolog di-hide dari booking wizard. Sesi yang sudah ter-jadwal tetap jalan, tapi tidak ada booking baru.'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              }}
+            />
           </div>
 
           {/*
