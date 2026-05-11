@@ -1,11 +1,13 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../auth/password-hasher';
-import {
-  localDateAtMidnight,
-  localPartsInTimezone,
-} from '../clinic-booking/timezone.util';
+import { localDateAtMidnight, localPartsInTimezone } from '../clinic-booking/timezone.util';
 import { CreatePsikologDto } from './dto/create-psikolog.dto';
 import { QueryPsikologDto } from './dto/query-psikolog.dto';
 import { UpdatePsikologDto } from './dto/update-psikolog.dto';
@@ -224,7 +226,13 @@ export class ClinicPsikologService {
    */
   async updateMe(
     userId: number,
-    dto: { fullName?: string; title?: string; bio?: string; color?: string },
+    dto: {
+      fullName?: string;
+      title?: string;
+      bio?: string;
+      color?: string;
+      avatarUrl?: string | null;
+    },
   ) {
     const profile = await this.prisma.clinicPsikologProfile.findFirst({
       where: { userId, deletedAt: null },
@@ -234,13 +242,36 @@ export class ClinicPsikologService {
       throw new NotFoundException(`Psikolog profile untuk user ${userId} tidak ditemukan`);
     }
 
+    // Avatar validation: kalau ada, harus data URL image atau http(s) URL.
+    // Cap ukuran ~1.5MB base64 (≈ 1MB raw) supaya tidak bloat DB.
+    if (dto.avatarUrl) {
+      const v = dto.avatarUrl;
+      const isDataUrl = v.startsWith('data:image/');
+      const isHttpUrl = v.startsWith('http://') || v.startsWith('https://');
+      if (!isDataUrl && !isHttpUrl) {
+        throw new BadRequestException(
+          'avatarUrl harus data URL (data:image/...;base64,...) atau URL absolut',
+        );
+      }
+      if (isDataUrl && v.length > 1_500_000) {
+        throw new BadRequestException('Foto terlalu besar — maksimal ~1MB setelah resize');
+      }
+    }
+
     await this.prisma.$transaction(async (tx) => {
-      // User.fullName self-update OK
+      // User.fullName + avatarUrl self-update OK
+      const userUpdates: Prisma.UserUpdateInput = { updatedBy: userId };
+      let hasUserUpdate = false;
       if (dto.fullName !== undefined) {
-        await tx.user.update({
-          where: { id: userId },
-          data: { fullName: dto.fullName, updatedBy: userId },
-        });
+        userUpdates.fullName = dto.fullName;
+        hasUserUpdate = true;
+      }
+      if (dto.avatarUrl !== undefined) {
+        userUpdates.avatarUrl = dto.avatarUrl;
+        hasUserUpdate = true;
+      }
+      if (hasUserUpdate) {
+        await tx.user.update({ where: { id: userId }, data: userUpdates });
       }
 
       // Profile self-editable subset
@@ -338,96 +369,83 @@ export class ClinicPsikologService {
     // Awal minggu = Senin (dow 1 .. 0=Minggu). Compute offset hari dari today.
     // Convert: Sen=0, Sel=1, ..., Min=6
     const isoDow = nowLocal.dow === 0 ? 6 : nowLocal.dow - 1;
-    const weekStart = new Date(
-      todayStart.getTime() - isoDow * 24 * 60 * 60 * 1000,
-    );
+    const weekStart = new Date(todayStart.getTime() - isoDow * 24 * 60 * 60 * 1000);
     const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const thirtyDaysAgo = new Date(
-      todayStart.getTime() - 30 * 24 * 60 * 60 * 1000,
-    );
-    const sevenDaysAgo = new Date(
-      todayStart.getTime() - 7 * 24 * 60 * 60 * 1000,
-    );
-    const fourteenDaysAhead = new Date(
-      todayStart.getTime() + 14 * 24 * 60 * 60 * 1000,
-    );
+    const thirtyDaysAgo = new Date(todayStart.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(todayStart.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAhead = new Date(todayStart.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-    const [
-      todayBookings,
-      weekBookings,
-      distinctClients30d,
-      completedNoNote,
-      packageEnding,
-    ] = await Promise.all([
-      // Today bookings — needed untuk count by status
-      this.prisma.clinicBooking.findMany({
-        where: {
-          psikologUserId: userId,
-          scheduledStart: { gte: todayStart, lt: todayEnd },
-          deletedAt: null,
-        },
-        select: { status: true },
-      }),
-      // Week bookings — needed untuk daily count chart
-      this.prisma.clinicBooking.findMany({
-        where: {
-          psikologUserId: userId,
-          scheduledStart: { gte: weekStart, lt: weekEnd },
-          status: { not: 'cancelled' },
-          deletedAt: null,
-        },
-        select: { scheduledStart: true },
-      }),
-      // Klien aktif — distinct client 30d non-cancelled
-      this.prisma.clinicBooking.findMany({
-        where: {
-          psikologUserId: userId,
-          status: { not: 'cancelled' },
-          scheduledStart: { gte: thirtyDaysAgo, lte: todayEnd },
-          deletedAt: null,
-        },
-        select: { clientId: true },
-        distinct: ['clientId'],
-      }),
-      // Completed bookings tanpa session note (last 7d) — pakai raw scan
-      // karena Prisma tidak support left-anti-join langsung. Limit 10.
-      this.prisma.clinicBooking.findMany({
-        where: {
-          psikologUserId: userId,
-          status: 'completed',
-          scheduledStart: { gte: sevenDaysAgo, lte: todayEnd },
-          deletedAt: null,
-        },
-        select: {
-          id: true,
-          scheduledStart: true,
-          client: { select: { name: true } },
-          service: { select: { name: true } },
-        },
-        orderBy: { scheduledStart: 'desc' },
-        take: 20,
-      }),
-      // Package ending soon — sessionN = sessionTotal - 1, future ≤14d
-      this.prisma.clinicBooking.findMany({
-        where: {
-          psikologUserId: userId,
-          status: { notIn: ['cancelled', 'completed'] },
-          scheduledStart: { gte: todayStart, lt: fourteenDaysAhead },
-          sessionTotal: { gt: 1 },
-          deletedAt: null,
-        },
-        select: {
-          id: true,
-          scheduledStart: true,
-          sessionN: true,
-          sessionTotal: true,
-          client: { select: { name: true } },
-        },
-        orderBy: { scheduledStart: 'asc' },
-        take: 10,
-      }),
-    ]);
+    const [todayBookings, weekBookings, distinctClients30d, completedNoNote, packageEnding] =
+      await Promise.all([
+        // Today bookings — needed untuk count by status
+        this.prisma.clinicBooking.findMany({
+          where: {
+            psikologUserId: userId,
+            scheduledStart: { gte: todayStart, lt: todayEnd },
+            deletedAt: null,
+          },
+          select: { status: true },
+        }),
+        // Week bookings — needed untuk daily count chart
+        this.prisma.clinicBooking.findMany({
+          where: {
+            psikologUserId: userId,
+            scheduledStart: { gte: weekStart, lt: weekEnd },
+            status: { not: 'cancelled' },
+            deletedAt: null,
+          },
+          select: { scheduledStart: true },
+        }),
+        // Klien aktif — distinct client 30d non-cancelled
+        this.prisma.clinicBooking.findMany({
+          where: {
+            psikologUserId: userId,
+            status: { not: 'cancelled' },
+            scheduledStart: { gte: thirtyDaysAgo, lte: todayEnd },
+            deletedAt: null,
+          },
+          select: { clientId: true },
+          distinct: ['clientId'],
+        }),
+        // Completed bookings tanpa session note (last 7d) — pakai raw scan
+        // karena Prisma tidak support left-anti-join langsung. Limit 10.
+        this.prisma.clinicBooking.findMany({
+          where: {
+            psikologUserId: userId,
+            status: 'completed',
+            scheduledStart: { gte: sevenDaysAgo, lte: todayEnd },
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            scheduledStart: true,
+            client: { select: { name: true } },
+            service: { select: { name: true } },
+          },
+          orderBy: { scheduledStart: 'desc' },
+          take: 20,
+        }),
+        // Package ending soon — sessionN = sessionTotal - 1, future ≤14d
+        this.prisma.clinicBooking.findMany({
+          where: {
+            psikologUserId: userId,
+            status: { notIn: ['cancelled', 'completed'] },
+            scheduledStart: { gte: todayStart, lt: fourteenDaysAhead },
+            sessionTotal: { gt: 1 },
+            deletedAt: null,
+          },
+          select: {
+            id: true,
+            scheduledStart: true,
+            sessionN: true,
+            sessionTotal: true,
+            client: { select: { name: true } },
+          },
+          orderBy: { scheduledStart: 'asc' },
+          take: 10,
+        }),
+      ]);
 
     // Filter completed-without-note via separate query (avoid raw SQL)
     const completedIds = completedNoNote.map((b) => b.id);
@@ -466,8 +484,7 @@ export class ClinicPsikologService {
     const today = {
       total: todayBookings.length,
       completed: todayBookings.filter((b) => b.status === 'completed').length,
-      inProgress: todayBookings.filter((b) => b.status === 'in_progress')
-        .length,
+      inProgress: todayBookings.filter((b) => b.status === 'in_progress').length,
       upcoming: todayBookings.filter((b) =>
         ['awaiting_dp', 'confirmed', 'checked_in'].includes(b.status),
       ).length,
@@ -618,10 +635,7 @@ export class ClinicPsikologService {
       where: { id: 1 },
       select: { timezone: true },
     });
-    const dateObj = localDateAtMidnight(
-      input.date,
-      settings?.timezone || 'Asia/Jakarta',
-    );
+    const dateObj = localDateAtMidnight(input.date, settings?.timezone || 'Asia/Jakarta');
     const slotIndicesValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
       input.slotIndices === undefined || input.slotIndices === null
         ? Prisma.DbNull
@@ -656,10 +670,7 @@ export class ClinicPsikologService {
       where: { id: 1 },
       select: { timezone: true },
     });
-    const dateObj = localDateAtMidnight(
-      dateStr,
-      settings?.timezone || 'Asia/Jakarta',
-    );
+    const dateObj = localDateAtMidnight(dateStr, settings?.timezone || 'Asia/Jakarta');
     await this.prisma.clinicPsikologDateOverride
       .delete({
         where: { psikologUserId_date: { psikologUserId: userId, date: dateObj } },

@@ -81,6 +81,21 @@ export class ClinicPsikologController {
     return this.service.getMyStats(userId);
   }
 
+  @Get('me/dashboard-stats')
+  @Roles('clinic-psikolog')
+  @ApiOperation({
+    summary: 'Dashboard psikolog: today + week + queue (catatan/paket habis)',
+    description:
+      'Return { today: {total,completed,inProgress,upcoming,cancelled}, week: {data[7],total,startDate}, klienAktif, catatanTertunda, pendingNotes[], packageEndingSoon[], anchorDate }. Timezone: Asia/Jakarta.',
+  })
+  myDashboardStats(@Request() req: AuthRequest) {
+    const userId = req.user?.sub ?? req.user?.id;
+    if (!userId) {
+      throw new BadRequestException('Unauthorized — userId tidak ada di JWT');
+    }
+    return this.service.getDashboardStats(userId);
+  }
+
   @Patch('me')
   @Roles('clinic-psikolog')
   @ApiOperation({
@@ -90,7 +105,15 @@ export class ClinicPsikologController {
       'defaultSlots/specialty/isActive admin-only (via PATCH /:id).',
   })
   updateMe(
-    @Body() body: { fullName?: string; title?: string; bio?: string; color?: string },
+    @Body()
+    body: {
+      fullName?: string;
+      title?: string;
+      bio?: string;
+      color?: string;
+      /** Base64 data URL (data:image/...;base64,...) atau URL absolut, atau null untuk hapus. */
+      avatarUrl?: string | null;
+    },
     @Request() req: AuthRequest,
   ) {
     const userId = req.user?.sub ?? req.user?.id;
