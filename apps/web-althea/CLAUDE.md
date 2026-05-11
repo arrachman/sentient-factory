@@ -65,20 +65,39 @@ npm run build:staging  # pakai .env.staging
 ## Layout
 
 ```
-app/                           # Next.js App Router
-├── (auth)/                    # Public routes — login (no register, admin-only seeding)
-├── (admin)/                   # Role: clinic-admin
-├── (psikolog)/                # Role: clinic-psikolog
-├── (owner)/                   # Role: clinic-owner
-├── (resepsionis)/             # Role: clinic-resepsionis
-├── (marketing)/               # Role: clinic-marketing
-├── (intern)/                  # Role: clinic-intern
-├── api/                       # Route handlers (proxy ke api-gateway bila perlu)
+app/                           # Next.js App Router (flat routes, no route groups untuk role)
+├── (auth)/                    # Public routes — login only (route group, no URL prefix)
+│   └── login/
+├── admin/                     # Role: clinic-admin (full access)
+│   ├── schedule/              # ← admin landing (Penjadwalan, bukan /dashboard)
+│   ├── psikolog/              # CRUD tim psikolog
+│   ├── layanan/               # CRUD service catalog
+│   ├── rooms/                 # CRUD + pemakaian ruangan
+│   ├── clients/               # Daftar pasien (admin-driven)
+│   ├── booking/               # Daftar booking + state machine
+│   ├── users-roles/           # User & role management
+│   ├── notif-wa/              # WA template editor + activity log
+│   ├── audit-log/             # Audit trail
+│   ├── pengaturan/            # ClinicSettings (slot operasional, dll)
+│   └── dashboard/             # (legacy, masih ada, tapi sidebar landing ke /admin/schedule)
+├── psikolog/                  # Role: clinic-psikolog (own-data only, BR-04)
+│   ├── dashboard/             # ← psikolog landing
+│   ├── schedule/              # Jadwal saya (Hari/Minggu/Bulan + filter)
+│   ├── patients/              # Klien saya
+│   ├── sessions/              # Catatan klinis (SOAP editor)
+│   ├── rooms/                 # Pemakaian Ruangan (read-only, klinis context)
+│   └── profile/               # Profil saya (editable subset: nama/title/bio/color/avatar)
+├── owner/                     # Role: clinic-owner — KPI dashboard
+├── resepsionis/               # Role: clinic-resepsionis — status board check-in
+├── marketing/                 # Role: clinic-marketing — read-only service catalog
+├── intern/                    # Role: clinic-intern — placeholder
+├── api/                       # Route handlers (auth proxy — NPM bypass dipatch via client-side cookie)
 ├── layout.tsx                 # Root layout (providers, fonts, theme)
-└── page.tsx                   # Root → redirect ke /login or /dashboard
+└── page.tsx                   # Root → redirect ke /login (atau role default route)
 
 components/                    # ShadCN-style UI primitives + komponen presentational
-features/                      # Feature modules per domain (pattern api/, hooks/, model/, ui/)
+├── layouts/admin-shell/       # Sidebar + topbar shell (NAV per role)
+features/                      # Feature modules per domain (pattern api/, hooks/, model/, ui/, lib/)
 hooks/                         # Custom hooks lintas-feature
 lib/                           # Utilities, api-client, helpers
 config/                        # Konstanta runtime (urls, paths, dll)
@@ -88,6 +107,8 @@ public/                        # Static assets (logo, images)
 proxy.ts                       # Auth guard + role-based redirect (Next.js 16 proxy convention; was middleware.ts)
 types/                         # Type definitions global
 ```
+
+**Note pattern**: Route groups `(auth)/`, `(admin)/`, dll **TIDAK dipakai** untuk role separation — route role pakai flat folder `admin/`, `psikolog/`, dst supaya URL match prefix. Hanya `(auth)/` yang masih route group karena login adalah unprotected public.
 
 ### Pattern feature module (sama dengan web-dashboard)
 ```
@@ -144,34 +165,51 @@ File mockup penting:
 
 ## API Integration
 - Base URL dari `NEXT_PUBLIC_API_URL` → `api-gateway` (3203 di dev, prod beda).
-- Endpoint psychology: prefix `/althea/*` (e.g. `/althea/psikolog`, `/althea/booking`, `/althea/sessions`).
-- DB: `api-gateway` pakai schema PostgreSQL terpisah `althea_*` (jangan bocor ke schema ERP).
-- Auth: cookie/JWT yang di-set api-gateway. Middleware Next baca `sf_token` cookie.
+- Endpoint psychology: prefix **`/clinic/*`** (e.g. `/clinic/psikolog`, `/clinic/booking`, `/clinic/booking/:id/note`). Lihat ADR 002.
+- DB: `api-gateway` pakai table prefix **`clinic_*`** di public schema (e.g. `clinic_psikolog_profile`, `clinic_booking`). Lihat ADR 006.
+- Auth: cookie `sf_token` di-set client-side via `document.cookie` setelah login (NPM bypass Next.js Route Handler — lihat ADR 009 + bug fix `8682443`).
 
 ### Strategi backend (ADR ringkas)
-Saat ini: **Opsi A (extend `api-gateway`)** dengan namespace `/althea/*` dan schema `althea_*`. Alasan: cepat go-MVP, share auth & user table.
+Saat ini: **Opsi A (extend `api-gateway`)** dengan namespace `/clinic/*` dan table prefix `clinic_*`. Alasan: cepat go-MVP, share auth & user table.
 
-Future migration: **extract ke `api-althea` service** (port 3204, slot reserved) saat traffic/team membesar atau scope compliance perlu isolated. Frontend tidak perlu berubah — `api-gateway` tetap edge proxy.
+Future migration: **extract ke `api-clinic` service** (port 3204, slot reserved) saat traffic/team membesar atau scope compliance perlu isolated. Frontend tidak perlu berubah — `api-gateway` tetap edge proxy.
+
+### Auth cookie flow (NPM bypass gotcha)
+NPM (reverse proxy production) forward `/api/*` LANGSUNG ke `api-gateway:3203`, bypass Next.js. Akibatnya Route Handler `app/api/auth/login/route.ts` yang seharusnya set HttpOnly cookie **tidak pernah jalan** di prod. Workaround: `useLogin` hook set `sf_token` cookie client-side via `document.cookie` dari token response body (Secure + SameSite=Lax, JS-readable). Trade-off XSS risk acceptable untuk MVP karena tidak ada user-generated HTML. Logout sama: clear cookie client-side.
 
 ## Role-based routing
 
-`proxy.ts` cek cookie + role claim dari JWT (`roles: string[]`), pick first `clinic-*` role, redirect ke route group sesuai:
+`proxy.ts` cek cookie + role claim dari JWT (`roles: string[]`), pick first `clinic-*` role, redirect ke path sesuai:
 
-| Role                   | Route group prefix    | Default landing |
-|------------------------|----------------------|-----------------|
-| `clinic-admin`         | `/(admin)/*`         | `/dashboard`    |
-| `clinic-psikolog`      | `/(psikolog)/*`      | `/dashboard`    |
-| `clinic-owner`         | `/(owner)/*`         | `/dashboard`    |
-| `clinic-resepsionis`   | `/(resepsionis)/*`   | `/dashboard`    |
-| `clinic-marketing`     | `/(marketing)/*`     | `/dashboard`    |
-| `clinic-intern`        | `/(intern)/*`        | `/dashboard`    |
-| (no token)             | `/(auth)/login`      | `/login`        |
+| Role                   | Path prefix           | Default landing            |
+|------------------------|-----------------------|----------------------------|
+| `clinic-admin`         | `/admin/*`            | **`/admin/schedule`**      |
+| `clinic-psikolog`      | `/psikolog/*`         | `/psikolog/dashboard`      |
+| `clinic-owner`         | `/owner/*`            | `/owner/dashboard`         |
+| `clinic-resepsionis`   | `/resepsionis/*`      | `/resepsionis/dashboard`   |
+| `clinic-marketing`     | `/marketing/*`        | `/marketing/dashboard`     |
+| `clinic-intern`        | `/intern/*`           | `/intern/dashboard`        |
+| (no token)             | `/login`              | `/login`                   |
 
 Admin bypass: `clinic-admin` boleh akses semua route. Role lain hanya prefix mereka (per `ROLE_ROUTE_PREFIXES` di `shared/auth/constants.ts`).
 
-Route group syntax `(name)` di Next.js tidak mempengaruhi URL — semua role landing di `/dashboard`, route group menentukan layout & components.
+**Admin landing = `/admin/schedule`** (Penjadwalan, sesuai sidebar nav pertama). Bukan `/admin/dashboard` (legacy, masih ada tapi tidak di sidebar nav).
 
-Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO).
+Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO). Set client-side via `document.cookie` setelah login response (NPM bypass — lihat section "Auth cookie flow" di atas).
+
+### Sidebar nav per role (canonical source: `components/layouts/admin-shell/nav-config.ts`)
+
+**Admin** — 3 group (Operasional / Manajemen / Sistem):
+- Operasional: Penjadwalan, Klien, Ruangan
+- Manajemen: Psikolog, Layanan, Notifikasi WA
+- Sistem: Daftar booking, Audit log, User & Role, Pengaturan
+
+**Psikolog** — 3 group (Praktik / Klinis / Akun):
+- Praktik: Dashboard, Jadwal saya, Klien saya
+- Klinis: Catatan klinis, Ruangan (read-only)
+- Akun: Profil saya
+
+Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
 
 ## Mobile responsive
 **Desktop-first** — primary target laptop/desktop. Tapi **wajib accessible di mobile** (responsive breakpoints Tailwind):
@@ -221,13 +259,24 @@ Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO).
 - Tema ShadCN core di `components/ui/*` yang upstream — modifikasi via `cva` variant, bukan edit langsung.
 - Port di `config/ports.json` — koordinasi dengan tim dulu sebelum ubah.
 
-## Roadmap fitur (urut prioritas)
-1. Auth (login pasien, login psikolog, register pasien) — hook ke api-gateway
-2. Booking wizard pasien (pilih layanan → pilih psikolog → pilih jadwal → konfirmasi)
-3. Patient dashboard (sesi mendatang, riwayat)
-4. Psikolog dashboard (jadwal hari ini, sesi mendatang)
-5. Admin: psikolog CRUD, layanan CRUD, rooms CRUD
-6. Admin: clients (pasien), users-roles
-7. Admin: notif-wa template + dispatch
-8. Admin: audit log, pengaturan global
-9. Polish: notifikasi realtime, payment integration, room joining
+## Status fitur
+
+Semua 14 slice MVP sudah **delivered** (8 May 2026). Iterasi UX & hardening lanjut tracked di:
+- `.planning/ROADMAP.md` — status per slice + History section
+- `.planning/CHANGELOG.md` — daily commits dengan SHA (grouped per slice/area)
+
+Highlight current state:
+- ✅ Auth flow (login + cookie client-side untuk NPM bypass + logout confirmation)
+- ✅ Master data: Psikolog, Layanan, Rooms (facilities text[]), Users & Roles, Clients
+- ✅ Booking wizard single-page (ADR 011) + reschedule + walk-in via wizard
+- ✅ Schedule grid `/admin/schedule` + `/psikolog/schedule` (Hari/Minggu/Bulan + filter)
+- ✅ WA Fonnte integration hardened (phone normalize, BullMQ retry, webhook fallback, ID date/time WIB) + 18 templates
+- ✅ WA event triggers (confirm/complete/cancel/reschedule)
+- ✅ Psikolog workflow: dashboard real-data, sessions SOAP, patients, profile (editable + **avatar upload base64**), schedule self-service (weekly + per-tanggal override), rooms read-only
+- ✅ Receptionist status board + SSE realtime
+- ✅ Owner KPI dashboard + audit log viewer
+- ✅ Payment: DP/lunas + pdfkit receipt + WA send
+- ✅ PWA: manifest + service worker (cache-first static, network /api+SSE)
+- ⏳ Outstanding: PWA proper icons (SVG placeholder), mobile QA real-device, prisma migration drift reconcile
+
+Untuk tambah fitur baru: ikuti pattern slice di `.planning/phases/<n>/` — `SPEC → PLAN → execute → VERIFICATION`. Lihat `.claude/agents/gsd-*.md` untuk workflow.

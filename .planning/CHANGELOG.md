@@ -57,6 +57,36 @@ Serangkaian polish iteratif berdasarkan feedback user real-time saat sesi review
 - **`3e75290`** `chore(althea): copy "Libur / di luar jadwal" → "Kosong"`
   - Lebih netral & singkat — "Libur" mengasumsikan ada alasan personal, "Kosong" lebih akurat untuk default closed/off-window
 
+### Slice 10 · Psikolog rooms (read-only)
+
+- **`80b08d3`** `feat(althea): /psikolog/rooms — read-only room usage view untuk psikolog`
+  - New feature module `features/psikolog-rooms/` mirror admin-rooms tanpa CRUD
+  - Hooks: `usePsikologRooms` (date + typeFilter + stats + cell pick) reuse `useRoomList` + `useBookingList(date)`
+  - UI: toolbar tanpa tombol Add/Edit/Delete, type filter chips, read-only `RoomDetailPanel` (no Edit/Hapus button)
+  - Route entry `app/psikolog/rooms/page.tsx`, sidebar nav group "Klinis"
+  - Reuses `RoomStatTilesRow`, `RoomUsageGrid`, `RoomUsageLegend` dari admin-rooms (DRY)
+
+### Slice 01 · Admin Psikolog form UX (extended)
+
+Polish iteratif form Edit Psikolog di `/admin/psikolog` berdasar user feedback real-time.
+
+- **`1457b08`** `refactor(althea): hapus UI Jadwal Mingguan dari form Edit Psikolog admin`
+  - Section "Jadwal Mingguan" (~60 lines) dihapus dari `psikolog-form.tsx`
+  - Rationale: jadwal availability dikelola self-service di `/psikolog/profile` & `/psikolog/schedule`
+  - Comment block ditinggal di code untuk pointer migration path
+- **`fec54ac`** `refactor(althea): hapus tombol 'Kosongkan (handle semua)' di Edit Psikolog`
+  - User feedback: tombol kontras dengan default behavior (empty = handle semua) — redundant
+  - Caption "Kosong = handle semua layanan" + footer hint juga dihapus
+- **`ad30fc3`** `fix(althea): Simpan button di Edit Psikolog modal tidak bisa diklik`
+  - Root cause: `zodResolver(createPsikologSchema)` enforce `password.min(8)`, tapi di edit mode field password disembunyikan (`{!isEdit}`) → form state `password: ''` → silent validation fail
+  - Fix: `editPsikologSchema = createPsikologSchema.extend({ password: z.string().optional().or(z.literal('')) })`, resolver dipilih dinamis: `zodResolver(isEdit ? editPsikologSchema : createPsikologSchema) as Resolver<CreatePsikologInput>`
+- **`efdf772`** `fix(althea): UX form Edit Psikolog — pisahkan toggle 'Aktif' dari Slot per hari`
+  - User feedback: "Aktif" di sebelah "Slot per hari" bikin bingung — apakah aktif slot atau aktif psikolog?
+  - Fix: section terpisah "Status Psikolog" dengan toggle switch (sage/cream) + label dinamis "Aktif — menerima booking" / "Nonaktif — tidak menerima booking" + helper text
+- **`e2e0cb3`** `fix(althea): hapus 'slot harian default' dari banner Edit profil saya`
+  - Profile dialog `/psikolog/profile` banner sebelumnya tulis "Email, lisensi SIPP, slot harian default, dan spesialisasi"
+  - Sekarang: "Email, lisensi SIPP, dan spesialisasi" — slot dikelola di tab Availability terpisah, tidak di Edit profil
+
 ### Slice 03 · Master Data Rooms (extended)
 
 - **`b97f84a`** `feat(althea): fasilitas ruangan terstruktur (array) + chip editor`
