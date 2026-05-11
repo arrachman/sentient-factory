@@ -410,15 +410,24 @@ function CellEditPopover({
   onDelete: (date: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState<boolean>(
-    existing ? existing.isOpen : presetMode === 'buka' ? true : true,
+    existing ? existing.isOpen : true,
   );
-  const [allSlots, setAllSlots] = useState<boolean>(
-    existing ? !existing.slotIndices : presetMode === 'buka' ? false : true,
-  );
-  const [slotSet, setSlotSet] = useState<Set<number>>(
-    new Set(existing?.slotIndices ?? []),
-  );
+  // Default: semua slot tercentang. Edit existing tanpa slotIndices = "semua",
+  // jadi juga set semua tercentang. presetMode='buka' (dari mode "Buka khusus")
+  // start dengan kosong supaya psikolog langsung pilih subset.
+  const [slotSet, setSlotSet] = useState<Set<number>>(() => {
+    if (existing) {
+      return existing.slotIndices
+        ? new Set(existing.slotIndices)
+        : new Set(slots.map((_, i) => i));
+    }
+    if (presetMode === 'buka') return new Set();
+    return new Set(slots.map((_, i) => i));
+  });
   const [reason, setReason] = useState<string>(existing?.reason ?? defaultReason);
+
+  const allChecked = slotSet.size === slots.length;
+  const noneChecked = slotSet.size === 0;
 
   function toggleSlot(idx: number) {
     setSlotSet((prev) => {
@@ -429,11 +438,20 @@ function CellEditPopover({
     });
   }
 
+  function selectAll() {
+    setSlotSet(new Set(slots.map((_, i) => i)));
+  }
+  function clearAll() {
+    setSlotSet(new Set());
+  }
+
   function save() {
     onSave({
       date: dateKey,
       isOpen,
-      slotIndices: isOpen && !allSlots ? Array.from(slotSet).sort((a, b) => a - b) : null,
+      // Kalau semua tercentang → simpan sebagai null (semantically "semua slot").
+      // Subset → array index.
+      slotIndices: isOpen && !allChecked ? Array.from(slotSet).sort((a, b) => a - b) : null,
       reason: reason.trim() || null,
     });
   }
@@ -495,46 +513,83 @@ function CellEditPopover({
           {isOpen && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="caption">Slot tersedia</label>
-                <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={allSlots}
-                    onChange={(e) => setAllSlots(e.target.checked)}
-                    className="h-3.5 w-3.5"
-                  />
-                  <span className={allSlots ? 'text-teal-800 font-medium' : 'text-fg-muted'}>
-                    Pakai semua slot
-                  </span>
+                <label className="caption">
+                  Slot tersedia ·{' '}
+                  <span
+                    className={`font-semibold ${
+                      noneChecked ? 'text-amber-700' : 'text-teal-800'
+                    }`}
+                  >
+                    {slotSet.size}/{slots.length}
+                  </span>{' '}
+                  dipilih
                 </label>
-              </div>
-              {allSlots ? (
-                <p className="caption italic text-fg-muted">
-                  Semua {slots.length} slot di tanggal ini akan tersedia.
-                </p>
-              ) : (
-                <div className="grid grid-cols-2 gap-1.5">
-                  {slots.map((slot, i) => {
-                    const active = slotSet.has(i);
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => toggleSlot(i)}
-                        className={`px-2 py-1.5 rounded border text-[11.5px] font-medium text-left transition-colors ${
-                          active
-                            ? 'bg-sage-50 border-sage-500 text-teal-800'
-                            : 'bg-card border-border text-fg hover:border-sage-300'
-                        }`}
-                      >
-                        <div className="font-mono">
-                          {slot.start} – {slot.end}
-                        </div>
-                        {slot.label && <div className="caption text-[9.5px]">{slot.label}</div>}
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={selectAll}
+                    disabled={allChecked}
+                    className="text-[11px] font-medium text-sage-700 hover:underline disabled:text-fg-muted disabled:no-underline"
+                  >
+                    Centang semua
+                  </button>
+                  <span className="text-fg-muted text-[11px]">·</span>
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    disabled={noneChecked}
+                    className="text-[11px] font-medium text-sage-700 hover:underline disabled:text-fg-muted disabled:no-underline"
+                  >
+                    Bersihkan
+                  </button>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {slots.map((slot, i) => {
+                  const active = slotSet.has(i);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => toggleSlot(i)}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded border text-[11.5px] font-medium text-left transition-colors ${
+                        active
+                          ? 'bg-sage-50 border-sage-500 text-teal-800'
+                          : 'bg-card border-border text-fg-muted hover:border-sage-300'
+                      }`}
+                    >
+                      <span
+                        className="flex items-center justify-center flex-shrink-0"
+                        style={{
+                          width: 14,
+                          height: 14,
+                          borderRadius: 3,
+                          border: `1.5px solid ${active ? '#5b8a66' : 'var(--border)'}`,
+                          background: active ? '#5b8a66' : 'transparent',
+                          color: '#fff',
+                          fontSize: 10,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {active ? '✓' : ''}
+                      </span>
+                      <span className="flex flex-col min-w-0 flex-1">
+                        <span className="font-mono">
+                          {slot.start} – {slot.end}
+                        </span>
+                        {slot.label && (
+                          <span className="caption text-[9.5px]">{slot.label}</span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {noneChecked && (
+                <p className="caption mt-1.5 text-amber-700">
+                  ⚠ Belum ada slot tercentang. Centang minimal 1 slot, atau ubah Tipe ke "Tutup
+                  (cuti)".
+                </p>
               )}
             </div>
           )}
@@ -574,7 +629,7 @@ function CellEditPopover({
             <button
               type="button"
               onClick={save}
-              disabled={isOpen && !allSlots && slotSet.size === 0}
+              disabled={isOpen && noneChecked}
               className="btn btn-primary btn-sm disabled:opacity-50"
             >
               Simpan
