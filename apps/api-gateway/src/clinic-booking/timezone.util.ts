@@ -38,10 +38,7 @@ export type LocalDateParts = {
  * @param d  Date object (biasanya parsed dari ISO UTC)
  * @param timezone  IANA timezone, mis. "Asia/Jakarta". Default "Asia/Jakarta".
  */
-export function localPartsInTimezone(
-  d: Date,
-  timezone = 'Asia/Jakarta',
-): LocalDateParts {
+export function localPartsInTimezone(d: Date, timezone = 'Asia/Jakarta'): LocalDateParts {
   // en-GB locale supaya hour 00-23 (bukan 24, bukan AM/PM)
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: timezone,
@@ -77,10 +74,7 @@ export function localPartsInTimezone(
  * Dipakai untuk lookup `clinic_psikolog_date_override.date` (column
  * disimpan sebagai "midnight di TZ klinik" expressed as UTC).
  */
-export function localDateAtMidnight(
-  dateStr: string,
-  timezone = 'Asia/Jakarta',
-): Date {
+export function localDateAtMidnight(dateStr: string, timezone = 'Asia/Jakarta'): Date {
   // Parse YYYY-MM-DD assuming clinic TZ. Trick: build ISO with offset
   // computed dari Intl.DateTimeFormat.
   // Simpler: ambil UTC date sama-sama lalu adjust. Cukup pakai

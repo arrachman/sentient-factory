@@ -11,6 +11,12 @@ export type UpdateProfileInput = {
   title?: string;
   bio?: string;
   color?: string;
+  /**
+   * Base64 data URL (data:image/...;base64,...) atau URL absolut.
+   * `null` untuk hapus avatar (fallback ke colored initial).
+   * `undefined` = tidak ubah.
+   */
+  avatarUrl?: string | null;
 };
 
 export type ProfileStats = {

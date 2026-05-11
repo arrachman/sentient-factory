@@ -38,6 +38,7 @@ export function ProfileCard({
         style={{ textAlign: 'center', marginBottom: 18 }}
       >
         <div
+          className="relative overflow-hidden"
           style={{
             width: 88,
             height: 88,
@@ -52,7 +53,21 @@ export function ProfileCard({
             marginBottom: 12,
           }}
         >
-          {initial(p)}
+          {p.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={p.avatarUrl}
+              alt={p.fullName ?? 'Foto profil'}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+              }}
+            />
+          ) : (
+            initial(p)
+          )}
         </div>
         <span
           style={{

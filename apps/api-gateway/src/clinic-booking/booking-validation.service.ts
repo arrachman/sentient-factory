@@ -171,9 +171,7 @@ export class BookingValidationService {
       (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
     if (slots.length === 0) return; // belum di-config, allow (bootstrap mode)
 
-    const matched = slots.find(
-      (s) => s.start === startParts.hhmm && s.end === endParts.hhmm,
-    );
+    const matched = slots.find((s) => s.start === startParts.hhmm && s.end === endParts.hhmm);
     if (!matched) {
       const available = slots.map((s) => `${s.start}-${s.end}`).join(', ');
       throw new BadRequestException(

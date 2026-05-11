@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Camera, Trash2, Upload, X } from 'lucide-react';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import { COLOR_PALETTE } from '@/features/admin-psikolog/model/types';
 import type { UpdateProfileInput } from '../api/profile.api';
+import { resizeAvatarFile } from '../lib/avatar-resize';
 
 type Props = {
   open: boolean;
@@ -36,6 +37,14 @@ export function ProfileEditDialog({
   const [title, setTitle] = useState(initial.title ?? '');
   const [bio, setBio] = useState(initial.bio ?? '');
   const [color, setColor] = useState(initial.color ?? COLOR_PALETTE[0]);
+  // Avatar state:
+  //   - undefined = tidak diubah dari initial
+  //   - null = user mau hapus avatar (kirim null ke API)
+  //   - string = data URL hasil resize (kirim ke API)
+  const [avatarChange, setAvatarChange] = useState<string | null | undefined>(undefined);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync state when dialog re-opens with fresh initial
   useEffect(() => {
@@ -44,10 +53,53 @@ export function ProfileEditDialog({
       setTitle(initial.title ?? '');
       setBio(initial.bio ?? '');
       setColor(initial.color ?? COLOR_PALETTE[0]);
+      setAvatarChange(undefined);
+      setAvatarError(null);
+      setAvatarBusy(false);
     }
   }, [open, initial]);
 
   if (!open) return null;
+
+  // Resolve displayed avatar:
+  //   - kalau user baru pilih file → preview data URL baru
+  //   - kalau user hapus → null (fallback ke colored initial)
+  //   - kalau belum diubah → pakai initial.avatarUrl (kalau ada)
+  const displayedAvatar =
+    avatarChange !== undefined ? avatarChange : initial.avatarUrl;
+  const userInitial =
+    (initial.fullName?.trim().charAt(0) ?? initial.email.charAt(0)).toUpperCase();
+
+  async function handleFilePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // reset supaya bisa re-pick file yang sama
+    if (!file) return;
+
+    // Browser-level size limit sebelum resize (cegah upload file 20MB+)
+    const MAX_INPUT_BYTES = 8 * 1024 * 1024; // 8MB raw input
+    if (file.size > MAX_INPUT_BYTES) {
+      setAvatarError(
+        `File terlalu besar (${Math.round(file.size / 1024 / 1024)}MB). Maksimal 8MB sebelum resize.`,
+      );
+      return;
+    }
+
+    setAvatarError(null);
+    setAvatarBusy(true);
+    try {
+      const { dataUrl } = await resizeAvatarFile(file);
+      setAvatarChange(dataUrl);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  function handleRemoveAvatar() {
+    setAvatarChange(null);
+    setAvatarError(null);
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +108,8 @@ export function ProfileEditDialog({
       title: title.trim() || undefined,
       bio: bio.trim() || undefined,
       color: color || undefined,
+      // Kirim hanya kalau user benar-benar ubah (undefined = skip)
+      avatarUrl: avatarChange,
     });
   }
 
@@ -108,6 +162,106 @@ export function ProfileEditDialog({
             ℹ️ Email, lisensi SIPP, dan spesialisasi dikelola oleh admin.
             Hubungi admin klinik untuk perubahan field tsb.
           </p>
+
+          {/* Avatar picker */}
+          <div>
+            <label className="caption mb-2 block">Foto profil</label>
+            <div className="flex items-center gap-4">
+              <div
+                className="relative rounded-full overflow-hidden shrink-0"
+                style={{
+                  width: 80,
+                  height: 80,
+                  background: color || 'var(--sage-500)',
+                  border: '2px solid var(--border)',
+                }}
+              >
+                {displayedAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={displayedAvatar}
+                    alt="Foto profil"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="flex items-center justify-center"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      color: '#fff',
+                      fontFamily: 'var(--font-serif)',
+                      fontSize: 32,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {userInitial}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2" style={{ flex: 1 }}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleFilePick}
+                    style={{ display: 'none' }}
+                    aria-label="Pilih foto profil"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={avatarBusy || submitting}
+                    className="btn btn-outline btn-sm"
+                  >
+                    {avatarBusy ? (
+                      <>
+                        <Camera size={14} /> Memproses…
+                      </>
+                    ) : displayedAvatar ? (
+                      <>
+                        <Upload size={14} /> Ganti foto
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} /> Upload foto
+                      </>
+                    )}
+                  </button>
+                  {displayedAvatar && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      disabled={avatarBusy || submitting}
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: 'var(--danger, #b54141)' }}
+                    >
+                      <Trash2 size={14} /> Hapus
+                    </button>
+                  )}
+                </div>
+                <span className="caption" style={{ fontSize: 11 }}>
+                  JPG/PNG/WEBP, otomatis di-crop kotak & resize ke 256px. Maks 8MB.
+                </span>
+                {avatarError && (
+                  <span
+                    className="caption"
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--danger, #b54141)',
+                    }}
+                  >
+                    ⚠ {avatarError}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
 
           <div>
             <label className="caption mb-1 block">Nama Lengkap *</label>
