@@ -18,7 +18,9 @@ export const SLOTS = [
 export const SLOT_BASE_HOUR = 8;
 export const SLOT_HEIGHT = 56; // px
 
-export const DAY_LABELS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+// 7 hari penuh (Sen-Min) untuk grid Minggu — biar admin/psikolog selalu lihat
+// Sabtu+Minggu untuk konteks libur, bukan cuma hari kerja.
+export const DAY_LABELS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 export const DAY_LABELS_FULL = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
 export type ViewMode = 'Hari' | 'Minggu' | 'Bulan';

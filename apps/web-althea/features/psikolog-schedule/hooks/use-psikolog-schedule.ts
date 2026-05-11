@@ -63,8 +63,9 @@ export function usePsikologSchedule() {
     if (view === 'Minggu') {
       const start = weekStart(anchor);
       const arr: Date[] = [];
-      // 6 hari kerja (Sen-Sab) — Min skip karena klinik tutup
-      for (let i = 0; i < 6; i++) {
+      // 7 hari penuh Sen-Min — Min tetap tampil sebagai konteks libur
+      // (cell akan auto render LiburCell kalau psikolog/klinik tutup).
+      for (let i = 0; i < 7; i++) {
         const d = new Date(start);
         d.setDate(start.getDate() + i);
         arr.push(d);

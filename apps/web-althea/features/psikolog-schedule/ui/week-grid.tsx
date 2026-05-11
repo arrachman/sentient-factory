@@ -65,7 +65,7 @@ export function WeekGrid({
             key={slotIdx}
             style={{
               display: 'grid',
-              gridTemplateColumns: '70px repeat(6, 1fr)',
+              gridTemplateColumns: '70px repeat(7, 1fr)',
               borderTop: '1px solid var(--border)',
             }}
           >
@@ -145,7 +145,7 @@ function DayHeaderRow({
     <div
       style={{
         display: 'grid',
-        gridTemplateColumns: '70px repeat(6, 1fr)',
+        gridTemplateColumns: '70px repeat(7, 1fr)',
         borderBottom: '1px solid var(--border)',
       }}
     >
