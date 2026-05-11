@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { normalizePhoneId } from '../common/utils/phone.util';
 import { renderTemplate } from './template-renderer';
 import {
   CreateTemplateDto,
@@ -206,12 +207,18 @@ export class ClinicWaService {
     bookingId: number | null;
     metadata: Record<string, unknown>;
   }) {
+    // Normalize phone sebelum simpan ke log — supaya webhook callback yang
+    // pakai format '62xxx' bisa match dengan recipientPhone di clinic_wa_log
+    // saat handleWebhook() lookup by messageId (defensive: jika messageId
+    // miss, fallback ke phone match).
+    const normalizedPhone = normalizePhoneId(args.recipientPhone) ?? args.recipientPhone;
+
     // Create log first dengan status 'queued'
     const log = await this.prisma.clinicWaLog.create({
       data: {
         templateId: args.templateId,
         recipientType: args.recipientType,
-        recipientPhone: args.recipientPhone,
+        recipientPhone: normalizedPhone,
         body: args.body,
         bookingId: args.bookingId,
         metadata: args.metadata as Prisma.InputJsonValue,
@@ -225,7 +232,7 @@ export class ClinicWaService {
           WA_JOB_SEND,
           {
             logId: log.id,
-            recipientPhone: args.recipientPhone,
+            recipientPhone: normalizedPhone,
             body: args.body,
             metadata: args.metadata,
           },
@@ -246,7 +253,7 @@ export class ClinicWaService {
 
     // Sync path (default / fallback)
     const result = await this.wa.send({
-      toPhone: args.recipientPhone,
+      toPhone: normalizedPhone,
       body: args.body,
       callbackUrl: process.env.FONNTE_WEBHOOK_URL,
       metadata: { logId: log.id, ...args.metadata },
@@ -275,15 +282,34 @@ export class ClinicWaService {
   // ----- Webhook -----
 
   async handleWebhook(dto: FonnteWebhookDto) {
-    if (!dto.id) {
-      this.logger.warn('Webhook tanpa message id — skip');
-      return { success: false, error: 'missing_message_id' };
+    if (!dto.id && !dto.sender) {
+      this.logger.warn('Webhook tanpa id maupun sender — skip');
+      return { success: false, error: 'missing_identifier' };
     }
-    const log = await this.prisma.clinicWaLog.findFirst({
-      where: { messageId: dto.id },
-    });
+
+    // Primary lookup: by messageId. Fallback: by sender phone + latest sent
+    // (Fonnte kadang tidak include id di webhook tertentu).
+    let log = dto.id
+      ? await this.prisma.clinicWaLog.findFirst({
+          where: { messageId: dto.id },
+        })
+      : null;
+
+    if (!log && dto.sender) {
+      const normalizedSender = normalizePhoneId(dto.sender) ?? dto.sender;
+      log = await this.prisma.clinicWaLog.findFirst({
+        where: {
+          recipientPhone: normalizedSender,
+          status: { in: ['terkirim', 'queued'] }, // belum final
+        },
+        orderBy: { id: 'desc' },
+      });
+    }
+
     if (!log) {
-      this.logger.warn(`Webhook untuk message_id ${dto.id} tidak match log — ignore`);
+      this.logger.warn(
+        `Webhook tidak match log — id=${dto.id} sender=${dto.sender} status=${dto.status}`,
+      );
       return { success: false, error: 'log_not_found' };
     }
     const statusMap: Record<string, string> = {
@@ -301,6 +327,7 @@ export class ClinicWaService {
       data.errorReason = dto.reason;
     }
     await this.prisma.clinicWaLog.update({ where: { id: log.id }, data });
+    this.logger.log(`Webhook OK: logId=${log.id} ${log.status} → ${newStatus}`);
     return { success: true, data: { logId: log.id, status: newStatus } };
   }
 }

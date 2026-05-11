@@ -40,14 +40,35 @@ export class BookingNotificationService {
       return;
     }
     try {
+      // Format tanggal/waktu human-readable Indonesia (Asia/Jakarta)
+      // supaya template variable {{tanggal}} {{waktu}} muncul rapi:
+      //   tanggal: 'Senin, 11 Mei 2026'
+      //   waktu:   '14:30 WIB'
+      const tanggalFormatted = booking.scheduledStart.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta',
+      });
+      const waktuFormatted = booking.scheduledStart.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Jakarta',
+      });
+      const totalFormatted = new Intl.NumberFormat('id-ID').format(
+        Number(booking.service.basePrice),
+      );
+
       const variables = {
         nama_klien: booking.client.name,
         nama_psikolog: booking.psikolog.fullName ?? 'Psikolog Althea',
-        tanggal: booking.scheduledStart.toISOString().slice(0, 10),
-        waktu: booking.scheduledStart.toISOString().slice(11, 16),
+        psikolog: booking.psikolog.fullName ?? 'Psikolog Althea', // alias
+        tanggal: tanggalFormatted,
+        waktu: `${waktuFormatted} WIB`,
         ruang: booking.room.name,
         layanan: booking.service.name,
-        total: String(booking.service.basePrice),
+        total: totalFormatted,
         ...extraVars,
       };
       await this.wa.dispatch({

@@ -158,17 +158,23 @@ export class FonnteWebhookDto {
   @IsString()
   device?: string;
 
-  @ApiPropertyOptional({ description: 'Message ID dari Fonnte' })
+  @ApiPropertyOptional({
+    description:
+      'Message ID dari Fonnte. Fonnte kadang kirim sebagai number, kadang string — Transform paksa ke string.',
+  })
   @IsOptional()
+  @Transform(({ value }) => (value === undefined || value === null ? value : String(value)))
   @IsString()
   id?: string;
 
-  @ApiPropertyOptional({ description: 'sender phone' })
+  @ApiPropertyOptional({ description: 'sender phone (format 62xxx)' })
   @IsOptional()
   @IsString()
   sender?: string;
 
-  @ApiPropertyOptional({ description: 'message status: sent/delivered/read/failed' })
+  @ApiPropertyOptional({
+    description: 'message status: sent/delivered/read/failed',
+  })
   @IsOptional()
   @IsString()
   status?: string;

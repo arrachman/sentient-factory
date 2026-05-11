@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { normalizePhoneId } from '../../common/utils/phone.util';
 import { DeliveryStatus, SendMessageParams, SendResult, WAProvider } from '../wa.interface';
 
 /**
@@ -42,8 +43,12 @@ export class FonnteProvider implements WAProvider {
     }
 
     const body = params.body || `[template:${params.templateId}]`;
+    // Normalize phone — Fonnte accept multiple formats tapi webhook callback
+    // selalu pakai `62xxx`, jadi standardize di sini supaya log.recipientPhone
+    // match webhook.sender saat handleWebhook lookup.
+    const targetPhone = normalizePhoneId(params.toPhone) ?? params.toPhone;
     const formData = new URLSearchParams();
-    formData.set('target', params.toPhone);
+    formData.set('target', targetPhone);
     formData.set('message', body);
     if (this.deviceId) formData.set('device', this.deviceId);
     if (params.callbackUrl) formData.set('webhook', params.callbackUrl);
