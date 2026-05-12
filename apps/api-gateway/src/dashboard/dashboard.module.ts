@@ -7,6 +7,7 @@ import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
 import { DashboardController } from './dashboard.controller';
 import { DashboardCustomDbService } from './dashboard-custom-db.service';
+import { DashboardInsightService } from './dashboard-insight.service';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardService } from './dashboard.service';
 import { SemanticSchemaService } from './semantic-schema.service';
@@ -17,6 +18,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
   providers: [
     DashboardService,
     DashboardCustomDbService,
+    DashboardInsightService,
     DashboardMysqlService,
     SemanticSchemaService,
     AlertingRuleService,
