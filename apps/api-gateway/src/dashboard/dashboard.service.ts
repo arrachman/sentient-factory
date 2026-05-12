@@ -12,6 +12,7 @@ import path from 'node:path';
 import nodemailer, { type Transporter } from 'nodemailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { AlertingConfigService } from './alerting-config.service';
+import { AlertingDeliveryService } from './alerting-delivery.service';
 import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
@@ -102,6 +103,8 @@ export class DashboardService {
     private readonly alertingObservabilityService: AlertingObservabilityService,
     @Inject(forwardRef(() => AlertingSchedulerService))
     private readonly alertingSchedulerService: AlertingSchedulerService,
+    @Inject(forwardRef(() => AlertingDeliveryService))
+    private readonly alertingDeliveryService: AlertingDeliveryService,
   ) {}
 
   async customDbPinTargets() {
@@ -237,7 +240,7 @@ export class DashboardService {
 
     this.alertDeliveryRunning = true;
     try {
-      const triageRecoveryConfig = await this.getAlertingTriageRecoveryConfig();
+      const triageRecoveryConfig = await this.alertingDeliveryService.getAlertingTriageRecoveryConfig();
       const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
         SELECT
           d.delivery_id,
@@ -321,7 +324,7 @@ export class DashboardService {
             autoClosedTriage = Number(resolvedCount || 0) > 0;
             if (autoClosedTriage) {
               const previous = triageBeforeRows[0];
-              await this.createAlertDeadLetterTriageAudit({
+              await this.alertingDeliveryService.createAlertDeadLetterTriageAudit({
                 deliveryId,
                 actionType: 'auto-resolve',
                 previousTriageStatus: previous?.triage_status
@@ -579,7 +582,7 @@ export class DashboardService {
     `);
 
     const triageBefore = triageBeforeRows[0];
-    await this.createAlertDeadLetterTriageAudit({
+    await this.alertingDeliveryService.createAlertDeadLetterTriageAudit({
       deliveryId: normalizedDeliveryId,
       actionType: 'requeue',
       previousTriageStatus: triageBefore?.triage_status ? String(triageBefore.triage_status) : null,
@@ -1199,7 +1202,7 @@ export class DashboardService {
               ? 'note-change'
               : 'update';
 
-    await this.createAlertDeadLetterTriageAudit({
+    await this.alertingDeliveryService.createAlertDeadLetterTriageAudit({
       deliveryId: normalizedDeliveryId,
       actionType,
       previousTriageStatus: previousStatus,
@@ -1217,48 +1220,6 @@ export class DashboardService {
     });
 
     return this.alertingDeadLetterTriage();
-  }
-
-  private async createAlertDeadLetterTriageAudit(input: {
-    deliveryId: number;
-    actionType: string;
-    previousTriageStatus: string | null;
-    nextTriageStatus: string | null;
-    previousAcknowledgedAt: string | null;
-    nextAcknowledgedAt: string | null;
-    previousAssignedTo: string | null;
-    nextAssignedTo: string | null;
-    noteSnapshot: string | null;
-    detailPayload: Record<string, unknown>;
-    actor: string;
-  }) {
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO public.alert_dead_letter_triage_audit (
-        delivery_id,
-        action_type,
-        previous_triage_status,
-        next_triage_status,
-        previous_acknowledged_at,
-        next_acknowledged_at,
-        previous_assigned_to,
-        next_assigned_to,
-        note_snapshot,
-        detail_payload,
-        created_by
-      ) VALUES (
-        ${input.deliveryId},
-        '${this.escapeSqlLiteral(input.actionType)}',
-        ${input.previousTriageStatus ? `'${this.escapeSqlLiteral(input.previousTriageStatus)}'` : 'NULL'},
-        ${input.nextTriageStatus ? `'${this.escapeSqlLiteral(input.nextTriageStatus)}'` : 'NULL'},
-        ${input.previousAcknowledgedAt ? `'${this.escapeSqlLiteral(input.previousAcknowledgedAt)}'::timestamptz` : 'NULL'},
-        ${input.nextAcknowledgedAt ? `'${this.escapeSqlLiteral(input.nextAcknowledgedAt)}'::timestamptz` : 'NULL'},
-        ${input.previousAssignedTo ? `'${this.escapeSqlLiteral(input.previousAssignedTo)}'` : 'NULL'},
-        ${input.nextAssignedTo ? `'${this.escapeSqlLiteral(input.nextAssignedTo)}'` : 'NULL'},
-        ${input.noteSnapshot ? `'${this.escapeSqlLiteral(input.noteSnapshot)}'` : 'NULL'},
-        '${this.escapeSqlLiteral(JSON.stringify(input.detailPayload || {}))}'::jsonb,
-        '${this.escapeSqlLiteral(input.actor)}'
-      )
-    `);
   }
 
   async runAlertingTriageEscalationCycle(actor = 'system-triage-escalation') {
@@ -2549,84 +2510,7 @@ export class DashboardService {
   }
 
   async ensureAlertingTestRule(actor: string) {
-    const existing = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT rule_id, rule_key
-      FROM public.alert_rule
-      WHERE rule_key = 'system-test-send-rule'
-        AND deleted_at IS NULL
-      LIMIT 1
-    `);
-
-    if (existing[0]?.rule_id) {
-      return {
-        rule_id: Number(existing[0].rule_id),
-        rule_key: String(existing[0].rule_key || 'system-test-send-rule'),
-      };
-    }
-
-    const inserted = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      INSERT INTO public.alert_rule (
-        rule_key,
-        rule_name,
-        description,
-        module_key,
-        source_type,
-        source_ref,
-        metric_id,
-        system_metric_ref,
-        semantic_ref,
-        condition_mapping_id,
-        condition_mapping_key,
-        condition_operator_key,
-        comparison_type,
-        value_type,
-        schedule_type,
-        schedule_value,
-        severity,
-        primary_channel,
-        condition_summary,
-        condition_config,
-        source_context,
-        message_template,
-        status,
-        is_active,
-        created_by,
-        updated_by
-      ) VALUES (
-        'system-test-send-rule',
-        'System Test Send Rule',
-        'Internal rule used to validate alert notification channels.',
-        'alerting',
-        'manual-rule-source',
-        'test-send',
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        'threshold',
-        'text',
-        'preset',
-        'daily',
-        'low',
-        'email',
-        'Internal test-send rule',
-        '{}'::jsonb,
-        '{"system":true,"purpose":"test-send"}'::jsonb,
-        'This is a test notification from the alerting module.',
-        'active',
-        TRUE,
-        '${this.escapeSqlLiteral(actor)}',
-        '${this.escapeSqlLiteral(actor)}'
-      )
-      RETURNING rule_id, rule_key
-    `);
-
-    return {
-      rule_id: Number(inserted[0]?.rule_id || 0),
-      rule_key: String(inserted[0]?.rule_key || 'system-test-send-rule'),
-    };
+    return this.alertingDeliveryService.ensureAlertingTestRule(actor);
   }
 
   private async ensureAlertingTriageEscalationRule(actor: string) {
@@ -3504,33 +3388,7 @@ export class DashboardService {
     errorMessage?: string | null;
     actor: string;
   }) {
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO public.alert_provider_session_audit (
-        provider_name,
-        channel_type,
-        action_type,
-        status,
-        pairing_mode,
-        phone_number,
-        auth_dir,
-        detail_payload,
-        error_message,
-        created_by,
-        updated_by
-      ) VALUES (
-        '${this.escapeSqlLiteral(input.providerName)}',
-        '${this.escapeSqlLiteral(input.channelType)}',
-        '${this.escapeSqlLiteral(input.actionType)}',
-        '${this.escapeSqlLiteral(input.status)}',
-        ${input.pairingMode ? `'${this.escapeSqlLiteral(input.pairingMode)}'` : 'NULL'},
-        ${input.phoneNumber ? `'${this.escapeSqlLiteral(input.phoneNumber)}'` : 'NULL'},
-        ${input.authDir ? `'${this.escapeSqlLiteral(input.authDir)}'` : 'NULL'},
-        '${this.escapeSqlLiteral(JSON.stringify(input.detailPayload || {}))}'::jsonb,
-        ${input.errorMessage ? `'${this.escapeSqlLiteral(input.errorMessage)}'` : 'NULL'},
-        '${this.escapeSqlLiteral(input.actor)}',
-        '${this.escapeSqlLiteral(input.actor)}'
-      )
-    `);
+    return this.alertingDeliveryService.createAlertProviderSessionAudit(input);
   }
 
   private mapBaileysHealthToSessionStatus(baileys: {
@@ -3575,59 +3433,7 @@ export class DashboardService {
     lastDisconnectedAt?: Date | null;
     actor: string;
   }) {
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO public.alert_provider_session_state (
-        provider_name,
-        channel_type,
-        session_key,
-        session_status,
-        pairing_mode,
-        phone_number,
-        auth_dir,
-        status_message,
-        last_health_check_at,
-        last_pairing_started_at,
-        last_pairing_result_at,
-        last_connected_at,
-        last_disconnected_at,
-        detail_payload,
-        is_active,
-        created_by,
-        updated_by
-      ) VALUES (
-        '${this.escapeSqlLiteral(input.providerName)}',
-        '${this.escapeSqlLiteral(input.channelType)}',
-        '${this.escapeSqlLiteral(input.sessionKey)}',
-        '${this.escapeSqlLiteral(input.sessionStatus)}',
-        ${input.pairingMode ? `'${this.escapeSqlLiteral(input.pairingMode)}'` : 'NULL'},
-        ${input.phoneNumber ? `'${this.escapeSqlLiteral(input.phoneNumber)}'` : 'NULL'},
-        ${input.authDir ? `'${this.escapeSqlLiteral(input.authDir)}'` : 'NULL'},
-        ${input.statusMessage ? `'${this.escapeSqlLiteral(input.statusMessage)}'` : 'NULL'},
-        ${input.lastHealthCheckAt ? `'${input.lastHealthCheckAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastPairingStartedAt ? `'${input.lastPairingStartedAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastPairingResultAt ? `'${input.lastPairingResultAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastConnectedAt ? `'${input.lastConnectedAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastDisconnectedAt ? `'${input.lastDisconnectedAt.toISOString()}'::timestamptz` : 'NULL'},
-        '${this.escapeSqlLiteral(JSON.stringify(input.detailPayload || {}))}'::jsonb,
-        TRUE,
-        '${this.escapeSqlLiteral(input.actor)}',
-        '${this.escapeSqlLiteral(input.actor)}'
-      )
-      ON CONFLICT (session_key) DO UPDATE SET
-        session_status = EXCLUDED.session_status,
-        pairing_mode = EXCLUDED.pairing_mode,
-        phone_number = EXCLUDED.phone_number,
-        auth_dir = EXCLUDED.auth_dir,
-        status_message = EXCLUDED.status_message,
-        last_health_check_at = COALESCE(EXCLUDED.last_health_check_at, public.alert_provider_session_state.last_health_check_at),
-        last_pairing_started_at = COALESCE(EXCLUDED.last_pairing_started_at, public.alert_provider_session_state.last_pairing_started_at),
-        last_pairing_result_at = COALESCE(EXCLUDED.last_pairing_result_at, public.alert_provider_session_state.last_pairing_result_at),
-        last_connected_at = COALESCE(EXCLUDED.last_connected_at, public.alert_provider_session_state.last_connected_at),
-        last_disconnected_at = COALESCE(EXCLUDED.last_disconnected_at, public.alert_provider_session_state.last_disconnected_at),
-        detail_payload = EXCLUDED.detail_payload,
-        is_active = TRUE,
-        updated_by = EXCLUDED.updated_by
-    `);
+    return this.alertingDeliveryService.upsertAlertProviderSessionState(input);
   }
 
   private async getAlertingTriagePolicy() {
@@ -3712,27 +3518,6 @@ export class DashboardService {
       cooldown_minutes:
         Number.isFinite(cooldownMinutes) && cooldownMinutes > 0 ? cooldownMinutes : 60,
     };
-  }
-
-  private async getAlertingTriageRecoveryConfig() {
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT value_text, value_json
-      FROM public.alert_runtime_setting
-      WHERE is_active = TRUE
-        AND setting_key = 'triage_auto_close_on_recovery'
-      LIMIT 1
-    `);
-
-    const row = rows[0];
-    const valueJson = this.asJson<Record<string, unknown>>(row?.value_json, {});
-    const valueText =
-      typeof row?.value_text === 'string' ? row.value_text.trim().toLowerCase() : '';
-    const enabled =
-      typeof valueJson['enabled'] === 'boolean'
-        ? Boolean(valueJson['enabled'])
-        : ['enabled', 'true', 'yes', '1', 'on'].includes(valueText);
-
-    return { enabled };
   }
 
   private buildAlertingTriageMetrics(
