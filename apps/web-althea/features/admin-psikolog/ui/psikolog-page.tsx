@@ -37,26 +37,24 @@ function initial(p: Psikolog): string {
   return (p.fullName ?? p.email).slice(0, 2).toUpperCase();
 }
 
-// Stats stubs — backend belum expose stats endpoint untuk psikolog.
-// Generate deterministic placeholder values dari id supaya tidak flicker.
-function stubStats(p: Psikolog) {
-  const seed = p.id;
-  const clients = 8 + (seed * 3) % 18;
-  const weekCap = [14, 16, 18, 20][seed % 4];
-  const weekSessions = Math.max(0, weekCap - (seed % 5));
-  const todayMax = 4;
-  const todayClients = Math.min(todayMax, (seed % 5));
-  const recentlyFreed = seed % 7 === 0;
-  const utilization = Math.round((weekSessions / weekCap) * 100);
-  const rating = (4.6 + ((seed * 13) % 5) / 10).toFixed(1);
-  const since = 2018 + (seed % 6);
-  return { clients, weekSessions, weekCap, todayClients, todayMax, recentlyFreed, utilization, rating, since };
+// Backend belum expose stats endpoint untuk psikolog — tampilkan zero-state
+// supaya tidak mengarang angka untuk psikolog baru (tanpa histori transaksi).
+function emptyStats(_p: Psikolog) {
+  return {
+    clients: 0,
+    weekSessions: 0,
+    weekCap: 0,
+    todayClients: 0,
+    todayMax: 4,
+    recentlyFreed: false,
+    utilization: 0,
+    rating: null as string | null,
+    since: null as number | null,
+  };
 }
 
-function weekDistribution(p: Psikolog): number[] {
-  // Stub bar chart: 6 hari × distribusi pseudo-random by id
-  const seed = p.id;
-  return HARI_SHORT.map((_, i) => Math.max(0, ((seed + i * 3) % 5)));
+function weekDistribution(_p: Psikolog): number[] {
+  return HARI_SHORT.map(() => 0);
 }
 
 // ============================================================================
@@ -101,7 +99,7 @@ function PsikologCard({
   selected: boolean;
   onClick: () => void;
 }) {
-  const stats = stubStats(p);
+  const stats = emptyStats(p);
   const dayFull = stats.todayClients >= stats.todayMax;
   const utilColor = stats.utilization > 90 ? 'var(--danger, #b54141)' : (p.color ?? 'var(--sage-500)');
   const specialtyText = Array.isArray(p.specialty) && p.specialty.length > 0
@@ -275,7 +273,7 @@ function ProfileAside({
   p: Psikolog;
   onEdit: () => void;
 }) {
-  const stats = stubStats(p);
+  const stats = emptyStats(p);
   const week = weekDistribution(p);
   const specialtyText = Array.isArray(p.specialty) && p.specialty.length > 0
     ? specialtyLabel(p.specialty[0])
@@ -324,14 +322,10 @@ function ProfileAside({
           </div>
           <div className="caption" style={{ marginTop: 2 }}>
             {specialtyText}
-            {specialtyText ? ' · ' : ''}sejak {stats.since}
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--teal-800)' }}>
-            ★ {stats.rating}
-          </span>
-          <span className="caption">· {stats.clients} klien aktif</span>
+          <span className="caption">Belum ada histori sesi</span>
         </div>
       </div>
 
