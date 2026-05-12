@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { AlertingBaileysService } from './alerting-baileys.service';
+import { AlertingChannelService } from './alerting-channel.service';
 import { AlertingConfigService } from './alerting-config.service';
+import { AlertingDeliveryDispatchService } from './alerting-delivery-dispatch.service';
 import { AlertingDeliveryService } from './alerting-delivery.service';
 import { AlertingEscalationService } from './alerting-escalation.service';
 import { AlertingInsightQueryService } from './alerting-insight-query.service';
@@ -50,7 +53,10 @@ import { SemanticSchemaService } from './semantic-schema.service';
     AlertingRuleService,
     AlertingTemplateService,
     AlertingEscalationService,
+    AlertingBaileysService,
+    AlertingChannelService,
     AlertingConfigService,
+    AlertingDeliveryDispatchService,
     AlertingDeliveryService,
     AlertingProviderSessionService,
     AlertingTriageService,
@@ -67,7 +73,10 @@ import { SemanticSchemaService } from './semantic-schema.service';
     AlertingRuleService,
     AlertingTemplateService,
     AlertingEscalationService,
+    AlertingBaileysService,
+    AlertingChannelService,
     AlertingConfigService,
+    AlertingDeliveryDispatchService,
     AlertingDeliveryService,
     AlertingProviderSessionService,
     AlertingTriageService,

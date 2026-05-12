@@ -7,6 +7,7 @@ import { AttendanceQueryService } from './attendance-query.service';
 import { AttendanceReviewService } from './attendance-review.service';
 import { AttendanceSettingsService } from './attendance-settings.service';
 import { FaceEnrollmentService } from './face-enrollment.service';
+import { UserWorksiteService } from './user-worksite.service';
 import { WorksiteService } from './worksite.service';
 
 @Module({
@@ -19,6 +20,7 @@ import { WorksiteService } from './worksite.service';
     AttendanceReviewService,
     AttendanceSettingsService,
     FaceEnrollmentService,
+    UserWorksiteService,
     WorksiteService,
   ],
 })

@@ -1,18 +1,16 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { access, mkdir, readdir, stat } from 'node:fs/promises';
-import path from 'node:path';
-import nodemailer, { type Transporter } from 'nodemailer';
 import { PrismaService } from '../prisma/prisma.service';
 import { asJson, escapeSqlLiteral } from './dashboard.utils';
+import { AlertingDeliveryDispatchService } from './alerting-delivery-dispatch.service';
 import { AlertingTriageService } from './alerting-triage.service';
 
 /**
  * AlertingDeliveryService
  *
- * Owns the delivery pipeline: run cycle, dispatch chain, channel senders
- * (SMTP / Baileys / webhook), delivery log queries, requeue, and provider
- * config accessors (getBaileysConfig, getSmtpConfig, etc.).
+ * Owns the delivery pipeline orchestration: run cycle, delivery log queries,
+ * requeue, and Baileys health inspection.
  *
+ * Channel dispatch + config accessors → AlertingDeliveryDispatchService
  * Dead-letter triage state → AlertingTriageService
  * Provider session audit/state + test-rule → AlertingProviderSessionService
  */
@@ -20,11 +18,11 @@ import { AlertingTriageService } from './alerting-triage.service';
 export class AlertingDeliveryService {
   private readonly logger = new Logger(AlertingDeliveryService.name);
   private alertDeliveryRunning = false;
-  private smtpTransporter: Transporter | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly alertingTriageService: AlertingTriageService,
+    private readonly alertingDeliveryDispatchService: AlertingDeliveryDispatchService,
   ) {}
 
   // ── Delivery cycle ───────────────────────────────────────────────────
@@ -66,7 +64,7 @@ export class AlertingDeliveryService {
       for (const row of rows) {
         const deliveryId = Number(row.delivery_id || 0);
         try {
-          const dispatchResult = await this.dispatchAlertDelivery({
+          const dispatchResult = await this.alertingDeliveryDispatchService.dispatchAlertDelivery({
             channelType: String(row.channel_type || ''),
             targetValue: String(row.target_value || ''),
             eventKey: String(row.event_key || ''),
@@ -214,429 +212,10 @@ export class AlertingDeliveryService {
     }
   }
 
-  // ── Dispatch helpers ─────────────────────────────────────────────────
+  // ── Baileys health (delegates to dispatch service) ───────────────────
 
-  private async dispatchAlertDelivery(input: {
-    channelType: string;
-    targetValue: string;
-    eventKey: string;
-    eventTitle: string;
-    message: string;
-    eventPayload: Record<string, unknown>;
-  }) {
-    if (input.channelType === 'wa-group' || input.channelType === 'wa-personal') {
-      const baileysResult = await this.dispatchWhatsAppViaBaileys(input);
-      if (baileysResult) {
-        return baileysResult;
-      }
-    }
-
-    if (input.channelType === 'email') {
-      const smtpResult = await this.dispatchEmailViaSmtp(input);
-      if (smtpResult) {
-        return smtpResult;
-      }
-    }
-
-    const webhookConfig = this.getAlertDeliveryWebhookConfig(input.channelType);
-    if (!webhookConfig.url) {
-      return {
-        providerName: 'dry-run',
-        providerMessageId: `dry-${Date.now()}`,
-        deliveryStatus: 'delivered',
-        responsePayload: {
-          dry_run: true,
-          channel_type: input.channelType,
-          target_value: input.targetValue,
-          event_key: input.eventKey,
-        },
-      };
-    }
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (webhookConfig.token) {
-      headers.Authorization = `Bearer ${webhookConfig.token}`;
-    }
-
-    const response = await fetch(webhookConfig.url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        channel_type: input.channelType,
-        target_value: input.targetValue,
-        event_key: input.eventKey,
-        event_title: input.eventTitle,
-        message: input.message,
-        payload: input.eventPayload,
-      }),
-    });
-
-    const rawText = await response.text();
-    let parsedPayload: unknown = rawText;
-    try {
-      parsedPayload = rawText ? JSON.parse(rawText) : {};
-    } catch {
-      parsedPayload = rawText;
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        `Delivery provider ${webhookConfig.providerName} rejected request with status ${response.status}.`,
-      );
-    }
-
-    const providerMessageId =
-      parsedPayload && typeof parsedPayload === 'object'
-        ? String(
-            (parsedPayload as Record<string, unknown>).message_id ||
-              (parsedPayload as Record<string, unknown>).id ||
-              '',
-          ).trim() || null
-        : null;
-
-    return {
-      providerName: webhookConfig.providerName,
-      providerMessageId,
-      deliveryStatus: 'delivered',
-      responsePayload: parsedPayload,
-    };
-  }
-
-  private async dispatchWhatsAppViaBaileys(input: {
-    channelType: string;
-    targetValue: string;
-    eventKey: string;
-    eventTitle: string;
-    message: string;
-    eventPayload: Record<string, unknown>;
-  }) {
-    const config = this.getBaileysConfig();
-    if (!config.enabled || !config.authDir) {
-      return null;
-    }
-
-    const jid = this.normalizeWhatsAppJid(input.channelType, input.targetValue);
-    const baileys = await import('@whiskeysockets/baileys');
-    await mkdir(config.authDir, { recursive: true });
-    const { state, saveCreds } = await baileys.useMultiFileAuthState(config.authDir);
-    const socket = baileys.makeWASocket({
-      auth: state,
-      browser: baileys.Browsers.ubuntu('Sentient Factory Alerting'),
-      syncFullHistory: false,
-      markOnlineOnConnect: false,
-      printQRInTerminal: false,
-    });
-
-    socket.ev.on('creds.update', saveCreds);
-
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Baileys connection timed out. Pair the WhatsApp session first.'));
-      }, 30000);
-
-      socket.ev.on('connection.update', (update: Record<string, unknown>) => {
-        const connection = String(update.connection || '');
-        if (connection === 'open') {
-          clearTimeout(timeout);
-          resolve();
-          return;
-        }
-        if (typeof update.qr === 'string' && update.qr.trim()) {
-          this.logger.warn(
-            'Baileys session requires QR pairing before WhatsApp delivery can be used.',
-          );
-        }
-        if (connection === 'close') {
-          clearTimeout(timeout);
-          reject(new Error('Baileys connection closed before delivery could be sent.'));
-        }
-      });
-    });
-
-    try {
-      const sendResult = await socket.sendMessage(jid, {
-        text: [
-          input.message,
-          '',
-          `Event Key: ${input.eventKey}`,
-          `Title: ${input.eventTitle}`,
-        ].join('\n'),
-      });
-
-      return {
-        providerName: 'baileys',
-        providerMessageId: String(sendResult?.key?.id || '').trim() || null,
-        deliveryStatus: 'delivered',
-        responsePayload: {
-          jid,
-          event_key: input.eventKey,
-          message_id: sendResult?.key?.id || null,
-        },
-      };
-    } finally {
-      try {
-        socket.end(undefined);
-      } catch {
-        // ignore socket shutdown errors
-      }
-    }
-  }
-
-  private async dispatchEmailViaSmtp(input: {
-    channelType: string;
-    targetValue: string;
-    eventKey: string;
-    eventTitle: string;
-    message: string;
-    eventPayload: Record<string, unknown>;
-  }) {
-    const config = this.getSmtpConfig();
-    if (!config.host || !config.port || !config.from) {
-      return null;
-    }
-
-    const transporter = this.getSmtpTransporter(config);
-    const info = await transporter.sendMail({
-      from: config.from,
-      to: input.targetValue,
-      subject: `[Alert] ${input.eventTitle}`.slice(0, 180),
-      text: [
-        input.message,
-        '',
-        `Event Key: ${input.eventKey}`,
-        `Target: ${input.targetValue}`,
-        `Payload: ${JSON.stringify(input.eventPayload, null, 2)}`,
-      ].join('\n'),
-      html: `
-        <div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5;">
-          <h2 style="margin:0 0 12px;">${this.escapeHtml(input.eventTitle)}</h2>
-          <p>${this.escapeHtml(input.message)}</p>
-          <p><strong>Event Key:</strong> ${this.escapeHtml(input.eventKey)}</p>
-          <pre style="background:#f6f8fa;padding:12px;border-radius:8px;overflow:auto;">${this.escapeHtml(
-            JSON.stringify(input.eventPayload, null, 2),
-          )}</pre>
-        </div>
-      `,
-    });
-
-    return {
-      providerName: 'smtp',
-      providerMessageId: info.messageId || null,
-      deliveryStatus: 'delivered',
-      responsePayload: {
-        accepted: info.accepted,
-        rejected: info.rejected,
-        response: info.response,
-        message_id: info.messageId,
-      },
-    };
-  }
-
-  // ── Config accessors (called externally) ────────────────────────────
-
-  getAlertDeliveryWebhookConfig(channelType: string) {
-    const normalized = channelType.trim().toLowerCase();
-    if (normalized === 'wa-group') {
-      return {
-        providerName: 'wa-group-webhook',
-        url: process.env.ALERTING_WA_GROUP_WEBHOOK_URL || '',
-        token: process.env.ALERTING_WA_GROUP_WEBHOOK_TOKEN || '',
-      };
-    }
-    if (normalized === 'wa-personal') {
-      return {
-        providerName: 'wa-personal-webhook',
-        url: process.env.ALERTING_WA_PERSONAL_WEBHOOK_URL || '',
-        token: process.env.ALERTING_WA_PERSONAL_WEBHOOK_TOKEN || '',
-      };
-    }
-    if (normalized === 'email') {
-      return {
-        providerName: 'email-webhook',
-        url: process.env.ALERTING_EMAIL_WEBHOOK_URL || '',
-        token: process.env.ALERTING_EMAIL_WEBHOOK_TOKEN || '',
-      };
-    }
-    return {
-      providerName: 'unknown-channel',
-      url: '',
-      token: '',
-    };
-  }
-
-  getBaileysConfig() {
-    const authDir = (process.env.ALERTING_WA_BAILEYS_AUTH_DIR || '').trim();
-    return {
-      enabled:
-        String(process.env.ALERTING_WA_BAILEYS_ENABLED || '')
-          .trim()
-          .toLowerCase() === 'true',
-      authDir: authDir ? path.resolve(authDir) : '',
-    };
-  }
-
-  async getBaileysHealth() {
-    const config = this.getBaileysConfig();
-    const health = {
-      enabled: config.enabled,
-      auth_dir: config.authDir || null,
-      auth_dir_exists: false,
-      auth_file_count: 0,
-      creds_present: false,
-      session_ready: false,
-      last_auth_update_at: null as string | null,
-      pairing_required: false,
-      status_label: 'disabled',
-    };
-
-    if (!config.enabled) {
-      return health;
-    }
-
-    if (!config.authDir) {
-      return {
-        ...health,
-        pairing_required: true,
-        status_label: 'missing-auth-dir',
-      };
-    }
-
-    try {
-      await access(config.authDir);
-      health.auth_dir_exists = true;
-
-      const fileNames: string[] = await readdir(config.authDir).catch(() => [] as string[]);
-      health.auth_file_count = fileNames.length;
-      health.creds_present = fileNames.includes('creds.json');
-
-      const stats: Array<Date | null> = await Promise.all(
-        fileNames.map(async (fileName) => {
-          try {
-            const fileStat = await stat(path.join(config.authDir, fileName));
-            return fileStat.mtime;
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      const latestMtime = stats
-        .filter((fileStat) => fileStat instanceof Date)
-        .sort((left, right) => right.getTime() - left.getTime())[0];
-
-      health.last_auth_update_at = latestMtime ? latestMtime.toISOString() : null;
-      health.session_ready = health.creds_present && health.auth_file_count > 0;
-      health.pairing_required = !health.session_ready;
-      health.status_label = health.session_ready ? 'ready' : 'pairing-required';
-      return health;
-    } catch {
-      return {
-        ...health,
-        pairing_required: true,
-        status_label: 'auth-dir-not-found',
-      };
-    }
-  }
-
-  mapBaileysHealthToSessionStatus(baileys: {
-    enabled: boolean;
-    session_ready: boolean;
-    pairing_required: boolean;
-    status_label: string;
-  }) {
-    if (!baileys.enabled) {
-      return 'disabled';
-    }
-    if (baileys.session_ready) {
-      return 'ready';
-    }
-    if (baileys.pairing_required || baileys.status_label === 'pairing-required') {
-      return 'pairing-required';
-    }
-    return 'disconnected';
-  }
-
-  getSmtpConfig() {
-    const port = Number(process.env.ALERTING_EMAIL_SMTP_PORT || process.env.SMTP_PORT || '') || 0;
-    return {
-      host: (process.env.ALERTING_EMAIL_SMTP_HOST || process.env.SMTP_HOST || '').trim(),
-      port,
-      user: (process.env.ALERTING_EMAIL_SMTP_USER || process.env.SMTP_USER || '').trim(),
-      pass: (process.env.ALERTING_EMAIL_SMTP_PASS || process.env.SMTP_PASS || '').trim(),
-      secure:
-        String(process.env.ALERTING_EMAIL_SMTP_SECURE || process.env.SMTP_SECURE || '')
-          .trim()
-          .toLowerCase() === 'true' || port === 465,
-      from: (
-        process.env.ALERTING_EMAIL_FROM ||
-        process.env.SMTP_FROM ||
-        process.env.SMTP_USER ||
-        ''
-      ).trim(),
-    };
-  }
-
-  private getSmtpTransporter(config: {
-    host: string;
-    port: number;
-    user: string;
-    pass: string;
-    secure: boolean;
-    from: string;
-  }) {
-    if (this.smtpTransporter) {
-      return this.smtpTransporter;
-    }
-
-    this.smtpTransporter = nodemailer.createTransport({
-      host: config.host,
-      port: config.port,
-      secure: config.secure,
-      auth: config.user || config.pass ? { user: config.user, pass: config.pass } : undefined,
-    });
-
-    return this.smtpTransporter;
-  }
-
-  private normalizeWhatsAppJid(channelType: string, targetValue: string) {
-    const normalizedTarget = targetValue.trim();
-    if (!normalizedTarget) {
-      throw new BadRequestException('WhatsApp target value is required.');
-    }
-
-    if (channelType === 'wa-group') {
-      if (normalizedTarget.includes('@')) {
-        return normalizedTarget;
-      }
-      if (/^\d+-\d+$/.test(normalizedTarget) || /^\d+$/.test(normalizedTarget)) {
-        return `${normalizedTarget}@g.us`;
-      }
-      throw new BadRequestException(
-        'WhatsApp group target must be a valid group JID or numeric group identifier.',
-      );
-    }
-
-    if (normalizedTarget.includes('@')) {
-      return normalizedTarget;
-    }
-    const digits = normalizedTarget.replace(/\D/g, '');
-    if (!digits) {
-      throw new BadRequestException(
-        'WhatsApp personal target must be a phone number or WhatsApp JID.',
-      );
-    }
-    return `${digits}@s.whatsapp.net`;
-  }
-
-  private escapeHtml(value: string) {
-    return value
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#39;');
+  getBaileysHealth() {
+    return this.alertingDeliveryDispatchService.getBaileysHealth();
   }
 
   // ── Delivery logs ────────────────────────────────────────────────────

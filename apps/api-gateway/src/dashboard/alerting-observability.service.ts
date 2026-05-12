@@ -1,5 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AlertingDeliveryDispatchService } from './alerting-delivery-dispatch.service';
 import { AlertingDeliveryService } from './alerting-delivery.service';
 import { AlertingProviderSessionService } from './alerting-provider-session.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
@@ -12,6 +13,7 @@ export class AlertingObservabilityService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => AlertingDeliveryService))
     private readonly alertingDeliveryService: AlertingDeliveryService,
+    private readonly alertingDeliveryDispatchService: AlertingDeliveryDispatchService,
     private readonly alertingProviderSessionService: AlertingProviderSessionService,
     private readonly alertingTriageService: AlertingTriageService,
     @Inject(forwardRef(() => AlertingSchedulerService))
@@ -286,11 +288,11 @@ export class AlertingObservabilityService {
   }
 
   async alertingDeliveryStatus() {
-    const smtpConfig = this.alertingDeliveryService.getSmtpConfig();
-    const waGroup = this.alertingDeliveryService.getAlertDeliveryWebhookConfig('wa-group');
-    const waPersonal = this.alertingDeliveryService.getAlertDeliveryWebhookConfig('wa-personal');
-    const emailWebhook = this.alertingDeliveryService.getAlertDeliveryWebhookConfig('email');
-    const baileysConfig = this.alertingDeliveryService.getBaileysConfig();
+    const smtpConfig = this.alertingDeliveryDispatchService.getSmtpConfig();
+    const waGroup = this.alertingDeliveryDispatchService.getAlertDeliveryWebhookConfig('wa-group');
+    const waPersonal = this.alertingDeliveryDispatchService.getAlertDeliveryWebhookConfig('wa-personal');
+    const emailWebhook = this.alertingDeliveryDispatchService.getAlertDeliveryWebhookConfig('email');
+    const baileysConfig = this.alertingDeliveryDispatchService.getBaileysConfig();
 
     return {
       success: true,
@@ -337,13 +339,13 @@ export class AlertingObservabilityService {
   }
 
   async alertingProviderHealth() {
-    const smtpConfig = this.alertingDeliveryService.getSmtpConfig();
-    const baileys = await this.alertingDeliveryService.getBaileysHealth();
+    const smtpConfig = this.alertingDeliveryDispatchService.getSmtpConfig();
+    const baileys = await this.alertingDeliveryDispatchService.getBaileysHealth();
     await this.alertingProviderSessionService.upsertAlertProviderSessionState({
       providerName: 'baileys',
       channelType: 'wa-group',
       sessionKey: 'baileys-wa-group',
-      sessionStatus: this.alertingDeliveryService.mapBaileysHealthToSessionStatus(baileys),
+      sessionStatus: this.alertingDeliveryDispatchService.mapBaileysHealthToSessionStatus(baileys),
       pairingMode: null,
       phoneNumber: null,
       authDir: baileys.auth_dir,
