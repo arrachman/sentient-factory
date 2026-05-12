@@ -4,6 +4,7 @@ import { AlertingConfigService } from './alerting-config.service';
 import { AlertingDeliveryService } from './alerting-delivery.service';
 import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingRuleService } from './alerting-rule.service';
+import { AlertingSchedulerService } from './alerting-scheduler.service';
 import { DashboardController } from './dashboard.controller';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardService } from './dashboard.service';
@@ -20,6 +21,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
     AlertingConfigService,
     AlertingDeliveryService,
     AlertingObservabilityService,
+    AlertingSchedulerService,
   ],
   exports: [
     DashboardService,
@@ -28,6 +30,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
     AlertingConfigService,
     AlertingDeliveryService,
     AlertingObservabilityService,
+    AlertingSchedulerService,
   ],
 })
 export class DashboardModule {}

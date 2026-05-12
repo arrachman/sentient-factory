@@ -6,8 +6,6 @@ import {
   InternalServerErrorException,
   Logger,
   NotFoundException,
-  OnModuleDestroy,
-  OnModuleInit,
 } from '@nestjs/common';
 import { access, mkdir, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
@@ -16,6 +14,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AlertingConfigService } from './alerting-config.service';
 import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingRuleService } from './alerting-rule.service';
+import { AlertingSchedulerService } from './alerting-scheduler.service';
 import { QueryDashboardBreakdownDto } from './dto/query-dashboard-breakdown.dto';
 import { QueryDashboardRangeDto } from './dto/query-dashboard-range.dto';
 import { QueryDashboardTableDto } from './dto/query-dashboard-table.dto';
@@ -86,26 +85,11 @@ const DOMAIN_FIELD_ALLOWLIST: Record<
 };
 
 @Injectable()
-export class DashboardService implements OnModuleInit, OnModuleDestroy {
+export class DashboardService {
   private readonly supportedDomains: readonly SupportedDomain[] = SUPPORTED_DOMAINS;
   private readonly logger = new Logger(DashboardService.name);
-  private readonly alertSchedulerIntervalMs = Math.max(
-    Number(process.env.ALERTING_SCHEDULER_INTERVAL_MS || '60000') || 60000,
-    15000,
-  );
-  private readonly alertDeliveryIntervalMs = Math.max(
-    Number(process.env.ALERTING_DELIVERY_INTERVAL_MS || '30000') || 30000,
-    10000,
-  );
-  private readonly alertTriageEscalationIntervalMs = Math.max(
-    Number(process.env.ALERTING_TRIAGE_ESCALATION_INTERVAL_MS || '60000') || 60000,
-    15000,
-  );
-  private alertSchedulerTimer: NodeJS.Timeout | null = null;
   private alertSchedulerRunning = false;
-  private alertDeliveryTimer: NodeJS.Timeout | null = null;
   private alertDeliveryRunning = false;
-  private alertTriageEscalationTimer: NodeJS.Timeout | null = null;
   private alertTriageEscalationRunning = false;
   private smtpTransporter: Transporter | null = null;
 
@@ -116,28 +100,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     @Inject(forwardRef(() => AlertingConfigService))
     private readonly alertingConfigService: AlertingConfigService,
     private readonly alertingObservabilityService: AlertingObservabilityService,
+    @Inject(forwardRef(() => AlertingSchedulerService))
+    private readonly alertingSchedulerService: AlertingSchedulerService,
   ) {}
-
-  onModuleInit() {
-    this.startAlertingScheduler();
-    this.startAlertDeliveryWorker();
-    this.startAlertTriageEscalationWorker();
-  }
-
-  onModuleDestroy() {
-    if (this.alertSchedulerTimer) {
-      clearInterval(this.alertSchedulerTimer);
-      this.alertSchedulerTimer = null;
-    }
-    if (this.alertDeliveryTimer) {
-      clearInterval(this.alertDeliveryTimer);
-      this.alertDeliveryTimer = null;
-    }
-    if (this.alertTriageEscalationTimer) {
-      clearInterval(this.alertTriageEscalationTimer);
-      this.alertTriageEscalationTimer = null;
-    }
-  }
 
   async customDbPinTargets() {
     const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
@@ -1618,9 +1583,9 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return {
       success: true,
       data: {
-        scheduler_interval_ms: this.alertSchedulerIntervalMs,
-        delivery_interval_ms: this.alertDeliveryIntervalMs,
-        triage_escalation_interval_ms: this.alertTriageEscalationIntervalMs,
+        scheduler_interval_ms: this.alertingSchedulerService.alertSchedulerIntervalMs,
+        delivery_interval_ms: this.alertingSchedulerService.alertDeliveryIntervalMs,
+        triage_escalation_interval_ms: this.alertingSchedulerService.alertTriageEscalationIntervalMs,
         channels: [
           {
             channel_type: 'wa-group',
@@ -3172,56 +3137,6 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     } catch {
       return fallback;
     }
-  }
-
-  private startAlertingScheduler() {
-    if (this.alertSchedulerTimer) {
-      return;
-    }
-
-    this.alertSchedulerTimer = setInterval(() => {
-      void this.runAlertingSchedulerCycle().catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown alert scheduler error.';
-        this.logger.error(`Alert scheduler cycle failed: ${message}`);
-      });
-    }, this.alertSchedulerIntervalMs);
-
-    this.logger.log(`Alert scheduler started with interval ${this.alertSchedulerIntervalMs}ms`);
-  }
-
-  private startAlertDeliveryWorker() {
-    if (this.alertDeliveryTimer) {
-      return;
-    }
-
-    this.alertDeliveryTimer = setInterval(() => {
-      void this.runAlertDeliveryCycle().catch((error) => {
-        const message =
-          error instanceof Error ? error.message : 'Unknown alert delivery worker error.';
-        this.logger.error(`Alert delivery cycle failed: ${message}`);
-      });
-    }, this.alertDeliveryIntervalMs);
-
-    this.logger.log(
-      `Alert delivery worker started with interval ${this.alertDeliveryIntervalMs}ms`,
-    );
-  }
-
-  private startAlertTriageEscalationWorker() {
-    if (this.alertTriageEscalationTimer) {
-      return;
-    }
-
-    this.alertTriageEscalationTimer = setInterval(() => {
-      void this.runAlertingTriageEscalationCycle().catch((error) => {
-        const message = error instanceof Error ? error.message : 'Unknown triage escalation error.';
-        this.logger.error(`Alert triage escalation cycle failed: ${message}`);
-      });
-    }, this.alertTriageEscalationIntervalMs);
-
-    this.logger.log(
-      `Alert triage escalation worker started with interval ${this.alertTriageEscalationIntervalMs}ms`,
-    );
   }
 
   private parseAlertScheduleToMs(scheduleValue: string) {
