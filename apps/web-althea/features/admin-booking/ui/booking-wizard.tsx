@@ -38,6 +38,8 @@ export function BookingWizard({
   const s = w.state;
   const setS = w.setState;
 
+  const firstSlotIdx = s.sessions[0]?.slotIdx ?? null;
+
   // Auto-scroll cascade: saat user pick di section sebelumnya, gulir ke section berikutnya.
   useEffect(() => {
     if (!open) return;
@@ -45,20 +47,14 @@ export function BookingWizard({
       sec2Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else if (s.serviceId && !s.psikologUserId) {
       sec3Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else if (s.psikologUserId && s.slotIdx === null) {
+    } else if (s.psikologUserId && firstSlotIdx === null) {
       sec4Ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [open, s.clientId, s.serviceId, s.psikologUserId, s.slotIdx]);
+  }, [open, s.clientId, s.serviceId, s.psikologUserId, firstSlotIdx]);
 
   if (!open) return null;
 
-  const canSubmit =
-    !!s.clientId &&
-    !!s.serviceId &&
-    !!s.psikologUserId &&
-    !!s.roomId &&
-    s.slotIdx !== null &&
-    !w.submitting;
+  const canSubmit = w.canSubmit;
 
   return (
     <div
@@ -69,7 +65,9 @@ export function BookingWizard({
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="card-althea w-full max-w-2xl max-h-[92vh] overflow-hidden bg-card flex flex-col">
+      <div
+        className={`card-althea w-full ${w.isMulti ? 'max-w-3xl' : 'max-w-2xl'} max-h-[92vh] overflow-hidden bg-card flex flex-col`}
+      >
         <DialogHeader onClose={onClose} />
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
@@ -124,17 +122,21 @@ export function BookingWizard({
           <Section
             ref={sec4Ref}
             stepNum={4}
-            title="Jadwal & Ruang"
-            filled={s.slotIdx !== null && !!s.roomId}
+            title={w.isMulti ? `Jadwal ${s.sessions.length} Sesi & Ruang` : 'Jadwal & Ruang'}
+            filled={w.allSessionsFilled && !!s.roomId}
             disabled={!s.psikologUserId}
             disabledHint="Pilih psikolog dulu."
           >
             <Step4ScheduleRoom
               state={s}
               setState={setS}
+              isMulti={w.isMulti}
+              updateSession={w.updateSession}
+              reapplyInterval={w.reapplyInterval}
+              setIntervalDays={w.setIntervalDays}
+              intraConflict={w.intraConflict}
               slots={w.slots}
               unavailableSlotIdx={w.unavailableSlotIdx}
-              isClosedDay={w.isClosedDay}
               psikologClosedToday={w.psikologClosedToday}
               resolvedAvailability={w.resolvedAvailability}
               selectedService={w.selectedService}
@@ -158,7 +160,11 @@ export function BookingWizard({
             disabled={!canSubmit}
             className="btn btn-primary disabled:opacity-50"
           >
-            {w.submitting ? 'Menyimpan...' : 'Buat Booking'}
+            {w.submitting
+              ? 'Menyimpan...'
+              : w.isMulti
+                ? `Buat ${s.sessions.length} Booking Sekaligus`
+                : 'Buat Booking'}
           </button>
         </div>
       </div>

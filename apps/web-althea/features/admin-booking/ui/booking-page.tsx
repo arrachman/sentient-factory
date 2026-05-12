@@ -7,7 +7,6 @@ import {
   Check,
   CheckCircle2,
   Eye,
-  Layers,
   Play,
   RotateCw,
   Search,
@@ -31,7 +30,6 @@ import {
 } from '../model/types';
 import { BookingDetailDialog } from './booking-detail-dialog';
 import { BookingWizard } from './booking-wizard';
-import { PackageWizard } from './package-wizard';
 import { RescheduleDialog } from './reschedule-dialog';
 
 function formatDateTime(iso: string): string {
@@ -76,7 +74,6 @@ export function BookingPage() {
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [search, setSearch] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [packageWizardOpen, setPackageWizardOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
   const [detailing, setDetailing] = useState<Booking | null>(null);
 
@@ -145,21 +142,10 @@ export function BookingPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="h1">Booking</h1>
-          <p className="caption mt-1">
-            Kelola booking sesi: konfirmasi, check-in, mulai sesi, reschedule, payment & WA reminder.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setPackageWizardOpen(true)} className="btn btn-outline">
-            <Layers className="h-4 w-4" /> Paket
-          </button>
-          <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
-            <CalendarPlus className="h-4 w-4" /> Booking Baru
-          </button>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+        <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
+          <CalendarPlus className="h-4 w-4" /> Booking Baru
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -362,7 +348,6 @@ export function BookingPage() {
       </div>
 
       <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
-      <PackageWizard open={packageWizardOpen} onClose={() => setPackageWizardOpen(false)} />
       <RescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} />
       <BookingDetailDialog booking={detailing} onClose={() => setDetailing(null)} />
     </div>

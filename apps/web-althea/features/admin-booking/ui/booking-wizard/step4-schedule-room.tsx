@@ -1,18 +1,22 @@
 'use client';
 
 /**
- * Step 4 wizard — DateStrip (horizontal pagination, color-coded) + slot grid
- * (only available) + ruang dropdown + buffer override + catatan.
+ * Step 4 wizard — Section "Jadwal & Ruang".
+ *
+ * Single-session: DateStrip + SlotGrid + Ruang + Override + Catatan.
+ * Multi-session: list accordion SessionRow (DateStrip + SlotGrid per sesi) + Ruang + Override + Catatan.
  */
-import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import type { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import type { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import type { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import type { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import type { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
-import type { WizardState } from './use-wizard-state';
+import type { WizardSession, WizardState } from './use-wizard-state';
+import { SessionRow } from './session-row';
+import { DateStrip } from './date-strip';
+import { SlotGrid } from './slot-grid';
 
 type Slot = NonNullable<
   ReturnType<typeof useSettings>['data']
@@ -24,9 +28,13 @@ type Service = NonNullable<
 export function Step4ScheduleRoom({
   state,
   setState,
+  isMulti,
+  updateSession,
+  reapplyInterval,
+  setIntervalDays,
+  intraConflict,
   slots,
   unavailableSlotIdx,
-  isClosedDay,
   psikologClosedToday,
   resolvedAvailability,
   selectedService,
@@ -39,9 +47,13 @@ export function Step4ScheduleRoom({
 }: {
   state: WizardState;
   setState: React.Dispatch<React.SetStateAction<WizardState>>;
+  isMulti: boolean;
+  updateSession: (i: number, partial: Partial<WizardSession>) => void;
+  reapplyInterval: () => void;
+  setIntervalDays: (n: number) => void;
+  intraConflict: Set<number>;
   slots: Slot[];
   unavailableSlotIdx: Set<number>;
-  isClosedDay: boolean;
   psikologClosedToday: boolean;
   resolvedAvailability?: {
     isOpen: boolean;
@@ -63,47 +75,79 @@ export function Step4ScheduleRoom({
   const psikologName = selectedPsikolog?.fullName ?? null;
   const overrideReason =
     resolvedAvailability?.source === 'override' ? resolvedAvailability.reason : null;
+
+  const firstSession = state.sessions[0];
+
   return (
     <div className="space-y-3">
-      <DateStrip
-        selectedDate={state.date}
-        psikolog={selectedPsikolog}
-        closedDayOfWeek={closedDayOfWeek}
-        holidays={holidays}
-        onChangeDate={(date) =>
-          setState((p) => ({ ...p, date, slotIdx: null }))
-        }
-      />
-      {psikologClosedToday && !state.bufferOverride && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          ⚠ <strong>{psikologName}</strong> tidak praktik di tanggal ini
-          {resolvedAvailability?.source === 'override'
-            ? ' (override khusus tanggal ini'
-            : ' (sesuai jadwal mingguan psikolog'}
-          {overrideReason ? `: ${overrideReason}` : ''}). Pilih tanggal lain,
-          ganti psikolog di step sebelumnya, atau centang override di bawah.
-        </div>
+      {!isMulti && firstSession && (
+        <>
+          <DateStrip
+            selectedDate={firstSession.date}
+            psikolog={selectedPsikolog}
+            closedDayOfWeek={closedDayOfWeek}
+            holidays={holidays}
+            onChangeDate={(date) =>
+              setState((p) => ({
+                ...p,
+                sessions: [{ date, slotIdx: null }],
+              }))
+            }
+          />
+          {psikologClosedToday && !state.bufferOverride && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              ⚠ <strong>{psikologName}</strong> tidak praktik di tanggal ini
+              {resolvedAvailability?.source === 'override'
+                ? ' (override khusus tanggal ini'
+                : ' (sesuai jadwal mingguan psikolog'}
+              {overrideReason ? `: ${overrideReason}` : ''}). Pilih tanggal lain,
+              ganti psikolog di step sebelumnya, atau centang override di bawah.
+            </div>
+          )}
+          {!psikologClosedToday && resolvedAvailability?.source === 'override' && (
+            <div className="rounded-md border border-sage-200 bg-sage-50 px-3 py-2 text-xs text-sage-800">
+              ℹ Tanggal ini pakai <strong>jadwal khusus</strong> psikolog (override)
+              {overrideReason ? ` — ${overrideReason}` : ''}.
+            </div>
+          )}
+          <SlotGrid
+            slots={slots}
+            unavailableSlotIdx={unavailableSlotIdx}
+            slotIdx={firstSession.slotIdx}
+            psikologName={psikologName}
+            isLoadingBookings={psikologDayBookings.isLoading}
+            onPick={(idx) =>
+              setState((p) => ({
+                ...p,
+                sessions: p.sessions.map((ses, i) =>
+                  i === 0 ? { ...ses, slotIdx: idx } : ses,
+                ),
+              }))
+            }
+          />
+          {selectedService && selectedSlot ? (
+            <SlotDurationHint service={selectedService} slot={selectedSlot} />
+          ) : null}
+        </>
       )}
-      {!psikologClosedToday && resolvedAvailability?.source === 'override' && (
-        <div className="rounded-md border border-sage-200 bg-sage-50 px-3 py-2 text-xs text-sage-800">
-          ℹ Tanggal ini pakai <strong>jadwal khusus</strong> psikolog (override)
-          {overrideReason ? ` — ${overrideReason}` : ''}.
-        </div>
-      )}
-      <SlotGrid
-        slots={slots}
-        unavailableSlotIdx={unavailableSlotIdx}
-        slotIdx={state.slotIdx}
-        psikologName={psikologName}
-        isLoadingBookings={psikologDayBookings.isLoading}
-        onPick={(idx) => setState((p) => ({ ...p, slotIdx: idx }))}
-      />
-      {selectedService && selectedSlot ? (
-        <SlotDurationHint
-          service={selectedService}
-          slot={selectedSlot}
+
+      {isMulti && (
+        <MultiSessionList
+          sessions={state.sessions}
+          slots={slots}
+          psikolog={selectedPsikolog}
+          psikologUserId={state.psikologUserId}
+          roomId={state.roomId}
+          closedDayOfWeek={closedDayOfWeek}
+          holidays={holidays}
+          intervalDays={state.intervalDays}
+          intraConflict={intraConflict}
+          onChangeInterval={setIntervalDays}
+          onApplyInterval={reapplyInterval}
+          onUpdateSession={updateSession}
         />
-      ) : null}
+      )}
+
       <RoomField
         roomList={roomList}
         roomId={state.roomId}
@@ -123,249 +167,116 @@ export function Step4ScheduleRoom({
   );
 }
 
-// =====================================================================
-// Sub-fields
-// =====================================================================
-
-const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-const DAY_KEY = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-
-type DateStatus = 'available' | 'klinik-closed' | 'holiday' | 'psikolog-off' | 'psikolog-unset';
-
-const STATUS_INFO: Record<DateStatus, { label: string; bg: string; border: string; fg: string }> = {
-  available:        { label: '',          bg: 'bg-card',      border: 'border-border',       fg: 'text-fg' },
-  'klinik-closed':  { label: 'Tutup',     bg: 'bg-cream-100', border: 'border-cream-200',    fg: 'text-fg-muted' },
-  holiday:          { label: 'Libur',     bg: 'bg-amber-50',  border: 'border-amber-200',    fg: 'text-amber-800' },
-  'psikolog-off':   { label: 'Libur',     bg: 'bg-rose-50',   border: 'border-rose-200',     fg: 'text-rose-700' },
-  'psikolog-unset': { label: 'Belum set', bg: 'bg-cream-100', border: 'border-cream-200',    fg: 'text-fg-muted' },
-};
-
-function pad(n: number) { return String(n).padStart(2, '0'); }
-function toDateKey(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function statusFor(
-  d: Date,
-  psikolog: Psikolog | null,
-  closedDayOfWeek: number[],
-  holidays: string[],
-): DateStatus {
-  const dateStr = toDateKey(d);
-  const dow = d.getDay();
-  if (holidays.includes(dateStr)) return 'holiday';
-  if (closedDayOfWeek.includes(dow)) return 'klinik-closed';
-  if (psikolog) {
-    const wa = psikolog.weeklyAvailability ?? {};
-    if (Object.keys(wa).length === 0) return 'psikolog-unset';
-    const dayCfg = wa[DAY_KEY[dow]];
-    if (!dayCfg || !dayCfg.isOpen) return 'psikolog-off';
-  }
-  return 'available';
-}
-
-function DateStrip({
-  selectedDate,
+function MultiSessionList({
+  sessions,
+  slots,
   psikolog,
+  psikologUserId,
+  roomId,
   closedDayOfWeek,
   holidays,
-  onChangeDate,
+  intervalDays,
+  intraConflict,
+  onChangeInterval,
+  onApplyInterval,
+  onUpdateSession,
 }: {
-  selectedDate: string;
+  sessions: WizardSession[];
+  slots: Slot[];
   psikolog: Psikolog | null;
+  psikologUserId: number | null;
+  roomId: number | null;
   closedDayOfWeek: number[];
   holidays: string[];
-  onChangeDate: (date: string) => void;
+  intervalDays: number;
+  intraConflict: Set<number>;
+  onChangeInterval: (n: number) => void;
+  onApplyInterval: () => void;
+  onUpdateSession: (i: number, partial: Partial<WizardSession>) => void;
 }) {
-  // Anchor minggu (Senin) — geser pakai prev/next
-  const [weekOffset, setWeekOffset] = useState(0);
+  // Accordion: 1 sesi expanded sekaligus. Default = sesi pertama yang belum
+  // dijadwalkan. Saat user pilih slot → auto-collapse + jump ke unscheduled
+  // berikutnya (atau collapse semua kalau sudah lengkap).
+  const firstUnscheduled = sessions.findIndex((s) => s.slotIdx === null);
+  const [activeIdx, setActiveIdx] = useState<number>(
+    firstUnscheduled === -1 ? 0 : firstUnscheduled,
+  );
 
-  const week = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    // Senin dari minggu hari ini
-    const dow = today.getDay();
-    const mondayOffset = dow === 0 ? -6 : 1 - dow;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + mondayOffset + weekOffset * 7);
-    // 7 hari
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      return d;
-    });
-  }, [weekOffset]);
-
-  const todayKey = toDateKey(new Date());
-  const weekLabel = useMemo(() => {
-    const first = week[0];
-    const last = week[6];
-    return `${first.getDate()} ${MONTH_SHORT[first.getMonth()]} – ${last.getDate()} ${MONTH_SHORT[last.getMonth()]} ${last.getFullYear()}`;
-  }, [week]);
+  // Saat psikolog/service berubah → sessions di-reset, kembali ke sesi 1.
+  useEffect(() => {
+    const idx = sessions.findIndex((s) => s.slotIdx === null);
+    setActiveIdx(idx === -1 ? -1 : idx);
+  }, [psikologUserId, sessions.length]);
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="caption">Tanggal</label>
-        <div className="flex items-center gap-1">
+    <div className="space-y-2">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <label className="caption block">
+            Jadwal {sessions.length} Sesi
+          </label>
+          <p className="caption text-fg-muted">
+            Semua sesi wajib dijadwalkan. Klik sesi untuk pilih tanggal &amp;
+            slot.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="caption">Interval (hari):</label>
+          <input
+            type="number"
+            min={1}
+            max={90}
+            value={intervalDays}
+            onChange={(e) => onChangeInterval(Number(e.target.value))}
+            className="input-althea max-w-[80px]"
+          />
           <button
             type="button"
-            onClick={() => setWeekOffset((o) => o - 1)}
-            className="btn btn-ghost btn-icon h-7 w-7"
-            aria-label="Minggu sebelumnya"
-            title="Minggu sebelumnya"
+            onClick={onApplyInterval}
+            className="btn btn-outline btn-sm"
+            title="Reset tanggal sesi 2..N berdasarkan tanggal sesi 1 + interval"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </button>
-          <span className="caption text-teal-800 font-medium tabular-nums px-1.5 min-w-[140px] text-center">
-            {weekLabel}
-          </span>
-          <button
-            type="button"
-            onClick={() => setWeekOffset((o) => o + 1)}
-            className="btn btn-ghost btn-icon h-7 w-7"
-            aria-label="Minggu berikutnya"
-            title="Minggu berikutnya"
-          >
-            <ChevronRight className="h-3.5 w-3.5" />
+            Apply Interval
           </button>
         </div>
       </div>
-
-      <div className="grid grid-cols-7 gap-1.5">
-        {week.map((d) => {
-          const key = toDateKey(d);
-          const status = statusFor(d, psikolog, closedDayOfWeek, holidays);
-          const info = STATUS_INFO[status];
-          const selected = key === selectedDate;
-          const isToday = key === todayKey;
-          const dow = d.getDay();
-          const unbookable = status !== 'available';
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => !unbookable && onChangeDate(key)}
-              disabled={unbookable}
-              className={`flex flex-col items-center px-1 py-2 rounded-md border text-xs transition-colors ${
-                selected
-                  ? 'bg-sage-500 border-sage-500 text-white shadow-sm'
-                  : unbookable
-                    ? `${info.bg} ${info.border} ${info.fg} cursor-not-allowed`
-                    : `${info.bg} ${info.border} ${info.fg} hover:border-sage-300 cursor-pointer`
-              } ${isToday && !selected ? 'ring-1 ring-sage-300' : ''}`}
-              title={
-                status === 'available'
-                  ? 'Tersedia'
-                  : status === 'klinik-closed'
-                    ? 'Klinik tutup — tidak bisa dipilih'
-                    : status === 'holiday'
-                      ? 'Tanggal libur — tidak bisa dipilih'
-                      : status === 'psikolog-off'
-                        ? `${psikolog?.fullName ?? 'Psikolog'} tidak praktik — tidak bisa dipilih`
-                        : 'Psikolog belum set jadwal — tidak bisa dipilih'
-              }
-            >
-              <span className="text-[10px] uppercase tracking-wider opacity-80">
-                {DAY_SHORT[dow]}
-              </span>
-              <span className="text-base font-semibold leading-tight tabular-nums">
-                {d.getDate()}
-              </span>
-              {info.label ? (
-                <span className="text-[9.5px] mt-0.5 leading-none">{info.label}</span>
-              ) : isToday ? (
-                <span className="text-[9.5px] mt-0.5 leading-none opacity-80">hari ini</span>
-              ) : null}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SlotGrid({
-  slots,
-  unavailableSlotIdx,
-  slotIdx,
-  psikologName,
-  isLoadingBookings,
-  onPick,
-}: {
-  slots: Slot[];
-  unavailableSlotIdx: Set<number>;
-  slotIdx: number | null;
-  psikologName: string | null;
-  isLoadingBookings: boolean;
-  onPick: (idx: number) => void;
-}) {
-  if (slots.length === 0) {
-    return (
-      <div>
-        <label className="caption mb-1 block">Slot tersedia</label>
-        <p className="caption italic text-fg-muted">
-          Belum ada slot operasional. Set di Pengaturan → Slot Operasional dulu.
-        </p>
-      </div>
-    );
-  }
-
-  // Selalu hanya tampilkan slot available (clean UX, no strikethrough clutter).
-  const visibleSlots = slots
-    .map((slot, i) => ({ slot, i }))
-    .filter(({ i }) => !unavailableSlotIdx.has(i));
-
-  return (
-    <div>
-      <label className="caption mb-1 block">
-        Slot tersedia untuk{' '}
-        <strong className="text-teal-800">{psikologName ?? 'psikolog'}</strong>
-      </label>
-      {visibleSlots.length === 0 ? (
-        <p className="caption italic text-fg-muted px-3 py-3 rounded-md bg-amber-50 border border-amber-200">
-          Tidak ada slot tersedia di tanggal ini. Pilih tanggal lain atau ganti
-          psikolog. (Override hanya bypass validasi jam buka — slot yang sudah
-          dibooking tetap tidak tampil.)
-        </p>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {visibleSlots.map(({ slot, i }) => {
-              const active = slotIdx === i;
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => onPick(i)}
-                  className={`px-3 py-2 rounded-md border text-sm font-medium transition-colors text-left ${
-                    active
-                      ? 'bg-sage-50 border-sage-500 text-teal-800'
-                      : 'bg-card border-border text-fg hover:border-sage-300'
-                  }`}
-                >
-                  <div className="font-semibold">
-                    {slot.start} – {slot.end}
-                  </div>
-                  <div className="caption mt-0.5">{slot.label || 'tersedia'}</div>
-                </button>
+      <div className="space-y-2">
+        {sessions.map((ses, i) => (
+          <SessionRow
+            key={i}
+            index={i}
+            state={ses}
+            slots={slots}
+            psikolog={psikolog}
+            psikologUserId={psikologUserId}
+            roomId={roomId}
+            closedDayOfWeek={closedDayOfWeek}
+            holidays={holidays}
+            isIntraConflict={intraConflict.has(i)}
+            isExpanded={activeIdx === i}
+            onToggleExpand={() => setActiveIdx((curr) => (curr === i ? -1 : i))}
+            onChange={(partial) => onUpdateSession(i, partial)}
+            onSlotPicked={() => {
+              // Cari sesi berikutnya yang belum dijadwalkan
+              const nextUnscheduled = sessions.findIndex(
+                (s, j) => j !== i && s.slotIdx === null,
               );
-            })}
-          </div>
-          {!isLoadingBookings && unavailableSlotIdx.size > 0 ? (
-            <p className="caption mt-1.5 text-fg-muted">
-              {visibleSlots.length} dari {slots.length} slot tersedia di tanggal ini.
-            </p>
-          ) : null}
-        </>
-      )}
-      {isLoadingBookings ? (
-        <p className="caption mt-1 text-fg-muted">Mengecek slot kosong…</p>
-      ) : null}
+              setActiveIdx(nextUnscheduled === -1 ? -1 : nextUnscheduled);
+            }}
+          />
+        ))}
+      </div>
+      <p className="caption text-fg-muted">
+        💡 Tip: edit tanggal Sesi 1 + klik &quot;Apply Interval&quot; untuk
+        auto-fill tanggal sesi berikutnya.
+      </p>
     </div>
   );
 }
+
+// =====================================================================
+// Sub-fields lain
+// =====================================================================
 
 function SlotDurationHint({
   service,
