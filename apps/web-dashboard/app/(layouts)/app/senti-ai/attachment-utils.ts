@@ -1,5 +1,7 @@
 'use client';
 
+export { buildAttachmentContext } from './attachment-context';
+
 export type PromptAttachmentStatus = 'ready' | 'metadata-only' | 'failed';
 
 export type PromptAttachment = {
@@ -23,16 +25,6 @@ const MAX_ATTACHMENT_BYTES = 15 * 1024 * 1024;
 const PREVIEW_LIMIT = 240;
 const CONTENT_LIMIT = 12_000;
 const PRINTABLE_TEXT_PATTERN = /[A-Za-z0-9][A-Za-z0-9 \t.,:;!?()[\]{}"'/\\_+=@#%-]{20,}/g;
-
-function formatBytes(size: number) {
-  if (size < 1024) {
-    return `${size} B`;
-  }
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
-  }
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 function clampText(value: string, limit = CONTENT_LIMIT) {
   const normalized = value.replace(/\u0000/g, ' ').replace(/\s+/g, ' ').trim();
@@ -229,34 +221,6 @@ async function extractImageMetadata(file: File) {
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
-}
-
-export function buildAttachmentContext(attachments: PromptAttachment[]) {
-  const activeAttachments = attachments.filter((attachment) => attachment.status !== 'failed');
-  if (activeAttachments.length === 0) {
-    return '';
-  }
-
-  return activeAttachments
-    .map((attachment, index) => {
-      const metadataLines = Object.entries(attachment.metadata)
-        .map(([key, value]) => `- ${key}: ${String(value)}`)
-        .join('\n');
-      const warningLine = attachment.warning ? `\nWarning: ${attachment.warning}` : '';
-
-      return [
-        `Lampiran ${index + 1}: ${attachment.name}`,
-        `Tipe: ${attachment.type || attachment.extension || 'unknown'}`,
-        `Ukuran: ${formatBytes(attachment.size)}`,
-        `Status ekstraksi: ${attachment.status}`,
-        metadataLines,
-        warningLine.trim(),
-        attachment.content ? `Konten:\n${attachment.content}` : 'Konten: tidak ada teks yang berhasil diekstrak.',
-      ]
-        .filter((line) => line.trim().length > 0)
-        .join('\n');
-    })
-    .join('\n\n');
 }
 
 export async function parsePromptAttachment(file: File, attachmentId?: string): Promise<PromptAttachment> {

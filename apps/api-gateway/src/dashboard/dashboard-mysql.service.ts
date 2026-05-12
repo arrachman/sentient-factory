@@ -1,7 +1,5 @@
 import {
   Injectable,
-  InternalServerErrorException,
-  NotFoundException,
   OnModuleDestroy,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +7,17 @@ import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 import mysql, { Pool, RowDataPacket } from 'mysql2/promise';
+import {
+  getMysqlConfig,
+  getTemplateRootCandidates,
+  resolveTemplateRoot,
+  resolveTemplateRootForDomain,
+  resolveTemplateRootForDomainAndFile,
+  quoteString,
+  quoteDate,
+  assertInt,
+  assertIdentifier,
+} from './dashboard-mysql.utils';
 
 type DashboardTemplateParams = {
   fromDate?: string;
@@ -66,14 +75,6 @@ type DomainMetadataResult = {
   }>;
 };
 
-type MysqlConfig = {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-};
-
 const DATE_COLUMN_CANDIDATES = [
   'created_at',
   'tanggal',
@@ -108,7 +109,7 @@ export class DashboardMysqlService implements OnModuleDestroy {
   ): Promise<RowDataPacket[]> {
     const templatePath = this.getTemplatePath(domain, fileName);
     if (!existsSync(templatePath)) {
-      throw new NotFoundException(`Dashboard SQL template not found: ${templatePath}`);
+      throw new Error(`Dashboard SQL template not found: ${templatePath}`);
     }
 
     const templateSql = await readFile(templatePath, 'utf8');
@@ -132,8 +133,11 @@ export class DashboardMysqlService implements OnModuleDestroy {
   }
 
   async healthCheck(domains: readonly DashboardDomain[]): Promise<HealthResult> {
-    const templateRoot = this.resolveTemplateRoot();
-    const config = this.getMysqlConfig();
+    const candidates = getTemplateRootCandidates(
+      this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT'),
+    );
+    const templateRoot = resolveTemplateRoot(candidates);
+    const config = getMysqlConfig(this.configService);
 
     const pool = this.getPool();
     await pool.query('SELECT 1');
@@ -162,7 +166,10 @@ export class DashboardMysqlService implements OnModuleDestroy {
   }
 
   async getDomainMetadata(domain: DashboardDomain): Promise<DomainMetadataResult> {
-    const templateRoot = this.resolveTemplateRoot();
+    const candidates = getTemplateRootCandidates(
+      this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT'),
+    );
+    const templateRoot = resolveTemplateRoot(candidates);
     const templates = {
       summary: this.getTemplatePath(domain, 'summary.sql'),
       trends: this.getTemplatePath(domain, 'trends.sql'),
@@ -195,9 +202,12 @@ export class DashboardMysqlService implements OnModuleDestroy {
   }
 
   getTemplatePath(domain: DashboardDomain, fileName: string): string {
+    const candidates = getTemplateRootCandidates(
+      this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT'),
+    );
     const root = fileName
-      ? this.resolveTemplateRootForDomainAndFile(domain, fileName)
-      : this.resolveTemplateRootForDomain(domain);
+      ? resolveTemplateRootForDomainAndFile(candidates, domain, fileName)
+      : resolveTemplateRootForDomain(candidates, domain);
     return resolve(root, domain, fileName);
   }
 
@@ -213,7 +223,7 @@ export class DashboardMysqlService implements OnModuleDestroy {
       return this.pool;
     }
 
-    const cfg = this.getMysqlConfig();
+    const cfg = getMysqlConfig(this.configService);
 
     this.pool = mysql.createPool({
       host: cfg.host,
@@ -231,78 +241,6 @@ export class DashboardMysqlService implements OnModuleDestroy {
     return this.pool;
   }
 
-  private getMysqlConfig(): MysqlConfig {
-    const host =
-      this.configService.get<string>('DASHBOARD_MYSQL_HOST') ??
-      this.configService.get<string>('MYSQL_HOST') ??
-      '127.0.0.1';
-    const port = Number(
-      this.configService.get<string>('DASHBOARD_MYSQL_PORT') ??
-        this.configService.get<string>('MYSQL_PORT') ??
-        '3307',
-    );
-    const user =
-      this.configService.get<string>('DASHBOARD_MYSQL_USER') ??
-      this.configService.get<string>('MYSQL_USER') ??
-      'root';
-    const password =
-      this.configService.get<string>('DASHBOARD_MYSQL_PASSWORD') ??
-      this.configService.get<string>('MYSQL_ROOT_PASSWORD') ??
-      this.configService.get<string>('MYSQL_PASSWORD') ??
-      '';
-    const database =
-      this.configService.get<string>('DASHBOARD_MYSQL_DATABASE') ??
-      this.configService.get<string>('MYSQL_DATABASE') ??
-      'myerpplus';
-
-    return { host, port, user, password, database };
-  }
-
-  private resolveTemplateRoot(): string {
-    const candidates = this.getTemplateRootCandidates();
-
-    const root = candidates.find((candidate) => existsSync(candidate));
-    if (!root) {
-      throw new InternalServerErrorException(
-        `Dashboard SQL template root not found. Checked: ${candidates.join(', ')}`,
-      );
-    }
-
-    return root;
-  }
-
-  private getTemplateRootCandidates(): string[] {
-    const configured = this.configService.get<string>('DASHBOARD_SQL_TEMPLATE_ROOT');
-    return [
-      configured,
-      resolve('/myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-      resolve(process.cwd(), 'sql-templates'),
-      resolve(process.cwd(), '../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-      resolve(process.cwd(), '../../apps/myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-      resolve(__dirname, '../../../myerpplus-db-mapping/dashboard-mapping/sql-templates'),
-    ].filter((value): value is string => Boolean(value));
-  }
-
-  private resolveTemplateRootForDomain(domain: DashboardDomain): string {
-    const candidates = this.getTemplateRootCandidates();
-    const rootWithDomain = candidates.find((candidate) => existsSync(resolve(candidate, domain)));
-    if (rootWithDomain) {
-      return rootWithDomain;
-    }
-    return this.resolveTemplateRoot();
-  }
-
-  private resolveTemplateRootForDomainAndFile(domain: DashboardDomain, fileName: string): string {
-    const candidates = this.getTemplateRootCandidates();
-    const rootWithFile = candidates.find((candidate) =>
-      existsSync(resolve(candidate, domain, fileName)),
-    );
-    if (rootWithFile) {
-      return rootWithFile;
-    }
-    return this.resolveTemplateRootForDomain(domain);
-  }
-
   private bindTemplate(
     templateSql: string,
     params: DashboardTemplateParams & { dateExpr: string },
@@ -310,50 +248,46 @@ export class DashboardMysqlService implements OnModuleDestroy {
     let sql = templateSql;
 
     if (params.fromDate) {
-      sql = sql.replaceAll(':from_date', this.quoteDate(params.fromDate));
+      sql = sql.replaceAll(':from_date', quoteDate(params.fromDate));
     }
     if (params.toDate) {
-      sql = sql.replaceAll(':to_date', this.quoteDate(params.toDate));
+      sql = sql.replaceAll(':to_date', quoteDate(params.toDate));
     }
     if (params.limit !== undefined) {
-      sql = sql.replaceAll(':limit', this.assertInt(params.limit, 'limit'));
+      sql = sql.replaceAll(':limit', assertInt(params.limit, 'limit'));
     }
     if (params.offset !== undefined) {
-      sql = sql.replaceAll(':offset', this.assertInt(params.offset, 'offset'));
+      sql = sql.replaceAll(':offset', assertInt(params.offset, 'offset'));
     }
 
     sql = sql.replaceAll('__DATE_EXPR__', params.dateExpr);
     sql = sql.replaceAll(
       '__GROUP_BY__',
-      params.groupBy ? this.assertIdentifier(params.groupBy, 'groupBy') : 'status',
+      params.groupBy ? assertIdentifier(params.groupBy, 'groupBy') : 'status',
     );
     sql = sql.replaceAll(
       '__ORDER_BY__',
-      params.orderBy ? this.assertIdentifier(params.orderBy, 'orderBy') : 'created_at',
+      params.orderBy ? assertIdentifier(params.orderBy, 'orderBy') : 'created_at',
     );
     sql = sql.replaceAll('__ORDER_DIR__', params.orderDir ?? 'DESC');
     sql = sql.replaceAll(
       '__SOURCE_FILTER__',
       params.sourceCode
-        ? ` AND COALESCE(j.tsumber, '') = ${this.quoteString(params.sourceCode)}`
+        ? ` AND COALESCE(j.tsumber, '') = ${quoteString(params.sourceCode)}`
         : '',
     );
     sql = sql.replaceAll(
       '__SOURCE_FILTER_X__',
       params.sourceCode
-        ? ` AND COALESCE(x.tsumber, '') = ${this.quoteString(params.sourceCode)}`
+        ? ` AND COALESCE(x.tsumber, '') = ${quoteString(params.sourceCode)}`
         : '',
     );
     sql = sql.replaceAll(
       '__SOURCE_CODE_LITERAL__',
-      params.sourceCode ? this.quoteString(params.sourceCode) : 'NULL',
+      params.sourceCode ? quoteString(params.sourceCode) : 'NULL',
     );
 
     return sql;
-  }
-
-  private quoteString(value: string): string {
-    return `'${value.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
   }
 
   private extractFirstSourceTable(templateSql: string): string | null {
@@ -376,7 +310,7 @@ export class DashboardMysqlService implements OnModuleDestroy {
     selectedDateColumn: string | null;
   }> {
     const pool = this.getPool();
-    const cfg = this.getMysqlConfig();
+    const cfg = getMysqlConfig(this.configService);
     const [rows] = await pool.query<ColumnNameRow[]>(
       `SELECT COLUMN_NAME
        FROM information_schema.columns
@@ -412,7 +346,7 @@ export class DashboardMysqlService implements OnModuleDestroy {
     }
 
     const pool = this.getPool();
-    const cfg = this.getMysqlConfig();
+    const cfg = getMysqlConfig(this.configService);
     const [rows] = await pool.query<ColumnNameRow[]>(
       `SELECT COLUMN_NAME
        FROM information_schema.columns
@@ -433,26 +367,5 @@ export class DashboardMysqlService implements OnModuleDestroy {
     const expression = picked ? `\`${picked}\`` : 'NOW()';
     this.tableDateColumnCache.set(tableName, expression);
     return expression;
-  }
-
-  private quoteDate(value: string): string {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      throw new InternalServerErrorException(`Invalid date literal format: ${value}`);
-    }
-    return `'${value}'`;
-  }
-
-  private assertInt(value: number, label: string): string {
-    if (!Number.isInteger(value) || value < 0) {
-      throw new InternalServerErrorException(`Invalid integer for ${label}`);
-    }
-    return String(value);
-  }
-
-  private assertIdentifier(value: string, label: string): string {
-    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(value)) {
-      throw new InternalServerErrorException(`Unsafe SQL identifier for ${label}`);
-    }
-    return value;
   }
 }
