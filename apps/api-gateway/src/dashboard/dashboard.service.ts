@@ -5454,7 +5454,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
       .slice(0, 48);
   }
 
-  private async ensureAlertingTestRule(actor: string) {
+  async ensureAlertingTestRule(actor: string) {
     const existing = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
       SELECT rule_id, rule_key
       FROM public.alert_rule
@@ -6448,7 +6448,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async createAlertProviderSessionAudit(input: {
+  async createAlertProviderSessionAudit(input: {
     providerName: string;
     channelType: 'wa-group' | 'wa-personal' | 'email';
     actionType: 'health-check' | 'pairing-start' | 'pairing-result' | 'session-refresh';
@@ -6507,7 +6507,7 @@ export class DashboardService implements OnModuleInit, OnModuleDestroy {
     return 'disconnected';
   }
 
-  private async upsertAlertProviderSessionState(input: {
+  async upsertAlertProviderSessionState(input: {
     providerName: string;
     channelType: 'wa-group' | 'wa-personal' | 'email';
     sessionKey: string;
