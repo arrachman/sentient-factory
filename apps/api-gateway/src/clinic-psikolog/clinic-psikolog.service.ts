@@ -56,6 +56,7 @@ export class ClinicPsikologService {
           username,
           passwordHash,
           fullName: dto.fullName,
+          phone: dto.phone ?? null,
           isActive: dto.isActive ?? true,
           createdBy: actorId,
           updatedBy: actorId,
@@ -532,6 +533,7 @@ export class ClinicPsikologService {
       // Update User fullName & isActive if provided
       const userUpdates: Prisma.UserUpdateInput = {};
       if (dto.fullName !== undefined) userUpdates.fullName = dto.fullName;
+      if (dto.phone !== undefined) userUpdates.phone = dto.phone || null;
       if (dto.isActive !== undefined) userUpdates.isActive = dto.isActive;
       if (Object.keys(userUpdates).length > 0) {
         userUpdates.updatedBy = actorId;
@@ -818,6 +820,17 @@ export class ClinicPsikologService {
       throw new NotFoundException(`Psikolog with id ${id} tidak ditemukan`);
     }
 
+    // Block hard-delete kalau psikolog masih punya booking aktif/histori —
+    // admin harus nonaktifkan (toggle isActive=false) supaya histori tidak orphan.
+    const bookingCount = await this.prisma.clinicBooking.count({
+      where: { psikologUserId: existing.userId, deletedAt: null },
+    });
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Psikolog ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — nonaktifkan saja lewat toggle "Aktif" di form edit.`,
+      );
+    }
+
     const now = new Date();
     await this.prisma.$transaction([
       this.prisma.clinicPsikologProfile.update({
@@ -868,6 +881,7 @@ export class ClinicPsikologService {
         username: true,
         fullName: true,
         avatarUrl: true,
+        phone: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,
@@ -882,6 +896,7 @@ export class ClinicPsikologService {
       username: string;
       fullName: string | null;
       avatarUrl: string | null;
+      phone: string | null;
       isActive: boolean;
       lastLogin: Date | null;
       createdAt: Date;
@@ -908,6 +923,7 @@ export class ClinicPsikologService {
       username: user.username,
       fullName: user.fullName,
       avatarUrl: user.avatarUrl,
+      phone: user.phone,
       isActive: profile.isActive && user.isActive,
       title: profile.title,
       specialty: profile.specialty,

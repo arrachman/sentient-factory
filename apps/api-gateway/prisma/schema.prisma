@@ -16,6 +16,7 @@ model User {
   warehouseId  Int?      @map("warehouse_id")
   fullName     String?   @map("full_name")
   avatarUrl    String?   @map("avatar_url")
+  phone        String?   @map("phone")
   isActive     Boolean   @default(true) @map("is_active")
   lastLogin    DateTime? @map("last_login_tz") @db.Timestamptz(3)
   createdAt    DateTime  @default(now()) @map("created_at")

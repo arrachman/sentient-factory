@@ -54,6 +54,7 @@ const DEFAULT_WEEKLY: Record<DayKey, DayAvailability> = {
 const EMPTY_FORM: CreatePsikologInput = {
   email: '',
   fullName: '',
+  phone: '',
   username: '',
   password: '',
   title: '',
@@ -100,6 +101,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
       reset({
         email: initial.email,
         fullName: initial.fullName ?? '',
+        phone: initial.phone ?? '',
         username: initial.username,
         password: '',
         title: initial.title ?? '',
@@ -177,6 +179,20 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
                 <p className="caption mt-1 text-danger">{errors.fullName.message}</p>
               )}
             </div>
+          </div>
+
+          <div>
+            <label className="caption mb-1 block">No WhatsApp</label>
+            <input
+              type="tel"
+              {...register('phone')}
+              className="input-althea"
+              placeholder="081234567890"
+              autoComplete="off"
+            />
+            {errors.phone && (
+              <p className="caption mt-1 text-danger">{errors.phone.message}</p>
+            )}
           </div>
 
           {!isEdit && (
