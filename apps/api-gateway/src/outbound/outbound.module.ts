@@ -5,6 +5,7 @@ import { OutboundController } from './outbound.controller';
 import { OutboundInventoryService } from './outbound-inventory.service';
 import { OutboundQueryService } from './outbound-query.service';
 import { OutboundService } from './outbound.service';
+import { OutboundStockMutationService } from './outbound-stock-mutation.service';
 import { OutboundStockReportService } from './outbound-stock-report.service';
 import { OutboundValidatorsService } from './outbound-validators.service';
 
@@ -15,6 +16,7 @@ import { OutboundValidatorsService } from './outbound-validators.service';
     OutboundService,
     OutboundBatchService,
     OutboundInventoryService,
+    OutboundStockMutationService,
     OutboundStockReportService,
     OutboundValidatorsService,
     OutboundQueryService,

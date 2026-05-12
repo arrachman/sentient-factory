@@ -1,7 +1,8 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { escapeSqlLiteral } from './dashboard.utils';
-import { DashboardService } from './dashboard.service';
+import { AlertingDeliveryService } from './alerting-delivery.service';
+import { AlertingTriageService } from './alerting-triage.service';
 import { AlertingTriageEscalationResolverService } from './alerting-triage-escalation-resolver.service';
 
 /**
@@ -17,8 +18,8 @@ export class AlertingTriageEscalationService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => DashboardService))
-    private readonly dashboardService: DashboardService,
+    private readonly alertingTriageService: AlertingTriageService,
+    private readonly alertingDeliveryService: AlertingDeliveryService,
     private readonly resolver: AlertingTriageEscalationResolverService,
   ) {}
 
@@ -26,7 +27,7 @@ export class AlertingTriageEscalationService {
 
   async runAlertingTriageEscalationCycle(actor = 'system-triage-escalation') {
     const [triagePayload, escalationConfig] = await Promise.all([
-      this.dashboardService.alertingDeadLetterTriage(),
+      this.alertingTriageService.alertingDeadLetterTriage(),
       this.getAlertingTriageEscalationConfig(),
     ]);
 
@@ -253,7 +254,7 @@ export class AlertingTriageEscalationService {
 
     const escalatedCount = results.filter((item) => item.escalated).length;
     const deliveryRun = escalatedCount
-      ? await this.dashboardService.runAlertDeliveryCycle(actor)
+      ? await this.alertingDeliveryService.runAlertDeliveryCycle(actor)
       : null;
 
     return {

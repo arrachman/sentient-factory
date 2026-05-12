@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { DashboardAlertingFacadeService } from './dashboard-alerting-facade.service';
 import { AlertingAnalyticsService } from './alerting-analytics.service';
 import { AlertingBaileysService } from './alerting-baileys.service';
 import { AlertingChannelService } from './alerting-channel.service';
@@ -28,6 +29,7 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardCustomDbService } from './dashboard-custom-db.service';
 import { DashboardCustomDbWidgetService } from './dashboard-custom-db-widget.service';
 import { DashboardInsightService } from './dashboard-insight.service';
+import { DashboardKpiService } from './dashboard-kpi.service';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardQueryService } from './dashboard-query.service';
 import { DashboardQueryM2Service } from './dashboard-query-m2.service';
@@ -46,7 +48,9 @@ import { SemanticSchemaService } from './semantic-schema.service';
   ],
   providers: [
     DashboardService,
+    DashboardAlertingFacadeService,
     DashboardQueryService,
+    DashboardKpiService,
     DashboardQueryM2Service,
     DashboardQueryM2CrService,
     DashboardCustomDbService,
@@ -77,6 +81,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
   ],
   exports: [
     DashboardService,
+    DashboardAlertingFacadeService,
     SemanticSchemaService,
     AlertingMetricService,
     AlertingInsightQueryService,

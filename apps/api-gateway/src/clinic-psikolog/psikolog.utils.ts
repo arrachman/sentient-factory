@@ -90,6 +90,55 @@ export function mapPsikologToResponse(
 }
 
 /**
+ * Build Prisma where clause for ClinicPsikologProfile list queries.
+ */
+export function buildPsikologWhereClause(query: {
+  isActive?: boolean;
+  specialty?: string;
+  search?: string;
+}): Record<string, unknown> {
+  const where: Record<string, unknown> = {
+    deletedAt: null,
+    user: { deletedAt: null },
+  };
+
+  if (typeof query.isActive === 'boolean') {
+    where['isActive'] = query.isActive;
+  }
+
+  if (query.specialty?.trim()) {
+    where['specialty'] = { has: query.specialty.trim() };
+  }
+
+  if (query.search?.trim()) {
+    const q = query.search.trim();
+    where['OR'] = [
+      { title: { contains: q, mode: 'insensitive' } },
+      { license: { contains: q, mode: 'insensitive' } },
+      { user: { fullName: { contains: q, mode: 'insensitive' } } },
+      { user: { email: { contains: q, mode: 'insensitive' } } },
+    ];
+  }
+
+  return where;
+}
+
+/**
+ * Group junction rows into a Map<userId, serviceId[]>.
+ */
+export function groupServiceIdsByUser(
+  rows: Array<{ psikologUserId: number; serviceId: number }>,
+): Map<number, number[]> {
+  const map = new Map<number, number[]>();
+  for (const r of rows) {
+    const arr = map.get(r.psikologUserId) ?? [];
+    arr.push(r.serviceId);
+    map.set(r.psikologUserId, arr);
+  }
+  return map;
+}
+
+/**
  * Validate avatarUrl format + size.
  * Throws BadRequestException on invalid input.
  */

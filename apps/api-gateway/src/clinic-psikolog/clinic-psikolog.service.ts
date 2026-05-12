@@ -12,7 +12,9 @@ import { UpdatePsikologDto } from './dto/update-psikolog.dto';
 import { PsikologDashboardService } from './psikolog-dashboard.service';
 import { PsikologAvailabilityService } from './psikolog-availability.service';
 import {
+  buildPsikologWhereClause,
   deriveUsername,
+  groupServiceIdsByUser,
   mapPsikologToResponse,
   userSelect,
   validateAvatarUrl,
@@ -29,10 +31,7 @@ export class ClinicPsikologService {
     private readonly availability: PsikologAvailabilityService,
   ) {}
 
-  /**
-   * Create user dengan role clinic-psikolog + ClinicPsikologProfile.
-   * Wrapped dalam transaction — semua atau tidak sama sekali.
-   */
+  /** Create user + ClinicPsikologProfile dalam satu transaction. */
   async create(dto: CreatePsikologDto, actorId?: number) {
     // Validate email uniqueness
     const existing = await this.prisma.user.findUnique({
@@ -98,7 +97,6 @@ export class ClinicPsikologService {
         },
       });
 
-      // Sync serviceIds junction (kosong = handle semua, filled = subset)
       if (dto.serviceIds && dto.serviceIds.length > 0) {
         await tx.clinicPsikologService.createMany({
           data: dto.serviceIds.map((serviceId) => ({
@@ -125,28 +123,7 @@ export class ClinicPsikologService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.ClinicPsikologProfileWhereInput = {
-      deletedAt: null,
-      user: { deletedAt: null },
-    };
-
-    if (typeof query.isActive === 'boolean') {
-      where.isActive = query.isActive;
-    }
-
-    if (query.specialty?.trim()) {
-      where.specialty = { has: query.specialty.trim() };
-    }
-
-    if (query.search?.trim()) {
-      const q = query.search.trim();
-      where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { license: { contains: q, mode: 'insensitive' } },
-        { user: { fullName: { contains: q, mode: 'insensitive' } } },
-        { user: { email: { contains: q, mode: 'insensitive' } } },
-      ];
-    }
+    const where = buildPsikologWhereClause(query) as Prisma.ClinicPsikologProfileWhereInput;
 
     const [profiles, total] = await this.prisma.$transaction([
       this.prisma.clinicPsikologProfile.findMany({
@@ -168,12 +145,7 @@ export class ClinicPsikologService {
             where: { psikologUserId: { in: userIds } },
             select: { psikologUserId: true, serviceId: true },
           });
-    const serviceIdsByUser = new Map<number, number[]>();
-    for (const r of junctionRows) {
-      const arr = serviceIdsByUser.get(r.psikologUserId) ?? [];
-      arr.push(r.serviceId);
-      serviceIdsByUser.set(r.psikologUserId, arr);
-    }
+    const serviceIdsByUser = groupServiceIdsByUser(junctionRows);
 
     return {
       success: true,
@@ -212,10 +184,7 @@ export class ClinicPsikologService {
     return rows.map((r) => r.serviceId);
   }
 
-  /**
-   * Lookup psikolog by JWT userId. Dipakai oleh GET /clinic/psikolog/me
-   * sebagai self-fetch endpoint untuk `/psikolog/profile` page.
-   */
+  /** Lookup psikolog by JWT userId — dipakai oleh GET /clinic/psikolog/me. */
   async findByUserId(userId: number) {
     const profile = await this.prisma.clinicPsikologProfile.findFirst({
       where: { userId, deletedAt: null },
@@ -231,10 +200,7 @@ export class ClinicPsikologService {
     };
   }
 
-  /**
-   * Self-edit subset profile (safe fields only). Psikolog tidak boleh edit
-   * email/license/defaultSlots/specialty/isActive — admin-only via update().
-   */
+  /** Self-edit subset profile. Admin-only fields (email/license/etc) via update(). */
   async updateMe(
     userId: number,
     dto: {
@@ -253,8 +219,6 @@ export class ClinicPsikologService {
       throw new NotFoundException(`Psikolog profile untuk user ${userId} tidak ditemukan`);
     }
 
-    // Avatar validation: kalau ada, harus data URL image atau http(s) URL.
-    // Cap ukuran ~1.5MB base64 (≈ 1MB raw) supaya tidak bloat DB.
     validateAvatarUrl(dto.avatarUrl ?? undefined);
 
     await this.prisma.$transaction(async (tx) => {
@@ -356,8 +320,7 @@ export class ClinicPsikologService {
         include: { user: userSelect() },
       });
 
-      // Sync junction kalau dto.serviceIds di-provide (replace all).
-      // undefined → biarkan apa adanya. [] → hapus (default "handle semua").
+      // undefined → skip, [] → hapus (default "handle semua"), filled → replace
       if (dto.serviceIds !== undefined) {
         await tx.clinicPsikologService.deleteMany({
           where: { psikologUserId: profile.userId },
@@ -394,8 +357,6 @@ export class ClinicPsikologService {
       throw new NotFoundException(`Psikolog with id ${id} tidak ditemukan`);
     }
 
-    // Block hard-delete kalau psikolog masih punya booking aktif/histori —
-    // admin harus nonaktifkan (toggle isActive=false) supaya histori tidak orphan.
     const bookingCount = await this.prisma.clinicBooking.count({
       where: { psikologUserId: existing.userId, deletedAt: null },
     });

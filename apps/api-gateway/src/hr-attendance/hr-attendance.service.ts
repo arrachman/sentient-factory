@@ -9,6 +9,7 @@ import { QueryHrWorksiteDto } from './dto/query-hr-worksite.dto';
 import { ReportAttendanceFailureDto } from './dto/report-attendance-failure.dto';
 import { UpdateHrWorksiteDto } from './dto/update-hr-worksite.dto';
 import { AttendanceClockService } from './attendance-clock.service';
+import { AttendanceFailureService } from './attendance-failure.service';
 import { AttendanceQueryService } from './attendance-query.service';
 import { AttendanceReviewService } from './attendance-review.service';
 import { AttendanceSettingsService } from './attendance-settings.service';
@@ -24,6 +25,7 @@ type AuthUser = {
 export class HrAttendanceService {
   constructor(
     private clockService: AttendanceClockService,
+    private failureService: AttendanceFailureService,
     private queryService: AttendanceQueryService,
     private reviewService: AttendanceReviewService,
     private settingsService: AttendanceSettingsService,
@@ -90,7 +92,7 @@ export class HrAttendanceService {
   }
 
   reportAttendanceFailure(authUser: AuthUser, dto: ReportAttendanceFailureDto) {
-    return this.clockService.reportAttendanceFailure(authUser, dto);
+    return this.failureService.reportAttendanceFailure(authUser, dto);
   }
 
   // --- Query ---

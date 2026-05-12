@@ -1,6 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateInboundDetailDto } from './dto/create-inbound-detail.dto';
@@ -13,9 +12,16 @@ import { InboundStockGuardService } from './inbound-stock-guard.service';
 import {
   NormalizedInboundDetail,
   normalizeAndValidateDetails,
-  parseIntStrict,
 } from './inbound-transaction.utils';
 import { InboundWarehouseResolverService } from './inbound-warehouse-resolver.service';
+import {
+  ensureSupplierExists,
+  ensureTransactionNoAvailable,
+  ensureWarehouseExists,
+  getActiveItems,
+  parseInboundId,
+  resolveTransactionNo,
+} from './inbound.utils';
 
 // ─── Prisma include constants ─────────────────────────────────────────────────
 
@@ -90,19 +96,19 @@ export class InboundsService {
   // ─── CRUD ──────────────────────────────────────────────────────────────────
 
   async create(dto: CreateInboundDto, actorId?: string | number) {
-    const supplierId = this.parseId(dto.supplierId, 'Supplier ID');
-    await this.ensureSupplierExists(supplierId);
+    const supplierId = parseInboundId(dto.supplierId, 'Supplier ID');
+    await ensureSupplierExists(this.prisma, supplierId);
     const effectiveWarehouseId = await this.warehouseResolver.resolveForActor(
       actorId,
       dto.warehouseId,
     );
-    await this.ensureWarehouseExists(effectiveWarehouseId);
+    await ensureWarehouseExists(this.prisma, effectiveWarehouseId);
 
     const detailPayload = normalizeAndValidateDetails(dto.details);
-    const itemMap = await this.getActiveItems(detailPayload.map((d) => d.itemId));
+    const itemMap = await getActiveItems(this.prisma, detailPayload.map((d) => d.itemId));
 
     const created = await this.prisma.$transaction(async (tx) => {
-      const transactionNo = await this.resolveTransactionNo(tx, dto.transactionNo);
+      const transactionNo = await resolveTransactionNo(tx, this.prisma, dto.transactionNo);
       const header = await tx.inbound.create({
         data: {
           transactionNo,
@@ -197,18 +203,18 @@ export class InboundsService {
     }
 
     if (dto.transactionNo && dto.transactionNo !== existing.transactionNo) {
-      await this.ensureTransactionNoAvailable(dto.transactionNo, id);
+      await ensureTransactionNoAvailable(this.prisma, dto.transactionNo, id);
     }
 
     if (dto.supplierId) {
-      await this.ensureSupplierExists(this.parseId(dto.supplierId, 'Supplier ID'));
+      await ensureSupplierExists(this.prisma, parseInboundId(dto.supplierId, 'Supplier ID'));
     }
 
     const effectiveWarehouseId = await this.warehouseResolver.resolveForActor(
       actorId,
       dto.warehouseId,
     );
-    await this.ensureWarehouseExists(effectiveWarehouseId);
+    await ensureWarehouseExists(this.prisma, effectiveWarehouseId);
 
     const detailsProvided = Array.isArray(dto.details);
     let detailPayload: NormalizedInboundDetail[] = [];
@@ -216,7 +222,7 @@ export class InboundsService {
 
     if (detailsProvided) {
       detailPayload = normalizeAndValidateDetails(dto.details as CreateInboundDetailDto[]);
-      itemMap = await this.getActiveItems(detailPayload.map((d) => d.itemId));
+      itemMap = await getActiveItems(this.prisma, detailPayload.map((d) => d.itemId));
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -225,7 +231,7 @@ export class InboundsService {
         data: {
           transactionNo: dto.transactionNo,
           transactionDate: dto.transactionDate ? new Date(dto.transactionDate) : undefined,
-          supplierId: dto.supplierId ? this.parseId(dto.supplierId, 'Supplier ID') : undefined,
+          supplierId: dto.supplierId ? parseInboundId(dto.supplierId, 'Supplier ID') : undefined,
           warehouseId: effectiveWarehouseId,
           notes: dto.notes,
           status: dto.status,
@@ -335,11 +341,11 @@ export class InboundsService {
     }
 
     if (query.supplierId?.trim()) {
-      where.supplierId = this.parseId(query.supplierId.trim(), 'Supplier ID');
+      where.supplierId = parseInboundId(query.supplierId.trim(), 'Supplier ID');
     }
 
     if (query.warehouseId?.trim() && typeof scopedWarehouseId !== 'number') {
-      where.warehouseId = this.parseId(query.warehouseId.trim(), 'Warehouse ID');
+      where.warehouseId = parseInboundId(query.warehouseId.trim(), 'Warehouse ID');
     }
 
     if (query.transactionDateFrom || query.transactionDateTo) {
@@ -361,94 +367,5 @@ export class InboundsService {
     }
 
     return where;
-  }
-
-  // ─── Transaction-no helpers ────────────────────────────────────────────────
-
-  private async resolveTransactionNo(tx: Prisma.TransactionClient, transactionNo?: string) {
-    const candidate = transactionNo?.trim();
-    if (candidate) {
-      await this.ensureTransactionNoAvailable(candidate);
-      return candidate;
-    }
-
-    const today = new Date();
-    const y = today.getFullYear();
-    const m = String(today.getMonth() + 1).padStart(2, '0');
-    const d = String(today.getDate()).padStart(2, '0');
-    const prefix = `INB-${y}${m}${d}-`;
-
-    const latestForDate = await tx.inbound.findFirst({
-      where: { transactionNo: { startsWith: prefix } },
-      select: { transactionNo: true },
-      orderBy: { transactionNo: 'desc' },
-    });
-
-    const latestSuffix = Number.parseInt(
-      latestForDate?.transactionNo?.slice(prefix.length) ?? '',
-      10,
-    );
-    const nextSequence = Number.isInteger(latestSuffix) && latestSuffix > 0 ? latestSuffix + 1 : 1;
-    return `${prefix}${String(nextSequence).padStart(4, '0')}`;
-  }
-
-  private async ensureTransactionNoAvailable(transactionNo: string, exceptId?: number) {
-    const duplicate = await this.prisma.inbound.findFirst({
-      where: { transactionNo, NOT: exceptId ? { id: exceptId } : undefined },
-      select: { id: true, deletedAt: true },
-    });
-
-    if (duplicate) {
-      throwDuplicate({
-        fieldLabel: 'Inbound transaction number',
-        value: transactionNo,
-        isSoftDeleted: Boolean(duplicate.deletedAt),
-      });
-    }
-  }
-
-  // ─── Domain helpers ────────────────────────────────────────────────────────
-
-  private async ensureSupplierExists(supplierId: number) {
-    const supplier = await this.prisma.masterDataContact.findFirst({
-      where: { id: supplierId, type: 'supplier', deletedAt: null },
-      select: { id: true },
-    });
-    if (!supplier) {
-      throw new BadRequestException('Supplier not found');
-    }
-  }
-
-  private async ensureWarehouseExists(warehouseId: number) {
-    const warehouse = await this.prisma.masterDataWarehouse.findFirst({
-      where: { id: warehouseId, deletedAt: null },
-      select: { id: true },
-    });
-    if (!warehouse) {
-      throw new BadRequestException('Warehouse not found');
-    }
-  }
-
-  private async getActiveItems(itemIds: number[]) {
-    const uniqueItemIds = [...new Set(itemIds)];
-    const items = await this.prisma.masterDataItem.findMany({
-      where: { id: { in: uniqueItemIds }, isActive: true, deletedAt: null },
-      select: { id: true, code: true, name: true, uom: { select: { id: true } } },
-    });
-
-    if (items.length !== uniqueItemIds.length) {
-      throw new BadRequestException('One or more items are not found or inactive');
-    }
-
-    return new Map(
-      items.map((item) => [
-        item.id,
-        { id: item.id, code: item.code, name: item.name, uomId: item.uom.id },
-      ]),
-    );
-  }
-
-  private parseId(value: string | number, fieldLabel: string): number {
-    return parseIntStrict(String(value), fieldLabel);
   }
 }

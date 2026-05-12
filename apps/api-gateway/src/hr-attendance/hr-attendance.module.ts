@@ -3,6 +3,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { HrAttendanceController } from './hr-attendance.controller';
 import { HrAttendanceService } from './hr-attendance.service';
 import { AttendanceClockService } from './attendance-clock.service';
+import { AttendanceFailureService } from './attendance-failure.service';
 import { AttendanceQueryService } from './attendance-query.service';
 import { AttendanceDashboardService } from './attendance-dashboard.service';
 import { AttendanceReviewService } from './attendance-review.service';
@@ -18,6 +19,7 @@ import { WorksiteService } from './worksite.service';
   providers: [
     HrAttendanceService,
     AttendanceClockService,
+    AttendanceFailureService,
     AttendanceQueryService,
     AttendanceDashboardService,
     AttendanceReviewService,

@@ -1,13 +1,12 @@
 import {
-  forwardRef,
-  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DashboardService } from './dashboard.service';
+import { AlertingDeliveryService } from './alerting-delivery.service';
+import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingTriageEscalationService } from './alerting-triage-escalation.service';
 
 /**
@@ -15,7 +14,7 @@ import { AlertingTriageEscalationService } from './alerting-triage-escalation.se
  *
  * Owns the lifecycle timers AND cycle bodies for the alerting workers:
  *  - rule scheduler (`runAlertingSchedulerCycle`)
- *  - delivery worker (delegates to DashboardService.runAlertDeliveryCycle)
+ *  - delivery worker (delegates to AlertingDeliveryService.runAlertDeliveryCycle)
  *  - triage escalation worker (delegates to AlertingTriageEscalationService)
  */
 @Injectable()
@@ -44,8 +43,8 @@ export class AlertingSchedulerService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => DashboardService))
-    private readonly dashboardService: DashboardService,
+    private readonly alertingDeliveryService: AlertingDeliveryService,
+    private readonly alertingRuleService: AlertingRuleService,
     private readonly alertingTriageEscalationService: AlertingTriageEscalationService,
   ) {}
 
@@ -91,7 +90,7 @@ export class AlertingSchedulerService implements OnModuleInit, OnModuleDestroy {
     }
 
     this.alertDeliveryTimer = setInterval(() => {
-      void this.dashboardService.runAlertDeliveryCycle().catch((error) => {
+      void this.alertingDeliveryService.runAlertDeliveryCycle().catch((error) => {
         const message =
           error instanceof Error ? error.message : 'Unknown alert delivery worker error.';
         this.logger.error(`Alert delivery cycle failed: ${message}`);
@@ -154,7 +153,7 @@ export class AlertingSchedulerService implements OnModuleInit, OnModuleDestroy {
       const results: Array<Record<string, unknown>> = [];
       for (const rule of dueRules) {
         try {
-          const result = await this.dashboardService.runAlertingRule(String(rule.rule_id), actor);
+          const result = await this.alertingRuleService.runAlertingRule(String(rule.rule_id), actor);
           results.push({
             rule_id: Number(rule.rule_id || 0),
             rule_name: String(rule.rule_name || ''),

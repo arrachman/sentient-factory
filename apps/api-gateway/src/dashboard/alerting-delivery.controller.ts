@@ -12,14 +12,14 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { DashboardService } from './dashboard.service';
+import { DashboardAlertingFacadeService } from './dashboard-alerting-facade.service';
 
 @ApiTags('Dashboard')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('dashboard')
 export class AlertingDeliveryController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(private readonly dashboardService: DashboardAlertingFacadeService) {}
 
   @Get('alerting/delivery-logs')
   @ApiOperation({ summary: 'List alert delivery logs' })

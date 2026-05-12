@@ -3,12 +3,12 @@ import { Prisma } from '@prisma/client';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClockAttendanceDto } from './dto/clock-attendance.dto';
-import { ReportAttendanceFailureDto } from './dto/report-attendance-failure.dto';
 import { requireHrProfileByAppUserId } from './hr-attendance-helpers';
 import { persistSnapshot } from './hr-attendance-snapshot';
 import { AttendanceSettingsService } from './attendance-settings.service';
 import { FaceEnrollmentService } from './face-enrollment.service';
 import { WorksiteService } from './worksite.service';
+import { diffMinutes } from './attendance-clock.utils';
 
 type AuthUser = {
   id: number;
@@ -26,15 +26,6 @@ export class AttendanceClockService {
     private faceEnrollmentService: FaceEnrollmentService,
     private worksiteService: WorksiteService,
   ) {}
-
-  private diffMinutes(clockInAt: Date | string | null) {
-    if (!clockInAt) {
-      return 0;
-    }
-    const start = new Date(clockInAt);
-    const end = new Date();
-    return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
-  }
 
   async clockIn(authUser: AuthUser, dto: ClockAttendanceDto) {
     const profile = await requireHrProfileByAppUserId(this.prisma, authUser.id);
@@ -331,7 +322,7 @@ export class AttendanceClockService {
     const clockOutStatus = insideGeofence ? 'success' : 'manual_review';
     const reasonCode = insideGeofence ? (dto.reasonCode ?? null) : 'outside_geofence';
 
-    const minutesWorked = this.diffMinutes(activeSession.clock_in_at);
+    const minutesWorked = diffMinutes(activeSession.clock_in_at);
 
     await this.prisma.$executeRaw(Prisma.sql`
       UPDATE public.hr_attendance_sessions
@@ -383,34 +374,4 @@ export class AttendanceClockService {
     };
   }
 
-  async reportAttendanceFailure(authUser: AuthUser, dto: ReportAttendanceFailureDto) {
-    const profile = await requireHrProfileByAppUserId(this.prisma, authUser.id);
-    const actorId = toAuditUserId(authUser.id);
-    const snapshotUrl = dto.snapshotDataUrl
-      ? await persistSnapshot('attempt-failures', `user-${authUser.id}`, dto.snapshotDataUrl)
-      : null;
-
-    await this.faceEnrollmentService.insertAttendanceEvent(profile.hrUserId, actorId, {
-      eventType: dto.eventType,
-      result: 'rejected',
-      reasonCode: dto.reasonCode,
-      latitude: dto.latitude,
-      longitude: dto.longitude,
-      faceScore: dto.faceScore,
-      livenessScore: dto.livenessScore,
-      snapshotUrl,
-      deviceInfo: dto.deviceInfo,
-      metadata: dto.metadata,
-    });
-
-    return {
-      success: true,
-      message: 'Attendance failure attempt recorded.',
-      data: {
-        eventType: dto.eventType,
-        reasonCode: dto.reasonCode,
-        snapshotUrl,
-      },
-    };
-  }
 }
