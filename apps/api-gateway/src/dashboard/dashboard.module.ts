@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
+import { AlertingAnalyticsService } from './alerting-analytics.service';
 import { AlertingBaileysService } from './alerting-baileys.service';
 import { AlertingChannelService } from './alerting-channel.service';
 import { AlertingConfigService } from './alerting-config.service';
@@ -10,6 +11,7 @@ import { AlertingInsightQueryService } from './alerting-insight-query.service';
 import { AlertingMetricService } from './alerting-metric.service';
 import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingProviderSessionService } from './alerting-provider-session.service';
+import { AlertingRuleRunnerService } from './alerting-rule-runner.service';
 import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
 import { AlertingTemplateService } from './alerting-template.service';
@@ -48,8 +50,10 @@ import { SemanticSchemaService } from './semantic-schema.service';
     DashboardInsightService,
     DashboardMysqlService,
     SemanticSchemaService,
+    AlertingAnalyticsService,
     AlertingMetricService,
     AlertingInsightQueryService,
+    AlertingRuleRunnerService,
     AlertingRuleService,
     AlertingTemplateService,
     AlertingEscalationService,

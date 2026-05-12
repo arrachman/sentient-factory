@@ -4,9 +4,11 @@ import { HrAttendanceController } from './hr-attendance.controller';
 import { HrAttendanceService } from './hr-attendance.service';
 import { AttendanceClockService } from './attendance-clock.service';
 import { AttendanceQueryService } from './attendance-query.service';
+import { AttendanceDashboardService } from './attendance-dashboard.service';
 import { AttendanceReviewService } from './attendance-review.service';
 import { AttendanceSettingsService } from './attendance-settings.service';
 import { FaceEnrollmentService } from './face-enrollment.service';
+import { FaceIdentificationService } from './face-identification.service';
 import { UserWorksiteService } from './user-worksite.service';
 import { WorksiteService } from './worksite.service';
 
@@ -17,9 +19,11 @@ import { WorksiteService } from './worksite.service';
     HrAttendanceService,
     AttendanceClockService,
     AttendanceQueryService,
+    AttendanceDashboardService,
     AttendanceReviewService,
     AttendanceSettingsService,
     FaceEnrollmentService,
+    FaceIdentificationService,
     UserWorksiteService,
     WorksiteService,
   ],
