@@ -30,13 +30,13 @@ const MENU_ROWS = [
   },
   {
     num: '03 · Desktop',
-    title: 'Role Lain (Owner, Resepsionis, Marketing)',
-    desc: 'Dashboard view-only untuk 3 role tambahan dari PRD § 3.',
+    title: 'Role Lain (Owner, Resepsionis)',
+    desc: 'Dashboard view-only untuk role tambahan Paket Standard. Marketing = Add-on Paket Full.',
     tone: 'olive',
     items: [
       ['owner-dashboard',     'Owner · Ringkasan'],
       ['resep-dashboard',     'Resepsionis · Klien hari ini'],
-      ['marketing-dashboard', 'Marketing · Insight layanan'],
+      ['marketing-dashboard', 'Marketing · Insight layanan', { addon: 'Paket Full' }],
     ],
   },
   {
@@ -67,7 +67,7 @@ const MENU_ROWS = [
       ['psk-dashboard', 'Dashboard psikolog'],
       ['psk-jadwal',    'Jadwal saya'],
       ['psk-klien',     'Klien saya'],
-      ['psk-catatan',   'Catatan klinis (SOAP)'],
+      ['psk-catatan',   'Catatan klinis (SOAP)', { addon: 'Add-on · OOS §5' }],
       ['psk-profil',    'Profil & availability'],
     ],
   },
@@ -86,13 +86,13 @@ const MENU_ROWS = [
   {
     num: '07 · Mobile',
     title: 'Staff Psikolog',
-    desc: 'Aplikasi untuk psikolog — jadwal, klien, catatan klinis, availability, recovery.',
+    desc: 'Aplikasi untuk psikolog — jadwal, klien, availability, recovery. Catatan klinis = Add-on (OOS §5).',
     tone: 'tan',
     items: [
       ['m-today',        '01 · Hari ini'],
       ['mp-klien',       '02 · Klien saya'],
       ['mp-jadwal',      '02b · Jadwal mingguan'],
-      ['mp-detail',      '03 · Detail & catatan'],
+      ['mp-detail',      '03 · Detail & catatan', { addon: 'Catatan = Add-on' }],
       ['m-availability', '04 · Availability'],
       ['mp-profil',      '05 · Profil'],
       ['m-login',        '06 · Login'],
@@ -149,12 +149,19 @@ function MenuPerRow() {
               <p style={{ margin: 0, fontSize: 12.5, color: 'var(--fg-muted)', lineHeight: 1.5 }}>{r.desc}</p>
             </div>
             <div className="row gap-2" style={{ flexWrap: 'wrap' }}>
-              {r.items.map(([id, label]) => (
-                <a key={id} href={'#' + id} style={chipStyle}>
-                  <span style={{ width: 6, height: 6, borderRadius: 999, background: TONE[r.tone] }} />
-                  {label}
-                </a>
-              ))}
+              {r.items.map((it) => {
+                const [id, label, meta] = it;
+                const addon = meta && meta.addon;
+                return (
+                  <a key={id} href={'#' + id} style={addon ? { ...chipStyle, opacity: 0.78, borderStyle: 'dashed' } : chipStyle}>
+                    <span style={{ width: 6, height: 6, borderRadius: 999, background: addon ? '#c2a85a' : TONE[r.tone] }} />
+                    {label}
+                    {addon && (
+                      <span style={addonBadgeStyle}>{addon}</span>
+                    )}
+                  </a>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -189,6 +196,18 @@ const chipStyle = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: 8,
+};
+
+const addonBadgeStyle = {
+  fontSize: 10.5,
+  fontWeight: 700,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase',
+  padding: '2px 7px',
+  borderRadius: 999,
+  background: '#fff5e0',
+  color: '#8a6a1f',
+  border: '1px solid #e3c98a',
 };
 
 window.MenuPerRow = MenuPerRow;

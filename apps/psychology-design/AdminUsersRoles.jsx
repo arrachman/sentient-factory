@@ -1,5 +1,6 @@
 // Admin · User & Role Management — PRD § 3 Daftar Role.
-// 6 role: Admin, Psikolog, Owner, Resepsionis, Marketing, Intern.
+// Paket Standard mengaktifkan 4 role: Admin, Psikolog, Owner, Resepsionis.
+// Marketing & Intern tetap ditampilkan sebagai Add-on Paket Full (lihat Proposal §3-4).
 // Hak akses berbeda — penting untuk privasi data klien (BR-04).
 
 const ROLES = [
@@ -7,8 +8,8 @@ const ROLES = [
   { k: 'psikolog', label: 'Psikolog',    count: 7, color: '#7a8556', access: 'Terbatas (data sendiri)', desc: 'Input availability, lihat jadwal & klien sendiri saja (BR-04)' },
   { k: 'owner',    label: 'Owner',       count: 1, color: '#1f3a3a', access: 'View Only',          desc: 'Memantau sistem secara keseluruhan' },
   { k: 'resep',    label: 'Resepsionis', count: 2, color: '#4a7090', access: 'View Only',          desc: 'Lihat jadwal harian untuk penerimaan klien' },
-  { k: 'mark',     label: 'Marketing',   count: 1, color: '#8a6a3a', access: 'View Terbatas',      desc: 'Lihat data layanan & kapasitas' },
-  { k: 'intern',   label: 'Intern',      count: 2, color: '#9a8c7a', access: 'View Terbatas',      desc: 'Akses minimal sesuai kebutuhan' },
+  { k: 'mark',     label: 'Marketing',   count: 1, color: '#8a6a3a', access: 'View Terbatas',      desc: 'Lihat data layanan & kapasitas',     addon: 'Paket Full' },
+  { k: 'intern',   label: 'Intern',      count: 2, color: '#9a8c7a', access: 'View Terbatas',      desc: 'Akses minimal sesuai kebutuhan',     addon: 'Paket Full' },
 ];
 
 const USERS = [
@@ -78,7 +79,7 @@ function AdminUsersRoles() {
           { lbl: 'Total user', val: USERS.length, sub: USERS.filter(u => u.status === 'active').length + ' aktif · 1 nonaktif' },
           { lbl: 'Sedang login', val: USERS.filter(u => u.last === 'Sekarang aktif').length, sub: 'sesi aktif sekarang' },
           { lbl: '2FA aktif', val: USERS.filter(u => u.twoFa).length + '/' + USERS.length, sub: 'wajib untuk admin & psikolog' },
-          { lbl: 'Role', val: ROLES.length, sub: '6 level akses berbeda' },
+          { lbl: 'Role', val: ROLES.length, sub: ROLES.filter(r => !r.addon).length + ' aktif · ' + ROLES.filter(r => r.addon).length + ' add-on Paket Full' },
         ].map((s, i) => (
           <div key={i} className="card-flat" style={{ padding: 14 }}>
             <div className="caption" style={{ marginBottom: 6 }}>{s.lbl}</div>
@@ -101,8 +102,9 @@ function AdminUsersRoles() {
               {ROLES.map(r => {
                 const sel = roleFilter === r.k;
                 return (
-                  <button key={r.k} onClick={() => setRoleFilter(r.k)} className="btn btn-sm" style={{ height: 28, padding: '0 12px', background: sel ? r.color : 'var(--bg-elev)', color: sel ? '#fff' : 'var(--fg)', border: '1px solid ' + (sel ? r.color : 'var(--border)') }}>
+                  <button key={r.k} onClick={() => setRoleFilter(r.k)} className="btn btn-sm" style={{ height: 28, padding: '0 12px', background: sel ? r.color : 'var(--bg-elev)', color: sel ? '#fff' : 'var(--fg)', border: '1px solid ' + (sel ? r.color : 'var(--border)'), borderStyle: r.addon ? 'dashed' : 'solid', opacity: r.addon ? 0.82 : 1 }}>
                     {r.label} <span style={{ marginLeft: 4, opacity: 0.8 }}>{r.count}</span>
+                    {r.addon && <span style={{ marginLeft: 6, fontSize: 9.5, padding: '1px 6px', borderRadius: 999, background: '#fff5e0', color: '#8a6a1f', border: '1px solid #e3c98a', fontWeight: 700, letterSpacing: '0.04em' }}>FULL</span>}
                   </button>
                 );
               })}
@@ -148,10 +150,13 @@ function AdminUsersRoles() {
         {tab === 'roles' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
             {ROLES.map(r => (
-              <div key={r.k} className="card" style={{ padding: 18, borderLeft: `4px solid ${r.color}` }}>
+              <div key={r.k} className="card" style={{ padding: 18, borderLeft: `4px solid ${r.color}`, opacity: r.addon ? 0.78 : 1, background: r.addon ? 'var(--cream-50)' : undefined }}>
                 <div className="row" style={{ justifyContent: 'space-between', marginBottom: 10 }}>
                   <div className="col">
-                    <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--teal-800)', fontFamily: 'var(--font-serif)' }}>{r.label}</span>
+                    <div className="row gap-2" style={{ alignItems: 'center' }}>
+                      <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--teal-800)', fontFamily: 'var(--font-serif)' }}>{r.label}</span>
+                      {r.addon && <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: '#fff5e0', color: '#8a6a1f', border: '1px solid #e3c98a', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Add-on · {r.addon}</span>}
+                    </div>
                     <span className="caption" style={{ marginTop: 2 }}>{r.count} user · akses: <strong style={{ color: r.color }}>{r.access}</strong></span>
                   </div>
                   <button className="btn btn-icon btn-ghost btn-sm"><Icon name="edit" size={13} /></button>
@@ -184,10 +189,11 @@ function AdminUsersRoles() {
                   <span className="eyebrow">Modul</span>
                 </div>
                 {ROLES.map(r => (
-                  <div key={r.k} style={{ padding: '12px 10px', background: 'var(--cream-50)', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', textAlign: 'center' }}>
+                  <div key={r.k} style={{ padding: '12px 10px', background: 'var(--cream-50)', borderBottom: '1px solid var(--border)', borderLeft: '1px solid var(--border)', textAlign: 'center', opacity: r.addon ? 0.7 : 1 }}>
                     <div className="col" style={{ alignItems: 'center', gap: 4 }}>
                       <span style={{ width: 8, height: 8, borderRadius: 999, background: r.color }} />
                       <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--teal-800)' }}>{r.label}</span>
+                      {r.addon && <span style={{ fontSize: 8.5, padding: '1px 5px', borderRadius: 999, background: '#fff5e0', color: '#8a6a1f', border: '1px solid #e3c98a', fontWeight: 700, letterSpacing: '0.04em' }}>FULL</span>}
                     </div>
                   </div>
                 ))}

@@ -4,6 +4,6 @@ services:
     container_name: psychology-design
     restart: unless-stopped
     ports:
-      - "3216:80"
+      - "3217:80"
     volumes:
       - ./:/usr/share/nginx/html:ro

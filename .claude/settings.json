@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Read",
       "Edit",
@@ -51,6 +52,21 @@
       "Bash(docker logs*)",
       "Bash(docker compose ps*)",
       "Bash(docker compose logs*)",
+      "Bash(cd *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(wc *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(xargs *)",
+      "Bash(diff *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(mkdir *)",
+      "Bash(for *)",
+      "Bash(while *)",
       "Bash(ls -la ~/.claude/ 2>/dev/null)",
       "Read(//home/rania/.claude/**)",
       "Bash(chmod 700 ~/.claude)",

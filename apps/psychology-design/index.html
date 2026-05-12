@@ -110,7 +110,7 @@ function App() {
         <DCArtboard id="resep-dashboard" label="Resepsionis · Klien hari ini & check-in + Pemakaian Ruangan (US-O02)" width={1280} height={1280}>
           <ResepsionisDashboard />
         </DCArtboard>
-        <DCArtboard id="marketing-dashboard" label="Marketing · Insight layanan & kapasitas" width={1280} height={880}>
+        <DCArtboard id="marketing-dashboard" label="Marketing · Insight layanan & kapasitas · Add-on Paket Full" width={1280} height={880} locked lockedNote="Dashboard role Marketing hanya tersedia di Paket Full. Paket Standard mencakup role Admin, Psikolog, Owner, dan Resepsionis.">
           <MarketingDashboard />
         </DCArtboard>
       </DCSection>
@@ -161,7 +161,7 @@ function App() {
         <DCArtboard id="psk-klien" label="Klien saya · daftar & detail" width={1280} height={880}>
           <PsikologKlienSaya />
         </DCArtboard>
-        <DCArtboard id="psk-catatan" label="Catatan klinis · editor SOAP" width={1280} height={880}>
+        <DCArtboard id="psk-catatan" label="Catatan klinis · editor SOAP · Add-on (Out of Scope Proposal §5)" width={1280} height={880} locked lockedLabel="Out of Scope · §5" lockedNote="Rekam medis / catatan sesi psikolog tidak termasuk dalam paket apa pun (Proposal §5). Dapat dikembangkan di fase berikutnya sebagai add-on terpisah.">
           <PsikologCatatan />
         </DCArtboard>
         <DCArtboard id="psk-profil" label="Profil saya · availability" width={1280} height={880}>
@@ -194,7 +194,7 @@ function App() {
         <DCArtboard id="mp-jadwal" label="02b · Jadwal mingguan" width={390} height={844}>
           <Phone><MobilePsikologJadwal /></Phone>
         </DCArtboard>
-        <DCArtboard id="mp-detail" label="03 · Detail klien & catatan" width={390} height={844}>
+        <DCArtboard id="mp-detail" label="03 · Detail klien & catatan · catatan = Add-on" width={390} height={844} locked lockedLabel="Out of Scope · §5" lockedNote="Catatan sesi/rekam medis tidak termasuk paket (Proposal §5). Detail klien tanpa catatan klinis tetap tersedia di Paket Standard.">
           <Phone><MobilePsikologDetail /></Phone>
         </DCArtboard>
         <DCArtboard id="m-availability" label="04 · Availability mingguan" width={390} height={844}>

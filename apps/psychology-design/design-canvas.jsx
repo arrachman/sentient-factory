@@ -655,7 +655,7 @@ function DCSection({ id, title, subtitle, children, gap = 48 }) {
 function DCArtboard() { return null; }
 
 function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorder, onFocus, registerText }) {
-  const { id: rawId, label: rawLabel, width = 260, height = 480, children, style = {} } = artboard.props;
+  const { id: rawId, label: rawLabel, width = 260, height = 480, children, style = {}, locked, lockedLabel = 'Add-on · Paket Full', lockedNote = 'Fitur ini tidak termasuk Paket Standard. Tersedia di Paket Full sebagai upgrade.' } = artboard.props;
   const id = rawId ?? rawLabel;
   const ref = React.useRef(null);
   const cardRef = React.useRef(null);
@@ -753,8 +753,25 @@ function DCArtboardFrame({ sectionId, artboard, label, order, onRename, onReorde
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M7 1h4v4M5 11H1V7M11 1L7.5 4.5M1 11l3.5-3.5"/></svg>
       </button>
       <div ref={cardRef} className="dc-card"
-        style={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)', overflow: 'hidden', width, height, background: '#fff', ...style }}>
-        {children || <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 13, fontFamily: DC.font }}>{id}</div>}
+        style={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06)', overflow: 'hidden', width, height, background: '#fff', position: 'relative', ...style }}>
+        {locked ? (
+          <>
+            <div style={{ height: '100%', filter: 'blur(7px) saturate(0.6)', pointerEvents: 'none', userSelect: 'none', opacity: 0.85 }}>
+              {children}
+            </div>
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(248, 244, 235, 0.55)', display: 'grid', placeItems: 'center', padding: 24, fontFamily: DC.font }}>
+              <div style={{ maxWidth: 360, textAlign: 'center', background: '#fff', border: '1.5px dashed #d4b878', borderRadius: 14, padding: '22px 24px', boxShadow: '0 6px 24px rgba(0,0,0,0.08)' }}>
+                <div style={{ width: 40, height: 40, margin: '0 auto 10px', borderRadius: 999, background: '#fff5e0', color: '#8a6a1f', display: 'grid', placeItems: 'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8a6a1f', marginBottom: 6 }}>{lockedLabel}</div>
+                <div style={{ fontSize: 13.5, color: '#3a3a3a', lineHeight: 1.5 }}>{lockedNote}</div>
+              </div>
+            </div>
+          </>
+        ) : (
+          children || <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#bbb', fontSize: 13, fontFamily: DC.font }}>{id}</div>
+        )}
       </div>
     </div>
   );
