@@ -106,6 +106,16 @@ export class ClinicServiceService {
 
   async remove(id: number, actorId?: number) {
     await this.findOne(id);
+    // Block hard-delete kalau ada transaksi booking terkait — admin harus
+    // deactivate (toggle isActive=false) supaya histori tidak orphan.
+    const bookingCount = await this.prisma.clinicBooking.count({
+      where: { serviceId: id, deletedAt: null },
+    });
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Service ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — nonaktifkan saja lewat toggle "Aktif".`,
+      );
+    }
     await this.prisma.clinicService.update({
       where: { id },
       data: { deletedAt: new Date(), deletedBy: actorId, isActive: false, updatedBy: actorId },

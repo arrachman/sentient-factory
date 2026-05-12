@@ -65,6 +65,14 @@ export class ClinicRoomService {
 
   async remove(id: number, actorId?: number) {
     await this.findOne(id);
+    const bookingCount = await this.prisma.clinicBooking.count({
+      where: { roomId: id, deletedAt: null },
+    });
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Ruangan ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — nonaktifkan saja lewat toggle "Aktif".`,
+      );
+    }
     await this.prisma.clinicRoom.update({
       where: { id },
       data: { deletedAt: new Date(), deletedBy: actorId, isActive: false, updatedBy: actorId },

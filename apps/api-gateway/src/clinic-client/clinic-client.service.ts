@@ -158,6 +158,14 @@ export class ClinicClientService {
 
   async remove(id: number, actorId?: number) {
     await this.findOne(id);
+    const bookingCount = await this.prisma.clinicBooking.count({
+      where: { clientId: id, deletedAt: null },
+    });
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Klien ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — arsipkan atau gabungkan data klien secara manual.`,
+      );
+    }
     await this.prisma.clinicClient.update({
       where: { id },
       data: { deletedAt: new Date(), deletedBy: actorId, updatedBy: actorId },
