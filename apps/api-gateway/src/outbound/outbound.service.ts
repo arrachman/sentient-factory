@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
-import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CreateOutboundDetailDto } from './dto/create-outbound-detail.dto';
 import { CreateOutboundDto } from './dto/create-outbound.dto';
 import { QueryMonitoringOutboundDto } from './dto/query-monitoring-outbound.dto';
@@ -10,6 +9,18 @@ import { QueryOutboundDto } from './dto/query-outbound.dto';
 import { QueryStockBatchReportDto } from './dto/query-stock-batch-report.dto';
 import { QueryStockMutationReportDto } from './dto/query-stock-mutation-report.dto';
 import { UpdateOutboundDto } from './dto/update-outbound.dto';
+import {
+  isMissingWarehouseColumnError,
+  normalizeAndValidateDetails,
+  normalizeAuditActor,
+  normalizeRequiredDoNumber,
+  parseId,
+  parseOptionalActorId,
+  parseOptionalId,
+} from './outbound-helpers';
+import { OutboundBatchService } from './outbound-batch.service';
+import { OutboundInventoryService } from './outbound-inventory.service';
+import { OutboundStockReportService } from './outbound-stock-report.service';
 
 type NormalizedOutboundDetail = Omit<CreateOutboundDetailDto, 'itemId' | 'batchNumber'> & {
   itemId: number;
@@ -18,23 +29,54 @@ type NormalizedOutboundDetail = Omit<CreateOutboundDetailDto, 'itemId' | 'batchN
 
 @Injectable()
 export class OutboundService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private batchService: OutboundBatchService,
+    private inventoryService: OutboundInventoryService,
+    private stockReportService: OutboundStockReportService,
+  ) {}
+
+  // ---------------------------------------------------------------------------
+  // Delegated methods
+  // ---------------------------------------------------------------------------
+
+  async getBatchOptions(
+    itemId?: string,
+    excludeDoId?: string,
+    warehouseId?: string,
+    actorId?: string | number,
+  ) {
+    return this.batchService.getBatchOptions(itemId, excludeDoId, warehouseId, actorId);
+  }
+
+  async findMonitoringReport(query: QueryMonitoringOutboundDto, actorId?: string | number) {
+    return this.batchService.findMonitoringReport(query, actorId);
+  }
+
+  async findStockBatchReport(query: QueryStockBatchReportDto) {
+    return this.stockReportService.findStockBatchReport(query);
+  }
+
+  async findStockMutationReport(query: QueryStockMutationReportDto) {
+    return this.stockReportService.findStockMutationReport(query);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Core CRUD
+  // ---------------------------------------------------------------------------
 
   async create(dto: CreateOutboundDto, actorId?: string | number) {
-    const auditActor = this.normalizeAuditActor(actorId);
-    const doNumber = this.normalizeRequiredDoNumber(dto.doNumber);
+    const auditActor = normalizeAuditActor(actorId);
+    const doNumber = normalizeRequiredDoNumber(dto.doNumber);
     await this.ensureDoNumberAvailable(doNumber);
 
-    const customerId = this.parseId(dto.customerId, 'customerId');
+    const customerId = parseId(dto.customerId, 'customerId');
     const warehouseId = await this.resolveInputWarehouseForActor(actorId, dto.warehouseId);
     const customer = await this.ensureCustomerExists(customerId);
     await this.ensureWarehouseExists(warehouseId);
     const defaults = await this.resolveDefaultsFromCustomerCity(customer.city ?? undefined);
 
-    const requestedDestinationCityId = this.parseOptionalId(
-      dto.destinationCityId,
-      'destinationCityId',
-    );
+    const requestedDestinationCityId = parseOptionalId(dto.destinationCityId, 'destinationCityId');
     const resolvedDestinationCityId =
       requestedDestinationCityId ?? defaults.destinationCityId ?? null;
     if (resolvedDestinationCityId !== null) {
@@ -47,13 +89,18 @@ export class OutboundService {
     const resolvedStdLeadTimeDays = dto.stdLeadTimeDays ?? resolvedSla?.stdLeadTimeDays ?? 0;
     const resolvedStdReturnDoDays = dto.stdReturnDoDays ?? resolvedSla?.stdReturnDoDays ?? 0;
 
-    const detailPayload = this.normalizeAndValidateDetails(dto.details);
+    const detailPayload = normalizeAndValidateDetails(dto.details);
     const itemMap = await this.getActiveItems(detailPayload.map((detail) => detail.itemId));
 
     let created;
     try {
       created = await this.prisma.$transaction(async (tx) => {
-        await this.ensureBatchAvailability(detailPayload, tx, undefined, warehouseId);
+        await this.inventoryService.ensureBatchAvailability(
+          detailPayload,
+          tx,
+          undefined,
+          warehouseId,
+        );
 
         const header = await tx.deliveryOrder.create({
           data: {
@@ -112,7 +159,7 @@ export class OutboundService {
           });
         }
 
-        await this.syncOutboundInventoryLedger(tx, header.id, actorId);
+        await this.inventoryService.syncOutboundInventoryLedger(tx, header.id, actorId);
 
         return header;
       });
@@ -150,7 +197,7 @@ export class OutboundService {
     }
 
     if (query.customerId?.trim()) {
-      where.customerId = this.parseId(query.customerId, 'customerId');
+      where.customerId = parseId(query.customerId, 'customerId');
     }
 
     if (query.doDateFrom || query.doDateTo) {
@@ -201,7 +248,7 @@ export class OutboundService {
       ]);
       [items, total] = result;
     } catch (error) {
-      if (this.isMissingWarehouseColumnError(error)) {
+      if (isMissingWarehouseColumnError(error)) {
         throw new BadRequestException(
           'Schema database outbound belum update. Jalankan migration terbaru (warehouse_id pada m2_outbound).',
         );
@@ -236,848 +283,6 @@ export class OutboundService {
         limit,
         total,
         totalPages: Math.ceil(total / limit) || 1,
-      },
-    };
-  }
-
-  async getBatchOptions(
-    itemId?: string,
-    excludeDoId?: string,
-    warehouseId?: string,
-    actorId?: string | number,
-  ) {
-    if (!String(itemId ?? '').trim()) {
-      throw new BadRequestException('itemId is required');
-    }
-    const normalizedItemId = this.parseId(itemId as string, 'itemId');
-
-    const normalizedExcludeDoId = this.parseOptionalId(excludeDoId, 'excludeDoId');
-    const normalizedWarehouseId = await this.resolveWarehouseFilterForActor(actorId, warehouseId);
-    const [inboundRows, usedRows] = await this.prisma.$transaction([
-      this.prisma.inboundDetailBatch.groupBy({
-        by: ['batchIn'],
-        where: {
-          deletedAt: null,
-          inboundDetail: {
-            deletedAt: null,
-            itemId: normalizedItemId,
-            inbound: {
-              deletedAt: null,
-              status: 'POSTED',
-              warehouseId: normalizedWarehouseId,
-            },
-          },
-        },
-        _sum: {
-          qty: true,
-        },
-        orderBy: {
-          batchIn: 'asc',
-        },
-      }),
-      this.prisma.outboundDetailBatch.groupBy({
-        by: ['batchOut'],
-        where: {
-          deletedAt: null,
-          outboundDetail: {
-            deletedAt: null,
-            itemId: normalizedItemId,
-            deliveryOrder: {
-              deletedAt: null,
-              id: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
-              warehouseId: normalizedWarehouseId,
-            },
-          },
-        },
-        _sum: {
-          qtyPcs: true,
-        },
-        orderBy: {
-          batchOut: 'asc',
-        },
-      }),
-    ]);
-
-    const usedByBatch = new Map<string, number>();
-    usedRows.forEach((row) => {
-      const key = String(row.batchOut ?? '')
-        .trim()
-        .toLowerCase();
-      if (!key) {
-        return;
-      }
-      const qty = Number(row._sum?.qtyPcs ?? 0);
-      usedByBatch.set(key, (usedByBatch.get(key) ?? 0) + (Number.isFinite(qty) ? qty : 0));
-    });
-
-    return {
-      success: true,
-      data: inboundRows
-        .map((row) => {
-          const inboundQty = Number(row._sum?.qty ?? 0);
-          const usedQty =
-            usedByBatch.get(
-              String(row.batchIn ?? '')
-                .trim()
-                .toLowerCase(),
-            ) ?? 0;
-          const remainingQty = Math.max(inboundQty - usedQty, 0);
-          return {
-            batchNumber: row.batchIn,
-            qtyPcs: remainingQty,
-          };
-        })
-        .filter((row) => row.qtyPcs > 0),
-    };
-  }
-
-  async findMonitoringReport(query: QueryMonitoringOutboundDto, actorId?: string | number) {
-    const where: Prisma.DeliveryOrderWhereInput = { deletedAt: null };
-
-    if (query.cityId?.trim()) {
-      where.destinationCityId = this.parseId(query.cityId, 'cityId');
-    }
-
-    if (query.provinceId?.trim()) {
-      where.destinationCity = {
-        provinceId: this.parseId(query.provinceId, 'provinceId'),
-      };
-    }
-
-    if (query.status?.trim()) {
-      where.status = query.status.trim().toUpperCase();
-    }
-
-    if (query.doReceivedDateFrom || query.doReceivedDateTo) {
-      where.doReceivedDate = {
-        gte: query.doReceivedDateFrom ? new Date(query.doReceivedDateFrom) : undefined,
-        lte: query.doReceivedDateTo ? new Date(query.doReceivedDateTo) : undefined,
-      };
-    }
-
-    const items = await this.prisma.deliveryOrder.findMany({
-      where,
-      include: {
-        customer: { select: { id: true, code: true, name: true, type: true } },
-        warehouse: {
-          select: {
-            id: true,
-            name: true,
-            locationName: true,
-            city: { select: { id: true, name: true, postalCode: true } },
-          },
-        },
-        destinationCity: {
-          select: {
-            id: true,
-            name: true,
-            postalCode: true,
-            province: { select: { id: true, name: true, isoCode: true } },
-          },
-        },
-        details: {
-          where: { deletedAt: null },
-          select: {
-            itemId: true,
-            qtyPcs: true,
-            qtyKg: true,
-            batches: {
-              where: { deletedAt: null },
-              select: { batchOut: true },
-            },
-          },
-        },
-      },
-      orderBy: [{ doReceivedDate: 'desc' }, { createdAt: 'desc' }],
-    });
-
-    const pairKeys = new Set<string>();
-    const batchNumbers = new Set<string>();
-    const itemIds = new Set<number>();
-    items.forEach((row) => {
-      row.details.forEach((detail) => {
-        const itemId = Number(detail.itemId ?? 0);
-        detail.batches.forEach((batch) => {
-          const batchNumber = String(batch.batchOut ?? '').trim();
-          if (!Number.isInteger(itemId) || itemId <= 0 || !batchNumber) {
-            return;
-          }
-          pairKeys.add(`${itemId}::${batchNumber}`);
-          itemIds.add(itemId);
-          batchNumbers.add(batchNumber);
-        });
-      });
-    });
-
-    const sourceByPair = new Map<
-      string,
-      Array<{
-        supplierId: number | null;
-        supplierName: string | null;
-        warehouseId: number | null;
-        warehouseName: string | null;
-      }>
-    >();
-
-    if (pairKeys.size > 0) {
-      const sourceRows = await this.prisma.inboundDetailBatch.findMany({
-        where: {
-          deletedAt: null,
-          batchIn: { in: [...batchNumbers] },
-          inboundDetail: {
-            deletedAt: null,
-            itemId: { in: [...itemIds] },
-            inbound: { deletedAt: null },
-          },
-        },
-        select: {
-          batchIn: true,
-          inboundDetail: {
-            select: {
-              itemId: true,
-              inbound: {
-                select: {
-                  supplierId: true,
-                  warehouseId: true,
-                  supplier: { select: { name: true } },
-                  warehouse: { select: { name: true } },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      sourceRows.forEach((row) => {
-        const itemId = String(row.inboundDetail?.itemId ?? '').trim();
-        const batchNumber = String(row.batchIn ?? '').trim();
-        const pairKey = `${itemId}::${batchNumber}`;
-
-        if (!pairKeys.has(pairKey)) {
-          return;
-        }
-
-        const next = sourceByPair.get(pairKey) ?? [];
-        next.push({
-          supplierId: row.inboundDetail?.inbound?.supplierId ?? null,
-          supplierName: row.inboundDetail?.inbound?.supplier?.name ?? null,
-          warehouseId: row.inboundDetail?.inbound?.warehouseId ?? null,
-          warehouseName: row.inboundDetail?.inbound?.warehouse?.name ?? null,
-        });
-        sourceByPair.set(pairKey, next);
-      });
-    }
-
-    const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
-    const warehouseFilter = await this.resolveWarehouseFilterForActor(actorId, query.warehouseId);
-
-    const enriched = items
-      .map((row) => {
-        const supplierSet = new Map<number, string>();
-        const warehouseSet = new Map<number, string>();
-        const totalItemTypes = row.details.length;
-        const totalQtyPcs = row.details.reduce((sum, detail) => {
-          const qty = Number(detail.qtyPcs ?? 0);
-          return sum + (Number.isFinite(qty) ? qty : 0);
-        }, 0);
-        const totalKg = row.details.reduce((sum, detail) => {
-          const qty = Number(detail.qtyKg ?? 0);
-          return sum + (Number.isFinite(qty) ? qty : 0);
-        }, 0);
-
-        row.details.forEach((detail) => {
-          detail.batches.forEach((batch) => {
-            const pairKey = `${detail.itemId}::${batch.batchOut}`;
-            const sources = sourceByPair.get(pairKey) ?? [];
-            sources.forEach((source) => {
-              if (source.supplierId) {
-                supplierSet.set(
-                  source.supplierId,
-                  source.supplierName || String(source.supplierId),
-                );
-              }
-              if (source.warehouseId) {
-                warehouseSet.set(
-                  source.warehouseId,
-                  source.warehouseName || String(source.warehouseId),
-                );
-              }
-            });
-          });
-        });
-
-        return {
-          ...row,
-          totalItemTypes,
-          totalQtyPcs,
-          totalKg,
-          sourceSuppliers: [...supplierSet.entries()].map(([id, name]) => ({ id, name })),
-          sourceWarehouses: [...warehouseSet.entries()].map(([id, name]) => ({ id, name })),
-        };
-      })
-      .filter((row) => {
-        if (supplierFilter !== undefined) {
-          const hasSupplier = row.sourceSuppliers.some(
-            (supplier) => supplier.id === supplierFilter,
-          );
-          if (!hasSupplier) {
-            return false;
-          }
-        }
-
-        if (warehouseFilter !== undefined) {
-          const hasWarehouse = row.sourceWarehouses.some(
-            (warehouse) => warehouse.id === warehouseFilter,
-          );
-          if (!hasWarehouse) {
-            return false;
-          }
-        }
-
-        return true;
-      });
-
-    return {
-      success: true,
-      data: enriched,
-      meta: {
-        total: enriched.length,
-      },
-    };
-  }
-
-  async findStockBatchReport(query: QueryStockBatchReportDto) {
-    const minimumStockPcs = 0;
-    const warehouseFilter = this.parseOptionalId(query.warehouseId, 'warehouseId');
-    const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
-    const itemFilter = this.parseOptionalId(query.itemId, 'itemId');
-
-    const [warehouseFilterRow, itemFilterRow] = await Promise.all([
-      warehouseFilter !== undefined
-        ? this.prisma.masterDataWarehouse.findFirst({
-            where: { id: warehouseFilter, deletedAt: null },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
-      itemFilter !== undefined
-        ? this.prisma.masterDataItem.findFirst({
-            where: { id: itemFilter, deletedAt: null },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
-    ]);
-
-    const ledgerRows = await this.prisma.inventoryLedger.findMany({
-      where: {
-        deletedAt: null,
-        warehouseId: warehouseFilterRow?.id,
-        itemId: itemFilterRow?.id,
-      },
-      include: {
-        item: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-            uom: { select: { id: true, code: true, name: true } },
-          },
-        },
-        warehouse: { select: { id: true, name: true } },
-        batch: { select: { id: true, batchNumber: true } },
-      },
-      orderBy: [{ transactionDate: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-    });
-
-    const pairKeys = new Set<string>();
-    const itemIds = new Set<number>();
-    const batchNumbers = new Set<string>();
-    const warehouseIds = new Set<number>();
-
-    ledgerRows.forEach((row) => {
-      const itemId = Number(row.item?.id ?? 0);
-      const batchNumber = String(row.batch?.batchNumber ?? '').trim();
-      const warehouseId = Number(row.warehouse?.id ?? 0);
-      if (!Number.isInteger(itemId) || itemId <= 0 || !batchNumber || !warehouseId) {
-        return;
-      }
-      pairKeys.add(`${itemId}::${batchNumber}::${warehouseId}`);
-      itemIds.add(itemId);
-      batchNumbers.add(batchNumber);
-      warehouseIds.add(warehouseId);
-    });
-
-    const suppliersByPair = new Map<string, Array<{ id: number; name: string }>>();
-
-    if (pairKeys.size > 0) {
-      const inboundSources = await this.prisma.inboundDetailBatch.findMany({
-        where: {
-          deletedAt: null,
-          batchIn: { in: [...batchNumbers] },
-          inboundDetail: {
-            deletedAt: null,
-            itemId: { in: [...itemIds] },
-            inbound: {
-              deletedAt: null,
-              warehouseId: { in: [...warehouseIds] },
-            },
-          },
-        },
-        select: {
-          batchIn: true,
-          inboundDetail: {
-            select: {
-              itemId: true,
-              inbound: {
-                select: {
-                  warehouseId: true,
-                  supplierId: true,
-                  supplier: { select: { name: true } },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      inboundSources.forEach((row) => {
-        const itemId = String(row.inboundDetail?.itemId ?? '').trim();
-        const batchNumber = String(row.batchIn ?? '').trim();
-        const warehouseId = Number(row.inboundDetail?.inbound?.warehouseId ?? 0);
-        const supplierId = Number(row.inboundDetail?.inbound?.supplierId ?? 0);
-        if (!itemId || !batchNumber || !warehouseId || !supplierId) {
-          return;
-        }
-
-        const pairKey = `${itemId}::${batchNumber}::${warehouseId}`;
-        if (!pairKeys.has(pairKey)) {
-          return;
-        }
-
-        const current = suppliersByPair.get(pairKey) ?? [];
-        if (!current.some((supplier) => supplier.id === supplierId)) {
-          current.push({
-            id: supplierId,
-            name: row.inboundDetail?.inbound?.supplier?.name ?? String(supplierId),
-          });
-        }
-        suppliersByPair.set(pairKey, current);
-      });
-    }
-
-    const balancesByKey = new Map<string, number>();
-
-    const data = ledgerRows
-      .filter((row) => {
-        if (supplierFilter === undefined) {
-          return true;
-        }
-
-        const pairKey = `${row.item?.id ?? ''}::${row.batch?.batchNumber ?? ''}::${row.warehouse?.id ?? ''}`;
-        const suppliers = suppliersByPair.get(pairKey) ?? [];
-        return suppliers.some((supplier) => supplier.id === supplierFilter);
-      })
-      .map((row) => {
-        const qtyPcs = Number(row.quantityPcs ?? 0);
-        const numericQty = Number.isFinite(qtyPcs) ? qtyPcs : 0;
-        const inbound = numericQty > 0 ? numericQty : 0;
-        const outbound = numericQty < 0 ? Math.abs(numericQty) : 0;
-
-        const balanceKey = `${row.itemId}::${row.batchId}::${row.warehouseId}`;
-        const prevBalance = balancesByKey.get(balanceKey) ?? 0;
-        const nextBalance = prevBalance + numericQty;
-        balancesByKey.set(balanceKey, nextBalance);
-
-        const pairKey = `${row.item?.id ?? ''}::${row.batch?.batchNumber ?? ''}::${row.warehouse?.id ?? ''}`;
-        const suppliers = suppliersByPair.get(pairKey) ?? [];
-
-        return {
-          id: row.id,
-          item: row.item,
-          warehouse: row.warehouse,
-          batch: row.batch,
-          supplierNames: suppliers.map((supplier) => supplier.name),
-          transactionDate: row.transactionDate,
-          mmfOrDo: row.referenceNumber ?? '',
-          description: row.notes ?? row.transactionType ?? '',
-          inbound,
-          outbound,
-          balance: nextBalance,
-          replenish: nextBalance <= minimumStockPcs ? 'YES' : '',
-        };
-      });
-
-    return {
-      success: true,
-      data,
-      meta: {
-        total: data.length,
-      },
-    };
-  }
-
-  private async resolveWarehouseFilterForActor(
-    actorId?: string | number,
-    requestedWarehouseId?: string,
-  ): Promise<number | undefined> {
-    const actor = await this.getActorWarehouseAccess(actorId);
-    if (actor.canAccessAllWarehouses) {
-      if (requestedWarehouseId?.trim()) {
-        return this.parseId(requestedWarehouseId, 'warehouseId');
-      }
-      return undefined;
-    }
-
-    if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
-      return actor.warehouseId;
-    }
-
-    throw new BadRequestException('Warehouse untuk user login belum terdaftar');
-  }
-
-  private async resolveInputWarehouseForActor(
-    actorId?: string | number,
-    requestedWarehouseId?: string,
-    fallbackWarehouseId?: number,
-  ): Promise<number> {
-    const actor = await this.getActorWarehouseAccess(actorId);
-
-    if (actor.canAccessAllWarehouses) {
-      if (requestedWarehouseId?.trim()) {
-        return this.parseId(requestedWarehouseId, 'warehouseId');
-      }
-      if (typeof fallbackWarehouseId === 'number' && fallbackWarehouseId > 0) {
-        return fallbackWarehouseId;
-      }
-      if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
-        return actor.warehouseId;
-      }
-      throw new BadRequestException('warehouseId is required');
-    }
-
-    if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
-      return actor.warehouseId;
-    }
-
-    throw new BadRequestException('Warehouse untuk user login belum terdaftar');
-  }
-
-  private async getActorWarehouseAccess(actorId?: string | number) {
-    const actorUserId = this.parseOptionalActorId(actorId);
-    if (!actorUserId) {
-      throw new BadRequestException('User login tidak ditemukan');
-    }
-
-    const actor = await this.prisma.user.findFirst({
-      where: {
-        id: actorUserId,
-        deletedAt: null,
-      },
-      select: {
-        warehouseId: true,
-        roles: {
-          where: {
-            deletedAt: null,
-            role: { deletedAt: null },
-          },
-          select: {
-            role: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!actor) {
-      throw new BadRequestException('User login tidak ditemukan');
-    }
-
-    const roleNames = (actor.roles ?? [])
-      .map((row) =>
-        String(row.role?.name ?? '')
-          .trim()
-          .toLowerCase(),
-      )
-      .filter(Boolean);
-
-    const canAccessAllWarehouses = roleNames.some(
-      (roleName) => roleName === 'admin' || roleName === 'super_admin',
-    );
-
-    return {
-      warehouseId: actor.warehouseId,
-      canAccessAllWarehouses,
-    };
-  }
-
-  private parseOptionalActorId(actorId?: string | number): number | undefined {
-    if (typeof actorId === 'number') {
-      return Number.isInteger(actorId) ? actorId : undefined;
-    }
-    const parsed = Number(String(actorId ?? '').trim());
-    return Number.isInteger(parsed) ? parsed : undefined;
-  }
-
-  private isMissingWarehouseColumnError(error: unknown): boolean {
-    const code = String((error as any)?.code ?? '').trim();
-    const metaText = JSON.stringify((error as any)?.meta ?? {})
-      .toLowerCase()
-      .trim();
-    return code === 'P2022' && metaText.includes('warehouse_id');
-  }
-
-  async findStockMutationReport(query: QueryStockMutationReportDto) {
-    const warehouseFilter = this.parseOptionalId(query.warehouseId, 'warehouseId');
-    const supplierFilter = this.parseOptionalId(query.supplierId, 'supplierId');
-    const itemFilter = this.parseOptionalId(query.itemId, 'itemId');
-
-    const [warehouseFilterRow, itemFilterRow] = await Promise.all([
-      warehouseFilter !== undefined
-        ? this.prisma.masterDataWarehouse.findFirst({
-            where: { id: warehouseFilter, deletedAt: null },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
-      itemFilter !== undefined
-        ? this.prisma.masterDataItem.findFirst({
-            where: { id: itemFilter, deletedAt: null },
-            select: { id: true },
-          })
-        : Promise.resolve(null),
-    ]);
-
-    const ledgerRows = await this.prisma.inventoryLedger.findMany({
-      where: {
-        deletedAt: null,
-        warehouseId: warehouseFilterRow?.id,
-        itemId: itemFilterRow?.id,
-      },
-      include: {
-        item: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
-        },
-        warehouse: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        batch: {
-          select: {
-            id: true,
-            batchNumber: true,
-            expiryDate: true,
-          },
-        },
-      },
-      orderBy: [{ transactionDate: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
-    });
-
-    const batchBalanceMap = new Map<
-      string,
-      {
-        itemId: number;
-        itemCode: string;
-        itemName: string;
-        warehouseId: number;
-        warehouseName: string;
-        batchNumber: string;
-        expiryDate: Date | null;
-        total: number;
-      }
-    >();
-
-    ledgerRows.forEach((row) => {
-      const itemId = String(row.itemId ?? '').trim();
-      const warehouseId = Number(row.warehouseId ?? 0);
-      const batchId = Number(row.batchId ?? 0);
-      if (!itemId || !warehouseId || !batchId) {
-        return;
-      }
-
-      const key = `${itemId}::${warehouseId}::${batchId}`;
-      const current = batchBalanceMap.get(key) ?? {
-        itemId: row.item?.id ?? itemId,
-        itemCode: row.item?.code ?? '',
-        itemName: row.item?.name ?? '',
-        warehouseId: row.warehouse?.id ?? warehouseId,
-        warehouseName: row.warehouse?.name ?? '',
-        batchNumber: row.batch?.batchNumber ?? '',
-        expiryDate: row.batch?.expiryDate ?? null,
-        total: 0,
-      };
-
-      const qty = Number(row.quantityPcs ?? 0);
-      current.total += Number.isFinite(qty) ? qty : 0;
-      if (!current.expiryDate && row.batch?.expiryDate) {
-        current.expiryDate = row.batch.expiryDate;
-      }
-
-      batchBalanceMap.set(key, current);
-    });
-
-    const balances = [...batchBalanceMap.values()].filter((row) => Math.abs(row.total) > 0.000001);
-    const pairKeys = new Set<string>();
-    const itemIds = new Set<number>();
-    const batchNumbers = new Set<string>();
-    const warehouseIds = new Set<number>();
-
-    balances.forEach((row) => {
-      if (!row.itemId || !row.batchNumber || !row.warehouseId) {
-        return;
-      }
-      pairKeys.add(`${row.itemId}::${row.batchNumber}::${row.warehouseId}`);
-      itemIds.add(row.itemId);
-      batchNumbers.add(row.batchNumber);
-      warehouseIds.add(row.warehouseId);
-    });
-
-    const suppliersByPair = new Map<string, Array<{ id: number; name: string }>>();
-
-    if (pairKeys.size > 0) {
-      const inboundSources = await this.prisma.inboundDetailBatch.findMany({
-        where: {
-          deletedAt: null,
-          batchIn: { in: [...batchNumbers] },
-          inboundDetail: {
-            deletedAt: null,
-            itemId: { in: [...itemIds] },
-            inbound: {
-              deletedAt: null,
-              warehouseId: { in: [...warehouseIds] },
-            },
-          },
-        },
-        select: {
-          batchIn: true,
-          inboundDetail: {
-            select: {
-              itemId: true,
-              inbound: {
-                select: {
-                  warehouseId: true,
-                  supplierId: true,
-                  supplier: { select: { name: true } },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      inboundSources.forEach((row) => {
-        const itemId = String(row.inboundDetail?.itemId ?? '').trim();
-        const batchNumber = String(row.batchIn ?? '').trim();
-        const warehouseId = Number(row.inboundDetail?.inbound?.warehouseId ?? 0);
-        const supplierId = Number(row.inboundDetail?.inbound?.supplierId ?? 0);
-        if (!itemId || !batchNumber || !warehouseId || !supplierId) {
-          return;
-        }
-
-        const pairKey = `${itemId}::${batchNumber}::${warehouseId}`;
-        if (!pairKeys.has(pairKey)) {
-          return;
-        }
-
-        const current = suppliersByPair.get(pairKey) ?? [];
-        if (!current.some((supplier) => supplier.id === supplierId)) {
-          current.push({
-            id: supplierId,
-            name: row.inboundDetail?.inbound?.supplier?.name ?? String(supplierId),
-          });
-        }
-        suppliersByPair.set(pairKey, current);
-      });
-    }
-
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const plusThreeMonths = new Date(startOfToday);
-    plusThreeMonths.setMonth(plusThreeMonths.getMonth() + 3);
-    const plusSixMonths = new Date(startOfToday);
-    plusSixMonths.setMonth(plusSixMonths.getMonth() + 6);
-
-    const data = balances
-      .filter((row) => {
-        if (supplierFilter === undefined) {
-          return true;
-        }
-        const pairKey = `${row.itemId}::${row.batchNumber}::${row.warehouseId}`;
-        const suppliers = suppliersByPair.get(pairKey) ?? [];
-        return suppliers.some((supplier) => supplier.id === supplierFilter);
-      })
-      .map((row) => {
-        const exp = row.expiryDate ? new Date(row.expiryDate) : null;
-        const expDateOnly = exp ? new Date(exp.getFullYear(), exp.getMonth(), exp.getDate()) : null;
-        const isExpiredOrToday = expDateOnly
-          ? expDateOnly.getTime() <= startOfToday.getTime()
-          : false;
-        const isInThreeMonths = expDateOnly
-          ? expDateOnly.getTime() > startOfToday.getTime() &&
-            expDateOnly.getTime() <= plusThreeMonths.getTime()
-          : false;
-        const isInSixMonths = expDateOnly
-          ? expDateOnly.getTime() > plusThreeMonths.getTime() &&
-            expDateOnly.getTime() <= plusSixMonths.getTime()
-          : false;
-
-        let expireLabel = '-';
-        let remarks = '';
-        if (expDateOnly) {
-          const diffMs = expDateOnly.getTime() - startOfToday.getTime();
-          const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
-          if (diffDays < 0) {
-            expireLabel = `EXPIRED ${Math.abs(diffDays)} DAY`;
-            remarks = 'Expired';
-          } else if (diffDays === 0) {
-            expireLabel = 'EXPIRED TODAY';
-            remarks = 'Expired Today';
-          } else {
-            expireLabel = `${diffDays} DAY`;
-            if (diffDays <= 90) {
-              remarks = 'Near Expire <= 3 Mth';
-            } else if (diffDays <= 180) {
-              remarks = 'Near Expire <= 6 Mth';
-            }
-          }
-        }
-
-        return {
-          itemId: row.itemId,
-          warehouseId: row.warehouseId,
-          supplierNames:
-            suppliersByPair
-              .get(`${row.itemId}::${row.batchNumber}::${row.warehouseId}`)
-              ?.map((supplier) => supplier.name) ?? [],
-          description: `${row.itemCode} ${row.itemName}`.trim(),
-          batchNumber: row.batchNumber,
-          expiryDate: row.expiryDate,
-          total: row.total,
-          actualToday: isExpiredOrToday ? row.total : 0,
-          actualThreeMonths: isInThreeMonths ? row.total : 0,
-          actualSixMonths: isInSixMonths ? row.total : 0,
-          expire: expireLabel,
-          remarks,
-        };
-      })
-      .sort((a, b) => {
-        if (a.description !== b.description) {
-          return a.description.localeCompare(b.description);
-        }
-        return a.batchNumber.localeCompare(b.batchNumber);
-      });
-
-    return {
-      success: true,
-      data,
-      meta: {
-        total: data.length,
       },
     };
   }
@@ -1130,7 +335,7 @@ export class OutboundService {
   }
 
   async update(id: number, dto: UpdateOutboundDto, actorId?: string | number) {
-    const auditActor = this.normalizeAuditActor(actorId);
+    const auditActor = normalizeAuditActor(actorId);
     const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const existing = await this.prisma.deliveryOrder.findFirst({
       where: {
@@ -1145,7 +350,7 @@ export class OutboundService {
     }
 
     if (typeof dto.doNumber !== 'undefined') {
-      const normalizedDoNumber = this.normalizeRequiredDoNumber(dto.doNumber);
+      const normalizedDoNumber = normalizeRequiredDoNumber(dto.doNumber);
       dto.doNumber = normalizedDoNumber;
       if (normalizedDoNumber !== existing.doNumber) {
         await this.ensureDoNumberAvailable(normalizedDoNumber, id);
@@ -1153,7 +358,7 @@ export class OutboundService {
     }
 
     if (dto.customerId) {
-      const customerId = this.parseId(dto.customerId, 'customerId');
+      const customerId = parseId(dto.customerId, 'customerId');
       dto.customerId = String(customerId);
       await this.ensureCustomerExists(customerId);
     }
@@ -1166,7 +371,7 @@ export class OutboundService {
     await this.ensureWarehouseExists(effectiveWarehouseId);
 
     if (typeof dto.destinationCityId !== 'undefined') {
-      const destinationCityId = this.parseOptionalId(dto.destinationCityId, 'destinationCityId');
+      const destinationCityId = parseOptionalId(dto.destinationCityId, 'destinationCityId');
       if (destinationCityId !== undefined) {
         await this.ensureCityExists(destinationCityId);
       }
@@ -1182,14 +387,19 @@ export class OutboundService {
     >();
 
     if (detailsProvided) {
-      detailPayload = this.normalizeAndValidateDetails(dto.details as CreateOutboundDetailDto[]);
+      detailPayload = normalizeAndValidateDetails(dto.details as CreateOutboundDetailDto[]);
       itemMap = await this.getActiveItems(detailPayload.map((detail) => detail.itemId));
     }
 
     try {
       await this.prisma.$transaction(async (tx) => {
         if (detailsProvided) {
-          await this.ensureBatchAvailability(detailPayload, tx, id, effectiveWarehouseId);
+          await this.inventoryService.ensureBatchAvailability(
+            detailPayload,
+            tx,
+            id,
+            effectiveWarehouseId,
+          );
         }
 
         await tx.deliveryOrder.update({
@@ -1198,12 +408,12 @@ export class OutboundService {
             doNumber: dto.doNumber,
             doDate: dto.doDate ? new Date(dto.doDate) : undefined,
             doReceivedDate: dto.doReceivedDate ? new Date(dto.doReceivedDate) : undefined,
-            customerId: dto.customerId ? this.parseId(dto.customerId, 'customerId') : undefined,
+            customerId: dto.customerId ? parseId(dto.customerId, 'customerId') : undefined,
             warehouseId: effectiveWarehouseId,
             destinationCityId:
               typeof dto.destinationCityId !== 'undefined'
                 ? dto.destinationCityId
-                  ? this.parseId(dto.destinationCityId, 'destinationCityId')
+                  ? parseId(dto.destinationCityId, 'destinationCityId')
                   : null
                 : undefined,
             stdLeadTimeDays: dto.stdLeadTimeDays,
@@ -1270,7 +480,7 @@ export class OutboundService {
           }
         }
 
-        await this.syncOutboundInventoryLedger(tx, id, actorId);
+        await this.inventoryService.syncOutboundInventoryLedger(tx, id, actorId);
       });
     } catch (error) {
       if (
@@ -1293,7 +503,7 @@ export class OutboundService {
   }
 
   async remove(id: number, actorId?: string | number) {
-    const auditActor = this.normalizeAuditActor(actorId);
+    const auditActor = normalizeAuditActor(actorId);
     const scopedWarehouseId = await this.resolveWarehouseFilterForActor(actorId);
     const existing = await this.prisma.deliveryOrder.findFirst({
       where: {
@@ -1340,11 +550,15 @@ export class OutboundService {
         },
       });
 
-      await this.syncOutboundInventoryLedger(tx, id, actorId);
+      await this.inventoryService.syncOutboundInventoryLedger(tx, id, actorId);
     });
 
     return { success: true, message: 'outbound deleted' };
   }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers (require Prisma — kept in main service)
+  // ---------------------------------------------------------------------------
 
   private async ensureDoNumberAvailable(doNumber: string, exceptId?: number) {
     const duplicate = await this.prisma.deliveryOrder.findFirst({
@@ -1362,14 +576,6 @@ export class OutboundService {
         isSoftDeleted: Boolean(duplicate.deletedAt),
       });
     }
-  }
-
-  private normalizeRequiredDoNumber(value?: string) {
-    const doNumber = String(value ?? '').trim();
-    if (!doNumber) {
-      throw new BadRequestException('DO number is required');
-    }
-    return doNumber;
   }
 
   private async ensureCustomerExists(customerId: number) {
@@ -1445,43 +651,6 @@ export class OutboundService {
     }
   }
 
-  private normalizeAndValidateDetails(
-    details: CreateOutboundDetailDto[],
-  ): NormalizedOutboundDetail[] {
-    if (!details.length) {
-      throw new BadRequestException('At least one detail row is required');
-    }
-
-    const seen = new Set<string>();
-
-    return details.map((raw) => {
-      const itemId = this.parseId(raw.itemId, 'detail.itemId');
-      const batchNumber = raw.batchNumber.trim();
-
-      if (!itemId) {
-        throw new BadRequestException('Detail itemId is required');
-      }
-
-      if (!batchNumber) {
-        throw new BadRequestException('Detail batchNumber is required');
-      }
-
-      const compositeKey = `${String(itemId)}::${batchNumber.toLowerCase()}`;
-      if (seen.has(compositeKey)) {
-        throw new BadRequestException(
-          `Duplicate item and batch combination: ${itemId} - ${batchNumber}`,
-        );
-      }
-      seen.add(compositeKey);
-
-      return {
-        ...raw,
-        itemId,
-        batchNumber,
-      };
-    });
-  }
-
   private async getActiveItems(itemIds: number[]) {
     const uniqueItemIds = [...new Set(itemIds)];
 
@@ -1545,210 +714,6 @@ export class OutboundService {
     return mappedWarehouseId;
   }
 
-  private async syncOutboundInventoryLedger(
-    tx: Prisma.TransactionClient,
-    deliveryOrderId: number,
-    actorId?: string | number,
-  ) {
-    const auditActor = this.normalizeAuditActor(actorId);
-    const now = new Date();
-    await tx.inventoryLedger.updateMany({
-      where: {
-        referenceDocType: 'OUTBOUND',
-        referenceDocId: String(deliveryOrderId),
-        deletedAt: null,
-      },
-      data: {
-        deletedAt: now,
-        deletedBy: auditActor ?? null,
-        updatedBy: auditActor ?? null,
-      },
-    });
-
-    const outbound = await tx.deliveryOrder.findFirst({
-      where: { id: deliveryOrderId },
-      select: {
-        id: true,
-        doNumber: true,
-        doDate: true,
-        warehouseId: true,
-        deletedAt: true,
-        details: {
-          where: { deletedAt: null },
-          orderBy: [{ lineNo: 'asc' }],
-          select: {
-            itemId: true,
-            item: {
-              select: {
-                id: true,
-                uom: {
-                  select: {
-                    id: true,
-                  },
-                },
-              },
-            },
-            batches: {
-              where: { deletedAt: null },
-              orderBy: [{ lineNo: 'asc' }],
-              select: {
-                batchOut: true,
-                qtyPcs: true,
-                qtyKg: true,
-                expiredDate: true,
-                notes: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!outbound || outbound.deletedAt) {
-      return;
-    }
-
-    const actorWarehouseId = await this.resolveWarehouseForActor(tx, actorId);
-    const actorUserId = await this.resolveActorUserId(tx, actorId);
-    const itemIds = new Set<number>();
-    const batchNumbers = new Set<string>();
-
-    outbound.details.forEach((detail) => {
-      const itemId = Number(detail.itemId ?? 0);
-      if (!itemId) {
-        return;
-      }
-      itemIds.add(itemId);
-      detail.batches.forEach((batch) => {
-        const batchNumber = String(batch.batchOut ?? '').trim();
-        if (batchNumber) {
-          batchNumbers.add(batchNumber);
-        }
-      });
-    });
-
-    const sourceByPair = new Map<string, { warehouseId: number; expiryDate: Date | null }>();
-    if (itemIds.size > 0 && batchNumbers.size > 0) {
-      const inboundSources = await tx.inboundDetailBatch.findMany({
-        where: {
-          deletedAt: null,
-          batchIn: { in: [...batchNumbers] },
-          inboundDetail: {
-            deletedAt: null,
-            itemId: { in: [...itemIds] },
-            inbound: {
-              deletedAt: null,
-              status: 'POSTED',
-            },
-          },
-        },
-        select: {
-          batchIn: true,
-          expiredDate: true,
-          inboundDetail: {
-            select: {
-              itemId: true,
-              inbound: {
-                select: {
-                  warehouse: {
-                    select: {
-                      id: true,
-                    },
-                  },
-                  transactionDate: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: [{ inboundDetail: { inbound: { transactionDate: 'asc' } } }, { createdAt: 'asc' }],
-      });
-
-      inboundSources.forEach((source) => {
-        const itemId = String(source.inboundDetail?.itemId ?? '').trim();
-        const batchNumber = String(source.batchIn ?? '').trim();
-        const warehouseId = Number(source.inboundDetail?.inbound?.warehouse?.id ?? 0);
-        if (!itemId || !batchNumber || !warehouseId) {
-          return;
-        }
-
-        const key = `${itemId}::${batchNumber.toLowerCase()}`;
-        if (!sourceByPair.has(key)) {
-          sourceByPair.set(key, {
-            warehouseId,
-            expiryDate: source.expiredDate ?? null,
-          });
-        }
-      });
-    }
-
-    for (const detail of outbound.details) {
-      for (const batch of detail.batches) {
-        const batchNumber = String(batch.batchOut ?? '').trim();
-        if (!batchNumber) {
-          continue;
-        }
-
-        const pairKey = `${detail.itemId}::${batchNumber.toLowerCase()}`;
-        const source = sourceByPair.get(pairKey);
-        const warehouseId = outbound.warehouseId || source?.warehouseId || actorWarehouseId;
-        if (!warehouseId) {
-          throw new BadRequestException(
-            `Warehouse source is not found for item ${detail.itemId} batch ${batchNumber}`,
-          );
-        }
-
-        const inventoryBatch = await tx.inventoryBatch.upsert({
-          where: {
-            itemId_batchNumber: {
-              itemId: detail.item.id,
-              batchNumber,
-            },
-          },
-          update: {
-            expiryDate: source?.expiryDate ?? batch.expiredDate ?? undefined,
-            deletedAt: null,
-            deletedBy: null,
-            updatedBy: auditActor ?? null,
-          },
-          create: {
-            itemId: detail.item.id,
-            batchNumber,
-            expiryDate: source?.expiryDate ?? batch.expiredDate ?? null,
-            createdBy: auditActor ?? null,
-            updatedBy: auditActor ?? null,
-          },
-          select: { id: true },
-        });
-
-        const qtyPcs = Number(batch.qtyPcs ?? 0);
-        const qtyKg = Number(batch.qtyKg ?? 0);
-
-        await tx.inventoryLedger.create({
-          data: {
-            transactionDate: outbound.doDate ?? now,
-            itemId: detail.item.id,
-            warehouseId,
-            batchId: inventoryBatch.id,
-            transactionType: 'OUTBOUND',
-            referenceDocType: 'OUTBOUND',
-            referenceDocId: String(outbound.id),
-            referenceNumber: outbound.doNumber,
-            quantityPcs: -Math.abs(Number.isFinite(qtyPcs) ? qtyPcs : 0),
-            quantityKg: -Math.abs(Number.isFinite(qtyKg) ? qtyKg : 0),
-            uomId: detail.item.uom.id,
-            unitCost: null,
-            totalValue: 0,
-            userId: actorUserId ?? null,
-            notes: batch.notes ?? null,
-            createdBy: auditActor ?? null,
-            updatedBy: auditActor ?? null,
-          },
-        });
-      }
-    }
-  }
-
   private async resolveActorUserId(tx: Prisma.TransactionClient, actorId?: string | number) {
     const parsedActorId = this.parseOptionalActorUserId(actorId);
     if (!parsedActorId) {
@@ -1766,165 +731,6 @@ export class OutboundService {
     return actor?.id;
   }
 
-  private async ensureBatchAvailability(
-    details: NormalizedOutboundDetail[],
-    tx: Prisma.TransactionClient,
-    excludeDoId?: number,
-    warehouseId?: number,
-  ) {
-    const requestedByPair = new Map<string, number>();
-    const pairLabelByKey = new Map<string, { itemId: number; batchNumber: string }>();
-    const itemIds = new Set<number>();
-    const batchNumbers = new Set<string>();
-
-    details.forEach((detail) => {
-      const itemId = detail.itemId;
-      const batchNumber = String(detail.batchNumber ?? '').trim();
-      const qty = Number(detail.qtyPcs ?? 0);
-      const qtyPcs = Number.isFinite(qty) ? qty : 0;
-      const key = `${String(itemId)}::${batchNumber.toLowerCase()}`;
-
-      requestedByPair.set(key, (requestedByPair.get(key) ?? 0) + qtyPcs);
-      if (!pairLabelByKey.has(key)) {
-        pairLabelByKey.set(key, { itemId, batchNumber });
-      }
-      itemIds.add(itemId);
-      batchNumbers.add(batchNumber);
-    });
-
-    if (pairLabelByKey.size === 0) {
-      return;
-    }
-
-    const normalizedExcludeDoId = excludeDoId;
-    const [inboundRows, usedRows] = await Promise.all([
-      tx.inboundDetailBatch.findMany({
-        where: {
-          deletedAt: null,
-          batchIn: { in: [...batchNumbers] },
-          inboundDetail: {
-            deletedAt: null,
-            itemId: { in: [...itemIds] },
-            inbound: {
-              deletedAt: null,
-              status: 'POSTED',
-              warehouseId,
-            },
-          },
-        },
-        select: {
-          batchIn: true,
-          qty: true,
-          inboundDetail: {
-            select: {
-              itemId: true,
-            },
-          },
-        },
-      }),
-      tx.outboundDetailBatch.findMany({
-        where: {
-          deletedAt: null,
-          batchOut: { in: [...batchNumbers] },
-          outboundDetail: {
-            deletedAt: null,
-            itemId: { in: [...itemIds] },
-            deliveryOrder: {
-              deletedAt: null,
-              id: normalizedExcludeDoId ? { not: normalizedExcludeDoId } : undefined,
-              warehouseId,
-            },
-          },
-        },
-        select: {
-          batchOut: true,
-          qtyPcs: true,
-          outboundDetail: {
-            select: {
-              itemId: true,
-            },
-          },
-        },
-      }),
-    ]);
-
-    const inboundByPair = new Map<string, number>();
-    inboundRows.forEach((row) => {
-      const itemId = String(row.inboundDetail?.itemId ?? '').trim();
-      const batchNumber = String(row.batchIn ?? '').trim();
-      if (!itemId || !batchNumber) {
-        return;
-      }
-      const key = `${itemId}::${batchNumber.toLowerCase()}`;
-      const qty = Number(row.qty ?? 0);
-      inboundByPair.set(key, (inboundByPair.get(key) ?? 0) + (Number.isFinite(qty) ? qty : 0));
-    });
-
-    const usedByPair = new Map<string, number>();
-    usedRows.forEach((row) => {
-      const itemId = String(row.outboundDetail?.itemId ?? '').trim();
-      const batchNumber = String(row.batchOut ?? '').trim();
-      if (!itemId || !batchNumber) {
-        return;
-      }
-      const key = `${itemId}::${batchNumber.toLowerCase()}`;
-      const qty = Number(row.qtyPcs ?? 0);
-      usedByPair.set(key, (usedByPair.get(key) ?? 0) + (Number.isFinite(qty) ? qty : 0));
-    });
-
-    requestedByPair.forEach((requestedQty, key) => {
-      const pair = pairLabelByKey.get(key);
-      if (!pair) {
-        return;
-      }
-      const inboundQty = inboundByPair.get(key) ?? 0;
-      const usedQty = usedByPair.get(key) ?? 0;
-      const availableQty = Math.max(inboundQty - usedQty, 0);
-
-      if (requestedQty > availableQty) {
-        throw new BadRequestException(
-          `Insufficient stock for item ${pair.itemId} batch ${pair.batchNumber}. Remaining ${availableQty.toLocaleString(
-            'en-US',
-          )} pcs, requested ${requestedQty.toLocaleString('en-US')} pcs.`,
-        );
-      }
-    });
-  }
-
-  private parseId(value: string | number, label: string): number {
-    if (typeof value === 'number') {
-      if (Number.isInteger(value) && value > 0) {
-        return value;
-      }
-      throw new BadRequestException(`${label} must be a valid integer`);
-    }
-
-    const normalized = String(value ?? '').trim();
-    if (!normalized) {
-      throw new BadRequestException(`${label} is required`);
-    }
-
-    const parsed = Number(normalized);
-    if (!Number.isInteger(parsed) || parsed <= 0) {
-      throw new BadRequestException(`${label} must be a valid integer`);
-    }
-
-    return parsed;
-  }
-
-  private parseOptionalId(
-    value: string | number | null | undefined,
-    label: string,
-  ): number | undefined {
-    if (typeof value === 'undefined' || value === null) {
-      return undefined;
-    }
-    if (typeof value === 'string' && !value.trim()) {
-      return undefined;
-    }
-    return this.parseId(value, label);
-  }
-
   private parseOptionalActorUserId(actorId?: string | number): number | undefined {
     if (typeof actorId === 'undefined' || actorId === null) {
       return undefined;
@@ -1940,8 +746,100 @@ export class OutboundService {
     return parsed;
   }
 
-  private normalizeAuditActor(actorId?: string | number): number | undefined {
-    const normalized = toAuditUserId(actorId);
-    return normalized ?? undefined;
+  private async resolveWarehouseFilterForActor(
+    actorId?: string | number,
+    requestedWarehouseId?: string,
+  ): Promise<number | undefined> {
+    const actor = await this.getActorWarehouseAccess(actorId);
+    if (actor.canAccessAllWarehouses) {
+      if (requestedWarehouseId?.trim()) {
+        return parseId(requestedWarehouseId, 'warehouseId');
+      }
+      return undefined;
+    }
+
+    if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
+      return actor.warehouseId;
+    }
+
+    throw new BadRequestException('Warehouse untuk user login belum terdaftar');
+  }
+
+  private async resolveInputWarehouseForActor(
+    actorId?: string | number,
+    requestedWarehouseId?: string,
+    fallbackWarehouseId?: number,
+  ): Promise<number> {
+    const actor = await this.getActorWarehouseAccess(actorId);
+
+    if (actor.canAccessAllWarehouses) {
+      if (requestedWarehouseId?.trim()) {
+        return parseId(requestedWarehouseId, 'warehouseId');
+      }
+      if (typeof fallbackWarehouseId === 'number' && fallbackWarehouseId > 0) {
+        return fallbackWarehouseId;
+      }
+      if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
+        return actor.warehouseId;
+      }
+      throw new BadRequestException('warehouseId is required');
+    }
+
+    if (typeof actor.warehouseId === 'number' && actor.warehouseId > 0) {
+      return actor.warehouseId;
+    }
+
+    throw new BadRequestException('Warehouse untuk user login belum terdaftar');
+  }
+
+  private async getActorWarehouseAccess(actorId?: string | number) {
+    const actorUserId = parseOptionalActorId(actorId);
+    if (!actorUserId) {
+      throw new BadRequestException('User login tidak ditemukan');
+    }
+
+    const actor = await this.prisma.user.findFirst({
+      where: {
+        id: actorUserId,
+        deletedAt: null,
+      },
+      select: {
+        warehouseId: true,
+        roles: {
+          where: {
+            deletedAt: null,
+            role: { deletedAt: null },
+          },
+          select: {
+            role: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!actor) {
+      throw new BadRequestException('User login tidak ditemukan');
+    }
+
+    const roleNames = (actor.roles ?? [])
+      .map((row) =>
+        String(row.role?.name ?? '')
+          .trim()
+          .toLowerCase(),
+      )
+      .filter(Boolean);
+
+    const canAccessAllWarehouses = roleNames.some(
+      (roleName) => roleName === 'admin' || roleName === 'super_admin',
+    );
+
+    return {
+      warehouseId: actor.warehouseId,
+      canAccessAllWarehouses,
+    };
   }
 }
