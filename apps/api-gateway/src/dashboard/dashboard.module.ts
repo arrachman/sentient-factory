@@ -10,12 +10,15 @@ import { AlertingProviderSessionService } from './alerting-provider-session.serv
 import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
 import { AlertingTemplateService } from './alerting-template.service';
+import { AlertingTriageEscalationResolverService } from './alerting-triage-escalation-resolver.service';
+import { AlertingTriageEscalationService } from './alerting-triage-escalation.service';
 import { AlertingTriageService } from './alerting-triage.service';
 import { AlertingDeliveryController } from './alerting-delivery.controller';
 import { AlertingOpsController } from './alerting-ops.controller';
 import { AlertingRulesController } from './alerting-rules.controller';
 import { DashboardController } from './dashboard.controller';
 import { DashboardCustomDbService } from './dashboard-custom-db.service';
+import { DashboardCustomDbWidgetService } from './dashboard-custom-db-widget.service';
 import { DashboardInsightService } from './dashboard-insight.service';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardQueryService } from './dashboard-query.service';
@@ -38,6 +41,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
     DashboardQueryM2Service,
     DashboardQueryM2CrService,
     DashboardCustomDbService,
+    DashboardCustomDbWidgetService,
     DashboardInsightService,
     DashboardMysqlService,
     SemanticSchemaService,
@@ -51,6 +55,8 @@ import { SemanticSchemaService } from './semantic-schema.service';
     AlertingProviderSessionService,
     AlertingTriageService,
     AlertingObservabilityService,
+    AlertingTriageEscalationResolverService,
+    AlertingTriageEscalationService,
     AlertingSchedulerService,
   ],
   exports: [
