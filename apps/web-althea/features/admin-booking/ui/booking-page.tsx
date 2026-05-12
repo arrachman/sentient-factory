@@ -170,6 +170,14 @@ export function BookingPage() {
             <CalendarDays className="h-3.5 w-3.5" /> {f.label}
           </button>
         ))}
+        <div className="ml-auto flex items-center gap-2">
+          <button type="button" onClick={() => setPackageWizardOpen(true)} className="btn btn-outline">
+            <Layers className="h-4 w-4" /> Paket
+          </button>
+          <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
+            <CalendarPlus className="h-4 w-4" /> Booking Baru
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
