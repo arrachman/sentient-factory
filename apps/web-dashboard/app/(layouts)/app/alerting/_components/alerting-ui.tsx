@@ -16,8 +16,8 @@ export { AlertSettingsPageView } from './alert-settings-page-view';
 export {
   AlertDeadLetterTriagePageView,
   buildDeadLetterTriageApiPath,
-  TriageItemCard,
 } from './alert-dead-letter-triage-page-view';
+export { TriageItemCard } from './triage-item-card';
 export { AlertDeadLetterTriageDetailPageView } from './alert-dead-letter-triage-detail-page-view';
 export { AlertDetailPageView } from './alert-detail-page-view';
 export { AlertRuleDetailPageView } from './alert-rule-detail-page-view';
