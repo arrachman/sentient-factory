@@ -283,8 +283,9 @@ export function UsersRolesPage() {
       return;
     }
     if (editing) {
-      const { email: _e, username: _u, ...rest } = form;
-      updateMut.mutate({ id: editing.id, input: rest }, { onSuccess: close });
+      const { email: _e, username: _u, password, ...rest } = form;
+      const input = password && password.length > 0 ? { ...rest, password } : rest;
+      updateMut.mutate({ id: editing.id, input }, { onSuccess: close });
     } else {
       createMut.mutate(form, { onSuccess: close });
     }
