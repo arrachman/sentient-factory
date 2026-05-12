@@ -9,6 +9,7 @@ import { DashboardController } from './dashboard.controller';
 import { DashboardCustomDbService } from './dashboard-custom-db.service';
 import { DashboardInsightService } from './dashboard-insight.service';
 import { DashboardMysqlService } from './dashboard-mysql.service';
+import { DashboardQueryService } from './dashboard-query.service';
 import { DashboardService } from './dashboard.service';
 import { SemanticSchemaService } from './semantic-schema.service';
 
@@ -17,6 +18,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
   controllers: [DashboardController],
   providers: [
     DashboardService,
+    DashboardQueryService,
     DashboardCustomDbService,
     DashboardInsightService,
     DashboardMysqlService,
