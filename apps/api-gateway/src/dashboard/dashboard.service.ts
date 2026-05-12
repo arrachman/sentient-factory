@@ -7,6 +7,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AlertingConfigService } from './alerting-config.service';
 import { AlertingDeliveryService } from './alerting-delivery.service';
+import { AlertingProviderSessionService } from './alerting-provider-session.service';
+import { AlertingTriageService } from './alerting-triage.service';
 import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
@@ -33,6 +35,8 @@ export class DashboardService {
     @Inject(forwardRef(() => AlertingSchedulerService))
     private readonly alertingSchedulerService: AlertingSchedulerService,
     private readonly alertingDeliveryService: AlertingDeliveryService,
+    private readonly alertingTriageService: AlertingTriageService,
+    private readonly alertingProviderSessionService: AlertingProviderSessionService,
     private readonly dashboardInsightService: DashboardInsightService,
     private readonly dashboardQueryService: DashboardQueryService,
   ) {}
@@ -122,7 +126,7 @@ export class DashboardService {
   }
 
   async alertingDeadLetterTriage(query: Record<string, unknown> = {}) {
-    return this.alertingDeliveryService.alertingDeadLetterTriage(query);
+    return this.alertingTriageService.alertingDeadLetterTriage(query);
   }
 
   async updateAlertingDeadLetterTriage(
@@ -130,7 +134,7 @@ export class DashboardService {
     body: Record<string, unknown>,
     actor: string,
   ) {
-    return this.alertingDeliveryService.updateAlertingDeadLetterTriage(deliveryId, body, actor);
+    return this.alertingTriageService.updateAlertingDeadLetterTriage(deliveryId, body, actor);
   }
 
   async alertingOpsOverview() {
@@ -336,7 +340,7 @@ export class DashboardService {
   }
 
   async ensureAlertingTestRule(actor: string) {
-    return this.alertingDeliveryService.ensureAlertingTestRule(actor);
+    return this.alertingProviderSessionService.ensureAlertingTestRule(actor);
   }
 
   async createAlertProviderSessionAudit(input: {
@@ -351,7 +355,7 @@ export class DashboardService {
     errorMessage?: string | null;
     actor: string;
   }) {
-    return this.alertingDeliveryService.createAlertProviderSessionAudit(input);
+    return this.alertingProviderSessionService.createAlertProviderSessionAudit(input);
   }
 
   async upsertAlertProviderSessionState(input: {
@@ -378,7 +382,7 @@ export class DashboardService {
     lastDisconnectedAt?: Date | null;
     actor: string;
   }) {
-    return this.alertingDeliveryService.upsertAlertProviderSessionState(input);
+    return this.alertingProviderSessionService.upsertAlertProviderSessionState(input);
   }
 
   async trends(domainInput: string, query: QueryDashboardRangeDto) {

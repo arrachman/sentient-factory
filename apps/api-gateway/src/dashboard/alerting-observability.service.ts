@@ -1,7 +1,9 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AlertingDeliveryService } from './alerting-delivery.service';
+import { AlertingProviderSessionService } from './alerting-provider-session.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
+import { AlertingTriageService } from './alerting-triage.service';
 import { asJson } from './dashboard.utils';
 
 @Injectable()
@@ -10,6 +12,8 @@ export class AlertingObservabilityService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => AlertingDeliveryService))
     private readonly alertingDeliveryService: AlertingDeliveryService,
+    private readonly alertingProviderSessionService: AlertingProviderSessionService,
+    private readonly alertingTriageService: AlertingTriageService,
     @Inject(forwardRef(() => AlertingSchedulerService))
     private readonly alertingSchedulerService: AlertingSchedulerService,
   ) {}
@@ -335,7 +339,7 @@ export class AlertingObservabilityService {
   async alertingProviderHealth() {
     const smtpConfig = this.alertingDeliveryService.getSmtpConfig();
     const baileys = await this.alertingDeliveryService.getBaileysHealth();
-    await this.alertingDeliveryService.upsertAlertProviderSessionState({
+    await this.alertingProviderSessionService.upsertAlertProviderSessionState({
       providerName: 'baileys',
       channelType: 'wa-group',
       sessionKey: 'baileys-wa-group',
@@ -450,7 +454,7 @@ export class AlertingObservabilityService {
       this.alertingDeliveryObservability(),
       this.alertingDeliveryStatus(),
       this.alertingProviderHealth(),
-      this.alertingDeliveryService.alertingDeadLetterTriage(),
+      this.alertingTriageService.alertingDeadLetterTriage(),
     ]);
 
     const analyticsData = analytics.data as Record<string, unknown>;
