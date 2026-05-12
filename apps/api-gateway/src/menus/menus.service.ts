@@ -6,22 +6,20 @@ import { CreateMenuDto } from './dto/create-menu.dto';
 import { QueryMenuDto } from './dto/query-menu.dto';
 import { UpdateMenuSortBatchDto } from './dto/update-menu-sort-batch.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
-
-type SidebarMenuItem = {
-  id: number;
-  key: string;
-  title: string;
-  path: string | null;
-  icon: string | null;
-  type: string;
-  parentId: number | null;
-  sortOrder: number;
-  children: SidebarMenuItem[];
-};
+import { MenuSidebarService } from './menu-sidebar.service';
+import {
+  assertNoCircularHierarchy,
+  resolveDescendantIds,
+  serializeMenu,
+  SidebarMenuItem,
+} from './menu-tree.utils';
 
 @Injectable()
 export class MenusService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private sidebarService: MenuSidebarService,
+  ) {}
 
   async create(dto: CreateMenuDto, actorId?: string | number) {
     const existing = await this.prisma.menu.findFirst({
@@ -66,9 +64,9 @@ export class MenusService {
       },
     });
 
-    await this.assignMenuToAdminRole(created.id, actorId);
+    await this.sidebarService.assignMenuToAdminRole(created.id, actorId);
 
-    return { success: true, data: this.serializeMenu(created) };
+    return { success: true, data: serializeMenu(created) };
   }
 
   async findAll(query: QueryMenuDto) {
@@ -133,7 +131,7 @@ export class MenusService {
 
     return {
       success: true,
-      data: items.map((item) => this.serializeMenu(item)),
+      data: items.map((item) => serializeMenu(item)),
       meta: {
         page,
         limit,
@@ -160,7 +158,7 @@ export class MenusService {
       throw new NotFoundException('Menu not found');
     }
 
-    return { success: true, data: this.serializeMenu(item) };
+    return { success: true, data: serializeMenu(item) };
   }
 
   async update(id: number, dto: UpdateMenuDto, actorId?: string | number) {
@@ -221,7 +219,7 @@ export class MenusService {
       },
     });
 
-    return { success: true, data: this.serializeMenu(updated) };
+    return { success: true, data: serializeMenu(updated) };
   }
 
   async updateSortBatch(dto: UpdateMenuSortBatchDto, actorId?: string | number) {
@@ -292,196 +290,7 @@ export class MenusService {
   }
 
   async getSidebarByUserId(userId: number | string): Promise<SidebarMenuItem[]> {
-    if (!userId) {
-      return [];
-    }
-    const normalizedUserId = typeof userId === 'number' ? userId : Number(userId);
-    if (!Number.isInteger(normalizedUserId)) {
-      return [];
-    }
-    await this.ensureAdministratorRoleMenu();
-
-    const userRoles = await this.prisma.userRole.findMany({
-      where: {
-        userId: normalizedUserId,
-        deletedAt: null,
-        role: {
-          deletedAt: null,
-        },
-      },
-      select: {
-        roleId: true,
-      },
-    });
-
-    const roleIds = userRoles.map((item) => item.roleId);
-    if (roleIds.length === 0) {
-      return [];
-    }
-
-    const roleMenus = await this.prisma.roleMenu.findMany({
-      where: {
-        roleId: { in: roleIds },
-        canView: true,
-        deletedAt: null,
-        menu: {
-          deletedAt: null,
-          isActive: true,
-          isVisible: true,
-        },
-      },
-      include: {
-        menu: {
-          select: {
-            id: true,
-            key: true,
-            title: true,
-            path: true,
-            icon: true,
-            type: true,
-            parentId: true,
-            sortOrder: true,
-          },
-        },
-      },
-      orderBy: {
-        menu: {
-          sortOrder: 'asc',
-        },
-      },
-    });
-
-    const dedupedMap = new Map<number, SidebarMenuItem>();
-    for (const row of roleMenus) {
-      const menu = row.menu;
-      if (!dedupedMap.has(menu.id)) {
-        dedupedMap.set(menu.id, {
-          id: menu.id,
-          key: menu.key,
-          title: menu.title,
-          path: menu.path,
-          icon: menu.icon,
-          type: menu.type,
-          parentId: menu.parentId,
-          sortOrder: menu.sortOrder,
-          children: [],
-        });
-      }
-    }
-
-    const items = Array.from(dedupedMap.values());
-    const byId = new Map(items.map((item) => [item.id, item]));
-    const roots: SidebarMenuItem[] = [];
-
-    for (const item of items) {
-      if (item.parentId && byId.has(item.parentId)) {
-        byId.get(item.parentId)!.children.push(item);
-      } else {
-        roots.push(item);
-      }
-    }
-
-    const sortRecursively = (list: SidebarMenuItem[]) => {
-      list.sort((a, b) => a.sortOrder - b.sortOrder);
-      for (const entry of list) {
-        sortRecursively(entry.children);
-      }
-    };
-
-    sortRecursively(roots);
-    return roots;
-  }
-
-  private async ensureAdministratorRoleMenu() {
-    const administratorParent = await this.prisma.menu.upsert({
-      where: { key: 'administrator' },
-      update: {
-        title: 'Administrator',
-        path: null,
-        icon: 'ShieldUser',
-        type: 'COLLAPSE',
-        parentId: null,
-        isVisible: true,
-        isActive: true,
-        deletedAt: null,
-        deletedBy: null,
-      },
-      create: {
-        key: 'administrator',
-        title: 'Administrator',
-        path: null,
-        icon: 'ShieldUser',
-        type: 'COLLAPSE',
-        parentId: null,
-        sortOrder: 50,
-        isVisible: true,
-        isActive: true,
-      },
-      select: { id: true },
-    });
-
-    const roleMenu = await this.prisma.menu.upsert({
-      where: { key: 'administrator-role' },
-      update: {
-        title: 'Role',
-        path: '/app/administrator/role',
-        icon: 'ShieldCheck',
-        type: 'ITEM',
-        parentId: administratorParent.id,
-        sortOrder: 34,
-        isVisible: true,
-        isActive: true,
-        deletedAt: null,
-        deletedBy: null,
-      },
-      create: {
-        key: 'administrator-role',
-        title: 'Role',
-        path: '/app/administrator/role',
-        icon: 'ShieldCheck',
-        type: 'ITEM',
-        parentId: administratorParent.id,
-        sortOrder: 34,
-        isVisible: true,
-        isActive: true,
-      },
-      select: { id: true },
-    });
-
-    const adminRole = await this.prisma.role.findFirst({
-      where: { name: 'admin', deletedAt: null },
-      select: { id: true },
-    });
-    if (!adminRole) {
-      return;
-    }
-
-    const existingRoleMenu = await this.prisma.roleMenu.findFirst({
-      where: { roleId: adminRole.id, menuId: roleMenu.id },
-      select: { id: true, deletedAt: true },
-    });
-
-    if (!existingRoleMenu) {
-      await this.prisma.roleMenu.create({
-        data: {
-          roleId: adminRole.id,
-          menuId: roleMenu.id,
-          canView: true,
-        },
-      });
-      return;
-    }
-
-    if (existingRoleMenu.deletedAt) {
-      await this.prisma.roleMenu.update({
-        where: { id: existingRoleMenu.id },
-        data: {
-          canView: true,
-          deletedAt: null,
-          deletedBy: null,
-        },
-      });
-    }
+    return this.sidebarService.getSidebarByUserId(userId);
   }
 
   private async ensureParentExists(parentId: number) {
@@ -495,146 +304,22 @@ export class MenusService {
   }
 
   private async ensureParentNotDescendant(id: number, candidateParentId: number) {
-    const children = await this.prisma.menu.findMany({
+    const allMenus = await this.prisma.menu.findMany({
       where: { deletedAt: null },
       select: { id: true, parentId: true },
     });
-
-    const parentMap = new Map<number, number | null>(
-      children.map((item) => [item.id, item.parentId]),
-    );
-    let cursor: number | null = candidateParentId;
-    while (cursor !== null) {
-      if (cursor === id) {
-        throw new BadRequestException('Invalid parent menu. Circular hierarchy detected.');
-      }
-      cursor = parentMap.get(cursor) ?? null;
-    }
+    assertNoCircularHierarchy(allMenus, id, candidateParentId);
   }
 
-  private async assignMenuToAdminRole(menuId: number, actorId?: string | number) {
-    const adminRole = await this.prisma.role.findFirst({
-      where: { name: 'admin', deletedAt: null },
-      select: { id: true },
+  private async resolveGroupMenuIds(groupId: number): Promise<number[]> {
+    const allMenus = await this.prisma.menu.findMany({
+      where: { deletedAt: null },
+      select: { id: true, parentId: true },
     });
-    if (!adminRole) {
-      return;
-    }
-
-    const existingRoleMenu = await this.prisma.roleMenu.findFirst({
-      where: { roleId: adminRole.id, menuId },
-      select: { id: true, deletedAt: true },
-    });
-
-    if (!existingRoleMenu) {
-      await this.prisma.roleMenu.create({
-        data: {
-          roleId: adminRole.id,
-          menuId,
-          canView: true,
-          createdBy: this.toActor(actorId),
-          updatedBy: this.toActor(actorId),
-        },
-      });
-      return;
-    }
-
-    if (existingRoleMenu.deletedAt) {
-      await this.prisma.roleMenu.update({
-        where: { id: existingRoleMenu.id },
-        data: {
-          canView: true,
-          deletedAt: null,
-          deletedBy: null,
-          updatedBy: this.toActor(actorId),
-        },
-      });
-      return;
-    }
-
-    await this.prisma.roleMenu.update({
-      where: { id: existingRoleMenu.id },
-      data: {
-        canView: true,
-        updatedBy: this.toActor(actorId),
-      },
-    });
+    return resolveDescendantIds(allMenus, groupId);
   }
 
   private toActor(actorId?: string | number): number | null {
     return toAuditUserId(actorId);
-  }
-
-  private serializeMenu(item: {
-    id: number;
-    key: string;
-    title: string;
-    path: string | null;
-    icon: string | null;
-    type: string;
-    parentId: number | null;
-    sortOrder: number;
-    isVisible: boolean;
-    isActive: boolean;
-    permissionName: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    parent?: {
-      id: number;
-      title: string;
-    } | null;
-  }) {
-    return {
-      id: item.id,
-      key: item.key,
-      title: item.title,
-      path: item.path,
-      icon: item.icon,
-      type: item.type,
-      parentId: item.parentId,
-      parentTitle: item.parent?.title ?? null,
-      sortOrder: item.sortOrder,
-      isVisible: item.isVisible,
-      isActive: item.isActive,
-      permissionName: item.permissionName,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-    };
-  }
-
-  private async resolveGroupMenuIds(groupId: number): Promise<number[]> {
-    const menus = await this.prisma.menu.findMany({
-      where: { deletedAt: null },
-      select: { id: true, parentId: true },
-    });
-
-    const idSet = new Set(menus.map((item) => item.id));
-    if (!idSet.has(groupId)) {
-      throw new NotFoundException('Group menu not found');
-    }
-
-    const childrenByParent = new Map<number | null, number[]>();
-    for (const menu of menus) {
-      const list = childrenByParent.get(menu.parentId) ?? [];
-      list.push(menu.id);
-      childrenByParent.set(menu.parentId, list);
-    }
-
-    const queue = [groupId];
-    const descendants: number[] = [];
-    const visited = new Set<number>();
-
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (!current || visited.has(current)) {
-        continue;
-      }
-      visited.add(current);
-      descendants.push(current);
-      const children = childrenByParent.get(current) ?? [];
-      queue.push(...children);
-    }
-
-    return descendants;
   }
 }
