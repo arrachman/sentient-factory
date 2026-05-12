@@ -6,6 +6,7 @@ import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingRuleService } from './alerting-rule.service';
 import { AlertingSchedulerService } from './alerting-scheduler.service';
 import { DashboardController } from './dashboard.controller';
+import { DashboardCustomDbService } from './dashboard-custom-db.service';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardService } from './dashboard.service';
 import { SemanticSchemaService } from './semantic-schema.service';
@@ -15,6 +16,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
   controllers: [DashboardController],
   providers: [
     DashboardService,
+    DashboardCustomDbService,
     DashboardMysqlService,
     SemanticSchemaService,
     AlertingRuleService,
