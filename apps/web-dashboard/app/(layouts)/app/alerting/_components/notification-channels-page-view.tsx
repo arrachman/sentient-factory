@@ -29,7 +29,8 @@ import {
 } from './types';
 import { statusBadgeClass } from './utils';
 import { Shell } from './_shared';
-import { ChannelCard } from './channel-card';
+import { ChannelCardList } from './channel-card-list';
+import { ChannelFormCard } from './channel-form-card';
 
 export function NotificationChannelsPageView() {
   const [channels, setChannels] = useState<PersistedAlertChannelRecord[]>([]);
@@ -268,158 +269,73 @@ export function NotificationChannelsPageView() {
           {channelsError ? <div className="text-sm text-rose-600 dark:text-rose-400">{channelsError}</div> : null}
           {channelActionMessage ? <div className="text-sm text-muted-foreground">{channelActionMessage}</div> : null}
           <TabsContent value="personal" className="grid gap-4 md:grid-cols-2">
-            {grouped.personal.map((item) => (
-              <ChannelCard
-                key={item.channel_id}
-                icon={<MessageCircleMore className="size-4" />}
-                deliveryState={deliveryStatus?.channels.find((channel) => channel.channel_type === 'wa-personal') || null}
-                label={item.label}
-                target={item.target_value}
-                status={item.status}
-                ownership={item.ownership_type}
-                ownerLabel={item.owner_label || undefined}
-                onEdit={() => handleEditChannel(item)}
-                onTestSend={() => handleTestSend(item.channel_id)}
-                testSendLoading={testSendLoadingId === item.channel_id}
-                isActive={item.is_active}
-                onToggleActive={() => handleToggleChannelState(item)}
-                toggleLoading={channelToggleLoadingId === item.channel_id}
-                onDelete={() => setChannelPendingDelete(item)}
-                deleteLoading={channelDeleteLoadingId === item.channel_id}
-              />
-            ))}
+            <ChannelCardList
+              items={grouped.personal}
+              icon={<MessageCircleMore className="size-4" />}
+              channelType="wa-personal"
+              deliveryStatus={deliveryStatus}
+              onEdit={handleEditChannel}
+              onTestSend={handleTestSend}
+              testSendLoadingId={testSendLoadingId}
+              onToggleActive={handleToggleChannelState}
+              channelToggleLoadingId={channelToggleLoadingId}
+              onDelete={setChannelPendingDelete}
+              channelDeleteLoadingId={channelDeleteLoadingId}
+            />
           </TabsContent>
           <TabsContent value="group" className="grid gap-4 md:grid-cols-2">
-            {grouped.group.map((item) => (
-              <ChannelCard
-                key={item.channel_id}
-                icon={<MessageSquareMore className="size-4" />}
-                deliveryState={deliveryStatus?.channels.find((channel) => channel.channel_type === 'wa-group') || null}
-                label={item.label}
-                target={item.target_value}
-                status={item.status}
-                ownership={item.ownership_type}
-                ownerLabel={item.owner_label || undefined}
-                onEdit={() => handleEditChannel(item)}
-                onTestSend={() => handleTestSend(item.channel_id)}
-                testSendLoading={testSendLoadingId === item.channel_id}
-                isActive={item.is_active}
-                onToggleActive={() => handleToggleChannelState(item)}
-                toggleLoading={channelToggleLoadingId === item.channel_id}
-                onDelete={() => setChannelPendingDelete(item)}
-                deleteLoading={channelDeleteLoadingId === item.channel_id}
-              />
-            ))}
+            <ChannelCardList
+              items={grouped.group}
+              icon={<MessageSquareMore className="size-4" />}
+              channelType="wa-group"
+              deliveryStatus={deliveryStatus}
+              onEdit={handleEditChannel}
+              onTestSend={handleTestSend}
+              testSendLoadingId={testSendLoadingId}
+              onToggleActive={handleToggleChannelState}
+              channelToggleLoadingId={channelToggleLoadingId}
+              onDelete={setChannelPendingDelete}
+              channelDeleteLoadingId={channelDeleteLoadingId}
+            />
           </TabsContent>
           <TabsContent value="email" className="grid gap-4 md:grid-cols-2">
-            {grouped.email.map((item) => (
-              <ChannelCard
-                key={item.channel_id}
-                icon={<Mail className="size-4" />}
-                deliveryState={deliveryStatus?.channels.find((channel) => channel.channel_type === 'email') || null}
-                label={item.label}
-                target={item.target_value}
-                status={item.status}
-                ownership={item.ownership_type}
-                ownerLabel={item.owner_label || undefined}
-                onEdit={() => handleEditChannel(item)}
-                onTestSend={() => handleTestSend(item.channel_id)}
-                testSendLoading={testSendLoadingId === item.channel_id}
-                isActive={item.is_active}
-                onToggleActive={() => handleToggleChannelState(item)}
-                toggleLoading={channelToggleLoadingId === item.channel_id}
-                onDelete={() => setChannelPendingDelete(item)}
-                deleteLoading={channelDeleteLoadingId === item.channel_id}
-              />
-            ))}
+            <ChannelCardList
+              items={grouped.email}
+              icon={<Mail className="size-4" />}
+              channelType="email"
+              deliveryStatus={deliveryStatus}
+              onEdit={handleEditChannel}
+              onTestSend={handleTestSend}
+              testSendLoadingId={testSendLoadingId}
+              onToggleActive={handleToggleChannelState}
+              channelToggleLoadingId={channelToggleLoadingId}
+              onDelete={setChannelPendingDelete}
+              channelDeleteLoadingId={channelDeleteLoadingId}
+            />
           </TabsContent>
           {channelsLoading ? <div className="text-sm text-muted-foreground">Loading channels...</div> : null}
         </Tabs>
 
-        <Card className="h-fit border-slate-200">
-          <CardHeader>
-            <CardTitle>{editingChannelId ? 'Edit User Notification Channel' : 'Create User Notification Channel'}</CardTitle>
-            <CardDescription>
-              Persisted flow for a recipient channel. It can stay standalone, or it can be bound to an internal user from the app.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Channel Type</div>
-              <Select value={channelType} onValueChange={(value) => setChannelType(value as NotificationChannel['type'])}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WhatsApp Personal">WhatsApp Personal</SelectItem>
-                  <SelectItem value="WhatsApp Group">WhatsApp Group</SelectItem>
-                  <SelectItem value="Email">Email</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Ownership</div>
-              <Select value={channelOwnership} onValueChange={(value) => setChannelOwnership(value as NotificationChannel['ownership'])}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standalone">Standalone Channel</SelectItem>
-                  <SelectItem value="internal_user">Bound To Internal User</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {channelOwnership === 'internal_user' ? (
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Internal User</div>
-                <Select value={ownerLabel} onValueChange={(value) => setOwnerLabel(value as (typeof internalUserOptions)[number])}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {internalUserOptions.map((item) => (
-                      <SelectItem key={item} value={item}>{item}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : null}
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Label</div>
-              <Input value={channelLabel} onChange={(event) => setChannelLabel(event.target.value)} placeholder="Finance Lead / Ops Alert Group / Management Distribution" />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Team Key</div>
-              <Input
-                value={channelTeamKey}
-                onChange={(event) => setChannelTeamKey(event.target.value)}
-                placeholder="finance-core / ops-l2 / warehouse-night-shift"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Target</div>
-              <Input value={channelTarget} onChange={(event) => setChannelTarget(event.target.value)} placeholder={channelType === 'Email' ? 'name@company.com' : channelType === 'WhatsApp Group' ? 'ops-alert-group' : '+62812xxxxxxx'} />
-            </div>
-            <div className="space-y-2">
-              <div className="text-sm font-medium">Initial Status</div>
-              <Select value={channelStatus} onValueChange={(value) => setChannelStatus(value as NotificationChannel['status'])}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="connected">Connected</SelectItem>
-                  <SelectItem value="failed">Failed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="rounded-xl bg-slate-50 px-3 py-2 text-xs text-muted-foreground">
-              Proper concept: store this as a standalone notification channel first. Add optional user binding for owner routing, and use `team key` only when this channel should be matched by team-based escalation policy.
-            </div>
-            <div className="flex gap-2">
-              <Button className="flex-1" onClick={handleSaveChannel} disabled={channelSaveLoading || !channelLabel.trim() || !channelTarget.trim()}>
-                {channelSaveLoading ? 'Saving...' : editingChannelId ? 'Save Channel' : 'Create Channel'}
-              </Button>
-              {editingChannelId ? (
-                <Button variant="outline" onClick={resetChannelForm} disabled={channelSaveLoading}>
-                  Cancel
-                </Button>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
+        <ChannelFormCard
+          editingChannelId={editingChannelId}
+          channelType={channelType}
+          setChannelType={setChannelType}
+          channelOwnership={channelOwnership}
+          setChannelOwnership={setChannelOwnership}
+          ownerLabel={ownerLabel}
+          setOwnerLabel={setOwnerLabel}
+          channelLabel={channelLabel}
+          setChannelLabel={setChannelLabel}
+          channelTeamKey={channelTeamKey}
+          setChannelTeamKey={setChannelTeamKey}
+          channelTarget={channelTarget}
+          setChannelTarget={setChannelTarget}
+          channelStatus={channelStatus}
+          setChannelStatus={setChannelStatus}
+          channelSaveLoading={channelSaveLoading}
+          onSave={handleSaveChannel}
+          onCancel={resetChannelForm}
+        />
       </div>
       <AlertDialog open={Boolean(channelPendingDelete)} onOpenChange={(open) => { if (!open) setChannelPendingDelete(null); }}>
         <AlertDialogContent>
