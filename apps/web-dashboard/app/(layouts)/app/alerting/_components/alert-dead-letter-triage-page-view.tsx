@@ -2,13 +2,8 @@
 
 import Link from 'next/link';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
 import type {
   AlertDeadLetterTriageAuditSummary,
   AlertDeadLetterTriageFilterContext,
@@ -17,9 +12,11 @@ import type {
   AlertDeadLetterTriageSummary,
   AlertTriageSavedViewRecord,
 } from './types';
-import { moduleLabelFromKey, statusBadgeClass } from './utils';
 import { Shell } from './_shared';
 import { TriageItemCard } from './triage-item-card';
+import { TriageSummaryPanel } from './triage-summary-panel';
+import { TriageSavedViews } from './triage-saved-views';
+import { TriageFiltersBar } from './triage-filters-bar';
 
 export function buildDeadLetterTriageApiPath(filters?: {
   deliveryId?: number | null;
@@ -306,180 +303,24 @@ export function AlertDeadLetterTriagePageView() {
       }
     >
       {error ? <div className="text-sm text-rose-600 dark:text-rose-400">{error}</div> : null}
-      {summary ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {[
-            { label: 'Filtered Items', value: summary.total_items },
-            { label: 'Overdue', value: summary.overdue_items + summary.critical_items },
-            { label: 'Critical', value: summary.critical_items },
-            { label: 'Acknowledged', value: summary.acknowledged_items },
-            { label: 'Unassigned', value: summary.unassigned_items },
-          ].map((item) => (
-            <Card key={item.label}>
-              <CardHeader className="pb-2">
-                <CardDescription>{item.label}</CardDescription>
-                <CardTitle className="text-3xl">{item.value}</CardTitle>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      ) : null}
-      {auditSummary ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            { label: 'Audit Entries', value: auditSummary.total_entries },
-            { label: 'Ack / Unack', value: `${auditSummary.acknowledge_actions}/${auditSummary.unacknowledge_actions}` },
-            { label: 'Assignments', value: auditSummary.assignment_actions },
-            { label: 'Requeues', value: auditSummary.requeue_actions },
-          ].map((item) => (
-            <Card key={item.label}>
-              <CardHeader className="pb-2">
-                <CardDescription>{item.label}</CardDescription>
-                <CardTitle className="text-2xl">{item.value}</CardTitle>
-              </CardHeader>
-            </Card>
-          ))}
-        </div>
-      ) : null}
-      {auditSummary ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Audit Breakdown</CardTitle>
-              <CardDescription>Action pattern inside the currently filtered queue.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {auditSummary.action_breakdown.length ? auditSummary.action_breakdown.slice(0, 6).map((entry) => (
-                <div key={entry.action_type} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm">
-                  <span>{entry.action_type}</span>
-                  <span className="font-medium">{entry.count}</span>
-                </div>
-              )) : (
-                <div className="rounded-xl border border-dashed px-4 py-4 text-sm text-muted-foreground">
-                  No audit activity in the current filter set.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Top Actors</CardTitle>
-              <CardDescription>Who touched this queue most often in the filtered view.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {auditSummary.top_actors.length ? auditSummary.top_actors.map((entry) => (
-                <div key={entry.actor} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm">
-                  <span>{entry.actor}</span>
-                  <span className="font-medium">{entry.action_count}</span>
-                </div>
-              )) : (
-                <div className="rounded-xl border border-dashed px-4 py-4 text-sm text-muted-foreground">
-                  No actor activity recorded yet.
-                </div>
-              )}
-              {auditSummary.activity_last_7d.length ? (
-                <div className="rounded-xl border px-3 py-3 text-xs text-muted-foreground">
-                  Last 7d: {auditSummary.activity_last_7d.map((entry) => `${entry.date}:${entry.count}`).join(' · ')}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved Views</CardTitle>
-          <CardDescription>Persist reusable triage filter presets for your operational queue.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 xl:grid-cols-[1.2fr,0.8fr]">
-            <div className="space-y-3">
-              {savedViews.length ? savedViews.map((view) => (
-                <div key={view.view_id} className="rounded-xl border px-4 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <div className="font-medium">{view.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {view.is_shared ? 'Shared' : 'Private'}
-                        {view.is_default ? ' · Default' : ''}
-                        {view.owner_actor ? ` · ${view.owner_actor}` : ' · System'}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" onClick={() => applySavedView(view)}>Apply</Button>
-                      {view.is_owned_by_current_user ? (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={viewActionLoadingId === view.view_id}
-                            onClick={() => {
-                              setEditingSavedViewId(view.view_id);
-                              setSavedViewName(view.name);
-                              setSavedViewShared(view.is_shared);
-                              setSavedViewDefault(view.is_default);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={viewActionLoadingId === view.view_id}
-                            onClick={() => void toggleSavedViewState(view.view_id, !view.is_active)}
-                          >
-                            {view.is_active ? 'Deactivate' : 'Reactivate'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={viewActionLoadingId === view.view_id}
-                            onClick={() => void deleteSavedView(view.view_id)}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Sort: {view.sort_by} / {view.sort_order} · Filters: {Object.entries(view.filters_json || {}).filter(([, value]) => String(value || '').trim() && String(value) !== 'all').map(([key, value]) => `${key}=${String(value)}`).join(', ') || 'none'}
-                  </div>
-                </div>
-              )) : (
-                <div className="rounded-xl border border-dashed px-4 py-4 text-sm text-muted-foreground">
-                  No saved triage views yet.
-                </div>
-              )}
-            </div>
-            <div className="space-y-3 rounded-xl border px-4 py-4">
-              <div className="font-medium">{editingSavedViewId ? 'Edit Saved View' : 'Save Current Filters'}</div>
-              <Input value={savedViewName} onChange={(event) => setSavedViewName(event.currentTarget.value)} placeholder="Critical finance queue" />
-              <div className="flex items-center justify-between rounded-xl border px-3 py-2">
-                <span className="text-sm">Shared with other operators</span>
-                <Switch checked={savedViewShared} onCheckedChange={setSavedViewShared} />
-              </div>
-              <div className="flex items-center justify-between rounded-xl border px-3 py-2">
-                <span className="text-sm">Set as my default view</span>
-                <Switch checked={savedViewDefault} onCheckedChange={setSavedViewDefault} />
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Current preset captures triage status, ack state, SLA state, module, stage, search, and sort order.
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={() => void persistSavedView()} disabled={viewActionLoadingId !== null}>
-                  {editingSavedViewId ? 'Update View' : 'Save View'}
-                </Button>
-                {editingSavedViewId ? (
-                  <Button variant="outline" onClick={resetSavedViewEditor} disabled={viewActionLoadingId !== null}>
-                    Cancel
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <TriageSummaryPanel summary={summary} auditSummary={auditSummary} />
+      <TriageSavedViews
+        savedViews={savedViews}
+        editingSavedViewId={editingSavedViewId}
+        setEditingSavedViewId={setEditingSavedViewId}
+        savedViewName={savedViewName}
+        setSavedViewName={setSavedViewName}
+        savedViewShared={savedViewShared}
+        setSavedViewShared={setSavedViewShared}
+        savedViewDefault={savedViewDefault}
+        setSavedViewDefault={setSavedViewDefault}
+        viewActionLoadingId={viewActionLoadingId}
+        applySavedView={applySavedView}
+        toggleSavedViewState={toggleSavedViewState}
+        deleteSavedView={deleteSavedView}
+        persistSavedView={persistSavedView}
+        resetSavedViewEditor={resetSavedViewEditor}
+      />
       <Card>
         <CardHeader>
           <CardTitle>Triage Queue</CardTitle>
@@ -490,91 +331,24 @@ export function AlertDeadLetterTriagePageView() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <Input value={search} onChange={(event) => setSearch(event.currentTarget.value)} placeholder="Search event, rule, target, owner..." />
-            <Select value={triageStatusFilter} onValueChange={setTriageStatusFilter}>
-              <SelectTrigger><SelectValue placeholder="Triage Status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="investigating">Investigating</SelectItem>
-                <SelectItem value="requeued">Requeued</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={acknowledgedFilter} onValueChange={setAcknowledgedFilter}>
-              <SelectTrigger><SelectValue placeholder="Acknowledgement" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Ack States</SelectItem>
-                <SelectItem value="acknowledged">Acknowledged</SelectItem>
-                <SelectItem value="unacknowledged">Unacknowledged</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={slaStatusFilter} onValueChange={setSlaStatusFilter}>
-              <SelectTrigger><SelectValue placeholder="SLA State" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All SLA States</SelectItem>
-                <SelectItem value="healthy">Healthy</SelectItem>
-                <SelectItem value="warning">Warning</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={moduleFilter} onValueChange={setModuleFilter}>
-              <SelectTrigger><SelectValue placeholder="Module" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Modules</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="finance">Finance</SelectItem>
-                <SelectItem value="warehouse">Warehouse</SelectItem>
-                <SelectItem value="purchasing">Purchasing</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={stageFilter} onValueChange={setStageFilter}>
-              <SelectTrigger><SelectValue placeholder="Stage" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Stages</SelectItem>
-                <SelectItem value="none">No Stage Policy</SelectItem>
-                <SelectItem value="staged">Has Stage Policy</SelectItem>
-                <SelectItem value="pending">Pending Next Stage</SelectItem>
-                <SelectItem value="final">Final Stage</SelectItem>
-                <SelectItem value="reminder">Reminder Mode</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger><SelectValue placeholder="Sort By" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dead_lettered_at">Dead Lettered At</SelectItem>
-                <SelectItem value="age_minutes">Age Minutes</SelectItem>
-                <SelectItem value="sla_due_at">SLA Due At</SelectItem>
-                <SelectItem value="triage_updated_at">Updated At</SelectItem>
-                <SelectItem value="escalation_count">Escalation Count</SelectItem>
-                <SelectItem value="event_title">Event Title</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger><SelectValue placeholder="Sort Order" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Descending</SelectItem>
-                <SelectItem value="asc">Ascending</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearch('');
-                setTriageStatusFilter('all');
-                setAcknowledgedFilter('all');
-                setSlaStatusFilter('all');
-                setModuleFilter('all');
-                setStageFilter('all');
-                setSortBy('dead_lettered_at');
-                setSortOrder('desc');
-              }}
-            >
-              Reset Filters
-            </Button>
-          </div>
+          <TriageFiltersBar
+            search={search}
+            setSearch={setSearch}
+            triageStatusFilter={triageStatusFilter}
+            setTriageStatusFilter={setTriageStatusFilter}
+            acknowledgedFilter={acknowledgedFilter}
+            setAcknowledgedFilter={setAcknowledgedFilter}
+            slaStatusFilter={slaStatusFilter}
+            setSlaStatusFilter={setSlaStatusFilter}
+            moduleFilter={moduleFilter}
+            setModuleFilter={setModuleFilter}
+            stageFilter={stageFilter}
+            setStageFilter={setStageFilter}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            sortOrder={sortOrder}
+            setSortOrder={setSortOrder}
+          />
           {items.map((item) => (
             <TriageItemCard
               key={item.delivery_id}
