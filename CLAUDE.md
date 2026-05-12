@@ -72,6 +72,26 @@ Port assignment hidup di `config/ports.json` (lihat `CONFIG-PORTS.md`):
 
 Cek konflik: `npm run ports:check`. Cari port bebas: `npm run ports:find`.
 
+### 4.1 UFW firewall — WAJIB buka port baru
+
+Host ini pakai **UFW dengan default policy DROP**. Artinya: setiap kali menambah app/service baru ke `config/ports.json` yang perlu diakses dari LAN (browser di mesin lain, mobile, dll), port-nya **HARUS** di-allow di UFW. Kalau tidak, `ping` jalan tapi `curl` timeout dari klien LAN.
+
+Checklist tiap kali menambah port:
+
+1. Tambah entry di `config/ports.json` (via `npm run ports:*` atau edit langsung).
+2. Buka port di UFW — restrict ke subnet LAN untuk service tanpa auth:
+   ```bash
+   # Akses LAN saja (preferred untuk prototype/dev)
+   sudo ufw allow from 192.168.1.0/24 to any port <PORT> proto tcp comment '<app-name>'
+   # Atau global (hanya untuk service ber-auth / public)
+   sudo ufw allow <PORT>/tcp comment '<app-name>'
+   sudo ufw reload
+   sudo ufw status | grep <PORT>
+   ```
+3. Verifikasi dari klien LAN: `curl -v --max-time 5 http://<host-ip>:<PORT>/`.
+
+Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow saat ini termasuk: 22 (ssh), 3202 (web-althea), 3203 (api-gateway), 3218 (web-erp prototype), 3307 (mysql), 9395.
+
 ## 5. Konvensi kode
 
 **TypeScript/JS**
