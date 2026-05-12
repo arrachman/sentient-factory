@@ -339,6 +339,7 @@ function ProfileAside({
             {p.fullName ?? p.email}
           </div>
           <div className="caption" style={{ marginTop: 2 }}>
+            {specialtyText}
             {specialtyText && sinceYear ? ' · ' : ''}
             {sinceYear ? `sejak ${sinceYear}` : ''}
           </div>
@@ -346,6 +347,11 @@ function ProfileAside({
         {p.license && (
           <div className="caption" style={{ fontSize: 11.5 }}>
             SIPP {p.license}
+          </div>
+        )}
+        {p.phone && (
+          <div className="caption" style={{ fontSize: 11.5 }}>
+            WA {p.phone}
           </div>
         )}
       </div>
