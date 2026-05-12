@@ -1,99 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import type { ReactNode } from 'react';
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import {
-  BellRing,
-  CheckCircle2,
-  CircleAlert,
-  Clock3,
-  Filter,
-  Mail,
-  MessageCircleMore,
-  MessageSquareMore,
-  Plus,
-  Settings2,
-  ShieldAlert,
-  Siren,
-  TriangleAlert,
-} from 'lucide-react';
-import QRCode from 'qrcode';
-import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { useEffect, useMemo, useState } from 'react';
+import { Filter, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import { cn } from '@/lib/utils';
-import {
-  alertEvents,
-  alertRules,
-  alertSummary,
-  getAlertById,
-  notificationLogs,
-  type AlertSeverity,
-  type AlertStatus,
-  type NotificationChannel,
-} from '../_lib/mock-data';
-import {
-  moduleOptions,
-  internalUserOptions,
-  type AlertAnalyticsPayload,
-  type AlertDeadLetterTriageAuditSummary,
-  type AlertDeadLetterTriageFilterContext,
-  type AlertDeadLetterTriagePolicy,
-  type AlertDeadLetterTriageRecord,
-  type AlertDeadLetterTriageSummary,
-  type AlertDeliveryLogRecord,
-  type AlertDeliveryObservabilityPayload,
-  type AlertDeliveryStatusPayload,
-  type AlertDeliveryStatusRecord,
-  type AlertEscalationPolicyRecord,
-  type AlertEventRecord,
-  type AlertOpsPayload,
-  type AlertRuleDetailRecord,
-  type AlertRuleRecord,
-  type AlertRuntimeSettingRecord,
-  type AlertTemplateRecord,
-  type AlertTriageSavedViewRecord,
-  type BaileysPairingPayload,
-  type BusinessMetricGoal,
-  type BusinessMetricOption,
-  type InternalUserOption,
-  type MetricConditionMapping,
-  type ModuleOption,
-  type PersistedAlertChannelRecord,
-  type SavedQueryOption,
-  type SystemMetricOption,
-} from './types';
-import {
-  alertStatusFromInsightStatus,
-  formatDimensions,
-  moduleLabelFromKey,
-  normalizeTemplateChannel,
-  severityBadgeClass,
-  severityFromAnomalyLevel,
-  statusBadgeClass,
-  summaryIcon,
-} from './utils';
-import { DetailRow, SettingRow, Shell } from './_shared';
+import type { AlertSeverity, AlertStatus } from '../_lib/mock-data';
+import { moduleOptions, type AlertAnalyticsPayload, type AlertEventRecord } from './types';
+import { formatDimensions, moduleLabelFromKey, severityBadgeClass, statusBadgeClass, summaryIcon } from './utils';
+import { Shell } from './_shared';
 
 export function AlertCenterPageView() {
   const [search, setSearch] = useState('');
