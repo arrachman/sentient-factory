@@ -103,8 +103,6 @@ import {
   applyNormalizedClipboardCopy,
   clampAttachmentName,
   createManagerSessionKey,
-  detectMode,
-  detectSchemaKey,
   formatAttachmentSize,
   formatColumnLabel,
   formatCompactNumber,
@@ -122,6 +120,7 @@ import {
   normalizeCopiedText,
   upsertRunHistory,
 } from './_utils-format';
+import { detectMode, detectSchemaKey } from './_utils-detect';
 import {
   APP_TIME_ZONE,
   applyWorkflowEventToSteps,
@@ -129,13 +128,11 @@ import {
   createHistoryWorkflowEntry,
   createUserPromptEntry,
   createWorkflowStreamEntry,
-  extractAiResultFromWorkflowPayload,
   extractWorkflowDisplayText,
   formatWorkflowStreamPayload,
   getWorkflowStreamDisplayPayload,
-  parseStreamDataChart,
-  parseStreamDataTable,
 } from './_utils-workflow';
+import { extractAiResultFromWorkflowPayload, parseStreamDataChart, parseStreamDataTable } from './_utils-stream';
 import {
   buildAiResultFromHistoryPrompt,
   buildChartFromQueryResult,

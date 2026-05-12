@@ -12,12 +12,8 @@ import type {
   SelectedStreamChart,
   SelectedStreamTable,
 } from './_types';
-import {
-  APP_TIME_ZONE,
-  createHistoryWorkflowEntry,
-  parseStreamDataChart,
-  parseStreamDataTable,
-} from './_utils-workflow';
+import { APP_TIME_ZONE, createHistoryWorkflowEntry } from './_utils-workflow';
+import { parseStreamDataChart, parseStreamDataTable } from './_utils-stream';
 
 // ---------------------------------------------------------------------------
 // AI result builders from history
