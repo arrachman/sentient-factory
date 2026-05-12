@@ -2,6 +2,8 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger }
 import { PrismaService } from '../prisma/prisma.service';
 import { DashboardMysqlService } from './dashboard-mysql.service';
 import { DashboardInsightService } from './dashboard-insight.service';
+import { DashboardQueryM2Service } from './dashboard-query-m2.service';
+import { DashboardQueryM2CrService } from './dashboard-query-m2cr.service';
 import { QueryDashboardBreakdownDto } from './dto/query-dashboard-breakdown.dto';
 import { QueryDashboardRangeDto } from './dto/query-dashboard-range.dto';
 import { QueryDashboardTableDto } from './dto/query-dashboard-table.dto';
@@ -85,7 +87,11 @@ export class DashboardQueryService {
     private readonly prisma: PrismaService,
     private readonly dashboardMysqlService: DashboardMysqlService,
     private readonly dashboardInsightService: DashboardInsightService,
+    private readonly dashboardQueryM2Service: DashboardQueryM2Service,
+    private readonly dashboardQueryM2CrService: DashboardQueryM2CrService,
   ) {}
+
+  // ── Generic cross-domain queries ──────────────────────────────────────────
 
   async summary(domainInput: string, query: QueryDashboardRangeDto) {
     const domain = this.assertDomain(domainInput);
@@ -217,6 +223,8 @@ export class DashboardQueryService {
     }
   }
 
+  // ── SO preset breakdowns (general/M1) ────────────────────────────────────
+
   async breakdownStatus(query: QueryDashboardRangeDto) {
     return this.executePresetBreakdown('so', 'status', 'breakdown_status.sql', query);
   }
@@ -233,409 +241,91 @@ export class DashboardQueryService {
     return this.executePresetBreakdown('so', 'customer', 'breakdown_customer.sql', query);
   }
 
-  async breakdownM2Status(query: QueryDashboardRangeDto) {
-    return this.executePresetBreakdown('m2', 'status', 'breakdown_status.sql', query);
-  }
-
-  async breakdownM2Cashflow(query: QueryDashboardRangeDto) {
-    return this.executePresetBreakdown('m2', 'cashflow', 'breakdown_cashflow.sql', query);
-  }
-
-  async breakdownM2Branch(query: QueryDashboardRangeDto) {
-    return this.executePresetBreakdown('m2', 'branch', 'breakdown_branch.sql', query);
-  }
+  // ── M2/SM delegations ─────────────────────────────────────────────────────
 
   async topContactsM2Sm(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        COALESCE(CAST(j.tkontak AS CHAR), '0') AS kontak_key,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(j.tkredit, 0)), 0) AS total_payment,
-        COALESCE(SUM(ABS(COALESCE(j.tdebit, 0) - COALESCE(j.tkredit, 0))), 0) AS movement_amount
-      FROM m2_transaction_journal j
-      WHERE DATE(j.ttgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-        AND j.tsumber = 'SM'
-      GROUP BY kontak_key
-      ORDER BY total_payment DESC, total_trx DESC
-      LIMIT 10;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_sm_top_contacts', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2Service.topContactsM2Sm(normalizedRange);
   }
 
   async contactDrilldownM2Sm(query: QueryDashboardRangeDto & { kontakId?: string }) {
     const normalizedRange = this.normalizeRange(query);
-    const kontakId = Number(query.kontakId);
-    if (!Number.isFinite(kontakId) || kontakId <= 0) {
-      throw new BadRequestException('kontakId harus berupa angka positif.');
-    }
-
-    const sql = `
-      SELECT
-        j.tid,
-        DATE(j.ttgl) AS trx_date,
-        j.tcabang AS cabang,
-        j.tsumber AS sumber,
-        j.tnotransaksi AS no_transaksi,
-        j.tkontak AS kontak_id,
-        j.tmatauang AS mata_uang,
-        COALESCE(j.tdebit, 0) AS debit,
-        COALESCE(j.tkredit, 0) AS kredit,
-        (COALESCE(j.tdebit, 0) - COALESCE(j.tkredit, 0)) AS net_amount,
-        j.tstatus,
-        j.tstatuslunas,
-        j.turaian
-      FROM m2_transaction_journal j
-      WHERE DATE(j.ttgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-        AND j.tsumber = 'SM'
-        AND j.tkontak = ${Math.trunc(kontakId)}
-      ORDER BY COALESCE(j.tkredit, 0) DESC, j.ttgl DESC
-      LIMIT 20;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_sm_contact_drilldown', query: { ...normalizedRange, kontakId }, rows },
-    };
+    const kontakId = this.dashboardQueryM2Service.validateKontakId(query.kontakId);
+    return this.dashboardQueryM2Service.contactDrilldownM2Sm(normalizedRange, kontakId);
   }
+
+  async breakdownM2Status(query: QueryDashboardRangeDto) {
+    const normalizedRange = this.normalizeRange(query);
+    const sourceCode = this.resolveM2SourceCode('m2', query.feature);
+    return this.dashboardQueryM2Service.breakdownM2Status(normalizedRange, sourceCode);
+  }
+
+  async breakdownM2Cashflow(query: QueryDashboardRangeDto) {
+    const normalizedRange = this.normalizeRange(query);
+    const sourceCode = this.resolveM2SourceCode('m2', query.feature);
+    return this.dashboardQueryM2Service.breakdownM2Cashflow(normalizedRange, sourceCode);
+  }
+
+  async breakdownM2Branch(query: QueryDashboardRangeDto) {
+    const normalizedRange = this.normalizeRange(query);
+    const sourceCode = this.resolveM2SourceCode('m2', query.feature);
+    return this.dashboardQueryM2Service.breakdownM2Branch(normalizedRange, sourceCode);
+  }
+
+  // ── M2Cr delegations ──────────────────────────────────────────────────────
 
   async summaryM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0)), 0) AS total_kas_masuk,
-        COALESCE(SUM(COALESCE(crjumlahbayar, 0)), 0) AS total_terbayar,
-        COALESCE(SUM(COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0)), 0) AS outstanding,
-        COUNT(DISTINCT COALESCE(NULLIF(TRIM(crcabang), ''), 'UNKNOWN')) AS total_cabang,
-        COUNT(DISTINCT COALESCE(NULLIF(TRIM(crsumber), ''), 'UNKNOWN')) AS total_sumber,
-        COUNT(DISTINCT crkontak) AS total_kontak
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}';
-    `;
-
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_summary', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.summaryM2Cr(normalizedRange);
   }
 
   async trendsM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        DATE_FORMAT(crtgl, '%Y-%m') AS period_ym,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0)), 0) AS total_kas_masuk,
-        COALESCE(SUM(COALESCE(crjumlahbayar, 0)), 0) AS total_terbayar,
-        COALESCE(SUM(COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0)), 0) AS outstanding
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      GROUP BY DATE_FORMAT(crtgl, '%Y-%m')
-      ORDER BY period_ym ASC;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_trends', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.trendsM2Cr(normalizedRange);
   }
 
   async breakdownSourceM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        COALESCE(NULLIF(TRIM(crsumber), ''), 'UNKNOWN') AS source_key,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0)), 0) AS total_kas_masuk
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      GROUP BY source_key
-      ORDER BY total_kas_masuk DESC, total_trx DESC;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_breakdown_source', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.breakdownSourceM2Cr(normalizedRange);
   }
 
   async breakdownStatusBayarM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        CAST(crstatusbayar AS CHAR) AS status_bayar_key,
-        CASE crstatusbayar
-          WHEN 0 THEN 'unpaid'
-          WHEN 1 THEN 'paid'
-          ELSE CONCAT('unknown_', COALESCE(CAST(crstatusbayar AS CHAR), 'null'))
-        END AS status_bayar_label,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0)), 0) AS total_kas_masuk,
-        COALESCE(SUM(COALESCE(crjumlahbayar, 0)), 0) AS total_terbayar
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      GROUP BY status_bayar_key, status_bayar_label
-      ORDER BY total_trx DESC;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_breakdown_status_bayar', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.breakdownStatusBayarM2Cr(normalizedRange);
   }
 
   async topContactsM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        COALESCE(CAST(crkontak AS CHAR), '0') AS kontak_key,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0)), 0) AS total_kas_masuk
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      GROUP BY kontak_key
-      ORDER BY total_kas_masuk DESC, total_trx DESC
-      LIMIT 10;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_top_contacts', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.topContactsM2Cr(normalizedRange);
   }
 
   async topOutstandingContactsM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        COALESCE(CAST(crkontak AS CHAR), '0') AS kontak_key,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0)), 0) AS total_outstanding
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      GROUP BY kontak_key
-      HAVING total_outstanding > 0
-      ORDER BY total_outstanding DESC, total_trx DESC
-      LIMIT 10;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_top_outstanding_contacts', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.topOutstandingContactsM2Cr(normalizedRange);
   }
 
   async topBranchesM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const sql = `
-      SELECT
-        COALESCE(NULLIF(TRIM(crcabang), ''), 'UNKNOWN') AS cabang,
-        COUNT(*) AS total_trx,
-        COALESCE(SUM(COALESCE(crjumlah, 0)), 0) AS total_kas_masuk,
-        COALESCE(SUM(COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0)), 0) AS total_outstanding
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      GROUP BY cabang
-      ORDER BY total_kas_masuk DESC, total_trx DESC
-      LIMIT 10;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_top_branches', query: normalizedRange, rows },
-    };
+    return this.dashboardQueryM2CrService.topBranchesM2Cr(normalizedRange);
   }
 
   async contactDrilldownM2Cr(query: QueryDashboardRangeDto & { kontakId?: string }) {
     const normalizedRange = this.normalizeRange(query);
-    const kontakId = Number(query.kontakId);
-    if (!Number.isFinite(kontakId) || kontakId <= 0) {
-      throw new BadRequestException('kontakId harus berupa angka positif.');
-    }
-
-    const sql = `
-      SELECT
-        crid,
-        DATE(crtgl) AS trx_date,
-        crcabang AS cabang,
-        crsumber AS sumber,
-        crnotransaksi AS no_transaksi,
-        crkontak AS kontak_id,
-        crnorek AS no_rek,
-        crmatauang AS mata_uang,
-        COALESCE(crjumlah, 0) AS jumlah,
-        COALESCE(crjumlahbayar, 0) AS jumlah_bayar,
-        (COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0)) AS outstanding,
-        crstatus,
-        crstatusbayar
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-        AND crkontak = ${Math.trunc(kontakId)}
-      ORDER BY outstanding DESC, crtgl DESC
-      LIMIT 20;
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: { type: 'm2_cr_contact_drilldown', query: { ...normalizedRange, kontakId }, rows },
-    };
+    const kontakId = this.dashboardQueryM2CrService.validateKontakId(query.kontakId);
+    return this.dashboardQueryM2CrService.contactDrilldownM2Cr(normalizedRange, kontakId);
   }
 
   async tableM2Cr(query: QueryDashboardTableDto) {
     const normalizedRange = this.normalizeRange(query);
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 20;
-    const offset = (page - 1) * pageSize;
-    const sortOrder = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
-    const allowedSortColumns = new Set([
-      'crtgl',
-      'crid',
-      'crjumlah',
-      'crjumlahbayar',
-      'outstanding',
-      'crstatus',
-      'crstatusbayar',
-    ]);
-    const sortBy =
-      query.sortBy && allowedSortColumns.has(query.sortBy) ? query.sortBy : 'outstanding';
-    const orderByExpression =
-      sortBy === 'outstanding' ? '(COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0))' : sortBy;
-
-    const sql = `
-      SELECT
-        crid,
-        DATE(crtgl) AS trx_date,
-        crcabang AS cabang,
-        crsumber AS sumber,
-        crnotransaksi AS no_transaksi,
-        crkontak AS kontak_id,
-        crnorek AS no_rek,
-        crmatauang AS mata_uang,
-        COALESCE(crjumlah, 0) AS jumlah,
-        COALESCE(crjumlahbayar, 0) AS jumlah_bayar,
-        (COALESCE(crjumlah, 0) - COALESCE(crjumlahbayar, 0)) AS outstanding,
-        crstatus,
-        crstatusbayar
-      FROM m2_cr
-      WHERE DATE(crtgl) BETWEEN '${normalizedRange.fromDate}' AND '${normalizedRange.toDate}'
-      ORDER BY ${orderByExpression} ${sortOrder}
-      LIMIT ${pageSize} OFFSET ${offset};
-    `;
-    const rows = await this.dashboardMysqlService.executeRawQuery(sql);
-    return {
-      success: true,
-      data: {
-        type: 'm2_cr_table',
-        query: {
-          ...normalizedRange,
-          page,
-          pageSize,
-          offset,
-          sortBy,
-          sortOrder: sortOrder.toLowerCase(),
-        },
-        rows,
-      },
-    };
+    return this.dashboardQueryM2CrService.tableM2Cr(query, normalizedRange);
   }
 
   async insightM2Cr(query: QueryDashboardRangeDto) {
     const normalizedRange = this.normalizeRange(query);
-    const [summaryRows, trendRows, statusRows, topRows] = await Promise.all([
-      this.summaryM2Cr(query),
-      this.trendsM2Cr(query),
-      this.breakdownStatusBayarM2Cr(query),
-      this.topContactsM2Cr(query),
-    ]);
-
-    const summary = (summaryRows.data.rows[0] ?? {}) as Record<string, unknown>;
-    const trends = trendRows.data.rows as Array<Record<string, unknown>>;
-    const statuses = statusRows.data.rows as Array<Record<string, unknown>>;
-    const tops = topRows.data.rows as Array<Record<string, unknown>>;
-
-    const totalKasMasuk = toNumber(summary.total_kas_masuk);
-    const totalTerbayar = toNumber(summary.total_terbayar);
-    const outstanding = toNumber(summary.outstanding);
-    const totalTrx = toNumber(summary.total_trx);
-    const outstandingPct = totalKasMasuk > 0 ? (outstanding / totalKasMasuk) * 100 : 0;
-
-    const sortedTrend = [...trends].sort((a, b) =>
-      String(a.period_ym ?? '').localeCompare(String(b.period_ym ?? '')),
-    );
-    const latest = sortedTrend[sortedTrend.length - 1];
-    const prev = sortedTrend[sortedTrend.length - 2];
-    const latestKasMasuk = toNumber(latest?.total_kas_masuk);
-    const prevKasMasuk = toNumber(prev?.total_kas_masuk);
-    const deltaPct = prevKasMasuk > 0 ? ((latestKasMasuk - prevKasMasuk) / prevKasMasuk) * 100 : 0;
-
-    const topContact = tops[0];
-    const topContactKey = String(topContact?.kontak_key ?? 'N/A');
-    const topContactValue = toNumber(topContact?.total_kas_masuk);
-
-    const paidStatus = statuses.find((row) => String(row.status_bayar_label) === 'paid');
-    const unpaidStatus = statuses.find((row) => String(row.status_bayar_label) === 'unpaid');
-    const paidPct = totalTrx > 0 ? (toNumber(paidStatus?.total_trx) / totalTrx) * 100 : 0;
-
-    const insights = [
-      {
-        text: `Periode ${normalizedRange.fromDate} s/d ${normalizedRange.toDate} mencatat ${formatNumber(totalTrx)} transaksi kas masuk.`,
-        confidence: 0.99,
-      },
-      {
-        text: `Total kas masuk ${formatMoneyCompact(totalKasMasuk)} dengan total terbayar ${formatMoneyCompact(totalTerbayar)}.`,
-        confidence: 0.95,
-      },
-      {
-        text: `Outstanding saat ini ${formatMoneyCompact(outstanding)} (${formatPercent(outstandingPct)} dari total kas masuk).`,
-        confidence: 0.9,
-      },
-      {
-        text: `Periode terbaru menunjukkan ${deltaPct >= 0 ? 'kenaikan' : 'penurunan'} kas masuk ${formatPercent(Math.abs(deltaPct))} dibanding periode sebelumnya.`,
-        confidence: prev ? 0.86 : 0.68,
-      },
-      {
-        text: `Kontak dengan kontribusi terbesar: ${topContactKey} (${formatMoneyCompact(topContactValue)}).`,
-        confidence: topContact ? 0.82 : 0.55,
-      },
-    ];
-
-    const anomalies: string[] = [];
-    if (outstandingPct > 30) {
-      anomalies.push(`Outstanding melebihi ambang 30% (${formatPercent(outstandingPct)}).`);
-    }
-    if (prev && Math.abs(deltaPct) > 40) {
-      anomalies.push(
-        `Perubahan kas masuk periode terbaru cukup ekstrem (${formatPercent(Math.abs(deltaPct))}).`,
-      );
-    }
-    if (!unpaidStatus && totalTrx > 0 && paidPct < 100) {
-      anomalies.push('Status bayar tidak konsisten terhadap total transaksi.');
-    }
-
-    const recommendations = [
-      'Prioritaskan follow-up kontak dengan nominal outstanding terbesar.',
-      'Validasi transaksi bernilai tinggi pada periode dengan perubahan ekstrem.',
-      'Pantau rasio paid vs unpaid mingguan untuk menjaga kualitas cash conversion.',
-    ];
-
-    return {
-      success: true,
-      data: {
-        type: 'm2_cr_insight',
-        query: normalizedRange,
-        model: { provider: 'rule-based', version: 'm2-cr-insight-v1' },
-        insights,
-        anomalies,
-        recommendations,
-      },
-    };
+    return this.dashboardQueryM2CrService.insightM2Cr(normalizedRange);
   }
+
+  // ── Insight delegations ───────────────────────────────────────────────────
 
   async insightM2(query: QueryDashboardRangeDto & { feature?: string }, actorId?: string | number) {
     return this.dashboardInsightService.insightM2(query, actorId);
@@ -654,6 +344,8 @@ export class DashboardQueryService {
   ) {
     return this.dashboardInsightService.insightHistoryM2(query, actorId);
   }
+
+  // ── Domain / health / metadata ────────────────────────────────────────────
 
   listDomains() {
     return {
@@ -901,6 +593,8 @@ export class DashboardQueryService {
       },
     };
   }
+
+  // ── Private helpers ───────────────────────────────────────────────────────
 
   private assertDomain(domain: string): SupportedDomain {
     if ((this.supportedDomains as readonly string[]).includes(domain)) {
