@@ -273,3 +273,4 @@ temp/
 **/node_modules.root_owned_backup_*/
 **/*_locked_[0-9]*/
 **/*.bak.[0-9]*
+apps/open-design/
