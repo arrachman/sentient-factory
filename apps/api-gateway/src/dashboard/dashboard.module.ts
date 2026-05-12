@@ -3,6 +3,8 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { AlertingConfigService } from './alerting-config.service';
 import { AlertingDeliveryService } from './alerting-delivery.service';
 import { AlertingEscalationService } from './alerting-escalation.service';
+import { AlertingInsightQueryService } from './alerting-insight-query.service';
+import { AlertingMetricService } from './alerting-metric.service';
 import { AlertingObservabilityService } from './alerting-observability.service';
 import { AlertingProviderSessionService } from './alerting-provider-session.service';
 import { AlertingRuleService } from './alerting-rule.service';
@@ -27,6 +29,8 @@ import { SemanticSchemaService } from './semantic-schema.service';
     DashboardInsightService,
     DashboardMysqlService,
     SemanticSchemaService,
+    AlertingMetricService,
+    AlertingInsightQueryService,
     AlertingRuleService,
     AlertingTemplateService,
     AlertingEscalationService,
@@ -40,6 +44,8 @@ import { SemanticSchemaService } from './semantic-schema.service';
   exports: [
     DashboardService,
     SemanticSchemaService,
+    AlertingMetricService,
+    AlertingInsightQueryService,
     AlertingRuleService,
     AlertingTemplateService,
     AlertingEscalationService,

@@ -1,164 +1,46 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { escapeSqlLiteral, asJson } from './dashboard.utils';
+import { AlertingMetricService } from './alerting-metric.service';
+import { AlertingInsightQueryService } from './alerting-insight-query.service';
 
 @Injectable()
 export class AlertingRuleService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly alertingMetricService: AlertingMetricService,
+    private readonly alertingInsightQueryService: AlertingInsightQueryService,
+  ) {}
+
+  // ── Metrics delegation ───────────────────────────────────────────────────────
 
   async alertingBusinessMetrics(moduleKey?: string) {
-    const where = ['deleted_at IS NULL', 'is_active = true'];
-    if (moduleKey && moduleKey !== 'all') {
-      where.push(`module_key = '${escapeSqlLiteral(moduleKey)}'`);
-    }
-
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT
-        metric_id, metric_key, label, short_label, module_key, description,
-        business_definition, unit, value_type, comparison_type, source_type,
-        source_ref, semantic_ref, system_metric_ref, supported_dimensions,
-        default_filters, tags, owner_name, review_status
-      FROM public.metric_business_registry
-      WHERE ${where.join(' AND ')}
-      ORDER BY module_key, sort_order, label
-    `);
-
-    return { success: true, data: rows.map((row) => this.mapAlertingBusinessMetricRow(row)) };
+    return this.alertingMetricService.alertingBusinessMetrics(moduleKey);
   }
 
   async alertingSystemMetrics(moduleKey?: string) {
-    const where = ['deleted_at IS NULL', 'is_active = true'];
-    if (moduleKey && moduleKey !== 'all') {
-      where.push(`module_key = '${escapeSqlLiteral(moduleKey)}'`);
-    }
-
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT
-        system_metric_id, metric_key, label, module_key, description, source_table,
-        source_type, resolver_key, aggregation_type, value_type, supported_dimensions,
-        supported_filters, default_filters, tags, owner_name, review_status
-      FROM public.metric_system_registry
-      WHERE ${where.join(' AND ')}
-      ORDER BY module_key, sort_order, label
-    `);
-
-    return { success: true, data: rows.map((row) => this.mapAlertingSystemMetricRow(row)) };
+    return this.alertingMetricService.alertingSystemMetrics(moduleKey);
   }
 
   async alertingMetricBuilderContext(moduleKey?: string, metricKey?: string) {
-    const where = ['is_active = true'];
-    if (moduleKey && moduleKey !== 'all') {
-      where.push(`module_key = '${escapeSqlLiteral(moduleKey)}'`);
-    }
-    if (metricKey) {
-      where.push(`metric_key = '${escapeSqlLiteral(metricKey)}'`);
-    }
-
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT
-        metric_id, metric_key, label, short_label, module_key, description,
-        business_definition, unit, value_type, comparison_type, semantic_ref,
-        canonical_semantic_key, semantic_label, semantic_entity_key, semantic_measure_key,
-        semantic_definition, semantic_calculation_summary, system_metric_ref,
-        system_metric_label, system_source_table, system_aggregation_type, source_type,
-        source_ref, supported_dimensions, default_filters, tags, owner_name, review_status,
-        goal_count, goals, condition_mapping_count, condition_mappings
-      FROM public.v_metric_alert_builder_context
-      WHERE ${where.join(' AND ')}
-      ORDER BY module_key, sort_order, label
-    `);
-
-    return { success: true, data: rows.map((row) => this.mapAlertingMetricBuilderContextRow(row)) };
+    return this.alertingMetricService.alertingMetricBuilderContext(moduleKey, metricKey);
   }
 
+  // ── Insights & saved queries delegation ──────────────────────────────────────
+
   async alertingInsights(moduleKey?: string, snapshotId?: string) {
-    const where = ['s.deleted_at IS NULL'];
-    if (moduleKey && moduleKey !== 'all') {
-      where.push(`b.module_key = '${escapeSqlLiteral(moduleKey)}'`);
-    }
-    if (snapshotId) {
-      where.push(`s.snapshot_id = ${Number(snapshotId) || 0}`);
-    }
-
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT
-        s.snapshot_id, b.metric_key, b.label AS metric_label, b.module_key,
-        s.snapshot_at, s.insight_text, s.recommendation_preview, s.anomaly_level,
-        s.status, s.is_alert_candidate, s.current_value, s.comparison_value,
-        s.change_pct, s.trend_label, s.source_ref, s.dimensions, s.evidence_payload
-      FROM public.metric_insight_snapshot s
-      JOIN public.metric_business_registry b ON b.metric_id = s.metric_id
-      WHERE ${where.join(' AND ')}
-      ORDER BY s.snapshot_at DESC, s.snapshot_id DESC
-    `);
-
-    return { success: true, data: rows.map((row) => this.mapAlertingInsightRow(row)) };
+    return this.alertingInsightQueryService.alertingInsights(moduleKey, snapshotId);
   }
 
   async alertingSavedQueries(channel?: string, limit?: string) {
-    const normalizedChannel = (channel || 'manager_dashboard').trim() || 'manager_dashboard';
-    const normalizedLimit = Math.max(Number(limit || '10') || 10, 1);
-    const requestId = crypto.randomUUID();
-    const sessions =
-      (await this.fetchAlertingSavedQueryJson<Array<Record<string, unknown>>>(
-        `${this.getAiBaseUrl()}/api/chat/history/sessions?channel=${encodeURIComponent(normalizedChannel)}&limit=${Math.max(normalizedLimit * 3, 30)}`,
-        requestId,
-      )) || [];
-
-    const savedQueries: Array<Record<string, unknown>> = [];
-    for (const session of sessions) {
-      const sessionId = String(session.id || '').trim();
-      if (!sessionId) {
-        continue;
-      }
-
-      const prompts =
-        (await this.fetchAlertingSavedQueryJson<Array<Record<string, unknown>>>(
-          `${this.getAiBaseUrl()}/api/chat/history/sessions/${sessionId}/prompts`,
-          requestId,
-        )) || [];
-
-      let matchedDetail: Record<string, unknown> | null = null;
-      for (const prompt of [...prompts].reverse()) {
-        const promptId = String(prompt.id || '').trim();
-        if (!promptId) {
-          continue;
-        }
-
-        const detail = await this.fetchAlertingSavedQueryJson<Record<string, unknown>>(
-          `${this.getAiBaseUrl()}/api/chat/history/prompts/${promptId}`,
-          requestId,
-        );
-
-        if (typeof detail?.query_sql === 'string' && detail.query_sql.trim()) {
-          matchedDetail = detail;
-          break;
-        }
-      }
-
-      if (!matchedDetail) {
-        continue;
-      }
-
-      savedQueries.push({
-        session_id: sessionId,
-        prompt_id: String(matchedDetail.id || ''),
-        title: String(session.title || matchedDetail.prompt || 'Untitled query').trim(),
-        prompt: String(matchedDetail.prompt || '').trim(),
-        query_sql: String(matchedDetail.query_sql || ''),
-        channel: session.channel || null,
-        mode: session.mode || null,
-        last_prompt_at: session.last_prompt_at || null,
-        created_at: matchedDetail.created_at || null,
-      });
-
-      if (savedQueries.length >= normalizedLimit) {
-        break;
-      }
-    }
-
-    return { success: true, data: savedQueries };
+    return this.alertingInsightQueryService.alertingSavedQueries(channel, limit);
   }
+
+  async alertingEvents(moduleKey?: string, eventId?: string) {
+    return this.alertingInsightQueryService.alertingEvents(moduleKey, eventId);
+  }
+
+  // ── Rule CRUD ────────────────────────────────────────────────────────────────
 
   async alertingRules(moduleKey?: string) {
     const where = ['r.deleted_at IS NULL'];
@@ -618,151 +500,7 @@ export class AlertingRuleService {
     };
   }
 
-  async alertingEvents(moduleKey?: string, eventId?: string) {
-    const where = ['e.deleted_at IS NULL'];
-    if (moduleKey && moduleKey !== 'all') {
-      where.push(`r.module_key = '${escapeSqlLiteral(moduleKey)}'`);
-    }
-    if (eventId) {
-      where.push(`e.event_id = ${Number(eventId) || 0}`);
-    }
-
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT
-        e.event_id, e.event_key, e.rule_id, r.rule_name, r.module_key,
-        COALESCE(b.label, '') AS metric_label, e.title,
-        COALESCE(e.description, '') AS description,
-        e.severity, e.status, e.source_ref, e.event_payload, e.detected_at,
-        e.acknowledged_at, e.resolved_at,
-        COALESCE(
-          jsonb_agg(
-            DISTINCT jsonb_build_object(
-              'channel_type', d.channel_type, 'target_value', d.target_value,
-              'delivery_status', d.delivery_status
-            )
-          ) FILTER (WHERE d.delivery_id IS NOT NULL),
-          '[]'::jsonb
-        ) AS deliveries
-      FROM public.alert_event e
-      JOIN public.alert_rule r ON r.rule_id = e.rule_id
-      LEFT JOIN public.metric_business_registry b ON b.metric_id = e.metric_id
-      LEFT JOIN public.alert_delivery_log d ON d.event_id = e.event_id
-      WHERE ${where.join(' AND ')}
-      GROUP BY
-        e.event_id, e.event_key, e.rule_id, r.rule_name, r.module_key, b.label,
-        e.title, e.description, e.severity, e.status, e.source_ref, e.event_payload,
-        e.detected_at, e.acknowledged_at, e.resolved_at
-      ORDER BY e.detected_at DESC, e.event_id DESC
-    `);
-
-    return { success: true, data: rows.map((row) => this.mapAlertEventRow(row)) };
-  }
-
-  // ── Private helpers ──────────────────────────────────────────────────────────
-
-  private mapAlertingBusinessMetricRow(row: Record<string, unknown>) {
-    return {
-      metric_id: Number(row.metric_id || 0),
-      metric_key: row.metric_key,
-      label: row.label,
-      short_label: row.short_label,
-      module_key: row.module_key,
-      description: row.description,
-      business_definition: row.business_definition,
-      unit: row.unit,
-      value_type: row.value_type,
-      comparison_type: row.comparison_type,
-      source_type: row.source_type,
-      source_ref: row.source_ref,
-      semantic_ref: row.semantic_ref,
-      system_metric_ref: row.system_metric_ref,
-      supported_dimensions: asJson(row.supported_dimensions, []),
-      default_filters: asJson(row.default_filters, {}),
-      tags: asJson(row.tags, []),
-      owner_name: row.owner_name,
-      review_status: row.review_status,
-    };
-  }
-
-  private mapAlertingSystemMetricRow(row: Record<string, unknown>) {
-    return {
-      system_metric_id: Number(row.system_metric_id || 0),
-      metric_key: row.metric_key,
-      label: row.label,
-      module_key: row.module_key,
-      description: row.description,
-      source_table: row.source_table,
-      source_type: row.source_type,
-      resolver_key: row.resolver_key,
-      aggregation_type: row.aggregation_type,
-      value_type: row.value_type,
-      supported_dimensions: asJson(row.supported_dimensions, []),
-      supported_filters: asJson(row.supported_filters, []),
-      default_filters: asJson(row.default_filters, {}),
-      tags: asJson(row.tags, []),
-      owner_name: row.owner_name,
-      review_status: row.review_status,
-    };
-  }
-
-  private mapAlertingMetricBuilderContextRow(row: Record<string, unknown>) {
-    return {
-      metric_id: Number(row.metric_id || 0),
-      metric_key: row.metric_key,
-      label: row.label,
-      short_label: row.short_label,
-      module_key: row.module_key,
-      description: row.description,
-      business_definition: row.business_definition,
-      unit: row.unit,
-      value_type: row.value_type,
-      comparison_type: row.comparison_type,
-      semantic_ref: row.semantic_ref,
-      canonical_semantic_key: row.canonical_semantic_key,
-      semantic_label: row.semantic_label,
-      semantic_entity_key: row.semantic_entity_key,
-      semantic_measure_key: row.semantic_measure_key,
-      semantic_definition: row.semantic_definition,
-      semantic_calculation_summary: row.semantic_calculation_summary,
-      system_metric_ref: row.system_metric_ref,
-      system_metric_label: row.system_metric_label,
-      system_source_table: row.system_source_table,
-      system_aggregation_type: row.system_aggregation_type,
-      source_type: row.source_type,
-      source_ref: row.source_ref,
-      supported_dimensions: asJson(row.supported_dimensions, []),
-      default_filters: asJson(row.default_filters, {}),
-      tags: asJson(row.tags, []),
-      owner_name: row.owner_name,
-      review_status: row.review_status,
-      goal_count: Number(row.goal_count || 0),
-      goals: asJson(row.goals, []),
-      condition_mapping_count: Number(row.condition_mapping_count || 0),
-      condition_mappings: asJson(row.condition_mappings, []),
-    };
-  }
-
-  private mapAlertingInsightRow(row: Record<string, unknown>) {
-    return {
-      snapshot_id: Number(row.snapshot_id || 0),
-      metric_key: row.metric_key,
-      metric_label: row.metric_label,
-      module_key: row.module_key,
-      snapshot_at: row.snapshot_at,
-      insight_text: row.insight_text,
-      recommendation_preview: row.recommendation_preview,
-      anomaly_level: row.anomaly_level,
-      status: row.status,
-      is_alert_candidate: Boolean(row.is_alert_candidate),
-      current_value: row.current_value,
-      comparison_value: row.comparison_value,
-      change_pct: row.change_pct,
-      trend_label: row.trend_label,
-      source_ref: row.source_ref,
-      dimensions: asJson(row.dimensions, {}),
-      evidence_payload: asJson(row.evidence_payload, {}),
-    };
-  }
+  // ── Shared helpers (used by other services) ──────────────────────────────────
 
   mapAlertRuleRow(row: Record<string, unknown>) {
     return {
@@ -815,27 +553,6 @@ export class AlertingRuleService {
       recent_events: asJson(row.recent_events, []),
       run_history: asJson(row.run_history, []),
       recipients: asJson(row.recipients, []),
-    };
-  }
-
-  mapAlertEventRow(row: Record<string, unknown>) {
-    return {
-      event_id: Number(row.event_id || 0),
-      event_key: row.event_key,
-      rule_id: Number(row.rule_id || 0),
-      rule_name: row.rule_name,
-      module_key: row.module_key,
-      metric_label: row.metric_label || null,
-      title: row.title,
-      description: row.description,
-      severity: row.severity,
-      status: row.status,
-      source_ref: row.source_ref || null,
-      event_payload: asJson(row.event_payload, {}),
-      detected_at: row.detected_at,
-      acknowledged_at: row.acknowledged_at,
-      resolved_at: row.resolved_at,
-      deliveries: asJson(row.deliveries, []),
     };
   }
 
@@ -909,36 +626,5 @@ export class AlertingRuleService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .slice(0, 48);
-  }
-
-  private getAiBaseUrl(): string {
-    const candidates = [
-      process.env.AI_ENGINE_URL,
-      process.env.AI_ENGINE_BASE_URL,
-      'http://ai-engine:8001',
-    ];
-    const configuredUrl = candidates.find(
-      (value) => typeof value === 'string' && value.trim().length > 0,
-    );
-    return configuredUrl?.trim().replace(/\/$/, '') || 'http://ai-engine:8001';
-  }
-
-  private async fetchAlertingSavedQueryJson<T>(input: string, requestId: string) {
-    const response = await fetch(input, {
-      method: 'GET',
-      headers: { 'x-request-id': requestId },
-      cache: 'no-store',
-    });
-    const payload = (await response.json().catch(() => null)) as {
-      success?: boolean;
-      data?: T;
-      message?: string;
-    } | null;
-
-    if (!response.ok || !payload?.success) {
-      throw new InternalServerErrorException(payload?.message || 'Failed to fetch saved queries.');
-    }
-
-    return payload.data;
   }
 }
