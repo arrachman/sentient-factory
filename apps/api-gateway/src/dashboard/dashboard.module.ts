@@ -18,6 +18,9 @@ import { AlertingTemplateService } from './alerting-template.service';
 import { AlertingTriageEscalationResolverService } from './alerting-triage-escalation-resolver.service';
 import { AlertingTriageEscalationService } from './alerting-triage-escalation.service';
 import { AlertingTriageService } from './alerting-triage.service';
+import { AlertingTriageUpdateService } from './alerting-triage-update.service';
+import { AlertingTriageViewService } from './alerting-triage-view.service';
+import { AlertingConfigController } from './alerting-config.controller';
 import { AlertingDeliveryController } from './alerting-delivery.controller';
 import { AlertingOpsController } from './alerting-ops.controller';
 import { AlertingRulesController } from './alerting-rules.controller';
@@ -37,6 +40,7 @@ import { SemanticSchemaService } from './semantic-schema.service';
   controllers: [
     DashboardController,
     AlertingRulesController,
+    AlertingConfigController,
     AlertingDeliveryController,
     AlertingOpsController,
   ],
@@ -63,11 +67,13 @@ import { SemanticSchemaService } from './semantic-schema.service';
     AlertingDeliveryDispatchService,
     AlertingDeliveryService,
     AlertingProviderSessionService,
+    AlertingTriageUpdateService,
     AlertingTriageService,
     AlertingObservabilityService,
     AlertingTriageEscalationResolverService,
     AlertingTriageEscalationService,
     AlertingSchedulerService,
+    AlertingTriageViewService,
   ],
   exports: [
     DashboardService,
