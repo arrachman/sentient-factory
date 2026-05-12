@@ -1,5 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { toAuditUserId } from '../common/utils/audit-user.util';
+import { CreateOutboundDetailDto } from './dto/create-outbound-detail.dto';
+
+export type NormalizedOutboundDetail = Omit<CreateOutboundDetailDto, 'itemId' | 'batchNumber'> & {
+  itemId: number;
+  batchNumber: string;
+};
 
 export function normalizeRequiredDoNumber(value?: string): string {
   const doNumber = String(value ?? '').trim();
