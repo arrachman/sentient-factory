@@ -21,8 +21,9 @@ Manajer paket: **npm workspaces + Turborepo** (ada `pnpm-workspace.yaml` legacy 
 2. **JANGAN** ubah `config/ports.json` tanpa diminta — itu single source of truth port. Pakai `npm run ports:*` untuk inspeksi/perubahan.
 3. **JANGAN** hapus/rename file di `packages/shared-types` tanpa update konsumen TS & Python (Pydantic) sekaligus — paket ini SSOT lintas-bahasa.
 4. **JANGAN** jalankan migrasi DB destruktif (`drop`, `truncate`) tanpa konfirmasi user.
-5. **JANGAN** pakai `--no-verify`, `git push --force` ke `main`, atau amend commit yang sudah dipush.
-6. Commit ber-prefix conventional: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`. Lihat `git log --oneline` untuk gaya.
+5. **JANGAN** pakai `--no-verify`, atau amend commit yang sudah dipush. **JANGAN** suggest `git push --force` ke branch manapun kecuali user minta secara eksplisit — jika perlu sinkronisasi, prefer rebase atau fast-forward.
+6. **Setelah ubah Prisma schema atau generate client** → WAJIB jalankan `prisma migrate deploy` (atau `prisma migrate dev`) sebelum declare task selesai. Jangan anggap schema change cukup tanpa migrasi.
+7. Commit ber-prefix conventional: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`. Lihat `git log --oneline` untuk gaya.
 
 ## 3. Perintah yang sering dipakai
 
@@ -94,6 +95,9 @@ Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow
 
 ## 5. Konvensi kode
 
+**Ukuran file**
+- **Maks 400 baris per file**. Saat audit atau refactor, flag semua file > 400 baris dan split ke modul lebih kecil. Jalankan `npm run typecheck` setelah setiap refactor. Untuk refactor besar, spawn sub-agent terpisah per file agar context utama tidak meledak.
+
 **TypeScript/JS**
 - Strict mode TS. Named exports > default exports.
 - Async/await; hindari callback. Functional style untuk transform data.
@@ -133,6 +137,7 @@ Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow
 - Edit `apps/myerpplus-db-mapping` tanpa render ulang Vault env (`vault:render:myerp`) → koneksi MySQL gagal.
 - Update `packages/shared-types` di TS saja → runtime ai-engine error karena Pydantic tertinggal.
 - Connector Debezium di-apply tanpa `cdc:connector:render` ulang → kredensial expired.
+- **Worktree ≠ live dev server**: edit di feature worktree tidak langsung terlihat di browser sampai di-cherry-pick/merge ke branch yang ditonton server. Sebelum fix UI, konfirmasi dulu branch mana yang sedang dijalankan dev server, lalu tawarkan cherry-pick jika fix perlu langsung tampil.
 
 ## 9. Jangan disentuh tanpa diminta
 
@@ -144,3 +149,31 @@ Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow
 ## 10. Saat ragu
 
 Tanya user. Lebih baik konfirmasi 10 detik daripada rollback 1 jam.
+
+## 11. Tips produktivitas vibe coding
+
+**Refactor besar — jangan mati di context limit**
+- Gunakan `Task` agent per file: satu agent = satu file oversized, context parent tetap kecil.
+- Sebelum mulai refactor besar, `/clear` dulu lalu buat checklist file-per-file.
+- Prompt template: `"Audit direktori ini untuk file > 400 baris. Buat checklist, lalu spawn Task agent terpisah per file untuk split + typecheck. Report summary saja ke parent context."`
+
+**Hooks — typecheck otomatis setelah edit**
+Tambahkan ke `.claude/settings.json` untuk catch typo/error lebih awal:
+```json
+{
+  "hooks": {
+    "PostToolUse": [{
+      "matcher": "Edit|Write",
+      "hooks": [{"type": "command", "command": "npm run typecheck 2>&1 | tail -20"}]
+    }]
+  }
+}
+```
+
+**Custom skills yang worth dibuat**
+- `/audit` → cari file > 400 baris, buat split plan, jalankan typecheck
+- `/merge-dev` → commit semua staged, push ke dev, report status
+- Buat di `.claude/skills/<nama>/SKILL.md`
+
+**Sebelum fix UI — selalu verifikasi checkout**
+Tanya dulu: *"Branch mana yang ditonton dev server sekarang, dan kita sedang edit di branch mana?"* — jika beda, propose cherry-pick terlebih dahulu.
