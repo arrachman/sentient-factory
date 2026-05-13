@@ -142,11 +142,6 @@ export function BookingPage() {
 
   return (
     <div className="space-y-6 p-4 lg:p-8">
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
-          <CalendarPlus className="h-4 w-4" /> Booking Baru
-        </button>
-      </div>
 
       <div className="flex flex-wrap gap-2">
         {(
