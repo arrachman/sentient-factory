@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
 import {
   CreateClientDto,
   QueryClientDto,
@@ -52,7 +53,10 @@ const SELESAI_THRESHOLD_DAYS = 30;
 
 @Injectable()
 export class ClinicClientService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly wa: ClinicWaService,
+  ) {}
 
   async create(dto: CreateClientDto, actorId?: number) {
     if (dto.medicalRecordNumber) {
@@ -74,6 +78,18 @@ export class ClinicClientService {
         updatedBy: actorId,
       },
     });
+
+    if (created.phoneWa && !created.waOptedOut) {
+      void this.wa
+        .dispatch({
+          templateName: 'Welcome New Client',
+          recipientType: 'klien',
+          recipientPhone: created.phoneWa,
+          variables: { nama_klien: created.name },
+        })
+        .catch((err) => console.error('[ClientService] welcome WA failed:', err));
+    }
+
     return { success: true, data: created, message: 'Client created' };
   }
 

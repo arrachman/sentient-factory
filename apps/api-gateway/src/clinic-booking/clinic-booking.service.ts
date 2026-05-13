@@ -114,6 +114,7 @@ export class ClinicBookingService {
     // Slice 9: WA event trigger
     if (booking.status === 'confirmed') {
       void this.notifier.notify(booking, 'Konfirmasi Booking');
+      void this.notifier.notifyPsikologInfo(booking);
     }
 
     // Slice 11: SSE event untuk realtime updates di resepsionis dashboard
@@ -225,6 +226,7 @@ export class ClinicBookingService {
     // Slice 9: WA event triggers per status
     if (target === 'confirmed') {
       void this.notifier.notify(updated, 'Konfirmasi Booking');
+      void this.notifier.notifyPsikologInfo(updated);
     } else if (target === 'completed') {
       void this.notifier.notify(updated, 'Follow-up Post Session');
     }
@@ -387,7 +389,7 @@ export class ClinicBookingService {
           id: true,
           email: true,
           fullName: true,
-          clinicPsikologProfile: { select: { title: true, color: true } },
+          clinicPsikologProfile: { select: { title: true, color: true, specialty: true, license: true } },
         },
       },
       room: { select: { id: true, name: true, type: true } },
