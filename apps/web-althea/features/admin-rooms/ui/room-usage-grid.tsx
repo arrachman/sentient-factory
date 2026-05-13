@@ -33,16 +33,11 @@ export function RoomUsageGrid({
   const colTpl = `90px repeat(${rooms.length}, minmax(96px, 1fr))`;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-        flex: 1,
-      }}
-    >
-      <GridHeader rooms={rooms} colTpl={colTpl} />
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+    // Satu container scroll untuk header + body — keduanya ikut saat scroll horizontal.
+    // Header pakai sticky top:0 agar tetap terlihat saat scroll vertikal.
+    <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+      <div style={{ minWidth: 'max-content' }}>
+        <GridHeader rooms={rooms} colTpl={colTpl} />
         {SLOTS.map((slot, slotIdx) => (
           <div
             key={`${slot.start}-${slot.end}`}
@@ -83,7 +78,9 @@ function GridHeader({ rooms, colTpl }: { rooms: Room[]; colTpl: string }) {
         gridTemplateColumns: colTpl,
         borderBottom: '1px solid var(--border)',
         background: 'var(--cream-50)',
-        overflowX: 'auto',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1,
       }}
     >
       <div
