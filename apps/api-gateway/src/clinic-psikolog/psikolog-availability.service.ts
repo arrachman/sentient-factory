@@ -16,6 +16,15 @@ export class PsikologAvailabilityService {
 
   /** List override psikolog dalam range tanggal. Dipakai psikolog di dialog. */
   async listOwnDateOverrides(userId: number, from?: string, to?: string) {
+    return this.listDateOverridesByUser(userId, from, to);
+  }
+
+  /**
+   * List override per-tanggal untuk psikolog manapun (admin-accessible).
+   * Dipakai booking wizard supaya DateStrip bisa render hari yang di-override
+   * sebagai available walau weekly-nya tutup.
+   */
+  async listDateOverridesByUser(userId: number, from?: string, to?: string) {
     const where: Prisma.ClinicPsikologDateOverrideWhereInput = {
       psikologUserId: userId,
     };

@@ -120,6 +120,23 @@ export function useDeleteMyDateOverride() {
 }
 
 /**
+ * List date overrides untuk psikolog tertentu dalam range tanggal.
+ * Dipakai DateStrip booking wizard supaya hari yang di-override tampil
+ * sebagai available walau weekly-nya tutup.
+ */
+export function usePsikologDateOverrides(
+  userId: number | null,
+  range?: { from?: string; to?: string },
+) {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'date-overrides-for-user', userId, range],
+    queryFn: () => psikologApi.listDateOverridesForUser(userId as number, range),
+    enabled: !!userId,
+    staleTime: 30_000,
+  });
+}
+
+/**
  * Resolve effective availability psikolog di tanggal tertentu.
  * Backend merge date override (priority) + weeklyAvailability (fallback).
  * Dipakai booking wizard untuk filter slot picker.

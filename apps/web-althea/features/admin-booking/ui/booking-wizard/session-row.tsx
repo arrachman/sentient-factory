@@ -207,6 +207,7 @@ export function SessionRow({
               <DateStrip
                 selectedDate={state.date}
                 psikolog={psikolog}
+                psikologUserId={psikologUserId}
                 closedDayOfWeek={closedDayOfWeek}
                 holidays={holidays}
                 onChangeDate={(date) => onChange({ date, slotIdx: null })}

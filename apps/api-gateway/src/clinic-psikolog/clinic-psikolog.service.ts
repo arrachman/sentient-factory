@@ -275,6 +275,9 @@ export class ClinicPsikologService {
   listOwnDateOverrides(userId: number, from?: string, to?: string) {
     return this.availability.listOwnDateOverrides(userId, from, to);
   }
+  listDateOverridesByUser(userId: number, from?: string, to?: string) {
+    return this.availability.listDateOverridesByUser(userId, from, to);
+  }
   upsertOwnDateOverride(
     userId: number,
     input: { date: string; isOpen: boolean; slotIndices?: number[] | null; reason?: string | null },

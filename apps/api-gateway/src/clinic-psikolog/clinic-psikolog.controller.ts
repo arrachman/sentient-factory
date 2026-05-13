@@ -206,6 +206,21 @@ export class ClinicPsikologController {
     return this.service.deleteOwnDateOverride(userId, date);
   }
 
+  @Get('by-user/:userId/date-overrides')
+  @Roles('clinic-admin', 'clinic-resepsionis', 'clinic-psikolog', 'clinic-owner')
+  @ApiOperation({
+    summary: 'List override per-tanggal untuk psikolog tertentu (admin/wizard)',
+    description:
+      'Mirror /me/date-overrides tapi terima userId eksplisit. Dipakai booking wizard supaya DateStrip render hari yang di-override sebagai available. Query: ?from=YYYY-MM-DD&to=YYYY-MM-DD.',
+  })
+  listDateOverridesByUser(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+  ) {
+    return this.service.listDateOverridesByUser(userId, from, to);
+  }
+
   @Get('by-user/:userId/availability-for-date')
   @Roles('clinic-admin', 'clinic-resepsionis', 'clinic-psikolog', 'clinic-owner')
   @ApiOperation({

@@ -4,10 +4,14 @@
  * Week-strip date picker dengan color-coded status:
  *   - available, klinik-closed, holiday, psikolog-off, psikolog-unset
  * Navigasi prev/next minggu. Dipakai single-session (Step4) & multi-session (SessionRow).
+ *
+ * Fetch date overrides psikolog sekali per minggu supaya hari yang di-override
+ * buka (walau weekly-nya tutup) tampil sebagai available di strip.
  */
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
+import { usePsikologDateOverrides } from '@/features/admin-psikolog/hooks/use-psikolog';
 
 const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 const DAY_KEY = [
@@ -50,16 +54,27 @@ export function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
+type OverrideMap = Map<string, { isOpen: boolean }>;
+
 function statusFor(
   d: Date,
   psikolog: Psikolog | null,
   closedDayOfWeek: number[],
   holidays: string[],
+  overrides: OverrideMap,
 ): DateStatus {
   const dateStr = toDateKey(d);
   const dow = d.getDay();
+
   if (holidays.includes(dateStr)) return 'holiday';
   if (closedDayOfWeek.includes(dow)) return 'klinik-closed';
+
+  // Override psikolog punya prioritas lebih tinggi dari jadwal mingguan
+  const ov = overrides.get(dateStr);
+  if (ov !== undefined) {
+    return ov.isOpen ? 'available' : 'psikolog-off';
+  }
+
   if (psikolog) {
     const wa = psikolog.weeklyAvailability ?? {};
     if (Object.keys(wa).length === 0) return 'psikolog-unset';
@@ -72,12 +87,14 @@ function statusFor(
 export function DateStrip({
   selectedDate,
   psikolog,
+  psikologUserId,
   closedDayOfWeek,
   holidays,
   onChangeDate,
 }: {
   selectedDate: string;
   psikolog: Psikolog | null;
+  psikologUserId?: number | null;
   closedDayOfWeek: number[];
   holidays: string[];
   onChangeDate: (date: string) => void;
@@ -85,8 +102,6 @@ export function DateStrip({
   const [weekOffset, setWeekOffset] = useState(0);
 
   // Sinkronkan anchor minggu agar minggu yang ditampilkan memuat selectedDate.
-  // Saat user pakai per-sesi (multi-session) dengan tanggal H+7 / H+14 / dst,
-  // strip otomatis loncat ke minggu yang berisi tanggal sesi tsb.
   useEffect(() => {
     if (!selectedDate) return;
     const sel = new Date(`${selectedDate}T00:00:00`);
@@ -116,6 +131,26 @@ export function DateStrip({
       return d;
     });
   }, [weekOffset]);
+
+  // Range query: Senin – Minggu minggu yang sedang ditampilkan
+  const weekFrom = useMemo(() => toDateKey(week[0]), [week]);
+  const weekTo   = useMemo(() => toDateKey(week[6]), [week]);
+
+  const effectiveUserId = psikologUserId ?? psikolog?.userId ?? null;
+  const overridesQuery = usePsikologDateOverrides(
+    effectiveUserId,
+    effectiveUserId ? { from: weekFrom, to: weekTo } : undefined,
+  );
+
+  const overrideMap = useMemo<OverrideMap>(() => {
+    const map: OverrideMap = new Map();
+    for (const ov of overridesQuery.data?.data ?? []) {
+      // Backend returns Date objects serialized as ISO strings — ambil bagian tanggal saja
+      const dateKey = ov.date.slice(0, 10);
+      map.set(dateKey, { isOpen: ov.isOpen });
+    }
+    return map;
+  }, [overridesQuery.data]);
 
   const todayKey = toDateKey(new Date());
   const weekLabel = useMemo(() => {
@@ -156,7 +191,7 @@ export function DateStrip({
       <div className="grid grid-cols-7 gap-1.5">
         {week.map((d) => {
           const key = toDateKey(d);
-          const status = statusFor(d, psikolog, closedDayOfWeek, holidays);
+          const status = statusFor(d, psikolog, closedDayOfWeek, holidays, overrideMap);
           const info = STATUS_INFO[status];
           const selected = key === selectedDate;
           const isToday = key === todayKey;

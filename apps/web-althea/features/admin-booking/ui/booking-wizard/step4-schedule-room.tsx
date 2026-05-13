@@ -85,6 +85,7 @@ export function Step4ScheduleRoom({
           <DateStrip
             selectedDate={firstSession.date}
             psikolog={selectedPsikolog}
+            psikologUserId={state.psikologUserId}
             closedDayOfWeek={closedDayOfWeek}
             holidays={holidays}
             onChangeDate={(date) =>
