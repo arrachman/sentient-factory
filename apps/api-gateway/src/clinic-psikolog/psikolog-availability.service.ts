@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { localDateAtMidnight, localPartsInTimezone } from '../clinic-booking/timezone.util';
+import { dateStrToDateColumn, localDateAtMidnight, localPartsInTimezone } from '../clinic-booking/timezone.util';
 import { mapPsikologToResponse, userSelect } from './psikolog.utils';
 
 @Injectable()
@@ -54,11 +54,7 @@ export class PsikologAvailabilityService {
     }
     // Konversi date string ke midnight di TZ klinik (consistent dengan
     // resolveAvailabilityForDate + assertPsikologAvailable lookup).
-    const settings = await this.prisma.clinicSettings.findFirst({
-      where: { id: 1 },
-      select: { timezone: true },
-    });
-    const dateObj = localDateAtMidnight(input.date, settings?.timezone || 'Asia/Jakarta');
+    const dateObj = dateStrToDateColumn(input.date);
     const slotIndicesValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
       input.slotIndices === undefined || input.slotIndices === null
         ? Prisma.DbNull
@@ -89,11 +85,7 @@ export class PsikologAvailabilityService {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       throw new ConflictException(`Tanggal '${dateStr}' bukan format ISO YYYY-MM-DD.`);
     }
-    const settings = await this.prisma.clinicSettings.findFirst({
-      where: { id: 1 },
-      select: { timezone: true },
-    });
-    const dateObj = localDateAtMidnight(dateStr, settings?.timezone || 'Asia/Jakarta');
+    const dateObj = dateStrToDateColumn(dateStr);
     await this.prisma.clinicPsikologDateOverride
       .delete({
         where: { psikologUserId_date: { psikologUserId: userId, date: dateObj } },
@@ -163,11 +155,10 @@ export class PsikologAvailabilityService {
     });
     const tz = settings?.timezone || 'Asia/Jakarta';
 
-    // dateOnly = midnight di TZ klinik (sebagai UTC instant). Penting karena
-    // ClinicPsikologDateOverride.date di-simpan dengan asumsi clinic-local
-    // midnight. dow juga dihitung di TZ klinik supaya konsisten.
-    const dateObj = localDateAtMidnight(dateStr, tz);
-    const dow = localPartsInTimezone(dateObj, tz).dow;
+    // dateObj: UTC midnight untuk lookup @db.Date (Prisma pakai UTC date portion).
+    // dow: hitung di TZ klinik dari dateStr supaya konsisten dengan weeklyAvailability.
+    const dateObj = dateStrToDateColumn(dateStr);
+    const dow = localPartsInTimezone(localDateAtMidnight(dateStr, tz), tz).dow;
 
     const [override, profile] = await Promise.all([
       this.prisma.clinicPsikologDateOverride.findUnique({

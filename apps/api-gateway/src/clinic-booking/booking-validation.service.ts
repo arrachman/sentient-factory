@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { localDateAtMidnight, localPartsInTimezone } from './timezone.util';
+import { dateStrToDateColumn, localDateAtMidnight, localPartsInTimezone } from './timezone.util';
 
 /**
  * Validation helpers untuk booking operations.
@@ -228,7 +228,7 @@ export class BookingValidationService {
     // weeklyAvailability + date overrides (yang dianggap WIB).
     const startParts = localPartsInTimezone(start, tz);
     const dow = startParts.dow;
-    const dateOnly = localDateAtMidnight(startParts.dateStr, tz);
+    const dateOnly = dateStrToDateColumn(startParts.dateStr);
 
     // 1. PRIORITAS: cek date override untuk tanggal spesifik
     const override = await this.prisma.clinicPsikologDateOverride.findUnique({

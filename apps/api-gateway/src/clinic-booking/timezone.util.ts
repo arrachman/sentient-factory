@@ -71,16 +71,26 @@ export function localPartsInTimezone(d: Date, timezone = 'Asia/Jakarta'): LocalD
  * Convert local-date-string (YYYY-MM-DD di TZ klinik) jadi Date object
  * yang mewakili 00:00 di TZ tsb (sebagai UTC instant).
  *
- * Dipakai untuk lookup `clinic_psikolog_date_override.date` (column
- * disimpan sebagai "midnight di TZ klinik" expressed as UTC).
+ * HANYA dipakai untuk kalkulasi DOW / hh:mm comparison — BUKAN untuk
+ * write/lookup kolom @db.Date Prisma. Untuk kolom @db.Date, pakai
+ * `dateStrToDateColumn` supaya Prisma ambil UTC-date yang benar.
  */
 export function localDateAtMidnight(dateStr: string, timezone = 'Asia/Jakarta'): Date {
-  // Parse YYYY-MM-DD assuming clinic TZ. Trick: build ISO with offset
-  // computed dari Intl.DateTimeFormat.
-  // Simpler: ambil UTC date sama-sama lalu adjust. Cukup pakai
-  // Date constructor dengan TZ-offset string.
   const offset = getTimezoneOffsetString(dateStr, timezone);
   return new Date(`${dateStr}T00:00:00${offset}`);
+}
+
+/**
+ * Convert YYYY-MM-DD string ke Date untuk dipakai sebagai value kolom
+ * `@db.Date` (Postgres `date` type) di Prisma.
+ *
+ * Prisma menggunakan UTC date portion saat write ke kolom @db.Date.
+ * Jadi Date harus UTC midnight supaya `2026-05-15` tersimpan sebagai
+ * `2026-05-15` — bukan `2026-05-14` (hasil localDateAtMidnight WIB yang
+ * menghasilkan 2026-05-14T17:00:00Z).
+ */
+export function dateStrToDateColumn(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00.000Z`);
 }
 
 function getTimezoneOffsetString(dateStr: string, timezone: string): string {
