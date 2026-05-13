@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Bell, Check, Edit, Filter, Plus } from 'lucide-react';
+import { Bell, Check, Edit, Filter, Plus, PowerOff, Trash2 } from 'lucide-react';
 import {
   useCreatePsikolog,
+  useDeactivatePsikolog,
+  useDeletePsikolog,
   usePsikologList,
   useUpdatePsikolog,
 } from '../hooks/use-psikolog';
@@ -269,9 +271,13 @@ function PsikologCard({
 function ProfileAside({
   p,
   onEdit,
+  onDelete,
+  onDeactivate,
 }: {
   p: Psikolog;
   onEdit: () => void;
+  onDelete: (p: Psikolog) => void;
+  onDeactivate: (p: Psikolog) => void;
 }) {
   const sinceYear = p.createdAt ? new Date(p.createdAt).getFullYear() : null;
   const specialtyText = Array.isArray(p.specialty) && p.specialty.length > 0
@@ -311,15 +317,38 @@ function ProfileAside({
     >
       <div className="flex items-center justify-between">
         <span className="eyebrow">Profil</span>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="btn btn-icon btn-ghost btn-sm"
-          aria-label="Edit profil"
-          title="Edit"
-        >
-          <Edit size={14} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="btn btn-icon btn-ghost btn-sm"
+            aria-label="Edit profil"
+            title="Edit"
+          >
+            <Edit size={14} />
+          </button>
+          {p.hasBookings ? (
+            <button
+              type="button"
+              onClick={() => onDeactivate(p)}
+              className="btn btn-icon btn-ghost btn-sm text-warning"
+              title="Ada booking terkait — klik untuk nonaktifkan"
+              aria-label="Nonaktifkan psikolog"
+            >
+              <PowerOff size={14} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onDelete(p)}
+              className="btn btn-icon btn-ghost btn-sm text-danger"
+              title="Hapus psikolog"
+              aria-label="Hapus psikolog"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div
@@ -498,6 +527,8 @@ export function PsikologPage() {
 
   const createMut = useCreatePsikolog();
   const updateMut = useUpdatePsikolog();
+  const deleteMut = useDeletePsikolog();
+  const deactivateMut = useDeactivatePsikolog();
 
   const psikologs = listQuery.data?.data ?? [];
 
@@ -519,6 +550,16 @@ export function PsikologPage() {
   function openEdit(p: Psikolog) {
     setEditing(p);
     setDialogOpen(true);
+  }
+
+  function handleDelete(p: Psikolog) {
+    if (!confirm(`Hapus psikolog "${p.fullName || p.email}"? Aksi ini tidak bisa dibatalkan.`)) return;
+    deleteMut.mutate(p.id, { onSuccess: () => setSelectedId(null) });
+  }
+
+  function handleDeactivate(p: Psikolog) {
+    if (!confirm(`Nonaktifkan psikolog "${p.fullName || p.email}"? Psikolog tidak akan muncul di booking baru.`)) return;
+    deactivateMut.mutate(p.id, { onSuccess: () => setSelectedId(null) });
   }
 
   function handleSubmit(input: CreatePsikologInput) {
@@ -680,7 +721,12 @@ export function PsikologPage() {
         {/* Right: detail aside (desktop only) */}
         {selected && (
           <div className="hidden lg:block">
-            <ProfileAside p={selected} onEdit={() => openEdit(selected)} />
+            <ProfileAside
+              p={selected}
+              onEdit={() => openEdit(selected)}
+              onDelete={handleDelete}
+              onDeactivate={handleDeactivate}
+            />
           </div>
         )}
       </div>

@@ -13,7 +13,7 @@
  * Klik trash icon → confirm + delete.
  */
 import { useState } from 'react';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, PowerOff, Trash2, X } from 'lucide-react';
 import { DEFAULT_FACILITIES } from '../model/constants';
 import {
   ROOM_TYPES,
@@ -33,6 +33,7 @@ export function RoomCrudDrawer({
   onCreateNew,
   onEdit,
   onDelete,
+  onDeactivate,
 }: {
   rooms: Room[];
   editing: Room | null;
@@ -44,6 +45,7 @@ export function RoomCrudDrawer({
   onCreateNew: () => void;
   onEdit: (r: Room) => void;
   onDelete: (r: Room) => void;
+  onDeactivate: (r: Room) => void;
 }) {
   return (
     <div
@@ -71,6 +73,7 @@ export function RoomCrudDrawer({
           onCreateNew={onCreateNew}
           onEdit={onEdit}
           onDelete={onDelete}
+          onDeactivate={onDeactivate}
         />
         <RoomFormPanel
           editing={editing}
@@ -95,12 +98,14 @@ function RoomList({
   onCreateNew,
   onEdit,
   onDelete,
+  onDeactivate,
 }: {
   rooms: Room[];
   editingId: number | null;
   onCreateNew: () => void;
   onEdit: (r: Room) => void;
   onDelete: (r: Room) => void;
+  onDeactivate: (r: Room) => void;
 }) {
   return (
     <div
@@ -147,6 +152,7 @@ function RoomList({
                     selected={editingId === r.id}
                     onEdit={() => onEdit(r)}
                     onDelete={() => onDelete(r)}
+                    onDeactivate={() => onDeactivate(r)}
                   />
                 ))}
               </div>
@@ -171,11 +177,13 @@ function RoomRow({
   selected,
   onEdit,
   onDelete,
+  onDeactivate,
 }: {
   room: Room;
   selected: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onDeactivate: () => void;
 }) {
   return (
     <div
@@ -219,15 +227,29 @@ function RoomRow({
           {room.isActive ? '' : ' · nonaktif'}
         </span>
       </button>
-      <button
-        type="button"
-        className="btn btn-ghost btn-icon btn-sm"
-        aria-label={`Hapus ${room.name}`}
-        onClick={onDelete}
-        style={{ color: 'var(--danger)' }}
-      >
-        <Trash2 size={13} />
-      </button>
+      {room.hasBookings ? (
+        <button
+          type="button"
+          className="btn btn-ghost btn-icon btn-sm"
+          aria-label={room.isActive ? `Nonaktifkan ${room.name}` : `${room.name} sudah nonaktif`}
+          onClick={onDeactivate}
+          disabled={!room.isActive}
+          title={room.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
+          style={{ color: 'var(--warning, #c97a1a)', opacity: room.isActive ? 1 : 0.3 }}
+        >
+          <PowerOff size={13} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="btn btn-ghost btn-icon btn-sm"
+          aria-label={`Hapus ${room.name}`}
+          onClick={onDelete}
+          style={{ color: 'var(--danger)' }}
+        >
+          <Trash2 size={13} />
+        </button>
+      )}
     </div>
   );
 }

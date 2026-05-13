@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MoreHorizontal, Pencil, Plus, Search, Settings, Trash2, X } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, PowerOff, Search, Settings, Trash2, X } from 'lucide-react';
 import {
   useCreateService,
+  useDeactivateService,
   useDeleteService,
   useServiceList,
   useUpdateService,
@@ -48,6 +49,7 @@ export function LayananPage() {
   const createMut = useCreateService();
   const updateMut = useUpdateService();
   const deleteMut = useDeleteService();
+  const deactivateMut = useDeactivateService();
 
   const items = list.data?.data ?? [];
 
@@ -111,6 +113,10 @@ export function LayananPage() {
   function handleDelete(s: Service) {
     if (!confirm(`Hapus layanan "${s.name}"?`)) return;
     deleteMut.mutate(s.id);
+  }
+  function handleDeactivate(s: Service) {
+    if (!confirm(`Nonaktifkan layanan "${s.name}"? Layanan tidak akan muncul di booking baru.`)) return;
+    deactivateMut.mutate(s.id);
   }
 
   const submitting = createMut.isPending || updateMut.isPending;
@@ -257,14 +263,27 @@ export function LayananPage() {
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(s)}
-                          className="btn btn-icon btn-ghost btn-sm text-danger"
-                          aria-label="Hapus"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        {s.hasBookings ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeactivate(s)}
+                            disabled={!s.isActive}
+                            className="btn btn-icon btn-ghost btn-sm text-warning disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={s.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
+                            aria-label="Nonaktifkan layanan"
+                          >
+                            <PowerOff className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(s)}
+                            className="btn btn-icon btn-ghost btn-sm text-danger"
+                            aria-label="Hapus"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <button type="button" className="btn btn-icon btn-ghost btn-sm" aria-label="Lainnya">
                           <MoreHorizontal className="h-3.5 w-3.5" />
                         </button>

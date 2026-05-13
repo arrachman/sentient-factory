@@ -147,11 +147,23 @@ export class ClinicPsikologService {
           });
     const serviceIdsByUser = groupServiceIdsByUser(junctionRows);
 
+    // Batch-check booking existence untuk disable delete button di FE
+    const bookingUserIds =
+      userIds.length === 0
+        ? []
+        : await this.prisma.clinicBooking.findMany({
+            where: { psikologUserId: { in: userIds }, deletedAt: null },
+            select: { psikologUserId: true },
+            distinct: ['psikologUserId'],
+          });
+    const hasBookingsSet = new Set(bookingUserIds.map((b) => b.psikologUserId));
+
     return {
       success: true,
-      data: profiles.map((p) =>
-        mapPsikologToResponse(p.user, p, serviceIdsByUser.get(p.userId) ?? []),
-      ),
+      data: profiles.map((p) => ({
+        ...mapPsikologToResponse(p.user, p, serviceIdsByUser.get(p.userId) ?? []),
+        hasBookings: hasBookingsSet.has(p.userId),
+      })),
       meta: {
         page,
         limit,

@@ -41,9 +41,22 @@ export class ClinicRoomService {
       }),
       this.prisma.clinicRoom.count({ where }),
     ]);
+
+    // All-time booking existence untuk disable delete button di FE
+    const ids = items.map((r) => r.id);
+    const hasBookingsRows =
+      ids.length === 0
+        ? []
+        : await this.prisma.clinicBooking.findMany({
+            where: { roomId: { in: ids }, deletedAt: null },
+            select: { roomId: true },
+            distinct: ['roomId'],
+          });
+    const hasBookingsSet = new Set(hasBookingsRows.map((b) => b.roomId));
+
     return {
       success: true,
-      data: items,
+      data: items.map((r) => ({ ...r, hasBookings: hasBookingsSet.has(r.id) })),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }

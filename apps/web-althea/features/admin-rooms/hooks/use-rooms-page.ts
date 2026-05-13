@@ -26,6 +26,7 @@ import { EMPTY_ROOM, SLOTS } from '../model/constants';
 import { shortName, todayKey } from '../model/utils';
 import {
   useCreateRoom,
+  useDeactivateRoom,
   useDeleteRoom,
   useRoomList,
   useUpdateRoom,
@@ -105,6 +106,7 @@ export function useRoomsPage() {
   const createMut = useCreateRoom();
   const updateMut = useUpdateRoom();
   const deleteMut = useDeleteRoom();
+  const deactivateMut = useDeactivateRoom();
   const rescheduleMut = useRescheduleBooking();
   const submitting = createMut.isPending || updateMut.isPending;
 
@@ -187,6 +189,15 @@ export function useRoomsPage() {
     });
   }
 
+  function deactivateRoom(room: Room) {
+    if (!confirm(`Nonaktifkan ruangan "${room.name}"? Ruangan tidak akan muncul di booking baru.`)) return;
+    deactivateMut.mutate(room.id, {
+      onSuccess: () => {
+        if (picked?.room.id === room.id) clearPicked();
+      },
+    });
+  }
+
   function startReassign() {
     if (!picked?.booking) return;
     setReassignBooking(picked.booking);
@@ -241,6 +252,7 @@ export function useRoomsPage() {
     closeCrud,
     submitForm,
     deleteRoom,
+    deactivateRoom,
     // reassign-booking handlers
     reassignBooking,
     startReassign,

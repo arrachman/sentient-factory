@@ -59,6 +59,7 @@ export const psikologSchema = z.object({
   lastLogin: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  hasBookings: z.boolean().default(false),
 });
 
 export type Psikolog = z.infer<typeof psikologSchema>;

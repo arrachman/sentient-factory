@@ -14,7 +14,7 @@
  *         dll) — TIDAK pengaruh ke booking yang sudah ada
  *       - "Hapus" → hapus ruangan dari sistem
  */
-import { ArrowRightLeft, Pencil, Trash2, X } from 'lucide-react';
+import { ArrowRightLeft, Pencil, PowerOff, Trash2, X } from 'lucide-react';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { DEFAULT_FACILITIES, ROOM_TYPE_STYLE, type SlotDef } from '../model/constants';
 import { ROOM_TYPE_LABEL, type Room } from '../model/types';
@@ -26,17 +26,16 @@ export function RoomDetailPanel({
   onClose,
   onEditMaster,
   onDelete,
+  onDeactivate,
   onReassignBooking,
 }: {
   room: Room;
   slot: SlotDef;
   booking: Booking | null;
   onClose: () => void;
-  /** Edit metadata ruangan (nama, tipe, kapasitas, fasilitas) — buka CRUD drawer */
   onEditMaster: () => void;
-  /** Hapus ruangan dari sistem */
   onDelete: () => void;
-  /** Pindahkan booking di slot ini ke ruangan lain (cuma dipakai kalau ada booking) */
+  onDeactivate: () => void;
   onReassignBooking: () => void;
 }) {
   const style = ROOM_TYPE_STYLE[room.type];
@@ -171,14 +170,27 @@ export function RoomDetailPanel({
           >
             <Pencil size={13} /> Edit master ruangan
           </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="btn btn-ghost btn-sm"
-            style={{ flex: 1, color: 'var(--danger)' }}
-          >
-            <Trash2 size={13} /> Hapus
-          </button>
+          {room.hasBookings ? (
+            <button
+              type="button"
+              onClick={onDeactivate}
+              disabled={!room.isActive}
+              className="btn btn-ghost btn-sm"
+              style={{ flex: 1, color: 'var(--warning, #c97a1a)', opacity: room.isActive ? 1 : 0.4 }}
+              title={room.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
+            >
+              <PowerOff size={13} /> Nonaktifkan
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="btn btn-ghost btn-sm"
+              style={{ flex: 1, color: 'var(--danger)' }}
+            >
+              <Trash2 size={13} /> Hapus
+            </button>
+          )}
         </div>
       </div>
     </aside>

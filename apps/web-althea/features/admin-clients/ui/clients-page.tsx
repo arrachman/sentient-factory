@@ -7,6 +7,7 @@ import {
   MessageCircle,
   Pencil,
   Plus,
+  PowerOff,
   Search,
   Trash2,
   X,
@@ -15,6 +16,7 @@ import {
   useClientDetail,
   useClientList,
   useCreateClient,
+  useDeactivateClient,
   useDeleteClient,
   useUpdateClient,
 } from '../hooks/use-client';
@@ -86,6 +88,7 @@ export function ClientsPage() {
   const createMut = useCreateClient();
   const updateMut = useUpdateClient();
   const deleteMut = useDeleteClient();
+  const deactivateMut = useDeactivateClient();
 
   const items = list.data?.data ?? [];
   const counts = useMemo(() => {
@@ -148,6 +151,10 @@ export function ClientsPage() {
   function handleDelete(c: Client) {
     if (!confirm(`Hapus klien "${c.name}"?`)) return;
     deleteMut.mutate(c.id, { onSuccess: () => { if (selectedId === c.id) setSelectedId(null); } });
+  }
+  function handleDeactivate(c: Client) {
+    if (!confirm(`Nonaktifkan klien "${c.name}"? Klien tidak akan muncul di pilihan booking baru.`)) return;
+    deactivateMut.mutate(c.id, { onSuccess: () => { if (selectedId === c.id) setSelectedId(null); } });
   }
 
   return (
@@ -354,14 +361,27 @@ export function ClientsPage() {
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(sel)}
-                      className="btn btn-outline btn-sm btn-icon text-danger"
-                      aria-label="Hapus"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {sel.totalBookings > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDeactivate(sel)}
+                        disabled={!sel.isActive}
+                        className="btn btn-outline btn-sm btn-icon text-warning disabled:opacity-30 disabled:cursor-not-allowed"
+                        title={sel.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
+                        aria-label="Nonaktifkan klien"
+                      >
+                        <PowerOff className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(sel)}
+                        className="btn btn-outline btn-sm btn-icon text-danger"
+                        aria-label="Hapus"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
 

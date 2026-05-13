@@ -20,6 +20,7 @@ export const roomSchema = z.object({
   /** Catatan freeform admin (notes only — bukan lagi facilities source) */
   description: z.string().nullable(),
   isActive: z.boolean(),
+  hasBookings: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

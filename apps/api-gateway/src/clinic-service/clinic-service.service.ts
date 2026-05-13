@@ -73,9 +73,22 @@ export class ClinicServiceService {
     const bookedMap = new Map<number, number>(
       bookedAgg.map((row) => [row.serviceId, row._count._all]),
     );
+
+    // All-time booking existence untuk disable delete button di FE
+    const hasBookingsRows =
+      ids.length === 0
+        ? []
+        : await this.prisma.clinicBooking.findMany({
+            where: { serviceId: { in: ids }, deletedAt: null },
+            select: { serviceId: true },
+            distinct: ['serviceId'],
+          });
+    const hasBookingsSet = new Set(hasBookingsRows.map((b) => b.serviceId));
+
     const enriched = items.map((s) => ({
       ...s,
       bookedThisMonth: bookedMap.get(s.id) ?? 0,
+      hasBookings: hasBookingsSet.has(s.id),
     }));
 
     return {

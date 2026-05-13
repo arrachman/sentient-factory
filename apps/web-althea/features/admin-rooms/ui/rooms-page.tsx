@@ -67,6 +67,7 @@ export function RoomsPage() {
               onClose={page.clearPicked}
               onEditMaster={() => page.startEdit(page.picked!.room)}
               onDelete={() => page.deleteRoom(page.picked!.room)}
+              onDeactivate={() => page.deactivateRoom(page.picked!.room)}
               onReassignBooking={page.startReassign}
             />
           ) : null}
@@ -85,6 +86,7 @@ export function RoomsPage() {
           onCreateNew={page.startCreate}
           onEdit={page.startEdit}
           onDelete={page.deleteRoom}
+          onDeactivate={page.deactivateRoom}
         />
       ) : null}
 

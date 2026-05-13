@@ -44,6 +44,7 @@ export const serviceSchema = z.object({
   description: z.string().nullable(),
   isActive: z.boolean(),
   bookedThisMonth: z.number().int().optional().default(0),
+  hasBookings: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

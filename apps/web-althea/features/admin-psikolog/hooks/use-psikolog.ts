@@ -148,3 +148,17 @@ export function useDeletePsikolog() {
     },
   });
 }
+
+export function useDeactivatePsikolog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => psikologApi.update(id, { isActive: false }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEY });
+      toast.success('Psikolog dinonaktifkan');
+    },
+    onError: (err: Error) => {
+      toast.error('Gagal nonaktifkan psikolog', { description: err.message });
+    },
+  });
+}
