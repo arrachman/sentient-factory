@@ -82,6 +82,11 @@ export class CreateClientDto {
   @IsOptional()
   @IsBoolean()
   waOptedOut?: boolean;
+
+  @ApiPropertyOptional({ default: true, description: 'False = klien dinonaktifkan (tidak muncul di pilihan booking baru, histori tetap)' })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
 export class UpdateClientDto extends PartialType(CreateClientDto) {}
@@ -135,4 +140,18 @@ export class QueryClientDto {
   })
   @IsBoolean()
   waOptedOut?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const v = value.trim().toLowerCase();
+      if (v === 'true') return true;
+      if (v === 'false') return false;
+    }
+    return value;
+  })
+  @IsBoolean()
+  isActive?: boolean;
 }

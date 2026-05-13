@@ -884,6 +884,7 @@ model ClinicClient {
   address              String?   @db.Text
   notes                String?   @db.Text
   waOptedOut           Boolean   @default(false) @map("wa_opted_out")
+  isActive             Boolean   @default(true) @map("is_active")
   // Audit fields
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   createdBy            Int?      @map("created_by")
@@ -896,6 +897,7 @@ model ClinicClient {
 
   @@index([phoneWa])
   @@index([name])
+  @@index([isActive])
   @@map("clinic_client")
 }
 

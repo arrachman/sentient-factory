@@ -45,6 +45,7 @@ const EMPTY: CreateClientInput = {
   address: '',
   notes: '',
   waOptedOut: false,
+  isActive: true,
 };
 
 type Filter = 'semua' | ClientStatus;
@@ -117,6 +118,7 @@ export function ClientsPage() {
       address: c.address ?? '',
       notes: c.notes ?? '',
       waOptedOut: c.waOptedOut,
+      isActive: c.isActive,
     });
     setOpen(true);
   }
@@ -236,13 +238,18 @@ export function ClientsPage() {
                     onClick={() => setSelectedId(c.id)}
                     className={`grid items-center w-full text-left px-4 py-3 border-b border-border transition-colors ${
                       isSel ? 'bg-sage-50 border-l-[3px] border-l-sage-500 pl-[13px]' : 'border-l-[3px] border-l-transparent hover:bg-cream-50'
-                    }`}
+                    } ${c.isActive ? '' : 'opacity-60'}`}
                     style={{ gridTemplateColumns: '2fr 1.5fr 1.3fr 1.4fr 1.4fr 90px' }}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <ClientAvatar name={c.name} category={c.category ?? undefined} size="md" />
                       <div className="flex flex-col min-w-0">
-                        <span className="text-[13.5px] font-semibold text-teal-800 truncate">{c.name}</span>
+                        <span className="text-[13.5px] font-semibold text-teal-800 truncate flex items-center gap-1.5">
+                          {c.name}
+                          {!c.isActive && (
+                            <span className="badge badge-neutral text-[10px] h-[18px] font-normal">nonaktif</span>
+                          )}
+                        </span>
                         <span className="text-[11.5px] text-fg-muted flex items-center gap-1.5">
                           {c.age ? <span>{c.age} thn</span> : null}
                           {c.category && (
@@ -549,6 +556,24 @@ export function ClientsPage() {
                       Centang kalau klien minta tidak menerima WA dari klinik (mis. alasan privasi).
                       Sistem akan skip semua reminder, konfirmasi booking, dan kiriman struk via WA —
                       admin perlu hubungi manual lewat telpon/email.
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <div className="rounded-md border border-border p-3 bg-cream-50">
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive ?? true}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                    className="h-4 w-4 mt-0.5 flex-shrink-0"
+                  />
+                  <span className="flex flex-col gap-1">
+                    <span className="font-medium text-teal-800">Aktif</span>
+                    <span className="caption">
+                      Uncheck untuk menonaktifkan klien. Pakai ini kalau klien sudah selesai program
+                      atau punya histori booking sehingga tidak bisa di-hard-delete. Klien nonaktif
+                      tidak muncul di pilihan booking baru; histori sesi tetap tersimpan untuk audit.
                     </span>
                   </span>
                 </label>

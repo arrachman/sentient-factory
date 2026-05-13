@@ -62,6 +62,7 @@ export const clientSchema = z.object({
   address: z.string().nullable(),
   notes: z.string().nullable(),
   waOptedOut: z.boolean(),
+  isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
   // Derived from backend enrichment
@@ -114,6 +115,7 @@ export const createClientSchema = z.object({
   address: z.string().max(1000).optional(),
   notes: z.string().max(2000).optional(),
   waOptedOut: z.boolean().optional(),
+  isActive: z.boolean().optional(),
 });
 export type CreateClientInput = z.infer<typeof createClientSchema>;
 

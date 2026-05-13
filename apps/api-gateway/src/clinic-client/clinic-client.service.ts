@@ -33,6 +33,7 @@ type ClientEnriched = {
   address: string | null;
   notes: string | null;
   waOptedOut: boolean;
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
   // Derived
@@ -70,6 +71,7 @@ export class ClinicClientService {
         ...dto,
         category,
         waOptedOut: dto.waOptedOut ?? false,
+        isActive: dto.isActive ?? true,
         createdBy: actorId,
         updatedBy: actorId,
       },
@@ -85,6 +87,7 @@ export class ClinicClientService {
     if (query.gender) where.gender = query.gender;
     if (query.category) where.category = query.category;
     if (typeof query.waOptedOut === 'boolean') where.waOptedOut = query.waOptedOut;
+    if (typeof query.isActive === 'boolean') where.isActive = query.isActive;
     if (query.search?.trim()) {
       const q = query.search.trim();
       where.OR = [
@@ -163,7 +166,7 @@ export class ClinicClientService {
     });
     if (bookingCount > 0) {
       throw new ConflictException(
-        `Klien ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — arsipkan atau gabungkan data klien secara manual.`,
+        `Klien ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — nonaktifkan saja lewat toggle "Aktif" di form edit.`,
       );
     }
     await this.prisma.clinicClient.update({
@@ -275,6 +278,7 @@ export class ClinicClientService {
         address: cb.address ?? null,
         notes: cb.notes ?? null,
         waOptedOut: cb.waOptedOut,
+        isActive: cb.isActive,
         createdAt: cb.createdAt,
         updatedAt: cb.updatedAt,
         derivedStatus,
