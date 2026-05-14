@@ -16,24 +16,7 @@ import {
   RescheduleBookingDto,
   UpdateBookingDto,
 } from './dto/clinic-booking.dto';
-
-/**
- * State machine transitions yang valid:
- *   awaiting_dp → confirmed | cancelled
- *   confirmed   → checked_in | cancelled | rescheduled (back to confirmed dengan slot baru)
- *   checked_in  → in_progress | cancelled
- *   in_progress → completed | cancelled (rare)
- *   completed   → (terminal)
- *   cancelled   → (terminal)
- */
-const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
-  awaiting_dp: ['confirmed', 'cancelled'],
-  confirmed: ['checked_in', 'cancelled'],
-  checked_in: ['in_progress', 'cancelled'],
-  in_progress: ['completed', 'cancelled'],
-  completed: [],
-  cancelled: [],
-};
+import { VALID_TRANSITIONS } from './booking-state-machine';
 
 /**
  * Booking domain orchestrator. Handles CRUD + state machine + reschedule.
@@ -72,6 +55,14 @@ export class ClinicBookingService {
       dto.psikologUserId,
       dto.roomId,
     );
+
+    // Room conflict selalu dicek — bufferOverride tidak boleh bypass ruangan fisik
+    await this.validation.assertNoRoomConflict({
+      roomId: dto.roomId,
+      scheduledStart: start,
+      scheduledEnd: end,
+      excludeBookingId: null,
+    });
 
     if (!dto.bufferOverride) {
       await this.validation.assertNoConflict({
@@ -286,6 +277,14 @@ export class ClinicBookingService {
 
     const newPsikologUserId = dto.psikologUserId ?? existing.data.psikologUserId;
     const newRoomId = dto.roomId ?? existing.data.roomId;
+
+    // Room conflict selalu dicek — bufferOverride tidak boleh bypass ruangan fisik
+    await this.validation.assertNoRoomConflict({
+      roomId: newRoomId,
+      scheduledStart: newStart,
+      scheduledEnd: newEnd,
+      excludeBookingId: id,
+    });
 
     if (!dto.bufferOverride) {
       await this.validation.assertNoConflict({

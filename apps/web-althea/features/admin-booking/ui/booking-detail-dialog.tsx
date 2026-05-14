@@ -13,32 +13,10 @@ import {
   X,
 } from 'lucide-react';
 import { bookingApi } from '../api/booking.api';
-import {
-  STATUS_BADGE_CLASS,
-  STATUS_LABEL,
-  type Booking,
-} from '../model/types';
+import { STATUS_BADGE_CLASS, STATUS_LABEL, type Booking } from '../model/types';
+import { DetailRow, formatDateTime, rp } from './booking-detail-utils';
 
-type Props = {
-  booking: Booking | null;
-  onClose: () => void;
-};
-
-function rp(value: string | number): string {
-  const n = typeof value === 'string' ? Number(value) : value;
-  return 'Rp ' + n.toLocaleString('id-ID');
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('id-ID', {
-    weekday: 'long',
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
+type Props = { booking: Booking | null; onClose: () => void };
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
   pending: 'Menunggu DP',
@@ -397,11 +375,3 @@ export function BookingDetailDialog({ booking, onClose }: Props) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-start gap-2">
-      <span className="caption text-fg-muted w-32 shrink-0">{label}</span>
-      <div className="flex-1 min-w-0">{value}</div>
-    </div>
-  );
-}

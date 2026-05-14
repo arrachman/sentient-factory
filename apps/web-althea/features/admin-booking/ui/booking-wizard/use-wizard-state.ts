@@ -24,11 +24,9 @@ import {
 } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
+import { addDays, buildIso, tomorrowDateStr } from './wizard-utils';
 
-export type WizardSession = {
-  date: string; // YYYY-MM-DD (TZ klinik)
-  slotIdx: number | null;
-};
+export type WizardSession = { date: string; slotIdx: number | null };
 
 export type WizardState = {
   clientId: number | null;
@@ -41,26 +39,6 @@ export type WizardState = {
   notes: string;
 };
 
-function pad(n: number) {
-  return String(n).padStart(2, '0');
-}
-
-function toDateKey(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-function tomorrowDateStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return toDateKey(d);
-}
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00`);
-  d.setDate(d.getDate() + days);
-  return toDateKey(d);
-}
-
 const INIT: WizardState = {
   clientId: null,
   serviceId: null,
@@ -71,11 +49,6 @@ const INIT: WizardState = {
   bufferOverride: false,
   notes: '',
 };
-
-function buildIso(dateStr: string, timeHHMM: string): string {
-  const d = new Date(`${dateStr}T${timeHHMM}:00`);
-  return d.toISOString();
-}
 
 export function useWizardState({
   open,
@@ -168,6 +141,14 @@ export function useWizardState({
     includeCancelled: false,
   });
 
+  // Semua booking di tanggal yang dipilih (tidak filter psikolog) —
+  // dipakai untuk deteksi ruangan yang sudah terpakai di slot terpilih.
+  const allDayBookings = useBookingList({
+    date: firstDate || undefined,
+    limit: 100,
+    includeCancelled: false,
+  });
+
   const selectedPsikolog = useMemo(
     () => psikologList.data?.data.find((p) => p.userId === s.psikologUserId),
     [psikologList.data, s.psikologUserId],
@@ -217,6 +198,23 @@ export function useWizardState({
     psikologClosedToday,
     resolvedAvailability,
   ]);
+
+  // RoomId yang sudah terpakai di slot yang dipilih (single-session mode).
+  // Dipakai oleh RoomField untuk disable / memberi label ruangan yang terpakai.
+  const occupiedRoomIds = useMemo(() => {
+    if (!firstDate || firstSlotIdx === null || !selectedSlot) return new Set<number>();
+    const slotStart = new Date(`${firstDate}T${selectedSlot.start}:00`).getTime();
+    const slotEnd = new Date(`${firstDate}T${selectedSlot.end}:00`).getTime();
+    const occupied = new Set<number>();
+    for (const b of allDayBookings.data?.data ?? []) {
+      const bStart = new Date(b.scheduledStart).getTime();
+      const bEnd = new Date(b.scheduledEnd).getTime();
+      if (bStart < slotEnd && bEnd > slotStart) {
+        occupied.add(b.roomId);
+      }
+    }
+    return occupied;
+  }, [allDayBookings.data, firstDate, firstSlotIdx, selectedSlot]);
 
   // Intra-session conflict (multi mode): sesi yang punya date+slotIdx duplikat.
   const intraConflict = useMemo(() => {
@@ -391,6 +389,7 @@ export function useWizardState({
     availabilityQuery,
     resolvedAvailability,
     unavailableSlotIdx,
+    occupiedRoomIds,
     intraConflict,
     allSessionsFilled,
     canSubmit,

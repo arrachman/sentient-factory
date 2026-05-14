@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../auth/password-hasher';
@@ -11,17 +7,10 @@ import { QueryPsikologDto } from './dto/query-psikolog.dto';
 import { UpdatePsikologDto } from './dto/update-psikolog.dto';
 import { PsikologDashboardService } from './psikolog-dashboard.service';
 import { PsikologAvailabilityService } from './psikolog-availability.service';
-import {
-  buildPsikologWhereClause,
-  deriveUsername,
-  groupServiceIdsByUser,
-  mapPsikologToResponse,
-  userSelect,
-  validateAvatarUrl,
-} from './psikolog.utils';
+import { buildPsikologWhereClause, deriveUsername, groupServiceIdsByUser, mapPsikologToResponse, userSelect, validateAvatarUrl } from './psikolog.utils';
 
 const PSIKOLOG_ROLE_NAME = 'clinic-psikolog';
-const DEFAULT_PASSWORD = 'Test1234!'; // TODO: replace dengan auto-generate + WA invite (Slice 8)
+const DEFAULT_PASSWORD = 'Test1234!';
 
 @Injectable()
 export class ClinicPsikologService {
