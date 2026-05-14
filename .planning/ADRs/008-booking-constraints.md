@@ -1,7 +1,7 @@
-# ADR 008: Booking Constraints — Slot Operasional, Buffer, Walk-in, Override
+# ADR 008: Booking Constraints — Slot Operasional, Walk-in, Override
 
-**Status**: Accepted (revised 2026-05-11)
-**Date**: 2026-05-08, revised 2026-05-11
+**Status**: Accepted (revised 2026-05-14)
+**Date**: 2026-05-08, revised 2026-05-11, revised 2026-05-14
 **Deciders**: User + Claude Code
 
 ## Context
@@ -10,11 +10,11 @@ Booking system perlu constraints untuk prevent conflict + accommodate operationa
 
 User decisions confirmed:
 - **Slot operasional** terdefinisi (bukan window jam-buka bebas) — booking harus pas dengan slot
-- Buffer 15 menit antar sesi (default)
-- Back-to-back OK kalau psikolog setuju (admin override)
+- ~~Buffer 15 menit antar sesi~~ — **DIHAPUS**: fitur `bufferMinutes` sudah dihapus dari kode dan skema DB
+- Back-to-back OK (tidak ada buffer enforced)
 - Walk-in allowed (resepsionis quick-book)
 - Reschedule fleksibel (no H-1 deadline)
-- **Bypass** semua validasi via single `bufferOverride` flag (audit-logged)
+- **Bypass** semua validasi slot/hari-tutup/jadwal-psikolog via single `bufferOverride` flag (audit-logged)
 - **Timezone-aware**: semua HH:MM/dow comparison di TZ klinik (default `Asia/Jakarta`), bukan TZ server (container UTC)
 
 ## Decision
@@ -29,7 +29,7 @@ model ClinicSettings {
   slotsOfDay      Json   @default("[]") @map("slots_of_day")
   closedDayOfWeek Json   @default("[0]") @map("closed_day_of_week")  // [0]=Minggu
   holidays        Json   @default("[]")
-  bufferMinutes   Int    @default(15) @map("buffer_minutes")
+  // bufferMinutes dihapus — fitur buffer antar booking tidak dipakai
   timezone        String @default("Asia/Jakarta")
   // ...
 }
@@ -83,17 +83,19 @@ Pakai ini untuk:
 
 Pernah-ada bug `2026-05-12T01:30:00Z` (= 08:30 WIB) di-format `01:30` di server UTC → fixed di commit `14f9c49`.
 
-### D. Buffer time
+### D. Buffer time — DIHAPUS
 
-Default `bufferMinutes: 15`. Implementation:
-- Schedule grid: visual gap 15-min antar booking
-- Conflict detection: `assertNoConflict` cek overlap dengan window `[start - buffer, end + buffer]`
-- Override per-booking via `bufferOverride` flag
+~~Default `bufferMinutes: 15`~~ — fitur buffer antar booking sudah dihapus sepenuhnya.
+
+Conflict detection `assertNoConflict` mengecek overlap tepat pada window `[start, end]` tanpa padding buffer.
+
+`bufferOverride` flag masih ada di model `ClinicBooking` sebagai mekanisme bypass validasi slot/hari-tutup/jadwal-psikolog (bukan bypass buffer karena buffer sudah tidak ada).
 
 ```prisma
 model ClinicBooking {
   // ...
   bufferOverride Boolean @default(false) @map("buffer_override")
+  // field ini skip slot-match + availability check, bukan skip buffer
 }
 ```
 
@@ -118,8 +120,8 @@ Resepsionis bisa quick-book on-the-spot:
 Validate saat create/update booking:
 1. **Slot match** — start/end pas dengan `slotsOfDay` (kecuali `bufferOverride`)
 2. **Closed day / holiday** — block (kecuali `bufferOverride`)
-3. **Psikolog conflict** — tidak ada booking lain overlap psikolog ±buffer
-4. **Room conflict** — tidak ada booking lain overlap room ±buffer
+3. **Psikolog conflict** — tidak ada booking lain overlap psikolog (exact window, tanpa buffer)
+4. **Room conflict** — tidak ada booking lain overlap room (exact window, tanpa buffer)
 5. **Psikolog availability** — sesuai jadwal mingguan + override (ADR 010)
 
 Conflict response: `409` dengan body `{ conflictType, conflictBookingId }`.

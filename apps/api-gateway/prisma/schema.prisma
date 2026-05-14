@@ -710,8 +710,6 @@ model ClinicSettings {
   // Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: Minggu tutup.
   closedDayOfWeek Json     @default("[0]") @map("closed_day_of_week")
   holidays        Json     @default("[]") // list of ISO date strings (tanggal libur ad-hoc)
-  // Booking constraints (ADR 008)
-  bufferMinutes  Int      @default(15) @map("buffer_minutes")
   // Pricing & payment (ADR 007)
   taxEnabled     Boolean  @default(true) @map("tax_enabled")
   taxPercentage  Decimal  @default(11.00) @map("tax_percentage") @db.Decimal(5, 2)

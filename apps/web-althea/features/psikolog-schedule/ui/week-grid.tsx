@@ -24,6 +24,7 @@ export function WeekGrid({
   isLoading,
   slotsOfDay,
   dayAvailability,
+  onBookingClick,
 }: {
   days: Date[];
   todayIdx: number;
@@ -31,6 +32,7 @@ export function WeekGrid({
   isLoading: boolean;
   slotsOfDay: ClinicSettings['slotsOfDay'];
   dayAvailability: DayAvailability[];
+  onBookingClick?: (b: Booking) => void;
 }) {
   // Fallback kalau settings belum loaded
   if (slotsOfDay.length === 0) {
@@ -123,6 +125,7 @@ export function WeekGrid({
                       }
                     }
                     cellHeight={CELL_HEIGHT}
+                    onBookingClick={onBookingClick}
                   />
                 </div>
               );

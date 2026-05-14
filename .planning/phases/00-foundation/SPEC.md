@@ -122,7 +122,7 @@ Seed script di `apps/api-gateway/prisma/seed-clinic.ts` (atau tambah ke existing
 - [ ] Body pakai Mustache placeholder (e.g., `Hai {{nama_klien}}, sesi kamu hari {{tanggal}} jam {{waktu}}...`)
 
 #### G7. Clinic Settings (1 row)
-- [ ] Single-tenant config: clinic name "Althea Psychology", address, operating hours (Senin-Jumat 09-18, Sabtu 10-16, Minggu tutup), tax_enabled=true, dp_percentage=50, buffer_minutes=15
+- [ ] Single-tenant config: clinic name "Althea Psychology", address, operating hours (Senin-Jumat 09-18, Sabtu 10-16, Minggu tutup), tax_enabled=true, dp_percentage=50 (buffer_minutes dihapus dari skema)
 
 ## Verification
 

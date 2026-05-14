@@ -67,11 +67,47 @@ export class BookingValidationService {
   }
 
   /**
-   * Cek psikolog & room conflict dengan buffer (default 15 menit).
+   * Cek room conflict — exact overlap tanpa buffer. SELALU dipanggil terlepas
+   * dari bufferOverride, karena ruangan adalah sumber daya fisik yang tidak bisa
+   * dipakai bersamaan. bufferOverride hanya berlaku untuk psikolog & slot check.
    *
-   * Buffer diambil dari ClinicSettings.bufferMinutes — slot existing ±buffer
-   * dianggap conflict supaya psikolog punya jeda istirahat / catatan.
-   *
+   * Throws ConflictException dengan detail konflik (tipe + bookingId existing).
+   */
+  async assertNoRoomConflict(args: {
+    roomId: number;
+    scheduledStart: Date;
+    scheduledEnd: Date;
+    excludeBookingId: number | null;
+  }): Promise<void> {
+    const { roomId, scheduledStart, scheduledEnd, excludeBookingId } = args;
+
+    const overlapWhere: Prisma.ClinicBookingWhereInput = {
+      deletedAt: null,
+      status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
+      roomId,
+      scheduledStart: { lt: scheduledEnd },
+      scheduledEnd: { gt: scheduledStart },
+    };
+    if (excludeBookingId) overlapWhere.id = { not: excludeBookingId };
+
+    const roomConflict = await this.prisma.clinicBooking.findFirst({
+      where: overlapWhere,
+      select: { id: true, scheduledStart: true, scheduledEnd: true },
+    });
+
+    if (roomConflict) {
+      throw new ConflictException({
+        message: 'Room conflict — ruangan sudah terpakai di waktu tersebut',
+        conflictType: 'room',
+        conflictBookingId: roomConflict.id,
+        scheduledStart: roomConflict.scheduledStart,
+        scheduledEnd: roomConflict.scheduledEnd,
+      });
+    }
+  }
+
+  /**
+   * Cek psikolog conflict (plain overlap, tanpa buffer jeda).
    * Throws ConflictException dengan detail konflik (tipe + bookingId existing).
    */
   async assertNoConflict(args: {
@@ -81,32 +117,21 @@ export class BookingValidationService {
     scheduledEnd: Date;
     excludeBookingId: number | null;
   }): Promise<void> {
-    const { psikologUserId, roomId, scheduledStart, scheduledEnd, excludeBookingId } = args;
-
-    const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
-    const bufferMs = (settings?.bufferMinutes ?? 15) * 60 * 1000;
-    const slotStart = new Date(scheduledStart.getTime() - bufferMs);
-    const slotEnd = new Date(scheduledEnd.getTime() + bufferMs);
+    const { psikologUserId, scheduledStart, scheduledEnd, excludeBookingId } = args;
 
     const overlapWhere: Prisma.ClinicBookingWhereInput = {
       deletedAt: null,
       status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
-      // Overlap test: existing.start < slotEnd AND existing.end > slotStart
-      scheduledStart: { lt: slotEnd },
-      scheduledEnd: { gt: slotStart },
+      // Overlap test: existing.start < end AND existing.end > start
+      scheduledStart: { lt: scheduledEnd },
+      scheduledEnd: { gt: scheduledStart },
     };
     if (excludeBookingId) overlapWhere.id = { not: excludeBookingId };
 
-    const [psikologConflict, roomConflict] = await Promise.all([
-      this.prisma.clinicBooking.findFirst({
-        where: { ...overlapWhere, psikologUserId },
-        select: { id: true, scheduledStart: true, scheduledEnd: true },
-      }),
-      this.prisma.clinicBooking.findFirst({
-        where: { ...overlapWhere, roomId },
-        select: { id: true, scheduledStart: true, scheduledEnd: true },
-      }),
-    ]);
+    const psikologConflict = await this.prisma.clinicBooking.findFirst({
+      where: { ...overlapWhere, psikologUserId },
+      select: { id: true, scheduledStart: true, scheduledEnd: true },
+    });
 
     if (psikologConflict) {
       throw new ConflictException({
@@ -115,15 +140,6 @@ export class BookingValidationService {
         conflictBookingId: psikologConflict.id,
         scheduledStart: psikologConflict.scheduledStart,
         scheduledEnd: psikologConflict.scheduledEnd,
-      });
-    }
-    if (roomConflict) {
-      throw new ConflictException({
-        message: 'Room conflict',
-        conflictType: 'room',
-        conflictBookingId: roomConflict.id,
-        scheduledStart: roomConflict.scheduledStart,
-        scheduledEnd: roomConflict.scheduledEnd,
       });
     }
   }

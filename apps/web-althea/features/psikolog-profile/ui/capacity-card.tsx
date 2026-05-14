@@ -13,7 +13,6 @@ export function CapacityCard({
 }) {
   const items: CapacityItem[] = [
     { label: 'Maks sesi/hari', value: String(defaultSlots), note: 'BR-01' },
-    { label: 'Jeda antar sesi', value: '15 menit' },
     { label: 'Booking dibuka', value: 'H-14' },
   ];
 

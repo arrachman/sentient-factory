@@ -137,6 +137,7 @@ export function BookingWizard({
               intraConflict={w.intraConflict}
               slots={w.slots}
               unavailableSlotIdx={w.unavailableSlotIdx}
+              occupiedRoomIds={w.occupiedRoomIds}
               psikologClosedToday={w.psikologClosedToday}
               resolvedAvailability={w.resolvedAvailability}
               selectedService={w.selectedService}

@@ -85,6 +85,7 @@ export function useClientsPage() {
       address: c.address ?? '',
       notes: c.notes ?? '',
       waOptedOut: c.waOptedOut,
+      isActive: c.isActive,
     });
     setOpen(true);
   }

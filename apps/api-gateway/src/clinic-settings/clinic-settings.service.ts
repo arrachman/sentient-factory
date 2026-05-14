@@ -31,7 +31,6 @@ export class ClinicSettingsService {
     if (dto.closedDayOfWeek !== undefined)
       data.closedDayOfWeek = dto.closedDayOfWeek as Prisma.InputJsonValue;
     if (dto.holidays !== undefined) data.holidays = dto.holidays as Prisma.InputJsonValue;
-    if (dto.bufferMinutes !== undefined) data.bufferMinutes = dto.bufferMinutes;
     if (dto.taxEnabled !== undefined) data.taxEnabled = dto.taxEnabled;
     if (dto.taxPercentage !== undefined) data.taxPercentage = new Prisma.Decimal(dto.taxPercentage);
     if (dto.dpPercentage !== undefined) data.dpPercentage = new Prisma.Decimal(dto.dpPercentage);

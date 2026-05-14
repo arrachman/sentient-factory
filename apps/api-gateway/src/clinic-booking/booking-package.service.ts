@@ -103,6 +103,14 @@ export class BookingPackageService {
           s.roomId,
         );
       }
+      // Room conflict selalu dicek — bufferOverride tidak boleh bypass ruangan fisik
+      await this.validation.assertNoRoomConflict({
+        roomId: s.roomId,
+        scheduledStart: s.start,
+        scheduledEnd: s.end,
+        excludeBookingId: null,
+      });
+
       if (!dto.bufferOverride) {
         await this.validation.assertNoConflict({
           psikologUserId: s.psikologUserId,

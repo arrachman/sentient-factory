@@ -18,12 +18,14 @@ export function HariView({
   isLoading,
   slotsOfDay,
   availability,
+  onBookingClick,
 }: {
   date: string;
   bookings: Booking[];
   isLoading: boolean;
   slotsOfDay: ClinicSettings['slotsOfDay'];
   availability: DayAvailability;
+  onBookingClick?: (b: Booking) => void;
 }) {
   const dayDate = new Date(date);
 
@@ -146,6 +148,7 @@ export function HariView({
                   booking={booking}
                   availability={availability}
                   cellHeight={CELL_HEIGHT}
+                  onBookingClick={onBookingClick}
                 />
               </div>
             </div>

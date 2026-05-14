@@ -11,7 +11,7 @@ const ITEMS: Array<{
   { color: '#5b8a66', border: '#385a43', label: 'Berlangsung' },
   { color: '#a9c8b0', border: '#5b8a66', label: 'Booked (akan datang)' },
   { color: '#ece6d3', border: '#c9bfa1', label: 'Selesai' },
-  { color: '#fafdf7', border: '#c5d8c8', label: 'Tersedia · siap di-booking' },
+  { color: '#fafdf7', border: '#c5d8c8', label: 'Tersedia' },
   { color: '#eeece6', border: '#d8d4c8', label: 'Kosong' },
 ];
 

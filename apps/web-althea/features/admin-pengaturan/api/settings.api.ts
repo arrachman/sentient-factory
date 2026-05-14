@@ -13,7 +13,6 @@ export type ClinicSettings = {
   /** Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). */
   closedDayOfWeek: number[];
   holidays: string[];
-  bufferMinutes: number;
   taxEnabled: boolean;
   taxPercentage: string | number;
   dpPercentage: string | number;
@@ -31,7 +30,6 @@ export type UpdateSettingsInput = Partial<{
   slotsOfDay: SlotDef[];
   closedDayOfWeek: number[];
   holidays: string[];
-  bufferMinutes: number;
   taxEnabled: boolean;
   taxPercentage: number;
   dpPercentage: number;

@@ -236,7 +236,9 @@ export class ClinicWaService {
             body: args.body,
             metadata: args.metadata,
           },
-          WA_JOB_DEFAULTS,
+          // jobId unik per log entry — mencegah double-send jika waQueue.add()
+          // throw timeout tapi job sudah tersimpan di Redis (split-brain scenario).
+          { ...WA_JOB_DEFAULTS, jobId: `wa-log-${log.id}` },
         );
         return {
           success: true,
@@ -245,9 +247,12 @@ export class ClinicWaService {
         };
       } catch (e) {
         this.logger.error(
-          `Failed to enqueue WA job, falling back to sync: ${(e as Error).message}`,
+          `Failed to enqueue WA job (logId=${log.id}): ${(e as Error).message}`,
         );
-        // fall through to sync path
+        // Jangan fallback ke sync — job mungkin sudah ada di Redis.
+        // Fallback sync + job aktif di queue = 2 pesan terkirim.
+        // Log tetap status 'queued'; admin bisa retry manual atau queue akan proses saat Redis recover.
+        return { success: false, data: { logId: log.id, status: 'queued' }, message: 'Queue error — will retry via BullMQ' };
       }
     }
 

@@ -160,22 +160,7 @@ export function TabSlot({
           <h2 className="h2 m-0">Konfigurasi Lain</h2>
         </header>
 
-        <div className="px-5 py-4 grid grid-cols-2 gap-4">
-          <div>
-            <label className="caption mb-1 block">Buffer antar sesi (menit)</label>
-            <input
-              type="number"
-              min={0}
-              max={120}
-              value={form.bufferMinutes ?? 15}
-              onChange={(e) => set('bufferMinutes', Number(e.target.value))}
-              className="input-althea h-9 py-0 max-w-[140px]"
-            />
-            <p className="caption mt-1">
-              Default 15 menit. Sistem cegah booking yang berhimpit kurang dari ini.
-            </p>
-          </div>
-
+        <div className="px-5 py-4">
           <div>
             <label className="caption mb-1 block">Tanggal libur (ad-hoc)</label>
             <textarea

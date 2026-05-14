@@ -244,7 +244,7 @@ Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
 - `Idempotency-Key` header per submit (`apiClient` set otomatis untuk mutation)
 
 ### Override flag
-- Satu checkbox `bufferOverride` skip semua validation (jam, hari libur, conflict buffer, psikolog availability)
+- Satu checkbox `bufferOverride` skip semua validation (slot-match, jam, hari libur, psikolog availability); fitur "conflict buffer" sudah dihapus — tidak ada buffer menit antar booking
 - Pakai HANYA untuk walk-in darurat, audit-logged otomatis
 - UI copy: wrap dalam card cream + helper text panjang supaya admin paham resikonya
 

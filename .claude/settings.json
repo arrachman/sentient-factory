@@ -1,4 +1,15 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{
+          "type": "command",
+          "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; if [[ \"$FILE\" == *\"web-althea\"* ]]; then cd /home/rania/apps/sentient-factory/apps/web-althea && npx tsc --noEmit 2>&1 | grep -E '(error TS|Error)' | head -10; elif [[ \"$FILE\" == *\"api-gateway\"* ]]; then cd /home/rania/apps/sentient-factory/apps/api-gateway && npx tsc --noEmit 2>&1 | grep -E '(error TS|Error)' | head -10; else cd /home/rania/apps/sentient-factory && npm run typecheck 2>&1 | grep -E '(error TS|Error)' | head -10; fi"
+        }]
+      }
+    ]
+  },
   "permissions": {
     "defaultMode": "bypassPermissions",
     "allow": [
@@ -67,10 +78,23 @@
       "Bash(mkdir *)",
       "Bash(for *)",
       "Bash(while *)",
+      "Bash(pm2 *)",
+      "Bash(systemctl *)",
+      "Bash(curl *)",
+      "Bash(sleep *)",
       "Bash(ls -la ~/.claude/ 2>/dev/null)",
       "Read(//home/rania/.claude/**)",
       "Bash(chmod 700 ~/.claude)",
-      "Bash(chmod 600 ~/.claude/settings.json ~/.claude/settings.local.json)"
+      "Bash(chmod 600 ~/.claude/settings.json ~/.claude/settings.local.json)",
+      "Bash(cd /home/rania/apps/sentient-factory && git stash && cd apps/web-althea && npm run typecheck 2>&1 | tail -10; cd /home/rania/apps/sentient-factory && git stash pop)",
+      "Bash({ *)",
+      "Skill(update-config)",
+      "Edit(**/.claude/settings.json)",
+      "Write(**/.claude/settings.json)",
+      "Edit(/home/rania/.claude/settings.json)",
+      "Write(/home/rania/.claude/settings.json)",
+      "Edit(/home/rania/apps/sentient-factory/.claude/settings.json)",
+      "Write(/home/rania/apps/sentient-factory/.claude/settings.json)"
     ],
     "deny": [
       "Bash(rm -rf *)",

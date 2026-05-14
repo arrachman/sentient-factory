@@ -11,8 +11,10 @@ import { Bell, CalendarClock } from 'lucide-react';
 import { useMe } from '@/features/auth/hooks/use-me';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { hasWeeklyAvailability } from '@/features/admin-psikolog/model/types';
+import type { Booking } from '@/features/admin-booking/model/types';
 import { usePsikologSchedule } from '../hooks/use-psikolog-schedule';
 import { AvailabilityDialog } from './availability-dialog';
+import { BookingDetailDrawer } from './booking-detail-drawer';
 import { BulanView } from './bulan-view';
 import { FilterPopover } from './filter-popover';
 import { HariView } from './hari-view';
@@ -31,6 +33,7 @@ export function PsikologSchedulePage() {
   const myWeekly = myProfile?.weeklyAvailability ?? null;
   const needsSetup = myProfile && !hasWeeklyAvailability(myWeekly);
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
   // Skeleton sampai anchor terisi (post-mount). Mencegah hydration
   // mismatch antara SSR (todayKey() di server time) vs CSR (client time).
@@ -99,6 +102,11 @@ export function PsikologSchedulePage() {
         initial={myWeekly}
       />
 
+      <BookingDetailDrawer
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+      />
+
       {/* Legend visible only for grid views (Hari & Minggu) */}
       {page.view !== 'Bulan' ? <ScheduleLegend /> : null}
 
@@ -116,6 +124,7 @@ export function PsikologSchedulePage() {
               source: 'unset',
             }
           }
+          onBookingClick={setSelectedBooking}
         />
       ) : page.view === 'Minggu' ? (
         <WeekGrid
@@ -125,6 +134,7 @@ export function PsikologSchedulePage() {
           isLoading={page.isLoading}
           slotsOfDay={page.slotsOfDay}
           dayAvailability={page.dayAvailability}
+          onBookingClick={setSelectedBooking}
         />
       ) : (
         <BulanView

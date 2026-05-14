@@ -89,10 +89,10 @@ Bug history: commit `14f9c49` fix booking slot 08:30 WIB salah parse jadi 01:30 
 `BookingValidationService` di `src/clinic-booking/booking-validation.service.ts`:
 
 1. `assertEntitiesExist(clientId, serviceId, psikologUserId, roomId)` — FK + active
-2. `assertNoConflict({...})` — psikolog/room overlap dengan buffer
+2. `assertNoConflict({...})` — psikolog/room overlap (exact window, tanpa buffer; fitur bufferMinutes dihapus)
 3. `assertSlotMatch(start, end)` — slot HH:MM exact match (TZ klinik)
 4. `assertPsikologAvailable(psikologUserId, start, slotIdx?)` — weekly + override
-   (skip kalau `bufferOverride: true`)
+   (skip kalau `bufferOverride: true` — flag ini skip step 2, 3, 4)
 
 Caller: `ClinicBookingService.create` + `BookingPackageService.create`.
 

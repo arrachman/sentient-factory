@@ -68,13 +68,6 @@ export class UpdateSettingsDto {
   @IsString({ each: true })
   holidays?: string[];
 
-  @ApiPropertyOptional({ example: 15 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(120)
-  bufferMinutes?: number;
-
   @ApiPropertyOptional({ example: true })
   @IsOptional()
   @IsBoolean()

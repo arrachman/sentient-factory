@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import type { WeeklyAvailability } from '../api/profile.api';
 
 const DAY_KEYS = [
@@ -63,9 +64,6 @@ function fromGrid(grid: CellState[][]): WeeklyAvailability {
   return out;
 }
 
-function isEqual(a: WeeklyAvailability, b: WeeklyAvailability): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
 
 export function AvailabilityGrid({
   initial,
@@ -81,6 +79,9 @@ export function AvailabilityGrid({
   saving: boolean;
 }) {
   const [grid, setGrid] = useState<CellState[][]>(() => toGrid(initial));
+  const userChangedRef = useRef(false);
+  const onSaveRef = useRef(onSave);
+  useEffect(() => { onSaveRef.current = onSave; });
 
   // Re-sync kalau backend data refresh
   useEffect(() => {
@@ -88,11 +89,23 @@ export function AvailabilityGrid({
   }, [initial]);
 
   const draft = useMemo(() => fromGrid(grid), [grid]);
-  const dirty = !isEqual(draft, initial);
+  // Auto-save 500ms setelah user mengubah grid
+  useEffect(() => {
+    if (!userChangedRef.current) return;
+    const timer = setTimeout(() => {
+      if (!userChangedRef.current) return;
+      userChangedRef.current = false;
+      onSaveRef.current(draft);
+      toast.success('Jadwal diperbarui');
+    }, 500);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
 
   function toggleCell(dayIdx: number, slotIdx: number) {
     const cellKey = `${dayIdx}-${slotIdx}`;
     if (bookedKeys.has(cellKey)) return; // Booked: read-only
+    userChangedRef.current = true;
     setGrid((prev) => {
       const next = prev.map((row) => [...row]);
       next[dayIdx][slotIdx] = next[dayIdx][slotIdx] === 'open' ? 'closed' : 'open';
@@ -101,6 +114,7 @@ export function AvailabilityGrid({
   }
 
   function setRowAll(dayIdx: number, state: CellState) {
+    userChangedRef.current = true;
     setGrid((prev) => {
       const next = prev.map((row) => [...row]);
       next[dayIdx] = next[dayIdx].map((cell, slotIdx) => {
@@ -110,14 +124,6 @@ export function AvailabilityGrid({
       });
       return next;
     });
-  }
-
-  function handleReset() {
-    setGrid(toGrid(initial));
-  }
-
-  function handleSave() {
-    onSave(draft);
   }
 
   const totalOpen = grid.flat().filter((c) => c === 'open').length;
@@ -148,26 +154,14 @@ export function AvailabilityGrid({
             {totalBooked > 0 ? ` · ${totalBooked} sudah di-book` : ''}
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          {dirty && (
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={saving}
-              className="btn btn-ghost btn-sm"
-            >
-              Batal
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={!dirty || saving}
-            className="btn btn-primary btn-sm"
+        {saving && (
+          <span
+            className="caption"
+            style={{ fontSize: 11, color: 'var(--sage-600)', alignSelf: 'center' }}
           >
-            {saving ? 'Menyimpan…' : 'Simpan'}
-          </button>
-        </div>
+            Menyimpan…
+          </span>
+        )}
       </div>
 
       {/* Legend */}
@@ -209,6 +203,53 @@ export function AvailabilityGrid({
           />
           Tidak tersedia
         </span>
+      </div>
+
+      {/* Info + warning */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          marginBottom: 14,
+        }}
+      >
+        <div
+          style={{
+            background: 'var(--cream-100)',
+            border: '1px solid var(--border-strong, #d8d3c3)',
+            borderRadius: 6,
+            padding: '8px 12px',
+            fontSize: 11.5,
+            color: 'var(--teal-700, #1e3a3a)',
+            lineHeight: 1.6,
+          }}
+        >
+          <strong style={{ display: 'block', marginBottom: 2 }}>Cara mengatur</strong>
+          Klik sel untuk buka/tutup slot jam tertentu. Klik nama hari untuk toggle semua slot hari itu sekaligus.
+          Perubahan otomatis tersimpan setelah 0,5 detik.
+          <br />
+          <span style={{ color: 'var(--teal-600, #2e5050)' }}>
+            Grid ini adalah <strong>jadwal default mingguan</strong> — berlaku untuk semua pekan
+            kecuali ada override per-tanggal yang diatur di halaman Jadwal Saya.
+          </span>
+        </div>
+        <div
+          style={{
+            background: '#fff8ec',
+            border: '1px solid #f0c97a',
+            borderRadius: 6,
+            padding: '8px 12px',
+            fontSize: 11.5,
+            color: '#7a5200',
+            lineHeight: 1.6,
+          }}
+        >
+          <strong>⚠ Perhatikan dampaknya:</strong> Menutup slot yang sudah ada booking aktif
+          tidak membatalkan booking tersebut, tetapi slot itu tidak akan bisa dipesan lagi
+          oleh klien baru. Pastikan tidak ada booking mendatang di slot yang akan ditutup
+          sebelum menyimpan perubahan.
+        </div>
       </div>
 
       {/* Grid */}
@@ -259,14 +300,6 @@ export function AvailabilityGrid({
         </div>
       </div>
 
-      {dirty && (
-        <p
-          className="caption"
-          style={{ marginTop: 12, fontSize: 11, color: 'var(--sage-700)' }}
-        >
-          ⚠ Ada perubahan belum disimpan. Klik "Simpan" untuk apply.
-        </p>
-      )}
     </div>
   );
 }

@@ -8,7 +8,6 @@ import {
   useUpdateProfile,
 } from '../hooks/use-profile';
 import { AvailabilityGrid } from './availability-grid';
-import { CapacityCard } from './capacity-card';
 import { ProfileCard } from './profile-card';
 import { ProfileEditDialog } from './profile-edit-dialog';
 import { StatsCard } from './stats-card';
@@ -81,7 +80,6 @@ export function ProfilePage() {
             saving={availMut.isPending}
             onSave={(wa) => availMut.mutate(wa)}
           />
-          <CapacityCard defaultSlots={p.defaultSlots} />
         </div>
       </div>
 

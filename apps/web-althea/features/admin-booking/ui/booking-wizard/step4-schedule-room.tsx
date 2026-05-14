@@ -35,6 +35,7 @@ export function Step4ScheduleRoom({
   intraConflict,
   slots,
   unavailableSlotIdx,
+  occupiedRoomIds,
   psikologClosedToday,
   resolvedAvailability,
   selectedService,
@@ -54,6 +55,7 @@ export function Step4ScheduleRoom({
   intraConflict: Set<number>;
   slots: Slot[];
   unavailableSlotIdx: Set<number>;
+  occupiedRoomIds: Set<number>;
   psikologClosedToday: boolean;
   resolvedAvailability?: {
     isOpen: boolean;
@@ -152,6 +154,8 @@ export function Step4ScheduleRoom({
       <RoomField
         roomList={roomList}
         roomId={state.roomId}
+        occupiedRoomIds={isMulti ? new Set<number>() : occupiedRoomIds}
+        slotSelected={isMulti ? true : state.sessions[0]?.slotIdx !== null}
         onChange={(roomId) => setState((p) => ({ ...p, roomId }))}
       />
       <BufferOverrideToggle
@@ -300,10 +304,14 @@ function SlotDurationHint({
 function RoomField({
   roomList,
   roomId,
+  occupiedRoomIds,
+  slotSelected,
   onChange,
 }: {
   roomList: ReturnType<typeof useRoomList>;
   roomId: number | null;
+  occupiedRoomIds: Set<number>;
+  slotSelected: boolean;
   onChange: (roomId: number | null) => void;
 }) {
   return (
@@ -317,12 +325,20 @@ function RoomField({
         className="input-althea"
       >
         <option value="">-- pilih ruang --</option>
-        {(roomList.data?.data ?? []).map((r) => (
-          <option key={r.id} value={r.id}>
-            [{r.type}] {r.name} (kapasitas {r.capacity})
-          </option>
-        ))}
+        {(roomList.data?.data ?? []).map((r) => {
+          const occupied = slotSelected && occupiedRoomIds.has(r.id);
+          return (
+            <option key={r.id} value={r.id} disabled={occupied}>
+              {occupied ? '🔴 ' : ''}[{r.type}] {r.name} (kapasitas {r.capacity}){occupied ? ' — terpakai' : ''}
+            </option>
+          );
+        })}
       </select>
+      {slotSelected && occupiedRoomIds.size > 0 && (
+        <p className="caption mt-1 text-rose-700">
+          ⚠ Ruangan bertanda 🔴 sudah terpakai di slot ini dan tidak bisa dipilih.
+        </p>
+      )}
     </div>
   );
 }
@@ -348,10 +364,13 @@ function BufferOverrideToggle({
             Lewati validasi jeda &amp; jam buka klinik
           </span>
           <span className="caption">
-            Sistem biasanya menolak booking yang berhimpit kurang dari 15
-            menit dari sesi lain, atau di hari tutup. Centang HANYA untuk
-            kasus khusus: walk-in darurat, sesi beruntun yang disengaja,
-            atau sesi di hari libur. Semua override tercatat di audit log.
+            Centang HANYA untuk kasus khusus: walk-in darurat, sesi di hari
+            tutup/libur, atau booking di luar slot operasional. Semua override
+            tercatat di audit log.{' '}
+            <strong className="text-rose-700">
+              Konflik ruangan tetap ditolak meski override aktif — ruangan tidak
+              bisa dipakai dua booking bersamaan.
+            </strong>
           </span>
         </span>
       </label>
