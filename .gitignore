@@ -276,3 +276,6 @@ temp/
 apps/open-design/
 
 insight/
+
+# Turborepo cache
+.turbo/cache/
