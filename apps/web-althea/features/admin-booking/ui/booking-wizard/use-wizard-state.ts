@@ -35,7 +35,6 @@ export type WizardState = {
   roomId: number | null;
   sessions: WizardSession[];
   intervalDays: number;
-  bufferOverride: boolean;
   notes: string;
 };
 
@@ -46,7 +45,6 @@ const INIT: WizardState = {
   roomId: null,
   sessions: [{ date: tomorrowDateStr(), slotIdx: null }],
   intervalDays: 7,
-  bufferOverride: false,
   notes: '',
 };
 
@@ -258,7 +256,7 @@ export function useWizardState({
           conflictBookingId?: number;
         };
         toast.error(`Conflict: ${body?.conflictType ?? 'unknown'}`, {
-          description: `Booking #${body?.conflictBookingId} bertabrakan. Pilih slot/psikolog/ruang lain, atau aktifkan "Buffer override".`,
+          description: `Booking #${body?.conflictBookingId} bertabrakan. Pilih slot, psikolog, atau ruangan lain.`,
         });
         return;
       }
@@ -288,9 +286,7 @@ export function useWizardState({
       if (err instanceof ApiError && err.status === 409) {
         const body = err.body as { conflictType?: string; message?: string };
         toast.error(`Conflict: ${body?.conflictType ?? 'unknown'}`, {
-          description:
-            body?.message ??
-            'Bentrok jadwal — adjust slot atau aktifkan buffer override',
+          description: body?.message ?? 'Bentrok jadwal — adjust slot atau pilih psikolog/ruangan lain',
         });
         return;
       }
@@ -342,7 +338,6 @@ export function useWizardState({
         scheduledEnd: buildIso(ses.date, slot.end),
         sessionN: 1,
         sessionTotal: 1,
-        bufferOverride: s.bufferOverride,
         notes: s.notes.trim() || undefined,
       });
       return;
@@ -359,7 +354,6 @@ export function useWizardState({
           scheduledEnd: buildIso(ses.date, slot.end),
         };
       }),
-      bufferOverride: s.bufferOverride,
       notes: s.notes.trim() || undefined,
     });
   }

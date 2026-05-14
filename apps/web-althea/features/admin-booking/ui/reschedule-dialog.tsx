@@ -28,7 +28,6 @@ export function RescheduleDialog({
   const [psikologUserId, setPsikologUserId] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);
   const [reason, setReason] = useState('');
-  const [bufferOverride, setBufferOverride] = useState(false);
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
@@ -41,7 +40,6 @@ export function RescheduleDialog({
       setPsikologUserId(booking.psikologUserId);
       setRoomId(booking.roomId);
       setReason('');
-      setBufferOverride(false);
     }
   }, [booking]);
 
@@ -78,7 +76,6 @@ export function RescheduleDialog({
       psikologUserId: psikologUserId ?? undefined,
       roomId: roomId ?? undefined,
       reason: reason.trim() || undefined,
-      bufferOverride,
     });
   }
 
@@ -95,7 +92,7 @@ export function RescheduleDialog({
             <h2 className="h2">Reschedule Booking #{booking.id}</h2>
             <p className="caption mt-1">{booking.client.name} — {booking.service.name}</p>
           </div>
-          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Close">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon btn-sm" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -137,14 +134,9 @@ export function RescheduleDialog({
             <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="input-althea h-auto py-2" />
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={bufferOverride} onChange={(e) => setBufferOverride(e.target.checked)} className="h-4 w-4" />
-            <span>Buffer override (skip 15-min buffer + operating hours check)</span>
-          </label>
-
           <div className="flex justify-end gap-2 border-t border-border pt-3">
-            <button type="button" onClick={onClose} className="btn btn-outline">Batal</button>
-            <button type="submit" disabled={mut.isPending} className="btn btn-primary">
+            <button type="button" onClick={onClose} className="btn btn-outline btn-sm">Batal</button>
+            <button type="submit" disabled={mut.isPending} className="btn btn-primary btn-sm">
               {mut.isPending ? 'Menyimpan...' : 'Reschedule'}
             </button>
           </div>

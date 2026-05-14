@@ -17,8 +17,6 @@ import {
 } from 'class-validator';
 
 export const BOOKING_STATUSES = [
-  'awaiting_dp',
-  'confirmed',
   'checked_in',
   'in_progress',
   'completed',
@@ -68,11 +66,6 @@ export class CreateBookingDto {
   @IsString()
   packageGroupId?: string;
 
-  @ApiPropertyOptional({ default: false, description: 'Skip buffer 15min check (admin override)' })
-  @IsOptional()
-  @IsBoolean()
-  bufferOverride?: boolean;
-
   @ApiPropertyOptional({ default: false, description: 'Walk-in booking (resepsionis)' })
   @IsOptional()
   @IsBoolean()
@@ -112,10 +105,6 @@ export class RescheduleBookingDto {
   @MaxLength(500)
   reason?: string;
 
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  bufferOverride?: boolean;
 }
 
 export class CancelBookingDto {
@@ -242,11 +231,6 @@ export class CreatePackageBookingDto {
   @ValidateNested({ each: true })
   @Type(() => PackageSessionDto)
   sessions!: PackageSessionDto[];
-
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  bufferOverride?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()

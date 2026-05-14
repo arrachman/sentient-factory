@@ -94,7 +94,7 @@ export function TabSlot({
                   <button
                     type="button"
                     onClick={() => removeSlot(i)}
-                    className="btn btn-ghost btn-icon h-8 w-8 text-danger"
+                    className="btn btn-ghost btn-icon btn-sm w-[30px] text-danger"
                     aria-label="Hapus slot"
                     title="Hapus slot"
                   >
@@ -114,8 +114,7 @@ export function TabSlot({
           </button>
 
           <p className="caption mt-3 text-fg-muted">
-            💡 Slot harus tidak overlap. Booking di luar slot ditolak — kecuali admin centang{' '}
-            <em>Lewati validasi jeda &amp; jam buka</em> di wizard (untuk walk-in darurat).
+            💡 Slot harus tidak overlap. Booking harus sesuai dengan salah satu slot di atas.
           </p>
         </div>
       </section>

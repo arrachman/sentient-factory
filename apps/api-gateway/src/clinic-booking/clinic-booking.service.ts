@@ -56,7 +56,6 @@ export class ClinicBookingService {
       dto.roomId,
     );
 
-    // Room conflict selalu dicek — bufferOverride tidak boleh bypass ruangan fisik
     await this.validation.assertNoRoomConflict({
       roomId: dto.roomId,
       scheduledStart: start,
@@ -64,17 +63,15 @@ export class ClinicBookingService {
       excludeBookingId: null,
     });
 
-    if (!dto.bufferOverride) {
-      await this.validation.assertNoConflict({
-        psikologUserId: dto.psikologUserId,
-        roomId: dto.roomId,
-        scheduledStart: start,
-        scheduledEnd: end,
-        excludeBookingId: null,
-      });
-    }
+    await this.validation.assertNoConflict({
+      psikologUserId: dto.psikologUserId,
+      roomId: dto.roomId,
+      scheduledStart: start,
+      scheduledEnd: end,
+      excludeBookingId: null,
+    });
 
-    if (!dto.createdViaWalkIn && !dto.bufferOverride) {
+    if (!dto.createdViaWalkIn) {
       await this.validation.assertSlotMatch(start, end);
       await this.validation.assertPsikologAvailable(dto.psikologUserId, start);
     }
@@ -91,22 +88,15 @@ export class ClinicBookingService {
         sessionTotal: dto.sessionTotal ?? 1,
         packageGroupId:
           dto.packageGroupId ?? (dto.sessionTotal && dto.sessionTotal > 1 ? randomUUID() : null),
-        status: dto.createdViaWalkIn ? 'confirmed' : 'awaiting_dp',
-        bufferOverride: dto.bufferOverride ?? false,
+        status: 'checked_in',
         createdViaWalkIn: dto.createdViaWalkIn ?? false,
-        confirmedAt: dto.createdViaWalkIn ? new Date() : null,
+        checkedInAt: new Date(),
         notes: dto.notes,
         createdBy: actorId,
         updatedBy: actorId,
       },
       include: this.includeRelations(),
     });
-
-    // Slice 9: WA event trigger
-    if (booking.status === 'confirmed') {
-      void this.notifier.notify(booking, 'Konfirmasi Booking');
-      void this.notifier.notifyPsikologInfo(booking);
-    }
 
     // Slice 11: SSE event untuk realtime updates di resepsionis dashboard
     this.events.emit({ type: 'created', bookingId: booking.id, status: booking.status });
@@ -178,7 +168,6 @@ export class ClinicBookingService {
     }
     const data: Prisma.ClinicBookingUpdateInput = { updatedBy: actorId };
     if (dto.notes !== undefined) data.notes = dto.notes;
-    if (dto.bufferOverride !== undefined) data.bufferOverride = dto.bufferOverride;
     const updated = await this.prisma.clinicBooking.update({
       where: { id },
       data,
@@ -202,7 +191,6 @@ export class ClinicBookingService {
     }
     const now = new Date();
     const data: Prisma.ClinicBookingUpdateInput = { status: target, updatedBy: actorId };
-    if (target === 'confirmed') data.confirmedAt = now;
     if (target === 'checked_in') data.checkedInAt = now;
     if (target === 'in_progress') data.startedAt = now;
     if (target === 'completed') data.completedAt = now;
@@ -215,10 +203,7 @@ export class ClinicBookingService {
     });
 
     // Slice 9: WA event triggers per status
-    if (target === 'confirmed') {
-      void this.notifier.notify(updated, 'Konfirmasi Booking');
-      void this.notifier.notifyPsikologInfo(updated);
-    } else if (target === 'completed') {
+    if (target === 'completed') {
       void this.notifier.notify(updated, 'Follow-up Post Session');
     }
 
@@ -227,12 +212,6 @@ export class ClinicBookingService {
     return { success: true, data: updated, message: `Booking → ${target}` };
   }
 
-  async confirm(id: number, actorId?: number) {
-    return this.transition(id, 'confirmed', actorId);
-  }
-  async checkIn(id: number, actorId?: number) {
-    return this.transition(id, 'checked_in', actorId);
-  }
   async start(id: number, actorId?: number) {
     return this.transition(id, 'in_progress', actorId);
   }
@@ -278,7 +257,6 @@ export class ClinicBookingService {
     const newPsikologUserId = dto.psikologUserId ?? existing.data.psikologUserId;
     const newRoomId = dto.roomId ?? existing.data.roomId;
 
-    // Room conflict selalu dicek — bufferOverride tidak boleh bypass ruangan fisik
     await this.validation.assertNoRoomConflict({
       roomId: newRoomId,
       scheduledStart: newStart,
@@ -286,15 +264,13 @@ export class ClinicBookingService {
       excludeBookingId: id,
     });
 
-    if (!dto.bufferOverride) {
-      await this.validation.assertNoConflict({
-        psikologUserId: newPsikologUserId,
-        roomId: newRoomId,
-        scheduledStart: newStart,
-        scheduledEnd: newEnd,
-        excludeBookingId: id,
-      });
-    }
+    await this.validation.assertNoConflict({
+      psikologUserId: newPsikologUserId,
+      roomId: newRoomId,
+      scheduledStart: newStart,
+      scheduledEnd: newEnd,
+      excludeBookingId: id,
+    });
 
     const history = (existing.data.rescheduleHistory as unknown[]) || [];
     history.push({

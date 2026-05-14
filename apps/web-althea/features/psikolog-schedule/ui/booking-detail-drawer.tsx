@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X, User, Briefcase, DoorOpen, CalendarDays, FileText, AlertTriangle } from 'lucide-react';
+import { X, User, Briefcase, DoorOpen, CalendarDays, FileText } from 'lucide-react';
 import { STATUS_LABEL } from '@/features/admin-booking/model/types';
 import type { Booking, BookingStatus } from '@/features/admin-booking/model/types';
 
 const STATUS_STYLE: Record<BookingStatus, { bg: string; color: string }> = {
-  awaiting_dp: { bg: '#fef3c7', color: '#92400e' },
-  confirmed: { bg: '#dde9d8', color: '#2d5a38' },
   checked_in: { bg: '#dbeafe', color: '#1e40af' },
   in_progress: { bg: '#5b8a66', color: '#fff' },
   completed: { bg: '#ece6d3', color: '#6b6047' },
@@ -101,7 +99,7 @@ export function BookingDetailDrawer({
 }
 
 function DrawerContent({ booking, onClose }: { booking: Booking; onClose: () => void }) {
-  const statusStyle = STATUS_STYLE[booking.status] ?? STATUS_STYLE.awaiting_dp;
+  const statusStyle = STATUS_STYLE[booking.status] ?? STATUS_STYLE.checked_in;
   const catLabel = SVC_CATEGORY_LABEL[booking.service.category] ?? booking.service.category;
 
   return (
@@ -280,25 +278,6 @@ function DrawerContent({ booking, onClose }: { booking: Booking; onClose: () => 
             </Row>
           )}
 
-          {/* Buffer override warning */}
-          {booking.bufferOverride && (
-            <div
-              style={{
-                padding: '10px 12px',
-                borderRadius: 8,
-                background: '#fff7ed',
-                border: '1px solid #fed7aa',
-                display: 'flex',
-                gap: 8,
-                alignItems: 'flex-start',
-              }}
-            >
-              <AlertTriangle size={14} style={{ color: '#ea580c', flexShrink: 0, marginTop: 1 }} />
-              <span style={{ fontSize: 12, color: '#7c2d12' }}>
-                Booking ini dibuat dengan override validasi (walk-in darurat / konflik jadwal diabaikan).
-              </span>
-            </div>
-          )}
         </div>
       </div>
 

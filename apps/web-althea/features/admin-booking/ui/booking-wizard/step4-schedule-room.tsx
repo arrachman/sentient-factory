@@ -97,14 +97,13 @@ export function Step4ScheduleRoom({
               }))
             }
           />
-          {psikologClosedToday && !state.bufferOverride && (
+          {psikologClosedToday && (
             <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
               ⚠ <strong>{psikologName}</strong> tidak praktik di tanggal ini
               {resolvedAvailability?.source === 'override'
                 ? ' (override khusus tanggal ini'
                 : ' (sesuai jadwal mingguan psikolog'}
-              {overrideReason ? `: ${overrideReason}` : ''}). Pilih tanggal lain,
-              ganti psikolog di step sebelumnya, atau centang override di bawah.
+              {overrideReason ? `: ${overrideReason}` : ''}). Pilih tanggal lain atau ganti psikolog di step sebelumnya.
             </div>
           )}
           {!psikologClosedToday && resolvedAvailability?.source === 'override' && (
@@ -157,12 +156,6 @@ export function Step4ScheduleRoom({
         occupiedRoomIds={isMulti ? new Set<number>() : occupiedRoomIds}
         slotSelected={isMulti ? true : state.sessions[0]?.slotIdx !== null}
         onChange={(roomId) => setState((p) => ({ ...p, roomId }))}
-      />
-      <BufferOverrideToggle
-        checked={state.bufferOverride}
-        onChange={(v) =>
-          setState((p) => ({ ...p, bufferOverride: v }))
-        }
       />
       <NotesField
         notes={state.notes}
@@ -339,41 +332,6 @@ function RoomField({
           ⚠ Ruangan bertanda 🔴 sudah terpakai di slot ini dan tidak bisa dipilih.
         </p>
       )}
-    </div>
-  );
-}
-
-function BufferOverrideToggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <div className="rounded-md border border-border p-3 bg-cream-50">
-      <label className="flex items-start gap-2 text-sm cursor-pointer">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="h-4 w-4 mt-0.5 flex-shrink-0"
-        />
-        <span className="flex flex-col gap-1">
-          <span className="font-medium text-teal-800">
-            Lewati validasi jeda &amp; jam buka klinik
-          </span>
-          <span className="caption">
-            Centang HANYA untuk kasus khusus: walk-in darurat, sesi di hari
-            tutup/libur, atau booking di luar slot operasional. Semua override
-            tercatat di audit log.{' '}
-            <strong className="text-rose-700">
-              Konflik ruangan tetap ditolak meski override aktif — ruangan tidak
-              bisa dipakai dua booking bersamaan.
-            </strong>
-          </span>
-        </span>
-      </label>
     </div>
   );
 }

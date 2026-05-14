@@ -103,7 +103,6 @@ export class BookingPackageService {
           s.roomId,
         );
       }
-      // Room conflict selalu dicek — bufferOverride tidak boleh bypass ruangan fisik
       await this.validation.assertNoRoomConflict({
         roomId: s.roomId,
         scheduledStart: s.start,
@@ -111,17 +110,15 @@ export class BookingPackageService {
         excludeBookingId: null,
       });
 
-      if (!dto.bufferOverride) {
-        await this.validation.assertNoConflict({
-          psikologUserId: s.psikologUserId,
-          roomId: s.roomId,
-          scheduledStart: s.start,
-          scheduledEnd: s.end,
-          excludeBookingId: null,
-        });
-        await this.validation.assertSlotMatch(s.start, s.end);
-        await this.validation.assertPsikologAvailable(s.psikologUserId, s.start);
-      }
+      await this.validation.assertNoConflict({
+        psikologUserId: s.psikologUserId,
+        roomId: s.roomId,
+        scheduledStart: s.start,
+        scheduledEnd: s.end,
+        excludeBookingId: null,
+      });
+      await this.validation.assertSlotMatch(s.start, s.end);
+      await this.validation.assertPsikologAvailable(s.psikologUserId, s.start);
     }
   }
 
@@ -165,8 +162,7 @@ export class BookingPackageService {
             sessionN: s.index + 1,
             sessionTotal: sessions.length,
             packageGroupId,
-            status: 'awaiting_dp',
-            bufferOverride: dto.bufferOverride ?? false,
+            status: 'checked_in',
             createdViaWalkIn: false,
             notes: dto.notes,
             createdBy: actorId,
