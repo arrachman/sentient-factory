@@ -20,8 +20,7 @@ export function PrivacyBanner({ count }: { count: number }) {
       />
       <span style={{ fontSize: 12, color: '#2c4a60', lineHeight: 1.4 }}>
         Menampilkan <strong>hanya klien Anda</strong> ({count} klien). Data
-        klien psikolog lain tidak bisa diakses sesuai kebijakan privasi
-        (BR-04).
+        klien psikolog lain tidak bisa diakses sesuai kebijakan privasi.
       </span>
     </div>
   );

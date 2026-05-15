@@ -60,6 +60,10 @@ export const psikologSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   hasBookings: z.boolean().default(false),
+  /** Stats dari batch query findAll() — hanya ada di list admin, bukan di getById. */
+  todayCount: z.number().int().default(0),
+  weekCount: z.number().int().default(0),
+  clientCount: z.number().int().default(0),
 });
 
 export type Psikolog = z.infer<typeof psikologSchema>;
@@ -139,13 +143,13 @@ export const SPECIALTY_LABEL: Record<string, string> = {
  * Default avatar color palette (sage spectrum).
  */
 export const COLOR_PALETTE = [
-  '#5b8a66',
-  '#7aa382',
-  '#c97a5d',
-  '#6f8aa3',
-  '#9c7c3c',
-  '#3a4f4f',
-  '#e3a895',
+  '#2f7a3f',
+  '#4ea860',
+  '#e25822',
+  '#2f6fb5',
+  '#c98a14',
+  '#0f3a3a',
+  '#d94f7a',
 ];
 
 export type ListResponse = {

@@ -6,6 +6,7 @@
  * Layout: header → action bar → stat tiles → 3-col grid (kategori sidebar ·
  * timeline · detail panel). State & data via `useAuditPage()` hook.
  */
+import { MousePointerClick } from 'lucide-react';
 import { exportAuditCsv } from '../model/export-csv';
 import { categoryLabel } from '../model/types';
 import { useAuditPage } from '../hooks/use-audit-page';
@@ -52,6 +53,7 @@ export function AuditLogPage() {
           filteredCount={page.filtered.length}
           isLoading={page.isLoading}
           isError={page.isError}
+          onShowAll={() => page.setCat('all')}
         >
           <AuditTimeline
             events={page.filtered}
@@ -64,7 +66,10 @@ export function AuditLogPage() {
           {page.selected ? (
             <AuditDetailPanel event={page.selected} />
           ) : (
-            <div className="caption">Tidak ada event terpilih.</div>
+            <div className="col gap-2" style={{ padding: 24, alignItems: 'center', textAlign: 'center' }}>
+              <MousePointerClick size={32} style={{ color: 'var(--fg-muted)', opacity: 0.35 }} />
+              <span className="caption">Klik event di timeline<br />untuk melihat detailnya.</span>
+            </div>
           )}
         </DetailCard>
       </div>
@@ -94,12 +99,14 @@ function TimelineCard({
   filteredCount,
   isLoading,
   isError,
+  onShowAll,
   children,
 }: {
   activeCat: ReturnType<typeof useAuditPage>['cat'];
   filteredCount: number;
   isLoading: boolean;
   isError: boolean;
+  onShowAll: () => void;
   children: React.ReactNode;
 }) {
   return (
@@ -132,7 +139,30 @@ function TimelineCard({
             Gagal memuat audit log. Coba refresh halaman.
           </Centered>
         ) : filteredCount === 0 ? (
-          <Centered>Belum ada audit log untuk filter ini.</Centered>
+          <Centered>
+            Belum ada audit log untuk filter ini.
+            {activeCat !== 'all' && (
+              <>
+                {' '}
+                <button
+                  type="button"
+                  onClick={onShowAll}
+                  style={{
+                    color: 'var(--sage-600)',
+                    fontWeight: 600,
+                    textDecoration: 'underline',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 'inherit',
+                    padding: 0,
+                  }}
+                >
+                  Tampilkan semua
+                </button>
+              </>
+            )}
+          </Centered>
         ) : (
           children
         )}

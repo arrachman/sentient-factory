@@ -60,8 +60,6 @@ export function PsikologRoomsPage() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <PageHeader />
-
       <RoomsToolbar
         date={page.date}
         typeFilter={page.typeFilter}
@@ -75,7 +73,7 @@ export function PsikologRoomsPage() {
       <RoomStatTilesRow stats={page.stats} />
 
       <div
-        className="px-7 pb-7 flex-1 min-h-0"
+        className="px-6 pb-6 flex-1 min-h-0"
         style={{ display: 'flex', gap: 16 }}
       >
         <GridCard>
@@ -94,6 +92,7 @@ export function PsikologRoomsPage() {
                   : null
               }
               onPick={page.pickCell}
+              readOnly
             />
           </GridBody>
         </GridCard>
@@ -116,19 +115,6 @@ export function PsikologRoomsPage() {
 // ============================================================================
 // Local layout slivers
 // ============================================================================
-
-function PageHeader() {
-  return (
-    <div className="px-7 pt-6 pb-2">
-      <div className="eyebrow">Klinis · Ruangan</div>
-      <h1 className="h1 mt-1">Pemakaian Ruangan</h1>
-      <p className="caption mt-1">
-        Lihat ketersediaan ruangan klinik hari ini — read-only. Untuk
-        reservasi atau perubahan, hubungi admin.
-      </p>
-    </div>
-  );
-}
 
 function GridCard({ children }: { children: React.ReactNode }) {
   return (

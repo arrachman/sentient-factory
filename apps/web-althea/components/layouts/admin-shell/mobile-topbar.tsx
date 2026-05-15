@@ -17,7 +17,7 @@ export function MobileTopbar({
       <button
         type="button"
         onClick={onOpenMenu}
-        className="btn btn-ghost btn-icon"
+        className="btn btn-ghost btn-icon btn-sm"
         aria-label="Buka menu"
       >
         <Menu className="h-5 w-5" />

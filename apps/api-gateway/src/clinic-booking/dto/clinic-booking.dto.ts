@@ -128,7 +128,7 @@ export class QueryBookingDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(200)
+  @Max(500)
   limit?: number = 50;
 
   @ApiPropertyOptional({ enum: BOOKING_STATUSES })
@@ -140,6 +140,16 @@ export class QueryBookingDto {
   @IsOptional()
   @IsString()
   date?: string;
+
+  @ApiPropertyOptional({ description: 'Filter booking dari tanggal (YYYY-MM-DD), inklusif' })
+  @IsOptional()
+  @IsString()
+  dateFrom?: string;
+
+  @ApiPropertyOptional({ description: 'Filter booking sampai tanggal (YYYY-MM-DD), inklusif' })
+  @IsOptional()
+  @IsString()
+  dateTo?: string;
 
   @ApiPropertyOptional({ description: 'Filter by psikolog user id' })
   @IsOptional()

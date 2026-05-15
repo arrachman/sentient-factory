@@ -12,8 +12,13 @@ import {
   WA_CATEGORIES,
   type Template,
 } from '../model/types';
-import { CATEGORY_HINT } from '../model/constants';
+import { CATEGORY_HINT, PAID_ONLY_TRIGGERS } from '../model/constants';
 import { getRecipStyle } from '../model/format';
+
+function isPaidOnlyTemplate(t: Template): boolean {
+  if (t.category === 'bayar') return true;
+  return t.triggerEvent ? PAID_ONLY_TRIGGERS.has(t.triggerEvent) : false;
+}
 
 export function TemplateList({
   templates,
@@ -47,14 +52,27 @@ export function TemplateList({
           WA_CATEGORIES.map((cat, ci) => {
             const items = templates.filter((t) => t.category === cat);
             if (items.length === 0) return null;
+            const allPaid = cat === 'bayar';
             return (
               <div key={cat}>
                 <CategoryHeader category={cat} hasBorderTop={ci > 0} />
+                {allPaid ? (
+                  <div className="px-4 py-2 bg-amber-50 border-b border-amber-200">
+                    <div className="text-xs text-amber-900 leading-relaxed">
+                      <strong>Hanya untuk paket full.</strong> Template
+                      pembayaran (DP, pelunasan, bukti bayar, refund)
+                      di-disable di paket saat ini. Hubungi admin untuk
+                      upgrade.
+                    </div>
+                  </div>
+                ) : null}
                 {items.map((t) => (
                   <TemplateRow
                     key={t.id}
                     template={t}
                     isSelected={t.id === selectedId && !creating}
+                    disabled={isPaidOnlyTemplate(t)}
+                    showPaidBadge={!allPaid && isPaidOnlyTemplate(t)}
                     onSelect={() => onSelect(t)}
                     onToggleActive={() => onToggleActive(t)}
                   />
@@ -92,21 +110,27 @@ function CategoryHeader({
 function TemplateRow({
   template: t,
   isSelected,
+  disabled = false,
+  showPaidBadge = false,
   onSelect,
   onToggleActive,
 }: {
   template: Template;
   isSelected: boolean;
+  disabled?: boolean;
+  showPaidBadge?: boolean;
   onSelect: () => void;
   onToggleActive: () => void;
 }) {
   return (
     <div
-      onClick={onSelect}
-      className={`px-4 py-2.5 border-b border-border cursor-pointer transition ${
-        isSelected
-          ? 'bg-sage-50 border-l-[3px] border-l-sage-500 pl-[13px]'
-          : 'hover:bg-cream-50 border-l-[3px] border-l-transparent pl-[13px]'
+      onClick={disabled ? undefined : onSelect}
+      className={`px-4 py-2.5 border-b border-border transition ${
+        disabled
+          ? 'cursor-not-allowed opacity-60 border-l-[3px] border-l-transparent pl-[13px]'
+          : isSelected
+            ? 'cursor-pointer bg-sage-50 border-l-[3px] border-l-sage-500 pl-[13px]'
+            : 'cursor-pointer hover:bg-cream-50 border-l-[3px] border-l-transparent pl-[13px]'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -123,21 +147,38 @@ function TemplateRow({
 
         <button
           type="button"
+          disabled={disabled}
           onClick={(e) => {
             e.stopPropagation();
+            if (disabled) return;
             onToggleActive();
           }}
-          aria-label={t.isActive ? 'Nonaktifkan' : 'Aktifkan'}
-          className="flex-shrink-0 mt-1"
+          aria-label={
+            disabled
+              ? 'Toggle dinonaktifkan — hanya untuk paket full'
+              : t.isActive
+                ? 'Nonaktifkan'
+                : 'Aktifkan'
+          }
+          title={
+            disabled ? 'Hanya untuk paket full' : undefined
+          }
+          className={`flex-shrink-0 mt-1 ${
+            disabled ? 'cursor-not-allowed' : ''
+          }`}
         >
           <span
             className={`block w-6 h-3.5 rounded-full relative transition ${
-              t.isActive ? 'bg-sage-500' : 'bg-cream-200'
+              disabled
+                ? 'bg-cream-200 opacity-50'
+                : t.isActive
+                  ? 'bg-sage-500'
+                  : 'bg-cream-200'
             }`}
           >
             <span
               className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all ${
-                t.isActive ? 'left-3' : 'left-0.5'
+                !disabled && t.isActive ? 'left-3' : 'left-0.5'
               }`}
             />
           </span>
@@ -160,6 +201,14 @@ function TemplateRow({
         {!t.isActive ? (
           <span className="badge badge-warn text-[10px] h-4 px-1.5">
             dijeda
+          </span>
+        ) : null}
+        {showPaidBadge ? (
+          <span
+            className="inline-flex items-center px-1.5 h-4 rounded-full text-[10px] font-medium bg-amber-100 text-amber-900"
+            title="Hanya untuk paket full"
+          >
+            paket full
           </span>
         ) : null}
       </div>

@@ -1,3 +1,4 @@
+import { Users } from 'lucide-react';
 import {
   SPECIALTY_LABEL,
   type Psikolog,
@@ -21,23 +22,42 @@ export function PsikologPerformanceCard({
   slotsPerDay: number;
 }) {
   return (
-    <div className="card-althea" style={{ padding: 20 }}>
+    <div className="card-althea flex flex-col" style={{ padding: 20 }}>
       <div
-        className="flex items-center justify-between"
+        className="flex items-start justify-between gap-3"
         style={{ marginBottom: 14 }}
       >
-        <h2
+        <div className="flex flex-col">
+          <h2
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-serif)',
+              fontSize: 17,
+              fontWeight: 500,
+              color: 'var(--teal-800)',
+            }}
+          >
+            Performa psikolog · hari ini
+          </h2>
+          <span className="caption" style={{ marginTop: 2 }}>
+            {totalCount} psikolog aktif · target {slotsPerDay} slot/orang
+          </span>
+        </div>
+        <span
+          aria-hidden
           style={{
-            margin: 0,
-            fontFamily: 'var(--font-serif)',
-            fontSize: 19,
-            fontWeight: 500,
-            color: 'var(--teal-800)',
+            width: 28,
+            height: 28,
+            borderRadius: 999,
+            background: 'var(--info-soft)',
+            color: 'var(--info)',
+            display: 'grid',
+            placeItems: 'center',
+            flexShrink: 0,
           }}
         >
-          Performa psikolog · hari ini
-        </h2>
-        <span className="caption">{totalCount} psikolog aktif</span>
+          <Users size={14} strokeWidth={2.2} />
+        </span>
       </div>
       <div className="flex flex-col gap-2">
         {isLoading ? (
@@ -112,12 +132,15 @@ function PsikologRow({
         {initial}
       </span>
       <div className="flex flex-col" style={{ flex: 1, minWidth: 0 }}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span
             style={{
               fontSize: 13,
               fontWeight: 600,
               color: 'var(--teal-800)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
             {p.fullName ?? p.email}
@@ -127,9 +150,10 @@ function PsikologRow({
               fontSize: 12,
               fontVariantNumeric: 'tabular-nums',
               color: 'var(--fg-muted)',
+              flexShrink: 0,
             }}
           >
-            {todayCount}/{max} hari ini · {totalActive} klien aktif
+            {todayCount}/{max} · {totalActive} klien
           </span>
         </div>
         <div
@@ -140,6 +164,7 @@ function PsikologRow({
             marginTop: 5,
             overflow: 'hidden',
           }}
+          aria-hidden
         >
           <div
             style={{

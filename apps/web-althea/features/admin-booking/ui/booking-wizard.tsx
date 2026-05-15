@@ -152,14 +152,14 @@ export function BookingWizard({
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-3">
-          <button type="button" onClick={onClose} className="btn btn-ghost">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-sm">
             Batal
           </button>
           <button
             type="button"
             onClick={() => w.submit()}
             disabled={!canSubmit}
-            className="btn btn-primary disabled:opacity-50"
+            className="btn btn-primary btn-sm disabled:opacity-50"
           >
             {w.submitting
               ? 'Menyimpan...'
@@ -185,7 +185,7 @@ function DialogHeader({ onClose }: { onClose: () => void }) {
       <button
         type="button"
         onClick={onClose}
-        className="btn btn-ghost btn-icon"
+        className="btn btn-ghost btn-icon btn-sm"
         aria-label="Close"
       >
         <X className="h-5 w-5" />

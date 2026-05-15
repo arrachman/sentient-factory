@@ -150,7 +150,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-ghost btn-icon"
+            className="btn btn-ghost btn-icon btn-sm"
             aria-label="Close dialog"
           >
             <X className="h-5 w-5" />
@@ -289,7 +289,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
               className="input-althea max-w-[160px]"
             />
             <p className="caption mt-1 text-fg-muted">
-              Maksimal jumlah klien per hari yang bisa di-booking ke psikolog ini (BR-01).
+              Maksimal jumlah klien per hari yang bisa di-booking ke psikolog ini.
             </p>
           </div>
 
@@ -370,10 +370,10 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-            <button type="button" onClick={onClose} className="btn btn-outline">
+            <button type="button" onClick={onClose} className="btn btn-outline btn-sm">
               Batal
             </button>
-            <button type="submit" disabled={submitting} className="btn btn-primary">
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-sm">
               {submitting ? 'Menyimpan...' : isEdit ? 'Simpan' : 'Tambah Psikolog'}
             </button>
           </div>

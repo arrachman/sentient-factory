@@ -158,7 +158,7 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-ghost btn-icon"
+            className="btn btn-ghost btn-icon btn-sm"
             aria-label="Tutup"
           >
             <X className="h-5 w-5" />
@@ -324,14 +324,14 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4">
-          <button type="button" onClick={onClose} className="btn btn-outline">
+          <button type="button" onClick={onClose} className="btn btn-outline btn-sm">
             Batal
           </button>
           <button
             type="button"
             onClick={save}
             disabled={updateMut.isPending || slots.length === 0}
-            className="btn btn-primary disabled:opacity-50"
+            className="btn btn-primary btn-sm disabled:opacity-50"
           >
             <Save className="h-4 w-4" /> {updateMut.isPending ? 'Menyimpan…' : 'Simpan Jadwal'}
           </button>

@@ -22,9 +22,17 @@ import {
   computeWeekTrend,
 } from '../model/aggregate';
 import { DEFAULT_SLOTS_PER_DAY } from '../model/constants';
-import { todayKey } from '../model/format';
+import { dateKey, todayKey } from '../model/format';
+
+function rangeFrom35DaysAgo(): { dateFrom: string; dateTo: string } {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - 35);
+  return { dateFrom: dateKey(from), dateTo: dateKey(to) };
+}
 
 export function useOwnerDashboard() {
+  const range = rangeFrom35DaysAgo();
   const today = useBookingList({
     date: todayKey(),
     limit: 200,
@@ -37,6 +45,8 @@ export function useOwnerDashboard() {
   const monthBookings = useBookingList({
     limit: 500,
     includeCancelled: false,
+    dateFrom: range.dateFrom,
+    dateTo: range.dateTo,
   });
 
   const slotsPerDay =

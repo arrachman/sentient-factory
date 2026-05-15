@@ -12,7 +12,7 @@ export function CapacityCard({
   defaultSlots: number;
 }) {
   const items: CapacityItem[] = [
-    { label: 'Maks sesi/hari', value: String(defaultSlots), note: 'BR-01' },
+    { label: 'Maks sesi/hari', value: String(defaultSlots) },
     { label: 'Booking dibuka', value: 'H-14' },
   ];
 
@@ -83,7 +83,7 @@ export function CapacityCard({
         className="caption"
         style={{ fontSize: 11, marginTop: 8, display: 'block' }}
       >
-        Maks {defaultSlots} klien/hari sesuai BR-01 — admin yang atur via{' '}
+        Maks {defaultSlots} klien/hari — admin yang atur via{' '}
         <span style={{ color: 'var(--sage-700)' }}>/admin/psikolog</span>. Anda
         pilih {defaultSlots} dari 10 slot tersedia di grid di atas.
       </span>

@@ -61,7 +61,7 @@ export function SidebarBrand({
       <button
         type="button"
         onClick={onCloseMobile}
-        className="lg:hidden btn btn-ghost btn-icon"
+        className="lg:hidden btn btn-ghost btn-icon btn-sm"
         aria-label="Tutup menu"
       >
         <X className="h-5 w-5" />

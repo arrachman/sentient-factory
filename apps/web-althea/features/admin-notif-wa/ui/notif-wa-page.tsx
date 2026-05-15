@@ -144,7 +144,7 @@ export function NotifWaPage() {
   const submitting = createMut.isPending || updateMut.isPending;
 
   return (
-    <div className="space-y-4 p-4 lg:p-8">
+    <div className="space-y-4 p-6">
       <WaPageHeader onCreate={startCreate} />
 
       <WaStatsRow

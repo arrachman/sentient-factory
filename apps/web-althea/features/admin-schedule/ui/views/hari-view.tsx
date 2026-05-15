@@ -17,13 +17,13 @@ export function HariView({
   psikologs,
   bookings,
   isLoading,
-  onCellClick,
+  onBookingClick,
 }: {
   date: string;
   psikologs: Psikolog[];
   bookings: Booking[];
   isLoading: boolean;
-  onCellClick: () => void;
+  onBookingClick: (b: Booking) => void;
 }) {
   if (isLoading) {
     return (
@@ -76,6 +76,7 @@ export function HariView({
                 ? 'none'
                 : '1px solid var(--border)',
             minWidth,
+            background: slotIdx % 2 === 1 ? 'rgba(247, 244, 237, 0.55)' : 'transparent',
           }}
         >
           <SlotLabel start={slot.start} end={slot.end} />
@@ -90,7 +91,7 @@ export function HariView({
                   minHeight: 88,
                 }}
               >
-                {b ? <BookingCard b={b} /> : <EmptySlot onClick={onCellClick} />}
+                {b ? <BookingCard b={b} onClick={() => onBookingClick(b)} /> : <EmptySlot />}
               </div>
             );
           })}
@@ -125,14 +126,13 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: 'var(--cream-50)',
         borderRight: '1px solid var(--border)',
       }}
     >
       <span
         style={{
-          fontSize: 11.5,
-          fontWeight: 600,
+          fontSize: 12,
+          fontWeight: 700,
           color: 'var(--teal-800)',
           fontVariantNumeric: 'tabular-nums',
         }}

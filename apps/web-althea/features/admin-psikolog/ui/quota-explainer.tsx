@@ -27,7 +27,7 @@ export function QuotaExplainer() {
             className="caption"
             style={{ fontWeight: 600, color: '#2c4a60' }}
           >
-            Kuota harian psikolog (BR-01)
+            Kuota harian psikolog
           </span>
           <span
             className="caption"

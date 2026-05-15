@@ -26,7 +26,12 @@ export type PsikologRowData = {
   totalActive: number;
 };
 
-export type WeekDay = { label: string; count: number; isToday: boolean };
+export type WeekDay = {
+  label: string;
+  dateLabel: string;
+  count: number;
+  isToday: boolean;
+};
 
 export type RoomGroupAgg = { used: number; max: number };
 
@@ -37,7 +42,15 @@ export type TopService = {
   count: number;
 };
 
-const WEEK_DAY_LABELS = ['Sn', 'Sl', 'Rb', 'Km', 'Jm', 'Sb', 'Mg'];
+const WEEK_DAY_LABELS = [
+  'Senin',
+  'Selasa',
+  'Rabu',
+  'Kamis',
+  'Jumat',
+  'Sabtu',
+  'Minggu',
+];
 
 export function computeKpi({
   todayBookings,
@@ -131,7 +144,16 @@ export function computeWeekTrend(allBookings: Booking[]): WeekDay[] {
       b.scheduledStart.startsWith(key),
     ).length;
     const dayIdx = (d.getDay() + 6) % 7; // Mon=0
-    days.push({ label: WEEK_DAY_LABELS[dayIdx], count, isToday: i === 0 });
+    const dateLabel = d.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+    });
+    days.push({
+      label: WEEK_DAY_LABELS[dayIdx],
+      dateLabel,
+      count,
+      isToday: i === 0,
+    });
   }
   return days;
 }

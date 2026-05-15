@@ -202,6 +202,7 @@ export class BookingPackageService {
           id: true,
           email: true,
           fullName: true,
+          avatarUrl: true,
           clinicPsikologProfile: { select: { title: true, color: true } },
         },
       },

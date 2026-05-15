@@ -4,6 +4,7 @@ import { ReactNode, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useMe } from '@/features/auth/hooks/use-me';
+import { usePsikologMe } from '@/features/psikolog-profile/hooks/use-profile';
 import { DesktopTopbar } from './admin-shell/desktop-topbar';
 import { performLogout, resolvePageMeta, userInitial } from './admin-shell/lib';
 import { LogoutConfirmDialog } from './admin-shell/logout-confirm-dialog';
@@ -24,6 +25,8 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
 
   const meQuery = useMe();
   const me = meQuery.data?.data;
+  const psikologMeQuery = usePsikologMe({ enabled: role === 'psikolog' });
+  const psikologProfile = psikologMeQuery.data?.data;
   const nav = NAV_BY_ROLE[role];
   const meta = resolvePageMeta(pathname, nav);
 
@@ -78,6 +81,8 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
           userName={userName}
           userRole={userRole}
           onRequestLogout={() => setLogoutConfirmOpen(true)}
+          avatarUrl={psikologProfile?.avatarUrl ?? null}
+          avatarColor={psikologProfile?.color ?? null}
         />
       </aside>
 
@@ -92,6 +97,8 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
           searchPlaceholder={searchPlaceholder}
           initial={initial}
           userName={userName}
+          avatarUrl={psikologProfile?.avatarUrl ?? null}
+          avatarColor={psikologProfile?.color ?? null}
         />
         <main className="flex-1">{children}</main>
       </div>

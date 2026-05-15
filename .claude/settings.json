@@ -5,7 +5,14 @@
         "matcher": "Edit|Write",
         "hooks": [{
           "type": "command",
-          "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; if [[ \"$FILE\" == *\"web-althea\"* ]]; then cd /home/rania/apps/sentient-factory/apps/web-althea && npx tsc --noEmit 2>&1 | grep -E '(error TS|Error)' | head -10; elif [[ \"$FILE\" == *\"api-gateway\"* ]]; then cd /home/rania/apps/sentient-factory/apps/api-gateway && npx tsc --noEmit 2>&1 | grep -E '(error TS|Error)' | head -10; else cd /home/rania/apps/sentient-factory && npm run typecheck 2>&1 | grep -E '(error TS|Error)' | head -10; fi"
+          "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx) WS=$(echo \"$FILE\" | grep -oP '/home/rania/apps/sentient-factory/(apps|packages)/[^/]+'); if [[ -n \"$WS\" && -f \"$WS/tsconfig.json\" ]]; then cd \"$WS\" && npx tsc --noEmit 2>&1 | grep -E 'error TS' | head -10; fi ;; esac"
+        }]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{
+          "type": "command",
+          "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx|*.py) if [ -f \"$FILE\" ]; then LINES=$(wc -l < \"$FILE\"); if [ \"$LINES\" -gt 400 ]; then echo \"⚠️  FILE TOO LONG: $FILE has $LINES lines (limit: 400). Split into smaller modules before continuing.\"; fi; fi ;; esac"
         }]
       }
     ]
@@ -80,7 +87,9 @@
       "Bash(while *)",
       "Bash(pm2 *)",
       "Bash(systemctl *)",
+      "Bash(journalctl *)",
       "Bash(curl *)",
+      "Bash(TOKEN=*)",
       "Bash(sleep *)",
       "Bash(ls -la ~/.claude/ 2>/dev/null)",
       "Read(//home/rania/.claude/**)",

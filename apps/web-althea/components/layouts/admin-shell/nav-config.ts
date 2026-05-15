@@ -8,15 +8,16 @@
  */
 import type { ReactNode } from 'react';
 import {
+  BarChart3,
   CalendarDays,
   ClipboardList,
   Clock,
   DoorOpen,
   FileText,
+  Notebook,
   Home,
   List,
   MessageSquare,
-  Notebook,
   Settings,
   Stethoscope,
   UserCircle2,
@@ -191,10 +192,30 @@ export type ShellRole =
   | 'marketing'
   | 'intern';
 
+const OWNER_NAV: NavGroup[] = [
+  {
+    category: 'Utama',
+    items: [
+      {
+        href: '/owner/dashboard',
+        label: 'Dashboard',
+        icon: createElement(Home, { className: ICON_CLASS }),
+        pageTitle: 'Snapshot Klinik · Hari Ini',
+      },
+      {
+        href: '/owner/analitik',
+        label: 'Analitik',
+        icon: createElement(BarChart3, { className: ICON_CLASS }),
+        pageTitle: 'Analitik & Performa Klinik',
+      },
+    ],
+  },
+];
+
 export const NAV_BY_ROLE: Record<ShellRole, NavGroup[]> = {
   admin: ADMIN_NAV,
   psikolog: PSIKOLOG_NAV,
-  owner: singleDashboardNav('/owner'),
+  owner: OWNER_NAV,
   resepsionis: singleDashboardNav('/resepsionis'),
   marketing: singleDashboardNav('/marketing'),
   intern: singleDashboardNav('/intern'),

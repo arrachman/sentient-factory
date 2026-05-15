@@ -26,7 +26,7 @@ export function PrivacyReminder() {
         style={{ fontSize: 11, color: '#2c4a60', lineHeight: 1.45 }}
       >
         Data klien ini hanya dapat diakses oleh Anda sebagai psikolog
-        penanggung. BR-04.
+        penanggung.
       </span>
     </div>
   );

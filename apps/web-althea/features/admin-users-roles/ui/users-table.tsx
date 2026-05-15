@@ -8,7 +8,7 @@
 import { MoreHorizontal, Pencil } from 'lucide-react';
 import type { ClinicRoleName, ClinicUser } from '../model/types';
 import { ROLE_INFO } from '../model/role-config';
-import { formatLastLogin, pickPrimaryRole } from '../model/format';
+import { formatLastLogin, formatLoginTimestamp, pickPrimaryRole } from '../model/format';
 import { UserAvatar } from './user-avatar';
 
 export function UsersTable({
@@ -109,7 +109,7 @@ function RoleFilterPills({
   );
 }
 
-const COL_TPL = '2fr 1.4fr 1.5fr 1fr 1.4fr 100px';
+const COL_TPL = '2fr 1.4fr 1.8fr 100px';
 
 function UserTableCard({
   items,
@@ -141,8 +141,6 @@ function UserTableCard({
         <span>User</span>
         <span>Role</span>
         <span>Aktivitas terakhir</span>
-        <span>2FA</span>
-        <span>Status</span>
         <span />
       </div>
       {isLoading ? (
@@ -242,26 +240,9 @@ function UserRow({
           {lastLabel}
         </span>
         <span className="caption" style={{ fontSize: 10.5 }}>
-          —
+          {formatLoginTimestamp(u.lastLogin)}
         </span>
       </div>
-      <span
-        className="badge badge-neutral"
-        style={{ height: 18, fontSize: 10, width: 'fit-content' }}
-        title="2FA backend belum tersedia"
-      >
-        — belum
-      </span>
-      <span
-        className={'badge ' + (u.isActive ? 'badge-sage' : 'badge-neutral')}
-        style={{
-          height: 20,
-          textTransform: 'capitalize',
-          width: 'fit-content',
-        }}
-      >
-        {u.isActive ? 'aktif' : 'nonaktif'}
-      </span>
       <div className="flex items-center justify-end gap-1">
         <button
           type="button"

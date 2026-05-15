@@ -120,18 +120,9 @@ export function ClientsPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col p-4 lg:p-8">
-      <div className="flex items-baseline justify-between border-b border-border pb-3">
-        <div>
-          <h1 className="h1">Daftar Klien</h1>
-          <p className="caption mt-1">
-            Kelola pasien klinik — intake form, riwayat sesi, &amp; jadwalkan booking baru.
-          </p>
-        </div>
-      </div>
-
+    <div className="flex h-[calc(100vh-4rem)] flex-col p-6">
       <div className="flex flex-1 min-h-0">
-        <div className="flex-1 min-w-0 px-2 pt-4 pb-2 flex flex-col gap-3">
+        <div className="flex-1 min-w-0 flex flex-col gap-3">
           <ClientsToolbar
             filter={filter}
             counts={counts}

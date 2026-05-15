@@ -82,22 +82,6 @@ export class ClinicBookingController {
     return this.service.update(id, dto, req.user?.sub ?? req.user?.id);
   }
 
-  @Post(':id/confirm')
-  @Roles(...WRITE_ROLES)
-  @AuditAction('confirm')
-  @ApiOperation({ summary: 'Mark booking as confirmed (DP paid)' })
-  confirm(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
-    return this.service.confirm(id, req.user?.sub ?? req.user?.id);
-  }
-
-  @Post(':id/check-in')
-  @Roles(...WRITE_ROLES)
-  @AuditAction('check_in')
-  @ApiOperation({ summary: 'Receptionist check-in client' })
-  checkIn(@Param('id', ParseIntPipe) id: number, @Request() req: AuthRequest) {
-    return this.service.checkIn(id, req.user?.sub ?? req.user?.id);
-  }
-
   @Post(':id/start')
   @Roles('clinic-admin', 'clinic-psikolog')
   @AuditAction('start')

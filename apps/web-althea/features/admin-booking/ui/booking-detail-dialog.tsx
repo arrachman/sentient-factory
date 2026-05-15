@@ -15,11 +15,12 @@ import {
 import { bookingApi } from '../api/booking.api';
 import { STATUS_BADGE_CLASS, STATUS_LABEL, type Booking } from '../model/types';
 import { DetailRow, formatDateTime, rp } from './booking-detail-utils';
+import { PLAN_FEATURES } from '@/shared/config/clinic-plan';
 
 type Props = { booking: Booking | null; onClose: () => void };
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
-  pending: 'Menunggu DP',
+  pending: 'Menunggu Konfirmasi',
   dp_paid: 'DP Lunas',
   lunas: 'Lunas',
   refunded: 'Refund',
@@ -40,7 +41,7 @@ export function BookingDetailDialog({ booking, onClose }: Props) {
   const paymentQuery = useQuery({
     queryKey: ['clinic', 'booking', booking?.id, 'payment'],
     queryFn: () => bookingApi.getPaymentByBooking(booking!.id),
-    enabled: !!booking && (tab === 'payment' || tab === 'detail'),
+    enabled: PLAN_FEATURES.payment && !!booking && (tab === 'payment' || tab === 'detail'),
   });
 
   const reminderMut = useMutation({
@@ -119,7 +120,7 @@ export function BookingDetailDialog({ booking, onClose }: Props) {
               )}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Close">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon btn-sm" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -129,7 +130,9 @@ export function BookingDetailDialog({ booking, onClose }: Props) {
           {[
             { id: 'detail', label: 'Detail', icon: <FileText className="h-4 w-4" /> },
             { id: 'notes', label: 'Catatan Klinis', icon: <FileText className="h-4 w-4" /> },
-            { id: 'payment', label: 'Pembayaran', icon: <Banknote className="h-4 w-4" /> },
+            ...(PLAN_FEATURES.payment
+              ? [{ id: 'payment', label: 'Pembayaran', icon: <Banknote className="h-4 w-4" /> }]
+              : []),
             {
               id: 'history',
               label: `Riwayat (${rescheduleHistory.length})`,
@@ -180,8 +183,8 @@ export function BookingDetailDialog({ booking, onClose }: Props) {
               <DetailRow label="Selesai" value={formatDateTime(booking.scheduledEnd)} />
               {booking.notes && <DetailRow label="Catatan" value={<div className="whitespace-pre-wrap">{booking.notes}</div>} />}
 
-              {/* Payment summary */}
-              {payment && (
+              {/* Payment summary — paket premium only */}
+              {PLAN_FEATURES.payment && payment && (
                 <DetailRow
                   label="Pembayaran"
                   value={

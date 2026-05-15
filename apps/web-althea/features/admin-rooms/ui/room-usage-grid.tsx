@@ -3,32 +3,35 @@
 /**
  * Grid pemakaian ruangan: rows = slot waktu, cols = ruangan, cell = booking.
  *
- * Tiap sel:
- *   - Ada booking → card warna unik psikolog (background `${color}22`,
- *     left bar 3px, dua baris: nama pendek + nama layanan)
- *   - Kosong → dashed border + ikon plus (klik = open detail panel sebagai
- *     hint untuk admin lanjut booking lewat halaman Jadwal)
+ * Visual hierarchy:
+ *   - Booked → card warna psikolog menonjol (opacity 26%, left bar 3px)
+ *   - Empty (admin) → dashed border + ikon plus (afford klik)
+ *   - Empty (readOnly) → near-invisible; hanya muncul saat hover
+ *   - Row banding: even rows soft cream tint untuk membantu eye-track horizontal
  */
-import { Plus } from 'lucide-react';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { ROOM_TYPE_STYLE, SLOTS } from '../model/constants';
 import { bookingForCell, shortName } from '../model/utils';
 import type { Room } from '../model/types';
 
-const CELL_HEIGHT_PX = 56;
+const CELL_HEIGHT_PX = 58;
+const ROW_BAND_EVEN = 'rgba(247, 244, 237, 0.55)';
+const PICKED_BG = 'rgba(91, 138, 102, 0.12)';
 
 export function RoomUsageGrid({
   rooms,
   bookings,
   dateKey,
-  pickedKey,
+  pickedKey = null,
   onPick,
+  readOnly = false,
 }: {
   rooms: Room[];
   bookings: Booking[];
   dateKey: string;
-  pickedKey: string | null;
-  onPick: (room: Room, slotIdx: number, booking: Booking | null) => void;
+  pickedKey?: string | null;
+  onPick?: (room: Room, slotIdx: number, booking: Booking | null) => void;
+  readOnly?: boolean;
 }) {
   const colTpl = `90px repeat(${rooms.length}, minmax(96px, 1fr))`;
 
@@ -48,6 +51,7 @@ export function RoomUsageGrid({
                 slotIdx === SLOTS.length - 1
                   ? 'none'
                   : '1px solid var(--border)',
+              background: slotIdx % 2 === 1 ? ROW_BAND_EVEN : 'transparent',
             }}
           >
             <SlotLabel slot={slot} />
@@ -59,7 +63,8 @@ export function RoomUsageGrid({
                   key={cellKey}
                   booking={booking}
                   isPicked={pickedKey === cellKey}
-                  onClick={() => onPick(r, slotIdx, booking)}
+                  readOnly={readOnly}
+                  onClick={() => onPick?.(r, slotIdx, booking)}
                 />
               );
             })}
@@ -150,24 +155,30 @@ function SlotLabel({ slot }: { slot: (typeof SLOTS)[number] }) {
   return (
     <div
       style={{
-        padding: '8px 12px',
+        padding: '8px 14px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: 'var(--cream-50)',
         borderRight: '1px solid var(--border)',
       }}
     >
       <span
         style={{
-          fontSize: 11.5,
-          fontWeight: 600,
+          fontSize: 12,
+          fontWeight: 700,
           color: 'var(--teal-800)',
+          fontVariantNumeric: 'tabular-nums',
         }}
       >
         {slot.start}
       </span>
-      <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>
+      <span
+        style={{
+          fontSize: 10.5,
+          color: 'var(--fg-muted)',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
         {slot.end}
       </span>
     </div>
@@ -177,30 +188,40 @@ function SlotLabel({ slot }: { slot: (typeof SLOTS)[number] }) {
 function GridCell({
   booking,
   isPicked,
+  readOnly,
   onClick,
 }: {
   booking: Booking | null;
   isPicked: boolean;
+  readOnly: boolean;
   onClick: () => void;
 }) {
+  const cellClass = booking
+    ? 'room-cell room-cell--booked'
+    : readOnly
+      ? 'room-cell room-cell--empty-readonly'
+      : 'room-cell room-cell--empty';
+
   return (
     <button
       type="button"
       onClick={onClick}
+      className={cellClass}
+      data-picked={isPicked || undefined}
       style={{
         padding: 4,
         borderLeft: '1px solid var(--border)',
         minHeight: CELL_HEIGHT_PX,
         cursor: 'pointer',
-        background: isPicked ? 'rgba(91,138,102,0.08)' : 'transparent',
-        border: 'none',
+        background: isPicked ? PICKED_BG : 'transparent',
         borderTop: 0,
         borderBottom: 0,
         borderRight: 0,
         textAlign: 'left',
+        transition: 'background 120ms ease',
       }}
     >
-      {booking ? <BookedCell booking={booking} /> : <EmptyCell />}
+      {booking ? <BookedCell booking={booking} /> : <EmptyCell readOnly={readOnly} />}
     </button>
   );
 }
@@ -211,14 +232,15 @@ function BookedCell({ booking }: { booking: Booking }) {
   return (
     <div
       style={{
-        background: `${psyColor}22`,
+        background: `${psyColor}26`,
         borderLeft: `3px solid ${psyColor}`,
         borderRadius: 6,
-        padding: '6px 8px',
+        padding: '7px 10px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
+        boxShadow: `inset 0 0 0 1px ${psyColor}1a`,
       }}
     >
       <div
@@ -238,7 +260,7 @@ function BookedCell({ booking }: { booking: Booking }) {
         style={{
           fontSize: 10.5,
           color: psyColor,
-          opacity: 0.7,
+          opacity: 0.78,
           lineHeight: 1.2,
           marginTop: 2,
           whiteSpace: 'nowrap',
@@ -252,19 +274,8 @@ function BookedCell({ booking }: { booking: Booking }) {
   );
 }
 
-function EmptyCell() {
-  return (
-    <div
-      style={{
-        height: '100%',
-        borderRadius: 6,
-        border: '1px dashed var(--border-strong)',
-        display: 'grid',
-        placeItems: 'center',
-        color: 'var(--fg-muted)',
-      }}
-    >
-      <Plus size={12} />
-    </div>
-  );
+function EmptyCell(_: { readOnly: boolean }) {
+  // Sengaja kosong visual di semua role — biarkan row band yang berbicara.
+  // Hover affordance di-handle via CSS class (room-cell--empty / room-cell--empty-readonly).
+  return <div style={{ height: '100%', borderRadius: 6 }} aria-hidden />;
 }

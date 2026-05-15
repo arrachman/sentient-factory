@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { PLAN_FEATURES } from '@/shared/config/clinic-plan';
 
-export const CLINIC_ROLES = [
+const ALL_CLINIC_ROLES = [
   'clinic-admin',
   'clinic-psikolog',
   'clinic-owner',
@@ -8,7 +9,15 @@ export const CLINIC_ROLES = [
   'clinic-marketing',
   'clinic-intern',
 ] as const;
-export type ClinicRoleName = (typeof CLINIC_ROLES)[number];
+
+export type ClinicRoleName = (typeof ALL_CLINIC_ROLES)[number];
+
+/** Role yang aktif sesuai paket — marketing & intern hanya di premium. */
+export const CLINIC_ROLES = ALL_CLINIC_ROLES.filter((r) => {
+  if (r === 'clinic-marketing') return PLAN_FEATURES.marketingRole;
+  if (r === 'clinic-intern') return PLAN_FEATURES.internRole;
+  return true;
+}) as unknown as readonly ClinicRoleName[];
 
 export const ROLE_LABEL: Record<ClinicRoleName, string> = {
   'clinic-admin': 'Admin',

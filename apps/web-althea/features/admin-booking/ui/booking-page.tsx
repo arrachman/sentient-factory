@@ -4,21 +4,17 @@ import { useMemo, useState } from 'react';
 import {
   CalendarDays,
   CalendarPlus,
-  Check,
   CheckCircle2,
   Eye,
   Play,
   RotateCw,
   Search,
-  UserCheck,
   X,
 } from 'lucide-react';
 import {
   useBookingList,
   useCancelBooking,
-  useCheckInBooking,
   useCompleteBooking,
-  useConfirmBooking,
   useStartBooking,
 } from '../hooks/use-booking';
 import {
@@ -45,8 +41,6 @@ function formatDateTime(iso: string): string {
 
 function nextActions(status: BookingStatus): BookingStatus[] {
   const map: Record<BookingStatus, BookingStatus[]> = {
-    awaiting_dp: ['confirmed', 'cancelled'],
-    confirmed: ['checked_in', 'cancelled'],
     checked_in: ['in_progress', 'cancelled'],
     in_progress: ['completed', 'cancelled'],
     completed: [],
@@ -71,7 +65,7 @@ function dateForQuickFilter(qf: QuickFilter): string | undefined {
 export function BookingPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('today');
   const [search, setSearch] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
@@ -89,8 +83,6 @@ export function BookingPage() {
     includeCancelled: !statusFilter,
   });
 
-  const confirmMut = useConfirmBooking();
-  const checkInMut = useCheckInBooking();
   const startMut = useStartBooking();
   const completeMut = useCompleteBooking();
   const cancelMut = useCancelBooking();
@@ -101,9 +93,7 @@ export function BookingPage() {
       cancelMut.mutate({ id, reason });
       return;
     }
-    if (action === 'confirmed') confirmMut.mutate(id);
-    else if (action === 'checked_in') checkInMut.mutate(id);
-    else if (action === 'in_progress') startMut.mutate(id);
+    if (action === 'in_progress') startMut.mutate(id);
     else if (action === 'completed') completeMut.mutate(id);
   }
 
@@ -141,7 +131,7 @@ export function BookingPage() {
   }, [list.data?.data, quickFilter, search]);
 
   return (
-    <div className="space-y-6 p-4 lg:p-8">
+    <div className="space-y-6 p-6">
 
       <div className="flex flex-wrap gap-2">
         {(
@@ -166,7 +156,7 @@ export function BookingPage() {
           </button>
         ))}
         <div className="ml-auto flex items-center gap-2">
-          <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
+          <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary btn-sm">
             <CalendarPlus className="h-4 w-4" /> Booking Baru
           </button>
         </div>
@@ -210,7 +200,7 @@ export function BookingPage() {
             setSearch('');
             setQuickFilter('all');
           }}
-          className="btn btn-ghost"
+          className="btn btn-ghost btn-sm"
         >
           Reset
         </button>
@@ -260,12 +250,23 @@ export function BookingPage() {
                     <span
                       className="avatar avatar-sm"
                       style={
-                        b.psikolog.clinicPsikologProfile?.color
-                          ? { backgroundColor: b.psikolog.clinicPsikologProfile.color, color: '#fff' }
-                          : undefined
+                        b.psikolog.avatarUrl
+                          ? { padding: 0, overflow: 'hidden' }
+                          : b.psikolog.clinicPsikologProfile?.color
+                            ? { backgroundColor: b.psikolog.clinicPsikologProfile.color, color: '#fff' }
+                            : undefined
                       }
                     >
-                      {(b.psikolog.fullName || b.psikolog.email).slice(0, 2).toUpperCase()}
+                      {b.psikolog.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={b.psikolog.avatarUrl}
+                          alt={b.psikolog.fullName || b.psikolog.email}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        (b.psikolog.fullName || b.psikolog.email).slice(0, 2).toUpperCase()
+                      )}
                     </span>
                     <span>{b.psikolog.fullName || b.psikolog.email}</span>
                   </div>
@@ -299,11 +300,7 @@ export function BookingPage() {
                     )}
                     {nextActions(b.status).map((act) => {
                       const icon =
-                        act === 'confirmed' ? (
-                          <Check className="h-3.5 w-3.5" />
-                        ) : act === 'checked_in' ? (
-                          <UserCheck className="h-3.5 w-3.5" />
-                        ) : act === 'in_progress' ? (
+                        act === 'in_progress' ? (
                           <Play className="h-3.5 w-3.5" />
                         ) : act === 'completed' ? (
                           <CheckCircle2 className="h-3.5 w-3.5" />

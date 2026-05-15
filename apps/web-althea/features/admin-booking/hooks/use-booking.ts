@@ -21,8 +21,6 @@ function transitionMutation(name: string, fn: (id: number) => Promise<unknown>) 
   };
 }
 
-export const useConfirmBooking = transitionMutation('confirmed', bookingApi.confirm);
-export const useCheckInBooking = transitionMutation('checked-in', bookingApi.checkIn);
 export const useStartBooking = transitionMutation('in_progress', bookingApi.start);
 export const useCompleteBooking = transitionMutation('completed', bookingApi.complete);
 

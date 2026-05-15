@@ -38,10 +38,10 @@ export default function GlobalError({
           </pre>
         )}
         <div className="flex justify-center gap-2">
-          <button type="button" onClick={() => reset()} className="btn btn-primary">
+          <button type="button" onClick={() => reset()} className="btn btn-primary btn-sm">
             <RefreshCcw className="h-4 w-4" /> Coba lagi
           </button>
-          <Link href="/" className="btn btn-outline">
+          <Link href="/" className="btn btn-outline btn-sm">
             Ke Dashboard
           </Link>
         </div>

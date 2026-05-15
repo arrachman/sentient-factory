@@ -30,7 +30,12 @@ export function useNotifWaPage() {
   const sendTestMut = useSendTest();
 
   const templates = useMemo<Template[]>(
-    () => tplList.data?.data ?? [],
+    () =>
+      (tplList.data?.data ?? []).filter((t) => {
+        const trig = t.triggerEvent?.toLowerCase() ?? '';
+        const name = t.name.toLowerCase();
+        return !trig.includes('otp') && !name.includes('otp');
+      }),
     [tplList.data],
   );
   const logs = useMemo<WaLog[]>(

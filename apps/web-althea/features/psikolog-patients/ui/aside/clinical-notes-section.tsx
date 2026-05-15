@@ -44,7 +44,7 @@ export function ClinicalNotesSection() {
       </div>
       <button
         type="button"
-        className="btn btn-primary"
+        className="btn btn-primary btn-sm"
         style={{ width: '100%' }}
       >
         + Tulis catatan sesi hari ini

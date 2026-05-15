@@ -52,9 +52,8 @@ export function PengingatSection() {
         />
         <NotifEventRow
           title="Pengingat 30 menit"
-          hint="Trigger: 30 menit sebelum sesi (PRD BR-08)"
+          hint="Trigger: 30 menit sebelum sesi"
           templates={[{ id: 't-30m' }]}
-          badge="BR-08"
           recipients={[
             { id: 'klien', label: 'WA klien', on: true },
             { id: 'psikolog', label: 'WA psikolog', on: true },

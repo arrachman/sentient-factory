@@ -7,6 +7,7 @@ import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
+import { BookingDetailDialog } from '@/features/admin-booking/ui/booking-detail-dialog';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { EMPTY_FILTERS, SLOTS } from '../model/constants';
 import { applyFilters, filterCount } from '../model/filters';
@@ -36,6 +37,7 @@ export function SchedulePage() {
   const [view, setView] = useState<ViewMode>('Hari');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
@@ -179,7 +181,7 @@ export function SchedulePage() {
                 psikologs={psikologs}
                 bookings={filteredBookings}
                 isLoading={isLoading}
-                onCellClick={() => setWizardOpen(true)}
+                onBookingClick={setSelectedBooking}
               />
             )}
             {view === 'Minggu' && (
@@ -187,7 +189,7 @@ export function SchedulePage() {
                 weekStart={weekStartMonday(date)}
                 bookings={filteredBookings}
                 isLoading={isLoading}
-                onCellClick={() => setWizardOpen(true)}
+                onBookingClick={setSelectedBooking}
               />
             )}
             {view === 'Bulan' && (
@@ -206,6 +208,10 @@ export function SchedulePage() {
       </div>
 
       <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
+      <BookingDetailDialog
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+      />
     </>
   );
 }

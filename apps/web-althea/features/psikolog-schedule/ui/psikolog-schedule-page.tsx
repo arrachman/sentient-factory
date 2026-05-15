@@ -39,14 +39,14 @@ export function PsikologSchedulePage() {
   // mismatch antara SSR (todayKey() di server time) vs CSR (client time).
   if (!page.ready) {
     return (
-      <div style={{ padding: 24 }}>
+      <div className="p-6">
         <div className="caption">Memuat jadwal...</div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="p-6">
       {needsSetup && (
         <div
           className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 flex items-start gap-2"
@@ -88,7 +88,6 @@ export function PsikologSchedulePage() {
             onClick={() => setAvailabilityOpen(true)}
             disabled={!myProfile}
             className="btn btn-primary btn-sm"
-            style={{ height: 32 }}
             title="Atur slot availability mingguan kamu"
           >
             <CalendarClock size={14} /> Set Jadwal

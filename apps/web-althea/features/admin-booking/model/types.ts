@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
 export const BOOKING_STATUSES = [
-  'awaiting_dp',
-  'confirmed',
   'checked_in',
   'in_progress',
   'completed',
@@ -11,8 +9,6 @@ export const BOOKING_STATUSES = [
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
 export const STATUS_LABEL: Record<BookingStatus, string> = {
-  awaiting_dp: 'Menunggu DP',
-  confirmed: 'Dikonfirmasi',
   checked_in: 'Check-in',
   in_progress: 'Berlangsung',
   completed: 'Selesai',
@@ -20,8 +16,6 @@ export const STATUS_LABEL: Record<BookingStatus, string> = {
 };
 
 export const STATUS_BADGE_CLASS: Record<BookingStatus, string> = {
-  awaiting_dp: 'badge-warn',
-  confirmed: 'badge-sage',
   checked_in: 'badge-terapi',
   in_progress: 'badge-rose',
   completed: 'badge-success',
@@ -49,6 +43,7 @@ export type Booking = {
     id: number;
     email: string;
     fullName: string | null;
+    avatarUrl: string | null;
     clinicPsikologProfile: { title: string | null; color: string | null } | null;
   };
   room: { id: number; name: string; type: string };

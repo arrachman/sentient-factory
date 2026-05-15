@@ -44,7 +44,6 @@ export function PsikologToolbar({
               onClick={() => onChangeFilter(t.key)}
               className="btn btn-sm"
               style={{
-                height: 30,
                 padding: '0 12px',
                 background: active ? 'var(--bg-elev, #fff)' : 'transparent',
                 boxShadow: active

@@ -138,7 +138,7 @@ export function ProfileEditDialog({
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="btn btn-ghost btn-icon"
+            className="btn btn-ghost btn-icon btn-sm"
             aria-label="Tutup"
           >
             <X size={18} />

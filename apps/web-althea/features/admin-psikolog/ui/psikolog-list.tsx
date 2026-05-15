@@ -89,7 +89,7 @@ export function PsikologList({ data, loading, onEdit, onDelete, onDeactivate }: 
                   <button
                     type="button"
                     onClick={() => onEdit(p)}
-                    className="btn btn-ghost btn-icon"
+                    className="btn btn-ghost btn-icon btn-sm"
                     title="Edit"
                     aria-label="Edit psikolog"
                   >
@@ -100,7 +100,7 @@ export function PsikologList({ data, loading, onEdit, onDelete, onDeactivate }: 
                       type="button"
                       onClick={() => onDeactivate(p)}
                       disabled={!p.isActive}
-                      className="btn btn-ghost btn-icon text-warning disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="btn btn-ghost btn-icon btn-sm text-warning disabled:opacity-30 disabled:cursor-not-allowed"
                       title={p.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
                       aria-label="Nonaktifkan psikolog"
                     >
@@ -110,7 +110,7 @@ export function PsikologList({ data, loading, onEdit, onDelete, onDeactivate }: 
                     <button
                       type="button"
                       onClick={() => onDelete(p)}
-                      className="btn btn-ghost btn-icon text-danger"
+                      className="btn btn-ghost btn-icon btn-sm text-danger"
                       title="Hapus"
                       aria-label="Hapus psikolog"
                     >

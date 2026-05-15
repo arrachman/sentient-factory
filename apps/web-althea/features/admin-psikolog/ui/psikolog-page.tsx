@@ -108,7 +108,6 @@ export function PsikologPage() {
                 onClick={() => setFilter(t.key)}
                 className="btn btn-sm"
                 style={{
-                  height: 30,
                   padding: '0 12px',
                   background: active ? 'var(--bg-elev, #fff)' : 'transparent',
                   boxShadow: active ? 'var(--shadow-xs, 0 1px 2px rgba(0,0,0,0.05))' : 'none',
@@ -130,11 +129,11 @@ export function PsikologPage() {
         </div>
       </div>
 
-      <div style={{ padding: '0 28px 12px' }}>
+      <div style={{ padding: '0 24px 12px' }}>
         <QuotaExplainer />
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, padding: '0 28px 28px', display: 'flex', gap: 16 }}>
+      <div style={{ flex: 1, minHeight: 0, padding: '0 24px 24px', display: 'flex', gap: 16 }}>
         <div
           style={{
             flex: 1,

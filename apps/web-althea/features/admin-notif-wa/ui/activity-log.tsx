@@ -4,7 +4,8 @@
  * Center column halaman Notifikasi WA — log aktivitas pengiriman:
  * time + ikon WA + recipient type + template name + nomor + status badge.
  */
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Search } from 'lucide-react';
+import { useState } from 'react';
 import { formatTime, getStatusStyle } from '../model/format';
 import type { WaLog } from '../model/types';
 
@@ -17,21 +18,47 @@ export function ActivityLog({
   isLoading: boolean;
   totalToday: number;
 }) {
+  const [search, setSearch] = useState('');
+
+  const filtered = search.trim()
+    ? logs.filter((l) => {
+        const q = search.toLowerCase();
+        return (
+          l.recipientPhone.toLowerCase().includes(q) ||
+          (l.template?.name ?? '').toLowerCase().includes(q) ||
+          l.status.toLowerCase().includes(q) ||
+          l.recipientType.toLowerCase().includes(q)
+        );
+      })
+    : logs;
+
   return (
     <div className="card-althea overflow-hidden flex flex-col">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="h2">Aktivitas Hari Ini</h2>
-        <span className="caption">{totalToday} kirim · auto refresh</span>
+      <div className="border-b border-border px-4 pt-3 pb-2 flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <h2 className="h2">Aktivitas Hari Ini</h2>
+          <span className="caption">{totalToday} kirim · auto refresh</span>
+        </div>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-muted" />
+          <input
+            type="search"
+            placeholder="Cari nama, nomor, template, status..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-althea pl-8 h-8 text-sm w-full"
+          />
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto max-h-[700px]">
         {isLoading ? (
           <div className="p-8 text-center text-fg-muted">Memuat...</div>
-        ) : logs.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-fg-muted">
-            Belum ada log pengiriman hari ini.
+            {search.trim() ? 'Tidak ada hasil untuk pencarian ini.' : 'Belum ada log pengiriman hari ini.'}
           </div>
         ) : (
-          logs.map((l) => <LogRow key={l.id} log={l} />)
+          filtered.map((l) => <LogRow key={l.id} log={l} />)
         )}
       </div>
     </div>

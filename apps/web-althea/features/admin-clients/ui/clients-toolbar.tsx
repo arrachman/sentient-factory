@@ -87,7 +87,7 @@ export function ClientsToolbar({
         <button
           type="button"
           onClick={onCreate}
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm"
         >
           <Plus className="h-4 w-4" /> Klien Baru
         </button>

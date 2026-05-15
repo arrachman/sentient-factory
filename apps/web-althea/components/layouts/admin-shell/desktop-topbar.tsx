@@ -10,11 +10,15 @@ export function DesktopTopbar({
   searchPlaceholder,
   initial,
   userName,
+  avatarUrl,
+  avatarColor,
 }: {
   meta: { category: string; label: string; title: string } | null;
   searchPlaceholder: string;
   initial: string;
   userName: string;
+  avatarUrl?: string | null;
+  avatarColor?: string | null;
 }) {
   return (
     <header
@@ -54,7 +58,7 @@ export function DesktopTopbar({
         </div>
         <button
           type="button"
-          className="btn btn-icon btn-ghost"
+          className="btn btn-icon btn-ghost btn-sm"
           aria-label="Notifikasi"
           title="Notifikasi"
         >
@@ -65,18 +69,28 @@ export function DesktopTopbar({
             width: 36,
             height: 36,
             borderRadius: 999,
-            background: 'var(--cream-300)',
-            color: 'var(--teal-800)',
+            background: avatarUrl ? 'transparent' : (avatarColor ?? 'var(--cream-300)'),
+            color: avatarColor ? '#fff' : 'var(--teal-800)',
             display: 'grid',
             placeItems: 'center',
             fontWeight: 700,
             fontSize: 14,
             flexShrink: 0,
+            overflow: 'hidden',
           }}
           title={userName}
           aria-label={`Akun: ${userName}`}
         >
-          {initial}
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt={userName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            initial
+          )}
         </div>
       </div>
     </header>

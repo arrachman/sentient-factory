@@ -60,7 +60,7 @@ export class BookingReminderScheduler {
     const bookings = await this.prisma.clinicBooking.findMany({
       where: {
         deletedAt: null,
-        status: { in: ['confirmed', 'awaiting_dp'] },
+        status: { in: ['checked_in'] },
         scheduledStart: { gte: start, lte: end },
       },
       include: {

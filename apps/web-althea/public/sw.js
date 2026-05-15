@@ -13,7 +13,7 @@
  * - Periodic sync untuk update data
  */
 
-const CACHE_VERSION = 'althea-v1';
+const CACHE_VERSION = 'althea-v2-2026-05-14';
 const APP_SHELL = [
   '/',
   '/login',

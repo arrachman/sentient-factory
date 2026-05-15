@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import {
   usePsikologMe,
   usePsikologStats,
@@ -22,6 +23,7 @@ import { StatsCard } from './stats-card';
 export function ProfilePage() {
   const meQuery = usePsikologMe();
   const statsQuery = usePsikologStats();
+  const settingsQuery = useSettings();
   const availMut = useUpdateAvailability();
   const profileMut = useUpdateProfile();
   const [editOpen, setEditOpen] = useState(false);
@@ -55,8 +57,10 @@ export function ProfilePage() {
   const p = meQuery.data?.data;
   if (!p) return null;
 
+  const slots = settingsQuery.data?.data?.slotsOfDay ?? [];
+
   return (
-    <div style={{ padding: 28 }}>
+    <div className="p-6">
       <div
         style={{
           display: 'grid',
@@ -77,6 +81,7 @@ export function ProfilePage() {
         <div className="flex flex-col" style={{ gap: 0 }}>
           <AvailabilityGrid
             initial={p.weeklyAvailability ?? {}}
+            slots={slots}
             saving={availMut.isPending}
             onSave={(wa) => availMut.mutate(wa)}
           />

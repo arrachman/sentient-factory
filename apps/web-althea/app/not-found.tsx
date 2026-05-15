@@ -10,10 +10,10 @@ export default function NotFound() {
           URL yang kamu buka tidak ada atau sudah dipindah. Cek lagi atau kembali ke dashboard.
         </p>
         <div className="flex justify-center gap-2">
-          <Link href="/" className="btn btn-primary">
+          <Link href="/" className="btn btn-primary btn-sm">
             Ke Dashboard
           </Link>
-          <Link href="/login" className="btn btn-outline">
+          <Link href="/login" className="btn btn-outline btn-sm">
             Login
           </Link>
         </div>

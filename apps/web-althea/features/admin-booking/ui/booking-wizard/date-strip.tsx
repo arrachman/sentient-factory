@@ -167,7 +167,7 @@ export function DateStrip({
           <button
             type="button"
             onClick={() => setWeekOffset((o) => o - 1)}
-            className="btn btn-ghost btn-icon h-7 w-7"
+            className="btn btn-ghost btn-icon btn-sm w-[30px]"
             aria-label="Minggu sebelumnya"
             title="Minggu sebelumnya"
           >
@@ -179,7 +179,7 @@ export function DateStrip({
           <button
             type="button"
             onClick={() => setWeekOffset((o) => o + 1)}
-            className="btn btn-ghost btn-icon h-7 w-7"
+            className="btn btn-ghost btn-icon btn-sm w-[30px]"
             aria-label="Minggu berikutnya"
             title="Minggu berikutnya"
           >

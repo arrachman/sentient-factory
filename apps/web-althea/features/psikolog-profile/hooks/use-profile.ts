@@ -11,11 +11,12 @@ import {
 const ME_KEY = ['clinic', 'psikolog', 'me'] as const;
 const STATS_KEY = ['clinic', 'psikolog', 'me', 'stats'] as const;
 
-export function usePsikologMe() {
+export function usePsikologMe(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ME_KEY,
     queryFn: () => psikologProfileApi.getMe(),
     staleTime: 60 * 1000, // 1 menit cache
+    enabled: options?.enabled ?? true,
   });
 }
 
@@ -36,7 +37,6 @@ export function useUpdateAvailability() {
       qc.invalidateQueries({ queryKey: ME_KEY });
       // Booking wizard depends on availability — invalidate juga
       qc.invalidateQueries({ queryKey: ['clinic', 'psikolog'] });
-      toast.success('Jadwal tersimpan');
     },
     onError: (e: Error) => {
       toast.error('Gagal simpan jadwal', { description: e.message });

@@ -1,3 +1,4 @@
+import { DoorOpen } from 'lucide-react';
 import type { RoomGroupAgg } from '../model/aggregate';
 import { ROOM_GROUP_COLOR, ROOM_GROUP_LABEL } from '../model/constants';
 
@@ -12,18 +13,42 @@ export function RoomUtilizationCard({
   const entries = Object.entries(roomGroups);
   return (
     <div className="card-althea" style={{ padding: 20 }}>
-      <h2
-        style={{
-          margin: '0 0 14px',
-          fontFamily: 'var(--font-serif)',
-          fontSize: 17,
-          fontWeight: 500,
-          color: 'var(--teal-800)',
-        }}
+      <div
+        className="flex items-center justify-between"
+        style={{ marginBottom: 14 }}
       >
-        Utilisasi ruangan
-      </h2>
-      <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
+          <h2
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-serif)',
+              fontSize: 17,
+              fontWeight: 500,
+              color: 'var(--teal-800)',
+            }}
+          >
+            Utilisasi ruangan
+          </h2>
+          <span className="caption" style={{ marginTop: 2 }}>
+            Per jenis ruangan · hari ini
+          </span>
+        </div>
+        <span
+          aria-hidden
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 999,
+            background: 'var(--amber-100)',
+            color: '#8a4a00',
+            display: 'grid',
+            placeItems: 'center',
+          }}
+        >
+          <DoorOpen size={14} strokeWidth={2.2} />
+        </span>
+      </div>
+      <div className="flex flex-col gap-2.5">
         {entries.length === 0 ? (
           <span className="caption text-fg-muted">
             Belum ada ruangan terdaftar.
@@ -58,7 +83,14 @@ function RoomUtilizationRow({
   const pct = max > 0 ? Math.min(100, (used / max) * 100) : 0;
   return (
     <div className="flex items-center gap-3">
-      <span style={{ fontSize: 12.5, color: 'var(--fg)', flex: 1 }}>
+      <span
+        style={{
+          fontSize: 12.5,
+          color: 'var(--fg)',
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
         {label}
       </span>
       <div
@@ -69,9 +101,15 @@ function RoomUtilizationRow({
           borderRadius: 999,
           overflow: 'hidden',
         }}
+        aria-hidden
       >
         <div
-          style={{ width: `${pct}%`, height: '100%', background: color }}
+          style={{
+            width: `${pct}%`,
+            height: '100%',
+            background: color,
+            transition: 'width 200ms ease',
+          }}
         />
       </div>
       <span

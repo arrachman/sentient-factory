@@ -122,7 +122,7 @@ export function LayananPage() {
   const submitting = createMut.isPending || updateMut.isPending;
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-7">
+    <div className="flex flex-col gap-4 p-6">
       {/* Top toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="relative w-[280px] max-w-full">
@@ -309,7 +309,7 @@ export function LayananPage() {
           <div className="card-althea w-full max-w-xl bg-card max-h-[92vh] overflow-y-auto">
             <div className="border-b border-border px-6 py-4 flex items-center justify-between">
               <h2 className="h2">{editing ? 'Edit Layanan' : 'Layanan Baru'}</h2>
-              <button type="button" onClick={close} className="btn btn-ghost btn-icon" aria-label="Tutup">
+              <button type="button" onClick={close} className="btn btn-ghost btn-icon btn-sm" aria-label="Tutup">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -355,8 +355,8 @@ export function LayananPage() {
                 Aktif
               </label>
               <div className="flex justify-end gap-2 border-t border-border pt-3">
-                <button type="button" onClick={close} className="btn btn-outline">Batal</button>
-                <button type="submit" disabled={submitting} className="btn btn-primary">
+                <button type="button" onClick={close} className="btn btn-outline btn-sm">Batal</button>
+                <button type="submit" disabled={submitting} className="btn btn-primary btn-sm">
                   {submitting ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
                 </button>
               </div>

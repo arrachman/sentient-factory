@@ -226,7 +226,7 @@ export function PatientDetailAside({ selected }: { selected: AggregatedClient })
         </div>
       </div>
 
-      <button type="button" className="btn btn-primary" style={{ width: '100%' }}>
+      <button type="button" className="btn btn-primary btn-sm" style={{ width: '100%' }}>
         + Tulis catatan sesi hari ini
       </button>
 
@@ -241,7 +241,7 @@ export function PatientDetailAside({ selected }: { selected: AggregatedClient })
       >
         <Bell size={12} style={{ color: 'var(--info, #4a90c0)', flexShrink: 0, marginTop: 2 }} />
         <span style={{ fontSize: 11, color: '#2c4a60', lineHeight: 1.45 }}>
-          Data klien ini hanya dapat diakses oleh Anda sebagai psikolog penanggung. BR-04.
+          Data klien ini hanya dapat diakses oleh Anda sebagai psikolog penanggung.
         </span>
       </div>
     </aside>

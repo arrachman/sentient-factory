@@ -96,33 +96,44 @@ function TimelineRow({
       style={{
         width: '100%',
         textAlign: 'left',
-        padding: '12px 18px',
+        padding: `12px 18px 12px ${isSelected ? '15px' : '18px'}`,
+        borderTop: 'none',
+        borderRight: 'none',
         borderBottom: isLast ? 'none' : '1px solid var(--border)',
-        alignItems: 'flex-start',
-        cursor: 'pointer',
-        background: isSelected ? 'var(--sage-50)' : 'transparent',
         borderLeft: isSelected
           ? '3px solid var(--sage-500)'
           : '3px solid transparent',
-        paddingLeft: isSelected ? 15 : 18,
-        border: 'none',
-        borderTop: 0,
-        borderRight: 0,
+        alignItems: 'flex-start',
+        cursor: 'pointer',
+        background: isSelected ? 'var(--sage-50)' : 'transparent',
       }}
     >
-      <span
+      <div
+        className="col"
         style={{
-          fontSize: 11.5,
-          fontWeight: 600,
-          color: 'var(--fg-muted)',
-          fontVariantNumeric: 'tabular-nums',
-          width: 38,
+          width: 52,
           flexShrink: 0,
           paddingTop: 2,
+          gap: 2,
+          alignItems: 'flex-start',
         }}
       >
-        {e.time}
-      </span>
+        <span
+          style={{
+            fontSize: 11.5,
+            fontWeight: 600,
+            color: 'var(--fg-muted)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {e.time}
+        </span>
+        {e.timeRelative ? (
+          <span style={{ fontSize: 10, color: 'var(--fg-muted)', opacity: 0.7 }}>
+            {e.timeRelative}
+          </span>
+        ) : null}
+      </div>
       <span
         style={{
           width: 28,
@@ -166,8 +177,8 @@ function TimelineRow({
         <span
           className={`badge ${sev.badgeClass}`}
           style={{
-            height: 18,
-            fontSize: 10,
+            height: 20,
+            fontSize: 11,
             textTransform: 'capitalize',
           }}
         >

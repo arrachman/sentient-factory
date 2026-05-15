@@ -49,6 +49,25 @@ export function formatLastLogin(iso: string | null): string {
   });
 }
 
+/**
+ * Format absolute timestamp untuk subline aktivitas terakhir.
+ * "12 Mei 2026 · 14:30" — atau "—" kalau belum pernah login.
+ */
+export function formatLoginTimestamp(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const tanggal = d.toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+  const jam = d.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return `${tanggal} · ${jam}`;
+}
+
 export function userInitial(u: ClinicUser): string {
   return (u.fullName || u.username || u.email).slice(0, 2).toUpperCase();
 }

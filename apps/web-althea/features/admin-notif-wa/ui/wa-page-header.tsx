@@ -8,15 +8,7 @@ import { Plus, Settings } from 'lucide-react';
  */
 export function WaPageHeader({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h1 className="h1">Notifikasi WhatsApp</h1>
-        <p className="caption mt-1">
-          Template + log delivery. Provider: Fonnte (atau Mock kalau belum
-          konfigurasi token).
-        </p>
-      </div>
-
+    <div className="flex flex-wrap items-center justify-end gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <ConnectionStatus />
         <button type="button" className="btn btn-outline btn-sm" disabled>

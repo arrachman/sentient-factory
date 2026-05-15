@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import type { SlotDef } from '@/features/admin-pengaturan/api/settings.api';
 import type { WeeklyAvailability } from '../api/profile.api';
 
 const DAY_KEYS = [
@@ -23,27 +24,21 @@ const DAY_LABEL: Record<DayKey, string> = {
   saturday: 'Sabtu',
 };
 
-// Slots 08:00 - 17:00 (10 jam — match mockup)
-const SLOTS = ['08', '09', '10', '11', '12', '13', '14', '15', '16', '17'] as const;
-const SLOT_COUNT = SLOTS.length;
-
 type CellState = 'open' | 'closed';
 
-/** Convert backend WeeklyAvailability → 6×10 grid of CellState */
-function toGrid(wa: WeeklyAvailability): CellState[][] {
+/** Convert backend WeeklyAvailability → 6×N grid of CellState */
+function toGrid(wa: WeeklyAvailability, slotCount: number): CellState[][] {
   return DAY_KEYS.map((day) => {
     const dayCfg = wa[day];
     if (!dayCfg || !dayCfg.isOpen) {
-      // Whole day closed
-      return Array(SLOT_COUNT).fill('closed') as CellState[];
+      return Array(slotCount).fill('closed') as CellState[];
     }
-    // Day open: if slotIndices specified → only those slots; else all open
     if (Array.isArray(dayCfg.slotIndices)) {
-      return Array.from({ length: SLOT_COUNT }, (_, i) =>
+      return Array.from({ length: slotCount }, (_, i) =>
         dayCfg.slotIndices!.includes(i) ? 'open' : 'closed',
       );
     }
-    return Array(SLOT_COUNT).fill('open') as CellState[];
+    return Array(slotCount).fill('open') as CellState[];
   });
 }
 
@@ -67,26 +62,31 @@ function fromGrid(grid: CellState[][]): WeeklyAvailability {
 
 export function AvailabilityGrid({
   initial,
+  slots,
   bookedKeys = new Set(),
   onSave,
   saving,
 }: {
   /** Current weekly availability (from API) */
   initial: WeeklyAvailability;
+  /** Slot operasional dari ClinicSettings.slotsOfDay */
+  slots: SlotDef[];
   /** Set of "dayIdx-slotIdx" keys yang sudah ada booking (read-only) */
   bookedKeys?: Set<string>;
   onSave: (next: WeeklyAvailability) => void;
   saving: boolean;
 }) {
-  const [grid, setGrid] = useState<CellState[][]>(() => toGrid(initial));
+  const slotCount = slots.length;
+  const [grid, setGrid] = useState<CellState[][]>(() => toGrid(initial, slotCount));
   const userChangedRef = useRef(false);
   const onSaveRef = useRef(onSave);
   useEffect(() => { onSaveRef.current = onSave; });
 
-  // Re-sync kalau backend data refresh
+  // Re-sync kalau backend data atau slots refresh
   useEffect(() => {
-    setGrid(toGrid(initial));
-  }, [initial]);
+    setGrid(toGrid(initial, slotCount));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial, slotCount]);
 
   const draft = useMemo(() => fromGrid(grid), [grid]);
   // Auto-save 500ms setelah user mengubah grid
@@ -257,16 +257,16 @@ export function AvailabilityGrid({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: `80px repeat(${SLOT_COUNT}, minmax(40px, 1fr))`,
+            gridTemplateColumns: `80px repeat(${slotCount}, minmax(40px, 1fr))`,
             gap: 4,
-            minWidth: 80 + SLOT_COUNT * 40,
+            minWidth: 80 + slotCount * 40,
           }}
         >
           {/* Header row: blank + slot times */}
           <div />
-          {SLOTS.map((s) => (
+          {slots.map((s) => (
             <div
-              key={s}
+              key={s.start}
               className="caption"
               style={{
                 textAlign: 'center',
@@ -274,7 +274,7 @@ export function AvailabilityGrid({
                 fontWeight: 600,
               }}
             >
-              {s}.00
+              {s.label ?? s.start.slice(0, 5)}
             </div>
           ))}
 
@@ -289,6 +289,7 @@ export function AvailabilityGrid({
                 day={day}
                 dayIdx={dayIdx}
                 cells={row}
+                slotLabels={slots.map((s) => s.label ?? s.start.slice(0, 5))}
                 bookedKeys={bookedKeys}
                 onToggleCell={toggleCell}
                 onSetAll={(state) => setRowAll(dayIdx, state)}
@@ -308,6 +309,7 @@ function DayRow({
   day,
   dayIdx,
   cells,
+  slotLabels,
   bookedKeys,
   onToggleCell,
   onSetAll,
@@ -317,6 +319,7 @@ function DayRow({
   day: DayKey;
   dayIdx: number;
   cells: CellState[];
+  slotLabels: string[];
   bookedKeys: Set<string>;
   onToggleCell: (dayIdx: number, slotIdx: number) => void;
   onSetAll: (state: CellState) => void;
@@ -358,7 +361,7 @@ function DayRow({
             onClick={() => onToggleCell(dayIdx, slotIdx)}
             disabled={isBooked}
             style={{
-              height: 38,
+              height: 36,
               borderRadius: 4,
               cursor: isBooked ? 'not-allowed' : 'pointer',
               background:
@@ -379,7 +382,7 @@ function DayRow({
                   ? 'Klik untuk tutup'
                   : 'Klik untuk buka'
             }
-            aria-label={`${DAY_LABEL[day]} jam ${SLOTS[slotIdx]}:00 — ${display}`}
+            aria-label={`${DAY_LABEL[day]} jam ${slotLabels[slotIdx]} — ${display}`}
           />
         );
       })}

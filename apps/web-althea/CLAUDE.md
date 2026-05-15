@@ -217,6 +217,15 @@ Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
 - Patient routes: lebih agresif mobile-friendly (target mahasiswa/karyawan akses dari HP)
 - Admin routes: optimized desktop, tetap usable di tablet
 
+## Layout & spacing convention
+
+**Page padding standar: `p-6` (24px semua sisi)**
+
+- Setiap `page.tsx` yang me-render konten langsung (bukan pure wrapper ke feature component) **wajib** punya `className="... p-6"` di outer div-nya.
+- Jangan pakai `p-4 lg:p-8` atau inline `style={{ padding: N }}` — selalu gunakan class `p-6`.
+- Pages yang merupakan pure wrapper (`return <FeatureComponent />`) tidak perlu `p-6` di page.tsx karena feature component mengatur spacing-nya sendiri.
+- Feature components yang full-height (`flex`, sidebar layout, grid 3-kolom) mengatur padding internal sendiri per section — **jangan** bungkus dengan `p-6` dari luar karena akan double-pad.
+
 ## Hal yang sering bikin masalah
 - Pakai hook React di Server Component → error build. Mark `"use client"` saat butuh state/effect.
 - Lupa wrap `<Suspense>` saat pakai `useSearchParams` di client component.

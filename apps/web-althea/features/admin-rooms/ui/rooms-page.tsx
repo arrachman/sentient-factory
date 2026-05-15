@@ -24,8 +24,6 @@ export function RoomsPage() {
   return (
     <>
       <div className="flex flex-col h-full min-h-0">
-        <PageHeader />
-
         <RoomsToolbar
           date={page.date}
           onChangeDate={page.setDate}
@@ -36,7 +34,7 @@ export function RoomsPage() {
         <RoomStatTilesRow stats={page.stats} />
 
         <div
-          className="px-7 pb-7 flex-1 min-h-0"
+          className="px-6 pb-6 flex-1 min-h-0"
           style={{ display: 'flex', gap: 16 }}
         >
           <GridCard>
@@ -107,15 +105,6 @@ export function RoomsPage() {
 // =====================================================================
 // Local layout slivers
 // =====================================================================
-
-function PageHeader() {
-  return (
-    <div className="px-7 pt-6 pb-2">
-      <div className="eyebrow">Operasional · Pemakaian Ruangan</div>
-      <h1 className="h1 mt-1">Pemakaian Ruangan</h1>
-    </div>
-  );
-}
 
 function GridCard({ children }: { children: React.ReactNode }) {
   return (

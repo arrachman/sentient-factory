@@ -95,7 +95,7 @@ export function CellEditPopover({
               {existing ? 'Edit override yang sudah ada' : 'Buat override baru untuk tanggal ini'}
             </p>
           </div>
-          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon" aria-label="Tutup">
+          <button type="button" onClick={onClose} className="btn btn-ghost btn-icon btn-sm" aria-label="Tutup">
             <X className="h-4 w-4" />
           </button>
         </div>

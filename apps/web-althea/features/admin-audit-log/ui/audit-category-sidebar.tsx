@@ -114,8 +114,8 @@ export function AuditCategorySidebar({
           className="caption"
           style={{ fontSize: 11.5, lineHeight: 1.45 }}
         >
-          Event "Akses ditolak" menandai pelanggaran BR-04 (psikolog × data
-          klien lain). Tinjau secara berkala.
+          Event "Akses ditolak" menandai pelanggaran privasi antar psikolog
+          (psikolog × data klien lain). Tinjau secara berkala.
         </div>
       </div>
     </aside>

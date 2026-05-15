@@ -56,6 +56,7 @@ export class AuthService {
     const ipAddress = this.normalizeHeaderValue(meta?.ipAddress);
     const userAgent = this.normalizeHeaderValue(meta?.userAgent);
 
+    const loginAt = new Date();
     try {
       await this.prisma.session.create({
         data: {
@@ -67,6 +68,10 @@ export class AuthService {
           createdBy: user.id,
           updatedBy: user.id,
         },
+      });
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { lastLogin: loginAt },
       });
     } catch (error) {
       this.logger.warn(

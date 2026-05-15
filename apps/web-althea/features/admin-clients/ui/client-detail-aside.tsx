@@ -86,7 +86,7 @@ function DetailHeader({
         <button
           type="button"
           onClick={onClose}
-          className="btn btn-ghost btn-icon h-7 w-7"
+          className="btn btn-ghost btn-icon btn-sm w-[30px]"
           aria-label="Tutup"
         >
           <X className="h-4 w-4" />

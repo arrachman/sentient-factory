@@ -75,7 +75,7 @@ export function PatientListTable({
         <Eye size={14} style={{ color: 'var(--info, #4a90c0)', flexShrink: 0 }} />
         <span style={{ fontSize: 12, color: '#2c4a60', lineHeight: 1.4 }}>
           Menampilkan <strong>hanya klien Anda</strong> ({allClients.length} klien). Data klien
-          psikolog lain tidak bisa diakses sesuai kebijakan privasi (BR-04).
+          psikolog lain tidak bisa diakses sesuai kebijakan privasi.
         </span>
       </div>
 

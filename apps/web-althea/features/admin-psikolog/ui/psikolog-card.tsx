@@ -1,5 +1,7 @@
 'use client';
 
+import { Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SPECIALTY_LABEL, type Psikolog } from '../model/types';
 
 function initial(p: Psikolog) {
@@ -10,13 +12,15 @@ function specialtyLabel(s: string) {
   return SPECIALTY_LABEL[s] ?? s;
 }
 
-function emptyStats(_p: Psikolog) {
+function deriveStats(p: Psikolog) {
+  const todayMax = p.defaultSlots > 0 ? p.defaultSlots : 4;
+  const weekCapacity = Math.max(1, todayMax * 5);
   return {
-    clients: 0,
-    weekSessions: 0,
-    utilization: 0,
-    todayClients: 0,
-    todayMax: 4,
+    clients: p.clientCount,
+    weekSessions: p.weekCount,
+    utilization: Math.min(100, Math.round((p.weekCount / weekCapacity) * 100)),
+    todayClients: p.todayCount,
+    todayMax,
     recentlyFreed: false,
   };
 }
@@ -53,7 +57,7 @@ export function PsikologCard({
   selected: boolean;
   onClick: () => void;
 }) {
-  const stats = emptyStats(p);
+  const stats = deriveStats(p);
   const dayFull = stats.todayClients >= stats.todayMax;
   const utilColor =
     stats.utilization > 90 ? 'var(--danger, #b54141)' : (p.color ?? 'var(--sage-500)');
@@ -86,18 +90,26 @@ export function PsikologCard({
             slot baru terbuka
           </span>
         )}
-        <span
-          className="badge"
-          style={{
-            height: 20,
-            fontSize: 10,
-            background: dayFull ? 'var(--danger-soft, #fce4e4)' : 'var(--cream-100)',
-            color: dayFull ? 'var(--danger, #b54141)' : 'var(--fg-muted)',
-            fontWeight: 600,
-          }}
-        >
-          hari ini {stats.todayClients}/{stats.todayMax}
-        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className="badge"
+              style={{
+                height: 20,
+                fontSize: 10,
+                background: dayFull ? 'var(--danger-soft, #fce4e4)' : 'var(--cream-100)',
+                color: dayFull ? 'var(--danger, #b54141)' : 'var(--fg-muted)',
+                fontWeight: 600,
+                cursor: 'default',
+              }}
+            >
+              hari ini {stats.todayClients}/{stats.todayMax}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            Sesi hari ini yang sudah dikonfirmasi / kapasitas harian psikolog ini
+          </TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="flex items-center gap-3" style={{ marginBottom: 12, paddingRight: 90 }}>
@@ -135,13 +147,38 @@ export function PsikologCard({
       <div style={{ height: 1, background: 'var(--border)', margin: '0 -16px 12px' }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-        {[
-          { label: 'Klien', value: stats.clients },
-          { label: 'Minggu ini', value: stats.weekSessions },
-          { label: 'Utilisasi', value: `${stats.utilization}%` },
-        ].map(({ label, value }) => (
+        {([
+          {
+            label: 'Klien',
+            value: stats.clients,
+            tip: 'Jumlah klien unik yang pernah ditangani dalam 90 hari terakhir',
+          },
+          {
+            label: 'Minggu ini',
+            value: stats.weekSessions,
+            tip: 'Total sesi (non-batal) yang dijadwalkan minggu ini (Senin–Minggu)',
+          },
+          {
+            label: 'Utilisasi',
+            value: `${stats.utilization}%`,
+            tip: `Persentase kepadatan jadwal minggu ini — sesi minggu ini dibagi kapasitas (${stats.todayMax} slot/hari × 5 hari)`,
+          },
+        ] as const).map(({ label, value, tip }) => (
           <div key={label}>
-            <div className="caption">{label}</div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="caption inline-flex items-center gap-0.5 cursor-default"
+                  style={{ userSelect: 'none' }}
+                >
+                  {label}
+                  <Info size={11} style={{ opacity: 0.45, flexShrink: 0 }} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" style={{ maxWidth: 220 }}>
+                {tip}
+              </TooltipContent>
+            </Tooltip>
             <div
               style={{
                 fontSize: 18,

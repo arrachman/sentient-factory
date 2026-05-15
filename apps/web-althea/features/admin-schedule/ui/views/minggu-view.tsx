@@ -13,12 +13,12 @@ export function MingguView({
   weekStart,
   bookings,
   isLoading,
-  onCellClick,
+  onBookingClick,
 }: {
   weekStart: string;
   bookings: Booking[];
   isLoading: boolean;
-  onCellClick: () => void;
+  onBookingClick: (b: Booking) => void;
 }) {
   if (isLoading) {
     return (
@@ -32,7 +32,6 @@ export function MingguView({
   for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
   const today = todayKey();
   const byCell = groupByCell(bookings);
-
   const colTpl = '110px repeat(7, minmax(120px, 1fr))';
   const minWidth = 110 + 7 * 120;
 
@@ -55,6 +54,7 @@ export function MingguView({
                 ? 'none'
                 : '1px solid var(--border)',
             minWidth,
+            background: slotIdx % 2 === 1 ? 'rgba(247, 244, 237, 0.55)' : 'transparent',
           }}
         >
           <SlotLabel start={slot.start} end={slot.end} />
@@ -66,7 +66,7 @@ export function MingguView({
                 key={d}
                 bookings={cellBookings}
                 isToday={d === today}
-                onClickEmpty={onCellClick}
+                onBookingClick={onBookingClick}
               />
             );
           })}
@@ -172,14 +172,13 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: 'var(--cream-50)',
         borderRight: '1px solid var(--border)',
       }}
     >
       <span
         style={{
-          fontSize: 11.5,
-          fontWeight: 600,
+          fontSize: 12,
+          fontWeight: 700,
           color: 'var(--teal-800)',
           fontVariantNumeric: 'tabular-nums',
         }}
@@ -202,11 +201,11 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
 function DayCell({
   bookings,
   isToday,
-  onClickEmpty,
+  onBookingClick,
 }: {
   bookings: Booking[];
   isToday: boolean;
-  onClickEmpty: () => void;
+  onBookingClick: (b: Booking) => void;
 }) {
   return (
     <div
@@ -218,11 +217,11 @@ function DayCell({
       }}
     >
       {bookings.length === 0 ? (
-        <EmptySlot onClick={onClickEmpty} />
+        <EmptySlot />
       ) : (
         <div className="flex flex-col" style={{ gap: 3, height: '100%' }}>
           {bookings.slice(0, 2).map((b) => (
-            <MiniBookingChip key={b.id} b={b} />
+            <MiniBookingChip key={b.id} b={b} onClick={() => onBookingClick(b)} />
           ))}
           {bookings.length > 2 ? (
             <span className="caption" style={{ fontSize: 10, paddingLeft: 4 }}>
@@ -235,10 +234,12 @@ function DayCell({
   );
 }
 
-function MiniBookingChip({ b }: { b: Booking }) {
+function MiniBookingChip({ b, onClick }: { b: Booking; onClick: () => void }) {
   const c = SVC_COLOR[b.service.category] ?? SVC_COLOR.konseling;
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       style={{
         background: c.fill,
         borderLeft: `2px solid ${c.bar}`,
@@ -249,10 +250,14 @@ function MiniBookingChip({ b }: { b: Booking }) {
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        cursor: 'pointer',
+        border: 'none',
+        textAlign: 'left',
+        width: '100%',
       }}
       title={`#${b.id} · ${b.client.name} · ${b.room.name}`}
     >
       {b.client.name}
-    </div>
+    </button>
   );
 }

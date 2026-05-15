@@ -33,7 +33,7 @@ export function PsikologDashboard() {
   }
 
   return (
-    <div style={{ padding: 28 }}>
+    <div className="p-6">
       <Greeting today={page.today} greetName={page.greetName} />
 
       <div

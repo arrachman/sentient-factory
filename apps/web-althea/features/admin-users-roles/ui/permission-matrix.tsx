@@ -81,9 +81,9 @@ export function PermissionMatrix() {
           className="caption"
           style={{ color: '#2c4a60', fontSize: 11.5 }}
         >
-          <strong>BR-04:</strong> Psikolog hanya dapat edit data klien sendiri
-          (&ldquo;Klien sendiri&rdquo;), tidak dapat melihat data klien
-          psikolog lain (&ldquo;Klien (semua)&rdquo; = —).
+          <strong>Privasi antar psikolog:</strong> Psikolog hanya dapat edit
+          data klien sendiri (&ldquo;Klien sendiri&rdquo;), tidak dapat melihat
+          data klien psikolog lain (&ldquo;Klien (semua)&rdquo; = —).
         </span>
       </div>
     </div>

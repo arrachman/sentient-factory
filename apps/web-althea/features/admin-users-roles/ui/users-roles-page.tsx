@@ -114,7 +114,7 @@ export function UsersRolesPage() {
 
       <UsersStatsStrip stats={stats} />
 
-      <div style={{ flex: 1, minHeight: 0, padding: '0 28px 28px', overflow: 'auto' }}>
+      <div style={{ flex: 1, minHeight: 0, padding: '0 24px 24px', overflow: 'auto' }}>
         {tab === 'users' && (
           <UsersTable
             items={items}

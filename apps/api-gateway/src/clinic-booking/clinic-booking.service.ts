@@ -132,6 +132,21 @@ export class ClinicBookingService {
       const dayEnd = new Date(day);
       dayEnd.setHours(23, 59, 59, 999);
       where.scheduledStart = { gte: dayStart, lte: dayEnd };
+    } else if (query.dateFrom || query.dateTo) {
+      const range: { gte?: Date; lte?: Date } = {};
+      if (query.dateFrom) {
+        const d = new Date(query.dateFrom);
+        if (isNaN(d.getTime())) throw new BadRequestException('dateFrom harus YYYY-MM-DD');
+        d.setHours(0, 0, 0, 0);
+        range.gte = d;
+      }
+      if (query.dateTo) {
+        const d = new Date(query.dateTo);
+        if (isNaN(d.getTime())) throw new BadRequestException('dateTo harus YYYY-MM-DD');
+        d.setHours(23, 59, 59, 999);
+        range.lte = d;
+      }
+      where.scheduledStart = range;
     }
 
     const [items, total] = await this.prisma.$transaction([
@@ -364,6 +379,7 @@ export class ClinicBookingService {
           id: true,
           email: true,
           fullName: true,
+          avatarUrl: true,
           clinicPsikologProfile: { select: { title: true, color: true, specialty: true, license: true } },
         },
       },
