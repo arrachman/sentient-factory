@@ -90,12 +90,14 @@ const Sidebar = ({ current, onNavigate, t }) => {
               }}
             >
               <Icon name={item.icon} size={16} stroke={1.6}/>
+              <span className="nav-label">{t(item.label)}</span>
             </div>
           );
         })}
         <div style={{flex:1}}/>
         <div className="nav-item" data-tip="Keyboard shortcuts" onClick={() => window.dispatchEvent(new CustomEvent('open-shortcuts'))}>
           <Icon name="keyboard" size={16}/>
+          <span className="nav-label">Pintasan</span>
         </div>
       </nav>
       {openItem && openItem.children && (

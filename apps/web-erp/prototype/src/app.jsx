@@ -4,7 +4,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "primary": "blue",
   "lang": "id",
   "density": "compact",
-  "fontScale": "base"
+  "fontScale": "base",
+  "sidebar": "icon"
 }/*EDITMODE-END*/;
 
 const MAX_TABS = 16;
@@ -68,7 +69,8 @@ const App = () => {
     document.documentElement.setAttribute('data-primary', tw.primary);
     document.documentElement.setAttribute('data-density', tw.density);
     document.documentElement.setAttribute('data-fontscale', tw.fontScale || 'base');
-  }, [tw.theme, tw.primary, tw.density, tw.fontScale]);
+    document.documentElement.setAttribute('data-sidebar', tw.sidebar || 'icon');
+  }, [tw.theme, tw.primary, tw.density, tw.fontScale, tw.sidebar]);
 
   // Bridge: in-app Appearance page dispatches tweak edits here.
   React.useEffect(() => {
@@ -250,12 +252,16 @@ const App = () => {
           <TweakRadio label="Theme" value={tw.theme} options={['light', 'dark']}
             onChange={v => setTweak('theme', v)}/>
           <TweakColor label="Warna primer" value={tw.primary}
-            options={['blue', 'indigo', 'emerald', 'violet']}
+            options={['blue', 'indigo', 'violet', 'fuchsia', 'rose', 'amber', 'emerald', 'teal', 'cyan']}
             onChange={v => setTweak('primary', v)}/>
           <TweakRadio label="Bahasa" value={tw.lang} options={['id', 'en']}
             onChange={v => setTweak('lang', v)}/>
           <TweakRadio label="Density" value={tw.density} options={['compact', 'comfortable']}
             onChange={v => setTweak('density', v)}/>
+          <TweakRadio label="Font" value={tw.fontScale} options={['sm', 'base', 'lg', 'xl']}
+            onChange={v => setTweak('fontScale', v)}/>
+          <TweakRadio label="Sidebar" value={tw.sidebar} options={['icon', 'label']}
+            onChange={v => setTweak('sidebar', v)}/>
         </TweakSection>
       </TweaksPanel>
     </>

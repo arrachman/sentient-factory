@@ -24,8 +24,20 @@ const Seg = ({ value, options, onChange }) => (
 const SWATCHES = [
   { v: 'blue', c: '#2563eb', label: 'Biru' },
   { v: 'indigo', c: '#4f46e5', label: 'Indigo' },
-  { v: 'emerald', c: '#059669', label: 'Emerald' },
   { v: 'violet', c: '#7c3aed', label: 'Violet' },
+  { v: 'fuchsia', c: '#c026d3', label: 'Fuchsia' },
+  { v: 'rose', c: '#e11d48', label: 'Rose' },
+  { v: 'amber', c: '#d97706', label: 'Amber' },
+  { v: 'emerald', c: '#059669', label: 'Emerald' },
+  { v: 'teal', c: '#0d9488', label: 'Teal' },
+  { v: 'cyan', c: '#0891b2', label: 'Cyan' },
+];
+
+const PALETTE_PACKS = [
+  { v: 'blue', label: 'Korporat', sub: 'Biru profesional', colors: ['#2563eb', '#0891b2', '#0d9488'] },
+  { v: 'violet', label: 'Kreatif', sub: 'Violet & fuchsia', colors: ['#7c3aed', '#c026d3', '#e11d48'] },
+  { v: 'emerald', label: 'Natural', sub: 'Hijau segar', colors: ['#059669', '#0d9488', '#65a30d'] },
+  { v: 'amber', label: 'Hangat', sub: 'Amber & rose', colors: ['#d97706', '#e11d48', '#c026d3'] },
 ];
 
 const AppearancePage = ({ t, tw }) => {
@@ -39,7 +51,7 @@ const AppearancePage = ({ t, tw }) => {
         <div className="page-actions">
           <button className="btn ghost" onClick={() => {
             setTweak('theme', 'light'); setTweak('primary', 'blue');
-            setTweak('density', 'compact'); setTweak('fontScale', 'base');
+            setTweak('density', 'compact'); setTweak('fontScale', 'base'); setTweak('sidebar', 'icon');
             window.toast('Tampilan dikembalikan ke bawaan', { type: 'info' });
           }}><Icon name="refresh" size={12}/> {t('Reset')}</button>
           <button className="btn primary" onClick={() => window.toast('Preferensi tampilan disimpan', { type: 'success' })}>
@@ -60,9 +72,32 @@ const AppearancePage = ({ t, tw }) => {
           </SetRow>
         </SetCard>
 
-        <SetCard icon="layers" title="Warna Aksen" sub="Warna primer komponen">
-          <SetRow label="Palet Warna">
-            <div style={{ display: 'flex', gap: 10 }}>
+        <SetCard icon="layers" title="Warna Aksen" sub="Paket & warna primer">
+          <SetRow label="Paket Warna" hint="Set warna siap pakai">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {PALETTE_PACKS.map(p => (
+                <button key={p.v} onClick={() => setTweak('primary', p.v)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px',
+                    borderRadius: 8, cursor: 'pointer', font: 'inherit', textAlign: 'left',
+                    background: cur.primary === p.v ? 'var(--primary-soft)' : 'var(--panel)',
+                    border: cur.primary === p.v ? '1px solid var(--primary)' : '1px solid var(--border)',
+                  }}>
+                  <span style={{ display: 'flex' }}>
+                    {p.colors.map((c, i) => (
+                      <span key={i} style={{ width: 13, height: 13, borderRadius: '50%', background: c, marginLeft: i ? -5 : 0, boxShadow: '0 0 0 1.5px var(--panel)' }}/>
+                    ))}
+                  </span>
+                  <span style={{ lineHeight: 1.2 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, display: 'block', color: cur.primary === p.v ? 'var(--primary-soft-fg)' : 'var(--fg)' }}>{p.label}</span>
+                    <span className="muted" style={{ fontSize: 10.5 }}>{p.sub}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </SetRow>
+          <SetRow label="Warna Spesifik">
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {SWATCHES.map(s => (
                 <button key={s.v} title={s.label} onClick={() => setTweak('primary', s.v)}
                   style={{
@@ -82,12 +117,12 @@ const AppearancePage = ({ t, tw }) => {
         </SetCard>
 
         <SetCard icon="info" title="Ukuran Font" sub="Skala teks antarmuka">
-          <SetRow label="Ukuran" hint="Kecil · Normal · Besar">
+          <SetRow label="Ukuran" hint="Kecil · Normal · Besar · Ekstra Besar">
             <Seg value={fontScale} onChange={v => setTweak('fontScale', v)}
-              options={[{ v: 'sm', label: 'Kecil' }, { v: 'base', label: 'Normal' }, { v: 'lg', label: 'Besar' }]}/>
+              options={[{ v: 'sm', label: 'Kecil' }, { v: 'base', label: 'Normal' }, { v: 'lg', label: 'Besar' }, { v: 'xl', label: 'Ekstra Besar' }]}/>
           </SetRow>
           <SetRow label="Pratinjau">
-            <span style={{ fontSize: fontScale === 'sm' ? 11 : fontScale === 'lg' ? 15 : 13 }}>
+            <span style={{ fontSize: { sm: 11, base: 13, lg: 15, xl: 17 }[fontScale] || 13 }}>
               Contoh teks tabel & form — {fontScale}
             </span>
           </SetRow>
@@ -97,6 +132,22 @@ const AppearancePage = ({ t, tw }) => {
           <SetRow label="Kepadatan" hint="Compact memuat lebih banyak baris">
             <Seg value={cur.density} onChange={v => setTweak('density', v)}
               options={[{ v: 'compact', label: 'Compact' }, { v: 'comfortable', label: 'Comfortable' }]}/>
+          </SetRow>
+        </SetCard>
+
+        <SetCard icon="database" title="Menu Sidebar" sub="Template navigasi samping">
+          <SetRow label="Template" hint="Ikon saja atau dengan label teks">
+            <Seg value={cur.sidebar || 'icon'} onChange={v => setTweak('sidebar', v)}
+              options={[{ v: 'icon', label: 'Ikon', icon: 'boxes' }, { v: 'label', label: 'Ikon + Label', icon: 'database' }]}/>
+          </SetRow>
+          <SetRow label="Pratinjau">
+            <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 3, border: '1px solid var(--border)', borderRadius: 8, padding: 8, background: 'var(--panel-2)', minWidth: (cur.sidebar === 'label') ? 170 : 'auto' }}>
+              {[['home', 'Dashboard'], ['coins', 'Keuangan'], ['cart', 'Pembelian']].map(([ic, lb], i) => (
+                <span key={ic} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, fontSize: 12, background: i === 0 ? 'var(--primary-soft)' : 'transparent', color: i === 0 ? 'var(--primary-soft-fg)' : 'var(--fg-muted)' }}>
+                  <Icon name={ic} size={14}/>{(cur.sidebar === 'label') && <span>{lb}</span>}
+                </span>
+              ))}
+            </div>
           </SetRow>
         </SetCard>
 
@@ -142,7 +193,7 @@ const AppearancePage = ({ t, tw }) => {
       <div className="pager">
         <span className="muted">Setting · Tampilan</span>
         <div className="spacer"/>
-        <span className="muted">Tema {cur.theme} · {SWATCHES.find(s => s.v === cur.primary)?.label} · font {fontScale} · {cur.density}</span>
+        <span className="muted">Tema {cur.theme} · {SWATCHES.find(s => s.v === cur.primary)?.label || cur.primary} · font {fontScale} · {cur.density} · sidebar {cur.sidebar || 'icon'}</span>
       </div>
     </div>
   );

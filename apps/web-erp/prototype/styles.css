@@ -93,6 +93,21 @@ body {
 [data-primary="violet"] { --primary: #7c3aed; --primary-hover: #6d28d9; --primary-soft: #f5f3ff; --primary-soft-fg: #6d28d9; }
 [data-theme="dark"][data-primary="violet"] { --primary-soft: #261a3e; --primary-soft-fg: #c4a8ff; }
 
+[data-primary="fuchsia"] { --primary: #c026d3; --primary-hover: #a21caf; --primary-soft: #fdf4ff; --primary-soft-fg: #a21caf; }
+[data-theme="dark"][data-primary="fuchsia"] { --primary-soft: #2c1033; --primary-soft-fg: #f0abfc; }
+
+[data-primary="rose"] { --primary: #e11d48; --primary-hover: #be123c; --primary-soft: #fff1f2; --primary-soft-fg: #be123c; }
+[data-theme="dark"][data-primary="rose"] { --primary-soft: #2c1016; --primary-soft-fg: #fda4af; }
+
+[data-primary="amber"] { --primary: #d97706; --primary-hover: #b45309; --primary-soft: #fffbeb; --primary-soft-fg: #b45309; }
+[data-theme="dark"][data-primary="amber"] { --primary-soft: #2a1d0a; --primary-soft-fg: #fcd34d; }
+
+[data-primary="teal"] { --primary: #0d9488; --primary-hover: #0f766e; --primary-soft: #f0fdfa; --primary-soft-fg: #0f766e; }
+[data-theme="dark"][data-primary="teal"] { --primary-soft: #0b2826; --primary-soft-fg: #5eead4; }
+
+[data-primary="cyan"] { --primary: #0891b2; --primary-hover: #0e7490; --primary-soft: #ecfeff; --primary-soft-fg: #0e7490; }
+[data-theme="dark"][data-primary="cyan"] { --primary-soft: #0a2730; --primary-soft-fg: #67e8f9; }
+
 ::selection { background: var(--selection-bg); }
 
 /* density */
@@ -1121,12 +1136,13 @@ body {
 .drawer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
 
 /* === Font scale (Setting → Tampilan) === */
-[data-fontscale="sm"] body, [data-fontscale="sm"].app, [data-fontscale="sm"] { font-size: 12px; }
+[data-fontscale="sm"] body { font-size: 12px; }
 [data-fontscale="base"] body { font-size: 13px; }
 [data-fontscale="lg"] body { font-size: 14.5px; }
-[data-fontscale="sm"] body { font-size: 12px; }
+[data-fontscale="xl"] body { font-size: 16px; }
 html[data-fontscale="sm"] { --row-h: 26px; --header-h: 26px; }
 html[data-fontscale="lg"] { --row-h: 34px; --header-h: 32px; }
+html[data-fontscale="xl"] { --row-h: 38px; --header-h: 36px; }
 
 /* === Notification badge on bell === */
 .iconbtn { position: relative; }
@@ -1163,3 +1179,16 @@ html[data-fontscale="lg"] { --row-h: 34px; --header-h: 32px; }
 .lookup-list { flex: 1; overflow: auto; }
 .lookup-list .tbl thead th { position: sticky; top: 0; z-index: 1; background: var(--panel-2); }
 .lookup-list .tbl tbody tr.focused td { box-shadow: inset 0 0 0 1px var(--primary); background: var(--primary-soft); }
+
+/* === Sidebar template (Setting → Tampilan) === */
+.sidebar .nav-label { display: none; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-sidebar="label"] { --sidebar-w: 210px; }
+[data-sidebar="label"] .sidebar { align-items: stretch; padding: 8px; }
+[data-sidebar="label"] .sidebar .nav-item {
+  width: 100%; height: 34px; justify-content: flex-start; gap: 10px; padding: 0 10px;
+}
+[data-sidebar="label"] .sidebar .nav-item .nav-label { display: inline; }
+[data-sidebar="label"] .sidebar .nav-divider { width: 100%; margin: 8px 0; }
+[data-sidebar="label"] .sidebar .nav-item.active::before { left: 0; top: 6px; bottom: 6px; }
+[data-sidebar="label"] .sidebar [data-tip]:hover::after,
+[data-sidebar="label"] .sidebar [data-tip]:hover::before { content: none; display: none; }
