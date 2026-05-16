@@ -158,6 +158,7 @@ const I18N = {
     'Perubahan Modal': 'Perubahan Modal', Periode: 'Periode',
     'Tahun Berjalan': 'Tahun Berjalan', 'Tahun Lalu': 'Tahun Lalu',
     'Tutup tab': 'Tutup tab', 'Tab baru': 'Tab baru', 'Duplikat tab': 'Duplikat tab',
+    'Tampilan': 'Tampilan', 'Notifikasi': 'Notifikasi', 'Aktivitas': 'Aktivitas',
   },
   en: {
     Dashboard: 'Dashboard',
@@ -252,6 +253,7 @@ const I18N = {
     'Perubahan Modal': 'Equity Changes', Periode: 'Period',
     'Tahun Berjalan': 'Current Year', 'Tahun Lalu': 'Prior Year',
     'Tutup tab': 'Close tab', 'Tab baru': 'New tab', 'Duplikat tab': 'Duplicate tab',
+    'Tampilan': 'Appearance', 'Notifikasi': 'Notifications', 'Aktivitas': 'Activity',
   },
 };
 

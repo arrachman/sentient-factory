@@ -3,7 +3,8 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "theme": "light",
   "primary": "blue",
   "lang": "id",
-  "density": "compact"
+  "density": "compact",
+  "fontScale": "base"
 }/*EDITMODE-END*/;
 
 const MAX_TABS = 16;
@@ -11,18 +12,20 @@ let _tabSeq = 1;
 const nextTabId = () => `t${_tabSeq++}`;
 
 // Resolve a route to its page component (drill-down stays in the same tab via onNav).
-const renderRoute = (route, onNav, onOpen, t, lang) => {
+const renderRoute = (route, onNav, onOpen, t, lang, tw) => {
   if (route === 'home') return <Dashboard t={t} onNavigate={onOpen}/>;
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpen}/>;
   if (route === 'set-prefs') return <SettingsPage t={t}/>;
+  if (route === 'set-appearance') return <AppearancePage t={t} tw={tw}/>;
   if (route.endsWith('-new')) {
     const base = route.slice(0, -4);
     if (window.TRX_CFG && window.TRX_CFG[base]) return <TrxForm moduleId={base} t={t} lang={lang} onNavigate={onNav}/>;
+    if (window.REGISTRY && window.REGISTRY[base]) return <RecordForm moduleId={base} t={t} onNavigate={onNav}/>;
   }
-  if (route === 'kas-masuk') return <KasMasukList t={t} lang={lang} onNavigate={onNav}/>;
-  if (window.MODULES && window.MODULES[route]) return <GenericList moduleId={route} t={t} onNavigate={onNav}/>;
+  if (route === 'kas-masuk') return <KasMasukList t={t} lang={lang} onNavigate={onNav} onOpenTab={onOpen}/>;
+  if (window.MODULES && window.MODULES[route]) return <GenericList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.REPORTS && window.REPORTS[route]) return <FinancialReport moduleId={route} t={t}/>;
-  if (window.REGISTRY && window.REGISTRY[route]) return <DataList moduleId={route} t={t} onNavigate={onNav}/>;
+  if (window.REGISTRY && window.REGISTRY[route]) return <DataList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   return <div style={{ padding: 32, color: 'var(--fg-muted)' }}>Halaman <strong>{route}</strong> belum tersedia di prototype ini.</div>;
 };
 
@@ -64,7 +67,15 @@ const App = () => {
     document.documentElement.setAttribute('data-theme', tw.theme);
     document.documentElement.setAttribute('data-primary', tw.primary);
     document.documentElement.setAttribute('data-density', tw.density);
-  }, [tw.theme, tw.primary, tw.density]);
+    document.documentElement.setAttribute('data-fontscale', tw.fontScale || 'base');
+  }, [tw.theme, tw.primary, tw.density, tw.fontScale]);
+
+  // Bridge: in-app Appearance page dispatches tweak edits here.
+  React.useEffect(() => {
+    const onSet = (e) => { const d = e.detail || {}; setTweak(d.key, d.val); };
+    window.addEventListener('app-set-tweak', onSet);
+    return () => window.removeEventListener('app-set-tweak', onSet);
+  }, [setTweak]);
 
   // Open-or-focus: reuse an existing tab for this route, else open a new one.
   const openTab = React.useCallback((route) => {
@@ -191,7 +202,7 @@ const App = () => {
               return (
                 <div key={tab.id} className="tabview" style={{ display: isActive ? 'flex' : 'none' }}>
                   <TabActiveContext.Provider value={isActive}>
-                    {renderRoute(tab.route, navigateInTab, openTab, tx, lang)}
+                    {renderRoute(tab.route, navigateInTab, openTab, tx, lang, tw)}
                   </TabActiveContext.Provider>
                 </div>
               );
@@ -202,6 +213,8 @@ const App = () => {
 
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} onAction={onPaletteAction} t={tx}/>
 
+      <NotificationPanel t={tx} onNavigate={openTab}/>
+      <ActivityPanel t={tx}/>
       <ToastHost/>
       <ConfirmHost/>
 

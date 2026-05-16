@@ -48,7 +48,8 @@ const NAV = [
   ]},
   { divider: true },
   { id: 'setting', icon: 'gear', label: 'Setting', children: [
-    { id: 'set-users', label: 'Users', code: 'U' }, { id: 'set-roles', label: 'Roles', code: 'R' }, { id: 'set-prefs', label: 'Preferensi', code: 'PR' },
+    { id: 'set-users', label: 'Users', code: 'U' }, { id: 'set-roles', label: 'Roles', code: 'R' },
+    { id: 'set-prefs', label: 'Preferensi', code: 'PR' }, { id: 'set-appearance', label: 'Tampilan', code: 'UI' },
   ]},
 ];
 

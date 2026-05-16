@@ -187,6 +187,7 @@ const pageMeta = (route, t) => {
   if (route === 'home') return { title: tx('Dashboard'), code: null, icon: 'home', crumbs: [{ label: tx('Dashboard') }] };
   if (route === 'statistik') return { title: tx('Statistik'), code: null, icon: 'stats', crumbs: [{ label: tx('Statistik') }] };
   if (route === 'set-prefs') return { title: tx('Preferensi'), code: 'PR', icon: 'gear', crumbs: [{ label: tx('Setting') }, { label: tx('Preferensi') }] };
+  if (route === 'set-appearance') return { title: tx('Tampilan'), code: 'UI', icon: 'moon', crumbs: [{ label: tx('Setting') }, { label: tx('Tampilan') }] };
   if (route.endsWith('-new')) {
     const meta = pageMeta(route.slice(0, -4), t);
     return { ...meta, code: meta.code ? `${meta.code} · Baru` : 'Baru', crumbs: [...meta.crumbs, { label: 'Baru' }] };

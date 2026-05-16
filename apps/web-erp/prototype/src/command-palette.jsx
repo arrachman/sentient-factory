@@ -29,7 +29,10 @@ const PaletteItems = (t) => {
   Object.entries(byGroup).forEach(([g, items]) => groups.push({ group: t(g), items }));
 
   groups.push({ group: t('Laporan'), items: Object.entries(REP).map(([id, m]) => ({ id, icon: 'file', label: t(m.label) })) });
-  groups.push({ group: t('Setting'), items: [{ id: 'set-prefs', icon: 'gear', label: t('Preferensi') }] });
+  groups.push({ group: t('Setting'), items: [
+    { id: 'set-prefs', icon: 'gear', label: t('Preferensi') },
+    { id: 'set-appearance', icon: 'moon', label: t('Tampilan') },
+  ] });
 
   groups.push({ group: 'Aksi', items: [
     { id: 'new:kas-masuk', icon: 'plus', label: t('Buat Kas Masuk'), hint: 'N C' },

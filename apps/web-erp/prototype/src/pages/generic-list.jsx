@@ -12,7 +12,8 @@ const MODULES = {
   'buku-besar':        { label: 'Buku Besar', code: 'GL', col: 'Akun', prefix: 'GL', isLedger: true },
 };
 
-const GenericList = ({ moduleId, t, onNavigate }) => {
+const GenericList = ({ moduleId, t, onNavigate, onOpenTab }) => {
+  const openForm = () => (onOpenTab || onNavigate)(`${moduleId}-new`);
   const mod = MODULES[moduleId];
   if (mod && mod.isLedger) return <BukuBesar t={t}/>;
   if (!mod) return <div style={{ padding: 24 }}>Modul tidak ditemukan: {moduleId}</div>;
@@ -72,8 +73,8 @@ const GenericList = ({ moduleId, t, onNavigate }) => {
     if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); setFocused(f => Math.min(view.length - 1, f + 1)); }
     else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
     else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); if (view[focused]) toggle(view[focused].id); }
-    else if (e.key.toLowerCase() === 'n') { e.preventDefault(); onNavigate(`${moduleId}-new`); }
-    else if (e.key === 'Enter' && view[focused]) { e.preventDefault(); onNavigate(`${moduleId}-new`); }
+    else if (e.key.toLowerCase() === 'n') { e.preventDefault(); openForm(); }
+    else if (e.key === 'Enter' && view[focused]) { e.preventDefault(); openForm(); }
   });
 
   const setSortCol = (col) => setSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
@@ -101,7 +102,7 @@ const GenericList = ({ moduleId, t, onNavigate }) => {
           <button className="btn" onClick={() => window.toast(`${filtered.length} baris diekspor (.xlsx)`, { type: 'success' })}><Icon name="download" size={12}/> {t('Export')}</button>
           <button className="btn" onClick={() => window.toast('Data dimuat ulang', { type: 'info' })}><Icon name="refresh" size={12}/></button>
           <div className="btn-split">
-            <button className="btn primary" onClick={() => onNavigate(`${moduleId}-new`)}><Icon name="plus" size={12}/> {t('Tambah')} <Kbd>N</Kbd></button>
+            <button className="btn primary" onClick={() => openForm()}><Icon name="plus" size={12}/> {t('Tambah')} <Kbd>N</Kbd></button>
             <button className="btn primary"><Icon name="chevdown" size={12}/></button>
           </div>
         </div>
@@ -144,7 +145,7 @@ const GenericList = ({ moduleId, t, onNavigate }) => {
             {view.map((r, i) => (
               <tr key={r.id} className={`${selected.has(r.id) ? 'selected' : ''} ${i === focused ? 'focused' : ''}`} onClick={() => setFocused(i)}>
                 <td className="col-check"><input type="checkbox" className="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)}/></td>
-                <td className="mono"><a style={{ color: 'var(--primary-soft-fg)', textDecoration: 'none', cursor: 'pointer' }} onClick={() => onNavigate(`${moduleId}-new`)}>{r.no}</a></td>
+                <td className="mono"><a style={{ color: 'var(--primary-soft-fg)', textDecoration: 'none', cursor: 'pointer' }} onClick={() => openForm()}>{r.no}</a></td>
                 <td className="mono muted">{r.tanggal}</td>
                 <td>{r.terimaDari}</td>
                 <td className="muted" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.uraian}</td>

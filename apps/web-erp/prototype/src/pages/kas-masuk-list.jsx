@@ -1,5 +1,6 @@
 // Kas Masuk — list view (uses shared FilterChip / AddFilterChip / DateRangeChip)
-const KasMasukList = ({ t, onNavigate, lang }) => {
+const KasMasukList = ({ t, onNavigate, lang, onOpenTab }) => {
+  const openForm = () => (onOpenTab || onNavigate)('kas-masuk-new');
   const [rows] = React.useState(() => genKasMasuk(64));
   const [q, setQ] = React.useState('');
   const [filters, setFilters] = React.useState({
@@ -53,7 +54,7 @@ const KasMasukList = ({ t, onNavigate, lang }) => {
     if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setFocused(f => Math.min(view.length - 1, f + 1)); }
     else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
     else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); if (view[focused]) toggle(view[focused].id); }
-    else if (e.key === 'Enter') { e.preventDefault(); onNavigate('kas-masuk-new'); }
+    else if (e.key === 'Enter') { e.preventDefault(); openForm(); }
   });
 
   const setSortCol = (col) => setSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
@@ -81,7 +82,7 @@ const KasMasukList = ({ t, onNavigate, lang }) => {
           <button className="btn" onClick={() => window.toast(`${filtered.length} baris diekspor (.xlsx)`, { type: 'success' })}><Icon name="download" size={12}/> {t('Export')}</button>
           <button className="btn" onClick={() => window.toast('Data dimuat ulang', { type: 'info' })}><Icon name="refresh" size={12}/></button>
           <div className="btn-split">
-            <button className="btn primary" onClick={() => onNavigate('kas-masuk-new')}><Icon name="plus" size={12}/> {t('Tambah')} <Kbd>N</Kbd></button>
+            <button className="btn primary" onClick={() => openForm()}><Icon name="plus" size={12}/> {t('Tambah')} <Kbd>N</Kbd></button>
             <button className="btn primary"><Icon name="chevdown" size={12}/></button>
           </div>
         </div>
@@ -128,7 +129,7 @@ const KasMasukList = ({ t, onNavigate, lang }) => {
                 <td className="col-check">
                   <input type="checkbox" className="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)}/>
                 </td>
-                <td className="mono"><a style={{ color: 'var(--primary-soft-fg)', textDecoration: 'none', cursor: 'pointer' }} onClick={() => onNavigate('kas-masuk-new')}>{r.no}</a></td>
+                <td className="mono"><a style={{ color: 'var(--primary-soft-fg)', textDecoration: 'none', cursor: 'pointer' }} onClick={() => openForm()}>{r.no}</a></td>
                 <td className="mono muted">{r.tanggal}</td>
                 <td style={{ maxWidth: 240, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.terimaDari}</td>
                 <td className="muted" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.uraian}</td>

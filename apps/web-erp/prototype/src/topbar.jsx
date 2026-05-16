@@ -42,6 +42,12 @@ const UserMenu = ({ user, onNavigate, onLogout }) => {
 };
 
 const Topbar = ({ crumbs, onOpenPalette, lang, t, user, onNavigate, onLogout }) => {
+  const [notif, setNotif] = React.useState(3);
+  React.useEffect(() => {
+    const fn = (e) => setNotif(e.detail || 0);
+    window.addEventListener('notif-count', fn);
+    return () => window.removeEventListener('notif-count', fn);
+  }, []);
   return (
     <header className="topbar">
       <div className="brand">
@@ -69,8 +75,10 @@ const Topbar = ({ crumbs, onOpenPalette, lang, t, user, onNavigate, onLogout }) 
           <Kbd>⌘</Kbd><Kbd>K</Kbd>
         </span>
       </button>
-      <button className="iconbtn has-dot" data-tip="Notifications" onClick={() => window.toast('Tidak ada notifikasi baru', { type: 'info' })}>
+      <button className={`iconbtn ${notif > 0 ? 'has-dot' : ''}`} data-tip="Notifikasi"
+        onClick={() => window.dispatchEvent(new CustomEvent('toggle-notif'))}>
         <Icon name="bell" size={14}/>
+        {notif > 0 && <span className="notif-badge">{notif > 9 ? '9+' : notif}</span>}
       </button>
       <button className="iconbtn" data-tip="Aktivitas" onClick={() => window.dispatchEvent(new CustomEvent('toggle-activity'))}>
         <Icon name="activity" size={14}/>

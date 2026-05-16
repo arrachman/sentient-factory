@@ -21,7 +21,8 @@ const DLCell = ({ col, value }) => {
   return <span style={col.w > 180 ? { display: 'block', maxWidth: col.w, overflow: 'hidden', textOverflow: 'ellipsis' } : null}>{value}</span>;
 };
 
-const DataList = ({ moduleId, t, onNavigate }) => {
+const DataList = ({ moduleId, t, onNavigate, onOpenTab }) => {
+  const openForm = () => (onOpenTab || onNavigate)(`${moduleId}-new`);
   const mod = window.REGISTRY[moduleId];
   if (!mod) return <div style={{ padding: 24 }}>Modul tidak ditemukan: {moduleId}</div>;
 
@@ -36,7 +37,6 @@ const DataList = ({ moduleId, t, onNavigate }) => {
   const [focused, setFocused] = React.useState(0);
   const [sort, setSort] = React.useState({ col: null, dir: 'asc' });
   const [page, setPage] = React.useState(1);
-  const [addOpen, setAddOpen] = React.useState(false);
   const pageSize = 24;
 
   const filtered = React.useMemo(() => {
@@ -70,12 +70,12 @@ const DataList = ({ moduleId, t, onNavigate }) => {
   const clearSel = () => setSelected(new Set());
 
   useKey((e) => {
-    if (window.__overlay || addOpen) return;
+    if (window.__overlay) return;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
     if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); setFocused(f => Math.min(view.length - 1, f + 1)); }
     else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
     else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); if (view[focused]) toggle(view[focused].id); }
-    else if (e.key.toLowerCase() === 'n') { e.preventDefault(); setAddOpen(true); }
+    else if (e.key.toLowerCase() === 'n') { e.preventDefault(); openForm(); }
   });
 
   const setSortCol = (col) => setSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
@@ -101,7 +101,7 @@ const DataList = ({ moduleId, t, onNavigate }) => {
           </div>
           <button className="btn" onClick={() => window.toast(`${filtered.length} baris diekspor (.xlsx)`, { type: 'success' })}><Icon name="download" size={12}/> {t('Export')}</button>
           <button className="btn" onClick={() => window.toast('Data dimuat ulang', { type: 'info' })}><Icon name="refresh" size={12}/></button>
-          <button className="btn primary" onClick={() => setAddOpen(true)}><Icon name="plus" size={12}/> {t('Tambah')} <Kbd>N</Kbd></button>
+          <button className="btn primary" onClick={openForm}><Icon name="plus" size={12}/> {t('Tambah')} <Kbd>N</Kbd></button>
         </div>
       </div>
 
@@ -177,7 +177,6 @@ const DataList = ({ moduleId, t, onNavigate }) => {
         </div>
       )}
 
-      <RecordModal open={addOpen} moduleId={moduleId} t={t} onClose={() => setAddOpen(false)}/>
     </div>
   );
 };

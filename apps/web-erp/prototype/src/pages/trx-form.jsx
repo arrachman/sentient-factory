@@ -74,6 +74,7 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
   const [editing, setEditing] = React.useState(null);
   const [coaQuery, setCoaQuery] = React.useState('');
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [lookup, setLookup] = React.useState(null); // 'coa' | 'lokasi' | { kind, mode:'line' }
   const [contact, setContact] = React.useState(null);
 
   const total = lines.reduce((s, l) => s + (cfg.journal ? Number(l.debit || 0) : Number(l.total || 0)), 0);
@@ -92,6 +93,22 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
   const removeLine = (id) => setLines(lines.filter(l => l.id !== id));
   const update = (id, col, v) => setLines(lines.map(l => l.id === id ? { ...l, [col]: v } : l));
 
+  const addLineFromCoa = (row) => {
+    const id = (lines[lines.length - 1]?.id || 0) + 1;
+    const base = cfg.journal
+      ? { id, no: row.code, nama: row.name, debit: 0, kredit: 0, catatan: '', cc: '' }
+      : { id, no: row.code, nama: row.name, total: 0, catatan: '', cc: '', proyek: '' };
+    setLines([...lines, base]);
+    window.toast(`Baris ditambah: ${row.code} ${row.name}`, { type: 'info' });
+  };
+
+  const onLookup = (val, row) => {
+    const tgt = lookup && lookup.target;
+    if (tgt === 'akun') setHead(h => ({ ...h, akun: val }));
+    else if (tgt === 'lokasi') setHead(h => ({ ...h, lokasi: val }));
+    else if (tgt === 'coa-line') addLineFromCoa(row);
+  };
+
   const save = (andNew) => {
     if (headerErr) { window.toast(`${cfg.party} wajib diisi.`, { type: 'danger' }); return; }
     if (!balanced) { window.toast('Jurnal belum balance — Debit ≠ Kredit.', { type: 'danger' }); return; }
@@ -106,7 +123,7 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
   };
 
   useKey((e) => {
-    if (window.__overlay || pickerOpen) return;
+    if (window.__overlay || pickerOpen || lookup) return;
     if (e.key === 'Escape' && !editing && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) onNavigate(backTo);
     if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(e.shiftKey); }
     if (e.key === '+' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) { e.preventDefault(); addLine(); }
@@ -150,8 +167,10 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
           )}
           {cfg.acct && (
             <Field label={t(cfg.acct)} required>
-              <input type="text" value={head.akun} onChange={e => setHead({ ...head, akun: e.target.value })}/>
-              {!cfg.opening && <button className="lookup" tabIndex={-1}><Icon name="search" size={11}/></button>}
+              <input type="text" value={head.akun} readOnly={!cfg.opening}
+                onClick={cfg.opening ? undefined : (e) => { e.stopPropagation(); setLookup({ kind: 'coa', target: 'akun' }); }}
+                onChange={e => setHead({ ...head, akun: e.target.value })}/>
+              {!cfg.opening && <button className="lookup" tabIndex={-1} onClick={(e) => { e.stopPropagation(); setLookup({ kind: 'coa', target: 'akun' }); }}><Icon name="search" size={11}/></button>}
             </Field>
           )}
           {cfg.party && (
@@ -161,8 +180,9 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
             </Field>
           )}
           <Field label={t('Lokasi')}>
-            <input type="text" value={head.lokasi} onChange={e => setHead({ ...head, lokasi: e.target.value })}/>
-            <button className="lookup" tabIndex={-1}><Icon name="search" size={11}/></button>
+            <input type="text" value={head.lokasi} readOnly
+              onClick={(e) => { e.stopPropagation(); setLookup({ kind: 'lokasi', target: 'lokasi' }); }}/>
+            <button className="lookup" tabIndex={-1} onClick={(e) => { e.stopPropagation(); setLookup({ kind: 'lokasi', target: 'lokasi' }); }}><Icon name="search" size={11}/></button>
           </Field>
         </div>
         <div>
@@ -239,9 +259,10 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
         <div style={{ flex: 1 }}/>
         <div style={{ alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px' }}>
           <span className="muted" style={{ fontSize: 11.5 }}>{t('Pencarian CoA')}</span>
-          <div className="search-input" style={{ width: 240, height: 24 }}>
+          <div className="search-input" style={{ width: 240, height: 24, cursor: 'pointer' }}
+            onClick={(e) => { e.stopPropagation(); setLookup({ kind: 'coa', target: 'coa-line' }); }}>
             <Icon name="search" size={11}/>
-            <input value={coaQuery} onChange={e => setCoaQuery(e.target.value)} placeholder="Kode atau nama akun"/>
+            <input value={coaQuery} readOnly placeholder="Cari akun untuk tambah baris..." style={{ cursor: 'pointer' }}/>
           </div>
           <button className="btn primary sm" onClick={(e) => { e.stopPropagation(); addLine(); }}>
             <Icon name="plus" size={11}/> Tambah Baris <Kbd>+</Kbd>
@@ -304,6 +325,9 @@ const TrxForm = ({ moduleId, t, onNavigate, lang }) => {
 
       <ContactPicker open={pickerOpen} onClose={() => setPickerOpen(false)}
         onSelect={(c) => { setContact(c); setHead(h => ({ ...h, party: c.name })); }} t={t}/>
+
+      <LookupModal open={!!lookup} kind={lookup && lookup.kind}
+        onSelect={onLookup} onClose={() => setLookup(null)}/>
 
       <div className="pager">
         <span className="muted">Pintasan:</span>
