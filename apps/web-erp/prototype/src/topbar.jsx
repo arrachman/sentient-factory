@@ -1,5 +1,47 @@
-// Topbar: brand, breadcrumbs, command trigger, user
-const Topbar = ({ crumbs, onOpenPalette, lang, t }) => {
+// Topbar: brand, breadcrumbs, command trigger, user menu (with logout)
+const UserMenu = ({ user, onNavigate, onLogout }) => {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const fn = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, []);
+  const go = (route) => { setOpen(false); onNavigate(route); };
+  return (
+    <div className="user-chip" ref={ref} onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer' }}>
+      <span className="avatar">{user.initials}</span>
+      <span style={{ fontSize: 12 }}>{user.user}</span>
+      <Icon name="chevdown" size={12}/>
+      {open && (
+        <div className="user-menu fade-in" onClick={e => e.stopPropagation()}>
+          <div className="user-menu-hd">
+            <span className="avatar">{user.initials}</span>
+            <div style={{ minWidth: 0 }}>
+              <div className="nm">{user.name}</div>
+              <div className="em">{user.email}</div>
+            </div>
+          </div>
+          <button className="user-menu-item" onClick={() => go('set-prefs')}>
+            <Icon name="user" size={13}/> Profil Saya
+          </button>
+          <button className="user-menu-item" onClick={() => go('set-prefs')}>
+            <Icon name="gear" size={13}/> Preferensi <span className="mk">PR</span>
+          </button>
+          <button className="user-menu-item" onClick={() => { setOpen(false); window.dispatchEvent(new CustomEvent('open-shortcuts')); }}>
+            <Icon name="keyboard" size={13}/> Pintasan <span className="mk">?</span>
+          </button>
+          <div className="user-menu-sep"/>
+          <button className="user-menu-item danger" onClick={() => { setOpen(false); onLogout(); }}>
+            <Icon name="arrowleft" size={13}/> Keluar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Topbar = ({ crumbs, onOpenPalette, lang, t, user, onNavigate, onLogout }) => {
   return (
     <header className="topbar">
       <div className="brand">
@@ -27,7 +69,7 @@ const Topbar = ({ crumbs, onOpenPalette, lang, t }) => {
           <Kbd>⌘</Kbd><Kbd>K</Kbd>
         </span>
       </button>
-      <button className="iconbtn has-dot" data-tip="Notifications">
+      <button className="iconbtn has-dot" data-tip="Notifications" onClick={() => window.toast('Tidak ada notifikasi baru', { type: 'info' })}>
         <Icon name="bell" size={14}/>
       </button>
       <button className="iconbtn" data-tip="Aktivitas" onClick={() => window.dispatchEvent(new CustomEvent('toggle-activity'))}>
@@ -36,11 +78,7 @@ const Topbar = ({ crumbs, onOpenPalette, lang, t }) => {
       <button className="iconbtn" data-tip="Pintasan (?)" onClick={() => window.dispatchEvent(new CustomEvent('open-shortcuts'))}>
         <Icon name="keyboard" size={14}/>
       </button>
-      <div className="user-chip">
-        <span className="avatar">AS</span>
-        <span style={{ fontSize: 12 }}>adi.s</span>
-        <Icon name="chevdown" size={12}/>
-      </div>
+      <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout}/>
     </header>
   );
 };

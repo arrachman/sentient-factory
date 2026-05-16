@@ -70,12 +70,20 @@ const StatusPill = ({ status, t }) => {
 
 const Kbd = ({ children }) => <span className="kbd">{children}</span>;
 
+// True when the consuming page lives in the active tab. Default true so
+// app-level shortcuts (outside any tab) keep working.
+const TabActiveContext = React.createContext(true);
+
+// Keydown subscription that auto-detaches when the page's tab is inactive,
+// so multiple mounted tabs don't all react to the same key.
 const useKey = (handler) => {
+  const active = React.useContext(TabActiveContext);
   React.useEffect(() => {
+    if (!active) return;
     const fn = (e) => handler(e);
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
-  }, [handler]);
+  }, [handler, active]);
 };
 
-Object.assign(window, { Spark, Bars, Donut, StatusPill, Kbd, useKey });
+Object.assign(window, { Spark, Bars, Donut, StatusPill, Kbd, useKey, TabActiveContext });

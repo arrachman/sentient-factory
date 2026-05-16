@@ -3,9 +3,9 @@ const NAV = [
   { id: 'home', icon: 'home', label: 'Dashboard' },
   { id: 'statistik', icon: 'stats', label: 'Statistik' },
   { id: 'master', icon: 'database', label: 'Data Master', children: [
-    { label: 'Customer', code: 'CUS' }, { label: 'Supplier', code: 'SUP' },
-    { label: 'Item', code: 'ITM' }, { label: 'Chart of Account', code: 'CoA' },
-    { label: 'Cabang & Lokasi', code: 'LOC' }, { label: 'Cost Center', code: 'CC' },
+    { id: 'm-customer', label: 'Customer', code: 'CUS' }, { id: 'm-supplier', label: 'Supplier', code: 'SUP' },
+    { id: 'm-item', label: 'Item', code: 'ITM' }, { id: 'm-coa', label: 'Chart of Account', code: 'CoA' },
+    { id: 'm-lokasi', label: 'Cabang & Lokasi', code: 'LOC' }, { id: 'm-costcenter', label: 'Cost Center', code: 'CC' },
   ]},
   { id: 'keuangan', icon: 'coins', label: 'Keuangan', children: [
     { group: 'Transaksi', items: [
@@ -22,33 +22,33 @@ const NAV = [
       { id: 'buku-besar', label: 'Buku Besar', code: 'GL' },
     ]},
     { group: 'Laporan', items: [
-      { label: 'Neraca', code: 'BS' }, { label: 'Laba Rugi', code: 'PL' },
-      { label: 'Arus Kas', code: 'CF' }, { label: 'Perubahan Modal', code: 'EQ' },
+      { id: 'rep-neraca', label: 'Neraca', code: 'BS' }, { id: 'rep-labarugi', label: 'Laba Rugi', code: 'PL' },
+      { id: 'rep-aruskas', label: 'Arus Kas', code: 'CF' }, { id: 'rep-modal', label: 'Perubahan Modal', code: 'EQ' },
     ]},
   ]},
   { id: 'persediaan', icon: 'boxes', label: 'Persediaan', children: [
-    { label: 'Stock Opname', code: 'SO' }, { label: 'Mutasi Stok', code: 'MS' },
-    { label: 'Penyesuaian', code: 'AJ' }, { label: 'Transfer Gudang', code: 'TG' },
+    { id: 'inv-opname', label: 'Stock Opname', code: 'SO' }, { id: 'inv-mutasi', label: 'Mutasi Stok', code: 'MS' },
+    { id: 'inv-adjust', label: 'Penyesuaian', code: 'AJ' }, { id: 'inv-transfer', label: 'Transfer Gudang', code: 'TG' },
   ]},
   { id: 'pembelian', icon: 'cart', label: 'Pembelian', children: [
-    { label: 'PO Pembelian', code: 'PO' }, { label: 'Penerimaan Barang', code: 'PR' },
-    { label: 'Faktur Pembelian', code: 'PI' }, { label: 'Retur Pembelian', code: 'PRT' },
+    { id: 'pur-po', label: 'PO Pembelian', code: 'PO' }, { id: 'pur-receipt', label: 'Penerimaan Barang', code: 'PR' },
+    { id: 'pur-invoice', label: 'Faktur Pembelian', code: 'PI' }, { id: 'pur-return', label: 'Retur Pembelian', code: 'PRT' },
   ]},
   { id: 'sales', icon: 'tag', label: 'Sales', children: [
-    { id: 'sales-order', label: 'SO Penjualan', code: 'SO' }, { label: 'Pengiriman', code: 'DO' },
-    { label: 'Faktur Penjualan', code: 'SI' }, { label: 'Retur Penjualan', code: 'SRT' },
+    { id: 'sales-order', label: 'SO Penjualan', code: 'SO' }, { id: 'sal-do', label: 'Pengiriman', code: 'DO' },
+    { id: 'sal-invoice', label: 'Faktur Penjualan', code: 'SI' }, { id: 'sal-return', label: 'Retur Penjualan', code: 'SRT' },
   ]},
   { id: 'produksi', icon: 'factory', label: 'Produksi', children: [
-    { label: 'Work Order', code: 'WO' }, { label: 'BOM', code: 'BOM' },
-    { label: 'Output Produksi', code: 'OP' },
+    { id: 'prd-wo', label: 'Work Order', code: 'WO' }, { id: 'prd-bom', label: 'BOM', code: 'BOM' },
+    { id: 'prd-output', label: 'Output Produksi', code: 'OP' },
   ]},
   { id: 'fixed-asset', icon: 'layers', label: 'Fixed Asset', children: [
-    { label: 'Daftar Aset', code: 'FA' }, { label: 'Penyusutan', code: 'DEP' },
-    { label: 'Disposal', code: 'DSP' },
+    { id: 'fa-list', label: 'Daftar Aset', code: 'FA' }, { id: 'fa-deprec', label: 'Penyusutan', code: 'DEP' },
+    { id: 'fa-disposal', label: 'Disposal', code: 'DSP' },
   ]},
   { divider: true },
   { id: 'setting', icon: 'gear', label: 'Setting', children: [
-    { label: 'Users', code: 'U' }, { label: 'Roles', code: 'R' }, { label: 'Preferensi', code: 'PR' },
+    { id: 'set-users', label: 'Users', code: 'U' }, { id: 'set-roles', label: 'Roles', code: 'R' }, { id: 'set-prefs', label: 'Preferensi', code: 'PR' },
   ]},
 ];
 
@@ -128,7 +128,7 @@ const Sidebar = ({ current, onNavigate, t }) => {
                 className={`flyout-item ${sub.id === current ? 'active' : ''}`}
                 onClick={() => { if (sub.id) { onNavigate(sub.id); setOpen(null); } }}>
                 <Icon name="dot" size={8}/>
-                <span>{sub.label}</span>
+                <span>{t(sub.label)}</span>
                 {sub.code && <span className="code">{sub.code}</span>}
               </div>
             ))
