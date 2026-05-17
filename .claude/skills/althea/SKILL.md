@@ -30,6 +30,17 @@ permintaan, bukan ritual kaku di setiap prompt:
 4. **Kalau konteks sudah jelas total** — permintaan eksplisit, tidak ada ambiguitas, dampak
    kecil/lokal — **tidak perlu bertanya atau konfirmasi**; langsung kerjakan. Jangan bertanya
    hanya demi formalitas.
+5. **Setiap kali ada tanya-jawab, konfirmasi keputusan, atau perubahan flow** (alur booking,
+   role/route, WA trigger, state machine, konvensi, atau asumsi baru) — **WAJIB update file
+   `.md` dokumentasi di `apps/web-althea`** supaya dokumen tetap sinkron dengan realita.
+   Jangan declare task selesai sebelum dokumen di-update.
+   - Sasaran default: `apps/web-althea/CLAUDE.md` (agent guide). Update juga
+     `apps/web-althea/README.md` bila menyangkut setup/quick start, dan
+     `apps/web-althea/features/README.md` bila menyangkut pola slice.
+   - Catat sebagai **fakta ringkas**, bukan log percakapan: keputusan + alasan singkat, flow
+     baru/berubah, dan asumsi yang disepakati — berguna untuk sesi berikutnya.
+   - Bila perubahan menyentuh status fitur, selaraskan juga `.planning/CHANGELOG.md` &
+     `.planning/ROADMAP.md` di root monorepo.
 
 ## Tech Stack
 

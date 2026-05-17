@@ -69,17 +69,17 @@ app/                           # Next.js App Router (flat routes, no route group
 ├── (auth)/                    # Public routes — login only (route group, no URL prefix)
 │   └── login/
 ├── admin/                     # Role: clinic-admin (full access)
-│   ├── schedule/              # ← admin landing (Penjadwalan, bukan /dashboard)
+│   ├── (admin)/jadwal/        # ← admin landing (Jadwal, route group; was schedule/)
 │   ├── psikolog/              # CRUD tim psikolog
 │   ├── layanan/               # CRUD service catalog
 │   ├── rooms/                 # CRUD + pemakaian ruangan
 │   ├── clients/               # Daftar pasien (admin-driven)
-│   ├── booking/               # Daftar booking + state machine
+│   ├── daftar-jadwal/         # Daftar booking + state machine (was booking/)
 │   ├── users-roles/           # User & role management
 │   ├── notif-wa/              # WA template editor + activity log
 │   ├── audit-log/             # Audit trail
 │   ├── pengaturan/            # ClinicSettings (slot operasional, dll)
-│   └── dashboard/             # (legacy, masih ada, tapi sidebar landing ke /admin/schedule)
+│   └── dashboard/             # (legacy, masih ada, tapi sidebar landing ke /admin/jadwal)
 ├── psikolog/                  # Role: clinic-psikolog (own-data only, BR-04)
 │   ├── dashboard/             # ← psikolog landing
 │   ├── schedule/              # Jadwal saya (Hari/Minggu/Bulan + filter)
@@ -183,7 +183,7 @@ NPM (reverse proxy production) forward `/api/*` LANGSUNG ke `api-gateway:3203`, 
 
 | Role                   | Path prefix           | Default landing            |
 |------------------------|-----------------------|----------------------------|
-| `clinic-admin`         | `/admin/*`            | **`/admin/schedule`**      |
+| `clinic-admin`         | `/admin/*`            | **`/admin/jadwal`**        |
 | `clinic-psikolog`      | `/psikolog/*`         | `/psikolog/dashboard`      |
 | `clinic-owner`         | `/owner/*`            | `/owner/dashboard`         |
 | `clinic-resepsionis`   | `/resepsionis/*`      | `/resepsionis/dashboard`   |
@@ -193,16 +193,16 @@ NPM (reverse proxy production) forward `/api/*` LANGSUNG ke `api-gateway:3203`, 
 
 Admin bypass: `clinic-admin` boleh akses semua route. Role lain hanya prefix mereka (per `ROLE_ROUTE_PREFIXES` di `shared/auth/constants.ts`).
 
-**Admin landing = `/admin/schedule`** (Penjadwalan, sesuai sidebar nav pertama). Bukan `/admin/dashboard` (legacy, masih ada tapi tidak di sidebar nav).
+**Admin landing = `/admin/jadwal`** (Jadwal, sesuai sidebar nav pertama). Bukan `/admin/dashboard` (legacy, masih ada tapi tidak di sidebar nav).
 
 Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO). Set client-side via `document.cookie` setelah login response (NPM bypass — lihat section "Auth cookie flow" di atas).
 
 ### Sidebar nav per role (canonical source: `components/layouts/admin-shell/nav-config.ts`)
 
 **Admin** — 3 group (Operasional / Manajemen / Sistem):
-- Operasional: Penjadwalan, Klien, Ruangan
+- Operasional: Jadwal, Klien, Ruangan
 - Manajemen: Psikolog, Layanan, Notifikasi WA
-- Sistem: Daftar booking, Audit log, User & Role, Pengaturan
+- Sistem: Daftar Jadwal, Audit log, User & Role, Pengaturan
 
 **Psikolog** — 3 group (Praktik / Klinis / Akun):
 - Praktik: Dashboard, Jadwal saya, Klien saya
@@ -278,7 +278,7 @@ Highlight current state:
 - ✅ Auth flow (login + cookie client-side untuk NPM bypass + logout confirmation)
 - ✅ Master data: Psikolog, Layanan, Rooms (facilities text[]), Users & Roles, Clients
 - ✅ Booking wizard single-page (ADR 011) + reschedule + walk-in via wizard
-- ✅ Schedule grid `/admin/schedule` + `/psikolog/schedule` (Hari/Minggu/Bulan + filter)
+- ✅ Schedule grid `/admin/jadwal` + `/psikolog/schedule` (Hari/Minggu/Bulan + filter)
 - ✅ WA Fonnte integration hardened (phone normalize, BullMQ retry, webhook fallback, ID date/time WIB) + 18 templates
 - ✅ WA event triggers (confirm/complete/cancel/reschedule)
 - ✅ Psikolog workflow: dashboard real-data, sessions SOAP, patients, profile (editable + **avatar upload base64**), schedule self-service (weekly + per-tanggal override), rooms read-only
