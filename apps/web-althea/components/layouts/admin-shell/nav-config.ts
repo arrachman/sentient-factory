@@ -46,8 +46,8 @@ const ADMIN_NAV: NavGroup[] = [
     category: 'Operasional',
     items: [
       {
-        href: '/admin/schedule',
-        label: 'Penjadwalan',
+        href: '/admin/jadwal',
+        label: 'Jadwal',
         icon: createElement(CalendarDays, { className: ICON_CLASS }),
         pageTitle: 'Jadwal Sesi',
       },
@@ -93,10 +93,10 @@ const ADMIN_NAV: NavGroup[] = [
     category: 'Sistem',
     items: [
       {
-        href: '/admin/booking',
-        label: 'Daftar booking',
+        href: '/admin/daftar-jadwal',
+        label: 'Daftar Jadwal',
         icon: createElement(FileText, { className: ICON_CLASS }),
-        pageTitle: 'Daftar Booking',
+        pageTitle: 'Daftar Jadwal',
       },
       {
         href: '/admin/audit-log',

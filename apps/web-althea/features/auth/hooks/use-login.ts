@@ -51,7 +51,7 @@ export function useLogin() {
       const returnTo = params.get('returnTo');
       const clinicRoles = res.data.user.roles.filter((r) => r.startsWith('clinic-')) as Role[];
       const role = clinicRoles[0] ?? 'clinic-admin';
-      const landing = ROLE_DEFAULT_ROUTE[role] ?? '/admin/schedule';
+      const landing = ROLE_DEFAULT_ROUTE[role] ?? '/admin/jadwal';
       const target = returnTo && returnTo.startsWith('/') ? returnTo : landing;
       // Hard navigation — bypass RSC cache, biarin middleware run dengan cookie fresh
       window.location.assign(target);

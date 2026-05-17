@@ -3,16 +3,16 @@
 /**
  * Toolbar atas Penjadwalan:
  *   [‹]  [📅 date pill]  [›]  [Hari ini]  [tab Hari/Minggu/Bulan]
- *                                              [Filter (badge)] [+ Jadwalkan Klien]
+ *                                              [Filter (badge)] [📅 Daftar Jadwal]
  * Date pill membuka native date picker via `dateInputRef.showPicker()`.
  */
 import { useRef } from 'react';
 import {
   CalendarDays,
+  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   Filter,
-  Plus,
 } from 'lucide-react';
 import type { ViewMode } from '../model/types';
 
@@ -168,7 +168,7 @@ export function ScheduleToolbar({
           onClick={onCreate}
           className="btn btn-primary btn-sm"
         >
-          <Plus size={15} style={{ stroke: '#fff' }} /> Jadwalkan Klien
+          <CalendarPlus className="h-4 w-4" /> Daftar Jadwal
         </button>
         {filterChildren}
       </div>

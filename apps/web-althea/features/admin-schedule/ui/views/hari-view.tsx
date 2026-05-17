@@ -6,6 +6,8 @@
  */
 import type { Booking } from '@/features/admin-booking/model/types';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
+import { emptySlotTone } from '@/features/psikolog-schedule/model/availability';
+import type { AvailabilityResolver } from '../../hooks/use-availability-map';
 import { SLOTS } from '../../model/constants';
 import { findBookingForSlot } from '../../model/filters';
 import { BookingCard } from '../components/booking-card';
@@ -18,12 +20,16 @@ export function HariView({
   bookings,
   isLoading,
   onBookingClick,
+  resolveAvailability,
+  onEmptySlotClick,
 }: {
   date: string;
   psikologs: Psikolog[];
   bookings: Booking[];
   isLoading: boolean;
   onBookingClick: (b: Booking) => void;
+  resolveAvailability?: AvailabilityResolver;
+  onEmptySlotClick?: () => void;
 }) {
   if (isLoading) {
     return (
@@ -40,6 +46,7 @@ export function HariView({
 
   const colTpl = `110px repeat(${psikologs.length}, minmax(140px, 1fr))`;
   const minWidth = 110 + psikologs.length * 140;
+  const dateObj = new Date(`${date}T00:00:00`);
 
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -82,6 +89,18 @@ export function HariView({
           <SlotLabel start={slot.start} end={slot.end} />
           {psikologs.map((p) => {
             const b = findBookingForSlot(bookings, p.userId, date, slot);
+            let emptyTone;
+            let emptyReason: string | null = null;
+            if (!b && resolveAvailability) {
+              const avail = resolveAvailability(p.userId, dateObj);
+              emptyTone = emptySlotTone({
+                date: dateObj,
+                slotIdx,
+                slotEnd: slot.end,
+                availability: avail,
+              });
+              emptyReason = avail.reason ?? null;
+            }
             return (
               <div
                 key={p.id}
@@ -91,7 +110,15 @@ export function HariView({
                   minHeight: 88,
                 }}
               >
-                {b ? <BookingCard b={b} onClick={() => onBookingClick(b)} /> : <EmptySlot />}
+                {b ? (
+                  <BookingCard b={b} onClick={() => onBookingClick(b)} />
+                ) : (
+                  <EmptySlot
+                    tone={emptyTone}
+                    reason={emptyReason}
+                    onClick={onEmptySlotClick}
+                  />
+                )}
               </div>
             );
           })}

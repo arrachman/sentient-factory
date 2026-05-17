@@ -7,31 +7,66 @@
  *  - status                    → start / complete / cancel (state machine + WA + audit)
  *  - catatan                   → PATCH /booking/:id (notes only)
  *
+ * Pemilihan jadwal memakai UI yang sama dengan Booking Wizard:
+ * DateStrip (week-strip color-coded) + SlotGrid, sehingga admin hanya bisa
+ * memilih tanggal/slot sesuai ketersediaan jadwal psikolog (override → weekly),
+ * slot operasional klinik, dan bentrok booking lain.
+ *
  * Layanan & klien TIDAK bisa diubah di sini (efek berantai durasi/harga/paket) —
  * pakai Batal lalu buat booking baru.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import {
+  useBookingList,
   useCancelBooking,
   useCompleteBooking,
   useRescheduleBooking,
   useStartBooking,
   useUpdateBooking,
 } from '../hooks/use-booking';
-import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
+import {
+  usePsikologAvailabilityForDate,
+  usePsikologList,
+} from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { STATUS_BADGE_CLASS, STATUS_LABEL, type Booking } from '../model/types';
+import { DateStrip } from './booking-wizard/date-strip';
+import { SlotGrid } from './booking-wizard/slot-grid';
+import { buildIso, toDateKey } from './booking-wizard/wizard-utils';
+
+type Slot = { start: string; end: string; label?: string };
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
 }
-function isoToLocal(iso: string): string {
+function hhmm(iso: string): string {
   const d = new Date(iso);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
-function localToIso(local: string): string {
-  return new Date(local).toISOString();
+function findSlotIdx(slots: Slot[], startHHMM: string, endHHMM: string): number | null {
+  let idx = slots.findIndex((s) => s.start === startHHMM && s.end === endHHMM);
+  if (idx === -1) idx = slots.findIndex((s) => s.start === startHHMM);
+  return idx === -1 ? null : idx;
+}
+function fmtRange(startIso: string, endIso: string): string {
+  const s = new Date(startIso);
+  const e = new Date(endIso);
+  const datePart = s.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Jakarta',
+  });
+  const t = (d: Date) =>
+    d.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
+    });
+  return `${datePart} · ${t(s)}–${t(e)}`;
 }
 
 export function EditBookingDialog({
@@ -41,8 +76,8 @@ export function EditBookingDialog({
   booking: Booking | null;
   onClose: () => void;
 }) {
-  const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
+  const [date, setDate] = useState('');
+  const [slotIdx, setSlotIdx] = useState<number | null>(null);
   const [psikologUserId, setPsikologUserId] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);
   const [reason, setReason] = useState('');
@@ -50,22 +85,135 @@ export function EditBookingDialog({
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
+  const settingsQuery = useSettings();
   const reschedule = useRescheduleBooking();
   const updateNotes = useUpdateBooking();
   const startMut = useStartBooking();
   const completeMut = useCompleteBooking();
   const cancelMut = useCancelBooking();
 
+  const slots: Slot[] = settingsQuery.data?.data.slotsOfDay ?? [];
+  const closedDayOfWeek = settingsQuery.data?.data.closedDayOfWeek ?? [];
+  const holidays = settingsQuery.data?.data.holidays ?? [];
+  const slotsReady = slots.length > 0;
+
+  // Slot index asli booking (untuk deteksi perubahan & supaya slot lama
+  // tetap bisa dipilih ulang walau jadwal psikolog sudah berubah).
+  const origSlotIdx = useMemo(() => {
+    if (!booking || !slotsReady) return null;
+    return findSlotIdx(slots, hhmm(booking.scheduledStart), hhmm(booking.scheduledEnd));
+  }, [booking, slots, slotsReady]);
+
+  // Reset saat booking berubah; re-init slotIdx ketika slot klinik selesai load.
   useEffect(() => {
-    if (booking) {
-      setStart(isoToLocal(booking.scheduledStart));
-      setEnd(isoToLocal(booking.scheduledEnd));
-      setPsikologUserId(booking.psikologUserId);
-      setRoomId(booking.roomId);
-      setReason('');
-      setNotes(booking.notes ?? '');
+    if (!booking) return;
+    setDate(toDateKey(new Date(booking.scheduledStart)));
+    setPsikologUserId(booking.psikologUserId);
+    setRoomId(booking.roomId);
+    setReason('');
+    setNotes(booking.notes ?? '');
+    setSlotIdx(
+      slotsReady
+        ? findSlotIdx(slots, hhmm(booking.scheduledStart), hhmm(booking.scheduledEnd))
+        : null,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking?.id, slotsReady]);
+
+  const psikologListFiltered = useMemo(() => {
+    const all = psikologList.data?.data ?? [];
+    if (!booking) return all;
+    return all.filter((p) => {
+      const ids = p.serviceIds ?? [];
+      return ids.length === 0 || ids.includes(booking.serviceId);
+    });
+  }, [psikologList.data, booking]);
+
+  const selectedPsikolog = useMemo(
+    () => psikologList.data?.data.find((p) => p.userId === psikologUserId) ?? null,
+    [psikologList.data, psikologUserId],
+  );
+  const psikologName = selectedPsikolog?.fullName ?? null;
+
+  const availabilityQuery = usePsikologAvailabilityForDate(psikologUserId, date);
+  const resolvedAvailability = availabilityQuery.data?.data;
+  const psikologClosedToday =
+    !!psikologUserId && !!date && !!resolvedAvailability && !resolvedAvailability.isOpen;
+  const overrideReason =
+    resolvedAvailability?.source === 'override' ? resolvedAvailability.reason : null;
+
+  const psikologDayBookings = useBookingList({
+    psikologUserId: psikologUserId ?? undefined,
+    date: psikologUserId && date ? date : undefined,
+    limit: 50,
+    includeCancelled: false,
+  });
+  const allDayBookings = useBookingList({
+    date: date || undefined,
+    limit: 100,
+    includeCancelled: false,
+  });
+
+  const sameAsOriginal =
+    !!booking &&
+    date === toDateKey(new Date(booking.scheduledStart)) &&
+    psikologUserId === booking.psikologUserId;
+
+  const unavailableSlotIdx = useMemo(() => {
+    if (!psikologUserId || !date) return new Set<number>();
+    const taken = new Set<number>();
+    if (psikologClosedToday) {
+      slots.forEach((_, i) => taken.add(i));
+    } else {
+      const allowed = resolvedAvailability?.slotIndices;
+      if (allowed !== null && allowed !== undefined) {
+        const allowedSet = new Set(allowed);
+        slots.forEach((_, idx) => {
+          if (!allowedSet.has(idx)) taken.add(idx);
+        });
+      }
+      for (const b of psikologDayBookings.data?.data ?? []) {
+        if (booking && b.id === booking.id) continue; // jangan blok slot booking ini sendiri
+        const bStart = new Date(b.scheduledStart).getTime();
+        const bEnd = new Date(b.scheduledEnd).getTime();
+        slots.forEach((slot, idx) => {
+          const slotStart = new Date(`${date}T${slot.start}:00`).getTime();
+          const slotEnd = new Date(`${date}T${slot.end}:00`).getTime();
+          if (bStart < slotEnd && bEnd > slotStart) taken.add(idx);
+        });
+      }
     }
-  }, [booking]);
+    // Slot asli booking selalu bisa dipilih kembali selama tanggal & psikolog
+    // belum diubah (booking lama mungkin dibuat sebelum jadwal psikolog berubah).
+    if (sameAsOriginal && origSlotIdx !== null) taken.delete(origSlotIdx);
+    return taken;
+  }, [
+    psikologUserId,
+    date,
+    psikologClosedToday,
+    resolvedAvailability,
+    psikologDayBookings.data,
+    slots,
+    booking,
+    sameAsOriginal,
+    origSlotIdx,
+  ]);
+
+  const selectedSlot = slotIdx !== null ? slots[slotIdx] ?? null : null;
+
+  const occupiedRoomIds = useMemo(() => {
+    if (!date || slotIdx === null || !selectedSlot) return new Set<number>();
+    const slotStart = new Date(`${date}T${selectedSlot.start}:00`).getTime();
+    const slotEnd = new Date(`${date}T${selectedSlot.end}:00`).getTime();
+    const occ = new Set<number>();
+    for (const b of allDayBookings.data?.data ?? []) {
+      if (booking && b.id === booking.id) continue;
+      const bStart = new Date(b.scheduledStart).getTime();
+      const bEnd = new Date(b.scheduledEnd).getTime();
+      if (bStart < slotEnd && bEnd > slotStart) occ.add(b.roomId);
+    }
+    return occ;
+  }, [allDayBookings.data, date, slotIdx, selectedSlot, booking]);
 
   if (!booking) return null;
 
@@ -83,10 +231,10 @@ export function EditBookingDialog({
 
   const scheduleChanged =
     canReschedule &&
-    !!start &&
-    !!end &&
-    (localToIso(start) !== new Date(booking.scheduledStart).toISOString() ||
-      localToIso(end) !== new Date(booking.scheduledEnd).toISOString() ||
+    !!date &&
+    slotIdx !== null &&
+    (date !== toDateKey(new Date(booking.scheduledStart)) ||
+      slotIdx !== origSlotIdx ||
       psikologUserId !== booking.psikologUserId ||
       roomId !== booking.roomId);
   const notesChanged = canEditNotes && notes.trim() !== (booking.notes ?? '').trim();
@@ -96,12 +244,13 @@ export function EditBookingDialog({
     e.preventDefault();
     if (!booking || !dirty) return;
     try {
-      if (scheduleChanged) {
+      if (scheduleChanged && slotIdx !== null) {
+        const slot = slots[slotIdx];
         await reschedule.mutateAsync({
           id: booking.id,
           input: {
-            scheduledStart: localToIso(start),
-            scheduledEnd: localToIso(end),
+            scheduledStart: buildIso(date, slot.start),
+            scheduledEnd: buildIso(date, slot.end),
             psikologUserId: psikologUserId ?? undefined,
             roomId: roomId ?? undefined,
             reason: reason.trim() || undefined,
@@ -160,78 +309,120 @@ export function EditBookingDialog({
         </div>
 
         <form onSubmit={save} className="space-y-3 px-6 py-4">
-          {!canReschedule && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
-              Jadwal, ruang & psikolog hanya bisa diubah saat status{' '}
-              <strong>Check-in</strong>. Booking ini <strong>{STATUS_LABEL[status]}</strong>.
-            </div>
-          )}
+          {!canReschedule ? (
+            <>
+              <div className="rounded-md border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-800">
+                Jadwal, ruang & psikolog hanya bisa diubah saat status{' '}
+                <strong>Check-in</strong>. Booking ini <strong>{STATUS_LABEL[status]}</strong>.
+              </div>
+              <div className="rounded-md border border-border bg-cream-50 px-3 py-2.5 text-sm">
+                <div className="caption mb-0.5">Jadwal saat ini</div>
+                <div className="font-medium text-teal-800">
+                  {fmtRange(booking.scheduledStart, booking.scheduledEnd)}
+                </div>
+                <div className="caption mt-1">
+                  Psikolog: {booking.psikolog?.fullName ?? '—'} · Ruang:{' '}
+                  {booking.room?.name ?? '—'}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="caption mb-1 block">Psikolog</label>
+                <select
+                  value={psikologUserId ?? ''}
+                  onChange={(e) => {
+                    setPsikologUserId(e.target.value ? Number(e.target.value) : null);
+                    setSlotIdx(null);
+                  }}
+                  className="input-althea"
+                >
+                  {psikologListFiltered.map((p) => (
+                    <option key={p.userId} value={p.userId}>
+                      {p.fullName ?? p.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="caption mb-1 block">Mulai</label>
-              <input
-                type="datetime-local"
-                value={start}
-                onChange={(e) => setStart(e.target.value)}
-                disabled={!canReschedule}
-                className="input-althea disabled:opacity-60"
+              <DateStrip
+                selectedDate={date}
+                psikolog={selectedPsikolog}
+                psikologUserId={psikologUserId}
+                closedDayOfWeek={closedDayOfWeek}
+                holidays={holidays}
+                onChangeDate={(d) => {
+                  setDate(d);
+                  setSlotIdx(null);
+                }}
               />
-            </div>
-            <div>
-              <label className="caption mb-1 block">Selesai</label>
-              <input
-                type="datetime-local"
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-                disabled={!canReschedule}
-                className="input-althea disabled:opacity-60"
+
+              {psikologClosedToday && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  ⚠ <strong>{psikologName ?? 'Psikolog'}</strong> tidak praktik di tanggal ini
+                  {resolvedAvailability?.source === 'override'
+                    ? ' (override khusus tanggal ini'
+                    : ' (sesuai jadwal mingguan psikolog'}
+                  {overrideReason ? `: ${overrideReason}` : ''}). Pilih tanggal lain atau ganti
+                  psikolog.
+                </div>
+              )}
+              {!psikologClosedToday && resolvedAvailability?.source === 'override' && (
+                <div className="rounded-md border border-sage-200 bg-sage-50 px-3 py-2 text-xs text-sage-800">
+                  ℹ Tanggal ini pakai <strong>jadwal khusus</strong> psikolog (override)
+                  {overrideReason ? ` — ${overrideReason}` : ''}.
+                </div>
+              )}
+
+              <SlotGrid
+                slots={slots}
+                unavailableSlotIdx={unavailableSlotIdx}
+                slotIdx={slotIdx}
+                psikologName={psikologName}
+                isLoadingBookings={psikologDayBookings.isLoading}
+                onPick={(idx) => setSlotIdx(idx)}
               />
-            </div>
-          </div>
 
-          <div>
-            <label className="caption mb-1 block">Psikolog</label>
-            <select
-              value={psikologUserId ?? ''}
-              onChange={(e) => setPsikologUserId(e.target.value ? Number(e.target.value) : null)}
-              disabled={!canReschedule}
-              className="input-althea disabled:opacity-60"
-            >
-              {(psikologList.data?.data ?? []).map((p) => (
-                <option key={p.userId} value={p.userId}>
-                  {p.fullName ?? p.email}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div>
+                <label className="caption mb-1 block">Ruang</label>
+                <select
+                  value={roomId ?? ''}
+                  onChange={(e) => setRoomId(e.target.value ? Number(e.target.value) : null)}
+                  className="input-althea"
+                >
+                  <option value="">-- pilih ruang --</option>
+                  {(roomList.data?.data ?? []).map((r) => {
+                    const occupied = slotIdx !== null && occupiedRoomIds.has(r.id);
+                    return (
+                      <option key={r.id} value={r.id} disabled={occupied}>
+                        {occupied ? '🔴 ' : ''}[{r.type}] {r.name}
+                        {occupied ? ' — terpakai' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                {slotIdx !== null && occupiedRoomIds.size > 0 && (
+                  <p className="caption mt-1 text-rose-700">
+                    ⚠ Ruangan bertanda 🔴 sudah terpakai di slot ini.
+                  </p>
+                )}
+              </div>
 
-          <div>
-            <label className="caption mb-1 block">Ruang</label>
-            <select
-              value={roomId ?? ''}
-              onChange={(e) => setRoomId(e.target.value ? Number(e.target.value) : null)}
-              disabled={!canReschedule}
-              className="input-althea disabled:opacity-60"
-            >
-              {(roomList.data?.data ?? []).map((r) => (
-                <option key={r.id} value={r.id}>
-                  [{r.type}] {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {canReschedule && scheduleChanged && (
-            <div>
-              <label className="caption mb-1 block">Alasan perubahan jadwal (opsional)</label>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={2}
-                className="input-althea h-auto py-2"
-              />
-            </div>
+              {scheduleChanged && (
+                <div>
+                  <label className="caption mb-1 block">
+                    Alasan perubahan jadwal (opsional)
+                  </label>
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={2}
+                    className="input-althea h-auto py-2"
+                  />
+                </div>
+              )}
+            </>
           )}
 
           <div>
@@ -285,11 +476,7 @@ export function EditBookingDialog({
             <button type="button" onClick={onClose} className="btn btn-outline btn-sm">
               Tutup
             </button>
-            <button
-              type="submit"
-              disabled={busy || !dirty}
-              className="btn btn-primary btn-sm"
-            >
+            <button type="submit" disabled={busy || !dirty} className="btn btn-primary btn-sm">
               {busy ? 'Menyimpan…' : 'Simpan perubahan'}
             </button>
           </div>

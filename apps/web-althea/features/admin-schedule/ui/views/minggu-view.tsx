@@ -5,20 +5,59 @@
  * booking; sisanya jadi "+N lagi" indicator.
  */
 import type { Booking } from '@/features/admin-booking/model/types';
+import type { Psikolog } from '@/features/admin-psikolog/model/types';
+import {
+  emptySlotTone,
+  type SlotCellTone,
+} from '@/features/psikolog-schedule/model/availability';
+import type { AvailabilityResolver } from '../../hooks/use-availability-map';
 import { DAY_LABELS_SHORT, SLOTS, SVC_COLOR } from '../../model/constants';
 import { addDays, pad2, toDateKey, todayKey } from '../../model/format';
 import { EmptySlot } from '../components/empty-slot';
+
+/**
+ * Agregat ketersediaan satu sel (hari × slot) lintas psikolog: sel dianggap
+ * "tersedia" jika minimal satu psikolog buka di slot itu. Tidak butuh filter
+ * psikolog manual.
+ */
+function aggregateTone(
+  psikologs: Psikolog[],
+  resolve: AvailabilityResolver,
+  dateObj: Date,
+  slotIdx: number,
+  slotEnd: string,
+): SlotCellTone | undefined {
+  if (psikologs.length === 0) return undefined;
+  let sawLibur = false;
+  for (const p of psikologs) {
+    const tone = emptySlotTone({
+      date: dateObj,
+      slotIdx,
+      slotEnd,
+      availability: resolve(p.userId, dateObj),
+    });
+    if (tone === 'available') return 'available';
+    if (tone === 'libur') sawLibur = true;
+  }
+  return sawLibur ? 'libur' : 'past';
+}
 
 export function MingguView({
   weekStart,
   bookings,
   isLoading,
   onBookingClick,
+  psikologs = [],
+  resolveAvailability,
+  onEmptySlotClick,
 }: {
   weekStart: string;
   bookings: Booking[];
   isLoading: boolean;
   onBookingClick: (b: Booking) => void;
+  psikologs?: Psikolog[];
+  resolveAvailability?: AvailabilityResolver;
+  onEmptySlotClick?: () => void;
 }) {
   if (isLoading) {
     return (
@@ -61,12 +100,24 @@ export function MingguView({
           {days.map((d) => {
             const cellKey = `${d}#${slotIdx}`;
             const cellBookings = byCell.get(cellKey) ?? [];
+            let emptyTone: SlotCellTone | undefined;
+            if (cellBookings.length === 0 && resolveAvailability) {
+              emptyTone = aggregateTone(
+                psikologs,
+                resolveAvailability,
+                new Date(`${d}T00:00:00`),
+                slotIdx,
+                slot.end,
+              );
+            }
             return (
               <DayCell
                 key={d}
                 bookings={cellBookings}
                 isToday={d === today}
                 onBookingClick={onBookingClick}
+                emptyTone={emptyTone}
+                onEmptySlotClick={onEmptySlotClick}
               />
             );
           })}
@@ -202,10 +253,14 @@ function DayCell({
   bookings,
   isToday,
   onBookingClick,
+  emptyTone,
+  onEmptySlotClick,
 }: {
   bookings: Booking[];
   isToday: boolean;
   onBookingClick: (b: Booking) => void;
+  emptyTone?: SlotCellTone;
+  onEmptySlotClick?: () => void;
 }) {
   return (
     <div
@@ -217,7 +272,7 @@ function DayCell({
       }}
     >
       {bookings.length === 0 ? (
-        <EmptySlot />
+        <EmptySlot tone={emptyTone} onClick={onEmptySlotClick} />
       ) : (
         <div className="flex flex-col" style={{ gap: 3, height: '100%' }}>
           {bookings.slice(0, 2).map((b) => (

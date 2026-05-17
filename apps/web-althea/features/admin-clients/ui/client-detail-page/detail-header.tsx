@@ -55,7 +55,7 @@ export function DetailHeader({
 
         <div className="flex items-center gap-2">
           <Link
-            href={`/admin/booking?clientId=${sel.id}`}
+            href={`/admin/daftar-jadwal?clientId=${sel.id}`}
             className="btn btn-primary btn-sm"
           >
             <Calendar className="h-4 w-4" /> Jadwalkan

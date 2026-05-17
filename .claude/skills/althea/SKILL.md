@@ -7,7 +7,7 @@ description: >
   menyebut fitur klinik (booking, psikolog, jadwal, WA notif, resepsionis, owner KPI).
 trigger: >
   Aktif saat user menyebut "althea", "web-althea", "klinik", "booking", "psikolog",
-  "admin/schedule", "resepsionis", "notif-wa", atau mengedit file di apps/web-althea/.
+  "admin/jadwal", "daftar-jadwal", "resepsionis", "notif-wa", atau mengedit file di apps/web-althea/.
 ---
 
 Kamu sedang bekerja di `apps/web-althea` — aplikasi internal **Althea Psychology** untuk
@@ -61,13 +61,13 @@ npm run build:staging
 ```
 app/
 ├── (auth)/login/          # Public, tidak di-prefix URL
-├── admin/                 # clinic-admin — landing: /admin/schedule
-│   ├── schedule/          # Penjadwalan (sidebar landing admin)
+├── admin/                 # clinic-admin — landing: /admin/jadwal
+│   ├── (admin)/jadwal/    # Jadwal sesi (route group, sidebar landing admin)
 │   ├── psikolog/          # CRUD tim psikolog
 │   ├── layanan/           # CRUD service catalog
 │   ├── rooms/             # CRUD + pemakaian ruangan
 │   ├── clients/           # Daftar klien (pasien)
-│   ├── booking/           # Daftar booking + state machine
+│   ├── daftar-jadwal/     # Daftar booking + state machine (was /admin/booking)
 │   ├── users-roles/       # User & role management
 │   ├── notif-wa/          # WA template editor + activity log
 │   ├── audit-log/         # Audit trail
@@ -95,7 +95,7 @@ proxy.ts                         # Auth guard + role-based redirect (was middlew
 
 | Role                 | Path prefix       | Default landing          |
 |----------------------|-------------------|--------------------------|
-| `clinic-admin`       | `/admin/*`        | `/admin/schedule`        |
+| `clinic-admin`       | `/admin/*`        | `/admin/jadwal`          |
 | `clinic-psikolog`    | `/psikolog/*`     | `/psikolog/dashboard`    |
 | `clinic-owner`       | `/owner/*`        | `/owner/dashboard`       |
 | `clinic-resepsionis` | `/resepsionis/*`  | `/resepsionis/dashboard` |

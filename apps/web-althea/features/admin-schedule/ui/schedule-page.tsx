@@ -24,6 +24,7 @@ import {
   weekStartMonday,
 } from '../model/format';
 import type { Filters, ViewMode } from '../model/types';
+import { useAvailabilityMap } from '../hooks/use-availability-map';
 import { FilterPopover } from './filter-popover';
 import { ScheduleStatsStrip } from './schedule-stats-strip';
 import { ScheduleToolbar } from './schedule-toolbar';
@@ -75,16 +76,35 @@ export function SchedulePage() {
     })),
   });
   const isLoading = dayQueries.some((q) => q.isLoading) || psikologList.isLoading;
+  const bookingsStamp = dayQueries.map((q) => q.dataUpdatedAt).join(',');
   const allBookings = useMemo<Booking[]>(
     () => dayQueries.flatMap((q) => q.data?.data ?? []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dayQueries.map((q) => q.dataUpdatedAt).join(',')],
+    [bookingsStamp],
   );
 
   const filteredBookings = useMemo(
     () => applyFilters(allBookings, filters),
     [allBookings, filters],
   );
+
+  // Resolver ketersediaan psikolog untuk sel kosong (Hari + Minggu).
+  const availEnabled = view === 'Hari' || view === 'Minggu';
+  const { resolve: resolveAvailability } = useAvailabilityMap({
+    psikologs,
+    from: datesToFetch[0] ?? '',
+    to: datesToFetch[datesToFetch.length - 1] ?? '',
+    enabled: availEnabled,
+  });
+  // Minggu = agregat lintas psikolog; hormati filter psikolog bila aktif.
+  const psikologsForAvail = useMemo(
+    () =>
+      filters.psikologIds.size > 0
+        ? psikologs.filter((p) => filters.psikologIds.has(p.userId))
+        : psikologs,
+    [psikologs, filters.psikologIds],
+  );
+  const openWizard = () => setWizardOpen(true);
 
   const stats = useMemo(() => {
     const totalSlots = psikologs.length * SLOTS.length * (datesToFetch.length || 1);
@@ -188,6 +208,8 @@ export function SchedulePage() {
                 bookings={filteredBookings}
                 isLoading={isLoading}
                 onBookingClick={setSelectedBooking}
+                resolveAvailability={resolveAvailability}
+                onEmptySlotClick={openWizard}
               />
             )}
             {view === 'Minggu' && (
@@ -196,6 +218,9 @@ export function SchedulePage() {
                 bookings={filteredBookings}
                 isLoading={isLoading}
                 onBookingClick={setSelectedBooking}
+                psikologs={psikologsForAvail}
+                resolveAvailability={resolveAvailability}
+                onEmptySlotClick={openWizard}
               />
             )}
             {view === 'Bulan' && (

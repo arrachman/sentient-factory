@@ -49,6 +49,20 @@ function nextActions(status: BookingStatus): BookingStatus[] {
   return map[status] || [];
 }
 
+const ACTION_LABEL: Record<BookingStatus, string> = {
+  checked_in: 'Check-in',
+  in_progress: 'Mulai',
+  completed: 'Selesai',
+  cancelled: 'Batal',
+};
+
+const ACTION_TOOLTIP: Record<BookingStatus, string> = {
+  checked_in: 'Tandai klien sudah check-in',
+  in_progress: 'Mulai sesi — status berubah jadi Berlangsung',
+  completed: 'Tandai sesi selesai — memicu notifikasi WA selesai',
+  cancelled: 'Batalkan booking — bisa isi alasan, memicu WA pembatalan',
+};
+
 type QuickFilter = 'all' | 'today' | 'tomorrow' | 'week' | 'past';
 
 function dateForQuickFilter(qf: QuickFilter): string | undefined {
@@ -157,7 +171,7 @@ export function BookingPage() {
         ))}
         <div className="ml-auto flex items-center gap-2">
           <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary btn-sm">
-            <CalendarPlus className="h-4 w-4" /> Booking Baru
+            <CalendarPlus className="h-4 w-4" /> Daftar Jadwal
           </button>
         </div>
       </div>
@@ -284,18 +298,18 @@ export function BookingPage() {
                       type="button"
                       onClick={() => setDetailing(b)}
                       className="btn btn-sm btn-ghost"
-                      title="Lihat detail"
+                      title="Lihat info lengkap booking (klien, layanan, pembayaran, catatan, riwayat)"
                     >
-                      <Eye className="h-3.5 w-3.5" />
+                      <Eye className="h-3.5 w-3.5" /> Detail
                     </button>
                     {!['cancelled', 'completed', 'in_progress'].includes(b.status) && (
                       <button
                         type="button"
                         onClick={() => setRescheduling(b)}
                         className="btn btn-sm btn-outline"
-                        title="Reschedule"
+                        title="Ganti tanggal/jam booking ini"
                       >
-                        <RotateCw className="h-3.5 w-3.5" />
+                        <RotateCw className="h-3.5 w-3.5" /> Reschedule
                       </button>
                     )}
                     {nextActions(b.status).map((act) => {
@@ -313,9 +327,9 @@ export function BookingPage() {
                           type="button"
                           onClick={() => handleAction(b.id, act)}
                           className={`btn btn-sm ${act === 'cancelled' ? 'btn-ghost text-danger' : 'btn-outline'}`}
-                          title={STATUS_LABEL[act]}
+                          title={ACTION_TOOLTIP[act]}
                         >
-                          {icon}
+                          {icon} {ACTION_LABEL[act]}
                         </button>
                       );
                     })}
