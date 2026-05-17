@@ -20,14 +20,12 @@ export function ClientsTable({
   items,
   isLoading,
   totalCount,
-  selectedId,
-  onSelect,
+  onOpen,
 }: {
   items: Client[];
   isLoading: boolean;
   totalCount: number;
-  selectedId: number | null;
-  onSelect: (id: number) => void;
+  onOpen: (id: number) => void;
 }) {
   return (
     <div className="card-althea overflow-hidden flex-1 min-h-0 flex flex-col bg-card">
@@ -43,12 +41,7 @@ export function ClientsTable({
           </div>
         ) : (
           items.map((c) => (
-            <ClientRow
-              key={c.id}
-              client={c}
-              isSelected={selectedId === c.id}
-              onClick={() => onSelect(c.id)}
-            />
+            <ClientRow key={c.id} client={c} onClick={() => onOpen(c.id)} />
           ))
         )}
       </div>
@@ -79,22 +72,16 @@ function TableHeader() {
 
 function ClientRow({
   client: c,
-  isSelected,
   onClick,
 }: {
   client: Client;
-  isSelected: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`grid items-center w-full text-left px-4 py-3 border-b border-border transition-colors ${
-        isSelected
-          ? 'bg-sage-50 border-l-[3px] border-l-sage-500 pl-[13px]'
-          : 'border-l-[3px] border-l-transparent hover:bg-cream-50'
-      }`}
+      className="grid items-center w-full text-left px-4 py-3 border-b border-border transition-colors border-l-[3px] border-l-transparent hover:bg-cream-50 hover:border-l-sage-300"
       style={{ gridTemplateColumns: COL_TPL }}
     >
       <div className="flex items-center gap-3 min-w-0">

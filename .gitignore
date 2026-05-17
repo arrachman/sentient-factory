@@ -279,3 +279,6 @@ insight/
 
 # Turborepo cache
 .turbo/cache/
+
+
+apps/web-erp/preferensi

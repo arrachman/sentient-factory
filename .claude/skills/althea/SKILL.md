@@ -14,6 +14,23 @@ Kamu sedang bekerja di `apps/web-althea` — aplikasi internal **Althea Psycholo
 manajemen klinik psikologi. **Pasien TIDAK login**; pasien hanya entitas data + penerima WA
 notification. Semua booking adalah admin-driven.
 
+## ATURAN INTERAKSI (diharuskan, tergantung konteks)
+
+Klarifikasi & konfirmasi **diharuskan** — bukan opsional — tapi disesuaikan dengan konteks
+permintaan, bukan ritual kaku di setiap prompt:
+
+1. **Bila ada ambiguitas, ajukan pertanyaan klarifikasi dulu** sebelum eksekusi. Identifikasi
+   titik tidak jelas (role mana, slice mana, perilaku UI, edge case, dampak ke
+   booking/WA/jadwal) dan tanyakan ke user — gunakan `AskUserQuestion` bila ada pilihan
+   terstruktur.
+2. **Konfirmasi pemahaman & rencana** sebelum perubahan yang tidak trivial: ringkas apa yang
+   dikerjakan, file tersentuh, dan asumsi yang dipakai. Tunggu user mengiyakan.
+3. **Konfirmasi ulang untuk aksi berisiko** (ubah `proxy.ts`, schema/migrasi, hapus/rename,
+   perubahan lintas-role, kirim WA). Lebih baik tanya 10 detik daripada rollback 1 jam.
+4. **Kalau konteks sudah jelas total** — permintaan eksplisit, tidak ada ambiguitas, dampak
+   kecil/lokal — **tidak perlu bertanya atau konfirmasi**; langsung kerjakan. Jangan bertanya
+   hanya demi formalitas.
+
 ## Tech Stack
 
 - **Framework**: Next.js App Router (React 19, TypeScript strict)

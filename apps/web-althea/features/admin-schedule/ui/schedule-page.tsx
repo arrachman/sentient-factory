@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { bookingApi } from '@/features/admin-booking/api/booking.api';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
@@ -33,7 +33,11 @@ import { MingguView } from './views/minggu-view';
 import { ServiceLegendItem } from './components/service-legend';
 
 export function SchedulePage() {
-  const [date, setDate] = useState<string>(todayKey());
+  // Init '' supaya SSR + client hydration konsisten. Set today di useEffect.
+  const [date, setDate] = useState<string>('');
+  useEffect(() => {
+    if (!date) setDate(todayKey());
+  }, [date]);
   const [view, setView] = useState<ViewMode>('Hari');
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -49,6 +53,7 @@ export function SchedulePage() {
   const services = serviceList.data?.data ?? [];
 
   const datesToFetch = useMemo(() => {
+    if (!date) return [];
     if (view === 'Hari') return [date];
     if (view === 'Minggu') {
       const start = weekStartMonday(date);
@@ -115,8 +120,9 @@ export function SchedulePage() {
     else setDate(addMonths(date, 1));
   }
 
-  const dateLabel =
-    view === 'Hari'
+  const dateLabel = !date
+    ? ''
+    : view === 'Hari'
       ? formatDateLong(date)
       : view === 'Minggu'
         ? formatWeekRange(weekStartMonday(date))

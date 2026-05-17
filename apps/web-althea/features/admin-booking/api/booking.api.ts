@@ -57,6 +57,10 @@ export const bookingApi = {
   list: (p: ListParams = {}) => apiClient.get<ListResponse>(`/booking${qs(p)}`),
   getById: (id: number) => apiClient.get<{ success: boolean; data: Booking }>(`/booking/${id}`),
   create: (input: CreateBookingInput) => apiClient.post<{ success: boolean; data: Booking }>('/booking', input),
+  // Backend PATCH /booking/:id only persists `notes` (blocked once completed/cancelled).
+  // Schedule/room/psikolog & status changes go through reschedule/state-machine endpoints.
+  update: (id: number, input: { notes?: string }) =>
+    apiClient.patch<{ success: boolean; data: Booking }>(`/booking/${id}`, input),
   start: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/start`),
   complete: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/complete`),
   cancel: (id: number, reason?: string) => apiClient.post<{ success: boolean }>(`/booking/${id}/cancel`, { reason }),

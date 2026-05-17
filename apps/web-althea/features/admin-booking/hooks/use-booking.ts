@@ -33,6 +33,19 @@ export function useCancelBooking() {
   });
 }
 
+export function useUpdateBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: number; input: Parameters<typeof bookingApi.update>[1] }) =>
+      bookingApi.update(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      toast.success('Booking diperbarui');
+    },
+    onError: (e: Error) => toast.error('Gagal perbarui booking', { description: e.message }),
+  });
+}
+
 export function useRescheduleBooking() {
   const qc = useQueryClient();
   return useMutation({
