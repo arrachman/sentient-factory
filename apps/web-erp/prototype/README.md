@@ -12,16 +12,29 @@ Ini adalah **prototype desain** untuk Sentient ERP. Bukan aplikasi produksi, buk
 - **Tech**: HTML, CSS, sedikit JSX standalone (`tweaks-panel.jsx`) — tidak ter-bundle ke build monorepo.
 - **Bukan**: app Next.js, bukan target Turborepo, bukan deploy target.
 
-## Port
+## Status: SUPERSEDED — referensi saja
 
-Di-serve di port **3218** (lihat `config/ports.json` → `apps.web-erp`).
+> Sejak **2026-05-17** keputusan frontend di-reversal: produk dibangun
+> sebagai app **Next.js** di `apps/web-erp/` (lihat `apps/web-erp/README.md`).
+> Prototype ini **bukan lagi runtime** — fungsinya sumber port design
+> system + shell ke app Next.js. Jangan kembangkan fitur di sini.
+>
+> Port **3219** di `config/ports.json → apps.web-erp` sekarang milik
+> **app Next.js**, bukan prototype.
+
+## Lihat prototype (ad-hoc, opsional)
+
+Hanya untuk meninjau desain lama. Pakai port ad-hoc bebas (BUKAN 3219):
 
 ```bash
-# Contoh menjalankan secara lokal (pilih salah satu)
-npx serve -l 3218 apps/web-erp/prototype
-# atau
-python3 -m http.server 3218 -d apps/web-erp/prototype
+cd apps/web-erp/prototype
+PORT=4319 npm run dev    # live-server, port ad-hoc
+# atau static:
+npx serve -l 4319 apps/web-erp/prototype
 ```
+
+> `package.json` di sini hanya untuk runner dev lokal — prototype **tetap bukan**
+> anggota workspace npm, bukan target Turborepo, bukan deploy target.
 
 ## Struktur
 

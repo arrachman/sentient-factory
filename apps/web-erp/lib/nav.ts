@@ -1,0 +1,183 @@
+/**
+ * Sidebar navigation tree + per-route page metadata.
+ * Ported from prototype `sidebar.jsx` (NAV) and the `pageMeta` helper.
+ */
+import type { IconName } from '@/components/ui/icons';
+
+export interface NavLeaf {
+  id: string;
+  label: string;
+  code?: string;
+}
+
+export interface NavGroup {
+  group: string;
+  items: NavLeaf[];
+}
+
+export interface NavItem {
+  id?: string;
+  icon?: IconName;
+  label?: string;
+  children?: NavLeaf[] | NavGroup[];
+  divider?: boolean;
+}
+
+export const NAV: NavItem[] = [
+  { id: 'home', icon: 'home', label: 'Dashboard' },
+  { id: 'statistik', icon: 'stats', label: 'Statistik' },
+  {
+    id: 'master',
+    icon: 'database',
+    label: 'Data Master',
+    children: [
+      { id: 'm-customer', label: 'Customer', code: 'CUS' },
+      { id: 'm-supplier', label: 'Supplier', code: 'SUP' },
+      { id: 'm-item', label: 'Item', code: 'ITM' },
+      { id: 'm-coa', label: 'Chart of Account', code: 'CoA' },
+      { id: 'm-lokasi', label: 'Cabang & Lokasi', code: 'LOC' },
+      { id: 'm-costcenter', label: 'Cost Center', code: 'CC' },
+    ],
+  },
+  {
+    id: 'keuangan',
+    icon: 'coins',
+    label: 'Keuangan',
+    children: [
+      {
+        group: 'Transaksi',
+        items: [
+          { id: 'kas-masuk', label: 'Kas Masuk', code: 'CR' },
+          { id: 'kas-keluar', label: 'Kas Keluar', code: 'CD' },
+          { id: 'bank-masuk', label: 'Bank Masuk', code: 'RM' },
+          { id: 'bank-keluar', label: 'Bank Keluar', code: 'SM' },
+          { id: 'jurnal-umum', label: 'Jurnal Umum', code: 'GJ' },
+          { id: 'giro-masuk', label: 'Giro Masuk', code: 'RG' },
+          { id: 'giro-keluar', label: 'Giro Keluar', code: 'SG' },
+          { id: 'giro-masuk-batal', label: 'Giro Masuk Batal', code: 'RGC' },
+          { id: 'giro-keluar-batal', label: 'Giro Keluar Batal', code: 'SGC' },
+          { id: 'saldo-awal', label: 'Saldo Awal Coa', code: 'CB' },
+          { id: 'buku-besar', label: 'Buku Besar', code: 'GL' },
+        ],
+      },
+      {
+        group: 'Laporan',
+        items: [
+          { id: 'rep-neraca', label: 'Neraca', code: 'BS' },
+          { id: 'rep-labarugi', label: 'Laba Rugi', code: 'PL' },
+          { id: 'rep-aruskas', label: 'Arus Kas', code: 'CF' },
+          { id: 'rep-modal', label: 'Perubahan Modal', code: 'EQ' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'persediaan',
+    icon: 'boxes',
+    label: 'Persediaan',
+    children: [
+      { id: 'inv-opname', label: 'Stock Opname', code: 'SO' },
+      { id: 'inv-mutasi', label: 'Mutasi Stok', code: 'MS' },
+      { id: 'inv-adjust', label: 'Penyesuaian', code: 'AJ' },
+      { id: 'inv-transfer', label: 'Transfer Gudang', code: 'TG' },
+    ],
+  },
+  {
+    id: 'pembelian',
+    icon: 'cart',
+    label: 'Pembelian',
+    children: [
+      { id: 'pur-po', label: 'PO Pembelian', code: 'PO' },
+      { id: 'pur-receipt', label: 'Penerimaan Barang', code: 'PR' },
+      { id: 'pur-invoice', label: 'Faktur Pembelian', code: 'PI' },
+      { id: 'pur-return', label: 'Retur Pembelian', code: 'PRT' },
+    ],
+  },
+  {
+    id: 'sales',
+    icon: 'tag',
+    label: 'Sales',
+    children: [
+      { id: 'sales-order', label: 'SO Penjualan', code: 'SO' },
+      { id: 'sal-do', label: 'Pengiriman', code: 'DO' },
+      { id: 'sal-invoice', label: 'Faktur Penjualan', code: 'SI' },
+      { id: 'sal-return', label: 'Retur Penjualan', code: 'SRT' },
+    ],
+  },
+  {
+    id: 'produksi',
+    icon: 'factory',
+    label: 'Produksi',
+    children: [
+      { id: 'prd-wo', label: 'Work Order', code: 'WO' },
+      { id: 'prd-bom', label: 'BOM', code: 'BOM' },
+      { id: 'prd-output', label: 'Output Produksi', code: 'OP' },
+    ],
+  },
+  {
+    id: 'fixed-asset',
+    icon: 'layers',
+    label: 'Fixed Asset',
+    children: [
+      { id: 'fa-list', label: 'Daftar Aset', code: 'FA' },
+      { id: 'fa-deprec', label: 'Penyusutan', code: 'DEP' },
+      { id: 'fa-disposal', label: 'Disposal', code: 'DSP' },
+    ],
+  },
+  { divider: true },
+  {
+    id: 'setting',
+    icon: 'gear',
+    label: 'Setting',
+    children: [
+      { id: 'set-users', label: 'Users', code: 'U' },
+      { id: 'set-roles', label: 'Roles', code: 'R' },
+      { id: 'set-prefs', label: 'Preferensi', code: 'PR' },
+      { id: 'set-appearance', label: 'Tampilan', code: 'UI' },
+    ],
+  },
+];
+
+export function isNavGroupArray(
+  children: NavLeaf[] | NavGroup[] | undefined,
+): children is NavGroup[] {
+  return Array.isArray(children) && !!children[0] && 'group' in children[0];
+}
+
+export interface Crumb {
+  label: string;
+  onClick?: () => void;
+}
+
+export interface PageMeta {
+  title: string;
+  icon: IconName;
+  code?: string;
+  crumbs: Crumb[];
+}
+
+/** Resolve a route id to its title/icon/breadcrumb — mirrors prototype `pageMeta`. */
+export function pageMeta(route: string, t: (k: string) => string): PageMeta {
+  if (route === 'home') {
+    return { title: t('Dashboard'), icon: 'home', crumbs: [{ label: t('Dashboard') }] };
+  }
+  if (route === 'statistik') {
+    return { title: t('Statistik'), icon: 'stats', crumbs: [{ label: t('Statistik') }] };
+  }
+  for (const top of NAV) {
+    if (top.divider || !top.children) continue;
+    const leaves: NavLeaf[] = isNavGroupArray(top.children)
+      ? top.children.flatMap((g) => g.items)
+      : top.children;
+    const leaf = leaves.find((l) => l.id === route);
+    if (leaf) {
+      return {
+        title: t(leaf.label),
+        icon: top.icon ?? 'file',
+        code: leaf.code,
+        crumbs: [{ label: t(top.label ?? '') }, { label: t(leaf.label) }],
+      };
+    }
+  }
+  return { title: route, icon: 'file', crumbs: [{ label: route }] };
+}

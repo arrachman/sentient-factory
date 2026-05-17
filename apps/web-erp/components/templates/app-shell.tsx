@@ -4,10 +4,19 @@ import * as React from 'react';
 import { makeTranslator } from '@/lib/mock';
 import { Dashboard } from '@/components/pages/dashboard';
 import { ComingSoon } from '@/components/pages/coming-soon';
+import { Statistik } from '@/components/pages/statistik';
+import { SettingsPage } from '@/components/pages/settings';
+import { AppearancePage } from '@/components/pages/appearance';
+import { KasMasukList } from '@/components/pages/kas-masuk-list';
+import { GenericList } from '@/components/pages/generic-list';
+import { FinancialReport } from '@/components/pages/financial-report';
+import { DataList } from '@/components/pages/data-list';
 import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
 import { TabBar, type ShellTab } from '@/components/organisms/tab-bar';
 import { CommandPalette } from '@/components/organisms/command-palette';
+import { TabActiveContext } from '@/lib/tab-context';
+import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import { pageMeta, type Crumb } from '@/lib/nav';
 
 const MAX_TABS = 16;
@@ -21,8 +30,48 @@ const DEMO_USER: ShellUser = {
   initials: 'AS',
 };
 
-function renderRoute(route: string, onNavigate: (r: string) => void, t: ReturnType<typeof makeTranslator>) {
-  if (route === 'home') return <Dashboard t={t} onNavigate={onNavigate} />;
+function renderRoute(
+  route: string,
+  onNavigate: (r: string) => void,
+  onOpenTab: (r: string) => void,
+  t: ReturnType<typeof makeTranslator>,
+  lang: Lang,
+) {
+  if (route === 'home') return <Dashboard t={t} onNavigate={onOpenTab} />;
+  if (route === 'statistik') return <Statistik t={t} onNavigate={onOpenTab} />;
+  if (route === 'set-prefs') return <SettingsPage t={t} />;
+  if (route === 'set-appearance') return <AppearancePage t={t} />;
+  // Forms (`*-new` routes) are deferred to a later scaffold batch.
+  if (route.endsWith('-new')) return <ComingSoon route={route} />;
+  if (route === 'kas-masuk')
+    return (
+      <KasMasukList
+        t={t}
+        lang={lang}
+        onNavigate={onNavigate}
+        onOpenTab={onOpenTab}
+      />
+    );
+  if (MODULES[route])
+    return (
+      <GenericList
+        moduleId={route}
+        t={t}
+        lang={lang}
+        onNavigate={onNavigate}
+        onOpenTab={onOpenTab}
+      />
+    );
+  if (REPORTS[route]) return <FinancialReport moduleId={route} t={t} />;
+  if (REGISTRY[route])
+    return (
+      <DataList
+        moduleId={route}
+        t={t}
+        onNavigate={onNavigate}
+        onOpenTab={onOpenTab}
+      />
+    );
   return <ComingSoon route={route} />;
 }
 
@@ -196,7 +245,15 @@ export function AppShell() {
                   className="tabview"
                   style={{ display: isActive ? 'flex' : 'none' }}
                 >
-                  {renderRoute(tab.route, navigateInTab, t)}
+                  <TabActiveContext.Provider value={isActive}>
+                    {renderRoute(
+                      tab.route,
+                      navigateInTab,
+                      openTab,
+                      t,
+                      lang,
+                    )}
+                  </TabActiveContext.Provider>
                 </div>
               );
             })}
