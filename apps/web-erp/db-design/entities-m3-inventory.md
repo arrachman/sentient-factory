@@ -44,6 +44,9 @@ FK = `fiscalPeriodId → sys_fiscal_periods` (no new period table).
 | `StockMovementType` | `REQUEST`, `ISSUE`, `TRANSFER`, `TRANSFER_RECEIPT`, `RETURN` | `m3_mr`/`rf`/`ts`/`rs` |
 | `StockCountType` | `FULL`, `CYCLE`, `SPOT` | `m3_sp` `spjenis`/`sajenis` |
 | `AdjustmentDirection` | `INCREASE`, `DECREASE` | `m3_sa` `jmlmasuk`/`jmlkeluar` |
+| `LotStatus` | `ACTIVE`, `QUARANTINE`, `EXPIRED`, `BLOCKED` | new — batch/expiry control (resolved §8 #24) |
+| `SerialStatus` | `IN_STOCK`, `ISSUED`, `RETURNED`, `SCRAPPED` | new — serial lifecycle (resolved §8 #24) |
+| `ReservationStatus` | `ACTIVE`, `FULFILLED`, `RELEASED`, `EXPIRED` | new — soft allocation / ATP (resolved §8 #25) |
 
 Reused from m2: `DocumentStatus` (`DRAFT`/`POSTED`/`VOID`/`CANCELLED`),
 `PostingStatus` (`UNPOSTED`/`POSTED`).
@@ -352,12 +355,122 @@ untuk audit trail dan report drill-down.
 
 ### inv_stock_balances *(view / materialized projection)*
 
-On-hand qty + moving-average cost per `(itemId, warehouseId)` computed from
-`inv_opening_stocks` + posted `inv_stock_movements` + `inv_stock_adjustments`.
+On-hand qty + moving-average cost per `(itemId, warehouseId, binId, lotId)`
+(bin/lot NULL for non-tracked items) computed from `inv_opening_stocks` +
+posted `inv_stock_movements` + `inv_stock_adjustments`. Available-to-promise =
+this qty − Σ `ACTIVE` `inv_stock_reservations`.
 Modeled as a read projection — **never written directly** (replaces legacy
 `bstok`/`m1_item_stock_warehouse` caches). Recomputation is *the source of truth*
 for cost; `inv_cost_recalculations` records the GL-side reconciliation of that
 recompute.
+
+---
+
+## Lot / Serial / Bin / Reservation — enterprise traceability (`inv_*`)
+
+> Added by **resolved §8 #24–26 (2026-05-18)**. These promote `inv` from an
+> accounting-inventory to an enterprise WMS-capable model: batch/expiry,
+> per-unit serials, structured bins, and available-to-promise reservation.
+> **Stock granularity changes:** `inv_stock_balances` is now keyed by
+> `(itemId, warehouseId, binId, lotId)` (bin/lot nullable for non-tracked
+> items). Serial on-hand is derived from `inv_serials.status = IN_STOCK`.
+
+### ErpInvBin → `inv_bins`  (modern — no legacy table; was string `lokasibarang`)
+
+Structured sub-location inside a warehouse (rack/shelf/slot) for putaway &
+picking. Replaces the free-text `binLocation` string. Per-item tracking flags
+live on `md_items` (`tracksBatch`/`tracksSerial`/`tracksBin`, see
+[entities-m1-master-data.md](entities-m1-master-data.md)); non-tracked items keep
+`binId = null`.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | bin code (unique per warehouse) |
+| name ○ | String | display label |
+| warehouseId ➜ | BigInt → Warehouse | owning warehouse |
+| binType ○ | String | `STORAGE` / `PICKING` / `STAGING` / `QUARANTINE` |
+| sequence ○ | Int | pick-path ordering |
+| isActive | Boolean | business toggle (default true) |
+
+Relations: `warehouse`, `movementLines`, `balances`. `@@unique([warehouseId, code])`,
+`@@index([warehouseId])`.
+
+### ErpInvLot → `inv_lots`  (modern — no legacy table)
+
+Batch/lot master per item — manufacturing/expiry/recall traceability.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| lotNumber 🔑 | String | batch number (unique per item) |
+| itemId ➜ | BigInt → Item | tracked item |
+| supplierLotNo ○ | String | vendor batch ref |
+| manufactureDate ○ | Date | |
+| expiryDate ○ | Date | drives FEFO + expiry alerts |
+| originGoodsReceiptId ○ ➜ | BigInt | source `pur_goods_receipts` (lineage) |
+| status ◆ | `LotStatus` | `ACTIVE`/`QUARANTINE`/`EXPIRED`/`BLOCKED` |
+| notes ○ | String | |
+
+Relations: `item`, `movementLines`, `balances`. `@@unique([itemId, lotNumber])`,
+`@@index([itemId, status])`, `@@index([expiryDate])`.
+
+### ErpInvSerial → `inv_serials`  (modern — no legacy table)
+
+Per-unit serial record; one row per physical unit, current location & state.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| serialNumber 🔑 | String | unique per item |
+| itemId ➜ | BigInt → Item | tracked item |
+| lotId ○ ➜ | BigInt → ErpInvLot | optional lot membership |
+| currentWarehouseId ○ ➜ | BigInt → Warehouse | null once `ISSUED`/`SCRAPPED` |
+| currentBinId ○ ➜ | BigInt → ErpInvBin | current bin |
+| status ◆ | `SerialStatus` | `IN_STOCK`/`ISSUED`/`RETURNED`/`SCRAPPED` |
+| originGoodsReceiptId ○ ➜ | BigInt | source `pur_goods_receipts` |
+| lastMovementId ○ ➜ | BigInt → ErpInvStockMovement | last movement touching this unit |
+| warrantyUntil ○ | Date | |
+| notes ○ | String | |
+
+Relations: `item`, `lot`, `currentWarehouse`, `currentBin`.
+`@@unique([itemId, serialNumber])`, `@@index([itemId, status])`,
+`@@index([currentWarehouseId])`.
+
+### ErpInvStockReservation → `inv_stock_reservations`  (modern — no legacy table)
+
+Soft allocation of on-hand stock against a demand doc (SO line / WO material
+requirement). **Available-to-promise** = `inv_stock_balances.qty` − Σ `ACTIVE`
+reservation qty. Reservation does **not** move stock or post GL; fulfilment
+(delivery / material issue) consumes it and flips it `FULFILLED`.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| itemId ➜ | BigInt → Item | reserved item |
+| warehouseId ➜ | BigInt → Warehouse | reserved from |
+| binId ○ ➜ | BigInt → ErpInvBin | optional bin pin |
+| lotId ○ ➜ | BigInt → ErpInvLot | optional lot pin |
+| quantity | Decimal(19,4) | reserved qty (base unit) |
+| sourceDocType | String | `SLS_ORDER` / `MFG_WORK_ORDER` / `MANUAL` |
+| sourceDocId | BigInt | demand doc row id |
+| sourceLineId ○ | BigInt | demand doc line id |
+| status ◆ | `ReservationStatus` | `ACTIVE`/`FULFILLED`/`RELEASED`/`EXPIRED` |
+| expiresAt ○ | DateTime | auto-release window |
+| fulfilledByMovementId ○ ➜ | BigInt → ErpInvStockMovement | the issue/delivery that consumed it |
+
+Relations: `item`, `warehouse`, `bin`, `lot`, `fulfilledByMovement`.
+`@@index([itemId, warehouseId, status])`,
+`@@index([sourceDocType, sourceDocId])`.
+
+### FK additions to existing line tables
+
+`inv_stock_movement_lines`, `inv_stock_count_lines`,
+`inv_stock_adjustment_lines`, and `inv_opening_stock_lines` each gain optional
+**`binId ➜ ErpInvBin`**, **`lotId ➜ ErpInvLot`**, **`serialId ➜ ErpInvSerial`**
+(nullable; populated only for items with `tracksBin`/`tracksBatch`/`tracksSerial`
+on `md_items`). The
+`relatedLineId` traceability already present is unchanged.
 
 ---
 
@@ -374,11 +487,12 @@ recompute.
 
 ---
 
-**Count:** 13 Inventory (`inv_*`) entities — StockMovement(+Line),
+**Count:** 17 Inventory (`inv_*`) entities — StockMovement(+Line),
 OpeningStock(+Line), StockCount(+Line), StockAdjustment(+Line),
-WeighbridgeTicket, **CostRecalculation(+Line)**, + derived `inv_stock_balances`
-(view). Period reuses `sys_fiscal_periods`; dimensions reuse the m2 `md_*`
-masters. `m3_dc`/`m3_pa` flagged out (see above).
+WeighbridgeTicket, **CostRecalculation(+Line)**, **Bin**, **Lot**, **Serial**,
+**StockReservation**, + derived `inv_stock_balances` (view, now keyed by
+`(itemId, warehouseId, binId, lotId)`). Period reuses `sys_fiscal_periods`;
+dimensions reuse the m2 `md_*` masters. `m3_dc`/`m3_pa` flagged out (see above).
 
 Legacy field-mapping appendix: **[legacy-mapping.md](legacy-mapping.md)** ·
 Roadmap context: **[module-roadmap.md](module-roadmap.md)**.

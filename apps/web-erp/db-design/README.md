@@ -111,6 +111,9 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `StockMovementType` | `REQUEST`, `ISSUE`, `TRANSFER`, `TRANSFER_RECEIPT`, `RETURN` | m3 `m3_mr`/`rf`/`ts`/`rs` |
 | `StockCountType` | `FULL`, `CYCLE`, `SPOT` | m3 `m3_sp` |
 | `AdjustmentDirection` | `INCREASE`, `DECREASE` | m3 `m3_sa` |
+| `LotStatus` | `ACTIVE`, `QUARANTINE`, `EXPIRED`, `BLOCKED` | new — m3 batch/expiry (resolved §8 #24) |
+| `SerialStatus` | `IN_STOCK`, `ISSUED`, `RETURNED`, `SCRAPPED` | new — m3 serial lifecycle (resolved §8 #24) |
+| `ReservationStatus` | `ACTIVE`, `FULFILLED`, `RELEASED`, `EXPIRED` | new — m3 ATP / soft allocation (resolved §8 #25) |
 | `CostingMethod` | `AVG`, `FIFO`, `STD` | new — inventory valuation (resolved §8 #19); global setting, default `AVG` |
 | `CostRecalcStatus` | `PENDING`, `COMPLETED`, `FAILED` | new — `inv_cost_recalculations` run state (resolved §8 #18) |
 | `PeriodCloseStatus` | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` | new — `fin_period_closings` run state (resolved §8 #21) |
@@ -246,6 +249,13 @@ erDiagram
     InvStockBalance }o--o| Item : on_hand
     InvCostRecalculation ||--o{ InvCostRecalculationLine : has
     InvCostRecalculation }o--o| FinJournalEntry : emits_cogs_delta
+    Warehouse ||--o{ InvBin : contains
+    Item ||--o{ InvLot : batched_as
+    Item ||--o{ InvSerial : serialized_as
+    InvLot ||--o{ InvSerial : groups
+    InvBin ||--o{ InvStockBalance : holds
+    InvStockReservation }o--o| Item : reserves
+    InvStockReservation }o--o| InvStockMovement : fulfilled_by
 ```
 
 `InvStockBalance` is a **derived view** (opening + posted movements + adjustments),
@@ -253,8 +263,11 @@ not a written table. `InvCostRecalculation` is the perpetual **recost run** that
 emits an auto `ADJUSTMENT` journal for the COGS delta (resolved §8 #18) — ledger
 stays immutable. Period reuses `sys_fiscal_periods` (lifecycle now
 `OPEN`/`SOFT_CLOSED`/`CLOSED`/`REOPENED`, §8 #20); dimensions reuse the m2
-`md_*` masters. `m3_dc`/`m3_pa` flagged out. Full catalog:
-**[entities-m3-inventory.md](entities-m3-inventory.md)**.
+`md_*` masters. **Enterprise traceability (resolved §8 #24–26):** `inv_bins`
+(structured WMS sub-location), `inv_lots` (batch/expiry, FEFO), `inv_serials`
+(per-unit), `inv_stock_reservations` (available-to-promise). `inv_stock_balances`
+now keyed by `(itemId, warehouseId, binId, lotId)`. `m3_dc`/`m3_pa` flagged out.
+Full catalog: **[entities-m3-inventory.md](entities-m3-inventory.md)**.
 
 ## 6.3 ERD — m4 Purchasing (`pur`)
 
@@ -441,10 +454,15 @@ re-opened — see **§8.1**.
 
 | 22 | Edit dokumen yang sudah POSTED | **Diizinkan — dengan notifikasi recost** | Dokumen `POSTED` (GR, invoice, dll) bisa diedit langsung. Sistem otomatis: (1) reverse `fin_ledger_entries` lama untuk dokumen itu, (2) post ulang dengan nilai baru, (3) buat `inv_cost_recalculations` dengan `status = PENDING`. UI menampilkan notifikasi *"Periode X perlu Recost"* selama ada run `PENDING`. Audit trail via `sys_audit_logs`. |
 | 23 | Recost direct-update ke `fin_ledger_entries` | **Recost menulis langsung ke ledger** | Recost run **tidak emit `JournalType.ADJUSTMENT`** baru — ia langsung update `debit`/`credit` pada baris COGS yang ada di `fin_ledger_entries`. `fin_ledger_entries` bukan lagi fully immutable: `debit`/`credit` bisa di-update oleh recost run yang sah. Setiap baris yang di-update di-stamp `recostedAt`/`recostedById`/`recostedByRunId`. Per-item before→after di `inv_cost_recalculation_lines`. Implikasi: posting matrix tidak lagi punya kolom "Recost ADJUSTMENT". |
+| 24 | Lot/Batch & Serial tracking di `inv` | **IN — lot + serial penuh** | +2 master `inv_lots` (batch/expiry, FEFO, recall lineage) + `inv_serials` (per-unit, status & lokasi). Enum baru `LotStatus`/`SerialStatus`. FK opsional `lotId`/`serialId` di semua line tabel `inv`. Per-item flag `isLotTracked`/`isSerialTracked` di `md_items`. Lineage `originGoodsReceiptId` → `pur` (2026-05-18). |
+| 25 | Stock reservation / available-to-promise | **IN core** | +1 `inv_stock_reservations` (soft allocation, tidak gerak stok/GL). ATP = on-hand − Σ reservasi `ACTIVE`. Dikonsumsi `sls` delivery / `mfg` material issue (flip `FULFILLED`). Enum `ReservationStatus` (2026-05-18). |
+| 26 | Bin/lokasi rak | **Master `inv_bins`** | +1 master sub-lokasi gudang terstruktur (putaway/picking); string `binLocation` lama digantikan FK `binId` (nullable, untuk item ber-flag `isBinTracked`). `inv_stock_balances` di-key ulang `(itemId, warehouseId, binId, lotId)` (2026-05-18). |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers),
-#22–23 (edit posted doc + recost direct-update, 2026-05-18).
+#22–23 (edit posted doc + recost direct-update, 2026-05-18),
+#24–26 (lot/serial + reservation/ATP + `inv_bins` master, 2026-05-18 —
+`inv` jadi WMS-capable; m3 inv: 13 → **17** entitas).
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 

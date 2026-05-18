@@ -117,8 +117,9 @@ Relations: self `parent`/`children`, `items Item[]`, GL accounts.
 | minStock | Decimal(19,4) | `bstokminimal` |
 | maxStock | Decimal(19,4) | `bstokmaksimal` |
 | reorderQty | Decimal(19,4) | `breorder` |
-| tracksSerial | Boolean | `bserial` |
-| tracksBatch | Boolean | `bbatch` |
+| tracksSerial | Boolean | `bserial` → `inv_serials` (resolved §8 #24) |
+| tracksBatch | Boolean | `bbatch` → `inv_lots` (resolved §8 #24) |
+| tracksBin | Boolean | new — opt-in `inv_bins` location (resolved §8 #26) |
 | inventoryAccountId ○ ➜ | BigInt → Account | `brekpersediaan` |
 | salesAccountId ○ ➜ | BigInt → Account | `brekpenjualan` |
 | cogsAccountId ○ ➜ | BigInt → Account | `brekhargapokok` |
