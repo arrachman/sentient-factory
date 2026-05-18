@@ -55,6 +55,13 @@ const Icon = ({ name, size = 14, stroke = 1.5, className = '' }) => {
     calendar: <><rect x="2" y="3.5" width="12" height="10" rx="1"/><path d="M2 6.5h12M5 2v3M11 2v3"/></>,
     'arrow-tr': <><path d="M5 11 11 5M11 5H6M11 5v5"/></>,
     'arrow-br': <><path d="M5 5 11 11M11 11V6M11 11H6"/></>,
+    clock: <><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.5l2.5 1.5"/></>,
+    edit: <><path d="M10.5 2.5l3 3L5.5 14H2.5v-3z"/><path d="M9 4l3 3"/></>,
+    printer: <><path d="M4.5 9H3V7h10v2H4.5"/><rect x="4.5" y="9" width="7" height="4.5"/><path d="M4.5 5V2.5h7V5"/><circle cx="12" cy="8" r="0.3" fill="currentColor"/></>,
+    'file-x': <><path d="M3.5 1.5h5L12 5v8.5H3.5z"/><path d="M8.5 1.5V5H12"/><path d="M6.5 8l3 3M9.5 8l-3 3"/></>,
+    'check-circle': <><circle cx="8" cy="8" r="6"/><path d="M5.5 8l2 2 4-4"/></>,
+    list: <><path d="M6 4h7M6 8h7M6 12h7M3 4h.01M3 8h.01M3 12h.01"/></>,
+    copy: <><rect x="5" y="5" width="8" height="9" rx="1"/><path d="M5 5V3.5H3V12h2"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} style={{display:'inline-block', verticalAlign: 'middle', flexShrink: 0}}>

@@ -18,14 +18,21 @@ const renderRoute = (route, onNav, onOpen, t, lang, tw) => {
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpen}/>;
   if (route === 'set-prefs') return <SettingsPage t={t}/>;
   if (route === 'set-appearance') return <AppearancePage t={t} tw={tw}/>;
+  if (route === 'approval-queue') return <ApprovalQueue t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
+  if (route === 'audit-trail') return <AuditTrail t={t}/>;
   if (route.endsWith('-new')) {
     const base = route.slice(0, -4);
     if (window.TRX_CFG && window.TRX_CFG[base]) return <TrxForm moduleId={base} t={t} lang={lang} onNavigate={onNav}/>;
     if (window.REGISTRY && window.REGISTRY[base]) return <RecordForm moduleId={base} t={t} onNavigate={onNav}/>;
   }
+  if (route.endsWith('-view') && route.length > 5) {
+    const base = route.slice(0, -5);
+    return <DetailPage moduleId={base} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
+  }
   if (route === 'kas-masuk') return <KasMasukList t={t} lang={lang} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.MODULES && window.MODULES[route]) return <GenericList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.REPORTS && window.REPORTS[route]) return <FinancialReport moduleId={route} t={t}/>;
+  if (window.MODULE_REPORTS && window.MODULE_REPORTS[route]) return <ModuleReport moduleId={route} t={t}/>;
   if (window.REGISTRY && window.REGISTRY[route]) return <DataList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   return <div style={{ padding: 32, color: 'var(--fg-muted)' }}>Halaman <strong>{route}</strong> belum tersedia di prototype ini.</div>;
 };

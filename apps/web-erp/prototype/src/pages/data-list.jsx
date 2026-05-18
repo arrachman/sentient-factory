@@ -139,7 +139,7 @@ const DataList = ({ moduleId, t, onNavigate, onOpenTab }) => {
                 <td className="col-check"><input type="checkbox" className="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)}/></td>
                 {mod.cols.map(c => (
                   <td key={c.k} className={['num', 'qty', 'qtyS', 'money', 'moneyS'].includes(c.t) ? 'col-num' : ''}
-                    onClick={c.t === 'code' ? () => window.toast(`${r[c.k]} — detail (prototype)`, { type: 'info' }) : undefined}>
+                    onClick={c.t === 'code' ? () => { window.__viewRow = r; onNavigate(`${moduleId}-view`); } : undefined}>
                     <DLCell col={c} value={r[c.k]}/>
                   </td>
                 ))}

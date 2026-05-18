@@ -145,7 +145,7 @@ const GenericList = ({ moduleId, t, onNavigate, onOpenTab }) => {
             {view.map((r, i) => (
               <tr key={r.id} className={`${selected.has(r.id) ? 'selected' : ''} ${i === focused ? 'focused' : ''}`} onClick={() => setFocused(i)}>
                 <td className="col-check"><input type="checkbox" className="checkbox" checked={selected.has(r.id)} onChange={() => toggle(r.id)}/></td>
-                <td className="mono"><a style={{ color: 'var(--primary-soft-fg)', textDecoration: 'none', cursor: 'pointer' }} onClick={() => openForm()}>{r.no}</a></td>
+                <td className="mono"><a style={{ color: 'var(--primary-soft-fg)', textDecoration: 'none', cursor: 'pointer' }} onClick={() => { window.__viewRow = { ...r, code: r.no, status: r.status }; onNavigate(`${moduleId}-view`); }}>{r.no}</a></td>
                 <td className="mono muted">{r.tanggal}</td>
                 <td>{r.terimaDari}</td>
                 <td className="muted" style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.uraian}</td>
