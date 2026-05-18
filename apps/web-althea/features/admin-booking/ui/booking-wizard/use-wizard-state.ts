@@ -18,13 +18,14 @@ import { apiClient, ApiError } from '@/lib/api-client';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { useClientList } from '@/features/admin-clients/hooks/use-client';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
+import { resolveServiceSlots } from '@/features/admin-layanan/model/slot';
 import {
   usePsikologList,
   usePsikologAvailabilityForDate,
 } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
-import { addDays, buildIso, tomorrowDateStr } from './wizard-utils';
+import { addDays, buildIso, pastSlotIdx, tomorrowDateStr } from './wizard-utils';
 
 export type WizardSession = { date: string; slotIdx: number | null };
 
@@ -119,7 +120,14 @@ export function useWizardState({
     }));
   }
 
-  const slots = settingsQuery.data?.data.slotsOfDay ?? [];
+  // Slot global = identitas/label/index. Layanan terpilih boleh override
+  // range waktunya (resolveServiceSlots). Index tetap sejajar global →
+  // unavailableSlotIdx & slotIndices psikolog tetap valid.
+  const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
+  const slots = useMemo(
+    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
+    [globalSlots, selectedService],
+  );
   const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
   const holidays = settingsQuery.data?.data.holidays ?? [];
 
@@ -169,7 +177,7 @@ export function useWizardState({
     if (psikologClosedToday) {
       return new Set<number>(slots.map((_, i) => i));
     }
-    const taken = new Set<number>();
+    const taken = pastSlotIdx(firstDate, slots);
     const allowed = resolvedAvailability?.slotIndices;
     if (allowed !== null && allowed !== undefined) {
       const allowedSet = new Set(allowed);

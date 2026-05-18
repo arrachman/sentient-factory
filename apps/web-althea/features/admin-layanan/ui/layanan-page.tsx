@@ -19,6 +19,7 @@ import {
   type Service,
   type ServiceGroup,
 } from '../model/types';
+import { SlotOverrideEditor } from './slot-override-editor';
 
 const EMPTY: CreateServiceInput = {
   name: '',
@@ -28,6 +29,7 @@ const EMPTY: CreateServiceInput = {
   basePrice: 500000,
   description: '',
   isActive: true,
+  slotOverrides: [],
 };
 
 function formatRp(n: number): string {
@@ -101,6 +103,7 @@ export function LayananPage() {
       basePrice: s.basePrice,
       description: s.description ?? '',
       isActive: s.isActive,
+      slotOverrides: s.slotOverrides ?? [],
     });
     setOpen(true);
   }
@@ -350,7 +353,14 @@ export function LayananPage() {
                   className="input-althea h-auto py-2"
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm">
+              <div className="border-t border-border pt-3">
+                <label className="caption mb-1 block font-semibold">Range Waktu Slot (khusus layanan ini)</label>
+                <SlotOverrideEditor
+                  value={form.slotOverrides}
+                  onChange={(next) => setForm({ ...form, slotOverrides: next })}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm border-t border-border pt-3">
                 <input type="checkbox" checked={form.isActive ?? true} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="h-4 w-4" />
                 Aktif
               </label>

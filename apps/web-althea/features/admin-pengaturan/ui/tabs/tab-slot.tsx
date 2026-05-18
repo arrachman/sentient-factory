@@ -17,6 +17,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import type { SlotDef, UpdateSettingsInput } from '../../api/settings.api';
 import { DEFAULT_SLOT, HARI } from '../../model/constants';
+import { ServiceSlotSummary } from './service-slot-summary';
 
 type Props = {
   form: UpdateSettingsInput;
@@ -118,6 +119,9 @@ export function TabSlot({
           </p>
         </div>
       </section>
+
+      {/* Section: Slot khusus per layanan (read-only) */}
+      <ServiceSlotSummary />
 
       {/* Section: Hari tutup */}
       <section className="card-althea bg-card">

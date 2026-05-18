@@ -3,7 +3,7 @@
 /**
  * Toolbar atas Penjadwalan:
  *   [‹]  [📅 date pill]  [›]  [Hari ini]  [tab Hari/Minggu/Bulan]
- *                                              [Filter (badge)] [📅 Daftar Jadwal]
+ *                                              [Filter (badge)] [📅 Jadwal Baru]
  * Date pill membuka native date picker via `dateInputRef.showPicker()`.
  */
 import { useRef } from 'react';
@@ -168,7 +168,7 @@ export function ScheduleToolbar({
           onClick={onCreate}
           className="btn btn-primary btn-sm"
         >
-          <CalendarPlus className="h-4 w-4" /> Daftar Jadwal
+          <CalendarPlus className="h-4 w-4" /> Jadwal Baru
         </button>
         {filterChildren}
       </div>

@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import { usePsikologDateOverrides } from '@/features/admin-psikolog/hooks/use-psikolog';
+import { isPastDate } from './wizard-utils';
 
 const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 const DAY_KEY = [
@@ -30,6 +31,7 @@ const MONTH_SHORT = [
 
 type DateStatus =
   | 'available'
+  | 'past'
   | 'klinik-closed'
   | 'holiday'
   | 'psikolog-off'
@@ -40,6 +42,7 @@ const STATUS_INFO: Record<
   { label: string; bg: string; border: string; fg: string }
 > = {
   available:        { label: '',          bg: 'bg-card',      border: 'border-border',    fg: 'text-fg' },
+  past:             { label: 'Lewat',     bg: 'bg-cream-100', border: 'border-cream-200', fg: 'text-fg-muted' },
   'klinik-closed':  { label: 'Tutup',     bg: 'bg-cream-100', border: 'border-cream-200', fg: 'text-fg-muted' },
   holiday:          { label: 'Libur',     bg: 'bg-amber-50',  border: 'border-amber-200', fg: 'text-amber-800' },
   'psikolog-off':   { label: 'Libur',     bg: 'bg-rose-50',   border: 'border-rose-200',  fg: 'text-rose-700' },
@@ -66,6 +69,7 @@ function statusFor(
   const dateStr = toDateKey(d);
   const dow = d.getDay();
 
+  if (isPastDate(dateStr)) return 'past';
   if (holidays.includes(dateStr)) return 'holiday';
   if (closedDayOfWeek.includes(dow)) return 'klinik-closed';
 
@@ -213,7 +217,9 @@ export function DateStrip({
               title={
                 status === 'available'
                   ? 'Tersedia'
-                  : status === 'klinik-closed'
+                  : status === 'past'
+                    ? 'Tanggal sudah lewat — tidak bisa dipilih'
+                    : status === 'klinik-closed'
                     ? 'Klinik tutup — tidak bisa dipilih'
                     : status === 'holiday'
                       ? 'Tanggal libur — tidak bisa dipilih'

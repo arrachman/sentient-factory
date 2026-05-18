@@ -20,6 +20,7 @@ import { usePsikologAvailabilityForDate } from '@/features/admin-psikolog/hooks/
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import { DateStrip } from './date-strip';
 import { SlotGrid } from './slot-grid';
+import { pastSlotIdx } from './wizard-utils';
 
 export type SessionRowState = {
   date: string;
@@ -95,7 +96,7 @@ export function SessionRow({
   );
 
   const unavailableIdx = useMemo(() => {
-    const taken = new Set<number>();
+    const taken = pastSlotIdx(state.date, slots);
     if (!psikologUserId) return taken;
     if (psikologClosed) {
       slots.forEach((_, i) => taken.add(i));

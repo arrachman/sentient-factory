@@ -171,7 +171,7 @@ export function BookingPage() {
         ))}
         <div className="ml-auto flex items-center gap-2">
           <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary btn-sm">
-            <CalendarPlus className="h-4 w-4" /> Daftar Jadwal
+            <CalendarPlus className="h-4 w-4" /> Jadwal Baru
           </button>
         </div>
       </div>
