@@ -147,9 +147,6 @@ export interface TrxLine {
   proyek?: string;
 }
 
-export interface TrxLineColumn {
-  k: keyof TrxLine;
-  h: string;
-  w?: number;
-  num?: boolean;
-}
+// TrxLineColumn is superseded by GridColumnDef<TrxLine> from lib/grid-types.
+// Re-exported here so callers that already import from trx-form-config don't break.
+export type { GridColumnDef as TrxLineColumn } from '@/lib/grid-types';
