@@ -166,31 +166,27 @@ export function AppShell() {
   }, []);
 
   const openTab = React.useCallback((route: string) => {
-    setTabs((prev) => {
-      const existing = prev.find((tb) => tb.route === route);
-      if (existing) {
-        setActiveId(existing.id);
-        return prev;
-      }
-      if (prev.length >= MAX_TABS) {
-        setActiveId(prev[prev.length - 1].id);
-        return prev;
-      }
-      const tab = { id: nextTabId(), route };
-      setActiveId(tab.id);
-      return [...prev, tab];
-    });
-  }, [nextTabId]);
+    const existing = tabs.find((tb) => tb.route === route);
+    if (existing) {
+      setActiveId(existing.id);
+      return;
+    }
+    if (tabs.length >= MAX_TABS) {
+      setActiveId(tabs[tabs.length - 1].id);
+      return;
+    }
+    const tab = { id: nextTabId(), route };
+    setActiveId(tab.id);
+    setTabs((prev) => [...prev, tab]);
+  }, [tabs, nextTabId]);
 
   const duplicateTab = React.useCallback((id: string) => {
-    setTabs((prev) => {
-      const src = prev.find((tb) => tb.id === id) ?? prev[prev.length - 1];
-      if (!src || prev.length >= MAX_TABS) return prev;
-      const tab = { id: nextTabId(), route: src.route };
-      setActiveId(tab.id);
-      return [...prev, tab];
-    });
-  }, [nextTabId]);
+    const src = tabs.find((tb) => tb.id === id) ?? tabs[tabs.length - 1];
+    if (!src || tabs.length >= MAX_TABS) return;
+    const tab = { id: nextTabId(), route: src.route };
+    setActiveId(tab.id);
+    setTabs((prev) => [...prev, tab]);
+  }, [tabs, nextTabId]);
 
   const navigateInTab = React.useCallback(
     (route: string) => {
@@ -202,21 +198,18 @@ export function AppShell() {
   );
 
   const closeTab = React.useCallback((id: string) => {
-    setTabs((prev) => {
-      const idx = prev.findIndex((tb) => tb.id === id);
-      if (idx === -1) return prev;
-      const next = prev.filter((tb) => tb.id !== id);
-      if (next.length === 0) {
-        const fresh = { id: nextTabId(), route: 'home' };
-        setActiveId(fresh.id);
-        return [fresh];
-      }
-      setActiveId((cur) =>
-        cur === id ? next[Math.max(0, idx - 1)].id : cur,
-      );
-      return next;
-    });
-  }, [nextTabId]);
+    const idx = tabs.findIndex((tb) => tb.id === id);
+    if (idx === -1) return;
+    const next = tabs.filter((tb) => tb.id !== id);
+    if (next.length === 0) {
+      const fresh = { id: nextTabId(), route: 'home' };
+      setTabs([fresh]);
+      setActiveId(fresh.id);
+      return;
+    }
+    setTabs(next);
+    setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
+  }, [tabs, nextTabId]);
 
   // Global shortcuts — Cmd/Ctrl+K palette, Cmd/Ctrl+W close, ? shortcuts.
   React.useEffect(() => {
