@@ -23,6 +23,7 @@ const renderRoute = (route, onNav, onOpen, t, lang, tw) => {
   if (route.endsWith('-new')) {
     const base = route.slice(0, -4);
     if (window.TRX_CFG && window.TRX_CFG[base]) return <TrxForm moduleId={base} t={t} lang={lang} onNavigate={onNav}/>;
+    if (window.DOC_CFG && window.DOC_CFG[base]) return <DocForm moduleId={base} t={t} onNavigate={onNav}/>;
     if (window.REGISTRY && window.REGISTRY[base]) return <RecordForm moduleId={base} t={t} onNavigate={onNav}/>;
   }
   if (route.endsWith('-view') && route.length > 5) {
@@ -32,6 +33,7 @@ const renderRoute = (route, onNav, onOpen, t, lang, tw) => {
   if (route === 'kas-masuk') return <KasMasukList t={t} lang={lang} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.MODULES && window.MODULES[route]) return <GenericList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.REPORTS && window.REPORTS[route]) return <FinancialReport moduleId={route} t={t}/>;
+  if (window.MODULE_REPORTS_EXT && window.MODULE_REPORTS_EXT[route]) return <ModuleReportExt moduleId={route} t={t}/>;
   if (window.MODULE_REPORTS && window.MODULE_REPORTS[route]) return <ModuleReport moduleId={route} t={t}/>;
   if (window.REGISTRY && window.REGISTRY[route]) return <DataList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   return <div style={{ padding: 32, color: 'var(--fg-muted)' }}>Halaman <strong>{route}</strong> belum tersedia di prototype ini.</div>;

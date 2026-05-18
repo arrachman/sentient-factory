@@ -35,6 +35,7 @@ const NAV = [
     ]},
     { group: 'Laporan', items: [
       { id: 'inv-rep-stok', label: 'Stok Akhir', code: 'STA' }, { id: 'inv-rep-kartu', label: 'Kartu Stok', code: 'KST' },
+      { id: 'inv-rep-adj', label: 'Rekap Penyesuaian', code: 'RPA' },
     ]},
   ]},
   { id: 'pembelian', icon: 'cart', label: 'Pembelian', children: [
@@ -44,6 +45,7 @@ const NAV = [
     ]},
     { group: 'Laporan', items: [
       { id: 'pur-rep-aging', label: 'Aging Hutang', code: 'AGH' }, { id: 'pur-rep-rekap', label: 'Rekap Pembelian', code: 'RPB' },
+      { id: 'pur-rep-supp', label: 'Rekap per Supplier', code: 'RPS' },
     ]},
   ]},
   { id: 'sales', icon: 'tag', label: 'Sales', children: [
@@ -53,6 +55,7 @@ const NAV = [
     ]},
     { group: 'Laporan', items: [
       { id: 'sls-rep-aging', label: 'Aging Piutang', code: 'AGP' }, { id: 'sls-rep-rekap', label: 'Rekap Penjualan', code: 'RPS' },
+      { id: 'sls-rep-cust', label: 'Rekap per Customer', code: 'RPC' },
     ]},
   ]},
   { id: 'produksi', icon: 'factory', label: 'Produksi', children: [
@@ -62,6 +65,7 @@ const NAV = [
     ]},
     { group: 'Laporan', items: [
       { id: 'mfg-rep-wo', label: 'Rekap Work Order', code: 'RWO' },
+      { id: 'prd-rep-bom', label: 'Rekap BOM', code: 'RBOM' },
     ]},
   ]},
   { id: 'fixed-asset', icon: 'layers', label: 'Fixed Asset', children: [
