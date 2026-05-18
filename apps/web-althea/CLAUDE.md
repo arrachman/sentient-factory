@@ -209,7 +209,14 @@ Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO). Set clien
 - Klinis: Catatan klinis, Ruangan (read-only)
 - Akun: Profil saya
 
-Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
+Owner / Marketing / Intern: single-page dashboard (1 item).
+
+**Resepsionis** — single group (Utama), 3 item:
+- Dashboard (`/resepsionis/dashboard`)
+- Daftar Jadwal (`/resepsionis/daftar-jadwal`) — reuse `BookingPage` dari `features/admin-booking` dengan prop `canCreate={false}` (resepsionis boleh lihat + ubah status + reschedule + cancel, tapi tidak boleh create booking baru via menu ini). Tombol "Jadwal Baru" disembunyikan.
+- Klien (`/resepsionis/clients`, detail `/resepsionis/clients/[id]`) — reuse `ClientsPage` + `ClientDetailPage` dari `features/admin-clients` dengan prop `basePath="/resepsionis/clients"` dan `schedulePath="/resepsionis/daftar-jadwal"`. Akses full (sama dengan admin: lihat / tambah / edit / hapus). `basePath` & `schedulePath` di-thread ke `DetailHeader` supaya link "Kembali" dan "Jadwalkan" tetap di prefix `/resepsionis/*` (tidak ke-bounce role guard).
+
+Pattern reuse halaman antar-role: tambahkan prop `basePath` (dan `schedulePath` bila perlu link cross-feature) di komponen feature, default ke path admin. Route mount per-role tinggal pass prop yang sesuai. Tetap di prefix masing-masing role supaya `proxy.ts` & `ROLE_ROUTE_PREFIXES` tidak perlu diubah.
 
 ## Mobile responsive
 **Desktop-first** — primary target laptop/desktop. Tapi **wajib accessible di mobile** (responsive breakpoints Tailwind):
@@ -255,6 +262,11 @@ Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
 - Searchable combobox untuk client, chip grid untuk service, card grid untuk psikolog, DateStrip + slot button grid untuk jadwal
 - `Idempotency-Key` header per submit (`apiClient` set otomatis untuk mutation)
 
+### WA trigger — onboarding klien (per 18 Mei 2026)
+- **`Welcome New Client`**: fire saat `POST /clinic/client` (`ClinicClientService.create`) bila klien punya `phoneWa` & `waOptedOut=false`. Tidak fire untuk klien lama yang dibuat sebelum trigger di-deploy (klien id ≤ 10 di DB dev) — bukan bug.
+- **`Info Psikolog`**: fire **sekali saja saat booking PERTAMA klien**, baik single (`POST /clinic/booking`) maupun paket (`POST /clinic/booking/package`). Definisi "pertama" = `count(clinicBooking WHERE clientId=X AND deletedAt IS NULL) excluding current = 0`. Booking ke-2+ tidak ulang Info Psikolog walau ganti psikolog (keputusan 18 Mei: trigger berbasis "first booking", bukan "first per pair klien-psikolog").
+- Caller: `booking-notification.service.ts:notifyPsikologInfo()`. Sebelum 18 Mei 2026 function ini didefinisikan tapi tidak pernah dipanggil — bug history: commit fix dispatch di `ClinicBookingService.create` + `BookingPackageService.persistAndEmit`.
+
 ### Override flag
 - Satu checkbox `bufferOverride` skip semua validation (slot-match, jam, hari libur, psikolog availability); fitur "conflict buffer" sudah dihapus — tidak ada buffer menit antar booking
 - Pakai HANYA untuk walk-in darurat, audit-logged otomatis
@@ -283,7 +295,7 @@ Highlight current state:
 - ✅ Booking wizard single-page (ADR 011) + reschedule + walk-in via wizard
 - ✅ Schedule grid `/admin/jadwal` + `/psikolog/schedule` (Hari/Minggu/Bulan + filter)
 - ✅ WA Fonnte integration hardened (phone normalize, BullMQ retry, webhook fallback, ID date/time WIB) + 18 templates
-- ✅ WA event triggers (confirm/complete/cancel/reschedule)
+- ✅ WA event triggers (confirm/complete/cancel/reschedule + Info Psikolog & Welcome New Client di booking/klien pertama)
 - ✅ Psikolog workflow: dashboard real-data, sessions SOAP, patients, profile (editable + **avatar upload base64**), schedule self-service (weekly + per-tanggal override), rooms read-only
 - ✅ Receptionist status board + SSE realtime
 - ✅ Owner KPI dashboard + audit log viewer

@@ -101,6 +101,16 @@ export class ClinicBookingService {
     // Slice 11: SSE event untuk realtime updates di resepsionis dashboard
     this.events.emit({ type: 'created', bookingId: booking.id, status: booking.status });
 
+    // Info Psikolog: kirim profil psikolog ke klien hanya saat booking PERTAMA klien itu.
+    // Booking ke-2+ tidak ulang Info Psikolog meski ganti psikolog (decision: trigger by
+    // "first booking", bukan "first per pair klien-psikolog").
+    const priorBookings = await this.prisma.clinicBooking.count({
+      where: { clientId: dto.clientId, id: { not: booking.id }, deletedAt: null },
+    });
+    if (priorBookings === 0) {
+      void this.notifier.notifyPsikologInfo(booking);
+    }
+
     return { success: true, data: booking, message: 'Booking created' };
   }
 

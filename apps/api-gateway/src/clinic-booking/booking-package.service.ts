@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingEventsService } from './booking-events.service';
+import { BookingNotificationService } from './booking-notification.service';
 import { BookingValidationService } from './booking-validation.service';
 import { CreatePackageBookingDto } from './dto/clinic-booking.dto';
 
@@ -31,6 +32,7 @@ export class BookingPackageService {
     private readonly prisma: PrismaService,
     private readonly validation: BookingValidationService,
     private readonly events: BookingEventsService,
+    private readonly notifier: BookingNotificationService,
   ) {}
 
   async create(dto: CreatePackageBookingDto, actorId?: number) {
@@ -177,6 +179,17 @@ export class BookingPackageService {
       this.events.emit({ type: 'created', bookingId: b.id, status: b.status });
     }
 
+    // Info Psikolog: fire saat booking pertama klien (paket pertama untuk klien baru).
+    // Count exclude ID dari paket ini sendiri — kalau prior = 0, kirim sekali pakai
+    // booking pertama paket (session 1) sebagai konteks profile psikolog.
+    const createdIds = created.map((b) => b.id);
+    const priorBookings = await this.prisma.clinicBooking.count({
+      where: { clientId: dto.clientId, id: { notIn: createdIds }, deletedAt: null },
+    });
+    if (priorBookings === 0 && created.length > 0) {
+      void this.notifier.notifyPsikologInfo(created[0]);
+    }
+
     return {
       success: true,
       data: { packageGroupId, sessionCount: created.length, bookings: created },
@@ -203,7 +216,9 @@ export class BookingPackageService {
           email: true,
           fullName: true,
           avatarUrl: true,
-          clinicPsikologProfile: { select: { title: true, color: true } },
+          clinicPsikologProfile: {
+            select: { title: true, color: true, specialty: true, license: true },
+          },
         },
       },
       room: { select: { id: true, name: true, type: true } },
