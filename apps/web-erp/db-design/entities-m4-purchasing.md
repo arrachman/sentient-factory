@@ -31,6 +31,8 @@ rate `Decimal(19,6)`; percent `Decimal(9,4)`. `*Fx` = transaction-currency amoun
 | `PurchaseDocType` | `REQUISITION`, `RFQ`, `QUOTATION`, `BID_SELECTION`, `ORDER`, `GOODS_RECEIPT`, `INVOICE`, `RETURN` | the m4 chain |
 | `PurchaseReturnType` | `DEBIT_NOTE`, `RETURN_TO_VENDOR` | `m4_dnr` vs `m4_prt` |
 | `PriceMode` | `TAX_INCLUSIVE`, `TAX_EXCLUSIVE` | `*hargatermasukpajak` |
+| `QcStatus` | `PENDING`, `PASSED`, `FAILED`, `PARTIAL` | new — goods-receipt line QC state (resolved §8 #25) |
+| `MatchStatus` | `PENDING`, `MATCHED`, `MISMATCH`, `WAIVED` | new — 3-way PO↔GR↔Invoice match (resolved §8 #24) |
 
 Reused: `DocumentStatus`, `PostingStatus` (m2); `SettlementStatus`, `PaymentMethod`
 (m2 — for the reused finance payment tables).
@@ -135,7 +137,9 @@ Each = «PurchaseDocHeader» + `lines: «PurchaseDocLine»[]`, with the deltas b
 - Adds: `requestedById ➜ ErpUser` (`prdimintaoleh`), `requestedPartnerId ○ ➜ Partner`
   (`prdimintaolehkontak`), `neededDate ○` (`prtgldipakai`), `requestedTo ○`
   (`prmintake`), `validFrom ○`/`validTo ○` (`prtglawal`/`prtglakhir`),
-  `salesQuotationId ○ ➜` (`pridsq` — demand from sales). No supplier (pre-sourcing).
+  `salesQuotationId ○ ➜` (`pridsq` — demand from sales),
+  `workOrderId ○ ➜ MfgWorkOrder` (`—` — auto-PR from manufacturing shortage; resolved §8 #26).
+  No supplier (pre-sourcing).
 
 ### ErpPurRfq → `pur_rfqs`  (legacy `m4_rfq` + `m4_rfq_detail`)
 - RFQ lines are **suppliers invited** (legacy `rfq_detail` = `idkontak`), not items:
@@ -162,13 +166,22 @@ Each = «PurchaseDocHeader» + `lines: «PurchaseDocLine»[]`, with the deltas b
 - Goods received vs PO. Lines carry `unitCost` + `accruedPayableAccountId`
   (`rekhutangsementara`). Posting moves stock (`inv`) + accrues GR/IR.
   Upstream: `orderId`.
+- **QC delta on lines (resolved §8 #25):** `acceptedQty Decimal(19,4)` (masuk stok +
+  jadi dasar hutang), `rejectedQty Decimal(19,4)` (calon retur ke supplier),
+  `quarantineQty Decimal(19,4)` (ditahan, belum diklasifikasi),
+  `qcStatus ◆ QcStatus` (`PENDING` saat baris dibuat; `PASSED`/`FAILED`/`PARTIAL`
+  setelah QC selesai). Stok hanya naik sebesar `acceptedQty`. `rejectedQty` otomatis
+  menjadi seed baris `pur_returns` bila diproses.
 
 ### ErpPurInvoice → `pur_invoices`  (legacy `m4_ri`; price-change `m4_ipc` folded)
 - Supplier bill = **AP open item**. Adds: `taxInvoiceNo ○` (`rinofakturpajak`),
   `taxPaid Boolean` (`risdhbayarpajak`), `taxPaidDate ○` (`ritglbayarpajak`),
   `settlementStatus ◆` (`ristatuslunas`), `settledDate ○` (`ritgllunas`),
   `advanceAmount ○` (`rijmluangmuka`), `advanceAccountId ○ ➜` (`rirekuangmuka`),
-  `isOpeningBalance Boolean` (`risaldoawal`). Upstream: `orderId`/`goodsReceiptId`.
+  `isOpeningBalance Boolean` (`risaldoawal`),
+  `matchStatus ◆ MatchStatus` (`—` — 3-way match PO↔GR↔Invoice; `PENDING` on creation;
+  AP posting blocked until `MATCHED` or explicitly `WAIVED`; resolved §8 #24).
+  Upstream: `orderId`/`goodsReceiptId`.
   > `m4_ipc` (purchase price change) is **folded** as an invoice with
   > `documentType` distinction at catalog-build time — not a separate table
   > (core-subset; legacy IPC duplicates the RI shape).
@@ -203,6 +216,24 @@ the already-cataloged finance entities — **no `pur_payment*` tables**:
 > `termDiscountAccountId` — to absorb VP/VPP. To be folded into a finance-doc
 > revision; recorded here, **not** silently edited into m2.
 
+---
+
+## Approval workflow integration (resolved §8 #27)
+
+Purchasing documents integrate with the **generic approval engine** (`sys_approval_*`,
+domain `sys` — designed as a separate cross-module system). No `pur_approval*` tables.
+
+| Doc | Trigger | Effect on status |
+| --- | --- | --- |
+| `pur_requisitions` | submit for approval | `status` → `PENDING_APPROVAL`; advance to `APPROVED` / `REJECTED` by engine |
+| `pur_orders` | submit for approval | same; `APPROVED` = PO can be sent to supplier |
+
+Approval configuration (who approves, amount thresholds, multi-level chain) lives
+entirely in `sys_approval_*`. The `pur_*` docs only carry the resulting `status` value.
+Design of `sys_approval_*` is a **separate deliverable** (domain `sys`).
+
+---
+
 ### Flagged / secondary (not modeled in core)
 - **`m4_pie`** (`pie_detail` = bare `sumber`/`idtransaksi` pointers) — a generic
   invoice-entry aggregator. Superseded by explicit chain links; **not modeled**.
@@ -216,7 +247,9 @@ the already-cataloged finance entities — **no `pur_payment*` tables**:
 (Requisition, Rfq[+suppliers], Quotation, BidSelection[+quotations], Order,
 GoodsReceipt, Invoice, Return) ≈ **18 tables**. Payment/settlement **reuses
 `fin_*`** (no new tables; +4 optional cols flagged onto `fin_ap_payments`).
-Period reuses `sys_fiscal_periods`; dimensions reuse `md_*`.
+Period reuses `sys_fiscal_periods`; dimensions reuse `md_*`. Approval engine
+reuses `sys_approval_*` (no new `pur_*` tables). Enterprise additions resolved
+§8 #24–#27 are **column-level only** — no new tables.
 
 Legacy field-mapping appendix: **[legacy-mapping.md](legacy-mapping.md)** ·
 Roadmap context: **[module-roadmap.md](module-roadmap.md)**.

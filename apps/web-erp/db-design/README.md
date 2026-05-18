@@ -124,6 +124,8 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `PurchaseDocType` | `REQUISITION`, `RFQ`, `QUOTATION`, `BID_SELECTION`, `ORDER`, `GOODS_RECEIPT`, `INVOICE`, `RETURN` | m4 chain |
 | `PurchaseReturnType` | `DEBIT_NOTE`, `RETURN_TO_VENDOR` | m4 `m4_dnr` vs `m4_prt` |
 | `PriceMode` | `TAX_INCLUSIVE`, `TAX_EXCLUSIVE` | m4 `*hargatermasukpajak` |
+| `QcStatus` | `PENDING`, `PASSED`, `FAILED`, `PARTIAL` | new — `pur_goods_receipt` line QC state (resolved §8 #38) |
+| `MatchStatus` | `PENDING`, `MATCHED`, `MISMATCH`, `WAIVED` | new — `pur_invoices` 3-way match (resolved §8 #37) |
 | `SalesDocType` | `QUOTATION`, `ORDER`, `PROFORMA_INVOICE`, `PACKING_LIST`, `DELIVERY_ORDER`, `DELIVERY_REPORT`, `INVOICE`, `RETURN`, `RETURN_RECEIPT` | m5 chain |
 | `MfgDocType` | `BOM`, `WORK_ORDER`, `MATERIAL_ISSUE`, `MATERIAL_RETURN`, `PRODUCTION`, `REWORK` | m6 doc set |
 | `DepreciationMethod` | `STRAIGHT_LINE`, `DECLINING_BALANCE`, `DOUBLE_DECLINING`, `SUM_OF_YEARS`, `UNITS_OF_PRODUCTION`, `NONE` | m7 `ametode` |
@@ -548,6 +550,10 @@ re-opened — see **§8.1**.
 | 34 | Financial Report Definitions | **IN — `fin_report_definitions` + `fin_report_sections` + `fin_report_lines`** | Layout laporan keuangan yang bisa dikonfigurasi tanpa coding (Neraca, L&R, Arus Kas). Memetakan range CoA / akun spesifik ke baris laporan. Formula lines untuk subtotal. Enum `FinancialReportType` (4), `ReportLineType` (5). 3 entitas baru. (2026-05-18) |
 | 35 | Credit Limit & Collection Management | **IN — `fin_credit_limits` + `fin_dunning_rules` + `fin_collection_activities`** | Batas piutang per customer dengan action WARN/BLOCK/REQUIRE_APPROVAL; dunning rules berbasis hari keterlambatan; log aktivitas penagihan. Enum `CreditLimitAction`, `CollectionActivityType`, `CollectionStatus`, `DunningLevel`. 3 entitas baru. (2026-05-18) |
 | 36 | Inter-branch / Consolidation | **IN — `fin_intercompany_rules` + `fin_intercompany_transactions`** | Konfigurasi pasangan akun due-from/due-to antar branch; record transaksi lintas cabang dengan JV di kedua sisi; eliminasi saat konsolidasi. Enum `IntercompanyStatus` (3). 2 entitas baru. (2026-05-18) |
+| 37 | 3-way match di `pur_invoices` | **IN — `matchStatus ◆ MatchStatus`** | Kolom baru di `pur_invoices`: `matchStatus` (`PENDING`/`MATCHED`/`MISMATCH`/`WAIVED`). AP posting diblokir sampai status `MATCHED` atau `WAIVED`. Sistem memvalidasi kesesuaian qty/harga antara PO ↔ GR ↔ Invoice. Enum `MatchStatus`. Column-level only, no new tables. (2026-05-18) |
+| 38 | QC qty di `pur_goods_receipt` lines | **IN — 4 kolom QC per baris GR** | Delta kolom di `pur_goods_receipt` lines: `acceptedQty`, `rejectedQty`, `quarantineQty` (Decimal 19,4) + `qcStatus ◆ QcStatus` (`PENDING` saat dibuat). Stok naik hanya sebesar `acceptedQty`; `rejectedQty` menjadi seed baris `pur_returns`. Enum `QcStatus`. Column-level only. (2026-05-18) |
+| 39 | mfg → pur auto-PR | **IN — `workOrderId ○ ➜ MfgWorkOrder` di `pur_requisitions`** | FK opsional di `pur_requisitions.workOrderId` — menandai PR yang dipicu kekurangan material Work Order. Menutup loop produksi→pengadaan; simetris dengan `salesQuotationId` (demand dari sales). Column-level only. (2026-05-18) |
+| 40 | Approval workflow — generik `sys_approval_*` | **IN — engine generik domain `sys`** | Approval engine lintas-modul (`pur` Requisition/PO, `sls` Order, `fin` journal, `fa` requisition, dll). Tidak ada `pur_approval*` tabel — dokumen `pur` hanya membawa `status` hasil approval. Desain `sys_approval_*` = deliverable tersendiri domain `sys`. (2026-05-18) |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers),
@@ -558,7 +564,9 @@ re-opened — see **§8.1**.
 #29 (domain `pln` MRP-lite baru, 2026-05-18 — 5 entitas + ATP view),
 **#30–36 (fin enterprise extensions: account determination + tax sub-ledger + FX
 revaluation + bank rec + recurring/accrual + report definitions + credit/collection
-+ inter-company, 2026-05-18 — `fin` total: 12 core → 31 entitas)**.
++ inter-company, 2026-05-18 — `fin` total: 12 core → 31 entitas)**,
+**#37–40 (pur enterprise additions: 3-way match + QC qty + auto-PR mfg→pur +
+approval generik `sys_approval_*`, 2026-05-18 — column-level only, no new tables)**.
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 
@@ -585,3 +593,10 @@ Fixed Assets, BI, POS) are mapped at roadmap depth in
 (`md_cost_centers`/`md_divisions`/`md_subdivisions`/`md_projects`) are **un-deferred**
 (resolved §8 #16). Per-module field catalogs are produced sequentially after review.
 Legacy lineage for m1's unmapped masters: **[legacy-mapping.md](legacy-mapping.md)**.
+
+**Explicitly deferred from `pur` core (2026-05-18):**
+- **Blanket / Contract PO** — PO type + call-off release; adopsi bila ada pola kontrak supplier rutin.
+- **Encumbrance / budget commitment** — PR/PO membebani anggaran sebelum realisasi (`committed` vs `actual` di `fin_budget_realizations`); tunda ke fase `fin` lanjutan.
+- **Landed cost** — alokasi freight/duty/asuransi ke `unitCost` item; butuh desain alokasi tersendiri (fase terpisah).
+- **Vendor scorecard / evaluation** — KPI supplier; masuk fase `bi` (Business Intelligence).
+- **Supplier price list / kontrak harga** — ikut fase pricing/`pos` (§8 #10 tiered pricing).
