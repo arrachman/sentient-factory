@@ -75,6 +75,7 @@ const DataList = ({ moduleId, t, onNavigate, onOpenTab }) => {
     if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); setFocused(f => Math.min(view.length - 1, f + 1)); }
     else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
     else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); if (view[focused]) toggle(view[focused].id); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (view[focused]) { window.__viewRow = view[focused]; onNavigate(`${moduleId}-view`); } }
     else if (e.key.toLowerCase() === 'n') { e.preventDefault(); openForm(); }
   });
 

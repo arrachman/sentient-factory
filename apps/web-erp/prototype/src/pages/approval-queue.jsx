@@ -48,6 +48,7 @@ const StatCard = ({ label, value, color }) => (
 const ApprovalQueue = ({ t, onNavigate, onOpenTab }) => {
   const [docs, setDocs]         = React.useState(PENDING_DOCS);
   const [selected, setSelected] = React.useState(new Set());
+  const [focused, setFocused]   = React.useState(0);
   const [tab, setTab]           = React.useState('all');
   const [filterMod, setFilterMod]   = React.useState('all');
   const [filterUser, setFilterUser] = React.useState('all');
@@ -122,6 +123,17 @@ const ApprovalQueue = ({ t, onNavigate, onOpenTab }) => {
     else setSelected(prev => { const s = new Set(prev); visIds.forEach(id => s.add(id)); return s; });
   };
   const allChecked = visible.length > 0 && visible.every(d => selected.has(d.id));
+
+  useKey((e) => {
+    if (window.__overlay) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setFocused(f => Math.min(visible.length - 1, f + 1)); }
+    else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
+    else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); if (visible[focused]) toggleOne(visible[focused].id); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (visible[focused]) handleOpen(visible[focused]); }
+    else if (e.key.toLowerCase() === 'a') { e.preventDefault(); if (visible[focused]) handleApprove(visible[focused]); }
+    else if (e.key.toLowerCase() === 'r') { e.preventDefault(); if (visible[focused]) handleReject(visible[focused]); }
+  });
 
   const totalPending   = docs.length;
   const totalUrgent    = docs.filter(d => d.aging >= 5 && d.aging <= 7).length;
@@ -211,8 +223,10 @@ const ApprovalQueue = ({ t, onNavigate, onOpenTab }) => {
             </tr>
           </thead>
           <tbody className="tbody">
-            {visible.map(doc => (
-              <tr key={doc.id} className="tr" style={{ background: selected.has(doc.id) ? 'var(--panel)' : undefined }}>
+            {visible.map((doc, idx) => (
+              <tr key={doc.id}
+                className={`tr${selected.has(doc.id) ? ' selected' : ''}${idx === focused ? ' focused' : ''}`}
+                onClick={() => setFocused(idx)}>
                 <td className="td">
                   <input type="checkbox" checked={selected.has(doc.id)} onChange={() => toggleOne(doc.id)}/>
                 </td>
@@ -246,6 +260,15 @@ const ApprovalQueue = ({ t, onNavigate, onOpenTab }) => {
           </tbody>
         </table>
       )}
+
+      <div className="pager" style={{ marginTop: 8 }}>
+        <span className="muted">Pintasan:</span>
+        <span><Kbd>J</Kbd>/<Kbd>K</Kbd> navigasi</span>
+        <span><Kbd>X</Kbd> pilih</span>
+        <span><Kbd>↵</Kbd> buka</span>
+        <span><Kbd>A</Kbd> setujui</span>
+        <span><Kbd>R</Kbd> tolak</span>
+      </div>
     </div>
   );
 };

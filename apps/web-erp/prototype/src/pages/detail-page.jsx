@@ -225,6 +225,27 @@ const DetailPage = ({ moduleId, t, onNavigate, onOpenTab }) => {
   const cols = mod?.cols || [];
   const isTrx = Boolean(window.MODULES?.[moduleId] || window.TRX_CFG?.[moduleId]);
 
+  const statusCol = cols.find(c => c.t === 'status');
+
+  useKey((e) => {
+    if (window.__overlay || !row) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    const status = statusCol ? row[statusCol.k] : null;
+    const isPending = status === 'Pending' || status === 'Menunggu';
+    if (e.key === 'Escape') { e.preventDefault(); onNavigate(moduleId); }
+    else if (e.key.toLowerCase() === 'e') { e.preventDefault(); (onOpenTab || onNavigate)(`${moduleId}-new`); }
+    else if (e.key.toLowerCase() === 'a' && isPending) {
+      e.preventDefault();
+      window.confirmAction({ title: t('Setujui Dokumen'), message: t('Yakin ingin menyetujui dokumen ini?'), variant: 'success', onConfirm: () => window.toast(t('Dokumen disetujui'), { type: 'success' }) });
+    } else if (e.key.toLowerCase() === 'r' && isPending) {
+      e.preventDefault();
+      window.confirmAction({ title: t('Tolak Dokumen'), message: t('Yakin ingin menolak dokumen ini?'), variant: 'danger', onConfirm: () => window.toast(t('Dokumen ditolak'), { type: 'danger' }) });
+    } else if (e.key.toLowerCase() === 'p') {
+      e.preventDefault();
+      window.toast(t('Mencetak dokumen…'), { type: 'info' });
+    }
+  });
+
   if (!row) {
     return <EmptyState onNavigate={onNavigate} moduleId={moduleId} t={t} />;
   }
