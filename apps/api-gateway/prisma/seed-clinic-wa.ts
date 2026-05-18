@@ -136,6 +136,14 @@ const TEMPLATES: TemplateSeed[] = [
       'Profil {{nama_psikolog}}, {{title}}\n\nSpesialisasi: {{spesialisasi}}\nPendidikan: {{pendidikan}}\nLisensi: {{lisensi}}\n\nWelcome to Althea.',
     recipients: ['klien'],
   },
+  {
+    name: 'Welcome Psikolog Baru',
+    category: 'onboarding',
+    triggerEvent: 'psikolog_welcome',
+    body:
+      'Halo {{nama_psikolog}} 🌿\n\nSelamat datang di Althea Psychology. Akun Anda sudah aktif dan siap dipakai.\n\nLogin: {{login_url}}\nUsername: {{username}}\n\nKalau ada kendala akses, hubungi admin klinik. Terima kasih.',
+    recipients: ['psikolog'],
+  },
 
   // ----- BAYAR (4) -----
   {

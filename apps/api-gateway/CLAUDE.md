@@ -96,6 +96,14 @@ Bug history: commit `14f9c49` fix booking slot 08:30 WIB salah parse jadi 01:30 
 
 Caller: `ClinicBookingService.create` + `BookingPackageService.create`.
 
+### WA fan-out (klien + psikolog)
+
+`BookingNotificationService.notify(booking, templateName)` di `src/clinic-booking/booking-notification.service.ts` selalu dispatch ke `booking.client.phoneWa`, lalu dispatch kedua ke `booking.psikolog.phone` **kalau** `ClinicWaTemplate.recipients` mengandung `'psikolog'` dan psikolog punya `User.phone`. Dua jalur — error sisi psikolog di-catch terpisah (log warn), tidak block kirim ke klien. Sumber nomor psikolog: kolom `User.phone` (bukan field baru di `ClinicPsikologProfile`).
+
+Konsekuensi untuk caller: setiap Prisma include yang nanti dipakai sebagai argumen `notify()` **wajib** select `psikolog.phone`. Sudah ada di `ClinicBookingService.includeRelations` + `BookingPackageService.includeRelations`.
+
+Template baru — `Welcome Psikolog Baru` (`recipients: ['psikolog']`) — di-fire dari `ClinicPsikologService.create` saat akun psikolog dibuat dan `User.phone` ada. Setelah update seed: `npm run db:seed` di `apps/api-gateway` untuk upsert template.
+
 ### Junction tables (Althea)
 
 | Table | Purpose | Default behavior |

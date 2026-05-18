@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 import {
   CalendarDays,
-  CalendarPlus,
   CheckCircle2,
   Eye,
   Play,
+  Plus,
   RotateCw,
   Search,
   X,
@@ -76,7 +76,7 @@ function dateForQuickFilter(qf: QuickFilter): string | undefined {
   return undefined;
 }
 
-export function BookingPage() {
+export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
   const [quickFilter, setQuickFilter] = useState<QuickFilter>('today');
@@ -169,11 +169,13 @@ export function BookingPage() {
             <CalendarDays className="h-3.5 w-3.5" /> {f.label}
           </button>
         ))}
-        <div className="ml-auto flex items-center gap-2">
-          <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary btn-sm">
-            <CalendarPlus className="h-4 w-4" /> Jadwal Baru
-          </button>
-        </div>
+        {canCreate && (
+          <div className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary btn-sm">
+              <Plus className="h-4 w-4" /> Jadwal Baru
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

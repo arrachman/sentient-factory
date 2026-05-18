@@ -25,7 +25,9 @@ const EMPTY: CreateClientInput = {
   isActive: true,
 };
 
-export function ClientsPage() {
+export function ClientsPage({
+  basePath = '/admin/clients',
+}: { basePath?: string } = {}) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('semua');
   const [search, setSearch] = useState('');
@@ -87,7 +89,7 @@ export function ClientsPage() {
           items={items}
           isLoading={list.isLoading}
           totalCount={items.length}
-          onOpen={(id) => router.push(`/admin/clients/${id}`)}
+          onOpen={(id) => router.push(`${basePath}/${id}`)}
         />
       </div>
 

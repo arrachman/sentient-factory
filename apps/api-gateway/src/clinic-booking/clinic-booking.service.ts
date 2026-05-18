@@ -111,6 +111,10 @@ export class ClinicBookingService {
       void this.notifier.notifyPsikologInfo(booking);
     }
 
+    // Konfirmasi Booking — kirim ke klien + fan-out ke psikolog (template recipients
+    // di seed sudah ['klien', 'psikolog']).
+    void this.notifier.notify(booking, 'Konfirmasi Booking');
+
     return { success: true, data: booking, message: 'Booking created' };
   }
 
@@ -229,7 +233,33 @@ export class ClinicBookingService {
 
     // Slice 9: WA event triggers per status
     if (target === 'completed') {
-      void this.notifier.notify(updated, 'Follow-up Post Session');
+      const nextBooking = await this.prisma.clinicBooking.findFirst({
+        where: {
+          clientId: updated.clientId,
+          id: { not: updated.id },
+          deletedAt: null,
+          status: { in: ['scheduled', 'confirmed', 'checked_in'] },
+          scheduledStart: { gt: now },
+        },
+        orderBy: { scheduledStart: 'asc' },
+        select: { scheduledStart: true },
+      });
+      const sesiBerikutTanggal = nextBooking
+        ? `${nextBooking.scheduledStart.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            timeZone: 'Asia/Jakarta',
+          })} pukul ${nextBooking.scheduledStart.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Asia/Jakarta',
+          })} WIB`
+        : '(belum dijadwalkan)';
+      void this.notifier.notify(updated, 'Follow-up Post Session', {
+        sesi_berikut_tanggal: sesiBerikutTanggal,
+      });
     }
 
     this.events.emit({ type: 'transition', bookingId: id, status: target });
@@ -329,11 +359,23 @@ export class ClinicBookingService {
       include: this.includeRelations(),
     });
 
+    const fmtTanggal = (d: Date) =>
+      d.toLocaleDateString('id-ID', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'Asia/Jakarta',
+      });
+    const fmtWaktu = (d: Date) =>
+      d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) +
+      ' WIB';
+
     void this.notifier.notify(updated, 'Reschedule Booking', {
-      tanggal_lama: existing.data.scheduledStart.toISOString(),
-      waktu_lama: existing.data.scheduledStart.toISOString().slice(11, 16),
-      tanggal_baru: newStart.toISOString(),
-      waktu_baru: newStart.toISOString().slice(11, 16),
+      tanggal_lama: fmtTanggal(existing.data.scheduledStart),
+      waktu_lama: fmtWaktu(existing.data.scheduledStart),
+      tanggal_baru: fmtTanggal(newStart),
+      waktu_baru: fmtWaktu(newStart),
       alasan: dto.reason ?? '-',
     });
 
@@ -390,6 +432,7 @@ export class ClinicBookingService {
           email: true,
           fullName: true,
           avatarUrl: true,
+          phone: true,
           clinicPsikologProfile: { select: { title: true, color: true, specialty: true, license: true } },
         },
       },

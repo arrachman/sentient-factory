@@ -192,6 +192,31 @@ export type ShellRole =
   | 'marketing'
   | 'intern';
 
+const RESEPSIONIS_NAV: NavGroup[] = [
+  {
+    category: 'Utama',
+    items: [
+      {
+        href: '/resepsionis/dashboard',
+        label: 'Dashboard',
+        icon: createElement(ClipboardList, { className: ICON_CLASS }),
+      },
+      {
+        href: '/resepsionis/daftar-jadwal',
+        label: 'Daftar Jadwal',
+        icon: createElement(FileText, { className: ICON_CLASS }),
+        pageTitle: 'Daftar Jadwal',
+      },
+      {
+        href: '/resepsionis/clients',
+        label: 'Klien',
+        icon: createElement(UserSquare, { className: ICON_CLASS }),
+        pageTitle: 'Daftar Klien',
+      },
+    ],
+  },
+];
+
 const OWNER_NAV: NavGroup[] = [
   {
     category: 'Utama',
@@ -208,6 +233,18 @@ const OWNER_NAV: NavGroup[] = [
         icon: createElement(BarChart3, { className: ICON_CLASS }),
         pageTitle: 'Analitik & Performa Klinik',
       },
+      {
+        href: '/owner/jadwal',
+        label: 'Jadwal Psikolog',
+        icon: createElement(CalendarDays, { className: ICON_CLASS }),
+        pageTitle: 'Grid Penjadwalan · Psikolog × Slot',
+      },
+      {
+        href: '/owner/ruangan',
+        label: 'Pemakaian Ruangan',
+        icon: createElement(DoorOpen, { className: ICON_CLASS }),
+        pageTitle: 'Pemakaian Ruangan · Slot × Ruangan',
+      },
     ],
   },
 ];
@@ -216,7 +253,7 @@ export const NAV_BY_ROLE: Record<ShellRole, NavGroup[]> = {
   admin: ADMIN_NAV,
   psikolog: PSIKOLOG_NAV,
   owner: OWNER_NAV,
-  resepsionis: singleDashboardNav('/resepsionis'),
+  resepsionis: RESEPSIONIS_NAV,
   marketing: singleDashboardNav('/marketing'),
   intern: singleDashboardNav('/intern'),
 };

@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
 
 /**
@@ -10,6 +11,11 @@ import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
  *
  * Fire-and-forget pattern: error tidak boleh block transition,
  * cuma logged ke console (dipantau Sentry di production).
+ *
+ * Fan-out ke psikolog: di-drive oleh kolom `ClinicWaTemplate.recipients`.
+ * Kalau template recipients mengandung 'psikolog' dan psikolog punya
+ * User.phone, dispatch kedua dilakukan paralel dengan recipientType
+ * 'psikolog'. Error sisi psikolog tidak ganggu kirim ke klien.
  */
 
 type BookingForNotification = {
@@ -20,6 +26,7 @@ type BookingForNotification = {
   service: { name: string; basePrice: unknown };
   psikolog: {
     fullName: string | null;
+    phone?: string | null;
     clinicPsikologProfile?: { title: string | null; specialty: string[]; license: string | null } | null;
   };
   room: { name: string };
@@ -27,7 +34,25 @@ type BookingForNotification = {
 
 @Injectable()
 export class BookingNotificationService {
-  constructor(private readonly wa: ClinicWaService) {}
+  private readonly logger = new Logger(BookingNotificationService.name);
+
+  constructor(
+    private readonly wa: ClinicWaService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Cek `ClinicWaTemplate.recipients` — apakah template ini juga harus
+   * dikirim ke psikolog. Return false kalau template tidak ditemukan
+   * (dispatch() yang akan log warn).
+   */
+  private async templateTargetsPsikolog(templateName: string): Promise<boolean> {
+    const tpl = await this.prisma.clinicWaTemplate.findFirst({
+      where: { name: templateName, isActive: true, deletedAt: null },
+      select: { recipients: true },
+    });
+    return tpl?.recipients?.includes('psikolog') ?? false;
+  }
 
   /**
    * Fire-and-forget WA dispatch untuk booking event.
@@ -81,6 +106,24 @@ export class BookingNotificationService {
         variables,
         bookingId: booking.id,
       });
+
+      // Fan-out ke psikolog kalau template recipients menyertakan 'psikolog'.
+      // Pakai try terpisah supaya error sisi psikolog tidak block log success klien.
+      if (booking.psikolog.phone && (await this.templateTargetsPsikolog(templateName))) {
+        try {
+          await this.wa.dispatch({
+            templateName,
+            recipientType: 'psikolog',
+            recipientPhone: booking.psikolog.phone,
+            variables,
+            bookingId: booking.id,
+          });
+        } catch (errPsikolog) {
+          this.logger.warn(
+            `[BookingNotification] psikolog fan-out failed template=${templateName} bookingId=${booking.id}: ${errPsikolog instanceof Error ? errPsikolog.message : errPsikolog}`,
+          );
+        }
+      }
     } catch (err) {
       console.error(`[BookingNotification] template=${templateName} bookingId=${booking.id}:`, err);
     }

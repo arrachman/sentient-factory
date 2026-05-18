@@ -4,21 +4,24 @@ import { formatRupiahShort } from '../model/format';
 import { KpiCard } from './kpi-card';
 
 /**
- * Strip 4 KPI di header Owner Dashboard.
- * Responsive: 2 kolom di mobile, 4 kolom di tablet/desktop.
+ * Strip 4 KPI di header Owner Dashboard. Label adaptif terhadap periode.
  */
 export function KpiStrip({
   kpi,
   slotsPerDay,
+  periodLabel,
+  rangeDays,
 }: {
   kpi: Kpi;
   slotsPerDay: number;
+  periodLabel: string;
+  rangeDays: number;
 }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
       <KpiCard
-        label="Sesi hari ini"
-        value={kpi.sesiToday}
+        label={`Sesi ${periodLabel}`}
+        value={kpi.sesiPeriod}
         sub={`${kpi.activePsikologCount} psikolog · ${kpi.usedRoomCount} ruangan terpakai`}
         icon={CalendarCheck}
         tone="sage"
@@ -26,7 +29,7 @@ export function KpiStrip({
       <KpiCard
         label="Utilisasi psikolog"
         value={`${kpi.utilPsikolog}%`}
-        sub={`${kpi.activePsikologCount} psikolog · rata-rata ${slotsPerDay} slot`}
+        sub={`${kpi.activePsikologCount} psikolog · ${slotsPerDay * Math.max(rangeDays, 1)} slot/orang`}
         icon={Users}
         tone="info"
       />
@@ -38,12 +41,12 @@ export function KpiStrip({
         tone="amber"
       />
       <KpiCard
-        label="Revenue bulan ini"
+        label={`Revenue ${periodLabel}`}
         value={
-          kpi.monthRevenue > 0 ? formatRupiahShort(kpi.monthRevenue) : '—'
+          kpi.periodRevenue > 0 ? formatRupiahShort(kpi.periodRevenue) : '—'
         }
         sub={
-          kpi.monthRevenue > 0
+          kpi.periodRevenue > 0
             ? 'dari sesi completed'
             : 'belum ada sesi completed'
         }

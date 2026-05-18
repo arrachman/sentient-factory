@@ -1,7 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { hashPassword } from '../auth/password-hasher';
+import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
 import { CreatePsikologDto } from './dto/create-psikolog.dto';
 import { QueryPsikologDto } from './dto/query-psikolog.dto';
 import { UpdatePsikologDto } from './dto/update-psikolog.dto';
@@ -15,10 +16,13 @@ const DEFAULT_PASSWORD = 'Test1234!';
 
 @Injectable()
 export class ClinicPsikologService {
+  private readonly logger = new Logger(ClinicPsikologService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly dashboard: PsikologDashboardService,
     private readonly availability: PsikologAvailabilityService,
+    private readonly wa: ClinicWaService,
   ) {}
 
   /** Create user + ClinicPsikologProfile dalam satu transaction. */
@@ -100,6 +104,27 @@ export class ClinicPsikologService {
 
       return { user, profile };
     });
+
+    // Welcome WA — fire-and-forget. Skip kalau psikolog tidak ada phone (admin
+    // bisa lengkapi via Update). Error tidak block create.
+    if (created.user.phone) {
+      void this.wa
+        .dispatch({
+          templateName: 'Welcome Psikolog Baru',
+          recipientType: 'psikolog',
+          recipientPhone: created.user.phone,
+          variables: {
+            nama_psikolog: created.user.fullName ?? created.user.email,
+            username: created.user.username ?? created.user.email,
+            login_url: process.env.WEB_ALTHEA_URL ?? 'https://althea.fr-labs.my.id',
+          },
+        })
+        .catch((err) =>
+          this.logger.warn(
+            `[psikolog-welcome] dispatch failed userId=${created.user.id}: ${err instanceof Error ? err.message : err}`,
+          ),
+        );
+    }
 
     return {
       success: true,

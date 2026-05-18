@@ -7,8 +7,10 @@ import { ROOM_GROUP_COLOR, ROOM_GROUP_LABEL } from '../model/constants';
  */
 export function RoomUtilizationCard({
   roomGroups,
+  periodLabel,
 }: {
   roomGroups: Record<string, RoomGroupAgg>;
+  periodLabel: string;
 }) {
   const entries = Object.entries(roomGroups);
   return (
@@ -30,7 +32,7 @@ export function RoomUtilizationCard({
             Utilisasi ruangan
           </h2>
           <span className="caption" style={{ marginTop: 2 }}>
-            Per jenis ruangan · hari ini
+            Per jenis ruangan · {periodLabel}
           </span>
         </div>
         <span

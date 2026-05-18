@@ -98,7 +98,7 @@ export const TRIGGER_META: Record<string, TriggerMeta> = {
       'Admin atau psikolog sudah klik "Selesai" di detail booking',
       'Nomor WhatsApp klien sudah diisi',
     ],
-    tips: 'Kalau template memakai variabel {{sesi_berikut_tanggal}}, pastikan booking lanjutan sudah diinput — kalau belum, variabel itu akan kosong di pesan.',
+    tips: 'Kalau template memakai variabel {{sesi_berikut_tanggal}}, sistem auto-lookup booking lanjutan klien terdekat (status scheduled/confirmed/checked_in, scheduledStart > now). Kalau belum ada booking lanjutan, variabel diisi "(belum dijadwalkan)" — jadi input booking lanjutan dulu sebelum tandai "Selesai" supaya isinya akurat.',
   },
   feedback_request: {
     status: 'belum-aktif',

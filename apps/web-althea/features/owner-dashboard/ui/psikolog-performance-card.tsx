@@ -7,20 +7,25 @@ import type { PsikologRowData } from '../model/aggregate';
 import { DEFAULT_PSIKOLOG_COLOR } from '../model/constants';
 
 /**
- * Card "Performa psikolog · hari ini" — list psikolog dengan progress bar
- * todayCount / slotsPerDay + total klien aktif.
+ * Card "Performa psikolog" — list psikolog dengan progress bar
+ * periodCount / (slotsPerDay × rangeDays) + total klien aktif di periode.
  */
 export function PsikologPerformanceCard({
   isLoading,
   rows,
   totalCount,
   slotsPerDay,
+  rangeDays,
+  periodLabel,
 }: {
   isLoading: boolean;
   rows: PsikologRowData[];
   totalCount: number;
   slotsPerDay: number;
+  rangeDays: number;
+  periodLabel: string;
 }) {
+  const maxSlots = slotsPerDay * Math.max(rangeDays, 1);
   return (
     <div className="card-althea flex flex-col" style={{ padding: 20 }}>
       <div
@@ -37,10 +42,10 @@ export function PsikologPerformanceCard({
               color: 'var(--teal-800)',
             }}
           >
-            Performa psikolog · hari ini
+            Performa psikolog · {periodLabel}
           </h2>
           <span className="caption" style={{ marginTop: 2 }}>
-            {totalCount} psikolog aktif · target {slotsPerDay} slot/orang
+            {totalCount} psikolog aktif · target {maxSlots} slot/orang
           </span>
         </div>
         <span
@@ -73,9 +78,9 @@ export function PsikologPerformanceCard({
             <PsikologRow
               key={row.p.id}
               p={row.p}
-              todayCount={row.todayCount}
+              periodCount={row.periodCount}
               totalActive={row.totalActive}
-              slotsPerDay={slotsPerDay}
+              maxSlots={maxSlots}
             />
           ))
         )}
@@ -86,17 +91,17 @@ export function PsikologPerformanceCard({
 
 function PsikologRow({
   p,
-  todayCount,
+  periodCount,
   totalActive,
-  slotsPerDay,
+  maxSlots,
 }: {
   p: Psikolog;
-  todayCount: number;
+  periodCount: number;
   totalActive: number;
-  slotsPerDay: number;
+  maxSlots: number;
 }) {
-  const max = slotsPerDay;
-  const pct = Math.min(100, (todayCount / max) * 100);
+  const max = maxSlots;
+  const pct = Math.min(100, (periodCount / Math.max(max, 1)) * 100);
   const color = p.color ?? DEFAULT_PSIKOLOG_COLOR;
   const initial = (p.fullName ?? p.email).slice(0, 2).toUpperCase();
   const rawSpecialty =
@@ -153,7 +158,7 @@ function PsikologRow({
               flexShrink: 0,
             }}
           >
-            {todayCount}/{max} · {totalActive} klien
+            {periodCount}/{max} · {totalActive} klien
           </span>
         </div>
         <div

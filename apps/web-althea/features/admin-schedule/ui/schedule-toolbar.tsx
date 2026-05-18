@@ -9,10 +9,10 @@
 import { useRef } from 'react';
 import {
   CalendarDays,
-  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   Filter,
+  Plus,
 } from 'lucide-react';
 import type { ViewMode } from '../model/types';
 
@@ -168,7 +168,7 @@ export function ScheduleToolbar({
           onClick={onCreate}
           className="btn btn-primary btn-sm"
         >
-          <CalendarPlus className="h-4 w-4" /> Jadwal Baru
+          <Plus className="h-4 w-4" /> Jadwal Baru
         </button>
         {filterChildren}
       </div>

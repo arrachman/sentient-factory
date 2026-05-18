@@ -1,11 +1,10 @@
 'use client';
 
 /**
- * Hook orchestrator untuk Owner Dashboard:
- *   - Fetch data: today bookings, last 30d bookings, psikolog, room, service, settings
- *   - Derive: KPI, performa psikolog, weekly trend, room groups, top services, owner note
+ * Hook orchestrator Owner Dashboard & Analitik dengan filter periode.
  *
- * Keep page tipis — semua compute di sini & tipis fungsi pure di model/aggregate.
+ * Input: { period, anchor } — period: Harian/Mingguan/Bulanan, anchor = YYYY-MM-DD.
+ * Output: range info + agregat siap pakai komponen UI.
  */
 import { useMemo } from 'react';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
@@ -19,107 +18,117 @@ import {
   computePsikologPerf,
   computeRoomGroups,
   computeTopServices,
-  computeWeekTrend,
+  computeTrend,
 } from '../model/aggregate';
 import { DEFAULT_SLOTS_PER_DAY } from '../model/constants';
-import { dateKey, todayKey } from '../model/format';
+import {
+  type PeriodMode,
+  resolveRange,
+} from '../model/period';
 
-function rangeFrom35DaysAgo(): { dateFrom: string; dateTo: string } {
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate() - 35);
-  return { dateFrom: dateKey(from), dateTo: dateKey(to) };
-}
+const FALLBACK_SLOTS = [
+  { start: '08:00', end: '09:30' },
+  { start: '09:30', end: '11:00' },
+  { start: '11:00', end: '12:30' },
+  { start: '13:00', end: '14:30' },
+  { start: '14:30', end: '16:00' },
+  { start: '16:00', end: '17:30' },
+];
 
-export function useOwnerDashboard() {
-  const range = rangeFrom35DaysAgo();
-  const today = useBookingList({
-    date: todayKey(),
-    limit: 200,
-    includeCancelled: false,
-  });
+export function useOwnerDashboard({
+  period,
+  anchor,
+}: {
+  period: PeriodMode;
+  anchor: string;
+}) {
+  const range = useMemo(() => resolveRange(period, anchor), [period, anchor]);
+
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
   const serviceList = useServiceList({ limit: 200, isActive: true });
   const settingsQuery = useSettings();
-  const monthBookings = useBookingList({
-    limit: 500,
+  const periodQuery = useBookingList({
+    limit: 1000,
     includeCancelled: false,
-    dateFrom: range.dateFrom,
-    dateTo: range.dateTo,
+    dateFrom: range.from || undefined,
+    dateTo: range.to || undefined,
   });
 
-  const slotsPerDay =
-    settingsQuery.data?.data.slotsOfDay?.length || DEFAULT_SLOTS_PER_DAY;
-  const todayBookings = today.data?.data ?? [];
+  const settings = settingsQuery.data?.data;
+  const slotsOfDay = settings?.slotsOfDay?.length
+    ? settings.slotsOfDay
+    : FALLBACK_SLOTS;
+  const slotsPerDay = slotsOfDay.length || DEFAULT_SLOTS_PER_DAY;
+
   const psikologs = psikologList.data?.data ?? [];
   const rooms = roomList.data?.data ?? [];
   const services = serviceList.data?.data ?? [];
-  const allBookings = monthBookings.data?.data ?? [];
+  const periodBookings = periodQuery.data?.data ?? [];
+  const rangeDays = Math.max(range.days.length, 1);
 
   const kpi = useMemo(
     () =>
       computeKpi({
-        todayBookings,
+        periodBookings,
         psikologs,
         rooms,
-        allBookings,
         slotsPerDay,
+        rangeDays,
       }),
-    [todayBookings, psikologs, rooms, allBookings, slotsPerDay],
+    [periodBookings, psikologs, rooms, slotsPerDay, rangeDays],
   );
 
   const psikologPerf = useMemo(
-    () =>
-      computePsikologPerf({
-        psikologs,
-        todayBookings,
-        allBookings,
-      }),
-    [psikologs, todayBookings, allBookings],
+    () => computePsikologPerf({ psikologs, periodBookings }),
+    [psikologs, periodBookings],
   );
 
   const ownerNote = useMemo(
-    () => computeOwnerNote(psikologPerf, slotsPerDay),
-    [psikologPerf, slotsPerDay],
+    () => computeOwnerNote(psikologPerf, slotsPerDay, rangeDays),
+    [psikologPerf, slotsPerDay, rangeDays],
   );
 
-  const weekTrend = useMemo(
-    () => computeWeekTrend(allBookings),
-    [allBookings],
+  const trend = useMemo(
+    () => computeTrend({ range, periodBookings, slotsOfDay }),
+    [range, periodBookings, slotsOfDay],
   );
 
   const roomGroups = useMemo(
     () =>
       computeRoomGroups({
         rooms,
-        todayBookings,
+        periodBookings,
         slotsPerDay,
+        rangeDays,
       }),
-    [rooms, todayBookings, slotsPerDay],
+    [rooms, periodBookings, slotsPerDay, rangeDays],
   );
 
   const topServices = useMemo(
-    () => computeTopServices(allBookings),
-    [allBookings],
+    () => computeTopServices(periodBookings),
+    [periodBookings],
   );
 
-  const weekTotal = weekTrend.reduce((sum, d) => sum + d.count, 0);
-  const weekMax = Math.max(...weekTrend.map((d) => d.count), 1);
+  const trendTotal = trend.reduce((sum, d) => sum + d.count, 0);
+  const trendMax = Math.max(...trend.map((d) => d.count), 1);
 
   return {
+    range,
     psikologs,
     rooms,
-    todayBookings,
     services,
+    periodBookings,
     isLoadingPsikolog: psikologList.isLoading,
+    isLoadingBookings: periodQuery.isLoading,
     slotsPerDay,
+    slotsOfDay,
     kpi,
     psikologPerf,
     ownerNote,
-    weekTrend,
-    weekTotal,
-    weekMax,
+    trend,
+    trendTotal,
+    trendMax,
     roomGroups,
     topServices,
   };

@@ -1,20 +1,21 @@
 /**
- * Aggregator pure-function untuk dashboard owner — semua derive state
- * dari `Booking[]`, `Psikolog[]`, `Room[]`, `slotsPerDay`.
+ * Aggregator pure-function untuk Owner Dashboard & Analitik.
  *
- * Diisolasi di model/ supaya hook/page-nya tipis & gampang di-unit-test
- * tanpa render React.
+ * Semua agregat di-derive dari `Booking[]` yang sudah di-scope ke periode aktif
+ * (Harian / Mingguan / Bulanan) + master data (psikolog, room, service) +
+ * `slotsPerDay` global.
  */
 import type { Booking } from '@/features/admin-booking/model/types';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import type { Room } from '@/features/admin-rooms/model/types';
-import { dateKey, pad2 } from './format';
+import { dateKey } from './format';
+import type { PeriodRange } from './period';
 
 export type Kpi = {
-  sesiToday: number;
+  sesiPeriod: number;
   utilPsikolog: number;
   utilRuangan: number;
-  monthRevenue: number;
+  periodRevenue: number;
   activePsikologCount: number;
   usedRoomCount: number;
   totalRoomCount: number;
@@ -22,15 +23,16 @@ export type Kpi = {
 
 export type PsikologRowData = {
   p: Psikolog;
-  todayCount: number;
+  periodCount: number;
   totalActive: number;
 };
 
-export type WeekDay = {
+export type TrendBar = {
+  key: string;
   label: string;
-  dateLabel: string;
+  sub: string;
   count: number;
-  isToday: boolean;
+  isCurrent: boolean;
 };
 
 export type RoomGroupAgg = { used: number; max: number };
@@ -53,40 +55,40 @@ const WEEK_DAY_LABELS = [
 ];
 
 export function computeKpi({
-  todayBookings,
+  periodBookings,
   psikologs,
   rooms,
-  allBookings,
   slotsPerDay,
+  rangeDays,
 }: {
-  todayBookings: Booking[];
+  periodBookings: Booking[];
   psikologs: Psikolog[];
   rooms: Room[];
-  allBookings: Booking[];
   slotsPerDay: number;
+  rangeDays: number;
 }): Kpi {
-  const sesiToday = todayBookings.length;
-  const totalSlots = psikologs.length * slotsPerDay;
+  const sesiPeriod = periodBookings.length;
+  const dayCount = Math.max(rangeDays, 1);
+  const totalPsikologSlots = psikologs.length * slotsPerDay * dayCount;
   const utilPsikolog =
-    totalSlots > 0 ? Math.round((sesiToday / totalSlots) * 100) : 0;
-  const usedRoomIds = new Set(todayBookings.map((b) => b.room.id));
-  const utilRuangan =
-    rooms.length > 0
-      ? Math.round((usedRoomIds.size / rooms.length) * 100)
+    totalPsikologSlots > 0
+      ? Math.round((sesiPeriod / totalPsikologSlots) * 100)
       : 0;
-  const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
-  const monthRevenue = allBookings
-    .filter(
-      (b) =>
-        b.status === 'completed' && b.scheduledStart.startsWith(thisMonth),
-    )
+  const totalRoomSlots = rooms.length * slotsPerDay * dayCount;
+  const usedRoomSlots = periodBookings.length;
+  const utilRuangan =
+    totalRoomSlots > 0
+      ? Math.round((usedRoomSlots / totalRoomSlots) * 100)
+      : 0;
+  const usedRoomIds = new Set(periodBookings.map((b) => b.room.id));
+  const periodRevenue = periodBookings
+    .filter((b) => b.status === 'completed')
     .reduce((sum, b) => sum + Number(b.service.basePrice), 0);
   return {
-    sesiToday,
+    sesiPeriod,
     utilPsikolog,
     utilRuangan,
-    monthRevenue,
+    periodRevenue,
     activePsikologCount: psikologs.length,
     usedRoomCount: usedRoomIds.size,
     totalRoomCount: rooms.length,
@@ -95,84 +97,119 @@ export function computeKpi({
 
 export function computePsikologPerf({
   psikologs,
-  todayBookings,
-  allBookings,
+  periodBookings,
 }: {
   psikologs: Psikolog[];
-  todayBookings: Booking[];
-  allBookings: Booking[];
+  periodBookings: Booking[];
 }): PsikologRowData[] {
   return psikologs.map((p) => {
-    const todayCount = todayBookings.filter(
+    const periodCount = periodBookings.filter(
       (b) => b.psikologUserId === p.userId,
     ).length;
     const totalActive = new Set(
-      allBookings
+      periodBookings
         .filter(
           (b) =>
             b.psikologUserId === p.userId && b.status !== 'cancelled',
         )
         .map((b) => b.client.id),
     ).size;
-    return { p, todayCount, totalActive };
+    return { p, periodCount, totalActive };
   });
 }
 
 export function computeOwnerNote(
   psikologPerf: PsikologRowData[],
   slotsPerDay: number,
+  rangeDays: number,
 ): string {
+  const denom = slotsPerDay * Math.max(rangeDays, 1);
   const under = psikologPerf
-    .filter(
-      (row) => row.todayCount / slotsPerDay <= 0.3 && row.totalActive < 5,
-    )
+    .filter((row) => row.periodCount / denom <= 0.3 && row.totalActive < 5)
     .map((row) => row.p.fullName ?? row.p.email);
   if (under.length === 0) {
-    return 'Semua psikolog di atas threshold utilisasi 30% — kapasitas merata hari ini.';
+    return 'Semua psikolog di atas threshold utilisasi 30% — kapasitas merata di periode ini.';
   }
-  return `${under.slice(0, 2).join(' & ')} masih underutilized hari ini. Pertimbangkan rebalance jadwal atau marketing fokus ke spesialisasi mereka.`;
+  return `${under.slice(0, 2).join(' & ')} masih underutilized di periode ini. Pertimbangkan rebalance jadwal atau marketing fokus ke spesialisasi mereka.`;
 }
 
-export function computeWeekTrend(allBookings: Booking[]): WeekDay[] {
-  const today = new Date();
-  const days: WeekDay[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    const key = dateKey(d);
-    const count = allBookings.filter((b) =>
+/**
+ * Trend bars per periode:
+ *  - Harian:   6 bar per slot operasional (anchor day)
+ *  - Mingguan: 7 bar per hari
+ *  - Bulanan:  N bar per hari
+ */
+export function computeTrend({
+  range,
+  periodBookings,
+  slotsOfDay,
+}: {
+  range: PeriodRange;
+  periodBookings: Booking[];
+  slotsOfDay: { start: string; end: string }[];
+}): TrendBar[] {
+  if (range.mode === 'Harian') {
+    const dayBookings = periodBookings.filter((b) =>
+      b.scheduledStart.startsWith(range.anchor),
+    );
+    const bars: TrendBar[] = slotsOfDay.map((s, idx) => {
+      const count = dayBookings.filter((b) => {
+        const t = b.scheduledStart.slice(11, 16);
+        return t === s.start;
+      }).length;
+      return {
+        key: `slot-${idx}`,
+        label: `Slot ${idx + 1}`,
+        sub: `${s.start}–${s.end}`,
+        count,
+        isCurrent: false,
+      };
+    });
+    return bars;
+  }
+
+  const today = dateKey(new Date());
+  return range.days.map((key) => {
+    const d = new Date(key);
+    const dayIdx = (d.getDay() + 6) % 7;
+    const count = periodBookings.filter((b) =>
       b.scheduledStart.startsWith(key),
     ).length;
-    const dayIdx = (d.getDay() + 6) % 7; // Mon=0
-    const dateLabel = d.toLocaleDateString('id-ID', {
+    const sub = d.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'short',
     });
-    days.push({
-      label: WEEK_DAY_LABELS[dayIdx],
-      dateLabel,
+    return {
+      key,
+      label:
+        range.mode === 'Mingguan'
+          ? WEEK_DAY_LABELS[dayIdx]
+          : String(d.getDate()),
+      sub,
       count,
-      isToday: i === 0,
-    });
-  }
-  return days;
+      isCurrent: key === today,
+    };
+  });
 }
 
 export function computeRoomGroups({
   rooms,
-  todayBookings,
+  periodBookings,
   slotsPerDay,
+  rangeDays,
 }: {
   rooms: Room[];
-  todayBookings: Booking[];
+  periodBookings: Booking[];
   slotsPerDay: number;
+  rangeDays: number;
 }): Record<string, RoomGroupAgg> {
   const byType: Record<string, RoomGroupAgg> = {};
+  const days = Math.max(rangeDays, 1);
   for (const r of rooms) {
     const t = r.type ?? 'konseling';
     if (!byType[t]) byType[t] = { used: 0, max: 0 };
-    byType[t].max += slotsPerDay;
-    const usedSlotsForRoom = todayBookings.filter(
+    byType[t].max += slotsPerDay * days;
+    const usedSlotsForRoom = periodBookings.filter(
       (b) => b.room.id === r.id,
     ).length;
     byType[t].used += usedSlotsForRoom;
@@ -180,16 +217,13 @@ export function computeRoomGroups({
   return byType;
 }
 
-export function computeTopServices(allBookings: Booking[]): TopService[] {
+export function computeTopServices(periodBookings: Booking[]): TopService[] {
   const counts: Record<
     number,
     { name: string; category: string; count: number }
   > = {};
-  const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
-  for (const b of allBookings) {
+  for (const b of periodBookings) {
     if (b.status === 'cancelled') continue;
-    if (!b.scheduledStart.startsWith(thisMonth)) continue;
     const id = b.service.id;
     if (!counts[id]) {
       counts[id] = {

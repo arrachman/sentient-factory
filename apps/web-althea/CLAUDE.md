@@ -209,7 +209,19 @@ Token cookie name: `sf_token` (shared dengan web-dashboard untuk SSO). Set clien
 - Klinis: Catatan klinis, Ruangan (read-only)
 - Akun: Profil saya
 
-Owner / Marketing / Intern: single-page dashboard (1 item).
+**Owner** — single group, 4 item:
+- Dashboard (`/owner/dashboard`) — KPI strip + tren periode (Harian/Mingguan/Bulanan).
+- Analitik (`/owner/analitik`) — performa psikolog + utilisasi ruangan + top services (mengikuti filter periode).
+- Jadwal Psikolog (`/owner/jadwal`) — grid `OwnerScheduleSection` (Hari/Minggu/Bulan, read-only mirror admin).
+- Pemakaian Ruangan (`/owner/ruangan`) — grid `RoomUsageSection` Slot × Ruangan untuk hari ini (read-only, klik sel buka detail panel).
+
+Halaman **Dashboard & Analitik** share **filter periode** (Harian / Mingguan / Bulanan) lewat `OwnerPeriodToolbar` di atas. State periode di-sync ke URL (`?period=&date=`) supaya pindah Dashboard ↔ Analitik mempertahankan pilihan user. Semua widget agregat di kedua halaman (KPI, tren, performa psikolog, utilisasi ruangan group, top services) re-compute dari satu `useBookingList({ dateFrom, dateTo })` di hook `use-owner-dashboard`. Tren bar adaptif: Harian = 6 bar per slot operasional; Mingguan = 7 bar per hari (Sen–Min); Bulanan = N bar per hari.
+
+Halaman **Jadwal Psikolog** & **Pemakaian Ruangan** punya state tanggal sendiri (default hari ini) — tidak terpengaruh filter periode dashboard. Alasan: keduanya konsumen tampilan per-hari (grid slot vs ruangan), bukan agregat lintas periode.
+
+`OwnerScheduleSection` di `features/owner-dashboard/ui/` adalah wrapper khusus owner yang re-use `HariView` / `MingguView` / `BulanView` + `FilterPopover` dari `features/admin-schedule` tapi build toolbar sendiri (read-only, tanpa "Jadwal Baru" & tanpa wizard). Klik booking buka `BookingDetailDialog` read-only. Component admin-schedule tidak disentuh — pattern: bila role lain mau pakai grid admin read-only, buat wrapper khusus bukan modif shared.
+
+Marketing / Intern: single-page dashboard (1 item).
 
 **Resepsionis** — single group (Utama), 3 item:
 - Dashboard (`/resepsionis/dashboard`)
@@ -262,10 +274,19 @@ Pattern reuse halaman antar-role: tambahkan prop `basePath` (dan `schedulePath` 
 - Searchable combobox untuk client, chip grid untuk service, card grid untuk psikolog, DateStrip + slot button grid untuk jadwal
 - `Idempotency-Key` header per submit (`apiClient` set otomatis untuk mutation)
 
+### WA trigger — fan-out ke psikolog (per 18 Mei 2026)
+- **Sumber fan-out**: kolom `ClinicWaTemplate.recipients` (array `['klien'|'psikolog']`). `BookingNotificationService.notify()` selalu dispatch ke klien, lalu dispatch kedua ke psikolog **kalau** template recipients mengandung `'psikolog'` **dan** `User.phone` psikolog tidak null. Error sisi psikolog di-catch terpisah → tidak ganggu kirim ke klien.
+- **Template yang fan-out ke psikolog**: `Konfirmasi Booking`, `Reschedule Booking`, `Cancel Booking` (seed `recipients: ['klien','psikolog']`). Reminder H-1 & 30m **tidak** fan-out (keputusan 18 Mei: psikolog cukup lihat jadwal di dashboard).
+- **Konfirmasi Booking**: sebelum 18 Mei 2026 template ada di seed tapi **tidak pernah di-dispatch** (bug). Sekarang di-fire di `ClinicBookingService.create` + `BookingPackageService.persistAndEmit` (per sesi paket).
+- **Welcome Psikolog Baru** (`triggerEvent: 'psikolog_welcome'`, `recipients: ['psikolog']`): fire saat `POST /clinic/psikolog` (`ClinicPsikologService.create`) kalau psikolog punya `User.phone`. Variabel: `{{nama_psikolog}}`, `{{username}}`, `{{login_url}}` (dari `WEB_ALTHEA_URL` env, fallback ke `https://althea.fr-labs.my.id`).
+- **Sumber nomor psikolog**: kolom `User.phone` (bukan field baru di `ClinicPsikologProfile`).
+- Caller `notify()` wajib include `psikolog: { select: { ..., phone: true, ... } }` di Prisma query — sudah ditambahkan di `ClinicBookingService.includeRelations` + `BookingPackageService.includeRelations`.
+
 ### WA trigger — onboarding klien (per 18 Mei 2026)
 - **`Welcome New Client`**: fire saat `POST /clinic/client` (`ClinicClientService.create`) bila klien punya `phoneWa` & `waOptedOut=false`. Tidak fire untuk klien lama yang dibuat sebelum trigger di-deploy (klien id ≤ 10 di DB dev) — bukan bug.
 - **`Info Psikolog`**: fire **sekali saja saat booking PERTAMA klien**, baik single (`POST /clinic/booking`) maupun paket (`POST /clinic/booking/package`). Definisi "pertama" = `count(clinicBooking WHERE clientId=X AND deletedAt IS NULL) excluding current = 0`. Booking ke-2+ tidak ulang Info Psikolog walau ganti psikolog (keputusan 18 Mei: trigger berbasis "first booking", bukan "first per pair klien-psikolog").
 - Caller: `booking-notification.service.ts:notifyPsikologInfo()`. Sebelum 18 Mei 2026 function ini didefinisikan tapi tidak pernah dipanggil — bug history: commit fix dispatch di `ClinicBookingService.create` + `BookingPackageService.persistAndEmit`.
+- **`Follow-up Post Session`**: fire saat `ClinicBookingService.transition()` ke status `completed`. Variabel `{{sesi_berikut_tanggal}}` di-resolve dari booking lanjutan klien terdekat (`status ∈ {scheduled,confirmed,checked_in}`, `scheduledStart > now`, urut ASC ambil 1) — format `"Senin, 18 Mei 2026 pukul 14:30 WIB"`. Kalau tidak ada booking lanjutan: fallback string `"(belum dijadwalkan)"` (bukan kosong). Bug history (18 Mei 2026): sebelum fix, caller tidak pass `extraVars` sama sekali → `{{sesi_berikut_tanggal}}` selalu jadi placeholder literal di pesan.
 
 ### Override flag
 - Satu checkbox `bufferOverride` skip semua validation (slot-match, jam, hari libur, psikolog availability); fitur "conflict buffer" sudah dihapus — tidak ada buffer menit antar booking

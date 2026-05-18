@@ -1,27 +1,39 @@
 import { TrendingUp } from 'lucide-react';
-import type { WeekDay } from '../model/aggregate';
+import type { TrendBar } from '../model/aggregate';
+import type { PeriodMode } from '../model/period';
 
 /**
- * Card "Sesi 7 hari terakhir" — list vertikal per hari.
- * Tiap baris: hari + tanggal, jumlah sesi, bar relatif, badge konteks
- * (Hari ini / Tersibuk / Kosong / di atas/bawah rata-rata).
+ * Card tren periode — list vertikal bar.
+ *   Harian   → 6 bar per slot operasional
+ *   Mingguan → 7 bar per hari (Sen–Min)
+ *   Bulanan  → N bar per hari
  */
-export function WeekTrendCard({
-  weekTrend,
-  weekTotal,
-  weekMax,
+export function TrendCard({
+  mode,
+  bars,
+  total,
+  max,
 }: {
-  weekTrend: WeekDay[];
-  weekTotal: number;
-  weekMax: number;
+  mode: PeriodMode;
+  bars: TrendBar[];
+  total: number;
+  max: number;
 }) {
-  const avg = weekTotal / Math.max(weekTrend.length, 1);
+  const avg = total / Math.max(bars.length, 1);
   const avgRounded = Math.round(avg * 10) / 10;
-  const busiest = weekTrend.reduce(
+  const busiest = bars.reduce(
     (acc, d) => (d.count > acc.count ? d : acc),
-    weekTrend[0],
+    bars[0],
   );
-  const zeroDays = weekTrend.filter((d) => d.count === 0).length;
+  const zeroCount = bars.filter((d) => d.count === 0).length;
+
+  const title =
+    mode === 'Harian'
+      ? 'Distribusi sesi per slot'
+      : mode === 'Mingguan'
+        ? 'Sesi per hari (minggu ini)'
+        : 'Sesi per hari (bulan ini)';
+  const unit = mode === 'Harian' ? 'slot' : 'hari';
 
   return (
     <div className="card-althea" style={{ padding: 20 }}>
@@ -38,7 +50,7 @@ export function WeekTrendCard({
             color: 'var(--teal-800)',
           }}
         >
-          Sesi 7 hari terakhir
+          {title}
         </h2>
         <span
           aria-hidden
@@ -65,13 +77,13 @@ export function WeekTrendCard({
           flexDirection: 'column',
         }}
       >
-        {weekTrend.map((d) => (
-          <WeekRow
-            key={`${d.label}-${d.dateLabel}`}
-            day={d}
-            max={weekMax}
+        {bars.map((d) => (
+          <TrendRow
+            key={d.key}
+            bar={d}
+            max={max}
             avg={avg}
-            isBusiest={d.count === busiest.count && d.count > 0}
+            isBusiest={d.count === busiest?.count && d.count > 0}
           />
         ))}
       </ul>
@@ -81,16 +93,17 @@ export function WeekTrendCard({
         style={{ marginTop: 14, gap: 8, flexWrap: 'wrap' }}
       >
         <span className="caption">
-          Total <strong style={{ color: 'var(--teal-800)' }}>{weekTotal}</strong>{' '}
-          sesi · rata-rata <strong style={{ color: 'var(--teal-800)' }}>{avgRounded}</strong>{' '}
-          sesi/hari
+          Total <strong style={{ color: 'var(--teal-800)' }}>{total}</strong>{' '}
+          sesi · rata-rata{' '}
+          <strong style={{ color: 'var(--teal-800)' }}>{avgRounded}</strong>{' '}
+          sesi/{unit}
         </span>
-        {zeroDays > 0 && (
+        {zeroCount > 0 && (
           <span
             className="caption"
             style={{ color: 'var(--rose-600, #b05a40)', fontWeight: 600 }}
           >
-            {zeroDays} hari tanpa sesi
+            {zeroCount} {unit} tanpa sesi
           </span>
         )}
       </div>
@@ -98,26 +111,26 @@ export function WeekTrendCard({
   );
 }
 
-function WeekRow({
-  day,
+function TrendRow({
+  bar,
   max,
   avg,
   isBusiest,
 }: {
-  day: WeekDay;
+  bar: TrendBar;
   max: number;
   avg: number;
   isBusiest: boolean;
 }) {
-  const pct = (day.count / Math.max(max, 1)) * 100;
-  const above = day.count > avg && day.count > 0;
-  const below = day.count < avg && day.count > 0;
+  const pct = (bar.count / Math.max(max, 1)) * 100;
+  const above = bar.count > avg && bar.count > 0;
+  const below = bar.count < avg && bar.count > 0;
 
-  const badge = day.isToday
+  const badge = bar.isCurrent
     ? { text: 'Hari ini', bg: 'var(--sage-500)', fg: '#fff' }
     : isBusiest
       ? { text: 'Tersibuk', bg: 'var(--sage-100)', fg: 'var(--sage-700)' }
-      : day.count === 0
+      : bar.count === 0
         ? { text: 'Kosong', bg: 'var(--cream-100)', fg: 'var(--fg-muted)' }
         : null;
 
@@ -136,14 +149,14 @@ function WeekRow({
         <span
           style={{
             fontSize: 13,
-            fontWeight: day.isToday ? 700 : 600,
-            color: day.isToday ? 'var(--sage-700)' : 'var(--teal-800)',
+            fontWeight: bar.isCurrent ? 700 : 600,
+            color: bar.isCurrent ? 'var(--sage-700)' : 'var(--teal-800)',
           }}
         >
-          {day.label}
+          {bar.label}
         </span>
         <span className="caption" style={{ fontSize: 11 }}>
-          {day.dateLabel}
+          {bar.sub}
         </span>
       </div>
 
@@ -158,9 +171,9 @@ function WeekRow({
       >
         <div
           style={{
-            width: `${Math.max(pct, day.count > 0 ? 4 : 0)}%`,
+            width: `${Math.max(pct, bar.count > 0 ? 4 : 0)}%`,
             height: '100%',
-            background: day.isToday
+            background: bar.isCurrent
               ? 'var(--sage-500)'
               : 'var(--sage-300, #a8c4ad)',
             transition: 'width 200ms ease',
@@ -172,12 +185,12 @@ function WeekRow({
         style={{
           fontSize: 14,
           fontWeight: 700,
-          color: day.isToday ? 'var(--sage-700)' : 'var(--teal-800)',
+          color: bar.isCurrent ? 'var(--sage-700)' : 'var(--teal-800)',
           fontVariantNumeric: 'tabular-nums',
           textAlign: 'right',
         }}
       >
-        {day.count}
+        {bar.count}
         <span
           className="caption"
           style={{ fontSize: 10, fontWeight: 400, marginLeft: 4 }}

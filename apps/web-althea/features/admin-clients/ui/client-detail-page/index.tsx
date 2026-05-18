@@ -37,7 +37,15 @@ function toFormInput(c: Client): CreateClientInput {
   };
 }
 
-export function ClientDetailPage({ clientId }: { clientId: number }) {
+export function ClientDetailPage({
+  clientId,
+  basePath = '/admin/clients',
+  schedulePath = '/admin/daftar-jadwal',
+}: {
+  clientId: number;
+  basePath?: string;
+  schedulePath?: string;
+}) {
   const router = useRouter();
   const detail = useClientDetail(clientId);
   const updateMut = useUpdateClient();
@@ -58,7 +66,7 @@ export function ClientDetailPage({ clientId }: { clientId: number }) {
     return (
       <div className="p-6 flex flex-col items-center gap-3 text-center">
         <p className="text-fg-muted">Klien tidak ditemukan atau gagal dimuat.</p>
-        <Link href="/admin/clients" className="btn btn-outline btn-sm">
+        <Link href={basePath} className="btn btn-outline btn-sm">
           Kembali ke daftar klien
         </Link>
       </div>
@@ -91,7 +99,7 @@ export function ClientDetailPage({ clientId }: { clientId: number }) {
   function handleDelete() {
     if (!sel) return;
     if (!confirm(`Hapus klien "${sel.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-    deleteMut.mutate(sel.id, { onSuccess: () => router.push('/admin/clients') });
+    deleteMut.mutate(sel.id, { onSuccess: () => router.push(basePath) });
   }
 
   return (
@@ -101,6 +109,8 @@ export function ClientDetailPage({ clientId }: { clientId: number }) {
         onEdit={openEdit}
         onDelete={handleDelete}
         deleting={deleteMut.isPending}
+        basePath={basePath}
+        schedulePath={schedulePath}
       />
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">

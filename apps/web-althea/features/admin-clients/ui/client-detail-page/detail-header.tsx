@@ -15,16 +15,20 @@ export function DetailHeader({
   onEdit,
   onDelete,
   deleting,
+  basePath = '/admin/clients',
+  schedulePath = '/admin/daftar-jadwal',
 }: {
   sel: ClientDetail;
   onEdit: () => void;
   onDelete: () => void;
   deleting: boolean;
+  basePath?: string;
+  schedulePath?: string;
 }) {
   return (
     <div className="flex flex-col gap-4 border-b border-border pb-5">
       <Link
-        href="/admin/clients"
+        href={basePath}
         className="caption inline-flex items-center gap-1.5 text-fg-muted hover:text-teal-800 w-fit"
       >
         <ArrowLeft className="h-3.5 w-3.5" /> Kembali ke daftar klien
@@ -55,7 +59,7 @@ export function DetailHeader({
 
         <div className="flex items-center gap-2">
           <Link
-            href={`/admin/daftar-jadwal?clientId=${sel.id}`}
+            href={`${schedulePath}?clientId=${sel.id}`}
             className="btn btn-primary btn-sm"
           >
             <Calendar className="h-4 w-4" /> Jadwalkan

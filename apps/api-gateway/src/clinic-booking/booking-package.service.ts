@@ -190,6 +190,12 @@ export class BookingPackageService {
       void this.notifier.notifyPsikologInfo(created[0]);
     }
 
+    // Konfirmasi Booking — fire per sesi supaya psikolog tahu tiap slot yang
+    // dijadwalkan. Fan-out ke psikolog otomatis lewat template recipients.
+    for (const b of created) {
+      void this.notifier.notify(b, 'Konfirmasi Booking');
+    }
+
     return {
       success: true,
       data: { packageGroupId, sessionCount: created.length, bookings: created },
@@ -216,6 +222,7 @@ export class BookingPackageService {
           email: true,
           fullName: true,
           avatarUrl: true,
+          phone: true,
           clinicPsikologProfile: {
             select: { title: true, color: true, specialty: true, license: true },
           },

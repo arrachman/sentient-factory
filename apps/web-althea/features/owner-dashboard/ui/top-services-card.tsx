@@ -9,9 +9,11 @@ import { SVC_DOT } from '../model/constants';
 export function TopServicesCard({
   topServices,
   totalCatalogCount,
+  periodLabel,
 }: {
   topServices: TopService[];
   totalCatalogCount: number;
+  periodLabel: string;
 }) {
   return (
     <div className="card-althea" style={{ padding: 20 }}>
@@ -29,7 +31,7 @@ export function TopServicesCard({
               color: 'var(--teal-800)',
             }}
           >
-            Layanan terlaris bulan ini
+            Layanan terlaris · {periodLabel}
           </h2>
           <span className="caption" style={{ marginTop: 2 }}>
             Top {Math.min(topServices.length, 6)} dari {totalCatalogCount}{' '}
@@ -54,7 +56,7 @@ export function TopServicesCard({
       <div className="flex flex-col">
         {topServices.length === 0 ? (
           <span className="caption text-fg-muted">
-            Belum ada sesi bulan ini — data akan muncul setelah ada booking.
+            Belum ada sesi di periode ini — data akan muncul setelah ada booking.
           </span>
         ) : (
           topServices.map((s, idx) => (
