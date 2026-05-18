@@ -1,10 +1,19 @@
 # Web-ERP — Database Design (MVP: m0 Administrator + m1 Master Data)
 
-> Status: **DECISIONS RESOLVED** — m0+m1 MVP final; §8 #1–20 closed with the user
-> on 2026-05-17. **One re-opened item** (§8.1 #21: period-close process) must be
-> resolved before the m2 `fin` Prisma write. Still design-only: no `schema.prisma`
-> edits / migration until the explicit "write Prisma" go-ahead (per CLAUDE.md §6).
-> Date: 2026-05-17 · Author: agent (Claude) · Product: Senti ERP, `apps/web-erp`.
+> Status: **PRISMA WRITTEN + MIGRATED (2026-05-18)** — all decisions resolved;
+> §8 #1–42 + §8.1 closed with the user. On user go-ahead ("buatkan tabel, prisma,
+> seed dari db-design semuanya") the full post-MVP catalog was translated into
+> `apps/api-gateway/prisma/schema.prisma` and applied as migration
+> `20260518_003_erp_modules_fin_inv_pur_sls_mfg_fa_pos_pln` (purely additive: 156
+> ERP tables across `fin`/`inv`/`pur`/`sls`/`mfg`/`fa`/`pos`/`pln` + `md` GL-dim
+> masters, 53 new enums; 0 DROP, clinic/`m0_*`/`m1_*` untouched). **Design note —
+> cross-domain references are stored as scalar `BigInt` FK + `@@index` WITHOUT a
+> Prisma `@relation` / DB-level FK**, to keep domains decoupled and the generator
+> independent; intra-domain FKs are enforced. This consciously relaxes §3
+> "FK integrity enforced at DB level" for *cross-domain* links only — revisit if
+> referential integrity across domains becomes required. `inv_stock_balances` is a
+> derived view (not a table). `bi`/m8 **excluded** — no field catalog exists yet.
+> Date: 2026-05-18 · Author: agent (Claude) · Product: Senti ERP, `apps/web-erp`.
 >
 > **Single source of truth.** This `db-design/` set (this README + `entities-m0-administrator.md`
 > + `entities-m1-master-data.md` + `entities-m2-finance.md` + `entities-m3-inventory.md` +

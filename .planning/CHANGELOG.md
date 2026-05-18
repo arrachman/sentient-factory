@@ -8,6 +8,23 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
 
 ## 2026-05-18
 
+### ERP: Prisma + migrasi + seed seluruh modul pasca-MVP dari db-design
+
+- **`feat(web-erp/api-gateway)`** terjemahkan seluruh katalog `apps/web-erp/db-design/`
+  pasca-MVP ke `apps/api-gateway/prisma/schema.prisma`
+  - 8 domain: `fin` (core+enterprise), `inv`, `pur`, `sls`, `mfg`, `fa`, `pos`, `pln`
+    + master GL-dim `md_cost_centers/divisions/subdivisions/projects`
+  - Migrasi `20260518_003_erp_modules_fin_inv_pur_sls_mfg_fa_pos_pln` — **purely
+    additive**: 156 tabel ERP + 53 enum baru; 0 DROP; clinic/`m0_*`/`m1_*` tidak tersentuh
+  - Cross-domain ref = scalar `BigInt` FK + `@@index` tanpa `@relation`/FK DB
+    (domain decoupled); FK intra-domain ditegakkan. `inv_stock_balances` = derived
+    view (bukan tabel). `bi`/m8 dikecualikan (belum ada katalog field)
+  - `prisma validate` clean, `prisma generate` OK, typecheck api-gateway 0 error,
+    seed ERP idempoten (`seed-erp.ts`) jalan tanpa error. Tidak ada seed fixture
+    db-design untuk modul transaksional (mulai kosong by design)
+  - Shadow DB tidak dipakai (migrasi klinik lama `20260509_001` rusak di shadow);
+    SQL digenerate via `migrate diff` datamodel→datamodel lalu `migrate deploy`
+
 ### ERP: Login/Logout terintegrasi dengan api-gateway (55a9f55)
 
 - **`feat(web-erp)`** integrasikan auth ERP end-to-end antara `apps/web-erp` dan `apps/api-gateway`

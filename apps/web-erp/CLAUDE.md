@@ -90,9 +90,15 @@ Aturan turunan:
 > `db-design/README.md §8` (13 keputusan). Yang berubah dari draft: PK = **BigInt**,
 > **audit-log (`sys_audit_logs`) masuk MVP**, **`CurrencyRate` bertanggal**,
 > **`legacyCode` di tiap master**; `ErpUser` tetap terpisah dari User klinik.
-> **MVP = 31 tabel** (14 `sys_*`/`adm_*` + 17 `md_*`). Masih **dokumen desain
-> saja** — TIDAK ada edit `schema.prisma`/migrasi sampai user beri go-ahead
-> eksplisit "tulis Prisma" (root CLAUDE.md §6).
+> **MVP = 31 tabel** (14 `sys_*`/`adm_*` + 17 `md_*`). **PRISMA SUDAH DITULIS &
+> DIMIGRASI (2026-05-18):** atas go-ahead user, seluruh katalog pasca-MVP
+> diterjemahkan ke `apps/api-gateway/prisma/schema.prisma` + migrasi
+> `20260518_003_erp_modules_fin_inv_pur_sls_mfg_fa_pos_pln` (additive: 156 tabel
+> ERP `fin`/`inv`/`pur`/`sls`/`mfg`/`fa`/`pos`/`pln` + master GL-dim `md_*`, 53
+> enum baru; 0 DROP, clinic/`m0_*`/`m1_*` aman). **Catatan desain:** referensi
+> lintas-domain = scalar `BigInt` FK + `@@index` **tanpa** `@relation`/FK DB
+> (domain decoupled); FK intra-domain ditegakkan. `inv_stock_balances` = derived
+> view. `bi`/m8 **dikecualikan** — belum ada katalog field.
 
 ---
 
