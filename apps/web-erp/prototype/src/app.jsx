@@ -93,11 +93,7 @@ const App = () => {
     setTabs(prev => {
       const existing = prev.find(tb => tb.route === route);
       if (existing) { setActiveId(existing.id); return prev; }
-      if (prev.length >= MAX_TABS) {
-        setActiveId(prev[prev.length - 1].id);
-        window.toast?.(`Maksimum ${MAX_TABS} tab — tutup beberapa tab dulu`, { type: 'warn' });
-        return prev;
-      }
+      if (prev.length >= MAX_TABS) { setActiveId(prev[prev.length - 1].id); return prev; }
       const tab = { id: nextTabId(), route };
       setActiveId(tab.id);
       return [...prev, tab];
@@ -107,11 +103,7 @@ const App = () => {
   const duplicateTab = React.useCallback((id) => {
     setTabs(prev => {
       const src = prev.find(tb => tb.id === id) || prev[prev.length - 1];
-      if (!src) return prev;
-      if (prev.length >= MAX_TABS) {
-        window.toast?.(`Maksimum ${MAX_TABS} tab — tutup beberapa tab dulu`, { type: 'warn' });
-        return prev;
-      }
+      if (!src || prev.length >= MAX_TABS) return prev;
       const tab = { id: nextTabId(), route: src.route };
       setActiveId(tab.id);
       return [...prev, tab];
@@ -134,34 +126,6 @@ const App = () => {
         return [fresh];
       }
       setActiveId(cur => cur === id ? next[Math.max(0, idx - 1)].id : cur);
-      return next;
-    });
-  }, []);
-
-  // Force-remount this tab's view by bumping its nonce (the view is keyed on it).
-  const reloadTab = React.useCallback((id) => {
-    setTabs(prev => prev.map(tb => tb.id === id ? { ...tb, nonce: (tb.nonce || 0) + 1 } : tb));
-    setActiveId(id);
-  }, []);
-
-  // Close every tab except the given one.
-  const closeOtherTabs = React.useCallback((id) => {
-    setTabs(prev => {
-      const keep = prev.find(tb => tb.id === id);
-      if (!keep) return prev;
-      setActiveId(id);
-      return [keep];
-    });
-  }, []);
-
-  // Close all tabs positioned after the given one.
-  const closeTabsToRight = React.useCallback((id) => {
-    setTabs(prev => {
-      const idx = prev.findIndex(tb => tb.id === id);
-      if (idx === -1) return prev;
-      const next = prev.slice(0, idx + 1);
-      if (next.length === prev.length) return prev;
-      setActiveId(cur => next.some(tb => tb.id === cur) ? cur : id);
       return next;
     });
   }, []);
@@ -244,13 +208,12 @@ const App = () => {
         <main className="main">
           <TabStrip tabs={tabs} activeId={activeId}
             onActivate={setActiveId} onClose={closeTab}
-            onReload={reloadTab} onCloseOthers={closeOtherTabs} onCloseRight={closeTabsToRight}
             onDuplicate={duplicateTab} onNew={() => openTab('home')} t={tx}/>
           <div className="tabviews">
             {tabs.map(tab => {
               const isActive = tab.id === activeId;
               return (
-                <div key={`${tab.id}:${tab.nonce || 0}`} className="tabview" style={{ display: isActive ? 'flex' : 'none' }}>
+                <div key={tab.id} className="tabview" style={{ display: isActive ? 'flex' : 'none' }}>
                   <TabActiveContext.Provider value={isActive}>
                     {renderRoute(tab.route, navigateInTab, openTab, tx, lang, tw)}
                   </TabActiveContext.Provider>
