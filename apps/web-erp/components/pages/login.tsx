@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * Login screen — ported from prototype `pages/login.jsx`. Demo-only auth:
- * any non-empty credentials succeed; the `DEMO` account can be pre-filled.
+ * Login screen — calls the real ERP auth API (POST /auth/login).
  * Emits a `ShellUser` upward via `onLogin`; the parent shell owns session.
  */
 import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { notify } from '@/lib/feedback';
+import { login as apiLogin } from '@/lib/api/auth';
+import { ErpApiError } from '@/lib/api/client';
 import type { ShellUser } from '@/components/organisms/topbar';
 
 export interface LoginPageProps {
@@ -17,19 +18,9 @@ export interface LoginPageProps {
 const DEMO = {
   user: 'adi.s',
   pass: 'sentient',
-  name: 'Adi Saputra',
-  email: 'adi.s@sentient.id',
-  role: 'Administrator',
-  initials: 'AS',
 } as const;
 
-const DEFAULT_ROLE = 'Akuntansi';
-const LOGIN_DELAY_MS = 520;
 const FOCUS_DELAY_MS = 80;
-
-function slugifyEmail(raw: string): string {
-  return raw.replace(/[^a-z0-9.]/gi, '.');
-}
 
 function makeInitials(label: string): string {
   return label
@@ -39,6 +30,21 @@ function makeInitials(label: string): string {
     .map((w) => w[0])
     .join('')
     .toUpperCase();
+}
+
+function toShellUser(apiUser: {
+  id: string;
+  login: string;
+  name: string;
+  email: string;
+  level: string;
+}): ShellUser {
+  return {
+    user: apiUser.login,
+    name: apiUser.name,
+    email: apiUser.email,
+    initials: makeInitials(apiUser.name),
+  };
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
@@ -55,7 +61,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     return () => clearTimeout(t);
   }, []);
 
-  const submit = (e?: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     if (!user.trim() || !pass.trim()) {
       setErr('Username dan password wajib diisi.');
@@ -63,23 +69,20 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
     setErr('');
     setBusy(true);
-    // Simulate network latency so the busy state is visible — replaced by a
-    // real auth call once api-gateway hook lands.
-    setTimeout(() => {
-      const trimmed = user.trim();
-      const known = trimmed === DEMO.user;
-      const name = known ? DEMO.name : trimmed;
-      const role = known ? DEMO.role : DEFAULT_ROLE;
-      const shellUser: ShellUser = {
-        user: trimmed,
-        name,
-        email: known ? DEMO.email : `${slugifyEmail(trimmed)}@sentient.id`,
-        initials: known ? DEMO.initials : makeInitials(name),
-      };
-      setBusy(false);
+    try {
+      const { user: apiUser } = await apiLogin(user.trim(), pass);
+      const shellUser = toShellUser(apiUser);
       onLogin(shellUser);
-      notify(`Selamat datang, ${name} — masuk sebagai ${role}`, 'success');
-    }, LOGIN_DELAY_MS);
+      notify(`Selamat datang, ${apiUser.name}`, 'success');
+    } catch (error) {
+      if (error instanceof ErpApiError) {
+        setErr(error.message);
+      } else {
+        setErr('Gagal terhubung ke server. Coba beberapa saat lagi.');
+      }
+    } finally {
+      setBusy(false);
+    }
   };
 
   const fillDemo = () => {

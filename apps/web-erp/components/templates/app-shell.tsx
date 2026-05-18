@@ -16,6 +16,7 @@ import { confirmAction } from '@/lib/feedback';
 import { MAX_TABS, USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
 import { renderRoute } from '@/components/templates/shell-route-renderer';
 import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
+import { logout as apiLogout } from '@/lib/api/auth';
 
 /**
  * Top-level multi-tab shell — ported from prototype `app.jsx`. Tab/route
@@ -36,9 +37,20 @@ export function AppShell() {
   const [user, setUser] = React.useState<ShellUser | null>(null);
   const [hydrated, setHydrated] = React.useState(false);
   React.useEffect(() => {
+    // If the erp_token cookie is absent, the session is gone — clear any
+    // stale user from localStorage so the login screen appears instead of
+    // an authenticated shell that would fail all API calls.
+    const hasToken = document.cookie
+      .split(';')
+      .some((c) => c.trim().startsWith('erp_token='));
+
     try {
       const raw = window.localStorage.getItem(USER_STORAGE_KEY);
-      if (raw) setUser(JSON.parse(raw) as ShellUser);
+      if (raw && hasToken) {
+        setUser(JSON.parse(raw) as ShellUser);
+      } else if (raw && !hasToken) {
+        window.localStorage.removeItem(USER_STORAGE_KEY);
+      }
     } catch {
       // ignore malformed payloads — user re-authenticates
     }
@@ -61,6 +73,10 @@ export function AppShell() {
     } catch {
       // best-effort cleanup
     }
+    // Fire-and-forget: clear the erp_token cookie server-side.
+    apiLogout().catch(() => {
+      // ignore — local state is already cleared
+    });
   }, []);
 
   const [lang, setLang] = React.useState<Lang>('id');
