@@ -100,8 +100,9 @@ export class ErpAuthService {
       accessToken,
       user: {
         id: erpUser.id.toString(),
-        email: erpUser.email ?? null,
         username: erpUser.code,
+        name: erpUser.name,
+        email: erpUser.email ?? null,
         erpLevel: erpUser.level,
       },
     };

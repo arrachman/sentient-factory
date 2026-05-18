@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ErpAuthService } from './erp-auth.service';
 import { ErpAuthController } from './erp-auth.controller';
+import { ErpJwtStrategy } from './strategies/erp-jwt.strategy';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { ErpAuthController } from './erp-auth.controller';
       }),
     }),
   ],
-  providers: [ErpAuthService],
+  providers: [ErpAuthService, ErpJwtStrategy],
   controllers: [ErpAuthController],
   exports: [ErpAuthService],
 })

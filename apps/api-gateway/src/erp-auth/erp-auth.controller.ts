@@ -18,7 +18,7 @@ import {
   ApiBearerAuth,
   ApiBody,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from './guards/erp-jwt-auth.guard';
 import { ErpAuthService } from './erp-auth.service';
 import { ErpLoginDto } from './dto/erp-login.dto';
 import { ErpAuthResponseDto } from './dto/erp-auth-response.dto';
@@ -68,7 +68,7 @@ export class ErpAuthController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(ErpJwtAuthGuard)
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Ambil profil pengguna ERP saat ini' })

@@ -8,10 +8,10 @@ import type { ApiResponse } from './types';
 
 export interface ErpAuthUser {
   id: string;
-  login: string;
+  username: string;
   name: string;
-  email: string;
-  level: string;
+  email: string | null;
+  erpLevel: string;
 }
 
 // ─── Auth API ─────────────────────────────────────────────────────────────────
@@ -19,8 +19,8 @@ export interface ErpAuthUser {
 export async function login(
   login: string,
   password: string,
-): Promise<{ user: ErpAuthUser }> {
-  const response = await apiPost<ApiResponse<{ user: ErpAuthUser }>>(
+): Promise<{ accessToken: string; user: ErpAuthUser }> {
+  const response = await apiPost<ApiResponse<{ accessToken: string; user: ErpAuthUser }>>(
     '/auth/login',
     { login, password },
   );

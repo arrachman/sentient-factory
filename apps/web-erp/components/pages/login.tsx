@@ -34,15 +34,15 @@ function makeInitials(label: string): string {
 
 function toShellUser(apiUser: {
   id: string;
-  login: string;
+  username: string;
   name: string;
-  email: string;
-  level: string;
+  email: string | null;
+  erpLevel: string;
 }): ShellUser {
   return {
-    user: apiUser.login,
+    user: apiUser.username,
     name: apiUser.name,
-    email: apiUser.email,
+    email: apiUser.email ?? '',
     initials: makeInitials(apiUser.name),
   };
 }
@@ -71,8 +71,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setBusy(true);
     try {
       const { user: apiUser } = await apiLogin(user.trim(), pass);
-      const shellUser = toShellUser(apiUser);
-      onLogin(shellUser);
+      onLogin(toShellUser(apiUser));
       notify(`Selamat datang, ${apiUser.name}`, 'success');
     } catch (error) {
       if (error instanceof ErpApiError) {
