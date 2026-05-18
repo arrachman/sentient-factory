@@ -207,6 +207,27 @@ AR entities — **no `sls_payment*` tables**:
 > `*diskontermin`/`*rekdiskontermin`). To be folded into a finance-doc revision;
 > recorded here, **not** silently edited into m2.
 
+### Pricing — **reuses the `pos` domain** (resolved [README §8](README.md#8-resolved-decisions-2026-05-17) #27)
+Sales pricing/discount is **not** modeled in `sls`. Single source of truth =
+`pos_contact_prices` + `pos_category_discounts` ([entities-m12-pos.md](entities-m12-pos.md)).
+`sls` documents are **consumers**: line `price`/discount is resolved against the
+`pos` agreement at entry time and persisted on the line (no `sls` price-list/tier
+table). Consistent with §8 #10 (tiered pricing → `pos` phase). This prevents two
+SSOTs for price.
+
+### Enterprise scope reviewed & deferred (resolved [README §8](README.md#8-resolved-decisions-2026-05-17) #28)
+Reviewed 2026-05-18; **not in core m5** (revisit per real need, not silently):
+- **Credit management** — credit-limit/exposure/hold. When added: attribute on
+  `md_partners` + a hold *status* on `sls_orders`, **not** a new table.
+- **Sales commission** — would be new `sls_commission_rules`/`sls_commission_entries`
+  (no legacy source). Deferred.
+- **Target / quota vs actual** — would extend `sls_forecasts` to target-vs-realisasi.
+  Deferred.
+- **Blanket / contract (call-off) order** — would be `orderType` enum + release
+  lines on `sls_orders`, **not** a separate table. Deferred.
+- **CRM / opportunity pipeline** — **out of ERP scope**; the chain starts at
+  Quotation. Pre-quotation funnel belongs to a separate CRM, not `sls`.
+
 ### Flagged / secondary / deferred (not modeled in core)
 - **`m5_cl`** (penutupan penjualan / sales closing per item) — specialized
   period-close-per-item doc; **not modeled** (superseded by invoice + fiscal

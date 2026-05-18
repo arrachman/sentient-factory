@@ -457,12 +457,15 @@ re-opened — see **§8.1**.
 | 24 | Lot/Batch & Serial tracking di `inv` | **IN — lot + serial penuh** | +2 master `inv_lots` (batch/expiry, FEFO, recall lineage) + `inv_serials` (per-unit, status & lokasi). Enum baru `LotStatus`/`SerialStatus`. FK opsional `lotId`/`serialId` di semua line tabel `inv`. Per-item flag `isLotTracked`/`isSerialTracked` di `md_items`. Lineage `originGoodsReceiptId` → `pur` (2026-05-18). |
 | 25 | Stock reservation / available-to-promise | **IN core** | +1 `inv_stock_reservations` (soft allocation, tidak gerak stok/GL). ATP = on-hand − Σ reservasi `ACTIVE`. Dikonsumsi `sls` delivery / `mfg` material issue (flip `FULFILLED`). Enum `ReservationStatus` (2026-05-18). |
 | 26 | Bin/lokasi rak | **Master `inv_bins`** | +1 master sub-lokasi gudang terstruktur (putaway/picking); string `binLocation` lama digantikan FK `binId` (nullable, untuk item ber-flag `isBinTracked`). `inv_stock_balances` di-key ulang `(itemId, warehouseId, binId, lotId)` (2026-05-18). |
+| 27 | Sales pricing engine SSOT (m5 `sls`) | **Reuse `pos` — TANPA price list di `sls`** | `sls` adalah **konsumen** harga; sumber kebenaran tunggal = `pos_contact_prices` + `pos_category_discounts` (m12 `pos`, lih. [entities-m12-pos.md](entities-m12-pos.md)). Tidak ada tabel harga/diskon di `sls`. Konsisten dgn #10 (tiered pricing → fase `pos`). Mencegah dua SSOT harga (2026-05-18). |
+| 28 | Cakupan enterprise tambahan m5 (credit mgmt / commission / target-quota / blanket order / CRM pipeline) | **Ditinjau — DIDEFER, tidak masuk core m5** | Direview 2026-05-18; user pilih *skip* untuk MVP/core. Tidak dimodelkan sekarang: credit-limit/hold, `sls_commission_*`, target-vs-realisasi, blanket/call-off order, CRM funnel. CRM pra-quotation = **out of ERP scope** (mulai dari Quotation). Revisit per-kebutuhan, bukan diam-diam masuk. |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers),
 #22–23 (edit posted doc + recost direct-update, 2026-05-18),
 #24–26 (lot/serial + reservation/ATP + `inv_bins` master, 2026-05-18 —
-`inv` jadi WMS-capable; m3 inv: 13 → **17** entitas).
+`inv` jadi WMS-capable; m3 inv: 13 → **17** entitas),
+#27–28 (sales pricing SSOT = reuse `pos`; enterprise extras m5 didefer, 2026-05-18).
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 

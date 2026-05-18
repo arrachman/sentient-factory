@@ -123,7 +123,9 @@ note/return, AP/PP/VP/VPP=payment variants, IPC=invoice price change, PIE/BS/CS.
 
 > **Field-level catalog done:** [entities-m5-sales.md](entities-m5-sales.md)
 > (~24 `sls_*`; mirror of `pur`; payment reuses `fin_ar_receipts`). `m5_cl`/`m5_rp`
-> secondary, `m5_spa`+loyalty deferred to `pos`. Original coarse plan kept below.
+> secondary, `m5_spa`+loyalty deferred to `pos`. **Pricing reuses `pos` SSOT (§8 #27);
+> enterprise extras (credit/commission/target/blanket/CRM) reviewed & deferred (§8 #28).**
+> Original coarse plan kept below.
 
 Legacy: SQ=quotation, SO=order, DO=delivery order, DR=delivery report,
 PL=packing list, PI=proforma invoice, SI=sales invoice, SR=sales return,
