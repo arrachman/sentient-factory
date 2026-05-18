@@ -24,6 +24,62 @@ async function hashPassword(password: string): Promise<string> {
   return `pbkdf2$v1$${digest}$${iterations}$${salt.toString('base64')}$${derived.toString('base64')}`;
 }
 
+type ErpMenuSeed = {
+  code: string;
+  title: string;
+  path: string | null;
+  icon: string | null;
+  type: 'MODULE' | 'GROUP' | 'ITEM';
+  parentCode: string | null;
+  sortOrder: number;
+  legacyCode: string | null;
+};
+
+// Curated MVP menu tree for sys_menus (ErpMenu). Only entries backed by a real
+// model AND a wired web-erp route id (lib/nav.ts) — no dead menus. Legacy
+// reference = "<m0_menu.mnmoduleid>-<mnid>" kept in legacyCode for traceability.
+const ERP_MENU_SEEDS: ErpMenuSeed[] = [
+  { code: 'master-data', title: 'Master Data', path: null, icon: 'database', type: 'MODULE', parentCode: null, sortOrder: 1, legacyCode: '1-1' },
+  { code: 'md-items', title: 'Item', path: 'md-items', icon: 'boxes', type: 'ITEM', parentCode: 'master-data', sortOrder: 1, legacyCode: '1-11' },
+  { code: 'md-partners', title: 'Partner', path: 'md-partners', icon: 'users', type: 'ITEM', parentCode: 'master-data', sortOrder: 2, legacyCode: '1-6' },
+  { code: 'md-item-categories', title: 'Item Category', path: 'md-item-categories', icon: 'layers', type: 'ITEM', parentCode: 'master-data', sortOrder: 3, legacyCode: '1-8' },
+  { code: 'md-units', title: 'Unit', path: 'md-units', icon: 'file', type: 'ITEM', parentCode: 'master-data', sortOrder: 4, legacyCode: '1-10' },
+  { code: 'administrator', title: 'Administrator', path: null, icon: 'gear', type: 'MODULE', parentCode: null, sortOrder: 2, legacyCode: '0-1' },
+  { code: 'adm-users', title: 'Users', path: 'adm-users', icon: 'users', type: 'ITEM', parentCode: 'administrator', sortOrder: 1, legacyCode: '0-4' },
+  { code: 'adm-roles', title: 'Roles', path: 'adm-roles', icon: 'shield', type: 'ITEM', parentCode: 'administrator', sortOrder: 2, legacyCode: '0-5' },
+  { code: 'adm-branches', title: 'Branch', path: 'adm-branches', icon: 'building', type: 'ITEM', parentCode: 'administrator', sortOrder: 3, legacyCode: '1-13' },
+  { code: 'adm-settings', title: 'System Settings', path: 'adm-settings', icon: 'gear', type: 'ITEM', parentCode: 'administrator', sortOrder: 4, legacyCode: '0-28' },
+];
+
+async function seedErpMenus() {
+  console.log('Seeding ERP menus (sys_menus)...');
+  const idByCode = new Map<string, bigint>();
+
+  for (const seed of ERP_MENU_SEEDS.filter((s) => s.parentCode === null)) {
+    const menu = await prisma.erpMenu.upsert({
+      where: { code: seed.code },
+      update: { title: seed.title, path: seed.path, icon: seed.icon, type: seed.type, parentId: null, sortOrder: seed.sortOrder, isActive: true, legacyCode: seed.legacyCode },
+      create: { code: seed.code, title: seed.title, path: seed.path, icon: seed.icon, type: seed.type, parentId: null, sortOrder: seed.sortOrder, isActive: true, legacyCode: seed.legacyCode },
+    });
+    idByCode.set(seed.code, menu.id);
+  }
+
+  for (const seed of ERP_MENU_SEEDS.filter((s) => s.parentCode !== null)) {
+    const parentId = idByCode.get(seed.parentCode as string);
+    if (!parentId) {
+      throw new Error(`ERP menu parent not found for ${seed.code} (parentCode=${seed.parentCode})`);
+    }
+    const menu = await prisma.erpMenu.upsert({
+      where: { code: seed.code },
+      update: { title: seed.title, path: seed.path, icon: seed.icon, type: seed.type, parentId, sortOrder: seed.sortOrder, isActive: true, legacyCode: seed.legacyCode },
+      create: { code: seed.code, title: seed.title, path: seed.path, icon: seed.icon, type: seed.type, parentId, sortOrder: seed.sortOrder, isActive: true, legacyCode: seed.legacyCode },
+    });
+    idByCode.set(seed.code, menu.id);
+  }
+
+  console.log(`  Upserted ${idByCode.size} ERP menus.`);
+}
+
 async function main() {
   console.log('Seeding database...');
 
@@ -1355,6 +1411,8 @@ async function main() {
       });
     }
   }
+
+  await seedErpMenus();
 
   console.log('Seeding completed.');
   console.log('-------------------------------------------');
