@@ -15,20 +15,26 @@ import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
 import { TabBar, type ShellTab } from '@/components/organisms/tab-bar';
 import { CommandPalette } from '@/components/organisms/command-palette';
+import { ConfirmDialogHost } from '@/components/organisms/confirm-dialog';
+import { NotificationDrawer } from '@/components/organisms/notification-drawer';
+import { ActivityDrawer } from '@/components/organisms/activity-drawer';
+import { LoginPage } from '@/components/pages/login';
+import { RecordForm } from '@/components/pages/record-form';
+import { TrxForm } from '@/components/pages/trx-form';
 import { TabActiveContext } from '@/lib/tab-context';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import { pageMeta, type Crumb } from '@/lib/nav';
 
 const MAX_TABS = 16;
+const USER_STORAGE_KEY = 'erp-user';
 
 type Lang = 'id' | 'en';
 
-const DEMO_USER: ShellUser = {
-  user: 'adi.s',
-  name: 'Adi Santoso',
-  email: 'adi.santoso@sentient.id',
-  initials: 'AS',
-};
+function resolveNewRoute(route: string): string | null {
+  if (!route.endsWith('-new')) return null;
+  const baseRoute = route.slice(0, -'-new'.length);
+  return baseRoute;
+}
 
 function renderRoute(
   route: string,
@@ -41,8 +47,21 @@ function renderRoute(
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpenTab} />;
   if (route === 'set-prefs') return <SettingsPage t={t} />;
   if (route === 'set-appearance') return <AppearancePage t={t} />;
-  // Forms (`*-new` routes) are deferred to a later scaffold batch.
-  if (route.endsWith('-new')) return <ComingSoon route={route} />;
+  const baseRoute = resolveNewRoute(route);
+  if (baseRoute) {
+    if (MODULES[baseRoute])
+      return (
+        <TrxForm
+          moduleId={baseRoute}
+          t={t}
+          lang={lang}
+          onNavigate={onNavigate}
+        />
+      );
+    if (REGISTRY[baseRoute])
+      return <RecordForm moduleId={baseRoute} t={t} onNavigate={onNavigate} />;
+    return <ComingSoon route={route} />;
+  }
   if (route === 'kas-masuk')
     return (
       <KasMasukList
@@ -78,6 +97,10 @@ function renderRoute(
 /**
  * Top-level multi-tab shell — ported from prototype `app.jsx`. Tab/route
  * state is React-local (no router-driven persistence, per scaffold scope).
+ *
+ * Auth is UI-only: the login gate stores the active `ShellUser` in
+ * localStorage so a refresh stays signed-in for the demo, but no token
+ * or API call is involved.
  */
 export function AppShell() {
   // Deterministic across SSR/client so tab `data-tab` hydrates cleanly.
@@ -87,6 +110,38 @@ export function AppShell() {
     () => `t${(tabSeq.current += 1)}`,
     [],
   );
+
+  // `null` until the client effect has read localStorage; render the
+  // shell once hydration finishes so SSR + CSR match.
+  const [user, setUser] = React.useState<ShellUser | null>(null);
+  const [hydrated, setHydrated] = React.useState(false);
+  React.useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+      if (raw) setUser(JSON.parse(raw) as ShellUser);
+    } catch {
+      // ignore malformed payloads — user re-authenticates
+    }
+    setHydrated(true);
+  }, []);
+
+  const onLogin = React.useCallback((u: ShellUser) => {
+    setUser(u);
+    try {
+      window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u));
+    } catch {
+      // best-effort persistence — login still proceeds
+    }
+  }, []);
+
+  const onLogout = React.useCallback(() => {
+    setUser(null);
+    try {
+      window.localStorage.removeItem(USER_STORAGE_KEY);
+    } catch {
+      // best-effort cleanup
+    }
+  }, []);
 
   const [lang, setLang] = React.useState<Lang>('id');
   const [tabs, setTabs] = React.useState<ShellTab[]>(() => [
@@ -214,6 +269,11 @@ export function AppShell() {
   const crumbs: Crumb[] = pageMeta(activeRoute, t).crumbs;
   const sidebarCurrent = activeRoute;
 
+  // Render nothing until localStorage has been read so the SSR shell
+  // and CSR shell agree on whether the user is logged in.
+  if (!hydrated) return null;
+  if (!user) return <LoginPage onLogin={onLogin} />;
+
   return (
     <>
       <div className="app">
@@ -222,9 +282,9 @@ export function AppShell() {
           crumbs={crumbs}
           onOpenPalette={() => setPaletteOpen(true)}
           t={t}
-          user={DEMO_USER}
+          user={user}
           onNavigate={openTab}
-          onLogout={() => undefined}
+          onLogout={onLogout}
         />
         <main className="main">
           <TabBar
@@ -267,6 +327,10 @@ export function AppShell() {
         onAction={onPaletteAction}
         t={t}
       />
+
+      <NotificationDrawer onNavigate={openTab} t={t} />
+      <ActivityDrawer t={t} />
+      <ConfirmDialogHost />
 
       {shortcutsOpen && (
         <div className="sc-overlay" onClick={() => setShortcutsOpen(false)}>

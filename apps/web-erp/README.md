@@ -72,11 +72,34 @@ item sidebar fungsional via `renderRoute` di `app-shell` —
 `Statistik`, `SettingsPage`, `AppearancePage` (theme via next-themes +
 data-* attr, tanpa global tweak store), `KasMasukList`, `BukuBesar`.
 Data layer = `lib/registry.ts` (generator deterministik, mock).
-Login di-skip (shell React-local, tanpa auth — keputusan scaffold).
 
-**Ditunda batch berikutnya:** form input (`*-new` → `TrxForm`/`RecordForm`,
-saat ini fallback `ComingSoon`), panel notifikasi/aktivitas, lookup
-modal, contact picker, confirm host.
+**Batch interaksi + forms ter-port (2026-05-18, multi-agent paralel):**
+
+- **Login** (`pages/login.tsx`) — gate UI-only, demo akun `adi.s/sentient`,
+  state user disimpan di `localStorage['erp-user']` lewat shell (bukan
+  NextAuth/JWT — keputusan UI-only).
+- **Modal picker** (`organisms/lookup-modal.tsx`, `organisms/contact-picker*.tsx`)
+  — LookupModal generik (kind `coa`/`lokasi`/`cc`), ContactPicker di-split
+  4 file sibling tier-Organism (`contact-picker.tsx` orchestrator +
+  `-data.tsx` IIFE seed + `-row.tsx` + `-preview.tsx`) karena single-file
+  >400 baris.
+- **Drawer slide-over** (`organisms/notification-drawer.tsx`,
+  `organisms/activity-drawer.tsx`, `molecules/drawer-panel.tsx`) —
+  listen `toggle-notif`/`toggle-activity` (dispatch dari topbar), drawer
+  notifikasi re-broadcast `notif-count` ke topbar badge. Tanpa
+  `window.__overlay` global; state lokal + ESC handler.
+- **Confirm dialog** (`organisms/confirm-dialog.tsx`) — host mount sekali
+  di shell, listen `app-confirm` CustomEvent. Types & API imperatif
+  (`confirmAction`, refactor `bulkAction`) di `lib/feedback.ts`. Caller
+  existing (`bulkAction(kind, count, clearSel)`) tetap kompat —
+  parameter `items?` opsional ditambah.
+- **Forms** (`pages/record-form.tsx`, `pages/trx-form*.tsx`) — RecordForm
+  generik untuk master/dokumen di REGISTRY. TrxForm 7-file split
+  (orchestrator + config + header + fields + summary + tabs + lines) =
+  Pages tier, semua ≤400 baris (§3). Routing `<route>-new`: kalau
+  `route ∈ MODULES` → `TrxForm`; kalau `route ∈ REGISTRY` → `RecordForm`;
+  else `ComingSoon`.
+- **Shared hook** `lib/drawer-toggle.ts` (`usePanelToggle(eventName)`).
 
 ## Catatan setup
 

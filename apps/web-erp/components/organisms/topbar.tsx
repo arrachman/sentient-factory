@@ -167,13 +167,22 @@ export function Topbar({
       <button
         className={cn('iconbtn', notif > 0 && 'has-dot')}
         data-tip="Notifikasi"
+        onClick={() =>
+          window.dispatchEvent(new CustomEvent('toggle-notif'))
+        }
       >
         <Icon name="bell" size={14} />
         {notif > 0 && (
           <span className="notif-badge">{notif > 9 ? '9+' : notif}</span>
         )}
       </button>
-      <button className="iconbtn" data-tip="Aktivitas">
+      <button
+        className="iconbtn"
+        data-tip="Aktivitas"
+        onClick={() =>
+          window.dispatchEvent(new CustomEvent('toggle-activity'))
+        }
+      >
         <Icon name="activity" size={14} />
       </button>
       <button
