@@ -27,7 +27,18 @@ npm run lint
 npm run test
 ```
 
-Akses: `http://localhost:3219/` atau `http://<host-ip>:3219/` dari LAN.
+### Akses (semua URL berikut mengarah ke instance web-erp yang sama)
+
+| URL | Konteks |
+| --- | --- |
+| `https://erp.fr-labs.my.id/` | Publik via domain (reverse proxy → port 3219) |
+| `http://192.168.1.150:3219/` | LAN (host-ip langsung) |
+| `http://202.59.200.26:3219/` | Public IP langsung |
+| `http://localhost:3219/` | Lokal di host |
+
+Keempatnya **satu aplikasi yang sama** (web-erp, port `3219`) — domain
+`erp.fr-labs.my.id` hanyalah reverse-proxy/DNS di depan port 3219. Bukan
+environment terpisah.
 
 ## Struktur
 

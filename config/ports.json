@@ -44,7 +44,7 @@
     },
     "web-erp": {
       "name": "Web ERP (Prototype)",
-      "port": 3218,
+      "port": 3219,
       "type": "static",
       "envVar": "WEB_ERP_PORT",
       "description": "Sentient ERP design prototype (static HTML/CSS)",
