@@ -36,6 +36,27 @@ import { ClinicBookingModule } from './clinic-booking/clinic-booking.module';
 import { ClinicPaymentModule } from './clinic-payment/clinic-payment.module';
 import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-note.module';
 import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
+// ERP domain (web-erp)
+import { ErpAuthModule } from './erp-auth/erp-auth.module';
+import { ErpUsersModule } from './erp-users/erp-users.module';
+import { ErpRolesModule } from './erp-roles/erp-roles.module';
+import { ErpPermissionsModule } from './erp-permissions/erp-permissions.module';
+import { ErpBranchesModule } from './erp-branches/erp-branches.module';
+import { ErpLocationsModule } from './erp-locations/erp-locations.module';
+import { ErpWarehousesModule } from './erp-warehouses/erp-warehouses.module';
+import { ErpUnitsModule } from './erp-units/erp-units.module';
+import { ErpItemCategoriesModule } from './erp-item-categories/erp-item-categories.module';
+import { ErpItemsModule } from './erp-items/erp-items.module';
+import { ErpPartnerCategoriesModule } from './erp-partner-categories/erp-partner-categories.module';
+import { ErpPartnersModule } from './erp-partners/erp-partners.module';
+import { ErpCurrenciesModule } from './erp-currencies/erp-currencies.module';
+import { ErpAccountsModule } from './erp-accounts/erp-accounts.module';
+import { ErpTaxesModule } from './erp-taxes/erp-taxes.module';
+import { ErpPaymentTermsModule } from './erp-payment-terms/erp-payment-terms.module';
+import { ErpSettingsModule } from './erp-settings/erp-settings.module';
+import { ErpSysMenusModule } from './erp-sys-menus/erp-sys-menus.module';
+import { ErpDocumentNumberingsModule } from './erp-document-numberings/erp-document-numberings.module';
+import { ErpFiscalPeriodsModule } from './erp-fiscal-periods/erp-fiscal-periods.module';
 
 @Module({
   imports: [
@@ -92,6 +113,27 @@ import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
     ClinicPaymentModule,
     ClinicSessionNoteModule,
     ClinicSettingsModule,
+    // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
+    ErpAuthModule,
+    ErpUsersModule,
+    ErpRolesModule,
+    ErpPermissionsModule,
+    ErpBranchesModule,
+    ErpLocationsModule,
+    ErpWarehousesModule,
+    ErpUnitsModule,
+    ErpItemCategoriesModule,
+    ErpItemsModule,
+    ErpPartnerCategoriesModule,
+    ErpPartnersModule,
+    ErpCurrenciesModule,
+    ErpAccountsModule,
+    ErpTaxesModule,
+    ErpPaymentTermsModule,
+    ErpSettingsModule,
+    ErpSysMenusModule,
+    ErpDocumentNumberingsModule,
+    ErpFiscalPeriodsModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)

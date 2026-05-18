@@ -1,0 +1,232 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
+import { PrismaService } from '../prisma/prisma.service';
+import { toAuditUserId } from '../common/utils/audit-user.util';
+import { CreateErpCurrencyDto } from './dto/create-erp-currency.dto';
+import { QueryErpCurrencyDto } from './dto/query-erp-currency.dto';
+import { UpdateErpCurrencyDto } from './dto/update-erp-currency.dto';
+import { CreateErpCurrencyRateDto } from './dto/create-erp-currency-rate.dto';
+
+@Injectable()
+export class ErpCurrenciesService {
+  constructor(private prisma: PrismaService) {}
+
+  async create(dto: CreateErpCurrencyDto, actorId?: string) {
+    const existing = await this.prisma.erpCurrency.findFirst({
+      where: { code: dto.code },
+      select: { id: true, deletedAt: true },
+    });
+    if (existing) {
+      throwDuplicate({
+        fieldLabel: 'Currency code',
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
+    }
+
+    let created;
+    try {
+      created = await this.prisma.erpCurrency.create({
+        data: {
+          code: dto.code,
+          name: dto.name,
+          symbol: dto.symbol,
+          isActive: dto.isActive ?? true,
+          createdById: toAuditUserId(actorId),
+          updatedById: toAuditUserId(actorId),
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code'])) {
+        throwDuplicate({ fieldLabel: 'Currency code', value: dto.code });
+      }
+      throw error;
+    }
+
+    return { success: true, data: created };
+  }
+
+  async findAll(query: QueryErpCurrencyDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.ErpCurrencyWhereInput = { deletedAt: null };
+    if (query.search?.trim()) {
+      const q = query.search.trim();
+      where.OR = [
+        { code: { contains: q, mode: 'insensitive' } },
+        { name: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+    if (query.isActive !== undefined) {
+      where.isActive = query.isActive;
+    }
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.erpCurrency.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.erpCurrency.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
+  }
+
+  async findOne(id: bigint) {
+    const item = await this.prisma.erpCurrency.findFirst({
+      where: { id, deletedAt: null },
+      include: { rates: { orderBy: { rateDate: 'desc' }, take: 5 } },
+    });
+    if (!item) {
+      throw new NotFoundException('Currency not found');
+    }
+    return { success: true, data: item };
+  }
+
+  async update(id: bigint, dto: UpdateErpCurrencyDto, actorId?: string) {
+    const existing = await this.prisma.erpCurrency.findFirst({
+      where: { id, deletedAt: null },
+    });
+    if (!existing) {
+      throw new NotFoundException('Currency not found');
+    }
+
+    if (dto.code && dto.code !== existing.code) {
+      const duplicate = await this.prisma.erpCurrency.findFirst({
+        where: { code: dto.code, NOT: { id } },
+        select: { id: true, deletedAt: true },
+      });
+      if (duplicate) {
+        throwDuplicate({
+          fieldLabel: 'Currency code',
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
+      }
+    }
+
+    let updated;
+    try {
+      updated = await this.prisma.erpCurrency.update({
+        where: { id },
+        data: {
+          code: dto.code,
+          name: dto.name,
+          symbol: dto.symbol,
+          isActive: dto.isActive,
+          updatedById: toAuditUserId(actorId),
+        },
+      });
+    } catch (error) {
+      if (isUniqueViolation(error, ['code'])) {
+        throwDuplicate({ fieldLabel: 'Currency code', value: dto.code ?? existing.code });
+      }
+      throw error;
+    }
+
+    return { success: true, data: updated };
+  }
+
+  async remove(id: bigint, actorId?: string) {
+    const existing = await this.prisma.erpCurrency.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Currency not found');
+    }
+
+    await this.prisma.erpCurrency.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        updatedById: toAuditUserId(actorId),
+      },
+    });
+
+    return { success: true, message: 'Currency deleted' };
+  }
+
+  async addRate(currencyId: bigint, dto: CreateErpCurrencyRateDto, actorId?: string) {
+    const currency = await this.prisma.erpCurrency.findFirst({
+      where: { id: currencyId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!currency) {
+      throw new NotFoundException('Currency not found');
+    }
+
+    const rateDate = new Date(dto.rateDate);
+    let rate;
+    try {
+      rate = await this.prisma.erpCurrencyRate.upsert({
+        where: { currencyId_rateDate: { currencyId, rateDate } },
+        create: {
+          currencyId,
+          rateDate,
+          rate: new Prisma.Decimal(dto.rate),
+          createdById: toAuditUserId(actorId),
+          updatedById: toAuditUserId(actorId),
+        },
+        update: {
+          rate: new Prisma.Decimal(dto.rate),
+          updatedById: toAuditUserId(actorId),
+        },
+      });
+    } catch (error) {
+      throw error;
+    }
+
+    return { success: true, data: rate };
+  }
+
+  async getRates(currencyId: bigint, query: { page?: number; limit?: number }) {
+    const currency = await this.prisma.erpCurrency.findFirst({
+      where: { id: currencyId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!currency) {
+      throw new NotFoundException('Currency not found');
+    }
+
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.ErpCurrencyRateWhereInput = { currencyId };
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.erpCurrencyRate.findMany({
+        where,
+        orderBy: [{ rateDate: 'desc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.erpCurrencyRate.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
+  }
+}
