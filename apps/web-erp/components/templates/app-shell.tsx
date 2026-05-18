@@ -2,15 +2,6 @@
 
 import * as React from 'react';
 import { makeTranslator } from '@/lib/mock';
-import { Dashboard } from '@/components/pages/dashboard';
-import { ComingSoon } from '@/components/pages/coming-soon';
-import { Statistik } from '@/components/pages/statistik';
-import { SettingsPage } from '@/components/pages/settings';
-import { AppearancePage } from '@/components/pages/appearance';
-import { KasMasukList } from '@/components/pages/kas-masuk-list';
-import { GenericList } from '@/components/pages/generic-list';
-import { FinancialReport } from '@/components/pages/financial-report';
-import { DataList } from '@/components/pages/data-list';
 import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
 import { TabBar, type ShellTab } from '@/components/organisms/tab-bar';
@@ -19,81 +10,12 @@ import { ConfirmDialogHost } from '@/components/organisms/confirm-dialog';
 import { NotificationDrawer } from '@/components/organisms/notification-drawer';
 import { ActivityDrawer } from '@/components/organisms/activity-drawer';
 import { LoginPage } from '@/components/pages/login';
-import { RecordForm } from '@/components/pages/record-form';
-import { TrxForm } from '@/components/pages/trx-form';
 import { TabActiveContext } from '@/lib/tab-context';
-import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import { pageMeta, type Crumb } from '@/lib/nav';
 import { confirmAction } from '@/lib/feedback';
-
-const MAX_TABS = 16;
-const USER_STORAGE_KEY = 'erp-user';
-
-type Lang = 'id' | 'en';
-
-function resolveNewRoute(route: string): string | null {
-  if (!route.endsWith('-new')) return null;
-  const baseRoute = route.slice(0, -'-new'.length);
-  return baseRoute;
-}
-
-function renderRoute(
-  route: string,
-  onNavigate: (r: string) => void,
-  onOpenTab: (r: string) => void,
-  t: ReturnType<typeof makeTranslator>,
-  lang: Lang,
-) {
-  if (route === 'home') return <Dashboard t={t} onNavigate={onOpenTab} />;
-  if (route === 'statistik') return <Statistik t={t} onNavigate={onOpenTab} />;
-  if (route === 'set-prefs') return <SettingsPage t={t} />;
-  if (route === 'set-appearance') return <AppearancePage t={t} />;
-  const baseRoute = resolveNewRoute(route);
-  if (baseRoute) {
-    if (MODULES[baseRoute])
-      return (
-        <TrxForm
-          moduleId={baseRoute}
-          t={t}
-          lang={lang}
-          onNavigate={onNavigate}
-        />
-      );
-    if (REGISTRY[baseRoute])
-      return <RecordForm moduleId={baseRoute} t={t} onNavigate={onNavigate} />;
-    return <ComingSoon route={route} />;
-  }
-  if (route === 'kas-masuk')
-    return (
-      <KasMasukList
-        t={t}
-        lang={lang}
-        onNavigate={onNavigate}
-        onOpenTab={onOpenTab}
-      />
-    );
-  if (MODULES[route])
-    return (
-      <GenericList
-        moduleId={route}
-        t={t}
-        lang={lang}
-        onNavigate={onNavigate}
-        onOpenTab={onOpenTab}
-      />
-    );
-  if (REPORTS[route]) return <FinancialReport moduleId={route} t={t} />;
-  if (REGISTRY[route])
-    return (
-      <DataList
-        moduleId={route}
-        t={t}
-        onNavigate={onNavigate}
-        onOpenTab={onOpenTab}
-      />
-    );
-  return <ComingSoon route={route} />;
-}
+import { MAX_TABS, USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
+import { renderRoute } from '@/components/templates/shell-route-renderer';
+import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
 
 /**
  * Top-level multi-tab shell — ported from prototype `app.jsx`. Tab/route
@@ -107,10 +29,7 @@ export function AppShell() {
   // Deterministic across SSR/client so tab `data-tab` hydrates cleanly.
   const initialTabId = React.useId();
   const tabSeq = React.useRef(0);
-  const nextTabId = React.useCallback(
-    () => `t${(tabSeq.current += 1)}`,
-    [],
-  );
+  const nextTabId = React.useCallback(() => `t${(tabSeq.current += 1)}`, []);
 
   // `null` until the client effect has read localStorage; render the
   // shell once hydration finishes so SSR + CSR match.
@@ -166,28 +85,34 @@ export function AppShell() {
     el.setAttribute('data-primary', 'blue');
   }, []);
 
-  const openTab = React.useCallback((route: string) => {
-    const existing = tabs.find((tb) => tb.route === route);
-    if (existing) {
-      setActiveId(existing.id);
-      return;
-    }
-    if (tabs.length >= MAX_TABS) {
-      setActiveId(tabs[tabs.length - 1].id);
-      return;
-    }
-    const tab = { id: nextTabId(), route };
-    setActiveId(tab.id);
-    setTabs((prev) => [...prev, tab]);
-  }, [tabs, nextTabId]);
+  const openTab = React.useCallback(
+    (route: string) => {
+      const existing = tabs.find((tb) => tb.route === route);
+      if (existing) {
+        setActiveId(existing.id);
+        return;
+      }
+      if (tabs.length >= MAX_TABS) {
+        setActiveId(tabs[tabs.length - 1].id);
+        return;
+      }
+      const tab = { id: nextTabId(), route };
+      setActiveId(tab.id);
+      setTabs((prev) => [...prev, tab]);
+    },
+    [tabs, nextTabId],
+  );
 
-  const duplicateTab = React.useCallback((id: string) => {
-    const src = tabs.find((tb) => tb.id === id) ?? tabs[tabs.length - 1];
-    if (!src || tabs.length >= MAX_TABS) return;
-    const tab = { id: nextTabId(), route: src.route };
-    setActiveId(tab.id);
-    setTabs((prev) => [...prev, tab]);
-  }, [tabs, nextTabId]);
+  const duplicateTab = React.useCallback(
+    (id: string) => {
+      const src = tabs.find((tb) => tb.id === id) ?? tabs[tabs.length - 1];
+      if (!src || tabs.length >= MAX_TABS) return;
+      const tab = { id: nextTabId(), route: src.route };
+      setActiveId(tab.id);
+      setTabs((prev) => [...prev, tab]);
+    },
+    [tabs, nextTabId],
+  );
 
   const navigateInTab = React.useCallback(
     (route: string) => {
@@ -198,33 +123,39 @@ export function AppShell() {
     [activeId],
   );
 
-  const closeTab = React.useCallback((id: string) => {
-    const idx = tabs.findIndex((tb) => tb.id === id);
-    if (idx === -1) return;
-    const next = tabs.filter((tb) => tb.id !== id);
-    if (next.length === 0) {
-      const fresh = { id: nextTabId(), route: 'home' };
-      setTabs([fresh]);
-      setActiveId(fresh.id);
-      return;
-    }
-    setTabs(next);
-    setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
-  }, [tabs, nextTabId]);
+  const closeTab = React.useCallback(
+    (id: string) => {
+      const idx = tabs.findIndex((tb) => tb.id === id);
+      if (idx === -1) return;
+      const next = tabs.filter((tb) => tb.id !== id);
+      if (next.length === 0) {
+        const fresh = { id: nextTabId(), route: 'home' };
+        setTabs([fresh]);
+        setActiveId(fresh.id);
+        return;
+      }
+      setTabs(next);
+      setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
+    },
+    [tabs, nextTabId],
+  );
 
-  const confirmClose = React.useCallback((id: string) => {
-    const tab = tabs.find((tb) => tb.id === id);
-    const label = tab ? pageMeta(tab.route, t).title : 'tab ini';
-    confirmAction({
-      title: 'Tutup tab?',
-      message: `"${label}" akan ditutup.`,
-      variant: 'warn',
-      confirmLabel: 'Tutup',
-      confirmIcon: 'x',
-      cancelLabel: 'Batal',
-      onConfirm: () => closeTab(id),
-    });
-  }, [tabs, t, closeTab]);
+  const confirmClose = React.useCallback(
+    (id: string) => {
+      const tab = tabs.find((tb) => tb.id === id);
+      const label = tab ? pageMeta(tab.route, t).title : 'tab ini';
+      confirmAction({
+        title: 'Tutup tab?',
+        message: `"${label}" akan ditutup.`,
+        variant: 'warn',
+        confirmLabel: 'Tutup',
+        confirmIcon: 'x',
+        cancelLabel: 'Batal',
+        onConfirm: () => closeTab(id),
+      });
+    },
+    [tabs, t, closeTab],
+  );
 
   // Force-remount this tab's view by bumping its nonce (view is keyed on it).
   const reloadTab = React.useCallback((id: string) => {
@@ -246,21 +177,24 @@ export function AppShell() {
   }, []);
 
   // Close all tabs positioned after the given one.
-  const closeTabsToRight = React.useCallback((id: string) => {
-    setTabs((prev) => {
-      const idx = prev.findIndex((tb) => tb.id === id);
-      if (idx === -1) return prev;
-      const next = prev.slice(0, idx + 1);
-      return next.length === prev.length ? prev : next;
-    });
-    setActiveId((cur) =>
-      tabs.slice(0, tabs.findIndex((tb) => tb.id === id) + 1).some(
-        (tb) => tb.id === cur,
-      )
-        ? cur
-        : id,
-    );
-  }, [tabs]);
+  const closeTabsToRight = React.useCallback(
+    (id: string) => {
+      setTabs((prev) => {
+        const idx = prev.findIndex((tb) => tb.id === id);
+        if (idx === -1) return prev;
+        const next = prev.slice(0, idx + 1);
+        return next.length === prev.length ? prev : next;
+      });
+      setActiveId((cur) =>
+        tabs
+          .slice(0, tabs.findIndex((tb) => tb.id === id) + 1)
+          .some((tb) => tb.id === cur)
+          ? cur
+          : id,
+      );
+    },
+    [tabs],
+  );
 
   // Global shortcuts — Cmd/Ctrl+K palette, Cmd/Ctrl+W close, Cmd/Ctrl+1-9 tabs, ? shortcuts.
   React.useEffect(() => {
@@ -372,13 +306,7 @@ export function AppShell() {
                   style={{ display: isActive ? 'flex' : 'none' }}
                 >
                   <TabActiveContext.Provider value={isActive}>
-                    {renderRoute(
-                      tab.route,
-                      navigateInTab,
-                      openTab,
-                      t,
-                      lang,
-                    )}
+                    {renderRoute(tab.route, navigateInTab, openTab, t, lang)}
                   </TabActiveContext.Provider>
                 </div>
               );
@@ -399,35 +327,7 @@ export function AppShell() {
       <ConfirmDialogHost />
 
       {shortcutsOpen && (
-        <div className="sc-overlay" onClick={() => setShortcutsOpen(false)}>
-          <div className="sc-card" onClick={(e) => e.stopPropagation()}>
-            <h3>Keyboard Shortcuts</h3>
-            <div className="sc-grid">
-              <div>Buka command palette</div>
-              <div>⌘ K</div>
-              <div>Tutup tab aktif</div>
-              <div>⌥ W</div>
-              <div>Pindah ke tab 1–8</div>
-              <div>⌘ 1–8</div>
-              <div>Pindah ke tab terakhir</div>
-              <div>⌘ 9</div>
-              <div>Toggle bahasa ID/EN</div>
-              <div>L</div>
-              <div>Tampilkan shortcut</div>
-              <div>?</div>
-              <div>Tutup overlay</div>
-              <div>ESC</div>
-            </div>
-            <div style={{ marginTop: 16, textAlign: 'right' }}>
-              <button
-                className="btn"
-                onClick={() => setShortcutsOpen(false)}
-              >
-                Tutup ESC
-              </button>
-            </div>
-          </div>
-        </div>
+        <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
       )}
     </>
   );
