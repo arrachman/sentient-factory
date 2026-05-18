@@ -4,6 +4,8 @@ import * as React from 'react';
 import { makeTranslator } from '@/lib/mock';
 import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
+import { NAV, type NavItem } from '@/lib/nav';
+import { fetchMyMenus } from '@/lib/api/menus';
 import { TabBar, type ShellTab } from '@/components/organisms/tab-bar';
 import { CommandPalette } from '@/components/organisms/command-palette';
 import { ConfirmDialogHost } from '@/components/organisms/confirm-dialog';
@@ -36,6 +38,15 @@ export function AppShell() {
   // shell once hydration finishes so SSR + CSR match.
   const [user, setUser] = React.useState<ShellUser | null>(null);
   const [hydrated, setHydrated] = React.useState(false);
+  // Menu nav from API; fall back to hardcoded NAV while loading or on error.
+  const [nav, setNav] = React.useState<NavItem[]>(NAV);
+
+  const loadNav = React.useCallback(() => {
+    fetchMyMenus()
+      .then((items) => { if (items.length > 0) setNav(items); })
+      .catch(() => { /* keep current nav on error */ });
+  }, []);
+
   React.useEffect(() => {
     // If the erp_token cookie is absent, the session is gone — clear any
     // stale user from localStorage so the login screen appears instead of
@@ -48,6 +59,7 @@ export function AppShell() {
       const raw = window.localStorage.getItem(USER_STORAGE_KEY);
       if (raw && hasToken) {
         setUser(JSON.parse(raw) as ShellUser);
+        loadNav();
       } else if (raw && !hasToken) {
         window.localStorage.removeItem(USER_STORAGE_KEY);
       }
@@ -55,19 +67,21 @@ export function AppShell() {
       // ignore malformed payloads — user re-authenticates
     }
     setHydrated(true);
-  }, []);
+  }, [loadNav]);
 
   const onLogin = React.useCallback((u: ShellUser) => {
     setUser(u);
+    loadNav();
     try {
       window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u));
     } catch {
       // best-effort persistence — login still proceeds
     }
-  }, []);
+  }, [loadNav]);
 
   const onLogout = React.useCallback(() => {
     setUser(null);
+    setNav(NAV);
     try {
       window.localStorage.removeItem(USER_STORAGE_KEY);
     } catch {
@@ -290,7 +304,7 @@ export function AppShell() {
   return (
     <>
       <div className="app">
-        <Sidebar current={sidebarCurrent} onNavigate={openTab} t={t} />
+        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={openTab} t={t} />
         <Topbar
           crumbs={crumbs}
           onOpenPalette={() => setPaletteOpen(true)}

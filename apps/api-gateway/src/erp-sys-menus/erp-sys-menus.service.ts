@@ -15,6 +15,17 @@ function buildTree(items: ErpMenu[], parentId: bigint | null = null): MenuNode[]
     .map((item) => ({ ...item, children: buildTree(items, item.id) }));
 }
 
+/** Remove ITEM nodes not in allowedIds; drop MODULE/GROUP that become empty. */
+function pruneTree(nodes: MenuNode[], allowedIds: Set<bigint> | null): MenuNode[] {
+  return nodes.flatMap((node) => {
+    if (node.type === 'ITEM') {
+      return allowedIds === null || allowedIds.has(node.id) ? [node] : [];
+    }
+    const prunedChildren = pruneTree(node.children, allowedIds);
+    return prunedChildren.length > 0 ? [{ ...node, children: prunedChildren }] : [];
+  });
+}
+
 @Injectable()
 export class ErpSysMenusService {
   constructor(private prisma: PrismaService) {}
@@ -92,6 +103,39 @@ export class ErpSysMenusService {
       orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
     });
     return { success: true, data: buildTree(all) };
+  }
+
+  /**
+   * Return only the menus the requesting user may see:
+   * - CENTRAL level → all active menus (no role filter)
+   * - Other levels  → ITEMs where user's roles have canView=true; MODULE/GROUP
+   *                   containers included automatically if they have visible children
+   */
+  async getMyMenus(userId: string, erpLevel: string) {
+    let allowedIds: Set<bigint> | null = null; // null = no filter
+
+    if (erpLevel !== 'CENTRAL') {
+      const userRoles = await this.prisma.erpUserRole.findMany({
+        where: { userId: BigInt(userId) },
+        select: { roleId: true },
+      });
+      const roleIds = userRoles.map((r) => r.roleId);
+
+      const roleMenus = await this.prisma.erpRoleMenu.findMany({
+        where: { roleId: { in: roleIds }, canView: true },
+        select: { menuId: true },
+      });
+      allowedIds = new Set(roleMenus.map((rm) => rm.menuId));
+    }
+
+    const all = await this.prisma.erpMenu.findMany({
+      where: { deletedAt: null, isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
+    });
+
+    const tree = buildTree(all);
+    const data = pruneTree(tree, allowedIds);
+    return { success: true, data };
   }
 
   async update(id: bigint, dto: UpdateErpSysMenuDto, actorId?: string) {

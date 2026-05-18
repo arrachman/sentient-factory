@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpSysMenuDto } from './dto/create-erp-sys-menu.dto';
 import { QueryErpSysMenuDto } from './dto/query-erp-sys-menu.dto';
 import { UpdateErpSysMenuDto } from './dto/update-erp-sys-menu.dto';
@@ -19,7 +19,7 @@ import { ErpSysMenusService } from './erp-sys-menus.service';
 
 @ApiTags('ERP Sys Menus')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/sys-menus')
 export class ErpSysMenusController {
   constructor(private readonly service: ErpSysMenusService) {}
@@ -43,6 +43,13 @@ export class ErpSysMenusController {
   @ApiResponse({ status: 200, description: 'Nested menu tree' })
   getTree() {
     return this.service.getTree();
+  }
+
+  @Get('my-menus')
+  @ApiOperation({ summary: 'Get menus accessible to the current ERP user (role-filtered)' })
+  @ApiResponse({ status: 200, description: 'Menu tree filtered by user role' })
+  getMyMenus(@Request() req: any) {
+    return this.service.getMyMenus(req.user.id, req.user.erpLevel);
   }
 
   @Get(':id')

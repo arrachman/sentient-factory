@@ -4,20 +4,20 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icons';
 import {
-  NAV,
   isNavGroupArray,
   type NavItem,
   type NavLeaf,
 } from '@/lib/nav';
 
 interface SidebarProps {
+  nav: NavItem[];
   current: string;
   onNavigate: (id: string) => void;
   t: (key: string) => string;
 }
 
 /** Icon-only nav rail with a hover flyout submenu — ported from `sidebar.jsx`. */
-export function Sidebar({ current, onNavigate, t }: SidebarProps) {
+export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
   const [open, setOpen] = React.useState<string | null>(null);
   const [openTop, setOpenTop] = React.useState(0);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -42,7 +42,7 @@ export function Sidebar({ current, onNavigate, t }: SidebarProps) {
     if (timer.current) clearTimeout(timer.current);
   };
 
-  const currentTop = NAV.find(
+  const currentTop = nav.find(
     (i) =>
       !i.divider &&
       (i.id === current ||
@@ -52,7 +52,7 @@ export function Sidebar({ current, onNavigate, t }: SidebarProps) {
             : i.children.some((c) => c.id === current)))),
   );
 
-  const openItem = NAV.find((i) => i.id === open);
+  const openItem = nav.find((i) => i.id === open);
 
   const renderLeaf = (sub: NavLeaf) => (
     <div
@@ -74,7 +74,7 @@ export function Sidebar({ current, onNavigate, t }: SidebarProps) {
   return (
     <>
       <nav className="sidebar" onMouseLeave={handleLeaveAll}>
-        {NAV.map((item, i) => {
+        {nav.map((item, i) => {
           if (item.divider)
             // eslint-disable-next-line react/no-array-index-key
             return <div key={`div-${i}`} className="nav-divider" />;

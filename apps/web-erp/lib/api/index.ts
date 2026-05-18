@@ -14,6 +14,8 @@ export { ErpApiError, apiGet, apiPost, apiPatch, apiDelete } from './client';
 export type { ErpAuthUser } from './auth';
 export { login, logout, getMe } from './auth';
 
+export { fetchMyMenus } from './menus';
+
 // F2 Admin resources
 export type {
   ErpUser,
