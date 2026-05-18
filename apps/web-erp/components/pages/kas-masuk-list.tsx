@@ -154,7 +154,10 @@ export function KasMasukList({
     } else if (e.key === 'x' || e.key === ' ') {
       e.preventDefault();
       if (view[focused]) toggle(view[focused].id);
-    } else if (e.key === 'Enter') {
+    } else if (e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      openForm();
+    } else if (e.key === 'Enter' && view[focused]) {
       e.preventDefault();
       openForm();
     }
