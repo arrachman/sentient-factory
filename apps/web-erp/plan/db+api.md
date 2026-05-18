@@ -1,0 +1,233 @@
+# Senti ERP — Recap DB + API & Rencana Selanjutnya
+
+> Terakhir diperbarui: 2026-05-18  
+> Status: DB ✅ · API ✅ · Frontend ⬜ (belum mulai)
+
+---
+
+## 1. Apa yang sudah selesai
+
+### 1.1 Database — Prisma Schema + Migration
+
+**Commit:** `02961c0` — `feat(web-erp): tambah Prisma models + migration ERP MVP m0+m1`
+
+**36 tabel ERP** ditambahkan ke `apps/api-gateway/prisma/schema.prisma` (shared Postgres
+dengan platform Althea). Semua model ber-prefix `Erp` di Prisma + `@@map("domain_table")`.
+
+| Grup | Tabel | Keterangan |
+|---|---|---|
+| `sys_*` (8) | `sys_settings`, `sys_menus`, `sys_document_numberings`, `sys_fiscal_periods`, `sys_audit_logs`, `sys_notifications`, `sys_email_templates`, `sys_languages` | Konfigurasi sistem |
+| `adm_*` (12) | `adm_users`, `adm_roles`, `adm_permissions`, `adm_user_roles`, `adm_role_permissions`, `adm_role_menus`, `adm_user_branch_access`, `adm_user_location_access`, `adm_user_warehouse_access`, `adm_user_sessions`, `adm_password_policies`, `adm_user_preferences` | Identity & access |
+| `md_*` (16) | `md_branches`, `md_locations`, `md_warehouses`, `md_units`, `md_item_categories`, `md_items`, `md_partner_categories`, `md_partners`, `md_partner_addresses`, `md_partner_contacts`, `md_partner_bank_accounts`, `md_currencies`, `md_currency_rates`, `md_accounts`, `md_taxes`, `md_payment_terms` | Master data |
+
+**Migration applied:** `apps/api-gateway/prisma/migrations/20260518_001_erp_mvp_m0_m1_init/migration.sql`  
+**Enum:** 13 enum Prisma (`ErpUserLevel`, `ErpMenuType`, `ErpItemType`, `ErpAccountType`, dll)  
+**PK:** BigInt `@default(autoincrement())` di semua tabel ERP  
+
+**Seed dijalankan** (`prisma/seed-erp.ts`):
+
+| Data | Isi |
+|---|---|
+| `sys_languages` | id (Indonesia), en (English) |
+| `sys_settings` | 7 setting default (timezone, currency, decimal places, dll) |
+| `sys_menus` | 28 menu entry M0+M1 |
+| `sys_document_numberings` | 7 tipe dokumen (GRN, PO, SO, INV, JV, RCP, PAY) |
+| `md_currencies` | IDR (base currency) |
+| `md_branches` | 1 cabang HQ |
+| `adm_password_policies` | 1 policy DEFAULT |
+| `adm_permissions` | 34 permission (CRUD × resource) |
+| `adm_roles` | 1 role SUPERADMIN |
+| `adm_users` | 1 user admin (`admin` / `Admin123!`) |
+| `adm_role_permissions` | 34 rows (SUPERADMIN dapat semua) |
+| `adm_role_menus` | 28 rows (SUPERADMIN dapat semua menu) |
+
+---
+
+### 1.2 API — NestJS Modules
+
+**Commit:** `9ad28a8` — `feat(api-gateway): tambah 20 ERP NestJS modules`  
+**124 files, 7235 baris baru, typecheck bersih (0 error)**
+
+Semua route di bawah prefix global `/api/erp/...`:
+
+| Module | Route | Isi |
+|---|---|---|
+| `erp-auth` | `/api/erp/auth` | login, logout, GET me — JWT cookie `erp_token` |
+| `erp-users` | `/api/erp/users` | CRUD `adm_users` |
+| `erp-roles` | `/api/erp/roles` | CRUD `adm_roles` + assign perms + assign menus |
+| `erp-permissions` | `/api/erp/permissions` | List `adm_permissions` |
+| `erp-branches` | `/api/erp/branches` | CRUD `md_branches` |
+| `erp-locations` | `/api/erp/locations` | CRUD `md_locations` |
+| `erp-warehouses` | `/api/erp/warehouses` | CRUD `md_warehouses` |
+| `erp-units` | `/api/erp/units` | CRUD `md_units` |
+| `erp-item-categories` | `/api/erp/item-categories` | CRUD `md_item_categories` (tree) |
+| `erp-items` | `/api/erp/items` | CRUD `md_items` |
+| `erp-partner-categories` | `/api/erp/partner-categories` | CRUD `md_partner_categories` |
+| `erp-partners` | `/api/erp/partners` | CRUD `md_partners` + nested address/contact/bank |
+| `erp-currencies` | `/api/erp/currencies` | CRUD `md_currencies` + sub-resource rates |
+| `erp-accounts` | `/api/erp/accounts` | CRUD `md_accounts` (CoA tree) |
+| `erp-taxes` | `/api/erp/taxes` | CRUD `md_taxes` |
+| `erp-payment-terms` | `/api/erp/payment-terms` | CRUD `md_payment_terms` |
+| `erp-settings` | `/api/erp/settings` | GET + PATCH `sys_settings` |
+| `erp-sys-menus` | `/api/erp/sys-menus` | CRUD `sys_menus` + GET tree |
+| `erp-document-numberings` | `/api/erp/document-numberings` | CRUD + generate next number |
+| `erp-fiscal-periods` | `/api/erp/fiscal-periods` | CRUD + open/close period |
+
+**Konvensi berlaku:**
+- Auth: `JwtAuthGuard` (shared dengan platform) — token dari `/api/erp/auth/login`
+- BigInt IDs: diserialisasi jadi string di response (global `BigIntSerializerInterceptor`)
+- Swagger: tersedia di `http://localhost:3203/api/docs` setelah server jalan
+- Soft delete: `deletedAt` timestamp (bukan hard delete)
+- Pagination: `{ success, data, meta: { page, limit, total, totalPages } }`
+
+---
+
+## 2. Yang belum selesai / perlu verifikasi
+
+| Item | Status | Catatan |
+|---|---|---|
+| Start api-gateway | ⬜ Pending | `cd apps/api-gateway && npm run dev` (port 3203). `dist/` sudah bersih. |
+| Test login endpoint | ⬜ Pending | `POST /api/erp/auth/login` body `{ login: "admin", password: "Admin123!" }` |
+| Swagger verify | ⬜ Pending | Buka `http://localhost:3203/api/docs` setelah server jalan |
+| Prisma generate (tsconfig fix) | ⚠️ Minor | Agent erp-admin memperbarui `apps/api-gateway/tsconfig.json` path `@prisma/client` → local. Verifikasi tidak break build lain. |
+
+---
+
+## 3. Rencana selanjutnya — Frontend web-erp
+
+DB dan API sudah siap. Langkah berikut adalah membangun frontend `apps/web-erp`.
+Urutan ini mengikuti **CLAUDE.md §2** (design system dulu, baru slicing) +
+**§2.1** (atomic design wajib).
+
+### Fase F0 — Design System & Shell (WAJIB sebelum halaman apapun)
+
+> Prerequisite: semua halaman dibangun dari token + komponen reusable ini.
+
+**F0.1 — Design Tokens**
+- Warna (primary, secondary, neutral, semantic: success/warning/error/info)
+- Tipografi (font family, size scale, weight)
+- Spacing scale (4px base grid)
+- Border radius, shadow, breakpoint
+- File: `apps/web-erp/src/styles/tokens.css` (atau Tailwind config extend)
+
+**F0.2 — Atoms** (komponen terkecil, tanpa business logic)
+- `Button` (variant: primary/secondary/ghost/danger, size: sm/md/lg, state: loading/disabled)
+- `Input`, `Textarea` (dengan error state)
+- `Select`, `MultiSelect`
+- `Checkbox`, `Radio`, `Toggle`
+- `Badge` (variant: status, level)
+- `Icon` (wrapper Lucide/Heroicons)
+- `Spinner` / `Skeleton`
+- `Tooltip`
+
+**F0.3 — Molecules**
+- `FormField` (Label + Input + Error message)
+- `SearchBox` (Input + icon + clear)
+- `Pagination` (prev/next + page info)
+- `ConfirmDialog` (modal konfirmasi sebelum aksi destruktif)
+- `Toast` / `Alert` (success, warning, error, info)
+- `DatePicker`, `DateRangePicker`
+
+**F0.4 — Organisms**
+- `DataTable` (kolom konfigurabel, sort, filter, pagination, row actions)
+- `SidebarNav` (tree menu dari `sys_menus`, highlight aktif, collapse)
+- `TopBar` (user avatar, notif, breadcrumb)
+- `FormSection` (card + title + fields grid)
+- `EmptyState`, `ErrorState`, `LoadingState`
+
+**F0.5 — App Shell Template**
+- Layout: `Sidebar (240px) + Main area`
+- Topbar sticky
+- Slot: `<Outlet />` untuk konten halaman
+- Route guard: redirect ke `/erp/login` jika belum auth
+
+---
+
+### Fase F1 — Auth Pages
+
+- `/erp/login` — form login → `POST /api/erp/auth/login` → set cookie → redirect dashboard
+- `/erp/logout` — clear session
+- Route guard: semua `/erp/*` (kecuali login) memerlukan `erp_token` valid
+
+---
+
+### Fase F2 — Dashboard M0 (Admin)
+
+> Menggunakan design system F0. Satu halaman = satu page component.
+
+| Halaman | Route | API |
+|---|---|---|
+| Dashboard utama | `/erp/dashboard` | stats ringkas (jumlah user, branch, item) |
+| User Management | `/erp/admin/users` | `GET/POST/PATCH/DELETE /api/erp/users` |
+| Role Management | `/erp/admin/roles` | CRUD roles + assign permissions + assign menus |
+| Permission List | `/erp/admin/permissions` | `GET /api/erp/permissions` (readonly) |
+| Branch | `/erp/admin/branches` | CRUD branches |
+| Location | `/erp/admin/locations` | CRUD locations |
+| Warehouse | `/erp/admin/warehouses` | CRUD warehouses |
+| System Settings | `/erp/admin/settings` | `GET/PATCH /api/erp/settings` |
+| Menu Config | `/erp/admin/menus` | CRUD `sys_menus` + drag-reorder tree |
+| Document Numbering | `/erp/admin/doc-numberings` | CRUD + preview format |
+| Fiscal Period | `/erp/admin/fiscal-periods` | CRUD + open/close actions |
+
+---
+
+### Fase F3 — Dashboard M1 (Master Data)
+
+| Halaman | Route | API |
+|---|---|---|
+| Item | `/erp/master/items` | CRUD items + filter by type/category |
+| Item Category | `/erp/master/item-categories` | CRUD + tree view |
+| Unit of Measure | `/erp/master/units` | CRUD |
+| Partner | `/erp/master/partners` | CRUD + nested tabs (address, contact, bank) |
+| Partner Category | `/erp/master/partner-categories` | CRUD |
+| Chart of Accounts | `/erp/master/accounts` | CRUD + tree CoA |
+| Currency | `/erp/master/currencies` | CRUD + rate history |
+| Tax | `/erp/master/taxes` | CRUD |
+| Payment Terms | `/erp/master/payment-terms` | CRUD |
+
+---
+
+### Fase F4 (Post-MVP) — Modul Transaksional
+
+Setelah F0–F3 solid, lanjut ke modul berikutnya sesuai roadmap:
+
+| Prioritas | Modul | Domain DB | Commit prerequisite |
+|---|---|---|---|
+| 1 | Finance / GL | `fin_*` | Schema m2 sudah di db-design, perlu Prisma write |
+| 2 | Inventory | `inv_*` | Schema m3 sudah di db-design |
+| 3 | Purchasing | `pur_*` | Schema m4 sudah di db-design |
+| 4 | Sales / AR | `sls_*` | Schema m5 sudah di db-design |
+| 5 | Manufacturing | `mfg_*` | Schema m6 sudah di db-design |
+| 6 | Fixed Assets | `fa_*` | Schema m7 sudah di db-design |
+| 7 | POS | `pos_*` | Schema m12 sudah di db-design |
+| 8 | Planning/MRP | `pln_*` | Schema pln sudah di db-design |
+| 9 | BI/Dashboard | `bi_*` | Schema m8 belum dikatalog |
+
+Setiap modul transaksional: **schema design review → Prisma write + migration → API → Frontend**.
+
+---
+
+## 4. Urutan kerja yang disarankan sekarang
+
+```
+1. Start api-gateway → test login → konfirmasi API berjalan    [~10 menit]
+2. /gsd-plan-phase atau /multi-agents untuk F0 design system   [besar — spawn parallel]
+3. F1 auth pages (login)                                       [1 hari]
+4. F2 admin pages (pakai design system F0)                     [3-5 hari]
+5. F3 master data pages                                        [3-5 hari]
+6. Review + keputusan: mulai m2 Finance atau polish M0+M1 dulu
+```
+
+---
+
+## 5. Referensi
+
+| Dokumen | Path | Isi |
+|---|---|---|
+| DB Design (otoritatif) | `apps/web-erp/db-design/README.md` | Hub semua keputusan DB, ERD, enum catalog |
+| Prisma Schema | `apps/api-gateway/prisma/schema.prisma` | Source of truth model DB |
+| Migration ERP | `apps/api-gateway/prisma/migrations/20260518_001_erp_mvp_m0_m1_init/` | SQL migration yang sudah applied |
+| Seed ERP | `apps/api-gateway/prisma/seed-erp.ts` | Data awal idempotent |
+| API Swagger | `http://localhost:3203/api/docs` | Auto-generated dari kode (perlu server jalan) |
+| Module Roadmap | `apps/web-erp/db-design/module-roadmap.md` | Peta domain m2–m12 |
+| CLAUDE.md web-erp | `apps/web-erp/CLAUDE.md` | Aturan baku: naming, atomic design, 400 baris |
