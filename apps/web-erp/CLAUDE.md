@@ -75,7 +75,8 @@ Aturan turunan:
 
 > Dokumen desain DB otoritatif = `apps/web-erp/db-design/` (`README.md` hub +
 > `entities-m0-administrator.md` + `entities-m1-master-data.md` +
-> `entities-m2-finance.md` + `entities-m3-inventory.md` + `entities-m4-purchasing.md`
+> `entities-m2-finance.md` + `entities-m2-finance-enterprise.md` +
+> `entities-m3-inventory.md` + `entities-m4-purchasing.md`
 > + `entities-m5-sales.md` + `entities-m6-manufacturing.md` + `entities-m7-fixed-assets.md`
 > + `entities-m12-pos.md` + `entities-pln-planning.md` + `legacy-mapping.md` + `module-roadmap.md`). MVP pakai
 > `sys_`/`adm_`/`md_`; modul pasca-MVP (m2–m12) dipetakan di `module-roadmap.md`

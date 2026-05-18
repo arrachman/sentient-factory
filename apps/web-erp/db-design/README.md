@@ -135,6 +135,22 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `VoucherStatus` | `ISSUED`, `REDEEMED`, `EXPIRED`, `VOID` | m12 `pos_voucher` |
 | `SalesChannel` *(flagged onto `sls_invoices`)* | `STANDARD`, `POS` | m12 `m12_si` vs m5 |
 
+| `PostingEvent` | `SALE_INVOICE`, `SALE_COGS`, `SALE_RETURN`, `SALE_RETURN_COGS`, `PUR_GOODS_RECEIPT`, `PUR_INVOICE`, `PUR_RETURN`, `INV_OPENING`, `INV_ADJUST_INCREASE`, `INV_ADJUST_DECREASE`, `INV_TRANSFER`, `AR_RECEIPT`, `AP_PAYMENT`, `CASH_RECEIPT`, `CASH_DISBURSEMENT`, `FA_ACQUISITION`, `FA_DEPRECIATION`, `FA_DISPOSAL`, `FA_REVALUATION`, `MFG_MATERIAL_ISSUE`, `MFG_MATERIAL_RETURN`, `MFG_PRODUCTION_OUTPUT`, `MFG_REWORK`, `FX_REVALUATION` | enterprise — `fin_posting_rules` (§8 #24) |
+| `TaxEntryType` | `PPN_KELUARAN`, `PPN_MASUKAN`, `PPH_21`, `PPH_23`, `PPH_4_2`, `PPH_25`, `PPH_26`, `OTHER` | enterprise — `fin_tax_entries` (§8 #25) |
+| `TaxEntryStatus` | `DRAFT`, `CONFIRMED`, `REPORTED`, `CANCELLED` | enterprise — `fin_tax_entries` |
+| `WhtCertStatus` | `ISSUED`, `CANCELLED` | enterprise — `fin_withholding_tax_certificates` |
+| `FxRevaluationStatus` | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` | enterprise — `fin_fx_revaluation_runs` (§8 #26) |
+| `BankStatementStatus` | `IMPORTED`, `IN_REVIEW`, `RECONCILED` | enterprise — `fin_bank_statements` (§8 #27) |
+| `RecurringFrequency` | `DAILY`, `WEEKLY`, `MONTHLY`, `QUARTERLY`, `YEARLY` | enterprise — recurring journals + accrual (§8 #27) |
+| `RecurringStatus` | `ACTIVE`, `PAUSED`, `COMPLETED`, `CANCELLED` | enterprise — recurring + accrual |
+| `FinancialReportType` | `BALANCE_SHEET`, `INCOME_STATEMENT`, `CASH_FLOW`, `CUSTOM` | enterprise — `fin_report_definitions` (§8 #28) |
+| `ReportLineType` | `ACCOUNTS`, `FORMULA`, `SECTION_TOTAL`, `HEADER`, `SPACER` | enterprise — `fin_report_lines` |
+| `CreditLimitAction` | `WARN`, `BLOCK`, `REQUIRE_APPROVAL` | enterprise — `fin_credit_limits` (§8 #29) |
+| `CollectionActivityType` | `PHONE_CALL`, `EMAIL`, `VISIT`, `LETTER`, `LEGAL` | enterprise — `fin_collection_activities` |
+| `CollectionStatus` | `OPEN`, `IN_PROGRESS`, `RESOLVED`, `ESCALATED` | enterprise — `fin_collection_activities` |
+| `DunningLevel` | `LEVEL_1`, `LEVEL_2`, `LEVEL_3`, `LEGAL` | enterprise — `fin_dunning_rules` |
+| `IntercompanyStatus` | `PENDING_MATCH`, `MATCHED`, `ELIMINATED` | enterprise — `fin_intercompany_transactions` (§8 #30) |
+
 > Enum detail per module: **[m2 fin](entities-m2-finance.md)** /
 > **[m3 inv](entities-m3-inventory.md)** / **[m4 pur](entities-m4-purchasing.md)** /
 > **[m5 sls](entities-m5-sales.md)** / **[m6 mfg](entities-m6-manufacturing.md)** /
@@ -234,6 +250,39 @@ erDiagram
 Accounting period reuses `sys_fiscal_periods`; GL dimension masters
 (`md_cost_centers`/`md_divisions`/`md_subdivisions`/`md_projects`) live in `md`.
 Full field-level catalog: **[entities-m2-finance.md](entities-m2-finance.md)**.
+Enterprise extensions (§8 #30–#36, 2026-05-18): **[entities-m2-finance-enterprise.md](entities-m2-finance-enterprise.md)**.
+
+## 6.1.1 ERD — m2 Finance Enterprise Extensions
+
+```mermaid
+erDiagram
+    FinPostingRule ||--o{ FinPostingRuleLine : has
+    FinPostingRule }o--o| ItemCategory : match_item_cat
+    FinPostingRule }o--o| PartnerCategory : match_partner_cat
+    FinTaxEntry }o--o| FinLedgerEntry : linked_gl
+    FinTaxEntry }o--o| FiscalPeriod : in_period
+    FinWhtCertificate }o--o| FinTaxEntry : from_entry
+    FinFxRevaluationRun ||--o{ FinFxRevaluationLine : has
+    FinFxRevaluationRun }o--o| FiscalPeriod : revalues
+    FinFxRevaluationRun }o--o| FinJournalEntry : auto_jv
+    FinBankStatement ||--o{ FinBankStatementLine : has
+    FinBankStatementLine }o--o| FinLedgerEntry : matched_to
+    FinRecurringJournalTemplate ||--o{ FinRecurringJournalTemplateLine : has
+    FinAccrualSchedule }o--o| Account : prepaid_acct
+    FinAccrualSchedule }o--o| Account : expense_acct
+    FinReportDefinition ||--o{ FinReportSection : has
+    FinReportSection ||--o{ FinReportLine : has
+    FinReportSection ||--o{ FinReportSection : parent_of
+    FinCreditLimit }o--o| Partner : limits
+    FinDunningRule ||--o{ FinCollectionActivity : triggers
+    FinCollectionActivity }o--o| Partner : for_partner
+    FinCollectionActivity }o--o| FinLedgerEntry : dunning_item
+    FinIntercompanyRule }o--o| Branch : from_branch
+    FinIntercompanyRule }o--o| Branch : to_branch
+    FinIntercompanyTransaction }o--o| FinIntercompanyRule : governed_by
+    FinIntercompanyTransaction }o--o| FinJournalEntry : from_jv
+    FinIntercompanyTransaction }o--o| FinJournalEntry : to_jv
+```
 
 ## 6.2 ERD — m3 Inventory (`inv`)
 
@@ -492,6 +541,13 @@ re-opened — see **§8.1**.
 | 27 | Sales pricing engine SSOT (m5 `sls`) | **Reuse `pos` — TANPA price list di `sls`** | `sls` adalah **konsumen** harga; sumber kebenaran tunggal = `pos_contact_prices` + `pos_category_discounts` (m12 `pos`, lih. [entities-m12-pos.md](entities-m12-pos.md)). Tidak ada tabel harga/diskon di `sls`. Konsisten dgn #10 (tiered pricing → fase `pos`). Mencegah dua SSOT harga (2026-05-18). |
 | 28 | Cakupan enterprise tambahan m5 (credit mgmt / commission / target-quota / blanket order / CRM pipeline) | **Ditinjau — DIDEFER, tidak masuk core m5** | Direview 2026-05-18; user pilih *skip* untuk MVP/core. Tidak dimodelkan sekarang: credit-limit/hold, `sls_commission_*`, target-vs-realisasi, blanket/call-off order, CRM funnel. CRM pra-quotation = **out of ERP scope** (mulai dari Quotation). Revisit per-kebutuhan, bukan diam-diam masuk. |
 | 29 | Planning / MRP-lite domain | **Domain `pln` baru — MRP-lite** | 5 entitas: `pln_reorder_policies` (per item/warehouse, lot size method), `pln_demand_forecasts` (manual/AI/kontrak), `pln_mrp_runs`(+lines) (explosion run, supply/demand worksheet), `pln_replenishment_suggestions` (action card PURCHASE/MANUFACTURE/TRANSFER → konversi ke `pur_requisitions`/`mfg_work_orders`/`inv_stock_movements` saat approved). 4 enum baru. `pln` tidak pernah post ke `fin` langsung. ATP view = `inv_stock_balances` − reservasi + scheduled receipts. No legacy equivalent. Full catalog: `entities-pln-planning.md` (2026-05-18). |
+| 30 | Account Determination engine | **IN — `fin_posting_rules` + `fin_posting_rule_lines`** | Tabel aturan posting terpusat menggantikan akun hardcode di `md_items`/`md_partners`. Matching: `module × eventType × branchId? × itemCategoryId? × partnerCategoryId?` + priority. Setiap rule punya N leg `(accountId, isDebit, legName)`. Enum `PostingEvent` (24 event types). 2 entitas baru. (2026-05-18) |
+| 31 | Tax sub-ledger (PPN + PPh) | **IN — `fin_tax_entries` + `fin_withholding_tax_certificates`** | Sub-ledger per-transaksi untuk rekap e-Faktur PPN dan Bukti Potong PPh (e-Bupot). Enum `TaxEntryType` (8 jenis), `TaxEntryStatus` (4), `WhtCertStatus` (2). 2 entitas baru. (2026-05-18) |
+| 32 | FX Revaluation run | **IN — `fin_fx_revaluation_runs` + `fin_fx_revaluation_lines`** | Run periodik revaluasi saldo AR/AP/bank valas ke kurs penutup; generate jurnal unrealized gain/loss otomatis. Enum `FxRevaluationStatus` (4). 2 entitas baru. (2026-05-18) |
+| 33 | Bank Reconciliation + Recurring/Accrual | **IN — 5 entitas baru** | Bank rec: `fin_bank_statements` + `fin_bank_statement_lines` (impor rekening koran + matching ke GL). Recurring: `fin_recurring_journal_templates` + `fin_recurring_journal_template_lines` (jurnal berkala). Accrual: `fin_accrual_schedules` (amortisasi prepaid). Enum `BankStatementStatus`, `RecurringFrequency`, `RecurringStatus`. (2026-05-18) |
+| 34 | Financial Report Definitions | **IN — `fin_report_definitions` + `fin_report_sections` + `fin_report_lines`** | Layout laporan keuangan yang bisa dikonfigurasi tanpa coding (Neraca, L&R, Arus Kas). Memetakan range CoA / akun spesifik ke baris laporan. Formula lines untuk subtotal. Enum `FinancialReportType` (4), `ReportLineType` (5). 3 entitas baru. (2026-05-18) |
+| 35 | Credit Limit & Collection Management | **IN — `fin_credit_limits` + `fin_dunning_rules` + `fin_collection_activities`** | Batas piutang per customer dengan action WARN/BLOCK/REQUIRE_APPROVAL; dunning rules berbasis hari keterlambatan; log aktivitas penagihan. Enum `CreditLimitAction`, `CollectionActivityType`, `CollectionStatus`, `DunningLevel`. 3 entitas baru. (2026-05-18) |
+| 36 | Inter-branch / Consolidation | **IN — `fin_intercompany_rules` + `fin_intercompany_transactions`** | Konfigurasi pasangan akun due-from/due-to antar branch; record transaksi lintas cabang dengan JV di kedua sisi; eliminasi saat konsolidasi. Enum `IntercompanyStatus` (3). 2 entitas baru. (2026-05-18) |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers),
@@ -499,7 +555,10 @@ re-opened — see **§8.1**.
 #24–26 (lot/serial + reservation/ATP + `inv_bins` master, 2026-05-18 —
 `inv` jadi WMS-capable; m3 inv: 13 → **17** entitas),
 #27–28 (sales pricing SSOT = reuse `pos`; enterprise extras m5 didefer, 2026-05-18),
-#29 (domain `pln` MRP-lite baru, 2026-05-18 — 5 entitas + ATP view).
+#29 (domain `pln` MRP-lite baru, 2026-05-18 — 5 entitas + ATP view),
+**#30–36 (fin enterprise extensions: account determination + tax sub-ledger + FX
+revaluation + bank rec + recurring/accrual + report definitions + credit/collection
++ inter-company, 2026-05-18 — `fin` total: 12 core → 31 entitas)**.
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 
@@ -507,7 +566,8 @@ The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 
 | # | Question | Status | Notes |
 | --- | --- | --- | --- |
-| 21 | Period-close process: dedicated `fin_period_closings` run entity + `JournalType.CLOSING` (generated closing journal, retained-earnings roll, reopenable)? | **RESOLVED (2026-05-18) — Opsi A model penuh** | `fin_period_closings` modeled in `entities-m2-finance.md`. `JournalType.CLOSING` added to enum. Roll laba ditahan otomatis saat `COMPLETED`; run reopenable. Semua open decision sekarang **sudah resolved** — siap untuk Prisma m2 bila user beri go-ahead. |
+| 21 | Period-close process: dedicated `fin_period_closings` run entity + `JournalType.CLOSING` (generated closing journal, retained-earnings roll, reopenable)? | **RESOLVED (2026-05-18) — Opsi A model penuh** | `fin_period_closings` modeled in `entities-m2-finance.md`. `JournalType.CLOSING` added to enum. Roll laba ditahan otomatis saat `COMPLETED`; run reopenable. |
+| — | Enterprise finance extensions (#30–#36) | **RESOLVED (2026-05-18) — semua IN** | Account Determination, Tax sub-ledger, FX Revaluation, Bank Rec, Recurring/Accrual, Report Definitions, Credit Limit & Collection, Inter-branch/Consolidation — semua dikonfirmasi user 2026-05-18. Catalog: `entities-m2-finance-enterprise.md`. **Semua open decision sekarang resolved** — siap untuk Prisma fin bila user beri go-ahead. |
 
 ## 9. Deferred (intentionally NOT in this MVP)
 

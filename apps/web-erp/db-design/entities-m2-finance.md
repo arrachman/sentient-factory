@@ -481,12 +481,18 @@ Relations: `fiscalPeriod`, `retainedEarningsAccount`, `closingJournalEntry`,
 
 ---
 
-**Count:** 12 Finance (`fin_*`) entities — JournalEntry, JournalLine, LedgerEntry,
+**Count:** 12 Finance core (`fin_*`) entities — JournalEntry, JournalLine, LedgerEntry,
 CashBankTransaction, CashBankLine, ArReceipt, ApPayment, PaymentInstrument,
 SettlementAllocation, Giro, BudgetRealization, **PeriodClosing**. Plus **4 GL dimension masters**
 moved to `md_*` (CostCenter, Division, Subdivision, Project — to be folded into a
 revised `entities-m1-master-data.md` count). Accounting period **reuses**
 `sys_fiscal_periods` (no new table).
+
+**Enterprise extensions (19 entities, total `fin` = 31):** Account Determination,
+Tax sub-ledger (PPN+PPh), FX Revaluation, Bank Reconciliation, Recurring/Accrual,
+Financial Report Definitions, Credit Limit & Collection, Inter-branch/Consolidation —
+field catalogs di **[entities-m2-finance-enterprise.md](entities-m2-finance-enterprise.md)**
+(decisions README §8 #24–#30, dikonfirmasi 2026-05-18).
 
 Legacy field-mapping appendix: **[legacy-mapping.md](legacy-mapping.md)** ·
 Roadmap context: **[module-roadmap.md](module-roadmap.md)**.
