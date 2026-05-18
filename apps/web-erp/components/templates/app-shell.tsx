@@ -24,6 +24,7 @@ import { TrxForm } from '@/components/pages/trx-form';
 import { TabActiveContext } from '@/lib/tab-context';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import { pageMeta, type Crumb } from '@/lib/nav';
+import { confirmAction } from '@/lib/feedback';
 
 const MAX_TABS = 16;
 const USER_STORAGE_KEY = 'erp-user';
@@ -211,6 +212,20 @@ export function AppShell() {
     setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
   }, [tabs, nextTabId]);
 
+  const confirmClose = React.useCallback((id: string) => {
+    const tab = tabs.find((tb) => tb.id === id);
+    const label = tab ? pageMeta(tab.route, t).title : 'tab ini';
+    confirmAction({
+      title: 'Tutup tab?',
+      message: `"${label}" akan ditutup.`,
+      variant: 'warn',
+      confirmLabel: 'Tutup',
+      confirmIcon: 'x',
+      cancelLabel: 'Batal',
+      onConfirm: () => closeTab(id),
+    });
+  }, [tabs, t, closeTab]);
+
   // Force-remount this tab's view by bumping its nonce (view is keyed on it).
   const reloadTab = React.useCallback((id: string) => {
     setTabs((prev) =>
@@ -259,7 +274,7 @@ export function AppShell() {
       }
       if (e.metaKey && e.code === 'KeyE') {
         e.preventDefault();
-        closeTab(activeId);
+        confirmClose(activeId);
         return;
       }
       if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
@@ -339,7 +354,7 @@ export function AppShell() {
             tabs={tabs}
             activeId={activeId}
             onActivate={setActiveId}
-            onClose={closeTab}
+            onClose={confirmClose}
             onReload={reloadTab}
             onCloseOthers={closeOtherTabs}
             onCloseRight={closeTabsToRight}
