@@ -6,6 +6,22 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
 
 ---
 
+## 2026-05-18
+
+### Slot range per-layanan (override)
+
+- **`feat(clinic)`** slot range override per-layanan (backend)
+  - `ClinicService.slotOverrides` JSON `[{index,start,end}]` + migrasi `20260518_002` (aditif, default `[]`)
+  - Identitas slot (jumlah/label/urutan/index) tetap dari `ClinicSettings.slotsOfDay` global; override hanya geser start/end
+  - `resolveServiceSlots()` util (`clinic-booking/slot-resolve.util.ts`) + `assertSlotMatch(start,end,serviceId?)` service-aware (fallback global)
+  - Normalisasi slotOverrides (start<end, dedupe per index, sorted) di create/update; caller booking single + package kirim `dto.serviceId`
+- **`feat(althea)`** editor & resolusi slot range per-layanan (frontend)
+  - `slotOverrideSchema` + `slotOverrides` di serviceSchema; `resolveServiceSlots()` mirror (`features/admin-layanan/model/slot.ts`)
+  - Booking wizard resolve `slots` dari layanan terpilih (index sejajar global → `slotIndices` psikolog & `unavailableSlotIdx` tetap valid)
+  - `SlotOverrideEditor` di form Layanan (label/jumlah read-only dari global, hanya geser start/end, Reset = ikut global)
+  - Ringkasan read-only "Slot Khusus per Layanan" di Pengaturan → Slot Operasional
+  - E2E verified: PATCH dedupe last-wins, GET persist, validasi start≥end ditolak
+
 ## 2026-05-11
 
 ### Slice 10 · Psikolog Workflow (extended)

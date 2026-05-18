@@ -239,12 +239,14 @@ Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
 ## Domain konvensi (Althea-specific)
 
 ### Booking flow (ADR 008 + 010 + 011)
-- **Single source of truth slot**: `ClinicSettings.slotsOfDay` (6 slot harian, WIB). Booking harus pas dengan slot — backend enforce via `assertSlotMatch`. Frontend `DateStrip` + slot picker mirror logic ini.
+- **Single source of truth slot**: `ClinicSettings.slotsOfDay` (6 slot harian, WIB). Booking harus pas dengan slot — backend enforce via `assertSlotMatch(start,end,serviceId?)`. Frontend `DateStrip` + slot picker mirror logic ini.
+- **Slot range per-layanan (override)**: `ClinicService.slotOverrides` (JSON `[{index,start,end}]`) boleh **menggeser range waktu** slot tertentu untuk layanan itu. **Identitas slot (jumlah, label, urutan, index) TETAP dari `slotsOfDay` global** — override hanya start/end; slot tanpa override mewarisi waktu global. Index hasil tetap sejajar global ⇒ `slotIndices` availability psikolog tetap valid (availability psikolog tetap acuan slot global). Resolusi via `resolveServiceSlots(global, overrides)` — ada di backend `clinic-booking/slot-resolve.util.ts` & frontend `features/admin-layanan/model/slot.ts` (mirror). `assertSlotMatch` validasi terhadap slot ter-resolve bila `serviceId` dikirim (fallback global bila tidak). Editor: **Admin → Layanan → Edit → Range Waktu Slot**; ringkasan read-only di **Pengaturan → Slot Operasional → Slot Khusus per Layanan**.
 - **Psikolog availability cascade**:
   1. Date override (`ClinicPsikologDateOverride`) — priority untuk tanggal exact
   2. Weekly recurring (`ClinicPsikologProfile.weeklyAvailability`) — fallback
   3. Empty `{}` → "belum set" → block booking
 - **Service ↔ Psikolog**: junction `ClinicPsikologService`. Kosong = handle semua. Filter di booking wizard via `psikologListFiltered`.
+- **No past booking**: wizard tambah jadwal tidak boleh pilih tanggal/jam lampau. `DateStrip` tandai tanggal < hari ini sebagai status `past` (disabled, label "Lewat"); slot dengan jam mulai ≤ sekarang di-block saat tanggal = hari ini (di-strip dari `SlotGrid`). Helper di `booking-wizard/wizard-utils.ts`: `todayDateStr`, `isPastDate`, `pastSlotIdx` — dipakai single-session (`use-wizard-state`) & multi-session (`session-row`). Default sesi 1 = H+1 jadi aman by default. Backend `assertSlotMatch`/validasi jam tetap last-line enforcement.
 - **Timezone**: semua HH:MM/dow comparison di TZ klinik (`Asia/Jakarta`), bukan server TZ. Backend pakai `localPartsInTimezone()`. Frontend: tampilkan `Date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })` kalau butuh display.
 
 ### Booking wizard pattern (ADR 011)

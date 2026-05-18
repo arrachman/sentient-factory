@@ -68,6 +68,7 @@ Status: 🔵 Not started · 🟡 In progress · 🟢 Done · 🔴 Blocked
 - 2026-05-11 — Booking validator fix: pakai TZ klinik (Asia/Jakarta) bukan server UTC saat compute `dow + hhmm` untuk slot lookup
 - 2026-05-11 — **Slice 07 UX iterations**: schedule grid Minggu 6→7 hari penuh (Sen-Min), slot-cell 5-state contrast tuning (Booked saturated vs Tersedia almost-white), libur cell amber zebra → flat gray disabled, emoji eksperimen → revert text-only minimal, copy "Libur"→"Kosong", Bulan view cell color sesuai state (sage gradient by count)
 - 2026-05-11 — Planning docs sync: ADR 010+011 added, ADR 008 revised slot/TZ/validation cascade, slice 6+7 SPEC filled (post-MVP iterations documented), CHANGELOG.md daily entries
+- 2026-05-18 — **Slot range per-layanan**: `ClinicService.slotOverrides` (geser start/end per layanan; identitas/label/index slot tetap dari `slotsOfDay` global), `resolveServiceSlots()` backend+frontend mirror, `assertSlotMatch` service-aware, editor di form Layanan + ringkasan read-only di Pengaturan; migrasi `20260518_002` (aditif)
 
 ## Outstanding for Production-Ready
 
