@@ -8,6 +8,51 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
 
 ## 2026-05-18
 
+### ERP: Login/Logout terintegrasi dengan api-gateway (55a9f55)
+
+- **`feat(web-erp)`** integrasikan auth ERP end-to-end antara `apps/web-erp` dan `apps/api-gateway`
+  - **Backend:** tambah `ErpJwtStrategy` (passport-jwt, baca cookie `erp_token`) + `ErpJwtAuthGuard` → fix `GET /erp/auth/me` yang sebelumnya salah guard (pakai `JwtAuthGuard` milik klinik/platform yang baca `sf_token`)
+  - **Backend:** tambah field `name` (nama lengkap) di `ErpAuthResponseDto` + `ErpAuthService.login` response
+  - **Frontend:** fix tipe `ErpAuthUser` (`username`/`erpLevel` bukan `login`/`level`), fix `toShellUser` mapping agar user chip topbar tampil nama + inisial benar
+  - Menu sidebar (`lib/nav.ts`) static hardcoded — tampil otomatis setelah login berhasil; integrasi menu dinamis dari `sys_menus` ditunda ke fase berikutnya
+  - Typecheck api-gateway + web-erp clean (0 error)
+
+---
+
+
+
+### WA Form Feedback H+1 (diaktifkan)
+
+- **`feat(clinic)`** trigger otomatis "Form Feedback" H+1 post-session
+  - Cron `0 8 * * *` TZ `Asia/Jakarta` baru di `booking-reminder.scheduler.ts` (`dispatchFeedbackH1`): scan booking `status=completed` dengan `completedAt` hari kemarin (00:00–23:59:59 WIB), dedup via `metadata.reminderFlag='feedback_h1'`
+  - Template seed `Form Feedback` di-rewrite: hapus `{{link_form}}` → klien diminta **balas pesan WA langsung** (kesan/masukan/saran), tanpa link/formulir. Variabel `{{nama_klien}}`, `{{nama_psikolog}}`
+  - Frontend `TRIGGER_META.feedback_request`: status `belum-aktif` → `cron` + copy diperbarui
+  - Keputusan: penangkapan balasan inbound ke DB **di luar scope** (balasan dibaca tim manual di WhatsApp; webhook Fonnte hanya track delivery outbound). Effort terpisah bila perlu.
+
+### Admin mobile web (sesuai prototype)
+
+- **`feat(althea)`** mobile responsive 4 halaman admin sesuai prototype "Mobile · Admin Klinik"
+  - Bottom tab bar `lg:hidden` (Jadwal · Klien · Ruangan · WA · Lainnya), role admin only; `<main>` `pb-16`
+  - Mobile topbar baru: avatar+nama+role (tap→menu) · judul halaman · bell
+  - Pattern dedicated `*-mobile.tsx` per feature (`lg:hidden`), desktop lama `hidden lg:*`, reuse state dari page (no refetch)
+  - Jadwal: date pills + 3 stat tile + list sesi (badge "now") + FAB; Klien: search + filter chips bercount + card list + FAB; Ruangan: 2 stat tile + card status per ruangan; Notif WA: 3 stat tile + template toggle + log hari ini
+  - Lint/typecheck clean (derive "now" via useEffect untuk lolos `react-hooks/purity`)
+
+### Psikolog mobile web (sesuai prototype)
+
+- **`feat(althea)`** mobile responsive 6 layar psikolog sesuai prototype "Mobile · Staff Psikolog"
+  - Bottom tab bar `lg:hidden` 4 tab (Hari ini · Jadwal · Klien · Saya), role psikolog only; `<main>` `pb-16`
+  - Pattern sama dengan admin: dedicated `*-mobile.tsx`, desktop `hidden lg:*`, reuse state via props
+  - Hari ini: tanggal serif + hero "sesi berikutnya" + list + prompt availability; Jadwal: toggle Hari/Minggu + day pills bercount + 3 stat tile + list + footnote info; Klien: search + banner privasi + filter chips + card (risk dot, progress, next); Profil: avatar+specialty chips + 4 stat 30-hari + menu list + Keluar
+  - `availability-dialog.tsx` full-screen di mobile + editor day-pills/checklist slot (tabel hari×slot tetap di `lg`)
+  - Login: aside brand `hidden lg:flex`, form full-width + wordmark mobile
+  - Typecheck clean; lint 0 error (warning set-state-in-effect = pola SSR-safe yang sudah diterima)
+
+### Hapus kode BR-0x dari UI + detail ruangan mobile
+
+- **`refactor(althea)`** hapus semua token business-rule code (`BR-01`, `BR-04`, dst) dari teks UI & comment di `apps/web-althea` — kalimat penjelas tetap, hanya kode dibuang (grep `BR-[0-9]` = 0). Scope: mobile + desktop, semua role.
+- **`feat(althea)`** detail ruangan mobile admin: `room-detail-sheet-mobile.tsx` (bottom-sheet) — info + status sekarang + sesi hari ini + fasilitas + aksi (Edit master/Nonaktif/Hapus). `RoomsMobile` props ganti `onPick` → `onEditMaster/onDelete/onDeactivate`. Reassign-booking khusus desktop.
+
 ### Slot range per-layanan (override)
 
 - **`feat(clinic)`** slot range override per-layanan (backend)
