@@ -1,0 +1,181 @@
+'use client';
+
+/**
+ * Item create/edit form — used inside a Modal.
+ * References unit and category lookups from the parent page.
+ * Atomic tier: Molecule/Organism sub-part.
+ */
+
+import * as React from 'react';
+import { FormField } from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import type { ErpItem, ErpItemType, CreateItemPayload } from '@/lib/api/items';
+import type { ErpUnit } from '@/lib/api/units';
+import type { ErpItemCategory } from '@/lib/api/item-categories';
+
+const ITEM_TYPES: ErpItemType[] = [
+  'INVENTORY',
+  'SERVICE',
+  'CONSUMABLE',
+  'ASSET',
+  'NON_INVENTORY',
+];
+
+export interface ItemFormData {
+  code: string;
+  name: string;
+  itemType: ErpItemType;
+  categoryId: string;
+  unitId: string;
+  description: string;
+  isActive: boolean;
+}
+
+export const defaultItemForm = (): ItemFormData => ({
+  code: '',
+  name: '',
+  itemType: 'INVENTORY',
+  categoryId: '',
+  unitId: '',
+  description: '',
+  isActive: true,
+});
+
+export function fromItem(item: ErpItem): ItemFormData {
+  return {
+    code: item.code,
+    name: item.name,
+    itemType: item.itemType,
+    categoryId: item.categoryId,
+    unitId: item.unitId,
+    description: item.description ?? '',
+    isActive: item.isActive,
+  };
+}
+
+export function toItemPayload(f: ItemFormData): CreateItemPayload {
+  return {
+    code: f.code,
+    name: f.name,
+    itemType: f.itemType,
+    categoryId: f.categoryId,
+    unitId: f.unitId,
+    description: f.description || undefined,
+    isActive: f.isActive,
+  };
+}
+
+interface ItemFormProps {
+  data: ItemFormData;
+  onChange: (d: ItemFormData) => void;
+  units: ErpUnit[];
+  categories: ErpItemCategory[];
+}
+
+export function ItemFormFields({ data, onChange, units, categories }: ItemFormProps) {
+  const set = (k: keyof ItemFormData, v: string | boolean) =>
+    onChange({ ...data, [k]: v });
+
+  return (
+    <div className="p-4">
+      <FormField label="Kode" htmlFor="if-code" required>
+        <Input
+          id="if-code"
+          value={data.code}
+          onChange={(e) => set('code', e.target.value)}
+          placeholder="ITM-001"
+        />
+      </FormField>
+      <FormField label="Nama" htmlFor="if-name" required>
+        <Input
+          id="if-name"
+          value={data.name}
+          onChange={(e) => set('name', e.target.value)}
+          placeholder="Baja Plat 2mm"
+        />
+      </FormField>
+      <FormField label="Tipe" htmlFor="if-type" required>
+        <Select
+          value={data.itemType}
+          onValueChange={(v) => set('itemType', v as ErpItemType)}
+        >
+          <SelectTrigger id="if-type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {ITEM_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+      <FormField label="Kategori" htmlFor="if-cat" required>
+        <Select
+          value={data.categoryId || '__none__'}
+          onValueChange={(v) => set('categoryId', v === '__none__' ? '' : v)}
+        >
+          <SelectTrigger id="if-cat">
+            <SelectValue placeholder="Pilih kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">— Pilih —</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+      <FormField label="Satuan" htmlFor="if-unit" required>
+        <Select
+          value={data.unitId || '__none__'}
+          onValueChange={(v) => set('unitId', v === '__none__' ? '' : v)}
+        >
+          <SelectTrigger id="if-unit">
+            <SelectValue placeholder="Pilih satuan" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">— Pilih —</SelectItem>
+            {units.map((u) => (
+              <SelectItem key={u.id} value={u.id}>
+                {u.code} — {u.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+      <FormField label="Deskripsi" htmlFor="if-desc">
+        <Input
+          id="if-desc"
+          value={data.description}
+          onChange={(e) => set('description', e.target.value)}
+          placeholder="Opsional"
+        />
+      </FormField>
+      <FormField label="Status" htmlFor="if-active">
+        <Select
+          value={data.isActive ? 'active' : 'inactive'}
+          onValueChange={(v) => set('isActive', v === 'active')}
+        >
+          <SelectTrigger id="if-active">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">Aktif</SelectItem>
+            <SelectItem value="inactive">Nonaktif</SelectItem>
+          </SelectContent>
+        </Select>
+      </FormField>
+    </div>
+  );
+}

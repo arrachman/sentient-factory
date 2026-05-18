@@ -17,6 +17,16 @@ import { FinancialReport } from '@/components/pages/financial-report';
 import { DataList } from '@/components/pages/data-list';
 import { RecordForm } from '@/components/pages/record-form';
 import { TrxForm } from '@/components/pages/trx-form';
+// F2 Admin pages
+import { ErpUsersPage } from '@/components/pages/erp-users-page';
+import { ErpBranchesPage } from '@/components/pages/erp-branches-page';
+import { ErpRolesPage } from '@/components/pages/erp-roles-page';
+import { ErpSettingsPage } from '@/components/pages/erp-settings-page';
+// F3 Master Data pages
+import { ErpItemsPage } from '@/components/pages/erp-items-page';
+import { ErpUnitsPage } from '@/components/pages/erp-units-page';
+import { ErpPartnersPage } from '@/components/pages/erp-partners-page';
+import { ErpItemCategoriesPage } from '@/components/pages/erp-item-categories-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import type { Lang } from '@/lib/shell-constants';
 
@@ -46,6 +56,18 @@ export function renderRoute(
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpenTab} />;
   if (route === 'set-prefs') return <SettingsPage t={t} />;
   if (route === 'set-appearance') return <AppearancePage t={t} />;
+
+  // ── F2 Admin ──────────────────────────────────────────────────────────────
+  if (route === 'adm-users') return <ErpUsersPage />;
+  if (route === 'adm-branches') return <ErpBranchesPage />;
+  if (route === 'adm-roles') return <ErpRolesPage />;
+  if (route === 'adm-settings') return <ErpSettingsPage />;
+
+  // ── F3 Master Data ────────────────────────────────────────────────────────
+  if (route === 'md-items') return <ErpItemsPage />;
+  if (route === 'md-units') return <ErpUnitsPage />;
+  if (route === 'md-partners') return <ErpPartnersPage />;
+  if (route === 'md-item-categories') return <ErpItemCategoriesPage />;
 
   const baseRoute = resolveNewRoute(route);
   if (baseRoute) {
