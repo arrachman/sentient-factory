@@ -199,13 +199,13 @@ function StatCardsExt({ stats }) {
   );
 }
 
-function DataTableExt({ cols, rows }) {
+function DataTableExt({ cols, rows, focused, onSetFocused }) {
   const PAGE = 20;
   const cells = rows.map(r => r.cells);
   return (
     <div>
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <table className="tbl" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: 'var(--panel)', borderBottom: '2px solid var(--border)' }}>
               {cols.map(c => (
@@ -216,8 +216,10 @@ function DataTableExt({ cols, rows }) {
           </thead>
           <tbody>
             {cells.map((row, i) => (
-              <tr key={i} style={{ borderBottom: '1px solid var(--border)',
-                background: i % 2 === 0 ? 'transparent' : 'var(--panel)' }}>
+              <tr key={i} className={i === focused ? 'focused' : ''}
+                style={{ borderBottom: '1px solid var(--border)',
+                  background: i % 2 === 0 ? 'transparent' : 'var(--panel)' }}
+                onClick={() => onSetFocused(i)}>
                 {row.map((cell, j) => (
                   <td key={j} style={{ padding: '7px 12px', color: 'var(--fg)', whiteSpace: 'nowrap' }}>
                     {cell}
@@ -228,8 +230,9 @@ function DataTableExt({ cols, rows }) {
           </tbody>
         </table>
       </div>
-      <div style={{ marginTop: 10, fontSize: 12, color: 'var(--fg-muted)' }}>
-        Menampilkan 1–{Math.min(PAGE, cells.length)} dari {cells.length}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+        <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Pintasan: <Kbd>J</Kbd>/<Kbd>K</Kbd> navigasi baris</span>
+        <span style={{ fontSize: 12, color: 'var(--fg-muted)' }}>Menampilkan 1–{Math.min(PAGE, cells.length)} dari {cells.length}</span>
       </div>
     </div>
   );
@@ -273,9 +276,17 @@ function ModuleReportExt({ moduleId, t }) {
   const [to, setTo]         = useStateE(defTo);
   const [branch, setBranch] = useStateE('');
   const [show, setShow]     = useStateE(true);
+  const [focused, setFocused] = useStateE(0);
 
   const rows  = useMemoE(() => def?.rows() || [], [moduleId]);
   const stats = useMemoE(() => def?.stats(rows) || [], [rows]);
+
+  useKey((e) => {
+    if (window.__overlay) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setFocused(f => Math.min(rows.length - 1, f + 1)); }
+    else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
+  });
 
   if (!meta || !def) {
     return <div style={{ color: 'var(--danger)', padding: 24 }}>Laporan tidak dikenal: {moduleId}</div>;
@@ -299,7 +310,7 @@ function ModuleReportExt({ moduleId, t }) {
         onExport={handleExport}
       />
       {show && <StatCardsExt stats={stats} />}
-      {show && <DataTableExt cols={def.cols} rows={rows} />}
+      {show && <DataTableExt cols={def.cols} rows={rows} focused={focused} onSetFocused={setFocused} />}
     </div>
   );
 }

@@ -76,6 +76,7 @@ function AuditTrail({ t }) {
   const [fUser, setFUser]       = useState('');
   const [page, setPage]         = useState(1);
   const [view, setView]         = useState('table');
+  const [focused, setFocused]   = useState(0);
 
   const USERS   = window.USERS   || ['adi.s','fitri.h','rendra.w','maya.p','budi.t'];
   const actions = useMemo(() => [...new Set(AUDIT_EVENTS.map(e => e.action))].sort(), []);
@@ -115,6 +116,14 @@ function AuditTrail({ t }) {
   };
 
   const goPage = (n) => setPage(Math.max(1, Math.min(totalPages, n)));
+
+  useKey((e) => {
+    if (window.__overlay) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setFocused(f => Math.min(paginated.length - 1, f + 1)); }
+    else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
+    else if (e.key.toLowerCase() === 'c' && paginated[focused]) { e.preventDefault(); copyRow(paginated[focused]); }
+  });
 
   /* ── grouped for timeline ── */
   const grouped = useMemo(() => {
@@ -205,8 +214,8 @@ function AuditTrail({ t }) {
             )
           ),
           React.createElement('tbody', null,
-            paginated.map(e =>
-              React.createElement('tr', { key: e.id, className: 'tr', style: { borderBottom: '1px solid var(--border)' } },
+            paginated.map((e, idx) =>
+              React.createElement('tr', { key: e.id, className: `tr${idx === focused ? ' focused' : ''}`, style: { borderBottom: '1px solid var(--border)' }, onClick: () => setFocused(idx) },
                 React.createElement('td', { className: 'td ti', style: { padding: '8px 10px', fontSize: 12, whiteSpace: 'nowrap', color: 'var(--fg-muted)' } }, e.ts),
                 React.createElement('td', { className: 'td', style: { padding: '8px 10px', fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap' } }, e.user),
                 React.createElement('td', { className: 'td', style: { padding: '8px 10px' } },
@@ -225,10 +234,15 @@ function AuditTrail({ t }) {
           )
         ),
         /* Pagination */
-        React.createElement('div', { style: { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8, marginTop: 12 } },
-          React.createElement('span', { className: 'muted', style: { fontSize: 12 } }, `Hal ${page} / ${totalPages}`),
-          React.createElement('button', { className: 'btn sm ghost', disabled: page === 1, onClick: () => goPage(page - 1) }, '← Prev'),
-          React.createElement('button', { className: 'btn sm ghost', disabled: page === totalPages, onClick: () => goPage(page + 1) }, 'Next →'),
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginTop: 12, flexWrap: 'wrap' } },
+          React.createElement('span', { className: 'muted', style: { fontSize: 12 } },
+            'Pintasan: ', React.createElement(Kbd, null, 'J'), '/', React.createElement(Kbd, null, 'K'), ' navigasi · ', React.createElement(Kbd, null, 'C'), ' salin baris'
+          ),
+          React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+            React.createElement('span', { className: 'muted', style: { fontSize: 12 } }, `Hal ${page} / ${totalPages}`),
+            React.createElement('button', { className: 'btn sm ghost', disabled: page === 1, onClick: () => goPage(page - 1) }, '← Prev'),
+            React.createElement('button', { className: 'btn sm ghost', disabled: page === totalPages, onClick: () => goPage(page + 1) }, 'Next →'),
+          )
         )
       ),
 

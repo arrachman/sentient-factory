@@ -54,7 +54,8 @@ const KasMasukList = ({ t, onNavigate, lang, onOpenTab }) => {
     if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setFocused(f => Math.min(view.length - 1, f + 1)); }
     else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setFocused(f => Math.max(0, f - 1)); }
     else if (e.key === 'x' || e.key === ' ') { e.preventDefault(); if (view[focused]) toggle(view[focused].id); }
-    else if (e.key === 'Enter') { e.preventDefault(); openForm(); }
+    else if (e.key === 'Enter' && view[focused]) { e.preventDefault(); const r = view[focused]; window.__viewRow = { ...r, code: r.no, status: r.status }; onNavigate('kas-masuk-view'); }
+    else if (e.key.toLowerCase() === 'n') { e.preventDefault(); openForm(); }
   });
 
   const setSortCol = (col) => setSort(s => ({ col, dir: s.col === col && s.dir === 'asc' ? 'desc' : 'asc' }));
@@ -151,7 +152,7 @@ const KasMasukList = ({ t, onNavigate, lang, onOpenTab }) => {
         <span>{t('Halaman')} <strong style={{ color: 'var(--fg)' }}>{safePage}</strong> {t('dari')} {totalPages}</span>
         <span>· {view.length} {t('dari')} {filtered.length} {t('baris')}</span>
         <div className="spacer"/>
-        <span className="muted">Pintasan: <Kbd>J</Kbd>/<Kbd>K</Kbd> navigasi · <Kbd>X</Kbd> pilih · <Kbd>↵</Kbd> buka</span>
+        <span className="muted">Pintasan: <Kbd>J</Kbd>/<Kbd>K</Kbd> navigasi · <Kbd>↵</Kbd> detail · <Kbd>X</Kbd> pilih · <Kbd>N</Kbd> baru</span>
         <div className="seg">
           <button disabled={safePage === 1} onClick={() => setPage(1)}><Icon name="chevdoubleleft" size={11}/></button>
           <button disabled={safePage === 1} onClick={() => setPage(p => Math.max(1, p - 1))}><Icon name="chevleft" size={11}/></button>
