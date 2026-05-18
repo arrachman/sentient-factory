@@ -72,7 +72,7 @@ export class ClinicBookingService {
     });
 
     if (!dto.createdViaWalkIn) {
-      await this.validation.assertSlotMatch(start, end);
+      await this.validation.assertSlotMatch(start, end, dto.serviceId);
       await this.validation.assertPsikologAvailable(dto.psikologUserId, start);
     }
 

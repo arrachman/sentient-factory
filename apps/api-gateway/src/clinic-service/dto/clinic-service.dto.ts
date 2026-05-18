@@ -1,19 +1,46 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 export const SERVICE_CATEGORIES = ['konseling', 'terapi', 'tes'] as const;
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
+
+const HHMM = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * Override range waktu satu slot untuk layanan ini. `index` menunjuk ke slot
+ * di ClinicSettings.slotsOfDay (identitas/label slot tetap dari global) —
+ * di sini cuma start/end yang digeser. Slot global tanpa entry di sini
+ * dipakai apa adanya.
+ */
+export class SlotOverrideDto {
+  @ApiProperty({ example: 0, description: 'Index slot di ClinicSettings.slotsOfDay' })
+  @IsInt()
+  @Min(0)
+  index!: number;
+
+  @ApiProperty({ example: '08:00', description: 'Jam mulai HH:MM (TZ klinik)' })
+  @Matches(HHMM, { message: 'start harus format HH:MM' })
+  start!: string;
+
+  @ApiProperty({ example: '10:00', description: 'Jam selesai HH:MM (TZ klinik)' })
+  @Matches(HHMM, { message: 'end harus format HH:MM' })
+  end!: string;
+}
 
 export class CreateServiceDto {
   @ApiProperty({ example: 'Konseling Individu Dewasa' })
@@ -52,6 +79,18 @@ export class CreateServiceDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({
+    type: [SlotOverrideDto],
+    description:
+      'Override range waktu slot khusus layanan ini. Kosong = pakai slot global apa adanya.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => SlotOverrideDto)
+  slotOverrides?: SlotOverrideDto[];
 }
 
 export class UpdateServiceDto extends PartialType(CreateServiceDto) {}

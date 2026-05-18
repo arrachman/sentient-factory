@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { dateStrToDateColumn, localDateAtMidnight, localPartsInTimezone } from './timezone.util';
+import { resolveServiceSlots, type SlotDef, type SlotOverride } from './slot-resolve.util';
 
 /**
  * Validation helpers untuk booking operations.
@@ -154,7 +155,7 @@ export class BookingValidationService {
    *
    * Mengganti `assertWithinOperatingHours` lama (operatingHours window per hari).
    */
-  async assertSlotMatch(start: Date, end: Date): Promise<void> {
+  async assertSlotMatch(start: Date, end: Date, serviceId?: number): Promise<void> {
     const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
     if (!settings) return; // no settings, allow (bootstrap mode)
 
@@ -183,15 +184,28 @@ export class BookingValidationService {
     }
 
     // 3. Slot match check (pakai HH:MM di TZ klinik)
-    const slots =
-      (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
-    if (slots.length === 0) return; // belum di-config, allow (bootstrap mode)
+    const globalSlots = (settings.slotsOfDay as SlotDef[]) || [];
+    if (globalSlots.length === 0) return; // belum di-config, allow (bootstrap mode)
+
+    // Layanan boleh override range waktu slot (identitas/label tetap global).
+    // Tanpa serviceId → validasi terhadap slot global apa adanya.
+    let slots = globalSlots;
+    if (serviceId !== undefined) {
+      const service = await this.prisma.clinicService.findFirst({
+        where: { id: serviceId, deletedAt: null },
+        select: { slotOverrides: true },
+      });
+      slots = resolveServiceSlots(
+        globalSlots,
+        (service?.slotOverrides as SlotOverride[] | null) ?? null,
+      );
+    }
 
     const matched = slots.find((s) => s.start === startParts.hhmm && s.end === endParts.hhmm);
     if (!matched) {
       const available = slots.map((s) => `${s.start}-${s.end}`).join(', ');
       throw new BadRequestException(
-        `Booking ${startParts.hhmm}-${endParts.hhmm} tidak cocok dengan slot operasional klinik. Slot tersedia: ${available}.`,
+        `Booking ${startParts.hhmm}-${endParts.hhmm} tidak cocok dengan slot layanan ini. Slot tersedia: ${available}.`,
       );
     }
   }
