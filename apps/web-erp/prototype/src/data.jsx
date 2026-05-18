@@ -47,44 +47,14 @@ const genKasMasuk = (n = 64) => {
 };
 
 const ACTIVITY = [
-  // Kas Masuk
   { who: 'fitri.h', what: 'memposting', target: 'CR-2605-2398', amount: 4250000, type: 'success', ts: '10:42' },
-  { who: 'maya.p', what: 'menyetujui', target: 'CR-2605-2401', amount: 18750000, type: 'success', ts: '10:38' },
-  // Kas Keluar
-  { who: 'rendra', what: 'membuat', target: 'CD-2605-1182', amount: -1850000, type: 'info', ts: '10:31' },
-  { who: 'maya.p', what: 'menolak', target: 'CD-2605-1640', amount: -3200000, type: 'danger', ts: '09:58' },
-  // Bank Masuk/Keluar
+  { who: 'rendra', what: 'membuat draft', target: 'SM-2605-1182', amount: -1850000, type: 'info', ts: '10:31' },
   { who: 'adi.s', what: 'menyetujui', target: 'RM-2605-0871', amount: 12500000, type: 'success', ts: '10:14' },
-  { who: 'budi.t', what: 'memposting', target: 'SM-2605-0304', amount: -6400000, type: 'success', ts: '08:15' },
-  // Jurnal Umum
-  { who: 'budi.t', what: 'mengedit', target: 'GJ-2605-0412', amount: null, type: 'warn', ts: '09:47' },
-  { who: 'fitri.h', what: 'memposting', target: 'GJ-2605-0415', amount: null, type: 'success', ts: '07:55' },
-  // Giro
+  { who: 'maya.p', what: 'menolak', target: 'CD-2605-1640', amount: -3200000, type: 'danger', ts: '09:58' },
+  { who: 'budi.t', what: 'meng-edit', target: 'GJ-2605-0412', amount: null, type: 'warn', ts: '09:47' },
   { who: 'fitri.h', what: 'memposting', target: 'CR-2605-2397', amount: 8750000, type: 'success', ts: '09:31' },
-  { who: 'rendra', what: 'mengarsip', target: 'RG-2605-0231', amount: null, type: 'danger', ts: '09:12' },
-  // Stock Opname & Mutasi Stok
-  { who: 'adi.s', what: 'membuat', target: 'inv-opname-2605-03', amount: null, type: 'info', ts: '09:05' },
-  { who: 'maya.p', what: 'menyetujui', target: 'inv-opname-2605-03', amount: null, type: 'success', ts: '09:02' },
-  { who: 'rendra', what: 'memposting', target: 'MUT-2605-0088', amount: null, type: 'success', ts: '08:50' },
-  // Penyesuaian stok
-  { who: 'budi.t', what: 'membuat', target: 'ADJ-2605-0021', amount: null, type: 'info', ts: '08:44' },
-  { who: 'adi.s', what: 'menolak', target: 'ADJ-2605-0020', amount: null, type: 'danger', ts: '08:40' },
-  // Purchasing: PO, Penerimaan, Faktur
-  { who: 'maya.p', what: 'membuat', target: 'PO-2605-0087', amount: -24500000, type: 'info', ts: '08:33' },
-  { who: 'fitri.h', what: 'menyetujui', target: 'PO-2605-0087', amount: -24500000, type: 'success', ts: '08:30' },
-  { who: 'rendra', what: 'memposting', target: 'GR-2605-0063', amount: null, type: 'success', ts: '08:22' },
-  { who: 'budi.t', what: 'membuat', target: 'PINV-2605-0045', amount: -18900000, type: 'info', ts: '08:10' },
-  // Sales: SO, Pengiriman, Faktur
-  { who: 'adi.s', what: 'membuat', target: 'SO-2605-1234', amount: 31200000, type: 'info', ts: '07:58' },
-  { who: 'maya.p', what: 'memposting', target: 'DEL-2605-0512', amount: null, type: 'success', ts: '07:45' },
-  { who: 'fitri.h', what: 'membuat', target: 'SINV-2605-0991', amount: 31200000, type: 'info', ts: '07:40' },
-  // Produksi: Work Order, BOM
-  { who: 'rendra', what: 'membuat', target: 'WO-2605-0045', amount: null, type: 'info', ts: '07:30' },
-  { who: 'budi.t', what: 'mengedit', target: 'BOM-IT-0082-v3', amount: null, type: 'warn', ts: '07:20' },
-  // Fixed Asset disposal & User/Role
-  { who: 'adi.s', what: 'memposting', target: 'DSP-2605-0007', amount: -5000000, type: 'danger', ts: '07:05' },
-  // User/role change
-  { who: 'maya.p', what: 'mengedit', target: 'user:budi.t (role:Kasir)', amount: null, type: 'warn', ts: '1 jam lalu' },
+  { who: 'rendra', what: 'membatalkan', target: 'RG-2605-0231', amount: null, type: 'danger', ts: '09:12' },
+  { who: 'adi.s', what: 'menyimpan', target: 'CB-2605-0019', amount: null, type: 'info', ts: '08:58' },
 ];
 
 const KPI_SERIES = {

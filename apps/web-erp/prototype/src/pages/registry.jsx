@@ -188,12 +188,6 @@ const pageMeta = (route, t) => {
   if (route === 'statistik') return { title: tx('Statistik'), code: null, icon: 'stats', crumbs: [{ label: tx('Statistik') }] };
   if (route === 'set-prefs') return { title: tx('Preferensi'), code: 'PR', icon: 'gear', crumbs: [{ label: tx('Setting') }, { label: tx('Preferensi') }] };
   if (route === 'set-appearance') return { title: tx('Tampilan'), code: 'UI', icon: 'moon', crumbs: [{ label: tx('Setting') }, { label: tx('Tampilan') }] };
-  if (route === 'approval-queue') return { title: tx('Persetujuan'), code: 'APQ', icon: 'check', crumbs: [{ label: tx('Persetujuan') }] };
-  if (route === 'audit-trail') return { title: tx('Jejak Audit'), code: 'AUD', icon: 'clock', crumbs: [{ label: tx('Jejak Audit') }] };
-  if (route.endsWith('-view') && route.length > 5) {
-    const meta = pageMeta(route.slice(0, -5), t);
-    return { ...meta, crumbs: [...meta.crumbs, { label: tx('Detail') }] };
-  }
   if (route.endsWith('-new')) {
     const meta = pageMeta(route.slice(0, -4), t);
     return { ...meta, code: meta.code ? `${meta.code} · Baru` : 'Baru', crumbs: [...meta.crumbs, { label: 'Baru' }] };
@@ -211,11 +205,6 @@ const pageMeta = (route, t) => {
     const m = REPORTS[route];
     return { title: tx(m.label), code: m.code, icon: 'file',
       crumbs: [{ label: tx('Keuangan') }, { label: tx('Laporan') }, { label: tx(m.label) }] };
-  }
-  if (window.MODULE_REPORTS && window.MODULE_REPORTS[route]) {
-    const m = window.MODULE_REPORTS[route];
-    return { title: tx(m.label), code: null, icon: GROUP_ICON[m.group] || 'file',
-      crumbs: [{ label: tx(m.group) }, { label: tx('Laporan') }, { label: tx(m.label) }] };
   }
   if (REGISTRY[route]) {
     const m = REGISTRY[route];

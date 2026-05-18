@@ -18,23 +18,14 @@ const renderRoute = (route, onNav, onOpen, t, lang, tw) => {
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpen}/>;
   if (route === 'set-prefs') return <SettingsPage t={t}/>;
   if (route === 'set-appearance') return <AppearancePage t={t} tw={tw}/>;
-  if (route === 'approval-queue') return <ApprovalQueue t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
-  if (route === 'audit-trail') return <AuditTrail t={t}/>;
   if (route.endsWith('-new')) {
     const base = route.slice(0, -4);
     if (window.TRX_CFG && window.TRX_CFG[base]) return <TrxForm moduleId={base} t={t} lang={lang} onNavigate={onNav}/>;
-    if (window.DOC_CFG && window.DOC_CFG[base]) return <DocForm moduleId={base} t={t} onNavigate={onNav}/>;
     if (window.REGISTRY && window.REGISTRY[base]) return <RecordForm moduleId={base} t={t} onNavigate={onNav}/>;
-  }
-  if (route.endsWith('-view') && route.length > 5) {
-    const base = route.slice(0, -5);
-    return <DetailPage moduleId={base} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   }
   if (route === 'kas-masuk') return <KasMasukList t={t} lang={lang} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.MODULES && window.MODULES[route]) return <GenericList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   if (window.REPORTS && window.REPORTS[route]) return <FinancialReport moduleId={route} t={t}/>;
-  if (window.MODULE_REPORTS_EXT && window.MODULE_REPORTS_EXT[route]) return <ModuleReportExt moduleId={route} t={t}/>;
-  if (window.MODULE_REPORTS && window.MODULE_REPORTS[route]) return <ModuleReport moduleId={route} t={t}/>;
   if (window.REGISTRY && window.REGISTRY[route]) return <DataList moduleId={route} t={t} onNavigate={onNav} onOpenTab={onOpen}/>;
   return <div style={{ padding: 32, color: 'var(--fg-muted)' }}>Halaman <strong>{route}</strong> belum tersedia di prototype ini.</div>;
 };
@@ -139,8 +130,6 @@ const App = () => {
     if (inEditor) return;
     if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); setShortcutsOpen(true); return; }
     if (e.key === '/') { e.preventDefault(); document.querySelector('.search-input input')?.focus(); return; }
-    if (e.key === ']') { e.preventDefault(); const idx = tabs.findIndex(tb => tb.id === activeId); setActiveId(tabs[(idx + 1) % tabs.length].id); return; }
-    if (e.key === '[') { e.preventDefault(); const idx = tabs.findIndex(tb => tb.id === activeId); setActiveId(tabs[(idx - 1 + tabs.length) % tabs.length].id); return; }
     if (e.key.toLowerCase() === 't') { setTweak('theme', tw.theme === 'dark' ? 'light' : 'dark'); return; }
     if (e.key.toLowerCase() === 'l') { setTweak('lang', lang === 'id' ? 'en' : 'id'); return; }
     if (e.key.toLowerCase() === 'g') {
@@ -236,36 +225,20 @@ const App = () => {
           <div className="sc-card" onClick={e => e.stopPropagation()}>
             <h3>Keyboard Shortcuts</h3>
             <div className="sc-grid">
-              <div style={{ gridColumn: '1/-1', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingBottom: 2, borderBottom: '1px solid var(--border)', marginBottom: 4 }}>Global</div>
               <div>Buka command palette</div><div><Kbd>⌘</Kbd><Kbd>K</Kbd></div>
               <div>Tutup tab aktif</div><div><Kbd>⌘</Kbd><Kbd>W</Kbd></div>
-              <div>Tab berikutnya / sebelumnya</div><div><Kbd>]</Kbd> / <Kbd>[</Kbd></div>
               <div>Fokus pencarian</div><div><Kbd>/</Kbd></div>
               <div>Toggle dark mode</div><div><Kbd>T</Kbd></div>
               <div>Toggle bahasa ID/EN</div><div><Kbd>L</Kbd></div>
-              <div>Tampilkan shortcut ini</div><div><Kbd>?</Kbd></div>
-              <div style={{ gridColumn: '1/-1', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingBottom: 2, borderBottom: '1px solid var(--border)', marginBottom: 4, marginTop: 8 }}>Navigasi cepat (G + ...)</div>
-              <div>Dashboard</div><div><Kbd>G</Kbd> <Kbd>H</Kbd></div>
-              <div>Kas Masuk</div><div><Kbd>G</Kbd> <Kbd>K</Kbd></div>
-              <div>Kas Keluar</div><div><Kbd>G</Kbd> <Kbd>C</Kbd></div>
-              <div>Bank Masuk</div><div><Kbd>G</Kbd> <Kbd>B</Kbd></div>
-              <div>Jurnal Umum</div><div><Kbd>G</Kbd> <Kbd>J</Kbd></div>
-              <div>Buku Besar</div><div><Kbd>G</Kbd> <Kbd>L</Kbd></div>
-              <div>Statistik</div><div><Kbd>G</Kbd> <Kbd>S</Kbd></div>
-              <div style={{ gridColumn: '1/-1', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingBottom: 2, borderBottom: '1px solid var(--border)', marginBottom: 4, marginTop: 8 }}>Halaman Daftar</div>
+              <div>Buka Dashboard</div><div><Kbd>G</Kbd> <Kbd>H</Kbd></div>
+              <div>Buka Kas Masuk</div><div><Kbd>G</Kbd> <Kbd>K</Kbd></div>
+              <div>Buka Statistik</div><div><Kbd>G</Kbd> <Kbd>S</Kbd></div>
+              <div>Buka Buku Besar</div><div><Kbd>G</Kbd> <Kbd>L</Kbd></div>
+              <div>Transaksi baru</div><div><Kbd>N</Kbd></div>
+              <div>Pilih/buang baris</div><div><Kbd>X</Kbd> atau <Kbd>Space</Kbd></div>
               <div>Navigasi baris</div><div><Kbd>J</Kbd> / <Kbd>K</Kbd></div>
-              <div>Buka detail baris</div><div><Kbd>↵</Kbd></div>
-              <div>Pilih / buang baris</div><div><Kbd>X</Kbd> atau <Kbd>Space</Kbd></div>
-              <div>Tambah baru</div><div><Kbd>N</Kbd></div>
-              <div style={{ gridColumn: '1/-1', fontSize: 11, color: 'var(--fg-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingBottom: 2, borderBottom: '1px solid var(--border)', marginBottom: 4, marginTop: 8 }}>Halaman Detail / Form</div>
-              <div>Kembali ke daftar</div><div><Kbd>ESC</Kbd></div>
-              <div>Edit dokumen</div><div><Kbd>E</Kbd></div>
-              <div>Setujui dokumen</div><div><Kbd>A</Kbd></div>
-              <div>Tolak dokumen</div><div><Kbd>R</Kbd></div>
-              <div>Cetak dokumen</div><div><Kbd>P</Kbd></div>
-              <div>Simpan form</div><div><Kbd>⌘</Kbd><Kbd>S</Kbd></div>
-              <div>Simpan & buat baru</div><div><Kbd>⌘</Kbd><Kbd>⇧</Kbd><Kbd>S</Kbd></div>
-              <div>Tambah baris</div><div><Kbd>+</Kbd></div>
+              <div>Tampilkan shortcut</div><div><Kbd>?</Kbd></div>
+              <div>Tutup overlay</div><div><Kbd>ESC</Kbd></div>
             </div>
             <div style={{ marginTop: 16, textAlign: 'right' }}>
               <button className="btn" onClick={() => setShortcutsOpen(false)}>Tutup <Kbd>ESC</Kbd></button>

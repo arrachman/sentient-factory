@@ -12,19 +12,10 @@ const GL_ACCOUNTS = [
 const BukuBesar = ({ t }) => {
   const [active, setActive] = React.useState(GL_ACCOUNTS[0].code);
   const [q, setQ] = React.useState('');
-  const [acctFocused, setAcctFocused] = React.useState(0);
 
   const acct = GL_ACCOUNTS.find(a => a.code === active) || GL_ACCOUNTS[0];
   const accounts = GL_ACCOUNTS.filter(a =>
     !q || a.code.includes(q) || a.name.toLowerCase().includes(q.toLowerCase()));
-
-  useKey((e) => {
-    if (window.__overlay) return;
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
-    if (e.key === 'j' || e.key === 'ArrowDown') { e.preventDefault(); setAcctFocused(f => Math.min(accounts.length - 1, f + 1)); }
-    else if (e.key === 'k' || e.key === 'ArrowUp') { e.preventDefault(); setAcctFocused(f => Math.max(0, f - 1)); }
-    else if (e.key === 'Enter' && accounts[acctFocused]) { e.preventDefault(); setActive(accounts[acctFocused].code); }
-  });
 
   const entries = React.useMemo(() => {
     const seed = active.split('').reduce((s, c) => s + c.charCodeAt(0), 7);
@@ -71,9 +62,9 @@ const BukuBesar = ({ t }) => {
               <input placeholder="Cari akun..." value={q} onChange={e => setQ(e.target.value)}/>
             </div>
           </div>
-          {accounts.map((a, i) => (
-            <div key={a.code} className={`flyout-item ${a.code === active ? 'active' : ''} ${i === acctFocused ? 'focused' : ''}`}
-              style={{ margin: 4, padding: '8px 10px' }} onClick={() => { setActive(a.code); setAcctFocused(i); }}>
+          {accounts.map(a => (
+            <div key={a.code} className={`flyout-item ${a.code === active ? 'active' : ''}`}
+              style={{ margin: 4, padding: '8px 10px' }} onClick={() => setActive(a.code)}>
               <span className="code" style={{ marginLeft: 0, marginRight: 8 }}>{a.code}</span>
               <span>{a.name}</span>
             </div>
@@ -109,9 +100,6 @@ const BukuBesar = ({ t }) => {
             </tbody>
           </table>
         </div>
-      </div>
-      <div className="pager">
-        <span className="muted">Pintasan: <Kbd>J</Kbd>/<Kbd>K</Kbd> navigasi akun · <Kbd>↵</Kbd> pilih akun</span>
       </div>
     </div>
   );

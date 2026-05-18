@@ -2,8 +2,6 @@
 const NAV = [
   { id: 'home', icon: 'home', label: 'Dashboard' },
   { id: 'statistik', icon: 'stats', label: 'Statistik' },
-  { id: 'approval-queue', icon: 'check', label: 'Persetujuan' },
-  { id: 'audit-trail', icon: 'clock', label: 'Audit Trail' },
   { id: 'master', icon: 'database', label: 'Data Master', children: [
     { id: 'm-customer', label: 'Customer', code: 'CUS' }, { id: 'm-supplier', label: 'Supplier', code: 'SUP' },
     { id: 'm-item', label: 'Item', code: 'ITM' }, { id: 'm-coa', label: 'Chart of Account', code: 'CoA' },
@@ -29,53 +27,24 @@ const NAV = [
     ]},
   ]},
   { id: 'persediaan', icon: 'boxes', label: 'Persediaan', children: [
-    { group: 'Transaksi', items: [
-      { id: 'inv-opname', label: 'Stock Opname', code: 'SO' }, { id: 'inv-mutasi', label: 'Mutasi Stok', code: 'MS' },
-      { id: 'inv-adjust', label: 'Penyesuaian', code: 'AJ' }, { id: 'inv-transfer', label: 'Transfer Gudang', code: 'TG' },
-    ]},
-    { group: 'Laporan', items: [
-      { id: 'inv-rep-stok', label: 'Stok Akhir', code: 'STA' }, { id: 'inv-rep-kartu', label: 'Kartu Stok', code: 'KST' },
-      { id: 'inv-rep-adj', label: 'Rekap Penyesuaian', code: 'RPA' },
-    ]},
+    { id: 'inv-opname', label: 'Stock Opname', code: 'SO' }, { id: 'inv-mutasi', label: 'Mutasi Stok', code: 'MS' },
+    { id: 'inv-adjust', label: 'Penyesuaian', code: 'AJ' }, { id: 'inv-transfer', label: 'Transfer Gudang', code: 'TG' },
   ]},
   { id: 'pembelian', icon: 'cart', label: 'Pembelian', children: [
-    { group: 'Transaksi', items: [
-      { id: 'pur-po', label: 'PO Pembelian', code: 'PO' }, { id: 'pur-receipt', label: 'Penerimaan Barang', code: 'PR' },
-      { id: 'pur-invoice', label: 'Faktur Pembelian', code: 'PI' }, { id: 'pur-return', label: 'Retur Pembelian', code: 'PRT' },
-    ]},
-    { group: 'Laporan', items: [
-      { id: 'pur-rep-aging', label: 'Aging Hutang', code: 'AGH' }, { id: 'pur-rep-rekap', label: 'Rekap Pembelian', code: 'RPB' },
-      { id: 'pur-rep-supp', label: 'Rekap per Supplier', code: 'RPS' },
-    ]},
+    { id: 'pur-po', label: 'PO Pembelian', code: 'PO' }, { id: 'pur-receipt', label: 'Penerimaan Barang', code: 'PR' },
+    { id: 'pur-invoice', label: 'Faktur Pembelian', code: 'PI' }, { id: 'pur-return', label: 'Retur Pembelian', code: 'PRT' },
   ]},
   { id: 'sales', icon: 'tag', label: 'Sales', children: [
-    { group: 'Transaksi', items: [
-      { id: 'sales-order', label: 'SO Penjualan', code: 'SO' }, { id: 'sal-do', label: 'Pengiriman', code: 'DO' },
-      { id: 'sal-invoice', label: 'Faktur Penjualan', code: 'SI' }, { id: 'sal-return', label: 'Retur Penjualan', code: 'SRT' },
-    ]},
-    { group: 'Laporan', items: [
-      { id: 'sls-rep-aging', label: 'Aging Piutang', code: 'AGP' }, { id: 'sls-rep-rekap', label: 'Rekap Penjualan', code: 'RPS' },
-      { id: 'sls-rep-cust', label: 'Rekap per Customer', code: 'RPC' },
-    ]},
+    { id: 'sales-order', label: 'SO Penjualan', code: 'SO' }, { id: 'sal-do', label: 'Pengiriman', code: 'DO' },
+    { id: 'sal-invoice', label: 'Faktur Penjualan', code: 'SI' }, { id: 'sal-return', label: 'Retur Penjualan', code: 'SRT' },
   ]},
   { id: 'produksi', icon: 'factory', label: 'Produksi', children: [
-    { group: 'Transaksi', items: [
-      { id: 'prd-wo', label: 'Work Order', code: 'WO' }, { id: 'prd-bom', label: 'BOM', code: 'BOM' },
-      { id: 'prd-output', label: 'Output Produksi', code: 'OP' },
-    ]},
-    { group: 'Laporan', items: [
-      { id: 'mfg-rep-wo', label: 'Rekap Work Order', code: 'RWO' },
-      { id: 'prd-rep-bom', label: 'Rekap BOM', code: 'RBOM' },
-    ]},
+    { id: 'prd-wo', label: 'Work Order', code: 'WO' }, { id: 'prd-bom', label: 'BOM', code: 'BOM' },
+    { id: 'prd-output', label: 'Output Produksi', code: 'OP' },
   ]},
   { id: 'fixed-asset', icon: 'layers', label: 'Fixed Asset', children: [
-    { group: 'Transaksi', items: [
-      { id: 'fa-list', label: 'Daftar Aset', code: 'FA' }, { id: 'fa-deprec', label: 'Penyusutan', code: 'DEP' },
-      { id: 'fa-disposal', label: 'Disposal', code: 'DSP' },
-    ]},
-    { group: 'Laporan', items: [
-      { id: 'fa-rep-rekap', label: 'Rekap Aset', code: 'RFA' }, { id: 'fa-rep-dep', label: 'Lap. Penyusutan', code: 'LPD' },
-    ]},
+    { id: 'fa-list', label: 'Daftar Aset', code: 'FA' }, { id: 'fa-deprec', label: 'Penyusutan', code: 'DEP' },
+    { id: 'fa-disposal', label: 'Disposal', code: 'DSP' },
   ]},
   { divider: true },
   { id: 'setting', icon: 'gear', label: 'Setting', children: [
