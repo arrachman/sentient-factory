@@ -104,7 +104,7 @@ export function TabBar({
             {meta.code && <span className="tab-code">{meta.code}</span>}
             <span
               className="tab-x"
-              title={t('Tutup tab')}
+              title={active ? `${t('Tutup tab')} (⌘E)` : t('Tutup tab')}
               onClick={(e) => {
                 e.stopPropagation();
                 onClose(tab.id);
@@ -118,7 +118,7 @@ export function TabBar({
       })}
       <button
         className="tab-new"
-        title={`${t('Tab baru')} (Dashboard)`}
+        title={`${t('Tab baru')} (⌘K)`}
         onClick={onNew}
       >
         <Icon name="plus" size={13} />

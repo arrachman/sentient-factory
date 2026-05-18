@@ -247,7 +247,7 @@ export function AppShell() {
     );
   }, [tabs]);
 
-  // Global shortcuts — Cmd/Ctrl+K palette, Cmd/Ctrl+W close, ? shortcuts.
+  // Global shortcuts — Cmd/Ctrl+K palette, Cmd/Ctrl+W close, Cmd/Ctrl+1-9 tabs, ? shortcuts.
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -257,9 +257,17 @@ export function AppShell() {
         setPaletteOpen(true);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w') {
+      if (e.metaKey && e.code === 'KeyE') {
         e.preventDefault();
         closeTab(activeId);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
+        e.preventDefault();
+        const n = parseInt(e.key, 10);
+        // Cmd/Ctrl+9 → last tab (browser convention)
+        const target = n === 9 ? tabs[tabs.length - 1] : tabs[n - 1];
+        if (target) setActiveId(target.id);
         return;
       }
       if (inEditor) return;
@@ -274,7 +282,18 @@ export function AppShell() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [activeId, closeTab]);
+  }, [activeId, closeTab, tabs]);
+
+  // Guard against accidental browser-tab close when Ctrl+W reaches the browser.
+  React.useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Chrome requires returnValue to trigger the native confirmation.
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, []);
 
   React.useEffect(() => {
     const sc = () => setShortcutsOpen(true);
@@ -325,7 +344,7 @@ export function AppShell() {
             onCloseOthers={closeOtherTabs}
             onCloseRight={closeTabsToRight}
             onDuplicate={duplicateTab}
-            onNew={() => openTab('home')}
+            onNew={() => setPaletteOpen(true)}
             t={t}
           />
           <div className="tabviews">
@@ -372,7 +391,11 @@ export function AppShell() {
               <div>Buka command palette</div>
               <div>⌘ K</div>
               <div>Tutup tab aktif</div>
-              <div>⌘ W</div>
+              <div>⌥ W</div>
+              <div>Pindah ke tab 1–8</div>
+              <div>⌘ 1–8</div>
+              <div>Pindah ke tab terakhir</div>
+              <div>⌘ 9</div>
               <div>Toggle bahasa ID/EN</div>
               <div>L</div>
               <div>Tampilkan shortcut</div>
