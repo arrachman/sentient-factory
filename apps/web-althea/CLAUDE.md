@@ -234,6 +234,7 @@ Owner / Resepsionis / Marketing / Intern: single-page dashboard (1 item).
 - Lupa role check di middleware → patient bisa akses route admin.
 - **SSR hydration mismatch** dari `new Date()` / `Date.now()` di first render → defer ke `useEffect`. Pattern: `useState('')` + `useEffect(() => setX(todayKey()))`. Lihat `app/psikolog/schedule/page.tsx`.
 - **Lupa filter psikolog by `serviceIds`** di custom flow — kalau bikin booking flow baru, pakai `psikologListFiltered` dari `use-wizard-state` atau replicate logic (ADR 010).
+- **`502 Bad Gateway` di `/api/*` (login dll)** → api-gateway down. Penyebab umum: container `sentient-infra-api-gateway` punya `node_modules` di **named volume terpisah** (bukan bind-mount), jadi setelah ubah `prisma/schema.prisma` Prisma client di container jadi stale → `tsc --watch` gagal compile (ratusan TS `Property 'erpX' does not exist on PrismaService`) → Node tidak listen → connection reset → NPM balas 502. Fix: `docker exec sentient-infra-api-gateway sh -c 'cd /app && npx prisma generate'`, tunggu tsc recompile (`docker logs sentient-infra-api-gateway` → "Nest application successfully started"). Selalu `prisma generate` **di dalam container** setelah schema change, bukan cuma di host.
 
 ## Domain konvensi (Althea-specific)
 
