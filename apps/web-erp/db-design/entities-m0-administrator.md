@@ -135,6 +135,73 @@ PK `@@id([userId, warehouseId])`.
 
 ---
 
+## Session, Security & Preferences (`adm_*`)
+
+### ErpUserSession  → `adm_user_sessions`  (new)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| userId ➜ | BigInt → ErpUser | |
+| refreshTokenHash | String | SHA-256 hash of the refresh token — never store plain |
+| deviceName ○ | String | e.g. `Chrome on Windows 11` |
+| ipAddress ○ | String | source IP at login |
+| userAgent ○ | String | raw User-Agent header |
+| lastActiveAt | DateTime | updated on each token refresh |
+| expiresAt | DateTime | absolute expiry of the refresh token |
+| revokedAt ○ | DateTime | set on logout / force-logout / password change |
+| revokedReason ○ | String | `LOGOUT`, `FORCE_LOGOUT`, `PASSWORD_CHANGED`, `ADMIN_REVOKE` |
+| createdAt | DateTime | login timestamp |
+
+`@@index([userId])`, `@@index([refreshTokenHash])`.
+**Append-only**: overrides global convention — no `deletedAt`, no `updatedAt`, no `updatedById`.
+A session is either active (`revokedAt IS NULL`) or revoked; never deleted (preserves audit trail).
+Password change or admin action sets `revokedAt` on all active sessions for that user.
+
+### ErpPasswordPolicy  → `adm_password_policies`  (new)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | e.g. `DEFAULT`, `ADMIN_STRICT` |
+| name | String | display label |
+| minLength | Int | @default(8) |
+| requireUppercase | Boolean | @default(true) |
+| requireLowercase | Boolean | @default(true) |
+| requireNumber | Boolean | @default(true) |
+| requireSymbol | Boolean | @default(false) |
+| maxAgeDays ○ | Int | null = no expiry; days until password must be changed |
+| historyCount | Int | @default(3) — cannot reuse last N passwords |
+| maxFailedAttempts | Int | @default(5) — triggers account lockout |
+| lockoutDurationMin | Int | @default(30) — minutes until auto-unlock |
+| maxConcurrentSessions ○ | Int | null = unlimited |
+| sessionTimeoutMin | Int | @default(480) — idle timeout (8 h) |
+| isDefault | Boolean | @default(false) — exactly one row must be `true` (app-enforced) |
+| isActive | Boolean | @default(true) |
+
+Unique `code`. App enforces a single `isDefault = true` at all times.
+Future extension: FK from `adm_roles` → `adm_password_policies` for per-role policy assignment.
+
+### ErpUserPreferences  → `adm_user_preferences`  (new)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| userId ➜ PK | BigInt → ErpUser | 1:1 — upserted on first save, never deleted |
+| theme ○ | String | `'light'` / `'dark'` / `'system'` |
+| language ○ | String(10) | BCP 47 code — overrides `adm_users.language` when set |
+| timezone ○ | String | IANA tz, e.g. `Asia/Jakarta` — for multi-office enterprise |
+| dateFormat ○ | String | `'DD/MM/YYYY'`, `'YYYY-MM-DD'`, etc. |
+| numberFormat ○ | String | `'1.000,00'` (ID) or `'1,000.00'` (US) |
+| tablePageSize ○ | Int | rows per page — app default 25 |
+| sidebarCollapsed | Boolean | @default(false) |
+| defaultBranchId ○ ➜ | BigInt → Branch | quick-filter default; must be within user's branch access |
+| metadata ○ | Json | extensible per-user overrides |
+
+PK is `userId` (1:1). Carries standard audit columns (`createdAt`, `updatedAt`,
+`createdById`, `updatedById`) but **no `deletedAt`** — preferences are upserted, not deleted.
+
+---
+
 ## System configuration (`sys_*`)
 
 ### ErpMenu  → `sys_menus`  (legacy `m0_menu`)
@@ -249,7 +316,67 @@ immutable). `createdAt` == `occurredAt`. Written by the app on every mutating ac
 
 ---
 
-**Count:** 14 Administrator entities — `adm_*` (6 identity, 3 join¹, 3 access) +
-`sys_*` (Menu, Setting, DocumentNumbering, FiscalPeriod, **AuditLog**).
+## Notification & Localization (`sys_*`)
+
+### ErpNotification  → `sys_notifications`  (new)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| recipientId ➜ | BigInt → ErpUser | |
+| type | String | e.g. `approval_request`, `recost_pending`, `stock_alert`, `period_close` |
+| title | String | short headline |
+| body | String | message body |
+| referenceEntity ○ | String | logical entity name, e.g. `ErpPurRequisition` |
+| referenceId ○ | BigInt | PK of the referenced row |
+| actionUrl ○ | String | deep-link path, e.g. `/purchase/requisitions/42` |
+| readAt ○ | DateTime | null = unread |
+| archivedAt ○ | DateTime | archived by recipient |
+| expiresAt ○ | DateTime | auto-dismiss; cleaned up by background job |
+| createdAt | DateTime | |
+
+`@@index([recipientId, readAt])`, `@@index([createdAt])`, `@@index([expiresAt])`.
+**Append-only**: no `updatedAt`, no `updatedById`, no `deletedAt`. Created by system,
+acknowledged via `readAt`, dismissed via `archivedAt`. Physical cleanup (cron) removes
+rows past `expiresAt` or beyond retention window (`sys_settings` key `notification.retention_days`).
+
+### ErpEmailTemplate  → `sys_email_templates`  (new)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String | event code, e.g. `APPROVAL_REQUEST`, `INVOICE_DUE`, `PASSWORD_RESET` |
+| name | String | display label |
+| description ○ | String | |
+| channel ◆ | `NotificationChannel` | `EMAIL` / `WHATSAPP` / `IN_APP` / `SMS` |
+| languageCode ○ ➜ | String(10) → ErpLanguage | null = language-agnostic / default; BCP 47 |
+| subject ○ | String | email subject line (EMAIL channel only) |
+| body | String | template body; HTML for email, plain text for WA/SMS; `{{placeholder}}` syntax |
+| availablePlaceholders ○ | Json | doc array: `["{{invoiceNo}}", "{{dueDate}}", "{{customerName}}"]` |
+| isActive | Boolean | @default(true) |
+
+Unique: `@@unique([code, channel, languageCode])` — same event code, different channel or
+language = separate row. Resolution order: language match → null-language fallback → skip.
+
+### ErpLanguage  → `sys_languages`  (new)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String(10) unique | BCP 47: `id`, `en`, `id-ID`, `en-US` |
+| name | String | English name, e.g. `Indonesian`, `English` |
+| nativeName | String | native script, e.g. `Bahasa Indonesia`, `English` |
+| isRtl | Boolean | @default(false) — right-to-left script flag |
+| isDefault | Boolean | @default(false) — exactly one row must be `true` (app-enforced) |
+| isActive | Boolean | @default(true) |
+
+App enforces a single `isDefault = true` row. Referenced by `adm_users.language`,
+`adm_user_preferences.language`, and `sys_email_templates.languageCode`.
+Seed minimum: `id` (default) + `en`.
+
+---
+
+**Count:** 20 Administrator entities — `adm_*` (6 identity + 3 joins¹ + 3 access + 3 session/security/prefs) +
+`sys_*` (Menu, Setting, DocumentNumbering, FiscalPeriod, AuditLog, **Notifications, EmailTemplates, Languages**).
 ¹ joins = ErpUserRole, ErpRolePermission, ErpRoleMenu. Continue to
 **[entities-m1-master-data.md](entities-m1-master-data.md)**.

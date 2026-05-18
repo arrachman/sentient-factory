@@ -30,7 +30,7 @@ new product is **fresh** — legacy is used only as a behavioral/feature referen
 | --- | --- |
 | Goal | Fresh modern product; `preferensi/` = reference only (features + business logic + flow). |
 | Frontend target | Continue `apps/web-erp/prototype/` (React SPA) as the future UI. |
-| MVP modules | **m0 Administrator** + **m1 Master Data** — *core subset only* (**31 tables**, not the ~70 legacy). |
+| MVP modules | **m0 Administrator** + **m1 Master Data** — *core subset only* (**37 tables**: 20 `adm_*`/`sys_*` + 17 `md_*`; not the ~70 legacy). |
 | Schema style | **Modern English, normalized.** No legacy column cruft; split addresses; explicit role/permission. |
 | DB placement | **Extend `apps/api-gateway/prisma/schema.prisma`** (shared Postgres with the Althea clinic domain). |
 | Surrogate PK | **`BigInt @default(autoincrement())`** — ERP transaction scale (resolved §8, diverges from api-gateway `Int`). |
@@ -97,6 +97,7 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `AddressType` | `BILLING`, `SHIPPING`, `OFFICE`, `OTHER` | `m1_contact` k1..k4 blocks |
 | `PartnerCategoryKind` | `CUSTOMER`, `SUPPLIER`, `SALESMAN`, `GENERAL` | merged contact category tables |
 | `AuditAction` | `CREATE`, `UPDATE`, `DELETE`, `RESTORE`, `LOGIN`, `LOGOUT` | new — `sys_audit_logs` (legacy `m0_userlog`) |
+| `NotificationChannel` | `EMAIL`, `WHATSAPP`, `IN_APP`, `SMS` | new — `sys_email_templates` (§8 #41) |
 | `JournalType` | `GENERAL`, `MEMORIAL`, `ADJUSTMENT`, `OPENING_BALANCE`, `CLOSING` | m2 `m2_gj`/`jm`/`aj`/`cb`; `CLOSING` = system-generated tutup buku (resolved §8 #21) |
 | `DocumentStatus` | `DRAFT`, `POSTED`, `VOID`, `CANCELLED` | m2 `*status` |
 | `PostingStatus` | `UNPOSTED`, `POSTED` | m2 `*posting` |
@@ -554,6 +555,7 @@ re-opened — see **§8.1**.
 | 38 | QC qty di `pur_goods_receipt` lines | **IN — 4 kolom QC per baris GR** | Delta kolom di `pur_goods_receipt` lines: `acceptedQty`, `rejectedQty`, `quarantineQty` (Decimal 19,4) + `qcStatus ◆ QcStatus` (`PENDING` saat dibuat). Stok naik hanya sebesar `acceptedQty`; `rejectedQty` menjadi seed baris `pur_returns`. Enum `QcStatus`. Column-level only. (2026-05-18) |
 | 39 | mfg → pur auto-PR | **IN — `workOrderId ○ ➜ MfgWorkOrder` di `pur_requisitions`** | FK opsional di `pur_requisitions.workOrderId` — menandai PR yang dipicu kekurangan material Work Order. Menutup loop produksi→pengadaan; simetris dengan `salesQuotationId` (demand dari sales). Column-level only. (2026-05-18) |
 | 40 | Approval workflow — generik `sys_approval_*` | **IN — engine generik domain `sys`** | Approval engine lintas-modul (`pur` Requisition/PO, `sls` Order, `fin` journal, `fa` requisition, dll). Tidak ada `pur_approval*` tabel — dokumen `pur` hanya membawa `status` hasil approval. Desain `sys_approval_*` = deliverable tersendiri domain `sys`. (2026-05-18) |
+| 41 | Enterprise adm+sys extensions | **IN — 6 entitas baru** | Session & auth: `adm_user_sessions` (refresh token, force logout, audit trail) + `adm_password_policies` (min-length, complexity, lockout, concurrent-session, timeout; kode `DEFAULT` / `ADMIN_STRICT`; satu row `isDefault`). Preferences: `adm_user_preferences` (theme, language override, timezone, dateFormat, numberFormat, pageSize, defaultBranch; 1:1 dengan user, upsert). Notifikasi: `sys_notifications` (in-app alert approval/recost/stok/period; append-only; TTL via `expiresAt`) + `sys_email_templates` (template multi-channel `EMAIL`/`WHATSAPP`/`IN_APP`/`SMS` × multi-language, `{{placeholder}}` syntax; unique `[code, channel, languageCode]`). Lokalisasi: `sys_languages` (BCP 47 `id`/`en`; `isDefault`; direferensikan oleh `adm_users.language`, `adm_user_preferences.language`, `sys_email_templates`). Enum baru: `NotificationChannel`. Total adm+sys: 14 → **20 entitas**. (2026-05-18) |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers),
@@ -566,7 +568,10 @@ re-opened — see **§8.1**.
 revaluation + bank rec + recurring/accrual + report definitions + credit/collection
 + inter-company, 2026-05-18 — `fin` total: 12 core → 31 entitas)**,
 **#37–40 (pur enterprise additions: 3-way match + QC qty + auto-PR mfg→pur +
-approval generik `sys_approval_*`, 2026-05-18 — column-level only, no new tables)**.
+approval generik `sys_approval_*`, 2026-05-18 — column-level only, no new tables)**,
+**#41 (enterprise adm+sys extensions: `adm_user_sessions` + `adm_password_policies` +
+`adm_user_preferences` + `sys_notifications` + `sys_email_templates` + `sys_languages`,
+2026-05-18 — adm+sys total: 14 → 20 entitas; enum `NotificationChannel` baru)**.
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 
