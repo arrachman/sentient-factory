@@ -27,12 +27,12 @@ Legend: 🔑 business key · ➜ FK · ◆ enum · ○ nullable. Money `Decimal(
 
 ### Posting matrix — `JournalType` × `FiscalPeriodStatus`
 
-| Status | Operational source docs¹ | `GENERAL` JV | `MEMORIAL`/`ADJUSTMENT`/`OPENING_BALANCE` | Recost `ADJUSTMENT` (auto) |
-| --- | --- | --- | --- | --- |
-| `OPEN` | post ✓ | post ✓ | post ✓ | ✓ |
-| `SOFT_CLOSED` | DRAFT only — posting ✗ | ✗ | post ✓ (accountant) | ✓ |
-| `CLOSED` | ✗ | ✗ | ✗ | ✗ — delta books into current OPEN period instead |
-| `REOPENED` | post ✓ | post ✓ | post ✓ | ✓ |
+| Status | Operational source docs¹ | `GENERAL` JV | `MEMORIAL`/`ADJUSTMENT`/`OPENING_BALANCE` | Recost `ADJUSTMENT` (auto) | `CLOSING` (auto, tutup buku) |
+| --- | --- | --- | --- | --- | --- |
+| `OPEN` | post ✓ | post ✓ | post ✓ | ✓ | ✗ |
+| `SOFT_CLOSED` | DRAFT only — posting ✗ | ✗ | post ✓ (accountant) | ✓ | ✓ — triggered by `fin_period_closings` run |
+| `CLOSED` | ✗ | ✗ | ✗ | ✗ — delta books into current OPEN period instead | ✗ (already closed) |
+| `REOPENED` | post ✓ | post ✓ | post ✓ | ✓ | ✓ — re-close run allowed |
 
 ¹ Operational = `fin_cash_bank_transactions`, `fin_ar_receipts`, `fin_ap_payments`,
 and posted `inv_*`/`pur_*`/`sls_*` documents.
@@ -47,7 +47,8 @@ rejected. This satisfies "di luar periodic, user tetap bisa input tanpa menggang
 
 | Enum | Values | Legacy source |
 | --- | --- | --- |
-| `JournalType` | `GENERAL`, `MEMORIAL`, `ADJUSTMENT`, `OPENING_BALANCE` | `m2_gj`/`m2_jm`/`m2_aj`/`m2_cb` |
+| `JournalType` | `GENERAL`, `MEMORIAL`, `ADJUSTMENT`, `OPENING_BALANCE`, `CLOSING` | `m2_gj`/`m2_jm`/`m2_aj`/`m2_cb`; `CLOSING` = system-generated tutup buku (resolved §8 #21) |
+| `PeriodCloseStatus` | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` | new — `fin_period_closings` run state (resolved §8 #21) |
 | `DocumentStatus` | `DRAFT`, `POSTED`, `VOID`, `CANCELLED` | `*status`/`*statussebelumnya` |
 | `PostingStatus` | `UNPOSTED`, `POSTED` | `*posting`/`*postingtgl` |
 | `SettlementStatus` | `UNPAID`, `PARTIAL`, `PAID` | `*statusbayar`/`*tgllunas` |
@@ -428,9 +429,55 @@ divisionId, subdivisionId, projectId])`. Actuals are recomputable from
 
 ---
 
-**Count:** 11 Finance (`fin_*`) entities — JournalEntry, JournalLine, LedgerEntry,
+## Period-close process (`fin_*`)
+
+### ErpFinPeriodClosing → `fin_period_closings`  (modern — no legacy table; resolved §8 #21)
+
+A **tutup-buku run**: one record per period-close execution. Triggered manually by
+the accountant after all transactions for the period are finalized. The run:
+
+1. Validates there are no un-posted or in-review documents for the period.
+2. Computes net income/loss from `fin_ledger_entries` for the period.
+3. Generates one auto `JournalType.CLOSING` entry: rolls net income/loss into the
+   `retainedEarningsAccountId` (Dr/Cr Revenue & Expense accounts to zero, Cr/Dr
+   Retained Earnings).
+4. Sets `sys_fiscal_periods.status = CLOSED` and stamps `closedAt`/`closedById`.
+5. Sets own `status = COMPLETED`.
+
+If the period is `REOPENED` later, a new closing run can be initiated (re-close).
+`fin_ledger_entries` stays immutable — the closing JV is a normal posted entry.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| docNumber 🔑 | String unique | run reference (via `sys_document_numberings`) |
+| fiscalPeriodId ➜ | BigInt → ErpFiscalPeriod | one closing per period per run |
+| status ◆ | `PeriodCloseStatus` | `PENDING`/`IN_PROGRESS`/`COMPLETED`/`FAILED` |
+| retainedEarningsAccountId ➜ | BigInt → Account | target CoA for laba ditahan roll |
+| closingJournalEntryId ○ ➜ | BigInt → ErpFinJournalEntry | the auto CLOSING JV generated |
+| netAmount ○ | Decimal(19,4) | net income (positive) or net loss (negative) rolled |
+| startedAt ○ | DateTime | |
+| completedAt ○ | DateTime | |
+| failedAt ○ | DateTime | |
+| failureReason ○ | String | error detail if `FAILED` |
+| reopenedAt ○ | DateTime | if the period was subsequently reopened |
+| reopenedById ○ ➜ | BigInt → ErpUser | who reopened |
+| reopenReason ○ | String | mandatory on reopen |
+| notes ○ | String | operator notes |
+
+Relations: `fiscalPeriod`, `retainedEarningsAccount`, `closingJournalEntry`,
+`reopenedBy`. Indexes: `@@index([fiscalPeriodId])`, `@@index([status])`.
+
+> **Unique constraint:** `@@unique([fiscalPeriodId])` — one *active* close run per
+> period. If a period is reopened and re-closed, the same record is updated
+> (status transitions `COMPLETED → [period reopened] → IN_PROGRESS → COMPLETED`).
+> Historical runs are captured via `sys_audit_logs` on each transition.
+
+---
+
+**Count:** 12 Finance (`fin_*`) entities — JournalEntry, JournalLine, LedgerEntry,
 CashBankTransaction, CashBankLine, ArReceipt, ApPayment, PaymentInstrument,
-SettlementAllocation, Giro, BudgetRealization. Plus **4 GL dimension masters**
+SettlementAllocation, Giro, BudgetRealization, **PeriodClosing**. Plus **4 GL dimension masters**
 moved to `md_*` (CostCenter, Division, Subdivision, Project — to be folded into a
 revised `entities-m1-master-data.md` count). Accounting period **reuses**
 `sys_fiscal_periods` (no new table).

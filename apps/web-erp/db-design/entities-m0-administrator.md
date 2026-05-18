@@ -226,8 +226,8 @@ Unique: `@@unique([year, periodNo])` — **global scope, no branch dimension** (
 Reopen + soft-close transitions are audited (`sys_audit_logs`). The
 `JournalType × FiscalPeriodStatus` posting matrix is detailed in
 [entities-m2-finance.md](entities-m2-finance.md). Period-close *process*
-automation (`fin_period_closings`, `JournalType.CLOSING`) is **deferred / open**
-— see [README §8.1](README.md#81-open-decision-re-opened-2026-05-17).
+automation is modeled via `fin_period_closings` + `JournalType.CLOSING`
+— resolved §8 #21, see [entities-m2-finance.md §Period-close process](entities-m2-finance.md).
 
 ### ErpAuditLog  → `sys_audit_logs`  (legacy `m0_userlog` — promoted into MVP, resolved §8 #3)
 

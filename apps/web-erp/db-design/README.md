@@ -97,7 +97,7 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `AddressType` | `BILLING`, `SHIPPING`, `OFFICE`, `OTHER` | `m1_contact` k1..k4 blocks |
 | `PartnerCategoryKind` | `CUSTOMER`, `SUPPLIER`, `SALESMAN`, `GENERAL` | merged contact category tables |
 | `AuditAction` | `CREATE`, `UPDATE`, `DELETE`, `RESTORE`, `LOGIN`, `LOGOUT` | new — `sys_audit_logs` (legacy `m0_userlog`) |
-| `JournalType` | `GENERAL`, `MEMORIAL`, `ADJUSTMENT`, `OPENING_BALANCE` | m2 `m2_gj`/`jm`/`aj`/`cb` |
+| `JournalType` | `GENERAL`, `MEMORIAL`, `ADJUSTMENT`, `OPENING_BALANCE`, `CLOSING` | m2 `m2_gj`/`jm`/`aj`/`cb`; `CLOSING` = system-generated tutup buku (resolved §8 #21) |
 | `DocumentStatus` | `DRAFT`, `POSTED`, `VOID`, `CANCELLED` | m2 `*status` |
 | `PostingStatus` | `UNPOSTED`, `POSTED` | m2 `*posting` |
 | `SettlementStatus` | `UNPAID`, `PARTIAL`, `PAID` | m2 `*statusbayar` |
@@ -113,6 +113,7 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `AdjustmentDirection` | `INCREASE`, `DECREASE` | m3 `m3_sa` |
 | `CostingMethod` | `AVG`, `FIFO`, `STD` | new — inventory valuation (resolved §8 #19); global setting, default `AVG` |
 | `CostRecalcStatus` | `PENDING`, `COMPLETED`, `FAILED` | new — `inv_cost_recalculations` run state (resolved §8 #18) |
+| `PeriodCloseStatus` | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` | new — `fin_period_closings` run state (resolved §8 #21) |
 | `PurchaseDocType` | `REQUISITION`, `RFQ`, `QUOTATION`, `BID_SELECTION`, `ORDER`, `GOODS_RECEIPT`, `INVOICE`, `RETURN` | m4 chain |
 | `PurchaseReturnType` | `DEBIT_NOTE`, `RETURN_TO_VENDOR` | m4 `m4_dnr` vs `m4_prt` |
 | `PriceMode` | `TAX_INCLUSIVE`, `TAX_EXCLUSIVE` | m4 `*hargatermasukpajak` |
@@ -436,18 +437,18 @@ re-opened — see **§8.1**.
 | 18 | Inventory accounting & HPP recalculation | **Perpetual + recost adjustment** | COGS booked per transaction; backdated/cost-affecting posts trigger a **recost run** (`inv_cost_recalculations`) that emits an auto `JournalType.ADJUSTMENT` for the COGS delta. `fin_ledger_entries` stays immutable — no edits to posted rows. Line `unitCost` = frozen as-posted snapshot; recomputed cost lives in the recost record + `inv_stock_balances`. +1 `inv_*` table + `CostRecalcStatus` enum. |
 | 19 | Costing method made explicit | **Global setting, default `AVG`** | New `CostingMethod` enum (`AVG`/`FIFO`/`STD`); held as `sys_settings` key `inventory.costing_method` (default `AVG` = moving-average). Not per-item. Recost logic must be method-aware. |
 | 20 | Period lifecycle for non-disruptive input | **Add `SOFT_CLOSED` + `REOPENED`** | `FiscalPeriodStatus` → `OPEN`→`SOFT_CLOSED`→`CLOSED`→`REOPENED`. `FiscalPeriod` gains reopen-audit fields. Operational docs keep posting while accountant finalizes; matrix `JournalType × FiscalPeriodStatus` defined in `entities-m2-finance.md`. Invariant added: `fiscalPeriodId` ≡ period containing `entryDate`. |
-| 21 | Period-close process entity & `JournalType.CLOSING` | **Deferred (OPEN)** | NOT modeled now. `fin_period_closings` + closing journal type left **open** — see §8.1. MVP+m2 scope focuses on recost HPP (#18) + soft-lock (#20); period-end batch closing handled later. |
+| 21 | Period-close process entity & `JournalType.CLOSING` | **RESOLVED — model penuh** | `fin_period_closings` run entity modeled in `entities-m2-finance.md`. Auto generates `JournalType.CLOSING` JV + roll laba ditahan. `PeriodCloseStatus` enum (`PENDING`/`IN_PROGRESS`/`COMPLETED`/`FAILED`). Reopenable; audit fields on both `sys_fiscal_periods` and `fin_period_closings`. |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers).
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 
-### 8.1 Open decision (re-opened 2026-05-17)
+### 8.1 ~~Open decision~~ — resolved 2026-05-18
 
 | # | Question | Status | Notes |
 | --- | --- | --- | --- |
-| 21 | Period-close process: dedicated `fin_period_closings` run entity + `JournalType.CLOSING`/`PERIOD_END` (generated closing journal, retained-earnings roll, reopenable)? | **OPEN — deferred** | Resolve before the m2 `fin` Prisma write. Until then: period close = setting `status = CLOSED` + manual closing JV (`JournalType.MEMORIAL`/`ADJUSTMENT`); no automated tutup-buku run. Recost (#18) and soft-lock (#20) do **not** depend on this. |
+| 21 | Period-close process: dedicated `fin_period_closings` run entity + `JournalType.CLOSING` (generated closing journal, retained-earnings roll, reopenable)? | **RESOLVED (2026-05-18) — Opsi A model penuh** | `fin_period_closings` modeled in `entities-m2-finance.md`. `JournalType.CLOSING` added to enum. Roll laba ditahan otomatis saat `COMPLETED`; run reopenable. Semua open decision sekarang **sudah resolved** — siap untuk Prisma m2 bila user beri go-ahead. |
 
 ## 9. Deferred (intentionally NOT in this MVP)
 
