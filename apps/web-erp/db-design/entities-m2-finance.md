@@ -27,19 +27,25 @@ Legend: 🔑 business key · ➜ FK · ◆ enum · ○ nullable. Money `Decimal(
 
 ### Posting matrix — `JournalType` × `FiscalPeriodStatus`
 
-| Status | Operational source docs¹ | `GENERAL` JV | `MEMORIAL`/`ADJUSTMENT`/`OPENING_BALANCE` | Recost `ADJUSTMENT` (auto) | `CLOSING` (auto, tutup buku) |
+| Status | Operational source docs¹ | `GENERAL` JV | `MEMORIAL`/`ADJUSTMENT`/`OPENING_BALANCE` | Recost (direct-update ledger) | `CLOSING` (auto, tutup buku) |
 | --- | --- | --- | --- | --- | --- |
-| `OPEN` | post ✓ | post ✓ | post ✓ | ✓ | ✗ |
-| `SOFT_CLOSED` | DRAFT only — posting ✗ | ✗ | post ✓ (accountant) | ✓ | ✓ — triggered by `fin_period_closings` run |
-| `CLOSED` | ✗ | ✗ | ✗ | ✗ — delta books into current OPEN period instead | ✗ (already closed) |
-| `REOPENED` | post ✓ | post ✓ | post ✓ | ✓ | ✓ — re-close run allowed |
+| `OPEN` | post ✓ | post ✓ | post ✓ | ✓ update `fin_ledger_entries` langsung | ✗ |
+| `SOFT_CLOSED` | DRAFT only — posting ✗ | ✗ | post ✓ (accountant) | ✓ update `fin_ledger_entries` langsung | ✓ — triggered by `fin_period_closings` run |
+| `CLOSED` | ✗ | ✗ | ✗ | ✗ — tidak bisa recost periode yang sudah `CLOSED` | ✗ (already closed) |
+| `REOPENED` | post ✓ | post ✓ | post ✓ | ✓ update `fin_ledger_entries` langsung | ✓ — re-close run allowed |
 
 ¹ Operational = `fin_cash_bank_transactions`, `fin_ar_receipts`, `fin_ap_payments`,
-and posted `inv_*`/`pur_*`/`sls_*` documents.
+dan posted `inv_*`/`pur_*`/`sls_*` documents.
 **Non-disruptive input:** a `SOFT_CLOSED`/`CLOSED` period never blocks users —
 they keep creating `DRAFT`s and posting freely into any `OPEN`/`REOPENED` period;
 only *posting that would write `fin_ledger_entries` into the locked period* is
 rejected. This satisfies "di luar periodic, user tetap bisa input tanpa mengganggu."
+
+**Edit dokumen POSTED (resolved §8 #22):** dokumen yang sudah `POSTED` bisa
+diedit. Saat disimpan, sistem otomatis: (1) reverse `fin_ledger_entries` lama
+milik dokumen itu, (2) post ulang dengan nilai baru, (3) buat
+`inv_cost_recalculations` `status = PENDING`. UI tampilkan notifikasi recost
+pending selama ada run `PENDING` untuk periode yang bersangkutan.
 
 ---
 
@@ -151,22 +157,19 @@ Indexes: `@@index([fiscalPeriodId])`, `@@index([entryDate])`, `@@index([journalT
 ### ErpFinLedgerEntry → `fin_ledger_entries`  (legacy `m2_transaction_journal`)
 
 The single posted-movement table — source for trial balance, GL, AR/AP aging,
-cash-flow. **Append-on-post & immutable** (overrides global soft-delete/updatedAt;
-corrections are reversing entries, never edits).
+cash-flow. **Append-on-post; `debit`/`credit` dapat di-update oleh recost run
+yang sah** (resolved §8 #23). Koreksi non-recost tetap via reversing entry.
 
-**HPP recalculation → recost adjustment (resolved §8 #18).** Inventory is
-**perpetual** (moving-average by default — `CostingMethod` setting, §8 #19). A
-backdated or cost-affecting `inv_*` post invalidates downstream COGS already in
-`fin_ledger_entries`. Because this table is immutable, the fix is **never an edit**:
-the recost run (`inv_cost_recalculations`, see [entities-m3-inventory.md](entities-m3-inventory.md))
-recomputes the moving-average and emits an **auto `JournalType.ADJUSTMENT` journal
-entry** for the COGS/inventory delta, posted via the normal `fin_journal_entries`
-→ `fin_ledger_entries` path. Targeting rule: the delta books into the affected
-period if `OPEN`/`SOFT_CLOSED`/`REOPENED`; if that period is `CLOSED`, it books
-into the current `OPEN` period instead (per the posting matrix above). The
-`unitCost` on `inv_*` lines is the **frozen as-posted snapshot** — never
-overwritten by a recost; recomputed cost lives in the recost record and the
-derived `inv_stock_balances` projection.
+**HPP recalculation → recost direct-update (resolved §8 #18, #23).**
+Inventory adalah **perpetual moving-average** (`CostingMethod` setting, §8 #19).
+Saat ada edit dokumen POSTED atau posting terlambat yang mengubah cost history,
+sistem buat `inv_cost_recalculations` `PENDING`. Akuntan trigger recost →
+run recomputes moving-average → **langsung update `debit`/`credit` pada baris
+COGS yang ada** di `fin_ledger_entries` (tidak emit jurnal ADJUSTMENT baru).
+Neraca + Laba Rugi otomatis fix karena laporan baca langsung dari tabel ini.
+Setiap baris yang di-update di-stamp `recostedAt`/`recostedById`/`recostedByRunId`.
+Recost hanya bisa jalan di periode `OPEN`/`SOFT_CLOSED`/`REOPENED` — periode
+`CLOSED` tidak bisa di-recost (per posting matrix).
 
 | Field | Type | Notes |
 | --- | --- | --- |
@@ -201,6 +204,9 @@ derived `inv_stock_balances` projection.
 | isOpeningBalance | Boolean | `tsaldoawal` |
 | isAdjustment | Boolean | `tadjustment` |
 | isRetail | Boolean | `tretail` |
+| recostedAt ○ | DateTime | timestamp recost terakhir yang update baris ini |
+| recostedById ○ ➜ | BigInt → ErpUser | user yang trigger recost |
+| recostedByRunId ○ ➜ | BigInt → ErpInvCostRecalculation | run recost yang mengubah baris ini (audit trail) |
 | group ○ | String | `tgrup` |
 | cashFlowCategory ○ ◆ | `CashFlowCategory` | `tjenisaruskas` |
 | budgetRealizedAmount ○ | Decimal(19,4) | `tjmlrealisasium` |

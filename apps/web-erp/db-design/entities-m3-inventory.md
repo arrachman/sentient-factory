@@ -23,13 +23,17 @@ FK = `fiscalPeriodId → sys_fiscal_periods` (no new period table).
 > Legacy denormalized `namabarang`/`tipebarang`/`satuanbarang` echoes are dropped
 > (resolved via the `md_items`/`md_units` relations).
 >
-> **Costing model (resolved §8 #18–19).** Inventory is **perpetual**; valuation
-> method = `CostingMethod` setting (`sys_settings` key `inventory.costing_method`,
-> default `AVG` = moving-average; `FIFO`/`STD` selectable). Line `unitCost` is the
-> **frozen as-posted snapshot** — never overwritten. When a backdated/cost-affecting
-> post changes history, an `inv_cost_recalculations` run recomputes the cost layer
-> and emits an auto `JournalType.ADJUSTMENT` for the COGS delta (mechanics in
-> [entities-m2-finance.md](entities-m2-finance.md) — ledger stays immutable).
+> **Costing model (resolved §8 #18–19, #22–23).** Inventory adalah **perpetual**;
+> valuation method = `CostingMethod` setting (`sys_settings` key
+> `inventory.costing_method`, default `AVG` = moving-average; `FIFO`/`STD`
+> selectable). Line `unitCost` adalah **frozen as-posted snapshot** — tidak pernah
+> ditimpa. Saat dokumen POSTED diedit atau ada posting terlambat yang mengubah
+> cost history, sistem otomatis buat `inv_cost_recalculations` `PENDING`. Akuntan
+> trigger recost → run **langsung update `debit`/`credit` pada baris COGS di
+> `fin_ledger_entries`** (tidak emit ADJUSTMENT journal baru — resolved §8 #23).
+> Neraca + Laba Rugi otomatis fix. Audit trail: baris yang di-update di-stamp
+> `recostedAt`/`recostedByRunId`; detail before→after di
+> `inv_cost_recalculation_lines`.
 
 ---
 
@@ -286,42 +290,41 @@ Gross/tare/net weighing ticket (commodity/bulk inventory).
 
 ### ErpInvCostRecalculation → `inv_cost_recalculations`  (modern — no legacy table)
 
-A **recost run**: records when/why the cost layer was recomputed, its scope, and
-the adjustment journal it produced. Triggered when a backdated or cost-affecting
-post (purchase receipt, opening stock, adjustment, return) changes valuation
-history under the perpetual `CostingMethod` (resolved §8 #18). It does **not**
-edit `fin_ledger_entries` or line `unitCost` snapshots — it recomputes the
-moving-average and **emits one auto `JournalType.ADJUSTMENT`** for the net
-COGS/inventory delta.
+A **recost run**: records when/why the cost layer was recomputed and which
+`fin_ledger_entries` rows were updated. Triggered when (a) dokumen POSTED
+diedit (`EDITED_DOC`), (b) ada posting terlambat/backdated, atau (c) manual
+oleh akuntan. Recost **langsung update `debit`/`credit` pada baris COGS
+di `fin_ledger_entries`** — tidak emit jurnal ADJUSTMENT baru (resolved §8 #23).
+Neraca + Laba Rugi otomatis fix setelah run `COMPLETED`.
 
 | Field | Type | Notes |
 | --- | --- | --- |
 | id | BigInt PK | |
 | docNumber 🔑 | String unique | run reference (via `sys_document_numberings`) |
 | costingMethod ◆ | `CostingMethod` | method applied (snapshot of the setting at run time) |
-| triggerType | String | `BACKDATED_POST` / `MANUAL` / `ADJUSTMENT` / `RETURN` |
+| triggerType | String | `EDITED_DOC` / `BACKDATED_POST` / `MANUAL` / `ADJUSTMENT` / `RETURN` |
 | triggerSourceDocType ○ | String | originating doc table key |
 | triggerSourceId ○ | BigInt | originating doc row id |
 | itemId ○ ➜ | BigInt → Item | scope: single item (null = all in scope) |
 | warehouseId ○ ➜ | BigInt → Warehouse | scope: single warehouse (null = all) |
 | fromDate | Date | recompute window start (earliest affected movement) |
 | toDate ○ | Date | window end (null = up to latest) |
-| fiscalPeriodId ➜ | BigInt → ErpFiscalPeriod | period the delta journal targets (per posting matrix) |
+| fiscalPeriodId ➜ | BigInt → ErpFiscalPeriod | periode yang di-recost (harus `OPEN`/`SOFT_CLOSED`/`REOPENED`) |
 | status ◆ | `CostRecalcStatus` | `PENDING`/`COMPLETED`/`FAILED` |
-| adjustmentJournalEntryId ○ ➜ | BigInt → ErpFinJournalEntry | the auto COGS-delta journal it generated |
-| deltaAmount ○ | Decimal(19,4) | net COGS/inventory delta booked |
+| totalDelta ○ | Decimal(19,4) | total net COGS delta (sum of all line deltas) — informasi saja |
 | startedAt ○ | DateTime | |
 | completedAt ○ | DateTime | |
 | notes ○ | String | failure reason / operator note |
 
 Relations: `lines ErpInvCostRecalculationLine[]`, `item`, `warehouse`,
-`fiscalPeriod`, `adjustmentJournalEntry`. Indexes:
+`fiscalPeriod`. Indexes:
 `@@index([status])`, `@@index([itemId, warehouseId])`,
 `@@index([triggerSourceDocType, triggerSourceId])`.
 
 ### ErpInvCostRecalculationLine → `inv_cost_recalculation_lines`
 
-Per item/warehouse before→after cost, for audit & report drill-down.
+Per item/warehouse before→after cost + per ledger entry yang di-update,
+untuk audit trail dan report drill-down.
 
 | Field | Type | Notes |
 | --- | --- | --- |
@@ -329,13 +332,19 @@ Per item/warehouse before→after cost, for audit & report drill-down.
 | costRecalculationId ➜ | BigInt → ErpInvCostRecalculation | |
 | itemId ➜ | BigInt → Item | |
 | warehouseId ➜ | BigInt → Warehouse | |
+| ledgerEntryId ○ ➜ | BigInt → ErpFinLedgerEntry | baris `fin_ledger_entries` yang di-update (null = item-level summary row) |
 | oldUnitCost | Decimal(19,4) | moving-average before recost |
 | newUnitCost | Decimal(19,4) | recomputed moving-average |
 | affectedQty | Decimal(19,4) | qty re-valued |
+| oldDebit ○ | Decimal(19,4) | nilai `debit` sebelum recost (snapshot) |
+| oldCredit ○ | Decimal(19,4) | nilai `credit` sebelum recost (snapshot) |
+| newDebit ○ | Decimal(19,4) | nilai `debit` setelah recost |
+| newCredit ○ | Decimal(19,4) | nilai `credit` setelah recost |
 | deltaAmount | Decimal(19,4) | `(new − old) × affectedQty` |
 | lineNo | Int | |
 
-`@@index([costRecalculationId])`, `@@index([itemId])`.
+`@@index([costRecalculationId])`, `@@index([itemId])`,
+`@@index([ledgerEntryId])`.
 
 ---
 
