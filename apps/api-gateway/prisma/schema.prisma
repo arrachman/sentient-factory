@@ -1062,3 +1062,948 @@ model ClinicIdempotencyKey {
   @@index([createdAt])
   @@map("clinic_idempotency_key")
 }
+
+// ==========================================
+// SENTI ERP — MVP: m0 Administrator + m1 Master Data
+// Domains: sys_* | adm_* | md_*
+// All ERP models prefixed Erp to avoid collision with platform models.
+// BigInt PKs throughout (resolved db-design §8 #2).
+// Enums prefixed Erp to avoid future collisions with platform enums.
+// ==========================================
+
+// --- Enums (m0 + m1 MVP) ---
+
+enum ErpUserLevel {
+  POS
+  CENTRAL
+  POS_AND_CENTRAL
+  BI
+  BI_AND_CENTRAL
+}
+
+enum ErpMenuType {
+  MODULE
+  GROUP
+  ITEM
+}
+
+enum ErpFiscalPeriodStatus {
+  OPEN
+  SOFT_CLOSED
+  CLOSED
+  REOPENED
+}
+
+enum ErpNumberingReset {
+  NEVER
+  YEARLY
+  MONTHLY
+}
+
+enum ErpItemType {
+  INVENTORY
+  SERVICE
+  VOUCHER
+  ASSEMBLY
+}
+
+enum ErpAccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+enum ErpAccountKind {
+  HEADER
+  POSTABLE
+}
+
+enum ErpNormalBalance {
+  DEBIT
+  CREDIT
+}
+
+enum ErpCashFlowCategory {
+  OPERATING
+  INVESTING
+  FINANCING
+}
+
+enum ErpAddressType {
+  BILLING
+  SHIPPING
+  OFFICE
+  OTHER
+}
+
+enum ErpPartnerCategoryKind {
+  CUSTOMER
+  SUPPLIER
+  SALESMAN
+  GENERAL
+}
+
+enum ErpAuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+  LOGIN
+  LOGOUT
+}
+
+enum ErpNotificationChannel {
+  EMAIL
+  WHATSAPP
+  IN_APP
+  SMS
+}
+
+// --- sys_* System Configuration ---
+
+model ErpMenu {
+  id          BigInt      @id @default(autoincrement())
+  code        String      @unique @map("code")
+  title       String      @map("title")
+  path        String?     @map("path")
+  icon        String?     @map("icon")
+  type        ErpMenuType @map("type")
+  parentId    BigInt?     @map("parent_id")
+  sortOrder   Int         @map("sort_order")
+  isActive    Boolean     @default(true) @map("is_active")
+  legacyCode  String?     @map("legacy_code")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?     @map("created_by_id")
+  updatedById BigInt?     @map("updated_by_id")
+  deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz(6)
+
+  parent     ErpMenu?              @relation("MenuParent", fields: [parentId], references: [id])
+  children   ErpMenu[]             @relation("MenuParent")
+  roleMenus  ErpRoleMenu[]
+  numberings ErpDocumentNumbering[]
+
+  @@index([parentId])
+  @@index([legacyCode])
+  @@map("sys_menus")
+}
+
+model ErpSetting {
+  id          BigInt    @id @default(autoincrement())
+  module      String?   @map("module")
+  group       String    @map("group")
+  key         String    @map("key")
+  name        String    @map("name")
+  value       String?   @map("value")
+  dataType    String    @map("data_type")
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([module, group, key])
+  @@map("sys_settings")
+}
+
+model ErpDocumentNumbering {
+  id               BigInt            @id @default(autoincrement())
+  documentCode     String            @unique @map("document_code")
+  name             String            @map("name")
+  prefix           String            @map("prefix")
+  digitCount       Int               @map("digit_count")
+  resetPolicy      ErpNumberingReset @map("reset_policy")
+  nextNumber       Int               @default(1) @map("next_number")
+  menuId           BigInt?           @map("menu_id")
+  affectsLedger    Boolean           @default(false) @map("affects_ledger")
+  affectsInventory Boolean           @default(false) @map("affects_inventory")
+  affectsCost      Boolean           @default(false) @map("affects_cost")
+  notes            String?           @map("notes")
+  legacyCode       String?           @map("legacy_code")
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?           @map("created_by_id")
+  updatedById      BigInt?           @map("updated_by_id")
+  deletedAt        DateTime?         @map("deleted_at") @db.Timestamptz(6)
+
+  menu ErpMenu? @relation(fields: [menuId], references: [id])
+
+  @@index([menuId])
+  @@index([legacyCode])
+  @@map("sys_document_numberings")
+}
+
+model ErpFiscalPeriod {
+  id           BigInt                @id @default(autoincrement())
+  year         Int                   @map("year")
+  periodNo     Int                   @map("period_no")
+  name         String                @map("name")
+  startDate    DateTime              @map("start_date") @db.Date
+  endDate      DateTime              @map("end_date") @db.Date
+  status       ErpFiscalPeriodStatus @default(OPEN) @map("status")
+  closedAt     DateTime?             @map("closed_at") @db.Timestamptz(6)
+  closedById   BigInt?               @map("closed_by_id")
+  softClosedAt DateTime?             @map("soft_closed_at") @db.Timestamptz(6)
+  reopenedAt   DateTime?             @map("reopened_at") @db.Timestamptz(6)
+  reopenedById BigInt?               @map("reopened_by_id")
+  reopenReason String?               @map("reopen_reason")
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById  BigInt?               @map("created_by_id")
+  updatedById  BigInt?               @map("updated_by_id")
+  deletedAt    DateTime?             @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([year, periodNo])
+  @@map("sys_fiscal_periods")
+}
+
+model ErpAuditLog {
+  id         BigInt         @id @default(autoincrement())
+  action     ErpAuditAction @map("action")
+  entityName String         @map("entity_name")
+  entityId   BigInt?        @map("entity_id")
+  summary    String?        @map("summary")
+  changes    Json?          @map("changes")
+  actorId    BigInt?        @map("actor_id")
+  actorIp    String?        @map("actor_ip")
+  occurredAt DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(6)
+
+  actor ErpUser? @relation(fields: [actorId], references: [id])
+
+  @@index([entityName, entityId])
+  @@index([actorId])
+  @@index([occurredAt])
+  @@map("sys_audit_logs")
+}
+
+model ErpNotification {
+  id              BigInt    @id @default(autoincrement())
+  recipientId     BigInt    @map("recipient_id")
+  type            String    @map("type")
+  title           String    @map("title")
+  body            String    @map("body")
+  referenceEntity String?   @map("reference_entity")
+  referenceId     BigInt?   @map("reference_id")
+  actionUrl       String?   @map("action_url")
+  readAt          DateTime? @map("read_at") @db.Timestamptz(6)
+  archivedAt      DateTime? @map("archived_at") @db.Timestamptz(6)
+  expiresAt       DateTime? @map("expires_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  recipient ErpUser @relation(fields: [recipientId], references: [id])
+
+  @@index([recipientId, readAt])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@map("sys_notifications")
+}
+
+model ErpLanguage {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code") @db.VarChar(10)
+  name        String    @map("name")
+  nativeName  String    @map("native_name")
+  isRtl       Boolean   @default(false) @map("is_rtl")
+  isDefault   Boolean   @default(false) @map("is_default")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  emailTemplates ErpEmailTemplate[]
+
+  @@map("sys_languages")
+}
+
+model ErpEmailTemplate {
+  id                    BigInt                 @id @default(autoincrement())
+  code                  String                 @map("code")
+  name                  String                 @map("name")
+  description           String?                @map("description")
+  channel               ErpNotificationChannel @map("channel")
+  languageCode          String?                @map("language_code") @db.VarChar(10)
+  subject               String?                @map("subject")
+  body                  String                 @map("body")
+  availablePlaceholders Json?                  @map("available_placeholders")
+  isActive              Boolean                @default(true) @map("is_active")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById           BigInt?                @map("created_by_id")
+  updatedById           BigInt?                @map("updated_by_id")
+  deletedAt             DateTime?              @map("deleted_at") @db.Timestamptz(6)
+
+  language ErpLanguage? @relation(fields: [languageCode], references: [code])
+
+  @@unique([code, channel, languageCode])
+  @@map("sys_email_templates")
+}
+
+// --- adm_* Identity & Access ---
+
+model ErpUser {
+  id                BigInt       @id @default(autoincrement())
+  code              String       @unique @map("code")
+  name              String       @map("name")
+  email             String?      @unique @map("email")
+  passwordHash      String       @map("password_hash")
+  level             ErpUserLevel @map("level")
+  language          String       @default("id") @map("language") @db.VarChar(2)
+  defaultMenuId     BigInt?      @map("default_menu_id")
+  homeBranchId      BigInt?      @map("home_branch_id")
+  homeWarehouseId   BigInt?      @map("home_warehouse_id")
+  salesmanPartnerId BigInt?      @map("salesman_partner_id")
+  expiresAt         DateTime?    @map("expires_at") @db.Timestamptz(6)
+  isActive          Boolean      @default(true) @map("is_active")
+  legacyCode        String?      @map("legacy_code")
+  metadata          Json?        @map("metadata")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById       BigInt?      @map("created_by_id")
+  updatedById       BigInt?      @map("updated_by_id")
+  deletedAt         DateTime?    @map("deleted_at") @db.Timestamptz(6)
+
+  roles           ErpUserRole[]
+  branchAccess    ErpUserBranchAccess[]
+  locationAccess  ErpUserLocationAccess[]
+  warehouseAccess ErpUserWarehouseAccess[]
+  sessions        ErpUserSession[]
+  preferences     ErpUserPreferences?
+  notifications   ErpNotification[]
+  auditLogs       ErpAuditLog[]
+
+  @@index([homeBranchId])
+  @@index([legacyCode])
+  @@map("adm_users")
+}
+
+model ErpRole {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  description String?   @map("description")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  users       ErpUserRole[]
+  permissions ErpRolePermission[]
+  menus       ErpRoleMenu[]
+
+  @@map("adm_roles")
+}
+
+model ErpPermission {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  group       String?   @map("group")
+  description String?   @map("description")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  roles ErpRolePermission[]
+
+  @@map("adm_permissions")
+}
+
+model ErpUserRole {
+  userId BigInt @map("user_id")
+  roleId BigInt @map("role_id")
+
+  user ErpUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role ErpRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("adm_user_roles")
+}
+
+model ErpRolePermission {
+  roleId       BigInt @map("role_id")
+  permissionId BigInt @map("permission_id")
+
+  role       ErpRole       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission ErpPermission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("adm_role_permissions")
+}
+
+model ErpRoleMenu {
+  roleId     BigInt  @map("role_id")
+  menuId     BigInt  @map("menu_id")
+  canView    Boolean @default(false) @map("can_view")
+  canCreate  Boolean @default(false) @map("can_create")
+  canEdit    Boolean @default(false) @map("can_edit")
+  canDelete  Boolean @default(false) @map("can_delete")
+  canApprove Boolean @default(false) @map("can_approve")
+  canPrint   Boolean @default(false) @map("can_print")
+  canExport  Boolean @default(false) @map("can_export")
+  canImport  Boolean @default(false) @map("can_import")
+  isFavorite Boolean @default(false) @map("is_favorite")
+
+  role ErpRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  menu ErpMenu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, menuId])
+  @@map("adm_role_menus")
+}
+
+model ErpUserBranchAccess {
+  userId   BigInt @map("user_id")
+  branchId BigInt @map("branch_id")
+
+  user   ErpUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch ErpBranch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([userId, branchId])
+  @@map("adm_user_branch_access")
+}
+
+model ErpUserLocationAccess {
+  userId     BigInt @map("user_id")
+  locationId BigInt @map("location_id")
+
+  user     ErpUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location ErpLocation @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, locationId])
+  @@map("adm_user_location_access")
+}
+
+model ErpUserWarehouseAccess {
+  userId      BigInt @map("user_id")
+  warehouseId BigInt @map("warehouse_id")
+
+  user      ErpUser      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  warehouse ErpWarehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, warehouseId])
+  @@map("adm_user_warehouse_access")
+}
+
+model ErpUserSession {
+  id               BigInt    @id @default(autoincrement())
+  userId           BigInt    @map("user_id")
+  refreshTokenHash String    @map("refresh_token_hash")
+  deviceName       String?   @map("device_name")
+  ipAddress        String?   @map("ip_address")
+  userAgent        String?   @map("user_agent")
+  lastActiveAt     DateTime  @map("last_active_at") @db.Timestamptz(6)
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokedReason    String?   @map("revoked_reason")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user ErpUser @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([refreshTokenHash])
+  @@map("adm_user_sessions")
+}
+
+model ErpPasswordPolicy {
+  id                    BigInt    @id @default(autoincrement())
+  code                  String    @unique @map("code")
+  name                  String    @map("name")
+  minLength             Int       @default(8) @map("min_length")
+  requireUppercase      Boolean   @default(true) @map("require_uppercase")
+  requireLowercase      Boolean   @default(true) @map("require_lowercase")
+  requireNumber         Boolean   @default(true) @map("require_number")
+  requireSymbol         Boolean   @default(false) @map("require_symbol")
+  maxAgeDays            Int?      @map("max_age_days")
+  historyCount          Int       @default(3) @map("history_count")
+  maxFailedAttempts     Int       @default(5) @map("max_failed_attempts")
+  lockoutDurationMin    Int       @default(30) @map("lockout_duration_min")
+  maxConcurrentSessions Int?      @map("max_concurrent_sessions")
+  sessionTimeoutMin     Int       @default(480) @map("session_timeout_min")
+  isDefault             Boolean   @default(false) @map("is_default")
+  isActive              Boolean   @default(true) @map("is_active")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById           BigInt?   @map("created_by_id")
+  updatedById           BigInt?   @map("updated_by_id")
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("adm_password_policies")
+}
+
+model ErpUserPreferences {
+  userId           BigInt   @id @map("user_id")
+  theme            String?  @map("theme")
+  language         String?  @map("language") @db.VarChar(10)
+  timezone         String?  @map("timezone")
+  dateFormat       String?  @map("date_format")
+  numberFormat     String?  @map("number_format")
+  tablePageSize    Int?     @map("table_page_size")
+  sidebarCollapsed Boolean  @default(false) @map("sidebar_collapsed")
+  defaultBranchId  BigInt?  @map("default_branch_id")
+  metadata         Json?    @map("metadata")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?  @map("created_by_id")
+  updatedById      BigInt?  @map("updated_by_id")
+
+  user ErpUser @relation(fields: [userId], references: [id])
+
+  @@map("adm_user_preferences")
+}
+
+// --- md_* Master Data ---
+
+model ErpBranch {
+  id           BigInt    @id @default(autoincrement())
+  code         String    @unique @map("code")
+  name         String    @map("name")
+  addressLine1 String?   @map("address_line1")
+  addressLine2 String?   @map("address_line2")
+  city         String?   @map("city")
+  postalCode   String?   @map("postal_code")
+  phone        String?   @map("phone")
+  fax          String?   @map("fax")
+  notes        String?   @map("notes")
+  isActive     Boolean   @default(true) @map("is_active")
+  legacyCode   String?   @map("legacy_code")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById  BigInt?   @map("created_by_id")
+  updatedById  BigInt?   @map("updated_by_id")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  locations        ErpLocation[]
+  userBranchAccess ErpUserBranchAccess[]
+  partners         ErpPartner[]
+
+  @@index([legacyCode])
+  @@map("md_branches")
+}
+
+model ErpLocation {
+  id           BigInt    @id @default(autoincrement())
+  code         String    @unique @map("code")
+  name         String    @map("name")
+  branchId     BigInt    @map("branch_id")
+  addressLine1 String?   @map("address_line1")
+  city         String?   @map("city")
+  postalCode   String?   @map("postal_code")
+  phone        String?   @map("phone")
+  notes        String?   @map("notes")
+  isActive     Boolean   @default(true) @map("is_active")
+  legacyCode   String?   @map("legacy_code")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById  BigInt?   @map("created_by_id")
+  updatedById  BigInt?   @map("updated_by_id")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  branch               ErpBranch @relation(fields: [branchId], references: [id])
+  warehouses           ErpWarehouse[]
+  userLocationAccess   ErpUserLocationAccess[]
+
+  @@index([branchId])
+  @@index([legacyCode])
+  @@map("md_locations")
+}
+
+model ErpWarehouse {
+  id                 BigInt    @id @default(autoincrement())
+  code               String    @unique @map("code")
+  name               String    @map("name")
+  locationId         BigInt    @map("location_id")
+  allowNegativeStock Boolean   @default(false) @map("allow_negative_stock")
+  notes              String?   @map("notes")
+  isActive           Boolean   @default(true) @map("is_active")
+  legacyCode         String?   @map("legacy_code")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById        BigInt?   @map("created_by_id")
+  updatedById        BigInt?   @map("updated_by_id")
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  location            ErpLocation @relation(fields: [locationId], references: [id])
+  userWarehouseAccess ErpUserWarehouseAccess[]
+
+  @@index([locationId])
+  @@index([legacyCode])
+  @@map("md_warehouses")
+}
+
+model ErpUnit {
+  id               BigInt    @id @default(autoincrement())
+  code             String    @unique @map("code")
+  name             String    @map("name")
+  conversionFactor Decimal   @default(1) @map("conversion_factor") @db.Decimal(19, 4)
+  notes            String?   @map("notes")
+  isActive         Boolean   @default(true) @map("is_active")
+  legacyCode       String?   @map("legacy_code")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?   @map("created_by_id")
+  updatedById      BigInt?   @map("updated_by_id")
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items ErpItem[]
+
+  @@index([legacyCode])
+  @@map("md_units")
+}
+
+model ErpItemCategory {
+  id                 BigInt    @id @default(autoincrement())
+  code               String    @unique @map("code")
+  name               String    @map("name")
+  parentId           BigInt?   @map("parent_id")
+  inventoryAccountId BigInt?   @map("inventory_account_id")
+  cogsAccountId      BigInt?   @map("cogs_account_id")
+  salesAccountId     BigInt?   @map("sales_account_id")
+  isActive           Boolean   @default(true) @map("is_active")
+  legacyCode         String?   @map("legacy_code")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById        BigInt?   @map("created_by_id")
+  updatedById        BigInt?   @map("updated_by_id")
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  parent           ErpItemCategory?  @relation("ItemCategoryParent", fields: [parentId], references: [id])
+  children         ErpItemCategory[] @relation("ItemCategoryParent")
+  inventoryAccount ErpAccount?       @relation("ItemCatInventoryAcct", fields: [inventoryAccountId], references: [id])
+  cogsAccount      ErpAccount?       @relation("ItemCatCogsAcct", fields: [cogsAccountId], references: [id])
+  salesAccount     ErpAccount?       @relation("ItemCatSalesAcct", fields: [salesAccountId], references: [id])
+  items            ErpItem[]
+
+  @@index([parentId])
+  @@index([legacyCode])
+  @@map("md_item_categories")
+}
+
+model ErpItem {
+  id                 BigInt      @id @default(autoincrement())
+  code               String      @unique @map("code")
+  name               String      @map("name")
+  barcode            String?     @map("barcode")
+  type               ErpItemType @map("type")
+  categoryId         BigInt      @map("category_id")
+  baseUnitId         BigInt      @map("base_unit_id")
+  standardCost       Decimal     @default(0) @map("standard_cost") @db.Decimal(19, 4)
+  averageCost        Decimal     @default(0) @map("average_cost") @db.Decimal(19, 4)
+  purchasePrice      Decimal     @default(0) @map("purchase_price") @db.Decimal(19, 4)
+  salePrice          Decimal     @default(0) @map("sale_price") @db.Decimal(19, 4)
+  minStock           Decimal     @default(0) @map("min_stock") @db.Decimal(19, 4)
+  maxStock           Decimal     @default(0) @map("max_stock") @db.Decimal(19, 4)
+  reorderQty         Decimal     @default(0) @map("reorder_qty") @db.Decimal(19, 4)
+  tracksSerial       Boolean     @default(false) @map("tracks_serial")
+  tracksBatch        Boolean     @default(false) @map("tracks_batch")
+  tracksBin          Boolean     @default(false) @map("tracks_bin")
+  inventoryAccountId BigInt?     @map("inventory_account_id")
+  salesAccountId     BigInt?     @map("sales_account_id")
+  cogsAccountId      BigInt?     @map("cogs_account_id")
+  purchaseTaxId      BigInt?     @map("purchase_tax_id")
+  saleTaxId          BigInt?     @map("sale_tax_id")
+  primarySupplierId  BigInt?     @map("primary_supplier_id")
+  weight             Decimal?    @map("weight") @db.Decimal(19, 4)
+  isActive           Boolean     @default(true) @map("is_active")
+  legacyCode         String?     @map("legacy_code")
+  metadata           Json?       @map("metadata")
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById        BigInt?     @map("created_by_id")
+  updatedById        BigInt?     @map("updated_by_id")
+  deletedAt          DateTime?   @map("deleted_at") @db.Timestamptz(6)
+
+  category         ErpItemCategory @relation(fields: [categoryId], references: [id])
+  baseUnit         ErpUnit         @relation(fields: [baseUnitId], references: [id])
+  inventoryAccount ErpAccount?     @relation("ItemInventoryAcct", fields: [inventoryAccountId], references: [id])
+  salesAccount     ErpAccount?     @relation("ItemSalesAcct", fields: [salesAccountId], references: [id])
+  cogsAccount      ErpAccount?     @relation("ItemCogsAcct", fields: [cogsAccountId], references: [id])
+  purchaseTax      ErpTax?         @relation("ItemPurchaseTax", fields: [purchaseTaxId], references: [id])
+  saleTax          ErpTax?         @relation("ItemSaleTax", fields: [saleTaxId], references: [id])
+  primarySupplier  ErpPartner?     @relation("ItemPrimarySupplier", fields: [primarySupplierId], references: [id])
+
+  @@index([categoryId])
+  @@index([baseUnitId])
+  @@index([barcode])
+  @@index([legacyCode])
+  @@map("md_items")
+}
+
+model ErpPartnerCategory {
+  id          BigInt                 @id @default(autoincrement())
+  code        String                 @unique @map("code")
+  name        String                 @map("name")
+  kind        ErpPartnerCategoryKind @map("kind")
+  salesTier   Int?                   @map("sales_tier")
+  isActive    Boolean                @default(true) @map("is_active")
+  legacyCode  String?                @map("legacy_code")
+  createdAt   DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?                @map("created_by_id")
+  updatedById BigInt?                @map("updated_by_id")
+  deletedAt   DateTime?              @map("deleted_at") @db.Timestamptz(6)
+
+  partners ErpPartner[]
+
+  @@index([legacyCode])
+  @@map("md_partner_categories")
+}
+
+model ErpPartner {
+  id                  BigInt    @id @default(autoincrement())
+  code                String    @unique @map("code")
+  name                String    @map("name")
+  isCustomer          Boolean   @default(false) @map("is_customer")
+  isSupplier          Boolean   @default(false) @map("is_supplier")
+  isSalesman          Boolean   @default(false) @map("is_salesman")
+  categoryId          BigInt?   @map("category_id")
+  taxNumber           String?   @map("tax_number")
+  isTaxable           Boolean   @default(false) @map("is_taxable")
+  currencyId          BigInt?   @map("currency_id")
+  receivableAccountId BigInt?   @map("receivable_account_id")
+  payableAccountId    BigInt?   @map("payable_account_id")
+  arCreditLimit       Decimal?  @map("ar_credit_limit") @db.Decimal(19, 4)
+  apCreditLimit       Decimal?  @map("ap_credit_limit") @db.Decimal(19, 4)
+  saleTermId          BigInt?   @map("sale_term_id")
+  purchaseTermId      BigInt?   @map("purchase_term_id")
+  salesmanId          BigInt?   @map("salesman_id")
+  commissionRate      Decimal?  @map("commission_rate") @db.Decimal(9, 4)
+  branchId            BigInt?   @map("branch_id")
+  isActive            Boolean   @default(true) @map("is_active")
+  legacyCode          String?   @map("legacy_code")
+  metadata            Json?     @map("metadata")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById         BigInt?   @map("created_by_id")
+  updatedById         BigInt?   @map("updated_by_id")
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  category          ErpPartnerCategory? @relation(fields: [categoryId], references: [id])
+  currency          ErpCurrency?        @relation(fields: [currencyId], references: [id])
+  receivableAccount ErpAccount?         @relation("PartnerReceivableAcct", fields: [receivableAccountId], references: [id])
+  payableAccount    ErpAccount?         @relation("PartnerPayableAcct", fields: [payableAccountId], references: [id])
+  saleTerm          ErpPaymentTerm?     @relation("PartnerSaleTerm", fields: [saleTermId], references: [id])
+  purchaseTerm      ErpPaymentTerm?     @relation("PartnerPurchaseTerm", fields: [purchaseTermId], references: [id])
+  salesman          ErpPartner?         @relation("PartnerSalesman", fields: [salesmanId], references: [id])
+  branch            ErpBranch?          @relation(fields: [branchId], references: [id])
+
+  addresses           ErpPartnerAddress[]
+  contacts            ErpPartnerContact[]
+  bankAccounts        ErpPartnerBankAccount[]
+  salesmanOfPartners  ErpPartner[]        @relation("PartnerSalesman")
+  itemPrimarySupplier ErpItem[]           @relation("ItemPrimarySupplier")
+
+  @@index([categoryId])
+  @@index([currencyId])
+  @@index([salesmanId])
+  @@index([legacyCode])
+  @@map("md_partners")
+}
+
+model ErpPartnerAddress {
+  id           BigInt         @id @default(autoincrement())
+  partnerId    BigInt         @map("partner_id")
+  type         ErpAddressType @map("type")
+  isDefault    Boolean        @default(false) @map("is_default")
+  addressLine1 String         @map("address_line1")
+  addressLine2 String?        @map("address_line2")
+  city         String?        @map("city")
+  province     String?        @map("province")
+  country      String?        @map("country")
+  postalCode   String?        @map("postal_code")
+  phone        String?        @map("phone")
+  fax          String?        @map("fax")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById  BigInt?        @map("created_by_id")
+  updatedById  BigInt?        @map("updated_by_id")
+  deletedAt    DateTime?      @map("deleted_at") @db.Timestamptz(6)
+
+  partner ErpPartner @relation(fields: [partnerId], references: [id])
+
+  @@index([partnerId])
+  @@map("md_partner_addresses")
+}
+
+model ErpPartnerContact {
+  id          BigInt    @id @default(autoincrement())
+  partnerId   BigInt    @map("partner_id")
+  name        String    @map("name")
+  title       String?   @map("title")
+  phone       String?   @map("phone")
+  email       String?   @map("email")
+  isDefault   Boolean   @default(false) @map("is_default")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  partner ErpPartner @relation(fields: [partnerId], references: [id])
+
+  @@index([partnerId])
+  @@map("md_partner_contacts")
+}
+
+model ErpPartnerBankAccount {
+  id            BigInt    @id @default(autoincrement())
+  partnerId     BigInt    @map("partner_id")
+  bankName      String    @map("bank_name")
+  accountNumber String    @map("account_number")
+  accountHolder String?   @map("account_holder")
+  isDefault     Boolean   @default(false) @map("is_default")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById   BigInt?   @map("created_by_id")
+  updatedById   BigInt?   @map("updated_by_id")
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  partner ErpPartner @relation(fields: [partnerId], references: [id])
+
+  @@index([partnerId])
+  @@map("md_partner_bank_accounts")
+}
+
+model ErpCurrency {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  symbol      String?   @map("symbol")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  rates    ErpCurrencyRate[]
+  partners ErpPartner[]
+  accounts ErpAccount[]
+
+  @@index([legacyCode])
+  @@map("md_currencies")
+}
+
+model ErpCurrencyRate {
+  id          BigInt   @id @default(autoincrement())
+  currencyId  BigInt   @map("currency_id")
+  rateDate    DateTime @map("rate_date") @db.Date
+  rate        Decimal  @map("rate") @db.Decimal(19, 6)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by_id")
+  updatedById BigInt?  @map("updated_by_id")
+
+  currency ErpCurrency @relation(fields: [currencyId], references: [id])
+
+  @@unique([currencyId, rateDate])
+  @@index([currencyId, rateDate])
+  @@map("md_currency_rates")
+}
+
+model ErpAccount {
+  id               BigInt               @id @default(autoincrement())
+  code             String               @unique @map("code")
+  name             String               @map("name")
+  alias            String?              @map("alias")
+  type             ErpAccountType       @map("type")
+  kind             ErpAccountKind       @map("kind")
+  normalBalance    ErpNormalBalance     @map("normal_balance")
+  parentId         BigInt?              @map("parent_id")
+  level            Int                  @map("level")
+  cashFlowCategory ErpCashFlowCategory? @map("cash_flow_category")
+  currencyId       BigInt?              @map("currency_id")
+  isControlAccount Boolean              @default(false) @map("is_control_account")
+  bankName         String?              @map("bank_name")
+  bankAccountNo    String?              @map("bank_account_no")
+  openingBalance   Decimal              @default(0) @map("opening_balance") @db.Decimal(19, 4)
+  isActive         Boolean              @default(true) @map("is_active")
+  notes            String?              @map("notes")
+  legacyCode       String?              @map("legacy_code")
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?              @map("created_by_id")
+  updatedById      BigInt?              @map("updated_by_id")
+  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+
+  parent   ErpAccount?  @relation("AccountParent", fields: [parentId], references: [id])
+  children ErpAccount[] @relation("AccountParent")
+  currency ErpCurrency? @relation(fields: [currencyId], references: [id])
+
+  itemCatInventory  ErpItemCategory[] @relation("ItemCatInventoryAcct")
+  itemCatCogs       ErpItemCategory[] @relation("ItemCatCogsAcct")
+  itemCatSales      ErpItemCategory[] @relation("ItemCatSalesAcct")
+  itemInventory     ErpItem[]         @relation("ItemInventoryAcct")
+  itemSales         ErpItem[]         @relation("ItemSalesAcct")
+  itemCogs          ErpItem[]         @relation("ItemCogsAcct")
+  taxSale           ErpTax[]          @relation("TaxSaleAcct")
+  taxPurchase       ErpTax[]          @relation("TaxPurchaseAcct")
+  partnerReceivable ErpPartner[]      @relation("PartnerReceivableAcct")
+  partnerPayable    ErpPartner[]      @relation("PartnerPayableAcct")
+
+  @@index([parentId])
+  @@index([currencyId])
+  @@index([legacyCode])
+  @@map("md_accounts")
+}
+
+model ErpTax {
+  id                BigInt    @id @default(autoincrement())
+  code              String    @unique @map("code")
+  name              String    @map("name")
+  rate              Decimal   @map("rate") @db.Decimal(9, 4)
+  saleAccountId     BigInt?   @map("sale_account_id")
+  purchaseAccountId BigInt?   @map("purchase_account_id")
+  isActive          Boolean   @default(true) @map("is_active")
+  legacyCode        String?   @map("legacy_code")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById       BigInt?   @map("created_by_id")
+  updatedById       BigInt?   @map("updated_by_id")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  saleAccount     ErpAccount? @relation("TaxSaleAcct", fields: [saleAccountId], references: [id])
+  purchaseAccount ErpAccount? @relation("TaxPurchaseAcct", fields: [purchaseAccountId], references: [id])
+  itemPurchaseTax ErpItem[]   @relation("ItemPurchaseTax")
+  itemSaleTax     ErpItem[]   @relation("ItemSaleTax")
+
+  @@index([legacyCode])
+  @@map("md_taxes")
+}
+
+model ErpPaymentTerm {
+  id               BigInt    @id @default(autoincrement())
+  code             String    @unique @map("code")
+  name             String    @map("name")
+  netDays          Int       @map("net_days")
+  discountPercent1 Decimal?  @map("discount_percent1") @db.Decimal(9, 4)
+  discountDays1    Int?      @map("discount_days1")
+  discountPercent2 Decimal?  @map("discount_percent2") @db.Decimal(9, 4)
+  discountDays2    Int?      @map("discount_days2")
+  penaltyPercent   Decimal?  @map("penalty_percent") @db.Decimal(9, 4)
+  penaltyPeriod    String?   @map("penalty_period")
+  isActive         Boolean   @default(true) @map("is_active")
+  legacyCode       String?   @map("legacy_code")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?   @map("created_by_id")
+  updatedById      BigInt?   @map("updated_by_id")
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  partnerSaleTerms     ErpPartner[] @relation("PartnerSaleTerm")
+  partnerPurchaseTerms ErpPartner[] @relation("PartnerPurchaseTerm")
+
+  @@index([legacyCode])
+  @@map("md_payment_terms")
+}
