@@ -9,7 +9,7 @@
 > **Single source of truth.** This `db-design/` set (this README + `entities-m0-administrator.md`
 > + `entities-m1-master-data.md` + `entities-m2-finance.md` + `entities-m3-inventory.md` +
 > `entities-m4-purchasing.md` + `entities-m5-sales.md` + `entities-m6-manufacturing.md`
-> + `entities-m7-fixed-assets.md` + `entities-m12-pos.md` + `legacy-mapping.md` +
+> + `entities-m7-fixed-assets.md` + `entities-m12-pos.md` + `entities-pln-planning.md` + `legacy-mapping.md` +
 > `module-roadmap.md`) is the **authoritative** DB design for web-erp. `module-roadmap.md`
 > maps the post-MVP modules (legacy m2–m12 → `fin`/`inv`/`pur`/`sls`/`mfg`/`fa`/`bi`/`pos`)
 > at roadmap depth; per-module field catalogs follow one at a time after review
@@ -114,6 +114,10 @@ reason scopes them; per-user data visibility is via `UserBranchAccess` /
 | `LotStatus` | `ACTIVE`, `QUARANTINE`, `EXPIRED`, `BLOCKED` | new — m3 batch/expiry (resolved §8 #24) |
 | `SerialStatus` | `IN_STOCK`, `ISSUED`, `RETURNED`, `SCRAPPED` | new — m3 serial lifecycle (resolved §8 #24) |
 | `ReservationStatus` | `ACTIVE`, `FULFILLED`, `RELEASED`, `EXPIRED` | new — m3 ATP / soft allocation (resolved §8 #25) |
+| `MrpRunStatus` | `DRAFT`, `PROCESSING`, `COMPLETED`, `FAILED` | new — `pln` MRP run lifecycle (resolved §8 #29) |
+| `LotSizeMethod` | `LOT_FOR_LOT`, `FIXED_QTY`, `EOQ`, `MIN_MAX` | new — `pln` reorder lot sizing (resolved §8 #29) |
+| `ReplenishmentSource` | `PURCHASE`, `MANUFACTURE`, `TRANSFER` | new — `pln` replenishment action type (resolved §8 #29) |
+| `SuggestionStatus` | `PENDING`, `APPROVED`, `REJECTED`, `CONVERTED` | new — `pln` suggestion approval flow (resolved §8 #29) |
 | `CostingMethod` | `AVG`, `FIFO`, `STD` | new — inventory valuation (resolved §8 #19); global setting, default `AVG` |
 | `CostRecalcStatus` | `PENDING`, `COMPLETED`, `FAILED` | new — `inv_cost_recalculations` run state (resolved §8 #18) |
 | `PeriodCloseStatus` | `PENDING`, `IN_PROGRESS`, `COMPLETED`, `FAILED` | new — `fin_period_closings` run state (resolved §8 #21) |
@@ -367,6 +371,34 @@ Acquisition chain reuses «PurchaseDocHeader» + «AssetLine»; AT payment reuse
 Asset-ops long tail flagged/deferred. Source = SQL dump. Full catalog:
 **[entities-m7-fixed-assets.md](entities-m7-fixed-assets.md)**.
 
+## 6.8 ERD — Planning / MRP-lite (`pln`)
+
+```mermaid
+erDiagram
+    PlnReorderPolicy }o--o| Item : per_item
+    PlnReorderPolicy }o--o| Warehouse : per_warehouse
+    PlnDemandForecast }o--o| Item : forecasts
+    PlnDemandForecast }o--o| Warehouse : at
+    PlnDemandForecast }o--o| FiscalPeriod : in_period
+    PlnMrpRun ||--o{ PlnMrpRunLine : explodes
+    PlnMrpRun ||--o{ PlnReplenishmentSuggestion : generates
+    PlnMrpRunLine }o--o| Item : for_item
+    PlnMrpRunLine }o--o| Warehouse : at_warehouse
+    PlnMrpRunLine }o--o| FiscalPeriod : in_bucket
+    PlnReplenishmentSuggestion }o--o| Item : replenishes
+    PlnReplenishmentSuggestion }o--o| Warehouse : into
+    PlnReplenishmentSuggestion }o--o| Partner : preferred_supplier
+    PlnReplenishmentSuggestion }o--o| PlnMrpRun : from_run
+```
+
+> **Inputs**: `sls_orders` + `mfg_work_orders` (demand) · `inv_stock_balances`
+> − `inv_stock_reservations` + open `pur_orders` (supply snapshot).
+> **Output**: suggestions convert to `pur_requisitions` / `mfg_work_orders` /
+> `inv_stock_movements` (TRANSFER) on approval — `pln` never posts GL directly.
+> Reorder params fall back to `md_items.minStock`/`maxStock`/`reorderQty` when no
+> policy row exists. Full catalog:
+> **[entities-pln-planning.md](entities-pln-planning.md)**.
+
 ## 6.7 ERD — m12 POS / Retail & Promotions (`pos`)
 
 ```mermaid
@@ -459,13 +491,15 @@ re-opened — see **§8.1**.
 | 26 | Bin/lokasi rak | **Master `inv_bins`** | +1 master sub-lokasi gudang terstruktur (putaway/picking); string `binLocation` lama digantikan FK `binId` (nullable, untuk item ber-flag `isBinTracked`). `inv_stock_balances` di-key ulang `(itemId, warehouseId, binId, lotId)` (2026-05-18). |
 | 27 | Sales pricing engine SSOT (m5 `sls`) | **Reuse `pos` — TANPA price list di `sls`** | `sls` adalah **konsumen** harga; sumber kebenaran tunggal = `pos_contact_prices` + `pos_category_discounts` (m12 `pos`, lih. [entities-m12-pos.md](entities-m12-pos.md)). Tidak ada tabel harga/diskon di `sls`. Konsisten dgn #10 (tiered pricing → fase `pos`). Mencegah dua SSOT harga (2026-05-18). |
 | 28 | Cakupan enterprise tambahan m5 (credit mgmt / commission / target-quota / blanket order / CRM pipeline) | **Ditinjau — DIDEFER, tidak masuk core m5** | Direview 2026-05-18; user pilih *skip* untuk MVP/core. Tidak dimodelkan sekarang: credit-limit/hold, `sls_commission_*`, target-vs-realisasi, blanket/call-off order, CRM funnel. CRM pra-quotation = **out of ERP scope** (mulai dari Quotation). Revisit per-kebutuhan, bukan diam-diam masuk. |
+| 29 | Planning / MRP-lite domain | **Domain `pln` baru — MRP-lite** | 5 entitas: `pln_reorder_policies` (per item/warehouse, lot size method), `pln_demand_forecasts` (manual/AI/kontrak), `pln_mrp_runs`(+lines) (explosion run, supply/demand worksheet), `pln_replenishment_suggestions` (action card PURCHASE/MANUFACTURE/TRANSFER → konversi ke `pur_requisitions`/`mfg_work_orders`/`inv_stock_movements` saat approved). 4 enum baru. `pln` tidak pernah post ke `fin` langsung. ATP view = `inv_stock_balances` − reservasi + scheduled receipts. No legacy equivalent. Full catalog: `entities-pln-planning.md` (2026-05-18). |
 
 **Changed vs prior draft:** #2 (BigInt), #3 (audit log added), #7 (legacyCode added),
 #8 (CurrencyRate table), #18–20 (recost HPP + costing method + period tiers),
 #22–23 (edit posted doc + recost direct-update, 2026-05-18),
 #24–26 (lot/serial + reservation/ATP + `inv_bins` master, 2026-05-18 —
 `inv` jadi WMS-capable; m3 inv: 13 → **17** entitas),
-#27–28 (sales pricing SSOT = reuse `pos`; enterprise extras m5 didefer, 2026-05-18).
+#27–28 (sales pricing SSOT = reuse `pos`; enterprise extras m5 didefer, 2026-05-18),
+#29 (domain `pln` MRP-lite baru, 2026-05-18 — 5 entitas + ATP view).
 Items #1, #4–6, #9–13 ratify the existing `db-design/` model.
 The retired `DB-DESIGN.md` rev. 3 divergences are now fully reconciled.
 

@@ -39,6 +39,7 @@ and its **modern core entities** (core-subset, not legacy 1:1 — resolved
 | m10 | *(unclear — frontend-only, no backend ws)* | — | `?` | ⚠ needs study before mapping |
 | m11 | Clinic / lab / healthcare billing | — | — | ❌ **out of ERP scope** (Althea vertical → `apps/web-althea`) |
 | m12 | POS / Retail & Promotions | ~18 | **`pos`** | ✅ **catalogued** → `entities-m12-pos.md` |
+| *(new)* | Planning / MRP-lite | 0 (no legacy) | **`pln`** | ✅ **catalogued** → `entities-pln-planning.md` (resolved §8 #29) |
 
 > Legacy `m2`–`m5` are in `apps/myerpplus-db-mapping/db/semantic-schema.json`
 > (authoritative). `m6`–`m12` inferred from the legacy Flex screens

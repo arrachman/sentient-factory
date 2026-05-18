@@ -37,6 +37,7 @@ Domain yang berlaku:
 | `fa` | Fixed assets (m7) | `fa_assets`, `fa_asset_categories`, `fa_depreciations`, `fa_disposals` |
 | `bi` | BI / dashboards (m8) | `bi_charts`, `bi_indicators`, `bi_chart_roles` |
 | `pos` | POS / retail & promotions (m12) | `pos_areas`, `pos_contact_prices`, `pos_category_discounts` |
+| `pln` | Planning / MRP-lite (new — no legacy equivalent) | `pln_reorder_policies`, `pln_demand_forecasts`, `pln_mrp_runs`, `pln_replenishment_suggestions` |
 
 > Domain map legacy→modern + entitas inti per modul = `db-design/module-roadmap.md`
 > (otoritatif). Legacy **m11 = vertical klinik** → milik `apps/web-althea`, **bukan**
@@ -76,10 +77,10 @@ Aturan turunan:
 > `entities-m0-administrator.md` + `entities-m1-master-data.md` +
 > `entities-m2-finance.md` + `entities-m3-inventory.md` + `entities-m4-purchasing.md`
 > + `entities-m5-sales.md` + `entities-m6-manufacturing.md` + `entities-m7-fixed-assets.md`
-> + `entities-m12-pos.md` + `legacy-mapping.md` + `module-roadmap.md`). MVP pakai
+> + `entities-m12-pos.md` + `entities-pln-planning.md` + `legacy-mapping.md` + `module-roadmap.md`). MVP pakai
 > `sys_`/`adm_`/`md_`; modul pasca-MVP (m2–m12) dipetakan di `module-roadmap.md`
 > (decision §8 #14–17). **m2 `fin` + m3 `inv` + m4 `pur` + m5 `sls` + m6 `mfg`
-> + m7 `fa` + m12 `pos` sudah katalog field-level** (periode reuse
+> + m7 `fa` + m12 `pos` + `pln` (baru) sudah katalog field-level** (periode reuse
 > `sys_fiscal_periods`; dimensi pakai master `md_*`; pembayaran AP/AR reuse
 > `fin_ap_payments`/`fin_ar_receipts`; sale POS reuse `sls_invoices`).
 > Sisa terakhir: m8 `bi`. Top-level
