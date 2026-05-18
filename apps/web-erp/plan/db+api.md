@@ -1,7 +1,7 @@
 # Senti ERP — Recap DB + API & Rencana Selanjutnya
 
-> Terakhir diperbarui: 2026-05-18  
-> Status: DB ✅ · API ✅ · Frontend ⬜ (belum mulai)
+> Terakhir diperbarui: 2026-05-18 (update wave 1+2)
+> Status: DB ✅ · API ✅ · Frontend F0–F3 ✅ · API-gateway offline ⚠️
 
 ---
 
@@ -82,14 +82,35 @@ Semua route di bawah prefix global `/api/erp/...`:
 
 ---
 
+## 1.3 Frontend — Design System + Auth + F2 Admin + F3 Master Data
+
+**Commits:** `b027825`, `7653ed1`, `4345dc0`, `8628f80` (Wave 1+2, 2026-05-18)
+
+| Sub-fase | Status | Keterangan |
+|---|---|---|
+| F0 — Design tokens | ✅ | `styles/erp-tokens.css` — warna, tipografi, spacing, radius |
+| F0 — Atoms | ✅ | `components/ui/` — button, input, select, badge, label, checkbox, tooltip, dll |
+| F0 — Organisms | ✅ | sidebar, topbar, table, modal, confirm-dialog, tab-bar, dll |
+| F0 — App shell | ✅ | `app-shell.tsx` dipecah 434→334 baris + `shell-route-renderer.tsx` |
+| F0 — API client | ✅ | `lib/api/` — client, auth, types + 8 resource files (users, roles, branches, dll) |
+| F1 — Login | ✅ | Terhubung ke `POST /api/erp/auth/login`, logout clear cookie, stale-session guard |
+| F2 — Admin pages | ✅ | Users, Roles, Branches, Settings — CRUD real API |
+| F3 — Master data | ✅ | Items, Units, Partners, Item Categories — CRUD real API |
+
+**Infrastruktur baru:**
+- `lib/use-erp-list.ts` — generic hook untuk list + CRUD + pagination
+- `components/organisms/erp-list-layout.tsx` — shell reusable untuk halaman list ERP
+
+---
+
 ## 2. Yang belum selesai / perlu verifikasi
 
 | Item | Status | Catatan |
 |---|---|---|
-| Start api-gateway | ⬜ Pending | `cd apps/api-gateway && npm run dev` (port 3203). `dist/` sudah bersih. |
-| Test login endpoint | ⬜ Pending | `POST /api/erp/auth/login` body `{ login: "admin", password: "Admin123!" }` |
+| Start api-gateway | ⚠️ Blocked | `dist/` dimiliki root — jalankan dulu: `sudo chown -R $USER:$USER apps/api-gateway/dist/` kemudian `cd apps/api-gateway && npm run dev` |
+| Test login endpoint | ⬜ Pending | Setelah api-gateway jalan: `POST /api/erp/auth/login` body `{ login: "admin", password: "Admin123!" }` |
 | Swagger verify | ⬜ Pending | Buka `http://localhost:3203/api/docs` setelah server jalan |
-| Prisma generate (tsconfig fix) | ⚠️ Minor | Agent erp-admin memperbarui `apps/api-gateway/tsconfig.json` path `@prisma/client` → local. Verifikasi tidak break build lain. |
+| Test halaman F2/F3 di browser | ⬜ Pending | web-erp jalan di `:3219`. Login → sidebar Setting (adm-users, dll) + Data Master (md-items, dll) |
 
 ---
 
@@ -210,12 +231,13 @@ Setiap modul transaksional: **schema design review → Prisma write + migration 
 ## 4. Urutan kerja yang disarankan sekarang
 
 ```
-1. Start api-gateway → test login → konfirmasi API berjalan    [~10 menit]
-2. /gsd-plan-phase atau /multi-agents untuk F0 design system   [besar — spawn parallel]
-3. F1 auth pages (login)                                       [1 hari]
-4. F2 admin pages (pakai design system F0)                     [3-5 hari]
-5. F3 master data pages                                        [3-5 hari]
-6. Review + keputusan: mulai m2 Finance atau polish M0+M1 dulu
+1. Fix dist/ ownership → start api-gateway → test login       [~5 menit]
+   sudo chown -R $USER:$USER apps/api-gateway/dist/
+   cd apps/api-gateway && npm run dev
+
+2. Test F2/F3 pages di browser (:3219) — confirm CRUD bekerja  [~30 menit]
+
+3. Review + keputusan: polish F2/F3 atau mulai F4 (m2 Finance)
 ```
 
 ---
