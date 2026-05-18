@@ -25,6 +25,14 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
   - Shadow DB tidak dipakai (migrasi klinik lama `20260509_001` rusak di shadow);
     SQL digenerate via `migrate diff` datamodel→datamodel lalu `migrate deploy`
 
+### ERP: Sidebar menu dari sys_menus via api-gateway (efdec28)
+
+- **`feat(web-erp)`** sidebar nav sekarang dimuat dari tabel `sys_menus` via api-gateway
+  - **Backend:** fix `ErpSysMenusController` guard (sama seperti auth: ganti `JwtAuthGuard` → `ErpJwtAuthGuard`)
+  - **Backend:** tambah `GET /api/erp/sys-menus/my-menus` — tree menu yang bisa dilihat user: CENTRAL lihat semua; level lain filter lewat `adm_role_menus.canView=true`; MODULE/GROUP kosong dipangkas otomatis
+  - **Frontend:** `lib/api/menus.ts` — `fetchMyMenus()` fetch + map `ApiMenuNode[]` → `NavItem[]`
+  - **Frontend:** `Sidebar` terima prop `nav[]` (tidak import hardcoded `NAV`); `AppShell` fetch my-menus setelah login + saat refresh; fallback ke `NAV` hardcoded selama loading atau jika API error; reset ke `NAV` saat logout
+
 ### ERP: Login/Logout terintegrasi dengan api-gateway (55a9f55)
 
 - **`feat(web-erp)`** integrasikan auth ERP end-to-end antara `apps/web-erp` dan `apps/api-gateway`
