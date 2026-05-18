@@ -217,6 +217,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     'Tutup tab': 'Tutup tab',
     'Tab baru': 'Tab baru',
     'Duplikat tab': 'Duplikat tab',
+    'Muat ulang': 'Muat ulang',
+    Tutup: 'Tutup',
+    'Tutup tab lain': 'Tutup tab lain',
+    'Tutup tab di kanan': 'Tutup tab di kanan',
   },
   en: {
     Dashboard: 'Dashboard',
@@ -293,6 +297,10 @@ const I18N: Record<Lang, Record<string, string>> = {
     'Tutup tab': 'Close tab',
     'Tab baru': 'New tab',
     'Duplikat tab': 'Duplicate tab',
+    'Muat ulang': 'Reload',
+    Tutup: 'Close',
+    'Tutup tab lain': 'Close Other Tabs',
+    'Tutup tab di kanan': 'Close Tabs to the Right',
   },
 };
 

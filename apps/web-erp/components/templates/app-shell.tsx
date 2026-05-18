@@ -211,6 +211,42 @@ export function AppShell() {
     setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
   }, [tabs, nextTabId]);
 
+  // Force-remount this tab's view by bumping its nonce (view is keyed on it).
+  const reloadTab = React.useCallback((id: string) => {
+    setTabs((prev) =>
+      prev.map((tb) =>
+        tb.id === id ? { ...tb, nonce: (tb.nonce ?? 0) + 1 } : tb,
+      ),
+    );
+    setActiveId(id);
+  }, []);
+
+  // Close every tab except the given one.
+  const closeOtherTabs = React.useCallback((id: string) => {
+    setTabs((prev) => {
+      const keep = prev.find((tb) => tb.id === id);
+      return keep ? [keep] : prev;
+    });
+    setActiveId(id);
+  }, []);
+
+  // Close all tabs positioned after the given one.
+  const closeTabsToRight = React.useCallback((id: string) => {
+    setTabs((prev) => {
+      const idx = prev.findIndex((tb) => tb.id === id);
+      if (idx === -1) return prev;
+      const next = prev.slice(0, idx + 1);
+      return next.length === prev.length ? prev : next;
+    });
+    setActiveId((cur) =>
+      tabs.slice(0, tabs.findIndex((tb) => tb.id === id) + 1).some(
+        (tb) => tb.id === cur,
+      )
+        ? cur
+        : id,
+    );
+  }, [tabs]);
+
   // Global shortcuts — Cmd/Ctrl+K palette, Cmd/Ctrl+W close, ? shortcuts.
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -285,6 +321,9 @@ export function AppShell() {
             activeId={activeId}
             onActivate={setActiveId}
             onClose={closeTab}
+            onReload={reloadTab}
+            onCloseOthers={closeOtherTabs}
+            onCloseRight={closeTabsToRight}
             onDuplicate={duplicateTab}
             onNew={() => openTab('home')}
             t={t}
@@ -294,7 +333,7 @@ export function AppShell() {
               const isActive = tab.id === activeId;
               return (
                 <div
-                  key={tab.id}
+                  key={`${tab.id}:${tab.nonce ?? 0}`}
                   className="tabview"
                   style={{ display: isActive ? 'flex' : 'none' }}
                 >
