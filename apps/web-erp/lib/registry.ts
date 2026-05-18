@@ -220,6 +220,7 @@ export const REPORTS: Record<string, ReportDef> = {
 
 /** Keuangan transaksi modules (driven by the generic finance list). */
 export const MODULES: Record<string, FinanceModule> = {
+  'kas-masuk': { label: 'Kas Masuk', code: 'CR', col: 'Terima Dari', prefix: 'CR' },
   'kas-keluar': { label: 'Kas Keluar', code: 'CD', col: 'Bayar Ke', prefix: 'CD' },
   'bank-masuk': { label: 'Bank Masuk', code: 'RM', col: 'Terima Dari', prefix: 'RM' },
   'bank-keluar': { label: 'Bank Keluar', code: 'SM', col: 'Bayar Ke', prefix: 'SM' },
