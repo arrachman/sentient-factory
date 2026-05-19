@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
 import type { Crumb } from '@/lib/nav';
+import { WorkspaceSwitcher } from '@/components/organisms/workspace-switcher';
 
 export interface ShellUser {
   user: string;
@@ -96,6 +97,8 @@ interface TopbarProps {
   user: ShellUser;
   onNavigate: (route: string) => void;
   onLogout: () => void;
+  workspaceId: string;
+  workspaceName: string;
 }
 
 /** Brand + breadcrumb + command trigger + user chip — ported from `topbar.jsx`. */
@@ -106,6 +109,8 @@ export function Topbar({
   user,
   onNavigate,
   onLogout,
+  workspaceId,
+  workspaceName,
 }: TopbarProps) {
   const [notif, setNotif] = React.useState(3);
 
@@ -125,6 +130,15 @@ export function Topbar({
           / ERP
         </span>
       </div>
+      <div
+        style={{
+          width: 1,
+          height: 18,
+          background: 'var(--border)',
+          margin: '0 8px',
+        }}
+      />
+      <WorkspaceSwitcher workspaceId={workspaceId} workspaceName={workspaceName} />
       <div
         style={{
           width: 1,

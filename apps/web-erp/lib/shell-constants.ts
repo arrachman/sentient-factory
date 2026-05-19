@@ -4,5 +4,8 @@ export const MAX_TABS = 16;
 /** localStorage key for persisting the active ShellUser across refreshes. */
 export const USER_STORAGE_KEY = 'erp-user';
 
+/** Default workspace id created automatically on first login. */
+export const DEFAULT_WORKSPACE_ID = 'ws1';
+
 /** Supported UI languages. */
 export type Lang = 'id' | 'en';

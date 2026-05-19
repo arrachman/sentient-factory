@@ -19,27 +19,27 @@ import { MAX_TABS, USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
 import { renderRoute } from '@/components/templates/shell-route-renderer';
 import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
 import { logout as apiLogout, getMe } from '@/lib/api/auth';
+import {
+  getOrCreateWorkspace,
+  saveWorkspace,
+  clearAllWorkspaces,
+  setLastActive,
+} from '@/lib/workspace';
 
-/**
- * Top-level multi-tab shell — ported from prototype `app.jsx`. Tab/route
- * state is React-local (no router-driven persistence, per scaffold scope).
- *
- * Auth is UI-only: the login gate stores the active `ShellUser` in
- * localStorage so a refresh stays signed-in for the demo, but no token
- * or API call is involved.
- */
-export function AppShell() {
-  // Deterministic across SSR/client so tab `data-tab` hydrates cleanly.
-  const initialTabId = React.useId();
+interface AppShellProps {
+  workspaceId: string;
+}
+
+export function AppShell({ workspaceId }: AppShellProps) {
   const tabSeq = React.useRef(0);
   const nextTabId = React.useCallback(() => `t${(tabSeq.current += 1)}`, []);
+  /** True once the workspace state has been loaded from localStorage. */
+  const workspaceReady = React.useRef(false);
 
-  // `null` until the client effect has read localStorage; render the
-  // shell once hydration finishes so SSR + CSR match.
   const [user, setUser] = React.useState<ShellUser | null>(null);
   const [hydrated, setHydrated] = React.useState(false);
-  // Menu nav from API; fall back to hardcoded NAV while loading or on error.
   const [nav, setNav] = React.useState<NavItem[]>(NAV);
+  const [workspaceName, setWorkspaceName] = React.useState('');
 
   const loadNav = React.useCallback(() => {
     fetchMyMenus()
@@ -47,9 +47,26 @@ export function AppShell() {
       .catch(() => { /* keep current nav on error */ });
   }, []);
 
+  // Load workspace tabs from localStorage and restore shell state.
+  const loadWorkspace = React.useCallback(() => {
+    const ws = getOrCreateWorkspace(workspaceId);
+    setWorkspaceName(ws.meta.name);
+
+    // Sync tabSeq so new tabs get non-colliding ids.
+    const maxSeq = ws.tabs.reduce((max, t) => {
+      const n = parseInt(t.id.replace('t', ''), 10);
+      return Number.isFinite(n) ? Math.max(max, n) : max;
+    }, 0);
+    tabSeq.current = maxSeq;
+
+    setTabs(ws.tabs.map((t) => ({ id: t.id, route: t.route })));
+    setActiveId(ws.tabs.find((t) => t.id === ws.activeTabId)?.id ?? ws.tabs[0]?.id ?? nextTabId());
+
+    workspaceReady.current = true;
+    setLastActive(workspaceId);
+  }, [workspaceId, nextTabId]);
+
   React.useEffect(() => {
-    // erp_token is HttpOnly — not readable via document.cookie.
-    // Call /auth/me to verify the cookie is still valid before restoring.
     const raw = (() => {
       try { return window.localStorage.getItem(USER_STORAGE_KEY); } catch { return null; }
     })();
@@ -64,55 +81,57 @@ export function AppShell() {
         try {
           setUser(JSON.parse(raw) as ShellUser);
           loadNav();
+          loadWorkspace();
         } catch {
           window.localStorage.removeItem(USER_STORAGE_KEY);
         }
       })
       .catch(() => {
-        // Cookie expired or invalid — force re-login
         try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
       })
       .finally(() => setHydrated(true));
-  }, [loadNav]);
+  }, [loadNav, loadWorkspace]);
 
   const onLogin = React.useCallback((u: ShellUser) => {
     setUser(u);
     loadNav();
-    try {
-      window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u));
-    } catch {
-      // best-effort persistence — login still proceeds
-    }
-  }, [loadNav]);
+    loadWorkspace();
+    try { window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u)); } catch { /* noop */ }
+  }, [loadNav, loadWorkspace]);
 
   const onLogout = React.useCallback(() => {
+    workspaceReady.current = false;
     setUser(null);
     setNav(NAV);
     try {
       window.localStorage.removeItem(USER_STORAGE_KEY);
-    } catch {
-      // best-effort cleanup
-    }
-    // Fire-and-forget: clear the erp_token cookie server-side.
-    apiLogout().catch(() => {
-      // ignore — local state is already cleared
-    });
+      clearAllWorkspaces();
+    } catch { /* noop */ }
+    apiLogout().catch(() => { /* ignore */ });
   }, []);
 
   const [lang, setLang] = React.useState<Lang>('id');
-  const [tabs, setTabs] = React.useState<ShellTab[]>(() => [
-    { id: initialTabId, route: 'home' },
-  ]);
-  const [activeId, setActiveId] = React.useState<string>(initialTabId);
+  const [tabs, setTabs] = React.useState<ShellTab[]>([{ id: 't0', route: 'home' }]);
+  const [activeId, setActiveId] = React.useState<string>('t0');
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+
+  // Persist workspace state whenever tabs or active tab change.
+  React.useEffect(() => {
+    if (!workspaceReady.current || !user) return;
+    const ws = getOrCreateWorkspace(workspaceId);
+    saveWorkspace({
+      ...ws,
+      tabs: tabs.map((t) => ({ id: t.id, route: t.route })),
+      activeTabId: activeId,
+    });
+  }, [tabs, activeId, workspaceId, user]);
 
   const t = React.useMemo(() => makeTranslator(lang), [lang]);
 
   const activeTab = tabs.find((tb) => tb.id === activeId) ?? tabs[0];
   const activeRoute = activeTab ? activeTab.route : 'home';
 
-  // The prototype CSS keys off these root data-attributes.
   React.useEffect(() => {
     const el = document.documentElement;
     el.setAttribute('data-density', 'compact');
@@ -124,14 +143,8 @@ export function AppShell() {
   const openTab = React.useCallback(
     (route: string) => {
       const existing = tabs.find((tb) => tb.route === route);
-      if (existing) {
-        setActiveId(existing.id);
-        return;
-      }
-      if (tabs.length >= MAX_TABS) {
-        setActiveId(tabs[tabs.length - 1].id);
-        return;
-      }
+      if (existing) { setActiveId(existing.id); return; }
+      if (tabs.length >= MAX_TABS) { setActiveId(tabs[tabs.length - 1].id); return; }
       const tab = { id: nextTabId(), route };
       setActiveId(tab.id);
       setTabs((prev) => [...prev, tab]);
@@ -193,17 +206,13 @@ export function AppShell() {
     [tabs, t, closeTab],
   );
 
-  // Force-remount this tab's view by bumping its nonce (view is keyed on it).
   const reloadTab = React.useCallback((id: string) => {
     setTabs((prev) =>
-      prev.map((tb) =>
-        tb.id === id ? { ...tb, nonce: (tb.nonce ?? 0) + 1 } : tb,
-      ),
+      prev.map((tb) => (tb.id === id ? { ...tb, nonce: (tb.nonce ?? 0) + 1 } : tb)),
     );
     setActiveId(id);
   }, []);
 
-  // Close every tab except the given one.
   const closeOtherTabs = React.useCallback((id: string) => {
     setTabs((prev) => {
       const keep = prev.find((tb) => tb.id === id);
@@ -212,7 +221,6 @@ export function AppShell() {
     setActiveId(id);
   }, []);
 
-  // Close all tabs positioned after the given one.
   const closeTabsToRight = React.useCallback(
     (id: string) => {
       setTabs((prev) => {
@@ -232,7 +240,6 @@ export function AppShell() {
     [tabs],
   );
 
-  // Global shortcuts — Cmd/Ctrl+K palette, Cmd/Ctrl+W close, Cmd/Ctrl+1-9 tabs, ? shortcuts.
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -250,7 +257,6 @@ export function AppShell() {
       if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
         e.preventDefault();
         const n = parseInt(e.key, 10);
-        // Cmd/Ctrl+9 → last tab (browser convention)
         const target = n === 9 ? tabs[tabs.length - 1] : tabs[n - 1];
         if (target) setActiveId(target.id);
         return;
@@ -267,7 +273,7 @@ export function AppShell() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [activeId, closeTab, tabs]);
+  }, [activeId, closeTab, tabs, confirmClose]);
 
   React.useEffect(() => {
     const sc = () => setShortcutsOpen(true);
@@ -281,18 +287,13 @@ export function AppShell() {
       if (what === 'lang') setLang((l) => (l === 'id' ? 'en' : 'id'));
       return;
     }
-    if (id.startsWith('new:')) {
-      openTab(id.split(':')[1]);
-      return;
-    }
+    if (id.startsWith('new:')) { openTab(id.split(':')[1]); return; }
     openTab(id);
   };
 
   const crumbs: Crumb[] = pageMeta(activeRoute, t).crumbs;
   const sidebarCurrent = activeRoute;
 
-  // Render nothing until localStorage has been read so the SSR shell
-  // and CSR shell agree on whether the user is logged in.
   if (!hydrated) return null;
   if (!user) return <LoginPage onLogin={onLogin} />;
 
@@ -307,6 +308,8 @@ export function AppShell() {
           user={user}
           onNavigate={openTab}
           onLogout={onLogout}
+          workspaceId={workspaceId}
+          workspaceName={workspaceName}
         />
         <main className="main">
           <TabBar
