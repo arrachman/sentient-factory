@@ -1,6 +1,6 @@
 // Login screen — shown when no authenticated user. Prototype: any non-empty
 // credentials work; the demo account is pre-fillable.
-const DEMO_USER = { user: 'adi.s', pass: 'sentient', name: 'Adi Saputra', email: 'adi.s@sentient.id', role: 'Administrator', initials: 'AS' };
+const DEMO_USER = { user: 'rania', pass: 'sentient', name: 'Rania', email: 'rania@sentient.id', role: 'Administrator', initials: 'R' };
 
 const LoginPage = ({ onLogin }) => {
   const [user, setUser] = React.useState('');
@@ -67,7 +67,7 @@ const LoginPage = ({ onLogin }) => {
             <div className="login-input">
               <span className="ic"><Icon name="user" size={14}/></span>
               <input ref={userRef} value={user} onChange={e => setUser(e.target.value)}
-                placeholder="cth: adi.s" autoComplete="username"/>
+                placeholder="cth: rania" autoComplete="username"/>
             </div>
           </div>
 

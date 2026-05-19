@@ -16,7 +16,7 @@ export interface LoginPageProps {
 }
 
 const DEMO = {
-  user: 'adi.s',
+  user: 'rania',
   pass: 'sentient',
 } as const;
 
@@ -160,7 +160,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setUser(e.target.value)
                 }
-                placeholder="cth: adi.s"
+                placeholder="cth: rania"
                 autoComplete="username"
               />
             </div>

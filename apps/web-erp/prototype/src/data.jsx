@@ -14,7 +14,7 @@ const todayStr = '12/05/2026';
 
 const CABANGS = ['PCI', 'JKT', 'BDG', 'SBY'];
 const LOKASIS = ['T - FG', 'T - RM', 'T - WIP', 'PCI - Gudang', 'JKT - Gudang'];
-const USERS = ['adi.s', 'fitri.h', 'rendra', 'maya.p', 'budi.t'];
+const USERS = ['rania', 'fitri.h', 'rendra', 'maya.p', 'budi.t'];
 const STATUSES = ['Approved', 'Need Approve', 'Posted', 'Draft', 'Rejected'];
 
 const TERIMA_DARI = ['PT Sumber Rejeki', 'CV Cahaya Abadi', 'PT Mitra Sentosa', 'Toko Berkah Jaya', 'PT Karya Mandiri', 'CV Tirta Makmur', 'PT Indo Lestari', 'Kasir Cabang PCI', 'Kasir Cabang JKT', 'PT Global Niaga', 'CV Anugerah', 'Pelanggan Tunai'];
@@ -49,12 +49,12 @@ const genKasMasuk = (n = 64) => {
 const ACTIVITY = [
   { who: 'fitri.h', what: 'memposting', target: 'CR-2605-2398', amount: 4250000, type: 'success', ts: '10:42' },
   { who: 'rendra', what: 'membuat draft', target: 'SM-2605-1182', amount: -1850000, type: 'info', ts: '10:31' },
-  { who: 'adi.s', what: 'menyetujui', target: 'RM-2605-0871', amount: 12500000, type: 'success', ts: '10:14' },
+  { who: 'rania', what: 'menyetujui', target: 'RM-2605-0871', amount: 12500000, type: 'success', ts: '10:14' },
   { who: 'maya.p', what: 'menolak', target: 'CD-2605-1640', amount: -3200000, type: 'danger', ts: '09:58' },
   { who: 'budi.t', what: 'meng-edit', target: 'GJ-2605-0412', amount: null, type: 'warn', ts: '09:47' },
   { who: 'fitri.h', what: 'memposting', target: 'CR-2605-2397', amount: 8750000, type: 'success', ts: '09:31' },
   { who: 'rendra', what: 'membatalkan', target: 'RG-2605-0231', amount: null, type: 'danger', ts: '09:12' },
-  { who: 'adi.s', what: 'menyimpan', target: 'CB-2605-0019', amount: null, type: 'info', ts: '08:58' },
+  { who: 'rania', what: 'menyimpan', target: 'CB-2605-0019', amount: null, type: 'info', ts: '08:58' },
 ];
 
 const KPI_SERIES = {
