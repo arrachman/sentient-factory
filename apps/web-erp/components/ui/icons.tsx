@@ -259,6 +259,77 @@ const ICON_PATHS = {
       <path d="M5 5V2.5h6V5" />
     </>
   ),
+  calculator: (
+    <>
+      <rect x="3" y="2" width="10" height="12" rx="1.2" />
+      <rect x="4.5" y="3.5" width="7" height="2.5" rx="0.4" />
+      <circle cx="5.5" cy="8" r="0.5" fill="currentColor" />
+      <circle cx="8" cy="8" r="0.5" fill="currentColor" />
+      <circle cx="10.5" cy="8" r="0.5" fill="currentColor" />
+      <circle cx="5.5" cy="10.5" r="0.5" fill="currentColor" />
+      <circle cx="8" cy="10.5" r="0.5" fill="currentColor" />
+      <circle cx="10.5" cy="10.5" r="0.5" fill="currentColor" />
+      <circle cx="5.5" cy="12.5" r="0.5" fill="currentColor" />
+      <circle cx="8" cy="12.5" r="0.5" fill="currentColor" />
+      <circle cx="10.5" cy="12.5" r="0.5" fill="currentColor" />
+    </>
+  ),
+  'shopping-cart': (
+    <>
+      <path d="M2 3h2l1.5 8h7l1.2-5H4.5" />
+      <circle cx="6" cy="13" r="0.8" />
+      <circle cx="11.5" cy="13" r="0.8" />
+    </>
+  ),
+  'shopping-bag': (
+    <>
+      <path d="M3.5 5h9l-.7 8.5H4.2L3.5 5z" />
+      <path d="M5.5 5V3.5a2.5 2.5 0 0 1 5 0V5" />
+    </>
+  ),
+  'trending-up': (
+    <>
+      <path d="M2.5 11.5 7 7l2.5 2.5L13.5 5" />
+      <path d="M10 5h3.5v3.5" />
+    </>
+  ),
+  'layout-dashboard': (
+    <>
+      <rect x="2.5" y="2.5" width="5" height="6" rx="0.6" />
+      <rect x="8.5" y="2.5" width="5" height="3.5" rx="0.6" />
+      <rect x="2.5" y="9.5" width="5" height="4" rx="0.6" />
+      <rect x="8.5" y="7.5" width="5" height="6" rx="0.6" />
+    </>
+  ),
+  'users-round': (
+    <>
+      <circle cx="6.5" cy="6" r="2.5" />
+      <path d="M2 13.5c.8-2.3 2.5-3.5 4.5-3.5s3.7 1.2 4.5 3.5" />
+      <path d="M11 3.5a2.3 2.3 0 0 1 0 4.5" />
+      <path d="M12.5 13.5c-.3-1.4-1-2.5-2-3.2" />
+    </>
+  ),
+  hospital: (
+    <>
+      <rect x="2.5" y="3.5" width="11" height="10.5" rx="0.8" />
+      <path d="M8 5.5v5M5.5 8h5" />
+      <path d="M4.5 14v-2.5h2V14M9.5 14v-2.5h2V14" />
+    </>
+  ),
+  'graduation-cap': (
+    <>
+      <path d="M1.5 6 8 3l6.5 3L8 9z" />
+      <path d="M4.5 7.5v3c0 1 1.5 2 3.5 2s3.5-1 3.5-2v-3" />
+      <path d="M13.5 6.5v3.5" />
+    </>
+  ),
+  handshake: (
+    <>
+      <path d="M2 7.5 5 5l2 1.5 2-1.5 2 1.5 2 0" />
+      <path d="M2 7.5v3l2.5 2 1.5-1 2 1.5 1.5-1 2 1 2-2v-3" />
+      <path d="M7 6.5 9 8.5" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;
