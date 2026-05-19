@@ -10,9 +10,10 @@
     "lint:fix": "eslint . --fix",
     "lint:strict": "eslint . --max-warnings 0",
     "typecheck": "tsc --noEmit",
+    "check:size": "node scripts/check-file-size.mjs",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "check": "npm run lint && npm run typecheck && npm run test",
+    "check": "npm run lint && npm run typecheck && npm run check:size && npm run test",
     "format": "prettier --write ."
   },
   "dependencies": {

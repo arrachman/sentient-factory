@@ -10,6 +10,7 @@ import {
 } from '../hooks/use-profile';
 import { AvailabilityGrid } from './availability-grid';
 import { ProfileCard } from './profile-card';
+import { ProfileMobile } from './profile-mobile';
 import { ProfileEditDialog } from './profile-edit-dialog';
 import { StatsCard } from './stats-card';
 
@@ -60,7 +61,15 @@ export function ProfilePage() {
   const slots = settingsQuery.data?.data?.slotsOfDay ?? [];
 
   return (
-    <div className="p-6">
+    <>
+      <ProfileMobile
+        p={p}
+        stats={statsQuery.data?.data}
+        statsLoading={statsQuery.isLoading}
+        onEdit={() => setEditOpen(true)}
+      />
+
+      <div className="hidden lg:block p-6">
       <div
         style={{
           display: 'grid',
@@ -87,6 +96,7 @@ export function ProfilePage() {
           />
         </div>
       </div>
+      </div>
 
       <ProfileEditDialog
         open={editOpen}
@@ -99,6 +109,6 @@ export function ProfilePage() {
           })
         }
       />
-    </div>
+    </>
   );
 }

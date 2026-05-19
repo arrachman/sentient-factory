@@ -179,6 +179,13 @@ export class FonnteWebhookDto {
   @IsString()
   status?: string;
 
+  @ApiPropertyOptional({
+    description: 'Fonnte state field — some webhook types use this instead of status',
+  })
+  @IsOptional()
+  @IsString()
+  state?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

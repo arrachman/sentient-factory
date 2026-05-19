@@ -41,7 +41,7 @@ export function TemplateList({
         <h2 className="h2">Template ({templates.length})</h2>
         <span className="caption">sinkron Pengaturan</span>
       </div>
-      <div className="flex-1 overflow-y-auto max-h-[700px]">
+      <div className="flex-1 overflow-y-auto max-h-[400px] lg:max-h-[700px]">
         {isLoading ? (
           <div className="p-8 text-center text-fg-muted">Memuat...</div>
         ) : templates.length === 0 ? (

@@ -56,6 +56,7 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
   const slots = settingsQuery.data?.data.slotsOfDay ?? [];
 
   const [tab, setTab] = useState<TabKey>('weekly');
+  const [mDay, setMDay] = useState<DayKey>('monday');
   const [draft, setDraft] = useState<Record<DayKey, DayAvailability>>(DEFAULT_FALLBACK);
 
   // Reset tab tiap dialog dibuka
@@ -139,12 +140,12 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/40 lg:items-center lg:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="card-althea w-full max-w-3xl max-h-[92vh] overflow-y-auto bg-card">
+      <div className="card-althea flex w-full flex-col overflow-y-auto bg-card lg:max-h-[92vh] lg:max-w-3xl lg:rounded-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
@@ -203,7 +204,117 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
               Slot Operasional sebelum kamu bisa atur jadwal.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            {/* Mobile weekly editor — day pills + slot checklist (prototype 04) */}
+            <div className="lg:hidden">
+              <div
+                className="mb-3 flex items-start gap-2 rounded-lg px-3 py-2.5 text-[12px]"
+                style={{ background: 'var(--info-soft, #e6f0f7)', color: '#2c4a60' }}
+              >
+                <CalendarDays className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  Pilih slot di mana kamu tersedia menerima klien. Pola
+                  berulang tiap minggu — bisa diedit per hari.
+                </span>
+              </div>
+
+              <p className="caption mb-1.5 text-[11px] font-semibold uppercase tracking-wide">
+                Hari
+              </p>
+              <div className="-mx-6 mb-4 flex gap-2 overflow-x-auto px-6 pb-1">
+                {DAY_KEYS.map((day) => {
+                  const cfg = draft[day];
+                  const sel = !cfg.isOpen
+                    ? 0
+                    : Array.isArray(cfg.slotIndices)
+                      ? cfg.slotIndices.length
+                      : slots.length;
+                  const active = day === mDay;
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => setMDay(day)}
+                      className="flex min-w-[58px] flex-col items-center rounded-xl border px-2 py-2"
+                      style={{
+                        borderColor: active ? 'transparent' : 'var(--border)',
+                        background: active
+                          ? 'var(--sage-500, #5b8a66)'
+                          : 'var(--card)',
+                        color: active ? '#fff' : 'var(--teal-800, #142828)',
+                      }}
+                    >
+                      <span className="text-[12px] font-semibold">
+                        {DAY_LABEL[day]}
+                      </span>
+                      <span className="text-[10px] opacity-80">
+                        {sel}/{slots.length}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mb-3 flex items-center justify-between">
+                <p className="caption text-[11px] font-semibold uppercase tracking-wide">
+                  Slot tersedia
+                </p>
+                <button
+                  type="button"
+                  onClick={() => toggleDayClosed(mDay)}
+                  className="text-[12px] font-medium text-sage-700"
+                >
+                  {draft[mDay].isOpen ? 'Tutup hari ini' : 'Buka hari ini'}
+                </button>
+              </div>
+
+              <ul className="space-y-2">
+                {slots.map((slot, slotIdx) => {
+                  const checked = isSlotChecked(mDay, slotIdx);
+                  return (
+                    <li key={slotIdx}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSlot(mDay, slotIdx)}
+                        className="flex w-full items-center gap-3 rounded-xl border p-3 text-left"
+                        style={{
+                          borderColor: checked
+                            ? 'var(--sage-500, #5b8a66)'
+                            : 'var(--border)',
+                          background: checked
+                            ? 'var(--sage-50, #f0f5f0)'
+                            : 'var(--card)',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          readOnly
+                          className="h-4 w-4"
+                          aria-label={`${DAY_LABEL[mDay]} slot ${slotIdx + 1}`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-teal-800">
+                            {slot.start}
+                            {slot.end ? ` – ${slot.end}` : ''}
+                          </p>
+                          {slot.label && (
+                            <p className="caption text-[11px]">{slot.label}</p>
+                          )}
+                        </div>
+                        {checked && (
+                          <span className="badge badge-sage text-[10px]">
+                            tersedia
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+
+            <div className="hidden overflow-x-auto lg:block">
               <table
                 className="w-full text-sm"
                 style={{ borderCollapse: 'separate', borderSpacing: 0 }}
@@ -314,6 +425,7 @@ export function AvailabilityDialog({ open, onClose, initial }: Props) {
                 </tbody>
               </table>
             </div>
+            </>
           )}
 
           <p className="caption mt-3 text-fg-muted">

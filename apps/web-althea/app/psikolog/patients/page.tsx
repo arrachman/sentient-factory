@@ -10,6 +10,7 @@ import {
 } from './_lib/patients-model';
 import { PatientDetailAside } from './_components/patient-detail-aside';
 import { PatientListTable } from './_components/patient-list-table';
+import { PatientsMobile } from './_components/patients-mobile';
 
 type StatusTab = 'Semua' | 'Aktif' | 'Baru' | 'Selesai';
 type SortBy = 'next' | 'name' | 'risk';
@@ -82,7 +83,23 @@ export default function PsikologPatientsPage() {
   }, [selectedId, visible, allClients]);
 
   return (
-    <div className="flex" style={{ minHeight: 'calc(100vh - 64px)' }}>
+    <>
+      <PatientsMobile
+        visible={visible}
+        counts={counts}
+        todayCount={todayCount}
+        isLoading={list.isLoading}
+        statusTab={statusTab}
+        query={query}
+        onSelectTab={setStatusTab}
+        onQuery={setQuery}
+        onSelect={setSelectedId}
+      />
+
+      <div
+        className="hidden lg:flex"
+        style={{ minHeight: 'calc(100vh - 64px)' }}
+      >
       <PatientListTable
         allClients={allClients}
         visible={visible}
@@ -106,6 +123,7 @@ export default function PsikologPatientsPage() {
         }}
       />
       {selected && <PatientDetailAside selected={selected} />}
-    </div>
+      </div>
+    </>
   );
 }

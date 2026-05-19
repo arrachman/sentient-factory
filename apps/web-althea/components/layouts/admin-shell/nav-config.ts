@@ -2,7 +2,7 @@
  * Navigation config per role + role pill style.
  *
  * - Admin: 3 groups (Operasional / Manajemen / Sistem)
- * - Psikolog: 3 groups (Praktik / Klinis / Akun) — privacy BR-04: hanya
+ * - Psikolog: 3 groups (Praktik / Klinis / Akun) — privacy: hanya
  *   data sendiri, tidak ada Tim/Kelola
  * - Owner / Resepsionis / Marketing / Intern: single Dashboard
  */

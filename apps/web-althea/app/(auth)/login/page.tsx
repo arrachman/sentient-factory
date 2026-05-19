@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Bell } from 'lucide-react';
 import { LoginForm } from '@/features/auth/ui/login-form';
 
 export const metadata: Metadata = { title: 'Masuk — Althea Psychology' };
@@ -7,16 +6,14 @@ export const metadata: Metadata = { title: 'Masuk — Althea Psychology' };
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--bg-elev)' }}>
-      {/* LEFT — brand panel */}
+      {/* LEFT — brand panel (desktop only) */}
       <aside
+        className="hidden lg:flex lg:flex-col lg:basis-[44%] lg:shrink-0"
         style={{
-          flex: '0 0 44%',
           minWidth: 0,
           background: 'linear-gradient(155deg, var(--sage-700) 0%, var(--teal-800) 100%)',
           color: '#fff',
           padding: '56px 56px 40px',
-          display: 'flex',
-          flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -155,6 +152,30 @@ export default function LoginPage() {
           background: 'var(--cream-50)',
         }}
       >
+        {/* Mobile wordmark (prototype 06) */}
+        <div className="mb-8 flex w-full max-w-[480px] items-center gap-2.5 lg:hidden">
+          <span
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-xl font-semibold text-white"
+            style={{ background: 'var(--sage-600, #4a7355)', fontFamily: 'var(--font-serif)' }}
+          >
+            A
+          </span>
+          <span className="flex flex-col leading-none">
+            <span
+              className="text-xl"
+              style={{ fontFamily: 'var(--font-serif)', color: 'var(--teal-800)' }}
+            >
+              Althea
+            </span>
+            <span
+              className="mt-1 text-[10px] font-medium uppercase"
+              style={{ letterSpacing: '0.12em', color: 'var(--fg-muted)' }}
+            >
+              Psychology
+            </span>
+          </span>
+        </div>
+
         {/* Card box */}
         <div
           style={{

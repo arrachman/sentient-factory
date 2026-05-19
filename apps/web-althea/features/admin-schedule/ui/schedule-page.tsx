@@ -6,10 +6,11 @@ import { bookingApi } from '@/features/admin-booking/api/booking.api';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
 import { BookingDetailDialog } from '@/features/admin-booking/ui/booking-detail-dialog';
 import type { Booking } from '@/features/admin-booking/model/types';
-import { EMPTY_FILTERS, SLOTS } from '../model/constants';
+import { EMPTY_FILTERS } from '../model/constants';
 import { applyFilters, filterCount } from '../model/filters';
 import {
   addDays,
@@ -26,6 +27,7 @@ import {
 import type { Filters, ViewMode } from '../model/types';
 import { useAvailabilityMap } from '../hooks/use-availability-map';
 import { FilterPopover } from './filter-popover';
+import { ScheduleMobile } from './schedule-mobile';
 import { ScheduleStatsStrip } from './schedule-stats-strip';
 import { ScheduleToolbar } from './schedule-toolbar';
 import { BulanView } from './views/bulan-view';
@@ -44,6 +46,9 @@ export function SchedulePage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+
+  const settingsQuery = useSettings();
+  const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
@@ -107,7 +112,7 @@ export function SchedulePage() {
   const openWizard = () => setWizardOpen(true);
 
   const stats = useMemo(() => {
-    const totalSlots = psikologs.length * SLOTS.length * (datesToFetch.length || 1);
+    const totalSlots = psikologs.length * globalSlots.length * (datesToFetch.length || 1);
     const usedRoomIds = new Set(filteredBookings.map((b) => b.room.id));
     const inProgressCount = filteredBookings.filter((b) => b.status === 'in_progress').length;
     return {
@@ -152,7 +157,22 @@ export function SchedulePage() {
 
   return (
     <>
-      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 160px)' }}>
+      <ScheduleMobile
+        date={date}
+        onPickDate={setDate}
+        bookings={filteredBookings}
+        psikologCount={psikologs.length}
+        roomCount={rooms.length}
+        isLoading={isLoading}
+        onCreate={() => setWizardOpen(true)}
+        onBookingClick={setSelectedBooking}
+        onToggleFilter={() => setFilterOpen((v) => !v)}
+      />
+
+      <div
+        className="hidden lg:flex flex-col"
+        style={{ minHeight: 'calc(100vh - 160px)' }}
+      >
         <ScheduleToolbar
           date={date}
           view={view}
@@ -206,6 +226,7 @@ export function SchedulePage() {
                 date={date}
                 psikologs={psikologs}
                 bookings={filteredBookings}
+                slots={globalSlots}
                 isLoading={isLoading}
                 onBookingClick={setSelectedBooking}
                 resolveAvailability={resolveAvailability}
@@ -216,6 +237,7 @@ export function SchedulePage() {
               <MingguView
                 weekStart={weekStartMonday(date)}
                 bookings={filteredBookings}
+                slots={globalSlots}
                 isLoading={isLoading}
                 onBookingClick={setSelectedBooking}
                 psikologs={psikologsForAvail}

@@ -1,6 +1,6 @@
 /**
  * Baris 4 stat tiles untuk halaman Audit Log.
- * Gunakan tone danger untuk BR-04 + warn untuk login gagal yang aktif.
+ * Gunakan tone danger untuk akses ditolak + warn untuk login gagal yang aktif.
  */
 import { AuditStatTile } from './audit-stat-tile';
 

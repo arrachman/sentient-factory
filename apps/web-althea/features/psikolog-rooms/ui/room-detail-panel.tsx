@@ -9,7 +9,6 @@ import { X } from 'lucide-react';
 import {
   DEFAULT_FACILITIES,
   ROOM_TYPE_STYLE,
-  SLOTS,
   type SlotDef,
 } from '@/features/admin-rooms/model/constants';
 import { ROOM_TYPE_LABEL, type Room } from '@/features/admin-rooms/model/types';
@@ -201,6 +200,4 @@ export function RoomDetailPanel({
   );
 }
 
-// Used by external callers; ensure SLOTS export not tree-shaken
 export type { SlotDef };
-export { SLOTS };

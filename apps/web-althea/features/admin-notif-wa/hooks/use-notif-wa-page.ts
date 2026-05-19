@@ -16,14 +16,15 @@ import {
   useSendTest,
   useTemplateList,
   useUpdateTemplate,
+  useWaStats,
 } from './use-wa';
 import { EMPTY_TEMPLATE } from '../model/constants';
-import { isToday } from '../model/format';
 import type { CreateTemplateInput, Template, WaLog } from '../model/types';
 
 export function useNotifWaPage() {
   const tplList = useTemplateList({ limit: 200 });
   const logList = useLogList({ limit: 50 });
+  const statsQuery = useWaStats();
   const updateMut = useUpdateTemplate();
   const deleteMut = useDeleteTemplate();
   const createMut = useCreateTemplate();
@@ -127,18 +128,13 @@ export function useNotifWaPage() {
     setDraft({ ...draft, body: draft.body + v });
   }
 
-  // Stats
+  // Stats — from server endpoint (accurate, not capped by log list limit)
   const totalTemplates = templates.length;
   const activeTemplates = templates.filter((t) => t.isActive).length;
-  const sentToday = useMemo(
-    () => logs.filter((l) => isToday(l.createdAt)),
-    [logs],
-  );
-  const sentTodayCount = sentToday.length;
-  const readToday = sentToday.filter((l) => l.status === 'dibaca').length;
-  const readRate =
-    sentTodayCount > 0 ? Math.round((readToday / sentTodayCount) * 100) : 0;
-  const failedToday = sentToday.filter((l) => l.status === 'gagal').length;
+  const sentTodayCount = statsQuery.data?.data.sentToday ?? 0;
+  const readToday = statsQuery.data?.data.readToday ?? 0;
+  const readRate = statsQuery.data?.data.readRate ?? 0;
+  const failedToday = statsQuery.data?.data.failedToday ?? 0;
 
   // Body vars dari template aktif (regex `{{var}}`)
   const bodyVars = useMemo(() => {

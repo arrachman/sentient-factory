@@ -65,13 +65,18 @@ const ACTION_TOOLTIP: Record<BookingStatus, string> = {
 
 type QuickFilter = 'all' | 'today' | 'tomorrow' | 'week' | 'past';
 
+function toLocalDateKey(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 function dateForQuickFilter(qf: QuickFilter): string | undefined {
   const today = new Date();
-  if (qf === 'today') return today.toISOString().slice(0, 10);
+  if (qf === 'today') return toLocalDateKey(today);
   if (qf === 'tomorrow') {
     const t = new Date(today);
     t.setDate(t.getDate() + 1);
-    return t.toISOString().slice(0, 10);
+    return toLocalDateKey(t);
   }
   return undefined;
 }

@@ -1,12 +1,12 @@
 // HTTP client for Senti ERP backend
-// Base URL: NEXT_PUBLIC_ERP_API_URL env or http://localhost:3203/api/erp
+// Base URL: NEXT_PUBLIC_ERP_API_URL env (required in production)
 // Cookies (erp_token) are sent automatically via credentials: 'include'
 // BigInt IDs are expected as strings (backend serialises BigInt → string)
 
 import type { ApiError } from './types';
 
 const BASE_URL =
-  process.env.NEXT_PUBLIC_ERP_API_URL ?? 'http://localhost:3203/api/erp';
+  process.env.NEXT_PUBLIC_ERP_API_URL ?? 'https://erp.fr-labs.my.id/api/erp';
 
 // ─── Error ────────────────────────────────────────────────────────────────────
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useClientList, useCreateClient } from '../hooks/use-client';
 import { type ClientCategory, type CreateClientInput } from '../model/types';
 import { ClientFormDialog } from './client-form-dialog';
+import { ClientsMobile } from './clients-mobile';
 import { ClientsTable } from './clients-table';
 import { ClientsToolbar } from './clients-toolbar';
 
@@ -73,7 +74,20 @@ export function ClientsPage({
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col p-6">
+    <>
+      <ClientsMobile
+        items={items}
+        isLoading={list.isLoading}
+        filter={filter}
+        counts={counts}
+        search={search}
+        onChangeFilter={setFilter}
+        onChangeSearch={setSearch}
+        onOpen={(id) => router.push(`${basePath}/${id}`)}
+        onCreate={openCreate}
+      />
+
+      <div className="hidden lg:flex h-[calc(100vh-4rem)] flex-col p-6">
       <div className="flex flex-1 min-h-0 flex-col gap-3">
         <ClientsToolbar
           filter={filter}
@@ -92,6 +106,7 @@ export function ClientsPage({
           onOpen={(id) => router.push(`${basePath}/${id}`)}
         />
       </div>
+      </div>
 
       {open && (
         <ClientFormDialog
@@ -103,6 +118,6 @@ export function ClientsPage({
           onSubmit={handleSubmit}
         />
       )}
-    </div>
+    </>
   );
 }

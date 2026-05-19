@@ -2,7 +2,7 @@
 
 /**
  * Sidebar kiri halaman Audit Log — daftar 10 kategori dengan ikon + count,
- * plus tip footer tentang BR-04.
+ * plus tip footer tentang privasi klien.
  */
 import { AUDIT_CATEGORIES, type AuditCategory } from '../model/types';
 

@@ -1,7 +1,7 @@
 import { Bell } from 'lucide-react';
 
 /**
- * Banner BR-01 — kuota harian psikolog auto-unblock saat reschedule/cancel.
+ * Banner — kuota harian psikolog auto-unblock saat reschedule/cancel.
  */
 export function QuotaExplainer() {
   return (

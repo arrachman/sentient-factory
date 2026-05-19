@@ -6,7 +6,7 @@
  *   - Actor card (avatar + nama + role)
  *   - Properties grid (Waktu/Kategori/Entity/IP/Perangkat/Catatan)
  *   - Diff before/after (kalau ada oldData & newData berbeda)
- *   - BR-04 enforcement note (kalau severity danger + denied/br pattern)
+ *   - Privacy enforcement note (kalau severity danger + denied/br pattern)
  *   - Action buttons (Lihat sumber disabled, Ekspor)
  *   - Marker untuk event otomatis (system/cron)
  */

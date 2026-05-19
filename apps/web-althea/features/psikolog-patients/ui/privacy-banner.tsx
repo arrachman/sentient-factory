@@ -1,7 +1,7 @@
 import { Eye } from 'lucide-react';
 
 /**
- * Banner BR-04 di top halaman Klien saya — transparansi privasi.
+ * Banner di top halaman Klien saya — transparansi privasi.
  */
 export function PrivacyBanner({ count }: { count: number }) {
   return (

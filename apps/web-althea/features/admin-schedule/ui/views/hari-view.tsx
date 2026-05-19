@@ -6,9 +6,9 @@
  */
 import type { Booking } from '@/features/admin-booking/model/types';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
+import type { SlotDef } from '@/features/admin-rooms/model/constants';
 import { emptySlotTone } from '@/features/psikolog-schedule/model/availability';
 import type { AvailabilityResolver } from '../../hooks/use-availability-map';
-import { SLOTS } from '../../model/constants';
 import { findBookingForSlot } from '../../model/filters';
 import { BookingCard } from '../components/booking-card';
 import { EmptySlot } from '../components/empty-slot';
@@ -18,6 +18,7 @@ export function HariView({
   date,
   psikologs,
   bookings,
+  slots,
   isLoading,
   onBookingClick,
   resolveAvailability,
@@ -26,6 +27,7 @@ export function HariView({
   date: string;
   psikologs: Psikolog[];
   bookings: Booking[];
+  slots: SlotDef[];
   isLoading: boolean;
   onBookingClick: (b: Booking) => void;
   resolveAvailability?: AvailabilityResolver;
@@ -72,21 +74,21 @@ export function HariView({
         ))}
       </div>
 
-      {SLOTS.map((slot, slotIdx) => (
+      {slots.map((slot, slotIdx) => (
         <div
           key={slot.start}
           style={{
             display: 'grid',
             gridTemplateColumns: colTpl,
             borderBottom:
-              slotIdx === SLOTS.length - 1
+              slotIdx === slots.length - 1
                 ? 'none'
                 : '1px solid var(--border)',
             minWidth,
             background: slotIdx % 2 === 1 ? 'rgba(247, 244, 237, 0.55)' : 'transparent',
           }}
         >
-          <SlotLabel start={slot.start} end={slot.end} />
+          <SlotLabel label={slot.label ?? `Slot ${slotIdx + 1}`} />
           {psikologs.map((p) => {
             const b = findBookingForSlot(bookings, p.userId, date, slot);
             let emptyTone;
@@ -145,7 +147,7 @@ function SlotHeaderCell() {
   );
 }
 
-function SlotLabel({ start, end }: { start: string; end: string }) {
+function SlotLabel({ label }: { label: string }) {
   return (
     <div
       style={{
@@ -164,16 +166,7 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {start}
-      </span>
-      <span
-        style={{
-          fontSize: 10.5,
-          color: 'var(--fg-muted)',
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {end}
+        {label}
       </span>
     </div>
   );

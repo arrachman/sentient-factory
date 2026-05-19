@@ -17,6 +17,17 @@ import {
   UpdateBookingDto,
 } from './dto/clinic-booking.dto';
 import { VALID_TRANSITIONS } from './booking-state-machine';
+import { localDateAtMidnight } from './timezone.util';
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function addDaysIso(dateStr: string, days: number): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-${pad(dt.getUTCDate())}`;
+}
 
 /**
  * Booking domain orchestrator. Handles CRUD + state machine + reschedule.
@@ -138,27 +149,24 @@ export class ClinicBookingService {
     if (query.psikologUserId) where.psikologUserId = query.psikologUserId;
     if (query.clientId) where.clientId = query.clientId;
     if (query.roomId) where.roomId = query.roomId;
+    const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
+    const tz = settings?.timezone || 'Asia/Jakarta';
     if (query.date) {
-      const day = new Date(query.date);
-      if (isNaN(day.getTime())) throw new BadRequestException('date harus YYYY-MM-DD');
-      const dayStart = new Date(day);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(day);
-      dayEnd.setHours(23, 59, 59, 999);
-      where.scheduledStart = { gte: dayStart, lte: dayEnd };
+      if (!ISO_DATE_RE.test(query.date)) throw new BadRequestException('date harus YYYY-MM-DD');
+      const dayStart = localDateAtMidnight(query.date, tz);
+      const dayEnd = localDateAtMidnight(addDaysIso(query.date, 1), tz);
+      where.scheduledStart = { gte: dayStart, lt: dayEnd };
     } else if (query.dateFrom || query.dateTo) {
-      const range: { gte?: Date; lte?: Date } = {};
+      const range: { gte?: Date; lt?: Date } = {};
       if (query.dateFrom) {
-        const d = new Date(query.dateFrom);
-        if (isNaN(d.getTime())) throw new BadRequestException('dateFrom harus YYYY-MM-DD');
-        d.setHours(0, 0, 0, 0);
-        range.gte = d;
+        if (!ISO_DATE_RE.test(query.dateFrom))
+          throw new BadRequestException('dateFrom harus YYYY-MM-DD');
+        range.gte = localDateAtMidnight(query.dateFrom, tz);
       }
       if (query.dateTo) {
-        const d = new Date(query.dateTo);
-        if (isNaN(d.getTime())) throw new BadRequestException('dateTo harus YYYY-MM-DD');
-        d.setHours(23, 59, 59, 999);
-        range.lte = d;
+        if (!ISO_DATE_RE.test(query.dateTo))
+          throw new BadRequestException('dateTo harus YYYY-MM-DD');
+        range.lt = localDateAtMidnight(addDaysIso(query.dateTo, 1), tz);
       }
       where.scheduledStart = range;
     }

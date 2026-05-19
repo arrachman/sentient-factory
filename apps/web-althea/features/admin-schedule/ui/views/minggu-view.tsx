@@ -11,7 +11,8 @@ import {
   type SlotCellTone,
 } from '@/features/psikolog-schedule/model/availability';
 import type { AvailabilityResolver } from '../../hooks/use-availability-map';
-import { DAY_LABELS_SHORT, SLOTS, SVC_COLOR } from '../../model/constants';
+import type { SlotDef } from '@/features/admin-rooms/model/constants';
+import { DAY_LABELS_SHORT, SVC_COLOR } from '../../model/constants';
 import { addDays, pad2, toDateKey, todayKey } from '../../model/format';
 import { EmptySlot } from '../components/empty-slot';
 
@@ -45,6 +46,7 @@ function aggregateTone(
 export function MingguView({
   weekStart,
   bookings,
+  slots,
   isLoading,
   onBookingClick,
   psikologs = [],
@@ -53,6 +55,7 @@ export function MingguView({
 }: {
   weekStart: string;
   bookings: Booking[];
+  slots: SlotDef[];
   isLoading: boolean;
   onBookingClick: (b: Booking) => void;
   psikologs?: Psikolog[];
@@ -70,7 +73,7 @@ export function MingguView({
   const days: string[] = [];
   for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
   const today = todayKey();
-  const byCell = groupByCell(bookings);
+  const byCell = groupByCell(bookings, slots);
   const colTpl = '110px repeat(7, minmax(120px, 1fr))';
   const minWidth = 110 + 7 * 120;
 
@@ -82,21 +85,21 @@ export function MingguView({
         colTpl={colTpl}
         minWidth={minWidth}
       />
-      {SLOTS.map((slot, slotIdx) => (
+      {slots.map((slot, slotIdx) => (
         <div
           key={slot.start}
           style={{
             display: 'grid',
             gridTemplateColumns: colTpl,
             borderBottom:
-              slotIdx === SLOTS.length - 1
+              slotIdx === slots.length - 1
                 ? 'none'
                 : '1px solid var(--border)',
             minWidth,
             background: slotIdx % 2 === 1 ? 'rgba(247, 244, 237, 0.55)' : 'transparent',
           }}
         >
-          <SlotLabel start={slot.start} end={slot.end} />
+          <SlotLabel label={slot.label ?? `Slot ${slotIdx + 1}`} />
           {days.map((d) => {
             const cellKey = `${d}#${slotIdx}`;
             const cellBookings = byCell.get(cellKey) ?? [];
@@ -127,13 +130,13 @@ export function MingguView({
   );
 }
 
-function groupByCell(bookings: Booking[]): Map<string, Booking[]> {
+function groupByCell(bookings: Booking[], slots: SlotDef[]): Map<string, Booking[]> {
   const out = new Map<string, Booking[]>();
   for (const b of bookings) {
     const start = new Date(b.scheduledStart);
     const dateKey = toDateKey(start);
     const hour = start.getHours();
-    const slotIdx = SLOTS.findIndex(
+    const slotIdx = slots.findIndex(
       (s) =>
         parseInt(s.start.split(':')[0], 10) === hour ||
         (parseInt(s.start.split(':')[0], 10) <= hour &&
@@ -215,7 +218,7 @@ function DayHeaderRow({
   );
 }
 
-function SlotLabel({ start, end }: { start: string; end: string }) {
+function SlotLabel({ label }: { label: string }) {
   return (
     <div
       style={{
@@ -234,16 +237,7 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {start}
-      </span>
-      <span
-        style={{
-          fontSize: 10.5,
-          color: 'var(--fg-muted)',
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {end}
+        {label}
       </span>
     </div>
   );

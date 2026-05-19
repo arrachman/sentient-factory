@@ -51,7 +51,7 @@ export function TemplateEditor({
     return (
       <div className="card-althea overflow-hidden flex flex-col">
         <div className="p-8 text-center text-fg-muted flex-1 flex items-center justify-center">
-          Pilih template di kiri untuk edit, atau klik{' '}
+          Pilih template di atas untuk edit, atau klik{' '}
           <strong className="ml-1">Template Baru</strong>.
         </div>
       </div>

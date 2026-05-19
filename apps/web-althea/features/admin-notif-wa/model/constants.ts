@@ -101,16 +101,18 @@ export const TRIGGER_META: Record<string, TriggerMeta> = {
     tips: 'Kalau template memakai variabel {{sesi_berikut_tanggal}}, sistem auto-lookup booking lanjutan klien terdekat (status scheduled/confirmed/checked_in, scheduledStart > now). Kalau belum ada booking lanjutan, variabel diisi "(belum dijadwalkan)" — jadi input booking lanjutan dulu sebelum tandai "Selesai" supaya isinya akurat.',
   },
   feedback_request: {
-    status: 'belum-aktif',
+    status: 'cron',
     cerita:
-      'Template ini disiapkan untuk meminta feedback dari klien setelah sesi. ' +
-      'Rencananya dikirim otomatis H+1 setelah sesi selesai. ' +
-      'Saat ini belum aktif — pengiriman otomatisnya belum tersambung ke sistem.',
+      'Dikirim otomatis H+1 setelah sesi selesai — sistem cek tiap hari jam 08:00 WIB ' +
+      'dan mengirim ke semua klien yang sesinya ditandai "Selesai" pada hari sebelumnya. ' +
+      'Klien diminta membalas pesan WhatsApp ini langsung dengan masukannya (tanpa link/formulir); ' +
+      'balasan dibaca tim lewat WhatsApp.',
     syarat: [
-      'Fitur auto-trigger belum tersedia — perlu pengembangan lebih lanjut',
-      'Untuk sekarang bisa dikirim manual via tombol Send Test',
+      'Sesi sudah ditandai "Selesai" (status completed) pada hari sebelumnya',
+      'Nomor WhatsApp klien sudah diisi & klien tidak opt-out',
+      'Feedback belum pernah dikirim untuk booking ini (tidak akan kirim dua kali)',
     ],
-    tips: 'Mau diaktifkan otomatis? Hubungi tim developer untuk menghubungkan trigger H+1 post-session.',
+    tips: 'Jaga template tetap meminta klien membalas pesan ini — jangan masukkan link form. Balasan klien masuk ke WhatsApp klinik, bukan ke aplikasi.',
   },
   payment_due: {
     status: 'paket-full',
@@ -125,17 +127,18 @@ export const TRIGGER_META: Record<string, TriggerMeta> = {
     tips: 'Upgrade ke Paket Full untuk mengaktifkan reminder pembayaran otomatis.',
   },
   confirmation: {
-    status: 'manual',
+    status: 'auto',
     cerita:
-      'Dikirim ke klien sebagai tanda bahwa bookingnya sudah dikonfirmasi oleh admin. ' +
-      'Saat ini pengiriman dilakukan manual — admin perlu klik Send Test atau memicunya dari halaman detail booking. ' +
-      'Ke depan rencananya akan otomatis saat status booking berubah jadi "Dikonfirmasi".',
+      'Otomatis terkirim begitu booking dibuat di sistem. ' +
+      'Dikirim ke klien DAN psikolog (fan-out) dengan teks netral peran — ' +
+      'tidak menyapa "Halo {{nama_klien}}", melainkan mendaftar Klien & Psikolog sebagai field ' +
+      'agar kedua pihak nyaman membacanya.',
     syarat: [
       'Booking sudah ada di sistem',
       'Nomor WhatsApp klien sudah diisi',
-      'Admin perlu kirim manual (belum otomatis)',
+      'Nomor psikolog (User.phone) terisi agar psikolog ikut menerima',
     ],
-    tips: 'Biasakan kirim konfirmasi sesegera mungkin setelah booking dibuat — klien senang dapat kepastian cepat.',
+    tips: 'Body wajib netral peran (tanpa "Anda"/"Halo nama") karena pesan yang sama dikirim ke klien dan psikolog.',
   },
   reschedule: {
     status: 'auto',

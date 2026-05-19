@@ -20,6 +20,7 @@ import { bookingApi } from '@/features/admin-booking/api/booking.api';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { BookingDetailDialog } from '@/features/admin-booking/ui/booking-detail-dialog';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { EMPTY_FILTERS } from '@/features/admin-schedule/model/constants';
@@ -62,6 +63,9 @@ export function OwnerScheduleSection() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+
+  const settingsQuery = useSettings();
+  const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
@@ -202,6 +206,7 @@ export function OwnerScheduleSection() {
           date={date}
           psikologs={psikologs}
           bookings={filteredBookings}
+          slots={globalSlots}
           isLoading={isLoading}
           onBookingClick={setSelectedBooking}
           resolveAvailability={resolveAvailability}
@@ -212,6 +217,7 @@ export function OwnerScheduleSection() {
         <MingguView
           weekStart={weekStartMonday(date)}
           bookings={filteredBookings}
+          slots={globalSlots}
           isLoading={isLoading}
           onBookingClick={setSelectedBooking}
           psikologs={psikologsForAvail}

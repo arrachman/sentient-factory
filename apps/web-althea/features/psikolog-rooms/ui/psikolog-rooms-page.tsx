@@ -20,7 +20,6 @@ import { Bell } from 'lucide-react';
 import { RoomStatTilesRow } from '@/features/admin-rooms/ui/room-stat-tiles-row';
 import { RoomUsageGrid } from '@/features/admin-rooms/ui/room-usage-grid';
 import { RoomUsageLegend } from '@/features/admin-rooms/ui/room-usage-legend';
-import { SLOTS } from '@/features/admin-rooms/model/constants';
 import { usePsikologRooms } from '../hooks/use-psikolog-rooms';
 import { RoomDetailPanel } from './room-detail-panel';
 import { RoomsToolbar } from './rooms-toolbar';
@@ -86,6 +85,7 @@ export function PsikologRoomsPage() {
               rooms={page.rooms}
               bookings={page.bookings}
               dateKey={page.date}
+              slots={page.slots}
               pickedKey={
                 page.picked
                   ? `${page.picked.room.id}-${page.picked.slotIdx}`
@@ -100,7 +100,7 @@ export function PsikologRoomsPage() {
         {page.picked ? (
           <RoomDetailPanel
             room={page.picked.room}
-            slot={SLOTS[page.picked.slotIdx]}
+            slot={page.slots[page.picked.slotIdx]}
             booking={page.picked.booking}
             onClose={page.clearPicked}
           />

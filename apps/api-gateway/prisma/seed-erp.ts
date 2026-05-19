@@ -246,6 +246,27 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M1.PROD.SUBCLASS',  title: 'Sub Class',           path: '/master/subclasses',            legacyCode: '1-106' },
   ], prodGrp.id);
 
+  // ── M2–M14: Module stubs (legacy MyERP+ modules) ─────────────────────────
+  // Roots only — items belum di-port. Path null = sidebar tampil tapi belum
+  // navigable; expand per modul saat fitur dibangun. Tidak ada m9 di legacy.
+  const moduleStubs: Array<{ code: string; title: string; icon: string; legacyCode: string; sortOrder: number }> = [
+    { code: 'M2',  title: 'Finance & Accounting', icon: 'calculator',   legacyCode: '2-1',  sortOrder: 3  },
+    { code: 'M3',  title: 'Warehouse & Inventory', icon: 'boxes',       legacyCode: '3-1',  sortOrder: 4  },
+    { code: 'M4',  title: 'Purchasing',            icon: 'shopping-cart', legacyCode: '4-1',  sortOrder: 5  },
+    { code: 'M5',  title: 'Sales',                 icon: 'trending-up',  legacyCode: '5-1',  sortOrder: 6  },
+    { code: 'M6',  title: 'Production',            icon: 'factory',      legacyCode: '6-1',  sortOrder: 7  },
+    { code: 'M7',  title: 'Fixed Assets',          icon: 'building',     legacyCode: '7-1',  sortOrder: 8  },
+    { code: 'M8',  title: 'Dashboard',             icon: 'layout-dashboard', legacyCode: '8-1', sortOrder: 9  },
+    { code: 'M10', title: 'HR & Payroll',          icon: 'users-round',  legacyCode: '10-1', sortOrder: 10 },
+    { code: 'M11', title: 'Hospital',              icon: 'hospital',     legacyCode: '11-1', sortOrder: 11 },
+    { code: 'M12', title: 'Point of Sales',        icon: 'shopping-bag', legacyCode: '12-1', sortOrder: 12 },
+    { code: 'M13', title: 'Academic',              icon: 'graduation-cap', legacyCode: '13-1', sortOrder: 13 },
+    { code: 'M14', title: 'Cooperative',           icon: 'handshake',    legacyCode: '14-1', sortOrder: 14 },
+  ];
+  for (const s of moduleStubs) {
+    await upsertMenu({ code: s.code, title: s.title, icon: s.icon, type: ErpMenuType.MODULE, sortOrder: s.sortOrder, legacyCode: s.legacyCode });
+  }
+
   console.log(`✓ sys_menus (${menuIds.size} entries)`);
   return menuIds;
 }

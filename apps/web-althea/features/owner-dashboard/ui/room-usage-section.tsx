@@ -12,10 +12,10 @@ import { useMemo, useState } from 'react';
 import type { Booking } from '@/features/admin-booking/model/types';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import type { Room } from '@/features/admin-rooms/model/types';
-import { SLOTS } from '@/features/admin-rooms/model/constants';
 import { RoomUsageGrid } from '@/features/admin-rooms/ui/room-usage-grid';
 import { RoomUsageLegend } from '@/features/admin-rooms/ui/room-usage-legend';
 import { RoomDetailPanel } from '@/features/psikolog-rooms/ui/room-detail-panel';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { todayKey } from '../model/format';
 
 type PickedCell = {
@@ -35,6 +35,8 @@ export function RoomUsageSection({
 }) {
   const [picked, setPicked] = useState<PickedCell | null>(null);
   const dateKey = todayKey();
+  const settingsQuery = useSettings();
+  const slots = settingsQuery.data?.data.slotsOfDay ?? [];
 
   const legendPsikologs = useMemo(() => {
     const map = new Map<number, { id: number; short: string; color: string }>();
@@ -101,6 +103,7 @@ export function RoomUsageSection({
               rooms={rooms}
               bookings={todayBookings}
               dateKey={dateKey}
+              slots={slots}
               pickedKey={
                 picked ? `${picked.room.id}-${picked.slotIdx}` : null
               }
@@ -115,7 +118,7 @@ export function RoomUsageSection({
         {picked ? (
           <RoomDetailPanel
             room={picked.room}
-            slot={SLOTS[picked.slotIdx]}
+            slot={slots[picked.slotIdx]}
             booking={picked.booking}
             onClose={() => setPicked(null)}
           />

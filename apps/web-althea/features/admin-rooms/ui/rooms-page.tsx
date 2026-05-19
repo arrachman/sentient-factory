@@ -8,11 +8,11 @@
  * di file terpisah (`rooms-toolbar`, `room-stat-tile`, `room-usage-grid`,
  * `room-usage-legend`, `room-detail-panel`, `room-crud-drawer`).
  */
-import { SLOTS } from '../model/constants';
 import { useRoomsPage } from '../hooks/use-rooms-page';
 import { RoomCrudDrawer } from './room-crud-drawer';
 import { RoomDetailPanel } from './room-detail-panel';
 import { RoomReassignDialog } from './room-reassign-dialog';
+import { RoomsMobile } from './rooms-mobile';
 import { RoomStatTilesRow } from './room-stat-tiles-row';
 import { RoomUsageGrid } from './room-usage-grid';
 import { RoomUsageLegend } from './room-usage-legend';
@@ -23,7 +23,13 @@ export function RoomsPage() {
 
   return (
     <>
-      <div className="flex flex-col h-full min-h-0">
+      <RoomsMobile
+        rooms={page.rooms}
+        bookings={page.bookings}
+        isLoading={page.isLoading}
+      />
+
+      <div className="hidden lg:flex flex-col h-full min-h-0">
         <RoomsToolbar
           date={page.date}
           onChangeDate={page.setDate}
@@ -47,6 +53,7 @@ export function RoomsPage() {
                 rooms={page.rooms}
                 bookings={page.bookings}
                 dateKey={page.date}
+                slots={page.slots}
                 pickedKey={
                   page.picked
                     ? `${page.picked.room.id}-${page.picked.slotIdx}`
@@ -60,7 +67,7 @@ export function RoomsPage() {
           {page.picked ? (
             <RoomDetailPanel
               room={page.picked.room}
-              slot={SLOTS[page.picked.slotIdx]}
+              slot={page.slots[page.picked.slotIdx]}
               booking={page.picked.booking}
               onClose={page.clearPicked}
               onEditMaster={() => page.startEdit(page.picked!.room)}

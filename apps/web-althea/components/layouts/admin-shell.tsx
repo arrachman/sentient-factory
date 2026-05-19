@@ -5,6 +5,8 @@ import { Menu, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useMe } from '@/features/auth/hooks/use-me';
 import { usePsikologMe } from '@/features/psikolog-profile/hooks/use-profile';
+import { AdminBottomTabs } from './admin-shell/admin-bottom-tabs';
+import { PsikologBottomTabs } from './admin-shell/psikolog-bottom-tabs';
 import { DesktopTopbar } from './admin-shell/desktop-topbar';
 import { performLogout, resolvePageMeta, userInitial } from './admin-shell/lib';
 import { LogoutConfirmDialog } from './admin-shell/logout-confirm-dialog';
@@ -90,6 +92,9 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
       <div className="flex-1 flex flex-col lg:pl-64 min-w-0">
         <MobileTopbar
           roleShort={userRole}
+          userName={userName}
+          initial={initial}
+          pageTitle={meta?.title ?? ''}
           onOpenMenu={() => setMobileOpen(true)}
         />
         <DesktopTopbar
@@ -100,8 +105,19 @@ export function AdminShell({ role, children }: { role: ShellRole; children: Reac
           avatarUrl={psikologProfile?.avatarUrl ?? null}
           avatarColor={psikologProfile?.color ?? null}
         />
-        <main className="flex-1">{children}</main>
+        <main
+          className={`flex-1 ${
+            role === 'admin' || role === 'psikolog' ? 'pb-16 lg:pb-0' : ''
+          }`}
+        >
+          {children}
+        </main>
       </div>
+
+      {role === 'admin' && (
+        <AdminBottomTabs onOpenMore={() => setMobileOpen(true)} />
+      )}
+      {role === 'psikolog' && <PsikologBottomTabs />}
 
       {logoutConfirmOpen && (
         <LogoutConfirmDialog

@@ -144,7 +144,8 @@ export function NotifWaPage() {
   const submitting = createMut.isPending || updateMut.isPending;
 
   return (
-    <div className="space-y-4 p-6">
+    <>
+      <div className="space-y-4 p-4 lg:p-6">
       <WaPageHeader onCreate={startCreate} />
 
       <WaStatsRow
@@ -156,7 +157,7 @@ export function NotifWaPage() {
         totalTemplates={totalTemplates}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_380px] gap-4 min-h-[640px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr_380px] gap-4 lg:min-h-[640px]">
         <TemplateList
           templates={templates}
           isLoading={tplList.isLoading}
@@ -186,6 +187,7 @@ export function NotifWaPage() {
           onDelete={handleDelete}
         />
       </div>
+      </div>
 
       {testOpen && selectedId !== null && (
         <SendTestDialog
@@ -195,6 +197,6 @@ export function NotifWaPage() {
           sendTest={sendTestMut}
         />
       )}
-    </div>
+    </>
   );
 }

@@ -1,7 +1,7 @@
 import { Bell } from 'lucide-react';
 
 /**
- * Privacy reminder block di footer aside (BR-04).
+ * Privacy reminder block di footer aside.
  */
 export function PrivacyReminder() {
   return (

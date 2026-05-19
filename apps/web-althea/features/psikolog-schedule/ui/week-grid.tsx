@@ -89,10 +89,7 @@ export function WeekGrid({
                   color: 'var(--teal-800)',
                 }}
               >
-                {slot.start}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>
-                {slot.end}
+                {slot.label ?? `Slot ${slotIdx + 1}`}
               </span>
             </div>
             {days.map((d, dayIdx) => {

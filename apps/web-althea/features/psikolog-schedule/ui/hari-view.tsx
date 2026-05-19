@@ -122,22 +122,8 @@ export function HariView({
                     color: 'var(--teal-800)',
                   }}
                 >
-                  {slot.start}
+                  {slot.label ?? `Slot ${slotIdx + 1}`}
                 </span>
-                <span style={{ fontSize: 10.5, color: 'var(--fg-muted)' }}>
-                  {slot.end}
-                </span>
-                {slot.label && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      color: 'var(--fg-muted)',
-                      marginTop: 2,
-                    }}
-                  >
-                    {slot.label}
-                  </span>
-                )}
               </div>
               <div>
                 <SlotCell

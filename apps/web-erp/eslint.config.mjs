@@ -42,6 +42,13 @@ export default defineConfig([
       '@next/next/no-img-element': 'off',
     },
   },
+  {
+    files: ['app/**/*.{ts,tsx,js,jsx}', 'components/**/*.{ts,tsx,js,jsx}', 'lib/**/*.{ts,tsx,js,jsx}', 'shared/**/*.{ts,tsx,js,jsx}'],
+    ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}', '**/*.seed.{ts,tsx}', '**/*.mock.{ts,tsx}', '**/__fixtures__/**', '**/__mocks__/**'],
+    rules: {
+      'max-lines': ['error', { max: 400, skipBlankLines: true, skipComments: true }],
+    },
+  },
   globalIgnores([
     '.next/**',
     'node_modules/**',

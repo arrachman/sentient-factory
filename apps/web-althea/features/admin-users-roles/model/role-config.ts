@@ -6,7 +6,7 @@
  * - PERMS: Tiap cell ∈ {edit, view, '—'}.
  * - PERM_STYLE: warna chip per kategori permission.
  *
- * Catatan BR-04: psikolog tidak boleh akses "Klien (semua)" — hanya
+ * Catatan privasi: psikolog tidak boleh akses "Klien (semua)" — hanya
  * "Klien (sendiri)". Ini di-enforce di backend juga.
  */
 import { PLAN_FEATURES } from '@/shared/config/clinic-plan';

@@ -50,7 +50,7 @@ export function ActivityLog({
           />
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto max-h-[700px]">
+      <div className="flex-1 overflow-y-auto max-h-[400px] lg:max-h-[700px]">
         {isLoading ? (
           <div className="p-8 text-center text-fg-muted">Memuat...</div>
         ) : filtered.length === 0 ? (

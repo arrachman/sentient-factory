@@ -102,6 +102,8 @@ Caller: `ClinicBookingService.create` + `BookingPackageService.create`.
 
 Konsekuensi untuk caller: setiap Prisma include yang nanti dipakai sebagai argumen `notify()` **wajib** select `psikolog.phone`. Sudah ada di `ClinicBookingService.includeRelations` + `BookingPackageService.includeRelations`.
 
+**Konvensi nama variabel template:** nama psikolog selalu dikirim dengan key **`nama_psikolog`** (match placeholder `{{nama_psikolog}}` di seed `seed-clinic-wa.ts`), bukan `psikolog`. Bug history: `BookingReminderScheduler.dispatchAndMark` sempat kirim key `psikolog` → reminder H-1 & 30m menampilkan `{{nama_psikolog}}` literal. Saat menambah/ubah variabel WA, samakan key dengan placeholder di seed template.
+
 Template baru — `Welcome Psikolog Baru` (`recipients: ['psikolog']`) — di-fire dari `ClinicPsikologService.create` saat akun psikolog dibuat dan `User.phone` ada. Setelah update seed: `npm run db:seed` di `apps/api-gateway` untuk upsert template.
 
 ### Junction tables (Althea)

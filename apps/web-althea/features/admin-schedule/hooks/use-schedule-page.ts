@@ -15,7 +15,8 @@ import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import type { Booking } from '@/features/admin-booking/model/types';
-import { EMPTY_FILTERS, SLOTS } from '../model/constants';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
+import { EMPTY_FILTERS } from '../model/constants';
 import { applyFilters, filterCount } from '../model/filters';
 import {
   addDays,
@@ -42,6 +43,9 @@ export function useSchedulePage() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+
+  const settingsQuery = useSettings();
+  const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
@@ -101,7 +105,7 @@ export function useSchedulePage() {
 
   const stats = useMemo<ScheduleStats>(() => {
     const totalSlots =
-      psikologs.length * SLOTS.length * (datesToFetch.length || 1);
+      psikologs.length * globalSlots.length * (datesToFetch.length || 1);
     const usedRoomIds = new Set(filteredBookings.map((b) => b.room.id));
     const inProgressCount = filteredBookings.filter(
       (b) => b.status === 'in_progress',

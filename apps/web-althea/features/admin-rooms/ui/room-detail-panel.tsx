@@ -260,10 +260,23 @@ function BookingSummary({ booking }: { booking: Booking }) {
         <br />
         Layanan: {booking.service.name}
         <br />
+        Waktu: {formatWaktu(booking.scheduledStart, booking.scheduledEnd)}
+        <br />
         Sesi: {booking.sessionN}/{booking.sessionTotal}
       </div>
     </div>
   );
+}
+
+function formatWaktu(startIso: string, endIso: string) {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Jakarta',
+      hour12: false,
+    });
+  return `${fmt(startIso)}–${fmt(endIso)} WIB`;
 }
 
 function EmptySlotMessage() {

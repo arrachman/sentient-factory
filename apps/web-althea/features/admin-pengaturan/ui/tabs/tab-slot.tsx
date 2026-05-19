@@ -64,7 +64,7 @@ export function TabSlot({
               >
                 <span>Mulai</span>
                 <span>Selesai</span>
-                <span>Label (opsional)</span>
+                <span>Label</span>
                 <span />
               </div>
               {slots.map((s, i) => (
@@ -91,6 +91,8 @@ export function TabSlot({
                     value={s.label ?? ''}
                     onChange={(e) => updateSlot(i, { label: e.target.value })}
                     className="input-althea h-9 py-0 text-[13px]"
+                    required
+                    aria-required="true"
                   />
                   <button
                     type="button"

@@ -8,20 +8,7 @@ import { DoorOpen, ListChecks, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { CreateRoomInput, RoomType } from './types';
 
-export type SlotDef = { start: string; end: string };
-
-/**
- * Slot operasional klinik — 6 slot 90-menit. Sumber tunggal supaya
- * SchedulePage & RoomsPage memetakan slot yang sama.
- */
-export const SLOTS: SlotDef[] = [
-  { start: '08:00', end: '09:30' },
-  { start: '10:00', end: '11:30' },
-  { start: '13:00', end: '14:30' },
-  { start: '15:00', end: '16:30' },
-  { start: '17:00', end: '18:30' },
-  { start: '19:00', end: '20:30' },
-];
+export type SlotDef = { start: string; end: string; label?: string };
 
 export type RoomTypeStyle = { bg: string; fg: string; icon: LucideIcon };
 

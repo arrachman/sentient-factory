@@ -19,6 +19,7 @@ import { BulanView } from './bulan-view';
 import { FilterPopover } from './filter-popover';
 import { HariView } from './hari-view';
 import { ScheduleLegend } from './schedule-legend';
+import { ScheduleMobile } from './schedule-mobile';
 import { ScheduleToolbar } from './schedule-toolbar';
 import { WeekGrid } from './week-grid';
 
@@ -46,7 +47,24 @@ export function PsikologSchedulePage() {
   }
 
   return (
-    <div className="p-6">
+    <>
+      <ScheduleMobile
+        page={page}
+        onBookingClick={setSelectedBooking}
+        onOpenAvailability={() => setAvailabilityOpen(true)}
+      />
+
+      <AvailabilityDialog
+        open={availabilityOpen}
+        onClose={() => setAvailabilityOpen(false)}
+        initial={myWeekly}
+      />
+      <BookingDetailDrawer
+        booking={selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+      />
+
+      <div className="hidden lg:block p-6">
       {needsSetup && (
         <div
           className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 flex items-start gap-2"
@@ -95,17 +113,6 @@ export function PsikologSchedulePage() {
         }
       />
 
-      <AvailabilityDialog
-        open={availabilityOpen}
-        onClose={() => setAvailabilityOpen(false)}
-        initial={myWeekly}
-      />
-
-      <BookingDetailDrawer
-        booking={selectedBooking}
-        onClose={() => setSelectedBooking(null)}
-      />
-
       {/* Legend visible only for grid views (Hari & Minggu) */}
       {page.view !== 'Bulan' ? <ScheduleLegend /> : null}
 
@@ -151,7 +158,8 @@ export function PsikologSchedulePage() {
       )}
 
       <Footnote />
-    </div>
+      </div>
+    </>
   );
 }
 

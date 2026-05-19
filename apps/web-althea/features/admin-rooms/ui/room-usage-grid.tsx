@@ -10,7 +10,8 @@
  *   - Row banding: even rows soft cream tint untuk membantu eye-track horizontal
  */
 import type { Booking } from '@/features/admin-booking/model/types';
-import { ROOM_TYPE_STYLE, SLOTS } from '../model/constants';
+import { ROOM_TYPE_STYLE } from '../model/constants';
+import type { SlotDef } from '../model/constants';
 import { bookingForCell, shortName } from '../model/utils';
 import type { Room } from '../model/types';
 
@@ -22,6 +23,7 @@ export function RoomUsageGrid({
   rooms,
   bookings,
   dateKey,
+  slots,
   pickedKey = null,
   onPick,
   readOnly = false,
@@ -29,6 +31,7 @@ export function RoomUsageGrid({
   rooms: Room[];
   bookings: Booking[];
   dateKey: string;
+  slots: SlotDef[];
   pickedKey?: string | null;
   onPick?: (room: Room, slotIdx: number, booking: Booking | null) => void;
   readOnly?: boolean;
@@ -41,20 +44,20 @@ export function RoomUsageGrid({
     <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
       <div style={{ minWidth: 'max-content' }}>
         <GridHeader rooms={rooms} colTpl={colTpl} />
-        {SLOTS.map((slot, slotIdx) => (
+        {slots.map((slot, slotIdx) => (
           <div
             key={`${slot.start}-${slot.end}`}
             style={{
               display: 'grid',
               gridTemplateColumns: colTpl,
               borderBottom:
-                slotIdx === SLOTS.length - 1
+                slotIdx === slots.length - 1
                   ? 'none'
                   : '1px solid var(--border)',
               background: slotIdx % 2 === 1 ? ROW_BAND_EVEN : 'transparent',
             }}
           >
-            <SlotLabel slot={slot} />
+            <SlotLabel slot={slot} idx={slotIdx} />
             {rooms.map((r) => {
               const booking = bookingForCell(bookings, r.id, dateKey, slot);
               const cellKey = `${r.id}-${slotIdx}`;
@@ -151,7 +154,7 @@ function GridHeader({ rooms, colTpl }: { rooms: Room[]; colTpl: string }) {
   );
 }
 
-function SlotLabel({ slot }: { slot: (typeof SLOTS)[number] }) {
+function SlotLabel({ slot, idx }: { slot: SlotDef; idx: number }) {
   return (
     <div
       style={{
@@ -170,16 +173,7 @@ function SlotLabel({ slot }: { slot: (typeof SLOTS)[number] }) {
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {slot.start}
-      </span>
-      <span
-        style={{
-          fontSize: 10.5,
-          color: 'var(--fg-muted)',
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {slot.end}
+        {slot.label ?? `Slot ${idx + 1}`}
       </span>
     </div>
   );

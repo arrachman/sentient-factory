@@ -7,6 +7,7 @@ import type { CreateTemplateInput } from '../model/types';
 
 const T_KEY = ['clinic', 'wa', 'template'] as const;
 const L_KEY = ['clinic', 'wa', 'log'] as const;
+const S_KEY = ['clinic', 'wa', 'stats'] as const;
 
 export function useTemplateList(params: Parameters<typeof waApi.listTemplates>[0] = {}) {
   return useQuery({ queryKey: [...T_KEY, params], queryFn: () => waApi.listTemplates(params) });
@@ -14,6 +15,10 @@ export function useTemplateList(params: Parameters<typeof waApi.listTemplates>[0
 
 export function useLogList(params: Parameters<typeof waApi.listLogs>[0] = {}) {
   return useQuery({ queryKey: [...L_KEY, params], queryFn: () => waApi.listLogs(params), refetchInterval: 5000 });
+}
+
+export function useWaStats(date?: string) {
+  return useQuery({ queryKey: [...S_KEY, date], queryFn: () => waApi.getStats(date), refetchInterval: 5000 });
 }
 
 export function useCreateTemplate() {

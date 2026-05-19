@@ -39,7 +39,7 @@ type Props = {
 /**
  * Default seed weekly availability untuk create psikolog baru: Sen-Jum buka,
  * Sab+Min tutup. Tidak ada UI editor — psikolog yang bersangkutan atur sendiri
- * lewat /psikolog/schedule "Set Jadwal" dialog (BR-04 privacy).
+ * lewat /psikolog/schedule "Set Jadwal" dialog (privacy).
  */
 const DEFAULT_WEEKLY: Record<DayKey, DayAvailability> = {
   monday: { isOpen: true },
@@ -354,7 +354,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
            * Jadwal Mingguan dipindah ke halaman /psikolog/schedule "Set Jadwal"
            * (dialog AvailabilityDialog) — diatur sendiri oleh psikolog
            * bersangkutan, bukan oleh admin. Lebih sesuai dengan flow privasi
-           * BR-04: admin tidak set jadwal psikolog secara langsung.
+           * Catatan: admin tidak set jadwal psikolog secara langsung.
            */}
 
           <ServicesSection control={control} />

@@ -1,6 +1,6 @@
 /**
  * Tab "Matriks permission" — grid 6 role × 10 modul, cell = chip permission.
- * Footer note BR-04 (psikolog × klien-semua = —).
+ * Footer note (psikolog × klien-semua = —).
  */
 import { Fragment } from 'react';
 import { Bell } from 'lucide-react';

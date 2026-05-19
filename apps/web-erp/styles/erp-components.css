@@ -2236,6 +2236,123 @@ body {
   margin: 4px 0;
 }
 
+/* === Workspace switcher === */
+.ws-switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.ws-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 200px;
+}
+.ws-pill:hover {
+  background: var(--panel-hover);
+}
+.ws-pill .ws-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+.ws-dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  min-width: 240px;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: var(--shadow-flyout);
+  z-index: 700;
+}
+.ws-dropdown-hd {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-faint);
+  padding: 6px 8px 4px;
+}
+.ws-dropdown-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+.ws-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+}
+.ws-item:hover {
+  background: var(--panel-hover);
+}
+.ws-item.active {
+  background: var(--primary-soft);
+  color: var(--primary-soft-fg);
+}
+.ws-item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ws-item-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-fg);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+.ws-item-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-faint);
+  cursor: pointer;
+}
+.ws-item-del:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.ws-item-new {
+  color: var(--primary);
+  font-weight: 500;
+}
+.ws-item-new:hover {
+  background: var(--primary-soft);
+}
+
 /* === Login screen === */
 .login-wrap {
   position: fixed;
