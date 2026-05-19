@@ -22,12 +22,63 @@ import { ErpUsersPage } from '@/components/pages/users-page';
 import { ErpBranchesPage } from '@/components/pages/branches-page';
 import { ErpRolesPage } from '@/components/pages/roles-page';
 import { ErpSettingsPage } from '@/components/pages/settings-page';
+import { ErpPermissionsPage } from '@/components/pages/permissions-page';
+import { ErpMenusPage } from '@/components/pages/menus-page';
+import { ErpDocumentNumberingsPage } from '@/components/pages/document-numberings-page';
+import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
 // F3 Master Data pages
 import { ErpItemsPage } from '@/components/pages/items-page';
 import { ErpUnitsPage } from '@/components/pages/units-page';
 import { ErpPartnersPage } from '@/components/pages/partners-page';
 import { ErpItemCategoriesPage } from '@/components/pages/item-categories-page';
+import { ErpLocationsPage } from '@/components/pages/locations-page';
+import { ErpWarehousesPage } from '@/components/pages/warehouses-page';
+import { ErpPartnerCategoriesPage } from '@/components/pages/partner-categories-page';
+import { ErpAccountsPage } from '@/components/pages/accounts-page';
+import { ErpCurrenciesPage } from '@/components/pages/currencies-page';
+import { ErpTaxesPage } from '@/components/pages/taxes-page';
+import { ErpPaymentTermsPage } from '@/components/pages/payment-terms-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
+
+/**
+ * ERP page registry. Keyed by the canonical route id = the seeded
+ * `sys_menus.path` (single source of truth — the dynamic sidebar emits
+ * these). Legacy short-ids (`adm-users`, `md-items`, …) are kept as
+ * aliases so the static NAV fallback in `lib/nav.ts` keeps working when
+ * the API is unreachable.
+ */
+const ERP_PAGES: Record<string, () => React.ReactNode> = {
+  // ── Admin (sys/adm) ───────────────────────────────────────────────────────
+  '/admin/users': () => <ErpUsersPage />,
+  '/admin/roles': () => <ErpRolesPage />,
+  '/admin/settings': () => <ErpSettingsPage />,
+  '/admin/permissions': () => <ErpPermissionsPage />,
+  '/admin/menus': () => <ErpMenusPage />,
+  '/admin/document-numbering': () => <ErpDocumentNumberingsPage />,
+  '/admin/fiscal-periods': () => <ErpFiscalPeriodsPage />,
+  // ── Master Data (md) ──────────────────────────────────────────────────────
+  '/master/branches': () => <ErpBranchesPage />,
+  '/master/items': () => <ErpItemsPage />,
+  '/master/units': () => <ErpUnitsPage />,
+  '/master/partners': () => <ErpPartnersPage />,
+  '/master/item-categories': () => <ErpItemCategoriesPage />,
+  '/master/locations': () => <ErpLocationsPage />,
+  '/master/warehouses': () => <ErpWarehousesPage />,
+  '/master/partner-categories': () => <ErpPartnerCategoriesPage />,
+  '/master/accounts': () => <ErpAccountsPage />,
+  '/master/currencies': () => <ErpCurrenciesPage />,
+  '/master/taxes': () => <ErpTaxesPage />,
+  '/master/payment-terms': () => <ErpPaymentTermsPage />,
+  // ── Legacy short-id aliases (static NAV fallback) ─────────────────────────
+  'adm-users': () => <ErpUsersPage />,
+  'adm-roles': () => <ErpRolesPage />,
+  'adm-branches': () => <ErpBranchesPage />,
+  'adm-settings': () => <ErpSettingsPage />,
+  'md-items': () => <ErpItemsPage />,
+  'md-units': () => <ErpUnitsPage />,
+  'md-partners': () => <ErpPartnersPage />,
+  'md-item-categories': () => <ErpItemCategoriesPage />,
+};
 import type { Lang } from '@/lib/shell-constants';
 
 /** If `route` ends with `-new`, returns the base route; otherwise `null`. */
@@ -57,17 +108,9 @@ export function renderRoute(
   if (route === 'set-prefs') return <SettingsPage t={t} />;
   if (route === 'set-appearance') return <AppearancePage t={t} />;
 
-  // ── F2 Admin ──────────────────────────────────────────────────────────────
-  if (route === 'adm-users') return <ErpUsersPage />;
-  if (route === 'adm-branches') return <ErpBranchesPage />;
-  if (route === 'adm-roles') return <ErpRolesPage />;
-  if (route === 'adm-settings') return <ErpSettingsPage />;
-
-  // ── F3 Master Data ────────────────────────────────────────────────────────
-  if (route === 'md-items') return <ErpItemsPage />;
-  if (route === 'md-units') return <ErpUnitsPage />;
-  if (route === 'md-partners') return <ErpPartnersPage />;
-  if (route === 'md-item-categories') return <ErpItemCategoriesPage />;
+  // ── ERP pages (seeded sys_menus path = canonical id; short-id aliases) ─────
+  const erpPage = ERP_PAGES[route];
+  if (erpPage) return erpPage();
 
   const baseRoute = resolveNewRoute(route);
   if (baseRoute) {

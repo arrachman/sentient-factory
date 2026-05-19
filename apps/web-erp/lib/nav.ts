@@ -163,8 +163,43 @@ export interface PageMeta {
   crumbs: Crumb[];
 }
 
+/**
+ * Title/breadcrumb for ERP routes keyed by the seeded `sys_menus.path`
+ * (canonical id). Keeps tabs/breadcrumbs readable when the active route is
+ * a raw path emitted by the dynamic sidebar.
+ */
+const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconName }> = {
+  '/admin/users': { group: 'Administrator', title: 'Users', icon: 'gear' },
+  '/admin/roles': { group: 'Administrator', title: 'Roles', icon: 'gear' },
+  '/admin/permissions': { group: 'Administrator', title: 'Permissions', icon: 'gear' },
+  '/admin/menus': { group: 'Administrator', title: 'Menu Manager', icon: 'gear' },
+  '/admin/settings': { group: 'Administrator', title: 'System Settings', icon: 'gear' },
+  '/admin/document-numbering': { group: 'Administrator', title: 'Document Numbering', icon: 'gear' },
+  '/admin/fiscal-periods': { group: 'Administrator', title: 'Fiscal Periods', icon: 'gear' },
+  '/master/branches': { group: 'Data Master', title: 'Branch', icon: 'database' },
+  '/master/locations': { group: 'Data Master', title: 'Location', icon: 'database' },
+  '/master/warehouses': { group: 'Data Master', title: 'Warehouse', icon: 'database' },
+  '/master/items': { group: 'Data Master', title: 'Item', icon: 'database' },
+  '/master/item-categories': { group: 'Data Master', title: 'Item Categories', icon: 'database' },
+  '/master/units': { group: 'Data Master', title: 'Units', icon: 'database' },
+  '/master/partners': { group: 'Data Master', title: 'Partner', icon: 'database' },
+  '/master/partner-categories': { group: 'Data Master', title: 'Partner Categories', icon: 'database' },
+  '/master/accounts': { group: 'Data Master', title: 'Chart of Accounts', icon: 'database' },
+  '/master/currencies': { group: 'Data Master', title: 'Currencies', icon: 'database' },
+  '/master/taxes': { group: 'Data Master', title: 'Taxes', icon: 'database' },
+  '/master/payment-terms': { group: 'Data Master', title: 'Payment Terms', icon: 'database' },
+};
+
 /** Resolve a route id to its title/icon/breadcrumb — mirrors prototype `pageMeta`. */
 export function pageMeta(route: string, t: (k: string) => string): PageMeta {
+  const erpMeta = ERP_ROUTE_META[route];
+  if (erpMeta) {
+    return {
+      title: t(erpMeta.title),
+      icon: erpMeta.icon,
+      crumbs: [{ label: t(erpMeta.group) }, { label: t(erpMeta.title) }],
+    };
+  }
   if (route === 'home') {
     return { title: t('Dashboard'), icon: 'home', crumbs: [{ label: t('Dashboard') }] };
   }
