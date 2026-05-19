@@ -15,13 +15,19 @@ function buildTree(items: ErpMenu[], parentId: bigint | null = null): MenuNode[]
     .map((item) => ({ ...item, children: buildTree(items, item.id) }));
 }
 
-/** Remove ITEM nodes not in allowedIds; drop MODULE/GROUP that become empty. */
+/**
+ * Remove ITEM nodes not in allowedIds; drop GROUP that become empty.
+ * MODULE selalu dipertahankan (stub kosong = "coming soon" placeholder di sidebar).
+ */
 function pruneTree(nodes: MenuNode[], allowedIds: Set<bigint> | null): MenuNode[] {
   return nodes.flatMap((node) => {
     if (node.type === 'ITEM') {
       return allowedIds === null || allowedIds.has(node.id) ? [node] : [];
     }
     const prunedChildren = pruneTree(node.children, allowedIds);
+    if (node.type === 'MODULE') {
+      return [{ ...node, children: prunedChildren }];
+    }
     return prunedChildren.length > 0 ? [{ ...node, children: prunedChildren }] : [];
   });
 }
