@@ -109,7 +109,10 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
       {openItem && openItem.children && (
         <div
           className="flyout fade-in"
-          style={{ top: Math.max(8, openTop) }}
+          style={{
+            top: Math.max(8, openTop),
+            maxHeight: `calc(100vh - ${Math.max(8, openTop)}px - 8px)`,
+          }}
           onMouseEnter={keepOpen}
           onMouseLeave={handleLeaveAll}
         >
