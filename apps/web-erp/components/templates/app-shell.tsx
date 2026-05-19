@@ -263,17 +263,6 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', handler);
   }, [activeId, closeTab, tabs]);
 
-  // Guard against accidental browser-tab close when Ctrl+W reaches the browser.
-  React.useEffect(() => {
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      // Chrome requires returnValue to trigger the native confirmation.
-      e.returnValue = '';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, []);
-
   React.useEffect(() => {
     const sc = () => setShortcutsOpen(true);
     window.addEventListener('open-shortcuts', sc);
