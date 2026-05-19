@@ -97,7 +97,15 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     const m = await prisma.erpMenu.upsert({
       where: { code: p.code },
       create: { code: p.code, title: p.title, type: p.type, parentId: p.parentId, path: p.path, icon: p.icon, sortOrder: p.sortOrder, legacyCode: p.legacyCode, isActive: true },
-      update: { legacyCode: p.legacyCode ?? undefined },
+      update: {
+        title: p.title,
+        type: p.type,
+        parentId: p.parentId ?? null,
+        path: p.path ?? null,
+        icon: p.icon ?? null,
+        sortOrder: p.sortOrder,
+        legacyCode: p.legacyCode ?? undefined,
+      },
     });
     menuIds.set(p.code, m.id);
     return m;
