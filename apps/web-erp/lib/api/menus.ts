@@ -4,7 +4,7 @@
 import { apiGet } from './client';
 import type { ApiResponse } from './types';
 import type { IconName } from '@/components/ui/icons';
-import type { NavItem, NavLeaf } from '@/lib/nav';
+import type { NavGroup, NavItem, NavLeaf } from '@/lib/nav';
 
 // ─── API shape ────────────────────────────────────────────────────────────────
 
@@ -31,20 +31,25 @@ function toLeaf(node: ApiMenuNode): NavLeaf {
 }
 
 function toNavItem(node: ApiMenuNode): NavItem {
-  if (node.children.length > 0) {
-    return {
-      id: node.code,
-      icon: (node.icon as IconName) ?? undefined,
-      label: node.title,
-      children: node.children.map(toLeaf),
-    };
+  const groups = node.children.filter((c) => c.type === 'GROUP');
+  const items  = node.children.filter((c) => c.type === 'ITEM');
+
+  if (groups.length > 0) {
+    // 3-level: MODULE → GROUP → ITEM
+    const children: NavGroup[] = groups.map((grp) => ({
+      group: grp.title,
+      items: grp.children.map(toLeaf),
+    }));
+    return { id: node.code, icon: (node.icon as IconName) ?? undefined, label: node.title, children };
   }
-  // Top-level leaf (rare in MVP)
-  return {
-    id: node.path ?? node.code,
-    icon: (node.icon as IconName) ?? undefined,
-    label: node.title,
-  };
+
+  if (items.length > 0) {
+    // 2-level: MODULE → ITEM (legacy shape)
+    return { id: node.code, icon: (node.icon as IconName) ?? undefined, label: node.title, children: items.map(toLeaf) };
+  }
+
+  // Top-level leaf (no children)
+  return { id: node.path ?? node.code, icon: (node.icon as IconName) ?? undefined, label: node.title };
 }
 
 export function apiMenuNodesToNavItems(nodes: ApiMenuNode[]): NavItem[] {
