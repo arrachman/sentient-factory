@@ -288,6 +288,9 @@ body {
   min-width: 240px;
   padding: 6px;
   z-index: 100;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .flyout .group-label {
   font-size: 10.5px;
@@ -1311,6 +1314,12 @@ body {
   white-space: nowrap;
   z-index: 200;
   pointer-events: none;
+}
+.sidebar [data-tip]:hover::after {
+  left: calc(100% + 8px);
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
 }
 
 /* No-text-select on chrome */
