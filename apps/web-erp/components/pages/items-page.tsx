@@ -38,7 +38,7 @@ import {
   fromItem,
   toItemPayload,
   type ItemFormData,
-} from './erp-items-form';
+} from './items-form';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 

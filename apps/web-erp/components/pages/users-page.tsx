@@ -35,7 +35,7 @@ import {
   useUserForm,
   toCreatePayload,
   toUpdatePayload,
-} from './erp-users-form';
+} from './users-form';
 
 // ─── Table ────────────────────────────────────────────────────────────────────
 

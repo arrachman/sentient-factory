@@ -18,15 +18,15 @@ import { DataList } from '@/components/pages/data-list';
 import { RecordForm } from '@/components/pages/record-form';
 import { TrxForm } from '@/components/pages/trx-form';
 // F2 Admin pages
-import { ErpUsersPage } from '@/components/pages/erp-users-page';
-import { ErpBranchesPage } from '@/components/pages/erp-branches-page';
-import { ErpRolesPage } from '@/components/pages/erp-roles-page';
-import { ErpSettingsPage } from '@/components/pages/erp-settings-page';
+import { ErpUsersPage } from '@/components/pages/users-page';
+import { ErpBranchesPage } from '@/components/pages/branches-page';
+import { ErpRolesPage } from '@/components/pages/roles-page';
+import { ErpSettingsPage } from '@/components/pages/settings-page';
 // F3 Master Data pages
-import { ErpItemsPage } from '@/components/pages/erp-items-page';
-import { ErpUnitsPage } from '@/components/pages/erp-units-page';
-import { ErpPartnersPage } from '@/components/pages/erp-partners-page';
-import { ErpItemCategoriesPage } from '@/components/pages/erp-item-categories-page';
+import { ErpItemsPage } from '@/components/pages/items-page';
+import { ErpUnitsPage } from '@/components/pages/units-page';
+import { ErpPartnersPage } from '@/components/pages/partners-page';
+import { ErpItemCategoriesPage } from '@/components/pages/item-categories-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import type { Lang } from '@/lib/shell-constants';
 

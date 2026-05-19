@@ -154,6 +154,18 @@ Konsekuensi:
 - Konfirmasi ke user kalau scope design system belum jelas — jangan asal
   mulai halaman.
 
+### 2.2 Penamaan file frontend (WAJIB)
+
+- **Dilarang** prefix `erp-` pada nama file di `apps/web-erp/**` (mis.
+  `components/pages/erp-items-page.tsx`). Path sudah berada di bawah
+  `web-erp`, jadi prefix produk pada filename = redundant noise.
+- `kebab-case` + akhiran semantik per tingkat atomic: `-page.tsx`,
+  `-form.tsx`, `-list.tsx`, dst. Contoh benar:
+  `components/pages/items-page.tsx`, `components/pages/items-form.tsx`.
+- Pengecualian: model Prisma tetap ber-prefix `Erp` (lihat §1) — itu untuk
+  hindari bentrok kelas/identifier lintas-app dalam satu schema, **bukan**
+  konvensi filename frontend.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
@@ -172,6 +184,12 @@ khusus web-erp tanpa pengecualian.
   seed/feed/mock/fixture — sejalan skill `ref-audit`.
 - Setelah split/refactor → `npm run typecheck` (atau verifikasi prototype
   tetap jalan) sebelum declare selesai.
+- **Enforcement otomatis** (sejak 2026-05-19):
+  - ESLint `max-lines` (error, 400) di-scope ke `app/**`, `components/**`,
+    `lib/**`, `shared/**` (exclude test/spec/seed/mock/fixture). Jalan via
+    `npm run lint` & `npm run check`.
+  - Script `npm run check:size` (`scripts/check-file-size.mjs`) sebagai gate
+    independen — `npm run check` chain: lint → typecheck → check:size → test.
 - Refactor besar → spawn sub-agent per file (root `CLAUDE.md §11`) agar
   context utama tidak meledak.
 
