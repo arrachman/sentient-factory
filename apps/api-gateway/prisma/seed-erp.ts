@@ -327,22 +327,27 @@ async function seedRoleAndUser(menuIds: Map<string, bigint>, permIds: Map<string
     });
   }
 
-  const passwordHash = hashPassword('Admin123!');
-  const user = await prisma.erpUser.upsert({
-    where: { code: 'ADMIN' },
-    create: {
-      code: 'ADMIN', name: 'Administrator',
-      email: 'admin@senti-erp.local',
-      passwordHash, level: ErpUserLevel.CENTRAL, language: 'id', isActive: true,
-    },
-    update: {},
-  });
+  const devUsers = [
+    { code: 'ADMIN', name: 'Administrator', email: 'admin@senti-erp.local', password: 'Admin123!' },
+    { code: 'rania', name: 'Rania', email: 'rania@senti-erp.local', password: 'sentient' },
+  ];
 
-  await prisma.erpUserRole.upsert({
-    where: { userId_roleId: { userId: user.id, roleId: role.id } },
-    create: { userId: user.id, roleId: role.id },
-    update: {},
-  });
+  for (const u of devUsers) {
+    const passwordHash = hashPassword(u.password);
+    const user = await prisma.erpUser.upsert({
+      where: { code: u.code },
+      create: {
+        code: u.code, name: u.name, email: u.email,
+        passwordHash, level: ErpUserLevel.CENTRAL, language: 'id', isActive: true,
+      },
+      update: {},
+    });
+    await prisma.erpUserRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId: role.id } },
+      create: { userId: user.id, roleId: role.id },
+      update: {},
+    });
+  }
 
   console.log('✓ adm_roles, adm_users, adm_user_roles, adm_role_permissions, adm_role_menus');
 }
