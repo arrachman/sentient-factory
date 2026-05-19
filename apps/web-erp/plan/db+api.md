@@ -1,7 +1,31 @@
 # Senti ERP — Recap DB + API & Rencana Selanjutnya
 
-> Terakhir diperbarui: 2026-05-18 (update wave 1+2)
-> Status: DB ✅ · API ✅ · Frontend F0–F3 ✅ · API-gateway offline ⚠️
+> Terakhir diperbarui: 2026-05-19 (wave 3 — semua halaman F2+F3 + sidebar dinamis)
+> Status: DB ✅ · API ✅ · Frontend F2+F3 lengkap ✅ · sidebar dinamis ✅ · UAT browser ⬜
+
+## Wave 3 (2026-05-19)
+
+- **11 halaman sisa dibangun** (client + page, pola `units` / `item-categories`):
+  Location, Warehouse, Tax, Payment Terms, Partner Category, Currency (+rate
+  history), Chart of Accounts (tree), Permissions (read-only), Document
+  Numbering (+generate next), Fiscal Periods (+open/close), Menu Manager
+  (`sys_menus` CRUD + tree + reorder). Total halaman ERP fungsional = 19.
+- **Keputusan terkunci — canonical route id = seeded `sys_menus.path`.**
+  Sidebar dinamis (`fetchMyMenus` → `app-shell`) meng-emit `node.path` sebagai
+  route id (mis. `/master/locations`, `/admin/fiscal-periods`). `renderRoute`
+  kini memetakan path → komponen via registry `ERP_PAGES`; short-id legacy
+  (`adm-users`, `md-items`) dipertahankan sebagai alias agar fallback `NAV`
+  statis (saat API down) tetap jalan. `pageMeta` punya `ERP_ROUTE_META` agar
+  breadcrumb/tab tidak menampilkan path mentah. Alasan: sys_menus jadi SSOT
+  navigasi per-role; sebelumnya sidebar dinamis menghasilkan ComingSoon untuk
+  semua karena mismatch path↔short-id.
+- Verifikasi: `tsc --noEmit` clean, `next build` sukses, `check:size` OK
+  (semua file ≤400 baris). Lint 16 error pre-existing di `app-shell.tsx` +
+  `use-erp-list.ts` (react-compiler, file tak disentuh sesi ini) — bukan
+  regресi wave 3. Smoke API: 19 endpoint `/api/erp/*` balas 200.
+- ⬜ Belum: UAT manual di browser (`:3219`, login `admin`/`Admin123!`) —
+  agent tidak bisa drive browser. Lint debt pre-existing perlu dibereskan
+  terpisah.
 
 ---
 

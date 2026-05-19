@@ -168,6 +168,17 @@ Konsekuensi:
 
 ---
 
+### 2.3 Canonical route id = seeded `sys_menus.path` (2026-05-19)
+
+Sidebar di-render dinamis dari `GET /api/erp/sys-menus/my-menus` (role-
+filtered). Route id kanonik **= `sys_menus.path`** (mis. `/master/locations`,
+`/admin/fiscal-periods`). `renderRoute` memetakan path→komponen via registry
+`ERP_PAGES` (`shell-route-renderer.tsx`); short-id legacy (`adm-users`,
+`md-items`) hanya **alias** untuk fallback `NAV` statis saat API down. Halaman
+ERP baru: tambahkan entry di `ERP_PAGES` (key = path seeded di
+`prisma/seed-erp.ts`) + `ERP_ROUTE_META` (`lib/nav.ts`) untuk breadcrumb.
+Jangan bikin skema id baru — `sys_menus` adalah SSOT navigasi.
+
 ## 3. Clean code & batas 400 baris (WAJIB)
 
 Saat vibe coding di `apps/web-erp/**`, kode **harus clean code** — dan
