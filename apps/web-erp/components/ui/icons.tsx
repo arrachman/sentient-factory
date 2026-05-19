@@ -237,6 +237,28 @@ const ICON_PATHS = {
   ),
   'arrow-tr': <path d="M5 11 11 5M11 5H6M11 5v5" />,
   'arrow-br': <path d="M5 5 11 11M11 11V6M11 11H6" />,
+  users: (
+    <>
+      <circle cx="6" cy="5.5" r="2" />
+      <path d="M2 13.5c.8-2 2.3-3 4-3s3.2 1 4 3" />
+      <circle cx="11" cy="5" r="1.8" />
+      <path d="M10 10.5c.6-.3 1.3-.5 2-.5 1.5 0 2.8.9 3.5 2.5" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M8 1.5 3 4v4c0 3 2.5 5.5 5 6 2.5-.5 5-3 5-6V4z" />
+      <path d="M5.5 8l2 2 3-3" />
+    </>
+  ),
+  building: (
+    <>
+      <rect x="2" y="5" width="12" height="9" rx="1" />
+      <path d="M5 14v-4h6v4" />
+      <path d="M2 8h12" />
+      <path d="M5 5V2.5h6V5" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

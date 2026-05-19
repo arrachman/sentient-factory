@@ -91,8 +91,8 @@ async function seedMenus(): Promise<Map<string, bigint>> {
 
   const m0 = await prisma.erpMenu.upsert({
     where: { code: 'M0' },
-    create: { code: 'M0', title: 'Administrator', type: ErpMenuType.MODULE, sortOrder: 1, isActive: true },
-    update: {},
+    create: { code: 'M0', title: 'Administrator', icon: 'gear', type: ErpMenuType.MODULE, sortOrder: 1, isActive: true },
+    update: { icon: 'gear' },
   });
   menuIds.set('M0', m0.id);
 
@@ -142,8 +142,8 @@ async function seedMenus(): Promise<Map<string, bigint>> {
 
   const m1 = await prisma.erpMenu.upsert({
     where: { code: 'M1' },
-    create: { code: 'M1', title: 'Master Data', type: ErpMenuType.MODULE, sortOrder: 2, isActive: true },
-    update: {},
+    create: { code: 'M1', title: 'Master Data', icon: 'database', type: ErpMenuType.MODULE, sortOrder: 2, isActive: true },
+    update: { icon: 'database' },
   });
   menuIds.set('M1', m1.id);
 
