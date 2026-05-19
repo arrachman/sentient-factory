@@ -89,144 +89,162 @@ async function seedPasswordPolicy() {
 async function seedMenus(): Promise<Map<string, bigint>> {
   const menuIds = new Map<string, bigint>();
 
-  const m0 = await prisma.erpMenu.upsert({
-    where: { code: 'M0' },
-    create: { code: 'M0', title: 'Administrator', icon: 'gear', type: ErpMenuType.MODULE, sortOrder: 1, isActive: true },
-    update: { icon: 'gear' },
-  });
-  menuIds.set('M0', m0.id);
-
-  const admGrp = await prisma.erpMenu.upsert({
-    where: { code: 'M0.ADM' },
-    create: { code: 'M0.ADM', title: 'Administration', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 1, isActive: true },
-    update: {},
-  });
-  menuIds.set('M0.ADM', admGrp.id);
-
-  const admItems = [
-    { code: 'M0.ADM.USERS', title: 'User Management', path: '/admin/users', sortOrder: 1 },
-    { code: 'M0.ADM.ROLES', title: 'Role Management', path: '/admin/roles', sortOrder: 2 },
-    { code: 'M0.ADM.PERMISSIONS', title: 'Permissions', path: '/admin/permissions', sortOrder: 3 },
-    { code: 'M0.ADM.MENUS', title: 'Menu Management', path: '/admin/menus', sortOrder: 4 },
-  ];
-  for (const item of admItems) {
+  async function upsertMenu(p: {
+    code: string; title: string; type: ErpMenuType;
+    parentId?: bigint; path?: string; icon?: string;
+    sortOrder: number; legacyCode?: string;
+  }) {
     const m = await prisma.erpMenu.upsert({
-      where: { code: item.code },
-      create: { code: item.code, title: item.title, path: item.path, type: ErpMenuType.ITEM, parentId: admGrp.id, sortOrder: item.sortOrder, isActive: true },
-      update: {},
+      where: { code: p.code },
+      create: { code: p.code, title: p.title, type: p.type, parentId: p.parentId, path: p.path, icon: p.icon, sortOrder: p.sortOrder, legacyCode: p.legacyCode, isActive: true },
+      update: { legacyCode: p.legacyCode ?? undefined },
     });
-    menuIds.set(item.code, m.id);
+    menuIds.set(p.code, m.id);
+    return m;
   }
 
-  const sysGrp = await prisma.erpMenu.upsert({
-    where: { code: 'M0.SYS' },
-    create: { code: 'M0.SYS', title: 'System', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 2, isActive: true },
-    update: {},
-  });
-  menuIds.set('M0.SYS', sysGrp.id);
-
-  const sysItems = [
-    { code: 'M0.SYS.SETTINGS', title: 'Settings', path: '/admin/settings', sortOrder: 1 },
-    { code: 'M0.SYS.DOCNUM', title: 'Document Numbering', path: '/admin/document-numbering', sortOrder: 2 },
-    { code: 'M0.SYS.FISCAL', title: 'Fiscal Periods', path: '/admin/fiscal-periods', sortOrder: 3 },
-    { code: 'M0.SYS.AUDIT', title: 'Audit Log', path: '/admin/audit-logs', sortOrder: 4 },
-  ];
-  for (const item of sysItems) {
-    const m = await prisma.erpMenu.upsert({
-      where: { code: item.code },
-      create: { code: item.code, title: item.title, path: item.path, type: ErpMenuType.ITEM, parentId: sysGrp.id, sortOrder: item.sortOrder, isActive: true },
-      update: {},
-    });
-    menuIds.set(item.code, m.id);
+  async function upsertItems(items: Array<{ code: string; title: string; path: string; legacyCode?: string }>, parentId: bigint) {
+    for (const [i, item] of items.entries()) {
+      await upsertMenu({ ...item, type: ErpMenuType.ITEM, parentId, sortOrder: i + 1 });
+    }
   }
 
-  const m1 = await prisma.erpMenu.upsert({
-    where: { code: 'M1' },
-    create: { code: 'M1', title: 'Master Data', icon: 'database', type: ErpMenuType.MODULE, sortOrder: 2, isActive: true },
-    update: { icon: 'database' },
-  });
-  menuIds.set('M1', m1.id);
+  // ── M0: Administrator ─────────────────────────────────────────────────────
+  const m0 = await upsertMenu({ code: 'M0', title: 'Administrator', icon: 'gear', type: ErpMenuType.MODULE, sortOrder: 1, legacyCode: '0-1' });
 
-  const orgGrp = await prisma.erpMenu.upsert({
-    where: { code: 'M1.ORG' },
-    create: { code: 'M1.ORG', title: 'Organization', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 1, isActive: true },
-    update: {},
-  });
-  menuIds.set('M1.ORG', orgGrp.id);
+  // M0.CFG — Pengaturan Awal (legacy 0-2): all initial config
+  const cfgGrp = await upsertMenu({ code: 'M0.CFG', title: 'Initial Setup', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 1, legacyCode: '0-2' });
+  await upsertItems([
+    { code: 'M0.CFG.COMPANY',        title: 'Company Settings',    path: '/admin/settings/company',        legacyCode: '0-27' },
+    { code: 'M0.CFG.ACCOUNTING',     title: 'Accounting Settings', path: '/admin/settings/accounting',     legacyCode: '0-29' },
+    { code: 'M0.CFG.DOCNUM',         title: 'Document Numbering',  path: '/admin/document-numbering',      legacyCode: '0-30' },
+    { code: 'M0.CFG.BANK-ACCOUNTS',  title: 'Bank Accounts',       path: '/admin/settings/bank-accounts',  legacyCode: '0-31' },
+    { code: 'M0.CFG.TAX',            title: 'Tax Settings',        path: '/admin/settings/tax',            legacyCode: '0-32' },
+    { code: 'M0.CFG.DESCRIPTION',    title: 'Description Presets', path: '/admin/settings/description',    legacyCode: '0-33' },
+    { code: 'M0.CFG.FORMAT',         title: 'Format Settings',     path: '/admin/settings/format',         legacyCode: '0-34' },
+    { code: 'M0.CFG.DEFAULTS',       title: 'Default Settings',    path: '/admin/settings/defaults',       legacyCode: '0-35' },
+    { code: 'M0.CFG.REPORT-DEFAULT', title: 'Report Defaults',     path: '/admin/settings/report-defaults', legacyCode: '0-36' },
+    { code: 'M0.CFG.SIGNATURE',      title: 'Signature Settings',  path: '/admin/settings/signature',      legacyCode: '0-37' },
+    { code: 'M0.CFG.OPTIONS',        title: 'Options',             path: '/admin/settings/options',        legacyCode: '0-38' },
+    { code: 'M0.CFG.HOME',           title: 'Home Layout',         path: '/admin/settings/home',           legacyCode: '0-39' },
+    { code: 'M0.CFG.APPROVAL',       title: 'Approval Settings',   path: '/admin/settings/approval',       legacyCode: '0-46' },
+    { code: 'M0.CFG.IMPORT',         title: 'Import Data',         path: '/admin/import',                  legacyCode: '0-20' },
+  ], cfgGrp.id);
 
-  const orgItems = [
-    { code: 'M1.ORG.BRANCH', title: 'Branch', path: '/master/branches', sortOrder: 1 },
-    { code: 'M1.ORG.LOCATION', title: 'Location', path: '/master/locations', sortOrder: 2 },
-    { code: 'M1.ORG.WAREHOUSE', title: 'Warehouse', path: '/master/warehouses', sortOrder: 3 },
-  ];
-  for (const item of orgItems) {
-    const m = await prisma.erpMenu.upsert({
-      where: { code: item.code },
-      create: { code: item.code, title: item.title, path: item.path, type: ErpMenuType.ITEM, parentId: orgGrp.id, sortOrder: item.sortOrder, isActive: true },
-      update: {},
-    });
-    menuIds.set(item.code, m.id);
-  }
+  // M0.ADM — Tool Administrator (legacy 0-25): identity & admin tools
+  const admGrp = await upsertMenu({ code: 'M0.ADM', title: 'Administration', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 2, legacyCode: '0-25' });
+  await upsertItems([
+    { code: 'M0.ADM.USERS',          title: 'User Management',     path: '/admin/users',                    legacyCode: '0-4'  },
+    { code: 'M0.ADM.ROLES',          title: 'Role Management',     path: '/admin/roles',                    legacyCode: '0-5'  },
+    { code: 'M0.ADM.PERMISSIONS',    title: 'Permissions',         path: '/admin/permissions'                                   },
+    { code: 'M0.ADM.LANG',           title: 'Language',            path: '/admin/language',                 legacyCode: '0-6'  },
+    { code: 'M0.ADM.ONLINE-USERS',   title: 'Online Users',        path: '/admin/users/online',             legacyCode: '0-18' },
+    { code: 'M0.ADM.USER-LOG',       title: 'User Log',            path: '/admin/audit-logs',               legacyCode: '0-21' },
+    { code: 'M0.ADM.CLOSE-PERIOD',   title: 'Close Fiscal Period', path: '/admin/fiscal-periods/close',     legacyCode: '0-17' },
+    { code: 'M0.ADM.RECALC-COGS',    title: 'Recalculate COGS',    path: '/admin/tools/recalc-cogs',        legacyCode: '0-12' },
+    { code: 'M0.ADM.REPOST-JOURNAL', title: 'Repost Journals',     path: '/admin/tools/repost-journal',     legacyCode: '0-13' },
+    { code: 'M0.ADM.DATA-VALIDITY',  title: 'Data Validity Check', path: '/admin/tools/data-validity',      legacyCode: '0-23' },
+  ], admGrp.id);
 
-  const itemsGrp = await prisma.erpMenu.upsert({
-    where: { code: 'M1.ITEM' },
-    create: { code: 'M1.ITEM', title: 'Items', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 2, isActive: true },
-    update: {},
-  });
-  menuIds.set('M1.ITEM', itemsGrp.id);
+  // M0.SYS — Sistem (legacy 0-26): system management (keep existing codes)
+  const sysGrp = await upsertMenu({ code: 'M0.SYS', title: 'System', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 3, legacyCode: '0-26' });
+  await upsertItems([
+    { code: 'M0.SYS.MENUS',    title: 'Menu Manager',        path: '/admin/menus',               legacyCode: '0-9'  },
+    { code: 'M0.SYS.SETTINGS', title: 'Settings Manager',    path: '/admin/settings',            legacyCode: '0-11' },
+    { code: 'M0.SYS.DOCNUM',   title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
+    { code: 'M0.SYS.FISCAL',   title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
+    { code: 'M0.SYS.AUDIT',    title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },
+  ], sysGrp.id);
 
-  for (const item of [
-    { code: 'M1.ITEM.UNITS', title: 'Units', path: '/master/units', sortOrder: 1 },
-    { code: 'M1.ITEM.CATEGORIES', title: 'Item Categories', path: '/master/item-categories', sortOrder: 2 },
-    { code: 'M1.ITEM.ITEMS', title: 'Items', path: '/master/items', sortOrder: 3 },
-  ]) {
-    const m = await prisma.erpMenu.upsert({
-      where: { code: item.code },
-      create: { code: item.code, title: item.title, path: item.path, type: ErpMenuType.ITEM, parentId: itemsGrp.id, sortOrder: item.sortOrder, isActive: true },
-      update: {},
-    });
-    menuIds.set(item.code, m.id);
-  }
+  // ── M1: Master Data ───────────────────────────────────────────────────────
+  const m1 = await upsertMenu({ code: 'M1', title: 'Master Data', icon: 'database', type: ErpMenuType.MODULE, sortOrder: 2, legacyCode: '1-1' });
 
-  const partnerGrp = await prisma.erpMenu.upsert({
-    where: { code: 'M1.PARTNER' },
-    create: { code: 'M1.PARTNER', title: 'Partners', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 3, isActive: true },
-    update: {},
-  });
-  menuIds.set('M1.PARTNER', partnerGrp.id);
+  // M1.ORG — Organization (branch, location, warehouse, divisions, etc.)
+  const orgGrp = await upsertMenu({ code: 'M1.ORG', title: 'Organization', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 1 });
+  await upsertItems([
+    { code: 'M1.ORG.BRANCH',       title: 'Branch',          path: '/master/branches',      legacyCode: '1-13' },
+    { code: 'M1.ORG.LOCATION',     title: 'Location',        path: '/master/locations',     legacyCode: '1-14' },
+    { code: 'M1.ORG.WAREHOUSE',    title: 'Warehouse',       path: '/master/warehouses',    legacyCode: '1-15' },
+    { code: 'M1.ORG.DIVISION',     title: 'Division',        path: '/master/divisions',     legacyCode: '1-16' },
+    { code: 'M1.ORG.SUBDIVISION',  title: 'Sub Division',    path: '/master/subdivisions',  legacyCode: '1-17' },
+    { code: 'M1.ORG.PROJECT',      title: 'Project',         path: '/master/projects',      legacyCode: '1-18' },
+    { code: 'M1.ORG.COST-CENTER',  title: 'Cost Center',     path: '/master/cost-centers',  legacyCode: '1-19' },
+    { code: 'M1.ORG.DEPARTMENT',   title: 'Department',      path: '/master/departments',   legacyCode: '1-84' },
+    { code: 'M1.ORG.SUBDEPT',      title: 'Sub Department',  path: '/master/sub-departments', legacyCode: '1-85' },
+  ], orgGrp.id);
 
-  for (const item of [
-    { code: 'M1.PARTNER.PARTNERS', title: 'Partners', path: '/master/partners', sortOrder: 1 },
-    { code: 'M1.PARTNER.CATEGORIES', title: 'Partner Categories', path: '/master/partner-categories', sortOrder: 2 },
-  ]) {
-    const m = await prisma.erpMenu.upsert({
-      where: { code: item.code },
-      create: { code: item.code, title: item.title, path: item.path, type: ErpMenuType.ITEM, parentId: partnerGrp.id, sortOrder: item.sortOrder, isActive: true },
-      update: {},
-    });
-    menuIds.set(item.code, m.id);
-  }
+  // M1.ITEM — Items & product classification
+  const itemsGrp = await upsertMenu({ code: 'M1.ITEM', title: 'Items', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 2 });
+  await upsertItems([
+    { code: 'M1.ITEM.ITEMS',          title: 'Items',             path: '/master/items',           legacyCode: '1-11' },
+    { code: 'M1.ITEM.CATEGORIES',     title: 'Item Categories',   path: '/master/item-categories', legacyCode: '1-8'  },
+    { code: 'M1.ITEM.TYPES',          title: 'Item Types',        path: '/master/item-types',      legacyCode: '1-9'  },
+    { code: 'M1.ITEM.UNITS',          title: 'Units',             path: '/master/units',           legacyCode: '1-10' },
+    { code: 'M1.ITEM.LOCATIONS',      title: 'Item Locations',    path: '/master/item-locations',  legacyCode: '1-7'  },
+    { code: 'M1.ITEM.INFO',           title: 'Item Information',  path: '/master/item-info',       legacyCode: '1-72' },
+    { code: 'M1.ITEM.PRODUCT-CLASS',  title: 'Product Class',     path: '/master/product-classes', legacyCode: '1-80' },
+    { code: 'M1.ITEM.PRICE-INDEX',    title: 'Price Index',       path: '/master/price-indices',   legacyCode: '1-81' },
+    { code: 'M1.ITEM.PRICE-CATEGORY', title: 'Price Category',    path: '/master/price-categories', legacyCode: '1-90' },
+    { code: 'M1.ITEM.COMMISSION',     title: 'Commission',        path: '/master/commissions',     legacyCode: '1-88' },
+    { code: 'M1.ITEM.PERMISSIONS',    title: 'Item Permissions',  path: '/master/item-permissions', legacyCode: '1-92' },
+    { code: 'M1.ITEM.CLASS',          title: 'Class',             path: '/master/classes',         legacyCode: '1-96' },
+    { code: 'M1.ITEM.MODEL',          title: 'Model',             path: '/master/models',          legacyCode: '1-97' },
+    { code: 'M1.ITEM.SIZE',           title: 'Size',              path: '/master/sizes',           legacyCode: '1-98' },
+    { code: 'M1.ITEM.COLOR',          title: 'Color',             path: '/master/colors',          legacyCode: '1-99' },
+    { code: 'M1.ITEM.BRAND',          title: 'Brand',             path: '/master/brands',          legacyCode: '1-101' },
+    { code: 'M1.ITEM.MATERIAL',       title: 'Material',          path: '/master/materials',       legacyCode: '1-102' },
+    { code: 'M1.ITEM.SECTION',        title: 'Section',           path: '/master/sections',        legacyCode: '1-103' },
+  ], itemsGrp.id);
 
-  const finGrp = await prisma.erpMenu.upsert({
-    where: { code: 'M1.FIN' },
-    create: { code: 'M1.FIN', title: 'Finance Masters', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 4, isActive: true },
-    update: {},
-  });
-  menuIds.set('M1.FIN', finGrp.id);
+  // M1.PARTNER — Partners & contacts
+  const partnerGrp = await upsertMenu({ code: 'M1.PARTNER', title: 'Partners', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 3 });
+  await upsertItems([
+    { code: 'M1.PARTNER.PARTNERS',      title: 'Partners',             path: '/master/partners',             legacyCode: '1-6'  },
+    { code: 'M1.PARTNER.CATEGORIES',    title: 'Partner Categories',   path: '/master/partner-categories',   legacyCode: '1-3'  },
+    { code: 'M1.PARTNER.CUSTOMER-CAT',  title: 'Customer Categories',  path: '/master/customer-categories',  legacyCode: '1-4'  },
+    { code: 'M1.PARTNER.SUPPLIER-CAT',  title: 'Supplier Categories',  path: '/master/supplier-categories',  legacyCode: '1-70' },
+    { code: 'M1.PARTNER.SALESMAN-CAT',  title: 'Salesman Categories',  path: '/master/salesman-categories',  legacyCode: '1-5'  },
+    { code: 'M1.PARTNER.BANK',          title: 'Bank',                 path: '/master/banks',                legacyCode: '1-23' },
+    { code: 'M1.PARTNER.EXPEDITION',    title: 'Expedition',           path: '/master/expeditions',          legacyCode: '1-29' },
+    { code: 'M1.PARTNER.VENDOR',        title: 'Vendor',               path: '/master/vendors',              legacyCode: '1-105' },
+  ], partnerGrp.id);
 
-  for (const item of [
-    { code: 'M1.FIN.ACCOUNTS', title: 'Chart of Accounts', path: '/master/accounts', sortOrder: 1 },
-    { code: 'M1.FIN.CURRENCIES', title: 'Currencies', path: '/master/currencies', sortOrder: 2 },
-    { code: 'M1.FIN.TAXES', title: 'Taxes', path: '/master/taxes', sortOrder: 3 },
-    { code: 'M1.FIN.TERMS', title: 'Payment Terms', path: '/master/payment-terms', sortOrder: 4 },
-  ]) {
-    const m = await prisma.erpMenu.upsert({
-      where: { code: item.code },
-      create: { code: item.code, title: item.title, path: item.path, type: ErpMenuType.ITEM, parentId: finGrp.id, sortOrder: item.sortOrder, isActive: true },
-      update: {},
-    });
-    menuIds.set(item.code, m.id);
-  }
+  // M1.FIN — Finance Masters
+  const finGrp = await upsertMenu({ code: 'M1.FIN', title: 'Finance Masters', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 4 });
+  await upsertItems([
+    { code: 'M1.FIN.ACCOUNTS',     title: 'Chart of Accounts',  path: '/master/accounts',       legacyCode: '1-12' },
+    { code: 'M1.FIN.TAXES',        title: 'Taxes',              path: '/master/taxes',          legacyCode: '1-21' },
+    { code: 'M1.FIN.CURRENCIES',   title: 'Currencies',         path: '/master/currencies',     legacyCode: '1-22' },
+    { code: 'M1.FIN.TERMS',        title: 'Payment Terms',      path: '/master/payment-terms',  legacyCode: '1-20' },
+    { code: 'M1.FIN.OTHER-COSTS',  title: 'Other Costs',        path: '/master/other-costs',    legacyCode: '1-31' },
+  ], finGrp.id);
+
+  // M1.REF — Reference / Misc
+  const refGrp = await upsertMenu({ code: 'M1.REF', title: 'Reference', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 5 });
+  await upsertItems([
+    { code: 'M1.REF.COUNTRY',         title: 'Country',                path: '/master/countries',         legacyCode: '1-25' },
+    { code: 'M1.REF.PROVINCE',        title: 'Province',               path: '/master/provinces',         legacyCode: '1-26' },
+    { code: 'M1.REF.CITY',            title: 'City',                   path: '/master/cities',            legacyCode: '1-27' },
+    { code: 'M1.REF.AREA',            title: 'Area',                   path: '/master/areas',             legacyCode: '1-28' },
+    { code: 'M1.REF.TXN-NOTE',        title: 'Transaction Notes',      path: '/master/transaction-notes', legacyCode: '1-24' },
+    { code: 'M1.REF.TXN-NOTE-DETAIL', title: 'Txn Note Detail',        path: '/master/txn-note-details',  legacyCode: '1-33' },
+    { code: 'M1.REF.ITEM-TXN-TYPE',   title: 'Item Transaction Types', path: '/master/item-txn-types',    legacyCode: '1-30' },
+    { code: 'M1.REF.PRODUCTION-CAT',  title: 'Production Categories',  path: '/master/production-categories', legacyCode: '1-35' },
+    { code: 'M1.REF.WORK-ESTIMATE',   title: 'Work Estimate',          path: '/master/work-estimates',    legacyCode: '1-34' },
+    { code: 'M1.REF.POINT-CAT',       title: 'Point Categories',       path: '/master/point-categories',  legacyCode: '1-78' },
+    { code: 'M1.REF.MISC',            title: 'Miscellaneous',          path: '/master/misc',              legacyCode: '1-32' },
+  ], refGrp.id);
+
+  // M1.PROD — Production Masters
+  const prodGrp = await upsertMenu({ code: 'M1.PROD', title: 'Production', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 6 });
+  await upsertItems([
+    { code: 'M1.PROD.LABOR',     title: 'Labor',               path: '/master/labor',                 legacyCode: '1-94'  },
+    { code: 'M1.PROD.MACHINE',   title: 'Machine',             path: '/master/machines',              legacyCode: '1-95'  },
+    { code: 'M1.PROD.DESIGNER',  title: 'Designer',            path: '/master/designers',             legacyCode: '1-104' },
+    { code: 'M1.PROD.ACTIVITY',  title: 'Production Activity', path: '/master/production-activities', legacyCode: '1-120' },
+    { code: 'M1.PROD.ROUTE',     title: 'Production Route',    path: '/master/production-routes',     legacyCode: '1-122' },
+    { code: 'M1.PROD.SUBCLASS',  title: 'Sub Class',           path: '/master/subclasses',            legacyCode: '1-106' },
+  ], prodGrp.id);
 
   console.log(`✓ sys_menus (${menuIds.size} entries)`);
   return menuIds;
