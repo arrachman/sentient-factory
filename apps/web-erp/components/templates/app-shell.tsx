@@ -18,7 +18,7 @@ import { confirmAction } from '@/lib/feedback';
 import { MAX_TABS, USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
 import { renderRoute } from '@/components/templates/shell-route-renderer';
 import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
-import { logout as apiLogout } from '@/lib/api/auth';
+import { logout as apiLogout, getMe } from '@/lib/api/auth';
 
 /**
  * Top-level multi-tab shell — ported from prototype `app.jsx`. Tab/route
@@ -48,25 +48,31 @@ export function AppShell() {
   }, []);
 
   React.useEffect(() => {
-    // If the erp_token cookie is absent, the session is gone — clear any
-    // stale user from localStorage so the login screen appears instead of
-    // an authenticated shell that would fail all API calls.
-    const hasToken = document.cookie
-      .split(';')
-      .some((c) => c.trim().startsWith('erp_token='));
+    // erp_token is HttpOnly — not readable via document.cookie.
+    // Call /auth/me to verify the cookie is still valid before restoring.
+    const raw = (() => {
+      try { return window.localStorage.getItem(USER_STORAGE_KEY); } catch { return null; }
+    })();
 
-    try {
-      const raw = window.localStorage.getItem(USER_STORAGE_KEY);
-      if (raw && hasToken) {
-        setUser(JSON.parse(raw) as ShellUser);
-        loadNav();
-      } else if (raw && !hasToken) {
-        window.localStorage.removeItem(USER_STORAGE_KEY);
-      }
-    } catch {
-      // ignore malformed payloads — user re-authenticates
+    if (!raw) {
+      setHydrated(true);
+      return;
     }
-    setHydrated(true);
+
+    getMe()
+      .then(() => {
+        try {
+          setUser(JSON.parse(raw) as ShellUser);
+          loadNav();
+        } catch {
+          window.localStorage.removeItem(USER_STORAGE_KEY);
+        }
+      })
+      .catch(() => {
+        // Cookie expired or invalid — force re-login
+        try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
+      })
+      .finally(() => setHydrated(true));
   }, [loadNav]);
 
   const onLogin = React.useCallback((u: ShellUser) => {
