@@ -1,5 +1,5 @@
 // ERP Audit Logs — read-only access to sys_audit_logs
-// Endpoint: GET /erp/audit-logs
+// Endpoint: GET /api/erp/audit-logs (apiGet base = /api/erp, so path = /audit-logs)
 
 import { apiGet } from './client';
 import type { PaginatedResponse } from './types';
@@ -56,5 +56,5 @@ export async function listAuditLogs(
   if (params.to !== undefined) query.to = params.to;
   if (params.page !== undefined) query.page = params.page;
   if (params.limit !== undefined) query.limit = params.limit;
-  return apiGet<PaginatedResponse<ErpAuditLog>>('/erp/audit-logs', query);
+  return apiGet<PaginatedResponse<ErpAuditLog>>('/audit-logs', query);
 }
