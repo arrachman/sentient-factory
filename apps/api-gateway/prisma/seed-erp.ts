@@ -266,6 +266,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
   // M0.CFG — Pengaturan Awal (legacy 0-2): all initial config
   const cfgGrp = await upsertMenu({ code: 'M0.CFG', title: 'Initial Setup', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 1, legacyCode: '0-2' });
   await upsertItems([
+    { code: 'M0.CFG.PREFERENCES',    title: 'Preferensi',          path: '/admin/preferences'                                   },
     { code: 'M0.CFG.COMPANY',        title: 'Company Settings',    path: '/admin/settings/company',        legacyCode: '0-27' },
     { code: 'M0.CFG.ACCOUNTING',     title: 'Accounting Settings', path: '/admin/settings/accounting',     legacyCode: '0-29' },
     { code: 'M0.CFG.DOCNUM',         title: 'Document Numbering',  path: '/admin/document-numbering',      legacyCode: '0-30' },
