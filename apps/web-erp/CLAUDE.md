@@ -179,6 +179,17 @@ ERP baru: tambahkan entry di `ERP_PAGES` (key = path seeded di
 `prisma/seed-erp.ts`) + `ERP_ROUTE_META` (`lib/nav.ts`) untuk breadcrumb.
 Jangan bikin skema id baru — `sys_menus` adalah SSOT navigasi.
 
+### 2.4 Command palette = derived dari role-filtered nav (2026-05-20)
+
+`CommandPalette` (`components/organisms/command-palette.tsx`) **tidak boleh**
+punya hardcoded menu list. Items diturunkan dari prop `nav: NavItem[]` yang
+sama dengan sidebar (state `nav` di `app-shell.tsx`, di-load via
+`fetchMyMenus()`). Konsekuensi: search palette = persis semua menu aktif
+yang user berhak akses (sesuai `adm_role_menus`). Group palette mengikuti
+struktur nav (MODULE → ITEM, atau MODULE → GROUP → ITEM jadi "Module ·
+Group"). Hanya group "Aksi" (toggle theme/lang) yang statis. Saat menambah
+modul baru: cukup seed di `sys_menus` + `adm_role_menus`, palette ikut.
+
 ## 3. Clean code & batas 400 baris (WAJIB)
 
 Saat vibe coding di `apps/web-erp/**`, kode **harus clean code** — dan

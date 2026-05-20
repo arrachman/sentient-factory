@@ -4,6 +4,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
+import type { NavGroup, NavItem, NavLeaf } from '@/lib/nav';
 
 interface PaletteItem {
   id: string;
@@ -17,51 +18,70 @@ interface PaletteGroup {
   items: PaletteItem[];
 }
 
+function isNavGroupArray(
+  children: NavLeaf[] | NavGroup[] | undefined,
+): children is NavGroup[] {
+  return Array.isArray(children) && children.length > 0 && 'group' in children[0];
+}
+
 /**
- * Static palette groups — ported from `command-palette.jsx`. The prototype's
- * dynamic REGISTRY/REPORTS groups are intentionally dropped (no module
- * registry in this scaffold); navigation, finance, setting + actions remain.
+ * Build palette groups from the role-filtered nav tree (sys_menus → my-menus).
+ * Falls back to a minimal "Navigasi" group if nav is empty.
  */
-function paletteItems(t: (k: string) => string): PaletteGroup[] {
-  return [
-    {
-      group: 'Navigasi',
-      items: [
-        { id: 'home', icon: 'home', label: t('Dashboard'), hint: 'G H' },
-        { id: 'statistik', icon: 'stats', label: t('Statistik'), hint: 'G S' },
-      ],
-    },
-    {
-      group: t('Keuangan'),
-      items: [
-        { id: 'kas-masuk', icon: 'wallet', label: t('Kas Masuk'), hint: 'G K' },
-        { id: 'kas-keluar', icon: 'wallet', label: t('Kas Keluar'), hint: 'G C' },
-        { id: 'bank-masuk', icon: 'bank', label: t('Bank Masuk'), hint: 'G B' },
-        { id: 'bank-keluar', icon: 'bank', label: t('Bank Keluar') },
-        { id: 'jurnal-umum', icon: 'book', label: t('Jurnal Umum'), hint: 'G J' },
-        { id: 'buku-besar', icon: 'book', label: t('Buku Besar'), hint: 'G L' },
-        { id: 'giro-masuk', icon: 'receipt', label: t('Giro Masuk') },
-        { id: 'giro-keluar', icon: 'receipt', label: t('Giro Keluar') },
-      ],
-    },
-    {
-      group: t('Setting'),
-      items: [
-        { id: 'set-prefs', icon: 'gear', label: t('Preferensi') },
-        { id: 'set-appearance', icon: 'moon', label: t('Tampilan') },
-      ],
-    },
-    {
-      group: 'Aksi',
-      items: [
-        { id: 'new:kas-masuk', icon: 'plus', label: t('Buat Kas Masuk'), hint: 'N C' },
-        { id: 'new:kas-keluar', icon: 'plus', label: t('Buat Kas Keluar'), hint: 'N D' },
-        { id: 'new:jurnal-umum', icon: 'plus', label: t('Posting Jurnal'), hint: 'N J' },
-        { id: 'toggle:theme', icon: 'moon', label: 'Toggle dark mode', hint: 'T' },
-        { id: 'toggle:lang', icon: 'info', label: 'Switch language (ID/EN)' },
-      ],
-    },
-  ];
+function buildGroupsFromNav(nav: NavItem[]): PaletteGroup[] {
+  const groups: PaletteGroup[] = [];
+  const topLeaves: PaletteItem[] = [];
+
+  for (const node of nav) {
+    if (node.divider) continue;
+    const moduleIcon: IconName = node.icon ?? 'file';
+
+    if (!node.children || node.children.length === 0) {
+      if (node.id && node.label) {
+        topLeaves.push({ id: node.id, icon: moduleIcon, label: node.label });
+      }
+      continue;
+    }
+
+    if (isNavGroupArray(node.children)) {
+      for (const sub of node.children) {
+        groups.push({
+          group: node.label ? `${node.label} · ${sub.group}` : sub.group,
+          items: sub.items.map((leaf) => ({
+            id: leaf.id,
+            icon: moduleIcon,
+            label: leaf.label,
+            hint: leaf.code,
+          })),
+        });
+      }
+    } else {
+      groups.push({
+        group: node.label ?? '',
+        items: node.children.map((leaf) => ({
+          id: leaf.id,
+          icon: moduleIcon,
+          label: leaf.label,
+          hint: leaf.code,
+        })),
+      });
+    }
+  }
+
+  if (topLeaves.length > 0) {
+    groups.unshift({ group: 'Navigasi', items: topLeaves });
+  }
+  return groups;
+}
+
+function actionGroup(t: (k: string) => string): PaletteGroup {
+  return {
+    group: t('Aksi'),
+    items: [
+      { id: 'toggle:theme', icon: 'moon', label: 'Toggle dark mode', hint: 'T' },
+      { id: 'toggle:lang', icon: 'info', label: 'Switch language (ID/EN)' },
+    ],
+  };
 }
 
 interface CommandPaletteProps {
@@ -69,6 +89,7 @@ interface CommandPaletteProps {
   onClose: () => void;
   onAction: (id: string) => void;
   t: (key: string) => string;
+  nav: NavItem[];
 }
 
 export function CommandPalette({
@@ -76,6 +97,7 @@ export function CommandPalette({
   onClose,
   onAction,
   t,
+  nav,
 }: CommandPaletteProps) {
   const [q, setQ] = React.useState('');
   const [active, setActive] = React.useState(0);
@@ -91,13 +113,17 @@ export function CommandPalette({
     return undefined;
   }, [open]);
 
-  const groups = React.useMemo(() => paletteItems(t), [t]);
+  const groups = React.useMemo(
+    () => [...buildGroupsFromNav(nav), actionGroup(t)],
+    [nav, t],
+  );
 
   const flat = React.useMemo(() => {
     const list: (PaletteItem & { _group: string })[] = [];
+    const needle = q.toLowerCase();
     groups.forEach((g) =>
       g.items.forEach((it) => {
-        if (!q || it.label.toLowerCase().includes(q.toLowerCase())) {
+        if (!q || it.label.toLowerCase().includes(needle)) {
           list.push({ ...it, _group: g.group });
         }
       }),
@@ -177,7 +203,7 @@ export function CommandPalette({
                 const myIdx = idx;
                 return (
                   <div
-                    key={it.id}
+                    key={`${g.group}:${it.id}`}
                     className={cn('cp-item', isActive && 'active')}
                     onMouseEnter={() => setActive(myIdx)}
                     onClick={() => {

@@ -348,6 +348,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
         onClose={() => setPaletteOpen(false)}
         onAction={onPaletteAction}
         t={t}
+        nav={nav}
       />
 
       <NotificationDrawer onNavigate={openTab} t={t} />
