@@ -127,6 +127,12 @@ export function AppearancePage(_props: AppearancePageProps) {
         } catch {
           /* localStorage unavailable — ignore */
         }
+        if (key === 'lang') {
+          // Tell the app-shell to retranslate topbar/sidebar/tabs in sync.
+          window.dispatchEvent(
+            new CustomEvent('erp-set-lang', { detail: { lang: next.lang } }),
+          );
+        }
         return next;
       });
     },
@@ -414,7 +420,7 @@ export function AppearancePage(_props: AppearancePageProps) {
                   }}
                 >
                   <Icon name={ic} size={14} />
-                  {tw.sidebar === 'label' && <span>{lb}</span>}
+                  {tw.sidebar === 'label' && <span>{t(lb)}</span>}
                 </span>
               ))}
             </div>

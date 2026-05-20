@@ -96,13 +96,13 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
         <div style={{ flex: 1 }} />
         <div
           className="nav-item"
-          data-tip="Keyboard shortcuts"
+          data-tip={t('Pintasan')}
           onClick={() =>
             window.dispatchEvent(new CustomEvent('open-shortcuts'))
           }
         >
           <Icon name="keyboard" size={16} />
-          <span className="nav-label">Pintasan</span>
+          <span className="nav-label">{t('Pintasan')}</span>
         </div>
       </nav>
       {openItem && openItem.children && (

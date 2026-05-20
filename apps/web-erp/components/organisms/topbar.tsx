@@ -18,9 +18,10 @@ interface UserMenuProps {
   user: ShellUser;
   onNavigate: (route: string) => void;
   onLogout: () => void;
+  t: (key: string) => string;
 }
 
-function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
+function UserMenu({ user, onNavigate, onLogout, t }: UserMenuProps) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -58,10 +59,10 @@ function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
             </div>
           </div>
           <button className="user-menu-item" onClick={() => go('set-prefs')}>
-            <Icon name="user" size={13} /> Profil Saya
+            <Icon name="user" size={13} /> {t('Profil Saya')}
           </button>
           <button className="user-menu-item" onClick={() => go('set-prefs')}>
-            <Icon name="gear" size={13} /> Preferensi{' '}
+            <Icon name="gear" size={13} /> {t('Preferensi')}{' '}
             <span className="mk">PR</span>
           </button>
           <button
@@ -71,7 +72,7 @@ function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
               window.dispatchEvent(new CustomEvent('open-shortcuts'));
             }}
           >
-            <Icon name="keyboard" size={13} /> Pintasan{' '}
+            <Icon name="keyboard" size={13} /> {t('Pintasan')}{' '}
             <span className="mk">?</span>
           </button>
           <div className="user-menu-sep" />
@@ -82,7 +83,7 @@ function UserMenu({ user, onNavigate, onLogout }: UserMenuProps) {
               onLogout();
             }}
           >
-            <Icon name="arrowleft" size={13} /> Keluar
+            <Icon name="arrowleft" size={13} /> {t('Keluar')}
           </button>
         </div>
       )}
@@ -180,7 +181,7 @@ export function Topbar({
       </button>
       <button
         className={cn('iconbtn', notif > 0 && 'has-dot')}
-        data-tip="Notifikasi"
+        data-tip={t('Notifikasi')}
         onClick={() =>
           window.dispatchEvent(new CustomEvent('toggle-notif'))
         }
@@ -192,7 +193,7 @@ export function Topbar({
       </button>
       <button
         className="iconbtn"
-        data-tip="Aktivitas"
+        data-tip={t('Aktivitas')}
         onClick={() =>
           window.dispatchEvent(new CustomEvent('toggle-activity'))
         }
@@ -201,14 +202,14 @@ export function Topbar({
       </button>
       <button
         className="iconbtn"
-        data-tip="Pintasan (?)"
+        data-tip={`${t('Pintasan')} (?)`}
         onClick={() =>
           window.dispatchEvent(new CustomEvent('open-shortcuts'))
         }
       >
         <Icon name="keyboard" size={14} />
       </button>
-      <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} />
+      <UserMenu user={user} onNavigate={onNavigate} onLogout={onLogout} t={t} />
     </header>
   );
 }

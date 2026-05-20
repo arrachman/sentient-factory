@@ -18,6 +18,7 @@ import { USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
 import { renderRoute } from '@/components/templates/shell-route-renderer';
 import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
 import { logout as apiLogout } from '@/lib/api/auth';
+import { getMyPreferences } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { useErpMe, useErpMyMenus, erpQueryKeys } from '@/lib/api/hooks';
 import { useAppShellTabs } from '@/lib/use-app-shell-tabs';
@@ -222,7 +223,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
         return;
       }
       if (e.key.toLowerCase() === 'l') {
-        setLang((l) => (l === 'id' ? 'en' : 'id'));
+        setLang((l) => (l === 'id' ? 'en' : l === 'en' ? 'ja' : 'id'));
       }
     };
     window.addEventListener('keydown', handler);
@@ -235,11 +236,39 @@ export function AppShell({ workspaceId }: AppShellProps) {
     return () => window.removeEventListener('open-shortcuts', sc);
   }, []);
 
+  // Sync UI language with server-stored preference + cross-component changes.
+  // - On mount (after auth): hydrate from API.
+  // - At runtime: AppearancePage dispatches `erp-set-lang` so the shell's
+  //   topbar/sidebar/tabs retranslate instantly without remount.
+  React.useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    getMyPreferences()
+      .then((prefs) => {
+        if (cancelled || !prefs?.language) return;
+        const next = prefs.language as Lang;
+        if (next === 'id' || next === 'en' || next === 'ja') setLang(next);
+      })
+      .catch(() => { /* ignore */ });
+    return () => { cancelled = true; };
+  }, [user]);
+
+  React.useEffect(() => {
+    const onSetLang = (e: Event) => {
+      const detail = (e as CustomEvent<{ lang: Lang }>).detail;
+      if (!detail) return;
+      const next = detail.lang;
+      if (next === 'id' || next === 'en' || next === 'ja') setLang(next);
+    };
+    window.addEventListener('erp-set-lang', onSetLang as EventListener);
+    return () => window.removeEventListener('erp-set-lang', onSetLang as EventListener);
+  }, []);
+
   const onPaletteAction = React.useCallback(
     (id: string) => {
       if (id.startsWith('toggle:')) {
         const what = id.split(':')[1];
-        if (what === 'lang') setLang((l) => (l === 'id' ? 'en' : 'id'));
+        if (what === 'lang') setLang((l) => (l === 'id' ? 'en' : l === 'en' ? 'ja' : 'id'));
         return;
       }
       if (id.startsWith('new:')) { openTab(id.split(':')[1]); return; }

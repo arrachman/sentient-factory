@@ -508,6 +508,16 @@ Pemetaan field:
   pakai union `'id' | 'en' | 'ja'`. `AppearancePage` men-derive translator
   lokal dari `tw.lang` via `makeTranslator` agar perubahan bahasa langsung
   refleks di halaman ini (tidak menunggu round-trip ke app-shell).
+- **Sinkronisasi shell:** saat user pindah bahasa di AppearancePage, halaman
+  dispatch `CustomEvent('erp-set-lang', { detail: { lang } })`. App-shell
+  punya listener yang memanggil `setLang(next)` — efeknya
+  topbar/sidebar/tab-bar/breadcrumb ikut translate instan tanpa remount.
+  App-shell juga memuat `language` awal dari `getMyPreferences()` setelah
+  user login (server SSOT), dan shortcut keyboard `L` mencycle id → en →
+  ja → id. Sumber kunci i18n untuk modul sidebar = title English seeded
+  di `apps/api-gateway/prisma/seed-erp.ts` (mis. "Master Data", "Finance &
+  Accounting"); pastikan setiap modul baru ditambah seed-nya juga dimasukkan
+  ke `I18N` di `lib/mock.ts` untuk ketiga bahasa.
 - Tweaks UI lain (`primary`, `density`, `fontScale`, `sidebar`) → `metadata`
   Json (default dari `DEFAULTS` di `appearance-parts.tsx`).
 
@@ -738,6 +748,35 @@ API page-side (per entitas):
 Endpoint API client wajib expose `list/create/update/remove/bulkStatus/
 bulkDelete` untuk dipasangkan ke organism (lihat
 `lib/api/divisions.ts` sebagai template).
+
+### 2.17 Modul sidebar Senti ERP — scope final (2026-05-20)
+
+Modul valid di `sys_menus` (sortOrder, sumber `seed-erp.ts`):
+
+| sortOrder | code | title | catatan |
+| --- | --- | --- | --- |
+| 0 | M8 | Dashboard | pinned paling atas |
+| 1 | M0 | Administrator | sys + adm |
+| 2 | M1 | Master Data | md (incl. group Organization) |
+| 3 | M2 | Finance & Accounting | fin |
+| 4 | M3 | Warehouse & Inventory | inv |
+| 5 | M4 | Purchasing | pur |
+| 6 | M5 | Sales | sls |
+| 7 | M6 | Production | mfg |
+| 8 | M7 | Fixed Assets | fa |
+| 9 | M12 | Point of Sale | pos (singular!) |
+| 99 | SET | Settings | preferensi user |
+
+**Dihapus permanen dari ERP scope:** M10 (HR & Payroll), M11 (Hospital —
+milik `apps/web-althea`), M13 (Academic), M14 (Cooperative). Tidak ada di
+`module-roadmap.md`, bukan scope manufaktur. Kalau perlu dihidupkan lagi:
+katalog field-level dulu di `db-design/`, lalu seed.
+
+**Single source of truth seed = `apps/api-gateway/prisma/seed-erp.ts`**.
+`prisma/seed.ts` (clinic seed) dulu punya blok `ERP_MENU_SEEDS` paralel
+dengan short-id legacy (`master-data`, `administrator`, `md-items`, ...)
+yang menabrak/duplicate setiap `npm run db:seed`. **Blok itu dihapus
+2026-05-20.** Jangan pernah re-introduce ERP menu seeding di `seed.ts`.
 
 ---
 
