@@ -7,12 +7,11 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type ErpUserLevel =
-  | 'SUPERADMIN'
+  | 'POS'
   | 'CENTRAL'
-  | 'BRANCH'
-  | 'SUPERVISOR'
-  | 'STAFF'
-  | 'READONLY';
+  | 'POS_AND_CENTRAL'
+  | 'BI'
+  | 'BI_AND_CENTRAL';
 
 export interface ErpUserRoleRef {
   role: { id: string; code: string; name: string };

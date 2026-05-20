@@ -34,7 +34,7 @@ import type {
 } from '@/lib/api/users';
 
 const LEVELS: ErpUserLevel[] = [
-  'SUPERADMIN', 'CENTRAL', 'BRANCH', 'SUPERVISOR', 'STAFF', 'READONLY',
+  'CENTRAL', 'POS', 'POS_AND_CENTRAL', 'BI', 'BI_AND_CENTRAL',
 ];
 
 const LANGUAGES = [
@@ -59,7 +59,7 @@ export interface UserFormData {
 
 const defaultForm = (): UserFormData => ({
   username: '', fullName: '', email: '', password: '', confirmPassword: '',
-  erpLevel: 'STAFF', language: 'id', branchId: '', homeWarehouseId: '',
+  erpLevel: 'CENTRAL', language: 'id', branchId: '', homeWarehouseId: '',
   expiresAt: '', isActive: true, roleIds: [],
 });
 
