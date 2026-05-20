@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { ErpAuditService } from '../erp-audit/erp-audit.service';
+import { diffFields } from '../erp-common/utils/diff-fields.util';
 import { BulkErpBranchDto, BulkStatusErpBranchDto } from './dto/bulk-erp-branch.dto';
 import { CreateErpBranchDto } from './dto/create-erp-branch.dto';
 import { QueryErpBranchDto } from './dto/query-erp-branch.dto';
@@ -9,7 +11,10 @@ import { UpdateErpBranchDto } from './dto/update-erp-branch.dto';
 
 @Injectable()
 export class ErpBranchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: ErpAuditService,
+  ) {}
 
   async create(dto: CreateErpBranchDto, actorId?: string) {
     const existing = await this.prisma.erpBranch.findFirst({
@@ -50,6 +55,14 @@ export class ErpBranchesService {
       }
       throw error;
     }
+
+    this.audit.log({
+      action: 'CREATE',
+      entityName: 'ErpBranch',
+      entityId: created.id,
+      summary: `Cabang ${created.code} dibuat`,
+      actorId: actorBigInt ?? undefined,
+    });
 
     return { success: true, data: created };
   }
@@ -155,6 +168,19 @@ export class ErpBranchesService {
       throw error;
     }
 
+    const changes = diffFields(
+      existing as unknown as Record<string, unknown>,
+      updated as unknown as Record<string, unknown>,
+    );
+    this.audit.log({
+      action: 'UPDATE',
+      entityName: 'ErpBranch',
+      entityId: id,
+      changes,
+      summary: `Cabang ${updated.code} diperbarui`,
+      actorId: actorBigInt ?? undefined,
+    });
+
     return { success: true, data: updated };
   }
 
@@ -195,6 +221,14 @@ export class ErpBranchesService {
         deletedAt: new Date(),
         updatedById: actorBigInt,
       },
+    });
+
+    this.audit.log({
+      action: 'DELETE',
+      entityName: 'ErpBranch',
+      entityId: id,
+      summary: `Cabang id=${id} dihapus`,
+      actorId: actorBigInt ?? undefined,
     });
 
     return { success: true, message: 'ERP Branch deleted' };

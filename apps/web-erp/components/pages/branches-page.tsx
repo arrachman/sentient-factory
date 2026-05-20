@@ -45,6 +45,7 @@ import {
   branchToPayload,
   type BranchForm,
 } from './branches-form';
+import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
 
 export function ErpBranchesPage() {
   const { rows, loading, error, reload } = useErpList(() => listBranches());
@@ -57,6 +58,7 @@ export function ErpBranchesPage() {
   const [editing, setEditing] = React.useState<ErpBranch | null>(null);
   const [form, setForm] = React.useState<BranchForm>(defaultBranchForm);
   const [saving, setSaving] = React.useState(false);
+  const [auditTarget, setAuditTarget] = React.useState<ErpBranch | null>(null);
 
   const filtered = React.useMemo(() => {
     const q = search.toLowerCase();
@@ -186,6 +188,7 @@ export function ErpBranchesPage() {
                   <TableCell>
                     <div style={{ display: 'flex', gap: 4 }}>
                       <button className="btn sm" onClick={() => openEdit(b)}>Edit</button>
+                      <button className="btn sm ghost" onClick={() => setAuditTarget(b)}>Riwayat</button>
                       <button className="btn sm danger" onClick={() => handleDelete(b)}>Hapus</button>
                     </div>
                   </TableCell>
@@ -219,6 +222,21 @@ export function ErpBranchesPage() {
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal open={!!auditTarget} onOpenChange={(v) => { if (!v) setAuditTarget(null); }}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>
+              Riwayat Perubahan — {auditTarget?.code} {auditTarget?.name}
+            </ModalTitle>
+          </ModalHeader>
+          <div style={{ padding: '0', maxHeight: '60vh', overflowY: 'auto' }}>
+            {auditTarget && (
+              <AuditHistoryPanel entityName="ErpBranch" entityId={auditTarget.id} />
+            )}
+          </div>
         </ModalContent>
       </Modal>
     </>

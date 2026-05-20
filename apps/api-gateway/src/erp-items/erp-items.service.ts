@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { ErpAuditService } from '../erp-audit/erp-audit.service';
+import { diffFields } from '../erp-common/utils/diff-fields.util';
 import { CreateErpItemDto } from './dto/create-erp-item.dto';
 import { QueryErpItemDto } from './dto/query-erp-item.dto';
 import { UpdateErpItemDto } from './dto/update-erp-item.dto';
@@ -13,7 +15,10 @@ const ITEM_INCLUDE = {
 
 @Injectable()
 export class ErpItemsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: ErpAuditService,
+  ) {}
 
   async create(dto: CreateErpItemDto, actorId?: string) {
     const existing = await this.prisma.erpItem.findFirst({
@@ -62,6 +67,14 @@ export class ErpItemsService {
       }
       throw error;
     }
+
+    this.audit.log({
+      action: 'CREATE',
+      entityName: 'ErpItem',
+      entityId: created.id,
+      summary: `Item ${created.code} dibuat`,
+      actorId: actorId ? BigInt(actorId) : undefined,
+    });
 
     return { success: true, data: created };
   }
@@ -195,6 +208,19 @@ export class ErpItemsService {
       throw error;
     }
 
+    const changes = diffFields(
+      existing as unknown as Record<string, unknown>,
+      updated as unknown as Record<string, unknown>,
+    );
+    this.audit.log({
+      action: 'UPDATE',
+      entityName: 'ErpItem',
+      entityId: id,
+      changes,
+      summary: `Item ${updated.code} diperbarui`,
+      actorId: actorId ? BigInt(actorId) : undefined,
+    });
+
     return { success: true, data: updated };
   }
 
@@ -213,6 +239,14 @@ export class ErpItemsService {
         deletedAt: new Date(),
         updatedById: actorId ? BigInt(actorId) : null,
       },
+    });
+
+    this.audit.log({
+      action: 'DELETE',
+      entityName: 'ErpItem',
+      entityId: id,
+      summary: `Item id=${id} dihapus`,
+      actorId: actorId ? BigInt(actorId) : undefined,
     });
 
     return { success: true, message: 'ERP item deleted' };
