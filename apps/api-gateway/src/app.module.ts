@@ -44,6 +44,12 @@ import { ErpPermissionsModule } from './erp-permissions/erp-permissions.module';
 import { ErpBranchesModule } from './erp-branches/erp-branches.module';
 import { ErpLocationsModule } from './erp-locations/erp-locations.module';
 import { ErpWarehousesModule } from './erp-warehouses/erp-warehouses.module';
+import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
+import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
+import { ErpProjectsModule } from './erp-projects/erp-projects.module';
+import { ErpCostCentersModule } from './erp-cost-centers/erp-cost-centers.module';
+import { ErpDepartmentsModule } from './erp-departments/erp-departments.module';
+import { ErpSubDepartmentsModule } from './erp-sub-departments/erp-sub-departments.module';
 import { ErpUnitsModule } from './erp-units/erp-units.module';
 import { ErpItemCategoriesModule } from './erp-item-categories/erp-item-categories.module';
 import { ErpItemsModule } from './erp-items/erp-items.module';
@@ -54,6 +60,7 @@ import { ErpAccountsModule } from './erp-accounts/erp-accounts.module';
 import { ErpTaxesModule } from './erp-taxes/erp-taxes.module';
 import { ErpPaymentTermsModule } from './erp-payment-terms/erp-payment-terms.module';
 import { ErpSettingsModule } from './erp-settings/erp-settings.module';
+import { ErpUserPreferencesModule } from './erp-user-preferences/erp-user-preferences.module';
 import { ErpSysMenusModule } from './erp-sys-menus/erp-sys-menus.module';
 import { ErpDocumentNumberingsModule } from './erp-document-numberings/erp-document-numberings.module';
 import { ErpFiscalPeriodsModule } from './erp-fiscal-periods/erp-fiscal-periods.module';
@@ -127,6 +134,12 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpBranchesModule,
     ErpLocationsModule,
     ErpWarehousesModule,
+    ErpDivisionsModule,
+    ErpSubDivisionsModule,
+    ErpProjectsModule,
+    ErpCostCentersModule,
+    ErpDepartmentsModule,
+    ErpSubDepartmentsModule,
     ErpUnitsModule,
     ErpItemCategoriesModule,
     ErpItemsModule,
@@ -137,6 +150,7 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpTaxesModule,
     ErpPaymentTermsModule,
     ErpSettingsModule,
+    ErpUserPreferencesModule,
     ErpSysMenusModule,
     ErpDocumentNumberingsModule,
     ErpFiscalPeriodsModule,

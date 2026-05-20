@@ -446,6 +446,16 @@ menampilkan dialog konfirmasi via `confirmAction()` sebelum eksekusi:
 semua empty state tabel — **jangan** biarkan `<tbody>` kosong tanpa keterangan.
 Empty saat filter aktif harus dibedakan dari empty tanpa filter (pesan beda).
 
+**Error state = molecule `ErrorState` (2026-05-20).** Pesan error mentah dari
+backend (mis. HTTP `Not Found`, `Failed to fetch`, `Unauthorized`) **dilarang**
+ditampilkan apa adanya. `ErpListLayout` me-render
+[`components/molecules/error-state.tsx`](components/molecules/error-state.tsx)
+yang mengkategorikan pesan jadi: tidak terhubung / data tidak ditemukan /
+akses ditolak / server bermasalah / fallback — masing-masing dengan ikon,
+judul, deskripsi user-friendly, dan tombol **Coba lagi** (memanggil
+`onRefresh`). Saat membuat halaman list baru: cukup oper `error` dari
+`useErpList` ke `ErpListLayout` — jangan rakit teks error ad-hoc.
+
 ### 2.10 Status boolean = kolom badge `Aktif/Nonaktif` (2026-05-20)
 
 Untuk entitas dengan status biner (`isActive`) di list page: tetap kolom
@@ -679,6 +689,50 @@ working tree atau feature branch.
   (lihat aturan sinkronisasi dokumen di skill `erp`).
 - Belum commit + (jika perlu) merge ke `dev` → task **belum** boleh
   dideklarasikan selesai.
+
+---
+
+### 2.15 Sidebar group `Organization` (2026-05-20)
+
+Group nav baru di NAV `Organization` (id `org`, icon `database`) menampung
+**9 master org-level**: Branch, Location, Warehouse, Division, Sub Division,
+Project, Cost Center, Department, Sub Department.
+
+- Path kanonik = `/org/<entity>` (di-seed di `sys_menus` di bawah module
+  `M1` group `M1.ORG`). Path lama `/master/branches`/`/master/locations`/
+  `/master/warehouses`/`/master/divisions`/`/master/subdivisions` tetap
+  ter-register di `ERP_PAGES` sebagai alias (jangan break link existing).
+- Tabel: `md_branches`, `md_locations`, `md_warehouses`, `md_divisions`,
+  `md_subdivisions`, `md_projects`, `md_cost_centers`, `md_departments`,
+  `md_sub_departments`. Model Prisma: `ErpBranch`, `ErpLocation`,
+  `ErpWarehouse`, `ErpDivision`, `ErpSubdivision`, `ErpProject`,
+  `ErpCostCenter`, `ErpDepartment`, `ErpSubDepartment`.
+- API module per-entitas di `apps/api-gateway/src/erp-*` (controller +
+  service + DTO create/update/query/bulk), guard `ErpJwtAuthGuard` (§2.5).
+- FE: tiap halaman = ~60-90 baris pakai organism reusable
+  `components/organisms/simple-master-page.tsx` (generik CRUD: pagination
+  server-driven, kebab+context menu, bulk action, audit panel). Wajib
+  pakai organism ini untuk halaman master "code+name+isActive" gaya baru —
+  **dilarang** fork branches-page lagi.
+
+### 2.16 `SimpleMasterPage<T, F>` organism (2026-05-20)
+
+[`components/organisms/simple-master-page.tsx`](components/organisms/simple-master-page.tsx)
+adalah organism reusable untuk halaman list master entitas "simple" (code +
+name + isActive + optional kolom/field tambahan). Pattern wajib §2.7–§2.12
+sudah built-in di sini.
+
+API page-side (per entitas):
+- `defaultForm()` / `fromRecord(row)` / `toPayload(form)` — adapter form.
+- `FormFields` — komponen form kustom (atom `FormField` + `Input` +
+  `BooleanRadio` + `Select` bila perlu).
+- `extraColumns: ExtraColumn<T>[]` — kolom ekstra di antara Nama dan Status
+  (untuk relasi parent: Sub Division→Division, Sub Department→Department,
+  Project→date range).
+
+Endpoint API client wajib expose `list/create/update/remove/bulkStatus/
+bulkDelete` untuk dipasangkan ke organism (lihat
+`lib/api/divisions.ts` sebagai template).
 
 ---
 

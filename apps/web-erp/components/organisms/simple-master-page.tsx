@@ -1,0 +1,323 @@
+'use client';
+
+/**
+ * Generic CRUD organism for "simple" master entities (code + name + isActive
+ * + optional extra columns/fields). Used by ORGANIZATION group masters
+ * (Division, SubDivision, Project, CostCenter, Department, SubDepartment)
+ * to avoid 280-line page boilerplate per entity.
+ *
+ * Each entity page = ~80 lines of config + form fields, not a fork of
+ * branches-page.tsx. Pattern matches branches-page.tsx feature-by-feature:
+ * server-driven paginate/sort/filter, keyboard nav, bulk actions, audit
+ * panel, kebab+context menu (RowActionsMenu).
+ */
+
+import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
+import {
+  RowActionsMenu,
+  RowContextMenu,
+  type RowActionItem,
+} from '@/components/molecules/row-actions-menu';
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
+} from '@/components/organisms/modal';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+  type KeyboardRowConfig,
+} from '@/components/organisms/erp-list-layout';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableEmpty,
+  CheckboxHead,
+  CheckboxCell,
+  CodeLinkCell,
+  SortableHead,
+} from '@/components/organisms/table';
+import { confirmAction, notify } from '@/lib/feedback';
+import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
+import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
+import type { PaginatedResponse, PaginationParams } from '@/lib/api/types';
+
+export interface BaseEntity {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+}
+
+export interface ExtraColumn<T> {
+  key: string;
+  label: string;
+  sortable?: boolean;
+  render: (row: T) => React.ReactNode;
+}
+
+export interface SimpleMasterPageProps<T extends BaseEntity, F> {
+  // Display
+  title: string;
+  code?: string;
+  entityLabel: string; // singular, lowercase, mis. "divisi"
+  storageKey: string;
+  auditEntityName: string;
+  // Data
+  list: (p: PaginationParams) => Promise<PaginatedResponse<T>>;
+  create: (payload: any) => Promise<T>;
+  update: (id: string, payload: any) => Promise<T>;
+  remove: (id: string) => Promise<void>;
+  bulkStatus: (ids: string[], isActive: boolean) => Promise<{ affected: number }>;
+  bulkDelete: (ids: string[]) => Promise<{ affected: number }>;
+  // Form
+  defaultForm: () => F;
+  fromRecord: (row: T) => F;
+  toPayload: (form: F) => any;
+  FormFields: React.ComponentType<{ data: F; onChange: (d: F) => void }>;
+  // Optional extra columns shown between Name and Status
+  extraColumns?: ExtraColumn<T>[];
+}
+
+export function SimpleMasterPage<T extends BaseEntity, F>({
+  title,
+  code,
+  entityLabel,
+  storageKey,
+  auditEntityName,
+  list,
+  create,
+  update,
+  remove,
+  bulkStatus,
+  bulkDelete,
+  defaultForm,
+  fromRecord,
+  toPayload,
+  FormFields,
+  extraColumns = [],
+}: SimpleMasterPageProps<T, F>) {
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
+  const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination(storageKey);
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () => list({
+      page, limit: pageSize, search: debouncedSearch || undefined,
+      sortBy, sortDir, isActive: isActiveParam,
+    }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [focusedIndex, setFocusedIndex] = React.useState(-1);
+  const [open, setOpen] = React.useState(false);
+  const [editing, setEditing] = React.useState<T | null>(null);
+  const [form, setForm] = React.useState<F>(defaultForm);
+  const [saving, setSaving] = React.useState(false);
+  const [auditTarget, setAuditTarget] = React.useState<T | null>(null);
+
+  React.useEffect(() => { setFocusedIndex(-1); }, [page, debouncedSearch, statusFilter]);
+
+  React.useEffect(() => {
+    if (focusedIndex < 0) return;
+    document.querySelector('[data-focused="true"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [focusedIndex]);
+
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const allSelected = paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
+  const someSelected = !allSelected && paged.some((r) => selectedIds.has(r.id));
+  const toggleRow = (id: string) =>
+    setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
+  const toggleAll = (checked: boolean) =>
+    setSelectedIds((prev) => { const next = new Set(prev); if (checked) paged.forEach((r) => next.add(r.id)); else paged.forEach((r) => next.delete(r.id)); return next; });
+
+  const ALL = { label: 'Semua', value: '' };
+  const filters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+  ];
+  const hasActiveFilter = search !== '' || statusFilter !== '';
+  const summary: SummaryConfig = { metricLabel: `Σ ${entityLabel}`, rowCount: totalRows, totalCount: totalRows };
+  const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+
+  const openCreate = () => { setEditing(null); setForm(defaultForm()); setOpen(true); };
+  const openEdit = (row: T) => { setEditing(row); setForm(fromRecord(row)); setOpen(true); };
+
+  const keyboardCfg: KeyboardRowConfig = {
+    rowCount: paged.length, focusedIndex, onFocusChange: setFocusedIndex,
+    onToggle: (i) => toggleRow(paged[i].id), onOpen: (i) => openEdit(paged[i]),
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (editing) { await update(editing.id, toPayload(form)); notify(`${title} diperbarui`, 'success'); }
+      else { await create(toPayload(form)); notify(`${title} dibuat`, 'success'); }
+      setOpen(false); reload();
+    } catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger'); }
+    finally { setSaving(false); }
+  };
+
+  const handleDelete = (row: T) =>
+    confirmAction({
+      title: `Hapus ${entityLabel}?`, message: `${row.code} — ${row.name} akan dihapus permanen.`,
+      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
+      onConfirm: async () => { try { await remove(row.id); notify(`${title} dihapus`, 'success'); reload(); } catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); } },
+    });
+
+  const selectedArr = Array.from(selectedIds);
+  const handleBulkStatus = (isActive: boolean) => {
+    const verb = isActive ? 'aktifkan' : 'nonaktifkan';
+    confirmAction({
+      title: `${isActive ? 'Aktifkan' : 'Nonaktifkan'} ${selectedArr.length} ${entityLabel}?`,
+      message: `Semua ${entityLabel} yang dipilih akan di-${verb}.`,
+      variant: isActive ? 'primary' : 'warn',
+      confirmLabel: isActive ? 'Aktifkan' : 'Nonaktifkan',
+      onConfirm: async () => {
+        try { const { affected } = await bulkStatus(selectedArr, isActive); notify(`${affected} ${entityLabel} berhasil di-${verb}`, 'success'); setSelectedIds(new Set()); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+      },
+    });
+  };
+
+  const handleBulkDelete = () =>
+    confirmAction({
+      title: `Hapus ${selectedArr.length} ${entityLabel}?`, message: `Semua ${entityLabel} yang dipilih akan dihapus permanen.`,
+      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
+      onConfirm: async () => {
+        try { const { affected } = await bulkDelete(selectedArr); notify(`${affected} ${entityLabel} dihapus`, 'success'); setSelectedIds(new Set()); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+      },
+    });
+
+  const colCount = 5 + extraColumns.length; // checkbox + code + name + ...extra + status + actions
+
+  return (
+    <>
+      <ErpListLayout
+        title={title} code={code ?? ''} loading={loading} error={error}
+        search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
+        onExport={() => notify('Export belum tersedia', 'warn')}
+        filters={filters} summary={summary} pagination={pagination}
+        keyboardRows={keyboardCfg}
+      >
+        <div className="lines">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <CheckboxHead checked={someSelected ? 'indeterminate' : allSelected} onCheckedChange={toggleAll} />
+                <SortableHead field="code" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Kode</SortableHead>
+                <SortableHead field="name" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Nama</SortableHead>
+                {extraColumns.map((c) => (
+                  c.sortable
+                    ? <SortableHead key={c.key} field={c.key} sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>{c.label}</SortableHead>
+                    : <TableHead key={c.key}>{c.label}</TableHead>
+                ))}
+                <SortableHead field="isActive" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Status</SortableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={colCount}>
+                  {hasActiveFilter ? 'Tidak ada hasil untuk filter ini' : `Tidak ada data ${entityLabel}`}
+                </TableEmpty>
+              ) : paged.map((row, idx) => {
+                const rowActions: RowActionItem[] = [
+                  { label: 'Edit', onSelect: () => openEdit(row) },
+                  { label: 'Riwayat', onSelect: () => setAuditTarget(row) },
+                  { label: 'Hapus', onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
+                ];
+                return (
+                  <RowContextMenu key={row.id} items={rowActions}>
+                    <TableRow data-selected={selectedIds.has(row.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)}>
+                      <CheckboxCell checked={selectedIds.has(row.id)} onCheckedChange={() => toggleRow(row.id)} />
+                      <CodeLinkCell code={row.code} onOpen={() => openEdit(row)} />
+                      <TableCell>{row.name}</TableCell>
+                      {extraColumns.map((c) => <TableCell key={c.key} className="muted">{c.render(row)}</TableCell>)}
+                      <TableCell>
+                        <Badge variant={row.isActive ? 'success' : 'default'} dot className="-ml-[7px]">
+                          {row.isActive ? 'Aktif' : 'Nonaktif'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <RowActionsMenu items={rowActions} />
+                      </TableCell>
+                    </TableRow>
+                  </RowContextMenu>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      </ErpListLayout>
+
+      {selectedIds.size > 0 && (
+        <div className="bulk-bar">
+          <span className="count">{selectedIds.size} baris dipilih</span>
+          <div className="divider" />
+          <button className="ba-btn" onClick={() => handleBulkStatus(true)}>Aktifkan</button>
+          <button className="ba-btn" onClick={() => handleBulkStatus(false)}>Nonaktifkan</button>
+          <div className="divider" />
+          <button className="ba-btn danger" onClick={handleBulkDelete}>Hapus</button>
+          <div className="divider" />
+          <button className="ba-btn" onClick={() => setSelectedIds(new Set())}>Batal</button>
+        </div>
+      )}
+
+      <Modal open={open} onOpenChange={setOpen}>
+        <ModalContent>
+          <ModalHeader><ModalTitle>{editing ? `Edit ${title}` : `Tambah ${title}`}</ModalTitle></ModalHeader>
+          <FormFields data={form} onChange={setForm} />
+          <ModalFooter>
+            <button className="btn ghost" onClick={() => setOpen(false)}>Batal</button>
+            <button className="btn primary" onClick={handleSave} disabled={saving}>
+              {saving ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal open={!!auditTarget} onOpenChange={(v) => { if (!v) setAuditTarget(null); }}>
+        <ModalContent size="lg">
+          <ModalHeader>
+            <ModalTitle>
+              Riwayat Perubahan — {auditTarget?.code} {auditTarget?.name}
+            </ModalTitle>
+          </ModalHeader>
+          <div style={{ padding: '0', maxHeight: '60vh', overflowY: 'auto' }}>
+            {auditTarget && (
+              <AuditHistoryPanel entityName={auditEntityName} entityId={auditTarget.id} />
+            )}
+          </div>
+        </ModalContent>
+      </Modal>
+    </>
+  );
+}

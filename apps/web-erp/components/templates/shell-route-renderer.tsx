@@ -38,6 +38,12 @@ import { ErpAccountsPage } from '@/components/pages/accounts-page';
 import { ErpCurrenciesPage } from '@/components/pages/currencies-page';
 import { ErpTaxesPage } from '@/components/pages/taxes-page';
 import { ErpPaymentTermsPage } from '@/components/pages/payment-terms-page';
+import { ErpDivisionsPage } from '@/components/pages/divisions-page';
+import { ErpSubDivisionsPage } from '@/components/pages/sub-divisions-page';
+import { ErpProjectsPage } from '@/components/pages/projects-page';
+import { ErpCostCentersPage } from '@/components/pages/cost-centers-page';
+import { ErpDepartmentsPage } from '@/components/pages/departments-page';
+import { ErpSubDepartmentsPage } from '@/components/pages/sub-departments-page';
 // F2 Finance (m2) pages — skeleton CRUD
 import { ErpJournalEntriesPage } from '@/components/pages/fin-journal-entries-page';
 import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
@@ -80,6 +86,18 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/currencies': () => <ErpCurrenciesPage />,
   '/master/taxes': () => <ErpTaxesPage />,
   '/master/payment-terms': () => <ErpPaymentTermsPage />,
+  '/master/divisions': () => <ErpDivisionsPage />,
+  '/master/subdivisions': () => <ErpSubDivisionsPage />,
+  // ── Organization (md, mirror of /master/* org masters) ───────────────────
+  '/org/branches': () => <ErpBranchesPage />,
+  '/org/locations': () => <ErpLocationsPage />,
+  '/org/warehouses': () => <ErpWarehousesPage />,
+  '/org/divisions': () => <ErpDivisionsPage />,
+  '/org/sub-divisions': () => <ErpSubDivisionsPage />,
+  '/org/projects': () => <ErpProjectsPage />,
+  '/org/cost-centers': () => <ErpCostCentersPage />,
+  '/org/departments': () => <ErpDepartmentsPage />,
+  '/org/sub-departments': () => <ErpSubDepartmentsPage />,
   // ── User Settings (personal preferences) ─────────────────────────────────
   '/settings/appearance': (ctx) => <AppearancePage t={ctx.t} />,
   // ── Finance (fin, m2) ─────────────────────────────────────────────────────

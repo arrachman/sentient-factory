@@ -2349,6 +2349,56 @@ model ErpProject {
   @@map("md_projects")
 }
 
+// --- Organization masters: Department / SubDepartment ---
+
+model ErpDepartment {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  parentId    BigInt?   @map("parent_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  parent         ErpDepartment?     @relation("ErpDepartment_parent", fields: [parentId], references: [id])
+  children       ErpDepartment[]    @relation("ErpDepartment_parent")
+  subDepartments ErpSubDepartment[]
+
+  @@index([parentId])
+  @@index([legacyCode])
+  @@map("md_departments")
+}
+
+model ErpSubDepartment {
+  id           BigInt    @id @default(autoincrement())
+  code         String    @unique @map("code")
+  name         String    @map("name")
+  departmentId BigInt    @map("department_id")
+  parentId     BigInt?   @map("parent_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  legacyCode   String?   @map("legacy_code")
+  metadata     Json?     @map("metadata")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById  BigInt?   @map("created_by_id")
+  updatedById  BigInt?   @map("updated_by_id")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  department ErpDepartment       @relation(fields: [departmentId], references: [id])
+  parent     ErpSubDepartment?   @relation("ErpSubDepartment_parent", fields: [parentId], references: [id])
+  children   ErpSubDepartment[]  @relation("ErpSubDepartment_parent")
+
+  @@index([departmentId])
+  @@index([parentId])
+  @@index([legacyCode])
+  @@map("md_sub_departments")
+}
+
 // --- Journals ---
 
 model ErpFinJournalEntry {

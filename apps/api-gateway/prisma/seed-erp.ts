@@ -314,15 +314,15 @@ async function seedMenus(): Promise<Map<string, bigint>> {
   // M1.ORG — Organization (branch, location, warehouse, divisions, etc.)
   const orgGrp = await upsertMenu({ code: 'M1.ORG', title: 'Organization', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 1 });
   await upsertItems([
-    { code: 'M1.ORG.BRANCH',       title: 'Branch',          path: '/master/branches',      legacyCode: '1-13' },
-    { code: 'M1.ORG.LOCATION',     title: 'Location',        path: '/master/locations',     legacyCode: '1-14' },
-    { code: 'M1.ORG.WAREHOUSE',    title: 'Warehouse',       path: '/master/warehouses',    legacyCode: '1-15' },
-    { code: 'M1.ORG.DIVISION',     title: 'Division',        path: '/master/divisions',     legacyCode: '1-16' },
-    { code: 'M1.ORG.SUBDIVISION',  title: 'Sub Division',    path: '/master/subdivisions',  legacyCode: '1-17' },
-    { code: 'M1.ORG.PROJECT',      title: 'Project',         path: '/master/projects',      legacyCode: '1-18' },
-    { code: 'M1.ORG.COST-CENTER',  title: 'Cost Center',     path: '/master/cost-centers',  legacyCode: '1-19' },
-    { code: 'M1.ORG.DEPARTMENT',   title: 'Department',      path: '/master/departments',   legacyCode: '1-84' },
-    { code: 'M1.ORG.SUBDEPT',      title: 'Sub Department',  path: '/master/sub-departments', legacyCode: '1-85' },
+    { code: 'M1.ORG.BRANCH',       title: 'Branch',          path: '/org/branches',         legacyCode: '1-13' },
+    { code: 'M1.ORG.LOCATION',     title: 'Location',        path: '/org/locations',        legacyCode: '1-14' },
+    { code: 'M1.ORG.WAREHOUSE',    title: 'Warehouse',       path: '/org/warehouses',       legacyCode: '1-15' },
+    { code: 'M1.ORG.DIVISION',     title: 'Division',        path: '/org/divisions',        legacyCode: '1-16' },
+    { code: 'M1.ORG.SUBDIVISION',  title: 'Sub Division',    path: '/org/sub-divisions',    legacyCode: '1-17' },
+    { code: 'M1.ORG.PROJECT',      title: 'Project',         path: '/org/projects',         legacyCode: '1-18' },
+    { code: 'M1.ORG.COST-CENTER',  title: 'Cost Center',     path: '/org/cost-centers',     legacyCode: '1-19' },
+    { code: 'M1.ORG.DEPARTMENT',   title: 'Department',      path: '/org/departments',      legacyCode: '1-84' },
+    { code: 'M1.ORG.SUBDEPT',      title: 'Sub Department',  path: '/org/sub-departments',  legacyCode: '1-85' },
   ], orgGrp.id);
 
   // M1.ITEM — Items & product classification
@@ -397,6 +397,12 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M1.PROD.ROUTE',     title: 'Production Route',    path: '/master/production-routes',     legacyCode: '1-122' },
     { code: 'M1.PROD.SUBCLASS',  title: 'Sub Class',           path: '/master/subclasses',            legacyCode: '1-106' },
   ], prodGrp.id);
+
+  // ── SET: User Settings (personal preferences, not admin config) ──────────
+  const setMod = await upsertMenu({ code: 'SET', title: 'Settings', icon: 'settings', type: ErpMenuType.MODULE, sortOrder: 99 });
+  await upsertItems([
+    { code: 'SET.APPEARANCE', title: 'Appearance', path: '/settings/appearance' },
+  ], setMod.id);
 
   // ── M2–M14: Module stubs (legacy MyERP+ modules) ─────────────────────────
   // Roots only — items belum di-port. Path null = sidebar tampil tapi belum
