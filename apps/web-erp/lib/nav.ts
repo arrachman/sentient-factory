@@ -188,6 +188,11 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/master/currencies': { group: 'Data Master', title: 'Currencies', icon: 'database' },
   '/master/taxes': { group: 'Data Master', title: 'Taxes', icon: 'database' },
   '/master/payment-terms': { group: 'Data Master', title: 'Payment Terms', icon: 'database' },
+  '/keuangan/journal-entries': { group: 'Keuangan', title: 'Journal Entries', icon: 'calculator' },
+  '/keuangan/ar-receipts': { group: 'Keuangan', title: 'AR Receipts', icon: 'calculator' },
+  '/keuangan/ap-payments': { group: 'Keuangan', title: 'AP Payments', icon: 'calculator' },
+  '/keuangan/giros': { group: 'Keuangan', title: 'Giros', icon: 'calculator' },
+  '/keuangan/ledger': { group: 'Keuangan', title: 'General Ledger', icon: 'calculator' },
 };
 
 /** Resolve a route id to its title/icon/breadcrumb — mirrors prototype `pageMeta`. */

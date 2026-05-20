@@ -32,6 +32,12 @@ const ROUTES = [
   ['master-currencies', '/master/currencies', 'Curren'],
   ['master-taxes', '/master/taxes', 'Tax'],
   ['master-payment-terms', '/master/payment-terms', 'Payment'],
+  // m2 Finance (skeleton CRUD)
+  ['fin-journal-entries', '/keuangan/journal-entries', 'Journal'],
+  ['fin-ar-receipts', '/keuangan/ar-receipts', 'AR Receipt'],
+  ['fin-ap-payments', '/keuangan/ap-payments', 'AP Payment'],
+  ['fin-giros', '/keuangan/giros', 'Giro'],
+  ['fin-ledger', '/keuangan/ledger', 'Ledger'],
 ];
 
 async function main() {

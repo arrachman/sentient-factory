@@ -38,6 +38,12 @@ import { ErpAccountsPage } from '@/components/pages/accounts-page';
 import { ErpCurrenciesPage } from '@/components/pages/currencies-page';
 import { ErpTaxesPage } from '@/components/pages/taxes-page';
 import { ErpPaymentTermsPage } from '@/components/pages/payment-terms-page';
+// F2 Finance (m2) pages — skeleton CRUD
+import { ErpJournalEntriesPage } from '@/components/pages/fin-journal-entries-page';
+import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
+import { ErpApPaymentsPage } from '@/components/pages/fin-ap-payments-page';
+import { ErpGirosPage } from '@/components/pages/fin-giros-page';
+import { ErpLedgerPage } from '@/components/pages/fin-ledger-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 
 /**
@@ -69,6 +75,12 @@ const ERP_PAGES: Record<string, () => React.ReactNode> = {
   '/master/currencies': () => <ErpCurrenciesPage />,
   '/master/taxes': () => <ErpTaxesPage />,
   '/master/payment-terms': () => <ErpPaymentTermsPage />,
+  // ── Finance (fin, m2) ─────────────────────────────────────────────────────
+  '/keuangan/journal-entries': () => <ErpJournalEntriesPage />,
+  '/keuangan/ar-receipts': () => <ErpArReceiptsPage />,
+  '/keuangan/ap-payments': () => <ErpApPaymentsPage />,
+  '/keuangan/giros': () => <ErpGirosPage />,
+  '/keuangan/ledger': () => <ErpLedgerPage />,
   // ── Legacy short-id aliases (static NAV fallback) ─────────────────────────
   'adm-users': () => <ErpUsersPage />,
   'adm-roles': () => <ErpRolesPage />,
