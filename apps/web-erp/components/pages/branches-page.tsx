@@ -18,7 +18,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -27,6 +32,8 @@ import {
   TableHead,
   TableCell,
   TableEmpty,
+  CheckboxHead,
+  CheckboxCell,
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
@@ -153,6 +160,9 @@ function BranchFormFields({
 export function ErpBranchesPage() {
   const { rows, loading, error, reload } = useErpList(() => listBranches());
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpBranch | null>(null);
   const [form, setForm] = React.useState<BranchForm>(defaultForm);
@@ -160,15 +170,44 @@ export function ErpBranchesPage() {
 
   const filtered = React.useMemo(() => {
     const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q) ||
-            (r.city ?? '').toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+    return rows.filter((r) => {
+      if (q && !r.code.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q) && !(r.city ?? '').toLowerCase().includes(q)) return false;
+      if (statusFilter === 'active' && !r.isActive) return false;
+      if (statusFilter === 'inactive' && r.isActive) return false;
+      return true;
+    });
+  }, [rows, search, statusFilter]);
+
+  React.useEffect(() => { setPage(1); }, [search, statusFilter]);
+
+  const PAGE_SIZE = 20;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Selection
+  const allSelected = paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
+  const someSelected = !allSelected && paged.some((r) => selectedIds.has(r.id));
+  const toggleRow = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const toggleAll = (checked: boolean) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) paged.forEach((r) => next.add(r.id));
+      else paged.forEach((r) => next.delete(r.id));
+      return next;
+    });
+
+  const ALL = { label: 'Semua', value: '' };
+  const branchFilters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+  ];
+  const branchSummary: SummaryConfig = { metricLabel: 'Σ cabang', rowCount: filtered.length, totalCount: rows.length };
+  const branchPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
 
   const openCreate = () => {
     setEditing(null);
@@ -231,11 +270,18 @@ export function ErpBranchesPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={branchFilters}
+        summary={branchSummary}
+        pagination={branchPagination}
       >
         <div className="lines">
           <Table>
             <TableHeader>
               <TableRow>
+                <CheckboxHead
+                  checked={someSelected ? 'indeterminate' : allSelected}
+                  onCheckedChange={toggleAll}
+                />
                 <TableHead>Kode</TableHead>
                 <TableHead>Nama</TableHead>
                 <TableHead>Kota</TableHead>
@@ -245,11 +291,15 @@ export function ErpBranchesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={6} />
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={7} />
               ) : (
-                filtered.map((b) => (
-                  <TableRow key={b.id}>
+                paged.map((b) => (
+                  <TableRow key={b.id} data-selected={selectedIds.has(b.id)}>
+                    <CheckboxCell
+                      checked={selectedIds.has(b.id)}
+                      onCheckedChange={() => toggleRow(b.id)}
+                    />
                     <TableCell className="mono">{b.code}</TableCell>
                     <TableCell>{b.name}</TableCell>
                     <TableCell className="muted">{b.city ?? '—'}</TableCell>
