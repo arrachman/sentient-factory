@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
+  IsDateString,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -49,4 +51,26 @@ export class CreateErpUserDto {
   @IsOptional()
   @IsString()
   branchId?: string;
+
+  @ApiPropertyOptional({ example: '1', description: 'Home warehouse ID (BigInt string)' })
+  @IsOptional()
+  @IsString()
+  homeWarehouseId?: string;
+
+  @ApiPropertyOptional({ example: 'id', description: 'Language code: id or en' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5)
+  language?: string;
+
+  @ApiPropertyOptional({ example: '2100-12-31', description: 'Account expiry date (ISO 8601)' })
+  @IsOptional()
+  @IsDateString()
+  expiresAt?: string;
+
+  @ApiPropertyOptional({ example: ['1', '2'], description: 'Role IDs to assign' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  roleIds?: string[];
 }

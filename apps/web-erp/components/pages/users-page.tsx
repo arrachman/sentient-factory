@@ -2,7 +2,7 @@
 
 /**
  * F2 Admin — User Management page.
- * Lists adm_users; supports create, edit, toggle active, delete.
+ * List kolom: Kode, Nama, Bahasa, Cabang, Tgl EXP, Status — mengikuti pola MyERP+.
  * Atomic tier: Page.
  */
 
@@ -25,25 +25,32 @@ import {
   TableCell,
   TableEmpty,
 } from '@/components/organisms/table';
-import { confirmAction } from '@/lib/feedback';
-import { notify } from '@/lib/feedback';
+import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
-import { listUsers, createUser, updateUser, deleteUser } from '@/lib/api/users';
-import type { ErpUser } from '@/lib/api/users';
 import {
-  UserForm,
-  useUserForm,
-  toCreatePayload,
-  toUpdatePayload,
+  listUsers, getUser, createUser, updateUser, deleteUser,
+} from '@/lib/api/users';
+import type { ErpUser, ErpUserRoleRef } from '@/lib/api/users';
+import {
+  UserForm, useUserForm, toCreatePayload, toUpdatePayload,
 } from './users-form';
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDate(iso?: string | null) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+function fmtLang(code?: string) {
+  return code === 'en' ? 'ENG' : 'INA';
+}
 
 // ─── Table ────────────────────────────────────────────────────────────────────
 
 function UsersTable({
-  rows,
-  onEdit,
-  onToggle,
-  onDelete,
+  rows, onEdit, onToggle, onDelete,
 }: {
   rows: ErpUser[];
   onEdit: (u: ErpUser) => void;
@@ -55,26 +62,35 @@ function UsersTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Username</TableHead>
+            <TableHead>Kode</TableHead>
             <TableHead>Nama</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Level</TableHead>
+            <TableHead>Bahasa</TableHead>
+            <TableHead>Cabang</TableHead>
+            <TableHead>Tgl EXP</TableHead>
             <TableHead>Status</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
           {rows.length === 0 ? (
-            <TableEmpty colSpan={6} />
+            <TableEmpty colSpan={7} />
           ) : (
             rows.map((u) => (
               <TableRow key={u.id}>
-                <TableCell className="mono">{u.username}</TableCell>
-                <TableCell>{u.fullName}</TableCell>
-                <TableCell className="muted">{u.email ?? '—'}</TableCell>
                 <TableCell>
-                  <span className="code">{u.erpLevel}</span>
+                  <button
+                    className="link mono text-left"
+                    onClick={() => onEdit(u)}
+                  >
+                    {u.username}
+                  </button>
                 </TableCell>
+                <TableCell>{u.fullName}</TableCell>
+                <TableCell className="muted">{fmtLang(u.language)}</TableCell>
+                <TableCell className="muted">
+                  {u.homeBranchId ? <span className="code">{u.homeBranchId}</span> : '—'}
+                </TableCell>
+                <TableCell className="muted">{fmtDate(u.expiresAt)}</TableCell>
                 <TableCell>
                   <Badge variant={u.isActive ? 'success' : 'default'} dot>
                     {u.isActive ? 'Aktif' : 'Nonaktif'}
@@ -82,19 +98,10 @@ function UsersTable({
                 </TableCell>
                 <TableCell>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <button className="btn sm" onClick={() => onEdit(u)}>
-                      Edit
-                    </button>
-                    <button
-                      className="btn sm ghost"
-                      onClick={() => onToggle(u)}
-                    >
+                    <button className="btn sm ghost" onClick={() => onToggle(u)}>
                       {u.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                     </button>
-                    <button
-                      className="btn sm danger"
-                      onClick={() => onDelete(u)}
-                    >
+                    <button className="btn sm danger" onClick={() => onDelete(u)}>
                       Hapus
                     </button>
                   </div>
@@ -115,8 +122,9 @@ export function ErpUsersPage() {
   const [search, setSearch] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpUser | null>(null);
+  const [editRoles, setEditRoles] = React.useState<ErpUserRoleRef[]>([]);
   const [saving, setSaving] = React.useState(false);
-  const { data, setData } = useUserForm(editing);
+  const { data, setData } = useUserForm(editing, editRoles);
 
   const filtered = React.useMemo(() => {
     const q = search.toLowerCase();
@@ -132,12 +140,20 @@ export function ErpUsersPage() {
 
   const openCreate = () => {
     setEditing(null);
+    setEditRoles([]);
     setOpen(true);
   };
 
-  const openEdit = (u: ErpUser) => {
+  const openEdit = async (u: ErpUser) => {
     setEditing(u);
+    setEditRoles([]);
     setOpen(true);
+    try {
+      const detail = await getUser(u.id);
+      setEditRoles(detail.roles ?? []);
+    } catch {
+      // roles stay empty — non-blocking
+    }
   };
 
   const handleSave = async () => {
@@ -168,10 +184,7 @@ export function ErpUsersPage() {
       onConfirm: async () => {
         try {
           await updateUser(u.id, { isActive: !u.isActive });
-          notify(
-            `User ${u.isActive ? 'dinonaktifkan' : 'diaktifkan'}`,
-            'success',
-          );
+          notify(`User ${u.isActive ? 'dinonaktifkan' : 'diaktifkan'}`, 'success');
           reload();
         } catch (e: unknown) {
           notify(e instanceof Error ? e.message : 'Gagal', 'danger');
@@ -220,20 +233,14 @@ export function ErpUsersPage() {
       </ErpListLayout>
 
       <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
+        <ModalContent size="lg">
           <ModalHeader>
-            <ModalTitle>{editing ? 'Edit User' : 'Tambah User'}</ModalTitle>
+            <ModalTitle>{editing ? `Edit User — ${editing.username}` : 'Tambah User'}</ModalTitle>
           </ModalHeader>
           <UserForm editing={editing} data={data} onChange={setData} />
           <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              Batal
-            </button>
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
+            <button className="btn ghost" onClick={() => setOpen(false)}>Batal</button>
+            <button className="btn primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </ModalFooter>

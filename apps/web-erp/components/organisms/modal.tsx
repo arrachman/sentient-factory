@@ -34,15 +34,17 @@ export const ModalContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
     hideClose?: boolean;
+    size?: 'md' | 'lg';
   }
->(({ className, children, hideClose, ...props }, ref) => (
+>(({ className, children, hideClose, size = 'md', ...props }, ref) => (
   <ModalPortal>
     <ModalOverlay>
       <DialogPrimitive.Content
         ref={ref}
         onClick={(e) => e.stopPropagation()}
         className={cn(
-          'relative mt-[12vh] flex w-[560px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-[var(--shadow-modal)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[state=open]:zoom-in-95',
+          'relative mt-[8vh] flex max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-[var(--shadow-modal)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[state=open]:zoom-in-95',
+          size === 'lg' ? 'w-[900px]' : 'w-[560px]',
           className,
         )}
         {...props}

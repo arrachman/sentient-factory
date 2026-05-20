@@ -26,12 +26,22 @@ export class ErpUsersService {
         email: dto.email ?? null,
         passwordHash: hashPassword(dto.password),
         level: dto.erpLevel,
+        language: dto.language ?? 'id',
         isActive: dto.isActive ?? true,
         homeBranchId: dto.branchId ? BigInt(dto.branchId) : null,
+        homeWarehouseId: dto.homeWarehouseId ? BigInt(dto.homeWarehouseId) : null,
+        expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         createdById: actorBigInt,
         updatedById: actorBigInt,
       },
     });
+
+    if (dto.roleIds?.length) {
+      await this.prisma.erpUserRole.createMany({
+        data: dto.roleIds.map((rid) => ({ userId: created.id, roleId: BigInt(rid) })),
+        skipDuplicates: true,
+      });
+    }
 
     return { success: true, data: created };
   }
@@ -73,6 +83,7 @@ export class ErpUsersService {
           language: true,
           isActive: true,
           homeBranchId: true,
+          homeWarehouseId: true,
           expiresAt: true,
           createdAt: true,
           updatedAt: true,
@@ -148,8 +159,13 @@ export class ErpUsersService {
     if (dto.fullName !== undefined) updateData.name = dto.fullName;
     if (dto.email !== undefined) updateData.email = dto.email;
     if (dto.erpLevel !== undefined) updateData.level = dto.erpLevel;
+    if (dto.language !== undefined) updateData.language = dto.language;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
     if (dto.branchId !== undefined) updateData.homeBranchId = BigInt(dto.branchId);
+    if (dto.homeWarehouseId !== undefined)
+      updateData.homeWarehouseId = dto.homeWarehouseId ? BigInt(dto.homeWarehouseId) : null;
+    if (dto.expiresAt !== undefined)
+      updateData.expiresAt = dto.expiresAt ? new Date(dto.expiresAt) : null;
     if (dto.password !== undefined) updateData.passwordHash = hashPassword(dto.password);
 
     const updated = await this.prisma.erpUser.update({
@@ -161,10 +177,24 @@ export class ErpUsersService {
         name: true,
         email: true,
         level: true,
+        language: true,
         isActive: true,
+        homeBranchId: true,
+        homeWarehouseId: true,
+        expiresAt: true,
         updatedAt: true,
       },
     });
+
+    if (dto.roleIds !== undefined) {
+      await this.prisma.erpUserRole.deleteMany({ where: { userId: id as bigint } });
+      if (dto.roleIds.length) {
+        await this.prisma.erpUserRole.createMany({
+          data: dto.roleIds.map((rid) => ({ userId: id as bigint, roleId: BigInt(rid) })),
+          skipDuplicates: true,
+        });
+      }
+    }
 
     return { success: true, data: updated };
   }

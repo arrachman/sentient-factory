@@ -14,13 +14,22 @@ export type ErpUserLevel =
   | 'STAFF'
   | 'READONLY';
 
+export interface ErpUserRoleRef {
+  role: { id: string; code: string; name: string };
+}
+
 export interface ErpUser {
   id: string;
   username: string;
   fullName: string;
   email?: string | null;
+  language: string;
   erpLevel: ErpUserLevel;
+  homeBranchId?: string | null;
+  homeWarehouseId?: string | null;
+  expiresAt?: string | null;
   isActive: boolean;
+  roles?: ErpUserRoleRef[];
   createdAt: string;
   updatedAt: string;
 }
@@ -31,15 +40,26 @@ export interface CreateUserPayload {
   email?: string;
   password: string;
   erpLevel: ErpUserLevel;
+  language?: string;
+  branchId?: string;
+  homeWarehouseId?: string;
+  expiresAt?: string;
   isActive?: boolean;
+  roleIds?: string[];
 }
 
 export interface UpdateUserPayload {
   username?: string;
   fullName?: string;
   email?: string;
+  password?: string;
   erpLevel?: ErpUserLevel;
+  language?: string;
+  branchId?: string;
+  homeWarehouseId?: string;
+  expiresAt?: string | null;
   isActive?: boolean;
+  roleIds?: string[];
 }
 
 // ─── API functions ────────────────────────────────────────────────────────────
@@ -48,6 +68,11 @@ export async function listUsers(
   params?: PaginationParams,
 ): Promise<PaginatedResponse<ErpUser>> {
   return apiGet<PaginatedResponse<ErpUser>>('/users', params as Record<string, string | number | boolean | undefined>);
+}
+
+export async function getUser(id: string): Promise<ErpUser> {
+  const res = await apiGet<ApiResponse<ErpUser>>(`/users/${id}`);
+  return res.data;
 }
 
 export async function createUser(
