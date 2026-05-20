@@ -176,6 +176,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/admin/settings': { group: 'Administrator', title: 'System Settings', icon: 'gear' },
   '/admin/document-numbering': { group: 'Administrator', title: 'Document Numbering', icon: 'gear' },
   '/admin/fiscal-periods': { group: 'Administrator', title: 'Fiscal Periods', icon: 'gear' },
+  '/admin/preferences': { group: 'Administrator', title: 'Preferensi', icon: 'gear' },
   '/master/branches': { group: 'Data Master', title: 'Branch', icon: 'database' },
   '/master/locations': { group: 'Data Master', title: 'Location', icon: 'database' },
   '/master/warehouses': { group: 'Data Master', title: 'Warehouse', icon: 'database' },
@@ -193,6 +194,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/keuangan/ap-payments': { group: 'Keuangan', title: 'AP Payments', icon: 'calculator' },
   '/keuangan/giros': { group: 'Keuangan', title: 'Giros', icon: 'calculator' },
   '/keuangan/ledger': { group: 'Keuangan', title: 'General Ledger', icon: 'calculator' },
+  '/settings/appearance': { group: 'Settings', title: 'Tampilan', icon: 'gear' },
 };
 
 /** Resolve a route id to its title/icon/breadcrumb — mirrors prototype `pageMeta`. */

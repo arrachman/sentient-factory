@@ -53,7 +53,11 @@ import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
  * aliases so the static NAV fallback in `lib/nav.ts` keeps working when
  * the API is unreachable.
  */
-const ERP_PAGES: Record<string, () => React.ReactNode> = {
+interface ErpPageCtx {
+  t: ReturnType<typeof makeTranslator>;
+}
+
+const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   // ── Admin (sys/adm) ───────────────────────────────────────────────────────
   '/admin/users': () => <ErpUsersPage />,
   '/admin/roles': () => <ErpRolesPage />,
@@ -62,6 +66,7 @@ const ERP_PAGES: Record<string, () => React.ReactNode> = {
   '/admin/menus': () => <ErpMenusPage />,
   '/admin/document-numbering': () => <ErpDocumentNumberingsPage />,
   '/admin/fiscal-periods': () => <ErpFiscalPeriodsPage />,
+  '/admin/preferences': (ctx) => <SettingsPage t={ctx.t} />,
   // ── Master Data (md) ──────────────────────────────────────────────────────
   '/master/branches': () => <ErpBranchesPage />,
   '/master/items': () => <ErpItemsPage />,
@@ -75,6 +80,8 @@ const ERP_PAGES: Record<string, () => React.ReactNode> = {
   '/master/currencies': () => <ErpCurrenciesPage />,
   '/master/taxes': () => <ErpTaxesPage />,
   '/master/payment-terms': () => <ErpPaymentTermsPage />,
+  // ── User Settings (personal preferences) ─────────────────────────────────
+  '/settings/appearance': (ctx) => <AppearancePage t={ctx.t} />,
   // ── Finance (fin, m2) ─────────────────────────────────────────────────────
   '/keuangan/journal-entries': () => <ErpJournalEntriesPage />,
   '/keuangan/ar-receipts': () => <ErpArReceiptsPage />,
@@ -122,7 +129,7 @@ export function renderRoute(
 
   // ── ERP pages (seeded sys_menus path = canonical id; short-id aliases) ─────
   const erpPage = ERP_PAGES[route];
-  if (erpPage) return erpPage();
+  if (erpPage) return erpPage({ t });
 
   const baseRoute = resolveNewRoute(route);
   if (baseRoute) {
