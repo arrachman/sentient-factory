@@ -63,6 +63,8 @@ async function request<T>(options: RequestOptions): Promise<T> {
   const response = await fetch(url, init);
 
   if (!response.ok) {
+    const fallbackMessage =
+      response.statusText || `Request gagal (HTTP ${response.status})`;
     let apiError: ApiError;
 
     try {
@@ -70,14 +72,18 @@ async function request<T>(options: RequestOptions): Promise<T> {
         error?: ApiError;
         message?: string;
       };
-      apiError = payload.error ?? {
+      const fromPayload = payload.error ?? {
         code: `HTTP_${response.status}`,
-        message: payload.message ?? response.statusText,
+        message: payload.message ?? fallbackMessage,
+      };
+      apiError = {
+        ...fromPayload,
+        message: fromPayload.message || fallbackMessage,
       };
     } catch {
       apiError = {
         code: `HTTP_${response.status}`,
-        message: response.statusText,
+        message: fallbackMessage,
       };
     }
 

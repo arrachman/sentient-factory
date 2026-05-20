@@ -179,6 +179,19 @@ ERP baru: tambahkan entry di `ERP_PAGES` (key = path seeded di
 `prisma/seed-erp.ts`) + `ERP_ROUTE_META` (`lib/nav.ts`) untuk breadcrumb.
 Jangan bikin skema id baru — `sys_menus` adalah SSOT navigasi.
 
+### 2.5 ERP controllers WAJIB pakai `ErpJwtAuthGuard` (2026-05-20)
+
+Semua controller di `apps/api-gateway/src/erp-*/**` **harus** guard dengan
+`ErpJwtAuthGuard` dari `../erp-auth/guards/erp-jwt-auth.guard`, **bukan**
+`JwtAuthGuard` clinic dari `../auth/guards/jwt-auth.guard`. Cookie
+`erp_token` ditandatangani oleh ErpAuthService dan hanya dikenali strategy
+`erp-jwt`. Salah guard → semua endpoint ERP 401 padahal `/erp/auth/me` &
+`/erp/sys-menus/my-menus` jalan. Sudah dibetulkan untuk 18 controller
+(branches, warehouses, locations, items, units, item-categories, users,
+roles, permissions, settings, currencies, taxes, payment-terms,
+partner-categories, partners, fiscal-periods, document-numberings,
+accounts).
+
 ### 2.4 Command palette = derived dari role-filtered nav (2026-05-20)
 
 `CommandPalette` (`components/organisms/command-palette.tsx`) **tidak boleh**
@@ -189,6 +202,21 @@ yang user berhak akses (sesuai `adm_role_menus`). Group palette mengikuti
 struktur nav (MODULE → ITEM, atau MODULE → GROUP → ITEM jadi "Module ·
 Group"). Hanya group "Aksi" (toggle theme/lang) yang statis. Saat menambah
 modul baru: cukup seed di `sys_menus` + `adm_role_menus`, palette ikut.
+
+### 2.6 Pilihan biner = radio button, bukan Select (2026-05-20)
+
+Saat field form hanya punya **2 opsi** (mis. Aktif/Nonaktif, Ya/Tidak, Pria/
+Wanita, Debit/Kredit) → **WAJIB** pakai radio button (atau segmented control),
+**bukan** `Select`/dropdown. Alasan: dropdown untuk 2 opsi = 2 klik untuk
+melihat & 2 klik untuk pilih, padahal radio = 1 klik dan kedua opsi terlihat
+langsung tanpa harus dibuka. Juga lebih aksesibel (tab langsung, tanpa popover).
+
+Berlaku untuk semua form ERP (filter list, dialog create/edit, settings).
+`Select` tetap dipakai untuk ≥ 3 opsi atau saat opsi-nya dinamis dari API.
+Saat vibe coding sebuah halaman: **baca dulu role/konteks field**, hitung
+jumlah opsi, pilih kontrol yang sesuai sebelum nulis JSX.
+
+---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
 

@@ -14,10 +14,11 @@ export type NotifyType = 'success' | 'info' | 'danger' | 'warn';
 
 /** Mirrors prototype `window.toast(msg, { type })`. */
 export function notify(msg: string, type: NotifyType = 'info'): void {
-  if (type === 'success') return void toast.success(msg);
-  if (type === 'danger') return void toast.error(msg);
-  if (type === 'warn') return void toast.warning(msg);
-  toast(msg);
+  const text = (msg ?? '').trim() || 'Terjadi kesalahan tanpa pesan';
+  if (type === 'success') return void toast.success(text);
+  if (type === 'danger') return void toast.error(text);
+  if (type === 'warn') return void toast.warning(text);
+  toast(text);
 }
 
 // ---------------------------------------------------------------------------
