@@ -9,6 +9,11 @@ import { Icon } from '@/components/ui/icons';
 import { type Translator } from '@/lib/mock';
 import { notify } from '@/lib/feedback';
 import {
+  getMyPreferences,
+  updateMyPreferences,
+  ErpApiError,
+} from '@/lib/api';
+import {
   DEFAULTS,
   FONT_PX,
   LivePreviewCard,
@@ -33,9 +38,20 @@ interface AppearancePageProps {
 export function AppearancePage({ t }: AppearancePageProps) {
   const { theme, setTheme } = useTheme();
   const [tw, setTw] = React.useState<Tweaks>(DEFAULTS);
+  const hydratedRef = React.useRef(false);
+  const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync local state from the DOM / localStorage after mount (avoids SSR
-  // hydration mismatch — render with prototype defaults, then reconcile).
+  // Apply tweaks to DOM data-attributes (without touching state).
+  const applyToDom = React.useCallback((next: Tweaks) => {
+    const el = document.documentElement;
+    el.setAttribute('data-primary', next.primary);
+    el.setAttribute('data-density', next.density);
+    el.setAttribute('data-fontscale', next.fontScale);
+    el.setAttribute('data-sidebar', next.sidebar);
+  }, []);
+
+  // Sync local state from the DOM / localStorage / API after mount.
+  // Order: API (server SSOT) > localStorage > DOM attr > DEFAULTS.
   React.useEffect(() => {
     const el = document.documentElement;
     let stored: Partial<Tweaks> = {};
@@ -45,7 +61,7 @@ export function AppearancePage({ t }: AppearancePageProps) {
     } catch {
       stored = {};
     }
-    setTw({
+    const baseline: Tweaks = {
       primary:
         stored.primary ?? el.getAttribute('data-primary') ?? DEFAULTS.primary,
       density:
@@ -61,7 +77,37 @@ export function AppearancePage({ t }: AppearancePageProps) {
         (el.getAttribute('data-sidebar') as SidebarMode) ??
         DEFAULTS.sidebar,
       lang: (stored.lang as Lang) ?? DEFAULTS.lang,
-    });
+    };
+    setTw(baseline);
+
+    // Server SSOT — overrides local if available.
+    let cancelled = false;
+    getMyPreferences()
+      .then((prefs) => {
+        if (cancelled || !prefs) {
+          hydratedRef.current = true;
+          return;
+        }
+        const meta = (prefs.metadata ?? {}) as Partial<Tweaks>;
+        const merged: Tweaks = {
+          primary: meta.primary ?? baseline.primary,
+          density: (meta.density as Density) ?? baseline.density,
+          fontScale: (meta.fontScale as FontScale) ?? baseline.fontScale,
+          sidebar: (meta.sidebar as SidebarMode) ?? baseline.sidebar,
+          lang: (prefs.language as Lang) ?? baseline.lang,
+        };
+        setTw(merged);
+        applyToDom(merged);
+        if (prefs.theme) setTheme(prefs.theme);
+        hydratedRef.current = true;
+      })
+      .catch(() => {
+        hydratedRef.current = true;
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applyTweak = React.useCallback(
@@ -83,6 +129,35 @@ export function AppearancePage({ t }: AppearancePageProps) {
     },
     [],
   );
+
+  // Auto-save (debounced) — kirim PUT ke server setiap kali tw/theme berubah
+  // setelah hidrasi awal selesai. localStorage + DOM sudah di-update sinkron
+  // di applyTweak/setTheme; server SSOT menyusul lewat debounce.
+  React.useEffect(() => {
+    if (!hydratedRef.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      updateMyPreferences({
+        theme: theme ?? 'light',
+        language: tw.lang,
+        metadata: {
+          primary: tw.primary,
+          density: tw.density,
+          fontScale: tw.fontScale,
+          sidebar: tw.sidebar,
+        },
+      }).catch((err) => {
+        const msg =
+          err instanceof ErpApiError
+            ? err.message
+            : 'Gagal menyimpan preferensi tampilan';
+        notify(msg, 'danger');
+      });
+    }, 500);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [theme, tw]);
 
   const resetAll = React.useCallback(() => {
     setTheme('light');
@@ -111,12 +186,6 @@ export function AppearancePage({ t }: AppearancePageProps) {
         <div className="page-actions">
           <button className="btn ghost" onClick={resetAll}>
             <Icon name="refresh" size={12} /> {t('Reset')}
-          </button>
-          <button
-            className="btn primary"
-            onClick={() => notify('Preferensi tampilan disimpan', 'success')}
-          >
-            <Icon name="save" size={12} /> {t('Simpan')}
           </button>
         </div>
       </div>

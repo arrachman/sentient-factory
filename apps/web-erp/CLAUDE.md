@@ -502,9 +502,12 @@ Pemetaan field:
 `getMyPreferences()` / `updateMyPreferences()` di `lib/api/user-preferences.ts`.
 
 **Load order saat mount AppearancePage**: API (server SSOT) > localStorage
-(`erp-appearance` key) > DOM data-attr > `DEFAULTS`. Tombol Simpan → PUT API +
-notify; DOM data-attr di-apply langsung saat user ubah kontrol (live preview),
-localStorage = cadangan offline.
+(`erp-appearance` key) > DOM data-attr > `DEFAULTS`. **Auto-save**: setiap
+perubahan kontrol langsung apply ke DOM data-attr (live preview) + tulis ke
+localStorage; PUT ke API otomatis ter-debounce 500ms (tanpa tombol Simpan).
+Hanya error API yang dinotifikasi (toast `danger`); sukses silent supaya tidak
+spam saat user geser kontrol berurutan. Tombol Reset tetap ada untuk
+mengembalikan ke `DEFAULTS`.
 
 ### 2.11 Inline row actions = semua di kebab menu (WAJIB, 2026-05-20)
 
