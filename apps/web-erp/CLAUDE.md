@@ -377,6 +377,29 @@ tabel** (hanya di label header atau tooltip bila perlu). Implementasi sekali di
 helper `lib/format.ts`, dipakai oleh semua halaman — tidak boleh inline per
 halaman.
 
+#### Tinggi baris/tabel = density token (WAJIB, 2026-05-20)
+
+Tabel list **wajib** mengikuti knob `density` di Setting → Tampilan
+(`compact` / `comfortable`). Implementasi sudah ada di
+[`components/organisms/table.tsx`](components/organisms/table.tsx):
+
+- `TableHead` pakai `h-[var(--header-h)]` → 28px compact / 34px comfortable.
+- `TableCell` pakai `h-[var(--row-h)]` → 28px compact / 36px comfortable.
+- Token didefinisikan di [`styles/erp-tokens.css`](styles/erp-tokens.css)
+  pada selector `[data-density='compact']` / `[data-density='comfortable']`
+  (data-attribute di-set di `<html>`).
+
+App-shell (`components/templates/app-shell.tsx`) hydrate `data-density`
+(juga `data-fontscale`/`data-sidebar`/`data-primary`) saat mount: pertama
+dari localStorage `erp-appearance`, lalu di-override server SSOT lewat
+`getMyPreferences()` (metadata Json). **DILARANG** hardcode `data-density`
+ke literal di mount effect — dulu force-set `compact` membuat preferensi
+user tidak persist saat reload. Pengubahan density di AppearancePage
+otomatis apply ke semua tabel tanpa remount karena listener CSS variable.
+
+Saat membuat halaman list baru: cukup pakai organism `Table*` dari
+`components/organisms/table.tsx` — density mengikuti otomatis.
+
 #### Approval status — token color mapping (WAJIB, jangan hardcode)
 
 | Status value | Badge variant | Label tampil |
@@ -525,6 +548,25 @@ Pemetaan field:
 (`apps/api-gateway/src/erp-user-preferences/**`) — `GET /erp/user-preferences/me`
 + `PUT /erp/user-preferences/me` (guard `ErpJwtAuthGuard`). FE pakai client
 `getMyPreferences()` / `updateMyPreferences()` di `lib/api/user-preferences.ts`.
+
+**Font scale → global (2026-05-20).** Knob "Ukuran Font" (`sm/base/lg/xl`)
+men-drive CSS variable `--font-scale` (0.9/1/1.12/1.25) di `html[data-fontscale]`
+(lihat [`styles/erp-tokens.css`](styles/erp-tokens.css)). Rules di
+[`styles/erp-components.css`](styles/erp-components.css) (`body`, `input/select/
+textarea/button`, `.tbl`, `.btn`, `.muted/.sub/.hint`, `.mono`) memakai
+`calc(<base>px * var(--font-scale))` supaya knob menjangkau form controls &
+tabel (yang biasa break font inheritance). **Shell juga ikut terskala
+(2026-05-20):** selector `.topbar .brand`, `.breadcrumb`, `.cmd-trigger`,
+`.kbd`, `.avatar`, `.flyout/.flyout-item`, `.tab-chip/.tab-code/.tab-count/
+.tab-ctx-item`, `.user-menu-hd/.user-menu-item/.user-menu-item .mk`,
+`.sidebar .nav-label` semua pakai `calc(NNpx * var(--font-scale, 1))` di
+[`styles/erp-components.css`](styles/erp-components.css). **Inline px sudah diaudit:** 32
+file komponen yang dulu hardcode `style={{ fontSize: NN }}` sudah di-refactor
+jadi `fontSize: 'calc(NNpx * var(--font-scale, 1))'` (80 occurrence) supaya
+ikut terskala. **Aturan baku:** saat menulis inline `fontSize`, **wajib**
+pakai pola `calc(NNpx * var(--font-scale, 1))` — jangan re-introduce literal
+numeric. Pengecualian sah: `FONT_PX[fontScale]` di `appearance-parts.tsx`
+(intentional bucket preview).
 
 **Load order saat mount AppearancePage**: API (server SSOT) > localStorage
 (`erp-appearance` key) > DOM data-attr > `DEFAULTS`. **Auto-save**: setiap
@@ -777,6 +819,56 @@ katalog field-level dulu di `db-design/`, lalu seed.
 dengan short-id legacy (`master-data`, `administrator`, `md-items`, ...)
 yang menabrak/duplicate setiap `npm run db:seed`. **Blok itu dihapus
 2026-05-20.** Jangan pernah re-introduce ERP menu seeding di `seed.ts`.
+
+### 2.18 MD legacy batch (2026-05-20) — 20 master baru dari MyERP+ m1_*
+
+Wave besar menambah 20 entitas master legacy yang belum di-implement.
+Branch `feat/erp-md-legacy-batch`, 3 commit.
+
+**Tercakup:** Brand, Material, ItemModel, Size, Section, ItemKind
+(table `md_item_types`), ProductClass, ItemLocation, Commission (+amount),
+Bank, Expedition, PartnerSubCategory (enum CUSTOMER/SUPPLIER/SALESMAN),
+OtherCost, Country, Province (FK Country), City (FK Province), Area
+(FK City), ItemTransactionType (+direction), TransactionNote, PriceCategory.
+
+**Keputusan terkunci batch ini:**
+
+1. **`ErpItemKind` ≠ `ErpItemType`.** Enum `ErpItemType` (hardcoded
+   `INVENTORY/SERVICE/VOUCHER/ASSEMBLY` di kolom `ErpItem.type`) sudah ada
+   sejak m1 init dan tidak boleh bentrok. Master user-configurable dari
+   legacy `m1_item_type` → model **`ErpItemKind`** dengan
+   `@@map("md_item_types")`. Saat menambah master baru: cek dulu apakah
+   nama model bentrok dengan enum/model existing.
+2. **Partner sub-category = 1 tabel + enum (`ErpPartnerSubCategoryType`).**
+   3 menu sidebar (Customer/Supplier/Salesman Categories) share 1 page +
+   1 table + 1 endpoint. Path `/master/{customer,supplier,salesman}-categories`
+   semua resolve ke `ErpPartnerSubCategoriesPage` di `ERP_PAGES`. Filter
+   type via query string ditambahkan saat dibutuhkan (saat ini belum).
+3. **Reference Country→Province→City→Area = FK ditegakkan (intra-domain `md`).**
+   Indonesia di-seed di `prisma/seed-md-legacy.ts` (idempotent upsert via
+   `code`): 6 Country, 34 Province ID, 8 City utama, 6 Bank, 5 Expedition.
+4. **ItemPermission ditunda.** Bukan master "code+name+isActive" — pivot
+   `itemId × roleId × {canView,canSell,canBuy}`. `SimpleMasterPage` tidak
+   cocok; perlu page custom. Tabel sudah ada (`md_item_permissions`) tapi
+   modul API/FE belum.
+5. **PriceCategoryDetail & TransactionNoteDetail = child-managed.** Tabel
+   ada (cascade delete dari parent), tapi diakses lewat parent form bukan
+   menu sidebar. Menu "Txn Note Detail" di sidebar untuk sekarang fallback
+   ke ComingSoon.
+
+**Generator script:** `apps/api-gateway/scripts/scaffold-md-batch.mjs` —
+one-shot scaffolder. Pattern di-mirror dari `erp-divisions`. Pluralization
+manual (Class→Classes, City→Cities, Country→Countries, Category→Categories;
+generator default plural = `+ 's'` di-override via sed post-process). Re-run
+aman: skip file yang sudah ada. **Untuk master sederhana berikutnya
+(code+name+isActive ± extra fields), tambah entry di array `ENTITIES`
+lalu re-run** — jangan tulis ulang DTO/service per tangan.
+
+**Migration:** `20260520_002_erp_md_legacy_batch` — additive, applied via
+`prisma db execute` lalu `prisma migrate resolve --applied` karena shadow
+DB drift di migrasi clinic lama. 23 tabel + 1 enum
+(`ErpPartnerSubCategoryType`), 0 DROP. Saat shadow DB rusak, route ini
+(execute + resolve) lebih aman daripada `migrate dev`.
 
 ---
 
