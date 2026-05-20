@@ -11,7 +11,7 @@ import { Icon } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
 import { DrawerPanel } from '@/components/molecules/drawer-panel';
 import { usePanelToggle } from '@/lib/drawer-toggle';
-import { ACTIVITY, fmtIDR, type ActivityRow, type ActivityType } from '@/lib/mock';
+import { ACTIVITY, fmtIDR, tGlobal, type ActivityRow, type ActivityType } from '@/lib/mock';
 
 type ActivityFilter = 'all' | ActivityType;
 
@@ -31,12 +31,12 @@ const SELECT_STYLE: React.CSSProperties = {
   borderRadius: 6,
   color: 'var(--fg)',
   font: 'inherit',
-  fontSize: 11.5,
+  fontSize: 'calc(11.5px * var(--font-scale, 1))',
 };
 
 const TARGET_STYLE: React.CSSProperties = {
   fontFamily: 'Geist Mono, monospace',
-  fontSize: 11,
+  fontSize: 'calc(11px * var(--font-scale, 1))',
 };
 
 function amountStyle(amount: number): React.CSSProperties {
@@ -86,9 +86,9 @@ export function ActivityDrawer(_props: ActivityDrawerProps): React.ReactElement 
     <DrawerPanel
       open={open}
       onClose={close}
-      title="Aktivitas"
+      title={tGlobal('Aktivitas')}
       icon="activity"
-      sub={`${ACTIVITY.length} kejadian hari ini`}
+      sub={`${ACTIVITY.length} ${tGlobal('kejadian hari ini')}`}
       head={
         <select
           value={filter}
@@ -97,7 +97,7 @@ export function ActivityDrawer(_props: ActivityDrawerProps): React.ReactElement 
         >
           {FILTER_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
-              {opt.label}
+              {tGlobal(opt.label)}
             </option>
           ))}
         </select>
@@ -113,7 +113,7 @@ export function ActivityDrawer(_props: ActivityDrawerProps): React.ReactElement 
             <div className="cm-empty" style={{ padding: 48 }}>
               <Icon name="activity" size={26} />
               <div className="muted" style={{ marginTop: 8 }}>
-                Tidak ada aktivitas
+                {tGlobal('Tidak ada aktivitas')}
               </div>
             </div>
           )}
@@ -121,7 +121,7 @@ export function ActivityDrawer(_props: ActivityDrawerProps): React.ReactElement 
       </div>
       <div className="drawer-ft">
         <button className="btn ghost" onClick={close}>
-          Tutup <Kbd>ESC</Kbd>
+          {tGlobal('Tutup')} <Kbd>ESC</Kbd>
         </button>
       </div>
     </DrawerPanel>

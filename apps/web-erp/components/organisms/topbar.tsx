@@ -47,7 +47,7 @@ function UserMenu({ user, onNavigate, onLogout, t }: UserMenuProps) {
       style={{ cursor: 'pointer' }}
     >
       <span className="avatar">{user.initials}</span>
-      <span style={{ fontSize: 12 }}>{user.user}</span>
+      <span style={{ fontSize: 'calc(12px * var(--font-scale, 1))' }}>{user.user}</span>
       <Icon name="chevdown" size={12} />
       {open && (
         <div className="user-menu fade-in" onClick={(e) => e.stopPropagation()}>
@@ -170,7 +170,7 @@ export function Topbar({
       <button
         className="cmd-trigger"
         onClick={onOpenPalette}
-        title="Command palette"
+        title={t('Command palette')}
       >
         <Icon name="search" size={13} />
         <span>{t('Cari semua...')}</span>

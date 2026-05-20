@@ -13,6 +13,7 @@ import { Kbd } from '@/components/ui/kbd';
 import { DrawerPanel } from '@/components/molecules/drawer-panel';
 import { usePanelToggle } from '@/lib/drawer-toggle';
 import { notify } from '@/lib/feedback';
+import { tGlobal } from '@/lib/mock';
 
 export type NotificationType = 'success' | 'info' | 'danger' | 'warn';
 
@@ -99,7 +100,7 @@ export interface NotificationDrawerProps {
 }
 
 const TITLE_STYLE = (read: boolean): React.CSSProperties => ({
-  fontSize: 12.5,
+  fontSize: 'calc(12.5px * var(--font-scale, 1))',
   fontWeight: read ? 400 : 600,
   display: 'flex',
   alignItems: 'center',
@@ -107,7 +108,7 @@ const TITLE_STYLE = (read: boolean): React.CSSProperties => ({
 });
 
 const TS_STYLE: React.CSSProperties = {
-  fontSize: 10.5,
+  fontSize: 'calc(10.5px * var(--font-scale, 1))',
   color: 'var(--fg-faint)',
   marginTop: 3,
   fontFamily: 'Geist Mono, monospace',
@@ -140,7 +141,7 @@ function NotifRow({
           {item.title}
           {!item.read && <span style={UNREAD_DOT_STYLE} />}
         </div>
-        <div className="muted" style={{ fontSize: 11.5, marginTop: 2 }}>
+        <div className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', marginTop: 2 }}>
           {item.body}
         </div>
         <div style={TS_STYLE}>{item.ts}</div>
@@ -190,16 +191,16 @@ export function NotificationDrawer({
     <DrawerPanel
       open={open}
       onClose={close}
-      title="Notifikasi"
+      title={tGlobal('Notifikasi')}
       icon="bell"
-      sub={`${unread} belum dibaca`}
+      sub={`${unread} ${tGlobal('belum dibaca')}`}
       head={
         <button
           className="btn ghost sm"
           onClick={markAll}
           disabled={unread === 0}
         >
-          <Icon name="check" size={11} /> Tandai semua
+          <Icon name="check" size={11} /> {tGlobal('Tandai semua')}
         </button>
       }
     >
@@ -208,13 +209,13 @@ export function NotificationDrawer({
           className={`tab ${tab === 'all' ? 'active' : ''}`}
           onClick={() => setTab('all')}
         >
-          Semua <span className="muted">{items.length}</span>
+          {tGlobal('Semua')} <span className="muted">{items.length}</span>
         </button>
         <button
           className={`tab ${tab === 'unread' ? 'active' : ''}`}
           onClick={() => setTab('unread')}
         >
-          Belum dibaca <span className="muted">{unread}</span>
+          {tGlobal('Belum dibaca')} <span className="muted">{unread}</span>
         </button>
       </div>
       <div className="drawer-bd scrollbar" style={{ padding: 0, gap: 0 }}>
@@ -222,7 +223,7 @@ export function NotificationDrawer({
           <div className="cm-empty" style={{ padding: 48 }}>
             <Icon name="bell" size={26} />
             <div className="muted" style={{ marginTop: 8 }}>
-              Tidak ada notifikasi
+              {tGlobal('Tidak ada notifikasi')}
             </div>
           </div>
         )}
@@ -232,7 +233,7 @@ export function NotificationDrawer({
       </div>
       <div className="drawer-ft">
         <button className="btn ghost" onClick={close}>
-          Tutup <Kbd>ESC</Kbd>
+          {tGlobal('Tutup')} <Kbd>ESC</Kbd>
         </button>
         <button
           className="btn"
@@ -241,7 +242,7 @@ export function NotificationDrawer({
             setOpen(false);
           }}
         >
-          Buka Dashboard
+          {tGlobal('Buka Dashboard')}
         </button>
       </div>
     </DrawerPanel>

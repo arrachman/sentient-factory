@@ -4,6 +4,7 @@ import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icons';
+import { tGlobal } from '@/lib/mock';
 
 /**
  * Accessible modal built on @radix-ui/react-dialog. Mirrors prototype
@@ -54,7 +55,7 @@ export const ModalContent = React.forwardRef<
         {!hideClose && (
           <DialogPrimitive.Close className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors hover:bg-[var(--panel-hover)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40">
             <Icon name="x" />
-            <span className="sr-only">Tutup</span>
+            <span className="sr-only">{tGlobal('Tutup')}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

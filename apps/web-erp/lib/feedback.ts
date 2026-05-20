@@ -9,6 +9,7 @@
  */
 import { toast } from 'sonner';
 import type { IconName } from '@/components/ui/icons';
+import { tGlobal } from './mock';
 
 export type NotifyType = 'success' | 'info' | 'danger' | 'warn';
 
@@ -136,19 +137,19 @@ export function bulkAction(
   const b = BULK[kind] ?? BULK.export;
   const tail =
     kind === 'delete'
-      ? 'Tindakan ini tidak dapat dibatalkan.'
-      : 'Aksi tercatat di audit trail.';
+      ? tGlobal('Tindakan ini tidak dapat dibatalkan.')
+      : tGlobal('Aksi tercatat di audit trail.');
   confirmAction({
-    title: b.title,
-    message: `${count} dokumen akan ${b.verb}. ${tail}`,
+    title: tGlobal(b.title),
+    message: `${count} ${tGlobal('dokumen akan')} ${tGlobal(b.verb)}. ${tail}`,
     items: items?.slice(0, 8),
     variant: b.variant,
     icon: b.icon,
-    confirmLabel: b.confirmLabel,
+    confirmLabel: tGlobal(b.confirmLabel),
     confirmIcon: b.confirmIcon,
     onConfirm: () => {
       clearSel();
-      notify(`${count} dokumen ${b.verb}`, b.type);
+      notify(`${count} ${tGlobal('dokumen')} ${tGlobal(b.verb)}`, b.type);
     },
   });
 }

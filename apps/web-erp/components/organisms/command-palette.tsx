@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
 import type { NavGroup, NavItem, NavLeaf } from '@/lib/nav';
+import { tGlobal } from '@/lib/mock';
 
 interface PaletteItem {
   id: string;
@@ -172,7 +173,7 @@ export function CommandPalette({
           <Icon name="search" size={15} />
           <input
             ref={inputRef}
-            placeholder="Ketik perintah atau cari..."
+            placeholder={tGlobal('Ketik perintah atau cari...')}
             value={q}
             onChange={(e) => {
               setQ(e.target.value);
@@ -187,16 +188,16 @@ export function CommandPalette({
               style={{
                 padding: '24px 12px',
                 color: 'var(--fg-muted)',
-                fontSize: 12.5,
+                fontSize: 'calc(12.5px * var(--font-scale, 1))',
                 textAlign: 'center',
               }}
             >
-              Tidak ada hasil
+              {tGlobal('Tidak ada hasil')}
             </div>
           )}
           {groupedFiltered.map((g) => (
             <div key={g.group}>
-              <div className="cp-group">{g.group}</div>
+              <div className="cp-group">{tGlobal(g.group)}</div>
               {g.items.map((it) => {
                 idx += 1;
                 const isActive = idx === active;
@@ -214,8 +215,8 @@ export function CommandPalette({
                     <span className="icon">
                       <Icon name={it.icon} size={14} />
                     </span>
-                    <span className="label">{it.label}</span>
-                    {it.hint && <span className="hint">{it.hint}</span>}
+                    <span className="label">{tGlobal(it.label)}</span>
+                    {it.hint && <span className="hint">{tGlobal(it.hint)}</span>}
                   </div>
                 );
               })}
@@ -225,13 +226,13 @@ export function CommandPalette({
         <div className="cp-foot">
           <span>
             <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd> navigasi
+            <Kbd>↓</Kbd> {tGlobal('navigasi')}
           </span>
           <span>
-            <Kbd>↵</Kbd> pilih
+            <Kbd>↵</Kbd> {tGlobal('pilih')}
           </span>
           <span>
-            <Kbd>ESC</Kbd> tutup
+            <Kbd>ESC</Kbd> {tGlobal('tutup')}
           </span>
           <span style={{ marginLeft: 'auto' }}>Sentient ERP</span>
         </div>

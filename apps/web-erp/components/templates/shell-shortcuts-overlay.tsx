@@ -4,6 +4,7 @@
  */
 
 import * as React from 'react';
+import { tGlobal } from '@/lib/mock';
 
 interface ShortcutsOverlayProps {
   onClose: () => void;
@@ -22,26 +23,26 @@ export function ShortcutsOverlay({ onClose }: ShortcutsOverlayProps) {
   return (
     <div className="sc-overlay" onClick={onClose}>
       <div className="sc-card" onClick={(e) => e.stopPropagation()}>
-        <h3>Keyboard Shortcuts</h3>
+        <h3>{tGlobal('Keyboard Shortcuts')}</h3>
         <div className="sc-grid">
-          <div>Buka command palette</div>
+          <div>{tGlobal('Buka command palette')}</div>
           <div>⌘ K</div>
-          <div>Tutup tab aktif</div>
+          <div>{tGlobal('Tutup tab aktif')}</div>
           <div>⌥ W</div>
-          <div>Pindah ke tab 1–8</div>
+          <div>{tGlobal('Pindah ke tab 1–8')}</div>
           <div>⌘ 1–8</div>
-          <div>Pindah ke tab terakhir</div>
+          <div>{tGlobal('Pindah ke tab terakhir')}</div>
           <div>⌘ 9</div>
-          <div>Toggle bahasa ID/EN</div>
+          <div>{tGlobal('Cycle bahasa ID/EN/JA')}</div>
           <div>L</div>
-          <div>Tampilkan shortcut</div>
+          <div>{tGlobal('Tampilkan shortcut')}</div>
           <div>?</div>
-          <div>Tutup overlay</div>
+          <div>{tGlobal('Tutup overlay')}</div>
           <div>ESC</div>
         </div>
         <div style={{ marginTop: 16, textAlign: 'right' }}>
           <button className="btn" onClick={onClose}>
-            Tutup ESC
+            {tGlobal('Tutup')} ESC
           </button>
         </div>
       </div>

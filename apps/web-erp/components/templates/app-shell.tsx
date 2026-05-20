@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { makeTranslator } from '@/lib/mock';
+import { makeTranslator, setCurrentLang } from '@/lib/mock';
 import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
 import { NAV, type NavItem } from '@/lib/nav';
@@ -161,6 +161,12 @@ export function AppShell({ workspaceId }: AppShellProps) {
 
   const t = React.useMemo(() => makeTranslator(lang), [lang]);
 
+  // Mirror the current language into the module-level registry so non-React
+  // helpers (confirm dialog, toast bulk-action) can translate without props.
+  React.useEffect(() => {
+    setCurrentLang(lang);
+  }, [lang]);
+
   const activeTab = tabs.find((tb) => tb.id === activeId) ?? tabs[0];
   const activeRoute = activeTab ? activeTab.route : 'home';
 
@@ -176,19 +182,19 @@ export function AppShell({ workspaceId }: AppShellProps) {
     (id: string) => {
       // Snapshot the label via functional setState so we don't take a
       // dependency on the changing `tabs` array.
-      let label = 'tab ini';
+      let label = t('tab ini');
       setTabs((prev) => {
         const tab = prev.find((tb) => tb.id === id);
         if (tab) label = pageMeta(tab.route, t).title;
         return prev;
       });
       confirmAction({
-        title: 'Tutup tab?',
-        message: `"${label}" akan ditutup.`,
+        title: t('Tutup tab?'),
+        message: t('"{label}" akan ditutup.').replace('{label}', label),
         variant: 'warn',
-        confirmLabel: 'Tutup',
+        confirmLabel: t('Tutup'),
         confirmIcon: 'x',
-        cancelLabel: 'Batal',
+        cancelLabel: t('Batal'),
         onConfirm: () => closeTab(id),
       });
     },

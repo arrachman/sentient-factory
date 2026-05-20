@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
+import { tGlobal } from '@/lib/mock';
 import type {
   ConfirmItem,
   ConfirmOptions,
@@ -103,8 +104,8 @@ export function ConfirmDialogHost(): React.ReactElement | null {
             <Icon name={icon} size={16} />
           </span>
           <div style={{ flex: 1 }}>
-            <div className="confirm-title">{cfg.title ?? 'Konfirmasi'}</div>
-            {cfg.message && <div className="confirm-msg">{cfg.message}</div>}
+            <div className="confirm-title">{tGlobal(cfg.title ?? 'Konfirmasi')}</div>
+            {cfg.message && <div className="confirm-msg">{tGlobal(cfg.message)}</div>}
           </div>
         </div>
         {cfg.items && cfg.items.length > 0 && (
@@ -125,7 +126,7 @@ export function ConfirmDialogHost(): React.ReactElement | null {
         )}
         <div className="confirm-ft">
           <button type="button" className="btn ghost" onClick={close}>
-            {cfg.cancelLabel ?? 'Batal'} <Kbd>ESC</Kbd>
+            {tGlobal(cfg.cancelLabel ?? 'Batal')} <Kbd>ESC</Kbd>
           </button>
           <button
             type="button"
@@ -134,7 +135,7 @@ export function ConfirmDialogHost(): React.ReactElement | null {
             onClick={doConfirm}
           >
             {cfg.confirmIcon && <Icon name={cfg.confirmIcon} size={12} />}{' '}
-            {cfg.confirmLabel ?? 'Konfirmasi'} <Kbd>↵</Kbd>
+            {tGlobal(cfg.confirmLabel ?? 'Konfirmasi')} <Kbd>↵</Kbd>
           </button>
         </div>
       </div>
