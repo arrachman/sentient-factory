@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
 import { NAV, type NavItem } from '@/lib/nav';
 import { fetchMyMenus } from '@/lib/api/menus';
-import { TabBar, type ShellTab } from '@/components/organisms/tab-bar';
+import { TabBar } from '@/components/organisms/tab-bar';
 import { CommandPalette } from '@/components/organisms/command-palette';
 import { ConfirmDialogHost } from '@/components/organisms/confirm-dialog';
 import { NotificationDrawer } from '@/components/organisms/notification-drawer';
@@ -15,10 +15,11 @@ import { LoginPage } from '@/components/pages/login';
 import { TabActiveContext } from '@/lib/tab-context';
 import { pageMeta, type Crumb } from '@/lib/nav';
 import { confirmAction } from '@/lib/feedback';
-import { MAX_TABS, USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
+import { USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
 import { renderRoute } from '@/components/templates/shell-route-renderer';
 import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
 import { logout as apiLogout, getMe } from '@/lib/api/auth';
+import { useAppShellTabs } from '@/lib/use-app-shell-tabs';
 import {
   getOrCreateWorkspace,
   saveWorkspace,
@@ -31,8 +32,6 @@ interface AppShellProps {
 }
 
 export function AppShell({ workspaceId }: AppShellProps) {
-  const tabSeq = React.useRef(0);
-  const nextTabId = React.useCallback(() => `t${(tabSeq.current += 1)}`, []);
   /** True once the workspace state has been loaded from localStorage. */
   const workspaceReady = React.useRef(false);
 
@@ -40,6 +39,25 @@ export function AppShell({ workspaceId }: AppShellProps) {
   const [hydrated, setHydrated] = React.useState(false);
   const [nav, setNav] = React.useState<NavItem[]>(NAV);
   const [workspaceName, setWorkspaceName] = React.useState('');
+  const [lang, setLang] = React.useState<Lang>('id');
+  const [paletteOpen, setPaletteOpen] = React.useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+
+  const {
+    tabs,
+    activeId,
+    setTabs,
+    setActiveId,
+    nextTabId,
+    syncTabSeq,
+    openTab,
+    duplicateTab,
+    navigateInTab,
+    closeTab,
+    reloadTab,
+    closeOtherTabs,
+    closeTabsToRight,
+  } = useAppShellTabs();
 
   const loadNav = React.useCallback(() => {
     fetchMyMenus()
@@ -51,20 +69,16 @@ export function AppShell({ workspaceId }: AppShellProps) {
   const loadWorkspace = React.useCallback(() => {
     const ws = getOrCreateWorkspace(workspaceId);
     setWorkspaceName(ws.meta.name);
-
-    // Sync tabSeq so new tabs get non-colliding ids.
-    const maxSeq = ws.tabs.reduce((max, t) => {
-      const n = parseInt(t.id.replace('t', ''), 10);
-      return Number.isFinite(n) ? Math.max(max, n) : max;
-    }, 0);
-    tabSeq.current = maxSeq;
-
+    syncTabSeq(ws.tabs);
     setTabs(ws.tabs.map((t) => ({ id: t.id, route: t.route })));
-    setActiveId(ws.tabs.find((t) => t.id === ws.activeTabId)?.id ?? ws.tabs[0]?.id ?? nextTabId());
-
+    setActiveId(
+      ws.tabs.find((t) => t.id === ws.activeTabId)?.id
+        ?? ws.tabs[0]?.id
+        ?? nextTabId(),
+    );
     workspaceReady.current = true;
     setLastActive(workspaceId);
-  }, [workspaceId, nextTabId]);
+  }, [workspaceId, nextTabId, syncTabSeq, setTabs, setActiveId]);
 
   React.useEffect(() => {
     const raw = (() => {
@@ -72,12 +86,16 @@ export function AppShell({ workspaceId }: AppShellProps) {
     })();
 
     if (!raw) {
-      setHydrated(true);
-      return;
+      // Defer the hydration flag so we don't synchronously cascade renders
+      // from within the effect body.
+      const id = setTimeout(() => setHydrated(true), 0);
+      return () => clearTimeout(id);
     }
 
+    let cancelled = false;
     getMe()
       .then(() => {
+        if (cancelled) return;
         try {
           setUser(JSON.parse(raw) as ShellUser);
           loadNav();
@@ -89,7 +107,9 @@ export function AppShell({ workspaceId }: AppShellProps) {
       .catch(() => {
         try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
       })
-      .finally(() => setHydrated(true));
+      .finally(() => { if (!cancelled) setHydrated(true); });
+
+    return () => { cancelled = true; };
   }, [loadNav, loadWorkspace]);
 
   const onLogin = React.useCallback((u: ShellUser) => {
@@ -109,12 +129,6 @@ export function AppShell({ workspaceId }: AppShellProps) {
     } catch { /* noop */ }
     apiLogout().catch(() => { /* ignore */ });
   }, []);
-
-  const [lang, setLang] = React.useState<Lang>('id');
-  const [tabs, setTabs] = React.useState<ShellTab[]>([{ id: 't0', route: 'home' }]);
-  const [activeId, setActiveId] = React.useState<string>('t0');
-  const [paletteOpen, setPaletteOpen] = React.useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
 
   // Persist workspace state whenever tabs or active tab change.
   React.useEffect(() => {
@@ -140,59 +154,16 @@ export function AppShell({ workspaceId }: AppShellProps) {
     el.setAttribute('data-primary', 'blue');
   }, []);
 
-  const openTab = React.useCallback(
-    (route: string) => {
-      const existing = tabs.find((tb) => tb.route === route);
-      if (existing) { setActiveId(existing.id); return; }
-      if (tabs.length >= MAX_TABS) { setActiveId(tabs[tabs.length - 1].id); return; }
-      const tab = { id: nextTabId(), route };
-      setActiveId(tab.id);
-      setTabs((prev) => [...prev, tab]);
-    },
-    [tabs, nextTabId],
-  );
-
-  const duplicateTab = React.useCallback(
-    (id: string) => {
-      const src = tabs.find((tb) => tb.id === id) ?? tabs[tabs.length - 1];
-      if (!src || tabs.length >= MAX_TABS) return;
-      const tab = { id: nextTabId(), route: src.route };
-      setActiveId(tab.id);
-      setTabs((prev) => [...prev, tab]);
-    },
-    [tabs, nextTabId],
-  );
-
-  const navigateInTab = React.useCallback(
-    (route: string) => {
-      setTabs((prev) =>
-        prev.map((tb) => (tb.id === activeId ? { ...tb, route } : tb)),
-      );
-    },
-    [activeId],
-  );
-
-  const closeTab = React.useCallback(
-    (id: string) => {
-      const idx = tabs.findIndex((tb) => tb.id === id);
-      if (idx === -1) return;
-      const next = tabs.filter((tb) => tb.id !== id);
-      if (next.length === 0) {
-        const fresh = { id: nextTabId(), route: 'home' };
-        setTabs([fresh]);
-        setActiveId(fresh.id);
-        return;
-      }
-      setTabs(next);
-      setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
-    },
-    [tabs, nextTabId],
-  );
-
   const confirmClose = React.useCallback(
     (id: string) => {
-      const tab = tabs.find((tb) => tb.id === id);
-      const label = tab ? pageMeta(tab.route, t).title : 'tab ini';
+      // Snapshot the label via functional setState so we don't take a
+      // dependency on the changing `tabs` array.
+      let label = 'tab ini';
+      setTabs((prev) => {
+        const tab = prev.find((tb) => tb.id === id);
+        if (tab) label = pageMeta(tab.route, t).title;
+        return prev;
+      });
       confirmAction({
         title: 'Tutup tab?',
         message: `"${label}" akan ditutup.`,
@@ -203,41 +174,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
         onConfirm: () => closeTab(id),
       });
     },
-    [tabs, t, closeTab],
-  );
-
-  const reloadTab = React.useCallback((id: string) => {
-    setTabs((prev) =>
-      prev.map((tb) => (tb.id === id ? { ...tb, nonce: (tb.nonce ?? 0) + 1 } : tb)),
-    );
-    setActiveId(id);
-  }, []);
-
-  const closeOtherTabs = React.useCallback((id: string) => {
-    setTabs((prev) => {
-      const keep = prev.find((tb) => tb.id === id);
-      return keep ? [keep] : prev;
-    });
-    setActiveId(id);
-  }, []);
-
-  const closeTabsToRight = React.useCallback(
-    (id: string) => {
-      setTabs((prev) => {
-        const idx = prev.findIndex((tb) => tb.id === id);
-        if (idx === -1) return prev;
-        const next = prev.slice(0, idx + 1);
-        return next.length === prev.length ? prev : next;
-      });
-      setActiveId((cur) =>
-        tabs
-          .slice(0, tabs.findIndex((tb) => tb.id === id) + 1)
-          .some((tb) => tb.id === cur)
-          ? cur
-          : id,
-      );
-    },
-    [tabs],
+    [t, closeTab, setTabs],
   );
 
   React.useEffect(() => {
@@ -273,7 +210,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [activeId, closeTab, tabs, confirmClose]);
+  }, [activeId, tabs, confirmClose, setActiveId]);
 
   React.useEffect(() => {
     const sc = () => setShortcutsOpen(true);
@@ -281,15 +218,18 @@ export function AppShell({ workspaceId }: AppShellProps) {
     return () => window.removeEventListener('open-shortcuts', sc);
   }, []);
 
-  const onPaletteAction = (id: string) => {
-    if (id.startsWith('toggle:')) {
-      const what = id.split(':')[1];
-      if (what === 'lang') setLang((l) => (l === 'id' ? 'en' : 'id'));
-      return;
-    }
-    if (id.startsWith('new:')) { openTab(id.split(':')[1]); return; }
-    openTab(id);
-  };
+  const onPaletteAction = React.useCallback(
+    (id: string) => {
+      if (id.startsWith('toggle:')) {
+        const what = id.split(':')[1];
+        if (what === 'lang') setLang((l) => (l === 'id' ? 'en' : 'id'));
+        return;
+      }
+      if (id.startsWith('new:')) { openTab(id.split(':')[1]); return; }
+      openTab(id);
+    },
+    [openTab],
+  );
 
   const crumbs: Crumb[] = pageMeta(activeRoute, t).crumbs;
   const sidebarCurrent = activeRoute;
@@ -327,9 +267,10 @@ export function AppShell({ workspaceId }: AppShellProps) {
           <div className="tabviews">
             {tabs.map((tab) => {
               const isActive = tab.id === activeId;
+              const viewKey = `${tab.id}:${tab.nonce ?? 0}`;
               return (
                 <div
-                  key={`${tab.id}:${tab.nonce ?? 0}`}
+                  key={viewKey}
                   className="tabview"
                   style={{ display: isActive ? 'flex' : 'none' }}
                 >
