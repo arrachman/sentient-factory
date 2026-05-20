@@ -330,6 +330,13 @@ const ICON_PATHS = {
       <path d="M7 6.5 9 8.5" />
     </>
   ),
+  'more-vertical': (
+    <>
+      <circle cx="8" cy="3.5" r="1" />
+      <circle cx="8" cy="8" r="1" />
+      <circle cx="8" cy="12.5" r="1" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

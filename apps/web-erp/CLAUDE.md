@@ -446,6 +446,54 @@ menampilkan dialog konfirmasi via `confirmAction()` sebelum eksekusi:
 semua empty state tabel — **jangan** biarkan `<tbody>` kosong tanpa keterangan.
 Empty saat filter aktif harus dibedakan dari empty tanpa filter (pesan beda).
 
+### 2.10 Status boolean = dot di depan nama, bukan kolom badge (2026-05-20)
+
+Untuk entitas dengan status biner sederhana (Aktif/Nonaktif) di list page —
+**dilarang** alokasikan kolom `STATUS` sendiri berisi pill badge. Pola wajib:
+
+- **Dot kecil** (`h-1.5 w-1.5 rounded-full`) di depan kolom Nama. Hijau
+  (`bg-success`) = aktif, abu (`bg-muted-foreground/50`) = nonaktif. `title`
+  + `aria-label` untuk aksesibilitas.
+- **Baris nonaktif di-mute**: `opacity-60` + paksa `text-muted-foreground` ke
+  semua `<td>` (`[&>td]:text-muted-foreground`). Mata langsung nangkep "yang
+  redup = mati" tanpa scan ke kanan.
+- Kolom STATUS dihapus → tabel lebih lapang, action column tetap di kanan.
+
+Berlaku untuk **semua** list master ERP dengan field `isActive` (branches,
+warehouses, locations, users, items, partners, dll). Status workflow multi-
+state (`Draft/Need Approve/Approved/Rejected/Posted`) tetap pakai badge
+`StatusBadge` (§2.9) — itu beda kasus.
+
+### 2.11 Inline row actions = Edit visible + kebab menu (WAJIB, 2026-05-20)
+
+Pola wajib kolom action di list page: **aksi primer (Edit) tetap visible**,
+**aksi sekunder + destruktif (Riwayat, Hapus, …) masuk kebab menu** (icon
+`more-vertical`). Hapus selalu di posisi terakhir + `separatorBefore: true`
+untuk jarak visual dari aksi non-destruktif.
+
+Alasan: 3+ tombol per baris × 10–20 baris bikin tabel "ribut". Tombol Hapus
+merah yang selalu visible juga rawan salah klik. Kebab menyembunyikan aksi
+jarang-dipakai tanpa menghilangkannya, dan Hapus jadi 2 klik = lebih aman.
+
+Implementasi wajib lewat molecule reusable
+[`components/molecules/row-actions-menu.tsx`](components/molecules/row-actions-menu.tsx)
+(`RowActionsMenu`) — **dilarang** rakit ad-hoc per halaman. Primitif Radix di
+[`components/ui/dropdown-menu.tsx`](components/ui/dropdown-menu.tsx). Contoh:
+
+```tsx
+<RowActionsMenu
+  onEdit={() => openEdit(row)}
+  items={[
+    { label: 'Riwayat', onSelect: () => setAuditTarget(row) },
+    { label: 'Hapus', onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
+  ]}
+/>
+```
+
+Pengecualian: bila entitas hanya punya 1 aksi (cuma Edit), tampilkan tombol
+Edit saja tanpa kebab. Bila entitas punya workflow approval (Approve/Reject/
+Post), aksi workflow ikut masuk kebab — bukan deretan tombol baru.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
