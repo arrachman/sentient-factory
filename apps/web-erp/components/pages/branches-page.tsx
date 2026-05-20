@@ -14,6 +14,7 @@ import {
   type FilterConfig,
   type SummaryConfig,
   type ListPaginationConfig,
+  type KeyboardRowConfig,
 } from '@/components/organisms/erp-list-layout';
 import {
   Table,
@@ -51,6 +52,7 @@ export function ErpBranchesPage() {
   const [statusFilter, setStatusFilter] = React.useState('');
   const [page, setPage] = React.useState(1);
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [focusedIndex, setFocusedIndex] = React.useState(-1);
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpBranch | null>(null);
   const [form, setForm] = React.useState<BranchForm>(defaultBranchForm);
@@ -66,7 +68,14 @@ export function ErpBranchesPage() {
     });
   }, [rows, search, statusFilter]);
 
-  React.useEffect(() => { setPage(1); }, [search, statusFilter]);
+  React.useEffect(() => { setPage(1); setFocusedIndex(-1); }, [search, statusFilter]);
+  React.useEffect(() => { setFocusedIndex(-1); }, [page]);
+
+  // Auto-scroll focused row into view
+  React.useEffect(() => {
+    if (focusedIndex < 0) return;
+    document.querySelector('[data-focused="true"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [focusedIndex]);
 
   const PAGE_SIZE = 20;
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -86,6 +95,13 @@ export function ErpBranchesPage() {
   ];
   const branchSummary: SummaryConfig = { metricLabel: 'Σ cabang', rowCount: filtered.length, totalCount: rows.length };
   const branchPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
+  const branchKeyboard: KeyboardRowConfig = {
+    rowCount: paged.length,
+    focusedIndex,
+    onFocusChange: setFocusedIndex,
+    onToggle: (i) => toggleRow(paged[i].id),
+    onOpen: (i) => openEdit(paged[i]),
+  };
 
   const openCreate = () => { setEditing(null); setForm(defaultBranchForm()); setOpen(true); };
   const openEdit = (b: ErpBranch) => { setEditing(b); setForm(branchFromRecord(b)); setOpen(true); };
@@ -139,6 +155,7 @@ export function ErpBranchesPage() {
         title="Cabang" code="BRN" loading={loading} error={error}
         search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
         filters={branchFilters} summary={branchSummary} pagination={branchPagination}
+        keyboardRows={branchKeyboard}
       >
         <div className="lines">
           <Table>
@@ -154,8 +171,8 @@ export function ErpBranchesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paged.length === 0 ? <TableEmpty colSpan={7} /> : paged.map((b) => (
-                <TableRow key={b.id} data-selected={selectedIds.has(b.id)}>
+              {paged.length === 0 ? <TableEmpty colSpan={7} /> : paged.map((b, idx) => (
+                <TableRow key={b.id} data-selected={selectedIds.has(b.id)} data-focused={focusedIndex === idx}>
                   <CheckboxCell checked={selectedIds.has(b.id)} onCheckedChange={() => toggleRow(b.id)} />
                   <TableCell className="mono">{b.code}</TableCell>
                   <TableCell>{b.name}</TableCell>

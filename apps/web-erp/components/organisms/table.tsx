@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 /**
  * Dense data-grid table primitives. Mirrors prototype `.lines table` /
@@ -59,7 +60,11 @@ export const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      'transition-colors hover:[&>td]:bg-[color-mix(in_oklab,var(--panel-hover)_60%,transparent)] data-[selected=true]:[&>td]:bg-[var(--primary-soft)]',
+      'transition-colors hover:[&>td]:bg-[color-mix(in_oklab,var(--panel-hover)_60%,transparent)]',
+      'data-[selected=true]:[&>td]:bg-[var(--primary-soft)]',
+      // focused row: left accent shadow + slightly tinted bg
+      'data-[focused=true]:[&>td:first-child]:shadow-[inset_2px_0_0_var(--primary)]',
+      'data-[focused=true]:[&>td]:bg-[color-mix(in_oklab,var(--primary)_10%,transparent)]',
       className,
     )}
     {...props}
@@ -99,6 +104,48 @@ export const TableCell = React.forwardRef<
   />
 ));
 TableCell.displayName = 'TableCell';
+
+/** Checkbox header cell for the select-all column. */
+export function CheckboxHead({
+  checked,
+  onCheckedChange,
+}: {
+  checked: boolean | 'indeterminate';
+  onCheckedChange: (v: boolean) => void;
+}) {
+  return (
+    <TableHead className="w-8 align-middle">
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={checked}
+          onCheckedChange={(v) => onCheckedChange(v === true)}
+          aria-label="Pilih semua"
+        />
+      </div>
+    </TableHead>
+  );
+}
+
+/** Checkbox data cell for a selectable row. */
+export function CheckboxCell({
+  checked,
+  onCheckedChange,
+}: {
+  checked: boolean;
+  onCheckedChange: (v: boolean) => void;
+}) {
+  return (
+    <TableCell className="w-8 align-middle" onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={checked}
+          onCheckedChange={(v) => onCheckedChange(v === true)}
+          aria-label="Pilih baris"
+        />
+      </div>
+    </TableCell>
+  );
+}
 
 /** Full-width empty-state cell. Mirrors prototype `.tbl-empty`. */
 export function TableEmpty({
