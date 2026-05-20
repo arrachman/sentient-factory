@@ -8,4 +8,4 @@ export const USER_STORAGE_KEY = 'erp-user';
 export const DEFAULT_WORKSPACE_ID = 'ws1';
 
 /** Supported UI languages. */
-export type Lang = 'id' | 'en';
+export type Lang = 'id' | 'en' | 'ja';

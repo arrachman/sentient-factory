@@ -175,7 +175,7 @@ function ListTable({
 interface GenericListProps {
   moduleId: string;
   t: Translator;
-  lang?: 'id' | 'en';
+  lang?: 'id' | 'en' | 'ja';
   onNavigate: (route: string) => void;
   onOpenTab?: (route: string) => void;
 }

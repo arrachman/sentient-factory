@@ -56,7 +56,7 @@ import {
 export interface TrxFormProps {
   moduleId: string;
   t: Translator;
-  lang: 'id' | 'en';
+  lang: 'id' | 'en' | 'ja';
   onNavigate: (route: string) => void;
 }
 

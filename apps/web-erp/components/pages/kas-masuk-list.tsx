@@ -27,7 +27,7 @@ import {
 
 interface KasMasukListProps {
   t: Translator;
-  lang?: 'id' | 'en';
+  lang?: 'id' | 'en' | 'ja';
   onNavigate: (r: string) => void;
   onOpenTab?: (r: string) => void;
 }

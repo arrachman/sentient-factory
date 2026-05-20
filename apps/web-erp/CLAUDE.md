@@ -502,7 +502,12 @@ tetap jalan sebagai alias fallback NAV statis.
 Pemetaan field:
 
 - `theme` (light/dark) → kolom eksplisit `theme`.
-- `language` (id/en) → kolom eksplisit `language`.
+- `language` (id/en/ja) → kolom eksplisit `language`. **3 bahasa** didukung di
+  UI sejak 2026-05-20: Indonesia, English, Japanese (日本語). Tipe `Lang` di
+  `lib/shell-constants.ts`, `lib/mock.ts`, dan `appearance-parts.tsx` semua
+  pakai union `'id' | 'en' | 'ja'`. `AppearancePage` men-derive translator
+  lokal dari `tw.lang` via `makeTranslator` agar perubahan bahasa langsung
+  refleks di halaman ini (tidak menunggu round-trip ke app-shell).
 - Tweaks UI lain (`primary`, `density`, `fontScale`, `sidebar`) → `metadata`
   Json (default dari `DEFAULTS` di `appearance-parts.tsx`).
 

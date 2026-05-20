@@ -6,7 +6,7 @@
 import * as React from 'react';
 import { useTheme } from 'next-themes';
 import { Icon } from '@/components/ui/icons';
-import { type Translator } from '@/lib/mock';
+import { makeTranslator, type Translator } from '@/lib/mock';
 import { notify } from '@/lib/feedback';
 import {
   getMyPreferences,
@@ -31,13 +31,16 @@ import {
 } from './appearance-parts';
 
 interface AppearancePageProps {
-  t: Translator;
+  // Accepted for shell-route-renderer parity; this page derives its own
+  // translator from tw.lang so language switch updates UI instantly.
+  t?: Translator;
 }
 
 /** Setting → Tampilan — ported from prototype `pages/appearance.jsx`. */
-export function AppearancePage({ t }: AppearancePageProps) {
+export function AppearancePage(_props: AppearancePageProps) {
   const { theme, setTheme } = useTheme();
   const [tw, setTw] = React.useState<Tweaks>(DEFAULTS);
+  const t = React.useMemo(() => makeTranslator(tw.lang), [tw.lang]);
   const hydratedRef = React.useRef(false);
   const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -150,7 +153,7 @@ export function AppearancePage({ t }: AppearancePageProps) {
         const msg =
           err instanceof ErpApiError
             ? err.message
-            : 'Gagal menyimpan preferensi tampilan';
+            : t('Gagal menyimpan preferensi tampilan');
         notify(msg, 'danger');
       });
     }, 500);
@@ -172,8 +175,8 @@ export function AppearancePage({ t }: AppearancePageProps) {
     } catch {
       /* localStorage unavailable — ignore */
     }
-    notify('Tampilan dikembalikan ke bawaan', 'info');
-  }, [setTheme]);
+    notify(t('Tampilan dikembalikan ke bawaan'), 'info');
+  }, [setTheme, t]);
 
   const fontScale = tw.fontScale || 'base';
 
@@ -181,7 +184,7 @@ export function AppearancePage({ t }: AppearancePageProps) {
     <div className="page">
       <div className="page-header">
         <h1 className="page-title">
-          Tampilan<span className="code-tag">UI</span>
+          {t('Tampilan')}<span className="code-tag">UI</span>
         </h1>
         <div className="page-actions">
           <button className="btn ghost" onClick={resetAll}>
@@ -194,31 +197,32 @@ export function AppearancePage({ t }: AppearancePageProps) {
         className="dash-grid scrollbar"
         style={{ overflow: 'auto', flex: 1, alignContent: 'start' }}
       >
-        <SetCard icon="moon" title="Tema" sub="Mode terang atau gelap">
-          <SetRow label="Mode Tema" hint="Berlaku untuk seluruh aplikasi">
+        <SetCard icon="moon" title={t('Tema')} sub={t('Mode terang atau gelap')}>
+          <SetRow label={t('Mode Tema')} hint={t('Berlaku untuk seluruh aplikasi')}>
             <Seg
               value={theme}
               onChange={(v) => setTheme(v)}
               options={[
-                { v: 'light', label: 'Terang', icon: 'sun' },
-                { v: 'dark', label: 'Gelap', icon: 'moon' },
+                { v: 'light', label: t('Terang'), icon: 'sun' },
+                { v: 'dark', label: t('Gelap'), icon: 'moon' },
               ]}
             />
           </SetRow>
-          <SetRow label="Bahasa" hint="Antarmuka">
+          <SetRow label={t('Bahasa')} hint={t('Antarmuka')}>
             <Seg
               value={tw.lang}
               onChange={(v) => applyTweak('lang', v as Lang)}
               options={[
-                { v: 'id', label: 'Indonesia' },
-                { v: 'en', label: 'English' },
+                { v: 'id', label: t('Indonesia') },
+                { v: 'en', label: t('English') },
+                { v: 'ja', label: t('Japanese') },
               ]}
             />
           </SetRow>
         </SetCard>
 
-        <SetCard icon="layers" title="Warna Aksen" sub="Paket & warna primer">
-          <SetRow label="Paket Warna" hint="Set warna siap pakai">
+        <SetCard icon="layers" title={t('Warna Aksen')} sub={t('Paket & warna primer')}>
+          <SetRow label={t('Paket Warna')} hint={t('Set warna siap pakai')}>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {PALETTE_PACKS.map((p) => (
                 <button
@@ -270,17 +274,17 @@ export function AppearancePage({ t }: AppearancePageProps) {
                             : 'var(--fg)',
                       }}
                     >
-                      {p.label}
+                      {t(p.label)}
                     </span>
                     <span className="muted" style={{ fontSize: 10.5 }}>
-                      {p.sub}
+                      {t(p.sub)}
                     </span>
                   </span>
                 </button>
               ))}
             </div>
           </SetRow>
-          <SetRow label="Warna Spesifik">
+          <SetRow label={t('Warna Spesifik')}>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {SWATCHES.map((s) => (
                 <button
@@ -309,49 +313,49 @@ export function AppearancePage({ t }: AppearancePageProps) {
               ))}
             </div>
           </SetRow>
-          <SetRow label="Aksen Aktif">
+          <SetRow label={t('Aksen Aktif')}>
             <span className="pill primary">
               <span className="dot" />
-              {SWATCHES.find((s) => s.v === tw.primary)?.label || tw.primary}
+              {t(SWATCHES.find((s) => s.v === tw.primary)?.label || tw.primary)}
             </span>
           </SetRow>
         </SetCard>
 
-        <SetCard icon="info" title="Ukuran Font" sub="Skala teks antarmuka">
-          <SetRow label="Ukuran" hint="Kecil · Normal · Besar · Ekstra Besar">
+        <SetCard icon="info" title={t('Ukuran Font')} sub={t('Skala teks antarmuka')}>
+          <SetRow label={t('Ukuran')} hint={t('Kecil · Normal · Besar · Ekstra Besar')}>
             <Seg
               value={fontScale}
               onChange={(v) => applyTweak('fontScale', v as FontScale)}
               options={[
-                { v: 'sm', label: 'Kecil' },
-                { v: 'base', label: 'Normal' },
-                { v: 'lg', label: 'Besar' },
-                { v: 'xl', label: 'Ekstra Besar' },
+                { v: 'sm', label: t('Kecil') },
+                { v: 'base', label: t('Normal') },
+                { v: 'lg', label: t('Besar') },
+                { v: 'xl', label: t('Ekstra Besar') },
               ]}
             />
           </SetRow>
-          <SetRow label="Pratinjau">
+          <SetRow label={t('Pratinjau')}>
             <span style={{ fontSize: FONT_PX[fontScale] || 13 }}>
-              Contoh teks tabel & form — {fontScale}
+              {t('Contoh teks tabel & form')} — {fontScale}
             </span>
           </SetRow>
         </SetCard>
 
         <SetCard
           icon="boxes"
-          title="Layout"
-          sub="Kepadatan tampilan tabel & list"
+          title={t('Layout')}
+          sub={t('Kepadatan tampilan tabel & list')}
         >
           <SetRow
-            label="Kepadatan"
-            hint="Compact memuat lebih banyak baris"
+            label={t('Kepadatan')}
+            hint={t('Compact memuat lebih banyak baris')}
           >
             <Seg
               value={tw.density}
               onChange={(v) => applyTweak('density', v as Density)}
               options={[
-                { v: 'compact', label: 'Compact' },
-                { v: 'comfortable', label: 'Comfortable' },
+                { v: 'compact', label: t('Compact') },
+                { v: 'comfortable', label: t('Comfortable') },
               ]}
             />
           </SetRow>
@@ -359,20 +363,20 @@ export function AppearancePage({ t }: AppearancePageProps) {
 
         <SetCard
           icon="database"
-          title="Menu Sidebar"
-          sub="Template navigasi samping"
+          title={t('Menu Sidebar')}
+          sub={t('Template navigasi samping')}
         >
-          <SetRow label="Template" hint="Ikon saja atau dengan label teks">
+          <SetRow label={t('Template')} hint={t('Ikon saja atau dengan label teks')}>
             <Seg
               value={tw.sidebar || 'icon'}
               onChange={(v) => applyTweak('sidebar', v as SidebarMode)}
               options={[
-                { v: 'icon', label: 'Ikon', icon: 'boxes' },
-                { v: 'label', label: 'Ikon + Label', icon: 'database' },
+                { v: 'icon', label: t('Ikon'), icon: 'boxes' },
+                { v: 'label', label: t('Ikon + Label'), icon: 'database' },
               ]}
             />
           </SetRow>
-          <SetRow label="Pratinjau">
+          <SetRow label={t('Pratinjau')}>
             <div
               style={{
                 display: 'inline-flex',
@@ -417,16 +421,17 @@ export function AppearancePage({ t }: AppearancePageProps) {
           </SetRow>
         </SetCard>
 
-        <LivePreviewCard />
+        <LivePreviewCard t={t} />
       </div>
 
       <div className="pager">
-        <span className="muted">Setting · Tampilan</span>
+        <span className="muted">{t('Setting · Tampilan')}</span>
         <div className="spacer" />
         <span className="muted">
-          Tema {theme} ·{' '}
-          {SWATCHES.find((s) => s.v === tw.primary)?.label || tw.primary} · font{' '}
-          {fontScale} · {tw.density} · sidebar {tw.sidebar || 'icon'}
+          {t('Tema')} {theme} ·{' '}
+          {t(SWATCHES.find((s) => s.v === tw.primary)?.label || tw.primary)} ·{' '}
+          {t('Ukuran')} {fontScale} · {t(tw.density === 'compact' ? 'Compact' : 'Comfortable')} ·{' '}
+          {t('Menu Sidebar')} {t((tw.sidebar || 'icon') === 'icon' ? 'Ikon' : 'Ikon + Label')}
         </span>
       </div>
     </div>

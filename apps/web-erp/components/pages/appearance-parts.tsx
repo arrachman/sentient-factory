@@ -5,9 +5,9 @@
 import * as React from 'react';
 import { Icon, type IconName } from '@/components/ui/icons';
 import { Sparkline } from '@/components/ui/sparkline';
-import { KPI_SERIES } from '@/lib/mock';
+import { KPI_SERIES, type Translator } from '@/lib/mock';
 
-export type Lang = 'id' | 'en';
+export type Lang = 'id' | 'en' | 'ja';
 export type FontScale = 'sm' | 'base' | 'lg' | 'xl';
 export type Density = 'compact' | 'comfortable';
 export type SidebarMode = 'icon' | 'label';
@@ -186,7 +186,7 @@ export const FONT_PX: Record<FontScale, number> = {
 };
 
 /** Static "Pratinjau Langsung" card — reflects live tweaks via CSS vars. */
-export function LivePreviewCard() {
+export function LivePreviewCard({ t }: { t: Translator }) {
   return (
     <div className="card" style={{ gridColumn: 'span 12' }}>
       <div className="card-h">
@@ -205,9 +205,9 @@ export function LivePreviewCard() {
           <Icon name="eye" size={13} />
         </span>
         <div>
-          <div className="title">Pratinjau Langsung</div>
+          <div className="title">{t('Pratinjau Langsung')}</div>
           <div className="sub" style={{ marginTop: 1 }}>
-            Perubahan diterapkan seketika
+            {t('Perubahan diterapkan seketika')}
           </div>
         </div>
       </div>
@@ -229,7 +229,7 @@ export function LivePreviewCard() {
           }}
         >
           <div className="kpi" style={{ padding: 0 }}>
-            <div className="label">Pendapatan bulan ini</div>
+            <div className="label">{t('Pendapatan bulan ini')}</div>
             <div className="value">Rp 487,5jt</div>
             <div className="delta up">
               <Icon name="arrow-tr" size={11} /> +12,4%
@@ -252,12 +252,12 @@ export function LivePreviewCard() {
         >
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn primary">
-              <Icon name="plus" size={12} /> Tambah
+              <Icon name="plus" size={12} /> {t('Tambah')}
             </button>
             <button className="btn">
-              <Icon name="download" size={12} /> Export
+              <Icon name="download" size={12} /> {t('Export')}
             </button>
-            <button className="btn ghost">Batal</button>
+            <button className="btn ghost">{t('Batal')}</button>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <span className="pill success">
@@ -279,9 +279,9 @@ export function LivePreviewCard() {
           >
             <thead>
               <tr>
-                <th>No</th>
-                <th>Nama</th>
-                <th className="col-num">Total</th>
+                <th>{t('No')}</th>
+                <th>{t('Nama')}</th>
+                <th className="col-num">{t('Total')}</th>
               </tr>
             </thead>
             <tbody>
