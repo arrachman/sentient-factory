@@ -8476,3 +8476,410 @@ model ErpPlnReplenishmentSuggestion {
   @@index([legacyCode])
   @@map("pln_replenishment_suggestions")
 }
+
+// ============================================================================
+// MD Legacy Batch (2026-05-20) — 23 master tables from MyERP+ m1_* legacy
+// All follow simple base shape: code(unique) + name + isActive + audit + legacyCode
+// FK lintas-domain = scalar BigInt + @@index (no @relation) per CLAUDE.md
+// ============================================================================
+
+model ErpBrand {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_brands")
+}
+
+model ErpMaterial {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_materials")
+}
+
+model ErpItemModel {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_item_models")
+}
+
+model ErpSize {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_sizes")
+}
+
+model ErpSection {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_sections")
+}
+
+model ErpItemKind {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_item_types")
+}
+
+model ErpProductClass {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_product_classes")
+}
+
+model ErpBank {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_banks")
+}
+
+model ErpExpedition {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_expeditions")
+}
+
+model ErpOtherCost {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_other_costs")
+}
+
+model ErpCommission {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  amount      Decimal   @default(0) @map("amount") @db.Decimal(19, 4)
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_commissions")
+}
+
+model ErpItemTransactionType {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  direction   String    @default("IN") @map("direction") // IN|OUT|TRANSFER
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([legacyCode])
+  @@map("md_item_transaction_types")
+}
+
+model ErpCountry {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isoCode     String?   @map("iso_code")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  provinces   ErpProvince[]
+  @@index([legacyCode])
+  @@map("md_countries")
+}
+
+model ErpProvince {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  countryId   BigInt    @map("country_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  country     ErpCountry @relation(fields: [countryId], references: [id])
+  cities      ErpCity[]
+  @@index([countryId])
+  @@index([legacyCode])
+  @@map("md_provinces")
+}
+
+model ErpCity {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  provinceId  BigInt    @map("province_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  province    ErpProvince @relation(fields: [provinceId], references: [id])
+  areas       ErpArea[]
+  @@index([provinceId])
+  @@index([legacyCode])
+  @@map("md_cities")
+}
+
+model ErpArea {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  cityId      BigInt    @map("city_id")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  city        ErpCity @relation(fields: [cityId], references: [id])
+  @@index([cityId])
+  @@index([legacyCode])
+  @@map("md_areas")
+}
+
+model ErpItemLocation {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  warehouseId BigInt?   @map("warehouse_id") // FK -> md_warehouses (scalar)
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@index([warehouseId])
+  @@index([legacyCode])
+  @@map("md_item_locations")
+}
+
+enum ErpPartnerSubCategoryType {
+  CUSTOMER
+  SUPPLIER
+  SALESMAN
+}
+
+model ErpPartnerSubCategory {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @map("code")
+  name        String    @map("name")
+  type        ErpPartnerSubCategoryType @map("type")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@unique([code, type])
+  @@index([type])
+  @@index([legacyCode])
+  @@map("md_partner_sub_categories")
+}
+
+model ErpPriceCategory {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  details     ErpPriceCategoryDetail[]
+  @@index([legacyCode])
+  @@map("md_price_categories")
+}
+
+model ErpPriceCategoryDetail {
+  id                BigInt   @id @default(autoincrement())
+  priceCategoryId   BigInt   @map("price_category_id")
+  minQty            Decimal  @default(0) @map("min_qty") @db.Decimal(19, 4)
+  maxQty            Decimal? @map("max_qty") @db.Decimal(19, 4)
+  discountPercent   Decimal  @default(0) @map("discount_percent") @db.Decimal(9, 4)
+  priceAdjustment   Decimal  @default(0) @map("price_adjustment") @db.Decimal(19, 4)
+  legacyCode        String?  @map("legacy_code")
+  metadata          Json?    @map("metadata")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+  priceCategory     ErpPriceCategory @relation(fields: [priceCategoryId], references: [id], onDelete: Cascade)
+  @@index([priceCategoryId])
+  @@map("md_price_category_details")
+}
+
+model ErpTransactionNote {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  details     ErpTransactionNoteDetail[]
+  @@index([legacyCode])
+  @@map("md_transaction_notes")
+}
+
+model ErpTransactionNoteDetail {
+  id                 BigInt   @id @default(autoincrement())
+  transactionNoteId  BigInt   @map("transaction_note_id")
+  sortOrder          Int      @default(0) @map("sort_order")
+  content            String   @map("content")
+  legacyCode         String?  @map("legacy_code")
+  metadata           Json?    @map("metadata")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+  transactionNote    ErpTransactionNote @relation(fields: [transactionNoteId], references: [id], onDelete: Cascade)
+  @@index([transactionNoteId])
+  @@map("md_transaction_note_details")
+}
+
+model ErpItemPermission {
+  id          BigInt    @id @default(autoincrement())
+  itemId      BigInt    @map("item_id") // FK -> md_items (scalar)
+  roleId      BigInt    @map("role_id") // FK -> adm_roles (scalar)
+  canView     Boolean   @default(true) @map("can_view")
+  canSell     Boolean   @default(true) @map("can_sell")
+  canBuy      Boolean   @default(true) @map("can_buy")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  @@unique([itemId, roleId])
+  @@index([itemId])
+  @@index([roleId])
+  @@index([legacyCode])
+  @@map("md_item_permissions")
+}
