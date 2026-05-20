@@ -68,3 +68,18 @@ export async function updateBranch(
 export async function deleteBranch(id: string): Promise<void> {
   await apiDelete<void>(`/branches/${id}`);
 }
+
+export async function bulkUpdateBranchStatus(
+  ids: string[],
+  isActive: boolean,
+): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>('/branches/bulk/status', { ids, isActive });
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteBranches(
+  ids: string[],
+): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>('/branches/bulk', { ids });
+  return { affected: res.affected };
+}

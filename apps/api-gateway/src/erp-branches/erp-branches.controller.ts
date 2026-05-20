@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpBranchDto, BulkStatusErpBranchDto } from './dto/bulk-erp-branch.dto';
 import { CreateErpBranchDto } from './dto/create-erp-branch.dto';
 import { QueryErpBranchDto } from './dto/query-erp-branch.dto';
 import { UpdateErpBranchDto } from './dto/update-erp-branch.dto';
@@ -50,6 +51,20 @@ export class ErpBranchesController {
   @ApiResponse({ status: 200, description: 'ERP branch updated' })
   update(@Param('id') id: string, @Body() dto: UpdateErpBranchDto, @Request() req: any) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk activate / deactivate ERP branches' })
+  @ApiResponse({ status: 200, description: 'Branches status updated' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpBranchDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP branches' })
+  @ApiResponse({ status: 200, description: 'Branches deleted' })
+  bulkDelete(@Body() dto: BulkErpBranchDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Delete(':id')

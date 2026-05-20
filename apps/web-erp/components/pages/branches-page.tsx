@@ -1,16 +1,7 @@
 'use client';
 
-/**
- * F2 Admin — Branch Management page.
- * Lists ERP branches; supports create, edit, delete.
- * Atomic tier: Page.
- */
-
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
-import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Modal,
   ModalContent,
@@ -42,120 +33,17 @@ import {
   createBranch,
   updateBranch,
   deleteBranch,
+  bulkUpdateBranchStatus,
+  bulkDeleteBranches,
 } from '@/lib/api/branches';
-import type {
-  ErpBranch,
-  CreateBranchPayload,
-  UpdateBranchPayload,
-} from '@/lib/api/branches';
-
-// ─── Form state ───────────────────────────────────────────────────────────────
-
-interface BranchForm {
-  code: string;
-  name: string;
-  addressLine1: string;
-  city: string;
-  phone: string;
-  isActive: boolean;
-}
-
-const defaultForm = (): BranchForm => ({
-  code: '',
-  name: '',
-  addressLine1: '',
-  city: '',
-  phone: '',
-  isActive: true,
-});
-
-function fromBranch(b: ErpBranch): BranchForm {
-  return {
-    code: b.code,
-    name: b.name,
-    addressLine1: b.addressLine1 ?? '',
-    city: b.city ?? '',
-    phone: b.phone ?? '',
-    isActive: b.isActive,
-  };
-}
-
-function toPayload(f: BranchForm): CreateBranchPayload & UpdateBranchPayload {
-  return {
-    code: f.code,
-    name: f.name,
-    addressLine1: f.addressLine1 || undefined,
-    city: f.city || undefined,
-    phone: f.phone || undefined,
-    isActive: f.isActive,
-  };
-}
-
-// ─── Branch form ──────────────────────────────────────────────────────────────
-
-function BranchFormFields({
-  data,
-  onChange,
-}: {
-  data: BranchForm;
-  onChange: (d: BranchForm) => void;
-}) {
-  const set = (k: keyof BranchForm, v: string | boolean) =>
-    onChange({ ...data, [k]: v });
-  return (
-    <div className="p-4">
-      <FormField label="Kode" htmlFor="bf-code" required>
-        <Input
-          id="bf-code"
-          value={data.code}
-          onChange={(e) => set('code', e.target.value)}
-          placeholder="HQ"
-        />
-      </FormField>
-      <FormField label="Nama" htmlFor="bf-name" required>
-        <Input
-          id="bf-name"
-          value={data.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Head Quarter Jakarta"
-        />
-      </FormField>
-      <FormField label="Alamat" htmlFor="bf-addr">
-        <Input
-          id="bf-addr"
-          value={data.addressLine1}
-          onChange={(e) => set('addressLine1', e.target.value)}
-          placeholder="Jl. Sudirman No. 1"
-        />
-      </FormField>
-      <FormField label="Kota" htmlFor="bf-city">
-        <Input
-          id="bf-city"
-          value={data.city}
-          onChange={(e) => set('city', e.target.value)}
-          placeholder="Jakarta"
-        />
-      </FormField>
-      <FormField label="Telepon" htmlFor="bf-phone">
-        <Input
-          id="bf-phone"
-          value={data.phone}
-          onChange={(e) => set('phone', e.target.value)}
-          placeholder="021-5551234"
-        />
-      </FormField>
-      <FormField label="Status" htmlFor="bf-active">
-        <BooleanRadio
-          id="bf-active"
-          value={data.isActive}
-          onValueChange={(v) => set('isActive', v)}
-        />
-      </FormField>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
+import type { ErpBranch } from '@/lib/api/branches';
+import {
+  BranchFormFields,
+  defaultBranchForm,
+  branchFromRecord,
+  branchToPayload,
+  type BranchForm,
+} from './branches-form';
 
 export function ErpBranchesPage() {
   const { rows, loading, error, reload } = useErpList(() => listBranches());
@@ -165,7 +53,7 @@ export function ErpBranchesPage() {
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpBranch | null>(null);
-  const [form, setForm] = React.useState<BranchForm>(defaultForm);
+  const [form, setForm] = React.useState<BranchForm>(defaultBranchForm);
   const [saving, setSaving] = React.useState(false);
 
   const filtered = React.useMemo(() => {
@@ -184,22 +72,12 @@ export function ErpBranchesPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Selection
   const allSelected = paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
   const someSelected = !allSelected && paged.some((r) => selectedIds.has(r.id));
   const toggleRow = (id: string) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
+    setSelectedIds((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const toggleAll = (checked: boolean) =>
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) paged.forEach((r) => next.add(r.id));
-      else paged.forEach((r) => next.delete(r.id));
-      return next;
-    });
+    setSelectedIds((prev) => { const next = new Set(prev); if (checked) paged.forEach((r) => next.add(r.id)); else paged.forEach((r) => next.delete(r.id)); return next; });
 
   const ALL = { label: 'Semua', value: '' };
   const branchFilters: FilterConfig[] = [
@@ -209,79 +87,64 @@ export function ErpBranchesPage() {
   const branchSummary: SummaryConfig = { metricLabel: 'Σ cabang', rowCount: filtered.length, totalCount: rows.length };
   const branchPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm(defaultForm());
-    setOpen(true);
-  };
-
-  const openEdit = (b: ErpBranch) => {
-    setEditing(b);
-    setForm(fromBranch(b));
-    setOpen(true);
-  };
+  const openCreate = () => { setEditing(null); setForm(defaultBranchForm()); setOpen(true); };
+  const openEdit = (b: ErpBranch) => { setEditing(b); setForm(branchFromRecord(b)); setOpen(true); };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (editing) {
-        await updateBranch(editing.id, toPayload(form));
-        notify('Cabang diperbarui', 'success');
-      } else {
-        await createBranch(toPayload(form));
-        notify('Cabang dibuat', 'success');
-      }
-      setOpen(false);
-      reload();
-    } catch (e: unknown) {
-      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
-    } finally {
-      setSaving(false);
-    }
+      if (editing) { await updateBranch(editing.id, branchToPayload(form)); notify('Cabang diperbarui', 'success'); }
+      else { await createBranch(branchToPayload(form)); notify('Cabang dibuat', 'success'); }
+      setOpen(false); reload();
+    } catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger'); }
+    finally { setSaving(false); }
   };
 
-  const handleDelete = (b: ErpBranch) => {
+  const handleDelete = (b: ErpBranch) =>
     confirmAction({
-      title: 'Hapus cabang?',
-      message: `${b.code} — ${b.name} akan dihapus permanen.`,
-      variant: 'danger',
-      confirmLabel: 'Hapus',
-      confirmIcon: 'trash',
+      title: 'Hapus cabang?', message: `${b.code} — ${b.name} akan dihapus permanen.`,
+      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
+      onConfirm: async () => { try { await deleteBranch(b.id); notify('Cabang dihapus', 'success'); reload(); } catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); } },
+    });
+
+  const selectedArr = Array.from(selectedIds);
+
+  const handleBulkStatus = (isActive: boolean) => {
+    const label = isActive ? 'aktifkan' : 'nonaktifkan';
+    confirmAction({
+      title: `${isActive ? 'Aktifkan' : 'Nonaktifkan'} ${selectedArr.length} cabang?`,
+      message: `Semua cabang yang dipilih akan di-${label}.`,
+      variant: isActive ? 'primary' : 'warn',
+      confirmLabel: isActive ? 'Aktifkan' : 'Nonaktifkan',
       onConfirm: async () => {
-        try {
-          await deleteBranch(b.id);
-          notify('Cabang dihapus', 'success');
-          reload();
-        } catch (e: unknown) {
-          notify(e instanceof Error ? e.message : 'Gagal', 'danger');
-        }
+        try { const { affected } = await bulkUpdateBranchStatus(selectedArr, isActive); notify(`${affected} cabang berhasil di-${label}`, 'success'); setSelectedIds(new Set()); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
       },
     });
   };
 
+  const handleBulkDelete = () =>
+    confirmAction({
+      title: `Hapus ${selectedArr.length} cabang?`, message: 'Semua cabang yang dipilih akan dihapus permanen.',
+      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
+      onConfirm: async () => {
+        try { const { affected } = await bulkDeleteBranches(selectedArr); notify(`${affected} cabang dihapus`, 'success'); setSelectedIds(new Set()); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+      },
+    });
+
   return (
     <>
       <ErpListLayout
-        title="Cabang"
-        code="BRN"
-        loading={loading}
-        error={error}
-        search={search}
-        onSearch={setSearch}
-        onAdd={openCreate}
-        onRefresh={reload}
-        filters={branchFilters}
-        summary={branchSummary}
-        pagination={branchPagination}
+        title="Cabang" code="BRN" loading={loading} error={error}
+        search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
+        filters={branchFilters} summary={branchSummary} pagination={branchPagination}
       >
         <div className="lines">
           <Table>
             <TableHeader>
               <TableRow>
-                <CheckboxHead
-                  checked={someSelected ? 'indeterminate' : allSelected}
-                  onCheckedChange={toggleAll}
-                />
+                <CheckboxHead checked={someSelected ? 'indeterminate' : allSelected} onCheckedChange={toggleAll} />
                 <TableHead>Kode</TableHead>
                 <TableHead>Nama</TableHead>
                 <TableHead>Kota</TableHead>
@@ -291,62 +154,51 @@ export function ErpBranchesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paged.length === 0 ? (
-                <TableEmpty colSpan={7} />
-              ) : (
-                paged.map((b) => (
-                  <TableRow key={b.id} data-selected={selectedIds.has(b.id)}>
-                    <CheckboxCell
-                      checked={selectedIds.has(b.id)}
-                      onCheckedChange={() => toggleRow(b.id)}
-                    />
-                    <TableCell className="mono">{b.code}</TableCell>
-                    <TableCell>{b.name}</TableCell>
-                    <TableCell className="muted">{b.city ?? '—'}</TableCell>
-                    <TableCell className="muted">{b.phone ?? '—'}</TableCell>
-                    <TableCell>
-                      <Badge variant={b.isActive ? 'success' : 'default'} dot>
-                        {b.isActive ? 'Aktif' : 'Nonaktif'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn sm" onClick={() => openEdit(b)}>
-                          Edit
-                        </button>
-                        <button
-                          className="btn sm danger"
-                          onClick={() => handleDelete(b)}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              {paged.length === 0 ? <TableEmpty colSpan={7} /> : paged.map((b) => (
+                <TableRow key={b.id} data-selected={selectedIds.has(b.id)}>
+                  <CheckboxCell checked={selectedIds.has(b.id)} onCheckedChange={() => toggleRow(b.id)} />
+                  <TableCell className="mono">{b.code}</TableCell>
+                  <TableCell>{b.name}</TableCell>
+                  <TableCell className="muted">{b.city ?? '—'}</TableCell>
+                  <TableCell className="muted">{b.phone ?? '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant={b.isActive ? 'success' : 'default'} dot>
+                      {b.isActive ? 'Aktif' : 'Nonaktif'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      <button className="btn sm" onClick={() => openEdit(b)}>Edit</button>
+                      <button className="btn sm danger" onClick={() => handleDelete(b)}>Hapus</button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>
       </ErpListLayout>
 
+      {selectedIds.size > 0 && (
+        <div className="bulk-bar">
+          <span className="count">{selectedIds.size} dipilih</span>
+          <div className="divider" />
+          <button className="ba-btn" onClick={() => handleBulkStatus(true)}>Aktifkan</button>
+          <button className="ba-btn" onClick={() => handleBulkStatus(false)}>Nonaktifkan</button>
+          <div className="divider" />
+          <button className="ba-btn danger" onClick={handleBulkDelete}>Hapus</button>
+          <div className="divider" />
+          <button className="ba-btn" onClick={() => setSelectedIds(new Set())}>Batal</button>
+        </div>
+      )}
+
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>
-          <ModalHeader>
-            <ModalTitle>
-              {editing ? 'Edit Cabang' : 'Tambah Cabang'}
-            </ModalTitle>
-          </ModalHeader>
+          <ModalHeader><ModalTitle>{editing ? 'Edit Cabang' : 'Tambah Cabang'}</ModalTitle></ModalHeader>
           <BranchFormFields data={form} onChange={setForm} />
           <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              Batal
-            </button>
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
+            <button className="btn ghost" onClick={() => setOpen(false)}>Batal</button>
+            <button className="btn primary" onClick={handleSave} disabled={saving}>
               {saving ? 'Menyimpan...' : 'Simpan'}
             </button>
           </ModalFooter>

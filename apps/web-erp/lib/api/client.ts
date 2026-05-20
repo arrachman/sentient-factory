@@ -115,6 +115,6 @@ export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
   return request<T>({ method: 'PATCH', path, body });
 }
 
-export function apiDelete<T>(path: string): Promise<T> {
-  return request<T>({ method: 'DELETE', path });
+export function apiDelete<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>({ method: 'DELETE', path, body });
 }
