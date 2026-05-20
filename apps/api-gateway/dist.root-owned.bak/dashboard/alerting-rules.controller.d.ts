@@ -1,0 +1,358 @@
+import { Request } from 'express';
+import { DashboardAlertingFacadeService } from './dashboard-alerting-facade.service';
+export declare class AlertingRulesController {
+    private readonly dashboardService;
+    constructor(dashboardService: DashboardAlertingFacadeService);
+    alertingBusinessMetrics(moduleKey?: string): Promise<{
+        success: boolean;
+        data: {
+            metric_id: number;
+            metric_key: unknown;
+            label: unknown;
+            short_label: unknown;
+            module_key: unknown;
+            description: unknown;
+            business_definition: unknown;
+            unit: unknown;
+            value_type: unknown;
+            comparison_type: unknown;
+            source_type: unknown;
+            source_ref: unknown;
+            semantic_ref: unknown;
+            system_metric_ref: unknown;
+            supported_dimensions: never[];
+            default_filters: {};
+            tags: never[];
+            owner_name: unknown;
+            review_status: unknown;
+        }[];
+    }>;
+    alertingSystemMetrics(moduleKey?: string): Promise<{
+        success: boolean;
+        data: {
+            system_metric_id: number;
+            metric_key: unknown;
+            label: unknown;
+            module_key: unknown;
+            description: unknown;
+            source_table: unknown;
+            source_type: unknown;
+            resolver_key: unknown;
+            aggregation_type: unknown;
+            value_type: unknown;
+            supported_dimensions: never[];
+            supported_filters: never[];
+            default_filters: {};
+            tags: never[];
+            owner_name: unknown;
+            review_status: unknown;
+        }[];
+    }>;
+    alertingMetricBuilderContext(moduleKey?: string, metricKey?: string): Promise<{
+        success: boolean;
+        data: {
+            metric_id: number;
+            metric_key: unknown;
+            label: unknown;
+            short_label: unknown;
+            module_key: unknown;
+            description: unknown;
+            business_definition: unknown;
+            unit: unknown;
+            value_type: unknown;
+            comparison_type: unknown;
+            semantic_ref: unknown;
+            canonical_semantic_key: unknown;
+            semantic_label: unknown;
+            semantic_entity_key: unknown;
+            semantic_measure_key: unknown;
+            semantic_definition: unknown;
+            semantic_calculation_summary: unknown;
+            system_metric_ref: unknown;
+            system_metric_label: unknown;
+            system_source_table: unknown;
+            system_aggregation_type: unknown;
+            source_type: unknown;
+            source_ref: unknown;
+            supported_dimensions: never[];
+            default_filters: {};
+            tags: never[];
+            owner_name: unknown;
+            review_status: unknown;
+            goal_count: number;
+            goals: never[];
+            condition_mapping_count: number;
+            condition_mappings: never[];
+        }[];
+    }>;
+    alertingInsights(moduleKey?: string, snapshotId?: string): Promise<{
+        success: boolean;
+        data: {
+            snapshot_id: number;
+            metric_key: unknown;
+            metric_label: unknown;
+            module_key: unknown;
+            snapshot_at: unknown;
+            insight_text: unknown;
+            recommendation_preview: unknown;
+            anomaly_level: unknown;
+            status: unknown;
+            is_alert_candidate: boolean;
+            current_value: unknown;
+            comparison_value: unknown;
+            change_pct: unknown;
+            trend_label: unknown;
+            source_ref: unknown;
+            dimensions: {};
+            evidence_payload: {};
+        }[];
+    }>;
+    alertingSavedQueries(channel?: string, limit?: string): Promise<{
+        success: boolean;
+        data: Record<string, unknown>[];
+    }>;
+    alertingRules(moduleKey?: string): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            rule_key: unknown;
+            rule_name: unknown;
+            description: unknown;
+            module_key: unknown;
+            severity: unknown;
+            schedule_value: unknown;
+            primary_channel: unknown;
+            status: unknown;
+            is_active: boolean;
+            last_run_at: unknown;
+            created_at: unknown;
+            metric_label: unknown;
+            recipients: never[];
+        }[];
+    }>;
+    alertingRuleDetail(ruleId: string): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            rule_key: unknown;
+            rule_name: unknown;
+            description: unknown;
+            module_key: unknown;
+            source_type: unknown;
+            source_ref: unknown;
+            metric_id: number | null;
+            system_metric_ref: {} | null;
+            semantic_ref: {} | null;
+            condition_mapping_id: number | null;
+            condition_mapping_key: {} | null;
+            condition_operator_key: {} | null;
+            comparison_type: {} | null;
+            value_type: {} | null;
+            schedule_type: unknown;
+            schedule_value: unknown;
+            severity: unknown;
+            primary_channel: unknown;
+            condition_summary: {} | null;
+            condition_config: {};
+            source_context: {};
+            message_template: {} | null;
+            status: unknown;
+            is_active: boolean;
+            last_run_at: unknown;
+            metric_label: {} | null;
+            recent_events: never[];
+            run_history: never[];
+            recipients: never[];
+        };
+    }>;
+    runAlertingRule(ruleId: string, req: Request & {
+        user?: {
+            username?: string;
+            email?: string;
+        };
+    }): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            matched_snapshot_id: number | null;
+            event: Record<string, unknown> | null;
+        };
+    }>;
+    createAlertingRule(req: Request & {
+        user?: {
+            username?: string;
+            email?: string;
+        };
+    }, body: Record<string, unknown>): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            rule_key: unknown;
+            rule_name: unknown;
+            description: unknown;
+            module_key: unknown;
+            source_type: unknown;
+            source_ref: unknown;
+            metric_id: number | null;
+            system_metric_ref: {} | null;
+            semantic_ref: {} | null;
+            condition_mapping_id: number | null;
+            condition_mapping_key: {} | null;
+            condition_operator_key: {} | null;
+            comparison_type: {} | null;
+            value_type: {} | null;
+            schedule_type: unknown;
+            schedule_value: unknown;
+            severity: unknown;
+            primary_channel: unknown;
+            condition_summary: {} | null;
+            condition_config: {};
+            source_context: {};
+            message_template: {} | null;
+            status: unknown;
+            is_active: boolean;
+            last_run_at: unknown;
+            metric_label: {} | null;
+            recent_events: never[];
+            run_history: never[];
+            recipients: never[];
+        };
+    }>;
+    updateAlertingRule(ruleId: string, req: Request & {
+        user?: {
+            username?: string;
+            email?: string;
+        };
+    }, body: Record<string, unknown>): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            rule_key: unknown;
+            rule_name: unknown;
+            description: unknown;
+            module_key: unknown;
+            source_type: unknown;
+            source_ref: unknown;
+            metric_id: number | null;
+            system_metric_ref: {} | null;
+            semantic_ref: {} | null;
+            condition_mapping_id: number | null;
+            condition_mapping_key: {} | null;
+            condition_operator_key: {} | null;
+            comparison_type: {} | null;
+            value_type: {} | null;
+            schedule_type: unknown;
+            schedule_value: unknown;
+            severity: unknown;
+            primary_channel: unknown;
+            condition_summary: {} | null;
+            condition_config: {};
+            source_context: {};
+            message_template: {} | null;
+            status: unknown;
+            is_active: boolean;
+            last_run_at: unknown;
+            metric_label: {} | null;
+            recent_events: never[];
+            run_history: never[];
+            recipients: never[];
+        };
+    }>;
+    updateAlertingRuleState(ruleId: string, req: Request & {
+        user?: {
+            username?: string;
+            email?: string;
+        };
+    }, body: Record<string, unknown>): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            rule_key: unknown;
+            rule_name: unknown;
+            description: unknown;
+            module_key: unknown;
+            severity: unknown;
+            schedule_value: unknown;
+            primary_channel: unknown;
+            status: unknown;
+            is_active: boolean;
+            last_run_at: unknown;
+            created_at: unknown;
+            metric_label: unknown;
+            recipients: never[];
+        }[];
+    }>;
+    deleteAlertingRule(ruleId: string, req: Request & {
+        user?: {
+            username?: string;
+            email?: string;
+        };
+    }): Promise<{
+        success: boolean;
+        data: {
+            rule_id: number;
+            rule_key: unknown;
+            rule_name: unknown;
+            description: unknown;
+            module_key: unknown;
+            severity: unknown;
+            schedule_value: unknown;
+            primary_channel: unknown;
+            status: unknown;
+            is_active: boolean;
+            last_run_at: unknown;
+            created_at: unknown;
+            metric_label: unknown;
+            recipients: never[];
+        }[];
+    }>;
+    alertingEvents(moduleKey?: string, eventId?: string): Promise<{
+        success: boolean;
+        data: {
+            event_id: number;
+            event_key: unknown;
+            rule_id: number;
+            rule_name: unknown;
+            module_key: unknown;
+            metric_label: {} | null;
+            title: unknown;
+            description: unknown;
+            severity: unknown;
+            status: unknown;
+            source_ref: {} | null;
+            event_payload: {};
+            detected_at: unknown;
+            acknowledged_at: unknown;
+            resolved_at: unknown;
+            deliveries: never[];
+        }[];
+    }>;
+    updateAlertingEvent(eventId: string, req: Request & {
+        user?: {
+            username?: string;
+            email?: string;
+        };
+    }, body: {
+        status?: string;
+    }): Promise<{
+        success: boolean;
+        data: {
+            event_id: number;
+            event_key: unknown;
+            rule_id: number;
+            rule_name: unknown;
+            module_key: unknown;
+            metric_label: {} | null;
+            title: unknown;
+            description: unknown;
+            severity: unknown;
+            status: unknown;
+            source_ref: {} | null;
+            event_payload: {};
+            detected_at: unknown;
+            acknowledged_at: unknown;
+            resolved_at: unknown;
+            deliveries: never[];
+        };
+    }>;
+}

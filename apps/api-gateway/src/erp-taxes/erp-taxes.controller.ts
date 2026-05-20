@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpTaxDto } from './dto/create-erp-tax.dto';
 import { QueryErpTaxDto } from './dto/query-erp-tax.dto';
 import { UpdateErpTaxDto } from './dto/update-erp-tax.dto';
@@ -19,7 +19,7 @@ import { ErpTaxesService } from './erp-taxes.service';
 
 @ApiTags('ERP Taxes')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/taxes')
 export class ErpTaxesController {
   constructor(private readonly service: ErpTaxesService) {}

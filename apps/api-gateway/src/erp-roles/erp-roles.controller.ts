@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { AssignMenusDto } from './dto/assign-menus.dto';
 import { AssignPermissionsDto } from './dto/assign-permissions.dto';
 import { CreateErpRoleDto } from './dto/create-erp-role.dto';
@@ -21,7 +21,7 @@ import { ErpRolesService } from './erp-roles.service';
 
 @ApiTags('ERP Roles')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/roles')
 export class ErpRolesController {
   constructor(private readonly service: ErpRolesService) {}

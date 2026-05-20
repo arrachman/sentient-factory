@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpLocationDto } from './dto/create-erp-location.dto';
 import { QueryErpLocationDto } from './dto/query-erp-location.dto';
 import { UpdateErpLocationDto } from './dto/update-erp-location.dto';
@@ -19,7 +19,7 @@ import { ErpLocationsService } from './erp-locations.service';
 
 @ApiTags('ERP Locations')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/locations')
 export class ErpLocationsController {
   constructor(private readonly service: ErpLocationsService) {}

@@ -11,6 +11,33 @@ import type { Room } from '@/features/admin-rooms/model/types';
 import { dateKey } from './format';
 import type { PeriodRange } from './period';
 
+/**
+ * Pisah ISO-UTC `scheduledStart` jadi komponen WIB (Asia/Jakarta).
+ * Penting: backend simpan booking sebagai UTC; semua slot operasional &
+ * anchor date di UI adalah WIB. Tanpa konversi, booking jam 08:30 WIB
+ * (= 01:30 UTC) tidak match slot start `08:00`.
+ */
+const WIB_FMT = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Asia/Jakarta',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+function wibParts(iso: string): { dateKey: string; hhmm: string } {
+  const parts = WIB_FMT.formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  let hour = get('hour');
+  if (hour === '24') hour = '00';
+  return {
+    dateKey: `${get('year')}-${get('month')}-${get('day')}`,
+    hhmm: `${hour}:${get('minute')}`,
+  };
+}
+
 export type Kpi = {
   sesiPeriod: number;
   utilPsikolog: number;
@@ -148,15 +175,20 @@ export function computeTrend({
   periodBookings: Booking[];
   slotsOfDay: { start: string; end: string }[];
 }): TrendBar[] {
+  const bookingWib = periodBookings.map((b) => ({
+    b,
+    wib: wibParts(b.scheduledStart),
+  }));
+
   if (range.mode === 'Harian') {
-    const dayBookings = periodBookings.filter((b) =>
-      b.scheduledStart.startsWith(range.anchor),
-    );
+    const dayBookings = bookingWib.filter((x) => x.wib.dateKey === range.anchor);
     const bars: TrendBar[] = slotsOfDay.map((s, idx) => {
-      const count = dayBookings.filter((b) => {
-        const t = b.scheduledStart.slice(11, 16);
-        return t === s.start;
-      }).length;
+      // Booking masuk slot bila waktu mulai WIB jatuh di window [start, end).
+      // Strict equality dengan `s.start` akan miss booking walk-in/override yang
+      // tidak persis di slot boundary.
+      const count = dayBookings.filter(
+        (x) => x.wib.hhmm >= s.start && x.wib.hhmm < s.end,
+      ).length;
       return {
         key: `slot-${idx}`,
         label: `Slot ${idx + 1}`,
@@ -172,9 +204,7 @@ export function computeTrend({
   return range.days.map((key) => {
     const d = new Date(key);
     const dayIdx = (d.getDay() + 6) % 7;
-    const count = periodBookings.filter((b) =>
-      b.scheduledStart.startsWith(key),
-    ).length;
+    const count = bookingWib.filter((x) => x.wib.dateKey === key).length;
     const sub = d.toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'short',

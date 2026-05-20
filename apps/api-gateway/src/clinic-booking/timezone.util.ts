@@ -93,6 +93,24 @@ export function dateStrToDateColumn(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00.000Z`);
 }
 
+/**
+ * Format Date jadi "HH.mm" 24-jam di TZ klinik (dot separator).
+ *
+ * Dipakai untuk variabel WA template (`{{waktu}}`, `{{waktu_lama}}`,
+ * `{{waktu_baru}}`, dst) supaya output konsisten — mis. jam 3 sore →
+ * "15.00", bukan "3:00 PM" / "15:00" / "03.00".
+ */
+export function formatClinicTimeOfDay(d: Date, timezone = 'Asia/Jakarta'): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: timezone,
+  })
+    .format(d)
+    .replace(':', '.');
+}
+
 function getTimezoneOffsetString(dateStr: string, timezone: string): string {
   // Compute offset di tanggal tsb (mis. WIB = +07:00 — fixed; tapi negara
   // dengan DST bisa berubah)

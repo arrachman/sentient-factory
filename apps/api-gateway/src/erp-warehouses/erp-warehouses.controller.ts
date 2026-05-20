@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpWarehouseDto } from './dto/create-erp-warehouse.dto';
 import { QueryErpWarehouseDto } from './dto/query-erp-warehouse.dto';
 import { UpdateErpWarehouseDto } from './dto/update-erp-warehouse.dto';
@@ -19,7 +19,7 @@ import { ErpWarehousesService } from './erp-warehouses.service';
 
 @ApiTags('ERP Warehouses')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/warehouses')
 export class ErpWarehousesController {
   constructor(private readonly service: ErpWarehousesService) {}

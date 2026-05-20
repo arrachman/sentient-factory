@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
-import { localPartsInTimezone, localDateAtMidnight } from './timezone.util';
+import { formatClinicTimeOfDay, localPartsInTimezone, localDateAtMidnight } from './timezone.util';
 
 /**
  * Cron-based booking reminders.
@@ -224,7 +224,7 @@ export class BookingReminderScheduler {
             month: 'long',
             year: 'numeric',
           }),
-          waktu: date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          waktu: formatClinicTimeOfDay(date),
         },
         bookingId: booking.id,
       });

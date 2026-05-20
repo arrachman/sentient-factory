@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpUnitDto } from './dto/create-erp-unit.dto';
 import { QueryErpUnitDto } from './dto/query-erp-unit.dto';
 import { UpdateErpUnitDto } from './dto/update-erp-unit.dto';
@@ -19,7 +19,7 @@ import { ErpUnitsService } from './erp-units.service';
 
 @ApiTags('ERP Units')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/units')
 export class ErpUnitsController {
   constructor(private readonly service: ErpUnitsService) {}

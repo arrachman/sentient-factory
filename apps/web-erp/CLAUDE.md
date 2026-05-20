@@ -216,6 +216,86 @@ Berlaku untuk semua form ERP (filter list, dialog create/edit, settings).
 Saat vibe coding sebuah halaman: **baca dulu role/konteks field**, hitung
 jumlah opsi, pilih kontrol yang sesuai sebelum nulis JSX.
 
+Primitive tersedia di [`components/ui/radio-group.tsx`](components/ui/radio-group.tsx):
+
+- `BooleanRadio` — helper untuk boolean field (Aktif/Nonaktif default,
+  bisa override `trueLabel`/`falseLabel` untuk Ya/Tidak dll).
+- `RadioGroup<T>` — generik untuk non-boolean (≥ 2 opsi terbatas yang
+  bisa di-segmented). Pilih ini bila value bukan boolean.
+
+Refactor awal (2026-05-20): 15 binary `Select` di 12 form (items, partners,
+users, branches, warehouses, locations, taxes, units, currencies, payment-
+terms, partner-categories, accounts, document-numberings) sudah diganti
+`BooleanRadio` — jangan re-introduce pattern lama.
+
+### 2.7 Standar baku setiap halaman list ERP (WAJIB, 2026-05-20)
+
+**Setiap** halaman list master/transaksi di `apps/web-erp/**` **wajib**
+menyediakan fitur-fitur berikut. Tidak ada list page yang boleh ship tanpa
+ini — kalau salah satu hilang, halaman itu **belum** selesai. Implementasi
+**harus** lewat organism reusable (`erp-list-layout.tsx` + turunannya),
+bukan ditulis ulang ad-hoc per halaman.
+
+**A. Header / Topbar (app shell, sudah disediakan `app-shell.tsx`)**
+- Breadcrumb hierarkis: `Sentient / ERP → <Modul> → <Entitas>` — sumber
+  label dari `ERP_ROUTE_META` (§2.3).
+- Multi-tab workspace dengan tombol `+` buka tab baru + indikator jumlah tab.
+- Global search "Cari semua…" shortcut **K** → buka `CommandPalette` (§2.4).
+- Notifikasi, activity monitor, shortcut helper, user menu.
+
+**B. Action bar (per halaman list)**
+- Search lokal "Cari …" shortcut **`/`** (fokus ke input search list).
+- Tombol **Export** data (CSV/XLSX, sesuai izin role).
+- Tombol **Refresh** (re-fetch list).
+- Tombol **`+ Tambah <entitas>`** shortcut **N**.
+
+**C. Filter & summary bar**
+- Filter **Status** approval (default "Semua") — chip/select.
+- Tombol ikon filter lanjutan (kolom dinamis bila ada).
+- **Summary agregat** kontekstual (mis. Σ piutang, Σ qty stok, jumlah baris
+  difilter vs total) — diletakkan di kanan/atas tabel.
+- Tombol **Reset filter** (visible begitu ada filter aktif).
+
+**D. Tabel data**
+- Checkbox select per-row + select-all di header.
+- Kolom kanonik per entitas (kode, nama, atribut kunci, nilai numerik, status).
+- **Kode** = link clickable → buka detail/edit, format kanonik per entitas
+  (mis. `CUS-YYMM-NNNN`).
+- Kolom numerik (uang/qty) **right-aligned** + format ribuan Indonesia.
+- Badge status workflow **berwarna konsisten** mengikuti token design system:
+  `Draft`, `Need Approve`, `Approved`, `Rejected`, `Posted` (warna dipetakan
+  sekali di token, jangan hardcode per halaman).
+
+**E. Footer / pagination**
+- Indikator: `Halaman X dari Y · M dari N baris`.
+- Pagination kontrol prev/next.
+
+**F. Keyboard-first navigation (WAJIB, listener di organism list)**
+- `J` / `K` → navigasi baris bawah/atas.
+- `X` → toggle pilih baris aktif.
+- `N` → tambah baru (sama dengan tombol di action bar).
+- `←` / `→` → halaman prev / next.
+- `/` → fokus search lokal · `K` → global palette · `?` → shortcut helper.
+
+**G. Sidebar kiri (app shell)**
+- Modul ikonik dinamis dari `GET /api/erp/sys-menus/my-menus` (§2.3).
+- Toggle tema (matahari/bulan) di paling bawah; toggle bahasa ID/EN.
+
+**Workflow approval**: setiap master/transaksi yang punya status workflow
+**wajib** mengikuti state machine `Draft → Need Approve → Approved/Rejected
+→ Posted`. State machine + transition rules hidup di backend; frontend list
+hanya menampilkan badge + filter, tidak memutuskan transisi.
+
+**Konsekuensi vibe coding:**
+- Bikin list page baru → mulai dari organism `erp-list-layout.tsx` + turunan
+  `generic-list*` / `data-list*`. **Dilarang** start dari blank `<table>`.
+- Butuh fitur list yang belum di organism (mis. grouping, pinned columns)
+  → **stop**, tambahkan ke organism reusable dulu (§2.1 atomic design),
+  baru pakai di halaman.
+- Checklist di atas adalah **definition of done** untuk list page;
+  declare selesai = semua poin A–G terpenuhi atau eskalasi alasan
+  pengecualian ke user.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)

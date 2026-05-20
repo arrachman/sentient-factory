@@ -49,7 +49,7 @@ export function useOwnerDashboard({
   const serviceList = useServiceList({ limit: 200, isActive: true });
   const settingsQuery = useSettings();
   const periodQuery = useBookingList({
-    limit: 1000,
+    limit: 500,
     includeCancelled: false,
     dateFrom: range.from || undefined,
     dateTo: range.to || undefined,

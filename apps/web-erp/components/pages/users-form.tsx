@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import type { ErpUser, ErpUserLevel, CreateUserPayload, UpdateUserPayload } from '@/lib/api/users';
 
 const LEVELS: ErpUserLevel[] = [
@@ -152,18 +153,11 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
         </Select>
       </FormField>
       <FormField label="Status" htmlFor="uf-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="uf-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="uf-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

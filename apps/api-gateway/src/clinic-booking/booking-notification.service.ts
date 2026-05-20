@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
+import { formatClinicTimeOfDay } from './timezone.util';
 
 /**
  * WA notification dispatch untuk booking lifecycle events.
@@ -71,7 +72,7 @@ export class BookingNotificationService {
       // Format tanggal/waktu human-readable Indonesia (Asia/Jakarta)
       // supaya template variable {{tanggal}} {{waktu}} muncul rapi:
       //   tanggal: 'Senin, 11 Mei 2026'
-      //   waktu:   '14:30 WIB'
+      //   waktu:   '14.30 WIB'  (24-jam, dot separator)
       const tanggalFormatted = booking.scheduledStart.toLocaleDateString('id-ID', {
         weekday: 'long',
         day: '2-digit',
@@ -79,11 +80,7 @@ export class BookingNotificationService {
         year: 'numeric',
         timeZone: 'Asia/Jakarta',
       });
-      const waktuFormatted = booking.scheduledStart.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Jakarta',
-      });
+      const waktuFormatted = formatClinicTimeOfDay(booking.scheduledStart);
       const totalFormatted = new Intl.NumberFormat('id-ID').format(
         Number(booking.service.basePrice),
       );
@@ -201,10 +198,7 @@ export class BookingNotificationService {
           month: 'long',
           year: 'numeric',
         }),
-        waktu: new Date(booking.scheduledStart).toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
+        waktu: formatClinicTimeOfDay(new Date(booking.scheduledStart)),
       },
       bookingId: booking.id,
     });

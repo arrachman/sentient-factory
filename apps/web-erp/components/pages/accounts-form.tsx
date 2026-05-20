@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   ACCOUNT_TYPES,
   ACCOUNT_KINDS,
@@ -226,18 +227,13 @@ export function AccountFormFields({
         </Select>
       </FormField>
       <FormField label="Control Account" htmlFor="ac-ctrl">
-        <Select
-          value={data.isControlAccount ? 'yes' : 'no'}
-          onValueChange={(v) => set('isControlAccount', v === 'yes')}
-        >
-          <SelectTrigger id="ac-ctrl">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="no">Tidak</SelectItem>
-            <SelectItem value="yes">Ya</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="ac-ctrl"
+          value={data.isControlAccount}
+          onValueChange={(v) => set('isControlAccount', v)}
+          trueLabel="Ya"
+          falseLabel="Tidak"
+        />
       </FormField>
       <FormField label="Catatan" htmlFor="ac-notes">
         <Input
@@ -247,18 +243,11 @@ export function AccountFormFields({
         />
       </FormField>
       <FormField label="Status" htmlFor="ac-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="ac-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="ac-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

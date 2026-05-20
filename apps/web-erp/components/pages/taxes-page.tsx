@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Modal,
   ModalContent,
@@ -169,18 +170,11 @@ function TaxFormFields({
         </Select>
       </FormField>
       <FormField label="Status" htmlFor="tf-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="tf-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="tf-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

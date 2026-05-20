@@ -17,7 +17,7 @@ import {
   UpdateBookingDto,
 } from './dto/clinic-booking.dto';
 import { VALID_TRANSITIONS } from './booking-state-machine';
-import { localDateAtMidnight } from './timezone.util';
+import { formatClinicTimeOfDay, localDateAtMidnight } from './timezone.util';
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -259,11 +259,7 @@ export class ClinicBookingService {
             month: 'long',
             year: 'numeric',
             timeZone: 'Asia/Jakarta',
-          })} pukul ${nextBooking.scheduledStart.toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Asia/Jakarta',
-          })} WIB`
+          })} pukul ${formatClinicTimeOfDay(nextBooking.scheduledStart)} WIB`
         : '(belum dijadwalkan)';
       void this.notifier.notify(updated, 'Follow-up Post Session', {
         sesi_berikut_tanggal: sesiBerikutTanggal,
@@ -375,9 +371,7 @@ export class ClinicBookingService {
         year: 'numeric',
         timeZone: 'Asia/Jakarta',
       });
-    const fmtWaktu = (d: Date) =>
-      d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }) +
-      ' WIB';
+    const fmtWaktu = (d: Date) => `${formatClinicTimeOfDay(d)} WIB`;
 
     void this.notifier.notify(updated, 'Reschedule Booking', {
       tanggal_lama: fmtTanggal(existing.data.scheduledStart),

@@ -10,13 +10,7 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Modal,
   ModalContent,
@@ -87,18 +81,11 @@ function UnitFormFields({
         />
       </FormField>
       <FormField label="Status" htmlFor="uf2-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="uf2-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="uf2-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

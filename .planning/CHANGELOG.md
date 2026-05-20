@@ -6,6 +6,42 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
 
 ---
 
+## 2026-05-19
+
+### Owner Trend "Distribusi sesi per slot" — fix selalu 0 (TZ + boundary)
+
+- **`fix(web-althea/owner-dashboard)`** — `computeTrend` mode Harian punya 2 bug:
+  1. **TZ mismatch**: bandingkan `scheduledStart.slice(11,16)` (jam UTC dari ISO)
+     ke slot start WIB. Booking 08:30 WIB (= `2026-05-19T01:30:00.000Z`) di-slice
+     jadi `"01:30"`, mismatch dengan slot `"08:30"`.
+  2. **Strict equality** `hhmm === slot.start` → miss booking walk-in/override
+     yang masuk tengah slot (mis. 15:46 di slot 15:15–16:45).
+- **Fix**: tambah helper `wibParts(iso)` pakai `Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' })` di `model/aggregate.ts`; mode Harian match range
+  containment `hhmm >= s.start && hhmm < s.end`; mode Mingguan/Bulanan filter
+  berdasar `wib.dateKey` (bukan `scheduledStart.startsWith(key)`) supaya booking
+  pagi WIB tidak ke-attach ke hari sebelumnya.
+- Verifikasi DB 19 Mei 2026: 5 booking WIB (08:30, 15:15, 15:46, 16:10, 16:27)
+  sekarang ter-distribusi ke Slot 1 (08:30–10:00) = 1 dan Slot 5 (15:15–16:45)
+  = 4. Total 5 sesi (sebelumnya 0).
+- **Update guide**: tambah gotcha "UTC→WIB conversion wajib untuk bucketing
+  per-slot" di `apps/web-althea/CLAUDE.md`.
+
+### Owner Dashboard & Analitik: fix KPI/agregat selalu 0 ("halaman terlihat statis")
+
+- **`fix(web-althea/owner-dashboard)`** — `useOwnerDashboard` minta booking dengan
+  `limit: 1000` ke `/clinic/booking`, tapi backend DTO cap `limit <= 500` →
+  API balas `400 Bad Request ("limit must not be greater than 500")` → TanStack
+  Query error → `periodBookings = []` → semua KPI/Tren/Performa psikolog/Utilisasi
+  ruangan/Top services dihitung dari array kosong → halaman tampak statis (semua 0,
+  filter periode "tidak ngefek" karena re-fetch tetap 400).
+- **Fix**: turunkan `limit` ke `500` di
+  `features/owner-dashboard/hooks/use-owner-dashboard.ts`. Cukup untuk window
+  terbesar (Bulanan ≈ 30 hari × 6 slot/hari = 180 slot/psikolog).
+- **Update guide**: tambah catatan "limit > 500 → 400" di
+  `apps/web-althea/CLAUDE.md` section "Hal yang sering bikin masalah".
+
+---
+
 ## 2026-05-18
 
 ### ERP: Prisma + migrasi + seed seluruh modul pasca-MVP dari db-design

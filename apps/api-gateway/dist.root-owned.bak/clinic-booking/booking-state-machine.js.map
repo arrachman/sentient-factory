@@ -1,0 +1,1 @@
+{"version":3,"file":"booking-state-machine.js","sourceRoot":"","sources":["../../src/clinic-booking/booking-state-machine.ts"],"names":[],"mappings":";;;AAGa,QAAA,iBAAiB,GAA2C;IACvE,UAAU,EAAE,CAAC,aAAa,EAAE,WAAW,CAAC;IACxC,WAAW,EAAE,CAAC,WAAW,EAAE,WAAW,CAAC;IACvC,SAAS,EAAE,EAAE;IACb,SAAS,EAAE,EAAE;CACd,CAAC"}

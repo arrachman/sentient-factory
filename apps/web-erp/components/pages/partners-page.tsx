@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Modal,
   ModalContent,
@@ -155,18 +156,11 @@ function PartnerFormFields({
         />
       </FormField>
       <FormField label="Status" htmlFor="pf-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="pf-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="pf-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

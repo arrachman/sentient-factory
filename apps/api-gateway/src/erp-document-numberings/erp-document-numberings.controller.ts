@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpDocumentNumberingDto } from './dto/create-erp-document-numbering.dto';
 import { QueryErpDocumentNumberingDto } from './dto/query-erp-document-numbering.dto';
 import { UpdateErpDocumentNumberingDto } from './dto/update-erp-document-numbering.dto';
@@ -19,7 +19,7 @@ import { ErpDocumentNumberingsService } from './erp-document-numberings.service'
 
 @ApiTags('ERP Document Numberings')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/document-numberings')
 export class ErpDocumentNumberingsController {
   constructor(private readonly service: ErpDocumentNumberingsService) {}

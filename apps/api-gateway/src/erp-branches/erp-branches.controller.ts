@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpBranchDto } from './dto/create-erp-branch.dto';
 import { QueryErpBranchDto } from './dto/query-erp-branch.dto';
 import { UpdateErpBranchDto } from './dto/update-erp-branch.dto';
@@ -19,7 +19,7 @@ import { ErpBranchesService } from './erp-branches.service';
 
 @ApiTags('ERP Branches')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/branches')
 export class ErpBranchesController {
   constructor(private readonly service: ErpBranchesService) {}

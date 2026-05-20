@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Modal,
   ModalContent,
@@ -141,18 +142,13 @@ function WarehouseFormFields({
         </Select>
       </FormField>
       <FormField label="Izinkan Stok Negatif" htmlFor="wf-neg">
-        <Select
-          value={data.allowNegativeStock ? 'yes' : 'no'}
-          onValueChange={(v) => set('allowNegativeStock', v === 'yes')}
-        >
-          <SelectTrigger id="wf-neg">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="no">Tidak</SelectItem>
-            <SelectItem value="yes">Ya</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="wf-neg"
+          value={data.allowNegativeStock}
+          onValueChange={(v) => set('allowNegativeStock', v)}
+          trueLabel="Ya"
+          falseLabel="Tidak"
+        />
       </FormField>
       <FormField label="Catatan" htmlFor="wf-notes">
         <Input
@@ -163,18 +159,11 @@ function WarehouseFormFields({
         />
       </FormField>
       <FormField label="Status" htmlFor="wf-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="wf-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="wf-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

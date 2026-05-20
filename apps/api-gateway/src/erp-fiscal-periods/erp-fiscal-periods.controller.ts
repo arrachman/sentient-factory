@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpFiscalPeriodDto } from './dto/create-erp-fiscal-period.dto';
 import { QueryErpFiscalPeriodDto } from './dto/query-erp-fiscal-period.dto';
 import { UpdateErpFiscalPeriodDto } from './dto/update-erp-fiscal-period.dto';
@@ -19,7 +19,7 @@ import { ErpFiscalPeriodsService } from './erp-fiscal-periods.service';
 
 @ApiTags('ERP Fiscal Periods')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/fiscal-periods')
 export class ErpFiscalPeriodsController {
   constructor(private readonly service: ErpFiscalPeriodsService) {}

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import type { ErpItem, ErpItemType, CreateItemPayload } from '@/lib/api/items';
 import type { ErpUnit } from '@/lib/api/units';
 import type { ErpItemCategory } from '@/lib/api/item-categories';
@@ -163,18 +164,11 @@ export function ItemFormFields({ data, onChange, units, categories }: ItemFormPr
         />
       </FormField>
       <FormField label="Status" htmlFor="if-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="if-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="if-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

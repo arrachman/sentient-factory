@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpItemDto } from './dto/create-erp-item.dto';
 import { QueryErpItemDto } from './dto/query-erp-item.dto';
 import { UpdateErpItemDto } from './dto/update-erp-item.dto';
@@ -19,7 +19,7 @@ import { ErpItemsService } from './erp-items.service';
 
 @ApiTags('ERP Items')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/items')
 export class ErpItemsController {
   constructor(private readonly service: ErpItemsService) {}

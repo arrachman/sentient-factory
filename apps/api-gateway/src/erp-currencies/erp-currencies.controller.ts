@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpCurrencyDto } from './dto/create-erp-currency.dto';
 import { QueryErpCurrencyDto } from './dto/query-erp-currency.dto';
 import { UpdateErpCurrencyDto } from './dto/update-erp-currency.dto';
@@ -20,7 +20,7 @@ import { ErpCurrenciesService } from './erp-currencies.service';
 
 @ApiTags('ERP Currencies')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/currencies')
 export class ErpCurrenciesController {
   constructor(private readonly service: ErpCurrenciesService) {}

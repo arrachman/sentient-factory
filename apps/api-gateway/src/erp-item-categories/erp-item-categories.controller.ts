@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpItemCategoryDto } from './dto/create-erp-item-category.dto';
 import { QueryErpItemCategoryDto } from './dto/query-erp-item-category.dto';
 import { UpdateErpItemCategoryDto } from './dto/update-erp-item-category.dto';
@@ -19,7 +19,7 @@ import { ErpItemCategoriesService } from './erp-item-categories.service';
 
 @ApiTags('ERP Item Categories')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/item-categories')
 export class ErpItemCategoriesController {
   constructor(private readonly service: ErpItemCategoriesService) {}

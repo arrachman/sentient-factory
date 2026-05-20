@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpPaymentTermDto } from './dto/create-erp-payment-term.dto';
 import { QueryErpPaymentTermDto } from './dto/query-erp-payment-term.dto';
 import { UpdateErpPaymentTermDto } from './dto/update-erp-payment-term.dto';
@@ -19,7 +19,7 @@ import { ErpPaymentTermsService } from './erp-payment-terms.service';
 
 @ApiTags('ERP Payment Terms')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(ErpJwtAuthGuard)
 @Controller('erp/payment-terms')
 export class ErpPaymentTermsController {
   constructor(private readonly service: ErpPaymentTermsService) {}

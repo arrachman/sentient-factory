@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   NUMBERING_RESET_OPTIONS,
   type ErpDocumentNumbering,
@@ -100,18 +101,13 @@ export function NumberingFormFields({
     label: string,
   ) => (
     <FormField label={label} htmlFor={`dn-${key}`}>
-      <Select
-        value={data[key] ? 'yes' : 'no'}
-        onValueChange={(v) => set(key, v === 'yes')}
-      >
-        <SelectTrigger id={`dn-${key}`}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="yes">Ya</SelectItem>
-          <SelectItem value="no">Tidak</SelectItem>
-        </SelectContent>
-      </Select>
+      <BooleanRadio
+        id={`dn-${key}`}
+        value={data[key]}
+        onValueChange={(v) => set(key, v)}
+        trueLabel="Ya"
+        falseLabel="Tidak"
+      />
     </FormField>
   );
 

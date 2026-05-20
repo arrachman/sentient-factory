@@ -12,7 +12,20 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('serviceWorker' in navigator)) return;
-    if (process.env.NODE_ENV !== 'production') return;
+
+    if (process.env.NODE_ENV !== 'production') {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        for (const reg of regs) {
+          reg.unregister().then((ok) => {
+            if (ok) console.info('[sw] dev mode — unregistered stale SW');
+          });
+        }
+      });
+      if ('caches' in window) {
+        caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+      }
+      return;
+    }
 
     navigator.serviceWorker
       .register('/sw.js')
