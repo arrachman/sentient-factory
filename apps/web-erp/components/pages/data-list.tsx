@@ -51,7 +51,7 @@ function ListHeader(p: {
   const { t, mod, q, setQ, status, setStatus, dateOn, setDateOn } = p;
   const { range, setRange, hasStatus, availFilters, filteredLen } = p;
   const { sumTotal, openForm, setPage, setSort } = p;
-  const muted: CSS = { fontSize: 11.5 };
+  const muted: CSS = { fontSize: 'calc(11.5px * var(--font-scale, 1))' };
   return (
     <>
       <div className="page-header">

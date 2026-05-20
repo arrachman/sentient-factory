@@ -291,10 +291,10 @@ export function KasMasukList({
           t={t}
         />
         <div style={{ flex: 1 }} />
-        <span className="muted" style={{ fontSize: 11.5 }}>
+        <span className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
           {filtered.length} {t('baris')}
         </span>
-        <span className="muted" style={{ fontSize: 11.5 }}>
+        <span className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
           ·
         </span>
         <button

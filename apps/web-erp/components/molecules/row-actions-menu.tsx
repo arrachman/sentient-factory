@@ -10,6 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from '@/components/ui/context-menu';
 
 export interface RowActionItem {
   label: string;
@@ -46,10 +53,7 @@ export function RowActionsMenu({ items }: { items: RowActionItem[] }) {
               {it.separatorBefore && <DropdownMenuSeparator />}
               <DropdownMenuItem
                 danger={it.danger}
-                onSelect={(e) => {
-                  e.preventDefault();
-                  it.onSelect();
-                }}
+                onSelect={() => it.onSelect()}
               >
                 {it.label}
               </DropdownMenuItem>
@@ -58,5 +62,38 @@ export function RowActionsMenu({ items }: { items: RowActionItem[] }) {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+  );
+}
+
+/**
+ * Right-click context menu for a table row. Renders the **same** items as
+ * `RowActionsMenu` (kebab) — per `apps/web-erp/CLAUDE.md §2.11`, kanan-klik
+ * di baris = paritas opsi dengan titik tiga. Pakai `asChild` agar trigger
+ * langsung jadi `<tr>` tanpa membungkus elemen non-table di dalam `<tbody>`.
+ */
+export function RowContextMenu({
+  items,
+  children,
+}: {
+  items: RowActionItem[];
+  children: React.ReactElement;
+}) {
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
+      <ContextMenuContent>
+        {items.map((it, i) => (
+          <React.Fragment key={`${it.label}-${i}`}>
+            {it.separatorBefore && <ContextMenuSeparator />}
+            <ContextMenuItem
+              danger={it.danger}
+              onSelect={() => it.onSelect()}
+            >
+              {it.label}
+            </ContextMenuItem>
+          </React.Fragment>
+        ))}
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

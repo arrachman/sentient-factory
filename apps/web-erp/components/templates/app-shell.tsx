@@ -172,10 +172,17 @@ export function AppShell({ workspaceId }: AppShellProps) {
 
   React.useEffect(() => {
     const el = document.documentElement;
-    el.setAttribute('data-density', 'compact');
-    el.setAttribute('data-fontscale', 'base');
-    el.setAttribute('data-sidebar', 'icon');
-    el.setAttribute('data-primary', 'blue');
+    let stored: Record<string, string> = {};
+    try {
+      const raw = window.localStorage.getItem('erp-appearance');
+      if (raw) stored = JSON.parse(raw) as Record<string, string>;
+    } catch {
+      stored = {};
+    }
+    el.setAttribute('data-density', stored.density ?? 'compact');
+    el.setAttribute('data-fontscale', stored.fontScale ?? 'base');
+    el.setAttribute('data-sidebar', stored.sidebar ?? 'icon');
+    el.setAttribute('data-primary', stored.primary ?? 'blue');
   }, []);
 
   const confirmClose = React.useCallback(
@@ -251,9 +258,19 @@ export function AppShell({ workspaceId }: AppShellProps) {
     let cancelled = false;
     getMyPreferences()
       .then((prefs) => {
-        if (cancelled || !prefs?.language) return;
-        const next = prefs.language as Lang;
-        if (next === 'id' || next === 'en' || next === 'ja') setLang(next);
+        if (cancelled || !prefs) return;
+        if (prefs.language) {
+          const next = prefs.language as Lang;
+          if (next === 'id' || next === 'en' || next === 'ja') setLang(next);
+        }
+        const meta = (prefs.metadata ?? {}) as Record<string, string>;
+        const el = document.documentElement;
+        if (meta.density === 'compact' || meta.density === 'comfortable') {
+          el.setAttribute('data-density', meta.density);
+        }
+        if (meta.fontScale) el.setAttribute('data-fontscale', meta.fontScale);
+        if (meta.sidebar) el.setAttribute('data-sidebar', meta.sidebar);
+        if (meta.primary) el.setAttribute('data-primary', meta.primary);
       })
       .catch(() => { /* ignore */ });
     return () => { cancelled = true; };

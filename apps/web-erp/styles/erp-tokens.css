@@ -290,17 +290,28 @@
 
 /* =====================================================================
    Font scale (Setting → Tampilan) — drives body font-size and the
-   row/header heights at the html level.
+   row/header heights at the html level. `--font-scale` is the multiplier
+   consumed by `calc()` rules in erp-components.css so the knob reaches
+   form controls, tables, buttons, and any selector opted in there.
    ===================================================================== */
+html {
+  --font-scale: 1;
+}
 html[data-fontscale='sm'] {
+  --font-scale: 0.9;
   --row-h: 26px;
   --header-h: 26px;
 }
+html[data-fontscale='base'] {
+  --font-scale: 1;
+}
 html[data-fontscale='lg'] {
+  --font-scale: 1.12;
   --row-h: 34px;
   --header-h: 32px;
 }
 html[data-fontscale='xl'] {
+  --font-scale: 1.25;
   --row-h: 38px;
   --header-h: 36px;
 }

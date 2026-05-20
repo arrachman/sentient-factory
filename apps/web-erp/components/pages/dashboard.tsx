@@ -147,7 +147,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: 10.5,
+                fontSize: 'calc(10.5px * var(--font-scale, 1))',
                 color: 'var(--fg-subtle)',
                 marginTop: 4,
                 fontFamily: 'Geist Mono, monospace',
@@ -180,7 +180,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    fontSize: 12,
+                    fontSize: 'calc(12px * var(--font-scale, 1))',
                     padding: '3px 0',
                   }}
                 >
@@ -197,7 +197,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
                     className="mono muted"
                     style={{
                       fontFamily: 'Geist Mono, monospace',
-                      fontSize: 11.5,
+                      fontSize: 'calc(11.5px * var(--font-scale, 1))',
                     }}
                   >
                     {s.v}%
@@ -280,7 +280,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
                   padding: '8px 12px',
                   borderTop: i === 0 ? 0 : '1px solid var(--border)',
                   alignItems: 'center',
-                  fontSize: 12,
+                  fontSize: 'calc(12px * var(--font-scale, 1))',
                 }}
               >
                 <span
@@ -293,7 +293,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
                   }`}
                   style={{
                     fontFamily: 'Geist Mono, monospace',
-                    fontSize: 10,
+                    fontSize: 'calc(10px * var(--font-scale, 1))',
                   }}
                 >
                   {trx.no.split('-')[0]}
@@ -310,7 +310,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
                   </div>
                   <div
                     style={{
-                      fontSize: 11,
+                      fontSize: 'calc(11px * var(--font-scale, 1))',
                       color: 'var(--fg-subtle)',
                       fontFamily: 'Geist Mono, monospace',
                     }}
@@ -361,7 +361,7 @@ export function Dashboard({ t, onNavigate }: DashboardProps) {
                   <span
                     style={{
                       fontFamily: 'Geist Mono, monospace',
-                      fontSize: 11,
+                      fontSize: 'calc(11px * var(--font-scale, 1))',
                     }}
                   >
                     {a.target}

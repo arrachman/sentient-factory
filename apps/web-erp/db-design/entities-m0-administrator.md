@@ -195,10 +195,16 @@ Future extension: FK from `adm_roles` → `adm_password_policies` for per-role p
 | tablePageSize ○ | Int | rows per page — app default 25 |
 | sidebarCollapsed | Boolean | @default(false) |
 | defaultBranchId ○ ➜ | BigInt → Branch | quick-filter default; must be within user's branch access |
-| metadata ○ | Json | extensible per-user overrides |
+| metadata ○ | Json | extensible per-user overrides — see Appearance usage below |
 
 PK is `userId` (1:1). Carries standard audit columns (`createdAt`, `updatedAt`,
 `createdById`, `updatedById`) but **no `deletedAt`** — preferences are upserted, not deleted.
+
+**Appearance page persistence (2026-05-20)**: `Setting → Tampilan`
+(`/settings/appearance`) reuses this table — no separate `adm_user_settings`.
+`theme` & `language` go to the explicit columns; tweaks specific to the
+appearance page (`primary`, `density`, `fontScale`, `sidebar` template) are
+written under `metadata` JSON. API: `GET/PUT /erp/user-preferences/me`.
 
 ---
 

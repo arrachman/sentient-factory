@@ -82,6 +82,7 @@ import { ErpTaxesModule } from './erp-taxes/erp-taxes.module';
 import { ErpPaymentTermsModule } from './erp-payment-terms/erp-payment-terms.module';
 import { ErpSettingsModule } from './erp-settings/erp-settings.module';
 import { ErpUserPreferencesModule } from './erp-user-preferences/erp-user-preferences.module';
+import { ErpNotificationsModule } from './erp-notifications/erp-notifications.module';
 import { ErpSysMenusModule } from './erp-sys-menus/erp-sys-menus.module';
 import { ErpDocumentNumberingsModule } from './erp-document-numberings/erp-document-numberings.module';
 import { ErpFiscalPeriodsModule } from './erp-fiscal-periods/erp-fiscal-periods.module';
@@ -193,6 +194,7 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpPaymentTermsModule,
     ErpSettingsModule,
     ErpUserPreferencesModule,
+    ErpNotificationsModule,
     ErpSysMenusModule,
     ErpDocumentNumberingsModule,
     ErpFiscalPeriodsModule,

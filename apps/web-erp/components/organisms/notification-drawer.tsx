@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Right slide-over Notifikasi panel — ported from prototype
- * `notifications.jsx#NotificationPanel`. Listens to the
- * `toggle-notif` window event (dispatched by topbar bell), keeps
- * local state for the seed list, and re-broadcasts the unread count
- * via `notif-count` so the topbar badge stays in sync.
+ * Right slide-over Notifikasi panel — backed by /erp/notifications/me
+ * (sys_notifications). Listens to the `toggle-notif` window event
+ * (dispatched by topbar bell), keeps local state synced with API, and
+ * re-broadcasts the unread count via `notif-count` so the topbar badge
+ * stays in sync.
  */
 import * as React from 'react';
 import { Icon, type IconName } from '@/components/ui/icons';
@@ -14,84 +14,41 @@ import { DrawerPanel } from '@/components/molecules/drawer-panel';
 import { usePanelToggle } from '@/lib/drawer-toggle';
 import { notify } from '@/lib/feedback';
 import { tGlobal } from '@/lib/mock';
-
-export type NotificationType = 'success' | 'info' | 'danger' | 'warn';
-
-export interface NotificationItem {
-  id: number;
-  type: NotificationType;
-  icon: IconName;
-  title: string;
-  body: string;
-  ts: string;
-  route: string | null;
-  read: boolean;
-}
+import {
+  archiveNotification,
+  listMyNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type ErpNotification,
+} from '@/lib/api/notifications';
 
 type Tab = 'all' | 'unread';
 
-const NOTIFS_SEED: NotificationItem[] = [
-  {
-    id: 1,
-    type: 'warn',
-    icon: 'info',
-    title: 'Menunggu persetujuan',
-    body: 'CR-2605-2398 (Rp 4.250.000) perlu Anda setujui.',
-    ts: '2 mnt lalu',
-    route: 'kas-masuk',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'success',
-    icon: 'check',
-    title: 'Dokumen diposting',
-    body: 'RM-2605-0871 berhasil diposting oleh fitri.h.',
-    ts: '14 mnt lalu',
-    route: 'bank-masuk',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'danger',
-    icon: 'x',
-    title: 'Transaksi ditolak',
-    body: 'CD-2605-1640 ditolak oleh maya.p — cek catatan.',
-    ts: '38 mnt lalu',
-    route: 'kas-keluar',
-    read: false,
-  },
-  {
-    id: 4,
-    type: 'info',
-    icon: 'boxes',
-    title: 'Stok menipis',
-    body: 'Bearing 6204 di bawah minimum (sisa 12 PCS).',
-    ts: '1 jam lalu',
-    route: 'm-item',
-    read: true,
-  },
-  {
-    id: 5,
-    type: 'info',
-    icon: 'receipt',
-    title: 'Giro jatuh tempo',
-    body: 'RG-2605-0231 jatuh tempo besok (20/06/2026).',
-    ts: '3 jam lalu',
-    route: 'giro-masuk',
-    read: true,
-  },
-  {
-    id: 6,
-    type: 'success',
-    icon: 'check',
-    title: 'Backup harian selesai',
-    body: 'Backup database 02:00 WIB sukses.',
-    ts: 'Kemarin',
-    route: null,
-    read: true,
-  },
-];
+const TYPE_ICON: Record<string, IconName> = {
+  success: 'check',
+  info: 'info',
+  warn: 'info',
+  danger: 'x',
+};
+
+function iconFor(type: string): IconName {
+  return TYPE_ICON[type] ?? 'info';
+}
+
+function relativeTime(iso: string): string {
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const diffSec = Math.max(0, Math.floor((now - then) / 1000));
+  if (diffSec < 60) return 'baru saja';
+  const min = Math.floor(diffSec / 60);
+  if (min < 60) return `${min} mnt lalu`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} jam lalu`;
+  const day = Math.floor(hr / 24);
+  if (day === 1) return 'Kemarin';
+  if (day < 7) return `${day} hari lalu`;
+  return new Date(iso).toLocaleDateString('id-ID');
+}
 
 export interface NotificationDrawerProps {
   onNavigate: (route: string) => void;
@@ -125,28 +82,29 @@ function NotifRow({
   item,
   onClick,
 }: {
-  item: NotificationItem;
+  item: ErpNotification;
   onClick: () => void;
 }): React.ReactElement {
+  const read = !!item.readAt;
   return (
     <div className="notif-row" onClick={onClick}>
       <span
         className={`confirm-ic ${item.type}`}
         style={{ width: 30, height: 30 }}
       >
-        <Icon name={item.icon} size={14} />
+        <Icon name={iconFor(item.type)} size={14} />
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={TITLE_STYLE(item.read)}>
+        <div style={TITLE_STYLE(read)}>
           {item.title}
-          {!item.read && <span style={UNREAD_DOT_STYLE} />}
+          {!read && <span style={UNREAD_DOT_STYLE} />}
         </div>
         <div className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', marginTop: 2 }}>
           {item.body}
         </div>
-        <div style={TS_STYLE}>{item.ts}</div>
+        <div style={TS_STYLE}>{relativeTime(item.createdAt)}</div>
       </div>
-      {item.route && (
+      {item.actionUrl && (
         <Icon name="chevright" size={11} className="muted" />
       )}
     </div>
@@ -157,10 +115,12 @@ export function NotificationDrawer({
   onNavigate,
 }: NotificationDrawerProps): React.ReactElement | null {
   const [open, setOpen] = usePanelToggle('toggle-notif');
-  const [items, setItems] = React.useState<NotificationItem[]>(NOTIFS_SEED);
+  const [items, setItems] = React.useState<ErpNotification[]>([]);
   const [tab, setTab] = React.useState<Tab>('all');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  const unread = items.filter((n) => !n.read).length;
+  const unread = items.filter((n) => !n.readAt).length;
 
   React.useEffect(() => {
     window.dispatchEvent(
@@ -168,21 +128,57 @@ export function NotificationDrawer({
     );
   }, [unread]);
 
-  const shown = tab === 'unread' ? items.filter((n) => !n.read) : items;
+  const reload = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data } = await listMyNotifications({ limit: 50 });
+      setItems(data);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Gagal memuat notifikasi';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load + refetch tiap kali drawer dibuka.
+  React.useEffect(() => {
+    if (open) reload();
+  }, [open, reload]);
+
+  // Sekali saat mount supaya badge topbar punya angka tanpa harus buka drawer.
+  React.useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const shown = tab === 'unread' ? items.filter((n) => !n.readAt) : items;
 
   const close = (): void => setOpen(false);
 
-  const markAll = (): void => {
-    setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    notify('Semua notifikasi ditandai dibaca', 'info');
+  const markAll = async (): Promise<void> => {
+    try {
+      await markAllNotificationsRead();
+      const now = new Date().toISOString();
+      setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? now })));
+      notify('Semua notifikasi ditandai dibaca', 'info');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Gagal menandai';
+      notify(msg, 'danger');
+    }
   };
 
-  const openItem = (n: NotificationItem): void => {
-    setItems((prev) =>
-      prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)),
-    );
-    if (n.route) {
-      onNavigate(n.route);
+  const openItem = async (n: ErpNotification): Promise<void> => {
+    if (!n.readAt) {
+      try {
+        const updated = await markNotificationRead(n.id);
+        setItems((prev) => prev.map((x) => (x.id === n.id ? updated : x)));
+      } catch {
+        // ignore; tetap navigate
+      }
+    }
+    if (n.actionUrl) {
+      onNavigate(n.actionUrl);
       setOpen(false);
     }
   };
@@ -219,7 +215,21 @@ export function NotificationDrawer({
         </button>
       </div>
       <div className="drawer-bd scrollbar" style={{ padding: 0, gap: 0 }}>
-        {shown.length === 0 && (
+        {loading && (
+          <div className="cm-empty" style={{ padding: 32 }}>
+            <div className="muted">{tGlobal('Memuat...')}</div>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="cm-empty" style={{ padding: 32 }}>
+            <Icon name="info" size={26} />
+            <div className="muted" style={{ marginTop: 8 }}>{error}</div>
+            <button className="btn ghost sm" style={{ marginTop: 12 }} onClick={reload}>
+              <Icon name="refresh" size={11} /> {tGlobal('Coba lagi')}
+            </button>
+          </div>
+        )}
+        {!loading && !error && shown.length === 0 && (
           <div className="cm-empty" style={{ padding: 48 }}>
             <Icon name="bell" size={26} />
             <div className="muted" style={{ marginTop: 8 }}>
@@ -227,8 +237,8 @@ export function NotificationDrawer({
             </div>
           </div>
         )}
-        {shown.map((n) => (
-          <NotifRow key={n.id} item={n} onClick={() => openItem(n)} />
+        {!loading && !error && shown.map((n) => (
+          <NotifRow key={n.id} item={n} onClick={() => void openItem(n)} />
         ))}
       </div>
       <div className="drawer-ft">
@@ -248,3 +258,11 @@ export function NotificationDrawer({
     </DrawerPanel>
   );
 }
+
+// Keep export shape compatible with previous imports (NotificationItem,
+// NotificationType) by re-exporting useful API types.
+export type { ErpNotification as NotificationItem } from '@/lib/api/notifications';
+export type NotificationType = 'success' | 'info' | 'danger' | 'warn';
+
+// Re-export for unit tests that need to detect archive action.
+export { archiveNotification };

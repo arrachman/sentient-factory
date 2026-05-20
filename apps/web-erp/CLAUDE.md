@@ -820,6 +820,32 @@ dengan short-id legacy (`master-data`, `administrator`, `md-items`, ...)
 yang menabrak/duplicate setiap `npm run db:seed`. **Blok itu dihapus
 2026-05-20.** Jangan pernah re-introduce ERP menu seeding di `seed.ts`.
 
+**M2 Finance — paritas legacy m2-finance (2026-05-20).** Sebelumnya seed M2
+cuma 4 transaksi + 1 report (`Journal Entries`, `AR Receipts`, `AP Payments`,
+`Giros`, `General Ledger`) — terlalu ringkas, tidak match legacy. Sekarang
+13 transaction items + 1 report, title **English**, ditahan `legacyCode`
+sebagai 2–3 huruf legacy:
+
+| code | title | legacyCode | path |
+| --- | --- | --- | --- |
+| M2.TX.CASH-RECEIPT | Cash Receipt | CR | /finance/cash-receipts |
+| M2.TX.CASH-DISBURSEMENT | Cash Disbursement | CD | /finance/cash-disbursements |
+| M2.TX.BANK-DISBURSEMENT | Bank Disbursement | BD | /finance/bank-disbursements |
+| M2.TX.CASHBANK-TRANSFER | Cash/Bank Transfer | CB | /finance/cashbank-transfers |
+| M2.TX.RECEIPT-GIRO | Receipt Giro | RG | /finance/receipt-giros |
+| M2.TX.SEND-GIRO | Send Giro | SG | /finance/send-giros |
+| M2.TX.RECEIPT-GIRO-CLR | Receipt Giro Clearing | RGC | /finance/receipt-giro-clearings |
+| M2.TX.SEND-GIRO-CLR | Send Giro Clearing | SGC | /finance/send-giro-clearings |
+| M2.TX.RECEIPT-MEMO | Receipt Memo | RM | /finance/receipt-memos |
+| M2.TX.SEND-MEMO | Send Memo | SM | /finance/send-memos |
+| M2.TX.GENERAL-JOURNAL | General Journal | GJ | /finance/general-journals |
+| M2.TX.ADJUSTMENT-JOURNAL | Adjustment Journal | AJ | /finance/adjustment-journals |
+| M2.RPT.LEDGER | General Ledger | — | /finance/ledger |
+
+Padanan ID untuk konteks user: CR=Kas Masuk, CD=Kas Keluar, BD=Bank
+Keluar, RG=Giro Masuk, SG=Giro Keluar. Path FE belum dibangun — menu
+muncul di sidebar, route placeholder akan ditambah saat slicing modul M2.
+
 ### 2.18 MD legacy batch (2026-05-20) — 20 master baru dari MyERP+ m1_*
 
 Wave besar menambah 20 entitas master legacy yang belum di-implement.

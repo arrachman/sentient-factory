@@ -192,10 +192,10 @@ export function ListToolbar({
         t={t}
       />
       <div style={{ flex: 1 }} />
-      <span className="muted" style={{ fontSize: 11.5 }}>
+      <span className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
         Σ {fmtIDR(sumTotal)}
       </span>
-      <span className="muted" style={{ fontSize: 11.5 }}>
+      <span className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
         · {filteredLen} {t('baris')}
       </span>
       <button

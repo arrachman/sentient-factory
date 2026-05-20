@@ -96,10 +96,13 @@ export class ErpWarehousesService {
       where.isActive = query.isActive;
     }
 
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpWarehouse.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [sortBy]: sortDir }],
         skip,
         take: limit,
         include: {

@@ -26,7 +26,7 @@ export function AppQueryProvider({ children }: { children: ReactNode }) {
     <QueryClientProvider client={client}>
       {children}
       {process.env.NODE_ENV === 'development' && (
-        <ReactQueryDevtools initialIsOpen={false} />
+        <ReactQueryDevtools initialIsOpen={false} buttonPosition="none" />
       )}
     </QueryClientProvider>
   );

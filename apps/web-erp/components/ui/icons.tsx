@@ -337,6 +337,23 @@ const ICON_PATHS = {
       <circle cx="8" cy="12.5" r="1" />
     </>
   ),
+  'alert-triangle': (
+    <>
+      <path d="M8 2 1.5 13.5h13z" />
+      <path d="M8 6.5v3.5M8 11.5v.01" />
+    </>
+  ),
+  'wifi-off': (
+    <>
+      <path d="M1.5 5.5C3 4 5.4 3 8 3c.7 0 1.4.07 2 .2" />
+      <path d="M14.5 5.5a10 10 0 0 0-2.3-1.6" />
+      <path d="M4 8.2A6.5 6.5 0 0 1 8 6.5" />
+      <path d="M12 8.2c-.5-.4-1.1-.7-1.7-.9" />
+      <path d="M6.5 10.7A3 3 0 0 1 8 10.2" />
+      <path d="M8 13.5v.01" />
+      <path d="m2 2 12 12" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

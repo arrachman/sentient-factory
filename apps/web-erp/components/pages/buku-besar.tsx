@@ -124,7 +124,7 @@ export function BukuBesar({ t }: BukuBesarProps) {
     padding: '10px 16px',
     borderBottom: '1px solid var(--border)',
     background: 'var(--panel-2)',
-    fontSize: 12.5,
+    fontSize: 'calc(12.5px * var(--font-scale, 1))',
     flexWrap: 'wrap',
   };
   const monoStyle: React.CSSProperties = { fontFamily: 'Geist Mono, monospace' };
@@ -186,7 +186,7 @@ export function BukuBesar({ t }: BukuBesarProps) {
           {accounts.length === 0 && (
             <div
               className="muted"
-              style={{ padding: 16, fontSize: 12 }}
+              style={{ padding: 16, fontSize: 'calc(12px * var(--font-scale, 1))' }}
             >
               Akun tidak ditemukan
             </div>

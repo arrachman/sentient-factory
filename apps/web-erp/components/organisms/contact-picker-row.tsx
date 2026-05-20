@@ -83,7 +83,7 @@ export function ContactPickerRow({
         <div
           className="muted"
           style={{
-            fontSize: 10.5,
+            fontSize: 'calc(10.5px * var(--font-scale, 1))',
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
           }}

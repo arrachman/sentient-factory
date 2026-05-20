@@ -68,7 +68,7 @@ export function ContactPickerPreview({
               className="mono"
               style={{
                 ...MONO_FONT,
-                fontSize: 11,
+                fontSize: 'calc(11px * var(--font-scale, 1))',
                 color: 'var(--fg-muted)',
               }}
             >
@@ -102,7 +102,7 @@ export function ContactPickerPreview({
         </div>
         <div className="cm-field">
           <span className="muted">NPWP</span>
-          <span className="mono" style={{ ...MONO_FONT, fontSize: 11.5 }}>
+          <span className="mono" style={{ ...MONO_FONT, fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
             {active.npwp}
           </span>
         </div>

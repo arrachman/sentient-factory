@@ -218,7 +218,7 @@ export function TrxFormFieldsMid({
               gap: 4,
               position: 'absolute',
               right: 8,
-              fontSize: 11.5,
+              fontSize: 'calc(11.5px * var(--font-scale, 1))',
               color: 'var(--fg-muted)',
             }}
           >

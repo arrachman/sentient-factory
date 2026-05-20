@@ -156,7 +156,7 @@ export function Stat({ label, value, accent, mono }: StatProps): React.ReactElem
       <div className="cm-stat-label">{label}</div>
       <div
         className={cn('cm-stat-val', accent === 'danger' && 'danger')}
-        style={mono ? { fontFamily: 'Geist Mono, monospace', fontSize: 12 } : undefined}
+        style={mono ? { fontFamily: 'Geist Mono, monospace', fontSize: 'calc(12px * var(--font-scale, 1))' } : undefined}
       >
         {value}
       </div>

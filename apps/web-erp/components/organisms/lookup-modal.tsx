@@ -188,7 +188,7 @@ export function LookupModal({
             <span>{cfg.title}</span>
             <span
               className="muted"
-              style={{ fontWeight: 400, fontSize: 11.5, marginLeft: 4 }}
+              style={{ fontWeight: 400, fontSize: 'calc(11.5px * var(--font-scale, 1))', marginLeft: 4 }}
             >
               · {rows.length}
             </span>

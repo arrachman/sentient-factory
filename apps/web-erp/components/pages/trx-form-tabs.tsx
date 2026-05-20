@@ -70,7 +70,7 @@ export function TrxFormTabs({
           padding: '0 6px',
         }}
       >
-        <span className="muted" style={{ fontSize: 11.5 }}>
+        <span className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
           {t('Pencarian CoA')}
         </span>
         <div
@@ -114,7 +114,7 @@ export function TrxInfoPanel({ label }: TrxInfoPanelProps): React.ReactElement {
     <div
       style={{
         padding: 16,
-        fontSize: 12.5,
+        fontSize: 'calc(12.5px * var(--font-scale, 1))',
         color: 'var(--fg-muted)',
         background: 'var(--panel)',
         flex: 1,
@@ -133,7 +133,7 @@ export function TrxAuditPanel(): React.ReactElement {
         padding: 16,
         background: 'var(--panel)',
         flex: 1,
-        fontSize: 12.5,
+        fontSize: 'calc(12.5px * var(--font-scale, 1))',
       }}
     >
       {ACTIVITY.slice(0, 5).map((a, i) => (

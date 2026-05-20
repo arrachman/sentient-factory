@@ -97,7 +97,7 @@ function TrxLineRow({
   return (
     <tr>
       <td>
-        <div className="cell muted" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+        <div className="cell muted" style={{ fontFamily: 'var(--font-mono)', fontSize: 'calc(11px * var(--font-scale, 1))' }}>
           {idx}
         </div>
       </td>
@@ -199,7 +199,7 @@ export function TrxLines({
         <button
           type="button"
           className="btn ghost sm"
-          style={{ fontSize: 11, gap: 4 }}
+          style={{ fontSize: 'calc(11px * var(--font-scale, 1))', gap: 4 }}
           onClick={() => setConfigOpen((o) => !o)}
           aria-expanded={configOpen}
           aria-haspopup="dialog"
@@ -216,7 +216,7 @@ export function TrxLines({
               borderRadius: '50%',
               background: 'var(--primary)',
               color: 'var(--primary-fg)',
-              fontSize: 9,
+              fontSize: 'calc(9px * var(--font-scale, 1))',
               fontWeight: 700,
             }}>
               {columns.filter((c) => !c.visible).length}

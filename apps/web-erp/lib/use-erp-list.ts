@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { notify } from '@/lib/feedback';
+import { toToastMessage } from '@/lib/error-message';
 import type { PaginatedMeta, PaginatedResponse } from '@/lib/api/types';
 
 export interface ErpListState<T> {
@@ -89,7 +90,7 @@ export function useErpList<T>(
         if (cancelled) return;
         const msg = err instanceof Error ? err.message : 'Gagal memuat data';
         dispatch({ type: 'error', message: msg });
-        notify(msg, 'danger');
+        notify(toToastMessage(msg), 'danger');
       });
 
     return () => {

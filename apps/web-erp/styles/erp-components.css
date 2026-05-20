@@ -76,7 +76,7 @@ body {
   align-items: center;
   gap: 8px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: calc(13px * var(--font-scale, 1));
   letter-spacing: -0.01em;
 }
 .topbar .brand .logo {
@@ -112,7 +112,7 @@ body {
   align-items: center;
   gap: 6px;
   color: var(--fg-muted);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
 }
 .breadcrumb .sep {
   color: var(--fg-faint);
@@ -153,7 +153,7 @@ body {
   border-radius: var(--radius);
   color: var(--fg-muted);
   font: inherit;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   cursor: pointer;
 }
 .cmd-trigger:hover {
@@ -174,7 +174,7 @@ body {
   height: 18px;
   padding: 0 4px;
   font-family: 'Geist Mono', ui-monospace, monospace;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--font-scale, 1));
   font-weight: 500;
   background: var(--kbd-bg);
   color: var(--fg-muted);
@@ -243,7 +243,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: calc(10px * var(--font-scale, 1));
   font-weight: 600;
 }
 
@@ -312,7 +312,7 @@ body {
   overscroll-behavior: contain;
 }
 .flyout .group-label {
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--font-scale, 1));
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--fg-faint);
@@ -331,14 +331,14 @@ body {
   gap: 8px;
   padding: 5px 8px;
   border-radius: 4px;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
   color: var(--fg);
   cursor: pointer;
   text-decoration: none;
 }
 .flyout-item .code {
   font-family: 'Geist Mono', monospace;
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--font-scale, 1));
   color: var(--fg-subtle);
   margin-left: auto;
   padding: 1px 5px;
@@ -1846,7 +1846,7 @@ body {
   border-bottom: 0;
   border-radius: 6px 6px 0 0;
   color: var(--fg-muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
@@ -1883,7 +1883,7 @@ body {
 }
 .tab-chip .tab-code {
   font-family: 'Geist Mono', monospace;
-  font-size: 9.5px;
+  font-size: calc(9.5px * var(--font-scale, 1));
   color: var(--fg-subtle);
   background: var(--panel-2);
   padding: 1px 4px;
@@ -1925,7 +1925,7 @@ body {
   color: var(--fg);
 }
 .tab-count {
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--font-scale, 1));
   color: var(--fg-faint);
   padding: 0 8px;
   align-self: center;
@@ -1968,7 +1968,7 @@ body {
   border: 0;
   border-radius: 5px;
   color: var(--fg);
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
@@ -2223,14 +2223,14 @@ body {
 .user-menu-hd .avatar {
   width: 32px;
   height: 32px;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
 }
 .user-menu-hd .nm {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
   font-weight: 600;
 }
 .user-menu-hd .em {
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale, 1));
   color: var(--fg-subtle);
 }
 .user-menu-item {
@@ -2244,7 +2244,7 @@ body {
   background: transparent;
   color: var(--fg);
   font: inherit;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
   cursor: pointer;
   text-align: left;
 }
@@ -2260,7 +2260,7 @@ body {
 .user-menu-item .mk {
   margin-left: auto;
   color: var(--fg-faint);
-  font-size: 10.5px;
+  font-size: calc(10.5px * var(--font-scale, 1));
   font-family: 'Geist Mono', monospace;
 }
 .user-menu-sep {
@@ -2732,18 +2732,36 @@ body {
   gap: 13px;
 }
 
-/* === Font scale (Setting → Tampilan) === */
-[data-fontscale='sm'] body {
-  font-size: 12px;
+/* === Font scale (Setting → Tampilan) ===
+   Drives the whole UI via `--font-scale` (defined in erp-tokens.css).
+   `body` sets the base; selectors below opt-in elements that break
+   font inheritance (form controls, table cells with explicit size)
+   so the knob reaches them too. Inline `style={{ fontSize: NN }}`
+   in components is NOT scaled here — refactor those to rem/var later. */
+body {
+  font-size: calc(13px * var(--font-scale, 1));
 }
-[data-fontscale='base'] body {
-  font-size: 13px;
+input,
+select,
+textarea,
+button {
+  font-size: calc(13px * var(--font-scale, 1));
 }
-[data-fontscale='lg'] body {
-  font-size: 14.5px;
+.tbl,
+.tbl th,
+.tbl td {
+  font-size: calc(12.5px * var(--font-scale, 1));
 }
-[data-fontscale='xl'] body {
-  font-size: 16px;
+.btn {
+  font-size: calc(12px * var(--font-scale, 1));
+}
+.muted,
+.sub,
+.hint {
+  font-size: calc(11.5px * var(--font-scale, 1));
+}
+.mono {
+  font-size: calc(12px * var(--font-scale, 1));
 }
 
 /* === Notification badge on bell === */
@@ -2838,7 +2856,7 @@ body {
 /* === Sidebar template (Setting → Tampilan) === */
 .sidebar .nav-label {
   display: none;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--font-scale, 1));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

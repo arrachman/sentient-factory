@@ -111,7 +111,7 @@ export function Statistik({ t, onNavigate }: StatistikProps) {
                 12 bulan terakhir (juta IDR)
               </div>
             </div>
-            <div className="more" style={{ display: 'flex', gap: 12, fontSize: 11.5 }}>
+            <div className="more" style={{ display: 'flex', gap: 12, fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ width: 8, height: 8, borderRadius: 2, background: 'var(--primary)' }} /> Pendapatan
               </span>
@@ -133,7 +133,7 @@ export function Statistik({ t, onNavigate }: StatistikProps) {
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
-                fontSize: 10.5,
+                fontSize: 'calc(10.5px * var(--font-scale, 1))',
                 color: 'var(--fg-subtle)',
                 marginTop: 6,
                 fontFamily: 'Geist Mono, monospace',
@@ -159,11 +159,11 @@ export function Statistik({ t, onNavigate }: StatistikProps) {
               {byBranch.map((s) => (
                 <div
                   key={s.label}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, padding: '3px 0' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 'calc(12px * var(--font-scale, 1))', padding: '3px 0' }}
                 >
                   <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color }} />
                   <span style={{ flex: 1 }}>{s.label}</span>
-                  <span className="mono muted" style={{ fontFamily: 'Geist Mono, monospace', fontSize: 11.5 }}>
+                  <span className="mono muted" style={{ fontFamily: 'Geist Mono, monospace', fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
                     {s.v}%
                   </span>
                 </div>
@@ -186,7 +186,7 @@ export function Statistik({ t, onNavigate }: StatistikProps) {
           <div style={{ padding: '6px 12px 12px' }}>
             {topCust.map((c, i) => (
               <div key={c.n} style={{ padding: '7px 0', borderTop: i ? '1px solid var(--border)' : 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'calc(12px * var(--font-scale, 1))', marginBottom: 4 }}>
                   <span>{c.n}</span>
                   <span className="mono muted" style={{ fontFamily: 'Geist Mono, monospace' }}>
                     Rp {fmtCompact(c.v)}
@@ -218,10 +218,10 @@ export function Statistik({ t, onNavigate }: StatistikProps) {
                   padding: '8px 12px',
                   borderTop: i ? '1px solid var(--border)' : 0,
                   alignItems: 'center',
-                  fontSize: 12,
+                  fontSize: 'calc(12px * var(--font-scale, 1))',
                 }}
               >
-                <span className="pill info" style={{ fontFamily: 'Geist Mono, monospace', fontSize: 10 }}>
+                <span className="pill info" style={{ fontFamily: 'Geist Mono, monospace', fontSize: 'calc(10px * var(--font-scale, 1))' }}>
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -255,13 +255,13 @@ export function Statistik({ t, onNavigate }: StatistikProps) {
                   justifyContent: 'center',
                 }}
               >
-                <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'Geist Mono, monospace' }}>82%</div>
-                <div className="muted" style={{ fontSize: 10.5 }}>
+                <div style={{ fontSize: 'calc(22px * var(--font-scale, 1))', fontWeight: 700, fontFamily: 'Geist Mono, monospace' }}>82%</div>
+                <div className="muted" style={{ fontSize: 'calc(10.5px * var(--font-scale, 1))' }}>
                   OEE
                 </div>
               </div>
             </div>
-            <div className="muted" style={{ fontSize: 11.5, textAlign: 'center' }}>
+            <div className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', textAlign: 'center' }}>
               Target 85% · selisih -3 pts
             </div>
           </div>

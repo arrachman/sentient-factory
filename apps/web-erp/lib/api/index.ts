@@ -9,7 +9,7 @@ export type {
   PaginationParams,
 } from './types';
 
-export { ErpApiError, apiGet, apiPost, apiPatch, apiDelete } from './client';
+export { ErpApiError, apiGet, apiPost, apiPatch, apiPut, apiDelete } from './client';
 
 export type { ErpAuthUser } from './auth';
 export { login, logout, getMe } from './auth';
@@ -46,6 +46,12 @@ export {
 
 export type { ErpSetting } from './settings';
 export { getSettings, updateSetting } from './settings';
+
+export type {
+  ErpUserPreferences,
+  UpdateUserPreferencesInput,
+} from './user-preferences';
+export { getMyPreferences, updateMyPreferences } from './user-preferences';
 
 // F3 Master Data resources
 export type {

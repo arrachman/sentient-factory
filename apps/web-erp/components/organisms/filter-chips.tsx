@@ -111,7 +111,7 @@ const DR_INPUT: React.CSSProperties = {
   borderRadius: 5,
   color: 'var(--fg)',
   font: 'inherit',
-  fontSize: 11.5,
+  fontSize: 'calc(11.5px * var(--font-scale, 1))',
 };
 
 interface DateRangeChipProps {

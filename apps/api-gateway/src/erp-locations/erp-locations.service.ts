@@ -87,10 +87,13 @@ export class ErpLocationsService {
       where.isActive = query.isActive;
     }
 
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpLocation.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [sortBy]: sortDir }],
         skip,
         take: limit,
         include: { branch: { select: { id: true, code: true, name: true } } },

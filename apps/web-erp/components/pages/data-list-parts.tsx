@@ -90,7 +90,7 @@ function DLCell({ col, value }: { col: RegistryCol; value: string | number }) {
       height: "100%",
       background: n >= 100 ? "var(--success)" : "var(--primary)",
     };
-    const lbl: CSS = { fontSize: 11, minWidth: 30, textAlign: "right" };
+    const lbl: CSS = { fontSize: 'calc(11px * var(--font-scale, 1))', minWidth: 30, textAlign: "right" };
     return (
       <div style={wrap}>
         <div style={PCT_TRACK}>

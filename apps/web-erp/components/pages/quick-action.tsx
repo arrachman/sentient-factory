@@ -26,7 +26,7 @@ export function QuickAction({ icon, label, hint, onClick }: QuickActionProps) {
         cursor: 'pointer',
         textAlign: 'left',
         font: 'inherit',
-        fontSize: 12,
+        fontSize: 'calc(12px * var(--font-scale, 1))',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'var(--panel-hover)';
@@ -49,12 +49,12 @@ export function QuickAction({ icon, label, hint, onClick }: QuickActionProps) {
       >
         <Icon name={icon} size={12} />
       </span>
-      <span style={{ flex: 1, fontSize: 11.5 }}>{label}</span>
+      <span style={{ flex: 1, fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>{label}</span>
       <span
         style={{
           fontFamily: 'Geist Mono, monospace',
           color: 'var(--fg-subtle)',
-          fontSize: 10.5,
+          fontSize: 'calc(10.5px * var(--font-scale, 1))',
         }}
       >
         {hint}

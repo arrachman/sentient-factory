@@ -407,38 +407,256 @@ async function seedMenus(): Promise<Map<string, bigint>> {
   // ── M2–M14: Module stubs (legacy MyERP+ modules) ─────────────────────────
   // Roots only — items belum di-port. Path null = sidebar tampil tapi belum
   // navigable; expand per modul saat fitur dibangun. Tidak ada m9 di legacy.
+  // Module roots Senti ERP. Dashboard pinned to top. M10 (HR & Payroll),
+  // M11 (Hospital — Althea vertical), M13 (Academic), M14 (Cooperative)
+  // dihapus 2026-05-20: bukan scope ERP manufaktur, belum di module-roadmap.
+  // M11 secara eksplisit milik apps/web-althea (CLAUDE.md §1).
   const moduleStubs: Array<{ code: string; title: string; icon: string; legacyCode: string; sortOrder: number }> = [
-    { code: 'M2',  title: 'Finance & Accounting', icon: 'calculator',   legacyCode: '2-1',  sortOrder: 3  },
-    { code: 'M3',  title: 'Warehouse & Inventory', icon: 'boxes',       legacyCode: '3-1',  sortOrder: 4  },
-    { code: 'M4',  title: 'Purchasing',            icon: 'shopping-cart', legacyCode: '4-1',  sortOrder: 5  },
-    { code: 'M5',  title: 'Sales',                 icon: 'trending-up',  legacyCode: '5-1',  sortOrder: 6  },
-    { code: 'M6',  title: 'Production',            icon: 'factory',      legacyCode: '6-1',  sortOrder: 7  },
-    { code: 'M7',  title: 'Fixed Assets',          icon: 'building',     legacyCode: '7-1',  sortOrder: 8  },
-    { code: 'M8',  title: 'Dashboard',             icon: 'layout-dashboard', legacyCode: '8-1', sortOrder: 9  },
-    { code: 'M10', title: 'HR & Payroll',          icon: 'users-round',  legacyCode: '10-1', sortOrder: 10 },
-    { code: 'M11', title: 'Hospital',              icon: 'hospital',     legacyCode: '11-1', sortOrder: 11 },
-    { code: 'M12', title: 'Point of Sales',        icon: 'shopping-bag', legacyCode: '12-1', sortOrder: 12 },
-    { code: 'M13', title: 'Academic',              icon: 'graduation-cap', legacyCode: '13-1', sortOrder: 13 },
-    { code: 'M14', title: 'Cooperative',           icon: 'handshake',    legacyCode: '14-1', sortOrder: 14 },
+    { code: 'M8',  title: 'Dashboard',              icon: 'layout-dashboard', legacyCode: '8-1', sortOrder: 0 },
+    // M0/M1 sudah di-upsert di atas dengan sortOrder 1 & 2.
+    { code: 'M2',  title: 'Finance & Accounting',  icon: 'calculator',     legacyCode: '2-1',  sortOrder: 3 },
+    { code: 'M3',  title: 'Warehouse & Inventory', icon: 'boxes',          legacyCode: '3-1',  sortOrder: 4 },
+    { code: 'M4',  title: 'Purchasing',            icon: 'shopping-cart',  legacyCode: '4-1',  sortOrder: 5 },
+    { code: 'M5',  title: 'Sales',                 icon: 'trending-up',    legacyCode: '5-1',  sortOrder: 6 },
+    { code: 'M6',  title: 'Production',            icon: 'factory',        legacyCode: '6-1',  sortOrder: 7 },
+    { code: 'M7',  title: 'Fixed Assets',          icon: 'building',       legacyCode: '7-1',  sortOrder: 8 },
+    { code: 'M12', title: 'Point of Sale',         icon: 'shopping-bag',   legacyCode: '12-1', sortOrder: 9 },
   ];
   for (const s of moduleStubs) {
     await upsertMenu({ code: s.code, title: s.title, icon: s.icon, type: ErpMenuType.MODULE, sortOrder: s.sortOrder, legacyCode: s.legacyCode });
   }
 
-  // M2 Finance — skeleton CRUD items (m2 MVP, no posting/balancing yet)
+  // M2 Finance — paritas dengan legacy m2-finance (13 transaction modules + GL).
+  // Legacy codes: CR=Cash Receipt, CD=Cash Disbursement, BD=Bank Disbursement,
+  // CB=Cash/Bank Transfer, RG=Receipt Giro, SG=Send Giro, RGC/SGC=Giro Clearing,
+  // RM=Receipt Memo (AR settle), SM=Send Memo (AP settle), GJ=General Journal,
+  // AJ=Adjustment Journal. Title English (keputusan 2026-05-20).
   const m2Id = menuIds.get('M2');
   if (m2Id) {
     const m2TxGrp = await upsertMenu({ code: 'M2.TX', title: 'Transactions', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 1 });
     await upsertItems([
-      { code: 'M2.TX.JOURNAL',     title: 'Journal Entries', path: '/keuangan/journal-entries' },
-      { code: 'M2.TX.AR-RECEIPT',  title: 'AR Receipts',     path: '/keuangan/ar-receipts' },
-      { code: 'M2.TX.AP-PAYMENT',  title: 'AP Payments',     path: '/keuangan/ap-payments' },
-      { code: 'M2.TX.GIRO',        title: 'Giros',           path: '/keuangan/giros' },
+      { code: 'M2.TX.CASH-RECEIPT',       title: 'Cash Receipt',         path: '/finance/cash-receipts',       legacyCode: 'CR' },
+      { code: 'M2.TX.CASH-DISBURSEMENT',  title: 'Cash Disbursement',    path: '/finance/cash-disbursements',  legacyCode: 'CD' },
+      { code: 'M2.TX.BANK-DISBURSEMENT',  title: 'Bank Disbursement',    path: '/finance/bank-disbursements',  legacyCode: 'BD' },
+      { code: 'M2.TX.CASHBANK-TRANSFER',  title: 'Cash/Bank Transfer',   path: '/finance/cashbank-transfers',  legacyCode: 'CB' },
+      { code: 'M2.TX.RECEIPT-GIRO',       title: 'Receipt Giro',         path: '/finance/receipt-giros',       legacyCode: 'RG' },
+      { code: 'M2.TX.SEND-GIRO',          title: 'Send Giro',            path: '/finance/send-giros',          legacyCode: 'SG' },
+      { code: 'M2.TX.RECEIPT-GIRO-CLR',   title: 'Receipt Giro Clearing', path: '/finance/receipt-giro-clearings', legacyCode: 'RGC' },
+      { code: 'M2.TX.SEND-GIRO-CLR',      title: 'Send Giro Clearing',   path: '/finance/send-giro-clearings', legacyCode: 'SGC' },
+      { code: 'M2.TX.RECEIPT-MEMO',       title: 'Receipt Memo',         path: '/finance/receipt-memos',       legacyCode: 'RM' },
+      { code: 'M2.TX.SEND-MEMO',          title: 'Send Memo',            path: '/finance/send-memos',          legacyCode: 'SM' },
+      { code: 'M2.TX.GENERAL-JOURNAL',    title: 'General Journal',      path: '/finance/general-journals',    legacyCode: 'GJ' },
+      { code: 'M2.TX.ADJUSTMENT-JOURNAL', title: 'Adjustment Journal',   path: '/finance/adjustment-journals', legacyCode: 'AJ' },
     ], m2TxGrp.id);
     const m2RptGrp = await upsertMenu({ code: 'M2.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 2 });
     await upsertItems([
-      { code: 'M2.RPT.LEDGER',     title: 'General Ledger',  path: '/keuangan/ledger' },
+      { code: 'M2.RPT.LEDGER',            title: 'General Ledger',       path: '/finance/ledger' },
     ], m2RptGrp.id);
+  }
+
+  // M3 Warehouse & Inventory — paritas dengan legacy m3 (10 transaksi, data, laporan, statistik).
+  // Legacy mntype: 2=group, 3=data-list, 4=report, 6=stat-group, 7=stat-item.
+  // Path prefix: /warehouse/* (belum navigable — frontend M3 belum dibangun).
+  const m3Id = menuIds.get('M3');
+  if (m3Id) {
+    const m3TxGrp = await upsertMenu({ code: 'M3.TX', title: 'Transactions', type: ErpMenuType.GROUP, parentId: m3Id, sortOrder: 1, legacyCode: '3-2' });
+    await upsertItems([
+      { code: 'M3.TX.MR', title: 'Material Request (MR)',       path: '/warehouse/material-requests',  legacyCode: '3-3'  },
+      { code: 'M3.TX.TS', title: 'Stock Transfer (TS)',         path: '/warehouse/transfers',          legacyCode: '3-4'  },
+      { code: 'M3.TX.RS', title: 'Transfer Receipt (RS)',       path: '/warehouse/transfer-receipts',  legacyCode: '3-5'  },
+      { code: 'M3.TX.SP', title: 'Stock Count (SP)',            path: '/warehouse/stock-counts',       legacyCode: '3-7'  },
+      { code: 'M3.TX.SA', title: 'Stock Adjustment (SA)',       path: '/warehouse/stock-adjustments',  legacyCode: '3-6'  },
+      { code: 'M3.TX.PA', title: 'Price Adjustment (PA)',       path: '/warehouse/price-adjustments',  legacyCode: '3-8'  },
+      { code: 'M3.TX.IB', title: 'Opening Stock (IB)',          path: '/warehouse/opening-stocks',     legacyCode: '3-23' },
+      { code: 'M3.TX.RF', title: 'Fuel Refill (RF)',            path: '/warehouse/fuel-refills',       legacyCode: '3-40' },
+      { code: 'M3.TX.DC', title: 'Time Sheet/Daily Check (DC)', path: '/warehouse/daily-checks',       legacyCode: '3-41' },
+      { code: 'M3.TX.RW', title: 'Receipt Weigher (RW)',        path: '/warehouse/receipt-weighers',   legacyCode: '3-51' },
+    ], m3TxGrp.id);
+
+    const m3DataGrp = await upsertMenu({ code: 'M3.DATA', title: 'Data', type: ErpMenuType.GROUP, parentId: m3Id, sortOrder: 2, legacyCode: '3-9' });
+    await upsertItems([
+      { code: 'M3.DATA.MR',     title: 'Material Request (MR)',       path: '/warehouse/data/material-requests',  legacyCode: '3-10' },
+      { code: 'M3.DATA.TS',     title: 'Stock Transfer (TS)',         path: '/warehouse/data/transfers',          legacyCode: '3-11' },
+      { code: 'M3.DATA.RS',     title: 'Transfer Receipt (RS)',       path: '/warehouse/data/transfer-receipts',  legacyCode: '3-12' },
+      { code: 'M3.DATA.SP',     title: 'Stock Count (SP)',            path: '/warehouse/data/stock-counts',       legacyCode: '3-14' },
+      { code: 'M3.DATA.SA',     title: 'Stock Adjustment (SA)',       path: '/warehouse/data/stock-adjustments',  legacyCode: '3-13' },
+      { code: 'M3.DATA.PA',     title: 'Price Adjustment (PA)',       path: '/warehouse/data/price-adjustments',  legacyCode: '3-15' },
+      { code: 'M3.DATA.IB',     title: 'Opening Stock (IB)',          path: '/warehouse/data/opening-stocks',     legacyCode: '3-24' },
+      { code: 'M3.DATA.RF',     title: 'Fuel Refill (RF)',            path: '/warehouse/data/fuel-refills',       legacyCode: '3-42' },
+      { code: 'M3.DATA.DC',     title: 'Time Sheet/Daily Check (DC)', path: '/warehouse/data/daily-checks',       legacyCode: '3-43' },
+      { code: 'M3.DATA.RW',     title: 'Receipt Weigher (RW)',        path: '/warehouse/data/receipt-weighers',   legacyCode: '3-52' },
+      { code: 'M3.DATA.SERIAL', title: 'Serial Item Cards',           path: '/warehouse/data/serial-cards',       legacyCode: '3-54' },
+    ], m3DataGrp.id);
+
+    const m3RptGrp = await upsertMenu({ code: 'M3.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m3Id, sortOrder: 3, legacyCode: '3-16' });
+    await upsertItems([
+      { code: 'M3.RPT.MR',           title: 'Material Request (MR)',       path: '/warehouse/reports/material-requests',  legacyCode: '3-17' },
+      { code: 'M3.RPT.TS',           title: 'Stock Transfer (TS)',         path: '/warehouse/reports/transfers',          legacyCode: '3-18' },
+      { code: 'M3.RPT.RS',           title: 'Transfer Receipt (RS)',       path: '/warehouse/reports/transfer-receipts',  legacyCode: '3-19' },
+      { code: 'M3.RPT.SP',           title: 'Stock Count (SP)',            path: '/warehouse/reports/stock-counts',       legacyCode: '3-21' },
+      { code: 'M3.RPT.SA',           title: 'Stock Adjustment (SA)',       path: '/warehouse/reports/stock-adjustments',  legacyCode: '3-20' },
+      { code: 'M3.RPT.PA',           title: 'Price Adjustment (PA)',       path: '/warehouse/reports/price-adjustments',  legacyCode: '3-22' },
+      { code: 'M3.RPT.IB',           title: 'Opening Stock (IB)',          path: '/warehouse/reports/opening-stocks',     legacyCode: '3-25' },
+      { code: 'M3.RPT.RF',           title: 'Fuel Refill (RF)',            path: '/warehouse/reports/fuel-refills',       legacyCode: '3-44' },
+      { code: 'M3.RPT.DC',           title: 'Time Sheet/Daily Check (DC)', path: '/warehouse/reports/daily-checks',       legacyCode: '3-45' },
+      { code: 'M3.RPT.RW',           title: 'Receipt Weigher (RW)',        path: '/warehouse/reports/receipt-weighers',   legacyCode: '3-53' },
+      { code: 'M3.RPT.STOCK-CARD',   title: 'Stock Card',                  path: '/warehouse/reports/stock-cards',        legacyCode: '3-36' },
+      { code: 'M3.RPT.STOCK-MUT',    title: 'Stock Mutation',              path: '/warehouse/reports/stock-mutations',    legacyCode: '3-37' },
+      { code: 'M3.RPT.STOCK',        title: 'Stock',                       path: '/warehouse/reports/stock',              legacyCode: '3-47' },
+      { code: 'M3.RPT.RETURNS',      title: 'Return Items',                path: '/warehouse/reports/returns',            legacyCode: '3-48' },
+      { code: 'M3.RPT.BELOW-MIN',    title: 'Below Minimum Stock',         path: '/warehouse/reports/below-minimum',      legacyCode: '3-26' },
+      { code: 'M3.RPT.BATCH',        title: 'Batch Items',                 path: '/warehouse/reports/batch-items',        legacyCode: '3-39' },
+      { code: 'M3.RPT.BATCH-CARD',   title: 'Batch Item Cards',            path: '/warehouse/reports/batch-cards',        legacyCode: '3-38' },
+      { code: 'M3.RPT.SERIAL',       title: 'Serial Items',                path: '/warehouse/reports/serial-items',       legacyCode: '3-35' },
+      { code: 'M3.RPT.SERIAL-CARD',  title: 'Serial Item Cards',           path: '/warehouse/reports/serial-cards',       legacyCode: '3-34' },
+      { code: 'M3.RPT.COGS-BAL',     title: 'COGS Balance',                path: '/warehouse/reports/cogs-balance',       legacyCode: '3-49' },
+      { code: 'M3.RPT.CONSIGNMENT',  title: 'Consignment Summary',         path: '/warehouse/reports/consignment',        legacyCode: '3-50' },
+      { code: 'M3.RPT.DAILY-STOCK',  title: 'Daily Available Stock',       path: '/warehouse/reports/daily-stock',        legacyCode: '3-55' },
+      { code: 'M3.RPT.STOCK-MINUS',  title: 'Stock Minus',                 path: '/warehouse/reports/stock-minus',        legacyCode: '3-56' },
+    ], m3RptGrp.id);
+
+    const m3StatGrp = await upsertMenu({ code: 'M3.STAT', title: 'Statistics', type: ErpMenuType.GROUP, parentId: m3Id, sortOrder: 4, legacyCode: '3-27' });
+    await upsertItems([
+      { code: 'M3.STAT.TOP-REVENUE',   title: 'Top Revenue Products',      path: '/warehouse/stats/top-revenue',     legacyCode: '3-29' },
+      { code: 'M3.STAT.PROFITABLE',    title: 'Most Profitable Products',  path: '/warehouse/stats/most-profitable', legacyCode: '3-32' },
+      { code: 'M3.STAT.BEST-SELLING',  title: 'Best Selling Products',     path: '/warehouse/stats/best-selling',    legacyCode: '3-33' },
+      { code: 'M3.STAT.BELOW-MIN',     title: 'Below Minimum Stock',       path: '/warehouse/stats/below-minimum',   legacyCode: '3-30' },
+      { code: 'M3.STAT.APPROVAL',      title: 'Need Approval (Warehouse)', path: '/warehouse/stats/approvals',       legacyCode: '3-46' },
+      { code: 'M3.STAT.KPI',           title: 'KPI Warehouse',             path: '/warehouse/stats/kpi',             legacyCode: '3-31' },
+    ], m3StatGrp.id);
+  }
+
+  // M4 Purchasing — active items only (skip CS=Lembar Biaya, IPC=Kalkulasi Import — mnactive=0 in legacy).
+  // TX/DATA/RPT mirror legacy 3-group pattern. Payments (VPP/VP) kept in M4 for discoverability
+  // even though posting goes via fin_ap_payments.
+  const m4Id = menuIds.get('M4');
+  if (m4Id) {
+    const m4TxGrp = await upsertMenu({ code: 'M4.TX', title: 'Transactions', type: ErpMenuType.GROUP, parentId: m4Id, sortOrder: 1, legacyCode: '4-2' });
+    await upsertItems([
+      { code: 'M4.TX.PR',      title: 'Purchase Requisition (PR)',     path: '/purchasing/purchase-requisitions', legacyCode: '4-3'  },
+      { code: 'M4.TX.RFQ',     title: 'Request for Quotation (RFQ)',   path: '/purchasing/rfqs',                  legacyCode: '4-5'  },
+      { code: 'M4.TX.BS',      title: 'Bid Comparison (BS)',           path: '/purchasing/bid-comparisons',       legacyCode: '4-6'  },
+      { code: 'M4.TX.PO',      title: 'Purchase Order (PO)',           path: '/purchasing/purchase-orders',       legacyCode: '4-7'  },
+      { code: 'M4.TX.AP',      title: 'Vendor Advance (AP)',           path: '/purchasing/vendor-advances',       legacyCode: '4-8'  },
+      { code: 'M4.TX.GRN',     title: 'Goods Receipt (GRN)',           path: '/purchasing/goods-receipts',        legacyCode: '4-10' },
+      { code: 'M4.TX.PI',      title: 'Purchase Invoice (PI)',         path: '/purchasing/purchase-invoices',     legacyCode: '4-11' },
+      { code: 'M4.TX.PP',      title: 'Freight Payable (PP)',          path: '/purchasing/freight-payables',      legacyCode: '4-44' },
+      { code: 'M4.TX.DNR',     title: 'Return Shipment (DNR)',         path: '/purchasing/return-shipments',      legacyCode: '4-12' },
+      { code: 'M4.TX.PRT',     title: 'Purchase Return (PRT)',         path: '/purchasing/purchase-returns',      legacyCode: '4-13' },
+      { code: 'M4.TX.VPP',     title: 'Payment Schedule (VPP)',        path: '/purchasing/payment-schedules',     legacyCode: '4-14' },
+      { code: 'M4.TX.VP',      title: 'Vendor Payment (VP)',           path: '/purchasing/vendor-payments',       legacyCode: '4-15' },
+      { code: 'M4.TX.BALANCE', title: 'Opening AP Balance',            path: '/purchasing/opening-ap-balance',    legacyCode: '4-51' },
+    ], m4TxGrp.id);
+
+    const m4DataGrp = await upsertMenu({ code: 'M4.DATA', title: 'Data', type: ErpMenuType.GROUP, parentId: m4Id, sortOrder: 2, legacyCode: '4-16' });
+    await upsertItems([
+      { code: 'M4.DATA.PR',      title: 'Purchase Requisition (PR)',   path: '/purchasing/data/purchase-requisitions', legacyCode: '4-17' },
+      { code: 'M4.DATA.RFQ',     title: 'Request for Quotation (RFQ)', path: '/purchasing/data/rfqs',                  legacyCode: '4-19' },
+      { code: 'M4.DATA.BS',      title: 'Bid Comparison (BS)',         path: '/purchasing/data/bid-comparisons',       legacyCode: '4-20' },
+      { code: 'M4.DATA.PO',      title: 'Purchase Order (PO)',         path: '/purchasing/data/purchase-orders',       legacyCode: '4-21' },
+      { code: 'M4.DATA.AP',      title: 'Vendor Advance (AP)',         path: '/purchasing/data/vendor-advances',       legacyCode: '4-22' },
+      { code: 'M4.DATA.GRN',     title: 'Goods Receipt (GRN)',         path: '/purchasing/data/goods-receipts',        legacyCode: '4-24' },
+      { code: 'M4.DATA.PI',      title: 'Purchase Invoice (PI)',       path: '/purchasing/data/purchase-invoices',     legacyCode: '4-25' },
+      { code: 'M4.DATA.PP',      title: 'Freight Payable (PP)',        path: '/purchasing/data/freight-payables',      legacyCode: '4-45' },
+      { code: 'M4.DATA.DNR',     title: 'Return Shipment (DNR)',       path: '/purchasing/data/return-shipments',      legacyCode: '4-26' },
+      { code: 'M4.DATA.PRT',     title: 'Purchase Return (PRT)',       path: '/purchasing/data/purchase-returns',      legacyCode: '4-27' },
+      { code: 'M4.DATA.VPP',     title: 'Payment Schedule (VPP)',      path: '/purchasing/data/payment-schedules',     legacyCode: '4-28' },
+      { code: 'M4.DATA.VP',      title: 'Vendor Payment (VP)',         path: '/purchasing/data/vendor-payments',       legacyCode: '4-29' },
+      { code: 'M4.DATA.BALANCE', title: 'Opening AP Balance',          path: '/purchasing/data/opening-ap-balance',    legacyCode: '4-51' },
+    ], m4DataGrp.id);
+
+    const m4RptGrp = await upsertMenu({ code: 'M4.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m4Id, sortOrder: 3, legacyCode: '4-30' });
+    await upsertItems([
+      { code: 'M4.RPT.PR',      title: 'Purchase Requisition (PR)',   path: '/purchasing/reports/purchase-requisitions', legacyCode: '4-31' },
+      { code: 'M4.RPT.RFQ',     title: 'Request for Quotation (RFQ)', path: '/purchasing/reports/rfqs',                  legacyCode: '4-33' },
+      { code: 'M4.RPT.BS',      title: 'Bid Comparison (BS)',         path: '/purchasing/reports/bid-comparisons',       legacyCode: '4-34' },
+      { code: 'M4.RPT.PO',      title: 'Purchase Order (PO)',         path: '/purchasing/reports/purchase-orders',       legacyCode: '4-35' },
+      { code: 'M4.RPT.AP',      title: 'Vendor Advance (AP)',         path: '/purchasing/reports/vendor-advances',       legacyCode: '4-36' },
+      { code: 'M4.RPT.GRN',     title: 'Goods Receipt (GRN)',         path: '/purchasing/reports/goods-receipts',        legacyCode: '4-38' },
+      { code: 'M4.RPT.PI',      title: 'Purchase Invoice (PI)',       path: '/purchasing/reports/purchase-invoices',     legacyCode: '4-39' },
+      { code: 'M4.RPT.PP',      title: 'Freight Payable (PP)',        path: '/purchasing/reports/freight-payables',      legacyCode: '4-46' },
+      { code: 'M4.RPT.DNR',     title: 'Return Shipment (DNR)',       path: '/purchasing/reports/return-shipments',      legacyCode: '4-40' },
+      { code: 'M4.RPT.PRT',     title: 'Purchase Return (PRT)',       path: '/purchasing/reports/purchase-returns',      legacyCode: '4-41' },
+      { code: 'M4.RPT.VPP',     title: 'Payment Schedule (VPP)',      path: '/purchasing/reports/payment-schedules',     legacyCode: '4-42' },
+      { code: 'M4.RPT.VP',      title: 'Vendor Payment (VP)',         path: '/purchasing/reports/vendor-payments',       legacyCode: '4-43' },
+      { code: 'M4.RPT.SUMMARY', title: 'Purchases',                   path: '/purchasing/reports/summary',               legacyCode: '4-50' },
+    ], m4RptGrp.id);
+  }
+
+  // M5 Sales — active items only (skip SPA=Penyesuaian Poin, CL=Complain — mnactive=0 in legacy).
+  // IC (Penagihan Piutang) and PV (Pembayaran Piutang) kept in M5 for discoverability;
+  // actual posting goes via fin_ar_receipts.
+  const m5Id = menuIds.get('M5');
+  if (m5Id) {
+    const m5TxGrp = await upsertMenu({ code: 'M5.TX', title: 'Transactions', type: ErpMenuType.GROUP, parentId: m5Id, sortOrder: 1, legacyCode: '5-2' });
+    await upsertItems([
+      { code: 'M5.TX.SQ',      title: 'Sales Quotation (SQ)',       path: '/sales/quotations',           legacyCode: '5-3'  },
+      { code: 'M5.TX.SO',      title: 'Sales Order (SO)',           path: '/sales/orders',               legacyCode: '5-4'  },
+      { code: 'M5.TX.AS',      title: 'Customer Advance (AS)',      path: '/sales/customer-advances',    legacyCode: '5-5'  },
+      { code: 'M5.TX.IP',      title: 'Payment Receipt (IP)',       path: '/sales/payment-receipts',     legacyCode: '5-44' },
+      { code: 'M5.TX.PI',      title: 'Proforma Invoice (PI)',      path: '/sales/proforma-invoices',    legacyCode: '5-9'  },
+      { code: 'M5.TX.PL',      title: 'Packing List (PL)',          path: '/sales/packing-lists',        legacyCode: '5-6'  },
+      { code: 'M5.TX.DO',      title: 'Delivery Order (DO)',        path: '/sales/delivery-orders',      legacyCode: '5-7'  },
+      { code: 'M5.TX.DR',      title: 'Delivery Report (DR)',       path: '/sales/delivery-reports',     legacyCode: '5-8'  },
+      { code: 'M5.TX.SI',      title: 'Sales Invoice (SI)',         path: '/sales/invoices',             legacyCode: '5-10' },
+      { code: 'M5.TX.RP',      title: 'Freight Receivable (RP)',    path: '/sales/freight-receivables',  legacyCode: '5-41' },
+      { code: 'M5.TX.RNR',     title: 'Return Receipt (RNR)',       path: '/sales/return-receipts',      legacyCode: '5-11' },
+      { code: 'M5.TX.SR',      title: 'Sales Return (SR)',          path: '/sales/returns',              legacyCode: '5-12' },
+      { code: 'M5.TX.IC',      title: 'AR Collection (IC)',         path: '/sales/ar-collections',       legacyCode: '5-13' },
+      { code: 'M5.TX.PV',      title: 'AR Payment (PV)',            path: '/sales/ar-payments',          legacyCode: '5-14' },
+      { code: 'M5.TX.SIE',     title: 'Invoice Swap (SIE)',         path: '/sales/invoice-swaps',        legacyCode: '5-68' },
+      { code: 'M5.TX.BALANCE', title: 'Opening AR Balance',         path: '/sales/opening-ar-balance',   legacyCode: '5-51' },
+    ], m5TxGrp.id);
+
+    const m5DataGrp = await upsertMenu({ code: 'M5.DATA', title: 'Data', type: ErpMenuType.GROUP, parentId: m5Id, sortOrder: 2, legacyCode: '5-15' });
+    await upsertItems([
+      { code: 'M5.DATA.SQ',      title: 'Sales Quotation (SQ)',     path: '/sales/data/quotations',          legacyCode: '5-16' },
+      { code: 'M5.DATA.SO',      title: 'Sales Order (SO)',         path: '/sales/data/orders',              legacyCode: '5-17' },
+      { code: 'M5.DATA.AS',      title: 'Customer Advance (AS)',    path: '/sales/data/customer-advances',   legacyCode: '5-18' },
+      { code: 'M5.DATA.IP',      title: 'Payment Receipt (IP)',     path: '/sales/data/payment-receipts',    legacyCode: '5-45' },
+      { code: 'M5.DATA.PI',      title: 'Proforma Invoice (PI)',    path: '/sales/data/proforma-invoices',   legacyCode: '5-22' },
+      { code: 'M5.DATA.PL',      title: 'Packing List (PL)',        path: '/sales/data/packing-lists',       legacyCode: '5-19' },
+      { code: 'M5.DATA.DO',      title: 'Delivery Order (DO)',      path: '/sales/data/delivery-orders',     legacyCode: '5-20' },
+      { code: 'M5.DATA.DR',      title: 'Delivery Report (DR)',     path: '/sales/data/delivery-reports',    legacyCode: '5-21' },
+      { code: 'M5.DATA.SI',      title: 'Sales Invoice (SI)',       path: '/sales/data/invoices',            legacyCode: '5-23' },
+      { code: 'M5.DATA.RP',      title: 'Freight Receivable (RP)',  path: '/sales/data/freight-receivables', legacyCode: '5-42' },
+      { code: 'M5.DATA.RNR',     title: 'Return Receipt (RNR)',     path: '/sales/data/return-receipts',     legacyCode: '5-24' },
+      { code: 'M5.DATA.SR',      title: 'Sales Return (SR)',        path: '/sales/data/returns',             legacyCode: '5-25' },
+      { code: 'M5.DATA.IC',      title: 'AR Collection (IC)',       path: '/sales/data/ar-collections',      legacyCode: '5-26' },
+      { code: 'M5.DATA.PV',      title: 'AR Payment (PV)',          path: '/sales/data/ar-payments',         legacyCode: '5-27' },
+      { code: 'M5.DATA.SIE',     title: 'Invoice Swap (SIE)',       path: '/sales/data/invoice-swaps',       legacyCode: '5-69' },
+      { code: 'M5.DATA.BALANCE', title: 'Opening AR Balance',       path: '/sales/data/opening-ar-balance',  legacyCode: '5-52' },
+    ], m5DataGrp.id);
+
+    const m5RptGrp = await upsertMenu({ code: 'M5.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m5Id, sortOrder: 3, legacyCode: '5-28' });
+    await upsertItems([
+      { code: 'M5.RPT.SQ',          title: 'Sales Quotation (SQ)',     path: '/sales/reports/quotations',          legacyCode: '5-29' },
+      { code: 'M5.RPT.SO',          title: 'Sales Order (SO)',         path: '/sales/reports/orders',              legacyCode: '5-30' },
+      { code: 'M5.RPT.AS',          title: 'Customer Advance (AS)',    path: '/sales/reports/customer-advances',   legacyCode: '5-31' },
+      { code: 'M5.RPT.IP',          title: 'Payment Receipt (IP)',     path: '/sales/reports/payment-receipts',    legacyCode: '5-46' },
+      { code: 'M5.RPT.PI',          title: 'Proforma Invoice (PI)',    path: '/sales/reports/proforma-invoices',   legacyCode: '5-35' },
+      { code: 'M5.RPT.PL',          title: 'Packing List (PL)',        path: '/sales/reports/packing-lists',       legacyCode: '5-32' },
+      { code: 'M5.RPT.DO',          title: 'Delivery Order (DO)',      path: '/sales/reports/delivery-orders',     legacyCode: '5-33' },
+      { code: 'M5.RPT.DR',          title: 'Delivery Report (DR)',     path: '/sales/reports/delivery-reports',    legacyCode: '5-34' },
+      { code: 'M5.RPT.SI',          title: 'Sales Invoice (SI)',       path: '/sales/reports/invoices',            legacyCode: '5-36' },
+      { code: 'M5.RPT.RP',          title: 'Freight Receivable (RP)',  path: '/sales/reports/freight-receivables', legacyCode: '5-43' },
+      { code: 'M5.RPT.RNR',         title: 'Return Receipt (RNR)',     path: '/sales/reports/return-receipts',     legacyCode: '5-37' },
+      { code: 'M5.RPT.SR',          title: 'Sales Return (SR)',        path: '/sales/reports/returns',             legacyCode: '5-38' },
+      { code: 'M5.RPT.IC',          title: 'AR Collection (IC)',       path: '/sales/reports/ar-collections',      legacyCode: '5-39' },
+      { code: 'M5.RPT.PV',          title: 'AR Payment (PV)',          path: '/sales/reports/ar-payments',         legacyCode: '5-40' },
+      { code: 'M5.RPT.SIE',         title: 'Invoice Swap (SIE)',       path: '/sales/reports/invoice-swaps',       legacyCode: '5-70' },
+      { code: 'M5.RPT.BALANCE',     title: 'Opening AR Balance',       path: '/sales/reports/opening-ar-balance',  legacyCode: '5-53' },
+      { code: 'M5.RPT.SUMMARY',     title: 'Sales Summary',            path: '/sales/reports/summary',             legacyCode: '5-50' },
+      { code: 'M5.RPT.BY-CUSTOMER', title: 'Sales by Customer',        path: '/sales/reports/by-customer',         legacyCode: '5-60' },
+      { code: 'M5.RPT.BY-SALESMAN', title: 'Sales by Salesman',        path: '/sales/reports/by-salesman',         legacyCode: '5-61' },
+      { code: 'M5.RPT.BY-ITEM',     title: 'Sales by Item',            path: '/sales/reports/by-item',             legacyCode: '5-62' },
+      { code: 'M5.RPT.BY-PROJECT',  title: 'Sales by Project',         path: '/sales/reports/by-project',          legacyCode: '5-63' },
+      { code: 'M5.RPT.BY-DIVISION', title: 'Sales by Division',        path: '/sales/reports/by-division',         legacyCode: '5-64' },
+      { code: 'M5.RPT.BY-CC',       title: 'Sales by Cost Center',     path: '/sales/reports/by-cost-center',      legacyCode: '5-65' },
+      { code: 'M5.RPT.BY-CATEGORY', title: 'Sales by Item Category',   path: '/sales/reports/by-item-category',    legacyCode: '5-66' },
+      { code: 'M5.RPT.REVENUE',     title: 'Revenue & Collection',     path: '/sales/reports/revenue-collection',  legacyCode: '5-72' },
+      { code: 'M5.RPT.BY-GROUP',    title: 'Sales by Group',           path: '/sales/reports/by-group',            legacyCode: '5-73' },
+    ], m5RptGrp.id);
   }
 
   console.log(`✓ sys_menus (${menuIds.size} entries)`);
@@ -565,6 +783,44 @@ async function seedRoleAndUser(menuIds: Map<string, bigint>, permIds: Map<string
   console.log('✓ adm_roles, adm_users, adm_user_roles, adm_role_permissions, adm_role_menus');
 }
 
+async function seedNotifications() {
+  const admin = await prisma.erpUser.findUnique({ where: { email: 'admin@senti-erp.local' } });
+  if (!admin) {
+    console.warn('  ! admin user not found, skip notifications seed');
+    return;
+  }
+  const existing = await prisma.erpNotification.count({ where: { recipientId: admin.id } });
+  if (existing > 0) {
+    console.log(`✓ sys_notifications (skip, ${existing} sudah ada untuk admin)`);
+    return;
+  }
+  const now = Date.now();
+  const items = [
+    { type: 'warn', title: 'Menunggu persetujuan', body: 'CR-2605-2398 (Rp 4.250.000) perlu Anda setujui.', referenceEntity: 'fin_ar_receipts', actionUrl: '/finance/cash-receipts', minutesAgo: 2, read: false },
+    { type: 'success', title: 'Dokumen diposting', body: 'RM-2605-0871 berhasil diposting oleh fitri.h.', referenceEntity: 'fin_receipt_memos', actionUrl: '/finance/receipt-memos', minutesAgo: 14, read: false },
+    { type: 'danger', title: 'Transaksi ditolak', body: 'CD-2605-1640 ditolak oleh maya.p — cek catatan.', referenceEntity: 'fin_ap_payments', actionUrl: '/finance/cash-disbursements', minutesAgo: 38, read: false },
+    { type: 'info', title: 'Stok menipis', body: 'Bearing 6204 di bawah minimum (sisa 12 PCS).', referenceEntity: 'md_items', actionUrl: '/master/items', minutesAgo: 60, read: true },
+    { type: 'info', title: 'Giro jatuh tempo', body: 'RG-2605-0231 jatuh tempo besok (20/06/2026).', referenceEntity: 'fin_giros', actionUrl: '/finance/receipt-giros', minutesAgo: 180, read: true },
+    { type: 'success', title: 'Backup harian selesai', body: 'Backup database 02:00 WIB sukses.', referenceEntity: null, actionUrl: null, minutesAgo: 60 * 20, read: true },
+  ];
+  for (const it of items) {
+    const createdAt = new Date(now - it.minutesAgo * 60_000);
+    await prisma.erpNotification.create({
+      data: {
+        recipientId: admin.id,
+        type: it.type,
+        title: it.title,
+        body: it.body,
+        referenceEntity: it.referenceEntity ?? undefined,
+        actionUrl: it.actionUrl ?? undefined,
+        createdAt,
+        readAt: it.read ? createdAt : null,
+      },
+    });
+  }
+  console.log(`✓ sys_notifications (${items.length} contoh untuk admin)`);
+}
+
 async function main() {
   console.log('Seeding ERP MVP (m0 + m1)...\n');
   await seedLanguages();
@@ -576,6 +832,7 @@ async function main() {
   await seedDocumentNumberings();
   const permIds = await seedPermissions();
   await seedRoleAndUser(menuIds, permIds);
+  await seedNotifications();
   console.log('\n✅ ERP seed complete.');
 }
 

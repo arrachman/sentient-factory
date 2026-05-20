@@ -68,7 +68,7 @@ export function Seg({
             background: value === o.v ? 'var(--primary)' : 'var(--panel)',
             color: value === o.v ? 'var(--primary-fg)' : 'var(--fg-muted)',
             font: 'inherit',
-            fontSize: 12,
+            fontSize: 'calc(12px * var(--font-scale, 1))',
             cursor: 'pointer',
           }}
         >
@@ -101,9 +101,9 @@ export function SetRow({
       }}
     >
       <div>
-        <div style={{ fontSize: 12.5 }}>{label}</div>
+        <div style={{ fontSize: 'calc(12.5px * var(--font-scale, 1))' }}>{label}</div>
         {hint && (
-          <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>
+          <div className="muted" style={{ fontSize: 'calc(11px * var(--font-scale, 1))', marginTop: 2 }}>
             {hint}
           </div>
         )}

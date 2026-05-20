@@ -15,6 +15,7 @@ const nextConfig = {
   // Scope Turbopack to this app (monorepo has multiple lockfiles; also
   // keeps the watcher off sibling reference dirs like prototype/preferensi).
   turbopack: { root: __dirname },
+  devIndicators: false,
 
   // Proxy /api/erp/* → api-gateway so same-origin calls from the browser
   // (NEXT_PUBLIC_ERP_API_URL = https://erp.fr-labs.my.id/api/erp) are

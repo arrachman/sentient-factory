@@ -275,7 +275,7 @@ export function AppearancePage(_props: AppearancePageProps) {
                   <span style={{ lineHeight: 1.2 }}>
                     <span
                       style={{
-                        fontSize: 12,
+                        fontSize: 'calc(12px * var(--font-scale, 1))',
                         fontWeight: 600,
                         display: 'block',
                         color:
@@ -286,7 +286,7 @@ export function AppearancePage(_props: AppearancePageProps) {
                     >
                       {t(p.label)}
                     </span>
-                    <span className="muted" style={{ fontSize: 10.5 }}>
+                    <span className="muted" style={{ fontSize: 'calc(10.5px * var(--font-scale, 1))' }}>
                       {t(p.sub)}
                     </span>
                   </span>
@@ -414,7 +414,7 @@ export function AppearancePage(_props: AppearancePageProps) {
                     gap: 8,
                     padding: '5px 8px',
                     borderRadius: 6,
-                    fontSize: 12,
+                    fontSize: 'calc(12px * var(--font-scale, 1))',
                     background:
                       i === 0 ? 'var(--primary-soft)' : 'transparent',
                     color:

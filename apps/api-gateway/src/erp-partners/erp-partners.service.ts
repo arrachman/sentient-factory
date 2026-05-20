@@ -92,10 +92,13 @@ export class ErpPartnersService {
       where.isActive = query.isActive;
     }
 
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpPartner.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [sortBy]: sortDir }],
         skip,
         take: limit,
         include: { category: { select: { id: true, code: true, name: true, kind: true } } },

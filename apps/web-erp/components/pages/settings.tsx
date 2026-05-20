@@ -68,9 +68,9 @@ function SetRow({ label, hint, children }: SetRowProps) {
       }}
     >
       <div>
-        <div style={{ fontSize: 12.5 }}>{label}</div>
+        <div style={{ fontSize: 'calc(12.5px * var(--font-scale, 1))' }}>{label}</div>
         {hint && (
-          <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>
+          <div className="muted" style={{ fontSize: 'calc(11px * var(--font-scale, 1))', marginTop: 2 }}>
             {hint}
           </div>
         )}
@@ -131,7 +131,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 'var(--radius)',
   color: 'var(--fg)',
   font: 'inherit',
-  fontSize: 12.5,
+  fontSize: 'calc(12.5px * var(--font-scale, 1))',
   outline: 'none',
   minWidth: 200,
 };
@@ -296,7 +296,7 @@ export function SettingsPage({ t }: SettingsPageProps) {
             />
             <span
               className="muted"
-              style={{ fontSize: 11.5, fontFamily: 'Geist Mono, monospace' }}
+              style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', fontFamily: 'Geist Mono, monospace' }}
             >
               → {s.prefCR}-2605-2400
             </span>
@@ -309,7 +309,7 @@ export function SettingsPage({ t }: SettingsPageProps) {
             />
             <span
               className="muted"
-              style={{ fontSize: 11.5, fontFamily: 'Geist Mono, monospace' }}
+              style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', fontFamily: 'Geist Mono, monospace' }}
             >
               → {s.prefCD}-2605-1640
             </span>
@@ -322,7 +322,7 @@ export function SettingsPage({ t }: SettingsPageProps) {
             />
             <span
               className="muted"
-              style={{ fontSize: 11.5, fontFamily: 'Geist Mono, monospace' }}
+              style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', fontFamily: 'Geist Mono, monospace' }}
             >
               → {s.prefPO}-2605-0312
             </span>
@@ -335,7 +335,7 @@ export function SettingsPage({ t }: SettingsPageProps) {
             />
             <span
               className="muted"
-              style={{ fontSize: 11.5, fontFamily: 'Geist Mono, monospace' }}
+              style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))', fontFamily: 'Geist Mono, monospace' }}
             >
               → {s.prefSI}-2605-0918
             </span>

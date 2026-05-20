@@ -176,7 +176,7 @@ export function GridCellEditor({
             border: 0,
             outline: 0,
             font: 'inherit',
-            fontSize: 12,
+            fontSize: 'calc(12px * var(--font-scale, 1))',
             color: 'var(--fg)',
           }}
         >
@@ -196,7 +196,7 @@ export function GridCellEditor({
         {options.map((o) => (
           <label
             key={o}
-            style={{ display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer', fontSize: 11 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer', fontSize: 'calc(11px * var(--font-scale, 1))' }}
           >
             <input
               type="radio"

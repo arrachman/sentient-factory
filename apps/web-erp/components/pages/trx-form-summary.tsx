@@ -59,7 +59,7 @@ export function TrxFormSummary({
       >
         <div
           style={{
-            fontSize: 11,
+            fontSize: 'calc(11px * var(--font-scale, 1))',
             color: 'var(--fg-muted)',
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
@@ -72,7 +72,7 @@ export function TrxFormSummary({
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: 12,
+            fontSize: 'calc(12px * var(--font-scale, 1))',
             padding: '2px 0',
           }}
         >
@@ -87,7 +87,7 @@ export function TrxFormSummary({
           style={{
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: 12,
+            fontSize: 'calc(12px * var(--font-scale, 1))',
             padding: '2px 0',
           }}
         >
@@ -105,7 +105,7 @@ export function TrxFormSummary({
             paddingTop: 4,
             display: 'flex',
             justifyContent: 'space-between',
-            fontSize: 13,
+            fontSize: 'calc(13px * var(--font-scale, 1))',
             fontWeight: 600,
           }}
         >

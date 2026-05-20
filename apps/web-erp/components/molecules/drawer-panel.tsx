@@ -61,7 +61,7 @@ export function DrawerPanel({
           </span>
           <div style={{ flex: 1 }}>
             <div className="ti">{title}</div>
-            <div className="muted" style={{ fontSize: 11 }}>
+            <div className="muted" style={{ fontSize: 'calc(11px * var(--font-scale, 1))' }}>
               {sub}
             </div>
           </div>

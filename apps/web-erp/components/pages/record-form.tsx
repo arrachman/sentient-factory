@@ -256,7 +256,7 @@ export function RecordForm({
           flex: 1,
           background: 'var(--panel)',
           padding: 16,
-          fontSize: 12.5,
+          fontSize: 'calc(12.5px * var(--font-scale, 1))',
           color: 'var(--fg-muted)',
           display: 'flex',
           alignItems: 'center',

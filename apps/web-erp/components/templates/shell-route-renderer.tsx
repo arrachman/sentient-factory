@@ -69,8 +69,16 @@ import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-pa
 import { ErpJournalEntriesPage } from '@/components/pages/fin-journal-entries-page';
 import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
 import { ErpApPaymentsPage } from '@/components/pages/fin-ap-payments-page';
-import { ErpGirosPage } from '@/components/pages/fin-giros-page';
 import { ErpLedgerPage } from '@/components/pages/fin-ledger-page';
+import { ErpCashReceiptsPage } from '@/components/pages/fin-cash-receipts-page';
+import { ErpCashDisbursementsPage } from '@/components/pages/fin-cash-disbursements-page';
+import { ErpBankDisbursementsPage } from '@/components/pages/fin-bank-disbursements-page';
+import { ErpCashbankTransfersPage } from '@/components/pages/fin-cashbank-transfers-page';
+import { ErpReceiptGirosPage } from '@/components/pages/fin-receipt-giros-page';
+import { ErpSendGirosPage } from '@/components/pages/fin-send-giros-page';
+import { ErpReceiptGiroClearingsPage } from '@/components/pages/fin-receipt-giro-clearings-page';
+import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clearings-page';
+import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 
 /**
@@ -146,11 +154,19 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   // ── User Settings (personal preferences) ─────────────────────────────────
   '/settings/appearance': (ctx) => <AppearancePage t={ctx.t} />,
   // ── Finance (fin, m2) ─────────────────────────────────────────────────────
-  '/keuangan/journal-entries': () => <ErpJournalEntriesPage />,
-  '/keuangan/ar-receipts': () => <ErpArReceiptsPage />,
-  '/keuangan/ap-payments': () => <ErpApPaymentsPage />,
-  '/keuangan/giros': () => <ErpGirosPage />,
-  '/keuangan/ledger': () => <ErpLedgerPage />,
+  '/finance/general-journals': () => <ErpJournalEntriesPage />,
+  '/finance/receipt-memos': () => <ErpArReceiptsPage />,
+  '/finance/send-memos': () => <ErpApPaymentsPage />,
+  '/finance/ledger': () => <ErpLedgerPage />,
+  '/finance/cash-receipts': () => <ErpCashReceiptsPage />,
+  '/finance/cash-disbursements': () => <ErpCashDisbursementsPage />,
+  '/finance/bank-disbursements': () => <ErpBankDisbursementsPage />,
+  '/finance/cashbank-transfers': () => <ErpCashbankTransfersPage />,
+  '/finance/receipt-giros': () => <ErpReceiptGirosPage />,
+  '/finance/send-giros': () => <ErpSendGirosPage />,
+  '/finance/receipt-giro-clearings': () => <ErpReceiptGiroClearingsPage />,
+  '/finance/send-giro-clearings': () => <ErpSendGiroClearingsPage />,
+  '/finance/adjustment-journals': () => <ErpAdjustmentJournalsPage />,
   // ── Legacy short-id aliases (static NAV fallback) ─────────────────────────
   'adm-users': () => <ErpUsersPage />,
   'adm-roles': () => <ErpRolesPage />,

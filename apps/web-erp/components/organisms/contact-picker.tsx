@@ -159,7 +159,7 @@ export function ContactPicker({
             <span>Cari Kontak</span>
             <span
               className="muted"
-              style={{ fontWeight: 400, fontSize: 11.5, marginLeft: 4 }}
+              style={{ fontWeight: 400, fontSize: 'calc(11.5px * var(--font-scale, 1))', marginLeft: 4 }}
             >
               · {filtered.length} dari {CONTACT_DATA.length}
             </span>
@@ -258,7 +258,7 @@ export function ContactPicker({
                   <Icon name="search" size={28} />
                 </div>
                 <div style={{ fontWeight: 500, marginTop: 8 }}>Tidak ditemukan</div>
-                <div className="muted" style={{ marginTop: 2, fontSize: 12 }}>
+                <div className="muted" style={{ marginTop: 2, fontSize: 'calc(12px * var(--font-scale, 1))' }}>
                   Coba ubah kata kunci atau ganti kategori.
                 </div>
               </div>

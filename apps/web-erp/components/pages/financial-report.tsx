@@ -190,7 +190,7 @@ export function FinancialReport({ moduleId, t }: FinancialReportProps) {
           <span className="val">IDR</span>
         </span>
         <div style={{ flex: 1 }} />
-        <span className="muted" style={{ fontSize: 11.5 }}>
+        <span className="muted" style={{ fontSize: 'calc(11.5px * var(--font-scale, 1))' }}>
           Disusun: 15/05/2026 · Belum diaudit
         </span>
       </div>
@@ -248,7 +248,7 @@ export function FinancialReport({ moduleId, t }: FinancialReportProps) {
                             : d >= 0
                               ? 'var(--success)'
                               : 'var(--danger)',
-                        fontSize: 11.5,
+                        fontSize: 'calc(11.5px * var(--font-scale, 1))',
                       }}
                     >
                       {d == null

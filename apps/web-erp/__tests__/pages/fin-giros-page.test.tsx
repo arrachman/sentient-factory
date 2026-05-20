@@ -3,22 +3,24 @@ import { screen, waitFor } from '@testing-library/react';
 import { emptyList, renderPage } from '../helpers/render-page';
 import { createFeedbackMock } from '../helpers/feedback-mock';
 
+// Smoke test for Receipt Giro page (split from former Giros page in
+// 2026-05-20 M2 finance scaffold — see web-erp CLAUDE.md §2.17).
 const api = vi.hoisted(() => ({
-  listGiros: vi.fn(),
-  createGiro: vi.fn(),
-  updateGiro: vi.fn(),
-  deleteGiro: vi.fn(),
+  listReceiptGiros: vi.fn(),
+  createReceiptGiro: vi.fn(),
+  updateReceiptGiro: vi.fn(),
+  deleteReceiptGiro: vi.fn(),
 }));
-vi.mock('@/lib/api/fin-giros', () => api);
+vi.mock('@/lib/api/fin-receipt-giros', () => api);
 vi.mock('@/lib/feedback', () => createFeedbackMock());
 
-import { ErpGirosPage } from '@/components/pages/fin-giros-page';
+import { ErpReceiptGirosPage } from '@/components/pages/fin-receipt-giros-page';
 
-describe('ErpGirosPage (smoke)', () => {
-  it('renders title and calls listGiros', async () => {
-    api.listGiros.mockResolvedValue(emptyList());
-    renderPage(<ErpGirosPage />);
-    expect(screen.getByText('Giros')).toBeInTheDocument();
-    await waitFor(() => expect(api.listGiros).toHaveBeenCalled());
+describe('ErpReceiptGirosPage (smoke)', () => {
+  it('renders title and calls listReceiptGiros', async () => {
+    api.listReceiptGiros.mockResolvedValue(emptyList());
+    renderPage(<ErpReceiptGirosPage />);
+    expect(screen.getByText('Receipt Giro')).toBeInTheDocument();
+    await waitFor(() => expect(api.listReceiptGiros).toHaveBeenCalled());
   });
 });

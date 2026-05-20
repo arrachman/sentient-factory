@@ -70,13 +70,13 @@ function ColRow({ col, updateOverride }: ColRowProps): React.ReactElement {
       {/* drag handle placeholder — DnD integration deferred */}
       <span
         aria-hidden
-        style={{ color: 'var(--fg-faint)', cursor: 'grab', fontSize: 14, lineHeight: 1, textAlign: 'center' }}
+        style={{ color: 'var(--fg-faint)', cursor: 'grab', fontSize: 'calc(14px * var(--font-scale, 1))', lineHeight: 1, textAlign: 'center' }}
       >
         ⠿
       </span>
 
       {/* visibility toggle + label */}
-      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, overflow: 'hidden' }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 'calc(12px * var(--font-scale, 1))', overflow: 'hidden' }}>
         <input
           type="checkbox"
           className="checkbox"
@@ -93,7 +93,7 @@ function ColRow({ col, updateOverride }: ColRowProps): React.ReactElement {
         value={col.fieldType}
         onChange={(e) => updateOverride(col.key, { fieldType: e.target.value as GridFieldType })}
         style={{
-          fontSize: 11,
+          fontSize: 'calc(11px * var(--font-scale, 1))',
           padding: '2px 4px',
           border: '1px solid var(--border)',
           borderRadius: 'var(--radius-sm)',
@@ -112,7 +112,7 @@ function ColRow({ col, updateOverride }: ColRowProps): React.ReactElement {
         type="button"
         onClick={() => updateOverride(col.key, { focusable: !col.focusable })}
         style={{
-          fontSize: 10,
+          fontSize: 'calc(10px * var(--font-scale, 1))',
           fontWeight: 700,
           letterSpacing: 0.3,
           padding: '2px 0',
@@ -184,9 +184,9 @@ export function GridColumnConfig({
         borderBottom: '1px solid var(--border)',
         background: 'var(--panel-2)',
       }}>
-        <span style={{ fontWeight: 600, fontSize: 12 }}>
+        <span style={{ fontWeight: 600, fontSize: 'calc(12px * var(--font-scale, 1))' }}>
           Konfigurasi Kolom
-          <span style={{ marginLeft: 6, color: 'var(--fg-faint)', fontWeight: 400, fontSize: 11 }}>
+          <span style={{ marginLeft: 6, color: 'var(--fg-faint)', fontWeight: 400, fontSize: 'calc(11px * var(--font-scale, 1))' }}>
             {visibleCount}/{columns.length} tampil
           </span>
         </span>
@@ -206,7 +206,7 @@ export function GridColumnConfig({
         gridTemplateColumns: '18px 1fr 108px 66px',
         gap: 8,
         padding: '5px 14px 3px',
-        fontSize: 10,
+        fontSize: 'calc(10px * var(--font-scale, 1))',
         fontWeight: 600,
         color: 'var(--fg-faint)',
         textTransform: 'uppercase',
