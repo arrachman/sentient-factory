@@ -168,7 +168,7 @@ function PeriodFormFields({
 
 export function ErpFiscalPeriodsPage() {
   const { rows, loading, error, reload } = useErpList(() =>
-    listFiscalPeriods({ limit: 100 }),
+    listFiscalPeriods(),
   );
   const [search, setSearch] = React.useState('');
   const [open, setOpen] = React.useState(false);

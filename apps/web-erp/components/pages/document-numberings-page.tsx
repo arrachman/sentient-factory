@@ -48,7 +48,7 @@ import {
 
 export function ErpDocumentNumberingsPage() {
   const { rows, loading, error, reload } = useErpList(() =>
-    listDocumentNumberings({ limit: 100 }),
+    listDocumentNumberings(),
   );
   const [search, setSearch] = React.useState('');
   const [open, setOpen] = React.useState(false);
