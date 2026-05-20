@@ -57,6 +57,11 @@ import { ErpSettingsModule } from './erp-settings/erp-settings.module';
 import { ErpSysMenusModule } from './erp-sys-menus/erp-sys-menus.module';
 import { ErpDocumentNumberingsModule } from './erp-document-numberings/erp-document-numberings.module';
 import { ErpFiscalPeriodsModule } from './erp-fiscal-periods/erp-fiscal-periods.module';
+import { ErpFinJournalEntriesModule } from './erp-fin-journal-entries/erp-fin-journal-entries.module';
+import { ErpFinArReceiptsModule } from './erp-fin-ar-receipts/erp-fin-ar-receipts.module';
+import { ErpFinApPaymentsModule } from './erp-fin-ap-payments/erp-fin-ap-payments.module';
+import { ErpFinGirosModule } from './erp-fin-giros/erp-fin-giros.module';
+import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
 
 @Module({
   imports: [
@@ -134,6 +139,12 @@ import { ErpFiscalPeriodsModule } from './erp-fiscal-periods/erp-fiscal-periods.
     ErpSysMenusModule,
     ErpDocumentNumberingsModule,
     ErpFiscalPeriodsModule,
+    // ERP m2 Finance (skeleton CRUD)
+    ErpFinJournalEntriesModule,
+    ErpFinArReceiptsModule,
+    ErpFinApPaymentsModule,
+    ErpFinGirosModule,
+    ErpFinLedgerModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)
