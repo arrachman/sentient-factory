@@ -22,7 +22,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type ListPaginationConfig,
+  type SummaryConfig,
+  type FilterConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -34,6 +39,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listGiros,
   createGiro,
@@ -167,22 +173,52 @@ function Fields({ data, onChange }: { data: FormState; onChange: (d: FormState) 
 }
 
 export function ErpGirosPage() {
-  const { rows, loading, error, reload } = useErpList(() => listGiros());
   const [search, setSearch] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('fin-giros');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const typeParam = (typeFilter || undefined) as ErpGiroType | undefined;
+  const statusParam = (statusFilter || undefined) as ErpGiroStatus | undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listGiros({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        type: typeParam,
+        status: statusParam,
+      }),
+    [page, pageSize, debouncedSearch, typeParam, statusParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, typeFilter, statusFilter, pageSize]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpGiro | null>(null);
   const [form, setForm] = React.useState<FormState>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter((r) =>
-          r.giroNumber.toLowerCase().includes(q) ||
-          (r.bankName ?? '').toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const ALL = { label: 'Semua', value: '' };
+  const filters: FilterConfig[] = [
+    { key: 'type', label: 'Tipe', value: typeFilter, onChange: setTypeFilter,
+      options: [ALL, ...GIRO_TYPES.map((t) => ({ label: t, value: t }))] },
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, ...GIRO_STATUSES.map((s) => ({ label: s, value: s }))] },
+  ];
+  const summary: SummaryConfig = { metricLabel: 'Σ giro', rowCount: totalRows, totalCount: totalRows };
+  const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
 
   const openCreate = () => {
     setEditing(null);
@@ -245,6 +281,9 @@ export function ErpGirosPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={filters}
+        summary={summary}
+        pagination={pagination}
       >
         <div className="lines">
           <Table>
@@ -260,10 +299,10 @@ export function ErpGirosPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={7} />
               ) : (
-                filtered.map((r) => (
+                paged.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="mono">{r.giroNumber}</TableCell>
                     <TableCell>{r.type}</TableCell>

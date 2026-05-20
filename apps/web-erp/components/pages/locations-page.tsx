@@ -26,7 +26,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -38,6 +43,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listLocations,
   createLocation,
@@ -207,24 +213,56 @@ function LocationFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpLocationsPage() {
-  const { rows, loading, error, reload } = useErpList(() => listLocations());
-  const { data: branches = [] } = useErpBranches();
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('locations');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam =
+    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listLocations({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+        isActive: isActiveParam,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
+  const { data: branches = [] } = useErpBranches();
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpLocation | null>(null);
   const [form, setForm] = React.useState<LocationForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const ALL = { label: 'Semua', value: '' };
+  const locationFilters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+  ];
+  const hasActiveFilter = search !== '' || statusFilter !== '';
+  const locationSummary: SummaryConfig = { metricLabel: 'Σ lokasi', rowCount: totalRows, totalCount: totalRows };
+  const locationPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+  // Suppress unused-warning for sort setters (not wired to UI yet).
+  void setSortBy; void setSortDir;
 
   const openCreate = () => {
     setEditing(null);
@@ -287,6 +325,9 @@ export function ErpLocationsPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={locationFilters}
+        summary={locationSummary}
+        pagination={locationPagination}
       >
         <div className="lines">
           <Table>
@@ -301,10 +342,18 @@ export function ErpLocationsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={6} />
+              {paged.length === 0 ? (
+                <TableEmpty
+                  colSpan={6}
+                  variant={hasActiveFilter ? 'filtered' : 'empty'}
+                  entityLabel="Lokasi"
+                  searchTerm={search || undefined}
+                  actionLabel={hasActiveFilter ? 'Reset filter' : 'Tambah Lokasi'}
+                  actionShortcut={hasActiveFilter ? undefined : 'N'}
+                  onAction={hasActiveFilter ? () => { setSearch(''); setStatusFilter(''); } : openCreate}
+                />
               ) : (
-                filtered.map((l) => (
+                paged.map((l) => (
                   <TableRow key={l.id}>
                     <TableCell className="mono">{l.code}</TableCell>
                     <TableCell>{l.name}</TableCell>

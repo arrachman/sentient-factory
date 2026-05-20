@@ -16,7 +16,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -28,6 +32,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listDocumentNumberings,
   createDocumentNumbering,

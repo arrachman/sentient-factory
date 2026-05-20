@@ -3,12 +3,17 @@
 /**
  * F2 Admin — Permissions page (read-only).
  * Lists adm_permissions; no create / edit / delete.
+ * Server-driven pagination (page/limit/search → backend).
  * Atomic tier: Page.
  */
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -19,27 +24,46 @@ import {
   TableEmpty,
 } from '@/components/organisms/table';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import { listPermissions } from '@/lib/api/permissions';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpPermissionsPage() {
-  const { rows, loading, error, reload } = useErpList(() =>
-    listPermissions({ limit: 100 }),
-  );
   const [search, setSearch] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } =
+    useListPagination('permissions');
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q) ||
-            (r.group ?? '').toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listPermissions({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+      }),
+    [page, pageSize, debouncedSearch],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, pageSize]);
+
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const permSummary: SummaryConfig = {
+    metricLabel: 'Σ permission',
+    rowCount: totalRows,
+    totalCount: totalRows,
+  };
+  const permPagination: ListPaginationConfig = {
+    page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize,
+  };
 
   return (
     <ErpListLayout
@@ -50,6 +74,8 @@ export function ErpPermissionsPage() {
       search={search}
       onSearch={setSearch}
       onRefresh={reload}
+      summary={permSummary}
+      pagination={permPagination}
     >
       <div className="lines">
         <Table>
@@ -62,10 +88,10 @@ export function ErpPermissionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {paged.length === 0 ? (
               <TableEmpty colSpan={4} />
             ) : (
-              filtered.map((p) => (
+              paged.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="mono">{p.code}</TableCell>
                   <TableCell>{p.name}</TableCell>

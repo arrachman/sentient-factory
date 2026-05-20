@@ -44,6 +44,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listPartners,
   createPartner,
@@ -176,36 +177,61 @@ function PartnerFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpPartnersPage() {
-  const { rows, loading, error, reload } = useErpList(() => listPartners());
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('');
-  const [page, setPage] = React.useState(1);
+  const { page, pageSize, setPage, setPageSize } = useListPagination('partners');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam =
+    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  // Server-side type filter: CUSTOMER/SUPPLIER map to isCustomer/isSupplier.
+  // SALESMAN is not a backend filter (DTO lacks `isSalesman`); fall back to
+  // client-side filtering of the current page for that one option.
+  const isCustomerParam = typeFilter === 'CUSTOMER' ? true : undefined;
+  const isSupplierParam = typeFilter === 'SUPPLIER' ? true : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listPartners({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+        isActive: isActiveParam,
+        isCustomer: isCustomerParam,
+        isSupplier: isSupplierParam,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam, isCustomerParam, isSupplierParam, typeFilter],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, typeFilter, sortBy, sortDir, pageSize]);
+
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpPartner | null>(null);
   const [form, setForm] = React.useState<PartnerForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return rows.filter((r) => {
-      if (q && !r.code.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q)) return false;
-      if (statusFilter === 'active' && !r.isActive) return false;
-      if (statusFilter === 'inactive' && r.isActive) return false;
-      if (typeFilter === 'CUSTOMER' && !(r.isCustomer && !r.isSupplier)) return false;
-      if (typeFilter === 'SUPPLIER' && !(r.isSupplier && !r.isCustomer)) return false;
-      if (typeFilter === 'SALESMAN' && !r.isSalesman) return false;
-      return true;
-    });
-  }, [rows, search, statusFilter, typeFilter]);
+  // Client-side fallback ONLY for SALESMAN (backend DTO has no isSalesman).
+  // For CUSTOMER/SUPPLIER the backend already filters; this passes through.
+  const paged = React.useMemo(() => {
+    if (typeFilter === 'SALESMAN') return rows.filter((r) => r.isSalesman);
+    return rows;
+  }, [rows, typeFilter]);
 
-  // Reset to page 1 when filters change
-  React.useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter]);
-
-  const PAGE_SIZE = 20;
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+  void setSortBy; void setSortDir;
 
   // Selection
   const allSelected = paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
@@ -231,8 +257,8 @@ export function ErpPartnersPage() {
     { key: 'type', label: 'Tipe', value: typeFilter, onChange: setTypeFilter,
       options: [ALL, { label: 'Customer', value: 'CUSTOMER' }, { label: 'Supplier', value: 'SUPPLIER' }, { label: 'Salesman', value: 'SALESMAN' }] },
   ];
-  const partnerSummary: SummaryConfig = { metricLabel: 'Σ partner', rowCount: filtered.length, totalCount: rows.length };
-  const partnerPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
+  const partnerSummary: SummaryConfig = { metricLabel: 'Σ partner', rowCount: totalRows, totalCount: totalRows };
+  const partnerPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
 
   const openCreate = () => {
     setEditing(null);

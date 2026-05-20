@@ -48,8 +48,13 @@ export interface CreateApPaymentPayload {
 
 export type UpdateApPaymentPayload = Partial<CreateApPaymentPayload>;
 
+export interface ListApPaymentsParams extends PaginationParams {
+  status?: ErpDocumentStatus;
+  paymentStatus?: ErpSettlementStatus;
+}
+
 export async function listApPayments(
-  params?: PaginationParams,
+  params?: ListApPaymentsParams,
 ): Promise<PaginatedResponse<ErpApPayment>> {
   return apiGet<PaginatedResponse<ErpApPayment>>(
     '/fin/ap-payments',

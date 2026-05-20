@@ -26,7 +26,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -38,6 +42,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listTaxes,
   createTax,
@@ -183,16 +188,43 @@ function TaxFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpTaxesPage() {
-  const { rows, loading, error, reload } = useErpList(() => listTaxes());
-  const [accounts, setAccounts] = React.useState<ErpAccount[]>([]);
   const [search, setSearch] = React.useState('');
+  const [sortBy] = React.useState('code');
+  const [sortDir] = React.useState<'asc' | 'desc'>('asc');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('taxes');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listTaxes({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir],
+  );
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, sortBy, sortDir, pageSize, setPage]);
+
+  const [accounts, setAccounts] = React.useState<ErpAccount[]>([]);
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpTax | null>(null);
   const [form, setForm] = React.useState<TaxForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
-    listAccounts()
+    // Load accounts for the form's account selects. Server defaults limit=10 so
+    // we ask for a large page; this list is a lookup, not the page's main list.
+    listAccounts({ page: 1, limit: 100 })
       .then((res) => setAccounts(res.data))
       .catch(() => setAccounts([]));
   }, []);
@@ -206,16 +238,23 @@ export function ErpTaxesPage() {
     [accounts],
   );
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+  const hasActiveFilter = search !== '';
+  const summary: SummaryConfig = {
+    metricLabel: 'Σ pajak',
+    rowCount: totalRows,
+    totalCount: totalRows,
+  };
+  const pagination: ListPaginationConfig = {
+    page,
+    pageCount,
+    pageSize,
+    totalRows,
+    onPage: setPage,
+    onPageSize: setPageSize,
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -278,6 +317,8 @@ export function ErpTaxesPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        summary={summary}
+        pagination={pagination}
       >
         <div className="lines">
           <Table>
@@ -293,10 +334,14 @@ export function ErpTaxesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={7} />
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={7}>
+                  {hasActiveFilter
+                    ? 'Tidak ada hasil untuk filter ini'
+                    : 'Tidak ada data pajak'}
+                </TableEmpty>
               ) : (
-                filtered.map((t) => (
+                paged.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="mono">{t.code}</TableCell>
                     <TableCell>{t.name}</TableCell>

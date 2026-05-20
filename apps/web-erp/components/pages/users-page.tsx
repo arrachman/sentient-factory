@@ -3,6 +3,7 @@
 /**
  * F2 Admin — User Management page.
  * List kolom: Kode, Nama, Bahasa, Cabang, Tgl EXP, Status — mengikuti pola MyERP+.
+ * Server-driven pagination (page/limit/search → backend).
  * Atomic tier: Page.
  */
 
@@ -15,7 +16,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -27,6 +32,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listUsers, getUser, createUser, updateUser, deleteUser,
 } from '@/lib/api/users';
@@ -118,25 +124,47 @@ function UsersTable({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpUsersPage() {
-  const { rows, loading, error, reload } = useErpList(() => listUsers());
   const [search, setSearch] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('users');
+
+  // Debounce search to avoid hitting API on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listUsers({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+      }),
+    [page, pageSize, debouncedSearch],
+  );
+
+  // Reset to page 1 when search/pageSize change.
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, pageSize]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpUser | null>(null);
   const [editRoles, setEditRoles] = React.useState<ErpUserRoleRef[]>([]);
   const [saving, setSaving] = React.useState(false);
   const { data, setData } = useUserForm(editing, editRoles);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.username.toLowerCase().includes(q) ||
-            r.fullName.toLowerCase().includes(q) ||
-            (r.email ?? '').toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const userSummary: SummaryConfig = {
+    metricLabel: 'Σ user',
+    rowCount: totalRows,
+    totalCount: totalRows,
+  };
+  const userPagination: ListPaginationConfig = {
+    page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize,
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -223,9 +251,11 @@ export function ErpUsersPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        summary={userSummary}
+        pagination={userPagination}
       >
         <UsersTable
-          rows={filtered}
+          rows={paged}
           onEdit={openEdit}
           onToggle={handleToggle}
           onDelete={handleDelete}

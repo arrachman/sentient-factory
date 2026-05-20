@@ -27,8 +27,13 @@ export interface ErpLedgerEntry {
   updatedAt: string;
 }
 
+export interface ListLedgerParams extends PaginationParams {
+  accountId?: string;
+  partnerId?: string;
+}
+
 export async function listLedgerEntries(
-  params?: PaginationParams,
+  params?: ListLedgerParams,
 ): Promise<PaginatedResponse<ErpLedgerEntry>> {
   return apiGet<PaginatedResponse<ErpLedgerEntry>>(
     '/fin/ledger',

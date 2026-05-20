@@ -18,7 +18,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -30,6 +34,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listPaymentTerms,
   createPaymentTerm,
@@ -204,25 +209,56 @@ function PaymentTermFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpPaymentTermsPage() {
-  const { rows, loading, error, reload } = useErpList(() =>
-    listPaymentTerms(),
-  );
   const [search, setSearch] = React.useState('');
+  const [sortBy] = React.useState('code');
+  const [sortDir] = React.useState<'asc' | 'desc'>('asc');
+  const { page, pageSize, setPage, setPageSize } =
+    useListPagination('payment-terms');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listPaymentTerms({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir],
+  );
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, sortBy, sortDir, pageSize, setPage]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpPaymentTerm | null>(null);
   const [form, setForm] = React.useState<PaymentTermForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+  const hasActiveFilter = search !== '';
+  const summary: SummaryConfig = {
+    metricLabel: 'Σ termin',
+    rowCount: totalRows,
+    totalCount: totalRows,
+  };
+  const pagination: ListPaginationConfig = {
+    page,
+    pageCount,
+    pageSize,
+    totalRows,
+    onPage: setPage,
+    onPageSize: setPageSize,
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -285,6 +321,8 @@ export function ErpPaymentTermsPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        summary={summary}
+        pagination={pagination}
       >
         <div className="lines">
           <Table>
@@ -299,10 +337,14 @@ export function ErpPaymentTermsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={6} />
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={6}>
+                  {hasActiveFilter
+                    ? 'Tidak ada hasil untuk filter ini'
+                    : 'Tidak ada data termin pembayaran'}
+                </TableEmpty>
               ) : (
-                filtered.map((t) => (
+                paged.map((t) => (
                   <TableRow key={t.id}>
                     <TableCell className="mono">{t.code}</TableCell>
                     <TableCell>{t.name}</TableCell>

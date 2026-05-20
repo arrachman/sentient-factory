@@ -18,7 +18,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -30,6 +35,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import { listUnits, createUnit, updateUnit, deleteUnit } from '@/lib/api/units';
 import type { ErpUnit, CreateUnitPayload } from '@/lib/api/units';
 
@@ -94,23 +100,53 @@ function UnitFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpUnitsPage() {
-  const { rows, loading, error, reload } = useErpList(() => listUnits());
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('units');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam =
+    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listUnits({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+        isActive: isActiveParam,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpUnit | null>(null);
   const [form, setForm] = React.useState<UnitForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const ALL = { label: 'Semua', value: '' };
+  const unitFilters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+  ];
+  const unitSummary: SummaryConfig = { metricLabel: 'Σ satuan', rowCount: totalRows, totalCount: totalRows };
+  const unitPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+  void setSortBy; void setSortDir;
 
   const openCreate = () => {
     setEditing(null);
@@ -173,6 +209,9 @@ export function ErpUnitsPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={unitFilters}
+        summary={unitSummary}
+        pagination={unitPagination}
       >
         <div className="lines">
           <Table>
@@ -185,10 +224,10 @@ export function ErpUnitsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={4} />
               ) : (
-                filtered.map((u) => (
+                paged.map((u) => (
                   <TableRow key={u.id}>
                     <TableCell className="mono">{u.code}</TableCell>
                     <TableCell>{u.name}</TableCell>

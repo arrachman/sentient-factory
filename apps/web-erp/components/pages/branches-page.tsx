@@ -2,7 +2,11 @@
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { RowActionsMenu } from '@/components/molecules/row-actions-menu';
+import {
+  RowActionsMenu,
+  RowContextMenu,
+  type RowActionItem,
+} from '@/components/molecules/row-actions-menu';
 import {
   Modal,
   ModalContent,
@@ -28,9 +32,11 @@ import {
   CheckboxHead,
   CheckboxCell,
   CodeLinkCell,
+  SortableHead,
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listBranches,
   createBranch,
@@ -50,10 +56,38 @@ import {
 import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
 
 export function ErpBranchesPage() {
-  const { rows, loading, error, reload } = useErpList(() => listBranches());
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
-  const [page, setPage] = React.useState(1);
+  const { page, pageSize, setPage, setPageSize } = useListPagination('branches');
+
+  // Debounce search to avoid hitting API on every keystroke.
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam =
+    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listBranches({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+        isActive: isActiveParam,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+  );
+
+  // Reset to page 1 when filters/search/sort change.
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [focusedIndex, setFocusedIndex] = React.useState(-1);
   const [open, setOpen] = React.useState(false);
@@ -62,18 +96,7 @@ export function ErpBranchesPage() {
   const [saving, setSaving] = React.useState(false);
   const [auditTarget, setAuditTarget] = React.useState<ErpBranch | null>(null);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return rows.filter((r) => {
-      if (q && !r.code.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q) && !(r.city ?? '').toLowerCase().includes(q)) return false;
-      if (statusFilter === 'active' && !r.isActive) return false;
-      if (statusFilter === 'inactive' && r.isActive) return false;
-      return true;
-    });
-  }, [rows, search, statusFilter]);
-
-  React.useEffect(() => { setPage(1); setFocusedIndex(-1); }, [search, statusFilter]);
-  React.useEffect(() => { setFocusedIndex(-1); }, [page]);
+  React.useEffect(() => { setFocusedIndex(-1); }, [page, debouncedSearch, statusFilter]);
 
   // Auto-scroll focused row into view
   React.useEffect(() => {
@@ -81,9 +104,9 @@ export function ErpBranchesPage() {
     document.querySelector('[data-focused="true"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [focusedIndex]);
 
-  const PAGE_SIZE = 20;
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
 
   const allSelected = paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
   const someSelected = !allSelected && paged.some((r) => selectedIds.has(r.id));
@@ -98,8 +121,8 @@ export function ErpBranchesPage() {
       options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
   ];
   const hasActiveFilter = search !== '' || statusFilter !== '';
-  const branchSummary: SummaryConfig = { metricLabel: 'Σ cabang', rowCount: filtered.length, totalCount: rows.length };
-  const branchPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
+  const branchSummary: SummaryConfig = { metricLabel: 'Σ cabang', rowCount: totalRows, totalCount: totalRows };
+  const branchPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
   const branchKeyboard: KeyboardRowConfig = {
     rowCount: paged.length,
     focusedIndex,
@@ -168,11 +191,11 @@ export function ErpBranchesPage() {
             <TableHeader>
               <TableRow>
                 <CheckboxHead checked={someSelected ? 'indeterminate' : allSelected} onCheckedChange={toggleAll} />
-                <TableHead>Kode</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Kota</TableHead>
-                <TableHead>Telepon</TableHead>
-                <TableHead>Status</TableHead>
+                <SortableHead field="code" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Kode</SortableHead>
+                <SortableHead field="name" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Nama</SortableHead>
+                <SortableHead field="city" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Kota</SortableHead>
+                <SortableHead field="phone" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Telepon</SortableHead>
+                <SortableHead field="isActive" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Status</SortableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
@@ -181,29 +204,32 @@ export function ErpBranchesPage() {
                 <TableEmpty colSpan={7}>
                   {hasActiveFilter ? 'Tidak ada hasil untuk filter ini' : 'Tidak ada data cabang'}
                 </TableEmpty>
-              ) : paged.map((b, idx) => (
-                <TableRow key={b.id} data-selected={selectedIds.has(b.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)}>
-                  <CheckboxCell checked={selectedIds.has(b.id)} onCheckedChange={() => toggleRow(b.id)} />
-                  <CodeLinkCell code={b.code} onOpen={() => openEdit(b)} />
-                  <TableCell>{b.name}</TableCell>
-                  <TableCell className="muted">{b.city ?? '—'}</TableCell>
-                  <TableCell className="muted">{b.phone ?? '—'}</TableCell>
-                  <TableCell>
-                    <Badge variant={b.isActive ? 'success' : 'default'} dot className="-ml-[7px]">
-                      {b.isActive ? 'Aktif' : 'Nonaktif'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <RowActionsMenu
-                      items={[
-                        { label: 'Edit', onSelect: () => openEdit(b) },
-                        { label: 'Riwayat', onSelect: () => setAuditTarget(b) },
-                        { label: 'Hapus', onSelect: () => handleDelete(b), danger: true, separatorBefore: true },
-                      ]}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              ) : paged.map((b, idx) => {
+                const rowActions: RowActionItem[] = [
+                  { label: 'Edit', onSelect: () => openEdit(b) },
+                  { label: 'Riwayat', onSelect: () => setAuditTarget(b) },
+                  { label: 'Hapus', onSelect: () => handleDelete(b), danger: true, separatorBefore: true },
+                ];
+                return (
+                  <RowContextMenu key={b.id} items={rowActions}>
+                    <TableRow data-selected={selectedIds.has(b.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)}>
+                      <CheckboxCell checked={selectedIds.has(b.id)} onCheckedChange={() => toggleRow(b.id)} />
+                      <CodeLinkCell code={b.code} onOpen={() => openEdit(b)} />
+                      <TableCell>{b.name}</TableCell>
+                      <TableCell className="muted">{b.city ?? '—'}</TableCell>
+                      <TableCell className="muted">{b.phone ?? '—'}</TableCell>
+                      <TableCell>
+                        <Badge variant={b.isActive ? 'success' : 'default'} dot className="-ml-[7px]">
+                          {b.isActive ? 'Aktif' : 'Nonaktif'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <RowActionsMenu items={rowActions} />
+                      </TableCell>
+                    </TableRow>
+                  </RowContextMenu>
+                );
+              })}
             </TableBody>
           </Table>
         </div>

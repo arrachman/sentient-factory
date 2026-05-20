@@ -24,7 +24,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -36,6 +40,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listItemCategories,
   createItemCategory,
@@ -132,31 +137,49 @@ function CatFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpItemCategoriesPage() {
-  const { rows, loading, error, reload } = useErpList(() =>
-    listItemCategories(),
-  );
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('item-categories');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listItemCategories({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, sortBy, sortDir, pageSize]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpItemCategory | null>(null);
   const [form, setForm] = React.useState<CatForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
 
   const parentMap = React.useMemo(() => {
     const m: Record<string, string> = {};
     rows.forEach((r) => (m[r.id] = r.name));
     return m;
   }, [rows]);
+
+  const catSummary: SummaryConfig = { metricLabel: 'Σ kategori', rowCount: totalRows, totalCount: totalRows };
+  const catPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+  void setSortBy; void setSortDir;
 
   const openCreate = () => {
     setEditing(null);
@@ -219,6 +242,8 @@ export function ErpItemCategoriesPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        summary={catSummary}
+        pagination={catPagination}
       >
         <div className="lines">
           <Table>
@@ -231,10 +256,10 @@ export function ErpItemCategoriesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={4} />
               ) : (
-                filtered.map((c) => (
+                paged.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="mono">{c.code}</TableCell>
                     <TableCell>

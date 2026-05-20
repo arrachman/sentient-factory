@@ -48,8 +48,13 @@ export interface CreateArReceiptPayload {
 
 export type UpdateArReceiptPayload = Partial<CreateArReceiptPayload>;
 
+export interface ListArReceiptsParams extends PaginationParams {
+  status?: ErpDocumentStatus;
+  paymentStatus?: ErpSettlementStatus;
+}
+
 export async function listArReceipts(
-  params?: PaginationParams,
+  params?: ListArReceiptsParams,
 ): Promise<PaginatedResponse<ErpArReceipt>> {
   return apiGet<PaginatedResponse<ErpArReceipt>>(
     '/fin/ar-receipts',

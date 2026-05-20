@@ -74,8 +74,13 @@ export interface CreateJournalEntryPayload {
 
 export type UpdateJournalEntryPayload = Partial<CreateJournalEntryPayload>;
 
+export interface ListJournalEntriesParams extends PaginationParams {
+  journalType?: ErpJournalType;
+  status?: ErpDocumentStatus;
+}
+
 export async function listJournalEntries(
-  params?: PaginationParams,
+  params?: ListJournalEntriesParams,
 ): Promise<PaginatedResponse<ErpJournalEntry>> {
   return apiGet<PaginatedResponse<ErpJournalEntry>>(
     '/fin/journal-entries',

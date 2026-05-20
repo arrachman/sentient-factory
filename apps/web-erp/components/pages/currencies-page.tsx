@@ -25,7 +25,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -37,6 +41,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listCurrencies,
   createCurrency,
@@ -134,23 +139,55 @@ function CurFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpCurrenciesPage() {
-  const { rows, loading, error, reload } = useErpList(() => listCurrencies());
   const [search, setSearch] = React.useState('');
+  const [sortBy] = React.useState('code');
+  const [sortDir] = React.useState<'asc' | 'desc'>('asc');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('currencies');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listCurrencies({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir],
+  );
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, sortBy, sortDir, pageSize, setPage]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpCurrency | null>(null);
   const [form, setForm] = React.useState<CurForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+  const hasActiveFilter = search !== '';
+  const summary: SummaryConfig = {
+    metricLabel: 'Σ mata uang',
+    rowCount: totalRows,
+    totalCount: totalRows,
+  };
+  const pagination: ListPaginationConfig = {
+    page,
+    pageCount,
+    pageSize,
+    totalRows,
+    onPage: setPage,
+    onPageSize: setPageSize,
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -213,6 +250,8 @@ export function ErpCurrenciesPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        summary={summary}
+        pagination={pagination}
       >
         <div className="lines">
           <Table>
@@ -226,10 +265,14 @@ export function ErpCurrenciesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={5} />
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={5}>
+                  {hasActiveFilter
+                    ? 'Tidak ada hasil untuk filter ini'
+                    : 'Tidak ada data mata uang'}
+                </TableEmpty>
               ) : (
-                filtered.map((c) => (
+                paged.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="mono">{c.code}</TableCell>
                     <TableCell>{c.name}</TableCell>

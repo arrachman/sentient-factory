@@ -46,8 +46,13 @@ export interface CreateGiroPayload {
 
 export type UpdateGiroPayload = Partial<CreateGiroPayload>;
 
+export interface ListGirosParams extends PaginationParams {
+  type?: ErpGiroType;
+  status?: ErpGiroStatus;
+}
+
 export async function listGiros(
-  params?: PaginationParams,
+  params?: ListGirosParams,
 ): Promise<PaginatedResponse<ErpGiro>> {
   return apiGet<PaginatedResponse<ErpGiro>>(
     '/fin/giros',

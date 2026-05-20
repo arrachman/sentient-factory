@@ -4,6 +4,12 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from './client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
+export interface ListPartnersParams extends PaginationParams {
+  isCustomer?: boolean;
+  isSupplier?: boolean;
+  categoryId?: string;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ErpPartner {
@@ -48,7 +54,7 @@ export interface UpdatePartnerPayload {
 // ─── API functions ────────────────────────────────────────────────────────────
 
 export async function listPartners(
-  params?: PaginationParams,
+  params?: ListPartnersParams,
 ): Promise<PaginatedResponse<ErpPartner>> {
   return apiGet<PaginatedResponse<ErpPartner>>('/partners', params as Record<string, string | number | boolean | undefined>);
 }

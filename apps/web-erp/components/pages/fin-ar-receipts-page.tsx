@@ -16,7 +16,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type ListPaginationConfig,
+  type SummaryConfig,
+  type FilterConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -28,6 +33,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listArReceipts,
   createArReceipt,
@@ -36,6 +42,7 @@ import {
 } from '@/lib/api/fin-ar-receipts';
 import type {
   ErpArReceipt,
+  ErpDocumentStatus,
   CreateArReceiptPayload,
 } from '@/lib/api/fin-ar-receipts';
 
@@ -148,19 +155,52 @@ function Fields({
 }
 
 export function ErpArReceiptsPage() {
-  const { rows, loading, error, reload } = useErpList(() => listArReceipts());
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('fin-ar-receipts');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const statusParam = (statusFilter || undefined) as ErpDocumentStatus | undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listArReceipts({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        status: statusParam,
+      }),
+    [page, pageSize, debouncedSearch, statusParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, pageSize]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpArReceipt | null>(null);
   const [form, setForm] = React.useState<FormState>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter((r) => r.docNumber.toLowerCase().includes(q) || r.description.toLowerCase().includes(q))
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const ALL = { label: 'Semua', value: '' };
+  const filters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL,
+        { label: 'Draft', value: 'DRAFT' },
+        { label: 'Posted', value: 'POSTED' },
+        { label: 'Void', value: 'VOID' },
+        { label: 'Cancelled', value: 'CANCELLED' },
+      ] },
+  ];
+  const summary: SummaryConfig = { metricLabel: 'Σ AR receipts', rowCount: totalRows, totalCount: totalRows };
+  const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
 
   const openCreate = () => {
     setEditing(null);
@@ -223,6 +263,9 @@ export function ErpArReceiptsPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={filters}
+        summary={summary}
+        pagination={pagination}
       >
         <div className="lines">
           <Table>
@@ -237,10 +280,10 @@ export function ErpArReceiptsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={6} />
               ) : (
-                filtered.map((r) => (
+                paged.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="mono">{r.docNumber}</TableCell>
                     <TableCell>{r.transactionDate.slice(0, 10)}</TableCell>

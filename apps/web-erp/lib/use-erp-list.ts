@@ -1,14 +1,16 @@
 'use client';
 
-// Generic hook for ERP list pages — handles load, reload, and error state.
-// Keep this file framework-agnostic (React only, no API calls).
+// Generic hook for ERP list pages — handles load, reload, params-reactive refetch, and error state.
+// Server-driven: page/limit/search/sort live in caller state and are passed via `fetcher`.
+// Caller is responsible for putting those state values into `deps` so the hook refetches.
 
 import * as React from 'react';
 import { notify } from '@/lib/feedback';
-import type { PaginatedResponse } from '@/lib/api/types';
+import type { PaginatedMeta, PaginatedResponse } from '@/lib/api/types';
 
 export interface ErpListState<T> {
   rows: T[];
+  meta: PaginatedMeta | null;
   loading: boolean;
   error: string | null;
   reload: () => void;
@@ -16,6 +18,7 @@ export interface ErpListState<T> {
 
 interface State<T> {
   rows: T[];
+  meta: PaginatedMeta | null;
   loading: boolean;
   error: string | null;
   tick: number;
@@ -23,7 +26,7 @@ interface State<T> {
 
 type Action<T> =
   | { type: 'start' }
-  | { type: 'success'; rows: T[] }
+  | { type: 'success'; rows: T[]; meta: PaginatedMeta }
   | { type: 'error'; message: string }
   | { type: 'reload' };
 
@@ -32,7 +35,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
     case 'start':
       return { ...state, loading: true, error: null };
     case 'success':
-      return { ...state, loading: false, rows: action.rows };
+      return { ...state, loading: false, rows: action.rows, meta: action.meta };
     case 'error':
       return { ...state, loading: false, error: action.message };
     case 'reload':
@@ -43,36 +46,44 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
 }
 
 /**
- * Fetches a paginated list resource once on mount and whenever `reload()` is
- * called. Surfaces a `notify` toast on error so the user sees feedback.
+ * Fetches a paginated list resource. Refetches whenever `deps` change or
+ * `reload()` is called. Exposes `meta` so caller can drive footer pagination
+ * from server-reported `total` / `totalPages`.
  *
- * Uses a reducer so the "start loading" transition happens inside the async
- * dispatch chain rather than synchronously in the effect body — keeping the
- * `react-hooks/set-state-in-effect` rule happy.
+ * Pattern (canonical):
+ *   const { rows, meta, loading, error, reload } = useErpList(
+ *     () => listBranches({ page, limit: pageSize, search, sortBy, sortDir, isActive }),
+ *     [page, pageSize, search, sortBy, sortDir, isActive],
+ *   );
  */
 export function useErpList<T>(
   fetcher: () => Promise<PaginatedResponse<T>>,
+  deps: React.DependencyList = [],
 ): ErpListState<T> {
   const [state, dispatch] = React.useReducer(reducer<T>, {
     rows: [],
+    meta: null,
     loading: true,
     error: null,
     tick: 0,
   });
 
+  // Keep latest fetcher in ref so we don't refetch when caller passes a new
+  // closure on every render — only `deps` and `tick` drive refetches.
+  const fetcherRef = React.useRef(fetcher);
+  fetcherRef.current = fetcher;
+
   React.useEffect(() => {
     let cancelled = false;
 
-    // Defer the "start" dispatch so we don't synchronously call setState
-    // inside the effect body.
     Promise.resolve().then(() => {
       if (cancelled) return;
       dispatch({ type: 'start' });
     });
 
-    fetcher()
+    fetcherRef.current()
       .then((res) => {
-        if (!cancelled) dispatch({ type: 'success', rows: res.data });
+        if (!cancelled) dispatch({ type: 'success', rows: res.data, meta: res.meta });
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -85,12 +96,13 @@ export function useErpList<T>(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.tick]);
+  }, [state.tick, ...deps]);
 
   const reload = React.useCallback(() => dispatch({ type: 'reload' }), []);
 
   return {
     rows: state.rows,
+    meta: state.meta,
     loading: state.loading,
     error: state.error,
     reload,

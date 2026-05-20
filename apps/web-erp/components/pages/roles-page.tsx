@@ -3,6 +3,7 @@
 /**
  * F2 Admin — Role Management page.
  * Lists adm_roles; supports create, edit, delete.
+ * Server-driven pagination (page/limit/search → backend).
  * Atomic tier: Page.
  */
 
@@ -17,7 +18,11 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -29,6 +34,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import { listRoles, createRole, updateRole, deleteRole } from '@/lib/api/roles';
 import type { ErpRole, CreateRolePayload } from '@/lib/api/roles';
 
@@ -101,23 +107,44 @@ function RoleFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpRolesPage() {
-  const { rows, loading, error, reload } = useErpList(() => listRoles());
   const [search, setSearch] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('roles');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listRoles({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+      }),
+    [page, pageSize, debouncedSearch],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, pageSize]);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpRole | null>(null);
   const [form, setForm] = React.useState<RoleForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const roleSummary: SummaryConfig = {
+    metricLabel: 'Σ role',
+    rowCount: totalRows,
+    totalCount: totalRows,
+  };
+  const rolePagination: ListPaginationConfig = {
+    page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize,
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -180,6 +207,8 @@ export function ErpRolesPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        summary={roleSummary}
+        pagination={rolePagination}
       >
         <div className="lines">
           <Table>
@@ -192,10 +221,10 @@ export function ErpRolesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={4} />
               ) : (
-                filtered.map((r) => (
+                paged.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="mono">{r.code}</TableCell>
                     <TableCell>{r.name}</TableCell>

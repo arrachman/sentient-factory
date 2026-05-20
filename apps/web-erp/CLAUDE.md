@@ -481,17 +481,96 @@ Konvensi item kebab:
 Implementasi wajib lewat molecule reusable
 [`components/molecules/row-actions-menu.tsx`](components/molecules/row-actions-menu.tsx)
 (`RowActionsMenu`) — **dilarang** rakit ad-hoc per halaman. Primitif Radix di
-[`components/ui/dropdown-menu.tsx`](components/ui/dropdown-menu.tsx). Contoh:
+[`components/ui/dropdown-menu.tsx`](components/ui/dropdown-menu.tsx).
+
+**Paritas right-click (WAJIB, 2026-05-20):** setiap baris list **wajib** juga
+membuka menu yang sama via klik-kanan (context menu). Bungkus `<TableRow>`
+dengan `<RowContextMenu items={rowActions}>` dari molecule yang sama; primitif
+Radix di [`components/ui/context-menu.tsx`](components/ui/context-menu.tsx).
+Items **harus** array yang sama (referensi sama) dengan `<RowActionsMenu>`
+agar opsi & urutannya garanteed sinkron — jangan duplikasi literal. Contoh:
 
 ```tsx
-<RowActionsMenu
-  items={[
-    { label: 'Edit', onSelect: () => openEdit(row) },
-    { label: 'Riwayat', onSelect: () => setAuditTarget(row) },
-    { label: 'Hapus', onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
-  ]}
-/>
+const rowActions: RowActionItem[] = [
+  { label: 'Edit', onSelect: () => openEdit(row) },
+  { label: 'Riwayat', onSelect: () => setAuditTarget(row) },
+  { label: 'Hapus', onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
+];
+return (
+  <RowContextMenu items={rowActions}>
+    <TableRow ...>
+      ...
+      <TableCell><RowActionsMenu items={rowActions} /></TableCell>
+    </TableRow>
+  </RowContextMenu>
+);
 ```
+
+### 2.12 Server-driven pagination + search + filter + sort (WAJIB, 2026-05-20)
+
+**Setiap** list page **wajib** mengirim `page`, `limit`, `search`, `sortBy`,
+`sortDir`, (+`isActive` bila ada filter status) ke API. **DILARANG** filter
+atau slice di klien atas data hasil API — backend default `limit=10`, kalau
+FE pakai client-side filter → user cuma lihat 10 baris pertama walau footer
+bilang "Tampilkan 25".
+
+Bug history (2026-05-20): branches page hanya menampilkan 10 baris walau
+seed 500 dummy ada — penyebab: `listBranches({ sortBy, sortDir })` tidak
+kirim `limit`, backend default 10, FE lalu `rows.filter(...).slice(page-1,
+page)`. Quick fix-nya menaikkan limit hanya menunda masalah; refactor
+proper diterapkan ke semua list page.
+
+**Pola kanonik** (lihat [components/pages/branches-page.tsx](components/pages/branches-page.tsx)):
+
+```tsx
+const [sortBy, setSortBy] = useState('createdAt');
+const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
+const [search, setSearch] = useState('');
+const [statusFilter, setStatusFilter] = useState('');
+const { page, pageSize, setPage, setPageSize } = useListPagination('branches');
+
+// Debounce search 300ms
+const [debouncedSearch, setDebouncedSearch] = useState(search);
+useEffect(() => {
+  const t = setTimeout(() => setDebouncedSearch(search), 300);
+  return () => clearTimeout(t);
+}, [search]);
+
+const isActiveParam = statusFilter === 'active' ? true
+  : statusFilter === 'inactive' ? false : undefined;
+
+const { rows, meta, loading, error, reload } = useErpList(
+  () => listBranches({
+    page, limit: pageSize, search: debouncedSearch || undefined,
+    sortBy, sortDir, isActive: isActiveParam,
+  }),
+  [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+);
+
+// Reset page 1 saat filter/search/sort/pageSize berubah
+useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
+const paged = rows;  // server sudah paginasi
+const totalRows = meta?.total ?? 0;
+const pageCount = meta?.totalPages ?? 1;
+```
+
+Aturan turunan:
+
+- `useErpList` (`lib/use-erp-list.ts`) **harus** dipanggil dengan
+  **deps array** kedua — fetcher closure di-cache via ref, hanya deps yang
+  trigger refetch.
+- `meta.total`/`meta.totalPages` dari backend = SSOT untuk pagination footer.
+- **Dilarang** memo `filtered = rows.filter(...)` di list page lagi —
+  filter ke backend.
+- Backend DTO **wajib** support minimal `page`, `limit`, `sortBy`, `sortDir`
+  + `search` (bila ada kolom teks). Filter status (`isActive`) bila entitas
+  punya. Kalau DTO belum lengkap → tambahkan dulu di
+  `apps/api-gateway/src/erp-<feature>/dto/query-*.dto.ts` sebelum FE
+  menggantungkan diri ke server-side.
+- Pengecualian sah saat ini (DTO memang tidak paginasi, list selalu kecil):
+  `settings`, `fiscal-periods`, `menus`, `permissions` (enum-like). Kalau
+  list-nya tumbuh, tambahkan paginasi backend dulu.
 
 ---
 

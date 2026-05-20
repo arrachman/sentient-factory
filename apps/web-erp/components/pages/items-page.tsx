@@ -16,7 +16,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -28,6 +33,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import { listItems, createItem, updateItem, deleteItem } from '@/lib/api/items';
 import type { ErpItem } from '@/lib/api/items';
 import { listUnits } from '@/lib/api/units';
@@ -43,11 +49,40 @@ import {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpItemsPage() {
-  const { rows, loading, error, reload } = useErpList(() => listItems());
-  const { rows: units } = useErpList(() => listUnits());
-  const { rows: categories } = useErpList(() => listItemCategories());
-
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('items');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam =
+    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listItems({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+        isActive: isActiveParam,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
+  // Lookup lists (load larger pages — used for label fallbacks in table cells).
+  const { rows: units } = useErpList(() => listUnits({ limit: 100 }), []);
+  const { rows: categories } = useErpList(() => listItemCategories({ limit: 100 }), []);
+
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpItem | null>(null);
   const [form, setForm] = React.useState<ItemFormData>(defaultItemForm);
@@ -66,16 +101,18 @@ export function ErpItemsPage() {
     return m;
   }, [categories]);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const ALL = { label: 'Semua', value: '' };
+  const itemFilters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+  ];
+  const itemSummary: SummaryConfig = { metricLabel: 'Σ item', rowCount: totalRows, totalCount: totalRows };
+  const itemPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+  void setSortBy; void setSortDir;
 
   const openCreate = () => {
     setEditing(null);
@@ -138,6 +175,9 @@ export function ErpItemsPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={itemFilters}
+        summary={itemSummary}
+        pagination={itemPagination}
       >
         <div className="lines">
           <Table>
@@ -153,10 +193,10 @@ export function ErpItemsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={7} />
               ) : (
-                filtered.map((item) => (
+                paged.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="mono">{item.code}</TableCell>
                     <TableCell>{item.name}</TableCell>

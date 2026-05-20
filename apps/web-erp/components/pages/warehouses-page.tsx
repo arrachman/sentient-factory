@@ -26,7 +26,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -38,6 +43,7 @@ import {
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
+import { useListPagination } from '@/lib/use-list-pagination';
 import {
   listWarehouses,
   createWarehouse,
@@ -172,30 +178,61 @@ function WarehouseFormFields({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpWarehousesPage() {
-  const { rows, loading, error, reload } = useErpList(() => listWarehouses());
-  const [locations, setLocations] = React.useState<ErpLocation[]>([]);
+  const [sortBy, setSortBy] = React.useState('createdAt');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const { page, pageSize, setPage, setPageSize } = useListPagination('warehouses');
+
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const isActiveParam =
+    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
+
+  const { rows, meta, loading, error, reload } = useErpList(
+    () =>
+      listWarehouses({
+        page,
+        limit: pageSize,
+        search: debouncedSearch || undefined,
+        sortBy,
+        sortDir,
+        isActive: isActiveParam,
+      }),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+  );
+
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
+
+  const [locations, setLocations] = React.useState<ErpLocation[]>([]);
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpWarehouse | null>(null);
   const [form, setForm] = React.useState<WarehouseForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
-    listLocations()
+    listLocations({ limit: 100 })
       .then((res) => setLocations(res.data))
       .catch(() => setLocations([]));
   }, []);
 
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+  const paged = rows;
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const ALL = { label: 'Semua', value: '' };
+  const warehouseFilters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+  ];
+  const hasActiveFilter = search !== '' || statusFilter !== '';
+  const warehouseSummary: SummaryConfig = { metricLabel: 'Σ gudang', rowCount: totalRows, totalCount: totalRows };
+  const warehousePagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+  void setSortBy; void setSortDir; void hasActiveFilter;
 
   const openCreate = () => {
     setEditing(null);
@@ -258,6 +295,9 @@ export function ErpWarehousesPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        filters={warehouseFilters}
+        summary={warehouseSummary}
+        pagination={warehousePagination}
       >
         <div className="lines">
           <Table>
@@ -272,10 +312,10 @@ export function ErpWarehousesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paged.length === 0 ? (
                 <TableEmpty colSpan={6} />
               ) : (
-                filtered.map((w) => (
+                paged.map((w) => (
                   <TableRow key={w.id}>
                     <TableCell className="mono">{w.code}</TableCell>
                     <TableCell>{w.name}</TableCell>
