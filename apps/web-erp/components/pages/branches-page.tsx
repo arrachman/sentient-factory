@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Badge } from '@/components/ui/badge';
 import { RowActionsMenu } from '@/components/molecules/row-actions-menu';
 import {
   Modal,
@@ -171,40 +172,31 @@ export function ErpBranchesPage() {
                 <TableHead>Nama</TableHead>
                 <TableHead>Kota</TableHead>
                 <TableHead>Telepon</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {paged.length === 0 ? (
-                <TableEmpty colSpan={6}>
+                <TableEmpty colSpan={7}>
                   {hasActiveFilter ? 'Tidak ada hasil untuk filter ini' : 'Tidak ada data cabang'}
                 </TableEmpty>
               ) : paged.map((b, idx) => (
-                <TableRow
-                  key={b.id}
-                  data-selected={selectedIds.has(b.id)}
-                  data-focused={focusedIndex === idx}
-                  className={`cursor-pointer ${b.isActive ? '' : 'opacity-60 [&>td]:text-muted-foreground'}`}
-                  onClick={() => setFocusedIndex(idx)}
-                >
+                <TableRow key={b.id} data-selected={selectedIds.has(b.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)}>
                   <CheckboxCell checked={selectedIds.has(b.id)} onCheckedChange={() => toggleRow(b.id)} />
                   <CodeLinkCell code={b.code} onOpen={() => openEdit(b)} />
-                  <TableCell>
-                    <span className="inline-flex items-center gap-2">
-                      <span
-                        className={`inline-block h-1.5 w-1.5 rounded-full ${b.isActive ? 'bg-success' : 'bg-muted-foreground/50'}`}
-                        aria-label={b.isActive ? 'Aktif' : 'Nonaktif'}
-                        title={b.isActive ? 'Aktif' : 'Nonaktif'}
-                      />
-                      {b.name}
-                    </span>
-                  </TableCell>
+                  <TableCell>{b.name}</TableCell>
                   <TableCell className="muted">{b.city ?? '—'}</TableCell>
                   <TableCell className="muted">{b.phone ?? '—'}</TableCell>
                   <TableCell>
+                    <Badge variant={b.isActive ? 'success' : 'default'} dot className="-ml-[7px]">
+                      {b.isActive ? 'Aktif' : 'Nonaktif'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
                     <RowActionsMenu
-                      onEdit={() => openEdit(b)}
                       items={[
+                        { label: 'Edit', onSelect: () => openEdit(b) },
                         { label: 'Riwayat', onSelect: () => setAuditTarget(b) },
                         { label: 'Hapus', onSelect: () => handleDelete(b), danger: true, separatorBefore: true },
                       ]}

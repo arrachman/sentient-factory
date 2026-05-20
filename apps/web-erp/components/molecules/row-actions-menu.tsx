@@ -19,33 +19,22 @@ export interface RowActionItem {
 }
 
 /**
- * Canonical inline row actions for list tables: primary action (Edit) stays
- * visible; secondary/destructive items collapse into a kebab. Reduces visual
- * noise and pushes Hapus behind a deliberate two-click path.
+ * Canonical inline row actions for list tables: semua aksi (Edit, Riwayat,
+ * Hapus, …) di balik kebab `more-vertical`. Tabel tetap tenang; aksi
+ * destruktif butuh klik sengaja sehingga lebih aman.
  */
-export function RowActionsMenu({
-  onEdit,
-  items,
-  editLabel = 'Edit',
-}: {
-  onEdit: () => void;
-  items: RowActionItem[];
-  editLabel?: string;
-}) {
+export function RowActionsMenu({ items }: { items: RowActionItem[] }) {
   return (
     <div
-      className="flex items-center justify-end gap-1"
+      className="flex items-center justify-end"
       onClick={(e) => e.stopPropagation()}
     >
-      <Button size="sm" variant="default" onClick={onEdit}>
-        {editLabel}
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             size="sm"
             variant="ghost"
-            aria-label="Aksi lain"
+            aria-label="Aksi baris"
             className="!px-1.5"
           >
             <Icon name="more-vertical" size={14} />

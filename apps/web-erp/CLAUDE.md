@@ -446,34 +446,37 @@ menampilkan dialog konfirmasi via `confirmAction()` sebelum eksekusi:
 semua empty state tabel — **jangan** biarkan `<tbody>` kosong tanpa keterangan.
 Empty saat filter aktif harus dibedakan dari empty tanpa filter (pesan beda).
 
-### 2.10 Status boolean = dot di depan nama, bukan kolom badge (2026-05-20)
+### 2.10 Status boolean = kolom badge `Aktif/Nonaktif` (2026-05-20)
 
-Untuk entitas dengan status biner sederhana (Aktif/Nonaktif) di list page —
-**dilarang** alokasikan kolom `STATUS` sendiri berisi pill badge. Pola wajib:
+Untuk entitas dengan status biner (`isActive`) di list page: tetap kolom
+sendiri `STATUS` berisi `<Badge variant="success|default" dot>` —
+`Aktif` (hijau) / `Nonaktif` (abu). Eksperimen "dot di depan Nama + mute
+baris nonaktif" dicoba lalu **di-rollback** atas keputusan user
+(2026-05-20): kolom badge lebih konsisten dengan workflow status multi-state
+dan lebih mudah dipindai saat semua baris perlu kelihatan "setara".
 
-- **Dot kecil** (`h-1.5 w-1.5 rounded-full`) di depan kolom Nama. Hijau
-  (`bg-success`) = aktif, abu (`bg-muted-foreground/50`) = nonaktif. `title`
-  + `aria-label` untuk aksesibilitas.
-- **Baris nonaktif di-mute**: `opacity-60` + paksa `text-muted-foreground` ke
-  semua `<td>` (`[&>td]:text-muted-foreground`). Mata langsung nangkep "yang
-  redup = mati" tanpa scan ke kanan.
-- Kolom STATUS dihapus → tabel lebih lapang, action column tetap di kanan.
+Workflow multi-state (`Draft/Need Approve/Approved/Rejected/Posted`) tetap
+pakai `StatusBadge` (§2.9).
 
-Berlaku untuk **semua** list master ERP dengan field `isActive` (branches,
-warehouses, locations, users, items, partners, dll). Status workflow multi-
-state (`Draft/Need Approve/Approved/Rejected/Posted`) tetap pakai badge
-`StatusBadge` (§2.9) — itu beda kasus.
+### 2.11 Inline row actions = semua di kebab menu (WAJIB, 2026-05-20)
 
-### 2.11 Inline row actions = Edit visible + kebab menu (WAJIB, 2026-05-20)
+Pola wajib kolom action di list page: **semua aksi (Edit, Riwayat, Hapus, …)
+masuk kebab menu** (icon `more-vertical`). Tidak ada tombol aksi yang visible
+inline — kolom action hanya berisi satu icon `⋮` per baris.
 
-Pola wajib kolom action di list page: **aksi primer (Edit) tetap visible**,
-**aksi sekunder + destruktif (Riwayat, Hapus, …) masuk kebab menu** (icon
-`more-vertical`). Hapus selalu di posisi terakhir + `separatorBefore: true`
-untuk jarak visual dari aksi non-destruktif.
+Alasan: deretan tombol per-baris × 10–20 baris bikin tabel sangat "ribut",
+dan tombol Hapus merah yang visible selalu rawan salah klik. Dengan semua
+aksi di kebab, tabel jauh lebih tenang dan setiap aksi butuh klik sengaja
+(termasuk Edit) — trade-off: Edit jadi 2 klik, tapi user tetap bisa klik
+kode di kolom KODE (`CodeLinkCell`) sebagai jalur cepat ke detail/edit
+(satu klik).
 
-Alasan: 3+ tombol per baris × 10–20 baris bikin tabel "ribut". Tombol Hapus
-merah yang selalu visible juga rawan salah klik. Kebab menyembunyikan aksi
-jarang-dipakai tanpa menghilangkannya, dan Hapus jadi 2 klik = lebih aman.
+Konvensi item kebab:
+- Urutan: aksi navigasi/baca dulu (Edit, Riwayat, Duplikat, …), aksi
+  destruktif terakhir.
+- **Hapus selalu paling bawah** + `separatorBefore: true` + `danger: true`.
+- Workflow approval (Approve/Reject/Post) ikut masuk kebab — bukan bikin
+  tombol baru.
 
 Implementasi wajib lewat molecule reusable
 [`components/molecules/row-actions-menu.tsx`](components/molecules/row-actions-menu.tsx)
@@ -482,17 +485,13 @@ Implementasi wajib lewat molecule reusable
 
 ```tsx
 <RowActionsMenu
-  onEdit={() => openEdit(row)}
   items={[
+    { label: 'Edit', onSelect: () => openEdit(row) },
     { label: 'Riwayat', onSelect: () => setAuditTarget(row) },
     { label: 'Hapus', onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
   ]}
 />
 ```
-
-Pengecualian: bila entitas hanya punya 1 aksi (cuma Edit), tampilkan tombol
-Edit saja tanpa kebab. Bila entitas punya workflow approval (Approve/Reject/
-Post), aksi workflow ikut masuk kebab — bukan deretan tombol baru.
 
 ---
 
