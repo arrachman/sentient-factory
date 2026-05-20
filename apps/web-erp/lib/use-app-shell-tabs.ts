@@ -54,35 +54,42 @@ export function useAppShellTabs(): AppShellTabsApi {
 
   const openTab = React.useCallback(
     (route: string) => {
+      let targetId: string | null = null;
+      let allocatedId: string | null = null;
       setTabs((prev) => {
         const existing = prev.find((tb) => tb.route === route);
         if (existing) {
-          setActiveId(existing.id);
+          targetId = existing.id;
           return prev;
         }
         if (prev.length >= MAX_TABS) {
-          setActiveId(prev[prev.length - 1].id);
+          targetId = prev[prev.length - 1].id;
           return prev;
         }
-        const tab = { id: nextTabId(), route };
-        setActiveId(tab.id);
-        return [...prev, tab];
+        // Allocate id only once across StrictMode double-invokes.
+        if (!allocatedId) allocatedId = nextTabId();
+        targetId = allocatedId;
+        return [...prev, { id: allocatedId, route }];
       });
+      if (targetId) setActiveId(targetId);
     },
-    [nextTabId],
+    [nextTabId, setTabs, setActiveId],
   );
 
   const duplicateTab = React.useCallback(
     (id: string) => {
+      let targetId: string | null = null;
+      let allocatedId: string | null = null;
       setTabs((prev) => {
         const src = prev.find((tb) => tb.id === id) ?? prev[prev.length - 1];
         if (!src || prev.length >= MAX_TABS) return prev;
-        const tab = { id: nextTabId(), route: src.route };
-        setActiveId(tab.id);
-        return [...prev, tab];
+        if (!allocatedId) allocatedId = nextTabId();
+        targetId = allocatedId;
+        return [...prev, { id: allocatedId, route: src.route }];
       });
+      if (targetId) setActiveId(targetId);
     },
-    [nextTabId],
+    [nextTabId, setTabs, setActiveId],
   );
 
   const navigateInTab = React.useCallback((route: string) => {
@@ -96,20 +103,26 @@ export function useAppShellTabs(): AppShellTabsApi {
 
   const closeTab = React.useCallback(
     (id: string) => {
+      let freshId: string | null = null;
+      let fallbackId: string | null = null;
       setTabs((prev) => {
         const idx = prev.findIndex((tb) => tb.id === id);
         if (idx === -1) return prev;
         const next = prev.filter((tb) => tb.id !== id);
         if (next.length === 0) {
-          const fresh = { id: nextTabId(), route: 'home' };
-          setActiveId(fresh.id);
-          return [fresh];
+          if (!freshId) freshId = nextTabId();
+          return [{ id: freshId, route: 'home' }];
         }
-        setActiveId((cur) => (cur === id ? next[Math.max(0, idx - 1)].id : cur));
+        fallbackId = next[Math.max(0, idx - 1)].id;
         return next;
       });
+      if (freshId) {
+        setActiveId(freshId);
+      } else if (fallbackId) {
+        setActiveId((cur) => (cur === id ? (fallbackId as string) : cur));
+      }
     },
-    [nextTabId],
+    [nextTabId, setTabs, setActiveId],
   );
 
   const reloadTab = React.useCallback((id: string) => {
@@ -117,7 +130,7 @@ export function useAppShellTabs(): AppShellTabsApi {
       prev.map((tb) => (tb.id === id ? { ...tb, nonce: (tb.nonce ?? 0) + 1 } : tb)),
     );
     setActiveId(id);
-  }, []);
+  }, [setTabs, setActiveId]);
 
   const closeOtherTabs = React.useCallback((id: string) => {
     setTabs((prev) => {
@@ -125,20 +138,22 @@ export function useAppShellTabs(): AppShellTabsApi {
       return keep ? [keep] : prev;
     });
     setActiveId(id);
-  }, []);
+  }, [setTabs, setActiveId]);
 
   const closeTabsToRight = React.useCallback((id: string) => {
+    let survivors: Set<string> | null = null;
     setTabs((prev) => {
       const idx = prev.findIndex((tb) => tb.id === id);
       if (idx === -1) return prev;
       const next = prev.slice(0, idx + 1);
       if (next.length === prev.length) return prev;
-      setActiveId((cur) =>
-        next.some((tb) => tb.id === cur) ? cur : id,
-      );
+      survivors = new Set(next.map((tb) => tb.id));
       return next;
     });
-  }, []);
+    if (survivors) {
+      setActiveId((cur) => ((survivors as Set<string>).has(cur) ? cur : id));
+    }
+  }, [setTabs, setActiveId]);
 
   return {
     tabs,
