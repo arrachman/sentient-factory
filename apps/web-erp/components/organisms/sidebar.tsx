@@ -67,7 +67,6 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
     >
       <Icon name="dot" size={8} />
       <span>{t(sub.label)}</span>
-      {sub.code && <span className="code">{sub.code}</span>}
     </div>
   );
 
@@ -125,7 +124,6 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
                 <div key={grp.group}>
                   <div className="group-label">
                     <span>{t(grp.group)}</span>
-                    <span className="badge">{grp.items.length}</span>
                   </div>
                   {grp.items.map(renderLeaf)}
                 </div>
