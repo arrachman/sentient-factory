@@ -48,7 +48,7 @@ import type {
   ErpLocation,
   CreateLocationPayload,
 } from '@/lib/api/locations';
-import { listBranches } from '@/lib/api/branches';
+import { useErpBranches } from '@/lib/api/hooks';
 import type { ErpBranch } from '@/lib/api/branches';
 
 // ─── Form state ───────────────────────────────────────────────────────────────
@@ -208,18 +208,12 @@ function LocationFormFields({
 
 export function ErpLocationsPage() {
   const { rows, loading, error, reload } = useErpList(() => listLocations());
-  const [branches, setBranches] = React.useState<ErpBranch[]>([]);
+  const { data: branches = [] } = useErpBranches();
   const [search, setSearch] = React.useState('');
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpLocation | null>(null);
   const [form, setForm] = React.useState<LocationForm>(defaultForm);
   const [saving, setSaving] = React.useState(false);
-
-  React.useEffect(() => {
-    listBranches()
-      .then((res) => setBranches(res.data))
-      .catch(() => setBranches([]));
-  }, []);
 
   const filtered = React.useMemo(() => {
     const q = search.toLowerCase();

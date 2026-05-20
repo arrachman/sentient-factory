@@ -5,7 +5,6 @@ import { makeTranslator } from '@/lib/mock';
 import { Sidebar } from '@/components/organisms/sidebar';
 import { Topbar, type ShellUser } from '@/components/organisms/topbar';
 import { NAV, type NavItem } from '@/lib/nav';
-import { fetchMyMenus } from '@/lib/api/menus';
 import { TabBar } from '@/components/organisms/tab-bar';
 import { CommandPalette } from '@/components/organisms/command-palette';
 import { ConfirmDialogHost } from '@/components/organisms/confirm-dialog';
@@ -18,7 +17,9 @@ import { confirmAction } from '@/lib/feedback';
 import { USER_STORAGE_KEY, type Lang } from '@/lib/shell-constants';
 import { renderRoute } from '@/components/templates/shell-route-renderer';
 import { ShortcutsOverlay } from '@/components/templates/shell-shortcuts-overlay';
-import { logout as apiLogout, getMe } from '@/lib/api/auth';
+import { logout as apiLogout } from '@/lib/api/auth';
+import { useQueryClient } from '@tanstack/react-query';
+import { useErpMe, useErpMyMenus, erpQueryKeys } from '@/lib/api/hooks';
 import { useAppShellTabs } from '@/lib/use-app-shell-tabs';
 import {
   getOrCreateWorkspace,
@@ -59,11 +60,21 @@ export function AppShell({ workspaceId }: AppShellProps) {
     closeTabsToRight,
   } = useAppShellTabs();
 
-  const loadNav = React.useCallback(() => {
-    fetchMyMenus()
-      .then((items) => { if (items.length > 0) setNav(items); })
-      .catch(() => { /* keep current nav on error */ });
-  }, []);
+  // Captured once on mount — used only for initial session validation.
+  const [storedUserRaw] = React.useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try { return window.localStorage.getItem(USER_STORAGE_KEY); } catch { return null; }
+  });
+
+  const queryClient = useQueryClient();
+
+  // Validate stored session on app load. Result is cached so re-renders and
+  // tab switches within staleTime never trigger a new HTTP request.
+  const meQuery = useErpMe({ enabled: !!storedUserRaw, retry: false });
+
+  // Load role-filtered nav once user is authenticated. Automatically re-runs
+  // after login because `user` flips from null → non-null.
+  const myMenusQuery = useErpMyMenus({ enabled: !!user });
 
   // Load workspace tabs from localStorage and restore shell state.
   const loadWorkspace = React.useCallback(() => {
@@ -80,44 +91,46 @@ export function AppShell({ workspaceId }: AppShellProps) {
     setLastActive(workspaceId);
   }, [workspaceId, nextTabId, syncTabSeq, setTabs, setActiveId]);
 
+  // Process auth validation result on initial load only. The ref guard
+  // prevents re-running when loadWorkspace reference changes or meQuery
+  // refetches after the initial check.
+  const authInitialized = React.useRef(false);
   React.useEffect(() => {
-    const raw = (() => {
-      try { return window.localStorage.getItem(USER_STORAGE_KEY); } catch { return null; }
-    })();
-
-    if (!raw) {
-      // Defer the hydration flag so we don't synchronously cascade renders
-      // from within the effect body.
+    if (authInitialized.current) return;
+    if (!storedUserRaw) {
+      authInitialized.current = true;
       const id = setTimeout(() => setHydrated(true), 0);
       return () => clearTimeout(id);
     }
-
-    let cancelled = false;
-    getMe()
-      .then(() => {
-        if (cancelled) return;
-        try {
-          setUser(JSON.parse(raw) as ShellUser);
-          loadNav();
-          loadWorkspace();
-        } catch {
-          window.localStorage.removeItem(USER_STORAGE_KEY);
-        }
-      })
-      .catch(() => {
+    if (!meQuery.isSuccess && !meQuery.isError) return; // still pending
+    authInitialized.current = true;
+    if (meQuery.isSuccess) {
+      try {
+        setUser(JSON.parse(storedUserRaw) as ShellUser);
+        loadWorkspace();
+      } catch {
         try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
-      })
-      .finally(() => { if (!cancelled) setHydrated(true); });
+      }
+    } else {
+      try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
+    }
+    setHydrated(true);
+  }, [storedUserRaw, meQuery.isSuccess, meQuery.isError, loadWorkspace]);
 
-    return () => { cancelled = true; };
-  }, [loadNav, loadWorkspace]);
+  // Sync nav whenever role-filtered menus arrive.
+  React.useEffect(() => {
+    if (myMenusQuery.data && myMenusQuery.data.length > 0) {
+      setNav(myMenusQuery.data);
+    }
+  }, [myMenusQuery.data]);
 
   const onLogin = React.useCallback((u: ShellUser) => {
     setUser(u);
-    loadNav();
     loadWorkspace();
+    // Force fresh menus for the new session (clears any stale cached result).
+    queryClient.invalidateQueries({ queryKey: erpQueryKeys.myMenus });
     try { window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u)); } catch { /* noop */ }
-  }, [loadNav, loadWorkspace]);
+  }, [loadWorkspace, queryClient]);
 
   const onLogout = React.useCallback(() => {
     workspaceReady.current = false;
@@ -127,8 +140,11 @@ export function AppShell({ workspaceId }: AppShellProps) {
       window.localStorage.removeItem(USER_STORAGE_KEY);
       clearAllWorkspaces();
     } catch { /* noop */ }
+    // Clear cached session data so next login fetches fresh.
+    queryClient.removeQueries({ queryKey: erpQueryKeys.me });
+    queryClient.removeQueries({ queryKey: erpQueryKeys.myMenus });
     apiLogout().catch(() => { /* ignore */ });
-  }, []);
+  }, [queryClient]);
 
   // Persist workspace state whenever tabs or active tab change.
   React.useEffect(() => {

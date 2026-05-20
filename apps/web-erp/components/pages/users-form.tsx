@@ -19,11 +19,10 @@ import {
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Icon } from '@/components/ui/icons';
-import { listBranches } from '@/lib/api/branches';
 import { listWarehouses } from '@/lib/api/warehouses';
 import { listRoles } from '@/lib/api/roles';
-import type { ErpBranch } from '@/lib/api/branches';
 import type { ErpWarehouse } from '@/lib/api/warehouses';
+import { useErpBranches } from '@/lib/api/hooks';
 import type { ErpRole } from '@/lib/api/roles';
 import type {
   ErpUser,
@@ -186,12 +185,11 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
   const set = (k: keyof UserFormData, v: string | boolean | string[]) =>
     onChange({ ...data, [k]: v });
 
-  const [branches, setBranches] = React.useState<ErpBranch[]>([]);
+  const { data: branches = [] } = useErpBranches({ limit: 100 });
   const [warehouses, setWarehouses] = React.useState<ErpWarehouse[]>([]);
   const [allRoles, setAllRoles] = React.useState<ErpRole[]>([]);
 
   React.useEffect(() => {
-    listBranches({ limit: 100 }).then((r) => setBranches(r.data)).catch(() => {});
     listWarehouses({ limit: 100 }).then((r) => setWarehouses(r.data)).catch(() => {});
     listRoles({ limit: 100 }).then((r) => setAllRoles(r.data)).catch(() => {});
   }, []);
@@ -242,12 +240,12 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
               placeholder={editing ? '—' : 'Ulangi password'} />
           </FormField>
           <FormField label="Cabang" htmlFor="uf-branch">
-            <Select value={data.branchId} onValueChange={(v) => set('branchId', v)}>
+            <Select value={data.branchId || '__none__'} onValueChange={(v) => set('branchId', v === '__none__' ? '' : v)}>
               <SelectTrigger id="uf-branch">
                 <SelectValue placeholder="Pilih cabang…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— Tidak ada —</SelectItem>
+                <SelectItem value="__none__">— Tidak ada —</SelectItem>
                 {branches.map((b) => (
                   <SelectItem key={b.id} value={b.id}>{b.code} — {b.name}</SelectItem>
                 ))}
@@ -255,12 +253,12 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
             </Select>
           </FormField>
           <FormField label="Gudang" htmlFor="uf-wh">
-            <Select value={data.homeWarehouseId} onValueChange={(v) => set('homeWarehouseId', v)}>
+            <Select value={data.homeWarehouseId || '__none__'} onValueChange={(v) => set('homeWarehouseId', v === '__none__' ? '' : v)}>
               <SelectTrigger id="uf-wh">
                 <SelectValue placeholder="Pilih gudang…" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">— Tidak ada —</SelectItem>
+                <SelectItem value="__none__">— Tidak ada —</SelectItem>
                 {warehouses.map((w) => (
                   <SelectItem key={w.id} value={w.id}>{w.code} — {w.name}</SelectItem>
                 ))}
