@@ -11,7 +11,6 @@
 import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
-import { Pagination } from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -19,6 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { TablePagination } from '@/components/molecules/table-pagination';
+import { ErrorState } from '@/components/molecules/error-state';
+import { tGlobal } from '@/lib/mock';
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -48,6 +50,9 @@ export interface ListPaginationConfig {
   pageSize: number;
   totalRows: number;
   onPage: (page: number) => void;
+  /** When provided, the limit selector is rendered in the footer. */
+  onPageSize?: (size: number) => void;
+  pageSizeOptions?: readonly number[];
 }
 
 /** Wires J/K/X/Enter/Space keyboard nav to a table rendered inside ErpListLayout. */
@@ -57,6 +62,55 @@ export interface KeyboardRowConfig {
   onFocusChange: (i: number) => void;
   onToggle: (i: number) => void;
   onOpen?: (i: number) => void;
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+
+function ListFooter({
+  pagination,
+  keyboardHints,
+  onAdd,
+}: {
+  pagination?: ListPaginationConfig;
+  keyboardHints?: boolean;
+  onAdd?: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-[5px] text-[11px] text-muted-foreground">
+      {pagination && (
+        <TablePagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          pageSize={pagination.pageSize}
+          totalRows={pagination.totalRows}
+          rowCount={Math.min(
+            pagination.pageSize,
+            Math.max(pagination.totalRows - (pagination.page - 1) * pagination.pageSize, 0),
+          )}
+          onPage={pagination.onPage}
+          onPageSize={pagination.onPageSize}
+          pageSizeOptions={pagination.pageSizeOptions}
+        />
+      )}
+
+      <div className="flex-1" />
+
+      {keyboardHints && (
+        <span className="flex items-center gap-[3px]">
+          {tGlobal('Pintasan')}:&nbsp;
+          <Kbd>J</Kbd>↓/<Kbd>K</Kbd>↑
+          <span className="mx-1 opacity-40">·</span>
+          <Kbd>X</Kbd>&nbsp;{tGlobal('pilih')}
+          {onAdd && (
+            <>
+              <span className="mx-1 opacity-40">·</span>
+              <Kbd>N</Kbd>&nbsp;{tGlobal('baru')}
+            </>
+          )}
+        </span>
+      )}
+    </div>
+  );
 }
 
 // ─── Sentinel for empty-string Select value ───────────────────────────────────
@@ -96,7 +150,7 @@ export function ErpListLayout({
   onAdd,
   onRefresh,
   onExport,
-  addLabel = 'Tambah',
+  addLabel,
   toolbar,
   filters,
   summary,
@@ -115,7 +169,8 @@ export function ErpListLayout({
         t.tagName === 'INPUT' ||
         t.tagName === 'TEXTAREA' ||
         t.tagName === 'SELECT' ||
-        t.isContentEditable;
+        t.isContentEditable ||
+        !!t.closest('[role="dialog"]');
 
       if (e.key === '/' && !inField) {
         e.preventDefault();
@@ -174,26 +229,13 @@ export function ErpListLayout({
   const handleReset = () => filters?.forEach((f) => f.onChange(''));
   const showFilterBar = (filters && filters.length > 0) || !!summary;
 
-  // Pagination summary text
-  const pagerSummary = React.useMemo(() => {
-    if (!pagination) return null;
-    const { page, pageSize, totalRows } = pagination;
-    if (totalRows === 0) return <span className="tabular-nums">0 baris</span>;
-    const from = (page - 1) * pageSize + 1;
-    const to = Math.min(page * pageSize, totalRows);
-    return (
-      <span className="tabular-nums text-[11.5px] text-muted-foreground">
-        {from}–{to} dari <strong className="text-foreground">{totalRows}</strong> baris
-      </span>
-    );
-  }, [pagination]);
 
   return (
     <div className="page">
       {/* Action bar */}
       <div className="page-header">
         <h1 className="page-title">
-          {title}
+          {tGlobal(title)}
           <span className="code-tag">{code}</span>
         </h1>
         <div className="page-actions">
@@ -201,25 +243,25 @@ export function ErpListLayout({
             <Icon name="search" size={12} />
             <input
               ref={searchRef}
-              placeholder="Cari semua..."
+              placeholder={tGlobal('Cari semua...')}
               value={search}
               onChange={(e) => onSearch(e.target.value)}
             />
             <Kbd>/</Kbd>
           </div>
           {onExport && (
-            <button className="btn" onClick={onExport} title="Export data">
+            <button className="btn" onClick={onExport} title={tGlobal('Export data')}>
               <Icon name="download" size={12} />
-              Export
+              {tGlobal('Export')}
             </button>
           )}
-          <button className="btn" onClick={onRefresh} title="Muat ulang">
+          <button className="btn" onClick={onRefresh} title={tGlobal('Muat ulang')}>
             <Icon name="refresh" size={12} />
           </button>
           {onAdd && (
             <button className="btn primary" onClick={onAdd}>
               <Icon name="plus" size={12} />
-              {addLabel}
+              {tGlobal(addLabel ?? 'Tambah')}
               <Kbd>N</Kbd>
             </button>
           )}
@@ -231,7 +273,7 @@ export function ErpListLayout({
         <div className="filter-bar">
           <button
             className="iconbtn"
-            title="Filter"
+            title={tGlobal('Filter')}
             style={{ opacity: hasActiveFilter ? 1 : 0.5 }}
           >
             <Icon name="filter" size={13} />
@@ -244,15 +286,15 @@ export function ErpListLayout({
               onValueChange={(v) => f.onChange(fromSel(v))}
             >
               <SelectTrigger style={{ width: 'auto', minWidth: '8rem' }}>
-                <span style={{ color: 'var(--fg-faint)', fontSize: 11, marginRight: 2 }}>
-                  {f.label}:
+                <span style={{ color: 'var(--fg-faint)', fontSize: 'calc(11px * var(--font-scale, 1))', marginRight: 2 }}>
+                  {tGlobal(f.label)}:
                 </span>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {f.options.map((o) => (
                   <SelectItem key={toSel(o.value)} value={toSel(o.value)}>
-                    {o.label}
+                    {tGlobal(o.label)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -263,15 +305,15 @@ export function ErpListLayout({
 
           {summary && (
             <span className="filter-summary">
-              {summary.metricLabel}
+              {tGlobal(summary.metricLabel)}
               {summary.metricValue && (
                 <> <strong>{summary.metricValue}</strong></>
               )}
               {' · '}
-              <strong>{summary.rowCount}</strong> baris
+              <strong>{summary.rowCount}</strong> {tGlobal('baris')}
               {summary.totalCount !== undefined &&
                 summary.totalCount !== summary.rowCount && (
-                  <> dari {summary.totalCount}</>
+                  <> {tGlobal('dari')} {summary.totalCount}</>
                 )}
             </span>
           )}
@@ -279,7 +321,7 @@ export function ErpListLayout({
           {hasActiveFilter && (
             <button className="btn ghost sm" onClick={handleReset}>
               <Icon name="x" size={11} />
-              Reset filter
+              {tGlobal('Reset filter')}
             </button>
           )}
         </div>
@@ -288,48 +330,25 @@ export function ErpListLayout({
       {toolbar && <div className="toolbar">{toolbar}</div>}
 
       {error && (
-        <div className="p-4 text-xs text-danger">Gagal memuat data: {error}</div>
+        <ErrorState
+          message={error}
+          onRetry={onRefresh}
+          retrying={loading}
+        />
       )}
 
       {loading && !error && (
-        <div className="p-8 text-center text-xs text-muted-foreground">Memuat...</div>
+        <div className="p-8 text-center text-xs text-muted-foreground">{tGlobal('Memuat...')}</div>
       )}
 
       {!loading && !error && children}
 
-      {pagination && (
-        <Pagination
-          page={pagination.page}
-          pageCount={pagination.pageCount}
-          onPageChange={pagination.onPage}
-          summary={pagerSummary}
+      {(pagination || keyboardHints) && (
+        <ListFooter
+          pagination={pagination}
+          keyboardHints={keyboardHints}
+          onAdd={onAdd}
         />
-      )}
-
-      {keyboardHints && (
-        <div className="kbd-footer">
-          <span>
-            <Kbd>J</Kbd>
-            <Kbd>K</Kbd> navigasi baris
-          </span>
-          <span>
-            <Kbd>X</Kbd> pilih
-          </span>
-          {onAdd && (
-            <span>
-              <Kbd>N</Kbd> baru
-            </span>
-          )}
-          <span>
-            <Kbd>/</Kbd> cari
-          </span>
-          {pagination && pagination.pageCount > 1 && (
-            <span>
-              <Kbd>←</Kbd>
-              <Kbd>→</Kbd> halaman
-            </span>
-          )}
-        </div>
       )}
     </div>
   );

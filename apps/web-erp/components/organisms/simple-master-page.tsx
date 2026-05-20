@@ -47,6 +47,7 @@ import {
   SortableHead,
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
+import { tGlobal } from '@/lib/mock';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
@@ -162,8 +163,9 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
     { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
       options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
   ];
+  // (label/option strings here are kept as i18n keys — translated by ErpListLayout via tGlobal)
   const hasActiveFilter = search !== '' || statusFilter !== '';
-  const summary: SummaryConfig = { metricLabel: `Σ ${entityLabel}`, rowCount: totalRows, totalCount: totalRows };
+  const summary: SummaryConfig = { metricLabel: `Σ ${tGlobal(entityLabel)}`, rowCount: totalRows, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
 
   const openCreate = () => { setEditing(null); setForm(defaultForm()); setOpen(true); };
@@ -177,42 +179,46 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   const handleSave = async () => {
     setSaving(true);
     try {
-      if (editing) { await update(editing.id, toPayload(form)); notify(`${title} diperbarui`, 'success'); }
-      else { await create(toPayload(form)); notify(`${title} dibuat`, 'success'); }
+      if (editing) { await update(editing.id, toPayload(form)); notify(`${tGlobal(title)} ${tGlobal('diperbarui')}`, 'success'); }
+      else { await create(toPayload(form)); notify(`${tGlobal(title)} ${tGlobal('dibuat')}`, 'success'); }
       setOpen(false); reload();
-    } catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger'); }
+    } catch (e: unknown) { notify(e instanceof Error ? e.message : tGlobal('Gagal menyimpan'), 'danger'); }
     finally { setSaving(false); }
   };
 
+  const entityT = tGlobal(entityLabel);
   const handleDelete = (row: T) =>
     confirmAction({
-      title: `Hapus ${entityLabel}?`, message: `${row.code} — ${row.name} akan dihapus permanen.`,
-      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
-      onConfirm: async () => { try { await remove(row.id); notify(`${title} dihapus`, 'success'); reload(); } catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); } },
+      title: `${tGlobal('Hapus')} ${entityT}?`,
+      message: `${row.code} — ${row.name} ${tGlobal('akan dihapus permanen.')}`,
+      variant: 'danger', confirmLabel: tGlobal('Hapus'), confirmIcon: 'trash',
+      onConfirm: async () => { try { await remove(row.id); notify(`${tGlobal(title)} ${tGlobal('dihapus')}`, 'success'); reload(); } catch (e: unknown) { notify(e instanceof Error ? e.message : tGlobal('Gagal'), 'danger'); } },
     });
 
   const selectedArr = Array.from(selectedIds);
   const handleBulkStatus = (isActive: boolean) => {
-    const verb = isActive ? 'aktifkan' : 'nonaktifkan';
+    const actionLabel = tGlobal(isActive ? 'Aktifkan' : 'Nonaktifkan');
+    const doneLabel = tGlobal(isActive ? 'diaktifkan' : 'dinonaktifkan');
     confirmAction({
-      title: `${isActive ? 'Aktifkan' : 'Nonaktifkan'} ${selectedArr.length} ${entityLabel}?`,
-      message: `Semua ${entityLabel} yang dipilih akan di-${verb}.`,
+      title: `${actionLabel} ${selectedArr.length} ${entityT}?`,
+      message: `${tGlobal('Semua')} ${entityT} ${tGlobal('yang dipilih akan')} ${doneLabel}.`,
       variant: isActive ? 'primary' : 'warn',
-      confirmLabel: isActive ? 'Aktifkan' : 'Nonaktifkan',
+      confirmLabel: actionLabel,
       onConfirm: async () => {
-        try { const { affected } = await bulkStatus(selectedArr, isActive); notify(`${affected} ${entityLabel} berhasil di-${verb}`, 'success'); setSelectedIds(new Set()); reload(); }
-        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+        try { const { affected } = await bulkStatus(selectedArr, isActive); notify(`${affected} ${entityT} ${doneLabel}`, 'success'); setSelectedIds(new Set()); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : tGlobal('Gagal'), 'danger'); }
       },
     });
   };
 
   const handleBulkDelete = () =>
     confirmAction({
-      title: `Hapus ${selectedArr.length} ${entityLabel}?`, message: `Semua ${entityLabel} yang dipilih akan dihapus permanen.`,
-      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
+      title: `${tGlobal('Hapus')} ${selectedArr.length} ${entityT}?`,
+      message: `${tGlobal('Semua')} ${entityT} ${tGlobal('yang dipilih akan dihapus permanen.')}`,
+      variant: 'danger', confirmLabel: tGlobal('Hapus'), confirmIcon: 'trash',
       onConfirm: async () => {
-        try { const { affected } = await bulkDelete(selectedArr); notify(`${affected} ${entityLabel} dihapus`, 'success'); setSelectedIds(new Set()); reload(); }
-        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+        try { const { affected } = await bulkDelete(selectedArr); notify(`${affected} ${entityT} ${tGlobal('dihapus')}`, 'success'); setSelectedIds(new Set()); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : tGlobal('Gagal'), 'danger'); }
       },
     });
 
@@ -223,7 +229,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
       <ErpListLayout
         title={title} code={code ?? ''} loading={loading} error={error}
         search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
-        onExport={() => notify('Export belum tersedia', 'warn')}
+        onExport={() => notify(tGlobal('Export belum tersedia'), 'warn')}
         filters={filters} summary={summary} pagination={pagination}
         keyboardRows={keyboardCfg}
       >
@@ -232,27 +238,27 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
             <TableHeader>
               <TableRow>
                 <CheckboxHead checked={someSelected ? 'indeterminate' : allSelected} onCheckedChange={toggleAll} />
-                <SortableHead field="code" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Kode</SortableHead>
-                <SortableHead field="name" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Nama</SortableHead>
+                <SortableHead field="code" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>{tGlobal('Kode')}</SortableHead>
+                <SortableHead field="name" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>{tGlobal('Nama')}</SortableHead>
                 {extraColumns.map((c) => (
                   c.sortable
-                    ? <SortableHead key={c.key} field={c.key} sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>{c.label}</SortableHead>
-                    : <TableHead key={c.key}>{c.label}</TableHead>
+                    ? <SortableHead key={c.key} field={c.key} sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>{tGlobal(c.label)}</SortableHead>
+                    : <TableHead key={c.key}>{tGlobal(c.label)}</TableHead>
                 ))}
-                <SortableHead field="isActive" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>Status</SortableHead>
+                <SortableHead field="isActive" sortBy={sortBy} sortDir={sortDir} onSort={(f, d) => { setSortBy(f); setSortDir(d); }}>{tGlobal('Status')}</SortableHead>
                 <TableHead />
               </TableRow>
             </TableHeader>
             <TableBody>
               {paged.length === 0 ? (
                 <TableEmpty colSpan={colCount}>
-                  {hasActiveFilter ? 'Tidak ada hasil untuk filter ini' : `Tidak ada data ${entityLabel}`}
+                  {hasActiveFilter ? tGlobal('Tidak ada hasil untuk filter ini') : `${tGlobal('Tidak ada data')} ${tGlobal(entityLabel)}`}
                 </TableEmpty>
               ) : paged.map((row, idx) => {
                 const rowActions: RowActionItem[] = [
-                  { label: 'Edit', onSelect: () => openEdit(row) },
-                  { label: 'Riwayat', onSelect: () => setAuditTarget(row) },
-                  { label: 'Hapus', onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
+                  { label: tGlobal('Edit'), onSelect: () => openEdit(row) },
+                  { label: tGlobal('Riwayat'), onSelect: () => setAuditTarget(row) },
+                  { label: tGlobal('Hapus'), onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
                 ];
                 return (
                   <RowContextMenu key={row.id} items={rowActions}>
@@ -263,7 +269,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
                       {extraColumns.map((c) => <TableCell key={c.key} className="muted">{c.render(row)}</TableCell>)}
                       <TableCell>
                         <Badge variant={row.isActive ? 'success' : 'default'} dot className="-ml-[7px]">
-                          {row.isActive ? 'Aktif' : 'Nonaktif'}
+                          {tGlobal(row.isActive ? 'Aktif' : 'Nonaktif')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -280,25 +286,25 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
 
       {selectedIds.size > 0 && (
         <div className="bulk-bar">
-          <span className="count">{selectedIds.size} baris dipilih</span>
+          <span className="count">{selectedIds.size} {tGlobal('baris dipilih')}</span>
           <div className="divider" />
-          <button className="ba-btn" onClick={() => handleBulkStatus(true)}>Aktifkan</button>
-          <button className="ba-btn" onClick={() => handleBulkStatus(false)}>Nonaktifkan</button>
+          <button className="ba-btn" onClick={() => handleBulkStatus(true)}>{tGlobal('Aktifkan')}</button>
+          <button className="ba-btn" onClick={() => handleBulkStatus(false)}>{tGlobal('Nonaktifkan')}</button>
           <div className="divider" />
-          <button className="ba-btn danger" onClick={handleBulkDelete}>Hapus</button>
+          <button className="ba-btn danger" onClick={handleBulkDelete}>{tGlobal('Hapus')}</button>
           <div className="divider" />
-          <button className="ba-btn" onClick={() => setSelectedIds(new Set())}>Batal</button>
+          <button className="ba-btn" onClick={() => setSelectedIds(new Set())}>{tGlobal('Batal')}</button>
         </div>
       )}
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>
-          <ModalHeader><ModalTitle>{editing ? `Edit ${title}` : `Tambah ${title}`}</ModalTitle></ModalHeader>
+          <ModalHeader><ModalTitle>{editing ? `${tGlobal('Edit')} ${tGlobal(title)}` : `${tGlobal('Tambah')} ${tGlobal(title)}`}</ModalTitle></ModalHeader>
           <FormFields data={form} onChange={setForm} />
           <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>Batal</button>
+            <button className="btn ghost" onClick={() => setOpen(false)}>{tGlobal('Batal')}</button>
             <button className="btn primary" onClick={handleSave} disabled={saving}>
-              {saving ? 'Menyimpan...' : 'Simpan'}
+              {saving ? tGlobal('Menyimpan...') : tGlobal('Simpan')}
             </button>
           </ModalFooter>
         </ModalContent>
@@ -308,7 +314,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
         <ModalContent size="lg">
           <ModalHeader>
             <ModalTitle>
-              Riwayat Perubahan — {auditTarget?.code} {auditTarget?.name}
+              {tGlobal('Riwayat Perubahan')} — {auditTarget?.code} {auditTarget?.name}
             </ModalTitle>
           </ModalHeader>
           <div style={{ padding: '0', maxHeight: '60vh', overflowY: 'auto' }}>
