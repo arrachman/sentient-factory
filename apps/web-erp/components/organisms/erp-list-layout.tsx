@@ -18,7 +18,7 @@ interface ErpListLayoutProps {
   error?: string | null;
   search: string;
   onSearch: (q: string) => void;
-  onAdd: () => void;
+  onAdd?: () => void;
   onRefresh: () => void;
   addLabel?: string;
   toolbar?: React.ReactNode;
@@ -57,9 +57,11 @@ export function ErpListLayout({
           <button className="btn" onClick={onRefresh} title="Muat ulang">
             <Icon name="refresh" size={12} />
           </button>
-          <button className="btn primary" onClick={onAdd}>
-            <Icon name="plus" size={12} /> {addLabel}
-          </button>
+          {onAdd && (
+            <button className="btn primary" onClick={onAdd}>
+              <Icon name="plus" size={12} /> {addLabel}
+            </button>
+          )}
         </div>
       </div>
 

@@ -18,7 +18,6 @@ import {
   TableCell,
   TableEmpty,
 } from '@/components/organisms/table';
-import { notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
 import { listPermissions } from '@/lib/api/permissions';
 
@@ -50,9 +49,6 @@ export function ErpPermissionsPage() {
       error={error}
       search={search}
       onSearch={setSearch}
-      onAdd={() =>
-        notify('Hak akses dikelola oleh sistem (read-only)', 'info')
-      }
       onRefresh={reload}
     >
       <div className="lines">
