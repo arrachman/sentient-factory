@@ -44,6 +44,27 @@ import { ErpProjectsPage } from '@/components/pages/projects-page';
 import { ErpCostCentersPage } from '@/components/pages/cost-centers-page';
 import { ErpDepartmentsPage } from '@/components/pages/departments-page';
 import { ErpSubDepartmentsPage } from '@/components/pages/sub-departments-page';
+// MD legacy batch (2026-05-20) — 20 entitas dari MyERP+ m1_*
+import { ErpBrandsPage } from '@/components/pages/brands-page';
+import { ErpMaterialsPage } from '@/components/pages/materials-page';
+import { ErpItemModelsPage } from '@/components/pages/item-models-page';
+import { ErpSizesPage } from '@/components/pages/sizes-page';
+import { ErpSectionsPage } from '@/components/pages/sections-page';
+import { ErpItemKindsPage } from '@/components/pages/item-types-page';
+import { ErpProductClassesPage } from '@/components/pages/product-classes-page';
+import { ErpBanksPage } from '@/components/pages/banks-page';
+import { ErpExpeditionsPage } from '@/components/pages/expeditions-page';
+import { ErpOtherCostsPage } from '@/components/pages/other-costs-page';
+import { ErpCommissionsPage } from '@/components/pages/commissions-page';
+import { ErpItemTransactionTypesPage } from '@/components/pages/item-transaction-types-page';
+import { ErpCountriesPage } from '@/components/pages/countries-page';
+import { ErpProvincesPage } from '@/components/pages/provinces-page';
+import { ErpCitiesPage } from '@/components/pages/cities-page';
+import { ErpAreasPage } from '@/components/pages/areas-page';
+import { ErpItemLocationsPage } from '@/components/pages/item-locations-page';
+import { ErpPartnerSubCategoriesPage } from '@/components/pages/partner-sub-categories-page';
+import { ErpPriceCategoriesPage } from '@/components/pages/price-categories-page';
+import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-page';
 // F2 Finance (m2) pages — skeleton CRUD
 import { ErpJournalEntriesPage } from '@/components/pages/fin-journal-entries-page';
 import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
@@ -88,6 +109,30 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/payment-terms': () => <ErpPaymentTermsPage />,
   '/master/divisions': () => <ErpDivisionsPage />,
   '/master/subdivisions': () => <ErpSubDivisionsPage />,
+  // ── Master Data Legacy Batch (2026-05-20) ─────────────────────────────────
+  '/master/brands': () => <ErpBrandsPage />,
+  '/master/materials': () => <ErpMaterialsPage />,
+  '/master/models': () => <ErpItemModelsPage />,
+  '/master/sizes': () => <ErpSizesPage />,
+  '/master/sections': () => <ErpSectionsPage />,
+  '/master/item-types': () => <ErpItemKindsPage />,
+  '/master/product-classes': () => <ErpProductClassesPage />,
+  '/master/banks': () => <ErpBanksPage />,
+  '/master/expeditions': () => <ErpExpeditionsPage />,
+  '/master/other-costs': () => <ErpOtherCostsPage />,
+  '/master/commissions': () => <ErpCommissionsPage />,
+  '/master/item-txn-types': () => <ErpItemTransactionTypesPage />,
+  '/master/countries': () => <ErpCountriesPage />,
+  '/master/provinces': () => <ErpProvincesPage />,
+  '/master/cities': () => <ErpCitiesPage />,
+  '/master/areas': () => <ErpAreasPage />,
+  '/master/item-locations': () => <ErpItemLocationsPage />,
+  // PartnerSubCategory: 1 table dengan enum type, 3 menu sidebar share page (decision 2026-05-20)
+  '/master/customer-categories': () => <ErpPartnerSubCategoriesPage />,
+  '/master/supplier-categories': () => <ErpPartnerSubCategoriesPage />,
+  '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage />,
+  '/master/price-categories': () => <ErpPriceCategoriesPage />,
+  '/master/transaction-notes': () => <ErpTransactionNotesPage />,
   // ── Organization (md, mirror of /master/* org masters) ───────────────────
   '/org/branches': () => <ErpBranchesPage />,
   '/org/locations': () => <ErpLocationsPage />,
