@@ -275,6 +275,22 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     await upsertMenu({ code: s.code, title: s.title, icon: s.icon, type: ErpMenuType.MODULE, sortOrder: s.sortOrder, legacyCode: s.legacyCode });
   }
 
+  // M2 Finance — skeleton CRUD items (m2 MVP, no posting/balancing yet)
+  const m2Id = menuIds.get('M2');
+  if (m2Id) {
+    const m2TxGrp = await upsertMenu({ code: 'M2.TX', title: 'Transactions', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 1 });
+    await upsertItems([
+      { code: 'M2.TX.JOURNAL',     title: 'Journal Entries', path: '/keuangan/journal-entries' },
+      { code: 'M2.TX.AR-RECEIPT',  title: 'AR Receipts',     path: '/keuangan/ar-receipts' },
+      { code: 'M2.TX.AP-PAYMENT',  title: 'AP Payments',     path: '/keuangan/ap-payments' },
+      { code: 'M2.TX.GIRO',        title: 'Giros',           path: '/keuangan/giros' },
+    ], m2TxGrp.id);
+    const m2RptGrp = await upsertMenu({ code: 'M2.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 2 });
+    await upsertItems([
+      { code: 'M2.RPT.LEDGER',     title: 'General Ledger',  path: '/keuangan/ledger' },
+    ], m2RptGrp.id);
+  }
+
   console.log(`✓ sys_menus (${menuIds.size} entries)`);
   return menuIds;
 }
