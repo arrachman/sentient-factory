@@ -1,7 +1,43 @@
 # Senti ERP — Recap DB + API & Rencana Selanjutnya
 
-> Terakhir diperbarui: 2026-05-19 (wave 3 — semua halaman F2+F3 + sidebar dinamis)
-> Status: DB ✅ · API ✅ · Frontend F2+F3 lengkap ✅ · sidebar dinamis ✅ · UAT browser ⬜
+> Terakhir diperbarui: 2026-05-20 (wave 4 — m2 finance skeleton + polish + tests)
+> Status: DB ✅ · API ✅ · Frontend F2+F3 ✅ · F4 m2 finance skeleton ✅ · sidebar dinamis ✅ · Playwright smoke 24/24 ✅ · vitest 27/27 ✅ · UAT browser manual ⬜
+
+## Wave 4 (2026-05-20)
+
+- **m2 Finance MVP (skeleton CRUD, 5 entitas)**: NestJS modules
+  `erp-fin-{journal-entries,ar-receipts,ap-payments,giros,ledger}` di
+  api-gateway + 5 halaman frontend dengan route `/keuangan/*`. Journal
+  Entries: master/detail (header + nested lines). Ledger: read-only. Seed
+  `sys_menus` ditambah dua group baru `M2.TX` + `M2.RPT`. Semua controller
+  pakai `ErpJwtAuthGuard` (CLAUDE.md §2.5). **Skeleton, bukan posting
+  engine** — belum: validasi debit==credit, auto-posting, hitung saldo CoA,
+  lookup partner/branch jadi Select, dedup `docNumber`/`giroNumber` jadi
+  pesan rapi.
+- **Polish & convention**: `ErpListLayout.onAdd` jadi optional (page
+  read-only seperti Permissions tak butuh workaround); sidebar flyout
+  `maxHeight` di-clamp; `SelectContent` z-index di atas modal; command
+  palette di-derive dari role-filtered nav (CLAUDE.md §2.4); 16 lint debt
+  react-compiler di `app-shell.tsx` + `use-erp-list.ts` dibereskan (extract
+  `useAppShellTabs` hook, `useErpList` pakai `useReducer`); Menu Manager
+  pakai DnD sibling-only via `@dnd-kit`.
+- **Playwright smoke** (`apps/web-erp/scripts/erp-smoke.mjs`): tools
+  intercept fetch prod → local api-gateway + inject Bearer token; navigasi
+  via mutasi localStorage workspace state + reload. 24 route ERP →
+  **24/24 OK** (login + render + listX called, 0 console error).
+- **Vitest 27/27** (`apps/web-erp/__tests__/`): 24 smoke render-test per
+  halaman + 3 interaction test (units create, menus create, journal-entries
+  create dengan 2 lines). Mocking pola `vi.hoisted` + `vi.mock('@/lib/api/...')`.
+  Helper `render-page.tsx` + `feedback-mock.ts` di `__tests__/helpers/`.
+- Gate akhir: typecheck clean · lint **0 error** · check:size OK · next
+  build sukses · Playwright smoke 24/24 · vitest 27/27.
+- ⬜ Belum: UAT manual klik-klik browser dari user (overnight run agent
+  hanya bisa otomasi); ⬜ `dist.root-owned.bak` di api-gateway perlu
+  `sudo rm -rf` dari user; ⬜ root `npm install` masih diblokir
+  `workspace:0.2.0` di `apps/open-design` — DnD agent terpaksa materialisasi
+  `@dnd-kit/*` langsung ke `apps/web-erp/node_modules/`, deklarasi
+  `package.json` sudah benar dan akan kembali nyambung saat root install
+  pulih.
 
 ## Wave 3 (2026-05-19)
 
