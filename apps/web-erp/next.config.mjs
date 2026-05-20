@@ -38,6 +38,7 @@ const defaultDevOrigins = [
   `localhost:${PORT}`,
   '127.0.0.1',
   `127.0.0.1:${PORT}`,
+  'erp.fr-labs.my.id',
 ];
 
 const envDevOrigins = (process.env.NEXT_ALLOWED_DEV_ORIGINS || '')

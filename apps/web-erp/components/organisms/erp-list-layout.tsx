@@ -145,12 +145,12 @@ export function ErpListLayout({
       }
       // Row navigation
       if (!inField && kr && kr.rowCount > 0) {
-        if (e.key === 'j' || e.key === 'J') {
+        if (e.key === 'j' || e.key === 'J' || e.key === 'ArrowDown') {
           e.preventDefault();
           kr.onFocusChange(Math.min(Math.max(kr.focusedIndex, 0) + 1, kr.rowCount - 1));
           return;
         }
-        if (e.key === 'k' || e.key === 'K') {
+        if (e.key === 'k' || e.key === 'K' || e.key === 'ArrowUp') {
           e.preventDefault();
           kr.onFocusChange(Math.max(kr.focusedIndex <= 0 ? 0 : kr.focusedIndex - 1, 0));
           return;

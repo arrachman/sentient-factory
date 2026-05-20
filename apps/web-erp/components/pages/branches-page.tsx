@@ -26,6 +26,7 @@ import {
   TableEmpty,
   CheckboxHead,
   CheckboxCell,
+  CodeLinkCell,
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
@@ -95,6 +96,7 @@ export function ErpBranchesPage() {
     { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
       options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
   ];
+  const hasActiveFilter = search !== '' || statusFilter !== '';
   const branchSummary: SummaryConfig = { metricLabel: 'Σ cabang', rowCount: filtered.length, totalCount: rows.length };
   const branchPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
   const branchKeyboard: KeyboardRowConfig = {
@@ -156,6 +158,7 @@ export function ErpBranchesPage() {
       <ErpListLayout
         title="Cabang" code="BRN" loading={loading} error={error}
         search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
+        onExport={() => notify('Export belum tersedia', 'warn')}
         filters={branchFilters} summary={branchSummary} pagination={branchPagination}
         keyboardRows={branchKeyboard}
       >
@@ -173,15 +176,19 @@ export function ErpBranchesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paged.length === 0 ? <TableEmpty colSpan={7} /> : paged.map((b, idx) => (
-                <TableRow key={b.id} data-selected={selectedIds.has(b.id)} data-focused={focusedIndex === idx}>
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={7}>
+                  {hasActiveFilter ? 'Tidak ada hasil untuk filter ini' : 'Tidak ada data cabang'}
+                </TableEmpty>
+              ) : paged.map((b, idx) => (
+                <TableRow key={b.id} data-selected={selectedIds.has(b.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)}>
                   <CheckboxCell checked={selectedIds.has(b.id)} onCheckedChange={() => toggleRow(b.id)} />
-                  <TableCell className="mono">{b.code}</TableCell>
+                  <CodeLinkCell code={b.code} onOpen={() => openEdit(b)} />
                   <TableCell>{b.name}</TableCell>
                   <TableCell className="muted">{b.city ?? '—'}</TableCell>
                   <TableCell className="muted">{b.phone ?? '—'}</TableCell>
                   <TableCell>
-                    <Badge variant={b.isActive ? 'success' : 'default'} dot>
+                    <Badge variant={b.isActive ? 'success' : 'default'} dot className="-ml-[7px]">
                       {b.isActive ? 'Aktif' : 'Nonaktif'}
                     </Badge>
                   </TableCell>
@@ -201,7 +208,7 @@ export function ErpBranchesPage() {
 
       {selectedIds.size > 0 && (
         <div className="bulk-bar">
-          <span className="count">{selectedIds.size} dipilih</span>
+          <span className="count">{selectedIds.size} baris dipilih</span>
           <div className="divider" />
           <button className="ba-btn" onClick={() => handleBulkStatus(true)}>Aktifkan</button>
           <button className="ba-btn" onClick={() => handleBulkStatus(false)}>Nonaktifkan</button>

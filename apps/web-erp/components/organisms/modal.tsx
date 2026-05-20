@@ -41,6 +41,7 @@ export const ModalContent = React.forwardRef<
     <ModalOverlay>
       <DialogPrimitive.Content
         ref={ref}
+        aria-describedby={undefined}
         onClick={(e) => e.stopPropagation()}
         className={cn(
           'relative mt-[8vh] flex max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-[var(--shadow-modal)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in data-[state=closed]:fade-out data-[state=open]:zoom-in-95',

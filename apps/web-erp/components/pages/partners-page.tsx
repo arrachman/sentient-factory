@@ -25,7 +25,12 @@ import {
   ModalTitle,
   ModalFooter,
 } from '@/components/organisms/modal';
-import { ErpListLayout } from '@/components/organisms/erp-list-layout';
+import {
+  ErpListLayout,
+  type FilterConfig,
+  type SummaryConfig,
+  type ListPaginationConfig,
+} from '@/components/organisms/erp-list-layout';
 import {
   Table,
   TableHeader,
@@ -34,6 +39,8 @@ import {
   TableHead,
   TableCell,
   TableEmpty,
+  CheckboxHead,
+  CheckboxCell,
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
 import { useErpList } from '@/lib/use-erp-list';
@@ -171,6 +178,10 @@ function PartnerFormFields({
 export function ErpPartnersPage() {
   const { rows, loading, error, reload } = useErpList(() => listPartners());
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('');
+  const [typeFilter, setTypeFilter] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpPartner | null>(null);
   const [form, setForm] = React.useState<PartnerForm>(defaultForm);
@@ -178,14 +189,50 @@ export function ErpPartnersPage() {
 
   const filtered = React.useMemo(() => {
     const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
+    return rows.filter((r) => {
+      if (q && !r.code.toLowerCase().includes(q) && !r.name.toLowerCase().includes(q)) return false;
+      if (statusFilter === 'active' && !r.isActive) return false;
+      if (statusFilter === 'inactive' && r.isActive) return false;
+      if (typeFilter === 'CUSTOMER' && !(r.isCustomer && !r.isSupplier)) return false;
+      if (typeFilter === 'SUPPLIER' && !(r.isSupplier && !r.isCustomer)) return false;
+      if (typeFilter === 'SALESMAN' && !r.isSalesman) return false;
+      return true;
+    });
+  }, [rows, search, statusFilter, typeFilter]);
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => { setPage(1); }, [search, statusFilter, typeFilter]);
+
+  const PAGE_SIZE = 20;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Selection
+  const allSelected = paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
+  const someSelected = !allSelected && paged.some((r) => selectedIds.has(r.id));
+  const toggleRow = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const toggleAll = (checked: boolean) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) paged.forEach((r) => next.add(r.id));
+      else paged.forEach((r) => next.delete(r.id));
+      return next;
+    });
+
+  const ALL = { label: 'Semua', value: '' };
+  const partnerFilters: FilterConfig[] = [
+    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
+      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+    { key: 'type', label: 'Tipe', value: typeFilter, onChange: setTypeFilter,
+      options: [ALL, { label: 'Customer', value: 'CUSTOMER' }, { label: 'Supplier', value: 'SUPPLIER' }, { label: 'Salesman', value: 'SALESMAN' }] },
+  ];
+  const partnerSummary: SummaryConfig = { metricLabel: 'Σ partner', rowCount: filtered.length, totalCount: rows.length };
+  const partnerPagination: ListPaginationConfig = { page, pageCount, pageSize: PAGE_SIZE, totalRows: filtered.length, onPage: setPage };
 
   const openCreate = () => {
     setEditing(null);
@@ -248,11 +295,19 @@ export function ErpPartnersPage() {
         onSearch={setSearch}
         onAdd={openCreate}
         onRefresh={reload}
+        onExport={() => notify('Export belum tersedia', 'warn')}
+        filters={partnerFilters}
+        summary={partnerSummary}
+        pagination={partnerPagination}
       >
         <div className="lines">
           <Table>
             <TableHeader>
               <TableRow>
+                <CheckboxHead
+                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                  onCheckedChange={toggleAll}
+                />
                 <TableHead>Kode</TableHead>
                 <TableHead>Nama</TableHead>
                 <TableHead>Tipe</TableHead>
@@ -261,11 +316,15 @@ export function ErpPartnersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={5} />
+              {paged.length === 0 ? (
+                <TableEmpty colSpan={6} />
               ) : (
-                filtered.map((p) => (
-                  <TableRow key={p.id}>
+                paged.map((p) => (
+                  <TableRow key={p.id} data-selected={selectedIds.has(p.id)}>
+                    <CheckboxCell
+                      checked={selectedIds.has(p.id)}
+                      onCheckedChange={() => toggleRow(p.id)}
+                    />
                     <TableCell className="mono">{p.code}</TableCell>
                     <TableCell>{p.name}</TableCell>
                     <TableCell className="muted text-xs">

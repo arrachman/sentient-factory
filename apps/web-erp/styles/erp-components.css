@@ -788,6 +788,10 @@ body {
 }
 
 /* Bulk actions bar */
+@keyframes bulk-bar-in {
+  from { transform: translateX(-50%) translateY(120%); opacity: 0; }
+  to   { transform: translateX(-50%) translateY(0);   opacity: 1; }
+}
 .bulk-bar {
   display: flex;
   align-items: center;
@@ -803,6 +807,7 @@ body {
   box-shadow: var(--shadow-modal);
   z-index: 200;
   font-size: 12px;
+  animation: bulk-bar-in 160ms ease-out;
 }
 .bulk-bar .count {
   font-weight: 600;

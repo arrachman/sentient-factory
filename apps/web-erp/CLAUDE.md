@@ -271,7 +271,7 @@ bukan ditulis ulang ad-hoc per halaman.
 - Pagination kontrol prev/next.
 
 **F. Keyboard-first navigation (WAJIB, listener di organism list)**
-- `J` / `K` → navigasi baris bawah/atas.
+- `J` / `K` atau `↓` / `↑` → navigasi baris bawah/atas.
 - `X` → toggle pilih baris aktif.
 - `N` → tambah baru (sama dengan tombol di action bar).
 - `←` / `→` → halaman prev / next.
@@ -295,6 +295,156 @@ hanya menampilkan badge + filter, tidak memutuskan transisi.
 - Checklist di atas adalah **definition of done** untuk list page;
   declare selesai = semua poin A–G terpenuhi atau eskalasi alasan
   pengecualian ke user.
+
+### 2.8 `cursor: pointer` wajib pada semua elemen interaktif (WAJIB)
+
+Setiap elemen yang bisa diklik atau difokus **harus** menampilkan `cursor:
+pointer`. Tidak ada pengecualian — elemen tanpa cursor pointer membingungkan
+user karena tidak terbaca sebagai interaktif.
+
+Elemen yang wajib:
+
+| Elemen | Cara set |
+| --- | --- |
+| `<button>` (semua varian: primary, secondary, ghost, icon, dll) | Token/class global di design system |
+| `<a>` / `<Link>` (Next.js) | Token/class global |
+| `<input type="checkbox">` | Token/class global |
+| `<input type="radio">` | Token/class global |
+| Wrapper custom checkbox/radio (div/span klik) | `cursor-pointer` via Tailwind atau token |
+| Label yang `htmlFor` ke input interaktif | `cursor-pointer` |
+| Clickable table row / cell | `cursor-pointer` pada `<tr>` / `<td>` |
+| Chip, badge, tag yang bisa diklik | `cursor-pointer` |
+
+Cara implementasi:
+
+- **Global CSS** (paling direkomendasikan): tambahkan satu rule di
+  `styles/erp-components.css` (atau `globals.css`) agar semua elemen standar
+  sudah di-cover tanpa perlu `className` per komponen:
+
+  ```css
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  label[for] {
+    cursor: pointer;
+  }
+  ```
+
+- **Wrapper custom**: tetap tambahkan `cursor-pointer` (Tailwind) atau
+  `style={{ cursor: 'pointer' }}` bila elemen bukan tag HTML standar di atas.
+- **Disabled state**: elemen `disabled` → `cursor: not-allowed` (override;
+  jangan biarkan pointer di elemen tidak aktif).
+
+Saat membuat komponen Atom baru (Button, Checkbox, RadioGroup, dll): **cek
+dulu** apakah global CSS sudah di-cover — jika belum, tambahkan ke komponen
+level atom (bukan ad-hoc di page). Jangan deklarasikan komponen selesai
+sebelum cursor state-nya benar.
+
+### 2.9 Spesifikasi detail behaviour halaman list (WAJIB, 2026-05-20)
+
+Detail implementasi yang melengkapi checklist §2.7. Semua poin ini **wajib
+konsisten** di setiap halaman list — bukan opsional.
+
+#### Row visual states (3 state, tidak boleh campur)
+
+| State | Trigger | Visual |
+| --- | --- | --- |
+| **Normal** | Default | Latar default |
+| **Hovered** | Cursor di atas row | Latar `--bg-hover` (subtle) |
+| **Focused** (keyboard) | J/K navigation aktif | Border kiri 2px `--accent`, latar `--bg-focus` |
+| **Selected** (checkbox) | Checkbox ✓ atau X keyboard | Latar `--bg-selected`, checkbox terisi |
+| **Focused + Selected** | Keduanya aktif bersamaan | Gabung: border kiri + latar selected |
+
+Row focused ≠ row selected. Navigasi J/K **tidak otomatis** men-select baris
+— hanya memindahkan fokus visual. X / Space yang men-toggle selection. Ini
+penting agar user bisa navigate tanpa sengaja memilih banyak baris.
+
+#### Column alignment & format angka (standard)
+
+| Tipe data | Alignment | Format |
+| --- | --- | --- |
+| Teks (kode, nama, kota, NPWP) | Kiri | — |
+| Numerik (uang, qty, %) | **Kanan** + `tabular-nums` | `46.666.000,00` |
+| Badge / status | Kiri (dalam cell) | `● Approved` |
+| Tombol aksi inline | Kanan | `Edit Hapus` |
+| Checkbox | Tengah | ☐ |
+
+Format angka Rupiah: `Intl.NumberFormat('id-ID', { minimumFractionDigits: 2 })`
+— ribuan titik, desimal koma, 2 digit desimal. **Tidak ada simbol Rp di kolom
+tabel** (hanya di label header atau tooltip bila perlu). Implementasi sekali di
+helper `lib/format.ts`, dipakai oleh semua halaman — tidak boleh inline per
+halaman.
+
+#### Approval status — token color mapping (WAJIB, jangan hardcode)
+
+| Status value | Badge variant | Label tampil |
+| --- | --- | --- |
+| `DRAFT` | `default` (abu-abu) | Draft |
+| `NEED_APPROVE` | `warning` (oranye) | Need Approve |
+| `APPROVED` | `success` (hijau) | Approved |
+| `REJECTED` | `danger` (merah) | Rejected |
+| `POSTED` | `info` (biru) | Posted |
+
+Mapping dipetakan **sekali** di `lib/status.ts` (fungsi `statusBadgeVariant` /
+`statusLabel`). Setiap halaman import fungsi ini — **tidak boleh** ada
+switch/if per halaman yang mendefinisikan warna sendiri.
+
+#### H. Bulk action toolbar (WAJIB bila entitas punya operasi batch)
+
+Tampil di atas tabel **hanya saat ≥ 1 baris dipilih**; hilang bila selection
+kembali ke 0. Animasi slide-in (jangan langsung muncul tanpa transisi).
+
+- Teks: `X baris dipilih` (X = jumlah selection)
+- Tombol aksi batch sesuai entitas (contoh: Aktifkan, Nonaktifkan, Hapus)
+- Tombol **Batal pilihan** di kanan — clear semua selection
+- Aksi destruktif batch → **wajib** confirmation dialog sebelum eksekusi
+- Setelah batch selesai → reload list + clear selection + toast notifikasi
+
+Implementasi lewat slot `toolbar` di `ErpListLayout` atau organism
+`bulk-action-bar.tsx`. **Dilarang** inline ad-hoc per halaman.
+
+#### Post-action feedback (toast/notifikasi)
+
+Setiap operasi CRUD dan batch **wajib** memberikan feedback via `notify()`:
+
+| Operasi | Variant | Contoh pesan |
+| --- | --- | --- |
+| Create sukses | `success` | `"Customer dibuat"` |
+| Update sukses | `success` | `"Customer diperbarui"` |
+| Delete sukses | `success` | `"Customer dihapus"` |
+| Batch sukses | `success` | `"3 customer diaktifkan"` |
+| Error API | `danger` | Pesan dari `error.message` |
+| Fitur belum tersedia | `warn` | `"Export belum tersedia"` |
+
+Tidak ada operasi **silent** (tanpa feedback) — user harus selalu tahu apakah
+aksi berhasil atau gagal. Toast error harus meneruskan pesan asli dari API,
+bukan pesan generik "Terjadi kesalahan".
+
+#### Confirmation dialog untuk aksi destruktif
+
+Setiap aksi yang **tidak bisa di-undo** (hapus, batch-hapus, reject) **wajib**
+menampilkan dialog konfirmasi via `confirmAction()` sebelum eksekusi:
+
+- **Title**: `Hapus <Entitas>?`
+- **Pesan single**: `<kode> — <nama> akan dihapus permanen.`
+- **Pesan batch**: `X <entitas> akan dihapus permanen.`
+- **Tombol confirm**: variant `danger`, label eksplisit (`Hapus`, bukan `OK`)
+- **Tombol batal**: ghost/secondary
+
+#### Empty / loading / error state
+
+| State | Tampilan |
+| --- | --- |
+| **Loading** | Teks `Memuat...` di tengah area tabel |
+| **Error** | Teks merah `Gagal memuat data: <pesan>` di atas tabel |
+| **Empty (no data)** | `TableEmpty` colspan penuh: `Tidak ada data` |
+| **Empty (filtered)** | `TableEmpty`: `Tidak ada hasil untuk filter ini` |
+
+`TableEmpty` (`components/organisms/table.tsx`) adalah komponen standar untuk
+semua empty state tabel — **jangan** biarkan `<tbody>` kosong tanpa keterangan.
+Empty saat filter aktif harus dibedakan dari empty tanpa filter (pesan beda).
 
 ---
 

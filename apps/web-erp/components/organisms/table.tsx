@@ -61,10 +61,13 @@ export const TableRow = React.forwardRef<
     ref={ref}
     className={cn(
       'transition-colors hover:[&>td]:bg-[color-mix(in_oklab,var(--panel-hover)_60%,transparent)]',
-      'data-[selected=true]:[&>td]:bg-[var(--primary-soft)]',
-      // focused row: left accent shadow + slightly tinted bg
-      'data-[focused=true]:[&>td:first-child]:shadow-[inset_2px_0_0_var(--primary)]',
-      'data-[focused=true]:[&>td]:bg-[color-mix(in_oklab,var(--primary)_10%,transparent)]',
+      'data-[selected=true]:[&>td]:!bg-[var(--primary-soft)]',
+      // focused row: full 1px primary outline only (no bg tint)
+      'data-[focused=true]:[&>td]:shadow-[inset_0_1px_0_var(--primary),inset_0_-1px_0_var(--primary)]',
+      // focused + hover → primary-soft bg (override gray hover)
+      'data-[focused=true]:hover:[&>td]:!bg-[var(--primary-soft)]',
+      'data-[focused=true]:[&>td:first-child]:shadow-[inset_1px_1px_0_var(--primary),inset_0_-1px_0_var(--primary),inset_1px_-1px_0_var(--primary)]',
+      'data-[focused=true]:[&>td:last-child]:shadow-[inset_0_1px_0_var(--primary),inset_-1px_0_0_var(--primary),inset_-1px_-1px_0_var(--primary)]',
       className,
     )}
     {...props}
@@ -79,7 +82,7 @@ export const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'sticky top-0 z-10 border-b border-border bg-secondary px-2.5 py-1.5 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground',
+      'sticky top-0 z-10 border-b border-border bg-secondary px-2.5 py-0 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground',
       numeric && 'text-right',
       className,
     )}
@@ -95,7 +98,7 @@ export const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      'border-b border-border px-2.5 py-1.5',
+      'border-b border-border px-2.5 py-0',
       numeric &&
         'text-right font-mono tabular-nums',
       className,
@@ -143,6 +146,36 @@ export function CheckboxCell({
           aria-label="Pilih baris"
         />
       </div>
+    </TableCell>
+  );
+}
+
+/**
+ * Code cell rendered as a clickable blue link. Canonical pattern per
+ * `apps/web-erp/CLAUDE.md` — KODE column is the entity's primary link
+ * to open detail/edit. Stops row-click propagation.
+ */
+export function CodeLinkCell({
+  code,
+  onOpen,
+  className,
+}: {
+  code: string;
+  onOpen: () => void;
+  className?: string;
+}) {
+  return (
+    <TableCell className={cn('mono', className)}>
+      <button
+        type="button"
+        className="bg-transparent border-0 p-0 m-0 text-primary font-[inherit] hover:underline focus:underline focus:outline-none"
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
+      >
+        {code}
+      </button>
     </TableCell>
   );
 }

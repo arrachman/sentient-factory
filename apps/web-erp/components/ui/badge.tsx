@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import { statusBadgeVariant } from '@/lib/status';
 
 /**
  * Status pill. Mirrors prototype `.pill` (+ soft tonal variants) and
@@ -47,19 +48,6 @@ export function Badge({
   );
 }
 
-/**
- * Maps a known document status string to its tonal variant — mirrors
- * the prototype `StatusPill` map (Approved→success, Need Approve→warn,
- * Posted→primary, Rejected→danger, Draft→default).
- */
-const STATUS_VARIANT: Record<string, BadgeProps['variant']> = {
-  Approved: 'success',
-  'Need Approve': 'warn',
-  Posted: 'primary',
-  Draft: 'default',
-  Rejected: 'danger',
-};
-
 export function StatusBadge({
   status,
   label,
@@ -70,11 +58,7 @@ export function StatusBadge({
   className?: string;
 }) {
   return (
-    <Badge
-      variant={STATUS_VARIANT[status] ?? 'default'}
-      dot
-      className={className}
-    >
+    <Badge variant={statusBadgeVariant(status)} dot className={className}>
       {label ?? status}
     </Badge>
   );
