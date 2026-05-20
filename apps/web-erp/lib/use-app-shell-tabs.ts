@@ -28,6 +28,8 @@ export interface AppShellTabsApi {
   reloadTab: (id: string) => void;
   closeOtherTabs: (id: string) => void;
   closeTabsToRight: (id: string) => void;
+  /** Reorders tab `fromId` to the slot currently held by `toId`. No-op if either id is missing or they match. */
+  reorderTabs: (fromId: string, toId: string) => void;
 }
 
 const INITIAL_TABS: ShellTab[] = [{ id: 't0', route: 'home' }];
@@ -155,6 +157,19 @@ export function useAppShellTabs(): AppShellTabsApi {
     }
   }, [setTabs, setActiveId]);
 
+  const reorderTabs = React.useCallback((fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    setTabs((prev) => {
+      const from = prev.findIndex((tb) => tb.id === fromId);
+      const to = prev.findIndex((tb) => tb.id === toId);
+      if (from === -1 || to === -1) return prev;
+      const next = prev.slice();
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  }, [setTabs]);
+
   return {
     tabs,
     activeId,
@@ -169,5 +184,6 @@ export function useAppShellTabs(): AppShellTabsApi {
     reloadTab,
     closeOtherTabs,
     closeTabsToRight,
+    reorderTabs,
   };
 }

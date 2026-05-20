@@ -1,6 +1,22 @@
 'use client';
 
 import * as React from 'react';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  useSortable,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
 import { Icon } from '@/components/ui/icons';
 import { pageMeta } from '@/lib/nav';
@@ -22,7 +38,78 @@ interface TabBarProps {
   onCloseRight: (id: string) => void;
   onDuplicate: (id: string) => void;
   onNew: () => void;
+  /** Called when user drag-drops a tab onto another tab's slot. */
+  onReorder: (fromId: string, toId: string) => void;
   t: (key: string) => string;
+}
+
+interface SortableTabChipProps {
+  tab: ShellTab;
+  active: boolean;
+  t: (key: string) => string;
+  onActivate: (id: string) => void;
+  onClose: (id: string) => void;
+  onContextMenu: (e: React.MouseEvent, id: string) => void;
+}
+
+function SortableTabChip({
+  tab,
+  active,
+  t,
+  onActivate,
+  onClose,
+  onContextMenu,
+}: SortableTabChipProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: tab.id });
+  const meta = pageMeta(tab.route, t);
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-tab={tab.id}
+      className={cn('tab-chip', active && 'active', isDragging && 'dragging')}
+      title={meta.crumbs.map((c) => c.label).join(' / ')}
+      onClick={() => onActivate(tab.id)}
+      onContextMenu={(e) => onContextMenu(e, tab.id)}
+      onAuxClick={(e) => {
+        if (e.button === 1) {
+          e.preventDefault();
+          onClose(tab.id);
+        }
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <Icon name={meta.icon} size={13} className="tab-ico" />
+      <span className="tab-label">{meta.title}</span>
+      {meta.code && <span className="tab-code">{meta.code}</span>}
+      <span
+        className="tab-x"
+        title={active ? `${t('Tutup tab')} (⌘E)` : t('Tutup tab')}
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose(tab.id);
+        }}
+        onAuxClick={(e) => e.stopPropagation()}
+      >
+        <Icon name="x" size={10} />
+      </span>
+    </div>
+  );
 }
 
 /** Browser-style tab strip — ported from `tabs.jsx`. */
@@ -36,6 +123,7 @@ export function TabBar({
   onCloseRight,
   onDuplicate,
   onNew,
+  onReorder,
   t,
 }: TabBarProps) {
   const stripRef = React.useRef<HTMLDivElement>(null);
@@ -79,43 +167,40 @@ export function TabBar({
   const hasOthers = tabs.length > 1;
   const hasRight = menuIdx > -1 && menuIdx < tabs.length - 1;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    onReorder(String(active.id), String(over.id));
+  };
+
+  const tabIds = React.useMemo(() => tabs.map((tb) => tb.id), [tabs]);
+
   return (
     <div className="tabstrip" ref={stripRef}>
-      {tabs.map((tab) => {
-        const meta = pageMeta(tab.route, t);
-        const active = tab.id === activeId;
-        return (
-          <div
-            key={tab.id}
-            data-tab={tab.id}
-            className={cn('tab-chip', active && 'active')}
-            title={meta.crumbs.map((c) => c.label).join(' / ')}
-            onClick={() => onActivate(tab.id)}
-            onContextMenu={(e) => openMenu(e, tab.id)}
-            onAuxClick={(e) => {
-              if (e.button === 1) {
-                e.preventDefault();
-                onClose(tab.id);
-              }
-            }}
-          >
-            <Icon name={meta.icon} size={13} className="tab-ico" />
-            <span className="tab-label">{meta.title}</span>
-            {meta.code && <span className="tab-code">{meta.code}</span>}
-            <span
-              className="tab-x"
-              title={active ? `${t('Tutup tab')} (⌘E)` : t('Tutup tab')}
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose(tab.id);
-              }}
-              onAuxClick={(e) => e.stopPropagation()}
-            >
-              <Icon name="x" size={10} />
-            </span>
-          </div>
-        );
-      })}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={tabIds} strategy={horizontalListSortingStrategy}>
+          {tabs.map((tab) => (
+            <SortableTabChip
+              key={tab.id}
+              tab={tab}
+              active={tab.id === activeId}
+              t={t}
+              onActivate={onActivate}
+              onClose={onClose}
+              onContextMenu={openMenu}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
       <button
         className="tab-new"
         title={`${t('Tab baru')} (⌘K)`}

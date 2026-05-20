@@ -58,6 +58,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
     reloadTab,
     closeOtherTabs,
     closeTabsToRight,
+    reorderTabs,
   } = useAppShellTabs();
 
   // Captured once on mount — used only for initial session validation.
@@ -278,6 +279,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
             onCloseRight={closeTabsToRight}
             onDuplicate={duplicateTab}
             onNew={() => setPaletteOpen(true)}
+            onReorder={reorderTabs}
             t={t}
           />
           <div className="tabviews">

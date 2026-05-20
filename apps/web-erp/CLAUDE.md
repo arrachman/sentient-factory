@@ -458,6 +458,54 @@ dan lebih mudah dipindai saat semua baris perlu kelihatan "setara".
 Workflow multi-state (`Draft/Need Approve/Approved/Rejected/Posted`) tetap
 pakai `StatusBadge` (§2.9).
 
+### 2.14 Tab navigator = drag-and-drop reorder via @dnd-kit (2026-05-20)
+
+Tab strip di app shell (`components/organisms/tab-bar.tsx`) **wajib**
+mendukung reorder manual via drag-and-drop. Library = `@dnd-kit/core` +
+`@dnd-kit/sortable` (sudah di `package.json`); **dilarang** native HTML5 DnD
+atau `react-beautiful-dnd`.
+
+- Setiap `tab-chip` di-wrap `useSortable({ id: tab.id })`; container pakai
+  `DndContext` + `SortableContext` strategi `horizontalListSortingStrategy`.
+- Sensor: `PointerSensor` dengan `activationConstraint.distance = 5px`
+  supaya klik tab (activate) tidak ke-trigger sebagai drag accidentally.
+  `KeyboardSensor` + `sortableKeyboardCoordinates` untuk a11y.
+- `onPointerDown` di tombol `tab-x` (close) **wajib** `stopPropagation()`
+  supaya tarik dari tombol-X tidak ikut memulai drag.
+- State machine reorder di [`lib/use-app-shell-tabs.ts`](lib/use-app-shell-tabs.ts)
+  via `reorderTabs(fromId, toId)` (functional setter + `splice`). Persistence
+  ke workspace localStorage **otomatis** lewat `useEffect` existing yang
+  watch `tabs` di `app-shell.tsx` — jangan tambah jalur simpan baru.
+- "+" (new tab), duplicate, dan tab counter tetap **di luar**
+  `SortableContext` agar tidak ikut sortable.
+
+### 2.13 Setting → Tampilan = `/settings/appearance` (2026-05-20)
+
+Halaman preferensi tampilan per-user. Canonical path = `/settings/appearance`
+(seeded di `sys_menus` di bawah module `SET` "Settings" dgn code
+`SET.APPEARANCE`). Komponen = `AppearancePage` (`components/pages/appearance.tsx`),
+ter-register di `ERP_PAGES` + `ERP_ROUTE_META`. Short-id legacy `set-appearance`
+tetap jalan sebagai alias fallback NAV statis.
+
+**Persistence:** reuse tabel `adm_user_preferences` (model Prisma
+`ErpUserPreferences`) — **tidak** bikin tabel `adm_user_settings` baru.
+Pemetaan field:
+
+- `theme` (light/dark) → kolom eksplisit `theme`.
+- `language` (id/en) → kolom eksplisit `language`.
+- Tweaks UI lain (`primary`, `density`, `fontScale`, `sidebar`) → `metadata`
+  Json (default dari `DEFAULTS` di `appearance-parts.tsx`).
+
+**API**: module `erp-user-preferences`
+(`apps/api-gateway/src/erp-user-preferences/**`) — `GET /erp/user-preferences/me`
++ `PUT /erp/user-preferences/me` (guard `ErpJwtAuthGuard`). FE pakai client
+`getMyPreferences()` / `updateMyPreferences()` di `lib/api/user-preferences.ts`.
+
+**Load order saat mount AppearancePage**: API (server SSOT) > localStorage
+(`erp-appearance` key) > DOM data-attr > `DEFAULTS`. Tombol Simpan → PUT API +
+notify; DOM data-attr di-apply langsung saat user ubah kontrol (live preview),
+localStorage = cadangan offline.
+
 ### 2.11 Inline row actions = semua di kebab menu (WAJIB, 2026-05-20)
 
 Pola wajib kolom action di list page: **semua aksi (Edit, Riwayat, Hapus, …)
@@ -519,6 +567,14 @@ seed 500 dummy ada — penyebab: `listBranches({ sortBy, sortDir })` tidak
 kirim `limit`, backend default 10, FE lalu `rows.filter(...).slice(page-1,
 page)`. Quick fix-nya menaikkan limit hanya menunda masalah; refactor
 proper diterapkan ke semua list page.
+
+Bug history (2026-05-20, lanjutan): FE pakai server-driven pagination tapi
+DTO `warehouses`/`partners`/`locations` belum punya `sortBy`/`sortDir` →
+`ValidationPipe({ forbidNonWhitelisted: true })` lempar 400
+`"property sortBy should not exist"`. Fix: tambah `sortBy`/`sortDir`
+(whitelist `IsIn(SORTABLE_FIELDS)`) ke ketiga DTO + wire `orderBy: [{
+[sortBy]: sortDir }]` di service. Setiap kali nambah list page baru, sync
+DTO query dulu sebelum FE diarahkan ke server-side sort.
 
 **Pola kanonik** (lihat [components/pages/branches-page.tsx](components/pages/branches-page.tsx)):
 
