@@ -38,6 +38,27 @@ import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-no
 import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
+// MD legacy batch (2026-05-20)
+import { ErpBrandsModule } from './erp-brands/brands.module';
+import { ErpMaterialsModule } from './erp-materials/materials.module';
+import { ErpItemModelsModule } from './erp-item-models/item-models.module';
+import { ErpSizesModule } from './erp-sizes/sizes.module';
+import { ErpSectionsModule } from './erp-sections/sections.module';
+import { ErpItemKindsModule } from './erp-item-types/item-types.module';
+import { ErpProductClassesModule } from './erp-product-classes/product-classes.module';
+import { ErpBanksModule } from './erp-banks/banks.module';
+import { ErpExpeditionsModule } from './erp-expeditions/expeditions.module';
+import { ErpOtherCostsModule } from './erp-other-costs/other-costs.module';
+import { ErpCommissionsModule } from './erp-commissions/commissions.module';
+import { ErpItemTransactionTypesModule } from './erp-item-transaction-types/item-transaction-types.module';
+import { ErpCountriesModule } from './erp-countries/countries.module';
+import { ErpProvincesModule } from './erp-provinces/provinces.module';
+import { ErpCitiesModule } from './erp-cities/cities.module';
+import { ErpAreasModule } from './erp-areas/areas.module';
+import { ErpItemLocationsModule } from './erp-item-locations/item-locations.module';
+import { ErpPartnerSubCategoriesModule } from './erp-partner-sub-categories/partner-sub-categories.module';
+import { ErpPriceCategoriesModule } from './erp-price-categories/price-categories.module';
+import { ErpTransactionNotesModule } from './erp-transaction-notes/transaction-notes.module';
 import { ErpUsersModule } from './erp-users/erp-users.module';
 import { ErpRolesModule } from './erp-roles/erp-roles.module';
 import { ErpPermissionsModule } from './erp-permissions/erp-permissions.module';
@@ -128,6 +149,27 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ClinicSettingsModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
+    // MD legacy batch (2026-05-20)
+    ErpBrandsModule,
+    ErpMaterialsModule,
+    ErpItemModelsModule,
+    ErpSizesModule,
+    ErpSectionsModule,
+    ErpItemKindsModule,
+    ErpProductClassesModule,
+    ErpBanksModule,
+    ErpExpeditionsModule,
+    ErpOtherCostsModule,
+    ErpCommissionsModule,
+    ErpItemTransactionTypesModule,
+    ErpCountriesModule,
+    ErpProvincesModule,
+    ErpCitiesModule,
+    ErpAreasModule,
+    ErpItemLocationsModule,
+    ErpPartnerSubCategoriesModule,
+    ErpPriceCategoriesModule,
+    ErpTransactionNotesModule,
     ErpUsersModule,
     ErpRolesModule,
     ErpPermissionsModule,
