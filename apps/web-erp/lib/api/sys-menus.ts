@@ -89,3 +89,16 @@ export async function updateSysMenu(
 export async function deleteSysMenu(id: string): Promise<void> {
   await apiDelete<void>(`/sys-menus/${id}`);
 }
+
+/**
+ * Batch reorder helper — backend has no batch endpoint, so this fans out to
+ * per-id PATCH calls in parallel. Only the rows whose sortOrder actually
+ * changes should be passed in by the caller.
+ */
+export async function reorderSiblings(
+  updates: { id: string; sortOrder: number }[],
+): Promise<void> {
+  await Promise.all(
+    updates.map((u) => updateSysMenu(u.id, { sortOrder: u.sortOrder })),
+  );
+}
