@@ -139,7 +139,7 @@ export function Topbar({
           margin: '0 8px',
         }}
       />
-      <WorkspaceSwitcher workspaceId={workspaceId} workspaceName={workspaceName} />
+      <WorkspaceSwitcher workspaceId={workspaceId} workspaceName={workspaceName} t={t} />
       <div
         style={{
           width: 1,

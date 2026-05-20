@@ -16,12 +16,14 @@ interface WorkspaceSwitcherProps {
   workspaceName: string;
   /** Called after creating a new workspace so the parent can re-read state. */
   onWorkspaceChange?: () => void;
+  t: (key: string) => string;
 }
 
 export function WorkspaceSwitcher({
   workspaceId,
   workspaceName,
   onWorkspaceChange,
+  t,
 }: WorkspaceSwitcherProps) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -71,7 +73,7 @@ export function WorkspaceSwitcher({
       <button
         className="ws-pill"
         onClick={() => setOpen((o) => !o)}
-        title="Ganti workspace"
+        title={t('Ganti workspace')}
       >
         <Icon name="layers" size={12} />
         <span className="ws-name">{workspaceName}</span>
@@ -80,7 +82,7 @@ export function WorkspaceSwitcher({
 
       {open && (
         <div className="ws-dropdown fade-in">
-          <div className="ws-dropdown-hd">Workspace</div>
+          <div className="ws-dropdown-hd">{t('Workspace')}</div>
 
           {workspaces.map((ws) => (
             <button
@@ -91,12 +93,12 @@ export function WorkspaceSwitcher({
               <Icon name="layers" size={12} />
               <span className="ws-item-name">{ws.name}</span>
               {ws.id === workspaceId && (
-                <span className="ws-item-badge">aktif</span>
+                <span className="ws-item-badge">{t('aktif')}</span>
               )}
               {workspaces.length > 1 && (
                 <button
                   className="ws-item-del"
-                  title="Hapus workspace"
+                  title={t('Hapus workspace')}
                   onClick={(e) => handleDelete(e, ws.id)}
                 >
                   <Icon name="x" size={11} />
@@ -109,7 +111,7 @@ export function WorkspaceSwitcher({
 
           <button className="ws-item ws-item-new" onClick={handleNew}>
             <Icon name="plus" size={12} />
-            <span>Buat Workspace</span>
+            <span>{t('Buat Workspace')}</span>
           </button>
         </div>
       )}

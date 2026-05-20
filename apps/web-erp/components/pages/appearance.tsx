@@ -113,28 +113,32 @@ export function AppearancePage(_props: AppearancePageProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const twRef = React.useRef(tw);
+  React.useEffect(() => {
+    twRef.current = tw;
+  }, [tw]);
+
   const applyTweak = React.useCallback(
     <K extends keyof Tweaks>(key: K, val: Tweaks[K]) => {
-      setTw((prev) => {
-        const next = { ...prev, [key]: val };
-        const el = document.documentElement;
-        el.setAttribute('data-primary', next.primary);
-        el.setAttribute('data-density', next.density);
-        el.setAttribute('data-fontscale', next.fontScale);
-        el.setAttribute('data-sidebar', next.sidebar);
-        try {
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        } catch {
-          /* localStorage unavailable — ignore */
-        }
-        if (key === 'lang') {
-          // Tell the app-shell to retranslate topbar/sidebar/tabs in sync.
-          window.dispatchEvent(
-            new CustomEvent('erp-set-lang', { detail: { lang: next.lang } }),
-          );
-        }
-        return next;
-      });
+      const next = { ...twRef.current, [key]: val };
+      twRef.current = next;
+      const el = document.documentElement;
+      el.setAttribute('data-primary', next.primary);
+      el.setAttribute('data-density', next.density);
+      el.setAttribute('data-fontscale', next.fontScale);
+      el.setAttribute('data-sidebar', next.sidebar);
+      try {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* localStorage unavailable — ignore */
+      }
+      if (key === 'lang') {
+        // Tell the app-shell to retranslate topbar/sidebar/tabs in sync.
+        window.dispatchEvent(
+          new CustomEvent('erp-set-lang', { detail: { lang: next.lang } }),
+        );
+      }
+      setTw(next);
     },
     [],
   );
