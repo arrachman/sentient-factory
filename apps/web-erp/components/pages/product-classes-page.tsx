@@ -10,6 +10,7 @@ import {
   bulkUpdateErpProductClassStatus, bulkDeleteErpProductClasses,
   type ErpProductClass, type CreateErpProductClassPayload,
 } from '@/lib/api/product-classes';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface FormData {
   code: string;
@@ -39,15 +40,21 @@ const toPayload = (f: FormData): CreateErpProductClassPayload => ({
   isActive: f.isActive,
 });
 
-function FormFields({ data, onChange }: { data: FormData; onChange: (d: FormData) => void }) {
+const validateProductClass = (form: FormData) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
   const set = (k: keyof FormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="ef-code" required>
-        <Input id="ef-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="PCL-001" />
+      <FormField label="Kode" htmlFor="ef-code" required error={errors.code}>
+        <Input id="ef-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="PCL-001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="ef-name" required>
-        <Input id="ef-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Product Class" />
+      <FormField label="Nama" htmlFor="ef-name" required error={errors.name}>
+        <Input id="ef-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Product Class" aria-invalid={!!errors.name} />
       </FormField>
 
       <FormField label="Status" htmlFor="ef-active">
@@ -75,6 +82,7 @@ export function ErpProductClassesPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validateProductClass}
     />
   );
 }

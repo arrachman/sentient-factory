@@ -16,6 +16,7 @@ import {
   bulkUpdateErpUnitStatus, bulkDeleteErpUnits,
   type ErpUnit, type CreateUnitPayload,
 } from '@/lib/api/units';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface UnitForm {
   code: string;
@@ -37,15 +38,21 @@ const toPayload = (f: UnitForm): CreateUnitPayload => ({
   isActive: f.isActive,
 });
 
-function FormFields({ data, onChange }: { data: UnitForm; onChange: (d: UnitForm) => void }) {
+const validateUnit = (form: UnitForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: UnitForm; onChange: (d: UnitForm) => void; errors?: FormErrors<UnitForm> }) {
   const set = (k: keyof UnitForm, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="uf-code" required>
-        <Input id="uf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="KG" />
+      <FormField label="Kode" htmlFor="uf-code" required error={errors.code}>
+        <Input id="uf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="KG" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="uf-name" required>
-        <Input id="uf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Kilogram" />
+      <FormField label="Nama" htmlFor="uf-name" required error={errors.name}>
+        <Input id="uf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Kilogram" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Status" htmlFor="uf-active">
         <BooleanRadio id="uf-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
@@ -72,6 +79,7 @@ export function ErpUnitsPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validateUnit}
     />
   );
 }
