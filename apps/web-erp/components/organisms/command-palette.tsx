@@ -91,6 +91,18 @@ interface CommandPaletteProps {
   onAction: (id: string) => void;
   t: (key: string) => string;
   nav: NavItem[];
+  workspaceId?: string;
+}
+
+function itemHref(id: string, workspaceId?: string): string | null {
+  if (id.includes(':')) return null;
+  if (workspaceId) {
+    if (id.startsWith('/')) return `/${workspaceId}${id}`;
+    return `/${workspaceId}/${id}`;
+  }
+  // Global mode: route IS the URL path.
+  if (id.startsWith('/')) return id;
+  return `/${id}`;
 }
 
 export function CommandPalette({
@@ -99,6 +111,7 @@ export function CommandPalette({
   onAction,
   t,
   nav,
+  workspaceId,
 }: CommandPaletteProps) {
   const [q, setQ] = React.useState('');
   const [active, setActive] = React.useState(0);
@@ -202,12 +215,16 @@ export function CommandPalette({
                 idx += 1;
                 const isActive = idx === active;
                 const myIdx = idx;
+                const href = itemHref(it.id, workspaceId);
+                const Tag = href ? 'a' : 'div';
                 return (
-                  <div
+                  <Tag
                     key={`${g.group}:${it.id}`}
+                    {...(href ? { href } : {})}
                     className={cn('cp-item', isActive && 'active')}
                     onMouseEnter={() => setActive(myIdx)}
-                    onClick={() => {
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault();
                       onAction(it.id);
                       onClose();
                     }}
@@ -217,7 +234,7 @@ export function CommandPalette({
                     </span>
                     <span className="label">{tGlobal(it.label)}</span>
                     {it.hint && <span className="hint">{tGlobal(it.hint)}</span>}
-                  </div>
+                  </Tag>
                 );
               })}
             </div>

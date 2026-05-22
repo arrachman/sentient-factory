@@ -10,10 +10,12 @@ import {
   nextWorkspaceId,
   type WorkspaceMeta,
 } from '@/lib/workspace';
+import { GLOBAL_BASE_PATH } from '@/lib/shell-constants';
 
 interface WorkspaceSwitcherProps {
-  workspaceId: string;
-  workspaceName: string;
+  /** Undefined = global (no-workspace) mode. */
+  workspaceId?: string;
+  workspaceName?: string;
   /** Called after creating a new workspace so the parent can re-read state. */
   onWorkspaceChange?: () => void;
   t: (key: string) => string;
@@ -29,6 +31,7 @@ export function WorkspaceSwitcher({
   const [open, setOpen] = React.useState(false);
   const [workspaces, setWorkspaces] = React.useState<WorkspaceMeta[]>([]);
   const ref = React.useRef<HTMLDivElement>(null);
+  const isGlobal = !workspaceId;
 
   // Load workspace list when dropdown opens.
   React.useEffect(() => {
@@ -44,9 +47,14 @@ export function WorkspaceSwitcher({
     return () => document.removeEventListener('mousedown', fn);
   }, []);
 
-  const navigate = (id: string) => {
+  const navigateToWorkspace = (id: string) => {
     setOpen(false);
     if (id !== workspaceId) router.push(`/${id}`);
+  };
+
+  const navigateToGlobal = () => {
+    setOpen(false);
+    if (!isGlobal) router.push(GLOBAL_BASE_PATH);
   };
 
   const handleNew = () => {
@@ -64,7 +72,7 @@ export function WorkspaceSwitcher({
     deleteWorkspace(id);
     setWorkspaces(remaining);
     if (id === workspaceId) {
-      router.push(`/${remaining[0].id}`);
+      router.push(GLOBAL_BASE_PATH);
     }
   };
 
@@ -76,7 +84,7 @@ export function WorkspaceSwitcher({
         title={t('Ganti workspace')}
       >
         <Icon name="layers" size={12} />
-        <span className="ws-name">{workspaceName}</span>
+        <span className="ws-name">{isGlobal ? t('Global') : workspaceName}</span>
         <Icon name="chevdown" size={11} />
       </button>
 
@@ -84,11 +92,22 @@ export function WorkspaceSwitcher({
         <div className="ws-dropdown fade-in">
           <div className="ws-dropdown-hd">{t('Workspace')}</div>
 
+          <button
+            className={`ws-item${isGlobal ? ' active' : ''}`}
+            onClick={navigateToGlobal}
+          >
+            <Icon name="database" size={12} />
+            <span className="ws-item-name">{t('Global')}</span>
+            {isGlobal && <span className="ws-item-badge">{t('aktif')}</span>}
+          </button>
+
+          {workspaces.length > 0 && <div className="ws-dropdown-sep" />}
+
           {workspaces.map((ws) => (
             <button
               key={ws.id}
               className={`ws-item${ws.id === workspaceId ? ' active' : ''}`}
-              onClick={() => navigate(ws.id)}
+              onClick={() => navigateToWorkspace(ws.id)}
             >
               <Icon name="layers" size={12} />
               <span className="ws-item-name">{ws.name}</span>

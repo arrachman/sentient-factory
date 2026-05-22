@@ -31,7 +31,8 @@ import {
 import { useUrlRouting, readUrlRoutingEnabled } from '@/lib/use-url-routing';
 
 interface AppShellProps {
-  workspaceId: string;
+  /** Omit for global (no-workspace) mode — tabs are in-memory only, no localStorage. */
+  workspaceId?: string;
   initialRoute?: string;
 }
 
@@ -68,9 +69,9 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   const { urlRoutingEnabled, navigate } = useUrlRouting({
     workspaceId,
     activeRoute,
+    activeId,
     setTabs,
     setActiveId,
-    nextTabId,
     navigateInTab,
     openTab,
   });
@@ -85,6 +86,15 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   const myMenusQuery = useErpMyMenus({ enabled: !!user });
 
   const loadWorkspace = React.useCallback(() => {
+    if (!workspaceId) {
+      // Global mode: in-memory tabs only — no localStorage reads or writes.
+      const defaultTab = { id: 't1', route: 'home' };
+      syncTabSeq([defaultTab]);
+      setTabs([defaultTab]);
+      setActiveId('t1');
+      workspaceReady.current = true;
+      return;
+    }
     const ws = getOrCreateWorkspace(workspaceId);
     setWorkspaceName(ws.meta.name);
     syncTabSeq(ws.tabs);
@@ -150,9 +160,9 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     apiLogout().catch(() => { /* ignore */ });
   }, [queryClient]);
 
-  // Persist workspace state whenever tabs or active tab change.
+  // Persist workspace state whenever tabs or active tab change (skip in global mode).
   React.useEffect(() => {
-    if (!workspaceReady.current || !user) return;
+    if (!workspaceReady.current || !user || !workspaceId) return;
     const ws = getOrCreateWorkspace(workspaceId);
     saveWorkspace({
       ...ws,
@@ -229,7 +239,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
         confirmClose(activeId);
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
+      if (!urlRoutingEnabled && (e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
         e.preventDefault();
         const n = parseInt(e.key, 10);
         const target = n === 9 ? tabs[tabs.length - 1] : tabs[n - 1];
@@ -248,7 +258,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [activeId, tabs, confirmClose, setActiveId]);
+  }, [activeId, tabs, confirmClose, setActiveId, urlRoutingEnabled]);
 
   React.useEffect(() => {
     const sc = () => setShortcutsOpen(true);
@@ -319,8 +329,13 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     [navigate],
   );
 
-  const crumbs: Crumb[] = pageMeta(activeRoute, t).crumbs;
+  const meta = pageMeta(activeRoute, t);
+  const crumbs: Crumb[] = meta.crumbs;
   const sidebarCurrent = activeRoute;
+
+  React.useEffect(() => {
+    document.title = `${meta.title} | Sentient ERP`;
+  }, [meta.title]);
 
   if (!hydrated) return null;
   if (!user) return <LoginPage onLogin={onLogin} />;
@@ -328,7 +343,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   return (
     <>
       <div className="app">
-        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} />
+        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} workspaceId={workspaceId} />
         <Topbar
           crumbs={crumbs}
           onOpenPalette={() => setPaletteOpen(true)}
@@ -381,6 +396,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
         onAction={onPaletteAction}
         t={t}
         nav={nav}
+        workspaceId={workspaceId}
       />
 
       <NotificationDrawer onNavigate={navigate} t={t} />
@@ -388,7 +404,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
       <ConfirmDialogHost />
 
       {shortcutsOpen && (
-        <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />
+        <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} urlRoutingEnabled={urlRoutingEnabled} />
       )}
     </>
   );

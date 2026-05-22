@@ -2,19 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getLastActiveId } from '@/lib/workspace';
-import { DEFAULT_WORKSPACE_ID } from '@/lib/shell-constants';
+import { GLOBAL_BASE_PATH } from '@/lib/shell-constants';
 
-/**
- * Root entry — redirects to the last active workspace or the default (ws1).
- * Uses client-side localStorage so the redirect is always workspace-aware.
- */
+/** Root entry — redirects to global (no-workspace) mode. */
 export default function RootPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const id = getLastActiveId() ?? DEFAULT_WORKSPACE_ID;
-    router.replace(`/${id}`);
+    router.replace(GLOBAL_BASE_PATH);
   }, [router]);
 
   return null;

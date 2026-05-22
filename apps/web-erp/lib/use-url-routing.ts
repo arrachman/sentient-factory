@@ -22,11 +22,11 @@ export function readUrlRoutingEnabled(): boolean {
 }
 
 interface UseUrlRoutingArgs {
-  workspaceId: string;
+  workspaceId?: string;
   activeRoute: string;
+  activeId: string;
   setTabs: React.Dispatch<React.SetStateAction<ShellTab[]>>;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
-  nextTabId: () => string;
   navigateInTab: (route: string) => void;
   openTab: (route: string) => void;
 }
@@ -49,20 +49,21 @@ export interface UseUrlRoutingApi {
 export function useUrlRouting({
   workspaceId,
   activeRoute,
+  activeId,
   setTabs,
   setActiveId,
-  nextTabId,
   navigateInTab,
   openTab,
 }: UseUrlRoutingArgs): UseUrlRoutingApi {
   const [urlRoutingEnabled, setUrlRoutingEnabled] = React.useState(false);
 
-  // Ref so the event handler always reads the live active route without
-  // needing to re-register the listener on every navigation.
+  // Refs so event handlers always read live values without re-registering.
   const activeRouteRef = React.useRef(activeRoute);
+  const activeIdRef = React.useRef(activeId);
   React.useEffect(() => {
     activeRouteRef.current = activeRoute;
-  }, [activeRoute]);
+    activeIdRef.current = activeId;
+  }, [activeRoute, activeId]);
 
   React.useEffect(() => {
     setUrlRoutingEnabled(readUrlRoutingEnabled());
@@ -71,10 +72,10 @@ export function useUrlRouting({
     };
     const onCustom = (e: Event) => {
       setUrlRoutingEnabled(!!(e as CustomEvent<{ enabled: boolean }>).detail?.enabled);
-      const freshId = nextTabId();
-      // Keep the current page; only close all other tabs.
-      setTabs([{ id: freshId, route: activeRouteRef.current || 'home' }]);
-      setActiveId(freshId);
+      // Reuse the current tab ID so the page component is NOT remounted — its
+      // React state (including the updated urlRouting tweak) is preserved.
+      setTabs([{ id: activeIdRef.current, route: activeRouteRef.current || 'home' }]);
+      setActiveId(activeIdRef.current);
     };
     // Server-side hydration: only update the flag, never reset workspace tabs.
     const onHydrate = (e: Event) => {
@@ -88,13 +89,26 @@ export function useUrlRouting({
       window.removeEventListener('erp-set-url-routing', onCustom as EventListener);
       window.removeEventListener('erp-hydrate-url-routing', onHydrate as EventListener);
     };
-  }, [nextTabId, setTabs, setActiveId]);
+  }, [setTabs, setActiveId]);
 
   React.useEffect(() => {
-    if (!urlRoutingEnabled || !activeRoute || activeRoute === 'home') return;
-    const target = `/${workspaceId}${activeRoute}`;
-    if (window.location.pathname !== target) {
-      window.history.replaceState(null, '', target);
+    // Global mode: workspaceRoot = '' so routes map to /org/warehouses directly.
+    // Workspace mode: workspaceRoot = /ws1 so routes map to /ws1/org/warehouses.
+    const workspaceRoot = workspaceId ? `/${workspaceId}` : '';
+    const homeUrl = workspaceId ? workspaceRoot : '/org';
+    if (urlRoutingEnabled) {
+      if (!activeRoute || activeRoute === 'home') return;
+      // Global: activeRoute IS the full path (/org/warehouses).
+      // Workspace: prepend workspace prefix.
+      const target = workspaceId ? `${workspaceRoot}${activeRoute}` : activeRoute;
+      if (window.location.pathname !== target) {
+        window.history.replaceState(null, '', target);
+      }
+    } else {
+      // Internal mode: URL shows only the root (workspace or /org).
+      if (window.location.pathname !== homeUrl) {
+        window.history.replaceState(null, '', homeUrl);
+      }
     }
   }, [urlRoutingEnabled, activeRoute, workspaceId]);
 
