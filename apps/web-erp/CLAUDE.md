@@ -515,8 +515,8 @@ atau `react-beautiful-dnd`.
 ### 2.13 Setting → Tampilan = `/settings/appearance` (2026-05-20)
 
 Halaman preferensi tampilan per-user. Canonical path = `/settings/appearance`
-(seeded di `sys_menus` di bawah module `SET` "Settings" dgn code
-`SET.APPEARANCE`). Komponen = `AppearancePage` (`components/pages/appearance.tsx`),
+(seeded di `sys_menus` di bawah group `M0.SYS` "System" — Administrator module —
+dgn code `M0.SYS.APPEARANCE`; 2026-05-22 dipindah dari `SET` module). Komponen = `AppearancePage` (`components/pages/appearance.tsx`),
 ter-register di `ERP_PAGES` + `ERP_ROUTE_META`. Short-id legacy `set-appearance`
 tetap jalan sebagai alias fallback NAV statis.
 
@@ -707,6 +707,39 @@ Aturan turunan:
   `settings`, `fiscal-periods`, `menus`, `permissions` (enum-like). Kalau
   list-nya tumbuh, tambahkan paginasi backend dulu.
 
+### 2.20 Hierarki geografis & kode pos (WAJIB, 2026-05-22)
+
+Setiap tabel referensi geografis **wajib** terhubung ke level di atasnya via
+FK yang ditegakkan — tidak boleh ada tabel wilayah yang berdiri sendiri tanpa
+relasi ke induknya.
+
+**Hierarki kanonik ERP (sudah diimplementasi):**
+
+```
+md_countries ← md_provinces ← md_cities ← md_areas (kecamatan) ← md_sub_areas (kelurahan)
+```
+
+Aturan turunan:
+
+- `md_provinces.countryId` → FK ke `md_countries`.
+- `md_cities.provinceId` → FK ke `md_provinces`.
+- `md_areas.cityId` → FK ke `md_cities`. Field `postalCode` ada di sini (per kecamatan).
+- `md_sub_areas.areaId` → FK ke `md_areas`. Field `postalCode` ada di sini juga (per kelurahan, lebih granular).
+- `postalCode` di `md_partner_addresses`, `md_branches`, `md_locations` adalah
+  **freetext** (isian manual) — terpisah dari referensi `md_areas`/`md_sub_areas`.
+  User mengisi manual atau autofill dari `md_sub_areas` saat memilih kelurahan di form alamat.
+
+**Seed data (2026-05-22):** `prisma/seed-md-geo.ts` (jalankan via `npm run db:seed:geo`).
+Sumber: `kode-wilayah-id` (MIT). Data lengkap Indonesia:
+38 provinsi, 514 kab/kota, 7.286 kecamatan (+ `postalCode`), 84.270 kelurahan/desa (+ `postalCode`).
+Kode = BPS code (2/4/7/10 digit sesuai level). Idempotent — aman dijalankan ulang.
+
+**Model Prisma:**
+- `ErpArea` → `@@map("md_areas")`, relasi `subAreas ErpSubArea[]`
+- `ErpSubArea` → `@@map("md_sub_areas")`, FK `areaId → ErpArea`, index `postalCode`
+
+Migration: `20260522_004_erp_md_geo_kelurahan` (additive, 0 DROP).
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
@@ -880,8 +913,10 @@ OtherCost, Country, Province (FK Country), City (FK Province), Area
    semua resolve ke `ErpPartnerSubCategoriesPage` di `ERP_PAGES`. Filter
    type via query string ditambahkan saat dibutuhkan (saat ini belum).
 3. **Reference Country→Province→City→Area = FK ditegakkan (intra-domain `md`).**
-   Indonesia di-seed di `prisma/seed-md-legacy.ts` (idempotent upsert via
-   `code`): 6 Country, 34 Province ID, 8 City utama, 6 Bank, 5 Expedition.
+   Seed di `prisma/seed-md-legacy.ts` (idempotent): **197 Country (seluruh dunia, ISO 3166-1 alpha-2, 2026-05-22)**, 38 Province ID, **514 Kab/Kota lengkap per BPS** (kode BPS 4-digit), Bank, Expedition.
+   City upsert pakai `findFirst(bpsCode OR code) + update-by-id` (bukan `upsert`) karena DB bisa mixed-state.
+   **`postalCode` hidup di `md_areas` (level kecamatan), bukan di `md_cities`** —
+   karena satu kota punya banyak kode pos, masing-masing per kecamatan. Lihat §2.20.
 4. **ItemPermission ditunda.** Bukan master "code+name+isActive" — pivot
    `itemId × roleId × {canView,canSell,canBuy}`. `SimpleMasterPage` tidak
    cocok; perlu page custom. Tabel sudah ada (`md_item_permissions`) tapi
@@ -906,6 +941,15 @@ DB drift di migrasi clinic lama. 23 tabel + 1 enum
 (execute + resolve) lebih aman daripada `migrate dev`.
 
 ### 2.19 Mode "Per-halaman URL" = true single-page (2026-05-22)
+
+**Penamaan resmi untuk vibe coding:**
+
+| Istilah | UI label | Kode | Arti |
+| --- | --- | --- | --- |
+| **URL routing off** | Internal | `urlRoutingEnabled = false` | navigasi tidak ubah URL, multi-tab aktif |
+| **URL routing on** | Per-halaman URL | `urlRoutingEnabled = true` | URL ikut halaman aktif, tab navigator disembunyikan |
+
+Gunakan "URL routing off/on" saat diskusi atau vibe coding — langsung korespondensi ke nama variabel `urlRoutingEnabled`.
 
 Knob URL Routing di Setting → Tampilan punya 2 mode: **Internal** (default,
 navigasi tidak mengubah URL, multi-tab) dan **Per-halaman URL**.
