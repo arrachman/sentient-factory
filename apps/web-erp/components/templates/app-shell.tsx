@@ -187,21 +187,6 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     else openTab(initialRoute);
   }, [initialRoute, user, openTab, navigateInTab]);
 
-  React.useEffect(() => {
-    const el = document.documentElement;
-    let stored: Record<string, string> = {};
-    try {
-      const raw = window.localStorage.getItem('erp-appearance');
-      if (raw) stored = JSON.parse(raw) as Record<string, string>;
-    } catch {
-      stored = {};
-    }
-    el.setAttribute('data-density', stored.density ?? 'compact');
-    el.setAttribute('data-fontscale', stored.fontScale ?? 'base');
-    el.setAttribute('data-sidebar', stored.sidebar ?? 'icon');
-    el.setAttribute('data-primary', stored.primary ?? 'blue');
-  }, []);
-
   const confirmClose = React.useCallback(
     (id: string) => {
       // Snapshot the label via functional setState so we don't take a
