@@ -24,6 +24,7 @@ import {
   type ErpPartnerCategoryKind,
   type CreatePartnerCategoryPayload,
 } from '@/lib/api/partner-categories';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface FormData {
   code: string;
@@ -53,15 +54,21 @@ const toPayload = (f: FormData): CreatePartnerCategoryPayload => ({
   isActive: f.isActive,
 });
 
-function FormFields({ data, onChange }: { data: FormData; onChange: (d: FormData) => void }) {
+const validatePartnerCategory = (form: FormData) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
   const set = (k: keyof FormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="pc-code" required>
-        <Input id="pc-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="CUST-RETAIL" />
+      <FormField label="Kode" htmlFor="pc-code" required error={errors.code}>
+        <Input id="pc-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="CUST-RETAIL" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="pc-name" required>
-        <Input id="pc-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Retail Customer" />
+      <FormField label="Nama" htmlFor="pc-name" required error={errors.name}>
+        <Input id="pc-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Retail Customer" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Jenis" htmlFor="pc-kind" required>
         <Select value={data.kind} onValueChange={(v) => set('kind', v as ErpPartnerCategoryKind)}>
@@ -100,6 +107,7 @@ export function ErpPartnerCategoriesPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validatePartnerCategory}
       extraColumns={[{ key: 'kind', label: 'Jenis', render: (row) => row.kind }]}
     />
   );

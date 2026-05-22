@@ -28,6 +28,7 @@ import {
   type ErpPartner,
   type CreatePartnerPayload,
 } from '@/lib/api/partners';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 // ─── Partner type helpers ─────────────────────────────────────────────────────
 
@@ -84,32 +85,42 @@ const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   isActive: f.isActive,
 });
 
+const validatePartner = (form: PartnerForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
 function PartnerFormFields({
   data,
   onChange,
+  errors = {},
 }: {
   data: PartnerForm;
   onChange: (d: PartnerForm) => void;
+  errors?: FormErrors<PartnerForm>;
 }) {
   const set = (k: keyof PartnerForm, v: string | boolean) =>
     onChange({ ...data, [k]: v });
 
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="pf-code" required>
+      <FormField label="Kode" htmlFor="pf-code" required error={errors.code}>
         <Input
           id="pf-code"
           value={data.code}
           onChange={(e) => set('code', e.target.value)}
           placeholder="CUST-001"
+          aria-invalid={!!errors.code}
         />
       </FormField>
-      <FormField label="Nama" htmlFor="pf-name" required>
+      <FormField label="Nama" htmlFor="pf-name" required error={errors.name}>
         <Input
           id="pf-name"
           value={data.name}
           onChange={(e) => set('name', e.target.value)}
           placeholder="PT Maju Bersama"
+          aria-invalid={!!errors.name}
         />
       </FormField>
       <FormField label="Tipe" htmlFor="pf-type">
@@ -173,6 +184,7 @@ export function ErpPartnersPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={PartnerFormFields}
+      validate={validatePartner}
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"
