@@ -5,6 +5,7 @@
 // replaces the current page in place when the tab strip is hidden.
 
 import * as React from 'react';
+import { GLOBAL_BASE_PATH } from '@/lib/shell-constants';
 import type { ShellTab } from '@/components/organisms/tab-bar';
 
 const APPEARANCE_STORAGE_KEY = 'erp-appearance';
@@ -92,15 +93,17 @@ export function useUrlRouting({
   }, [setTabs, setActiveId]);
 
   React.useEffect(() => {
-    // Global mode: workspaceRoot = '' so routes map to /org/warehouses directly.
-    // Workspace mode: workspaceRoot = /ws1 so routes map to /ws1/org/warehouses.
+    // Global mode: routes map to /app/<route> (e.g. /app/master/provinces).
+    // Workspace mode: workspaceRoot = /ws1 so routes map to /ws1/<route>.
     const workspaceRoot = workspaceId ? `/${workspaceId}` : '';
-    const homeUrl = workspaceId ? workspaceRoot : '/org';
+    const homeUrl = workspaceId ? workspaceRoot : GLOBAL_BASE_PATH;
     if (urlRoutingEnabled) {
       if (!activeRoute || activeRoute === 'home') return;
-      // Global: activeRoute IS the full path (/org/warehouses).
+      // Global: prepend /app prefix so URL = /app/master/provinces.
       // Workspace: prepend workspace prefix.
-      const target = workspaceId ? `${workspaceRoot}${activeRoute}` : activeRoute;
+      const target = workspaceId
+        ? `${workspaceRoot}${activeRoute}`
+        : `${GLOBAL_BASE_PATH}${activeRoute}`;
       if (window.location.pathname !== target) {
         window.history.replaceState(null, '', target);
       }

@@ -1,6 +1,7 @@
-import { AppShell } from '@/components/templates/app-shell';
+import { redirect } from 'next/navigation';
+import { GLOBAL_BASE_PATH } from '@/lib/shell-constants';
 
-/** Global (no-workspace) mode — home. */
+/** /dashboard is superseded by /app — redirect for backwards compat. */
 export default function DashboardPage() {
-  return <AppShell />;
+  redirect(GLOBAL_BASE_PATH);
 }
