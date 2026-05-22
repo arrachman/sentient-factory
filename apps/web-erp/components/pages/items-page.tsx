@@ -17,7 +17,8 @@ import {
 import { listUnits, type ErpUnit } from '@/lib/api/units';
 import { listItemCategories, type ErpItemCategory } from '@/lib/api/item-categories';
 import { useErpList } from '@/lib/use-erp-list';
-import { ItemFormFields, defaultItemForm, fromItem, toItemPayload, type ItemFormData } from './items-form';
+import { ItemFormFields, defaultItemForm, fromItem, toItemPayload, validateItem, type ItemFormData } from './items-form';
+import type { FormErrors } from '@/lib/form-validation';
 
 // ─── Lookup provider ──────────────────────────────────────────────────────────
 
@@ -54,8 +55,8 @@ export function ErpItemsPage() {
 
   const FormFields = React.useMemo(
     () =>
-      function ItemsFormFields({ data, onChange }: { data: ItemFormData; onChange: (d: ItemFormData) => void }) {
-        return <ItemFormFields data={data} onChange={onChange} units={units} categories={categories} />;
+      function ItemsFormFields({ data, onChange, errors }: { data: ItemFormData; onChange: (d: ItemFormData) => void; errors?: FormErrors<ItemFormData> }) {
+        return <ItemFormFields data={data} onChange={onChange} units={units} categories={categories} errors={errors} />;
       },
     [units, categories],
   );
@@ -77,6 +78,7 @@ export function ErpItemsPage() {
       fromRecord={fromItem}
       toPayload={toItemPayload as (f: ItemFormData) => any}
       FormFields={FormFields}
+      validate={validateItem}
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"

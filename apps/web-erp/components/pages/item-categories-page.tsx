@@ -23,6 +23,7 @@ import {
   bulkUpdateErpItemCategoryStatus, bulkDeleteErpItemCategories,
   type ErpItemCategory, type CreateItemCategoryPayload,
 } from '@/lib/api/item-categories';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface CatForm {
   id?: string;
@@ -49,7 +50,13 @@ const toPayload = (f: CatForm): CreateItemCategoryPayload => ({
   parentId: f.parentId || null,
 });
 
-function FormFields({ data, onChange }: { data: CatForm; onChange: (d: CatForm) => void }) {
+const validateCategory = (form: CatForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: CatForm; onChange: (d: CatForm) => void; errors?: FormErrors<CatForm> }) {
   const set = (k: keyof CatForm, v: string | boolean) => onChange({ ...data, [k]: v });
 
   const [allCategories, setAllCategories] = React.useState<ErpItemCategory[]>([]);
@@ -61,11 +68,11 @@ function FormFields({ data, onChange }: { data: CatForm; onChange: (d: CatForm) 
 
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="cf-code" required>
-        <Input id="cf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="RAW-MAT" />
+      <FormField label="Kode" htmlFor="cf-code" required error={errors.code}>
+        <Input id="cf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="RAW-MAT" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="cf-name" required>
-        <Input id="cf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Bahan Baku" />
+      <FormField label="Nama" htmlFor="cf-name" required error={errors.name}>
+        <Input id="cf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Bahan Baku" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Status" htmlFor="cf-active">
         <BooleanRadio id="cf-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
@@ -108,6 +115,7 @@ export function ErpItemCategoriesPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validateCategory}
       extraColumns={[{ key: 'parent', label: 'Parent', render: (row) => row.parent?.name ?? '—' }]}
     />
   );
