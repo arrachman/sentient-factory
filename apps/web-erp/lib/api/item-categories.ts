@@ -10,6 +10,7 @@ export interface ErpItemCategory {
   id: string;
   code: string;
   name: string;
+  isActive: boolean;
   parentId?: string | null;
   inventoryAccountId?: string | null;
   createdAt: string;
@@ -20,6 +21,7 @@ export interface ErpItemCategory {
 export interface CreateItemCategoryPayload {
   code: string;
   name: string;
+  isActive?: boolean;
   parentId?: string | null;
   inventoryAccountId?: string | null;
 }
@@ -56,4 +58,14 @@ export async function updateItemCategory(
 
 export async function deleteItemCategory(id: string): Promise<void> {
   await apiDelete<void>(`/item-categories/${id}`);
+}
+
+export async function bulkUpdateErpItemCategoryStatus(ids: string[], isActive: boolean): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>('/item-categories/bulk/status', { ids, isActive });
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteErpItemCategories(ids: string[]): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>('/item-categories/bulk', { ids });
+  return { affected: res.affected };
 }
