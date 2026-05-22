@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpPaymentTermDto, BulkStatusErpPaymentTermDto } from './dto/bulk-erp-payment-term.dto';
 import { CreateErpPaymentTermDto } from './dto/create-erp-payment-term.dto';
 import { QueryErpPaymentTermDto } from './dto/query-erp-payment-term.dto';
 import { UpdateErpPaymentTermDto } from './dto/update-erp-payment-term.dto';
@@ -50,6 +51,18 @@ export class ErpPaymentTermsController {
   @ApiResponse({ status: 200, description: 'Payment term updated' })
   update(@Param('id') id: string, @Body() dto: UpdateErpPaymentTermDto, @Request() req: any) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk activate/deactivate ERP payment terms' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpPaymentTermDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP payment terms' })
+  bulkDelete(@Body() dto: BulkErpPaymentTermDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Delete(':id')

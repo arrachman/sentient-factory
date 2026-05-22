@@ -74,3 +74,13 @@ export async function updatePaymentTerm(
 export async function deletePaymentTerm(id: string): Promise<void> {
   await apiDelete<void>(`/payment-terms/${id}`);
 }
+
+export async function bulkUpdateErpPaymentTermStatus(ids: string[], isActive: boolean): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>('/payment-terms/bulk/status', { ids, isActive });
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteErpPaymentTerms(ids: string[]): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>('/payment-terms/bulk', { ids });
+  return { affected: res.affected };
+}

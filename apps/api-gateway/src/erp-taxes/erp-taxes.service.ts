@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
+import { BulkErpTaxDto, BulkStatusErpTaxDto } from './dto/bulk-erp-tax.dto';
 import { CreateErpTaxDto } from './dto/create-erp-tax.dto';
 import { QueryErpTaxDto } from './dto/query-erp-tax.dto';
 import { UpdateErpTaxDto } from './dto/update-erp-tax.dto';
@@ -65,10 +66,12 @@ export class ErpTaxesService {
       where.isActive = query.isActive;
     }
 
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpTax.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [sortBy]: sortDir }],
         skip,
         take: limit,
         include: {
@@ -153,6 +156,26 @@ export class ErpTaxesService {
     }
 
     return { success: true, data: updated };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpTaxDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = toAuditUserId(actorId);
+    const { count } = await this.prisma.erpTax.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpTaxDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = toAuditUserId(actorId);
+    const { count } = await this.prisma.erpTax.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 
   async remove(id: bigint, actorId?: string) {
