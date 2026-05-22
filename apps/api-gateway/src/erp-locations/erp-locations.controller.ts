@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpLocationDto, BulkStatusErpLocationDto } from './dto/bulk-erp-location.dto';
 import { CreateErpLocationDto } from './dto/create-erp-location.dto';
 import { QueryErpLocationDto } from './dto/query-erp-location.dto';
 import { UpdateErpLocationDto } from './dto/update-erp-location.dto';
@@ -57,5 +58,19 @@ export class ErpLocationsController {
   @ApiResponse({ status: 200, description: 'ERP location deleted' })
   remove(@Param('id') id: string, @Request() req: any) {
     return this.service.remove(BigInt(id), req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk update ERP location status' })
+  @ApiResponse({ status: 200, description: 'Bulk status updated' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpLocationDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk delete ERP locations (soft delete)' })
+  @ApiResponse({ status: 200, description: 'Bulk deleted' })
+  bulkDelete(@Body() dto: BulkErpLocationDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 }

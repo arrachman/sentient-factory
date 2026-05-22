@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { BulkErpLocationDto, BulkStatusErpLocationDto } from './dto/bulk-erp-location.dto';
 import { CreateErpLocationDto } from './dto/create-erp-location.dto';
 import { QueryErpLocationDto } from './dto/query-erp-location.dto';
 import { UpdateErpLocationDto } from './dto/update-erp-location.dto';
@@ -207,5 +208,25 @@ export class ErpLocationsService {
     });
 
     return { success: true, message: 'ERP Location deleted' };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpLocationDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpLocation.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpLocationDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpLocation.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 }
