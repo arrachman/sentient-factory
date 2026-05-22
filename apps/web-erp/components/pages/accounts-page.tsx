@@ -17,7 +17,7 @@ import {
   bulkDeleteAccounts,
   type ErpAccount,
 } from '@/lib/api/accounts';
-import { AccountFormFields, defaultAccountForm, fromAccount, toAccountPayload } from './accounts-form';
+import { AccountFormFields, defaultAccountForm, fromAccount, toAccountPayload, validateAccount } from './accounts-form';
 import type { AccountFormData } from './accounts-form';
 
 const fromRecord = (r: ErpAccount): AccountFormData => fromAccount(r);
@@ -53,6 +53,7 @@ export function ErpAccountsPage() {
       fromRecord={fromRecord}
       toPayload={toAccountPayload}
       FormFields={AccountFormFields}
+      validate={validateAccount}
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"

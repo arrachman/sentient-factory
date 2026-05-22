@@ -33,6 +33,7 @@ import type {
   ErpCashFlowCategory,
   CreateAccountPayload,
 } from '@/lib/api/accounts';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 const NONE = '__none__';
 
@@ -109,23 +110,31 @@ async function loadParentOptions(
   };
 }
 
+export const validateAccount = (form: AccountFormData) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
 export function AccountFormFields({
   data,
   onChange,
+  errors = {},
 }: {
   data: AccountFormData;
   onChange: (d: AccountFormData) => void;
+  errors?: FormErrors<AccountFormData>;
 }) {
   const set = (k: keyof AccountFormData, v: string | boolean) =>
     onChange({ ...data, [k]: v });
 
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="ac-code" required>
-        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1-1001" />
+      <FormField label="Kode" htmlFor="ac-code" required error={errors.code}>
+        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1-1001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="ac-name" required>
-        <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" />
+      <FormField label="Nama" htmlFor="ac-name" required error={errors.name}>
+        <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Alias" htmlFor="ac-alias">
         <Input id="ac-alias" value={data.alias} onChange={(e) => set('alias', e.target.value)} placeholder="Kas Besar" />
