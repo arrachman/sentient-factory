@@ -17,6 +17,7 @@ import {
   defaultBranchForm,
   branchFromRecord,
   branchToPayload,
+  validateBranch,
   type BranchForm,
 } from './branches-form';
 
@@ -43,6 +44,7 @@ export function ErpBranchesPage() {
       fromRecord={branchFromRecord}
       toPayload={branchToPayload}
       FormFields={BranchFormFields}
+      validate={validateBranch}
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"

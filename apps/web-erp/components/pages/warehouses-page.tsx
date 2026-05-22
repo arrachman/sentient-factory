@@ -24,6 +24,7 @@ import {
   type CreateWarehousePayload,
 } from '@/lib/api/warehouses';
 import { listLocations } from '@/lib/api/locations';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -63,6 +64,15 @@ const toPayload = (f: WarehouseForm): CreateWarehousePayload => ({
   isActive: f.isActive,
 });
 
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const validateWarehouse = (form: WarehouseForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    { field: 'locationId', label: 'Lokasi', required: true },
+  ]);
+
 // ─── FK loader ────────────────────────────────────────────────────────────────
 
 async function loadLocationOptions(search: string, page: number, limit: number) {
@@ -75,24 +85,25 @@ async function loadLocationOptions(search: string, page: number, limit: number) 
 
 // ─── Form fields ──────────────────────────────────────────────────────────────
 
-function WarehouseFormFields({ data, onChange }: { data: WarehouseForm; onChange: (d: WarehouseForm) => void }) {
+function WarehouseFormFields({ data, onChange, errors = {} }: { data: WarehouseForm; onChange: (d: WarehouseForm) => void; errors?: FormErrors<WarehouseForm> }) {
   const set = <K extends keyof WarehouseForm>(k: K, v: WarehouseForm[K]) =>
     onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="wf-code" required>
-        <Input id="wf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="WH-001" />
+      <FormField label="Kode" htmlFor="wf-code" required error={errors.code}>
+        <Input id="wf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="WH-001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="wf-name" required>
-        <Input id="wf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Gudang Bahan Baku A" />
+      <FormField label="Nama" htmlFor="wf-name" required error={errors.name}>
+        <Input id="wf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Gudang Bahan Baku A" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Lokasi" htmlFor="wf-loc" required>
+      <FormField label="Lokasi" htmlFor="wf-loc" required error={errors.locationId}>
         <SearchSelect
           id="wf-loc"
           placeholder="Cari lokasi…"
           value={data.locationId}
           onValueChange={(v) => set('locationId', v)}
           loadOptions={loadLocationOptions}
+          error={!!errors.locationId}
         />
       </FormField>
       <FormField label="Izinkan Stok Negatif" htmlFor="wf-neg">
@@ -134,6 +145,7 @@ export function ErpWarehousesPage() {
       bulkStatus={bulkUpdateWarehouseStatus} bulkDelete={bulkDeleteWarehouses}
       defaultForm={defaultForm} fromRecord={fromRecord} toPayload={toPayload}
       FormFields={WarehouseFormFields}
+      validate={validateWarehouse}
       extraColumns={extraColumns}
     />
   );

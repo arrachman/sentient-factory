@@ -24,6 +24,7 @@ import {
   type CreateLocationPayload,
 } from '@/lib/api/locations';
 import { listBranches } from '@/lib/api/branches';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -75,6 +76,15 @@ const toPayload = (f: LocationForm): CreateLocationPayload => ({
   isActive: f.isActive,
 });
 
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const validateLocation = (form: LocationForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    { field: 'branchId', label: 'Cabang', required: true },
+  ]);
+
 // ─── Branch loader for SearchSelect ───────────────────────────────────────────
 
 async function loadBranchOptions(search: string, page: number, limit: number) {
@@ -84,24 +94,25 @@ async function loadBranchOptions(search: string, page: number, limit: number) {
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
-function LocationFormFields({ data, onChange }: { data: LocationForm; onChange: (d: LocationForm) => void }) {
+function LocationFormFields({ data, onChange, errors = {} }: { data: LocationForm; onChange: (d: LocationForm) => void; errors?: FormErrors<LocationForm> }) {
   const set = <K extends keyof LocationForm>(k: K, v: LocationForm[K]) =>
     onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="lf-code" required>
-        <Input id="lf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="LOC-001" />
+      <FormField label="Kode" htmlFor="lf-code" required error={errors.code}>
+        <Input id="lf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="LOC-001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="lf-name" required>
-        <Input id="lf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Gudang Utara" />
+      <FormField label="Nama" htmlFor="lf-name" required error={errors.name}>
+        <Input id="lf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Gudang Utara" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Cabang" htmlFor="lf-branch" required>
+      <FormField label="Cabang" htmlFor="lf-branch" required error={errors.branchId}>
         <SearchSelect
           id="lf-branch"
           placeholder="Cari cabang…"
           value={data.branchId}
           onValueChange={(v) => set('branchId', v)}
           loadOptions={loadBranchOptions}
+          error={!!errors.branchId}
         />
       </FormField>
       <FormField label="Alamat" htmlFor="lf-addr">
@@ -153,6 +164,7 @@ export function ErpLocationsPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={LocationFormFields}
+      validate={validateLocation}
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"
