@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpCurrencyDto, BulkStatusErpCurrencyDto } from './dto/bulk-erp-currency.dto';
 import { CreateErpCurrencyDto } from './dto/create-erp-currency.dto';
 import { QueryErpCurrencyDto } from './dto/query-erp-currency.dto';
 import { UpdateErpCurrencyDto } from './dto/update-erp-currency.dto';
@@ -51,6 +52,20 @@ export class ErpCurrenciesController {
   @ApiResponse({ status: 200, description: 'Currency updated' })
   update(@Param('id') id: string, @Body() dto: UpdateErpCurrencyDto, @Request() req: any) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk activate/deactivate ERP currencies' })
+  @ApiResponse({ status: 200, description: 'Bulk status updated' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpCurrencyDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP currencies' })
+  @ApiResponse({ status: 200, description: 'Bulk deleted' })
+  bulkDelete(@Body() dto: BulkErpCurrencyDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Delete(':id')

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { BulkErpPartnerCategoryDto, BulkStatusErpPartnerCategoryDto } from './dto/bulk-erp-partner-category.dto';
 import { CreateErpPartnerCategoryDto } from './dto/create-erp-partner-category.dto';
 import { QueryErpPartnerCategoryDto } from './dto/query-erp-partner-category.dto';
 import { UpdateErpPartnerCategoryDto } from './dto/update-erp-partner-category.dto';
@@ -146,6 +147,26 @@ export class ErpPartnerCategoriesService {
     }
 
     return { success: true, data: updated };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpPartnerCategoryDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpPartnerCategory.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpPartnerCategoryDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpPartnerCategory.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 
   async remove(id: bigint, actorId?: string) {

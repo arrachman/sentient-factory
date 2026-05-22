@@ -80,3 +80,24 @@ export async function updatePartnerCategory(
 export async function deletePartnerCategory(id: string): Promise<void> {
   await apiDelete<void>(`/partner-categories/${id}`);
 }
+
+export async function bulkUpdateErpPartnerCategoryStatus(
+  ids: string[],
+  isActive: boolean,
+): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>(
+    '/partner-categories/bulk/status',
+    { ids, isActive },
+  );
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteErpPartnerCategories(
+  ids: string[],
+): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>(
+    '/partner-categories/bulk',
+    { ids },
+  );
+  return { affected: res.affected };
+}
