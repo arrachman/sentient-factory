@@ -28,15 +28,15 @@ import {
   clearAllWorkspaces,
   setLastActive,
 } from '@/lib/workspace';
+import { useUrlRouting, readUrlRoutingEnabled } from '@/lib/use-url-routing';
 
 interface AppShellProps {
   workspaceId: string;
+  initialRoute?: string;
 }
 
-export function AppShell({ workspaceId }: AppShellProps) {
-  /** True once the workspace state has been loaded from localStorage. */
+export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   const workspaceReady = React.useRef(false);
-
   const [user, setUser] = React.useState<ShellUser | null>(null);
   const [hydrated, setHydrated] = React.useState(false);
   const [nav, setNav] = React.useState<NavItem[]>(NAV);
@@ -62,23 +62,28 @@ export function AppShell({ workspaceId }: AppShellProps) {
     reorderTabs,
   } = useAppShellTabs();
 
-  // Captured once on mount — used only for initial session validation.
+  const activeTab = tabs.find((tb) => tb.id === activeId) ?? tabs[0];
+  const activeRoute = activeTab ? activeTab.route : 'home';
+
+  const { urlRoutingEnabled, navigate } = useUrlRouting({
+    workspaceId,
+    activeRoute,
+    setTabs,
+    setActiveId,
+    nextTabId,
+    navigateInTab,
+    openTab,
+  });
+
   const [storedUserRaw] = React.useState<string | null>(() => {
     if (typeof window === 'undefined') return null;
     try { return window.localStorage.getItem(USER_STORAGE_KEY); } catch { return null; }
   });
 
   const queryClient = useQueryClient();
-
-  // Validate stored session on app load. Result is cached so re-renders and
-  // tab switches within staleTime never trigger a new HTTP request.
   const meQuery = useErpMe({ enabled: !!storedUserRaw, retry: false });
-
-  // Load role-filtered nav once user is authenticated. Automatically re-runs
-  // after login because `user` flips from null → non-null.
   const myMenusQuery = useErpMyMenus({ enabled: !!user });
 
-  // Load workspace tabs from localStorage and restore shell state.
   const loadWorkspace = React.useCallback(() => {
     const ws = getOrCreateWorkspace(workspaceId);
     setWorkspaceName(ws.meta.name);
@@ -93,9 +98,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
     setLastActive(workspaceId);
   }, [workspaceId, nextTabId, syncTabSeq, setTabs, setActiveId]);
 
-  // Process auth validation result on initial load only. The ref guard
-  // prevents re-running when loadWorkspace reference changes or meQuery
-  // refetches after the initial check.
+  // Ref guard prevents re-running when loadWorkspace ref or meQuery refetches.
   const authInitialized = React.useRef(false);
   React.useEffect(() => {
     if (authInitialized.current) return;
@@ -119,7 +122,6 @@ export function AppShell({ workspaceId }: AppShellProps) {
     setHydrated(true);
   }, [storedUserRaw, meQuery.isSuccess, meQuery.isError, loadWorkspace]);
 
-  // Sync nav whenever role-filtered menus arrive.
   React.useEffect(() => {
     if (myMenusQuery.data && myMenusQuery.data.length > 0) {
       setNav(myMenusQuery.data);
@@ -167,8 +169,13 @@ export function AppShell({ workspaceId }: AppShellProps) {
     setCurrentLang(lang);
   }, [lang]);
 
-  const activeTab = tabs.find((tb) => tb.id === activeId) ?? tabs[0];
-  const activeRoute = activeTab ? activeTab.route : 'home';
+  const initialRouteHandled = React.useRef(false);
+  React.useEffect(() => {
+    if (initialRouteHandled.current || !initialRoute || !user) return;
+    initialRouteHandled.current = true;
+    if (readUrlRoutingEnabled()) navigateInTab(initialRoute);
+    else openTab(initialRoute);
+  }, [initialRoute, user, openTab, navigateInTab]);
 
   React.useEffect(() => {
     const el = document.documentElement;
@@ -249,10 +256,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
     return () => window.removeEventListener('open-shortcuts', sc);
   }, []);
 
-  // Sync UI language with server-stored preference + cross-component changes.
-  // - On mount (after auth): hydrate from API.
-  // - At runtime: AppearancePage dispatches `erp-set-lang` so the shell's
-  //   topbar/sidebar/tabs retranslate instantly without remount.
+  // Hydrate lang from server SSOT on login; listen for same-tab lang changes.
   React.useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -294,10 +298,10 @@ export function AppShell({ workspaceId }: AppShellProps) {
         if (what === 'lang') setLang((l) => (l === 'id' ? 'en' : l === 'en' ? 'ja' : 'id'));
         return;
       }
-      if (id.startsWith('new:')) { openTab(id.split(':')[1]); return; }
-      openTab(id);
+      if (id.startsWith('new:')) { navigate(id.split(':')[1]); return; }
+      navigate(id);
     },
-    [openTab],
+    [navigate],
   );
 
   const crumbs: Crumb[] = pageMeta(activeRoute, t).crumbs;
@@ -309,31 +313,33 @@ export function AppShell({ workspaceId }: AppShellProps) {
   return (
     <>
       <div className="app">
-        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={openTab} t={t} />
+        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} />
         <Topbar
           crumbs={crumbs}
           onOpenPalette={() => setPaletteOpen(true)}
           t={t}
           user={user}
-          onNavigate={openTab}
+          onNavigate={navigate}
           onLogout={onLogout}
           workspaceId={workspaceId}
           workspaceName={workspaceName}
         />
         <main className="main">
-          <TabBar
-            tabs={tabs}
-            activeId={activeId}
-            onActivate={setActiveId}
-            onClose={confirmClose}
-            onReload={reloadTab}
-            onCloseOthers={closeOtherTabs}
-            onCloseRight={closeTabsToRight}
-            onDuplicate={duplicateTab}
-            onNew={() => setPaletteOpen(true)}
-            onReorder={reorderTabs}
-            t={t}
-          />
+          {!urlRoutingEnabled && (
+            <TabBar
+              tabs={tabs}
+              activeId={activeId}
+              onActivate={setActiveId}
+              onClose={confirmClose}
+              onReload={reloadTab}
+              onCloseOthers={closeOtherTabs}
+              onCloseRight={closeTabsToRight}
+              onDuplicate={duplicateTab}
+              onNew={() => setPaletteOpen(true)}
+              onReorder={reorderTabs}
+              t={t}
+            />
+          )}
           <div className="tabviews">
             {tabs.map((tab) => {
               const isActive = tab.id === activeId;
@@ -362,7 +368,7 @@ export function AppShell({ workspaceId }: AppShellProps) {
         nav={nav}
       />
 
-      <NotificationDrawer onNavigate={openTab} t={t} />
+      <NotificationDrawer onNavigate={navigate} t={t} />
       <ActivityDrawer t={t} />
       <ConfirmDialogHost />
 

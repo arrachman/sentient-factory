@@ -896,6 +896,26 @@ DB drift di migrasi clinic lama. 23 tabel + 1 enum
 (`ErpPartnerSubCategoryType`), 0 DROP. Saat shadow DB rusak, route ini
 (execute + resolve) lebih aman daripada `migrate dev`.
 
+### 2.19 Mode "Per-halaman URL" = true single-page (2026-05-22)
+
+Knob URL Routing di Setting → Tampilan punya 2 mode: **Internal** (default,
+navigasi tidak mengubah URL, multi-tab) dan **Per-halaman URL**.
+
+- Memilih **Per-halaman URL** **menyembunyikan seluruh tab navigator** —
+  `TabBar` tidak dirender. Konsekuensi: user hanya bisa membuka satu halaman
+  dalam satu waktu. Navigasi via sidebar/topbar/command-palette/notifikasi
+  **mengganti** halaman aktif di tempat (replace), bukan membuka tab baru.
+- Ganti mode (dua arah) **wajib** lewat `confirmAction` dengan pesan eksplisit
+  per arah: ke Per-halaman URL → "tab navigator dihapus, hanya satu halaman";
+  ke Internal → "tab navigator ditampilkan kembali". Saat dikonfirmasi semua
+  tab ditutup & navigasi direset ke `home`.
+- Logika URL-routing diekstrak dari `app-shell.tsx` ke hook
+  [`lib/use-url-routing.ts`](lib/use-url-routing.ts) (`useUrlRouting` +
+  `readUrlRoutingEnabled`) — mengelola state mode, listener event
+  `erp-set-url-routing`/`storage`, sync `window.history.replaceState`, dan
+  `navigate()` (replace vs openTab). `app-shell.tsx` memanggil hook ini; saat
+  mode aktif, render `TabBar` di-gate dengan `!urlRoutingEnabled`.
+
 ---
 
 ## 5. Saat ragu

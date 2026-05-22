@@ -1,13 +1,10 @@
 'use client';
 
-// Setting → Tampilan : live theme/appearance template (color, font size, theme, layout).
-// Self-contained: theme via next-themes; other knobs mirror the app-shell's
-// document.documentElement data-* attributes + persist to localStorage.
 import * as React from 'react';
 import { useTheme } from 'next-themes';
 import { Icon } from '@/components/ui/icons';
 import { makeTranslator, type Translator } from '@/lib/mock';
-import { notify } from '@/lib/feedback';
+import { confirmAction, notify } from '@/lib/feedback';
 import {
   getMyPreferences,
   updateMyPreferences,
@@ -21,6 +18,8 @@ import {
   Seg,
   SetCard,
   SetRow,
+  UrlRoutingCard,
+  SidebarModeCard,
   STORAGE_KEY,
   SWATCHES,
   type Density,
@@ -44,7 +43,6 @@ export function AppearancePage(_props: AppearancePageProps) {
   const hydratedRef = React.useRef(false);
   const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Apply tweaks to DOM data-attributes (without touching state).
   const applyToDom = React.useCallback((next: Tweaks) => {
     const el = document.documentElement;
     el.setAttribute('data-primary', next.primary);
@@ -80,10 +78,10 @@ export function AppearancePage(_props: AppearancePageProps) {
         (el.getAttribute('data-sidebar') as SidebarMode) ??
         DEFAULTS.sidebar,
       lang: (stored.lang as Lang) ?? DEFAULTS.lang,
+      urlRouting: stored.urlRouting ?? DEFAULTS.urlRouting,
     };
     setTw(baseline);
 
-    // Server SSOT — overrides local if available.
     let cancelled = false;
     getMyPreferences()
       .then((prefs) => {
@@ -98,6 +96,7 @@ export function AppearancePage(_props: AppearancePageProps) {
           fontScale: (meta.fontScale as FontScale) ?? baseline.fontScale,
           sidebar: (meta.sidebar as SidebarMode) ?? baseline.sidebar,
           lang: (prefs.language as Lang) ?? baseline.lang,
+          urlRouting: meta.urlRouting ?? baseline.urlRouting,
         };
         setTw(merged);
         applyToDom(merged);
@@ -132,20 +131,15 @@ export function AppearancePage(_props: AppearancePageProps) {
       } catch {
         /* localStorage unavailable — ignore */
       }
-      if (key === 'lang') {
-        // Tell the app-shell to retranslate topbar/sidebar/tabs in sync.
-        window.dispatchEvent(
-          new CustomEvent('erp-set-lang', { detail: { lang: next.lang } }),
-        );
-      }
+      if (key === 'lang')
+        window.dispatchEvent(new CustomEvent('erp-set-lang', { detail: { lang: next.lang } }));
+      if (key === 'urlRouting')
+        window.dispatchEvent(new CustomEvent('erp-set-url-routing', { detail: { enabled: next.urlRouting } }));
       setTw(next);
     },
     [],
   );
 
-  // Auto-save (debounced) — kirim PUT ke server setiap kali tw/theme berubah
-  // setelah hidrasi awal selesai. localStorage + DOM sudah di-update sinkron
-  // di applyTweak/setTheme; server SSOT menyusul lewat debounce.
   React.useEffect(() => {
     if (!hydratedRef.current) return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -158,6 +152,7 @@ export function AppearancePage(_props: AppearancePageProps) {
           density: tw.density,
           fontScale: tw.fontScale,
           sidebar: tw.sidebar,
+          urlRouting: tw.urlRouting,
         },
       }).catch((err) => {
         const msg =
@@ -183,7 +178,7 @@ export function AppearancePage(_props: AppearancePageProps) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
     } catch {
-      /* localStorage unavailable — ignore */
+      // ignore
     }
     notify(t('Tampilan dikembalikan ke bawaan'), 'info');
   }, [setTheme, t]);
@@ -371,65 +366,32 @@ export function AppearancePage(_props: AppearancePageProps) {
           </SetRow>
         </SetCard>
 
-        <SetCard
-          icon="database"
-          title={t('Menu Sidebar')}
-          sub={t('Template navigasi samping')}
-        >
-          <SetRow label={t('Template')} hint={t('Ikon saja atau dengan label teks')}>
-            <Seg
-              value={tw.sidebar || 'icon'}
-              onChange={(v) => applyTweak('sidebar', v as SidebarMode)}
-              options={[
-                { v: 'icon', label: t('Ikon'), icon: 'boxes' },
-                { v: 'label', label: t('Ikon + Label'), icon: 'database' },
-              ]}
-            />
-          </SetRow>
-          <SetRow label={t('Pratinjau')}>
-            <div
-              style={{
-                display: 'inline-flex',
-                flexDirection: 'column',
-                gap: 3,
-                border: '1px solid var(--border)',
-                borderRadius: 8,
-                padding: 8,
-                background: 'var(--panel-2)',
-                minWidth: tw.sidebar === 'label' ? 170 : 'auto',
-              }}
-            >
-              {(
-                [
-                  ['home', 'Dashboard'],
-                  ['coins', 'Keuangan'],
-                  ['cart', 'Pembelian'],
-                ] as const
-              ).map(([ic, lb], i) => (
-                <span
-                  key={ic}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '5px 8px',
-                    borderRadius: 6,
-                    fontSize: 'calc(12px * var(--font-scale, 1))',
-                    background:
-                      i === 0 ? 'var(--primary-soft)' : 'transparent',
-                    color:
-                      i === 0
-                        ? 'var(--primary-soft-fg)'
-                        : 'var(--fg-muted)',
-                  }}
-                >
-                  <Icon name={ic} size={14} />
-                  {tw.sidebar === 'label' && <span>{t(lb)}</span>}
-                </span>
-              ))}
-            </div>
-          </SetRow>
-        </SetCard>
+        <SidebarModeCard
+          sidebar={tw.sidebar}
+          onChange={(v) => applyTweak('sidebar', v)}
+          t={t}
+        />
+
+        <UrlRoutingCard
+          urlRouting={tw.urlRouting ?? false}
+          onChange={(v) => {
+            confirmAction({
+              title: v
+                ? t('Aktifkan Mode Per-halaman URL?')
+                : t('Kembali ke Mode Internal?'),
+              message: v
+                ? t('Tab navigator akan dihapus — Anda hanya dapat membuka satu halaman dalam satu waktu. Semua tab yang terbuka sekarang akan ditutup dan navigasi direset ke halaman awal.')
+                : t('Tab navigator akan ditampilkan kembali sehingga Anda bisa membuka banyak halaman. Semua tab yang terbuka sekarang akan ditutup dan navigasi direset ke halaman awal.'),
+              variant: 'warn',
+              icon: 'layers',
+              confirmLabel: v ? t('Aktifkan Per-halaman URL') : t('Kembali ke Internal'),
+              confirmIcon: 'layers',
+              cancelLabel: t('Batal'),
+              onConfirm: () => applyTweak('urlRouting', v),
+            });
+          }}
+          t={t}
+        />
 
         <LivePreviewCard t={t} />
       </div>
@@ -441,7 +403,8 @@ export function AppearancePage(_props: AppearancePageProps) {
           {t('Tema')} {theme} ·{' '}
           {t(SWATCHES.find((s) => s.v === tw.primary)?.label || tw.primary)} ·{' '}
           {t('Ukuran')} {fontScale} · {t(tw.density === 'compact' ? 'Compact' : 'Comfortable')} ·{' '}
-          {t('Menu Sidebar')} {t((tw.sidebar || 'icon') === 'icon' ? 'Ikon' : 'Ikon + Label')}
+          {t('Menu Sidebar')} {t((tw.sidebar || 'icon') === 'icon' ? 'Ikon' : 'Ikon + Label')} ·{' '}
+          {t('URL')} {tw.urlRouting ? t('Per-halaman URL') : t('Internal')}
         </span>
       </div>
     </div>

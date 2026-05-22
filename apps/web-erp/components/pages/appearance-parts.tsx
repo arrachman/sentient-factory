@@ -20,6 +20,7 @@ export interface Tweaks {
   fontScale: FontScale;
   sidebar: SidebarMode;
   lang: Lang;
+  urlRouting: boolean;
 }
 
 export const DEFAULTS: Tweaks = {
@@ -28,6 +29,7 @@ export const DEFAULTS: Tweaks = {
   fontScale: 'base',
   sidebar: 'icon',
   lang: 'id',
+  urlRouting: false,
 };
 
 export interface SegOption {
@@ -184,6 +186,97 @@ export const FONT_PX: Record<FontScale, number> = {
   lg: 15,
   xl: 17,
 };
+
+/** Sidebar mode SetCard — extracted to keep appearance.tsx ≤400 lines. */
+export function SidebarModeCard({
+  sidebar,
+  onChange,
+  t,
+}: {
+  sidebar: SidebarMode;
+  onChange: (v: SidebarMode) => void;
+  t: Translator;
+}) {
+  return (
+    <SetCard icon="database" title={t('Menu Sidebar')} sub={t('Template navigasi samping')}>
+      <SetRow label={t('Template')} hint={t('Ikon saja atau dengan label teks')}>
+        <Seg
+          value={sidebar || 'icon'}
+          onChange={(v) => onChange(v as SidebarMode)}
+          options={[
+            { v: 'icon', label: t('Ikon'), icon: 'boxes' },
+            { v: 'label', label: t('Ikon + Label'), icon: 'database' },
+          ]}
+        />
+      </SetRow>
+      <SetRow label={t('Pratinjau')}>
+        <div
+          style={{
+            display: 'inline-flex',
+            flexDirection: 'column',
+            gap: 3,
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            padding: 8,
+            background: 'var(--panel-2)',
+            minWidth: sidebar === 'label' ? 170 : 'auto',
+          }}
+        >
+          {(
+            [
+              ['home', 'Dashboard'],
+              ['coins', 'Keuangan'],
+              ['cart', 'Pembelian'],
+            ] as const
+          ).map(([ic, lb], i) => (
+            <span
+              key={ic}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 8px',
+                borderRadius: 6,
+                fontSize: 'calc(12px * var(--font-scale, 1))',
+                background: i === 0 ? 'var(--primary-soft)' : 'transparent',
+                color: i === 0 ? 'var(--primary-soft-fg)' : 'var(--fg-muted)',
+              }}
+            >
+              <Icon name={ic} size={14} />
+              {sidebar === 'label' && <span>{t(lb)}</span>}
+            </span>
+          ))}
+        </div>
+      </SetRow>
+    </SetCard>
+  );
+}
+
+/** URL routing toggle card — sync browser URL to active tab route. */
+export function UrlRoutingCard({
+  urlRouting,
+  onChange,
+  t,
+}: {
+  urlRouting: boolean;
+  onChange: (v: boolean) => void;
+  t: Translator;
+}) {
+  return (
+    <SetCard icon="layers" title={t('URL Routing')} sub={t('Sinkronisasi URL browser dengan halaman aktif')}>
+      <SetRow label={t('Mode')} hint={t('Per-halaman URL: URL browser ikut route aktif; Internal: navigasi tidak mengubah URL')}>
+        <Seg
+          value={urlRouting ? 'routing' : 'internal'}
+          onChange={(v) => onChange(v === 'routing')}
+          options={[
+            { v: 'internal', label: t('Internal'), icon: 'boxes' },
+            { v: 'routing', label: t('Per-halaman URL'), icon: 'layers' },
+          ]}
+        />
+      </SetRow>
+    </SetCard>
+  );
+}
 
 /** Static "Pratinjau Langsung" card — reflects live tweaks via CSS vars. */
 export function LivePreviewCard({ t }: { t: Translator }) {
