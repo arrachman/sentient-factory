@@ -16,6 +16,7 @@ import {
   type CreateCurrencyPayload,
 } from '@/lib/api/currencies';
 import { CurrencyRatesPanel } from './currencies-rates';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface CurrencyForm {
   id?: string;
@@ -42,15 +43,21 @@ const toPayload = ({ id: _id, ...f }: CurrencyForm): CreateCurrencyPayload => ({
   isActive: f.isActive,
 });
 
-function FormFields({ data, onChange }: { data: CurrencyForm; onChange: (d: CurrencyForm) => void }) {
+const validateCurrency = (form: CurrencyForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: CurrencyForm; onChange: (d: CurrencyForm) => void; errors?: FormErrors<CurrencyForm> }) {
   const set = (k: keyof CurrencyForm, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="cu-code" required>
-        <Input id="cu-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="USD" />
+      <FormField label="Kode" htmlFor="cu-code" required error={errors.code}>
+        <Input id="cu-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="USD" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="cu-name" required>
-        <Input id="cu-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="US Dollar" />
+      <FormField label="Nama" htmlFor="cu-name" required error={errors.name}>
+        <Input id="cu-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="US Dollar" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Simbol" htmlFor="cu-symbol">
         <Input id="cu-symbol" value={data.symbol} onChange={(e) => set('symbol', e.target.value)} placeholder="$" />
@@ -86,6 +93,7 @@ export function ErpCurrenciesPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validateCurrency}
       extraColumns={[{ key: 'symbol', label: 'Simbol', render: (row) => row.symbol ?? '—' }]}
     />
   );

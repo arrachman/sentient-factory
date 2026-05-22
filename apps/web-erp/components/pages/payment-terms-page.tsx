@@ -10,6 +10,7 @@ import {
   bulkUpdateErpPaymentTermStatus, bulkDeleteErpPaymentTerms,
   type ErpPaymentTerm, type CreatePaymentTermPayload,
 } from '@/lib/api/payment-terms';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface FormData {
   code: string;
@@ -67,18 +68,29 @@ const toPayload = (f: FormData): CreatePaymentTermPayload => {
   };
 };
 
-function FormFields({ data, onChange }: { data: FormData; onChange: (d: FormData) => void }) {
+const validatePaymentTerm = (form: FormData) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    {
+      field: 'netDays',
+      label: 'Jatuh Tempo',
+      validate: (v) => (v === '' || v === null || v === undefined) ? 'Jatuh Tempo wajib diisi' : undefined,
+    },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
   const set = (k: keyof FormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="pt-code" required>
-        <Input id="pt-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="NET30" />
+      <FormField label="Kode" htmlFor="pt-code" required error={errors.code}>
+        <Input id="pt-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="NET30" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="pt-name" required>
-        <Input id="pt-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Net 30 Days" />
+      <FormField label="Nama" htmlFor="pt-name" required error={errors.name}>
+        <Input id="pt-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Net 30 Days" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Jatuh Tempo (hari)" htmlFor="pt-net" required>
-        <Input id="pt-net" type="number" value={data.netDays} onChange={(e) => set('netDays', e.target.value)} placeholder="30" />
+      <FormField label="Jatuh Tempo (hari)" htmlFor="pt-net" required error={errors.netDays}>
+        <Input id="pt-net" type="number" value={data.netDays} onChange={(e) => set('netDays', e.target.value)} placeholder="30" aria-invalid={!!errors.netDays} />
       </FormField>
       <FormField label="Diskon Hari (Tier 1)" htmlFor="pt-dd1">
         <Input id="pt-dd1" type="number" value={data.discountDays1} onChange={(e) => set('discountDays1', e.target.value)} placeholder="10" />
@@ -123,6 +135,7 @@ export function ErpPaymentTermsPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validatePaymentTerm}
       extraColumns={[
         { key: 'netDays', label: 'Jatuh Tempo (hari)', sortable: true, render: (row) => `${row.netDays} hari` },
       ]}
