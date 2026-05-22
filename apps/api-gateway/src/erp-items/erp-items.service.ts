@@ -4,6 +4,7 @@ import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.ut
 import { PrismaService } from '../prisma/prisma.service';
 import { ErpAuditService } from '../erp-audit/erp-audit.service';
 import { diffFields } from '../erp-common/utils/diff-fields.util';
+import { BulkErpItemDto, BulkStatusErpItemDto } from './dto/bulk-erp-item.dto';
 import { CreateErpItemDto } from './dto/create-erp-item.dto';
 import { QueryErpItemDto } from './dto/query-erp-item.dto';
 import { UpdateErpItemDto } from './dto/update-erp-item.dto';
@@ -250,5 +251,25 @@ export class ErpItemsService {
     });
 
     return { success: true, message: 'ERP item deleted' };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpItemDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpItem.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpItemDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpItem.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 }

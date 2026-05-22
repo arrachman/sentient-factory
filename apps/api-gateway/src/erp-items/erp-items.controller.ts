@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpItemDto, BulkStatusErpItemDto } from './dto/bulk-erp-item.dto';
 import { CreateErpItemDto } from './dto/create-erp-item.dto';
 import { QueryErpItemDto } from './dto/query-erp-item.dto';
 import { UpdateErpItemDto } from './dto/update-erp-item.dto';
@@ -50,6 +51,18 @@ export class ErpItemsController {
   @ApiResponse({ status: 200, description: 'ERP item updated' })
   update(@Param('id') id: string, @Body() dto: UpdateErpItemDto, @Request() req: any) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk activate/deactivate ERP items' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpItemDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP items' })
+  bulkDelete(@Body() dto: BulkErpItemDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Delete(':id')
