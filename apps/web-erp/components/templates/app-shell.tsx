@@ -275,6 +275,21 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
         if (meta.fontScale) el.setAttribute('data-fontscale', meta.fontScale);
         if (meta.sidebar) el.setAttribute('data-sidebar', meta.sidebar);
         if (meta.primary) el.setAttribute('data-primary', meta.primary);
+        // Hydrate urlRouting from server SSOT: update localStorage so
+        // readUrlRoutingEnabled() returns the correct value on next load,
+        // and notify useUrlRouting to update its live state.
+        if ('urlRouting' in meta) {
+          const urlRouting = !!(meta as unknown as { urlRouting?: boolean }).urlRouting;
+          try {
+            const raw = window.localStorage.getItem('erp-appearance') ?? '{}';
+            const stored = JSON.parse(raw) as Record<string, unknown>;
+            stored.urlRouting = urlRouting;
+            window.localStorage.setItem('erp-appearance', JSON.stringify(stored));
+          } catch { /* ignore */ }
+          window.dispatchEvent(
+            new CustomEvent('erp-hydrate-url-routing', { detail: { enabled: urlRouting } }),
+          );
+        }
       })
       .catch(() => { /* ignore */ });
     return () => { cancelled = true; };

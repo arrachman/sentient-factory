@@ -576,6 +576,15 @@ Hanya error API yang dinotifikasi (toast `danger`); sukses silent supaya tidak
 spam saat user geser kontrol berurutan. Tombol Reset tetap ada untuk
 mengembalikan ke `DEFAULTS`.
 
+**Cross-device hydration (2026-05-22):** setelah API prefs berhasil di-load,
+`AppearancePage` langsung tulis `merged` ke localStorage (`erp-appearance`)
+sehingga `readUrlRoutingEnabled()` pada reload berikutnya sudah benar tanpa
+menunggu user mengubah setting. `app-shell.tsx` juga melakukan hal yang sama +
+dispatch `CustomEvent('erp-hydrate-url-routing')` agar `useUrlRouting` update
+state `urlRoutingEnabled` **tanpa** mereset workspace tabs (berbeda dari
+`erp-set-url-routing` yang memang reset tabs untuk manual toggle). Ini
+mengatasi skenario cross-device / localStorage cleared.
+
 ### 2.11 Inline row actions = semua di kebab menu (WAJIB, 2026-05-20)
 
 Pola wajib kolom action di list page: **semua aksi (Edit, Riwayat, Hapus, …)
@@ -908,7 +917,8 @@ navigasi tidak mengubah URL, multi-tab) dan **Per-halaman URL**.
 - Ganti mode (dua arah) **wajib** lewat `confirmAction` dengan pesan eksplisit
   per arah: ke Per-halaman URL → "tab navigator dihapus, hanya satu halaman";
   ke Internal → "tab navigator ditampilkan kembali". Saat dikonfirmasi semua
-  tab ditutup & navigasi direset ke `home`.
+  tab lain ditutup — **halaman yang sedang aktif dipertahankan** (bukan reset
+  ke `home`).
 - Logika URL-routing diekstrak dari `app-shell.tsx` ke hook
   [`lib/use-url-routing.ts`](lib/use-url-routing.ts) (`useUrlRouting` +
   `readUrlRoutingEnabled`) — mengelola state mode, listener event

@@ -57,6 +57,13 @@ export function useUrlRouting({
 }: UseUrlRoutingArgs): UseUrlRoutingApi {
   const [urlRoutingEnabled, setUrlRoutingEnabled] = React.useState(false);
 
+  // Ref so the event handler always reads the live active route without
+  // needing to re-register the listener on every navigation.
+  const activeRouteRef = React.useRef(activeRoute);
+  React.useEffect(() => {
+    activeRouteRef.current = activeRoute;
+  }, [activeRoute]);
+
   React.useEffect(() => {
     setUrlRoutingEnabled(readUrlRoutingEnabled());
     const onStorage = (e: StorageEvent) => {
@@ -65,14 +72,21 @@ export function useUrlRouting({
     const onCustom = (e: Event) => {
       setUrlRoutingEnabled(!!(e as CustomEvent<{ enabled: boolean }>).detail?.enabled);
       const freshId = nextTabId();
-      setTabs([{ id: freshId, route: 'home' }]);
+      // Keep the current page; only close all other tabs.
+      setTabs([{ id: freshId, route: activeRouteRef.current || 'home' }]);
       setActiveId(freshId);
+    };
+    // Server-side hydration: only update the flag, never reset workspace tabs.
+    const onHydrate = (e: Event) => {
+      setUrlRoutingEnabled(!!(e as CustomEvent<{ enabled: boolean }>).detail?.enabled);
     };
     window.addEventListener('storage', onStorage);
     window.addEventListener('erp-set-url-routing', onCustom as EventListener);
+    window.addEventListener('erp-hydrate-url-routing', onHydrate as EventListener);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('erp-set-url-routing', onCustom as EventListener);
+      window.removeEventListener('erp-hydrate-url-routing', onHydrate as EventListener);
     };
   }, [nextTabId, setTabs, setActiveId]);
 
