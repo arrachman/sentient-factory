@@ -18,14 +18,15 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { SearchSelect, type SearchSelectOption } from '@/components/molecules/search-select';
 import {
   ACCOUNT_TYPES,
   ACCOUNT_KINDS,
   NORMAL_BALANCES,
   CASH_FLOW_CATEGORIES,
+  listAccounts,
 } from '@/lib/api/accounts';
 import type {
-  ErpAccount,
   ErpAccountType,
   ErpAccountKind,
   ErpNormalBalance,
@@ -63,7 +64,7 @@ export const defaultAccountForm = (): AccountFormData => ({
   isActive: true,
 });
 
-export function fromAccount(a: ErpAccount): AccountFormData {
+export function fromAccount(a: { code: string; name: string; alias?: string | null; type: ErpAccountType; kind: ErpAccountKind; normalBalance: ErpNormalBalance; cashFlowCategory?: ErpCashFlowCategory | null; parentId?: string | null; isControlAccount: boolean; notes?: string | null; isActive: boolean }): AccountFormData {
   return {
     code: a.code,
     name: a.name,
@@ -96,158 +97,89 @@ export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
   };
 }
 
+async function loadParentOptions(
+  search: string,
+  _page: number,
+  limit: number,
+): Promise<{ data: SearchSelectOption[]; total: number }> {
+  const res = await listAccounts({ search: search || undefined, limit, isActive: true });
+  return {
+    data: res.data.map((a) => ({ value: a.id, label: a.name, code: a.code })),
+    total: res.meta?.total ?? res.data.length,
+  };
+}
+
 export function AccountFormFields({
   data,
   onChange,
-  allRows,
-  editingId,
 }: {
   data: AccountFormData;
   onChange: (d: AccountFormData) => void;
-  allRows: ErpAccount[];
-  editingId?: string;
 }) {
   const set = (k: keyof AccountFormData, v: string | boolean) =>
     onChange({ ...data, [k]: v });
-  const parents = allRows.filter((r) => r.id !== editingId);
 
   return (
     <div className="p-4">
       <FormField label="Kode" htmlFor="ac-code" required>
-        <Input
-          id="ac-code"
-          value={data.code}
-          onChange={(e) => set('code', e.target.value)}
-          placeholder="1-1001"
-        />
+        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1-1001" />
       </FormField>
       <FormField label="Nama" htmlFor="ac-name" required>
-        <Input
-          id="ac-name"
-          value={data.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Cash on Hand"
-        />
+        <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" />
       </FormField>
       <FormField label="Alias" htmlFor="ac-alias">
-        <Input
-          id="ac-alias"
-          value={data.alias}
-          onChange={(e) => set('alias', e.target.value)}
-          placeholder="Kas Besar"
-        />
+        <Input id="ac-alias" value={data.alias} onChange={(e) => set('alias', e.target.value)} placeholder="Kas Besar" />
       </FormField>
       <FormField label="Tipe Akun" htmlFor="ac-type" required>
-        <Select
-          value={data.accountType}
-          onValueChange={(v) => set('accountType', v as ErpAccountType)}
-        >
-          <SelectTrigger id="ac-type">
-            <SelectValue />
-          </SelectTrigger>
+        <Select value={data.accountType} onValueChange={(v) => set('accountType', v as ErpAccountType)}>
+          <SelectTrigger id="ac-type"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {ACCOUNT_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
+            {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
       </FormField>
       <FormField label="Jenis" htmlFor="ac-kind" required>
-        <Select
-          value={data.accountKind}
-          onValueChange={(v) => set('accountKind', v as ErpAccountKind)}
-        >
-          <SelectTrigger id="ac-kind">
-            <SelectValue />
-          </SelectTrigger>
+        <Select value={data.accountKind} onValueChange={(v) => set('accountKind', v as ErpAccountKind)}>
+          <SelectTrigger id="ac-kind"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {ACCOUNT_KINDS.map((k) => (
-              <SelectItem key={k} value={k}>
-                {k}
-              </SelectItem>
-            ))}
+            {ACCOUNT_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
           </SelectContent>
         </Select>
       </FormField>
       <FormField label="Saldo Normal" htmlFor="ac-nb" required>
-        <Select
-          value={data.normalBalance}
-          onValueChange={(v) => set('normalBalance', v as ErpNormalBalance)}
-        >
-          <SelectTrigger id="ac-nb">
-            <SelectValue />
-          </SelectTrigger>
+        <Select value={data.normalBalance} onValueChange={(v) => set('normalBalance', v as ErpNormalBalance)}>
+          <SelectTrigger id="ac-nb"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {NORMAL_BALANCES.map((n) => (
-              <SelectItem key={n} value={n}>
-                {n}
-              </SelectItem>
-            ))}
+            {NORMAL_BALANCES.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
           </SelectContent>
         </Select>
       </FormField>
       <FormField label="Kategori Arus Kas" htmlFor="ac-cf">
-        <Select
-          value={data.cashFlowCategory || NONE}
-          onValueChange={(v) =>
-            set('cashFlowCategory', v === NONE ? '' : v)
-          }
-        >
-          <SelectTrigger id="ac-cf">
-            <SelectValue placeholder="— Tidak ada —" />
-          </SelectTrigger>
+        <Select value={data.cashFlowCategory || NONE} onValueChange={(v) => set('cashFlowCategory', v === NONE ? '' : v)}>
+          <SelectTrigger id="ac-cf"><SelectValue placeholder="— Tidak ada —" /></SelectTrigger>
           <SelectContent>
             <SelectItem value={NONE}>— Tidak ada —</SelectItem>
-            {CASH_FLOW_CATEGORIES.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
+            {CASH_FLOW_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
       </FormField>
       <FormField label="Parent" htmlFor="ac-parent">
-        <Select
-          value={data.parentId || NONE}
-          onValueChange={(v) => set('parentId', v === NONE ? '' : v)}
-        >
-          <SelectTrigger id="ac-parent">
-            <SelectValue placeholder="— Root —" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>— Root —</SelectItem>
-            {parents.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.code} — {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchSelect
+          id="ac-parent"
+          placeholder="— Root —"
+          value={data.parentId}
+          onValueChange={(v) => set('parentId', v)}
+          loadOptions={loadParentOptions}
+        />
       </FormField>
       <FormField label="Control Account" htmlFor="ac-ctrl">
-        <BooleanRadio
-          id="ac-ctrl"
-          value={data.isControlAccount}
-          onValueChange={(v) => set('isControlAccount', v)}
-          trueLabel="Ya"
-          falseLabel="Tidak"
-        />
+        <BooleanRadio id="ac-ctrl" value={data.isControlAccount} onValueChange={(v) => set('isControlAccount', v)} trueLabel="Ya" falseLabel="Tidak" />
       </FormField>
       <FormField label="Catatan" htmlFor="ac-notes">
-        <Input
-          id="ac-notes"
-          value={data.notes}
-          onChange={(e) => set('notes', e.target.value)}
-        />
+        <Input id="ac-notes" value={data.notes} onChange={(e) => set('notes', e.target.value)} />
       </FormField>
       <FormField label="Status" htmlFor="ac-active">
-        <BooleanRadio
-          id="ac-active"
-          value={data.isActive}
-          onValueChange={(v) => set('isActive', v)}
-        />
+        <BooleanRadio id="ac-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>
     </div>
   );
