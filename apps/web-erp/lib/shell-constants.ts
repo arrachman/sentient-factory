@@ -7,8 +7,8 @@ export const USER_STORAGE_KEY = 'erp-user';
 /** Default workspace id created automatically on first login. */
 export const DEFAULT_WORKSPACE_ID = 'ws1';
 
-/** Base path for global (no-workspace) mode. Static Next.js segment /org/... */
-export const GLOBAL_BASE_PATH = '/org';
+/** Base path for global (no-workspace) mode. Static Next.js segment /dashboard. */
+export const GLOBAL_BASE_PATH = '/dashboard';
 
 /** Supported UI languages. */
 export type Lang = 'id' | 'en' | 'ja';
