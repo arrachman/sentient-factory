@@ -1,7 +1,10 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BookingCrudService } from './booking-crud.service';
+import { BookingEventsService } from './booking-events.service';
 import { BookingNotesService } from './booking-notes.service';
 import { BookingNotificationService } from './booking-notification.service';
 import { BookingPackageService } from './booking-package.service';
+import { BookingTransitionsService } from './booking-transitions.service';
 import { BookingValidationService } from './booking-validation.service';
 import { ClinicBookingService } from './clinic-booking.service';
 
@@ -64,17 +67,18 @@ describe('ClinicBookingService — state machine + conflict detection', () => {
     const packageService = {
       create: jest.fn(),
     } as unknown as BookingPackageService;
-    const eventsMock = {
+    const events = {
       emit: jest.fn(),
       asObservable: jest.fn(),
-    } as unknown as import('./booking-events.service').BookingEventsService;
+    } as unknown as BookingEventsService;
+    const crudService = new BookingCrudService(prisma, validation, notifier, events);
+    const transitionsService = new BookingTransitionsService(prisma, events, notifier, validation, crudService);
     service = new ClinicBookingService(
-      prisma,
-      validation,
+      crudService,
+      transitionsService,
       notifier,
       notes,
       packageService,
-      eventsMock,
     );
   });
 

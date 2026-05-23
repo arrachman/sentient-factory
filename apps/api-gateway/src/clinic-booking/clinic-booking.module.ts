@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ClinicWaModule } from '../clinic-wa/clinic-wa.module';
 import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
+import { BookingCrudService } from './booking-crud.service';
+import { BookingTransitionsService } from './booking-transitions.service';
 import { BookingEventsService } from './booking-events.service';
 import { BookingNotesService } from './booking-notes.service';
 import { BookingNotificationService } from './booking-notification.service';
@@ -19,6 +21,8 @@ import { WaSchedulerTriggerController } from './wa-scheduler-trigger.controller'
   controllers: [ClinicBookingController, BookingStreamController, WaSchedulerTriggerController],
   providers: [
     ClinicBookingService,
+    BookingCrudService,
+    BookingTransitionsService,
     BookingValidationService,
     BookingNotificationService,
     BookingNotesService,
@@ -28,6 +32,6 @@ import { WaSchedulerTriggerController } from './wa-scheduler-trigger.controller'
     BookingAutoTransitionScheduler,
     IdempotencyInterceptor,
   ],
-  exports: [ClinicBookingService, BookingEventsService, BookingReminderScheduler],
+  exports: [ClinicBookingService, BookingCrudService, BookingTransitionsService, BookingEventsService, BookingReminderScheduler],
 })
 export class ClinicBookingModule {}
