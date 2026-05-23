@@ -4,29 +4,35 @@ import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
-import {
-  Select, SelectTrigger, SelectValue, SelectContentWithSearch, SelectItem,
-} from '@/components/ui/select';
+import { SearchSelect } from '@/components/molecules/search-select';
 import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
 import {
   listSubDepartments, createSubDepartment, updateSubDepartment, deleteSubDepartment,
   bulkUpdateSubDepartmentStatus, bulkDeleteSubDepartments,
   type ErpSubDepartment, type CreateSubDepartmentPayload,
 } from '@/lib/api/sub-departments';
-import { listDepartments, type ErpDepartment } from '@/lib/api/departments';
+import { listDepartments } from '@/lib/api/departments';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
+
+const loadDepartmentOptions = async (search: string, page: number, limit: number) => {
+  const res = await listDepartments({ page, limit, search: search || undefined, isActive: true });
+  return { data: res.data.map((d) => ({ value: d.id, label: d.name, code: d.code })), total: res.meta.total };
+};
 
 interface SubDepartmentForm {
   code: string;
   name: string;
   departmentId: string;
+  departmentLabel?: string;
   isActive: boolean;
 }
 
 const defaultForm = (): SubDepartmentForm => ({ code: '', name: '', departmentId: '', isActive: true });
 
 const fromRecord = (r: ErpSubDepartment): SubDepartmentForm => ({
-  code: r.code, name: r.name, departmentId: r.departmentId, isActive: r.isActive,
+  code: r.code, name: r.name, departmentId: r.departmentId,
+  departmentLabel: r.department ? (r.department.code + ' — ' + r.department.name) : '',
+  isActive: r.isActive,
 });
 
 const toPayload = (f: SubDepartmentForm): CreateSubDepartmentPayload => ({
@@ -43,14 +49,6 @@ const validateSubDepartment = (form: SubDepartmentForm) =>
 function SubDepartmentFormFields({ data, onChange, errors = {} }: { data: SubDepartmentForm; onChange: (d: SubDepartmentForm) => void; errors?: FormErrors<SubDepartmentForm> }) {
   const set = <K extends keyof SubDepartmentForm>(k: K, v: SubDepartmentForm[K]) =>
     onChange({ ...data, [k]: v });
-  const [departments, setDepartments] = React.useState<ErpDepartment[]>([]);
-  const [deptSearch, setDeptSearch] = React.useState('');
-  React.useEffect(() => {
-    listDepartments({ limit: 500, isActive: true }).then((r) => setDepartments(r.data)).catch(() => {});
-  }, []);
-  const filteredDepts = departments.filter(
-    (d) => `${d.code} ${d.name}`.toLowerCase().includes(deptSearch.toLowerCase()),
-  );
   return (
     <div className="p-4">
       <FormField label="Kode" htmlFor="sp-code" required error={errors.code}>
@@ -60,22 +58,16 @@ function SubDepartmentFormFields({ data, onChange, errors = {} }: { data: SubDep
         <Input id="sp-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Sub Department A" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Department" htmlFor="sp-dept" required error={errors.departmentId}>
-        <Select
+        <SearchSelect
+          id="sp-dept"
           value={data.departmentId}
-          onValueChange={(v) => { set('departmentId', v); setDeptSearch(''); }}
-          onOpenChange={(open) => { if (!open) setDeptSearch(''); }}
-        >
-          <SelectTrigger id="sp-dept" aria-invalid={!!errors.departmentId}><SelectValue placeholder="Pilih department" /></SelectTrigger>
-          <SelectContentWithSearch
-            searchPlaceholder="Cari department..."
-            searchValue={deptSearch}
-            onSearchChange={setDeptSearch}
-          >
-            {filteredDepts.map((d) => (
-              <SelectItem key={d.id} value={d.id}>{d.code} — {d.name}</SelectItem>
-            ))}
-          </SelectContentWithSearch>
-        </Select>
+          onValueChange={(v) => set('departmentId', v)}
+          placeholder="Cari department…"
+          loadOptions={loadDepartmentOptions}
+          initialLabel={data.departmentLabel}
+          title="Department"
+          error={!!errors.departmentId}
+        />
       </FormField>
       <FormField label="Status" htmlFor="sp-active">
         <BooleanRadio id="sp-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />

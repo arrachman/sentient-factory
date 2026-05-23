@@ -19,10 +19,10 @@ import {
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Icon } from '@/components/ui/icons';
+import { SearchSelect } from '@/components/molecules/search-select';
+import { listBranches } from '@/lib/api/branches';
 import { listWarehouses } from '@/lib/api/warehouses';
 import { listRoles } from '@/lib/api/roles';
-import type { ErpWarehouse } from '@/lib/api/warehouses';
-import { useErpBranches } from '@/lib/api/hooks';
 import type { ErpRole } from '@/lib/api/roles';
 import type {
   ErpUser,
@@ -31,6 +31,16 @@ import type {
   CreateUserPayload,
   UpdateUserPayload,
 } from '@/lib/api/users';
+
+const loadBranchOptions = async (search: string, page: number, limit: number) => {
+  const res = await listBranches({ page, limit, search: search || undefined, isActive: true });
+  return { data: res.data.map((b) => ({ value: b.id, label: b.name, code: b.code })), total: res.meta.total };
+};
+
+const loadWarehouseOptions = async (search: string, page: number, limit: number) => {
+  const res = await listWarehouses({ page, limit, search: search || undefined, isActive: true });
+  return { data: res.data.map((w) => ({ value: w.id, label: w.name, code: w.code })), total: res.meta.total };
+};
 
 const LEVELS: ErpUserLevel[] = [
   'CENTRAL', 'POS', 'POS_AND_CENTRAL', 'BI', 'BI_AND_CENTRAL',
@@ -50,7 +60,9 @@ export interface UserFormData {
   erpLevel: ErpUserLevel;
   language: string;
   branchId: string;
+  branchLabel?: string;
   homeWarehouseId: string;
+  homeWarehouseLabel?: string;
   expiresAt: string;
   isActive: boolean;
   roleIds: string[];
@@ -72,7 +84,9 @@ function fromUser(u: ErpUser, roles?: ErpUserRoleRef[]): UserFormData {
     erpLevel: u.erpLevel,
     language: u.language ?? 'id',
     branchId: u.homeBranchId ?? '',
+    branchLabel: '',
     homeWarehouseId: u.homeWarehouseId ?? '',
+    homeWarehouseLabel: '',
     expiresAt: u.expiresAt ? u.expiresAt.slice(0, 10) : '',
     isActive: u.isActive,
     roleIds: (roles ?? u.roles ?? []).map((r) => r.role.id),
@@ -185,12 +199,9 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
   const set = (k: keyof UserFormData, v: string | boolean | string[]) =>
     onChange({ ...data, [k]: v });
 
-  const { data: branches = [] } = useErpBranches({ limit: 100 });
-  const [warehouses, setWarehouses] = React.useState<ErpWarehouse[]>([]);
   const [allRoles, setAllRoles] = React.useState<ErpRole[]>([]);
 
   React.useEffect(() => {
-    listWarehouses({ limit: 100 }).then((r) => setWarehouses(r.data)).catch(() => {});
     listRoles({ limit: 100 }).then((r) => setAllRoles(r.data)).catch(() => {});
   }, []);
 
@@ -240,30 +251,26 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
               placeholder={editing ? '—' : 'Ulangi password'} />
           </FormField>
           <FormField label="Cabang" htmlFor="uf-branch">
-            <Select value={data.branchId || '__none__'} onValueChange={(v) => set('branchId', v === '__none__' ? '' : v)}>
-              <SelectTrigger id="uf-branch">
-                <SelectValue placeholder="Pilih cabang…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— Tidak ada —</SelectItem>
-                {branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>{b.code} — {b.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchSelect
+              id="uf-branch"
+              value={data.branchId}
+              onValueChange={(v) => set('branchId', v)}
+              placeholder="Cari cabang…"
+              loadOptions={loadBranchOptions}
+              initialLabel={data.branchLabel}
+              title="Cabang"
+            />
           </FormField>
           <FormField label="Gudang" htmlFor="uf-wh">
-            <Select value={data.homeWarehouseId || '__none__'} onValueChange={(v) => set('homeWarehouseId', v === '__none__' ? '' : v)}>
-              <SelectTrigger id="uf-wh">
-                <SelectValue placeholder="Pilih gudang…" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">— Tidak ada —</SelectItem>
-                {warehouses.map((w) => (
-                  <SelectItem key={w.id} value={w.id}>{w.code} — {w.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchSelect
+              id="uf-wh"
+              value={data.homeWarehouseId}
+              onValueChange={(v) => set('homeWarehouseId', v)}
+              placeholder="Cari gudang…"
+              loadOptions={loadWarehouseOptions}
+              initialLabel={data.homeWarehouseLabel}
+              title="Gudang"
+            />
           </FormField>
           <FormField label="Bahasa" htmlFor="uf-lang">
             <Select value={data.language} onValueChange={(v) => set('language', v)}>

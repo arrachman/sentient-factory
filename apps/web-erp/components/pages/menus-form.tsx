@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -16,18 +17,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { SearchSelect } from '@/components/molecules/search-select';
 import type {
   ErpSysMenu,
   ErpMenuType,
   CreateSysMenuPayload,
 } from '@/lib/api/sys-menus';
-import { ERP_MENU_TYPES } from '@/lib/api/sys-menus';
+import { ERP_MENU_TYPES, listSysMenus } from '@/lib/api/sys-menus';
 
 export interface MenuForm {
   code: string;
   title: string;
   type: ErpMenuType;
   parentId: string;
+  parentLabel?: string;
   path: string;
   icon: string;
   sortOrder: number;
@@ -39,6 +42,7 @@ export const defaultMenuForm = (): MenuForm => ({
   title: '',
   type: 'MODULE',
   parentId: '',
+  parentLabel: '',
   path: '',
   icon: '',
   sortOrder: 0,
@@ -51,6 +55,7 @@ export function fromMenu(m: ErpSysMenu): MenuForm {
     title: m.title,
     type: m.type,
     parentId: m.parentId ?? '',
+    parentLabel: '',
     path: m.path ?? '',
     icon: m.icon ?? '',
     sortOrder: m.sortOrder,
@@ -74,20 +79,34 @@ export function toMenuPayload(f: MenuForm): CreateSysMenuPayload {
 export function MenuFormFields({
   data,
   onChange,
-  allRows,
   editingId,
 }: {
   data: MenuForm;
   onChange: (d: MenuForm) => void;
-  allRows: ErpSysMenu[];
   editingId?: string;
 }) {
   const set = <K extends keyof MenuForm>(k: K, v: MenuForm[K]) =>
     onChange({ ...data, [k]: v });
 
-  // Parent candidates: MODULE/GROUP only, never self.
-  const parents = allRows.filter(
-    (r) => r.id !== editingId && (r.type === 'MODULE' || r.type === 'GROUP'),
+  const loadParentMenuOptions = React.useCallback(
+    async (search: string, page: number, limit: number) => {
+      const res = await listSysMenus();
+      const filtered = res.data.filter(
+        (m) =>
+          (m.type === 'MODULE' || m.type === 'GROUP') &&
+          m.id !== editingId &&
+          (!search ||
+            m.title.toLowerCase().includes(search.toLowerCase()) ||
+            m.code.toLowerCase().includes(search.toLowerCase())),
+      );
+      const start = (page - 1) * limit;
+      const pageData = filtered.slice(start, start + limit);
+      return {
+        data: pageData.map((m) => ({ value: m.id, label: m.title, code: m.code })),
+        total: filtered.length,
+      };
+    },
+    [editingId],
   );
 
   return (
@@ -126,24 +145,15 @@ export function MenuFormFields({
         </Select>
       </FormField>
       <FormField label="Parent" htmlFor="mf-parent">
-        <Select
-          value={data.parentId || '__none__'}
-          onValueChange={(v) =>
-            set('parentId', v === '__none__' ? '' : v)
-          }
-        >
-          <SelectTrigger id="mf-parent">
-            <SelectValue placeholder="— Top level —" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">— Top level —</SelectItem>
-            {parents.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                [{p.type}] {p.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchSelect
+          id="mf-parent"
+          value={data.parentId}
+          onValueChange={(v) => set('parentId', v)}
+          placeholder="— Top level —"
+          loadOptions={loadParentMenuOptions}
+          initialLabel={data.parentLabel}
+          title="Menu Parent"
+        />
       </FormField>
       <FormField label="Path" htmlFor="mf-path">
         <Input
@@ -173,18 +183,11 @@ export function MenuFormFields({
         />
       </FormField>
       <FormField label="Status" htmlFor="mf-active">
-        <Select
-          value={data.isActive ? 'active' : 'inactive'}
-          onValueChange={(v) => set('isActive', v === 'active')}
-        >
-          <SelectTrigger id="mf-active">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="active">Aktif</SelectItem>
-            <SelectItem value="inactive">Nonaktif</SelectItem>
-          </SelectContent>
-        </Select>
+        <BooleanRadio
+          id="mf-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
       </FormField>
     </div>
   );

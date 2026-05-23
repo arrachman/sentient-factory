@@ -175,7 +175,6 @@ export function ErpMenusPage() {
           <MenuFormFields
             data={form}
             onChange={setForm}
-            allRows={rows}
             editingId={editing?.id}
           />
           <ModalFooter>
