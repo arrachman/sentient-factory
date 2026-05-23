@@ -1,53 +1,26 @@
 'use client';
 
 /**
- * Hook orchestrator untuk Booking Wizard:
- *   - 4 section: client → service → psikolog → schedule+room
- *   - Layanan dengan sessionCount > 1 → multi-sesi: tiap sesi punya date + slot
- *     picker sendiri. Submit ke /booking/package (atomic), bukan /booking.
- *   - Layanan single-session → tetap pakai DateStrip + slot grid existing,
- *     submit ke /booking.
- *   - Reset on dialog open.
- *   - Compute unavailableSlotIdx untuk single-session mode (sessions[0]); multi
- *     mode delegates per-row availability ke SessionRow.
+ * Orchestrator hook for the Booking Wizard.
+ * Owns master state (s/setS), list queries, derived memos, and assembles
+ * the full public API by delegating to useWizardSessions, useWizardAvailability,
+ * and useWizardMutations.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { apiClient, ApiError } from '@/lib/api-client';
-import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
+import { useQueryClient } from '@tanstack/react-query';
 import { useClientList } from '@/features/admin-clients/hooks/use-client';
 import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
 import { resolveServiceSlots } from '@/features/admin-layanan/model/slot';
-import {
-  usePsikologList,
-  usePsikologAvailabilityForDate,
-} from '@/features/admin-psikolog/hooks/use-psikolog';
+import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
-import { addDays, buildIso, pastSlotIdx, tomorrowDateStr } from './wizard-utils';
+import { buildIso, tomorrowDateStr } from './wizard-utils';
+import { INIT, WizardState, WizardSession } from './wizard-types';
+import { useWizardSessions } from './use-wizard-sessions';
+import { useWizardAvailability } from './use-wizard-availability';
+import { useWizardMutations } from './use-wizard-mutations';
 
-export type WizardSession = { date: string; slotIdx: number | null };
-
-export type WizardState = {
-  clientId: number | null;
-  serviceId: number | null;
-  psikologUserId: number | null;
-  roomId: number | null;
-  sessions: WizardSession[];
-  intervalDays: number;
-  notes: string;
-};
-
-const INIT: WizardState = {
-  clientId: null,
-  serviceId: null,
-  psikologUserId: null,
-  roomId: null,
-  sessions: [{ date: tomorrowDateStr(), slotIdx: null }],
-  intervalDays: 7,
-  notes: '',
-};
+export type { WizardSession, WizardState };
 
 export function useWizardState({
   open,
@@ -63,265 +36,25 @@ export function useWizardState({
     if (open) setS({ ...INIT, sessions: [{ date: tomorrowDateStr(), slotIdx: null }] });
   }, [open]);
 
+  // --- List queries ---
   const clientList = useClientList({ limit: 200 });
   const serviceList = useServiceList({ limit: 200, isActive: true });
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
   const settingsQuery = useSettings();
 
+  // --- Derived memos ---
   const selectedService = useMemo(
     () => serviceList.data?.data.find((sv) => sv.id === s.serviceId),
     [serviceList.data, s.serviceId],
   );
-
-  const isMulti = (selectedService?.sessionCount ?? 1) > 1;
-
-  // Saat service berubah → sinkronkan jumlah sesi dengan service.sessionCount.
-  // Sesi 1 default H+1, sesi 2..N = sesi 1 + i * intervalDays. Reset semua slot.
-  useEffect(() => {
-    if (!selectedService) return;
-    const count = Math.max(1, selectedService.sessionCount ?? 1);
-    setS((prev) => {
-      const base = prev.sessions[0]?.date ?? tomorrowDateStr();
-      const nextSessions: WizardSession[] = Array.from(
-        { length: count },
-        (_, i) => ({
-          date: i === 0 ? base : addDays(base, i * prev.intervalDays),
-          slotIdx: null,
-        }),
-      );
-      return { ...prev, sessions: nextSessions };
-    });
-  }, [selectedService]);
-
-  function reapplyInterval() {
-    setS((prev) => {
-      if (prev.sessions.length <= 1) return prev;
-      const base = prev.sessions[0].date;
-      return {
-        ...prev,
-        sessions: prev.sessions.map((ses, i) => ({
-          date: i === 0 ? base : addDays(base, i * prev.intervalDays),
-          slotIdx: i === 0 ? ses.slotIdx : null,
-        })),
-      };
-    });
-  }
-
-  function updateSession(i: number, partial: Partial<WizardSession>) {
-    setS((prev) => ({
-      ...prev,
-      sessions: prev.sessions.map((ses, idx) => {
-        if (idx !== i) return ses;
-        const next = { ...ses, ...partial };
-        if (partial.date && partial.date !== ses.date) next.slotIdx = null;
-        return next;
-      }),
-    }));
-  }
-
-  // Slot global = identitas/label/index. Layanan terpilih boleh override
-  // range waktunya (resolveServiceSlots). Index tetap sejajar global →
-  // unavailableSlotIdx & slotIndices psikolog tetap valid.
-  const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
-  const slots = useMemo(
-    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
-    [globalSlots, selectedService],
-  );
-  const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
-  const holidays = settingsQuery.data?.data.holidays ?? [];
-
-  // Single-session helpers (sessions[0])
-  const firstSession = s.sessions[0];
-  const firstDate = firstSession?.date ?? '';
-  const firstSlotIdx = firstSession?.slotIdx ?? null;
-  const selectedSlot = firstSlotIdx !== null ? slots[firstSlotIdx] : null;
-  const isClosedDay = closedDays.includes(
-    new Date(`${firstDate}T00:00:00`).getDay(),
-  );
-
-  const psikologDayBookings = useBookingList({
-    psikologUserId: s.psikologUserId ?? undefined,
-    date: s.psikologUserId && firstDate ? firstDate : undefined,
-    limit: 50,
-    includeCancelled: false,
-  });
-
-  // Semua booking di tanggal yang dipilih (tidak filter psikolog) —
-  // dipakai untuk deteksi ruangan yang sudah terpakai di slot terpilih.
-  const allDayBookings = useBookingList({
-    date: firstDate || undefined,
-    limit: 100,
-    includeCancelled: false,
-  });
 
   const selectedPsikolog = useMemo(
     () => psikologList.data?.data.find((p) => p.userId === s.psikologUserId),
     [psikologList.data, s.psikologUserId],
   );
 
-  const availabilityQuery = usePsikologAvailabilityForDate(
-    s.psikologUserId,
-    firstDate,
-  );
-  const resolvedAvailability = availabilityQuery.data?.data;
-
-  const psikologClosedToday = useMemo(() => {
-    if (!s.psikologUserId || !firstDate) return false;
-    if (!resolvedAvailability) return false;
-    return !resolvedAvailability.isOpen;
-  }, [resolvedAvailability, s.psikologUserId, firstDate]);
-
-  const unavailableSlotIdx = useMemo(() => {
-    if (!s.psikologUserId || !firstDate) return new Set<number>();
-    if (psikologClosedToday) {
-      return new Set<number>(slots.map((_, i) => i));
-    }
-    const taken = pastSlotIdx(firstDate, slots);
-    const allowed = resolvedAvailability?.slotIndices;
-    if (allowed !== null && allowed !== undefined) {
-      const allowedSet = new Set(allowed);
-      slots.forEach((_, idx) => {
-        if (!allowedSet.has(idx)) taken.add(idx);
-      });
-    }
-    const bookings = psikologDayBookings.data?.data ?? [];
-    for (const b of bookings) {
-      const bStart = new Date(b.scheduledStart).getTime();
-      const bEnd = new Date(b.scheduledEnd).getTime();
-      slots.forEach((slot, idx) => {
-        const slotStart = new Date(`${firstDate}T${slot.start}:00`).getTime();
-        const slotEnd = new Date(`${firstDate}T${slot.end}:00`).getTime();
-        if (bStart < slotEnd && bEnd > slotStart) taken.add(idx);
-      });
-    }
-    return taken;
-  }, [
-    psikologDayBookings.data,
-    slots,
-    firstDate,
-    s.psikologUserId,
-    psikologClosedToday,
-    resolvedAvailability,
-  ]);
-
-  // RoomId yang sudah terpakai di slot yang dipilih (single-session mode).
-  // Dipakai oleh RoomField untuk disable / memberi label ruangan yang terpakai.
-  const occupiedRoomIds = useMemo(() => {
-    if (!firstDate || firstSlotIdx === null || !selectedSlot) return new Set<number>();
-    const slotStart = new Date(`${firstDate}T${selectedSlot.start}:00`).getTime();
-    const slotEnd = new Date(`${firstDate}T${selectedSlot.end}:00`).getTime();
-    const occupied = new Set<number>();
-    for (const b of allDayBookings.data?.data ?? []) {
-      const bStart = new Date(b.scheduledStart).getTime();
-      const bEnd = new Date(b.scheduledEnd).getTime();
-      if (bStart < slotEnd && bEnd > slotStart) {
-        occupied.add(b.roomId);
-      }
-    }
-    return occupied;
-  }, [allDayBookings.data, firstDate, firstSlotIdx, selectedSlot]);
-
-  // Intra-session conflict (multi mode): sesi yang punya date+slotIdx duplikat.
-  const intraConflict = useMemo(() => {
-    if (!isMulti) return new Set<number>();
-    const seen = new Map<string, number[]>();
-    s.sessions.forEach((ses, i) => {
-      if (ses.slotIdx === null) return;
-      const key = `${ses.date}#${ses.slotIdx}`;
-      const arr = seen.get(key) ?? [];
-      arr.push(i);
-      seen.set(key, arr);
-    });
-    const conflicts = new Set<number>();
-    for (const arr of seen.values()) {
-      if (arr.length > 1) arr.forEach((i) => conflicts.add(i));
-    }
-    return conflicts;
-  }, [s.sessions, isMulti]);
-
-  const createSingleMut = useMutation({
-    mutationFn: async (payload: object) => {
-      const idempotencyKey = (
-        globalThis.crypto?.randomUUID?.() ??
-        `${Date.now()}-${Math.random()}`
-      ).replace(/[^a-zA-Z0-9_-]/g, '');
-      return apiClient.post<{ success: boolean; data: { id: number } }>(
-        '/booking',
-        payload,
-        { headers: { 'Idempotency-Key': idempotencyKey } },
-      );
-    },
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['clinic', 'booking'] });
-      toast.success(`Booking #${res.data.id} berhasil dibuat`);
-      onClose();
-    },
-    onError: (err: Error) => {
-      if (err instanceof ApiError && err.status === 409) {
-        const body = err.body as {
-          conflictType?: string;
-          conflictBookingId?: number;
-        };
-        toast.error(`Conflict: ${body?.conflictType ?? 'unknown'}`, {
-          description: `Booking #${body?.conflictBookingId} bertabrakan. Pilih slot, psikolog, atau ruangan lain.`,
-        });
-        return;
-      }
-      toast.error('Gagal create booking', { description: err.message });
-    },
-  });
-
-  const createPackageMut = useMutation({
-    mutationFn: async (payload: object) => {
-      const idempotencyKey = (
-        globalThis.crypto?.randomUUID?.() ??
-        `${Date.now()}-${Math.random()}`
-      ).replace(/[^a-zA-Z0-9_-]/g, '');
-      return apiClient.post<{
-        success: boolean;
-        data: { packageGroupId: string; sessionCount: number };
-      }>('/booking/package', payload, {
-        headers: { 'Idempotency-Key': idempotencyKey },
-      });
-    },
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: ['clinic', 'booking'] });
-      toast.success(`Paket ${res.data.sessionCount} sesi berhasil dibuat`);
-      onClose();
-    },
-    onError: (err: Error) => {
-      if (err instanceof ApiError && err.status === 409) {
-        const body = err.body as { conflictType?: string; message?: string };
-        toast.error(`Conflict: ${body?.conflictType ?? 'unknown'}`, {
-          description: body?.message ?? 'Bentrok jadwal — adjust slot atau pilih psikolog/ruangan lain',
-        });
-        return;
-      }
-      toast.error('Gagal create paket booking', { description: err.message });
-    },
-  });
-
-  const submitting = createSingleMut.isPending || createPackageMut.isPending;
-
-  const allSessionsFilled =
-    s.sessions.length > 0 && s.sessions.every((ses) => ses.slotIdx !== null);
-
-  const canSubmit =
-    !!s.clientId &&
-    !!s.serviceId &&
-    !!s.psikologUserId &&
-    !!s.roomId &&
-    allSessionsFilled &&
-    intraConflict.size === 0 &&
-    !submitting;
-
-  /**
-   * Filtered list psikolog berdasarkan layanan terpilih.
-   *   - serviceId belum dipilih → tampil semua
-   *   - psikolog.serviceIds kosong → handle SEMUA layanan
-   *   - psikolog.serviceIds includes serviceId → muncul
-   */
+  /** Psikolog filtered by selected service (empty serviceIds = handles all). */
   const psikologListFiltered = useMemo(() => {
     const all = psikologList.data?.data ?? [];
     if (!s.serviceId) return all;
@@ -331,6 +64,43 @@ export function useWizardState({
     });
   }, [psikologList.data, s.serviceId]);
 
+  const isMulti = (selectedService?.sessionCount ?? 1) > 1;
+
+  // Slot resolution: service overrides may shift time ranges; indices stay global-aligned.
+  const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
+  const slots = useMemo(
+    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
+    [globalSlots, selectedService],
+  );
+  const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
+  const holidays = settingsQuery.data?.data.holidays ?? [];
+
+  const firstDate = s.sessions[0]?.date ?? '';
+  const isClosedDay = closedDays.includes(new Date(`${firstDate}T00:00:00`).getDay());
+
+  // --- Sub-hooks ---
+  const { reapplyInterval, updateSession } = useWizardSessions({ selectedService, s, setS });
+
+  const {
+    psikologDayBookings,
+    availabilityQuery,
+    resolvedAvailability,
+    psikologClosedToday,
+    unavailableSlotIdx,
+    occupiedRoomIds,
+    intraConflict,
+    selectedSlot,
+  } = useWizardAvailability({ s, slots, isMulti });
+
+  const { createSingleMut, createPackageMut } = useWizardMutations({ onClose, qc });
+
+  // --- Submit ---
+  const submitting = createSingleMut.isPending || createPackageMut.isPending;
+  const allSessionsFilled = s.sessions.length > 0 && s.sessions.every((ses) => ses.slotIdx !== null);
+  const canSubmit =
+    !!s.clientId && !!s.serviceId && !!s.psikologUserId && !!s.roomId &&
+    allSessionsFilled && intraConflict.size === 0 && !submitting;
+
   function submit() {
     if (!canSubmit || !selectedService) return;
     if (!isMulti) {
@@ -338,64 +108,36 @@ export function useWizardState({
       if (ses.slotIdx === null) return;
       const slot = slots[ses.slotIdx];
       createSingleMut.mutate({
-        clientId: s.clientId,
-        serviceId: s.serviceId,
-        psikologUserId: s.psikologUserId,
-        roomId: s.roomId,
+        clientId: s.clientId, serviceId: s.serviceId,
+        psikologUserId: s.psikologUserId, roomId: s.roomId,
         scheduledStart: buildIso(ses.date, slot.start),
         scheduledEnd: buildIso(ses.date, slot.end),
-        sessionN: 1,
-        sessionTotal: 1,
+        sessionN: 1, sessionTotal: 1,
         notes: s.notes.trim() || undefined,
       });
       return;
     }
     createPackageMut.mutate({
-      clientId: s.clientId,
-      serviceId: s.serviceId,
-      psikologUserId: s.psikologUserId,
-      roomId: s.roomId,
+      clientId: s.clientId, serviceId: s.serviceId,
+      psikologUserId: s.psikologUserId, roomId: s.roomId,
       sessions: s.sessions.map((ses) => {
         const slot = slots[ses.slotIdx as number];
-        return {
-          scheduledStart: buildIso(ses.date, slot.start),
-          scheduledEnd: buildIso(ses.date, slot.end),
-        };
+        return { scheduledStart: buildIso(ses.date, slot.start), scheduledEnd: buildIso(ses.date, slot.end) };
       }),
       notes: s.notes.trim() || undefined,
     });
   }
 
   return {
-    state: s,
-    setState: setS,
-    isMulti,
-    updateSession,
-    reapplyInterval,
-    setIntervalDays: (n: number) =>
-      setS((prev) => ({ ...prev, intervalDays: n })),
-    clientList,
-    serviceList,
-    psikologList,
-    psikologListFiltered,
-    roomList,
-    selectedService,
-    selectedPsikolog,
-    psikologClosedToday,
-    slots,
-    closedDayOfWeek: closedDays,
-    holidays,
-    selectedSlot,
-    isClosedDay,
-    psikologDayBookings,
-    availabilityQuery,
-    resolvedAvailability,
-    unavailableSlotIdx,
-    occupiedRoomIds,
-    intraConflict,
-    allSessionsFilled,
-    canSubmit,
-    submitting,
-    submit,
+    state: s, setState: setS, isMulti,
+    updateSession, reapplyInterval,
+    setIntervalDays: (n: number) => setS((prev) => ({ ...prev, intervalDays: n })),
+    clientList, serviceList, psikologList, psikologListFiltered,
+    roomList, selectedService, selectedPsikolog,
+    slots, closedDayOfWeek: closedDays, holidays, isClosedDay,
+    selectedSlot, psikologDayBookings, availabilityQuery,
+    resolvedAvailability, psikologClosedToday,
+    unavailableSlotIdx, occupiedRoomIds, intraConflict,
+    allSessionsFilled, canSubmit, submitting, submit,
   };
 }
