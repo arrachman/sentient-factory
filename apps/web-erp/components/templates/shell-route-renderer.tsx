@@ -67,6 +67,17 @@ import { ErpItemLocationsPage } from '@/components/pages/item-locations-page';
 import { ErpPartnerSubCategoriesPage } from '@/components/pages/partner-sub-categories-page';
 import { ErpPriceCategoriesPage } from '@/components/pages/price-categories-page';
 import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-page';
+// MD production batch — 10 entitas master produksi baru
+import { ErpProductionCategoriesPage } from '@/components/pages/production-categories-page';
+import { ErpPointCategoriesPage } from '@/components/pages/point-categories-page';
+import { ErpMiscellaneousPage } from '@/components/pages/miscellaneous-page';
+import { ErpSubClassesPage } from '@/components/pages/sub-classes-page';
+import { ErpWorkEstimatesPage } from '@/components/pages/work-estimates-page';
+import { ErpLaborsPage } from '@/components/pages/labors-page';
+import { ErpMachinesPage } from '@/components/pages/machines-page';
+import { ErpDesignersPage } from '@/components/pages/designers-page';
+import { ErpProductionActivitiesPage } from '@/components/pages/production-activities-page';
+import { ErpProductionRoutesPage } from '@/components/pages/production-routes-page';
 // F2 Finance (m2) pages — skeleton CRUD
 import { ErpJournalEntriesPage } from '@/components/pages/fin-journal-entries-page';
 import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
@@ -145,6 +156,17 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage />,
   '/master/price-categories': () => <ErpPriceCategoriesPage />,
   '/master/transaction-notes': () => <ErpTransactionNotesPage />,
+  // MD production batch (2026-05-23) — 10 master produksi baru
+  '/master/production-categories': () => <ErpProductionCategoriesPage />,
+  '/master/point-categories': () => <ErpPointCategoriesPage />,
+  '/master/miscellaneous': () => <ErpMiscellaneousPage />,
+  '/master/sub-classes': () => <ErpSubClassesPage />,
+  '/master/work-estimates': () => <ErpWorkEstimatesPage />,
+  '/master/labors': () => <ErpLaborsPage />,
+  '/master/machines': () => <ErpMachinesPage />,
+  '/master/designers': () => <ErpDesignersPage />,
+  '/master/production-activities': () => <ErpProductionActivitiesPage />,
+  '/master/production-routes': () => <ErpProductionRoutesPage />,
   // ── Organization (md, mirror of /master/* org masters) ───────────────────
   '/org/branches': () => <ErpBranchesPage />,
   '/org/locations': () => <ErpLocationsPage />,

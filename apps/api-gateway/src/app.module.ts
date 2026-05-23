@@ -49,6 +49,16 @@ import { ErpProductClassesModule } from './erp-product-classes/product-classes.m
 import { ErpBanksModule } from './erp-banks/banks.module';
 import { ErpExpeditionsModule } from './erp-expeditions/expeditions.module';
 import { ErpOtherCostsModule } from './erp-other-costs/other-costs.module';
+import { ErpProductionCategoriesModule } from './erp-production-categories/production-categories.module';
+import { ErpPointCategoriesModule } from './erp-point-categories/point-categories.module';
+import { ErpMiscellaneousModule } from './erp-miscellaneous/miscellaneous.module';
+import { ErpSubClassesModule } from './erp-sub-classes/sub-classes.module';
+import { ErpWorkEstimatesModule } from './erp-work-estimates/work-estimates.module';
+import { ErpLaborsModule } from './erp-labors/labors.module';
+import { ErpMachinesModule } from './erp-machines/machines.module';
+import { ErpDesignersModule } from './erp-designers/designers.module';
+import { ErpProductionActivitiesModule } from './erp-production-activities/production-activities.module';
+import { ErpProductionRoutesModule } from './erp-production-routes/production-routes.module';
 import { ErpCommissionsModule } from './erp-commissions/commissions.module';
 import { ErpItemTransactionTypesModule } from './erp-item-transaction-types/item-transaction-types.module';
 import { ErpCountriesModule } from './erp-countries/countries.module';
@@ -161,6 +171,16 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpBanksModule,
     ErpExpeditionsModule,
     ErpOtherCostsModule,
+    ErpProductionCategoriesModule,
+    ErpPointCategoriesModule,
+    ErpMiscellaneousModule,
+    ErpSubClassesModule,
+    ErpWorkEstimatesModule,
+    ErpLaborsModule,
+    ErpMachinesModule,
+    ErpDesignersModule,
+    ErpProductionActivitiesModule,
+    ErpProductionRoutesModule,
     ErpCommissionsModule,
     ErpItemTransactionTypesModule,
     ErpCountriesModule,

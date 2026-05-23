@@ -385,18 +385,18 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M1.REF.PRODUCTION-CAT',  title: 'Production Categories',  path: '/master/production-categories', legacyCode: '1-35' },
     { code: 'M1.REF.WORK-ESTIMATE',   title: 'Work Estimate',          path: '/master/work-estimates',    legacyCode: '1-34' },
     { code: 'M1.REF.POINT-CAT',       title: 'Point Categories',       path: '/master/point-categories',  legacyCode: '1-78' },
-    { code: 'M1.REF.MISC',            title: 'Miscellaneous',          path: '/master/misc',              legacyCode: '1-32' },
+    { code: 'M1.REF.MISC',            title: 'Miscellaneous',          path: '/master/miscellaneous',     legacyCode: '1-32' },
   ], refGrp.id);
 
   // M1.PROD — Production Masters
   const prodGrp = await upsertMenu({ code: 'M1.PROD', title: 'Production', type: ErpMenuType.GROUP, parentId: m1.id, sortOrder: 6 });
   await upsertItems([
-    { code: 'M1.PROD.LABOR',     title: 'Labor',               path: '/master/labor',                 legacyCode: '1-94'  },
+    { code: 'M1.PROD.LABOR',     title: 'Labor',               path: '/master/labors',                legacyCode: '1-94'  },
     { code: 'M1.PROD.MACHINE',   title: 'Machine',             path: '/master/machines',              legacyCode: '1-95'  },
     { code: 'M1.PROD.DESIGNER',  title: 'Designer',            path: '/master/designers',             legacyCode: '1-104' },
     { code: 'M1.PROD.ACTIVITY',  title: 'Production Activity', path: '/master/production-activities', legacyCode: '1-120' },
     { code: 'M1.PROD.ROUTE',     title: 'Production Route',    path: '/master/production-routes',     legacyCode: '1-122' },
-    { code: 'M1.PROD.SUBCLASS',  title: 'Sub Class',           path: '/master/subclasses',            legacyCode: '1-106' },
+    { code: 'M1.PROD.SUBCLASS',  title: 'Sub Class',           path: '/master/sub-classes',           legacyCode: '1-106' },
   ], prodGrp.id);
 
   // SET module removed — Appearance moved to M0.SYS.APPEARANCE (System group).
