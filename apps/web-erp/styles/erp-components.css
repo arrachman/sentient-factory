@@ -955,10 +955,18 @@ body {
   color: var(--fg);
 }
 
+/* Scrollable body area: table + footer scroll together; header/filter stay pinned */
+.page-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Detail line editor */
 .lines {
-  flex: 1;
-  overflow: auto;
+  overflow-x: auto;
   background: var(--panel);
 }
 .lines table {

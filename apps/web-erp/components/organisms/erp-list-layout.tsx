@@ -332,35 +332,37 @@ export function ErpListLayout({
 
       {toolbar && <div className="toolbar">{toolbar}</div>}
 
-      {fetching && !loading && !error && (
-        <div
-          className="h-[2px] w-full animate-pulse bg-primary/40"
-          aria-hidden
-          style={{ position: 'relative', zIndex: 1, marginBottom: -2 }}
-        />
-      )}
+      <div className="page-body">
+        {fetching && !loading && !error && (
+          <div
+            className="h-[2px] w-full animate-pulse bg-primary/40"
+            aria-hidden
+            style={{ position: 'relative', zIndex: 1, marginBottom: -2 }}
+          />
+        )}
 
-      {error && (
-        <ErrorState
-          message={error}
-          onRetry={onRefresh}
-          retrying={loading ?? fetching}
-        />
-      )}
+        {error && (
+          <ErrorState
+            message={error}
+            onRetry={onRefresh}
+            retrying={loading ?? fetching}
+          />
+        )}
 
-      {loading && !error && (
-        <div className="p-8 text-center text-xs text-muted-foreground">{tGlobal('Memuat...')}</div>
-      )}
+        {loading && !error && (
+          <div className="p-8 text-center text-xs text-muted-foreground">{tGlobal('Memuat...')}</div>
+        )}
 
-      {!loading && !error && children}
+        {!loading && !error && children}
 
-      {(pagination || keyboardHints) && (
-        <ListFooter
-          pagination={pagination}
-          keyboardHints={keyboardHints}
-          onAdd={onAdd}
-        />
-      )}
+        {(pagination || keyboardHints) && (
+          <ListFooter
+            pagination={pagination}
+            keyboardHints={keyboardHints}
+            onAdd={onAdd}
+          />
+        )}
+      </div>
     </div>
   );
 }
