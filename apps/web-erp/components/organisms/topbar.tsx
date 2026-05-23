@@ -113,7 +113,7 @@ export function Topbar({
   workspaceId,
   workspaceName,
 }: TopbarProps) {
-  const [notif, setNotif] = React.useState(3);
+  const [notif, setNotif] = React.useState(0);
 
   React.useEffect(() => {
     const fn = (e: Event) =>

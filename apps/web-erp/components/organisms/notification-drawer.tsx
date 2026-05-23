@@ -81,9 +81,11 @@ const UNREAD_DOT_STYLE: React.CSSProperties = {
 function NotifRow({
   item,
   onClick,
+  onDismiss,
 }: {
   item: ErpNotification;
   onClick: () => void;
+  onDismiss: (e: React.MouseEvent) => void;
 }): React.ReactElement {
   const read = !!item.readAt;
   return (
@@ -107,6 +109,14 @@ function NotifRow({
       {item.actionUrl && (
         <Icon name="chevright" size={11} className="muted" />
       )}
+      <button
+        className="notif-dismiss"
+        onClick={onDismiss}
+        aria-label="Tutup notifikasi"
+        title="Tutup"
+      >
+        <Icon name="x" size={11} />
+      </button>
     </div>
   );
 }
@@ -187,6 +197,17 @@ export function NotificationDrawer({
     }
   };
 
+  const dismissItem = async (e: React.MouseEvent, n: ErpNotification): Promise<void> => {
+    e.stopPropagation();
+    try {
+      await archiveNotification(n.id);
+      setItems((prev) => prev.filter((x) => x.id !== n.id));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menutup notifikasi';
+      notify(msg, 'danger');
+    }
+  };
+
   return (
     <DrawerPanel
       open={open}
@@ -242,7 +263,12 @@ export function NotificationDrawer({
           </div>
         )}
         {!loading && !error && shown.map((n) => (
-          <NotifRow key={n.id} item={n} onClick={() => void openItem(n)} />
+          <NotifRow
+            key={n.id}
+            item={n}
+            onClick={() => void openItem(n)}
+            onDismiss={(e) => void dismissItem(e, n)}
+          />
         ))}
       </div>
       <div className="drawer-ft">

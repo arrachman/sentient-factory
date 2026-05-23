@@ -164,12 +164,37 @@ button {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   transition: background 70ms;
+  position: relative;
 }
 .notif-row:hover {
   background: var(--panel-hover);
 }
 .notif-row .confirm-ic {
   border-radius: 8px;
+}
+.notif-dismiss {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--fg-faint);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 70ms, color 70ms;
+  padding: 0;
+}
+.notif-row:hover .notif-dismiss {
+  display: flex;
+}
+.notif-dismiss:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
 }
 
 /* === Lookup modal (magnifier pickers) === */
