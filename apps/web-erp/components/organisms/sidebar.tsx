@@ -31,6 +31,69 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Accordion state — tracks which module is expanded
+  const [collapsedGroups, setCollapsedGroups] = React.useState<Set<string>>(() => {
+    const initial = new Set<string>();
+    for (const item of nav) {
+      if (!item.children || !isNavGroupArray(item.children)) continue;
+      const hasActiveGroup = item.children.some((grp) => grp.items.some((s) => s.id === current));
+      item.children.forEach((grp, gi) => {
+        const isActive = grp.items.some((s) => s.id === current);
+        // Collapse non-active groups; fallback to keeping only the first open when no match
+        if (hasActiveGroup ? !isActive : gi > 0) {
+          initial.add(`${item.id}__${grp.group}`);
+        }
+      });
+    }
+    return initial;
+  });
+
+  // When nav swaps from static fallback to API nav: recompute from scratch so
+  // the active route's group is expanded and siblings are collapsed.
+  const navRef = React.useRef<NavItem[]>(nav);
+  React.useEffect(() => {
+    const navChanged = navRef.current !== nav;
+    navRef.current = nav;
+
+    if (navChanged) {
+      const next = new Set<string>();
+      for (const item of nav) {
+        if (!item.children || !isNavGroupArray(item.children)) continue;
+        const hasActiveGroup = item.children.some((grp) => grp.items.some((s) => s.id === current));
+        item.children.forEach((grp, gi) => {
+          const isActive = grp.items.some((s) => s.id === current);
+          if (hasActiveGroup ? !isActive : gi > 0) next.add(`${item.id}__${grp.group}`);
+        });
+      }
+      setCollapsedGroups(next);
+    } else {
+      // current changed: only open the active group, leave others as-is
+      setCollapsedGroups((prev) => {
+        let changed = false;
+        const next = new Set(prev);
+        for (const item of nav) {
+          if (!item.children || !isNavGroupArray(item.children)) continue;
+          for (const grp of item.children) {
+            const key = `${item.id}__${grp.group}`;
+            if (grp.items.some((s) => s.id === current) && next.has(key)) {
+              next.delete(key);
+              changed = true;
+            }
+          }
+        }
+        return changed ? next : prev;
+      });
+    }
+  }, [nav, current]);
+
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   const currentTop = nav.find(
     (i) =>
       !i.divider &&
@@ -109,12 +172,19 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
   const renderAccordionChildren = (item: NavItem) => {
     if (!item.children) return null;
     if (isNavGroupArray(item.children)) {
-      return item.children.map((grp) => (
-        <div key={grp.group} className="accordion-group">
-          <div className="accordion-group-label">{t(grp.group)}</div>
-          {grp.items.map(renderAccordionLeaf)}
-        </div>
-      ));
+      return item.children.map((grp) => {
+        const key = `${item.id}__${grp.group}`;
+        const isCollapsed = collapsedGroups.has(key);
+        return (
+          <div key={grp.group} className="accordion-group">
+            <div className="accordion-group-label" onClick={() => toggleGroup(key)}>
+              <span>{t(grp.group)}</span>
+              <Icon name={isCollapsed ? 'chevdown' : 'chevup'} size={10} stroke={1.6} style={{ opacity: 0.5 }} />
+            </div>
+            {!isCollapsed && grp.items.map(renderAccordionLeaf)}
+          </div>
+        );
+      });
     }
     return item.children.map(renderAccordionLeaf);
   };

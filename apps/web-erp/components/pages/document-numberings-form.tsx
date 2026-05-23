@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * F2 Admin — Document Numbering form fields (molecule split from page).
+ * F2 Admin — Document Numbering form fields.
+ * Used by document-numberings-page.tsx via SimpleMasterPage FormFields prop.
  */
 
 import * as React from 'react';
@@ -21,6 +22,9 @@ import {
   type ErpNumberingReset,
   type CreateDocumentNumberingPayload,
 } from '@/lib/api/document-numberings';
+import type { FormErrors } from '@/lib/form-validation';
+
+// ─── Form shape ───────────────────────────────────────────────────────────────
 
 export interface NumberingForm {
   documentCode: string;
@@ -34,6 +38,8 @@ export interface NumberingForm {
   affectsCost: boolean;
   notes: string;
 }
+
+// ─── Adapters ─────────────────────────────────────────────────────────────────
 
 const RESET_LABEL: Record<ErpNumberingReset, string> = {
   NEVER: 'Tidak pernah reset',
@@ -86,17 +92,26 @@ export function toNumberingPayload(
   };
 }
 
+// ─── FormFields component ─────────────────────────────────────────────────────
+
+interface NumberingFormFieldsProps {
+  data: NumberingForm;
+  onChange: (d: NumberingForm) => void;
+  errors?: FormErrors<NumberingForm>;
+  /** True when editing an existing record — documentCode is read-only. */
+  isEditing?: boolean;
+}
+
 export function NumberingFormFields({
   data,
   onChange,
-}: {
-  data: NumberingForm;
-  onChange: (d: NumberingForm) => void;
-}) {
+  errors = {},
+  isEditing = false,
+}: NumberingFormFieldsProps) {
   const set = (k: keyof NumberingForm, v: string | boolean) =>
     onChange({ ...data, [k]: v });
 
-  const flag = (
+  const flagField = (
     key: 'affectsLedger' | 'affectsInventory' | 'affectsCost',
     label: string,
   ) => (
@@ -113,37 +128,42 @@ export function NumberingFormFields({
 
   return (
     <div className="p-4">
-      <FormField label="Kode Dokumen" htmlFor="dn-code" required>
+      <FormField label="Kode Dokumen" htmlFor="dn-code" required error={errors.documentCode}>
         <Input
           id="dn-code"
           value={data.documentCode}
           onChange={(e) => set('documentCode', e.target.value)}
           placeholder="INV-OUT"
+          disabled={isEditing}
+          aria-invalid={!!errors.documentCode}
         />
       </FormField>
-      <FormField label="Nama" htmlFor="dn-name" required>
+      <FormField label="Nama" htmlFor="dn-name" required error={errors.name}>
         <Input
           id="dn-name"
           value={data.name}
           onChange={(e) => set('name', e.target.value)}
           placeholder="Sales Invoice"
+          aria-invalid={!!errors.name}
         />
       </FormField>
-      <FormField label="Prefix" htmlFor="dn-prefix" required>
+      <FormField label="Prefix" htmlFor="dn-prefix" required error={errors.prefix}>
         <Input
           id="dn-prefix"
           value={data.prefix}
           onChange={(e) => set('prefix', e.target.value)}
           placeholder="INV"
+          aria-invalid={!!errors.prefix}
         />
       </FormField>
-      <FormField label="Jumlah Digit" htmlFor="dn-digits" required>
+      <FormField label="Jumlah Digit" htmlFor="dn-digits" required error={errors.digitCount}>
         <Input
           id="dn-digits"
           type="number"
           value={data.digitCount}
           onChange={(e) => set('digitCount', e.target.value)}
           placeholder="6"
+          aria-invalid={!!errors.digitCount}
         />
       </FormField>
       <FormField label="Kebijakan Reset" htmlFor="dn-reset" required>
@@ -163,18 +183,19 @@ export function NumberingFormFields({
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label="Nomor Berikutnya" htmlFor="dn-next" required>
+      <FormField label="Nomor Berikutnya" htmlFor="dn-next" required error={errors.nextNumber}>
         <Input
           id="dn-next"
           type="number"
           value={data.nextNumber}
           onChange={(e) => set('nextNumber', e.target.value)}
           placeholder="1"
+          aria-invalid={!!errors.nextNumber}
         />
       </FormField>
-      {flag('affectsLedger', 'Pengaruhi Buku Besar')}
-      {flag('affectsInventory', 'Pengaruhi Persediaan')}
-      {flag('affectsCost', 'Pengaruhi Biaya')}
+      {flagField('affectsLedger', 'Pengaruhi Buku Besar')}
+      {flagField('affectsInventory', 'Pengaruhi Persediaan')}
+      {flagField('affectsCost', 'Pengaruhi Biaya')}
       <FormField label="Catatan" htmlFor="dn-notes">
         <Input
           id="dn-notes"

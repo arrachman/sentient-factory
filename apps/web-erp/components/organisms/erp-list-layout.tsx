@@ -76,7 +76,7 @@ function ListFooter({
   onAdd?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 border-t border-border bg-card px-4 py-[5px] text-[11px] text-muted-foreground">
+    <div className="sticky bottom-0 flex items-center gap-3 border-t border-border bg-card px-4 py-[5px] text-[11px] text-muted-foreground">
       {pagination && (
         <TablePagination
           page={pagination.page}
@@ -341,19 +341,21 @@ export function ErpListLayout({
           />
         )}
 
-        {error && (
-          <ErrorState
-            message={error}
-            onRetry={onRefresh}
-            retrying={loading ?? fetching}
-          />
-        )}
+        <div className={`flex-1 min-h-0${(error || (loading && !error)) ? ' flex items-center justify-center' : ''}`}>
+          {error && (
+            <ErrorState
+              message={error}
+              onRetry={onRefresh}
+              retrying={loading ?? fetching}
+            />
+          )}
 
-        {loading && !error && (
-          <div className="p-8 text-center text-xs text-muted-foreground">{tGlobal('Memuat...')}</div>
-        )}
+          {loading && !error && (
+            <div className="text-center text-xs text-muted-foreground">{tGlobal('Memuat...')}</div>
+          )}
 
-        {!loading && !error && children}
+          {!loading && !error && children}
+        </div>
 
         {(pagination || keyboardHints) && (
           <ListFooter

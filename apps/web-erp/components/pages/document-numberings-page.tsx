@@ -1,46 +1,23 @@
 'use client';
 
 /**
- * F2 Admin — Document Numbering page.
- * Lists sys_document_numberings; supports create, edit, delete +
- * a "Generate next number" preview action per row.
- * Atomic tier: Page.
+ * F2 Admin — Document Numbering page (sys_document_numberings).
+ * Refactored to use SimpleMasterPage organism.
  */
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
-  ModalFooter,
-} from '@/components/organisms/modal';
-import {
-  ErpListLayout,
-  type SummaryConfig,
-  type ListPaginationConfig,
-} from '@/components/organisms/erp-list-layout';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmpty,
-} from '@/components/organisms/table';
-import { confirmAction, notify } from '@/lib/feedback';
-import { useErpList } from '@/lib/use-erp-list';
-import { useListPagination } from '@/lib/use-list-pagination';
+import { SimpleMasterPage, type BaseEntity } from '@/components/organisms/simple-master-page';
 import {
   listDocumentNumberings,
   createDocumentNumbering,
   updateDocumentNumbering,
   deleteDocumentNumbering,
-  getNextDocumentNumber,
+  type ErpDocumentNumbering,
+  type ErpNumberingReset,
 } from '@/lib/api/document-numberings';
-import type { ErpDocumentNumbering } from '@/lib/api/document-numberings';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
+import type { PaginatedResponse, PaginationParams } from '@/lib/api/types';
 import {
   NumberingFormFields,
   defaultNumberingForm,
@@ -49,183 +26,119 @@ import {
   type NumberingForm,
 } from './document-numberings-form';
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Adapter type ──────────────────────────────────────────────────────────────
+// SimpleMasterPage requires BaseEntity (id, code, name, isActive).
+// ErpDocumentNumbering uses documentCode instead of code, and has no isActive.
+
+interface DocNumRow extends ErpDocumentNumbering, BaseEntity {
+  code: string;      // mirrors documentCode
+  isActive: boolean; // always true — no status concept for numbering records
+}
+
+// ─── Bulk stubs ────────────────────────────────────────────────────────────────
+// Document numberings have no bulk status/delete API.
+// SimpleMasterPage requires these props — stubs notify via thrown error so
+// the organism's confirmAction/catch path shows a user-friendly message.
+
+async function bulkStatusStub(): Promise<{ affected: number }> {
+  throw new Error('Operasi batch tidak didukung untuk Penomoran Dokumen');
+}
+
+async function bulkDeleteStub(): Promise<{ affected: number }> {
+  throw new Error('Operasi batch tidak didukung untuk Penomoran Dokumen');
+}
+
+// ─── List adapter ──────────────────────────────────────────────────────────────
+
+async function listDocNumRows(
+  params?: PaginationParams,
+): Promise<PaginatedResponse<DocNumRow>> {
+  const res = await listDocumentNumberings(params);
+  return {
+    ...res,
+    data: res.data.map((r) => ({
+      ...r,
+      code: r.documentCode,
+      isActive: true,
+    })),
+  };
+}
+
+// ─── Form adapters ─────────────────────────────────────────────────────────────
+
+const defaultForm = defaultNumberingForm;
+
+const fromRecord = (row: DocNumRow): NumberingForm => fromNumbering(row);
+
+const toPayload = toNumberingPayload;
+
+// ─── Validation ────────────────────────────────────────────────────────────────
+
+function validateNumbering(form: NumberingForm): FormErrors<NumberingForm> {
+  return validateForm(form, [
+    { field: 'documentCode', label: 'Kode Dokumen', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    { field: 'prefix', label: 'Prefix', required: true },
+    { field: 'digitCount', label: 'Jumlah Digit', required: true },
+    { field: 'nextNumber', label: 'Nomor Berikutnya', required: true },
+  ]);
+}
+
+// ─── Extra columns ─────────────────────────────────────────────────────────────
+
+const RESET_LABEL: Record<ErpNumberingReset, string> = {
+  NEVER: 'Tidak pernah',
+  YEARLY: 'Tiap tahun',
+  MONTHLY: 'Tiap bulan',
+};
+
+const extraColumns = [
+  {
+    key: 'prefix',
+    label: 'Prefix',
+    sortable: false,
+    render: (row: DocNumRow) => <span className="mono">{row.prefix}</span>,
+  },
+  {
+    key: 'digitCount',
+    label: 'Digit',
+    sortable: false,
+    render: (row: DocNumRow) => <span className="mono">{row.digitCount}</span>,
+  },
+  {
+    key: 'resetPolicy',
+    label: 'Reset',
+    sortable: false,
+    render: (row: DocNumRow) => (
+      <Badge variant="default">{RESET_LABEL[row.resetPolicy]}</Badge>
+    ),
+  },
+];
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export function ErpDocumentNumberingsPage() {
-  const { rows, loading, error, reload } = useErpList(() =>
-    listDocumentNumberings(),
-  );
-  const [search, setSearch] = React.useState('');
-  const [open, setOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<ErpDocumentNumbering | null>(
-    null,
-  );
-  const [form, setForm] = React.useState<NumberingForm>(defaultNumberingForm);
-  const [saving, setSaving] = React.useState(false);
-
-  const filtered = React.useMemo(() => {
-    const q = search.toLowerCase();
-    return q
-      ? rows.filter(
-          (r) =>
-            r.documentCode.toLowerCase().includes(q) ||
-            r.name.toLowerCase().includes(q) ||
-            r.prefix.toLowerCase().includes(q),
-        )
-      : rows;
-  }, [rows, search]);
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm(defaultNumberingForm());
-    setOpen(true);
-  };
-
-  const openEdit = (n: ErpDocumentNumbering) => {
-    setEditing(n);
-    setForm(fromNumbering(n));
-    setOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateDocumentNumbering(editing.id, toNumberingPayload(form));
-        notify('Penomoran diperbarui', 'success');
-      } else {
-        await createDocumentNumbering(toNumberingPayload(form));
-        notify('Penomoran dibuat', 'success');
-      }
-      setOpen(false);
-      reload();
-    } catch (e: unknown) {
-      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = (n: ErpDocumentNumbering) => {
-    confirmAction({
-      title: 'Hapus penomoran?',
-      message: `${n.documentCode} — ${n.name} akan dihapus permanen.`,
-      variant: 'danger',
-      confirmLabel: 'Hapus',
-      confirmIcon: 'trash',
-      onConfirm: async () => {
-        try {
-          await deleteDocumentNumbering(n.id);
-          notify('Penomoran dihapus', 'success');
-          reload();
-        } catch (e: unknown) {
-          notify(e instanceof Error ? e.message : 'Gagal', 'danger');
-        }
-      },
-    });
-  };
-
-  const handleNext = async (n: ErpDocumentNumbering) => {
-    try {
-      const res = await getNextDocumentNumber(n.documentCode);
-      notify(`Nomor berikutnya: ${res.docNumber}`, 'success');
-      reload();
-    } catch (e: unknown) {
-      notify(e instanceof Error ? e.message : 'Gagal', 'danger');
-    }
-  };
-
   return (
-    <>
-      <ErpListLayout
-        title="Penomoran Dokumen"
-        code="DOCNUM"
-        loading={loading}
-        error={error}
-        search={search}
-        onSearch={setSearch}
-        onAdd={openCreate}
-        onRefresh={reload}
-      >
-        <div className="lines">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kode</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Prefix</TableHead>
-                <TableHead>Digit</TableHead>
-                <TableHead>Reset</TableHead>
-                <TableHead>Berikutnya</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableEmpty colSpan={7} />
-              ) : (
-                filtered.map((n) => (
-                  <TableRow key={n.id}>
-                    <TableCell className="mono">{n.documentCode}</TableCell>
-                    <TableCell>{n.name}</TableCell>
-                    <TableCell className="mono">{n.prefix}</TableCell>
-                    <TableCell className="mono">{n.digitCount}</TableCell>
-                    <TableCell>
-                      <Badge variant="default">{n.resetPolicy}</Badge>
-                    </TableCell>
-                    <TableCell className="mono">{n.nextNumber}</TableCell>
-                    <TableCell>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button
-                          className="btn sm"
-                          onClick={() => handleNext(n)}
-                        >
-                          Generate
-                        </button>
-                        <button
-                          className="btn sm"
-                          onClick={() => openEdit(n)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn sm danger"
-                          onClick={() => handleDelete(n)}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </ErpListLayout>
-
-      <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>
-              {editing ? 'Edit Penomoran' : 'Tambah Penomoran'}
-            </ModalTitle>
-          </ModalHeader>
-          <NumberingFormFields data={form} onChange={setForm} />
-          <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              Batal
-            </button>
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Menyimpan...' : 'Simpan'}
-            </button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+    <SimpleMasterPage<DocNumRow, NumberingForm>
+      title="Penomoran Dokumen"
+      code="DOCNUM"
+      entityLabel="penomoran"
+      storageKey="document-numberings"
+      auditEntityName="ErpDocumentNumbering"
+      list={listDocNumRows}
+      create={(payload) => createDocumentNumbering(payload).then((r) => ({ ...r, code: r.documentCode, isActive: true }))}
+      update={(id, payload) => updateDocumentNumbering(id, payload).then((r) => ({ ...r, code: r.documentCode, isActive: true }))}
+      remove={deleteDocumentNumbering}
+      bulkStatus={bulkStatusStub}
+      bulkDelete={bulkDeleteStub}
+      defaultForm={defaultForm}
+      fromRecord={fromRecord}
+      toPayload={toPayload}
+      FormFields={NumberingFormFields}
+      validate={validateNumbering}
+      defaultSortBy="documentCode"
+      defaultSortDir="asc"
+      extraColumns={extraColumns}
+    />
   );
 }
