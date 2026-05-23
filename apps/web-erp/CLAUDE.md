@@ -661,7 +661,7 @@ DTO query dulu sebelum FE diarahkan ke server-side sort.
 const [sortBy, setSortBy] = useState('createdAt');
 const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
 const [search, setSearch] = useState('');
-const [statusFilter, setStatusFilter] = useState('');
+const [statusFilter, setStatusFilter] = useState('active'); // default: tampilkan aktif saja
 const { page, pageSize, setPage, setPageSize } = useListPagination('branches');
 
 // Debounce search 300ms
@@ -832,6 +832,42 @@ API page-side (per entitas):
 Endpoint API client wajib expose `list/create/update/remove/bulkStatus/
 bulkDelete` untuk dipasangkan ke organism (lihat
 `lib/api/divisions.ts` sebagai template).
+
+#### Standar validasi form `SimpleMasterPage` (WAJIB, 2026-05-23)
+
+Setiap halaman yang pakai `SimpleMasterPage` **wajib** menerapkan pola
+validasi berikut — tanpa pengecualian:
+
+1. **`validate` prop wajib ada** di `<SimpleMasterPage ... validate={validateXxx} />`.
+   Minimal validasi: `code` required + `name` required (+ FK required bila ada
+   field `SearchSelect` yang mandatory).
+
+2. **`FormFields` wajib terima `errors`**:
+   ```tsx
+   function FormFields({
+     data, onChange, errors = {}
+   }: { data: F; onChange: (d: F) => void; errors?: FormErrors<F> }) {
+   ```
+
+3. **`aria-invalid` wajib pada setiap `<Input>` yang required**:
+   ```tsx
+   <FormField label="Kode" htmlFor="ef-code" required error={errors.code}>
+     <Input ... aria-invalid={!!errors.code} />
+   </FormField>
+   ```
+
+4. **`error` prop wajib pada `<SearchSelect>` required**:
+   ```tsx
+   <SearchSelect ... error={!!errors.fieldId} />
+   ```
+   (Pasangkan `aria-invalid` + border merah sudah built-in di `SearchSelect`.)
+
+5. **Auto-focus ke field error pertama** — sudah built-in di `handleSave`
+   organism (query `[role="dialog"] [aria-invalid="true"]`, no-op bila tidak ada).
+
+Konsekuensi: halaman yang skip `validate=` → submit tanpa validasi client-side.
+Halaman yang skip `aria-invalid=` → auto-focus gagal menemukan field error.
+Kedua ini harus selesai sebelum halaman dideklarasikan done.
 
 ### 2.17 Modul sidebar Senti ERP — scope final (2026-05-20)
 
