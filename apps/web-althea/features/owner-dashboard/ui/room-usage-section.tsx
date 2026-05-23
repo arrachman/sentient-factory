@@ -28,13 +28,15 @@ export function RoomUsageSection({
   rooms,
   todayBookings,
   psikologs: _psikologs,
+  dateKey: dateProp,
 }: {
   rooms: Room[];
   todayBookings: Booking[];
   psikologs: Psikolog[];
+  dateKey?: string;
 }) {
   const [picked, setPicked] = useState<PickedCell | null>(null);
-  const dateKey = todayKey();
+  const dateKey = dateProp ?? todayKey();
   const settingsQuery = useSettings();
   const slots = settingsQuery.data?.data.slotsOfDay ?? [];
 
