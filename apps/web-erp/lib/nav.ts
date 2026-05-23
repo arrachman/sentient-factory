@@ -204,6 +204,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/master/item-categories': { group: 'Data Master', title: 'Item Categories', icon: 'database' },
   '/master/units': { group: 'Data Master', title: 'Units', icon: 'database' },
   '/master/partners': { group: 'Data Master', title: 'Partner', icon: 'database' },
+  '/master/vendors': { group: 'Data Master', title: 'Vendor', icon: 'database' },
   '/master/partner-categories': { group: 'Data Master', title: 'Partner Categories', icon: 'database' },
   '/master/accounts': { group: 'Data Master', title: 'Chart of Accounts', icon: 'database' },
   '/master/currencies': { group: 'Data Master', title: 'Currencies', icon: 'database' },
