@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErpAuditService } from '../erp-audit/erp-audit.service';
 import { diffFields } from '../erp-common/utils/diff-fields.util';
@@ -10,6 +9,37 @@ import { UpdateErpItemPermissionDto } from './dto/update-item-permission.dto';
 
 const ENTITY = 'ErpItemPermission';
 const LABEL_ID = 'ItemPermission';
+
+const SORT_MAP: Record<string, string> = {
+  createdAt: 'p.created_at',
+  itemCode: 'i.code',
+  itemName: 'i.name',
+  roleName: 'r.name',
+};
+
+type RawPermRow = {
+  id: bigint; item_id: bigint; role_id: bigint;
+  can_view: boolean; can_sell: boolean; can_buy: boolean;
+  legacy_code: string | null; created_at: Date; updated_at: Date;
+  item_code: string | null; item_name: string | null; role_name: string | null;
+};
+
+function mapRaw(r: RawPermRow) {
+  return {
+    id: r.id.toString(),
+    itemId: r.item_id.toString(),
+    roleId: r.role_id.toString(),
+    canView: r.can_view,
+    canSell: r.can_sell,
+    canBuy: r.can_buy,
+    legacyCode: r.legacy_code ?? null,
+    itemCode: r.item_code ?? null,
+    itemName: r.item_name ?? null,
+    roleName: r.role_name ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
 
 @Injectable()
 export class ErpItemPermissionsService {
@@ -50,21 +80,54 @@ export class ErpItemPermissionsService {
   async findAll(query: QueryErpItemPermissionDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
-    const skip = (page - 1) * limit;
-    const where: Prisma.ErpItemPermissionWhereInput = { deletedAt: null };
-    if (query.search?.trim()) {
-      const q = query.search.trim();
-      where.OR = [
-        { legacyCode: { contains: q, mode: 'insensitive' } },
-      ];
+    const offset = (page - 1) * limit;
+    const search = query.search?.trim() ?? '';
+    const sortCol = SORT_MAP[query.sortBy ?? 'createdAt'] ?? 'p.created_at';
+    const sortDir = query.sortDir === 'asc' ? 'ASC' : 'DESC';
+
+    const JOIN = `
+      FROM md_item_permissions p
+      LEFT JOIN md_items i ON i.id = p.item_id AND i.deleted_at IS NULL
+      LEFT JOIN adm_roles r ON r.id = p.role_id AND r.deleted_at IS NULL
+    `;
+    const SELECT = `
+      SELECT p.id, p.item_id, p.role_id, p.can_view, p.can_sell, p.can_buy,
+             p.legacy_code, p.created_at, p.updated_at,
+             i.code AS item_code, i.name AS item_name, r.name AS role_name
+      ${JOIN}
+    `;
+
+    let rows: RawPermRow[];
+    let total: number;
+
+    if (search) {
+      const like = `%${search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      const WHERE = `WHERE p.deleted_at IS NULL AND (i.code ILIKE $1 OR i.name ILIKE $1 OR r.name ILIKE $1)`;
+      rows = await this.prisma.$queryRawUnsafe<RawPermRow[]>(
+        `${SELECT} ${WHERE} ORDER BY ${sortCol} ${sortDir} LIMIT $2 OFFSET $3`,
+        like, limit, offset,
+      );
+      const [{ count }] = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
+        `SELECT COUNT(*) AS count ${JOIN} ${WHERE}`,
+        like,
+      );
+      total = Number(count);
+    } else {
+      rows = await this.prisma.$queryRawUnsafe<RawPermRow[]>(
+        `${SELECT} WHERE p.deleted_at IS NULL ORDER BY ${sortCol} ${sortDir} LIMIT $1 OFFSET $2`,
+        limit, offset,
+      );
+      const [{ count }] = await this.prisma.$queryRawUnsafe<[{ count: bigint }]>(
+        `SELECT COUNT(*) AS count FROM md_item_permissions WHERE deleted_at IS NULL`,
+      );
+      total = Number(count);
     }
-    const sortBy = query.sortBy ?? 'createdAt';
-    const sortDir = query.sortDir ?? 'desc';
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpItemPermission.findMany({ where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit }),
-      this.prisma.erpItemPermission.count({ where }),
-    ]);
-    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+
+    return {
+      success: true,
+      data: rows.map(mapRaw),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+    };
   }
 
   async findOne(id: bigint) {

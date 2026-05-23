@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-const SORTABLE_FIELDS = ['legacyCode', 'createdAt'] as const;
+const SORTABLE_FIELDS = ['createdAt', 'itemCode', 'itemName', 'roleName'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
 export class QueryErpItemPermissionDto {
