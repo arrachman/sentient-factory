@@ -27,6 +27,7 @@
     "db:seed:geo": "ts-node prisma/seed-md-geo.ts",
     "db:seed:departments": "ts-node prisma/seed-md-departments.ts",
     "db:seed:warehouses": "ts-node prisma/seed-md-warehouses.ts",
+    "db:seed:supplier-categories": "ts-node prisma/seed-erp-md-supplier-categories.ts",
     "db:ensure-system-user": "ts-node prisma/ensure-system-user.ts",
     "db:backfill:inventory-ledger": "ts-node prisma/backfill-inventory-ledger.ts",
     "db:studio": "prisma studio",
