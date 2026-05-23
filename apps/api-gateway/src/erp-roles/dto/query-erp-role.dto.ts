@@ -1,6 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+
+const SORTABLE_FIELDS = ['code', 'name', 'isActive', 'createdAt'] as const;
+type SortableField = (typeof SORTABLE_FIELDS)[number];
 
 export class QueryErpRoleDto {
   @ApiPropertyOptional({ example: 1 })
@@ -22,4 +25,14 @@ export class QueryErpRoleDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({ example: 'createdAt', enum: SORTABLE_FIELDS })
+  @IsOptional()
+  @IsIn(SORTABLE_FIELDS)
+  sortBy?: SortableField;
+
+  @ApiPropertyOptional({ example: 'desc', enum: ['asc', 'desc'] })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortDir?: 'asc' | 'desc';
 }

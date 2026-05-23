@@ -88,7 +88,7 @@ export class ErpAccountsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpAccount.findMany({
         where,
-        orderBy: [{ code: 'asc' }],
+        orderBy: [{ [query.sortBy ?? 'code']: query.sortDir ?? 'asc' }],
         skip,
         take: limit,
         include: { parent: { select: { id: true, code: true, name: true } } },

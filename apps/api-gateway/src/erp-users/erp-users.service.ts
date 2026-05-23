@@ -71,7 +71,7 @@ export class ErpUsersService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpUser.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDir ?? 'desc' }],
         skip,
         take: limit,
         select: {

@@ -46,7 +46,7 @@ export class ErpRolesService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpRole.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDir ?? 'desc' }],
         skip,
         take: limit,
       }),

@@ -35,7 +35,7 @@ export class ErpPermissionsService {
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpPermission.findMany({
         where,
-        orderBy: [{ group: 'asc' }, { code: 'asc' }],
+        orderBy: [{ [query.sortBy ?? 'code']: query.sortDir ?? 'asc' }],
         skip,
         take: limit,
       }),
