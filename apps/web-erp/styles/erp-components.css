@@ -262,6 +262,7 @@ body {
 .sidebar .nav-item {
   width: 36px;
   height: 36px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2911,13 +2912,15 @@ button {
 [data-sidebar='label'] .sidebar {
   align-items: stretch;
   padding: 8px;
+  gap: 4px;
 }
 [data-sidebar='label'] .sidebar .nav-item {
   width: 100%;
-  height: 34px;
+  height: 36px;
+  min-height: 36px;
   justify-content: flex-start;
   gap: 10px;
-  padding: 0 10px;
+  padding: 0 12px;
 }
 [data-sidebar='label'] .sidebar .nav-item .nav-label {
   display: inline;
@@ -2935,6 +2938,16 @@ button {
 [data-sidebar='label'] .sidebar [data-tip]:hover::before {
   content: none;
   display: none;
+}
+[data-sidebar='label'] .accordion-submenu {
+  gap: 2px;
+  padding: 2px 0 6px 0;
+}
+[data-sidebar='label'] .accordion-group-label {
+  padding: 8px 8px 4px 8px;
+}
+[data-sidebar='label'] .accordion-item {
+  padding: 6px 10px 6px 18px;
 }
 
 /* ── Filter bar (shared list-page chrome) ───────────────────────────────── */

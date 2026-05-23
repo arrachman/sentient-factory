@@ -124,7 +124,7 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
       <nav
         className="sidebar"
         onMouseLeave={sidebarMenuMode === 'flyout' ? handleLeaveAll : undefined}
-        style={sidebarMenuMode === 'accordion' ? { overflowY: 'auto' } : undefined}
+        style={sidebarMenuMode === 'accordion' ? { overflowY: 'auto', scrollbarGutter: 'stable' } : undefined}
       >
         {nav.map((item, i) => {
           if (item.divider)
