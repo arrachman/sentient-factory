@@ -80,7 +80,6 @@ import { ErpReceiptGiroClearingsPage } from '@/components/pages/fin-receipt-giro
 import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clearings-page';
 import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
-import { SettingsShell, isSettingsRoute } from '@/components/molecules/settings-shell';
 
 /**
  * ERP page registry. Keyed by the canonical route id = the seeded
@@ -154,6 +153,9 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/org/sub-departments': () => <ErpSubDepartmentsPage />,
   // ── User Settings (personal preferences) ─────────────────────────────────
   '/settings/appearance': (ctx) => <AppearancePage t={ctx.t} />,
+  // ── Legacy short-id aliases for settings routes ───────────────────────────
+  'set-appearance': (ctx) => <AppearancePage t={ctx.t} />,
+  'set-prefs': (ctx) => <SettingsPage t={ctx.t} />,
   // ── Finance (fin, m2) ─────────────────────────────────────────────────────
   '/finance/general-journals': () => <ErpJournalEntriesPage />,
   '/finance/receipt-memos': () => <ErpArReceiptsPage />,
@@ -180,18 +182,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
 };
 import type { Lang } from '@/lib/shell-constants';
 
-function readSettingsNavMode(): 'routing' | 'tabs' {
-  try {
-    if (typeof window === 'undefined') return 'tabs';
-    const raw = window.localStorage.getItem('erp-appearance');
-    if (!raw) return 'tabs';
-    const parsed = JSON.parse(raw) as { urlRouting?: boolean | string };
-    return parsed.urlRouting === true || parsed.urlRouting === 'true' ? 'routing' : 'tabs';
-  } catch {
-    return 'tabs';
-  }
-}
-
 /** If `route` ends with `-new`, returns the base route; otherwise `null`. */
 function resolveNewRoute(route: string): string | null {
   if (!route.endsWith('-new')) return null;
@@ -216,26 +206,6 @@ export function renderRoute(
 ): React.ReactNode {
   if (route === 'home') return <Dashboard t={t} onNavigate={onOpenTab} />;
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpenTab} />;
-
-  // ── Settings pages — wrapped in SettingsShell for tab navigation ─────────
-  if (isSettingsRoute(route)) {
-    const mode = readSettingsNavMode();
-    const renderSettingsContent = (r: string): React.ReactNode => {
-      if (r === '/settings/appearance' || r === 'set-appearance')
-        return <AppearancePage t={t} />;
-      if (r === '/admin/preferences' || r === 'set-prefs')
-        return <SettingsPage t={t} />;
-      return <ErpSettingsPage />;
-    };
-    return (
-      <SettingsShell
-        activeRoute={route}
-        mode={mode}
-        onNavigate={onNavigate}
-        renderContent={renderSettingsContent}
-      />
-    );
-  }
 
   // ── ERP pages (seeded sys_menus path = canonical id; short-id aliases) ─────
   const erpPage = ERP_PAGES[route];

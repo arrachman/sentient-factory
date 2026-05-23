@@ -86,7 +86,7 @@ export const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'sticky top-0 z-10 h-[var(--header-h)] border-b border-border bg-secondary !px-[10px] !py-0 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground',
+      'sticky top-0 z-10 h-[var(--header-h)] overflow-hidden truncate border-b border-border bg-secondary !px-[10px] !py-0 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground',
       numeric && 'text-right',
       className,
     )}
@@ -102,7 +102,7 @@ export const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      'h-[var(--row-h)] border-b border-border !px-[10px] !py-0',
+      'h-[var(--row-h)] overflow-hidden truncate border-b border-border !px-[10px] !py-0',
       numeric &&
         'text-right font-mono tabular-nums',
       className,

@@ -8,9 +8,10 @@ import { tGlobal } from '@/lib/mock';
 
 interface ShortcutsOverlayProps {
   onClose: () => void;
+  urlRoutingEnabled?: boolean;
 }
 
-export function ShortcutsOverlay({ onClose }: ShortcutsOverlayProps) {
+export function ShortcutsOverlay({ onClose, urlRoutingEnabled }: ShortcutsOverlayProps) {
   // Close on Escape key.
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -27,12 +28,14 @@ export function ShortcutsOverlay({ onClose }: ShortcutsOverlayProps) {
         <div className="sc-grid">
           <div>{tGlobal('Buka command palette')}</div>
           <div>⌘ K</div>
+          {!urlRoutingEnabled && (<>
           <div>{tGlobal('Tutup tab aktif')}</div>
           <div>⌥ W</div>
           <div>{tGlobal('Pindah ke tab 1–8')}</div>
           <div>⌘ 1–8</div>
           <div>{tGlobal('Pindah ke tab terakhir')}</div>
           <div>⌘ 9</div>
+          </>)}
           <div>{tGlobal('Cycle bahasa ID/EN/JA')}</div>
           <div>L</div>
           <div>{tGlobal('Tampilkan shortcut')}</div>

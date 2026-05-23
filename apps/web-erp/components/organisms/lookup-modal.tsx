@@ -272,9 +272,14 @@ export function LookupModal({
           <span>
             <Kbd>ESC</Kbd> tutup
           </span>
-          <span style={{ marginLeft: 'auto' }} className="muted">
-            Sentient ERP
-          </span>
+          <button
+            type="button"
+            className="btn ghost sm"
+            style={{ marginLeft: 'auto' }}
+            onClick={onClose}
+          >
+            Batal
+          </button>
         </div>
       </div>
     </div>

@@ -124,6 +124,8 @@ interface ErpListLayoutProps {
   title: string;
   code: string;
   loading?: boolean;
+  /** True during any fetch (initial or refetch). Shows a thin top bar without blocking the table. */
+  fetching?: boolean;
   error?: string | null;
   search: string;
   onSearch: (q: string) => void;
@@ -144,6 +146,7 @@ export function ErpListLayout({
   title,
   code,
   loading,
+  fetching,
   error,
   search,
   onSearch,
@@ -329,11 +332,19 @@ export function ErpListLayout({
 
       {toolbar && <div className="toolbar">{toolbar}</div>}
 
+      {fetching && !loading && !error && (
+        <div
+          className="h-[2px] w-full animate-pulse bg-primary/40"
+          aria-hidden
+          style={{ position: 'relative', zIndex: 1, marginBottom: -2 }}
+        />
+      )}
+
       {error && (
         <ErrorState
           message={error}
           onRetry={onRefresh}
-          retrying={loading}
+          retrying={loading ?? fetching}
         />
       )}
 

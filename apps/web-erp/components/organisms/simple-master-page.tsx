@@ -47,6 +47,7 @@ import {
   SortableHead,
 } from '@/components/organisms/table';
 import { confirmAction, notify } from '@/lib/feedback';
+import { validateForm, hasErrors, type FormErrors, type FieldRule } from '@/lib/form-validation';
 import { tGlobal } from '@/lib/mock';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
@@ -85,9 +86,14 @@ export interface SimpleMasterPageProps<T extends BaseEntity, F> {
   defaultForm: () => F;
   fromRecord: (row: T) => F;
   toPayload: (form: F) => any;
-  FormFields: React.ComponentType<{ data: F; onChange: (d: F) => void }>;
+  FormFields: React.ComponentType<{ data: F; onChange: (d: F) => void; errors?: FormErrors<F> }>;
+  /** Optional client-side validation. Return empty object (or omit) to skip. */
+  validate?: (form: F) => FormErrors<F>;
   // Optional extra columns shown between Name and Status
   extraColumns?: ExtraColumn<T>[];
+  // Default sort (overrides organism default of createdAt desc)
+  defaultSortBy?: string;
+  defaultSortDir?: 'asc' | 'desc';
 }
 
 export function SimpleMasterPage<T extends BaseEntity, F>({
@@ -106,12 +112,15 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   fromRecord,
   toPayload,
   FormFields,
+  validate,
   extraColumns = [],
+  defaultSortBy = 'createdAt',
+  defaultSortDir = 'desc',
 }: SimpleMasterPageProps<T, F>) {
-  const [sortBy, setSortBy] = React.useState('createdAt');
-  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
+  const [sortBy, setSortBy] = React.useState(defaultSortBy);
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>(defaultSortDir);
   const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('active');
   const { page, pageSize, setPage, setPageSize } = useListPagination(storageKey);
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search);
@@ -122,7 +131,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
 
   const isActiveParam = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
 
-  const { rows, meta, loading, error, reload } = useErpList(
+  const { rows, meta, loading, fetching, error, reload } = useErpList(
     () => list({
       page, limit: pageSize, search: debouncedSearch || undefined,
       sortBy, sortDir, isActive: isActiveParam,
@@ -138,6 +147,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   const [editing, setEditing] = React.useState<T | null>(null);
   const [form, setForm] = React.useState<F>(defaultForm);
   const [saving, setSaving] = React.useState(false);
+  const [formErrors, setFormErrors] = React.useState<FormErrors<F>>({});
   const [auditTarget, setAuditTarget] = React.useState<T | null>(null);
 
   React.useEffect(() => { setFocusedIndex(-1); }, [page, debouncedSearch, statusFilter]);
@@ -164,12 +174,12 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
       options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
   ];
   // (label/option strings here are kept as i18n keys — translated by ErpListLayout via tGlobal)
-  const hasActiveFilter = search !== '' || statusFilter !== '';
+  const hasActiveFilter = search !== '' || statusFilter !== 'active';
   const summary: SummaryConfig = { metricLabel: `Σ ${tGlobal(entityLabel)}`, rowCount: totalRows, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
 
-  const openCreate = () => { setEditing(null); setForm(defaultForm()); setOpen(true); };
-  const openEdit = (row: T) => { setEditing(row); setForm(fromRecord(row)); setOpen(true); };
+  const openCreate = () => { setEditing(null); setForm(defaultForm()); setFormErrors({}); setOpen(true); };
+  const openEdit = (row: T) => { setEditing(row); setForm(fromRecord(row)); setFormErrors({}); setOpen(true); };
 
   const keyboardCfg: KeyboardRowConfig = {
     rowCount: paged.length, focusedIndex, onFocusChange: setFocusedIndex,
@@ -177,6 +187,18 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   };
 
   const handleSave = async () => {
+    if (validate) {
+      const errors = validate(form);
+      if (hasErrors(errors)) {
+        setFormErrors(errors);
+        setTimeout(() => {
+          const el = document.querySelector<HTMLElement>('[role="dialog"] [aria-invalid="true"]');
+          el?.focus();
+        }, 0);
+        return;
+      }
+    }
+    setFormErrors({});
     setSaving(true);
     try {
       if (editing) { await update(editing.id, toPayload(form)); notify(`${tGlobal(title)} ${tGlobal('diperbarui')}`, 'success'); }
@@ -227,14 +249,22 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   return (
     <>
       <ErpListLayout
-        title={title} code={code ?? ''} loading={loading} error={error}
+        title={title} code={code ?? ''} loading={loading} fetching={fetching} error={error}
         search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
         onExport={() => notify(tGlobal('Export belum tersedia'), 'warn')}
         filters={filters} summary={summary} pagination={pagination}
         keyboardRows={keyboardCfg}
       >
         <div className="lines">
-          <Table>
+          <Table className="table-fixed">
+            <colgroup>
+              <col style={{ width: 36 }} />
+              <col style={{ width: 200 }} />
+              <col />
+              {extraColumns.map((c) => <col key={c.key} style={{ width: 160 }} />)}
+              <col style={{ width: 140 }} />
+              <col style={{ width: 48 }} />
+            </colgroup>
             <TableHeader>
               <TableRow>
                 <CheckboxHead checked={someSelected ? 'indeterminate' : allSelected} onCheckedChange={toggleAll} />
@@ -251,9 +281,15 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
             </TableHeader>
             <TableBody>
               {paged.length === 0 ? (
-                <TableEmpty colSpan={colCount}>
-                  {hasActiveFilter ? tGlobal('Tidak ada hasil untuk filter ini') : `${tGlobal('Tidak ada data')} ${tGlobal(entityLabel)}`}
-                </TableEmpty>
+                <TableEmpty
+                  colSpan={colCount}
+                  variant={hasActiveFilter ? 'filtered' : 'empty'}
+                  entityLabel={tGlobal(entityLabel)}
+                  searchTerm={debouncedSearch || undefined}
+                  onAction={hasActiveFilter ? () => { setSearch(''); setStatusFilter('active'); } : openCreate}
+                  actionLabel={hasActiveFilter ? tGlobal('Reset filter') : `${tGlobal('Tambah')} ${tGlobal(entityLabel)}`}
+                  actionShortcut={hasActiveFilter ? undefined : 'N'}
+                />
               ) : paged.map((row, idx) => {
                 const rowActions: RowActionItem[] = [
                   { label: tGlobal('Edit'), onSelect: () => openEdit(row) },
@@ -262,7 +298,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
                 ];
                 return (
                   <RowContextMenu key={row.id} items={rowActions}>
-                    <TableRow data-selected={selectedIds.has(row.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)}>
+                    <TableRow data-selected={selectedIds.has(row.id)} data-focused={focusedIndex === idx} className="cursor-pointer" onClick={() => setFocusedIndex(idx)} onDoubleClick={() => openEdit(row)}>
                       <CheckboxCell checked={selectedIds.has(row.id)} onCheckedChange={() => toggleRow(row.id)} />
                       <CodeLinkCell code={row.code} onOpen={() => openEdit(row)} />
                       <TableCell>{row.name}</TableCell>
@@ -300,7 +336,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>
           <ModalHeader><ModalTitle>{editing ? `${tGlobal('Edit')} ${tGlobal(title)}` : `${tGlobal('Tambah')} ${tGlobal(title)}`}</ModalTitle></ModalHeader>
-          <FormFields data={form} onChange={setForm} />
+          <FormFields data={form} onChange={setForm} errors={formErrors} />
           <ModalFooter>
             <button className="btn ghost" onClick={() => setOpen(false)}>{tGlobal('Batal')}</button>
             <button className="btn primary" onClick={handleSave} disabled={saving}>

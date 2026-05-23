@@ -14,16 +14,23 @@ interface SidebarProps {
   current: string;
   onNavigate: (id: string) => void;
   t: (key: string) => string;
+  workspaceId?: string;
+}
+
+/** Builds a navigable href for a route id so browsers can offer right-click / Ctrl+click. */
+function leafHref(id: string, workspaceId?: string): string {
+  const base = workspaceId ? `/${workspaceId}` : '';
+  return id.startsWith('/') ? `${base}${id}` : `${base}/${id}`;
 }
 
 /** Icon-only nav rail with a hover flyout submenu — ported from `sidebar.jsx`. */
-export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
+export function Sidebar({ nav, current, onNavigate, t, workspaceId }: SidebarProps) {
   const [open, setOpen] = React.useState<string | null>(null);
   const [openTop, setOpenTop] = React.useState(0);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleEnter = (
-    e: React.MouseEvent<HTMLDivElement>,
+    e: React.MouseEvent<HTMLElement>,
     item: NavItem,
   ) => {
     if (!item.children) {
@@ -54,12 +61,16 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
 
   const openItem = nav.find((i) => i.id === open);
 
+  // Leaf flyout items use <a href> so the browser exposes right-click / Ctrl+click.
+  // Normal left-click is intercepted for SPA navigation; modifier clicks fall through.
   const renderLeaf = (sub: NavLeaf) => (
-    <div
+    <a
       key={sub.label}
+      href={leafHref(sub.id, workspaceId)}
       className={cn('flyout-item', sub.id === current && 'active')}
-      onClick={() => {
-        if (sub.id) {
+      onClick={(e) => {
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+          e.preventDefault();
           onNavigate(sub.id);
           setOpen(null);
         }
@@ -67,7 +78,7 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
     >
       <Icon name="dot" size={8} />
       <span>{t(sub.label)}</span>
-    </div>
+    </a>
   );
 
   return (
@@ -78,15 +89,36 @@ export function Sidebar({ nav, current, onNavigate, t }: SidebarProps) {
             // eslint-disable-next-line react/no-array-index-key
             return <div key={`div-${i}`} className="nav-divider" />;
           const isActive = !!currentTop && currentTop.id === item.id;
+
+          // Leaf top-level items (no children) become real links.
+          if (!item.children && item.id) {
+            return (
+              <a
+                key={item.id}
+                href={leafHref(item.id, workspaceId)}
+                className={cn('nav-item', isActive && 'active')}
+                data-tip={t(item.label ?? '')}
+                onMouseEnter={(e) => handleEnter(e, item)}
+                onClick={(e) => {
+                  if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+                    e.preventDefault();
+                    onNavigate(item.id!);
+                  }
+                }}
+              >
+                {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
+                <span className="nav-label">{t(item.label ?? '')}</span>
+              </a>
+            );
+          }
+
+          // Items with children open a flyout — not navigable, stay as div.
           return (
             <div
               key={item.id}
               className={cn('nav-item', isActive && 'active')}
               data-tip={t(item.label ?? '')}
               onMouseEnter={(e) => handleEnter(e, item)}
-              onClick={() => {
-                if (!item.children && item.id) onNavigate(item.id);
-              }}
             >
               {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
               <span className="nav-label">{t(item.label ?? '')}</span>
