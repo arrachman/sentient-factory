@@ -68,6 +68,9 @@ import { ErpAreasModule } from './erp-areas/areas.module';
 import { ErpItemLocationsModule } from './erp-item-locations/item-locations.module';
 import { ErpPartnerSubCategoriesModule } from './erp-partner-sub-categories/partner-sub-categories.module';
 import { ErpPriceCategoriesModule } from './erp-price-categories/price-categories.module';
+import { ErpItemInformationsModule } from './erp-item-informations/erp-item-informations.module';
+import { ErpPriceIndicesModule } from './erp-price-indices/erp-price-indices.module';
+import { ErpItemPermissionsModule } from './erp-item-permissions/item-permissions.module';
 import { ErpTransactionNotesModule } from './erp-transaction-notes/transaction-notes.module';
 import { ErpUsersModule } from './erp-users/erp-users.module';
 import { ErpRolesModule } from './erp-roles/erp-roles.module';
@@ -190,6 +193,9 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpItemLocationsModule,
     ErpPartnerSubCategoriesModule,
     ErpPriceCategoriesModule,
+    ErpItemInformationsModule,
+    ErpPriceIndicesModule,
+    ErpItemPermissionsModule,
     ErpTransactionNotesModule,
     ErpUsersModule,
     ErpRolesModule,

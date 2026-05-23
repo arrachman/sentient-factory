@@ -1,7 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpItemInformationDto } from './dto/create-item-information.dto';
+import { QueryErpItemInformationDto } from './dto/query-item-information.dto';
 import { UpdateErpItemInformationDto } from './dto/update-item-information.dto';
 import { ErpItemInformationsService } from './erp-item-informations.service';
 
@@ -16,6 +17,10 @@ export class ErpItemInformationsController {
   @ApiOperation({ summary: 'Create Item Information' })
   @ApiResponse({ status: 201 })
   create(@Body() dto: CreateErpItemInformationDto, @Request() req: any) { return this.service.create(dto, req.user?.id); }
+
+  @Get()
+  @ApiOperation({ summary: 'List Item Informations' })
+  findAll(@Query() query: QueryErpItemInformationDto) { return this.service.findAll(query); }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get Item Information by ID' })
