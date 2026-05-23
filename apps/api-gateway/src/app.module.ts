@@ -46,6 +46,7 @@ import { ErpSizesModule } from './erp-sizes/sizes.module';
 import { ErpSectionsModule } from './erp-sections/sections.module';
 import { ErpItemKindsModule } from './erp-item-types/item-types.module';
 import { ErpProductClassesModule } from './erp-product-classes/product-classes.module';
+import { ErpClassesModule } from './erp-classes/classes.module';
 import { ErpBanksModule } from './erp-banks/banks.module';
 import { ErpExpeditionsModule } from './erp-expeditions/expeditions.module';
 import { ErpOtherCostsModule } from './erp-other-costs/other-costs.module';
@@ -172,6 +173,7 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpSectionsModule,
     ErpItemKindsModule,
     ErpProductClassesModule,
+    ErpClassesModule,
     ErpBanksModule,
     ErpExpeditionsModule,
     ErpOtherCostsModule,

@@ -221,6 +221,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/master/sections': { group: 'Data Master', title: 'Section', icon: 'database' },
   '/master/item-types': { group: 'Data Master', title: 'Item Type', icon: 'database' },
   '/master/product-classes': { group: 'Data Master', title: 'Product Class', icon: 'database' },
+  '/master/classes': { group: 'Data Master', title: 'Class', icon: 'database' },
   '/master/banks': { group: 'Data Master', title: 'Bank', icon: 'database' },
   '/master/expeditions': { group: 'Data Master', title: 'Expedition', icon: 'database' },
   '/master/other-costs': { group: 'Data Master', title: 'Other Cost', icon: 'database' },

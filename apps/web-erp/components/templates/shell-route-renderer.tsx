@@ -54,6 +54,7 @@ import { ErpSizesPage } from '@/components/pages/sizes-page';
 import { ErpSectionsPage } from '@/components/pages/sections-page';
 import { ErpItemKindsPage } from '@/components/pages/item-types-page';
 import { ErpProductClassesPage } from '@/components/pages/product-classes-page';
+import { ErpClassesPage } from '@/components/pages/classes-page';
 import { ErpBanksPage } from '@/components/pages/banks-page';
 import { ErpExpeditionsPage } from '@/components/pages/expeditions-page';
 import { ErpOtherCostsPage } from '@/components/pages/other-costs-page';
@@ -142,6 +143,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/sections': () => <ErpSectionsPage />,
   '/master/item-types': () => <ErpItemKindsPage />,
   '/master/product-classes': () => <ErpProductClassesPage />,
+  '/master/classes': () => <ErpClassesPage />,
   '/master/banks': () => <ErpBanksPage />,
   '/master/expeditions': () => <ErpExpeditionsPage />,
   '/master/other-costs': () => <ErpOtherCostsPage />,
