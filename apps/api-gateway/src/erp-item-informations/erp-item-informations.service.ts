@@ -17,6 +17,8 @@ export class ErpItemInformationsService {
     private readonly audit: ErpAuditService,
   ) {}
 
+  private readonly ITEM_SELECT = { id: true, code: true, name: true };
+
   async create(dto: CreateErpItemInformationDto, actorId?: string) {
     const actorBigInt = actorId ? BigInt(actorId) : null;
     const itemId = BigInt(dto.itemId);
@@ -33,6 +35,7 @@ export class ErpItemInformationsService {
         createdById: actorBigInt,
         updatedById: actorBigInt,
       },
+      include: { item: { select: this.ITEM_SELECT } },
     });
     this.audit.log({
       action: 'CREATE', entityName: ENTITY, entityId: created.id,
@@ -58,20 +61,29 @@ export class ErpItemInformationsService {
     const sortBy = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpItemInformation.findMany({ where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit }),
+      this.prisma.erpItemInformation.findMany({
+        where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit,
+        include: { item: { select: this.ITEM_SELECT } },
+      }),
       this.prisma.erpItemInformation.count({ where }),
     ]);
     return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
   }
 
   async findOne(id: bigint) {
-    const item = await this.prisma.erpItemInformation.findFirst({ where: { id, deletedAt: null } });
+    const item = await this.prisma.erpItemInformation.findFirst({
+      where: { id, deletedAt: null },
+      include: { item: { select: this.ITEM_SELECT } },
+    });
     if (!item) throw new NotFoundException(`${ENTITY} not found`);
     return { success: true, data: item };
   }
 
   async findByItemId(itemId: bigint) {
-    const item = await this.prisma.erpItemInformation.findFirst({ where: { itemId, deletedAt: null } });
+    const item = await this.prisma.erpItemInformation.findFirst({
+      where: { itemId, deletedAt: null },
+      include: { item: { select: this.ITEM_SELECT } },
+    });
     if (!item) throw new NotFoundException(`${ENTITY} for itemId=${itemId} not found`);
     return { success: true, data: item };
   }
@@ -92,6 +104,7 @@ export class ErpItemInformationsService {
         notes: dto.notes,
         updatedById: actorBigInt,
       },
+      include: { item: { select: this.ITEM_SELECT } },
     });
     const changes = diffFields(existing as unknown as Record<string, unknown>, updated as unknown as Record<string, unknown>);
     this.audit.log({

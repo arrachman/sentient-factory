@@ -59,7 +59,7 @@ export const NAV: NavItem[] = [
       { id: '/master/colors', label: 'Warna', code: 'CLR' },
       { id: '/master/item-permissions', label: 'Izin Item', code: 'IPM' },
       { id: '/master/price-indices', label: 'Price Index', code: 'PRX' },
-      { id: '/master/item-informations', label: 'Info Item', code: 'INF' },
+      { id: '/master/item-info', label: 'Info Item', code: 'INF' },
     ],
   },
   {
@@ -251,7 +251,8 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/master/production-activities': { group: 'Data Master', title: 'Production Activity', icon: 'database' },
   '/master/production-routes': { group: 'Data Master', title: 'Production Route', icon: 'database' },
   '/master/price-indices': { group: 'Data Master', title: 'Price Index', icon: 'database' },
-  '/master/item-informations': { group: 'Data Master', title: 'Item Information', icon: 'database' },
+  '/master/item-info': { group: 'Data Master', title: 'Item Information', icon: 'database' },
+  '/master/item-informations': { group: 'Data Master', title: 'Item Information', icon: 'database' }, // alias
   '/org/branches': { group: 'Organization', title: 'Branch', icon: 'database' },
   '/org/locations': { group: 'Organization', title: 'Location', icon: 'database' },
   '/org/warehouses': { group: 'Organization', title: 'Warehouse', icon: 'database' },

@@ -184,6 +184,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/transaction-notes': () => <ErpTransactionNotesPage />,
   '/master/txn-note-details': () => <ErpTxnNoteDetailsPage />,
   '/master/price-indices': () => <ErpPriceIndicesPage />,
+  '/master/item-info': () => <ErpItemInformationsPage />,
+  // Alias — legacy/long-form path; canonical lives in sys_menus as /master/item-info
   '/master/item-informations': () => <ErpItemInformationsPage />,
   // MD production batch (2026-05-23) — 10 master produksi baru
   '/master/production-categories': () => <ErpProductionCategoriesPage />,

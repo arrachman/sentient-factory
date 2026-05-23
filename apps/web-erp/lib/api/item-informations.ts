@@ -14,6 +14,7 @@ export interface ErpItemInformation {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  item?: { id: string; code: string; name: string } | null;
 }
 
 export interface CreateErpItemInformationPayload {

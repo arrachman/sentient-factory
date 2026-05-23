@@ -740,6 +740,25 @@ Kode = BPS code (2/4/7/10 digit sesuai level). Idempotent — aman dijalankan ul
 
 Migration: `20260522_004_erp_md_geo_kelurahan` (additive, 0 DROP).
 
+### 2.21 Item Information page = `/master/item-info` (canonical, 2026-05-23)
+
+Halaman Item Information (1:1 extension dari `md_items`: produsen, negara
+asal, garansi, deskripsi panjang, spesifikasi, tags, catatan). Canonical
+path **= `/master/item-info`** (seed `sys_menus` code `M1.ITEM.INFO`).
+Long-form `/master/item-informations` dipertahankan **sebagai alias** di
+[`shell-route-renderer.tsx`](components/templates/shell-route-renderer.tsx)
+dan `ERP_ROUTE_META` (`lib/nav.ts`) untuk URL yang sudah ter-bookmark —
+jangan dihapus, tapi jangan dipakai sebagai entry baru.
+
+**Aturan implementasi:**
+
+- Form pakai **`SearchSelect`** untuk `itemId` (load dari `listItems`), **disabled saat edit** karena `itemId @unique` (1:1 ke `ErpItem`) — ganti item = ganti rekor.
+- Field form lengkap: `itemId`, `manufacturer`, `countryOfOrigin`, `warrantyPeriodMonths`, `longDescription` (textarea), `specifications` (textarea), `tags`, `notes` (textarea). **Dilarang** drop field DTO dari form tanpa alasan.
+- Service `ErpItemInformationsService` **wajib** include `item: { select: { id, code, name } }` di semua query (list/get/create/update) supaya halaman bisa pakai `item.code`/`item.name` sebagai kolom KODE/NAMA tanpa N+1 fetch.
+- `SimpleMasterPage` adapter: `code = item.code` (fallback `INF-${id}`), `name = item.name` (fallback `Item #${itemId}`), `isActive = true` (entity tak punya status sendiri). Extra columns: Produsen, Negara Asal, Garansi.
+
+**Seed dummy:** `prisma/seed-erp-item-informations-dummy.ts` (100 rows, idempotent — `findMany({ information: { is: null } }) + createMany skipDuplicates`). Butuh `md_items` ter-seed lebih dulu (lihat `seed-erp-md-dummy.ts`).
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
