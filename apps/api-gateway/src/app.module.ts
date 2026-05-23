@@ -108,6 +108,8 @@ import { ErpFinApPaymentsModule } from './erp-fin-ap-payments/erp-fin-ap-payment
 import { ErpFinGirosModule } from './erp-fin-giros/erp-fin-giros.module';
 import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
+import { ErpLanguagesModule } from './erp-languages/erp-languages.module';
+import { ErpToolsModule } from './erp-tools/erp-tools.module';
 
 @Module({
   imports: [
@@ -231,6 +233,8 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpDocumentNumberingsModule,
     ErpFiscalPeriodsModule,
     ErpAuditModule,
+    ErpLanguagesModule,
+    ErpToolsModule,
     // ERP m2 Finance (skeleton CRUD)
     ErpFinJournalEntriesModule,
     ErpFinArReceiptsModule,

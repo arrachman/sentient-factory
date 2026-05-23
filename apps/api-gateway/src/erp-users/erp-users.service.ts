@@ -199,6 +199,31 @@ export class ErpUsersService {
     return { success: true, data: updated };
   }
 
+  async findOnline(windowMinutes = 30) {
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - windowMinutes * 60 * 1000);
+
+    const sessions = await this.prisma.erpUserSession.findMany({
+      where: {
+        revokedAt: null,
+        expiresAt: { gt: now },
+        lastActiveAt: { gte: windowStart },
+      },
+      include: {
+        user: {
+          select: { id: true, code: true, name: true, email: true, isActive: true },
+        },
+      },
+      orderBy: { lastActiveAt: 'desc' },
+    });
+
+    return {
+      success: true,
+      data: sessions,
+      meta: { count: sessions.length, windowMinutes },
+    };
+  }
+
   async remove(id: BigInt, actorId?: string) {
     const existing = await this.prisma.erpUser.findFirst({
       where: { id: id as bigint, deletedAt: null },

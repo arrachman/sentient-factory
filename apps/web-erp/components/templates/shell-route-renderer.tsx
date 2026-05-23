@@ -97,6 +97,15 @@ import { ErpSendGirosPage } from '@/components/pages/fin-send-giros-page';
 import { ErpReceiptGiroClearingsPage } from '@/components/pages/fin-receipt-giro-clearings-page';
 import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clearings-page';
 import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
+// Audit Logs
+import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
+// Admin tools & identity pages
+import { ErpLanguagePage } from '@/components/pages/language-page';
+import { ErpOnlineUsersPage } from '@/components/pages/online-users-page';
+import { ErpFiscalPeriodsClosePage } from '@/components/pages/fiscal-periods-close-page';
+import { ErpRecalcCogsPage } from '@/components/pages/tools-recalc-cogs-page';
+import { ErpRepostJournalPage } from '@/components/pages/tools-repost-journal-page';
+import { ErpDataValidityPage } from '@/components/pages/tools-data-validity-page';
 // Settings sub-pages + Import
 import { SettingsGroupPage } from '@/components/pages/settings-group-page';
 import { ErpImportPage } from '@/components/pages/import-page';
@@ -138,6 +147,13 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/menus': () => <ErpMenusPage />,
   '/admin/document-numbering': () => <ErpDocumentNumberingsPage />,
   '/admin/fiscal-periods': () => <ErpFiscalPeriodsPage />,
+  '/admin/audit-logs': () => <ErpAuditLogsPage />,
+  '/admin/language': () => <ErpLanguagePage />,
+  '/admin/users/online': () => <ErpOnlineUsersPage />,
+  '/admin/fiscal-periods/close': () => <ErpFiscalPeriodsClosePage />,
+  '/admin/tools/recalc-cogs': () => <ErpRecalcCogsPage />,
+  '/admin/tools/repost-journal': () => <ErpRepostJournalPage />,
+  '/admin/tools/data-validity': () => <ErpDataValidityPage />,
   '/admin/preferences': (ctx) => <SettingsPage t={ctx.t} />,
   // ── Master Data (md) ──────────────────────────────────────────────────────
   '/master/branches': () => <ErpBranchesPage />,

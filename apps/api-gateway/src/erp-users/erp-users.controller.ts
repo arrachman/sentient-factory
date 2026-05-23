@@ -38,6 +38,12 @@ export class ErpUsersController {
     return this.service.findAll(query);
   }
 
+  @Get('online')
+  @ApiOperation({ summary: 'List currently active user sessions' })
+  findOnline(@Query('window') window?: string) {
+    return this.service.findOnline(window ? parseInt(window, 10) : 30);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get one ERP user' })
   @ApiResponse({ status: 200, description: 'ERP user detail' })

@@ -15,6 +15,10 @@ const ACTION_LABEL: Record<AuditAction, string> = {
   RESTORE: 'Dipulihkan',
   LOGIN: 'Login',
   LOGOUT: 'Logout',
+  APPROVE: 'Disetujui',
+  REJECT: 'Ditolak',
+  POST: 'Diposting',
+  REOPEN: 'Dibuka Ulang',
 };
 
 const ACTION_VARIANT: Record<AuditAction, 'success' | 'danger' | 'info' | 'warn' | 'default'> = {
@@ -22,8 +26,12 @@ const ACTION_VARIANT: Record<AuditAction, 'success' | 'danger' | 'info' | 'warn'
   UPDATE: 'info',
   DELETE: 'danger',
   RESTORE: 'warn',
-  LOGIN: 'default',
+  LOGIN: 'info',
   LOGOUT: 'default',
+  APPROVE: 'success',
+  REJECT: 'danger',
+  POST: 'info',
+  REOPEN: 'warn',
 };
 
 function formatDate(iso: string) {

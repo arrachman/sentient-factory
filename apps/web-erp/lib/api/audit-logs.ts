@@ -6,7 +6,20 @@ import type { PaginatedResponse } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'RESTORE' | 'LOGIN' | 'LOGOUT';
+export type AuditAction =
+  | 'CREATE'
+  | 'UPDATE'
+  | 'DELETE'
+  | 'RESTORE'
+  | 'LOGIN'
+  | 'LOGOUT'
+  | 'APPROVE'
+  | 'REJECT'
+  | 'POST'
+  | 'REOPEN';
+
+/** Alias matching the task-spec naming convention. */
+export type ErpAuditAction = AuditAction;
 
 export interface ErpAuditActor {
   id: string;
@@ -41,6 +54,9 @@ export interface AuditLogParams {
   page?: number;
   limit?: number;
 }
+
+/** Alias matching the task-spec naming convention. */
+export type QueryAuditLogsParams = AuditLogParams;
 
 // ─── API ──────────────────────────────────────────────────────────────────────
 
