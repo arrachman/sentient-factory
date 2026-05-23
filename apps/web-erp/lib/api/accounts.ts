@@ -82,7 +82,7 @@ export type UpdateAccountPayload = Partial<CreateAccountPayload>;
 // ─── API functions ────────────────────────────────────────────────────────────
 
 export async function listAccounts(
-  params?: PaginationParams,
+  params?: PaginationParams & { accountType?: ErpAccountType; accountKind?: ErpAccountKind },
 ): Promise<PaginatedResponse<ErpAccount>> {
   return apiGet<PaginatedResponse<ErpAccount>>(
     '/accounts',

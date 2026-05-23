@@ -164,9 +164,42 @@ const extraColumns: ExtraColumn<ErpPartner>[] = [
   { key: 'partnerType', label: 'Tipe', render: (r) => partnerTypeLabel(r) },
 ];
 
+// ─── Type filter extras ───────────────────────────────────────────────────────
+
+const TYPE_FILTER_EXTRAS = [
+  {
+    key: 'type',
+    label: 'Tipe',
+    defaultValue: '',
+    options: [
+      { label: 'Customer', value: 'customer' },
+      { label: 'Supplier', value: 'supplier' },
+    ],
+  },
+];
+
+function makeListPartners(typeVal: string) {
+  return (params: Parameters<typeof listPartners>[0]) => {
+    // Remove the FE-only 'type' key before forwarding to avoid backend 400
+    const { type: _type, ...rest } = params as typeof params & { type?: string };
+    return listPartners({
+      ...rest,
+      isCustomer: typeVal === 'customer' ? true : undefined,
+      isSupplier: typeVal === 'supplier' ? true : undefined,
+    });
+  };
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpPartnersPage() {
+  const [typeFilter, setTypeFilter] = React.useState('');
+
+  const listFn = React.useMemo(
+    () => makeListPartners(typeFilter),
+    [typeFilter],
+  );
+
   return (
     <SimpleMasterPage<ErpPartner, PartnerForm>
       title="Partner"
@@ -174,7 +207,7 @@ export function ErpPartnersPage() {
       entityLabel="partner"
       storageKey="partners"
       auditEntityName="ErpPartner"
-      list={listPartners}
+      list={listFn}
       create={createPartner}
       update={updatePartner}
       remove={deletePartner}
@@ -188,6 +221,8 @@ export function ErpPartnersPage() {
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"
+      extraFilters={TYPE_FILTER_EXTRAS}
+      onExtraFilterChange={(vals) => setTypeFilter(vals['type'] ?? '')}
     />
   );
 }

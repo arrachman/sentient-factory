@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
-import { SimpleMasterPage } from '@/components/organisms/simple-master-page';
+import { SimpleMasterPage, type ExtraFilterDef } from '@/components/organisms/simple-master-page';
 import {
   listPartnerCategories,
   createPartnerCategory,
@@ -89,6 +89,14 @@ function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange:
   );
 }
 
+const kindFilters: ExtraFilterDef[] = [
+  { key: 'kind', label: 'Kind', options: [
+    { label: 'Customer', value: 'CUSTOMER' },
+    { label: 'Supplier', value: 'SUPPLIER' },
+    { label: 'Salesman', value: 'SALESMAN' },
+  ]},
+];
+
 export function ErpPartnerCategoriesPage() {
   return (
     <SimpleMasterPage<ErpPartnerCategory, FormData>
@@ -109,6 +117,7 @@ export function ErpPartnerCategoriesPage() {
       FormFields={FormFields}
       validate={validatePartnerCategory}
       extraColumns={[{ key: 'kind', label: 'Jenis', render: (row) => row.kind }]}
+      extraFilters={kindFilters}
     />
   );
 }

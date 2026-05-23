@@ -7,7 +7,7 @@
  */
 
 import * as React from 'react';
-import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
+import { SimpleMasterPage, type ExtraColumn, type ExtraFilterDef } from '@/components/organisms/simple-master-page';
 import {
   listAccounts,
   createAccount,
@@ -15,6 +15,8 @@ import {
   deleteAccount,
   bulkUpdateAccountStatus,
   bulkDeleteAccounts,
+  ACCOUNT_TYPES,
+  ACCOUNT_KINDS,
   type ErpAccount,
 } from '@/lib/api/accounts';
 import { AccountFormFields, defaultAccountForm, fromAccount, toAccountPayload, validateAccount } from './accounts-form';
@@ -33,6 +35,14 @@ const extraColumns: ExtraColumn<ErpAccount>[] = [
       return p ? `${p.code} — ${p.name}` : '—';
     },
   },
+];
+
+const accountFilters: ExtraFilterDef[] = [
+  { key: 'accountType', label: 'Tipe', options: ACCOUNT_TYPES.map(t => ({ label: t, value: t })) },
+  { key: 'accountKind', label: 'Jenis', options: [
+    { label: 'Header', value: 'HEADER' },
+    { label: 'Postable', value: 'POSTABLE' },
+  ]},
 ];
 
 export function ErpAccountsPage() {
@@ -57,6 +67,7 @@ export function ErpAccountsPage() {
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"
+      extraFilters={accountFilters}
     />
   );
 }

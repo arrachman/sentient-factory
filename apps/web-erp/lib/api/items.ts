@@ -63,7 +63,7 @@ export interface UpdateItemPayload {
 // ─── API functions ────────────────────────────────────────────────────────────
 
 export async function listItems(
-  params?: PaginationParams,
+  params?: PaginationParams & { itemType?: ErpItemType },
 ): Promise<PaginatedResponse<ErpItem>> {
   return apiGet<PaginatedResponse<ErpItem>>('/items', params as Record<string, string | number | boolean | undefined>);
 }

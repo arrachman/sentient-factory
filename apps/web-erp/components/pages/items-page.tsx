@@ -7,7 +7,7 @@
  */
 
 import * as React from 'react';
-import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
+import { SimpleMasterPage, type ExtraColumn, type ExtraFilterDef } from '@/components/organisms/simple-master-page';
 import { Badge } from '@/components/ui/badge';
 import {
   listItems, createItem, updateItem, deleteItem,
@@ -48,6 +48,18 @@ const extraColumns: ExtraColumn<ErpItem>[] = [
   },
 ];
 
+// ─── Extra filters ─────────────────────────────────────────────────────────────
+
+const itemTypeFilters: ExtraFilterDef[] = [
+  { key: 'itemType', label: 'Tipe', options: [
+    { label: 'Inventory', value: 'INVENTORY' },
+    { label: 'Service', value: 'SERVICE' },
+    { label: 'Consumable', value: 'CONSUMABLE' },
+    { label: 'Aset', value: 'ASSET' },
+    { label: 'Non-Inventory', value: 'NON_INVENTORY' },
+  ]},
+];
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export function ErpItemsPage() {
@@ -82,6 +94,7 @@ export function ErpItemsPage() {
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"
+      extraFilters={itemTypeFilters}
     />
   );
 }

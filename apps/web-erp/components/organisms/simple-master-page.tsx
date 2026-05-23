@@ -68,6 +68,13 @@ export interface ExtraColumn<T> {
   render: (row: T) => React.ReactNode;
 }
 
+export interface ExtraFilterDef {
+  key: string;
+  label: string;
+  defaultValue?: string;
+  options: { label: string; value: string }[];
+}
+
 export interface SimpleMasterPageProps<T extends BaseEntity, F> {
   // Display
   title: string;
@@ -94,6 +101,9 @@ export interface SimpleMasterPageProps<T extends BaseEntity, F> {
   // Default sort (overrides organism default of createdAt desc)
   defaultSortBy?: string;
   defaultSortDir?: 'asc' | 'desc';
+  extraFilters?: ExtraFilterDef[];
+  /** Called whenever extra filter values change so parent can sync & wrap list fn. */
+  onExtraFilterChange?: (values: Record<string, string>) => void;
 }
 
 export function SimpleMasterPage<T extends BaseEntity, F>({
@@ -116,12 +126,25 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   extraColumns = [],
   defaultSortBy = 'createdAt',
   defaultSortDir = 'desc',
+  extraFilters = [],
+  onExtraFilterChange,
 }: SimpleMasterPageProps<T, F>) {
   const [sortBy, setSortBy] = React.useState(defaultSortBy);
   const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>(defaultSortDir);
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('active');
+  const [extraFilterValues, setExtraFilterValues] = React.useState<Record<string, string>>(
+    () => Object.fromEntries(extraFilters.map(f => [f.key, f.defaultValue ?? '']))
+  );
   const { page, pageSize, setPage, setPageSize } = useListPagination(storageKey);
+  const setExtraFilter = (key: string, value: string) => {
+    setExtraFilterValues(prev => {
+      const next = { ...prev, [key]: value };
+      onExtraFilterChange?.(next);
+      return next;
+    });
+    setPage(1);
+  };
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search);
   React.useEffect(() => {
@@ -131,12 +154,13 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
 
   const isActiveParam = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
 
+  const extraParams = Object.fromEntries(Object.entries(extraFilterValues).filter(([, v]) => v !== ''));
   const { rows, meta, loading, fetching, error, reload } = useErpList(
     () => list({
       page, limit: pageSize, search: debouncedSearch || undefined,
-      sortBy, sortDir, isActive: isActiveParam,
-    }),
-    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
+      sortBy, sortDir, isActive: isActiveParam, ...extraParams,
+    } as Parameters<typeof list>[0]),
+    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam, JSON.stringify(extraFilterValues)],
   );
 
   React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
@@ -172,9 +196,15 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   const filters: FilterConfig[] = [
     { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
       options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
+    ...extraFilters.map(f => ({
+      key: f.key, label: f.label,
+      value: extraFilterValues[f.key] ?? '',
+      onChange: (v: string) => setExtraFilter(f.key, v),
+      options: [{ label: 'Semua', value: '' }, ...f.options],
+    })),
   ];
   // (label/option strings here are kept as i18n keys — translated by ErpListLayout via tGlobal)
-  const hasActiveFilter = search !== '' || statusFilter !== 'active';
+  const hasActiveFilter = search !== '' || statusFilter !== 'active' || Object.values(extraFilterValues).some(v => v !== '');
   const summary: SummaryConfig = { metricLabel: `Σ ${tGlobal(entityLabel)}`, rowCount: totalRows, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
 
@@ -286,7 +316,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
                   variant={hasActiveFilter ? 'filtered' : 'empty'}
                   entityLabel={tGlobal(entityLabel)}
                   searchTerm={debouncedSearch || undefined}
-                  onAction={hasActiveFilter ? () => { setSearch(''); setStatusFilter('active'); } : openCreate}
+                  onAction={hasActiveFilter ? () => { setSearch(''); setStatusFilter('active'); setExtraFilterValues(Object.fromEntries(extraFilters.map(f => [f.key, f.defaultValue ?? '']))); } : openCreate}
                   actionLabel={hasActiveFilter ? tGlobal('Reset filter') : `${tGlobal('Tambah')} ${tGlobal(entityLabel)}`}
                   actionShortcut={hasActiveFilter ? undefined : 'N'}
                 />
