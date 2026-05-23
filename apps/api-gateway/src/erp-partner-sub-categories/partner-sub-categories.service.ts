@@ -62,6 +62,7 @@ export class ErpPartnerSubCategoriesService {
       ];
     }
     if (query.isActive !== undefined) where.isActive = query.isActive;
+    if (query.type) where.type = query.type;
     const sortBy = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([

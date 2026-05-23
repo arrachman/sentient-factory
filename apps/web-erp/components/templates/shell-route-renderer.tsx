@@ -30,6 +30,7 @@ import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
 import { ErpItemsPage } from '@/components/pages/items-page';
 import { ErpUnitsPage } from '@/components/pages/units-page';
 import { ErpPartnersPage } from '@/components/pages/partners-page';
+import { ErpVendorsPage } from '@/components/pages/vendors-page';
 import { ErpItemCategoriesPage } from '@/components/pages/item-categories-page';
 import { ErpLocationsPage } from '@/components/pages/locations-page';
 import { ErpWarehousesPage } from '@/components/pages/warehouses-page';
@@ -123,6 +124,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/items': () => <ErpItemsPage />,
   '/master/units': () => <ErpUnitsPage />,
   '/master/partners': () => <ErpPartnersPage />,
+  '/master/vendors': () => <ErpVendorsPage />,
   '/master/item-categories': () => <ErpItemCategoriesPage />,
   '/master/locations': () => <ErpLocationsPage />,
   '/master/warehouses': () => <ErpWarehousesPage />,
@@ -155,9 +157,9 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/areas': () => <ErpAreasPage />,
   '/master/item-locations': () => <ErpItemLocationsPage />,
   // PartnerSubCategory: 1 table dengan enum type, 3 menu sidebar share page (decision 2026-05-20)
-  '/master/customer-categories': () => <ErpPartnerSubCategoriesPage />,
-  '/master/supplier-categories': () => <ErpPartnerSubCategoriesPage />,
-  '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage />,
+  '/master/customer-categories': () => <ErpPartnerSubCategoriesPage type="CUSTOMER" />,
+  '/master/supplier-categories': () => <ErpPartnerSubCategoriesPage type="SUPPLIER" />,
+  '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage type="SALESMAN" />,
   '/master/price-categories': () => <ErpPriceCategoriesPage />,
   '/master/transaction-notes': () => <ErpTransactionNotesPage />,
   '/master/price-indices': () => <ErpPriceIndicesPage />,

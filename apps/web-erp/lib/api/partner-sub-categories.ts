@@ -23,7 +23,13 @@ export type UpdateErpPartnerSubCategoryPayload = Partial<CreateErpPartnerSubCate
 
 const BASE = '/partner-sub-categories';
 
-export async function listPartnerSubCategories(params?: PaginationParams): Promise<PaginatedResponse<ErpPartnerSubCategory>> {
+export type PartnerSubCategoryType = 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN';
+
+export interface ListPartnerSubCategoriesParams extends PaginationParams {
+  type?: PartnerSubCategoryType;
+}
+
+export async function listPartnerSubCategories(params?: ListPartnerSubCategoriesParams): Promise<PaginatedResponse<ErpPartnerSubCategory>> {
   return apiGet<PaginatedResponse<ErpPartnerSubCategory>>(BASE, params as Record<string, string | number | boolean | undefined>);
 }
 
