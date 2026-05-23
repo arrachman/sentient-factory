@@ -67,6 +67,8 @@ import { ErpItemLocationsPage } from '@/components/pages/item-locations-page';
 import { ErpPartnerSubCategoriesPage } from '@/components/pages/partner-sub-categories-page';
 import { ErpPriceCategoriesPage } from '@/components/pages/price-categories-page';
 import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-page';
+import { ErpPriceIndicesPage } from '@/components/pages/price-indices-page';
+import { ErpItemInformationsPage } from '@/components/pages/item-informations-page';
 // MD production batch — 10 entitas master produksi baru
 import { ErpProductionCategoriesPage } from '@/components/pages/production-categories-page';
 import { ErpPointCategoriesPage } from '@/components/pages/point-categories-page';
@@ -156,6 +158,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage />,
   '/master/price-categories': () => <ErpPriceCategoriesPage />,
   '/master/transaction-notes': () => <ErpTransactionNotesPage />,
+  '/master/price-indices': () => <ErpPriceIndicesPage />,
+  '/master/item-informations': () => <ErpItemInformationsPage />,
   // MD production batch (2026-05-23) — 10 master produksi baru
   '/master/production-categories': () => <ErpProductionCategoriesPage />,
   '/master/point-categories': () => <ErpPointCategoriesPage />,
