@@ -11,6 +11,7 @@ export type UpdateProfileInput = {
   title?: string;
   bio?: string;
   color?: string;
+  phone: string;
   /**
    * Base64 data URL (data:image/...;base64,...) atau URL absolut.
    * `null` untuk hapus avatar (fallback ke colored initial).
