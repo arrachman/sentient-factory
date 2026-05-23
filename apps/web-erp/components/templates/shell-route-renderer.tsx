@@ -69,6 +69,7 @@ import { ErpItemLocationsPage } from '@/components/pages/item-locations-page';
 import { ErpPartnerSubCategoriesPage } from '@/components/pages/partner-sub-categories-page';
 import { ErpPriceCategoriesPage } from '@/components/pages/price-categories-page';
 import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-page';
+import { ErpTxnNoteDetailsPage } from '@/components/pages/txn-note-details-page';
 import { ErpPriceIndicesPage } from '@/components/pages/price-indices-page';
 import { ErpItemInformationsPage } from '@/components/pages/item-informations-page';
 // MD production batch — 10 entitas master produksi baru
@@ -96,6 +97,9 @@ import { ErpSendGirosPage } from '@/components/pages/fin-send-giros-page';
 import { ErpReceiptGiroClearingsPage } from '@/components/pages/fin-receipt-giro-clearings-page';
 import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clearings-page';
 import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
+// Settings sub-pages + Import
+import { SettingsGroupPage } from '@/components/pages/settings-group-page';
+import { ErpImportPage } from '@/components/pages/import-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 
 /**
@@ -110,6 +114,22 @@ interface ErpPageCtx {
 }
 
 const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
+  // ── Admin (sys/adm) ───────────────────────────────────────────────────────
+  // ── Admin Settings sub-pages ─────────────────────────────────────────────
+  '/admin/settings/company': () => <SettingsGroupPage group="company" title="Pengaturan Perusahaan" />,
+  '/admin/settings/accounting': () => <SettingsGroupPage group="accounting" title="Pengaturan Akuntansi" />,
+  '/admin/settings/bank-accounts': () => <SettingsGroupPage group="bank-accounts" title="Rekening Bank Perusahaan" />,
+  '/admin/settings/tax': () => <SettingsGroupPage group="tax" title="Pengaturan Pajak" />,
+  '/admin/settings/description': () => <SettingsGroupPage group="description" title="Deskripsi Dokumen" />,
+  '/admin/settings/format': () => <SettingsGroupPage group="format" title="Format Tampilan" />,
+  '/admin/settings/defaults': () => <SettingsGroupPage group="defaults" title="Nilai Default" />,
+  '/admin/settings/report-defaults': () => <SettingsGroupPage group="report-defaults" title="Default Laporan" />,
+  '/admin/settings/signature': () => <SettingsGroupPage group="signature" title="Tanda Tangan" />,
+  '/admin/settings/options': () => <SettingsGroupPage group="options" title="Opsi Lanjutan" />,
+  '/admin/settings/home': () => <SettingsGroupPage group="home" title="Pengaturan Beranda" />,
+  '/admin/settings/approval': () => <SettingsGroupPage group="approval" title="Pengaturan Persetujuan" />,
+  // ── Import ────────────────────────────────────────────────────────────────
+  '/admin/import': () => <ErpImportPage />,
   // ── Admin (sys/adm) ───────────────────────────────────────────────────────
   '/admin/users': () => <ErpUsersPage />,
   '/admin/roles': () => <ErpRolesPage />,
@@ -162,6 +182,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage type="SALESMAN" />,
   '/master/price-categories': () => <ErpPriceCategoriesPage />,
   '/master/transaction-notes': () => <ErpTransactionNotesPage />,
+  '/master/txn-note-details': () => <ErpTxnNoteDetailsPage />,
   '/master/price-indices': () => <ErpPriceIndicesPage />,
   '/master/item-informations': () => <ErpItemInformationsPage />,
   // MD production batch (2026-05-23) — 10 master produksi baru

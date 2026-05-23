@@ -238,6 +238,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/master/salesman-categories': { group: 'Data Master', title: 'Salesman Category', icon: 'database' },
   '/master/price-categories': { group: 'Data Master', title: 'Price Category', icon: 'database' },
   '/master/transaction-notes': { group: 'Data Master', title: 'Transaction Note', icon: 'database' },
+  '/master/txn-note-details': { group: 'Data Master', title: 'Txn Note Detail', icon: 'database' },
   // MD production batch (2026-05-23)
   '/master/production-categories': { group: 'Data Master', title: 'Production Category', icon: 'database' },
   '/master/point-categories': { group: 'Data Master', title: 'Point Category', icon: 'database' },

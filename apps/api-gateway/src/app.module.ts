@@ -73,6 +73,7 @@ import { ErpItemInformationsModule } from './erp-item-informations/erp-item-info
 import { ErpPriceIndicesModule } from './erp-price-indices/erp-price-indices.module';
 import { ErpItemPermissionsModule } from './erp-item-permissions/item-permissions.module';
 import { ErpTransactionNotesModule } from './erp-transaction-notes/transaction-notes.module';
+import { ErpTxnNoteDetailsModule } from './erp-txn-note-details/txn-note-details.module';
 import { ErpUsersModule } from './erp-users/erp-users.module';
 import { ErpRolesModule } from './erp-roles/erp-roles.module';
 import { ErpPermissionsModule } from './erp-permissions/erp-permissions.module';
@@ -200,6 +201,7 @@ import { ErpAuditModule } from './erp-audit/erp-audit.module';
     ErpPriceIndicesModule,
     ErpItemPermissionsModule,
     ErpTransactionNotesModule,
+    ErpTxnNoteDetailsModule,
     ErpUsersModule,
     ErpRolesModule,
     ErpPermissionsModule,
