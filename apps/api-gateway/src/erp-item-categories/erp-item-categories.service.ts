@@ -78,7 +78,7 @@ export class ErpItemCategoriesService {
         include: {
           parent: { select: { id: true, code: true, name: true } },
         },
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDir ?? 'desc' }],
         skip,
         take: limit,
       }),
