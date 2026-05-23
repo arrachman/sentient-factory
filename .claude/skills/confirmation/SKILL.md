@@ -6,11 +6,10 @@ description: >
   scope yang lebar, atau aksi berisiko (destructive, shared state, hard-to-reverse).
   Tujuannya: tanya dulu di depan — bukan tengah jalan, bukan setelah selesai.
 trigger: >
-  Aktif saat request user mengandung kata samar ("itu", "yang kemarin",
-  "rapikan", "perbaiki bug-nya", "update semua"), menyentuh aksi destruktif
-  (delete, drop, reset, force-push, rm -rf, truncate, migrate destruktif),
-  scope tidak jelas (file/modul/branch mana), atau ada >1 interpretasi
-  yang masuk akal. Juga aktif untuk task lintas-app/lintas-package besar.
+  WAJIB AKTIF untuk setiap request non-trivial. Selalu konfirmasi dan
+  selaraskan pemahaman SEBELUM tool call pertama yang mengubah state.
+  Minimal: restate pemahaman + tanya kalau ada yang ambigu. Tidak perlu
+  menunggu kondisi khusus — ini default mode, bukan mode darurat.
 ---
 
 # Confirmation-First Operating Mode
@@ -18,7 +17,29 @@ trigger: >
 Prinsip: **lebih baik tanya 10 detik di depan daripada rollback 1 jam**.
 Sejalan dengan `CLAUDE.md` §10 ("Saat ragu, tanya user").
 
-## 1. Kapan WAJIB konfirmasi di awal
+> **Mode ini WAJIB aktif.** Sebelum aksi apapun, Claude HARUS restating
+> pemahaman dan mengonfirmasi ke user — terutama untuk task yang menyentuh
+> kode, DB, file, atau shared state.
+
+## 0. Langkah WAJIB sebelum tool call pertama
+
+Untuk setiap request non-trivial, sebelum membuka file atau menjalankan
+command apapun:
+
+1. **Restate** — parafrase singkat apa yang kamu pahami dari request.
+2. **Identifikasi gap** — hal apa yang masih ambigu atau perlu keputusan user.
+3. **Konfirmasi atau asumsi** — kalau ada cabang keputusan nyata → tanya.
+   Kalau gap kecil dan reversible → nyatakan asumsi lalu lanjut.
+4. **STOP** sampai user confirm (untuk kasus ambigu/destruktif).
+
+Format ringkas:
+
+```
+Pemahaman saya: <parafrase singkat>
+Perlu konfirmasi: <pertanyaan konkret, pakai AskUserQuestion jika ≥2 opsi>
+```
+
+## 1. Kapan WAJIB konfirmasi (bukan hanya restate)
 
 Sebelum tool call pertama yang mengubah state, tanya dulu jika menemui:
 
@@ -54,9 +75,10 @@ Sebelum tool call pertama yang mengubah state, tanya dulu jika menemui:
 
 ## 3. Format konfirmasi di awal
 
-Saat ragu, balas pertama kali dengan struktur ini (boleh ringkas):
+Saat ada ambiguitas, balas pertama dengan struktur ini (ringkas):
 
 ```
+Pemahaman saya: <parafrase singkat task>
 Sebelum mulai, perlu konfirmasi:
 1. <hal ambigu 1> → opsi A / opsi B
 2. <hal ambigu 2> → ?
@@ -77,6 +99,7 @@ pola asumsi — selalu tanya.
 
 ## 5. Anti-pola yang harus dihindari
 
+- ❌ Langsung kerja tanpa restate pemahaman sama sekali.
 - ❌ Mulai edit dulu, baru tanya di tengah.
 - ❌ Tanya setelah selesai ("sudah saya hapus, oke kan?").
 - ❌ Tanya 5–10 pertanyaan sekaligus untuk task sederhana.
@@ -86,10 +109,11 @@ pola asumsi — selalu tanya.
 
 ## 6. Checklist mental sebelum tool call pertama
 
-1. Apakah ada kata samar di request? → klarifikasi.
-2. Apakah aksi ini reversible? → kalau tidak, konfirmasi.
-3. Apakah ada >1 interpretasi? → tanya pilih yang mana.
-4. Apakah scope jelas (file/modul/branch)? → kalau tidak, tanya.
-5. Sudah cek `git status` / branch aktif kalau relevan? → kalau belum, cek.
+1. Sudah restate pemahaman ke user? → kalau belum, lakukan.
+2. Apakah ada kata samar di request? → klarifikasi.
+3. Apakah aksi ini reversible? → kalau tidak, konfirmasi.
+4. Apakah ada >1 interpretasi? → tanya pilih yang mana.
+5. Apakah scope jelas (file/modul/branch)? → kalau tidak, tanya.
+6. Sudah cek `git status` / branch aktif kalau relevan? → kalau belum, cek.
 
-Kalau semua lima jawabannya aman → langsung kerja, narasi singkat saja.
+Kalau semua jawabannya aman → langsung kerja, narasi singkat saja.
