@@ -14,6 +14,18 @@ const ITEM_INCLUDE = {
   baseUnit: { select: { id: true, code: true, name: true } },
 } as const;
 
+// Maps Prisma field names to the frontend ErpItem interface shape
+function mapItem(item: any) {
+  const { type, baseUnit, baseUnitId, salePrice, ...rest } = item;
+  return {
+    ...rest,
+    itemType: type,
+    unitId: String(baseUnitId),
+    unit: baseUnit ?? null,
+    sellingPrice: salePrice != null ? String(salePrice) : null,
+  };
+}
+
 @Injectable()
 export class ErpItemsService {
   constructor(
@@ -77,7 +89,7 @@ export class ErpItemsService {
       actorId: actorId ? BigInt(actorId) : undefined,
     });
 
-    return { success: true, data: created };
+    return { success: true, data: mapItem(created) };
   }
 
   async findAll(query: QueryErpItemDto) {
@@ -112,11 +124,14 @@ export class ErpItemsService {
       where.isActive = query.isActive;
     }
 
+    const sortField = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpItem.findMany({
         where,
         include: ITEM_INCLUDE,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [sortField]: sortDir }],
         skip,
         take: limit,
       }),
@@ -125,7 +140,7 @@ export class ErpItemsService {
 
     return {
       success: true,
-      data: items,
+      data: items.map(mapItem),
       meta: {
         page,
         limit,
@@ -143,7 +158,7 @@ export class ErpItemsService {
     if (!item) {
       throw new NotFoundException('ERP item not found');
     }
-    return { success: true, data: item };
+    return { success: true, data: mapItem(item) };
   }
 
   async update(id: bigint, dto: UpdateErpItemDto, actorId?: string) {
@@ -222,7 +237,7 @@ export class ErpItemsService {
       actorId: actorId ? BigInt(actorId) : undefined,
     });
 
-    return { success: true, data: updated };
+    return { success: true, data: mapItem(updated) };
   }
 
   async remove(id: bigint, actorId?: string) {
