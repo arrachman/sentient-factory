@@ -62,3 +62,13 @@ export async function updateTax(
 export async function deleteTax(id: string): Promise<void> {
   await apiDelete<void>(`/taxes/${id}`);
 }
+
+export async function bulkUpdateErpTaxStatus(ids: string[], isActive: boolean): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>('/taxes/bulk/status', { ids, isActive });
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteErpTaxes(ids: string[]): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>('/taxes/bulk', { ids });
+  return { affected: res.affected };
+}

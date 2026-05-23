@@ -309,7 +309,90 @@ Relations: self `parent`/`children`, `currency`.
 
 ---
 
+## Geographic Reference (`md_*`)
+
+> Hierarki kanonik: `md_countries` ← `md_provinces` ← `md_cities` ← `md_areas`.
+> FK **wajib ditegakkan** di setiap level (intra-domain `md`). Kode pos (`postalCode`)
+> berada di `md_areas` (kecamatan), bukan di `md_cities` — karena satu kota punya
+> banyak kode pos, masing-masing per kecamatan. Lihat `CLAUDE.md §2.20`.
+>
+> Jika kelurahan dibutuhkan di masa depan → tambah `md_sub_areas` (FK ke `md_areas`).
+
+### Country  → `md_countries`  (legacy `m1_country`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | ISO 3166-1 alpha-2 direkomendasikan |
+| name | String | |
+| isoCode ○ | String | ISO 3166-1 alpha-3 |
+| isActive | Boolean | |
+
+Relations: `provinces Province[]`.
+
+### Province  → `md_provinces`  (legacy `m1_province`)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | |
+| name | String | |
+| countryId ➜ | BigInt → Country | FK wajib |
+| isActive | Boolean | |
+
+Relations: `country Country`, `cities City[]`.
+
+### City  → `md_cities`  (legacy `m1_city` — kota/kabupaten)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | |
+| name | String | |
+| provinceId ➜ | BigInt → Province | FK wajib |
+| isActive | Boolean | |
+
+> **Tidak ada `postalCode` di level ini** — satu kota punya banyak kode pos.
+
+Relations: `province Province`, `areas Area[]`.
+
+### Area  → `md_areas`  (kecamatan — BPS 7-digit code)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | BPS 7-digit, e.g. `"3173080"` |
+| name | String | nama kecamatan |
+| cityId ➜ | BigInt → City | FK wajib |
+| postalCode ○ | String | kode pos per kecamatan (dari kelurahan pertama) |
+| isActive | Boolean | |
+
+Relations: `city City`, `subAreas SubArea[]`.
+
+### SubArea  → `md_sub_areas`  (kelurahan/desa — BPS 10-digit code)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | BPS 10-digit, e.g. `"3173080003"` |
+| name | String | nama kelurahan/desa |
+| areaId ➜ | BigInt → Area | FK wajib |
+| postalCode ○ | String | **kode pos per kelurahan** — SSOT paling akurat |
+| isActive | Boolean | |
+
+`@@index([postalCode])` — untuk autofill dari kelurahan ke kode pos.
+
+Relations: `area Area`.
+
+> **Seed data Indonesia lengkap** tersedia via `npm run db:seed:geo`
+> (`prisma/seed-md-geo.ts`, sumber `kode-wilayah-id` MIT):
+> 38 provinsi · 514 kab/kota · 7.286 kecamatan · **84.270 kelurahan/desa**.
+> Semua kode = BPS code. Migration: `20260522_004_erp_md_geo_kelurahan`.
+
+---
+
 **Count:** 17 Master Data (`md_*`) core entities (3 org, 3 items, 5 partner, 5 finance¹ + ItemCategory/Unit).
 ¹ finance = Currency, **CurrencyRate**, Account, Tax, PaymentTerm.
 Combined MVP total = **31 tables** (14 Administrator `sys_*`/`adm_*` + 17 `md_*`).
+Geographic reference (4 tabel: Country, Province, City, Area) ditambahkan via §2.18 batch.
 Legacy field-mapping appendix: **[legacy-mapping.md](legacy-mapping.md)**.

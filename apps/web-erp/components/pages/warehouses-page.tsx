@@ -3,59 +3,28 @@
 /**
  * Master Data — Warehouse page.
  * Lists md_warehouses; supports create, edit, delete.
- * Location FK rendered as a Select populated from /locations.
+ * Location FK rendered as a SearchSelect populated lazily from /locations.
  * Atomic tier: Page.
  */
 
 import * as React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
-  ModalFooter,
-} from '@/components/organisms/modal';
-import {
-  ErpListLayout,
-  type FilterConfig,
-  type SummaryConfig,
-  type ListPaginationConfig,
-} from '@/components/organisms/erp-list-layout';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmpty,
-} from '@/components/organisms/table';
-import { confirmAction, notify } from '@/lib/feedback';
-import { useErpList } from '@/lib/use-erp-list';
-import { useListPagination } from '@/lib/use-list-pagination';
+import { SearchSelect } from '@/components/molecules/search-select';
+import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
 import {
   listWarehouses,
   createWarehouse,
   updateWarehouse,
   deleteWarehouse,
-} from '@/lib/api/warehouses';
-import type {
-  ErpWarehouse,
-  CreateWarehousePayload,
+  bulkUpdateWarehouseStatus,
+  bulkDeleteWarehouses,
+  type ErpWarehouse,
+  type CreateWarehousePayload,
 } from '@/lib/api/warehouses';
 import { listLocations } from '@/lib/api/locations';
-import type { ErpLocation } from '@/lib/api/locations';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -77,313 +46,107 @@ const defaultForm = (): WarehouseForm => ({
   isActive: true,
 });
 
-function fromWarehouse(w: ErpWarehouse): WarehouseForm {
+const fromRecord = (w: ErpWarehouse): WarehouseForm => ({
+  code: w.code,
+  name: w.name,
+  locationId: w.locationId ?? '',
+  allowNegativeStock: w.allowNegativeStock,
+  notes: w.notes ?? '',
+  isActive: w.isActive,
+});
+
+const toPayload = (f: WarehouseForm): CreateWarehousePayload => ({
+  code: f.code,
+  name: f.name,
+  locationId: f.locationId,
+  allowNegativeStock: f.allowNegativeStock,
+  notes: f.notes || undefined,
+  isActive: f.isActive,
+});
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const validateWarehouse = (form: WarehouseForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    { field: 'locationId', label: 'Lokasi', required: true },
+  ]);
+
+// ─── FK loader ────────────────────────────────────────────────────────────────
+
+async function loadLocationOptions(search: string, page: number, limit: number) {
+  const res = await listLocations({ search: search || undefined, page, limit, isActive: true });
   return {
-    code: w.code,
-    name: w.name,
-    locationId: w.locationId ?? '',
-    allowNegativeStock: w.allowNegativeStock,
-    notes: w.notes ?? '',
-    isActive: w.isActive,
+    data: res.data.map((l) => ({ value: l.id, label: l.name, code: l.code })),
+    total: res.meta.total,
   };
 }
 
-function toPayload(f: WarehouseForm): CreateWarehousePayload {
-  return {
-    code: f.code,
-    name: f.name,
-    locationId: f.locationId,
-    allowNegativeStock: f.allowNegativeStock,
-    notes: f.notes || undefined,
-    isActive: f.isActive,
-  };
-}
+// ─── Form fields ──────────────────────────────────────────────────────────────
 
-// ─── Form ─────────────────────────────────────────────────────────────────────
-
-function WarehouseFormFields({
-  data,
-  locations,
-  onChange,
-}: {
-  data: WarehouseForm;
-  locations: ErpLocation[];
-  onChange: (d: WarehouseForm) => void;
-}) {
-  const set = (k: keyof WarehouseForm, v: string | boolean) =>
+function WarehouseFormFields({ data, onChange, errors = {} }: { data: WarehouseForm; onChange: (d: WarehouseForm) => void; errors?: FormErrors<WarehouseForm> }) {
+  const set = <K extends keyof WarehouseForm>(k: K, v: WarehouseForm[K]) =>
     onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="wf-code" required>
-        <Input
-          id="wf-code"
-          value={data.code}
-          onChange={(e) => set('code', e.target.value)}
-          placeholder="WH-001"
-        />
+      <FormField label="Kode" htmlFor="wf-code" required error={errors.code}>
+        <Input id="wf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="WH-001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="wf-name" required>
-        <Input
-          id="wf-name"
-          value={data.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Gudang Bahan Baku A"
-        />
+      <FormField label="Nama" htmlFor="wf-name" required error={errors.name}>
+        <Input id="wf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Gudang Bahan Baku A" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Lokasi" htmlFor="wf-loc" required>
-        <Select
+      <FormField label="Lokasi" htmlFor="wf-loc" required error={errors.locationId}>
+        <SearchSelect
+          id="wf-loc"
+          placeholder="Cari lokasi…"
           value={data.locationId}
           onValueChange={(v) => set('locationId', v)}
-        >
-          <SelectTrigger id="wf-loc">
-            <SelectValue placeholder="Pilih lokasi" />
-          </SelectTrigger>
-          <SelectContent>
-            {locations.map((l) => (
-              <SelectItem key={l.id} value={l.id}>
-                {l.code} — {l.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          loadOptions={loadLocationOptions}
+          error={!!errors.locationId}
+        />
       </FormField>
       <FormField label="Izinkan Stok Negatif" htmlFor="wf-neg">
-        <BooleanRadio
-          id="wf-neg"
-          value={data.allowNegativeStock}
-          onValueChange={(v) => set('allowNegativeStock', v)}
-          trueLabel="Ya"
-          falseLabel="Tidak"
-        />
+        <BooleanRadio id="wf-neg" value={data.allowNegativeStock} onValueChange={(v) => set('allowNegativeStock', v)} trueLabel="Ya" falseLabel="Tidak" />
       </FormField>
       <FormField label="Catatan" htmlFor="wf-notes">
-        <Input
-          id="wf-notes"
-          value={data.notes}
-          onChange={(e) => set('notes', e.target.value)}
-          placeholder="Gudang utama bahan baku produksi"
-        />
+        <Input id="wf-notes" value={data.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Gudang utama bahan baku produksi" />
       </FormField>
       <FormField label="Status" htmlFor="wf-active">
-        <BooleanRadio
-          id="wf-active"
-          value={data.isActive}
-          onValueChange={(v) => set('isActive', v)}
-        />
+        <BooleanRadio id="wf-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>
     </div>
   );
 }
 
+// ─── Extra columns ────────────────────────────────────────────────────────────
+
+const extraColumns: ExtraColumn<ErpWarehouse>[] = [
+  {
+    key: 'location',
+    label: 'Lokasi',
+    render: (r) => (r.location ? `${r.location.code} — ${r.location.name}` : '—'),
+  },
+  {
+    key: 'allowNegativeStock',
+    label: 'Stok Negatif',
+    render: (r) => (r.allowNegativeStock ? 'Diizinkan' : 'Tidak'),
+  },
+];
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpWarehousesPage() {
-  const [sortBy, setSortBy] = React.useState('createdAt');
-  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
-  const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('');
-  const { page, pageSize, setPage, setPageSize } = useListPagination('warehouses');
-
-  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
-  React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const isActiveParam =
-    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
-
-  const { rows, meta, loading, error, reload } = useErpList(
-    () =>
-      listWarehouses({
-        page,
-        limit: pageSize,
-        search: debouncedSearch || undefined,
-        sortBy,
-        sortDir,
-        isActive: isActiveParam,
-      }),
-    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
-  );
-
-  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
-
-  const [locations, setLocations] = React.useState<ErpLocation[]>([]);
-  const [open, setOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<ErpWarehouse | null>(null);
-  const [form, setForm] = React.useState<WarehouseForm>(defaultForm);
-  const [saving, setSaving] = React.useState(false);
-
-  React.useEffect(() => {
-    listLocations({ limit: 100 })
-      .then((res) => setLocations(res.data))
-      .catch(() => setLocations([]));
-  }, []);
-
-  const paged = rows;
-  const totalRows = meta?.total ?? 0;
-  const pageCount = meta?.totalPages ?? 1;
-
-  const ALL = { label: 'Semua', value: '' };
-  const warehouseFilters: FilterConfig[] = [
-    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
-      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
-  ];
-  const hasActiveFilter = search !== '' || statusFilter !== '';
-  const warehouseSummary: SummaryConfig = { metricLabel: 'Σ gudang', rowCount: totalRows, totalCount: totalRows };
-  const warehousePagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
-  void setSortBy; void setSortDir; void hasActiveFilter;
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm(defaultForm());
-    setOpen(true);
-  };
-
-  const openEdit = (w: ErpWarehouse) => {
-    setEditing(w);
-    setForm(fromWarehouse(w));
-    setOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateWarehouse(editing.id, toPayload(form));
-        notify('Gudang diperbarui', 'success');
-      } else {
-        await createWarehouse(toPayload(form));
-        notify('Gudang dibuat', 'success');
-      }
-      setOpen(false);
-      reload();
-    } catch (e: unknown) {
-      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = (w: ErpWarehouse) => {
-    confirmAction({
-      title: 'Hapus gudang?',
-      message: `${w.code} — ${w.name} akan dihapus permanen.`,
-      variant: 'danger',
-      confirmLabel: 'Hapus',
-      confirmIcon: 'trash',
-      onConfirm: async () => {
-        try {
-          await deleteWarehouse(w.id);
-          notify('Gudang dihapus', 'success');
-          reload();
-        } catch (e: unknown) {
-          notify(e instanceof Error ? e.message : 'Gagal', 'danger');
-        }
-      },
-    });
-  };
-
   return (
-    <>
-      <ErpListLayout
-        title="Gudang"
-        code="WH"
-        loading={loading}
-        error={error}
-        search={search}
-        onSearch={setSearch}
-        onAdd={openCreate}
-        onRefresh={reload}
-        filters={warehouseFilters}
-        summary={warehouseSummary}
-        pagination={warehousePagination}
-      >
-        <div className="lines">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kode</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Lokasi</TableHead>
-                <TableHead>Stok Negatif</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paged.length === 0 ? (
-                <TableEmpty colSpan={6} />
-              ) : (
-                paged.map((w) => (
-                  <TableRow key={w.id}>
-                    <TableCell className="mono">{w.code}</TableCell>
-                    <TableCell>{w.name}</TableCell>
-                    <TableCell>
-                      {w.location
-                        ? `${w.location.code} — ${w.location.name}`
-                        : '—'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={w.allowNegativeStock ? 'warn' : 'default'}
-                        dot
-                      >
-                        {w.allowNegativeStock ? 'Diizinkan' : 'Tidak'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={w.isActive ? 'success' : 'default'} dot>
-                        {w.isActive ? 'Aktif' : 'Nonaktif'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn sm" onClick={() => openEdit(w)}>
-                          Edit
-                        </button>
-                        <button
-                          className="btn sm danger"
-                          onClick={() => handleDelete(w)}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </ErpListLayout>
-
-      <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>
-              {editing ? 'Edit Gudang' : 'Tambah Gudang'}
-            </ModalTitle>
-          </ModalHeader>
-          <WarehouseFormFields
-            data={form}
-            locations={locations}
-            onChange={setForm}
-          />
-          <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              Batal
-            </button>
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Menyimpan...' : 'Simpan'}
-            </button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+    <SimpleMasterPage<ErpWarehouse, WarehouseForm>
+      title="Gudang" code="WH" entityLabel="gudang"
+      storageKey="warehouses" auditEntityName="ErpWarehouse"
+      list={listWarehouses} create={createWarehouse} update={updateWarehouse} remove={deleteWarehouse}
+      bulkStatus={bulkUpdateWarehouseStatus} bulkDelete={bulkDeleteWarehouses}
+      defaultForm={defaultForm} fromRecord={fromRecord} toPayload={toPayload}
+      FormFields={WarehouseFormFields}
+      validate={validateWarehouse}
+      extraColumns={extraColumns}
+    />
   );
 }

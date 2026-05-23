@@ -20,6 +20,7 @@ import { BooleanRadio } from '@/components/ui/radio-group';
 import type { ErpItem, ErpItemType, CreateItemPayload } from '@/lib/api/items';
 import type { ErpUnit } from '@/lib/api/units';
 import type { ErpItemCategory } from '@/lib/api/item-categories';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 const ITEM_TYPES: ErpItemType[] = [
   'INVENTORY',
@@ -73,33 +74,44 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
   };
 }
 
+export const validateItem = (form: ItemFormData) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    { field: 'categoryId', label: 'Kategori', required: true },
+    { field: 'unitId', label: 'Satuan', required: true },
+  ]);
+
 interface ItemFormProps {
   data: ItemFormData;
   onChange: (d: ItemFormData) => void;
   units: ErpUnit[];
   categories: ErpItemCategory[];
+  errors?: FormErrors<ItemFormData>;
 }
 
-export function ItemFormFields({ data, onChange, units, categories }: ItemFormProps) {
+export function ItemFormFields({ data, onChange, units, categories, errors = {} }: ItemFormProps) {
   const set = (k: keyof ItemFormData, v: string | boolean) =>
     onChange({ ...data, [k]: v });
 
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="if-code" required>
+      <FormField label="Kode" htmlFor="if-code" required error={errors.code}>
         <Input
           id="if-code"
           value={data.code}
           onChange={(e) => set('code', e.target.value)}
           placeholder="ITM-001"
+          aria-invalid={!!errors.code}
         />
       </FormField>
-      <FormField label="Nama" htmlFor="if-name" required>
+      <FormField label="Nama" htmlFor="if-name" required error={errors.name}>
         <Input
           id="if-name"
           value={data.name}
           onChange={(e) => set('name', e.target.value)}
           placeholder="Baja Plat 2mm"
+          aria-invalid={!!errors.name}
         />
       </FormField>
       <FormField label="Tipe" htmlFor="if-type" required>
@@ -119,12 +131,12 @@ export function ItemFormFields({ data, onChange, units, categories }: ItemFormPr
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label="Kategori" htmlFor="if-cat" required>
+      <FormField label="Kategori" htmlFor="if-cat" required error={errors.categoryId}>
         <Select
           value={data.categoryId || '__none__'}
           onValueChange={(v) => set('categoryId', v === '__none__' ? '' : v)}
         >
-          <SelectTrigger id="if-cat">
+          <SelectTrigger id="if-cat" aria-invalid={!!errors.categoryId}>
             <SelectValue placeholder="Pilih kategori" />
           </SelectTrigger>
           <SelectContent>
@@ -137,12 +149,12 @@ export function ItemFormFields({ data, onChange, units, categories }: ItemFormPr
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label="Satuan" htmlFor="if-unit" required>
+      <FormField label="Satuan" htmlFor="if-unit" required error={errors.unitId}>
         <Select
           value={data.unitId || '__none__'}
           onValueChange={(v) => set('unitId', v === '__none__' ? '' : v)}
         >
-          <SelectTrigger id="if-unit">
+          <SelectTrigger id="if-unit" aria-invalid={!!errors.unitId}>
             <SelectValue placeholder="Pilih satuan" />
           </SelectTrigger>
           <SelectContent>

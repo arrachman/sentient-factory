@@ -101,6 +101,11 @@ export function AppearancePage(_props: AppearancePageProps) {
         setTw(merged);
         applyToDom(merged);
         if (prefs.theme) setTheme(prefs.theme);
+        // Sync server SSOT → localStorage so readUrlRoutingEnabled() is correct
+        // cross-device / after localStorage cleared.
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        } catch { /* localStorage unavailable */ }
         hydratedRef.current = true;
       })
       .catch(() => {
@@ -380,8 +385,8 @@ export function AppearancePage(_props: AppearancePageProps) {
                 ? t('Aktifkan Mode Per-halaman URL?')
                 : t('Kembali ke Mode Internal?'),
               message: v
-                ? t('Tab navigator akan dihapus — Anda hanya dapat membuka satu halaman dalam satu waktu. Semua tab yang terbuka sekarang akan ditutup dan navigasi direset ke halaman awal.')
-                : t('Tab navigator akan ditampilkan kembali sehingga Anda bisa membuka banyak halaman. Semua tab yang terbuka sekarang akan ditutup dan navigasi direset ke halaman awal.'),
+                ? t('Tab navigator akan dihapus — Anda hanya dapat membuka satu halaman dalam satu waktu. Semua tab lain akan ditutup; halaman ini tetap aktif.')
+                : t('Tab navigator akan ditampilkan kembali sehingga Anda bisa membuka banyak halaman. Semua tab lain akan ditutup; halaman ini tetap aktif.'),
               variant: 'warn',
               icon: 'layers',
               confirmLabel: v ? t('Aktifkan Per-halaman URL') : t('Kembali ke Internal'),

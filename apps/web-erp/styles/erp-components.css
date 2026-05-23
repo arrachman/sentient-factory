@@ -270,6 +270,7 @@ body {
   cursor: pointer;
   position: relative;
   transition: background 80ms, color 80ms;
+  text-decoration: none;
 }
 .sidebar .nav-item:hover {
   background: var(--panel-hover);
@@ -3106,4 +3107,62 @@ button {
 }
 .settings-tab:hover { color: var(--fg); }
 .settings-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* =====================================================================
+   DateRangePicker — hide native calendar picker indicator so only our
+   custom popover calendar is used. Input text entry still works normally.
+   ===================================================================== */
+.drp-input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.drp-input::-webkit-inner-spin-button {
+  display: none;
+}
+/* colorScheme adapts the native input chrome to match dark/light mode */
+.dark .drp-input,
+[data-theme='dark'] .drp-input {
+  color-scheme: dark;
+}
+
+/* =====================================================================
+   react-day-picker (rdp) — token override for ERP design system
+   Scoped to .rdp-root so it only affects our DayPicker instances.
+   Light tokens → :root already correct via --primary / --primary-soft.
+   Dark tokens override explicitly under .dark / [data-theme="dark"].
+   ===================================================================== */
+
+/* Light mode — map rdp accent to ERP primary palette */
+.rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: var(--primary-soft);
+  --rdp-range_middle-background-color: var(--primary-soft);
+  --rdp-range_middle-color: var(--fg);
+  --rdp-today-color: var(--primary);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  color: var(--fg);
+  font-size: calc(13px * var(--font-scale, 1));
+}
+
+/* Dark mode — override accent-background to dark-friendly variant */
+.dark .rdp-root,
+[data-theme='dark'] .rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: var(--primary-soft);
+  --rdp-range_middle-background-color: var(--primary-soft);
+  --rdp-range_middle-color: var(--primary-soft-fg);
+  --rdp-today-color: var(--primary-soft-fg);
+  --rdp-range_start-color: #ffffff;
+  --rdp-range_end-color: #ffffff;
+  color: var(--fg);
+}
+
+/* Day hover in dark mode */
+.dark .rdp-day_button:hover:not(:disabled),
+[data-theme='dark'] .rdp-day_button:hover:not(:disabled) {
+  background-color: var(--panel-hover);
+  border-radius: 100%;
+}
 .settings-content { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }

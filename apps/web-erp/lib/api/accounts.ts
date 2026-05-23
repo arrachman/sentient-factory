@@ -111,3 +111,24 @@ export async function updateAccount(
 export async function deleteAccount(id: string): Promise<void> {
   await apiDelete<void>(`/accounts/${id}`);
 }
+
+export async function bulkUpdateAccountStatus(
+  ids: string[],
+  isActive: boolean,
+): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>(
+    '/accounts/bulk/status',
+    { ids, isActive },
+  );
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteAccounts(
+  ids: string[],
+): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>(
+    '/accounts/bulk',
+    { ids },
+  );
+  return { affected: res.affected };
+}

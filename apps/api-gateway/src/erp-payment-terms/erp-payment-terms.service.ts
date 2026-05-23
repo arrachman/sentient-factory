@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
+import { BulkErpPaymentTermDto, BulkStatusErpPaymentTermDto } from './dto/bulk-erp-payment-term.dto';
 import { CreateErpPaymentTermDto } from './dto/create-erp-payment-term.dto';
 import { QueryErpPaymentTermDto } from './dto/query-erp-payment-term.dto';
 import { UpdateErpPaymentTermDto } from './dto/update-erp-payment-term.dto';
@@ -69,10 +70,12 @@ export class ErpPaymentTermsService {
       where.isActive = query.isActive;
     }
 
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpPaymentTerm.findMany({
         where,
-        orderBy: [{ createdAt: 'desc' }],
+        orderBy: [{ [sortBy]: sortDir }],
         skip,
         take: limit,
       }),
@@ -155,6 +158,26 @@ export class ErpPaymentTermsService {
     }
 
     return { success: true, data: updated };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpPaymentTermDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = toAuditUserId(actorId);
+    const { count } = await this.prisma.erpPaymentTerm.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpPaymentTermDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = toAuditUserId(actorId);
+    const { count } = await this.prisma.erpPaymentTerm.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 
   async remove(id: bigint, actorId?: string) {

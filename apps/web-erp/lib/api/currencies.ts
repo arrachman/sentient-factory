@@ -82,6 +82,27 @@ export async function deleteCurrency(id: string): Promise<void> {
   await apiDelete<void>(`/currencies/${id}`);
 }
 
+export async function bulkUpdateErpCurrencyStatus(
+  ids: string[],
+  isActive: boolean,
+): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>(
+    '/currencies/bulk/status',
+    { ids, isActive },
+  );
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteErpCurrencies(
+  ids: string[],
+): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>(
+    '/currencies/bulk',
+    { ids },
+  );
+  return { affected: res.affected };
+}
+
 // ─── Rates sub-resource ────────────────────────────────────────────────────────
 
 export async function listCurrencyRates(

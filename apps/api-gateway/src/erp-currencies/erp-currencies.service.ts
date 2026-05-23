@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
+import { BulkErpCurrencyDto, BulkStatusErpCurrencyDto } from './dto/bulk-erp-currency.dto';
 import { CreateErpCurrencyDto } from './dto/create-erp-currency.dto';
 import { QueryErpCurrencyDto } from './dto/query-erp-currency.dto';
 import { UpdateErpCurrencyDto } from './dto/update-erp-currency.dto';
@@ -139,6 +140,24 @@ export class ErpCurrenciesService {
     }
 
     return { success: true, data: updated };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpCurrencyDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const { count } = await this.prisma.erpCurrency.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: toAuditUserId(actorId), updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpCurrencyDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const { count } = await this.prisma.erpCurrency.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: toAuditUserId(actorId), updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 
   async remove(id: bigint, actorId?: string) {

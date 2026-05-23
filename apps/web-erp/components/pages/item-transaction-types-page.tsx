@@ -10,6 +10,7 @@ import {
   bulkUpdateErpItemTransactionTypeStatus, bulkDeleteErpItemTransactionTypes,
   type ErpItemTransactionType, type CreateErpItemTransactionTypePayload,
 } from '@/lib/api/item-transaction-types';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 interface FormData {
   code: string;
@@ -39,15 +40,21 @@ const toPayload = (f: FormData): CreateErpItemTransactionTypePayload => ({
   isActive: f.isActive,
 });
 
-function FormFields({ data, onChange }: { data: FormData; onChange: (d: FormData) => void }) {
+const validateItemTransactionType = (form: FormData) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+  ]);
+
+function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
   const set = (k: keyof FormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="ef-code" required>
-        <Input id="ef-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="ITT-001" />
+      <FormField label="Kode" htmlFor="ef-code" required error={errors.code}>
+        <Input id="ef-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="ITT-001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="ef-name" required>
-        <Input id="ef-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Item Transaction Type" />
+      <FormField label="Nama" htmlFor="ef-name" required error={errors.name}>
+        <Input id="ef-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Item Transaction Type" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Direction" htmlFor="ef-direction">
         <Input id="ef-direction" value={data.direction ?? ''} onChange={(e) => set('direction', e.target.value)} />
@@ -77,6 +84,7 @@ export function ErpItemTransactionTypesPage() {
       fromRecord={fromRecord}
       toPayload={toPayload}
       FormFields={FormFields}
+      validate={validateItemTransactionType}
     />
   );
 }

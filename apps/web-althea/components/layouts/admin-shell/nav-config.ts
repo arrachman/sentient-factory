@@ -84,7 +84,6 @@ const ADMIN_NAV: NavGroup[] = [
         href: '/admin/notif-wa',
         label: 'Notifikasi WA',
         icon: createElement(MessageSquare, { className: ICON_CLASS }),
-        badge: 'aktif',
         pageTitle: 'WhatsApp Otomatis',
       },
     ],
@@ -200,6 +199,18 @@ const RESEPSIONIS_NAV: NavGroup[] = [
         href: '/resepsionis/dashboard',
         label: 'Dashboard',
         icon: createElement(ClipboardList, { className: ICON_CLASS }),
+      },
+      {
+        href: '/resepsionis/jadwal',
+        label: 'Jadwal',
+        icon: createElement(CalendarDays, { className: ICON_CLASS }),
+        pageTitle: 'Jadwal Sesi',
+      },
+      {
+        href: '/resepsionis/ruangan',
+        label: 'Ruangan',
+        icon: createElement(DoorOpen, { className: ICON_CLASS }),
+        pageTitle: 'Pemakaian Ruangan',
       },
       {
         href: '/resepsionis/daftar-jadwal',

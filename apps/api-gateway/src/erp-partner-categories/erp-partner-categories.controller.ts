@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpPartnerCategoryDto, BulkStatusErpPartnerCategoryDto } from './dto/bulk-erp-partner-category.dto';
 import { CreateErpPartnerCategoryDto } from './dto/create-erp-partner-category.dto';
 import { QueryErpPartnerCategoryDto } from './dto/query-erp-partner-category.dto';
 import { UpdateErpPartnerCategoryDto } from './dto/update-erp-partner-category.dto';
@@ -54,6 +55,20 @@ export class ErpPartnerCategoriesController {
     @Request() req: any,
   ) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk activate/deactivate ERP partner categories' })
+  @ApiResponse({ status: 200, description: 'Bulk status updated' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpPartnerCategoryDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP partner categories' })
+  @ApiResponse({ status: 200, description: 'Bulk deleted' })
+  bulkDelete(@Body() dto: BulkErpPartnerCategoryDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Delete(':id')

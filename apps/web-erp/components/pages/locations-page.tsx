@@ -2,60 +2,29 @@
 
 /**
  * Master Data — Location page.
- * Lists md_locations; supports create, edit, delete.
- * Branch FK rendered as a Select populated from /branches.
+ * Lists md_locations; supports create, edit, delete (bulk-aware).
+ * Branch FK rendered via SearchSelect.
  * Atomic tier: Page.
  */
 
 import * as React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
-  ModalFooter,
-} from '@/components/organisms/modal';
-import {
-  ErpListLayout,
-  type FilterConfig,
-  type SummaryConfig,
-  type ListPaginationConfig,
-} from '@/components/organisms/erp-list-layout';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmpty,
-} from '@/components/organisms/table';
-import { confirmAction, notify } from '@/lib/feedback';
-import { useErpList } from '@/lib/use-erp-list';
-import { useListPagination } from '@/lib/use-list-pagination';
+import { SearchSelect } from '@/components/molecules/search-select';
+import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
 import {
   listLocations,
   createLocation,
   updateLocation,
   deleteLocation,
+  bulkUpdateLocationStatus,
+  bulkDeleteLocations,
+  type ErpLocation,
+  type CreateLocationPayload,
 } from '@/lib/api/locations';
-import type {
-  ErpLocation,
-  CreateLocationPayload,
-} from '@/lib/api/locations';
-import { useErpBranches } from '@/lib/api/hooks';
-import type { ErpBranch } from '@/lib/api/branches';
+import { listBranches } from '@/lib/api/branches';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
@@ -83,336 +52,122 @@ const defaultForm = (): LocationForm => ({
   isActive: true,
 });
 
-function fromLocation(l: ErpLocation): LocationForm {
-  return {
-    code: l.code,
-    name: l.name,
-    branchId: l.branchId ?? '',
-    addressLine1: l.addressLine1 ?? '',
-    city: l.city ?? '',
-    postalCode: l.postalCode ?? '',
-    phone: l.phone ?? '',
-    notes: l.notes ?? '',
-    isActive: l.isActive,
-  };
-}
+const fromRecord = (l: ErpLocation): LocationForm => ({
+  code: l.code,
+  name: l.name,
+  branchId: l.branchId ?? '',
+  addressLine1: l.addressLine1 ?? '',
+  city: l.city ?? '',
+  postalCode: l.postalCode ?? '',
+  phone: l.phone ?? '',
+  notes: l.notes ?? '',
+  isActive: l.isActive,
+});
 
-function toPayload(f: LocationForm): CreateLocationPayload {
-  return {
-    code: f.code,
-    name: f.name,
-    branchId: f.branchId,
-    addressLine1: f.addressLine1 || undefined,
-    city: f.city || undefined,
-    postalCode: f.postalCode || undefined,
-    phone: f.phone || undefined,
-    notes: f.notes || undefined,
-    isActive: f.isActive,
-  };
+const toPayload = (f: LocationForm): CreateLocationPayload => ({
+  code: f.code,
+  name: f.name,
+  branchId: f.branchId,
+  addressLine1: f.addressLine1 || undefined,
+  city: f.city || undefined,
+  postalCode: f.postalCode || undefined,
+  phone: f.phone || undefined,
+  notes: f.notes || undefined,
+  isActive: f.isActive,
+});
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+
+const validateLocation = (form: LocationForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'name', label: 'Nama', required: true },
+    { field: 'branchId', label: 'Cabang', required: true },
+  ]);
+
+// ─── Branch loader for SearchSelect ───────────────────────────────────────────
+
+async function loadBranchOptions(search: string, page: number, limit: number) {
+  const res = await listBranches({ search: search || undefined, page, limit, isActive: true });
+  return { data: res.data.map((b) => ({ value: b.id, label: b.name, code: b.code })), total: res.meta.total };
 }
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
-function LocationFormFields({
-  data,
-  branches,
-  onChange,
-}: {
-  data: LocationForm;
-  branches: ErpBranch[];
-  onChange: (d: LocationForm) => void;
-}) {
-  const set = (k: keyof LocationForm, v: string | boolean) =>
+function LocationFormFields({ data, onChange, errors = {} }: { data: LocationForm; onChange: (d: LocationForm) => void; errors?: FormErrors<LocationForm> }) {
+  const set = <K extends keyof LocationForm>(k: K, v: LocationForm[K]) =>
     onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="lf-code" required>
-        <Input
-          id="lf-code"
-          value={data.code}
-          onChange={(e) => set('code', e.target.value)}
-          placeholder="LOC-001"
-        />
+      <FormField label="Kode" htmlFor="lf-code" required error={errors.code}>
+        <Input id="lf-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="LOC-001" aria-invalid={!!errors.code} />
       </FormField>
-      <FormField label="Nama" htmlFor="lf-name" required>
-        <Input
-          id="lf-name"
-          value={data.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Gudang Utara"
-        />
+      <FormField label="Nama" htmlFor="lf-name" required error={errors.name}>
+        <Input id="lf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Gudang Utara" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Cabang" htmlFor="lf-branch" required>
-        <Select
+      <FormField label="Cabang" htmlFor="lf-branch" required error={errors.branchId}>
+        <SearchSelect
+          id="lf-branch"
+          placeholder="Cari cabang…"
           value={data.branchId}
           onValueChange={(v) => set('branchId', v)}
-        >
-          <SelectTrigger id="lf-branch">
-            <SelectValue placeholder="Pilih cabang" />
-          </SelectTrigger>
-          <SelectContent>
-            {branches.map((b) => (
-              <SelectItem key={b.id} value={b.id}>
-                {b.code} — {b.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          loadOptions={loadBranchOptions}
+          error={!!errors.branchId}
+        />
       </FormField>
       <FormField label="Alamat" htmlFor="lf-addr">
-        <Input
-          id="lf-addr"
-          value={data.addressLine1}
-          onChange={(e) => set('addressLine1', e.target.value)}
-          placeholder="Jl. Industri No. 10"
-        />
+        <Input id="lf-addr" value={data.addressLine1} onChange={(e) => set('addressLine1', e.target.value)} placeholder="Jl. Industri No. 10" />
       </FormField>
       <FormField label="Kota" htmlFor="lf-city">
-        <Input
-          id="lf-city"
-          value={data.city}
-          onChange={(e) => set('city', e.target.value)}
-          placeholder="Bekasi"
-        />
+        <Input id="lf-city" value={data.city} onChange={(e) => set('city', e.target.value)} placeholder="Bekasi" />
       </FormField>
       <FormField label="Kode Pos" htmlFor="lf-zip">
-        <Input
-          id="lf-zip"
-          value={data.postalCode}
-          onChange={(e) => set('postalCode', e.target.value)}
-          placeholder="17141"
-        />
+        <Input id="lf-zip" value={data.postalCode} onChange={(e) => set('postalCode', e.target.value)} placeholder="17141" />
       </FormField>
       <FormField label="Telepon" htmlFor="lf-phone">
-        <Input
-          id="lf-phone"
-          value={data.phone}
-          onChange={(e) => set('phone', e.target.value)}
-          placeholder="021-8881234"
-        />
+        <Input id="lf-phone" value={data.phone} onChange={(e) => set('phone', e.target.value)} placeholder="021-8881234" />
       </FormField>
       <FormField label="Catatan" htmlFor="lf-notes">
-        <Input
-          id="lf-notes"
-          value={data.notes}
-          onChange={(e) => set('notes', e.target.value)}
-          placeholder="Lokasi penyimpanan bahan baku"
-        />
+        <Input id="lf-notes" value={data.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Lokasi penyimpanan bahan baku" />
       </FormField>
       <FormField label="Status" htmlFor="lf-active">
-        <BooleanRadio
-          id="lf-active"
-          value={data.isActive}
-          onValueChange={(v) => set('isActive', v)}
-        />
+        <BooleanRadio id="lf-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>
     </div>
   );
 }
 
+// ─── Extra columns ────────────────────────────────────────────────────────────
+
+const extraColumns: ExtraColumn<ErpLocation>[] = [
+  { key: 'branch', label: 'Cabang', render: (r) => r.branch ? `${r.branch.code} — ${r.branch.name}` : '—' },
+  { key: 'city', label: 'Kota', render: (r) => r.city ?? '—' },
+];
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpLocationsPage() {
-  const [sortBy, setSortBy] = React.useState('createdAt');
-  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
-  const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('');
-  const { page, pageSize, setPage, setPageSize } = useListPagination('locations');
-
-  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
-  React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const isActiveParam =
-    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
-
-  const { rows, meta, loading, error, reload } = useErpList(
-    () =>
-      listLocations({
-        page,
-        limit: pageSize,
-        search: debouncedSearch || undefined,
-        sortBy,
-        sortDir,
-        isActive: isActiveParam,
-      }),
-    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
-  );
-
-  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
-
-  const { data: branches = [] } = useErpBranches();
-  const [open, setOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<ErpLocation | null>(null);
-  const [form, setForm] = React.useState<LocationForm>(defaultForm);
-  const [saving, setSaving] = React.useState(false);
-
-  const paged = rows;
-  const totalRows = meta?.total ?? 0;
-  const pageCount = meta?.totalPages ?? 1;
-
-  const ALL = { label: 'Semua', value: '' };
-  const locationFilters: FilterConfig[] = [
-    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
-      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
-  ];
-  const hasActiveFilter = search !== '' || statusFilter !== '';
-  const locationSummary: SummaryConfig = { metricLabel: 'Σ lokasi', rowCount: totalRows, totalCount: totalRows };
-  const locationPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
-  // Suppress unused-warning for sort setters (not wired to UI yet).
-  void setSortBy; void setSortDir;
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm(defaultForm());
-    setOpen(true);
-  };
-
-  const openEdit = (l: ErpLocation) => {
-    setEditing(l);
-    setForm(fromLocation(l));
-    setOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateLocation(editing.id, toPayload(form));
-        notify('Lokasi diperbarui', 'success');
-      } else {
-        await createLocation(toPayload(form));
-        notify('Lokasi dibuat', 'success');
-      }
-      setOpen(false);
-      reload();
-    } catch (e: unknown) {
-      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = (l: ErpLocation) => {
-    confirmAction({
-      title: 'Hapus lokasi?',
-      message: `${l.code} — ${l.name} akan dihapus permanen.`,
-      variant: 'danger',
-      confirmLabel: 'Hapus',
-      confirmIcon: 'trash',
-      onConfirm: async () => {
-        try {
-          await deleteLocation(l.id);
-          notify('Lokasi dihapus', 'success');
-          reload();
-        } catch (e: unknown) {
-          notify(e instanceof Error ? e.message : 'Gagal', 'danger');
-        }
-      },
-    });
-  };
-
   return (
-    <>
-      <ErpListLayout
-        title="Lokasi"
-        code="LOC"
-        loading={loading}
-        error={error}
-        search={search}
-        onSearch={setSearch}
-        onAdd={openCreate}
-        onRefresh={reload}
-        filters={locationFilters}
-        summary={locationSummary}
-        pagination={locationPagination}
-      >
-        <div className="lines">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kode</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Cabang</TableHead>
-                <TableHead>Kota</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paged.length === 0 ? (
-                <TableEmpty
-                  colSpan={6}
-                  variant={hasActiveFilter ? 'filtered' : 'empty'}
-                  entityLabel="Lokasi"
-                  searchTerm={search || undefined}
-                  actionLabel={hasActiveFilter ? 'Reset filter' : 'Tambah Lokasi'}
-                  actionShortcut={hasActiveFilter ? undefined : 'N'}
-                  onAction={hasActiveFilter ? () => { setSearch(''); setStatusFilter(''); } : openCreate}
-                />
-              ) : (
-                paged.map((l) => (
-                  <TableRow key={l.id}>
-                    <TableCell className="mono">{l.code}</TableCell>
-                    <TableCell>{l.name}</TableCell>
-                    <TableCell>
-                      {l.branch ? `${l.branch.code} — ${l.branch.name}` : '—'}
-                    </TableCell>
-                    <TableCell>{l.city ?? '—'}</TableCell>
-                    <TableCell>
-                      <Badge variant={l.isActive ? 'success' : 'default'} dot>
-                        {l.isActive ? 'Aktif' : 'Nonaktif'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn sm" onClick={() => openEdit(l)}>
-                          Edit
-                        </button>
-                        <button
-                          className="btn sm danger"
-                          onClick={() => handleDelete(l)}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </ErpListLayout>
-
-      <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>
-              {editing ? 'Edit Lokasi' : 'Tambah Lokasi'}
-            </ModalTitle>
-          </ModalHeader>
-          <LocationFormFields
-            data={form}
-            branches={branches}
-            onChange={setForm}
-          />
-          <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              Batal
-            </button>
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Menyimpan...' : 'Simpan'}
-            </button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+    <SimpleMasterPage<ErpLocation, LocationForm>
+      title="Location"
+      code="LOC"
+      entityLabel="location"
+      storageKey="locations"
+      auditEntityName="ErpLocation"
+      list={listLocations}
+      create={createLocation}
+      update={updateLocation}
+      remove={deleteLocation}
+      bulkStatus={bulkUpdateLocationStatus}
+      bulkDelete={bulkDeleteLocations}
+      defaultForm={defaultForm}
+      fromRecord={fromRecord}
+      toPayload={toPayload}
+      FormFields={LocationFormFields}
+      validate={validateLocation}
+      extraColumns={extraColumns}
+      defaultSortBy="code"
+      defaultSortDir="asc"
+    />
   );
 }

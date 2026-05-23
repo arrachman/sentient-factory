@@ -15,6 +15,7 @@ import { SendTestDialog } from './send-test-dialog';
 import { TemplateEditor } from './template-editor';
 import { TemplateList } from './template-list';
 import { WaPageHeader } from './wa-page-header';
+import { WaSettingsDrawer } from './wa-settings-drawer';
 import { WaStatsRow } from './wa-stats-row';
 
 const EMPTY_TEMPLATE: CreateTemplateInput = {
@@ -41,6 +42,7 @@ export function NotifWaPage() {
   const [draft, setDraft] = useState<CreateTemplateInput>(EMPTY_TEMPLATE);
   const [creating, setCreating] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (selectedId === null && templates.length > 0) {
@@ -146,7 +148,7 @@ export function NotifWaPage() {
   return (
     <>
       <div className="space-y-4 p-4 lg:p-6">
-      <WaPageHeader onCreate={startCreate} />
+      <WaPageHeader onOpenSettings={() => setSettingsOpen(true)} />
 
       <WaStatsRow
         sentTodayCount={sentTodayCount}
@@ -187,6 +189,7 @@ export function NotifWaPage() {
           onDelete={handleDelete}
         />
       </div>
+
       </div>
 
       {testOpen && selectedId !== null && (
@@ -197,6 +200,11 @@ export function NotifWaPage() {
           sendTest={sendTestMut}
         />
       )}
+
+      <WaSettingsDrawer
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </>
   );
 }

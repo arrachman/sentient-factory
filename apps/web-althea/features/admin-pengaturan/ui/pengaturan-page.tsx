@@ -17,7 +17,6 @@ import {
   TabDisabled,
 } from './tabs/tab-disabled';
 import { TabKlinik } from './tabs/tab-klinik';
-import { TabNotifikasi } from './tabs/tab-notifikasi';
 import { TabSlot } from './tabs/tab-slot';
 
 export function PengaturanPage() {
@@ -142,8 +141,6 @@ function TabContent({
           toggleClosedDay={page.toggleClosedDay}
         />
       );
-    case 'notifikasi':
-      return <TabNotifikasi form={page.form} set={page.set} />;
     case 'pembayaran':
       return (
         <TabDisabled

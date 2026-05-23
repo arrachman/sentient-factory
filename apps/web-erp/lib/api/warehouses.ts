@@ -70,3 +70,13 @@ export async function updateWarehouse(
 export async function deleteWarehouse(id: string): Promise<void> {
   await apiDelete<void>(`/warehouses/${id}`);
 }
+
+export async function bulkUpdateWarehouseStatus(ids: string[], isActive: boolean): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>('/warehouses/bulk/status', { ids, isActive });
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteWarehouses(ids: string[]): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>('/warehouses/bulk', { ids });
+  return { affected: res.affected };
+}

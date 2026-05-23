@@ -78,3 +78,16 @@ export async function updateLocation(
 export async function deleteLocation(id: string): Promise<void> {
   await apiDelete<void>(`/locations/${id}`);
 }
+
+export async function bulkUpdateLocationStatus(
+  ids: string[],
+  isActive: boolean,
+): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>('/locations/bulk/status', { ids, isActive });
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteLocations(ids: string[]): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>('/locations/bulk', { ids });
+  return { affected: res.affected };
+}

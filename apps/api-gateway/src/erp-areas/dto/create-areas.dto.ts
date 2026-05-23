@@ -12,7 +12,7 @@ export class CreateErpAreaDto {
   @MaxLength(150)
   name!: string;
 
-  @ApiPropertyOptional({ example: "1", description: "City id" })
+  @ApiProperty({ example: "1", description: "City id (required)" })
   @IsString()
   cityId!: string;
 

@@ -37,6 +37,7 @@ export function ProfileEditDialog({
   const [title, setTitle] = useState(initial.title ?? '');
   const [bio, setBio] = useState(initial.bio ?? '');
   const [color, setColor] = useState(initial.color ?? COLOR_PALETTE[0]);
+  const [phone, setPhone] = useState(initial.phone ?? '');
   // Avatar state:
   //   - undefined = tidak diubah dari initial
   //   - null = user mau hapus avatar (kirim null ke API)
@@ -53,6 +54,7 @@ export function ProfileEditDialog({
       setTitle(initial.title ?? '');
       setBio(initial.bio ?? '');
       setColor(initial.color ?? COLOR_PALETTE[0]);
+      setPhone(initial.phone ?? '');
       setAvatarChange(undefined);
       setAvatarError(null);
       setAvatarBusy(false);
@@ -108,6 +110,7 @@ export function ProfileEditDialog({
       title: title.trim() || undefined,
       bio: bio.trim() || undefined,
       color: color || undefined,
+      phone: phone.trim(),
       // Kirim hanya kalau user benar-benar ubah (undefined = skip)
       avatarUrl: avatarChange,
     });
@@ -306,6 +309,22 @@ export function ProfileEditDialog({
           </div>
 
           <div>
+            <label className="caption mb-1 block">No. HP / WA *</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              maxLength={20}
+              className="input-althea"
+              placeholder="628xxxxxxxxxx"
+            />
+            <p className="caption" style={{ fontSize: 11, marginTop: 4 }}>
+              Format internasional (62xxx). Dipakai untuk notifikasi WhatsApp.
+            </p>
+          </div>
+
+          <div>
             <label className="caption mb-1 block">Warna avatar</label>
             <div className="flex flex-wrap" style={{ gap: 8 }}>
               {COLOR_PALETTE.map((c) => (
@@ -349,7 +368,7 @@ export function ProfileEditDialog({
             </button>
             <button
               type="submit"
-              disabled={submitting || !fullName.trim()}
+              disabled={submitting || !fullName.trim() || !phone.trim()}
               className="btn btn-primary btn-sm"
             >
               {submitting ? 'Menyimpan…' : 'Simpan'}

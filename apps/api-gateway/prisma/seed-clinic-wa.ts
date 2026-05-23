@@ -67,7 +67,7 @@ const TEMPLATES: TemplateSeed[] = [
     category: 'jadwal',
     triggerEvent: 'confirmation',
     body:
-      '[Althea Psychology] Konfirmasi Booking\n\nBooking berikut telah dikonfirmasi ✅\n\n🧑 Klien: {{nama_klien}}\n👤 Psikolog: {{nama_psikolog}}\n📋 Layanan: {{layanan}}\n📅 Tanggal: {{tanggal}}\n⏰ Waktu: {{waktu}}\n📍 Ruang: {{ruang}}\n💰 Total: Rp {{total}}\n\nMohon catat jadwal ini. Terima kasih.',
+      '[Althea Psychology] Konfirmasi Booking\n\nBooking berikut telah dikonfirmasi ✅\n\n🧑 Klien: {{nama_klien}}\n👤 Psikolog: {{nama_psikolog}}\n📋 Layanan: {{layanan}}\n\n📅 Jadwal:\n{{jadwal_lengkap}}\n{{total_baris}}\nMohon catat jadwal ini. Terima kasih.',
     recipients: ['klien', 'psikolog'],
   },
   {

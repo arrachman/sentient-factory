@@ -6,7 +6,7 @@ export interface ErpArea {
   id: string;
   code: string;
   name: string;
-  cityId: string | null;
+  cityId: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

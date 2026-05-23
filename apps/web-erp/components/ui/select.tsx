@@ -96,6 +96,43 @@ export const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
+export const SelectContentWithSearch = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> & {
+    searchPlaceholder?: string;
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
+  }
+>(({ className, children, position = 'popper', searchPlaceholder = 'Cari...', searchValue = '', onSearchChange, ...props }, ref) => (
+  <SelectPrimitive.Portal>
+    <SelectPrimitive.Content
+      ref={ref}
+      position={position}
+      className={cn(
+        'relative z-[800] min-w-[8rem] overflow-hidden rounded-md border border-border bg-popover text-popover-foreground shadow-[var(--shadow-flyout)]',
+        position === 'popper' && 'translate-y-1',
+        className,
+      )}
+      {...props}
+    >
+      <div className="border-b border-border px-1 py-1">
+        <input
+          className="w-full rounded px-2 py-1 text-[12.5px] bg-transparent outline-none placeholder:text-[var(--fg-subtle)]"
+          placeholder={searchPlaceholder}
+          value={searchValue}
+          onChange={(e) => onSearchChange?.(e.target.value)}
+          onKeyDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        />
+      </div>
+      <SelectPrimitive.Viewport className="max-h-72 p-1">
+        {children}
+      </SelectPrimitive.Viewport>
+    </SelectPrimitive.Content>
+  </SelectPrimitive.Portal>
+));
+SelectContentWithSearch.displayName = 'SelectContentWithSearch';
+
 export const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>

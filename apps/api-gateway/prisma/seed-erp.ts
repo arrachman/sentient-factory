@@ -301,11 +301,12 @@ async function seedMenus(): Promise<Map<string, bigint>> {
   // M0.SYS — Sistem (legacy 0-26): system management (keep existing codes)
   const sysGrp = await upsertMenu({ code: 'M0.SYS', title: 'System', type: ErpMenuType.GROUP, parentId: m0.id, sortOrder: 3, legacyCode: '0-26' });
   await upsertItems([
-    { code: 'M0.SYS.MENUS',    title: 'Menu Manager',        path: '/admin/menus',               legacyCode: '0-9'  },
-    { code: 'M0.SYS.SETTINGS', title: 'Settings Manager',    path: '/admin/settings',            legacyCode: '0-11' },
-    { code: 'M0.SYS.DOCNUM',   title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
-    { code: 'M0.SYS.FISCAL',   title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
-    { code: 'M0.SYS.AUDIT',    title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },
+    { code: 'M0.SYS.MENUS',       title: 'Menu Manager',        path: '/admin/menus',               legacyCode: '0-9'  },
+    { code: 'M0.SYS.SETTINGS',    title: 'Settings Manager',    path: '/admin/settings',            legacyCode: '0-11' },
+    { code: 'M0.SYS.DOCNUM',      title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
+    { code: 'M0.SYS.FISCAL',      title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
+    { code: 'M0.SYS.AUDIT',       title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },
+    { code: 'M0.SYS.APPEARANCE',  title: 'Appearance',          path: '/settings/appearance'                         },
   ], sysGrp.id);
 
   // ── M1: Master Data ───────────────────────────────────────────────────────
@@ -398,11 +399,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M1.PROD.SUBCLASS',  title: 'Sub Class',           path: '/master/subclasses',            legacyCode: '1-106' },
   ], prodGrp.id);
 
-  // ── SET: User Settings (personal preferences, not admin config) ──────────
-  const setMod = await upsertMenu({ code: 'SET', title: 'Settings', icon: 'settings', type: ErpMenuType.MODULE, sortOrder: 99 });
-  await upsertItems([
-    { code: 'SET.APPEARANCE', title: 'Appearance', path: '/settings/appearance' },
-  ], setMod.id);
+  // SET module removed — Appearance moved to M0.SYS.APPEARANCE (System group).
 
   // ── M2–M14: Module stubs (legacy MyERP+ modules) ─────────────────────────
   // Roots only — items belum di-port. Path null = sidebar tampil tapi belum
@@ -821,17 +818,487 @@ async function seedNotifications() {
   console.log(`✓ sys_notifications (${items.length} contoh untuk admin)`);
 }
 
+async function seedDivisions() {
+  const divisions = [
+    { code: 'PROD',   name: 'Produksi' },
+    { code: 'QC',     name: 'Quality Control' },
+    { code: 'GUDLOG', name: 'Gudang & Logistik' },
+    { code: 'PURC',   name: 'Pengadaan' },
+    { code: 'SALES',  name: 'Penjualan & Pemasaran' },
+    { code: 'FIN',    name: 'Keuangan & Akuntansi' },
+    { code: 'HR',     name: 'Sumber Daya Manusia' },
+    { code: 'ENG',    name: 'Engineering & R&D' },
+    { code: 'IT',     name: 'Teknologi Informasi' },
+    { code: 'GA',     name: 'General Affairs' },
+  ];
+  const subdivisionsByDivCode: Record<string, { code: string; name: string }[]> = {
+    PROD:   [
+      { code: 'PROD-FAB', name: 'Fabrikasi' },
+      { code: 'PROD-ASM', name: 'Perakitan (Assembly)' },
+      { code: 'PROD-FIN', name: 'Finishing' },
+      { code: 'PROD-MNT', name: 'Pemeliharaan & Perawatan' },
+    ],
+    QC: [
+      { code: 'QC-IQC',  name: 'Incoming Quality Control' },
+      { code: 'QC-IPQC', name: 'In-Process Quality Control' },
+      { code: 'QC-FQC',  name: 'Final Quality Control' },
+    ],
+    GUDLOG: [
+      { code: 'GUDLOG-BB',  name: 'Gudang Bahan Baku' },
+      { code: 'GUDLOG-BJ',  name: 'Gudang Barang Jadi' },
+      { code: 'GUDLOG-SP',  name: 'Gudang Spare Parts' },
+      { code: 'GUDLOG-EXP', name: 'Ekspedisi & Pengiriman' },
+    ],
+    PURC: [
+      { code: 'PURC-LOK', name: 'Pembelian Lokal' },
+      { code: 'PURC-IMP', name: 'Pembelian Impor' },
+    ],
+    SALES: [
+      { code: 'SALES-DOM', name: 'Sales Domestik' },
+      { code: 'SALES-EXP', name: 'Sales Ekspor' },
+      { code: 'SALES-CS',  name: 'Customer Service' },
+    ],
+    FIN: [
+      { code: 'FIN-AKT', name: 'Akuntansi' },
+      { code: 'FIN-KAU', name: 'Keuangan' },
+      { code: 'FIN-TAX', name: 'Perpajakan' },
+    ],
+    HR: [
+      { code: 'HR-RKT', name: 'Rekrutmen & Seleksi' },
+      { code: 'HR-PAY', name: 'Payroll & Kompensasi' },
+      { code: 'HR-TRN', name: 'Pelatihan & Pengembangan' },
+    ],
+    ENG: [
+      { code: 'ENG-RD',  name: 'Riset & Pengembangan' },
+      { code: 'ENG-DSN', name: 'Desain & Perencanaan' },
+      { code: 'ENG-PE',  name: 'Process Engineering' },
+    ],
+    IT: [
+      { code: 'IT-INF', name: 'Infrastruktur & Jaringan' },
+      { code: 'IT-DEV', name: 'Pengembangan Sistem' },
+    ],
+    GA: [
+      { code: 'GA-UMM', name: 'Umum & Kantor' },
+      { code: 'GA-K3',  name: 'Keamanan & K3' },
+    ],
+  };
+
+  const divMap: Record<string, bigint> = {};
+  for (const d of divisions) {
+    const row = await prisma.erpDivision.upsert({
+      where: { code: d.code },
+      create: { code: d.code, name: d.name, isActive: true },
+      update: { name: d.name, isActive: true, deletedAt: null },
+    });
+    divMap[d.code] = row.id;
+  }
+  for (const [divCode, subs] of Object.entries(subdivisionsByDivCode)) {
+    const divisionId = divMap[divCode];
+    for (const s of subs) {
+      await prisma.erpSubdivision.upsert({
+        where: { code: s.code },
+        create: { code: s.code, name: s.name, divisionId, isActive: true },
+        update: { name: s.name, divisionId, isActive: true, deletedAt: null },
+      });
+    }
+  }
+  console.log(`✓ md_divisions (${divisions.length}) + md_subdivisions (${Object.values(subdivisionsByDivCode).flat().length})`);
+}
+
+async function seedLocations() {
+  const branchCodes = ['HQ','BDG','SBY','MKS','MDN','SMG','YGY','PLM','DPS','BPN','PKU','PNK'];
+  const branchMap = new Map<string, bigint>();
+  for (const code of branchCodes) {
+    const b = await prisma.erpBranch.findUnique({ where: { code }, select: { id: true } });
+    if (b) branchMap.set(code, b.id);
+  }
+
+  // Hapus child records (FK non-nullable) sebelum delete locations
+  await prisma.erpWarehouse.deleteMany({});
+  await prisma.erpLocation.deleteMany({});
+
+  const locs: {
+    code: string; name: string; bc: string;
+    addr?: string; city?: string; postal?: string; phone?: string; notes?: string; active?: boolean;
+  }[] = [
+    // ── HQ Jakarta (12) ──────────────────────────────────────────────
+    { code:'HQ-KTR-01', name:'Kantor Pusat - Gedung Utama',          bc:'HQ', addr:'Jl. Jend. Sudirman No. 1',            city:'Jakarta Pusat',   postal:'10220', phone:'021-5700001', notes:'Lantai 1-5 operasional' },
+    { code:'HQ-KTR-02', name:'Kantor Pusat - Gedung Annex',          bc:'HQ', addr:'Jl. Jend. Sudirman No. 1A',           city:'Jakarta Pusat',   postal:'10220', phone:'021-5700010', notes:'Lantai 6-10 divisi keuangan' },
+    { code:'HQ-GDG-01', name:'Gudang Pusat Jakarta',                 bc:'HQ', addr:'Jl. Raya Cakung No. 88',              city:'Jakarta Timur',   postal:'13910', phone:'021-4601101', notes:'Gudang stok utama' },
+    { code:'HQ-GDG-02', name:'Gudang Distribusi Jakarta Utara',      bc:'HQ', addr:'Jl. Industri Raya No. 12',            city:'Jakarta Utara',   postal:'14430', phone:'021-6901201', notes:'Gudang area Tanjung Priok' },
+    { code:'HQ-GDG-03', name:'Gudang Logistik Cakung',               bc:'HQ', addr:'Kawasan Industri Cakung Blok C-5',    city:'Jakarta Timur',   postal:'13930', phone:'021-4608301', notes:'Penyimpanan bahan baku' },
+    { code:'HQ-DCT-01', name:'Distribution Center Marunda',          bc:'HQ', addr:'Jl. Marunda Raya No. 45',             city:'Jakarta Utara',   postal:'14150', phone:'021-4403401', notes:'Pusat distribusi wilayah Jawa' },
+    { code:'HQ-SHR-01', name:'Showroom Jakarta Selatan',             bc:'HQ', addr:'Jl. TB Simatupang No. 20',            city:'Jakarta Selatan', postal:'12430', phone:'021-7884501', notes:'Showroom produk premium' },
+    { code:'HQ-SHR-02', name:'Showroom Kelapa Gading',               bc:'HQ', addr:'Jl. Boulevard Raya No. 33',           city:'Jakarta Utara',   postal:'14240', phone:'021-4506601', notes:'Showroom produk reguler' },
+    { code:'HQ-WRK-01', name:'Workshop Cakung',                      bc:'HQ', addr:'Jl. Penggilingan Raya No. 7',         city:'Jakarta Timur',   postal:'13940', phone:'021-4601701', notes:'Bengkel dan servis' },
+    { code:'HQ-CTR-01', name:'Counter Sales Mangga Dua',             bc:'HQ', addr:'Jl. Mangga Dua Raya No. 5',           city:'Jakarta Utara',   postal:'14430', phone:'021-6012801', notes:'Counter penjualan grosir' },
+    { code:'HQ-CTR-02', name:'Counter Sales Glodok',                 bc:'HQ', addr:'Jl. Hayam Wuruk No. 108',             city:'Jakarta Barat',   postal:'11180', phone:'021-6008901', notes:'Counter elektronik & spare part' },
+    { code:'HQ-CTR-03', name:'Counter Sales Puri Indah',             bc:'HQ', addr:'Puri Indah Business Park Blok A-12',  city:'Jakarta Barat',   postal:'11610', phone:'021-5839001', notes:'Counter wilayah Jakarta Barat' },
+    // ── SBY Surabaya (10) ─────────────────────────────────────────────
+    { code:'SBY-KTR-01', name:'Kantor Cabang Surabaya',              bc:'SBY', addr:'Jl. Pemuda No. 27',                   city:'Surabaya',        postal:'60271', phone:'031-5350201', notes:'Kantor utama cabang' },
+    { code:'SBY-KTR-02', name:'Kantor Area Jawa Timur',              bc:'SBY', addr:'Jl. Basuki Rachmat No. 55',           city:'Surabaya',        postal:'60261', phone:'031-5476301', notes:'Kantor koordinasi area Jatim' },
+    { code:'SBY-GDG-01', name:'Gudang Utama Surabaya',               bc:'SBY', addr:'Jl. Margomulyo No. 18',               city:'Surabaya',        postal:'60185', phone:'031-7490401', notes:'Gudang stok utama Surabaya' },
+    { code:'SBY-GDG-02', name:'Gudang Distribusi Surabaya Barat',    bc:'SBY', addr:'Jl. Raya Banjaran No. 99',            city:'Surabaya',        postal:'60211', phone:'031-7402501', notes:'Gudang distribusi barat' },
+    { code:'SBY-GDG-03', name:'Gudang Transit Juanda',               bc:'SBY', addr:'Jl. Raya Juanda No. 5',               city:'Sidoarjo',        postal:'61253', phone:'031-8685601', notes:'Transit area bandara Juanda' },
+    { code:'SBY-SHR-01', name:'Showroom Surabaya',                   bc:'SBY', addr:'Jl. Tunjungan No. 40',                city:'Surabaya',        postal:'60275', phone:'031-5340701', notes:'Showroom utama Surabaya' },
+    { code:'SBY-WRK-01', name:'Workshop Rungkut',                    bc:'SBY', addr:'Kawasan Industri SIER Blok D-3',      city:'Surabaya',        postal:'60291', phone:'031-8494801', notes:'Workshop & service center' },
+    { code:'SBY-CTR-01', name:'Counter Sales ITC Surabaya',          bc:'SBY', addr:'Jl. Gembong No. 20 Lt. 2 Kios 35',   city:'Surabaya',        postal:'60133', phone:'031-3534901', notes:'Counter ITC Surabaya' },
+    { code:'SBY-CTR-02', name:'Counter Sales Pakuwon',               bc:'SBY', addr:'Jl. Lontar No. 2 Ruko Pakuwon B-7',  city:'Surabaya',        postal:'60213', phone:'031-7401001', notes:'Counter wilayah Surabaya Barat' },
+    { code:'SBY-DCT-01', name:'Distribution Center Sidoarjo',        bc:'SBY', addr:'Jl. Raya Betro No. 101',              city:'Sidoarjo',        postal:'61219', phone:'031-8056101', notes:'DC untuk distribusi Jatim' },
+    // ── BDG Bandung (9) ───────────────────────────────────────────────
+    { code:'BDG-KTR-01', name:'Kantor Cabang Bandung',               bc:'BDG', addr:'Jl. Asia Afrika No. 45',              city:'Bandung',         postal:'40111', phone:'022-4200101', notes:'Kantor utama cabang Bandung' },
+    { code:'BDG-GDG-01', name:'Gudang Utama Bandung',                bc:'BDG', addr:'Jl. Soekarno Hatta No. 123',          city:'Bandung',         postal:'40223', phone:'022-6030201', notes:'Gudang stok utama Bandung' },
+    { code:'BDG-GDG-02', name:'Gudang Distribusi Cimahi',            bc:'BDG', addr:'Jl. Industri No. 17',                 city:'Cimahi',          postal:'40534', phone:'022-6641301', notes:'Gudang distribusi barat Bandung' },
+    { code:'BDG-SHR-01', name:'Showroom Bandung',                    bc:'BDG', addr:'Jl. Braga No. 30',                    city:'Bandung',         postal:'40111', phone:'022-4234401', notes:'Showroom pusat kota Bandung' },
+    { code:'BDG-WRK-01', name:'Workshop Dayeuhkolot',                bc:'BDG', addr:'Jl. Raya Dayeuhkolot No. 88',         city:'Bandung',         postal:'40256', phone:'022-5202501', notes:'Bengkel dan servis Bandung' },
+    { code:'BDG-CTR-01', name:'Counter Sales BTC Bandung',           bc:'BDG', addr:'Jl. Purnawarman No. 13 Lt. 1',        city:'Bandung',         postal:'40117', phone:'022-4218601', notes:'Counter BTC Bandung' },
+    { code:'BDG-CTR-02', name:'Counter Sales Paris Van Java',        bc:'BDG', addr:'Jl. Sukajadi No. 137 Kios B-24',     city:'Bandung',         postal:'40162', phone:'022-2033701', notes:'Counter Paris Van Java Mall' },
+    { code:'BDG-DCT-01', name:'Distribution Center Gedebage',        bc:'BDG', addr:'Kawasan Industri Gedebage Blok E-2',  city:'Bandung',         postal:'40294', phone:'022-7832801', notes:'DC distribusi Jawa Barat Timur' },
+    { code:'BDG-CTR-03', name:'Counter Sales Cimahi',                bc:'BDG', addr:'Jl. Jend. H. Amir Machmud No. 55',   city:'Cimahi',          postal:'40526', phone:'022-6630901', notes:'Counter wilayah Cimahi' },
+    // ── MKS Makassar (9) ──────────────────────────────────────────────
+    { code:'MKS-KTR-01', name:'Kantor Cabang Makassar',              bc:'MKS', addr:'Jl. Sam Ratulangi No. 8',             city:'Makassar',        postal:'90111', phone:'0411-871301', notes:'Kantor utama cabang Makassar' },
+    { code:'MKS-KTR-02', name:'Kantor Area Sulawesi Selatan',        bc:'MKS', addr:'Jl. Pettarani No. 50',                city:'Makassar',        postal:'90222', phone:'0411-452201', notes:'Koordinasi area Sulsel' },
+    { code:'MKS-GDG-01', name:'Gudang Utama Makassar',               bc:'MKS', addr:'Jl. Kima Raya No. 33',                city:'Makassar',        postal:'90241', phone:'0411-511301', notes:'Gudang stok utama Makassar' },
+    { code:'MKS-GDG-02', name:'Gudang Distribusi Maros',             bc:'MKS', addr:'Jl. Poros Makassar-Maros Km. 25',     city:'Maros',           postal:'90514', phone:'0411-373401', notes:'Gudang distribusi Sulsel Utara' },
+    { code:'MKS-SHR-01', name:'Showroom Makassar',                   bc:'MKS', addr:'Jl. A.P. Pettarani No. 22',           city:'Makassar',        postal:'90222', phone:'0411-456501', notes:'Showroom utama Makassar' },
+    { code:'MKS-WRK-01', name:'Workshop Antang',                     bc:'MKS', addr:'Jl. Antang Raya No. 77',              city:'Makassar',        postal:'90231', phone:'0411-492601', notes:'Bengkel dan servis Makassar' },
+    { code:'MKS-CTR-01', name:'Counter Sales Mall Ratu Indah',       bc:'MKS', addr:'Jl. Urip Sumoharjo Kios C-12',        city:'Makassar',        postal:'90232', phone:'0411-443701', notes:'Counter Mall Ratu Indah' },
+    { code:'MKS-CTR-02', name:'Counter Sales Somba Opu',             bc:'MKS', addr:'Jl. Somba Opu No. 140',               city:'Makassar',        postal:'90111', phone:'0411-363801', notes:'Counter kawasan bisnis Somba Opu' },
+    { code:'MKS-DCT-01', name:'Distribution Center Maros',           bc:'MKS', addr:'Kawasan Industri Maros Blok A-8',     city:'Maros',           postal:'90512', phone:'0411-374901', notes:'DC distribusi Indonesia Timur' },
+    // ── MDN Medan (8) ─────────────────────────────────────────────────
+    { code:'MDN-KTR-01', name:'Kantor Cabang Medan',                 bc:'MDN', addr:'Jl. Gatot Subroto No. 12',            city:'Medan',           postal:'20112', phone:'061-4521401', notes:'Kantor utama cabang Medan' },
+    { code:'MDN-GDG-01', name:'Gudang Utama Medan',                  bc:'MDN', addr:'Jl. Glugur Raya No. 66',              city:'Medan',           postal:'20214', phone:'061-6626501', notes:'Gudang stok utama Medan' },
+    { code:'MDN-GDG-02', name:'Gudang Distribusi Belawan',           bc:'MDN', addr:'Jl. Pelabuhan Raya No. 30',           city:'Medan',           postal:'20411', phone:'061-6943601', notes:'Gudang area pelabuhan Belawan' },
+    { code:'MDN-SHR-01', name:'Showroom Medan',                      bc:'MDN', addr:'Jl. Iskandar Muda No. 44',            city:'Medan',           postal:'20154', phone:'061-4155701', notes:'Showroom utama Medan' },
+    { code:'MDN-WRK-01', name:'Workshop Helvetia',                   bc:'MDN', addr:'Jl. Asrama No. 88',                   city:'Medan',           postal:'20124', phone:'061-8468801', notes:'Bengkel dan servis Medan' },
+    { code:'MDN-CTR-01', name:'Counter Sales Plaza Medan Fair',      bc:'MDN', addr:'Jl. Gatot Subroto No. 30 Lt. 1',     city:'Medan',           postal:'20112', phone:'061-4527901', notes:'Counter Plaza Medan Fair' },
+    { code:'MDN-CTR-02', name:'Counter Sales Sun Plaza',             bc:'MDN', addr:'Jl. K.H. Zainul Arifin No. 7 Lt. 2', city:'Medan',           postal:'20153', phone:'061-4574001', notes:'Counter Sun Plaza Medan' },
+    { code:'MDN-DCT-01', name:'Distribution Center Belawan',         bc:'MDN', addr:'Kawasan Industri Belawan Blok C-3',   city:'Medan',           postal:'20411', phone:'061-6942101', notes:'DC distribusi Sumatera Utara' },
+    // ── SMG Semarang (8) ──────────────────────────────────────────────
+    { code:'SMG-KTR-01', name:'Kantor Cabang Semarang',              bc:'SMG', addr:'Jl. Pandanaran No. 55',               city:'Semarang',        postal:'50134', phone:'024-8310501', notes:'Kantor utama cabang Semarang' },
+    { code:'SMG-GDG-01', name:'Gudang Utama Semarang',               bc:'SMG', addr:'Jl. Kaligawe Raya No. 101',           city:'Semarang',        postal:'50112', phone:'024-6583601', notes:'Gudang stok utama Semarang' },
+    { code:'SMG-GDG-02', name:'Gudang Distribusi Kaligawe',          bc:'SMG', addr:'Kawasan Industri Semarang Blok B-4',  city:'Semarang',        postal:'50119', phone:'024-6584701', notes:'Gudang distribusi Jateng' },
+    { code:'SMG-SHR-01', name:'Showroom Semarang',                   bc:'SMG', addr:'Jl. Ahmad Yani No. 150',              city:'Semarang',        postal:'50174', phone:'024-8314801', notes:'Showroom utama Semarang' },
+    { code:'SMG-WRK-01', name:'Workshop Terboyo',                    bc:'SMG', addr:'Jl. Terboyo Industri No. 22',         city:'Semarang',        postal:'50115', phone:'024-6592901', notes:'Bengkel dan servis Semarang' },
+    { code:'SMG-CTR-01', name:'Counter Sales DP Mall',               bc:'SMG', addr:'Jl. Pemuda No. 150 Lt. 2 Kios 14',   city:'Semarang',        postal:'50132', phone:'024-3520001', notes:'Counter DP Mall Semarang' },
+    { code:'SMG-CTR-02', name:'Counter Sales Paragon Mall',          bc:'SMG', addr:'Jl. Pemuda No. 118 Lt. 3 Kios 21',   city:'Semarang',        postal:'50132', phone:'024-3551101', notes:'Counter Paragon City Mall' },
+    { code:'SMG-DCT-01', name:'Distribution Center Kaligawe',        bc:'SMG', addr:'Jl. Raya Semarang-Demak Km. 8',      city:'Semarang',        postal:'50118', phone:'024-6595201', notes:'DC distribusi Jawa Tengah' },
+    // ── YGY Yogyakarta (7) ────────────────────────────────────────────
+    { code:'YGY-KTR-01', name:'Kantor Cabang Yogyakarta',            bc:'YGY', addr:'Jl. Malioboro No. 20',               city:'Yogyakarta',      postal:'55213', phone:'0274-561601', notes:'Kantor utama cabang Yogyakarta' },
+    { code:'YGY-GDG-01', name:'Gudang Utama Yogyakarta',             bc:'YGY', addr:'Jl. Ringroad Utara No. 77',          city:'Yogyakarta',      postal:'55283', phone:'0274-868701', notes:'Gudang stok utama Yogyakarta' },
+    { code:'YGY-GDG-02', name:'Gudang Distribusi Maguwoharjo',       bc:'YGY', addr:'Jl. Raya Maguwoharjo No. 45',        city:'Sleman',          postal:'55282', phone:'0274-496801', notes:'Gudang distribusi DIY' },
+    { code:'YGY-SHR-01', name:'Showroom Yogyakarta',                 bc:'YGY', addr:'Jl. Solo No. 55',                    city:'Yogyakarta',      postal:'55281', phone:'0274-580901', notes:'Showroom utama Yogyakarta' },
+    { code:'YGY-WRK-01', name:'Workshop Condongcatur',               bc:'YGY', addr:'Jl. Seturan Raya No. 12',            city:'Sleman',          postal:'55281', phone:'0274-487001', notes:'Bengkel dan servis Yogyakarta' },
+    { code:'YGY-CTR-01', name:'Counter Sales Ambarrukmo Plaza',      bc:'YGY', addr:'Jl. Laksda Adisucipto No. 32 Lt. 1', city:'Yogyakarta',     postal:'55281', phone:'0274-488101', notes:'Counter Ambarrukmo Plaza' },
+    { code:'YGY-CTR-02', name:'Counter Sales Malioboro Mall',        bc:'YGY', addr:'Jl. Malioboro No. 52 Lt. 1 Kios 8',  city:'Yogyakarta',     postal:'55213', phone:'0274-562201', notes:'Counter Malioboro Mall' },
+    // ── PLM Palembang (7) ─────────────────────────────────────────────
+    { code:'PLM-KTR-01', name:'Kantor Cabang Palembang',             bc:'PLM', addr:'Jl. Jend. Sudirman No. 88',          city:'Palembang',       postal:'30126', phone:'0711-357701', notes:'Kantor utama cabang Palembang' },
+    { code:'PLM-GDG-01', name:'Gudang Utama Palembang',              bc:'PLM', addr:'Jl. Mayor Ruslan No. 50',            city:'Palembang',       postal:'30137', phone:'0711-711801', notes:'Gudang stok utama Palembang' },
+    { code:'PLM-GDG-02', name:'Gudang Distribusi Boom Baru',         bc:'PLM', addr:'Jl. Rumah Bari No. 15',              city:'Palembang',       postal:'30121', phone:'0711-352901', notes:'Gudang area pelabuhan Boom Baru' },
+    { code:'PLM-SHR-01', name:'Showroom Palembang',                  bc:'PLM', addr:'Jl. Demang Lebar Daun No. 25',      city:'Palembang',       postal:'30137', phone:'0711-813001', notes:'Showroom utama Palembang' },
+    { code:'PLM-WRK-01', name:'Workshop Jakabaring',                 bc:'PLM', addr:'Jl. Jakabaring Raya No. 8',          city:'Palembang',       postal:'30262', phone:'0711-511101', notes:'Bengkel dan servis Palembang' },
+    { code:'PLM-CTR-01', name:'Counter Sales Palembang Trade Center',bc:'PLM', addr:'Jl. Basuki Rahmat No. 1 Lt. 1',     city:'Palembang',       postal:'30126', phone:'0711-356201', notes:'Counter PTC Palembang' },
+    { code:'PLM-DCT-01', name:'Distribution Center Boom Baru',       bc:'PLM', addr:'Kawasan Industri Boom Baru Blok D-2',city:'Palembang',      postal:'30121', phone:'0711-353301', notes:'DC distribusi Sumatera Selatan' },
+    // ── DPS Denpasar (8) ──────────────────────────────────────────────
+    { code:'DPS-KTR-01', name:'Kantor Cabang Denpasar',              bc:'DPS', addr:'Jl. Raya Puputan No. 33',            city:'Denpasar',        postal:'80235', phone:'0361-225801', notes:'Kantor utama cabang Denpasar' },
+    { code:'DPS-KTR-02', name:'Kantor Area Bali',                    bc:'DPS', addr:'Jl. Teuku Umar No. 66',              city:'Denpasar',        postal:'80113', phone:'0361-264901', notes:'Koordinasi area Bali-Nusra' },
+    { code:'DPS-GDG-01', name:'Gudang Utama Denpasar',               bc:'DPS', addr:'Jl. Cargo Raya No. 20',              city:'Denpasar',        postal:'80115', phone:'0361-412001', notes:'Gudang stok utama Denpasar' },
+    { code:'DPS-GDG-02', name:'Gudang Distribusi Sanur',             bc:'DPS', addr:'Jl. By Pass Ngurah Rai No. 55',      city:'Denpasar',        postal:'80222', phone:'0361-285101', notes:'Gudang distribusi Bali Selatan' },
+    { code:'DPS-SHR-01', name:'Showroom Denpasar',                   bc:'DPS', addr:'Jl. Diponegoro No. 12',              city:'Denpasar',        postal:'80113', phone:'0361-227201', notes:'Showroom utama Denpasar' },
+    { code:'DPS-WRK-01', name:'Workshop Pemogan',                    bc:'DPS', addr:'Jl. Raya Pemogan No. 40',            city:'Denpasar',        postal:'80221', phone:'0361-723301', notes:'Bengkel dan servis Denpasar' },
+    { code:'DPS-CTR-01', name:'Counter Sales Kuta Square',           bc:'DPS', addr:'Jl. Bakungsari No. 1 Kios D-5',      city:'Badung',          postal:'80361', phone:'0361-753401', notes:'Counter Kuta Square Bali' },
+    { code:'DPS-DCT-01', name:'Distribution Center Sanur',           bc:'DPS', addr:'Jl. Hang Tuah No. 77',               city:'Denpasar',        postal:'80227', phone:'0361-289501', notes:'DC distribusi Bali & NTB' },
+    // ── BPN Balikpapan (7) ────────────────────────────────────────────
+    { code:'BPN-KTR-01', name:'Kantor Cabang Balikpapan',            bc:'BPN', addr:'Jl. Jend. Sudirman No. 15',          city:'Balikpapan',      postal:'76114', phone:'0542-736901', notes:'Kantor utama cabang Balikpapan' },
+    { code:'BPN-GDG-01', name:'Gudang Utama Balikpapan',             bc:'BPN', addr:'Jl. Soekarno Hatta KM. 7 No. 30',   city:'Balikpapan',      postal:'76126', phone:'0542-777001', notes:'Gudang stok utama Balikpapan' },
+    { code:'BPN-GDG-02', name:'Gudang Distribusi Kariangau',         bc:'BPN', addr:'Kawasan Industri Kariangau Blok B-3', city:'Balikpapan',     postal:'76117', phone:'0542-884101', notes:'Gudang distribusi Kaltim' },
+    { code:'BPN-SHR-01', name:'Showroom Balikpapan',                 bc:'BPN', addr:'Jl. Ahmad Yani No. 40',              city:'Balikpapan',      postal:'76112', phone:'0542-733201', notes:'Showroom utama Balikpapan' },
+    { code:'BPN-WRK-01', name:'Workshop Klandasan',                  bc:'BPN', addr:'Jl. Letjen S. Parman No. 12',        city:'Balikpapan',      postal:'76111', phone:'0542-427301', notes:'Bengkel dan servis Balikpapan' },
+    { code:'BPN-CTR-01', name:'Counter Sales Mall Fantasi',          bc:'BPN', addr:'Jl. Ahmad Yani No. 5 Lt. 2 Kios 8',  city:'Balikpapan',     postal:'76112', phone:'0542-735401', notes:'Counter Mall Fantasi Balikpapan' },
+    { code:'BPN-DCT-01', name:'Distribution Center Kariangau',       bc:'BPN', addr:'Kawasan Industri Kariangau Blok A-7', city:'Balikpapan',    postal:'76117', phone:'0542-884501', notes:'DC distribusi Kalimantan Timur' },
+    // ── PKU Pekanbaru (8, branch non-aktif) ───────────────────────────
+    { code:'PKU-KTR-01', name:'Kantor Cabang Pekanbaru',             bc:'PKU', addr:'Jl. Jend. Ahmad Yani No. 7',         city:'Pekanbaru',       postal:'28156', phone:'0761-857001', notes:'Kantor utama cabang Pekanbaru', active:false },
+    { code:'PKU-GDG-01', name:'Gudang Utama Pekanbaru',              bc:'PKU', addr:'Jl. Soekarno Hatta No. 55',          city:'Pekanbaru',       postal:'28289', phone:'0761-673101', notes:'Gudang stok utama Pekanbaru', active:false },
+    { code:'PKU-GDG-02', name:'Gudang Distribusi Rumbai',            bc:'PKU', addr:'Jl. Sekolah No. 40',                 city:'Pekanbaru',       postal:'28262', phone:'0761-551201', notes:'Gudang distribusi Riau', active:false },
+    { code:'PKU-SHR-01', name:'Showroom Pekanbaru',                  bc:'PKU', addr:'Jl. Tuanku Tambusai No. 20',         city:'Pekanbaru',       postal:'28282', phone:'0761-856301', notes:'Showroom utama Pekanbaru', active:false },
+    { code:'PKU-WRK-01', name:'Workshop Marpoyan',                   bc:'PKU', addr:'Jl. Soekarno Hatta KM. 3 No. 15',   city:'Pekanbaru',       postal:'28284', phone:'0761-689401', notes:'Bengkel dan servis Pekanbaru', active:false },
+    { code:'PKU-CTR-01', name:'Counter Sales Metropolitan Pekanbaru',bc:'PKU', addr:'Jl. Tuanku Tambusai Ujung No. 1',    city:'Pekanbaru',      postal:'28282', phone:'0761-858501', notes:'Counter Metropolitan Mall', active:false },
+    { code:'PKU-CTR-02', name:'Counter Sales Plaza Senapelan',       bc:'PKU', addr:'Jl. Ahmad Yani No. 60 Lt. 1',        city:'Pekanbaru',       postal:'28156', phone:'0761-857601', notes:'Counter Plaza Senapelan', active:false },
+    { code:'PKU-DCT-01', name:'Distribution Center Rumbai',          bc:'PKU', addr:'Kawasan Industri Rumbai Blok C-1',   city:'Pekanbaru',       postal:'28266', phone:'0761-554701', notes:'DC distribusi Riau', active:false },
+    // ── PNK Pontianak (7, branch non-aktif) ───────────────────────────
+    { code:'PNK-KTR-01', name:'Kantor Cabang Pontianak',             bc:'PNK', addr:'Jl. Tanjungpura No. 66',             city:'Pontianak',       postal:'78112', phone:'0561-748101', notes:'Kantor utama cabang Pontianak', active:false },
+    { code:'PNK-GDG-01', name:'Gudang Utama Pontianak',              bc:'PNK', addr:'Jl. Khatulistiwa No. 88',            city:'Pontianak',       postal:'78243', phone:'0561-884201', notes:'Gudang stok utama Pontianak', active:false },
+    { code:'PNK-GDG-02', name:'Gudang Distribusi Siantan',           bc:'PNK', addr:'Jl. Siantan Hulu No. 30',            city:'Pontianak',       postal:'78244', phone:'0561-881301', notes:'Gudang distribusi Kalbar', active:false },
+    { code:'PNK-SHR-01', name:'Showroom Pontianak',                  bc:'PNK', addr:'Jl. Ahmad Yani No. 98',              city:'Pontianak',       postal:'78124', phone:'0561-732401', notes:'Showroom utama Pontianak', active:false },
+    { code:'PNK-WRK-01', name:'Workshop Sei Ambawang',               bc:'PNK', addr:'Jl. Tanjung Raya II No. 12',         city:'Pontianak',       postal:'78241', phone:'0561-882501', notes:'Bengkel dan servis Pontianak', active:false },
+    { code:'PNK-CTR-01', name:'Counter Sales Ayani Mega Mall',       bc:'PNK', addr:'Jl. Ahmad Yani No. 49 Lt. 1 Kios 6', city:'Pontianak',      postal:'78124', phone:'0561-737601', notes:'Counter Ayani Mega Mall', active:false },
+    { code:'PNK-DCT-01', name:'Distribution Center Siantan',         bc:'PNK', addr:'Kawasan Industri Siantan Blok A-4',  city:'Pontianak',       postal:'78244', phone:'0561-883701', notes:'DC distribusi Kalimantan Barat', active:false },
+  ];
+
+  for (const { bc, addr, active, postal, ...d } of locs) {
+    const branchId = branchMap.get(bc);
+    if (!branchId) continue;
+    const payload = { ...d, branchId, addressLine1: addr, postalCode: postal, isActive: active ?? true };
+    await prisma.erpLocation.upsert({
+      where: { code: d.code },
+      create: payload,
+      update: payload,
+    });
+  }
+  console.log(`✓ md_locations (${locs.length} entries)`);
+}
+
+async function seedWarehouses() {
+  type WH = { lc: string; code: string; name: string; neg?: boolean; notes?: string; active?: boolean };
+  const rows: WH[] = [
+    // ── HQ-GDG-01: Gudang Pusat Jakarta (8) ───────────────────────────────────────
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-RM-A',  name:'Bahan Baku A — Logam & Profil',        notes:'Plat baja, besi hollow, aluminium profil' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-RM-B',  name:'Bahan Baku B — Plastik & Kimia',       notes:'Resin, compound, bahan kimia proses' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-WIP',   name:'Barang Setengah Jadi (WIP)',            notes:'Buffer produksi antar lini' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-FG-A',  name:'Barang Jadi A — Produk Reguler',       notes:'Produk standar siap jual' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-FG-B',  name:'Barang Jadi B — Produk Premium',       notes:'Produk premium & custom order' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-PKG',   name:'Kemasan & Label',                       notes:'Karton, bubble wrap, label barcode' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-QR',    name:'Karantina & Hold',                      neg:false, notes:'Produk pending QC, retur supplier' },
+    { lc:'HQ-GDG-01', code:'HQ-GDG-01-RET',   name:'Retur Pelanggan',                       neg:false, notes:'Barang retur dari pelanggan, sorting & rework' },
+
+    // ── HQ-GDG-02: Gudang Distribusi Jakarta Utara (3) ───────────────────────────
+    { lc:'HQ-GDG-02', code:'HQ-GDG-02-FG',    name:'Barang Jadi Distribusi Utara',          notes:'Stok distribusi wilayah Jakarta Utara' },
+    { lc:'HQ-GDG-02', code:'HQ-GDG-02-STG',   name:'Staging Area Pengiriman Utara',         notes:'Barang siap muat & antrian ekspedisi' },
+    { lc:'HQ-GDG-02', code:'HQ-GDG-02-RET',   name:'Retur Distribusi Utara',                neg:false, notes:'Barang retur dari agen/distributor area utara' },
+
+    // ── HQ-GDG-03: Gudang Logistik Cakung (3) ────────────────────────────────────
+    { lc:'HQ-GDG-03', code:'HQ-GDG-03-RM',    name:'Bahan Baku Impor Cakung',               notes:'Buffer bahan baku impor & bonded' },
+    { lc:'HQ-GDG-03', code:'HQ-GDG-03-CONS',  name:'Bahan Pendukung Produksi',              notes:'Oli, pelumas, majun, consumables lini produksi' },
+    { lc:'HQ-GDG-03', code:'HQ-GDG-03-SCRP',  name:'Scrap & Limbah Produksi',               neg:false, notes:'Scrap metal, plastik off-spec, limbah proses' },
+
+    // ── HQ-DCT-01: Distribution Center Marunda (5) ───────────────────────────────
+    { lc:'HQ-DCT-01', code:'HQ-DCT-01-FG-A',  name:'Finished Goods DC Marunda — Zona A',   notes:'Zona A: produk kategori berat & bulk' },
+    { lc:'HQ-DCT-01', code:'HQ-DCT-01-FG-B',  name:'Finished Goods DC Marunda — Zona B',   notes:'Zona B: produk kategori ringan & kecil' },
+    { lc:'HQ-DCT-01', code:'HQ-DCT-01-STG',   name:'Staging & Dispatch Marunda',            notes:'Antrian loading dock & verifikasi DO' },
+    { lc:'HQ-DCT-01', code:'HQ-DCT-01-QR',    name:'Karantina DC Marunda',                  neg:false, notes:'Produk pending inspeksi sebelum dispatch' },
+    { lc:'HQ-DCT-01', code:'HQ-DCT-01-RET',   name:'Retur Processing Marunda',              neg:false, notes:'Sorting & repackaging retur dari distributor' },
+
+    // ── HQ-WRK-01: Workshop Cakung (3) ───────────────────────────────────────────
+    { lc:'HQ-WRK-01', code:'HQ-WRK-01-SP',    name:'Spare Parts Mesin Workshop',            notes:'Suku cadang mesin produksi & utilitas' },
+    { lc:'HQ-WRK-01', code:'HQ-WRK-01-CONS',  name:'Consumables Workshop',                  notes:'Elektroda las, mata bor, amplas, perkakas habis' },
+    { lc:'HQ-WRK-01', code:'HQ-WRK-01-SCRP',  name:'Scrap Workshop',                        neg:false, notes:'Scrap hasil repair & overhaul mesin' },
+
+    // ── SBY-GDG-01: Gudang Utama Surabaya (6) ────────────────────────────────────
+    { lc:'SBY-GDG-01', code:'SBY-GDG-01-RM',   name:'Bahan Baku Surabaya',                  notes:'Stok bahan baku wilayah Jawa Timur' },
+    { lc:'SBY-GDG-01', code:'SBY-GDG-01-FG-A', name:'Barang Jadi A Surabaya',               notes:'Produk reguler stok cabang Surabaya' },
+    { lc:'SBY-GDG-01', code:'SBY-GDG-01-FG-B', name:'Barang Jadi B Surabaya',               notes:'Produk project & tender Jawa Timur' },
+    { lc:'SBY-GDG-01', code:'SBY-GDG-01-PKG',  name:'Kemasan Surabaya',                     notes:'Kemasan repack & relabeling cabang Surabaya' },
+    { lc:'SBY-GDG-01', code:'SBY-GDG-01-QR',   name:'Karantina Surabaya',                   neg:false, notes:'Hold QC & investigasi keluhan Surabaya' },
+    { lc:'SBY-GDG-01', code:'SBY-GDG-01-RET',  name:'Retur Surabaya',                       neg:false, notes:'Retur pelanggan & distributor Jawa Timur' },
+
+    // ── SBY-GDG-02: Gudang Distribusi Surabaya Barat (2) ─────────────────────────
+    { lc:'SBY-GDG-02', code:'SBY-GDG-02-FG',   name:'Barang Jadi Distribusi Barat SBY',     notes:'Stok untuk area Surabaya Barat & Gresik' },
+    { lc:'SBY-GDG-02', code:'SBY-GDG-02-STG',  name:'Staging Distribusi Barat SBY',         notes:'Antrian muat truk distribusi harian' },
+
+    // ── SBY-GDG-03: Gudang Transit Juanda (2) ────────────────────────────────────
+    { lc:'SBY-GDG-03', code:'SBY-GDG-03-TRAN', name:'Transit Kargo Udara Juanda',            notes:'Buffer kargo masuk/keluar via Bandara Juanda' },
+    { lc:'SBY-GDG-03', code:'SBY-GDG-03-FG',   name:'Transit Barang Jadi Juanda',            notes:'Konsolidasi pengiriman lintas pulau' },
+
+    // ── SBY-DCT-01: DC Sidoarjo (3) ──────────────────────────────────────────────
+    { lc:'SBY-DCT-01', code:'SBY-DCT-01-FG',   name:'Finished Goods DC Sidoarjo',            notes:'Stok distribusi area Sidoarjo & Pasuruan' },
+    { lc:'SBY-DCT-01', code:'SBY-DCT-01-STG',  name:'Staging DC Sidoarjo',                   notes:'Persiapan muat & sortir delivery order' },
+    { lc:'SBY-DCT-01', code:'SBY-DCT-01-QR',   name:'Karantina DC Sidoarjo',                 neg:false, notes:'Produk pending inspeksi & retur Sidoarjo' },
+
+    // ── SBY-WRK-01: Workshop Rungkut (2) ─────────────────────────────────────────
+    { lc:'SBY-WRK-01', code:'SBY-WRK-01-SP',   name:'Spare Parts Workshop Rungkut',          notes:'Suku cadang mesin di kawasan industri SIER' },
+    { lc:'SBY-WRK-01', code:'SBY-WRK-01-CONS', name:'Consumables Workshop Rungkut',          notes:'Bahan habis pakai maintenance Surabaya' },
+
+    // ── BDG-GDG-01: Gudang Utama Bandung (5) ─────────────────────────────────────
+    { lc:'BDG-GDG-01', code:'BDG-GDG-01-RM',   name:'Bahan Baku Bandung',                    notes:'Tekstil, benang, bahan kimia tekstil & garmen' },
+    { lc:'BDG-GDG-01', code:'BDG-GDG-01-FG',   name:'Barang Jadi Bandung',                   notes:'Produk jadi stok cabang Bandung' },
+    { lc:'BDG-GDG-01', code:'BDG-GDG-01-PKG',  name:'Kemasan Bandung',                       notes:'Kemasan produk wilayah Jawa Barat' },
+    { lc:'BDG-GDG-01', code:'BDG-GDG-01-QR',   name:'Karantina Bandung',                     neg:false, notes:'Hold QC & retur produk wilayah Bandung' },
+    { lc:'BDG-GDG-01', code:'BDG-GDG-01-RET',  name:'Retur Bandung',                         neg:false, notes:'Retur pelanggan wilayah Jawa Barat' },
+
+    // ── BDG-GDG-02: Gudang Distribusi Cimahi (2) ─────────────────────────────────
+    { lc:'BDG-GDG-02', code:'BDG-GDG-02-FG',   name:'Barang Jadi Distribusi Cimahi',         notes:'Stok distribusi Cimahi & Bandung Barat' },
+    { lc:'BDG-GDG-02', code:'BDG-GDG-02-STG',  name:'Staging Distribusi Cimahi',             notes:'Area muat harian ekspedisi Bandung Barat' },
+
+    // ── BDG-DCT-01: DC Gedebage (2) ──────────────────────────────────────────────
+    { lc:'BDG-DCT-01', code:'BDG-DCT-01-FG',   name:'Finished Goods DC Gedebage',            notes:'Stok DC untuk distribusi Jawa Barat Timur' },
+    { lc:'BDG-DCT-01', code:'BDG-DCT-01-STG',  name:'Staging DC Gedebage',                   notes:'Loading dock & verifikasi delivery order Jabar Timur' },
+
+    // ── BDG-WRK-01: Workshop Dayeuhkolot (2) ─────────────────────────────────────
+    { lc:'BDG-WRK-01', code:'BDG-WRK-01-SP',   name:'Spare Parts Workshop Dayeuhkolot',      notes:'Suku cadang mesin cabang Bandung' },
+    { lc:'BDG-WRK-01', code:'BDG-WRK-01-CONS', name:'Consumables Workshop Dayeuhkolot',      notes:'Bahan habis pakai maintenance Bandung' },
+
+    // ── MKS-GDG-01: Gudang Utama Makassar (4) ────────────────────────────────────
+    { lc:'MKS-GDG-01', code:'MKS-GDG-01-FG',   name:'Barang Jadi Makassar',                  notes:'Stok produk jadi cabang Makassar' },
+    { lc:'MKS-GDG-01', code:'MKS-GDG-01-RM',   name:'Bahan Baku Makassar',                   notes:'Buffer bahan baku untuk wilayah Sulawesi Selatan' },
+    { lc:'MKS-GDG-01', code:'MKS-GDG-01-QR',   name:'Karantina Makassar',                    neg:false, notes:'Produk hold & investigasi mutu Makassar' },
+    { lc:'MKS-GDG-01', code:'MKS-GDG-01-RET',  name:'Retur Makassar',                        neg:false, notes:'Retur pelanggan & agen Sulawesi' },
+
+    // ── MKS-GDG-02: Gudang Distribusi Maros (2) ──────────────────────────────────
+    { lc:'MKS-GDG-02', code:'MKS-GDG-02-FG',   name:'Barang Jadi Distribusi Maros',          notes:'Stok distribusi Sulsel Utara & Sulawesi Tengah' },
+    { lc:'MKS-GDG-02', code:'MKS-GDG-02-STG',  name:'Staging Distribusi Maros',              notes:'Antrian muat & pencocokan DO area Maros' },
+
+    // ── MKS-DCT-01: DC Maros (2) ─────────────────────────────────────────────────
+    { lc:'MKS-DCT-01', code:'MKS-DCT-01-FG',   name:'Finished Goods DC Maros',               notes:'DC distribusi Indonesia Timur via pelabuhan' },
+    { lc:'MKS-DCT-01', code:'MKS-DCT-01-STG',  name:'Staging DC Maros',                      notes:'Persiapan pengiriman kapal Indonesia Timur' },
+
+    // ── MKS-WRK-01: Workshop Antang (2) ──────────────────────────────────────────
+    { lc:'MKS-WRK-01', code:'MKS-WRK-01-SP',   name:'Spare Parts Workshop Antang',           notes:'Suku cadang & tooling workshop Makassar' },
+    { lc:'MKS-WRK-01', code:'MKS-WRK-01-CONS', name:'Consumables Workshop Antang',           notes:'Bahan habis pakai servis kendaraan & mesin Makassar' },
+
+    // ── MDN-GDG-01: Gudang Utama Medan (4) ───────────────────────────────────────
+    { lc:'MDN-GDG-01', code:'MDN-GDG-01-FG',   name:'Barang Jadi Medan',                     notes:'Stok produk jadi cabang Medan' },
+    { lc:'MDN-GDG-01', code:'MDN-GDG-01-RM',   name:'Bahan Baku Medan',                      notes:'Buffer bahan baku untuk wilayah Sumatera Utara' },
+    { lc:'MDN-GDG-01', code:'MDN-GDG-01-QR',   name:'Karantina Medan',                       neg:false, notes:'Hold QC & investigasi produk wilayah Medan' },
+    { lc:'MDN-GDG-01', code:'MDN-GDG-01-RET',  name:'Retur Medan',                           neg:false, notes:'Retur agen & pelanggan Sumatera Utara' },
+
+    // ── MDN-GDG-02: Gudang Distribusi Belawan (2) ────────────────────────────────
+    { lc:'MDN-GDG-02', code:'MDN-GDG-02-FG',   name:'Barang Jadi Pelabuhan Belawan',         notes:'Stok siap muat kapal wilayah Sumatera' },
+    { lc:'MDN-GDG-02', code:'MDN-GDG-02-STG',  name:'Staging Pelabuhan Belawan',             notes:'Antrian muat & cek fisik ekspor/antar pulau' },
+
+    // ── MDN-DCT-01: DC Belawan (2) ────────────────────────────────────────────────
+    { lc:'MDN-DCT-01', code:'MDN-DCT-01-FG',   name:'Finished Goods DC Belawan',             notes:'DC distribusi Sumatera Utara & Aceh' },
+    { lc:'MDN-DCT-01', code:'MDN-DCT-01-STG',  name:'Staging DC Belawan',                    notes:'Loading dock & verifikasi delivery order Sumut' },
+
+    // ── MDN-WRK-01: Workshop Helvetia (2) ────────────────────────────────────────
+    { lc:'MDN-WRK-01', code:'MDN-WRK-01-SP',   name:'Spare Parts Workshop Helvetia',         notes:'Suku cadang mesin & kendaraan cabang Medan' },
+    { lc:'MDN-WRK-01', code:'MDN-WRK-01-CONS', name:'Consumables Workshop Helvetia',         notes:'Bahan habis pakai maintenance Medan' },
+
+    // ── SMG-GDG-01: Gudang Utama Semarang (4) ────────────────────────────────────
+    { lc:'SMG-GDG-01', code:'SMG-GDG-01-FG',   name:'Barang Jadi Semarang',                  notes:'Stok produk jadi cabang Semarang' },
+    { lc:'SMG-GDG-01', code:'SMG-GDG-01-RM',   name:'Bahan Baku Semarang',                   notes:'Buffer bahan baku untuk wilayah Jawa Tengah' },
+    { lc:'SMG-GDG-01', code:'SMG-GDG-01-QR',   name:'Karantina Semarang',                    neg:false, notes:'Hold QC & investigasi produk Semarang' },
+    { lc:'SMG-GDG-01', code:'SMG-GDG-01-RET',  name:'Retur Semarang',                        neg:false, notes:'Retur pelanggan wilayah Jawa Tengah' },
+
+    // ── SMG-GDG-02: Gudang Distribusi Kaligawe (2) ───────────────────────────────
+    { lc:'SMG-GDG-02', code:'SMG-GDG-02-FG',   name:'Barang Jadi Distribusi Kaligawe',       notes:'Stok distribusi kawasan industri Semarang' },
+    { lc:'SMG-GDG-02', code:'SMG-GDG-02-STG',  name:'Staging Distribusi Kaligawe',           notes:'Antrian muat harian area Kaligawe' },
+
+    // ── SMG-DCT-01: DC Semarang-Demak (2) ────────────────────────────────────────
+    { lc:'SMG-DCT-01', code:'SMG-DCT-01-FG',   name:'Finished Goods DC Semarang-Demak',      notes:'DC distribusi Jawa Tengah & DIY' },
+    { lc:'SMG-DCT-01', code:'SMG-DCT-01-STG',  name:'Staging DC Semarang-Demak',             notes:'Loading dock & sortir delivery order Jateng' },
+
+    // ── SMG-WRK-01: Workshop Terboyo (2) ─────────────────────────────────────────
+    { lc:'SMG-WRK-01', code:'SMG-WRK-01-SP',   name:'Spare Parts Workshop Terboyo',          notes:'Suku cadang mesin & kendaraan Semarang' },
+    { lc:'SMG-WRK-01', code:'SMG-WRK-01-CONS', name:'Consumables Workshop Terboyo',          notes:'Bahan habis pakai maintenance Semarang' },
+
+    // ── YGY-GDG-01: Gudang Utama Yogyakarta (4) ──────────────────────────────────
+    { lc:'YGY-GDG-01', code:'YGY-GDG-01-FG',   name:'Barang Jadi Yogyakarta',                notes:'Stok produk jadi cabang Yogyakarta' },
+    { lc:'YGY-GDG-01', code:'YGY-GDG-01-RM',   name:'Bahan Baku Yogyakarta',                 notes:'Buffer bahan baku DIY & Jateng Selatan' },
+    { lc:'YGY-GDG-01', code:'YGY-GDG-01-QR',   name:'Karantina Yogyakarta',                  neg:false, notes:'Hold QC produk wilayah Yogyakarta' },
+    { lc:'YGY-GDG-01', code:'YGY-GDG-01-RET',  name:'Retur Yogyakarta',                      neg:false, notes:'Retur pelanggan wilayah DIY' },
+
+    // ── YGY-GDG-02: Gudang Distribusi Maguwoharjo (2) ────────────────────────────
+    { lc:'YGY-GDG-02', code:'YGY-GDG-02-FG',   name:'Barang Jadi Distribusi Maguwoharjo',    notes:'Stok distribusi Sleman & Gunung Kidul' },
+    { lc:'YGY-GDG-02', code:'YGY-GDG-02-STG',  name:'Staging Distribusi Maguwoharjo',        notes:'Antrian muat & sortir DO area Sleman' },
+
+    // ── YGY-WRK-01: Workshop Condongcatur (2) ────────────────────────────────────
+    { lc:'YGY-WRK-01', code:'YGY-WRK-01-SP',   name:'Spare Parts Workshop Condongcatur',     notes:'Suku cadang mesin & kendaraan Yogyakarta' },
+    { lc:'YGY-WRK-01', code:'YGY-WRK-01-CONS', name:'Consumables Workshop Condongcatur',     notes:'Bahan habis pakai maintenance Yogyakarta' },
+
+    // ── PLM-GDG-01: Gudang Utama Palembang (4) ───────────────────────────────────
+    { lc:'PLM-GDG-01', code:'PLM-GDG-01-FG',   name:'Barang Jadi Palembang',                 notes:'Stok produk jadi cabang Palembang' },
+    { lc:'PLM-GDG-01', code:'PLM-GDG-01-RM',   name:'Bahan Baku Palembang',                  notes:'Buffer bahan baku untuk wilayah Sumatera Selatan' },
+    { lc:'PLM-GDG-01', code:'PLM-GDG-01-QR',   name:'Karantina Palembang',                   neg:false, notes:'Hold QC produk Palembang' },
+    { lc:'PLM-GDG-01', code:'PLM-GDG-01-RET',  name:'Retur Palembang',                       neg:false, notes:'Retur pelanggan Sumatera Selatan & Bangka' },
+
+    // ── PLM-GDG-02: Gudang Distribusi Boom Baru (2) ──────────────────────────────
+    { lc:'PLM-GDG-02', code:'PLM-GDG-02-FG',   name:'Barang Jadi Pelabuhan Boom Baru',       notes:'Stok siap muat kapal pelabuhan Palembang' },
+    { lc:'PLM-GDG-02', code:'PLM-GDG-02-STG',  name:'Staging Pelabuhan Boom Baru',           notes:'Antrian muat & cek fisik antar pulau Palembang' },
+
+    // ── PLM-DCT-01: DC Boom Baru (1) ─────────────────────────────────────────────
+    { lc:'PLM-DCT-01', code:'PLM-DCT-01-FG',   name:'Finished Goods DC Boom Baru',           notes:'DC distribusi Sumatera Selatan & Lampung' },
+    { lc:'PLM-DCT-01', code:'PLM-DCT-01-STG',  name:'Staging DC Boom Baru',                  notes:'Sortir & muat distribusi wilayah Sumsel' },
+
+    // ── PLM-WRK-01: Workshop Jakabaring (2) ──────────────────────────────────────
+    { lc:'PLM-WRK-01', code:'PLM-WRK-01-SP',   name:'Spare Parts Workshop Jakabaring',       notes:'Suku cadang mesin & alat berat Palembang' },
+    { lc:'PLM-WRK-01', code:'PLM-WRK-01-CONS', name:'Consumables Workshop Jakabaring',       notes:'Bahan habis pakai maintenance Palembang' },
+
+    // ── DPS-GDG-01: Gudang Utama Denpasar (4) ────────────────────────────────────
+    { lc:'DPS-GDG-01', code:'DPS-GDG-01-FG',   name:'Barang Jadi Denpasar',                  notes:'Stok produk jadi cabang Denpasar' },
+    { lc:'DPS-GDG-01', code:'DPS-GDG-01-RM',   name:'Bahan Baku Denpasar',                   notes:'Buffer bahan baku Bali & Nusa Tenggara' },
+    { lc:'DPS-GDG-01', code:'DPS-GDG-01-QR',   name:'Karantina Denpasar',                    neg:false, notes:'Hold QC produk wilayah Denpasar' },
+    { lc:'DPS-GDG-01', code:'DPS-GDG-01-RET',  name:'Retur Denpasar',                        neg:false, notes:'Retur pelanggan Bali & Nusa Tenggara' },
+
+    // ── DPS-GDG-02: Gudang Distribusi Sanur (2) ──────────────────────────────────
+    { lc:'DPS-GDG-02', code:'DPS-GDG-02-FG',   name:'Barang Jadi Distribusi Sanur',          notes:'Stok distribusi Bali Selatan & Nusra' },
+    { lc:'DPS-GDG-02', code:'DPS-GDG-02-STG',  name:'Staging Distribusi Sanur',              notes:'Antrian muat & pencocokan DO Bali Selatan' },
+
+    // ── DPS-DCT-01: DC Sanur (2) ─────────────────────────────────────────────────
+    { lc:'DPS-DCT-01', code:'DPS-DCT-01-FG',   name:'Finished Goods DC Sanur',               notes:'DC distribusi Bali & Nusa Tenggara Barat' },
+    { lc:'DPS-DCT-01', code:'DPS-DCT-01-STG',  name:'Staging DC Sanur',                      notes:'Loading dock & verifikasi DO Bali-NTB' },
+
+    // ── DPS-WRK-01: Workshop Pemogan (2) ─────────────────────────────────────────
+    { lc:'DPS-WRK-01', code:'DPS-WRK-01-SP',   name:'Spare Parts Workshop Pemogan',          notes:'Suku cadang mesin & kendaraan Bali' },
+    { lc:'DPS-WRK-01', code:'DPS-WRK-01-CONS', name:'Consumables Workshop Pemogan',          notes:'Bahan habis pakai maintenance Denpasar' },
+
+    // ── BPN-GDG-01: Gudang Utama Balikpapan (4) ──────────────────────────────────
+    { lc:'BPN-GDG-01', code:'BPN-GDG-01-FG',   name:'Barang Jadi Balikpapan',                notes:'Stok produk jadi cabang Balikpapan' },
+    { lc:'BPN-GDG-01', code:'BPN-GDG-01-RM',   name:'Bahan Baku Balikpapan',                 notes:'Buffer bahan baku Kaltim & proyek IKN' },
+    { lc:'BPN-GDG-01', code:'BPN-GDG-01-QR',   name:'Karantina Balikpapan',                  neg:false, notes:'Hold QC produk wilayah Balikpapan' },
+    { lc:'BPN-GDG-01', code:'BPN-GDG-01-RET',  name:'Retur Balikpapan',                      neg:false, notes:'Retur pelanggan wilayah Kalimantan Timur' },
+
+    // ── BPN-GDG-02: Gudang Distribusi Kariangau (2) ──────────────────────────────
+    { lc:'BPN-GDG-02', code:'BPN-GDG-02-FG',   name:'Barang Jadi Distribusi Kariangau',      notes:'Stok distribusi kawasan industri Kariangau' },
+    { lc:'BPN-GDG-02', code:'BPN-GDG-02-STG',  name:'Staging Distribusi Kariangau',          notes:'Antrian muat & verifikasi DO Kaltim' },
+
+    // ── BPN-DCT-01: DC Kariangau (2) ─────────────────────────────────────────────
+    { lc:'BPN-DCT-01', code:'BPN-DCT-01-FG',   name:'Finished Goods DC Kariangau',           notes:'DC distribusi Kalimantan Timur & proyek IKN' },
+    { lc:'BPN-DCT-01', code:'BPN-DCT-01-STG',  name:'Staging DC Kariangau',                  notes:'Loading dock & sortir DO Kalimantan' },
+
+    // ── BPN-WRK-01: Workshop Klandasan (2) ───────────────────────────────────────
+    { lc:'BPN-WRK-01', code:'BPN-WRK-01-SP',   name:'Spare Parts Workshop Klandasan',        notes:'Suku cadang alat berat & mesin Balikpapan' },
+    { lc:'BPN-WRK-01', code:'BPN-WRK-01-CONS', name:'Consumables Workshop Klandasan',        notes:'Bahan habis pakai maintenance Balikpapan' },
+
+    // ── PKU Pekanbaru — non-aktif (4) ─────────────────────────────────────────────
+    { lc:'PKU-GDG-01', code:'PKU-GDG-01-FG',   name:'Barang Jadi Pekanbaru',                 notes:'Stok produk jadi cabang Pekanbaru (hibernasi)', active:false },
+    { lc:'PKU-GDG-01', code:'PKU-GDG-01-RM',   name:'Bahan Baku Pekanbaru',                  notes:'Buffer bahan baku wilayah Riau (hibernasi)', active:false },
+    { lc:'PKU-GDG-02', code:'PKU-GDG-02-FG',   name:'Barang Jadi Distribusi Rumbai',         notes:'Stok distribusi Riau (hibernasi)', active:false },
+    { lc:'PKU-DCT-01', code:'PKU-DCT-01-FG',   name:'Finished Goods DC Rumbai',              notes:'DC distribusi Riau — non-aktif', active:false },
+
+    // ── PNK Pontianak — non-aktif (4) ─────────────────────────────────────────────
+    { lc:'PNK-GDG-01', code:'PNK-GDG-01-FG',   name:'Barang Jadi Pontianak',                 notes:'Stok produk jadi cabang Pontianak (hibernasi)', active:false },
+    { lc:'PNK-GDG-01', code:'PNK-GDG-01-RM',   name:'Bahan Baku Pontianak',                  notes:'Buffer bahan baku Kalimantan Barat (hibernasi)', active:false },
+    { lc:'PNK-GDG-02', code:'PNK-GDG-02-FG',   name:'Barang Jadi Distribusi Siantan',        notes:'Stok distribusi Kalimantan Barat (hibernasi)', active:false },
+    { lc:'PNK-DCT-01', code:'PNK-DCT-01-FG',   name:'Finished Goods DC Siantan',             notes:'DC distribusi Kalimantan Barat — non-aktif', active:false },
+  ];
+
+  // Build locationCode → id map
+  const allLocCodes = [...new Set(rows.map(r => r.lc))];
+  const locMap = new Map<string, bigint>();
+  for (const code of allLocCodes) {
+    const loc = await prisma.erpLocation.findUnique({ where: { code }, select: { id: true } });
+    if (loc) locMap.set(code, loc.id);
+  }
+
+  let count = 0;
+  for (const { lc, active, neg, ...d } of rows) {
+    const locationId = locMap.get(lc);
+    if (!locationId) { console.warn(`  ⚠ Location ${lc} not found, skip ${d.code}`); continue; }
+    const payload = { ...d, locationId, isActive: active ?? true, allowNegativeStock: neg ?? false };
+    await prisma.erpWarehouse.upsert({
+      where: { code: d.code },
+      create: payload,
+      update: payload,
+    });
+    count++;
+  }
+  console.log(`✓ md_warehouses (${count} entries)`);
+}
+
 async function main() {
   console.log('Seeding ERP MVP (m0 + m1)...\n');
   await seedLanguages();
   await seedSettings();
   await seedCurrency();
   await seedBranch();
+  await seedLocations();
+  await seedWarehouses();
   await seedPasswordPolicy();
   const menuIds = await seedMenus();
   await seedDocumentNumberings();
   const permIds = await seedPermissions();
   await seedRoleAndUser(menuIds, permIds);
+  await seedDivisions();
   await seedNotifications();
   console.log('\n✅ ERP seed complete.');
 }

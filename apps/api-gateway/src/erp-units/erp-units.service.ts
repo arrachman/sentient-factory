@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { BulkErpUnitDto, BulkStatusErpUnitDto } from './dto/bulk-erp-unit.dto';
 import { CreateErpUnitDto } from './dto/create-erp-unit.dto';
 import { QueryErpUnitDto } from './dto/query-erp-unit.dto';
 import { UpdateErpUnitDto } from './dto/update-erp-unit.dto';
@@ -136,6 +137,26 @@ export class ErpUnitsService {
     }
 
     return { success: true, data: updated };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpUnitDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpUnit.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpUnitDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+    const { count } = await this.prisma.erpUnit.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 
   async remove(id: bigint, actorId?: string) {

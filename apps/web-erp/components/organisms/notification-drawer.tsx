@@ -148,7 +148,11 @@ export function NotificationDrawer({
   }, [open, reload]);
 
   // Sekali saat mount supaya badge topbar punya angka tanpa harus buka drawer.
+  // useRef guard mencegah double-fetch saat AppShell remount akibat redirect chain (/org → /dashboard).
+  const hasFetched = React.useRef(false);
   React.useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     reload();
   }, [reload]);
 

@@ -275,6 +275,7 @@ export class ClinicPsikologService {
       title?: string;
       bio?: string;
       color?: string;
+      phone: string;
       avatarUrl?: string | null;
     },
   ) {
@@ -300,6 +301,8 @@ export class ClinicPsikologService {
         userUpdates.avatarUrl = dto.avatarUrl;
         hasUserUpdate = true;
       }
+      userUpdates.phone = dto.phone.trim() || null;
+      hasUserUpdate = true;
       if (hasUserUpdate) {
         await tx.user.update({ where: { id: userId }, data: userUpdates });
       }

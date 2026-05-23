@@ -98,8 +98,8 @@ interface TopbarProps {
   user: ShellUser;
   onNavigate: (route: string) => void;
   onLogout: () => void;
-  workspaceId: string;
-  workspaceName: string;
+  workspaceId?: string;
+  workspaceName?: string;
 }
 
 /** Brand + breadcrumb + command trigger + user chip — ported from `topbar.jsx`. */

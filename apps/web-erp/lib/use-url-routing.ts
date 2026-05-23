@@ -5,6 +5,7 @@
 // replaces the current page in place when the tab strip is hidden.
 
 import * as React from 'react';
+import { GLOBAL_BASE_PATH } from '@/lib/shell-constants';
 import type { ShellTab } from '@/components/organisms/tab-bar';
 
 const APPEARANCE_STORAGE_KEY = 'erp-appearance';
@@ -22,11 +23,11 @@ export function readUrlRoutingEnabled(): boolean {
 }
 
 interface UseUrlRoutingArgs {
-  workspaceId: string;
+  workspaceId?: string;
   activeRoute: string;
+  activeId: string;
   setTabs: React.Dispatch<React.SetStateAction<ShellTab[]>>;
   setActiveId: React.Dispatch<React.SetStateAction<string>>;
-  nextTabId: () => string;
   navigateInTab: (route: string) => void;
   openTab: (route: string) => void;
 }
@@ -49,13 +50,21 @@ export interface UseUrlRoutingApi {
 export function useUrlRouting({
   workspaceId,
   activeRoute,
+  activeId,
   setTabs,
   setActiveId,
-  nextTabId,
   navigateInTab,
   openTab,
 }: UseUrlRoutingArgs): UseUrlRoutingApi {
   const [urlRoutingEnabled, setUrlRoutingEnabled] = React.useState(false);
+
+  // Refs so event handlers always read live values without re-registering.
+  const activeRouteRef = React.useRef(activeRoute);
+  const activeIdRef = React.useRef(activeId);
+  React.useEffect(() => {
+    activeRouteRef.current = activeRoute;
+    activeIdRef.current = activeId;
+  }, [activeRoute, activeId]);
 
   React.useEffect(() => {
     setUrlRoutingEnabled(readUrlRoutingEnabled());
@@ -64,23 +73,45 @@ export function useUrlRouting({
     };
     const onCustom = (e: Event) => {
       setUrlRoutingEnabled(!!(e as CustomEvent<{ enabled: boolean }>).detail?.enabled);
-      const freshId = nextTabId();
-      setTabs([{ id: freshId, route: 'home' }]);
-      setActiveId(freshId);
+      // Reuse the current tab ID so the page component is NOT remounted — its
+      // React state (including the updated urlRouting tweak) is preserved.
+      setTabs([{ id: activeIdRef.current, route: activeRouteRef.current || 'home' }]);
+      setActiveId(activeIdRef.current);
+    };
+    // Server-side hydration: only update the flag, never reset workspace tabs.
+    const onHydrate = (e: Event) => {
+      setUrlRoutingEnabled(!!(e as CustomEvent<{ enabled: boolean }>).detail?.enabled);
     };
     window.addEventListener('storage', onStorage);
     window.addEventListener('erp-set-url-routing', onCustom as EventListener);
+    window.addEventListener('erp-hydrate-url-routing', onHydrate as EventListener);
     return () => {
       window.removeEventListener('storage', onStorage);
       window.removeEventListener('erp-set-url-routing', onCustom as EventListener);
+      window.removeEventListener('erp-hydrate-url-routing', onHydrate as EventListener);
     };
-  }, [nextTabId, setTabs, setActiveId]);
+  }, [setTabs, setActiveId]);
 
   React.useEffect(() => {
-    if (!urlRoutingEnabled || !activeRoute || activeRoute === 'home') return;
-    const target = `/${workspaceId}${activeRoute}`;
-    if (window.location.pathname !== target) {
-      window.history.replaceState(null, '', target);
+    // Global mode: routes map to /app/<route> (e.g. /app/master/provinces).
+    // Workspace mode: workspaceRoot = /ws1 so routes map to /ws1/<route>.
+    const workspaceRoot = workspaceId ? `/${workspaceId}` : '';
+    const homeUrl = workspaceId ? workspaceRoot : GLOBAL_BASE_PATH;
+    if (urlRoutingEnabled) {
+      if (!activeRoute || activeRoute === 'home') return;
+      // Global: prepend /app prefix so URL = /app/master/provinces.
+      // Workspace: prepend workspace prefix.
+      const target = workspaceId
+        ? `${workspaceRoot}${activeRoute}`
+        : `${GLOBAL_BASE_PATH}${activeRoute}`;
+      if (window.location.pathname !== target) {
+        window.history.replaceState(null, '', target);
+      }
+    } else {
+      // Internal mode: URL shows only the root (workspace or /org).
+      if (window.location.pathname !== homeUrl) {
+        window.history.replaceState(null, '', homeUrl);
+      }
     }
   }, [urlRoutingEnabled, activeRoute, workspaceId]);
 

@@ -38,6 +38,8 @@ export class ErpDivisionsService {
           name: dto.name,
           parentId: dto.parentId ? BigInt(dto.parentId) : null,
           isActive: dto.isActive ?? true,
+          barcode: dto.barcode,
+          note: dto.note,
           createdById: actorBigInt,
           updatedById: actorBigInt,
         },
@@ -108,6 +110,8 @@ export class ErpDivisionsService {
           name: dto.name,
           parentId: dto.parentId === undefined ? undefined : dto.parentId ? BigInt(dto.parentId) : null,
           isActive: dto.isActive,
+          barcode: dto.barcode,
+          note: dto.note,
           updatedById: actorBigInt,
         },
       });

@@ -7,6 +7,7 @@ export interface ErpProvince {
   code: string;
   name: string;
   countryId: string | null;
+  countryName?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpItemCategoryDto, BulkStatusErpItemCategoryDto } from './dto/bulk-erp-item-category.dto';
 import { CreateErpItemCategoryDto } from './dto/create-erp-item-category.dto';
 import { QueryErpItemCategoryDto } from './dto/query-erp-item-category.dto';
 import { UpdateErpItemCategoryDto } from './dto/update-erp-item-category.dto';
@@ -54,6 +55,18 @@ export class ErpItemCategoriesController {
     @Request() req: any,
   ) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk activate/deactivate ERP item categories' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpItemCategoryDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP item categories' })
+  bulkDelete(@Body() dto: BulkErpItemCategoryDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Delete(':id')

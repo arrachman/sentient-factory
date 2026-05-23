@@ -4,19 +4,12 @@ import { FieldRow } from '../../shared/field-row';
 import { MicroSelect } from '../../shared/micro-select';
 import { Toggle } from '../../shared/toggle';
 
-/**
- * Bagian "Pengiriman & retry" + "Email" + "Telegram" + "Default Country Code".
- * Konfigurasi delivery — bukan event, jadi bukan NotifEventRow.
- */
 export function PengirimanSection({
   form,
   set,
 }: {
   form: UpdateSettingsInput;
-  set: <K extends keyof UpdateSettingsInput>(
-    key: K,
-    value: UpdateSettingsInput[K],
-  ) => void;
+  set: <K extends keyof UpdateSettingsInput>(key: K, value: UpdateSettingsInput[K]) => void;
 }) {
   return (
     <>
@@ -28,23 +21,25 @@ export function PengirimanSection({
           <DeliveryRow title="Pengirim WA" hint="Nomor terdaftar di WA Business API">
             <input
               className="input-althea"
-              defaultValue="+62 822 1100 8899"
+              value={form.waSenderNumber ?? ''}
+              onChange={(e) => set('waSenderNumber', e.target.value)}
+              placeholder="+6282211008899"
               style={{ width: 200, height: 32, fontSize: 12 }}
             />
-            <span className="badge badge-success">terverifikasi</span>
           </DeliveryRow>
           <DeliveryRow
             title="Jumlah retry otomatis"
             hint="Coba kirim ulang kalau gagal"
           >
             <MicroSelect
-              defaultValue="3"
+              value={String(form.waRetryCount ?? 3)}
               options={[
                 ['0', 'Tidak retry'],
                 ['1', '1 kali'],
                 ['3', '3 kali'],
                 ['5', '5 kali'],
               ]}
+              onChange={(v) => set('waRetryCount', Number(v))}
             />
           </DeliveryRow>
           <DeliveryRow
@@ -52,13 +47,14 @@ export function PengirimanSection({
             hint="Tunggu sekian lama sebelum coba lagi"
           >
             <MicroSelect
-              defaultValue="5"
+              value={String(form.waRetryDelayMinutes ?? 5)}
               options={[
                 ['1', '1 menit'],
                 ['5', '5 menit'],
                 ['15', '15 menit'],
                 ['60', '1 jam'],
               ]}
+              onChange={(v) => set('waRetryDelayMinutes', Number(v))}
             />
           </DeliveryRow>
           <DeliveryRow
@@ -68,7 +64,8 @@ export function PengirimanSection({
             <div className="flex items-center gap-2">
               <input
                 className="input-althea"
-                defaultValue="07:00"
+                value={form.waSendWindowStart ?? '07:00'}
+                onChange={(e) => set('waSendWindowStart', e.target.value)}
                 style={{
                   width: 70,
                   height: 32,
@@ -80,7 +77,8 @@ export function PengirimanSection({
               <span className="caption">sampai</span>
               <input
                 className="input-althea"
-                defaultValue="21:00"
+                value={form.waSendWindowEnd ?? '21:00'}
+                onChange={(e) => set('waSendWindowEnd', e.target.value)}
                 style={{
                   width: 70,
                   height: 32,
@@ -95,16 +93,32 @@ export function PengirimanSection({
             title="Notif gagal kirim ke admin"
             hint="Email harian rangkuman pesan yang gagal terkirim"
           >
-            <Toggle on label="Aktif" />
+            <Toggle
+              on={form.notifFailedSendEmail ?? true}
+              label={form.notifFailedSendEmail !== false ? 'Aktif' : 'Nonaktif'}
+              onChange={(v) => set('notifFailedSendEmail', v)}
+            />
           </DeliveryRow>
         </div>
       </FieldRow>
 
       <FieldRow label="Email" hint="Untuk invoice & rekap mingguan">
         <div className="flex flex-col gap-3">
-          <Toggle on label="Kirim invoice PDF setelah pembayaran" />
-          <Toggle on label="Rekap mingguan ke admin (Senin pagi)" />
-          <Toggle label="Rekap bulanan ke psikolog" />
+          <Toggle
+            on={form.emailInvoiceAfterPayment ?? true}
+            label="Kirim invoice PDF setelah pembayaran"
+            onChange={(v) => set('emailInvoiceAfterPayment', v)}
+          />
+          <Toggle
+            on={form.emailWeeklyRecap ?? true}
+            label="Rekap mingguan ke admin (Senin pagi)"
+            onChange={(v) => set('emailWeeklyRecap', v)}
+          />
+          <Toggle
+            on={form.emailMonthlyPsikolog ?? false}
+            label="Rekap bulanan ke psikolog"
+            onChange={(v) => set('emailMonthlyPsikolog', v)}
+          />
         </div>
       </FieldRow>
 
@@ -141,13 +155,7 @@ function DeliveryRow({
   return (
     <div className="flex items-center gap-3 flex-wrap">
       <div className="flex flex-col" style={{ flex: 1, minWidth: 220 }}>
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--teal-800)',
-          }}
-        >
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--teal-800)' }}>
           {title}
         </span>
         <span className="caption" style={{ marginTop: 2 }}>

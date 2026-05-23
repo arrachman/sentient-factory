@@ -2,272 +2,86 @@
 
 /**
  * F3 Master Data — Item (produk/bahan) page.
- * Lists md_items; supports create, edit, delete.
- * Loads units + categories for lookup selects.
+ * Uses SimpleMasterPage organism for full-feature CRUD.
  * Atomic tier: Page.
  */
 
 import * as React from 'react';
+import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
 import { Badge } from '@/components/ui/badge';
 import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
-  ModalFooter,
-} from '@/components/organisms/modal';
-import {
-  ErpListLayout,
-  type FilterConfig,
-  type SummaryConfig,
-  type ListPaginationConfig,
-} from '@/components/organisms/erp-list-layout';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmpty,
-} from '@/components/organisms/table';
-import { confirmAction, notify } from '@/lib/feedback';
+  listItems, createItem, updateItem, deleteItem,
+  bulkUpdateItemStatus, bulkDeleteItems,
+  type ErpItem, type ErpItemType, type CreateItemPayload,
+} from '@/lib/api/items';
+import { listUnits, type ErpUnit } from '@/lib/api/units';
+import { listItemCategories, type ErpItemCategory } from '@/lib/api/item-categories';
 import { useErpList } from '@/lib/use-erp-list';
-import { useListPagination } from '@/lib/use-list-pagination';
-import { listItems, createItem, updateItem, deleteItem } from '@/lib/api/items';
-import type { ErpItem } from '@/lib/api/items';
-import { listUnits } from '@/lib/api/units';
-import { listItemCategories } from '@/lib/api/item-categories';
-import {
-  ItemFormFields,
-  defaultItemForm,
-  fromItem,
-  toItemPayload,
-  type ItemFormData,
-} from './items-form';
+import { ItemFormFields, defaultItemForm, fromItem, toItemPayload, validateItem, type ItemFormData } from './items-form';
+import type { FormErrors } from '@/lib/form-validation';
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Lookup provider ──────────────────────────────────────────────────────────
 
-export function ErpItemsPage() {
-  const [sortBy, setSortBy] = React.useState('createdAt');
-  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
-  const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('');
-  const { page, pageSize, setPage, setPageSize } = useListPagination('items');
-
-  const [debouncedSearch, setDebouncedSearch] = React.useState(search);
-  React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
-
-  const isActiveParam =
-    statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
-
-  const { rows, meta, loading, error, reload } = useErpList(
-    () =>
-      listItems({
-        page,
-        limit: pageSize,
-        search: debouncedSearch || undefined,
-        sortBy,
-        sortDir,
-        isActive: isActiveParam,
-      }),
-    [page, pageSize, debouncedSearch, sortBy, sortDir, isActiveParam],
-  );
-
-  React.useEffect(() => { setPage(1); }, [debouncedSearch, statusFilter, sortBy, sortDir, pageSize]);
-
-  // Lookup lists (load larger pages — used for label fallbacks in table cells).
+function useItemLookups() {
   const { rows: units } = useErpList(() => listUnits({ limit: 100 }), []);
   const { rows: categories } = useErpList(() => listItemCategories({ limit: 100 }), []);
+  return { units, categories };
+}
 
-  const [open, setOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<ErpItem | null>(null);
-  const [form, setForm] = React.useState<ItemFormData>(defaultItemForm);
-  const [saving, setSaving] = React.useState(false);
+// ─── Extra columns ─────────────────────────────────────────────────────────────
 
-  // Build lookup maps
-  const unitMap = React.useMemo(() => {
-    const m: Record<string, string> = {};
-    units.forEach((u) => (m[u.id] = u.code));
-    return m;
-  }, [units]);
+const extraColumns: ExtraColumn<ErpItem>[] = [
+  {
+    key: 'itemType',
+    label: 'Tipe',
+    render: (r) => <span className="code">{r.itemType}</span>,
+  },
+  {
+    key: 'unit',
+    label: 'Satuan',
+    render: (r) => <span className="muted">{r.unit?.code ?? r.unitId}</span>,
+  },
+  {
+    key: 'category',
+    label: 'Kategori',
+    render: (r) => <span className="muted">{r.category?.name ?? r.categoryId}</span>,
+  },
+];
 
-  const catMap = React.useMemo(() => {
-    const m: Record<string, string> = {};
-    categories.forEach((c) => (m[c.id] = c.name));
-    return m;
-  }, [categories]);
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
-  const paged = rows;
-  const totalRows = meta?.total ?? 0;
-  const pageCount = meta?.totalPages ?? 1;
+export function ErpItemsPage() {
+  const { units, categories } = useItemLookups();
 
-  const ALL = { label: 'Semua', value: '' };
-  const itemFilters: FilterConfig[] = [
-    { key: 'status', label: 'Status', value: statusFilter, onChange: setStatusFilter,
-      options: [ALL, { label: 'Aktif', value: 'active' }, { label: 'Nonaktif', value: 'inactive' }] },
-  ];
-  const itemSummary: SummaryConfig = { metricLabel: 'Σ item', rowCount: totalRows, totalCount: totalRows };
-  const itemPagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
-  void setSortBy; void setSortDir;
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm(defaultItemForm());
-    setOpen(true);
-  };
-
-  const openEdit = (item: ErpItem) => {
-    setEditing(item);
-    setForm(fromItem(item));
-    setOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      if (editing) {
-        await updateItem(editing.id, toItemPayload(form));
-        notify('Item diperbarui', 'success');
-      } else {
-        await createItem(toItemPayload(form));
-        notify('Item dibuat', 'success');
-      }
-      setOpen(false);
-      reload();
-    } catch (e: unknown) {
-      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = (item: ErpItem) => {
-    confirmAction({
-      title: 'Hapus item?',
-      message: `${item.code} — ${item.name} akan dihapus permanen.`,
-      variant: 'danger',
-      confirmLabel: 'Hapus',
-      confirmIcon: 'trash',
-      onConfirm: async () => {
-        try {
-          await deleteItem(item.id);
-          notify('Item dihapus', 'success');
-          reload();
-        } catch (e: unknown) {
-          notify(e instanceof Error ? e.message : 'Gagal', 'danger');
-        }
+  const FormFields = React.useMemo(
+    () =>
+      function ItemsFormFields({ data, onChange, errors }: { data: ItemFormData; onChange: (d: ItemFormData) => void; errors?: FormErrors<ItemFormData> }) {
+        return <ItemFormFields data={data} onChange={onChange} units={units} categories={categories} errors={errors} />;
       },
-    });
-  };
+    [units, categories],
+  );
 
   return (
-    <>
-      <ErpListLayout
-        title="Item"
-        code="ITM"
-        loading={loading}
-        error={error}
-        search={search}
-        onSearch={setSearch}
-        onAdd={openCreate}
-        onRefresh={reload}
-        filters={itemFilters}
-        summary={itemSummary}
-        pagination={itemPagination}
-      >
-        <div className="lines">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kode</TableHead>
-                <TableHead>Nama</TableHead>
-                <TableHead>Tipe</TableHead>
-                <TableHead>Satuan</TableHead>
-                <TableHead>Kategori</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paged.length === 0 ? (
-                <TableEmpty colSpan={7} />
-              ) : (
-                paged.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="mono">{item.code}</TableCell>
-                    <TableCell>{item.name}</TableCell>
-                    <TableCell>
-                      <span className="code">{item.itemType}</span>
-                    </TableCell>
-                    <TableCell className="muted">
-                      {item.unit?.code ?? unitMap[item.unitId] ?? item.unitId}
-                    </TableCell>
-                    <TableCell className="muted">
-                      {item.category?.name ??
-                        catMap[item.categoryId] ??
-                        item.categoryId}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={item.isActive ? 'success' : 'default'}
-                        dot
-                      >
-                        {item.isActive ? 'Aktif' : 'Nonaktif'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button
-                          className="btn sm"
-                          onClick={() => openEdit(item)}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="btn sm danger"
-                          onClick={() => handleDelete(item)}
-                        >
-                          Hapus
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </ErpListLayout>
-
-      <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>{editing ? 'Edit Item' : 'Tambah Item'}</ModalTitle>
-          </ModalHeader>
-          <ItemFormFields
-            data={form}
-            onChange={setForm}
-            units={units}
-            categories={categories}
-          />
-          <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              Batal
-            </button>
-            <button
-              className="btn primary"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              {saving ? 'Menyimpan...' : 'Simpan'}
-            </button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+    <SimpleMasterPage<ErpItem, ItemFormData>
+      title="Item"
+      code="ITM"
+      entityLabel="item"
+      storageKey="items"
+      auditEntityName="ErpItem"
+      list={listItems}
+      create={createItem}
+      update={updateItem}
+      remove={deleteItem}
+      bulkStatus={bulkUpdateItemStatus}
+      bulkDelete={bulkDeleteItems}
+      defaultForm={defaultItemForm}
+      fromRecord={fromItem}
+      toPayload={toItemPayload as (f: ItemFormData) => any}
+      FormFields={FormFields}
+      validate={validateItem}
+      extraColumns={extraColumns}
+      defaultSortBy="code"
+      defaultSortDir="asc"
+    />
   );
 }

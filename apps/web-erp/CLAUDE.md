@@ -515,8 +515,8 @@ atau `react-beautiful-dnd`.
 ### 2.13 Setting → Tampilan = `/settings/appearance` (2026-05-20)
 
 Halaman preferensi tampilan per-user. Canonical path = `/settings/appearance`
-(seeded di `sys_menus` di bawah module `SET` "Settings" dgn code
-`SET.APPEARANCE`). Komponen = `AppearancePage` (`components/pages/appearance.tsx`),
+(seeded di `sys_menus` di bawah group `M0.SYS` "System" — Administrator module —
+dgn code `M0.SYS.APPEARANCE`; 2026-05-22 dipindah dari `SET` module). Komponen = `AppearancePage` (`components/pages/appearance.tsx`),
 ter-register di `ERP_PAGES` + `ERP_ROUTE_META`. Short-id legacy `set-appearance`
 tetap jalan sebagai alias fallback NAV statis.
 
@@ -575,6 +575,15 @@ localStorage; PUT ke API otomatis ter-debounce 500ms (tanpa tombol Simpan).
 Hanya error API yang dinotifikasi (toast `danger`); sukses silent supaya tidak
 spam saat user geser kontrol berurutan. Tombol Reset tetap ada untuk
 mengembalikan ke `DEFAULTS`.
+
+**Cross-device hydration (2026-05-22):** setelah API prefs berhasil di-load,
+`AppearancePage` langsung tulis `merged` ke localStorage (`erp-appearance`)
+sehingga `readUrlRoutingEnabled()` pada reload berikutnya sudah benar tanpa
+menunggu user mengubah setting. `app-shell.tsx` juga melakukan hal yang sama +
+dispatch `CustomEvent('erp-hydrate-url-routing')` agar `useUrlRouting` update
+state `urlRoutingEnabled` **tanpa** mereset workspace tabs (berbeda dari
+`erp-set-url-routing` yang memang reset tabs untuk manual toggle). Ini
+mengatasi skenario cross-device / localStorage cleared.
 
 ### 2.11 Inline row actions = semua di kebab menu (WAJIB, 2026-05-20)
 
@@ -652,7 +661,7 @@ DTO query dulu sebelum FE diarahkan ke server-side sort.
 const [sortBy, setSortBy] = useState('createdAt');
 const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
 const [search, setSearch] = useState('');
-const [statusFilter, setStatusFilter] = useState('');
+const [statusFilter, setStatusFilter] = useState('active'); // default: tampilkan aktif saja
 const { page, pageSize, setPage, setPageSize } = useListPagination('branches');
 
 // Debounce search 300ms
@@ -697,6 +706,39 @@ Aturan turunan:
 - Pengecualian sah saat ini (DTO memang tidak paginasi, list selalu kecil):
   `settings`, `fiscal-periods`, `menus`, `permissions` (enum-like). Kalau
   list-nya tumbuh, tambahkan paginasi backend dulu.
+
+### 2.20 Hierarki geografis & kode pos (WAJIB, 2026-05-22)
+
+Setiap tabel referensi geografis **wajib** terhubung ke level di atasnya via
+FK yang ditegakkan — tidak boleh ada tabel wilayah yang berdiri sendiri tanpa
+relasi ke induknya.
+
+**Hierarki kanonik ERP (sudah diimplementasi):**
+
+```
+md_countries ← md_provinces ← md_cities ← md_areas (kecamatan) ← md_sub_areas (kelurahan)
+```
+
+Aturan turunan:
+
+- `md_provinces.countryId` → FK ke `md_countries`.
+- `md_cities.provinceId` → FK ke `md_provinces`.
+- `md_areas.cityId` → FK ke `md_cities`. Field `postalCode` ada di sini (per kecamatan).
+- `md_sub_areas.areaId` → FK ke `md_areas`. Field `postalCode` ada di sini juga (per kelurahan, lebih granular).
+- `postalCode` di `md_partner_addresses`, `md_branches`, `md_locations` adalah
+  **freetext** (isian manual) — terpisah dari referensi `md_areas`/`md_sub_areas`.
+  User mengisi manual atau autofill dari `md_sub_areas` saat memilih kelurahan di form alamat.
+
+**Seed data (2026-05-22):** `prisma/seed-md-geo.ts` (jalankan via `npm run db:seed:geo`).
+Sumber: `kode-wilayah-id` (MIT). Data lengkap Indonesia:
+38 provinsi, 514 kab/kota, 7.286 kecamatan (+ `postalCode`), 84.270 kelurahan/desa (+ `postalCode`).
+Kode = BPS code (2/4/7/10 digit sesuai level). Idempotent — aman dijalankan ulang.
+
+**Model Prisma:**
+- `ErpArea` → `@@map("md_areas")`, relasi `subAreas ErpSubArea[]`
+- `ErpSubArea` → `@@map("md_sub_areas")`, FK `areaId → ErpArea`, index `postalCode`
+
+Migration: `20260522_004_erp_md_geo_kelurahan` (additive, 0 DROP).
 
 ---
 
@@ -791,6 +833,42 @@ Endpoint API client wajib expose `list/create/update/remove/bulkStatus/
 bulkDelete` untuk dipasangkan ke organism (lihat
 `lib/api/divisions.ts` sebagai template).
 
+#### Standar validasi form `SimpleMasterPage` (WAJIB, 2026-05-23)
+
+Setiap halaman yang pakai `SimpleMasterPage` **wajib** menerapkan pola
+validasi berikut — tanpa pengecualian:
+
+1. **`validate` prop wajib ada** di `<SimpleMasterPage ... validate={validateXxx} />`.
+   Minimal validasi: `code` required + `name` required (+ FK required bila ada
+   field `SearchSelect` yang mandatory).
+
+2. **`FormFields` wajib terima `errors`**:
+   ```tsx
+   function FormFields({
+     data, onChange, errors = {}
+   }: { data: F; onChange: (d: F) => void; errors?: FormErrors<F> }) {
+   ```
+
+3. **`aria-invalid` wajib pada setiap `<Input>` yang required**:
+   ```tsx
+   <FormField label="Kode" htmlFor="ef-code" required error={errors.code}>
+     <Input ... aria-invalid={!!errors.code} />
+   </FormField>
+   ```
+
+4. **`error` prop wajib pada `<SearchSelect>` required**:
+   ```tsx
+   <SearchSelect ... error={!!errors.fieldId} />
+   ```
+   (Pasangkan `aria-invalid` + border merah sudah built-in di `SearchSelect`.)
+
+5. **Auto-focus ke field error pertama** — sudah built-in di `handleSave`
+   organism (query `[role="dialog"] [aria-invalid="true"]`, no-op bila tidak ada).
+
+Konsekuensi: halaman yang skip `validate=` → submit tanpa validasi client-side.
+Halaman yang skip `aria-invalid=` → auto-focus gagal menemukan field error.
+Kedua ini harus selesai sebelum halaman dideklarasikan done.
+
 ### 2.17 Modul sidebar Senti ERP — scope final (2026-05-20)
 
 Modul valid di `sys_menus` (sortOrder, sumber `seed-erp.ts`):
@@ -871,8 +949,10 @@ OtherCost, Country, Province (FK Country), City (FK Province), Area
    semua resolve ke `ErpPartnerSubCategoriesPage` di `ERP_PAGES`. Filter
    type via query string ditambahkan saat dibutuhkan (saat ini belum).
 3. **Reference Country→Province→City→Area = FK ditegakkan (intra-domain `md`).**
-   Indonesia di-seed di `prisma/seed-md-legacy.ts` (idempotent upsert via
-   `code`): 6 Country, 34 Province ID, 8 City utama, 6 Bank, 5 Expedition.
+   Seed di `prisma/seed-md-legacy.ts` (idempotent): **197 Country (seluruh dunia, ISO 3166-1 alpha-2, 2026-05-22)**, 38 Province ID, **514 Kab/Kota lengkap per BPS** (kode BPS 4-digit), Bank, Expedition.
+   City upsert pakai `findFirst(bpsCode OR code) + update-by-id` (bukan `upsert`) karena DB bisa mixed-state.
+   **`postalCode` hidup di `md_areas` (level kecamatan), bukan di `md_cities`** —
+   karena satu kota punya banyak kode pos, masing-masing per kecamatan. Lihat §2.20.
 4. **ItemPermission ditunda.** Bukan master "code+name+isActive" — pivot
    `itemId × roleId × {canView,canSell,canBuy}`. `SimpleMasterPage` tidak
    cocok; perlu page custom. Tabel sudah ada (`md_item_permissions`) tapi
@@ -898,6 +978,15 @@ DB drift di migrasi clinic lama. 23 tabel + 1 enum
 
 ### 2.19 Mode "Per-halaman URL" = true single-page (2026-05-22)
 
+**Penamaan resmi untuk vibe coding:**
+
+| Istilah | UI label | Kode | Arti |
+| --- | --- | --- | --- |
+| **URL routing off** | Internal | `urlRoutingEnabled = false` | navigasi tidak ubah URL, multi-tab aktif |
+| **URL routing on** | Per-halaman URL | `urlRoutingEnabled = true` | URL ikut halaman aktif, tab navigator disembunyikan |
+
+Gunakan "URL routing off/on" saat diskusi atau vibe coding — langsung korespondensi ke nama variabel `urlRoutingEnabled`.
+
 Knob URL Routing di Setting → Tampilan punya 2 mode: **Internal** (default,
 navigasi tidak mengubah URL, multi-tab) dan **Per-halaman URL**.
 
@@ -908,7 +997,8 @@ navigasi tidak mengubah URL, multi-tab) dan **Per-halaman URL**.
 - Ganti mode (dua arah) **wajib** lewat `confirmAction` dengan pesan eksplisit
   per arah: ke Per-halaman URL → "tab navigator dihapus, hanya satu halaman";
   ke Internal → "tab navigator ditampilkan kembali". Saat dikonfirmasi semua
-  tab ditutup & navigasi direset ke `home`.
+  tab lain ditutup — **halaman yang sedang aktif dipertahankan** (bukan reset
+  ke `home`).
 - Logika URL-routing diekstrak dari `app-shell.tsx` ke hook
   [`lib/use-url-routing.ts`](lib/use-url-routing.ts) (`useUrlRouting` +
   `readUrlRoutingEnabled`) — mengelola state mode, listener event

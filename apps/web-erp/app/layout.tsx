@@ -25,9 +25,19 @@ export const viewport = {
   initialScale: 1,
 };
 
+// Inline script content — runs synchronously before first paint so
+// data-primary / data-sidebar / data-density / data-fontscale are never
+// missing on the initial frame (prevents flash / FOUC).
+const APPEARANCE_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('erp-appearance')||'{}');var e=document.documentElement;e.setAttribute('data-density',s.density||'compact');e.setAttribute('data-fontscale',s.fontScale||'base');e.setAttribute('data-sidebar',s.sidebar||'icon');e.setAttribute('data-primary',s.primary||'blue');}catch(x){}})();`;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" className="h-full" suppressHydrationWarning>
+      {/* eslint-disable-next-line @next/next/no-head-element */}
+      <head>
+        {/* Blocking script — MUST run before body to avoid FOUC */}
+        <script dangerouslySetInnerHTML={{ __html: APPEARANCE_INIT_SCRIPT }} />
+      </head>
       <body
         className={cn(
           'h-full antialiased text-sm text-foreground bg-background',

@@ -12,10 +12,11 @@ import { BookingStreamController } from './booking-stream.controller';
 import { BookingValidationService } from './booking-validation.service';
 import { ClinicBookingController } from './clinic-booking.controller';
 import { ClinicBookingService } from './clinic-booking.service';
+import { WaSchedulerTriggerController } from './wa-scheduler-trigger.controller';
 
 @Module({
   imports: [PrismaModule, ClinicWaModule],
-  controllers: [ClinicBookingController, BookingStreamController],
+  controllers: [ClinicBookingController, BookingStreamController, WaSchedulerTriggerController],
   providers: [
     ClinicBookingService,
     BookingValidationService,
@@ -27,6 +28,6 @@ import { ClinicBookingService } from './clinic-booking.service';
     BookingAutoTransitionScheduler,
     IdempotencyInterceptor,
   ],
-  exports: [ClinicBookingService, BookingEventsService],
+  exports: [ClinicBookingService, BookingEventsService, BookingReminderScheduler],
 })
 export class ClinicBookingModule {}
