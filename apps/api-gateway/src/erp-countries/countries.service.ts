@@ -59,6 +59,7 @@ export class ErpCountriesService {
       const q = query.search.trim();
       where.OR = [
         { code: { contains: q, mode: 'insensitive' } },
+        { isoCode: { contains: q, mode: 'insensitive' } },
         { name: { contains: q, mode: 'insensitive' } },
       ];
     }

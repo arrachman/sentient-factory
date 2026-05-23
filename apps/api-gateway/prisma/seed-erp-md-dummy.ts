@@ -8,8 +8,11 @@
  *
  * Seeded (target 100 rows each):
  *   md_locations, md_warehouses, md_units, md_item_categories, md_items,
- *   md_partners, md_taxes, md_payment_terms, md_cost_centers, md_divisions,
+ *   md_partners, md_taxes, md_payment_terms, md_divisions,
  *   md_subdivisions, md_projects.
+ *
+ * Skipped (already populated with real data):
+ *   md_cost_centers — seeded via seed-erp-md-legacy.ts with 43 real manufacturing cost centers.
  */
 import { PrismaClient } from '@prisma/client';
 
@@ -118,16 +121,7 @@ async function main(): Promise<void> {
     return r.count;
   });
 
-  // ---- md_cost_centers (self-FK optional)
-  await seedIfEmpty('md_cost_centers', () => prisma.erpCostCenter.count(), async () => {
-    const rows = Array.from({ length: COUNT }, (_, i) => ({
-      code: `${PREFIX}-CC-${pad(i + 1)}`,
-      name: `Cost Center Dummy ${pad(i + 1)}`,
-      isActive: Math.random() > 0.05,
-    }));
-    const r = await prisma.erpCostCenter.createMany({ data: rows, skipDuplicates: true });
-    return r.count;
-  });
+  // md_cost_centers — skipped, real manufacturing data seeded via seed-erp-md-legacy.ts
 
   // ---- md_divisions
   await seedIfEmpty('md_divisions', () => prisma.erpDivision.count(), async () => {

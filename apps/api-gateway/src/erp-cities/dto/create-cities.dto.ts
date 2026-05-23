@@ -1,19 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateErpCityDto {
-  @ApiProperty({ example: 'CTYC-001' })
+  @ApiProperty({ example: 'KAB-SIMEULUE', description: 'Kode unik human-readable (slug dari nama)' })
   @IsString()
-  @MaxLength(50)
+  @MaxLength(100)
   code!: string;
 
-  @ApiProperty({ example: 'City Sample' })
+  @ApiProperty({ example: 'Kab. Simeulue' })
   @IsString()
   @MaxLength(150)
   name!: string;
 
-  @ApiPropertyOptional({ example: "1", description: "Province id" })
+  @ApiPropertyOptional({ example: '1101', description: 'Kode BPS 4-digit kab/kota' })
+  @IsOptional()
   @IsString()
+  @MaxLength(10)
+  bpsCode?: string;
+
+  @ApiProperty({ example: '1', description: 'Province id (required)' })
+  @IsString()
+  @IsNotEmpty()
   provinceId!: string;
 
   @ApiPropertyOptional({ example: true, default: true })

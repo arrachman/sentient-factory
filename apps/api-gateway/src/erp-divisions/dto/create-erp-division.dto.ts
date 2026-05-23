@@ -21,4 +21,16 @@ export class CreateErpDivisionDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
+
+  @ApiPropertyOptional({ example: 'DIV-OPS-001' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  barcode?: string;
+
+  @ApiPropertyOptional({ example: 'Division catatan tambahan' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  note?: string;
 }

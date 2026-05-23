@@ -693,9 +693,76 @@ async function main() {
     await prisma.erpExpedition.upsert({ where: { code: e.code }, update: e, create: e });
   }
 
+  // ---- md_cost_centers — manufacturing hierarchy (idempotent)
+  const CC_PARENTS = [
+    { code: 'PROD', name: 'Produksi' },
+    { code: 'ADM',  name: 'Administrasi & Umum' },
+    { code: 'LOG',  name: 'Logistik & Pergudangan' },
+    { code: 'QC',   name: 'Quality Control' },
+    { code: 'MTC',  name: 'Pemeliharaan & Utilitas' },
+    { code: 'MKT',  name: 'Pemasaran & Penjualan' },
+    { code: 'RD',   name: 'Riset & Pengembangan' },
+  ];
+  const CC_CHILDREN: { code: string; name: string; parentCode: string }[] = [
+    { code: 'PROD-MCH',  name: 'Pemesinan (Machining)',           parentCode: 'PROD' },
+    { code: 'PROD-WLD',  name: 'Pengelasan (Welding)',            parentCode: 'PROD' },
+    { code: 'PROD-FAB',  name: 'Fabrikasi (Fabrication)',         parentCode: 'PROD' },
+    { code: 'PROD-ASM',  name: 'Perakitan (Assembly)',            parentCode: 'PROD' },
+    { code: 'PROD-PNT',  name: 'Pengecatan (Painting)',           parentCode: 'PROD' },
+    { code: 'PROD-FNS',  name: 'Finishing',                      parentCode: 'PROD' },
+    { code: 'PROD-PKG',  name: 'Pengemasan (Packaging)',          parentCode: 'PROD' },
+    { code: 'PROD-OVH',  name: 'Overhead Produksi',              parentCode: 'PROD' },
+    { code: 'ADM-MNG',   name: 'Manajemen & Direksi',            parentCode: 'ADM'  },
+    { code: 'ADM-FIN',   name: 'Keuangan & Akuntansi',           parentCode: 'ADM'  },
+    { code: 'ADM-HRD',   name: 'SDM & Personalia (HRD)',         parentCode: 'ADM'  },
+    { code: 'ADM-IT',    name: 'Teknologi Informasi (IT)',        parentCode: 'ADM'  },
+    { code: 'ADM-LGL',   name: 'Legal & Kepatuhan',              parentCode: 'ADM'  },
+    { code: 'ADM-PROC',  name: 'Pengadaan (Procurement)',        parentCode: 'ADM'  },
+    { code: 'LOG-RM',    name: 'Gudang Bahan Baku',              parentCode: 'LOG'  },
+    { code: 'LOG-WIP',   name: 'Gudang Barang Setengah Jadi',    parentCode: 'LOG'  },
+    { code: 'LOG-FG',    name: 'Gudang Barang Jadi',             parentCode: 'LOG'  },
+    { code: 'LOG-IMP',   name: 'Impor & Bea Cukai',              parentCode: 'LOG'  },
+    { code: 'LOG-EXP',   name: 'Ekspor & Pengiriman',            parentCode: 'LOG'  },
+    { code: 'LOG-TRN',   name: 'Transportasi & Distribusi',      parentCode: 'LOG'  },
+    { code: 'QC-IQC',    name: 'Incoming Quality Control (IQC)', parentCode: 'QC'   },
+    { code: 'QC-IPQC',   name: 'In-Process Quality Control',    parentCode: 'QC'   },
+    { code: 'QC-OQC',    name: 'Outgoing Quality Control (OQC)', parentCode: 'QC'   },
+    { code: 'QC-LAB',    name: 'Laboratorium & Pengujian',       parentCode: 'QC'   },
+    { code: 'QC-CAL',    name: 'Kalibrasi Alat Ukur',            parentCode: 'QC'   },
+    { code: 'MTC-MCH',   name: 'Pemeliharaan Mesin',             parentCode: 'MTC'  },
+    { code: 'MTC-BLD',   name: 'Pemeliharaan Gedung',            parentCode: 'MTC'  },
+    { code: 'MTC-UTL',   name: 'Utilitas (Listrik, Air, Gas)',   parentCode: 'MTC'  },
+    { code: 'MTC-K3',    name: 'Keselamatan & Kesehatan Kerja (K3)', parentCode: 'MTC' },
+    { code: 'MKT-DOM',   name: 'Penjualan Domestik',             parentCode: 'MKT'  },
+    { code: 'MKT-EXP',   name: 'Penjualan Ekspor',              parentCode: 'MKT'  },
+    { code: 'MKT-ADV',   name: 'Promosi & Iklan',               parentCode: 'MKT'  },
+    { code: 'MKT-CRM',   name: 'Customer Relationship (CRM)',   parentCode: 'MKT'  },
+    { code: 'RD-DES',    name: 'Desain & Engineering Produk',   parentCode: 'RD'   },
+    { code: 'RD-PRO',    name: 'Pengembangan Proses',           parentCode: 'RD'   },
+    { code: 'RD-INN',    name: 'Inovasi & Prototipe',           parentCode: 'RD'   },
+  ];
+  const ccParentMap = new Map<string, bigint>();
+  for (const p of CC_PARENTS) {
+    const rec = await prisma.erpCostCenter.upsert({
+      where: { code: p.code },
+      update: { name: p.name },
+      create: { code: p.code, name: p.name, isActive: true },
+    });
+    ccParentMap.set(p.code, rec.id);
+  }
+  for (const c of CC_CHILDREN) {
+    const parentId = ccParentMap.get(c.parentCode);
+    await prisma.erpCostCenter.upsert({
+      where: { code: c.code },
+      update: { name: c.name, parentId },
+      create: { code: c.code, name: c.name, parentId, isActive: true },
+    });
+  }
+
   console.log('md-legacy seed complete:', {
     countries: countries.length, provinces: provinces.length,
     cities: cities.length, banks: banks.length, exps: exps.length,
+    costCenters: CC_PARENTS.length + CC_CHILDREN.length,
   });
 }
 

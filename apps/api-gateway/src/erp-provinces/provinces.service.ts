@@ -66,16 +66,24 @@ export class ErpProvincesService {
     const sortBy = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpProvince.findMany({ where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit }),
+      this.prisma.erpProvince.findMany({
+        where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit,
+        include: { country: { select: { name: true } } },
+      }),
       this.prisma.erpProvince.count({ where }),
     ]);
-    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+    const data = items.map(({ country, ...rest }) => ({ ...rest, countryName: country?.name ?? null }));
+    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
   }
 
   async findOne(id: bigint) {
-    const item = await this.prisma.erpProvince.findFirst({ where: { id, deletedAt: null } });
+    const item = await this.prisma.erpProvince.findFirst({
+      where: { id, deletedAt: null },
+      include: { country: { select: { name: true } } },
+    });
     if (!item) throw new NotFoundException(`${ENTITY} not found`);
-    return { success: true, data: item };
+    const { country, ...rest } = item;
+    return { success: true, data: { ...rest, countryName: country?.name ?? null } };
   }
 
   async update(id: bigint, dto: UpdateErpProvinceDto, actorId?: string) {
