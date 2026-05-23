@@ -29,6 +29,7 @@ import {
   setLastActive,
 } from '@/lib/workspace';
 import { useUrlRouting, readUrlRoutingEnabled } from '@/lib/use-url-routing';
+import { applyServerPrefs } from '@/lib/apply-server-prefs';
 
 interface AppShellProps {
   /** Omit for global (no-workspace) mode — tabs are in-memory only, no localStorage. */
@@ -81,6 +82,18 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     try { return window.localStorage.getItem(USER_STORAGE_KEY); } catch { return null; }
   });
 
+  // Start prefs fetch eagerly in parallel with the /me auth check so that by
+  // the time auth succeeds, the prefs promise may already be resolved.
+  const eagerPrefsRef = React.useRef<ReturnType<typeof getMyPreferences>>(
+    Promise.resolve(null),
+  );
+  React.useEffect(() => {
+    if (!storedUserRaw) return;
+    eagerPrefsRef.current = getMyPreferences().catch(() => null);
+  // storedUserRaw is stable (initialized once from localStorage)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const queryClient = useQueryClient();
   const meQuery = useErpMe({ enabled: !!storedUserRaw, retry: false });
   const myMenusQuery = useErpMyMenus({ enabled: !!user });
@@ -88,7 +101,10 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   const loadWorkspace = React.useCallback(() => {
     if (!workspaceId) {
       // Global mode: in-memory tabs only — no localStorage reads or writes.
-      const defaultTab = { id: 't1', route: 'home' };
+      // Use initialRoute directly so the first visible render already shows
+      // the correct page (avoids a Dashboard flash before the initialRoute
+      // effect fires one render later).
+      const defaultTab = { id: 't1', route: initialRoute ?? 'home' };
       syncTabSeq([defaultTab]);
       setTabs([defaultTab]);
       setActiveId('t1');
@@ -106,7 +122,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     );
     workspaceReady.current = true;
     setLastActive(workspaceId);
-  }, [workspaceId, nextTabId, syncTabSeq, setTabs, setActiveId]);
+  }, [workspaceId, initialRoute, nextTabId, syncTabSeq, setTabs, setActiveId]);
 
   // Ref guard prevents re-running when loadWorkspace ref or meQuery refetches.
   const authInitialized = React.useRef(false);
@@ -123,6 +139,14 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
       try {
         setUser(JSON.parse(storedUserRaw) as ShellUser);
         loadWorkspace();
+        // Apply server prefs to DOM + localStorage BEFORE revealing the shell
+        // so the blocking-script values are never visibly wrong on first render.
+        // eagerPrefsRef may already be resolved (parallel fetch started above).
+        eagerPrefsRef.current
+          .then((prefs) => { if (prefs) applyServerPrefs(prefs, setLang); })
+          .catch(() => {})
+          .finally(() => setHydrated(true));
+        return; // setHydrated called in the prefs chain above
       } catch {
         try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
       }
@@ -130,7 +154,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
       try { window.localStorage.removeItem(USER_STORAGE_KEY); } catch { /* noop */ }
     }
     setHydrated(true);
-  }, [storedUserRaw, meQuery.isSuccess, meQuery.isError, loadWorkspace]);
+  }, [storedUserRaw, meQuery.isSuccess, meQuery.isError, loadWorkspace, setLang]);
 
   React.useEffect(() => {
     if (myMenusQuery.data && myMenusQuery.data.length > 0) {
@@ -144,7 +168,11 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     // Force fresh menus for the new session (clears any stale cached result).
     queryClient.invalidateQueries({ queryKey: erpQueryKeys.myMenus });
     try { window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(u)); } catch { /* noop */ }
-  }, [loadWorkspace, queryClient]);
+    // Apply prefs immediately after login so appearance is correct from the start.
+    getMyPreferences()
+      .then((prefs) => { if (prefs) applyServerPrefs(prefs, setLang); })
+      .catch(() => {});
+  }, [loadWorkspace, queryClient, setLang]);
 
   const onLogout = React.useCallback(() => {
     workspaceReady.current = false;
@@ -251,44 +279,9 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     return () => window.removeEventListener('open-shortcuts', sc);
   }, []);
 
-  // Hydrate lang from server SSOT on login; listen for same-tab lang changes.
-  React.useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    getMyPreferences()
-      .then((prefs) => {
-        if (cancelled || !prefs) return;
-        if (prefs.language) {
-          const next = prefs.language as Lang;
-          if (next === 'id' || next === 'en' || next === 'ja') setLang(next);
-        }
-        const meta = (prefs.metadata ?? {}) as Record<string, string>;
-        const el = document.documentElement;
-        if (meta.density === 'compact' || meta.density === 'comfortable') {
-          el.setAttribute('data-density', meta.density);
-        }
-        if (meta.fontScale) el.setAttribute('data-fontscale', meta.fontScale);
-        if (meta.sidebar) el.setAttribute('data-sidebar', meta.sidebar);
-        if (meta.primary) el.setAttribute('data-primary', meta.primary);
-        // Hydrate urlRouting from server SSOT: update localStorage so
-        // readUrlRoutingEnabled() returns the correct value on next load,
-        // and notify useUrlRouting to update its live state.
-        if ('urlRouting' in meta) {
-          const urlRouting = !!(meta as unknown as { urlRouting?: boolean }).urlRouting;
-          try {
-            const raw = window.localStorage.getItem('erp-appearance') ?? '{}';
-            const stored = JSON.parse(raw) as Record<string, unknown>;
-            stored.urlRouting = urlRouting;
-            window.localStorage.setItem('erp-appearance', JSON.stringify(stored));
-          } catch { /* ignore */ }
-          window.dispatchEvent(
-            new CustomEvent('erp-hydrate-url-routing', { detail: { enabled: urlRouting } }),
-          );
-        }
-      })
-      .catch(() => { /* ignore */ });
-    return () => { cancelled = true; };
-  }, [user]);
+  // Listen for same-tab lang changes dispatched by AppearancePage.
+  // (Prefs are applied to DOM + localStorage via applyServerPrefs, called in
+  //  the auth effect before the shell renders and in onLogin after a fresh login.)
 
   React.useEffect(() => {
     const onSetLang = (e: Event) => {
