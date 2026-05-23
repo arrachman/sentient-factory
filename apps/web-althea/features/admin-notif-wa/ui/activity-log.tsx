@@ -6,7 +6,7 @@
  */
 import { MessageCircle, Search } from 'lucide-react';
 import { useState } from 'react';
-import { formatTime, getStatusStyle } from '../model/format';
+import { formatDate, formatTime, getStatusStyle } from '../model/format';
 import type { WaLog } from '../model/types';
 
 export function ActivityLog({
@@ -75,9 +75,10 @@ function LogRow({ log: l }: { log: WaLog }) {
         : l.recipientType;
   return (
     <div className="flex items-start gap-3 px-4 py-3 border-b border-border last:border-b-0">
-      <span className="caption font-mono w-12 flex-shrink-0 pt-0.5 tabular-nums">
-        {formatTime(l.createdAt)}
-      </span>
+      <div className="flex flex-col items-end w-14 flex-shrink-0 pt-0.5 tabular-nums">
+        <span className="caption font-mono">{formatTime(l.createdAt)}</span>
+        <span className="text-[10px] leading-tight text-fg-muted font-mono">{formatDate(l.createdAt)}</span>
+      </div>
       <div
         className="flex-shrink-0 rounded-full grid place-items-center"
         style={{

@@ -44,11 +44,6 @@ export const COMMON_VARIABLES = [
   '{{nama_psikolog}}',
   '{{nama_ruangan}}',
   '{{nama_layanan}}',
-  '{{no_rekam_medis}}',
-  '{{kode_otp}}',
-  '{{jumlah_dp}}',
-  '{{link_feedback}}',
-  '{{alasan_reschedule}}',
 ];
 
 export type TriggerMeta = {
