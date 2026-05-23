@@ -17,9 +17,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { SearchSelect } from '@/components/molecules/search-select';
 import type { ErpItem, ErpItemType, CreateItemPayload } from '@/lib/api/items';
-import type { ErpUnit } from '@/lib/api/units';
-import type { ErpItemCategory } from '@/lib/api/item-categories';
+import { listItemCategories } from '@/lib/api/item-categories';
+import { listUnits } from '@/lib/api/units';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 const ITEM_TYPES: ErpItemType[] = [
@@ -30,12 +31,24 @@ const ITEM_TYPES: ErpItemType[] = [
   'NON_INVENTORY',
 ];
 
+async function loadCategoryOptions(search: string, page: number, limit: number) {
+  const res = await listItemCategories({ search: search || undefined, page, limit, isActive: true });
+  return { data: res.data.map((c) => ({ value: c.id, label: c.name, code: c.code })), total: res.meta.total };
+}
+
+async function loadUnitOptions(search: string, page: number, limit: number) {
+  const res = await listUnits({ search: search || undefined, page, limit, isActive: true });
+  return { data: res.data.map((u) => ({ value: u.id, label: u.name, code: u.code })), total: res.meta.total };
+}
+
 export interface ItemFormData {
   code: string;
   name: string;
   itemType: ErpItemType;
   categoryId: string;
+  categoryLabel?: string;
   unitId: string;
+  unitLabel?: string;
   description: string;
   isActive: boolean;
 }
@@ -45,7 +58,9 @@ export const defaultItemForm = (): ItemFormData => ({
   name: '',
   itemType: 'INVENTORY',
   categoryId: '',
+  categoryLabel: '',
   unitId: '',
+  unitLabel: '',
   description: '',
   isActive: true,
 });
@@ -56,7 +71,9 @@ export function fromItem(item: ErpItem): ItemFormData {
     name: item.name,
     itemType: item.itemType,
     categoryId: item.categoryId,
+    categoryLabel: item.category?.name ?? '',
     unitId: item.unitId,
+    unitLabel: item.unit ? `${item.unit.code} — ${item.unit.name}` : '',
     description: item.description ?? '',
     isActive: item.isActive,
   };
@@ -85,12 +102,10 @@ export const validateItem = (form: ItemFormData) =>
 interface ItemFormProps {
   data: ItemFormData;
   onChange: (d: ItemFormData) => void;
-  units: ErpUnit[];
-  categories: ErpItemCategory[];
   errors?: FormErrors<ItemFormData>;
 }
 
-export function ItemFormFields({ data, onChange, units, categories, errors = {} }: ItemFormProps) {
+export function ItemFormFields({ data, onChange, errors = {} }: ItemFormProps) {
   const set = (k: keyof ItemFormData, v: string | boolean) =>
     onChange({ ...data, [k]: v });
 
@@ -132,40 +147,26 @@ export function ItemFormFields({ data, onChange, units, categories, errors = {} 
         </Select>
       </FormField>
       <FormField label="Kategori" htmlFor="if-cat" required error={errors.categoryId}>
-        <Select
-          value={data.categoryId || '__none__'}
-          onValueChange={(v) => set('categoryId', v === '__none__' ? '' : v)}
-        >
-          <SelectTrigger id="if-cat" aria-invalid={!!errors.categoryId}>
-            <SelectValue placeholder="Pilih kategori" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">— Pilih —</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchSelect
+          id="if-cat"
+          placeholder="Cari kategori…"
+          value={data.categoryId}
+          onValueChange={(v) => set('categoryId', v)}
+          loadOptions={loadCategoryOptions}
+          error={!!errors.categoryId}
+          initialLabel={data.categoryLabel}
+        />
       </FormField>
       <FormField label="Satuan" htmlFor="if-unit" required error={errors.unitId}>
-        <Select
-          value={data.unitId || '__none__'}
-          onValueChange={(v) => set('unitId', v === '__none__' ? '' : v)}
-        >
-          <SelectTrigger id="if-unit" aria-invalid={!!errors.unitId}>
-            <SelectValue placeholder="Pilih satuan" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">— Pilih —</SelectItem>
-            {units.map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.code} — {u.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchSelect
+          id="if-unit"
+          placeholder="Cari satuan…"
+          value={data.unitId}
+          onValueChange={(v) => set('unitId', v)}
+          loadOptions={loadUnitOptions}
+          error={!!errors.unitId}
+          initialLabel={data.unitLabel}
+        />
       </FormField>
       <FormField label="Deskripsi" htmlFor="if-desc">
         <Input

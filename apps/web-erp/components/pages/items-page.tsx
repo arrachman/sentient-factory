@@ -8,25 +8,12 @@
 
 import * as React from 'react';
 import { SimpleMasterPage, type ExtraColumn, type ExtraFilterDef } from '@/components/organisms/simple-master-page';
-import { Badge } from '@/components/ui/badge';
 import {
   listItems, createItem, updateItem, deleteItem,
   bulkUpdateItemStatus, bulkDeleteItems,
-  type ErpItem, type ErpItemType, type CreateItemPayload,
+  type ErpItem,
 } from '@/lib/api/items';
-import { listUnits, type ErpUnit } from '@/lib/api/units';
-import { listItemCategories, type ErpItemCategory } from '@/lib/api/item-categories';
-import { useErpList } from '@/lib/use-erp-list';
 import { ItemFormFields, defaultItemForm, fromItem, toItemPayload, validateItem, type ItemFormData } from './items-form';
-import type { FormErrors } from '@/lib/form-validation';
-
-// ─── Lookup provider ──────────────────────────────────────────────────────────
-
-function useItemLookups() {
-  const { rows: units } = useErpList(() => listUnits({ limit: 100 }), []);
-  const { rows: categories } = useErpList(() => listItemCategories({ limit: 100 }), []);
-  return { units, categories };
-}
 
 // ─── Extra columns ─────────────────────────────────────────────────────────────
 
@@ -63,16 +50,6 @@ const itemTypeFilters: ExtraFilterDef[] = [
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export function ErpItemsPage() {
-  const { units, categories } = useItemLookups();
-
-  const FormFields = React.useMemo(
-    () =>
-      function ItemsFormFields({ data, onChange, errors }: { data: ItemFormData; onChange: (d: ItemFormData) => void; errors?: FormErrors<ItemFormData> }) {
-        return <ItemFormFields data={data} onChange={onChange} units={units} categories={categories} errors={errors} />;
-      },
-    [units, categories],
-  );
-
   return (
     <SimpleMasterPage<ErpItem, ItemFormData>
       title="Item"
@@ -89,7 +66,7 @@ export function ErpItemsPage() {
       defaultForm={defaultItemForm}
       fromRecord={fromItem}
       toPayload={toItemPayload as (f: ItemFormData) => any}
-      FormFields={FormFields}
+      FormFields={ItemFormFields}
       validate={validateItem}
       extraColumns={extraColumns}
       defaultSortBy="code"

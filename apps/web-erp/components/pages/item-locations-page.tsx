@@ -11,6 +11,8 @@ import {
   type ErpItemLocation, type CreateErpItemLocationPayload,
 } from '@/lib/api/item-locations';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
+import { SearchSelect } from '@/components/molecules/search-select';
+import { listWarehouses } from '@/lib/api/warehouses';
 
 interface FormData {
   code: string;
@@ -46,6 +48,11 @@ const validateItemLocation = (form: FormData) =>
     { field: 'name', label: 'Nama', required: true },
   ]);
 
+async function loadWarehouseOptions(search: string, page: number, limit: number) {
+  const res = await listWarehouses({ search: search || undefined, page, limit, isActive: true });
+  return { data: res.data.map((w) => ({ value: w.id, label: w.name, code: w.code })), total: res.meta.total };
+}
+
 function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
   const set = (k: keyof FormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
@@ -56,8 +63,14 @@ function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange:
       <FormField label="Nama" htmlFor="ef-name" required error={errors.name}>
         <Input id="ef-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Item Location" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Gudang" htmlFor="ef-warehouseId">
-        <Input id="ef-warehouseId" value={data.warehouseId ?? ''} onChange={(e) => set('warehouseId', e.target.value)} />
+      <FormField label="Gudang" htmlFor="ef-warehouse">
+        <SearchSelect
+          id="ef-warehouse"
+          placeholder="Cari gudang…"
+          value={data.warehouseId}
+          onValueChange={(v) => set('warehouseId', v)}
+          loadOptions={loadWarehouseOptions}
+        />
       </FormField>
       <FormField label="Status" htmlFor="ef-active">
         <BooleanRadio id="ef-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />

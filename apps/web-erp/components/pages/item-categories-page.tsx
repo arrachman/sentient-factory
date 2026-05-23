@@ -10,13 +10,7 @@ import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { SearchSelect } from '@/components/molecules/search-select';
 import { SimpleMasterPage } from '@/components/organisms/simple-master-page';
 import {
   listItemCategories, createItemCategory, updateItemCategory, deleteItemCategory,
@@ -31,9 +25,10 @@ interface CatForm {
   name: string;
   isActive: boolean;
   parentId: string;
+  parentLabel?: string;
 }
 
-const defaultForm = (): CatForm => ({ code: '', name: '', isActive: true, parentId: '' });
+const defaultForm = (): CatForm => ({ code: '', name: '', isActive: true, parentId: '', parentLabel: '' });
 
 const fromRecord = (r: ErpItemCategory): CatForm => ({
   id: r.id,
@@ -41,6 +36,7 @@ const fromRecord = (r: ErpItemCategory): CatForm => ({
   name: r.name,
   isActive: r.isActive,
   parentId: r.parentId ?? '',
+  parentLabel: r.parent?.name ?? '',
 });
 
 const toPayload = (f: CatForm): CreateItemCategoryPayload => ({
@@ -59,12 +55,18 @@ const validateCategory = (form: CatForm) =>
 function FormFields({ data, onChange, errors = {} }: { data: CatForm; onChange: (d: CatForm) => void; errors?: FormErrors<CatForm> }) {
   const set = (k: keyof CatForm, v: string | boolean) => onChange({ ...data, [k]: v });
 
-  const [allCategories, setAllCategories] = React.useState<ErpItemCategory[]>([]);
-  React.useEffect(() => {
-    listItemCategories({ limit: 200 }).then((res) => setAllCategories(res.data)).catch(() => {});
-  }, []);
-
-  const parents = allCategories.filter((r) => r.id !== data.id);
+  const loadParentOptions = React.useCallback(
+    async (search: string, page: number, limit: number) => {
+      const res = await listItemCategories({ search: search || undefined, page, limit, isActive: true });
+      return {
+        data: res.data
+          .filter((c) => c.id !== data.id)
+          .map((c) => ({ value: c.id, label: c.name, code: c.code })),
+        total: res.meta.total,
+      };
+    },
+    [data.id],
+  );
 
   return (
     <div className="p-4">
@@ -78,20 +80,15 @@ function FormFields({ data, onChange, errors = {} }: { data: CatForm; onChange: 
         <BooleanRadio id="cf-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>
       <FormField label="Parent" htmlFor="cf-parent">
-        <Select
-          value={data.parentId || '__none__'}
-          onValueChange={(v) => set('parentId', v === '__none__' ? '' : v)}
-        >
-          <SelectTrigger id="cf-parent">
-            <SelectValue placeholder="— Root —" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none__">— Root —</SelectItem>
-            {parents.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchSelect
+          id="cf-parent"
+          placeholder="Cari kategori parent…"
+          value={data.parentId}
+          onValueChange={(v) => set('parentId', v)}
+          loadOptions={loadParentOptions}
+          initialLabel={data.parentLabel}
+          title="Kategori Parent"
+        />
       </FormField>
     </div>
   );
