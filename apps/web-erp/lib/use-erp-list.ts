@@ -12,7 +12,10 @@ import type { PaginatedMeta, PaginatedResponse } from '@/lib/api/types';
 export interface ErpListState<T> {
   rows: T[];
   meta: PaginatedMeta | null;
+  /** True only during the very first fetch (no data yet). Use this to block the table. */
   loading: boolean;
+  /** True during any fetch — initial or refetch. Use for non-blocking indicators. */
+  fetching: boolean;
   error: string | null;
   reload: () => void;
 }
@@ -20,7 +23,8 @@ export interface ErpListState<T> {
 interface State<T> {
   rows: T[];
   meta: PaginatedMeta | null;
-  loading: boolean;
+  fetching: boolean;
+  hasData: boolean;
   error: string | null;
   tick: number;
 }
@@ -34,11 +38,11 @@ type Action<T> =
 function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   switch (action.type) {
     case 'start':
-      return { ...state, loading: true, error: null };
+      return { ...state, fetching: true, error: null };
     case 'success':
-      return { ...state, loading: false, rows: action.rows, meta: action.meta };
+      return { ...state, fetching: false, hasData: true, rows: action.rows, meta: action.meta };
     case 'error':
-      return { ...state, loading: false, error: action.message };
+      return { ...state, fetching: false, error: action.message };
     case 'reload':
       return { ...state, tick: state.tick + 1 };
     default:
@@ -64,7 +68,8 @@ export function useErpList<T>(
   const [state, dispatch] = React.useReducer(reducer<T>, {
     rows: [],
     meta: null,
-    loading: true,
+    fetching: true,
+    hasData: false,
     error: null,
     tick: 0,
   });
@@ -104,7 +109,8 @@ export function useErpList<T>(
   return {
     rows: state.rows,
     meta: state.meta,
-    loading: state.loading,
+    loading: state.fetching && !state.hasData,
+    fetching: state.fetching,
     error: state.error,
     reload,
   };

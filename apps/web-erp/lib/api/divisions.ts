@@ -10,6 +10,8 @@ export interface ErpDivision {
   name: string;
   parentId?: string | null;
   isActive: boolean;
+  barcode?: string | null;
+  note?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,6 +21,8 @@ export interface CreateDivisionPayload {
   name: string;
   parentId?: string;
   isActive?: boolean;
+  barcode?: string;
+  note?: string;
 }
 
 export interface UpdateDivisionPayload {
@@ -26,6 +30,8 @@ export interface UpdateDivisionPayload {
   name?: string;
   parentId?: string;
   isActive?: boolean;
+  barcode?: string;
+  note?: string;
 }
 
 export async function listDivisions(

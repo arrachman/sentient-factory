@@ -252,7 +252,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/finance/send-giro-clearings': { group: 'Finance', title: 'Send Giro Clearing', icon: 'calculator' },
   '/finance/adjustment-journals': { group: 'Finance', title: 'Adjustment Journal', icon: 'calculator' },
   '/finance/ledger': { group: 'Finance', title: 'General Ledger', icon: 'calculator' },
-  '/settings/appearance': { group: 'Settings', title: 'Tampilan', icon: 'gear' },
+  '/settings/appearance': { group: 'Administrator', title: 'Appearance', icon: 'gear' },
 };
 
 /** Resolve a route id to its title/icon/breadcrumb — mirrors prototype `pageMeta`. */
