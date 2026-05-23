@@ -21,6 +21,7 @@ const POOLS = {
   depMethod: ['Garis Lurus', 'Saldo Menurun', 'Unit Produksi'],
   bomVer: ['v1.0', 'v1.1', 'v2.0', 'v2.3', 'v3.0'],
   city: ['Jakarta', 'Bandung', 'Surabaya', 'Tangerang', 'Bekasi', 'Bogor', 'Semarang', 'Cikarang'],
+  cabang: ['PCI', 'JKT', 'BDG', 'SBY'],
   karyawan: ['Adi Saputra', 'Fitri Handayani', 'Rendra Wibowo', 'Maya Pratiwi', 'Budi Tirta', 'Sari Indah', 'Joko Susilo', 'Dewi Lestari', 'Andi Prasetyo'],
 };
 
@@ -76,25 +77,31 @@ const MASTER = [
   ['m-customer', 'Customer', 'CUS', 'Data Master', [
     C('code', 'Kode', 'code'), C('nama', 'Nama', 'text', 220, 'cust'), C('kota', 'Kota', 'text', 0, 'city'),
     C('npwp', 'NPWP', 'text', 0, 'npwp'), C('telp', 'Telepon', 'text', 0, 'phone'),
-    C('saldo', 'Piutang', 'money'), C('status', 'Status', 'status')]],
+    C('saldo', 'Piutang', 'money'), C('status', 'Status', 'status')],
+    [{ k: 'kota', label: 'Kota', opts: POOLS.city }]],
   ['m-supplier', 'Supplier', 'SUP', 'Data Master', [
     C('code', 'Kode', 'code'), C('nama', 'Nama', 'text', 220, 'supp'), C('kota', 'Kota', 'text', 0, 'city'),
     C('npwp', 'NPWP', 'text', 0, 'npwp'), C('telp', 'Telepon', 'text', 0, 'phone'),
-    C('saldo', 'Hutang', 'money'), C('status', 'Status', 'status')]],
+    C('saldo', 'Hutang', 'money'), C('status', 'Status', 'status')],
+    [{ k: 'kota', label: 'Kota', opts: POOLS.city }]],
   ['m-item', 'Item', 'ITM', 'Data Master', [
     C('code', 'Kode', 'code'), C('nama', 'Nama Barang', 'text', 220, 'item'), C('kategori', 'Kategori', 'text', 0, 'itemCat'),
     C('satuan', 'Satuan', 'text', 0, 'satuan'), C('stok', 'Stok', 'qty'), C('hpp', 'HPP', 'money'),
-    C('harga', 'Harga Jual', 'money'), C('status', 'Status', 'status')]],
+    C('harga', 'Harga Jual', 'money'), C('status', 'Status', 'status')],
+    [{ k: 'kategori', label: 'Kategori', opts: POOLS.itemCat }, { k: 'satuan', label: 'Satuan', opts: POOLS.satuan }]],
   ['m-coa', 'Chart of Account', 'CoA', 'Data Master', [
     C('code', 'No Akun', 'text', 130, 'acctno'), C('nama', 'Nama Akun', 'text', 240, 'acct'),
     C('tipe', 'Tipe', 'text', 0, 'acctType'), C('normal', 'Saldo Normal', 'text', 0, 'dk'),
-    C('saldo', 'Saldo', 'money'), C('status', 'Status', 'status')]],
+    C('saldo', 'Saldo', 'money'), C('status', 'Status', 'status')],
+    [{ k: 'tipe', label: 'Tipe', opts: POOLS.acctType }, { k: 'normal', label: 'Saldo Normal', opts: ['Debit', 'Kredit'] }]],
   ['m-lokasi', 'Cabang & Lokasi', 'LOC', 'Data Master', [
     C('code', 'Kode', 'code'), C('nama', 'Nama', 'text', 200, 'loc'), C('cabang', 'Cabang', 'text', 0, 'cabang'),
-    C('tipe', 'Tipe', 'text', 0, 'locType'), C('kota', 'Kota', 'text', 0, 'city'), C('status', 'Status', 'status')]],
+    C('tipe', 'Tipe', 'text', 0, 'locType'), C('kota', 'Kota', 'text', 0, 'city'), C('status', 'Status', 'status')],
+    [{ k: 'cabang', label: 'Cabang', opts: POOLS.cabang }, { k: 'tipe', label: 'Tipe', opts: POOLS.locType }, { k: 'kota', label: 'Kota', opts: POOLS.city }]],
   ['m-costcenter', 'Cost Center', 'CC', 'Data Master', [
     C('code', 'Kode', 'code'), C('nama', 'Nama', 'text', 200, 'cc'), C('dept', 'Departemen', 'text', 0, 'dept'),
-    C('pic', 'PIC', 'text', 0, 'user'), C('anggaran', 'Anggaran', 'money'), C('status', 'Status', 'status')]],
+    C('pic', 'PIC', 'text', 0, 'user'), C('anggaran', 'Anggaran', 'money'), C('status', 'Status', 'status')],
+    [{ k: 'dept', label: 'Departemen', opts: POOLS.dept }, { k: 'pic', label: 'PIC', opts: () => window.USERS || [] }]],
 ];
 
 const DOCS = [
@@ -163,8 +170,8 @@ const DOCS = [
 ];
 
 const REGISTRY = {};
-[...MASTER, ...DOCS].forEach(([id, label, code, group, cols]) => {
-  REGISTRY[id] = { label, code, group, prefix: code, cols, gen: makeGen(id, code, cols, 56) };
+[...MASTER, ...DOCS].forEach(([id, label, code, group, cols, filters = []]) => {
+  REGISTRY[id] = { label, code, group, prefix: code, cols, filters, gen: makeGen(id, code, cols, 56) };
 });
 
 const REPORTS = {

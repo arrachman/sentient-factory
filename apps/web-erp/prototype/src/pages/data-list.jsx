@@ -36,12 +36,15 @@ const DataList = ({ moduleId, t, onNavigate, onOpenTab }) => {
   const [selected, setSelected] = React.useState(new Set());
   const [focused, setFocused] = React.useState(0);
   const [sort, setSort] = React.useState({ col: null, dir: 'asc' });
+  const extraFilterDefs = mod.filters || [];
+  const [fv, setFv] = React.useState(() => Object.fromEntries(extraFilterDefs.map(f => [f.k, 'Semua'])));
   const [page, setPage] = React.useState(1);
   const pageSize = 24;
 
   const filtered = React.useMemo(() => {
     let arr = rows;
     if (hasStatus && status !== 'Semua') arr = arr.filter(r => r.status === status);
+    extraFilterDefs.forEach(f => { if (fv[f.k] && fv[f.k] !== 'Semua') arr = arr.filter(r => r[f.k] === fv[f.k]); });
     if (q) {
       const ql = q.toLowerCase();
       arr = arr.filter(r => mod.cols.some(c => String(r[c.k]).toLowerCase().includes(ql)));
@@ -57,7 +60,7 @@ const DataList = ({ moduleId, t, onNavigate, onOpenTab }) => {
       });
     }
     return arr;
-  }, [rows, q, status, sort]);
+  }, [rows, q, status, fv, sort]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
@@ -108,12 +111,17 @@ const DataList = ({ moduleId, t, onNavigate, onOpenTab }) => {
       <div className="toolbar">
         <Icon name="filter" size={13} className="muted"/>
         {hasStatus && <FilterChip label={t('Status')} val={status} options={['Semua', ...window.STATUSES]} onChange={v => { setStatus(v); setPage(1); }} onRemove={() => { setStatus('Semua'); setPage(1); }}/>}
+        {extraFilterDefs.map(f => (
+          <FilterChip key={f.k} label={t(f.label)} val={fv[f.k] || 'Semua'} options={['Semua', ...(typeof f.opts === 'function' ? f.opts() : f.opts)]}
+            onChange={v => { setFv(prev => ({ ...prev, [f.k]: v })); setPage(1); }}
+            onRemove={() => { setFv(prev => ({ ...prev, [f.k]: 'Semua' })); setPage(1); }}/>
+        ))}
         {dateOn && <DateRangeChip from={range.from} to={range.to} onChange={(f, to) => setRange({ from: f, to })} onRemove={() => setDateOn(false)}/>}
         <AddFilterChip available={availFilters.map(f => ({ id: f.id, label: f.label }))} onAdd={() => setDateOn(true)} t={t}/>
         <div style={{ flex: 1 }}/>
         {sumTotal != null && <span className="muted" style={{ fontSize: 11.5 }}>Σ {fmtIDR(sumTotal)}</span>}
         <span className="muted" style={{ fontSize: 11.5 }}>· {filtered.length} {t('baris')}</span>
-        <button className="btn ghost sm" onClick={() => { setStatus('Semua'); setQ(''); setSort({ col: null, dir: 'asc' }); setPage(1); }}>{t('Reset')}</button>
+        <button className="btn ghost sm" onClick={() => { setStatus('Semua'); setQ(''); setFv(Object.fromEntries(extraFilterDefs.map(f => [f.k, 'Semua']))); setSort({ col: null, dir: 'asc' }); setPage(1); }}>{t('Reset')}</button>
       </div>
 
       <div className="tbl-wrap scrollbar">
