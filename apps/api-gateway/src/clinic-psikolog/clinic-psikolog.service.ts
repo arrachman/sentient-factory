@@ -8,8 +8,8 @@ import { QueryPsikologDto } from './dto/query-psikolog.dto';
 import { UpdatePsikologDto } from './dto/update-psikolog.dto';
 import { PsikologDashboardService } from './psikolog-dashboard.service';
 import { PsikologAvailabilityService } from './psikolog-availability.service';
-import { buildPsikologWhereClause, deriveUsername, groupServiceIdsByUser, mapPsikologToResponse, userSelect, validateAvatarUrl } from './psikolog.utils';
-import { localDateAtMidnight, localPartsInTimezone } from '../clinic-booking/timezone.util';
+import { PsikologListStatsService } from './psikolog-list-stats.service';
+import { buildPsikologWhereClause, deriveUsername, mapPsikologToResponse, userSelect, validateAvatarUrl } from './psikolog.utils';
 
 const PSIKOLOG_ROLE_NAME = 'clinic-psikolog';
 const DEFAULT_PASSWORD = 'Test1234!';
@@ -23,6 +23,7 @@ export class ClinicPsikologService {
     private readonly dashboard: PsikologDashboardService,
     private readonly availability: PsikologAvailabilityService,
     private readonly wa: ClinicWaService,
+    private readonly listStats: PsikologListStatsService,
   ) {}
 
   /** Create user + ClinicPsikologProfile dalam satu transaction. */
@@ -151,64 +152,10 @@ export class ClinicPsikologService {
       this.prisma.clinicPsikologProfile.count({ where }),
     ]);
 
-    // Batch-load serviceIds junction untuk avoid N+1
+    // Batch-load semua list stats (junction + booking-existence + today/week/client)
     const userIds = profiles.map((p) => p.userId);
-    const junctionRows =
-      userIds.length === 0
-        ? []
-        : await this.prisma.clinicPsikologService.findMany({
-            where: { psikologUserId: { in: userIds } },
-            select: { psikologUserId: true, serviceId: true },
-          });
-    const serviceIdsByUser = groupServiceIdsByUser(junctionRows);
-
-    // Batch-check booking existence untuk disable delete button di FE
-    const bookingUserIds =
-      userIds.length === 0
-        ? []
-        : await this.prisma.clinicBooking.findMany({
-            where: { psikologUserId: { in: userIds }, deletedAt: null },
-            select: { psikologUserId: true },
-            distinct: ['psikologUserId'],
-          });
-    const hasBookingsSet = new Set(bookingUserIds.map((b) => b.psikologUserId));
-
-    // Batch stats untuk admin card: today / week / distinct clients 90d
-    const tz = 'Asia/Jakarta';
-    const nowLocal = localPartsInTimezone(new Date(), tz);
-    const todayStart = localDateAtMidnight(nowLocal.dateStr, tz);
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-    const isoDow = nowLocal.dow === 0 ? 6 : nowLocal.dow - 1;
-    const weekStart = new Date(todayStart.getTime() - isoDow * 24 * 60 * 60 * 1000);
-    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const ninetyDaysAgo = new Date(todayStart.getTime() - 90 * 24 * 60 * 60 * 1000);
-
-    const todayCounts = userIds.length === 0 ? [] : await this.prisma.clinicBooking.groupBy({
-      by: ['psikologUserId'],
-      where: { psikologUserId: { in: userIds }, status: { not: 'cancelled' }, scheduledStart: { gte: todayStart, lt: todayEnd }, deletedAt: null },
-      _count: { id: true },
-    });
-    const weekCounts = userIds.length === 0 ? [] : await this.prisma.clinicBooking.groupBy({
-      by: ['psikologUserId'],
-      where: { psikologUserId: { in: userIds }, status: { not: 'cancelled' }, scheduledStart: { gte: weekStart, lt: weekEnd }, deletedAt: null },
-      _count: { id: true },
-    });
-    const clientCountRows: Array<{ psikolog_user_id: number; client_count: number }> =
-      userIds.length === 0
-        ? []
-        : await this.prisma.$queryRaw`
-            SELECT psikolog_user_id, COUNT(DISTINCT client_id)::int AS client_count
-            FROM clinic_booking
-            WHERE psikolog_user_id IN (${Prisma.join(userIds)})
-              AND status != 'cancelled'
-              AND scheduled_start >= ${ninetyDaysAgo}
-              AND deleted_at IS NULL
-            GROUP BY psikolog_user_id
-          `;
-
-    const todayMap = new Map(todayCounts.map((r) => [r.psikologUserId, r._count.id]));
-    const weekMap = new Map(weekCounts.map((r) => [r.psikologUserId, r._count.id]));
-    const clientMap = new Map(clientCountRows.map((r) => [Number(r.psikolog_user_id), Number(r.client_count)]));
+    const { serviceIdsByUser, hasBookingsSet, todayMap, weekMap, clientMap } =
+      await this.listStats.loadListStats(userIds);
 
     return {
       success: true,
