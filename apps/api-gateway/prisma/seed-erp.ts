@@ -1,5 +1,6 @@
 import { PrismaClient, ErpUserLevel, ErpMenuType, ErpNumberingReset } from '@prisma/client';
 import { pbkdf2Sync, randomBytes } from 'crypto';
+import { seedTransactionNotes } from './seed-erp-transaction-notes';
 
 const prisma = new PrismaClient();
 
@@ -27,13 +28,83 @@ async function seedLanguages() {
 
 async function seedSettings() {
   const settings = [
-    { module: 'system', group: 'company', key: 'name', name: 'Company Name', value: 'PT Sentient Factory', dataType: 'string' },
-    { module: 'system', group: 'company', key: 'currency', name: 'Base Currency', value: 'IDR', dataType: 'string' },
-    { module: 'system', group: 'general', key: 'timezone', name: 'Default Timezone', value: 'Asia/Jakarta', dataType: 'string' },
-    { module: 'system', group: 'general', key: 'date_format', name: 'Date Format', value: 'DD/MM/YYYY', dataType: 'string' },
-    { module: 'system', group: 'general', key: 'number_format', name: 'Number Format', value: '1.000,00', dataType: 'string' },
-    { module: 'system', group: 'fiscal', key: 'year_start_month', name: 'Fiscal Year Start Month', value: '1', dataType: 'number' },
-    { module: 'inventory', group: 'costing', key: 'method', name: 'Costing Method', value: 'AVG', dataType: 'string' },
+    // company
+    { module: 'system', group: 'company', key: 'name', name: 'Nama Perusahaan', value: 'PT Sentient Factory', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'code', name: 'Kode Perusahaan', value: 'SF', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'address_line1', name: 'Alamat Baris 1', value: 'Jl. Industri No. 1', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'address_line2', name: 'Alamat Baris 2', value: 'Kawasan Industri MM2100', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'city', name: 'Kota', value: 'Bekasi', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'postal_code', name: 'Kode Pos', value: '17520', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'phone', name: 'Telepon', value: '021-88888888', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'fax', name: 'Fax', value: '021-88888889', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'email', name: 'Email', value: 'info@sentient-factory.com', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'website', name: 'Website', value: 'https://sentient-factory.com', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'npwp', name: 'NPWP', value: '01.234.567.8-901.000', dataType: 'string' },
+    { module: 'system', group: 'company', key: 'currency', name: 'Mata Uang Dasar', value: 'IDR', dataType: 'string' },
+    // accounting
+    { module: 'system', group: 'accounting', key: 'fiscal_year_start', name: 'Awal Tahun Fiskal (Bulan)', value: '1', dataType: 'number' },
+    { module: 'system', group: 'accounting', key: 'decimal_places', name: 'Desimal', value: '2', dataType: 'number' },
+    { module: 'system', group: 'accounting', key: 'rounding_method', name: 'Metode Pembulatan', value: 'ROUND', dataType: 'string' },
+    { module: 'system', group: 'accounting', key: 'auto_journal', name: 'Auto Jurnal', value: 'true', dataType: 'boolean' },
+    { module: 'system', group: 'accounting', key: 'ar_account', name: 'Akun Piutang Default', value: '1130', dataType: 'string' },
+    { module: 'system', group: 'accounting', key: 'ap_account', name: 'Akun Hutang Default', value: '2110', dataType: 'string' },
+    { module: 'system', group: 'accounting', key: 'cash_account', name: 'Akun Kas Default', value: '1110', dataType: 'string' },
+    // bank-accounts
+    { module: 'system', group: 'bank-accounts', key: 'default_bank_name', name: 'Nama Bank Utama', value: 'Bank BCA', dataType: 'string' },
+    { module: 'system', group: 'bank-accounts', key: 'default_account_number', name: 'Nomor Rekening', value: '1234567890', dataType: 'string' },
+    { module: 'system', group: 'bank-accounts', key: 'default_account_name', name: 'Nama Pemilik Rekening', value: 'PT Sentient Factory', dataType: 'string' },
+    { module: 'system', group: 'bank-accounts', key: 'swift_code', name: 'Kode SWIFT', value: 'CENAIDJA', dataType: 'string' },
+    // tax
+    { module: 'system', group: 'tax', key: 'ppn_rate', name: 'Tarif PPN (%)', value: '11', dataType: 'number' },
+    { module: 'system', group: 'tax', key: 'pph_rate', name: 'Tarif PPh (%)', value: '2', dataType: 'number' },
+    { module: 'system', group: 'tax', key: 'tax_inclusive', name: 'Harga Termasuk Pajak', value: 'false', dataType: 'boolean' },
+    { module: 'system', group: 'tax', key: 'tax_number', name: 'Nomor PKP', value: '01.234.567.8-901.000', dataType: 'string' },
+    { module: 'system', group: 'tax', key: 'default_tax_code', name: 'Kode Pajak Default', value: 'PPN11', dataType: 'string' },
+    // description
+    { module: 'system', group: 'description', key: 'invoice_header', name: 'Header Faktur', value: 'Terima kasih atas kepercayaan Anda', dataType: 'string' },
+    { module: 'system', group: 'description', key: 'invoice_footer', name: 'Footer Faktur', value: 'Pembayaran ke rekening PT Sentient Factory', dataType: 'string' },
+    { module: 'system', group: 'description', key: 'po_notes', name: 'Catatan PO Default', value: 'Mohon konfirmasi penerimaan PO ini', dataType: 'string' },
+    { module: 'system', group: 'description', key: 'so_notes', name: 'Catatan SO Default', value: 'Pesanan akan diproses dalam 2 hari kerja', dataType: 'string' },
+    { module: 'system', group: 'description', key: 'delivery_notes', name: 'Catatan Pengiriman', value: 'Mohon diperiksa sebelum diterima', dataType: 'string' },
+    // format
+    { module: 'system', group: 'format', key: 'date_format', name: 'Format Tanggal', value: 'DD/MM/YYYY', dataType: 'string' },
+    { module: 'system', group: 'format', key: 'time_format', name: 'Format Waktu', value: 'HH:mm', dataType: 'string' },
+    { module: 'system', group: 'format', key: 'number_format', name: 'Format Angka', value: '1.000,00', dataType: 'string' },
+    { module: 'system', group: 'format', key: 'currency_symbol', name: 'Simbol Mata Uang', value: 'Rp', dataType: 'string' },
+    { module: 'system', group: 'format', key: 'currency_position', name: 'Posisi Simbol', value: 'before', dataType: 'string' },
+    { module: 'system', group: 'format', key: 'timezone', name: 'Zona Waktu', value: 'Asia/Jakarta', dataType: 'string' },
+    // defaults
+    { module: 'system', group: 'defaults', key: 'default_warehouse', name: 'Gudang Default', value: 'GD-001', dataType: 'string' },
+    { module: 'system', group: 'defaults', key: 'default_payment_term', name: 'Termin Pembayaran Default', value: 'NET30', dataType: 'string' },
+    { module: 'system', group: 'defaults', key: 'default_price_category', name: 'Kategori Harga Default', value: 'RETAIL', dataType: 'string' },
+    { module: 'system', group: 'defaults', key: 'default_sales_tax', name: 'Pajak Penjualan Default', value: 'PPN11', dataType: 'string' },
+    { module: 'system', group: 'defaults', key: 'default_purchase_tax', name: 'Pajak Pembelian Default', value: 'PPN11', dataType: 'string' },
+    // report-defaults
+    { module: 'system', group: 'report-defaults', key: 'paper_size', name: 'Ukuran Kertas', value: 'A4', dataType: 'string' },
+    { module: 'system', group: 'report-defaults', key: 'orientation', name: 'Orientasi', value: 'portrait', dataType: 'string' },
+    { module: 'system', group: 'report-defaults', key: 'font_size', name: 'Ukuran Font (pt)', value: '10', dataType: 'number' },
+    { module: 'system', group: 'report-defaults', key: 'show_logo', name: 'Tampilkan Logo', value: 'true', dataType: 'boolean' },
+    { module: 'system', group: 'report-defaults', key: 'show_stamp', name: 'Tampilkan Cap', value: 'false', dataType: 'boolean' },
+    // signature
+    { module: 'system', group: 'signature', key: 'authorized_by', name: 'Disetujui Oleh', value: 'Direktur Utama', dataType: 'string' },
+    { module: 'system', group: 'signature', key: 'prepared_by', name: 'Disiapkan Oleh', value: 'Staff Administrasi', dataType: 'string' },
+    { module: 'system', group: 'signature', key: 'checked_by', name: 'Diperiksa Oleh', value: 'Manajer Keuangan', dataType: 'string' },
+    { module: 'system', group: 'signature', key: 'show_signature_line', name: 'Tampilkan Baris TTD', value: 'true', dataType: 'boolean' },
+    // options
+    { module: 'system', group: 'options', key: 'auto_increment_code', name: 'Auto Kode', value: 'true', dataType: 'boolean' },
+    { module: 'system', group: 'options', key: 'confirm_before_delete', name: 'Konfirmasi Sebelum Hapus', value: 'true', dataType: 'boolean' },
+    { module: 'system', group: 'options', key: 'show_audit_log', name: 'Tampilkan Audit Log', value: 'true', dataType: 'boolean' },
+    { module: 'system', group: 'options', key: 'enable_multi_currency', name: 'Multi Mata Uang', value: 'false', dataType: 'boolean' },
+    { module: 'system', group: 'options', key: 'enable_batch', name: 'Enable Batch', value: 'false', dataType: 'boolean' },
+    // home
+    { module: 'system', group: 'home', key: 'welcome_message', name: 'Pesan Selamat Datang', value: 'Selamat datang di Sentient ERP', dataType: 'string' },
+    { module: 'system', group: 'home', key: 'dashboard_layout', name: 'Tata Letak Dashboard', value: 'grid', dataType: 'string' },
+    { module: 'system', group: 'home', key: 'show_quick_access', name: 'Tampilkan Quick Access', value: 'true', dataType: 'boolean' },
+    // approval
+    { module: 'system', group: 'approval', key: 'require_po_approval', name: 'Persetujuan PO', value: 'false', dataType: 'boolean' },
+    { module: 'system', group: 'approval', key: 'require_so_approval', name: 'Persetujuan SO', value: 'false', dataType: 'boolean' },
+    { module: 'system', group: 'approval', key: 'auto_approve_below', name: 'Auto Approve di Bawah (Rp)', value: '0', dataType: 'number' },
+    { module: 'system', group: 'approval', key: 'approval_levels', name: 'Tingkat Persetujuan', value: '1', dataType: 'number' },
   ];
   for (const s of settings) {
     await prisma.erpSetting.upsert({
@@ -1285,6 +1356,149 @@ async function seedWarehouses() {
   console.log(`✓ md_warehouses (${count} entries)`);
 }
 
+async function seedPartnerCategories() {
+  const categories: { code: string; name: string; salesTier?: number; legacyCode?: string }[] = [
+    // ── Industri Manufaktur ───────────────────────────────────────────────────
+    { code: 'MFG-01', name: 'Manufaktur Otomotif & Komponen', salesTier: 1 },
+    { code: 'MFG-02', name: 'Manufaktur Elektronik & Listrik', salesTier: 1 },
+    { code: 'MFG-03', name: 'Manufaktur Mesin & Peralatan Industri', salesTier: 1 },
+    { code: 'MFG-04', name: 'Manufaktur Baja & Logam', salesTier: 1 },
+    { code: 'MFG-05', name: 'Manufaktur Plastik & Karet', salesTier: 2 },
+    { code: 'MFG-06', name: 'Manufaktur Tekstil & Garmen', salesTier: 2 },
+    { code: 'MFG-07', name: 'Manufaktur Kertas & Kemasan', salesTier: 2 },
+    { code: 'MFG-08', name: 'Manufaktur Farmasi & Alat Kesehatan', salesTier: 1 },
+    { code: 'MFG-09', name: 'Manufaktur Makanan & Minuman', salesTier: 2 },
+    { code: 'MFG-10', name: 'Manufaktur Furnitur & Interior', salesTier: 2 },
+    { code: 'MFG-11', name: 'Manufaktur Kimia & Petrokimia', salesTier: 1 },
+    { code: 'MFG-12', name: 'Manufaktur Semen & Material Bangunan', salesTier: 2 },
+    { code: 'MFG-13', name: 'Manufaktur Kayu & Turunannya', salesTier: 3 },
+    { code: 'MFG-14', name: 'Manufaktur Keramik & Kaca', salesTier: 2 },
+    { code: 'MFG-15', name: 'Manufaktur Alat Pertanian', salesTier: 3 },
+    { code: 'MFG-16', name: 'Manufaktur Peralatan Rumah Tangga', salesTier: 2 },
+    { code: 'MFG-17', name: 'Manufaktur Percetakan & Penerbitan', salesTier: 3 },
+    { code: 'MFG-18', name: 'Manufaktur Alat Tulis & Kantor', salesTier: 3 },
+    { code: 'MFG-19', name: 'Manufaktur Produk Karet Teknik', salesTier: 2 },
+    { code: 'MFG-20', name: 'Manufaktur Pengolahan Bahan Tambang', salesTier: 1 },
+    { code: 'MFG-21', name: 'Manufaktur Produk Beton Pracetak', salesTier: 2 },
+    { code: 'MFG-22', name: 'Manufaktur Kabel & Kawat', salesTier: 2 },
+    { code: 'MFG-23', name: 'Manufaktur Sepatu & Alas Kaki', salesTier: 2 },
+    { code: 'MFG-24', name: 'Manufaktur Kosmetik & Perawatan', salesTier: 2 },
+    { code: 'MFG-25', name: 'Manufaktur Produk Kulit', salesTier: 3 },
+
+    // ── Distribusi & Perdagangan ──────────────────────────────────────────────
+    { code: 'DAG-01', name: 'Distributor Tunggal Nasional', salesTier: 1, legacyCode: 'D1' },
+    { code: 'DAG-02', name: 'Distributor Regional', salesTier: 1, legacyCode: 'D2' },
+    { code: 'DAG-03', name: 'Sub-Distributor', salesTier: 2, legacyCode: 'D3' },
+    { code: 'DAG-04', name: 'Pedagang Besar / Grosir', salesTier: 2 },
+    { code: 'DAG-05', name: 'Importir & Eksportir', salesTier: 1 },
+    { code: 'DAG-06', name: 'Agen Tunggal Pemegang Merek (ATPM)', salesTier: 1 },
+    { code: 'DAG-07', name: 'Retailer Modern (Supermarket / Hypermarket)', salesTier: 2 },
+    { code: 'DAG-08', name: 'Retailer Tradisional', salesTier: 3 },
+    { code: 'DAG-09', name: 'Toko Bangunan & Material', salesTier: 3 },
+    { code: 'DAG-10', name: 'Toko Suku Cadang & Spare Part', salesTier: 3 },
+    { code: 'DAG-11', name: 'Toko Online / E-Commerce Seller', salesTier: 2 },
+    { code: 'DAG-12', name: 'Dealer Resmi', salesTier: 2 },
+    { code: 'DAG-13', name: 'Agen Pemasaran / Trading House', salesTier: 2 },
+    { code: 'DAG-14', name: 'Koperasi Distribusi', salesTier: 3 },
+    { code: 'DAG-15', name: 'Marketplace Platform (Agregator)', salesTier: 1 },
+
+    // ── Jasa & Proyek ─────────────────────────────────────────────────────────
+    { code: 'JSA-01', name: 'Kontraktor Konstruksi Besar', salesTier: 1 },
+    { code: 'JSA-02', name: 'Kontraktor Konstruksi Menengah', salesTier: 2 },
+    { code: 'JSA-03', name: 'Kontraktor Mekanikal & Elektrikal (ME)', salesTier: 2 },
+    { code: 'JSA-04', name: 'Perusahaan Jasa Pemeliharaan & MRO', salesTier: 2 },
+    { code: 'JSA-05', name: 'Perusahaan Jasa Engineering & Konsultasi', salesTier: 1 },
+    { code: 'JSA-06', name: 'Perusahaan Jasa Pengiriman & Logistik', salesTier: 2 },
+    { code: 'JSA-07', name: 'Perusahaan Jasa Pertambangan', salesTier: 1 },
+    { code: 'JSA-08', name: 'Perusahaan Perkebunan & Agribisnis', salesTier: 2 },
+    { code: 'JSA-09', name: 'Perusahaan Jasa IT & Teknologi', salesTier: 2 },
+    { code: 'JSA-10', name: 'Perusahaan Properti & Developer', salesTier: 1 },
+    { code: 'JSA-11', name: 'Perusahaan Energi & Kelistrikan', salesTier: 1 },
+    { code: 'JSA-12', name: 'Hotel, Restoran & Katering (HoReCa)', salesTier: 2 },
+    { code: 'JSA-13', name: 'Rumah Sakit & Klinik', salesTier: 2 },
+    { code: 'JSA-14', name: 'Perusahaan Media & Periklanan', salesTier: 3 },
+    { code: 'JSA-15', name: 'Perusahaan Asuransi & Keuangan', salesTier: 2 },
+
+    // ── Pemerintah & Institusi ────────────────────────────────────────────────
+    { code: 'GOV-01', name: 'BUMN / Perusahaan Negara', salesTier: 1 },
+    { code: 'GOV-02', name: 'BUMD / Perusahaan Daerah', salesTier: 2 },
+    { code: 'GOV-03', name: 'Kementerian & Lembaga Pemerintah Pusat', salesTier: 1 },
+    { code: 'GOV-04', name: 'Pemerintah Daerah (Pemda / Dinas)', salesTier: 2 },
+    { code: 'GOV-05', name: 'TNI & Kepolisian', salesTier: 1 },
+    { code: 'GOV-06', name: 'Lembaga Pendidikan Negeri (Universitas/Poltek)', salesTier: 2 },
+    { code: 'GOV-07', name: 'Lembaga Penelitian & Pengembangan Negeri', salesTier: 2 },
+    { code: 'GOV-08', name: 'Badan Usaha Pelabuhan & Bandara', salesTier: 1 },
+    { code: 'GOV-09', name: 'Organisasi Internasional & NGO', salesTier: 2 },
+    { code: 'GOV-10', name: 'Koperasi Primer & Sekunder', salesTier: 3 },
+
+    // ── Skala & Tier Usaha ────────────────────────────────────────────────────
+    { code: 'SKL-01', name: 'Pelanggan Korporat (Enterprise > 1.000 karyawan)', salesTier: 1 },
+    { code: 'SKL-02', name: 'Pelanggan Besar (Large 500–1.000 karyawan)', salesTier: 1 },
+    { code: 'SKL-03', name: 'Pelanggan Menengah Atas (Mid-Upper 100–499)', salesTier: 2 },
+    { code: 'SKL-04', name: 'Pelanggan Menengah (Mid 50–99 karyawan)', salesTier: 2 },
+    { code: 'SKL-05', name: 'Pelanggan Kecil (Small < 50 karyawan)', salesTier: 3 },
+    { code: 'SKL-06', name: 'UMKM Mikro (< 10 karyawan)', salesTier: 3 },
+    { code: 'SKL-07', name: 'Perorangan / Individual (B2C)', salesTier: 3 },
+    { code: 'SKL-08', name: 'Grup Usaha / Holding Company', salesTier: 1 },
+    { code: 'SKL-09', name: 'Perusahaan Multinasional (PMA)', salesTier: 1 },
+    { code: 'SKL-10', name: 'Startup & Perusahaan Rintisan', salesTier: 2 },
+
+    // ── Kanal & Pola Transaksi ────────────────────────────────────────────────
+    { code: 'KAN-01', name: 'Penjualan Langsung (Direct Sales)', salesTier: 1 },
+    { code: 'KAN-02', name: 'Penjualan via Tender / Lelang', salesTier: 1 },
+    { code: 'KAN-03', name: 'Kontrak Jangka Panjang (Annual Contract)', salesTier: 1 },
+    { code: 'KAN-04', name: 'Penjualan Proyek (Project-Based)', salesTier: 2 },
+    { code: 'KAN-05', name: 'Penjualan COD (Cash on Delivery)', salesTier: 3 },
+    { code: 'KAN-06', name: 'Penjualan Kredit Jangka Pendek (< 30 hari)', salesTier: 2 },
+    { code: 'KAN-07', name: 'Penjualan Kredit Jangka Panjang (> 60 hari)', salesTier: 2 },
+    { code: 'KAN-08', name: 'Penjualan via Platform Digital', salesTier: 2 },
+    { code: 'KAN-09', name: 'Pelanggan Walk-in / Over the Counter (OTC)', salesTier: 3 },
+    { code: 'KAN-10', name: 'Penjualan via Mitra / Referral Partner', salesTier: 2 },
+
+    // ── Regional & Ekspor ─────────────────────────────────────────────────────
+    { code: 'REG-01', name: 'Pelanggan Lokal (Kota/Kabupaten)', salesTier: 3 },
+    { code: 'REG-02', name: 'Pelanggan Regional Jawa', salesTier: 2 },
+    { code: 'REG-03', name: 'Pelanggan Regional Sumatera', salesTier: 2 },
+    { code: 'REG-04', name: 'Pelanggan Regional Kalimantan', salesTier: 2 },
+    { code: 'REG-05', name: 'Pelanggan Regional Sulawesi', salesTier: 2 },
+    { code: 'REG-06', name: 'Pelanggan Regional Bali & Nusa Tenggara', salesTier: 2 },
+    { code: 'REG-07', name: 'Pelanggan Regional Maluku & Papua', salesTier: 2 },
+    { code: 'REG-08', name: 'Ekspor ASEAN (Malaysia, Singapura, Thailand, dll)', salesTier: 1 },
+    { code: 'REG-09', name: 'Ekspor Asia Timur (Jepang, Korea, Tiongkok)', salesTier: 1 },
+    { code: 'REG-10', name: 'Ekspor Eropa & Amerika', salesTier: 1 },
+
+    // ── Segmen Khusus & Loyalitas ─────────────────────────────────────────────
+    { code: 'SPL-01', name: 'Pelanggan VIP / Key Account', salesTier: 1 },
+    { code: 'SPL-02', name: 'Pelanggan Prioritas (Top 20 Revenue)', salesTier: 1 },
+    { code: 'SPL-03', name: 'Pelanggan Loyal (> 5 tahun bertransaksi)', salesTier: 2 },
+    { code: 'SPL-04', name: 'Pelanggan Baru (< 1 tahun)', salesTier: 3 },
+    { code: 'SPL-05', name: 'Pelanggan Potensial / Prospek Aktif', salesTier: 3 },
+    { code: 'SPL-06', name: 'Pelanggan Reaktivasi (Kembali Bertransaksi)', salesTier: 3 },
+    { code: 'SPL-07', name: 'Pelanggan Musiman (Seasonal Buyer)', salesTier: 3 },
+    { code: 'SPL-08', name: 'Pelanggan Konsinyasi / Titip Jual', salesTier: 2 },
+    { code: 'SPL-09', name: 'Pelanggan Sampel / Demo Unit', salesTier: 3 },
+    { code: 'SPL-10', name: 'Pelanggan Internal (Antar Divisi / Grup)', salesTier: 1 },
+  ];
+
+  let count = 0;
+  for (const cat of categories) {
+    await prisma.erpPartnerCategory.upsert({
+      where: { code: cat.code },
+      create: {
+        code: cat.code,
+        name: cat.name,
+        kind: 'CUSTOMER',
+        salesTier: cat.salesTier ?? null,
+        isActive: true,
+        legacyCode: cat.legacyCode ?? null,
+      },
+      update: {},
+    });
+    count++;
+  }
+  console.log(`✓ md_partner_categories — CUSTOMER (${count} entries)`);
+}
+
 async function main() {
   console.log('Seeding ERP MVP (m0 + m1)...\n');
   await seedLanguages();
@@ -1300,6 +1514,8 @@ async function main() {
   await seedRoleAndUser(menuIds, permIds);
   await seedDivisions();
   await seedNotifications();
+  await seedPartnerCategories();
+  await seedTransactionNotes(prisma);
   console.log('\n✅ ERP seed complete.');
 }
 
