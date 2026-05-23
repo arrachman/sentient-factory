@@ -12,11 +12,6 @@ export const SETTINGS_TABS = [
   { key: 'klinik', label: 'Profil Klinik', hint: 'Identitas & kontak' },
   { key: 'slot', label: 'Slot Operasional', hint: 'Jam slot booking & hari tutup' },
   {
-    key: 'notifikasi',
-    label: 'Notifikasi',
-    hint: 'WhatsApp, email, reminder',
-  },
-  {
     key: 'pembayaran',
     label: 'Pembayaran',
     hint: 'Metode & invoice',
