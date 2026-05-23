@@ -72,7 +72,9 @@ export function AppearancePage(_props: AppearancePageProps) {
 
         <SidebarModeCard
           sidebar={tw.sidebar}
+          sidebarMenu={tw.sidebarMenu}
           onChange={(v) => applyTweak('sidebar', v)}
+          onMenuMode={(v) => applyTweak('sidebarMenu', v)}
           t={t}
         />
 
@@ -107,7 +109,7 @@ export function AppearancePage(_props: AppearancePageProps) {
           {t('Tema')} {theme} ·{' '}
           {t(SWATCHES.find((s) => s.v === tw.primary)?.label || tw.primary)} ·{' '}
           {t('Ukuran')} {fontScale} · {t(tw.density === 'compact' ? 'Compact' : 'Comfortable')} ·{' '}
-          {t('Menu Sidebar')} {t((tw.sidebar || 'icon') === 'icon' ? 'Ikon' : 'Ikon + Label')} ·{' '}
+          {t('Menu Sidebar')} {t((tw.sidebar || 'icon') === 'icon' ? 'Ikon' : 'Ikon + Label')} · {t((tw.sidebarMenu || 'flyout') === 'flyout' ? 'Flyout' : 'Accordion')} ·{' '}
           {t('URL')} {tw.urlRouting ? t('Per-halaman URL') : t('Internal')}
         </span>
       </div>

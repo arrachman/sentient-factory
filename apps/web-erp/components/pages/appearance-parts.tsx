@@ -11,6 +11,7 @@ export type Lang = 'id' | 'en' | 'ja';
 export type FontScale = 'sm' | 'base' | 'lg' | 'xl';
 export type Density = 'compact' | 'comfortable';
 export type SidebarMode = 'icon' | 'label';
+export type SidebarMenuMode = 'flyout' | 'accordion';
 
 export const STORAGE_KEY = 'erp-appearance';
 
@@ -19,6 +20,7 @@ export interface Tweaks {
   density: Density;
   fontScale: FontScale;
   sidebar: SidebarMode;
+  sidebarMenu: SidebarMenuMode;
   lang: Lang;
   urlRouting: boolean;
 }
@@ -28,6 +30,7 @@ export const DEFAULTS: Tweaks = {
   density: 'compact',
   fontScale: 'base',
   sidebar: 'icon',
+  sidebarMenu: 'flyout',
   lang: 'id',
   urlRouting: false,
 };
@@ -187,14 +190,24 @@ export const FONT_PX: Record<FontScale, number> = {
   xl: 17,
 };
 
+const PREVIEW_ITEMS = [
+  { ic: 'home', lb: 'Dashboard' },
+  { ic: 'coins', lb: 'Keuangan' },
+  { ic: 'cart', lb: 'Pembelian' },
+] as const;
+
 /** Sidebar mode SetCard — extracted to keep appearance.tsx ≤400 lines. */
 export function SidebarModeCard({
   sidebar,
+  sidebarMenu,
   onChange,
+  onMenuMode,
   t,
 }: {
   sidebar: SidebarMode;
+  sidebarMenu: SidebarMenuMode;
   onChange: (v: SidebarMode) => void;
+  onMenuMode: (v: SidebarMenuMode) => void;
   t: Translator;
 }) {
   return (
@@ -209,42 +222,31 @@ export function SidebarModeCard({
           ]}
         />
       </SetRow>
+      <SetRow label={t('Mode Menu')} hint={t('Flyout: submenu muncul di kanan saat hover · Accordion: submenu expand di bawah modul')}>
+        <Seg
+          value={sidebarMenu || 'flyout'}
+          onChange={(v) => onMenuMode(v as SidebarMenuMode)}
+          options={[
+            { v: 'flyout', label: t('Flyout'), icon: 'layers' },
+            { v: 'accordion', label: t('Accordion'), icon: 'chevdown' },
+          ]}
+        />
+      </SetRow>
       <SetRow label={t('Pratinjau')}>
-        <div
-          style={{
-            display: 'inline-flex',
-            flexDirection: 'column',
-            gap: 3,
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            padding: 8,
-            background: 'var(--panel-2)',
-            minWidth: sidebar === 'label' ? 170 : 'auto',
-          }}
-        >
-          {(
-            [
-              ['home', 'Dashboard'],
-              ['coins', 'Keuangan'],
-              ['cart', 'Pembelian'],
-            ] as const
-          ).map(([ic, lb], i) => (
-            <span
-              key={ic}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '5px 8px',
-                borderRadius: 6,
-                fontSize: 'calc(12px * var(--font-scale, 1))',
-                background: i === 0 ? 'var(--primary-soft)' : 'transparent',
-                color: i === 0 ? 'var(--primary-soft-fg)' : 'var(--fg-muted)',
-              }}
-            >
-              <Icon name={ic} size={14} />
-              {sidebar === 'label' && <span>{t(lb)}</span>}
-            </span>
+        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 3, border: '1px solid var(--border)', borderRadius: 8, padding: 8, background: 'var(--panel-2)', minWidth: sidebar === 'label' ? 170 : 'auto' }}>
+          {PREVIEW_ITEMS.map(({ ic, lb }, i) => (
+            <React.Fragment key={ic}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, fontSize: 'calc(12px * var(--font-scale, 1))', background: i === 0 ? 'var(--primary-soft)' : 'transparent', color: i === 0 ? 'var(--primary-soft-fg)' : 'var(--fg-muted)' }}>
+                <Icon name={ic} size={14} />
+                {sidebar === 'label' && <span style={{ flex: 1 }}>{t(lb)}</span>}
+                {sidebar === 'label' && i === 0 && sidebarMenu === 'accordion' && <Icon name="chevdown" size={10} />}
+              </span>
+              {i === 0 && sidebarMenu === 'accordion' && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 8px 3px 28px', fontSize: 'calc(11px * var(--font-scale, 1))', color: 'var(--primary)' }}>
+                  <Icon name="dot" size={8} /> {sidebar === 'label' && <span>{t('Sub Menu')}</span>}
+                </span>
+              )}
+            </React.Fragment>
           ))}
         </div>
       </SetRow>

@@ -17,6 +17,7 @@ export function applyServerPrefs(
     el.setAttribute('data-density', meta.density);
   if (meta.fontScale) el.setAttribute('data-fontscale', meta.fontScale);
   if (meta.sidebar) el.setAttribute('data-sidebar', meta.sidebar);
+  if (meta.sidebarMenu) el.setAttribute('data-sidebar-menu', meta.sidebarMenu);
   if (meta.primary) el.setAttribute('data-primary', meta.primary);
 
   // Apply language to React state (drives the translator in the shell).
@@ -33,6 +34,7 @@ export function applyServerPrefs(
     if (meta.density) stored.density = meta.density;
     if (meta.fontScale) stored.fontScale = meta.fontScale;
     if (meta.sidebar) stored.sidebar = meta.sidebar;
+    if (meta.sidebarMenu) stored.sidebarMenu = meta.sidebarMenu;
     if (meta.primary) stored.primary = meta.primary;
     if (prefs.language) stored.lang = prefs.language;
     if ('urlRouting' in meta)

@@ -15,6 +15,7 @@ interface SidebarProps {
   onNavigate: (id: string) => void;
   t: (key: string) => string;
   workspaceId?: string;
+  sidebarMenuMode?: 'flyout' | 'accordion';
 }
 
 /** Builds a navigable href for a route id so browsers can offer right-click / Ctrl+click. */
@@ -24,16 +25,35 @@ function leafHref(id: string, workspaceId?: string): string {
 }
 
 /** Icon-only nav rail with a hover flyout submenu — ported from `sidebar.jsx`. */
-export function Sidebar({ nav, current, onNavigate, t, workspaceId }: SidebarProps) {
+export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuMode = 'flyout' }: SidebarProps) {
   const [open, setOpen] = React.useState<string | null>(null);
   const [openTop, setOpenTop] = React.useState(0);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleEnter = (
-    e: React.MouseEvent<HTMLElement>,
-    item: NavItem,
-  ) => {
-    if (!item.children) {
+  // Accordion state — tracks which module is expanded
+  const currentTop = nav.find(
+    (i) =>
+      !i.divider &&
+      (i.id === current ||
+        (i.children &&
+          (isNavGroupArray(i.children)
+            ? i.children.some((g) => g.items.some((s) => s.id === current))
+            : i.children.some((c) => c.id === current)))),
+  );
+  const [expandedId, setExpandedId] = React.useState<string | null>(
+    () => currentTop?.id ?? null,
+  );
+
+  // When navigating to a different module, auto-expand that module in accordion mode
+  React.useEffect(() => {
+    if (sidebarMenuMode === 'accordion' && currentTop?.id) {
+      setExpandedId(currentTop.id);
+    }
+  }, [currentTop?.id, sidebarMenuMode]);
+
+  // Flyout handlers
+  const handleEnter = (e: React.MouseEvent<HTMLElement>, item: NavItem) => {
+    if (sidebarMenuMode === 'accordion' || !item.children) {
       setOpen(null);
       return;
     }
@@ -49,20 +69,8 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId }: SidebarPro
     if (timer.current) clearTimeout(timer.current);
   };
 
-  const currentTop = nav.find(
-    (i) =>
-      !i.divider &&
-      (i.id === current ||
-        (i.children &&
-          (isNavGroupArray(i.children)
-            ? i.children.some((g) => g.items.some((s) => s.id === current))
-            : i.children.some((c) => c.id === current)))),
-  );
-
   const openItem = nav.find((i) => i.id === open);
 
-  // Leaf flyout items use <a href> so the browser exposes right-click / Ctrl+click.
-  // Normal left-click is intercepted for SPA navigation; modifier clicks fall through.
   const renderLeaf = (sub: NavLeaf) => (
     <a
       key={sub.label}
@@ -81,13 +89,48 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId }: SidebarPro
     </a>
   );
 
+  const renderAccordionLeaf = (sub: NavLeaf) => (
+    <a
+      key={sub.label}
+      href={leafHref(sub.id, workspaceId)}
+      className={cn('accordion-item', sub.id === current && 'active')}
+      onClick={(e) => {
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
+          e.preventDefault();
+          onNavigate(sub.id);
+        }
+      }}
+    >
+      <Icon name="dot" size={8} />
+      <span>{t(sub.label)}</span>
+    </a>
+  );
+
+  const renderAccordionChildren = (item: NavItem) => {
+    if (!item.children) return null;
+    if (isNavGroupArray(item.children)) {
+      return item.children.map((grp) => (
+        <div key={grp.group} className="accordion-group">
+          <div className="accordion-group-label">{t(grp.group)}</div>
+          {grp.items.map(renderAccordionLeaf)}
+        </div>
+      ));
+    }
+    return item.children.map(renderAccordionLeaf);
+  };
+
   return (
     <>
-      <nav className="sidebar" onMouseLeave={handleLeaveAll}>
+      <nav
+        className="sidebar"
+        onMouseLeave={sidebarMenuMode === 'flyout' ? handleLeaveAll : undefined}
+        style={sidebarMenuMode === 'accordion' ? { overflowY: 'auto' } : undefined}
+      >
         {nav.map((item, i) => {
           if (item.divider)
             // eslint-disable-next-line react/no-array-index-key
             return <div key={`div-${i}`} className="nav-divider" />;
+
           const isActive = !!currentTop && currentTop.id === item.id;
 
           // Leaf top-level items (no children) become real links.
@@ -112,7 +155,31 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId }: SidebarPro
             );
           }
 
-          // Items with children open a flyout — not navigable, stay as div.
+          // Accordion mode: click to expand/collapse inline
+          if (sidebarMenuMode === 'accordion' && item.children) {
+            const isExpanded = expandedId === item.id;
+            return (
+              <React.Fragment key={item.id}>
+                <div
+                  className={cn('nav-item', isActive && 'active')}
+                  data-tip={t(item.label ?? '')}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setExpandedId(isExpanded ? null : (item.id ?? null))}
+                >
+                  {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
+                  <span className="nav-label" style={{ flex: 1 }}>{t(item.label ?? '')}</span>
+                  <Icon name={isExpanded ? 'chevup' : 'chevdown'} size={12} stroke={1.6} style={{ opacity: 0.5, flexShrink: 0 }} />
+                </div>
+                {isExpanded && (
+                  <div className="accordion-submenu">
+                    {renderAccordionChildren(item)}
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          }
+
+          // Flyout mode: items with children open a flyout on hover.
           return (
             <div
               key={item.id}
@@ -137,7 +204,7 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId }: SidebarPro
           <span className="nav-label">{t('Pintasan')}</span>
         </div>
       </nav>
-      {openItem && openItem.children && (
+      {sidebarMenuMode === 'flyout' && openItem && openItem.children && (
         <div
           className="flyout fade-in"
           style={{

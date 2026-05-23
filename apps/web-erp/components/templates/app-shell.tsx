@@ -46,6 +46,14 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   const [lang, setLang] = React.useState<Lang>('id');
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+  const [sidebarMenuMode, setSidebarMenuMode] = React.useState<'flyout' | 'accordion'>(() => {
+    if (typeof window === 'undefined') return 'flyout';
+    try {
+      const stored = JSON.parse(window.localStorage.getItem('erp-appearance') ?? '{}') as Record<string, unknown>;
+      if (stored.sidebarMenu === 'accordion') return 'accordion';
+    } catch { /* ignore */ }
+    return (document.documentElement.getAttribute('data-sidebar-menu') as 'flyout' | 'accordion') ?? 'flyout';
+  });
 
   const {
     tabs,
@@ -279,6 +287,18 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     return () => window.removeEventListener('open-shortcuts', sc);
   }, []);
 
+  // Listen for sidebar menu mode changes dispatched by AppearancePage.
+  React.useEffect(() => {
+    const onSetMode = (e: Event) => {
+      const detail = (e as CustomEvent<{ mode: string }>).detail;
+      if (detail?.mode === 'accordion' || detail?.mode === 'flyout') {
+        setSidebarMenuMode(detail.mode as 'flyout' | 'accordion');
+      }
+    };
+    window.addEventListener('erp-set-sidebar-menu', onSetMode as EventListener);
+    return () => window.removeEventListener('erp-set-sidebar-menu', onSetMode as EventListener);
+  }, []);
+
   // Listen for same-tab lang changes dispatched by AppearancePage.
   // (Prefs are applied to DOM + localStorage via applyServerPrefs, called in
   //  the auth effect before the shell renders and in onLogin after a fresh login.)
@@ -321,7 +341,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   return (
     <>
       <div className="app">
-        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} workspaceId={workspaceId} />
+        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} workspaceId={workspaceId} sidebarMenuMode={sidebarMenuMode} />
         <Topbar
           crumbs={crumbs}
           onOpenPalette={() => setPaletteOpen(true)}
