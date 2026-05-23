@@ -47,9 +47,16 @@ export class ErpDocumentNumberingsService {
   }
 
   async findAll(query: QueryErpDocumentNumberingDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const skip = (page - 1) * limit;
+    const sortBy = query.sortBy ?? 'documentCode';
+    const sortDir = query.sortDir ?? 'asc';
+
     const where: {
       deletedAt?: null;
       documentCode?: string;
+      OR?: { documentCode?: { contains: string; mode: 'insensitive' }; name?: { contains: string; mode: 'insensitive' } }[];
     } = {};
 
     if (query.isActive === true || query.isActive === undefined) {
@@ -57,12 +64,34 @@ export class ErpDocumentNumberingsService {
     }
     if (query.documentCode?.trim()) where.documentCode = query.documentCode.trim();
 
-    const items = await this.prisma.erpDocumentNumbering.findMany({
-      where,
-      orderBy: [{ documentCode: 'asc' }],
-    });
+    if (query.search?.trim()) {
+      const q = query.search.trim();
+      where.OR = [
+        { documentCode: { contains: q, mode: 'insensitive' } },
+        { name: { contains: q, mode: 'insensitive' } },
+      ];
+    }
 
-    return { success: true, data: items };
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.erpDocumentNumbering.findMany({
+        where,
+        orderBy: [{ [sortBy]: sortDir }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.erpDocumentNumbering.count({ where }),
+    ]);
+
+    return {
+      success: true,
+      data: items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    };
   }
 
   async findOne(id: bigint) {
