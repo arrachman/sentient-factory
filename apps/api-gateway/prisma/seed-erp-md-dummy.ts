@@ -3,13 +3,13 @@
  * Run: npx ts-node prisma/seed-erp-md-dummy.ts
  *
  * Idempotent: skips entire table if it already has >=1 row.
- * Skipped because already populated (per snapshot 2026-05-20):
- *   md_branches, md_partner_categories, md_currencies, md_accounts.
+ * Skipped because already populated:
+ *   md_branches, md_partner_categories, md_currencies, md_accounts (snapshot 2026-05-20).
+ *   md_projects — seeded via seed-erp-md-projects.ts with 104 real manufacturing projects.
  *
  * Seeded (target 100 rows each):
  *   md_locations, md_warehouses, md_units, md_item_categories, md_items,
- *   md_partners, md_taxes, md_payment_terms, md_divisions,
- *   md_subdivisions, md_projects.
+ *   md_partners, md_taxes, md_payment_terms, md_divisions, md_subdivisions.
  *
  * Skipped (already populated with real data):
  *   md_cost_centers — seeded via seed-erp-md-legacy.ts with 43 real manufacturing cost centers.
@@ -239,24 +239,7 @@ async function main(): Promise<void> {
     return r.count;
   });
 
-  // ---- md_projects (FK branch optional)
-  await seedIfEmpty('md_projects', () => prisma.erpProject.count(), async () => {
-    const branches = await prisma.erpBranch.findMany({ select: { id: true }, take: 500 });
-    const rows = Array.from({ length: COUNT }, (_, i) => {
-      const start = new Date(2024, ri(0, 11), ri(1, 28));
-      const end = new Date(start.getTime() + ri(30, 365) * 86400000);
-      return {
-        code: `${PREFIX}-PRJ-${pad(i + 1)}`,
-        name: `Proyek Dummy ${pad(i + 1)}`,
-        startDate: start,
-        endDate: end,
-        branchId: branches.length ? branches[i % branches.length].id : null,
-        isActive: Math.random() > 0.05,
-      };
-    });
-    const r = await prisma.erpProject.createMany({ data: rows, skipDuplicates: true });
-    return r.count;
-  });
+  // md_projects — skipped, real data seeded via seed-erp-md-projects.ts
 }
 
 main()
