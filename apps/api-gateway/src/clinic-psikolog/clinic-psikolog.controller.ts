@@ -99,7 +99,7 @@ export class ClinicPsikologController {
   @Patch('me')
   @Roles('clinic-psikolog')
   @ApiOperation({
-    summary: 'Edit own profile (subset: fullName, title, bio, color)',
+    summary: 'Edit own profile (subset: fullName, title, bio, color, phone)',
     description:
       'Psikolog hanya boleh edit field non-sensitive sendiri. Email/license/' +
       'defaultSlots/specialty/isActive admin-only (via PATCH /:id).',
@@ -111,6 +111,7 @@ export class ClinicPsikologController {
       title?: string;
       bio?: string;
       color?: string;
+      phone: string;
       /** Base64 data URL (data:image/...;base64,...) atau URL absolut, atau null untuk hapus. */
       avatarUrl?: string | null;
     },

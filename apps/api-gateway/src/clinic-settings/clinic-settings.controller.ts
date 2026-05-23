@@ -39,4 +39,11 @@ export class ClinicSettingsController {
   update(@Body() dto: UpdateSettingsDto, @Request() req: AuthRequest) {
     return this.service.update(dto, req.user?.sub ?? req.user?.id);
   }
+
+  @Get('wa-status')
+  @Roles('clinic-admin')
+  @ApiOperation({ summary: 'Cek status koneksi device Fonnte secara real-time' })
+  getWaStatus() {
+    return this.service.getWaDeviceStatus();
+  }
 }
