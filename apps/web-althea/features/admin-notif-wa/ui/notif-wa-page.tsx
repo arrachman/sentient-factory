@@ -14,7 +14,6 @@ import { ActivityLog } from './activity-log';
 import { SendTestDialog } from './send-test-dialog';
 import { TemplateEditor } from './template-editor';
 import { TemplateList } from './template-list';
-import { WaPageHeader } from './wa-page-header';
 import { WaSettingsDrawer } from './wa-settings-drawer';
 import { WaStatsRow } from './wa-stats-row';
 
@@ -148,7 +147,6 @@ export function NotifWaPage() {
   return (
     <>
       <div className="space-y-4 p-4 lg:p-6">
-      <WaPageHeader onOpenSettings={() => setSettingsOpen(true)} />
 
       <WaStatsRow
         sentTodayCount={sentTodayCount}
