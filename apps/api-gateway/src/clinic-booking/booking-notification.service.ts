@@ -33,6 +33,45 @@ type BookingForNotification = {
   room: { name: string };
 };
 
+/** Subset settings yang dipakai oleh notifier — cukup field notif booleans. */
+type NotifSettings = {
+  waSendEnabled: boolean;
+  notifConfirmKlien: boolean;
+  notifConfirmPsikolog: boolean;
+  notifFollowupKlien: boolean;
+  notifRescheduleKlien: boolean;
+  notifReschedulePsikolog: boolean;
+  notifCancelKlien: boolean;
+  notifCancelPsikolog: boolean;
+  notifUbahRuanganKlien: boolean;
+  notifUbahRuanganPsikolog: boolean;
+  notifUbahLayananKlien: boolean;
+  notifUbahLayananPsikolog: boolean;
+  notifWelcomeKlien: boolean;
+  notifWelcomePsikolog: boolean;
+  notifDpKlien: boolean;
+  notifBuktiPembayaranKlien: boolean;
+  notifPelunasanKlien: boolean;
+};
+
+/**
+ * Map template name → toggle field yang mengontrol dispatch-nya.
+ * Struktur: { klien?: keyof NotifSettings, psikolog?: keyof NotifSettings }
+ */
+const TEMPLATE_TOGGLE: Record<string, { klien?: keyof NotifSettings; psikolog?: keyof NotifSettings }> = {
+  'Konfirmasi Booking':         { klien: 'notifConfirmKlien',        psikolog: 'notifConfirmPsikolog' },
+  'Follow-up Post Session':     { klien: 'notifFollowupKlien' },
+  'Reschedule Booking':         { klien: 'notifRescheduleKlien',     psikolog: 'notifReschedulePsikolog' },
+  'Cancel Booking':             { klien: 'notifCancelKlien',         psikolog: 'notifCancelPsikolog' },
+  'Ubah Ruangan':               { klien: 'notifUbahRuanganKlien',    psikolog: 'notifUbahRuanganPsikolog' },
+  'Ubah Layanan':               { klien: 'notifUbahLayananKlien',    psikolog: 'notifUbahLayananPsikolog' },
+  'Welcome New Client':         { klien: 'notifWelcomeKlien' },
+  'Welcome Psikolog Baru':      { psikolog: 'notifWelcomePsikolog' },
+  'Tagihan DP':                 { klien: 'notifDpKlien' },
+  'Bukti Pembayaran':           { klien: 'notifBuktiPembayaranKlien' },
+  'Pengingat Pelunasan':        { klien: 'notifPelunasanKlien' },
+};
+
 @Injectable()
 export class BookingNotificationService {
   private readonly logger = new Logger(BookingNotificationService.name);
@@ -41,6 +80,30 @@ export class BookingNotificationService {
     private readonly wa: ClinicWaService,
     private readonly prisma: PrismaService,
   ) {}
+
+  /** Baca notif settings dari DB (single-row). Null-safe — pakai defaults kalau row belum ada. */
+  private async getNotifSettings(): Promise<NotifSettings> {
+    const s = await this.prisma.clinicSettings.findUnique({ where: { id: 1 } });
+    return {
+      waSendEnabled:              s?.waSendEnabled              ?? false,
+      notifConfirmKlien:          s?.notifConfirmKlien          ?? true,
+      notifConfirmPsikolog:       s?.notifConfirmPsikolog       ?? true,
+      notifFollowupKlien:         s?.notifFollowupKlien         ?? true,
+      notifRescheduleKlien:       s?.notifRescheduleKlien       ?? true,
+      notifReschedulePsikolog:    s?.notifReschedulePsikolog    ?? true,
+      notifCancelKlien:           s?.notifCancelKlien           ?? true,
+      notifCancelPsikolog:        s?.notifCancelPsikolog        ?? true,
+      notifUbahRuanganKlien:      s?.notifUbahRuanganKlien      ?? true,
+      notifUbahRuanganPsikolog:   s?.notifUbahRuanganPsikolog   ?? true,
+      notifUbahLayananKlien:      s?.notifUbahLayananKlien      ?? false,
+      notifUbahLayananPsikolog:   s?.notifUbahLayananPsikolog   ?? false,
+      notifWelcomeKlien:          s?.notifWelcomeKlien          ?? true,
+      notifWelcomePsikolog:       s?.notifWelcomePsikolog       ?? true,
+      notifDpKlien:               s?.notifDpKlien               ?? true,
+      notifBuktiPembayaranKlien:  s?.notifBuktiPembayaranKlien  ?? false,
+      notifPelunasanKlien:        s?.notifPelunasanKlien        ?? true,
+    };
+  }
 
   /**
    * Cek `ClinicWaTemplate.recipients` — apakah template ini juga harus
@@ -58,6 +121,7 @@ export class BookingNotificationService {
   /**
    * Fire-and-forget WA dispatch untuk booking event.
    * Caller pakai `void this.notify(...)` — error logged, tidak throw.
+   * Cek notif toggle dari ClinicSettings sebelum dispatch — kalau off, skip.
    */
   async notify(
     booking: BookingForNotification,
@@ -65,9 +129,18 @@ export class BookingNotificationService {
     extraVars: Record<string, string | number> = {},
   ): Promise<void> {
     if (!booking.client.phoneWa) {
-      // No phone, skip silently (some clients walk-in without WA)
       return;
     }
+
+    const settings = await this.getNotifSettings();
+    if (!settings.waSendEnabled) return;
+
+    const toggle = TEMPLATE_TOGGLE[templateName];
+    if (toggle?.klien !== undefined && !settings[toggle.klien]) {
+      this.logger.debug(`[notify] skip klien — ${templateName} (toggle off)`);
+      return;
+    }
+
     try {
       // Format tanggal/waktu human-readable Indonesia (Asia/Jakarta)
       // supaya template variable {{tanggal}} {{waktu}} muncul rapi:
@@ -81,9 +154,14 @@ export class BookingNotificationService {
         timeZone: 'Asia/Jakarta',
       });
       const waktuFormatted = formatClinicTimeOfDay(booking.scheduledStart);
+      const waktuEndFormatted = formatClinicTimeOfDay(booking.scheduledEnd);
       const totalFormatted = new Intl.NumberFormat('id-ID').format(
         Number(booking.service.basePrice),
       );
+
+      // jadwal_lengkap & total_baris: default single-session, di-override oleh extraVars
+      // kalau dipanggil dari notifyPackageConfirmation (multi-sesi).
+      const defaultJadwalLengkap = `${tanggalFormatted} · ${waktuFormatted}–${waktuEndFormatted} WIB · ${booking.room.name}`;
 
       const variables = {
         nama_klien: booking.client.name,
@@ -94,6 +172,8 @@ export class BookingNotificationService {
         ruang: booking.room.name,
         layanan: booking.service.name,
         total: totalFormatted,
+        jadwal_lengkap: defaultJadwalLengkap,
+        total_baris: `💰 Total: Rp ${totalFormatted}`,
         ...extraVars,
       };
       await this.wa.dispatch({
@@ -104,9 +184,10 @@ export class BookingNotificationService {
         bookingId: booking.id,
       });
 
-      // Fan-out ke psikolog kalau template recipients menyertakan 'psikolog'.
-      // Pakai try terpisah supaya error sisi psikolog tidak block log success klien.
-      if (booking.psikolog.phone && (await this.templateTargetsPsikolog(templateName))) {
+      // Fan-out ke psikolog: cek toggle psikolog + template recipients
+      const psikologToggleKey = toggle?.psikolog;
+      const psikologToggleOn = psikologToggleKey ? settings[psikologToggleKey] : true;
+      if (booking.psikolog.phone && psikologToggleOn && (await this.templateTargetsPsikolog(templateName))) {
         try {
           await this.wa.dispatch({
             templateName,
@@ -131,6 +212,36 @@ export class BookingNotificationService {
    * Beda dengan `notify()`: throw error kalau booking tidak punya phone
    * atau status final, supaya caller bisa show ke user.
    */
+  /**
+   * Kirim 1 WA Konfirmasi Booking untuk paket multi-sesi.
+   * Satu notifikasi dengan jadwal_lengkap semua sesi — tidak loop per sesi.
+   * Fire-and-forget — error tidak throw.
+   */
+  async notifyPackageConfirmation(bookings: BookingForNotification[]): Promise<void> {
+    if (bookings.length === 0) return;
+    const first = bookings[0];
+
+    const jadwal_lengkap = bookings
+      .map((b, i) => {
+        const tgl = b.scheduledStart.toLocaleDateString('id-ID', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'Asia/Jakarta',
+        });
+        const jamStart = formatClinicTimeOfDay(b.scheduledStart);
+        const jamEnd = formatClinicTimeOfDay(b.scheduledEnd);
+        return `Sesi ${i + 1}: ${tgl} · ${jamStart}–${jamEnd} WIB · ${b.room.name}`;
+      })
+      .join('\n');
+
+    await this.notify(first, 'Konfirmasi Booking', {
+      jadwal_lengkap,
+      total_baris: '', // sembunyikan total untuk paket multi-sesi
+    });
+  }
+
   /**
    * Kirim profil psikolog ke klien saat booking pertama dikonfirmasi.
    * Fire-and-forget — error tidak throw.
