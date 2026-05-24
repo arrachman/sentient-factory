@@ -759,6 +759,34 @@ jangan dihapus, tapi jangan dipakai sebagai entry baru.
 
 **Seed dummy:** `prisma/seed-erp-item-informations-dummy.ts` (100 rows, idempotent — `findMany({ information: { is: null } }) + createMany skipDuplicates`). Butuh `md_items` ter-seed lebih dulu (lihat `seed-erp-md-dummy.ts`).
 
+### 2.23 Item master = form lengkap sectioned (2026-05-24)
+
+Master Item (`/master/items`, `ErpItemsPage`) di-expand dari 7 field → paritas
+header MyERP+ "Barang". Field katalog otoritatif = `db-design/entities-m1-master-data.md`.
+
+- **`md_items` kolom baru** (migrasi `20260524_001_erp_item_dimensions_classification`):
+  `costMethod` (enum `ErpCostingMethod` AVG/FIFO/STD), `minOrderQty`, `ageCategory`,
+  `validUntil`, `isVatable` (BKP), `isSpecial`, + 9 dimensi GL FK (`divisionId`,
+  `subdivisionId`, `departmentId`, `subDepartmentId`, `branchId`, `defaultLocationId`,
+  `defaultWarehouseId`, `projectId`, `costCenterId`). Klasifikasi (`kindId`,
+  `productClassId`, `brandId`, `materialId`, `itemModelId`, `sizeId`, `colorId`,
+  `sectionId`) sebagian sudah dari `20260523_001` — schema.prisma kini meng-expose
+  semuanya. **FK intra-domain `md` ditegakkan** (named `@relation` + back-pointer parent).
+- **`ErpItemType` enum di-reshape** (migrasi `20260524_002_erp_item_type_enum_reshape`):
+  `INVENTORY/SERVICE/CONSUMABLE/ASSET/NON_INVENTORY` (hapus `VOUCHER/ASSEMBLY`).
+  FE & DB konsisten. Saat menyentuh `type`, pakai set ini.
+- **Form FE**: dipecah `items-form.tsx` (types/adapters/validation) +
+  `items-form-fields.tsx` (UI organism) + `items-form-lookups.ts` (loader SearchSelect).
+  Layout = **modal `lg` (900px), section 2-kolom** (Identitas · Satuan & Penilaian ·
+  Stok & Tracking · Harga & Pajak · Akun GL · Dimensi & Supplier · Deskripsi).
+  Bukan tab legacy — keputusan user: "UX nyaman & compact". Sub-komponen
+  `LookupField`/`NumField`/`YesNoField` **di module-level** (jangan inline di render —
+  remount + hilang focus).
+- **`SimpleMasterPage` dapat prop `modalSize?: 'md' | 'lg'`** (default `md`). Form
+  kaya (banyak field) → pakai `modalSize="lg"`. Diteruskan ke `<ModalContent size>`.
+- **Deferred** (belum di form): price tiers 2–10, tab Atribut multi-varian,
+  distributor multi-supplier. Item Information tetap halaman 1:1 terpisah (§2.21).
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
@@ -888,48 +916,78 @@ Konsekuensi: halaman yang skip `validate=` → submit tanpa validasi client-side
 Halaman yang skip `aria-invalid=` → auto-focus gagal menemukan field error.
 Kedua ini harus selesai sebelum halaman dideklarasikan done.
 
-### 2.22 Menu Manager = SimpleMasterPage flat list (2026-05-24)
+### 2.22 Menu Manager = TreeDndMasterPage (tree + cross-parent DnD) (2026-05-24, revisi)
 
 `/admin/menus` (komponen `ErpMenusPage` di
 [`components/pages/menus-page.tsx`](components/pages/menus-page.tsx))
-**memakai `SimpleMasterPage`** — bukan tree+DnD lagi. Migrasi 2026-05-24
-mengganti versi sebelumnya yang punya hierarchy depth-first + drag-and-drop
-sibling reorder. Trade-off diterima dengan user: kehilangan visual indent
-tree & DnD reorder, dapat seluruh standar §2.7–§2.12 (pagination/sort/
-filter/bulk/audit/keyboard nav).
+**memakai organism `TreeDndMasterPage`** — hierarki MODULE→GROUP→ITEM dengan
+drag-and-drop reorder (sibling **dan** cross-parent). **Revisi keputusan
+2026-05-24** (atas permintaan user): versi flat-list `SimpleMasterPage` yang
+sempat dipakai pagi itu **di-rollback**. Trade-off yang diterima ulang dengan
+user:
 
-Detail implementasi:
+- **Checkbox column diganti drag handle** (icon `grip-vertical`) di kolom
+  paling kiri → **tidak ada bulk action** di halaman ini (pengecualian sah
+  atas §2.9.H, dikonfirmasi user). Aksi destruktif per-baris tetap ada di
+  kebab + right-click menu.
+- **Tidak ada pagination/sort/filter server-driven** (pengecualian sah atas
+  §2.7/§2.12) — tampilan hierarkis butuh seluruh subtree terlihat agar DnD
+  bermakna. Search client-side menyaring baris yang cocok **+ ancestor-nya**
+  supaya konteks tree tetap terbaca.
 
-- **Kolom ekstra:** Tipe (badge: MODULE=success/GROUP=info/ITEM=default),
-  Path (mono muted), Urutan (mono numeric).
-- **Filter ekstra:** Tipe (MODULE/GROUP/ITEM) — di-apply client-side
-  di atas hasil `listAdapted`.
+Organism reusable (atomic level organisms), bukan fork SimpleMasterPage:
+
+- [`components/organisms/tree-dnd-master-page.tsx`](components/organisms/tree-dnd-master-page.tsx)
+  — shell: state, search, modal create/edit, audit panel, DnD orchestration.
+- [`components/organisms/tree-dnd-row.tsx`](components/organisms/tree-dnd-row.tsx)
+  — molecule baris (drag handle + indent depth + cells + kebab/context menu).
+- [`components/organisms/tree-dnd-helpers.ts`](components/organisms/tree-dnd-helpers.ts)
+  — pure helpers (`flattenTree`, `inferNewParent`, `computeReorderChanges`,
+  `validateDrop`); dipisah agar shell < 400 baris (§3).
+- [`components/organisms/tree-dnd-master-page.types.ts`](components/organisms/tree-dnd-master-page.types.ts)
+  — tipe bersama (`TreeRow`, props) untuk hindari import sirkular.
+
+DnD = `@dnd-kit/core` + `@dnd-kit/sortable` (sama lib dgn tab-bar §2.14),
+`PointerSensor` `distance: 5`, `verticalListSortingStrategy`.
+
+**Cross-parent drop rule** (`inferNewParent`): setelah `arrayMove` di flat
+list, parent baru item diturunkan dari baris tepat di atasnya:
+MODULE → selalu root (null); GROUP → nesting di MODULE terdekat ke atas;
+ITEM → anak dari MODULE/GROUP container terdekat, atau sibling dari ITEM
+terdekat (mewarisi parent ITEM itu). Hanya item yang berubah `parentId`/
+`sortOrder` yang dikirim ke backend (optimistic update lokal dulu, rollback
+via `reload()` bila API gagal).
+
+Detail kolom & form:
+
+- **Kolom ekstra:** Tipe (badge MODULE=success/GROUP=info/ITEM=default),
+  Path (mono muted). Kolom Urutan dihilangkan (urutan kini dari posisi DnD).
 - **Parent menu** masih bisa diedit per-row via `SearchSelect` di form
-  (filter `MODULE` + `GROUP` only). Validasi "tidak boleh jadi parent
-  diri sendiri" sekarang **server-side** (FormFields tidak terima
-  `editingId` lagi — SimpleMasterPage tidak meneruskan editing state ke
-  FormFields).
-- **Sort default:** `sortOrder` asc (mempertahankan urutan seed).
-- **Reorder antar baris** harus lewat form Edit → ubah field `Urutan`.
-  Tidak ada DnD lagi.
+  (filter `MODULE` + `GROUP` only) sebagai jalur alternatif memindah node
+  ke container kosong. Validasi cycle/hierarki **server-side**.
 
 Backend (`apps/api-gateway/src/erp-sys-menus/`):
 
-- Endpoint bulk baru: `PATCH /erp/sys-menus/bulk/status`,
-  `DELETE /erp/sys-menus/bulk` (DTO `BulkErpSysMenuDto` +
-  `BulkStatusErpSysMenuDto`). Bulk routes di-register **sebelum** route
-  `:id` (NestJS match in declaration order).
-- `GET /erp/sys-menus` tetap return flat tanpa pagination/sort — sesuai
-  §2.12 exception ("menus list selalu kecil"). Client `listSysMenus()`
-  yang adaptasi: fetch semua, lalu filter/sort/slice **client-side**
-  sebelum wrap jadi `PaginatedResponse` untuk SimpleMasterPage.
+- Endpoint baru: `POST /erp/sys-menus/reorder` (DTO `ReorderErpSysMenuDto`
+  = `{ items: { id, parentId, sortOrder }[] }`). Diregister **sebelum**
+  route `:id`. Service `reorder()` memvalidasi aturan hierarki tipe
+  (MODULE root-only; GROUP di bawah MODULE; ITEM di bawah MODULE/GROUP) +
+  **no-cycle** (tak boleh pindah node ke diri sendiri / descendant-nya),
+  lalu apply semua update dalam **satu `$transaction`**.
+- Endpoint bulk lama (`PATCH bulk/status`, `DELETE bulk`) **tetap ada** di
+  service/controller (dipakai API lain / future), tapi **tidak dipasang**
+  di halaman menus karena tak ada checkbox.
+- `GET /erp/sys-menus` tetap flat tanpa pagination — §2.12 exception. Client
+  `loadAll()` di menus-page request `limit:10000` lalu pakai seluruh data
+  untuk membangun tree di FE.
 
 Konsekuensi vibe coding:
 
-- Butuh tree view menu lagi? Bikin organism `HierarchicalMasterPage`
-  baru (atomic-design level organisms), jangan fork SimpleMasterPage.
-- File `menus-tree.tsx` dan helper `reorderSiblings` sudah **dihapus** —
-  jangan re-introduce kalau cuma butuh visual indent.
+- Butuh tree+DnD untuk entitas hierarkis lain (mis. CoA tree, kategori
+  berjenjang)? **Pakai ulang `TreeDndMasterPage`** — jangan fork menus-page,
+  jangan bikin organism tree baru.
+- Butuh bulk action di menus lagi? Itu balik konflik dgn keputusan "drag
+  handle ganti checkbox" — eskalasi ke user dulu (§5).
 
 ### 2.17 Modul sidebar Senti ERP — scope final (2026-05-20)
 

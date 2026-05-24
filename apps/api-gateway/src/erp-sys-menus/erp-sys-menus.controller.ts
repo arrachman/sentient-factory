@@ -15,6 +15,7 @@ import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { BulkErpSysMenuDto, BulkStatusErpSysMenuDto } from './dto/bulk-erp-sys-menu.dto';
 import { CreateErpSysMenuDto } from './dto/create-erp-sys-menu.dto';
 import { QueryErpSysMenuDto } from './dto/query-erp-sys-menu.dto';
+import { ReorderErpSysMenuDto } from './dto/reorder-erp-sys-menu.dto';
 import { UpdateErpSysMenuDto } from './dto/update-erp-sys-menu.dto';
 import { ErpSysMenusService } from './erp-sys-menus.service';
 
@@ -63,6 +64,16 @@ export class ErpSysMenusController {
   @ApiOperation({ summary: 'Bulk soft-delete ERP menus' })
   bulkDelete(@Body() dto: BulkErpSysMenuDto, @Request() req: any) {
     return this.service.bulkDelete(dto, req.user?.id);
+  }
+
+  @Post('reorder')
+  @ApiOperation({
+    summary:
+      'Atomically reorder ERP menus (cross-parent supported). Each item sets new parentId + sortOrder.',
+  })
+  @ApiResponse({ status: 200, description: 'ERP menus reordered' })
+  reorder(@Body() dto: ReorderErpSysMenuDto, @Request() req: any) {
+    return this.service.reorder(dto, req.user?.id);
   }
 
   @Get(':id')

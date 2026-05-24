@@ -140,6 +140,27 @@ export async function bulkUpdateSysMenuStatus(
   return { affected: res.affected };
 }
 
+export interface ReorderSysMenuItem {
+  id: string;
+  parentId: string | null;
+  sortOrder: number;
+}
+
+/**
+ * Atomic cross-parent reorder. Send the desired final state for all
+ * affected items; backend validates hierarchy rules + no-cycle and
+ * applies in a single transaction.
+ */
+export async function reorderSysMenus(
+  items: ReorderSysMenuItem[],
+): Promise<{ affected: number }> {
+  const res = await apiPost<{ success: boolean; affected: number }>(
+    '/sys-menus/reorder',
+    { items },
+  );
+  return { affected: res.affected };
+}
+
 export async function bulkDeleteSysMenus(
   ids: string[],
 ): Promise<{ affected: number }> {

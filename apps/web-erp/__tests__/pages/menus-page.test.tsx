@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
   createSysMenu: vi.fn(),
   updateSysMenu: vi.fn(),
   deleteSysMenu: vi.fn(),
+  reorderSysMenus: vi.fn(),
   bulkUpdateSysMenuStatus: vi.fn(),
   bulkDeleteSysMenus: vi.fn(),
   ERP_MENU_TYPES: ['MODULE', 'GROUP', 'ITEM'],

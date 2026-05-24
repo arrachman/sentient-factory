@@ -354,6 +354,11 @@ const ICON_PATHS = {
       <path d="m2 2 12 12" />
     </>
   ),
+  'grip-vertical': (
+    <>
+      <path d="M6 3.5v.01M6 8v.01M6 12.5v.01M10 3.5v.01M10 8v.01M10 12.5v.01" />
+    </>
+  ),
 } as const;
 
 export type IconName = keyof typeof ICON_PATHS;

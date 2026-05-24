@@ -5,6 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BulkErpSysMenuDto, BulkStatusErpSysMenuDto } from './dto/bulk-erp-sys-menu.dto';
 import { CreateErpSysMenuDto } from './dto/create-erp-sys-menu.dto';
 import { QueryErpSysMenuDto } from './dto/query-erp-sys-menu.dto';
+import { ReorderErpSysMenuDto } from './dto/reorder-erp-sys-menu.dto';
 import { UpdateErpSysMenuDto } from './dto/update-erp-sys-menu.dto';
 
 type MenuNode = ErpMenu & { children: MenuNode[] };
@@ -197,6 +198,113 @@ export class ErpSysMenusService {
       data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
     });
     return { success: true, affected: count };
+  }
+
+  /**
+   * Atomic cross-parent reorder. Client sends final desired state for the
+   * affected items: `{ id, parentId, sortOrder }[]`. Server validates type
+   * hierarchy rules (MODULE root-only; GROUP under MODULE; ITEM under
+   * MODULE/GROUP) + no-cycle (cannot move a node into itself or its
+   * descendant), then applies all updates in one transaction.
+   */
+  async reorder(dto: ReorderErpSysMenuDto, actorId?: string) {
+    if (dto.items.length === 0) return { success: true, affected: 0 };
+
+    const all = await this.prisma.erpMenu.findMany({
+      where: { deletedAt: null },
+      select: { id: true, type: true, parentId: true },
+    });
+    const byId = new Map(all.map((m) => [m.id.toString(), m]));
+
+    // Pre-compute descendants for cycle check (parent → children index)
+    const childrenIndex = new Map<string, string[]>();
+    for (const m of all) {
+      const pk = m.parentId ? m.parentId.toString() : 'ROOT';
+      const arr = childrenIndex.get(pk) ?? [];
+      arr.push(m.id.toString());
+      childrenIndex.set(pk, arr);
+    }
+    const collectDescendants = (rootId: string): Set<string> => {
+      const out = new Set<string>();
+      const stack = [rootId];
+      while (stack.length) {
+        const cur = stack.pop()!;
+        const kids = childrenIndex.get(cur) ?? [];
+        for (const k of kids) {
+          if (!out.has(k)) {
+            out.add(k);
+            stack.push(k);
+          }
+        }
+      }
+      return out;
+    };
+
+    for (const item of dto.items) {
+      const node = byId.get(item.id);
+      if (!node) {
+        throw new NotFoundException(`Menu ${item.id} not found`);
+      }
+      const newParentId = item.parentId ?? null;
+
+      // Type hierarchy rule check
+      if (node.type === 'MODULE' && newParentId !== null) {
+        throw new BadRequestException(
+          `MODULE menu cannot have a parent (id=${item.id})`,
+        );
+      }
+      if (newParentId !== null) {
+        const parent = byId.get(newParentId);
+        if (!parent) {
+          throw new BadRequestException(
+            `Parent menu ${newParentId} not found`,
+          );
+        }
+        if (node.type === 'GROUP' && parent.type !== 'MODULE') {
+          throw new BadRequestException(
+            `GROUP must be a child of MODULE (id=${item.id})`,
+          );
+        }
+        if (node.type === 'ITEM' && parent.type === 'ITEM') {
+          throw new BadRequestException(
+            `ITEM cannot be a child of ITEM (id=${item.id})`,
+          );
+        }
+        // No cycle: newParentId must not be the node itself or any descendant
+        if (newParentId === item.id) {
+          throw new BadRequestException(
+            `Menu ${item.id} cannot be its own parent`,
+          );
+        }
+        const descendants = collectDescendants(item.id);
+        if (descendants.has(newParentId)) {
+          throw new BadRequestException(
+            `Menu ${item.id} cannot be moved under its own descendant`,
+          );
+        }
+      }
+    }
+
+    const actorBigInt = toAuditUserId(actorId)
+      ? BigInt(toAuditUserId(actorId) as number)
+      : undefined;
+    const now = new Date();
+
+    await this.prisma.$transaction(
+      dto.items.map((item) =>
+        this.prisma.erpMenu.update({
+          where: { id: BigInt(item.id) },
+          data: {
+            parentId: item.parentId ? BigInt(item.parentId) : null,
+            sortOrder: item.sortOrder,
+            updatedById: actorBigInt,
+            updatedAt: now,
+          },
+        }),
+      ),
+    );
+
+    return { success: true, affected: dto.items.length };
   }
 
   async remove(id: bigint, actorId?: string) {
