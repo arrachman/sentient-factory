@@ -269,6 +269,9 @@ bukan ditulis ulang ad-hoc per halaman.
 **E. Footer / pagination**
 - Indikator: `Halaman X dari Y · M dari N baris`.
 - Pagination kontrol prev/next.
+- Implementasi via organism reusable [`components/organisms/list-footer.tsx`](components/organisms/list-footer.tsx)
+  (`ListFooter`) — mode `pagination` (TablePagination penuh) atau `summary`
+  (count-only, dipakai halaman non-paginasi seperti tree menus §2.22).
 
 **F. Keyboard-first navigation (WAJIB, listener di organism list)**
 - `J` / `K` atau `↓` / `↑` → navigasi baris bawah/atas.
@@ -980,6 +983,23 @@ Backend (`apps/api-gateway/src/erp-sys-menus/`):
 - `GET /erp/sys-menus` tetap flat tanpa pagination — §2.12 exception. Client
   `loadAll()` di menus-page request `limit:10000` lalu pakai seluruh data
   untuk membangun tree di FE.
+
+**Footer informasional + keyboard nav (2026-05-24).** Walau halaman ini
+**tidak** punya pagination (DnD butuh seluruh tree visible), footer tetap
+hadir agar konsisten visual dgn list page lain — bentuk **count-only**:
+`X dari Y baris` (X = baris visible setelah filter search, Y = total flat) +
+hint pintasan keyboard. Footer dirender lewat organism reusable
+[`components/organisms/list-footer.tsx`](components/organisms/list-footer.tsx)
+yang juga dipakai `ErpListLayout`/SimpleMasterPage — mode dipilih via prop:
+`pagination` → TablePagination penuh, `summary` → count-only (tree), plus
+`selectable=false` untuk drop hint "X pilih" di halaman tanpa selection.
+
+Keyboard navigation diwirekan via hook reusable
+[`lib/use-tree-keyboard-nav.ts`](lib/use-tree-keyboard-nav.ts): **J/↓** &
+**K/↑** geser focus, **Enter** open focused row (edit), **N** add new, **/**
+focus search. **Tidak ada `X` (select)** — konsisten dgn keputusan "drag
+handle ganti checkbox" di atas. Focus state visual via `data-focused` di
+`TableRow` (styling otomatis dari `components/organisms/table.tsx`).
 
 Konsekuensi vibe coding:
 

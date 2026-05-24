@@ -39,6 +39,7 @@ import {
   TableEmpty,
 } from '@/components/organisms/table';
 import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
+import { ListFooter } from '@/components/organisms/list-footer';
 import { TreeDndRow } from './tree-dnd-row';
 import {
   flattenTree,
@@ -53,6 +54,7 @@ import type {
 import { confirmAction, notify } from '@/lib/feedback';
 import { hasErrors, type FormErrors } from '@/lib/form-validation';
 import { tGlobal } from '@/lib/mock';
+import { useTreeKeyboardNav } from '@/lib/use-tree-keyboard-nav';
 
 export type { TreeRow, TreeNodeType } from './tree-dnd-master-page.types';
 export type { TreeDndExtraColumn } from './tree-dnd-row';
@@ -78,6 +80,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
   const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
+  const searchRef = React.useRef<HTMLInputElement>(null);
 
   const reload = React.useCallback(async () => {
     setLoading(true);
@@ -147,6 +150,19 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
     setFormErrors({});
     setOpen(true);
   };
+
+  // Keyboard-first row nav (CLAUDE.md §2.7 F). No X/select: this tree has no
+  // row selection (§2.22 — drag handle replaces the checkbox column).
+  const { focusedIndex } = useTreeKeyboardNav({
+    rowCount: visibleFlat.length,
+    resetKey: debouncedSearch,
+    searchRef,
+    onAdd: openCreate,
+    onOpenFocused: (i) => {
+      const target = visibleFlat[i]?.row;
+      if (target) openEdit(target);
+    },
+  });
 
   const handleSave = async () => {
     if (validate) {
@@ -254,43 +270,20 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-          padding: '12px 12px 0',
-        }}
-      >
-        <h2 style={{ fontSize: 'calc(15px * var(--font-scale, 1))', fontWeight: 600 }}>
-          {tGlobal(title)}
-        </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 12px 0' }}>
+        <h2 style={{ fontSize: 'calc(15px * var(--font-scale, 1))', fontWeight: 600 }}>{tGlobal(title)}</h2>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={tGlobal('Cari…')}
-            style={{ width: 220 }}
-          />
-          <button className="btn ghost" onClick={reload} title={tGlobal('Muat ulang')}>
-            <Icon name="refresh" />
-          </button>
-          <button className="btn primary" onClick={openCreate}>
-            <Icon name="plus" /> {tGlobal('Tambah')}
-          </button>
+          <Input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tGlobal('Cari…')} style={{ width: 220 }} />
+          <button className="btn ghost" onClick={reload} title={tGlobal('Muat ulang')}><Icon name="refresh" /></button>
+          <button className="btn primary" onClick={openCreate}><Icon name="plus" /> {tGlobal('Tambah')}</button>
         </div>
       </div>
 
       <div className="lines">
         {loading ? (
-          <div style={{ padding: 16 }} className="muted">
-            {tGlobal('Memuat...')}
-          </div>
+          <div style={{ padding: 16 }} className="muted">{tGlobal('Memuat...')}</div>
         ) : error ? (
-          <div style={{ padding: 16, color: 'var(--danger, #c33)' }}>
-            {tGlobal('Gagal memuat data')}: {error}
-          </div>
+          <div style={{ padding: 16, color: 'var(--danger, #c33)' }}>{tGlobal('Gagal memuat data')}: {error}</div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <Table className="table-fixed">
@@ -298,9 +291,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
                 <col style={{ width: 36 }} />
                 <col style={{ width: 200 }} />
                 <col />
-                {extraColumns.map((c) => (
-                  <col key={c.key} style={{ width: 160 }} />
-                ))}
+                {extraColumns.map((c) => <col key={c.key} style={{ width: 160 }} />)}
                 <col style={{ width: 120 }} />
                 <col style={{ width: 48 }} />
               </colgroup>
@@ -309,9 +300,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
                   <TableHead aria-label={tGlobal('Tarik')} />
                   <TableHead>{tGlobal('Kode')}</TableHead>
                   <TableHead>{tGlobal('Nama')}</TableHead>
-                  {extraColumns.map((c) => (
-                    <TableHead key={c.key}>{tGlobal(c.label)}</TableHead>
-                  ))}
+                  {extraColumns.map((c) => <TableHead key={c.key}>{tGlobal(c.label)}</TableHead>)}
                   <TableHead>{tGlobal('Status')}</TableHead>
                   <TableHead />
                 </TableRow>
@@ -326,7 +315,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
                       searchTerm={debouncedSearch || undefined}
                     />
                   ) : (
-                    visibleFlat.map(({ row, depth }) => {
+                    visibleFlat.map(({ row, depth }, idx) => {
                       const actions: RowActionItem[] = [
                         { label: tGlobal('Edit'), onSelect: () => openEdit(row) },
                         { label: tGlobal('Riwayat'), onSelect: () => setAuditTarget(row) },
@@ -342,6 +331,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
                           key={row.id}
                           row={row}
                           depth={depth}
+                          focused={focusedIndex === idx}
                           extraColumns={extraColumns}
                           rowActions={actions}
                           onOpenEdit={openEdit}
@@ -355,6 +345,14 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
           </DndContext>
         )}
       </div>
+
+      {!loading && !error && (
+        <ListFooter
+          summary={{ rowCount: visibleFlat.length, totalRows: flat.length }}
+          selectable={false}
+          onAdd={openCreate}
+        />
+      )}
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent>

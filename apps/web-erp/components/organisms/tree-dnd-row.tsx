@@ -37,6 +37,8 @@ interface BaseRow {
 interface Props<T extends BaseRow> {
   row: T;
   depth: number;
+  /** Keyboard-nav focus highlight (J/K). Renders the focused row outline. */
+  focused?: boolean;
   extraColumns: TreeDndExtraColumn<T>[];
   rowActions: RowActionItem[];
   onOpenEdit: (row: T) => void;
@@ -45,6 +47,7 @@ interface Props<T extends BaseRow> {
 export function TreeDndRow<T extends BaseRow>({
   row,
   depth,
+  focused,
   extraColumns,
   rowActions,
   onOpenEdit,
@@ -70,6 +73,7 @@ export function TreeDndRow<T extends BaseRow>({
       <TableRow
         ref={setNodeRef as React.Ref<HTMLTableRowElement>}
         style={style}
+        data-focused={focused}
         className="cursor-pointer"
         onDoubleClick={() => onOpenEdit(row)}
       >

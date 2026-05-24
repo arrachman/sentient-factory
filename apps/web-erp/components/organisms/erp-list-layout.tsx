@@ -18,9 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { TablePagination } from '@/components/molecules/table-pagination';
 import { ErrorState } from '@/components/molecules/error-state';
+import { ListFooter, type ListPaginationConfig } from '@/components/organisms/list-footer';
 import { tGlobal } from '@/lib/mock';
+
+export type { ListPaginationConfig };
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -44,17 +46,6 @@ export interface SummaryConfig {
   totalCount?: number;
 }
 
-export interface ListPaginationConfig {
-  page: number;
-  pageCount: number;
-  pageSize: number;
-  totalRows: number;
-  onPage: (page: number) => void;
-  /** When provided, the limit selector is rendered in the footer. */
-  onPageSize?: (size: number) => void;
-  pageSizeOptions?: readonly number[];
-}
-
 /** Wires J/K/X/Enter/Space keyboard nav to a table rendered inside ErpListLayout. */
 export interface KeyboardRowConfig {
   rowCount: number;
@@ -62,55 +53,6 @@ export interface KeyboardRowConfig {
   onFocusChange: (i: number) => void;
   onToggle: (i: number) => void;
   onOpen?: (i: number) => void;
-}
-
-// ─── Footer ───────────────────────────────────────────────────────────────────
-
-function ListFooter({
-  pagination,
-  keyboardHints,
-  onAdd,
-}: {
-  pagination?: ListPaginationConfig;
-  keyboardHints?: boolean;
-  onAdd?: () => void;
-}) {
-  return (
-    <div className="sticky bottom-0 flex items-center gap-3 border-t border-border bg-card px-4 py-[5px] text-[11px] text-muted-foreground">
-      {pagination && (
-        <TablePagination
-          page={pagination.page}
-          pageCount={pagination.pageCount}
-          pageSize={pagination.pageSize}
-          totalRows={pagination.totalRows}
-          rowCount={Math.min(
-            pagination.pageSize,
-            Math.max(pagination.totalRows - (pagination.page - 1) * pagination.pageSize, 0),
-          )}
-          onPage={pagination.onPage}
-          onPageSize={pagination.onPageSize}
-          pageSizeOptions={pagination.pageSizeOptions}
-        />
-      )}
-
-      <div className="flex-1" />
-
-      {keyboardHints && (
-        <span className="flex items-center gap-[3px]">
-          {tGlobal('Pintasan')}:&nbsp;
-          <Kbd>J</Kbd>↓/<Kbd>K</Kbd>↑
-          <span className="mx-1 opacity-40">·</span>
-          <Kbd>X</Kbd>&nbsp;{tGlobal('pilih')}
-          {onAdd && (
-            <>
-              <span className="mx-1 opacity-40">·</span>
-              <Kbd>N</Kbd>&nbsp;{tGlobal('baru')}
-            </>
-          )}
-        </span>
-      )}
-    </div>
-  );
 }
 
 // ─── Sentinel for empty-string Select value ───────────────────────────────────
@@ -230,7 +172,7 @@ export function ErpListLayout({
 
   const hasActiveFilter = filters?.some((f) => f.value !== '');
   const handleReset = () => filters?.forEach((f) => f.onChange(''));
-  const showFilterBar = (filters && filters.length > 0) || !!summary;
+  const showFilterBar = (filters && filters.length > 0) || !!summary || !!toolbar;
 
 
   return (
@@ -304,6 +246,8 @@ export function ErpListLayout({
             </Select>
           ))}
 
+          {toolbar}
+
           <div style={{ flex: 1 }} />
 
           {summary && (
@@ -330,8 +274,6 @@ export function ErpListLayout({
         </div>
       )}
 
-      {toolbar && <div className="toolbar">{toolbar}</div>}
-
       <div className="page-body">
         {fetching && !loading && !error && (
           <div
@@ -356,15 +298,15 @@ export function ErpListLayout({
 
           {!loading && !error && children}
         </div>
-
-        {(pagination || keyboardHints) && (
-          <ListFooter
-            pagination={pagination}
-            keyboardHints={keyboardHints}
-            onAdd={onAdd}
-          />
-        )}
       </div>
+
+      {(pagination || keyboardHints) && (
+        <ListFooter
+          pagination={pagination}
+          keyboardHints={keyboardHints}
+          onAdd={onAdd}
+        />
+      )}
     </div>
   );
 }
