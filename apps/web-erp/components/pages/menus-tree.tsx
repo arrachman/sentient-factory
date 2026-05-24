@@ -174,16 +174,6 @@ export interface SortOrderUpdate {
   sortOrder: number;
 }
 
-function groupByParent(rows: FlatRow[]): Map<string, FlatRow[]> {
-  const map = new Map<string, FlatRow[]>();
-  for (const r of rows) {
-    const key = r.menu.parentId ?? '__root__';
-    const arr = map.get(key) ?? [];
-    arr.push(r);
-    map.set(key, arr);
-  }
-  return map;
-}
 
 export interface MenusDndProviderProps {
   rows: FlatRow[];
@@ -250,30 +240,41 @@ export interface MenusTreeRowsProps {
 
 /** The actual <tr> rows. Must live inside <tbody>. */
 export function MenusTreeRows({ rows, onEdit, onDelete }: MenusTreeRowsProps) {
-  const groups = React.useMemo(() => groupByParent(rows), [rows]);
+  const childrenByParent = React.useMemo(() => {
+    const map = new Map<string, FlatRow[]>();
+    for (const r of rows) {
+      const key = r.menu.parentId ?? '__root__';
+      const arr = map.get(key) ?? [];
+      arr.push(r);
+      map.set(key, arr);
+    }
+    return map;
+  }, [rows]);
 
   if (rows.length === 0) {
     return <TableEmpty colSpan={7} />;
   }
 
-  return (
-    <>
-      {Array.from(groups.entries()).map(([parentKey, group]) => (
-        <SortableContext
-          key={parentKey}
-          items={group.map((r) => r.menu.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {group.map((r) => (
-            <MenuRow
-              key={r.menu.id}
-              row={r}
-              onEdit={onEdit}
-              onDelete={onDelete}
-            />
-          ))}
-        </SortableContext>
-      ))}
-    </>
-  );
+  // Render depth-first: each sibling group gets its own SortableContext
+  // (SortableContext emits no DOM, so nesting inside <tbody> is safe).
+  function renderGroup(parentKey: string): React.ReactNode {
+    const group = childrenByParent.get(parentKey);
+    if (!group || group.length === 0) return null;
+    return (
+      <SortableContext
+        key={parentKey}
+        items={group.map((r) => r.menu.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {group.map((r) => (
+          <React.Fragment key={r.menu.id}>
+            <MenuRow row={r} onEdit={onEdit} onDelete={onDelete} />
+            {renderGroup(r.menu.id)}
+          </React.Fragment>
+        ))}
+      </SortableContext>
+    );
+  }
+
+  return <>{renderGroup('__root__')}</>;
 }
