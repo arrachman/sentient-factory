@@ -1,28 +1,30 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
 } from 'class-validator';
-import { ErpItemType } from '@prisma/client';
+import { ErpCostingMethod, ErpItemType } from '@prisma/client';
 
 export class CreateErpItemDto {
-  @ApiProperty({ example: 'ITM-001', description: 'Unique item code' })
+  // ─── Core identity ────────────────────────────────────────────────
+  @ApiProperty({ example: 'ITM-001' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
   code!: string;
 
-  @ApiProperty({ example: 'Steel Rod 10mm', description: 'Item name' })
+  @ApiProperty({ example: 'Steel Rod 10mm' })
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
   name!: string;
 
-  @ApiProperty({ enum: ErpItemType, example: ErpItemType.INVENTORY, description: 'Item type' })
+  @ApiProperty({ enum: ErpItemType, example: ErpItemType.INVENTORY })
   @IsEnum(ErpItemType)
   itemType!: ErpItemType;
 
@@ -36,92 +38,94 @@ export class CreateErpItemDto {
   @IsNotEmpty()
   unitId!: string;
 
-  @ApiPropertyOptional({ example: 'D6 10mm steel rod', description: 'Item description' })
+  @ApiPropertyOptional({ example: 'D6 10mm steel rod' })
   @IsOptional()
   @IsString()
   @MaxLength(1000)
   description?: string;
 
-  @ApiPropertyOptional({ example: '12345678', description: 'Barcode' })
+  @ApiPropertyOptional({ example: '12345678' })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   barcode?: string;
 
-  @ApiPropertyOptional({ example: '50000', description: 'Standard cost (Decimal as string)' })
+  // ─── Costing method (HPP) ─────────────────────────────────────────
+  @ApiPropertyOptional({ enum: ErpCostingMethod, default: ErpCostingMethod.AVG })
+  @IsOptional()
+  @IsEnum(ErpCostingMethod)
+  costMethod?: ErpCostingMethod;
+
+  // ─── Classification (lookups) ─────────────────────────────────────
+  @ApiPropertyOptional({ description: 'Item kind ID (md_item_types) — legacy "Tipe"' })
   @IsOptional()
   @IsString()
-  standardCost?: string;
+  kindId?: string | null;
 
-  @ApiPropertyOptional({ example: '50000', description: 'Purchase price (Decimal as string)' })
+  @ApiPropertyOptional({ description: 'Product class ID (md_product_classes) — legacy "Kelas Produk"' })
   @IsOptional()
   @IsString()
-  purchasePrice?: string;
+  productClassId?: string | null;
 
-  @ApiPropertyOptional({ example: '75000', description: 'Sale price (Decimal as string)' })
-  @IsOptional()
-  @IsString()
-  salePrice?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() brandId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() materialId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() itemModelId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() sizeId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() colorId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() sectionId?: string | null;
 
-  @ApiPropertyOptional({ example: '10', description: 'Minimum stock level' })
-  @IsOptional()
-  @IsString()
-  minStock?: string;
+  // ─── GL / organizational dimensions ───────────────────────────────
+  @ApiPropertyOptional() @IsOptional() @IsString() divisionId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() subdivisionId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() departmentId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() subDepartmentId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() branchId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() defaultLocationId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() defaultWarehouseId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() costCenterId?: string | null;
 
-  @ApiPropertyOptional({ example: '500', description: 'Maximum stock level' })
-  @IsOptional()
-  @IsString()
-  maxStock?: string;
+  // ─── Costs & prices ───────────────────────────────────────────────
+  @ApiPropertyOptional({ example: '50000' }) @IsOptional() @IsString() standardCost?: string;
+  @ApiPropertyOptional({ example: '50000' }) @IsOptional() @IsString() purchasePrice?: string;
+  @ApiPropertyOptional({ example: '75000' }) @IsOptional() @IsString() salePrice?: string;
 
-  @ApiPropertyOptional({ example: '50', description: 'Reorder quantity' })
-  @IsOptional()
-  @IsString()
-  reorderQty?: string;
+  // ─── Stock levels ─────────────────────────────────────────────────
+  @ApiPropertyOptional({ example: '10' }) @IsOptional() @IsString() minStock?: string;
+  @ApiPropertyOptional({ example: '500' }) @IsOptional() @IsString() maxStock?: string;
+  @ApiPropertyOptional({ example: '50' }) @IsOptional() @IsString() reorderQty?: string;
+  @ApiPropertyOptional({ example: '5' }) @IsOptional() @IsString() minOrderQty?: string;
 
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  tracksSerial?: boolean = false;
+  // ─── Tracking flags ───────────────────────────────────────────────
+  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksSerial?: boolean = false;
+  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksBatch?: boolean = false;
+  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksBin?: boolean = false;
 
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  tracksBatch?: boolean = false;
+  // ─── GL accounts ──────────────────────────────────────────────────
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() inventoryAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() cogsAccountId?: string | null;
 
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  tracksBin?: boolean = false;
+  // ─── Tax ──────────────────────────────────────────────────────────
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseTaxId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() saleTaxId?: string | null;
 
-  @ApiPropertyOptional({
-    example: '456',
-    description: 'Inventory account ID (BigInt as string)',
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  inventoryAccountId?: string | null;
+  // ─── Supplier & physical ──────────────────────────────────────────
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() primarySupplierId?: string | null;
+  @ApiPropertyOptional({ example: '1.5' }) @IsOptional() @IsString() weight?: string;
 
-  @ApiPropertyOptional({
-    example: '457',
-    description: 'Sales account ID (BigInt as string)',
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  salesAccountId?: string | null;
+  // ─── Validity & flags (legacy parity) ─────────────────────────────
+  @ApiPropertyOptional({ description: 'Kategori Umur (freetext)' })
+  @IsOptional() @IsString() ageCategory?: string | null;
 
-  @ApiPropertyOptional({
-    example: '458',
-    description: 'COGS account ID (BigInt as string)',
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  cogsAccountId?: string | null;
+  @ApiPropertyOptional({ description: 'Berlaku s.d (ISO date YYYY-MM-DD)' })
+  @IsOptional() @IsDateString() validUntil?: string | null;
 
-  @ApiPropertyOptional({ example: true, default: true })
-  @IsOptional()
-  @IsBoolean()
-  isActive?: boolean = true;
+  @ApiPropertyOptional({ default: true, description: 'BKP — Barang Kena Pajak (VATable)' })
+  @IsOptional() @IsBoolean() isVatable?: boolean = true;
+
+  @ApiPropertyOptional({ default: false, description: 'Spesial' })
+  @IsOptional() @IsBoolean() isSpecial?: boolean = false;
+
+  @ApiPropertyOptional({ default: true }) @IsOptional() @IsBoolean() isActive?: boolean = true;
 }

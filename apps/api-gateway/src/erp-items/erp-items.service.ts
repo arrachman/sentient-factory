@@ -10,9 +10,71 @@ import { QueryErpItemDto } from './dto/query-erp-item.dto';
 import { UpdateErpItemDto } from './dto/update-erp-item.dto';
 
 const ITEM_INCLUDE = {
-  category: { select: { id: true, code: true, name: true } },
-  baseUnit: { select: { id: true, code: true, name: true } },
+  category:         { select: { id: true, code: true, name: true } },
+  baseUnit:         { select: { id: true, code: true, name: true } },
+  kind:             { select: { id: true, code: true, name: true } },
+  productClass:     { select: { id: true, code: true, name: true } },
+  division:         { select: { id: true, code: true, name: true } },
+  subdivision:      { select: { id: true, code: true, name: true } },
+  department:       { select: { id: true, code: true, name: true } },
+  subDepartment:    { select: { id: true, code: true, name: true } },
+  branch:           { select: { id: true, code: true, name: true } },
+  defaultLocation:  { select: { id: true, code: true, name: true } },
+  defaultWarehouse: { select: { id: true, code: true, name: true } },
+  project:          { select: { id: true, code: true, name: true } },
+  costCenter:       { select: { id: true, code: true, name: true } },
+  inventoryAccount: { select: { id: true, code: true, name: true } },
+  salesAccount:     { select: { id: true, code: true, name: true } },
+  cogsAccount:      { select: { id: true, code: true, name: true } },
+  purchaseTax:      { select: { id: true, code: true, name: true } },
+  saleTax:          { select: { id: true, code: true, name: true } },
+  primarySupplier:  { select: { id: true, code: true, name: true } },
 } as const;
+
+// FK fields where empty string or null = clear the relation; non-empty = BigInt.
+const FK_OPTIONAL_FIELDS = [
+  'kindId', 'productClassId', 'brandId', 'materialId', 'itemModelId', 'sizeId',
+  'colorId', 'sectionId', 'divisionId', 'subdivisionId', 'departmentId',
+  'subDepartmentId', 'branchId', 'defaultLocationId', 'defaultWarehouseId',
+  'projectId', 'costCenterId', 'inventoryAccountId', 'salesAccountId',
+  'cogsAccountId', 'purchaseTaxId', 'saleTaxId', 'primarySupplierId',
+] as const;
+
+const DECIMAL_FIELDS = [
+  'standardCost', 'purchasePrice', 'salePrice',
+  'minStock', 'maxStock', 'reorderQty', 'minOrderQty', 'weight',
+] as const;
+
+function toFkOrNull(v: string | null | undefined): bigint | null | undefined {
+  if (v === undefined) return undefined;
+  if (v === null || v === '') return null;
+  return BigInt(v);
+}
+
+function toDecimalOrUndefined(v: string | null | undefined): Prisma.Decimal | undefined {
+  if (v === undefined || v === null || v === '') return undefined;
+  return new Prisma.Decimal(v);
+}
+
+function buildFkData(dto: Record<string, unknown>): Record<string, bigint | null | undefined> {
+  const out: Record<string, bigint | null | undefined> = {};
+  for (const f of FK_OPTIONAL_FIELDS) {
+    const v = dto[f] as string | null | undefined;
+    const conv = toFkOrNull(v);
+    if (conv !== undefined) out[f] = conv;
+  }
+  return out;
+}
+
+function buildDecimalData(dto: Record<string, unknown>): Record<string, Prisma.Decimal | undefined> {
+  const out: Record<string, Prisma.Decimal | undefined> = {};
+  for (const f of DECIMAL_FIELDS) {
+    const v = dto[f] as string | null | undefined;
+    const conv = toDecimalOrUndefined(v);
+    if (conv !== undefined) out[f] = conv;
+  }
+  return out;
+}
 
 // Maps Prisma field names to the frontend ErpItem interface shape
 function mapItem(item: any) {
@@ -23,6 +85,7 @@ function mapItem(item: any) {
     unitId: String(baseUnitId),
     unit: baseUnit ?? null,
     sellingPrice: salePrice != null ? String(salePrice) : null,
+    salePrice: salePrice != null ? String(salePrice) : null,
   };
 }
 
@@ -53,21 +116,19 @@ export class ErpItemsService {
           code: dto.code,
           name: dto.name,
           type: dto.itemType,
+          costMethod: dto.costMethod ?? undefined,
           categoryId: BigInt(dto.categoryId),
           baseUnitId: BigInt(dto.unitId),
           barcode: dto.barcode ?? null,
-          standardCost: dto.standardCost ? new Prisma.Decimal(dto.standardCost) : undefined,
-          purchasePrice: dto.purchasePrice ? new Prisma.Decimal(dto.purchasePrice) : undefined,
-          salePrice: dto.salePrice ? new Prisma.Decimal(dto.salePrice) : undefined,
-          minStock: dto.minStock ? new Prisma.Decimal(dto.minStock) : undefined,
-          maxStock: dto.maxStock ? new Prisma.Decimal(dto.maxStock) : undefined,
-          reorderQty: dto.reorderQty ? new Prisma.Decimal(dto.reorderQty) : undefined,
+          ...buildDecimalData(dto as unknown as Record<string, unknown>),
           tracksSerial: dto.tracksSerial ?? false,
           tracksBatch: dto.tracksBatch ?? false,
           tracksBin: dto.tracksBin ?? false,
-          inventoryAccountId: dto.inventoryAccountId ? BigInt(dto.inventoryAccountId) : null,
-          salesAccountId: dto.salesAccountId ? BigInt(dto.salesAccountId) : null,
-          cogsAccountId: dto.cogsAccountId ? BigInt(dto.cogsAccountId) : null,
+          ageCategory: dto.ageCategory ?? null,
+          validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
+          isVatable: dto.isVatable ?? true,
+          isSpecial: dto.isSpecial ?? false,
+          ...buildFkData(dto as unknown as Record<string, unknown>),
           isActive: dto.isActive ?? true,
           createdById: actorId ? BigInt(actorId) : null,
           updatedById: actorId ? BigInt(actorId) : null,
@@ -108,21 +169,14 @@ export class ErpItemsService {
       ];
     }
 
-    if (query.itemType !== undefined) {
-      where.type = query.itemType;
-    }
-
-    if (query.categoryId !== undefined) {
-      where.categoryId = BigInt(query.categoryId);
-    }
-
-    if (query.unitId !== undefined) {
-      where.baseUnitId = BigInt(query.unitId);
-    }
-
-    if (query.isActive !== undefined) {
-      where.isActive = query.isActive;
-    }
+    if (query.itemType !== undefined) where.type = query.itemType;
+    if (query.categoryId !== undefined) where.categoryId = BigInt(query.categoryId);
+    if (query.unitId !== undefined) where.baseUnitId = BigInt(query.unitId);
+    if (query.kindId !== undefined) where.kindId = BigInt(query.kindId);
+    if (query.productClassId !== undefined) where.productClassId = BigInt(query.productClassId);
+    if (query.branchId !== undefined) where.branchId = BigInt(query.branchId);
+    if (query.defaultWarehouseId !== undefined) where.defaultWarehouseId = BigInt(query.defaultWarehouseId);
+    if (query.isActive !== undefined) where.isActive = query.isActive;
 
     const sortField = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
@@ -191,27 +245,23 @@ export class ErpItemsService {
           code: dto.code,
           name: dto.name,
           type: dto.itemType,
+          costMethod: dto.costMethod,
           categoryId: dto.categoryId ? BigInt(dto.categoryId) : undefined,
           baseUnitId: dto.unitId ? BigInt(dto.unitId) : undefined,
           barcode: dto.barcode,
-          standardCost: dto.standardCost ? new Prisma.Decimal(dto.standardCost) : undefined,
-          purchasePrice: dto.purchasePrice ? new Prisma.Decimal(dto.purchasePrice) : undefined,
-          salePrice: dto.salePrice ? new Prisma.Decimal(dto.salePrice) : undefined,
-          minStock: dto.minStock ? new Prisma.Decimal(dto.minStock) : undefined,
-          maxStock: dto.maxStock ? new Prisma.Decimal(dto.maxStock) : undefined,
-          reorderQty: dto.reorderQty ? new Prisma.Decimal(dto.reorderQty) : undefined,
+          ...buildDecimalData(dto as unknown as Record<string, unknown>),
           tracksSerial: dto.tracksSerial,
           tracksBatch: dto.tracksBatch,
           tracksBin: dto.tracksBin,
-          inventoryAccountId: dto.inventoryAccountId !== undefined
-            ? (dto.inventoryAccountId ? BigInt(dto.inventoryAccountId) : null)
-            : undefined,
-          salesAccountId: dto.salesAccountId !== undefined
-            ? (dto.salesAccountId ? BigInt(dto.salesAccountId) : null)
-            : undefined,
-          cogsAccountId: dto.cogsAccountId !== undefined
-            ? (dto.cogsAccountId ? BigInt(dto.cogsAccountId) : null)
-            : undefined,
+          ageCategory: dto.ageCategory,
+          validUntil: dto.validUntil === undefined
+            ? undefined
+            : dto.validUntil === null || dto.validUntil === ''
+              ? null
+              : new Date(dto.validUntil),
+          isVatable: dto.isVatable,
+          isSpecial: dto.isSpecial,
+          ...buildFkData(dto as unknown as Record<string, unknown>),
           isActive: dto.isActive,
           updatedById: actorId ? BigInt(actorId) : null,
         },

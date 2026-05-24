@@ -1152,8 +1152,9 @@ enum ErpNumberingReset {
 enum ErpItemType {
   INVENTORY
   SERVICE
-  VOUCHER
-  ASSEMBLY
+  CONSUMABLE
+  ASSET
+  NON_INVENTORY
 }
 
 enum ErpAccountType {
@@ -1634,6 +1635,7 @@ model ErpBranch {
   locations        ErpLocation[]
   userBranchAccess ErpUserBranchAccess[]
   partners         ErpPartner[]
+  items            ErpItem[] @relation("ItemBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -1660,6 +1662,7 @@ model ErpLocation {
   branch             ErpBranch               @relation(fields: [branchId], references: [id])
   warehouses         ErpWarehouse[]
   userLocationAccess ErpUserLocationAccess[]
+  items              ErpItem[]               @relation("ItemDefaultLocation")
 
   @@index([branchId])
   @@index([legacyCode])
@@ -1683,6 +1686,7 @@ model ErpWarehouse {
 
   location            ErpLocation              @relation(fields: [locationId], references: [id])
   userWarehouseAccess ErpUserWarehouseAccess[]
+  items               ErpItem[]                @relation("ItemDefaultWarehouse")
 
   @@index([locationId])
   @@index([legacyCode])
@@ -1738,51 +1742,100 @@ model ErpItemCategory {
 }
 
 model ErpItem {
-  id                 BigInt      @id @default(autoincrement())
-  code               String      @unique @map("code")
-  name               String      @map("name")
-  barcode            String?     @map("barcode")
-  type               ErpItemType @map("type")
-  categoryId         BigInt      @map("category_id")
-  baseUnitId         BigInt      @map("base_unit_id")
-  standardCost       Decimal     @default(0) @map("standard_cost") @db.Decimal(19, 4)
-  averageCost        Decimal     @default(0) @map("average_cost") @db.Decimal(19, 4)
-  purchasePrice      Decimal     @default(0) @map("purchase_price") @db.Decimal(19, 4)
-  salePrice          Decimal     @default(0) @map("sale_price") @db.Decimal(19, 4)
-  minStock           Decimal     @default(0) @map("min_stock") @db.Decimal(19, 4)
-  maxStock           Decimal     @default(0) @map("max_stock") @db.Decimal(19, 4)
-  reorderQty         Decimal     @default(0) @map("reorder_qty") @db.Decimal(19, 4)
-  tracksSerial       Boolean     @default(false) @map("tracks_serial")
-  tracksBatch        Boolean     @default(false) @map("tracks_batch")
-  tracksBin          Boolean     @default(false) @map("tracks_bin")
-  inventoryAccountId BigInt?     @map("inventory_account_id")
-  salesAccountId     BigInt?     @map("sales_account_id")
-  cogsAccountId      BigInt?     @map("cogs_account_id")
-  purchaseTaxId      BigInt?     @map("purchase_tax_id")
-  saleTaxId          BigInt?     @map("sale_tax_id")
-  primarySupplierId  BigInt?     @map("primary_supplier_id")
-  weight             Decimal?    @map("weight") @db.Decimal(19, 4)
-  isActive           Boolean     @default(true) @map("is_active")
-  legacyCode         String?     @map("legacy_code")
-  metadata           Json?       @map("metadata")
-  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById        BigInt?     @map("created_by_id")
-  updatedById        BigInt?     @map("updated_by_id")
-  deletedAt          DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  id                 BigInt           @id @default(autoincrement())
+  code               String           @unique @map("code")
+  name               String           @map("name")
+  barcode            String?          @map("barcode")
+  type               ErpItemType      @map("type")
+  costMethod         ErpCostingMethod @default(AVG) @map("cost_method")
+  categoryId         BigInt           @map("category_id")
+  baseUnitId         BigInt           @map("base_unit_id")
+  kindId             BigInt?          @map("kind_id")
+  productClassId     BigInt?          @map("product_class_id")
+  brandId            BigInt?          @map("brand_id")
+  materialId         BigInt?          @map("material_id")
+  itemModelId        BigInt?          @map("item_model_id")
+  sizeId             BigInt?          @map("size_id")
+  colorId            BigInt?          @map("color_id")
+  sectionId          BigInt?          @map("section_id")
+  divisionId         BigInt?          @map("division_id")
+  subdivisionId      BigInt?          @map("subdivision_id")
+  departmentId       BigInt?          @map("department_id")
+  subDepartmentId    BigInt?          @map("sub_department_id")
+  branchId           BigInt?          @map("branch_id")
+  defaultLocationId  BigInt?          @map("default_location_id")
+  defaultWarehouseId BigInt?          @map("default_warehouse_id")
+  projectId          BigInt?          @map("project_id")
+  costCenterId       BigInt?          @map("cost_center_id")
+  standardCost       Decimal          @default(0) @map("standard_cost") @db.Decimal(19, 4)
+  averageCost        Decimal          @default(0) @map("average_cost") @db.Decimal(19, 4)
+  purchasePrice      Decimal          @default(0) @map("purchase_price") @db.Decimal(19, 4)
+  salePrice          Decimal          @default(0) @map("sale_price") @db.Decimal(19, 4)
+  minStock           Decimal          @default(0) @map("min_stock") @db.Decimal(19, 4)
+  maxStock           Decimal          @default(0) @map("max_stock") @db.Decimal(19, 4)
+  reorderQty         Decimal          @default(0) @map("reorder_qty") @db.Decimal(19, 4)
+  minOrderQty        Decimal          @default(0) @map("min_order_qty") @db.Decimal(19, 4)
+  tracksSerial       Boolean          @default(false) @map("tracks_serial")
+  tracksBatch        Boolean          @default(false) @map("tracks_batch")
+  tracksBin          Boolean          @default(false) @map("tracks_bin")
+  inventoryAccountId BigInt?          @map("inventory_account_id")
+  salesAccountId     BigInt?          @map("sales_account_id")
+  cogsAccountId      BigInt?          @map("cogs_account_id")
+  purchaseTaxId      BigInt?          @map("purchase_tax_id")
+  saleTaxId          BigInt?          @map("sale_tax_id")
+  primarySupplierId  BigInt?          @map("primary_supplier_id")
+  weight             Decimal?         @map("weight") @db.Decimal(19, 4)
+  ageCategory        String?          @map("age_category")
+  validUntil         DateTime?        @map("valid_until") @db.Date
+  isVatable          Boolean          @default(true) @map("is_vatable")
+  isSpecial          Boolean          @default(false) @map("is_special")
+  isActive           Boolean          @default(true) @map("is_active")
+  legacyCode         String?          @map("legacy_code")
+  metadata           Json?            @map("metadata")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById        BigInt?          @map("created_by_id")
+  updatedById        BigInt?          @map("updated_by_id")
+  deletedAt          DateTime?        @map("deleted_at") @db.Timestamptz(6)
 
-  category         ErpItemCategory @relation(fields: [categoryId], references: [id])
-  baseUnit         ErpUnit         @relation(fields: [baseUnitId], references: [id])
-  inventoryAccount ErpAccount?     @relation("ItemInventoryAcct", fields: [inventoryAccountId], references: [id])
-  salesAccount     ErpAccount?     @relation("ItemSalesAcct", fields: [salesAccountId], references: [id])
-  cogsAccount      ErpAccount?     @relation("ItemCogsAcct", fields: [cogsAccountId], references: [id])
-  purchaseTax      ErpTax?         @relation("ItemPurchaseTax", fields: [purchaseTaxId], references: [id])
-  saleTax          ErpTax?         @relation("ItemSaleTax", fields: [saleTaxId], references: [id])
-  primarySupplier  ErpPartner?        @relation("ItemPrimarySupplier", fields: [primarySupplierId], references: [id])
+  category         ErpItemCategory     @relation(fields: [categoryId], references: [id])
+  baseUnit         ErpUnit             @relation(fields: [baseUnitId], references: [id])
+  kind             ErpItemKind?        @relation("ItemKind", fields: [kindId], references: [id])
+  productClass     ErpProductClass?    @relation("ItemProductClass", fields: [productClassId], references: [id])
+  division         ErpDivision?        @relation("ItemDivision", fields: [divisionId], references: [id])
+  subdivision      ErpSubdivision?     @relation("ItemSubdivision", fields: [subdivisionId], references: [id])
+  department       ErpDepartment?      @relation("ItemDepartment", fields: [departmentId], references: [id])
+  subDepartment    ErpSubDepartment?   @relation("ItemSubDepartment", fields: [subDepartmentId], references: [id])
+  branch           ErpBranch?          @relation("ItemBranch", fields: [branchId], references: [id])
+  defaultLocation  ErpLocation?        @relation("ItemDefaultLocation", fields: [defaultLocationId], references: [id])
+  defaultWarehouse ErpWarehouse?       @relation("ItemDefaultWarehouse", fields: [defaultWarehouseId], references: [id])
+  project          ErpProject?         @relation("ItemProject", fields: [projectId], references: [id])
+  costCenter       ErpCostCenter?      @relation("ItemCostCenter", fields: [costCenterId], references: [id])
+  inventoryAccount ErpAccount?         @relation("ItemInventoryAcct", fields: [inventoryAccountId], references: [id])
+  salesAccount     ErpAccount?         @relation("ItemSalesAcct", fields: [salesAccountId], references: [id])
+  cogsAccount      ErpAccount?         @relation("ItemCogsAcct", fields: [cogsAccountId], references: [id])
+  purchaseTax      ErpTax?             @relation("ItemPurchaseTax", fields: [purchaseTaxId], references: [id])
+  saleTax          ErpTax?             @relation("ItemSaleTax", fields: [saleTaxId], references: [id])
+  primarySupplier  ErpPartner?         @relation("ItemPrimarySupplier", fields: [primarySupplierId], references: [id])
   information      ErpItemInformation?
 
   @@index([categoryId])
   @@index([baseUnitId])
+  @@index([kindId])
+  @@index([productClassId])
+  @@index([brandId])
+  @@index([materialId])
+  @@index([itemModelId])
+  @@index([sizeId])
+  @@index([colorId])
+  @@index([sectionId])
+  @@index([divisionId])
+  @@index([departmentId])
+  @@index([branchId])
+  @@index([defaultLocationId])
+  @@index([defaultWarehouseId])
+  @@index([projectId])
+  @@index([costCenterId])
   @@index([barcode])
   @@index([legacyCode])
   @@map("md_items")
@@ -2297,6 +2350,7 @@ model ErpCostCenter {
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
   accrualSchedules              ErpFinAccrualSchedule[]
+  items                         ErpItem[] @relation("ItemCostCenter")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -2328,6 +2382,7 @@ model ErpDivision {
   cashBankLines                 ErpFinCashBankLine[]
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
+  items                         ErpItem[] @relation("ItemDivision")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -2357,6 +2412,7 @@ model ErpSubdivision {
   ledgerEntries      ErpFinLedgerEntry[]
   cashBankLines      ErpFinCashBankLine[]
   budgetRealizations ErpFinBudgetRealization[]
+  items              ErpItem[] @relation("ItemSubdivision")
 
   @@index([divisionId])
   @@index([parentId])
@@ -2389,6 +2445,7 @@ model ErpProject {
   cashBankLines                 ErpFinCashBankLine[]
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
+  items                         ErpItem[] @relation("ItemProject")
 
   @@index([parentId])
   @@index([branchId])
@@ -2415,6 +2472,7 @@ model ErpDepartment {
   parent         ErpDepartment?     @relation("ErpDepartment_parent", fields: [parentId], references: [id])
   children       ErpDepartment[]    @relation("ErpDepartment_parent")
   subDepartments ErpSubDepartment[]
+  items          ErpItem[]          @relation("ItemDepartment")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -2439,6 +2497,7 @@ model ErpSubDepartment {
   department ErpDepartment       @relation(fields: [departmentId], references: [id])
   parent     ErpSubDepartment?   @relation("ErpSubDepartment_parent", fields: [parentId], references: [id])
   children   ErpSubDepartment[]  @relation("ErpSubDepartment_parent")
+  items      ErpItem[]           @relation("ItemSubDepartment")
 
   @@index([departmentId])
   @@index([parentId])
@@ -8622,6 +8681,9 @@ model ErpItemKind {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items ErpItem[] @relation("ItemKind")
+
   @@index([legacyCode])
   @@map("md_item_types")
 }
@@ -8638,6 +8700,9 @@ model ErpProductClass {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items ErpItem[] @relation("ItemProductClass")
+
   @@index([legacyCode])
   @@map("md_product_classes")
 }

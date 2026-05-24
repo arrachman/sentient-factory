@@ -99,6 +99,52 @@ Relations: `branch Branch`, `warehouses Warehouse[]`.
 
 Relations: self `parent`/`children`, `items Item[]`, GL accounts.
 
+### ItemKind  → `md_item_types`  (legacy `m1_item_type` — "Tipe Produk")
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | legacy `Kode` (RM, WIP, FG, FA, MRO, ORM, UM, WO) |
+| name | String | legacy `Nama` (RAW MATERIAL, FINISH GOODS, …) |
+| isActive | Boolean | |
+| metadata ○ | Json | |
+
+> **Naming caveat (resolved §8 #?, ref CLAUDE.md §2.18):** model = `ErpItemKind`,
+> **bukan** `ErpItemType` — `ErpItemType` sudah dipakai sebagai *enum* di
+> `ErpItem.type`. Tabel ini = master user-configurable yang mereplikasi legacy
+> "Tipe Produk" (peran bisnis / manufacturing stage), bukan enum perilaku sistem.
+
+Relations: `items Item[]`.
+
+### Item classification — 3 sumbu independen (resolved 2026-05-24, dengan user)
+
+Satu item dilihat dari **tiga sudut pandang berbeda**, masing-masing kolom
+sendiri (legacy MyERP+ cuma punya 2: Tipe Produk + Kategori Produk):
+
+| Sumbu | Kolom | Jenis | Menjawab | Contoh |
+| --- | --- | --- | --- | --- |
+| **Sistem** | `type` | enum `ErpItemType` | bagaimana sistem memperlakukan item (stockable? hit COGS/expense? punya BOM?) | INVENTORY, SERVICE |
+| **Peran bisnis / stage** | `kindId ➜ ItemKind` | master | posisi di alur bisnis/produksi | RM, WIP, FG, FA, MRO, WO |
+| **Material / klasifikasi** | `categoryId ➜ ItemCategory` | master (hierarkis) | terbuat dari apa / kelompok produk | BRASS, ALLOY, CHEMICAL |
+
+- **Sumbu sistem (`type`)** = enum kecil & tetap → drives logika akuntansi/inventory.
+- **Sumbu peran (`kind`)** = `md_item_types`, replikasi legacy "Tipe Produk", user-extend.
+- **Sumbu material (`category`)** = `md_item_categories`, replikasi legacy "Kategori Produk", mendukung nesting via `parentId`.
+- **Validasi cross-field (UI, hard rule):** kombinasi `type` × `kind` yang tidak masuk akal harus diblok di form (mis. `type=SERVICE` tidak boleh `kind=RAW MATERIAL`). State machine validasi hidup di backend; form menampilkan error.
+
+> **RESOLVED 2026-05-24 (dengan user) — enum `ErpItemType` = set sifat stok/aset:**
+> `INVENTORY · SERVICE · CONSUMABLE · ASSET · NON_INVENTORY`. Nilai lama
+> `VOUCHER`/`ASSEMBLY` **dihapus** — keduanya redundan dengan model 3-sumbu:
+> "ber-BOM/rakitan" = fakta terpisah (ada baris `mfg_boms`), bukan tipe; "voucher"
+> = `NON_INVENTORY`. Backfill data seed lama: `VOUCHER→NON_INVENTORY`,
+> `ASSEMBLY→INVENTORY` (peran rakitan pindah ke `kind`, mis. FG/WIP).
+>
+> **✅ IMPLEMENTED 2026-05-24** — migrasi enum
+> `20260524_002_erp_item_type_enum_reshape` (recreate type Postgres + USING
+> backfill; 600 seed rows = INVENTORY, no-op). FE `ErpItemType` di
+> `lib/api/items.ts`, `ITEM_TYPES`, dan filter di `items-page.tsx` sudah memakai
+> set baru — backend & FE kini konsisten.
+
 ### Item  → `md_items`  (legacy `m1_item` — trimmed 128 → ~24 core)
 
 | Field | Type | Notes |
@@ -107,8 +153,17 @@ Relations: self `parent`/`children`, `items Item[]`, GL accounts.
 | code 🔑 | String unique | `bkode` |
 | name | String | `bnama` |
 | barcode ○ | String | `bbarcode` |
-| type ◆ | `ItemType` | `bjenis`/`btipe` → enum |
-| categoryId ➜ | BigInt → ItemCategory | `bkategori` |
+| type ◆ | `ErpItemType` | sumbu **sistem** — INVENTORY/SERVICE/CONSUMABLE/ASSET/NON_INVENTORY |
+| costMethod ◆ | `ErpCostingMethod` | AVG/FIFO/STD — legacy "HPP" (`bmetodehpp`), default AVG |
+| kindId ○ ➜ | BigInt → ItemKind | sumbu **peran/stage** — legacy "Tipe Produk" (`bjenis`/`btipe`) |
+| productClassId ○ ➜ | BigInt → ProductClass | legacy "Kelas Produk" (`bkelasproduk`) |
+| brandId ○ ➜ | BigInt → Brand | atribut (legacy `bmerk`) |
+| materialId ○ ➜ | BigInt → Material | atribut |
+| itemModelId ○ ➜ | BigInt → ItemModel | atribut |
+| sizeId ○ ➜ | BigInt → Size | atribut |
+| colorId ○ ➜ | BigInt → Color | atribut |
+| sectionId ○ ➜ | BigInt → Section | atribut |
+| categoryId ➜ | BigInt → ItemCategory | sumbu **material** — legacy "Kategori Produk" (`bkategori`) |
 | baseUnitId ➜ | BigInt → Unit | `bsatuan` |
 | standardCost | Decimal(19,4) | `bhpp` |
 | averageCost | Decimal(19,4) | `bhppaverage` |
@@ -117,6 +172,7 @@ Relations: self `parent`/`children`, `items Item[]`, GL accounts.
 | minStock | Decimal(19,4) | `bstokminimal` |
 | maxStock | Decimal(19,4) | `bstokmaksimal` |
 | reorderQty | Decimal(19,4) | `breorder` |
+| minOrderQty | Decimal(19,4) | legacy "Min Order" (`bminorder`) |
 | tracksSerial | Boolean | `bserial` → `inv_serials` (resolved §8 #24) |
 | tracksBatch | Boolean | `bbatch` → `inv_lots` (resolved §8 #24) |
 | tracksBin | Boolean | new — opt-in `inv_bins` location (resolved §8 #26) |
@@ -127,11 +183,30 @@ Relations: self `parent`/`children`, `items Item[]`, GL accounts.
 | saleTaxId ○ ➜ | BigInt → Tax | `bpajakjual` |
 | primarySupplierId ○ ➜ | BigInt → Partner | `bsuplier` |
 | weight ○ | Decimal(19,4) | optional logistics |
+| ageCategory ○ | String | legacy "Kategori Umur" (`bkategoriumur`) — freetext |
+| validUntil ○ | Date | legacy "Berlaku s.d" (`bberlaku`) |
+| isVatable | Boolean | legacy "BKP" (`bkp`) — Barang Kena Pajak, default true |
+| isSpecial | Boolean | legacy "Spesial" (`bspesial`), default false |
 | isActive | Boolean | `baktif` |
 | metadata ○ | Json | `bcustom1..15`, dimensions, etc. |
 
+**GL / organizational dimensions** (legacy header lookups; all `○` nullable FK → `md_*`):
+`divisionId → Division`, `subdivisionId → Subdivision`, `departmentId → Department`,
+`subDepartmentId → SubDepartment`, `branchId → Branch`, `defaultLocationId → Location`,
+`defaultWarehouseId → Warehouse`, `projectId → Project`, `costCenterId → CostCenter`.
+Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di parent).
+
 > **`stockOnHand` is intentionally NOT a column.** Legacy `bstok` is a denormalized
 > cache; modern stock is derived from inventory transactions (future module).
+
+> **✅ IMPLEMENTED 2026-05-24** — kolom klasifikasi (kind/productClass/brand/
+> material/itemModel/size/color/section), dimensi GL (9 di atas), `costMethod`,
+> `minOrderQty`, `ageCategory`, `validUntil`, `isVatable`, `isSpecial` ditambahkan
+> via migrasi `20260524_001_erp_item_dimensions_classification`
+> (kolom atribut/klasifikasi sebagian sudah dari `20260523_001`). Form FE
+> (`items-form.tsx` + `items-form-fields.tsx`, modal `lg` sectioned 2-kolom)
+> meng-expose seluruh field. Belum di-expose ke form: price tiers 2–10, tab
+> Atribut multi-varian, distributor multi-supplier (deferred).
 
 ---
 

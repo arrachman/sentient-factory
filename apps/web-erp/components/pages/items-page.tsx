@@ -42,7 +42,7 @@ const itemTypeFilters: ExtraFilterDef[] = [
     { label: 'Inventory', value: 'INVENTORY' },
     { label: 'Service', value: 'SERVICE' },
     { label: 'Consumable', value: 'CONSUMABLE' },
-    { label: 'Aset', value: 'ASSET' },
+    { label: 'Asset', value: 'ASSET' },
     { label: 'Non-Inventory', value: 'NON_INVENTORY' },
   ]},
 ];
@@ -65,13 +65,14 @@ export function ErpItemsPage() {
       bulkDelete={bulkDeleteItems}
       defaultForm={defaultItemForm}
       fromRecord={fromItem}
-      toPayload={toItemPayload as (f: ItemFormData) => any}
+      toPayload={toItemPayload}
       FormFields={ItemFormFields}
       validate={validateItem}
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"
       extraFilters={itemTypeFilters}
+      modalSize="lg"
     />
   );
 }

@@ -8,6 +8,8 @@ const itemsApi = vi.hoisted(() => ({
   createItem: vi.fn(),
   updateItem: vi.fn(),
   deleteItem: vi.fn(),
+  bulkUpdateItemStatus: vi.fn(),
+  bulkDeleteItems: vi.fn(),
 }));
 const unitsApi = vi.hoisted(() => ({ listUnits: vi.fn() }));
 const catsApi = vi.hoisted(() => ({ listItemCategories: vi.fn() }));

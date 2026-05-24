@@ -3,7 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ErpItemType } from '@prisma/client';
 
-const SORTABLE_FIELDS = ['code', 'name', 'type', 'isActive', 'createdAt'] as const;
+const SORTABLE_FIELDS = ['code', 'name', 'type', 'costMethod', 'salePrice', 'isActive', 'createdAt', 'updatedAt'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
 export class QueryErpItemDto {
@@ -41,6 +41,26 @@ export class QueryErpItemDto {
   @IsOptional()
   @IsString()
   unitId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by item kind (Tipe)' })
+  @IsOptional()
+  @IsString()
+  kindId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by product class (Kelas Produk)' })
+  @IsOptional()
+  @IsString()
+  productClassId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by branch' })
+  @IsOptional()
+  @IsString()
+  branchId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by default warehouse' })
+  @IsOptional()
+  @IsString()
+  defaultWarehouseId?: string;
 
   @ApiPropertyOptional({ example: true, description: 'Filter by active status' })
   @IsOptional()

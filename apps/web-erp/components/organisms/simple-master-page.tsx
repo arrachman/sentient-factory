@@ -104,6 +104,8 @@ export interface SimpleMasterPageProps<T extends BaseEntity, F> {
   extraFilters?: ExtraFilterDef[];
   /** Called whenever extra filter values change so parent can sync & wrap list fn. */
   onExtraFilterChange?: (values: Record<string, string>) => void;
+  /** Modal width for the create/edit form. Default 'md' (560px). Use 'lg' (900px) for rich forms. */
+  modalSize?: 'md' | 'lg';
 }
 
 export function SimpleMasterPage<T extends BaseEntity, F>({
@@ -128,6 +130,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   defaultSortDir = 'desc',
   extraFilters = [],
   onExtraFilterChange,
+  modalSize = 'md',
 }: SimpleMasterPageProps<T, F>) {
   const [sortBy, setSortBy] = React.useState(defaultSortBy);
   const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>(defaultSortDir);
@@ -138,11 +141,9 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   );
   const { page, pageSize, setPage, setPageSize } = useListPagination(storageKey);
   const setExtraFilter = (key: string, value: string) => {
-    setExtraFilterValues(prev => {
-      const next = { ...prev, [key]: value };
-      onExtraFilterChange?.(next);
-      return next;
-    });
+    const next = { ...extraFilterValues, [key]: value };
+    setExtraFilterValues(next);
+    onExtraFilterChange?.(next);
     setPage(1);
   };
 
@@ -364,7 +365,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
       )}
 
       <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
+        <ModalContent size={modalSize}>
           <ModalHeader><ModalTitle>{editing ? `${tGlobal('Edit')} ${tGlobal(title)}` : `${tGlobal('Tambah')} ${tGlobal(title)}`}</ModalTitle></ModalHeader>
           <FormFields data={form} onChange={setForm} errors={formErrors} />
           <ModalFooter>

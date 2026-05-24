@@ -1,188 +1,197 @@
 'use client';
 
 /**
- * Item create/edit form — used inside a Modal.
- * References unit and category lookups from the parent page.
- * Atomic tier: Molecule/Organism sub-part.
+ * Item create/edit form — types, defaults, adapters, validation.
+ * The sectioned 2-column UI lives in ./items-form-fields.
+ * Atomic tier: Molecule (data) + Organism (UI in sibling file).
  */
 
-import * as React from 'react';
-import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { BooleanRadio } from '@/components/ui/radio-group';
-import { SearchSelect } from '@/components/molecules/search-select';
-import type { ErpItem, ErpItemType, CreateItemPayload } from '@/lib/api/items';
-import { listItemCategories } from '@/lib/api/item-categories';
-import { listUnits } from '@/lib/api/units';
+import type { ErpItem, ErpItemType, ErpCostingMethod, CreateItemPayload } from '@/lib/api/items';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
-const ITEM_TYPES: ErpItemType[] = [
-  'INVENTORY',
-  'SERVICE',
-  'CONSUMABLE',
-  'ASSET',
-  'NON_INVENTORY',
+export { ItemFormFields } from './items-form-fields';
+
+export const ITEM_TYPES: ErpItemType[] = ['INVENTORY', 'SERVICE', 'CONSUMABLE', 'ASSET', 'NON_INVENTORY'];
+export const COST_METHODS: { value: ErpCostingMethod; label: string }[] = [
+  { value: 'AVG', label: 'Average' },
+  { value: 'FIFO', label: 'FIFO' },
+  { value: 'STD', label: 'Standard' },
 ];
-
-async function loadCategoryOptions(search: string, page: number, limit: number) {
-  const res = await listItemCategories({ search: search || undefined, page, limit, isActive: true });
-  return { data: res.data.map((c) => ({ value: c.id, label: c.name, code: c.code })), total: res.meta.total };
-}
-
-async function loadUnitOptions(search: string, page: number, limit: number) {
-  const res = await listUnits({ search: search || undefined, page, limit, isActive: true });
-  return { data: res.data.map((u) => ({ value: u.id, label: u.name, code: u.code })), total: res.meta.total };
-}
 
 export interface ItemFormData {
   code: string;
   name: string;
   itemType: ErpItemType;
-  categoryId: string;
-  categoryLabel?: string;
-  unitId: string;
-  unitLabel?: string;
+  costMethod: ErpCostingMethod;
   description: string;
+  barcode: string;
+
+  // Classification lookups (id + label for edit-mode display)
+  categoryId: string; categoryLabel?: string;
+  unitId: string; unitLabel?: string;
+  kindId: string; kindLabel?: string;
+  productClassId: string; productClassLabel?: string;
+
+  // GL / org dimensions
+  divisionId: string; divisionLabel?: string;
+  subdivisionId: string; subdivisionLabel?: string;
+  departmentId: string; departmentLabel?: string;
+  subDepartmentId: string; subDepartmentLabel?: string;
+  branchId: string; branchLabel?: string;
+  defaultLocationId: string; defaultLocationLabel?: string;
+  defaultWarehouseId: string; defaultWarehouseLabel?: string;
+  projectId: string; projectLabel?: string;
+  costCenterId: string; costCenterLabel?: string;
+
+  // Costs & prices
+  standardCost: string;
+  purchasePrice: string;
+  salePrice: string;
+
+  // Stock
+  minStock: string;
+  maxStock: string;
+  reorderQty: string;
+  minOrderQty: string;
+  tracksSerial: boolean;
+  tracksBatch: boolean;
+  tracksBin: boolean;
+
+  // Accounts & tax
+  inventoryAccountId: string; inventoryAccountLabel?: string;
+  salesAccountId: string; salesAccountLabel?: string;
+  cogsAccountId: string; cogsAccountLabel?: string;
+  purchaseTaxId: string; purchaseTaxLabel?: string;
+  saleTaxId: string; saleTaxLabel?: string;
+
+  // Supplier & physical
+  primarySupplierId: string; primarySupplierLabel?: string;
+  weight: string;
+
+  // Validity & flags
+  ageCategory: string;
+  validUntil: string;
+  isVatable: boolean;
+  isSpecial: boolean;
   isActive: boolean;
 }
 
 export const defaultItemForm = (): ItemFormData => ({
-  code: '',
-  name: '',
-  itemType: 'INVENTORY',
-  categoryId: '',
-  categoryLabel: '',
-  unitId: '',
-  unitLabel: '',
-  description: '',
-  isActive: true,
+  code: '', name: '', itemType: 'INVENTORY', costMethod: 'AVG', description: '', barcode: '',
+  categoryId: '', unitId: '', kindId: '', productClassId: '',
+  divisionId: '', subdivisionId: '', departmentId: '', subDepartmentId: '',
+  branchId: '', defaultLocationId: '', defaultWarehouseId: '', projectId: '', costCenterId: '',
+  standardCost: '', purchasePrice: '', salePrice: '',
+  minStock: '', maxStock: '', reorderQty: '', minOrderQty: '',
+  tracksSerial: false, tracksBatch: false, tracksBin: false,
+  inventoryAccountId: '', salesAccountId: '', cogsAccountId: '',
+  purchaseTaxId: '', saleTaxId: '',
+  primarySupplierId: '', weight: '',
+  ageCategory: '', validUntil: '', isVatable: true, isSpecial: false, isActive: true,
 });
+
+const refLabel = (r?: { code?: string; name?: string } | null) =>
+  r ? (r.code ? `${r.code} — ${r.name ?? ''}` : r.name ?? '') : '';
 
 export function fromItem(item: ErpItem): ItemFormData {
   return {
     code: item.code,
     name: item.name,
     itemType: item.itemType,
-    categoryId: item.categoryId,
-    categoryLabel: item.category?.name ?? '',
-    unitId: item.unitId,
-    unitLabel: item.unit ? `${item.unit.code} — ${item.unit.name}` : '',
+    costMethod: item.costMethod ?? 'AVG',
     description: item.description ?? '',
+    barcode: item.barcode ?? '',
+    categoryId: item.categoryId ?? '', categoryLabel: refLabel(item.category),
+    unitId: item.unitId ?? '', unitLabel: refLabel(item.unit),
+    kindId: item.kindId ?? '', kindLabel: refLabel(item.kind),
+    productClassId: item.productClassId ?? '', productClassLabel: refLabel(item.productClass),
+    divisionId: item.divisionId ?? '', divisionLabel: refLabel(item.division),
+    subdivisionId: item.subdivisionId ?? '', subdivisionLabel: refLabel(item.subdivision),
+    departmentId: item.departmentId ?? '', departmentLabel: refLabel(item.department),
+    subDepartmentId: item.subDepartmentId ?? '', subDepartmentLabel: refLabel(item.subDepartment),
+    branchId: item.branchId ?? '', branchLabel: refLabel(item.branch),
+    defaultLocationId: item.defaultLocationId ?? '', defaultLocationLabel: refLabel(item.defaultLocation),
+    defaultWarehouseId: item.defaultWarehouseId ?? '', defaultWarehouseLabel: refLabel(item.defaultWarehouse),
+    projectId: item.projectId ?? '', projectLabel: refLabel(item.project),
+    costCenterId: item.costCenterId ?? '', costCenterLabel: refLabel(item.costCenter),
+    standardCost: item.standardCost ?? '',
+    purchasePrice: item.purchasePrice ?? '',
+    salePrice: item.salePrice ?? item.sellingPrice ?? '',
+    minStock: item.minStock ?? '',
+    maxStock: item.maxStock ?? '',
+    reorderQty: item.reorderQty ?? '',
+    minOrderQty: item.minOrderQty ?? '',
+    tracksSerial: item.tracksSerial ?? false,
+    tracksBatch: item.tracksBatch ?? false,
+    tracksBin: item.tracksBin ?? false,
+    inventoryAccountId: item.inventoryAccountId ?? '', inventoryAccountLabel: refLabel(item.inventoryAccount),
+    salesAccountId: item.salesAccountId ?? '', salesAccountLabel: refLabel(item.salesAccount),
+    cogsAccountId: item.cogsAccountId ?? '', cogsAccountLabel: refLabel(item.cogsAccount),
+    purchaseTaxId: item.purchaseTaxId ?? '', purchaseTaxLabel: refLabel(item.purchaseTax),
+    saleTaxId: item.saleTaxId ?? '', saleTaxLabel: refLabel(item.saleTax),
+    primarySupplierId: item.primarySupplierId ?? '', primarySupplierLabel: refLabel(item.primarySupplier),
+    weight: item.weight ?? '',
+    ageCategory: item.ageCategory ?? '',
+    validUntil: item.validUntil ? item.validUntil.slice(0, 10) : '',
+    isVatable: item.isVatable ?? true,
+    isSpecial: item.isSpecial ?? false,
     isActive: item.isActive,
   };
 }
+
+const orUndef = (v: string) => (v.trim() === '' ? undefined : v);
+const orNull = (v: string) => (v.trim() === '' ? null : v);
 
 export function toItemPayload(f: ItemFormData): CreateItemPayload {
   return {
     code: f.code,
     name: f.name,
     itemType: f.itemType,
+    costMethod: f.costMethod,
     categoryId: f.categoryId,
     unitId: f.unitId,
-    description: f.description || undefined,
+    description: orUndef(f.description),
+    barcode: orUndef(f.barcode),
+    kindId: orNull(f.kindId),
+    productClassId: orNull(f.productClassId),
+    divisionId: orNull(f.divisionId),
+    subdivisionId: orNull(f.subdivisionId),
+    departmentId: orNull(f.departmentId),
+    subDepartmentId: orNull(f.subDepartmentId),
+    branchId: orNull(f.branchId),
+    defaultLocationId: orNull(f.defaultLocationId),
+    defaultWarehouseId: orNull(f.defaultWarehouseId),
+    projectId: orNull(f.projectId),
+    costCenterId: orNull(f.costCenterId),
+    standardCost: orUndef(f.standardCost),
+    purchasePrice: orUndef(f.purchasePrice),
+    salePrice: orUndef(f.salePrice),
+    minStock: orUndef(f.minStock),
+    maxStock: orUndef(f.maxStock),
+    reorderQty: orUndef(f.reorderQty),
+    minOrderQty: orUndef(f.minOrderQty),
+    tracksSerial: f.tracksSerial,
+    tracksBatch: f.tracksBatch,
+    tracksBin: f.tracksBin,
+    inventoryAccountId: orNull(f.inventoryAccountId),
+    salesAccountId: orNull(f.salesAccountId),
+    cogsAccountId: orNull(f.cogsAccountId),
+    purchaseTaxId: orNull(f.purchaseTaxId),
+    saleTaxId: orNull(f.saleTaxId),
+    primarySupplierId: orNull(f.primarySupplierId),
+    weight: orUndef(f.weight),
+    ageCategory: orNull(f.ageCategory),
+    validUntil: orNull(f.validUntil),
+    isVatable: f.isVatable,
+    isSpecial: f.isSpecial,
     isActive: f.isActive,
   };
 }
 
-export const validateItem = (form: ItemFormData) =>
+export const validateItem = (form: ItemFormData): FormErrors<ItemFormData> =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
     { field: 'categoryId', label: 'Kategori', required: true },
     { field: 'unitId', label: 'Satuan', required: true },
   ]);
-
-interface ItemFormProps {
-  data: ItemFormData;
-  onChange: (d: ItemFormData) => void;
-  errors?: FormErrors<ItemFormData>;
-}
-
-export function ItemFormFields({ data, onChange, errors = {} }: ItemFormProps) {
-  const set = (k: keyof ItemFormData, v: string | boolean) =>
-    onChange({ ...data, [k]: v });
-
-  return (
-    <div className="p-4">
-      <FormField label="Kode" htmlFor="if-code" required error={errors.code}>
-        <Input
-          id="if-code"
-          value={data.code}
-          onChange={(e) => set('code', e.target.value)}
-          placeholder="ITM-001"
-          aria-invalid={!!errors.code}
-        />
-      </FormField>
-      <FormField label="Nama" htmlFor="if-name" required error={errors.name}>
-        <Input
-          id="if-name"
-          value={data.name}
-          onChange={(e) => set('name', e.target.value)}
-          placeholder="Baja Plat 2mm"
-          aria-invalid={!!errors.name}
-        />
-      </FormField>
-      <FormField label="Tipe" htmlFor="if-type" required>
-        <Select
-          value={data.itemType}
-          onValueChange={(v) => set('itemType', v as ErpItemType)}
-        >
-          <SelectTrigger id="if-type">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ITEM_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormField>
-      <FormField label="Kategori" htmlFor="if-cat" required error={errors.categoryId}>
-        <SearchSelect
-          id="if-cat"
-          placeholder="Cari kategori…"
-          value={data.categoryId}
-          onValueChange={(v) => set('categoryId', v)}
-          loadOptions={loadCategoryOptions}
-          error={!!errors.categoryId}
-          initialLabel={data.categoryLabel}
-        />
-      </FormField>
-      <FormField label="Satuan" htmlFor="if-unit" required error={errors.unitId}>
-        <SearchSelect
-          id="if-unit"
-          placeholder="Cari satuan…"
-          value={data.unitId}
-          onValueChange={(v) => set('unitId', v)}
-          loadOptions={loadUnitOptions}
-          error={!!errors.unitId}
-          initialLabel={data.unitLabel}
-        />
-      </FormField>
-      <FormField label="Deskripsi" htmlFor="if-desc">
-        <Input
-          id="if-desc"
-          value={data.description}
-          onChange={(e) => set('description', e.target.value)}
-          placeholder="Opsional"
-        />
-      </FormField>
-      <FormField label="Status" htmlFor="if-active">
-        <BooleanRadio
-          id="if-active"
-          value={data.isActive}
-          onValueChange={(v) => set('isActive', v)}
-        />
-      </FormField>
-    </div>
-  );
-}
