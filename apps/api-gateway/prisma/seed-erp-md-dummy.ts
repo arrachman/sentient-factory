@@ -29,7 +29,7 @@ const STREETS = [
   'Jl. Merdeka', 'Jl. Sudirman', 'Jl. Thamrin', 'Jl. Gatot Subroto',
   'Jl. Diponegoro', 'Jl. Ahmad Yani', 'Jl. Pahlawan', 'Jl. Veteran',
 ];
-const ITEM_TYPES = ['INVENTORY', 'SERVICE', 'VOUCHER', 'ASSEMBLY'] as const;
+const ITEM_TYPES = ['INVENTORY', 'SERVICE', 'CONSUMABLE', 'ASSET', 'NON_INVENTORY'] as const;
 const UNIT_NAMES = [
   ['PCS', 'Piece'], ['BOX', 'Box'], ['KG', 'Kilogram'], ['G', 'Gram'],
   ['L', 'Liter'], ['ML', 'Milliliter'], ['M', 'Meter'], ['CM', 'Centimeter'],
