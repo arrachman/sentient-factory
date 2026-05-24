@@ -214,7 +214,7 @@ export function CodeLinkCell({
   className?: string;
 }) {
   return (
-    <TableCell className={cn('mono', className)}>
+    <TableCell className={cn('mono tabular-nums', className)}>
       <button
         type="button"
         className="bg-transparent border-0 p-0 m-0 text-primary font-[inherit] hover:underline focus:underline focus:outline-none"
