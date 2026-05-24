@@ -3,7 +3,7 @@
 // Kept separate from menus.ts (which owns role-filtered nav mapping).
 
 import { apiGet, apiPost, apiPatch, apiDelete } from './client';
-import type { ApiResponse, PaginatedResponse } from './types';
+import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,19 +46,58 @@ export type UpdateSysMenuPayload = Partial<CreateSysMenuPayload>;
 // ─── API functions ────────────────────────────────────────────────────────────
 
 /**
- * Flat list of all menus. Backend returns { success, data: [] } (no meta);
- * we adapt it to PaginatedResponse so it plugs into useErpList.
+ * Flat list of all menus. Backend returns { success, data: [] } (no meta) and
+ * doesn't support page/limit/sort/search query params (per CLAUDE.md §2.12
+ * `menus` is an explicit pagination exception — list is small). We fetch all,
+ * then apply filter/sort/slice client-side so SimpleMasterPage's server-driven
+ * pagination contract still holds.
  */
-export async function listSysMenus(): Promise<PaginatedResponse<ErpSysMenu>> {
+export async function listSysMenus(
+  params: PaginationParams = {},
+): Promise<PaginatedResponse<ErpSysMenu>> {
   const res = await apiGet<ApiResponse<ErpSysMenu[]>>('/sys-menus');
+  let rows = res.data;
+
+  const q = params.search?.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter(
+      (r) =>
+        r.code.toLowerCase().includes(q) ||
+        r.title.toLowerCase().includes(q) ||
+        (r.path?.toLowerCase().includes(q) ?? false),
+    );
+  }
+  if (params.isActive !== undefined) {
+    rows = rows.filter((r) => r.isActive === params.isActive);
+  }
+
+  const sortBy = params.sortBy ?? 'sortOrder';
+  const sortDir: 'asc' | 'desc' = params.sortDir ?? 'asc';
+  const dir = sortDir === 'asc' ? 1 : -1;
+  rows = [...rows].sort((a, b) => {
+    const av = (a as unknown as Record<string, unknown>)[sortBy];
+    const bv = (b as unknown as Record<string, unknown>)[sortBy];
+    if (av == null && bv == null) return 0;
+    if (av == null) return -1 * dir;
+    if (bv == null) return 1 * dir;
+    if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * dir;
+    return String(av).localeCompare(String(bv)) * dir;
+  });
+
+  const total = rows.length;
+  const limit = params.limit ?? (total || 1);
+  const page = params.page ?? 1;
+  const start = (page - 1) * limit;
+  const pageRows = rows.slice(start, start + limit);
+
   return {
     success: res.success,
-    data: res.data,
+    data: pageRows,
     meta: {
-      page: 1,
-      limit: res.data.length,
-      total: res.data.length,
-      totalPages: 1,
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     },
   };
 }
@@ -90,15 +129,23 @@ export async function deleteSysMenu(id: string): Promise<void> {
   await apiDelete<void>(`/sys-menus/${id}`);
 }
 
-/**
- * Batch reorder helper — backend has no batch endpoint, so this fans out to
- * per-id PATCH calls in parallel. Only the rows whose sortOrder actually
- * changes should be passed in by the caller.
- */
-export async function reorderSiblings(
-  updates: { id: string; sortOrder: number }[],
-): Promise<void> {
-  await Promise.all(
-    updates.map((u) => updateSysMenu(u.id, { sortOrder: u.sortOrder })),
+export async function bulkUpdateSysMenuStatus(
+  ids: string[],
+  isActive: boolean,
+): Promise<{ affected: number }> {
+  const res = await apiPatch<{ success: boolean; affected: number }>(
+    '/sys-menus/bulk/status',
+    { ids, isActive },
   );
+  return { affected: res.affected };
+}
+
+export async function bulkDeleteSysMenus(
+  ids: string[],
+): Promise<{ affected: number }> {
+  const res = await apiDelete<{ success: boolean; affected: number }>(
+    '/sys-menus/bulk',
+    { ids },
+  );
+  return { affected: res.affected };
 }

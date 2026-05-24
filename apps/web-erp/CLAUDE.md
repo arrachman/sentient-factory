@@ -888,6 +888,49 @@ Konsekuensi: halaman yang skip `validate=` → submit tanpa validasi client-side
 Halaman yang skip `aria-invalid=` → auto-focus gagal menemukan field error.
 Kedua ini harus selesai sebelum halaman dideklarasikan done.
 
+### 2.22 Menu Manager = SimpleMasterPage flat list (2026-05-24)
+
+`/admin/menus` (komponen `ErpMenusPage` di
+[`components/pages/menus-page.tsx`](components/pages/menus-page.tsx))
+**memakai `SimpleMasterPage`** — bukan tree+DnD lagi. Migrasi 2026-05-24
+mengganti versi sebelumnya yang punya hierarchy depth-first + drag-and-drop
+sibling reorder. Trade-off diterima dengan user: kehilangan visual indent
+tree & DnD reorder, dapat seluruh standar §2.7–§2.12 (pagination/sort/
+filter/bulk/audit/keyboard nav).
+
+Detail implementasi:
+
+- **Kolom ekstra:** Tipe (badge: MODULE=success/GROUP=info/ITEM=default),
+  Path (mono muted), Urutan (mono numeric).
+- **Filter ekstra:** Tipe (MODULE/GROUP/ITEM) — di-apply client-side
+  di atas hasil `listAdapted`.
+- **Parent menu** masih bisa diedit per-row via `SearchSelect` di form
+  (filter `MODULE` + `GROUP` only). Validasi "tidak boleh jadi parent
+  diri sendiri" sekarang **server-side** (FormFields tidak terima
+  `editingId` lagi — SimpleMasterPage tidak meneruskan editing state ke
+  FormFields).
+- **Sort default:** `sortOrder` asc (mempertahankan urutan seed).
+- **Reorder antar baris** harus lewat form Edit → ubah field `Urutan`.
+  Tidak ada DnD lagi.
+
+Backend (`apps/api-gateway/src/erp-sys-menus/`):
+
+- Endpoint bulk baru: `PATCH /erp/sys-menus/bulk/status`,
+  `DELETE /erp/sys-menus/bulk` (DTO `BulkErpSysMenuDto` +
+  `BulkStatusErpSysMenuDto`). Bulk routes di-register **sebelum** route
+  `:id` (NestJS match in declaration order).
+- `GET /erp/sys-menus` tetap return flat tanpa pagination/sort — sesuai
+  §2.12 exception ("menus list selalu kecil"). Client `listSysMenus()`
+  yang adaptasi: fetch semua, lalu filter/sort/slice **client-side**
+  sebelum wrap jadi `PaginatedResponse` untuk SimpleMasterPage.
+
+Konsekuensi vibe coding:
+
+- Butuh tree view menu lagi? Bikin organism `HierarchicalMasterPage`
+  baru (atomic-design level organisms), jangan fork SimpleMasterPage.
+- File `menus-tree.tsx` dan helper `reorderSiblings` sudah **dihapus** —
+  jangan re-introduce kalau cuma butuh visual indent.
+
 ### 2.17 Modul sidebar Senti ERP — scope final (2026-05-20)
 
 Modul valid di `sys_menus` (sortOrder, sumber `seed-erp.ts`):

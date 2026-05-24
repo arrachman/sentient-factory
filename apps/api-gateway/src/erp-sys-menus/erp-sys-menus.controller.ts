@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
+import { BulkErpSysMenuDto, BulkStatusErpSysMenuDto } from './dto/bulk-erp-sys-menu.dto';
 import { CreateErpSysMenuDto } from './dto/create-erp-sys-menu.dto';
 import { QueryErpSysMenuDto } from './dto/query-erp-sys-menu.dto';
 import { UpdateErpSysMenuDto } from './dto/update-erp-sys-menu.dto';
@@ -50,6 +51,18 @@ export class ErpSysMenusController {
   @ApiResponse({ status: 200, description: 'Menu tree filtered by user role' })
   getMyMenus(@Request() req: any) {
     return this.service.getMyMenus(req.user.id, req.user.erpLevel);
+  }
+
+  @Patch('bulk/status')
+  @ApiOperation({ summary: 'Bulk update active status for ERP menus' })
+  bulkUpdateStatus(@Body() dto: BulkStatusErpSysMenuDto, @Request() req: any) {
+    return this.service.bulkUpdateStatus(dto, req.user?.id);
+  }
+
+  @Delete('bulk')
+  @ApiOperation({ summary: 'Bulk soft-delete ERP menus' })
+  bulkDelete(@Body() dto: BulkErpSysMenuDto, @Request() req: any) {
+    return this.service.bulkDelete(dto, req.user?.id);
   }
 
   @Get(':id')

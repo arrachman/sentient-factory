@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { ErpMenu } from '@prisma/client';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { BulkErpSysMenuDto, BulkStatusErpSysMenuDto } from './dto/bulk-erp-sys-menu.dto';
 import { CreateErpSysMenuDto } from './dto/create-erp-sys-menu.dto';
 import { QueryErpSysMenuDto } from './dto/query-erp-sys-menu.dto';
 import { UpdateErpSysMenuDto } from './dto/update-erp-sys-menu.dto';
@@ -176,6 +177,26 @@ export class ErpSysMenusService {
     });
 
     return { success: true, data: updated };
+  }
+
+  async bulkUpdateStatus(dto: BulkStatusErpSysMenuDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = toAuditUserId(actorId) ? BigInt(toAuditUserId(actorId) as number) : undefined;
+    const { count } = await this.prisma.erpMenu.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { isActive: dto.isActive, updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
+  }
+
+  async bulkDelete(dto: BulkErpSysMenuDto, actorId?: string) {
+    const ids = dto.ids.map((id) => BigInt(id));
+    const actorBigInt = toAuditUserId(actorId) ? BigInt(toAuditUserId(actorId) as number) : undefined;
+    const { count } = await this.prisma.erpMenu.updateMany({
+      where: { id: { in: ids }, deletedAt: null },
+      data: { deletedAt: new Date(), updatedById: actorBigInt, updatedAt: new Date() },
+    });
+    return { success: true, affected: count };
   }
 
   async remove(id: bigint, actorId?: string) {

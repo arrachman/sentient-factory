@@ -9,7 +9,8 @@ const api = vi.hoisted(() => ({
   createSysMenu: vi.fn(),
   updateSysMenu: vi.fn(),
   deleteSysMenu: vi.fn(),
-  reorderSiblings: vi.fn(),
+  bulkUpdateSysMenuStatus: vi.fn(),
+  bulkDeleteSysMenus: vi.fn(),
   ERP_MENU_TYPES: ['MODULE', 'GROUP', 'ITEM'],
 }));
 vi.mock('@/lib/api/sys-menus', () => api);
@@ -23,7 +24,7 @@ describe('ErpMenusPage (smoke)', () => {
   it('renders title and calls listSysMenus', async () => {
     api.listSysMenus.mockResolvedValue(emptyList());
     renderPage(<ErpMenusPage />);
-    expect(screen.getByText('Menu Manager')).toBeInTheDocument();
+    expect(screen.getByText('Manajer Menu')).toBeInTheDocument();
     await waitFor(() => expect(api.listSysMenus).toHaveBeenCalled());
   });
 });

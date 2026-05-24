@@ -2,7 +2,7 @@
 
 /**
  * Sys Menu Manager — form fields molecule.
- * Used by menus-page.tsx inside the create/edit modal.
+ * Used by menus-page.tsx (SimpleMasterPage) inside the create/edit modal.
  * Atomic tier: Organism (form section).
  */
 
@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { SearchSelect } from '@/components/molecules/search-select';
+import { validateForm, type FormErrors } from '@/lib/form-validation';
 import type {
   ErpSysMenu,
   ErpMenuType,
@@ -76,55 +77,63 @@ export function toMenuPayload(f: MenuForm): CreateSysMenuPayload {
   };
 }
 
+export const validateMenu = (form: MenuForm) =>
+  validateForm(form, [
+    { field: 'code', label: 'Kode', required: true },
+    { field: 'title', label: 'Judul', required: true },
+  ]);
+
+async function loadParentMenuOptions(
+  search: string,
+  page: number,
+  limit: number,
+) {
+  const res = await listSysMenus();
+  const filtered = res.data.filter(
+    (m) =>
+      (m.type === 'MODULE' || m.type === 'GROUP') &&
+      (!search ||
+        m.title.toLowerCase().includes(search.toLowerCase()) ||
+        m.code.toLowerCase().includes(search.toLowerCase())),
+  );
+  const start = (page - 1) * limit;
+  const pageData = filtered.slice(start, start + limit);
+  return {
+    data: pageData.map((m) => ({ value: m.id, label: m.title, code: m.code })),
+    total: filtered.length,
+  };
+}
+
 export function MenuFormFields({
   data,
   onChange,
-  editingId,
+  errors = {},
 }: {
   data: MenuForm;
   onChange: (d: MenuForm) => void;
-  editingId?: string;
+  errors?: FormErrors<MenuForm>;
 }) {
   const set = <K extends keyof MenuForm>(k: K, v: MenuForm[K]) =>
     onChange({ ...data, [k]: v });
 
-  const loadParentMenuOptions = React.useCallback(
-    async (search: string, page: number, limit: number) => {
-      const res = await listSysMenus();
-      const filtered = res.data.filter(
-        (m) =>
-          (m.type === 'MODULE' || m.type === 'GROUP') &&
-          m.id !== editingId &&
-          (!search ||
-            m.title.toLowerCase().includes(search.toLowerCase()) ||
-            m.code.toLowerCase().includes(search.toLowerCase())),
-      );
-      const start = (page - 1) * limit;
-      const pageData = filtered.slice(start, start + limit);
-      return {
-        data: pageData.map((m) => ({ value: m.id, label: m.title, code: m.code })),
-        total: filtered.length,
-      };
-    },
-    [editingId],
-  );
-
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="mf-code" required>
+      <FormField label="Kode" htmlFor="mf-code" required error={errors.code}>
         <Input
           id="mf-code"
           value={data.code}
           onChange={(e) => set('code', e.target.value)}
           placeholder="INVENTORY_ITEMS"
+          aria-invalid={!!errors.code}
         />
       </FormField>
-      <FormField label="Judul" htmlFor="mf-title" required>
+      <FormField label="Judul" htmlFor="mf-title" required error={errors.title}>
         <Input
           id="mf-title"
           value={data.title}
           onChange={(e) => set('title', e.target.value)}
           placeholder="Inventory Items"
+          aria-invalid={!!errors.title}
         />
       </FormField>
       <FormField label="Tipe" htmlFor="mf-type" required>
