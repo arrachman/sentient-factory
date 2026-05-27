@@ -72,7 +72,7 @@ export function ErpItemsPage() {
       defaultSortBy="code"
       defaultSortDir="asc"
       extraFilters={itemTypeFilters}
-      modalSize="lg"
+      modalSize="xl"
     />
   );
 }

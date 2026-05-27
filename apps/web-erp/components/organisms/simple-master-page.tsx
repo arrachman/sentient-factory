@@ -107,8 +107,8 @@ export interface SimpleMasterPageProps<T extends BaseEntity, F> {
   extraFilters?: ExtraFilterDef[];
   /** Called whenever extra filter values change so parent can sync & wrap list fn. */
   onExtraFilterChange?: (values: Record<string, string>) => void;
-  /** Modal width for the create/edit form. Default 'md' (560px). Use 'lg' (900px) for rich forms. */
-  modalSize?: 'md' | 'lg';
+  /** Modal width for the create/edit form. Default 'md' (560px). 'lg' (900px) for rich; 'xl' (1100px) for side-nav layouts. */
+  modalSize?: 'md' | 'lg' | 'xl';
 }
 
 export function SimpleMasterPage<T extends BaseEntity, F>({
