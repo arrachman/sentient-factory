@@ -12,6 +12,7 @@ import {
   CalendarPlus,
   AlertCircle,
   BellOff,
+  CalendarOff,
   Check,
 } from 'lucide-react';
 import { useClientDetail } from '@/features/admin-clients/hooks/use-client';
@@ -45,13 +46,6 @@ const CLIENT_STATUS_STYLE: Record<ClientStatus, { bg: string; color: string }> =
 };
 
 const DEFAULT_AVATAR_PALETTE = { bg: '#dcebe0', fg: '#385a43' };
-
-const SVC_CATEGORY_LABEL: Record<string, string> = {
-  konseling: 'Konseling',
-  terapi: 'Terapi Dewasa',
-  anak: 'Terapi Anak',
-  tes: 'Tes Psikologi',
-};
 
 function genderLabel(g: string | null | undefined): string {
   if (!g) return '—';
@@ -95,32 +89,32 @@ function formatDateMedium(iso: string) {
   });
 }
 
-export function BookingDetailDrawer({
-  booking,
+export function ClientDetailModal({
+  clientId,
   onClose,
 }: {
-  booking: Booking | null;
+  clientId: number | null;
   onClose: () => void;
 }) {
   useEffect(() => {
-    if (!booking) return;
+    if (clientId == null) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [booking, onClose]);
+  }, [clientId, onClose]);
 
   useEffect(() => {
-    if (!booking) return;
+    if (clientId == null) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [booking]);
+  }, [clientId]);
 
-  const open = !!booking;
+  const open = clientId != null;
 
   return (
     <div
@@ -144,7 +138,7 @@ export function BookingDetailDrawer({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="booking-detail-title"
+        aria-labelledby="client-detail-title"
         style={{
           width: 720,
           maxWidth: '100%',
@@ -159,55 +153,46 @@ export function BookingDetailDrawer({
           transition: 'transform 0.22s cubic-bezier(0.4,0,0.2,1)',
         }}
       >
-        {booking && <ModalContent booking={booking} onClose={onClose} />}
+        {clientId != null && <ModalContent clientId={clientId} onClose={onClose} />}
       </div>
     </div>
   );
 }
 
-function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => void }) {
-  const clientQ = useClientDetail(booking.client.id);
+function ModalContent({ clientId, onClose }: { clientId: number; onClose: () => void }) {
+  const clientQ = useClientDetail(clientId);
   const client = clientQ.data?.data;
 
   const clientBookingsQ = useBookingList({
-    clientId: booking.client.id,
+    clientId,
     limit: 100,
     includeCancelled: false,
   });
 
-  const { upcoming } = useMemo(() => {
+  const { upcoming, nextBooking } = useMemo(() => {
     const all = clientBookingsQ.data?.data ?? [];
     const now = Date.now();
-    const future = all
+    const active = all
       .filter((b) => {
-        if (b.id === booking.id) return false;
         const status = b.status as string;
         if (status === 'cancelled' || status === 'completed') return false;
-        return new Date(b.scheduledStart).getTime() > now;
+        return new Date(b.scheduledEnd).getTime() > now;
       })
       .sort(
         (a, b) =>
           new Date(a.scheduledStart).getTime() - new Date(b.scheduledStart).getTime(),
       );
-    return { upcoming: future };
-  }, [clientBookingsQ.data, booking.id]);
+    return { upcoming: active, nextBooking: active[0] ?? null };
+  }, [clientBookingsQ.data]);
 
   const recent = client?.recentSessions ?? [];
+  const restUpcoming = nextBooking ? upcoming.slice(1) : upcoming;
 
   const avatarPalette = client?.category
     ? CATEGORY_PALETTE[client.category as ClientCategory]
     : DEFAULT_AVATAR_PALETTE;
-  const initials = getInitials(booking.client.name);
-
-  const statusStyle = STATUS_STYLE[booking.status] ?? STATUS_STYLE.checked_in;
-  const catLabel = SVC_CATEGORY_LABEL[booking.service.category] ?? booking.service.category;
-
-  const isInProgress = booking.status === 'in_progress';
-  const completeMut = useCompleteBooking();
-  const handleComplete = () => {
-    if (!window.confirm('Tandai sesi ini selesai? Tindakan ini akan mengirim WA Follow-up ke klien.')) return;
-    completeMut.mutate(booking.id, { onSuccess: onClose });
-  };
+  const name = client?.name ?? 'Memuat…';
+  const initials = client ? getInitials(client.name) : '…';
 
   return (
     <>
@@ -287,10 +272,10 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
                 marginBottom: 4,
               }}
             >
-              Detail Sesi
+              Detail Klien
             </div>
             <h2
-              id="booking-detail-title"
+              id="client-detail-title"
               style={{
                 margin: 0,
                 fontFamily: 'var(--font-serif)',
@@ -303,7 +288,7 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
                 whiteSpace: 'nowrap',
               }}
             >
-              {booking.client.name}
+              {name}
             </h2>
             {client && (
               <div
@@ -337,18 +322,17 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
                 gap: 6,
               }}
             >
-              <Pill bg={statusStyle.bg} color={statusStyle.color}>
-                {STATUS_LABEL[booking.status] ?? booking.status}
-              </Pill>
-              {booking.createdViaWalkIn && (
-                <Pill bg="#fef3c7" color="#92400e">Walk-in</Pill>
-              )}
               {client && (
                 <Pill
                   bg={CLIENT_STATUS_STYLE[client.derivedStatus].bg}
                   color={CLIENT_STATUS_STYLE[client.derivedStatus].color}
                 >
                   Klien {CLIENT_STATUS_LABEL[client.derivedStatus]}
+                </Pill>
+              )}
+              {client && (
+                <Pill bg="var(--cream-200, #ece6d3)" color="#6b6047">
+                  {client.totalBookings} sesi total
                 </Pill>
               )}
               {client?.waOptedOut && (
@@ -361,7 +345,7 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
         </div>
       </header>
 
-      {/* BODY — plain block layout (flex column + gap caused first cards to shrink to zero) */}
+      {/* BODY */}
       <div
         style={{
           flex: 1,
@@ -369,127 +353,28 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
           padding: '24px 32px 28px',
         }}
       >
-        {/* SESI INI CARD */}
-        <Card title="Sesi ini" spacing>
-          <div
-            style={{
-              padding: '16px 18px',
-              borderRadius: 10,
-              background: isInProgress ? '#dcfce7' : 'var(--sage-50)',
-              border: `1px solid ${isInProgress ? '#86efac' : 'var(--sage-100, #c5d8c8)'}`,
-              marginBottom: 16,
-            }}
-          >
-            <div
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: 17,
-                fontWeight: 700,
-                color: 'var(--teal-800)',
-                marginBottom: 4,
-              }}
-            >
-              {formatLongDate(booking.scheduledStart)}
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 14,
-                color: 'var(--teal-800)',
-              }}
-            >
-              <Clock size={14} style={{ opacity: 0.7 }} />
-              <span>
-                {formatTime(booking.scheduledStart)} – {formatTime(booking.scheduledEnd)}
-              </span>
-              <span style={{ opacity: 0.55 }}>·</span>
-              <span style={{ opacity: 0.75 }}>{booking.service.durationMinutes} menit</span>
-            </div>
-          </div>
-
-          <FieldGrid>
-            <Field label="Layanan">
-              <div style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: 14 }}>
-                {booking.service.name}
-              </div>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginTop: 4,
-                }}
-              >
-                <Pill bg="var(--cream-200, #ece6d3)" color="#6b6047" size="sm">
-                  {catLabel}
-                </Pill>
-                {booking.sessionTotal > 1 && (
-                  <span className="caption" style={{ fontSize: 11 }}>
-                    Sesi {booking.sessionN}/{booking.sessionTotal}
-                  </span>
-                )}
-              </div>
-            </Field>
-
-            {booking.room && (
-              <Field label="Ruangan" icon={<DoorOpen size={13} />}>
+        {/* SESI BERIKUTNYA CARD */}
+        <Card title="Sesi berikutnya" spacing>
+          {clientBookingsQ.isLoading && <Loading>Memuat jadwal…</Loading>}
+          {!clientBookingsQ.isLoading && !nextBooking && (
+            <EmptyHero>
+              <CalendarOff size={18} style={{ opacity: 0.6 }} />
+              <div>
                 <div style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: 14 }}>
-                  {booking.room.name}
+                  Belum ada sesi terjadwal
                 </div>
-                <div className="caption" style={{ fontSize: 12, marginTop: 2 }}>
-                  {booking.room.type}
+                <div className="caption" style={{ marginTop: 2 }}>
+                  Hubungi admin untuk menjadwalkan sesi berikutnya.
                 </div>
-              </Field>
-            )}
-          </FieldGrid>
-
-          {booking.notes ? (
-            <NoteBlock label="Keluhan / Catatan sesi">{booking.notes}</NoteBlock>
-          ) : (
-            <NoteBlock label="Keluhan / Catatan sesi" muted>
-              Tidak ada catatan
-            </NoteBlock>
+              </div>
+            </EmptyHero>
           )}
-
-          {isInProgress && (
-            <div
-              style={{
-                marginTop: 16,
-                display: 'flex',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleComplete}
-                disabled={completeMut.isPending}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: completeMut.isPending ? '#9ca3af' : 'var(--sage-500, #5b8a66)',
-                  color: '#fff',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: completeMut.isPending ? 'wait' : 'pointer',
-                  transition: 'background 0.15s',
-                }}
-              >
-                <Check size={14} />
-                {completeMut.isPending ? 'Menyelesaikan…' : 'Selesaikan sesi'}
-              </button>
-            </div>
-          )}
+          {nextBooking && <NextSessionBlock booking={nextBooking} />}
         </Card>
 
         {/* PROFIL KLIEN CARD */}
         <Card title="Profil klien" spacing>
-          {clientQ.isLoading && <Loading>Memuat profil klien...</Loading>}
+          {clientQ.isLoading && <Loading>Memuat profil klien…</Loading>}
           {clientQ.isError && (
             <ErrorRow>
               <AlertCircle size={14} /> Tidak bisa ambil profil klien. Coba refresh.
@@ -499,9 +384,9 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
             <>
               <FieldGrid>
                 <Field label="WhatsApp" icon={<Phone size={13} />}>
-                  {booking.client.phoneWa ? (
+                  {client.phoneWa ? (
                     <span style={{ fontSize: 14, color: 'var(--teal-800)' }}>
-                      {booking.client.phoneWa}
+                      {client.phoneWa}
                     </span>
                   ) : (
                     <Muted>—</Muted>
@@ -569,7 +454,7 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
             title="Riwayat sesi"
             subtitle={client ? `${client.totalBookings} sesi total` : null}
           >
-            {clientQ.isLoading && <Loading>Memuat riwayat...</Loading>}
+            {clientQ.isLoading && <Loading>Memuat riwayat…</Loading>}
             {client && recent.length === 0 && !clientQ.isLoading && (
               <EmptyState>Belum ada sesi selesai.</EmptyState>
             )}
@@ -588,25 +473,27 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
                 ))}
                 {client && client.totalBookings > recent.length && (
                   <Footnote>
-                    Menampilkan {recent.length} dari {client.totalBookings}. Buka halaman Klien untuk riwayat lengkap.
+                    Menampilkan {recent.length} dari {client.totalBookings} sesi total.
                   </Footnote>
                 )}
               </div>
             )}
           </Card>
 
-          {/* MENDATANG */}
+          {/* MENDATANG (selain "Sesi berikutnya" di atas) */}
           <Card
-            title="Sesi mendatang"
-            subtitle={upcoming.length > 0 ? `${upcoming.length} terjadwal` : null}
+            title="Sesi mendatang lain"
+            subtitle={restUpcoming.length > 0 ? `${restUpcoming.length} terjadwal` : null}
           >
-            {clientBookingsQ.isLoading && <Loading>Memuat jadwal...</Loading>}
-            {!clientBookingsQ.isLoading && upcoming.length === 0 && (
-              <EmptyState>Tidak ada sesi terjadwal setelah ini.</EmptyState>
+            {clientBookingsQ.isLoading && <Loading>Memuat jadwal…</Loading>}
+            {!clientBookingsQ.isLoading && restUpcoming.length === 0 && (
+              <EmptyState>
+                {nextBooking ? 'Tidak ada sesi lain setelah yang berikutnya.' : 'Tidak ada sesi terjadwal.'}
+              </EmptyState>
             )}
-            {upcoming.length > 0 && (
+            {restUpcoming.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {upcoming.slice(0, 6).map((b) => (
+                {restUpcoming.slice(0, 6).map((b) => (
                   <SessionRow
                     key={b.id}
                     tone="upcoming"
@@ -619,8 +506,8 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
                     rightBadgeStyle={STATUS_STYLE[b.status]}
                   />
                 ))}
-                {upcoming.length > 6 && (
-                  <Footnote>+{upcoming.length - 6} sesi mendatang lainnya.</Footnote>
+                {restUpcoming.length > 6 && (
+                  <Footnote>+{restUpcoming.length - 6} sesi mendatang lainnya.</Footnote>
                 )}
               </div>
             )}
@@ -641,14 +528,133 @@ function ModalContent({ booking, onClose }: { booking: Booking; onClose: () => v
           color: 'var(--fg-muted)',
         }}
       >
-        <span>Booking #{booking.id}</span>
-        {client && <span>Klien #{client.id}</span>}
+        <span>Klien #{clientId}</span>
+        {client?.medicalRecordNumber && <span>MRN {client.medicalRecordNumber}</span>}
       </footer>
     </>
   );
 }
 
-/* ---------------- Primitives ---------------- */
+function NextSessionBlock({ booking }: { booking: Booking }) {
+  const statusStyle = STATUS_STYLE[booking.status] ?? STATUS_STYLE.checked_in;
+  const isInProgress = booking.status === 'in_progress';
+  const completeMut = useCompleteBooking();
+
+  const handleComplete = () => {
+    if (!window.confirm('Tandai sesi ini selesai? Tindakan ini akan mengirim WA Follow-up ke klien.')) return;
+    completeMut.mutate(booking.id);
+  };
+
+  return (
+    <>
+      <div
+        style={{
+          padding: '16px 18px',
+          borderRadius: 10,
+          background: isInProgress ? '#dcfce7' : 'var(--sage-50)',
+          border: `1px solid ${isInProgress ? '#86efac' : 'var(--sage-100, #c5d8c8)'}`,
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 17,
+            fontWeight: 700,
+            color: 'var(--teal-800)',
+            marginBottom: 4,
+          }}
+        >
+          {formatLongDate(booking.scheduledStart)}
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 14,
+            color: 'var(--teal-800)',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Clock size={14} style={{ opacity: 0.7 }} />
+          <span>
+            {formatTime(booking.scheduledStart)} – {formatTime(booking.scheduledEnd)}
+          </span>
+          <span style={{ opacity: 0.55 }}>·</span>
+          <span style={{ opacity: 0.75 }}>{booking.service.durationMinutes} menit</span>
+          <span style={{ flex: 1 }} />
+          <Pill bg={statusStyle.bg} color={statusStyle.color} size="sm">
+            {STATUS_LABEL[booking.status] ?? booking.status}
+          </Pill>
+        </div>
+      </div>
+
+      <FieldGrid>
+        <Field label="Layanan">
+          <div style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: 14 }}>
+            {booking.service.name}
+          </div>
+          {booking.sessionTotal > 1 && (
+            <div className="caption" style={{ fontSize: 11, marginTop: 2 }}>
+              Sesi {booking.sessionN}/{booking.sessionTotal}
+            </div>
+          )}
+        </Field>
+
+        {booking.room && (
+          <Field label="Ruangan" icon={<DoorOpen size={13} />}>
+            <div style={{ fontWeight: 600, color: 'var(--teal-800)', fontSize: 14 }}>
+              {booking.room.name}
+            </div>
+            <div className="caption" style={{ fontSize: 12, marginTop: 2 }}>
+              {booking.room.type}
+            </div>
+          </Field>
+        )}
+      </FieldGrid>
+
+      {booking.notes && (
+        <NoteBlock label="Keluhan / Catatan sesi">{booking.notes}</NoteBlock>
+      )}
+
+      {isInProgress && (
+        <div
+          style={{
+            marginTop: 16,
+            display: 'flex',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleComplete}
+            disabled={completeMut.isPending}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: 'none',
+              background: completeMut.isPending ? '#9ca3af' : 'var(--sage-500, #5b8a66)',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: completeMut.isPending ? 'wait' : 'pointer',
+              transition: 'background 0.15s',
+            }}
+          >
+            <Check size={14} />
+            {completeMut.isPending ? 'Menyelesaikan…' : 'Selesaikan sesi'}
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+/* ---------------- Primitives (mirror booking-detail-drawer) ---------------- */
 
 function Card({
   title,
@@ -658,7 +664,6 @@ function Card({
 }: {
   title: string;
   subtitle?: string | null;
-  /** Add bottom margin (for stacked cards in block layout). */
   spacing?: boolean;
   children: React.ReactNode;
 }) {
@@ -768,13 +773,11 @@ function NoteBlock({
   label,
   icon,
   tone = 'default',
-  muted = false,
   children,
 }: {
   label: string;
   icon?: React.ReactNode;
   tone?: 'default' | 'warning';
-  muted?: boolean;
   children: React.ReactNode;
 }) {
   const bg = tone === 'warning' ? '#fff7ed' : 'var(--cream-50, #fbfaf6)';
@@ -791,8 +794,7 @@ function NoteBlock({
           border: `1px solid ${border}`,
           fontSize: 13,
           lineHeight: 1.55,
-          color: muted ? 'var(--fg-muted)' : 'var(--teal-800)',
-          fontStyle: muted ? 'italic' : 'normal',
+          color: 'var(--teal-800)',
           whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
         }}
@@ -985,6 +987,25 @@ function EmptyState({ children }: { children: React.ReactNode }) {
   );
 }
 
+function EmptyHero({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        padding: '20px 18px',
+        borderRadius: 10,
+        background: 'var(--cream-50, #fbfaf6)',
+        border: '1px dashed var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        color: 'var(--fg-muted)',
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function ErrorRow({ children }: { children: React.ReactNode }) {
   return (
     <div
@@ -1027,4 +1048,3 @@ function Footnote({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-

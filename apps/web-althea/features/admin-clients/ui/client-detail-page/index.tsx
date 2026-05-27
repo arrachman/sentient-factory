@@ -14,6 +14,8 @@ import { DetailHeader } from './detail-header';
 import {
   ContactSection,
   CurrentServiceSection,
+  IdentitySection,
+  InactiveBanner,
   NextSessionSection,
   NotesSection,
   ServicesSection,
@@ -115,12 +117,14 @@ export function ClientDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-5">
+          <IdentitySection sel={sel} />
           <ContactSection sel={sel} />
           <ServicesSection sel={sel} />
           {sel.currentService ? <CurrentServiceSection sel={sel} /> : null}
           {sel.nextSession ? <NextSessionSection sel={sel} /> : null}
-          {sel.notes ? <NotesSection notes={sel.notes} /> : null}
+          <NotesSection notes={sel.notes} />
           {sel.waOptedOut ? <WaOptedOutBanner /> : null}
+          {!sel.isActive ? <InactiveBanner /> : null}
         </div>
 
         <ClientBookingsSection clientId={sel.id} />

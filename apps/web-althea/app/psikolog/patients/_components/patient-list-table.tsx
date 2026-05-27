@@ -24,7 +24,6 @@ export function PatientListTable({
   katFilter,
   sortBy,
   query,
-  selectedId,
   onSelectTab,
   onKatFilter,
   onSortBy,
@@ -41,7 +40,6 @@ export function PatientListTable({
   katFilter: (typeof CATEGORY_OPTIONS)[number];
   sortBy: SortBy;
   query: string;
-  selectedId: number | null;
   onSelectTab: (t: StatusTab) => void;
   onKatFilter: (v: (typeof CATEGORY_OPTIONS)[number]) => void;
   onSortBy: (v: SortBy) => void;
@@ -52,10 +50,9 @@ export function PatientListTable({
   return (
     <div
       style={{
-        flex: 1.5,
+        flex: 1,
         padding: 20,
         overflow: 'auto',
-        borderRight: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
         gap: 14,
@@ -189,7 +186,6 @@ export function PatientListTable({
                 key={c.id}
                 client={c}
                 index={i}
-                isSelected={c.id === selectedId}
                 onSelect={() => onSelect(c.id)}
               />
             ))
@@ -245,12 +241,10 @@ function EmptyState({
 function PatientRow({
   client: c,
   index,
-  isSelected,
   onSelect,
 }: {
   client: AggregatedClient;
   index: number;
-  isSelected: boolean;
   onSelect: () => void;
 }) {
   const pct = c.sessionTotal > 0 ? Math.round((c.sessionN / c.sessionTotal) * 100) : 0;
@@ -268,9 +262,18 @@ function PatientRow({
         borderTop: index ? '1px solid var(--border)' : 'none',
         alignItems: 'center',
         cursor: 'pointer',
-        background: isSelected ? 'var(--sage-50)' : 'transparent',
-        borderLeft: isSelected ? '3px solid var(--sage-500)' : '3px solid transparent',
-        paddingLeft: isSelected ? 13 : 16,
+        borderLeft: '3px solid transparent',
+        transition: 'background 0.12s',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'var(--sage-50)';
+        e.currentTarget.style.borderLeftColor = 'var(--sage-500)';
+        e.currentTarget.style.paddingLeft = '13px';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+        e.currentTarget.style.borderLeftColor = 'transparent';
+        e.currentTarget.style.paddingLeft = '16px';
       }}
     >
       <div className="flex items-center gap-2">
