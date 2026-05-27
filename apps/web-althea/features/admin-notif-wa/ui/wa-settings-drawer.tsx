@@ -2,7 +2,6 @@
 
 import { Check, X } from 'lucide-react';
 import { PengingatSection } from '@/features/admin-pengaturan/ui/tabs/notifikasi/pengingat-section';
-import { PengirimanSection } from '@/features/admin-pengaturan/ui/tabs/notifikasi/pengiriman-section';
 import { PerubahanOnboardingSection } from '@/features/admin-pengaturan/ui/tabs/notifikasi/perubahan-onboarding-section';
 import { WaConnectionSection } from '@/features/admin-pengaturan/ui/tabs/notifikasi/wa-connection-section';
 import { useWaSettingsForm } from '../hooks/use-wa-settings-form';
@@ -109,7 +108,6 @@ export function WaSettingsDrawer({
               <WaConnectionSection form={form} set={set} showNotifWaLink={false} />
               <PengingatSection form={form} set={set} />
               <PerubahanOnboardingSection form={form} set={set} />
-              <PengirimanSection form={form} set={set} />
             </div>
           )}
         </div>
