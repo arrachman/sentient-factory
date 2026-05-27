@@ -321,12 +321,16 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
                         <RotateCw className="h-3.5 w-3.5" /> Reschedule
                       </button>
                     )}
-                    {b.status === 'checked_in' && (
+                    {(b.status === 'checked_in' || b.status === 'completed') && (
                       <button
                         type="button"
                         onClick={() => setEditing(b)}
                         className="btn btn-sm btn-outline"
-                        title="Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute otomatis"
+                        title={
+                          b.status === 'completed'
+                            ? 'Recategorisasi layanan untuk booking selesai — jadwal historis tetap, pembayaran recompute'
+                            : 'Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute otomatis'
+                        }
                       >
                         <Replace className="h-3.5 w-3.5" /> Ubah Layanan
                       </button>

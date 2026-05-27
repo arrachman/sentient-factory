@@ -35,8 +35,9 @@ export function BookingWizard({
   /**
    * Kalau diisi → wizard masuk mode EDIT (atomic update via POST /booking/:id/edit).
    * Step 1 (Klien) di-lock & dirender sebagai info-banner. Auto-scroll mulai
-   * dari Step 2 (Layanan) saat dialog dibuka. Hanya valid untuk booking ber-status
-   * `checked_in` — backend juga enforce.
+   * dari Step 2 (Layanan) saat dialog dibuka. Valid untuk booking ber-status
+   * `checked_in` (validasi penuh) atau `completed` (recategorisasi historis —
+   * jadwal/slot/konflik di-skip backend) — backend enforce.
    */
   editingBooking?: Booking | null;
 }) {
@@ -102,20 +103,29 @@ export function BookingWizard({
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
           {isEdit && editingBooking ? (
-            <div className="rounded-lg border border-sage-300 bg-sage-50/40 px-4 py-2.5 flex items-center gap-3">
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sage-500 text-white">
-                <Check className="h-3.5 w-3.5" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[10.5px] uppercase tracking-wider font-semibold text-fg-muted">
-                  Klien
+            <>
+              <div className="rounded-lg border border-sage-300 bg-sage-50/40 px-4 py-2.5 flex items-center gap-3">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sage-500 text-white">
+                  <Check className="h-3.5 w-3.5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10.5px] uppercase tracking-wider font-semibold text-fg-muted">
+                    Klien
+                  </div>
+                  <div className="text-sm font-semibold text-teal-800 truncate">
+                    {editingBooking.client.name}
+                  </div>
                 </div>
-                <div className="text-sm font-semibold text-teal-800 truncate">
-                  {editingBooking.client.name}
-                </div>
+                <span className="caption italic text-fg-muted">terkunci saat ubah</span>
               </div>
-              <span className="caption italic text-fg-muted">terkunci saat ubah</span>
-            </div>
+              {editingBooking.status === 'completed' && (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  <strong>Recategorisasi historis:</strong> booking ini sudah <strong>Selesai</strong>.
+                  Jadwal & durasi historis tidak berubah meskipun layanan baru punya durasi berbeda —
+                  hanya kategori layanan & pembayaran yang di-recompute.
+                </div>
+              )}
+            </>
           ) : (
             <Section
               stepNum={1}
@@ -148,9 +158,16 @@ export function BookingWizard({
             />
             {isEdit && editingBooking && (
               <div className="mt-3 caption text-fg-muted">
-                Hanya layanan yang ditangani{' '}
-                <strong>{editingBooking.psikolog.fullName ?? editingBooking.psikolog.email}</strong>{' '}
-                yang ditampilkan. Pilih layanan baru untuk ubah — psikolog & jadwal tidak berubah.
+                {editServiceWhitelist ? (
+                  <>
+                    Hanya layanan yang ditangani{' '}
+                    <strong>
+                      {editingBooking.psikolog.fullName ?? editingBooking.psikolog.email}
+                    </strong>{' '}
+                    yang ditampilkan.{' '}
+                  </>
+                ) : null}
+                Pilih layanan baru untuk ubah — psikolog & jadwal tidak berubah.
                 Pembayaran akan dihitung ulang otomatis.
               </div>
             )}

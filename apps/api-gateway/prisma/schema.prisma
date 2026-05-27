@@ -823,6 +823,11 @@ model ClinicService {
   // Kosong [] → layanan pakai waktu slot global apa adanya.
   // [{ index: 0, start: "08:00", end: "10:00" }, ...]
   slotOverrides   Json      @default("[]") @map("slot_overrides")
+  // Index slot global yang dinonaktifkan untuk layanan ini (mis. layanan
+  // hanya dipakai 4 dari 6 slot). Booking di slot dengan index di list
+  // ini ditolak (assertSlotMatch). Booking wizard juga hide slot tersebut.
+  // [0, 5] artinya slot pertama & keenam non-aktif untuk layanan ini.
+  disabledSlotIndices Json  @default("[]") @map("disabled_slot_indices")
   // Audit fields
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   createdBy       Int?      @map("created_by")

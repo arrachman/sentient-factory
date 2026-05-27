@@ -98,7 +98,12 @@ export function useWizardState({
   // Slot resolution: service overrides may shift time ranges; indices stay global-aligned.
   const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
   const slots = useMemo(
-    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
+    () =>
+      resolveServiceSlots(
+        globalSlots,
+        selectedService?.slotOverrides,
+        selectedService?.disabledSlotIndices,
+      ),
     [globalSlots, selectedService],
   );
   const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];

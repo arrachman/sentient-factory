@@ -67,7 +67,12 @@ export function RescheduleDialog({
   );
 
   const slots = useMemo(
-    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
+    () =>
+      resolveServiceSlots(
+        globalSlots,
+        selectedService?.slotOverrides,
+        selectedService?.disabledSlotIndices,
+      ),
     [globalSlots, selectedService],
   );
 

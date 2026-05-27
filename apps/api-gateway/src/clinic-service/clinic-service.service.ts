@@ -37,6 +37,18 @@ export class ClinicServiceService {
     return [...byIndex.values()].sort((a, b) => a.index - b.index);
   }
 
+  /**
+   * Bersihkan disabledSlotIndices: dedupe, sort ascending, drop nilai negatif.
+   */
+  private normalizeDisabledSlotIndices(raw?: number[]): number[] {
+    if (!raw || raw.length === 0) return [];
+    const set = new Set<number>();
+    for (const i of raw) {
+      if (Number.isInteger(i) && i >= 0) set.add(i);
+    }
+    return [...set].sort((a, b) => a - b);
+  }
+
   async create(dto: CreateServiceDto, actorId?: number) {
     const existing = await this.prisma.clinicService.findFirst({
       where: { name: dto.name, deletedAt: null },
@@ -45,7 +57,11 @@ export class ClinicServiceService {
     if (existing) {
       throw new ConflictException(`Service '${dto.name}' sudah ada.`);
     }
-    const { slotOverrides: _slotOverrides, ...rest } = dto;
+    const {
+      slotOverrides: _slotOverrides,
+      disabledSlotIndices: _disabledSlotIndices,
+      ...rest
+    } = dto;
     const created = await this.prisma.clinicService.create({
       data: {
         ...rest,
@@ -53,6 +69,9 @@ export class ClinicServiceService {
         isActive: dto.isActive ?? true,
         slotOverrides: this.normalizeSlotOverrides(
           dto.slotOverrides,
+        ) as unknown as Prisma.InputJsonValue,
+        disabledSlotIndices: this.normalizeDisabledSlotIndices(
+          dto.disabledSlotIndices,
         ) as unknown as Prisma.InputJsonValue,
         createdBy: actorId,
         updatedBy: actorId,
@@ -142,7 +161,11 @@ export class ClinicServiceService {
 
   async update(id: number, dto: UpdateServiceDto, actorId?: number) {
     await this.findOne(id);
-    const { slotOverrides: _slotOverrides, ...rest } = dto;
+    const {
+      slotOverrides: _slotOverrides,
+      disabledSlotIndices: _disabledSlotIndices,
+      ...rest
+    } = dto;
     const data: Prisma.ClinicServiceUpdateInput = {
       ...rest,
       updatedBy: actorId,
@@ -151,6 +174,11 @@ export class ClinicServiceService {
     if (dto.slotOverrides !== undefined) {
       data.slotOverrides = this.normalizeSlotOverrides(
         dto.slotOverrides,
+      ) as unknown as Prisma.InputJsonValue;
+    }
+    if (dto.disabledSlotIndices !== undefined) {
+      data.disabledSlotIndices = this.normalizeDisabledSlotIndices(
+        dto.disabledSlotIndices,
       ) as unknown as Prisma.InputJsonValue;
     }
     const updated = await this.prisma.clinicService.update({ where: { id }, data });

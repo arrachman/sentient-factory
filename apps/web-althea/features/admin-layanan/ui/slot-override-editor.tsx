@@ -1,27 +1,40 @@
 'use client';
 
 /**
- * Editor override range waktu slot per-layanan.
+ * Editor slot per-layanan.
  *
  * Identitas slot (jumlah, label, urutan, index) READ-ONLY dari
- * ClinicSettings.slotsOfDay global. Admin hanya bisa menggeser start/end
- * tiap slot untuk layanan ini. Slot tanpa "waktu khusus" mewarisi waktu
- * global apa adanya (tidak disimpan ke slotOverrides).
+ * ClinicSettings.slotsOfDay global. Admin bisa:
+ *   - Geser start/end tiap slot via input time → simpan ke `slotOverrides`
+ *   - Nonaktifkan slot via checkbox → index masuk ke `disabledSlotIndices`
+ *
+ * Slot yang dinonaktifkan tidak akan muncul di booking wizard & ditolak oleh
+ * backend `assertSlotMatch`. Slot tanpa override mewarisi waktu global apa
+ * adanya (tidak disimpan ke slotOverrides).
  */
 import { RotateCcw } from 'lucide-react';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import type { SlotOverride } from '../model/types';
 
 type Props = {
-  value: SlotOverride[] | undefined;
-  onChange: (next: SlotOverride[]) => void;
+  overrides: SlotOverride[] | undefined;
+  onChangeOverrides: (next: SlotOverride[]) => void;
+  disabledIndices: number[] | undefined;
+  onChangeDisabled: (next: number[]) => void;
 };
 
-export function SlotOverrideEditor({ value, onChange }: Props) {
+export function SlotOverrideEditor({
+  overrides: overridesProp,
+  onChangeOverrides,
+  disabledIndices: disabledProp,
+  onChangeDisabled,
+}: Props) {
   const settings = useSettings();
   const globalSlots = settings.data?.data.slotsOfDay ?? [];
-  const overrides = value ?? [];
+  const overrides = overridesProp ?? [];
+  const disabledIndices = disabledProp ?? [];
   const byIndex = new Map(overrides.map((o) => [o.index, o]));
+  const disabledSet = new Set(disabledIndices);
 
   function setOverride(index: number, partial: Partial<Pick<SlotOverride, 'start' | 'end'>>) {
     const base = byIndex.get(index) ?? {
@@ -32,11 +45,20 @@ export function SlotOverrideEditor({ value, onChange }: Props) {
     const next = overrides.filter((o) => o.index !== index);
     next.push({ ...base, ...partial });
     next.sort((a, b) => a.index - b.index);
-    onChange(next);
+    onChangeOverrides(next);
   }
 
   function resetSlot(index: number) {
-    onChange(overrides.filter((o) => o.index !== index));
+    onChangeOverrides(overrides.filter((o) => o.index !== index));
+  }
+
+  function toggleEnabled(index: number, enabled: boolean) {
+    if (enabled) {
+      onChangeDisabled(disabledIndices.filter((i) => i !== index));
+    } else {
+      if (disabledSet.has(index)) return;
+      onChangeDisabled([...disabledIndices, index].sort((a, b) => a - b));
+    }
   }
 
   if (settings.isLoading) {
@@ -50,27 +72,51 @@ export function SlotOverrideEditor({ value, onChange }: Props) {
     );
   }
 
+  const enabledCount = globalSlots.length - disabledSet.size;
+
   return (
     <div className="flex flex-col gap-2">
       <p className="caption text-fg-muted">
-        Nama & jumlah slot mengikuti slot global. Layanan ini hanya bisa menggeser{' '}
-        <strong>range waktu</strong>-nya. Kosongkan (Reset) untuk ikut waktu global.
+        Centang slot yang dipakai layanan ini ({enabledCount} dari {globalSlots.length} aktif).
+        Kosongkan centang untuk menonaktifkan slot. Bisa juga geser <strong>range waktu</strong>{' '}
+        per slot — kosongkan (Reset) untuk ikut waktu global.
       </p>
       {globalSlots.map((slot, i) => {
         const ov = byIndex.get(i);
         const custom = !!ov;
+        const isEnabled = !disabledSet.has(i);
         return (
           <div
             key={i}
-            className="grid items-center gap-2 px-3 py-2 rounded-md bg-cream-50 border border-border"
-            style={{ gridTemplateColumns: '1.6fr 1fr 1fr 32px' }}
+            className={`grid items-center gap-2 px-3 py-2 rounded-md border ${
+              isEnabled
+                ? 'bg-cream-50 border-border'
+                : 'bg-cream-100 border-cream-200 opacity-70'
+            }`}
+            style={{ gridTemplateColumns: '24px 1.5fr 1fr 1fr 32px' }}
           >
+            <label className="flex items-center justify-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isEnabled}
+                onChange={(e) => toggleEnabled(i, e.target.checked)}
+                className="h-4 w-4 cursor-pointer"
+                aria-label={`Aktifkan ${slot.label || `Slot ${i + 1}`}`}
+                title={isEnabled ? 'Klik untuk nonaktifkan slot ini' : 'Klik untuk aktifkan slot ini'}
+              />
+            </label>
             <div className="min-w-0">
-              <div className="text-[13px] font-semibold text-teal-800 truncate">
+              <div
+                className={`text-[13px] font-semibold truncate ${
+                  isEnabled ? 'text-teal-800' : 'text-fg-muted line-through'
+                }`}
+              >
                 {slot.label || `Slot ${i + 1}`}
               </div>
               <div className="caption text-fg-muted">
-                {custom ? (
+                {!isEnabled ? (
+                  <span className="text-danger">tidak dipakai layanan ini</span>
+                ) : custom ? (
                   <span className="text-sage-700">waktu khusus layanan</span>
                 ) : (
                   `ikut global · ${slot.start}–${slot.end}`
@@ -81,18 +127,20 @@ export function SlotOverrideEditor({ value, onChange }: Props) {
               type="time"
               value={ov?.start ?? slot.start}
               onChange={(e) => setOverride(i, { start: e.target.value })}
-              className={`input-althea h-9 py-0 text-[13px] ${custom ? '' : 'text-fg-muted'}`}
+              disabled={!isEnabled}
+              className={`input-althea h-9 py-0 text-[13px] ${custom ? '' : 'text-fg-muted'} disabled:opacity-50 disabled:cursor-not-allowed`}
             />
             <input
               type="time"
               value={ov?.end ?? slot.end}
               onChange={(e) => setOverride(i, { end: e.target.value })}
-              className={`input-althea h-9 py-0 text-[13px] ${custom ? '' : 'text-fg-muted'}`}
+              disabled={!isEnabled}
+              className={`input-althea h-9 py-0 text-[13px] ${custom ? '' : 'text-fg-muted'} disabled:opacity-50 disabled:cursor-not-allowed`}
             />
             <button
               type="button"
               onClick={() => resetSlot(i)}
-              disabled={!custom}
+              disabled={!custom || !isEnabled}
               className="btn btn-ghost btn-icon btn-sm w-[28px] disabled:opacity-30"
               aria-label="Reset ke waktu global"
               title="Reset ke waktu global"

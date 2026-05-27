@@ -15,7 +15,7 @@ Prefix `clinic-` di Role table (m0_role) untuk distinguish dari ERP roles. Lihat
 - **clinic-marketing** — read-only service catalog & capacity
 - **clinic-intern** — minimal access (placeholder)
 
-Service types: konseling (5), terapi dewasa & anak (4), tes psikologi (7) — total 16 service catalog.
+Service types: konseling (5), terapi dewasa & anak + paket bulanan (9), tes psikologi (13) — total 27 service catalog (per 27 Mei 2026, lihat section "Catalog seed 27 Mei 2026" di bawah).
 
 ## Stack
 - **Next.js 16+ (App Router)**, React 19, TypeScript strict.
@@ -287,7 +287,8 @@ Mengikuti prototype "Mobile · Staff Psikolog" (6 layar). Pola identik dengan ad
 
 ### Booking flow (ADR 008 + 010 + 011)
 - **Single source of truth slot**: `ClinicSettings.slotsOfDay` (6 slot harian, WIB). Booking harus pas dengan slot — backend enforce via `assertSlotMatch(start,end,serviceId?)`. Frontend `DateStrip` + slot picker mirror logic ini.
-- **Slot range per-layanan (override)**: `ClinicService.slotOverrides` (JSON `[{index,start,end}]`) boleh **menggeser range waktu** slot tertentu untuk layanan itu. **Identitas slot (jumlah, label, urutan, index) TETAP dari `slotsOfDay` global** — override hanya start/end; slot tanpa override mewarisi waktu global. Index hasil tetap sejajar global ⇒ `slotIndices` availability psikolog tetap valid (availability psikolog tetap acuan slot global). Resolusi via `resolveServiceSlots(global, overrides)` — ada di backend `clinic-booking/slot-resolve.util.ts` & frontend `features/admin-layanan/model/slot.ts` (mirror). `assertSlotMatch` validasi terhadap slot ter-resolve bila `serviceId` dikirim (fallback global bila tidak). Editor: **Admin → Layanan → Edit → Range Waktu Slot**; ringkasan read-only di **Pengaturan → Slot Operasional → Slot Khusus per Layanan**.
+- **Slot range per-layanan (override)**: `ClinicService.slotOverrides` (JSON `[{index,start,end}]`) boleh **menggeser range waktu** slot tertentu untuk layanan itu. **Identitas slot (jumlah, label, urutan, index) TETAP dari `slotsOfDay` global** — override hanya start/end; slot tanpa override mewarisi waktu global. Index hasil tetap sejajar global ⇒ `slotIndices` availability psikolog tetap valid (availability psikolog tetap acuan slot global). Resolusi via `resolveServiceSlots(global, overrides, disabledIndices?)` — ada di backend `clinic-booking/slot-resolve.util.ts` & frontend `features/admin-layanan/model/slot.ts` (mirror). `assertSlotMatch` validasi terhadap slot ter-resolve yang **enabled** (filter `!s.disabled`) bila `serviceId` dikirim (fallback global bila tidak). Editor: **Admin → Layanan → Edit → Slot yang Dipakai Layanan Ini**; ringkasan read-only di **Pengaturan → Slot Operasional → Slot Khusus per Layanan**.
+- **Slot nonaktif per-layanan** (per 27 Mei 2026): `ClinicService.disabledSlotIndices` (JSON `number[]`, mis. `[0,5]`) berisi index slot global yang **tidak dipakai** layanan ini (mis. layanan cuma 4 dari 6 slot). Identitas slot tetap (panjang array hasil resolusi sama dengan global) — `resolveServiceSlots` menandai slot terkait dengan flag `disabled: true`, panjang & index tidak berubah supaya mapping slot lintas-layanan (mis. `booking-transitions.editBooking` ambil slot di index yang sama di service baru) tetap konsisten. Konsumen tampilan (`SlotGrid` di booking wizard, `service-slot-summary`) tinggal filter `!slot.disabled`. Booking ke slot disabled ditolak `assertSlotMatch` (filter `!s.disabled` sebelum match). `booking-transitions.editBooking` melempar 400 kalau service baru men-disable slot di index booking saat ini (admin diminta reschedule dulu). UI editor: checkbox per slot di **Admin → Layanan → Edit** — uncheck = nonaktif (input waktu juga ikut disabled, tombol Reset disabled). Migration: `20260527_004_clinic_service_disabled_slot_indices`.
 - **Psikolog availability cascade**:
   1. Date override (`ClinicPsikologDateOverride`) — priority untuk tanggal exact
   2. Weekly recurring (`ClinicPsikologProfile.weeklyAvailability`) — fallback
@@ -302,26 +303,30 @@ Mengikuti prototype "Mobile · Staff Psikolog" (6 layar). Pola identik dengan ad
 - Searchable combobox untuk client, chip grid untuk service, card grid untuk psikolog, DateStrip + slot button grid untuk jadwal
 - `Idempotency-Key` header per submit (`apiClient` set otomatis untuk mutation)
 
-### Ubah Layanan via wizard mode saat check-in (per 26 Mei 2026)
-Tombol **Ubah Layanan** (icon `Replace`) di `/admin/daftar-jadwal` (kolom Aksi) + `client-detail-page` (bookings section) — muncul **hanya saat `status === 'checked_in'`**. Reuses `features/admin-booking/ui/booking-wizard.tsx` dalam **edit mode** via prop `editingBooking?: Booking`. Scope sengaja sempit: **hanya ganti layanan**, psikolog & jadwal tetap.
+### Ubah Layanan via wizard mode (status check-in atau selesai, per 27 Mei 2026)
+Tombol **Ubah Layanan** (icon `Replace`) di `/admin/daftar-jadwal` (kolom Aksi) + `client-detail-page` (bookings section) — muncul saat `status === 'checked_in'` **atau** `status === 'completed'`. Reuses `features/admin-booking/ui/booking-wizard.tsx` dalam **edit mode** via prop `editingBooking?: Booking`. Scope sengaja sempit: **hanya ganti layanan**, psikolog & jadwal tetap.
+
+**Dua mode dengan perilaku berbeda:**
+- **`checked_in`** (active edit): validasi penuh — psikolog handle service (junction), `assertSlotMatch` (hormati `slotOverrides`), `assertNoConflict`/`assertNoRoomConflict` (exclude self). `scheduledStart`/`scheduledEnd` auto-resolve via slot INDEX kalau client tidak kirim eksplisit (slot identity konsisten lintas-layanan; durasi bisa beda). Use case: klien baru datang & admin sadar salah pilih layanan saat booking sebelum sesi dimulai.
+- **`completed`** (recategorisasi historis): sesi sudah lewat → `scheduledStart`/`scheduledEnd` **TETAP** meskipun layanan baru punya durasi berbeda. Auto-resolve di-skip, `assertSlotMatch` di-skip, `assertNoConflict`/`assertNoRoomConflict` di-skip — jadwal historis tidak diubah, slot/konflik forward-looking sudah tidak relevan. Junction psikolog↔service tetap divalidasi (admin perlu update junction kalau psikolog tidak normally handle service baru). Use case: admin koreksi laporan/pembayaran dari booking selesai yang salah kategori. UI tampilkan banner amber "Recategorisasi historis" di dalam dialog.
 
 - **UI flow**: BookingWizard buka dengan title "Ubah Layanan Booking #N". Step 1 (Klien) jadi banner info terkunci. Step Layanan satu-satunya yang interaktif, badge step `1` (bukan 2 supaya tidak misleading). Step 3 (Psikolog) & Step 4 (Jadwal + Ruang) **tidak di-render** sama sekali di edit mode — admin tidak boleh ganti psikolog/jadwal lewat dialog ini (kalau perlu, pakai Reschedule). Auto-scroll ke Step Layanan saat dialog open. Tombol submit: "Simpan Layanan Baru".
 - **Filter service**: `Step2Service` terima prop opsional `serviceIdWhitelist?: number[]`. Di edit mode, wizard lookup psikolog booking → kalau `psikolog.serviceIds.length > 0` → pass sebagai whitelist (chips terbatas ke layanan yang psikolog terassign handle). Junction kosong (`serviceIds = []`) = handle semua → no filter. Caption di bawah grid menjelaskan filter ke admin.
 - **State pre-fill**: `useWizardState` baca `editingBooking` lalu seed `{clientId, serviceId, psikologUserId, roomId, sessions[0].date, notes}` dari booking. `slotIdx` tidak di-derive di edit mode (Step 4 hidden, tidak dipakai untuk submit).
 - **canSubmit (edit mode)**: hanya butuh `serviceId !== editingBooking.serviceId` (admin harus ganti layanan, no-op di-block). Submit kirim **hanya `{ serviceId }`** ke backend.
 - **Backend endpoint**: `POST /clinic/booking/:id/edit` → `BookingTransitionsService.editBooking` (atomic). DTO `EditBookingDto` semua optional. Saat hanya `serviceId` dikirim:
-  1. Status guard: `checked_in` only
+  1. Status guard: `checked_in` atau `completed` (selain itu → 400)
   2. `assertEntitiesExist` (client/service/psikolog/room existing)
-  3. **Auto-resolve `scheduledStart`/`scheduledEnd`** (kalau client tidak kirim eksplisit & service berubah):
+  3. **Auto-resolve `scheduledStart`/`scheduledEnd`** — hanya untuk `checked_in`, di-skip untuk `completed`:
      - Identifikasi **slot INDEX** booking saat ini di `resolveServiceSlots(global, OLD.slotOverrides)` (match by `start === HH:MM(scheduledStart, TZ)` AND `end === HH:MM(scheduledEnd, TZ)`)
      - Ambil slot di **index yang sama** di `resolveServiceSlots(global, NEW.slotOverrides)`
      - `newStart = buildClinicInstant(date, newSlot.start, tz)`, `newEnd = buildClinicInstant(date, newSlot.end, tz)`
      - Slot identity (index) konsisten lintas-layanan; hanya time range yang bisa beda. Kalau booking lama tidak match slot manapun → 400 (data integrity issue, suggest reschedule dulu)
      - **JANGAN pakai `start + service.durationMinutes`** — buggy karena layanan baru bisa punya `slotOverrides` yang membuat durasi slot di index yang sama beda dari `service.durationMinutes`. Contoh bug: booking 13:30-14:30 (60 min override) → ubah ke layanan tanpa override → slot global di index sama = 13:30-15:00 (90 min). Compute `13:30 + 60 = 14:30` → mismatch dengan slot 13:30-15:00. Fix: pakai `newSlot.end` (= 15:00).
-  4. Psikolog handle service baru via junction `ClinicPsikologService` (kosong = handle semua)
-  5. `assertSlotMatch(start, end, serviceId=newService)` — hormati `slotOverrides` per-layanan
-  6. `assertNoRoomConflict` + `assertNoConflict` exclude self — penting kalau durasi memanjang & nabrak booking sesudahnya
-- **Riwayat reschedule**: scheduledEnd berubah karena duration baru → masuk ke `booking.rescheduleHistory` (otomatis terdeteksi via `scheduleChanged`), entry punya field `serviceId` (from/to) + `source: 'edit-wizard'`.
+  4. Psikolog handle service baru via junction `ClinicPsikologService` (kosong = handle semua) — berlaku di kedua mode.
+  5. `assertSlotMatch(start, end, serviceId=newService)` — hanya untuk `checked_in`. Untuk `completed`, jadwal historis bisa saja tidak match slot layanan baru → di-skip.
+  6. `assertNoRoomConflict` + `assertNoConflict` exclude self — hanya untuk `checked_in`. Untuk `completed`, sesi sudah lewat → konflik forward-looking tidak relevan, di-skip.
+- **Riwayat reschedule**: entry didorong ke `booking.rescheduleHistory` kalau `scheduleChanged` **atau** `serviceChanged` (sebelumnya hanya `scheduleChanged`, jadi service-only edit di mode `completed` tidak tercatat). Entry punya field `serviceId` (from/to) + `source: 'edit-wizard'` (atau `'edit-wizard-completed'` untuk mode completed) supaya admin bisa bedakan asal perubahan.
 - **Payment recompute**: service berubah → recompute `totalAmount = base + 11% tax`, `taxAmount`, `dpAmount = total * 0.5`. **`paidAmount` tetap**. Status re-derive: `paid>=total → lunas`, `paid>=dp → dp_paid`, else `pending`. Stamp `dpPaidAt`/`lunasAt` di-reset kalau status turun, di-set baru kalau status naik dan stamp lama null.
 - **WA**: TIDAK fan-out — admin action saat klien sudah hadir di klinik (silent). Audit log via `@AuditAction('edit')` interceptor.
 - **Edit mode override di wizard**: `isMulti` selalu `false`; `useWizardSessions` skip auto-expand jadi N rows. Service baru dengan `sessionCount > 1` tetap diperlakukan sebagai single booking — kalau admin butuh paket, harus buat booking baru.
@@ -389,6 +394,21 @@ Sebelum 27 Mei 2026: ada **dua sumber** yang kadang berlawanan — `ClinicSettin
 - **`Follow-up Post Session`**: fire saat `ClinicBookingService.transition()` ke status `completed`. Variabel `{{sesi_berikut_tanggal}}` di-resolve dari booking lanjutan klien terdekat (`status ∈ {scheduled,confirmed,checked_in}`, `scheduledStart > now`, urut ASC ambil 1) — format `"Senin, 18 Mei 2026 pukul 15.00 WIB"`. Kalau tidak ada booking lanjutan: fallback string `"(belum dijadwalkan)"` (bukan kosong). Bug history (18 Mei 2026): sebelum fix, caller tidak pass `extraVars` sama sekali → `{{sesi_berikut_tanggal}}` selalu jadi placeholder literal di pesan.
 - **`Form Feedback`** (`triggerEvent: 'feedback_request'`, `recipients: ['klien']`) — diaktifkan 18 Mei 2026. Cron `0 8 * * *` TZ `Asia/Jakarta` di `booking-reminder.scheduler.ts` (`dispatchFeedbackH1`): tiap hari jam 08:00 WIB scan booking `status=completed` dengan `completedAt` di seluruh hari **kemarin** (00:00–23:59:59 WIB), klien punya `phoneWa` & `!waOptedOut`, belum dikirimi feedback. Dedup via `ClinicWaLog.metadata.reminderFlag = 'feedback_h1'` (pola sama H-1/30m). Variabel: `{{nama_klien}}`, `{{nama_psikolog}}` (fallback `"psikolog kami"`). **Keputusan**: template **tidak pakai link form** — klien diminta **membalas pesan WA langsung**; balasan dibaca tim manual di WhatsApp. Penangkapan balasan inbound ke DB **tidak diimplementasi** (di luar scope; webhook Fonnte saat ini hanya track delivery status outbound, lagipula paket Free tidak kirim callback). Bila nanti perlu simpan feedback ke aplikasi → effort terpisah (model `ClinicWaInbound` + extend webhook + halaman admin).
 
+### Catalog seed 27 Mei 2026 — layanan & ruangan
+
+Bulk seed ditambah/diupdate langsung via SQL ke Postgres (bypass DTO, fast for placeholder catalog). Detail:
+
+- **9 layanan baru** sebagai placeholder (`base_price = 0`, deskripsi flag "Placeholder seed 27 Mei 2026 — admin set harga & durasi via UI"):
+  - Tes (6): Asesmen Kemampuan Belajar, Asesmen Emosi/Perilaku Anak, Paket Tes 1, Paket Tes 2, Tes Bakat Minat (2 sesi), Tes Kesehatan Mental
+  - Terapi paket (3): Paket 1 Bulan (4 sesi), Paket 3 Bulan (12 sesi), Paket 6 Bulan (24 sesi)
+- **Catatan**: "Tes Kesehatan Mental" (id 25) ditambah sebagai item baru terpisah dari existing "Tes MHCU (group)" (id 13) — admin perlu verifikasi apakah keduanya beda format (individu vs group) atau duplikat yang perlu di-merge.
+- **"Tes Bakat Minat (1 sesi)"** dari request user **tidak di-insert** — assumed sama dengan existing "Tes Bakat Minat" (id 14, 1 sesi, 180min).
+- **5 ruangan update kapasitas**: Sky/Sage/Forest/Sunset Room dari kap 1 → 2; Mint Room dari kap 1 → 4. Nama & type tetap.
+- **2 ruangan rename**: `Seminar` → `Network Room` (kap tetap 20, type seminar); `Tes` → `Psychotest Room` + kap 1 → 8 (type tes). Rename hanya nama (id tetap) — booking historis tidak terpengaruh.
+- **Ruangan tidak disentuh karena sudah match**: Playground (id 9, kap 4 anak), Terapi Anak 1/2/3 (id 6/7/8, kap 1 anak), Alam Hijau Room (id 12, kap 10 anak — tidak diminta user tapi dibiarkan aktif).
+- **Total catalog**: 27 service aktif (5 konseling + 9 terapi + 13 tes), 12 room aktif (5 konseling + 5 anak + 1 seminar + 1 tes).
+- **TODO admin**: edit harga & durasi 9 layanan placeholder via `/admin/layanan` sebelum dipakai di booking; tanpa harga base, payment compute akan menghasilkan total 0.
+
 ### WA device pairing — ganti nomor pengirim in-app (per 27 Mei 2026)
 
 Admin bisa tambah / ganti device WhatsApp (nomor pengirim Fonnte) langsung dari UI, tanpa edit `.env` / restart container.
@@ -406,6 +426,75 @@ Admin bisa tambah / ganti device WhatsApp (nomor pengirim Fonnte) langsung dari 
 - **Polling QR**: drawer poll `POST /wa-devices/qr` tiap 4 detik. Saat Fonnte balas `reason: "already connected"` → scan berhasil → drawer lanjut ke step 3 (Aktifkan).
 - **Migration provider switch**: `ClinicWaModule` factory `WA_PROVIDER` sekarang pilih `FonnteProvider` bila `FONNTE_API_TOKEN` ATAU `FONNTE_ACCOUNT_TOKEN` ada (sebelumnya hanya cek `FONNTE_API_TOKEN`). Konsekuensi: setelah set `FONNTE_ACCOUNT_TOKEN` tanpa device token aktif, provider Fonnte aktif tapi `send()` return `failed` sampai admin pair device lewat UI.
 - **Konsekuensi keamanan**: token Fonnte device di-simpan **plaintext** di Postgres. Risk acceptable untuk klinik internal (token bukan rahasia tinggi, bisa di-regen via dashboard Fonnte). Bila DB dump bocor, segera regenerate via Fonnte dashboard + pair ulang via UI.
+
+### Detail Sesi (Psikolog · Jadwal Saya) — modal profil klien (per 27 Mei 2026)
+**Pop-up modal centered** (bukan side drawer) di `features/psikolog-schedule/ui/booking-detail-drawer.tsx` — nama file tetap, tapi presentation sudah jadi modal terpusat. Klik kartu booking di `/psikolog/schedule` Hari/Minggu/Bulan buka modal yang menampilkan **profil klien lengkap** + riwayat + sesi mendatang.
+
+- **Layout modal**: width 720px / `maxHeight: 90vh`, scroll internal di body. Background overlay `rgba(20,40,40,0.45)` + `backdrop-filter: blur(2px)`. Klik overlay = tutup; tekan ESC = tutup; `document.body.overflow` di-lock saat open supaya halaman di belakang tidak scroll. Animasi `scale(0.96)→scale(1)` 220ms saat open.
+- **Hero header** (linear-gradient dari warna kategori klien → cream-100): avatar inisial 72px bg putih dengan ring kategori, nama klien serif 22px, baris quick-facts `gender · umur · kategori · MRN` di bawah nama, lalu deret chips status (Check-in/Berlangsung/dst + Walk-in + `Klien {derivedStatus}` + `Opt-out WA` kalau true). Tombol close di pojok kanan-atas hero.
+- **Body** = stack 3 elemen utama dengan card putih (kontras vs body cream-50):
+  1. **Card "Sesi ini"** — hero block tanggal serif gede + jam mulai-selesai + durasi (bg sage-50), lalu field grid 2-kolom (Layanan + chip kategori + sesi N/total; Ruangan + type), lalu NoteBlock catatan sesi.
+  2. **Card "Profil klien"** — field grid 2-kolom (WhatsApp, Email), chips layanan terdaftar, NoteBlock alamat (kalau ada), NoteBlock catatan klien (tone warning kalau ada — bg orange-50).
+  3. **Grid 2-kolom** (`auto-fit minmax(280px,1fr)` → stack di sempit): Card "Riwayat sesi" (subtitle = total sesi, list 5 sesi completed dari `recentSessions`) + Card "Sesi mendatang" (subtitle = jumlah upcoming, list maks 6 sesi dengan badge status).
+- **Pattern presentational**: bukan lagi "icon-circle + label + value" tiap baris (terlalu kaku/noisy di iterasi sebelumnya). Sekarang pakai `Card` (header putih + body), `FieldGrid` (responsive 2-col), `Field` (label uppercase 10px + value 14px), `Pill` (rounded-full, size sm/md), `NoteBlock` (label + cream/warning panel), `SessionRow` (single 28px icon di kiri + tanggal+jam+title+subtitle + badge kanan). Helper-helper di-export di bawah `ModalContent` di file yang sama supaya 1-file enak di-edit.
+- **Data sources** (tidak berubah dari iterasi sebelumnya):
+  - `useClientDetail(booking.client.id)` → `GET /clinic/client/:id` → `ClientWithHistory` (`recentSessions` = 5 sesi `status=completed` desc dari backend `clinic-client.service.ts:findOne`).
+  - `useBookingList({ clientId, limit: 100, includeCancelled: false })` → semua booking klien. Split client-side: **sesi mendatang** = `scheduledStart > now AND status NOT IN ('cancelled','completed') AND id !== currentBookingId`, sort ASC. Tidak ada endpoint dedicated.
+- **Avatar**: inisial 2-huruf (huruf pertama + huruf pertama kata terakhir; 1-kata = 2 huruf pertama), warna dari `CATEGORY_PALETTE[client.category]` fallback sage. **Tidak ada upload foto** — kolom photo tidak ada di `ClinicClient` (klien tidak login). Bila mau tambah foto upload nanti → butuh migration + endpoint + UI di form klien (out of scope per 27 Mei).
+- **Fix bug lama**: label gender sebelumnya match `'male'/'female'` (salah — backend kirim `'L'/'P'`), sekarang map via `GENDER_LABEL` dari `features/admin-clients/model/types`. Mapping juga toleran kalau backend suatu saat kirim `'male'/'female'`.
+- **Scope**: modal ini hanya dipakai di `psikolog/schedule` (bukan admin/owner/resepsionis — mereka pakai `BookingDetailDialog` dari `features/admin-booking`). Pattern serupa bisa di-port ke dialog admin nanti bila perlu, **tapi belum di-port** — keputusan 27 Mei: psikolog yang paling butuh konteks klien sebelum sesi.
+
+> **Catatan nama file**: komponen masih bernama `BookingDetailDrawer` walau sudah modal, supaya import di `psikolog-schedule-page.tsx` tidak perlu di-touch. Rename suatu saat = breaking change kecil, defer kecuali ada drawer lain yang dibutuhkan.
+
+LEGACY-NOTE: iterasi sebelumnya berupa **side drawer 460px slide-from-right** dengan section title eyebrow + pattern Row icon-per-baris. Diganti karena terasa kaku / list-y / sulit dibaca.
+
+### Detail Klien (Psikolog · Klien Saya) — modal profil klien (per 27 Mei 2026)
+**Pop-up modal centered** di `app/psikolog/patients/_components/client-detail-modal.tsx` — pattern mirror persis `BookingDetailDrawer` di Jadwal Saya (lihat section di atas), supaya psikolog dapat detail klien yang sama lengkapnya baik datang dari kartu booking di schedule maupun dari row tabel klien.
+
+- **Trigger**: klik baris di `PatientListTable` (desktop) atau card di `PatientsMobile` (mobile) → set `openClientId` di `page.tsx` → modal terbuka. Sebelum 27 Mei: desktop pakai aside-panel 380px (`PatientDetailAside`, dihapus), mobile `setSelectedId` no-op. Pattern aside tidak skala ke mobile dan data-nya tipis (cuma derivasi dari booking list — email/MRN/alamat/layanan terdaftar tidak pernah di-fetch).
+- **Beda dengan modal Jadwal Saya**:
+  - Header eyebrow `Detail Klien` (bukan `Detail Sesi`). Chips: status klien (aktif/baru/selesai) + total sesi + opt-out WA. **Tidak ada chip status booking** (tidak ada single-booking context).
+  - Card pertama = **"Sesi berikutnya"** (bukan "Sesi ini") — derive dari `useBookingList({clientId})` filter `status NOT IN ('cancelled','completed') AND scheduledStart > now`, sort ASC, ambil pertama. Pill status booking dipindah ke pojok kanan baris jam (kompak). Empty state `CalendarOff` icon kalau belum ada upcoming.
+  - Card "Sesi mendatang lain" = sisa upcoming setelah dikeluarkan yang sudah tampil di card pertama (`slice(1)`). Subtitle dynamic (`N terjadwal` atau empty state kontekstual).
+  - Footer: `Klien #N` + `MRN ...` (tidak ada `Booking #N`).
+- **Data sources** (sama persis dengan modal schedule, tidak ada endpoint baru):
+  - `useClientDetail(clientId)` → profil + `recentSessions` 5 sesi `completed` desc.
+  - `useBookingList({ clientId, limit: 100, includeCancelled: false })` → derive `nextBooking` + `upcoming`.
+- **Cleanup yang ikut**:
+  - File dihapus: `app/psikolog/patients/_components/patient-detail-aside.tsx` (aside 380px lama).
+  - `PatientListTable`: prop `selectedId` dihapus (row tidak punya selected state lagi — modal hidup di luar tabel). Border kiri sage di row sekarang **hover-only** (tidak persistent), `borderRight` ke aside lama dihapus (tabel full-width).
+- **Kenapa duplikat primitives (Card/Pill/FieldGrid/Field/NoteBlock/SessionRow/dst) di 2 file**: keputusan 27 Mei (lihat section sebelumnya) sengaja tidak port pattern modal ke shared primitives sampai ada surface ketiga yang butuh. Sekarang ada surface kedua (Klien Saya) — masih pertahankan duplikasi karena (a) primitives kecil, (b) modal punya quirks per-konteks (eyebrow, chips, card pertama), (c) refactor jadi shared `<DetailModal>` butuh slot-based API yang justru menambah kompleksitas. Bila ada surface ketiga (mis. admin client detail modal) → port ke `features/admin-clients/ui/client-detail-modal-shared.tsx` atau primitives-only ke `components/ui/detail-card.tsx`.
+- **Scope tidak berubah**: ikon WA + edit di kolom Aksi tabel tetap stop-propagation (tidak buka modal). Tombol "Buka editor lengkap" / aksi catatan klinis dari aside lama dihilangkan — kalau psikolog mau ke catatan, masih bisa via sidebar `Catatan klinis`.
+
+### Tombol "Selesaikan sesi" di modal detail psikolog (per 27 Mei 2026)
+
+Psikolog bisa mark sesi `in_progress` → `completed` langsung dari kedua modal detail (Jadwal Saya & Klien Saya), tanpa harus minta admin/resepsionis. Sebelumnya `useCompleteBooking` hanya dipakai admin Daftar Jadwal & resepsionis status board.
+
+- **Surface**:
+  - `features/psikolog-schedule/ui/booking-detail-drawer.tsx` — tombol di bawah card "Sesi ini", muncul saat `booking.status === 'in_progress'`. Highlighted card berubah warna sage-50 → light-green (`#dcfce7` + border `#86efac`) sebagai visual cue sesi sedang aktif.
+  - `app/psikolog/patients/_components/client-detail-modal.tsx` — pola sama di card "Sesi berikutnya". Filter sesi aktif diperluas: termasuk `in_progress` & `checked_in` (bukan hanya `scheduledStart > now` murni) — pakai `scheduledEnd > now` supaya sesi yang sedang berjalan tetap nongol di card pertama. Sort by `scheduledStart` ASC.
+- **Confirm + WA cue**: `window.confirm('Tandai sesi ini selesai? Tindakan ini akan mengirim WA Follow-up ke klien.')` sebelum mutate. Pola sama dengan resepsionis dashboard. User diingatkan side-effect WA supaya tidak surprise.
+- **Auto-close** (schedule drawer only): `completeMut.mutate(id, { onSuccess: onClose })` — drawer schedule menyimpan booking object stale setelah transisi, jadi close otomatis lebih bersih. Modal patients TIDAK auto-close: `useBookingList` refetch → nextBooking auto-update ke sesi berikutnya (atau empty state) — psikolog langsung lihat next session tanpa reopen.
+- **Hook reuse**: import `useCompleteBooking` dari `features/admin-booking/hooks/use-booking` — tidak buat hook baru. Toast & invalidation sudah handle di hook (`toast.success('Booking → completed')`, invalidate `['clinic','booking']`).
+- **Tidak ada tombol "Mulai sesi"** di kedua modal — transisi `checked_in → in_progress` masih wewenang resepsionis/admin (mereka yang verifikasi klien hadir di klinik). Psikolog hanya boleh `in_progress → completed` karena mereka yang tahu kapan sesi berakhir.
+- **Scope**: tidak menambah Cancel / Reschedule ke modal psikolog — itu wewenang admin (psikolog request via WA/chat). Modal psikolog tetap minimal action: hanya 1 tombol Selesai bila relevan.
+
+**Bug fix layout (27 Mei 2026)**: body modal awalnya dibungkus `display: flex; flex-direction: column; gap: 20` dan Card direnders sebagai `<section>` (flex item dengan `flex-shrink: 1` default). Dua Card pertama (Sesi ini + Profil klien) collapse ke ~0px tinggi karena flex-shrink mengkompres mereka demi memberi ruang ke grid 2-kolom (child terakhir) — yang muncul hanya border atas/bawah masing-masing card, jadi terlihat seperti "garis dobel" di body. Fix: (a) body diganti ke plain block layout (no flex), (b) Card render sebagai `<div>` (bukan `<section>`/`<header>`) dengan `flex-shrink: 0` defensif, (c) prop `spacing` di Card menambah `marginBottom: 20` untuk cards yang ditumpuk langsung di body block (Sesi ini + Profil klien); grid container 2-kolom (Riwayat + Mendatang) tetap pakai gap internal. Pelajaran: hindari flex column + `flex-shrink: 1` (default) untuk container yang punya child grid heavier — collapse cards akan jadi sulit di-debug karena Card titles bahkan hilang.
+
+- **Data sources** (dua hook paralel saat drawer terbuka):
+  - `useClientDetail(booking.client.id)` → `GET /clinic/client/:id` → `ClientWithHistory` (profil + `recentSessions` 5 sesi `status=completed` desc, sudah ada di backend `clinic-client.service.ts:findOne`).
+  - `useBookingList({ clientId, limit: 100, includeCancelled: false })` → semua booking klien. Frontend split client-side: **sesi mendatang** = `scheduledStart > now AND status NOT IN ('cancelled','completed') AND id !== currentBookingId`, sort ASC. Tidak ada endpoint dedicated `/upcoming` — pakai filter list yang sudah ada.
+  - `enabled: id !== null` — query auto-pause saat drawer ketutup. Loading state non-blocking: section "Sesi ini" tampil instan dari payload booking, section lain render setelah fetch selesai.
+- **Section drawer** (urutan top-to-bottom):
+  1. **Sesi ini** — layanan, jadwal, ruangan, catatan sesi (`booking.notes`).
+  2. **Profil klien** — identitas (gender + umur + chip kategori dewasa/anak/remaja/dst), MRN, chips layanan terdaftar, catatan klien (`client.notes` — beda dari catatan sesi).
+  3. **Riwayat sesi (selesai)** — list 5 sesi `completed` terakhir dari `recentSessions`, dengan tanggal + layanan + psikolog. Counter `{total} total` di header section; footnote bila `totalBookings > 5` menunjuk halaman Klien untuk riwayat lengkap.
+  4. **Sesi mendatang** — list maks 8 sesi upcoming + counter `{N} sesi`. Tiap row punya badge status booking (Check-in / Berlangsung / dst).
+  5. **Kontak** — WhatsApp (+ badge `Opt-out WA` kalau `waOptedOut=true`), email, alamat.
+- **Header**: **avatar inisial bulat 52px** (warna dari `CATEGORY_PALETTE[client.category]`, fallback sage) + nama klien + chips (status booking + Walk-in + status klien `derivedStatus` baru/aktif/selesai). **Tidak ada upload foto** — kolom photo tidak ada di `ClinicClient` (klien tidak login). Inisial diambil dari huruf pertama + huruf pertama kata terakhir nama; 1-kata = 2 huruf pertama. Bila mau tambah foto upload nanti → butuh migration + endpoint + UI di form klien (out of scope per 27 Mei).
+- **Width drawer** 460px (naik dari 380 → 440 → 460) supaya badge per-row di section Sesi mendatang tidak overflow. `maxWidth: 95vw` jaga mobile-friendly.
+- **Fix bug lama**: label gender sebelumnya match `'male'/'female'` (salah — backend kirim `'L'/'P'`), sekarang map via `GENDER_LABEL` dari `features/admin-clients/model/types`. Mapping juga toleran kalau backend suatu saat kirim `'male'/'female'`.
+- **Scope**: drawer ini hanya dipakai di `psikolog/schedule` (bukan admin/owner/resepsionis — mereka pakai `BookingDetailDialog` dari `features/admin-booking`). Pattern serupa bisa di-port ke dialog admin nanti bila perlu, **tapi belum di-port** — keputusan 27 Mei: psikolog yang paling butuh konteks klien sebelum sesi.
 
 ### Override flag
 - Satu checkbox `bufferOverride` skip semua validation (slot-match, jam, hari libur, psikolog availability); fitur "conflict buffer" sudah dihapus — tidak ada buffer menit antar booking

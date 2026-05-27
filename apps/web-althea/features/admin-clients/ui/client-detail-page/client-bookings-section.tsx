@@ -195,13 +195,17 @@ function BookingRow({
         >
           <Pencil className="h-3.5 w-3.5" /> Edit
         </button>
-        {b.status === 'checked_in' && (
+        {(b.status === 'checked_in' || b.status === 'completed') && (
           <button
             type="button"
             onClick={onWizardEdit}
             className="btn btn-outline btn-sm"
             aria-label={`Ubah layanan booking #${b.id}`}
-            title="Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute"
+            title={
+              b.status === 'completed'
+                ? 'Recategorisasi layanan untuk booking selesai — jadwal historis tetap, pembayaran recompute'
+                : 'Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute'
+            }
           >
             <Replace className="h-3.5 w-3.5" /> Ubah Layanan
           </button>

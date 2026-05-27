@@ -10,6 +10,7 @@ interface SlotDef {
   start: string;
   end: string;
   label?: string;
+  disabled?: boolean;
 }
 
 interface UseWizardAvailabilityParams {

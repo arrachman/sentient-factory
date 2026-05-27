@@ -9,8 +9,12 @@
  * sebagai card disabled dengan info klien + status, supaya admin paham slot mana
  * yang penuh dan oleh siapa. Slot lain di unavailableSlotIdx (past/psikolog-off)
  * tetap di-hide.
+ *
+ * Slot dengan `slot.disabled === true` (dinonaktifkan per-layanan via
+ * ClinicService.disabledSlotIndices) **selalu di-hide**, terlepas dari mode.
+ * Tidak dipakai layanan = bukan informasi yang berguna untuk admin di sini.
  */
-type Slot = { start: string; end: string; label?: string };
+type Slot = { start: string; end: string; label?: string; disabled?: boolean };
 
 export type SlotBookingInfo = {
   clientName: string;
@@ -49,9 +53,10 @@ export function SlotGrid({
   //   - tidak unavailable, ATAU
   //   - punya info booking (mode reschedule: tampil disabled dengan info klien)
   // Slot unavailable tanpa info booking (past time, di luar window psikolog) tetap di-hide.
+  // Slot dengan `disabled` (nonaktif per-layanan) selalu di-hide.
   const visibleSlots = slots
     .map((slot, i) => ({ slot, i }))
-    .filter(({ i }) => !unavailableSlotIdx.has(i) || slotBookings?.has(i));
+    .filter(({ slot, i }) => !slot.disabled && (!unavailableSlotIdx.has(i) || slotBookings?.has(i)));
   const availableCount = visibleSlots.filter(
     ({ i }) => !unavailableSlotIdx.has(i),
   ).length;

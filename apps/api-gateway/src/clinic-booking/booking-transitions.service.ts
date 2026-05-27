@@ -195,32 +195,44 @@ export class BookingTransitionsService {
   }
 
   /**
-   * Atomic edit untuk booking ber-status `checked_in` — backend dari wizard
-   * "Ubah Booking" (mulai step 2 Layanan). Admin boleh ubah service,
-   * scheduledStart/End, psikolog, room, notes — semua dalam satu transaksi.
+   * Atomic edit untuk booking ber-status `checked_in` atau `completed` —
+   * backend dari wizard "Ubah Booking" (mulai step 2 Layanan).
+   *
+   * Mode `checked_in`: admin boleh ubah service, scheduledStart/End, psikolog,
+   * room, notes — semua dalam satu transaksi, dengan validasi penuh
+   * (slot-match, no-conflict, junction psikolog↔service).
+   *
+   * Mode `completed` (recategorisasi historis): sesi sudah lewat, jadi
+   * jadwal/slot/konflik TIDAK divalidasi. scheduledStart/End TETAP — meskipun
+   * durasi layanan baru berbeda, kita TIDAK auto-resolve waktu. Use case:
+   * admin salah pilih layanan saat booking & ingin koreksi laporan +
+   * pembayaran (recompute total/DP, paidAmount tetap, status re-derive).
    *
    * Flow:
-   *   1. Status guard: harus `checked_in`
+   *   1. Status guard: `checked_in` atau `completed`
    *   2. Build nilai baru (fallback ke existing kalau field tidak dikirim)
    *   3. Validate entities exist (client/service/psikolog/room aktif)
    *   4. Validate psikolog handle service baru (junction kosong = handle semua)
-   *   5. Validate slot match (pakai serviceId baru → hormati slotOverrides)
-   *   6. Validate no conflict (psikolog + room, exclude self)
-   *   7. Detect schedule/psikolog/room change → push ke rescheduleHistory
-   *   8. Update booking + recompute payment (kalau service berubah)
+   *   5. [checked_in only] Auto-resolve scheduledStart/End via slot index +
+   *      assertSlotMatch + assertNo(Room)Conflict (exclude self)
+   *   6. Detect perubahan service/jadwal/psikolog/room → push ke
+   *      rescheduleHistory (juga untuk service-only edit, supaya audit
+   *      tracking layanan tidak hilang)
+   *   7. Update booking + recompute payment (kalau service berubah)
    *
-   * Sengaja TIDAK fan-out WA — admin action saat klien sudah hadir di klinik
-   * (silent, audit-logged via interceptor).
+   * Sengaja TIDAK fan-out WA — admin action saat klien sudah hadir / sudah
+   * pulang (silent, audit-logged via interceptor).
    */
   async editBooking(id: number, dto: EditBookingDto, actorId?: number) {
     const existing = await this.crudService.findOne(id);
     const booking = existing.data;
     const current = booking.status as BookingStatus;
-    if (current !== 'checked_in') {
+    if (current !== 'checked_in' && current !== 'completed') {
       throw new BadRequestException(
-        `Ubah booking hanya boleh saat status checked_in. Status saat ini: ${current}.`,
+        `Ubah booking hanya boleh saat status checked_in atau completed. Status saat ini: ${current}.`,
       );
     }
+    const isCompleted = current === 'completed';
 
     const newServiceId = dto.serviceId ?? booking.serviceId;
     const newPsikologUserId = dto.psikologUserId ?? booking.psikologUserId;
@@ -245,6 +257,7 @@ export class BookingTransitionsService {
         basePrice: true,
         durationMinutes: true,
         slotOverrides: true,
+        disabledSlotIndices: true,
         psikologs: { select: { psikologUserId: true } },
       },
     });
@@ -262,7 +275,7 @@ export class BookingTransitionsService {
     let newStart = dto.scheduledStart ? new Date(dto.scheduledStart) : booking.scheduledStart;
     let newEnd = dto.scheduledEnd ? new Date(dto.scheduledEnd) : booking.scheduledEnd;
 
-    if (!dto.scheduledStart && !dto.scheduledEnd && newServiceId !== booking.serviceId) {
+    if (!isCompleted && !dto.scheduledStart && !dto.scheduledEnd && newServiceId !== booking.serviceId) {
       const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
       const tz = settings?.timezone || 'Asia/Jakarta';
       const globalSlots = (settings?.slotsOfDay as SlotDef[]) || [];
@@ -289,11 +302,17 @@ export class BookingTransitionsService {
       const newResolved = resolveServiceSlots(
         globalSlots,
         (service.slotOverrides as SlotOverride[] | null) ?? null,
+        (service.disabledSlotIndices as number[] | null) ?? null,
       );
       const newSlot = newResolved[slotIdx];
       if (!newSlot) {
         throw new BadRequestException(
           `Layanan baru tidak punya slot di posisi ${slotIdx + 1}.`,
+        );
+      }
+      if (newSlot.disabled) {
+        throw new BadRequestException(
+          `Slot ke-${slotIdx + 1} dinonaktifkan untuk layanan "${service.name}". Reschedule ke slot lain dulu sebelum ubah layanan.`,
         );
       }
 
@@ -315,23 +334,29 @@ export class BookingTransitionsService {
       }
     }
 
-    // Slot match — pakai serviceId baru supaya slotOverrides per-layanan dihormati.
-    await this.validation.assertSlotMatch(newStart, newEnd, service.id);
+    // Validasi forward-looking — slot match + no-conflict — hanya untuk
+    // booking aktif (`checked_in`). Untuk `completed`, sesi sudah lewat:
+    // slot mungkin tidak match lagi karena layanan baru punya slotOverrides
+    // berbeda, dan konflik psikolog/room sudah tidak relevan.
+    if (!isCompleted) {
+      // Slot match — pakai serviceId baru supaya slotOverrides per-layanan dihormati.
+      await this.validation.assertSlotMatch(newStart, newEnd, service.id);
 
-    // Cek konflik psikolog + room (exclude self).
-    await this.validation.assertNoRoomConflict({
-      roomId: newRoomId,
-      scheduledStart: newStart,
-      scheduledEnd: newEnd,
-      excludeBookingId: id,
-    });
-    await this.validation.assertNoConflict({
-      psikologUserId: newPsikologUserId,
-      roomId: newRoomId,
-      scheduledStart: newStart,
-      scheduledEnd: newEnd,
-      excludeBookingId: id,
-    });
+      // Cek konflik psikolog + room (exclude self).
+      await this.validation.assertNoRoomConflict({
+        roomId: newRoomId,
+        scheduledStart: newStart,
+        scheduledEnd: newEnd,
+        excludeBookingId: id,
+      });
+      await this.validation.assertNoConflict({
+        psikologUserId: newPsikologUserId,
+        roomId: newRoomId,
+        scheduledStart: newStart,
+        scheduledEnd: newEnd,
+        excludeBookingId: id,
+      });
+    }
 
     // Deteksi perubahan jadwal/psikolog/room → tulis ke rescheduleHistory.
     const scheduleChanged =
@@ -359,7 +384,9 @@ export class BookingTransitionsService {
     }
     if (dto.notes !== undefined) data.notes = dto.notes;
 
-    if (scheduleChanged) {
+    // History entry untuk service-only edit juga (mis. recategorisasi
+    // booking `completed`) — supaya admin punya jejak kapan layanan diubah.
+    if (scheduleChanged || serviceChanged) {
       const history = (booking.rescheduleHistory as unknown[]) || [];
       history.push({
         from: {
@@ -379,7 +406,7 @@ export class BookingTransitionsService {
         reason: dto.reason ?? null,
         by: actorId ?? null,
         at: new Date(),
-        source: 'edit-wizard',
+        source: isCompleted ? 'edit-wizard-completed' : 'edit-wizard',
       });
       data.rescheduleHistory = history as Prisma.InputJsonValue;
     }
