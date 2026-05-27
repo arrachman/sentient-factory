@@ -8,6 +8,18 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
 
 ## 2026-05-27
 
+### WA dispatch routing — single source of truth = `ClinicWaTemplate.recipients`
+
+Sebelumnya: routing per recipient (klien/psikolog) ditentukan oleh **dua sumber** terpisah — `ClinicSettings.notif<Event><Recipient>` booleans (drawer Pengaturan Notifikasi WA) dan `ClinicWaTemplate.recipients` (template editor di Notif WA). Membingungkan + kadang berlawanan (kasus user: drawer "WA klien=on, WA psikolog=off" vs template "klien ❌, psikolog ✓"). Sekarang single source.
+
+- **`feat(api-gateway/prisma)`** — migration `20260527_002_backfill_clinic_wa_template_recipients` sync `template.recipients` dari nilai `ClinicSettings.notif*` lama sebelum kolom-kolom itu di-drop, supaya state efektif terjaga. 11 template ter-update (Konfirmasi/Reschedule/Cancel Booking, Pengingat H-1, M30, Follow-up, Form Feedback, Welcome New Client, Welcome Psikolog Baru, OTP Login, Bukti Pembayaran).
+- **`refactor(api-gateway/clinic-booking)`** — `BookingNotificationService.notify()` & `BookingReminderScheduler` tidak lagi baca `ClinicSettings.notif*` flags. Master kill-switch tetap `waSendEnabled`. Per-role routing: cek `template.recipients.includes('klien'|'psikolog')`. `TEMPLATE_TOGGLE` map dihapus (membersihkan 4 dead entry: Ubah Ruangan, Ubah Layanan, Tagihan DP, Pengingat Pelunasan — template tidak ada di seed).
+- **`feat(api-gateway/prisma)`** — migration `20260527_003_drop_clinic_settings_notif_recipient_flags` hapus 27 kolom `notif<event><recipient>` dari `clinic_settings`. Yang tetap: `waSendEnabled`, `notifH1SendTime`, `notifFollowupDelayHours`, `notifFeedbackSendTime`, `notifFailedSendEmail`. DTO + service mapping dirampingkan.
+- **`feat(api-gateway/clinic-wa)`** — `UpdateTemplateDto.recipients` relax `@ArrayMinSize(1)` → allow `recipients=[]` (semua role off = template aktif tapi tidak dispatch). Create masih wajib min 1.
+- **`feat(web-althea/admin-pengaturan)`** — hook baru `useWaTemplateRecipients()` (`features/admin-pengaturan/hooks/`): fetch list template + helper `toggle(name, role)` yang PATCH `/clinic/wa/template/:id`. Drawer Pengaturan WA section "Pengingat" & "Perubahan jadwal + Onboarding" pakai hook ini sebagai sumber state toggle. `settings.api.ts` types dirampingkan (drop 27 field). **Baris orphan dihapus dari drawer** (tidak punya template di seed): "Pengingat sesi lanjutan", "Paket akan habis", "Pengingat minggu kosong", "Ubah ruangan", "Ubah layanan", "Invite user baru", plus 3 baris locked "Pembayaran" (Tagihan DP/Bukti/Pelunasan).
+- **Doc**: section baru "WA dispatch routing — single source of truth" di `apps/web-althea/CLAUDE.md` mendokumentasikan aturan dispatch baru, daftar kolom yang dihapus, dan UX semantics (recipients=[] = silent).
+- **Konsekuensi**: surface drawer ("WA klien"/"WA psikolog" toggle) dan template editor ("Penerima" chip) sekarang **edit kolom yang sama** — perubahan di satu side langsung tercermin di side lain. Tidak ada lagi 2 source of truth yang bisa diverge.
+
 ### WA device pairing — admin bisa ganti nomor pengirim in-app
 
 Sebelumnya: ganti nomor Fonnte = edit `FONNTE_API_TOKEN` di Vault + render `.env` + restart container. Sekarang: admin pair lewat UI tanpa edit env.
