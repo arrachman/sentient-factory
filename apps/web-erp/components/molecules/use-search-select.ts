@@ -216,11 +216,12 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       try {
         const { data: results } = await loadOptions(inputText, 1, limit);
         if (results.length === 0) {
-          // Tidak ditemukan → kosongkan
+          // Tidak ditemukan → kosongkan lalu buka modal dengan teks pencarian
           if (!isMulti) props.onValueChange('');
           setDisplayLabel('');
           setInputText('');
           setInputFocused(false);
+          openModal(inputText);
           return;
         }
         if (results.length === 1) { selectFromDropdown(results[0]); return; }
@@ -282,11 +283,12 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     try {
       const { data: results } = await loadOptions(inputText, 1, limit);
       if (results.length === 0) {
-        // Tidak ditemukan → kosongkan
+        // Tidak ditemukan → kosongkan lalu buka modal dengan teks pencarian
         if (!isMulti) props.onValueChange('');
         setDisplayLabel('');
         setInputText('');
         ignoreNextBlurRef.current = false;
+        openModal(inputText);
       } else if (results.length === 1) {
         selectFromDropdown(results[0]);
         setTimeout(focusNext, 0);
