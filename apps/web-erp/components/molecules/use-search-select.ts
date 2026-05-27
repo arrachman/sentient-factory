@@ -70,6 +70,10 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const resolvedTitle = (props.title ?? placeholder.replace(/…$/, '').trim());
   const isMulti = props.mode === 'multi';
 
+  // ── Display label builder — "{code} - {label}" when code is present ─────────
+  const optLabel = (opt: SearchSelectOption): string =>
+    opt.code ? `${opt.code} - ${opt.label}` : opt.label;
+
   // ── Modal state ───────────────────────────────────────────────────────────
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
@@ -112,7 +116,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     loadOptions('', 1, limit).then(({ data }) => {
       setOptions(data);
       const found = data.find((o) => o.value === props.value);
-      if (found) setDisplayLabel(found.label);
+      if (found) setDisplayLabel(optLabel(found));
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -121,7 +125,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     if (isMulti) return;
     if (!props.value) { setDisplayLabel(''); return; }
     const found = options.find((o) => o.value === props.value);
-    if (found) setDisplayLabel(found.label);
+    if (found) setDisplayLabel(optLabel(found));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.value, options]);
 
@@ -280,8 +284,8 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const selectFromDropdown = (opt: SearchSelectOption) => {
     if (!isMulti) {
       props.onValueChange(opt.value);
-      setDisplayLabel(opt.label);
-      setInputText(opt.label);
+      setDisplayLabel(optLabel(opt));
+      setInputText(optLabel(opt));
     }
     setDropdownOpen(false);
     setInputFocused(false);
@@ -289,14 +293,14 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
 
   // ── Modal selection ───────────────────────────────────────────────────────
   const selectSingle = (opt: SearchSelectOption, idx?: number) => {
-    if (!isMulti) { setLocalSingle(opt.value); setLocalSingleLabel(opt.label); }
+    if (!isMulti) { setLocalSingle(opt.value); setLocalSingleLabel(optLabel(opt)); }
     if (idx !== undefined) { setFocusedIdx(idx); setTableActive(true); }
   };
 
   const confirmRow = (opt: SearchSelectOption) => {
     if (isMulti) { toggleMulti(opt.value); return; }
     props.onValueChange(opt.value);
-    setDisplayLabel(opt.label);
+    setDisplayLabel(optLabel(opt));
     closeModal(true);
   };
 
@@ -330,11 +334,11 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       e.preventDefault();
       if (!tableActive) {
         setTableActive(true); setFocusedIdx(0);
-        if (!isMulti && displayOptions[0]) { setLocalSingle(displayOptions[0].value); setLocalSingleLabel(displayOptions[0].label); }
+        if (!isMulti && displayOptions[0]) { setLocalSingle(displayOptions[0].value); setLocalSingleLabel(optLabel(displayOptions[0])); }
       } else {
         const next = Math.min(focusedIdx + 1, displayOptions.length - 1);
         setFocusedIdx(next);
-        if (!isMulti && displayOptions[next]) { setLocalSingle(displayOptions[next].value); setLocalSingleLabel(displayOptions[next].label); }
+        if (!isMulti && displayOptions[next]) { setLocalSingle(displayOptions[next].value); setLocalSingleLabel(optLabel(displayOptions[next])); }
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -342,7 +346,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       else if (tableActive) {
         const prev = Math.max(focusedIdx - 1, 0);
         setFocusedIdx(prev);
-        if (!isMulti && displayOptions[prev]) { setLocalSingle(displayOptions[prev].value); setLocalSingleLabel(displayOptions[prev].label); }
+        if (!isMulti && displayOptions[prev]) { setLocalSingle(displayOptions[prev].value); setLocalSingleLabel(optLabel(displayOptions[prev])); }
       }
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
