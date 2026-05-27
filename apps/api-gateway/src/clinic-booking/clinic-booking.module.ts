@@ -12,6 +12,8 @@ import { BookingAutoTransitionScheduler } from './booking-auto-transition.schedu
 import { BookingReminderScheduler } from './booking-reminder.scheduler';
 import { BookingStreamController } from './booking-stream.controller';
 import { BookingValidationService } from './booking-validation.service';
+import { BookingStateChangesService } from './booking-state-changes.service';
+import { BookingEditWizardService } from './booking-edit-wizard.service';
 import { ClinicBookingController } from './clinic-booking.controller';
 import { ClinicBookingService } from './clinic-booking.service';
 import { WaSchedulerTriggerController } from './wa-scheduler-trigger.controller';
@@ -23,6 +25,8 @@ import { WaSchedulerTriggerController } from './wa-scheduler-trigger.controller'
     ClinicBookingService,
     BookingCrudService,
     BookingTransitionsService,
+    BookingStateChangesService,
+    BookingEditWizardService,
     BookingValidationService,
     BookingNotificationService,
     BookingNotesService,

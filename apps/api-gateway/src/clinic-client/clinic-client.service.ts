@@ -6,65 +6,18 @@ import {
   CreateClientDto,
   QueryClientDto,
   UpdateClientDto,
-  type ClientStatus,
 } from './dto/clinic-client.dto';
-
-type BookingSlim = {
-  id: number;
-  scheduledStart: Date;
-  scheduledEnd: Date;
-  sessionN: number;
-  sessionTotal: number;
-  packageGroupId: string | null;
-  status: string;
-  service: { id: number; name: string } | null;
-  psikolog: { fullName: string | null; email: string } | null;
-};
-
-type ClientServiceRef = {
-  id: number;
-  name: string;
-  category: string;
-};
-
-type ClientEnriched = {
-  id: number;
-  name: string;
-  gender: string;
-  age: number | null;
-  category: string | null;
-  phoneWa: string;
-  medicalRecordNumber: string | null;
-  preferredServiceType: string | null;
-  services: ClientServiceRef[];
-  serviceIds: number[];
-  email: string | null;
-  address: string | null;
-  notes: string | null;
-  waOptedOut: boolean;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  // Derived
-  derivedStatus: ClientStatus;
-  totalBookings: number;
-  lastSession: { date: Date; serviceName: string | null; psikologName: string | null } | null;
-  nextSession: { date: Date; serviceName: string | null; psikologName: string | null } | null;
-  currentService: {
-    name: string;
-    psikologName: string | null;
-    sessionN: number;
-    sessionTotal: number;
-  } | null;
-};
-
-const SELESAI_THRESHOLD_DAYS = 30;
+import { deriveCategoryFromAge } from './clinic-client.helpers';
+import { ClientValidator } from './clinic-client.validator';
+import { ClinicEnricher } from './clinic-client.enricher';
 
 @Injectable()
 export class ClinicClientService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly wa: ClinicWaService,
+    private readonly validator: ClientValidator,
+    private readonly enricher: ClinicEnricher,
   ) {}
 
   async create(dto: CreateClientDto, actorId?: number) {
@@ -77,9 +30,9 @@ export class ClinicClientService {
         throw new ConflictException(`MRN ${dto.medicalRecordNumber} sudah dipakai.`);
       }
     }
-    const serviceIds = await this.validateServiceIds(dto.serviceIds);
-    const primaryName = await this.resolvePrimaryServiceName(serviceIds);
-    const category = dto.category ?? this.deriveCategoryFromAge(dto.age);
+    const serviceIds = await this.validator.validateServiceIds(dto.serviceIds);
+    const primaryName = await this.validator.resolvePrimaryServiceName(serviceIds);
+    const category = dto.category ?? deriveCategoryFromAge(dto.age);
 
     const { serviceIds: _omit, preferredServiceType: _omit2, ...rest } = dto;
     const created = await this.prisma.clinicClient.create({
@@ -136,7 +89,7 @@ export class ClinicClientService {
       where,
       orderBy: [{ name: 'asc' }],
     });
-    const enrichedAll = await this.enrichBatch(items);
+    const enrichedAll = await this.enricher.enrichBatch(items);
     const filteredByStatus = query.status
       ? enrichedAll.filter((c) => c.derivedStatus === query.status)
       : enrichedAll;
@@ -155,7 +108,7 @@ export class ClinicClientService {
       where: { id, deletedAt: null },
     });
     if (!client) throw new NotFoundException(`Client ${id} not found`);
-    const [enriched] = await this.enrichBatch([client]);
+    const [enriched] = await this.enricher.enrichBatch([client]);
     const history = await this.prisma.clinicBooking.findMany({
       where: { clientId: id, status: 'completed', deletedAt: null },
       orderBy: { scheduledStart: 'desc' },
@@ -186,11 +139,11 @@ export class ClinicClientService {
     const data: Prisma.ClinicClientUpdateInput = { ...rest, updatedBy: actorId };
     if (dto.age !== undefined && dto.category === undefined) {
       // re-derive category kalau age berubah dan category gak di-set explicit
-      data.category = this.deriveCategoryFromAge(dto.age);
+      data.category = deriveCategoryFromAge(dto.age);
     }
     if (serviceIds !== undefined) {
-      const validIds = await this.validateServiceIds(serviceIds);
-      data.preferredServiceType = await this.resolvePrimaryServiceName(validIds);
+      const validIds = await this.validator.validateServiceIds(serviceIds);
+      data.preferredServiceType = await this.validator.resolvePrimaryServiceName(validIds);
       // Replace strategy: hapus semua entry junction lama, insert ulang.
       // Simpler & safer dari computed diff; jumlah service per klien kecil (≤ ~18).
       data.services = {
@@ -217,187 +170,5 @@ export class ClinicClientService {
       data: { deletedAt: new Date(), deletedBy: actorId, updatedBy: actorId },
     });
     return { success: true, message: 'Client deleted' };
-  }
-
-  // ----- helpers -----
-
-  /**
-   * Validasi serviceIds yang dikirim user:
-   * - dedup,
-   * - pastikan semua existing & belum di-soft-delete (deletedAt null),
-   * - minimal 1 (DTO sudah enforce, ini defense in depth).
-   * Return ids ter-dedup urut asc.
-   */
-  private async validateServiceIds(ids: number[]): Promise<number[]> {
-    const unique = Array.from(new Set(ids)).sort((a, b) => a - b);
-    if (unique.length === 0) {
-      throw new ConflictException('Minimal 1 layanan harus dipilih.');
-    }
-    const found = await this.prisma.clinicService.findMany({
-      where: { id: { in: unique }, deletedAt: null },
-      select: { id: true },
-    });
-    if (found.length !== unique.length) {
-      const foundSet = new Set(found.map((s) => s.id));
-      const missing = unique.filter((id) => !foundSet.has(id));
-      throw new ConflictException(
-        `Layanan tidak ditemukan / sudah dihapus: ${missing.join(', ')}`,
-      );
-    }
-    return unique;
-  }
-
-  /**
-   * Resolve nama service "utama" untuk diisi ke kolom legacy
-   * `clinic_client.preferred_service_type`. Ambil service pertama urut by id asc
-   * supaya stabil (deterministik) dan tidak depend ke urutan kirim user.
-   */
-  private async resolvePrimaryServiceName(ids: number[]): Promise<string | null> {
-    if (ids.length === 0) return null;
-    const first = await this.prisma.clinicService.findUnique({
-      where: { id: ids[0] },
-      select: { name: true },
-    });
-    return first?.name ?? null;
-  }
-
-  private deriveCategoryFromAge(age?: number | null): string | null {
-    if (age === undefined || age === null) return null;
-    if (age < 12) return 'anak';
-    if (age < 18) return 'remaja';
-    return 'dewasa';
-  }
-
-  private async enrichBatch(
-    clients: { id: number }[] & { id: number; name: string }[],
-  ): Promise<ClientEnriched[]> {
-    if (clients.length === 0) return [];
-    const ids = clients.map((c) => c.id);
-    const now = new Date();
-
-    // Fetch ALL bookings (not deleted, not cancelled) untuk batch — lebih efisien dari per-client query
-    const bookings = await this.prisma.clinicBooking.findMany({
-      where: {
-        clientId: { in: ids },
-        deletedAt: null,
-      },
-      orderBy: { scheduledStart: 'desc' },
-      include: {
-        service: { select: { id: true, name: true } },
-        psikolog: { select: { fullName: true, email: true } },
-      },
-    });
-
-    // Batch fetch junction klien ↔ service (multi-select layanan)
-    const serviceLinks = await this.prisma.clinicClientService.findMany({
-      where: { clientId: { in: ids } },
-      include: { service: { select: { id: true, name: true, category: true } } },
-      orderBy: [{ clientId: 'asc' }, { serviceId: 'asc' }],
-    });
-    const servicesByClient = new Map<number, ClientServiceRef[]>();
-    for (const link of serviceLinks) {
-      const arr = servicesByClient.get(link.clientId) ?? [];
-      arr.push({ id: link.service.id, name: link.service.name, category: link.service.category });
-      servicesByClient.set(link.clientId, arr);
-    }
-
-    const byClient = new Map<number, BookingSlim[]>();
-    for (const b of bookings) {
-      const slim: BookingSlim = {
-        id: b.id,
-        scheduledStart: b.scheduledStart,
-        scheduledEnd: b.scheduledEnd,
-        sessionN: b.sessionN,
-        sessionTotal: b.sessionTotal,
-        packageGroupId: b.packageGroupId,
-        status: b.status,
-        service: b.service,
-        psikolog: b.psikolog ? { fullName: b.psikolog.fullName, email: b.psikolog.email } : null,
-      };
-      const arr = byClient.get(b.clientId) ?? [];
-      arr.push(slim);
-      byClient.set(b.clientId, arr);
-    }
-
-    return clients.map((c) => {
-      const cb = c as ClientEnriched & { gender: string };
-      const all = byClient.get(c.id) ?? [];
-      const upcoming = all
-        .filter(
-          (b) => b.status !== 'cancelled' && b.status !== 'completed' && b.scheduledStart > now,
-        )
-        .sort((a, b) => a.scheduledStart.getTime() - b.scheduledStart.getTime());
-      const past = all
-        .filter((b) => b.status === 'completed')
-        .sort((a, b) => b.scheduledStart.getTime() - a.scheduledStart.getTime());
-
-      const next = upcoming[0] ?? null;
-      const last = past[0] ?? null;
-      const totalBookings = all.filter((b) => b.status !== 'cancelled').length;
-
-      // Derive current package: latest active package_group_id
-      let currentService: ClientEnriched['currentService'] = null;
-      const activeRef = next ?? last;
-      if (activeRef) {
-        currentService = {
-          name: activeRef.service?.name ?? '—',
-          psikologName: activeRef.psikolog?.fullName ?? activeRef.psikolog?.email ?? null,
-          sessionN: activeRef.sessionN,
-          sessionTotal: activeRef.sessionTotal,
-        };
-      }
-
-      // Derive status
-      let derivedStatus: ClientStatus = 'baru';
-      if (past.length === 0 && upcoming.length === 0) {
-        derivedStatus = 'baru';
-      } else if (upcoming.length > 0) {
-        derivedStatus = past.length === 0 ? 'baru' : 'aktif';
-      } else if (past.length > 0) {
-        const lastDate = past[0].scheduledStart;
-        const ageDays = (now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
-        derivedStatus = ageDays <= SELESAI_THRESHOLD_DAYS ? 'aktif' : 'selesai';
-      }
-      // First-timer dengan upcoming = "baru"; sudah ada past = "aktif"
-      if (past.length === 0 && upcoming.length > 0) derivedStatus = 'baru';
-
-      const services = servicesByClient.get(c.id) ?? [];
-      return {
-        id: cb.id,
-        name: cb.name,
-        gender: cb.gender,
-        age: cb.age ?? null,
-        category: (cb.category ?? null) as string | null,
-        phoneWa: cb.phoneWa,
-        medicalRecordNumber: cb.medicalRecordNumber ?? null,
-        preferredServiceType: cb.preferredServiceType ?? null,
-        services,
-        serviceIds: services.map((s) => s.id),
-        email: cb.email ?? null,
-        address: cb.address ?? null,
-        notes: cb.notes ?? null,
-        waOptedOut: cb.waOptedOut,
-        isActive: cb.isActive,
-        createdAt: cb.createdAt,
-        updatedAt: cb.updatedAt,
-        derivedStatus,
-        totalBookings,
-        lastSession: last
-          ? {
-              date: last.scheduledStart,
-              serviceName: last.service?.name ?? null,
-              psikologName: last.psikolog?.fullName ?? last.psikolog?.email ?? null,
-            }
-          : null,
-        nextSession: next
-          ? {
-              date: next.scheduledStart,
-              serviceName: next.service?.name ?? null,
-              psikologName: next.psikolog?.fullName ?? next.psikolog?.email ?? null,
-            }
-          : null,
-        currentService,
-      };
-    });
   }
 }
