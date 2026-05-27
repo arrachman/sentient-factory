@@ -36,13 +36,16 @@ import {
 
 type Loader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: string }[]; total: number }>;
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-border px-5 py-3 first:border-t-0">
-      <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-[var(--fg-subtle)]">
-        {title}
-      </h4>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-0">{children}</div>
+    <section className="border-t border-border first:border-t-0">
+      <header className="flex items-baseline gap-2 bg-[var(--panel-2)] px-5 py-1.5">
+        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-foreground">
+          {title}
+        </h4>
+        {hint && <span className="text-[11px] text-[var(--fg-subtle)]">— {hint}</span>}
+      </header>
+      <div className="grid grid-cols-2 gap-x-6 gap-y-0 px-5 py-3">{children}</div>
     </section>
   );
 }
@@ -82,9 +85,9 @@ function NumField(props: { id: string; label: string; value: string; onChange: (
   );
 }
 
-function YesNoField(props: { id: string; label: string; value: boolean; onChange: (v: boolean) => void }) {
+function YesNoField(props: { id: string; label: string; value: boolean; onChange: (v: boolean) => void; help?: string }) {
   return (
-    <FormField label={props.label} htmlFor={props.id}>
+    <FormField label={props.label} htmlFor={props.id} help={props.help}>
       <BooleanRadio id={props.id} value={props.value} onValueChange={props.onChange} trueLabel="Ya" falseLabel="Tidak" />
     </FormField>
   );
@@ -110,11 +113,11 @@ export function ItemFormFields({
         <FormField label="Status" htmlFor="if-active">
           <BooleanRadio id="if-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
         </FormField>
-        <YesNoField id="if-special" label="Spesial" value={data.isSpecial} onChange={(v) => set('isSpecial', v)} />
+        <YesNoField id="if-special" label="Spesial" value={data.isSpecial} onChange={(v) => set('isSpecial', v)} help="Item khusus, tidak masuk laporan reguler" />
       </Section>
 
-      <Section title="Klasifikasi">
-        <FormField label="Tipe" htmlFor="if-type" required>
+      <Section title="Klasifikasi" hint="Tipe menentukan field yang muncul di bawah">
+        <FormField label="Tipe" htmlFor="if-type" required help="INVENTORY/CONSUMABLE/ASSET = stok fisik. SERVICE = jasa. NON_INVENTORY = non-stok.">
           <Select value={data.itemType} onValueChange={(v) => set('itemType', v)}>
             <SelectTrigger id="if-type"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -122,7 +125,7 @@ export function ItemFormFields({
             </SelectContent>
           </Select>
         </FormField>
-        <FormField label="Metode HPP" htmlFor="if-hpp" required>
+        <FormField label="Metode HPP" htmlFor="if-hpp" required help="Rumus penghitungan harga pokok saat keluar stok">
           <Select value={data.costMethod} onValueChange={(v) => set('costMethod', v)}>
             <SelectTrigger id="if-hpp"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -160,13 +163,13 @@ export function ItemFormFields({
         <NumField id="if-stdcost" label="Harga Standar" value={data.standardCost} onChange={(v) => set('standardCost', v)} />
         <NumField id="if-buy" label="Harga Beli" value={data.purchasePrice} onChange={(v) => set('purchasePrice', v)} />
         <NumField id="if-sell" label="Harga Jual" value={data.salePrice} onChange={(v) => set('salePrice', v)} />
-        <FormField label="Harga berlaku s.d" htmlFor="if-valid">
+        <FormField label="Harga berlaku s.d" htmlFor="if-valid" help="Setelah tanggal ini, harga jual perlu di-review">
           <Input id="if-valid" type="date" value={data.validUntil} onChange={(e) => set('validUntil', e.target.value)} />
         </FormField>
       </Section>
 
       <Section title="Pajak">
-        <YesNoField id="if-vat" label="BKP (Kena PPN)" value={data.isVatable} onChange={(v) => set('isVatable', v)} />
+        <YesNoField id="if-vat" label="BKP (Kena PPN)" value={data.isVatable} onChange={(v) => set('isVatable', v)} help="Kena PPN saat transaksi beli/jual" />
         <LookupField id="if-buytax" label="Pajak Beli" value={data.purchaseTaxId} onPick={(v) => set('purchaseTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.purchaseTaxLabel} />
         <LookupField id="if-selltax" label="Pajak Jual" value={data.saleTaxId} onPick={(v) => set('saleTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.saleTaxLabel} />
       </Section>

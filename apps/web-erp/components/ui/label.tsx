@@ -6,7 +6,9 @@ import { cn } from '@/lib/utils';
 
 /**
  * Form label. Mirrors prototype `.field label` (muted, 12px). Set
- * `required` to render the danger asterisk (`.field label .req`).
+ * `required` to render the danger asterisk + emphasize the label text
+ * (semibold + foreground color) so users can scan required vs optional
+ * at a glance.
  */
 export const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
@@ -17,7 +19,8 @@ export const Label = React.forwardRef<
   <LabelPrimitive.Root
     ref={ref}
     className={cn(
-      'text-xs font-normal text-muted-foreground peer-disabled:cursor-not-allowed peer-disabled:opacity-45',
+      'text-xs peer-disabled:cursor-not-allowed peer-disabled:opacity-45',
+      required ? 'font-semibold text-foreground' : 'font-normal text-muted-foreground',
       className,
     )}
     {...props}
