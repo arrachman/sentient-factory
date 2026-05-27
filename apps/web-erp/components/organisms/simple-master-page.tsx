@@ -20,6 +20,8 @@ import {
   type RowActionItem,
 } from '@/components/molecules/row-actions-menu';
 import { FormErrorSummary } from '@/components/molecules/form-error-summary';
+import { BulkActionBar } from '@/components/molecules/bulk-action-bar';
+import { AuditModal } from '@/components/molecules/audit-modal';
 import {
   Modal,
   ModalContent,
@@ -52,7 +54,6 @@ import { validateForm, hasErrors, type FormErrors, type FieldRule } from '@/lib/
 import { tGlobal } from '@/lib/mock';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
-import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
 import type { PaginatedResponse, PaginationParams } from '@/lib/api/types';
 
 export interface BaseEntity {
@@ -218,7 +219,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
     onToggle: (i) => toggleRow(paged[i].id), onOpen: (i) => openEdit(paged[i]),
   };
 
-  const handleSave = async () => {
+  const handleSave = async (keepOpen = false) => {
     if (validate) {
       const errors = validate(form);
       if (hasErrors(errors)) {
@@ -235,7 +236,16 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
     try {
       if (editing) { await update(editing.id, toPayload(form)); notify(`${tGlobal(title)} ${tGlobal('diperbarui')}`, 'success'); }
       else { await create(toPayload(form)); notify(`${tGlobal(title)} ${tGlobal('dibuat')}`, 'success'); }
-      setOpen(false); reload();
+      if (keepOpen && !editing) {
+        setForm(defaultForm());
+        setTimeout(() => {
+          const el = document.querySelector<HTMLElement>('[role="dialog"] input:not([type="hidden"]):not([disabled])');
+          el?.focus();
+        }, 0);
+      } else {
+        setOpen(false);
+      }
+      reload();
     } catch (e: unknown) { notify(e instanceof Error ? e.message : tGlobal('Gagal menyimpan'), 'danger'); }
     finally { setSaving(false); }
   };
@@ -352,18 +362,13 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
         </div>
       </ErpListLayout>
 
-      {selectedIds.size > 0 && (
-        <div className="bulk-bar">
-          <span className="count">{selectedIds.size} {tGlobal('baris dipilih')}</span>
-          <div className="divider" />
-          <button className="ba-btn" onClick={() => handleBulkStatus(true)}>{tGlobal('Aktifkan')}</button>
-          <button className="ba-btn" onClick={() => handleBulkStatus(false)}>{tGlobal('Nonaktifkan')}</button>
-          <div className="divider" />
-          <button className="ba-btn danger" onClick={handleBulkDelete}>{tGlobal('Hapus')}</button>
-          <div className="divider" />
-          <button className="ba-btn" onClick={() => setSelectedIds(new Set())}>{tGlobal('Batal')}</button>
-        </div>
-      )}
+      <BulkActionBar
+        count={selectedIds.size}
+        onActivate={() => handleBulkStatus(true)}
+        onDeactivate={() => handleBulkStatus(false)}
+        onDelete={handleBulkDelete}
+        onCancel={() => setSelectedIds(new Set())}
+      />
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent size={modalSize}>
@@ -372,27 +377,19 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
           <FormFields data={form} onChange={setForm} errors={formErrors} />
           <ModalFooter>
             <button className="btn ghost" onClick={() => setOpen(false)}>{tGlobal('Batal')}</button>
-            <button className="btn primary" onClick={handleSave} disabled={saving}>
+            {!editing && (
+              <button className="btn ghost" onClick={() => handleSave(true)} disabled={saving} title="Ctrl+Enter">
+                {tGlobal('Simpan & Tambah Baru')}
+              </button>
+            )}
+            <button className="btn primary" onClick={() => handleSave(false)} disabled={saving} title="Ctrl+S">
               {saving ? tGlobal('Menyimpan...') : tGlobal('Simpan')}
             </button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
-      <Modal open={!!auditTarget} onOpenChange={(v) => { if (!v) setAuditTarget(null); }}>
-        <ModalContent size="lg">
-          <ModalHeader>
-            <ModalTitle>
-              {tGlobal('Riwayat Perubahan')} — {auditTarget?.code} {auditTarget?.name}
-            </ModalTitle>
-          </ModalHeader>
-          <div style={{ padding: '0', maxHeight: '60vh', overflowY: 'auto' }}>
-            {auditTarget && (
-              <AuditHistoryPanel entityName={auditEntityName} entityId={auditTarget.id} />
-            )}
-          </div>
-        </ModalContent>
-      </Modal>
+      <AuditModal target={auditTarget} onClose={() => setAuditTarget(null)} entityName={auditEntityName} />
     </>
   );
 }
