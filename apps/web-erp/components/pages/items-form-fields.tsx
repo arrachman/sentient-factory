@@ -17,6 +17,7 @@ import { BooleanRadio } from '@/components/ui/radio-group';
 import { SearchSelect } from '@/components/molecules/search-select';
 import type { FormErrors } from '@/lib/form-validation';
 import type { ErpItemType } from '@/lib/api/items';
+import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generator';
 import type { ItemFormData } from './items-form';
 import { ITEM_TYPES, COST_METHODS } from './items-form';
 
@@ -98,11 +99,33 @@ export function ItemFormFields({
 }: { data: ItemFormData; onChange: (d: ItemFormData) => void; errors?: FormErrors<ItemFormData> }) {
   const set = (k: keyof ItemFormData, v: string | boolean) => onChange({ ...data, [k]: v });
 
+  const [generating, setGenerating] = React.useState(false);
+  const handleAutoCode = async () => {
+    setGenerating(true);
+    try {
+      const next = await generateNextItemCode(data.itemType);
+      set('code', next);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="overflow-y-auto" style={{ maxHeight: 'calc(86vh - 120px)' }}>
       <Section title="Identitas">
         <FormField label="Kode" htmlFor="if-code" required error={errors.code}>
-          <Input id="if-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="ITM-001" aria-invalid={!!errors.code} />
+          <div className="flex w-full items-center gap-1.5">
+            <Input id="if-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={nextCodePreview(data.itemType)} aria-invalid={!!errors.code} />
+            <button
+              type="button"
+              onClick={handleAutoCode}
+              disabled={generating}
+              className="shrink-0 rounded-[var(--radius)] border border-border bg-[var(--panel-2)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--panel-hover)] disabled:opacity-50"
+              title={`Isi otomatis dengan urutan berikutnya (${nextCodePreview(data.itemType)})`}
+            >
+              {generating ? '…' : 'Auto'}
+            </button>
+          </div>
         </FormField>
         <FormField label="Nama" htmlFor="if-name" required error={errors.name}>
           <Input id="if-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Baja Plat 2mm" aria-invalid={!!errors.name} />
