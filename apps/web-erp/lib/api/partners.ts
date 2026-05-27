@@ -12,6 +12,12 @@ export interface ListPartnersParams extends PaginationParams {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface ErpPartnerAccountRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface ErpPartner {
   id: string;
   code: string;
@@ -22,6 +28,10 @@ export interface ErpPartner {
   isSalesman: boolean;
   taxNumber?: string | null;
   isTaxable: boolean;
+  receivableAccountId?: string | null;
+  payableAccountId?: string | null;
+  receivableAccount?: ErpPartnerAccountRef | null;
+  payableAccount?: ErpPartnerAccountRef | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -36,6 +46,8 @@ export interface CreatePartnerPayload {
   isSalesman?: boolean;
   taxNumber?: string;
   isTaxable?: boolean;
+  receivableAccountId?: string | null;
+  payableAccountId?: string | null;
   isActive?: boolean;
 }
 
@@ -48,6 +60,8 @@ export interface UpdatePartnerPayload {
   isSalesman?: boolean;
   taxNumber?: string;
   isTaxable?: boolean;
+  receivableAccountId?: string | null;
+  payableAccountId?: string | null;
   isActive?: boolean;
 }
 

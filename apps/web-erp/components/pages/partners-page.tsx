@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { SearchSelect } from '@/components/molecules/search-select';
 import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
 import {
   listPartners,
@@ -28,7 +29,34 @@ import {
   type ErpPartner,
   type CreatePartnerPayload,
 } from '@/lib/api/partners';
+import { listAccounts, type ErpAccountType } from '@/lib/api/accounts';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
+
+const accountOptionLoader = (accountType: ErpAccountType) =>
+  async (search: string, page: number, limit: number) => {
+    const res = await listAccounts({
+      page,
+      limit,
+      search: search || undefined,
+      accountType,
+      accountKind: 'POSTABLE',
+      isActive: true,
+    });
+    return {
+      data: res.data.map((a) => ({
+        value: a.id,
+        label: a.name,
+        code: a.code,
+      })),
+      total: res.meta.total,
+    };
+  };
+
+const loadReceivableAccounts = accountOptionLoader('ASSET');
+const loadPayableAccounts = accountOptionLoader('LIABILITY');
+
+const accountLabel = (acct?: { code: string; name: string } | null) =>
+  acct ? `${acct.code} — ${acct.name}` : '';
 
 // ─── Partner type helpers ─────────────────────────────────────────────────────
 
@@ -56,6 +84,10 @@ interface PartnerForm {
   name: string;
   partnerType: PartnerTypeKey;
   taxNumber: string;
+  receivableAccountId: string;
+  receivableAccountLabel: string;
+  payableAccountId: string;
+  payableAccountLabel: string;
   isActive: boolean;
 }
 
@@ -64,6 +96,10 @@ const defaultForm = (): PartnerForm => ({
   name: '',
   partnerType: 'CUSTOMER',
   taxNumber: '',
+  receivableAccountId: '',
+  receivableAccountLabel: '',
+  payableAccountId: '',
+  payableAccountLabel: '',
   isActive: true,
 });
 
@@ -72,6 +108,10 @@ const fromRecord = (p: ErpPartner): PartnerForm => ({
   name: p.name,
   partnerType: resolvePartnerType(p),
   taxNumber: p.taxNumber ?? '',
+  receivableAccountId: p.receivableAccountId ?? '',
+  receivableAccountLabel: accountLabel(p.receivableAccount),
+  payableAccountId: p.payableAccountId ?? '',
+  payableAccountLabel: accountLabel(p.payableAccount),
   isActive: p.isActive,
 });
 
@@ -82,6 +122,8 @@ const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   isSupplier: f.partnerType === 'SUPPLIER' || f.partnerType === 'BOTH',
   isSalesman: f.partnerType === 'SALESMAN',
   taxNumber: f.taxNumber || undefined,
+  receivableAccountId: f.receivableAccountId || null,
+  payableAccountId: f.payableAccountId || null,
   isActive: f.isActive,
 });
 
@@ -102,6 +144,11 @@ function PartnerFormFields({
 }) {
   const set = (k: keyof PartnerForm, v: string | boolean) =>
     onChange({ ...data, [k]: v });
+
+  const showCustomerFields =
+    data.partnerType === 'CUSTOMER' || data.partnerType === 'BOTH';
+  const showSupplierFields =
+    data.partnerType === 'SUPPLIER' || data.partnerType === 'BOTH';
 
   return (
     <div className="p-4">
@@ -147,6 +194,32 @@ function PartnerFormFields({
           placeholder="01.234.567.8-901.000"
         />
       </FormField>
+      {showCustomerFields && (
+        <FormField label="Akun Piutang (AR)" htmlFor="pf-recv-acct">
+          <SearchSelect
+            id="pf-recv-acct"
+            value={data.receivableAccountId}
+            onValueChange={(v) => set('receivableAccountId', v)}
+            placeholder="Cari akun piutang…"
+            loadOptions={loadReceivableAccounts}
+            initialLabel={data.receivableAccountLabel}
+            title="Akun Piutang"
+          />
+        </FormField>
+      )}
+      {showSupplierFields && (
+        <FormField label="Akun Hutang (AP)" htmlFor="pf-pay-acct">
+          <SearchSelect
+            id="pf-pay-acct"
+            value={data.payableAccountId}
+            onValueChange={(v) => set('payableAccountId', v)}
+            placeholder="Cari akun hutang…"
+            loadOptions={loadPayableAccounts}
+            initialLabel={data.payableAccountLabel}
+            title="Akun Hutang"
+          />
+        </FormField>
+      )}
       <FormField label="Status" htmlFor="pf-active">
         <BooleanRadio
           id="pf-active"

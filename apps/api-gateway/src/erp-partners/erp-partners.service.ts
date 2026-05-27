@@ -32,6 +32,8 @@ export class ErpPartnersService {
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
     const categoryBigInt = dto.categoryId ? BigInt(dto.categoryId) : null;
+    const receivableBigInt = dto.receivableAccountId ? BigInt(dto.receivableAccountId) : null;
+    const payableBigInt = dto.payableAccountId ? BigInt(dto.payableAccountId) : null;
 
     let created;
     try {
@@ -45,6 +47,8 @@ export class ErpPartnersService {
           isSalesman: dto.isSalesman ?? false,
           taxNumber: dto.taxNumber,
           isTaxable: dto.isTaxable ?? false,
+          receivableAccountId: receivableBigInt,
+          payableAccountId: payableBigInt,
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
@@ -101,7 +105,11 @@ export class ErpPartnersService {
         orderBy: [{ [sortBy]: sortDir }],
         skip,
         take: limit,
-        include: { category: { select: { id: true, code: true, name: true, kind: true } } },
+        include: {
+          category: { select: { id: true, code: true, name: true, kind: true } },
+          receivableAccount: { select: { id: true, code: true, name: true } },
+          payableAccount: { select: { id: true, code: true, name: true } },
+        },
       }),
       this.prisma.erpPartner.count({ where }),
     ]);
@@ -123,6 +131,8 @@ export class ErpPartnersService {
       where: { id, deletedAt: null },
       include: {
         category: { select: { id: true, code: true, name: true, kind: true } },
+        receivableAccount: { select: { id: true, code: true, name: true } },
+        payableAccount: { select: { id: true, code: true, name: true } },
         addresses: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
         contacts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
         bankAccounts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
@@ -163,6 +173,18 @@ export class ErpPartnersService {
           ? BigInt(dto.categoryId)
           : null
         : undefined;
+    const receivableBigInt =
+      dto.receivableAccountId !== undefined
+        ? dto.receivableAccountId
+          ? BigInt(dto.receivableAccountId)
+          : null
+        : undefined;
+    const payableBigInt =
+      dto.payableAccountId !== undefined
+        ? dto.payableAccountId
+          ? BigInt(dto.payableAccountId)
+          : null
+        : undefined;
 
     let updated;
     try {
@@ -177,6 +199,8 @@ export class ErpPartnersService {
           isSalesman: dto.isSalesman,
           taxNumber: dto.taxNumber,
           isTaxable: dto.isTaxable,
+          receivableAccountId: receivableBigInt,
+          payableAccountId: payableBigInt,
           isActive: dto.isActive,
           updatedById: actorBigInt,
         },
