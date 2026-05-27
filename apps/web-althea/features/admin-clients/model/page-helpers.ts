@@ -15,7 +15,7 @@ export const EMPTY_CLIENT: CreateClientInput = {
   category: undefined,
   phoneWa: '+62',
   medicalRecordNumber: '',
-  preferredServiceType: '',
+  serviceIds: [],
   email: '',
   address: '',
   notes: '',
@@ -35,7 +35,6 @@ export function sanitizeClientPayload(form: CreateClientInput): CreateClientInpu
     ...form,
     email: trim(form.email),
     medicalRecordNumber: trim(form.medicalRecordNumber),
-    preferredServiceType: trim(form.preferredServiceType),
     address: trim(form.address),
     notes: trim(form.notes),
   };

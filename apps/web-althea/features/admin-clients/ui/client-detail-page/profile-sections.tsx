@@ -38,6 +38,26 @@ export function ContactSection({ sel }: { sel: ClientDetail }) {
   );
 }
 
+export function ServicesSection({ sel }: { sel: ClientDetail }) {
+  const services = sel.services ?? [];
+  if (services.length === 0) return null;
+  return (
+    <section className="flex flex-col gap-2">
+      <SectionLabel>Layanan terdaftar</SectionLabel>
+      <div className="flex flex-wrap gap-1.5">
+        {services.map((sv) => (
+          <span
+            key={sv.id}
+            className="px-2.5 py-1 rounded-full text-xs font-medium bg-sage-50 text-sage-700 border border-sage-200"
+          >
+            {sv.name}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function CurrentServiceSection({ sel }: { sel: ClientDetail }) {
   if (!sel.currentService) return null;
   const cs = sel.currentService;

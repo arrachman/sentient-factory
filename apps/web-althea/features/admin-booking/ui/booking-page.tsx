@@ -7,6 +7,7 @@ import {
   Eye,
   Play,
   Plus,
+  Replace,
   RotateCw,
   Search,
   X,
@@ -89,6 +90,7 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
   const [detailing, setDetailing] = useState<Booking | null>(null);
+  const [editing, setEditing] = useState<Booking | null>(null);
 
   const effectiveDate =
     quickFilter === 'today' || quickFilter === 'tomorrow'
@@ -319,6 +321,16 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
                         <RotateCw className="h-3.5 w-3.5" /> Reschedule
                       </button>
                     )}
+                    {b.status === 'checked_in' && (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(b)}
+                        className="btn btn-sm btn-outline"
+                        title="Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute otomatis"
+                      >
+                        <Replace className="h-3.5 w-3.5" /> Ubah Layanan
+                      </button>
+                    )}
                     {nextActions(b.status).map((act) => {
                       const icon =
                         act === 'in_progress' ? (
@@ -366,6 +378,11 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
       </div>
 
       <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
+      <BookingWizard
+        open={!!editing}
+        editingBooking={editing}
+        onClose={() => setEditing(null)}
+      />
       <RescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} />
       <BookingDetailDialog booking={detailing} onClose={() => setDetailing(null)} />
     </div>

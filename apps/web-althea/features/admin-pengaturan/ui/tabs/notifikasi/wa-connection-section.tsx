@@ -1,9 +1,13 @@
+'use client';
+
 import Link from 'next/link';
-import { RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import { RefreshCw, Smartphone } from 'lucide-react';
 import type { UpdateSettingsInput } from '../../../api/settings.api';
 import { FieldRow } from '../../shared/field-row';
 import { Toggle } from '../../shared/toggle';
 import { useWaDeviceStatus } from '../../../hooks/use-wa-device-status';
+import { WaDevicePairingDrawer } from './wa-device-pairing-drawer';
 
 /**
  * Bagian "Koneksi WhatsApp" + master toggle "Aktifkan kirim WA".
@@ -22,6 +26,7 @@ export function WaConnectionSection({
   showNotifWaLink?: boolean;
 }) {
   const { data: deviceStatus, isLoading, refetch } = useWaDeviceStatus();
+  const [pairingOpen, setPairingOpen] = useState(false);
 
   const displayNumber =
     form.waSenderNumber && form.waSenderNumber.trim() !== ''
@@ -109,19 +114,38 @@ export function WaConnectionSection({
             </span>
           )}
 
-          {showNotifWaLink && (
-            <Link
-              href="/admin/notif-wa"
-              className="caption"
+          <div className="flex items-center gap-3 flex-wrap" style={{ marginTop: 2 }}>
+            <button
+              type="button"
+              onClick={() => setPairingOpen(true)}
+              className="btn btn-ghost btn-sm"
               style={{
-                color: 'var(--sage-700)',
-                cursor: 'pointer',
                 fontSize: 11.5,
+                padding: '6px 10px',
+                color: 'var(--sage-700)',
+                borderRadius: 6,
+                border: '1px solid var(--sage-200)',
+                background: '#fff',
               }}
             >
-              Buka halaman Notifikasi WA · Log & template untuk edit isi pesan →
-            </Link>
-          )}
+              <Smartphone size={12} />
+              {deviceStatus?.devicePhone ? 'Ganti device WA' : 'Tambah device WA'}
+            </button>
+
+            {showNotifWaLink && (
+              <Link
+                href="/admin/notif-wa"
+                className="caption"
+                style={{
+                  color: 'var(--sage-700)',
+                  cursor: 'pointer',
+                  fontSize: 11.5,
+                }}
+              >
+                Buka halaman Notifikasi WA · Log & template untuk edit isi pesan →
+              </Link>
+            )}
+          </div>
         </div>
       </FieldRow>
 
@@ -135,6 +159,14 @@ export function WaConnectionSection({
           onChange={(v) => set('waSendEnabled', v)}
         />
       </FieldRow>
+
+      <WaDevicePairingDrawer
+        open={pairingOpen}
+        onClose={() => {
+          setPairingOpen(false);
+          refetch();
+        }}
+      />
     </>
   );
 }

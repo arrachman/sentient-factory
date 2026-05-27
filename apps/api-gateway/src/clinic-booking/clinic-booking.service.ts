@@ -9,6 +9,7 @@ import {
   CancelBookingDto,
   CreateBookingDto,
   CreatePackageBookingDto,
+  EditBookingDto,
   QueryBookingDto,
   RescheduleBookingDto,
   UpdateBookingDto,
@@ -69,6 +70,10 @@ export class ClinicBookingService {
 
   reschedule(id: number, dto: RescheduleBookingDto, actorId?: number) {
     return this.transitionsService.reschedule(id, dto, actorId);
+  }
+
+  editBooking(id: number, dto: EditBookingDto, actorId?: number) {
+    return this.transitionsService.editBooking(id, dto, actorId);
   }
 
   // Notes

@@ -23,6 +23,7 @@ import {
   CancelBookingDto,
   CreateBookingDto,
   CreatePackageBookingDto,
+  EditBookingDto,
   QueryBookingDto,
   RescheduleBookingDto,
   UpdateBookingDto,
@@ -120,6 +121,26 @@ export class ClinicBookingController {
     @Request() req: AuthRequest,
   ) {
     return this.service.reschedule(id, dto, req.user?.sub ?? req.user?.id);
+  }
+
+  @Post(':id/edit')
+  @Roles(...WRITE_ROLES)
+  @AuditAction('edit')
+  @ApiOperation({
+    summary: 'Ubah booking via wizard (hanya status checked_in, atomic full edit)',
+    description:
+      'Update service / scheduledStart / scheduledEnd / psikolog / room / notes ' +
+      'sekaligus dalam satu transaksi. Full validation: psikolog handle service ' +
+      '(junction), slotMatch (overrides per-layanan), no-conflict (exclude self). ' +
+      'Riwayat reschedule auto-write kalau jadwal/psikolog/room berubah. Payment ' +
+      'auto-recompute kalau service berubah. Tidak fan-out WA — admin action silent.',
+  })
+  editBooking(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: EditBookingDto,
+    @Request() req: AuthRequest,
+  ) {
+    return this.service.editBooking(id, dto, req.user?.sub ?? req.user?.id);
   }
 
   @Post(':id/note')

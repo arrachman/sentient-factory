@@ -6,6 +6,38 @@ Format: per-tanggal (WIB), grouped by slice/area. Setiap entry mencantumkan comm
 
 ---
 
+## 2026-05-27
+
+### WA device pairing — admin bisa ganti nomor pengirim in-app
+
+Sebelumnya: ganti nomor Fonnte = edit `FONNTE_API_TOKEN` di Vault + render `.env` + restart container. Sekarang: admin pair lewat UI tanpa edit env.
+
+- **`feat(api-gateway/clinic-settings)`** — kolom baru `ClinicSettings.waActiveDeviceToken: String?` (migration `20260527_001_clinic_settings_wa_active_device_token`). Plaintext storage; risk OK untuk klinik internal.
+- **`feat(api-gateway/clinic-settings)`** — endpoint admin baru di `/clinic/settings/wa-devices`: `GET` (list), `POST` (addDevice), `POST /qr` (ambil QR base64), `POST /activate` (set active sender + auto disconnect+delete device lama), `DELETE /:devicePhone` (hapus device dari akun). Semua proxy Fonnte account-level via env baru `FONNTE_ACCOUNT_TOKEN`. DTO: `CreateWaDeviceDto`, `WaDeviceQrDto`, `ActivateWaDeviceDto`.
+- **`refactor(api-gateway/clinic-wa)`** — `FonnteProvider` inject `ClinicSettingsService`, baca token aktif via `getActiveDeviceToken()` per-send: DB `waActiveDeviceToken` priority > env `FONNTE_API_TOKEN` fallback. `ClinicWaModule.WA_PROVIDER` factory sekarang aktifkan FonnteProvider kalau salah satu dari `FONNTE_API_TOKEN`/`FONNTE_ACCOUNT_TOKEN` ada.
+- **`feat(web-althea/admin-pengaturan)`** — `WaDevicePairingDrawer` 3-step (form nama+nomor → scan QR poll tiap 4 detik → tombol Aktifkan). Tombol "Tambah / Ganti device WA" di `WaConnectionSection` (drawer & tab pengaturan). API client + hooks baru di `features/admin-pengaturan/{api,hooks}`. Tidak pakai QR library — Fonnte balas QR sebagai data URL PNG, cukup `<img>`.
+- **Doc**: section "WA device pairing — ganti nomor pengirim in-app" baru di `apps/web-althea/CLAUDE.md` (catat priority resolver, env var baru, Fonnte Free 1-device limit, security note plaintext token).
+- **Konsekuensi ops**: butuh set `FONNTE_ACCOUNT_TOKEN` di Vault `api-gateway/FONNTE_ACCOUNT_TOKEN` supaya endpoint pairing jalan. Tanpa token → endpoint balas `503` dengan pesan minta config dulu.
+
+---
+
+## 2026-05-26
+
+### Booking — fitur "Ubah Booking" via wizard mode saat status check-in
+
+Pivoted dari pendekatan awal (dialog `change-service` terpisah) ke **reuse BookingWizard dalam edit mode** — admin minta UX seragam dengan "Booking Baru" tapi mulai dari step 2 (Layanan), klien terkunci.
+
+- **`feat(api-gateway/clinic-booking)`** — endpoint baru `POST /clinic/booking/:id/edit` di `BookingTransitionsService.editBooking` (atomic). DTO `EditBookingDto` (semua field optional, fallback ke existing). Validasi penuh: `assertEntitiesExist` → psikolog handle service baru via junction → `assertSlotMatch(start, end, serviceId)` (hormati `slotOverrides` per-layanan) → `assertNoRoomConflict` + `assertNoConflict` exclude diri sendiri. Status guard: `checked_in` only. `@AuditAction('edit')` interceptor.
+- **`feat(api-gateway/clinic-booking)`** — riwayat reschedule auto-write kalau `scheduledStart/End` atau `psikologUserId` atau `roomId` berubah; field `from/to` extended dengan `serviceId` dan `source: 'edit-wizard'`. Service change saja (tanpa schedule shift) tidak tulis history — cukup audit log.
+- **`feat(api-gateway/clinic-payment)`** — recompute total/tax/dp otomatis kalau service berubah. `paidAmount` tetap (jejak akuntansi). Status re-derive: `paid>=total → lunas`, `paid>=dp → dp_paid`, else `pending`. Stamp `dpPaidAt`/`lunasAt` di-reset kalau status turun, di-set baru kalau status naik & stamp lama null.
+- **`feat(web-althea/admin-booking)`** — `BookingWizard` extended dengan prop `editingBooking?: Booking`. `useWizardState` seed initial state dari booking, derive `slotIdx` dari `scheduledStart` (TZ klinik) setelah `slots` ter-resolve. `useWizardSessions` skip auto-expand jadi N rows di edit mode. `isMulti` selalu `false` di edit mode. `useWizardMutations` tambah `editMut` (call `/booking/:id/edit`). Header: "Ubah Booking #N", step 1 (Klien) di-render sebagai info banner terkunci, auto-scroll ke step 2 saat dialog open. Submit button: "Simpan Perubahan".
+- **`feat(web-althea/admin-booking)`** — tombol **Ubah** (icon `Replace`) di `booking-page.tsx` (kolom Aksi) + `client-bookings-section.tsx` (BookingRow), muncul hanya saat `b.status === 'checked_in'`. Kedua tempat render `<BookingWizard editingBooking={x} />`.
+- **`refactor(web-althea/admin-booking)`** — hapus `change-service-dialog.tsx` (sudah obsolete), hapus `useChangeService` hook & `bookingApi.changeService` (replaced oleh `editBooking` API + `useEditBooking` di hooks). `EditBookingDialog` lama (untuk status non-`checked_in`) tetap dipertahankan untuk edit notes pasca-completed — beda surface, beda scope.
+- **Schema**: tidak ada perubahan Prisma — semua field existing (`serviceId`, `scheduledStart/End`, `psikologUserId`, `roomId`, `rescheduleHistory`, `clinic_payment.*`) sudah cukup.
+- **Doc**: ganti section "Ubah Layanan saat check-in" → "Ubah Booking via wizard mode saat check-in" di `apps/web-althea/CLAUDE.md`.
+
+---
+
 ## 2026-05-19
 
 ### Owner Trend "Distribusi sesi per slot" — fix selalu 0 (TZ + boundary)

@@ -6,7 +6,7 @@
  * Aksi per-baris: Detail (read-only dialog) & Edit (form edit terpadu).
  */
 import { useMemo, useState } from 'react';
-import { CalendarClock, Eye, Pencil } from 'lucide-react';
+import { CalendarClock, Eye, Pencil, Replace } from 'lucide-react';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import {
   BOOKING_STATUSES,
@@ -16,6 +16,7 @@ import {
   type BookingStatus,
 } from '@/features/admin-booking/model/types';
 import { BookingDetailDialog } from '@/features/admin-booking/ui/booking-detail-dialog';
+import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
 import { EditBookingDialog } from '@/features/admin-booking/ui/edit-booking-dialog';
 
 type Filter = 'semua' | BookingStatus;
@@ -35,6 +36,7 @@ export function ClientBookingsSection({ clientId }: { clientId: number }) {
   const [filter, setFilter] = useState<Filter>('semua');
   const [detail, setDetail] = useState<Booking | null>(null);
   const [editing, setEditing] = useState<Booking | null>(null);
+  const [wizardEdit, setWizardEdit] = useState<Booking | null>(null);
 
   const list = useBookingList({ clientId, includeCancelled: true, limit: 200 });
 
@@ -97,6 +99,7 @@ export function ClientBookingsSection({ clientId }: { clientId: number }) {
                 booking={b}
                 onDetail={() => setDetail(b)}
                 onEdit={() => setEditing(b)}
+                onWizardEdit={() => setWizardEdit(b)}
               />
             ))}
           </div>
@@ -105,6 +108,11 @@ export function ClientBookingsSection({ clientId }: { clientId: number }) {
 
       {detail && <BookingDetailDialog booking={detail} onClose={() => setDetail(null)} />}
       {editing && <EditBookingDialog booking={editing} onClose={() => setEditing(null)} />}
+      <BookingWizard
+        open={!!wizardEdit}
+        editingBooking={wizardEdit}
+        onClose={() => setWizardEdit(null)}
+      />
     </section>
   );
 }
@@ -140,10 +148,12 @@ function BookingRow({
   booking: b,
   onDetail,
   onEdit,
+  onWizardEdit,
 }: {
   booking: Booking;
   onDetail: () => void;
   onEdit: () => void;
+  onWizardEdit: () => void;
 }) {
   const psikolog = b.psikolog.fullName || b.psikolog.email;
   return (
@@ -185,6 +195,17 @@ function BookingRow({
         >
           <Pencil className="h-3.5 w-3.5" /> Edit
         </button>
+        {b.status === 'checked_in' && (
+          <button
+            type="button"
+            onClick={onWizardEdit}
+            className="btn btn-outline btn-sm"
+            aria-label={`Ubah layanan booking #${b.id}`}
+            title="Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute"
+          >
+            <Replace className="h-3.5 w-3.5" /> Ubah Layanan
+          </button>
+        )}
       </div>
     </div>
   );

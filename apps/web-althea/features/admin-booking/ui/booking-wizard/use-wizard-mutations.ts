@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { apiClient, ApiError } from '@/lib/api-client';
+import { bookingApi } from '../../api/booking.api';
 
 interface UseWizardMutationsParams {
   onClose: () => void;
@@ -77,5 +78,25 @@ export function useWizardMutations({ onClose, qc }: UseWizardMutationsParams) {
     },
   });
 
-  return { createSingleMut, createPackageMut };
+  const editMut = useMutation({
+    mutationFn: ({ id, input }: { id: number; input: Parameters<typeof bookingApi.editBooking>[1] }) =>
+      bookingApi.editBooking(id, input),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['clinic', 'booking'] });
+      toast.success(res.message ?? `Booking #${res.data.id} diperbarui`);
+      onClose();
+    },
+    onError: (err: Error) => {
+      if (err instanceof ApiError && err.status === 409) {
+        const body = err.body as { conflictType?: string; conflictBookingId?: number };
+        toast.error(`Conflict: ${body?.conflictType ?? 'unknown'}`, {
+          description: `Booking #${body?.conflictBookingId} bertabrakan. Pilih slot, psikolog, atau ruangan lain.`,
+        });
+        return;
+      }
+      toast.error('Gagal ubah booking', { description: err.message });
+    },
+  });
+
+  return { createSingleMut, createPackageMut, editMut };
 }

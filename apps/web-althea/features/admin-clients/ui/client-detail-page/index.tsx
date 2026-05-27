@@ -16,6 +16,7 @@ import {
   CurrentServiceSection,
   NextSessionSection,
   NotesSection,
+  ServicesSection,
   WaOptedOutBanner,
 } from './profile-sections';
 import { ClientBookingsSection } from './client-bookings-section';
@@ -28,7 +29,7 @@ function toFormInput(c: Client): CreateClientInput {
     category: c.category ?? undefined,
     phoneWa: c.phoneWa,
     medicalRecordNumber: c.medicalRecordNumber ?? '',
-    preferredServiceType: c.preferredServiceType ?? '',
+    serviceIds: c.serviceIds ?? [],
     email: c.email ?? '',
     address: c.address ?? '',
     notes: c.notes ?? '',
@@ -86,7 +87,6 @@ export function ClientDetailPage({
       ...form,
       email: form.email?.trim() || undefined,
       medicalRecordNumber: form.medicalRecordNumber?.trim() || undefined,
-      preferredServiceType: form.preferredServiceType?.trim() || undefined,
       address: form.address?.trim() || undefined,
       notes: form.notes?.trim() || undefined,
     };
@@ -116,6 +116,7 @@ export function ClientDetailPage({
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <div className="flex flex-col gap-5">
           <ContactSection sel={sel} />
+          <ServicesSection sel={sel} />
           {sel.currentService ? <CurrentServiceSection sel={sel} /> : null}
           {sel.nextSession ? <NextSessionSection sel={sel} /> : null}
           {sel.notes ? <NotesSection notes={sel.notes} /> : null}

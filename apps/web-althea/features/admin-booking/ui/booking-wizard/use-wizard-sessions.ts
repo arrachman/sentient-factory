@@ -8,6 +8,8 @@ interface UseWizardSessionsParams {
   selectedService: { sessionCount?: number | null } | undefined;
   s: WizardState;
   setS: React.Dispatch<React.SetStateAction<WizardState>>;
+  /** Edit mode: skip auto-expand jadi N rows — kita selalu edit satu booking. */
+  isEditMode?: boolean;
 }
 
 /**
@@ -20,24 +22,27 @@ export function useWizardSessions({
   selectedService,
   s,
   setS,
+  isEditMode,
 }: UseWizardSessionsParams) {
   // Saat service berubah → sinkronkan jumlah sesi dengan service.sessionCount.
   // Sesi 1 default H+1, sesi 2..N = sesi 1 + i * intervalDays. Reset semua slot.
+  // Edit mode selalu single-session (edit 1 booking saja), bahkan kalau service
+  // baru sessionCount>1 → admin perlu create paket baru kalau mau, bukan via edit.
   useEffect(() => {
     if (!selectedService) return;
-    const count = Math.max(1, selectedService.sessionCount ?? 1);
+    const count = isEditMode ? 1 : Math.max(1, selectedService.sessionCount ?? 1);
     setS((prev) => {
       const base = prev.sessions[0]?.date ?? tomorrowDateStr();
       const nextSessions: WizardSession[] = Array.from(
         { length: count },
         (_, i) => ({
           date: i === 0 ? base : addDays(base, i * prev.intervalDays),
-          slotIdx: null,
+          slotIdx: isEditMode && i === 0 ? (prev.sessions[0]?.slotIdx ?? null) : null,
         }),
       );
       return { ...prev, sessions: nextSessions };
     });
-  }, [selectedService, setS]);
+  }, [selectedService, setS, isEditMode]);
 
   const reapplyInterval = useCallback(() => {
     setS((prev) => {
