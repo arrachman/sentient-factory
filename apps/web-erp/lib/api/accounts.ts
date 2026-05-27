@@ -1,7 +1,7 @@
 // ERP Account resource API — CRUD for md_accounts (Chart of Accounts)
 // Endpoints: /accounts. Hierarchy via parentId (flat list, no /tree route).
 
-import { apiGet, apiPost, apiPatch, apiDelete } from './client';
+import { apiGet, apiPost, apiPatch, apiPut, apiDelete } from './client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
 // ─── Enums (from CreateErpAccountDto / Prisma) ─────────────────────────────────
@@ -131,4 +131,32 @@ export async function bulkDeleteAccounts(
     { ids },
   );
   return { affected: res.affected };
+}
+
+// ─── Account code format (sys_settings group "account-code") ──────────────────
+
+export interface AccountCodeFormat {
+  segments: number[];
+  separator: string;
+  patternSource: string;
+  maxLength: number;
+  example: string;
+  accountCount: number;
+  locked: boolean;
+}
+
+export async function getAccountCodeFormat(): Promise<AccountCodeFormat> {
+  const res = await apiGet<ApiResponse<AccountCodeFormat>>('/accounts/code-format');
+  return res.data;
+}
+
+export async function updateAccountCodeFormat(
+  segments: number[],
+  separator: string,
+): Promise<Omit<AccountCodeFormat, 'accountCount' | 'locked'>> {
+  const res = await apiPut<ApiResponse<Omit<AccountCodeFormat, 'accountCount' | 'locked'>>>(
+    '/accounts/code-format',
+    { segments, separator },
+  );
+  return res.data;
 }

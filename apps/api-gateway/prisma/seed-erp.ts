@@ -105,6 +105,9 @@ async function seedSettings() {
     { module: 'system', group: 'approval', key: 'require_so_approval', name: 'Persetujuan SO', value: 'false', dataType: 'boolean' },
     { module: 'system', group: 'approval', key: 'auto_approve_below', name: 'Auto Approve di Bawah (Rp)', value: '0', dataType: 'number' },
     { module: 'system', group: 'approval', key: 'approval_levels', name: 'Tingkat Persetujuan', value: '1', dataType: 'number' },
+    // account-code (CoA format — diakses lewat halaman dedicated /admin/account-code-format)
+    { module: 'system', group: 'account-code', key: 'account_code_segments', name: 'Segmen Kode Akun', value: '[4,2,3]', dataType: 'json' },
+    { module: 'system', group: 'account-code', key: 'account_code_separator', name: 'Pemisah Segmen Kode Akun', value: '.', dataType: 'string' },
   ];
   for (const s of settings) {
     await prisma.erpSetting.upsert({
@@ -374,6 +377,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
   await upsertItems([
     { code: 'M0.SYS.MENUS',       title: 'Menu Manager',        path: '/admin/menus',               legacyCode: '0-9'  },
     { code: 'M0.SYS.SETTINGS',    title: 'Settings Manager',    path: '/admin/settings',            legacyCode: '0-11' },
+    { code: 'M0.SYS.ACCT-CODE',   title: 'Account Code Format', path: '/admin/account-code-format'                   },
     { code: 'M0.SYS.DOCNUM',      title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
     { code: 'M0.SYS.FISCAL',      title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
     { code: 'M0.SYS.AUDIT',       title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },

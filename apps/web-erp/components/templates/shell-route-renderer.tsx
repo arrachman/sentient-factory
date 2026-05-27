@@ -108,6 +108,7 @@ import { ErpRepostJournalPage } from '@/components/pages/tools-repost-journal-pa
 import { ErpDataValidityPage } from '@/components/pages/tools-data-validity-page';
 // Settings sub-pages + Import
 import { SettingsGroupPage } from '@/components/pages/settings-group-page';
+import { AccountCodeFormatPage } from '@/components/pages/account-code-format-page';
 import { ErpImportPage } from '@/components/pages/import-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 
@@ -137,6 +138,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/settings/options': () => <SettingsGroupPage group="options" title="Opsi Lanjutan" />,
   '/admin/settings/home': () => <SettingsGroupPage group="home" title="Pengaturan Beranda" />,
   '/admin/settings/approval': () => <SettingsGroupPage group="approval" title="Pengaturan Persetujuan" />,
+  '/admin/account-code-format': () => <AccountCodeFormatPage />,
   // ── Import ────────────────────────────────────────────────────────────────
   '/admin/import': () => <ErpImportPage />,
   // ── Admin (sys/adm) ───────────────────────────────────────────────────────

@@ -24,9 +24,11 @@ import {
   ACCOUNT_KINDS,
   NORMAL_BALANCES,
   CASH_FLOW_CATEGORIES,
+  getAccountCodeFormat,
   listAccounts,
 } from '@/lib/api/accounts';
 import type {
+  AccountCodeFormat,
   ErpAccountType,
   ErpAccountKind,
   ErpNormalBalance,
@@ -110,11 +112,74 @@ async function loadParentOptions(
   };
 }
 
-export const validateAccount = (form: AccountFormData) =>
-  validateForm(form, [
-    { field: 'code', label: 'Kode', required: true },
+const FALLBACK_FORMAT: AccountCodeFormat = {
+  segments: [4, 2, 3],
+  separator: '.',
+  patternSource: '^\\d{4}\\.\\d{2}\\.\\d{3}$',
+  maxLength: 11,
+  example: '1101.01.001',
+  accountCount: 0,
+  locked: false,
+};
+
+let cachedFormat: AccountCodeFormat | null = null;
+let inflightFormat: Promise<AccountCodeFormat> | null = null;
+
+async function loadAccountCodeFormat(): Promise<AccountCodeFormat> {
+  if (cachedFormat) return cachedFormat;
+  if (inflightFormat) return inflightFormat;
+  inflightFormat = getAccountCodeFormat()
+    .then((f) => {
+      cachedFormat = f;
+      return f;
+    })
+    .catch(() => FALLBACK_FORMAT)
+    .finally(() => {
+      inflightFormat = null;
+    });
+  return inflightFormat;
+}
+
+export function invalidateAccountCodeFormatCache() {
+  cachedFormat = null;
+}
+
+function useAccountCodeFormat(): AccountCodeFormat {
+  const [format, setFormat] = React.useState<AccountCodeFormat>(
+    cachedFormat ?? FALLBACK_FORMAT,
+  );
+  React.useEffect(() => {
+    let cancelled = false;
+    void loadAccountCodeFormat().then((f) => {
+      if (!cancelled) setFormat(f);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return format;
+}
+
+function formatLayoutLabel(f: AccountCodeFormat): string {
+  return f.segments.join(f.separator || ' ');
+}
+
+export const validateAccount = (form: AccountFormData) => {
+  const fmt = cachedFormat ?? FALLBACK_FORMAT;
+  const regex = new RegExp(fmt.patternSource);
+  return validateForm(form, [
+    {
+      field: 'code',
+      label: 'Kode',
+      required: true,
+      validate: (value) =>
+        typeof value === 'string' && !regex.test(value)
+          ? `Format wajib ${formatLayoutLabel(fmt)} (contoh: ${fmt.example})`
+          : undefined,
+    },
     { field: 'name', label: 'Nama', required: true },
   ]);
+};
 
 export function AccountFormFields({
   data,
@@ -127,11 +192,19 @@ export function AccountFormFields({
 }) {
   const set = (k: keyof AccountFormData, v: string | boolean) =>
     onChange({ ...data, [k]: v });
+  const format = useAccountCodeFormat();
+  const layoutLabel = formatLayoutLabel(format);
 
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="ac-code" required error={errors.code}>
-        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1-1001" aria-invalid={!!errors.code} />
+      <FormField
+        label="Kode"
+        htmlFor="ac-code"
+        required
+        error={errors.code}
+        help={`Format ${layoutLabel} (contoh: ${format.example})`}
+      >
+        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={format.example} aria-invalid={!!errors.code} maxLength={format.maxLength} />
       </FormField>
       <FormField label="Nama" htmlFor="ac-name" required error={errors.name}>
         <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" aria-invalid={!!errors.name} />

@@ -790,6 +790,39 @@ header MyERP+ "Barang". Field katalog otoritatif = `db-design/entities-m1-master
 - **Deferred** (belum di form): price tiers 2–10, tab Atribut multi-varian,
   distributor multi-supplier. Item Information tetap halaman 1:1 terpisah (§2.21).
 
+### 2.24 Format kode akun CoA = dinamis dari `sys_settings` (2026-05-27)
+
+Format `md_accounts.code` **tidak** lagi hard-locked ke `NNNN.NN.NNN` (#43
+db-design). Pakai 2 setting global di `sys_settings` group `account-code`:
+
+- `account_code_segments` (JSON array int, mis. `[4,2,3]` / `[5]` / `[7]` / `[6,3]`) — panjang tiap segmen.
+- `account_code_separator` (string: `.` / `-` / `/` / `""` tanpa pemisah).
+
+**Backend SSOT** = `apps/api-gateway/src/erp-accounts/account-code-format.ts`:
+`buildAccountCodeFormat(segments, separator)` → `{pattern, maxLength, example}`.
+`ErpAccountsService.create()`/`update()` baca setting + `validateAccountCode()`
+sebelum insert. DTO `CreateErpAccountDto` hanya `@MaxLength(30)` (tidak ada
+`@Matches`). Endpoint: `GET /erp/accounts/code-format` (segments, separator,
+patternSource, maxLength, example, accountCount, locked) + `PUT /erp/accounts/code-format`
+(409 ConflictException bila `md_accounts.count > 0` — **lock-after-data**).
+
+**Frontend:**
+- `components/pages/accounts-form.tsx` cache format module-level + hook
+  `useAccountCodeFormat()`; `validateAccount` baca cache; `AccountFormFields`
+  pakai `maxLength`/`placeholder`/`example` dari format aktif.
+- Halaman dedicated `/admin/account-code-format`
+  (`account-code-format-page.tsx` + molecule `account-code-format-presets.tsx`)
+  di group `M0.SYS` (Administrator → System) — segments editor (1–5 segmen
+  × 1–12 digit), separator picker, preset cepat (PSAK 4-2-3, flat 5/6/7,
+  4-3, 4-3-3, legacy 6-3), preview live, lock card saat ada akun. Setelah
+  PUT sukses → `invalidateAccountCodeFormatCache()` supaya form refresh.
+
+**Saat onboarding klien dengan CoA legacy berbeda**: admin Senti pilih
+format di `/admin/account-code-format` **sebelum** import CoA / jalankan
+`seed-erp-accounts.ts`. Default seed tetap PSAK 4-2-3 — klien yang OK
+dengan PSAK tinggal pakai. Ganti format setelah ada akun → tolak 409;
+harus hapus semua akun dulu (out of scope MVP: tool migrasi rename code).
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)

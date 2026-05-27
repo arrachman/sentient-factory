@@ -1,18 +1,135 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
+import {
+  AccountCodeFormat,
+  buildAccountCodeFormat,
+  parseSegments,
+  parseSeparator,
+  validateAccountCode,
+} from './account-code-format';
 import { BulkErpAccountDto, BulkStatusErpAccountDto } from './dto/bulk-erp-account.dto';
 import { CreateErpAccountDto } from './dto/create-erp-account.dto';
 import { QueryErpAccountDto } from './dto/query-erp-account.dto';
 import { UpdateErpAccountDto } from './dto/update-erp-account.dto';
 
+const SETTING_GROUP = 'account-code';
+const KEY_SEGMENTS = 'account_code_segments';
+const KEY_SEPARATOR = 'account_code_separator';
+
 @Injectable()
 export class ErpAccountsService {
   constructor(private prisma: PrismaService) {}
 
+  async getCodeFormat(): Promise<{
+    segments: number[];
+    separator: string;
+    patternSource: string;
+    maxLength: number;
+    example: string;
+    accountCount: number;
+    locked: boolean;
+  }> {
+    const format = await this.loadFormat();
+    const accountCount = await this.prisma.erpAccount.count({
+      where: { deletedAt: null },
+    });
+    return {
+      segments: format.segments,
+      separator: format.separator,
+      patternSource: format.patternSource,
+      maxLength: format.maxLength,
+      example: format.example,
+      accountCount,
+      locked: accountCount > 0,
+    };
+  }
+
+  async updateCodeFormat(
+    segments: number[],
+    separator: string,
+    actorId?: string,
+  ): Promise<{
+    segments: number[];
+    separator: string;
+    patternSource: string;
+    maxLength: number;
+    example: string;
+  }> {
+    const accountCount = await this.prisma.erpAccount.count({
+      where: { deletedAt: null },
+    });
+    if (accountCount > 0) {
+      throw new ConflictException(
+        `Format kode akun tidak bisa diubah: sudah ada ${accountCount} akun. Hapus semua akun dulu untuk reset format.`,
+      );
+    }
+    const format = buildAccountCodeFormat(
+      parseSegments(JSON.stringify(segments)),
+      parseSeparator(separator),
+    );
+    const updatedById = toAuditUserId(actorId);
+    const writes: Array<{ key: string; value: string; name: string }> = [
+      {
+        key: KEY_SEGMENTS,
+        value: JSON.stringify(format.segments),
+        name: 'Segmen Kode Akun',
+      },
+      {
+        key: KEY_SEPARATOR,
+        value: format.separator,
+        name: 'Pemisah Segmen Kode Akun',
+      },
+    ];
+    for (const w of writes) {
+      await this.prisma.erpSetting.upsert({
+        where: {
+          module_group_key: {
+            module: 'system',
+            group: SETTING_GROUP,
+            key: w.key,
+          },
+        },
+        create: {
+          module: 'system',
+          group: SETTING_GROUP,
+          key: w.key,
+          name: w.name,
+          value: w.value,
+          dataType: w.key === KEY_SEGMENTS ? 'json' : 'string',
+        },
+        update: { value: w.value, updatedById },
+      });
+    }
+    return {
+      segments: format.segments,
+      separator: format.separator,
+      patternSource: format.patternSource,
+      maxLength: format.maxLength,
+      example: format.example,
+    };
+  }
+
+  private async loadFormat(): Promise<AccountCodeFormat> {
+    const rows = await this.prisma.erpSetting.findMany({
+      where: {
+        group: SETTING_GROUP,
+        key: { in: [KEY_SEGMENTS, KEY_SEPARATOR] },
+        deletedAt: null,
+      },
+    });
+    const map = new Map(rows.map((r) => [r.key, r.value]));
+    const segments = parseSegments(map.get(KEY_SEGMENTS));
+    const separator = parseSeparator(map.get(KEY_SEPARATOR));
+    return buildAccountCodeFormat(segments, separator);
+  }
+
   async create(dto: CreateErpAccountDto, actorId?: string) {
+    const format = await this.loadFormat();
+    validateAccountCode(dto.code, format);
+
     const existing = await this.prisma.erpAccount.findFirst({
       where: { code: dto.code },
       select: { id: true, deletedAt: true },
@@ -132,6 +249,8 @@ export class ErpAccountsService {
     }
 
     if (dto.code && dto.code !== existing.code) {
+      const format = await this.loadFormat();
+      validateAccountCode(dto.code, format);
       const duplicate = await this.prisma.erpAccount.findFirst({
         where: { code: dto.code, NOT: { id } },
         select: { id: true, deletedAt: true },
@@ -157,8 +276,14 @@ export class ErpAccountsService {
           kind: dto.accountKind,
           normalBalance: dto.normalBalance,
           cashFlowCategory: dto.cashFlowCategory,
-          parentId: dto.parentId !== undefined ? (dto.parentId ? BigInt(dto.parentId) : null) : undefined,
-          currencyId: dto.currencyId !== undefined ? (dto.currencyId ? BigInt(dto.currencyId) : null) : undefined,
+          parentId:
+            dto.parentId !== undefined ? (dto.parentId ? BigInt(dto.parentId) : null) : undefined,
+          currencyId:
+            dto.currencyId !== undefined
+              ? dto.currencyId
+                ? BigInt(dto.currencyId)
+                : null
+              : undefined,
           level: dto.level,
           isActive: dto.isActive,
           isControlAccount: dto.isControlAccount,

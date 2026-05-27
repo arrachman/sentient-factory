@@ -1,12 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsEnum,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
 import {
   ErpAccountType,
   ErpAccountKind,
@@ -15,9 +8,13 @@ import {
 } from '@prisma/client';
 
 export class CreateErpAccountDto {
-  @ApiProperty({ example: '1-1001', description: 'Unique account code' })
+  @ApiProperty({
+    example: '1101.01.001',
+    description:
+      'Unique account code. Format dinamis dari sys_settings group "account-code" (segments + separator); default 4-2-3 (NNNN.NN.NNN). Validasi runtime di service.',
+  })
   @IsString()
-  @MaxLength(50)
+  @MaxLength(30)
   code!: string;
 
   @ApiProperty({ example: 'Cash on Hand' })

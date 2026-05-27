@@ -204,6 +204,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/admin/tools/repost-journal': { group: 'Administrator', title: 'Repost Journals', icon: 'gear' },
   '/admin/tools/data-validity': { group: 'Administrator', title: 'Data Validity Check', icon: 'gear' },
   '/admin/preferences': { group: 'Administrator', title: 'Preferensi', icon: 'gear' },
+  '/admin/account-code-format': { group: 'Administrator', title: 'Account Code Format', icon: 'calculator' },
   '/master/branches': { group: 'Data Master', title: 'Branch', icon: 'database' },
   '/master/locations': { group: 'Data Master', title: 'Location', icon: 'database' },
   '/master/warehouses': { group: 'Data Master', title: 'Warehouse', icon: 'database' },
