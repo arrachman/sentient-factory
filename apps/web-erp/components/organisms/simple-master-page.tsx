@@ -211,6 +211,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
 
   const openCreate = () => { setEditing(null); setForm(defaultForm()); setFormErrors({}); setOpen(true); };
   const openEdit = (row: T) => { setEditing(row); setForm(fromRecord(row)); setFormErrors({}); setOpen(true); };
+  const openDuplicate = (row: T) => { setEditing(null); setForm({ ...fromRecord(row), code: '' } as F); setFormErrors({}); setOpen(true); };
 
   const keyboardCfg: KeyboardRowConfig = {
     rowCount: paged.length, focusedIndex, onFocusChange: setFocusedIndex,
@@ -265,8 +266,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
 
   const selectedArr = Array.from(selectedIds);
   const handleBulkStatus = (isActive: boolean) => {
-    const actionLabel = tGlobal(isActive ? 'Aktifkan' : 'Nonaktifkan');
-    const doneLabel = tGlobal(isActive ? 'diaktifkan' : 'dinonaktifkan');
+    const actionLabel = tGlobal(isActive ? 'Aktifkan' : 'Nonaktifkan'); const doneLabel = tGlobal(isActive ? 'diaktifkan' : 'dinonaktifkan');
     confirmAction({
       title: `${actionLabel} ${selectedArr.length} ${entityT}?`,
       message: `${tGlobal('Semua')} ${entityT} ${tGlobal('yang dipilih akan')} ${doneLabel}.`,
@@ -339,6 +339,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
               ) : paged.map((row, idx) => {
                 const rowActions: RowActionItem[] = [
                   { label: tGlobal('Edit'), onSelect: () => openEdit(row) },
+                  { label: tGlobal('Duplikat'), onSelect: () => openDuplicate(row) },
                   { label: tGlobal('Riwayat'), onSelect: () => setAuditTarget(row) },
                   { label: tGlobal('Hapus'), onSelect: () => handleDelete(row), danger: true, separatorBefore: true },
                 ];
