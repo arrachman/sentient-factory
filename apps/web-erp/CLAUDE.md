@@ -823,6 +823,91 @@ format di `/admin/account-code-format` **sebelum** import CoA / jalankan
 dengan PSAK tinggal pakai. Ganti format setelah ada akun → tolak 409;
 harus hapus semua akun dulu (out of scope MVP: tool migrasi rename code).
 
+### 2.25 Item master form redesign — quick-add + side-nav (2026-05-27)
+
+Lanjutan §2.23. Form item kini punya **2 mode entri** dan layout berbeda
+per mode. Keputusan ini berlaku **khusus form item** — masih sectioned
+2-kolom kompak, namun layout level-form berubah.
+
+**Mode entri:**
+- **Cepat** — default saat tambah item baru (`data.code === ''`). Hanya
+  section Identitas + Klasifikasi (~7-8 field wajib). Layout scroll.
+- **Lengkap** — default saat edit. Semua section, **side-nav 200px di
+  kiri** + content section aktif di kanan. Section conditional (Inventory
+  & Tracking) hanya muncul saat `isStockable(itemType)`. Dot merah di
+  nav item menandakan section dgn error validasi.
+
+Toggle Cepat/Lengkap di top form (pill segmented). User bebas switch
+tanpa kehilangan state form. Modal pakai `size="xl"` (1100px) supaya
+side-nav + content tidak crowded.
+
+**Section grouping (9 section):**
+Identitas · Klasifikasi · Inventory & Tracking (conditional) · Harga ·
+Pajak · Akuntansi · Dimensi GL · Supplier · Catatan. Restructure dari
+7 section lama (§2.23) yang campur identitas dengan satuan, dan Akun
+GL dengan Dimensi/Supplier.
+
+**Conditional disclosure per itemType:**
+- `INVENTORY/CONSUMABLE/ASSET` → tampilkan Inventory & Tracking
+- `SERVICE/NON_INVENTORY` → sembunyikan Inventory & Tracking
+- `SERVICE` → sembunyikan juga Berat (kg)
+- `tracksBatch=Ya` → munculkan Kategori Umur (intra-section)
+
+**Smart features:**
+- Tombol **Auto** di samping field Kode → fetch item dgn prefix
+  matching itemType (ITM-/SVC-/CNS-/AST-/NIN-), generate sequence
+  berikutnya client-side. Helper di `lib/items-code-generator.ts`.
+  Bukan transactional — `sys_document_numberings` endpoint
+  ditangguhkan sampai BE-nya dibuat.
+- **Duplikat** di row kebab menu → buka modal create dgn prefill,
+  kode dikosongkan supaya user isi baru. Berlaku untuk semua master
+  ERP (SimpleMasterPage), tidak hanya item.
+
+**SimpleMasterPage enhancement (universal):**
+Berlaku untuk **semua** halaman master ERP yang pakai
+`SimpleMasterPage`, bukan items-only:
+- **Validation summary banner** di top modal saat client-side validasi
+  gagal — list 5 error pertama + count. Komponen
+  `components/molecules/form-error-summary.tsx`.
+- **Footer multi-save**: tombol "Simpan & Tambah Baru" muncul di create
+  mode (selain "Simpan"). Save → reset form → auto-focus → modal tetap
+  buka untuk batch entry.
+- **Keyboard shortcuts**: Ctrl/Cmd+S = Simpan, Ctrl/Cmd+Enter = Simpan
+  & Tambah Baru (create mode). Hook `lib/use-modal-shortcuts.ts`.
+- **Row action Duplikat** di kebab + right-click menu (urutan: Edit →
+  Duplikat → Riwayat → Hapus).
+- `modalSize` prop diperluas: `'md' | 'lg' | 'xl'` (560/900/1100px).
+
+**UX polish (item form):**
+- Section header: bg `var(--panel-2)` muted + padding (bukan caps
+  tipis tanpa bg). Tambah prop `hint` untuk one-liner di sebelah judul.
+- Required label: semibold + foreground color (bukan muted) di atom
+  `Label` — berlaku universal untuk semua form ERP, tidak hanya item.
+  Optional label tetap regular muted.
+- Helper text untuk field ambigu: Spesial, Tipe, Metode HPP, BKP,
+  Harga berlaku s.d.
+- Placeholder lookup field: "Cari xxx…" → "Pilih xxx…" (verb action
+  konsisten dgn pattern dropdown).
+- Field "Berlaku s.d" → "Harga berlaku s.d" + helper text agar
+  konteks (masa berlaku harga, bukan masa berlaku item) jelas.
+
+**Atomic refactor pendukung:**
+- `components/molecules/form-error-summary.tsx` — molecule baru
+- `components/molecules/bulk-action-bar.tsx` — extract dari organism
+- `components/molecules/audit-modal.tsx` — extract dari organism
+- `components/pages/items-form-parts.tsx` — helper Section/Lookup/
+  Num/YesNo + visibility rules untuk items-form-fields
+- `lib/use-modal-shortcuts.ts` — hook keyboard shortcuts reusable
+- `lib/items-code-generator.ts` — generator client-side auto-code
+
+**Konsekuensi vibe coding:**
+- Membuat form master baru dgn banyak field (>20)? Pertimbangkan
+  pattern Cepat/Lengkap + side-nav layout. Pola sudah ada di items;
+  bisa di-port ke entitas lain bila kebutuhannya sama.
+- Membuat row action baru di list? Reuse pola Edit → Duplikat →
+  Riwayat → (sep) → Hapus di kebab menu. Tambah aksi entitas-spesifik
+  di antara Duplikat dan Riwayat.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
