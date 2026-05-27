@@ -110,9 +110,19 @@ async function loadParentOptions(
   };
 }
 
+const ACCOUNT_CODE_PATTERN = /^\d{4}\.\d{2}\.\d{3}$/;
+
 export const validateAccount = (form: AccountFormData) =>
   validateForm(form, [
-    { field: 'code', label: 'Kode', required: true },
+    {
+      field: 'code',
+      label: 'Kode',
+      required: true,
+      validate: (value) =>
+        typeof value === 'string' && !ACCOUNT_CODE_PATTERN.test(value)
+          ? 'Format wajib NNNN.NN.NNN (contoh: 1101.01.001)'
+          : undefined,
+    },
     { field: 'name', label: 'Nama', required: true },
   ]);
 
@@ -131,7 +141,7 @@ export function AccountFormFields({
   return (
     <div className="p-4">
       <FormField label="Kode" htmlFor="ac-code" required error={errors.code}>
-        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1-1001" aria-invalid={!!errors.code} />
+        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1101.01.001" aria-invalid={!!errors.code} maxLength={11} />
       </FormField>
       <FormField label="Nama" htmlFor="ac-name" required error={errors.name}>
         <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" aria-invalid={!!errors.name} />
