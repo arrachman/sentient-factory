@@ -99,41 +99,11 @@ export class ClinicSettingsService {
     if (dto.emailWeeklyRecap !== undefined) data.emailWeeklyRecap = dto.emailWeeklyRecap;
     if (dto.emailMonthlyPsikolog !== undefined) data.emailMonthlyPsikolog = dto.emailMonthlyPsikolog;
 
-    // Pengingat sesi otomatis
-    if (dto.notifConfirmKlien !== undefined) data.notifConfirmKlien = dto.notifConfirmKlien;
-    if (dto.notifConfirmPsikolog !== undefined) data.notifConfirmPsikolog = dto.notifConfirmPsikolog;
-    if (dto.notifH1Klien !== undefined) data.notifH1Klien = dto.notifH1Klien;
+    // Notifikasi — timing/delay setting. Recipient routing pindah ke
+    // ClinicWaTemplate.recipients (lihat /clinic/wa/template).
     if (dto.notifH1SendTime !== undefined) data.notifH1SendTime = dto.notifH1SendTime;
-    if (dto.notifM30Klien !== undefined) data.notifM30Klien = dto.notifM30Klien;
-    if (dto.notifFollowupKlien !== undefined) data.notifFollowupKlien = dto.notifFollowupKlien;
     if (dto.notifFollowupDelayHours !== undefined) data.notifFollowupDelayHours = dto.notifFollowupDelayHours;
-    if (dto.notifFeedbackKlien !== undefined) data.notifFeedbackKlien = dto.notifFeedbackKlien;
     if (dto.notifFeedbackSendTime !== undefined) data.notifFeedbackSendTime = dto.notifFeedbackSendTime;
-    if (dto.notifSesiLanjutanKlien !== undefined) data.notifSesiLanjutanKlien = dto.notifSesiLanjutanKlien;
-    if (dto.notifSesiLanjutanDays !== undefined) data.notifSesiLanjutanDays = dto.notifSesiLanjutanDays;
-    if (dto.notifPaketHabisKlien !== undefined) data.notifPaketHabisKlien = dto.notifPaketHabisKlien;
-    if (dto.notifMingguKosongPsikolog !== undefined) data.notifMingguKosongPsikolog = dto.notifMingguKosongPsikolog;
-    if (dto.notifMingguKosongDaysBefore !== undefined) data.notifMingguKosongDaysBefore = dto.notifMingguKosongDaysBefore;
-    if (dto.notifMingguKosongThreshold !== undefined) data.notifMingguKosongThreshold = dto.notifMingguKosongThreshold;
-
-    // Perubahan jadwal
-    if (dto.notifRescheduleKlien !== undefined) data.notifRescheduleKlien = dto.notifRescheduleKlien;
-    if (dto.notifReschedulePsikolog !== undefined) data.notifReschedulePsikolog = dto.notifReschedulePsikolog;
-    if (dto.notifCancelKlien !== undefined) data.notifCancelKlien = dto.notifCancelKlien;
-    if (dto.notifCancelPsikolog !== undefined) data.notifCancelPsikolog = dto.notifCancelPsikolog;
-    if (dto.notifUbahRuanganKlien !== undefined) data.notifUbahRuanganKlien = dto.notifUbahRuanganKlien;
-    if (dto.notifUbahRuanganPsikolog !== undefined) data.notifUbahRuanganPsikolog = dto.notifUbahRuanganPsikolog;
-    if (dto.notifUbahLayananKlien !== undefined) data.notifUbahLayananKlien = dto.notifUbahLayananKlien;
-    if (dto.notifUbahLayananPsikolog !== undefined) data.notifUbahLayananPsikolog = dto.notifUbahLayananPsikolog;
-
-    // Onboarding & pembayaran
-    if (dto.notifWelcomeKlien !== undefined) data.notifWelcomeKlien = dto.notifWelcomeKlien;
-    if (dto.notifWelcomePsikolog !== undefined) data.notifWelcomePsikolog = dto.notifWelcomePsikolog;
-    if (dto.notifInviteStaff !== undefined) data.notifInviteStaff = dto.notifInviteStaff;
-    if (dto.notifOtpUser !== undefined) data.notifOtpUser = dto.notifOtpUser;
-    if (dto.notifDpKlien !== undefined) data.notifDpKlien = dto.notifDpKlien;
-    if (dto.notifBuktiPembayaranKlien !== undefined) data.notifBuktiPembayaranKlien = dto.notifBuktiPembayaranKlien;
-    if (dto.notifPelunasanKlien !== undefined) data.notifPelunasanKlien = dto.notifPelunasanKlien;
 
     const updated = await this.prisma.clinicSettings.upsert({
       where: { id: SETTINGS_ID },
