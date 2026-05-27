@@ -241,7 +241,9 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
 
   const handleIconMouseDown = (e: React.MouseEvent) => {
     e.preventDefault(); // keep input focused, avoid blur
-    openModal(isMulti ? '' : inputText);
+    // Buka dengan query kosong kecuali user sudah mengetik sesuatu yang berbeda dari display
+    const typedQuery = !isMulti && inputText !== displayLabel ? inputText : '';
+    openModal(isMulti ? '' : typedQuery);
   };
 
   const focusNext = () => {
@@ -258,7 +260,8 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const handleSingleKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'F12' || (e.key === 'F12' && (e.metaKey || e.ctrlKey))) {
       e.preventDefault();
-      openModal(inputText);
+      // Buka dengan query kosong kecuali user sudah mengetik sesuatu yang berbeda dari display
+      openModal(inputText !== displayLabel ? inputText : '');
       return;
     }
     if (e.key !== 'Enter') return;
