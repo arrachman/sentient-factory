@@ -16,8 +16,17 @@ import {
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { SearchSelect } from '@/components/molecules/search-select';
 import type { FormErrors } from '@/lib/form-validation';
+import type { ErpItemType } from '@/lib/api/items';
 import type { ItemFormData } from './items-form';
 import { ITEM_TYPES, COST_METHODS } from './items-form';
+
+// Visibility rules per item type — sembunyikan field yang tidak relevan.
+// INVENTORY/CONSUMABLE/ASSET = barang fisik → tampilkan stok & tracking.
+// SERVICE = jasa, tanpa fisik → sembunyikan stok/tracking & berat.
+// NON_INVENTORY = barang non-stok (mis. fee, biaya) → sembunyikan stok/tracking.
+const isStockable = (t: ErpItemType) =>
+  t === 'INVENTORY' || t === 'CONSUMABLE' || t === 'ASSET';
+const showsWeight = (t: ErpItemType) => t !== 'SERVICE';
 import {
   loadCategoryOptions, loadUnitOptions, loadKindOptions, loadProductClassOptions,
   loadDivisionOptions, loadSubDivisionOptions, loadDepartmentOptions, loadSubDepartmentOptions,
@@ -125,21 +134,27 @@ export function ItemFormFields({
             </SelectContent>
           </Select>
         </FormField>
-        <NumField id="if-weight" label="Berat (kg)" value={data.weight} onChange={(v) => set('weight', v)} />
+        {showsWeight(data.itemType) && (
+          <NumField id="if-weight" label="Berat (kg)" value={data.weight} onChange={(v) => set('weight', v)} />
+        )}
       </Section>
 
-      <Section title="Stok & Tracking">
-        <NumField id="if-minstock" label="Stok Min" value={data.minStock} onChange={(v) => set('minStock', v)} />
-        <NumField id="if-maxstock" label="Stok Maks" value={data.maxStock} onChange={(v) => set('maxStock', v)} />
-        <NumField id="if-reorder" label="Jumlah Reorder" value={data.reorderQty} onChange={(v) => set('reorderQty', v)} />
-        <NumField id="if-minorder" label="Min Order" value={data.minOrderQty} onChange={(v) => set('minOrderQty', v)} />
-        <YesNoField id="if-serial" label="Serial No." value={data.tracksSerial} onChange={(v) => set('tracksSerial', v)} />
-        <YesNoField id="if-batch" label="Batch / Lot" value={data.tracksBatch} onChange={(v) => set('tracksBatch', v)} />
-        <YesNoField id="if-bin" label="Bin / Rak" value={data.tracksBin} onChange={(v) => set('tracksBin', v)} />
-        <FormField label="Kategori Umur" htmlFor="if-age">
-          <Input id="if-age" value={data.ageCategory} onChange={(e) => set('ageCategory', e.target.value)} placeholder="Opsional" />
-        </FormField>
-      </Section>
+      {isStockable(data.itemType) && (
+        <Section title="Stok & Tracking">
+          <NumField id="if-minstock" label="Stok Min" value={data.minStock} onChange={(v) => set('minStock', v)} />
+          <NumField id="if-maxstock" label="Stok Maks" value={data.maxStock} onChange={(v) => set('maxStock', v)} />
+          <NumField id="if-reorder" label="Jumlah Reorder" value={data.reorderQty} onChange={(v) => set('reorderQty', v)} />
+          <NumField id="if-minorder" label="Min Order" value={data.minOrderQty} onChange={(v) => set('minOrderQty', v)} />
+          <YesNoField id="if-serial" label="Serial No." value={data.tracksSerial} onChange={(v) => set('tracksSerial', v)} />
+          <YesNoField id="if-batch" label="Batch / Lot" value={data.tracksBatch} onChange={(v) => set('tracksBatch', v)} />
+          <YesNoField id="if-bin" label="Bin / Rak" value={data.tracksBin} onChange={(v) => set('tracksBin', v)} />
+          {data.tracksBatch && (
+            <FormField label="Kategori Umur" htmlFor="if-age">
+              <Input id="if-age" value={data.ageCategory} onChange={(e) => set('ageCategory', e.target.value)} placeholder="mis. FIFO 30 hari" />
+            </FormField>
+          )}
+        </Section>
+      )}
 
       <Section title="Harga & Pajak">
         <NumField id="if-stdcost" label="Harga Standar" value={data.standardCost} onChange={(v) => set('standardCost', v)} />
