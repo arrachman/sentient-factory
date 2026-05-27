@@ -54,6 +54,7 @@ import { validateForm, hasErrors, type FormErrors, type FieldRule } from '@/lib/
 import { tGlobal } from '@/lib/mock';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
+import { useModalShortcuts } from '@/lib/use-modal-shortcuts';
 import type { PaginatedResponse, PaginationParams } from '@/lib/api/types';
 
 export interface BaseEntity {
@@ -150,10 +151,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
   };
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search);
-  React.useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
+  React.useEffect(() => { const t = setTimeout(() => setDebouncedSearch(search), 300); return () => clearTimeout(t); }, [search]);
 
   const isActiveParam = statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
 
@@ -249,6 +247,12 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
     } catch (e: unknown) { notify(e instanceof Error ? e.message : tGlobal('Gagal menyimpan'), 'danger'); }
     finally { setSaving(false); }
   };
+
+  useModalShortcuts({
+    open, editing: !!editing,
+    onSave: () => handleSave(false),
+    onSaveAndNew: () => handleSave(true),
+  });
 
   const entityT = tGlobal(entityLabel);
   const handleDelete = (row: T) =>
