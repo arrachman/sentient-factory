@@ -19,6 +19,7 @@ import {
   RowContextMenu,
   type RowActionItem,
 } from '@/components/molecules/row-actions-menu';
+import { FormErrorSummary } from '@/components/molecules/form-error-summary';
 import {
   Modal,
   ModalContent,
@@ -367,6 +368,7 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent size={modalSize}>
           <ModalHeader><ModalTitle>{editing ? `${tGlobal('Edit')} ${tGlobal(title)}` : `${tGlobal('Tambah')} ${tGlobal(title)}`}</ModalTitle></ModalHeader>
+          <FormErrorSummary errors={formErrors} />
           <FormFields data={form} onChange={setForm} errors={formErrors} />
           <ModalFooter>
             <button className="btn ghost" onClick={() => setOpen(false)}>{tGlobal('Batal')}</button>
