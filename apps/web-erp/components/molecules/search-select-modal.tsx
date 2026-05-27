@@ -50,7 +50,7 @@ export function SearchSelectModal({
   onSelectSingle, onConfirmRow, onClose, onConfirm,
 }: SearchSelectModalProps) {
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!next) onClose(); else onOpenChange(next); }}>
+    <DialogPrimitive.Root open={open} onOpenChange={(next) => { if (!next) onClose(true); else onOpenChange(next); }}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[900] bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
