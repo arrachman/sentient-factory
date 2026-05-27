@@ -29,6 +29,11 @@ target clean code dan refactor di sini cuma bikin risiko tanpa nilai:
   `*_locked_*`, `*.d.ts`, `*.generated.*`, `*.gen.*`, `*.min.js`,
   `*.bundle.js`, file test (`*.test.* *.spec.*`).
 
+Folder yang **selalu di-skip** tanpa perlu ditanya:
+
+- `apps/myerpplus-db-mapping` — jembatan ke MyERP+, kode pihak ketiga / mapping
+  legacy, bukan target clean code.
+
 Kalau ragu sebuah app/folder itu vendored/third-party (mis. sub-app yang
 bukan kode inti repo), **tanya user** dulu app mana yang mau diaudit sebelum
 jalan — jangan refactor kode pihak ketiga.
@@ -39,6 +44,7 @@ jalan — jangan refactor kode pihak ketiga.
 
    ```bash
    find apps packages \
+     -type d \( -name 'myerpplus-db-mapping' \) -prune -o \
      -type d \( -name 'node_modules' -o -name 'dist*' -o -name 'build' \
        -o -name '.next' -o -name '.turbo' -o -name '.tmp' -o -name '.cache' \
        -o -name '.git' -o -name 'out' -o -name 'coverage' -o -name 'prisma' \
