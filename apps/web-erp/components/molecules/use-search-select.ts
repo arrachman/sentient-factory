@@ -215,6 +215,14 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       setDropdownLoading(true);
       try {
         const { data: results } = await loadOptions(inputText, 1, limit);
+        if (results.length === 0) {
+          // Tidak ditemukan → kosongkan
+          if (!isMulti) props.onValueChange('');
+          setDisplayLabel('');
+          setInputText('');
+          setInputFocused(false);
+          return;
+        }
         if (results.length === 1) { selectFromDropdown(results[0]); return; }
         openModal(inputText);
         return;
@@ -273,7 +281,13 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     setDropdownLoading(true);
     try {
       const { data: results } = await loadOptions(inputText, 1, limit);
-      if (results.length === 1) {
+      if (results.length === 0) {
+        // Tidak ditemukan → kosongkan
+        if (!isMulti) props.onValueChange('');
+        setDisplayLabel('');
+        setInputText('');
+        ignoreNextBlurRef.current = false;
+      } else if (results.length === 1) {
         selectFromDropdown(results[0]);
         setTimeout(focusNext, 0);
       } else {
