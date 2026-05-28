@@ -45,7 +45,7 @@ export class ErpWorkEstimatesService {
     const where: Prisma.ErpWorkEstimateWhereInput = { deletedAt: null };
     if (query.search?.trim()) {
       const q = query.search.trim();
-      where.OR = [{ code: { contains: q, mode: 'insensitive' } }, { name: { contains: q, mode: 'insensitive' } }];
+      where.OR = [{ code: { equals: q, mode: 'insensitive' } }, { name: { contains: q, mode: 'insensitive' } }];
     }
     if (query.isActive !== undefined) where.isActive = query.isActive;
     const sortBy = query.sortBy ?? 'createdAt';

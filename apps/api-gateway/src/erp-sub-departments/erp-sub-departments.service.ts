@@ -64,7 +64,7 @@ export class ErpSubDepartmentsService {
     if (query.search?.trim()) {
       const q = query.search.trim();
       where.OR = [
-        { code: { contains: q, mode: 'insensitive' } },
+        { code: { equals: q, mode: 'insensitive' } },
         { name: { contains: q, mode: 'insensitive' } },
       ];
     }

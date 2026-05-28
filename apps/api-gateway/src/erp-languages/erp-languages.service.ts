@@ -21,7 +21,7 @@ export class ErpLanguagesService {
     if (query.search?.trim()) {
       const q = query.search.trim();
       where.OR = [
-        { code: { contains: q, mode: 'insensitive' } },
+        { code: { equals: q, mode: 'insensitive' } },
         { name: { contains: q, mode: 'insensitive' } },
         { nativeName: { contains: q, mode: 'insensitive' } },
       ];

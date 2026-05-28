@@ -967,6 +967,72 @@ Garment vertical (`db-design/seed-data-garment.md`) **tidak** dihabisi
 prefiks-nya karena belum dieksekusi & vertical-spesifik — saat slicing
 garment, terapkan aturan §2.27 ini.
 
+### 2.28 `SearchSelect` modal — stale-while-loading saat ganti halaman (2026-05-28)
+
+Modal `SearchSelect` (`components/molecules/search-select-modal.tsx` +
+`use-search-select.ts`) **wajib** memakai pola **stale-while-loading** saat
+user menavigasi halaman dgn `←`/`→`:
+
+- Baris hasil halaman sebelumnya **tetap di-render** selama `loading=true`,
+  bukan diganti satu baris "Memuat…" yang membuat tbody kolaps & modal
+  "berkedip" (collapse → expand) tiap ganti halaman.
+- `<tbody>` saat loading dgn data existing → `opacity-50 pointer-events-none
+  transition-opacity duration-150` + `aria-busy=true` (a11y).
+- Header count `· {total}` **stabil** lintas-halaman (`tabular-nums`) —
+  **dilarang** swap ke `· Memuat…` saat loading: `total` tidak berubah
+  antar halaman, jadi swap text bikin width goyang & berkedip. Cukup dim
+  tbody sebagai sinyal loading.
+- Highlight focus baris (`isFocused`) di-suppress saat `loading` — supaya
+  outline tidak nyangkut di baris stale yang sebentar lagi diganti.
+- `tableActive` **tidak** di-reset di efek fetch maupun di handler
+  `ArrowLeft/Right` — user yang sedang navigasi tabel tetap di mode tabel
+  setelah halaman berikutnya muncul. Reset `tableActive=false` hanya di
+  `openModal` (initial open) supaya search input yang fokus duluan.
+- Fallback "Memuat…" full-body **hanya** dipakai saat truly empty
+  (`loading && displayOptions.length === 0`, mis. saat modal baru dibuka
+  belum ada data sama sekali).
+
+Konsekuensi vibe coding: kalau menambah list modal-style baru di web-erp,
+**dilarang** pola "replace tbody dgn loader row" untuk transisi halaman —
+clone pola di atas. List page biasa (`SimpleMasterPage`) tetap pakai
+`ErpListLayout` (§2.9) yang punya state loading khusus.
+
+### 2.29 Search semantics list endpoint = `code` exact, `name` LIKE (WAJIB, 2026-05-28)
+
+Setiap service list ERP yang menerima `query.search` **wajib** memakai
+semantik: **`code` exact-match (case-insensitive)**, **`name` partial
+(`contains`, case-insensitive)**. Berlaku untuk semua jalur (SearchSelect
+modal & list page search `/`) — backend endpoint sama, jadi satu sumber.
+
+Pola kanonik (Prisma):
+
+```ts
+if (query.search?.trim()) {
+  const q = query.search.trim();
+  where.OR = [
+    { code: { equals: q, mode: 'insensitive' } },
+    { name: { contains: q, mode: 'insensitive' } },
+  ];
+}
+```
+
+Alasan: `code` adalah identifier unik (mis. `BR-001`, `ITM-MM`, `4.1.001`)
+— user yang ngetik kode biasanya tahu persis kodenya & ingin **landing
+satu hit**. Partial match (`contains`) di kode → hasil keruh (`BR` match
+ratusan `BR-xxx`), bikin SearchSelect tidak deterministik. Sebaliknya
+`name` adalah teks bebas → partial WAJIB (user jarang ingat nama persis).
+
+Berlaku **mass refactor 2026-05-28** ke 55 service ERP yang punya pola
+`code OR name` search. **Pengecualian sah** (dipertahankan `contains` —
+bukan "code"):
+- `md_items.barcode` (`erp-items.service.ts`) — barcode bukan kode entitas;
+  semantik scan/partial belum dirombak (eskalasi terpisah bila perlu).
+- `md_accounts.alias` (`erp-accounts.service.ts`) — alias = teks bebas.
+
+Saat membuat service ERP baru dengan search: **wajib** pakai pola di atas
+sejak awal. **Dilarang** re-introduce `{ code: { contains: ... } }` di
+service baru.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
