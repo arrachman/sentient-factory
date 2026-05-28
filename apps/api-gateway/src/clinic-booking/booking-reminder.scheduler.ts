@@ -10,13 +10,14 @@ import { formatClinicTimeOfDay, localPartsInTimezone, localDateAtMidnight } from
  *
  * - H-1 reminder: polling EVERY_5_MINUTES, kirim dalam window [sendTime, sendTime+5min) WIB.
  *   Jam kirim dibaca dari ClinicSettings.notifH1SendTime (default "08:00").
- *   Toggle: notifH1Klien.
+ *   Aktif/tidak: cek ClinicWaTemplate "Pengingat H-1 Booking" recipients.includes('klien').
  * - 30-min reminder: EVERY_5_MINUTES, window 25-35 menit sebelum sesi.
- *   Toggle: notifM30Klien.
+ *   Aktif/tidak: cek ClinicWaTemplate "Pengingat 30 Menit Sebelum Sesi" recipients.
  * - Form Feedback H+1: polling EVERY_5_MINUTES, window [feedbackSendTime, feedbackSendTime+5min) WIB.
  *   Jam kirim: ClinicSettings.notifFeedbackSendTime (default "08:00").
- *   Toggle: notifFeedbackKlien.
+ *   Aktif/tidak: cek ClinicWaTemplate "Form Feedback" recipients.
  *
+ * Master kill-switch: ClinicSettings.waSendEnabled.
  * Semua scheduler pakai ClinicWaLog.metadata.reminderFlag untuk dedupe per-booking per-hari.
  */
 export type ReminderRunResult = {
@@ -44,17 +45,26 @@ export class BookingReminderScheduler {
     private readonly wa: ClinicWaService,
   ) {}
 
-  /** Baca settings dari DB — null-safe dengan defaults. */
+  /** Baca settings dari DB — null-safe dengan defaults. Field timing & master switch saja. */
   private async getSettings() {
     const s = await this.prisma.clinicSettings.findUnique({ where: { id: 1 } });
     return {
-      waSendEnabled:        s?.waSendEnabled        ?? false,
-      notifH1Klien:         s?.notifH1Klien         ?? true,
-      notifH1SendTime:      s?.notifH1SendTime       ?? '08:00',
-      notifM30Klien:        s?.notifM30Klien         ?? true,
-      notifFeedbackKlien:   s?.notifFeedbackKlien    ?? true,
+      waSendEnabled:         s?.waSendEnabled         ?? false,
+      notifH1SendTime:       s?.notifH1SendTime       ?? '08:00',
       notifFeedbackSendTime: s?.notifFeedbackSendTime ?? '08:00',
     };
+  }
+
+  /**
+   * Cek apakah template dispatch ke klien (single source of truth = recipients).
+   * Return false bila template tidak aktif / tidak ada / recipients tidak include 'klien'.
+   */
+  private async shouldSendToKlien(templateName: string): Promise<boolean> {
+    const tpl = await this.prisma.clinicWaTemplate.findFirst({
+      where: { name: templateName, isActive: true, deletedAt: null },
+      select: { recipients: true },
+    });
+    return tpl?.recipients?.includes('klien') ?? false;
   }
 
   /**
@@ -69,7 +79,7 @@ export class BookingReminderScheduler {
     const nowWib = localPartsInTimezone(now, tz);
 
     const settings = await this.getSettings();
-    if (!settings.waSendEnabled || !settings.notifH1Klien) {
+    if (!settings.waSendEnabled || !(await this.shouldSendToKlien('Pengingat H-1 Booking'))) {
       return { type: 'h1', dispatched: 0, skipped: 0, bookingIds: [] };
     }
     if (!isWithinSendWindow(nowWib, settings.notifH1SendTime)) {
@@ -98,12 +108,12 @@ export class BookingReminderScheduler {
 
   /**
    * 30-min reminder — polling setiap 5 menit.
-   * Toggle: notifM30Klien.
+   * Aktif/tidak: cek template "Pengingat 30 Menit Sebelum Sesi" recipients.
    */
   @Cron(CronExpression.EVERY_5_MINUTES, { name: 'reminder-30m' })
   async dispatch30mReminders(windowCenterMinutes = 30): Promise<ReminderRunResult> {
     const settings = await this.getSettings();
-    if (!settings.waSendEnabled || !settings.notifM30Klien) {
+    if (!settings.waSendEnabled || !(await this.shouldSendToKlien('Pengingat 30 Menit Sebelum Sesi'))) {
       return { type: 'm30', dispatched: 0, skipped: 0, bookingIds: [] };
     }
 
@@ -126,7 +136,7 @@ export class BookingReminderScheduler {
   /**
    * Form Feedback H+1 — polling setiap 5 menit.
    * Kirim dalam window [notifFeedbackSendTime, notifFeedbackSendTime+5min) WIB.
-   * Toggle: notifFeedbackKlien.
+   * Aktif/tidak: cek template "Form Feedback" recipients.
    */
   @Cron(CronExpression.EVERY_5_MINUTES, { name: 'feedback-h1' })
   async dispatchFeedbackH1(): Promise<ReminderRunResult> {
@@ -135,7 +145,7 @@ export class BookingReminderScheduler {
     const nowWib = localPartsInTimezone(now, tz);
 
     const settings = await this.getSettings();
-    if (!settings.waSendEnabled || !settings.notifFeedbackKlien) {
+    if (!settings.waSendEnabled || !(await this.shouldSendToKlien('Form Feedback'))) {
       return { type: 'feedback_h1', dispatched: 0, skipped: 0, bookingIds: [] };
     }
     if (!isWithinSendWindow(nowWib, settings.notifFeedbackSendTime)) {

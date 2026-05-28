@@ -79,6 +79,22 @@ export const bookingApi = {
       `/booking/${id}/reschedule`,
       input,
     ),
+  editBooking: (
+    id: number,
+    input: {
+      serviceId?: number;
+      scheduledStart?: string;
+      scheduledEnd?: string;
+      psikologUserId?: number;
+      roomId?: number;
+      notes?: string;
+      reason?: string;
+    },
+  ) =>
+    apiClient.post<{ success: boolean; data: Booking; message?: string }>(
+      `/booking/${id}/edit`,
+      input,
+    ),
   listNotes: (id: number) => apiClient.get<{ success: boolean; data: ClinicalNote[] }>(`/booking/${id}/note`),
   sendReminder: (id: number, templateName?: string) =>
     apiClient.post<{ success: boolean; message: string }>(`/booking/${id}/send-reminder`, { templateName }),

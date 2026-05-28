@@ -697,75 +697,50 @@ model ManagerDataFreshness {
 /// Single-row config table untuk clinic operational settings.
 /// Lihat ADR 007 (pricing) + ADR 008 (booking constraints) untuk semantic.
 model ClinicSettings {
-  id              Int      @id @default(1)
-  clinicName      String   @default("Althea Psychology") @map("clinic_name")
-  address         String?  @db.Text
-  timezone        String   @default("Asia/Jakarta")
-  currency        String   @default("IDR")
+  id                          Int      @id @default(1)
+  clinicName                  String   @default("Althea Psychology") @map("clinic_name")
+  address                     String?  @db.Text
+  timezone                    String   @default("Asia/Jakarta")
+  currency                    String   @default("IDR")
   // Slot operasional klinik — array jam terdefinisi (booking harus pas dengan
   // salah satu slot). Ganti `operatingHours` lama (per-day open/close window)
   // supaya satu source of truth.
   // [{ start: "08:30", end: "10:00", label: "Pagi 1" }, ...]
-  slotsOfDay      Json     @default("[]") @map("slots_of_day")
+  slotsOfDay                  Json     @default("[]") @map("slots_of_day")
   // Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: Minggu tutup.
-  closedDayOfWeek Json     @default("[0]") @map("closed_day_of_week")
-  holidays        Json     @default("[]") // list of ISO date strings (tanggal libur ad-hoc)
+  closedDayOfWeek             Json     @default("[0]") @map("closed_day_of_week")
+  holidays                    Json     @default("[]") // list of ISO date strings (tanggal libur ad-hoc)
   // Pricing & payment (ADR 007)
-  taxEnabled      Boolean  @default(true) @map("tax_enabled")
-  taxPercentage   Decimal  @default(11.00) @map("tax_percentage") @db.Decimal(5, 2)
-  dpPercentage    Decimal  @default(50.00) @map("dp_percentage") @db.Decimal(5, 2)
+  taxEnabled                  Boolean  @default(true) @map("tax_enabled")
+  taxPercentage               Decimal  @default(11.00) @map("tax_percentage") @db.Decimal(5, 2)
+  dpPercentage                Decimal  @default(50.00) @map("dp_percentage") @db.Decimal(5, 2)
   // WA settings (ADR 004)
-  waSendEnabled    Boolean  @default(false) @map("wa_send_enabled")
-  waCountryCode    String   @default("+62") @map("wa_country_code")
-  waSenderNumber   String   @default("") @map("wa_sender_number")
+  waSendEnabled               Boolean  @default(false) @map("wa_send_enabled")
+  waCountryCode               String   @default("+62") @map("wa_country_code")
+  waSenderNumber              String   @default("") @map("wa_sender_number")
+  // Active Fonnte device token (per-device send token). Bila null → fallback ke env FONNTE_API_TOKEN.
+  // Di-set via flow pairing di /clinic/settings/wa-devices/activate.
+  waActiveDeviceToken         String?  @map("wa_active_device_token")
   // WA delivery & retry
-  waRetryCount          Int    @default(3)   @map("wa_retry_count")
-  waRetryDelayMinutes   Int    @default(5)   @map("wa_retry_delay_minutes")
-  waSendWindowStart     String @default("07:00") @map("wa_send_window_start")
-  waSendWindowEnd       String @default("21:00") @map("wa_send_window_end")
-  notifFailedSendEmail  Boolean @default(true) @map("notif_failed_send_email")
+  waRetryCount                Int      @default(3) @map("wa_retry_count")
+  waRetryDelayMinutes         Int      @default(5) @map("wa_retry_delay_minutes")
+  waSendWindowStart           String   @default("07:00") @map("wa_send_window_start")
+  waSendWindowEnd             String   @default("21:00") @map("wa_send_window_end")
+  notifFailedSendEmail        Boolean  @default(true) @map("notif_failed_send_email")
   // Email
-  emailInvoiceAfterPayment Boolean @default(true)  @map("email_invoice_after_payment")
-  emailWeeklyRecap         Boolean @default(true)  @map("email_weekly_recap")
-  emailMonthlyPsikolog     Boolean @default(false) @map("email_monthly_psikolog")
-  // Notifikasi per-event toggles — pengingat sesi otomatis
-  notifConfirmKlien        Boolean @default(true)  @map("notif_confirm_klien")
-  notifConfirmPsikolog     Boolean @default(true)  @map("notif_confirm_psikolog")
-  notifH1Klien             Boolean @default(true)  @map("notif_h1_klien")
-  notifH1SendTime          String  @default("08:00") @map("notif_h1_send_time")
-  notifM30Klien            Boolean @default(true)  @map("notif_m30_klien")
-  notifFollowupKlien       Boolean @default(true)  @map("notif_followup_klien")
-  notifFollowupDelayHours  Int     @default(3)     @map("notif_followup_delay_hours")
-  notifFeedbackKlien       Boolean @default(true)  @map("notif_feedback_klien")
-  notifFeedbackSendTime    String  @default("08:00") @map("notif_feedback_send_time")
-  notifSesiLanjutanKlien   Boolean @default(false) @map("notif_sesi_lanjutan_klien")
-  notifSesiLanjutanDays    Int     @default(7)     @map("notif_sesi_lanjutan_days")
-  notifPaketHabisKlien     Boolean @default(true)  @map("notif_paket_habis_klien")
-  notifMingguKosongPsikolog       Boolean @default(true) @map("notif_minggu_kosong_psikolog")
-  notifMingguKosongDaysBefore     Int     @default(3)    @map("notif_minggu_kosong_days_before")
-  notifMingguKosongThreshold      Int     @default(50)   @map("notif_minggu_kosong_threshold")
-  // Notifikasi per-event toggles — perubahan jadwal
-  notifRescheduleKlien     Boolean @default(true)  @map("notif_reschedule_klien")
-  notifReschedulePsikolog  Boolean @default(true)  @map("notif_reschedule_psikolog")
-  notifCancelKlien         Boolean @default(true)  @map("notif_cancel_klien")
-  notifCancelPsikolog      Boolean @default(true)  @map("notif_cancel_psikolog")
-  notifUbahRuanganKlien    Boolean @default(true)  @map("notif_ubah_ruangan_klien")
-  notifUbahRuanganPsikolog Boolean @default(true)  @map("notif_ubah_ruangan_psikolog")
-  notifUbahLayananKlien    Boolean @default(false) @map("notif_ubah_layanan_klien")
-  notifUbahLayananPsikolog Boolean @default(false) @map("notif_ubah_layanan_psikolog")
-  // Notifikasi per-event toggles — onboarding & pembayaran
-  notifWelcomeKlien        Boolean @default(true)  @map("notif_welcome_klien")
-  notifWelcomePsikolog     Boolean @default(true)  @map("notif_welcome_psikolog")
-  notifInviteStaff         Boolean @default(true)  @map("notif_invite_staff")
-  notifOtpUser             Boolean @default(true)  @map("notif_otp_user")
-  notifDpKlien             Boolean @default(true)  @map("notif_dp_klien")
-  notifBuktiPembayaranKlien Boolean @default(false) @map("notif_bukti_pembayaran_klien")
-  notifPelunasanKlien      Boolean @default(true)  @map("notif_pelunasan_klien")
+  emailInvoiceAfterPayment    Boolean  @default(true) @map("email_invoice_after_payment")
+  emailWeeklyRecap            Boolean  @default(true) @map("email_weekly_recap")
+  emailMonthlyPsikolog        Boolean  @default(false) @map("email_monthly_psikolog")
+  // Notifikasi — jam kirim scheduler & delay setting. Recipient routing (klien/psikolog)
+  // di-pegang oleh ClinicWaTemplate.recipients, bukan kolom di sini.
+  notifH1SendTime             String   @default("08:00") @map("notif_h1_send_time")
+  notifFollowupDelayHours     Int      @default(3) @map("notif_followup_delay_hours")
+  notifFeedbackSendTime       String   @default("08:00") @map("notif_feedback_send_time")
   // Audit fields
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  createdBy       Int?     @map("created_by")
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
-  updatedBy       Int?     @map("updated_by")
+  createdAt                   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy                   Int?     @map("created_by")
+  updatedAt                   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy                   Int?     @map("updated_by")
 
   @@map("clinic_settings")
 }
@@ -848,6 +823,11 @@ model ClinicService {
   // Kosong [] → layanan pakai waktu slot global apa adanya.
   // [{ index: 0, start: "08:00", end: "10:00" }, ...]
   slotOverrides   Json      @default("[]") @map("slot_overrides")
+  // Index slot global yang dinonaktifkan untuk layanan ini (mis. layanan
+  // hanya dipakai 4 dari 6 slot). Booking di slot dengan index di list
+  // ini ditolak (assertSlotMatch). Booking wizard juga hide slot tersebut.
+  // [0, 5] artinya slot pertama & keenam non-aktif untuk layanan ini.
+  disabledSlotIndices Json  @default("[]") @map("disabled_slot_indices")
   // Audit fields
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   createdBy       Int?      @map("created_by")
@@ -858,6 +838,7 @@ model ClinicService {
 
   bookings  ClinicBooking[]
   psikologs ClinicPsikologService[]
+  clients   ClinicClientService[]
 
   @@index([category, isActive])
   @@map("clinic_service")
@@ -942,11 +923,34 @@ model ClinicClient {
   deletedBy            Int?      @map("deleted_by")
 
   bookings ClinicBooking[]
+  services ClinicClientService[]
 
   @@index([phoneWa])
   @@index([name])
   @@index([isActive])
   @@map("clinic_client")
+}
+
+/// Junction table klien ↔ service.
+///
+/// Klien bisa terdaftar di banyak layanan (mis. konseling individu + tes psikologi).
+/// Field `clinic_client.preferred_service_type` (single-name varchar) tetap ada untuk
+/// backward compat & kode legacy yang baca nama layanan utama — auto-sync ke nama
+/// service pertama (urut by serviceId asc) saat create/update.
+model ClinicClientService {
+  id        Int      @id @default(autoincrement())
+  clientId  Int      @map("client_id")
+  serviceId Int      @map("service_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy Int?     @map("created_by")
+
+  client  ClinicClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service ClinicService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, serviceId])
+  @@index([serviceId])
+  @@index([clientId])
+  @@map("clinic_client_service")
 }
 
 /// Booking sesi psikolog. State machine:
@@ -1635,7 +1639,7 @@ model ErpBranch {
   locations        ErpLocation[]
   userBranchAccess ErpUserBranchAccess[]
   partners         ErpPartner[]
-  items            ErpItem[] @relation("ItemBranch")
+  items            ErpItem[]             @relation("ItemBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -2350,7 +2354,7 @@ model ErpCostCenter {
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
   accrualSchedules              ErpFinAccrualSchedule[]
-  items                         ErpItem[] @relation("ItemCostCenter")
+  items                         ErpItem[]                            @relation("ItemCostCenter")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -2382,7 +2386,7 @@ model ErpDivision {
   cashBankLines                 ErpFinCashBankLine[]
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
-  items                         ErpItem[] @relation("ItemDivision")
+  items                         ErpItem[]                            @relation("ItemDivision")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -2412,7 +2416,7 @@ model ErpSubdivision {
   ledgerEntries      ErpFinLedgerEntry[]
   cashBankLines      ErpFinCashBankLine[]
   budgetRealizations ErpFinBudgetRealization[]
-  items              ErpItem[] @relation("ItemSubdivision")
+  items              ErpItem[]                 @relation("ItemSubdivision")
 
   @@index([divisionId])
   @@index([parentId])
@@ -2445,7 +2449,7 @@ model ErpProject {
   cashBankLines                 ErpFinCashBankLine[]
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
-  items                         ErpItem[] @relation("ItemProject")
+  items                         ErpItem[]                            @relation("ItemProject")
 
   @@index([parentId])
   @@index([branchId])
@@ -2494,10 +2498,10 @@ model ErpSubDepartment {
   updatedById  BigInt?   @map("updated_by_id")
   deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  department ErpDepartment       @relation(fields: [departmentId], references: [id])
-  parent     ErpSubDepartment?   @relation("ErpSubDepartment_parent", fields: [parentId], references: [id])
-  children   ErpSubDepartment[]  @relation("ErpSubDepartment_parent")
-  items      ErpItem[]           @relation("ItemSubDepartment")
+  department ErpDepartment      @relation(fields: [departmentId], references: [id])
+  parent     ErpSubDepartment?  @relation("ErpSubDepartment_parent", fields: [parentId], references: [id])
+  children   ErpSubDepartment[] @relation("ErpSubDepartment_parent")
+  items      ErpItem[]          @relation("ItemSubDepartment")
 
   @@index([departmentId])
   @@index([parentId])
@@ -8601,6 +8605,7 @@ model ErpBrand {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_brands")
 }
@@ -8617,6 +8622,7 @@ model ErpMaterial {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_materials")
 }
@@ -8633,6 +8639,7 @@ model ErpItemModel {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_item_models")
 }
@@ -8649,6 +8656,7 @@ model ErpSize {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_sizes")
 }
@@ -8665,6 +8673,7 @@ model ErpSection {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_sections")
 }
@@ -8719,6 +8728,7 @@ model ErpBank {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_banks")
 }
@@ -8735,6 +8745,7 @@ model ErpExpedition {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_expeditions")
 }
@@ -8751,6 +8762,7 @@ model ErpOtherCost {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_other_costs")
 }
@@ -8768,6 +8780,7 @@ model ErpCommission {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_commissions")
 }
@@ -8785,76 +8798,16 @@ model ErpItemTransactionType {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_item_transaction_types")
 }
 
 model ErpCountry {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  isoCode     String?   @map("iso_code")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-  provinces   ErpProvince[]
-  @@index([legacyCode])
-  @@map("md_countries")
-}
-
-model ErpProvince {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  countryId   BigInt    @map("country_id")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-  country     ErpCountry @relation(fields: [countryId], references: [id])
-  cities      ErpCity[]
-  @@index([countryId])
-  @@index([legacyCode])
-  @@map("md_provinces")
-}
-
-model ErpCity {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  bpsCode     String?   @unique @map("bps_code")
-  provinceId  BigInt    @map("province_id")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-  province    ErpProvince @relation(fields: [provinceId], references: [id])
-  areas       ErpArea[]
-  @@index([provinceId])
-  @@index([legacyCode])
-  @@index([bpsCode])
-  @@map("md_cities")
-}
-
-model ErpArea {
   id          BigInt        @id @default(autoincrement())
   code        String        @unique @map("code")
   name        String        @map("name")
-  cityId      BigInt        @map("city_id")
-  postalCode  String?       @map("postal_code")
+  isoCode     String?       @map("iso_code")
   isActive    Boolean       @default(true) @map("is_active")
   legacyCode  String?       @map("legacy_code")
   metadata    Json?         @map("metadata")
@@ -8863,8 +8816,73 @@ model ErpArea {
   createdById BigInt?       @map("created_by_id")
   updatedById BigInt?       @map("updated_by_id")
   deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  city        ErpCity       @relation(fields: [cityId], references: [id])
+  provinces   ErpProvince[]
+
+  @@index([legacyCode])
+  @@map("md_countries")
+}
+
+model ErpProvince {
+  id          BigInt     @id @default(autoincrement())
+  code        String     @unique @map("code")
+  name        String     @map("name")
+  countryId   BigInt     @map("country_id")
+  isActive    Boolean    @default(true) @map("is_active")
+  legacyCode  String?    @map("legacy_code")
+  metadata    Json?      @map("metadata")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?    @map("created_by_id")
+  updatedById BigInt?    @map("updated_by_id")
+  deletedAt   DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  country     ErpCountry @relation(fields: [countryId], references: [id])
+  cities      ErpCity[]
+
+  @@index([countryId])
+  @@index([legacyCode])
+  @@map("md_provinces")
+}
+
+model ErpCity {
+  id          BigInt      @id @default(autoincrement())
+  code        String      @unique @map("code")
+  name        String      @map("name")
+  bpsCode     String?     @unique @map("bps_code")
+  provinceId  BigInt      @map("province_id")
+  isActive    Boolean     @default(true) @map("is_active")
+  legacyCode  String?     @map("legacy_code")
+  metadata    Json?       @map("metadata")
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?     @map("created_by_id")
+  updatedById BigInt?     @map("updated_by_id")
+  deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  province    ErpProvince @relation(fields: [provinceId], references: [id])
+  areas       ErpArea[]
+
+  @@index([provinceId])
+  @@index([legacyCode])
+  @@index([bpsCode])
+  @@map("md_cities")
+}
+
+model ErpArea {
+  id          BigInt       @id @default(autoincrement())
+  code        String       @unique @map("code")
+  name        String       @map("name")
+  cityId      BigInt       @map("city_id")
+  postalCode  String?      @map("postal_code")
+  isActive    Boolean      @default(true) @map("is_active")
+  legacyCode  String?      @map("legacy_code")
+  metadata    Json?        @map("metadata")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?      @map("created_by_id")
+  updatedById BigInt?      @map("updated_by_id")
+  deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  city        ErpCity      @relation(fields: [cityId], references: [id])
   subAreas    ErpSubArea[]
+
   @@index([cityId])
   @@index([legacyCode])
   @@map("md_areas")
@@ -8884,6 +8902,7 @@ model ErpSubArea {
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
   area        ErpArea   @relation(fields: [areaId], references: [id])
+
   @@index([areaId])
   @@index([postalCode])
   @@index([legacyCode])
@@ -8903,6 +8922,7 @@ model ErpItemLocation {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([warehouseId])
   @@index([legacyCode])
   @@map("md_item_locations")
@@ -8915,18 +8935,19 @@ enum ErpPartnerSubCategoryType {
 }
 
 model ErpPartnerSubCategory {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @map("code")
-  name        String    @map("name")
+  id          BigInt                    @id @default(autoincrement())
+  code        String                    @map("code")
+  name        String                    @map("name")
   type        ErpPartnerSubCategoryType @map("type")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  isActive    Boolean                   @default(true) @map("is_active")
+  legacyCode  String?                   @map("legacy_code")
+  metadata    Json?                     @map("metadata")
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?                   @map("created_by_id")
+  updatedById BigInt?                   @map("updated_by_id")
+  deletedAt   DateTime?                 @map("deleted_at") @db.Timestamptz(6)
+
   @@unique([code, type])
   @@index([type])
   @@index([legacyCode])
@@ -8934,67 +8955,71 @@ model ErpPartnerSubCategory {
 }
 
 model ErpPriceCategory {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id          BigInt                   @id @default(autoincrement())
+  code        String                   @unique @map("code")
+  name        String                   @map("name")
+  isActive    Boolean                  @default(true) @map("is_active")
+  legacyCode  String?                  @map("legacy_code")
+  metadata    Json?                    @map("metadata")
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?                  @map("created_by_id")
+  updatedById BigInt?                  @map("updated_by_id")
+  deletedAt   DateTime?                @map("deleted_at") @db.Timestamptz(6)
   details     ErpPriceCategoryDetail[]
+
   @@index([legacyCode])
   @@map("md_price_categories")
 }
 
 model ErpPriceCategoryDetail {
-  id                BigInt   @id @default(autoincrement())
-  priceCategoryId   BigInt   @map("price_category_id")
-  minQty            Decimal  @default(0) @map("min_qty") @db.Decimal(19, 4)
-  maxQty            Decimal? @map("max_qty") @db.Decimal(19, 4)
-  discountPercent   Decimal  @default(0) @map("discount_percent") @db.Decimal(9, 4)
-  priceAdjustment   Decimal  @default(0) @map("price_adjustment") @db.Decimal(19, 4)
-  legacyCode        String?  @map("legacy_code")
-  metadata          Json?    @map("metadata")
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
-  priceCategory     ErpPriceCategory @relation(fields: [priceCategoryId], references: [id], onDelete: Cascade)
+  id              BigInt           @id @default(autoincrement())
+  priceCategoryId BigInt           @map("price_category_id")
+  minQty          Decimal          @default(0) @map("min_qty") @db.Decimal(19, 4)
+  maxQty          Decimal?         @map("max_qty") @db.Decimal(19, 4)
+  discountPercent Decimal          @default(0) @map("discount_percent") @db.Decimal(9, 4)
+  priceAdjustment Decimal          @default(0) @map("price_adjustment") @db.Decimal(19, 4)
+  legacyCode      String?          @map("legacy_code")
+  metadata        Json?            @map("metadata")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  priceCategory   ErpPriceCategory @relation(fields: [priceCategoryId], references: [id], onDelete: Cascade)
+
   @@index([priceCategoryId])
   @@map("md_price_category_details")
 }
 
 model ErpTransactionNote {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id          BigInt                     @id @default(autoincrement())
+  code        String                     @unique @map("code")
+  name        String                     @map("name")
+  isActive    Boolean                    @default(true) @map("is_active")
+  legacyCode  String?                    @map("legacy_code")
+  metadata    Json?                      @map("metadata")
+  createdAt   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?                    @map("created_by_id")
+  updatedById BigInt?                    @map("updated_by_id")
+  deletedAt   DateTime?                  @map("deleted_at") @db.Timestamptz(6)
   details     ErpTransactionNoteDetail[]
+
   @@index([legacyCode])
   @@map("md_transaction_notes")
 }
 
 model ErpTransactionNoteDetail {
-  id                 BigInt   @id @default(autoincrement())
-  transactionNoteId  BigInt   @map("transaction_note_id")
-  sortOrder          Int      @default(0) @map("sort_order")
-  content            String   @map("content")
-  legacyCode         String?  @map("legacy_code")
-  metadata           Json?    @map("metadata")
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
-  transactionNote    ErpTransactionNote @relation(fields: [transactionNoteId], references: [id], onDelete: Cascade)
+  id                BigInt             @id @default(autoincrement())
+  transactionNoteId BigInt             @map("transaction_note_id")
+  sortOrder         Int                @default(0) @map("sort_order")
+  content           String             @map("content")
+  legacyCode        String?            @map("legacy_code")
+  metadata          Json?              @map("metadata")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  transactionNote   ErpTransactionNote @relation(fields: [transactionNoteId], references: [id], onDelete: Cascade)
+
   @@index([transactionNoteId])
   @@map("md_transaction_note_details")
 }
@@ -9013,6 +9038,7 @@ model ErpItemPermission {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@unique([itemId, roleId])
   @@index([itemId])
   @@index([roleId])
@@ -9032,6 +9058,7 @@ model ErpProductionCategory {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_production_categories")
 }
@@ -9048,6 +9075,7 @@ model ErpPointCategory {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_point_categories")
 }
@@ -9064,6 +9092,7 @@ model ErpMiscellaneous {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_miscellaneous")
 }
@@ -9080,6 +9109,7 @@ model ErpClass {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_classes")
 }
@@ -9096,6 +9126,7 @@ model ErpSubClass {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_sub_classes")
 }
@@ -9112,6 +9143,7 @@ model ErpWorkEstimate {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_work_estimates")
 }
@@ -9128,6 +9160,7 @@ model ErpLabor {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_labors")
 }
@@ -9144,6 +9177,7 @@ model ErpMachine {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_machines")
 }
@@ -9160,6 +9194,7 @@ model ErpDesigner {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_designers")
 }
@@ -9176,6 +9211,7 @@ model ErpProductionActivity {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_production_activities")
 }
@@ -9192,6 +9228,7 @@ model ErpProductionRoute {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_production_routes")
 }
@@ -9209,6 +9246,7 @@ model ErpColor {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_colors")
 }
@@ -9227,28 +9265,30 @@ model ErpPriceIndex {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
   @@index([legacyCode])
   @@map("md_price_indices")
 }
 
 model ErpItemInformation {
-  id                    BigInt    @id @default(autoincrement())
-  itemId                BigInt    @unique @map("item_id")
-  longDescription       String?   @map("long_description")
-  specifications        String?   @map("specifications")
-  manufacturer          String?   @map("manufacturer")
-  countryOfOrigin       String?   @map("country_of_origin")
-  warrantyPeriodMonths  Int?      @map("warranty_period_months")
-  tags                  String?   @map("tags")
-  notes                 String?   @map("notes")
-  legacyCode            String?   @map("legacy_code")
-  metadata              Json?     @map("metadata")
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById           BigInt?   @map("created_by_id")
-  updatedById           BigInt?   @map("updated_by_id")
-  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(6)
-  item                  ErpItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  id                   BigInt    @id @default(autoincrement())
+  itemId               BigInt    @unique @map("item_id")
+  longDescription      String?   @map("long_description")
+  specifications       String?   @map("specifications")
+  manufacturer         String?   @map("manufacturer")
+  countryOfOrigin      String?   @map("country_of_origin")
+  warrantyPeriodMonths Int?      @map("warranty_period_months")
+  tags                 String?   @map("tags")
+  notes                String?   @map("notes")
+  legacyCode           String?   @map("legacy_code")
+  metadata             Json?     @map("metadata")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById          BigInt?   @map("created_by_id")
+  updatedById          BigInt?   @map("updated_by_id")
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+  item                 ErpItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
   @@index([legacyCode])
   @@map("md_item_informations")
 }

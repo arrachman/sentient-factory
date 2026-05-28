@@ -27,7 +27,7 @@ export type SessionRowState = {
   slotIdx: number | null;
 };
 
-type Slot = { start: string; end: string; label?: string };
+type Slot = { start: string; end: string; label?: string; disabled?: boolean };
 
 const DAY_LONG = [
   'Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu',

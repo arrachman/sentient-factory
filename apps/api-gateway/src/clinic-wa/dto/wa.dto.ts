@@ -52,7 +52,16 @@ export class CreateTemplateDto {
   isActive?: boolean;
 }
 
-export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {}
+export class UpdateTemplateDto extends PartialType(CreateTemplateDto) {
+  // Override: izinkan recipients=[] saat update (semua toggle off di drawer
+  // Pengaturan WA = template aktif tapi tidak dispatch ke siapapun).
+  // Create masih wajib ArrayMinSize(1) untuk cegah template "yatim".
+  @ApiPropertyOptional({ example: ['klien'], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  recipients?: string[];
+}
 
 export class QueryTemplateDto {
   @ApiPropertyOptional({ default: 1 })

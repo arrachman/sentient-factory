@@ -95,6 +95,8 @@ export function DateStrip({
   closedDayOfWeek,
   holidays,
   onChangeDate,
+  bookingCountByDate,
+  onWeekChange,
 }: {
   selectedDate: string;
   psikolog: Psikolog | null;
@@ -102,6 +104,8 @@ export function DateStrip({
   closedDayOfWeek: number[];
   holidays: string[];
   onChangeDate: (date: string) => void;
+  bookingCountByDate?: Record<string, number>;
+  onWeekChange?: (from: string, to: string) => void;
 }) {
   const [weekOffset, setWeekOffset] = useState(0);
 
@@ -139,6 +143,12 @@ export function DateStrip({
   // Range query: Senin – Minggu minggu yang sedang ditampilkan
   const weekFrom = useMemo(() => toDateKey(week[0]), [week]);
   const weekTo   = useMemo(() => toDateKey(week[6]), [week]);
+
+  // Beri tahu parent minggu mana yang sedang tampil — supaya parent bisa
+  // fetch booking count untuk window ini (mode reschedule).
+  useEffect(() => {
+    onWeekChange?.(weekFrom, weekTo);
+  }, [weekFrom, weekTo, onWeekChange]);
 
   const effectiveUserId = psikologUserId ?? psikolog?.userId ?? null;
   const overridesQuery = usePsikologDateOverrides(
@@ -201,13 +211,14 @@ export function DateStrip({
           const isToday = key === todayKey;
           const dow = d.getDay();
           const unbookable = status !== 'available';
+          const bookingCount = bookingCountByDate?.[key] ?? 0;
           return (
             <button
               key={key}
               type="button"
               onClick={() => !unbookable && onChangeDate(key)}
               disabled={unbookable}
-              className={`flex flex-col items-center px-1 py-2 rounded-md border text-xs transition-colors ${
+              className={`relative flex flex-col items-center px-1 py-2 rounded-md border text-xs transition-colors ${
                 selected
                   ? 'bg-sage-500 border-sage-500 text-white shadow-sm'
                   : unbookable
@@ -216,7 +227,9 @@ export function DateStrip({
               } ${isToday && !selected ? 'ring-1 ring-sage-300' : ''}`}
               title={
                 status === 'available'
-                  ? 'Tersedia'
+                  ? bookingCount > 0
+                    ? `${bookingCount} booking di hari ini`
+                    : 'Tersedia'
                   : status === 'past'
                     ? 'Tanggal sudah lewat — tidak bisa dipilih'
                     : status === 'klinik-closed'
@@ -228,6 +241,17 @@ export function DateStrip({
                         : 'Psikolog belum set jadwal — tidak bisa dipilih'
               }
             >
+              {bookingCount > 0 && !unbookable ? (
+                <span
+                  className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full text-[9px] font-semibold leading-4 text-center tabular-nums ${
+                    selected
+                      ? 'bg-white text-sage-700 ring-1 ring-sage-500'
+                      : 'bg-sage-500 text-white'
+                  }`}
+                >
+                  {bookingCount}
+                </span>
+              ) : null}
               <span className="text-[10px] uppercase tracking-wider opacity-80">
                 {DAY_SHORT[dow]}
               </span>

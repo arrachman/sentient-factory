@@ -28,39 +28,11 @@ export type ClinicSettings = {
   emailInvoiceAfterPayment: boolean;
   emailWeeklyRecap: boolean;
   emailMonthlyPsikolog: boolean;
-  // Pengingat sesi otomatis
-  notifConfirmKlien: boolean;
-  notifConfirmPsikolog: boolean;
-  notifH1Klien: boolean;
+  // Notifikasi — timing/delay. Recipient routing (klien/psikolog) di-pegang
+  // oleh ClinicWaTemplate.recipients, akses lewat /clinic/wa/template.
   notifH1SendTime: string;
-  notifM30Klien: boolean;
-  notifFollowupKlien: boolean;
   notifFollowupDelayHours: number;
-  notifFeedbackKlien: boolean;
   notifFeedbackSendTime: string;
-  notifSesiLanjutanKlien: boolean;
-  notifSesiLanjutanDays: number;
-  notifPaketHabisKlien: boolean;
-  notifMingguKosongPsikolog: boolean;
-  notifMingguKosongDaysBefore: number;
-  notifMingguKosongThreshold: number;
-  // Perubahan jadwal
-  notifRescheduleKlien: boolean;
-  notifReschedulePsikolog: boolean;
-  notifCancelKlien: boolean;
-  notifCancelPsikolog: boolean;
-  notifUbahRuanganKlien: boolean;
-  notifUbahRuanganPsikolog: boolean;
-  notifUbahLayananKlien: boolean;
-  notifUbahLayananPsikolog: boolean;
-  // Onboarding & pembayaran
-  notifWelcomeKlien: boolean;
-  notifWelcomePsikolog: boolean;
-  notifInviteStaff: boolean;
-  notifOtpUser: boolean;
-  notifDpKlien: boolean;
-  notifBuktiPembayaranKlien: boolean;
-  notifPelunasanKlien: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -90,39 +62,10 @@ export type UpdateSettingsInput = Partial<{
   emailInvoiceAfterPayment: boolean;
   emailWeeklyRecap: boolean;
   emailMonthlyPsikolog: boolean;
-  // Pengingat sesi otomatis
-  notifConfirmKlien: boolean;
-  notifConfirmPsikolog: boolean;
-  notifH1Klien: boolean;
+  // Notifikasi — timing/delay
   notifH1SendTime: string;
-  notifM30Klien: boolean;
-  notifFollowupKlien: boolean;
   notifFollowupDelayHours: number;
-  notifFeedbackKlien: boolean;
   notifFeedbackSendTime: string;
-  notifSesiLanjutanKlien: boolean;
-  notifSesiLanjutanDays: number;
-  notifPaketHabisKlien: boolean;
-  notifMingguKosongPsikolog: boolean;
-  notifMingguKosongDaysBefore: number;
-  notifMingguKosongThreshold: number;
-  // Perubahan jadwal
-  notifRescheduleKlien: boolean;
-  notifReschedulePsikolog: boolean;
-  notifCancelKlien: boolean;
-  notifCancelPsikolog: boolean;
-  notifUbahRuanganKlien: boolean;
-  notifUbahRuanganPsikolog: boolean;
-  notifUbahLayananKlien: boolean;
-  notifUbahLayananPsikolog: boolean;
-  // Onboarding & pembayaran
-  notifWelcomeKlien: boolean;
-  notifWelcomePsikolog: boolean;
-  notifInviteStaff: boolean;
-  notifOtpUser: boolean;
-  notifDpKlien: boolean;
-  notifBuktiPembayaranKlien: boolean;
-  notifPelunasanKlien: boolean;
 }>;
 
 export type WaDeviceStatus = {

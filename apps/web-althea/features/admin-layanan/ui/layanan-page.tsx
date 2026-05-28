@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MoreHorizontal, Pencil, Plus, PowerOff, Search, Settings, Trash2, X } from 'lucide-react';
+import { Pencil, Plus, PowerOff, Search, Settings, Trash2, X } from 'lucide-react';
 import {
   useCreateService,
   useDeactivateService,
@@ -30,6 +30,7 @@ const EMPTY: CreateServiceInput = {
   description: '',
   isActive: true,
   slotOverrides: [],
+  disabledSlotIndices: [],
 };
 
 function formatRp(n: number): string {
@@ -104,6 +105,7 @@ export function LayananPage() {
       description: s.description ?? '',
       isActive: s.isActive,
       slotOverrides: s.slotOverrides ?? [],
+      disabledSlotIndices: s.disabledSlotIndices ?? [],
     });
     setOpen(true);
   }
@@ -287,9 +289,6 @@ export function LayananPage() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
-                        <button type="button" className="btn btn-icon btn-ghost btn-sm" aria-label="Lainnya">
-                          <MoreHorizontal className="h-3.5 w-3.5" />
-                        </button>
                       </div>
                     </div>
                   ))}
@@ -354,10 +353,12 @@ export function LayananPage() {
                 />
               </div>
               <div className="border-t border-border pt-3">
-                <label className="caption mb-1 block font-semibold">Range Waktu Slot (khusus layanan ini)</label>
+                <label className="caption mb-1 block font-semibold">Slot yang Dipakai Layanan Ini</label>
                 <SlotOverrideEditor
-                  value={form.slotOverrides}
-                  onChange={(next) => setForm({ ...form, slotOverrides: next })}
+                  overrides={form.slotOverrides}
+                  onChangeOverrides={(next) => setForm({ ...form, slotOverrides: next })}
+                  disabledIndices={form.disabledSlotIndices}
+                  onChangeDisabled={(next) => setForm({ ...form, disabledSlotIndices: next })}
                 />
               </div>
               <label className="flex items-center gap-2 text-sm border-t border-border pt-3">

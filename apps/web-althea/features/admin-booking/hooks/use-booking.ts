@@ -46,6 +46,19 @@ export function useUpdateBooking() {
   });
 }
 
+export function useEditBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: number; input: Parameters<typeof bookingApi.editBooking>[1] }) =>
+      bookingApi.editBooking(id, input),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: KEY });
+      toast.success(res.message ?? 'Booking diperbarui');
+    },
+    onError: (e: Error) => toast.error('Gagal ubah booking', { description: e.message }),
+  });
+}
+
 export function useRescheduleBooking() {
   const qc = useQueryClient();
   return useMutation({

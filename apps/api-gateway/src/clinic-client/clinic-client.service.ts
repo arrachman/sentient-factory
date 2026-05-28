@@ -21,6 +21,12 @@ type BookingSlim = {
   psikolog: { fullName: string | null; email: string } | null;
 };
 
+type ClientServiceRef = {
+  id: number;
+  name: string;
+  category: string;
+};
+
 type ClientEnriched = {
   id: number;
   name: string;
@@ -30,6 +36,8 @@ type ClientEnriched = {
   phoneWa: string;
   medicalRecordNumber: string | null;
   preferredServiceType: string | null;
+  services: ClientServiceRef[];
+  serviceIds: number[];
   email: string | null;
   address: string | null;
   notes: string | null;
@@ -69,15 +77,23 @@ export class ClinicClientService {
         throw new ConflictException(`MRN ${dto.medicalRecordNumber} sudah dipakai.`);
       }
     }
+    const serviceIds = await this.validateServiceIds(dto.serviceIds);
+    const primaryName = await this.resolvePrimaryServiceName(serviceIds);
     const category = dto.category ?? this.deriveCategoryFromAge(dto.age);
+
+    const { serviceIds: _omit, preferredServiceType: _omit2, ...rest } = dto;
     const created = await this.prisma.clinicClient.create({
       data: {
-        ...dto,
+        ...rest,
         category,
+        preferredServiceType: primaryName,
         waOptedOut: dto.waOptedOut ?? false,
         isActive: dto.isActive ?? true,
         createdBy: actorId,
         updatedBy: actorId,
+        services: {
+          create: serviceIds.map((sid) => ({ serviceId: sid, createdBy: actorId })),
+        },
       },
     });
 
@@ -166,10 +182,21 @@ export class ClinicClientService {
 
   async update(id: number, dto: UpdateClientDto, actorId?: number) {
     await this.findOne(id);
-    const data: Prisma.ClinicClientUpdateInput = { ...dto, updatedBy: actorId };
+    const { serviceIds, preferredServiceType: _ignored, ...rest } = dto;
+    const data: Prisma.ClinicClientUpdateInput = { ...rest, updatedBy: actorId };
     if (dto.age !== undefined && dto.category === undefined) {
       // re-derive category kalau age berubah dan category gak di-set explicit
       data.category = this.deriveCategoryFromAge(dto.age);
+    }
+    if (serviceIds !== undefined) {
+      const validIds = await this.validateServiceIds(serviceIds);
+      data.preferredServiceType = await this.resolvePrimaryServiceName(validIds);
+      // Replace strategy: hapus semua entry junction lama, insert ulang.
+      // Simpler & safer dari computed diff; jumlah service per klien kecil (≤ ~18).
+      data.services = {
+        deleteMany: {},
+        create: validIds.map((sid) => ({ serviceId: sid, createdBy: actorId })),
+      };
     }
     const updated = await this.prisma.clinicClient.update({ where: { id }, data });
     return { success: true, data: updated, message: 'Client updated' };
@@ -193,6 +220,46 @@ export class ClinicClientService {
   }
 
   // ----- helpers -----
+
+  /**
+   * Validasi serviceIds yang dikirim user:
+   * - dedup,
+   * - pastikan semua existing & belum di-soft-delete (deletedAt null),
+   * - minimal 1 (DTO sudah enforce, ini defense in depth).
+   * Return ids ter-dedup urut asc.
+   */
+  private async validateServiceIds(ids: number[]): Promise<number[]> {
+    const unique = Array.from(new Set(ids)).sort((a, b) => a - b);
+    if (unique.length === 0) {
+      throw new ConflictException('Minimal 1 layanan harus dipilih.');
+    }
+    const found = await this.prisma.clinicService.findMany({
+      where: { id: { in: unique }, deletedAt: null },
+      select: { id: true },
+    });
+    if (found.length !== unique.length) {
+      const foundSet = new Set(found.map((s) => s.id));
+      const missing = unique.filter((id) => !foundSet.has(id));
+      throw new ConflictException(
+        `Layanan tidak ditemukan / sudah dihapus: ${missing.join(', ')}`,
+      );
+    }
+    return unique;
+  }
+
+  /**
+   * Resolve nama service "utama" untuk diisi ke kolom legacy
+   * `clinic_client.preferred_service_type`. Ambil service pertama urut by id asc
+   * supaya stabil (deterministik) dan tidak depend ke urutan kirim user.
+   */
+  private async resolvePrimaryServiceName(ids: number[]): Promise<string | null> {
+    if (ids.length === 0) return null;
+    const first = await this.prisma.clinicService.findUnique({
+      where: { id: ids[0] },
+      select: { name: true },
+    });
+    return first?.name ?? null;
+  }
 
   private deriveCategoryFromAge(age?: number | null): string | null {
     if (age === undefined || age === null) return null;
@@ -220,6 +287,19 @@ export class ClinicClientService {
         psikolog: { select: { fullName: true, email: true } },
       },
     });
+
+    // Batch fetch junction klien ↔ service (multi-select layanan)
+    const serviceLinks = await this.prisma.clinicClientService.findMany({
+      where: { clientId: { in: ids } },
+      include: { service: { select: { id: true, name: true, category: true } } },
+      orderBy: [{ clientId: 'asc' }, { serviceId: 'asc' }],
+    });
+    const servicesByClient = new Map<number, ClientServiceRef[]>();
+    for (const link of serviceLinks) {
+      const arr = servicesByClient.get(link.clientId) ?? [];
+      arr.push({ id: link.service.id, name: link.service.name, category: link.service.category });
+      servicesByClient.set(link.clientId, arr);
+    }
 
     const byClient = new Map<number, BookingSlim[]>();
     for (const b of bookings) {
@@ -281,6 +361,7 @@ export class ClinicClientService {
       // First-timer dengan upcoming = "baru"; sudah ada past = "aktif"
       if (past.length === 0 && upcoming.length > 0) derivedStatus = 'baru';
 
+      const services = servicesByClient.get(c.id) ?? [];
       return {
         id: cb.id,
         name: cb.name,
@@ -290,6 +371,8 @@ export class ClinicClientService {
         phoneWa: cb.phoneWa,
         medicalRecordNumber: cb.medicalRecordNumber ?? null,
         preferredServiceType: cb.preferredServiceType ?? null,
+        services,
+        serviceIds: services.map((s) => s.id),
         email: cb.email ?? null,
         address: cb.address ?? null,
         notes: cb.notes ?? null,

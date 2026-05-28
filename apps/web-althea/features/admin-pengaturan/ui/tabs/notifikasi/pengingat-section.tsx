@@ -1,8 +1,19 @@
+'use client';
+
 import type { UpdateSettingsInput } from '../../../api/settings.api';
+import { useWaTemplateRecipients } from '../../../hooks/use-wa-template-recipients';
 import { FieldRow } from '../../shared/field-row';
 import { MicroSelect } from '../../shared/micro-select';
 import { NotifEventRow } from '../../shared/notif-event-row';
 
+/**
+ * Pengaturan WA — section "Kirim pesan otomatis".
+ *
+ * Recipient toggles ("WA klien" / "WA psikolog") bind langsung ke
+ * ClinicWaTemplate.recipients via useWaTemplateRecipients() — bukan
+ * ke ClinicSettings (SSOT pindah). Field timing (notifH1SendTime,
+ * notifFollowupDelayHours, notifFeedbackSendTime) tetap di settings.
+ */
 export function PengingatSection({
   form,
   set,
@@ -10,6 +21,8 @@ export function PengingatSection({
   form: UpdateSettingsInput;
   set: <K extends keyof UpdateSettingsInput>(key: K, value: UpdateSettingsInput[K]) => void;
 }) {
+  const { hasRecipient, toggle, isLoading } = useWaTemplateRecipients();
+
   return (
     <FieldRow
       label="Kirim pesan otomatis"
@@ -25,14 +38,14 @@ export function PengingatSection({
             {
               id: 'klien',
               label: 'WA klien',
-              on: form.notifConfirmKlien ?? true,
-              onChange: (v) => set('notifConfirmKlien', v),
+              on: !isLoading && hasRecipient('Konfirmasi Booking', 'klien'),
+              onChange: () => toggle('Konfirmasi Booking', 'klien'),
             },
             {
               id: 'psikolog',
               label: 'WA psikolog',
-              on: form.notifConfirmPsikolog ?? true,
-              onChange: (v) => set('notifConfirmPsikolog', v),
+              on: !isLoading && hasRecipient('Konfirmasi Booking', 'psikolog'),
+              onChange: () => toggle('Konfirmasi Booking', 'psikolog'),
             },
           ]}
         />
@@ -63,8 +76,8 @@ export function PengingatSection({
             {
               id: 'klien',
               label: 'WA klien',
-              on: form.notifH1Klien ?? true,
-              onChange: (v) => set('notifH1Klien', v),
+              on: !isLoading && hasRecipient('Pengingat H-1 Booking', 'klien'),
+              onChange: () => toggle('Pengingat H-1 Booking', 'klien'),
             },
           ]}
         />
@@ -76,8 +89,8 @@ export function PengingatSection({
             {
               id: 'klien',
               label: 'WA klien',
-              on: form.notifM30Klien ?? true,
-              onChange: (v) => set('notifM30Klien', v),
+              on: !isLoading && hasRecipient('Pengingat 30 Menit Sebelum Sesi', 'klien'),
+              onChange: () => toggle('Pengingat 30 Menit Sebelum Sesi', 'klien'),
             },
           ]}
         />
@@ -100,8 +113,8 @@ export function PengingatSection({
             {
               id: 'klien',
               label: 'WA klien',
-              on: form.notifFollowupKlien ?? true,
-              onChange: (v) => set('notifFollowupKlien', v),
+              on: !isLoading && hasRecipient('Follow-up Post Session', 'klien'),
+              onChange: () => toggle('Follow-up Post Session', 'klien'),
             },
           ]}
         />
@@ -132,92 +145,8 @@ export function PengingatSection({
             {
               id: 'klien',
               label: 'WA klien',
-              on: form.notifFeedbackKlien ?? true,
-              onChange: (v) => set('notifFeedbackKlien', v),
-            },
-          ]}
-        />
-        <NotifEventRow
-          title="Pengingat sesi lanjutan"
-          hint="Untuk paket multi-sesi yang sesinya belum dijadwal"
-          templates={[{ id: 't-lanjutan' }]}
-          extra={
-            <MicroSelect
-              value={String(form.notifSesiLanjutanDays ?? 7)}
-              options={[
-                ['3', 'H+3'],
-                ['7', 'H+7'],
-                ['14', 'H+14'],
-              ]}
-              width={90}
-              onChange={(v) => set('notifSesiLanjutanDays', Number(v))}
-            />
-          }
-          recipients={[
-            {
-              id: 'klien',
-              label: 'WA klien',
-              on: form.notifSesiLanjutanKlien ?? false,
-              onChange: (v) => set('notifSesiLanjutanKlien', v),
-            },
-          ]}
-        />
-        <NotifEventRow
-          title="Paket akan habis"
-          hint="Trigger: saat sesi tersisa ≤ 1 dari paket — tawarkan paket lanjutan"
-          templates={[{ id: 't-paket-habis' }]}
-          recipients={[
-            {
-              id: 'klien',
-              label: 'WA klien',
-              on: form.notifPaketHabisKlien ?? true,
-              onChange: (v) => set('notifPaketHabisKlien', v),
-            },
-          ]}
-        />
-        <NotifEventRow
-          title="Pengingat minggu kosong (psikolog)"
-          hint="Kirim WA ke psikolog kalau minggu kerja mendatang masih banyak slot kosong."
-          badge="psikolog"
-          templates={[{ id: 't-week-empty' }]}
-          extra={
-            <div className="flex items-center gap-1 flex-wrap">
-              <span className="caption" style={{ fontSize: 11 }}>
-                kirim
-              </span>
-              <MicroSelect
-                value={String(form.notifMingguKosongDaysBefore ?? 3)}
-                options={[
-                  ['1', 'H-1'],
-                  ['3', 'H-3'],
-                  ['5', 'H-5'],
-                  ['7', 'H-7'],
-                ]}
-                width={78}
-                onChange={(v) => set('notifMingguKosongDaysBefore', Number(v))}
-              />
-              <span className="caption" style={{ fontSize: 11 }}>
-                jika kosong ≥
-              </span>
-              <MicroSelect
-                value={String(form.notifMingguKosongThreshold ?? 50)}
-                options={[
-                  ['30', '30%'],
-                  ['50', '50%'],
-                  ['70', '70%'],
-                  ['80', '80%'],
-                ]}
-                width={78}
-                onChange={(v) => set('notifMingguKosongThreshold', Number(v))}
-              />
-            </div>
-          }
-          recipients={[
-            {
-              id: 'psikolog',
-              label: 'WA psikolog',
-              on: form.notifMingguKosongPsikolog ?? true,
-              onChange: (v) => set('notifMingguKosongPsikolog', v),
+              on: !isLoading && hasRecipient('Form Feedback', 'klien'),
+              onChange: () => toggle('Form Feedback', 'klien'),
             },
           ]}
         />

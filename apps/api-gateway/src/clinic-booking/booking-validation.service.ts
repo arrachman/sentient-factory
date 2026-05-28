@@ -187,23 +187,29 @@ export class BookingValidationService {
     const globalSlots = (settings.slotsOfDay as SlotDef[]) || [];
     if (globalSlots.length === 0) return; // belum di-config, allow (bootstrap mode)
 
-    // Layanan boleh override range waktu slot (identitas/label tetap global).
-    // Tanpa serviceId → validasi terhadap slot global apa adanya.
+    // Layanan boleh override range waktu slot (identitas/label tetap global)
+    // dan menonaktifkan slot tertentu via disabledSlotIndices. Tanpa serviceId
+    // → validasi terhadap slot global apa adanya.
     let slots = globalSlots;
     if (serviceId !== undefined) {
       const service = await this.prisma.clinicService.findFirst({
         where: { id: serviceId, deletedAt: null },
-        select: { slotOverrides: true },
+        select: { slotOverrides: true, disabledSlotIndices: true },
       });
       slots = resolveServiceSlots(
         globalSlots,
         (service?.slotOverrides as SlotOverride[] | null) ?? null,
+        (service?.disabledSlotIndices as number[] | null) ?? null,
       );
     }
 
-    const matched = slots.find((s) => s.start === startParts.hhmm && s.end === endParts.hhmm);
+    // Slot disabled untuk layanan ini tidak boleh di-book sama sekali.
+    const enabledSlots = slots.filter((s) => !s.disabled);
+    const matched = enabledSlots.find(
+      (s) => s.start === startParts.hhmm && s.end === endParts.hhmm,
+    );
     if (!matched) {
-      const available = slots.map((s) => `${s.start}-${s.end}`).join(', ');
+      const available = enabledSlots.map((s) => `${s.start}-${s.end}`).join(', ') || '(tidak ada)';
       throw new BadRequestException(
         `Booking ${startParts.hhmm}-${endParts.hhmm} tidak cocok dengan slot layanan ini. Slot tersedia: ${available}.`,
       );

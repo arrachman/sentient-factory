@@ -43,6 +43,24 @@ export class CreateErpPartnerDto {
   @IsBoolean()
   isTaxable?: boolean = false;
 
+  @ApiPropertyOptional({
+    example: '42',
+    description:
+      'ErpAccount ID (BigInt as string) — control account piutang (AR) untuk partner customer. Default override saat posting AR.',
+  })
+  @IsOptional()
+  @IsString()
+  receivableAccountId?: string | null;
+
+  @ApiPropertyOptional({
+    example: '43',
+    description:
+      'ErpAccount ID (BigInt as string) — control account hutang (AP) untuk partner supplier. Default override saat posting AP. Bisa di-split per mata uang / per kategori (mis. Hutang IDR vs Hutang USD).',
+  })
+  @IsOptional()
+  @IsString()
+  payableAccountId?: string | null;
+
   @ApiPropertyOptional({ example: true, default: true })
   @IsOptional()
   @IsBoolean()

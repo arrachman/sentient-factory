@@ -30,6 +30,7 @@ import {
 } from '@/lib/workspace';
 import { useUrlRouting, readUrlRoutingEnabled } from '@/lib/use-url-routing';
 import { applyServerPrefs } from '@/lib/apply-server-prefs';
+import { useAppShellKeyboard } from '@/components/templates/use-app-shell-keyboard';
 
 interface AppShellProps {
   /** Omit for global (no-workspace) mode — tabs are in-memory only, no localStorage. */
@@ -246,73 +247,17 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     [t, closeTab, setTabs],
   );
 
-  React.useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      const inEditor = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        setPaletteOpen(true);
-        return;
-      }
-      if (e.metaKey && e.code === 'KeyE') {
-        e.preventDefault();
-        confirmClose(activeId);
-        return;
-      }
-      if (!urlRoutingEnabled && (e.metaKey || e.ctrlKey) && /^[1-9]$/.test(e.key)) {
-        e.preventDefault();
-        const n = parseInt(e.key, 10);
-        const target = n === 9 ? tabs[tabs.length - 1] : tabs[n - 1];
-        if (target) setActiveId(target.id);
-        return;
-      }
-      if (inEditor) return;
-      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
-        e.preventDefault();
-        setShortcutsOpen(true);
-        return;
-      }
-      if (e.key.toLowerCase() === 'l') {
-        setLang((l) => (l === 'id' ? 'en' : l === 'en' ? 'ja' : 'id'));
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [activeId, tabs, confirmClose, setActiveId, urlRoutingEnabled]);
-
-  React.useEffect(() => {
-    const sc = () => setShortcutsOpen(true);
-    window.addEventListener('open-shortcuts', sc);
-    return () => window.removeEventListener('open-shortcuts', sc);
-  }, []);
-
-  // Listen for sidebar menu mode changes dispatched by AppearancePage.
-  React.useEffect(() => {
-    const onSetMode = (e: Event) => {
-      const detail = (e as CustomEvent<{ mode: string }>).detail;
-      if (detail?.mode === 'accordion' || detail?.mode === 'flyout') {
-        setSidebarMenuMode(detail.mode as 'flyout' | 'accordion');
-      }
-    };
-    window.addEventListener('erp-set-sidebar-menu', onSetMode as EventListener);
-    return () => window.removeEventListener('erp-set-sidebar-menu', onSetMode as EventListener);
-  }, []);
-
-  // Listen for same-tab lang changes dispatched by AppearancePage.
-  // (Prefs are applied to DOM + localStorage via applyServerPrefs, called in
-  //  the auth effect before the shell renders and in onLogin after a fresh login.)
-
-  React.useEffect(() => {
-    const onSetLang = (e: Event) => {
-      const detail = (e as CustomEvent<{ lang: Lang }>).detail;
-      if (!detail) return;
-      const next = detail.lang;
-      if (next === 'id' || next === 'en' || next === 'ja') setLang(next);
-    };
-    window.addEventListener('erp-set-lang', onSetLang as EventListener);
-    return () => window.removeEventListener('erp-set-lang', onSetLang as EventListener);
-  }, []);
+  useAppShellKeyboard({
+    activeId,
+    tabs,
+    urlRoutingEnabled,
+    confirmClose,
+    setActiveId,
+    setPaletteOpen,
+    setShortcutsOpen,
+    setLang,
+    setSidebarMenuMode,
+  });
 
   const onPaletteAction = React.useCallback(
     (id: string) => {

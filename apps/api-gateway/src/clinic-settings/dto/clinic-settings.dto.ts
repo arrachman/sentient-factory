@@ -156,38 +156,16 @@ export class UpdateSettingsDto {
   @IsBoolean()
   emailMonthlyPsikolog?: boolean;
 
-  // ── Pengingat sesi otomatis ───────────────────────────────────────────────
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifConfirmKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifConfirmPsikolog?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifH1Klien?: boolean;
+  // ── Notifikasi: timing & delay settings ───────────────────────────────────
+  // Routing per recipient (klien/psikolog/staff/user) di-pegang oleh
+  // ClinicWaTemplate.recipients (lihat /clinic/wa/template). Field di sini
+  // hanya jam kirim scheduler + delay configuration.
 
   @ApiPropertyOptional({ example: '08:00' })
   @IsOptional()
   @IsString()
   @Matches(/^\d{2}:\d{2}$/)
   notifH1SendTime?: string;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifM30Klien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifFollowupKlien?: boolean;
 
   @ApiPropertyOptional({ example: 3 })
   @IsOptional()
@@ -196,129 +174,9 @@ export class UpdateSettingsDto {
   @Max(48)
   notifFollowupDelayHours?: number;
 
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifFeedbackKlien?: boolean;
-
   @ApiPropertyOptional({ example: '08:00' })
   @IsOptional()
   @IsString()
   @Matches(/^\d{2}:\d{2}$/)
   notifFeedbackSendTime?: string;
-
-  @ApiPropertyOptional({ example: false })
-  @IsOptional()
-  @IsBoolean()
-  notifSesiLanjutanKlien?: boolean;
-
-  @ApiPropertyOptional({ example: 7 })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(30)
-  notifSesiLanjutanDays?: number;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifPaketHabisKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifMingguKosongPsikolog?: boolean;
-
-  @ApiPropertyOptional({ example: 3 })
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(7)
-  notifMingguKosongDaysBefore?: number;
-
-  @ApiPropertyOptional({ example: 50 })
-  @IsOptional()
-  @IsInt()
-  @Min(10)
-  @Max(100)
-  notifMingguKosongThreshold?: number;
-
-  // ── Perubahan jadwal ──────────────────────────────────────────────────────
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifRescheduleKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifReschedulePsikolog?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifCancelKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifCancelPsikolog?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifUbahRuanganKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifUbahRuanganPsikolog?: boolean;
-
-  @ApiPropertyOptional({ example: false })
-  @IsOptional()
-  @IsBoolean()
-  notifUbahLayananKlien?: boolean;
-
-  @ApiPropertyOptional({ example: false })
-  @IsOptional()
-  @IsBoolean()
-  notifUbahLayananPsikolog?: boolean;
-
-  // ── Onboarding & pembayaran ───────────────────────────────────────────────
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifWelcomeKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifWelcomePsikolog?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifInviteStaff?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifOtpUser?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifDpKlien?: boolean;
-
-  @ApiPropertyOptional({ example: false })
-  @IsOptional()
-  @IsBoolean()
-  notifBuktiPembayaranKlien?: boolean;
-
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @IsBoolean()
-  notifPelunasanKlien?: boolean;
 }

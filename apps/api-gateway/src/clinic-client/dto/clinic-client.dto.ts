@@ -1,6 +1,9 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  ArrayMinSize,
+  ArrayUnique,
+  IsArray,
   IsBoolean,
   IsEmail,
   IsIn,
@@ -31,12 +34,11 @@ export class CreateClientDto {
   @IsIn(GENDERS)
   gender!: Gender;
 
-  @ApiPropertyOptional({ example: 28 })
-  @IsOptional()
+  @ApiProperty({ example: 28 })
   @IsInt()
   @Min(0)
   @Max(120)
-  age?: number;
+  age!: number;
 
   @ApiPropertyOptional({ enum: CLIENT_CATEGORIES, example: 'dewasa' })
   @IsOptional()
@@ -48,13 +50,29 @@ export class CreateClientDto {
   @MaxLength(30)
   phoneWa!: string;
 
-  @ApiPropertyOptional({ example: 'MR-2026-0001' })
-  @IsOptional()
+  @ApiProperty({ example: 'MR-2026-0001' })
   @IsString()
   @MaxLength(80)
-  medicalRecordNumber?: string;
+  medicalRecordNumber!: string;
 
-  @ApiPropertyOptional({ example: 'konseling' })
+  @ApiProperty({
+    example: [12, 15],
+    description:
+      'ID layanan dari katalog (clinic_service.id). Multi-select — minimal 1. Disimpan ke junction clinic_client_service.',
+    type: [Number],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsInt({ each: true })
+  @Type(() => Number)
+  serviceIds!: number[];
+
+  @ApiPropertyOptional({
+    example: 'Konseling Individu',
+    description:
+      'DEPRECATED. Diisi otomatis oleh backend dari nama service pertama (urut by serviceId asc) untuk backward compat. Jangan dipakai untuk input baru — pakai serviceIds.',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(60)

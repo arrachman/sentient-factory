@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ClinicSettingsService } from '../../clinic-settings/clinic-settings.service';
 import { normalizePhoneId } from '../../common/utils/phone.util';
 import { DeliveryStatus, SendMessageParams, SendResult, WAProvider } from '../wa.interface';
 
@@ -8,7 +9,10 @@ import { DeliveryStatus, SendMessageParams, SendResult, WAProvider } from '../wa
  *
  * API: https://api.fonnte.com/send (POST)
  * Auth: header `Authorization: <TOKEN>`
- * Token didapat dari dashboard Fonnte (per-device).
+ *
+ * Token resolution (lihat ClinicSettingsService.getActiveDeviceToken):
+ *   1. DB `clinic_settings.wa_active_device_token` (di-set via pairing flow)
+ *   2. env FONNTE_API_TOKEN (fallback legacy)
  *
  * Phone format: E.164 atau dengan country code (+62...). Fonnte handle baik.
  *
@@ -18,27 +22,27 @@ import { DeliveryStatus, SendMessageParams, SendResult, WAProvider } from '../wa
 export class FonnteProvider implements WAProvider {
   readonly name = 'fonnte';
   private readonly logger = new Logger(FonnteProvider.name);
-  private readonly token: string;
   private readonly apiUrl: string;
   private readonly deviceId?: string;
 
-  constructor(config: ConfigService) {
-    this.token = config.get<string>('FONNTE_API_TOKEN') || '';
+  constructor(
+    config: ConfigService,
+    private readonly settings: ClinicSettingsService,
+  ) {
     this.apiUrl = config.get<string>('FONNTE_API_URL') || 'https://api.fonnte.com';
     this.deviceId = config.get<string>('FONNTE_DEVICE_ID');
-    if (!this.token) {
-      this.logger.warn(
-        'FONNTE_API_TOKEN not set — FonnteProvider akan fail saat send. Set token di .env atau pakai MockWAProvider.',
-      );
-    }
   }
 
   async send(params: SendMessageParams): Promise<SendResult> {
-    if (!this.token) {
+    const token = await this.settings.getActiveDeviceToken();
+    if (!token) {
+      this.logger.warn(
+        'No active Fonnte device token (DB & env empty). Pair device via /admin/notif-wa atau set FONNTE_API_TOKEN.',
+      );
       return {
         messageId: `fonnte_unconfigured_${Date.now()}`,
         status: 'failed',
-        errorReason: 'FONNTE_API_TOKEN not configured',
+        errorReason: 'No active Fonnte device token configured',
       };
     }
 
@@ -57,7 +61,7 @@ export class FonnteProvider implements WAProvider {
       const response = await fetch(`${this.apiUrl}/send`, {
         method: 'POST',
         headers: {
-          Authorization: this.token,
+          Authorization: token,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: formData.toString(),

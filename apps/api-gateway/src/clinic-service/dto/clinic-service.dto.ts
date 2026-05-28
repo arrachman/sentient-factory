@@ -91,6 +91,19 @@ export class CreateServiceDto {
   @ValidateNested({ each: true })
   @Type(() => SlotOverrideDto)
   slotOverrides?: SlotOverrideDto[];
+
+  @ApiPropertyOptional({
+    type: [Number],
+    example: [0, 5],
+    description:
+      'Index slot global yang dinonaktifkan untuk layanan ini. Booking pada slot ini akan ditolak. Default [] = semua slot aktif.',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  disabledSlotIndices?: number[];
 }
 
 export class UpdateServiceDto extends PartialType(CreateServiceDto) {}

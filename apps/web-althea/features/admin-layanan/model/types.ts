@@ -57,6 +57,7 @@ export const serviceSchema = z.object({
   description: z.string().nullable(),
   isActive: z.boolean(),
   slotOverrides: z.array(slotOverrideSchema).optional().default([]),
+  disabledSlotIndices: z.array(z.number().int().min(0)).optional().default([]),
   bookedThisMonth: z.number().int().optional().default(0),
   hasBookings: z.boolean().default(false),
   createdAt: z.string(),
@@ -73,6 +74,7 @@ export const createServiceSchema = z.object({
   description: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
   slotOverrides: z.array(slotOverrideSchema).max(50).optional(),
+  disabledSlotIndices: z.array(z.number().int().min(0)).max(50).optional(),
 });
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 

@@ -18,7 +18,7 @@ const EMPTY: CreateClientInput = {
   category: undefined,
   phoneWa: '+62',
   medicalRecordNumber: '',
-  preferredServiceType: '',
+  serviceIds: [],
   email: '',
   address: '',
   notes: '',
@@ -66,7 +66,6 @@ export function ClientsPage({
       ...form,
       email: form.email?.trim() || undefined,
       medicalRecordNumber: form.medicalRecordNumber?.trim() || undefined,
-      preferredServiceType: form.preferredServiceType?.trim() || undefined,
       address: form.address?.trim() || undefined,
       notes: form.notes?.trim() || undefined,
     };

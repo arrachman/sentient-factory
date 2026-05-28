@@ -14,6 +14,7 @@ import { resolveServiceSlots } from '@/features/admin-layanan/model/slot';
 import { usePsikologList } from '@/features/admin-psikolog/hooks/use-psikolog';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
 import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
+import type { Booking } from '../../model/types';
 import { buildIso, tomorrowDateStr } from './wizard-utils';
 import { INIT, WizardState, WizardSession } from './wizard-types';
 import { useWizardSessions } from './use-wizard-sessions';
@@ -22,19 +23,46 @@ import { useWizardMutations } from './use-wizard-mutations';
 
 export type { WizardSession, WizardState };
 
+/**
+ * Derive komponen tanggal (YYYY-MM-DD) di TZ klinik dari ISO datetime.
+ * Mirror logic `toLocalDateKey` di booking-page tapi pakai TZ klinik
+ * (Asia/Jakarta) eksplisit supaya tidak tergantung locale admin.
+ */
+function dateKeyInClinicTz(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+}
+
+function initStateFromBooking(b: Booking): WizardState {
+  return {
+    clientId: b.clientId,
+    serviceId: b.serviceId,
+    psikologUserId: b.psikologUserId,
+    roomId: b.roomId,
+    // slotIdx di-resolve setelah `slots` siap (lihat useEffect di hook).
+    sessions: [{ date: dateKeyInClinicTz(b.scheduledStart), slotIdx: null }],
+    intervalDays: 7,
+    notes: b.notes ?? '',
+  };
+}
+
 export function useWizardState({
   open,
   onClose,
+  editingBooking,
 }: {
   open: boolean;
   onClose: () => void;
+  editingBooking?: Booking | null;
 }) {
+  const isEditMode = !!editingBooking;
   const [s, setS] = useState<WizardState>(INIT);
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (open) setS({ ...INIT, sessions: [{ date: tomorrowDateStr(), slotIdx: null }] });
-  }, [open]);
+    if (!open) return;
+    if (editingBooking) setS(initStateFromBooking(editingBooking));
+    else setS({ ...INIT, sessions: [{ date: tomorrowDateStr(), slotIdx: null }] });
+  }, [open, editingBooking]);
 
   // --- List queries ---
   const clientList = useClientList({ limit: 200 });
@@ -64,12 +92,18 @@ export function useWizardState({
     });
   }, [psikologList.data, s.serviceId]);
 
-  const isMulti = (selectedService?.sessionCount ?? 1) > 1;
+  // Edit mode: always single — admin tidak boleh re-expand jadi paket via edit.
+  const isMulti = isEditMode ? false : (selectedService?.sessionCount ?? 1) > 1;
 
   // Slot resolution: service overrides may shift time ranges; indices stay global-aligned.
   const globalSlots = settingsQuery.data?.data.slotsOfDay ?? [];
   const slots = useMemo(
-    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
+    () =>
+      resolveServiceSlots(
+        globalSlots,
+        selectedService?.slotOverrides,
+        selectedService?.disabledSlotIndices,
+      ),
     [globalSlots, selectedService],
   );
   const closedDays = settingsQuery.data?.data.closedDayOfWeek ?? [];
@@ -79,7 +113,12 @@ export function useWizardState({
   const isClosedDay = closedDays.includes(new Date(`${firstDate}T00:00:00`).getDay());
 
   // --- Sub-hooks ---
-  const { reapplyInterval, updateSession } = useWizardSessions({ selectedService, s, setS });
+  const { reapplyInterval, updateSession } = useWizardSessions({
+    selectedService,
+    s,
+    setS,
+    isEditMode,
+  });
 
   const {
     psikologDayBookings,
@@ -92,17 +131,35 @@ export function useWizardState({
     selectedSlot,
   } = useWizardAvailability({ s, slots, isMulti });
 
-  const { createSingleMut, createPackageMut } = useWizardMutations({ onClose, qc });
+  const { createSingleMut, createPackageMut, editMut } = useWizardMutations({ onClose, qc });
 
   // --- Submit ---
-  const submitting = createSingleMut.isPending || createPackageMut.isPending;
+  const submitting =
+    createSingleMut.isPending || createPackageMut.isPending || editMut.isPending;
   const allSessionsFilled = s.sessions.length > 0 && s.sessions.every((ses) => ses.slotIdx !== null);
-  const canSubmit =
-    !!s.clientId && !!s.serviceId && !!s.psikologUserId && !!s.roomId &&
-    allSessionsFilled && intraConflict.size === 0 && !submitting;
+  // Edit mode: hanya butuh serviceId baru yang beda dari booking awal.
+  // Psikolog/jadwal/ruang tidak diubah di UI — backend pakai nilai existing
+  // dan auto-recompute scheduledEnd dari durasi service baru.
+  const editCanSubmit =
+    !!editingBooking && !!s.serviceId && s.serviceId !== editingBooking.serviceId && !submitting;
+  const canSubmit = isEditMode
+    ? editCanSubmit
+    : !!s.clientId && !!s.serviceId && !!s.psikologUserId && !!s.roomId &&
+      allSessionsFilled && intraConflict.size === 0 && !submitting;
 
   function submit() {
-    if (!canSubmit || !selectedService) return;
+    if (!canSubmit) return;
+
+    if (isEditMode && editingBooking && s.serviceId) {
+      editMut.mutate({
+        id: editingBooking.id,
+        input: { serviceId: s.serviceId },
+      });
+      return;
+    }
+
+    if (!selectedService) return;
+
     if (!isMulti) {
       const ses = s.sessions[0];
       if (ses.slotIdx === null) return;
@@ -129,7 +186,7 @@ export function useWizardState({
   }
 
   return {
-    state: s, setState: setS, isMulti,
+    state: s, setState: setS, isMulti, isEditMode, editingBooking: editingBooking ?? null,
     updateSession, reapplyInterval,
     setIntervalDays: (n: number) => setS((prev) => ({ ...prev, intervalDays: n })),
     clientList, serviceList, psikologList, psikologListFiltered,

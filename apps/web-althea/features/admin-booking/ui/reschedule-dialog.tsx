@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -15,9 +15,9 @@ import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { resolveServiceSlots } from '@/features/admin-layanan/model/slot';
 import { DateStrip } from './booking-wizard/date-strip';
-import { SlotGrid } from './booking-wizard/slot-grid';
+import { SlotGrid, type SlotBookingInfo } from './booking-wizard/slot-grid';
 import { buildIso, pastSlotIdx, toDateKey } from './booking-wizard/wizard-utils';
-import type { Booking } from '../model/types';
+import { STATUS_LABEL, type Booking } from '../model/types';
 
 function isoToDateKey(iso: string): string {
   return toDateKey(new Date(iso));
@@ -40,6 +40,15 @@ export function RescheduleDialog({
   const [psikologUserId, setPsikologUserId] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number | null>(null);
   const [reason, setReason] = useState('');
+  const [weekRange, setWeekRange] = useState<{ from: string; to: string } | null>(
+    null,
+  );
+
+  const handleWeekChange = useCallback((from: string, to: string) => {
+    setWeekRange((prev) =>
+      prev && prev.from === from && prev.to === to ? prev : { from, to },
+    );
+  }, []);
 
   const psikologList = usePsikologList({ limit: 200, isActive: true });
   const roomList = useRoomList({ limit: 200, isActive: true });
@@ -58,7 +67,12 @@ export function RescheduleDialog({
   );
 
   const slots = useMemo(
-    () => resolveServiceSlots(globalSlots, selectedService?.slotOverrides),
+    () =>
+      resolveServiceSlots(
+        globalSlots,
+        selectedService?.slotOverrides,
+        selectedService?.disabledSlotIndices,
+      ),
     [globalSlots, selectedService],
   );
 
@@ -88,13 +102,8 @@ export function RescheduleDialog({
     }
   }, [booking]);
 
-  // Pre-select slot saat slots selesai load
-  useEffect(() => {
-    if (!booking || slots.length === 0 || selectedSlotIdx !== null) return;
-    const currentTime = isoToTimeHHMM(booking.scheduledStart);
-    const idx = slots.findIndex((s) => s.start === currentTime);
-    if (idx !== -1) setSelectedSlotIdx(idx);
-  }, [booking, slots, selectedSlotIdx]);
+  // Tidak ada pre-select slot — slot booking saat ini di-disable (reschedule ke
+  // slot yang sama = no-op), jadi admin wajib pilih slot baru secara eksplisit.
 
   // Availability psikolog di tanggal terpilih
   const availabilityQuery = usePsikologAvailabilityForDate(psikologUserId, selectedDate);
@@ -120,7 +129,78 @@ export function RescheduleDialog({
     includeCancelled: false,
   });
 
-  // Slot tidak tersedia — exclude booking saat ini dari conflict check
+  // Booking psikolog di seluruh minggu yang sedang ditampilkan di DateStrip
+  // (untuk badge count per tanggal). Exclude booking saat ini supaya count
+  // tidak inflate slot yang akan dipindah.
+  const psikologWeekBookings = useBookingList({
+    psikologUserId: psikologUserId ?? undefined,
+    dateFrom: psikologUserId && weekRange ? weekRange.from : undefined,
+    dateTo: psikologUserId && weekRange ? weekRange.to : undefined,
+    limit: 200,
+    includeCancelled: false,
+  });
+
+  const bookingCountByDate = useMemo(() => {
+    if (!psikologUserId) return undefined;
+    const counts: Record<string, number> = {};
+    for (const b of psikologWeekBookings.data?.data ?? []) {
+      const key = isoToDateKey(b.scheduledStart);
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [psikologWeekBookings.data, psikologUserId]);
+
+  // Map slot idx → info booking yang menempati slot itu (di tanggal terpilih).
+  //
+  // Sama dengan unavailableSlotIdx: booking lain pakai time-overlap, booking
+  // sendiri pakai exact slot.start match.
+  const slotBookingsByIdx = useMemo(() => {
+    const map = new Map<number, SlotBookingInfo>();
+    if (!selectedDate || !psikologUserId) return map;
+    // Booking lain — time overlap
+    const otherBookings = (psikologDayBookings.data?.data ?? []).filter(
+      (b) => b.id !== booking?.id,
+    );
+    for (const b of otherBookings) {
+      const bStart = new Date(b.scheduledStart).getTime();
+      const bEnd = new Date(b.scheduledEnd).getTime();
+      slots.forEach((slot, idx) => {
+        const sStart = new Date(`${selectedDate}T${slot.start}:00`).getTime();
+        const sEnd = new Date(`${selectedDate}T${slot.end}:00`).getTime();
+        if (bStart < sEnd && bEnd > sStart && !map.has(idx)) {
+          map.set(idx, {
+            clientName: b.client.name,
+            statusLabel: STATUS_LABEL[b.status] ?? b.status,
+          });
+        }
+      });
+    }
+    // Booking sendiri — slot dengan start time exact match
+    if (booking && isoToDateKey(booking.scheduledStart) === selectedDate) {
+      const selfStart = isoToTimeHHMM(booking.scheduledStart);
+      const selfIdx = slots.findIndex((s) => s.start === selfStart);
+      if (selfIdx !== -1) {
+        map.set(selfIdx, {
+          clientName: booking.client.name,
+          statusLabel: 'sesi saat ini',
+        });
+      }
+    }
+    return map;
+  }, [psikologDayBookings.data, slots, selectedDate, psikologUserId, booking]);
+
+  // Slot tidak tersedia.
+  //
+  // Dua sumber konflik dibedakan:
+  // 1. Booking LAIN psikolog di hari ini → pakai time-overlap (psikolog tidak
+  //    bisa di 2 slot bersamaan walau slotnya overlap waktu).
+  // 2. Booking yang sedang di-reschedule SENDIRI → match by slot.start ===
+  //    booking.scheduledStart (identitas slot exact, bukan time-overlap).
+  //    Alasan: kalau admin pindah ke slot lain (mis. slot yang overlap waktu
+  //    seperti Slot 5↔Slot 6 di config klinik yang slotnya non-contiguous),
+  //    slot lama otomatis bebas — jadi slot yang sekadar overlap waktu dengan
+  //    booking ini tidak boleh ikut di-disable. Hanya slot dengan start time
+  //    persis = booking saat ini yang no-op-able.
   const unavailableSlotIdx = useMemo(() => {
     if (!psikologUserId || !selectedDate) return new Set<number>();
     if (psikologClosedToday) return new Set<number>(slots.map((_, i) => i));
@@ -133,11 +213,11 @@ export function RescheduleDialog({
         if (!allowedSet.has(idx)) taken.add(idx);
       });
     }
-    // Booking lain milik psikolog ini di hari yang sama (exclude booking ini sendiri)
-    const bookings = (psikologDayBookings.data?.data ?? []).filter(
+    // (1) Booking lain — time overlap
+    const otherBookings = (psikologDayBookings.data?.data ?? []).filter(
       (b) => b.id !== booking?.id,
     );
-    for (const b of bookings) {
+    for (const b of otherBookings) {
       const bStart = new Date(b.scheduledStart).getTime();
       const bEnd = new Date(b.scheduledEnd).getTime();
       slots.forEach((slot, idx) => {
@@ -145,6 +225,12 @@ export function RescheduleDialog({
         const sEnd = new Date(`${selectedDate}T${slot.end}:00`).getTime();
         if (bStart < sEnd && bEnd > sStart) taken.add(idx);
       });
+    }
+    // (2) Booking sendiri — hanya slot dengan start time EXACT match
+    if (booking && isoToDateKey(booking.scheduledStart) === selectedDate) {
+      const selfStart = isoToTimeHHMM(booking.scheduledStart);
+      const selfIdx = slots.findIndex((s) => s.start === selfStart);
+      if (selfIdx !== -1) taken.add(selfIdx);
     }
     return taken;
   }, [
@@ -154,7 +240,7 @@ export function RescheduleDialog({
     psikologUserId,
     psikologClosedToday,
     resolvedAvailability,
-    booking?.id,
+    booking,
   ]);
 
   // Ruangan terpakai di slot terpilih (exclude booking ini sendiri)
@@ -197,7 +283,11 @@ export function RescheduleDialog({
   if (!booking) return null;
 
   const canSubmit =
-    !!selectedDate && selectedSlotIdx !== null && !!psikologUserId && !mut.isPending;
+    !!selectedDate &&
+    selectedSlotIdx !== null &&
+    !unavailableSlotIdx.has(selectedSlotIdx) &&
+    !!psikologUserId &&
+    !mut.isPending;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -274,6 +364,8 @@ export function RescheduleDialog({
                 setSelectedDate(date);
                 setSelectedSlotIdx(null);
               }}
+              bookingCountByDate={bookingCountByDate}
+              onWeekChange={handleWeekChange}
             />
 
             {psikologClosedToday && (
@@ -301,6 +393,7 @@ export function RescheduleDialog({
               psikologName={selectedPsikolog?.fullName ?? null}
               isLoadingBookings={psikologDayBookings.isLoading}
               onPick={(idx) => setSelectedSlotIdx(idx)}
+              slotBookings={slotBookingsByIdx}
             />
 
             {/* Ruang */}

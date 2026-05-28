@@ -13,10 +13,11 @@ import { formatClinicTimeOfDay } from './timezone.util';
  * Fire-and-forget pattern: error tidak boleh block transition,
  * cuma logged ke console (dipantau Sentry di production).
  *
- * Fan-out ke psikolog: di-drive oleh kolom `ClinicWaTemplate.recipients`.
- * Kalau template recipients mengandung 'psikolog' dan psikolog punya
- * User.phone, dispatch kedua dilakukan paralel dengan recipientType
- * 'psikolog'. Error sisi psikolog tidak ganggu kirim ke klien.
+ * Routing per role di-drive oleh `ClinicWaTemplate.recipients` (single source
+ * of truth). Master kill-switch global: `ClinicSettings.waSendEnabled`.
+ *   - `recipients.includes('klien')` + client.phoneWa → kirim ke klien
+ *   - `recipients.includes('psikolog')` + psikolog.phone → fan-out psikolog
+ * Error sisi psikolog di-catch terpisah, tidak ganggu dispatch ke klien.
  */
 
 type BookingForNotification = {
@@ -33,45 +34,6 @@ type BookingForNotification = {
   room: { name: string };
 };
 
-/** Subset settings yang dipakai oleh notifier — cukup field notif booleans. */
-type NotifSettings = {
-  waSendEnabled: boolean;
-  notifConfirmKlien: boolean;
-  notifConfirmPsikolog: boolean;
-  notifFollowupKlien: boolean;
-  notifRescheduleKlien: boolean;
-  notifReschedulePsikolog: boolean;
-  notifCancelKlien: boolean;
-  notifCancelPsikolog: boolean;
-  notifUbahRuanganKlien: boolean;
-  notifUbahRuanganPsikolog: boolean;
-  notifUbahLayananKlien: boolean;
-  notifUbahLayananPsikolog: boolean;
-  notifWelcomeKlien: boolean;
-  notifWelcomePsikolog: boolean;
-  notifDpKlien: boolean;
-  notifBuktiPembayaranKlien: boolean;
-  notifPelunasanKlien: boolean;
-};
-
-/**
- * Map template name → toggle field yang mengontrol dispatch-nya.
- * Struktur: { klien?: keyof NotifSettings, psikolog?: keyof NotifSettings }
- */
-const TEMPLATE_TOGGLE: Record<string, { klien?: keyof NotifSettings; psikolog?: keyof NotifSettings }> = {
-  'Konfirmasi Booking':         { klien: 'notifConfirmKlien',        psikolog: 'notifConfirmPsikolog' },
-  'Follow-up Post Session':     { klien: 'notifFollowupKlien' },
-  'Reschedule Booking':         { klien: 'notifRescheduleKlien',     psikolog: 'notifReschedulePsikolog' },
-  'Cancel Booking':             { klien: 'notifCancelKlien',         psikolog: 'notifCancelPsikolog' },
-  'Ubah Ruangan':               { klien: 'notifUbahRuanganKlien',    psikolog: 'notifUbahRuanganPsikolog' },
-  'Ubah Layanan':               { klien: 'notifUbahLayananKlien',    psikolog: 'notifUbahLayananPsikolog' },
-  'Welcome New Client':         { klien: 'notifWelcomeKlien' },
-  'Welcome Psikolog Baru':      { psikolog: 'notifWelcomePsikolog' },
-  'Tagihan DP':                 { klien: 'notifDpKlien' },
-  'Bukti Pembayaran':           { klien: 'notifBuktiPembayaranKlien' },
-  'Pengingat Pelunasan':        { klien: 'notifPelunasanKlien' },
-};
-
 @Injectable()
 export class BookingNotificationService {
   private readonly logger = new Logger(BookingNotificationService.name);
@@ -81,65 +43,57 @@ export class BookingNotificationService {
     private readonly prisma: PrismaService,
   ) {}
 
-  /** Baca notif settings dari DB (single-row). Null-safe — pakai defaults kalau row belum ada. */
-  private async getNotifSettings(): Promise<NotifSettings> {
-    const s = await this.prisma.clinicSettings.findUnique({ where: { id: 1 } });
-    return {
-      waSendEnabled:              s?.waSendEnabled              ?? false,
-      notifConfirmKlien:          s?.notifConfirmKlien          ?? true,
-      notifConfirmPsikolog:       s?.notifConfirmPsikolog       ?? true,
-      notifFollowupKlien:         s?.notifFollowupKlien         ?? true,
-      notifRescheduleKlien:       s?.notifRescheduleKlien       ?? true,
-      notifReschedulePsikolog:    s?.notifReschedulePsikolog    ?? true,
-      notifCancelKlien:           s?.notifCancelKlien           ?? true,
-      notifCancelPsikolog:        s?.notifCancelPsikolog        ?? true,
-      notifUbahRuanganKlien:      s?.notifUbahRuanganKlien      ?? true,
-      notifUbahRuanganPsikolog:   s?.notifUbahRuanganPsikolog   ?? true,
-      notifUbahLayananKlien:      s?.notifUbahLayananKlien      ?? false,
-      notifUbahLayananPsikolog:   s?.notifUbahLayananPsikolog   ?? false,
-      notifWelcomeKlien:          s?.notifWelcomeKlien          ?? true,
-      notifWelcomePsikolog:       s?.notifWelcomePsikolog       ?? true,
-      notifDpKlien:               s?.notifDpKlien               ?? true,
-      notifBuktiPembayaranKlien:  s?.notifBuktiPembayaranKlien  ?? false,
-      notifPelunasanKlien:        s?.notifPelunasanKlien        ?? true,
-    };
+  /**
+   * Master kill-switch: ClinicSettings.waSendEnabled. Bila false → seluruh
+   * dispatch WA dimatikan (override semua template). Granular routing
+   * per-role-per-event dipegang oleh ClinicWaTemplate.recipients.
+   */
+  private async isWaEnabled(): Promise<boolean> {
+    const s = await this.prisma.clinicSettings.findUnique({
+      where: { id: 1 },
+      select: { waSendEnabled: true },
+    });
+    return s?.waSendEnabled ?? false;
   }
 
   /**
-   * Cek `ClinicWaTemplate.recipients` — apakah template ini juga harus
-   * dikirim ke psikolog. Return false kalau template tidak ditemukan
-   * (dispatch() yang akan log warn).
+   * Ambil recipients template (array `klien` | `psikolog` | `staff` | `user`).
+   * Empty array bila template tidak aktif / tidak ada — dispatcher akan skip
+   * semua recipient.
    */
-  private async templateTargetsPsikolog(templateName: string): Promise<boolean> {
+  private async getTemplateRecipients(templateName: string): Promise<string[]> {
     const tpl = await this.prisma.clinicWaTemplate.findFirst({
       where: { name: templateName, isActive: true, deletedAt: null },
       select: { recipients: true },
     });
-    return tpl?.recipients?.includes('psikolog') ?? false;
+    return tpl?.recipients ?? [];
   }
 
   /**
    * Fire-and-forget WA dispatch untuk booking event.
    * Caller pakai `void this.notify(...)` — error logged, tidak throw.
-   * Cek notif toggle dari ClinicSettings sebelum dispatch — kalau off, skip.
+   *
+   * Routing rule (single source of truth = `ClinicWaTemplate.recipients`):
+   *   - master switch `waSendEnabled` mati → skip semua
+   *   - `recipients.includes('klien')` → dispatch ke klien
+   *   - `recipients.includes('psikolog')` → fan-out ke psikolog (butuh phone)
    */
   async notify(
     booking: BookingForNotification,
     templateName: string,
     extraVars: Record<string, string | number> = {},
   ): Promise<void> {
-    if (!booking.client.phoneWa) {
+    if (!(await this.isWaEnabled())) return;
+
+    const recipients = await this.getTemplateRecipients(templateName);
+    if (recipients.length === 0) {
+      this.logger.debug(`[notify] skip ${templateName} — recipients empty`);
       return;
     }
 
-    const settings = await this.getNotifSettings();
-    if (!settings.waSendEnabled) return;
-
-    const toggle = TEMPLATE_TOGGLE[templateName];
-    if (toggle?.klien !== undefined && !settings[toggle.klien]) {
-      this.logger.debug(`[notify] skip klien — ${templateName} (toggle off)`);
-      return;
-    }
+    const sendToKlien = recipients.includes('klien') && Boolean(booking.client.phoneWa);
+    const sendToPsikolog = recipients.includes('psikolog') && Boolean(booking.psikolog.phone);
+    if (!sendToKlien && !sendToPsikolog) return;
 
     try {
       // Format tanggal/waktu human-readable Indonesia (Asia/Jakarta)
@@ -176,23 +130,22 @@ export class BookingNotificationService {
         total_baris: `💰 Total: Rp ${totalFormatted}`,
         ...extraVars,
       };
-      await this.wa.dispatch({
-        templateName,
-        recipientType: 'klien',
-        recipientPhone: booking.client.phoneWa,
-        variables,
-        bookingId: booking.id,
-      });
+      if (sendToKlien) {
+        await this.wa.dispatch({
+          templateName,
+          recipientType: 'klien',
+          recipientPhone: booking.client.phoneWa!,
+          variables,
+          bookingId: booking.id,
+        });
+      }
 
-      // Fan-out ke psikolog: cek toggle psikolog + template recipients
-      const psikologToggleKey = toggle?.psikolog;
-      const psikologToggleOn = psikologToggleKey ? settings[psikologToggleKey] : true;
-      if (booking.psikolog.phone && psikologToggleOn && (await this.templateTargetsPsikolog(templateName))) {
+      if (sendToPsikolog) {
         try {
           await this.wa.dispatch({
             templateName,
             recipientType: 'psikolog',
-            recipientPhone: booking.psikolog.phone,
+            recipientPhone: booking.psikolog.phone!,
             variables,
             bookingId: booking.id,
           });

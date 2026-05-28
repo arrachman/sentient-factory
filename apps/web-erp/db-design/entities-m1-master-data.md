@@ -330,10 +330,20 @@ Rate at a transaction date = latest row with `rateDate <= txnDate`. Base currenc
 
 ### Account  → `md_accounts`  (legacy `m1_coa` — Chart of Accounts)
 
+**Format kode wajib: `NNNN.NN.NNN` (4-2-3, dual dot, 11 char).** Decision
+2026-05-27 (lihat `README.md §8` #43). 4 digit prefix = kelompok-grup PSAK
+(`1xxx` Aset, `2xxx` Liab, `3xxx` Ekuitas, `4xxx` Revenue, `5xxx` HPP,
+`6xxx` Beban, `7xxx` Pos Luar Biasa & Pajak); 2 digit middle = sub-grup
+(max 99 anak per cabang); 3 digit leaf = nomor urut akun (max 999, mirror
+legacy `.NNN`). HEADER pakai trailing zero `NNNN.00.000`; POSTABLE pakai
+non-zero, default `NNNN.01.001`. Regex enforcement di
+`CreateErpAccountDto` (`@Matches(/^\d{4}\.\d{2}\.\d{3}$/)`) + FE form
+validator di `accounts-form.tsx`.
+
 | Field | Type | Notes |
 | --- | --- | --- |
 | id | BigInt PK | |
-| code 🔑 | String unique | account number (`cnomor`) |
+| code 🔑 | String unique | account number `NNNN.NN.NNN` (legacy `cnomor`) |
 | name | String | `cnama` |
 | alias ○ | String | `cnamaalias1` (alias2/3 → metadata) |
 | type ◆ | `AccountType` | `ctipe` |

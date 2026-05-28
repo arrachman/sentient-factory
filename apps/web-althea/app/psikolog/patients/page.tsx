@@ -8,7 +8,7 @@ import {
   aggregateClients,
   type AggregatedClient,
 } from './_lib/patients-model';
-import { PatientDetailAside } from './_components/patient-detail-aside';
+import { ClientDetailModal } from './_components/client-detail-modal';
 import { PatientListTable } from './_components/patient-list-table';
 import { PatientsMobile } from './_components/patients-mobile';
 
@@ -23,7 +23,7 @@ export default function PsikologPatientsPage() {
   const [katFilter, setKatFilter] = useState<(typeof CATEGORY_OPTIONS)[number]>('Semua');
   const [sortBy, setSortBy] = useState<SortBy>('next');
   const [query, setQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [openClientId, setOpenClientId] = useState<number | null>(null);
 
   const list = useBookingList({ psikologUserId: myUserId, limit: 200, includeCancelled: true });
 
@@ -73,15 +73,6 @@ export default function PsikologPatientsPage() {
     return rows;
   }, [allClients, statusTab, katFilter, sortBy, query]);
 
-  const selected: AggregatedClient | null = useMemo(() => {
-    if (allClients.length === 0) return null;
-    if (selectedId !== null) {
-      const found = allClients.find((c) => c.id === selectedId);
-      if (found) return found;
-    }
-    return visible[0] ?? allClients[0] ?? null;
-  }, [selectedId, visible, allClients]);
-
   return (
     <>
       <PatientsMobile
@@ -93,37 +84,40 @@ export default function PsikologPatientsPage() {
         query={query}
         onSelectTab={setStatusTab}
         onQuery={setQuery}
-        onSelect={setSelectedId}
+        onSelect={setOpenClientId}
       />
 
       <div
         className="hidden lg:flex"
         style={{ minHeight: 'calc(100vh - 64px)' }}
       >
-      <PatientListTable
-        allClients={allClients}
-        visible={visible}
-        counts={counts}
-        todayCount={todayCount}
-        isLoading={list.isLoading}
-        statusTab={statusTab}
-        katFilter={katFilter}
-        sortBy={sortBy}
-        query={query}
-        selectedId={selectedId}
-        onSelectTab={setStatusTab}
-        onKatFilter={setKatFilter}
-        onSortBy={setSortBy}
-        onQuery={setQuery}
-        onSelect={setSelectedId}
-        onResetFilters={() => {
-          setQuery('');
-          setKatFilter('Semua');
-          setStatusTab('Semua');
-        }}
-      />
-      {selected && <PatientDetailAside selected={selected} />}
+        <PatientListTable
+          allClients={allClients}
+          visible={visible}
+          counts={counts}
+          todayCount={todayCount}
+          isLoading={list.isLoading}
+          statusTab={statusTab}
+          katFilter={katFilter}
+          sortBy={sortBy}
+          query={query}
+          onSelectTab={setStatusTab}
+          onKatFilter={setKatFilter}
+          onSortBy={setSortBy}
+          onQuery={setQuery}
+          onSelect={setOpenClientId}
+          onResetFilters={() => {
+            setQuery('');
+            setKatFilter('Semua');
+            setStatusTab('Semua');
+          }}
+        />
       </div>
+
+      <ClientDetailModal
+        clientId={openClientId}
+        onClose={() => setOpenClientId(null)}
+      />
     </>
   );
 }

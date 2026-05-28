@@ -111,6 +111,24 @@ export function formatClinicTimeOfDay(d: Date, timezone = 'Asia/Jakarta'): strin
     .replace(':', '.');
 }
 
+/**
+ * Build Date object yang mewakili `dateStr T hhmm` di TZ klinik (sebagai
+ * UTC instant). Dipakai saat backend perlu reconstruct booking time dari
+ * komponen tanggal + HH:MM string (mis. auto-recompute scheduledEnd dari
+ * slot.end layanan baru).
+ *
+ * Contoh: `buildClinicInstant('2026-05-26', '13:30', 'Asia/Jakarta')` →
+ * Date 2026-05-26T06:30:00.000Z (= 13:30 WIB).
+ */
+export function buildClinicInstant(
+  dateStr: string,
+  hhmm: string,
+  timezone = 'Asia/Jakarta',
+): Date {
+  const offset = getTimezoneOffsetString(dateStr, timezone);
+  return new Date(`${dateStr}T${hhmm}:00${offset}`);
+}
+
 function getTimezoneOffsetString(dateStr: string, timezone: string): string {
   // Compute offset di tanggal tsb (mis. WIB = +07:00 — fixed; tapi negara
   // dengan DST bisa berubah)
