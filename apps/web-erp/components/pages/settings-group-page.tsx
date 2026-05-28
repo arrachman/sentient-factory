@@ -2,144 +2,16 @@
 
 import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
-import { Input } from '@/components/ui/input';
 import { notify } from '@/lib/feedback';
 import { getSettings, updateSetting } from '@/lib/api/settings';
 import type { ErpSetting } from '@/lib/api/settings';
+import { SettingRow } from './setting-row';
+import { EmptyGroup } from './empty-group-state';
 
 interface Props {
   group: string;
   title: string;
 }
-
-// ─── Field row ────────────────────────────────────────────────────────────────
-
-function SettingRow({
-  setting,
-  value,
-  dirty,
-  onChange,
-}: {
-  setting: ErpSetting;
-  value: string;
-  dirty: boolean;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '260px 1fr',
-        gap: 16,
-        alignItems: 'start',
-        padding: '10px 0',
-        borderTop: '1px solid var(--border)',
-      }}
-    >
-      <div>
-        <label
-          htmlFor={`sg-${setting.key}`}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: 'calc(12.5px * var(--font-scale, 1))',
-            color: 'var(--fg)',
-            cursor: 'pointer',
-          }}
-        >
-          {setting.description ?? setting.key}
-          {dirty && (
-            <span
-              style={{
-                display: 'inline-block',
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: 'var(--warning, #f59e0b)',
-                flexShrink: 0,
-              }}
-              title="Belum disimpan"
-            />
-          )}
-        </label>
-        <div
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'calc(10.5px * var(--font-scale, 1))',
-            color: 'var(--fg-faint, var(--fg-muted))',
-            marginTop: 2,
-          }}
-        >
-          {setting.key}
-        </div>
-      </div>
-      <Input
-        id={`sg-${setting.key}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={setting.value ?? ''}
-      />
-    </div>
-  );
-}
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-function EmptyGroup({ group }: { group: string }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 16,
-        padding: '48px 24px',
-        textAlign: 'center',
-      }}
-    >
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 'var(--radius-lg, 10px)',
-          background: 'var(--primary-soft)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--primary)',
-          flexShrink: 0,
-        }}
-      >
-        <Icon name="gear" size={22} />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div
-          style={{
-            fontSize: 'calc(13.5px * var(--font-scale, 1))',
-            fontWeight: 600,
-            color: 'var(--fg)',
-          }}
-        >
-          Belum ada pengaturan
-        </div>
-        <div
-          style={{
-            fontSize: 'calc(12px * var(--font-scale, 1))',
-            color: 'var(--fg-muted)',
-            lineHeight: 1.55,
-            maxWidth: 320,
-          }}
-        >
-          Grup <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--panel-2)', padding: '1px 5px', borderRadius: 4 }}>{group}</code> belum memiliki entri pengaturan. Pengaturan ditambahkan oleh administrator sistem.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function SettingsGroupPage({ group, title }: Props) {
   const [settings, setSettings] = React.useState<ErpSetting[]>([]);
