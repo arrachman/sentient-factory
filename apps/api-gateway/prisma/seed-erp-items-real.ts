@@ -45,37 +45,38 @@ const UNITS_TO_ADD: Array<{ code: string; name: string; notes?: string }> = [
 ];
 
 // ─── Real item categories (from legacy kategoribarang codes) ────────────────
+// Code = legacyCode (no 'CAT-' prefix; redundant — entity scope is category).
 const CATEGORIES: Array<{ code: string; name: string; legacyCode: string }> = [
-  { code: 'CAT-AB',  name: 'Accessories / Bumper',      legacyCode: 'AB' },
-  { code: 'CAT-AL',  name: 'Aluminium',                  legacyCode: 'AL' },
-  { code: 'CAT-AP',  name: 'Auto Parts',                 legacyCode: 'AP' },
-  { code: 'CAT-APD', name: 'APD / Safety Equipment',     legacyCode: 'APD' },
-  { code: 'CAT-ATK', name: 'Alat Tulis Kantor',          legacyCode: 'ATK' },
-  { code: 'CAT-BAR', name: 'Bar Stock',                  legacyCode: 'BAR' },
-  { code: 'CAT-BT',  name: 'Bolt & Fastener',            legacyCode: 'BT' },
-  { code: 'CAT-CH',  name: 'Chain',                      legacyCode: 'CH' },
-  { code: 'CAT-CON', name: 'Consumable',                 legacyCode: 'CON' },
-  { code: 'CAT-EL',  name: 'Electrical',                 legacyCode: 'EL' },
-  { code: 'CAT-FA',  name: 'Finished Assembly',          legacyCode: 'FA' },
-  { code: 'CAT-FL',  name: 'Flat / Wire',                legacyCode: 'FL' },
-  { code: 'CAT-HL',  name: 'Hollow',                     legacyCode: 'HL' },
-  { code: 'CAT-HX',  name: 'Hex / Hexagonal',            legacyCode: 'HX' },
-  { code: 'CAT-IN',  name: 'Injection Part',             legacyCode: 'IN' },
-  { code: 'CAT-JS',  name: 'Jasa / Service',             legacyCode: 'JS' },
-  { code: 'CAT-KN',  name: 'Knob',                       legacyCode: 'KN' },
-  { code: 'CAT-LM',  name: 'Laminasi',                   legacyCode: 'LM' },
-  { code: 'CAT-MM',  name: 'Metal Miscellaneous',        legacyCode: 'MM' },
-  { code: 'CAT-NC',  name: 'NC Parts / CNC',             legacyCode: 'NC' },
-  { code: 'CAT-OBT', name: 'Obat / Chemical',            legacyCode: 'OBT' },
-  { code: 'CAT-PAC', name: 'Packaging',                  legacyCode: 'PAC' },
-  { code: 'CAT-PB',  name: 'Pipe / Tube (PB)',           legacyCode: 'PB' },
-  { code: 'CAT-RD',  name: 'Rod',                        legacyCode: 'RD' },
-  { code: 'CAT-RS',  name: 'Rod Special',                legacyCode: 'RS' },
-  { code: 'CAT-ST',  name: 'Strip',                      legacyCode: 'ST' },
-  { code: 'CAT-TB',  name: 'Tube',                       legacyCode: 'TB' },
-  { code: 'CAT-TM',  name: 'Thermal / Heat Treatment',  legacyCode: 'TM' },
-  { code: 'CAT-YZ',  name: 'Yamato Zipper',              legacyCode: 'YZ' },
-  { code: 'CAT-ZN',  name: 'Zinc / Zamak',               legacyCode: 'ZN' },
+  { code: 'AB',  name: 'Accessories / Bumper',      legacyCode: 'AB' },
+  { code: 'AL',  name: 'Aluminium',                  legacyCode: 'AL' },
+  { code: 'AP',  name: 'Auto Parts',                 legacyCode: 'AP' },
+  { code: 'APD', name: 'APD / Safety Equipment',     legacyCode: 'APD' },
+  { code: 'ATK', name: 'Alat Tulis Kantor',          legacyCode: 'ATK' },
+  { code: 'BAR', name: 'Bar Stock',                  legacyCode: 'BAR' },
+  { code: 'BT',  name: 'Bolt & Fastener',            legacyCode: 'BT' },
+  { code: 'CH',  name: 'Chain',                      legacyCode: 'CH' },
+  { code: 'CON', name: 'Consumable',                 legacyCode: 'CON' },
+  { code: 'EL',  name: 'Electrical',                 legacyCode: 'EL' },
+  { code: 'FA',  name: 'Finished Assembly',          legacyCode: 'FA' },
+  { code: 'FL',  name: 'Flat / Wire',                legacyCode: 'FL' },
+  { code: 'HL',  name: 'Hollow',                     legacyCode: 'HL' },
+  { code: 'HX',  name: 'Hex / Hexagonal',            legacyCode: 'HX' },
+  { code: 'IN',  name: 'Injection Part',             legacyCode: 'IN' },
+  { code: 'JS',  name: 'Jasa / Service',             legacyCode: 'JS' },
+  { code: 'KN',  name: 'Knob',                       legacyCode: 'KN' },
+  { code: 'LM',  name: 'Laminasi',                   legacyCode: 'LM' },
+  { code: 'MM',  name: 'Metal Miscellaneous',        legacyCode: 'MM' },
+  { code: 'NC',  name: 'NC Parts / CNC',             legacyCode: 'NC' },
+  { code: 'OBT', name: 'Obat / Chemical',            legacyCode: 'OBT' },
+  { code: 'PAC', name: 'Packaging',                  legacyCode: 'PAC' },
+  { code: 'PB',  name: 'Pipe / Tube (PB)',           legacyCode: 'PB' },
+  { code: 'RD',  name: 'Rod',                        legacyCode: 'RD' },
+  { code: 'RS',  name: 'Rod Special',                legacyCode: 'RS' },
+  { code: 'ST',  name: 'Strip',                      legacyCode: 'ST' },
+  { code: 'TB',  name: 'Tube',                       legacyCode: 'TB' },
+  { code: 'TM',  name: 'Thermal / Heat Treatment',  legacyCode: 'TM' },
+  { code: 'YZ',  name: 'Yamato Zipper',              legacyCode: 'YZ' },
+  { code: 'ZN',  name: 'Zinc / Zamak',               legacyCode: 'ZN' },
 ];
 
 // ─── Parser ──────────────────────────────────────────────────────────────────
@@ -181,7 +182,7 @@ async function main(): Promise<void> {
 
   // Fallback unit (KG — always exists)
   const fallbackUnitId = unitMap.get('KG') ?? allUnits[0]?.id;
-  // Fallback category (CAT-MM — metal misc)
+  // Fallback category (MM — metal misc)
   const fallbackCatId = catMap.get('MM') ?? allCats[0]?.id;
 
   if (!fallbackUnitId || !fallbackCatId) {

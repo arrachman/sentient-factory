@@ -936,6 +936,37 @@ Kalau cukup dijelaskan satu kalimat helper text statik → tetap pakai
 Kandidat untuk diberi pola ini di masa depan: `ErpCostingMethod`
 (AVG/FIFO/STD), status workflow approval, role/permission picker.
 
+### 2.27 Master `code` = tanpa entity-scope prefix (2026-05-28)
+
+Kolom `code` master ERP **tidak boleh** dipayungi prefix yang sekadar
+mengulang entity scope-nya (mis. `CAT-XX` untuk item category, `BRD-XX`
+untuk brand, `UNT-XX` untuk unit). Scope sudah implied oleh tabel & UI
+breadcrumb — prefix = noise.
+
+Aturan:
+
+- Master code = bare semantic code (mis. `ZN` untuk Zinc, `MM` untuk Metal
+  Misc). Bila legacy punya `legacyCode` 2–4 huruf yang stabil, pakai
+  langsung sebagai `code`.
+- Prefix tetap **valid** kalau:
+  - Multi-segment semantik (mis. `RM-FB` = Raw Material → Fabric — segmen
+    pertama bermakna sub-tipe, bukan entitas).
+  - Namespace isolasi dataset (mis. `DUMMY-0001` di `seed-erp-md-dummy.ts`
+    untuk memisahkan dummy dari real data — segmen `DUMMY` adalah
+    dataset-tag, bukan entity-scope tag).
+- Saat menulis seed/migration baru: jangan re-introduce pola `<ENTITY>-XX`.
+  Auto-code generator (mis. `lib/items-code-generator.ts` untuk item code
+  `ITM-/SVC-/CNS-` — itu **item type marker**, beda kasus dgn category).
+
+Migrasi pendukung: `20260528_001_erp_strip_cat_prefix_item_categories`
+(strip `CAT-` dari 30 row `md_item_categories.code`; FK aman karena semua
+referensi pakai `categoryId` BigInt). Seed `seed-erp-items-real.ts` juga
+disinkron — 28 entry `CATEGORIES` sekarang bare code (`AB`, `AL`, ... `ZN`).
+
+Garment vertical (`db-design/seed-data-garment.md`) **tidak** dihabisi
+prefiks-nya karena belum dieksekusi & vertical-spesifik — saat slicing
+garment, terapkan aturan §2.27 ini.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
