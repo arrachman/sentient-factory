@@ -67,7 +67,11 @@ export function SearchSelectModal({
           <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
               <span className="text-[calc(13px*var(--font-scale,1))] font-semibold text-foreground">{resolvedTitle}</span>
-              {!loading && total > 0 && <span className="text-[calc(12px*var(--font-scale,1))] text-muted-foreground">· {total}</span>}
+              {total > 0 && (
+                <span className="text-[calc(12px*var(--font-scale,1))] text-muted-foreground tabular-nums">
+                  · {total}
+                </span>
+              )}
             </div>
             <DialogPrimitive.Close asChild>
               <button type="button" style={{ cursor: 'pointer' }}
@@ -111,16 +115,22 @@ export function SearchSelectModal({
                   ))}
                 </tr>
               </thead>
-              <tbody>
-                {loading && (
+              <tbody
+                aria-busy={loading || undefined}
+                className={cn(
+                  'transition-opacity duration-150',
+                  loading && displayOptions.length > 0 && 'pointer-events-none opacity-50',
+                )}
+              >
+                {loading && displayOptions.length === 0 && (
                   <tr><td colSpan={colSpan} className="px-4 py-4 text-[var(--fg-subtle)]">Memuat…</td></tr>
                 )}
                 {!loading && displayOptions.length === 0 && (
                   <tr><td colSpan={colSpan} className="px-4 py-4 text-[var(--fg-subtle)]">Tidak ada hasil</td></tr>
                 )}
-                {!loading && displayOptions.map((opt, i) => {
+                {displayOptions.length > 0 && displayOptions.map((opt, i) => {
                   const isActive = isMulti ? localSelected.has(opt.value) : opt.value === localSingle;
-                  const isFocused = tableActive && i === focusedIdx;
+                  const isFocused = !loading && tableActive && i === focusedIdx;
                   return (
                     <tr
                       key={opt.value}

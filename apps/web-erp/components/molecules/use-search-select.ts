@@ -74,6 +74,18 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const optLabel = (opt: SearchSelectOption): string =>
     opt.code ? `${opt.code} - ${opt.label}` : opt.label;
 
+  // Prioritaskan exact code match: kalau dalam results ada tepat 1 row dgn
+  // code == query (case-insensitive), auto-pilih row itu — meskipun results
+  // total > 1 (mis. nama lain ikut match LIKE). §2.30
+  const pickExactCodeMatch = (
+    results: SearchSelectOption[], q: string,
+  ): SearchSelectOption | null => {
+    const qLower = q.trim().toLowerCase();
+    if (!qLower) return null;
+    const exact = results.filter((r) => String(r.code ?? '').toLowerCase() === qLower);
+    return exact.length === 1 ? exact[0] : null;
+  };
+
   // ── Modal state ───────────────────────────────────────────────────────────
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
@@ -138,13 +150,14 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   }, [query, open]);
 
   // ── Server-side fetch — fires on debouncedQuery OR page change ────────────
+  // Tidak reset `tableActive` di sini — biarkan persist saat user nav ←/→ (§2.28).
   React.useEffect(() => {
     if (!open) return;
     let cancelled = false;
     setLoading(true);
     loadOptions(debouncedQuery, page, limit)
       .then(({ data, total: t }) => {
-        if (!cancelled) { setOptions(data); setTotal(t); setFocusedIdx(0); setTableActive(false); setLoading(false); }
+        if (!cancelled) { setOptions(data); setTotal(t); setFocusedIdx(0); setLoading(false); }
       })
       .catch(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -224,6 +237,8 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
           openModal(inputText);
           return;
         }
+        const exact = pickExactCodeMatch(results, inputText);
+        if (exact) { selectFromDropdown(exact); return; }
         if (results.length === 1) { selectFromDropdown(results[0]); return; }
         openModal(inputText);
         return;
@@ -289,6 +304,12 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
         setInputText('');
         ignoreNextBlurRef.current = false;
         openModal(inputText);
+        return;
+      }
+      const exact = pickExactCodeMatch(results, inputText);
+      if (exact) {
+        selectFromDropdown(exact);
+        setTimeout(focusNext, 0);
       } else if (results.length === 1) {
         selectFromDropdown(results[0]);
         setTimeout(focusNext, 0);
@@ -371,13 +392,11 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       e.preventDefault();
       setPage((p) => Math.max(1, p - 1));
       setFocusedIdx(0);
-      setTableActive(false);
       setLocalSingle(''); setLocalSingleLabel('');
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       setPage((p) => Math.min(totalPages, p + 1));
       setFocusedIdx(0);
-      setTableActive(false);
       setLocalSingle(''); setLocalSingleLabel('');
     } else if (e.key === 'Enter') {
       if (e.target instanceof HTMLButtonElement) return;

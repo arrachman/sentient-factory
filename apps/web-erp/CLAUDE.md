@@ -1033,6 +1033,30 @@ Saat membuat service ERP baru dengan search: **wajib** pakai pola di atas
 sejak awal. **Dilarang** re-introduce `{ code: { contains: ... } }` di
 service baru.
 
+### 2.30 `SearchSelect` inline-search — exact code match auto-pilih (2026-05-28)
+
+Pelengkap §2.29. Saat user mengetik di input `SearchSelect` lalu commit
+(blur ke luar input atau tekan Enter), `useSearchSelect` melakukan fetch
+satu kali (`loadOptions(text, 1, limit)`) dan memilih jalur berikutnya:
+
+1. **0 hasil** → reset value + buka modal dgn query (user lihat "Tidak ada hasil").
+2. **Ada tepat 1 row dgn `code` exact-match (case-insensitive)** → auto-pilih
+   row itu, **walaupun total `results.length > 1`** (mis. response 13 row krn
+   "um" juga LIKE-match `name`, tapi `code = "UM"` cuma 1 → pilih `UM`).
+3. **1 hasil saja** (tanpa exact code match) → auto-pilih row itu.
+4. **>1 hasil tanpa exact code match** → buka modal supaya user pilih manual.
+
+Helper `pickExactCodeMatch(results, query)` di
+[`components/molecules/use-search-select.ts`](components/molecules/use-search-select.ts)
+adalah SSOT logika ini — dipakai di `handleSingleBlur` dan handler Enter
+`handleSingleKeyDown`. Defensive: kalau ada >1 row dgn code exact (tidak
+seharusnya — code unique), tetap buka modal (`exact.length === 1` only).
+
+Alasan: backend `code` sudah exact-match (§2.29), tapi response tetap berisi
+row tambahan dari `name LIKE`. Tanpa shortcut ini, user yang ngetik kode
+yang sudah ia hafal masih harus klik modal 1× lagi padahal kandidat-nya
+jelas — beat seluruh keuntungan "search-by-code = exact".
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
