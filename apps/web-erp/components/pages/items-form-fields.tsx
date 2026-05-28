@@ -14,8 +14,10 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { ItemTypeInfoButton, getItemTypeTraits } from '@/components/molecules/item-type-info';
 import type { FormErrors } from '@/lib/form-validation';
 import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generator';
 import type { ItemFormData } from './items-form';
@@ -86,12 +88,21 @@ export function ItemFormFields({
 
   const renderKlasifikasi = () => (
     <Section title="Klasifikasi" hint="Tipe menentukan field yang muncul">
-      <FormField label="Tipe" htmlFor="if-type" required help="INVENTORY/CONSUMABLE/ASSET = stok fisik. SERVICE = jasa. NON_INVENTORY = non-stok.">
-        <Select value={data.itemType} onValueChange={(v) => set('itemType', v)}>
-          <SelectTrigger id="if-type"><SelectValue /></SelectTrigger>
-          <SelectContent>{ITEM_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-        </Select>
-      </FormField>
+      <div className="grid grid-cols-[110px_1fr] items-center gap-x-3 py-[5px]">
+        <div className="flex items-center gap-1">
+          <Label htmlFor="if-type" required>Tipe</Label>
+          <ItemTypeInfoButton currentType={data.itemType} />
+        </div>
+        <div className="relative flex items-center">
+          <Select value={data.itemType} onValueChange={(v) => set('itemType', v)}>
+            <SelectTrigger id="if-type"><SelectValue /></SelectTrigger>
+            <SelectContent>{ITEM_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <p className="col-start-2 pt-0.5 text-[11px] text-[var(--fg-subtle)]">
+          {getItemTypeTraits(data.itemType)}
+        </p>
+      </div>
       <FormField label="Metode HPP" htmlFor="if-hpp" required help="Rumus penghitungan harga pokok saat keluar stok">
         <Select value={data.costMethod} onValueChange={(v) => set('costMethod', v)}>
           <SelectTrigger id="if-hpp"><SelectValue /></SelectTrigger>

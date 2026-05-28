@@ -908,6 +908,34 @@ Berlaku untuk **semua** halaman master ERP yang pakai
   Riwayat → (sep) → Hapus di kebab menu. Tambah aksi entitas-spesifik
   di antara Duplikat dan Riwayat.
 
+### 2.26 Info icon + popover untuk enum berbisnis-logic (2026-05-28)
+
+Field enum dgn semantik bisnis non-trivial (mis. `ErpItemType` —
+INVENTORY/SERVICE/CONSUMABLE/ASSET/NON_INVENTORY) **wajib** punya jalur
+"cek perbandingan" tanpa keluar form. Pola standar = **info icon di label
++ Radix Popover** berisi tabel perbandingan sifat + contoh kasus, plus
+**helper text dinamis** di bawah Select yang menampilkan trait kunci dari
+nilai terpilih (ikut berubah saat user ganti pilihan).
+
+Implementasi pertama = item form (§2.25):
+- Molecule [`components/molecules/item-type-info.tsx`](components/molecules/item-type-info.tsx)
+  — exports `ItemTypeInfoButton({ currentType })` + helper `getItemTypeTraits(type)`.
+  Popover highlight kolom & contoh row yang match `currentType`.
+- Section Klasifikasi di [`items-form-fields.tsx`](components/pages/items-form-fields.tsx)
+  pakai grid manual (bukan `FormField`) supaya icon button bisa berdiri di
+  **luar `<label>`** — klik icon tidak menyambar fokus ke Select.
+
+Kapan pakai pola ini (kriteria):
+- Enum dgn ≥ 3 nilai yang punya **konsekuensi sistem berbeda** (drive logika
+  akuntansi, stok, workflow), bukan sekadar label kosmetik.
+- User awam (bukan dev/admin) bakal sering bingung memilih → butuh
+  comparison reference yang on-demand.
+
+Kalau cukup dijelaskan satu kalimat helper text statik → tetap pakai
+`help` prop `FormField` (jangan pasang popover sekadar dekoratif).
+Kandidat untuk diberi pola ini di masa depan: `ErpCostingMethod`
+(AVG/FIFO/STD), status workflow approval, role/permission picker.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)
