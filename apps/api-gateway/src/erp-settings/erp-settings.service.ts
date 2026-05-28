@@ -3,10 +3,74 @@ import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { QueryErpSettingDto } from './dto/query-erp-setting.dto';
 import { UpdateErpSettingDto } from './dto/update-erp-setting.dto';
+import {
+  buildNumberFormat,
+  NumberFormat,
+  parseDecimals,
+  parseDecimalSep,
+  parseThousandsSep,
+} from './number-format';
+
+const NUMBER_FORMAT_GROUP = 'number-format';
+const KEY_THOUSANDS = 'number_thousands_sep';
+const KEY_DECIMAL = 'number_decimal_sep';
+const KEY_DECIMALS = 'number_decimals';
 
 @Injectable()
 export class ErpSettingsService {
   constructor(private prisma: PrismaService) {}
+
+  async getNumberFormat(): Promise<NumberFormat> {
+    const rows = await this.prisma.erpSetting.findMany({
+      where: {
+        group: NUMBER_FORMAT_GROUP,
+        key: { in: [KEY_THOUSANDS, KEY_DECIMAL, KEY_DECIMALS] },
+        deletedAt: null,
+      },
+    });
+    const map = new Map(rows.map((r) => [r.key, r.value]));
+    return buildNumberFormat(
+      parseThousandsSep(map.get(KEY_THOUSANDS)),
+      parseDecimalSep(map.get(KEY_DECIMAL)),
+      parseDecimals(map.get(KEY_DECIMALS)),
+    );
+  }
+
+  async updateNumberFormat(
+    thousandsSep: string,
+    decimalSep: string,
+    decimals: number,
+    actorId?: string,
+  ): Promise<NumberFormat> {
+    const format = buildNumberFormat(
+      parseThousandsSep(thousandsSep),
+      parseDecimalSep(decimalSep),
+      parseDecimals(String(decimals)),
+    );
+    const updatedById = toAuditUserId(actorId);
+    const writes: Array<{ key: string; value: string; name: string; dataType: string }> = [
+      { key: KEY_THOUSANDS, value: format.thousandsSep, name: 'Pemisah Ribuan', dataType: 'string' },
+      { key: KEY_DECIMAL, value: format.decimalSep, name: 'Pemisah Desimal', dataType: 'string' },
+      { key: KEY_DECIMALS, value: String(format.decimals), name: 'Jumlah Desimal', dataType: 'integer' },
+    ];
+    for (const w of writes) {
+      await this.prisma.erpSetting.upsert({
+        where: {
+          module_group_key: { module: 'system', group: NUMBER_FORMAT_GROUP, key: w.key },
+        },
+        create: {
+          module: 'system',
+          group: NUMBER_FORMAT_GROUP,
+          key: w.key,
+          name: w.name,
+          value: w.value,
+          dataType: w.dataType,
+        },
+        update: { value: w.value, updatedById },
+      });
+    }
+    return format;
+  }
 
   async findAll(query: QueryErpSettingDto) {
     const where: {

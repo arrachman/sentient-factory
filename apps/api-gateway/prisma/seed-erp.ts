@@ -69,7 +69,10 @@ async function seedSettings() {
     // format
     { module: 'system', group: 'format', key: 'date_format', name: 'Format Tanggal', value: 'DD/MM/YYYY', dataType: 'string' },
     { module: 'system', group: 'format', key: 'time_format', name: 'Format Waktu', value: 'HH:mm', dataType: 'string' },
-    { module: 'system', group: 'format', key: 'number_format', name: 'Format Angka', value: '1.000,00', dataType: 'string' },
+    // number-format (global number formatting — diakses lewat halaman dedicated /admin/number-format)
+    { module: 'system', group: 'number-format', key: 'number_thousands_sep', name: 'Pemisah Ribuan', value: '.', dataType: 'string' },
+    { module: 'system', group: 'number-format', key: 'number_decimal_sep', name: 'Pemisah Desimal', value: ',', dataType: 'string' },
+    { module: 'system', group: 'number-format', key: 'number_decimals', name: 'Jumlah Desimal Default', value: '0', dataType: 'integer' },
     { module: 'system', group: 'format', key: 'currency_symbol', name: 'Simbol Mata Uang', value: 'Rp', dataType: 'string' },
     { module: 'system', group: 'format', key: 'currency_position', name: 'Posisi Simbol', value: 'before', dataType: 'string' },
     { module: 'system', group: 'format', key: 'timezone', name: 'Zona Waktu', value: 'Asia/Jakarta', dataType: 'string' },
@@ -109,6 +112,10 @@ async function seedSettings() {
     { module: 'system', group: 'account-code', key: 'account_code_segments', name: 'Segmen Kode Akun', value: '[4,2,3]', dataType: 'json' },
     { module: 'system', group: 'account-code', key: 'account_code_separator', name: 'Pemisah Segmen Kode Akun', value: '.', dataType: 'string' },
   ];
+  // Cleanup deprecated single-key number_format (replaced by group `number-format` with 3 keys, 2026-05-28).
+  await prisma.erpSetting.deleteMany({
+    where: { module: 'system', group: 'format', key: 'number_format' },
+  });
   for (const s of settings) {
     await prisma.erpSetting.upsert({
       where: { module_group_key: { module: s.module, group: s.group, key: s.key } },
@@ -378,6 +385,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M0.SYS.MENUS',       title: 'Menu Manager',        path: '/admin/menus',               legacyCode: '0-9'  },
     { code: 'M0.SYS.SETTINGS',    title: 'Settings Manager',    path: '/admin/settings',            legacyCode: '0-11' },
     { code: 'M0.SYS.ACCT-CODE',   title: 'Account Code Format', path: '/admin/account-code-format'                   },
+    { code: 'M0.SYS.NUM-FORMAT',  title: 'Number Format',       path: '/admin/number-format'                         },
     { code: 'M0.SYS.DOCNUM',      title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
     { code: 'M0.SYS.FISCAL',      title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
     { code: 'M0.SYS.AUDIT',       title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },

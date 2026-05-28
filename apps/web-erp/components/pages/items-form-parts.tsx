@@ -8,8 +8,8 @@
 
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { NumInput } from '@/components/molecules/num-input';
 import { SearchSelect } from '@/components/molecules/search-select';
 import type { ErpItemType } from '@/lib/api/items';
 
@@ -42,10 +42,10 @@ export function LookupField(props: {
   );
 }
 
-export function NumField(props: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+export function NumField(props: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder?: string; decimals?: number }) {
   return (
     <FormField label={props.label} htmlFor={props.id}>
-      <Input id={props.id} inputMode="decimal" value={props.value} onChange={(e) => props.onChange(e.target.value)} placeholder={props.placeholder ?? '0'} className="text-right tabular-nums" />
+      <NumInput id={props.id} value={props.value} onChange={props.onChange} placeholder={props.placeholder ?? '0'} decimals={props.decimals} />
     </FormField>
   );
 }

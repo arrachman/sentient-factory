@@ -1057,6 +1057,59 @@ row tambahan dari `name LIKE`. Tanpa shortcut ini, user yang ngetik kode
 yang sudah ia hafal masih harus klik modal 1× lagi padahal kandidat-nya
 jelas — beat seluruh keuntungan "search-by-code = exact".
 
+### 2.31 Format angka dinamis dari `sys_settings` (2026-05-28)
+
+Format angka **tidak** lagi hardcode `id-ID`. Pakai 3 setting global di
+`sys_settings` group `number-format`:
+
+- `number_thousands_sep` (string: `.` / `,` / ` ` / `'` / `""` tanpa pemisah)
+- `number_decimal_sep` (string: `,` / `.`)
+- `number_decimals` (integer 0–6 — default digit desimal)
+
+**Backend SSOT** = [`apps/api-gateway/src/erp-settings/number-format.ts`](../api-gateway/src/erp-settings/number-format.ts):
+`buildNumberFormat(thousandsSep, decimalSep, decimals)` → `{thousandsSep,
+decimalSep, decimals, example}`. Validasi: `thousandsSep` ≠ `decimalSep`,
+`decimals` 0–6. Endpoint: `GET /erp/settings/number-format` +
+`PUT /erp/settings/number-format` (guard `ErpJwtAuthGuard`). **Tidak ada
+lock-after-data** (beda dgn account-code-format §2.24) — ini display
+formatting, ubah kapan saja, semua tampilan ikut refresh.
+
+**Frontend:**
+
+- [`lib/format.ts`](lib/format.ts) — module-level cache + `useNumberFormat()`
+  hook + helper `formatNumber(value, decimals?)` / `formatRupiah(value)` /
+  `formatQty(value)`. Helper lama tetap kompatibel (delegate ke
+  `formatNumber`). Default fallback `{ '.', ',', 0 }` saat API gagal.
+- [`lib/format.ts`](lib/format.ts) juga export `formatRawForDisplay(raw,
+  fmt, decimals?)` + `parseDisplayToRaw(display, fmt)` — pure helpers untuk
+  live mask di input.
+- [`components/molecules/num-input.tsx`](components/molecules/num-input.tsx)
+  (`NumInput`) — input numerik dgn live thousand-separator masking +
+  caret restore via digit-index. Value = raw canonical (`12345` / `12345.5`).
+- `NumField` di [`items-form-parts.tsx`](components/pages/items-form-parts.tsx)
+  sekarang pakai `NumInput` (semua field numerik items-form ikut format).
+- Halaman dedicated `/admin/number-format` ([`number-format-page.tsx`](components/pages/number-format-page.tsx))
+  di group `M0.SYS` (Administrator → System) — 3 dropdown/input + preset
+  cepat (id-ID, id-ID+2 desimal, en-US, en-US+2 desimal, plain) + preview
+  live. Setelah PUT sukses → `invalidateNumberFormatCache(updated)` supaya
+  semua subscriber `useNumberFormat()` re-render dgn format baru.
+
+**Saat membuat input numerik baru**: pakai `<NumInput>` (atau `NumField` di
+items-form). **Dilarang** `<Input type="number">` atau `<Input
+inputMode="decimal">` mentah untuk field qty/harga — tidak ikut format
+global. `decimals?` prop bisa override default per field (mis. `decimals={2}`
+untuk harga, biarkan undefined untuk qty integer ikut setting global).
+
+**Saat memformat angka di tabel/summary**: pakai `formatNumber/formatRupiah/
+formatQty` dari `lib/format.ts` — sudah otomatis ikut setting global (§2.9
+"Format Angka" disempurnakan: tidak lagi hardcode locale id-ID).
+
+**Migrasi seed:** key tunggal lama `sys_settings.key='number_format'` di
+group `format` (value literal `'1.000,00'`, never dipakai) **dihapus
+otomatis** oleh `prisma/seed-erp.ts` (`deleteMany` sebelum upsert) — clean,
+non-destructive. Jalankan `npm run db:seed` setelah pull untuk hidupkan
+3 key baru + menu `/admin/number-format`.
+
 ---
 
 ## 3. Clean code & batas 400 baris (WAJIB)

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Put, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { QueryErpSettingDto } from './dto/query-erp-setting.dto';
 import { UpdateErpSettingDto } from './dto/update-erp-setting.dto';
+import { UpdateNumberFormatDto } from './dto/update-number-format.dto';
 import { ErpSettingsService } from './erp-settings.service';
 
 @ApiTags('ERP Settings')
@@ -17,6 +18,22 @@ export class ErpSettingsController {
   @ApiResponse({ status: 200, description: 'List of ERP settings' })
   findAll(@Query() query: QueryErpSettingDto) {
     return this.service.findAll(query);
+  }
+
+  @Get('number-format')
+  @ApiOperation({ summary: 'Get global number formatting (thousands/decimal sep + decimals)' })
+  @ApiResponse({ status: 200, description: 'Active number format' })
+  getNumberFormat() {
+    return this.service.getNumberFormat().then((data) => ({ success: true, data }));
+  }
+
+  @Put('number-format')
+  @ApiOperation({ summary: 'Update global number formatting' })
+  @ApiResponse({ status: 200, description: 'Number format updated' })
+  updateNumberFormat(@Body() dto: UpdateNumberFormatDto, @Request() req: any) {
+    return this.service
+      .updateNumberFormat(dto.thousandsSep, dto.decimalSep, dto.decimals, req.user?.id)
+      .then((data) => ({ success: true, data }));
   }
 
   @Get(':key')
