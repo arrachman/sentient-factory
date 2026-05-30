@@ -787,8 +787,9 @@ header MyERP+ "Barang". Field katalog otoritatif = `db-design/entities-m1-master
   remount + hilang focus).
 - **`SimpleMasterPage` dapat prop `modalSize?: 'md' | 'lg'`** (default `md`). Form
   kaya (banyak field) → pakai `modalSize="lg"`. Diteruskan ke `<ModalContent size>`.
-- **Deferred** (belum di form): price tiers 2–10, tab Atribut multi-varian,
-  distributor multi-supplier. Item Information tetap halaman 1:1 terpisah (§2.21).
+- **Deferred** (belum di form): tab Atribut multi-varian, distributor
+  multi-supplier. Item Information tetap halaman 1:1 terpisah (§2.21).
+  (Price tiers 1–10 sudah **implemented** — lihat §2.32.)
 
 ### 2.24 Format kode akun CoA = dinamis dari `sys_settings` (2026-05-27)
 
@@ -1109,6 +1110,125 @@ group `format` (value literal `'1.000,00'`, never dipakai) **dihapus
 otomatis** oleh `prisma/seed-erp.ts` (`deleteMany` sebelum upsert) — clean,
 non-destructive. Jalankan `npm run db:seed` setelah pull untuk hidupkan
 3 key baru + menu `/admin/number-format`.
+
+### 2.32 Item — tab Harga paritas MyERP+ (price tiers 1–10) (2026-05-30)
+
+Section **Harga** di form item (§2.25) di-expand ke paritas tab "Harga"
+MyERP+: 10 tingkat harga jual + diskon per tingkat. Mengakhiri "deferred
+price tiers 2–10" dari §2.23.
+
+**Model data = tabel anak ternormalisasi** (keputusan user 2026-05-30):
+- `md_item_prices` (model `ErpItemPrice`): `itemId` FK (cascade), `level`
+  (1–10), `price` Decimal(19,4), `discountPercent` Decimal(9,4), audit cols.
+  `@@unique([itemId, level])`. **Bukan** kolom flat `salePrice1..10` —
+  sejalan prinsip ternormalisasi + nyambung ke `md_partners.salesTier`
+  (legacy `cctingkatjual`) untuk logika pricing modul Sales nanti.
+- `md_items.purchaseDiscount` Decimal(9,4) — "Diskon Pembelian" (persen).
+- Migrasi `20260530_001_erp_item_price_tiers` (additive, 0 DROP). **Hand-written
+  SQL + `prisma migrate deploy`** (bukan `migrate dev`) — `migrate dev` gagal di
+  shadow DB karena migrasi clinic lama tidak replay bersih; DB live sendiri
+  `up to date`. Pola ini berlaku untuk semua migrasi ERP berikutnya.
+
+**Pemetaan field MyERP+ → schema (jangan bikin kolom redundan):**
+- "Harga Beli Terakhir" → `purchasePrice` (sudah ada).
+- "Hpp rata-rata" (readonly) → `averageCost` (computed sistem; field form
+  read-only, **tidak** dikirim di payload).
+- "Hpp Update" → `standardCost` (manual/standard HPP, legacy `bhpp`) — **bukan**
+  kolom baru.
+- "Harga Jual 1..10" / "Diskon Jual 1..10" → `md_item_prices` rows.
+- `md_items.salePrice` tetap ada = **cache denormalized level-1** (di-set dari
+  `prices[level=1].price` saat simpan; dibaca modul lain). SSOT 10 tier =
+  `md_item_prices`.
+
+**Backend:** DTO `ItemPriceDto` (level 1–10 + price/discountPercent string),
+`prices?: ItemPriceDto[]` di create DTO (`@ValidateNested`). Service
+`buildPriceRows()` skip level yang price+diskon kosong; create = nested
+`prices.create`; update = `prices: { deleteMany: {}, create }` (replace
+penuh). `ITEM_INCLUDE.prices` + `mapItem` stringify Decimal.
+
+**Frontend:** `ItemFormData.salePrices`/`saleDiscounts` = `string[10]` (index
+0 = level 1) + `purchaseDiscount` + `averageCost` (display-only). `fromItem`
+expand sparse rows → 10 slot (`tierColumn`); `toItemPayload` collapse →
+sparse rows (`buildPriceTiers`, skip kosong) + `salePrice = salePrices[0]`.
+Layout = 2-kolom paired (Harga Jual N kiri ‖ Diskon Jual N kanan), buy-side
+(Harga Beli/Diskon Pembelian/HPP) di atas. `NumField` dapat prop `readOnly`
+untuk HPP Rata-rata.
+
+### 2.34 Naming reservation: `md_item_locations` ≠ tab Lokasi (2026-05-30)
+
+**`ErpItemLocation` / `md_item_locations` = master "Item Location" legacy**
+(code/name/warehouse, modul `erp-item-locations/` + halaman + data ada).
+**JANGAN** pakai nama ini untuk junction "tab Lokasi" item. Junction per-item
+(Gudang + Lokasi) = **`ErpItemPlacement` / `md_item_placements`** (relasi
+`ErpItem.locations`, migrasi `20260530_003`). Bug history: fitur tab Lokasi
+sempat mendefinisikan ulang `model ErpItemLocation @@map("md_item_locations")`
+→ skema invalid (duplicate model) + migrasi `CREATE TABLE IF NOT EXISTS`
+jadi no-op (tabel master sudah ada) → **semua** operasi item gagal dengan
+`PrismaClientValidationError` (filter menamai-nya "Invalid query parameters").
+Resolusi: rename junction ke `ErpItemPlacement`. Relasi field tetap `locations`
+jadi service/FE tak berubah.
+
+### 2.33 Item — tab Akun paritas MyERP+ (8 akun GL) (2026-05-30)
+
+Section **Akuntansi** di form item (§2.25) di-expand ke paritas tab "Akun"
+MyERP+: dari 3 akun → **8 akun GL** (urutan legacy). Tambahan 5 akun:
+Retur Penjualan, Diskon Penjualan, Retur Pembelian, Diskon Pembelian,
+Konsinyasi (Persediaan/Penjualan/HPP sudah ada).
+
+- **`md_items` kolom baru** (semua nullable BigInt → `md_accounts`):
+  `salesReturnAccountId`, `salesDiscountAccountId`, `purchaseReturnAccountId`,
+  `purchaseDiscountAccountId`, `consignmentAccountId`. Relasi `ItemSalesReturnAcct`
+  dst di `ErpItem` + back-pointer di `ErpAccount`. Migrasi
+  `20260530_002_erp_item_legacy_gl_accounts` (additive, 0 DROP, FK `ON DELETE
+  SET NULL`). Hand-written SQL + `migrate deploy` (pola §2.32).
+- **Wajib hanya saat `type=INVENTORY`** (keputusan user 2026-05-30). DB kolom
+  tetap nullable (aman untuk 100+ item lama + tipe SERVICE/NON_INVENTORY yang
+  tak butuh akun ini). Required di-enforce **FE-only** lewat `validateItem`
+  (`REQUIRED_INVENTORY_ACCOUNTS` + `requiredWhenInventory`) — legacy menandai
+  semua 8 wajib, tapi modern kita kondisikan ke tipe stok. Backend DTO semua
+  optional.
+- **UX bridge:** akun GL tidak terlihat di mode entri **Cepat** (§2.25). Kalau
+  validasi akun gagal saat simpan di Cepat, `items-form-fields.tsx` auto-switch
+  ke **Lengkap** + buka section Akuntansi (efek `accountError && mode==='cepat'`)
+  supaya error bisa diperbaiki. Label section pakai nama legacy ringkas
+  (Persediaan, Penjualan, Retur Penjualan, …) bukan "Akun Persediaan".
+
+### 2.34 Item — section Lokasi multi-gudang (placements) (2026-05-30)
+
+Section **Lokasi** baru di form item (§2.25), paritas tab "Lokasi" MyERP+
+(`m1_item_location_warehouse`): per item, daftar baris **(Gudang, Lokasi)** =
+penempatan item di banyak gudang/spot. Pelengkap `defaultWarehouseId`/
+`defaultLocationId` yang tetap single default.
+
+- **Data model = junction ternormalisasi `md_item_placements`** (model Prisma
+  **`ErpItemPlacement`**, bukan `ErpItemLocation`): `itemId` FK (cascade),
+  `warehouseId` FK → `md_warehouses` (**Gudang**), `locationId` FK →
+  **`md_item_locations`** (**Lokasi** = master named-spot legacy, `code`/`name`/
+  `warehouseId`), audit cols. `@@unique([itemId, warehouseId, locationId])`.
+  **Penting (keputusan user 2026-05-30):** "Lokasi" = master spot
+  `md_item_locations` (sudah punya modul + halaman + seed sendiri), **bukan**
+  `md_locations` (itu level cabang/site). Nama tabel `md_item_locations` sudah
+  dipakai master spot → junction pakai nama `md_item_placements`.
+- Migrasi `20260530_003_erp_item_locations` (CREATE `md_item_placements`,
+  additive 0 DROP) + koreksi `20260530_004_erp_item_placement_location_fk`
+  (repoint FK `location_id` dari draft `md_locations` → `md_item_locations`;
+  draft awal salah target). Hand-written SQL + `migrate deploy` (pola §2.32).
+- **Backend:** DTO `ItemLocationDto` (`warehouseId`+`locationId` string),
+  `locations?: ItemLocationDto[]` di create DTO. Relasi Prisma di service =
+  `placements` (create / `deleteMany`+create saat update); `buildLocationRows`
+  skip baris tak-lengkap + **dedupe** pasangan. `mapItem` memetakan
+  `placements` → field FE `locations` (`{warehouseId, locationId, warehouse,
+  location}`). Helper murni (include graph + builders + `mapItem`) di-extract
+  ke **`erp-items.mappers.ts`** supaya service tetap < 400 baris (§3).
+- **Frontend:** `ItemFormData.locations: ItemLocationFormRow[]` (punya `key`
+  stabil client agar display `SearchSelect` tahan add/remove baris — tidak
+  dikirim). Section `lokasi` di side-nav **Lengkap**, **hanya untuk tipe
+  stockable** (INVENTORY/CONSUMABLE/ASSET), placement: setelah Inventory.
+  Editor multi-baris = organism
+  [`components/pages/items-form-locations.tsx`](components/pages/items-form-locations.tsx)
+  (tabel No · Gudang · Lokasi · hapus + tombol "Tambah"). Loader Lokasi =
+  `loadItemLocationOptions` (master spot), **bukan** `loadLocationOptions`.
+  `toItemPayload` drop baris yang Gudang/Lokasi belum lengkap.
 
 ---
 

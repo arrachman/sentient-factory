@@ -33,7 +33,10 @@ export type UpdateErpItemInformationPayload = Partial<CreateErpItemInformationPa
 const BASE = '/item-informations';
 
 export async function listItemInformations(params?: PaginationParams): Promise<PaginatedResponse<ErpItemInformation>> {
-  return apiGet<PaginatedResponse<ErpItemInformation>>(BASE, params as Record<string, string | number | boolean | undefined>);
+  // md_item_informations has no isActive column — strip it so NestJS
+  // forbidNonWhitelisted doesn't 400 on the unknown query param.
+  const { isActive: _omit, ...rest } = params ?? {};
+  return apiGet<PaginatedResponse<ErpItemInformation>>(BASE, rest as Record<string, string | number | boolean | undefined>);
 }
 
 export async function createErpItemInformation(payload: CreateErpItemInformationPayload): Promise<ErpItemInformation> {

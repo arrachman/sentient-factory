@@ -23,6 +23,7 @@ import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generato
 import type { ItemFormData } from './items-form';
 import { ITEM_TYPES, COST_METHODS } from './items-form';
 import { Section, LookupField, NumField, YesNoField, isStockable, showsWeight } from './items-form-parts';
+import { ItemLocationsEditor } from './items-form-locations';
 import {
   loadCategoryOptions, loadUnitOptions, loadKindOptions, loadProductClassOptions,
   loadDivisionOptions, loadSubDivisionOptions, loadDepartmentOptions, loadSubDepartmentOptions,
@@ -31,7 +32,7 @@ import {
 } from './items-form-lookups';
 
 type Mode = 'cepat' | 'lengkap';
-type SectionId = 'identitas' | 'klasifikasi' | 'inventory' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'catatan';
+type SectionId = 'identitas' | 'klasifikasi' | 'inventory' | 'lokasi' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'catatan';
 
 const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
 
@@ -51,13 +52,21 @@ export function ItemFormFields({
     finally { setGenerating(false); }
   };
 
+  // Akun GL wajib (INVENTORY) tidak terlihat di mode Cepat — kalau validasi gagal di
+  // section ini, lompat ke Lengkap + buka Akuntansi supaya error bisa diperbaiki.
+  const accountError = !!(errors.inventoryAccountId || errors.salesAccountId || errors.salesReturnAccountId || errors.salesDiscountAccountId || errors.cogsAccountId || errors.purchaseReturnAccountId || errors.purchaseDiscountAccountId || errors.consignmentAccountId);
+  React.useEffect(() => {
+    if (accountError && mode === 'cepat') { setMode('lengkap'); setActiveSection('akuntansi'); }
+  }, [accountError, mode]);
+
   const sections: { id: SectionId; label: string; available: boolean; hasError: boolean }[] = [
     { id: 'identitas', label: 'Identitas', available: true, hasError: !!(errors.code || errors.name) },
     { id: 'klasifikasi', label: 'Klasifikasi', available: true, hasError: !!(errors.categoryId || errors.unitId) },
     { id: 'inventory', label: 'Inventory & Tracking', available: isStockable(data.itemType), hasError: false },
+    { id: 'lokasi', label: 'Lokasi', available: isStockable(data.itemType), hasError: false },
     { id: 'harga', label: 'Harga', available: true, hasError: false },
     { id: 'pajak', label: 'Pajak', available: true, hasError: false },
-    { id: 'akuntansi', label: 'Akuntansi', available: true, hasError: false },
+    { id: 'akuntansi', label: 'Akuntansi', available: true, hasError: accountError },
     { id: 'dimensi', label: 'Dimensi GL', available: true, hasError: false },
     { id: 'supplier', label: 'Supplier', available: true, hasError: false },
     { id: 'catatan', label: 'Catatan', available: true, hasError: false },
@@ -134,11 +143,30 @@ export function ItemFormFields({
     </Section>
   );
 
+  const renderLokasi = () => (
+    <Section title="Lokasi" hint="Penempatan item per Gudang + Lokasi (paritas MyERP+)">
+      <ItemLocationsEditor rows={data.locations} onChange={(rows) => onChange({ ...data, locations: rows })} />
+    </Section>
+  );
+
+  const setTier = (arr: 'salePrices' | 'saleDiscounts', i: number, v: string) => {
+    const next = [...data[arr]];
+    next[i] = v;
+    onChange({ ...data, [arr]: next });
+  };
+
   const renderHarga = () => (
-    <Section title="Harga">
-      <NumField id="if-stdcost" label="Harga Standar" value={data.standardCost} onChange={(v) => set('standardCost', v)} />
-      <NumField id="if-buy" label="Harga Beli" value={data.purchasePrice} onChange={(v) => set('purchasePrice', v)} />
-      <NumField id="if-sell" label="Harga Jual" value={data.salePrice} onChange={(v) => set('salePrice', v)} />
+    <Section title="Harga" hint="Harga Jual 1–10 + diskon per tingkat (paritas MyERP+)">
+      <NumField id="if-buy" label="Harga Beli Terakhir" value={data.purchasePrice} onChange={(v) => set('purchasePrice', v)} />
+      <NumField id="if-avgcost" label="HPP Rata-rata" value={data.averageCost} onChange={() => {}} readOnly help="Otomatis dari sistem" />
+      <NumField id="if-buydisc" label="Diskon Pembelian" value={data.purchaseDiscount} onChange={(v) => set('purchaseDiscount', v)} placeholder="0" help="Persen (%)" />
+      <NumField id="if-stdcost" label="HPP Update" value={data.standardCost} onChange={(v) => set('standardCost', v)} help="Set HPP manual" />
+      {data.salePrices.map((_, i) => (
+        <React.Fragment key={i}>
+          <NumField id={`if-sell-${i}`} label={`Harga Jual ${i + 1}`} value={data.salePrices[i] ?? ''} onChange={(v) => setTier('salePrices', i, v)} />
+          <NumField id={`if-selldisc-${i}`} label={`Diskon Jual ${i + 1}`} value={data.saleDiscounts[i] ?? ''} onChange={(v) => setTier('saleDiscounts', i, v)} placeholder="0" />
+        </React.Fragment>
+      ))}
       <FormField label="Harga berlaku s.d" htmlFor="if-valid" help="Setelah tanggal ini, harga jual perlu di-review">
         <Input id="if-valid" type="date" value={data.validUntil} onChange={(e) => set('validUntil', e.target.value)} />
       </FormField>
@@ -153,13 +181,22 @@ export function ItemFormFields({
     </Section>
   );
 
-  const renderAkuntansi = () => (
-    <Section title="Akuntansi">
-      <LookupField id="if-acc-inv" label="Akun Persediaan" value={data.inventoryAccountId} onPick={(v) => set('inventoryAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.inventoryAccountLabel} />
-      <LookupField id="if-acc-sales" label="Akun Penjualan" value={data.salesAccountId} onPick={(v) => set('salesAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.salesAccountLabel} />
-      <LookupField id="if-acc-cogs" label="Akun HPP" value={data.cogsAccountId} onPick={(v) => set('cogsAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.cogsAccountLabel} />
-    </Section>
-  );
+  const renderAkuntansi = () => {
+    const req = data.itemType === 'INVENTORY';
+    const hint = req ? 'Wajib diisi untuk item Inventory' : 'Opsional untuk tipe non-Inventory';
+    return (
+      <Section title="Akuntansi" hint={hint}>
+        <LookupField id="if-acc-inv" label="Persediaan" value={data.inventoryAccountId} onPick={(v) => set('inventoryAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.inventoryAccountLabel} required={req} error={!!errors.inventoryAccountId} />
+        <LookupField id="if-acc-sales" label="Penjualan" value={data.salesAccountId} onPick={(v) => set('salesAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.salesAccountLabel} required={req} error={!!errors.salesAccountId} />
+        <LookupField id="if-acc-sret" label="Retur Penjualan" value={data.salesReturnAccountId} onPick={(v) => set('salesReturnAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.salesReturnAccountLabel} required={req} error={!!errors.salesReturnAccountId} />
+        <LookupField id="if-acc-sdisc" label="Diskon Penjualan" value={data.salesDiscountAccountId} onPick={(v) => set('salesDiscountAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.salesDiscountAccountLabel} required={req} error={!!errors.salesDiscountAccountId} />
+        <LookupField id="if-acc-cogs" label="HPP" value={data.cogsAccountId} onPick={(v) => set('cogsAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.cogsAccountLabel} required={req} error={!!errors.cogsAccountId} />
+        <LookupField id="if-acc-pret" label="Retur Pembelian" value={data.purchaseReturnAccountId} onPick={(v) => set('purchaseReturnAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.purchaseReturnAccountLabel} required={req} error={!!errors.purchaseReturnAccountId} />
+        <LookupField id="if-acc-pdisc" label="Diskon Pembelian" value={data.purchaseDiscountAccountId} onPick={(v) => set('purchaseDiscountAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.purchaseDiscountAccountLabel} required={req} error={!!errors.purchaseDiscountAccountId} />
+        <LookupField id="if-acc-cons" label="Konsinyasi" value={data.consignmentAccountId} onPick={(v) => set('consignmentAccountId', v)} loader={loadAccountOptions} placeholder="Pilih akun…" initialLabel={data.consignmentAccountLabel} required={req} error={!!errors.consignmentAccountId} />
+      </Section>
+    );
+  };
 
   const renderDimensi = () => (
     <Section title="Dimensi GL">
@@ -191,7 +228,7 @@ export function ItemFormFields({
 
   const renderById: Record<SectionId, () => React.ReactElement> = {
     identitas: renderIdentitas, klasifikasi: renderKlasifikasi, inventory: renderInventory,
-    harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
+    lokasi: renderLokasi, harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
     dimensi: renderDimensi, supplier: renderSupplier, catatan: renderCatatan,
   };
 

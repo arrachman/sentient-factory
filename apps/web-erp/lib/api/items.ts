@@ -21,6 +21,21 @@ interface RelationRef {
   name?: string;
 }
 
+/** One sale price tier (legacy "Harga Jual N" + "Diskon Jual N"). */
+export interface ItemPriceTier {
+  level: number;
+  price: string;
+  discountPercent: string;
+}
+
+/** One item storage placement (legacy "Lokasi" tab: Gudang + Lokasi). */
+export interface ItemLocationRow {
+  warehouseId: string;
+  locationId: string;
+  warehouse?: RelationRef | null;
+  location?: RelationRef | null;
+}
+
 export interface ErpItem {
   id: string;
   code: string;
@@ -54,11 +69,14 @@ export interface ErpItem {
   costCenterId?: string | null;
 
   // Costs & prices
-  standardCost?: string | null;
-  averageCost?: string | null;
-  purchasePrice?: string | null;
-  salePrice?: string | null;
+  standardCost?: string | null;      // "Hpp Update" (manual HPP)
+  averageCost?: string | null;       // "Hpp rata-rata" (computed, readonly)
+  purchasePrice?: string | null;     // "Harga Beli Terakhir"
+  purchaseDiscount?: string | null;  // "Diskon Pembelian" (percent)
+  salePrice?: string | null;         // "Harga Jual 1" (mirror of tier level 1)
   sellingPrice?: string | null; // legacy alias of salePrice
+  prices?: ItemPriceTier[];          // "Harga Jual 1..10" + "Diskon Jual 1..10"
+  locations?: ItemLocationRow[];     // "Lokasi" tab: Gudang + Lokasi placements
 
   // Stock & tracking
   minStock?: string | null;
@@ -73,6 +91,11 @@ export interface ErpItem {
   inventoryAccountId?: string | null;
   salesAccountId?: string | null;
   cogsAccountId?: string | null;
+  salesReturnAccountId?: string | null;
+  salesDiscountAccountId?: string | null;
+  purchaseReturnAccountId?: string | null;
+  purchaseDiscountAccountId?: string | null;
+  consignmentAccountId?: string | null;
 
   // Tax
   purchaseTaxId?: string | null;
@@ -109,6 +132,11 @@ export interface ErpItem {
   inventoryAccount?: RelationRef | null;
   salesAccount?: RelationRef | null;
   cogsAccount?: RelationRef | null;
+  salesReturnAccount?: RelationRef | null;
+  salesDiscountAccount?: RelationRef | null;
+  purchaseReturnAccount?: RelationRef | null;
+  purchaseDiscountAccount?: RelationRef | null;
+  consignmentAccount?: RelationRef | null;
   purchaseTax?: RelationRef | null;
   saleTax?: RelationRef | null;
   primarySupplier?: RelationRef | null;
@@ -145,7 +173,10 @@ export interface CreateItemPayload {
 
   standardCost?: string;
   purchasePrice?: string;
+  purchaseDiscount?: string;
   salePrice?: string;
+  prices?: { level: number; price?: string; discountPercent?: string }[];
+  locations?: { warehouseId: string; locationId: string }[];
 
   minStock?: string;
   maxStock?: string;
@@ -159,6 +190,11 @@ export interface CreateItemPayload {
   inventoryAccountId?: string | null;
   salesAccountId?: string | null;
   cogsAccountId?: string | null;
+  salesReturnAccountId?: string | null;
+  salesDiscountAccountId?: string | null;
+  purchaseReturnAccountId?: string | null;
+  purchaseDiscountAccountId?: string | null;
+  consignmentAccountId?: string | null;
   purchaseTaxId?: string | null;
   saleTaxId?: string | null;
   primarySupplierId?: string | null;

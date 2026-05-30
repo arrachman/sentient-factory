@@ -44,24 +44,54 @@ export function getItemTypeTraits(t: ErpItemType): string {
 }
 
 export function ItemTypeInfoButton({ currentType }: { currentType?: ErpItemType }) {
+  const [open, setOpen] = React.useState(false);
+  const closeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearTimers = () => {
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+    if (openTimerRef.current) { clearTimeout(openTimerRef.current); openTimerRef.current = null; }
+  };
+  const scheduleOpen = () => {
+    clearTimers();
+    openTimerRef.current = setTimeout(() => setOpen(true), 150);
+  };
+  const scheduleClose = () => {
+    clearTimers();
+    closeTimerRef.current = setTimeout(() => setOpen(false), 200);
+  };
+
+  React.useEffect(() => () => clearTimers(), []);
+
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          aria-label="Lihat perbandingan tipe item"
-          className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[var(--fg-subtle)] hover:bg-[var(--panel-hover)] hover:text-foreground focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--accent)]"
-        >
-          <Icon name="info" size={14} />
-        </button>
-      </Popover.Trigger>
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <span
+        className="inline-flex"
+        onMouseEnter={scheduleOpen}
+        onMouseLeave={scheduleClose}
+      >
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            aria-label="Lihat perbandingan tipe item"
+            onFocus={() => setOpen(true)}
+            onBlur={scheduleClose}
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[var(--fg-subtle)] hover:bg-[var(--panel-hover)] hover:text-foreground focus-visible:outline focus-visible:outline-1 focus-visible:outline-[var(--accent)]"
+          >
+            <Icon name="info" size={14} />
+          </button>
+        </Popover.Trigger>
+      </span>
       <Popover.Portal>
         <Popover.Content
           side="right"
           align="start"
           sideOffset={8}
           collisionPadding={16}
-          className="z-[100] w-[460px] rounded-md border border-border bg-[var(--panel)] p-3 text-[var(--fg)] shadow-[var(--shadow-flyout)]"
+          onMouseEnter={clearTimers}
+          onMouseLeave={scheduleClose}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="z-[800] w-[460px] rounded-md border border-border bg-[var(--panel)] p-3 text-[var(--fg)] shadow-[var(--shadow-flyout)]"
         >
           <div className="mb-2 flex items-center justify-between">
             <h4 className="text-[12px] font-semibold">Perbandingan Tipe Item</h4>

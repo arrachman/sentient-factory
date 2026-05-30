@@ -9,85 +9,14 @@ import { CreateErpItemDto } from './dto/create-erp-item.dto';
 import { QueryErpItemDto } from './dto/query-erp-item.dto';
 import { UpdateErpItemDto } from './dto/update-erp-item.dto';
 
-const ITEM_INCLUDE = {
-  category:         { select: { id: true, code: true, name: true } },
-  baseUnit:         { select: { id: true, code: true, name: true } },
-  kind:             { select: { id: true, code: true, name: true } },
-  productClass:     { select: { id: true, code: true, name: true } },
-  division:         { select: { id: true, code: true, name: true } },
-  subdivision:      { select: { id: true, code: true, name: true } },
-  department:       { select: { id: true, code: true, name: true } },
-  subDepartment:    { select: { id: true, code: true, name: true } },
-  branch:           { select: { id: true, code: true, name: true } },
-  defaultLocation:  { select: { id: true, code: true, name: true } },
-  defaultWarehouse: { select: { id: true, code: true, name: true } },
-  project:          { select: { id: true, code: true, name: true } },
-  costCenter:       { select: { id: true, code: true, name: true } },
-  inventoryAccount: { select: { id: true, code: true, name: true } },
-  salesAccount:     { select: { id: true, code: true, name: true } },
-  cogsAccount:      { select: { id: true, code: true, name: true } },
-  purchaseTax:      { select: { id: true, code: true, name: true } },
-  saleTax:          { select: { id: true, code: true, name: true } },
-  primarySupplier:  { select: { id: true, code: true, name: true } },
-} as const;
-
-// FK fields where empty string or null = clear the relation; non-empty = BigInt.
-const FK_OPTIONAL_FIELDS = [
-  'kindId', 'productClassId', 'brandId', 'materialId', 'itemModelId', 'sizeId',
-  'colorId', 'sectionId', 'divisionId', 'subdivisionId', 'departmentId',
-  'subDepartmentId', 'branchId', 'defaultLocationId', 'defaultWarehouseId',
-  'projectId', 'costCenterId', 'inventoryAccountId', 'salesAccountId',
-  'cogsAccountId', 'purchaseTaxId', 'saleTaxId', 'primarySupplierId',
-] as const;
-
-const DECIMAL_FIELDS = [
-  'standardCost', 'purchasePrice', 'salePrice',
-  'minStock', 'maxStock', 'reorderQty', 'minOrderQty', 'weight',
-] as const;
-
-function toFkOrNull(v: string | null | undefined): bigint | null | undefined {
-  if (v === undefined) return undefined;
-  if (v === null || v === '') return null;
-  return BigInt(v);
-}
-
-function toDecimalOrUndefined(v: string | null | undefined): Prisma.Decimal | undefined {
-  if (v === undefined || v === null || v === '') return undefined;
-  return new Prisma.Decimal(v);
-}
-
-function buildFkData(dto: Record<string, unknown>): Record<string, bigint | null | undefined> {
-  const out: Record<string, bigint | null | undefined> = {};
-  for (const f of FK_OPTIONAL_FIELDS) {
-    const v = dto[f] as string | null | undefined;
-    const conv = toFkOrNull(v);
-    if (conv !== undefined) out[f] = conv;
-  }
-  return out;
-}
-
-function buildDecimalData(dto: Record<string, unknown>): Record<string, Prisma.Decimal | undefined> {
-  const out: Record<string, Prisma.Decimal | undefined> = {};
-  for (const f of DECIMAL_FIELDS) {
-    const v = dto[f] as string | null | undefined;
-    const conv = toDecimalOrUndefined(v);
-    if (conv !== undefined) out[f] = conv;
-  }
-  return out;
-}
-
-// Maps Prisma field names to the frontend ErpItem interface shape
-function mapItem(item: any) {
-  const { type, baseUnit, baseUnitId, salePrice, ...rest } = item;
-  return {
-    ...rest,
-    itemType: type,
-    unitId: String(baseUnitId),
-    unit: baseUnit ?? null,
-    sellingPrice: salePrice != null ? String(salePrice) : null,
-    salePrice: salePrice != null ? String(salePrice) : null,
-  };
-}
+import {
+  ITEM_INCLUDE,
+  buildPriceRows,
+  buildLocationRows,
+  buildFkData,
+  buildDecimalData,
+  mapItem,
+} from './erp-items.mappers';
 
 @Injectable()
 export class ErpItemsService {
@@ -132,6 +61,12 @@ export class ErpItemsService {
           isActive: dto.isActive ?? true,
           createdById: actorId ? BigInt(actorId) : null,
           updatedById: actorId ? BigInt(actorId) : null,
+          ...(buildPriceRows(dto.prices, actorId)
+            ? { prices: { create: buildPriceRows(dto.prices, actorId) } }
+            : {}),
+          ...(buildLocationRows(dto.locations, actorId)
+            ? { placements: { create: buildLocationRows(dto.locations, actorId) } }
+            : {}),
         },
         include: ITEM_INCLUDE,
       });
@@ -264,6 +199,12 @@ export class ErpItemsService {
           ...buildFkData(dto as unknown as Record<string, unknown>),
           isActive: dto.isActive,
           updatedById: actorId ? BigInt(actorId) : null,
+          ...(dto.prices !== undefined
+            ? { prices: { deleteMany: {}, create: buildPriceRows(dto.prices, actorId) } }
+            : {}),
+          ...(dto.locations !== undefined
+            ? { placements: { deleteMany: {}, create: buildLocationRows(dto.locations, actorId) } }
+            : {}),
         },
         include: ITEM_INCLUDE,
       });

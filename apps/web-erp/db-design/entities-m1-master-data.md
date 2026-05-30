@@ -165,10 +165,11 @@ sendiri (legacy MyERP+ cuma punya 2: Tipe Produk + Kategori Produk):
 | sectionId ○ ➜ | BigInt → Section | atribut |
 | categoryId ➜ | BigInt → ItemCategory | sumbu **material** — legacy "Kategori Produk" (`bkategori`) |
 | baseUnitId ➜ | BigInt → Unit | `bsatuan` |
-| standardCost | Decimal(19,4) | `bhpp` |
-| averageCost | Decimal(19,4) | `bhppaverage` |
-| purchasePrice | Decimal(19,4) | `bhargabeli` |
-| salePrice | Decimal(19,4) | `bhargajual1` (tiers 2–10 deferred) |
+| standardCost | Decimal(19,4) | `bhpp` — "Hpp Update" (manual HPP) |
+| averageCost | Decimal(19,4) | `bhppaverage` — "Hpp rata-rata" (computed, readonly) |
+| purchasePrice | Decimal(19,4) | `bhargabeli` — "Harga Beli Terakhir" |
+| purchaseDiscount | Decimal(9,4) | "Diskon Pembelian" (persen) — **implemented 2026-05-30** |
+| salePrice | Decimal(19,4) | `bhargajual1` — cache denormalized level-1 dari `md_item_prices` |
 | minStock | Decimal(19,4) | `bstokminimal` |
 | maxStock | Decimal(19,4) | `bstokmaksimal` |
 | reorderQty | Decimal(19,4) | `breorder` |
@@ -176,9 +177,14 @@ sendiri (legacy MyERP+ cuma punya 2: Tipe Produk + Kategori Produk):
 | tracksSerial | Boolean | `bserial` → `inv_serials` (resolved §8 #24) |
 | tracksBatch | Boolean | `bbatch` → `inv_lots` (resolved §8 #24) |
 | tracksBin | Boolean | new — opt-in `inv_bins` location (resolved §8 #26) |
-| inventoryAccountId ○ ➜ | BigInt → Account | `brekpersediaan` |
-| salesAccountId ○ ➜ | BigInt → Account | `brekpenjualan` |
-| cogsAccountId ○ ➜ | BigInt → Account | `brekhargapokok` |
+| inventoryAccountId ○ ➜ | BigInt → Account | tab Akun "Persediaan" (`brekpersediaan`) |
+| salesAccountId ○ ➜ | BigInt → Account | tab Akun "Penjualan" (`brekpenjualan`) |
+| salesReturnAccountId ○ ➜ | BigInt → Account | tab Akun "Retur Penjualan" |
+| salesDiscountAccountId ○ ➜ | BigInt → Account | tab Akun "Diskon Penjualan" |
+| cogsAccountId ○ ➜ | BigInt → Account | tab Akun "Hpp" (`brekhargapokok`) |
+| purchaseReturnAccountId ○ ➜ | BigInt → Account | tab Akun "Retur Pembelian" |
+| purchaseDiscountAccountId ○ ➜ | BigInt → Account | tab Akun "Diskon Pembelian" |
+| consignmentAccountId ○ ➜ | BigInt → Account | tab Akun "Konsinyasi" |
 | purchaseTaxId ○ ➜ | BigInt → Tax | `bpajakbeli` |
 | saleTaxId ○ ➜ | BigInt → Tax | `bpajakjual` |
 | primarySupplierId ○ ➜ | BigInt → Partner | `bsuplier` |
@@ -205,8 +211,27 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 > via migrasi `20260524_001_erp_item_dimensions_classification`
 > (kolom atribut/klasifikasi sebagian sudah dari `20260523_001`). Form FE
 > (`items-form.tsx` + `items-form-fields.tsx`, modal `lg` sectioned 2-kolom)
-> meng-expose seluruh field. Belum di-expose ke form: price tiers 2–10, tab
-> Atribut multi-varian, distributor multi-supplier (deferred).
+> meng-expose seluruh field. Belum di-expose ke form: tab Atribut multi-varian,
+> distributor multi-supplier (deferred).
+
+> **✅ IMPLEMENTED 2026-05-30 — price tiers 1–10** (`md_item_prices`, model
+> `ErpItemPrice`) + `md_items.purchaseDiscount`. Mengakhiri "tiers 2–10
+> deferred". Migrasi `20260530_001_erp_item_price_tiers` (additive). Detail
+> keputusan model + pemetaan field MyERP+ = `apps/web-erp/CLAUDE.md §2.32`.
+
+### Item Price Tiers (`md_item_prices` / `ErpItemPrice`) — child of `md_items`
+
+| Kolom | Tipe | Catatan |
+| --- | --- | --- |
+| id | BigInt PK | |
+| itemId ➜ | BigInt → Item | FK enforced, `onDelete: Cascade` |
+| level | Int | 1–10 (tingkat harga, nyambung `md_partners.salesTier`) |
+| price | Decimal(19,4) | "Harga Jual N" (`bhargajualN`) |
+| discountPercent | Decimal(9,4) | "Diskon Jual N" (persen) |
+| audit | — | createdAt/updatedAt/createdById/updatedById |
+
+> `@@unique([itemId, level])`. SSOT 10 tier; `md_items.salePrice` = cache
+> level-1. Row level dgn price+diskon kosong **tidak** disimpan (sparse).
 
 ---
 

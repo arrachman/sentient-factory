@@ -32,8 +32,10 @@ export interface PaginationParams {
   sortDir?: 'asc' | 'desc';
   /**
    * Optional active-state filter — supported by most ERP list endpoints
-   * (branches, locations, partners, items, …). Endpoints that don't expose
-   * `isActive` simply ignore unknown query params.
+   * (branches, locations, partners, items, …). Backend uses
+   * `forbidNonWhitelisted: true`, so resources without an `isActive` column
+   * (e.g. item-informations) must strip this in their lib wrapper before
+   * forwarding to the API, otherwise NestJS responds 400.
    */
   isActive?: boolean;
 }

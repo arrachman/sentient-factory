@@ -42,10 +42,10 @@ export function LookupField(props: {
   );
 }
 
-export function NumField(props: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder?: string; decimals?: number }) {
+export function NumField(props: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder?: string; decimals?: number; readOnly?: boolean; help?: string }) {
   return (
-    <FormField label={props.label} htmlFor={props.id}>
-      <NumInput id={props.id} value={props.value} onChange={props.onChange} placeholder={props.placeholder ?? '0'} decimals={props.decimals} />
+    <FormField label={props.label} htmlFor={props.id} help={props.help}>
+      <NumInput id={props.id} value={props.value} onChange={props.readOnly ? () => {} : props.onChange} placeholder={props.placeholder ?? '0'} decimals={props.decimals} readOnly={props.readOnly} disabled={props.readOnly} />
     </FormField>
   );
 }

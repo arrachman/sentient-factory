@@ -1691,6 +1691,7 @@ model ErpWarehouse {
   location            ErpLocation              @relation(fields: [locationId], references: [id])
   userWarehouseAccess ErpUserWarehouseAccess[]
   items               ErpItem[]                @relation("ItemDefaultWarehouse")
+  placements          ErpItemPlacement[]       @relation("ItemPlacementWarehouse")
 
   @@index([locationId])
   @@index([legacyCode])
@@ -1774,6 +1775,7 @@ model ErpItem {
   standardCost       Decimal          @default(0) @map("standard_cost") @db.Decimal(19, 4)
   averageCost        Decimal          @default(0) @map("average_cost") @db.Decimal(19, 4)
   purchasePrice      Decimal          @default(0) @map("purchase_price") @db.Decimal(19, 4)
+  purchaseDiscount   Decimal          @default(0) @map("purchase_discount") @db.Decimal(9, 4)
   salePrice          Decimal          @default(0) @map("sale_price") @db.Decimal(19, 4)
   minStock           Decimal          @default(0) @map("min_stock") @db.Decimal(19, 4)
   maxStock           Decimal          @default(0) @map("max_stock") @db.Decimal(19, 4)
@@ -1785,6 +1787,11 @@ model ErpItem {
   inventoryAccountId BigInt?          @map("inventory_account_id")
   salesAccountId     BigInt?          @map("sales_account_id")
   cogsAccountId      BigInt?          @map("cogs_account_id")
+  salesReturnAccountId      BigInt?   @map("sales_return_account_id")
+  salesDiscountAccountId    BigInt?   @map("sales_discount_account_id")
+  purchaseReturnAccountId   BigInt?   @map("purchase_return_account_id")
+  purchaseDiscountAccountId BigInt?   @map("purchase_discount_account_id")
+  consignmentAccountId      BigInt?   @map("consignment_account_id")
   purchaseTaxId      BigInt?          @map("purchase_tax_id")
   saleTaxId          BigInt?          @map("sale_tax_id")
   primarySupplierId  BigInt?          @map("primary_supplier_id")
@@ -1818,10 +1825,17 @@ model ErpItem {
   inventoryAccount ErpAccount?         @relation("ItemInventoryAcct", fields: [inventoryAccountId], references: [id])
   salesAccount     ErpAccount?         @relation("ItemSalesAcct", fields: [salesAccountId], references: [id])
   cogsAccount      ErpAccount?         @relation("ItemCogsAcct", fields: [cogsAccountId], references: [id])
+  salesReturnAccount      ErpAccount?  @relation("ItemSalesReturnAcct", fields: [salesReturnAccountId], references: [id])
+  salesDiscountAccount    ErpAccount?  @relation("ItemSalesDiscountAcct", fields: [salesDiscountAccountId], references: [id])
+  purchaseReturnAccount   ErpAccount?  @relation("ItemPurchaseReturnAcct", fields: [purchaseReturnAccountId], references: [id])
+  purchaseDiscountAccount ErpAccount?  @relation("ItemPurchaseDiscountAcct", fields: [purchaseDiscountAccountId], references: [id])
+  consignmentAccount      ErpAccount?  @relation("ItemConsignmentAcct", fields: [consignmentAccountId], references: [id])
   purchaseTax      ErpTax?             @relation("ItemPurchaseTax", fields: [purchaseTaxId], references: [id])
   saleTax          ErpTax?             @relation("ItemSaleTax", fields: [saleTaxId], references: [id])
   primarySupplier  ErpPartner?         @relation("ItemPrimarySupplier", fields: [primarySupplierId], references: [id])
   information      ErpItemInformation?
+  prices           ErpItemPrice[]      @relation("ItemPrices")
+  placements       ErpItemPlacement[]  @relation("ItemPlacements")
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -1843,6 +1857,51 @@ model ErpItem {
   @@index([barcode])
   @@index([legacyCode])
   @@map("md_items")
+}
+
+/// Sale price tiers per item (legacy MyERP+ "Harga Jual 1..10" + "Diskon Jual 1..10").
+/// One row per (item, level 1..10). Level 1 mirrors ErpItem.salePrice (denormalized cache).
+model ErpItemPrice {
+  id              BigInt   @id @default(autoincrement())
+  itemId          BigInt   @map("item_id")
+  level           Int      @map("level")
+  price           Decimal  @default(0) @map("price") @db.Decimal(19, 4)
+  discountPercent Decimal  @default(0) @map("discount_percent") @db.Decimal(9, 4)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById     BigInt?  @map("created_by_id")
+  updatedById     BigInt?  @map("updated_by_id")
+
+  item ErpItem @relation("ItemPrices", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, level])
+  @@index([itemId])
+  @@map("md_item_prices")
+}
+
+/// Item storage placements per item (legacy MyERP+ "Lokasi" tab = m1_item_location_warehouse).
+/// One row per (item, warehouse, location) — multi placement beyond defaultWarehouse/defaultLocation.
+/// NB: named `ErpItemPlacement`/`md_item_placements` — `ErpItemLocation`/`md_item_locations`
+/// is already the legacy "Item Location" master (code/name) with its own module + data.
+model ErpItemPlacement {
+  id          BigInt   @id @default(autoincrement())
+  itemId      BigInt   @map("item_id")
+  warehouseId BigInt   @map("warehouse_id")
+  locationId  BigInt   @map("location_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by_id")
+  updatedById BigInt?  @map("updated_by_id")
+
+  item      ErpItem         @relation("ItemPlacements", fields: [itemId], references: [id], onDelete: Cascade)
+  warehouse ErpWarehouse    @relation("ItemPlacementWarehouse", fields: [warehouseId], references: [id])
+  location  ErpItemLocation @relation("ItemPlacementLocation", fields: [locationId], references: [id])
+
+  @@unique([itemId, warehouseId, locationId])
+  @@index([itemId])
+  @@index([warehouseId])
+  @@index([locationId])
+  @@map("md_item_placements")
 }
 
 model ErpPartnerCategory {
@@ -2054,6 +2113,11 @@ model ErpAccount {
   itemInventory     ErpItem[]         @relation("ItemInventoryAcct")
   itemSales         ErpItem[]         @relation("ItemSalesAcct")
   itemCogs          ErpItem[]         @relation("ItemCogsAcct")
+  itemSalesReturn      ErpItem[]      @relation("ItemSalesReturnAcct")
+  itemSalesDiscount    ErpItem[]      @relation("ItemSalesDiscountAcct")
+  itemPurchaseReturn   ErpItem[]      @relation("ItemPurchaseReturnAcct")
+  itemPurchaseDiscount ErpItem[]      @relation("ItemPurchaseDiscountAcct")
+  itemConsignment      ErpItem[]      @relation("ItemConsignmentAcct")
   taxSale           ErpTax[]          @relation("TaxSaleAcct")
   taxPurchase       ErpTax[]          @relation("TaxPurchaseAcct")
   partnerReceivable ErpPartner[]      @relation("PartnerReceivableAcct")
@@ -8922,6 +8986,8 @@ model ErpItemLocation {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  placements  ErpItemPlacement[] @relation("ItemPlacementLocation")
 
   @@index([warehouseId])
   @@index([legacyCode])

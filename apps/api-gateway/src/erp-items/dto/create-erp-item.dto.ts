@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
@@ -7,8 +8,12 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ErpCostingMethod, ErpItemType } from '@prisma/client';
+import { ItemPriceDto } from './item-price.dto';
+import { ItemLocationDto } from './item-location.dto';
 
 export class CreateErpItemDto {
   // ─── Core identity ────────────────────────────────────────────────
@@ -86,9 +91,29 @@ export class CreateErpItemDto {
   @ApiPropertyOptional() @IsOptional() @IsString() costCenterId?: string | null;
 
   // ─── Costs & prices ───────────────────────────────────────────────
-  @ApiPropertyOptional({ example: '50000' }) @IsOptional() @IsString() standardCost?: string;
-  @ApiPropertyOptional({ example: '50000' }) @IsOptional() @IsString() purchasePrice?: string;
-  @ApiPropertyOptional({ example: '75000' }) @IsOptional() @IsString() salePrice?: string;
+  // standardCost = "Hpp Update" (manual HPP), averageCost = "Hpp rata-rata" (computed, readonly).
+  @ApiPropertyOptional({ example: '50000', description: 'Hpp Update — manual/standard HPP' })
+  @IsOptional() @IsString() standardCost?: string;
+  @ApiPropertyOptional({ example: '50000', description: 'Harga Beli Terakhir' })
+  @IsOptional() @IsString() purchasePrice?: string;
+  @ApiPropertyOptional({ example: '5', description: 'Diskon Pembelian (percent)' })
+  @IsOptional() @IsString() purchaseDiscount?: string;
+  @ApiPropertyOptional({ example: '75000', description: 'Harga Jual 1 (mirror of price tier level 1)' })
+  @IsOptional() @IsString() salePrice?: string;
+
+  @ApiPropertyOptional({ type: [ItemPriceDto], description: 'Sale price tiers (Harga Jual 1..10 + Diskon Jual 1..10)' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemPriceDto)
+  prices?: ItemPriceDto[];
+
+  @ApiPropertyOptional({ type: [ItemLocationDto], description: 'Item storage placements (Lokasi tab: Gudang + Lokasi)' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemLocationDto)
+  locations?: ItemLocationDto[];
 
   // ─── Stock levels ─────────────────────────────────────────────────
   @ApiPropertyOptional({ example: '10' }) @IsOptional() @IsString() minStock?: string;
@@ -105,6 +130,11 @@ export class CreateErpItemDto {
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() inventoryAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() cogsAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesReturnAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesDiscountAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseReturnAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseDiscountAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() consignmentAccountId?: string | null;
 
   // ─── Tax ──────────────────────────────────────────────────────────
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseTaxId?: string | null;

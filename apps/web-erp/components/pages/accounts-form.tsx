@@ -25,6 +25,7 @@ import {
   NORMAL_BALANCES,
   CASH_FLOW_CATEGORIES,
   listAccounts,
+  getAccountCodeFormat,
 } from '@/lib/api/accounts';
 import type {
   ErpAccountType,
@@ -32,10 +33,73 @@ import type {
   ErpNormalBalance,
   ErpCashFlowCategory,
   CreateAccountPayload,
+  AccountCodeFormat,
 } from '@/lib/api/accounts';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 const NONE = '__none__';
+
+// ─── Account code format cache (sys_settings group "account-code") ────────────
+//
+// §2.24: format kode CoA dinamis dari `sys_settings`. Cache module-level supaya
+// `validateAccount` (sync, dipanggil SimpleMasterPage) bisa pakai pattern aktif
+// tanpa async fetch tiap submit. Hook `useAccountCodeFormat()` priming cache
+// saat form pertama mount; `invalidateAccountCodeFormatCache()` di-panggil
+// setelah PUT /accounts/code-format sukses agar form refresh.
+
+let accountCodeFormatCache: AccountCodeFormat | null = null;
+let inflightFormatRequest: Promise<AccountCodeFormat> | null = null;
+type FormatListener = (f: AccountCodeFormat | null) => void;
+const formatListeners = new Set<FormatListener>();
+
+function buildAccountCodePattern(segments: number[], separator: string): RegExp {
+  const escapedSep = separator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = segments.map((n) => `\\d{${n}}`);
+  return new RegExp(`^${parts.join(escapedSep)}$`);
+}
+
+async function fetchAccountCodeFormat(): Promise<AccountCodeFormat> {
+  if (inflightFormatRequest) return inflightFormatRequest;
+  inflightFormatRequest = getAccountCodeFormat()
+    .then((f) => {
+      accountCodeFormatCache = f;
+      formatListeners.forEach((cb) => cb(f));
+      return f;
+    })
+    .finally(() => {
+      inflightFormatRequest = null;
+    });
+  return inflightFormatRequest;
+}
+
+export function invalidateAccountCodeFormatCache(): void {
+  accountCodeFormatCache = null;
+  inflightFormatRequest = null;
+  formatListeners.forEach((cb) => cb(null));
+  // Re-prime so any mounted form picks up the new format immediately.
+  void fetchAccountCodeFormat().catch(() => {
+    /* swallow — form will retry on next mount */
+  });
+}
+
+export function useAccountCodeFormat(): AccountCodeFormat | null {
+  const [format, setFormat] = React.useState<AccountCodeFormat | null>(accountCodeFormatCache);
+  React.useEffect(() => {
+    const listener: FormatListener = (f) => setFormat(f);
+    formatListeners.add(listener);
+    if (!accountCodeFormatCache) {
+      void fetchAccountCodeFormat()
+        .then((f) => setFormat(f))
+        .catch(() => {
+          /* keep null — validateAccount falls back to length-only check */
+        });
+    }
+    return () => {
+      formatListeners.delete(listener);
+    };
+  }, []);
+  return format;
+}
 
 export interface AccountFormData {
   code: string;
@@ -110,21 +174,25 @@ async function loadParentOptions(
   };
 }
 
-const ACCOUNT_CODE_PATTERN = /^\d{4}\.\d{2}\.\d{3}$/;
-
-export const validateAccount = (form: AccountFormData) =>
-  validateForm(form, [
+export const validateAccount = (form: AccountFormData) => {
+  const fmt = accountCodeFormatCache;
+  return validateForm(form, [
     {
       field: 'code',
       label: 'Kode',
       required: true,
-      validate: (value) =>
-        typeof value === 'string' && !ACCOUNT_CODE_PATTERN.test(value)
-          ? 'Format wajib NNNN.NN.NNN (contoh: 1101.01.001)'
-          : undefined,
+      validate: (value) => {
+        if (typeof value !== 'string') return undefined;
+        if (!fmt) return undefined; // server akan validasi; cache belum terisi
+        const re = buildAccountCodePattern(fmt.segments, fmt.separator);
+        return re.test(value)
+          ? undefined
+          : `Format wajib ${fmt.patternSource} (contoh: ${fmt.example})`;
+      },
     },
     { field: 'name', label: 'Nama', required: true },
   ]);
+};
 
 export function AccountFormFields({
   data,
@@ -137,11 +205,14 @@ export function AccountFormFields({
 }) {
   const set = (k: keyof AccountFormData, v: string | boolean) =>
     onChange({ ...data, [k]: v });
+  const format = useAccountCodeFormat();
+  const codePlaceholder = format?.example ?? '1101.01.001';
+  const codeMaxLength = format?.maxLength ?? 11;
 
   return (
     <div className="p-4">
       <FormField label="Kode" htmlFor="ac-code" required error={errors.code}>
-        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="1101.01.001" aria-invalid={!!errors.code} maxLength={11} />
+        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={codePlaceholder} aria-invalid={!!errors.code} maxLength={codeMaxLength} />
       </FormField>
       <FormField label="Nama" htmlFor="ac-name" required error={errors.name}>
         <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" aria-invalid={!!errors.name} />

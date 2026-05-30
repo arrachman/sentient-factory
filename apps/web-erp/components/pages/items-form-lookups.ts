@@ -11,6 +11,7 @@ import { listDepartments } from '@/lib/api/departments';
 import { listSubDepartments } from '@/lib/api/sub-departments';
 import { listBranches } from '@/lib/api/branches';
 import { listLocations } from '@/lib/api/locations';
+import { listItemLocations } from '@/lib/api/item-locations';
 import { listWarehouses } from '@/lib/api/warehouses';
 import { listProjects } from '@/lib/api/projects';
 import { listCostCenters } from '@/lib/api/cost-centers';
@@ -41,6 +42,7 @@ export const loadDepartmentOptions = makeLoader(listDepartments as unknown as Li
 export const loadSubDepartmentOptions = makeLoader(listSubDepartments as unknown as ListFn);
 export const loadBranchOptions = makeLoader(listBranches as unknown as ListFn);
 export const loadLocationOptions = makeLoader(listLocations as unknown as ListFn);
+export const loadItemLocationOptions = makeLoader(listItemLocations as unknown as ListFn);
 export const loadWarehouseOptions = makeLoader(listWarehouses as unknown as ListFn);
 export const loadProjectOptions = makeLoader(listProjects as unknown as ListFn);
 export const loadCostCenterOptions = makeLoader(listCostCenters as unknown as ListFn);
