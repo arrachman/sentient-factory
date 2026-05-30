@@ -77,6 +77,19 @@ export function buildPriceRows(prices: PriceTierInput[] | undefined, actorId?: s
     }));
 }
 
+/**
+ * Denormalized salePrice cache = level-1 tier price (§2.32). Returns the L1
+ * price so create/update can keep md_items.salePrice in sync server-side
+ * regardless of whether the client sent salePrice. Undefined when no tiers
+ * given or the L1 price is blank (don't touch the existing cache).
+ */
+export function deriveSalePriceFromTiers(prices: PriceTierInput[] | undefined): Prisma.Decimal | undefined {
+  if (!prices) return undefined;
+  const l1 = prices.find((p) => p.level === 1);
+  if (!l1 || (l1.price ?? '') === '') return undefined;
+  return new Prisma.Decimal(l1.price as string);
+}
+
 interface LocationInput { warehouseId?: string; locationId?: string }
 
 /** Build md_item_locations rows, skipping incomplete pairs and deduping (itemId,warehouse,location). */

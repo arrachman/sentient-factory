@@ -15,6 +15,7 @@ import {
   buildLocationRows,
   buildFkData,
   buildDecimalData,
+  deriveSalePriceFromTiers,
   mapItem,
 } from './erp-items.mappers';
 
@@ -58,6 +59,10 @@ export class ErpItemsService {
           isVatable: dto.isVatable ?? true,
           isSpecial: dto.isSpecial ?? false,
           ...buildFkData(dto as unknown as Record<string, unknown>),
+          // salePrice cache = level-1 tier price (§2.32) — overrides client-sent salePrice.
+          ...(deriveSalePriceFromTiers(dto.prices) !== undefined
+            ? { salePrice: deriveSalePriceFromTiers(dto.prices) }
+            : {}),
           isActive: dto.isActive ?? true,
           createdById: actorId ? BigInt(actorId) : null,
           updatedById: actorId ? BigInt(actorId) : null,
@@ -197,6 +202,10 @@ export class ErpItemsService {
           isVatable: dto.isVatable,
           isSpecial: dto.isSpecial,
           ...buildFkData(dto as unknown as Record<string, unknown>),
+          // salePrice cache = level-1 tier price (§2.32) — overrides client-sent salePrice.
+          ...(deriveSalePriceFromTiers(dto.prices) !== undefined
+            ? { salePrice: deriveSalePriceFromTiers(dto.prices) }
+            : {}),
           isActive: dto.isActive,
           updatedById: actorId ? BigInt(actorId) : null,
           ...(dto.prices !== undefined

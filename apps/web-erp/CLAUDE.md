@@ -1144,7 +1144,12 @@ price tiers 2–10" dari §2.23.
 `prices?: ItemPriceDto[]` di create DTO (`@ValidateNested`). Service
 `buildPriceRows()` skip level yang price+diskon kosong; create = nested
 `prices.create`; update = `prices: { deleteMany: {}, create }` (replace
-penuh). `ITEM_INCLUDE.prices` + `mapItem` stringify Decimal.
+penuh). `ITEM_INCLUDE.prices` + `mapItem` stringify Decimal. **Cache
+`md_items.salePrice` di-derive server-side** dari tier level-1 via
+`deriveSalePriceFromTiers()` (di `erp-items.mappers.ts`), di-set setelah
+`buildDecimalData` sehingga **override** `salePrice` kiriman client — cache
+selalu sinkron walau caller (mis. API mentah) tak mengirim `salePrice`. Blank
+L1 price → cache tidak disentuh.
 
 **Frontend:** `ItemFormData.salePrices`/`saleDiscounts` = `string[10]` (index
 0 = level 1) + `purchaseDiscount` + `averageCost` (display-only). `fromItem`
