@@ -1160,13 +1160,16 @@ untuk HPP Rata-rata.
 (code/name/warehouse, modul `erp-item-locations/` + halaman + data ada).
 **JANGAN** pakai nama ini untuk junction "tab Lokasi" item. Junction per-item
 (Gudang + Lokasi) = **`ErpItemPlacement` / `md_item_placements`** (relasi
-`ErpItem.locations`, migrasi `20260530_003`). Bug history: fitur tab Lokasi
+`ErpItem.placements`, migrasi `20260530_003`). Bug history: fitur tab Lokasi
 sempat mendefinisikan ulang `model ErpItemLocation @@map("md_item_locations")`
 → skema invalid (duplicate model) + migrasi `CREATE TABLE IF NOT EXISTS`
 jadi no-op (tabel master sudah ada) → **semua** operasi item gagal dengan
-`PrismaClientValidationError` (filter menamai-nya "Invalid query parameters").
-Resolusi: rename junction ke `ErpItemPlacement`. Relasi field tetap `locations`
-jadi service/FE tak berubah.
+`PrismaClientValidationError` (filter `all-exceptions.filter.ts` menamai-nya
+"Invalid query parameters" — menyesatkan, bukan soal query param). Resolusi:
+rename junction ke `ErpItemPlacement` + relasi field `placements`. **Catatan
+ops:** tiap rename schema item **wajib** `prisma generate` **di dalam container**
++ restart (named-volume `api_gateway_node_modules` ≠ host; `nest --watch`
+recompile TS tapi **tidak** regen Prisma client → client basi = error di atas).
 
 ### 2.33 Item — tab Akun paritas MyERP+ (8 akun GL) (2026-05-30)
 
