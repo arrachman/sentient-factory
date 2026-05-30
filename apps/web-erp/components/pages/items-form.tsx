@@ -93,6 +93,9 @@ export const defaultItemForm = (): ItemFormData => ({
 const refLabel = (r?: { code?: string; name?: string } | null) =>
   r ? (r.code ? `${r.code} — ${r.name ?? ''}` : r.name ?? '') : '';
 
+/** Numeric API fields (Decimal) may arrive as number or string — form state is string. */
+const numStr = (v: unknown): string => (v == null ? '' : String(v));
+
 export function fromItem(item: ErpItem): ItemFormData {
   return {
     code: item.code,
@@ -114,13 +117,13 @@ export function fromItem(item: ErpItem): ItemFormData {
     defaultWarehouseId: item.defaultWarehouseId ?? '', defaultWarehouseLabel: refLabel(item.defaultWarehouse),
     projectId: item.projectId ?? '', projectLabel: refLabel(item.project),
     costCenterId: item.costCenterId ?? '', costCenterLabel: refLabel(item.costCenter),
-    standardCost: item.standardCost ?? '',
-    purchasePrice: item.purchasePrice ?? '',
-    salePrice: item.salePrice ?? item.sellingPrice ?? '',
-    minStock: item.minStock ?? '',
-    maxStock: item.maxStock ?? '',
-    reorderQty: item.reorderQty ?? '',
-    minOrderQty: item.minOrderQty ?? '',
+    standardCost: numStr(item.standardCost),
+    purchasePrice: numStr(item.purchasePrice),
+    salePrice: numStr(item.salePrice ?? item.sellingPrice),
+    minStock: numStr(item.minStock),
+    maxStock: numStr(item.maxStock),
+    reorderQty: numStr(item.reorderQty),
+    minOrderQty: numStr(item.minOrderQty),
     tracksSerial: item.tracksSerial ?? false,
     tracksBatch: item.tracksBatch ?? false,
     tracksBin: item.tracksBin ?? false,
@@ -130,7 +133,7 @@ export function fromItem(item: ErpItem): ItemFormData {
     purchaseTaxId: item.purchaseTaxId ?? '', purchaseTaxLabel: refLabel(item.purchaseTax),
     saleTaxId: item.saleTaxId ?? '', saleTaxLabel: refLabel(item.saleTax),
     primarySupplierId: item.primarySupplierId ?? '', primarySupplierLabel: refLabel(item.primarySupplier),
-    weight: item.weight ?? '',
+    weight: numStr(item.weight),
     ageCategory: item.ageCategory ?? '',
     validUntil: item.validUntil ? item.validUntil.slice(0, 10) : '',
     isVatable: item.isVatable ?? true,

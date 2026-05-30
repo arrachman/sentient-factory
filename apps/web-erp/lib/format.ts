@@ -82,6 +82,8 @@ export function formatRawForDisplay(
   decimals?: number,
 ): string {
   if (raw == null || raw === '' || raw === '-') return raw ?? '';
+  // Defensive: callers may leak a number (e.g. Decimal field from API). Contract is string.
+  if (typeof raw !== 'string') raw = String(raw);
   // Normalize: raw is canonical with '.' as decimal sep.
   const negative = raw.startsWith('-');
   const body = negative ? raw.slice(1) : raw;
