@@ -157,12 +157,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">
+    <label className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground w-24 shrink-0 text-left">
         {required && <span className="text-danger">* </span>}
         {label}
       </span>
-      {children}
+      <div className="flex-1 min-w-0">{children}</div>
     </label>
   );
 }
