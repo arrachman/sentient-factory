@@ -71,6 +71,9 @@ export class ErpFinCashBankTransactionsService {
       divisionId: toBigInt(line.divisionId),
       subdivisionId: toBigInt(line.subdivisionId),
       projectId: toBigInt(line.projectId),
+      customFields: line.customFields
+        ? (line.customFields as Prisma.InputJsonValue)
+        : Prisma.JsonNull,
       lineNo: line.lineNo,
     };
   }

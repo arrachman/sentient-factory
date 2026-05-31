@@ -9,6 +9,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumberString,
+  IsObject,
   IsOptional,
   IsString,
   Min,
@@ -61,6 +62,11 @@ export class CashBankLineDto {
   @ApiPropertyOptional() @IsOptional() @IsString() divisionId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() subdivisionId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
+
+  @ApiPropertyOptional({ description: 'User-defined grid column values (Kustomisasi Grid), keyed by dataField' })
+  @IsOptional()
+  @IsObject()
+  customFields?: Record<string, unknown>;
 
   @ApiProperty({ example: 1 })
   @IsInt()
