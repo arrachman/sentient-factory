@@ -1344,6 +1344,20 @@ DTO query account `apps/api-gateway` ditambah filter `normalBalance` (enum
 aset debit** (termasuk piutang/persediaan), bukan murni kas/bank; belum ada flag
 `isCashAccount` di `md_accounts`.
 
+**Detail grid = full-keyboard (2026-05-31).** Atas permintaan user, `cash-bank-lines.tsx`
+membuang **search "Pencarian CoA"**, **tombol "+ Tambah"**, dan **kolom trash** —
+grid dikemudikan keyboard penuh:
+- **Tab / Shift+Tab** — pindah antar field (native).
+- **Enter** di field teks (Total/Catatan) baris **terakhir** → tambah baris baru &
+  fokus ke kolom Akun baris itu. Gating pakai `e.defaultPrevented`: SearchSelect
+  (Akun/Cost Center) selalu `preventDefault` Enter-nya sendiri, jadi Enter yang
+  *belum* di-preventDefault dipastikan datang dari field teks biasa → aman, tidak
+  bentrok dengan pilih-akun. Baris kosong tidak ditumpuk (butuh accountId/amount).
+- **Ctrl/Cmd+Delete** — hapus baris aktif; selalu sisakan ≥1 baris (kosongkan bila
+  tinggal satu). Fokus dipulihkan via `useLayoutEffect` + `data-row` index.
+Akun tetap dipilih lewat SearchSelect per-baris (ketik cari / ikon modal). Berlaku
+ke **semua** form yang reuse organism ini (CR/CD/BD).
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE
 CD/BD/transfer belum pakai backend baru ini.

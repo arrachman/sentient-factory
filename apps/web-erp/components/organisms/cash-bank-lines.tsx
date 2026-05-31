@@ -9,11 +9,17 @@
  * with a single Total (no per-line debit/credit). Mirrors `fin_cash_bank_lines`
  * + the legacy MyERP+ "Detail" tab (No Akun · Nama Akun · Total · Total Valas ·
  * Catatan · Cost Center).
+ *
+ * Full-keyboard grid (no search bar / add button / trash column):
+ * - Tab / Shift+Tab — pindah antar field (native).
+ * - Enter di field terakhir baris terakhir — tambah baris baru & fokus ke sana.
+ * - Ctrl/Cmd+Delete — hapus baris aktif (selalu sisakan minimal satu baris).
+ * Akun dipilih lewat SearchSelect per-baris (ketik untuk cari, atau ikon modal).
  */
 
 import * as React from 'react';
-import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
+import { Kbd } from '@/components/ui/kbd';
 import { NumInput } from '@/components/molecules/num-input';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
@@ -56,33 +62,74 @@ export function CashBankLinesEditor({
   readOnly?: boolean;
   showFx?: boolean;
 }) {
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  // Index baris yang harus difokus setelah render (append/remove via keyboard).
+  const focusRowRef = React.useRef<number | null>(null);
+
   const patch = (key: string, p: Partial<CashLineRow>) =>
     onChange(lines.map((l) => (l.key === key ? { ...l, ...p } : l)));
-  const remove = (key: string) => onChange(lines.filter((l) => l.key !== key));
-  const addLine = () => onChange([...lines, newCashLine()]);
+
+  // Tambah baris di akhir + jadwalkan fokus ke field Akun baris baru.
+  const appendRow = () => {
+    focusRowRef.current = lines.length;
+    onChange([...lines, newCashLine()]);
+  };
+
+  // Hapus baris; selalu sisakan minimal satu baris (kosongkan bila tinggal satu).
+  const removeRow = (idx: number) => {
+    if (lines.length <= 1) {
+      focusRowRef.current = 0;
+      onChange([newCashLine()]);
+      return;
+    }
+    const next = lines.filter((_, i) => i !== idx);
+    focusRowRef.current = Math.min(idx, next.length - 1);
+    onChange(next);
+  };
+
+  React.useLayoutEffect(() => {
+    if (focusRowRef.current == null) return;
+    const idx = focusRowRef.current;
+    focusRowRef.current = null;
+    rootRef.current
+      ?.querySelector<HTMLElement>(`[data-row="${idx}"] input`)
+      ?.focus();
+  });
+
+  const handleGridKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (readOnly) return;
+    const rowEl = (e.target as HTMLElement).closest?.('[data-row]');
+    if (!rowEl) return;
+    const idx = Number(rowEl.getAttribute('data-row'));
+
+    if (e.key === 'Delete' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      removeRow(idx);
+      return;
+    }
+
+    // SearchSelect selalu preventDefault Enter-nya sendiri (pilih akun/cost
+    // center) — jadi defaultPrevented=false berarti Enter datang dari field
+    // teks biasa (Total/Catatan). Tambah baris hanya dari baris terakhir.
+    if (e.key === 'Enter' && !e.shiftKey && !e.defaultPrevented) {
+      if (idx !== lines.length - 1) return;
+      const last = lines[idx];
+      if (!last?.accountId && !last?.amount) return; // jangan tumpuk baris kosong
+      e.preventDefault();
+      appendRow();
+    }
+  };
 
   const total = lines.reduce((s, l) => s + Number(l.amount || 0), 0);
   const totalFx = lines.reduce((s, l) => s + Number(l.amountFx || 0), 0);
+  const colSpan = showFx ? 6 : 5;
 
   return (
-    <div className="cashbank-lines">
+    <div className="cashbank-lines" ref={rootRef} onKeyDown={handleGridKeyDown}>
       {!readOnly && (
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs text-muted-foreground w-28">Pencarian CoA</span>
-          <div className="flex-1">
-            <SearchSelect
-              placeholder="Cari akun untuk tambah baris…"
-              value=""
-              onValueChange={(v) => {
-                if (!v) return;
-                onChange([...lines, { ...newCashLine(), accountId: v }]);
-              }}
-              loadOptions={loadAccountOptionsCoded}
-            />
-          </div>
-          <button type="button" className="btn sm" onClick={addLine}>
-            <Icon name="plus" size={12} /> Tambah
-          </button>
+        <div className="mb-2 flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
+          Ketik di kolom Akun untuk cari CoA · <Kbd>Enter</Kbd> baris baru ·{' '}
+          <Kbd>Ctrl</Kbd>+<Kbd>Del</Kbd> hapus baris
         </div>
       )}
 
@@ -95,19 +142,18 @@ export function CashBankLinesEditor({
             {showFx && <TableHead style={{ width: 140, textAlign: 'right' }}>Total Valas</TableHead>}
             <TableHead>Catatan</TableHead>
             <TableHead style={{ width: 220 }}>Cost Center</TableHead>
-            {!readOnly && <TableHead style={{ width: 44 }} />}
           </TableRow>
         </TableHeader>
         <TableBody>
           {lines.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={readOnly ? 6 : 7} className="text-center text-muted-foreground py-4">
-                Belum ada baris akun. Cari CoA di atas atau klik Tambah.
+              <TableCell colSpan={colSpan} className="text-center text-muted-foreground py-4">
+                Belum ada baris akun.
               </TableCell>
             </TableRow>
           ) : (
             lines.map((l, i) => (
-              <TableRow key={l.key}>
+              <TableRow key={l.key} data-row={i}>
                 <TableCell className="text-muted-foreground">{i + 1}</TableCell>
                 <TableCell>
                   <SearchSelect
@@ -154,18 +200,6 @@ export function CashBankLinesEditor({
                     loadOptions={loadCostCenterOptions}
                   />
                 </TableCell>
-                {!readOnly && (
-                  <TableCell>
-                    <button
-                      type="button"
-                      className="iconbtn danger"
-                      title="Hapus baris"
-                      onClick={() => remove(l.key)}
-                    >
-                      <Icon name="trash" size={13} />
-                    </button>
-                  </TableCell>
-                )}
               </TableRow>
             ))
           )}
