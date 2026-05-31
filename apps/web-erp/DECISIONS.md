@@ -1314,6 +1314,17 @@ sudah ada). Pola filter kaya transaksi: panel terpisah di atas tabel (bukan
 label-di-atas (`flex flex-col`) jadi label-kiri-input-kanan (`flex items-center`, label
 `w-24 shrink-0 text-left`) atas permintaan user — tiap field header jadi satu baris.
 
+**Akun Kas [D] = picker akun kas saja (2026-05-31).** Picker `bankAccountId`
+dibatasi ke akun kas/bank (sebelumnya semua akun). Paritas filter legacy MyERP+
+`cgd='D' and caktif=1 and ctipe=0` → Senti `normalBalance=DEBIT` + `isActive=true`
++ `type=ASSET` (`ctipe` legacy = `AccountType`, nilai 0 = ASSET) + tambahan
+`kind=POSTABLE` (header spt "Aset Lancar" tak bisa di-posting GL). Loader baru
+`loadCashAccountOptionsCoded` ([items-form-lookups.ts](components/pages/items-form-lookups.ts));
+DTO query account `apps/api-gateway` ditambah filter `normalBalance` (enum
+`ErpNormalBalance`, additive — tanpa migrasi). Catatan: ini ikut legacy = **semua
+aset debit** (termasuk piutang/persediaan), bukan murni kas/bank; belum ada flag
+`isCashAccount` di `md_accounts`.
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE
 CD/BD/transfer belum pakai backend baru ini.

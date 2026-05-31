@@ -64,6 +64,27 @@ export const loadAccountOptionsCoded = async (search: string, page: number, limi
     total: res.meta.total,
   };
 };
+
+/**
+ * Cash/bank account picker — "Akun Kas". Legacy MyERP+ filter
+ * `cgd='D' and caktif=1 and ctipe=0` → Senti: postable, debit-normal ASSET,
+ * active. (`kind=POSTABLE` excludes header accounts that can't receive postings.)
+ */
+export const loadCashAccountOptionsCoded = async (search: string, page: number, limit: number) => {
+  const res = await listAccounts({
+    search: search || undefined,
+    page,
+    limit,
+    isActive: true,
+    accountType: 'ASSET',
+    accountKind: 'POSTABLE',
+    normalBalance: 'DEBIT',
+  });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.code ? `${x.code} - ${x.name}` : x.name, code: x.code })),
+    total: res.meta.total,
+  };
+};
 export const loadTaxOptions = makeLoader(listTaxes as unknown as ListFn);
 export const loadPartnerOptions = makeLoader(listPartners as unknown as ListFn);
 

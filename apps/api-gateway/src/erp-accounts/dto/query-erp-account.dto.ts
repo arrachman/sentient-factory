@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import { ErpAccountType, ErpAccountKind } from '@prisma/client';
+import { ErpAccountType, ErpAccountKind, ErpNormalBalance } from '@prisma/client';
 
 const SORTABLE_FIELDS = ['code', 'name', 'isActive', 'createdAt'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
@@ -36,6 +36,11 @@ export class QueryErpAccountDto {
   @IsOptional()
   @IsEnum(ErpAccountKind)
   accountKind?: ErpAccountKind;
+
+  @ApiPropertyOptional({ enum: ErpNormalBalance })
+  @IsOptional()
+  @IsEnum(ErpNormalBalance)
+  normalBalance?: ErpNormalBalance;
 
   @ApiPropertyOptional({ example: '1', description: 'Filter by parent account ID' })
   @IsOptional()

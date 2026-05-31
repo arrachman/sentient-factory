@@ -27,7 +27,7 @@ import {
 } from '@/components/organisms/cash-bank-lines';
 import {
   loadPartnerOptions,
-  loadAccountOptionsCoded,
+  loadCashAccountOptionsCoded,
   loadLocationOptions,
   loadBranchOptions,
 } from './items-form-lookups';
@@ -241,7 +241,7 @@ export function CashReceiptForm({
               initialLabel={data.bankAccountLabel}
               disabled={locked}
               onValueChange={(v) => set({ bankAccountId: v })}
-              loadOptions={loadAccountOptionsCoded}
+              loadOptions={loadCashAccountOptionsCoded}
             />
           </Field>
           <Field label="Uraian" required>

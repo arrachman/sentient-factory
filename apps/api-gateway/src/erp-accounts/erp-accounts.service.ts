@@ -195,6 +195,9 @@ export class ErpAccountsService {
     if (query.accountKind) {
       where.kind = query.accountKind;
     }
+    if (query.normalBalance) {
+      where.normalBalance = query.normalBalance;
+    }
     if (query.parentId !== undefined) {
       where.parentId = query.parentId === 'null' ? null : BigInt(query.parentId);
     }
