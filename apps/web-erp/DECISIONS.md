@@ -997,6 +997,46 @@ recompile TS tapi **tidak** regen Prisma client → client basi = error di atas)
 
 ---
 
+### 2.36 Item — tab Distributor (item-supplier list) (2026-05-31)
+
+Section **Distributor** baru di form item (§2.25), paritas tab "Distributor"
+item master MyERP+ (`m1_item_supplier`): per item, daftar baris **partner
+distributor/supplier**. Tabel legacy hanya menampilkan **Kode + Nama** partner →
+modern kita simpan referensi partner saja (tanpa kolom catatan/SKU; keputusan
+user 2026-05-31). **Coexist** dengan field tunggal `primarySupplierId` di section
+**Supplier**: yang single = supplier utama/default; tab Distributor = daftar
+distributor/supplier tambahan.
+
+- **Data model = junction ternormalisasi `md_item_distributors`** (model Prisma
+  **`ErpItemDistributor`**): `itemId` FK (cascade), `partnerId` FK → `md_partners`,
+  `sortOrder` (jaga urutan tampil legacy), audit cols. `@@unique([itemId,
+  partnerId])` — satu partner tak duplikat per item. Relasi back-pointer
+  `ErpPartner.itemDistributors`.
+- Migrasi `20260531_002_erp_item_distributors` (CREATE `md_item_distributors`,
+  additive 0 DROP; FK item cascade, partner `ON DELETE RESTRICT`). Hand-written
+  SQL + `migrate deploy` (pola §2.32). **Catatan ops:** `prisma generate` **di
+  dalam container** + restart wajib setelah schema berubah (lihat §2.34).
+- **Backend:** DTO `ItemDistributorDto` (`partnerId` string `@IsNotEmpty`),
+  `distributors?: ItemDistributorDto[]` di create DTO (inherited di update via
+  `PartialType`). `buildDistributorRows` (di `erp-items.mappers.ts`) skip partner
+  kosong + **dedupe by partner** + isi `sortOrder` urut index; create = nested
+  `distributors.create`, update = `distributors: { deleteMany: {}, create }`
+  (replace penuh, pola placements/prices). `ITEM_INCLUDE.distributors` +
+  `mapItem` memetakan ke field FE `distributors` (`{partnerId, partner}`),
+  `orderBy: [{ sortOrder }, { id }]`.
+- **Frontend:** `ItemFormData.distributors: ItemDistributorFormRow[]` (punya `key`
+  stabil client agar display `SearchSelect` tahan add/remove baris — tidak
+  dikirim). Section `distributor` di side-nav **Lengkap** (`available: true`,
+  **tidak** dibatasi tipe stockable — distributor relevan untuk semua tipe item),
+  urutan setelah Supplier. Editor multi-baris = organism
+  [`components/pages/items-form-distributors.tsx`](components/pages/items-form-distributors.tsx)
+  (tabel No · Distributor · hapus + tombol "Tambah"). Loader =
+  `loadSupplierOptions` — partner **difilter `isSupplier=true`** (keputusan user
+  2026-05-31), bukan semua partner. `toItemPayload` drop baris yang partner belum
+  dipilih.
+
+---
+
 ### 2.37 Item — tab Branch multi-cabang (item-branch) (2026-05-31)
 
 Section **Branch** baru di form item (§2.25), paritas tab "Branch" item master
