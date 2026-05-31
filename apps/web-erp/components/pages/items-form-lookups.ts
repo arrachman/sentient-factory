@@ -56,11 +56,15 @@ export const loadProjectOptions = makeLoader(listProjects as unknown as ListFn);
 export const loadCostCenterOptions = makeLoader(listCostCenters as unknown as ListFn);
 export const loadAccountOptions = makeLoader(listAccounts as unknown as ListFn);
 
-/** Account picker showing "code - name" in the trigger (accounting convention). */
+/**
+ * Account picker. Trigger shows "code - name" (accounting convention) via
+ * SearchSelect's optLabel which prepends `code`; the modal NAMA column shows
+ * `label` (the name only) — KODE has its own column, so name stays clean.
+ */
 export const loadAccountOptionsCoded = async (search: string, page: number, limit: number) => {
   const res = await listAccounts({ search: search || undefined, page, limit, isActive: true });
   return {
-    data: res.data.map((x) => ({ value: x.id, label: x.code ? `${x.code} - ${x.name}` : x.name, code: x.code })),
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
     total: res.meta.total,
   };
 };
@@ -81,7 +85,7 @@ export const loadCashAccountOptionsCoded = async (search: string, page: number, 
     normalBalance: 'DEBIT',
   });
   return {
-    data: res.data.map((x) => ({ value: x.id, label: x.code ? `${x.code} - ${x.name}` : x.name, code: x.code })),
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
     total: res.meta.total,
   };
 };

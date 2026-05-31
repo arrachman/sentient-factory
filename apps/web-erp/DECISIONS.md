@@ -809,6 +809,25 @@ jelas — beat seluruh keuntungan "search-by-code = exact".
 
 ---
 
+### 2.30b Loader picker — `label` = nama saja, kode di field `code` (2026-05-31)
+
+Untuk semua loader `SearchSelect` (termasuk akun coded), opsi **wajib**
+memisahkan `code` dan `label`:
+
+- `code` → kolom KODE modal + di-prepend `useSearchSelect.optLabel` jadi
+  display trigger `"{code} - {name}"` (konvensi akuntansi).
+- `label` → kolom NAMA modal = **nama saja**, tanpa prefix kode (KODE sudah
+  punya kolom sendiri; menampilkan kode lagi di NAMA = redundan).
+
+`loadAccountOptionsCoded` & `loadCashAccountOptionsCoded`
+([`components/pages/items-form-lookups.ts`](components/pages/items-form-lookups.ts))
+dulu set `label = "{code} - {name}"` → kolom NAMA dobel kode **dan** trigger
+jadi `"{code} - {code} - {name}"` (optLabel prepend lagi). Diperbaiki: set
+`label = x.name` saja. **Jangan** embed kode ke `label` di loader baru —
+`optLabel` yang urus prefix kode untuk trigger.
+
+---
+
 ### 2.31 Format angka dinamis dari `sys_settings` (2026-05-28)
 
 Format angka **tidak** lagi hardcode `id-ID`. Pakai 3 setting global di
