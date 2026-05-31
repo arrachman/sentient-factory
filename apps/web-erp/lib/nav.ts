@@ -323,5 +323,23 @@ export function pageMeta(route: string, t: (k: string) => string): PageMeta {
       };
     }
   }
+  // Transaction sub-routes (<base>/new, <base>/:id) inherit the base meta
+  // plus a form crumb — keeps breadcrumb/tab label clean for /new & /:id.
+  const slash = route.lastIndexOf('/');
+  if (slash > 0) {
+    const baseMeta = ERP_ROUTE_META[route.slice(0, slash)];
+    if (baseMeta) {
+      const subLabel = route.slice(slash + 1) === 'new' ? t('Baru') : t('Edit');
+      return {
+        title: `${t(baseMeta.title)} · ${subLabel}`,
+        icon: baseMeta.icon,
+        crumbs: [
+          { label: t(baseMeta.group) },
+          { label: t(baseMeta.title) },
+          { label: subLabel },
+        ],
+      };
+    }
+  }
   return { title: route, icon: 'file', crumbs: [{ label: route }] };
 }

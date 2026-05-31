@@ -114,6 +114,21 @@ import { NumberFormatPage } from '@/components/pages/number-format-page';
 import { DateFormatPage } from '@/components/pages/date-format-page';
 import { ErpImportPage } from '@/components/pages/import-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
+import {
+  resolveTrxFormRoute,
+  type TrxFormPage,
+} from '@/lib/trx-route';
+
+/**
+ * Transaction form pages — URL-addressable in three shapes per `lib/trx-route`:
+ * `<base>` (list), `<base>/new` (create), `<base>/:id` (edit). Keyed by the
+ * canonical `sys_menus.path`. Add new transaction modules here (CD/BD/giro/
+ * jurnal…) as they adopt the sub-route convention.
+ */
+const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
+  '/finance/cash-receipts': ErpCashReceiptsPage,
+};
+const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
 /**
  * ERP page registry. Keyed by the canonical route id = the seeded
@@ -243,7 +258,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/finance/receipt-memos': () => <ErpArReceiptsPage />,
   '/finance/send-memos': () => <ErpApPaymentsPage />,
   '/finance/ledger': () => <ErpLedgerPage />,
-  '/finance/cash-receipts': () => <ErpCashReceiptsPage />,
+  // /finance/cash-receipts → handled by TRX_FORM_PAGES (list + /new + /:id).
   '/finance/cash-disbursements': () => <ErpCashDisbursementsPage />,
   '/finance/bank-disbursements': () => <ErpBankDisbursementsPage />,
   '/finance/cashbank-transfers': () => <ErpCashbankTransfersPage />,
@@ -292,6 +307,21 @@ export function renderRoute(
   // ── ERP pages (seeded sys_menus path = canonical id; short-id aliases) ─────
   const erpPage = ERP_PAGES[route];
   if (erpPage) return erpPage({ t });
+
+  // ── Transaction form pages (list / <base>/new / <base>/:id) ────────────────
+  const TrxListPage = TRX_FORM_PAGES[route];
+  if (TrxListPage) return <TrxListPage onNavigate={onNavigate} />;
+  const trx = resolveTrxFormRoute(route, TRX_BASES);
+  if (trx) {
+    const TrxFormPageCmp = TRX_FORM_PAGES[trx.base];
+    return (
+      <TrxFormPageCmp
+        formMode={trx.mode}
+        recordId={trx.recordId}
+        onNavigate={onNavigate}
+      />
+    );
+  }
 
   const baseRoute = resolveNewRoute(route);
   if (baseRoute) {
