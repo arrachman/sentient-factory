@@ -47,6 +47,8 @@ import { ErpDepartmentsPage } from '@/components/pages/departments-page';
 import { ErpSubDepartmentsPage } from '@/components/pages/sub-departments-page';
 // MD legacy batch (2026-05-20) — 20 entitas dari MyERP+ m1_*
 import { ErpColorsPage } from '@/components/pages/colors-page';
+import { ErpNozzlesPage } from '@/components/pages/nozzles-page';
+import { ErpOemsPage } from '@/components/pages/oems-page';
 import { ErpItemPermissionsPage } from '@/components/pages/item-permissions-page';
 import { ErpBrandsPage } from '@/components/pages/brands-page';
 import { ErpMaterialsPage } from '@/components/pages/materials-page';
@@ -177,6 +179,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/subdivisions': () => <ErpSubDivisionsPage />,
   // ── Master Data Legacy Batch (2026-05-20) ─────────────────────────────────
   '/master/colors': () => <ErpColorsPage />,
+  '/master/nozzles': () => <ErpNozzlesPage />,
+  '/master/oems': () => <ErpOemsPage />,
   '/master/item-permissions': () => <ErpItemPermissionsPage />,
   '/master/brands': () => <ErpBrandsPage />,
   '/master/materials': () => <ErpMaterialsPage />,

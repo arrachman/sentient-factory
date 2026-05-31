@@ -13,6 +13,8 @@ import {
   ITEM_INCLUDE,
   buildPriceRows,
   buildLocationRows,
+  buildDistributorRows,
+  buildBranchRows,
   buildFkData,
   buildDecimalData,
   deriveSalePriceFromTiers,
@@ -58,6 +60,9 @@ export class ErpItemsService {
           validUntil: dto.validUntil ? new Date(dto.validUntil) : null,
           isVatable: dto.isVatable ?? true,
           isSpecial: dto.isSpecial ?? false,
+          registrationNo: dto.registrationNo ?? null,
+          isReturnable: dto.isReturnable ?? true,
+          isMobile: dto.isMobile ?? false,
           ...buildFkData(dto as unknown as Record<string, unknown>),
           // salePrice cache = level-1 tier price (§2.32) — overrides client-sent salePrice.
           ...(deriveSalePriceFromTiers(dto.prices) !== undefined
@@ -71,6 +76,12 @@ export class ErpItemsService {
             : {}),
           ...(buildLocationRows(dto.locations, actorId)
             ? { placements: { create: buildLocationRows(dto.locations, actorId) } }
+            : {}),
+          ...(buildDistributorRows(dto.distributors, actorId)
+            ? { distributors: { create: buildDistributorRows(dto.distributors, actorId) } }
+            : {}),
+          ...(buildBranchRows(dto.branches, actorId)
+            ? { branches: { create: buildBranchRows(dto.branches, actorId) } }
             : {}),
         },
         include: ITEM_INCLUDE,
@@ -201,6 +212,9 @@ export class ErpItemsService {
               : new Date(dto.validUntil),
           isVatable: dto.isVatable,
           isSpecial: dto.isSpecial,
+          registrationNo: dto.registrationNo,
+          isReturnable: dto.isReturnable,
+          isMobile: dto.isMobile,
           ...buildFkData(dto as unknown as Record<string, unknown>),
           // salePrice cache = level-1 tier price (§2.32) — overrides client-sent salePrice.
           ...(deriveSalePriceFromTiers(dto.prices) !== undefined
@@ -213,6 +227,12 @@ export class ErpItemsService {
             : {}),
           ...(dto.locations !== undefined
             ? { placements: { deleteMany: {}, create: buildLocationRows(dto.locations, actorId) } }
+            : {}),
+          ...(dto.distributors !== undefined
+            ? { distributors: { deleteMany: {}, create: buildDistributorRows(dto.distributors, actorId) } }
+            : {}),
+          ...(dto.branches !== undefined
+            ? { branches: { deleteMany: {}, create: buildBranchRows(dto.branches, actorId) } }
             : {}),
         },
         include: ITEM_INCLUDE,

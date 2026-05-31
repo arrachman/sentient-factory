@@ -32,6 +32,16 @@ export const ITEM_INCLUDE = {
   purchaseTax:      { select: { id: true, code: true, name: true } },
   saleTax:          { select: { id: true, code: true, name: true } },
   primarySupplier:  { select: { id: true, code: true, name: true } },
+  brand:            { select: { id: true, code: true, name: true } },
+  material:         { select: { id: true, code: true, name: true } },
+  size:             { select: { id: true, code: true, name: true } },
+  color:            { select: { id: true, code: true, name: true } },
+  section:          { select: { id: true, code: true, name: true } },
+  designer:         { select: { id: true, code: true, name: true } },
+  nozzle:           { select: { id: true, code: true, name: true } },
+  oem:              { select: { id: true, code: true, name: true } },
+  vendor:           { select: { id: true, code: true, name: true } },
+  fieldUnit:        { select: { id: true, code: true, name: true } },
   prices:           { select: { level: true, price: true, discountPercent: true }, orderBy: { level: 'asc' } },
   placements:       {
     select: {
@@ -39,6 +49,22 @@ export const ITEM_INCLUDE = {
       locationId: true,
       warehouse: { select: { id: true, code: true, name: true } },
       location:  { select: { id: true, code: true, name: true } },
+    },
+    orderBy: { id: 'asc' },
+  },
+  distributors:     {
+    select: {
+      partnerId: true,
+      partner: { select: { id: true, code: true, name: true } },
+    },
+    orderBy: { sortOrder: 'asc' },
+  },
+  branches:         {
+    select: {
+      branchId: true,
+      costCenterId: true,
+      branch:     { select: { id: true, code: true, name: true } },
+      costCenter: { select: { id: true, code: true, name: true } },
     },
     orderBy: { id: 'asc' },
   },
@@ -53,11 +79,15 @@ const FK_OPTIONAL_FIELDS = [
   'cogsAccountId', 'salesReturnAccountId', 'salesDiscountAccountId',
   'purchaseReturnAccountId', 'purchaseDiscountAccountId', 'consignmentAccountId',
   'purchaseTaxId', 'saleTaxId', 'primarySupplierId',
+  // Atribut produk (legacy "Atribut")
+  'designerId', 'nozzleId', 'oemId', 'vendorId', 'fieldUnitId',
 ] as const;
 
 const DECIMAL_FIELDS = [
   'standardCost', 'purchasePrice', 'purchaseDiscount', 'salePrice',
   'minStock', 'maxStock', 'reorderQty', 'minOrderQty', 'weight',
+  // Dimensi fisik (legacy "Atribut")
+  'length', 'width', 'height', 'volume', 'conversionKgPcs',
 ] as const;
 
 interface PriceTierInput { level: number; price?: string; discountPercent?: string }
@@ -113,6 +143,52 @@ export function buildLocationRows(locations: LocationInput[] | undefined, actorI
     }));
 }
 
+interface DistributorInput { partnerId?: string }
+
+/** Build md_item_distributors rows, skipping empty partner refs and deduping by partner. */
+export function buildDistributorRows(distributors: DistributorInput[] | undefined, actorId?: string) {
+  if (!distributors) return undefined;
+  const actor = actorId ? BigInt(actorId) : null;
+  const seen = new Set<string>();
+  return distributors
+    .filter((d) => (d.partnerId ?? '') !== '')
+    .filter((d) => {
+      const key = d.partnerId as string;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((d, i) => ({
+      partnerId: BigInt(d.partnerId as string),
+      sortOrder: i,
+      createdById: actor,
+      updatedById: actor,
+    }));
+}
+
+interface BranchInput { branchId?: string; costCenterId?: string }
+
+/** Build md_item_branches rows, skipping incomplete pairs and deduping by branch (one cost center per branch). */
+export function buildBranchRows(branches: BranchInput[] | undefined, actorId?: string) {
+  if (!branches) return undefined;
+  const actor = actorId ? BigInt(actorId) : null;
+  const seen = new Set<string>();
+  return branches
+    .filter((b) => (b.branchId ?? '') !== '' && (b.costCenterId ?? '') !== '')
+    .filter((b) => {
+      const key = b.branchId as string;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((b) => ({
+      branchId: BigInt(b.branchId as string),
+      costCenterId: BigInt(b.costCenterId as string),
+      createdById: actor,
+      updatedById: actor,
+    }));
+}
+
 function toFkOrNull(v: string | null | undefined): bigint | null | undefined {
   if (v === undefined) return undefined;
   if (v === null || v === '') return null;
@@ -146,7 +222,7 @@ export function buildDecimalData(dto: Record<string, unknown>): Record<string, P
 
 // Maps Prisma field names to the frontend ErpItem interface shape
 export function mapItem(item: any) {
-  const { type, baseUnit, baseUnitId, salePrice, prices, placements, ...rest } = item;
+  const { type, baseUnit, baseUnitId, salePrice, prices, placements, distributors, branches, ...rest } = item;
   return {
     ...rest,
     itemType: type,
@@ -164,6 +240,16 @@ export function mapItem(item: any) {
       locationId: String(l.locationId),
       warehouse: l.warehouse ?? null,
       location: l.location ?? null,
+    })),
+    distributors: (distributors ?? []).map((d: any) => ({
+      partnerId: String(d.partnerId),
+      partner: d.partner ?? null,
+    })),
+    branches: (branches ?? []).map((b: any) => ({
+      branchId: String(b.branchId),
+      costCenterId: String(b.costCenterId),
+      branch: b.branch ?? null,
+      costCenter: b.costCenter ?? null,
     })),
   };
 }

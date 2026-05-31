@@ -18,6 +18,14 @@ import { listCostCenters } from '@/lib/api/cost-centers';
 import { listAccounts } from '@/lib/api/accounts';
 import { listTaxes } from '@/lib/api/taxes';
 import { listPartners } from '@/lib/api/partners';
+import { listBrands } from '@/lib/api/brands';
+import { listMaterials } from '@/lib/api/materials';
+import { listSizes } from '@/lib/api/sizes';
+import { listColors } from '@/lib/api/colors';
+import { listSections } from '@/lib/api/sections';
+import { listDesigners } from '@/lib/api/designers';
+import { listNozzles } from '@/lib/api/nozzles';
+import { listOems } from '@/lib/api/oems';
 
 interface Listable { id: string; code?: string; name: string }
 type ListFn = (p: { search?: string; page: number; limit: number; isActive?: boolean }) => Promise<{ data: Listable[]; meta: { total: number } }>;
@@ -49,3 +57,22 @@ export const loadCostCenterOptions = makeLoader(listCostCenters as unknown as Li
 export const loadAccountOptions = makeLoader(listAccounts as unknown as ListFn);
 export const loadTaxOptions = makeLoader(listTaxes as unknown as ListFn);
 export const loadPartnerOptions = makeLoader(listPartners as unknown as ListFn);
+
+// Atribut produk (legacy "Atribut"). Vendor -> reuse loadPartnerOptions; Satuan Lapangan -> reuse loadUnitOptions.
+export const loadBrandOptions = makeLoader(listBrands as unknown as ListFn);
+export const loadMaterialOptions = makeLoader(listMaterials as unknown as ListFn);
+export const loadSizeOptions = makeLoader(listSizes as unknown as ListFn);
+export const loadColorOptions = makeLoader(listColors as unknown as ListFn);
+export const loadSectionOptions = makeLoader(listSections as unknown as ListFn);
+export const loadDesignerOptions = makeLoader(listDesigners as unknown as ListFn);
+export const loadNozzleOptions = makeLoader(listNozzles as unknown as ListFn);
+export const loadOemOptions = makeLoader(listOems as unknown as ListFn);
+
+/** Distributor picker = partners flagged as supplier (legacy "Distributor" tab). */
+export const loadSupplierOptions = async (search: string, page: number, limit: number) => {
+  const res = await listPartners({ search: search || undefined, page, limit, isActive: true, isSupplier: true });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
+    total: res.meta.total,
+  };
+};

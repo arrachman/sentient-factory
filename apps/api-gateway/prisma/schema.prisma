@@ -1640,6 +1640,7 @@ model ErpBranch {
   userBranchAccess ErpUserBranchAccess[]
   partners         ErpPartner[]
   items            ErpItem[]             @relation("ItemBranch")
+  itemBranches     ErpItemBranch[]       @relation("ItemBranchBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -1712,7 +1713,8 @@ model ErpUnit {
   updatedById      BigInt?   @map("updated_by_id")
   deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  items ErpItem[]
+  items          ErpItem[] @relation("ItemBaseUnit")
+  fieldUnitItems ErpItem[] @relation("ItemFieldUnit")
 
   @@index([legacyCode])
   @@map("md_units")
@@ -1763,6 +1765,11 @@ model ErpItem {
   sizeId             BigInt?          @map("size_id")
   colorId            BigInt?          @map("color_id")
   sectionId          BigInt?          @map("section_id")
+  designerId         BigInt?          @map("designer_id")
+  nozzleId           BigInt?          @map("nozzle_id")
+  oemId              BigInt?          @map("oem_id")
+  vendorId           BigInt?          @map("vendor_id")
+  fieldUnitId        BigInt?          @map("field_unit_id")
   divisionId         BigInt?          @map("division_id")
   subdivisionId      BigInt?          @map("subdivision_id")
   departmentId       BigInt?          @map("department_id")
@@ -1796,6 +1803,14 @@ model ErpItem {
   saleTaxId          BigInt?          @map("sale_tax_id")
   primarySupplierId  BigInt?          @map("primary_supplier_id")
   weight             Decimal?         @map("weight") @db.Decimal(19, 4)
+  length             Decimal?         @map("length") @db.Decimal(19, 4)
+  width              Decimal?         @map("width") @db.Decimal(19, 4)
+  height             Decimal?         @map("height") @db.Decimal(19, 4)
+  volume             Decimal?         @map("volume") @db.Decimal(19, 4)
+  conversionKgPcs    Decimal          @default(1) @map("conversion_kg_pcs") @db.Decimal(19, 4)
+  registrationNo     String?          @map("registration_no")
+  isReturnable       Boolean          @default(true) @map("is_returnable")
+  isMobile           Boolean          @default(false) @map("is_mobile")
   ageCategory        String?          @map("age_category")
   validUntil         DateTime?        @map("valid_until") @db.Date
   isVatable          Boolean          @default(true) @map("is_vatable")
@@ -1810,9 +1825,18 @@ model ErpItem {
   deletedAt          DateTime?        @map("deleted_at") @db.Timestamptz(6)
 
   category         ErpItemCategory     @relation(fields: [categoryId], references: [id])
-  baseUnit         ErpUnit             @relation(fields: [baseUnitId], references: [id])
+  baseUnit         ErpUnit             @relation("ItemBaseUnit", fields: [baseUnitId], references: [id])
+  fieldUnit        ErpUnit?            @relation("ItemFieldUnit", fields: [fieldUnitId], references: [id])
   kind             ErpItemKind?        @relation("ItemKind", fields: [kindId], references: [id])
   productClass     ErpProductClass?    @relation("ItemProductClass", fields: [productClassId], references: [id])
+  brand            ErpBrand?           @relation(fields: [brandId], references: [id])
+  material         ErpMaterial?        @relation(fields: [materialId], references: [id])
+  size             ErpSize?            @relation(fields: [sizeId], references: [id])
+  color            ErpColor?           @relation(fields: [colorId], references: [id])
+  section          ErpSection?         @relation(fields: [sectionId], references: [id])
+  designer         ErpDesigner?        @relation(fields: [designerId], references: [id])
+  nozzle           ErpNozzle?          @relation(fields: [nozzleId], references: [id])
+  oem              ErpOem?             @relation(fields: [oemId], references: [id])
   division         ErpDivision?        @relation("ItemDivision", fields: [divisionId], references: [id])
   subdivision      ErpSubdivision?     @relation("ItemSubdivision", fields: [subdivisionId], references: [id])
   department       ErpDepartment?      @relation("ItemDepartment", fields: [departmentId], references: [id])
@@ -1833,9 +1857,12 @@ model ErpItem {
   purchaseTax      ErpTax?             @relation("ItemPurchaseTax", fields: [purchaseTaxId], references: [id])
   saleTax          ErpTax?             @relation("ItemSaleTax", fields: [saleTaxId], references: [id])
   primarySupplier  ErpPartner?         @relation("ItemPrimarySupplier", fields: [primarySupplierId], references: [id])
+  vendor           ErpPartner?         @relation("ItemVendor", fields: [vendorId], references: [id])
   information      ErpItemInformation?
   prices           ErpItemPrice[]      @relation("ItemPrices")
   placements       ErpItemPlacement[]  @relation("ItemPlacements")
+  branches         ErpItemBranch[]     @relation("ItemBranches")
+  distributors     ErpItemDistributor[] @relation("ItemDistributors")
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -1847,6 +1874,11 @@ model ErpItem {
   @@index([sizeId])
   @@index([colorId])
   @@index([sectionId])
+  @@index([designerId])
+  @@index([nozzleId])
+  @@index([oemId])
+  @@index([vendorId])
+  @@index([fieldUnitId])
   @@index([divisionId])
   @@index([departmentId])
   @@index([branchId])
@@ -1902,6 +1934,55 @@ model ErpItemPlacement {
   @@index([warehouseId])
   @@index([locationId])
   @@map("md_item_placements")
+}
+
+/// Item branch assignments per item (legacy MyERP+ item master "Branch" tab).
+/// One row per (item, branch) carrying a required cost center (Cabang + Cost Center).
+/// Complements the single home branchId/costCenterId on md_items — those stay the
+/// primary/default dimension; this lists the item's branch placements. Both FK to
+/// md masters (intra-domain enforced); cascade on item delete, restrict the masters.
+model ErpItemBranch {
+  id           BigInt   @id @default(autoincrement())
+  itemId       BigInt   @map("item_id")
+  branchId     BigInt   @map("branch_id")
+  costCenterId BigInt   @map("cost_center_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById  BigInt?  @map("created_by_id")
+  updatedById  BigInt?  @map("updated_by_id")
+
+  item       ErpItem       @relation("ItemBranches", fields: [itemId], references: [id], onDelete: Cascade)
+  branch     ErpBranch     @relation("ItemBranchBranch", fields: [branchId], references: [id])
+  costCenter ErpCostCenter @relation("ItemBranchCostCenter", fields: [costCenterId], references: [id])
+
+  @@unique([itemId, branchId])
+  @@index([itemId])
+  @@index([branchId])
+  @@index([costCenterId])
+  @@map("md_item_branches")
+}
+
+/// Item distributors per item (legacy MyERP+ "Distributor" tab = m1_item_supplier).
+/// One row per (item, partner) — the supplier/distributor partners that supply this item.
+/// partner_id -> md_partners (filtered to is_supplier on the UI). Multi-row beyond the
+/// single primarySupplierId on md_items. sortOrder keeps the legacy display order.
+model ErpItemDistributor {
+  id          BigInt   @id @default(autoincrement())
+  itemId      BigInt   @map("item_id")
+  partnerId   BigInt   @map("partner_id")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by_id")
+  updatedById BigInt?  @map("updated_by_id")
+
+  item    ErpItem    @relation("ItemDistributors", fields: [itemId], references: [id], onDelete: Cascade)
+  partner ErpPartner @relation("ItemDistributorPartner", fields: [partnerId], references: [id])
+
+  @@unique([itemId, partnerId])
+  @@index([itemId])
+  @@index([partnerId])
+  @@map("md_item_distributors")
 }
 
 model ErpPartnerCategory {
@@ -1967,6 +2048,8 @@ model ErpPartner {
   bankAccounts        ErpPartnerBankAccount[]
   salesmanOfPartners  ErpPartner[]            @relation("PartnerSalesman")
   itemPrimarySupplier ErpItem[]               @relation("ItemPrimarySupplier")
+  itemDistributors    ErpItemDistributor[]    @relation("ItemDistributorPartner")
+  itemVendor          ErpItem[]               @relation("ItemVendor")
 
   @@index([categoryId])
   @@index([currencyId])
@@ -2419,6 +2502,7 @@ model ErpCostCenter {
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
   accrualSchedules              ErpFinAccrualSchedule[]
   items                         ErpItem[]                            @relation("ItemCostCenter")
+  itemBranches                  ErpItemBranch[]                      @relation("ItemBranchCostCenter")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -8670,6 +8754,8 @@ model ErpBrand {
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  items       ErpItem[]
+
   @@index([legacyCode])
   @@map("md_brands")
 }
@@ -8686,6 +8772,8 @@ model ErpMaterial {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items       ErpItem[]
 
   @@index([legacyCode])
   @@map("md_materials")
@@ -8721,6 +8809,8 @@ model ErpSize {
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  items       ErpItem[]
+
   @@index([legacyCode])
   @@map("md_sizes")
 }
@@ -8737,6 +8827,8 @@ model ErpSection {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items       ErpItem[]
 
   @@index([legacyCode])
   @@map("md_sections")
@@ -9261,8 +9353,48 @@ model ErpDesigner {
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  items       ErpItem[]
+
   @@index([legacyCode])
   @@map("md_designers")
+}
+
+model ErpNozzle {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items       ErpItem[]
+
+  @@index([legacyCode])
+  @@map("md_nozzles")
+}
+
+model ErpOem {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code")
+  name        String    @map("name")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items       ErpItem[]
+
+  @@index([legacyCode])
+  @@map("md_oems")
 }
 
 model ErpProductionActivity {
@@ -9312,6 +9444,8 @@ model ErpColor {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  items       ErpItem[]
 
   @@index([legacyCode])
   @@map("md_colors")

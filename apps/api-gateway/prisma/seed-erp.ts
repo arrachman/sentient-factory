@@ -427,6 +427,8 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M1.ITEM.MODEL',          title: 'Model',             path: '/master/models',          legacyCode: '1-97' },
     { code: 'M1.ITEM.SIZE',           title: 'Size',              path: '/master/sizes',           legacyCode: '1-98' },
     { code: 'M1.ITEM.COLOR',          title: 'Color',             path: '/master/colors',          legacyCode: '1-99' },
+    { code: 'M1.ITEM.NOZZLE', title: 'Nozzle', path: '/master/nozzles', legacyCode: '1-901' },
+    { code: 'M1.ITEM.OEM', title: 'OEM', path: '/master/oems', legacyCode: '1-902' },
     { code: 'M1.ITEM.BRAND',          title: 'Brand',             path: '/master/brands',          legacyCode: '1-101' },
     { code: 'M1.ITEM.MATERIAL',       title: 'Material',          path: '/master/materials',       legacyCode: '1-102' },
     { code: 'M1.ITEM.SECTION',        title: 'Section',           path: '/master/sections',        legacyCode: '1-103' },
@@ -506,31 +508,47 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     await upsertMenu({ code: s.code, title: s.title, icon: s.icon, type: ErpMenuType.MODULE, sortOrder: s.sortOrder, legacyCode: s.legacyCode });
   }
 
-  // M2 Finance — paritas dengan legacy m2-finance (13 transaction modules + GL).
-  // Legacy codes: CR=Cash Receipt, CD=Cash Disbursement, BD=Bank Disbursement,
-  // CB=Cash/Bank Transfer, RG=Receipt Giro, SG=Send Giro, RGC/SGC=Giro Clearing,
-  // RM=Receipt Memo (AR settle), SM=Send Memo (AP settle), GJ=General Journal,
-  // AJ=Adjustment Journal. Title English (keputusan 2026-05-20).
+  // M2 Finance — paritas dengan legacy m2-finance (Keuangan ▸ Transaksi + Laporan).
+  // Legacy "Transaksi" codes (lihat menu legacy):
+  //   CR=Kas Masuk (Cash Receipt), CD=Kas Keluar (Cash Disbursement),
+  //   RM=Bank Masuk (Bank Receipt → fin_ar_receipts), SM=Bank Keluar (Bank Payment → fin_ap_payments),
+  //   GJ=Jurnal Umum (General Journal), RG/SG=Giro Masuk/Keluar, RGC/SGC=Giro …Batal (clearing),
+  //   CB=Saldo Awal Coa (Opening Balance → JournalType.OPENING_BALANCE).
+  //   Tambahan modern (tak ada di menu legacy ini): BD=Bank Disbursement, AJ=Adjustment Journal.
+  // Title English (keputusan 2026-05-20); CB & RM/SM dikoreksi 2026-05-31 (§ finance-menu-parity).
   const m2Id = menuIds.get('M2');
   if (m2Id) {
     const m2TxGrp = await upsertMenu({ code: 'M2.TX', title: 'Transactions', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 1 });
     await upsertItems([
       { code: 'M2.TX.CASH-RECEIPT',       title: 'Cash Receipt',         path: '/finance/cash-receipts',       legacyCode: 'CR' },
       { code: 'M2.TX.CASH-DISBURSEMENT',  title: 'Cash Disbursement',    path: '/finance/cash-disbursements',  legacyCode: 'CD' },
+      { code: 'M2.TX.BANK-RECEIPT',       title: 'Bank Receipt',         path: '/finance/bank-receipts',       legacyCode: 'RM' },
+      { code: 'M2.TX.BANK-PAYMENT',       title: 'Bank Payment',         path: '/finance/bank-payments',       legacyCode: 'SM' },
       { code: 'M2.TX.BANK-DISBURSEMENT',  title: 'Bank Disbursement',    path: '/finance/bank-disbursements',  legacyCode: 'BD' },
-      { code: 'M2.TX.CASHBANK-TRANSFER',  title: 'Cash/Bank Transfer',   path: '/finance/cashbank-transfers',  legacyCode: 'CB' },
+      { code: 'M2.TX.GENERAL-JOURNAL',    title: 'General Journal',      path: '/finance/general-journals',    legacyCode: 'GJ' },
+      { code: 'M2.TX.ADJUSTMENT-JOURNAL', title: 'Adjustment Journal',   path: '/finance/adjustment-journals', legacyCode: 'AJ' },
       { code: 'M2.TX.RECEIPT-GIRO',       title: 'Receipt Giro',         path: '/finance/receipt-giros',       legacyCode: 'RG' },
       { code: 'M2.TX.SEND-GIRO',          title: 'Send Giro',            path: '/finance/send-giros',          legacyCode: 'SG' },
       { code: 'M2.TX.RECEIPT-GIRO-CLR',   title: 'Receipt Giro Clearing', path: '/finance/receipt-giro-clearings', legacyCode: 'RGC' },
       { code: 'M2.TX.SEND-GIRO-CLR',      title: 'Send Giro Clearing',   path: '/finance/send-giro-clearings', legacyCode: 'SGC' },
-      { code: 'M2.TX.RECEIPT-MEMO',       title: 'Receipt Memo',         path: '/finance/receipt-memos',       legacyCode: 'RM' },
-      { code: 'M2.TX.SEND-MEMO',          title: 'Send Memo',            path: '/finance/send-memos',          legacyCode: 'SM' },
-      { code: 'M2.TX.GENERAL-JOURNAL',    title: 'General Journal',      path: '/finance/general-journals',    legacyCode: 'GJ' },
-      { code: 'M2.TX.ADJUSTMENT-JOURNAL', title: 'Adjustment Journal',   path: '/finance/adjustment-journals', legacyCode: 'AJ' },
+      { code: 'M2.TX.OPENING-BALANCE',    title: 'Opening Balance (CoA)', path: '/finance/opening-balances',   legacyCode: 'CB' },
     ], m2TxGrp.id);
+    // Laporan keuangan inti — legacy MODULEID=2 (Report.vb) punya ~150 varian;
+    // di sini parent report kanonik yang dipenuhi oleh fin_ledger_entries / fin_budget_realizations / fin_giros.
     const m2RptGrp = await upsertMenu({ code: 'M2.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 2 });
     await upsertItems([
-      { code: 'M2.RPT.LEDGER',            title: 'General Ledger',       path: '/finance/ledger' },
+      { code: 'M2.RPT.LEDGER',            title: 'General Ledger',          path: '/finance/ledger',              legacyCode: '2-41'  },
+      { code: 'M2.RPT.TRIAL-BALANCE',     title: 'Trial Balance',           path: '/finance/trial-balance',       legacyCode: '2-42'  },
+      { code: 'M2.RPT.BALANCE-SHEET',     title: 'Balance Sheet',           path: '/finance/balance-sheet',       legacyCode: '2-45'  },
+      { code: 'M2.RPT.INCOME-STATEMENT',  title: 'Income Statement',        path: '/finance/income-statement',    legacyCode: '2-46'  },
+      { code: 'M2.RPT.CASH-FLOW',         title: 'Cash Flow',               path: '/finance/cash-flow',           legacyCode: '2-104' },
+      { code: 'M2.RPT.DAILY-CASH-BANK',   title: 'Daily Cash & Bank',       path: '/finance/daily-cash-bank',     legacyCode: '2-43'  },
+      { code: 'M2.RPT.AR-CARD',           title: 'AR Card',                 path: '/finance/ar-card',             legacyCode: '2-47'  },
+      { code: 'M2.RPT.AR-AGING',          title: 'AR Aging',                path: '/finance/ar-aging',            legacyCode: '2-92'  },
+      { code: 'M2.RPT.AP-CARD',           title: 'AP Card',                 path: '/finance/ap-card',             legacyCode: '2-50'  },
+      { code: 'M2.RPT.AP-AGING',          title: 'AP Aging',                path: '/finance/ap-aging',            legacyCode: '2-93'  },
+      { code: 'M2.RPT.GIRO-MATURITY',     title: 'Giro Maturity',           path: '/finance/giro-maturity',       legacyCode: '2-9'   },
+      { code: 'M2.RPT.BUDGET-REALIZATION', title: 'Budget vs Realization',  path: '/finance/budget-realization',  legacyCode: '2-135' },
     ], m2RptGrp.id);
   }
 

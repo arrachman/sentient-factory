@@ -22,8 +22,11 @@ import type { FormErrors } from '@/lib/form-validation';
 import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generator';
 import type { ItemFormData } from './items-form';
 import { ITEM_TYPES, COST_METHODS } from './items-form';
-import { Section, LookupField, NumField, YesNoField, isStockable, showsWeight } from './items-form-parts';
+import { Section, LookupField, NumField, YesNoField, isStockable } from './items-form-parts';
 import { ItemLocationsEditor } from './items-form-locations';
+import { ItemAtributSection } from './items-form-atribut';
+import { ItemDistributorsEditor } from './items-form-distributors';
+import { ItemBranchesEditor } from './items-form-branches';
 import {
   loadCategoryOptions, loadUnitOptions, loadKindOptions, loadProductClassOptions,
   loadDivisionOptions, loadSubDivisionOptions, loadDepartmentOptions, loadSubDepartmentOptions,
@@ -32,7 +35,7 @@ import {
 } from './items-form-lookups';
 
 type Mode = 'cepat' | 'lengkap';
-type SectionId = 'identitas' | 'klasifikasi' | 'inventory' | 'lokasi' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'catatan';
+type SectionId = 'identitas' | 'klasifikasi' | 'atribut' | 'inventory' | 'lokasi' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'distributor' | 'branch' | 'catatan';
 
 const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
 
@@ -62,6 +65,7 @@ export function ItemFormFields({
   const sections: { id: SectionId; label: string; available: boolean; hasError: boolean }[] = [
     { id: 'identitas', label: 'Identitas', available: true, hasError: !!(errors.code || errors.name) },
     { id: 'klasifikasi', label: 'Klasifikasi', available: true, hasError: !!(errors.categoryId || errors.unitId) },
+    { id: 'atribut', label: 'Atribut', available: true, hasError: false },
     { id: 'inventory', label: 'Inventory & Tracking', available: isStockable(data.itemType), hasError: false },
     { id: 'lokasi', label: 'Lokasi', available: isStockable(data.itemType), hasError: false },
     { id: 'harga', label: 'Harga', available: true, hasError: false },
@@ -69,6 +73,8 @@ export function ItemFormFields({
     { id: 'akuntansi', label: 'Akuntansi', available: true, hasError: accountError },
     { id: 'dimensi', label: 'Dimensi GL', available: true, hasError: false },
     { id: 'supplier', label: 'Supplier', available: true, hasError: false },
+    { id: 'distributor', label: 'Distributor', available: true, hasError: false },
+    { id: 'branch', label: 'Branch', available: true, hasError: false },
     { id: 'catatan', label: 'Catatan', available: true, hasError: false },
   ];
 
@@ -122,7 +128,6 @@ export function ItemFormFields({
       <LookupField id="if-unit" label="Satuan" value={data.unitId} onPick={(v) => set('unitId', v)} loader={loadUnitOptions} placeholder="Pilih satuan…" required initialLabel={data.unitLabel} error={!!errors.unitId} />
       <LookupField id="if-kind" label="Jenis Barang" value={data.kindId} onPick={(v) => set('kindId', v)} loader={loadKindOptions} placeholder="Pilih jenis…" initialLabel={data.kindLabel} />
       <LookupField id="if-pclass" label="Kelas Produk" value={data.productClassId} onPick={(v) => set('productClassId', v)} loader={loadProductClassOptions} placeholder="Pilih kelas…" initialLabel={data.productClassLabel} />
-      {showsWeight(data.itemType) && <NumField id="if-weight" label="Berat (kg)" value={data.weight} onChange={(v) => set('weight', v)} />}
     </Section>
   );
 
@@ -218,6 +223,18 @@ export function ItemFormFields({
     </Section>
   );
 
+  const renderDistributor = () => (
+    <Section title="Distributor" hint="Daftar distributor/supplier item (paritas MyERP+)">
+      <ItemDistributorsEditor rows={data.distributors} onChange={(rows) => onChange({ ...data, distributors: rows })} />
+    </Section>
+  );
+
+  const renderBranch = () => (
+    <Section title="Branch" hint="Penempatan item per Cabang + Cost Center (paritas MyERP+)">
+      <ItemBranchesEditor rows={data.branches} onChange={(rows) => onChange({ ...data, branches: rows })} />
+    </Section>
+  );
+
   const renderCatatan = () => (
     <Section title="Catatan">
       <FormField label="Deskripsi" htmlFor="if-desc" className="col-span-2 grid-cols-[110px_1fr]">
@@ -227,9 +244,12 @@ export function ItemFormFields({
   );
 
   const renderById: Record<SectionId, () => React.ReactElement> = {
-    identitas: renderIdentitas, klasifikasi: renderKlasifikasi, inventory: renderInventory,
+    identitas: renderIdentitas, klasifikasi: renderKlasifikasi,
+    atribut: () => <ItemAtributSection data={data} onChange={onChange} />,
+    inventory: renderInventory,
     lokasi: renderLokasi, harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
-    dimensi: renderDimensi, supplier: renderSupplier, catatan: renderCatatan,
+    dimensi: renderDimensi, supplier: renderSupplier, distributor: renderDistributor,
+    branch: renderBranch, catatan: renderCatatan,
   };
 
   const modeToggle = (

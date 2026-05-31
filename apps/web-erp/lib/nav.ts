@@ -57,6 +57,8 @@ export const NAV: NavItem[] = [
       { id: 'm-lokasi', label: 'Cabang & Lokasi', code: 'LOC' },
       { id: 'm-costcenter', label: 'Cost Center', code: 'CC' },
       { id: '/master/colors', label: 'Warna', code: 'CLR' },
+      { id: '/master/nozzles', label: 'Nozzle', code: 'NZL' },
+      { id: '/master/oems', label: 'OEM', code: 'OEM' },
       { id: '/master/item-permissions', label: 'Izin Item', code: 'IPM' },
       { id: '/master/price-indices', label: 'Price Index', code: 'PRX' },
       { id: '/master/item-info', label: 'Info Item', code: 'INF' },
@@ -223,6 +225,8 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/master/subdivisions': { group: 'Data Master', title: 'Sub Division', icon: 'database' },
   // MD legacy batch (2026-05-20)
   '/master/colors': { group: 'Data Master', title: 'Color', icon: 'database' },
+  '/master/nozzles': { group: 'Data Master', title: 'Nozzle', icon: 'database' },
+  '/master/oems': { group: 'Data Master', title: 'OEM', icon: 'database' },
   '/master/item-permissions': { group: 'Data Master', title: 'Item Permissions', icon: 'database' },
   '/master/brands': { group: 'Data Master', title: 'Brand', icon: 'database' },
   '/master/materials': { group: 'Data Master', title: 'Material', icon: 'database' },

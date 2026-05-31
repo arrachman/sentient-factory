@@ -1,0 +1,1120 @@
+# Web-ERP — Decision Log (catatan build per-fitur)
+
+Riwayat keputusan **per-fitur** Senti ERP — dibaca **on-demand** saat menyentuh
+fitur terkait, **bukan** tiap sesi. Rulebook invariant yang berlaku setiap saat
+ada di [`CLAUDE.md`](CLAUDE.md); file ini melengkapinya dengan konteks + rasional.
+
+Nomor section (`§2.x`) dipertahankan sebagai **anchor stabil** — banyak commit &
+dokumen lain me-rujuk `§2.x`, jadi id-nya tidak diubah walau urutannya dirapikan.
+Aturan turunan yang **berlaku saat membangun apa pun yang baru** sudah diringkas
+di `CLAUDE.md` (section "Aturan turunan lintas-fitur"); di sini detail lengkapnya.
+
+---
+
+---
+
+### 2.4 Command palette = derived dari role-filtered nav (2026-05-20)
+
+`CommandPalette` (`components/organisms/command-palette.tsx`) **tidak boleh**
+punya hardcoded menu list. Items diturunkan dari prop `nav: NavItem[]` yang
+sama dengan sidebar (state `nav` di `app-shell.tsx`, di-load via
+`fetchMyMenus()`). Konsekuensi: search palette = persis semua menu aktif
+yang user berhak akses (sesuai `adm_role_menus`). Group palette mengikuti
+struktur nav (MODULE → ITEM, atau MODULE → GROUP → ITEM jadi "Module ·
+Group"). Hanya group "Aksi" (toggle theme/lang) yang statis. Saat menambah
+modul baru: cukup seed di `sys_menus` + `adm_role_menus`, palette ikut.
+
+---
+
+### 2.13 Setting → Tampilan = `/settings/appearance` (2026-05-20)
+
+Halaman preferensi tampilan per-user. Canonical path = `/settings/appearance`
+(seeded di `sys_menus` di bawah group `M0.SYS` "System" — Administrator module —
+dgn code `M0.SYS.APPEARANCE`; 2026-05-22 dipindah dari `SET` module). Komponen = `AppearancePage` (`components/pages/appearance.tsx`),
+ter-register di `ERP_PAGES` + `ERP_ROUTE_META`. Short-id legacy `set-appearance`
+tetap jalan sebagai alias fallback NAV statis.
+
+**Persistence:** reuse tabel `adm_user_preferences` (model Prisma
+`ErpUserPreferences`) — **tidak** bikin tabel `adm_user_settings` baru.
+Pemetaan field:
+
+- `theme` (light/dark) → kolom eksplisit `theme`.
+- `language` (id/en/ja) → kolom eksplisit `language`. **3 bahasa** didukung di
+  UI sejak 2026-05-20: Indonesia, English, Japanese (日本語). Tipe `Lang` di
+  `lib/shell-constants.ts`, `lib/mock.ts`, dan `appearance-parts.tsx` semua
+  pakai union `'id' | 'en' | 'ja'`. `AppearancePage` men-derive translator
+  lokal dari `tw.lang` via `makeTranslator` agar perubahan bahasa langsung
+  refleks di halaman ini (tidak menunggu round-trip ke app-shell).
+- **Sinkronisasi shell:** saat user pindah bahasa di AppearancePage, halaman
+  dispatch `CustomEvent('erp-set-lang', { detail: { lang } })`. App-shell
+  punya listener yang memanggil `setLang(next)` — efeknya
+  topbar/sidebar/tab-bar/breadcrumb ikut translate instan tanpa remount.
+  App-shell juga memuat `language` awal dari `getMyPreferences()` setelah
+  user login (server SSOT), dan shortcut keyboard `L` mencycle id → en →
+  ja → id. Sumber kunci i18n untuk modul sidebar = title English seeded
+  di `apps/api-gateway/prisma/seed-erp.ts` (mis. "Master Data", "Finance &
+  Accounting"); pastikan setiap modul baru ditambah seed-nya juga dimasukkan
+  ke `I18N` di `lib/mock.ts` untuk ketiga bahasa.
+- Tweaks UI lain (`primary`, `density`, `fontScale`, `sidebar`) → `metadata`
+  Json (default dari `DEFAULTS` di `appearance-parts.tsx`).
+
+**API**: module `erp-user-preferences`
+(`apps/api-gateway/src/erp-user-preferences/**`) — `GET /erp/user-preferences/me`
++ `PUT /erp/user-preferences/me` (guard `ErpJwtAuthGuard`). FE pakai client
+`getMyPreferences()` / `updateMyPreferences()` di `lib/api/user-preferences.ts`.
+
+**Font scale → global (2026-05-20).** Knob "Ukuran Font" (`sm/base/lg/xl`)
+men-drive CSS variable `--font-scale` (0.9/1/1.12/1.25) di `html[data-fontscale]`
+(lihat [`styles/erp-tokens.css`](styles/erp-tokens.css)). Rules di
+[`styles/erp-components.css`](styles/erp-components.css) (`body`, `input/select/
+textarea/button`, `.tbl`, `.btn`, `.muted/.sub/.hint`, `.mono`) memakai
+`calc(<base>px * var(--font-scale))` supaya knob menjangkau form controls &
+tabel (yang biasa break font inheritance). **Shell juga ikut terskala
+(2026-05-20):** selector `.topbar .brand`, `.breadcrumb`, `.cmd-trigger`,
+`.kbd`, `.avatar`, `.flyout/.flyout-item`, `.tab-chip/.tab-code/.tab-count/
+.tab-ctx-item`, `.user-menu-hd/.user-menu-item/.user-menu-item .mk`,
+`.sidebar .nav-label` semua pakai `calc(NNpx * var(--font-scale, 1))` di
+[`styles/erp-components.css`](styles/erp-components.css). **Inline px sudah diaudit:** 32
+file komponen yang dulu hardcode `style={{ fontSize: NN }}` sudah di-refactor
+jadi `fontSize: 'calc(NNpx * var(--font-scale, 1))'` (80 occurrence) supaya
+ikut terskala. **Aturan baku:** saat menulis inline `fontSize`, **wajib**
+pakai pola `calc(NNpx * var(--font-scale, 1))` — jangan re-introduce literal
+numeric. Pengecualian sah: `FONT_PX[fontScale]` di `appearance-parts.tsx`
+(intentional bucket preview).
+
+**Load order saat mount AppearancePage**: API (server SSOT) > localStorage
+(`erp-appearance` key) > DOM data-attr > `DEFAULTS`. **Auto-save**: setiap
+perubahan kontrol langsung apply ke DOM data-attr (live preview) + tulis ke
+localStorage; PUT ke API otomatis ter-debounce 500ms (tanpa tombol Simpan).
+Hanya error API yang dinotifikasi (toast `danger`); sukses silent supaya tidak
+spam saat user geser kontrol berurutan. Tombol Reset tetap ada untuk
+mengembalikan ke `DEFAULTS`.
+
+**Cross-device hydration (2026-05-22):** setelah API prefs berhasil di-load,
+`AppearancePage` langsung tulis `merged` ke localStorage (`erp-appearance`)
+sehingga `readUrlRoutingEnabled()` pada reload berikutnya sudah benar tanpa
+menunggu user mengubah setting. `app-shell.tsx` juga melakukan hal yang sama +
+dispatch `CustomEvent('erp-hydrate-url-routing')` agar `useUrlRouting` update
+state `urlRoutingEnabled` **tanpa** mereset workspace tabs (berbeda dari
+`erp-set-url-routing` yang memang reset tabs untuk manual toggle). Ini
+mengatasi skenario cross-device / localStorage cleared.
+
+---
+
+### 2.14 Tab navigator = drag-and-drop reorder via @dnd-kit (2026-05-20)
+
+Tab strip di app shell (`components/organisms/tab-bar.tsx`) **wajib**
+mendukung reorder manual via drag-and-drop. Library = `@dnd-kit/core` +
+`@dnd-kit/sortable` (sudah di `package.json`); **dilarang** native HTML5 DnD
+atau `react-beautiful-dnd`.
+
+- Setiap `tab-chip` di-wrap `useSortable({ id: tab.id })`; container pakai
+  `DndContext` + `SortableContext` strategi `horizontalListSortingStrategy`.
+- Sensor: `PointerSensor` dengan `activationConstraint.distance = 5px`
+  supaya klik tab (activate) tidak ke-trigger sebagai drag accidentally.
+  `KeyboardSensor` + `sortableKeyboardCoordinates` untuk a11y.
+- `onPointerDown` di tombol `tab-x` (close) **wajib** `stopPropagation()`
+  supaya tarik dari tombol-X tidak ikut memulai drag.
+- State machine reorder di [`lib/use-app-shell-tabs.ts`](lib/use-app-shell-tabs.ts)
+  via `reorderTabs(fromId, toId)` (functional setter + `splice`). Persistence
+  ke workspace localStorage **otomatis** lewat `useEffect` existing yang
+  watch `tabs` di `app-shell.tsx` — jangan tambah jalur simpan baru.
+- "+" (new tab), duplicate, dan tab counter tetap **di luar**
+  `SortableContext` agar tidak ikut sortable.
+
+---
+
+### 2.15 Sidebar group `Organization` (2026-05-20)
+
+Group nav baru di NAV `Organization` (id `org`, icon `database`) menampung
+**9 master org-level**: Branch, Location, Warehouse, Division, Sub Division,
+Project, Cost Center, Department, Sub Department.
+
+- Path kanonik = `/org/<entity>` (di-seed di `sys_menus` di bawah module
+  `M1` group `M1.ORG`). Path lama `/master/branches`/`/master/locations`/
+  `/master/warehouses`/`/master/divisions`/`/master/subdivisions` tetap
+  ter-register di `ERP_PAGES` sebagai alias (jangan break link existing).
+- Tabel: `md_branches`, `md_locations`, `md_warehouses`, `md_divisions`,
+  `md_subdivisions`, `md_projects`, `md_cost_centers`, `md_departments`,
+  `md_sub_departments`. Model Prisma: `ErpBranch`, `ErpLocation`,
+  `ErpWarehouse`, `ErpDivision`, `ErpSubdivision`, `ErpProject`,
+  `ErpCostCenter`, `ErpDepartment`, `ErpSubDepartment`.
+- API module per-entitas di `apps/api-gateway/src/erp-*` (controller +
+  service + DTO create/update/query/bulk), guard `ErpJwtAuthGuard` (§2.5).
+- FE: tiap halaman = ~60-90 baris pakai organism reusable
+  `components/organisms/simple-master-page.tsx` (generik CRUD: pagination
+  server-driven, kebab+context menu, bulk action, audit panel). Wajib
+  pakai organism ini untuk halaman master "code+name+isActive" gaya baru —
+  **dilarang** fork branches-page lagi.
+
+---
+
+### 2.16 `SimpleMasterPage<T, F>` organism (2026-05-20)
+
+[`components/organisms/simple-master-page.tsx`](components/organisms/simple-master-page.tsx)
+adalah organism reusable untuk halaman list master entitas "simple" (code +
+name + isActive + optional kolom/field tambahan). Pattern wajib §2.7–§2.12
+sudah built-in di sini.
+
+API page-side (per entitas):
+- `defaultForm()` / `fromRecord(row)` / `toPayload(form)` — adapter form.
+- `FormFields` — komponen form kustom (atom `FormField` + `Input` +
+  `BooleanRadio` + `Select` bila perlu).
+- `extraColumns: ExtraColumn<T>[]` — kolom ekstra di antara Nama dan Status
+  (untuk relasi parent: Sub Division→Division, Sub Department→Department,
+  Project→date range).
+
+Endpoint API client wajib expose `list/create/update/remove/bulkStatus/
+bulkDelete` untuk dipasangkan ke organism (lihat
+`lib/api/divisions.ts` sebagai template).
+
+#### Standar validasi form `SimpleMasterPage` (WAJIB, 2026-05-23)
+
+Setiap halaman yang pakai `SimpleMasterPage` **wajib** menerapkan pola
+validasi berikut — tanpa pengecualian:
+
+1. **`validate` prop wajib ada** di `<SimpleMasterPage ... validate={validateXxx} />`.
+   Minimal validasi: `code` required + `name` required (+ FK required bila ada
+   field `SearchSelect` yang mandatory).
+
+2. **`FormFields` wajib terima `errors`**:
+   ```tsx
+   function FormFields({
+     data, onChange, errors = {}
+   }: { data: F; onChange: (d: F) => void; errors?: FormErrors<F> }) {
+   ```
+
+3. **`aria-invalid` wajib pada setiap `<Input>` yang required**:
+   ```tsx
+   <FormField label="Kode" htmlFor="ef-code" required error={errors.code}>
+     <Input ... aria-invalid={!!errors.code} />
+   </FormField>
+   ```
+
+4. **`error` prop wajib pada `<SearchSelect>` required**:
+   ```tsx
+   <SearchSelect ... error={!!errors.fieldId} />
+   ```
+   (Pasangkan `aria-invalid` + border merah sudah built-in di `SearchSelect`.)
+
+5. **Auto-focus ke field error pertama** — sudah built-in di `handleSave`
+   organism (query `[role="dialog"] [aria-invalid="true"]`, no-op bila tidak ada).
+
+Konsekuensi: halaman yang skip `validate=` → submit tanpa validasi client-side.
+Halaman yang skip `aria-invalid=` → auto-focus gagal menemukan field error.
+Kedua ini harus selesai sebelum halaman dideklarasikan done.
+
+---
+
+### 2.17 Modul sidebar Senti ERP — scope final (2026-05-20)
+
+Modul valid di `sys_menus` (sortOrder, sumber `seed-erp.ts`):
+
+| sortOrder | code | title | catatan |
+| --- | --- | --- | --- |
+| 0 | M8 | Dashboard | pinned paling atas |
+| 1 | M0 | Administrator | sys + adm |
+| 2 | M1 | Master Data | md (incl. group Organization) |
+| 3 | M2 | Finance & Accounting | fin |
+| 4 | M3 | Warehouse & Inventory | inv |
+| 5 | M4 | Purchasing | pur |
+| 6 | M5 | Sales | sls |
+| 7 | M6 | Production | mfg |
+| 8 | M7 | Fixed Assets | fa |
+| 9 | M12 | Point of Sale | pos (singular!) |
+| 99 | SET | Settings | preferensi user |
+
+**Dihapus permanen dari ERP scope:** M10 (HR & Payroll), M11 (Hospital —
+milik `apps/web-althea`), M13 (Academic), M14 (Cooperative). Tidak ada di
+`module-roadmap.md`, bukan scope manufaktur. Kalau perlu dihidupkan lagi:
+katalog field-level dulu di `db-design/`, lalu seed.
+
+**Single source of truth seed = `apps/api-gateway/prisma/seed-erp.ts`**.
+`prisma/seed.ts` (clinic seed) dulu punya blok `ERP_MENU_SEEDS` paralel
+dengan short-id legacy (`master-data`, `administrator`, `md-items`, ...)
+yang menabrak/duplicate setiap `npm run db:seed`. **Blok itu dihapus
+2026-05-20.** Jangan pernah re-introduce ERP menu seeding di `seed.ts`.
+
+**M2 Finance — paritas legacy m2-finance (2026-05-20).** Sebelumnya seed M2
+cuma 4 transaksi + 1 report (`Journal Entries`, `AR Receipts`, `AP Payments`,
+`Giros`, `General Ledger`) — terlalu ringkas, tidak match legacy. Sekarang
+13 transaction items + 1 report, title **English**, ditahan `legacyCode`
+sebagai 2–3 huruf legacy:
+
+| code | title | legacyCode | path |
+| --- | --- | --- | --- |
+| M2.TX.CASH-RECEIPT | Cash Receipt | CR | /finance/cash-receipts |
+| M2.TX.CASH-DISBURSEMENT | Cash Disbursement | CD | /finance/cash-disbursements |
+| M2.TX.BANK-DISBURSEMENT | Bank Disbursement | BD | /finance/bank-disbursements |
+| M2.TX.CASHBANK-TRANSFER | Cash/Bank Transfer | CB | /finance/cashbank-transfers |
+| M2.TX.RECEIPT-GIRO | Receipt Giro | RG | /finance/receipt-giros |
+| M2.TX.SEND-GIRO | Send Giro | SG | /finance/send-giros |
+| M2.TX.RECEIPT-GIRO-CLR | Receipt Giro Clearing | RGC | /finance/receipt-giro-clearings |
+| M2.TX.SEND-GIRO-CLR | Send Giro Clearing | SGC | /finance/send-giro-clearings |
+| M2.TX.RECEIPT-MEMO | Receipt Memo | RM | /finance/receipt-memos |
+| M2.TX.SEND-MEMO | Send Memo | SM | /finance/send-memos |
+| M2.TX.GENERAL-JOURNAL | General Journal | GJ | /finance/general-journals |
+| M2.TX.ADJUSTMENT-JOURNAL | Adjustment Journal | AJ | /finance/adjustment-journals |
+| M2.RPT.LEDGER | General Ledger | — | /finance/ledger |
+
+Padanan ID untuk konteks user: CR=Kas Masuk, CD=Kas Keluar, BD=Bank
+Keluar, RG=Giro Masuk, SG=Giro Keluar. Path FE belum dibangun — menu
+muncul di sidebar, route placeholder akan ditambah saat slicing modul M2.
+
+---
+
+### 2.18 MD legacy batch (2026-05-20) — 20 master baru dari MyERP+ m1_*
+
+Wave besar menambah 20 entitas master legacy yang belum di-implement.
+Branch `feat/erp-md-legacy-batch`, 3 commit.
+
+**Tercakup:** Brand, Material, ItemModel, Size, Section, ItemKind
+(table `md_item_types`), ProductClass, ItemLocation, Commission (+amount),
+Bank, Expedition, PartnerSubCategory (enum CUSTOMER/SUPPLIER/SALESMAN),
+OtherCost, Country, Province (FK Country), City (FK Province), Area
+(FK City), ItemTransactionType (+direction), TransactionNote, PriceCategory.
+
+**Keputusan terkunci batch ini:**
+
+1. **`ErpItemKind` ≠ `ErpItemType`.** Enum `ErpItemType` (hardcoded
+   `INVENTORY/SERVICE/VOUCHER/ASSEMBLY` di kolom `ErpItem.type`) sudah ada
+   sejak m1 init dan tidak boleh bentrok. Master user-configurable dari
+   legacy `m1_item_type` → model **`ErpItemKind`** dengan
+   `@@map("md_item_types")`. Saat menambah master baru: cek dulu apakah
+   nama model bentrok dengan enum/model existing.
+2. **Partner sub-category = 1 tabel + enum (`ErpPartnerSubCategoryType`).**
+   3 menu sidebar (Customer/Supplier/Salesman Categories) share 1 page +
+   1 table + 1 endpoint. Path `/master/{customer,supplier,salesman}-categories`
+   semua resolve ke `ErpPartnerSubCategoriesPage` di `ERP_PAGES`. Filter
+   type via query string ditambahkan saat dibutuhkan (saat ini belum).
+3. **Reference Country→Province→City→Area = FK ditegakkan (intra-domain `md`).**
+   Seed di `prisma/seed-md-legacy.ts` (idempotent): **197 Country (seluruh dunia, ISO 3166-1 alpha-2, 2026-05-22)**, 38 Province ID, **514 Kab/Kota lengkap per BPS** (kode BPS 4-digit), Bank, Expedition.
+   City upsert pakai `findFirst(bpsCode OR code) + update-by-id` (bukan `upsert`) karena DB bisa mixed-state.
+   **`postalCode` hidup di `md_areas` (level kecamatan), bukan di `md_cities`** —
+   karena satu kota punya banyak kode pos, masing-masing per kecamatan. Lihat §2.20.
+4. **ItemPermission ditunda.** Bukan master "code+name+isActive" — pivot
+   `itemId × roleId × {canView,canSell,canBuy}`. `SimpleMasterPage` tidak
+   cocok; perlu page custom. Tabel sudah ada (`md_item_permissions`) tapi
+   modul API/FE belum.
+5. **PriceCategoryDetail & TransactionNoteDetail = child-managed.** Tabel
+   ada (cascade delete dari parent), tapi diakses lewat parent form bukan
+   menu sidebar. Menu "Txn Note Detail" di sidebar untuk sekarang fallback
+   ke ComingSoon.
+
+**Generator script:** `apps/api-gateway/scripts/scaffold-md-batch.mjs` —
+one-shot scaffolder. Pattern di-mirror dari `erp-divisions`. Pluralization
+manual (Class→Classes, City→Cities, Country→Countries, Category→Categories;
+generator default plural = `+ 's'` di-override via sed post-process). Re-run
+aman: skip file yang sudah ada. **Untuk master sederhana berikutnya
+(code+name+isActive ± extra fields), tambah entry di array `ENTITIES`
+lalu re-run** — jangan tulis ulang DTO/service per tangan.
+
+**Migration:** `20260520_002_erp_md_legacy_batch` — additive, applied via
+`prisma db execute` lalu `prisma migrate resolve --applied` karena shadow
+DB drift di migrasi clinic lama. 23 tabel + 1 enum
+(`ErpPartnerSubCategoryType`), 0 DROP. Saat shadow DB rusak, route ini
+(execute + resolve) lebih aman daripada `migrate dev`.
+
+---
+
+### 2.19 Mode "Per-halaman URL" = true single-page (2026-05-22)
+
+**Penamaan resmi untuk vibe coding:**
+
+| Istilah | UI label | Kode | Arti |
+| --- | --- | --- | --- |
+| **URL routing off** | Internal | `urlRoutingEnabled = false` | navigasi tidak ubah URL, multi-tab aktif |
+| **URL routing on** | Per-halaman URL | `urlRoutingEnabled = true` | URL ikut halaman aktif, tab navigator disembunyikan |
+
+Gunakan "URL routing off/on" saat diskusi atau vibe coding — langsung korespondensi ke nama variabel `urlRoutingEnabled`.
+
+Knob URL Routing di Setting → Tampilan punya 2 mode: **Internal** (default,
+navigasi tidak mengubah URL, multi-tab) dan **Per-halaman URL**.
+
+- Memilih **Per-halaman URL** **menyembunyikan seluruh tab navigator** —
+  `TabBar` tidak dirender. Konsekuensi: user hanya bisa membuka satu halaman
+  dalam satu waktu. Navigasi via sidebar/topbar/command-palette/notifikasi
+  **mengganti** halaman aktif di tempat (replace), bukan membuka tab baru.
+- Ganti mode (dua arah) **wajib** lewat `confirmAction` dengan pesan eksplisit
+  per arah: ke Per-halaman URL → "tab navigator dihapus, hanya satu halaman";
+  ke Internal → "tab navigator ditampilkan kembali". Saat dikonfirmasi semua
+  tab lain ditutup — **halaman yang sedang aktif dipertahankan** (bukan reset
+  ke `home`).
+- Logika URL-routing diekstrak dari `app-shell.tsx` ke hook
+  [`lib/use-url-routing.ts`](lib/use-url-routing.ts) (`useUrlRouting` +
+  `readUrlRoutingEnabled`) — mengelola state mode, listener event
+  `erp-set-url-routing`/`storage`, sync `window.history.replaceState`, dan
+  `navigate()` (replace vs openTab). `app-shell.tsx` memanggil hook ini; saat
+  mode aktif, render `TabBar` di-gate dengan `!urlRoutingEnabled`.
+
+---
+
+### 2.20 Hierarki geografis & kode pos (WAJIB, 2026-05-22)
+
+Setiap tabel referensi geografis **wajib** terhubung ke level di atasnya via
+FK yang ditegakkan — tidak boleh ada tabel wilayah yang berdiri sendiri tanpa
+relasi ke induknya.
+
+**Hierarki kanonik ERP (sudah diimplementasi):**
+
+```
+md_countries ← md_provinces ← md_cities ← md_areas (kecamatan) ← md_sub_areas (kelurahan)
+```
+
+Aturan turunan:
+
+- `md_provinces.countryId` → FK ke `md_countries`.
+- `md_cities.provinceId` → FK ke `md_provinces`.
+- `md_areas.cityId` → FK ke `md_cities`. Field `postalCode` ada di sini (per kecamatan).
+- `md_sub_areas.areaId` → FK ke `md_areas`. Field `postalCode` ada di sini juga (per kelurahan, lebih granular).
+- `postalCode` di `md_partner_addresses`, `md_branches`, `md_locations` adalah
+  **freetext** (isian manual) — terpisah dari referensi `md_areas`/`md_sub_areas`.
+  User mengisi manual atau autofill dari `md_sub_areas` saat memilih kelurahan di form alamat.
+
+**Seed data (2026-05-22):** `prisma/seed-md-geo.ts` (jalankan via `npm run db:seed:geo`).
+Sumber: `kode-wilayah-id` (MIT). Data lengkap Indonesia:
+38 provinsi, 514 kab/kota, 7.286 kecamatan (+ `postalCode`), 84.270 kelurahan/desa (+ `postalCode`).
+Kode = BPS code (2/4/7/10 digit sesuai level). Idempotent — aman dijalankan ulang.
+
+**Model Prisma:**
+- `ErpArea` → `@@map("md_areas")`, relasi `subAreas ErpSubArea[]`
+- `ErpSubArea` → `@@map("md_sub_areas")`, FK `areaId → ErpArea`, index `postalCode`
+
+Migration: `20260522_004_erp_md_geo_kelurahan` (additive, 0 DROP).
+
+---
+
+### 2.21 Item Information page = `/master/item-info` (canonical, 2026-05-23)
+
+Halaman Item Information (1:1 extension dari `md_items`: produsen, negara
+asal, garansi, deskripsi panjang, spesifikasi, tags, catatan). Canonical
+path **= `/master/item-info`** (seed `sys_menus` code `M1.ITEM.INFO`).
+Long-form `/master/item-informations` dipertahankan **sebagai alias** di
+[`shell-route-renderer.tsx`](components/templates/shell-route-renderer.tsx)
+dan `ERP_ROUTE_META` (`lib/nav.ts`) untuk URL yang sudah ter-bookmark —
+jangan dihapus, tapi jangan dipakai sebagai entry baru.
+
+**Aturan implementasi:**
+
+- Form pakai **`SearchSelect`** untuk `itemId` (load dari `listItems`), **disabled saat edit** karena `itemId @unique` (1:1 ke `ErpItem`) — ganti item = ganti rekor.
+- Field form lengkap: `itemId`, `manufacturer`, `countryOfOrigin`, `warrantyPeriodMonths`, `longDescription` (textarea), `specifications` (textarea), `tags`, `notes` (textarea). **Dilarang** drop field DTO dari form tanpa alasan.
+- Service `ErpItemInformationsService` **wajib** include `item: { select: { id, code, name } }` di semua query (list/get/create/update) supaya halaman bisa pakai `item.code`/`item.name` sebagai kolom KODE/NAMA tanpa N+1 fetch.
+- `SimpleMasterPage` adapter: `code = item.code` (fallback `INF-${id}`), `name = item.name` (fallback `Item #${itemId}`), `isActive = true` (entity tak punya status sendiri). Extra columns: Produsen, Negara Asal, Garansi.
+
+**Seed dummy:** `prisma/seed-erp-item-informations-dummy.ts` (100 rows, idempotent — `findMany({ information: { is: null } }) + createMany skipDuplicates`). Butuh `md_items` ter-seed lebih dulu (lihat `seed-erp-md-dummy.ts`).
+
+---
+
+### 2.22 Menu Manager = TreeDndMasterPage (tree + cross-parent DnD) (2026-05-24, revisi)
+
+`/admin/menus` (komponen `ErpMenusPage` di
+[`components/pages/menus-page.tsx`](components/pages/menus-page.tsx))
+**memakai organism `TreeDndMasterPage`** — hierarki MODULE→GROUP→ITEM dengan
+drag-and-drop reorder (sibling **dan** cross-parent). **Revisi keputusan
+2026-05-24** (atas permintaan user): versi flat-list `SimpleMasterPage` yang
+sempat dipakai pagi itu **di-rollback**. Trade-off yang diterima ulang dengan
+user:
+
+- **Checkbox column diganti drag handle** (icon `grip-vertical`) di kolom
+  paling kiri → **tidak ada bulk action** di halaman ini (pengecualian sah
+  atas §2.9.H, dikonfirmasi user). Aksi destruktif per-baris tetap ada di
+  kebab + right-click menu.
+- **Tidak ada pagination/sort/filter server-driven** (pengecualian sah atas
+  §2.7/§2.12) — tampilan hierarkis butuh seluruh subtree terlihat agar DnD
+  bermakna. Search client-side menyaring baris yang cocok **+ ancestor-nya**
+  supaya konteks tree tetap terbaca.
+
+Organism reusable (atomic level organisms), bukan fork SimpleMasterPage:
+
+- [`components/organisms/tree-dnd-master-page.tsx`](components/organisms/tree-dnd-master-page.tsx)
+  — shell: state, search, modal create/edit, audit panel, DnD orchestration.
+- [`components/organisms/tree-dnd-row.tsx`](components/organisms/tree-dnd-row.tsx)
+  — molecule baris (drag handle + indent depth + cells + kebab/context menu).
+- [`components/organisms/tree-dnd-helpers.ts`](components/organisms/tree-dnd-helpers.ts)
+  — pure helpers (`flattenTree`, `inferNewParent`, `computeReorderChanges`,
+  `validateDrop`); dipisah agar shell < 400 baris (§3).
+- [`components/organisms/tree-dnd-master-page.types.ts`](components/organisms/tree-dnd-master-page.types.ts)
+  — tipe bersama (`TreeRow`, props) untuk hindari import sirkular.
+
+DnD = `@dnd-kit/core` + `@dnd-kit/sortable` (sama lib dgn tab-bar §2.14),
+`PointerSensor` `distance: 5`, `verticalListSortingStrategy`.
+
+**Cross-parent drop rule** (`inferNewParent`): setelah `arrayMove` di flat
+list, parent baru item diturunkan dari baris tepat di atasnya:
+MODULE → selalu root (null); GROUP → nesting di MODULE terdekat ke atas;
+ITEM → anak dari MODULE/GROUP container terdekat, atau sibling dari ITEM
+terdekat (mewarisi parent ITEM itu). Hanya item yang berubah `parentId`/
+`sortOrder` yang dikirim ke backend (optimistic update lokal dulu, rollback
+via `reload()` bila API gagal).
+
+Detail kolom & form:
+
+- **Kolom ekstra:** Tipe (badge MODULE=success/GROUP=info/ITEM=default),
+  Path (mono muted). Kolom Urutan dihilangkan (urutan kini dari posisi DnD).
+- **Parent menu** masih bisa diedit per-row via `SearchSelect` di form
+  (filter `MODULE` + `GROUP` only) sebagai jalur alternatif memindah node
+  ke container kosong. Validasi cycle/hierarki **server-side**.
+
+Backend (`apps/api-gateway/src/erp-sys-menus/`):
+
+- Endpoint baru: `POST /erp/sys-menus/reorder` (DTO `ReorderErpSysMenuDto`
+  = `{ items: { id, parentId, sortOrder }[] }`). Diregister **sebelum**
+  route `:id`. Service `reorder()` memvalidasi aturan hierarki tipe
+  (MODULE root-only; GROUP di bawah MODULE; ITEM di bawah MODULE/GROUP) +
+  **no-cycle** (tak boleh pindah node ke diri sendiri / descendant-nya),
+  lalu apply semua update dalam **satu `$transaction`**.
+- Endpoint bulk lama (`PATCH bulk/status`, `DELETE bulk`) **tetap ada** di
+  service/controller (dipakai API lain / future), tapi **tidak dipasang**
+  di halaman menus karena tak ada checkbox.
+- `GET /erp/sys-menus` tetap flat tanpa pagination — §2.12 exception. Client
+  `loadAll()` di menus-page request `limit:10000` lalu pakai seluruh data
+  untuk membangun tree di FE.
+
+**Footer informasional + keyboard nav (2026-05-24).** Walau halaman ini
+**tidak** punya pagination (DnD butuh seluruh tree visible), footer tetap
+hadir agar konsisten visual dgn list page lain — bentuk **count-only**:
+`X dari Y baris` (X = baris visible setelah filter search, Y = total flat) +
+hint pintasan keyboard. Footer dirender lewat organism reusable
+[`components/organisms/list-footer.tsx`](components/organisms/list-footer.tsx)
+yang juga dipakai `ErpListLayout`/SimpleMasterPage — mode dipilih via prop:
+`pagination` → TablePagination penuh, `summary` → count-only (tree), plus
+`selectable=false` untuk drop hint "X pilih" di halaman tanpa selection.
+
+Keyboard navigation diwirekan via hook reusable
+[`lib/use-tree-keyboard-nav.ts`](lib/use-tree-keyboard-nav.ts): **J/↓** &
+**K/↑** geser focus, **Enter** open focused row (edit), **N** add new, **/**
+focus search. **Tidak ada `X` (select)** — konsisten dgn keputusan "drag
+handle ganti checkbox" di atas. Focus state visual via `data-focused` di
+`TableRow` (styling otomatis dari `components/organisms/table.tsx`).
+
+Konsekuensi vibe coding:
+
+- Butuh tree+DnD untuk entitas hierarkis lain (mis. CoA tree, kategori
+  berjenjang)? **Pakai ulang `TreeDndMasterPage`** — jangan fork menus-page,
+  jangan bikin organism tree baru.
+- Butuh bulk action di menus lagi? Itu balik konflik dgn keputusan "drag
+  handle ganti checkbox" — eskalasi ke user dulu (§5).
+
+---
+
+### 2.23 Item master = form lengkap sectioned (2026-05-24)
+
+Master Item (`/master/items`, `ErpItemsPage`) di-expand dari 7 field → paritas
+header MyERP+ "Barang". Field katalog otoritatif = `db-design/entities-m1-master-data.md`.
+
+- **`md_items` kolom baru** (migrasi `20260524_001_erp_item_dimensions_classification`):
+  `costMethod` (enum `ErpCostingMethod` AVG/FIFO/STD), `minOrderQty`, `ageCategory`,
+  `validUntil`, `isVatable` (BKP), `isSpecial`, + 9 dimensi GL FK (`divisionId`,
+  `subdivisionId`, `departmentId`, `subDepartmentId`, `branchId`, `defaultLocationId`,
+  `defaultWarehouseId`, `projectId`, `costCenterId`). Klasifikasi (`kindId`,
+  `productClassId`, `brandId`, `materialId`, `itemModelId`, `sizeId`, `colorId`,
+  `sectionId`) sebagian sudah dari `20260523_001` — schema.prisma kini meng-expose
+  semuanya. **FK intra-domain `md` ditegakkan** (named `@relation` + back-pointer parent).
+- **`ErpItemType` enum di-reshape** (migrasi `20260524_002_erp_item_type_enum_reshape`):
+  `INVENTORY/SERVICE/CONSUMABLE/ASSET/NON_INVENTORY` (hapus `VOUCHER/ASSEMBLY`).
+  FE & DB konsisten. Saat menyentuh `type`, pakai set ini.
+- **Form FE**: dipecah `items-form.tsx` (types/adapters/validation) +
+  `items-form-fields.tsx` (UI organism) + `items-form-lookups.ts` (loader SearchSelect).
+  Layout = **modal `lg` (900px), section 2-kolom** (Identitas · Satuan & Penilaian ·
+  Stok & Tracking · Harga & Pajak · Akun GL · Dimensi & Supplier · Deskripsi).
+  Bukan tab legacy — keputusan user: "UX nyaman & compact". Sub-komponen
+  `LookupField`/`NumField`/`YesNoField` **di module-level** (jangan inline di render —
+  remount + hilang focus).
+- **`SimpleMasterPage` dapat prop `modalSize?: 'md' | 'lg'`** (default `md`). Form
+  kaya (banyak field) → pakai `modalSize="lg"`. Diteruskan ke `<ModalContent size>`.
+- **Deferred** (belum di form): tab Atribut multi-varian, distributor
+  multi-supplier. Item Information tetap halaman 1:1 terpisah (§2.21).
+  (Price tiers 1–10 sudah **implemented** — lihat §2.32.)
+
+---
+
+### 2.24 Format kode akun CoA = dinamis dari `sys_settings` (2026-05-27)
+
+Format `md_accounts.code` **tidak** lagi hard-locked ke `NNNN.NN.NNN` (#43
+db-design). Pakai 2 setting global di `sys_settings` group `account-code`:
+
+- `account_code_segments` (JSON array int, mis. `[4,2,3]` / `[5]` / `[7]` / `[6,3]`) — panjang tiap segmen.
+- `account_code_separator` (string: `.` / `-` / `/` / `""` tanpa pemisah).
+
+**Backend SSOT** = `apps/api-gateway/src/erp-accounts/account-code-format.ts`:
+`buildAccountCodeFormat(segments, separator)` → `{pattern, maxLength, example}`.
+`ErpAccountsService.create()`/`update()` baca setting + `validateAccountCode()`
+sebelum insert. DTO `CreateErpAccountDto` hanya `@MaxLength(30)` (tidak ada
+`@Matches`). Endpoint: `GET /erp/accounts/code-format` (segments, separator,
+patternSource, maxLength, example, accountCount, locked) + `PUT /erp/accounts/code-format`
+(409 ConflictException bila `md_accounts.count > 0` — **lock-after-data**).
+
+**Frontend:**
+- `components/pages/accounts-form.tsx` cache format module-level + hook
+  `useAccountCodeFormat()`; `validateAccount` baca cache; `AccountFormFields`
+  pakai `maxLength`/`placeholder`/`example` dari format aktif.
+- Halaman dedicated `/admin/account-code-format`
+  (`account-code-format-page.tsx` + molecule `account-code-format-presets.tsx`)
+  di group `M0.SYS` (Administrator → System) — segments editor (1–5 segmen
+  × 1–12 digit), separator picker, preset cepat (PSAK 4-2-3, flat 5/6/7,
+  4-3, 4-3-3, legacy 6-3), preview live, lock card saat ada akun. Setelah
+  PUT sukses → `invalidateAccountCodeFormatCache()` supaya form refresh.
+
+**Saat onboarding klien dengan CoA legacy berbeda**: admin Senti pilih
+format di `/admin/account-code-format` **sebelum** import CoA / jalankan
+`seed-erp-accounts.ts`. Default seed tetap PSAK 4-2-3 — klien yang OK
+dengan PSAK tinggal pakai. Ganti format setelah ada akun → tolak 409;
+harus hapus semua akun dulu (out of scope MVP: tool migrasi rename code).
+
+---
+
+### 2.25 Item master form redesign — quick-add + side-nav (2026-05-27)
+
+Lanjutan §2.23. Form item kini punya **2 mode entri** dan layout berbeda
+per mode. Keputusan ini berlaku **khusus form item** — masih sectioned
+2-kolom kompak, namun layout level-form berubah.
+
+**Mode entri:**
+- **Cepat** — default saat tambah item baru (`data.code === ''`). Hanya
+  section Identitas + Klasifikasi (~7-8 field wajib). Layout scroll.
+- **Lengkap** — default saat edit. Semua section, **side-nav 200px di
+  kiri** + content section aktif di kanan. Section conditional (Inventory
+  & Tracking) hanya muncul saat `isStockable(itemType)`. Dot merah di
+  nav item menandakan section dgn error validasi.
+
+Toggle Cepat/Lengkap di top form (pill segmented). User bebas switch
+tanpa kehilangan state form. Modal pakai `size="xl"` (1100px) supaya
+side-nav + content tidak crowded.
+
+**Section grouping (9 section):**
+Identitas · Klasifikasi · Inventory & Tracking (conditional) · Harga ·
+Pajak · Akuntansi · Dimensi GL · Supplier · Catatan. Restructure dari
+7 section lama (§2.23) yang campur identitas dengan satuan, dan Akun
+GL dengan Dimensi/Supplier.
+
+**Conditional disclosure per itemType:**
+- `INVENTORY/CONSUMABLE/ASSET` → tampilkan Inventory & Tracking
+- `SERVICE/NON_INVENTORY` → sembunyikan Inventory & Tracking
+- `SERVICE` → sembunyikan juga Berat (kg)
+- `tracksBatch=Ya` → munculkan Kategori Umur (intra-section)
+
+**Smart features:**
+- Tombol **Auto** di samping field Kode → fetch item dgn prefix
+  matching itemType (ITM-/SVC-/CNS-/AST-/NIN-), generate sequence
+  berikutnya client-side. Helper di `lib/items-code-generator.ts`.
+  Bukan transactional — `sys_document_numberings` endpoint
+  ditangguhkan sampai BE-nya dibuat.
+- **Duplikat** di row kebab menu → buka modal create dgn prefill,
+  kode dikosongkan supaya user isi baru. Berlaku untuk semua master
+  ERP (SimpleMasterPage), tidak hanya item.
+
+**SimpleMasterPage enhancement (universal):**
+Berlaku untuk **semua** halaman master ERP yang pakai
+`SimpleMasterPage`, bukan items-only:
+- **Validation summary banner** di top modal saat client-side validasi
+  gagal — list 5 error pertama + count. Komponen
+  `components/molecules/form-error-summary.tsx`.
+- **Footer multi-save**: tombol "Simpan & Tambah Baru" muncul di create
+  mode (selain "Simpan"). Save → reset form → auto-focus → modal tetap
+  buka untuk batch entry.
+- **Keyboard shortcuts**: Ctrl/Cmd+S = Simpan, Ctrl/Cmd+Enter = Simpan
+  & Tambah Baru (create mode). Hook `lib/use-modal-shortcuts.ts`.
+- **Row action Duplikat** di kebab + right-click menu (urutan: Edit →
+  Duplikat → Riwayat → Hapus).
+- `modalSize` prop diperluas: `'md' | 'lg' | 'xl'` (560/900/1100px).
+
+**UX polish (item form):**
+- Section header: bg `var(--panel-2)` muted + padding (bukan caps
+  tipis tanpa bg). Tambah prop `hint` untuk one-liner di sebelah judul.
+- Required label: semibold + foreground color (bukan muted) di atom
+  `Label` — berlaku universal untuk semua form ERP, tidak hanya item.
+  Optional label tetap regular muted.
+- Helper text untuk field ambigu: Spesial, Tipe, Metode HPP, BKP,
+  Harga berlaku s.d.
+- Placeholder lookup field: "Cari xxx…" → "Pilih xxx…" (verb action
+  konsisten dgn pattern dropdown).
+- Field "Berlaku s.d" → "Harga berlaku s.d" + helper text agar
+  konteks (masa berlaku harga, bukan masa berlaku item) jelas.
+
+**Atomic refactor pendukung:**
+- `components/molecules/form-error-summary.tsx` — molecule baru
+- `components/molecules/bulk-action-bar.tsx` — extract dari organism
+- `components/molecules/audit-modal.tsx` — extract dari organism
+- `components/pages/items-form-parts.tsx` — helper Section/Lookup/
+  Num/YesNo + visibility rules untuk items-form-fields
+- `lib/use-modal-shortcuts.ts` — hook keyboard shortcuts reusable
+- `lib/items-code-generator.ts` — generator client-side auto-code
+
+**Konsekuensi vibe coding:**
+- Membuat form master baru dgn banyak field (>20)? Pertimbangkan
+  pattern Cepat/Lengkap + side-nav layout. Pola sudah ada di items;
+  bisa di-port ke entitas lain bila kebutuhannya sama.
+- Membuat row action baru di list? Reuse pola Edit → Duplikat →
+  Riwayat → (sep) → Hapus di kebab menu. Tambah aksi entitas-spesifik
+  di antara Duplikat dan Riwayat.
+
+---
+
+### 2.26 Info icon + popover untuk enum berbisnis-logic (2026-05-28)
+
+Field enum dgn semantik bisnis non-trivial (mis. `ErpItemType` —
+INVENTORY/SERVICE/CONSUMABLE/ASSET/NON_INVENTORY) **wajib** punya jalur
+"cek perbandingan" tanpa keluar form. Pola standar = **info icon di label
++ Radix Popover** berisi tabel perbandingan sifat + contoh kasus, plus
+**helper text dinamis** di bawah Select yang menampilkan trait kunci dari
+nilai terpilih (ikut berubah saat user ganti pilihan).
+
+Implementasi pertama = item form (§2.25):
+- Molecule [`components/molecules/item-type-info.tsx`](components/molecules/item-type-info.tsx)
+  — exports `ItemTypeInfoButton({ currentType })` + helper `getItemTypeTraits(type)`.
+  Popover highlight kolom & contoh row yang match `currentType`.
+- Section Klasifikasi di [`items-form-fields.tsx`](components/pages/items-form-fields.tsx)
+  pakai grid manual (bukan `FormField`) supaya icon button bisa berdiri di
+  **luar `<label>`** — klik icon tidak menyambar fokus ke Select.
+
+Kapan pakai pola ini (kriteria):
+- Enum dgn ≥ 3 nilai yang punya **konsekuensi sistem berbeda** (drive logika
+  akuntansi, stok, workflow), bukan sekadar label kosmetik.
+- User awam (bukan dev/admin) bakal sering bingung memilih → butuh
+  comparison reference yang on-demand.
+
+Kalau cukup dijelaskan satu kalimat helper text statik → tetap pakai
+`help` prop `FormField` (jangan pasang popover sekadar dekoratif).
+Kandidat untuk diberi pola ini di masa depan: `ErpCostingMethod`
+(AVG/FIFO/STD), status workflow approval, role/permission picker.
+
+---
+
+### 2.27 Master `code` = tanpa entity-scope prefix (2026-05-28)
+
+Kolom `code` master ERP **tidak boleh** dipayungi prefix yang sekadar
+mengulang entity scope-nya (mis. `CAT-XX` untuk item category, `BRD-XX`
+untuk brand, `UNT-XX` untuk unit). Scope sudah implied oleh tabel & UI
+breadcrumb — prefix = noise.
+
+Aturan:
+
+- Master code = bare semantic code (mis. `ZN` untuk Zinc, `MM` untuk Metal
+  Misc). Bila legacy punya `legacyCode` 2–4 huruf yang stabil, pakai
+  langsung sebagai `code`.
+- Prefix tetap **valid** kalau:
+  - Multi-segment semantik (mis. `RM-FB` = Raw Material → Fabric — segmen
+    pertama bermakna sub-tipe, bukan entitas).
+  - Namespace isolasi dataset (mis. `DUMMY-0001` di `seed-erp-md-dummy.ts`
+    untuk memisahkan dummy dari real data — segmen `DUMMY` adalah
+    dataset-tag, bukan entity-scope tag).
+- Saat menulis seed/migration baru: jangan re-introduce pola `<ENTITY>-XX`.
+  Auto-code generator (mis. `lib/items-code-generator.ts` untuk item code
+  `ITM-/SVC-/CNS-` — itu **item type marker**, beda kasus dgn category).
+
+Migrasi pendukung: `20260528_001_erp_strip_cat_prefix_item_categories`
+(strip `CAT-` dari 30 row `md_item_categories.code`; FK aman karena semua
+referensi pakai `categoryId` BigInt). Seed `seed-erp-items-real.ts` juga
+disinkron — 28 entry `CATEGORIES` sekarang bare code (`AB`, `AL`, ... `ZN`).
+
+Garment vertical (`db-design/seed-data-garment.md`) **tidak** dihabisi
+prefiks-nya karena belum dieksekusi & vertical-spesifik — saat slicing
+garment, terapkan aturan §2.27 ini.
+
+---
+
+### 2.28 `SearchSelect` modal — stale-while-loading saat ganti halaman (2026-05-28)
+
+Modal `SearchSelect` (`components/molecules/search-select-modal.tsx` +
+`use-search-select.ts`) **wajib** memakai pola **stale-while-loading** saat
+user menavigasi halaman dgn `←`/`→`:
+
+- Baris hasil halaman sebelumnya **tetap di-render** selama `loading=true`,
+  bukan diganti satu baris "Memuat…" yang membuat tbody kolaps & modal
+  "berkedip" (collapse → expand) tiap ganti halaman.
+- `<tbody>` saat loading dgn data existing → `opacity-50 pointer-events-none
+  transition-opacity duration-150` + `aria-busy=true` (a11y).
+- Header count `· {total}` **stabil** lintas-halaman (`tabular-nums`) —
+  **dilarang** swap ke `· Memuat…` saat loading: `total` tidak berubah
+  antar halaman, jadi swap text bikin width goyang & berkedip. Cukup dim
+  tbody sebagai sinyal loading.
+- Highlight focus baris (`isFocused`) di-suppress saat `loading` — supaya
+  outline tidak nyangkut di baris stale yang sebentar lagi diganti.
+- `tableActive` **tidak** di-reset di efek fetch maupun di handler
+  `ArrowLeft/Right` — user yang sedang navigasi tabel tetap di mode tabel
+  setelah halaman berikutnya muncul. Reset `tableActive=false` hanya di
+  `openModal` (initial open) supaya search input yang fokus duluan.
+- Fallback "Memuat…" full-body **hanya** dipakai saat truly empty
+  (`loading && displayOptions.length === 0`, mis. saat modal baru dibuka
+  belum ada data sama sekali).
+
+Konsekuensi vibe coding: kalau menambah list modal-style baru di web-erp,
+**dilarang** pola "replace tbody dgn loader row" untuk transisi halaman —
+clone pola di atas. List page biasa (`SimpleMasterPage`) tetap pakai
+`ErpListLayout` (§2.9) yang punya state loading khusus.
+
+---
+
+### 2.29 Search semantics list endpoint = `code` exact, `name` LIKE (WAJIB, 2026-05-28)
+
+Setiap service list ERP yang menerima `query.search` **wajib** memakai
+semantik: **`code` exact-match (case-insensitive)**, **`name` partial
+(`contains`, case-insensitive)**. Berlaku untuk semua jalur (SearchSelect
+modal & list page search `/`) — backend endpoint sama, jadi satu sumber.
+
+Pola kanonik (Prisma):
+
+```ts
+if (query.search?.trim()) {
+  const q = query.search.trim();
+  where.OR = [
+    { code: { equals: q, mode: 'insensitive' } },
+    { name: { contains: q, mode: 'insensitive' } },
+  ];
+}
+```
+
+Alasan: `code` adalah identifier unik (mis. `BR-001`, `ITM-MM`, `4.1.001`)
+— user yang ngetik kode biasanya tahu persis kodenya & ingin **landing
+satu hit**. Partial match (`contains`) di kode → hasil keruh (`BR` match
+ratusan `BR-xxx`), bikin SearchSelect tidak deterministik. Sebaliknya
+`name` adalah teks bebas → partial WAJIB (user jarang ingat nama persis).
+
+Berlaku **mass refactor 2026-05-28** ke 55 service ERP yang punya pola
+`code OR name` search. **Pengecualian sah** (dipertahankan `contains` —
+bukan "code"):
+- `md_items.barcode` (`erp-items.service.ts`) — barcode bukan kode entitas;
+  semantik scan/partial belum dirombak (eskalasi terpisah bila perlu).
+- `md_accounts.alias` (`erp-accounts.service.ts`) — alias = teks bebas.
+
+Saat membuat service ERP baru dengan search: **wajib** pakai pola di atas
+sejak awal. **Dilarang** re-introduce `{ code: { contains: ... } }` di
+service baru.
+
+---
+
+### 2.30 `SearchSelect` inline-search — exact code match auto-pilih (2026-05-28)
+
+Pelengkap §2.29. Saat user mengetik di input `SearchSelect` lalu commit
+(blur ke luar input atau tekan Enter), `useSearchSelect` melakukan fetch
+satu kali (`loadOptions(text, 1, limit)`) dan memilih jalur berikutnya:
+
+1. **0 hasil** → reset value + buka modal dgn query (user lihat "Tidak ada hasil").
+2. **Ada tepat 1 row dgn `code` exact-match (case-insensitive)** → auto-pilih
+   row itu, **walaupun total `results.length > 1`** (mis. response 13 row krn
+   "um" juga LIKE-match `name`, tapi `code = "UM"` cuma 1 → pilih `UM`).
+3. **1 hasil saja** (tanpa exact code match) → auto-pilih row itu.
+4. **>1 hasil tanpa exact code match** → buka modal supaya user pilih manual.
+
+Helper `pickExactCodeMatch(results, query)` di
+[`components/molecules/use-search-select.ts`](components/molecules/use-search-select.ts)
+adalah SSOT logika ini — dipakai di `handleSingleBlur` dan handler Enter
+`handleSingleKeyDown`. Defensive: kalau ada >1 row dgn code exact (tidak
+seharusnya — code unique), tetap buka modal (`exact.length === 1` only).
+
+Alasan: backend `code` sudah exact-match (§2.29), tapi response tetap berisi
+row tambahan dari `name LIKE`. Tanpa shortcut ini, user yang ngetik kode
+yang sudah ia hafal masih harus klik modal 1× lagi padahal kandidat-nya
+jelas — beat seluruh keuntungan "search-by-code = exact".
+
+---
+
+### 2.31 Format angka dinamis dari `sys_settings` (2026-05-28)
+
+Format angka **tidak** lagi hardcode `id-ID`. Pakai 3 setting global di
+`sys_settings` group `number-format`:
+
+- `number_thousands_sep` (string: `.` / `,` / ` ` / `'` / `""` tanpa pemisah)
+- `number_decimal_sep` (string: `,` / `.`)
+- `number_decimals` (integer 0–6 — default digit desimal)
+
+**Backend SSOT** = [`apps/api-gateway/src/erp-settings/number-format.ts`](../api-gateway/src/erp-settings/number-format.ts):
+`buildNumberFormat(thousandsSep, decimalSep, decimals)` → `{thousandsSep,
+decimalSep, decimals, example}`. Validasi: `thousandsSep` ≠ `decimalSep`,
+`decimals` 0–6. Endpoint: `GET /erp/settings/number-format` +
+`PUT /erp/settings/number-format` (guard `ErpJwtAuthGuard`). **Tidak ada
+lock-after-data** (beda dgn account-code-format §2.24) — ini display
+formatting, ubah kapan saja, semua tampilan ikut refresh.
+
+**Frontend:**
+
+- [`lib/format.ts`](lib/format.ts) — module-level cache + `useNumberFormat()`
+  hook + helper `formatNumber(value, decimals?)` / `formatRupiah(value)` /
+  `formatQty(value)`. Helper lama tetap kompatibel (delegate ke
+  `formatNumber`). Default fallback `{ '.', ',', 0 }` saat API gagal.
+- [`lib/format.ts`](lib/format.ts) juga export `formatRawForDisplay(raw,
+  fmt, decimals?)` + `parseDisplayToRaw(display, fmt)` — pure helpers untuk
+  live mask di input.
+- [`components/molecules/num-input.tsx`](components/molecules/num-input.tsx)
+  (`NumInput`) — input numerik dgn live thousand-separator masking +
+  caret restore via digit-index. Value = raw canonical (`12345` / `12345.5`).
+- `NumField` di [`items-form-parts.tsx`](components/pages/items-form-parts.tsx)
+  sekarang pakai `NumInput` (semua field numerik items-form ikut format).
+- Halaman dedicated `/admin/number-format` ([`number-format-page.tsx`](components/pages/number-format-page.tsx))
+  di group `M0.SYS` (Administrator → System) — 3 dropdown/input + preset
+  cepat (id-ID, id-ID+2 desimal, en-US, en-US+2 desimal, plain) + preview
+  live. Setelah PUT sukses → `invalidateNumberFormatCache(updated)` supaya
+  semua subscriber `useNumberFormat()` re-render dgn format baru.
+
+**Saat membuat input numerik baru**: pakai `<NumInput>` (atau `NumField` di
+items-form). **Dilarang** `<Input type="number">` atau `<Input
+inputMode="decimal">` mentah untuk field qty/harga — tidak ikut format
+global. `decimals?` prop bisa override default per field (mis. `decimals={2}`
+untuk harga, biarkan undefined untuk qty integer ikut setting global).
+
+**Saat memformat angka di tabel/summary**: pakai `formatNumber/formatRupiah/
+formatQty` dari `lib/format.ts` — sudah otomatis ikut setting global (§2.9
+"Format Angka" disempurnakan: tidak lagi hardcode locale id-ID).
+
+**Migrasi seed:** key tunggal lama `sys_settings.key='number_format'` di
+group `format` (value literal `'1.000,00'`, never dipakai) **dihapus
+otomatis** oleh `prisma/seed-erp.ts` (`deleteMany` sebelum upsert) — clean,
+non-destructive. Jalankan `npm run db:seed` setelah pull untuk hidupkan
+3 key baru + menu `/admin/number-format`.
+
+---
+
+### 2.32 Item — tab Harga paritas MyERP+ (price tiers 1–10) (2026-05-30)
+
+Section **Harga** di form item (§2.25) di-expand ke paritas tab "Harga"
+MyERP+: 10 tingkat harga jual + diskon per tingkat. Mengakhiri "deferred
+price tiers 2–10" dari §2.23.
+
+**Model data = tabel anak ternormalisasi** (keputusan user 2026-05-30):
+- `md_item_prices` (model `ErpItemPrice`): `itemId` FK (cascade), `level`
+  (1–10), `price` Decimal(19,4), `discountPercent` Decimal(9,4), audit cols.
+  `@@unique([itemId, level])`. **Bukan** kolom flat `salePrice1..10` —
+  sejalan prinsip ternormalisasi + nyambung ke `md_partners.salesTier`
+  (legacy `cctingkatjual`) untuk logika pricing modul Sales nanti.
+- `md_items.purchaseDiscount` Decimal(9,4) — "Diskon Pembelian" (persen).
+- Migrasi `20260530_001_erp_item_price_tiers` (additive, 0 DROP). **Hand-written
+  SQL + `prisma migrate deploy`** (bukan `migrate dev`) — `migrate dev` gagal di
+  shadow DB karena migrasi clinic lama tidak replay bersih; DB live sendiri
+  `up to date`. Pola ini berlaku untuk semua migrasi ERP berikutnya.
+
+**Pemetaan field MyERP+ → schema (jangan bikin kolom redundan):**
+- "Harga Beli Terakhir" → `purchasePrice` (sudah ada).
+- "Hpp rata-rata" (readonly) → `averageCost` (computed sistem; field form
+  read-only, **tidak** dikirim di payload).
+- "Hpp Update" → `standardCost` (manual/standard HPP, legacy `bhpp`) — **bukan**
+  kolom baru.
+- "Harga Jual 1..10" / "Diskon Jual 1..10" → `md_item_prices` rows.
+- `md_items.salePrice` tetap ada = **cache denormalized level-1** (di-set dari
+  `prices[level=1].price` saat simpan; dibaca modul lain). SSOT 10 tier =
+  `md_item_prices`.
+
+**Backend:** DTO `ItemPriceDto` (level 1–10 + price/discountPercent string),
+`prices?: ItemPriceDto[]` di create DTO (`@ValidateNested`). Service
+`buildPriceRows()` skip level yang price+diskon kosong; create = nested
+`prices.create`; update = `prices: { deleteMany: {}, create }` (replace
+penuh). `ITEM_INCLUDE.prices` + `mapItem` stringify Decimal. **Cache
+`md_items.salePrice` di-derive server-side** dari tier level-1 via
+`deriveSalePriceFromTiers()` (di `erp-items.mappers.ts`), di-set setelah
+`buildDecimalData` sehingga **override** `salePrice` kiriman client — cache
+selalu sinkron walau caller (mis. API mentah) tak mengirim `salePrice`. Blank
+L1 price → cache tidak disentuh.
+
+**Frontend:** `ItemFormData.salePrices`/`saleDiscounts` = `string[10]` (index
+0 = level 1) + `purchaseDiscount` + `averageCost` (display-only). `fromItem`
+expand sparse rows → 10 slot (`tierColumn`); `toItemPayload` collapse →
+sparse rows (`buildPriceTiers`, skip kosong) + `salePrice = salePrices[0]`.
+Layout = 2-kolom paired (Harga Jual N kiri ‖ Diskon Jual N kanan), buy-side
+(Harga Beli/Diskon Pembelian/HPP) di atas. `NumField` dapat prop `readOnly`
+untuk HPP Rata-rata.
+
+---
+
+### 2.33 Item — tab Akun paritas MyERP+ (8 akun GL) (2026-05-30)
+
+Section **Akuntansi** di form item (§2.25) di-expand ke paritas tab "Akun"
+MyERP+: dari 3 akun → **8 akun GL** (urutan legacy). Tambahan 5 akun:
+Retur Penjualan, Diskon Penjualan, Retur Pembelian, Diskon Pembelian,
+Konsinyasi (Persediaan/Penjualan/HPP sudah ada).
+
+- **`md_items` kolom baru** (semua nullable BigInt → `md_accounts`):
+  `salesReturnAccountId`, `salesDiscountAccountId`, `purchaseReturnAccountId`,
+  `purchaseDiscountAccountId`, `consignmentAccountId`. Relasi `ItemSalesReturnAcct`
+  dst di `ErpItem` + back-pointer di `ErpAccount`. Migrasi
+  `20260530_002_erp_item_legacy_gl_accounts` (additive, 0 DROP, FK `ON DELETE
+  SET NULL`). Hand-written SQL + `migrate deploy` (pola §2.32).
+- **Wajib hanya saat `type=INVENTORY`** (keputusan user 2026-05-30). DB kolom
+  tetap nullable (aman untuk 100+ item lama + tipe SERVICE/NON_INVENTORY yang
+  tak butuh akun ini). Required di-enforce **FE-only** lewat `validateItem`
+  (`REQUIRED_INVENTORY_ACCOUNTS` + `requiredWhenInventory`) — legacy menandai
+  semua 8 wajib, tapi modern kita kondisikan ke tipe stok. Backend DTO semua
+  optional.
+- **UX bridge:** akun GL tidak terlihat di mode entri **Cepat** (§2.25). Kalau
+  validasi akun gagal saat simpan di Cepat, `items-form-fields.tsx` auto-switch
+  ke **Lengkap** + buka section Akuntansi (efek `accountError && mode==='cepat'`)
+  supaya error bisa diperbaiki. Label section pakai nama legacy ringkas
+  (Persediaan, Penjualan, Retur Penjualan, …) bukan "Akun Persediaan".
+
+---
+
+### 2.34 Item — section Lokasi multi-gudang (placements) (2026-05-30)
+
+Section **Lokasi** baru di form item (§2.25), paritas tab "Lokasi" MyERP+
+(`m1_item_location_warehouse`): per item, daftar baris **(Gudang, Lokasi)** =
+penempatan item di banyak gudang/spot. Pelengkap `defaultWarehouseId`/
+`defaultLocationId` yang tetap single default.
+
+- **Data model = junction ternormalisasi `md_item_placements`** (model Prisma
+  **`ErpItemPlacement`**, bukan `ErpItemLocation`): `itemId` FK (cascade),
+  `warehouseId` FK → `md_warehouses` (**Gudang**), `locationId` FK →
+  **`md_item_locations`** (**Lokasi** = master named-spot legacy, `code`/`name`/
+  `warehouseId`), audit cols. `@@unique([itemId, warehouseId, locationId])`.
+  **Penting (keputusan user 2026-05-30):** "Lokasi" = master spot
+  `md_item_locations` (sudah punya modul + halaman + seed sendiri), **bukan**
+  `md_locations` (itu level cabang/site). Nama tabel `md_item_locations` sudah
+  dipakai master spot → junction pakai nama `md_item_placements`.
+- Migrasi `20260530_003_erp_item_locations` (CREATE `md_item_placements`,
+  additive 0 DROP) + koreksi `20260530_004_erp_item_placement_location_fk`
+  (repoint FK `location_id` dari draft `md_locations` → `md_item_locations`;
+  draft awal salah target). Hand-written SQL + `migrate deploy` (pola §2.32).
+- **Backend:** DTO `ItemLocationDto` (`warehouseId`+`locationId` string),
+  `locations?: ItemLocationDto[]` di create DTO. Relasi Prisma di service =
+  `placements` (create / `deleteMany`+create saat update); `buildLocationRows`
+  skip baris tak-lengkap + **dedupe** pasangan. `mapItem` memetakan
+  `placements` → field FE `locations` (`{warehouseId, locationId, warehouse,
+  location}`). Helper murni (include graph + builders + `mapItem`) di-extract
+  ke **`erp-items.mappers.ts`** supaya service tetap < 400 baris (§3).
+- **Frontend:** `ItemFormData.locations: ItemLocationFormRow[]` (punya `key`
+  stabil client agar display `SearchSelect` tahan add/remove baris — tidak
+  dikirim). Section `lokasi` di side-nav **Lengkap**, **hanya untuk tipe
+  stockable** (INVENTORY/CONSUMABLE/ASSET), placement: setelah Inventory.
+  Editor multi-baris = organism
+  [`components/pages/items-form-locations.tsx`](components/pages/items-form-locations.tsx)
+  (tabel No · Gudang · Lokasi · hapus + tombol "Tambah"). Loader Lokasi =
+  `loadItemLocationOptions` (master spot), **bukan** `loadLocationOptions`.
+  `toItemPayload` drop baris yang Gudang/Lokasi belum lengkap.
+
+**⚠ Naming gotcha — `md_item_locations` ≠ `md_item_placements`** (digabung dari bekas §2.34 "Naming reservation"):
+
+**`ErpItemLocation` / `md_item_locations` = master "Item Location" legacy**
+(code/name/warehouse, modul `erp-item-locations/` + halaman + data ada).
+**JANGAN** pakai nama ini untuk junction "tab Lokasi" item. Junction per-item
+(Gudang + Lokasi) = **`ErpItemPlacement` / `md_item_placements`** (relasi
+`ErpItem.placements`, migrasi `20260530_003`). Bug history: fitur tab Lokasi
+sempat mendefinisikan ulang `model ErpItemLocation @@map("md_item_locations")`
+→ skema invalid (duplicate model) + migrasi `CREATE TABLE IF NOT EXISTS`
+jadi no-op (tabel master sudah ada) → **semua** operasi item gagal dengan
+`PrismaClientValidationError` (filter `all-exceptions.filter.ts` menamai-nya
+"Invalid query parameters" — menyesatkan, bukan soal query param). Resolusi:
+rename junction ke `ErpItemPlacement` + relasi field `placements`. **Catatan
+ops:** tiap rename schema item **wajib** `prisma generate` **di dalam container**
++ restart (named-volume `api_gateway_node_modules` ≠ host; `nest --watch`
+recompile TS tapi **tidak** regen Prisma client → client basi = error di atas).
+
+---
+
+### 2.37 Item — tab Branch multi-cabang (item-branch) (2026-05-31)
+
+Section **Branch** baru di form item (§2.25), paritas tab "Branch" item master
+MyERP+: per item, daftar baris **(Cabang, Cost Center)** = penempatan item di
+banyak cabang dengan cost center per cabang. **Coexist** dengan field tunggal
+`branchId` + `costCenterId` di section **Dimensi GL** (keputusan user
+2026-05-31): yang single tetap = cabang/cost center **home/default**; tab Branch
+= daftar penempatan tambahan. **Cost Center wajib** per baris (Cabang + Cost
+Center sama-sama wajib agar baris tersimpan).
+
+- **Data model = junction ternormalisasi `md_item_branches`** (model Prisma
+  **`ErpItemBranch`**): `itemId` FK (cascade), `branchId` FK → `md_branches`
+  (**Cabang**), `costCenterId` FK → `md_cost_centers` (**Cost Center**), audit
+  cols. `@@unique([itemId, branchId])` — satu cost center per cabang per item.
+  Relasi back-pointer `ErpBranch.itemBranches` + `ErpCostCenter.itemBranches`.
+- Migrasi `20260531_003_erp_item_branches` (CREATE `md_item_branches`, additive
+  0 DROP; FK item cascade, cabang/cost center `ON DELETE RESTRICT`). Hand-written
+  SQL + `migrate deploy` (pola §2.32). **Catatan ops:** `prisma generate` **di
+  dalam container** + restart wajib setelah schema berubah (lihat §2.34).
+- **Backend:** DTO `ItemBranchDto` (`branchId`+`costCenterId` string, keduanya
+  `@IsNotEmpty`), `branches?: ItemBranchDto[]` di create DTO (inherited di update
+  via `PartialType`). `buildBranchRows` (di `erp-items.mappers.ts`) skip baris
+  tak-lengkap + **dedupe by branch**; create = nested `branches.create`, update =
+  `branches: { deleteMany: {}, create }` (replace penuh, pola placements/prices).
+  `ITEM_INCLUDE.branches` + `mapItem` memetakan ke field FE `branches`
+  (`{branchId, costCenterId, branch, costCenter}`).
+- **Frontend:** `ItemFormData.branches: ItemBranchFormRow[]` (punya `key` stabil
+  client agar display `SearchSelect` tahan add/remove baris — tidak dikirim).
+  Section `branch` di side-nav **Lengkap** (`available: true`, **tidak**
+  dibatasi tipe stockable — cabang relevan untuk semua tipe item), urutan
+  setelah Distributor. Editor multi-baris = organism
+  [`components/pages/items-form-branches.tsx`](components/pages/items-form-branches.tsx)
+  (tabel No · Cabang · Cost Center · hapus + tombol "Tambah"). Loader =
+  `loadBranchOptions` + `loadCostCenterOptions`. `toItemPayload` drop baris yang
+  Cabang/Cost Center belum lengkap.
+
+---
+
+## § Finance (M2) menu parity — koreksi label + folder Laporan (2026-05-31)
+
+Audit menu **Keuangan ▸ Transaksi** legacy MyERP+ vs seed kita (`prisma/seed-erp.ts`
+grup `M2`). Legacy "Transaksi" = 11 item: Kas Masuk (CR), Kas Keluar (CD), Bank
+Masuk (RM), Bank Keluar (SM), Jurnal Umum (GJ), Giro Masuk/Keluar (RG/SG), Giro
+Masuk/Keluar Batal (RGC/SGC), Saldo Awal Coa (CB), Buku Besar (GL = laporan).
+
+**Koreksi label seed (kontradiksi legacy + dok desain `entities-m2-finance.md`):**
+- **CB** legacy = **Saldo Awal Coa / Opening Balance** (→ `JournalType.OPENING_BALANCE`),
+  bukan "Cash/Bank Transfer". Seed lama salah label → diperbaiki jadi
+  `M2.TX.OPENING-BALANCE` "Opening Balance (CoA)" `/finance/opening-balances`.
+- **RM/SM** legacy = **Bank Masuk/Bank Keluar**; DB kita = `fin_ar_receipts` /
+  `fin_ap_payments` (receipt/payment via bank, dengan alokasi settlement). Label
+  "Receipt Memo/Send Memo" membingungkan → diganti **Bank Receipt** (`RM`) /
+  **Bank Payment** (`SM`), path `/finance/bank-receipts` & `/finance/bank-payments`.
+- **BD** (Bank Disbursement) & **AJ** (Adjustment Journal) = tambahan modern,
+  **tak ada** di menu Transaksi legacy ini — dipertahankan (didukung skema).
+
+**Folder Laporan (M2.RPT) ditambah.** Legacy MODULEID=2 (`Report.vb`) punya ~150
+varian laporan; di seed kita di-kanonkan jadi parent report yang dipenuhi
+`fin_ledger_entries`/`fin_budget_realizations`/`fin_giros`: General Ledger,
+Trial Balance, Balance Sheet, Income Statement, Cash Flow, Daily Cash & Bank,
+AR Card, AR Aging, AP Card, AP Aging, Giro Maturity, Budget vs Realization
+(legacyCode = `2-<MENUID>`). Sebelumnya M2.RPT cuma punya General Ledger.
+
+**Cakupan DB:** seluruh 11 item legacy ter-cover oleh 31 tabel `fin_*` (jauh di
+atas legacy). Yang belum: **frontend M2 belum dibangun** (path `/finance/*`
+ter-seed tapi belum ada entry di `ERP_PAGES`/`ERP_ROUTE_META`).
+
+**Drift live DB (perlu prune).** `sys_menus` di DB akumulasi entri M2 usang dari
+iterasi seed lama (seed tak punya prune): `M2.TX.CASHBANK-TRANSFER`,
+`M2.TX.RECEIPT-MEMO`, `M2.TX.SEND-MEMO` (digantikan koreksi di atas) + duplikat
+prefix `/keuangan/` lama: `M2.TX.AP-PAYMENT`, `M2.TX.AR-RECEIPT`, `M2.TX.GIRO`,
+`M2.TX.JOURNAL`. FK `adm_role_menus.menu_id` = `ON DELETE CASCADE`, jadi prune
+baris `sys_menus` aman (role-map ikut terhapus). Re-seed menambah kode baru tapi
+**tidak** menghapus yang usang — prune manual diperlukan.
+
+## §2.35 — Item master "Atribut" tab (legacy MyERP+ parity) (2026-05-31)
+
+Menambahkan tab **Atribut** ke form item (`/app/master/items`), meniru tab
+"Atribut" legacy MyERP+ dengan UI/UX dimodernkan (amati-tiru-modifikasi).
+
+**Keputusan dengan user:**
+- **Model lookup = reuse master existing + tambah minimal** (BUKAN tabel generik
+  `md_item_attributes`). 6 master atribut sudah ada (Warna/Merk/Ukuran/Material/
+  Section/Desainer) dengan kolom FK di `md_items` tapi belum punya relasi Prisma →
+  relasi di-wire sekarang. **Vendor → reuse `md_partners`**. **Satuan Lapangan →
+  reuse `md_units`** (relasi `ItemFieldUnit`; `baseUnit` dinamai `ItemBaseUnit`).
+  Alasan menolak tabel generik: destruktif (drop 6 tabel+FK), langgar norma
+  migrasi additive §2.32 (0 DROP), buang kerja yang sudah jalan.
+- **Nozzle & Oem benar-benar baru** → master kecil baru `md_nozzles` + `md_oems`
+  (mirror `md_colors`: code+name+isActive), konsisten pola master atribut lain
+  (tabel + FK + halaman CRUD + SearchSelect). Bukan teks bebas.
+- **Cakupan = semua field legacy** (~20). Scalar baru di `md_items`:
+  `length/width/height/volume` (Decimal nullable), `conversion_kg_pcs`
+  (Decimal default 1), `registration_no` (No. Ijin Edar), `is_returnable`
+  (Retur, default **true** sesuai legacy), `is_mobile` (default false).
+- **Layout = 1 tab "Atribut" bergrup** (best practice, bukan grid datar legacy):
+  3 grup → **Dimensi & Berat** (Panjang/Lebar/Tinggi/Volume/Berat/Konversi
+  Kg-Pcs) · **Klasifikasi Produk** (Warna/Merk/Ukuran/Material/Section/Desainer/
+  Nozzle/OEM/Vendor) · **Penanganan & Regulasi** (Satuan Lapangan/No. Ijin Edar/
+  Retur/Mobile). Section "Atribut" disisipkan di side-nav setelah "Klasifikasi".
+- **Berat dipindah** dari section Klasifikasi → grup Dimensi & Berat (hapus
+  `showsWeight` gate di Klasifikasi). **Serial/Batch tetap** di section Inventory
+  (`tracksSerial`/`tracksBatch`) — tidak diduplikasi di Atribut.
+- **itemModel** tidak di-wire (tidak ada di screenshot Atribut legacy).
+
+**Implementasi:**
+- DB: migrasi `20260531_001_erp_item_attributes` (additive, idempotent, 0 DROP) —
+  13 kolom `md_items` + tabel `md_nozzles`/`md_oems` + FK constraints (termasuk
+  untuk kolom brand/material/size/color/section yang dulu belum ber-constraint).
+- Backend: `ErpItem` relasi + 2 model baru; `erp-items` DTO/mappers/service
+  (`FK_OPTIONAL_FIELDS`+`DECIMAL_FIELDS`+`ITEM_INCLUDE` + create/update flag);
+  modul `erp-nozzles`/`erp-oems` (mirror `erp-colors`, guard `ErpJwtAuthGuard`
+  §2.5) terdaftar di `app.module.ts`; menu di-seed di `seed-erp.ts`
+  (`M1.ITEM.NOZZLE` `/master/nozzles`, `M1.ITEM.OEM` `/master/oems`).
+- Frontend: `lib/api/{nozzles,oems}.ts`; loaders di `items-form-lookups.ts`;
+  `items-form.tsx` (ItemFormData/default/fromItem/toItemPayload); section UI
+  reusable `items-form-atribut.tsx`; halaman master `{nozzles,oems}-page.tsx`
+  (pakai organism `SimpleMasterPage`) terdaftar di `ERP_PAGES`
+  (shell-route-renderer) + `NAV`/`ERP_ROUTE_META` (`lib/nav.ts`).
+- Verifikasi: `tsc --noEmit` BE+FE 0 error, `check:size` clean, migrasi applied,
+  endpoint `/api/erp/{nozzles,oems}` 401 (route+guard OK), menu seeded.

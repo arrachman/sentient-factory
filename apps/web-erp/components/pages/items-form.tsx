@@ -20,6 +20,21 @@ export interface ItemLocationFormRow {
   warehouseId: string; warehouseLabel?: string;
   locationId: string; locationLabel?: string;
 }
+
+/** One row in the "Distributor" section (legacy m1_item_supplier). `key` is a
+ *  stable client id so SearchSelect display state survives row add/remove. */
+export interface ItemDistributorFormRow {
+  key: string;
+  partnerId: string; partnerLabel?: string;
+}
+
+/** One row in the "Branch" section (legacy Cabang + Cost Center). `key` is a
+ *  stable client id so SearchSelect display state survives row add/remove. */
+export interface ItemBranchFormRow {
+  key: string;
+  branchId: string; branchLabel?: string;
+  costCenterId: string; costCenterLabel?: string;
+}
 export const COST_METHODS: { value: ErpCostingMethod; label: string }[] = [
   { value: 'AVG', label: 'Average' },
   { value: 'FIFO', label: 'FIFO' },
@@ -39,6 +54,18 @@ export interface ItemFormData {
   unitId: string; unitLabel?: string;
   kindId: string; kindLabel?: string;
   productClassId: string; productClassLabel?: string;
+
+  // Atribut produk (legacy "Atribut") — id + label for edit-mode display
+  brandId: string; brandLabel?: string;
+  materialId: string; materialLabel?: string;
+  sizeId: string; sizeLabel?: string;
+  colorId: string; colorLabel?: string;
+  sectionId: string; sectionLabel?: string;
+  designerId: string; designerLabel?: string;
+  nozzleId: string; nozzleLabel?: string;
+  oemId: string; oemLabel?: string;
+  vendorId: string; vendorLabel?: string;
+  fieldUnitId: string; fieldUnitLabel?: string;
 
   // GL / org dimensions
   divisionId: string; divisionLabel?: string;
@@ -61,6 +88,12 @@ export interface ItemFormData {
 
   // Storage placements ("Lokasi" tab: Gudang + Lokasi per row)
   locations: ItemLocationFormRow[];
+
+  // Distributors ("Distributor" tab: supplier partner per row)
+  distributors: ItemDistributorFormRow[];
+
+  // Branches ("Branch" tab: Cabang + Cost Center per row)
+  branches: ItemBranchFormRow[];
 
   // Stock
   minStock: string;
@@ -87,6 +120,16 @@ export interface ItemFormData {
   primarySupplierId: string; primarySupplierLabel?: string;
   weight: string;
 
+  // Atribut fisik & regulasi (legacy "Atribut")
+  length: string;
+  width: string;
+  height: string;
+  volume: string;
+  conversionKgPcs: string;
+  registrationNo: string;
+  isReturnable: boolean;
+  isMobile: boolean;
+
   // Validity & flags
   ageCategory: string;
   validUntil: string;
@@ -98,11 +141,15 @@ export interface ItemFormData {
 export const defaultItemForm = (): ItemFormData => ({
   code: '', name: '', itemType: 'INVENTORY', costMethod: 'AVG', description: '', barcode: '',
   categoryId: '', unitId: '', kindId: '', productClassId: '',
+  brandId: '', materialId: '', sizeId: '', colorId: '', sectionId: '',
+  designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '',
   divisionId: '', subdivisionId: '', departmentId: '', subDepartmentId: '',
   branchId: '', defaultLocationId: '', defaultWarehouseId: '', projectId: '', costCenterId: '',
   standardCost: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',
   salePrices: Array<string>(10).fill(''), saleDiscounts: Array<string>(10).fill(''),
   locations: [],
+  distributors: [],
+  branches: [],
   minStock: '', maxStock: '', reorderQty: '', minOrderQty: '',
   tracksSerial: false, tracksBatch: false, tracksBin: false,
   inventoryAccountId: '', salesAccountId: '', cogsAccountId: '',
@@ -110,6 +157,8 @@ export const defaultItemForm = (): ItemFormData => ({
   purchaseReturnAccountId: '', purchaseDiscountAccountId: '', consignmentAccountId: '',
   purchaseTaxId: '', saleTaxId: '',
   primarySupplierId: '', weight: '',
+  length: '', width: '', height: '', volume: '', conversionKgPcs: '1', registrationNo: '',
+  isReturnable: true, isMobile: false,
   ageCategory: '', validUntil: '', isVatable: true, isSpecial: false, isActive: true,
 });
 
@@ -145,6 +194,16 @@ export function fromItem(item: ErpItem): ItemFormData {
     unitId: item.unitId ?? '', unitLabel: refLabel(item.unit),
     kindId: item.kindId ?? '', kindLabel: refLabel(item.kind),
     productClassId: item.productClassId ?? '', productClassLabel: refLabel(item.productClass),
+    brandId: item.brandId ?? '', brandLabel: refLabel(item.brand),
+    materialId: item.materialId ?? '', materialLabel: refLabel(item.material),
+    sizeId: item.sizeId ?? '', sizeLabel: refLabel(item.size),
+    colorId: item.colorId ?? '', colorLabel: refLabel(item.color),
+    sectionId: item.sectionId ?? '', sectionLabel: refLabel(item.section),
+    designerId: item.designerId ?? '', designerLabel: refLabel(item.designer),
+    nozzleId: item.nozzleId ?? '', nozzleLabel: refLabel(item.nozzle),
+    oemId: item.oemId ?? '', oemLabel: refLabel(item.oem),
+    vendorId: item.vendorId ?? '', vendorLabel: refLabel(item.vendor),
+    fieldUnitId: item.fieldUnitId ?? '', fieldUnitLabel: refLabel(item.fieldUnit),
     divisionId: item.divisionId ?? '', divisionLabel: refLabel(item.division),
     subdivisionId: item.subdivisionId ?? '', subdivisionLabel: refLabel(item.subdivision),
     departmentId: item.departmentId ?? '', departmentLabel: refLabel(item.department),
@@ -165,6 +224,15 @@ export function fromItem(item: ErpItem): ItemFormData {
       warehouseId: l.warehouseId, warehouseLabel: refLabel(l.warehouse),
       locationId: l.locationId, locationLabel: refLabel(l.location),
     })),
+    distributors: (item.distributors ?? []).map((d, i) => ({
+      key: `init-${i}`,
+      partnerId: d.partnerId, partnerLabel: refLabel(d.partner),
+    })),
+    branches: (item.branches ?? []).map((b, i) => ({
+      key: `init-${i}`,
+      branchId: b.branchId, branchLabel: refLabel(b.branch),
+      costCenterId: b.costCenterId, costCenterLabel: refLabel(b.costCenter),
+    })),
     minStock: numStr(item.minStock),
     maxStock: numStr(item.maxStock),
     reorderQty: numStr(item.reorderQty),
@@ -184,6 +252,14 @@ export function fromItem(item: ErpItem): ItemFormData {
     saleTaxId: item.saleTaxId ?? '', saleTaxLabel: refLabel(item.saleTax),
     primarySupplierId: item.primarySupplierId ?? '', primarySupplierLabel: refLabel(item.primarySupplier),
     weight: numStr(item.weight),
+    length: numStr(item.length),
+    width: numStr(item.width),
+    height: numStr(item.height),
+    volume: numStr(item.volume),
+    conversionKgPcs: numStr(item.conversionKgPcs),
+    registrationNo: item.registrationNo ?? '',
+    isReturnable: item.isReturnable ?? true,
+    isMobile: item.isMobile ?? false,
     ageCategory: item.ageCategory ?? '',
     validUntil: item.validUntil ? item.validUntil.slice(0, 10) : '',
     isVatable: item.isVatable ?? true,
@@ -220,6 +296,16 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     barcode: orUndef(f.barcode),
     kindId: orNull(f.kindId),
     productClassId: orNull(f.productClassId),
+    brandId: orNull(f.brandId),
+    materialId: orNull(f.materialId),
+    sizeId: orNull(f.sizeId),
+    colorId: orNull(f.colorId),
+    sectionId: orNull(f.sectionId),
+    designerId: orNull(f.designerId),
+    nozzleId: orNull(f.nozzleId),
+    oemId: orNull(f.oemId),
+    vendorId: orNull(f.vendorId),
+    fieldUnitId: orNull(f.fieldUnitId),
     divisionId: orNull(f.divisionId),
     subdivisionId: orNull(f.subdivisionId),
     departmentId: orNull(f.departmentId),
@@ -237,6 +323,12 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     locations: f.locations
       .filter((l) => l.warehouseId !== '' && l.locationId !== '')
       .map((l) => ({ warehouseId: l.warehouseId, locationId: l.locationId })),
+    distributors: f.distributors
+      .filter((d) => d.partnerId !== '')
+      .map((d) => ({ partnerId: d.partnerId })),
+    branches: f.branches
+      .filter((b) => b.branchId !== '' && b.costCenterId !== '')
+      .map((b) => ({ branchId: b.branchId, costCenterId: b.costCenterId })),
     minStock: orUndef(f.minStock),
     maxStock: orUndef(f.maxStock),
     reorderQty: orUndef(f.reorderQty),
@@ -256,6 +348,14 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     saleTaxId: orNull(f.saleTaxId),
     primarySupplierId: orNull(f.primarySupplierId),
     weight: orUndef(f.weight),
+    length: orUndef(f.length),
+    width: orUndef(f.width),
+    height: orUndef(f.height),
+    volume: orUndef(f.volume),
+    conversionKgPcs: orUndef(f.conversionKgPcs),
+    registrationNo: orNull(f.registrationNo),
+    isReturnable: f.isReturnable,
+    isMobile: f.isMobile,
     ageCategory: orNull(f.ageCategory),
     validUntil: orNull(f.validUntil),
     isVatable: f.isVatable,

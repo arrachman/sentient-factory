@@ -14,6 +14,8 @@ import { Type } from 'class-transformer';
 import { ErpCostingMethod, ErpItemType } from '@prisma/client';
 import { ItemPriceDto } from './item-price.dto';
 import { ItemLocationDto } from './item-location.dto';
+import { ItemBranchDto } from './item-branch.dto';
+import { ItemDistributorDto } from './item-distributor.dto';
 
 export class CreateErpItemDto {
   // ─── Core identity ────────────────────────────────────────────────
@@ -79,6 +81,18 @@ export class CreateErpItemDto {
   @ApiPropertyOptional() @IsOptional() @IsString() colorId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() sectionId?: string | null;
 
+  // ─── Atribut produk (legacy "Atribut") ────────────────────────────
+  @ApiPropertyOptional({ description: 'Desainer ID (md_designers)' })
+  @IsOptional() @IsString() designerId?: string | null;
+  @ApiPropertyOptional({ description: 'Nozzle ID (md_nozzles)' })
+  @IsOptional() @IsString() nozzleId?: string | null;
+  @ApiPropertyOptional({ description: 'OEM ID (md_oems)' })
+  @IsOptional() @IsString() oemId?: string | null;
+  @ApiPropertyOptional({ description: 'Vendor ID (md_partners) — legacy "Vendor"' })
+  @IsOptional() @IsString() vendorId?: string | null;
+  @ApiPropertyOptional({ description: 'Satuan Lapangan / field unit ID (md_units)' })
+  @IsOptional() @IsString() fieldUnitId?: string | null;
+
   // ─── GL / organizational dimensions ───────────────────────────────
   @ApiPropertyOptional() @IsOptional() @IsString() divisionId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() subdivisionId?: string | null;
@@ -115,6 +129,20 @@ export class CreateErpItemDto {
   @Type(() => ItemLocationDto)
   locations?: ItemLocationDto[];
 
+  @ApiPropertyOptional({ type: [ItemBranchDto], description: 'Item branch assignments (Branch tab: Cabang + Cost Center)' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemBranchDto)
+  branches?: ItemBranchDto[];
+
+  @ApiPropertyOptional({ type: [ItemDistributorDto], description: 'Item distributors (Distributor tab: supplier partners)' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemDistributorDto)
+  distributors?: ItemDistributorDto[];
+
   // ─── Stock levels ─────────────────────────────────────────────────
   @ApiPropertyOptional({ example: '10' }) @IsOptional() @IsString() minStock?: string;
   @ApiPropertyOptional({ example: '500' }) @IsOptional() @IsString() maxStock?: string;
@@ -143,6 +171,16 @@ export class CreateErpItemDto {
   // ─── Supplier & physical ──────────────────────────────────────────
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() primarySupplierId?: string | null;
   @ApiPropertyOptional({ example: '1.5' }) @IsOptional() @IsString() weight?: string;
+
+  // ─── Dimensi fisik & regulasi (legacy "Atribut") ──────────────────
+  @ApiPropertyOptional({ example: '120', description: 'Panjang' }) @IsOptional() @IsString() length?: string;
+  @ApiPropertyOptional({ example: '60', description: 'Lebar' }) @IsOptional() @IsString() width?: string;
+  @ApiPropertyOptional({ example: '30', description: 'Tinggi' }) @IsOptional() @IsString() height?: string;
+  @ApiPropertyOptional({ example: '0.216', description: 'Volume' }) @IsOptional() @IsString() volume?: string;
+  @ApiPropertyOptional({ example: '1', description: 'Konversi Kg/Pcs' }) @IsOptional() @IsString() conversionKgPcs?: string;
+  @ApiPropertyOptional({ description: 'No. Ijin Edar' }) @IsOptional() @IsString() registrationNo?: string | null;
+  @ApiPropertyOptional({ default: true, description: 'Retur — dapat diretur' }) @IsOptional() @IsBoolean() isReturnable?: boolean = true;
+  @ApiPropertyOptional({ default: false, description: 'Mobile' }) @IsOptional() @IsBoolean() isMobile?: boolean = false;
 
   // ─── Validity & flags (legacy parity) ─────────────────────────────
   @ApiPropertyOptional({ description: 'Kategori Umur (freetext)' })
