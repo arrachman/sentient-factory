@@ -10,6 +10,7 @@
 import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { Badge } from '@/components/ui/badge';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import {
@@ -159,8 +160,8 @@ function Field({
   return (
     <label className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground w-24 shrink-0 text-left">
-        {required && <span className="text-danger">* </span>}
         {label}
+        {required && <span className="text-danger">&nbsp;*</span>}
       </span>
       <div className="flex-1 min-w-0">{children}</div>
     </label>
@@ -276,11 +277,10 @@ export function CashReceiptForm({
             />
           </Field>
           <Field label="Tanggal" required>
-            <Input
-              type="date"
+            <DateInput
               value={data.transactionDate}
               disabled={locked}
-              onChange={(e) => set({ transactionDate: e.target.value })}
+              onChange={(v) => set({ transactionDate: v })}
             />
           </Field>
         </div>
