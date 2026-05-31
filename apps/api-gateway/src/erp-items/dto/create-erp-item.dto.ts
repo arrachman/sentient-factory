@@ -16,6 +16,7 @@ import { ItemPriceDto } from './item-price.dto';
 import { ItemLocationDto } from './item-location.dto';
 import { ItemBranchDto } from './item-branch.dto';
 import { ItemDistributorDto } from './item-distributor.dto';
+import { ItemOthersDto, ItemCustomDto } from './item-metadata.dto';
 
 export class CreateErpItemDto {
   // ─── Core identity ────────────────────────────────────────────────
@@ -196,4 +197,17 @@ export class CreateErpItemDto {
   @IsOptional() @IsBoolean() isSpecial?: boolean = false;
 
   @ApiPropertyOptional({ default: true }) @IsOptional() @IsBoolean() isActive?: boolean = true;
+
+  // ─── Lain-lain & Custom (legacy tabs) — persisted in md_items.metadata ────
+  @ApiPropertyOptional({ type: ItemOthersDto, description: 'Legacy "Lain-lain" tab (alias names + notes) → metadata.others' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ItemOthersDto)
+  others?: ItemOthersDto;
+
+  @ApiPropertyOptional({ type: ItemCustomDto, description: 'Legacy "Custom" tab (production/moulding attrs) → metadata.custom' })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ItemCustomDto)
+  custom?: ItemCustomDto;
 }

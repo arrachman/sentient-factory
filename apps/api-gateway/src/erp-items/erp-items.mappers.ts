@@ -220,6 +220,45 @@ export function buildDecimalData(dto: Record<string, unknown>): Record<string, P
   return out;
 }
 
+/** Drop empty-string/null/undefined values; return undefined when nothing remains. */
+function compactMeta(obj?: Record<string, unknown>): Record<string, unknown> | undefined {
+  if (!obj) return undefined;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined && v !== null && v !== '') out[k] = v;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * Assemble md_items.metadata from the "Lain-lain" (`others`) + "Custom"
+ * (`custom`) DTO sub-objects (§2.38 — stored as JSON, no dedicated columns).
+ * Merges onto any existing metadata so unrelated keys survive; clears a
+ * namespace whose fields are all blank. Returns undefined when neither sub-
+ * object was sent, so create/update leaves the column untouched.
+ */
+export function buildItemMetadata(
+  dto: { others?: object | null; custom?: object | null },
+  existing?: Prisma.JsonValue | null,
+): Prisma.InputJsonValue | undefined {
+  if (dto.others == null && dto.custom == null) return undefined;
+  const base: Record<string, unknown> =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...(existing as Record<string, unknown>) }
+      : {};
+  if (dto.others != null) {
+    const c = compactMeta(dto.others as Record<string, unknown>);
+    if (c) base.others = c;
+    else delete base.others;
+  }
+  if (dto.custom != null) {
+    const c = compactMeta(dto.custom as Record<string, unknown>);
+    if (c) base.custom = c;
+    else delete base.custom;
+  }
+  return base as Prisma.InputJsonValue;
+}
+
 // Maps Prisma field names to the frontend ErpItem interface shape
 export function mapItem(item: any) {
   const { type, baseUnit, baseUnitId, salePrice, prices, placements, distributors, branches, ...rest } = item;

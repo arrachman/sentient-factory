@@ -1158,3 +1158,44 @@ Menambahkan tab **Atribut** ke form item (`/app/master/items`), meniru tab
   (shell-route-renderer) + `NAV`/`ERP_ROUTE_META` (`lib/nav.ts`).
 - Verifikasi: `tsc --noEmit` BE+FE 0 error, `check:size` clean, migrasi applied,
   endpoint `/api/erp/{nozzles,oems}` 401 (route+guard OK), menu seeded.
+
+---
+
+### 2.38 Item — tab Lain-lain + Custom (metadata JSON sidecar) (2026-05-31)
+
+Menambahkan dua tab terakhir form item legacy MyERP+ (`/app/master/items`):
+**Lain-lain** dan **Custom** (amati-tiru-modifikasi). Beda dari tab lain
+(Atribut/Distributor/Branch yang pakai kolom/tabel riil), kedua tab ini
+**disimpan di `md_items.metadata` (Json)** — **tanpa migrasi/kolom baru**
+(keputusan user 2026-05-31: storage = metadata Json).
+
+- **Lain-lain → `metadata.others`:** `aliasName1..4` (Nama Alias 1–4),
+  `notesRc` (Notes RC), `catatan` (Catatan).
+- **Custom → `metadata.custom`:** `productionCategory`, `productionGroup`,
+  `maxQtySo`, `capacityPerHour`, `maxQtyRc`, `allowance`, `wip1..3`,
+  `mouldFinish`, `moldSemi1..2`, `min1`/`max1`/`min2`/`max2`. Field kuantitas
+  (Max Qty SO/RC, Kapasitas Per Jam, Allowance) = `NumField`; sisanya teks.
+  Field lookup legacy (Kategori/Kelompok Produksi, WIP, Mould — punya ikon
+  search) **di-modernisasi jadi teks bebas** karena belum ada master-nya;
+  promosikan ke lookup saat master dibuat.
+
+**Implementasi (tanpa Prisma/migrasi — kolom `metadata` sudah ada):**
+- Backend: DTO nested `ItemOthersDto`/`ItemCustomDto`
+  ([`dto/item-metadata.dto.ts`](../../api-gateway/src/erp-items/dto/item-metadata.dto.ts))
+  + field `others`/`custom` di `CreateErpItemDto` (`@ValidateNested`). Helper
+  `buildItemMetadata(dto, existing?)` di `erp-items.mappers.ts` merakit
+  `metadata` (compact buang nilai kosong, **merge** ke metadata existing supaya
+  key lain selamat, clear namespace bila semua blank, `undefined` = jangan
+  sentuh kolom). Di-wire ke `create` + `update`. `mapItem` sudah meneruskan
+  `metadata` apa adanya via `...rest` (tak perlu diubah).
+- Frontend: tipe `ItemOthersData`/`ItemCustomData`/`ItemMetadata` +
+  `ErpItem.metadata` + `CreateItemPayload.others/custom` di `lib/api/items.ts`;
+  `ItemFormData.others/custom` + adapter `fromItem` (baca `item.metadata`) /
+  `toItemPayload` di `items-form.tsx`; section UI reusable
+  [`items-form-lainlain.tsx`](components/pages/items-form-lainlain.tsx)
+  (`ItemLainLainSection` + `ItemCustomSection`), didaftarkan di side-nav
+  `items-form-fields.tsx` setelah "Catatan".
+- **Catatan ops:** tak ada migrasi & tak perlu `prisma generate`. BE host pakai
+  `nest start --watch` (auto-reload). Bila API live disajikan dari container
+  Docker, perlu rebuild/restart container agar perubahan TS ikut (pola §2.32).
+- Verifikasi: `tsc --noEmit` BE+FE 0 error untuk file item.

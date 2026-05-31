@@ -27,6 +27,7 @@ import { ItemLocationsEditor } from './items-form-locations';
 import { ItemAtributSection } from './items-form-atribut';
 import { ItemDistributorsEditor } from './items-form-distributors';
 import { ItemBranchesEditor } from './items-form-branches';
+import { ItemLainLainSection, ItemCustomSection } from './items-form-lainlain';
 import {
   loadCategoryOptions, loadUnitOptions, loadKindOptions, loadProductClassOptions,
   loadDivisionOptions, loadSubDivisionOptions, loadDepartmentOptions, loadSubDepartmentOptions,
@@ -35,7 +36,7 @@ import {
 } from './items-form-lookups';
 
 type Mode = 'cepat' | 'lengkap';
-type SectionId = 'identitas' | 'klasifikasi' | 'atribut' | 'inventory' | 'lokasi' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'distributor' | 'branch' | 'catatan';
+type SectionId = 'identitas' | 'klasifikasi' | 'atribut' | 'inventory' | 'lokasi' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'distributor' | 'branch' | 'catatan' | 'lainlain' | 'custom';
 
 const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
 
@@ -76,6 +77,8 @@ export function ItemFormFields({
     { id: 'distributor', label: 'Distributor', available: true, hasError: false },
     { id: 'branch', label: 'Branch', available: true, hasError: false },
     { id: 'catatan', label: 'Catatan', available: true, hasError: false },
+    { id: 'lainlain', label: 'Lain-lain', available: true, hasError: false },
+    { id: 'custom', label: 'Custom', available: true, hasError: false },
   ];
 
   const renderIdentitas = () => (
@@ -250,6 +253,8 @@ export function ItemFormFields({
     lokasi: renderLokasi, harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
     dimensi: renderDimensi, supplier: renderSupplier, distributor: renderDistributor,
     branch: renderBranch, catatan: renderCatatan,
+    lainlain: () => <ItemLainLainSection data={data} onChange={onChange} />,
+    custom: () => <ItemCustomSection data={data} onChange={onChange} />,
   };
 
   const modeToggle = (

@@ -6,7 +6,10 @@
  * Atomic tier: Molecule (data) + Organism (UI in sibling file).
  */
 
-import type { ErpItem, ErpItemType, ErpCostingMethod, CreateItemPayload } from '@/lib/api/items';
+import type {
+  ErpItem, ErpItemType, ErpCostingMethod, CreateItemPayload,
+  ItemOthersData, ItemCustomData,
+} from '@/lib/api/items';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 export { ItemFormFields } from './items-form-fields';
@@ -95,6 +98,10 @@ export interface ItemFormData {
   // Branches ("Branch" tab: Cabang + Cost Center per row)
   branches: ItemBranchFormRow[];
 
+  // Lain-lain ("Lain-lain" tab) + Custom ("Custom" tab) → metadata sidecar
+  others: ItemOthersData;
+  custom: ItemCustomData;
+
   // Stock
   minStock: string;
   maxStock: string;
@@ -150,6 +157,7 @@ export const defaultItemForm = (): ItemFormData => ({
   locations: [],
   distributors: [],
   branches: [],
+  others: {}, custom: {},
   minStock: '', maxStock: '', reorderQty: '', minOrderQty: '',
   tracksSerial: false, tracksBatch: false, tracksBin: false,
   inventoryAccountId: '', salesAccountId: '', cogsAccountId: '',
@@ -233,6 +241,8 @@ export function fromItem(item: ErpItem): ItemFormData {
       branchId: b.branchId, branchLabel: refLabel(b.branch),
       costCenterId: b.costCenterId, costCenterLabel: refLabel(b.costCenter),
     })),
+    others: { ...(item.metadata?.others ?? {}) },
+    custom: { ...(item.metadata?.custom ?? {}) },
     minStock: numStr(item.minStock),
     maxStock: numStr(item.maxStock),
     reorderQty: numStr(item.reorderQty),
@@ -329,6 +339,8 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     branches: f.branches
       .filter((b) => b.branchId !== '' && b.costCenterId !== '')
       .map((b) => ({ branchId: b.branchId, costCenterId: b.costCenterId })),
+    others: f.others,
+    custom: f.custom,
     minStock: orUndef(f.minStock),
     maxStock: orUndef(f.maxStock),
     reorderQty: orUndef(f.reorderQty),

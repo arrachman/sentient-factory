@@ -17,6 +17,7 @@ import {
   buildBranchRows,
   buildFkData,
   buildDecimalData,
+  buildItemMetadata,
   deriveSalePriceFromTiers,
   mapItem,
 } from './erp-items.mappers';
@@ -69,6 +70,8 @@ export class ErpItemsService {
             ? { salePrice: deriveSalePriceFromTiers(dto.prices) }
             : {}),
           isActive: dto.isActive ?? true,
+          // Lain-lain + Custom tabs → md_items.metadata (§2.38).
+          ...(buildItemMetadata(dto) !== undefined ? { metadata: buildItemMetadata(dto) } : {}),
           createdById: actorId ? BigInt(actorId) : null,
           updatedById: actorId ? BigInt(actorId) : null,
           ...(buildPriceRows(dto.prices, actorId)
@@ -221,6 +224,10 @@ export class ErpItemsService {
             ? { salePrice: deriveSalePriceFromTiers(dto.prices) }
             : {}),
           isActive: dto.isActive,
+          // Lain-lain + Custom tabs → md_items.metadata, merged onto existing (§2.38).
+          ...(buildItemMetadata(dto, existing.metadata) !== undefined
+            ? { metadata: buildItemMetadata(dto, existing.metadata) }
+            : {}),
           updatedById: actorId ? BigInt(actorId) : null,
           ...(dto.prices !== undefined
             ? { prices: { deleteMany: {}, create: buildPriceRows(dto.prices, actorId) } }

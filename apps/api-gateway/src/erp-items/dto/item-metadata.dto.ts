@@ -3,7 +3,7 @@ import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 /**
  * Legacy "Lain-lain" tab — alias names + free-text notes.
- * Persisted under `md_items.metadata.others` (no dedicated columns, §2.35).
+ * Persisted under `md_items.metadata.others` (no dedicated columns, §2.38).
  */
 export class ItemOthersDto {
   @ApiPropertyOptional({ description: 'Nama Alias 1' })
@@ -27,7 +27,7 @@ export class ItemOthersDto {
 
 /**
  * Legacy "Custom" tab — production/moulding attributes.
- * Persisted under `md_items.metadata.custom` (no dedicated columns, §2.35).
+ * Persisted under `md_items.metadata.custom` (no dedicated columns, §2.38).
  * Numeric values kept as strings for parity with the other Decimal-as-string
  * item fields; the form formats them via `lib/format.ts`.
  */

@@ -50,6 +50,29 @@ export interface ItemBranchRow {
   costCenter?: RelationRef | null;
 }
 
+/** Legacy "Lain-lain" tab — alias names + free-text notes (in metadata.others). */
+export interface ItemOthersData {
+  aliasName1?: string; aliasName2?: string; aliasName3?: string; aliasName4?: string;
+  notesRc?: string;
+  catatan?: string;
+}
+
+/** Legacy "Custom" tab — production/moulding attributes (in metadata.custom). */
+export interface ItemCustomData {
+  productionCategory?: string; productionGroup?: string;
+  maxQtySo?: string; capacityPerHour?: string; maxQtyRc?: string; allowance?: string;
+  wip1?: string; wip2?: string; wip3?: string;
+  mouldFinish?: string; moldSemi1?: string; moldSemi2?: string;
+  min1?: string; max1?: string; min2?: string; max2?: string;
+}
+
+/** Free-form JSON sidecar; ERP item form stores Lain-lain/Custom tabs here. */
+export interface ItemMetadata {
+  others?: ItemOthersData;
+  custom?: ItemCustomData;
+  [key: string]: unknown;
+}
+
 export interface ErpItem {
   id: string;
   code: string;
@@ -98,6 +121,7 @@ export interface ErpItem {
   locations?: ItemLocationRow[];     // "Lokasi" tab: Gudang + Lokasi placements
   distributors?: ItemDistributorRow[]; // "Distributor" tab: supplier partners
   branches?: ItemBranchRow[];        // "Branch" tab: Cabang + Cost Center
+  metadata?: ItemMetadata | null;    // "Lain-lain" + "Custom" tabs (JSON sidecar)
 
   // Stock & tracking
   minStock?: string | null;
@@ -225,6 +249,8 @@ export interface CreateItemPayload {
   locations?: { warehouseId: string; locationId: string }[];
   distributors?: { partnerId: string }[];
   branches?: { branchId: string; costCenterId: string }[];
+  others?: ItemOthersData;   // "Lain-lain" tab → metadata.others
+  custom?: ItemCustomData;   // "Custom" tab → metadata.custom
 
   minStock?: string;
   maxStock?: string;
