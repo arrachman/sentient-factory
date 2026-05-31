@@ -1185,10 +1185,16 @@ Masuk/Keluar Batal (RGC/SGC), Saldo Awal Coa (CB), Buku Besar (GL = laporan).
 - **CB** legacy = **Saldo Awal Coa / Opening Balance** (→ `JournalType.OPENING_BALANCE`),
   bukan "Cash/Bank Transfer". Seed lama salah label → diperbaiki jadi
   `M2.TX.OPENING-BALANCE` "Opening Balance (CoA)" `/finance/opening-balances`.
-- **RM/SM** legacy = **Bank Masuk/Bank Keluar**; DB kita = `fin_ar_receipts` /
-  `fin_ap_payments` (receipt/payment via bank, dengan alokasi settlement). Label
-  "Receipt Memo/Send Memo" membingungkan → diganti **Bank Receipt** (`RM`) /
-  **Bank Payment** (`SM`), path `/finance/bank-receipts` & `/finance/bank-payments`.
+- **RM/SM** legacy = **Bank Masuk/Bank Keluar**; label "Receipt Memo/Send Memo"
+  membingungkan → diganti **Bank Receipt** (`RM`) / **Bank Payment** (`SM`),
+  path `/finance/bank-receipts` & `/finance/bank-payments`.
+  > **⚠️ Koreksi model RM (2026-05-31, lihat § Bank Masuk di bawah):** rencana
+  > awal memetakan RM → `fin_ar_receipts` (AR settlement). Setelah lihat layar
+  > legacy "Bank Masuk (RM)" (header + baris kontra CoA + Total, identik Kas
+  > Masuk), keputusan dengan user: **RM = twin Kas Masuk** di
+  > `fin_cash_bank_transactions` (`kind=BANK`, `direction=RECEIPT`), **bukan**
+  > `fin_ar_receipts`. `fin_ar_receipts` dicadangkan untuk settlement AR murni
+  > bila dibutuhkan, bukan untuk path `/finance/bank-receipts`.
 - **BD** (Bank Disbursement) & **AJ** (Adjustment Journal) = tambahan modern,
   **tak ada** di menu Transaksi legacy ini — dipertahankan (didukung skema).
 
@@ -1396,9 +1402,30 @@ cell), `use-cash-grid-nav.ts` (state machine keyboard), `cash-bank-lines.tsx`
   render display — `onValueChange` hanya kasih value). Additive; caller lama aman.
 Berlaku ke **semua** form yang reuse organism ini (CR/CD/BD).
 
+**Kas Keluar / CD = adopter kedua (2026-05-31).** CD disamakan penuh dengan CR:
+endpoint shared `direction=DISBURSEMENT`, URL sub-route (§2.3.1), workflow actions,
+slim filter bar + drawer (§2.40), keyboard nav. Karena form & filter CR/CD beda
+**hanya label + arah**, keduanya diekstrak jadi organism reusable berparameter
+(keputusan user — generik & share, bukan duplikat ~380 baris):
+- Form: [`cash-bank-transaction-form.tsx`](components/pages/cash-bank-transaction-form.tsx)
+  (`CashBankTransactionForm`, prop `labels:{partner,account}`) + model
+  [`cash-bank-form-model.ts`](components/pages/cash-bank-form-model.ts)
+  (`toCashBankPayload(d, direction)`). CR/CD form = wrapper tipis.
+- Filter: [`cash-bank-filters.tsx`](components/pages/cash-bank-filters.tsx)
+  (`CashBankFiltersBar`, prop `entityName`+`partnerLabel`) +
+  [`cash-bank-filter-fields.tsx`](components/pages/cash-bank-filter-fields.tsx).
+  CR/CD filter = wrapper tipis.
+- Label arah: CR = "Terima Dari" / "Akun Kas [D]"; CD = "Bayar Ke" / "Akun Kas [K]"
+  (paritas legacy: disbursement = Cr Akun Kas, Dr tiap baris).
+- `lib/api/fin-cash-disbursements.ts` ditulis ulang ke endpoint shared
+  (`direction=DISBURSEMENT`, reuse tipe CR) + `transitionCashDisbursement`. Modal
+  CRUD skeleton lama (entryDate/cashAccountId/ID-input) dibuang. Registrasi pindah
+  `ERP_PAGES` → `TRX_FORM_PAGES` (shell-route-renderer). File CR filter-fields lama
+  dihapus (digantikan shared).
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
-reopen dulu); kolom User Input di tabel (filter User sudah ada); FE
-CD/BD/transfer belum pakai backend baru ini.
+reopen dulu); kolom User Input di tabel (filter User sudah ada); FE BD/transfer
+belum pakai backend baru ini (CR + CD sudah).
 
 
 ---
@@ -1509,3 +1536,97 @@ Frontend (`components/pages/currencies-page.tsx` + `lib/api/currencies.ts`) tida
 berubah — list dibaca dari API `GET /api/erp/currencies`.
 
 ---
+
+## § Kustomisasi Grid — layout grid transaksi (2026-05-31)
+
+Menu **Kustomisasi Grid** (`/admin/grid-customization`, Administrator → System)
+= editor layout kolom grid detail transaksi (paritas layar "Grid" legacy MyERP+).
+Kiri = pohon modul→transaksi; kanan = editor kolom. Atas keputusan user:
+full-stack + wire ke grid live, atribut simplified, pohon semua modul, dukung
+kolom kustom.
+
+**DB (domain `sys`):** `sys_transaction_types` (katalog penggerak pohon: code,
+name, module_key/label, group_label, line_table, sort_order) + `sys_transaction_grid_columns`
+(per transaksi: sort_order, header_text, data_field, width, is_visible/required/editable,
+kind STANDARD|CUSTOM, data_type TEXT|NUMBER|DATE|LOOKUP, lookup_source). Kolom kustom
+disimpan di **`fin_cash_bank_lines.custom_fields` (JSONB)** keyed by data_field.
+Migrasi `20260531_005_erp_grid_customization` (additive, 0 DROP). Enum disimpan
+sebagai TEXT + validasi app (migrasi ringan).
+
+**Backend:** modul `erp-sys-transaction-grids` (guard `ErpJwtAuthGuard`):
+`GET /erp/transaction-grids/types`, `GET/PUT /:code/columns` (PUT = replace penuh).
+`CashBankLineDto`/`mapLine` + enrich pass-through `customFields`.
+
+**Frontend:** `grid-customization-page.tsx` + `-tree.tsx` + `-columns.tsx`;
+API client `lib/api/transaction-grids.ts`. Grid kas/bank (`cash-bank-lines.tsx`)
+**config-driven**: prop `columns` eksplisit atau self-fetch via `transactionCode`
+(mis. `"FIN.CR"`), fallback `defaultGridCols(showFx)` bila API kosong/404. Cell
+render by `dataType`; label lookup non-akun di-resolve dari master kecil (cache
+modul). `SearchSelect` dapat prop reusable `autoFocus`/`initialQuery`/`onPick`.
+
+**Catatan:** wiring `transactionCode` ke form CR/CD ada di file refactor cash-bank
+(`cash-bank-transaction-form.tsx` dkk). Seed katalog 29 transaksi (15 modul) +
+kolom default keluarga kas/bank (CR/CD/RM/SM). **Follow-up:** label lookup dimensi
+(costCenter/division/…) di dokumen lama tampil id sampai master ter-resolve;
+modul transaksi non-kas/bank belum punya line_table/wiring.
+
+---
+
+## § Bank Masuk (RM) — twin Kas Masuk + Cara Bayar + Giro (2026-05-31)
+
+Build halaman **Bank Masuk / Bank Receipt** (`/finance/bank-receipts`, legacyCode
+`RM`), meniru layar legacy MyERP+ (amati-tiru-modifikasi).
+
+**Keputusan dengan user:**
+- **Model = twin Kas Masuk**, BUKAN `fin_ar_receipts`. Bank Masuk dibangun di
+  atas modul **shared** `erp-fin-cash-bank-transactions` (sama dgn CR/CD), dengan
+  diskriminator baru `kind=BANK` + `direction=RECEIPT`. Layar legacy "Bank Masuk
+  (RM)" = header + baris kontra CoA + Total, identik Kas Masuk (hanya "Akun Bank
+  [D]" + Cara Bayar + tab Giro) — jadi reuse pola Kas Masuk, bukan layar alokasi
+  AR. Mengoreksi catatan menu-parity yang sempat memetakan RM → `fin_ar_receipts`.
+- **Full parity**: sertakan **Cara Bayar** (enum `ErpPaymentMethod`, default
+  `TRANSFER`) + **tab Giro** yang berfungsi.
+
+**Skema (additive, migrasi `20260531_006_erp_cash_bank_kind_payment_method`, 0 DROP):**
+- Enum baru `ErpCashBankKind { CASH, BANK }`.
+- `fin_cash_bank_transactions` + kolom `kind` (`ErpCashBankKind` NOT NULL default
+  `CASH` → baris CR/CD lama otomatis `CASH`) & `payment_method`
+  (`ErpPaymentMethod` nullable). Index `(kind, direction, status)`.
+- **Doc numbering** di-key per (kind, direction): `BANK_RECEIPT` prefix **RM**
+  (seed `seed-erp.ts` + insert idempotent ke DB live). CR/CD tetap.
+- **Giro tab** = baris giro disimpan sebagai rekor **`fin_giros`** (type
+  `INCOMING`, `source='CASH_BANK_TXN'`, `sourceTransactionId`=id transaksi,
+  status `OUTSTANDING`). Sinkron seperti baris kontra: hard delete + recreate saat
+  update (dokumen masih editable/pre-post → belum ada clearing), soft-delete saat
+  transaksi dihapus. Field per giro: No Giro/Cek, Bank Penerbit, Jatuh Tempo,
+  Nominal, Catatan.
+
+**Posting GL:** tidak berubah — RECEIPT tetap Dr akun bank (header) / Cr baris
+kontra, apa pun Cara Bayar. **Asumsi/ditunda:** nuansa akuntansi giro-belum-cair
+(Dr Giro/Notes Receivable lalu pindah saat clearing) belum dimodelkan; giro di tab
+ini = pencatatan instrumen + dasar untuk modul Receipt Giro Clearing (RGC) ke
+depan. Eskalasi bila perlu posting giro yang berbeda.
+
+**Backend (shared module `erp-fin-cash-bank-transactions`):**
+- DTO create + `kind`/`paymentMethod`/`giros[]` (`CashBankGiroDto`); query DTO
+  + `kind`. `genDocNumber(tx, kind, direction)`. Helper `syncGiros`/`loadGiros`;
+  `one()` melampirkan `giros`. Guard tetap `ErpJwtAuthGuard` (§2.5).
+- Regresi Kas Masuk aman: default `kind=CASH`, jalur CR tak berubah.
+
+**Frontend (adopter §2.3.1 — reuse, jangan fork):**
+- `lib/api/fin-bank-receipts.ts` (reuse tipe shared dari `fin-cash-receipts`,
+  `kind:'BANK'`, + `paymentMethod`/`giros`).
+- `fin-bank-receipts-form.tsx` = **wrapper tipis** atas form shared
+  `cash-bank-transaction-form.tsx` (header/Detail/Info dari sana). Dua hal khas
+  bank di-inject via slot **baru** form shared: **`headerExtra`** (Cara Bayar
+  Select §2.6 → 6 opsi) + **`extraTabs`** (tab Giro = organism reusable
+  `components/organisms/cash-bank-giros.tsx`, dipakai bareng Bank Keluar). Slot
+  additive → CR/CD tak terpengaruh. Model `fin-bank-receipts-form-model.ts`
+  extend `CashBankFormData` + `paymentMethod`/`giros`, reuse mapper shared
+  (`toCashBankPayload`). (Editor giro standalone yang sempat dibuat → dihapus,
+  diganti organism shared agar tak duplikat.)
+- `fin-bank-receipts-page.tsx` (list + router sub-route), reuse filter
+  `CashReceiptFilters` + workflow `cashBankWorkflowActions`. Kolom list +
+  **Cara Bayar**.
+- Routing: daftar `/finance/bank-receipts` di `TRX_FORM_PAGES`
+  (shell-route-renderer) + `ERP_ROUTE_META` (`lib/nav.ts`).

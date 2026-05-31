@@ -219,10 +219,20 @@ lagi state `mode` internal di page. Mekanisme reusable:
 - `pageMeta()` (`lib/nav.ts`) otomatis turunkan breadcrumb sub-route dari base
   meta + crumb `Baru`/`Edit` — tidak perlu daftar `/new`/`/:id` di `ERP_ROUTE_META`.
 
-Adopter pertama = **Kas Masuk** (`fin-cash-receipts-page.tsx`). Page transaksi
-baru: daftar di `TRX_FORM_PAGES`, implement `TrxFormPageProps`, reuse helper —
-**jangan** fork skema URL sendiri. Workflow row-actions (Ajukan/Setujui/…)
-shared di [`lib/fin-cash-bank-workflow.ts`](lib/fin-cash-bank-workflow.ts).
+Adopter = **Kas Masuk** (`fin-cash-receipts-page.tsx`), **Kas Keluar**
+(`fin-cash-disbursements-page.tsx`) & **Bank Masuk** (`fin-bank-receipts-page.tsx`).
+Page transaksi baru: daftar di `TRX_FORM_PAGES`, implement `TrxFormPageProps`,
+reuse helper — **jangan** fork skema URL sendiri. Workflow row-actions
+(Ajukan/Setujui/…) shared di
+[`lib/fin-cash-bank-workflow.ts`](lib/fin-cash-bank-workflow.ts). Form & filter
+CR/CD beda **hanya label + arah** → komponen shared berparameter
+([`cash-bank-transaction-form.tsx`](components/pages/cash-bank-transaction-form.tsx) +
+[`cash-bank-filters.tsx`](components/pages/cash-bank-filters.tsx)); per-direction
+= wrapper tipis (jangan duplikat). **Bank Masuk (RM) = twin Kas Masuk** (kind=BANK):
+wrapper tipis yang oper `headerExtra` (Cara Bayar) + `extraTabs` (Giro,
+organism [`cash-bank-giros.tsx`](components/organisms/cash-bank-giros.tsx)) ke form
+shared; **jangan** fork form. Detail di `DECISIONS.md` § Kas Masuk / Kas Keluar /
+Bank Masuk.
 
 ---
 

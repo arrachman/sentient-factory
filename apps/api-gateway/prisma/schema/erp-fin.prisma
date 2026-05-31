@@ -157,6 +157,8 @@ model ErpFinCashBankTransaction {
   docNumber       String               @unique @map("doc_number")
   autoNumber      String?              @map("auto_number")
   direction       ErpCashBankDirection @map("direction")
+  kind            ErpCashBankKind      @default(CASH) @map("kind") // CASH=Kas (CR/CD) · BANK=Bank (RM/SM)
+  paymentMethod   ErpPaymentMethod?    @map("payment_method") // Cara Bayar (bank txns)
   branchId        BigInt               @map("branch_id") // FK -> md_branches (ErpBranch)
   locationId      BigInt?              @map("location_id") // FK -> md_locations (ErpLocation)
   source          String?              @map("source")
@@ -196,6 +198,7 @@ model ErpFinCashBankTransaction {
   @@index([branchId])
   @@index([partnerId])
   @@index([legacyCode])
+  @@index([kind, direction, status])
   @@map("fin_cash_bank_transactions")
 }
 

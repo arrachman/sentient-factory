@@ -1,17 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsDateString,
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import {
   ErpCashBankDirectionDto,
+  ErpCashBankKindDto,
+  ErpPaymentMethodDto,
   ErpDocumentStatusDto,
 } from './create-cash-bank-transaction.dto';
 
@@ -59,6 +52,16 @@ export class QueryCashBankTransactionDto {
   @IsEnum(ErpCashBankDirectionDto)
   direction?: ErpCashBankDirectionDto;
 
+  @ApiPropertyOptional({ enum: ErpCashBankKindDto, description: 'CASH (Kas) vs BANK (Bank)' })
+  @IsOptional()
+  @IsEnum(ErpCashBankKindDto)
+  kind?: ErpCashBankKindDto;
+
+  @ApiPropertyOptional({ enum: ErpPaymentMethodDto, description: 'Cara Bayar (bank txns)' })
+  @IsOptional()
+  @IsEnum(ErpPaymentMethodDto)
+  paymentMethod?: ErpPaymentMethodDto;
+
   @ApiPropertyOptional({ enum: ErpDocumentStatusDto })
   @IsOptional()
   @IsEnum(ErpDocumentStatusDto)
@@ -77,20 +80,32 @@ export class QueryCashBankTransactionDto {
   @ApiPropertyOptional() @IsOptional() @IsString() branchId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() locationId?: string;
   @ApiPropertyOptional({ description: 'Terima Dari (partner id)' })
-  @IsOptional() @IsString() partnerId?: string;
+  @IsOptional()
+  @IsString()
+  partnerId?: string;
 
   @ApiPropertyOptional({ description: 'No Transaksi >= (range start)' })
-  @IsOptional() @IsString() docNumberFrom?: string;
+  @IsOptional()
+  @IsString()
+  docNumberFrom?: string;
 
   @ApiPropertyOptional({ description: 'No Transaksi <= (range end)' })
-  @IsOptional() @IsString() docNumberTo?: string;
+  @IsOptional()
+  @IsString()
+  docNumberTo?: string;
 
   @ApiPropertyOptional({ description: 'Uraian (description contains)' })
-  @IsOptional() @IsString() description?: string;
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @ApiPropertyOptional({ description: 'Catatan (notes contains)' })
-  @IsOptional() @IsString() notes?: string;
+  @IsOptional()
+  @IsString()
+  notes?: string;
 
   @ApiPropertyOptional({ description: 'User input (createdById)' })
-  @IsOptional() @IsString() createdById?: string;
+  @IsOptional()
+  @IsString()
+  createdById?: string;
 }

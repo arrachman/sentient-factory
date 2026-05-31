@@ -21,6 +21,56 @@ export enum ErpCashBankDirectionDto {
   DISBURSEMENT = 'DISBURSEMENT',
 }
 
+/** Cash (Kas, CR/CD) vs Bank (Bank, RM/SM) — mirrors DB ErpCashBankKind. */
+export enum ErpCashBankKindDto {
+  CASH = 'CASH',
+  BANK = 'BANK',
+}
+
+/** Cara Bayar — mirrors DB ErpPaymentMethod. */
+export enum ErpPaymentMethodDto {
+  CASH = 'CASH',
+  TRANSFER = 'TRANSFER',
+  GIRO = 'GIRO',
+  CHEQUE = 'CHEQUE',
+  CARD = 'CARD',
+  OTHER = 'OTHER',
+}
+
+/**
+ * Giro instrument captured alongside a bank transaction (Giro tab). Persisted
+ * as fin_giros rows linked via sourceTransactionId; the giro type is derived
+ * from the transaction direction (RECEIPT → INCOMING).
+ */
+export class CashBankGiroDto {
+  @ApiProperty({ example: 'BG-0012345', description: 'Nomor giro/cek' })
+  @IsString()
+  @IsNotEmpty()
+  giroNumber!: string;
+
+  @ApiPropertyOptional({ description: 'Bank penerbit' })
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() bankAccountNo?: string;
+
+  @ApiProperty({ example: '500000.0000' })
+  @IsNumberString()
+  amount!: string;
+
+  @ApiProperty({ example: '2026-06-20', description: 'Tanggal jatuh tempo' })
+  @IsDateString()
+  dueDate!: string;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  @Min(1)
+  lineNo!: number;
+}
+
 /** Full Senti approval state machine (§2.7) — mirrors DB ErpDocumentStatus. */
 export enum ErpDocumentStatusDto {
   DRAFT = 'DRAFT',
@@ -63,7 +113,9 @@ export class CashBankLineDto {
   @ApiPropertyOptional() @IsOptional() @IsString() subdivisionId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
 
-  @ApiPropertyOptional({ description: 'User-defined grid column values (Kustomisasi Grid), keyed by dataField' })
+  @ApiPropertyOptional({
+    description: 'User-defined grid column values (Kustomisasi Grid), keyed by dataField',
+  })
   @IsOptional()
   @IsObject()
   customFields?: Record<string, unknown>;
@@ -75,12 +127,17 @@ export class CashBankLineDto {
 }
 
 export class CreateCashBankTransactionDto {
-  @ApiPropertyOptional({ description: 'Manual doc number; omit (or set auto=true) to server-generate' })
+  @ApiPropertyOptional({
+    description: 'Manual doc number; omit (or set auto=true) to server-generate',
+  })
   @IsOptional()
   @IsString()
   docNumber?: string;
 
-  @ApiPropertyOptional({ description: 'Auto-generate docNumber via sys_document_numberings', default: true })
+  @ApiPropertyOptional({
+    description: 'Auto-generate docNumber via sys_document_numberings',
+    default: true,
+  })
   @IsOptional()
   @IsBoolean()
   auto?: boolean;
@@ -88,6 +145,16 @@ export class CreateCashBankTransactionDto {
   @ApiProperty({ enum: ErpCashBankDirectionDto, example: ErpCashBankDirectionDto.RECEIPT })
   @IsEnum(ErpCashBankDirectionDto)
   direction!: ErpCashBankDirectionDto;
+
+  @ApiPropertyOptional({ enum: ErpCashBankKindDto, default: ErpCashBankKindDto.CASH })
+  @IsOptional()
+  @IsEnum(ErpCashBankKindDto)
+  kind?: ErpCashBankKindDto;
+
+  @ApiPropertyOptional({ enum: ErpPaymentMethodDto, description: 'Cara Bayar (bank txns)' })
+  @IsOptional()
+  @IsEnum(ErpPaymentMethodDto)
+  paymentMethod?: ErpPaymentMethodDto;
 
   @ApiProperty({ example: '1', description: 'Branch (md_branches) id — Cabang' })
   @IsString()
@@ -105,12 +172,17 @@ export class CreateCashBankTransactionDto {
   @IsDateString()
   transactionDate!: string;
 
-  @ApiPropertyOptional({ description: 'Fiscal period id; derived from transactionDate when omitted' })
+  @ApiPropertyOptional({
+    description: 'Fiscal period id; derived from transactionDate when omitted',
+  })
   @IsOptional()
   @IsString()
   fiscalPeriodId?: string;
 
-  @ApiProperty({ example: '5', description: 'Cash/bank GL account (md_accounts) id — Akun Kas [D]' })
+  @ApiProperty({
+    example: '5',
+    description: 'Cash/bank GL account (md_accounts) id — Akun Kas [D]',
+  })
   @IsString()
   @IsNotEmpty()
   bankAccountId!: string;
@@ -156,4 +228,11 @@ export class CreateCashBankTransactionDto {
   @ValidateNested({ each: true })
   @Type(() => CashBankLineDto)
   lines!: CashBankLineDto[];
+
+  @ApiPropertyOptional({ type: [CashBankGiroDto], description: 'Giro tab instruments (bank txns)' })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CashBankGiroDto)
+  giros?: CashBankGiroDto[];
 }

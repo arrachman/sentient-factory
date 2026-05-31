@@ -281,6 +281,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/finance/receipt-memos': { group: 'Finance', title: 'Receipt Memo', icon: 'calculator' },
   '/finance/send-memos': { group: 'Finance', title: 'Send Memo', icon: 'calculator' },
   '/finance/cash-receipts': { group: 'Finance', title: 'Cash Receipt', icon: 'calculator' },
+  '/finance/bank-receipts': { group: 'Finance', title: 'Bank Receipt', icon: 'calculator' },
   '/finance/cash-disbursements': { group: 'Finance', title: 'Cash Disbursement', icon: 'calculator' },
   '/finance/bank-disbursements': { group: 'Finance', title: 'Bank Disbursement', icon: 'calculator' },
   '/finance/cashbank-transfers': { group: 'Finance', title: 'Cash/Bank Transfer', icon: 'calculator' },

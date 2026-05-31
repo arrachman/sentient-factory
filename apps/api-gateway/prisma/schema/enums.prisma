@@ -127,6 +127,13 @@ enum ErpCashBankDirection {
   DISBURSEMENT
 }
 
+// Discriminates cash transactions (Kas Masuk/Keluar, CR/CD) from bank ones
+// (Bank Masuk/Keluar, RM/SM) on the shared fin_cash_bank_transactions table.
+enum ErpCashBankKind {
+  CASH
+  BANK
+}
+
 enum ErpPaymentMethod {
   CASH
   TRANSFER
