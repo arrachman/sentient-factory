@@ -77,6 +77,13 @@ export function ErpCashReceiptsPage({
   const [form, setForm] = React.useState<CashReceiptFormData>(defaultCashReceiptForm);
   const [saving, setSaving] = React.useState(false);
 
+  // In edit mode the form is only ready once the loaded record matches the
+  // route id — mounting CashReceiptForm before then would let its currency
+  // effect clobber the fetched record with stale defaults (race).
+  const formReady =
+    formMode === 'create' ||
+    (formMode === 'edit' && String(form.id ?? '') === String(recordId ?? ''));
+
   const goList = React.useCallback(() => onNavigate?.(CR_BASE), [onNavigate]);
 
   const [search, setSearch] = React.useState('');
@@ -142,13 +149,17 @@ export function ErpCashReceiptsPage({
       let alive = true;
       getCashReceipt(recordId)
         .then((full) => alive && setForm(fromCashReceipt(full)))
-        .catch(() => alive && notify('Gagal memuat Kas Masuk', 'danger'));
+        .catch(() => {
+          if (!alive) return;
+          notify('Gagal memuat Kas Masuk', 'danger');
+          goList();
+        });
       return () => {
         alive = false;
       };
     }
     return undefined;
-  }, [formMode, recordId]);
+  }, [formMode, recordId, goList]);
   React.useEffect(() => loadForm(), [loadForm]);
 
   const persist = async (closeAfter: boolean, newAfter = false) => {
@@ -241,14 +252,18 @@ export function ErpCashReceiptsPage({
           </h1>
         </div>
         <div className="page-body overflow-auto p-4">
-          <CashReceiptForm
-            data={form}
-            onChange={setForm}
-            saving={saving}
-            onSave={() => persist(true)}
-            onSaveNew={() => persist(false, true)}
-            onReset={loadForm}
-          />
+          {formReady ? (
+            <CashReceiptForm
+              data={form}
+              onChange={setForm}
+              saving={saving}
+              onSave={() => persist(true)}
+              onSaveNew={() => persist(false, true)}
+              onReset={loadForm}
+            />
+          ) : (
+            <div className="p-8 text-center text-muted">Memuat…</div>
+          )}
         </div>
       </div>
     );
