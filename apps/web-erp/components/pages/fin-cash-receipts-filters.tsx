@@ -1,14 +1,16 @@
 'use client';
 
 /**
- * Kas Masuk (CR) — advanced filter panel (paritas legacy MyERP+).
- * Atomic tier: Page sub-part. Fields: No Transaksi (range), Status, Tanggal
- * (range), Terima Dari, Lokasi, Cabang, Uraian, Catatan, User.
+ * Kas Masuk (CR) — slim filter bar (enterprise/minimalist).
+ * Inline quick filters (Status, Tanggal) apply live; everything else lives in
+ * a right-side filter drawer (staged draft → "Terapkan"). Active advanced
+ * filters surface as removable chips below the bar.
+ * Atomic tier: Page sub-part.
  */
 
 import * as React from 'react';
-import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
+import { Icon } from '@/components/ui/icons';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import {
   Select,
   SelectContent,
@@ -16,13 +18,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { SearchSelect } from '@/components/molecules/search-select';
 import {
-  loadPartnerOptions,
-  loadLocationOptions,
-  loadBranchOptions,
-} from './items-form-lookups';
-import { listUsers } from '@/lib/api/users';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerBody,
+  DrawerFooter,
+} from '@/components/organisms/drawer';
+import { CrFilterFields, STATUS_OPTIONS } from './fin-cash-receipts-filter-fields';
 
 export interface CrFilters {
   noFrom: string;
@@ -62,29 +66,45 @@ export const hasActiveCrFilters = (f: CrFilters): boolean =>
     f.partnerId || f.locationId || f.branchId || f.uraian || f.catatan || f.userId
   );
 
-const STATUS_OPTIONS = [
-  { label: 'Semua', value: '' },
-  { label: 'Draft', value: 'DRAFT' },
-  { label: 'Need Approve', value: 'NEED_APPROVE' },
-  { label: 'Approved', value: 'APPROVED' },
-  { label: 'Rejected', value: 'REJECTED' },
-  { label: 'Posted', value: 'POSTED' },
-];
+interface CrChip {
+  key: string;
+  label: string;
+  clear: Partial<CrFilters>;
+}
 
-const loadUserOptions = async (search: string, page: number, limit: number) => {
-  const res = await listUsers({ search: search || undefined, page, limit });
-  return {
-    data: res.data.map((u) => ({ value: u.id, label: u.fullName, code: u.username })),
-    total: res.meta.total,
-  };
-};
+/** Active *advanced* filters (Status & Tanggal stay in the inline bar). */
+function advancedChips(f: CrFilters): CrChip[] {
+  const out: CrChip[] = [];
+  if (f.noFrom || f.noTo)
+    out.push({ key: 'no', label: `No: ${f.noFrom || '…'} – ${f.noTo || '…'}`, clear: { noFrom: '', noTo: '' } });
+  if (f.partnerId)
+    out.push({ key: 'partner', label: `Terima Dari: ${f.partnerLabel || f.partnerId}`, clear: { partnerId: '', partnerLabel: undefined } });
+  if (f.locationId)
+    out.push({ key: 'loc', label: `Lokasi: ${f.locationLabel || f.locationId}`, clear: { locationId: '', locationLabel: undefined } });
+  if (f.branchId)
+    out.push({ key: 'branch', label: `Cabang: ${f.branchLabel || f.branchId}`, clear: { branchId: '', branchLabel: undefined } });
+  if (f.uraian)
+    out.push({ key: 'uraian', label: `Uraian: ${f.uraian}`, clear: { uraian: '' } });
+  if (f.catatan)
+    out.push({ key: 'catatan', label: `Catatan: ${f.catatan}`, clear: { catatan: '' } });
+  if (f.userId)
+    out.push({ key: 'user', label: `User: ${f.userLabel || f.userId}`, clear: { userId: '', userLabel: undefined } });
+  return out;
+}
 
-function Field({ label, children, wide }: { label: string; children: React.ReactNode; wide?: boolean }) {
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
-    <label className={`flex flex-col gap-1 ${wide ? 'md:col-span-2' : ''}`}>
-      <span className="text-xs text-muted-foreground">{label}</span>
-      {children}
-    </label>
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 pl-2.5 pr-1 py-0.5 text-xs text-foreground">
+      <span className="truncate max-w-[220px]">{label}</span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:bg-[var(--panel-hover)] hover:text-foreground"
+        title="Hapus filter"
+      >
+        <Icon name="x" size={10} />
+      </button>
+    </span>
   );
 }
 
@@ -95,80 +115,92 @@ export function CashReceiptFilters({
   value: CrFilters;
   onChange: (f: CrFilters) => void;
 }) {
-  const set = (p: Partial<CrFilters>) => onChange({ ...value, ...p });
+  const [open, setOpen] = React.useState(false);
+  const [draft, setDraft] = React.useState<CrFilters>(value);
+
+  const openDrawer = () => {
+    setDraft(value);
+    setOpen(true);
+  };
+  const apply = () => {
+    onChange(draft);
+    setOpen(false);
+  };
+
+  const chips = advancedChips(value);
+  const advCount = chips.length;
+  const anyActive = hasActiveCrFilters(value);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-3 rounded-lg border border-border bg-secondary/30 p-3 mb-3">
-      <Field label="No Transaksi">
-        <div className="flex items-center gap-1">
-          <Input value={value.noFrom} onChange={(e) => set({ noFrom: e.target.value })} placeholder="dari" />
-          <span className="text-xs text-muted-foreground">s.d</span>
-          <Input value={value.noTo} onChange={(e) => set({ noTo: e.target.value })} placeholder="s.d" />
+    <div className="mb-3 flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="w-[150px]">
+          <Select value={value.status || '_all'} onValueChange={(v) => onChange({ ...value, status: v === '_all' ? '' : v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map((o) => (
+                <SelectItem key={o.value || '_all'} value={o.value || '_all'}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </Field>
-      <Field label="Status">
-        <Select value={value.status || '_all'} onValueChange={(v) => set({ status: v === '_all' ? '' : v })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((o) => (
-              <SelectItem key={o.value || '_all'} value={o.value || '_all'}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
-      <Field label="Tanggal">
-        <div className="flex items-center gap-1">
-          <DateInput value={value.dateFrom} onChange={(v) => set({ dateFrom: v })} />
-          <span className="text-xs text-muted-foreground">-</span>
-          <DateInput value={value.dateTo} onChange={(v) => set({ dateTo: v })} />
+
+        <div className="w-[250px]">
+          <DateRangePicker
+            from={value.dateFrom}
+            to={value.dateTo}
+            onChangeFrom={(v) => onChange({ ...value, dateFrom: v })}
+            onChangeTo={(v) => onChange({ ...value, dateTo: v })}
+          />
         </div>
-      </Field>
-      <Field label="Terima Dari">
-        <SearchSelect
-          placeholder="Semua partner"
-          value={value.partnerId}
-          initialLabel={value.partnerLabel}
-          onValueChange={(v) => set({ partnerId: v })}
-          loadOptions={loadPartnerOptions}
-        />
-      </Field>
-      <Field label="Lokasi">
-        <SearchSelect
-          placeholder="Semua lokasi"
-          value={value.locationId}
-          initialLabel={value.locationLabel}
-          onValueChange={(v) => set({ locationId: v })}
-          loadOptions={loadLocationOptions}
-        />
-      </Field>
-      <Field label="Cabang">
-        <SearchSelect
-          placeholder="Semua cabang"
-          value={value.branchId}
-          initialLabel={value.branchLabel}
-          onValueChange={(v) => set({ branchId: v })}
-          loadOptions={loadBranchOptions}
-        />
-      </Field>
-      <Field label="Uraian" wide>
-        <Input value={value.uraian} onChange={(e) => set({ uraian: e.target.value })} placeholder="Cari uraian…" />
-      </Field>
-      <Field label="Catatan" wide>
-        <Input value={value.catatan} onChange={(e) => set({ catatan: e.target.value })} placeholder="Cari catatan…" />
-      </Field>
-      <Field label="User">
-        <SearchSelect
-          placeholder="Semua user"
-          value={value.userId}
-          initialLabel={value.userLabel}
-          onValueChange={(v) => set({ userId: v })}
-          loadOptions={loadUserOptions}
-        />
-      </Field>
+
+        <button type="button" className="btn ghost sm" onClick={openDrawer}>
+          <Icon name="filter" size={12} /> Filter
+          {advCount > 0 && (
+            <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+              {advCount}
+            </span>
+          )}
+        </button>
+
+        {anyActive && (
+          <button type="button" className="btn ghost sm" onClick={() => onChange(emptyCrFilters)}>
+            <Icon name="x" size={11} /> Reset
+          </button>
+        )}
+      </div>
+
+      {chips.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {chips.map((c) => (
+            <ActiveChip key={c.key} label={c.label} onRemove={() => onChange({ ...value, ...c.clear })} />
+          ))}
+        </div>
+      )}
+
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <Icon name="filter" size={14} />
+            <DrawerTitle>Filter Kas Masuk</DrawerTitle>
+          </DrawerHeader>
+          <DrawerBody>
+            <CrFilterFields value={draft} onChange={setDraft} />
+          </DrawerBody>
+          <DrawerFooter>
+            <button type="button" className="btn ghost sm" onClick={() => setDraft(emptyCrFilters)}>
+              Atur ulang
+            </button>
+            <button type="button" className="btn primary sm" onClick={apply}>
+              Terapkan
+            </button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

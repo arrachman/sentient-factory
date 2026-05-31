@@ -1380,3 +1380,35 @@ MyERP+ yang menaruh info dokumen di kanan-atas.
 Tanggal/No Transaksi/Kurs di kiri atau acak. Field di luar daftar → masukkan ke
 kolom yang paling sesuai (identitas=kiri, dimensi=tengah, dokumen=kanan).
 Referensi implementasi: [`fin-cash-receipts-form.tsx`](components/pages/fin-cash-receipts-form.tsx).
+
+## §2.40 Filter list = slim bar + drawer kanan (enterprise/minimalis) (2026-05-31)
+
+Pola filter baku untuk halaman list transaksi (lahir dari Kas Masuk/CR, modul
+fin lain mengikuti). Menggantikan grid 9-field yang selalu terbuka (noisy).
+Tiga lapis:
+
+1. **Slim bar inline** (selalu tampil): quick filter **Status** + **Tanggal**
+   (`DateRangePicker`) yang **apply live**, tombol **Filter** (ikon `filter`)
+   dengan badge angka = jumlah filter lanjutan aktif, dan tombol **Reset**
+   (tampil hanya saat ada filter aktif; clear semua).
+2. **Drawer kanan** (`components/organisms/drawer.tsx`, slide-over Radix Dialog):
+   memuat **semua** field (No Transaksi range, Status, Tanggal, Terima Dari,
+   Lokasi, Cabang, Uraian, Catatan, User). Edit **draft terstaging** — tidak
+   menyentuh list sampai **"Terapkan"**; **"Atur ulang"** clear draft. Quick
+   filter di bar (Status/Tanggal) tetap live karena di luar drawer.
+3. **Chip aktif** di bawah bar: hanya filter **lanjutan** (bukan Status/Tanggal
+   yang sudah tampil inline) sebagai pill removable; klik ✕ = clear field itu
+   **live**.
+
+Aturan turunan:
+- **Drawer** = organism reusable baru (`Drawer`/`DrawerContent`/`DrawerHeader`/
+  `DrawerBody`/`DrawerFooter`, side `right|left`, size `sm|md|lg`). Mirror
+  `Modal` tapi slide dari tepi. Pakai ini untuk panel filter & side surface
+  lain; jangan rakit slide-over ad-hoc.
+- **Label SearchSelect untuk chip**: `onValueChange` hanya kasih value, jadi
+  label di-cache via wrapper `withLabelCache(loader)` (module-level
+  `LABEL_CACHE`) lalu disimpan ke `*Label` di `CrFilters` saat dipilih —
+  feed chip + `initialLabel`. Jangan ubah molecule `SearchSelect`.
+- File: [`fin-cash-receipts-filters.tsx`](components/pages/fin-cash-receipts-filters.tsx)
+  (bar + chip + drawer orchestrator) + [`fin-cash-receipts-filter-fields.tsx`](components/pages/fin-cash-receipts-filter-fields.tsx)
+  (body form drawer + STATUS_OPTIONS + label cache). Split demi batas 400 baris.

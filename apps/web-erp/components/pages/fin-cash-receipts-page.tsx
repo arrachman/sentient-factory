@@ -26,7 +26,6 @@ import {
 import {
   CashReceiptFilters,
   emptyCrFilters,
-  hasActiveCrFilters,
   type CrFilters,
 } from './fin-cash-receipts-filters';
 import {
@@ -287,16 +286,7 @@ export function ErpCashReceiptsPage() {
         onOpen: (i) => rows[i] && openEdit(rows[i]),
       }}
     >
-      <div className="flex items-start gap-2">
-        <div className="flex-1">
-          <CashReceiptFilters value={filters} onChange={setFilters} />
-        </div>
-        {hasActiveCrFilters(filters) && (
-          <button className="btn ghost sm mt-6" onClick={() => setFilters(emptyCrFilters)}>
-            <Icon name="x" size={11} /> Reset filter
-          </button>
-        )}
-      </div>
+      <CashReceiptFilters value={filters} onChange={setFilters} />
       {selected.size > 0 && (
         <div className="bulk-bar flex items-center gap-3 px-3 py-2 mb-2 rounded-md bg-secondary text-sm">
           <strong>{selected.size}</strong> baris dipilih
