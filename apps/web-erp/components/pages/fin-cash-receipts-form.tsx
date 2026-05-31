@@ -12,7 +12,6 @@ import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Badge } from '@/components/ui/badge';
-import { BooleanRadio } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -287,21 +286,24 @@ export function CashReceiptForm({
 
         <div className="flex flex-col gap-3">
           <Field label="No Transaksi">
-            <Input
-              value={data.auto ? '(otomatis saat simpan)' : data.docNumber}
-              placeholder="No transaksi"
-              disabled={data.auto || locked}
-              onChange={(e) => set({ docNumber: e.target.value })}
-            />
-          </Field>
-          <Field label="Penomoran">
-            <BooleanRadio
-              value={data.auto}
-              disabled={locked}
-              trueLabel="Auto"
-              falseLabel="Manual"
-              onValueChange={(v) => set({ auto: v })}
-            />
+            <div className="flex items-center gap-2">
+              <Input
+                className="flex-1 min-w-0"
+                value={data.auto ? '(otomatis saat simpan)' : data.docNumber}
+                placeholder="No transaksi"
+                disabled={data.auto || locked}
+                onChange={(e) => set({ docNumber: e.target.value })}
+              />
+              <label className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={data.auto}
+                  disabled={locked}
+                  onChange={(e) => set({ auto: e.target.checked })}
+                />
+                Auto
+              </label>
+            </div>
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Uang" required>
