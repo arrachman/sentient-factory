@@ -1,0 +1,421 @@
+/// Single-row config table untuk clinic operational settings.
+/// Lihat ADR 007 (pricing) + ADR 008 (booking constraints) untuk semantic.
+model ClinicSettings {
+  id                       Int      @id @default(1)
+  clinicName               String   @default("Althea Psychology") @map("clinic_name")
+  address                  String?  @db.Text
+  timezone                 String   @default("Asia/Jakarta")
+  currency                 String   @default("IDR")
+  // Slot operasional klinik — array jam terdefinisi (booking harus pas dengan
+  // salah satu slot). Ganti `operatingHours` lama (per-day open/close window)
+  // supaya satu source of truth.
+  // [{ start: "08:30", end: "10:00", label: "Pagi 1" }, ...]
+  slotsOfDay               Json     @default("[]") @map("slots_of_day")
+  // Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: Minggu tutup.
+  closedDayOfWeek          Json     @default("[0]") @map("closed_day_of_week")
+  holidays                 Json     @default("[]") // list of ISO date strings (tanggal libur ad-hoc)
+  // Pricing & payment (ADR 007)
+  taxEnabled               Boolean  @default(true) @map("tax_enabled")
+  taxPercentage            Decimal  @default(11.00) @map("tax_percentage") @db.Decimal(5, 2)
+  dpPercentage             Decimal  @default(50.00) @map("dp_percentage") @db.Decimal(5, 2)
+  // WA settings (ADR 004)
+  waSendEnabled            Boolean  @default(false) @map("wa_send_enabled")
+  waCountryCode            String   @default("+62") @map("wa_country_code")
+  waSenderNumber           String   @default("") @map("wa_sender_number")
+  // Active Fonnte device token (per-device send token). Bila null → fallback ke env FONNTE_API_TOKEN.
+  // Di-set via flow pairing di /clinic/settings/wa-devices/activate.
+  waActiveDeviceToken      String?  @map("wa_active_device_token")
+  // WA delivery & retry
+  waRetryCount             Int      @default(3) @map("wa_retry_count")
+  waRetryDelayMinutes      Int      @default(5) @map("wa_retry_delay_minutes")
+  waSendWindowStart        String   @default("07:00") @map("wa_send_window_start")
+  waSendWindowEnd          String   @default("21:00") @map("wa_send_window_end")
+  notifFailedSendEmail     Boolean  @default(true) @map("notif_failed_send_email")
+  // Email
+  emailInvoiceAfterPayment Boolean  @default(true) @map("email_invoice_after_payment")
+  emailWeeklyRecap         Boolean  @default(true) @map("email_weekly_recap")
+  emailMonthlyPsikolog     Boolean  @default(false) @map("email_monthly_psikolog")
+  // Notifikasi — jam kirim scheduler & delay setting. Recipient routing (klien/psikolog)
+  // di-pegang oleh ClinicWaTemplate.recipients, bukan kolom di sini.
+  notifH1SendTime          String   @default("08:00") @map("notif_h1_send_time")
+  notifFollowupDelayHours  Int      @default(3) @map("notif_followup_delay_hours")
+  notifFeedbackSendTime    String   @default("08:00") @map("notif_feedback_send_time")
+  // Audit fields
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy                Int?     @map("created_by")
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy                Int?     @map("updated_by")
+
+  @@map("clinic_settings")
+}
+
+/// Profile extension untuk user dengan role `clinic-psikolog`.
+/// 1-to-1 dengan User (m0_users). User table tetap source of truth untuk auth.
+model ClinicPsikologProfile {
+  id                 Int       @id @default(autoincrement())
+  userId             Int       @unique @map("user_id")
+  title              String? // e.g., "M.Psi", "Psikolog"
+  specialty          String[] // ["klinis_dewasa", "anak_remaja", "pasangan"]
+  color              String? // hex code untuk avatar/badge (e.g., "#5b8a66")
+  license            String? // SIPP nomor (Surat Izin Praktik Psikolog)
+  defaultSlots       Int       @default(4) @map("default_slots") // max sesi per hari (kuota)
+  // Jadwal mingguan psikolog. Format:
+  //   { "monday": { "isOpen": true, "slotIndices"?: [0,1,2] }, ..., "sunday": { "isOpen": false } }
+  // Empty {} = belum set → admin tidak bisa booking psikolog ini.
+  // slotIndices opsional (kalau tidak ada → semua slot di slotsOfDay tersedia di hari itu).
+  weeklyAvailability Json      @default("{}") @map("weekly_availability")
+  bio                String?   @db.Text
+  isActive           Boolean   @default(true) @map("is_active")
+  // Audit fields
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy          Int?      @map("created_by")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy          Int?      @map("updated_by")
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy          Int?      @map("deleted_by")
+
+  user          User                         @relation(fields: [userId], references: [id])
+  dateOverrides ClinicPsikologDateOverride[]
+
+  @@index([isActive])
+  @@map("clinic_psikolog_profile")
+}
+
+/// Override jadwal psikolog per tanggal spesifik (mengganti weeklyAvailability
+/// untuk tanggal tsb). Use case:
+///   - Cuti/leave (isOpen=false di tanggal yang biasanya kerja)
+///   - Makeup session (isOpen=true di tanggal yang biasanya libur)
+///   - Reduced availability (slotIndices subset di tanggal tsb)
+///
+/// Lookup: PRIORITAS override > weeklyAvailability. Kalau ada row untuk
+/// (psikologUserId, date) → pakai itu; kalau tidak → fallback weekly.
+model ClinicPsikologDateOverride {
+  id             Int      @id @default(autoincrement())
+  psikologUserId Int      @map("psikolog_user_id")
+  date           DateTime @db.Date // tanggal spesifik (bukan datetime)
+  isOpen         Boolean  @map("is_open")
+  // slotIndices opsional. null/undefined → kalau isOpen=true berarti semua slot.
+  slotIndices    Json?    @map("slot_indices")
+  reason         String? // optional note: "cuti tahunan", "makeup", dll
+  // Audit
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?     @map("created_by")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy      Int?     @map("updated_by")
+
+  profile ClinicPsikologProfile @relation(fields: [psikologUserId], references: [userId], onDelete: Cascade)
+
+  @@unique([psikologUserId, date])
+  @@index([date])
+  @@map("clinic_psikolog_date_override")
+}
+
+/// Service catalog — konseling/terapi/tes types.
+/// Lihat ADR 007 (pricing model).
+model ClinicService {
+  id                  Int       @id @default(autoincrement())
+  name                String
+  category            String // 'konseling' | 'terapi' | 'tes'
+  sessionCount        Int       @default(1) @map("session_count")
+  durationMinutes     Int       @map("duration_minutes")
+  basePrice           Decimal   @map("base_price") @db.Decimal(12, 2)
+  description         String?   @db.Text
+  isActive            Boolean   @default(true) @map("is_active")
+  // Override range waktu slot per-layanan. Identitas slot (jumlah, label,
+  // urutan, index) TETAP dari ClinicSettings.slotsOfDay — di sini hanya
+  // simpan slot yang start/end-nya digeser untuk layanan ini.
+  // Kosong [] → layanan pakai waktu slot global apa adanya.
+  // [{ index: 0, start: "08:00", end: "10:00" }, ...]
+  slotOverrides       Json      @default("[]") @map("slot_overrides")
+  // Index slot global yang dinonaktifkan untuk layanan ini (mis. layanan
+  // hanya dipakai 4 dari 6 slot). Booking di slot dengan index di list
+  // ini ditolak (assertSlotMatch). Booking wizard juga hide slot tersebut.
+  // [0, 5] artinya slot pertama & keenam non-aktif untuk layanan ini.
+  disabledSlotIndices Json      @default("[]") @map("disabled_slot_indices")
+  // Audit fields
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy           Int?      @map("created_by")
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy           Int?      @map("updated_by")
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy           Int?      @map("deleted_by")
+
+  bookings  ClinicBooking[]
+  psikologs ClinicPsikologService[]
+  clients   ClinicClientService[]
+
+  @@index([category, isActive])
+  @@map("clinic_service")
+}
+
+/// Junction table psikolog ↔ service.
+///
+/// Default behavior:
+///   - Psikolog TANPA entry di sini → handle semua service (legacy / new psikolog)
+///   - Psikolog DENGAN entry → hanya handle service yang di-list
+///
+/// Dipakai booking wizard untuk filter psikolog by service yang di-pick.
+model ClinicPsikologService {
+  id             Int      @id @default(autoincrement())
+  psikologUserId Int      @map("psikolog_user_id")
+  serviceId      Int      @map("service_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?     @map("created_by")
+
+  psikolog User          @relation("PsikologServices", fields: [psikologUserId], references: [id], onDelete: Cascade)
+  service  ClinicService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([psikologUserId, serviceId])
+  @@index([serviceId])
+  @@index([psikologUserId])
+  @@map("clinic_psikolog_service")
+}
+
+/// Physical/virtual rooms tempat sesi berlangsung.
+/// 11 rooms per PRD: konseling (Sky/Sage/Forest/Sunset/Mint), anak (Terapi 1-3 + Playground), Tes, Seminar.
+model ClinicRoom {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  type        String // 'konseling' | 'anak' | 'tes' | 'seminar'
+  capacity    Int       @default(1)
+  /// Daftar fasilitas terstruktur (mis. ["Sofa","Meja","AC","Tisu"]). Dipakai
+  /// RoomDetailPanel & booking wizard. Empty array → UI fallback ke default
+  /// per type. Diperkenalkan setelah description (legacy, dipakai sebagai
+  /// catatan freeform admin).
+  facilities  String[]  @default([])
+  /// Catatan freeform admin (mis. "AC service 2026-02-01"). Sebelumnya
+  /// juga dipakai sebagai comma-separated facilities — backfilled ke
+  /// `facilities` di migration, sekarang murni notes.
+  description String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  // Audit fields
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy   Int?      @map("created_by")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy   Int?      @map("updated_by")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy   Int?      @map("deleted_by")
+
+  bookings ClinicBooking[]
+
+  @@index([type, isActive])
+  @@map("clinic_room")
+}
+
+/// Pasien (klien klinik). Standalone entity — TIDAK login ke app, hanya recipient WA notification.
+/// See ADR 003.
+model ClinicClient {
+  id                   Int       @id @default(autoincrement())
+  name                 String
+  gender               String // 'L' | 'P'
+  age                  Int?
+  category             String? // 'dewasa' | 'remaja' | 'anak' | 'pasangan' | 'keluarga'
+  phoneWa              String    @map("phone_wa")
+  medicalRecordNumber  String?   @unique @map("medical_record_number")
+  preferredServiceType String?   @map("preferred_service_type")
+  email                String?
+  address              String?   @db.Text
+  notes                String?   @db.Text
+  waOptedOut           Boolean   @default(false) @map("wa_opted_out")
+  isActive             Boolean   @default(true) @map("is_active")
+  // Audit fields
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy            Int?      @map("created_by")
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy            Int?      @map("updated_by")
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy            Int?      @map("deleted_by")
+
+  bookings ClinicBooking[]
+  services ClinicClientService[]
+
+  @@index([phoneWa])
+  @@index([name])
+  @@index([isActive])
+  @@map("clinic_client")
+}
+
+/// Junction table klien ↔ service.
+///
+/// Klien bisa terdaftar di banyak layanan (mis. konseling individu + tes psikologi).
+/// Field `clinic_client.preferred_service_type` (single-name varchar) tetap ada untuk
+/// backward compat & kode legacy yang baca nama layanan utama — auto-sync ke nama
+/// service pertama (urut by serviceId asc) saat create/update.
+model ClinicClientService {
+  id        Int      @id @default(autoincrement())
+  clientId  Int      @map("client_id")
+  serviceId Int      @map("service_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy Int?     @map("created_by")
+
+  client  ClinicClient  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  service ClinicService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, serviceId])
+  @@index([serviceId])
+  @@index([clientId])
+  @@map("clinic_client_service")
+}
+
+/// Booking sesi psikolog. State machine:
+///   awaiting_dp → confirmed → checked_in → in_progress → completed
+///                  ↓             ↓              ↓
+///              cancelled    cancelled    (rare cancel)
+/// See ADR 008 (booking constraints).
+model ClinicBooking {
+  id                Int       @id @default(autoincrement())
+  clientId          Int       @map("client_id")
+  serviceId         Int       @map("service_id")
+  psikologUserId    Int       @map("psikolog_user_id") // FK ke User (clinic-psikolog)
+  roomId            Int       @map("room_id")
+  scheduledStart    DateTime  @map("scheduled_start") @db.Timestamptz(3)
+  scheduledEnd      DateTime  @map("scheduled_end") @db.Timestamptz(3)
+  sessionN          Int       @default(1) @map("session_n")
+  sessionTotal      Int       @default(1) @map("session_total")
+  packageGroupId    String?   @map("package_group_id")
+  status            String    @default("awaiting_dp")
+  bufferOverride    Boolean   @default(false) @map("buffer_override")
+  createdViaWalkIn  Boolean   @default(false) @map("created_via_walk_in")
+  confirmedAt       DateTime? @map("confirmed_at") @db.Timestamptz(3)
+  checkedInAt       DateTime? @map("checked_in_at") @db.Timestamptz(3)
+  startedAt         DateTime? @map("started_at") @db.Timestamptz(3)
+  completedAt       DateTime? @map("completed_at") @db.Timestamptz(3)
+  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason      String?   @map("cancel_reason") @db.Text
+  rescheduleHistory Json      @default("[]") @map("reschedule_history")
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy         Int?      @map("created_by")
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy         Int?      @map("updated_by")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy         Int?      @map("deleted_by")
+
+  client   ClinicClient   @relation(fields: [clientId], references: [id])
+  service  ClinicService  @relation(fields: [serviceId], references: [id])
+  psikolog User           @relation("BookingPsikolog", fields: [psikologUserId], references: [id])
+  room     ClinicRoom     @relation(fields: [roomId], references: [id])
+  payment  ClinicPayment?
+
+  @@index([scheduledStart, scheduledEnd])
+  @@index([psikologUserId, scheduledStart])
+  @@index([roomId, scheduledStart])
+  @@index([status])
+  @@index([packageGroupId])
+  @@map("clinic_booking")
+}
+
+/// WA template — Mustache-style body. 18 default templates per PRD (4 categories).
+/// See ADR 004 (Fonnte provider).
+model ClinicWaTemplate {
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  category     String // 'pengingat' | 'jadwal' | 'onboarding' | 'bayar'
+  triggerEvent String?   @map("trigger_event") // 'confirmation' | 'reminder_h1' | 'reminder_30m' | 'follow_up' | dll
+  body         String    @db.Text // Mustache template "Hai {{nama}}, sesi kamu {{tanggal}}..."
+  recipients   String[] // ['klien'] | ['psikolog'] | ['klien', 'psikolog']
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy    Int?      @map("created_by")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy    Int?      @map("updated_by")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy    Int?      @map("deleted_by")
+
+  logs ClinicWaLog[]
+
+  @@index([category, isActive])
+  @@map("clinic_wa_template")
+}
+
+/// WA log — track delivery status untuk tiap pesan terkirim.
+/// 4 statuses: terkirim → sampai → dibaca atau gagal.
+model ClinicWaLog {
+  id             Int       @id @default(autoincrement())
+  templateId     Int?      @map("template_id")
+  recipientType  String    @map("recipient_type") // 'klien' | 'psikolog'
+  recipientPhone String    @map("recipient_phone")
+  body           String    @db.Text // rendered template body
+  messageId      String?   @map("message_id") // dari Fonnte
+  status         String    @default("queued") // 'queued' | 'terkirim' | 'sampai' | 'dibaca' | 'gagal'
+  errorReason    String?   @map("error_reason") @db.Text
+  retryCount     Int       @default(0) @map("retry_count")
+  bookingId      Int?      @map("booking_id") // optional: trace to booking
+  metadata       Json      @default("{}") // { event, variables, ... }
+  sentAt         DateTime? @map("sent_at") @db.Timestamptz(3)
+  deliveredAt    DateTime? @map("delivered_at") @db.Timestamptz(3)
+  readAt         DateTime? @map("read_at") @db.Timestamptz(3)
+  failedAt       DateTime? @map("failed_at") @db.Timestamptz(3)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?      @map("created_by")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy      Int?      @map("updated_by")
+
+  template ClinicWaTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([status])
+  @@index([recipientPhone])
+  @@index([bookingId])
+  @@index([createdAt])
+  @@map("clinic_wa_log")
+}
+
+/// Payment record per booking. DP + lunas tracking.
+/// See ADR 007 (pricing & payment model).
+model ClinicPayment {
+  id            Int       @id @default(autoincrement())
+  bookingId     Int       @unique @map("booking_id")
+  totalAmount   Decimal   @map("total_amount") @db.Decimal(12, 2)
+  taxAmount     Decimal   @default(0) @map("tax_amount") @db.Decimal(12, 2)
+  dpAmount      Decimal   @default(0) @map("dp_amount") @db.Decimal(12, 2)
+  paidAmount    Decimal   @default(0) @map("paid_amount") @db.Decimal(12, 2)
+  status        String    @default("pending") // 'pending' | 'dp_paid' | 'lunas' | 'refunded'
+  dpPaidAt      DateTime? @map("dp_paid_at") @db.Timestamptz(3)
+  lunasAt       DateTime? @map("lunas_at") @db.Timestamptz(3)
+  paymentMethod String?   @map("payment_method") // 'cash' | 'transfer' | TBD
+  receiptUrl    String?   @map("receipt_url") @db.Text
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy     Int?      @map("created_by")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy     Int?      @map("updated_by")
+
+  booking ClinicBooking @relation(fields: [bookingId], references: [id])
+
+  @@index([status])
+  @@map("clinic_payment")
+}
+
+/// Clinical note dari psikolog post-session. Private by default.
+/// Linked ke booking + psikolog user.
+model ClinicSessionNote {
+  id             Int       @id @default(autoincrement())
+  bookingId      Int       @map("booking_id")
+  psikologUserId Int       @map("psikolog_user_id")
+  noteText       String    @map("note_text") @db.Text
+  isPrivate      Boolean   @default(true) @map("is_private")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy      Int?      @map("created_by")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedBy      Int?      @map("updated_by")
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(3)
+  deletedBy      Int?      @map("deleted_by")
+
+  @@index([bookingId])
+  @@index([psikologUserId])
+  @@map("clinic_session_note")
+}
+
+/// Idempotency key cache untuk POST mutations (booking/payment/package).
+/// Client kirim header `Idempotency-Key: <uuid>` → response cached 24h supaya
+/// retry safe (network blip tidak duplicate booking).
+model ClinicIdempotencyKey {
+  key        String   @id // composite: METHOD:path|user-key
+  response   Json // cached JSON response body
+  statusCode Int      @map("status_code")
+  actorId    Int?     @map("actor_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([createdAt])
+  @@map("clinic_idempotency_key")
+}

@@ -32,7 +32,7 @@ npm run db:studio
 - Logger: gunakan `@sentient-factory/logger` (package), bukan `console.log`.
 
 ## Database (Prisma)
-- Schema: `prisma/schema.prisma` — **SSOT**. Edit di sini, lalu `npm run db:generate`.
+- Schema: **multi-file** di `prisma/schema/` (fitur `prismaSchemaFolder`, preview di Prisma 5.22) — **SSOT**. Dipecah per-domain: `platform`/`wms`/`clinic` + `erp-*` (core/md/fin/sls/pur/inv/mfg/fa/pos/pln) + `enums` + `datasource`. Tambah/ubah model di file domain yang sesuai (`@@map` prefix menentukan domain), lalu `npm run db:generate`. Prisma auto-detect folder; jangan buat `prisma/schema.prisma` lagi. Detail & alasan: `prisma/SCHEMA-SPLIT-PLAN.md`.
 - Migrasi dev: `npm run db:migrate -- --name <slug>`. **Jangan** edit migrasi yang sudah dipush.
 - Seed dev: `prisma/seed.ts`. Idempoten.
 - Backfill scripts (`backfill-*.ts`) hanya jalan manual; jangan masukkan ke startup.
