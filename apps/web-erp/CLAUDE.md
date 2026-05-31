@@ -191,6 +191,41 @@ Jangan bikin skema id baru — `sys_menus` adalah SSOT navigasi.
 
 ---
 
+### 2.3.1 URL form transaksi = sub-route `<base>/new` & `<base>/:id` (2026-05-31)
+
+Halaman **transaksi** (CR/CD/BD/giro/jurnal) wajib **URL-addressable** dalam
+tiga bentuk, semua diturunkan dari `base` = canonical `sys_menus.path` (§2.3):
+
+| URL | View |
+| --- | --- |
+| `<base>` (mis. `/finance/cash-receipts`) | list |
+| `<base>/new` | form create |
+| `<base>/:id` | form edit (deep-link/refresh → fetch by id) |
+
+Route string tetap **single source of truth** untuk list-vs-form — tidak ada
+lagi state `mode` internal di page. Mekanisme reusable:
+
+- Helper + builder di [`lib/trx-route.ts`](lib/trx-route.ts): `resolveTrxFormRoute()`,
+  `trxNewRoute()`, `trxEditRoute()`, interface `TrxFormPageProps`
+  (`formMode?`/`recordId?`/`onNavigate?`).
+- Registry `TRX_FORM_PAGES` di `shell-route-renderer.tsx` (key = base path).
+  **Page transaksi didaftar di sini, BUKAN di `ERP_PAGES`** — `renderRoute`
+  meng-handle list + `/new` + `/:id` sekaligus dan meng-oper `onNavigate`.
+- Page menerima `TrxFormPageProps`: derive `mode` dari `formMode`, muat form
+  via effect (`create` → blank, `edit` → `getRecord(recordId)`), dan
+  open/edit/back/save = panggil `onNavigate(...)` (replace-in-tab). `onNavigate`
+  = `navigateInTab` → konsisten di Internal mode (ganti route tab) & Per-page
+  URL mode (§2.19, URL jadi `/app<base>/new`).
+- `pageMeta()` (`lib/nav.ts`) otomatis turunkan breadcrumb sub-route dari base
+  meta + crumb `Baru`/`Edit` — tidak perlu daftar `/new`/`/:id` di `ERP_ROUTE_META`.
+
+Adopter pertama = **Kas Masuk** (`fin-cash-receipts-page.tsx`). Page transaksi
+baru: daftar di `TRX_FORM_PAGES`, implement `TrxFormPageProps`, reuse helper —
+**jangan** fork skema URL sendiri. Workflow row-actions (Ajukan/Setujui/…)
+shared di [`lib/fin-cash-bank-workflow.ts`](lib/fin-cash-bank-workflow.ts).
+
+---
+
 ### 2.5 ERP controllers WAJIB pakai `ErpJwtAuthGuard` (2026-05-20)
 
 Semua controller di `apps/api-gateway/src/erp-*/**` **harus** guard dengan
@@ -653,10 +688,11 @@ di [`DECISIONS.md`](DECISIONS.md).
 - **Preferensi user** (theme/lang/density/font/sidebar/primary) → tabel `adm_user_preferences`; 3 bahasa UI `id/en/ja`. → §2.13
 - **Command palette & sidebar** = derived dari `sys_menus` role-filtered (`my-menus`); dilarang hardcode menu list. SSOT seed menu = `prisma/seed-erp.ts` (jangan seed ERP menu di `seed.ts`). → §2.4/§2.17
 - **Mode URL routing off/on** (`urlRoutingEnabled`) → ganti mode wajib `confirmAction`. → §2.19
+- **URL form transaksi** → sub-route `<base>/new` (create) & `<base>/:id` (edit) dari canonical list path; route = SSOT list-vs-form (tanpa state `mode`). Reuse `lib/trx-route.ts` + registry `TRX_FORM_PAGES`; jangan fork skema URL. → §2.3.1
 - **Layout form input transaksi** → kolom **kanan-atas** urutan baku: **Tanggal → No Transaksi → Uang/Kurs**. Kurs read-only inline di sebelah mata uang; `No Transaksi` + checkbox `Auto` satu baris. Field identitas (partner/akun/uraian) di kiri, dimensi (cabang/lokasi) di tengah. Label rata kiri, asterisk required di belakang teks. Berlaku semua form transaksi (CR/CD/BD/giro/jurnal). → §2.36 (DECISIONS.md)
 - **Transaksi kas/bank (CR/CD/BD)** → backend **shared** `erp-fin-cash-bank-transactions` (enum `direction`, `docNumber` auto + `fiscalPeriodId` diturunkan dari tanggal, posting GL balanced saat POST, state machine §2.7). Baris kontra = organism `cash-bank-lines.tsx` (**satu kolom Total**, bukan debit/kredit ala jurnal umum). Status read-only (badge) + transisi via aksi. → § Kas Masuk (DECISIONS.md)
 - **Status dokumen transaksi** = enum `ErpDocumentStatus` 7-nilai (`DRAFT/NEED_APPROVE/APPROVED/REJECTED/POSTED/VOID/CANCELLED`), sejalan `lib/status.ts`; jangan reintroduce varian 4-nilai lama. → § Kas Masuk (DECISIONS.md)
-- **Filter list transaksi** → slim bar inline (Status + Tanggal live) + tombol **Filter** (badge jumlah) buka **drawer kanan** (staged draft → "Terapkan") + **chip** filter lanjutan removable. Drawer = organism reusable `components/organisms/drawer.tsx`; jangan rakit slide-over ad-hoc. Label SearchSelect untuk chip via `withLabelCache`. → §2.40
+- **Filter list transaksi** → **1 baris**: kontrol filter masuk slot `toolbar` `ErpListLayout` (gabung baris summary `Σ`). Inline = Status + Tanggal live; tombol **Filter** (badge jumlah filter lanjutan aktif) buka **drawer kanan** (staged draft → "Terapkan"); + Reset saat aktif. Tanpa chip terpisah. Drawer = organism reusable `components/organisms/drawer.tsx`; jangan rakit slide-over ad-hoc. → §2.40
 - **Master atribut item** (lookup spt Nozzle/OEM) → mirror `md_colors` (code+name+isActive) + FK di `md_items` + modul backend (guard `ErpJwtAuthGuard`) + seed `seed-erp.ts` + daftar di `ERP_PAGES`/`NAV`/`ERP_ROUTE_META`. Reuse master existing (Warna/Merk/Ukuran/Material/Section/Desainer); Vendor→`md_partners`, Satuan Lapangan→`md_units`. **Jangan** bikin tabel atribut generik. → §2.35
 
 ---

@@ -1399,20 +1399,24 @@ Referensi implementasi: [`fin-cash-receipts-form.tsx`](components/pages/fin-cash
 
 Pola filter baku untuk halaman list transaksi (lahir dari Kas Masuk/CR, modul
 fin lain mengikuti). Menggantikan grid 9-field yang selalu terbuka (noisy).
-Tiga lapis:
+**Satu baris** (keputusan user 2026-05-31): kontrol filter digabung ke baris
+summary `ErpListLayout` lewat slot `toolbar` — **tidak** ada baris filter
+terpisah. Komposisi:
 
-1. **Slim bar inline** (selalu tampil): quick filter **Status** + **Tanggal**
-   (`DateRangePicker`) yang **apply live**, tombol **Filter** (ikon `filter`)
-   dengan badge angka = jumlah filter lanjutan aktif, dan tombol **Reset**
-   (tampil hanya saat ada filter aktif; clear semua).
+1. **Inline (di slot `toolbar`, kiri baris summary)**: quick filter **Status** +
+   **Tanggal** (`DateRangePicker`) yang **apply live**, tombol **Filter** (ikon
+   `filter`) dengan **badge angka** = jumlah filter lanjutan aktif, dan tombol
+   **Reset** (tampil hanya saat ada filter aktif; clear semua). `Σ` summary tetap
+   di kanan baris yang sama.
 2. **Drawer kanan** (`components/organisms/drawer.tsx`, slide-over Radix Dialog):
    memuat **semua** field (No Transaksi range, Status, Tanggal, Terima Dari,
    Lokasi, Cabang, Uraian, Catatan, User). Edit **draft terstaging** — tidak
    menyentuh list sampai **"Terapkan"**; **"Atur ulang"** clear draft. Quick
    filter di bar (Status/Tanggal) tetap live karena di luar drawer.
-3. **Chip aktif** di bawah bar: hanya filter **lanjutan** (bukan Status/Tanggal
-   yang sudah tampil inline) sebagai pill removable; klik ✕ = clear field itu
-   **live**.
+3. **Filter lanjutan aktif** TIDAK ditampilkan sebagai chip terpisah (biar tetap
+   1 baris) — hanya **badge angka** di tombol Filter; detailnya terlihat di
+   dalam drawer. (Varian chip-bar removable sempat dibuat lalu di-rollback demi
+   "1 baris aja".)
 
 Aturan turunan:
 - **Drawer** = organism reusable baru (`Drawer`/`DrawerContent`/`DrawerHeader`/

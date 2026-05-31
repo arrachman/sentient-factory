@@ -2,7 +2,8 @@
 
 /**
  * Kas Masuk (Cash Receipt / CR) — list (§2.7) + master-detail form.
- * Atomic tier: Page. List ↔ form view toggle (legacy back-arrow UX).
+ * Atomic tier: Page. URL-driven list↔form via trx sub-routes (§2.3.1):
+ * /finance/cash-receipts · /new · /:id. Route = SSOT, no internal mode state.
  */
 
 import * as React from 'react';
@@ -34,6 +35,12 @@ import {
   type RowActionItem,
 } from '@/components/molecules/row-actions-menu';
 import { confirmAction, notify } from '@/lib/feedback';
+import { cashBankWorkflowActions } from '@/lib/fin-cash-bank-workflow';
+import {
+  trxNewRoute,
+  trxEditRoute,
+  type TrxFormPageProps,
+} from '@/lib/trx-route';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { formatNumber } from '@/lib/format';
@@ -57,36 +64,20 @@ import {
   type CashReceiptFormData,
 } from './fin-cash-receipts-form';
 
-/** Workflow actions offered per status (§2.7 state machine). */
-function workflowActions(
-  status: ErpDocumentStatus,
-  run: (a: CashBankTransition) => void,
-): RowActionItem[] {
-  switch (status) {
-    case 'DRAFT':
-    case 'REJECTED':
-      return [{ label: 'Ajukan', onSelect: () => run('SUBMIT') }];
-    case 'NEED_APPROVE':
-      return [
-        { label: 'Setujui', onSelect: () => run('APPROVE') },
-        { label: 'Tolak', onSelect: () => run('REJECT') },
-      ];
-    case 'APPROVED':
-      return [
-        { label: 'Posting', onSelect: () => run('POST') },
-        { label: 'Reopen', onSelect: () => run('REOPEN') },
-      ];
-    case 'POSTED':
-      return [{ label: 'Reopen', onSelect: () => run('REOPEN') }];
-    default:
-      return [];
-  }
-}
+/** Canonical list path (seeded `sys_menus.path`); base for /new and /:id. */
+const CR_BASE = '/finance/cash-receipts';
 
-export function ErpCashReceiptsPage() {
-  const [mode, setMode] = React.useState<'list' | 'form'>('list');
+export function ErpCashReceiptsPage({
+  formMode,
+  recordId,
+  onNavigate,
+}: TrxFormPageProps = {}) {
+  // The route drives list↔form: form view whenever a form sub-route is active.
+  const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<CashReceiptFormData>(defaultCashReceiptForm);
   const [saving, setSaving] = React.useState(false);
+
+  const goList = React.useCallback(() => onNavigate?.(CR_BASE), [onNavigate]);
 
   const [search, setSearch] = React.useState('');
   const [filters, setFilters] = React.useState<CrFilters>(emptyCrFilters);
@@ -136,19 +127,29 @@ export function ErpCashReceiptsPage() {
   const totalRows = meta?.total ?? 0;
   const pageCount = meta?.totalPages ?? 1;
 
-  const toForm = (data: CashReceiptFormData) => {
-    setForm(data);
-    setMode('form');
-  };
-  const openCreate = () => toForm(defaultCashReceiptForm());
-  const openEdit = async (r: ErpCashReceipt) => {
-    try {
-      const full = await getCashReceipt(r.id); // ensure lines + refs
-      toForm(fromCashReceipt(full));
-    } catch {
-      toForm(fromCashReceipt(r));
+  // Navigation drives the form: open/edit/back are all route changes.
+  const openCreate = () => onNavigate?.(trxNewRoute(CR_BASE));
+  const openEdit = (r: ErpCashReceipt) => onNavigate?.(trxEditRoute(CR_BASE, r.id));
+
+  // Populate the form from the active route. Create → blank; edit → fetch by
+  // id (so a deep link / refresh on /:id loads correctly without a list row).
+  const loadForm = React.useCallback(() => {
+    if (formMode === 'create') {
+      setForm(defaultCashReceiptForm());
+      return undefined;
     }
-  };
+    if (formMode === 'edit' && recordId) {
+      let alive = true;
+      getCashReceipt(recordId)
+        .then((full) => alive && setForm(fromCashReceipt(full)))
+        .catch(() => alive && notify('Gagal memuat Kas Masuk', 'danger'));
+      return () => {
+        alive = false;
+      };
+    }
+    return undefined;
+  }, [formMode, recordId]);
+  React.useEffect(() => loadForm(), [loadForm]);
 
   const persist = async (closeAfter: boolean, newAfter = false) => {
     if (!form.branchId || !form.bankAccountId || !form.description) {
@@ -166,8 +167,12 @@ export function ErpCashReceiptsPage() {
         notify('Kas Masuk dibuat', 'success');
       }
       reload();
-      if (newAfter) setForm(defaultCashReceiptForm());
-      else if (closeAfter) setMode('list');
+      if (newAfter) {
+        setForm(defaultCashReceiptForm());
+        onNavigate?.(trxNewRoute(CR_BASE));
+      } else if (closeAfter) {
+        goList();
+      }
     } catch (e: unknown) {
       notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
     } finally {
@@ -218,7 +223,7 @@ export function ErpCashReceiptsPage() {
 
   const rowActions = (r: ErpCashReceipt): RowActionItem[] => [
     { label: 'Edit / Lihat', onSelect: () => openEdit(r) },
-    ...workflowActions(r.status, (a) => runTransition(r, a)),
+    ...cashBankWorkflowActions(r.status, (a) => runTransition(r, a)),
     { label: 'Hapus', onSelect: () => handleDelete(r), danger: true, separatorBefore: true },
   ];
 
@@ -228,7 +233,7 @@ export function ErpCashReceiptsPage() {
       <div className="page">
         <div className="page-header">
           <h1 className="page-title flex items-center gap-2">
-            <button className="iconbtn" onClick={() => setMode('list')} title="Kembali" style={{ fontSize: 18, lineHeight: 1 }}>
+            <button className="iconbtn" onClick={goList} title="Kembali" style={{ fontSize: 18, lineHeight: 1 }}>
               ←
             </button>
             Kas Masuk
@@ -242,7 +247,7 @@ export function ErpCashReceiptsPage() {
             saving={saving}
             onSave={() => persist(true)}
             onSaveNew={() => persist(false, true)}
-            onReset={() => setForm(form.id ? form : defaultCashReceiptForm())}
+            onReset={loadForm}
           />
         </div>
       </div>
@@ -276,6 +281,7 @@ export function ErpCashReceiptsPage() {
       onSearch={setSearch}
       onAdd={openCreate}
       onRefresh={reload}
+      toolbar={<CashReceiptFilters value={filters} onChange={setFilters} />}
       summary={summary}
       pagination={pagination}
       keyboardRows={{
@@ -286,7 +292,6 @@ export function ErpCashReceiptsPage() {
         onOpen: (i) => rows[i] && openEdit(rows[i]),
       }}
     >
-      <CashReceiptFilters value={filters} onChange={setFilters} />
       {selected.size > 0 && (
         <div className="bulk-bar flex items-center gap-3 px-3 py-2 mb-2 rounded-md bg-secondary text-sm">
           <strong>{selected.size}</strong> baris dipilih
