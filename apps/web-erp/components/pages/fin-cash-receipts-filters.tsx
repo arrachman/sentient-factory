@@ -114,14 +114,13 @@ export function CashReceiptFilters({
         </SelectContent>
       </Select>
 
-      <div style={{ width: 250 }}>
-        <DateRangePicker
-          from={value.dateFrom}
-          to={value.dateTo}
-          onChangeFrom={(v) => onChange({ ...value, dateFrom: v })}
-          onChangeTo={(v) => onChange({ ...value, dateTo: v })}
-        />
-      </div>
+      <DateRangePicker
+        fullWidth={false}
+        from={value.dateFrom}
+        to={value.dateTo}
+        onChangeFrom={(v) => onChange({ ...value, dateFrom: v })}
+        onChangeTo={(v) => onChange({ ...value, dateTo: v })}
+      />
 
       <button type="button" className="btn ghost sm" onClick={openDrawer} title="Filter lanjutan">
         <Icon name="filter" size={12} /> Filter

@@ -17,6 +17,12 @@ interface DateRangePickerProps {
   onChangeTo: (v: string) => void;
   id?: string;
   disabled?: boolean;
+  /**
+   * Fill the parent's width (form/drawer contexts). Default true.
+   * Pass `false` in a horizontal flex bar so the control sizes to its own
+   * content instead of overflowing a too-narrow box (see §2.40 slim filter bar).
+   */
+  fullWidth?: boolean;
 }
 
 function toDate(iso: string): Date | undefined {
@@ -37,11 +43,16 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
   padding: 0,
   cursor: 'text',
-  width: 120,
 };
 
+// Native date inputs have a browser-enforced intrinsic width (~124px) and will
+// not shrink below it. Give each a basis that fits "dd/mm/yyyy" + the picker
+// indicator so the row never clips or overflows its container.
+const startStyle: React.CSSProperties = { ...inputStyle, width: 124, flexShrink: 0 };
+const endStyle: React.CSSProperties = { ...inputStyle, flex: '1 0 124px', minWidth: 124 };
+
 export function DateRangePicker({
-  from, to, onChangeFrom, onChangeTo, id, disabled,
+  from, to, onChangeFrom, onChangeTo, id, disabled, fullWidth = true,
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState<Date>(() => toDate(from) ?? new Date());
@@ -71,7 +82,7 @@ export function DateRangePicker({
         style={{
           display: 'flex',
           alignItems: 'center',
-          width: '100%',
+          width: fullWidth ? '100%' : 'fit-content',
           padding: '0 10px',
           height: 34,
           border: '1px solid var(--border)',
@@ -88,7 +99,7 @@ export function DateRangePicker({
           onChange={(e) => onChangeFrom(e.target.value)}
           disabled={disabled}
           className="drp-input"
-          style={inputStyle}
+          style={startStyle}
         />
 
         <span style={{ color: 'var(--fg-faint)', fontSize: 'calc(12px * var(--font-scale, 1))', flexShrink: 0 }}>→</span>
@@ -100,7 +111,7 @@ export function DateRangePicker({
           onChange={(e) => onChangeTo(e.target.value)}
           disabled={disabled}
           className="drp-input"
-          style={{ ...inputStyle, flex: 1 }}
+          style={endStyle}
         />
 
         {/* Clear button — visible only when any date is set */}

@@ -1452,3 +1452,14 @@ Aturan turunan:
 - File: [`fin-cash-receipts-filters.tsx`](components/pages/fin-cash-receipts-filters.tsx)
   (bar + chip + drawer orchestrator) + [`fin-cash-receipts-filter-fields.tsx`](components/pages/fin-cash-receipts-filter-fields.tsx)
   (body form drawer + STATUS_OPTIONS + label cache). Split demi batas 400 baris.
+- **`DateRangePicker` inline di bar = `fullWidth={false}` (2026-05-31).** Input
+  tanggal **native** (`type="date"`) punya lebar intrinsik browser (~124px) yang
+  **tidak bisa menyusut**; dulu dibungkus `<div style={{ width: 250 }}>` → flex
+  dalam meluber & **menumpuk** di atas tombol Filter. Keputusan user: tetap
+  native (typeable), **lebarkan**. Solusi: prop `fullWidth` di `DateRangePicker`
+  — `true` (default) untuk konteks form/drawer (root `width:100%`), `false` untuk
+  bar horizontal (root `width:fit-content` → sizing ke konten, anti-luber &
+  ikut `--font-scale`). Tiap input pakai basis `124px` (`flex:'1 0 124px'` /
+  `flexShrink:0`) agar `dd/mm/yyyy` + ikon picker tak terpotong. **Jangan**
+  clamp `DateRangePicker` native ke lebar tetap < ~330px di flex row — pakai
+  `fullWidth={false}`.
