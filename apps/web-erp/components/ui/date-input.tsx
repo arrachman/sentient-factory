@@ -8,6 +8,7 @@ import 'react-day-picker/style.css';
 import { cn } from '@/lib/utils';
 import {
   formatDate,
+  parseDisplayDate,
   parseIsoDate,
   toIsoDate,
   useDateFormat,
@@ -29,9 +30,11 @@ export interface DateInputProps {
 
 /**
  * Single-date field — replaces native <input type="date">.
- * Empty state shows a friendly placeholder (no browser dd/mm/yyyy); filled
- * state shows the date formatted per sys_settings (lib/date-format.ts).
- * Calendar icon / clicking the field opens a Radix Popover day-picker.
+ * The field is a free-text input: the user can TYPE the date directly (parsed
+ * liberally per the active display format, see parseDisplayDate) or open the
+ * Radix Popover day-picker via the calendar icon. Empty state shows a friendly
+ * placeholder (no browser dd/mm/yyyy); filled state shows the date formatted
+ * per sys_settings (lib/date-format.ts).
  */
 export function DateInput({
   value,
@@ -48,6 +51,11 @@ export function DateInput({
   const [month, setMonth] = React.useState<Date>(() => parseIsoDate(value) ?? new Date());
   const invalid = rest['aria-invalid'] === true || rest['aria-invalid'] === 'true';
 
+  // Local draft text so the user can type freely; committed on blur/Enter.
+  const [draft, setDraft] = React.useState<string | null>(null);
+  const display = formatDate(value, fmt);
+  const text = draft ?? display;
+
   function handleOpenChange(next: boolean) {
     if (disabled) return;
     if (next) setMonth(parseIsoDate(value) ?? new Date());
@@ -55,55 +63,89 @@ export function DateInput({
   }
 
   function handleSelect(date: Date | undefined) {
+    setDraft(null);
     onChange(toIsoDate(date));
     setOpen(false);
   }
 
+  /** Parse the typed draft and commit it (or revert to the last valid value). */
+  function commitDraft() {
+    if (draft === null) return;
+    const iso = parseDisplayDate(draft, fmt);
+    if (iso !== null) {
+      // '' clears, a valid ISO sets — either way, accept it.
+      if (iso !== value) onChange(iso);
+    }
+    // Invalid (null) → drop the draft and fall back to the formatted value.
+    setDraft(null);
+  }
+
   const selected = parseIsoDate(value);
-  const display = formatDate(value, fmt);
 
   return (
     <Popover.Root open={open} onOpenChange={handleOpenChange}>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
+      <div
+        className={cn(
+          'flex h-[26px] w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 text-[12.5px] text-foreground transition-[border-color,box-shadow] duration-75',
+          'focus-within:border-primary focus-within:shadow-[0_0_0_2px_color-mix(in_oklab,var(--primary)_22%,transparent)]',
+          'hover:border-[var(--fg-subtle)]',
+          disabled && 'cursor-not-allowed opacity-45',
+          invalid && 'border-danger',
+          open && 'border-primary shadow-[0_0_0_2px_color-mix(in_oklab,var(--primary)_22%,transparent)]',
+          className,
+        )}
+      >
+        <input
+          type="text"
+          inputMode="numeric"
           id={id}
           name={name}
           disabled={disabled}
-          className={cn(
-            'flex h-[26px] w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 text-left text-[12.5px] text-foreground outline-none transition-[border-color,box-shadow] duration-75',
-            'hover:border-[var(--fg-subtle)]',
-            'disabled:cursor-not-allowed disabled:opacity-45',
-            invalid && 'border-danger',
-            open && 'border-primary shadow-[0_0_0_2px_color-mix(in_oklab,var(--primary)_22%,transparent)]',
-            className,
-          )}
-        >
-          <span
-            className={cn('flex-1 truncate', !display && 'text-[var(--fg-subtle)]')}
-          >
-            {display || placeholder}
-          </span>
+          autoComplete="off"
+          aria-invalid={rest['aria-invalid']}
+          placeholder={placeholder}
+          value={text}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitDraft}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commitDraft();
+            } else if (e.key === 'Escape' && draft !== null) {
+              e.preventDefault();
+              setDraft(null);
+            }
+          }}
+          className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[var(--fg-subtle)] disabled:cursor-not-allowed"
+        />
 
-          {display && !disabled && (
-            <span
-              role="button"
-              tabIndex={-1}
-              aria-label="Hapus tanggal"
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange('');
-              }}
-              className="flex shrink-0 items-center text-[var(--fg-subtle)] hover:text-foreground"
-            >
-              <XIcon />
-            </span>
-          )}
-          <span className="flex shrink-0 items-center text-[var(--fg-muted)]">
+        {display && !disabled && (
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-label="Hapus tanggal"
+            onClick={() => {
+              setDraft(null);
+              onChange('');
+            }}
+            className="flex shrink-0 items-center text-[var(--fg-subtle)] hover:text-foreground"
+          >
+            <XIcon />
+          </button>
+        )}
+
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            tabIndex={-1}
+            disabled={disabled}
+            aria-label="Buka kalender"
+            className="flex shrink-0 items-center text-[var(--fg-muted)] hover:text-foreground disabled:cursor-not-allowed"
+          >
             <CalendarIcon />
-          </span>
-        </button>
-      </Popover.Trigger>
+          </button>
+        </Popover.Trigger>
+      </div>
 
       <Popover.Portal>
         <Popover.Content

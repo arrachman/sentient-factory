@@ -900,6 +900,14 @@ dengan komponen reusable [`components/ui/date-input.tsx`](components/ui/date-inp
 - **Kontrak:** `value` = ISO string `YYYY-MM-DD`; `onChange(v: string)` terima
   **string ISO langsung** (bukan event). Props opsional: `id`, `name`,
   `disabled`, `aria-invalid`, `placeholder`, `className`.
+- **Bisa diketik manual (2026-05-31):** field = `<input type="text">` editable,
+  bukan tombol read-only. User boleh **mengetik** tanggal langsung (tidak wajib
+  lewat day-picker); ikon kalender hanya membuka popover sebagai alternatif.
+  Draft teks di-commit saat **blur** / **Enter** (`Escape` membatalkan draft).
+  Parsing toleran via `parseDisplayDate(text, fmt)` di `lib/date-format.ts`:
+  coba format aktif dulu, lalu fallback umum (`5/5/2026`, `05-05-2026`,
+  `2026-05-05`, `5 Mei 2026`). Input invalid → revert ke nilai valid terakhir;
+  kosong → clear. Format token & day-picker tidak berubah.
 
 **Format tampilan tanggal dinamis dari `sys_settings`** (sejajar §2.31):
 

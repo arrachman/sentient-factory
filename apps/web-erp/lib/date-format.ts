@@ -9,7 +9,7 @@
  */
 
 import * as React from 'react';
-import { format as fnsFormat, isValid } from 'date-fns';
+import { format as fnsFormat, parse as fnsParse, isValid } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { getDateFormat, type DateFormat } from '@/lib/api/date-format';
 
@@ -114,6 +114,33 @@ export function formatDate(iso: string | null | undefined, fmt?: DateFormat): st
   } catch {
     return fnsFormat(date, 'dd/MM/yyyy', { locale: idLocale });
   }
+}
+
+/**
+ * Parse user-typed date text → canonical ISO date string (YYYY-MM-DD).
+ * Tries the active display format first, then a set of common fallbacks so
+ * the user can type liberally (e.g. `5/5/2026`, `05-05-2026`, `2026-05-05`).
+ * Returns `''` for empty input, or `null` when the text cannot be parsed.
+ */
+export function parseDisplayDate(text: string, fmt?: DateFormat): string | null {
+  const trimmed = text.trim();
+  if (!trimmed) return '';
+  const token = (fmt ?? getDateFormatSync()).format;
+  const patterns = [
+    tokenToPattern(token),
+    'dd/MM/yyyy',
+    'd/M/yyyy',
+    'dd-MM-yyyy',
+    'd-M-yyyy',
+    'yyyy-MM-dd',
+    'd MMM yyyy',
+    'd MMMM yyyy',
+  ];
+  for (const pattern of patterns) {
+    const date = fnsParse(trimmed, pattern, new Date(), { locale: idLocale });
+    if (isValid(date)) return toIsoDate(date);
+  }
+  return null;
 }
 
 export type { DateFormat };
