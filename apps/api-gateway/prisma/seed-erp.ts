@@ -1,6 +1,7 @@
 import { PrismaClient, ErpUserLevel, ErpMenuType, ErpNumberingReset } from '@prisma/client';
 import { pbkdf2Sync, randomBytes } from 'crypto';
 import { seedTransactionNotes } from './seed-erp-transaction-notes';
+import { seedTransactionGrids } from './seed-erp-transaction-grids';
 import { iso4217Currencies } from './data/iso-4217-currencies';
 
 const prisma = new PrismaClient();
@@ -394,6 +395,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M0.SYS.DOCNUM',      title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
     { code: 'M0.SYS.FISCAL',      title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
     { code: 'M0.SYS.AUDIT',       title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },
+    { code: 'M0.SYS.GRID',        title: 'Kustomisasi Grid',    path: '/admin/grid-customization'                    },
     { code: 'M0.SYS.APPEARANCE',  title: 'Appearance',          path: '/settings/appearance'                         },
   ], sysGrp.id);
 
@@ -1553,6 +1555,7 @@ async function main() {
   await seedNotifications();
   await seedPartnerCategories();
   await seedTransactionNotes(prisma);
+  await seedTransactionGrids(prisma);
   console.log('\n✅ ERP seed complete.');
 }
 

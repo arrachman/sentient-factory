@@ -213,6 +213,7 @@ model ErpFinCashBankLine {
   subdivisionId         BigInt?  @map("subdivision_id")
   projectId             BigInt?  @map("project_id")
   lineNo                Int      @map("line_no")
+  customFields          Json?    @map("custom_fields") // user-defined grid columns (Kustomisasi Grid), keyed by dataField
 
   cashBankTransaction ErpFinCashBankTransaction @relation(fields: [cashBankTransactionId], references: [id], onDelete: Cascade)
   costCenter          ErpCostCenter?            @relation(fields: [costCenterId], references: [id])

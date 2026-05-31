@@ -1,0 +1,53 @@
+// ── Kustomisasi Grid (Transaction grid customization) ───────────────────────
+// System-wide, admin-managed definitions for which columns appear in each
+// transaction detail grid (mirrors legacy MyERP+ "Grid" config). Domain = sys.
+// `kind`/`dataType` kept as TEXT + app-level validation (lighter migrations).
+
+model ErpTransactionType {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @map("code") // e.g. "FIN.CR"
+  name        String    @map("name") // e.g. "Cash Receipt (CR)"
+  moduleKey   String    @map("module_key") // e.g. "finance"
+  moduleLabel String    @map("module_label") // e.g. "Finance & Accounting"
+  groupLabel  String?   @map("group_label") // e.g. "Transaction"
+  lineTable   String?   @map("line_table") // physical line table this grid drives, e.g. "fin_cash_bank_lines"
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  legacyCode  String?   @map("legacy_code")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  columns ErpTransactionGridColumn[]
+
+  @@index([moduleKey])
+  @@map("sys_transaction_types")
+}
+
+model ErpTransactionGridColumn {
+  id                BigInt    @id @default(autoincrement())
+  transactionTypeId BigInt    @map("transaction_type_id")
+  sortOrder         Int       @default(0) @map("sort_order") // "No" column / display order
+  headerText        String    @map("header_text")
+  dataField         String    @map("data_field") // standard field key (accountId, amount, …) or custom slot (customText1, …)
+  width             Int       @default(120) @map("width")
+  isVisible         Boolean   @default(true) @map("is_visible")
+  isRequired        Boolean   @default(false) @map("is_required")
+  isEditable        Boolean   @default(true) @map("is_editable")
+  kind              String    @default("STANDARD") @map("kind") // STANDARD | CUSTOM
+  dataType          String    @default("TEXT") @map("data_type") // TEXT | NUMBER | DATE | LOOKUP
+  lookupSource      String?   @map("lookup_source") // for LOOKUP: account | costCenter | division | subdivision | project
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById       BigInt?   @map("created_by_id")
+  updatedById       BigInt?   @map("updated_by_id")
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  transactionType ErpTransactionType @relation(fields: [transactionTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([transactionTypeId, dataField])
+  @@index([transactionTypeId])
+  @@map("sys_transaction_grid_columns")
+}
