@@ -12,13 +12,6 @@ import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
 import { DateInput } from '@/components/ui/date-input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
   CashBankLinesEditor,
@@ -30,6 +23,7 @@ import {
   loadCashAccountOptionsCoded,
   loadLocationOptions,
   loadBranchOptions,
+  loadCurrencyOptions,
 } from './items-form-lookups';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
@@ -200,6 +194,12 @@ export function CashReceiptForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // SearchSelect trigger label for the selected currency ("IDR - Rupiah").
+  const currencyLabel = React.useMemo(() => {
+    const c = currencies.find((x) => x.id === data.currencyId);
+    return c ? `${c.code} - ${c.name}` : undefined;
+  }, [currencies, data.currencyId]);
+
   return (
     <div className="cr-form flex flex-col gap-4">
       {/* Toolbar */}
@@ -307,22 +307,16 @@ export function CashReceiptForm({
           </Field>
           <Field label="Uang" required>
             <div className="flex items-center gap-2">
-              <Select
-                value={data.currencyId}
-                onValueChange={(v) => set({ currencyId: v })}
-                disabled={locked}
-              >
-                <SelectTrigger className="flex-1 min-w-0">
-                  <SelectValue placeholder="Mata uang" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.code}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex-1 min-w-0">
+                <SearchSelect
+                  placeholder="Mata uang"
+                  value={data.currencyId}
+                  initialLabel={currencyLabel}
+                  disabled={locked}
+                  onValueChange={(v) => set({ currencyId: v })}
+                  loadOptions={loadCurrencyOptions}
+                />
+              </div>
               <span
                 className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 whitespace-nowrap"
                 title="Kurs ke mata uang dasar (read-only)"

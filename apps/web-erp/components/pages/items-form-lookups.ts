@@ -26,6 +26,7 @@ import { listSections } from '@/lib/api/sections';
 import { listDesigners } from '@/lib/api/designers';
 import { listNozzles } from '@/lib/api/nozzles';
 import { listOems } from '@/lib/api/oems';
+import { listCurrencies } from '@/lib/api/currencies';
 
 interface Listable { id: string; code?: string; name: string }
 type ListFn = (p: { search?: string; page: number; limit: number; isActive?: boolean }) => Promise<{ data: Listable[]; meta: { total: number } }>;
@@ -91,6 +92,7 @@ export const loadCashAccountOptionsCoded = async (search: string, page: number, 
 };
 export const loadTaxOptions = makeLoader(listTaxes as unknown as ListFn);
 export const loadPartnerOptions = makeLoader(listPartners as unknown as ListFn);
+export const loadCurrencyOptions = makeLoader(listCurrencies as unknown as ListFn);
 
 // Atribut produk (legacy "Atribut"). Vendor -> reuse loadPartnerOptions; Satuan Lapangan -> reuse loadUnitOptions.
 export const loadBrandOptions = makeLoader(listBrands as unknown as ListFn);

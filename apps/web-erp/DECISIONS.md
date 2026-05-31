@@ -1409,8 +1409,14 @@ MyERP+ yang menaruh info dokumen di kanan-atas.
   1. **Tanggal** (required) — paling atas.
   2. **No Transaksi** — input + checkbox **Auto** satu baris (Auto on → readonly
      `(otomatis saat simpan)`, server generate via `sys_document_numberings`).
-  3. **Uang/Kurs** — satu baris: `Select` mata uang + **Kurs read-only** inline
-     (muted, `formatNumber(rate,2)`); kurs turunan, bukan input editable.
+  3. **Uang/Kurs** — satu baris: **`SearchSelect` mata uang** + **Kurs read-only**
+     inline (muted, `formatNumber(rate,2)`); kurs turunan, bukan input editable.
+     Mata uang **bukan** `Select` biasa (2026-05-31): master mata uang lengkap
+     (modul dunia, bisa puluhan/ratusan baris) → pakai `SearchSelect` agar bisa
+     diketik/dicari + konsisten dgn picker lain di form (partner/akun/cabang).
+     Loader = `loadCurrencyOptions` (`items-form-lookups.ts`); trigger label =
+     `"<code> - <name>"` via `initialLabel` (derive dari list currencies yg
+     sudah di-fetch). Adopter pertama = Kas Masuk (`fin-cash-receipts-form.tsx`).
 
 **Konvensi field umum:**
 - Label via helper `Field` (`<label>` horizontal): teks **rata kiri** (`text-left`,
