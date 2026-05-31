@@ -530,8 +530,10 @@ async function seedMenus(): Promise<Map<string, bigint>> {
       { code: 'M2.TX.CASH-RECEIPT',       title: 'Cash Receipt',         path: '/finance/cash-receipts',       legacyCode: 'CR' },
       { code: 'M2.TX.CASH-DISBURSEMENT',  title: 'Cash Disbursement',    path: '/finance/cash-disbursements',  legacyCode: 'CD' },
       { code: 'M2.TX.BANK-RECEIPT',       title: 'Bank Receipt',         path: '/finance/bank-receipts',       legacyCode: 'RM' },
-      { code: 'M2.TX.BANK-PAYMENT',       title: 'Bank Payment',         path: '/finance/bank-payments',       legacyCode: 'SM' },
-      { code: 'M2.TX.BANK-DISBURSEMENT',  title: 'Bank Disbursement',    path: '/finance/bank-disbursements',  legacyCode: 'BD' },
+      // SM=Bank Keluar lives on the shared cash-bank table (kind=BANK, direction=DISBURSEMENT)
+      // at /finance/bank-disbursements. The old standalone BANK-PAYMENT (SM→fin_ap_payments)
+      // entry was removed (2026-05-31) — it duplicated this page (§ Bank Keluar SM).
+      { code: 'M2.TX.BANK-DISBURSEMENT',  title: 'Bank Keluar',          path: '/finance/bank-disbursements',  legacyCode: 'SM' },
       { code: 'M2.TX.GENERAL-JOURNAL',    title: 'General Journal',      path: '/finance/general-journals',    legacyCode: 'GJ' },
       { code: 'M2.TX.ADJUSTMENT-JOURNAL', title: 'Adjustment Journal',   path: '/finance/adjustment-journals', legacyCode: 'AJ' },
       { code: 'M2.TX.RECEIPT-GIRO',       title: 'Receipt Giro',         path: '/finance/receipt-giros',       legacyCode: 'RG' },
@@ -540,6 +542,13 @@ async function seedMenus(): Promise<Map<string, bigint>> {
       { code: 'M2.TX.SEND-GIRO-CLR',      title: 'Send Giro Clearing',   path: '/finance/send-giro-clearings', legacyCode: 'SGC' },
       { code: 'M2.TX.OPENING-BALANCE',    title: 'Opening Balance (CoA)', path: '/finance/opening-balances',   legacyCode: 'CB' },
     ], m2TxGrp.id);
+    // Prune legacy duplicate "Bank Payment" (SM → fin_ap_payments) menu — superseded by
+    // "Bank Keluar" on the shared cash-bank table at /finance/bank-disbursements (2026-05-31).
+    const legacyBankPayment = await prisma.erpMenu.findUnique({ where: { code: 'M2.TX.BANK-PAYMENT' } });
+    if (legacyBankPayment) {
+      await prisma.erpRoleMenu.deleteMany({ where: { menuId: legacyBankPayment.id } });
+      await prisma.erpMenu.delete({ where: { id: legacyBankPayment.id } });
+    }
     // Laporan keuangan inti — legacy MODULEID=2 (Report.vb) punya ~150 varian;
     // di sini parent report kanonik yang dipenuhi oleh fin_ledger_entries / fin_budget_realizations / fin_giros.
     const m2RptGrp = await upsertMenu({ code: 'M2.RPT', title: 'Reports', type: ErpMenuType.GROUP, parentId: m2Id, sortOrder: 2 });
@@ -779,6 +788,8 @@ async function seedDocumentNumberings() {
     { documentCode: 'PAY', name: 'Payment', prefix: 'PAY', digitCount: 6 },
     { documentCode: 'CASH_RECEIPT', name: 'Kas Masuk (Cash Receipt)', prefix: 'CR', digitCount: 6 },
     { documentCode: 'CASH_DISBURSEMENT', name: 'Kas Keluar (Cash Disbursement)', prefix: 'CD', digitCount: 6 },
+    { documentCode: 'BANK_RECEIPT', name: 'Bank Masuk (Bank Receipt)', prefix: 'RM', digitCount: 6 },
+    { documentCode: 'BANK_DISBURSEMENT', name: 'Bank Keluar (Bank Disbursement)', prefix: 'SM', digitCount: 6 },
   ]) {
     await prisma.erpDocumentNumbering.upsert({
       where: { documentCode: n.documentCode },

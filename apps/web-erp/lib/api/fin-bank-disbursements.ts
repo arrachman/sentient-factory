@@ -1,75 +1,61 @@
-// ERP m2 Finance — Bank Disbursements (header + lines) skeleton CRUD client.
-// Endpoints: /fin/bank-disbursements
+// ERP m2 Finance — Bank Keluar / Bank Disbursement (SM).
+// Backed by the SHARED cash-bank-transactions resource with
+// direction=DISBURSEMENT + kind=BANK (same endpoint/types as Kas Masuk/Keluar;
+// see lib/api/fin-cash-receipts.ts + the erp-fin-cash-bank-transactions module).
+// Only `direction` + `kind` differ from the cash variants; giros + paymentMethod
+// (Cara Bayar) ride on the shared payload.
 
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
-import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
+import type { ApiResponse, PaginatedResponse } from './types';
 import type {
+  CashBankTransition,
+  CreateCashReceiptPayload,
+  ErpCashReceipt,
+  ListCashReceiptsParams,
+} from './fin-cash-receipts';
+
+// Re-export the shared cash/bank transaction types under bank-flavoured names.
+export type {
   ErpDocumentStatus,
   ErpPostingStatus,
-  ErpJournalLine,
-} from './fin-journal-entries';
+  ErpPaymentMethod,
+  ErpCashBankKind,
+  CashBankDirection,
+  ErpRef,
+  ErpCashBankLine,
+  ErpCashBankGiro,
+  CashBankLinePayload,
+  CashBankGiroPayload,
+  CashBankTransition,
+} from './fin-cash-receipts';
 
-export interface ErpBankDisbursement {
-  id: string;
-  docNumber: string;
-  branchId: string;
-  locationId?: string | null;
-  cashAccountId: string;
-  entryDate: string;
-  fiscalPeriodId: string;
-  partnerId?: string | null;
-  description: string;
-  notes?: string | null;
-  currencyId: string;
-  exchangeRate: string;
-  status: ErpDocumentStatus;
-  postingStatus: ErpPostingStatus;
-  legacyCode?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  lines: ErpJournalLine[];
-}
+export type ErpBankDisbursement = ErpCashReceipt;
+export type CreateBankDisbursementPayload = CreateCashReceiptPayload;
+export type UpdateBankDisbursementPayload = Partial<CreateBankDisbursementPayload>;
+export type ListBankDisbursementsParams = ListCashReceiptsParams;
 
-export interface CreateBankDisbursementPayload {
-  docNumber: string;
-  branchId: string;
-  cashAccountId: string;
-  entryDate: string;
-  fiscalPeriodId: string;
-  description: string;
-  currencyId: string;
-  exchangeRate: string;
-  status?: ErpDocumentStatus;
-  postingStatus?: ErpPostingStatus;
-  notes?: string;
-  partnerId?: string;
-  locationId?: string;
-  lines: ErpJournalLine[];
-}
+const BASE = '/fin/cash-bank-transactions';
+type Query = Record<string, string | number | boolean | undefined>;
 
-export type UpdateBankDisbursementPayload =
-  Partial<CreateBankDisbursementPayload>;
-
-export interface ListBankDisbursementsParams extends PaginationParams {
-  status?: ErpDocumentStatus;
-}
-
-export async function listBankDisbursements(
+export function listBankDisbursements(
   params?: ListBankDisbursementsParams,
 ): Promise<PaginatedResponse<ErpBankDisbursement>> {
-  return apiGet<PaginatedResponse<ErpBankDisbursement>>(
-    '/fin/bank-disbursements',
-    params as Record<string, string | number | boolean | undefined>,
-  );
+  return apiGet<PaginatedResponse<ErpBankDisbursement>>(BASE, {
+    ...(params as Query),
+    direction: 'DISBURSEMENT',
+    kind: 'BANK',
+  });
+}
+
+export async function getBankDisbursement(id: string): Promise<ErpBankDisbursement> {
+  const res = await apiGet<ApiResponse<ErpBankDisbursement>>(`${BASE}/${id}`);
+  return res.data;
 }
 
 export async function createBankDisbursement(
   payload: CreateBankDisbursementPayload,
 ): Promise<ErpBankDisbursement> {
-  const res = await apiPost<ApiResponse<ErpBankDisbursement>>(
-    '/fin/bank-disbursements',
-    payload,
-  );
+  const res = await apiPost<ApiResponse<ErpBankDisbursement>>(BASE, payload);
   return res.data;
 }
 
@@ -77,13 +63,22 @@ export async function updateBankDisbursement(
   id: string,
   payload: UpdateBankDisbursementPayload,
 ): Promise<ErpBankDisbursement> {
-  const res = await apiPatch<ApiResponse<ErpBankDisbursement>>(
-    `/fin/bank-disbursements/${id}`,
-    payload,
+  const res = await apiPatch<ApiResponse<ErpBankDisbursement>>(`${BASE}/${id}`, payload);
+  return res.data;
+}
+
+export async function transitionBankDisbursement(
+  id: string,
+  action: CashBankTransition,
+  reason?: string,
+): Promise<ErpBankDisbursement> {
+  const res = await apiPost<ApiResponse<ErpBankDisbursement>>(
+    `${BASE}/${id}/transition`,
+    { action, reason },
   );
   return res.data;
 }
 
 export async function deleteBankDisbursement(id: string): Promise<void> {
-  await apiDelete<void>(`/fin/bank-disbursements/${id}`);
+  await apiDelete<void>(`${BASE}/${id}`);
 }

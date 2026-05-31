@@ -91,6 +91,7 @@ import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
 import { ErpApPaymentsPage } from '@/components/pages/fin-ap-payments-page';
 import { ErpLedgerPage } from '@/components/pages/fin-ledger-page';
 import { ErpCashReceiptsPage } from '@/components/pages/fin-cash-receipts-page';
+import { ErpBankReceiptsPage } from '@/components/pages/fin-bank-receipts-page';
 import { ErpCashDisbursementsPage } from '@/components/pages/fin-cash-disbursements-page';
 import { ErpBankDisbursementsPage } from '@/components/pages/fin-bank-disbursements-page';
 import { ErpCashbankTransfersPage } from '@/components/pages/fin-cashbank-transfers-page';
@@ -128,6 +129,9 @@ import {
  */
 const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/cash-receipts': ErpCashReceiptsPage,
+  '/finance/cash-disbursements': ErpCashDisbursementsPage,
+  '/finance/bank-receipts': ErpBankReceiptsPage,
+  '/finance/bank-disbursements': ErpBankDisbursementsPage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
@@ -260,9 +264,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/finance/receipt-memos': () => <ErpArReceiptsPage />,
   '/finance/send-memos': () => <ErpApPaymentsPage />,
   '/finance/ledger': () => <ErpLedgerPage />,
-  // /finance/cash-receipts → handled by TRX_FORM_PAGES (list + /new + /:id).
-  '/finance/cash-disbursements': () => <ErpCashDisbursementsPage />,
-  '/finance/bank-disbursements': () => <ErpBankDisbursementsPage />,
+  // /finance/cash-receipts + /finance/cash-disbursements + /finance/bank-receipts
+  // + /finance/bank-disbursements → handled by TRX_FORM_PAGES (list + /new + /:id).
   '/finance/cashbank-transfers': () => <ErpCashbankTransfersPage />,
   '/finance/receipt-giros': () => <ErpReceiptGirosPage />,
   '/finance/send-giros': () => <ErpSendGirosPage />,

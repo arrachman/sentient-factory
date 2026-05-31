@@ -1,9 +1,10 @@
 'use client';
 
 /**
- * Kas Masuk (CR) — full advanced-filter form, rendered inside the filter
- * drawer (slide-over). Edits a staged draft; the parent commits on "Terapkan".
- * Atomic tier: Page sub-part (organism-level form body).
+ * Cash/bank transaction — shared advanced-filter form (drawer body), reused by
+ * Kas Masuk (CR) / Kas Keluar (CD) / Bank Keluar (BD). Only the party field
+ * label ("Terima Dari" vs "Bayar Ke") differs, passed via `partnerLabel`.
+ * Edits a staged draft; the parent commits on "Terapkan". Atomic tier: organism.
  */
 
 import * as React from 'react';
@@ -26,7 +27,49 @@ import {
   loadBranchOptions,
 } from './items-form-lookups';
 import { listUsers } from '@/lib/api/users';
-import type { CrFilters } from './fin-cash-receipts-filters';
+
+export interface CashBankFilters {
+  noFrom: string;
+  noTo: string;
+  status: string;
+  dateFrom: string;
+  dateTo: string;
+  partnerId: string;
+  partnerLabel?: string;
+  locationId: string;
+  locationLabel?: string;
+  branchId: string;
+  branchLabel?: string;
+  uraian: string;
+  catatan: string;
+  userId: string;
+  userLabel?: string;
+}
+
+export const emptyCashBankFilters: CashBankFilters = {
+  noFrom: '',
+  noTo: '',
+  status: '',
+  dateFrom: '',
+  dateTo: '',
+  partnerId: '',
+  locationId: '',
+  branchId: '',
+  uraian: '',
+  catatan: '',
+  userId: '',
+};
+
+export const hasActiveCashBankFilters = (f: CashBankFilters): boolean =>
+  !!(
+    f.noFrom || f.noTo || f.status || f.dateFrom || f.dateTo ||
+    f.partnerId || f.locationId || f.branchId || f.uraian || f.catatan || f.userId
+  );
+
+/** Count of active *advanced* filters (Status & Tanggal stay inline → excluded). */
+export const advancedCashBankCount = (f: CashBankFilters): number =>
+  [f.noFrom || f.noTo, f.partnerId, f.locationId, f.branchId, f.uraian, f.catatan, f.userId]
+    .filter(Boolean).length;
 
 export const STATUS_OPTIONS = [
   { label: 'Semua', value: '' },
@@ -80,14 +123,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export function CrFilterFields({
+export function CashBankFilterFields({
   value,
   onChange,
+  partnerLabel,
 }: {
-  value: CrFilters;
-  onChange: (f: CrFilters) => void;
+  value: CashBankFilters;
+  onChange: (f: CashBankFilters) => void;
+  partnerLabel: string;
 }) {
-  const set = (p: Partial<CrFilters>) => onChange({ ...value, ...p });
+  const set = (p: Partial<CashBankFilters>) => onChange({ ...value, ...p });
   const lbl = cachedLabel;
 
   return (
@@ -121,7 +166,7 @@ export function CrFilterFields({
           onChangeTo={(v) => set({ dateTo: v })}
         />
       </Field>
-      <Field label="Terima Dari">
+      <Field label={partnerLabel}>
         <SearchSelect
           placeholder="Semua partner"
           value={value.partnerId}

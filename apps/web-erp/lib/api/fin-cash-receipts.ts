@@ -17,6 +17,38 @@ export type ErpDocumentStatus =
   | 'CANCELLED';
 export type ErpPostingStatus = 'UNPOSTED' | 'POSTED';
 export type CashBankDirection = 'RECEIPT' | 'DISBURSEMENT';
+/** Kas (CR/CD) vs Bank (RM/SM) discriminator on the shared table. */
+export type ErpCashBankKind = 'CASH' | 'BANK';
+/** Cara Bayar (bank transactions). */
+export type ErpPaymentMethod =
+  | 'CASH'
+  | 'TRANSFER'
+  | 'GIRO'
+  | 'CHEQUE'
+  | 'CARD'
+  | 'OTHER';
+
+/** Giro instrument captured in the Giro tab of a bank transaction. */
+export interface ErpCashBankGiro {
+  id?: string;
+  giroNumber: string;
+  bankName?: string | null;
+  bankAccountNo?: string | null;
+  amount: string;
+  dueDate: string;
+  notes?: string | null;
+  lineNo: number;
+}
+
+export interface CashBankGiroPayload {
+  giroNumber: string;
+  bankName?: string;
+  bankAccountNo?: string;
+  amount: string;
+  dueDate: string;
+  notes?: string;
+  lineNo: number;
+}
 
 /** Resolved cross-domain reference (partner/account/branch/…): code + name. */
 export interface ErpRef {
@@ -47,6 +79,8 @@ export interface ErpCashReceipt {
   docNumber: string;
   autoNumber?: string | null;
   direction: CashBankDirection;
+  kind: ErpCashBankKind;
+  paymentMethod?: ErpPaymentMethod | null;
   branchId: string;
   branch?: ErpRef | null;
   locationId?: string | null;
@@ -73,6 +107,7 @@ export interface ErpCashReceipt {
   createdById?: string | null;
   updatedById?: string | null;
   lines: ErpCashBankLine[];
+  giros?: ErpCashBankGiro[];
 }
 
 export interface CashBankLinePayload {
@@ -94,6 +129,8 @@ export interface CreateCashReceiptPayload {
   docNumber?: string;
   auto?: boolean;
   direction: CashBankDirection;
+  kind?: ErpCashBankKind;
+  paymentMethod?: ErpPaymentMethod;
   branchId: string;
   locationId?: string;
   transactionDate: string;
@@ -107,6 +144,7 @@ export interface CreateCashReceiptPayload {
   exchangeRate: string;
   legacyCode?: string;
   lines: CashBankLinePayload[];
+  giros?: CashBankGiroPayload[];
 }
 
 export type UpdateCashReceiptPayload = Partial<CreateCashReceiptPayload>;
@@ -122,6 +160,8 @@ export interface ListCashReceiptsParams extends PaginationParams {
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
   status?: ErpDocumentStatus;
+  kind?: ErpCashBankKind;
+  paymentMethod?: ErpPaymentMethod;
   dateFrom?: string;
   dateTo?: string;
   branchId?: string;

@@ -1,173 +1,132 @@
 'use client';
 
 /**
- * Bank Disbursement (CR) — create/edit form fields with nested journal lines.
- * Atomic tier: Organism sub-part.
+ * Bank Keluar (SM) form — bank-flavoured wrapper over the shared cash/bank
+ * transaction form. Differs from Kas Keluar (CD) only in: bank labels
+ * ("Bayar Ke" + "Akun Bank [K]"), a Cara Bayar (paymentMethod) header field,
+ * and a functional Giro tab. Model + layout live in cash-bank-form-model.ts /
+ * cash-bank-transaction-form.tsx (§3 reuse — header/lines identical).
  */
 
 import * as React from 'react';
-import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  CashBankTransactionForm,
+  type CashBankFormLabels,
+} from './cash-bank-transaction-form';
+import {
+  defaultCashBankForm,
+  fromCashBankTransaction,
+  toCashBankPayload,
+  type CashBankFormData,
+} from './cash-bank-form-model';
+import { CashBankGirosEditor } from '@/components/organisms/cash-bank-giros';
 import type {
   CreateBankDisbursementPayload,
   ErpBankDisbursement,
+  ErpPaymentMethod,
 } from '@/lib/api/fin-bank-disbursements';
-import type { ErpJournalLine } from '@/lib/api/fin-journal-entries';
-import { JournalLinesEditor } from './fin-shared-lines';
 
-export interface BankDisbursementFormData {
-  docNumber: string;
-  branchId: string;
-  cashAccountId: string;
-  entryDate: string;
-  fiscalPeriodId: string;
-  partnerId: string;
-  description: string;
-  notes: string;
-  currencyId: string;
-  exchangeRate: string;
-  lines: ErpJournalLine[];
-}
+export type BankDisbursementFormData = CashBankFormData;
 
-export const defaultBankDisbursementForm = (): BankDisbursementFormData => ({
-  docNumber: '',
-  branchId: '1',
-  cashAccountId: '',
-  entryDate: new Date().toISOString().slice(0, 10),
-  fiscalPeriodId: '1',
-  partnerId: '',
-  description: '',
-  notes: '',
-  currencyId: '1',
-  exchangeRate: '1.000000',
-  lines: [],
-});
+export const defaultBankDisbursementForm = (): BankDisbursementFormData =>
+  defaultCashBankForm('BANK');
+export const fromBankDisbursement = (r: ErpBankDisbursement): BankDisbursementFormData =>
+  fromCashBankTransaction(r);
+export const toBankDisbursementPayload = (
+  d: BankDisbursementFormData,
+): CreateBankDisbursementPayload => toCashBankPayload(d, 'DISBURSEMENT');
 
-export function fromBankDisbursement(r: ErpBankDisbursement): BankDisbursementFormData {
-  return {
-    docNumber: r.docNumber,
-    branchId: r.branchId,
-    cashAccountId: r.cashAccountId,
-    entryDate: r.entryDate.slice(0, 10),
-    fiscalPeriodId: r.fiscalPeriodId,
-    partnerId: r.partnerId ?? '',
-    description: r.description,
-    notes: r.notes ?? '',
-    currencyId: r.currencyId,
-    exchangeRate: r.exchangeRate,
-    lines: r.lines.map((l) => ({ ...l })),
-  };
-}
+const SM_LABELS: CashBankFormLabels = { partner: 'Bayar Ke', account: 'Akun Bank [K]' };
 
-export function toBankDisbursementPayload(
-  f: BankDisbursementFormData,
-): CreateBankDisbursementPayload {
-  return {
-    docNumber: f.docNumber,
-    branchId: f.branchId,
-    cashAccountId: f.cashAccountId,
-    entryDate: f.entryDate,
-    fiscalPeriodId: f.fiscalPeriodId,
-    description: f.description,
-    currencyId: f.currencyId,
-    exchangeRate: f.exchangeRate,
-    notes: f.notes || undefined,
-    partnerId: f.partnerId || undefined,
-    lines: f.lines.map((l, i) => ({ ...l, lineNo: i + 1 })),
-  };
-}
+/** Cara Bayar options for bank transactions (CASH excluded — that's Kas). */
+const PAYMENT_METHODS: { value: ErpPaymentMethod; label: string }[] = [
+  { value: 'TRANSFER', label: 'Transfer' },
+  { value: 'GIRO', label: 'Giro' },
+  { value: 'CHEQUE', label: 'Cek' },
+  { value: 'CARD', label: 'Kartu' },
+  { value: 'OTHER', label: 'Lainnya' },
+];
 
-export function BankDisbursementFormFields({
+/** Cara Bayar value → label (covers CASH for completeness, used by the list column). */
+export const paymentMethodLabel = (m?: ErpPaymentMethod | null): string => {
+  if (!m) return '—';
+  if (m === 'CASH') return 'Tunai';
+  return PAYMENT_METHODS.find((p) => p.value === m)?.label ?? m;
+};
+
+const EDITABLE = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
+
+export function BankDisbursementForm({
   data,
   onChange,
+  saving,
+  onSave,
+  onSaveNew,
+  onReset,
 }: {
   data: BankDisbursementFormData;
   onChange: (d: BankDisbursementFormData) => void;
+  saving?: boolean;
+  onSave: () => void;
+  onSaveNew: () => void;
+  onReset: () => void;
 }) {
-  const set = <K extends keyof BankDisbursementFormData>(
-    k: K,
-    v: BankDisbursementFormData[K],
-  ) => onChange({ ...data, [k]: v });
+  const locked = !EDITABLE.includes(data.status);
+
+  // Cara Bayar — rendered atop the left header column (matches Field markup).
+  const caraBayar = (
+    <label className="flex items-center gap-2">
+      <span className="text-xs text-muted-foreground w-24 shrink-0 text-left">
+        Cara Bayar<span className="text-danger">&nbsp;*</span>
+      </span>
+      <div className="flex-1 min-w-0">
+        <Select
+          value={data.paymentMethod || 'TRANSFER'}
+          disabled={locked}
+          onValueChange={(v) => onChange({ ...data, paymentMethod: v as ErpPaymentMethod })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih cara bayar" />
+          </SelectTrigger>
+          <SelectContent>
+            {PAYMENT_METHODS.map((m) => (
+              <SelectItem key={m.value} value={m.value}>
+                {m.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </label>
+  );
+
+  const giroTab = (
+    <CashBankGirosEditor
+      giros={data.giros}
+      onChange={(giros) => onChange({ ...data, giros })}
+      readOnly={locked}
+    />
+  );
 
   return (
-    <div className="p-4">
-      <FormField label="No. Dokumen" htmlFor="bd-doc" required>
-        <Input
-          id="bd-doc"
-          value={data.docNumber}
-          onChange={(e) => set('docNumber', e.target.value)}
-          placeholder="BD-2026-000001"
-        />
-      </FormField>
-      <FormField label="Tanggal" htmlFor="bd-date" required>
-        <DateInput
-          id="bd-date"
-          value={data.entryDate}
-          onChange={(v) => set('entryDate', v)}
-        />
-      </FormField>
-      <FormField label="Cash Account ID" htmlFor="bd-cash" required>
-        <Input
-          id="bd-cash"
-          value={data.cashAccountId}
-          onChange={(e) => set('cashAccountId', e.target.value)}
-          placeholder="ID rekening kas/bank"
-        />
-      </FormField>
-      <FormField label="Branch ID" htmlFor="bd-branch" required>
-        <Input
-          id="bd-branch"
-          value={data.branchId}
-          onChange={(e) => set('branchId', e.target.value)}
-        />
-      </FormField>
-      <FormField label="Fiscal Period ID" htmlFor="bd-fp" required>
-        <Input
-          id="bd-fp"
-          value={data.fiscalPeriodId}
-          onChange={(e) => set('fiscalPeriodId', e.target.value)}
-        />
-      </FormField>
-      <FormField label="Partner ID" htmlFor="bd-partner">
-        <Input
-          id="bd-partner"
-          value={data.partnerId}
-          onChange={(e) => set('partnerId', e.target.value)}
-        />
-      </FormField>
-      <FormField label="Currency ID" htmlFor="bd-cur" required>
-        <Input
-          id="bd-cur"
-          value={data.currencyId}
-          onChange={(e) => set('currencyId', e.target.value)}
-        />
-      </FormField>
-      <FormField label="Kurs" htmlFor="bd-rate" required>
-        <Input
-          id="bd-rate"
-          value={data.exchangeRate}
-          onChange={(e) => set('exchangeRate', e.target.value)}
-        />
-      </FormField>
-      <FormField label="Deskripsi" htmlFor="bd-desc" required>
-        <Input
-          id="bd-desc"
-          value={data.description}
-          onChange={(e) => set('description', e.target.value)}
-        />
-      </FormField>
-      <FormField label="Catatan" htmlFor="bd-notes">
-        <Input
-          id="bd-notes"
-          value={data.notes}
-          onChange={(e) => set('notes', e.target.value)}
-        />
-      </FormField>
-      <JournalLinesEditor
-        lines={data.lines}
-        onChange={(lines) => onChange({ ...data, lines })}
-      />
-    </div>
+    <CashBankTransactionForm
+      data={data}
+      onChange={onChange}
+      labels={SM_LABELS}
+      transactionCode="FIN.SM"
+      headerExtra={caraBayar}
+      extraTabs={[{ key: 'giro', label: 'Giro', content: giroTab }]}
+      saving={saving}
+      onSave={onSave}
+      onSaveNew={onSaveNew}
+      onReset={onReset}
+    />
   );
 }

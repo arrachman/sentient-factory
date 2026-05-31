@@ -283,7 +283,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/finance/cash-receipts': { group: 'Finance', title: 'Cash Receipt', icon: 'calculator' },
   '/finance/bank-receipts': { group: 'Finance', title: 'Bank Receipt', icon: 'calculator' },
   '/finance/cash-disbursements': { group: 'Finance', title: 'Cash Disbursement', icon: 'calculator' },
-  '/finance/bank-disbursements': { group: 'Finance', title: 'Bank Disbursement', icon: 'calculator' },
+  '/finance/bank-disbursements': { group: 'Finance', title: 'Bank Keluar', icon: 'calculator' },
   '/finance/cashbank-transfers': { group: 'Finance', title: 'Cash/Bank Transfer', icon: 'calculator' },
   '/finance/receipt-giros': { group: 'Finance', title: 'Receipt Giro', icon: 'calculator' },
   '/finance/send-giros': { group: 'Finance', title: 'Send Giro', icon: 'calculator' },
