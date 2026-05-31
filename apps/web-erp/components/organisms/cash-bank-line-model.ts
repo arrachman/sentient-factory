@@ -16,9 +16,12 @@ export interface CashLineRow {
   costCenterLabel?: string;
 }
 
+// Distinct key namespace from loaded rows (`fromCashReceipt` keys them
+// `cl-<id|lineNo>`) — sharing the `cl-` prefix collided when appending rows
+// to an existing receipt. `nl-` = new line.
 let seq = 0;
 export const newCashLine = (): CashLineRow => ({
-  key: `cl-${(seq += 1)}`,
+  key: `nl-${(seq += 1)}`,
   accountId: '',
   amount: '',
 });
