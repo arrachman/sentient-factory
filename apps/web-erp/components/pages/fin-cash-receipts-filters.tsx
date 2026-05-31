@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import {
   Select,
   SelectContent,
@@ -121,9 +122,9 @@ export function CashReceiptFilters({
       </Field>
       <Field label="Tanggal">
         <div className="flex items-center gap-1">
-          <Input type="date" value={value.dateFrom} onChange={(e) => set({ dateFrom: e.target.value })} />
+          <DateInput value={value.dateFrom} onChange={(v) => set({ dateFrom: v })} />
           <span className="text-xs text-muted-foreground">-</span>
-          <Input type="date" value={value.dateTo} onChange={(e) => set({ dateTo: e.target.value })} />
+          <DateInput value={value.dateTo} onChange={(v) => set({ dateTo: v })} />
         </div>
       </Field>
       <Field label="Terima Dari">

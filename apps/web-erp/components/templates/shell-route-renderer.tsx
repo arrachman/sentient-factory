@@ -111,6 +111,7 @@ import { ErpDataValidityPage } from '@/components/pages/tools-data-validity-page
 import { SettingsGroupPage } from '@/components/pages/settings-group-page';
 import { AccountCodeFormatPage } from '@/components/pages/account-code-format-page';
 import { NumberFormatPage } from '@/components/pages/number-format-page';
+import { DateFormatPage } from '@/components/pages/date-format-page';
 import { ErpImportPage } from '@/components/pages/import-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 
@@ -142,6 +143,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/settings/approval': () => <SettingsGroupPage group="approval" title="Pengaturan Persetujuan" />,
   '/admin/account-code-format': () => <AccountCodeFormatPage />,
   '/admin/number-format': () => <NumberFormatPage />,
+  '/admin/date-format': () => <DateFormatPage />,
   // ── Import ────────────────────────────────────────────────────────────────
   '/admin/import': () => <ErpImportPage />,
   // ── Admin (sys/adm) ───────────────────────────────────────────────────────

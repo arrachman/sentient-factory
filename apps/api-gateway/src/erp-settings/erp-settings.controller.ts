@@ -4,6 +4,7 @@ import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { QueryErpSettingDto } from './dto/query-erp-setting.dto';
 import { UpdateErpSettingDto } from './dto/update-erp-setting.dto';
 import { UpdateNumberFormatDto } from './dto/update-number-format.dto';
+import { UpdateDateFormatDto } from './dto/update-date-format.dto';
 import { ErpSettingsService } from './erp-settings.service';
 
 @ApiTags('ERP Settings')
@@ -33,6 +34,22 @@ export class ErpSettingsController {
   updateNumberFormat(@Body() dto: UpdateNumberFormatDto, @Request() req: any) {
     return this.service
       .updateNumberFormat(dto.thousandsSep, dto.decimalSep, dto.decimals, req.user?.id)
+      .then((data) => ({ success: true, data }));
+  }
+
+  @Get('date-format')
+  @ApiOperation({ summary: 'Get global date display format' })
+  @ApiResponse({ status: 200, description: 'Active date format' })
+  getDateFormat() {
+    return this.service.getDateFormat().then((data) => ({ success: true, data }));
+  }
+
+  @Put('date-format')
+  @ApiOperation({ summary: 'Update global date display format' })
+  @ApiResponse({ status: 200, description: 'Date format updated' })
+  updateDateFormat(@Body() dto: UpdateDateFormatDto, @Request() req: any) {
+    return this.service
+      .updateDateFormat(dto.format, req.user?.id)
       .then((data) => ({ success: true, data }));
   }
 

@@ -10,11 +10,15 @@ import {
   parseDecimalSep,
   parseThousandsSep,
 } from './number-format';
+import { buildDateFormat, DateFormat, parseDateFormatToken } from './date-format';
 
 const NUMBER_FORMAT_GROUP = 'number-format';
 const KEY_THOUSANDS = 'number_thousands_sep';
 const KEY_DECIMAL = 'number_decimal_sep';
 const KEY_DECIMALS = 'number_decimals';
+
+const FORMAT_GROUP = 'format';
+const KEY_DATE_FORMAT = 'date_format';
 
 @Injectable()
 export class ErpSettingsService {
@@ -70,6 +74,33 @@ export class ErpSettingsService {
       });
     }
     return format;
+  }
+
+  async getDateFormat(): Promise<DateFormat> {
+    const row = await this.prisma.erpSetting.findFirst({
+      where: { group: FORMAT_GROUP, key: KEY_DATE_FORMAT, deletedAt: null },
+    });
+    return buildDateFormat(row?.value);
+  }
+
+  async updateDateFormat(format: string, actorId?: string): Promise<DateFormat> {
+    const token = parseDateFormatToken(format);
+    const updatedById = toAuditUserId(actorId);
+    await this.prisma.erpSetting.upsert({
+      where: {
+        module_group_key: { module: 'system', group: FORMAT_GROUP, key: KEY_DATE_FORMAT },
+      },
+      create: {
+        module: 'system',
+        group: FORMAT_GROUP,
+        key: KEY_DATE_FORMAT,
+        name: 'Format Tanggal',
+        value: token,
+        dataType: 'string',
+      },
+      update: { value: token, updatedById },
+    });
+    return buildDateFormat(token);
   }
 
   async findAll(query: QueryErpSettingDto) {

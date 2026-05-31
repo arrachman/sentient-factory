@@ -7,6 +7,7 @@
  */
 
 import * as React from 'react';
+import { DateInput } from '@/components/ui/date-input';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import {
@@ -75,11 +76,10 @@ export function CurrencyRatesPanel({ currencyId }: { currencyId: string }) {
     <div className="p-4">
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
         <FormField label="Tanggal" htmlFor="cr-date">
-          <Input
+          <DateInput
             id="cr-date"
-            type="date"
             value={rateDate}
-            onChange={(e) => setRateDate(e.target.value)}
+            onChange={(v) => setRateDate(v)}
           />
         </FormField>
         <FormField label="Rate" htmlFor="cr-rate">

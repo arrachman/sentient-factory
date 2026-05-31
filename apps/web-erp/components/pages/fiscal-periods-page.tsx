@@ -8,15 +8,9 @@
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { DateInput } from '@/components/ui/date-input';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Modal,
   ModalContent,
@@ -145,19 +139,17 @@ function PeriodFormFields({
         />
       </FormField>
       <FormField label="Tanggal Mulai" htmlFor="fp-start" required>
-        <Input
+        <DateInput
           id="fp-start"
-          type="date"
           value={data.startDate}
-          onChange={(e) => set('startDate', e.target.value)}
+          onChange={(v) => set('startDate', v)}
         />
       </FormField>
       <FormField label="Tanggal Akhir" htmlFor="fp-end" required>
-        <Input
+        <DateInput
           id="fp-end"
-          type="date"
           value={data.endDate}
-          onChange={(e) => set('endDate', e.target.value)}
+          onChange={(v) => set('endDate', v)}
         />
       </FormField>
     </div>

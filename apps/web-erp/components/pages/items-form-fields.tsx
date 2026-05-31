@@ -12,6 +12,7 @@
  */
 
 import * as React from 'react';
+import { DateInput } from '@/components/ui/date-input';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -176,7 +177,7 @@ export function ItemFormFields({
         </React.Fragment>
       ))}
       <FormField label="Harga berlaku s.d" htmlFor="if-valid" help="Setelah tanggal ini, harga jual perlu di-review">
-        <Input id="if-valid" type="date" value={data.validUntil} onChange={(e) => set('validUntil', e.target.value)} />
+        <DateInput id="if-valid" value={data.validUntil} onChange={(v) => set('validUntil', v)} />
       </FormField>
     </Section>
   );

@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { notify } from '@/lib/feedback';
 import {
   runRecalcCogs,
@@ -110,21 +111,19 @@ export function ErpRecalcCogsPage() {
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FormField label="Dari Tanggal" htmlFor="rc-from">
-              <Input
+              <DateInput
                 id="rc-from"
-                type="date"
                 value={params.fromDate ?? ''}
-                onChange={(e) => set('fromDate', e.target.value)}
+                onChange={(v) => set('fromDate', v)}
               />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
             <FormField label="Sampai Tanggal" htmlFor="rc-to">
-              <Input
+              <DateInput
                 id="rc-to"
-                type="date"
                 value={params.toDate ?? ''}
-                onChange={(e) => set('toDate', e.target.value)}
+                onChange={(v) => set('toDate', v)}
               />
             </FormField>
           </div>

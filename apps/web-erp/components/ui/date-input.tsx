@@ -1,0 +1,151 @@
+'use client';
+
+import * as React from 'react';
+import * as Popover from '@radix-ui/react-popover';
+import { DayPicker } from 'react-day-picker';
+import { id as idLocale } from 'react-day-picker/locale';
+import 'react-day-picker/style.css';
+import { cn } from '@/lib/utils';
+import {
+  formatDate,
+  parseIsoDate,
+  toIsoDate,
+  useDateFormat,
+} from '@/lib/date-format';
+
+export interface DateInputProps {
+  /** Canonical ISO date string (YYYY-MM-DD), or '' when empty. */
+  value: string;
+  /** Called with the new ISO date string ('' when cleared). */
+  onChange: (iso: string) => void;
+  id?: string;
+  name?: string;
+  disabled?: boolean;
+  /** Soft empty-state text. */
+  placeholder?: string;
+  'aria-invalid'?: boolean | 'true' | 'false';
+  className?: string;
+}
+
+/**
+ * Single-date field — replaces native <input type="date">.
+ * Empty state shows a friendly placeholder (no browser dd/mm/yyyy); filled
+ * state shows the date formatted per sys_settings (lib/date-format.ts).
+ * Calendar icon / clicking the field opens a Radix Popover day-picker.
+ */
+export function DateInput({
+  value,
+  onChange,
+  id,
+  name,
+  disabled,
+  placeholder = 'Pilih tanggal',
+  className,
+  ...rest
+}: DateInputProps) {
+  const fmt = useDateFormat();
+  const [open, setOpen] = React.useState(false);
+  const [month, setMonth] = React.useState<Date>(() => parseIsoDate(value) ?? new Date());
+  const invalid = rest['aria-invalid'] === true || rest['aria-invalid'] === 'true';
+
+  function handleOpenChange(next: boolean) {
+    if (disabled) return;
+    if (next) setMonth(parseIsoDate(value) ?? new Date());
+    setOpen(next);
+  }
+
+  function handleSelect(date: Date | undefined) {
+    onChange(toIsoDate(date));
+    setOpen(false);
+  }
+
+  const selected = parseIsoDate(value);
+  const display = formatDate(value, fmt);
+
+  return (
+    <Popover.Root open={open} onOpenChange={handleOpenChange}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          id={id}
+          name={name}
+          disabled={disabled}
+          className={cn(
+            'flex h-[26px] w-full min-w-0 items-center gap-1.5 rounded-md border border-border bg-card px-2 text-left text-[12.5px] text-foreground outline-none transition-[border-color,box-shadow] duration-75',
+            'hover:border-[var(--fg-subtle)]',
+            'disabled:cursor-not-allowed disabled:opacity-45',
+            invalid && 'border-danger',
+            open && 'border-primary shadow-[0_0_0_2px_color-mix(in_oklab,var(--primary)_22%,transparent)]',
+            className,
+          )}
+        >
+          <span
+            className={cn('flex-1 truncate', !display && 'text-[var(--fg-subtle)]')}
+          >
+            {display || placeholder}
+          </span>
+
+          {display && !disabled && (
+            <span
+              role="button"
+              tabIndex={-1}
+              aria-label="Hapus tanggal"
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange('');
+              }}
+              className="flex shrink-0 items-center text-[var(--fg-subtle)] hover:text-foreground"
+            >
+              <XIcon />
+            </span>
+          )}
+          <span className="flex shrink-0 items-center text-[var(--fg-muted)]">
+            <CalendarIcon />
+          </span>
+        </button>
+      </Popover.Trigger>
+
+      <Popover.Portal>
+        <Popover.Content
+          align="start"
+          sideOffset={4}
+          style={{
+            background: 'var(--panel)',
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            boxShadow: 'var(--shadow-flyout)',
+            padding: 12,
+            zIndex: 9999,
+            color: 'var(--fg)',
+          }}
+        >
+          <DayPicker
+            mode="single"
+            selected={selected}
+            onSelect={handleSelect}
+            month={month}
+            onMonthChange={setMonth}
+            locale={idLocale}
+          />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="1" y="2.5" width="14" height="12" rx="2" />
+      <path d="M1 6.5h14M5 1v3M11 1v3" />
+    </svg>
+  );
+}
+
+function XIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M2 2l8 8M10 2l-8 8" />
+    </svg>
+  );
+}

@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import type {
   CreateSendGiroPayload,
   ErpSendGiro,
@@ -112,11 +113,10 @@ export function SendGiroFormFields({
         />
       </FormField>
       <FormField label="Tanggal Entry" htmlFor="sg-date" required>
-        <Input
+        <DateInput
           id="sg-date"
-          type="date"
           value={data.entryDate}
-          onChange={(e) => set('entryDate', e.target.value)}
+          onChange={(v) => set('entryDate', v)}
         />
       </FormField>
       <FormField label="No. Giro" htmlFor="sg-gno" required>
@@ -127,11 +127,10 @@ export function SendGiroFormFields({
         />
       </FormField>
       <FormField label="Tanggal Giro" htmlFor="sg-gdate" required>
-        <Input
+        <DateInput
           id="sg-gdate"
-          type="date"
           value={data.giroDate}
-          onChange={(e) => set('giroDate', e.target.value)}
+          onChange={(v) => set('giroDate', v)}
         />
       </FormField>
       <FormField label="Bank Giro" htmlFor="sg-gbank" required>
@@ -142,11 +141,10 @@ export function SendGiroFormFields({
         />
       </FormField>
       <FormField label="Jatuh Tempo" htmlFor="sg-due" required>
-        <Input
+        <DateInput
           id="sg-due"
-          type="date"
           value={data.dueDate}
-          onChange={(e) => set('dueDate', e.target.value)}
+          onChange={(v) => set('dueDate', v)}
         />
       </FormField>
       <FormField label="Branch ID" htmlFor="sg-branch" required>

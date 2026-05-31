@@ -9,6 +9,7 @@ import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import {
   Modal,
   ModalContent,
@@ -121,7 +122,7 @@ function Fields({
         <Input id="ar-doc" value={data.docNumber} onChange={(e) => set('docNumber', e.target.value)} placeholder="RCP-2026-000001" />
       </FormField>
       <FormField label="Tanggal" htmlFor="ar-date" required>
-        <Input id="ar-date" type="date" value={data.transactionDate} onChange={(e) => set('transactionDate', e.target.value)} />
+        <DateInput id="ar-date" value={data.transactionDate} onChange={(v) => set('transactionDate', v)} />
       </FormField>
       <FormField label="Branch ID" htmlFor="ar-branch" required>
         <Input id="ar-branch" value={data.branchId} onChange={(e) => set('branchId', e.target.value)} />

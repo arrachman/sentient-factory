@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import {
   Select,
   SelectContent,
@@ -143,7 +144,7 @@ export function JournalFormFields({
         </Select>
       </FormField>
       <FormField label="Tanggal" htmlFor="je-date" required>
-        <Input id="je-date" type="date" value={data.entryDate} onChange={(e) => set('entryDate', e.target.value)} />
+        <DateInput id="je-date" value={data.entryDate} onChange={(v) => set('entryDate', v)} />
       </FormField>
       <FormField label="Branch ID" htmlFor="je-branch" required>
         <Input id="je-branch" value={data.branchId} onChange={(e) => set('branchId', e.target.value)} />

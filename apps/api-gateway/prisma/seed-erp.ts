@@ -386,6 +386,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M0.SYS.SETTINGS',    title: 'Settings Manager',    path: '/admin/settings',            legacyCode: '0-11' },
     { code: 'M0.SYS.ACCT-CODE',   title: 'Account Code Format', path: '/admin/account-code-format'                   },
     { code: 'M0.SYS.NUM-FORMAT',  title: 'Number Format',       path: '/admin/number-format'                         },
+    { code: 'M0.SYS.DATE-FORMAT', title: 'Date Format',         path: '/admin/date-format'                           },
     { code: 'M0.SYS.DOCNUM',      title: 'Document Numbering',  path: '/admin/document-numbering',  legacyCode: '0-30' },
     { code: 'M0.SYS.FISCAL',      title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
     { code: 'M0.SYS.AUDIT',       title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },

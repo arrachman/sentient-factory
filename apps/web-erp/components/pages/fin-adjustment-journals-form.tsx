@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import type {
   CreateAdjustmentJournalPayload,
   ErpAdjustmentJournal,
@@ -98,11 +99,10 @@ export function AdjustmentJournalFormFields({
         />
       </FormField>
       <FormField label="Tanggal" htmlFor="aj-date" required>
-        <Input
+        <DateInput
           id="aj-date"
-          type="date"
           value={data.entryDate}
-          onChange={(e) => set('entryDate', e.target.value)}
+          onChange={(v) => set('entryDate', v)}
         />
       </FormField>
       <FormField label="Branch ID" htmlFor="aj-branch" required>

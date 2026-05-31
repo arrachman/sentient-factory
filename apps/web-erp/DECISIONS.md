@@ -864,6 +864,56 @@ non-destructive. Jalankan `npm run db:seed` setelah pull untuk hidupkan
 
 ---
 
+### 2.39 Date field = `<DateInput>` (popover day-picker) + format dinamis (2026-05-31)
+
+**Masalah:** semua field tanggal pakai native `<input type="date">` →
+placeholder `dd/mm/yyyy` abu-abu (browser-controlled, tidak bisa di-custom)
++ chrome native yang tidak konsisten dgn design system. User minta UX
+placeholder tanggal diperbaiki.
+
+**Keputusan:** ganti **semua** native `<Input type="date">` di form/filter
+dengan komponen reusable [`components/ui/date-input.tsx`](components/ui/date-input.tsx)
+(`DateInput`) — Radix Popover + `react-day-picker` (mode `single`, locale id)
++ `date-fns`, sejajar pola `date-range-picker.tsx`.
+
+- **Empty state** = placeholder lembut `"Pilih tanggal"` (bukan `dd/mm/yyyy`).
+- **Filled state** = tanggal diformat per setting global + tombol clear (X).
+- **Kontrak:** `value` = ISO string `YYYY-MM-DD`; `onChange(v: string)` terima
+  **string ISO langsung** (bukan event). Props opsional: `id`, `name`,
+  `disabled`, `aria-invalid`, `placeholder`, `className`.
+
+**Format tampilan tanggal dinamis dari `sys_settings`** (sejajar §2.31):
+
+- Key tunggal `system/format/date_format` (sudah ada di seed, value
+  `DD/MM/YYYY`). Token moment-style; preset terbatas (`DD/MM/YYYY`,
+  `DD-MM-YYYY`, `MM/DD/YYYY`, `YYYY-MM-DD`, `DD MMMM YYYY`, `D MMM YYYY`).
+- **Backend SSOT** = [`apps/api-gateway/src/erp-settings/date-format.ts`](../api-gateway/src/erp-settings/date-format.ts):
+  `buildDateFormat(token)` → `{format, example}`, validasi token ∈ preset.
+  Endpoint `GET`/`PUT /erp/settings/date-format` (guard `ErpJwtAuthGuard`),
+  reuse tabel `erpSetting` (tidak ada group/migrasi baru).
+- **Frontend** [`lib/date-format.ts`](lib/date-format.ts): cache module-level
+  + `useDateFormat()` hook + `formatDate(iso, fmt?)` (token→date-fns pattern
+  via `tokenToPattern`) + `parseIsoDate` / `toIsoDate`. Default fallback
+  `DD/MM/YYYY` saat API gagal.
+- Halaman dedicated `/admin/date-format`
+  ([`date-format-page.tsx`](components/pages/date-format-page.tsx)) di group
+  `M0.SYS` — preset clickable + preview live; setelah PUT →
+  `invalidateDateFormatCache(updated)`.
+
+**Aturan:** field tanggal baru **wajib** `<DateInput>` (atau `formatDate()`
+untuk display di tabel) — **dilarang** native `<input type="date">` mentah.
+**Pengecualian:** inline grid-cell editor
+([`grid-cell-editor.tsx`](components/molecules/grid-cell-editor.tsx)) tetap
+native `type="date"` (konteks editor sel spreadsheet autofocus/keyboard,
+popover mengganggu), dan `date-range-picker.tsx` (komponen rentang terpisah).
+
+**Seed:** menu `/admin/date-format` (`M0.SYS.DATE-FORMAT`) ditambah di
+`prisma/seed-erp.ts`. Jalankan `npm run db:seed` (idempoten) setelah pull
+agar item muncul di sidebar dinamis (route tetap reachable via URL/palette
+tanpa reseed).
+
+---
+
 ### 2.32 Item — tab Harga paritas MyERP+ (price tiers 1–10) (2026-05-30)
 
 Section **Harga** di form item (§2.25) di-expand ke paritas tab "Harga"

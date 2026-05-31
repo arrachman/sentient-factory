@@ -7,6 +7,7 @@
  */
 
 import * as React from 'react';
+import { DateInput } from '@/components/ui/date-input';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import {
@@ -231,8 +232,8 @@ export function UserForm({ editing, data, onChange }: UserFormProps) {
             <Input id="uf-city" value="" readOnly disabled placeholder="Dari cabang" />
           </FormField>
           <FormField label="Tgl Berakhir" htmlFor="uf-exp">
-            <Input id="uf-exp" type="date" value={data.expiresAt}
-              onChange={(e) => set('expiresAt', e.target.value)} />
+            <DateInput id="uf-exp" value={data.expiresAt}
+              onChange={(v) => set('expiresAt', v)} />
           </FormField>
           <FormField label="Aktif" htmlFor="uf-active">
             <BooleanRadio id="uf-active" value={data.isActive}

@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import { ErpListLayout } from '@/components/organisms/erp-list-layout';
 import {
   Table,
@@ -97,22 +97,20 @@ function DateRangeBar({ from, to, onFrom, onTo }: DateRangeBarProps) {
       <span style={{ fontSize: 'calc(11px * var(--font-scale, 1))', color: 'var(--fg-faint)' }}>
         Dari:
       </span>
-      <Input
+      <DateInput
         id="al-from"
-        type="date"
         value={from}
-        onChange={(e) => onFrom(e.target.value)}
-        style={{ width: 130 }}
+        onChange={(v) => onFrom(v)}
+        className="w-[130px]"
       />
       <span style={{ fontSize: 'calc(11px * var(--font-scale, 1))', color: 'var(--fg-faint)' }}>
         Sampai:
       </span>
-      <Input
+      <DateInput
         id="al-to"
-        type="date"
         value={to}
-        onChange={(e) => onTo(e.target.value)}
-        style={{ width: 130 }}
+        onChange={(v) => onTo(v)}
+        className="w-[130px]"
       />
     </div>
   );

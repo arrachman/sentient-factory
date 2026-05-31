@@ -208,6 +208,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/admin/preferences': { group: 'Administrator', title: 'Preferensi', icon: 'gear' },
   '/admin/account-code-format': { group: 'Administrator', title: 'Account Code Format', icon: 'calculator' },
   '/admin/number-format': { group: 'Administrator', title: 'Number Format', icon: 'calculator' },
+  '/admin/date-format': { group: 'Administrator', title: 'Date Format', icon: 'calendar' },
   '/master/branches': { group: 'Data Master', title: 'Branch', icon: 'database' },
   '/master/locations': { group: 'Data Master', title: 'Location', icon: 'database' },
   '/master/warehouses': { group: 'Data Master', title: 'Warehouse', icon: 'database' },

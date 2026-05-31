@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import {
   Select,
   SelectContent,
@@ -131,21 +132,19 @@ export function ErpRepostJournalPage() {
         <div style={{ display: 'flex', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <FormField label="Dari Tanggal" htmlFor="rj-from">
-              <Input
+              <DateInput
                 id="rj-from"
-                type="date"
                 value={params.fromDate ?? ''}
-                onChange={(e) => set('fromDate', e.target.value)}
+                onChange={(v) => set('fromDate', v)}
               />
             </FormField>
           </div>
           <div style={{ flex: 1 }}>
             <FormField label="Sampai Tanggal" htmlFor="rj-to">
-              <Input
+              <DateInput
                 id="rj-to"
-                type="date"
                 value={params.toDate ?? ''}
-                onChange={(e) => set('toDate', e.target.value)}
+                onChange={(v) => set('toDate', v)}
               />
             </FormField>
           </div>

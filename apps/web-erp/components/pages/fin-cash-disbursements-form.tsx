@@ -8,6 +8,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { DateInput } from '@/components/ui/date-input';
 import type {
   CreateCashDisbursementPayload,
   ErpCashDisbursement,
@@ -100,11 +101,10 @@ export function CashDisbursementFormFields({
         />
       </FormField>
       <FormField label="Tanggal" htmlFor="cd-date" required>
-        <Input
+        <DateInput
           id="cd-date"
-          type="date"
           value={data.entryDate}
-          onChange={(e) => set('entryDate', e.target.value)}
+          onChange={(v) => set('entryDate', v)}
         />
       </FormField>
       <FormField label="Cash Account ID" htmlFor="cd-cash" required>
