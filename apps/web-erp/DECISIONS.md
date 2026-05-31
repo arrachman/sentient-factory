@@ -1471,3 +1471,23 @@ Aturan turunan:
   `flexShrink:0`) agar `dd/mm/yyyy` + ikon picker tak terpotong. **Jangan**
   clamp `DateRangePicker` native ke lebar tetap < ~330px di flex row — pakai
   `fullWidth={false}`.
+
+### 2.43 Master Mata Uang = seed full ISO 4217 (2026-05-31)
+
+Master Mata Uang (`md_currencies` / model `ErpCurrency`) di-seed dengan daftar
+**lengkap ISO 4217 aktif** (189 entri, termasuk IDR + logam mulia XAU/XAG/XPT/XPD),
+bukan hanya IDR. Data array hidup di modul terpisah
+[`apps/api-gateway/prisma/data/iso-4217-currencies.ts`](../../api-gateway/prisma/data/iso-4217-currencies.ts)
+(interface `Iso4217Currency` = `code`/`name`/`symbol?`) dan di-import oleh
+`seedCurrency()` di `prisma/seed-erp.ts`. Upsert **idempotent** keyed on `code`
+(`create` baru + `update` name/symbol untuk yang sudah ada), `isActive: true`
+untuk semua. `symbol` diisi bila ada simbol baku; dikosongkan untuk kode tanpa
+simbol umum (mis. XDR, BOV).
+
+Alasan: halaman master Currencies (`/master/currencies`) sebelumnya cuma punya
+IDR; aplikasi butuh pilihan mata uang dunia lengkap. Data dijadikan modul
+terpisah agar `seed-erp.ts` tetap ringkas (file seed exempt dari batas 400 baris).
+Frontend (`components/pages/currencies-page.tsx` + `lib/api/currencies.ts`) tidak
+berubah — list dibaca dari API `GET /api/erp/currencies`.
+
+---

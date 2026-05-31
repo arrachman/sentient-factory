@@ -1,6 +1,7 @@
 import { PrismaClient, ErpUserLevel, ErpMenuType, ErpNumberingReset } from '@prisma/client';
 import { pbkdf2Sync, randomBytes } from 'crypto';
 import { seedTransactionNotes } from './seed-erp-transaction-notes';
+import { iso4217Currencies } from './data/iso-4217-currencies';
 
 const prisma = new PrismaClient();
 
@@ -127,12 +128,15 @@ async function seedSettings() {
 }
 
 async function seedCurrency() {
-  await prisma.erpCurrency.upsert({
-    where: { code: 'IDR' },
-    create: { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', isActive: true },
-    update: {},
-  });
-  console.log('✓ md_currencies');
+  // Full ISO 4217 active currency list (incl. IDR). Data: prisma/data/iso-4217-currencies.ts.
+  for (const c of iso4217Currencies) {
+    await prisma.erpCurrency.upsert({
+      where: { code: c.code },
+      create: { code: c.code, name: c.name, symbol: c.symbol, isActive: true },
+      update: { name: c.name, symbol: c.symbol },
+    });
+  }
+  console.log(`✓ md_currencies (${iso4217Currencies.length} entries)`);
 }
 
 async function seedBranch() {
