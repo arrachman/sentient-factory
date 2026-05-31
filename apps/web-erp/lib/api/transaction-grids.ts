@@ -1,5 +1,6 @@
 // Kustomisasi Grid API — transaction-type catalog + per-transaction grid columns.
-// Endpoints: /erp/transaction-grids/types, /:code/columns (GET + PUT).
+// Endpoints: /transaction-grids/types, /:code/columns (GET + PUT).
+// NOTE: BASE_URL already ends in /api/erp — paths here must NOT repeat the `erp` segment.
 
 import { apiGet, apiPut } from './client';
 
@@ -37,12 +38,12 @@ export interface GridColumnsResponse {
 }
 
 export const listTransactionTypes = () =>
-  apiGet<ErpTransactionType[]>('/erp/transaction-grids/types');
+  apiGet<ErpTransactionType[]>('/transaction-grids/types');
 
 export const getGridColumns = (code: string) =>
-  apiGet<GridColumnsResponse>(`/erp/transaction-grids/${encodeURIComponent(code)}/columns`);
+  apiGet<GridColumnsResponse>(`/transaction-grids/${encodeURIComponent(code)}/columns`);
 
 export const saveGridColumns = (code: string, columns: ErpGridColumn[]) =>
-  apiPut<GridColumnsResponse>(`/erp/transaction-grids/${encodeURIComponent(code)}/columns`, {
+  apiPut<GridColumnsResponse>(`/transaction-grids/${encodeURIComponent(code)}/columns`, {
     columns: columns.map((c, i) => ({ ...c, sortOrder: i })),
   });
