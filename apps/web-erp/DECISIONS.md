@@ -24,6 +24,15 @@ struktur nav (MODULE → ITEM, atau MODULE → GROUP → ITEM jadi "Module ·
 Group"). Hanya group "Aksi" (toggle theme/lang) yang statis. Saat menambah
 modul baru: cukup seed di `sys_menus` + `adm_role_menus`, palette ikut.
 
+**Pencarian penuh (2026-05-31):** filter palette match terhadap **label
+(raw + ter-translate via `tGlobal`), code/hint, dan nama group/module** —
+bukan label saja. Konsekuensi: mengetik kode (`M0.CFG`, `CR`, `BRN`), nama
+modul ("administrator", "data master"), atau teks yang tampil di layar (mode
+ID/EN/JA) semuanya resolve. Sebelumnya hanya `it.label` raw yang dicocokkan,
+jadi kode yang terlihat di kolom hint tidak bisa dicari & teks Indonesia yang
+tampil tidak match. Sidebar & palette tetap satu sumber `nav` (coverage sinkron
+by construction) — perubahan ini murni di field yang dicocokkan, bukan daftar item.
+
 ---
 
 ### 2.13 Setting → Tampilan = `/settings/appearance` (2026-05-20)

@@ -134,12 +134,26 @@ export function CommandPalette({
 
   const flat = React.useMemo(() => {
     const list: (PaletteItem & { _group: string })[] = [];
-    const needle = q.toLowerCase();
+    const needle = q.trim().toLowerCase();
     groups.forEach((g) =>
       g.items.forEach((it) => {
-        if (!q || it.label.toLowerCase().includes(needle)) {
+        if (!needle) {
           list.push({ ...it, _group: g.group });
+          return;
         }
+        // Full search: match the label (raw + translated), the code/hint, and
+        // the group/module name — so typing a code (e.g. "M0.CFG"), a module
+        // ("administrator"), or the on-screen translated text all resolve.
+        const haystack = [
+          it.label,
+          tGlobal(it.label),
+          it.hint ?? '',
+          g.group,
+          tGlobal(g.group),
+        ]
+          .join(' ')
+          .toLowerCase();
+        if (haystack.includes(needle)) list.push({ ...it, _group: g.group });
       }),
     );
     return list;
