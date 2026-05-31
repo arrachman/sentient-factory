@@ -1328,3 +1328,36 @@ aset debit** (termasuk piutang/persediaan), bukan murni kas/bank; belum ada flag
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE
 CD/BD/transfer belum pakai backend baru ini.
+
+
+---
+
+## §2.36 Layout baku form input transaksi (2026-05-31)
+
+Standar posisi field untuk **semua form input transaksi** (CR sekarang; CD/BD/
+giro/jurnal mengikuti). Lahir dari Kas Masuk (§ Kas Masuk) — paritas pola legacy
+MyERP+ yang menaruh info dokumen di kanan-atas.
+
+**Grid header 3 kolom** (`grid md:grid-cols-3`):
+- **Kiri = identitas transaksi**: pihak/partner (Terima Dari / Bayar Ke), Akun
+  Kas/Bank [D/K], Uraian.
+- **Tengah = dimensi**: Cabang (required), Lokasi, (Cost Center/Divisi/Proyek bila ada).
+- **Kanan = info dokumen, URUTAN BAKU dari atas:**
+  1. **Tanggal** (required) — paling atas.
+  2. **No Transaksi** — input + checkbox **Auto** satu baris (Auto on → readonly
+     `(otomatis saat simpan)`, server generate via `sys_document_numberings`).
+  3. **Uang/Kurs** — satu baris: `Select` mata uang + **Kurs read-only** inline
+     (muted, `formatNumber(rate,2)`); kurs turunan, bukan input editable.
+
+**Konvensi field umum:**
+- Label via helper `Field` (`<label>` horizontal): teks **rata kiri** (`text-left`,
+  `w-24 shrink-0`), tanda **required `*` di belakang** teks (bukan depan — biar
+  teks label sejajar).
+- Status workflow = **badge read-only di toolbar** (kanan), transisi via aksi
+  (§2.7) — bukan field editable di header.
+- Toolbar atas: Simpan · Simpan & Baru (hanya saat create) · Reset · spacer · Badge status.
+
+**Konsekuensi:** form transaksi baru **mulai dari** komposisi ini; jangan taruh
+Tanggal/No Transaksi/Kurs di kiri atau acak. Field di luar daftar → masukkan ke
+kolom yang paling sesuai (identitas=kiri, dimensi=tengah, dokumen=kanan).
+Referensi implementasi: [`fin-cash-receipts-form.tsx`](components/pages/fin-cash-receipts-form.tsx).

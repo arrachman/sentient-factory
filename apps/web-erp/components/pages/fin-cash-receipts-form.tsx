@@ -274,6 +274,10 @@ export function CashReceiptForm({
               loadOptions={loadLocationOptions}
             />
           </Field>
+        </div>
+
+        {/* Kolom kanan = info dokumen, urutan baku: Tanggal → No Transaksi → Uang/Kurs (§2.36) */}
+        <div className="flex flex-col gap-3">
           <Field label="Tanggal" required>
             <DateInput
               value={data.transactionDate}
@@ -281,9 +285,6 @@ export function CashReceiptForm({
               onChange={(v) => set({ transactionDate: v })}
             />
           </Field>
-        </div>
-
-        <div className="flex flex-col gap-3">
           <Field label="No Transaksi">
             <div className="flex items-center gap-2">
               <Input
