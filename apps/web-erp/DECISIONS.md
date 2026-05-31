@@ -908,6 +908,11 @@ dengan komponen reusable [`components/ui/date-input.tsx`](components/ui/date-inp
   coba format aktif dulu, lalu fallback umum (`5/5/2026`, `05-05-2026`,
   `2026-05-05`, `5 Mei 2026`). Input invalid → revert ke nilai valid terakhir;
   kosong → clear. Format token & day-picker tidak berubah.
+- **Karakter diketik dibatasi (2026-05-31):** hanya **digit + separator format
+  aktif** yang lolos (sanitizer di `onChange`); selain itu di-strip. Untuk
+  `DD/MM/YYYY` → cuma angka & `/`. Separator diturunkan dari token (non-huruf),
+  jadi format `DD-MM-YYYY`/`YYYY-MM-DD` otomatis izinkan `-`. Format ber-nama
+  bulan (`MMM`/`MMMM`) tambahan izinkan huruf+spasi.
 
 **Format tampilan tanggal dinamis dari `sys_settings`** (sejajar §2.31):
 

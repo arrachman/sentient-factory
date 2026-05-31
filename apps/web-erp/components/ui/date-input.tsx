@@ -56,6 +56,21 @@ export function DateInput({
   const display = formatDate(value, fmt);
   const text = draft ?? display;
 
+  // Restrict typed chars to digits + the separators of the active format
+  // (so DD/MM/YYYY allows only digits and "/"). Letters/spaces stay allowed
+  // only when the format uses a month name (MMM/MMMM, e.g. "5 Mei 2026").
+  const sanitize = React.useCallback(
+    (raw: string) => {
+      const token = fmt.format;
+      const seps = Array.from(new Set(token.replace(/[A-Za-z]/g, '')))
+        .map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('');
+      const cls = /MMM/.test(token) ? `\\dA-Za-z\\s${seps}` : `\\d${seps}`;
+      return raw.replace(new RegExp(`[^${cls}]`, 'g'), '');
+    },
+    [fmt.format],
+  );
+
   function handleOpenChange(next: boolean) {
     if (disabled) return;
     if (next) setMonth(parseIsoDate(value) ?? new Date());
@@ -105,7 +120,7 @@ export function DateInput({
           aria-invalid={rest['aria-invalid']}
           placeholder={placeholder}
           value={text}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => setDraft(sanitize(e.target.value))}
           onBlur={commitDraft}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
