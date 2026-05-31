@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import { CashLineRow, CellKind, newCashLine } from './cash-bank-line-model';
+import { buildCellPatch, CashLineRow, GridCol, newCashLine } from './cash-bank-line-model';
 
 export interface CellSel { r: number; c: number }
 
@@ -43,7 +43,7 @@ export function useCashGridNav({
 }: {
   lines: CashLineRow[];
   onChange: (lines: CashLineRow[]) => void;
-  cols: CellKind[];
+  cols: GridCol[];
   readOnly: boolean;
 }): CashGridNav {
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -80,7 +80,10 @@ export function useCashGridNav({
     setEditing(true);
   };
 
-  const editCell = (r: number, c: number) => beginEdit(r, c, { selectOnFocus: true });
+  const editCell = (r: number, c: number) => {
+    if (!cols[c]?.isEditable) return;
+    beginEdit(r, c, { selectOnFocus: true });
+  };
 
   const endEdit = (focusRoot = true) => {
     setEditing(false);
@@ -130,22 +133,20 @@ export function useCashGridNav({
   };
 
   const startCharEdit = (r: number, c: number, key: string) => {
-    const kind = cols[c];
-    if (kind === 'account' || kind === 'costCenter') {
-      beginEdit(r, c, { seed: key });
-      return true;
-    }
-    if (kind === 'notes') {
-      patch(lines[r].key, { notes: key });
+    const col = cols[c];
+    if (!col?.isEditable) return false;
+    if (col.dataType === 'LOOKUP') { beginEdit(r, c, { seed: key }); return true; }
+    if (col.dataType === 'DATE') { beginEdit(r, c, {}); return true; }
+    if (col.dataType === 'NUMBER') {
+      if (!/[0-9]/.test(key)) return false;
+      patch(lines[r].key, buildCellPatch(lines[r], col, key));
       beginEdit(r, c, {});
       return true;
     }
-    if (/[0-9]/.test(key)) {
-      patch(lines[r].key, { [kind === 'amount' ? 'amount' : 'amountFx']: key });
-      beginEdit(r, c, {});
-      return true;
-    }
-    return false;
+    // TEXT
+    patch(lines[r].key, buildCellPatch(lines[r], col, key));
+    beginEdit(r, c, {});
+    return true;
   };
 
   const onRootKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {

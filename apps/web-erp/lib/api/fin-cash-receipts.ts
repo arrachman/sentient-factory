@@ -38,6 +38,7 @@ export interface ErpCashBankLine {
   divisionId?: string | null;
   subdivisionId?: string | null;
   projectId?: string | null;
+  customFields?: Record<string, unknown> | null;
   lineNo: number;
 }
 
@@ -86,6 +87,7 @@ export interface CashBankLinePayload {
   divisionId?: string;
   subdivisionId?: string;
   projectId?: string;
+  customFields?: Record<string, unknown>;
 }
 
 export interface CreateCashReceiptPayload {
