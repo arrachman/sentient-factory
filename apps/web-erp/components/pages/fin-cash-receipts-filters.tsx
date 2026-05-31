@@ -101,26 +101,32 @@ export function CashReceiptFilters({
 
   return (
     <>
-      <Select value={value.status || '_all'} onValueChange={(v) => onChange({ ...value, status: v === '_all' ? '' : v })}>
-        <SelectTrigger style={{ width: 'auto', minWidth: '7rem' }}>
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          {STATUS_OPTIONS.map((o) => (
-            <SelectItem key={o.value || '_all'} value={o.value || '_all'}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <label className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">Status</span>
+        <Select value={value.status || '_all'} onValueChange={(v) => onChange({ ...value, status: v === '_all' ? '' : v })}>
+          <SelectTrigger style={{ width: 'auto', minWidth: '7rem' }}>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPTIONS.map((o) => (
+              <SelectItem key={o.value || '_all'} value={o.value || '_all'}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </label>
 
-      <DateRangePicker
-        fullWidth={false}
-        from={value.dateFrom}
-        to={value.dateTo}
-        onChangeFrom={(v) => onChange({ ...value, dateFrom: v })}
-        onChangeTo={(v) => onChange({ ...value, dateTo: v })}
-      />
+      <label className="flex items-center gap-1.5">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">Tanggal</span>
+        <DateRangePicker
+          fullWidth={false}
+          from={value.dateFrom}
+          to={value.dateTo}
+          onChangeFrom={(v) => onChange({ ...value, dateFrom: v })}
+          onChangeTo={(v) => onChange({ ...value, dateTo: v })}
+        />
+      </label>
 
       <button type="button" className="btn ghost sm" onClick={openDrawer} title="Filter lanjutan">
         <Icon name="filter" size={12} /> Filter

@@ -1443,7 +1443,11 @@ terpisah. Komposisi:
    **Tanggal** (`DateRangePicker`) yang **apply live**, tombol **Filter** (ikon
    `filter`) dengan **badge angka** = jumlah filter lanjutan aktif, dan tombol
    **Reset** (tampil hanya saat ada filter aktif; clear semua). `Σ` summary tetap
-   di kanan baris yang sama.
+   di kanan baris yang sama. **Label di kiri tiap kontrol inline (2026-05-31):**
+   "Status" & "Tanggal" sebagai `<span class="text-xs text-muted-foreground">`
+   di dalam `<label>` (flex, gap kecil) — supaya jelas field mana yang difilter
+   (dropdown "Semua" + range `dd/mm/yyyy` ambigu tanpa label; placeholder hilang
+   begitu ada nilai jadi tak cukup).
 2. **Drawer kanan** (`components/organisms/drawer.tsx`, slide-over Radix Dialog):
    memuat **semua** field (No Transaksi range, Status, Tanggal, Terima Dari,
    Lokasi, Cabang, Uraian, Catatan, User). Edit **draft terstaging** — tidak
