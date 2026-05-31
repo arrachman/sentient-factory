@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { NumInput } from '@/components/molecules/num-input';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
   CashBankLinesEditor,
@@ -305,14 +304,14 @@ export function CashReceiptForm({
               </label>
             </div>
           </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Uang" required>
+          <Field label="Uang" required>
+            <div className="flex items-center gap-2">
               <Select
                 value={data.currencyId}
                 onValueChange={(v) => set({ currencyId: v })}
                 disabled={locked}
               >
-                <SelectTrigger>
+                <SelectTrigger className="flex-1 min-w-0">
                   <SelectValue placeholder="Mata uang" />
                 </SelectTrigger>
                 <SelectContent>
@@ -323,16 +322,17 @@ export function CashReceiptForm({
                   ))}
                 </SelectContent>
               </Select>
-            </Field>
-            <Field label="Kurs" required>
-              <NumInput
-                value={data.exchangeRate}
-                decimals={4}
-                disabled={locked}
-                onChange={(raw) => set({ exchangeRate: raw })}
-              />
-            </Field>
-          </div>
+              <span
+                className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 whitespace-nowrap"
+                title="Kurs ke mata uang dasar (read-only)"
+              >
+                Kurs
+                <span className="tabular-nums font-medium text-foreground">
+                  {formatNumber(Number(data.exchangeRate) || 1, 2)}
+                </span>
+              </span>
+            </div>
+          </Field>
         </div>
       </div>
 
