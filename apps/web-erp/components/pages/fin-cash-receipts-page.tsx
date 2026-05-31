@@ -10,7 +10,6 @@ import { Icon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import {
   ErpListLayout,
-  type FilterConfig,
   type ListPaginationConfig,
   type SummaryConfig,
 } from '@/components/organisms/erp-list-layout';
@@ -24,7 +23,12 @@ import {
   TableEmpty,
   CodeLinkCell,
 } from '@/components/organisms/table';
-import { Input } from '@/components/ui/input';
+import {
+  CashReceiptFilters,
+  emptyCrFilters,
+  hasActiveCrFilters,
+  type CrFilters,
+} from './fin-cash-receipts-filters';
 import {
   RowActionsMenu,
   RowContextMenu,
@@ -86,18 +90,20 @@ export function ErpCashReceiptsPage() {
   const [saving, setSaving] = React.useState(false);
 
   const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState('');
-  const [dateFrom, setDateFrom] = React.useState('');
-  const [dateTo, setDateTo] = React.useState('');
+  const [filters, setFilters] = React.useState<CrFilters>(emptyCrFilters);
   const { page, pageSize, setPage, setPageSize } = useListPagination('fin-cash-receipts');
 
+  // Debounce search + the whole filter object (text fields type-as-you-go).
   const [debouncedSearch, setDebouncedSearch] = React.useState(search);
+  const [debF, setDebF] = React.useState(filters);
   React.useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(t);
   }, [search]);
-
-  const statusParam = (statusFilter || undefined) as ErpDocumentStatus | undefined;
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebF(filters), 350);
+    return () => clearTimeout(t);
+  }, [filters]);
 
   const { rows, meta, loading, error, reload } = useErpList(
     () =>
@@ -105,18 +111,26 @@ export function ErpCashReceiptsPage() {
         page,
         limit: pageSize,
         search: debouncedSearch || undefined,
-        status: statusParam,
-        dateFrom: dateFrom || undefined,
-        dateTo: dateTo || undefined,
+        status: (debF.status || undefined) as ErpDocumentStatus | undefined,
+        dateFrom: debF.dateFrom || undefined,
+        dateTo: debF.dateTo || undefined,
+        docNumberFrom: debF.noFrom || undefined,
+        docNumberTo: debF.noTo || undefined,
+        partnerId: debF.partnerId || undefined,
+        locationId: debF.locationId || undefined,
+        branchId: debF.branchId || undefined,
+        description: debF.uraian || undefined,
+        notes: debF.catatan || undefined,
+        createdById: debF.userId || undefined,
         sortBy: 'transactionDate',
         sortDir: 'desc',
       }),
-    [page, pageSize, debouncedSearch, statusParam, dateFrom, dateTo],
+    [page, pageSize, debouncedSearch, debF],
   );
 
   React.useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter, dateFrom, dateTo, pageSize]);
+  }, [debouncedSearch, debF, pageSize]);
 
   const [focused, setFocused] = React.useState(-1);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
@@ -237,22 +251,6 @@ export function ErpCashReceiptsPage() {
   }
 
   // ── list view ─────────────────────────────────────────────────────────────────
-  const filters: FilterConfig[] = [
-    {
-      key: 'status',
-      label: 'Status',
-      value: statusFilter,
-      onChange: setStatusFilter,
-      options: [
-        { label: 'Semua', value: '' },
-        { label: 'Draft', value: 'DRAFT' },
-        { label: 'Need Approve', value: 'NEED_APPROVE' },
-        { label: 'Approved', value: 'APPROVED' },
-        { label: 'Rejected', value: 'REJECTED' },
-        { label: 'Posted', value: 'POSTED' },
-      ],
-    },
-  ];
   const summary: SummaryConfig = { metricLabel: 'Σ Kas Masuk', rowCount: rows.length, totalCount: totalRows };
   const pagination: ListPaginationConfig = {
     page,
@@ -269,15 +267,6 @@ export function ErpCashReceiptsPage() {
       return n;
     });
 
-  const dateToolbar = (
-    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-      <span>Tanggal</span>
-      <Input type="date" className="h-7 w-36" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-      <span>s.d</span>
-      <Input type="date" className="h-7 w-36" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-    </div>
-  );
-
   return (
     <ErpListLayout
       title="Kas Masuk"
@@ -288,8 +277,6 @@ export function ErpCashReceiptsPage() {
       onSearch={setSearch}
       onAdd={openCreate}
       onRefresh={reload}
-      filters={filters}
-      toolbar={dateToolbar}
       summary={summary}
       pagination={pagination}
       keyboardRows={{
@@ -300,6 +287,16 @@ export function ErpCashReceiptsPage() {
         onOpen: (i) => rows[i] && openEdit(rows[i]),
       }}
     >
+      <div className="flex items-start gap-2">
+        <div className="flex-1">
+          <CashReceiptFilters value={filters} onChange={setFilters} />
+        </div>
+        {hasActiveCrFilters(filters) && (
+          <button className="btn ghost sm mt-6" onClick={() => setFilters(emptyCrFilters)}>
+            <Icon name="x" size={11} /> Reset filter
+          </button>
+        )}
+      </div>
       {selected.size > 0 && (
         <div className="bulk-bar flex items-center gap-3 px-3 py-2 mb-2 rounded-md bg-secondary text-sm">
           <strong>{selected.size}</strong> baris dipilih

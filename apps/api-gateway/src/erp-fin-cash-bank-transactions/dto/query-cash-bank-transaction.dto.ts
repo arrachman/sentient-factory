@@ -76,5 +76,21 @@ export class QueryCashBankTransactionDto {
 
   @ApiPropertyOptional() @IsOptional() @IsString() branchId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() locationId?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() partnerId?: string;
+  @ApiPropertyOptional({ description: 'Terima Dari (partner id)' })
+  @IsOptional() @IsString() partnerId?: string;
+
+  @ApiPropertyOptional({ description: 'No Transaksi >= (range start)' })
+  @IsOptional() @IsString() docNumberFrom?: string;
+
+  @ApiPropertyOptional({ description: 'No Transaksi <= (range end)' })
+  @IsOptional() @IsString() docNumberTo?: string;
+
+  @ApiPropertyOptional({ description: 'Uraian (description contains)' })
+  @IsOptional() @IsString() description?: string;
+
+  @ApiPropertyOptional({ description: 'Catatan (notes contains)' })
+  @IsOptional() @IsString() notes?: string;
+
+  @ApiPropertyOptional({ description: 'User input (createdById)' })
+  @IsOptional() @IsString() createdById?: string;
 }

@@ -1250,6 +1250,15 @@ ke endpoint shared (`direction=RECEIPT`) + `transitionCashReceipt`.
 **Dihapus:** prototype `kas-masuk-list.tsx` + `kas-masuk-list-parts.tsx` (mock
 client-side, orphaned, langgar §2.12) + route legacy `'kas-masuk'`.
 
+**Filter list = paritas legacy (2026-05-31).** Panel filter
+[`fin-cash-receipts-filters.tsx`](components/pages/fin-cash-receipts-filters.tsx)
+(`CashReceiptFilters`): No Transaksi (range), Status, Tanggal (range), Terima Dari,
+Lokasi, Cabang, Uraian, Catatan, User — semua **server-driven** (debounce 350ms) +
+reset filter, plus search global di header. Backend query DTO menambah
+`docNumberFrom/To`, `description`, `notes`, `createdById` (partner/branch/location
+sudah ada). Pola filter kaya transaksi: panel terpisah di atas tabel (bukan
+`FilterConfig` dropdown ErpListLayout yang cuma cocok untuk master sederhana).
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
-reopen dulu); filter Terima Dari/Lokasi/Cabang di list; kolom User Input; FE
+reopen dulu); kolom User Input di tabel (filter User sudah ada); FE
 CD/BD/transfer belum pakai backend baru ini.

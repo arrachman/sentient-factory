@@ -125,6 +125,11 @@ export interface ListCashReceiptsParams extends PaginationParams {
   branchId?: string;
   locationId?: string;
   partnerId?: string;
+  docNumberFrom?: string;
+  docNumberTo?: string;
+  description?: string;
+  notes?: string;
+  createdById?: string;
 }
 
 type Query = Record<string, string | number | boolean | undefined>;

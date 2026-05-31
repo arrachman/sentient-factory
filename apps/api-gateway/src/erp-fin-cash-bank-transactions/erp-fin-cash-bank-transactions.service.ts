@@ -182,11 +182,24 @@ export class ErpFinCashBankTransactionsService {
     if (query.branchId) where.branchId = BigInt(query.branchId);
     if (query.locationId) where.locationId = BigInt(query.locationId);
     if (query.partnerId) where.partnerId = BigInt(query.partnerId);
+    if (query.createdById) where.createdById = BigInt(query.createdById);
     if (query.dateFrom || query.dateTo) {
       where.transactionDate = {
         ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
         ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
       };
+    }
+    if (query.docNumberFrom || query.docNumberTo) {
+      where.docNumber = {
+        ...(query.docNumberFrom ? { gte: query.docNumberFrom } : {}),
+        ...(query.docNumberTo ? { lte: query.docNumberTo } : {}),
+      };
+    }
+    if (query.description?.trim()) {
+      where.description = { contains: query.description.trim(), mode: 'insensitive' };
+    }
+    if (query.notes?.trim()) {
+      where.notes = { contains: query.notes.trim(), mode: 'insensitive' };
     }
     if (query.search?.trim()) {
       const q = query.search.trim();
