@@ -1259,6 +1259,11 @@ reset filter, plus search global di header. Backend query DTO menambah
 sudah ada). Pola filter kaya transaksi: panel terpisah di atas tabel (bukan
 `FilterConfig` dropdown ErpListLayout yang cuma cocok untuk master sederhana).
 
+**Header form = label inline 1 baris (2026-05-31).** `Field` di
+[`fin-cash-receipts-form.tsx`](components/pages/fin-cash-receipts-form.tsx) diubah dari
+label-di-atas (`flex flex-col`) jadi label-kiri-input-kanan (`flex items-center`, label
+`w-24 shrink-0 text-left`) atas permintaan user — tiap field header jadi satu baris.
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE
 CD/BD/transfer belum pakai backend baru ini.
