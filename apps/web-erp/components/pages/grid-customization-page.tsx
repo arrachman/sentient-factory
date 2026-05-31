@@ -3,7 +3,8 @@
 /**
  * Kustomisasi Grid (/admin/grid-customization) — admin page to customize the
  * column layout of each transaction detail grid (legacy MyERP+ "Grid" parity).
- * Left = module→transaction tree; right = editable column definitions.
+ * Left = module→transaction tree; right = tab strip (one type can own many
+ * grids) + editable column definitions for the active tab.
  */
 
 import * as React from 'react';
@@ -11,12 +12,14 @@ import { Icon } from '@/components/ui/icons';
 import { notify } from '@/lib/feedback';
 import {
   listTransactionTypes,
-  getGridColumns,
-  saveGridColumns,
+  getTransactionGrids,
+  saveTransactionGrids,
   type ErpTransactionType,
+  type ErpTransactionGrid,
   type ErpGridColumn,
 } from '@/lib/api/transaction-grids';
 import { GridCustomizationTree } from './grid-customization-tree';
+import { GridCustomizationTabs } from './grid-customization-tabs';
 import { GridCustomizationColumns } from './grid-customization-columns';
 
 const blankColumn = (index: number): ErpGridColumn => ({
@@ -27,15 +30,21 @@ const blankColumn = (index: number): ErpGridColumn => ({
   isVisible: true,
   isRequired: false,
   isEditable: true,
+  isSkippable: false,
   kind: 'CUSTOM',
   dataType: 'TEXT',
   lookupSource: null,
+  labelFormatter: null,
+  headerRenderer: null,
+  cellRenderer: null,
+  cellEditor: null,
 });
 
 export function GridCustomizationPage() {
   const [types, setTypes] = React.useState<ErpTransactionType[]>([]);
   const [selected, setSelected] = React.useState<string | undefined>();
-  const [columns, setColumns] = React.useState<ErpGridColumn[]>([]);
+  const [grids, setGrids] = React.useState<ErpTransactionGrid[]>([]);
+  const [activeKey, setActiveKey] = React.useState<string | undefined>();
   const [loadingCols, setLoadingCols] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -53,20 +62,33 @@ export function GridCustomizationPage() {
   React.useEffect(() => {
     if (!selected) return;
     setLoadingCols(true);
-    getGridColumns(selected)
-      .then((r) => setColumns(r.columns))
-      .catch((e) => notify(e?.message ?? 'Gagal memuat kolom', 'danger'))
+    getTransactionGrids(selected)
+      .then((r) => {
+        setGrids(r.grids);
+        setActiveKey((r.grids.find((g) => g.isPrimary) ?? r.grids[0])?.key);
+      })
+      .catch((e) => notify(e?.message ?? 'Gagal memuat grid', 'danger'))
       .finally(() => setLoadingCols(false));
   }, [selected]);
 
   const selectedType = types.find((t) => t.code === selected);
+  const activeGrid = grids.find((g) => g.key === activeKey) ?? grids[0];
+
+  const setActiveColumns = (cols: ErpGridColumn[]) =>
+    setGrids((gs) => gs.map((g) => (g.key === activeGrid?.key ? { ...g, columns: cols } : g)));
+
+  const addColumn = () => {
+    if (!activeGrid) return;
+    setActiveColumns([...activeGrid.columns, blankColumn(activeGrid.columns.length)]);
+  };
 
   const handleSave = async () => {
     if (!selected) return;
     setSaving(true);
     try {
-      const r = await saveGridColumns(selected, columns);
-      setColumns(r.columns);
+      const r = await saveTransactionGrids(selected, grids);
+      setGrids(r.grids);
+      setActiveKey((prev) => (r.grids.some((g) => g.key === prev) ? prev : (r.grids.find((g) => g.isPrimary) ?? r.grids[0])?.key));
       notify('Layout grid disimpan', 'success');
     } catch (e) {
       notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
@@ -92,12 +114,7 @@ export function GridCustomizationPage() {
         <div className="flex items-center gap-2 border-b border-border px-4 py-2">
           <h2 className="text-sm font-semibold">{selectedType?.name ?? 'Pilih transaksi'}</h2>
           <div className="flex-1" />
-          <button
-            type="button"
-            className="btn"
-            disabled={!selected}
-            onClick={() => setColumns((c) => [...c, blankColumn(c.length)])}
-          >
+          <button type="button" className="btn" disabled={!activeGrid} onClick={addColumn}>
             <Icon name="plus" size={12} /> Tambah Kolom
           </button>
           <button type="button" className="btn primary" disabled={!selected || saving} onClick={handleSave}>
@@ -105,11 +122,22 @@ export function GridCustomizationPage() {
           </button>
         </div>
 
+        {!loadingCols && grids.length > 0 && (
+          <GridCustomizationTabs
+            grids={grids}
+            activeKey={activeKey}
+            onSelect={setActiveKey}
+            onGridsChange={setGrids}
+          />
+        )}
+
         <div className="flex-1 overflow-auto p-3">
           {loadingCols ? (
             <div className="p-4 text-sm text-muted-foreground">Memuat…</div>
+          ) : activeGrid ? (
+            <GridCustomizationColumns columns={activeGrid.columns} onColumnsChange={setActiveColumns} />
           ) : (
-            <GridCustomizationColumns columns={columns} onColumnsChange={setColumns} />
+            <div className="p-4 text-sm text-muted-foreground">Pilih jenis transaksi.</div>
           )}
         </div>
       </section>

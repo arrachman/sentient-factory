@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Put, Request, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
-import { SaveGridColumnsDto } from './dto/save-grid-columns.dto';
+import { SaveGridsDto } from './dto/save-grid-columns.dto';
 import { ErpSysTransactionGridsService } from './erp-sys-transaction-grids.service';
 
 @ApiTags('ERP Transaction Grids (Kustomisasi Grid)')
@@ -18,18 +18,24 @@ export class ErpSysTransactionGridsController {
   }
 
   @Get(':code/columns')
-  @ApiOperation({ summary: 'Get grid columns for a transaction type' })
+  @ApiOperation({ summary: 'Get primary-grid columns (compat — read by the live entry grid)' })
   getColumns(@Param('code') code: string) {
     return this.service.getColumns(code);
   }
 
-  @Put(':code/columns')
-  @ApiOperation({ summary: 'Replace grid columns for a transaction type' })
-  saveColumns(
+  @Get(':code/grids')
+  @ApiOperation({ summary: 'Get all grids (tabs) + columns for a transaction type' })
+  getGrids(@Param('code') code: string) {
+    return this.service.getGrids(code);
+  }
+
+  @Put(':code/grids')
+  @ApiOperation({ summary: 'Replace all grids (tabs) + columns for a transaction type' })
+  saveGrids(
     @Param('code') code: string,
-    @Body() dto: SaveGridColumnsDto,
+    @Body() dto: SaveGridsDto,
     @Request() req: any,
   ) {
-    return this.service.saveColumns(code, dto, req.user?.id);
+    return this.service.saveGrids(code, dto, req.user?.id);
   }
 }

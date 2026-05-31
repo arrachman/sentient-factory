@@ -1570,6 +1570,40 @@ kolom default keluarga kas/bank (CR/CD/RM/SM). **Follow-up:** label lookup dimen
 (costCenter/division/…) di dokumen lama tampil id sampai master ter-resolve;
 modul transaksi non-kas/bank belum punya line_table/wiring.
 
+### Update 2026-05-31 — tabbing (banyak grid/menu) + slot renderer + skip-fokus
+
+Atas keputusan user: **1 menu/jenis transaksi bisa punya >1 tabel** → layer
+**grid/tab** baru disisipkan, dan tiap kolom dapat slot format/render + flag skip.
+
+- **DB:** model baru **`ErpTransactionGrid` → `@@map("sys_transaction_grids")`**
+  (tab: `transaction_type_id` FK, `key`, `label`, `sort_order`, `line_table?`,
+  `is_primary`, `is_active`, audit; unique `[transaction_type_id, key]`). Kolom
+  **pindah parent** dari `transaction_type_id` → **`grid_id`** (unique
+  `[grid_id, data_field]`). Tambahan kolom di `sys_transaction_grid_columns`:
+  `is_skippable BOOLEAN` (skip fokus saat tab/arrow di grid entry) +
+  `label_formatter` / `header_renderer` / `cell_renderer` / `cell_editor`
+  (semua **TEXT nullable**, allowlist app-level, `null` = derive dari `data_type`).
+  Migrasi `20260531_007_erp_grid_tabs_renderers` (data-preserving: tiap jenis
+  transaksi existing dapat 1 grid `main` primary, semua kolom di-repoint;
+  `migrate deploy`).
+- **Penamaan (best-practice modern grid, bukan Flex):** `labelFormatter`,
+  `headerRenderer`, `cellRenderer`, `cellEditor` (peta dari istilah legacy Flex
+  Label function / Header renderer / Item renderer / Item editor).
+- **Katalog enum (dropdown FE = allowlist DTO):**
+  `labelFormatter`: NONE·NUMBER·DECIMAL·CURRENCY·PERCENT·DATE·DATETIME·BOOLEAN ·
+  `headerRenderer`: DEFAULT·REQUIRED·CENTER·WRAP·HELP ·
+  `cellRenderer`: TEXT·NUMERIC·CURRENCY·BADGE·CHECK·LINK·LOOKUP ·
+  `cellEditor`: TEXT·NUMBER·DATE·LOOKUP·TEXTAREA·CHECKBOX·NONE.
+- **Backend:** `GET /:code/grids` + `PUT /:code/grids` (replace penuh grids+kolom);
+  `GET /:code/columns` **dipertahankan** (kompat) → balikin kolom grid `is_primary`
+  (dibaca `cash-bank-lines.tsx`). `getGrids` **lazy-create** grid `main` primary
+  bila jenis transaksi belum punya grid (editor selalu bisa dibuka). DTO:
+  `GridInputDto`/`SaveGridsDto` + allowlist enum.
+- **Frontend:** tab strip `grid-customization-tabs.tsx` (pilih/ tambah/ rename
+  klik-ganda/ geser/ hapus/ set primary; min 1 tab). `-columns.tsx` tambah kolom
+  **Skip** (checkbox, setelah Edit) + 4 dropdown slot (opsi `— (auto)` = null).
+  `-page.tsx` jadi grids-aware. API client: `getTransactionGrids`/`saveTransactionGrids`.
+
 ---
 
 ## § Bank Masuk (RM) — twin Kas Masuk + Cara Bayar + Giro (2026-05-31)
@@ -1630,3 +1664,50 @@ depan. Eskalasi bila perlu posting giro yang berbeda.
   **Cara Bayar**.
 - Routing: daftar `/finance/bank-receipts` di `TRX_FORM_PAGES`
   (shell-route-renderer) + `ERP_ROUTE_META` (`lib/nav.ts`).
+
+## § Bank Keluar (SM) — twin Kas Keluar + Cara Bayar + Giro (2026-05-31)
+
+Build halaman **Bank Keluar / Bank Disbursement** (`/finance/bank-disbursements`,
+legacyCode `SM`), meniru layar legacy MyERP+ "Bank Keluar (SM)". Sibling Bank Masuk
+(RM, § atas) — arah keluar. Reuse fondasi shared yang sama (jangan fork).
+
+**Keputusan dengan user (2026-05-31):**
+- `/finance/bank-disbursements` = **Bank Keluar (SM)** di atas modul **shared**
+  `erp-fin-cash-bank-transactions`, `kind=BANK` + `direction=DISBURSEMENT`. Judul
+  page + sidebar = **"Bank Keluar"**, code-tag **SM** (override konvensi English
+  untuk item ini, atas pilihan user eksplisit).
+- **Rapikan duplikat**: entri menu lama `/finance/bank-payments` ("Bank Payment",
+  SM→`fin_ap_payments`) **dihapus** dari seed + di-prune dari DB live (idempotent),
+  karena duplikat konsep dengan halaman ini.
+
+**Skema:** tak ada perubahan baru — reuse migrasi `20260531_006` (kind +
+payment_method + index) dari Bank Masuk. **Doc numbering** key
+`BANK_DISBURSEMENT` prefix **SM** (seed `seed-erp.ts` + insert idempotent ke DB
+live). **Giro tab** = `fin_giros` type **`OUTGOING`** (derive dari direction),
+`source='CASH_BANK_TXN'`, sinkron hard delete+recreate (sama pola Bank Masuk;
+dasar modul Send Giro Clearing/SGC ke depan).
+
+**Backend (shared module):** tambah filter **`paymentMethod`** di query DTO +
+`where` service (melengkapi `kind` dari Bank Masuk). `genDocNumber`/`syncGiros`/
+`loadGiros` sudah generik (dipakai RM & SM). Regresi CR/CD/RM aman.
+
+**Frontend (adopter §2.3.1 — reuse, jangan fork):**
+- `lib/api/fin-bank-disbursements.ts` (reuse tipe shared dari `fin-cash-receipts`,
+  `direction:'DISBURSEMENT'` + `kind:'BANK'`).
+- `fin-bank-disbursements-form.tsx` = **wrapper tipis** atas `cash-bank-transaction-form.tsx`,
+  inject **Cara Bayar** (Select §2.6, 6 opsi, default `TRANSFER`) via `headerExtra`
+  + **tab Giro** via `extraTabs` (organism shared `cash-bank-giros.tsx`). Label
+  bank: "Bayar Ke" + "Akun Bank [K]". Export `paymentMethodLabel` untuk kolom list.
+- **Model**: SM pakai **shared `cash-bank-form-model.ts`** langsung —
+  `CashBankFormData` diperluas `kind`/`paymentMethod`/`giros`; `defaultCashBankForm('BANK')`
+  set `paymentMethod='TRANSFER'`; `toCashBankPayload` kirim `giros` hanya saat
+  `kind='BANK'` (cash → `undefined`, backend skip sync). Types di `fin-cash-receipts.ts`
+  + `ErpCashBankGiro`/`CashBankGiroPayload`/`ErpPaymentMethod`/`ErpCashBankKind`.
+- `fin-bank-disbursements-page.tsx` (list + router sub-route §2.3.1), reuse filter
+  bar shared (wrapper `fin-bank-disbursements-filters.tsx`, "Bank Keluar"/"Bayar Ke")
+  + `cashBankWorkflowActions`. Kolom list + **Cara Bayar**.
+- Routing: `/finance/bank-disbursements` dipindah dari `ERP_PAGES` ke
+  `TRX_FORM_PAGES` (shell-route-renderer) + `ERP_ROUTE_META` (`lib/nav.ts`).
+- **Ditunda**: filter Cara Bayar di drawer (butuh ubah `cash-bank-filter-fields`
+  shared); pass ini cukup **kolom** Cara Bayar di list. Backend filter
+  `paymentMethod` sudah siap → tinggal wire field saat melanjutkan.

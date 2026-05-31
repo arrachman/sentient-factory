@@ -114,16 +114,24 @@ export async function seedTransactionGrids(prisma: PrismaClient): Promise<void> 
     });
   }
 
-  // Default columns for the cash/bank family.
+  // Primary "main" grid (tab) + default columns for the cash/bank family.
   const cashBankCodes = TXNS.filter((t) => t.lineTable === CASH_BANK_LINE_TABLE).map((t) => t.code);
   for (const code of cashBankCodes) {
     const type = await prisma.erpTransactionType.findUnique({ where: { code } });
     if (!type) continue;
+    const grid = await prisma.erpTransactionGrid.upsert({
+      where: { transactionTypeId_key: { transactionTypeId: type.id, key: 'main' } },
+      create: {
+        transactionTypeId: type.id, key: 'main', label: 'Utama', sortOrder: 0,
+        lineTable: type.lineTable, isPrimary: true,
+      },
+      update: { lineTable: type.lineTable, isPrimary: true },
+    });
     for (const [i, c] of CASH_BANK_COLUMNS.entries()) {
       await prisma.erpTransactionGridColumn.upsert({
-        where: { transactionTypeId_dataField: { transactionTypeId: type.id, dataField: c.field } },
+        where: { gridId_dataField: { gridId: grid.id, dataField: c.field } },
         create: {
-          transactionTypeId: type.id, sortOrder: i, headerText: c.header, dataField: c.field,
+          gridId: grid.id, sortOrder: i, headerText: c.header, dataField: c.field,
           width: c.width, dataType: c.type, kind: c.kind ?? 'STANDARD', lookupSource: c.lookup ?? null,
           isVisible: c.visible ?? true, isRequired: c.required ?? false, isEditable: c.editable ?? true,
         },
@@ -132,5 +140,5 @@ export async function seedTransactionGrids(prisma: PrismaClient): Promise<void> 
     }
   }
 
-  console.log(`✓ sys_transaction_types (${TXNS.length}) + default grid columns (cash/bank)`);
+  console.log(`✓ sys_transaction_types (${TXNS.length}) + primary grid + default columns (cash/bank)`);
 }
