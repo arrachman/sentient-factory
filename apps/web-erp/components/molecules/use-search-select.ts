@@ -121,6 +121,17 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     if (!inputFocused) setInputText(displayLabel);
   }, [displayLabel, inputFocused]);
 
+  // ── Grid cell edit-mode: seed inline query + focus on mount ──────────────
+  React.useEffect(() => {
+    if (isMulti) return;
+    const seed = props.initialQuery;
+    if (seed) { setInputText(seed); setInputFocused(true); }
+    if (props.autoFocus || seed) {
+      setTimeout(() => { triggerRef.current?.focus(); }, 0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Resolve single display label on mount ────────────────────────────────
   React.useEffect(() => {
     if (isMulti) return;
@@ -324,6 +335,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const selectFromDropdown = (opt: SearchSelectOption) => {
     if (!isMulti) {
       props.onValueChange(opt.value);
+      props.onPick?.({ value: opt.value, label: optLabel(opt) });
       setDisplayLabel(optLabel(opt));
       setInputText(optLabel(opt));
     }
@@ -340,6 +352,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const confirmRow = (opt: SearchSelectOption) => {
     if (isMulti) { toggleMulti(opt.value); return; }
     props.onValueChange(opt.value);
+    props.onPick?.({ value: opt.value, label: optLabel(opt) });
     setDisplayLabel(optLabel(opt));
     closeModal(true);
   };
@@ -352,6 +365,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       props.onValuesChange(Array.from(localSelected));
     } else if (localSingle) {
       props.onValueChange(localSingle);
+      props.onPick?.({ value: localSingle, label: localSingleLabel });
       setDisplayLabel(localSingleLabel);
     }
     closeModal();

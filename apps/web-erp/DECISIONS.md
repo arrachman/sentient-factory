@@ -1366,19 +1366,27 @@ DTO query account `apps/api-gateway` ditambah filter `normalBalance` (enum
 aset debit** (termasuk piutang/persediaan), bukan murni kas/bank; belum ada flag
 `isCashAccount` di `md_accounts`.
 
-**Detail grid = full-keyboard (2026-05-31).** Atas permintaan user, `cash-bank-lines.tsx`
-membuang **search "Pencarian CoA"**, **tombol "+ Tambah"**, dan **kolom trash** —
-grid dikemudikan keyboard penuh:
-- **Tab / Shift+Tab** — pindah antar field (native).
-- **Enter** di field teks (Total/Catatan) baris **terakhir** → tambah baris baru &
-  fokus ke kolom Akun baris itu. Gating pakai `e.defaultPrevented`: SearchSelect
-  (Akun/Cost Center) selalu `preventDefault` Enter-nya sendiri, jadi Enter yang
-  *belum* di-preventDefault dipastikan datang dari field teks biasa → aman, tidak
-  bentrok dengan pilih-akun. Baris kosong tidak ditumpuk (butuh accountId/amount).
-- **Ctrl/Cmd+Delete** — hapus baris aktif; selalu sisakan ≥1 baris (kosongkan bila
-  tinggal satu). Fokus dipulihkan via `useLayoutEffect` + `data-row` index.
-Akun tetap dipilih lewat SearchSelect per-baris (ketik cari / ikon modal). Berlaku
-ke **semua** form yang reuse organism ini (CR/CD/BD).
+**Detail grid = spreadsheet cell-selection (2026-05-31).** Atas permintaan user,
+grid Detail bukan lagi deret input aktif (search "Pencarian CoA", tombol "+ Tambah",
+dan kolom trash dibuang). Default tiap cell = **terpilih (highlighted), bukan input**;
+edit muncul on-demand. Dipecah jadi 4 file (<400 baris, §3): `cash-bank-line-model.ts`
+(tipe + `newCashLine` + `cellColumns`), `cash-bank-line-cell.tsx` (display↔edit per
+cell), `use-cash-grid-nav.ts` (state machine keyboard), `cash-bank-lines.tsx`
+(organism komposit; re-export model untuk form).
+- **Masuk edit (Excel-style):** klik pilih cell; **ketik / Enter / F2 / dobel-klik**
+  masuk edit. Mengetik karakter langsung menyemai nilai (num/notes di-`patch`,
+  akun/cost-center lewat `initialQuery` SearchSelect).
+- **Navigasi:** `↑↓←→` pindah cell (saat tidak edit). Saat edit: **Enter** =
+  commit & tetap di cell (keluar edit), **Tab** = commit & pindah kanan/kiri,
+  **Esc** = batal (revert snapshot). Panah saat edit = gerak caret di input.
+- **Tambah baris:** **Tab** di cell terakhir baris terakhir, atau **↓** di baris
+  terakhir → append baris baru. **Hapus baris:** **Ctrl/Cmd+Delete** (sisakan ≥1).
+- **Fokus:** root `div` `tabIndex=0` menangkap keydown; setelah nav/exit-edit di-
+  refocus via `wantRoot` ref + `useLayoutEffect` (tidak mencuri fokus saat blur).
+- **SearchSelect** ditambah prop reusable: `autoFocus`, `initialQuery` (semai
+  pencarian saat type-to-edit), dan `onPick(value,label)` (cell butuh label untuk
+  render display — `onValueChange` hanya kasih value). Additive; caller lama aman.
+Berlaku ke **semua** form yang reuse organism ini (CR/CD/BD).
 
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE

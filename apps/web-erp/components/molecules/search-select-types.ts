@@ -31,6 +31,12 @@ export interface BaseProps {
   limit?: number;
   /** Pre-fill display label when value is known but may not appear in first-page results. */
   initialLabel?: string;
+  /** Focus the inline input on mount (grid cell edit-mode). */
+  autoFocus?: boolean;
+  /** Seed the inline search text on mount (type-to-edit in a grid cell). Implies autoFocus. */
+  initialQuery?: string;
+  /** Fires alongside onValueChange with the picked option (value + display label). */
+  onPick?: (opt: { value: string; label: string }) => void;
 }
 
 export interface SingleProps extends BaseProps {
