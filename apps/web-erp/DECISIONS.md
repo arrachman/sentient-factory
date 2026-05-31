@@ -1199,3 +1199,57 @@ Menambahkan dua tab terakhir form item legacy MyERP+ (`/app/master/items`):
   `nest start --watch` (auto-reload). Bila API live disajikan dari container
   Docker, perlu rebuild/restart container agar perubahan TS ikut (pola §2.32).
 - Verifikasi: `tsc --noEmit` BE+FE 0 error untuk file item.
+
+---
+
+## § Kas Masuk / Cash Receipt (CR) — transaksi fin pertama (2026-05-31)
+
+Fitur transaksi master-detail penuh pertama di M2 Finance — dibangun dari UI legacy
+MyERP+ "Kas Masuk (CR)" tapi pakai design system + standar Senti (§2.7/§2.9).
+Keputusan dengan user: **posting GL sekarang**, **state machine Senti**, **backend
+cash-bank shared (wire CR dulu)**.
+
+**Status enum diperluas (additive).** `ErpDocumentStatus` ditambah `NEED_APPROVE`,
+`APPROVED`, `REJECTED` (migrasi `20260531_004_erp_document_status_workflow`,
+`ALTER TYPE ADD VALUE`) agar DB sejalan dengan `lib/status.ts` (5-status canonical)
+dan mendukung state machine §2.7. Dipakai semua dokumen fin/inv/pur/sls.
+
+**Backend = 1 modul shared `erp-fin-cash-bank-transactions`** (melayani
+RECEIPT/DISBURSEMENT via enum `direction`; CD/BD nyusul gratis). Endpoint
+`/erp/fin/cash-bank-transactions` (`ErpJwtAuthGuard`). Pola:
+- `create`: `docNumber` auto via `sys_document_numberings` (code `CASH_RECEIPT`,
+  prefix `CR`) saat `auto=true`; `fiscalPeriodId` **diturunkan dari
+  transactionDate** (cari periode yang memuat tanggal — tidak dipilih manual);
+  `amount` header = Σ baris (server-side, tak percaya klien).
+- **Workflow** `transition` (state machine): DRAFT→NEED_APPROVE→APPROVED→POSTED
+  (+REJECTED, +REOPEN). Edit hanya saat DRAFT/NEED_APPROVE/REJECTED; POSTED tak
+  bisa dihapus (reopen dulu).
+- **Posting GL** (`cash-bank-posting.service.ts`): saat POST → generate
+  `fin_ledger_entries` balanced — RECEIPT = **Dr Akun Kas (header)** + **Cr tiap
+  baris**; DISBURSEMENT kebalikannya. Periode `CLOSED` ditolak. REOPEN
+  hard-delete ledger milik dokumen (re-post idempoten). Validasi Σbaris=header.
+- Cross-domain FK (partner/account/branch/currency) = **scalar tanpa @relation**
+  → di-enrich code+name server-side (`cash-bank-enrich.ts`) agar list bawa nama.
+- **E2E terverifikasi (2026-05-31):** create→submit→approve→post menghasilkan
+  3 ledger entries balanced (Dr 455.000 = Cr 300.000+155.000).
+
+**Frontend.** Editor baris kas/bank = organism reusable
+[`components/organisms/cash-bank-lines.tsx`](components/organisms/cash-bank-lines.tsx)
+— **satu kolom Total per baris** (No Akun · Nama · Total · Total Valas · Catatan ·
+Cost Center), bukan debit/kredit (beda dari `JournalLinesEditor` jurnal umum).
+SearchSelect CoA "code - name" (`loadAccountOptionsCoded`) + cost center, `NumInput`,
+total footer. Form [`fin-cash-receipts-form.tsx`](components/pages/fin-cash-receipts-form.tsx):
+header SearchSelect (Terima Dari/Akun Kas/Cabang/Lokasi) + tab Detail/Info + Total;
+**Status read-only (badge), transisi via aksi** (§2.7). List
+[`fin-cash-receipts-page.tsx`](components/pages/fin-cash-receipts-page.tsx) §2.7:
+kolom legacy (No Transaksi link, Tanggal, Terima Dari, Total, Uang, Kurs, Status),
+filter status + rentang tanggal, kebab + context menu workflow actions, bulk hapus,
+keyboard nav, list↔form mode (back-arrow). `lib/api/fin-cash-receipts.ts` diselaraskan
+ke endpoint shared (`direction=RECEIPT`) + `transitionCashReceipt`.
+
+**Dihapus:** prototype `kas-masuk-list.tsx` + `kas-masuk-list-parts.tsx` (mock
+client-side, orphaned, langgar §2.12) + route legacy `'kas-masuk'`.
+
+**Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
+reopen dulu); filter Terima Dari/Lokasi/Cabang di list; kolom User Input; FE
+CD/BD/transfer belum pakai backend baru ini.

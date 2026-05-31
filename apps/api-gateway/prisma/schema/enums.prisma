@@ -103,6 +103,9 @@ enum ErpJournalType {
 
 enum ErpDocumentStatus {
   DRAFT
+  NEED_APPROVE
+  APPROVED
+  REJECTED
   POSTED
   VOID
   CANCELLED

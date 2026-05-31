@@ -770,6 +770,8 @@ async function seedDocumentNumberings() {
     { documentCode: 'JV', name: 'Journal Voucher', prefix: 'JV', digitCount: 6 },
     { documentCode: 'RCP', name: 'Receipt', prefix: 'RCP', digitCount: 6 },
     { documentCode: 'PAY', name: 'Payment', prefix: 'PAY', digitCount: 6 },
+    { documentCode: 'CASH_RECEIPT', name: 'Kas Masuk (Cash Receipt)', prefix: 'CR', digitCount: 6 },
+    { documentCode: 'CASH_DISBURSEMENT', name: 'Kas Keluar (Cash Disbursement)', prefix: 'CD', digitCount: 6 },
   ]) {
     await prisma.erpDocumentNumbering.upsert({
       where: { documentCode: n.documentCode },

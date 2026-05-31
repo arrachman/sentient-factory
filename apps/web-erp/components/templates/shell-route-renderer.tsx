@@ -11,7 +11,6 @@ import { ComingSoon } from '@/components/pages/coming-soon';
 import { Statistik } from '@/components/pages/statistik';
 import { SettingsPage } from '@/components/pages/settings';
 import { AppearancePage } from '@/components/pages/appearance';
-import { KasMasukList } from '@/components/pages/kas-masuk-list';
 import { GenericList } from '@/components/pages/generic-list';
 import { FinancialReport } from '@/components/pages/financial-report';
 import { DataList } from '@/components/pages/data-list';
@@ -308,15 +307,6 @@ export function renderRoute(
     return <ComingSoon route={route} />;
   }
 
-  if (route === 'kas-masuk')
-    return (
-      <KasMasukList
-        t={t}
-        lang={lang}
-        onNavigate={onNavigate}
-        onOpenTab={onOpenTab}
-      />
-    );
   if (MODULES[route])
     return (
       <GenericList

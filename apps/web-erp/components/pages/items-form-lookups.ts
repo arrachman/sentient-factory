@@ -55,6 +55,15 @@ export const loadWarehouseOptions = makeLoader(listWarehouses as unknown as List
 export const loadProjectOptions = makeLoader(listProjects as unknown as ListFn);
 export const loadCostCenterOptions = makeLoader(listCostCenters as unknown as ListFn);
 export const loadAccountOptions = makeLoader(listAccounts as unknown as ListFn);
+
+/** Account picker showing "code - name" in the trigger (accounting convention). */
+export const loadAccountOptionsCoded = async (search: string, page: number, limit: number) => {
+  const res = await listAccounts({ search: search || undefined, page, limit, isActive: true });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.code ? `${x.code} - ${x.name}` : x.name, code: x.code })),
+    total: res.meta.total,
+  };
+};
 export const loadTaxOptions = makeLoader(listTaxes as unknown as ListFn);
 export const loadPartnerOptions = makeLoader(listPartners as unknown as ListFn);
 
