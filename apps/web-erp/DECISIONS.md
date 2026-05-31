@@ -946,7 +946,15 @@ untuk display di tabel) — **dilarang** native `<input type="date">` mentah.
 **Pengecualian:** inline grid-cell editor
 ([`grid-cell-editor.tsx`](components/molecules/grid-cell-editor.tsx)) tetap
 native `type="date"` (konteks editor sel spreadsheet autofocus/keyboard,
-popover mengganggu), dan `date-range-picker.tsx` (komponen rentang terpisah).
+popover mengganggu).
+
+**`date-range-picker.tsx` ikut aturan ini (2026-05-31):** dua native
+`type="date"` di rentang sudah diganti `<input type="text">` editable
+(sub-komponen internal `EditableDate`) yang **reuse pola `DateInput`** —
+display via `formatDate` per `sys_settings`, ketik-manual + parse via
+`parseDisplayDate`, sanitizer karakter, commit on blur/Enter. **Placeholder
+`dd/mm/yyyy` browser dihapus** → `"Mulai"` / `"Selesai"`. Popover kalender
+tetap mode `range`. Bukan lagi pengecualian.
 
 **Seed:** menu `/admin/date-format` (`M0.SYS.DATE-FORMAT`) ditambah di
 `prisma/seed-erp.ts`. Jalankan `npm run db:seed` (idempoten) setelah pull

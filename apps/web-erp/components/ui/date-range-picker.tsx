@@ -3,9 +3,16 @@
 import * as React from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { DayPicker, type DateRange } from 'react-day-picker';
-import { format, isValid, parseISO } from 'date-fns';
 import { id as idLocale } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
+import {
+  formatDate,
+  parseDisplayDate,
+  parseIsoDate,
+  toIsoDate,
+  useDateFormat,
+  type DateFormat,
+} from '@/lib/date-format';
 
 export type { DateRange };
 
@@ -25,17 +32,10 @@ interface DateRangePickerProps {
   fullWidth?: boolean;
 }
 
-function toDate(iso: string): Date | undefined {
-  if (!iso) return undefined;
-  const d = parseISO(iso);
-  return isValid(d) ? d : undefined;
-}
+const toDate = parseIsoDate;
+const toIso = toIsoDate;
 
-function toIso(d: Date | undefined): string {
-  return d ? format(d, 'yyyy-MM-dd') : '';
-}
-
-const inputStyle: React.CSSProperties = {
+const inputBaseStyle: React.CSSProperties = {
   border: 'none',
   background: 'transparent',
   color: 'var(--fg)',
@@ -45,15 +45,76 @@ const inputStyle: React.CSSProperties = {
   cursor: 'text',
 };
 
-// Native date inputs have a browser-enforced intrinsic width (~124px) and will
-// not shrink below it. Give each a basis that fits "dd/mm/yyyy" + the picker
-// indicator so the row never clips or overflows its container.
-const startStyle: React.CSSProperties = { ...inputStyle, width: 124, flexShrink: 0 };
-const endStyle: React.CSSProperties = { ...inputStyle, flex: '1 0 124px', minWidth: 124 };
+// Width fits a formatted date (e.g. "31/05/2026") plus a little slack.
+const startStyle: React.CSSProperties = { ...inputBaseStyle, width: 104, flexShrink: 0 };
+const endStyle: React.CSSProperties = { ...inputBaseStyle, flex: '1 0 104px', minWidth: 104 };
+
+/**
+ * Free-text editable date field for one end of the range. Shows the date
+ * formatted per sys_settings when filled, and a friendly placeholder (no
+ * browser dd/mm/yyyy) when empty. Typing is parsed liberally via
+ * parseDisplayDate; committed on blur/Enter. Mirrors <DateInput> (§2.39).
+ */
+function EditableDate({
+  iso, onChangeIso, fmt, placeholder, disabled, style, id,
+}: {
+  iso: string;
+  onChangeIso: (v: string) => void;
+  fmt: DateFormat;
+  placeholder: string;
+  disabled?: boolean;
+  style: React.CSSProperties;
+  id?: string;
+}) {
+  const [draft, setDraft] = React.useState<string | null>(null);
+  const display = formatDate(iso, fmt);
+  const text = draft ?? display;
+
+  // Restrict typed chars to digits + the active format's separators.
+  const sanitize = React.useCallback(
+    (raw: string) => {
+      const token = fmt.format;
+      const seps = Array.from(new Set(token.replace(/[A-Za-z]/g, '')))
+        .map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join('');
+      const cls = /MMM/.test(token) ? `\\dA-Za-z\\s${seps}` : `\\d${seps}`;
+      return raw.replace(new RegExp(`[^${cls}]`, 'g'), '');
+    },
+    [fmt.format],
+  );
+
+  function commitDraft() {
+    if (draft === null) return;
+    const parsed = parseDisplayDate(draft, fmt);
+    if (parsed !== null && parsed !== iso) onChangeIso(parsed);
+    setDraft(null);
+  }
+
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      disabled={disabled}
+      placeholder={placeholder}
+      value={text}
+      onChange={(e) => setDraft(sanitize(e.target.value))}
+      onBlur={commitDraft}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commitDraft(); }
+        else if (e.key === 'Escape' && draft !== null) { e.preventDefault(); setDraft(null); }
+      }}
+      className="drp-input placeholder:text-[var(--fg-subtle)]"
+      style={style}
+    />
+  );
+}
 
 export function DateRangePicker({
   from, to, onChangeFrom, onChangeTo, id, disabled, fullWidth = true,
 }: DateRangePickerProps) {
+  const fmt = useDateFormat();
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState<Date>(() => toDate(from) ?? new Date());
 
@@ -92,25 +153,25 @@ export function DateRangePicker({
         }}
       >
         {/* Manual-editable start date */}
-        <input
+        <EditableDate
           id={id}
-          type="date"
-          value={from}
-          onChange={(e) => onChangeFrom(e.target.value)}
+          iso={from}
+          onChangeIso={onChangeFrom}
+          fmt={fmt}
+          placeholder="Mulai"
           disabled={disabled}
-          className="drp-input"
           style={startStyle}
         />
 
         <span style={{ color: 'var(--fg-faint)', fontSize: 'calc(12px * var(--font-scale, 1))', flexShrink: 0 }}>→</span>
 
         {/* Manual-editable end date */}
-        <input
-          type="date"
-          value={to}
-          onChange={(e) => onChangeTo(e.target.value)}
+        <EditableDate
+          iso={to}
+          onChangeIso={onChangeTo}
+          fmt={fmt}
+          placeholder="Selesai"
           disabled={disabled}
-          className="drp-input"
           style={endStyle}
         />
 
