@@ -195,6 +195,7 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/admin/roles': { group: 'Administrator', title: 'Roles', icon: 'gear' },
   '/admin/permissions': { group: 'Administrator', title: 'Permissions', icon: 'gear' },
   '/admin/menus': { group: 'Administrator', title: 'Menu Manager', icon: 'gear' },
+  '/admin/grid-customization': { group: 'Administrator', title: 'Kustomisasi Grid', icon: 'layers' },
   '/admin/settings': { group: 'Administrator', title: 'System Settings', icon: 'gear' },
   '/admin/document-numbering': { group: 'Administrator', title: 'Document Numbering', icon: 'gear' },
   '/admin/fiscal-periods': { group: 'Administrator', title: 'Fiscal Periods', icon: 'gear' },
