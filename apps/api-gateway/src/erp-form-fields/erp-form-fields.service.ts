@@ -7,7 +7,7 @@ import { SaveFormFieldsDto } from './dto/save-form-fields.dto';
 // Only keys that differ per type need separate entries — most fields are shared.
 const CR_DEFAULTS = [
   { fieldKey: 'partnerId',     kind: 'STRUCTURAL', label: 'Terima Dari',  fieldType: 'PARTNER',   isRequired: true,  isVisible: true,  sortOrder: 0, columnSlot: 'LEFT'   },
-  { fieldKey: 'bankAccountId', kind: 'STRUCTURAL', label: 'Akun Kas [D]', fieldType: 'ACCOUNT',   isRequired: true,  isVisible: true,  sortOrder: 1, columnSlot: 'LEFT'   },
+  { fieldKey: 'bankAccountId', kind: 'STRUCTURAL', label: 'Akun Kas [D]', fieldType: 'ACCOUNT',   isRequired: true,  isVisible: true,  sortOrder: 1, columnSlot: 'LEFT',   lookupDefaultFilter: { accountType: 'ASSET', accountKind: 'POSTABLE', normalBalance: 'DEBIT', isActive: true } },
   { fieldKey: 'description',   kind: 'STRUCTURAL', label: 'Uraian',       fieldType: 'TEXT',      isRequired: true,  isVisible: true,  sortOrder: 2, columnSlot: 'LEFT'   },
   { fieldKey: 'branchId',      kind: 'STRUCTURAL', label: 'Cabang',       fieldType: 'BRANCH',    isRequired: true,  isVisible: true,  sortOrder: 3, columnSlot: 'CENTER' },
   { fieldKey: 'locationId',    kind: 'STRUCTURAL', label: 'Lokasi',       fieldType: 'LOCATION',  isRequired: false, isVisible: true,  sortOrder: 4, columnSlot: 'CENTER' },
@@ -61,6 +61,32 @@ export class ErpFormFieldsService {
         where: { transactionTypeCode: code, deletedAt: null },
         orderBy: { sortOrder: 'asc' },
       });
+    } else {
+      // Backfill lookupDefaultFilter for existing records that were seeded before
+      // filter support was added (null = never set by admin; {} = admin explicitly cleared).
+      const defaults = DEFAULTS_BY_CODE[code];
+      if (defaults) {
+        const toBackfill = fields.filter((f) => {
+          if (f.lookupDefaultFilter !== null) return false;
+          const def = defaults.find((d) => d.fieldKey === f.fieldKey);
+          return def && 'lookupDefaultFilter' in def && def.lookupDefaultFilter != null;
+        });
+        if (toBackfill.length > 0) {
+          await Promise.all(
+            toBackfill.map((f) => {
+              const def = defaults.find((d) => d.fieldKey === f.fieldKey)!;
+              return this.prisma.erpFormField.update({
+                where: { id: f.id },
+                data: { lookupDefaultFilter: def.lookupDefaultFilter as Prisma.InputJsonValue },
+              });
+            }),
+          );
+          fields = await this.prisma.erpFormField.findMany({
+            where: { transactionTypeCode: code, deletedAt: null },
+            orderBy: { sortOrder: 'asc' },
+          });
+        }
+      }
     }
 
     return { code, fields };
@@ -69,18 +95,22 @@ export class ErpFormFieldsService {
   /** Replace all fields for a transaction type (bulk save). */
   async saveFields(code: string, dto: SaveFormFieldsDto, actorId?: string) {
     const updatedById = actorId ? BigInt(actorId) : null;
+    const incomingKeys = new Set(dto.fields.map((f) => f.fieldKey));
 
     await this.prisma.$transaction(async (tx) => {
-      // Soft-delete existing then upsert incoming to preserve IDs.
+      // Soft-delete active fields that are no longer in the incoming list.
       await tx.erpFormField.updateMany({
-        where: { transactionTypeCode: code, deletedAt: null },
+        where: {
+          transactionTypeCode: code,
+          deletedAt: null,
+          NOT: { fieldKey: { in: [...incomingKeys] } },
+        },
         data: { deletedAt: new Date() },
       });
 
-      await tx.erpFormField.createMany({
-        data: dto.fields.map((f) => ({
-          transactionTypeCode: code,
-          fieldKey: f.fieldKey,
+      // Upsert each incoming field — updates existing (restoring if soft-deleted), creates if new.
+      for (const f of dto.fields) {
+        const fieldData = {
           kind: f.kind,
           label: f.label,
           fieldType: f.fieldType,
@@ -92,9 +122,14 @@ export class ErpFormFieldsService {
           sortOrder: f.sortOrder,
           columnSlot: f.columnSlot,
           updatedById,
-          createdById: updatedById,
-        })),
-      });
+          deletedAt: null,
+        };
+        await tx.erpFormField.upsert({
+          where: { transactionTypeCode_fieldKey: { transactionTypeCode: code, fieldKey: f.fieldKey } },
+          create: { transactionTypeCode: code, fieldKey: f.fieldKey, createdById: updatedById, ...fieldData },
+          update: fieldData,
+        });
+      }
     });
 
     return this.getFields(code);

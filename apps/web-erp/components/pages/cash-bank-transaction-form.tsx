@@ -22,6 +22,7 @@ import {
   loadBranchOptions,
   loadCurrencyOptions,
 } from './items-form-lookups';
+import { buildLookupLoader } from '@/lib/lookup-source-registry';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { formatNumber } from '@/lib/format';
@@ -97,6 +98,14 @@ export function CashBankTransactionForm({
   const [currencies, setCurrencies] = React.useState<ErpCurrency[]>([]);
   const formConfig = useFormFields(transactionCode);
   const set = (p: Partial<CashBankFormData>) => onChange({ ...data, ...p });
+
+  const bankAccountLoader = React.useMemo(() => {
+    const f = formConfig.byKey['bankAccountId'];
+    const configured = (f?.lookupDefaultFilter || f?.lookupDefaultSort)
+      ? buildLookupLoader('accounts', f.lookupDefaultFilter ?? null, f.lookupDefaultSort ?? null)
+      : null;
+    return configured ?? loadCashAccountOptionsCoded;
+  }, [formConfig]);
   const locked = !EDITABLE.includes(data.status);
 
   // Derive labels from form builder config (fallback to prop labels if not loaded yet).
@@ -171,7 +180,7 @@ export function CashBankTransactionForm({
               initialLabel={data.bankAccountLabel}
               disabled={locked}
               onValueChange={(v) => set({ bankAccountId: v })}
-              loadOptions={loadCashAccountOptionsCoded}
+              loadOptions={bankAccountLoader}
             />
           </Field>
           {descriptionVisible && (
