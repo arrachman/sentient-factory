@@ -360,6 +360,15 @@
 .lines tr:hover td {
   background: color-mix(in oklab, var(--panel-hover) 60%, transparent);
 }
+/* Cash/bank lines grid: hover per-cell, not per-row. Cancel the TableRow
+   all-cell row hover, then tint only the cell under the cursor. */
+.cashbank-lines tbody tr:hover > td {
+  background-color: transparent;
+}
+.cashbank-lines tbody tr:hover > td:hover {
+  background-color: color-mix(in oklab, var(--panel-hover) 60%, transparent);
+}
+
 .lines tr.adder td .cell {
   color: var(--fg-faint);
 }
