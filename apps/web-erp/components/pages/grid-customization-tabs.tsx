@@ -58,8 +58,16 @@ function SortableTabItem({
         isDragging && 'z-10',
       )}
       {...attributes}
-      {...listeners}
     >
+      <button
+        type="button"
+        className="iconbtn text-muted-foreground"
+        style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+        title="Seret untuk menata ulang"
+        {...listeners}
+      >
+        <Icon name="grip-vertical" size={12} />
+      </button>
       {editingKey === g.key ? (
         <Input
           autoFocus

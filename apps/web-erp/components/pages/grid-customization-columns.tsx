@@ -74,6 +74,18 @@ function SortableColumnRow({
 
   return (
     <TableRow ref={setNodeRef as React.Ref<HTMLTableRowElement>} style={style}>
+      <TableCell style={{ width: 36 }}>
+        <button
+          type="button"
+          className="iconbtn text-muted-foreground"
+          title="Seret untuk menata ulang"
+          style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
+          {...attributes}
+          {...listeners}
+        >
+          <Icon name="grip-vertical" size={14} />
+        </button>
+      </TableCell>
       <TableCell className="text-muted-foreground">{index + 1}</TableCell>
       <TableCell>
         <Input value={col.headerText} onChange={(e) => onPatch({ headerText: e.target.value })} />
@@ -100,22 +112,10 @@ function SortableColumnRow({
       <TableCell>
         <SlotSelect value={col.cellEditor} options={CELL_EDITORS} onChange={(v) => onPatch({ cellEditor: v as ErpGridColumn['cellEditor'] })} />
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            className="iconbtn"
-            title="Tarik untuk menata ulang"
-            style={{ cursor: 'grab', touchAction: 'none' }}
-            {...attributes}
-            {...listeners}
-          >
-            <Icon name="grip-vertical" size={14} />
-          </button>
-          <button type="button" className="iconbtn danger" title="Hapus kolom" onClick={onRemove}>
-            <Icon name="trash" size={13} />
-          </button>
-        </div>
+      <TableCell style={{ width: 48 }}>
+        <button type="button" className="iconbtn danger" title="Hapus kolom" onClick={onRemove}>
+          <Icon name="trash" size={13} />
+        </button>
       </TableCell>
     </TableRow>
   );
@@ -146,6 +146,7 @@ export function GridCustomizationColumns({
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead style={{ width: 36 }} />
             <TableHead style={{ width: 40 }}>No</TableHead>
             <TableHead>Header Text</TableHead>
             <TableHead style={{ width: 150 }}>Data Field</TableHead>
@@ -158,14 +159,14 @@ export function GridCustomizationColumns({
             <TableHead style={{ width: 140 }}>Header Renderer</TableHead>
             <TableHead style={{ width: 140 }}>Cell Renderer</TableHead>
             <TableHead style={{ width: 140 }}>Cell Editor</TableHead>
-            <TableHead style={{ width: 72 }} />
+            <TableHead style={{ width: 48 }} />
           </TableRow>
         </TableHeader>
         <SortableContext items={colIds} strategy={verticalListSortingStrategy}>
           <TableBody>
             {columns.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={13} className="py-4 text-center text-muted-foreground">
+                <TableCell colSpan={14} className="py-4 text-center text-muted-foreground">
                   Belum ada kolom. Klik "Tambah Kolom".
                 </TableCell>
               </TableRow>
