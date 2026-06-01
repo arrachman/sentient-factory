@@ -17,7 +17,7 @@ import { SearchSelect } from '@/components/molecules/search-select';
 import { CashBankLinesEditor } from '@/components/organisms/cash-bank-lines';
 import {
   loadPartnerOptions,
-  loadCashAccountOptionsCoded,
+  loadAccountOptionsCoded,
   loadLocationOptions,
   loadBranchOptions,
   loadCurrencyOptions,
@@ -104,7 +104,7 @@ export function CashBankTransactionForm({
     const configured = (f?.lookupDefaultFilter || f?.lookupDefaultSort)
       ? buildLookupLoader('accounts', f.lookupDefaultFilter ?? null, f.lookupDefaultSort ?? null)
       : null;
-    return configured ?? loadCashAccountOptionsCoded;
+    return configured ?? loadAccountOptionsCoded;
   }, [formConfig]);
   const locked = !EDITABLE.includes(data.status);
 

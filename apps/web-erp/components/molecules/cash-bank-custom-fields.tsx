@@ -12,7 +12,7 @@ import { DateInput } from '@/components/ui/date-input';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
   loadPartnerOptions,
-  loadCashAccountOptionsCoded,
+  loadAccountOptionsCoded,
   loadBranchOptions,
   loadLocationOptions,
   loadCurrencyOptions,
@@ -23,7 +23,7 @@ import type { ErpFormField, FormFieldType, FormColumnSlot } from '@/lib/api/form
 // Fallback loaders for built-in types when no custom config is set.
 const BUILTIN_LOADERS: Partial<Record<FormFieldType, (search: string, page: number, limit: number) => Promise<any>>> = {
   PARTNER:  loadPartnerOptions,
-  ACCOUNT:  loadCashAccountOptionsCoded,
+  ACCOUNT:  loadAccountOptionsCoded,
   BRANCH:   loadBranchOptions,
   LOCATION: loadLocationOptions,
   CURRENCY: loadCurrencyOptions,
