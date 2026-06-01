@@ -23,6 +23,8 @@ import {
   FORM_FIELD_TYPES, FORM_COLUMN_SLOTS, FORM_FIELD_TYPE_LABELS,
   type ErpFormField, type FormFieldType, type FormColumnSlot,
 } from '@/lib/api/form-fields';
+import { LOOKUP_SOURCE_OPTIONS, sourceLabelOf } from '@/lib/lookup-source-registry';
+import { LookupConfigPopover } from './form-builder-lookup-config';
 
 const SLOT_LABELS: Record<FormColumnSlot, string> = { LEFT: 'Kiri', CENTER: 'Tengah', RIGHT: 'Kanan' };
 const TEXT_VIEW = 'cursor-text truncate rounded px-2 py-0.5 text-sm hover:bg-secondary/60';
@@ -32,7 +34,9 @@ function isFieldChanged(a: ErpFormField, b: ErpFormField | undefined): boolean {
   return (
     a.label !== b.label || a.fieldType !== b.fieldType ||
     a.isRequired !== b.isRequired || a.isVisible !== b.isVisible ||
-    a.columnSlot !== b.columnSlot || (a.lookupSource ?? null) !== (b.lookupSource ?? null)
+    a.columnSlot !== b.columnSlot || (a.lookupSource ?? null) !== (b.lookupSource ?? null) ||
+    JSON.stringify(a.lookupDefaultFilter ?? null) !== JSON.stringify(b.lookupDefaultFilter ?? null) ||
+    (a.lookupDefaultSort ?? null) !== (b.lookupDefaultSort ?? null)
   );
 }
 
@@ -57,25 +61,17 @@ function LabelCell({ value, onChange }: { value: string; onChange: (v: string) =
   );
 }
 
-function LookupSourceCell({ value, onChange }: { value?: string | null; onChange: (v: string) => void }) {
-  const [editing, setEditing] = React.useState(false);
-  if (editing) {
-    return (
-      <Input
-        autoFocus
-        className="h-6 px-1.5 py-0 text-sm"
-        placeholder="e.g. partners"
-        value={value ?? ''}
-        onChange={(e) => onChange(e.target.value)}
-        onBlur={() => setEditing(false)}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Escape') setEditing(false); }}
-      />
-    );
-  }
+/** Source selector for LOOKUP fields (custom only). */
+function LookupSourceSelect({ value, onChange }: { value?: string | null; onChange: (v: string | null) => void }) {
   return (
-    <div className={TEXT_VIEW} title="Klik untuk edit" onClick={() => setEditing(true)}>
-      {value || <span className="text-muted-foreground italic">—</span>}
-    </div>
+    <Select value={value ?? ''} onValueChange={(v) => onChange(v || null)}>
+      <SelectTrigger className="h-6 text-xs"><SelectValue placeholder="Pilih sumber…" /></SelectTrigger>
+      <SelectContent>
+        {LOOKUP_SOURCE_OPTIONS.map((s) => (
+          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -133,12 +129,30 @@ function FieldRow({
         )}
       </TableCell>
 
-      <TableCell className="w-[130px]">
-        {field.fieldType === 'LOOKUP' ? (
-          <LookupSourceCell value={field.lookupSource} onChange={(v) => onUpdate({ lookupSource: v })} />
-        ) : (
-          <span className="px-2 text-xs text-muted-foreground">—</span>
-        )}
+      <TableCell className="w-[160px]">
+        <div className="flex items-center gap-1">
+          {field.fieldType === 'LOOKUP' ? (
+            <div className="flex-1 min-w-0">
+              <LookupSourceSelect
+                value={field.lookupSource}
+                onChange={(v) => onUpdate({ lookupSource: v })}
+              />
+            </div>
+          ) : (['PARTNER','ACCOUNT','BRANCH','LOCATION','CURRENCY'] as string[]).includes(field.fieldType) ? (
+            <span className="flex-1 px-1 text-xs text-muted-foreground truncate">
+              {sourceLabelOf(field.fieldType === 'PARTNER' ? 'partners'
+                : field.fieldType === 'ACCOUNT' ? 'accounts'
+                : field.fieldType === 'BRANCH' ? 'branches'
+                : field.fieldType === 'LOCATION' ? 'locations'
+                : 'currencies')}
+            </span>
+          ) : (
+            <span className="flex-1 px-1 text-xs text-muted-foreground">—</span>
+          )}
+          {(['PARTNER','ACCOUNT','BRANCH','LOCATION','CURRENCY','LOOKUP'] as string[]).includes(field.fieldType) && (
+            <LookupConfigPopover field={field} onUpdate={onUpdate} />
+          )}
+        </div>
       </TableCell>
 
       <TableCell className="w-[110px]">
@@ -225,7 +239,7 @@ export function FormBuilderFields({
               <TableHead className="w-2" />
               <TableHead>Label</TableHead>
               <TableHead className="w-[140px]">Tipe</TableHead>
-              <TableHead className="w-[130px]">Lookup Source</TableHead>
+              <TableHead className="w-[160px]">Sumber / Konfigurasi</TableHead>
               <TableHead className="w-[110px]">Kolom</TableHead>
               <TableHead className="w-10 text-center">Wajib</TableHead>
               <TableHead className="w-10 text-center">Tampil</TableHead>

@@ -17,12 +17,14 @@ import {
   loadLocationOptions,
   loadCurrencyOptions,
 } from '@/components/pages/items-form-lookups';
+import { buildLookupLoader, BUILTIN_SOURCE } from '@/lib/lookup-source-registry';
 import type { ErpFormField, FormFieldType, FormColumnSlot } from '@/lib/api/form-fields';
 
-const LOOKUP_LOADERS: Partial<Record<FormFieldType, (search: string, page: number, limit: number) => Promise<any>>> = {
-  PARTNER: loadPartnerOptions,
-  ACCOUNT: loadCashAccountOptionsCoded,
-  BRANCH: loadBranchOptions,
+// Fallback loaders for built-in types when no custom config is set.
+const BUILTIN_LOADERS: Partial<Record<FormFieldType, (search: string, page: number, limit: number) => Promise<any>>> = {
+  PARTNER:  loadPartnerOptions,
+  ACCOUNT:  loadCashAccountOptionsCoded,
+  BRANCH:   loadBranchOptions,
   LOCATION: loadLocationOptions,
   CURRENCY: loadCurrencyOptions,
 };
@@ -38,10 +40,20 @@ function CustomField({
   onChange: (v: string | number | null) => void;
   disabled?: boolean;
 }) {
-  const loader = LOOKUP_LOADERS[field.fieldType];
+  const hasLookupConfig = !!field.lookupDefaultFilter || !!field.lookupDefaultSort || !!field.lookupSource;
+  const isLookupType = (['PARTNER','ACCOUNT','BRANCH','LOCATION','CURRENCY','LOOKUP'] as string[]).includes(field.fieldType);
 
-  if (loader || field.fieldType === 'LOOKUP') {
-    const effectiveLoader = loader ?? LOOKUP_LOADERS.PARTNER!; // fallback for unknown LOOKUP
+  if (isLookupType) {
+    // Build a configured loader when custom filter/sort/source is set; fall back to built-in loaders.
+    const builtinSource = BUILTIN_SOURCE[field.fieldType as FormFieldType];
+    const configuredLoader = hasLookupConfig
+      ? buildLookupLoader(
+          field.fieldType === 'LOOKUP' ? field.lookupSource : builtinSource,
+          field.lookupDefaultFilter,
+          field.lookupDefaultSort,
+        )
+      : null;
+    const effectiveLoader = configuredLoader ?? BUILTIN_LOADERS[field.fieldType as FormFieldType] ?? BUILTIN_LOADERS.PARTNER!;
     return (
       <SearchSelect
         placeholder={`Pilih ${field.label.toLowerCase()}…`}

@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsArray, IsBoolean, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested,
+  IsArray, IsBoolean, IsIn, IsInt, IsObject, IsOptional, IsString, Min, ValidateNested,
 } from 'class-validator';
 
 export const FORM_FIELD_KINDS = ['STRUCTURAL', 'CUSTOM'] as const;
@@ -17,6 +17,8 @@ export class FormFieldInputDto {
   @ApiProperty({ example: 'Terima Dari' }) @IsString() label!: string;
   @ApiProperty({ enum: FORM_FIELD_TYPES }) @IsIn(FORM_FIELD_TYPES) fieldType!: (typeof FORM_FIELD_TYPES)[number];
   @ApiPropertyOptional({ example: 'partners' }) @IsOptional() @IsString() lookupSource?: string;
+  @ApiPropertyOptional({ example: { isCustomer: true } }) @IsOptional() @IsObject() lookupDefaultFilter?: Record<string, unknown>;
+  @ApiPropertyOptional({ example: 'name:asc' }) @IsOptional() @IsString() lookupDefaultSort?: string;
   @ApiProperty({ example: false }) @IsBoolean() isRequired!: boolean;
   @ApiProperty({ example: true }) @IsBoolean() isVisible!: boolean;
   @ApiProperty({ example: 0 }) @IsInt() @Min(0) sortOrder!: number;

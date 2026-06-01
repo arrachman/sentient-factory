@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveFormFieldsDto } from './dto/save-form-fields.dto';
 
@@ -84,6 +85,8 @@ export class ErpFormFieldsService {
           label: f.label,
           fieldType: f.fieldType,
           lookupSource: f.lookupSource ?? null,
+          lookupDefaultFilter: (f.lookupDefaultFilter as Prisma.InputJsonValue) ?? Prisma.DbNull,
+          lookupDefaultSort: f.lookupDefaultSort ?? null,
           isRequired: f.isRequired,
           isVisible: f.isVisible,
           sortOrder: f.sortOrder,

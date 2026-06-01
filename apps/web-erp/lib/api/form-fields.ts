@@ -38,6 +38,8 @@ export interface ErpFormField {
   label: string;
   fieldType: FormFieldType;
   lookupSource?: string | null;
+  lookupDefaultFilter?: Record<string, unknown> | null;
+  lookupDefaultSort?: string | null;
   isRequired: boolean;
   isVisible: boolean;
   sortOrder: number;
@@ -60,6 +62,8 @@ export const saveFormFields = (code: string, fields: ErpFormField[]) =>
       label: f.label,
       fieldType: f.fieldType,
       lookupSource: f.lookupSource ?? undefined,
+      lookupDefaultFilter: f.lookupDefaultFilter ?? undefined,
+      lookupDefaultSort: f.lookupDefaultSort ?? undefined,
       isRequired: f.isRequired,
       isVisible: f.isVisible,
       sortOrder: i,
