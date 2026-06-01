@@ -15,6 +15,7 @@ export const CELL_RENDERERS = ['TEXT', 'NUMERIC', 'CURRENCY', 'BADGE', 'CHECK', 
 export const CELL_EDITORS = [
   'TEXT', 'NUMBER', 'DATE', 'LOOKUP', 'TEXTAREA', 'CHECKBOX', 'NONE',
   'DISCOUNT', 'STEPPER', 'COMBOBOX', 'ACCOUNT_PICKER', 'PARTNER_PICKER',
+  'ROWNUM',
 ] as const;
 
 export type LabelFormatter = (typeof LABEL_FORMATTERS)[number];
@@ -24,7 +25,7 @@ export type CellEditor = (typeof CELL_EDITORS)[number];
 
 // Semantic column type — single selector that derives all 4 presentation slots.
 export const COLUMN_TYPES = [
-  'text', 'number', 'currency', 'decimal', 'percent',
+  'text', 'number', 'rownum', 'currency', 'decimal', 'percent',
   'date', 'datetime', 'checkbox', 'lookup', 'textarea',
   'badge', 'link', 'discount', 'stepper', 'combobox',
   'account_picker', 'partner_picker',
@@ -34,6 +35,7 @@ export type ColumnType = (typeof COLUMN_TYPES)[number];
 export const COLUMN_TYPE_LABELS: Record<ColumnType, string> = {
   text: 'Text',
   number: 'Number',
+  rownum: 'Nomor Urut',
   currency: 'Currency',
   decimal: 'Decimal',
   percent: 'Percent',
@@ -62,6 +64,7 @@ export interface ColumnTypePreset {
 export const COLUMN_TYPE_PRESETS: Record<ColumnType, ColumnTypePreset> = {
   text:           { labelFormatter: 'NONE',     headerRenderer: 'DEFAULT', cellRenderer: 'TEXT',    cellEditor: 'TEXT'           },
   number:         { labelFormatter: 'NUMBER',   headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'NUMBER'         },
+  rownum:         { labelFormatter: 'NUMBER',   headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'ROWNUM'         },
   currency:       { labelFormatter: 'CURRENCY', headerRenderer: 'DEFAULT', cellRenderer: 'CURRENCY',cellEditor: 'NUMBER'         },
   decimal:        { labelFormatter: 'DECIMAL',  headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'NUMBER'         },
   percent:        { labelFormatter: 'PERCENT',  headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'NUMBER'         },
@@ -91,6 +94,7 @@ export function inferColumnType(
     TEXTAREA: 'textarea', CHECKBOX: 'checkbox', NONE: 'badge',
     DISCOUNT: 'discount', STEPPER: 'stepper', COMBOBOX: 'combobox',
     ACCOUNT_PICKER: 'account_picker', PARTNER_PICKER: 'partner_picker',
+    ROWNUM: 'rownum',
   };
   if (cellEditor && editorMap[cellEditor]) {
     const candidate = editorMap[cellEditor]!;
@@ -178,8 +182,28 @@ export const getTransactionGrids = (code: string) =>
 export const saveTransactionGrids = (code: string, grids: ErpTransactionGrid[]) =>
   apiPut<GridsResponse>(`/transaction-grids/${encodeURIComponent(code)}/grids`, {
     grids: grids.map((g, gi) => ({
-      ...g,
+      key: g.key,
+      label: g.label,
       sortOrder: gi,
-      columns: g.columns.map((c, ci) => ({ ...c, sortOrder: ci })),
+      lineTable: g.lineTable ?? undefined,
+      isPrimary: g.isPrimary,
+      columns: g.columns.map((c, ci) => ({
+        sortOrder: ci,
+        headerText: c.headerText,
+        dataField: c.dataField,
+        width: c.width,
+        isVisible: c.isVisible,
+        isRequired: c.isRequired,
+        isEditable: c.isEditable,
+        isSkippable: c.isSkippable,
+        kind: c.kind,
+        dataType: c.dataType,
+        lookupSource: c.lookupSource ?? undefined,
+        columnType: c.columnType ?? undefined,
+        labelFormatter: c.labelFormatter ?? undefined,
+        headerRenderer: c.headerRenderer ?? undefined,
+        cellRenderer: c.cellRenderer ?? undefined,
+        cellEditor: c.cellEditor ?? undefined,
+      })),
     })),
   });

@@ -13,9 +13,10 @@ export const CELL_RENDERERS = ['TEXT', 'NUMERIC', 'CURRENCY', 'BADGE', 'CHECK', 
 export const CELL_EDITORS = [
   'TEXT', 'NUMBER', 'DATE', 'LOOKUP', 'TEXTAREA', 'CHECKBOX', 'NONE',
   'DISCOUNT', 'STEPPER', 'COMBOBOX', 'ACCOUNT_PICKER', 'PARTNER_PICKER',
+  'ROWNUM',
 ] as const;
 export const COLUMN_TYPES = [
-  'text', 'number', 'currency', 'decimal', 'percent',
+  'text', 'number', 'rownum', 'currency', 'decimal', 'percent',
   'date', 'datetime', 'checkbox', 'lookup', 'textarea',
   'badge', 'link', 'discount', 'stepper', 'combobox',
   'account_picker', 'partner_picker',
