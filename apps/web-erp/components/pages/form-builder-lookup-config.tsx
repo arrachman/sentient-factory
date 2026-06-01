@@ -53,69 +53,63 @@ function FilterTable({
       {entries.map((e, i) => {
         const fieldDef = filterFields?.find((f) => f.key === e.key);
         return (
-          <div key={i} className="flex flex-col gap-1.5 rounded-md border border-border/60 p-2.5">
-            {/* Row 1: field key + delete */}
-            <div className="flex items-center gap-2">
-              {filterFields ? (
-                <Select value={e.key || ''} onValueChange={(v) => set(i, { key: v, value: '' })}>
-                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
-                    <SelectValue placeholder="Pilih field…" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filterFields.map((f) => (
-                      <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  className="h-7 px-2 text-xs flex-1"
-                  placeholder="field"
-                  value={e.key}
-                  onChange={(ev) => set(i, { key: ev.target.value })}
-                />
-              )}
-              <button
-                type="button"
-                className="iconbtn text-muted-foreground hover:text-danger shrink-0"
-                onClick={() => onChange(entries.filter((_, idx) => idx !== i))}
-              >
-                <Icon name="trash" size={12} />
-              </button>
-            </div>
-            {/* Row 2: = value */}
-            <div className="flex items-center gap-2 pl-0.5">
-              <span className="text-xs text-muted-foreground shrink-0">=</span>
-              {fieldDef?.type === 'boolean' ? (
-                <Select value={e.value} onValueChange={(v) => set(i, { value: v })}>
-                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
-                    <SelectValue placeholder="nilai" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">true</SelectItem>
-                    <SelectItem value="false">false</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : fieldDef?.type === 'enum' && fieldDef.options ? (
-                <Select value={e.value} onValueChange={(v) => set(i, { value: v })}>
-                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
-                    <SelectValue placeholder="nilai" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fieldDef.options.map((o) => (
-                      <SelectItem key={o} value={o}>{o}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  className="h-7 px-2 text-xs flex-1"
-                  placeholder="value"
-                  value={e.value}
-                  onChange={(ev) => set(i, { value: ev.target.value })}
-                />
-              )}
-            </div>
+          <div key={i} className="flex items-center gap-1.5">
+            {filterFields ? (
+              <Select value={e.key || ''} onValueChange={(v) => set(i, { key: v, value: '' })}>
+                <SelectTrigger className="h-7 text-xs w-[140px] shrink-0">
+                  <SelectValue placeholder="Pilih field…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filterFields.map((f) => (
+                    <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                className="h-7 px-2 text-xs w-[140px] shrink-0"
+                placeholder="field"
+                value={e.key}
+                onChange={(ev) => set(i, { key: ev.target.value })}
+              />
+            )}
+            <span className="text-xs text-muted-foreground shrink-0">=</span>
+            {fieldDef?.type === 'boolean' ? (
+              <Select value={e.value} onValueChange={(v) => set(i, { value: v })}>
+                <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                  <SelectValue placeholder="nilai" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">true</SelectItem>
+                  <SelectItem value="false">false</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : fieldDef?.type === 'enum' && fieldDef.options ? (
+              <Select value={e.value} onValueChange={(v) => set(i, { value: v })}>
+                <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                  <SelectValue placeholder="nilai" />
+                </SelectTrigger>
+                <SelectContent>
+                  {fieldDef.options.map((o) => (
+                    <SelectItem key={o} value={o}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                className="h-7 px-2 text-xs flex-1"
+                placeholder="value"
+                value={e.value}
+                onChange={(ev) => set(i, { value: ev.target.value })}
+              />
+            )}
+            <button
+              type="button"
+              className="iconbtn text-muted-foreground hover:text-danger shrink-0"
+              onClick={() => onChange(entries.filter((_, idx) => idx !== i))}
+            >
+              <Icon name="trash" size={12} />
+            </button>
           </div>
         );
       })}
@@ -185,7 +179,7 @@ export function LookupConfigSection({
               </SelectContent>
             </Select>
           ) : (
-            <span className="text-xs text-foreground px-2 py-0.5 bg-secondary/40 rounded">
+            <span className="flex h-7 items-center rounded-md border border-border bg-secondary/30 px-2 text-xs text-foreground">
               {sourceLabelOf(effectiveSource)}
             </span>
           )}

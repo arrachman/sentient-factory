@@ -31,6 +31,60 @@ const SOURCE_MAP: Record<string, { label: string; listFn: AnyListFn }> = {
   projects:      { label: 'Proyek',        listFn: listProjects      as unknown as AnyListFn },
 };
 
+// --- Source schema: valid sort/filter fields per source, for Form Builder hints ---
+
+export type SortFieldDef  = { value: string; label: string };
+export type FilterFieldDef = {
+  key: string;
+  label: string;
+  type: 'boolean' | 'enum' | 'string';
+  options?: string[];
+};
+export type SourceSchema = { sortFields: SortFieldDef[]; filterFields: FilterFieldDef[] };
+
+const COMMON_SORT: SortFieldDef[] = [
+  { value: 'name',      label: 'Nama' },
+  { value: 'code',      label: 'Kode' },
+  { value: 'createdAt', label: 'Dibuat' },
+];
+
+const COMMON_FILTER: FilterFieldDef[] = [
+  { key: 'isActive', label: 'Status Aktif', type: 'boolean' },
+];
+
+const SOURCE_SCHEMA_MAP: Record<string, SourceSchema> = {
+  accounts: {
+    sortFields: COMMON_SORT,
+    filterFields: [
+      { key: 'accountType',   label: 'Tipe Akun',      type: 'enum', options: ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'] },
+      { key: 'accountKind',   label: 'Jenis',           type: 'enum', options: ['POSTABLE', 'HEADER'] },
+      { key: 'normalBalance', label: 'Normal Balance',  type: 'enum', options: ['DEBIT', 'CREDIT'] },
+      ...COMMON_FILTER,
+    ],
+  },
+  partners: {
+    sortFields: COMMON_SORT,
+    filterFields: [
+      { key: 'isCustomer', label: 'Pelanggan',     type: 'boolean' },
+      { key: 'isSupplier', label: 'Supplier',      type: 'boolean' },
+      { key: 'categoryId', label: 'Kategori (ID)', type: 'string' },
+      ...COMMON_FILTER,
+    ],
+  },
+  branches:        { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  locations:       { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  currencies:      { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  'cost-centers':  { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  divisions:       { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  'sub-divisions': { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  warehouses:      { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  projects:        { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+};
+
+export function getSourceSchema(source: string | null | undefined): SourceSchema | null {
+  return source ? (SOURCE_SCHEMA_MAP[source] ?? null) : null;
+}
+
 /** Fixed source slug for built-in lookup field types. */
 export const BUILTIN_SOURCE: Partial<Record<FormFieldType, string>> = {
   PARTNER:  'partners',

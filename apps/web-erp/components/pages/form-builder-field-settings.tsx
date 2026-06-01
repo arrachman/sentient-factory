@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Per-field settings popover for the Form Builder, shown for EVERY field type.
+ * Per-field settings dialog for the Form Builder, shown for EVERY field type.
  * Holds the generic knobs (placeholder, default value, read-only) plus, for
  * lookup-style fields, the lookup source/sort/filter config (LookupConfigSection).
  */
@@ -14,8 +14,8 @@ import { DateInput } from '@/components/ui/date-input';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
-  Popover, PopoverTrigger, PopoverContent,
-} from '@/components/ui/popover';
+  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogBody,
+} from '@/components/ui/dialog';
 import {
   loadPartnerOptions, loadAccountOptionsCoded, loadBranchOptions,
   loadLocationOptions, loadCurrencyOptions,
@@ -99,8 +99,8 @@ export function FieldSettingsPopover({
     (lookup && hasLookupConfig(field));
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
         <button
           type="button"
           className={`iconbtn ${configured ? 'text-primary' : 'text-muted-foreground'}`}
@@ -108,45 +108,50 @@ export function FieldSettingsPopover({
         >
           <Icon name="gear" size={12} />
         </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[480px] p-5 flex flex-col gap-5">
-        <p className="text-xs font-semibold text-foreground">Konfigurasi Field</p>
+      </DialogTrigger>
+      <DialogContent className="w-[520px] max-w-[95vw] max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Konfigurasi Field — {field.label || field.fieldKey}</DialogTitle>
+        </DialogHeader>
+        <DialogBody className="flex flex-col gap-5 flex-1 max-h-[calc(90vh-64px)]">
 
-        {/* Placeholder */}
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Placeholder</span>
-          <Input
-            className="h-8 text-xs"
-            placeholder="Teks petunjuk saat kosong…"
-            value={field.placeholder ?? ''}
-            onChange={(e) => onUpdate({ placeholder: e.target.value || null })}
-          />
-        </div>
-
-        {/* Default value */}
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Nilai default (saat tambah baru)</span>
-          <DefaultValueEditor field={field} onChange={(v) => onUpdate({ defaultValue: v })} />
-        </div>
-
-        {/* Read-only */}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs text-muted-foreground">Kunci (read-only)</span>
-          <BooleanRadio
-            value={field.isReadonly === true}
-            onValueChange={(v) => onUpdate({ isReadonly: v })}
-            trueLabel="Ya"
-            falseLabel="Tidak"
-          />
-        </div>
-
-        {/* Lookup-specific config */}
-        {lookup && (
-          <div className="flex flex-col gap-5 border-t border-border pt-4">
-            <LookupConfigSection field={field} onUpdate={onUpdate} />
+          {/* Placeholder */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Placeholder</span>
+            <Input
+              className="h-8 text-xs"
+              placeholder="Teks petunjuk saat kosong…"
+              value={field.placeholder ?? ''}
+              onChange={(e) => onUpdate({ placeholder: e.target.value || null })}
+            />
           </div>
-        )}
-      </PopoverContent>
-    </Popover>
+
+          {/* Default value */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Nilai default (saat tambah baru)</span>
+            <DefaultValueEditor field={field} onChange={(v) => onUpdate({ defaultValue: v })} />
+          </div>
+
+          {/* Read-only */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">Kunci (read-only)</span>
+            <BooleanRadio
+              value={field.isReadonly === true}
+              onValueChange={(v) => onUpdate({ isReadonly: v })}
+              trueLabel="Ya"
+              falseLabel="Tidak"
+            />
+          </div>
+
+          {/* Lookup-specific config */}
+          {lookup && (
+            <div className="flex flex-col gap-5 border-t border-border pt-4">
+              <LookupConfigSection field={field} onUpdate={onUpdate} />
+            </div>
+          )}
+
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 }
