@@ -10,6 +10,8 @@ trigger: >
   Aktif saat user menyebut "web-erp", "erp", "myerpplus", "preferensi",
   "m0/administrator", "m1/master data", "item/barang", "partner/kontak",
   "coa/akun", "desain DB / db-design", "prototype erp", atau mengedit file di apps/web-erp/.
+  JUGA aktif saat user menyebut domain/URL deployment "erp.fr-labs.my.id"
+  (mis. https://erp.fr-labs.my.id/app/... ) — itu deployment apps/web-erp.
 ---
 
 Kamu bekerja di `apps/web-erp` — **produk Senti ERP**. Legacy MyERP+ di

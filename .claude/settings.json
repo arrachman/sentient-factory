@@ -126,7 +126,16 @@
       "Write(**/.env)",
       "Write(**/.env.*)",
       "Edit(config/ports.json)",
-      "Edit(infra/docker-compose.yml)"
+      "Edit(infra/docker-compose.yml)",
+      "Read(apps/web-erp/prototype/**)",
+      "Edit(apps/web-erp/prototype/**)",
+      "Write(apps/web-erp/prototype/**)",
+      "Read(**/web-erp/prototype/**)",
+      "Edit(**/web-erp/prototype/**)",
+      "Write(**/web-erp/prototype/**)",
+      "Read(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)",
+      "Edit(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)",
+      "Write(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)"
     ]
   },
   "worktree": {
