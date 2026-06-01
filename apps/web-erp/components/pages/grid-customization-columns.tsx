@@ -25,6 +25,27 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { GridBulkToolbar, type BooleanColumnFlag } from '@/components/molecules/grid-bulk-toolbar';
+
+const BOOL_FLAGS: BooleanColumnFlag[] = ['isVisible', 'isRequired', 'isEditable', 'isSkippable'];
+
+const DEFAULT_FLAGS: Record<BooleanColumnFlag, boolean> = {
+  isVisible: true, isRequired: false, isEditable: true, isSkippable: false,
+};
+
+function isColChanged(a: ErpGridColumn, b: ErpGridColumn | undefined): boolean {
+  if (!b) return true;
+  return (
+    a.headerText !== b.headerText ||
+    a.dataField !== b.dataField ||
+    a.width !== b.width ||
+    a.isVisible !== b.isVisible ||
+    a.isRequired !== b.isRequired ||
+    a.isEditable !== b.isEditable ||
+    a.isSkippable !== b.isSkippable ||
+    (a.columnType ?? null) !== (b.columnType ?? null)
+  );
+}
 
 function CenterCheck({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -34,9 +55,7 @@ function CenterCheck({ checked, onChange }: { checked: boolean; onChange: (v: bo
   );
 }
 
-function ColumnTypeSelect({
-  value, onChange,
-}: {
+function ColumnTypeSelect({ value, onChange }: {
   value: ColumnType | null | undefined;
   onChange: (v: ColumnType) => void;
 }) {
@@ -53,10 +72,13 @@ function ColumnTypeSelect({
 }
 
 function SortableColumnRow({
-  col, index, onPatch, onRemove,
+  col, index, saved, selected, onToggleSelect, onPatch, onRemove,
 }: {
   col: ErpGridColumn;
   index: number;
+  saved: ErpGridColumn | undefined;
+  selected: boolean;
+  onToggleSelect: () => void;
   onPatch: (p: Partial<ErpGridColumn>) => void;
   onRemove: () => void;
 }) {
@@ -64,14 +86,19 @@ function SortableColumnRow({
     attributes, listeners, setNodeRef, transform, transition, isDragging,
   } = useSortable({ id: String(index) });
 
+  const changed = isColChanged(col, saved);
+
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : undefined,
-    backgroundColor: isDragging ? 'var(--bg-hover)' : undefined,
+    backgroundColor: isDragging
+      ? 'var(--bg-hover)'
+      : selected
+        ? 'color-mix(in srgb, var(--primary) 8%, transparent)'
+        : undefined,
   };
 
-  // Derive current columnType from slots if not explicitly set
   const currentType: ColumnType = col.columnType
     ?? inferColumnType(col.labelFormatter, col.cellRenderer, col.cellEditor);
 
@@ -99,6 +126,17 @@ function SortableColumnRow({
         >
           <Icon name="grip-vertical" size={14} />
         </button>
+      </TableCell>
+      <TableCell style={{ width: 36 }}>
+        <div className="flex items-center justify-center gap-1.5">
+          <Checkbox checked={selected} onCheckedChange={onToggleSelect} />
+          {changed && (
+            <span
+              title="Belum disimpan"
+              className="inline-block h-1.5 w-1.5 rounded-full bg-warning"
+            />
+          )}
+        </div>
       </TableCell>
       <TableCell className="text-muted-foreground">{index + 1}</TableCell>
       <TableCell>
@@ -128,11 +166,17 @@ function SortableColumnRow({
 
 export function GridCustomizationColumns({
   columns,
+  savedColumns,
   onColumnsChange,
 }: {
   columns: ErpGridColumn[];
+  savedColumns: ErpGridColumn[];
   onColumnsChange: (cols: ErpGridColumn[]) => void;
 }) {
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+
+  React.useEffect(() => { setSelected(new Set()); }, [columns.length]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -144,48 +188,87 @@ export function GridCustomizationColumns({
     onColumnsChange(arrayMove(columns, Number(active.id), Number(over.id)));
   };
 
+  const toggleSelect = (i: number) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelected(checked ? new Set(columns.map((_, i) => i)) : new Set());
+  };
+
+  const handleBulkToggle = (flag: BooleanColumnFlag, value: boolean) => {
+    onColumnsChange(columns.map((c, i) => selected.has(i) ? { ...c, [flag]: value } : c));
+  };
+
+  const handleBulkReset = () => {
+    onColumnsChange(
+      columns.map((c, i) =>
+        selected.has(i) ? { ...c, ...DEFAULT_FLAGS } : c,
+      ),
+    );
+    setSelected(new Set());
+  };
+
   const colIds = React.useMemo(() => columns.map((_, i) => String(i)), [columns]);
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead style={{ width: 36 }} />
-            <TableHead style={{ width: 40 }}>No</TableHead>
-            <TableHead>Header Text</TableHead>
-            <TableHead style={{ width: 150 }}>Data Field</TableHead>
-            <TableHead style={{ width: 90, textAlign: 'right' }}>Lebar</TableHead>
-            <TableHead style={{ width: 56, textAlign: 'center' }}>Tampil</TableHead>
-            <TableHead style={{ width: 56, textAlign: 'center' }}>Wajib</TableHead>
-            <TableHead style={{ width: 56, textAlign: 'center' }}>Edit</TableHead>
-            <TableHead style={{ width: 56, textAlign: 'center' }}>Skip</TableHead>
-            <TableHead style={{ width: 180 }}>Tipe Kolom</TableHead>
-            <TableHead style={{ width: 48 }} />
-          </TableRow>
-        </TableHeader>
-        <SortableContext items={colIds} strategy={verticalListSortingStrategy}>
-          <TableBody>
-            {columns.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={11} className="py-4 text-center text-muted-foreground">
-                  Belum ada kolom. Klik "Tambah Kolom".
-                </TableCell>
-              </TableRow>
-            ) : (
-              columns.map((c, i) => (
-                <SortableColumnRow
-                  key={String(i)}
-                  col={c}
-                  index={i}
-                  onPatch={(p) => onColumnsChange(columns.map((col, idx) => (idx === i ? { ...col, ...p } : col)))}
-                  onRemove={() => onColumnsChange(columns.filter((_, idx) => idx !== i))}
-                />
-              ))
-            )}
-          </TableBody>
-        </SortableContext>
-      </Table>
-    </DndContext>
+    <div>
+      <GridBulkToolbar
+        total={columns.length}
+        selectedIndices={selected}
+        columns={columns}
+        onSelectAll={handleSelectAll}
+        onBulkToggle={handleBulkToggle}
+        onBulkReset={handleBulkReset}
+      />
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead style={{ width: 36 }} />
+              <TableHead style={{ width: 52 }} />
+              <TableHead style={{ width: 40 }}>No</TableHead>
+              <TableHead>Header Text</TableHead>
+              <TableHead style={{ width: 150 }}>Data Field</TableHead>
+              <TableHead style={{ width: 90, textAlign: 'right' }}>Lebar</TableHead>
+              <TableHead style={{ width: 56, textAlign: 'center' }}>Tampil</TableHead>
+              <TableHead style={{ width: 56, textAlign: 'center' }}>Wajib</TableHead>
+              <TableHead style={{ width: 56, textAlign: 'center' }}>Edit</TableHead>
+              <TableHead style={{ width: 56, textAlign: 'center' }}>Skip</TableHead>
+              <TableHead style={{ width: 180 }}>Tipe Kolom</TableHead>
+              <TableHead style={{ width: 48 }} />
+            </TableRow>
+          </TableHeader>
+          <SortableContext items={colIds} strategy={verticalListSortingStrategy}>
+            <TableBody>
+              {columns.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={12} className="py-4 text-center text-muted-foreground">
+                    Belum ada kolom. Klik &ldquo;Tambah Kolom&rdquo;.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                columns.map((c, i) => (
+                  <SortableColumnRow
+                    key={String(i)}
+                    col={c}
+                    index={i}
+                    saved={savedColumns[i]}
+                    selected={selected.has(i)}
+                    onToggleSelect={() => toggleSelect(i)}
+                    onPatch={(p) => onColumnsChange(columns.map((col, idx) => (idx === i ? { ...col, ...p } : col)))}
+                    onRemove={() => onColumnsChange(columns.filter((_, idx) => idx !== i))}
+                  />
+                ))
+              )}
+            </TableBody>
+          </SortableContext>
+        </Table>
+      </DndContext>
+    </div>
   );
 }
