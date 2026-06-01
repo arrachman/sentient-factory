@@ -38,6 +38,8 @@ export interface CashBankFormData {
   postedAt?: string | null;
   lines: CashLineRow[];
   giros: GiroRow[];
+  /** Values for custom header fields added via Form Builder, keyed by fieldKey. */
+  customFields: Record<string, string | number | null>;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -61,6 +63,7 @@ export function defaultCashBankForm(kind: ErpCashBankKind = 'CASH'): CashBankFor
     status: 'DRAFT',
     lines: [newCashLine()],
     giros: [],
+    customFields: {},
   };
 }
 
@@ -89,6 +92,7 @@ export function fromCashBankTransaction(r: ErpCashReceipt): CashBankFormData {
     notes: r.notes ?? '',
     status: r.status,
     postedAt: r.postedAt,
+    customFields: (r as any).customFields ?? {},
     lines: r.lines.map((l) => ({
       key: `cl-${l.id ?? l.lineNo}`,
       accountId: l.accountId,

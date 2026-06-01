@@ -111,6 +111,7 @@ import { ErpFinGirosModule } from './erp-fin-giros/erp-fin-giros.module';
 import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
 import { ErpFinCashBankTransactionsModule } from './erp-fin-cash-bank-transactions/erp-fin-cash-bank-transactions.module';
 import { ErpSysTransactionGridsModule } from './erp-sys-transaction-grids/erp-sys-transaction-grids.module';
+import { ErpFormFieldsModule } from './erp-form-fields/erp-form-fields.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
 import { ErpLanguagesModule } from './erp-languages/erp-languages.module';
 import { ErpToolsModule } from './erp-tools/erp-tools.module';
@@ -249,6 +250,7 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpFinLedgerModule,
     ErpFinCashBankTransactionsModule,
     ErpSysTransactionGridsModule,
+    ErpFormFieldsModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)

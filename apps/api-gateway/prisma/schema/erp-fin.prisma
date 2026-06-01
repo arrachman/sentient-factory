@@ -185,6 +185,7 @@ model ErpFinCashBankTransaction {
   postedAt        DateTime?            @map("posted_at") @db.Timestamptz(6)
   legacyCode      String?              @map("legacy_code")
   metadata        Json?                @map("metadata")
+  customFields    Json?                @map("custom_fields") // user-defined header fields (Form Builder), keyed by fieldKey
   createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById     BigInt?              @map("created_by_id")

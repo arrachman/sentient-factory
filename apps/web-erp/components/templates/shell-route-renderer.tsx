@@ -24,6 +24,7 @@ import { ErpSettingsPage } from '@/components/pages/settings-page';
 import { ErpPermissionsPage } from '@/components/pages/permissions-page';
 import { ErpMenusPage } from '@/components/pages/menus-page';
 import { GridCustomizationPage } from '@/components/pages/grid-customization-page';
+import { FormBuilderPage } from '@/components/pages/form-builder-page';
 import { ErpDocumentNumberingsPage } from '@/components/pages/document-numberings-page';
 import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
 // F3 Master Data pages
@@ -173,6 +174,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/permissions': () => <ErpPermissionsPage />,
   '/admin/menus': () => <ErpMenusPage />,
   '/admin/grid-customization': () => <GridCustomizationPage />,
+  '/admin/form-builder': () => <FormBuilderPage />,
   '/admin/document-numbering': () => <ErpDocumentNumberingsPage />,
   '/admin/fiscal-periods': () => <ErpFiscalPeriodsPage />,
   '/admin/audit-logs': () => <ErpAuditLogsPage />,

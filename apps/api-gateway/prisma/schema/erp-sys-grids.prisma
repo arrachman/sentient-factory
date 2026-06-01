@@ -87,3 +87,31 @@ model ErpTransactionGridColumn {
   @@index([gridId])
   @@map("sys_transaction_grid_columns")
 }
+
+// ── Form Builder (Transaction header form customization) ─────────────────────
+// Per-transaction-type config for header form fields: structural fields can be
+// relabeled / hidden / reordered; custom fields can be added with any fieldType.
+// Custom field values are stored in fin_cash_bank_transactions.custom_fields (JSONB).
+
+model ErpFormField {
+  id                  BigInt    @id @default(autoincrement())
+  transactionTypeCode String    @map("transaction_type_code") // e.g. "FIN.CR"
+  fieldKey            String    @map("field_key") // structural: "partnerId" | custom: "customText1"
+  kind                String    @default("STRUCTURAL") @map("kind") // STRUCTURAL | CUSTOM
+  label               String    @map("label") // display label shown in the form
+  fieldType           String    @default("TEXT") @map("field_type") // TEXT|NUMBER|DATE|PARTNER|ACCOUNT|BRANCH|LOCATION|CURRENCY|LOOKUP
+  lookupSource        String?   @map("lookup_source") // for LOOKUP: API slug, e.g. "partners"
+  isRequired          Boolean   @default(false) @map("is_required")
+  isVisible           Boolean   @default(true) @map("is_visible")
+  sortOrder           Int       @default(0) @map("sort_order")
+  columnSlot          String    @default("LEFT") @map("column_slot") // LEFT | CENTER | RIGHT
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById         BigInt?   @map("created_by_id")
+  updatedById         BigInt?   @map("updated_by_id")
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([transactionTypeCode, fieldKey])
+  @@index([transactionTypeCode])
+  @@map("sys_form_fields")
+}

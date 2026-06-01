@@ -27,6 +27,8 @@ import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { formatNumber } from '@/lib/format';
 import type { ErpDocumentStatus } from '@/lib/api/fin-cash-receipts';
 import type { CashBankFormData } from './cash-bank-form-model';
+import { useFormFields } from '@/lib/use-form-fields';
+import { CashBankCustomFields } from '@/components/molecules/cash-bank-custom-fields';
 
 /** Direction-specific header labels (only thing that differs CR vs CD). */
 export interface CashBankFormLabels {
@@ -93,8 +95,19 @@ export function CashBankTransactionForm({
 }) {
   const [tab, setTab] = React.useState<string>('detail');
   const [currencies, setCurrencies] = React.useState<ErpCurrency[]>([]);
+  const formConfig = useFormFields(transactionCode);
   const set = (p: Partial<CashBankFormData>) => onChange({ ...data, ...p });
   const locked = !EDITABLE.includes(data.status);
+
+  // Derive labels from form builder config (fallback to prop labels if not loaded yet).
+  const partnerLabel = formConfig.byKey['partnerId']?.label ?? labels.partner;
+  const accountLabel = formConfig.byKey['bankAccountId']?.label ?? labels.account;
+  const branchVisible = formConfig.byKey['branchId']?.isVisible ?? true;
+  const locationVisible = formConfig.byKey['locationId']?.isVisible ?? true;
+  const descriptionVisible = formConfig.byKey['description']?.isVisible ?? true;
+
+  const setCustomField = (key: string, value: string | number | null) =>
+    set({ customFields: { ...data.customFields, [key]: value } });
   const total = data.lines.reduce((s, l) => s + Number(l.amount || 0), 0);
 
   React.useEffect(() => {
@@ -141,7 +154,7 @@ export function CashBankTransactionForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 rounded-lg border border-border p-4">
         <div className="flex flex-col gap-3">
           {headerExtra}
-          <Field label={labels.partner} required>
+          <Field label={partnerLabel} required={formConfig.byKey['partnerId']?.isRequired ?? true}>
             <SearchSelect
               placeholder="Pilih partner…"
               value={data.partnerId}
@@ -151,7 +164,7 @@ export function CashBankTransactionForm({
               loadOptions={loadPartnerOptions}
             />
           </Field>
-          <Field label={labels.account} required>
+          <Field label={accountLabel} required={formConfig.byKey['bankAccountId']?.isRequired ?? true}>
             <SearchSelect
               placeholder="Pilih akun kas/bank…"
               value={data.bankAccountId}
@@ -161,36 +174,54 @@ export function CashBankTransactionForm({
               loadOptions={loadCashAccountOptionsCoded}
             />
           </Field>
-          <Field label="Uraian" required>
-            <Input
-              value={data.description}
-              disabled={locked}
-              onChange={(e) => set({ description: e.target.value })}
-            />
-          </Field>
+          {descriptionVisible && (
+            <Field label={formConfig.byKey['description']?.label ?? 'Uraian'} required={formConfig.byKey['description']?.isRequired ?? true}>
+              <Input
+                value={data.description}
+                disabled={locked}
+                onChange={(e) => set({ description: e.target.value })}
+              />
+            </Field>
+          )}
+          <CashBankCustomFields
+            fields={formConfig.bySlot.LEFT}
+            values={data.customFields}
+            onValueChange={setCustomField}
+            disabled={locked}
+          />
         </div>
 
         <div className="flex flex-col gap-3">
-          <Field label="Cabang" required>
-            <SearchSelect
-              placeholder="Pilih cabang…"
-              value={data.branchId}
-              initialLabel={data.branchLabel}
-              disabled={locked}
-              onValueChange={(v) => set({ branchId: v })}
-              loadOptions={loadBranchOptions}
-            />
-          </Field>
-          <Field label="Lokasi">
-            <SearchSelect
-              placeholder="Pilih lokasi…"
-              value={data.locationId}
-              initialLabel={data.locationLabel}
-              disabled={locked}
-              onValueChange={(v) => set({ locationId: v })}
-              loadOptions={loadLocationOptions}
-            />
-          </Field>
+          {branchVisible && (
+            <Field label={formConfig.byKey['branchId']?.label ?? 'Cabang'} required={formConfig.byKey['branchId']?.isRequired ?? true}>
+              <SearchSelect
+                placeholder="Pilih cabang…"
+                value={data.branchId}
+                initialLabel={data.branchLabel}
+                disabled={locked}
+                onValueChange={(v) => set({ branchId: v })}
+                loadOptions={loadBranchOptions}
+              />
+            </Field>
+          )}
+          {locationVisible && (
+            <Field label={formConfig.byKey['locationId']?.label ?? 'Lokasi'}>
+              <SearchSelect
+                placeholder="Pilih lokasi…"
+                value={data.locationId}
+                initialLabel={data.locationLabel}
+                disabled={locked}
+                onValueChange={(v) => set({ locationId: v })}
+                loadOptions={loadLocationOptions}
+              />
+            </Field>
+          )}
+          <CashBankCustomFields
+            fields={formConfig.bySlot.CENTER}
+            values={data.customFields}
+            onValueChange={setCustomField}
+            disabled={locked}
+          />
         </div>
 
         {/* Kolom kanan = info dokumen, urutan baku: Tanggal → No Transaksi → Uang/Kurs (§2.36) */}
@@ -222,7 +253,7 @@ export function CashBankTransactionForm({
               </label>
             </div>
           </Field>
-          <Field label="Uang" required>
+          <Field label={formConfig.byKey['currencyId']?.label ?? 'Uang'} required={formConfig.byKey['currencyId']?.isRequired ?? true}>
             <div className="flex items-center gap-2">
               <div className="flex-1 min-w-0">
                 <SearchSelect
@@ -245,6 +276,12 @@ export function CashBankTransactionForm({
               </span>
             </div>
           </Field>
+          <CashBankCustomFields
+            fields={formConfig.bySlot.RIGHT}
+            values={data.customFields}
+            onValueChange={setCustomField}
+            disabled={locked}
+          />
         </div>
       </div>
 

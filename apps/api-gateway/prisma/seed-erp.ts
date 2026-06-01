@@ -396,6 +396,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M0.SYS.FISCAL',      title: 'Fiscal Periods',      path: '/admin/fiscal-periods',      legacyCode: '0-17' },
     { code: 'M0.SYS.AUDIT',       title: 'Audit Log',           path: '/admin/audit-logs',          legacyCode: '0-21' },
     { code: 'M0.SYS.GRID',        title: 'Kustomisasi Grid',    path: '/admin/grid-customization'                    },
+    { code: 'M0.SYS.FORM',        title: 'Form Builder',        path: '/admin/form-builder'                          },
     { code: 'M0.SYS.APPEARANCE',  title: 'Appearance',          path: '/settings/appearance'                         },
   ], sysGrp.id);
 
