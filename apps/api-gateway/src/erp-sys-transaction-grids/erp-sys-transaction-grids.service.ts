@@ -89,6 +89,7 @@ export class ErpSysTransactionGridsService {
                 kind: c.kind,
                 dataType: c.dataType,
                 lookupSource: c.lookupSource ?? null,
+                columnType: c.columnType ?? null,
                 labelFormatter: c.labelFormatter ?? null,
                 headerRenderer: c.headerRenderer ?? null,
                 cellRenderer: c.cellRenderer ?? null,

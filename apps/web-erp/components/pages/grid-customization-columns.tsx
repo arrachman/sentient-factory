@@ -18,14 +18,13 @@ import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from '@/components/organisms/table';
 import {
-  LABEL_FORMATTERS, HEADER_RENDERERS, CELL_RENDERERS, CELL_EDITORS,
-  type ErpGridColumn,
+  COLUMN_TYPES, COLUMN_TYPE_LABELS, COLUMN_TYPE_PRESETS,
+  inferColumnType,
+  type ErpGridColumn, type ColumnType,
 } from '@/lib/api/transaction-grids';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-
-const AUTO = '__AUTO__';
 
 function CenterCheck({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -35,19 +34,19 @@ function CenterCheck({ checked, onChange }: { checked: boolean; onChange: (v: bo
   );
 }
 
-function SlotSelect({
-  value, options, onChange,
+function ColumnTypeSelect({
+  value, onChange,
 }: {
-  value: string | null | undefined;
-  options: readonly string[];
-  onChange: (v: string | null) => void;
+  value: ColumnType | null | undefined;
+  onChange: (v: ColumnType) => void;
 }) {
   return (
-    <Select value={value ?? AUTO} onValueChange={(v) => onChange(v === AUTO ? null : v)}>
+    <Select value={value ?? 'text'} onValueChange={(v) => onChange(v as ColumnType)}>
       <SelectTrigger><SelectValue /></SelectTrigger>
       <SelectContent>
-        <SelectItem value={AUTO}>— (auto)</SelectItem>
-        {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+        {COLUMN_TYPES.map((t) => (
+          <SelectItem key={t} value={t}>{COLUMN_TYPE_LABELS[t]}</SelectItem>
+        ))}
       </SelectContent>
     </Select>
   );
@@ -70,6 +69,21 @@ function SortableColumnRow({
     transition,
     opacity: isDragging ? 0.5 : undefined,
     backgroundColor: isDragging ? 'var(--bg-hover)' : undefined,
+  };
+
+  // Derive current columnType from slots if not explicitly set
+  const currentType: ColumnType = col.columnType
+    ?? inferColumnType(col.labelFormatter, col.cellRenderer, col.cellEditor);
+
+  const handleTypeChange = (type: ColumnType) => {
+    const preset = COLUMN_TYPE_PRESETS[type];
+    onPatch({
+      columnType: type,
+      labelFormatter: preset.labelFormatter,
+      headerRenderer: preset.headerRenderer,
+      cellRenderer: preset.cellRenderer,
+      cellEditor: preset.cellEditor,
+    });
   };
 
   return (
@@ -101,16 +115,7 @@ function SortableColumnRow({
       <TableCell><CenterCheck checked={col.isEditable} onChange={(v) => onPatch({ isEditable: v })} /></TableCell>
       <TableCell><CenterCheck checked={col.isSkippable} onChange={(v) => onPatch({ isSkippable: v })} /></TableCell>
       <TableCell>
-        <SlotSelect value={col.labelFormatter} options={LABEL_FORMATTERS} onChange={(v) => onPatch({ labelFormatter: v as ErpGridColumn['labelFormatter'] })} />
-      </TableCell>
-      <TableCell>
-        <SlotSelect value={col.headerRenderer} options={HEADER_RENDERERS} onChange={(v) => onPatch({ headerRenderer: v as ErpGridColumn['headerRenderer'] })} />
-      </TableCell>
-      <TableCell>
-        <SlotSelect value={col.cellRenderer} options={CELL_RENDERERS} onChange={(v) => onPatch({ cellRenderer: v as ErpGridColumn['cellRenderer'] })} />
-      </TableCell>
-      <TableCell>
-        <SlotSelect value={col.cellEditor} options={CELL_EDITORS} onChange={(v) => onPatch({ cellEditor: v as ErpGridColumn['cellEditor'] })} />
+        <ColumnTypeSelect value={currentType} onChange={handleTypeChange} />
       </TableCell>
       <TableCell style={{ width: 48 }}>
         <button type="button" className="iconbtn danger" title="Hapus kolom" onClick={onRemove}>
@@ -155,10 +160,7 @@ export function GridCustomizationColumns({
             <TableHead style={{ width: 56, textAlign: 'center' }}>Wajib</TableHead>
             <TableHead style={{ width: 56, textAlign: 'center' }}>Edit</TableHead>
             <TableHead style={{ width: 56, textAlign: 'center' }}>Skip</TableHead>
-            <TableHead style={{ width: 150 }}>Label Formatter</TableHead>
-            <TableHead style={{ width: 140 }}>Header Renderer</TableHead>
-            <TableHead style={{ width: 140 }}>Cell Renderer</TableHead>
-            <TableHead style={{ width: 140 }}>Cell Editor</TableHead>
+            <TableHead style={{ width: 180 }}>Tipe Kolom</TableHead>
             <TableHead style={{ width: 48 }} />
           </TableRow>
         </TableHeader>
@@ -166,7 +168,7 @@ export function GridCustomizationColumns({
           <TableBody>
             {columns.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={14} className="py-4 text-center text-muted-foreground">
+                <TableCell colSpan={11} className="py-4 text-center text-muted-foreground">
                   Belum ada kolom. Klik "Tambah Kolom".
                 </TableCell>
               </TableRow>

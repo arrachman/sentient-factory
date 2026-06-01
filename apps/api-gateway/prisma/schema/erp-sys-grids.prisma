@@ -68,11 +68,13 @@ model ErpTransactionGridColumn {
   kind         String  @default("STANDARD") @map("kind") // STANDARD | CUSTOM
   dataType     String  @default("TEXT") @map("data_type") // TEXT | NUMBER | DATE | LOOKUP
   lookupSource String? @map("lookup_source") // for LOOKUP: account | costCenter | division | subdivision | project
+  // Semantic column type — single selector that derives all 4 presentation slots below.
+  columnType     String? @map("column_type") // text|number|currency|decimal|percent|date|datetime|checkbox|lookup|textarea|badge|link|discount|stepper|combobox|account_picker|partner_picker
   // Presentation/edit slots (allowlist in DTO + FE dropdowns; null = derive from dataType)
   labelFormatter String? @map("label_formatter") // value format in cell: NONE|NUMBER|DECIMAL|CURRENCY|PERCENT|DATE|DATETIME|BOOLEAN
   headerRenderer String? @map("header_renderer") // header cell render: DEFAULT|REQUIRED|CENTER|WRAP|HELP
   cellRenderer   String? @map("cell_renderer") // row cell render: TEXT|NUMERIC|CURRENCY|BADGE|CHECK|LINK|LOOKUP
-  cellEditor     String? @map("cell_editor") // active-cell editor: TEXT|NUMBER|DATE|LOOKUP|TEXTAREA|CHECKBOX|NONE
+  cellEditor     String? @map("cell_editor") // active-cell editor: TEXT|NUMBER|DATE|LOOKUP|TEXTAREA|CHECKBOX|NONE|DISCOUNT|STEPPER|COMBOBOX|ACCOUNT_PICKER|PARTNER_PICKER
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById BigInt?   @map("created_by_id")

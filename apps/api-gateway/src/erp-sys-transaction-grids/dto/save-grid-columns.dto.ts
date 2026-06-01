@@ -10,7 +10,16 @@ export const GRID_DATA_TYPES = ['TEXT', 'NUMBER', 'DATE', 'LOOKUP'] as const;
 export const LABEL_FORMATTERS = ['NONE', 'NUMBER', 'DECIMAL', 'CURRENCY', 'PERCENT', 'DATE', 'DATETIME', 'BOOLEAN'] as const;
 export const HEADER_RENDERERS = ['DEFAULT', 'REQUIRED', 'CENTER', 'WRAP', 'HELP'] as const;
 export const CELL_RENDERERS = ['TEXT', 'NUMERIC', 'CURRENCY', 'BADGE', 'CHECK', 'LINK', 'LOOKUP'] as const;
-export const CELL_EDITORS = ['TEXT', 'NUMBER', 'DATE', 'LOOKUP', 'TEXTAREA', 'CHECKBOX', 'NONE'] as const;
+export const CELL_EDITORS = [
+  'TEXT', 'NUMBER', 'DATE', 'LOOKUP', 'TEXTAREA', 'CHECKBOX', 'NONE',
+  'DISCOUNT', 'STEPPER', 'COMBOBOX', 'ACCOUNT_PICKER', 'PARTNER_PICKER',
+] as const;
+export const COLUMN_TYPES = [
+  'text', 'number', 'currency', 'decimal', 'percent',
+  'date', 'datetime', 'checkbox', 'lookup', 'textarea',
+  'badge', 'link', 'discount', 'stepper', 'combobox',
+  'account_picker', 'partner_picker',
+] as const;
 
 export class GridColumnInputDto {
   @ApiProperty({ example: 0 }) @IsInt() @Min(0) sortOrder!: number;
@@ -28,6 +37,7 @@ export class GridColumnInputDto {
   @ApiPropertyOptional({ enum: HEADER_RENDERERS }) @IsOptional() @IsIn(HEADER_RENDERERS) headerRenderer?: (typeof HEADER_RENDERERS)[number];
   @ApiPropertyOptional({ enum: CELL_RENDERERS }) @IsOptional() @IsIn(CELL_RENDERERS) cellRenderer?: (typeof CELL_RENDERERS)[number];
   @ApiPropertyOptional({ enum: CELL_EDITORS }) @IsOptional() @IsIn(CELL_EDITORS) cellEditor?: (typeof CELL_EDITORS)[number];
+  @ApiPropertyOptional({ enum: COLUMN_TYPES }) @IsOptional() @IsIn(COLUMN_TYPES) columnType?: (typeof COLUMN_TYPES)[number];
 }
 
 export class GridInputDto {
