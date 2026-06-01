@@ -2,27 +2,28 @@ import * as React from 'react';
 import { getFormFields, type ErpFormField, type FormColumnSlot } from './api/form-fields';
 
 export interface FormFieldsConfig {
+  /** Every field (structural + custom) keyed by fieldKey. */
   byKey: Record<string, ErpFormField>;
-  bySlot: Record<FormColumnSlot, ErpFormField[]>;
-  custom: ErpFormField[];
+  /** All fields grouped per column slot, ordered by sortOrder. Drives rendering. */
+  slotFields: Record<FormColumnSlot, ErpFormField[]>;
 }
 
-const EMPTY: FormFieldsConfig = { byKey: {}, bySlot: { LEFT: [], CENTER: [], RIGHT: [] }, custom: [] };
+const EMPTY: FormFieldsConfig = {
+  byKey: {},
+  slotFields: { LEFT: [], CENTER: [], RIGHT: [] },
+};
 
-function toConfig(fields: ErpFormField[]): FormFieldsConfig {
+/** Build a render config from a flat field list (sorted by sortOrder per slot). */
+export function buildFormConfig(fields: ErpFormField[]): FormFieldsConfig {
   const byKey: Record<string, ErpFormField> = {};
-  const bySlot: Record<FormColumnSlot, ErpFormField[]> = { LEFT: [], CENTER: [], RIGHT: [] };
-  const custom: ErpFormField[] = [];
+  const slotFields: Record<FormColumnSlot, ErpFormField[]> = { LEFT: [], CENTER: [], RIGHT: [] };
 
-  for (const f of fields) {
+  const ordered = fields.slice().sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const f of ordered) {
     byKey[f.fieldKey] = f;
-    if (f.kind === 'CUSTOM') custom.push(f);
+    slotFields[f.columnSlot].push(f);
   }
-  // Custom fields grouped by slot for rendering in each column.
-  for (const f of custom) {
-    bySlot[f.columnSlot].push(f);
-  }
-  return { byKey, bySlot, custom };
+  return { byKey, slotFields };
 }
 
 /** Loads form field config for a transaction type. Returns empty config while loading. */
@@ -33,7 +34,7 @@ export function useFormFields(transactionCode?: string): FormFieldsConfig {
     if (!transactionCode) return;
     let cancelled = false;
     getFormFields(transactionCode)
-      .then((r) => { if (!cancelled) setConfig(toConfig(r.fields)); })
+      .then((r) => { if (!cancelled) setConfig(buildFormConfig(r.fields)); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [transactionCode]);

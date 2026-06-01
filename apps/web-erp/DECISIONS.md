@@ -1800,3 +1800,45 @@ tapi `SearchSelect` belum menampilkan label terpilih saat awal (label di-resolve
 dari `data.*Label`/`initialLabel` yang belum terisi untuk default config) — nilai
 tetap benar saat simpan; label tampil setelah user membuka picker. Perbaikan label
 prefetch ditunda sampai dibutuhkan.
+
+### Header form transaksi = render 100% dari config (no hardcoded layout) (2026-06-01)
+
+**Keputusan user:** "tidak boleh ada yg statis via source code, harus dinamis full
+via form builder." Dipilih level **"render dinamis, binding tetap"** (frontend-only,
+backend tak berubah) — bukan full-decouple.
+
+Sebelumnya `cash-bank-transaction-form.tsx` me-render 8 field struktural sebagai
+blok `<Field>` JSX hardcoded (urutan & slot terkunci di source), custom field
+di-append di belakang. Sekarang header = **satu loop config-ordered** per slot
+(LEFT/CENTER/RIGHT), urut `sortOrder`, hormati `isVisible`, dispatch per `kind`:
+
+- **Struktural** → `components/molecules/cash-bank-structural-field.tsx`
+  (`CashBankStructuralField` + `StructuralFieldCtx`). `switch` atas 8 `fieldKey`
+  = **binding field→kolom `CashBankFormData`** (input spesial: `docNumber` Auto,
+  `currencyId` Kurs). Binding ini sengaja tetap di source — itulah arti "binding
+  tetap"; yang dinamis = layout/urutan/visibilitas/label/atribut.
+- **Custom** → `cash-bank-custom-fields.tsx` direfactor ke **singular**
+  `CashBankCustomField` (row tunggal), bukan lagi plural per-slot.
+- Baris label+kontrol bersama diekstrak ke `components/molecules/form-field-row.tsx`
+  (`FormFieldRow`) — hapus duplikasi `Field` di 2 file.
+
+**Hook (`lib/use-form-fields.ts`):** `FormFieldsConfig` kini `{ byKey, slotFields }`
+(`slotFields` = SEMUA field per slot, sorted; `bySlot`/`custom` lama dihapus).
+Export `buildFormConfig(fields)`. Fallback `DEFAULT_FORM_FIELDS`
+(`lib/api/form-fields.ts`) = layout struktural bawaan saat config belum load /
+form tanpa `transactionCode` (cegah flash kosong); form meng-inject label arah
+(`labels.partner`/`labels.account`) ke fallback agar "Terima Dari"/"Bayar Ke" benar.
+
+**Type field sistem tetap di-GUARD (tidak bisa diubah).** Tiap field struktural
+terikat kolom DB + posting GL (`bankAccountId` wajib ACCOUNT, `transactionDate`
+wajib DATE, dst), jadi `fieldType`-nya **tidak** boleh diganti bebas (akan memecah
+posting). Di builder (`form-builder-fields.tsx`) Tipe field sistem = **Select
+disabled + tooltip** "terikat kolom DB & posting GL" (bukan teks mati). Yang tetap
+editable untuk field sistem: label, sumber/filter/sort (gear), visible, wajib,
+slot, urutan, placeholder, default, readonly. Field **custom** = bebas penuh
+(termasuk tipe & sumber). Kalau type field sistem benar-benar perlu bebas → itu
+**full-decouple backend** (JSON bag + posting baca by-key) = fase terpisah, di luar
+keputusan ini.
+
+**Scope:** form kas/bank (CR/CD/BD/RM) yang share `cash-bank-transaction-form.tsx`.
+Jurnal/giro form terpisah → adopsi pola yang sama bila diperlukan.

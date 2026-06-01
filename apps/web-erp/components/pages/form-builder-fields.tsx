@@ -128,7 +128,19 @@ function FieldRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="pr-2 text-xs text-muted-foreground">{FORM_FIELD_TYPE_LABELS[field.fieldType]}</span>
+          <Select value={field.fieldType} disabled>
+            <SelectTrigger
+              className="h-6 text-xs cursor-not-allowed opacity-70"
+              title="Tipe field sistem terikat kolom DB & posting GL — tidak dapat diubah"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FORM_FIELD_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>{FORM_FIELD_TYPE_LABELS[t]}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </TableCell>
 

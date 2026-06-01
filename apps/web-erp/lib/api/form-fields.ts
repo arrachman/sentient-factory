@@ -52,6 +52,24 @@ export interface ErpFormField {
   columnSlot: FormColumnSlot;
 }
 
+/**
+ * Built-in structural layout used as a fallback when no Form Builder config has
+ * loaded yet (or the transaction type has no saved config). The authoritative
+ * layout always comes from the API; this only prevents an empty header flash and
+ * keeps direction-agnostic forms working. Labels for partner/account are generic
+ * here — callers override them with direction labels (e.g. "Terima Dari").
+ */
+export const DEFAULT_FORM_FIELDS: ErpFormField[] = [
+  { fieldKey: 'partnerId', kind: 'STRUCTURAL', label: 'Partner', fieldType: 'PARTNER', isRequired: true, isVisible: true, sortOrder: 0, columnSlot: 'LEFT' },
+  { fieldKey: 'bankAccountId', kind: 'STRUCTURAL', label: 'Akun Kas/Bank', fieldType: 'ACCOUNT', isRequired: true, isVisible: true, sortOrder: 1, columnSlot: 'LEFT' },
+  { fieldKey: 'description', kind: 'STRUCTURAL', label: 'Uraian', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 2, columnSlot: 'LEFT' },
+  { fieldKey: 'branchId', kind: 'STRUCTURAL', label: 'Cabang', fieldType: 'BRANCH', isRequired: false, isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
+  { fieldKey: 'locationId', kind: 'STRUCTURAL', label: 'Lokasi', fieldType: 'LOCATION', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'CENTER' },
+  { fieldKey: 'transactionDate', kind: 'STRUCTURAL', label: 'Tanggal', fieldType: 'DATE', isRequired: true, isVisible: true, sortOrder: 0, columnSlot: 'RIGHT' },
+  { fieldKey: 'docNumber', kind: 'STRUCTURAL', label: 'No Transaksi', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT' },
+  { fieldKey: 'currencyId', kind: 'STRUCTURAL', label: 'Uang', fieldType: 'CURRENCY', isRequired: true, isVisible: true, sortOrder: 2, columnSlot: 'RIGHT' },
+];
+
 export interface FormFieldsResponse {
   code: string;
   fields: ErpFormField[];

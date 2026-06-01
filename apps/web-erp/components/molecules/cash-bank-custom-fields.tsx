@@ -1,8 +1,10 @@
 'use client';
 
 /**
- * Renders custom header fields added via Form Builder for a given column slot.
- * Structural fields are still rendered directly in cash-bank-transaction-form.tsx.
+ * Renders a single CUSTOM header field (added via Form Builder) for the cash/bank
+ * transaction form. Value lives in CashBankFormData.customFields keyed by fieldKey
+ * (no fixed DB column). The transaction form renders structural + custom fields in
+ * one config-ordered loop, dispatching per field kind.
  */
 
 import * as React from 'react';
@@ -10,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { NumInput } from '@/components/molecules/num-input';
 import { DateInput } from '@/components/ui/date-input';
 import { SearchSelect } from '@/components/molecules/search-select';
+import { FormFieldRow } from '@/components/molecules/form-field-row';
 import {
   loadPartnerOptions,
   loadAccountOptionsCoded,
@@ -32,7 +35,7 @@ const BUILTIN_LOADERS: Partial<Record<FormFieldType, LoaderFn>> = {
   CURRENCY: loadCurrencyOptions,
 };
 
-function CustomField({
+function CustomFieldControl({
   field,
   value,
   onChange,
@@ -101,53 +104,21 @@ function CustomField({
   );
 }
 
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground w-24 shrink-0 text-left">
-        {label}
-        {required && <span className="text-danger">&nbsp;*</span>}
-      </span>
-      <div className="flex-1 min-w-0">{children}</div>
-    </label>
-  );
-}
-
-/** Renders all visible custom fields for a given column slot. */
-export function CashBankCustomFields({
-  fields,
-  values,
-  onValueChange,
+/** One custom header field row (label + control). */
+export function CashBankCustomField({
+  field,
+  value,
+  onChange,
   disabled,
 }: {
-  fields: ErpFormField[];
-  values: Record<string, string | number | null>;
-  onValueChange: (key: string, value: string | number | null) => void;
+  field: ErpFormField;
+  value: string | number | null;
+  onChange: (v: string | number | null) => void;
   disabled?: boolean;
 }) {
-  const visible = fields.filter((f) => f.isVisible);
-  if (visible.length === 0) return null;
-
   return (
-    <>
-      {visible.map((f) => (
-        <Field key={f.fieldKey} label={f.label} required={f.isRequired}>
-          <CustomField
-            field={f}
-            value={values[f.fieldKey] ?? null}
-            onChange={(v) => onValueChange(f.fieldKey, v)}
-            disabled={disabled}
-          />
-        </Field>
-      ))}
-    </>
+    <FormFieldRow label={field.label} required={field.isRequired}>
+      <CustomFieldControl field={field} value={value} onChange={onChange} disabled={disabled} />
+    </FormFieldRow>
   );
 }

@@ -2,35 +2,32 @@
 
 /**
  * Cash/bank transaction master-detail form — shared organism for Kas Masuk (CR),
- * Kas Keluar (CD), Bank Keluar (BD)… The header layout (§2.36), Detail/Info tabs
- * and contra-CoA lines are identical across directions; callers only pass the
- * party/account labels ("Terima Dari" vs "Bayar Ke", "Akun Kas [D]" vs "[K]").
+ * Kas Keluar (CD), Bank Keluar (BD)… The header is rendered 100% from Form Builder
+ * config: field set, order, slot, labels, visibility, placeholder, required and
+ * read-only all come from `useFormFields`. Structural fields (bound to DB columns)
+ * render via CashBankStructuralField; custom fields via CashBankCustomField.
  * Status is read-only (badge) — transitions happen via list workflow actions (§2.7).
  */
 
 import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
-import { DateInput } from '@/components/ui/date-input';
 import { Badge } from '@/components/ui/badge';
-import { SearchSelect } from '@/components/molecules/search-select';
 import { CashBankLinesEditor } from '@/components/organisms/cash-bank-lines';
-import {
-  loadPartnerOptions,
-  loadAccountOptionsCoded,
-  loadLocationOptions,
-  loadBranchOptions,
-  loadCurrencyOptions,
-} from './items-form-lookups';
+import { loadAccountOptionsCoded } from './items-form-lookups';
 import { buildLookupLoader } from '@/lib/lookup-source-registry';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
 import { formatNumber } from '@/lib/format';
 import type { ErpDocumentStatus } from '@/lib/api/fin-cash-receipts';
+import { DEFAULT_FORM_FIELDS, type FormColumnSlot } from '@/lib/api/form-fields';
 import { formDefaultsPatch, type CashBankFormData } from './cash-bank-form-model';
-import { useFormFields } from '@/lib/use-form-fields';
-import { CashBankCustomFields } from '@/components/molecules/cash-bank-custom-fields';
+import { useFormFields, buildFormConfig } from '@/lib/use-form-fields';
+import {
+  CashBankStructuralField, type StructuralFieldCtx,
+} from '@/components/molecules/cash-bank-structural-field';
+import { CashBankCustomField } from '@/components/molecules/cash-bank-custom-fields';
 
 /** Direction-specific header labels (only thing that differs CR vs CD). */
 export interface CashBankFormLabels {
@@ -48,26 +45,7 @@ export interface CashBankExtraTab {
 }
 
 const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
-
-function Field({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground w-24 shrink-0 text-left">
-        {label}
-        {required && <span className="text-danger">&nbsp;*</span>}
-      </span>
-      <div className="flex-1 min-w-0">{children}</div>
-    </label>
-  );
-}
+const SLOTS: FormColumnSlot[] = ['LEFT', 'CENTER', 'RIGHT'];
 
 export function CashBankTransactionForm({
   data,
@@ -99,8 +77,18 @@ export function CashBankTransactionForm({
   const [currencies, setCurrencies] = React.useState<ErpCurrency[]>([]);
   // Required ("Wajib") grid columns still empty — reported by the lines editor.
   const [lineRequiredMissing, setLineRequiredMissing] = React.useState<string[]>([]);
-  const formConfig = useFormFields(transactionCode);
   const set = (p: Partial<CashBankFormData>) => onChange({ ...data, ...p });
+
+  // Fallback layout (direction labels injected) until the real config loads.
+  const fallbackConfig = React.useMemo(
+    () => buildFormConfig(DEFAULT_FORM_FIELDS.map((f) =>
+      f.fieldKey === 'partnerId' ? { ...f, label: labels.partner }
+        : f.fieldKey === 'bankAccountId' ? { ...f, label: labels.account }
+          : f)),
+    [labels.partner, labels.account],
+  );
+  const loaded = useFormFields(transactionCode);
+  const formConfig = Object.keys(loaded.byKey).length ? loaded : fallbackConfig;
 
   // Block saving while a required grid column is empty; surface which ones.
   const guardSave = (run: () => void) => () => {
@@ -112,6 +100,8 @@ export function CashBankTransactionForm({
     run();
   };
 
+  const locked = !EDITABLE.includes(data.status);
+
   const bankAccountLoader = React.useMemo(() => {
     const f = formConfig.byKey['bankAccountId'];
     const configured = (f?.lookupDefaultFilter || f?.lookupDefaultSort)
@@ -119,7 +109,6 @@ export function CashBankTransactionForm({
       : null;
     return configured ?? loadAccountOptionsCoded;
   }, [formConfig]);
-  const locked = !EDITABLE.includes(data.status);
 
   // Per-field placeholder / read-only from form builder config.
   const ph = (key: string, fallback: string) => formConfig.byKey[key]?.placeholder || fallback;
@@ -129,19 +118,12 @@ export function CashBankTransactionForm({
   const defaultsApplied = React.useRef(false);
   React.useEffect(() => {
     if (data.id || defaultsApplied.current) return;
-    if (Object.keys(formConfig.byKey).length === 0) return; // config not loaded yet
+    if (Object.keys(loaded.byKey).length === 0) return; // real config not loaded yet
     defaultsApplied.current = true;
-    const patch = formDefaultsPatch(data, formConfig);
+    const patch = formDefaultsPatch(data, loaded);
     if (Object.keys(patch).length > 0) onChange({ ...data, ...patch });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formConfig]);
-
-  // Derive labels from form builder config (fallback to prop labels if not loaded yet).
-  const partnerLabel = formConfig.byKey['partnerId']?.label ?? labels.partner;
-  const accountLabel = formConfig.byKey['bankAccountId']?.label ?? labels.account;
-  const branchVisible = formConfig.byKey['branchId']?.isVisible ?? true;
-  const locationVisible = formConfig.byKey['locationId']?.isVisible ?? true;
-  const descriptionVisible = formConfig.byKey['description']?.isVisible ?? true;
+  }, [loaded]);
 
   const setCustomField = (key: string, value: string | number | null) =>
     set({ customFields: { ...data.customFields, [key]: value } });
@@ -166,6 +148,23 @@ export function CashBankTransactionForm({
     return c ? `${c.code} - ${c.name}` : undefined;
   }, [currencies, data.currencyId]);
 
+  const ctx: StructuralFieldCtx = { data, set, ph, ro, locked, currencyLabel, bankAccountLoader };
+
+  const renderSlot = (slot: FormColumnSlot) =>
+    formConfig.slotFields[slot]
+      .filter((f) => f.isVisible)
+      .map((f) => (f.kind === 'STRUCTURAL'
+        ? <CashBankStructuralField key={f.fieldKey} field={f} ctx={ctx} />
+        : (
+          <CashBankCustomField
+            key={f.fieldKey}
+            field={f}
+            value={data.customFields[f.fieldKey] ?? null}
+            onChange={(v) => setCustomField(f.fieldKey, v)}
+            disabled={locked}
+          />
+        )));
+
   return (
     <div className="cr-form flex flex-col gap-4">
       {/* Toolbar */}
@@ -187,141 +186,14 @@ export function CashBankTransactionForm({
         </Badge>
       </div>
 
-      {/* Header */}
+      {/* Header — rendered from Form Builder config; LEFT/CENTER/RIGHT slots, ordered by sortOrder. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 rounded-lg border border-border p-4">
-        <div className="flex flex-col gap-3">
-          {headerExtra}
-          <Field label={partnerLabel} required={formConfig.byKey['partnerId']?.isRequired ?? true}>
-            <SearchSelect
-              placeholder={ph('partnerId', 'Pilih partner…')}
-              value={data.partnerId}
-              initialLabel={data.partnerLabel}
-              disabled={ro('partnerId')}
-              onValueChange={(v) => set({ partnerId: v })}
-              loadOptions={loadPartnerOptions}
-            />
-          </Field>
-          <Field label={accountLabel} required={formConfig.byKey['bankAccountId']?.isRequired ?? true}>
-            <SearchSelect
-              placeholder={ph('bankAccountId', 'Pilih akun kas/bank…')}
-              value={data.bankAccountId}
-              initialLabel={data.bankAccountLabel}
-              disabled={ro('bankAccountId')}
-              onValueChange={(v) => set({ bankAccountId: v })}
-              loadOptions={bankAccountLoader}
-            />
-          </Field>
-          {descriptionVisible && (
-            <Field label={formConfig.byKey['description']?.label ?? 'Uraian'} required={formConfig.byKey['description']?.isRequired ?? true}>
-              <Input
-                value={data.description}
-                placeholder={formConfig.byKey['description']?.placeholder || undefined}
-                disabled={ro('description')}
-                onChange={(e) => set({ description: e.target.value })}
-              />
-            </Field>
-          )}
-          <CashBankCustomFields
-            fields={formConfig.bySlot.LEFT}
-            values={data.customFields}
-            onValueChange={setCustomField}
-            disabled={locked}
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {branchVisible && (
-            <Field label={formConfig.byKey['branchId']?.label ?? 'Cabang'} required={formConfig.byKey['branchId']?.isRequired ?? true}>
-              <SearchSelect
-                placeholder={ph('branchId', 'Pilih cabang…')}
-                value={data.branchId}
-                initialLabel={data.branchLabel}
-                disabled={ro('branchId')}
-                onValueChange={(v) => set({ branchId: v })}
-                loadOptions={loadBranchOptions}
-              />
-            </Field>
-          )}
-          {locationVisible && (
-            <Field label={formConfig.byKey['locationId']?.label ?? 'Lokasi'}>
-              <SearchSelect
-                placeholder={ph('locationId', 'Pilih lokasi…')}
-                value={data.locationId}
-                initialLabel={data.locationLabel}
-                disabled={ro('locationId')}
-                onValueChange={(v) => set({ locationId: v })}
-                loadOptions={loadLocationOptions}
-              />
-            </Field>
-          )}
-          <CashBankCustomFields
-            fields={formConfig.bySlot.CENTER}
-            values={data.customFields}
-            onValueChange={setCustomField}
-            disabled={locked}
-          />
-        </div>
-
-        {/* Kolom kanan = info dokumen, urutan baku: Tanggal → No Transaksi → Uang/Kurs (§2.36) */}
-        <div className="flex flex-col gap-3">
-          <Field label="Tanggal" required>
-            <DateInput
-              value={data.transactionDate}
-              placeholder={formConfig.byKey['transactionDate']?.placeholder || undefined}
-              disabled={ro('transactionDate')}
-              onChange={(v) => set({ transactionDate: v })}
-            />
-          </Field>
-          <Field label="No Transaksi">
-            <div className="flex items-center gap-2">
-              <Input
-                className="flex-1 min-w-0"
-                value={data.auto ? '(otomatis saat simpan)' : data.docNumber}
-                placeholder={ph('docNumber', 'No transaksi')}
-                disabled={data.auto || ro('docNumber')}
-                onChange={(e) => set({ docNumber: e.target.value })}
-              />
-              <label className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={data.auto}
-                  disabled={locked}
-                  onChange={(e) => set({ auto: e.target.checked })}
-                />
-                Auto
-              </label>
-            </div>
-          </Field>
-          <Field label={formConfig.byKey['currencyId']?.label ?? 'Uang'} required={formConfig.byKey['currencyId']?.isRequired ?? true}>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <SearchSelect
-                  placeholder={ph('currencyId', 'Mata uang')}
-                  value={data.currencyId}
-                  initialLabel={currencyLabel}
-                  disabled={ro('currencyId')}
-                  onValueChange={(v) => set({ currencyId: v })}
-                  loadOptions={loadCurrencyOptions}
-                />
-              </div>
-              <span
-                className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 whitespace-nowrap"
-                title="Kurs ke mata uang dasar (read-only)"
-              >
-                Kurs
-                <span className="tabular-nums font-medium text-foreground">
-                  {formatNumber(Number(data.exchangeRate) || 1, 2)}
-                </span>
-              </span>
-            </div>
-          </Field>
-          <CashBankCustomFields
-            fields={formConfig.bySlot.RIGHT}
-            values={data.customFields}
-            onValueChange={setCustomField}
-            disabled={locked}
-          />
-        </div>
+        {SLOTS.map((slot) => (
+          <div key={slot} className="flex flex-col gap-3">
+            {slot === 'LEFT' && headerExtra}
+            {renderSlot(slot)}
+          </div>
+        ))}
       </div>
 
       {/* Tabs: Detail → [extra tabs] → Info */}
