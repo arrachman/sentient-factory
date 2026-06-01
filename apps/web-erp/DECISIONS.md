@@ -1564,6 +1564,13 @@ API client `lib/api/transaction-grids.ts`. Grid kas/bank (`cash-bank-lines.tsx`)
 render by `dataType`; label lookup non-akun di-resolve dari master kecil (cache
 modul). `SearchSelect` dapat prop reusable `autoFocus`/`initialQuery`/`onPick`.
 
+**100% config-driven — tidak ada kolom statis (2026-06-01):** grid render
+**hanya** kolom dari config (visible). Kolom "No" (nomor baris) yang dulu
+di-hardcode di header + tiap baris **dihapus** — sebelumnya double dengan
+layout config & melanggar prinsip "tidak ada yg statis". Konsekuensi: tidak ada
+nomor baris bawaan; bila perlu, tambahkan kolom sendiri lewat Kustomisasi Grid.
+`colSpan` empty-state = `cols.length` (bukan `+1`).
+
 **Catatan:** wiring `transactionCode` ke form CR/CD ada di file refactor cash-bank
 (`cash-bank-transaction-form.tsx` dkk). Seed katalog 29 transaksi (15 modul) +
 kolom default keluarga kas/bank (CR/CD/RM/SM). **Follow-up:** label lookup dimensi

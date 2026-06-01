@@ -104,7 +104,7 @@ export function CashBankLinesEditor({
   const total = lines.reduce((s, l) => s + Number(l.amount || 0), 0);
   const totalFx = lines.reduce((s, l) => s + Number(l.amountFx || 0), 0);
   const hasFx = cols.some((c) => c.dataField === 'amountFx');
-  const colSpan = cols.length + 1;
+  const colSpan = cols.length;
 
   return (
     <div
@@ -124,7 +124,6 @@ export function CashBankLinesEditor({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead style={{ width: 44 }}>No</TableHead>
             {cols.map((c) => (
               <TableHead
                 key={c.dataField}
@@ -145,7 +144,6 @@ export function CashBankLinesEditor({
           ) : (
             lines.map((l, i) => (
               <TableRow key={l.key} data-row={i}>
-                <TableCell className="text-muted-foreground">{i + 1}</TableCell>
                 {cols.map((c, ci) => {
                   const isSel = sel?.r === i && sel?.c === ci;
                   const isEdit = editing && isSel;
