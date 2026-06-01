@@ -42,6 +42,10 @@ export interface GridCol {
   kind: 'STANDARD' | 'CUSTOM';
   isEditable: boolean;
   isRequired: boolean;
+  /** Semantic editor type from Kustomisasi Grid (wins over dataType for widget selection). */
+  cellEditor?: string | null;
+  /** Static option list — used by COMBOBOX editor. */
+  options?: string[];
 }
 
 const STANDARD_FIELDS = new Set([

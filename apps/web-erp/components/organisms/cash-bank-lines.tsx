@@ -46,6 +46,7 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
       kind: c.kind,
       isEditable: c.isEditable,
       isRequired: c.isRequired,
+      cellEditor: c.cellEditor ?? null,
     }));
 
 export type { CashLineRow } from './cash-bank-line-model';

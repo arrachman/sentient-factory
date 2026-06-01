@@ -4,19 +4,30 @@
  * One cell of the cash/bank contra-account grid, rendered from a GridCol
  * descriptor (Kustomisasi Grid). Default = SELECTED display cell (plain text);
  * only the edited cell renders its real control (SearchSelect / NumInput /
- * DateInput / Input), auto-focused.
+ * DateInput / Input / DiscountInput / StepperInput / ComboboxInput / Textarea
+ * / Checkbox), auto-focused.
+ *
+ * Editor selection priority: col.cellEditor (semantic) → col.dataType (storage).
  */
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
+import { Input, Textarea } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { NumInput } from '@/components/molecules/num-input';
 import { DateInput } from '@/components/ui/date-input';
 import { SearchSelect } from '@/components/molecules/search-select';
+import { DiscountInput } from '@/components/molecules/discount-input';
+import { StepperInput } from '@/components/molecules/stepper-input';
+import { ComboboxInput } from '@/components/molecules/combobox-input';
 import { TableCell } from '@/components/organisms/table';
 import {
-  loadAccountOptionsCoded, loadCostCenterOptions, loadDivisionOptions,
-  loadSubDivisionOptions, loadProjectOptions,
+  loadAccountOptionsCoded,
+  loadCostCenterOptions,
+  loadDivisionOptions,
+  loadSubDivisionOptions,
+  loadProjectOptions,
+  loadPartnerOptions,
 } from '@/components/pages/items-form-lookups';
 import { formatNumber } from '@/lib/format';
 import { formatDate } from '@/lib/date-format';
@@ -25,16 +36,15 @@ import type { GridCol } from './cash-bank-line-model';
 type Loader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: unknown }[]; total: number }>;
 
 const LOADERS: Record<string, Loader> = {
-  account: loadAccountOptionsCoded as unknown as Loader,
+  account:    loadAccountOptionsCoded as unknown as Loader,
   costCenter: loadCostCenterOptions as unknown as Loader,
-  division: loadDivisionOptions as unknown as Loader,
+  division:   loadDivisionOptions as unknown as Loader,
   subdivision: loadSubDivisionOptions as unknown as Loader,
-  project: loadProjectOptions as unknown as Loader,
+  project:    loadProjectOptions as unknown as Loader,
+  partner:    loadPartnerOptions as unknown as Loader,
 };
 
-// Resolve id→label for small master lookups (cost center / division / …) once,
-// cached module-wide. Account labels come pre-enriched, so we skip fetching the
-// (potentially huge) account list.
+// Lazy-fetch label maps for small lookups (not accounts — too large).
 const labelCache = new Map<string, Promise<Map<string, string>>>();
 function resolveLabelMap(source: string): Promise<Map<string, string>> {
   let p = labelCache.get(source);
@@ -59,6 +69,8 @@ function LookupLabel({ source, value, fallback }: { source?: string | null; valu
   return <>{label || value}</>;
 }
 
+// ─── Props ────────────────────────────────────────────────────────────────────
+
 export interface LineCellProps {
   col: GridCol;
   value: string;
@@ -73,8 +85,22 @@ export interface LineCellProps {
   onEndEdit: (focusRoot: boolean) => void;
 }
 
-function EditControl({ col, value, label, seed, selectOnFocus, onSet, onEndEdit }: LineCellProps) {
+// ─── Edit controls ────────────────────────────────────────────────────────────
+
+function effectiveEditor(col: GridCol): string {
+  if (col.cellEditor) return col.cellEditor;
   switch (col.dataType) {
+    case 'NUMBER': return 'NUMBER';
+    case 'DATE':   return 'DATE';
+    case 'LOOKUP': return 'LOOKUP';
+    default:       return 'TEXT';
+  }
+}
+
+function EditControl({ col, value, label, seed, selectOnFocus, onSet, onEndEdit }: LineCellProps) {
+  const editor = effectiveEditor(col);
+
+  switch (editor) {
     case 'LOOKUP':
       return (
         <SearchSelect
@@ -88,20 +114,116 @@ function EditControl({ col, value, label, seed, selectOnFocus, onSet, onEndEdit 
           loadOptions={LOADERS[col.lookupSource ?? ''] ?? loadAccountOptionsCoded}
         />
       );
+
+    case 'ACCOUNT_PICKER':
+      return (
+        <SearchSelect
+          autoFocus
+          initialQuery={seed}
+          placeholder="Pilih akun…"
+          value={value}
+          initialLabel={label}
+          onValueChange={(v) => onSet(v)}
+          onPick={(o) => { onSet(o.value, o.label); onEndEdit(true); }}
+          loadOptions={loadAccountOptionsCoded as unknown as Loader}
+        />
+      );
+
+    case 'PARTNER_PICKER':
+      return (
+        <SearchSelect
+          autoFocus
+          initialQuery={seed}
+          placeholder="Pilih partner…"
+          value={value}
+          initialLabel={label}
+          onValueChange={(v) => onSet(v)}
+          onPick={(o) => { onSet(o.value, o.label); onEndEdit(true); }}
+          loadOptions={loadPartnerOptions as unknown as Loader}
+        />
+      );
+
     case 'NUMBER':
       return (
         <NumInput
-          autoFocus decimals={2} value={value}
+          autoFocus
+          decimals={2}
+          value={value}
           onFocus={(e) => { if (selectOnFocus) e.currentTarget.select(); }}
           onChange={(raw) => onSet(raw)}
         />
       );
+
+    case 'DISCOUNT':
+      return (
+        <DiscountInput
+          autoFocus
+          value={value}
+          onFocus={(e: React.FocusEvent<HTMLInputElement>) => { if (selectOnFocus) e.currentTarget.select(); }}
+          onChange={(raw) => onSet(raw)}
+        />
+      );
+
+    case 'STEPPER':
+      return (
+        <StepperInput
+          autoFocus
+          value={value}
+          onChange={(raw) => onSet(raw)}
+          decimals={0}
+        />
+      );
+
+    case 'COMBOBOX':
+      return (
+        <ComboboxInput
+          autoFocus
+          value={value}
+          options={col.options ?? []}
+          onChange={(v) => onSet(v)}
+          onCommit={() => onEndEdit(true)}
+        />
+      );
+
     case 'DATE':
       return <DateInput value={value} onChange={(v) => onSet(v)} />;
+
+    case 'TEXTAREA':
+      return (
+        <Textarea
+          autoFocus
+          value={value}
+          rows={2}
+          onChange={(e) => onSet(e.target.value)}
+          onBlur={() => onEndEdit(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') onEndEdit(false);
+          }}
+        />
+      );
+
+    case 'CHECKBOX':
+      return (
+        <div className="flex h-[var(--row-h)] items-center justify-center">
+          <Checkbox
+            checked={value === 'true' || value === '1'}
+            onCheckedChange={(v) => { onSet(v ? 'true' : 'false'); onEndEdit(true); }}
+          />
+        </div>
+      );
+
+    case 'NONE':
+      return (
+        <div className="flex h-[var(--row-h)] items-center px-[10px] text-[var(--fg-subtle)]">
+          {value || '—'}
+        </div>
+      );
+
     default:
       return (
         <Input
-          autoFocus value={value}
+          autoFocus
+          value={value}
           onFocus={(e) => { if (selectOnFocus) e.currentTarget.select(); }}
           onChange={(e) => onSet(e.target.value)}
         />
@@ -109,22 +231,58 @@ function EditControl({ col, value, label, seed, selectOnFocus, onSet, onEndEdit 
   }
 }
 
+// ─── Display cell ─────────────────────────────────────────────────────────────
+
 function displayCell(col: GridCol, value: string, label?: string): { node: React.ReactNode; muted: boolean } {
   if (!value) {
-    const ph = col.dataType === 'LOOKUP' ? 'Pilih…' : col.dataType === 'NUMBER' ? '0,00' : '—';
+    const editor = effectiveEditor(col);
+    const ph =
+      editor === 'LOOKUP' || editor === 'ACCOUNT_PICKER' || editor === 'PARTNER_PICKER' ? 'Pilih…'
+      : editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' ? '0'
+      : editor === 'CHECKBOX' ? '—'
+      : editor === 'NONE' ? ''
+      : '—';
     return { node: ph, muted: true };
   }
-  switch (col.dataType) {
-    case 'LOOKUP': return { node: <LookupLabel source={col.lookupSource} value={value} fallback={label} />, muted: false };
-    case 'NUMBER': return { node: formatNumber(Number(value || 0), 2), muted: false };
-    case 'DATE': return { node: formatDate(value), muted: false };
-    default: return { node: value, muted: false };
+
+  const editor = effectiveEditor(col);
+
+  switch (editor) {
+    case 'LOOKUP':
+      return { node: <LookupLabel source={col.lookupSource} value={value} fallback={label} />, muted: false };
+    case 'ACCOUNT_PICKER':
+      return { node: label || value, muted: false };
+    case 'PARTNER_PICKER':
+      return { node: <LookupLabel source="partner" value={value} fallback={label} />, muted: false };
+    case 'NUMBER':
+    case 'STEPPER':
+      return { node: formatNumber(Number(value || 0), 0), muted: false };
+    case 'DISCOUNT':
+      return { node: `${formatNumber(Number(value || 0), 2)} %`, muted: false };
+    case 'DATE':
+      return { node: formatDate(value), muted: false };
+    case 'CHECKBOX':
+      return {
+        node: (
+          <span style={{ color: (value === 'true' || value === '1') ? 'var(--primary)' : 'var(--fg-subtle)', fontWeight: 600 }}>
+            {(value === 'true' || value === '1') ? '✓' : '—'}
+          </span>
+        ),
+        muted: false,
+      };
+    case 'NONE':
+      return { node: value, muted: false };
+    default:
+      return { node: value, muted: false };
   }
 }
 
+// ─── LineCell ─────────────────────────────────────────────────────────────────
+
 export function LineCell(props: LineCellProps) {
   const { col, value, label, selected, editing, onSelect, onEdit, onEndEdit } = props;
-  const numeric = col.dataType === 'NUMBER';
+  const editor = effectiveEditor(col);
+  const numeric = editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER';
 
   return (
     <TableCell
@@ -146,6 +304,7 @@ export function LineCell(props: LineCellProps) {
           className={cn(
             'flex h-[var(--row-h)] w-full cursor-pointer select-none items-center truncate px-[10px]',
             numeric && 'justify-end tabular-nums',
+            editor === 'CHECKBOX' && 'justify-center',
           )}
         >
           {(() => {
