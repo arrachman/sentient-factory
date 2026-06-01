@@ -23,12 +23,14 @@ import {
   TableCell,
 } from '@/components/organisms/table';
 import { formatNumber } from '@/lib/format';
+import { notify } from '@/lib/feedback';
 import { getGridColumns, type ErpGridColumn } from '@/lib/api/transaction-grids';
 import {
   buildCellPatch,
   CashLineRow,
   defaultGridCols,
   getCellRaw,
+  linesRequiredMissing,
   type GridCol,
 } from './cash-bank-line-model';
 import { LineCell } from './cash-bank-line-cell';
@@ -44,8 +46,10 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
       dataType: c.dataType,
       lookupSource: c.lookupSource,
       kind: c.kind,
-      isEditable: c.isEditable,
+      // ROWNUM = auto sequence from row position → always read-only.
+      isEditable: c.cellEditor === 'ROWNUM' ? false : c.isEditable,
       isRequired: c.isRequired,
+      isSkippable: c.isSkippable,
       cellEditor: c.cellEditor ?? null,
     }));
 
@@ -66,6 +70,7 @@ export function CashBankLinesEditor({
   showFx = false,
   columns,
   transactionCode,
+  onValidityChange,
 }: {
   lines: CashLineRow[];
   onChange: (lines: CashLineRow[]) => void;
@@ -75,6 +80,8 @@ export function CashBankLinesEditor({
   columns?: GridCol[];
   /** When set (e.g. "FIN.CR"), the editor fetches its Kustomisasi Grid config. */
   transactionCode?: string;
+  /** Reports the required ("Wajib") columns still left empty across all rows. */
+  onValidityChange?: (missing: string[]) => void;
 }) {
   const [fetched, setFetched] = React.useState<GridCol[] | undefined>();
 
@@ -95,7 +102,18 @@ export function CashBankLinesEditor({
   const {
     rootRef, sel, editing, seed, selectOnFocus,
     onRootKeyDown, selectCell, editCell, endEdit, patch,
-  } = useCashGridNav({ lines, onChange, cols, readOnly });
+  } = useCashGridNav({
+    lines,
+    onChange,
+    cols,
+    readOnly,
+    onAppendBlocked: (missing) =>
+      notify(`Lengkapi kolom wajib dulu: ${missing.join(', ')}`, 'warn'),
+  });
+
+  // Surface required-column completeness so the form can gate saving.
+  const missingRequired = React.useMemo(() => linesRequiredMissing(lines, cols), [lines, cols]);
+  React.useEffect(() => { onValidityChange?.(missingRequired); }, [missingRequired, onValidityChange]);
 
   const handleRootFocus = () => {
     if (!readOnly && !sel && !editing) selectCell(0, 0);
@@ -127,7 +145,7 @@ export function CashBankLinesEditor({
             {cols.map((c) => (
               <TableHead
                 key={c.dataField}
-                style={{ width: c.width, textAlign: c.dataType === 'NUMBER' ? 'right' : 'left' }}
+                style={{ width: c.width, textAlign: c.dataType === 'NUMBER' || c.cellEditor === 'ROWNUM' ? 'right' : 'left' }}
               >
                 {c.headerText}
               </TableHead>
@@ -151,6 +169,7 @@ export function CashBankLinesEditor({
                     <LineCell
                       key={c.dataField}
                       col={c}
+                      rowIndex={i}
                       value={getCellRaw(l, c)}
                       label={lookupLabel(l, c)}
                       selected={!readOnly && !!isSel}

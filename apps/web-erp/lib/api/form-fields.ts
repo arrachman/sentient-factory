@@ -40,6 +40,12 @@ export interface ErpFormField {
   lookupSource?: string | null;
   lookupDefaultFilter?: Record<string, unknown> | null;
   lookupDefaultSort?: string | null;
+  /** Input placeholder shown when empty; null/empty = form's built-in default. */
+  placeholder?: string | null;
+  /** Value prefilled on new records (lookup = id, others = raw string). */
+  defaultValue?: string | null;
+  /** Always non-editable regardless of document workflow status. */
+  isReadonly?: boolean;
   isRequired: boolean;
   isVisible: boolean;
   sortOrder: number;
@@ -64,6 +70,9 @@ export const saveFormFields = (code: string, fields: ErpFormField[]) =>
       lookupSource: f.lookupSource ?? undefined,
       lookupDefaultFilter: f.lookupDefaultFilter ?? undefined,
       lookupDefaultSort: f.lookupDefaultSort ?? undefined,
+      placeholder: f.placeholder ?? undefined,
+      defaultValue: f.defaultValue ?? undefined,
+      isReadonly: f.isReadonly ?? false,
       isRequired: f.isRequired,
       isVisible: f.isVisible,
       sortOrder: i,

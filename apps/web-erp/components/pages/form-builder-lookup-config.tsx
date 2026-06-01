@@ -7,11 +7,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-  Popover, PopoverTrigger, PopoverContent,
-} from '@/components/ui/popover';
-import {
-  LOOKUP_SOURCE_OPTIONS, sourceLabelOf, BUILTIN_SOURCE,
+  LOOKUP_SOURCE_OPTIONS, sourceLabelOf, BUILTIN_SOURCE, getSourceSchema,
 } from '@/lib/lookup-source-registry';
+import type { FilterFieldDef } from '@/lib/lookup-source-registry';
 import type { ErpFormField, FormFieldType } from '@/lib/api/form-fields';
 
 const SORT_DIR_OPTIONS = [
@@ -41,43 +39,90 @@ function entriesToFilter(entries: FilterEntry[]): Record<string, unknown> {
 function FilterTable({
   entries,
   onChange,
+  filterFields,
 }: {
   entries: FilterEntry[];
   onChange: (e: FilterEntry[]) => void;
+  filterFields?: FilterFieldDef[];
 }) {
   const set = (i: number, patch: Partial<FilterEntry>) =>
     onChange(entries.map((e, idx) => (idx === i ? { ...e, ...patch } : e)));
 
   return (
-    <div className="flex flex-col gap-1">
-      {entries.map((e, i) => (
-        <div key={i} className="flex items-center gap-1">
-          <Input
-            className="h-6 px-1.5 py-0 text-xs w-28"
-            placeholder="field"
-            value={e.key}
-            onChange={(ev) => set(i, { key: ev.target.value })}
-          />
-          <span className="text-xs text-muted-foreground">=</span>
-          <Input
-            className="h-6 px-1.5 py-0 text-xs w-28"
-            placeholder="value"
-            value={e.value}
-            onChange={(ev) => set(i, { value: ev.target.value })}
-          />
-          <button
-            type="button"
-            className="iconbtn text-danger"
-            onClick={() => onChange(entries.filter((_, idx) => idx !== i))}
-          >
-            <Icon name="trash" size={10} />
-          </button>
-        </div>
-      ))}
+    <div className="flex flex-col gap-2">
+      {entries.map((e, i) => {
+        const fieldDef = filterFields?.find((f) => f.key === e.key);
+        return (
+          <div key={i} className="flex flex-col gap-1.5 rounded-md border border-border/60 p-2.5">
+            {/* Row 1: field key + delete */}
+            <div className="flex items-center gap-2">
+              {filterFields ? (
+                <Select value={e.key || ''} onValueChange={(v) => set(i, { key: v, value: '' })}>
+                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                    <SelectValue placeholder="Pilih field…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterFields.map((f) => (
+                      <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  className="h-7 px-2 text-xs flex-1"
+                  placeholder="field"
+                  value={e.key}
+                  onChange={(ev) => set(i, { key: ev.target.value })}
+                />
+              )}
+              <button
+                type="button"
+                className="iconbtn text-muted-foreground hover:text-danger shrink-0"
+                onClick={() => onChange(entries.filter((_, idx) => idx !== i))}
+              >
+                <Icon name="trash" size={12} />
+              </button>
+            </div>
+            {/* Row 2: = value */}
+            <div className="flex items-center gap-2 pl-0.5">
+              <span className="text-xs text-muted-foreground shrink-0">=</span>
+              {fieldDef?.type === 'boolean' ? (
+                <Select value={e.value} onValueChange={(v) => set(i, { value: v })}>
+                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                    <SelectValue placeholder="nilai" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">true</SelectItem>
+                    <SelectItem value="false">false</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : fieldDef?.type === 'enum' && fieldDef.options ? (
+                <Select value={e.value} onValueChange={(v) => set(i, { value: v })}>
+                  <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                    <SelectValue placeholder="nilai" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {fieldDef.options.map((o) => (
+                      <SelectItem key={o} value={o}>{o}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  className="h-7 px-2 text-xs flex-1"
+                  placeholder="value"
+                  value={e.value}
+                  onChange={(ev) => set(i, { value: ev.target.value })}
+                />
+              )}
+            </div>
+          </div>
+        );
+      })}
       <button
         type="button"
-        className="btn ghost text-xs h-6 px-2 self-start mt-0.5"
-        onClick={() => onChange([...entries, { key: '', value: '' }])}
+        className="btn ghost text-xs h-7 px-2 self-start"
+        onClick={() => onChange([...entries, { key: filterFields?.[0]?.key ?? '', value: '' }])}
       >
         <Icon name="plus" size={11} /> Tambah filter
       </button>
@@ -85,7 +130,16 @@ function FilterTable({
   );
 }
 
-export function LookupConfigPopover({
+/** True when a lookup field has any source/sort/filter config set (for gear highlight). */
+export function hasLookupConfig(field: ErpFormField): boolean {
+  return (
+    (!!field.lookupDefaultFilter && Object.keys(field.lookupDefaultFilter).length > 0) ||
+    !!field.lookupDefaultSort
+  );
+}
+
+/** Lookup source + default sort + default filter editor. Body only (no popover wrapper). */
+export function LookupConfigSection({
   field,
   onUpdate,
 }: {
@@ -95,6 +149,7 @@ export function LookupConfigPopover({
   const isLookup = field.fieldType === 'LOOKUP';
   const builtinSource = BUILTIN_SOURCE[field.fieldType as FormFieldType];
   const effectiveSource = isLookup ? field.lookupSource : builtinSource;
+  const schema = getSourceSchema(effectiveSource);
 
   const [sortField, sortDir] = (field.lookupDefaultSort ?? ':asc').split(':');
   const [filterEntries, setFilterEntries] = React.useState<FilterEntry[]>(
@@ -110,22 +165,8 @@ export function LookupConfigPopover({
     onUpdate({ lookupDefaultFilter: entriesToFilter(entries) });
   };
 
-  const hasConfig =
-    (field.lookupDefaultFilter && Object.keys(field.lookupDefaultFilter).length > 0) ||
-    !!field.lookupDefaultSort;
-
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={`iconbtn ${hasConfig ? 'text-primary' : 'text-muted-foreground'}`}
-          title="Konfigurasi Lookup"
-        >
-          <Icon name="gear" size={12} />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-4 flex flex-col gap-4">
+    <>
         <p className="text-xs font-semibold text-foreground">Konfigurasi Lookup</p>
 
         {/* Source selector — only editable for LOOKUP type */}
@@ -153,18 +194,32 @@ export function LookupConfigPopover({
         {/* Default Sort */}
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Urutan default</span>
-          <div className="flex items-center gap-1">
-            <Input
-              className="h-7 px-2 text-xs flex-1"
-              placeholder="field (e.g. name)"
-              value={sortField ?? ''}
-              onChange={(e) => onUpdate({ lookupDefaultSort: `${e.target.value}:${sortDir ?? 'asc'}` })}
-            />
+          <div className="flex items-center gap-2">
+            {schema ? (
+              <Select
+                value={sortField ?? ''}
+                onValueChange={(v) => onUpdate({ lookupDefaultSort: `${v}:${sortDir ?? 'asc'}` })}
+              >
+                <SelectTrigger className="h-8 text-xs flex-1 min-w-0"><SelectValue placeholder="Pilih field…" /></SelectTrigger>
+                <SelectContent>
+                  {schema.sortFields.map((f) => (
+                    <SelectItem key={f.value} value={f.value}>{f.label} · {f.value}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                className="h-8 px-2 text-xs flex-1"
+                placeholder="field (e.g. name)"
+                value={sortField ?? ''}
+                onChange={(e) => onUpdate({ lookupDefaultSort: `${e.target.value}:${sortDir ?? 'asc'}` })}
+              />
+            )}
             <Select
               value={sortDir || 'asc'}
               onValueChange={(v) => onUpdate({ lookupDefaultSort: `${sortField ?? 'name'}:${v}` })}
             >
-              <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {SORT_DIR_OPTIONS.map((o) => (
                   <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -177,12 +232,13 @@ export function LookupConfigPopover({
         {/* Default Filter */}
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Filter default</span>
-          <p className="text-[10px] text-muted-foreground/70">
-            Nilai <code>true</code>/<code>false</code> = boolean; angka = number; lainnya = string.
-          </p>
-          <FilterTable entries={filterEntries} onChange={commitFilter} />
+          {!schema && (
+            <p className="text-[10px] text-muted-foreground/70">
+              Nilai <code>true</code>/<code>false</code> = boolean; angka = number; lainnya = string.
+            </p>
+          )}
+          <FilterTable entries={filterEntries} onChange={commitFilter} filterFields={schema?.filterFields} />
         </div>
-      </PopoverContent>
-    </Popover>
+    </>
   );
 }

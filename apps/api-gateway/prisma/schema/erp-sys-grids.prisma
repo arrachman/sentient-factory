@@ -103,6 +103,9 @@ model ErpFormField {
   lookupSource        String?   @map("lookup_source") // for LOOKUP: API slug, e.g. "partners"
   lookupDefaultFilter Json?     @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"isCustomer":true}
   lookupDefaultSort   String?   @map("lookup_default_sort") // "field:direction", e.g. "name:asc"
+  placeholder         String?   @map("placeholder") // input placeholder shown when empty; null = use form default
+  defaultValue        String?   @map("default_value") // prefilled value on new records (lookup = id, others = raw string)
+  isReadonly          Boolean   @default(false) @map("is_readonly") // always non-editable regardless of workflow status
   isRequired          Boolean   @default(false) @map("is_required")
   isVisible           Boolean   @default(true) @map("is_visible")
   sortOrder           Int       @default(0) @map("sort_order")

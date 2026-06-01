@@ -42,6 +42,8 @@ export interface GridCol {
   kind: 'STANDARD' | 'CUSTOM';
   isEditable: boolean;
   isRequired: boolean;
+  /** Skip cell during navigation — the cell can never be focused/selected/edited. */
+  isSkippable?: boolean;
   /** Semantic editor type from Kustomisasi Grid (wins over dataType for widget selection). */
   cellEditor?: string | null;
   /** Static option list — used by COMBOBOX editor. */
@@ -59,6 +61,24 @@ const isStandard = (col: GridCol) => col.kind === 'STANDARD' && STANDARD_FIELDS.
 export function getCellRaw(row: CashLineRow, col: GridCol): string {
   if (isStandard(col)) return String((row as unknown as Record<string, unknown>)[col.dataField] ?? '');
   return String(row.customFields?.[col.dataField] ?? '');
+}
+
+/** True when a cell holds a value (ROWNUM is auto → always considered filled). */
+export function isCellFilled(row: CashLineRow, col: GridCol): boolean {
+  if (col.cellEditor === 'ROWNUM') return true;
+  return getCellRaw(row, col).trim() !== '';
+}
+
+/** Header texts of the `isRequired` columns left empty in a single row. */
+export function rowRequiredMissing(row: CashLineRow, cols: GridCol[]): string[] {
+  return cols.filter((c) => c.isRequired && !isCellFilled(row, c)).map((c) => c.headerText);
+}
+
+/** Unique header texts of every required column left empty across all rows. */
+export function linesRequiredMissing(rows: CashLineRow[], cols: GridCol[]): string[] {
+  const missing = new Set<string>();
+  rows.forEach((r) => rowRequiredMissing(r, cols).forEach((h) => missing.add(h)));
+  return [...missing];
 }
 
 /** Build the partial-row patch to write `value` (+ optional lookup label) into a column. */

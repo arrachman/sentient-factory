@@ -75,6 +75,8 @@ export interface LineCellProps {
   col: GridCol;
   value: string;
   label?: string;
+  /** 0-based row position — rendered (1-based) by the ROWNUM column type. */
+  rowIndex?: number;
   selected: boolean;
   editing: boolean;
   seed?: string;
@@ -97,10 +99,18 @@ function effectiveEditor(col: GridCol): string {
   }
 }
 
-function EditControl({ col, value, label, seed, selectOnFocus, onSet, onEndEdit }: LineCellProps) {
+function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, onEndEdit }: LineCellProps) {
   const editor = effectiveEditor(col);
 
   switch (editor) {
+    case 'ROWNUM':
+      // Auto sequence — read-only, never truly entered (column forced non-editable).
+      return (
+        <div className="flex h-[var(--row-h)] items-center justify-end tabular-nums text-[var(--fg-subtle)]">
+          {(rowIndex ?? 0) + 1}
+        </div>
+      );
+
     case 'LOOKUP':
       return (
         <SearchSelect
@@ -233,9 +243,15 @@ function EditControl({ col, value, label, seed, selectOnFocus, onSet, onEndEdit 
 
 // ─── Display cell ─────────────────────────────────────────────────────────────
 
-function displayCell(col: GridCol, value: string, label?: string): { node: React.ReactNode; muted: boolean } {
+function displayCell(col: GridCol, value: string, label?: string, rowIndex?: number): { node: React.ReactNode; muted: boolean } {
+  const editor = effectiveEditor(col);
+
+  // Auto sequence — derived from row position, ignores the (empty) cell value.
+  if (editor === 'ROWNUM') {
+    return { node: (rowIndex ?? 0) + 1, muted: true };
+  }
+
   if (!value) {
-    const editor = effectiveEditor(col);
     const ph =
       editor === 'LOOKUP' || editor === 'ACCOUNT_PICKER' || editor === 'PARTNER_PICKER' ? 'Pilih…'
       : editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' ? '0'
@@ -244,8 +260,6 @@ function displayCell(col: GridCol, value: string, label?: string): { node: React
       : '—';
     return { node: ph, muted: true };
   }
-
-  const editor = effectiveEditor(col);
 
   switch (editor) {
     case 'LOOKUP':
@@ -280,15 +294,17 @@ function displayCell(col: GridCol, value: string, label?: string): { node: React
 // ─── LineCell ─────────────────────────────────────────────────────────────────
 
 export function LineCell(props: LineCellProps) {
-  const { col, value, label, selected, editing, onSelect, onEdit, onEndEdit } = props;
+  const { col, value, label, rowIndex, selected, editing, onSelect, onEdit, onEndEdit } = props;
   const editor = effectiveEditor(col);
-  const numeric = editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER';
+  const numeric = editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' || editor === 'ROWNUM';
+  // "Skip" flag (Kustomisasi Grid) → cell can never be focused/selected/edited.
+  const skippable = !!col.isSkippable;
 
   return (
     <TableCell
-      className={cn('p-0 align-middle', selected && !editing && 'shadow-[inset_0_0_0_2px_var(--primary)]')}
+      className={cn('p-0 align-middle', selected && !editing && !skippable && 'shadow-[inset_0_0_0_2px_var(--primary)]')}
     >
-      {editing ? (
+      {editing && !skippable ? (
         <div
           className="px-[10px]"
           onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) onEndEdit(false); }}
@@ -297,18 +313,19 @@ export function LineCell(props: LineCellProps) {
         </div>
       ) : (
         <div
-          role="button"
+          role={skippable ? undefined : 'button'}
           tabIndex={-1}
-          onClick={onSelect}
-          onDoubleClick={onEdit}
+          onClick={skippable ? undefined : onSelect}
+          onDoubleClick={skippable ? undefined : onEdit}
           className={cn(
-            'flex h-[var(--row-h)] w-full cursor-pointer select-none items-center truncate px-[10px]',
+            'flex h-[var(--row-h)] w-full select-none items-center truncate px-[10px]',
+            skippable ? 'cursor-default opacity-70' : 'cursor-pointer',
             numeric && 'justify-end tabular-nums',
             editor === 'CHECKBOX' && 'justify-center',
           )}
         >
           {(() => {
-            const { node, muted } = displayCell(col, value, label);
+            const { node, muted } = displayCell(col, value, label, rowIndex);
             return <span className={cn('truncate', muted && 'text-[var(--fg-subtle)]')}>{node}</span>;
           })()}
         </div>

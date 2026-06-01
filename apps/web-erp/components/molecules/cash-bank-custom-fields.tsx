@@ -18,10 +18,13 @@ import {
   loadCurrencyOptions,
 } from '@/components/pages/items-form-lookups';
 import { buildLookupLoader, BUILTIN_SOURCE } from '@/lib/lookup-source-registry';
-import type { ErpFormField, FormFieldType, FormColumnSlot } from '@/lib/api/form-fields';
+import type { SearchSelectProps } from '@/components/molecules/search-select-types';
+import type { ErpFormField, FormFieldType } from '@/lib/api/form-fields';
+
+type LoaderFn = SearchSelectProps['loadOptions'];
 
 // Fallback loaders for built-in types when no custom config is set.
-const BUILTIN_LOADERS: Partial<Record<FormFieldType, (search: string, page: number, limit: number) => Promise<any>>> = {
+const BUILTIN_LOADERS: Partial<Record<FormFieldType, LoaderFn>> = {
   PARTNER:  loadPartnerOptions,
   ACCOUNT:  loadAccountOptionsCoded,
   BRANCH:   loadBranchOptions,
@@ -42,6 +45,7 @@ function CustomField({
 }) {
   const hasLookupConfig = !!field.lookupDefaultFilter || !!field.lookupDefaultSort || !!field.lookupSource;
   const isLookupType = (['PARTNER','ACCOUNT','BRANCH','LOCATION','CURRENCY','LOOKUP'] as string[]).includes(field.fieldType);
+  const ro = disabled || field.isReadonly === true;
 
   if (isLookupType) {
     // Build a configured loader when custom filter/sort/source is set; fall back to built-in loaders.
@@ -56,9 +60,9 @@ function CustomField({
     const effectiveLoader = configuredLoader ?? BUILTIN_LOADERS[field.fieldType as FormFieldType] ?? BUILTIN_LOADERS.PARTNER!;
     return (
       <SearchSelect
-        placeholder={`Pilih ${field.label.toLowerCase()}…`}
+        placeholder={field.placeholder || `Pilih ${field.label.toLowerCase()}…`}
         value={value ? String(value) : ''}
-        disabled={disabled}
+        disabled={ro}
         onValueChange={(v) => onChange(v)}
         loadOptions={effectiveLoader}
       />
@@ -69,7 +73,8 @@ function CustomField({
     return (
       <DateInput
         value={value ? String(value) : ''}
-        disabled={disabled}
+        placeholder={field.placeholder || undefined}
+        disabled={ro}
         onChange={(v) => onChange(v)}
       />
     );
@@ -79,7 +84,8 @@ function CustomField({
     return (
       <NumInput
         value={value != null ? String(value) : ''}
-        disabled={disabled}
+        placeholder={field.placeholder || undefined}
+        disabled={ro}
         onChange={(v) => onChange(v)}
       />
     );
@@ -88,7 +94,8 @@ function CustomField({
   return (
     <Input
       value={value ? String(value) : ''}
-      disabled={disabled}
+      placeholder={field.placeholder || undefined}
+      disabled={ro}
       onChange={(e) => onChange(e.target.value)}
     />
   );

@@ -5,6 +5,7 @@
 
 import { newCashLine, type CashLineRow } from '@/components/organisms/cash-bank-lines';
 import { type GiroRow } from '@/components/organisms/cash-bank-giros';
+import type { FormFieldsConfig } from '@/lib/use-form-fields';
 import type {
   CashBankDirection,
   CreateCashReceiptPayload,
@@ -65,6 +66,41 @@ export function defaultCashBankForm(kind: ErpCashBankKind = 'CASH'): CashBankFor
     giros: [],
     customFields: {},
   };
+}
+
+/** Structural header keys whose default value maps straight onto a CashBankFormData field. */
+const STRUCTURAL_DEFAULT_KEYS = [
+  'partnerId', 'bankAccountId', 'description',
+  'branchId', 'locationId', 'transactionDate', 'docNumber', 'currencyId',
+] as const;
+
+/**
+ * Patch of default values for a NEW form, derived from Form Builder config.
+ * Only fills keys that are currently empty — never clobbers data already entered.
+ */
+export function formDefaultsPatch(
+  data: CashBankFormData,
+  config: FormFieldsConfig,
+): Partial<CashBankFormData> {
+  const patch: Partial<CashBankFormData> = {};
+  const customPatch: Record<string, string | number | null> = {};
+  const isEmpty = (v: unknown) => v == null || v === '';
+
+  for (const key of Object.keys(config.byKey)) {
+    const f = config.byKey[key];
+    if (isEmpty(f.defaultValue)) continue;
+    if (f.kind === 'CUSTOM') {
+      if (isEmpty(data.customFields[key])) customPatch[key] = f.defaultValue!;
+    } else if ((STRUCTURAL_DEFAULT_KEYS as readonly string[]).includes(key)) {
+      if (isEmpty((data as unknown as Record<string, unknown>)[key])) {
+        (patch as Record<string, unknown>)[key] = f.defaultValue!;
+      }
+    }
+  }
+  if (Object.keys(customPatch).length > 0) {
+    patch.customFields = { ...data.customFields, ...customPatch };
+  }
+  return patch;
 }
 
 const acctLabel = (ref?: { code: string; name: string } | null) =>

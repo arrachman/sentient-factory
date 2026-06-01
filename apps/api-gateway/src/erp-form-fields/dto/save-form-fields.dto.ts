@@ -19,6 +19,9 @@ export class FormFieldInputDto {
   @ApiPropertyOptional({ example: 'partners' }) @IsOptional() @IsString() lookupSource?: string;
   @ApiPropertyOptional({ example: { isCustomer: true } }) @IsOptional() @IsObject() lookupDefaultFilter?: Record<string, unknown>;
   @ApiPropertyOptional({ example: 'name:asc' }) @IsOptional() @IsString() lookupDefaultSort?: string;
+  @ApiPropertyOptional({ example: 'Pilih akun kas/bank…' }) @IsOptional() @IsString() placeholder?: string;
+  @ApiPropertyOptional({ example: '1' }) @IsOptional() @IsString() defaultValue?: string;
+  @ApiPropertyOptional({ example: false }) @IsOptional() @IsBoolean() isReadonly?: boolean;
   @ApiProperty({ example: false }) @IsBoolean() isRequired!: boolean;
   @ApiProperty({ example: true }) @IsBoolean() isVisible!: boolean;
   @ApiProperty({ example: 0 }) @IsInt() @Min(0) sortOrder!: number;

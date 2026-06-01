@@ -1571,6 +1571,23 @@ layout config & melanggar prinsip "tidak ada yg statis". Konsekuensi: tidak ada
 nomor baris bawaan; bila perlu, tambahkan kolom sendiri lewat Kustomisasi Grid.
 `colSpan` empty-state = `cols.length` (bukan `+1`).
 
+**Semantik 4 flag kolom — live behavior (2026-06-01):** keempat flag Kustomisasi
+Grid di-honor penuh di grid transaksi (`cash-bank-lines.tsx`):
+- **Tampil** (`isVisible`) → kolom hanya di-render bila visible (`toGridCols` filter).
+- **Edit** (`isEditable`) → cell bisa masuk mode edit; ROWNUM dipaksa non-editable.
+- **Skip** (`isSkippable`) → cell **tidak bisa difokus**: navigasi
+  Tab/Shift+Tab/panah ↔ melompatinya, klik tidak menyeleksi, double-click tidak
+  membuka editor (`useCashGridNav` skip-aware via `isFocusable`/`focusableFrom`;
+  `LineCell` render non-interaktif `cursor-default opacity-70`).
+- **Wajib** (`isRequired`) → cell **harus diisi**. Konsekuensi: (a) **tidak bisa
+  tambah baris baru** selagi baris terakhir punya kolom wajib kosong
+  (`appendRow` di-gate `rowRequiredMissing`, fallback notif `warn`); (b) **tidak
+  bisa simpan transaksi** selagi ada kolom wajib kosong di baris mana pun — editor
+  lapor via `onValidityChange` ke form (`cash-bank-transaction-form.tsx`),
+  `guardSave` blokir Simpan/Simpan&Baru + notif + pindah ke tab Detail. Helper
+  validasi (`isCellFilled`/`rowRequiredMissing`/`linesRequiredMissing`) di
+  `cash-bank-line-model.ts`. ROWNUM dianggap selalu terisi (auto).
+
 **Catatan:** wiring `transactionCode` ke form CR/CD ada di file refactor cash-bank
 (`cash-bank-transaction-form.tsx` dkk). Seed katalog 29 transaksi (15 modul) +
 kolom default keluarga kas/bank (CR/CD/RM/SM). **Follow-up:** label lookup dimensi
@@ -1610,6 +1627,25 @@ Atas keputusan user: **1 menu/jenis transaksi bisa punya >1 tabel** → layer
   klik-ganda/ geser/ hapus/ set primary; min 1 tab). `-columns.tsx` tambah kolom
   **Skip** (checkbox, setelah Edit) + 4 dropdown slot (opsi `— (auto)` = null).
   `-page.tsx` jadi grids-aware. API client: `getTransactionGrids`/`saveTransactionGrids`.
+
+### Update 2026-06-01 — tipe kolom `rownum` (Nomor Urut)
+
+Setelah kolom "No" hardcoded dihapus (lihat blok "100% config-driven" di atas),
+ditambah **tipe kolom semantik `rownum`** (label dropdown **"Nomor Urut"**) supaya
+nomor baris bisa dipasang lewat Kustomisasi Grid — bukan statik lagi.
+
+- **Catalog (`lib/api/transaction-grids.ts` + DTO `save-grid-columns.dto.ts`):**
+  `columnType` baru `'rownum'` → preset slot `{ labelFormatter: NUMBER, headerRenderer:
+  DEFAULT, cellRenderer: NUMERIC, cellEditor: 'ROWNUM' }`. Slot `cellEditor` dapat
+  nilai baru **`ROWNUM`** (ditambah di allowlist FE **dan** DTO backend `@IsIn`).
+  `inferColumnType` memetakan `ROWNUM → rownum` agar kolom tersimpan round-trip.
+- **Read-only auto:** nilai = posisi baris (`rowIndex + 1`), **tidak** disimpan ke
+  data/`custom_fields`. Live grid (`cash-bank-line-cell.tsx`) render via
+  `effectiveEditor === 'ROWNUM'` → angka rata-kanan `tabular-nums` muted; header
+  ikut rata-kanan. `toGridCols` (`cash-bank-lines.tsx`) memaksa `isEditable=false`
+  untuk kolom ROWNUM (tak bisa diketik/diedit walau admin set Edit). `rowIndex`
+  dioper `cash-bank-lines.tsx` → `LineCell`.
+- **DB:** tanpa migrasi — `columnType`/`cellEditor` sudah `String?` (allowlist app-level).
 
 ---
 
@@ -1718,3 +1754,49 @@ dasar modul Send Giro Clearing/SGC ke depan).
 - **Ditunda**: filter Cara Bayar di drawer (butuh ubah `cash-bank-filter-fields`
   shared); pass ini cukup **kolom** Cara Bayar di list. Backend filter
   `paymentMethod` sudah siap → tinggal wire field saat melanjutkan.
+
+## § Form Builder — pengaturan field per-jenis transaksi (placeholder, nilai default, read-only) (2026-06-01)
+
+Form Builder (`/admin/form-builder`, GET/PUT `/api/erp/transaction-forms/:code/fields`)
+mengonfigurasi field header form transaksi (CR/CD/BD/RM). Sebelumnya bisa atur:
+label, tipe, visible, wajib, kolom (slot), urutan, dan untuk lookup → sumber +
+filter + urutan default. **Ditambah (2026-06-01)** tiga atribut per-field, berlaku
+untuk **semua** tipe field:
+
+- **`placeholder`** (`String?`) — teks petunjuk saat kosong. `null`/`''` → form
+  pakai placeholder bawaannya (mis. "Pilih partner…"). Gantikan hardcode di form.
+- **`defaultValue`** (`String?`) — nilai prefilled saat **tambah baru** (record
+  tanpa `id`). Lookup menyimpan **id**; tipe lain menyimpan string mentah.
+- **`isReadonly`** (`Boolean @default(false)`) — field selalu non-edit, **terlepas**
+  dari status workflow. Berbeda dari `locked` (yang diturunkan dari status dokumen).
+
+**DB/Backend:** kolom `placeholder` / `default_value` / `is_readonly` di
+`sys_form_fields` (migrasi hand-written `20260601_004_form_fields_field_settings`,
+`prisma migrate deploy` + `generate` di dalam container — §2.32/§2.34). DTO
+`FormFieldInputDto` + `ErpFormFieldsService.saveFields` persist ketiganya.
+
+**UI (atomic, reusable):**
+- `components/pages/form-builder-field-settings.tsx` → `FieldSettingsPopover`:
+  **satu** gear per baris, muncul untuk **semua** tipe field. Isi: Placeholder,
+  Nilai default (editor type-aware: SearchSelect untuk lookup, DateInput/NumInput/
+  Input untuk DATE/NUMBER/lainnya), dan **Kunci (read-only)** = `BooleanRadio`
+  (§2.6 — pilihan biner = radio).
+- `form-builder-lookup-config.tsx` di-refactor: body lookup (sumber/sort/filter)
+  diekspor sebagai `LookupConfigSection` (tanpa popover wrapper) + helper
+  `hasLookupConfig`. `FieldSettingsPopover` me-render section ini untuk tipe lookup
+  → **satu** popover gabungan, bukan dua gear.
+
+**Konsumsi form (`cash-bank-transaction-form.tsx` + `cash-bank-custom-fields.tsx`):**
+- Placeholder: `ph(key, fallback)` = `config.placeholder || fallback`.
+- Read-only: `ro(key)` = `locked || config.isReadonly`.
+- Default: `formDefaultsPatch(data, config)` (`cash-bank-form-model.ts`) menghitung
+  patch nilai default → diterapkan **sekali** via effect saat record baru & config
+  sudah load (guard `useRef`); **hanya** mengisi field yang masih kosong (tidak
+  pernah menimpa input user). Structural keys map langsung ke `CashBankFormData`;
+  custom keys masuk `customFields`.
+
+**Keterbatasan diketahui:** untuk `defaultValue` bertipe lookup, form menyimpan id
+tapi `SearchSelect` belum menampilkan label terpilih saat awal (label di-resolve
+dari `data.*Label`/`initialLabel` yang belum terisi untuk default config) — nilai
+tetap benar saat simpan; label tampil setelah user membuka picker. Perbaikan label
+prefetch ditunda sampai dibutuhkan.

@@ -25,9 +25,10 @@ import {
 import { buildLookupLoader } from '@/lib/lookup-source-registry';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
+import { notify } from '@/lib/feedback';
 import { formatNumber } from '@/lib/format';
 import type { ErpDocumentStatus } from '@/lib/api/fin-cash-receipts';
-import type { CashBankFormData } from './cash-bank-form-model';
+import { formDefaultsPatch, type CashBankFormData } from './cash-bank-form-model';
 import { useFormFields } from '@/lib/use-form-fields';
 import { CashBankCustomFields } from '@/components/molecules/cash-bank-custom-fields';
 
@@ -96,8 +97,20 @@ export function CashBankTransactionForm({
 }) {
   const [tab, setTab] = React.useState<string>('detail');
   const [currencies, setCurrencies] = React.useState<ErpCurrency[]>([]);
+  // Required ("Wajib") grid columns still empty — reported by the lines editor.
+  const [lineRequiredMissing, setLineRequiredMissing] = React.useState<string[]>([]);
   const formConfig = useFormFields(transactionCode);
   const set = (p: Partial<CashBankFormData>) => onChange({ ...data, ...p });
+
+  // Block saving while a required grid column is empty; surface which ones.
+  const guardSave = (run: () => void) => () => {
+    if (lineRequiredMissing.length) {
+      notify(`Lengkapi kolom wajib di grid: ${lineRequiredMissing.join(', ')}`, 'warn');
+      setTab('detail');
+      return;
+    }
+    run();
+  };
 
   const bankAccountLoader = React.useMemo(() => {
     const f = formConfig.byKey['bankAccountId'];
@@ -107,6 +120,21 @@ export function CashBankTransactionForm({
     return configured ?? loadAccountOptionsCoded;
   }, [formConfig]);
   const locked = !EDITABLE.includes(data.status);
+
+  // Per-field placeholder / read-only from form builder config.
+  const ph = (key: string, fallback: string) => formConfig.byKey[key]?.placeholder || fallback;
+  const ro = (key: string) => locked || formConfig.byKey[key]?.isReadonly === true;
+
+  // Apply Form Builder default values once, on a new (unsaved) record after config loads.
+  const defaultsApplied = React.useRef(false);
+  React.useEffect(() => {
+    if (data.id || defaultsApplied.current) return;
+    if (Object.keys(formConfig.byKey).length === 0) return; // config not loaded yet
+    defaultsApplied.current = true;
+    const patch = formDefaultsPatch(data, formConfig);
+    if (Object.keys(patch).length > 0) onChange({ ...data, ...patch });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formConfig]);
 
   // Derive labels from form builder config (fallback to prop labels if not loaded yet).
   const partnerLabel = formConfig.byKey['partnerId']?.label ?? labels.partner;
@@ -142,11 +170,11 @@ export function CashBankTransactionForm({
     <div className="cr-form flex flex-col gap-4">
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <button type="button" className="btn primary" onClick={onSave} disabled={saving || locked}>
+        <button type="button" className="btn primary" onClick={guardSave(onSave)} disabled={saving || locked}>
           <Icon name="save" size={13} /> Simpan
         </button>
         {!data.id && (
-          <button type="button" className="btn" onClick={onSaveNew} disabled={saving || locked}>
+          <button type="button" className="btn" onClick={guardSave(onSaveNew)} disabled={saving || locked}>
             Simpan &amp; Baru
           </button>
         )}
@@ -165,20 +193,20 @@ export function CashBankTransactionForm({
           {headerExtra}
           <Field label={partnerLabel} required={formConfig.byKey['partnerId']?.isRequired ?? true}>
             <SearchSelect
-              placeholder="Pilih partner…"
+              placeholder={ph('partnerId', 'Pilih partner…')}
               value={data.partnerId}
               initialLabel={data.partnerLabel}
-              disabled={locked}
+              disabled={ro('partnerId')}
               onValueChange={(v) => set({ partnerId: v })}
               loadOptions={loadPartnerOptions}
             />
           </Field>
           <Field label={accountLabel} required={formConfig.byKey['bankAccountId']?.isRequired ?? true}>
             <SearchSelect
-              placeholder="Pilih akun kas/bank…"
+              placeholder={ph('bankAccountId', 'Pilih akun kas/bank…')}
               value={data.bankAccountId}
               initialLabel={data.bankAccountLabel}
-              disabled={locked}
+              disabled={ro('bankAccountId')}
               onValueChange={(v) => set({ bankAccountId: v })}
               loadOptions={bankAccountLoader}
             />
@@ -187,7 +215,8 @@ export function CashBankTransactionForm({
             <Field label={formConfig.byKey['description']?.label ?? 'Uraian'} required={formConfig.byKey['description']?.isRequired ?? true}>
               <Input
                 value={data.description}
-                disabled={locked}
+                placeholder={formConfig.byKey['description']?.placeholder || undefined}
+                disabled={ro('description')}
                 onChange={(e) => set({ description: e.target.value })}
               />
             </Field>
@@ -204,10 +233,10 @@ export function CashBankTransactionForm({
           {branchVisible && (
             <Field label={formConfig.byKey['branchId']?.label ?? 'Cabang'} required={formConfig.byKey['branchId']?.isRequired ?? true}>
               <SearchSelect
-                placeholder="Pilih cabang…"
+                placeholder={ph('branchId', 'Pilih cabang…')}
                 value={data.branchId}
                 initialLabel={data.branchLabel}
-                disabled={locked}
+                disabled={ro('branchId')}
                 onValueChange={(v) => set({ branchId: v })}
                 loadOptions={loadBranchOptions}
               />
@@ -216,10 +245,10 @@ export function CashBankTransactionForm({
           {locationVisible && (
             <Field label={formConfig.byKey['locationId']?.label ?? 'Lokasi'}>
               <SearchSelect
-                placeholder="Pilih lokasi…"
+                placeholder={ph('locationId', 'Pilih lokasi…')}
                 value={data.locationId}
                 initialLabel={data.locationLabel}
-                disabled={locked}
+                disabled={ro('locationId')}
                 onValueChange={(v) => set({ locationId: v })}
                 loadOptions={loadLocationOptions}
               />
@@ -238,7 +267,8 @@ export function CashBankTransactionForm({
           <Field label="Tanggal" required>
             <DateInput
               value={data.transactionDate}
-              disabled={locked}
+              placeholder={formConfig.byKey['transactionDate']?.placeholder || undefined}
+              disabled={ro('transactionDate')}
               onChange={(v) => set({ transactionDate: v })}
             />
           </Field>
@@ -247,8 +277,8 @@ export function CashBankTransactionForm({
               <Input
                 className="flex-1 min-w-0"
                 value={data.auto ? '(otomatis saat simpan)' : data.docNumber}
-                placeholder="No transaksi"
-                disabled={data.auto || locked}
+                placeholder={ph('docNumber', 'No transaksi')}
+                disabled={data.auto || ro('docNumber')}
                 onChange={(e) => set({ docNumber: e.target.value })}
               />
               <label className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 cursor-pointer">
@@ -266,10 +296,10 @@ export function CashBankTransactionForm({
             <div className="flex items-center gap-2">
               <div className="flex-1 min-w-0">
                 <SearchSelect
-                  placeholder="Mata uang"
+                  placeholder={ph('currencyId', 'Mata uang')}
                   value={data.currencyId}
                   initialLabel={currencyLabel}
-                  disabled={locked}
+                  disabled={ro('currencyId')}
                   onValueChange={(v) => set({ currencyId: v })}
                   loadOptions={loadCurrencyOptions}
                 />
@@ -322,6 +352,7 @@ export function CashBankTransactionForm({
           onChange={(lines) => set({ lines })}
           readOnly={locked}
           transactionCode={transactionCode}
+          onValidityChange={setLineRequiredMissing}
         />
       )}
       {extraTabs.map((t) => (tab === t.key ? <div key={t.key}>{t.content}</div> : null))}

@@ -15,7 +15,9 @@
  */
 
 import * as React from 'react';
-import { buildCellPatch, CashLineRow, GridCol, newCashLine } from './cash-bank-line-model';
+import {
+  buildCellPatch, CashLineRow, GridCol, newCashLine, rowRequiredMissing,
+} from './cash-bank-line-model';
 
 export interface CellSel { r: number; c: number }
 
@@ -40,11 +42,14 @@ export function useCashGridNav({
   onChange,
   cols,
   readOnly,
+  onAppendBlocked,
 }: {
   lines: CashLineRow[];
   onChange: (lines: CashLineRow[]) => void;
   cols: GridCol[];
   readOnly: boolean;
+  /** Called (with the missing required headers) when a row append is refused. */
+  onAppendBlocked?: (missing: string[]) => void;
 }): CashGridNav {
   const rootRef = React.useRef<HTMLDivElement>(null);
   const [sel, setSel] = React.useState<CellSel | null>(null);
@@ -66,9 +71,22 @@ export function useCashGridNav({
   const patch = (key: string, p: Partial<CashLineRow>) =>
     onChange(lines.map((l) => (l.key === key ? { ...l, ...p } : l)));
 
+  // Skippable columns can never be focused (Kustomisasi Grid "Skip" flag).
+  const isFocusable = (c: number) => !!cols[c] && !cols[c].isSkippable;
+  const firstFocusableCol = () => cols.findIndex((_, c) => isFocusable(c));
+  // Nearest focusable column from `c` in `dir` (inclusive of `c`); -1 if none.
+  const focusableFrom = (c: number, dir: 1 | -1) => {
+    for (let i = c; i >= 0 && i < cols.length; i += dir) if (isFocusable(i)) return i;
+    return -1;
+  };
+
   const selectCell = (r: number, c: number) => {
+    // Snap onto the nearest focusable column so clicks on a skipped cell no-op
+    // (or land on its neighbour) instead of selecting an unfocusable cell.
+    const target = isFocusable(c) ? c : (focusableFrom(c, 1) >= 0 ? focusableFrom(c, 1) : focusableFrom(c, -1));
+    if (target < 0) return;
     setEditing(false);
-    setSel({ r, c });
+    setSel({ r, c: target });
     wantRoot.current = true;
   };
 
@@ -97,11 +115,18 @@ export function useCashGridNav({
     endEdit(true);
   };
 
-  const appendRow = (focusCol: number) => {
-    setSel({ r: lines.length, c: focusCol });
+  // Append a blank row — refused while any required cell of the last row is
+  // empty ("Wajib" flag). Returns false when blocked so callers can stop.
+  const appendRow = (focusCol: number): boolean => {
+    const last = lines[lines.length - 1];
+    const missing = last ? rowRequiredMissing(last, cols) : [];
+    if (missing.length) { onAppendBlocked?.(missing); return false; }
+    const target = isFocusable(focusCol) ? focusCol : Math.max(0, firstFocusableCol());
+    setSel({ r: lines.length, c: target });
     setEditing(false);
     wantRoot.current = true;
     onChange([...lines, newCashLine()]);
+    return true;
   };
 
   const removeRow = (idx: number) => {
@@ -117,19 +142,28 @@ export function useCashGridNav({
     onChange(next);
   };
 
-  const lastCol = cols.length - 1;
   const lastRow = lines.length - 1;
+  const firstCol = firstFocusableCol();
+  const lastCol = focusableFrom(cols.length - 1, -1);
+
+  // Step horizontally to the next focusable column in a row; -1 if none remain.
+  const stepCol = (c: number, dir: 1 | -1) => {
+    const next = focusableFrom(c + dir, dir);
+    return next;
+  };
 
   // Move one cell forward/back, wrapping rows; appends when stepping past the end.
   const moveTab = (r: number, c: number, back: boolean) => {
     if (back) {
-      if (c > 0) selectCell(r, c - 1);
+      const prev = stepCol(c, -1);
+      if (prev >= 0) selectCell(r, prev);
       else if (r > 0) selectCell(r - 1, lastCol);
       return;
     }
-    if (c < lastCol) selectCell(r, c + 1);
-    else if (r < lastRow) selectCell(r + 1, 0);
-    else appendRow(0);
+    const next = stepCol(c, 1);
+    if (next >= 0) selectCell(r, next);
+    else if (r < lastRow) selectCell(r + 1, firstCol);
+    else appendRow(firstCol);
   };
 
   const startCharEdit = (r: number, c: number, key: string) => {
@@ -168,8 +202,8 @@ export function useCashGridNav({
         e.preventDefault();
         if (r < lastRow) selectCell(r + 1, c); else appendRow(c);
         break;
-      case 'ArrowLeft': e.preventDefault(); if (c > 0) selectCell(r, c - 1); break;
-      case 'ArrowRight': e.preventDefault(); if (c < lastCol) selectCell(r, c + 1); break;
+      case 'ArrowLeft': { e.preventDefault(); const p = stepCol(c, -1); if (p >= 0) selectCell(r, p); break; }
+      case 'ArrowRight': { e.preventDefault(); const n = stepCol(c, 1); if (n >= 0) selectCell(r, n); break; }
       case 'Tab': e.preventDefault(); moveTab(r, c, e.shiftKey); break;
       case 'Enter':
       case 'F2': e.preventDefault(); editCell(r, c); break;

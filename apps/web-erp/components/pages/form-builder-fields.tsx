@@ -24,10 +24,10 @@ import {
   type ErpFormField, type FormFieldType, type FormColumnSlot,
 } from '@/lib/api/form-fields';
 import { LOOKUP_SOURCE_OPTIONS, sourceLabelOf } from '@/lib/lookup-source-registry';
-import { LookupConfigPopover } from './form-builder-lookup-config';
+import { FieldSettingsPopover } from './form-builder-field-settings';
 
 const SLOT_LABELS: Record<FormColumnSlot, string> = { LEFT: 'Kiri', CENTER: 'Tengah', RIGHT: 'Kanan' };
-const TEXT_VIEW = 'cursor-text truncate rounded px-2 py-0.5 text-sm hover:bg-secondary/60';
+const TEXT_VIEW = 'cursor-text truncate rounded pr-2 py-0.5 text-sm hover:bg-secondary/60';
 
 function isFieldChanged(a: ErpFormField, b: ErpFormField | undefined): boolean {
   if (!b) return true;
@@ -36,7 +36,10 @@ function isFieldChanged(a: ErpFormField, b: ErpFormField | undefined): boolean {
     a.isRequired !== b.isRequired || a.isVisible !== b.isVisible ||
     a.columnSlot !== b.columnSlot || (a.lookupSource ?? null) !== (b.lookupSource ?? null) ||
     JSON.stringify(a.lookupDefaultFilter ?? null) !== JSON.stringify(b.lookupDefaultFilter ?? null) ||
-    (a.lookupDefaultSort ?? null) !== (b.lookupDefaultSort ?? null)
+    (a.lookupDefaultSort ?? null) !== (b.lookupDefaultSort ?? null) ||
+    (a.placeholder ?? null) !== (b.placeholder ?? null) ||
+    (a.defaultValue ?? null) !== (b.defaultValue ?? null) ||
+    (a.isReadonly ?? false) !== (b.isReadonly ?? false)
   );
 }
 
@@ -110,7 +113,7 @@ function FieldRow({
         {changed && <span className="inline-block h-2 w-2 rounded-full bg-warning" title="Belum disimpan" />}
       </TableCell>
 
-      <TableCell className="min-w-[140px]">
+      <TableCell className="w-[280px]">
         <LabelCell value={field.label} onChange={(v) => onUpdate({ label: v })} />
       </TableCell>
 
@@ -125,7 +128,7 @@ function FieldRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="px-2 text-xs text-muted-foreground">{FORM_FIELD_TYPE_LABELS[field.fieldType]}</span>
+          <span className="pr-2 text-xs text-muted-foreground">{FORM_FIELD_TYPE_LABELS[field.fieldType]}</span>
         )}
       </TableCell>
 
@@ -139,7 +142,7 @@ function FieldRow({
               />
             </div>
           ) : (['PARTNER','ACCOUNT','BRANCH','LOCATION','CURRENCY'] as string[]).includes(field.fieldType) ? (
-            <span className="flex-1 px-1 text-xs text-muted-foreground truncate">
+            <span className="flex-1 pr-1 text-xs text-muted-foreground truncate">
               {sourceLabelOf(field.fieldType === 'PARTNER' ? 'partners'
                 : field.fieldType === 'ACCOUNT' ? 'accounts'
                 : field.fieldType === 'BRANCH' ? 'branches'
@@ -147,11 +150,9 @@ function FieldRow({
                 : 'currencies')}
             </span>
           ) : (
-            <span className="flex-1 px-1 text-xs text-muted-foreground">—</span>
+            <span className="flex-1 pr-1 text-xs text-muted-foreground">—</span>
           )}
-          {(['PARTNER','ACCOUNT','BRANCH','LOCATION','CURRENCY','LOOKUP'] as string[]).includes(field.fieldType) && (
-            <LookupConfigPopover field={field} onUpdate={onUpdate} />
-          )}
+          <FieldSettingsPopover field={field} onUpdate={onUpdate} />
         </div>
       </TableCell>
 
@@ -237,7 +238,7 @@ export function FormBuilderFields({
             <TableRow>
               <TableHead className="w-6" />
               <TableHead className="w-2" />
-              <TableHead>Label</TableHead>
+              <TableHead className="w-[280px]">Label</TableHead>
               <TableHead className="w-[140px]">Tipe</TableHead>
               <TableHead className="w-[160px]">Sumber / Konfigurasi</TableHead>
               <TableHead className="w-[110px]">Kolom</TableHead>
