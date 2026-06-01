@@ -1,19 +1,19 @@
 'use client';
 
-/**
- * Tab strip for Kustomisasi Grid: one transaction type can own many grids
- * (tables) — each is a tab here. Select / add / rename / reorder / delete tabs
- * and mark the primary grid (the one the live entry grid reads).
- */
-
 import * as React from 'react';
+import {
+  DndContext, PointerSensor, KeyboardSensor,
+  useSensor, useSensors, closestCenter, type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, horizontalListSortingStrategy, useSortable,
+  sortableKeyboardCoordinates, arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icons';
 import { cn } from '@/lib/utils';
 import type { ErpTransactionGrid } from '@/lib/api/transaction-grids';
-
-const slugify = (s: string) =>
-  s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'tab';
 
 function uniqueKey(base: string, taken: Set<string>) {
   let key = base;
@@ -22,11 +22,93 @@ function uniqueKey(base: string, taken: Set<string>) {
   return key;
 }
 
+function SortableTabItem({
+  g, total, activeKey, editingKey,
+  onSelect, onSetEditingKey, onRename, onSetPrimary, onRemove,
+}: {
+  g: ErpTransactionGrid;
+  total: number;
+  activeKey?: string;
+  editingKey: string | null;
+  onSelect: (key: string) => void;
+  onSetEditingKey: (key: string | null) => void;
+  onRename: (key: string, label: string) => void;
+  onSetPrimary: (key: string) => void;
+  onRemove: (key: string) => void;
+}) {
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
+  } = useSortable({ id: g.key });
+
+  const active = g.key === activeKey;
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'group flex items-center gap-1 rounded-t px-2 py-1.5 text-[12.5px]',
+        active ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground',
+        isDragging && 'z-10',
+      )}
+      {...attributes}
+      {...listeners}
+    >
+      {editingKey === g.key ? (
+        <Input
+          autoFocus
+          value={g.label}
+          onChange={(e) => onRename(g.key, e.target.value)}
+          onBlur={() => onSetEditingKey(null)}
+          onKeyDown={(e) => { if (e.key === 'Enter') onSetEditingKey(null); }}
+          className="h-6 w-28 px-1 text-[12.5px]"
+          onPointerDown={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <button
+          type="button"
+          className="cursor-pointer whitespace-nowrap font-medium"
+          onClick={() => onSelect(g.key)}
+          onDoubleClick={() => onSetEditingKey(g.key)}
+          onPointerDown={(e) => e.stopPropagation()}
+          title="Klik untuk pilih · klik-ganda untuk ubah nama · tarik untuk menata ulang"
+        >
+          {g.label}
+        </button>
+      )}
+      <button
+        type="button"
+        className={cn('iconbtn', g.isPrimary ? 'text-primary' : 'text-muted-foreground')}
+        title={g.isPrimary ? 'Tab utama (dibaca grid entry)' : 'Jadikan tab utama'}
+        onClick={() => onSetPrimary(g.key)}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <Icon name={g.isPrimary ? 'check' : 'dot'} size={12} />
+      </button>
+      {active && (
+        <button
+          type="button"
+          className="iconbtn danger"
+          title="Hapus tab"
+          onClick={() => onRemove(g.key)}
+          onPointerDown={(e) => e.stopPropagation()}
+          disabled={total <= 1}
+        >
+          <Icon name="trash" size={12} />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function GridCustomizationTabs({
-  grids,
-  activeKey,
-  onSelect,
-  onGridsChange,
+  grids, activeKey, onSelect, onGridsChange,
 }: {
   grids: ErpTransactionGrid[];
   activeKey?: string;
@@ -34,6 +116,19 @@ export function GridCustomizationTabs({
   onGridsChange: (grids: ErpTransactionGrid[]) => void;
 }) {
   const [editingKey, setEditingKey] = React.useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = grids.findIndex((g) => g.key === String(active.id));
+    const to = grids.findIndex((g) => g.key === String(over.id));
+    if (from !== -1 && to !== -1) onGridsChange(arrayMove(grids, from, to));
+  };
 
   const addTab = () => {
     const taken = new Set(grids.map((g) => g.key));
@@ -50,80 +145,41 @@ export function GridCustomizationTabs({
   const rename = (key: string, label: string) =>
     onGridsChange(grids.map((g) => (g.key === key ? { ...g, label } : g)));
 
-  const move = (key: string, dir: -1 | 1) => {
-    const i = grids.findIndex((g) => g.key === key);
-    const j = i + dir;
-    if (i < 0 || j < 0 || j >= grids.length) return;
-    const next = [...grids];
-    [next[i], next[j]] = [next[j], next[i]];
-    onGridsChange(next);
-  };
-
   const setPrimary = (key: string) =>
     onGridsChange(grids.map((g) => ({ ...g, isPrimary: g.key === key })));
 
   const remove = (key: string) => {
-    if (grids.length <= 1) return; // keep at least one grid
+    if (grids.length <= 1) return;
     const next = grids.filter((g) => g.key !== key);
     if (!next.some((g) => g.isPrimary)) next[0] = { ...next[0], isPrimary: true };
     onGridsChange(next);
     if (activeKey === key) onSelect(next[0].key);
   };
 
+  const gridKeys = React.useMemo(() => grids.map((g) => g.key), [grids]);
+
   return (
     <div className="flex items-center gap-1 border-b border-border bg-card px-2">
-      <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
-        {grids.map((g, i) => {
-          const active = g.key === activeKey;
-          return (
-            <div
-              key={g.key}
-              className={cn(
-                'group flex items-center gap-1 rounded-t px-2 py-1.5 text-[12.5px]',
-                active ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {editingKey === g.key ? (
-                <Input
-                  autoFocus
-                  value={g.label}
-                  onChange={(e) => rename(g.key, e.target.value)}
-                  onBlur={() => setEditingKey(null)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') setEditingKey(null); }}
-                  className="h-6 w-28 px-1 text-[12.5px]"
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="cursor-pointer whitespace-nowrap font-medium"
-                  onClick={() => onSelect(g.key)}
-                  onDoubleClick={() => setEditingKey(g.key)}
-                  title="Klik untuk pilih · klik-ganda untuk ubah nama"
-                >
-                  {g.label}
-                </button>
-              )}
-              <button
-                type="button"
-                className={cn('iconbtn', g.isPrimary ? 'text-primary' : 'text-muted-foreground')}
-                title={g.isPrimary ? 'Tab utama (dibaca grid entry)' : 'Jadikan tab utama'}
-                onClick={() => setPrimary(g.key)}
-              >
-                <Icon name={g.isPrimary ? 'check' : 'dot'} size={12} />
-              </button>
-              {active && (
-                <span className="flex items-center gap-0.5">
-                  <button type="button" className="iconbtn" title="Geser kiri" onClick={() => move(g.key, -1)} disabled={i === 0}>←</button>
-                  <button type="button" className="iconbtn" title="Geser kanan" onClick={() => move(g.key, 1)} disabled={i === grids.length - 1}>→</button>
-                  <button type="button" className="iconbtn danger" title="Hapus tab" onClick={() => remove(g.key)} disabled={grids.length <= 1}>
-                    <Icon name="trash" size={12} />
-                  </button>
-                </span>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={gridKeys} strategy={horizontalListSortingStrategy}>
+          <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+            {grids.map((g) => (
+              <SortableTabItem
+                key={g.key}
+                g={g}
+                total={grids.length}
+                activeKey={activeKey}
+                editingKey={editingKey}
+                onSelect={onSelect}
+                onSetEditingKey={setEditingKey}
+                onRename={rename}
+                onSetPrimary={setPrimary}
+                onRemove={remove}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
       <button type="button" className="btn shrink-0" onClick={addTab}>
         <Icon name="plus" size={12} /> Tab
       </button>
