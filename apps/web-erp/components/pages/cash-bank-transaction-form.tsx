@@ -20,6 +20,7 @@ import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
 import { formatNumber } from '@/lib/format';
+import { arrowFieldNavKeyDown } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/fin-cash-receipts';
 import { DEFAULT_FORM_FIELDS, type FormColumnSlot } from '@/lib/api/form-fields';
 import { formDefaultsPatch, type CashBankFormData } from './cash-bank-form-model';
@@ -210,8 +211,12 @@ export function CashBankTransactionForm({
         </Badge>
       </div>
 
-      {/* Header — rendered from Form Builder config; LEFT/CENTER/RIGHT slots, ordered by sortOrder. */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 rounded-lg border border-border p-4">
+      {/* Header — rendered from Form Builder config; LEFT/CENTER/RIGHT slots, ordered by sortOrder.
+          ArrowDown/ArrowUp move focus between fields like Tab/Shift+Tab (§ arrow field nav). */}
+      <div
+        className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 rounded-lg border border-border p-4"
+        onKeyDown={arrowFieldNavKeyDown}
+      >
         {SLOTS.map((slot) => (
           <div key={slot} className="flex flex-col gap-3">
             {slot === 'LEFT' && headerExtra}
