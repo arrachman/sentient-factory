@@ -3,10 +3,26 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveFormFieldsDto } from './dto/save-form-fields.dto';
 import { withDefaultValueLabels } from './lookup-label-resolver';
+import { INV_DEFAULTS_BY_CODE } from './inv-form-field-defaults';
 
 // Default structural field configs per transaction-type code.
 // Only keys that differ per type need separate entries — most fields are shared.
-const CR_DEFAULTS = [
+interface FormFieldDefault {
+  fieldKey: string;
+  kind: 'STRUCTURAL' | 'CUSTOM';
+  label: string;
+  fieldType: 'TEXT' | 'NUMBER' | 'DATE' | 'PARTNER' | 'ACCOUNT' | 'BRANCH' | 'LOCATION' | 'CURRENCY' | 'LOOKUP';
+  isRequired: boolean;
+  isVisible: boolean;
+  sortOrder: number;
+  columnSlot: 'LEFT' | 'CENTER' | 'RIGHT';
+  lookupDefaultFilter?: Prisma.InputJsonValue;
+}
+
+// Filter for cash/bank account pickers: postable ASSET accounts with a debit normal balance.
+const CASH_ACCOUNT_FILTER = { accountType: 'ASSET', accountKind: 'POSTABLE', normalBalance: 'DEBIT', isActive: true };
+
+const CR_DEFAULTS: FormFieldDefault[] = [
   { fieldKey: 'partnerId',     kind: 'STRUCTURAL', label: 'Terima Dari',  fieldType: 'PARTNER',   isRequired: true,  isVisible: true,  sortOrder: 0, columnSlot: 'LEFT'   },
   { fieldKey: 'bankAccountId', kind: 'STRUCTURAL', label: 'Akun Kas [D]', fieldType: 'ACCOUNT',   isRequired: true,  isVisible: true,  sortOrder: 1, columnSlot: 'LEFT',   lookupDefaultFilter: { accountType: 'ASSET', accountKind: 'POSTABLE', normalBalance: 'DEBIT', isActive: true } },
   { fieldKey: 'description',   kind: 'STRUCTURAL', label: 'Uraian',       fieldType: 'TEXT',      isRequired: true,  isVisible: true,  sortOrder: 2, columnSlot: 'LEFT'   },
@@ -34,11 +50,68 @@ const RM_DEFAULTS = CR_DEFAULTS.map((f) => {
   return f;
 });
 
-const DEFAULTS_BY_CODE: Record<string, typeof CR_DEFAULTS> = {
+// ── Journal family (GJ/AJ/JM/RV/BB) → fin_journal_lines (Akun · Debit · Kredit) ──
+// Header has no single cash account; identity = Uraian + dimensions; entryDate (not
+// transactionDate) is the journal-native date key bound by a future config-driven form.
+const JOURNAL_DEFAULTS: FormFieldDefault[] = [
+  { fieldKey: 'description', kind: 'STRUCTURAL', label: 'Uraian',       fieldType: 'TEXT',     isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'LEFT'   },
+  { fieldKey: 'notes',       kind: 'STRUCTURAL', label: 'Catatan',      fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT'   },
+  { fieldKey: 'branchId',    kind: 'STRUCTURAL', label: 'Cabang',       fieldType: 'BRANCH',   isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
+  { fieldKey: 'entryDate',   kind: 'STRUCTURAL', label: 'Tanggal',      fieldType: 'DATE',     isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'RIGHT'  },
+  { fieldKey: 'docNumber',   kind: 'STRUCTURAL', label: 'No Transaksi', fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT'  },
+  { fieldKey: 'currencyId',  kind: 'STRUCTURAL', label: 'Uang',         fieldType: 'CURRENCY', isRequired: true,  isVisible: true, sortOrder: 2, columnSlot: 'RIGHT'  },
+];
+
+// Adjustment Journal adds an optional partner (for partner-scoped adjustments).
+const AJ_DEFAULTS: FormFieldDefault[] = [
+  { fieldKey: 'partnerId', kind: 'STRUCTURAL', label: 'Partner', fieldType: 'PARTNER', isRequired: false, isVisible: true, sortOrder: 0, columnSlot: 'LEFT' },
+  ...JOURNAL_DEFAULTS.map((f) => (f.columnSlot === 'LEFT' ? { ...f, sortOrder: f.sortOrder + 1 } : f)),
+];
+
+// Opening Balance (CoA) — same journal header, date labelled per its meaning.
+const BB_DEFAULTS: FormFieldDefault[] = JOURNAL_DEFAULTS.map((f) =>
+  (f.fieldKey === 'entryDate' ? { ...f, label: 'Tanggal Saldo Awal' } : f));
+
+// ── Giro family (RG/SG) → fin_giros (instruments captured in the detail grid) ──
+// Instrument fields (No Giro/Bank/Jatuh Tempo/Nominal) live in the grid, not the header.
+const RG_DEFAULTS: FormFieldDefault[] = [
+  { fieldKey: 'partnerId',   kind: 'STRUCTURAL', label: 'Terima Dari',  fieldType: 'PARTNER',  isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'LEFT'   },
+  { fieldKey: 'description', kind: 'STRUCTURAL', label: 'Uraian',       fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT'   },
+  { fieldKey: 'branchId',    kind: 'STRUCTURAL', label: 'Cabang',       fieldType: 'BRANCH',   isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
+  { fieldKey: 'entryDate',   kind: 'STRUCTURAL', label: 'Tanggal',      fieldType: 'DATE',     isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'RIGHT'  },
+  { fieldKey: 'docNumber',   kind: 'STRUCTURAL', label: 'No Transaksi', fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT'  },
+  { fieldKey: 'currencyId',  kind: 'STRUCTURAL', label: 'Uang',         fieldType: 'CURRENCY', isRequired: true,  isVisible: true, sortOrder: 2, columnSlot: 'RIGHT'  },
+];
+
+const SG_DEFAULTS: FormFieldDefault[] = RG_DEFAULTS.map((f) =>
+  (f.fieldKey === 'partnerId' ? { ...f, label: 'Bayar Ke' } : f));
+
+// ── Giro clearing (RGC/SGC) → fin_giros (clear outstanding giros into a bank account) ──
+const RGC_DEFAULTS: FormFieldDefault[] = [
+  { fieldKey: 'bankAccountId', kind: 'STRUCTURAL', label: 'Akun Bank',     fieldType: 'ACCOUNT',  isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'LEFT',   lookupDefaultFilter: CASH_ACCOUNT_FILTER },
+  { fieldKey: 'description',   kind: 'STRUCTURAL', label: 'Uraian',        fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT'   },
+  { fieldKey: 'branchId',      kind: 'STRUCTURAL', label: 'Cabang',        fieldType: 'BRANCH',   isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
+  { fieldKey: 'entryDate',     kind: 'STRUCTURAL', label: 'Tanggal Cair',  fieldType: 'DATE',     isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'RIGHT'  },
+  { fieldKey: 'docNumber',     kind: 'STRUCTURAL', label: 'No Transaksi',  fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT'  },
+  { fieldKey: 'currencyId',    kind: 'STRUCTURAL', label: 'Uang',          fieldType: 'CURRENCY', isRequired: true,  isVisible: true, sortOrder: 2, columnSlot: 'RIGHT'  },
+];
+
+const DEFAULTS_BY_CODE: Record<string, FormFieldDefault[]> = {
   'FIN.CR': CR_DEFAULTS,
   'FIN.CD': CD_DEFAULTS,
   'FIN.BD': BD_DEFAULTS,
   'FIN.RM': RM_DEFAULTS,
+  'FIN.GJ': JOURNAL_DEFAULTS,
+  'FIN.AJ': AJ_DEFAULTS,
+  'FIN.JM': JOURNAL_DEFAULTS,
+  'FIN.RV': JOURNAL_DEFAULTS,
+  'FIN.BB': BB_DEFAULTS,
+  'FIN.RG': RG_DEFAULTS,
+  'FIN.SG': SG_DEFAULTS,
+  'FIN.RGC': RGC_DEFAULTS,
+  'FIN.SGC': RGC_DEFAULTS,
+  // M3 Warehouse & Inventory header layouts (see inv-form-field-defaults.ts).
+  ...INV_DEFAULTS_BY_CODE,
 };
 
 @Injectable()
