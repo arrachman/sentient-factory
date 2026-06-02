@@ -1907,10 +1907,13 @@ untuk **semua** tipe field:
   field DATE = segmented `Kosong / Hari ini / Tanggal tetap` (`DateDefaultEditor` di
   `form-builder-field-settings.tsx`). "Hari ini" simpan sentinel **`@today`**
   (`TODAY_DEFAULT` di `lib/api/form-fields.ts`); `formDefaultsPatch` resolve `@today`
-  → `todayIso()` saat apply. **`transactionDate` di-override** oleh default config
-  walau baseline-nya sudah today (effect jalan sekali pra-input, jadi aman) — beda
-  dari field lain yang fill-empty. Tanpa default config → tetap fallback baseline
-  today. Backend simpan `@today` apa adanya (string), resolver label lookup tak
+  → `todayIso()` saat apply. **Tanggal transaksi 100% config-driven (2026-06-02):**
+  baseline hardcode `today` di `defaultCashBankForm` **dihapus** (`transactionDate: ''`)
+  — keputusan user "benar-benar kosong". Jadi: **Kosong** → field blank (user isi
+  manual; tetap `required`), **Hari ini** → today, **Tanggal tetap** → fix. Semua
+  via `formDefaultsPatch` fill-empty biasa (tak perlu override lagi). Konsekuensi:
+  jenis transaksi tanpa default tanggal terkonfigurasi → form mulai blank (bukan
+  today). Backend simpan `@today` apa adanya (string); resolver label lookup tak
   menyentuhnya (DATE bukan lookup).
 - **Currency default = config-driven (2026-06-02, FIXED):** dulu effect mount
   meng-hardcode `currencyId = find(IDR) ?? currencies[0]` dengan closure `data`

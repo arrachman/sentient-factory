@@ -53,7 +53,9 @@ export function defaultCashBankForm(kind: ErpCashBankKind = 'CASH'): CashBankFor
     auto: true,
     kind,
     paymentMethod: kind === 'BANK' ? 'TRANSFER' : '',
-    transactionDate: todayIso(),
+    // No hardcoded date: the transaction date is driven entirely by the Form
+    // Builder default (Kosong=blank, Hari ini=today, Tanggal tetap=fixed).
+    transactionDate: '',
     partnerId: '',
     bankAccountId: '',
     locationId: '',
@@ -105,12 +107,10 @@ export function formDefaultsPatch(
     if (f.kind === 'CUSTOM') {
       if (isEmpty(data.customFields[key])) customPatch[key] = val;
     } else if ((STRUCTURAL_DEFAULT_KEYS as readonly string[]).includes(key)) {
-      // DATE structural (transactionDate) is pre-seeded with today; a configured
-      // default should still win on a fresh record → override. This runs once,
-      // before any user input, so it never clobbers entered data. Other keys:
-      // fill-empty only.
-      const overridable = f.fieldType === 'DATE';
-      if (overridable || isEmpty((data as unknown as Record<string, unknown>)[key])) {
+      // Fill-empty only (never clobbers entered data). All structural fields —
+      // transactionDate included — start blank now, so the config default
+      // (incl. @today) applies cleanly; "Kosong" leaves the field blank.
+      if (isEmpty((data as unknown as Record<string, unknown>)[key])) {
         (patch as Record<string, unknown>)[key] = val;
         // Carry the resolved label so the picker shows it without a round-trip.
         const labelKey = STRUCTURAL_LABEL_KEYS[key];
