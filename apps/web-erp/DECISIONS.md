@@ -1912,6 +1912,17 @@ untuk **semua** tipe field:
   currency (IDR) **hanya** bila config tak punya default. Effect default menunggu
   **config + currencies** ter-load (deterministik). `currencyLabel` fallback ke
   `config.byKey['currencyId'].defaultValueLabel` saat currency tak ada di list.
+- **`SearchSelect` hormati `initialLabel` untuk value async (2026-06-02, ROOT CAUSE):**
+  bug field Uang "Kosong" yang membandel ternyata di primitif `SearchSelect`
+  (`use-search-select.ts`), bukan alur data. `initialLabel` dulu **hanya** dipakai
+  di effect mount yang ber-deps `[]` — saat default form di-apply **setelah** mount
+  (async), value berubah jadi `'1'` tapi effect mount sudah lewat, dan effect
+  `[props.value, options]` cuma cek `options` (IDR tak ada di halaman pertama) →
+  `displayLabel` kosong walau `value` & `initialLabel` benar. Fix: effect itu kini
+  fallback ke `initialLabel` saat value tak ketemu di `options` (deps tambah
+  `initialLabel`). Berlaku **semua** picker (partner/akun/cabang/lokasi/uang) yang
+  value-nya di-set async — diverifikasi via console log: data benar, render primitif
+  yang putus.
 
 **Label nilai default lookup di-resolve server-side (2026-06-02, FIXED):** dulu
 `defaultValue` lookup hanya menyimpan id; saat dialog dibuka ulang `SearchSelect`

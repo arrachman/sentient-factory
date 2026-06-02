@@ -126,7 +126,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     if (isMulti) return;
     const seed = props.initialQuery;
     if (seed) { setInputText(seed); setInputFocused(true); }
-    if (props.autoFocus || seed) {
+    if ((props.autoFocus || seed) && !props.autoOpenModal) {
       setTimeout(() => { triggerRef.current?.focus(); }, 0);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -149,8 +149,11 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     if (!props.value) { setDisplayLabel(''); return; }
     const found = options.find((o) => o.value === props.value);
     if (found) setDisplayLabel(optLabel(found));
+    // Value set async (e.g. form default) after mount, and not on the first
+    // options page → fall back to the caller-provided label so it isn't blank.
+    else if (initialLabel) setDisplayLabel(initialLabel);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.value, options]);
+  }, [props.value, options, initialLabel]);
 
   // ── Modal debounced search — defers debouncedQuery update; resets page ───
   React.useEffect(() => {
@@ -202,6 +205,17 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     setTimeout(() => { searchRef.current?.focus(); searchRef.current?.select(); }, 60);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMulti, displayLabel]);
+
+  // ── Auto-open the modal on mount when requested (grid search-icon click) ──
+  // Deferred a tick so the originating click finishes first — otherwise Radix's
+  // dismissable layer treats that same interaction as an outside-click and the
+  // dialog opens then immediately closes.
+  React.useEffect(() => {
+    if (!props.autoOpenModal) return;
+    const t = setTimeout(() => openModal(''), 0);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const closeModal = (refocusTrigger = false) => {
     setOpen(false);
