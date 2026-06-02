@@ -1452,6 +1452,23 @@ tampil identik dgn Kas Masuk:
   re-run `seed-erp-transaction-grids.ts` me-recreate slot kustom default (perilaku
   existing, berlaku CR & CD).
 
+**Code kanonik Bank = FIN.RM / FIN.SM (2026-06-02).** Ditemukan mismatch: page
+Bank pakai `transactionCode` **FIN.RM** (Bank Masuk) / **FIN.SM** (Bank Keluar),
+tapi seed lama men-seed **FIN.BR / FIN.BP** → backend `typeByCode` lempar 404 →
+config grid/form bank **tak pernah ketemu/tersimpan** (selalu fallback default).
+Keputusan user: **FIN.RM/FIN.SM kanonik** (selaras frontend + abbreviation legacy
+RM/SM). Tindakan:
+- DB: `sys_transaction_types.code` FIN.BR→**FIN.RM**, FIN.BP→**FIN.SM** (grid ikut
+  via FK, tak ter-orphan).
+- Seed `seed-erp-transaction-grids.ts`: TXNS code disesuaikan ke FIN.RM/FIN.SM.
+- Grid FIN.RM & FIN.SM dikurasi mirror CR (9 kolom, sama spt CD).
+- Form fields FIN.RM/FIN.SM dibuat (copy 8 struktural CD + default @today/IDR),
+  label arah: RM = "Terima Dari" / "Akun Bank [D]"; SM = "Bayar Ke" / "Akun Bank [K]".
+- Catatan: label form sekarang dari **config DB** (prop `labels` form hanya feed
+  fallback DEFAULT_FORM_FIELDS) — makanya label arah wajib benar saat seed config.
+- Empat anggota kas/bank (CR/CD/RM/SM) kini paritas penuh: 8–9 form fields + 9
+  kolom grid (8 visible).
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE BD/transfer
 belum pakai backend baru ini (CR + CD sudah).

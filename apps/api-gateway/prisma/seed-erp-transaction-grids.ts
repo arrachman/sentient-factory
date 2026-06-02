@@ -34,8 +34,8 @@ const TXNS: TxnDef[] = [
   // Finance — Transaction
   { code: 'FIN.CR', name: 'Cash Receipt (CR)', moduleKey: 'finance', group: 'Transaction', lineTable: CASH_BANK_LINE_TABLE },
   { code: 'FIN.CD', name: 'Cash Disbursement (CD)', moduleKey: 'finance', group: 'Transaction', lineTable: CASH_BANK_LINE_TABLE },
-  { code: 'FIN.BR', name: 'Bank Receipt (RM)', moduleKey: 'finance', group: 'Transaction', lineTable: CASH_BANK_LINE_TABLE },
-  { code: 'FIN.BP', name: 'Bank Payment (SM)', moduleKey: 'finance', group: 'Transaction', lineTable: CASH_BANK_LINE_TABLE },
+  { code: 'FIN.RM', name: 'Bank Receipt (RM)', moduleKey: 'finance', group: 'Transaction', lineTable: CASH_BANK_LINE_TABLE },
+  { code: 'FIN.SM', name: 'Bank Payment (SM)', moduleKey: 'finance', group: 'Transaction', lineTable: CASH_BANK_LINE_TABLE },
   { code: 'FIN.GJ', name: 'General Journal (GJ)', moduleKey: 'finance', group: 'Transaction' },
   { code: 'FIN.AJ', name: 'Adjustment Journal (AJ)', moduleKey: 'finance', group: 'Transaction' },
   { code: 'FIN.JM', name: 'Journal Memorial (JM)', moduleKey: 'finance', group: 'Transaction' },
