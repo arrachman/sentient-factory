@@ -1721,6 +1721,29 @@ samping picker sumber) berisi **Konfigurasi Lookup** lengkap: Sumber data +
   baru. API client `ErpGridColumn` + `saveTransactionGrids` + `isColChanged`
   (deep-compare filter) ikut.
 
+### Update 2026-06-02 — `inferColumnType` hormati `dataType` (label "Tipe Kolom" jujur)
+
+**Bug:** kolom Cost Center (juga Divisi/Sub Divisi/Proyek/Akun) tampil **"Text"**
+di layar Kustomisasi padahal di grid live render **lookup** (icon search). Akar:
+kolom seed lama hanya mengisi `dataType` (`LOOKUP`) — slot semantik
+`cellEditor`/`columnType` masih `null`. Dua jalur baca tipe **tidak konsisten**:
+`effectiveEditor()` (grid live) fallback ke `dataType`, sedangkan `inferColumnType()`
+(layar Kustomisasi) **mengabaikan** `dataType` → selalu `return 'text'`.
+
+**Fix:** `inferColumnType(labelFormatter, cellRenderer, cellEditor, dataType?)` —
+tambah param `dataType` sebagai fallback terakhir (`LOOKUP→lookup`, `NUMBER→number`,
+`DATE→date`, else `text`), mirror `effectiveEditor()`. Call site
+`grid-customization-columns.tsx` oper `col.dataType`. Hasil: kolom FK lookup lama
+kini tampil **"Lookup Kustom"** + picker sumber-nya muncul; kolom numerik tampil
+"Number". **Tanpa migrasi / perubahan seed** — murni perbaikan inferensi label.
+
+**Keputusan dengan user (2026-06-02):** Cost Center/Divisi/Sub Divisi/Proyek
+**tetap lookup** (bukan free text). Alasan: field standar = **FK numerik**
+(`fin_cash_bank_lines.cost_center_id` dst = `BigInt? → ErpCostCenter`) dan save
+path `toBigInt(BigInt(v))` akan **error** bila diisi teks bebas. Free-text "cost
+center" (bila perlu) = **kolom CUSTOM** terpisah (disimpan di `customFields` JSON),
+bukan mengubah slot FK standar.
+
 ---
 
 ## § Bank Masuk (RM) — twin Kas Masuk + Cara Bayar + Giro (2026-05-31)
@@ -1877,7 +1900,18 @@ untuk **semua** tipe field:
   patch nilai default → diterapkan **sekali** via effect saat record baru & config
   sudah load (guard `useRef`); **hanya** mengisi field yang masih kosong (tidak
   pernah menimpa input user). Structural keys map langsung ke `CashBankFormData`;
-  custom keys masuk `customFields`.
+  custom keys masuk `customFields`. Untuk structural **lookup** (partner/account/
+  branch/location), patch **ikut mengisi `*Label`** dari `defaultValueLabel` config
+  → picker langsung tampil label benar tanpa round-trip.
+- **Currency default = config-driven (2026-06-02, FIXED):** dulu effect mount
+  meng-hardcode `currencyId = find(IDR) ?? currencies[0]` dengan closure `data`
+  basi → **menimpa** default Form Builder; karena IDR (id=1) di luar 100 baris
+  pertama (`createdAt desc`, 172 currency) malah men-set currency acak + label
+  kosong. Sekarang effect mount **hanya** memuat list currency; default currency
+  diputuskan effect `formDefaultsPatch` (config = sumber kebenaran), fallback base
+  currency (IDR) **hanya** bila config tak punya default. Effect default menunggu
+  **config + currencies** ter-load (deterministik). `currencyLabel` fallback ke
+  `config.byKey['currencyId'].defaultValueLabel` saat currency tak ada di list.
 
 **Label nilai default lookup di-resolve server-side (2026-06-02, FIXED):** dulu
 `defaultValue` lookup hanya menyimpan id; saat dialog dibuka ulang `SearchSelect`

@@ -74,6 +74,14 @@ const STRUCTURAL_DEFAULT_KEYS = [
   'branchId', 'locationId', 'transactionDate', 'docNumber', 'currencyId',
 ] as const;
 
+/** Structural lookup key → its display-label twin on CashBankFormData. */
+const STRUCTURAL_LABEL_KEYS: Record<string, keyof CashBankFormData> = {
+  partnerId: 'partnerLabel',
+  bankAccountId: 'bankAccountLabel',
+  branchId: 'branchLabel',
+  locationId: 'locationLabel',
+};
+
 /**
  * Patch of default values for a NEW form, derived from Form Builder config.
  * Only fills keys that are currently empty — never clobbers data already entered.
@@ -94,6 +102,11 @@ export function formDefaultsPatch(
     } else if ((STRUCTURAL_DEFAULT_KEYS as readonly string[]).includes(key)) {
       if (isEmpty((data as unknown as Record<string, unknown>)[key])) {
         (patch as Record<string, unknown>)[key] = f.defaultValue!;
+        // Carry the resolved label so the picker shows it without a round-trip.
+        const labelKey = STRUCTURAL_LABEL_KEYS[key];
+        if (labelKey && f.defaultValueLabel) {
+          (patch as Record<string, unknown>)[labelKey] = f.defaultValueLabel;
+        }
       }
     }
   }

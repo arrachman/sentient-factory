@@ -114,39 +114,51 @@ export function CashBankTransactionForm({
   const ph = (key: string, fallback: string) => formConfig.byKey[key]?.placeholder || fallback;
   const ro = (key: string) => locked || formConfig.byKey[key]?.isReadonly === true;
 
-  // Apply Form Builder default values once, on a new (unsaved) record after config loads.
+  // Apply Form Builder default values once, on a new (unsaved) record — after BOTH
+  // the field config and the currency list have loaded (currencies feed the
+  // base-currency fallback below + label resolution). Form Builder config is the
+  // source of truth for the default currency; only fall back to base when unset.
   const defaultsApplied = React.useRef(false);
   React.useEffect(() => {
     if (data.id || defaultsApplied.current) return;
     if (Object.keys(loaded.byKey).length === 0) return; // real config not loaded yet
+    if (currencies.length === 0) return;                // currencies not loaded yet
     defaultsApplied.current = true;
     const patch = formDefaultsPatch(data, loaded);
+    if (!data.currencyId && !patch.currencyId) {
+      const idr = currencies.find((c) => c.code === 'IDR') ?? currencies[0];
+      if (idr) patch.currencyId = idr.id;
+    }
     if (Object.keys(patch).length > 0) onChange({ ...data, ...patch });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loaded]);
+  }, [loaded, currencies]);
 
   const setCustomField = (key: string, value: string | number | null) =>
     set({ customFields: { ...data.customFields, [key]: value } });
   const total = data.lines.reduce((s, l) => s + Number(l.amount || 0), 0);
 
   React.useEffect(() => {
+    // Load the currency list for the picker + label resolution. The default
+    // currency is decided by the Form Builder defaults effect above — NOT here
+    // (the old hardcoded IDR fallback used to override the configured default).
     listCurrencies({ page: 1, limit: 100, isActive: true })
-      .then((r) => {
-        setCurrencies(r.data);
-        if (!data.currencyId) {
-          const idr = r.data.find((c) => c.code === 'IDR') ?? r.data[0];
-          if (idr) set({ currencyId: idr.id });
-        }
-      })
+      .then((r) => setCurrencies(r.data))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // SearchSelect trigger label for the selected currency ("IDR - Rupiah").
+  // The currency may sit outside the fetched page (172 currencies) — fall back to
+  // the Form Builder config's resolved default label so the picker isn't blank.
   const currencyLabel = React.useMemo(() => {
     const c = currencies.find((x) => x.id === data.currencyId);
-    return c ? `${c.code} - ${c.name}` : undefined;
-  }, [currencies, data.currencyId]);
+    if (c) return `${c.code} - ${c.name}`;
+    const cfg = formConfig.byKey['currencyId'];
+    if (cfg?.defaultValue && cfg.defaultValue === data.currencyId) {
+      return cfg.defaultValueLabel ?? undefined;
+    }
+    return undefined;
+  }, [currencies, data.currencyId, formConfig]);
 
   const ctx: StructuralFieldCtx = { data, set, ph, ro, locked, currencyLabel, bankAccountLoader };
 
