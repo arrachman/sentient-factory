@@ -141,8 +141,17 @@ export function CashBankTransactionForm({
     // Load the currency list for the picker + label resolution. The default
     // currency is decided by the Form Builder defaults effect above — NOT here
     // (the old hardcoded IDR fallback used to override the configured default).
-    listCurrencies({ page: 1, limit: 100, isActive: true })
-      .then((r) => setCurrencies(r.data))
+    // Explicitly fetch IDR too: with 172 currencies the base currency sits past
+    // the first page, so the base-currency fallback + its label would miss it.
+    Promise.all([
+      listCurrencies({ page: 1, limit: 100, isActive: true }),
+      listCurrencies({ search: 'IDR', limit: 5, isActive: true }),
+    ])
+      .then(([all, idr]) => {
+        const byId = new Map<string, ErpCurrency>();
+        [...all.data, ...idr.data].forEach((c) => byId.set(c.id, c));
+        setCurrencies([...byId.values()]);
+      })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
