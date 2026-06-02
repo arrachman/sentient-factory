@@ -370,3 +370,51 @@ button {
   --rdp-range_end-color: #ffffff;
   color: var(--fg);
 }
+
+/* ---------------------------------------------------------------------------
+   Month/year dropdowns (captionLayout="dropdown") — style the v9 caption to
+   read as clickable ERP controls. The <select> overlays the label invisibly;
+   we style the visible .rdp-caption_label + give the native option list the
+   right color-scheme so it follows light/dark.
+   --------------------------------------------------------------------------- */
+.rdp-root .rdp-dropdowns {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rdp-root .rdp-dropdown_root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The native <select> overlay — invisible but interactive; carry the theme so
+   the popped-open option list isn't a mismatched white-on-dark. */
+.rdp-root .rdp-dropdown {
+  color-scheme: light dark;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.rdp-root .rdp-caption_label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card, var(--panel));
+  color: var(--fg);
+  font-weight: 600;
+  font-size: calc(13px * var(--font-scale, 1));
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.1s ease, background 0.1s ease;
+}
+
+.rdp-root .rdp-dropdown_root:hover .rdp-caption_label,
+.rdp-root .rdp-dropdown:focus-visible + .rdp-caption_label {
+  border-color: var(--primary);
+  background: var(--bg-hover, var(--panel));
+}

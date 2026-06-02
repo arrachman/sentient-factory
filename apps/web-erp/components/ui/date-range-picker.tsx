@@ -6,6 +6,7 @@ import { DayPicker, type DateRange } from 'react-day-picker';
 import { id as idLocale } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
 import {
+  calendarNavBounds,
   formatDate,
   parseDisplayDate,
   parseIsoDate,
@@ -115,6 +116,7 @@ export function DateRangePicker({
   from, to, onChangeFrom, onChangeTo, id, disabled, fullWidth = true,
 }: DateRangePickerProps) {
   const fmt = useDateFormat();
+  const navBounds = React.useMemo(calendarNavBounds, []);
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState<Date>(() => toDate(from) ?? new Date());
 
@@ -239,6 +241,9 @@ export function DateRangePicker({
             month={month}
             onMonthChange={setMonth}
             numberOfMonths={2}
+            captionLayout="dropdown"
+            startMonth={navBounds.startMonth}
+            endMonth={navBounds.endMonth}
             locale={idLocale}
           />
           {(from || to) && (

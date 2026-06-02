@@ -7,6 +7,7 @@ import { id as idLocale } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
 import { cn } from '@/lib/utils';
 import {
+  calendarNavBounds,
   formatDate,
   parseDisplayDate,
   parseIsoDate,
@@ -47,6 +48,7 @@ export function DateInput({
   ...rest
 }: DateInputProps) {
   const fmt = useDateFormat();
+  const navBounds = React.useMemo(calendarNavBounds, []);
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState<Date>(() => parseIsoDate(value) ?? new Date());
   const invalid = rest['aria-invalid'] === true || rest['aria-invalid'] === 'true';
@@ -182,6 +184,9 @@ export function DateInput({
             onSelect={handleSelect}
             month={month}
             onMonthChange={setMonth}
+            captionLayout="dropdown"
+            startMonth={navBounds.startMonth}
+            endMonth={navBounds.endMonth}
             locale={idLocale}
           />
         </Popover.Content>

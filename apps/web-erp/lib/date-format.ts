@@ -143,4 +143,18 @@ export function parseDisplayDate(text: string, fmt?: DateFormat): string | null 
   return null;
 }
 
+/**
+ * Navigation bounds for the day-picker month/year dropdowns
+ * (`captionLayout="dropdown"`). Wide enough to cover historical records
+ * (birth dates, legacy transactions back to the early 1900s) and a few years
+ * ahead. End year is dynamic relative to "now" so it never goes stale.
+ */
+export function calendarNavBounds(): { startMonth: Date; endMonth: Date } {
+  const year = new Date().getFullYear();
+  return {
+    startMonth: new Date(1920, 0, 1),
+    endMonth: new Date(year + 10, 11, 31),
+  };
+}
+
 export type { DateFormat };

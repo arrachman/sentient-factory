@@ -956,6 +956,20 @@ display via `formatDate` per `sys_settings`, ketik-manual + parse via
 `dd/mm/yyyy` browser dihapus** → `"Mulai"` / `"Selesai"`. Popover kalender
 tetap mode `range`. Bukan lagi pengecualian.
 
+**Navigasi bulan/tahun cepat via dropdown (2026-06-02):** kalender `<DateInput>`
+**dan** `date-range-picker.tsx` pakai `captionLayout="dropdown"` bawaan
+react-day-picker v9 → caption bulan & tahun jadi dropdown (mis. pilih
+**Desember 1992** tanpa klik panah berkali-kali). Rentang navigasi dari helper
+tunggal `calendarNavBounds()` di [`lib/date-format.ts`](lib/date-format.ts):
+`startMonth` = Jan 1920, `endMonth` = (tahun-ini + 10) Des — cukup lebar untuk
+tanggal lahir / transaksi historis dan beberapa tahun ke depan; end-year dinamis
+relatif "now" supaya tidak basi. Styling dropdown = token ERP (caption sebagai
+kontrol ber-border + hover, `color-scheme: light dark` untuk option list native)
+di [`styles/erp-panels.css`](styles/erp-panels.css) (blok `.rdp-root`). Panah
+prev/next tetap ada sebagai pelengkap. Field tanggal baru otomatis dapat ini —
+cukup reuse `<DateInput>`/`DateRangePicker`, jangan set `captionLayout` ad-hoc
+per pemakaian.
+
 **Seed:** menu `/admin/date-format` (`M0.SYS.DATE-FORMAT`) ditambah di
 `prisma/seed-erp.ts`. Jalankan `npm run db:seed` (idempoten) setelah pull
 agar item muncul di sidebar dinamis (route tetap reachable via URL/palette

@@ -691,7 +691,7 @@ di [`DECISIONS.md`](DECISIONS.md).
 - **Search list endpoint** = `code` exact-match (insensitive) + `name` `contains`; dilarang `code: { contains }`. SearchSelect: exact-code auto-pick saat commit. → §2.29/§2.30
 - **`SearchSelect` modal** = stale-while-loading saat ganti halaman (jangan replace `<tbody>` dgn loader row). → §2.28
 - **Input numerik** = `<NumInput>` (bukan `<Input type=number>`); **display angka** = `formatNumber/formatRupiah/formatQty` dari `lib/format.ts`. → §2.31
-- **Input tanggal** = `<DateInput>` (bukan `<Input type=date>` mentah; placeholder "Pilih tanggal", popover day-picker); **display tanggal** = `formatDate()` dari `lib/date-format.ts` (format dinamis dari `sys_settings`). Pengecualian: grid-cell editor & date-range-picker. → §2.39
+- **Input tanggal** = `<DateInput>` (bukan `<Input type=date>` mentah; placeholder "Pilih tanggal", popover day-picker dgn caption bulan/tahun = dropdown `captionLayout="dropdown"`, rentang dari `calendarNavBounds()`); **display tanggal** = `formatDate()` dari `lib/date-format.ts` (format dinamis dari `sys_settings`). Pengecualian: grid-cell editor & date-range-picker. → §2.39
 - **Format kode akun & angka** = dinamis dari `sys_settings` (bukan hardcode locale); account-code = lock-after-data. → §2.24/§2.31
 - **Enum business-logic** (≥3 nilai, konsekuensi sistem beda) → info-icon di label + Radix Popover comparison. → §2.26
 - **Migrasi ERP** = hand-written SQL + `prisma migrate deploy` (bukan `migrate dev`) + `prisma generate` **di dalam container** lalu restart. → §2.32/§2.34
