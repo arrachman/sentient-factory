@@ -8,13 +8,13 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
-  IsNumberString,
   IsObject,
   IsOptional,
   IsString,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { IsDecimalString } from '../../erp-common/decorators/is-decimal-string.decorator';
 
 export enum ErpCashBankDirectionDto {
   RECEIPT = 'RECEIPT',
@@ -56,7 +56,7 @@ export class CashBankGiroDto {
   @ApiPropertyOptional() @IsOptional() @IsString() bankAccountNo?: string;
 
   @ApiProperty({ example: '500000.0000' })
-  @IsNumberString()
+  @IsDecimalString()
   amount!: string;
 
   @ApiProperty({ example: '2026-06-20', description: 'Tanggal jatuh tempo' })
@@ -95,16 +95,16 @@ export class CashBankLineDto {
 
   @ApiPropertyOptional({ example: '1.000000' })
   @IsOptional()
-  @IsNumberString()
+  @IsDecimalString()
   exchangeRate?: string;
 
   @ApiProperty({ example: '455000.0000' })
-  @IsNumberString()
+  @IsDecimalString()
   amount!: string;
 
   @ApiPropertyOptional({ example: '0.0000' })
   @IsOptional()
-  @IsNumberString()
+  @IsDecimalString()
   amountFx?: string;
 
   @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
@@ -207,12 +207,12 @@ export class CreateCashBankTransactionDto {
   currencyId!: string;
 
   @ApiProperty({ example: '1.000000' })
-  @IsNumberString()
+  @IsDecimalString()
   exchangeRate!: string;
 
   @ApiPropertyOptional({ description: 'Header total; recomputed server-side as Σ line amounts' })
   @IsOptional()
-  @IsNumberString()
+  @IsDecimalString()
   amount?: string;
 
   @ApiPropertyOptional({ enum: ErpDocumentStatusDto, default: ErpDocumentStatusDto.DRAFT })
