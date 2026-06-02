@@ -12,8 +12,14 @@ import {
   CreateWaDeviceDto,
   WaDeviceQrDto,
 } from './dto/wa-device.dto';
-import { SETTINGS_ID, FonnteDevice, WaDeviceListResponse } from './wa-device.types';
+import { SETTINGS_ID, WaDeviceListResponse } from './wa-device.types';
 import { WaDeviceStatusService } from './wa-device-status.service';
+import {
+  fonntePost,
+  extractDeviceList,
+  mapFonnteDevice,
+  type FonnteResponse,
+} from './fonnte-http.helpers';
 
 @Injectable()
 export class WaDevicePairingService {
@@ -39,28 +45,12 @@ export class WaDevicePairingService {
     return this.config.get<string>('FONNTE_API_URL') ?? 'https://api.fonnte.com';
   }
 
-  private async fonntePost(
+  private fonntePost(
     path: string,
     authToken: string,
     body: Record<string, string>,
-  ): Promise<{ ok: boolean; status: number; json: Record<string, unknown> }> {
-    const form = new URLSearchParams();
-    for (const [k, v] of Object.entries(body)) form.set(k, v);
-    const res = await fetch(`${this.apiUrl()}${path}`, {
-      method: 'POST',
-      headers: {
-        Authorization: authToken,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: form.toString(),
-    });
-    let json: Record<string, unknown> = {};
-    try {
-      json = (await res.json()) as Record<string, unknown>;
-    } catch {
-      // ignore parse error, leave json empty
-    }
-    return { ok: res.ok && json.status !== false, status: res.status, json };
+  ): Promise<FonnteResponse> {
+    return fonntePost(this.apiUrl(), path, authToken, body);
   }
 
   /**
@@ -71,34 +61,9 @@ export class WaDevicePairingService {
     const accountToken = this.requireAccountToken();
     const { ok, json } = await this.fonntePost('/get-devices', accountToken, {});
 
-    const rawList = Array.isArray((json as { data?: unknown }).data)
-      ? ((json as { data: Array<Record<string, unknown>> }).data)
-      : [];
-
+    const rawList = extractDeviceList(json);
     const active = await this.waDeviceStatus.getActiveDeviceToken();
-
-    const devices: FonnteDevice[] = rawList.map((d) => {
-      const token = typeof d.token === 'string' ? d.token : undefined;
-      const quotaRaw = d.quota;
-      const quota =
-        typeof quotaRaw === 'number'
-          ? quotaRaw
-          : typeof quotaRaw === 'string'
-            ? Number.parseInt(quotaRaw, 10)
-            : undefined;
-      return {
-        name: typeof d.name === 'string' ? d.name : undefined,
-        device: typeof d.device === 'string' ? d.device : undefined,
-        status: typeof d.status === 'string' ? d.status : undefined,
-        token,
-        quota: Number.isFinite(quota as number) ? (quota as number) : undefined,
-        expired: typeof d.expired === 'string' ? d.expired : undefined,
-        expiredDate: typeof d['expired-date'] === 'string' ? (d['expired-date'] as string) : undefined,
-        package: typeof d.package === 'string' ? d.package : undefined,
-        autoread: typeof d.autoread === 'string' ? d.autoread : undefined,
-        isActive: !!active && token === active,
-      };
-    });
+    const devices = rawList.map((d) => mapFonnteDevice(d, active));
 
     if (!ok && devices.length === 0) {
       throw new BadRequestException(
@@ -141,9 +106,7 @@ export class WaDevicePairingService {
     const reason = typeof json.reason === 'string' ? json.reason : '';
     if (/already exist/i.test(reason)) {
       const list = await this.fonntePost('/get-devices', accountToken, {});
-      const rawList = Array.isArray((list.json as { data?: unknown }).data)
-        ? ((list.json as { data: Array<Record<string, unknown>> }).data)
-        : [];
+      const rawList = extractDeviceList(list.json);
       const existing = rawList.find(
         (d) =>
           d.device === dto.phone ||
@@ -310,9 +273,7 @@ export class WaDevicePairingService {
         try {
           // Lookup phone lama via /get-devices supaya bisa /delete-device.
           const list = await this.fonntePost('/get-devices', accountToken, {});
-          const rawList = Array.isArray((list.json as { data?: unknown }).data)
-            ? ((list.json as { data: Array<Record<string, unknown>> }).data)
-            : [];
+          const rawList = extractDeviceList(list.json);
           const prevDevice = rawList.find((d) => d.token === prevToken);
           const prevPhone =
             prevDevice && typeof prevDevice.device === 'string'
@@ -367,9 +328,7 @@ export class WaDevicePairingService {
     const accountToken = this.requireAccountToken();
     // Lookup device token by phone supaya bisa /disconnect (yang butuh device token).
     const list = await this.fonntePost('/get-devices', accountToken, {});
-    const rawList = Array.isArray((list.json as { data?: unknown }).data)
-      ? ((list.json as { data: Array<Record<string, unknown>> }).data)
-      : [];
+    const rawList = extractDeviceList(list.json);
     const target = rawList.find(
       (d) => d.device === devicePhone || d.device === `+${devicePhone}`,
     );

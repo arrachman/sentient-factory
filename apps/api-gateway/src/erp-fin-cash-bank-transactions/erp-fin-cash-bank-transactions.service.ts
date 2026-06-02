@@ -13,40 +13,19 @@ import {
   CashBankTransitionAction as A,
   TransitionCashBankTransactionDto,
 } from './dto/transition-cash-bank-transaction.dto';
-
-function toBigInt(v?: string | null): bigint | null {
-  if (v === undefined || v === null || v === '') return null;
-  return BigInt(v);
-}
-
-/** Statuses where header/lines may still be edited (§2.7 state machine). */
-const EDITABLE = new Set(['DRAFT', 'NEED_APPROVE', 'REJECTED']);
-
-/** valid (status, action) → next status. POST/REOPEN handled separately. */
-const NEXT: Record<string, Partial<Record<A, string>>> = {
-  DRAFT: { [A.SUBMIT]: 'NEED_APPROVE' },
-  REJECTED: { [A.SUBMIT]: 'NEED_APPROVE' },
-  NEED_APPROVE: { [A.APPROVE]: 'APPROVED', [A.REJECT]: 'REJECTED' },
-  APPROVED: { [A.POST]: 'POSTED', [A.REOPEN]: 'DRAFT' },
-};
-
-/** (kind, direction) → numbering documentCode / fallback prefix. Kas=CR/CD, Bank=RM/SM. */
-const docKey = (kind: string, direction: string) => `${kind}_${direction}`;
-const FALLBACK_PREFIX: Record<string, string> = {
-  CASH_RECEIPT: 'CR',
-  CASH_DISBURSEMENT: 'CD',
-  BANK_RECEIPT: 'RM',
-  BANK_DISBURSEMENT: 'SM',
-};
-const DOC_CODE: Record<string, string> = {
-  CASH_RECEIPT: 'CASH_RECEIPT',
-  CASH_DISBURSEMENT: 'CASH_DISBURSEMENT',
-  BANK_RECEIPT: 'BANK_RECEIPT',
-  BANK_DISBURSEMENT: 'BANK_DISBURSEMENT',
-};
-
-/** Marks giros owned by a cash/bank transaction (Giro tab) for sync/cleanup. */
-const GIRO_SOURCE = 'CASH_BANK_TXN';
+import {
+  toBigInt,
+  EDITABLE,
+  NEXT,
+  docKey,
+  FALLBACK_PREFIX,
+  DOC_CODE,
+  GIRO_SOURCE,
+  giroType,
+  sumAmount,
+  mapLine,
+  buildCashBankWhere,
+} from './cash-bank-txn.helpers';
 
 @Injectable()
 export class ErpFinCashBankTransactionsService {
@@ -54,31 +33,6 @@ export class ErpFinCashBankTransactionsService {
     private readonly prisma: PrismaService,
     private readonly posting: CashBankPostingService,
   ) {}
-
-  // ── helpers ───────────────────────────────────────────────────────────────
-  private sumAmount(lines: CashBankLineDto[], fallback?: string) {
-    if (!lines?.length) return new Prisma.Decimal(fallback ?? 0);
-    return lines.reduce((s, l) => s.add(new Prisma.Decimal(l.amount)), new Prisma.Decimal(0));
-  }
-
-  private mapLine(line: CashBankLineDto, header: { currencyId: string; exchangeRate: string }) {
-    return {
-      accountId: BigInt(line.accountId),
-      currencyId: BigInt(line.currencyId ?? header.currencyId),
-      exchangeRate: new Prisma.Decimal(line.exchangeRate ?? header.exchangeRate),
-      amount: new Prisma.Decimal(line.amount),
-      amountFx: line.amountFx ? new Prisma.Decimal(line.amountFx) : null,
-      notes: line.notes ?? null,
-      costCenterId: toBigInt(line.costCenterId),
-      divisionId: toBigInt(line.divisionId),
-      subdivisionId: toBigInt(line.subdivisionId),
-      projectId: toBigInt(line.projectId),
-      customFields: line.customFields
-        ? (line.customFields as Prisma.InputJsonValue)
-        : Prisma.JsonNull,
-      lineNo: line.lineNo,
-    };
-  }
 
   private async resolvePeriod(
     tx: Prisma.TransactionClient,
@@ -120,11 +74,6 @@ export class ErpFinCashBankTransactionsService {
     return `${FALLBACK_PREFIX[key] ?? 'TX'}${String(count + 1).padStart(6, '0')}`;
   }
 
-  /** RECEIPT → INCOMING giro, DISBURSEMENT → OUTGOING. */
-  private giroType(direction: string) {
-    return direction === 'RECEIPT' ? 'INCOMING' : 'OUTGOING';
-  }
-
   /**
    * Replace the giros owned by a transaction (Giro tab). Children of an
    * editable (pre-post) document, so hard delete + recreate — mirrors how
@@ -152,7 +101,7 @@ export class ErpFinCashBankTransactionsService {
     await tx.erpFinGiro.createMany({
       data: giros.map((g) => ({
         giroNumber: g.giroNumber,
-        type: this.giroType(header.direction) as never,
+        type: giroType(header.direction) as never,
         source: GIRO_SOURCE,
         sourceTransactionId: txnId,
         partnerId: header.partnerId,
@@ -225,14 +174,14 @@ export class ErpFinCashBankTransactionsService {
           notes: dto.notes ?? null,
           currencyId: BigInt(dto.currencyId),
           exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-          amount: this.sumAmount(dto.lines, dto.amount),
+          amount: sumAmount(dto.lines, dto.amount),
           status: 'DRAFT',
           postingStatus: 'UNPOSTED',
           legacyCode: dto.legacyCode ?? null,
           createdById: actor,
           updatedById: actor,
           lines: dto.lines.length
-            ? { create: dto.lines.map((l) => this.mapLine(l, dto)) }
+            ? { create: dto.lines.map((l) => mapLine(l, dto)) }
             : undefined,
         },
         select: { id: true },
@@ -259,42 +208,7 @@ export class ErpFinCashBankTransactionsService {
   async findAll(query: QueryCashBankTransactionDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
-    const where: Prisma.ErpFinCashBankTransactionWhereInput = { deletedAt: null };
-
-    if (query.direction) where.direction = query.direction as never;
-    if (query.kind) where.kind = query.kind as never;
-    if (query.paymentMethod) where.paymentMethod = query.paymentMethod as never;
-    if (query.status) where.status = query.status as never;
-    if (query.branchId) where.branchId = BigInt(query.branchId);
-    if (query.locationId) where.locationId = BigInt(query.locationId);
-    if (query.partnerId) where.partnerId = BigInt(query.partnerId);
-    if (query.createdById) where.createdById = BigInt(query.createdById);
-    if (query.dateFrom || query.dateTo) {
-      where.transactionDate = {
-        ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
-        ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
-      };
-    }
-    if (query.docNumberFrom || query.docNumberTo) {
-      where.docNumber = {
-        ...(query.docNumberFrom ? { gte: query.docNumberFrom } : {}),
-        ...(query.docNumberTo ? { lte: query.docNumberTo } : {}),
-      };
-    }
-    if (query.description?.trim()) {
-      where.description = { contains: query.description.trim(), mode: 'insensitive' };
-    }
-    if (query.notes?.trim()) {
-      where.notes = { contains: query.notes.trim(), mode: 'insensitive' };
-    }
-    if (query.search?.trim()) {
-      const q = query.search.trim();
-      where.OR = [
-        { docNumber: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { contactPerson: { contains: q, mode: 'insensitive' } },
-      ];
-    }
+    const where = buildCashBankWhere(query);
 
     const sortBy = query.sortBy ?? 'transactionDate';
     const sortDir = query.sortDir ?? 'desc';
@@ -356,9 +270,9 @@ export class ErpFinCashBankTransactionsService {
         data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
       }
       if (dto.lines !== undefined) {
-        data.amount = this.sumAmount(dto.lines, dto.amount);
+        data.amount = sumAmount(dto.lines, dto.amount);
         await tx.erpFinCashBankLine.deleteMany({ where: { cashBankTransactionId: id } });
-        data.lines = { create: dto.lines.map((l) => this.mapLine(l, header)) };
+        data.lines = { create: dto.lines.map((l) => mapLine(l, header)) };
       }
       await tx.erpFinCashBankTransaction.update({ where: { id }, data });
       await this.syncGiros(
