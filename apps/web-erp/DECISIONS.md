@@ -1859,13 +1859,16 @@ untuk **semua** tipe field:
   diekspor sebagai `LookupConfigSection` (tanpa popover wrapper) + helper
   `hasLookupConfig`. `FieldSettingsPopover` me-render section ini untuk tipe lookup
   → **satu** popover gabungan, bukan dua gear.
-- **Tanpa tombol submit di dialog (by design, 2026-06-02):** dialog meng-edit
-  draft secara *live* via `onUpdate` (propagasi ke state `fields` di
-  `form-builder-page.tsx`); persist permanen hanya lewat tombol **Simpan** di
-  toolbar halaman (`handleSave` → `saveFormFields`). Untuk afford­ance, dialog
-  punya **footer** dengan tombol **Selesai** (`DialogClose`) + hint "tersimpan
-  otomatis ke draft, klik Simpan untuk permanen". Jangan tambah tombol save
-  per-dialog — penyimpanan tetap di-batch satu kali di level halaman (+ Undo/Redo).
+- **Footer dialog = Tutup + Simpan-ke-DB (2026-06-02):** dialog meng-edit draft
+  *live* via `onUpdate` (propagasi ke state `fields`), tapi footer punya tombol
+  **Simpan** yang memanggil `onSave` (= `handleSave` halaman → `saveFormFields`)
+  lalu menutup dialog (`DialogClose`) — jadi user bisa langsung persist ke DB
+  dari dalam dialog tanpa harus cari tombol Simpan di toolbar. `onSave`/`saving`
+  di-thread `form-builder-page` → `FormBuilderFields` → `FieldRow` →
+  `FieldSettingsPopover` (opsional; fallback tombol **Tutup** saja bila tak ada).
+  Tetap satu endpoint bulk (`saveFormFields(code, fields)`) — Simpan dialog
+  menyimpan **seluruh** konfigurasi field, identik dgn tombol Simpan toolbar
+  (Undo/Redo tetap berlaku). Tombol toolbar tidak dihapus.
 
 **Konsumsi form (`cash-bank-transaction-form.tsx` + `cash-bank-custom-fields.tsx`):**
 - Placeholder: `ph(key, fallback)` = `config.placeholder || fallback`.

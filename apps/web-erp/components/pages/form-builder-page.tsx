@@ -194,6 +194,8 @@ export function FormBuilderPage() {
                 fields={fields}
                 savedFields={savedFields}
                 onFieldsChange={pushFields}
+                onSave={handleSave}
+                saving={saving}
               />
             </div>
           ) : (

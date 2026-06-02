@@ -83,11 +83,15 @@ function FieldRow({
   savedField,
   onUpdate,
   onDelete,
+  onSave,
+  saving,
 }: {
   field: ErpFormField;
   savedField?: ErpFormField;
   onUpdate: (patch: Partial<ErpFormField>) => void;
   onDelete?: () => void;
+  onSave?: () => void | Promise<void>;
+  saving?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: field.fieldKey });
@@ -164,7 +168,7 @@ function FieldRow({
           ) : (
             <span className="flex-1 pr-1 text-xs text-muted-foreground">—</span>
           )}
-          <FieldSettingsPopover field={field} onUpdate={onUpdate} />
+          <FieldSettingsPopover field={field} onUpdate={onUpdate} onSave={onSave} saving={saving} />
         </div>
       </TableCell>
 
@@ -215,10 +219,14 @@ export function FormBuilderFields({
   fields,
   savedFields,
   onFieldsChange,
+  onSave,
+  saving,
 }: {
   fields: ErpFormField[];
   savedFields: ErpFormField[];
   onFieldsChange: (fields: ErpFormField[]) => void;
+  onSave?: () => void | Promise<void>;
+  saving?: boolean;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -267,6 +275,8 @@ export function FormBuilderFields({
                 savedField={savedMap[f.fieldKey]}
                 onUpdate={(patch) => update(f.fieldKey, patch)}
                 onDelete={f.kind === 'CUSTOM' ? () => deleteField(f.fieldKey) : undefined}
+                onSave={onSave}
+                saving={saving}
               />
             ))}
           </TableBody>

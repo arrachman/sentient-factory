@@ -89,9 +89,14 @@ function DefaultValueEditor({
 export function FieldSettingsPopover({
   field,
   onUpdate,
+  onSave,
+  saving,
 }: {
   field: ErpFormField;
   onUpdate: (patch: Partial<ErpFormField>) => void;
+  /** Persist the whole form config to the DB (page-level save). */
+  onSave?: () => void | Promise<void>;
+  saving?: boolean;
 }) {
   const lookup = isLookupType(field.fieldType);
   const configured =
@@ -152,15 +157,22 @@ export function FieldSettingsPopover({
 
         </DialogBody>
 
-        <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
-          <span className="text-[11px] text-muted-foreground">
-            Perubahan tersimpan otomatis ke draft — klik <b>Simpan</b> di toolbar untuk menyimpan permanen.
-          </span>
+        <div className="flex items-center justify-end gap-2 border-t border-border px-5 py-3">
           <DialogClose asChild>
-            <button type="button" className="btn primary shrink-0">
-              <Icon name="check" size={13} /> Selesai
-            </button>
+            <button type="button" className="btn shrink-0">Tutup</button>
           </DialogClose>
+          {onSave && (
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="btn primary shrink-0"
+                disabled={saving}
+                onClick={() => { void onSave(); }}
+              >
+                <Icon name="save" size={13} /> {saving ? 'Menyimpan…' : 'Simpan'}
+              </button>
+            </DialogClose>
+          )}
         </div>
       </DialogContent>
     </Dialog>
