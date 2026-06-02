@@ -35,6 +35,10 @@ export interface BaseProps {
   autoFocus?: boolean;
   /** Seed the inline search text on mount (type-to-edit in a grid cell). Implies autoFocus. */
   initialQuery?: string;
+  /** Grid-cell edit mode: input fills the cell (full row height, no rounded border/margin). */
+  fill?: boolean;
+  /** Open the modal window immediately on mount (e.g. triggered by a grid cell's search icon). */
+  autoOpenModal?: boolean;
   /** Fires alongside onValueChange with the picked option (value + display label). */
   onPick?: (opt: { value: string; label: string }) => void;
 }

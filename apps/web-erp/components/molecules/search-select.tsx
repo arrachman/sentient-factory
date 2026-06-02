@@ -19,6 +19,7 @@ export function SearchSelect(props: SearchSelectProps) {
         isMulti={s.isMulti}
         disabled={props.disabled ?? false}
         error={props.error ?? false}
+        fill={props.fill ?? false}
         placeholder={props.placeholder ?? 'Pilih…'}
         triggerDisplay={s.triggerDisplay}
         inputText={s.inputText}

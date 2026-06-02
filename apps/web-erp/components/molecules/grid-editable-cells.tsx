@@ -12,10 +12,14 @@ import {
 } from '@/lib/api/transaction-grids';
 import { LOOKUP_SOURCE_OPTIONS } from '@/lib/lookup-source-registry';
 import { TableCell } from '@/components/organisms/table';
+import { cn } from '@/lib/utils';
 
 const SEL_BG = 'color-mix(in srgb, var(--primary) 12%, transparent)';
 const SEL_OUTLINE = '1px solid color-mix(in srgb, var(--primary) 40%, transparent)';
-const TV = 'cursor-text truncate rounded px-2 py-0.5 text-sm hover:bg-secondary/60';
+// `-mx-2` cancels the chip's `px-2` so the text aligns with the header's
+// 10px cell padding (header ↔ body left edge match) while keeping the
+// hover/edit affordance.
+const TV = 'cursor-text truncate rounded -mx-2 px-2 py-0.5 text-sm hover:bg-secondary/60';
 
 export const cellSelectedStyle = (sel: boolean): React.CSSProperties =>
   sel
@@ -90,7 +94,7 @@ export const EditableNumCell = React.forwardRef<EditableCellHandle, {
   if (!editing) {
     return (
       <div
-        className="cursor-text rounded px-2 py-0.5 text-right text-sm tabular-nums hover:bg-secondary/60"
+        className="cursor-text rounded -mx-2 px-2 py-0.5 text-right text-sm tabular-nums hover:bg-secondary/60"
         onDoubleClick={() => setEditing(true)}
       >
         {value || '0'}
@@ -122,7 +126,7 @@ export function EditableSelectCell({ value, onChange }: {
     <Select value={currentType} open={open} onOpenChange={setOpen} onValueChange={(v) => onChange(v as ColumnType)}>
       <SelectTrigger
         style={!open ? { border: '1px solid transparent', backgroundColor: 'transparent', boxShadow: 'none' } : undefined}
-        className={!open ? 'hover:bg-secondary/60' : undefined}
+        className={cn('-mx-2', !open && 'hover:bg-secondary/60')}
       >
         <SelectValue />
       </SelectTrigger>
@@ -141,16 +145,14 @@ export function GridLookupSourceCell({ value, onChange }: {
   onChange: (v: string | null) => void;
 }) {
   return (
-    <div className="mt-1" onClick={(e) => e.stopPropagation()}>
-      <Select value={value ?? ''} onValueChange={(v) => onChange(v || null)}>
-        <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Pilih sumber…" /></SelectTrigger>
-        <SelectContent>
-          {LOOKUP_SOURCE_OPTIONS.map((s) => (
-            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={value ?? ''} onValueChange={(v) => onChange(v || null)}>
+      <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Pilih sumber…" /></SelectTrigger>
+      <SelectContent>
+        {LOOKUP_SOURCE_OPTIONS.map((s) => (
+          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
