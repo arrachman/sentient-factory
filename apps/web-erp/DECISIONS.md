@@ -1653,6 +1653,31 @@ header live grid `textAlign: center` saat `cellEditor === 'ROWNUM'`, dan cell va
 `justify-end`).
 - **DB:** tanpa migrasi — `columnType`/`cellEditor` sudah `String?` (allowlist app-level).
 
+### Update 2026-06-02 — tipe kolom `lookup` = "Lookup Kustom" + source picker
+
+Tipe kolom `lookup` (label dropdown diganti **"Lookup Kustom"**) kini bisa memilih
+**sumber data** lewat picker di bawah dropdown tipe (muncul hanya saat tipe = lookup),
+paritas dgn Form Builder. Sumber = `LOOKUP_SOURCE_OPTIONS` (10: Partner, Akun, Cabang,
+Lokasi, Mata Uang, Cost Center, Divisi, Sub Divisi, Gudang, Proyek).
+
+- **Editor:** `grid-customization-columns.tsx` render `GridLookupSourceCell`
+  (molecule `grid-editable-cells.tsx`) di sel Tipe Kolom; `handleTypeChange`
+  set `dataType='LOOKUP'` saat tipe lookup; `lookupSource` ikut deteksi
+  "belum disimpan" (`isColChanged`). `lookupSource` sudah round-trip di
+  `saveTransactionGrids` + DTO backend (free-form `@IsString`).
+- **Unifikasi sumber (penting):** dulu ada 2 kosakata slug —
+  registry Form Builder (`accounts`/`partners`/`cost-centers`/…, 10 sumber) vs
+  LOADERS grid live (`account`/`partner`/`costCenter`/…, 6 sumber). Atas keputusan
+  user **disatukan ke slug registry**. Resolver loader/label live grid dipindah ke
+  modul baru [`lib/grid-lookup-loaders.ts`](lib/grid-lookup-loaders.ts):
+  `gridLookupLoader(slug)` + `canonicalSource(slug)`. 6 sumber lama pakai loader
+  `items-form-lookups` existing (jaga display akun "No · Nama"); 4 sumber baru
+  (Cabang/Lokasi/Mata Uang/Gudang) via `buildLookupLoader` registry. **Slug lama
+  di-ALIAS** ke kanonik (`account→accounts`, `costCenter→cost-centers`, dll) →
+  baris/seed lama tetap resolve **tanpa migrasi DB**. `cash-bank-line-cell.tsx`
+  pakai resolver baru. Seed `seed-erp-transaction-grids.ts` diperbarui ke slug
+  kanonik.
+
 ---
 
 ## § Bank Masuk (RM) — twin Kas Masuk + Cara Bayar + Giro (2026-05-31)

@@ -42,7 +42,7 @@ export const COLUMN_TYPE_LABELS: Record<ColumnType, string> = {
   date: 'Date',
   datetime: 'Datetime',
   checkbox: 'Checkbox',
-  lookup: 'Lookup',
+  lookup: 'Lookup Kustom',
   textarea: 'Textarea',
   badge: 'Badge (read-only)',
   link: 'Link (read-only)',

@@ -23,37 +23,28 @@ import { ComboboxInput } from '@/components/molecules/combobox-input';
 import { TableCell } from '@/components/organisms/table';
 import {
   loadAccountOptionsCoded,
-  loadCostCenterOptions,
-  loadDivisionOptions,
-  loadSubDivisionOptions,
-  loadProjectOptions,
   loadPartnerOptions,
 } from '@/components/pages/items-form-lookups';
+import {
+  gridLookupLoader, canonicalSource, DEFAULT_LOOKUP_LOADER,
+} from '@/lib/grid-lookup-loaders';
 import { formatNumber } from '@/lib/format';
 import { formatDate } from '@/lib/date-format';
 import type { GridCol } from './cash-bank-line-model';
 
 type Loader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: unknown }[]; total: number }>;
 
-const LOADERS: Record<string, Loader> = {
-  account:    loadAccountOptionsCoded as unknown as Loader,
-  costCenter: loadCostCenterOptions as unknown as Loader,
-  division:   loadDivisionOptions as unknown as Loader,
-  subdivision: loadSubDivisionOptions as unknown as Loader,
-  project:    loadProjectOptions as unknown as Loader,
-  partner:    loadPartnerOptions as unknown as Loader,
-};
-
 // Lazy-fetch label maps for small lookups (not accounts — too large).
 const labelCache = new Map<string, Promise<Map<string, string>>>();
 function resolveLabelMap(source: string): Promise<Map<string, string>> {
-  let p = labelCache.get(source);
+  const key = canonicalSource(source);
+  let p = labelCache.get(key);
   if (!p) {
-    const loader = LOADERS[source];
+    const loader = gridLookupLoader(source);
     p = loader
       ? loader('', 1, 500).then((r) => new Map(r.data.map((o) => [o.value, o.label])))
       : Promise.resolve(new Map());
-    labelCache.set(source, p);
+    labelCache.set(key, p);
   }
   return p;
 }
@@ -61,7 +52,8 @@ function resolveLabelMap(source: string): Promise<Map<string, string>> {
 function LookupLabel({ source, value, fallback }: { source?: string | null; value: string; fallback?: string }) {
   const [label, setLabel] = React.useState(fallback ?? '');
   React.useEffect(() => {
-    if (fallback || !value || !source || source === 'account') return;
+    // Accounts use the stored label (catalog too large to map eagerly).
+    if (fallback || !value || !source || canonicalSource(source) === 'accounts') return;
     let alive = true;
     resolveLabelMap(source).then((m) => { if (alive) setLabel(m.get(value) ?? ''); });
     return () => { alive = false; };
@@ -121,7 +113,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, 
           initialLabel={label}
           onValueChange={(v) => onSet(v)}
           onPick={(o) => { onSet(o.value, o.label); onEndEdit(true); }}
-          loadOptions={LOADERS[col.lookupSource ?? ''] ?? loadAccountOptionsCoded}
+          loadOptions={gridLookupLoader(col.lookupSource) ?? DEFAULT_LOOKUP_LOADER}
         />
       );
 

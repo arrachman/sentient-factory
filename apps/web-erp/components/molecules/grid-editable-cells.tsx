@@ -10,6 +10,7 @@ import {
 import {
   COLUMN_TYPES, COLUMN_TYPE_LABELS, type ColumnType,
 } from '@/lib/api/transaction-grids';
+import { LOOKUP_SOURCE_OPTIONS } from '@/lib/lookup-source-registry';
 import { TableCell } from '@/components/organisms/table';
 
 const SEL_BG = 'color-mix(in srgb, var(--primary) 12%, transparent)';
@@ -131,6 +132,25 @@ export function EditableSelectCell({ value, onChange }: {
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+/** Source picker shown under the type select when columnType === 'lookup'. */
+export function GridLookupSourceCell({ value, onChange }: {
+  value: string | null | undefined;
+  onChange: (v: string | null) => void;
+}) {
+  return (
+    <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+      <Select value={value ?? ''} onValueChange={(v) => onChange(v || null)}>
+        <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Pilih sumber…" /></SelectTrigger>
+        <SelectContent>
+          {LOOKUP_SOURCE_OPTIONS.map((s) => (
+            <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 

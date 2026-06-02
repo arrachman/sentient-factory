@@ -21,7 +21,7 @@ import {
 import { GridBulkToolbar, type BooleanColumnFlag } from '@/components/molecules/grid-bulk-toolbar';
 import {
   EditableTextCell, EditableNumCell, EditableSelectCell, FlagCell,
-  cellSelectedStyle, type EditableCellHandle,
+  GridLookupSourceCell, cellSelectedStyle, type EditableCellHandle,
 } from '@/components/molecules/grid-editable-cells';
 
 // ── constants ─────────────────────────────────────────────────────────────────
@@ -47,7 +47,8 @@ function isColChanged(a: ErpGridColumn, b: ErpGridColumn | undefined): boolean {
     a.headerText !== b.headerText || a.dataField !== b.dataField ||
     a.width !== b.width || a.isVisible !== b.isVisible ||
     a.isRequired !== b.isRequired || a.isEditable !== b.isEditable ||
-    a.isSkippable !== b.isSkippable || (a.columnType ?? null) !== (b.columnType ?? null)
+    a.isSkippable !== b.isSkippable || (a.columnType ?? null) !== (b.columnType ?? null) ||
+    (a.lookupSource ?? null) !== (b.lookupSource ?? null)
   );
 }
 
@@ -106,13 +107,22 @@ const SortableColumnRow = React.memo(
 
       const handleTypeChange = (type: ColumnType) => {
         const preset = COLUMN_TYPE_PRESETS[type];
-        onPatch(index, { columnType: type, labelFormatter: preset.labelFormatter, headerRenderer: preset.headerRenderer, cellRenderer: preset.cellRenderer, cellEditor: preset.cellEditor });
+        const patch: Partial<ErpGridColumn> = {
+          columnType: type,
+          labelFormatter: preset.labelFormatter, headerRenderer: preset.headerRenderer,
+          cellRenderer: preset.cellRenderer, cellEditor: preset.cellEditor,
+        };
+        if (type === 'lookup') patch.dataType = 'LOOKUP';
+        onPatch(index, patch);
       };
 
       return (
         <TableRow ref={setNodeRef as React.Ref<HTMLTableRowElement>} style={style}>
-          <TableCell style={{ width: 36 }}>
-            <button type="button" className="iconbtn text-muted-foreground"
+          <TableCell truncate={false} className="!px-0 text-center" style={{ width: 36 }}>
+            <button type="button"
+              className="iconbtn text-muted-foreground hover:text-foreground"
+              title="Seret untuk urutkan kolom"
+              aria-label="Seret untuk urutkan kolom"
               style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
               {...attributes} {...listeners}>
               <Icon name="grip-vertical" size={14} />
@@ -139,8 +149,11 @@ const SortableColumnRow = React.memo(
           <FlagCell checked={col.isSkippable} selected={selectedCells.has('isSkippable')} onChange={(v) => onPatch(index, { isSkippable: v })} onSelect={() => onCellSelect(index, 'isSkippable')} />
           <TableCell style={cellSelectedStyle(selectedCells.has('columnType'))} onClick={() => onCellSelect(index, 'columnType')}>
             <EditableSelectCell value={currentType} onChange={handleTypeChange} />
+            {currentType === 'lookup' && (
+              <GridLookupSourceCell value={col.lookupSource} onChange={(v) => onPatch(index, { lookupSource: v })} />
+            )}
           </TableCell>
-          <TableCell style={{ width: 48 }}>
+          <TableCell truncate={false} className="text-center" style={{ width: 48 }}>
             <button type="button" className="iconbtn danger" title="Hapus kolom" onClick={() => onRemove(index)}>
               <Icon name="trash" size={13} />
             </button>

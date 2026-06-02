@@ -33,7 +33,7 @@ export class GridColumnInputDto {
   @ApiPropertyOptional({ example: false }) @IsOptional() @IsBoolean() isSkippable?: boolean;
   @ApiProperty({ enum: GRID_COLUMN_KINDS }) @IsIn(GRID_COLUMN_KINDS) kind!: (typeof GRID_COLUMN_KINDS)[number];
   @ApiProperty({ enum: GRID_DATA_TYPES }) @IsIn(GRID_DATA_TYPES) dataType!: (typeof GRID_DATA_TYPES)[number];
-  @ApiPropertyOptional({ example: 'account' }) @IsOptional() @IsString() lookupSource?: string;
+  @ApiPropertyOptional({ example: 'accounts' }) @IsOptional() @IsString() lookupSource?: string;
   @ApiPropertyOptional({ enum: LABEL_FORMATTERS }) @IsOptional() @IsIn(LABEL_FORMATTERS) labelFormatter?: (typeof LABEL_FORMATTERS)[number];
   @ApiPropertyOptional({ enum: HEADER_RENDERERS }) @IsOptional() @IsIn(HEADER_RENDERERS) headerRenderer?: (typeof HEADER_RENDERERS)[number];
   @ApiPropertyOptional({ enum: CELL_RENDERERS }) @IsOptional() @IsIn(CELL_RENDERERS) cellRenderer?: (typeof CELL_RENDERERS)[number];

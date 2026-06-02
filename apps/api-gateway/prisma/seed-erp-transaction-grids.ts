@@ -77,14 +77,14 @@ interface ColDef {
 // Default columns for the cash/bank family — maps to fin_cash_bank_lines fields
 // + custom slots (hidden by default). Mirrors current hardcoded grid.
 const CASH_BANK_COLUMNS: ColDef[] = [
-  { field: 'accountId', header: 'Akun (No · Nama)', width: 320, type: 'LOOKUP', lookup: 'account', required: true },
+  { field: 'accountId', header: 'Akun (No · Nama)', width: 320, type: 'LOOKUP', lookup: 'accounts', required: true },
   { field: 'amount', header: 'Total', width: 160, type: 'NUMBER' },
   { field: 'amountFx', header: 'Total Valas', width: 140, type: 'NUMBER', visible: false },
   { field: 'notes', header: 'Catatan', width: 240, type: 'TEXT' },
-  { field: 'costCenterId', header: 'Cost Center', width: 220, type: 'LOOKUP', lookup: 'costCenter' },
-  { field: 'divisionId', header: 'Divisi', width: 180, type: 'LOOKUP', lookup: 'division', visible: false },
-  { field: 'subdivisionId', header: 'Sub Divisi', width: 180, type: 'LOOKUP', lookup: 'subdivision', visible: false },
-  { field: 'projectId', header: 'Proyek', width: 180, type: 'LOOKUP', lookup: 'project', visible: false },
+  { field: 'costCenterId', header: 'Cost Center', width: 220, type: 'LOOKUP', lookup: 'cost-centers' },
+  { field: 'divisionId', header: 'Divisi', width: 180, type: 'LOOKUP', lookup: 'divisions', visible: false },
+  { field: 'subdivisionId', header: 'Sub Divisi', width: 180, type: 'LOOKUP', lookup: 'sub-divisions', visible: false },
+  { field: 'projectId', header: 'Proyek', width: 180, type: 'LOOKUP', lookup: 'projects', visible: false },
   { field: 'customText1', header: 'Custom Text 1', width: 140, type: 'TEXT', kind: 'CUSTOM', visible: false },
   { field: 'customText2', header: 'Custom Text 2', width: 140, type: 'TEXT', kind: 'CUSTOM', visible: false },
   { field: 'customText3', header: 'Custom Text 3', width: 140, type: 'TEXT', kind: 'CUSTOM', visible: false },
