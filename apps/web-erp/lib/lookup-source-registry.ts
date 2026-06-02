@@ -11,6 +11,10 @@ import { listDivisions } from '@/lib/api/divisions';
 import { listSubDivisions } from '@/lib/api/sub-divisions';
 import { listWarehouses } from '@/lib/api/warehouses';
 import { listProjects } from '@/lib/api/projects';
+import { listItems } from '@/lib/api/items';
+import { listUnits } from '@/lib/api/units';
+import { listTaxes } from '@/lib/api/taxes';
+import { listPaymentTerms } from '@/lib/api/payment-terms';
 import type { FormFieldType } from '@/lib/api/form-fields';
 
 type AnyListFn = (params: Record<string, unknown>) => Promise<{
@@ -29,6 +33,10 @@ const SOURCE_MAP: Record<string, { label: string; listFn: AnyListFn }> = {
   'sub-divisions':{ label: 'Sub Divisi',  listFn: listSubDivisions  as unknown as AnyListFn },
   warehouses:    { label: 'Gudang',        listFn: listWarehouses    as unknown as AnyListFn },
   projects:      { label: 'Proyek',        listFn: listProjects      as unknown as AnyListFn },
+  items:         { label: 'Barang/Item',   listFn: listItems         as unknown as AnyListFn },
+  units:         { label: 'Satuan',         listFn: listUnits         as unknown as AnyListFn },
+  taxes:         { label: 'Pajak',          listFn: listTaxes         as unknown as AnyListFn },
+  'payment-terms':{ label: 'Termin',        listFn: listPaymentTerms  as unknown as AnyListFn },
 };
 
 // --- Source schema: valid sort/filter fields per source, for Form Builder hints ---
@@ -79,6 +87,16 @@ const SOURCE_SCHEMA_MAP: Record<string, SourceSchema> = {
   'sub-divisions': { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
   warehouses:      { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
   projects:        { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  items: {
+    sortFields: COMMON_SORT,
+    filterFields: [
+      { key: 'itemType', label: 'Tipe Barang', type: 'enum', options: ['INVENTORY', 'SERVICE', 'CONSUMABLE', 'ASSET', 'NON_INVENTORY'] },
+      ...COMMON_FILTER,
+    ],
+  },
+  units:           { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  taxes:           { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
+  'payment-terms': { sortFields: COMMON_SORT, filterFields: COMMON_FILTER },
 };
 
 export function getSourceSchema(source: string | null | undefined): SourceSchema | null {

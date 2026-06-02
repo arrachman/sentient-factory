@@ -1,12 +1,26 @@
 /**
- * Shared model for the cash/bank contra-account grid (Kas Masuk/Keluar/Bank).
- * Row shape + factory + grid-column descriptors. Columns are config-driven
+ * Row model for the cash/bank contra-account grid (Kas Masuk/Keluar/Bank).
+ * Row shape + factory + grid-column descriptors + the `GridModel` adapter the
+ * generic engine (`useGridNav` / `LineCell`) uses. Columns are config-driven
  * (Kustomisasi Grid): the organism renders whatever visible columns it is given,
  * falling back to a sensible default set when no config is available.
+ *
+ * The generic grid types/helpers live in `grid-line-core`; this file binds them
+ * to the cash/bank row shape (re-exporting the same public API the cash/bank
+ * organism + cell already import, so nothing downstream changes).
  */
 
-export interface CashLineRow {
-  key: string;
+import {
+  GridCol, GridDataType, GridModel, GridRowBase,
+  isLookupCol as coreIsLookupCol,
+  isCellFilled as coreIsCellFilled,
+  rowRequiredMissing as coreRowRequiredMissing,
+  linesRequiredMissing as coreLinesRequiredMissing,
+} from './grid-line-core';
+
+export type { GridCol, GridDataType } from './grid-line-core';
+
+export interface CashLineRow extends GridRowBase {
   accountId: string;
   accountLabel?: string;
   amount: string;
@@ -17,10 +31,6 @@ export interface CashLineRow {
   divisionId?: string;
   subdivisionId?: string;
   projectId?: string;
-  /** Resolved display labels for lookup columns, keyed by dataField. */
-  labels?: Record<string, string>;
-  /** User-defined column values (Kustomisasi Grid), keyed by dataField. */
-  customFields?: Record<string, unknown>;
 }
 
 let seq = 0;
@@ -30,29 +40,6 @@ export const newCashLine = (): CashLineRow => ({
   amount: '',
 });
 
-export type GridDataType = 'TEXT' | 'NUMBER' | 'DATE' | 'LOOKUP';
-
-/** A single grid column (subset of the API column, what the grid needs to render). */
-export interface GridCol {
-  dataField: string;
-  headerText: string;
-  width: number;
-  dataType: GridDataType;
-  lookupSource?: string | null;
-  lookupDefaultFilter?: Record<string, unknown> | null;
-  lookupDefaultSort?: string | null;
-  kind: 'STANDARD' | 'CUSTOM';
-  isEditable: boolean;
-  isRequired: boolean;
-  /** Skip flag (Kustomisasi Grid) — cell is view-only (selectable but not editable);
-   *  Enter-navigation jumps over it. Click / arrows / Tab can still land on it. */
-  isSkippable?: boolean;
-  /** Semantic editor type from Kustomisasi Grid (wins over dataType for widget selection). */
-  cellEditor?: string | null;
-  /** Static option list — used by COMBOBOX editor. */
-  options?: string[];
-}
-
 const STANDARD_FIELDS = new Set([
   'accountId', 'amount', 'amountFx', 'notes',
   'costCenterId', 'divisionId', 'subdivisionId', 'projectId',
@@ -60,36 +47,10 @@ const STANDARD_FIELDS = new Set([
 
 const isStandard = (col: GridCol) => col.kind === 'STANDARD' && STANDARD_FIELDS.has(col.dataField);
 
-const LOOKUP_EDITORS = new Set(['LOOKUP', 'ACCOUNT_PICKER', 'PARTNER_PICKER']);
-
-/** True when a column edits through a search-picker (used to auto-open its search window). */
-export function isLookupCol(col: GridCol): boolean {
-  const editor = col.cellEditor || (col.dataType === 'LOOKUP' ? 'LOOKUP' : '');
-  return LOOKUP_EDITORS.has(editor);
-}
-
 /** Read a cell's raw string value from a row for the given column. */
 export function getCellRaw(row: CashLineRow, col: GridCol): string {
   if (isStandard(col)) return String((row as unknown as Record<string, unknown>)[col.dataField] ?? '');
   return String(row.customFields?.[col.dataField] ?? '');
-}
-
-/** True when a cell holds a value (ROWNUM is auto → always considered filled). */
-export function isCellFilled(row: CashLineRow, col: GridCol): boolean {
-  if (col.cellEditor === 'ROWNUM') return true;
-  return getCellRaw(row, col).trim() !== '';
-}
-
-/** Header texts of the `isRequired` columns left empty in a single row. */
-export function rowRequiredMissing(row: CashLineRow, cols: GridCol[]): string[] {
-  return cols.filter((c) => c.isRequired && !isCellFilled(row, c)).map((c) => c.headerText);
-}
-
-/** Unique header texts of every required column left empty across all rows. */
-export function linesRequiredMissing(rows: CashLineRow[], cols: GridCol[]): string[] {
-  const missing = new Set<string>();
-  rows.forEach((r) => rowRequiredMissing(r, cols).forEach((h) => missing.add(h)));
-  return [...missing];
 }
 
 /** Build the partial-row patch to write `value` (+ optional lookup label) into a column. */
@@ -106,6 +67,22 @@ export function buildCellPatch(
   }
   return { customFields: { ...row.customFields, [col.dataField]: value } };
 }
+
+/** GridModel adapter binding the generic engine to the cash/bank row shape. */
+export const cashBankGridModel: GridModel<CashLineRow> = {
+  newRow: newCashLine,
+  getCellRaw,
+  buildCellPatch,
+};
+
+// Convenience wrappers preserving the original (model-free) signatures used by
+// the cash/bank organism — logic lives once in grid-line-core.
+export const isLookupCol = coreIsLookupCol;
+export const isCellFilled = (row: CashLineRow, col: GridCol) => coreIsCellFilled(cashBankGridModel, row, col);
+export const rowRequiredMissing = (row: CashLineRow, cols: GridCol[]) =>
+  coreRowRequiredMissing(cashBankGridModel, row, cols);
+export const linesRequiredMissing = (rows: CashLineRow[], cols: GridCol[]) =>
+  coreLinesRequiredMissing(cashBankGridModel, rows, cols);
 
 /** Default columns when no Kustomisasi Grid config is available (mirrors legacy). */
 export function defaultGridCols(showFx: boolean): GridCol[] {

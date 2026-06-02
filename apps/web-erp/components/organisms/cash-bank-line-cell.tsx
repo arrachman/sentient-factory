@@ -72,8 +72,9 @@ function resolveLabelMap(source: string): Promise<Map<string, string>> {
 function LookupLabel({ source, value, fallback }: { source?: string | null; value: string; fallback?: string }) {
   const [label, setLabel] = React.useState(fallback ?? '');
   React.useEffect(() => {
-    // Accounts use the stored label (catalog too large to map eagerly).
-    if (fallback || !value || !source || canonicalSource(source) === 'accounts') return;
+    // Accounts + items use the stored label (catalogs too large to map eagerly).
+    const canon = canonicalSource(source);
+    if (fallback || !value || !source || canon === 'accounts' || canon === 'items') return;
     let alive = true;
     resolveLabelMap(source).then((m) => { if (alive) setLabel(m.get(value) ?? ''); });
     return () => { alive = false; };

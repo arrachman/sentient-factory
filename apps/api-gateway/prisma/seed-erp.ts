@@ -2,6 +2,7 @@ import { PrismaClient, ErpUserLevel, ErpMenuType, ErpNumberingReset } from '@pri
 import { pbkdf2Sync, randomBytes } from 'crypto';
 import { seedTransactionNotes } from './seed-erp-transaction-notes';
 import { seedTransactionGrids } from './seed-erp-transaction-grids';
+import { seedSalesForms } from './seed-erp-sales-forms';
 import { iso4217Currencies } from './data/iso-4217-currencies';
 
 const prisma = new PrismaClient();
@@ -1568,6 +1569,7 @@ async function main() {
   await seedPartnerCategories();
   await seedTransactionNotes(prisma);
   await seedTransactionGrids(prisma);
+  await seedSalesForms(prisma);
   console.log('\n✅ ERP seed complete.');
 }
 

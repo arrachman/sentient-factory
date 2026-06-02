@@ -2038,3 +2038,150 @@ keputusan ini.
 
 **Scope:** form kas/bank (CR/CD/BD/RM) yang share `cash-bank-transaction-form.tsx`.
 Jurnal/giro form terpisah → adopsi pola yang sama bila diperlukan.
+
+## § Setup config Form Builder + Kustomisasi Grid — transaksi non-kas/bank (2026-06-02)
+
+Atas permintaan user ("kerjakan ini semua kecuali cash/bank, kerjakan di form build
+dan grid custom dulu"): **config-only** — siapkan default Form Builder (header
+`sys_form_fields`) + Kustomisasi Grid (`sys_transaction_grids` + kolom) untuk **9
+transaksi Finance non-kas/bank**, mirip setup FIN.CD. **Halaman TIDAK direfactor
+pass ini** (jurnal/giro masih hardcoded `JournalLinesEditor` — lihat follow-up).
+
+**Cakupan (9 kode, keputusan user "7 menu + JM & RV"):** General Journal `FIN.GJ`,
+Adjustment Journal `FIN.AJ`, Journal Memorial `FIN.JM`, Receipt Giro `FIN.RG`, Send
+Giro `FIN.SG`, **Receipt Giro Clearing `FIN.RGC`** (baru), **Send Giro Clearing
+`FIN.SGC`** (baru), Revaluasi Valas `FIN.RV`, Opening Balance (CoA) `FIN.BB`.
+Catalog `sys_transaction_types` diselaraskan ke label menu: RG/SG = "Receipt/Send
+Giro" (dari "Receive/Spend"), BB = "Opening Balance (CoA)" (dari "Beginning
+Balance"); RGC/SGC ditambahkan.
+
+**3 famili grid (`seed-erp-transaction-grids.ts`, `GridFamily` + `LINE_TABLE_BY_FAMILY`):**
+- **journal** (GJ/AJ/JM/RV/BB) → `fin_journal_lines`. Kolom default: No (rownum) ·
+  Akun (lookup `accounts`, wajib) · Debit · Kredit · Catatan · Cost Center · Divisi /
+  Sub Divisi / Proyek (lookup, hidden).
+- **giro** (RG/SG) → `fin_giros`. **Keputusan user: grid = instrumen giro
+  (domain-benar), BUKAN baris jurnal Debit/Kredit** (halaman hardcoded lama yang
+  memakai JournalLinesEditor = scaffolding sementara, bukan acuan). Kolom: No ·
+  No Giro/Cek (`giroNumber`, wajib) · Bank Penerbit (`bankName`) · Jatuh Tempo
+  (`dueDate`) · Nominal (`amount`) · Catatan.
+- **giroClearing** (RGC/SGC) → `fin_giros`. Kolom: No · No Giro/Cek · Jatuh Tempo ·
+  Nominal · **Tgl Cair (`clearedDate`, wajib)** · **Akun Bank (`bankAccountId`,
+  lookup accounts)** · Catatan.
+- Tanpa slot kustom hidden (beda dari cash/bank) — mengikuti hasil kurasi cash/bank
+  (custom slot ditambah via UI bila perlu). `rownum` pakai preset
+  `cellEditor=ROWNUM` (center). Grid `main` primary per transaksi.
+
+**Form Builder header default (`erp-form-fields.service.ts` → `DEFAULTS_BY_CODE`):**
+field-key **native model jurnal/giro** (mis. `entryDate`, bukan `transactionDate`
+ala kas/bank) — di-bind form config-driven jurnal/giro di masa depan.
+- journal (GJ/JM/RV): Uraian + Catatan (LEFT) · Cabang (CENTER) · Tanggal · No
+  Transaksi · Uang (RIGHT). **BB** = sama, label tanggal "Tanggal Saldo Awal".
+  **AJ** = + Partner (opsional, LEFT).
+- giro (RG): Terima Dari (partner) + Uraian (LEFT) · Cabang · Tanggal · No
+  Transaksi · Uang. **SG** = partner "Bayar Ke". Instrumen (No Giro/Bank/Jatuh
+  Tempo/Nominal) ada di **grid**, bukan header.
+- giroClearing (RGC/SGC): Akun Bank (account, filter kas/bank) + Uraian · Cabang ·
+  Tanggal Cair · No Transaksi · Uang.
+
+**Di mana config hidup (penting):** beda dari kurasi cash/bank yang live-DB-only,
+9 transaksi ini belum punya baseline di code → baseline **ditulis version-controlled**
+(grid kolom di `seed-erp-transaction-grids.ts`; header default di `DEFAULTS_BY_CODE`),
+konsisten dgn tempat baseline cash/bank berada. Karena container `nest --watch`
+(bind-mount) tidak selalu recompile, config **juga di-apply langsung ke DB live**
+(idempotent): grid kolom + **baris `sys_form_fields` di-seed langsung** supaya
+`getFields()` mengembalikan default benar tanpa bergantung lazy-seed (mencegah
+fallback `CR_DEFAULTS` salah ter-persist bila Form Builder dibuka sebelum recompile).
+
+**Follow-up (belum, di luar pass ini):**
+- Halaman jurnal/giro/clearing **belum** config-driven (masih hardcoded; tidak oper
+  `transactionCode`). Wiring = fase terpisah (perlu komponen grid jurnal Debit/Kredit
+  & grid instrumen giro yang baca config, + form header render dari Form Builder).
+- **Opening Balance** belum punya halaman frontend tersendiri (kini = `journalType`
+  di General Journal). Catalog/config `FIN.BB` sudah siap.
+- Posting GL & line-table backend untuk giro/clearing (`fin_giros` clearing flow)
+  belum dibangun; instrumen giro saat ini = pencatatan, dasar modul clearing.
+
+## § Sales Order (SO) — transaksi sales pertama + grid engine generik (2026-06-02)
+
+Build transaksi **item-based** pertama di m5 Sales — pola **persis cash/bank**
+(config-driven header via Form Builder + grid baris via Kustomisasi Grid + §2.36
+layout + state machine §2.7 + sub-route URL §2.3.1), tapi baris = **item**
+(Item·Qty·Satuan·Harga·Disc·Pajak·Total), bukan kontra-akun + Total tunggal.
+Keputusan user: pilot **Sales Order**, **full backend incl. posting**, dan **semua
+16 transaksi sales terdaftar** di Form Builder + Kustomisasi Grid.
+
+**Grid engine digeneralkan (bukan fork).** Mesin grid spreadsheet (navigasi cell,
+edit-state, render kolom config-driven) diekstrak jadi **generik model-agnostik**:
+- [`grid-line-core.ts`](components/organisms/grid-line-core.ts) — `GridCol`/`GridDataType`/
+  `GridRowBase` + interface adapter **`GridModel<Row>`** (`newRow`/`getCellRaw`/
+  `buildCellPatch`) + helper generik (`isLookupCol`/`isCellFilled`/`rowRequiredMissing`/
+  `linesRequiredMissing`).
+- [`use-grid-nav.ts`](components/organisms/use-grid-nav.ts) — `useGridNav<Row>` generik
+  (logika dipindah dari `use-cash-grid-nav`). `LineCell` ([cash-bank-line-cell.tsx](components/organisms/cash-bank-line-cell.tsx))
+  sudah row-agnostic → dipakai apa adanya (semua editor: ROWNUM/LOOKUP/NUMBER/
+  DISCOUNT/STEPPER/DATE/TEXTAREA/CHECKBOX/…).
+- Cash/bank **tidak berubah perilaku**: `cash-bank-line-model.ts` kini mendefinisikan
+  `cashBankGridModel` + delegasi helper ke core; `use-cash-grid-nav.ts` = wrapper tipis
+  (`useGridNav` + `cashBankGridModel`). `cash-bank-lines.tsx` tak disentuh. **Jangan
+  fork mesin grid** — bikin `GridModel<Row>` baru + organism konsumen.
+- Sales: [`sls-item-line-model.ts`](components/organisms/sls-item-line-model.ts)
+  (`SlsItemLineRow` + `slsItemGridModel`; `lineTotal` = derived qty×harga−disc, read-only/skip)
+  + organism [`sls-item-lines.tsx`](components/organisms/sls-item-lines.tsx).
+
+**Backend = modul baru `erp-sls-orders`** (`/erp/sls/orders`, `ErpJwtAuthGuard`),
+mirror cash/bank: create/list/get/update/remove + `transition` (state machine
+DRAFT→NEED_APPROVE→APPROVED→POSTED + REJECT/REOPEN), `docNumber` auto via
+`sys_document_numberings` code **`SO`** (tabel `sls_orders` punya **dua** kolom unik
+NOT NULL `code` + `doc_number` → di-set sama), `fiscalPeriodId` diturunkan dari
+`docDate`, `subtotal`/`grandTotal` dihitung server-side (`lineNet = qty×harga −
+disc`; `grandTotal = subtotal + Σpajak baris + pajak/biaya header − disc header`).
+Enrich cross-domain (customer/branch/location/warehouse/currency/paymentTerm/
+salesDept + per-baris item/unit/tax/warehouse) = scalar FK tanpa `@relation`,
+di-resolve code+name server-side.
+
+**SO TIDAK posting GL (penting).** Sales Order = dokumen komitmen, bukan peristiwa
+finansial → `SlsOrderPostingService.postToLedger` = **no-op terdokumentasi** (POST
+hanya cek periode tak CLOSED + set POSTED/postedAt; **0 baris `fin_ledger_entries`**).
+Signature paralel `CashBankPostingService` agar **Sales Invoice (SI)** nanti isi
+posting AR/revenue sungguhan. **E2E terverifikasi (2026-06-02):** create (subtotal=
+grandTotal 202.500 dari 2 baris) → submit → approve → post (POSTED, 0 ledger) → list.
+
+**Frontend (adopter §2.3.1).** API client [`lib/api/sls-orders.ts`](lib/api/sls-orders.ts);
+form shared [`sales-transaction-form.tsx`](components/pages/sales-transaction-form.tsx)
+(header 100% dari Form Builder via `useFormFields('SLS.SO')`, dispatch struktural
+→ [`sls-structural-field.tsx`](components/molecules/sls-structural-field.tsx), custom →
+reuse `CashBankCustomField`; Detail = `sls-item-lines`; fallback `DEFAULT_SLS_FORM_FIELDS`)
++ wrapper tipis [`sls-order-form.tsx`](components/pages/sls-order-form.tsx) +
+model [`sls-order-form-model.ts`](components/pages/sls-order-form-model.ts). List/router
+[`sls-orders-page.tsx`](components/pages/sls-orders-page.tsx) (reuse `cashBankWorkflowActions`
+= mesin §2.7 yang sama) + filter slim [`sls-orders-filters.tsx`](components/pages/sls-orders-filters.tsx).
+Daftar `/sales/orders` di `TRX_FORM_PAGES` (shell-route-renderer) + `ERP_ROUTE_META`.
+
+**Lookup source baru (registry).** [`lookup-source-registry.ts`](lib/lookup-source-registry.ts)
+ditambah `items`/`units`/`taxes`/`payment-terms` (selain 10 lama) → dipakai grid item
+(Item/Satuan/Pajak) & header (Termin). `items` dikecualikan dari eager label-fetch di
+`LineCell` (katalog besar — pakai label tersimpan/enriched, sama spt `accounts`).
+
+**Katalog + config 16 transaksi sales (`seed-erp-transaction-grids.ts` +
+`seed-erp-sales-forms.ts`).** Famili grid baru **`salesItem`** (kolom item-based default,
+`lineTable` per-txn karena tiap dokumen sales punya tabel baris sendiri). 16 type
+`SLS.*` di `sys_transaction_types` (kode lama `SLS.INV`/`SLS.RET` **di-prune** →
+diganti `SLS.SI`/`SLS.SR`). 9 dokumen item-based (SQ/SO/PI/PL/DO/DR/SI/RNR/SR) dapat
+grid + 12 field header (`sys_form_fields`); 7 dokumen pembayaran/alokasi (AS/IP/RP/IC/
+PV/SIE/BB) = katalog saja (belum item-based). **Form kerja penuh baru SLS.SO.**
+
+**Kontrak dataField/fieldKey (jangan rename).** Grid SLS.SO: `rowNo`,`itemId`,`quantity`,
+`unitId`,`unitPrice`,`discountPercent`,`discountAmount`(hidden),`tax1Id`,`lineTotal`
+(skip/derived),`warehouseId`(hidden),`notes`,`costCenterId`/`divisionId`/`subdivisionId`/
+`projectId`(hidden). Form SLS.SO: `customerId`/`description`/`referenceNo` (LEFT) ·
+`branchId`/`locationId`/`warehouseId`/`salesDeptId` (CENTER) · `docDate`(@today)/`docNumber`/
+`currencyId`(default 1)/`paymentTermId`/`dueDate` (RIGHT).
+
+**Follow-up:**
+- Kolom **custom** baris sales belum persist (`sls_*_lines` tak punya `custom_fields`
+  JSONB; cash/bank punya). Tambah kolom JSONB additif bila perlu custom line column.
+- SI/DO/dst belum punya backend/form (hanya katalog + grid/form config). SI = isi
+  posting AR/revenue di `SlsOrderPostingService` pola.
+- **REOPEN dari POSTED → 400** (mesin `NEXT` tak punya transisi POSTED→REOPEN; **sama
+  persis** dgn cash/bank — gap warisan, bukan regresi). UI kebab menawarkan "Reopen"
+  di POSTED tapi backend menolak. Perbaiki serempak dgn cash/bank di pass terpisah.
