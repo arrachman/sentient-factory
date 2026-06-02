@@ -58,6 +58,11 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
 export type { CashLineRow } from './cash-bank-line-model';
 export { newCashLine } from './cash-bank-line-model';
 
+/** Imperative handle so a parent form can move focus into the grid (selects cell 0,0). */
+export interface CashBankLinesHandle {
+  focus: () => void;
+}
+
 const lookupLabel = (row: CashLineRow, col: GridCol): string | undefined => {
   if (row.labels?.[col.dataField]) return row.labels[col.dataField];
   if (col.dataField === 'accountId') return row.accountLabel;
@@ -65,15 +70,7 @@ const lookupLabel = (row: CashLineRow, col: GridCol): string | undefined => {
   return undefined;
 };
 
-export function CashBankLinesEditor({
-  lines,
-  onChange,
-  readOnly = false,
-  showFx = false,
-  columns,
-  transactionCode,
-  onValidityChange,
-}: {
+export const CashBankLinesEditor = React.forwardRef<CashBankLinesHandle, {
   lines: CashLineRow[];
   onChange: (lines: CashLineRow[]) => void;
   readOnly?: boolean;
@@ -84,7 +81,15 @@ export function CashBankLinesEditor({
   transactionCode?: string;
   /** Reports the required ("Wajib") columns still left empty across all rows. */
   onValidityChange?: (missing: string[]) => void;
-}) {
+}>(function CashBankLinesEditor({
+  lines,
+  onChange,
+  readOnly = false,
+  showFx = false,
+  columns,
+  transactionCode,
+  onValidityChange,
+}, ref) {
   const [fetched, setFetched] = React.useState<GridCol[] | undefined>();
 
   React.useEffect(() => {
@@ -116,6 +121,9 @@ export function CashBankLinesEditor({
   // Surface required-column completeness so the form can gate saving.
   const missingRequired = React.useMemo(() => linesRequiredMissing(lines, cols), [lines, cols]);
   React.useEffect(() => { onValidityChange?.(missingRequired); }, [missingRequired, onValidityChange]);
+
+  // Let a parent form move focus into the grid (onFocus then selects cell 0,0).
+  React.useImperativeHandle(ref, () => ({ focus: () => rootRef.current?.focus() }), [rootRef]);
 
   const handleRootFocus = () => {
     if (!readOnly && !sel && !editing) selectCell(0, 0);
@@ -217,4 +225,4 @@ export function CashBankLinesEditor({
       </div>
     </div>
   );
-}
+});

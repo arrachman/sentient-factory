@@ -2,11 +2,16 @@
  * Arrow-key field navigation for forms.
  *
  * ArrowDown / ArrowUp move focus to the next / previous focusable field within
- * a container, mirroring Tab / Shift+Tab. Attach `arrowFieldNavKeyDown` to a
- * form section's `onKeyDown`; it only fires from single-line text-like inputs
- * where arrows are otherwise inert. Controls that own their arrow keys — number
- * steppers, radios, selects, textareas, and anything with an open popup
- * (`aria-expanded="true"`) — keep native behavior and are skipped as sources.
+ * a container, mirroring Tab / Shift+Tab. Build a handler with
+ * `createArrowFieldNav()` and attach it to a form section's `onKeyDown`; it only
+ * fires from single-line text-like inputs where arrows are otherwise inert.
+ * Controls that own their arrow keys — number steppers, radios, selects,
+ * textareas, and anything with an open popup (`aria-expanded="true"`) — keep
+ * native behavior and are skipped as sources.
+ *
+ * When focus is on the last/first field and an exit hook is supplied, the
+ * navigation hands off to an adjacent region (e.g. ArrowDown from the last
+ * header field jumps into the detail grid).
  */
 
 const FOCUSABLE_SELECTOR = [
@@ -35,13 +40,27 @@ function isArrowNavSource(el: EventTarget | null): el is HTMLElement {
   return type !== 'number' && type !== 'range' && type !== 'radio';
 }
 
+function focusField(el: HTMLElement): void {
+  el.focus();
+  if (el instanceof HTMLInputElement && el.type !== 'checkbox') el.select?.();
+}
+
+export interface ArrowFieldNavOptions {
+  /** Called when ArrowDown is pressed on the last field. Return false if it could not move focus. */
+  onForwardExit?: () => boolean | void;
+  /** Called when ArrowUp is pressed on the first field. Return false if it could not move focus. */
+  onBackwardExit?: () => boolean | void;
+}
+
 /**
  * `onKeyDown` handler: ArrowDown/ArrowUp move focus to the next/previous field
- * within `e.currentTarget`. No wrap (matches Tab/Shift+Tab). Scope the handler
- * to a section that does NOT contain a control with its own arrow navigation
- * (e.g. a data grid) — attach it to the header container only.
+ * within `e.currentTarget`. No wrap (matches Tab/Shift+Tab). Call this from an
+ * inline `onKeyDown` so the exit hooks run at event time, not during render.
+ * Scope it to a section that does NOT contain a control with its own arrow
+ * navigation (e.g. a data grid) — attach to the header container only, and use
+ * the exit hooks to hand off into adjacent regions.
  */
-export function arrowFieldNavKeyDown(e: React.KeyboardEvent<HTMLElement>): void {
+export function arrowFieldNav(e: React.KeyboardEvent<HTMLElement>, opts: ArrowFieldNavOptions = {}): void {
   if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
   if (!isArrowNavSource(e.target)) return;
 
@@ -49,10 +68,15 @@ export function arrowFieldNavKeyDown(e: React.KeyboardEvent<HTMLElement>): void 
   const idx = fields.indexOf(e.target);
   if (idx === -1) return;
 
-  const next = fields[e.key === 'ArrowDown' ? idx + 1 : idx - 1];
-  if (!next) return;
+  const forward = e.key === 'ArrowDown';
+  const next = fields[forward ? idx + 1 : idx - 1];
+  if (next) {
+    e.preventDefault();
+    focusField(next);
+    return;
+  }
 
-  e.preventDefault();
-  next.focus();
-  if (next instanceof HTMLInputElement && next.type !== 'checkbox') next.select?.();
+  // Off the end → optional handoff to an adjacent region (e.g. detail grid).
+  const exit = forward ? opts.onForwardExit : opts.onBackwardExit;
+  if (exit && exit() !== false) e.preventDefault();
 }

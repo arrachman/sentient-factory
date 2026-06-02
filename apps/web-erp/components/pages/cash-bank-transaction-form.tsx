@@ -13,14 +13,14 @@ import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { CashBankLinesEditor } from '@/components/organisms/cash-bank-lines';
+import { CashBankLinesEditor, type CashBankLinesHandle } from '@/components/organisms/cash-bank-lines';
 import { loadAccountOptionsCoded } from './items-form-lookups';
 import { buildLookupLoader } from '@/lib/lookup-source-registry';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
 import { formatNumber } from '@/lib/format';
-import { arrowFieldNavKeyDown } from '@/lib/field-focus-nav';
+import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/fin-cash-receipts';
 import { DEFAULT_FORM_FIELDS, type FormColumnSlot } from '@/lib/api/form-fields';
 import { formDefaultsPatch, type CashBankFormData } from './cash-bank-form-model';
@@ -76,6 +76,17 @@ export function CashBankTransactionForm({
 }) {
   const [tab, setTab] = React.useState<string>('detail');
   const [currencies, setCurrencies] = React.useState<ErpCurrency[]>([]);
+  const linesRef = React.useRef<CashBankLinesHandle>(null);
+  // ArrowDown past the last header field hands focus to the detail grid (cell 0,0).
+  const headerKeyNav = (e: React.KeyboardEvent<HTMLElement>) =>
+    arrowFieldNav(e, {
+      onForwardExit: () => {
+        if (!linesRef.current) return false;
+        setTab('detail');
+        linesRef.current.focus();
+        return true;
+      },
+    });
   // Required ("Wajib") grid columns still empty — reported by the lines editor.
   const [lineRequiredMissing, setLineRequiredMissing] = React.useState<string[]>([]);
   const set = (p: Partial<CashBankFormData>) => onChange({ ...data, ...p });
@@ -215,7 +226,7 @@ export function CashBankTransactionForm({
           ArrowDown/ArrowUp move focus between fields like Tab/Shift+Tab (§ arrow field nav). */}
       <div
         className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 rounded-lg border border-border p-4"
-        onKeyDown={arrowFieldNavKeyDown}
+        onKeyDown={headerKeyNav}
       >
         {SLOTS.map((slot) => (
           <div key={slot} className="flex flex-col gap-3">
@@ -249,6 +260,7 @@ export function CashBankTransactionForm({
 
       {tab === 'detail' && (
         <CashBankLinesEditor
+          ref={linesRef}
           lines={data.lines}
           onChange={(lines) => set({ lines })}
           readOnly={locked}
