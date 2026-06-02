@@ -39,10 +39,13 @@ export interface GridCol {
   width: number;
   dataType: GridDataType;
   lookupSource?: string | null;
+  lookupDefaultFilter?: Record<string, unknown> | null;
+  lookupDefaultSort?: string | null;
   kind: 'STANDARD' | 'CUSTOM';
   isEditable: boolean;
   isRequired: boolean;
-  /** Skip cell during navigation — the cell can never be focused/selected/edited. */
+  /** Skip flag (Kustomisasi Grid) — cell is view-only (selectable but not editable);
+   *  Enter-navigation jumps over it. Click / arrows / Tab can still land on it. */
   isSkippable?: boolean;
   /** Semantic editor type from Kustomisasi Grid (wins over dataType for widget selection). */
   cellEditor?: string | null;
@@ -56,6 +59,14 @@ const STANDARD_FIELDS = new Set([
 ]);
 
 const isStandard = (col: GridCol) => col.kind === 'STANDARD' && STANDARD_FIELDS.has(col.dataField);
+
+const LOOKUP_EDITORS = new Set(['LOOKUP', 'ACCOUNT_PICKER', 'PARTNER_PICKER']);
+
+/** True when a column edits through a search-picker (used to auto-open its search window). */
+export function isLookupCol(col: GridCol): boolean {
+  const editor = col.cellEditor || (col.dataType === 'LOOKUP' ? 'LOOKUP' : '');
+  return LOOKUP_EDITORS.has(editor);
+}
 
 /** Read a cell's raw string value from a row for the given column. */
 export function getCellRaw(row: CashLineRow, col: GridCol): string {

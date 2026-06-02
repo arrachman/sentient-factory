@@ -8,15 +8,20 @@
  * - Click selects a cell; double-click / Enter / F2 / typing → edit mode.
  * - Typing a printable char enters edit & seeds the value (Excel-style).
  * - Arrow keys move the selected cell (when not editing).
- * - While editing: Enter = commit & stay (exit edit), Tab = commit & move,
+ * - Enter (not editing) = advance to the next non-skip cell (data-entry flow);
+ *   F2 / double-click / typing open edit mode instead. Landing only selects (never
+ *   auto-opens, incl. on a freshly appended row). Pressing Enter while sitting on
+ *   an EMPTY required cell opens it (LOOKUP → search window); a filled one advances.
+ * - While editing: Enter = commit & advance, Tab = commit & move,
  *   Esc = cancel (revert to snapshot). Caret arrows stay inside the input.
+ * - Tab/arrows can land on Skip cells (view-only); only Enter jumps over them.
  * - Tab at the last cell of the last row, or ArrowDown on the last row,
  *   appends a new row. Ctrl/Cmd+Delete removes the active row (keeps ≥1).
  */
 
 import * as React from 'react';
 import {
-  buildCellPatch, CashLineRow, GridCol, newCashLine, rowRequiredMissing,
+  buildCellPatch, CashLineRow, GridCol, isCellFilled, isLookupCol, newCashLine, rowRequiredMissing,
 } from './cash-bank-line-model';
 
 export interface CellSel { r: number; c: number }
@@ -27,6 +32,8 @@ export interface CashGridNav {
   editing: boolean;
   seed?: string;
   selectOnFocus: boolean;
+  /** True when the active edit should auto-open the lookup search window. */
+  openModal: boolean;
   onRootKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
   selectCell: (r: number, c: number) => void;
   editCell: (r: number, c: number) => void;
@@ -56,6 +63,7 @@ export function useCashGridNav({
   const [editing, setEditing] = React.useState(false);
   const [seed, setSeed] = React.useState<string | undefined>(undefined);
   const [selectOnFocus, setSelectOnFocus] = React.useState(false);
+  const [openModal, setOpenModal] = React.useState(false);
   const snapshot = React.useRef<CashLineRow | null>(null);
   const wantRoot = React.useRef(false);
 
@@ -71,41 +79,50 @@ export function useCashGridNav({
   const patch = (key: string, p: Partial<CashLineRow>) =>
     onChange(lines.map((l) => (l.key === key ? { ...l, ...p } : l)));
 
-  // Skippable columns can never be focused (Kustomisasi Grid "Skip" flag).
-  const isFocusable = (c: number) => !!cols[c] && !cols[c].isSkippable;
-  const firstFocusableCol = () => cols.findIndex((_, c) => isFocusable(c));
-  // Nearest focusable column from `c` in `dir` (inclusive of `c`); -1 if none.
-  const focusableFrom = (c: number, dir: 1 | -1) => {
-    for (let i = c; i >= 0 && i < cols.length; i += dir) if (isFocusable(i)) return i;
+  // The Skip flag is VIEW-ONLY now, not unfocusable: every visible cell can be
+  // selected (click / arrows / Tab land on it). Only Enter-navigation jumps over
+  // Skip columns, and Skip cells can never enter edit mode.
+  const isSelectable = (c: number) => c >= 0 && c < cols.length && !!cols[c];
+  const isEditableCol = (c: number) => isSelectable(c) && !!cols[c].isEditable && !cols[c].isSkippable;
+  const firstSelectableCol = () => cols.findIndex((_, c) => isSelectable(c));
+  // Nearest selectable column from `c` in `dir` (inclusive of `c`); -1 if none.
+  const selectableFrom = (c: number, dir: 1 | -1) => {
+    for (let i = c; i >= 0 && i < cols.length; i += dir) if (isSelectable(i)) return i;
+    return -1;
+  };
+  // Nearest NON-skip selectable column from `c` in `dir` — Enter jumps over Skip.
+  const enterFrom = (c: number, dir: 1 | -1) => {
+    for (let i = c; i >= 0 && i < cols.length; i += dir) if (isSelectable(i) && !cols[i].isSkippable) return i;
     return -1;
   };
 
   const selectCell = (r: number, c: number) => {
-    // Snap onto the nearest focusable column so clicks on a skipped cell no-op
-    // (or land on its neighbour) instead of selecting an unfocusable cell.
-    const target = isFocusable(c) ? c : (focusableFrom(c, 1) >= 0 ? focusableFrom(c, 1) : focusableFrom(c, -1));
+    // Snap onto the nearest selectable column for out-of-range targets.
+    const target = isSelectable(c) ? c : (selectableFrom(c, 1) >= 0 ? selectableFrom(c, 1) : selectableFrom(c, -1));
     if (target < 0) return;
     setEditing(false);
     setSel({ r, c: target });
     wantRoot.current = true;
   };
 
-  const beginEdit = (r: number, c: number, opts: { seed?: string; selectOnFocus?: boolean }) => {
+  const beginEdit = (r: number, c: number, opts: { seed?: string; selectOnFocus?: boolean; openModal?: boolean }) => {
     snapshot.current = lines[r] ? { ...lines[r] } : null;
     setSel({ r, c });
     setSeed(opts.seed);
     setSelectOnFocus(opts.selectOnFocus ?? false);
+    setOpenModal(opts.openModal ?? false);
     setEditing(true);
   };
 
   const editCell = (r: number, c: number) => {
-    if (!cols[c]?.isEditable) return;
+    if (!isEditableCol(c)) return; // Skip + non-editable columns are view-only
     beginEdit(r, c, { selectOnFocus: true });
   };
 
   const endEdit = (focusRoot = true) => {
     setEditing(false);
     setSeed(undefined);
+    setOpenModal(false);
     if (focusRoot) wantRoot.current = true;
   };
 
@@ -121,7 +138,7 @@ export function useCashGridNav({
     const last = lines[lines.length - 1];
     const missing = last ? rowRequiredMissing(last, cols) : [];
     if (missing.length) { onAppendBlocked?.(missing); return false; }
-    const target = isFocusable(focusCol) ? focusCol : Math.max(0, firstFocusableCol());
+    const target = isSelectable(focusCol) ? focusCol : Math.max(0, firstSelectableCol());
     setSel({ r: lines.length, c: target });
     setEditing(false);
     wantRoot.current = true;
@@ -143,14 +160,14 @@ export function useCashGridNav({
   };
 
   const lastRow = lines.length - 1;
-  const firstCol = firstFocusableCol();
-  const lastCol = focusableFrom(cols.length - 1, -1);
+  const firstCol = firstSelectableCol();
+  const lastCol = selectableFrom(cols.length - 1, -1);
+  const firstEnterCol = enterFrom(0, 1);
 
-  // Step horizontally to the next focusable column in a row; -1 if none remain.
-  const stepCol = (c: number, dir: 1 | -1) => {
-    const next = focusableFrom(c + dir, dir);
-    return next;
-  };
+  // Step to the next selectable column (Tab/arrows land on Skip cells too).
+  const stepCol = (c: number, dir: 1 | -1) => selectableFrom(c + dir, dir);
+  // Step to the next NON-skip column (Enter-navigation jumps over Skip).
+  const stepEnter = (c: number, dir: 1 | -1) => enterFrom(c + dir, dir);
 
   // Move one cell forward/back, wrapping rows; appends when stepping past the end.
   const moveTab = (r: number, c: number, back: boolean) => {
@@ -166,9 +183,26 @@ export function useCashGridNav({
     else appendRow(firstCol);
   };
 
+  // Enter advances forward to the next non-skip cell, wrapping rows / appending.
+  // Landing only SELECTS the cell — it never auto-opens an editor (incl. on a new
+  // row). Opening a required lookup is a deliberate second Enter (see onRootKeyDown).
+  const moveEnter = (r: number, c: number) => {
+    const next = stepEnter(c, 1);
+    if (next >= 0) { selectCell(r, next); return; }
+    if (r < lastRow) { selectCell(r + 1, firstEnterCol >= 0 ? firstEnterCol : firstCol); return; }
+    appendRow(firstEnterCol >= 0 ? firstEnterCol : Math.max(0, firstCol));
+  };
+
+  // True when Enter on the selected cell should OPEN it instead of advancing:
+  // an empty required editable cell (LOOKUP → search window). Filled cells advance.
+  const shouldOpenOnEnter = (r: number, c: number) => {
+    const col = cols[c];
+    return !!col && col.isRequired && isEditableCol(c) && !isCellFilled(lines[r], col);
+  };
+
   const startCharEdit = (r: number, c: number, key: string) => {
     const col = cols[c];
-    if (!col?.isEditable) return false;
+    if (!isEditableCol(c)) return false; // Skip + non-editable columns are view-only
     if (col.dataType === 'LOOKUP') { beginEdit(r, c, { seed: key }); return true; }
     if (col.dataType === 'DATE') { beginEdit(r, c, {}); return true; }
     if (col.dataType === 'NUMBER') {
@@ -190,8 +224,8 @@ export function useCashGridNav({
     if (editing) {
       if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
       // SearchSelect preventDefaults its own Enter (resolving a pick); only a
-      // plain field's unhandled Enter should commit+exit here.
-      else if (e.key === 'Enter' && !e.defaultPrevented) { e.preventDefault(); endEdit(); }
+      // plain field's unhandled Enter should commit then advance to the next cell.
+      else if (e.key === 'Enter' && !e.defaultPrevented) { e.preventDefault(); endEdit(false); moveEnter(r, c); }
       else if (e.key === 'Tab') { e.preventDefault(); endEdit(false); moveTab(r, c, e.shiftKey); }
       return; // other keys → input handles (typing, caret arrows)
     }
@@ -206,6 +240,11 @@ export function useCashGridNav({
       case 'ArrowRight': { e.preventDefault(); const n = stepCol(c, 1); if (n >= 0) selectCell(r, n); break; }
       case 'Tab': e.preventDefault(); moveTab(r, c, e.shiftKey); break;
       case 'Enter':
+        e.preventDefault();
+        // Empty required cell → open it (LOOKUP = search window); else advance.
+        if (shouldOpenOnEnter(r, c)) beginEdit(r, c, { selectOnFocus: true, openModal: isLookupCol(cols[c]) });
+        else moveEnter(r, c);
+        break;
       case 'F2': e.preventDefault(); editCell(r, c); break;
       case 'Delete':
       case 'Backspace':
@@ -217,7 +256,7 @@ export function useCashGridNav({
   };
 
   return {
-    rootRef, sel, editing, seed, selectOnFocus,
+    rootRef, sel, editing, seed, selectOnFocus, openModal,
     onRootKeyDown, selectCell, editCell, endEdit, patch,
   };
 }

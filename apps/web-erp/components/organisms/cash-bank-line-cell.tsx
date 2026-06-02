@@ -12,6 +12,7 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { Icon } from '@/components/ui/icons';
 import { Input, Textarea } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { NumInput } from '@/components/molecules/num-input';
@@ -34,6 +35,27 @@ import type { GridCol } from './cash-bank-line-model';
 
 type Loader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: unknown }[]; total: number }>;
 
+// Backend list DTOs cap `limit` at 100, so the label map is built by paging
+// through all rows (100 at a time) rather than a single oversized request —
+// requesting limit > 100 returns HTTP 400.
+const LOOKUP_PAGE_SIZE = 100;
+const MAX_LOOKUP_PAGES = 50; // safety bound (≤ 5000 rows) for small lookups
+
+async function fetchAllLabels(loader: Loader): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  const first = await loader('', 1, LOOKUP_PAGE_SIZE);
+  for (const o of first.data) map.set(o.value, o.label);
+  const totalPages = Math.min(
+    Math.ceil((first.total || first.data.length) / LOOKUP_PAGE_SIZE),
+    MAX_LOOKUP_PAGES,
+  );
+  for (let page = 2; page <= totalPages; page += 1) {
+    const res = await loader('', page, LOOKUP_PAGE_SIZE);
+    for (const o of res.data) map.set(o.value, o.label);
+  }
+  return map;
+}
+
 // Lazy-fetch label maps for small lookups (not accounts — too large).
 const labelCache = new Map<string, Promise<Map<string, string>>>();
 function resolveLabelMap(source: string): Promise<Map<string, string>> {
@@ -41,9 +63,7 @@ function resolveLabelMap(source: string): Promise<Map<string, string>> {
   let p = labelCache.get(key);
   if (!p) {
     const loader = gridLookupLoader(source);
-    p = loader
-      ? loader('', 1, 500).then((r) => new Map(r.data.map((o) => [o.value, o.label])))
-      : Promise.resolve(new Map());
+    p = loader ? fetchAllLabels(loader) : Promise.resolve(new Map());
     labelCache.set(key, p);
   }
   return p;
@@ -73,6 +93,8 @@ export interface LineCellProps {
   editing: boolean;
   seed?: string;
   selectOnFocus: boolean;
+  /** Nav-driven: open the lookup search window as soon as edit mode begins. */
+  autoOpenModal?: boolean;
   onSet: (value: string, label?: string) => void;
   onSelect: () => void;
   onEdit: () => void;
@@ -91,7 +113,7 @@ function effectiveEditor(col: GridCol): string {
   }
 }
 
-function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, onEndEdit }: LineCellProps) {
+function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, autoOpenModal, onSet, onEndEdit }: LineCellProps & { autoOpenModal?: boolean }) {
   const editor = effectiveEditor(col);
 
   switch (editor) {
@@ -107,13 +129,15 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, 
       return (
         <SearchSelect
           autoFocus
+          fill
+          autoOpenModal={autoOpenModal}
           initialQuery={seed}
           placeholder="Pilih…"
           value={value}
           initialLabel={label}
           onValueChange={(v) => onSet(v)}
           onPick={(o) => { onSet(o.value, o.label); onEndEdit(true); }}
-          loadOptions={gridLookupLoader(col.lookupSource) ?? DEFAULT_LOOKUP_LOADER}
+          loadOptions={gridLookupLoader(col.lookupSource, col.lookupDefaultFilter, col.lookupDefaultSort) ?? DEFAULT_LOOKUP_LOADER}
         />
       );
 
@@ -121,6 +145,8 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, 
       return (
         <SearchSelect
           autoFocus
+          fill
+          autoOpenModal={autoOpenModal}
           initialQuery={seed}
           placeholder="Pilih akun…"
           value={value}
@@ -135,6 +161,8 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, 
       return (
         <SearchSelect
           autoFocus
+          fill
+          autoOpenModal={autoOpenModal}
           initialQuery={seed}
           placeholder="Pilih partner…"
           value={value}
@@ -244,10 +272,10 @@ function displayCell(col: GridCol, value: string, label?: string, rowIndex?: num
   }
 
   if (!value) {
+    // Lookup cells show no "Pilih…" label in the table — empty falls to the
+    // same muted "—" as text cells (the search icon on hover signals the picker).
     const ph =
-      editor === 'LOOKUP' || editor === 'ACCOUNT_PICKER' || editor === 'PARTNER_PICKER' ? 'Pilih…'
-      : editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' ? '0'
-      : editor === 'CHECKBOX' ? '—'
+      editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' ? '0'
       : editor === 'NONE' ? ''
       : '—';
     return { node: ph, muted: true };
@@ -286,33 +314,53 @@ function displayCell(col: GridCol, value: string, label?: string, rowIndex?: num
 // ─── LineCell ─────────────────────────────────────────────────────────────────
 
 export function LineCell(props: LineCellProps) {
-  const { col, value, label, rowIndex, selected, editing, onSelect, onEdit, onEndEdit } = props;
+  const { col, value, label, rowIndex, selected, editing, autoOpenModal, onSelect, onEdit, onEndEdit } = props;
   const editor = effectiveEditor(col);
   const numeric = editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER';
   const isRownum = editor === 'ROWNUM';
-  // "Skip" flag (Kustomisasi Grid) → cell can never be focused/selected/edited.
+  const isLookup = editor === 'LOOKUP' || editor === 'ACCOUNT_PICKER' || editor === 'PARTNER_PICKER';
+  // "Skip" flag (Kustomisasi Grid) → view-only: still selectable (click / arrows /
+  // Tab land on it) but never editable; Enter-navigation jumps over it.
   const skippable = !!col.isSkippable;
+  // Set when the search icon is clicked → enter edit mode AND auto-open the
+  // SearchSelect modal window. Reset once edit mode ends. Combined with the
+  // nav-driven `autoOpenModal` (Enter landing on a required lookup).
+  const [openModalOnEdit, setOpenModalOnEdit] = React.useState(false);
+  React.useEffect(() => { if (!editing) setOpenModalOnEdit(false); }, [editing]);
 
   return (
     <TableCell
-      className={cn('p-0 align-middle', selected && !editing && !skippable && 'shadow-[inset_0_0_0_2px_var(--primary)]')}
+      className={cn(
+        'p-0 align-middle',
+        // Lookup fills the cell (display + edit): drop the cell's own !px so the
+        // inner px-[10px] is the only horizontal padding — no double margin,
+        // and the placeholder lines up exactly with the editor text.
+        !skippable && isLookup && '!px-0',
+        selected && !editing && 'shadow-[inset_0_0_0_2px_var(--primary)]',
+      )}
     >
       {editing && !skippable ? (
         <div
-          className="px-[10px]"
-          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) onEndEdit(false); }}
+          onBlur={(e) => {
+            // Focus leaving into the SearchSelect modal (portaled outside this
+            // cell, role="dialog") must NOT end edit — that would unmount the
+            // SearchSelect and close the modal the user just opened.
+            const next = e.relatedTarget as HTMLElement | null;
+            if (e.currentTarget.contains(next) || next?.closest('[role="dialog"]')) return;
+            onEndEdit(false);
+          }}
         >
-          <EditControl {...props} />
+          <EditControl {...props} autoOpenModal={openModalOnEdit || !!autoOpenModal} />
         </div>
       ) : (
         <div
-          role={skippable ? undefined : 'button'}
+          role="button"
           tabIndex={-1}
-          onClick={skippable ? undefined : onSelect}
-          onDoubleClick={skippable ? undefined : onEdit}
+          onClick={onSelect}
+          onDoubleClick={onEdit}
           className={cn(
-            'flex h-[var(--row-h)] w-full select-none items-center truncate px-[10px]',
-            skippable ? 'cursor-default opacity-70' : 'cursor-pointer',
+            'group flex h-[var(--row-h)] w-full cursor-pointer select-none items-center truncate px-[10px]',
+            skippable && 'opacity-70',
             numeric && 'justify-end tabular-nums',
             (isRownum || editor === 'CHECKBOX') && 'justify-center',
             isRownum && 'tabular-nums',
@@ -320,8 +368,19 @@ export function LineCell(props: LineCellProps) {
         >
           {(() => {
             const { node, muted } = displayCell(col, value, label, rowIndex);
-            return <span className={cn('truncate', muted && 'text-[var(--fg-subtle)]')}>{node}</span>;
+            return <span className={cn('min-w-0 truncate', muted && 'text-[var(--fg-subtle)]')}>{node}</span>;
           })()}
+          {isLookup && !skippable && (
+            <button
+              type="button"
+              title="Cari…"
+              aria-label="Cari…"
+              onClick={(e) => { e.stopPropagation(); setOpenModalOnEdit(true); onEdit(); }}
+              className="ml-auto flex shrink-0 cursor-pointer items-center pl-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+            >
+              <Icon name="search" size={13} />
+            </button>
+          )}
         </div>
       )}
     </TableCell>

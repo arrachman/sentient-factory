@@ -45,6 +45,8 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
       width: c.width,
       dataType: c.dataType,
       lookupSource: c.lookupSource,
+      lookupDefaultFilter: c.lookupDefaultFilter,
+      lookupDefaultSort: c.lookupDefaultSort,
       kind: c.kind,
       // ROWNUM = auto sequence from row position → always read-only.
       isEditable: c.cellEditor === 'ROWNUM' ? false : c.isEditable,
@@ -100,7 +102,7 @@ export function CashBankLinesEditor({
     return defaultGridCols(showFx);
   }, [columns, fetched, showFx]);
   const {
-    rootRef, sel, editing, seed, selectOnFocus,
+    rootRef, sel, editing, seed, selectOnFocus, openModal,
     onRootKeyDown, selectCell, editCell, endEdit, patch,
   } = useCashGridNav({
     lines,
@@ -122,12 +124,16 @@ export function CashBankLinesEditor({
   const total = lines.reduce((s, l) => s + Number(l.amount || 0), 0);
   const totalFx = lines.reduce((s, l) => s + Number(l.amountFx || 0), 0);
   const hasFx = cols.some((c) => c.dataField === 'amountFx');
-  // +1 for the trailing elastic spacer column (absorbs extra width).
-  const colSpan = cols.length + 1;
-  // Fixed layout honours each column's px width exactly; min-width = Σ widths so
-  // a wide container lets the spacer absorb the slack (no scroll), a narrow one
-  // scrolls instead of squashing the columns.
-  const tableMinWidth = cols.reduce((s, c) => s + (c.width || 0), 0);
+  const colSpan = cols.length;
+  // Fixed layout honours each column's px width exactly. Columns with width 0
+  // (falsy) get NO width style → they stay elastic and absorb the leftover space.
+  // - With ≥1 elastic column: table is w-full so the elastic column(s) fill the
+  //   slack; minWidth = Σ fixed widths keeps the fixed columns intact (elastic
+  //   shrinks freely when the container is narrow).
+  // - With no elastic column: table width = Σ widths, so a wide container leaves
+  //   plain background to the right and a narrow one scrolls instead of squashing.
+  const fixedWidth = cols.reduce((s, c) => s + (c.width || 0), 0);
+  const hasElastic = cols.some((c) => !c.width);
 
   return (
     <div
@@ -139,24 +145,26 @@ export function CashBankLinesEditor({
     >
       {!readOnly && (
         <div className="mb-2 flex flex-wrap items-center justify-end gap-1 text-[11px] text-muted-foreground">
-          Klik cell lalu ketik / <Kbd>Enter</Kbd> untuk edit · <Kbd>↑↓←→</Kbd> pindah ·{' '}
-          <Kbd>Tab</Kbd>/<Kbd>↓</Kbd> di akhir = baris baru · <Kbd>Ctrl</Kbd>+<Kbd>Del</Kbd> hapus baris
+          Klik cell lalu ketik / <Kbd>F2</Kbd> untuk edit · <Kbd>Enter</Kbd> maju ke kolom berikutnya ·{' '}
+          <Kbd>↑↓←→</Kbd> pindah · <Kbd>Tab</Kbd>/<Kbd>↓</Kbd> di akhir = baris baru ·{' '}
+          <Kbd>Ctrl</Kbd>+<Kbd>Del</Kbd> hapus baris
         </div>
       )}
 
-      <Table className="table-fixed" style={{ minWidth: tableMinWidth }}>
+      <Table
+        className={hasElastic ? 'table-fixed w-full' : 'table-fixed !w-auto'}
+        style={hasElastic ? { minWidth: fixedWidth } : { width: fixedWidth, minWidth: fixedWidth }}
+      >
         <TableHeader>
           <TableRow>
             {cols.map((c) => (
               <TableHead
                 key={c.dataField}
-                style={{ width: c.width, textAlign: c.cellEditor === 'ROWNUM' ? 'center' : c.dataType === 'NUMBER' ? 'right' : 'left' }}
+                style={{ width: c.width || undefined, textAlign: c.cellEditor === 'ROWNUM' ? 'center' : c.dataType === 'NUMBER' ? 'right' : 'left' }}
               >
                 {c.headerText}
               </TableHead>
             ))}
-            {/* Elastic spacer: absorbs slack so configured widths stay exact. */}
-            <TableHead aria-hidden />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -183,6 +191,7 @@ export function CashBankLinesEditor({
                       editing={isEdit}
                       seed={isEdit ? seed : undefined}
                       selectOnFocus={selectOnFocus}
+                      autoOpenModal={isEdit ? openModal : false}
                       onSet={(value, label) => patch(l.key, buildCellPatch(l, c, value, label))}
                       onSelect={() => { if (!readOnly) selectCell(i, ci); }}
                       onEdit={() => { if (!readOnly) editCell(i, ci); }}
@@ -190,7 +199,6 @@ export function CashBankLinesEditor({
                     />
                   );
                 })}
-                <TableCell aria-hidden />
               </TableRow>
             ))
           )}
