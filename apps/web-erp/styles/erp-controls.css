@@ -369,17 +369,6 @@
   background-color: color-mix(in oklab, var(--panel-hover) 60%, transparent);
 }
 
-/* Flush header cells — drop the shared TableHead horizontal padding here, and
-   match the body cells (zero their inner content padding) so columns align. */
-.cashbank-lines thead th {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-.cashbank-lines tbody td > div {
-  padding-left: 0;
-  padding-right: 0;
-}
-
 .lines tr.adder td .cell {
   color: var(--fg-faint);
 }

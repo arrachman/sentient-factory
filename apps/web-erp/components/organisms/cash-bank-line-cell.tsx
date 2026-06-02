@@ -224,7 +224,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, 
 
     case 'NONE':
       return (
-        <div className="flex h-[var(--row-h)] items-center px-[10px] text-[var(--fg-subtle)]">
+        <div className="flex h-[var(--row-h)] items-center text-[var(--fg-subtle)]">
           {value || '—'}
         </div>
       );
@@ -302,11 +302,11 @@ export function LineCell(props: LineCellProps) {
 
   return (
     <TableCell
+      padX={false}
       className={cn('p-0 align-middle', selected && !editing && !skippable && 'shadow-[inset_0_0_0_2px_var(--primary)]')}
     >
       {editing && !skippable ? (
         <div
-          className="px-[10px]"
           onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) onEndEdit(false); }}
         >
           <EditControl {...props} />
@@ -318,7 +318,7 @@ export function LineCell(props: LineCellProps) {
           onClick={skippable ? undefined : onSelect}
           onDoubleClick={skippable ? undefined : onEdit}
           className={cn(
-            'flex h-[var(--row-h)] w-full select-none items-center truncate px-[10px]',
+            'flex h-[var(--row-h)] w-full select-none items-center truncate',
             skippable ? 'cursor-default opacity-70' : 'cursor-pointer',
             numeric && 'justify-end tabular-nums',
             editor === 'CHECKBOX' && 'justify-center',

@@ -81,12 +81,13 @@ TableRow.displayName = 'TableRow';
 
 export const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean }
->(({ className, numeric, ...props }, ref) => (
+  React.ThHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean; padX?: boolean }
+>(({ className, numeric, padX = true, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      'sticky top-0 z-10 h-[var(--header-h)] overflow-hidden truncate border-b border-border bg-secondary !px-[10px] !py-0 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground',
+      'sticky top-0 z-10 h-[var(--header-h)] overflow-hidden truncate border-b border-border bg-secondary !py-0 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground',
+      padX && '!px-[10px]',
       numeric && 'text-right',
       className,
     )}
@@ -97,12 +98,13 @@ TableHead.displayName = 'TableHead';
 
 export const TableCell = React.forwardRef<
   HTMLTableCellElement,
-  React.TdHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean }
->(({ className, numeric, ...props }, ref) => (
+  React.TdHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean; padX?: boolean }
+>(({ className, numeric, padX = true, ...props }, ref) => (
   <td
     ref={ref}
     className={cn(
-      'h-[var(--row-h)] overflow-hidden truncate border-b border-border !px-[10px] !py-0',
+      'h-[var(--row-h)] overflow-hidden truncate border-b border-border !py-0',
+      padX && '!px-[10px]',
       numeric &&
         'text-right font-mono tabular-nums',
       className,

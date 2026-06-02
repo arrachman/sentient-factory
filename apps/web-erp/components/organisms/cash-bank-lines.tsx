@@ -145,6 +145,7 @@ export function CashBankLinesEditor({
             {cols.map((c) => (
               <TableHead
                 key={c.dataField}
+                padX={false}
                 style={{ width: c.width, textAlign: c.dataType === 'NUMBER' || c.cellEditor === 'ROWNUM' ? 'right' : 'left' }}
               >
                 {c.headerText}
