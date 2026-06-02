@@ -1,6 +1,25 @@
 import * as React from 'react';
 import { SearchSelectColumn, SearchSelectOption } from './search-select-types';
 
+/** Display label builder — "{code} - {label}" when code is present. */
+export const optLabel = (opt: SearchSelectOption): string =>
+  opt.code ? `${opt.code} - ${opt.label}` : opt.label;
+
+/**
+ * Prioritaskan exact code match: kalau dalam results ada tepat 1 row dgn
+ * code == query (case-insensitive), auto-pilih row itu — meskipun results
+ * total > 1 (mis. nama lain ikut match LIKE). §2.30
+ */
+export function pickExactCodeMatch(
+  results: SearchSelectOption[],
+  q: string,
+): SearchSelectOption | null {
+  const qLower = q.trim().toLowerCase();
+  if (!qLower) return null;
+  const exact = results.filter((r) => String(r.code ?? '').toLowerCase() === qLower);
+  return exact.length === 1 ? exact[0] : null;
+}
+
 export interface SearchSelectState {
   // Modal state
   open: boolean;
