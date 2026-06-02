@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icons';
 import { NumInput } from '@/components/molecules/num-input';
 import { DateInput } from '@/components/ui/date-input';
-import { BooleanRadio } from '@/components/ui/radio-group';
+import { BooleanRadio, RadioGroup, type RadioOption } from '@/components/ui/radio-group';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
   Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogClose,
@@ -21,7 +21,7 @@ import {
   loadLocationOptions, loadCurrencyOptions,
 } from '@/components/pages/items-form-lookups';
 import { buildLookupLoader, BUILTIN_SOURCE } from '@/lib/lookup-source-registry';
-import type { ErpFormField, FormFieldType } from '@/lib/api/form-fields';
+import { TODAY_DEFAULT, type ErpFormField, type FormFieldType } from '@/lib/api/form-fields';
 import type { SearchSelectProps } from '@/components/molecules/search-select-types';
 import { LookupConfigSection, hasLookupConfig } from './form-builder-lookup-config';
 
@@ -37,6 +37,55 @@ const BUILTIN_LOADERS: Partial<Record<FormFieldType, LoaderFn>> = {
   LOCATION: loadLocationOptions,
   CURRENCY: loadCurrencyOptions,
 };
+
+type DateMode = 'empty' | 'today' | 'fixed';
+const DATE_MODE_OPTIONS: ReadonlyArray<RadioOption<DateMode>> = [
+  { value: 'empty', label: 'Kosong' },
+  { value: 'today', label: 'Hari ini' },
+  { value: 'fixed', label: 'Tanggal tetap' },
+];
+const isoToday = () => new Date().toISOString().slice(0, 10);
+
+/**
+ * Default-value editor for DATE fields: choose "Kosong" (no default),
+ * "Hari ini" (dynamic — stores the {@link TODAY_DEFAULT} sentinel, resolved to
+ * the current date when a record opens), or "Tanggal tetap" (a fixed ISO date).
+ */
+function DateDefaultEditor({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string | null) => void;
+}) {
+  const mode: DateMode = !value ? 'empty' : value === TODAY_DEFAULT ? 'today' : 'fixed';
+  const setMode = (m: DateMode) => {
+    if (m === 'empty') onChange(null);
+    else if (m === 'today') onChange(TODAY_DEFAULT);
+    else onChange(value && value !== TODAY_DEFAULT ? value : isoToday());
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <RadioGroup
+        value={mode}
+        onValueChange={setMode}
+        options={DATE_MODE_OPTIONS}
+        aria-label="Mode nilai default tanggal"
+      />
+      {mode === 'today' && (
+        <span className="text-[11px] text-muted-foreground">
+          Otomatis terisi tanggal hari ini setiap menambah data baru.
+        </span>
+      )}
+      {mode === 'fixed' && (
+        <DateInput
+          value={value === TODAY_DEFAULT ? '' : value}
+          onChange={(v) => onChange(v || null)}
+        />
+      )}
+    </div>
+  );
+}
 
 /** Type-aware editor for a field's default value. Stores lookup id / raw string. */
 function DefaultValueEditor({
@@ -70,7 +119,7 @@ function DefaultValueEditor({
   }
 
   if (field.fieldType === 'DATE') {
-    return <DateInput value={value} onChange={(v) => onChange(v || null)} />;
+    return <DateDefaultEditor value={value} onChange={onChange} />;
   }
 
   if (field.fieldType === 'NUMBER') {

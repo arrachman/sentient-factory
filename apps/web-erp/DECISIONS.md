@@ -1903,6 +1903,15 @@ untuk **semua** tipe field:
   custom keys masuk `customFields`. Untuk structural **lookup** (partner/account/
   branch/location), patch **ikut mengisi `*Label`** dari `defaultValueLabel` config
   → picker langsung tampil label benar tanpa round-trip.
+- **Default tanggal: "Hari ini" dinamis + fixed (2026-06-02):** editor nilai default
+  field DATE = segmented `Kosong / Hari ini / Tanggal tetap` (`DateDefaultEditor` di
+  `form-builder-field-settings.tsx`). "Hari ini" simpan sentinel **`@today`**
+  (`TODAY_DEFAULT` di `lib/api/form-fields.ts`); `formDefaultsPatch` resolve `@today`
+  → `todayIso()` saat apply. **`transactionDate` di-override** oleh default config
+  walau baseline-nya sudah today (effect jalan sekali pra-input, jadi aman) — beda
+  dari field lain yang fill-empty. Tanpa default config → tetap fallback baseline
+  today. Backend simpan `@today` apa adanya (string), resolver label lookup tak
+  menyentuhnya (DATE bukan lookup).
 - **Currency default = config-driven (2026-06-02, FIXED):** dulu effect mount
   meng-hardcode `currencyId = find(IDR) ?? currencies[0]` dengan closure `data`
   basi → **menimpa** default Form Builder; karena IDR (id=1) di luar 100 baris

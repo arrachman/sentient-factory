@@ -5,6 +5,7 @@
 
 import { newCashLine, type CashLineRow } from '@/components/organisms/cash-bank-lines';
 import { type GiroRow } from '@/components/organisms/cash-bank-giros';
+import { TODAY_DEFAULT } from '@/lib/api/form-fields';
 import type { FormFieldsConfig } from '@/lib/use-form-fields';
 import type {
   CashBankDirection,
@@ -97,11 +98,20 @@ export function formDefaultsPatch(
   for (const key of Object.keys(config.byKey)) {
     const f = config.byKey[key];
     if (isEmpty(f.defaultValue)) continue;
+    // DATE "@today" sentinel → the current date (dynamic default).
+    const val = f.fieldType === 'DATE' && f.defaultValue === TODAY_DEFAULT
+      ? todayIso()
+      : f.defaultValue!;
     if (f.kind === 'CUSTOM') {
-      if (isEmpty(data.customFields[key])) customPatch[key] = f.defaultValue!;
+      if (isEmpty(data.customFields[key])) customPatch[key] = val;
     } else if ((STRUCTURAL_DEFAULT_KEYS as readonly string[]).includes(key)) {
-      if (isEmpty((data as unknown as Record<string, unknown>)[key])) {
-        (patch as Record<string, unknown>)[key] = f.defaultValue!;
+      // DATE structural (transactionDate) is pre-seeded with today; a configured
+      // default should still win on a fresh record → override. This runs once,
+      // before any user input, so it never clobbers entered data. Other keys:
+      // fill-empty only.
+      const overridable = f.fieldType === 'DATE';
+      if (overridable || isEmpty((data as unknown as Record<string, unknown>)[key])) {
+        (patch as Record<string, unknown>)[key] = val;
         // Carry the resolved label so the picker shows it without a round-trip.
         const labelKey = STRUCTURAL_LABEL_KEYS[key];
         if (labelKey && f.defaultValueLabel) {

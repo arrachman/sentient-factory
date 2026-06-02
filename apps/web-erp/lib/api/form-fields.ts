@@ -10,6 +10,13 @@ export const FORM_FIELD_TYPES = [
 ] as const;
 export const FORM_COLUMN_SLOTS = ['LEFT', 'CENTER', 'RIGHT'] as const;
 
+/**
+ * Sentinel stored in a DATE field's `defaultValue` meaning "resolve to the
+ * current date each time a new record opens" (dynamic), as opposed to a fixed
+ * ISO date string. Resolved at form-fill time — never persisted as a real date.
+ */
+export const TODAY_DEFAULT = '@today';
+
 export type FormFieldKind = (typeof FORM_FIELD_KINDS)[number];
 export type FormFieldType = (typeof FORM_FIELD_TYPES)[number];
 export type FormColumnSlot = (typeof FORM_COLUMN_SLOTS)[number];
