@@ -132,44 +132,60 @@ export function hasLookupConfig(field: ErpFormField): boolean {
   );
 }
 
-/** Lookup source + default sort + default filter editor. Body only (no popover wrapper). */
-export function LookupConfigSection({
-  field,
-  onUpdate,
-}: {
-  field: ErpFormField;
-  onUpdate: (patch: Partial<ErpFormField>) => void;
-}) {
-  const isLookup = field.fieldType === 'LOOKUP';
-  const builtinSource = BUILTIN_SOURCE[field.fieldType as FormFieldType];
-  const effectiveSource = isLookup ? field.lookupSource : builtinSource;
-  const schema = getSourceSchema(effectiveSource);
+/** Patch emitted by the generic lookup editor (subset of any lookup-carrying record). */
+export interface LookupConfigPatch {
+  lookupSource?: string | null;
+  lookupDefaultSort?: string | null;
+  lookupDefaultFilter?: Record<string, unknown>;
+}
 
-  const [sortField, sortDir] = (field.lookupDefaultSort ?? ':asc').split(':');
+/**
+ * Generic source + default-sort + default-filter editor. Body only (no popover).
+ * Reused by Form Builder fields and Kustomisasi Grid columns — both carry the
+ * same `lookupSource`/`lookupDefaultSort`/`lookupDefaultFilter` shape.
+ */
+export function LookupSortFilterFields({
+  source,
+  sourceEditable,
+  defaultSort,
+  defaultFilter,
+  onChange,
+  resetKey,
+}: {
+  source: string | null | undefined;
+  sourceEditable: boolean;
+  defaultSort: string | null | undefined;
+  defaultFilter: Record<string, unknown> | null | undefined;
+  onChange: (patch: LookupConfigPatch) => void;
+  resetKey: string;
+}) {
+  const schema = getSourceSchema(source);
+
+  const [sortField, sortDir] = (defaultSort ?? ':asc').split(':');
   const [filterEntries, setFilterEntries] = React.useState<FilterEntry[]>(
-    () => filterToEntries(field.lookupDefaultFilter),
+    () => filterToEntries(defaultFilter),
   );
 
   React.useEffect(() => {
-    setFilterEntries(filterToEntries(field.lookupDefaultFilter));
-  }, [field.fieldKey]);
+    setFilterEntries(filterToEntries(defaultFilter));
+  }, [resetKey]);
 
   const commitFilter = (entries: FilterEntry[]) => {
     setFilterEntries(entries);
-    onUpdate({ lookupDefaultFilter: entriesToFilter(entries) });
+    onChange({ lookupDefaultFilter: entriesToFilter(entries) });
   };
 
   return (
     <>
         <p className="text-xs font-semibold text-foreground">Konfigurasi Lookup</p>
 
-        {/* Source selector — only editable for LOOKUP type */}
+        {/* Source selector — editable when the owner allows changing it */}
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Sumber data (MD)</span>
-          {isLookup ? (
+          {sourceEditable ? (
             <Select
-              value={field.lookupSource ?? ''}
-              onValueChange={(v) => onUpdate({ lookupSource: v || null })}
+              value={source ?? ''}
+              onValueChange={(v) => onChange({ lookupSource: v || null })}
             >
               <SelectTrigger className="h-7 text-xs"><SelectValue placeholder="Pilih sumber…" /></SelectTrigger>
               <SelectContent>
@@ -180,7 +196,7 @@ export function LookupConfigSection({
             </Select>
           ) : (
             <span className="flex h-7 items-center rounded-md border border-border bg-secondary/30 px-2 text-xs text-foreground">
-              {sourceLabelOf(effectiveSource)}
+              {sourceLabelOf(source)}
             </span>
           )}
         </div>
@@ -192,7 +208,7 @@ export function LookupConfigSection({
             {schema ? (
               <Select
                 value={sortField ?? ''}
-                onValueChange={(v) => onUpdate({ lookupDefaultSort: `${v}:${sortDir ?? 'asc'}` })}
+                onValueChange={(v) => onChange({ lookupDefaultSort: `${v}:${sortDir ?? 'asc'}` })}
               >
                 <SelectTrigger className="h-8 text-xs flex-1 min-w-0"><SelectValue placeholder="Pilih field…" /></SelectTrigger>
                 <SelectContent>
@@ -206,12 +222,12 @@ export function LookupConfigSection({
                 className="h-8 px-2 text-xs flex-1"
                 placeholder="field (e.g. name)"
                 value={sortField ?? ''}
-                onChange={(e) => onUpdate({ lookupDefaultSort: `${e.target.value}:${sortDir ?? 'asc'}` })}
+                onChange={(e) => onChange({ lookupDefaultSort: `${e.target.value}:${sortDir ?? 'asc'}` })}
               />
             )}
             <Select
               value={sortDir || 'asc'}
-              onValueChange={(v) => onUpdate({ lookupDefaultSort: `${sortField ?? 'name'}:${v}` })}
+              onValueChange={(v) => onChange({ lookupDefaultSort: `${sortField ?? 'name'}:${v}` })}
             >
               <SelectTrigger className="h-8 text-xs w-28"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -234,5 +250,29 @@ export function LookupConfigSection({
           <FilterTable entries={filterEntries} onChange={commitFilter} filterFields={schema?.filterFields} />
         </div>
     </>
+  );
+}
+
+/** Form-Builder wrapper: derives effective source from the field type. */
+export function LookupConfigSection({
+  field,
+  onUpdate,
+}: {
+  field: ErpFormField;
+  onUpdate: (patch: Partial<ErpFormField>) => void;
+}) {
+  const isLookup = field.fieldType === 'LOOKUP';
+  const builtinSource = BUILTIN_SOURCE[field.fieldType as FormFieldType];
+  const effectiveSource = isLookup ? field.lookupSource : builtinSource;
+
+  return (
+    <LookupSortFilterFields
+      source={effectiveSource}
+      sourceEditable={isLookup}
+      defaultSort={field.lookupDefaultSort}
+      defaultFilter={field.lookupDefaultFilter}
+      onChange={onUpdate}
+      resetKey={field.fieldKey}
+    />
   );
 }

@@ -23,6 +23,7 @@ import {
   EditableTextCell, EditableNumCell, EditableSelectCell, FlagCell,
   GridLookupSourceCell, cellSelectedStyle, type EditableCellHandle,
 } from '@/components/molecules/grid-editable-cells';
+import { GridColumnLookupSettings } from '@/components/pages/grid-column-lookup-settings';
 
 // ── constants ─────────────────────────────────────────────────────────────────
 
@@ -48,7 +49,9 @@ function isColChanged(a: ErpGridColumn, b: ErpGridColumn | undefined): boolean {
     a.width !== b.width || a.isVisible !== b.isVisible ||
     a.isRequired !== b.isRequired || a.isEditable !== b.isEditable ||
     a.isSkippable !== b.isSkippable || (a.columnType ?? null) !== (b.columnType ?? null) ||
-    (a.lookupSource ?? null) !== (b.lookupSource ?? null)
+    (a.lookupSource ?? null) !== (b.lookupSource ?? null) ||
+    (a.lookupDefaultSort ?? null) !== (b.lookupDefaultSort ?? null) ||
+    JSON.stringify(a.lookupDefaultFilter ?? null) !== JSON.stringify(b.lookupDefaultFilter ?? null)
   );
 }
 
@@ -97,7 +100,7 @@ const SortableColumnRow = React.memo(
       };
 
       const currentType: ColumnType = col.columnType
-        ?? inferColumnType(col.labelFormatter, col.cellRenderer, col.cellEditor);
+        ?? inferColumnType(col.labelFormatter, col.cellRenderer, col.cellEditor, col.dataType);
 
       const handleCellClick = (colId: string) => (e: React.MouseEvent) => {
         const t = e.target as HTMLElement;
@@ -129,7 +132,7 @@ const SortableColumnRow = React.memo(
             </button>
           </TableCell>
           <TableCell style={{ width: 48 }}>
-            <div className="flex items-center justify-end gap-1 text-muted-foreground">
+            <div className="flex items-center justify-center gap-1 text-muted-foreground">
               {index + 1}
               {isColChanged(col, saved) && <span title="Belum disimpan" className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />}
             </div>
@@ -150,7 +153,12 @@ const SortableColumnRow = React.memo(
           <TableCell style={cellSelectedStyle(selectedCells.has('columnType'))} onClick={() => onCellSelect(index, 'columnType')}>
             <EditableSelectCell value={currentType} onChange={handleTypeChange} />
             {currentType === 'lookup' && (
-              <GridLookupSourceCell value={col.lookupSource} onChange={(v) => onPatch(index, { lookupSource: v })} />
+              <div className="mt-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <div className="min-w-0 flex-1">
+                  <GridLookupSourceCell value={col.lookupSource} onChange={(v) => onPatch(index, { lookupSource: v })} />
+                </div>
+                <GridColumnLookupSettings col={col} onPatch={(p) => onPatch(index, p)} />
+              </div>
             )}
           </TableCell>
           <TableCell truncate={false} className="text-center" style={{ width: 48 }}>
@@ -325,7 +333,7 @@ export function GridCustomizationColumns({ columns, savedColumns, onColumnsChang
             <TableHeader>
               <TableRow>
                 <TableHead style={{ width: 36 }} />
-                <TableHead style={{ width: 48, textAlign: 'right' }}>No</TableHead>
+                <TableHead style={{ width: 48, textAlign: 'center' }}>No</TableHead>
                 <TableHead style={{ width: 260 }}>Header Text</TableHead>
                 <TableHead style={{ width: 200 }}>Data Field</TableHead>
                 <TableHead style={{ width: 90, textAlign: 'right' }}>Lebar</TableHead>

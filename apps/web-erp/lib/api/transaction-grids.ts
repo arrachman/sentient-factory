@@ -83,10 +83,15 @@ export const COLUMN_TYPE_PRESETS: Record<ColumnType, ColumnTypePreset> = {
 };
 
 // Derives the best matching ColumnType from existing slot values (for loading saved columns).
+// `dataType` is the legacy storage type and the last-resort fallback: columns seeded
+// before the semantic slots existed carry only `dataType` (cellEditor/columnType null),
+// so it must mirror `effectiveEditor()` in the live grid — otherwise a LOOKUP column
+// would falsely read as "Text" here while the grid renders a search picker.
 export function inferColumnType(
   labelFormatter?: LabelFormatter | null,
   cellRenderer?: CellRenderer | null,
   cellEditor?: CellEditor | null,
+  dataType?: GridDataType | null,
 ): ColumnType {
   // Try to match by cellEditor first (most specific)
   const editorMap: Partial<Record<CellEditor, ColumnType>> = {
@@ -115,6 +120,12 @@ export function inferColumnType(
     }
     return candidate;
   }
+  // No semantic editor configured (legacy rows) → fall back to storage dataType,
+  // matching effectiveEditor() in the live grid so the label never contradicts
+  // how the cell actually renders.
+  if (dataType === 'LOOKUP') return 'lookup';
+  if (dataType === 'NUMBER') return 'number';
+  if (dataType === 'DATE') return 'date';
   return 'text';
 }
 
@@ -142,6 +153,8 @@ export interface ErpGridColumn {
   kind: GridColumnKind;
   dataType: GridDataType;
   lookupSource?: string | null;
+  lookupDefaultFilter?: Record<string, unknown> | null;
+  lookupDefaultSort?: string | null;
   columnType?: ColumnType | null;
   labelFormatter?: LabelFormatter | null;
   headerRenderer?: HeaderRenderer | null;
@@ -199,6 +212,9 @@ export const saveTransactionGrids = (code: string, grids: ErpTransactionGrid[]) 
         kind: c.kind,
         dataType: c.dataType,
         lookupSource: c.lookupSource ?? undefined,
+        lookupDefaultFilter: c.lookupDefaultFilter && Object.keys(c.lookupDefaultFilter).length > 0
+          ? c.lookupDefaultFilter : undefined,
+        lookupDefaultSort: c.lookupDefaultSort ?? undefined,
         columnType: c.columnType ?? undefined,
         labelFormatter: c.labelFormatter ?? undefined,
         headerRenderer: c.headerRenderer ?? undefined,

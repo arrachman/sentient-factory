@@ -1,20 +1,9 @@
-// Resolves a Kustomisasi-Grid `lookupSource` slug → a SearchSelect loader.
-// Unifies two historical vocabularies onto the canonical lookup-source-registry
-// slugs (the ones used by Form Builder & shown in the source picker):
-//   - 6 sources were already wired in the live grid with short slugs
-//     (`account`, `partner`, `costCenter`, …) — kept as back-compat ALIASES so
-//     rows/seed saved before unification keep resolving.
-//   - 4 new sources (Cabang/Lokasi/Mata Uang/Gudang) come from the shared
-//     registry via `buildLookupLoader`.
+// Resolves a Kustomisasi-Grid `lookupSource` slug (+ optional default filter/sort)
+// → a SearchSelect loader. Everything routes through the shared lookup-source
+// registry (`buildLookupLoader`), so the 10 sources, their default filter and
+// default sort behave identically to Form Builder. Legacy short slugs
+// (`account`, `costCenter`, …) saved before unification are aliased.
 
-import {
-  loadAccountOptionsCoded,
-  loadCostCenterOptions,
-  loadDivisionOptions,
-  loadSubDivisionOptions,
-  loadProjectOptions,
-  loadPartnerOptions,
-} from '@/components/pages/items-form-lookups';
 import { buildLookupLoader } from '@/lib/lookup-source-registry';
 
 export type GridLookupLoader = (
@@ -39,27 +28,19 @@ export function canonicalSource(source: string | null | undefined): string {
   return SOURCE_ALIAS[source] ?? source;
 }
 
-// Canonical-slug → loader. The 6 already-wired sources keep their existing
-// loaders (preserves the account "No · Nama" display); the 4 new ones are built
-// from the shared registry.
-const LOADERS: Record<string, GridLookupLoader> = {
-  accounts:        loadAccountOptionsCoded as unknown as GridLookupLoader,
-  partners:        loadPartnerOptions as unknown as GridLookupLoader,
-  'cost-centers':  loadCostCenterOptions as unknown as GridLookupLoader,
-  divisions:       loadDivisionOptions as unknown as GridLookupLoader,
-  'sub-divisions': loadSubDivisionOptions as unknown as GridLookupLoader,
-  projects:        loadProjectOptions as unknown as GridLookupLoader,
-  branches:        buildLookupLoader('branches')   as unknown as GridLookupLoader,
-  locations:       buildLookupLoader('locations')  as unknown as GridLookupLoader,
-  currencies:      buildLookupLoader('currencies') as unknown as GridLookupLoader,
-  warehouses:      buildLookupLoader('warehouses') as unknown as GridLookupLoader,
-};
-
 /** Default loader when a column has no (or an unknown) source. */
-export const DEFAULT_LOOKUP_LOADER: GridLookupLoader = LOADERS.accounts;
+export const DEFAULT_LOOKUP_LOADER = buildLookupLoader('accounts') as unknown as GridLookupLoader;
 
-/** Loader for a grid `lookupSource` slug (old or canonical), or null if unknown. */
-export function gridLookupLoader(source: string | null | undefined): GridLookupLoader | null {
+/**
+ * Loader for a grid lookup column. Merges the column's default filter/sort into
+ * every fetch. Returns null if the slug is unknown.
+ */
+export function gridLookupLoader(
+  source: string | null | undefined,
+  defaultFilter?: Record<string, unknown> | null,
+  defaultSort?: string | null,
+): GridLookupLoader | null {
   const s = canonicalSource(source);
-  return s ? (LOADERS[s] ?? null) : null;
+  if (!s) return null;
+  return buildLookupLoader(s, defaultFilter ?? null, defaultSort ?? null) as GridLookupLoader | null;
 }
