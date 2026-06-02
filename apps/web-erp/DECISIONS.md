@@ -1636,15 +1636,21 @@ nomor baris bisa dipasang lewat Kustomisasi Grid — bukan statik lagi.
 
 - **Catalog (`lib/api/transaction-grids.ts` + DTO `save-grid-columns.dto.ts`):**
   `columnType` baru `'rownum'` → preset slot `{ labelFormatter: NUMBER, headerRenderer:
-  DEFAULT, cellRenderer: NUMERIC, cellEditor: 'ROWNUM' }`. Slot `cellEditor` dapat
+  CENTER, cellRenderer: NUMERIC, cellEditor: 'ROWNUM' }`. Slot `cellEditor` dapat
   nilai baru **`ROWNUM`** (ditambah di allowlist FE **dan** DTO backend `@IsIn`).
   `inferColumnType` memetakan `ROWNUM → rownum` agar kolom tersimpan round-trip.
 - **Read-only auto:** nilai = posisi baris (`rowIndex + 1`), **tidak** disimpan ke
   data/`custom_fields`. Live grid (`cash-bank-line-cell.tsx`) render via
-  `effectiveEditor === 'ROWNUM'` → angka rata-kanan `tabular-nums` muted; header
-  ikut rata-kanan. `toGridCols` (`cash-bank-lines.tsx`) memaksa `isEditable=false`
+  `effectiveEditor === 'ROWNUM'` → angka **rata-tengah** `tabular-nums` muted; header
+  ikut **rata-tengah**. `toGridCols` (`cash-bank-lines.tsx`) memaksa `isEditable=false`
   untuk kolom ROWNUM (tak bisa diketik/diedit walau admin set Edit). `rowIndex`
   dioper `cash-bank-lines.tsx` → `LineCell`.
+
+**Update 2026-06-02 — alignment Nomor Urut = center.** Atas permintaan user, tipe
+`rownum` diset rata-tengah (sebelumnya rata-kanan): preset `headerRenderer: CENTER`,
+header live grid `textAlign: center` saat `cellEditor === 'ROWNUM'`, dan cell value
+(display + edit control) `justify-center` (dipisah dari flag `numeric` yang tetap
+`justify-end`).
 - **DB:** tanpa migrasi — `columnType`/`cellEditor` sudah `String?` (allowlist app-level).
 
 ---

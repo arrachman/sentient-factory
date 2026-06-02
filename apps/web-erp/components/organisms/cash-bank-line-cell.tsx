@@ -106,7 +106,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, onSet, 
     case 'ROWNUM':
       // Auto sequence — read-only, never truly entered (column forced non-editable).
       return (
-        <div className="flex h-[var(--row-h)] items-center justify-end tabular-nums text-[var(--fg-subtle)]">
+        <div className="flex h-[var(--row-h)] items-center justify-center tabular-nums text-[var(--fg-subtle)]">
           {(rowIndex ?? 0) + 1}
         </div>
       );
@@ -296,7 +296,8 @@ function displayCell(col: GridCol, value: string, label?: string, rowIndex?: num
 export function LineCell(props: LineCellProps) {
   const { col, value, label, rowIndex, selected, editing, onSelect, onEdit, onEndEdit } = props;
   const editor = effectiveEditor(col);
-  const numeric = editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' || editor === 'ROWNUM';
+  const numeric = editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER';
+  const isRownum = editor === 'ROWNUM';
   // "Skip" flag (Kustomisasi Grid) → cell can never be focused/selected/edited.
   const skippable = !!col.isSkippable;
 
@@ -321,7 +322,8 @@ export function LineCell(props: LineCellProps) {
             'flex h-[var(--row-h)] w-full select-none items-center truncate',
             skippable ? 'cursor-default opacity-70' : 'cursor-pointer',
             numeric && 'justify-end tabular-nums',
-            editor === 'CHECKBOX' && 'justify-center',
+            (isRownum || editor === 'CHECKBOX') && 'justify-center',
+            isRownum && 'tabular-nums',
           )}
         >
           {(() => {

@@ -64,7 +64,7 @@ export interface ColumnTypePreset {
 export const COLUMN_TYPE_PRESETS: Record<ColumnType, ColumnTypePreset> = {
   text:           { labelFormatter: 'NONE',     headerRenderer: 'DEFAULT', cellRenderer: 'TEXT',    cellEditor: 'TEXT'           },
   number:         { labelFormatter: 'NUMBER',   headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'NUMBER'         },
-  rownum:         { labelFormatter: 'NUMBER',   headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'ROWNUM'         },
+  rownum:         { labelFormatter: 'NUMBER',   headerRenderer: 'CENTER',  cellRenderer: 'NUMERIC', cellEditor: 'ROWNUM'         },
   currency:       { labelFormatter: 'CURRENCY', headerRenderer: 'DEFAULT', cellRenderer: 'CURRENCY',cellEditor: 'NUMBER'         },
   decimal:        { labelFormatter: 'DECIMAL',  headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'NUMBER'         },
   percent:        { labelFormatter: 'PERCENT',  headerRenderer: 'DEFAULT', cellRenderer: 'NUMERIC', cellEditor: 'NUMBER'         },
