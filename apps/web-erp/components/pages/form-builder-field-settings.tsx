@@ -14,7 +14,7 @@ import { DateInput } from '@/components/ui/date-input';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { SearchSelect } from '@/components/molecules/search-select';
 import {
-  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogBody,
+  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogClose,
 } from '@/components/ui/dialog';
 import {
   loadPartnerOptions, loadAccountOptionsCoded, loadBranchOptions,
@@ -151,6 +151,17 @@ export function FieldSettingsPopover({
           )}
 
         </DialogBody>
+
+        <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+          <span className="text-[11px] text-muted-foreground">
+            Perubahan tersimpan otomatis ke draft — klik <b>Simpan</b> di toolbar untuk menyimpan permanen.
+          </span>
+          <DialogClose asChild>
+            <button type="button" className="btn primary shrink-0">
+              <Icon name="check" size={13} /> Selesai
+            </button>
+          </DialogClose>
+        </div>
       </DialogContent>
     </Dialog>
   );

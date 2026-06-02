@@ -1575,10 +1575,13 @@ nomor baris bawaan; bila perlu, tambahkan kolom sendiri lewat Kustomisasi Grid.
 Grid di-honor penuh di grid transaksi (`cash-bank-lines.tsx`):
 - **Tampil** (`isVisible`) → kolom hanya di-render bila visible (`toGridCols` filter).
 - **Edit** (`isEditable`) → cell bisa masuk mode edit; ROWNUM dipaksa non-editable.
-- **Skip** (`isSkippable`) → cell **tidak bisa difokus**: navigasi
-  Tab/Shift+Tab/panah ↔ melompatinya, klik tidak menyeleksi, double-click tidak
-  membuka editor (`useCashGridNav` skip-aware via `isFocusable`/`focusableFrom`;
-  `LineCell` render non-interaktif `cursor-default opacity-70`).
+- **Skip** (`isSkippable`) → cell **view-only**, bukan unfocusable (revisi
+  2026-06-02 dgn user): cell **tetap bisa di-select** (klik / panah ↔ / Tab
+  mendarat di sana, render `opacity-70` sbg petunjuk read-only) **tapi tidak bisa
+  masuk mode edit**. Yang melompatinya **hanya Enter** — lihat semantik Enter di
+  bawah. `useCashGridNav`: `isSelectable` (semua kolom terlihat) untuk klik/panah/
+  Tab vs `enterFrom`/`stepEnter` (skip-aware) untuk Enter; `isEditableCol` =
+  `isEditable && !isSkippable`.
 - **Wajib** (`isRequired`) → cell **harus diisi**. Konsekuensi: (a) **tidak bisa
   tambah baris baru** selagi baris terakhir punya kolom wajib kosong
   (`appendRow` di-gate `rowRequiredMissing`, fallback notif `warn`); (b) **tidak
@@ -1587,6 +1590,20 @@ Grid di-honor penuh di grid transaksi (`cash-bank-lines.tsx`):
   `guardSave` blokir Simpan/Simpan&Baru + notif + pindah ke tab Detail. Helper
   validasi (`isCellFilled`/`rowRequiredMissing`/`linesRequiredMissing`) di
   `cash-bank-line-model.ts`. ROWNUM dianggap selalu terisi (auto).
+
+**Semantik Enter di grid (revisi 2026-06-02 dgn user):** Enter **bukan lagi** pembuka
+edit — sekarang = **maju ke cell berikutnya** (alur data-entry cepat ala MyERP+),
+**melompati kolom Skip**. Mode edit dibuka via **F2 / double-click / mengetik**.
+**Mendarat di sebuah cell hanya menyeleksinya — TIDAK auto-buka editor**, termasuk
+saat baris baru di-append (Enter di akhir baris terakhir → tambah baris, mendarat &
+**tunggu** di cell, bukan langsung buka search). **Membuka = Enter kedua yang
+disengaja:** saat sel terpilih adalah **kolom Wajib (`isRequired`) yang masih KOSONG**,
+Enter **membuka** cell-nya (LOOKUP → window search `SearchSelect autoOpenModal`)
+alih-alih maju. Kalau kolom wajib itu **sudah terisi** → Enter maju normal (tidak
+buka ulang). Saat sedang edit: Enter = commit lalu maju, Tab = commit lalu pindah,
+Esc = batal. Wiring: `moveEnter` + guard `shouldOpenOnEnter` (pakai `isCellFilled`)
+di `useCashGridNav`; flag `openModal` dialirkan ke `LineCell.autoOpenModal`; helper
+`isLookupCol` di `cash-bank-line-model.ts`.
 
 **Catatan:** wiring `transactionCode` ke form CR/CD ada di file refactor cash-bank
 (`cash-bank-transaction-form.tsx` dkk). Seed katalog 29 transaksi (15 modul) +
@@ -1677,6 +1694,32 @@ Lokasi, Mata Uang, Cost Center, Divisi, Sub Divisi, Gudang, Proyek).
   baris/seed lama tetap resolve **tanpa migrasi DB**. `cash-bank-line-cell.tsx`
   pakai resolver baru. Seed `seed-erp-transaction-grids.ts` diperbarui ke slug
   kanonik.
+
+### Update 2026-06-02 — Konfigurasi Lookup kolom grid (sumber + urutan + filter)
+
+Kolom tipe **Lookup Kustom** kini punya **gear popover** (di sel Tipe Kolom, di
+samping picker sumber) berisi **Konfigurasi Lookup** lengkap: Sumber data +
+**Urutan default** + **Filter default** — paritas penuh dgn Form Builder.
+
+- **DB:** 2 kolom baru di `sys_transaction_grid_columns`:
+  `lookup_default_filter JSONB` + `lookup_default_sort TEXT` (nullable, mirror
+  `sys_form_fields`). Migrasi `20260602_001_erp_grid_lookup_config` (additive,
+  0 DROP; `migrate deploy` + `prisma generate` di container + restart).
+- **Backend:** DTO `GridColumnInputDto` + service create + GET pass-through
+  (include columns → otomatis terbawa).
+- **Editor reuse (DRY):** komponen generik **`LookupSortFilterFields`** diekstrak
+  dari `form-builder-lookup-config.tsx` (props: source/sourceEditable/defaultSort/
+  defaultFilter/onChange/resetKey). `LookupConfigSection` (Form Builder) jadi
+  wrapper tipis; popover grid =
+  [`grid-column-lookup-settings.tsx`](components/pages/grid-column-lookup-settings.tsx)
+  (`GridColumnLookupSettings`) pakai komponen generik yg sama. Schema sort/filter
+  per-sumber dari registry (`getSourceSchema`).
+- **Live grid:** `gridLookupLoader(source, defaultFilter?, defaultSort?)` kini
+  merge filter+sort ke tiap fetch via `buildLookupLoader` (semua sumber lewat
+  registry — loader akun shape-identik dgn loader lama, display "No · Nama"
+  tetap). `GridCol` + `toGridCols` + `cash-bank-line-cell.tsx` membawa 2 field
+  baru. API client `ErpGridColumn` + `saveTransactionGrids` + `isColChanged`
+  (deep-compare filter) ikut.
 
 ---
 
@@ -1816,6 +1859,13 @@ untuk **semua** tipe field:
   diekspor sebagai `LookupConfigSection` (tanpa popover wrapper) + helper
   `hasLookupConfig`. `FieldSettingsPopover` me-render section ini untuk tipe lookup
   → **satu** popover gabungan, bukan dua gear.
+- **Tanpa tombol submit di dialog (by design, 2026-06-02):** dialog meng-edit
+  draft secara *live* via `onUpdate` (propagasi ke state `fields` di
+  `form-builder-page.tsx`); persist permanen hanya lewat tombol **Simpan** di
+  toolbar halaman (`handleSave` → `saveFormFields`). Untuk afford­ance, dialog
+  punya **footer** dengan tombol **Selesai** (`DialogClose`) + hint "tersimpan
+  otomatis ke draft, klik Simpan untuk permanen". Jangan tambah tombol save
+  per-dialog — penyimpanan tetap di-batch satu kali di level halaman (+ Undo/Redo).
 
 **Konsumsi form (`cash-bank-transaction-form.tsx` + `cash-bank-custom-fields.tsx`):**
 - Placeholder: `ph(key, fallback)` = `config.placeholder || fallback`.
