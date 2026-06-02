@@ -1437,6 +1437,21 @@ slim filter bar + drawer (§2.40), keyboard nav. Karena form & filter CR/CD beda
   `ERP_PAGES` → `TRX_FORM_PAGES` (shell-route-renderer). File CR filter-fields lama
   dihapus (digantikan shared).
 
+**Config FIN.CD = mirror FIN.CR (2026-06-02).** Setup data config `FIN.CD` (live
+DB, bukan seed) disamakan dengan kurasi `FIN.CR` agar `cash-disbursements/new`
+tampil identik dgn Kas Masuk:
+- **Grid** (`sys_transaction_grid_columns`, primary grid): 15 kolom default seed →
+  9 kolom kurasi CR — kolom `No.` (ROWNUM), `No. Akun` (elastis width 0),
+  `Total`, `Total Valas` (hidden), `Catatan`, `Cost Center`, **Divisi / Sub Divisi /
+  Proyek visible**; slot kustom (customText/Double/Date) dibuang.
+- **Form** (`sys_form_fields`): tambah default record-baru CR yg belum ada di CD —
+  `transactionDate.defaultValue=@today` + `currencyId.defaultValue=1` (IDR).
+- Field struktural CD sudah lengkap & berlabel arah benar ("Bayar Ke"/"Akun Kas [K]")
+  sejak adopter kedua; custom field uji CR ("Field Baru") **tidak** disalin.
+- Kurasi grid/form = live-DB only (sama spt CR, lewat UI), **bukan** lewat seed —
+  re-run `seed-erp-transaction-grids.ts` me-recreate slot kustom default (perilaku
+  existing, berlaku CR & CD).
+
 **Belum (follow-up):** edit dokumen POSTED auto reverse+repost (sekarang diblok —
 reopen dulu); kolom User Input di tabel (filter User sudah ada); FE BD/transfer
 belum pakai backend baru ini (CR + CD sudah).
