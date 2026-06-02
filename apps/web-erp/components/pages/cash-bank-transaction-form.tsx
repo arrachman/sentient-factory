@@ -122,10 +122,13 @@ export function CashBankTransactionForm({
   React.useEffect(() => {
     if (data.id || defaultsApplied.current) return;
     if (Object.keys(loaded.byKey).length === 0) return; // real config not loaded yet
-    if (currencies.length === 0) return;                // currencies not loaded yet
-    defaultsApplied.current = true;
     const patch = formDefaultsPatch(data, loaded);
-    if (!data.currencyId && !patch.currencyId) {
+    // Config default is authoritative & needs no currency list. Only the
+    // base-currency fallback (no configured default) waits for currencies.
+    const needFallback = !data.currencyId && !patch.currencyId;
+    if (needFallback && currencies.length === 0) return;
+    defaultsApplied.current = true;
+    if (needFallback) {
       const idr = currencies.find((c) => c.code === 'IDR') ?? currencies[0];
       if (idr) patch.currencyId = idr.id;
     }
@@ -143,16 +146,16 @@ export function CashBankTransactionForm({
     // (the old hardcoded IDR fallback used to override the configured default).
     // Explicitly fetch IDR too: with 172 currencies the base currency sits past
     // the first page, so the base-currency fallback + its label would miss it.
-    Promise.all([
+    Promise.allSettled([
       listCurrencies({ page: 1, limit: 100, isActive: true }),
       listCurrencies({ search: 'IDR', limit: 5, isActive: true }),
-    ])
-      .then(([all, idr]) => {
-        const byId = new Map<string, ErpCurrency>();
-        [...all.data, ...idr.data].forEach((c) => byId.set(c.id, c));
-        setCurrencies([...byId.values()]);
-      })
-      .catch(() => {});
+    ]).then((res) => {
+      const byId = new Map<string, ErpCurrency>();
+      for (const r of res) {
+        if (r.status === 'fulfilled') r.value.data.forEach((c) => byId.set(c.id, c));
+      }
+      if (byId.size > 0) setCurrencies([...byId.values()]);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
