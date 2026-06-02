@@ -122,11 +122,16 @@ export function CashBankLinesEditor({
   const total = lines.reduce((s, l) => s + Number(l.amount || 0), 0);
   const totalFx = lines.reduce((s, l) => s + Number(l.amountFx || 0), 0);
   const hasFx = cols.some((c) => c.dataField === 'amountFx');
-  const colSpan = cols.length;
+  // +1 for the trailing elastic spacer column (absorbs extra width).
+  const colSpan = cols.length + 1;
+  // Fixed layout honours each column's px width exactly; min-width = Σ widths so
+  // a wide container lets the spacer absorb the slack (no scroll), a narrow one
+  // scrolls instead of squashing the columns.
+  const tableMinWidth = cols.reduce((s, c) => s + (c.width || 0), 0);
 
   return (
     <div
-      className="cashbank-lines outline-none"
+      className="cashbank-lines outline-none overflow-x-auto"
       ref={rootRef}
       tabIndex={readOnly ? -1 : 0}
       onKeyDown={onRootKeyDown}
@@ -139,7 +144,7 @@ export function CashBankLinesEditor({
         </div>
       )}
 
-      <Table>
+      <Table className="table-fixed" style={{ minWidth: tableMinWidth }}>
         <TableHeader>
           <TableRow>
             {cols.map((c) => (
@@ -150,6 +155,8 @@ export function CashBankLinesEditor({
                 {c.headerText}
               </TableHead>
             ))}
+            {/* Elastic spacer: absorbs slack so configured widths stay exact. */}
+            <TableHead aria-hidden />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -183,6 +190,7 @@ export function CashBankLinesEditor({
                     />
                   );
                 })}
+                <TableCell aria-hidden />
               </TableRow>
             ))
           )}
