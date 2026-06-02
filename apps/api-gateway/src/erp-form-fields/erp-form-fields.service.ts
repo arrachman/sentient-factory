@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveFormFieldsDto } from './dto/save-form-fields.dto';
+import { withDefaultValueLabels } from './lookup-label-resolver';
 
 // Default structural field configs per transaction-type code.
 // Only keys that differ per type need separate entries — most fields are shared.
@@ -89,7 +90,7 @@ export class ErpFormFieldsService {
       }
     }
 
-    return { code, fields };
+    return { code, fields: await withDefaultValueLabels(this.prisma, fields) };
   }
 
   /** Replace all fields for a transaction type (bulk save). */

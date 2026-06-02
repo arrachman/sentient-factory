@@ -1879,11 +1879,20 @@ untuk **semua** tipe field:
   pernah menimpa input user). Structural keys map langsung ke `CashBankFormData`;
   custom keys masuk `customFields`.
 
-**Keterbatasan diketahui:** untuk `defaultValue` bertipe lookup, form menyimpan id
-tapi `SearchSelect` belum menampilkan label terpilih saat awal (label di-resolve
-dari `data.*Label`/`initialLabel` yang belum terisi untuk default config) — nilai
-tetap benar saat simpan; label tampil setelah user membuka picker. Perbaikan label
-prefetch ditunda sampai dibutuhkan.
+**Label nilai default lookup di-resolve server-side (2026-06-02, FIXED):** dulu
+`defaultValue` lookup hanya menyimpan id; saat dialog dibuka ulang `SearchSelect`
+me-resolve label dari `loadOptions('', 1, limit)` (halaman pertama). Bila row
+tersimpan ada di luar halaman 1 (mis. IDR id=1 di antara 172 mata uang yang
+di-sort `createdAt desc`), label **tidak ketemu → field tampak kosong** → user
+mengira "tidak tersimpan" (padahal id tersimpan benar). **Fix:** backend
+`GET /transaction-forms/:code/fields` kini mengembalikan `defaultValueLabel`
+(`{code} - {name}`) untuk tiap field lookup ber-`defaultValue`, di-resolve di
+`erp-form-fields/lookup-label-resolver.ts` (`withDefaultValueLabels` — group id
+per slug, 1 query/slug, mendukung 10 sumber + alias slug lama). FE: tipe
+`ErpFormField.defaultValueLabel` + `DefaultValueEditor` oper `initialLabel` ke
+`SearchSelect`. Tanpa kolom DB baru (derived). **Catatan:** Kustomisasi Grid
+punya pola serupa untuk default lookup kolom — belum diberi resolver yang sama
+(belum dilaporkan bermasalah).
 
 ### Header form transaksi = render 100% dari config (no hardcoded layout) (2026-06-01)
 

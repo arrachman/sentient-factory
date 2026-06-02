@@ -62,6 +62,7 @@ function DefaultValueEditor({
       <SearchSelect
         placeholder="Pilih nilai default…"
         value={value}
+        initialLabel={field.defaultValueLabel ?? undefined}
         onValueChange={(v) => onChange(v || null)}
         loadOptions={loader}
       />

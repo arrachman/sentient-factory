@@ -44,6 +44,8 @@ export interface ErpFormField {
   placeholder?: string | null;
   /** Value prefilled on new records (lookup = id, others = raw string). */
   defaultValue?: string | null;
+  /** Resolved "{code} - {name}" label for a lookup `defaultValue` (server-derived, read-only). */
+  defaultValueLabel?: string | null;
   /** Always non-editable regardless of document workflow status. */
   isReadonly?: boolean;
   isRequired: boolean;
