@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { SaveGridsDto } from './dto/save-grid-columns.dto';
 
@@ -89,6 +90,8 @@ export class ErpSysTransactionGridsService {
                 kind: c.kind,
                 dataType: c.dataType,
                 lookupSource: c.lookupSource ?? null,
+                lookupDefaultFilter: (c.lookupDefaultFilter as Prisma.InputJsonValue) ?? Prisma.DbNull,
+                lookupDefaultSort: c.lookupDefaultSort ?? null,
                 columnType: c.columnType ?? null,
                 labelFormatter: c.labelFormatter ?? null,
                 headerRenderer: c.headerRenderer ?? null,

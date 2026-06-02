@@ -67,7 +67,9 @@ model ErpTransactionGridColumn {
   isSkippable Boolean @default(false) @map("is_skippable") // cell skipped during tab/arrow focus navigation
   kind         String  @default("STANDARD") @map("kind") // STANDARD | CUSTOM
   dataType     String  @default("TEXT") @map("data_type") // TEXT | NUMBER | DATE | LOOKUP
-  lookupSource String? @map("lookup_source") // for LOOKUP: account | costCenter | division | subdivision | project
+  lookupSource String? @map("lookup_source") // for LOOKUP: registry slug (accounts|partners|cost-centers|…); legacy slugs aliased at runtime
+  lookupDefaultFilter Json?   @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"isActive":true}
+  lookupDefaultSort   String? @map("lookup_default_sort") // "field:direction", e.g. "name:asc"
   // Semantic column type — single selector that derives all 4 presentation slots below.
   columnType     String? @map("column_type") // text|number|currency|decimal|percent|date|datetime|checkbox|lookup|textarea|badge|link|discount|stepper|combobox|account_picker|partner_picker
   // Presentation/edit slots (allowlist in DTO + FE dropdowns; null = derive from dataType)
