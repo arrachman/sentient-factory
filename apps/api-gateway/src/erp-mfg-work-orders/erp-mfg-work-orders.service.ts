@@ -185,7 +185,7 @@ export class ErpMfgWorkOrdersService {
       if (dto.sourceWarehouseId !== undefined) data.sourceWarehouseId = toBigInt(dto.sourceWarehouseId);
       if (dto.productionWarehouseId !== undefined) data.productionWarehouseId = toBigInt(dto.productionWarehouseId);
       if (dto.destinationWarehouseId !== undefined) data.destinationWarehouseId = toBigInt(dto.destinationWarehouseId);
-      if (dto.bomId !== undefined) data.bomId = toBigInt(dto.bomId);
+      if (dto.bomId !== undefined) data.bom = dto.bomId ? { connect: { id: BigInt(dto.bomId) } } : { disconnect: true };
       if (dto.requestedById !== undefined) data.requestedById = toBigInt(dto.requestedById);
       if (dto.requestedPartnerId !== undefined) data.requestedPartnerId = toBigInt(dto.requestedPartnerId);
       if (dto.neededDate !== undefined) data.neededDate = dto.neededDate ? new Date(dto.neededDate) : null;

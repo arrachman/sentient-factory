@@ -211,7 +211,7 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/sales/reports/revenue-collection': { group: 'Sales', title: 'Revenue & Collection', icon: 'stats' },
   '/sales/reports/by-group': { group: 'Sales', title: 'Sales by Group', icon: 'stats' },
   '/manufacturing/boms': { group: 'Produksi', title: 'Bill of Materials', icon: 'layers' },
-  '/manufacturing/work-orders': { group: 'Produksi', title: 'Work Order', icon: 'tool' },
+  '/manufacturing/work-orders': { group: 'Produksi', title: 'Work Order', icon: 'layers' },
 };
 
 // Merge in read-only "Data" register routes (derived from register configs) so

@@ -781,6 +781,16 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     ], m5RptGrp.id);
   }
 
+  // M6 Production — BOM + Work Order (frontend & backend live, 2026-06-03)
+  const m6Id = menuIds.get('M6');
+  if (m6Id) {
+    const m6TxGrp = await upsertMenu({ code: 'M6.TX', title: 'Transaksi', type: ErpMenuType.GROUP, parentId: m6Id, sortOrder: 1, legacyCode: '6-2' });
+    await bulkUpsertMenuItems([
+      { code: 'M6.TX.BOM', title: 'Bill of Materials (BOM)', path: '/manufacturing/boms',        legacyCode: '6-3' },
+      { code: 'M6.TX.WO',  title: 'Work Order (WO)',         path: '/manufacturing/work-orders', legacyCode: '6-4' },
+    ], m6TxGrp.id);
+  }
+
   console.log(`✓ sys_menus (${menuIds.size} entries)`);
   return menuIds;
 }
@@ -798,6 +808,8 @@ async function seedDocumentNumberings() {
     { documentCode: 'CASH_DISBURSEMENT', name: 'Kas Keluar (Cash Disbursement)', prefix: 'CD', digitCount: 6 },
     { documentCode: 'BANK_RECEIPT', name: 'Bank Masuk (Bank Receipt)', prefix: 'RM', digitCount: 6 },
     { documentCode: 'BANK_DISBURSEMENT', name: 'Bank Keluar (Bank Disbursement)', prefix: 'SM', digitCount: 6 },
+    { documentCode: 'BOM', name: 'Bill of Materials', prefix: 'BOM', digitCount: 6 },
+    { documentCode: 'WO', name: 'Work Order', prefix: 'WO', digitCount: 6 },
   ]) {
     await prisma.erpDocumentNumbering.upsert({
       where: { documentCode: n.documentCode },
