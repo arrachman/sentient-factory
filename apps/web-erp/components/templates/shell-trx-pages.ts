@@ -59,6 +59,7 @@ import { ErpFreightPayablesPage } from '@/components/pages/pur-freight-payables-
 import { ErpPaymentSchedulesPage } from '@/components/pages/pur-payment-schedules-page';
 import { ErpVendorPaymentsPage } from '@/components/pages/pur-vendor-payments-page';
 import { ErpOpeningApBalancePage } from '@/components/pages/pur-opening-ap-balance-page';
+import { ErpMfgBomsPage } from '@/components/pages/mfg-boms-page';
 import type { TrxFormPage } from '@/lib/trx-route';
 
 export const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
@@ -114,4 +115,5 @@ export const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/purchasing/payment-schedules': ErpPaymentSchedulesPage,
   '/purchasing/vendor-payments': ErpVendorPaymentsPage,
   '/purchasing/opening-ap-balance': ErpOpeningApBalancePage,
+  '/manufacturing/boms': ErpMfgBomsPage,
 };
