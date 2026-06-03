@@ -7,6 +7,7 @@
  */
 
 import type { IconName } from '@/components/ui/icons';
+import { REGISTER_ROUTE_META } from '@/lib/registers';
 
 export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconName }> = {
   '/admin/users': { group: 'Administrator', title: 'Users', icon: 'gear' },
@@ -206,3 +207,7 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/sales/reports/revenue-collection': { group: 'Sales', title: 'Revenue & Collection', icon: 'stats' },
   '/sales/reports/by-group': { group: 'Sales', title: 'Sales by Group', icon: 'stats' },
 };
+
+// Merge in read-only "Data" register routes (derived from register configs) so
+// their breadcrumbs/tab labels resolve via pageMeta() like any other ERP route.
+Object.assign(ERP_ROUTE_META, REGISTER_ROUTE_META);

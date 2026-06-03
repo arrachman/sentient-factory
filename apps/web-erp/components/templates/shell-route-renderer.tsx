@@ -115,6 +115,8 @@ import { ErpImportPage } from '@/components/pages/import-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import { resolveTrxFormRoute } from '@/lib/trx-route';
 import { TRX_FORM_PAGES } from './shell-trx-pages';
+import { DocumentRegisterPage } from '@/components/organisms/document-register-page';
+import { REGISTER_CONFIGS } from '@/lib/registers';
 import type { Lang } from '@/lib/shell-constants';
 import { InvReportPage } from '@/components/pages/inv-report-page';
 import { invReportOptions } from '@/lib/inv-report-options';
@@ -351,6 +353,24 @@ export function renderRoute(
         />
       );
     }
+  }
+
+  // ── Read-only "Data" registers (legacy DATA group): one config-driven page ──
+  const registerCfg = REGISTER_CONFIGS[route];
+  if (registerCfg) return <DocumentRegisterPage config={registerCfg} onNavigate={onNavigate} />;
+
+  // Serial Item Cards "Data" entry is a report, not a document register.
+  if (route === '/warehouse/data/serial-cards') {
+    const opt = invReportOptions('serial-cards');
+    return (
+      <InvReportPage
+        reportKey="serial-cards"
+        title={opt.title}
+        asOfMode={opt.asOfMode}
+        showItem={opt.showItem}
+        statusOptions={opt.statusOptions}
+      />
+    );
   }
 
   const TrxListPage = TRX_FORM_PAGES[route];
