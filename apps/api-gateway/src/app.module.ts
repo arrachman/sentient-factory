@@ -112,6 +112,9 @@ import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
 import { ErpFinCashBankTransactionsModule } from './erp-fin-cash-bank-transactions/erp-fin-cash-bank-transactions.module';
 import { ErpSlsOrdersModule } from './erp-sls-orders/erp-sls-orders.module';
 import { ErpPurOrdersModule } from './erp-pur-orders/erp-pur-orders.module';
+import { ErpPurRequisitionsModule } from './erp-pur-requisitions/erp-pur-requisitions.module';
+import { ErpPurInvoicesModule } from './erp-pur-invoices/erp-pur-invoices.module';
+import { ErpPurReturnsModule } from './erp-pur-returns/erp-pur-returns.module';
 import { ErpSysTransactionGridsModule } from './erp-sys-transaction-grids/erp-sys-transaction-grids.module';
 import { ErpFormFieldsModule } from './erp-form-fields/erp-form-fields.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
@@ -253,6 +256,9 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpFinCashBankTransactionsModule,
     ErpSlsOrdersModule,
     ErpPurOrdersModule,
+    ErpPurRequisitionsModule,
+    ErpPurInvoicesModule,
+    ErpPurReturnsModule,
     ErpSysTransactionGridsModule,
     ErpFormFieldsModule,
   ],

@@ -105,6 +105,10 @@ import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-jou
 import { ErpSlsOrdersPage } from '@/components/pages/sls-orders-page';
 // Purchasing (pur, m4)
 import { ErpPurOrdersPage } from '@/components/pages/pur-orders-page';
+import { ErpPurRequisitionsPage } from '@/components/pages/pur-requisitions-page';
+import { ErpPurInvoicesPage } from '@/components/pages/pur-invoices-page';
+import { ErpReturnShipmentsPage } from '@/components/pages/pur-return-shipments-page';
+import { ErpPurchaseReturnsPage } from '@/components/pages/pur-purchase-returns-page';
 // Audit Logs
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
 // Admin tools & identity pages
@@ -139,6 +143,10 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/bank-disbursements': ErpBankDisbursementsPage,
   '/sales/orders': ErpSlsOrdersPage,
   '/purchasing/purchase-orders': ErpPurOrdersPage,
+  '/purchasing/purchase-requisitions': ErpPurRequisitionsPage,
+  '/purchasing/purchase-invoices': ErpPurInvoicesPage,
+  '/purchasing/return-shipments': ErpReturnShipmentsPage,
+  '/purchasing/purchase-returns': ErpPurchaseReturnsPage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
