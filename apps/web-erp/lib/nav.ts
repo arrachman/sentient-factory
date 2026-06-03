@@ -293,6 +293,10 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/finance/adjustment-journals': { group: 'Finance', title: 'Adjustment Journal', icon: 'calculator' },
   '/finance/ledger': { group: 'Finance', title: 'General Ledger', icon: 'calculator' },
   '/sales/orders': { group: 'Sales', title: 'Sales Order', icon: 'trending-up' },
+  '/warehouse/material-requests': { group: 'Warehouse', title: 'Material Request', icon: 'boxes' },
+  '/warehouse/transfers': { group: 'Warehouse', title: 'Stock Transfer', icon: 'boxes' },
+  '/warehouse/transfer-receipts': { group: 'Warehouse', title: 'Transfer Receipt', icon: 'boxes' },
+  '/warehouse/fuel-refills': { group: 'Warehouse', title: 'Fuel Refill', icon: 'boxes' },
   '/settings/appearance': { group: 'Administrator', title: 'Appearance', icon: 'gear' },
 };
 
