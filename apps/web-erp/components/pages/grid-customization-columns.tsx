@@ -23,7 +23,7 @@ import {
   EditableTextCell, EditableNumCell, EditableSelectCell, FlagCell,
   GridLookupSourceCell, cellSelectedStyle, type EditableCellHandle,
 } from '@/components/molecules/grid-editable-cells';
-import { GridColumnLookupSettings } from '@/components/pages/grid-column-lookup-settings';
+import { GridColumnSettings } from '@/components/pages/grid-column-settings';
 
 // ── constants ─────────────────────────────────────────────────────────────────
 
@@ -51,7 +51,10 @@ function isColChanged(a: ErpGridColumn, b: ErpGridColumn | undefined): boolean {
     a.isSkippable !== b.isSkippable || (a.columnType ?? null) !== (b.columnType ?? null) ||
     (a.lookupSource ?? null) !== (b.lookupSource ?? null) ||
     (a.lookupDefaultSort ?? null) !== (b.lookupDefaultSort ?? null) ||
-    JSON.stringify(a.lookupDefaultFilter ?? null) !== JSON.stringify(b.lookupDefaultFilter ?? null)
+    JSON.stringify(a.lookupDefaultFilter ?? null) !== JSON.stringify(b.lookupDefaultFilter ?? null) ||
+    (a.placeholder ?? null) !== (b.placeholder ?? null) ||
+    (a.defaultValue ?? null) !== (b.defaultValue ?? null) ||
+    (a.defaultValueLabel ?? null) !== (b.defaultValueLabel ?? null)
   );
 }
 
@@ -151,13 +154,19 @@ const SortableColumnRow = React.memo(
           <FlagCell checked={col.isEditable} selected={selectedCells.has('isEditable')} onChange={(v) => onPatch(index, { isEditable: v })} onSelect={() => onCellSelect(index, 'isEditable')} />
           <FlagCell checked={col.isSkippable} selected={selectedCells.has('isSkippable')} onChange={(v) => onPatch(index, { isSkippable: v })} onSelect={() => onCellSelect(index, 'isSkippable')} />
           <TableCell style={cellSelectedStyle(selectedCells.has('columnType'))} onClick={() => onCellSelect(index, 'columnType')}>
-            <EditableSelectCell value={currentType} onChange={handleTypeChange} />
+            <div className="flex items-center gap-1">
+              <div className="min-w-0 flex-1">
+                <EditableSelectCell value={currentType} onChange={handleTypeChange} />
+              </div>
+              <span onClick={(e) => e.stopPropagation()}>
+                <GridColumnSettings col={col} onPatch={(p) => onPatch(index, p)} />
+              </span>
+            </div>
             {currentType === 'lookup' && (
               <div className="mt-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                 <div className="min-w-0 flex-1">
                   <GridLookupSourceCell value={col.lookupSource} onChange={(v) => onPatch(index, { lookupSource: v })} />
                 </div>
-                <GridColumnLookupSettings col={col} onPatch={(p) => onPatch(index, p)} />
               </div>
             )}
           </TableCell>

@@ -27,6 +27,7 @@ import { notify } from '@/lib/feedback';
 import { getGridColumns, type ErpGridColumn } from '@/lib/api/transaction-grids';
 import { LineCell } from './cash-bank-line-cell';
 import { useGridNav } from './use-grid-nav';
+import { useSeedLineDefaults } from './use-line-defaults';
 import { linesRequiredMissing, type GridCol } from './grid-line-core';
 import {
   defaultInvStockMovementCols,
@@ -52,6 +53,9 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
       isRequired: c.isRequired,
       isSkippable: c.isSkippable,
       cellEditor: c.cellEditor ?? null,
+      placeholder: c.placeholder,
+      defaultValue: c.defaultValue,
+      defaultValueLabel: c.defaultValueLabel,
     }));
 
 export type { InvStockMovementLineRow } from './inv-stock-movement-line-model';
@@ -106,6 +110,11 @@ export const InvStockMovementLinesEditor = React.forwardRef<InvStockMovementLine
     if (fetched && fetched.length) return fetched;
     return defaultInvStockMovementCols();
   }, [columns, fetched]);
+
+  useSeedLineDefaults({
+    ready: columns ? true : fetched !== undefined,
+    lines, cols, model: invStockMovementGridModel, readOnly, onChange,
+  });
 
   const {
     rootRef, sel, editing, seed, selectOnFocus, openModal,

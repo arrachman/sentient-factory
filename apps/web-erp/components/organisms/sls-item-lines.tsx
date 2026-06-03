@@ -26,6 +26,7 @@ import { notify } from '@/lib/feedback';
 import { getGridColumns, type ErpGridColumn } from '@/lib/api/transaction-grids';
 import { LineCell } from './cash-bank-line-cell';
 import { useGridNav } from './use-grid-nav';
+import { useSeedLineDefaults } from './use-line-defaults';
 import { linesRequiredMissing, type GridCol } from './grid-line-core';
 import {
   computeLineTotal,
@@ -52,6 +53,9 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
       isRequired: c.isRequired,
       isSkippable: c.isSkippable,
       cellEditor: c.cellEditor ?? null,
+      placeholder: c.placeholder,
+      defaultValue: c.defaultValue,
+      defaultValueLabel: c.defaultValueLabel,
     }));
 
 export type { SlsItemLineRow } from './sls-item-line-model';
@@ -106,6 +110,12 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
     if (fetched && fetched.length) return fetched;
     return defaultSlsItemCols();
   }, [columns, fetched]);
+
+  // Seed configured default values onto the initial blank line once real config loads.
+  useSeedLineDefaults({
+    ready: columns ? true : fetched !== undefined,
+    lines, cols, model: slsItemGridModel, readOnly, onChange,
+  });
 
   const {
     rootRef, sel, editing, seed, selectOnFocus, openModal,

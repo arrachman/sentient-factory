@@ -24,7 +24,7 @@
 
 import * as React from 'react';
 import {
-  GridCol, GridModel, GridRowBase, isCellFilled, isLookupCol, rowRequiredMissing,
+  GridCol, GridModel, GridRowBase, applyColumnDefaults, isCellFilled, isLookupCol, rowRequiredMissing,
 } from './grid-line-core';
 
 export interface CellSel { r: number; c: number }
@@ -148,7 +148,7 @@ export function useGridNav<Row extends GridRowBase>({
     setSel({ r: lines.length, c: target });
     setEditing(false);
     wantRoot.current = true;
-    onChange([...lines, model.newRow()]);
+    onChange([...lines, applyColumnDefaults(model, model.newRow(), cols)]);
     return true;
   };
 
@@ -157,7 +157,7 @@ export function useGridNav<Row extends GridRowBase>({
     wantRoot.current = true;
     if (lines.length <= 1) {
       setSel({ r: 0, c: 0 });
-      onChange([model.newRow()]);
+      onChange([applyColumnDefaults(model, model.newRow(), cols)]);
       return;
     }
     const next = lines.filter((_, i) => i !== idx);

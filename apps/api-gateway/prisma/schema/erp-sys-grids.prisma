@@ -70,6 +70,10 @@ model ErpTransactionGridColumn {
   lookupSource String? @map("lookup_source") // for LOOKUP: registry slug (accounts|partners|cost-centers|…); legacy slugs aliased at runtime
   lookupDefaultFilter Json?   @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"isActive":true}
   lookupDefaultSort   String? @map("lookup_default_sort") // "field:direction", e.g. "name:asc"
+  // Per-column field settings (mirror sys_form_fields) — apply to the live entry grid.
+  placeholder       String? @map("placeholder") // cell placeholder shown when empty; null = built-in default
+  defaultValue      String? @map("default_value") // prefilled on a new line row (lookup = id, others = raw string)
+  defaultValueLabel String? @map("default_value_label") // resolved display label for a lookup defaultValue (stored at pick time)
   // Semantic column type — single selector that derives all 4 presentation slots below.
   columnType     String? @map("column_type") // text|number|currency|decimal|percent|date|datetime|checkbox|lookup|textarea|badge|link|discount|stepper|combobox|account_picker|partner_picker
   // Presentation/edit slots (allowlist in DTO + FE dropdowns; null = derive from dataType)

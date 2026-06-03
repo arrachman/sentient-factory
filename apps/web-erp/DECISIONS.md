@@ -1741,6 +1741,38 @@ Lokasi, Mata Uang, Cost Center, Divisi, Sub Divisi, Gudang, Proyek).
   pakai resolver baru. Seed `seed-erp-transaction-grids.ts` diperbarui ke slug
   kanonik.
 
+### Update 2026-06-03 — Field Settings kolom grid: Placeholder + Nilai Default (paritas Form Builder)
+
+Semua kolom grid (bukan hanya Lookup) kini punya **gear dialog** "Konfigurasi Kolom" berisi
+**Placeholder** + **Nilai default (saat tambah baris baru)** — paritas penuh dgn
+`FieldSettingsPopover` Form Builder. Lookup Kustom juga tetap dapat Konfigurasi Lookup
+(sumber + urutan + filter) di bawah divider dalam dialog yang sama.
+
+- **DB:** 3 kolom baru di `sys_transaction_grid_columns`: `placeholder TEXT`,
+  `default_value TEXT`, `default_value_label TEXT` (nullable). Migrasi
+  `20260603_001_erp_grid_column_field_settings` (additive, 0 DROP). `default_value_label`
+  disimpan di sisi FE saat lookup di-pick (bukan di-resolve server-side) karena sumber
+  grid mencakup `taxes` yang tidak punya kolom `code` — tidak bisa pakai
+  `withDefaultValueLabels` sama persis seperti Form Builder.
+- **Backend:** DTO `GridColumnInputDto` + service create + GET pass-through (include
+  columns → 3 field baru otomatis terbawa). Prisma generate di container setelah migrasi.
+- **Config UI:** [`grid-column-settings.tsx`](components/pages/grid-column-settings.tsx)
+  (`GridColumnSettings`) menggantikan `grid-column-lookup-settings.tsx` (dihapus). Gear
+  sekarang **ada di setiap kolom** (bukan hanya lookup) di samping dropdown Tipe. Dialog
+  = Placeholder (Input) + Nilai default (type-aware via
+  [`grid-column-default-editor.tsx`](components/pages/grid-column-default-editor.tsx):
+  SearchSelect untuk lookup/account_picker/partner_picker, NumInput untuk numerik,
+  DateInput untuk date, BooleanRadio untuk checkbox, Input untuk text/textarea) + Lookup
+  section (hanya tipe lookup). `hasGridColumnConfig` highlight gear biru bila ada config.
+- **Live grid — apply defaults (3 consumers):** `GridCol` + `toGridCols` tiap consumer
+  (sls/inv/cashbank) propagate `placeholder`/`defaultValue`/`defaultValueLabel`.
+  `placeholder` ditampilkan di editor cell (`SearchSelect`, `Input`, `Textarea`) dan di
+  empty-cell display. Default diterapkan via 2 path: (a) **saat append baris baru**
+  (`useGridNav.appendRow`/`removeRow` call `applyColumnDefaults` dari `grid-line-core.ts`);
+  (b) **saat form buka** (`useSeedLineDefaults` hook: sekali saat config load, hanya baris
+  pristine/kosong, tidak re-fill setelah user clear). Helper baru di `grid-line-core.ts`:
+  `applyColumnDefaults`, `colsHaveDefaults`, `isRowPristine`.
+
 ### Update 2026-06-02 — Konfigurasi Lookup kolom grid (sumber + urutan + filter)
 
 Kolom tipe **Lookup Kustom** kini punya **gear popover** (di sel Tipe Kolom, di
