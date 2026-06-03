@@ -2240,8 +2240,15 @@ ledger entries; subtotal/grandTotal benar). FE: `lib/api/pur-orders`,
 `customerId`→`supplierId`, `receivableAccountId`→`payableAccountId`, `salesDeptId` di-drop.
 Reuse `cashBankWorkflowActions` + grid engine generik (sama spt SO).
 
-**Replikasi** ke PR/GRN/PI/DNR/PRT (item docs) menyusul pakai PO sebagai template;
-RFQ (baris supplier)/BS (baris bid) + pembayaran (AP/VP/VPP)/OB butuh penanganan khusus.
+Semua 13 transaksi Purchasing selesai. Replikasi selesai (PR/PI/GRN/DNR/PRT/RFQ/BS).
+Payment docs (AP/PP/VPP/VP/OB): reuse pur_invoices / fin_ap_payments — lihat §§ payment docs di bawah.
 
 **Follow-up (sama persis SO):** REOPEN dari POSTED → 400 (gap warisan); kolom custom
 baris belum persist (`pur_*_lines` tak punya `custom_fields` JSONB).
+
+**Payment docs (AP/PP/VPP/VP/OB)**: reuse Finance domain + `fin_ap_payments` +4 kolom
+(migrasi `20260603_001`): `fx_gain_loss_amount/account_id` + `term_discount_amount/account_id`.
+AP/PP/OB = list pur_invoices dari sisi pembelian; VPP/VP = fin_ap_payments DRAFT/ALL.
+Form semua coming-soon — menunggu integrasi Finance AP payment form ke purchasing UI.
+Routes: /purchasing/vendor-advances · /purchasing/freight-payables ·
+/purchasing/payment-schedules · /purchasing/vendor-payments · /purchasing/opening-ap-balance.
