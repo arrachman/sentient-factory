@@ -2217,3 +2217,81 @@ PV/SIE/BB) = katalog saja (belum item-based). **Form kerja penuh baru SLS.SO.**
 - **REOPEN dari POSTED → 400** (mesin `NEXT` tak punya transisi POSTED→REOPEN; **sama
   persis** dgn cash/bank — gap warisan, bukan regresi). UI kebab menawarkan "Reopen"
   di POSTED tapi backend menolak. Perbaiki serempak dgn cash/bank di pass terpisah.
+
+---
+
+## M3 Warehouse & Inventory — 10 Transaksi (2026-06-03)
+
+Semua 10 transaksi M3 dibangun end-to-end: config layer (Form Builder + Kustomisasi Grid)
+untuk semua 10, backend + frontend untuk 7 transaksi utama; PA/RW/DC punya bentuk
+khusus (diuraikan di bawah).
+
+### Pola umum (MR/TS/RS/RF/SA/IB/SP)
+
+- **Backend**: satu module per tabel (`erp-inv-stock-movements` shared untuk 4 dokumen
+  via `movementType` discriminator; module terpisah untuk SA/IB/SP). Semua: guard
+  `ErpJwtAuthGuard`, state machine §2.7, penomoran via `sys_document_numberings`,
+  fiscal period dari tanggal transaksi, posting NO-OP seam (stock balance = derived
+  view `inv_stock_balances` dari status POSTED), enrich FK batched tanpa @relation.
+- **Frontend**: 1 page per kode transaksi (thin wrapper di atas shared core atau
+  standalone); form header 100% dari `useFormFields(transactionCode)`; grid detail
+  dari `getGridColumns(transactionCode)`; generic grid engine reuse
+  (`grid-line-core`/`use-grid-nav`/`LineCell`). URL sub-route `<base>/new` + `<base>/:id`
+  via `TRX_FORM_PAGES` (§2.3.1).
+
+### Keputusan desain per transaksi
+
+**MR/TS/RS/RF** → `inv_stock_movements` shared, `movementType` enum discriminator.
+Penomoran per-kode (MR/TS/RS/RF). Source/dest warehouse per-baris (TS/RS) atau
+header-only (MR). RF = fuel refill, kolom Harga/Liter tampil default.
+
+**SA (Stock Adjustment)** → `inv_stock_adjustments`. Arah INCREASE/DECREASE per-baris.
+**Akun GL server-side:** `inventoryAccountId = line ?? item.inventoryAccountId ??
+Setting(inventory.accounts.defaultInventoryAccountId)` — error eksplisit bila tidak
+diset. `contraAccountId = line ?? Setting(inventory.accounts.defaultAdjustmentContraAccountId)`.
+Frontend grid TIDAK tampilkan kolom akun (diturunkan otomatis).
+
+**IB (Opening Stock)** → `inv_opening_stocks`. Header wajib `currencyId`+`exchangeRate`.
+Akun persediaan server-side sama dengan SA. Header warehouse = default untuk baris;
+baris boleh override per baris.
+
+**SP (Stock Count)** → `inv_stock_counts`. Qty sistem/fisik/baik/rusak + varianceQty
+= fisik − sistem (dihitung server-side). Tanpa akun GL (penyesuaian terpisah via SA).
+Model TIDAK punya `postedAt` — POST hanya flip `status`+`postingStatus`.
+
+**PA (Price Adjustment)** → `inv_cost_recalculations`. Bukan dokumen hand-keyed;
+ini trigger proses recalc. Create = scope (item?/gudang?, dateRange, costingMethod)
+→ status PENDING; kalkulasi async out-of-scope. Tanpa workflow approval.
+Frontend: form header-only, create-only (tanpa edit), status badge job.
+
+**RW (Receipt Weigher)** → `inv_weighbridge_tickets`. Header-only (tanpa grid baris).
+`netWeight = grossWeight − tareWeight` dihitung server-side, tampil read-only di form.
+Workflow §2.7 penuh.
+
+**DC (Daily Check / Time Sheet)** → `inv_daily_checks` + `inv_daily_check_lines` (**tabel
+BARU**, migrasi `20260603_003`). Header: branchId/checkDate/machineRef/operatorRef.
+Baris: item+qty+unit+gudang. Workflow §2.7 penuh.
+
+### Kode transaksi ↔ route ↔ backend ↔ tabel
+
+| Kode    | Route FE                         | Backend endpoint                | Tabel header                  |
+|---------|----------------------------------|---------------------------------|-------------------------------|
+| INV.MR  | /warehouse/material-requests     | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.TS  | /warehouse/transfers             | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.RS  | /warehouse/transfer-receipts     | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.RF  | /warehouse/fuel-refills          | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.SA  | /warehouse/stock-adjustments     | /erp/inv/stock-adjustments      | inv_stock_adjustments         |
+| INV.IB  | /warehouse/opening-stocks        | /erp/inv/opening-stocks         | inv_opening_stocks            |
+| INV.SP  | /warehouse/stock-counts          | /erp/inv/stock-counts           | inv_stock_counts              |
+| INV.PA  | /warehouse/price-adjustments     | /erp/inv/price-adjustments      | inv_cost_recalculations       |
+| INV.RW  | /warehouse/receipt-weighers      | /erp/inv/weighbridge-tickets    | inv_weighbridge_tickets       |
+| INV.DC  | /warehouse/daily-checks          | /erp/inv/daily-checks           | inv_daily_checks              |
+
+### Follow-up
+- Kolom akun GL per-baris (SA/IB) bisa di-expose di Grid Custom bila admin ingin
+  override. Default server-side dari item/Setting sudah cukup untuk sebagian besar kasus.
+- IB: konversi mata uang (header `exchangeRate`) belum dipakai di posting GL — seam
+  tersedia, implementasi saat modul GL inventory diaktifkan.
+- PA: background job processor (mengisi `status=COMPLETED` + `totalDelta`) belum dibuat.
+- DC: model `inv_daily_check_lines` minimal (item+qty+unit). Bila perlu field mesin/
+  jam-kerja tambahan, tambah kolom + migrasi additif.
