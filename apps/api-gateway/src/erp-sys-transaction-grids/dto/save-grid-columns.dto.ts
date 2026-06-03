@@ -36,6 +36,9 @@ export class GridColumnInputDto {
   @ApiPropertyOptional({ example: 'accounts' }) @IsOptional() @IsString() lookupSource?: string;
   @ApiPropertyOptional({ example: { isActive: true } }) @IsOptional() @IsObject() lookupDefaultFilter?: Record<string, unknown>;
   @ApiPropertyOptional({ example: 'name:asc' }) @IsOptional() @IsString() lookupDefaultSort?: string;
+  @ApiPropertyOptional({ example: 'Pilih satuan…' }) @IsOptional() @IsString() placeholder?: string;
+  @ApiPropertyOptional({ example: '12' }) @IsOptional() @IsString() defaultValue?: string;
+  @ApiPropertyOptional({ example: 'PCS - Pieces' }) @IsOptional() @IsString() defaultValueLabel?: string;
   @ApiPropertyOptional({ enum: LABEL_FORMATTERS }) @IsOptional() @IsIn(LABEL_FORMATTERS) labelFormatter?: (typeof LABEL_FORMATTERS)[number];
   @ApiPropertyOptional({ enum: HEADER_RENDERERS }) @IsOptional() @IsIn(HEADER_RENDERERS) headerRenderer?: (typeof HEADER_RENDERERS)[number];
   @ApiPropertyOptional({ enum: CELL_RENDERERS }) @IsOptional() @IsIn(CELL_RENDERERS) cellRenderer?: (typeof CELL_RENDERERS)[number];

@@ -23,6 +23,7 @@ import {
   loadCurrencyOptions,
 } from '@/components/pages/items-form-lookups';
 import { loadCustomerOptions, loadPaymentTermOptions } from '@/components/pages/sls-form-lookups';
+import { getPartnerForAutoFill } from '@/lib/api/sls-orders';
 import type { SearchSelectProps } from '@/components/molecules/search-select-types';
 import type { ErpFormField } from '@/lib/api/form-fields';
 import type { SlsOrderFormData } from '@/components/pages/sls-order-form-model';
@@ -76,7 +77,28 @@ export function SlsStructuralField({ field, ctx }: { field: ErpFormField; ctx: S
       return row(
         <Picker value={data.customerId} initialLabel={data.customerLabel}
           ph={ph(key, 'Pilih pelanggan…')} ro={ro(key)} loader={loadCustomerOptions}
-          onChange={(v, label) => set({ customerId: v, customerLabel: label ?? data.customerLabel })} />,
+          onChange={async (v, label) => {
+            const patch: Partial<SlsOrderFormData> = { customerId: v, customerLabel: label ?? data.customerLabel };
+            if (v) {
+              const p = await getPartnerForAutoFill(v).catch(() => null);
+              if (p) {
+                if (p.saleTermId && !data.paymentTermId) {
+                  patch.paymentTermId = p.saleTermId;
+                  patch.paymentTermLabel = p.saleTerm?.name;
+                  // Derive dueDate if docDate known
+                  if (data.docDate && p.saleTerm?.netDays) {
+                    const d = new Date(data.docDate);
+                    d.setDate(d.getDate() + p.saleTerm.netDays);
+                    patch.dueDate = d.toISOString().slice(0, 10);
+                  }
+                }
+                if (p.currencyId && !data.currencyId) patch.currencyId = p.currencyId;
+                if (p.receivableAccountId && !data.receivableAccountId)
+                  patch.receivableAccountId = p.receivableAccountId;
+              }
+            }
+            set(patch);
+          }} />,
       );
     case 'branchId':
       return row(

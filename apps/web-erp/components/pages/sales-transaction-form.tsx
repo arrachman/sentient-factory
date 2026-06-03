@@ -128,6 +128,13 @@ export function SalesTransactionForm({
     set({ customFields: { ...data.customFields, [key]: value } });
 
   const subtotal = data.lines.reduce((s, l) => s + computeLineTotal(l), 0);
+  const discAmt = Number(data.discountAmount) || (data.discountPercent ? subtotal * Number(data.discountPercent) / 100 : 0);
+  const lineTaxTotal = 0; // computed server-side; UI shows header adjustments only
+  const headerTax = (Number(data.tax1Amount) || 0) + (Number(data.tax2Amount) || 0);
+  const otherCost = Number(data.otherCostAmount) || 0;
+  const grandTotal = subtotal - discAmt + headerTax + otherCost + lineTaxTotal;
+  const hasAdj = !!(data.discountPercent || data.discountAmount || data.tax1Amount || data.tax2Amount || data.otherCostAmount);
+  const [adjOpen, setAdjOpen] = React.useState(false);
 
   const ctx: SlsStructuralFieldCtx = { data, set, ph, ro, locked, currencyLabel };
 
@@ -225,10 +232,78 @@ export function SalesTransactionForm({
         </dl>
       )}
 
-      {/* Footer total */}
-      <div className="flex justify-end items-center gap-3 border-t border-border pt-3">
-        <span className="text-sm text-muted-foreground">Subtotal</span>
-        <span className="text-lg font-semibold tabular-nums">{formatNumber(subtotal, 2)}</span>
+      {/* Footer — subtotal + adjustments + grand total */}
+      <div className="flex flex-col items-end gap-1 border-t border-border pt-3">
+        <div className="flex items-center gap-6 text-sm">
+          <span className="text-muted-foreground">Subtotal</span>
+          <span className="tabular-nums font-medium w-36 text-right">{formatNumber(subtotal, 2)}</span>
+        </div>
+
+        {/* Adjustment toggle */}
+        <button
+          type="button"
+          className="btn ghost xs text-xs"
+          onClick={() => setAdjOpen((o) => !o)}
+          disabled={locked}
+        >
+          {adjOpen || hasAdj ? 'Tutup penyesuaian' : '+ Diskon / Pajak / Biaya'}
+        </button>
+
+        {(adjOpen || hasAdj) && (
+          <div className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-1.5 text-sm mt-1 w-80">
+            <span className="text-muted-foreground text-right">Diskon %</span>
+            <Input
+              className="h-7 text-sm text-right"
+              value={data.discountPercent}
+              disabled={locked}
+              placeholder="0"
+              onChange={(e) => set({ discountPercent: e.target.value, discountAmount: '' })}
+            />
+            <span className="text-muted-foreground text-right">Diskon Rp</span>
+            <Input
+              className="h-7 text-sm text-right"
+              value={data.discountAmount}
+              disabled={locked}
+              placeholder="0"
+              onChange={(e) => set({ discountAmount: e.target.value, discountPercent: '' })}
+            />
+            {discAmt > 0 && (
+              <>
+                <span className="text-muted-foreground text-right text-xs">  – Diskon</span>
+                <span className="tabular-nums text-right text-destructive">–{formatNumber(discAmt, 2)}</span>
+              </>
+            )}
+            <span className="text-muted-foreground text-right">Pajak 1 Rp</span>
+            <Input
+              className="h-7 text-sm text-right"
+              value={data.tax1Amount}
+              disabled={locked}
+              placeholder="0"
+              onChange={(e) => set({ tax1Amount: e.target.value })}
+            />
+            <span className="text-muted-foreground text-right">Pajak 2 Rp</span>
+            <Input
+              className="h-7 text-sm text-right"
+              value={data.tax2Amount}
+              disabled={locked}
+              placeholder="0"
+              onChange={(e) => set({ tax2Amount: e.target.value })}
+            />
+            <span className="text-muted-foreground text-right">Biaya Lain Rp</span>
+            <Input
+              className="h-7 text-sm text-right"
+              value={data.otherCostAmount}
+              disabled={locked}
+              placeholder="0"
+              onChange={(e) => set({ otherCostAmount: e.target.value })}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center gap-6 text-base font-semibold mt-1 border-t border-border pt-2 min-w-64">
+          <span>Grand Total</span>
+          <span className="tabular-nums w-36 text-right">{formatNumber(grandTotal, 2)}</span>
+        </div>
       </div>
     </div>
   );

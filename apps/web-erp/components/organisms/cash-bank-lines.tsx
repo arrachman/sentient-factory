@@ -35,6 +35,8 @@ import {
 } from './cash-bank-line-model';
 import { LineCell } from './cash-bank-line-cell';
 import { useCashGridNav } from './use-cash-grid-nav';
+import { cashBankGridModel } from './cash-bank-line-model';
+import { useSeedLineDefaults } from './use-line-defaults';
 
 const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
   cols
@@ -53,6 +55,9 @@ const toGridCols = (cols: ErpGridColumn[]): GridCol[] =>
       isRequired: c.isRequired,
       isSkippable: c.isSkippable,
       cellEditor: c.cellEditor ?? null,
+      placeholder: c.placeholder,
+      defaultValue: c.defaultValue,
+      defaultValueLabel: c.defaultValueLabel,
     }));
 
 export type { CashLineRow } from './cash-bank-line-model';
@@ -106,6 +111,12 @@ export const CashBankLinesEditor = React.forwardRef<CashBankLinesHandle, {
     if (fetched && fetched.length) return fetched;
     return defaultGridCols(showFx);
   }, [columns, fetched, showFx]);
+
+  useSeedLineDefaults({
+    ready: columns ? true : fetched !== undefined,
+    lines, cols, model: cashBankGridModel, readOnly, onChange,
+  });
+
   const {
     rootRef, sel, editing, seed, selectOnFocus, openModal,
     onRootKeyDown, selectCell, editCell, endEdit, patch,

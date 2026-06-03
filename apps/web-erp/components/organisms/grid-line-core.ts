@@ -30,6 +30,12 @@ export interface GridCol {
   cellEditor?: string | null;
   /** Static option list — used by COMBOBOX editor. */
   options?: string[];
+  /** Cell placeholder shown when empty (Kustomisasi Grid field settings). */
+  placeholder?: string | null;
+  /** Value prefilled on a new line row (lookup = id, others = raw string). */
+  defaultValue?: string | null;
+  /** Stored display label for a lookup `defaultValue` (so the defaulted cell reads correctly). */
+  defaultValueLabel?: string | null;
 }
 
 /** Common shape every grid row must satisfy (stable key + lookup labels + custom values). */
@@ -88,4 +94,38 @@ export function linesRequiredMissing<Row extends GridRowBase>(
   const missing = new Set<string>();
   rows.forEach((r) => rowRequiredMissing(model, r, cols).forEach((h) => missing.add(h)));
   return [...missing];
+}
+
+/** True when any column carries a configured default value (Kustomisasi Grid). */
+export function colsHaveDefaults(cols: GridCol[]): boolean {
+  return cols.some((c) => c.defaultValue != null && c.defaultValue !== '');
+}
+
+/**
+ * Fold every column's configured `defaultValue` into a freshly minted row.
+ * Lookup columns also carry their stored label so the cell reads correctly.
+ * Patches are applied sequentially so per-row merges (labels/customFields) stack.
+ * Columns without a default are left untouched; returns a new row.
+ */
+export function applyColumnDefaults<Row extends GridRowBase>(
+  model: GridModel<Row>,
+  row: Row,
+  cols: GridCol[],
+): Row {
+  let next = row;
+  for (const col of cols) {
+    const dv = col.defaultValue;
+    if (dv == null || dv === '') continue;
+    next = { ...next, ...model.buildCellPatch(next, col, dv, col.defaultValueLabel ?? undefined) };
+  }
+  return next;
+}
+
+/** True when no editable, non-skip cell of the row holds a value (a blank/new line). */
+export function isRowPristine<Row extends GridRowBase>(
+  model: GridModel<Row>,
+  row: Row,
+  cols: GridCol[],
+): boolean {
+  return !cols.some((c) => c.isEditable && !c.isSkippable && isCellFilled(model, row, c));
 }

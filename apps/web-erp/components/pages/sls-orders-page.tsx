@@ -76,6 +76,8 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
 
   const [search, setSearch] = React.useState('');
   const [filters, setFilters] = React.useState<SlsFilters>(emptySlsFilters);
+  const [sortBy, setSortBy] = React.useState('docDate');
+  const [sortDir, setSortDir] = React.useState<'asc' | 'desc'>('desc');
   const { page, pageSize, setPage, setPageSize } = useListPagination('sls-orders');
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search);
@@ -98,20 +100,28 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
         status: (debF.status || undefined) as ErpDocumentStatus | undefined,
         dateFrom: debF.dateFrom || undefined,
         dateTo: debF.dateTo || undefined,
-        sortBy: 'docDate',
-        sortDir: 'desc',
+        docNumberFrom: debF.docNumber || undefined,
+        description: debF.uraian || undefined,
+        sortBy,
+        sortDir,
       }),
-    [page, pageSize, debouncedSearch, debF],
+    [page, pageSize, debouncedSearch, debF, sortBy, sortDir],
   );
 
   React.useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, debF, pageSize]);
+  }, [debouncedSearch, debF, pageSize, sortBy, sortDir]);
 
   const [focused, setFocused] = React.useState(-1);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const totalRows = meta?.total ?? 0;
   const pageCount = meta?.totalPages ?? 1;
+
+  const toggleSort = (col: string) => {
+    if (sortBy === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortBy(col); setSortDir('asc'); }
+    setPage(1);
+  };
 
   const openCreate = () => onNavigate?.(trxNewRoute(SO_BASE));
   const openEdit = (r: ErpSlsOrder) => onNavigate?.(trxEditRoute(SO_BASE, r.id));
@@ -250,7 +260,13 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
   }
 
   // ── list view ─────────────────────────────────────────────────────────────────
-  const summary: SummaryConfig = { metricLabel: 'Σ Sales Order', rowCount: rows.length, totalCount: totalRows };
+  const sumGT = (meta as { sumGrandTotal?: string } | null)?.sumGrandTotal;
+  const summary: SummaryConfig = {
+    metricLabel: 'Σ Sales Order',
+    rowCount: rows.length,
+    totalCount: totalRows,
+    metricValue: sumGT ? formatNumber(Number(sumGT), 2) : undefined,
+  };
   const pagination: ListPaginationConfig = {
     page,
     pageCount,
@@ -276,7 +292,19 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
       onSearch={setSearch}
       onAdd={openCreate}
       onRefresh={reload}
-      toolbar={<SlsOrderFilters value={filters} onChange={setFilters} />}
+      toolbar={
+        <>
+          <SlsOrderFilters value={filters} onChange={setFilters} />
+          <button
+            type="button"
+            className="btn ghost sm"
+            onClick={() => notify('Export akan tersedia segera.', 'info')}
+            title="Export ke CSV/Excel"
+          >
+            <Icon name="download" size={12} /> Export
+          </button>
+        </>
+      }
       summary={summary}
       pagination={pagination}
       keyboardRows={{
@@ -317,14 +345,35 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead style={{ width: 36 }} />
-            <TableHead>No Transaksi</TableHead>
-            <TableHead>Tanggal</TableHead>
-            <TableHead>Pelanggan</TableHead>
-            <TableHead>Uraian</TableHead>
-            <TableHead style={{ textAlign: 'right' }}>Total</TableHead>
-            <TableHead>Uang</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead style={{ width: 36, textAlign: 'center' }}>
+              <input
+                type="checkbox"
+                checked={rows.length > 0 && rows.every((r) => selected.has(r.id))}
+                ref={(el) => { if (el) el.indeterminate = selected.size > 0 && !rows.every((r) => selected.has(r.id)); }}
+                onChange={(e) => setSelected(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())}
+                title="Pilih semua"
+              />
+            </TableHead>
+            {([
+              ['docNumber', 'No Transaksi'],
+              ['docDate', 'Tanggal'],
+              [null, 'Pelanggan'],
+              [null, 'Uraian'],
+              ['grandTotal', 'Total'],
+              [null, 'Uang'],
+              ['status', 'Status'],
+            ] as [string | null, string][]).map(([col, label]) => (
+              <TableHead
+                key={label}
+                style={col === 'grandTotal' ? { textAlign: 'right', cursor: col ? 'pointer' : undefined } : { cursor: col ? 'pointer' : undefined }}
+                onClick={col ? () => toggleSort(col) : undefined}
+              >
+                {label}
+                {col && sortBy === col && (
+                  <span className="ml-1 text-muted-foreground text-xs">{sortDir === 'asc' ? '↑' : '↓'}</span>
+                )}
+              </TableHead>
+            ))}
             <TableHead style={{ width: 44 }} />
           </TableRow>
         </TableHeader>

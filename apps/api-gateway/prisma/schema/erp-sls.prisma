@@ -168,6 +168,7 @@ model ErpSlsOrder {
   postedAt            DateTime?          @map("posted_at") @db.Timestamptz(6)
   quotationId         BigInt?            @map("quotation_id")
   metadata            Json?              @map("metadata")
+  customFields        Json?              @map("custom_fields") // Form Builder non-standard header fields
   deletedAt           DateTime?          @map("deleted_at") @db.Timestamptz(6)
   createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -218,6 +219,7 @@ model ErpSlsOrderLine {
   projectId          BigInt?  @map("project_id") // FK -> md_projects (ErpProject)
   sourceLineId       BigInt?  @map("source_line_id") // FK -> prior chain line (traceability)
   notes              String?  @map("notes")
+  customFields       Json?    @map("custom_fields") // Kustomisasi Grid non-standard line fields
   lineNo             Int      @map("line_no")
 
   order ErpSlsOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)

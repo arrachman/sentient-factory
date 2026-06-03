@@ -13,6 +13,13 @@
  * - salesItem    → sls_*_lines (per-txn override: SQ/SO/PI/PL/DO/DR/SI/RNR/SR) — item
  *   + qty/price/disc/tax + derived Total. Each sales doc owns its own line table.
  *
+ * Purchasing (M4):
+ * - purchaseItem    → pur_*_lines (PR/PO/PI/DNR/PRT) — item + qty/cost/disc/tax + Total.
+ * - purchaseReceipt → pur_goods_receipt_lines (GRN) — item + QC delta (accepted/rejected/quarantine).
+ * - purchaseRfq     → pur_rfq_suppliers (RFQ) — invited-supplier lines (not items).
+ * - purchaseBid     → pur_bid_selection_lines (BS) — quotation comparison (rank/selected).
+ *   Each purchasing doc owns its own line table (per-txn `lineTable` override).
+ *
  * Column defaults exist so the Grid Customization screen (and a future config-driven
  * detail grid) opens with a sensible curated layout instead of an empty/lazy grid.
  * `update: {}` on columns keeps admin edits on re-seed (only missing defaults created).
@@ -46,9 +53,16 @@ type GridFamily =
   // Inventory (M3) — item-line families mapping to the inv_* line tables.
   | 'invMoveTransfer' | 'invMoveRequest' | 'invFuel'
   | 'invOpening' | 'invCount' | 'invAdjustment' | 'invCostRecalc'
+  | 'invDailyCheck'
   // Sales (M5) — item-line family. Unlike finance/inventory families that share a
   // line table, each sales doc has its OWN line table → per-txn `lineTable` override.
-  | 'salesItem';
+  | 'salesItem'
+  // Purchasing (M4) — like sales, each pur doc owns its own line table (per-txn
+  // `lineTable` override). `purchaseItem` = standard item lines (PR/PO/PI/returns);
+  // `purchaseReceipt` = GRN item lines + QC delta (accepted/rejected/quarantine);
+  // `purchaseRfq` = invited-supplier lines (pur_rfq_suppliers, not items);
+  // `purchaseBid` = bid-selection lines (rank/selected).
+  | 'purchaseItem' | 'purchaseReceipt' | 'purchaseRfq' | 'purchaseBid';
 
 const LINE_TABLE_BY_FAMILY: Record<GridFamily, string> = {
   cashbank: 'fin_cash_bank_lines',
@@ -62,9 +76,16 @@ const LINE_TABLE_BY_FAMILY: Record<GridFamily, string> = {
   invCount: 'inv_stock_count_lines',
   invAdjustment: 'inv_stock_adjustment_lines',
   invCostRecalc: 'inv_cost_recalculation_lines',
+  invDailyCheck: 'inv_daily_check_lines',
   // Fallback only — each salesItem txn ALWAYS sets an explicit `lineTable` override
   // (sales docs don't share a single line table).
   salesItem: 'sls_order_lines',
+  // Fallback only — each purchasing txn sets an explicit `lineTable` override
+  // (purchasing docs don't share a single line table).
+  purchaseItem: 'pur_order_lines',
+  purchaseReceipt: 'pur_goods_receipt_lines',
+  purchaseRfq: 'pur_rfq_suppliers',
+  purchaseBid: 'pur_bid_selection_lines',
 };
 
 // `lineTable` overrides LINE_TABLE_BY_FAMILY[family] when present (sales docs each
@@ -95,13 +116,24 @@ const TXNS: TxnDef[] = [
   { code: 'INV.PA', name: 'Price Adjustment (PA)', moduleKey: 'inventory', group: 'Transaction', grid: 'invCostRecalc' },
   { code: 'INV.IB', name: 'Opening Stock (IB)', moduleKey: 'inventory', group: 'Transaction', grid: 'invOpening' },
   { code: 'INV.RF', name: 'Fuel Refill (RF)', moduleKey: 'inventory', group: 'Transaction', grid: 'invFuel' },
-  { code: 'INV.DC', name: 'Time Sheet/Daily Check (DC)', moduleKey: 'inventory', group: 'Transaction' },
+  { code: 'INV.DC', name: 'Time Sheet/Daily Check (DC)', moduleKey: 'inventory', group: 'Transaction', grid: 'invDailyCheck' },
   { code: 'INV.RW', name: 'Receipt Weigher (RW)', moduleKey: 'inventory', group: 'Transaction' },
-  // Purchasing
-  { code: 'PUR.PO', name: 'Purchase Order', moduleKey: 'purchasing', group: 'Transaction' },
-  { code: 'PUR.GR', name: 'Goods Receipt', moduleKey: 'purchasing', group: 'Transaction' },
-  { code: 'PUR.INV', name: 'Purchase Invoice', moduleKey: 'purchasing', group: 'Transaction' },
-  { code: 'PUR.RET', name: 'Purchase Return', moduleKey: 'purchasing', group: 'Transaction' },
+  // Purchasing (M4) — full 13-transaction set (paritas menu M4.TX). Item-based docs
+  // (purchase* families) each own their line table via explicit `lineTable`;
+  // payment/opening txns (AP/PP/VPP/VP/OB reuse the finance domain) omit a grid.
+  { code: 'PUR.PR', name: 'Purchase Requisition (PR)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseItem', lineTable: 'pur_requisition_lines' },
+  { code: 'PUR.RFQ', name: 'Request for Quotation (RFQ)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseRfq', lineTable: 'pur_rfq_suppliers' },
+  { code: 'PUR.BS', name: 'Bid Comparison (BS)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseBid', lineTable: 'pur_bid_selection_lines' },
+  { code: 'PUR.PO', name: 'Purchase Order (PO)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseItem', lineTable: 'pur_order_lines' },
+  { code: 'PUR.AP', name: 'Vendor Advance (AP)', moduleKey: 'purchasing', group: 'Transaction' },
+  { code: 'PUR.GRN', name: 'Goods Receipt (GRN)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseReceipt', lineTable: 'pur_goods_receipt_lines' },
+  { code: 'PUR.PI', name: 'Purchase Invoice (PI)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseItem', lineTable: 'pur_invoice_lines' },
+  { code: 'PUR.PP', name: 'Freight Payable (PP)', moduleKey: 'purchasing', group: 'Transaction' },
+  { code: 'PUR.DNR', name: 'Return Shipment (DNR)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseItem', lineTable: 'pur_return_lines' },
+  { code: 'PUR.PRT', name: 'Purchase Return (PRT)', moduleKey: 'purchasing', group: 'Transaction', grid: 'purchaseItem', lineTable: 'pur_return_lines' },
+  { code: 'PUR.VPP', name: 'Payment Schedule (VPP)', moduleKey: 'purchasing', group: 'Transaction' },
+  { code: 'PUR.VP', name: 'Vendor Payment (VP)', moduleKey: 'purchasing', group: 'Transaction' },
+  { code: 'PUR.OB', name: 'Opening AP Balance', moduleKey: 'purchasing', group: 'Transaction' },
   // Sales (M5) — full 16-transaction set. Item-based docs (salesItem family) each
   // own their line table via explicit `lineTable`; document-only/payment txns omit grid.
   { code: 'SLS.SQ', name: 'Sales Quotation (SQ)', moduleKey: 'sales', group: 'Transaction', grid: 'salesItem', lineTable: 'sls_quotation_lines' },
@@ -305,6 +337,19 @@ const INV_COST_RECALC_COLUMNS: ColDef[] = [
   ...INV_CUSTOM_SLOTS,
 ];
 
+// invDailyCheck → inv_daily_check_lines (Time Sheet/Daily Check): qty-based count
+// per item/warehouse. Mirrors defaultInvDailyCheckCols() in the frontend line-model.
+const INV_DAILY_CHECK_COLUMNS: ColDef[] = [
+  ROWNUM_COL,
+  { field: 'itemId', header: 'Item (Kode · Nama)', width: 320, type: 'LOOKUP', lookup: 'items', required: true },
+  { field: 'quantity', header: 'Qty', width: 120, type: 'NUMBER', required: true },
+  { field: 'unitId', header: 'Satuan', width: 140, type: 'LOOKUP', lookup: 'units', required: true },
+  { field: 'warehouseId', header: 'Gudang', width: 200, type: 'LOOKUP', lookup: 'warehouses' },
+  { field: 'costCenterId', header: 'Cost Center', width: 200, type: 'LOOKUP', lookup: 'cost-centers', visible: false },
+  { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
+  ...INV_CUSTOM_SLOTS,
+];
+
 // ── Sales (M5) item-line columns → sls_*_lines tables ────────────────────────
 
 // salesItem → per-txn sls_*_lines (item + qty/price/disc/tax + derived total).
@@ -339,6 +384,78 @@ const SALES_ITEM_COLUMNS: ColDef[] = [
   { field: 'projectId', header: 'Proyek', width: 160, type: 'LOOKUP', lookup: 'projects', visible: false },
 ];
 
+// ── Purchasing (M4) item-line columns → pur_*_lines tables ───────────────────
+
+// purchaseItem → per-txn pur_*_lines (item + qty/cost/disc/tax + derived total).
+// Mirrors SALES_ITEM_COLUMNS; dataFields are a FIXED CONTRACT — frontend binds exactly.
+const PURCHASE_ITEM_COLUMNS: ColDef[] = [
+  ROWNUM_COL,
+  { field: 'itemId', header: 'Item', width: 300, type: 'LOOKUP', lookup: 'items', required: true },
+  {
+    field: 'quantity', header: 'Qty', width: 110, type: 'NUMBER', required: true,
+    columnType: 'stepper', cellEditor: 'STEPPER', labelFormatter: 'NUMBER', cellRenderer: 'NUMERIC',
+  },
+  { field: 'unitId', header: 'Satuan', width: 140, type: 'LOOKUP', lookup: 'units', required: true },
+  {
+    field: 'unitPrice', header: 'Harga', width: 150, type: 'NUMBER',
+    columnType: 'currency', cellEditor: 'NUMBER', labelFormatter: 'CURRENCY', cellRenderer: 'CURRENCY',
+  },
+  {
+    field: 'discountPercent', header: 'Disc %', width: 100, type: 'NUMBER',
+    columnType: 'discount', cellEditor: 'DISCOUNT', labelFormatter: 'PERCENT', cellRenderer: 'NUMERIC',
+  },
+  { field: 'discountAmount', header: 'Disc Rp', width: 130, type: 'NUMBER', visible: false },
+  { field: 'tax1Id', header: 'Pajak', width: 150, type: 'LOOKUP', lookup: 'taxes' },
+  {
+    field: 'lineTotal', header: 'Total', width: 160, type: 'NUMBER', editable: false, skippable: true,
+    columnType: 'currency', cellEditor: 'NUMBER', labelFormatter: 'CURRENCY', cellRenderer: 'CURRENCY',
+  },
+  { field: 'warehouseId', header: 'Gudang', width: 180, type: 'LOOKUP', lookup: 'warehouses', visible: false },
+  { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
+  { field: 'costCenterId', header: 'Cost Center', width: 200, type: 'LOOKUP', lookup: 'cost-centers', visible: false },
+  { field: 'divisionId', header: 'Divisi', width: 160, type: 'LOOKUP', lookup: 'divisions', visible: false },
+  { field: 'subdivisionId', header: 'Sub Divisi', width: 160, type: 'LOOKUP', lookup: 'sub-divisions', visible: false },
+  { field: 'projectId', header: 'Proyek', width: 160, type: 'LOOKUP', lookup: 'projects', visible: false },
+];
+
+// purchaseReceipt → pur_goods_receipt_lines (item + QC delta: accepted/rejected/quarantine).
+// Stock only increases by acceptedQty; rejectedQty seeds a return (resolved §8 #25).
+const PURCHASE_RECEIPT_COLUMNS: ColDef[] = [
+  ROWNUM_COL,
+  { field: 'itemId', header: 'Item', width: 300, type: 'LOOKUP', lookup: 'items', required: true },
+  {
+    field: 'quantity', header: 'Qty Kirim', width: 120, type: 'NUMBER', required: true,
+    columnType: 'stepper', cellEditor: 'STEPPER', labelFormatter: 'NUMBER', cellRenderer: 'NUMERIC',
+  },
+  { field: 'unitId', header: 'Satuan', width: 130, type: 'LOOKUP', lookup: 'units', required: true },
+  { field: 'acceptedQty', header: 'Diterima', width: 120, type: 'NUMBER' },
+  { field: 'rejectedQty', header: 'Ditolak', width: 120, type: 'NUMBER', visible: false },
+  { field: 'quarantineQty', header: 'Karantina', width: 120, type: 'NUMBER', visible: false },
+  {
+    field: 'unitCost', header: 'Harga Pokok', width: 150, type: 'NUMBER', visible: false,
+    columnType: 'currency', cellEditor: 'NUMBER', labelFormatter: 'CURRENCY', cellRenderer: 'CURRENCY',
+  },
+  { field: 'warehouseId', header: 'Gudang', width: 180, type: 'LOOKUP', lookup: 'warehouses' },
+  { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
+  { field: 'costCenterId', header: 'Cost Center', width: 200, type: 'LOOKUP', lookup: 'cost-centers', visible: false },
+  { field: 'projectId', header: 'Proyek', width: 160, type: 'LOOKUP', lookup: 'projects', visible: false },
+];
+
+// purchaseRfq → pur_rfq_suppliers (RFQ "lines" = invited suppliers, NOT items).
+const PURCHASE_RFQ_COLUMNS: ColDef[] = [
+  ROWNUM_COL,
+  { field: 'supplierId', header: 'Supplier', width: 360, type: 'LOOKUP', lookup: 'partners', required: true },
+  { field: 'notes', header: 'Catatan', width: 320, type: 'TEXT' },
+];
+
+// purchaseBid → pur_bid_selection_lines (compare quotations: rank + winner flag).
+const PURCHASE_BID_COLUMNS: ColDef[] = [
+  ROWNUM_COL,
+  { field: 'priceRank', header: 'Peringkat Harga', width: 150, type: 'NUMBER' },
+  { field: 'selected', header: 'Terpilih', width: 120, type: 'TEXT' },
+  { field: 'notes', header: 'Catatan', width: 360, type: 'TEXT' },
+];
+
 const COLUMNS_BY_FAMILY: Record<GridFamily, ColDef[]> = {
   cashbank: CASH_BANK_COLUMNS,
   journal: JOURNAL_COLUMNS,
@@ -351,7 +468,12 @@ const COLUMNS_BY_FAMILY: Record<GridFamily, ColDef[]> = {
   invCount: INV_COUNT_COLUMNS,
   invAdjustment: INV_ADJUSTMENT_COLUMNS,
   invCostRecalc: INV_COST_RECALC_COLUMNS,
+  invDailyCheck: INV_DAILY_CHECK_COLUMNS,
   salesItem: SALES_ITEM_COLUMNS,
+  purchaseItem: PURCHASE_ITEM_COLUMNS,
+  purchaseReceipt: PURCHASE_RECEIPT_COLUMNS,
+  purchaseRfq: PURCHASE_RFQ_COLUMNS,
+  purchaseBid: PURCHASE_BID_COLUMNS,
 };
 
 // Generic inventory placeholders superseded by the M3 transaction codes above.
@@ -368,6 +490,11 @@ export async function seedTransactionGrids(prisma: PrismaClient): Promise<void> 
   // Prune obsolete sales codes replaced by SLS.SI / SLS.SR. Grids + columns
   // cascade via onDelete: Cascade (verified). SLS.SO / SLS.DO are KEPT (same codes).
   await prisma.erpTransactionType.deleteMany({ where: { code: { in: ['SLS.INV', 'SLS.RET'] } } });
+
+  // Prune obsolete purchasing stubs replaced by the canonical 13 menu codes:
+  // PUR.GR → PUR.GRN, PUR.INV → PUR.PI, PUR.RET → PUR.DNR/PUR.PRT. PUR.PO is KEPT
+  // (same code). Grids + columns cascade via onDelete: Cascade.
+  await prisma.erpTransactionType.deleteMany({ where: { code: { in: ['PUR.GR', 'PUR.INV', 'PUR.RET'] } } });
 
   for (const [i, t] of TXNS.entries()) {
     // Per-txn `lineTable` override wins; else fall back to the family's shared table.
@@ -418,5 +545,5 @@ export async function seedTransactionGrids(prisma: PrismaClient): Promise<void> 
   }
 
   const gridded = TXNS.filter((t) => t.grid).length;
-  console.log(`✓ sys_transaction_types (${TXNS.length}) + primary grid + default columns (${gridded} fin/inv/sales txns)`);
+  console.log(`✓ sys_transaction_types (${TXNS.length}) + primary grid + default columns (${gridded} fin/inv/sales/pur txns)`);
 }

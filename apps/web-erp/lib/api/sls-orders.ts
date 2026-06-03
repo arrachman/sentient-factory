@@ -3,7 +3,16 @@
 // Endpoint: /sls/orders  (see apps/api-gateway/src/erp-sls-orders).
 
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
-import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
+import type { ApiResponse, PaginatedMeta, PaginationParams } from './types';
+
+export interface SlsOrderListMeta extends PaginatedMeta {
+  sumGrandTotal: string;
+}
+export interface SlsOrderListResponse {
+  success: boolean;
+  data: ErpSlsOrder[];
+  meta: SlsOrderListMeta;
+}
 
 const BASE = '/sls/orders';
 
@@ -49,6 +58,7 @@ export interface ErpSlsOrderLine {
   subdivisionId?: string | null;
   projectId?: string | null;
   notes?: string | null;
+  customFields?: Record<string, unknown> | null;
   lineNo: number;
 }
 
@@ -89,6 +99,7 @@ export interface ErpSlsOrder {
   salesDept?: ErpRef | null;
   receivableAccountId?: string | null;
   receivableAccount?: ErpRef | null;
+  customFields?: Record<string, unknown> | null;
   status: ErpDocumentStatus;
   postingStatus: ErpPostingStatus;
   postedAt?: string | null;
@@ -118,6 +129,7 @@ export interface SlsOrderLinePayload {
   subdivisionId?: string;
   projectId?: string;
   notes?: string;
+  customFields?: Record<string, unknown>;
   lineNo: number;
 }
 
@@ -147,10 +159,13 @@ export interface CreateSlsOrderPayload {
   tax2Amount?: string;
   otherCostAmount?: string;
   legacyCode?: string;
+  customFields?: Record<string, unknown>;
   lines: SlsOrderLinePayload[];
 }
 
-export type UpdateSlsOrderPayload = Partial<CreateSlsOrderPayload>;
+export type UpdateSlsOrderPayload = Partial<Omit<CreateSlsOrderPayload, 'lines'>> & {
+  lines?: SlsOrderLinePayload[];
+};
 
 export type SlsOrderTransition = 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST' | 'REOPEN';
 
@@ -173,8 +188,51 @@ type Query = Record<string, string | number | boolean | undefined>;
 
 export function listSlsOrders(
   params?: ListSlsOrdersParams,
-): Promise<PaginatedResponse<ErpSlsOrder>> {
-  return apiGet<PaginatedResponse<ErpSlsOrder>>(BASE, params as Query);
+): Promise<SlsOrderListResponse> {
+  return apiGet<SlsOrderListResponse>(BASE, params as Query);
+}
+
+/** Item detail for auto-fill: salePrice, baseUnitId, saleTaxId. */
+export interface ItemAutoFill {
+  id: string;
+  code: string;
+  name: string;
+  salePrice: string;
+  baseUnitId: string;
+  baseUnit?: { id: string; code: string; name: string } | null;
+  saleTaxId?: string | null;
+  saleTax?: { id: string; code: string; name: string; rate: string } | null;
+}
+
+export async function getItemForAutoFill(id: string): Promise<ItemAutoFill | null> {
+  try {
+    const res = await apiGet<ApiResponse<ItemAutoFill>>(`/items/${id}`);
+    return res.data;
+  } catch {
+    return null;
+  }
+}
+
+/** Partner (customer) detail for auto-fill: saleTermId, currencyId, receivableAccountId. */
+export interface PartnerAutoFill {
+  id: string;
+  code: string;
+  name: string;
+  saleTermId?: string | null;
+  saleTerm?: { id: string; code: string; name: string; netDays: number } | null;
+  currencyId?: string | null;
+  currency?: { id: string; code: string; name: string } | null;
+  receivableAccountId?: string | null;
+  receivableAccount?: { id: string; code: string; name: string } | null;
+}
+
+export async function getPartnerForAutoFill(id: string): Promise<PartnerAutoFill | null> {
+  try {
+    const res = await apiGet<ApiResponse<PartnerAutoFill>>(`/partners/${id}`);
+    return res.data;
+  } catch {
+    return null;
+  }
 }
 
 export async function getSlsOrder(id: string): Promise<ErpSlsOrder> {

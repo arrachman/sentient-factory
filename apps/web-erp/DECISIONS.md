@@ -1741,6 +1741,38 @@ Lokasi, Mata Uang, Cost Center, Divisi, Sub Divisi, Gudang, Proyek).
   pakai resolver baru. Seed `seed-erp-transaction-grids.ts` diperbarui ke slug
   kanonik.
 
+### Update 2026-06-03 — Field Settings kolom grid: Placeholder + Nilai Default (paritas Form Builder)
+
+Semua kolom grid (bukan hanya Lookup) kini punya **gear dialog** "Konfigurasi Kolom" berisi
+**Placeholder** + **Nilai default (saat tambah baris baru)** — paritas penuh dgn
+`FieldSettingsPopover` Form Builder. Lookup Kustom juga tetap dapat Konfigurasi Lookup
+(sumber + urutan + filter) di bawah divider dalam dialog yang sama.
+
+- **DB:** 3 kolom baru di `sys_transaction_grid_columns`: `placeholder TEXT`,
+  `default_value TEXT`, `default_value_label TEXT` (nullable). Migrasi
+  `20260603_001_erp_grid_column_field_settings` (additive, 0 DROP). `default_value_label`
+  disimpan di sisi FE saat lookup di-pick (bukan di-resolve server-side) karena sumber
+  grid mencakup `taxes` yang tidak punya kolom `code` — tidak bisa pakai
+  `withDefaultValueLabels` sama persis seperti Form Builder.
+- **Backend:** DTO `GridColumnInputDto` + service create + GET pass-through (include
+  columns → 3 field baru otomatis terbawa). Prisma generate di container setelah migrasi.
+- **Config UI:** [`grid-column-settings.tsx`](components/pages/grid-column-settings.tsx)
+  (`GridColumnSettings`) menggantikan `grid-column-lookup-settings.tsx` (dihapus). Gear
+  sekarang **ada di setiap kolom** (bukan hanya lookup) di samping dropdown Tipe. Dialog
+  = Placeholder (Input) + Nilai default (type-aware via
+  [`grid-column-default-editor.tsx`](components/pages/grid-column-default-editor.tsx):
+  SearchSelect untuk lookup/account_picker/partner_picker, NumInput untuk numerik,
+  DateInput untuk date, BooleanRadio untuk checkbox, Input untuk text/textarea) + Lookup
+  section (hanya tipe lookup). `hasGridColumnConfig` highlight gear biru bila ada config.
+- **Live grid — apply defaults (3 consumers):** `GridCol` + `toGridCols` tiap consumer
+  (sls/inv/cashbank) propagate `placeholder`/`defaultValue`/`defaultValueLabel`.
+  `placeholder` ditampilkan di editor cell (`SearchSelect`, `Input`, `Textarea`) dan di
+  empty-cell display. Default diterapkan via 2 path: (a) **saat append baris baru**
+  (`useGridNav.appendRow`/`removeRow` call `applyColumnDefaults` dari `grid-line-core.ts`);
+  (b) **saat form buka** (`useSeedLineDefaults` hook: sekali saat config load, hanya baris
+  pristine/kosong, tidak re-fill setelah user clear). Helper baru di `grid-line-core.ts`:
+  `applyColumnDefaults`, `colsHaveDefaults`, `isRowPristine`.
+
 ### Update 2026-06-02 — Konfigurasi Lookup kolom grid (sumber + urutan + filter)
 
 Kolom tipe **Lookup Kustom** kini punya **gear popover** (di sel Tipe Kolom, di
@@ -2185,3 +2217,163 @@ PV/SIE/BB) = katalog saja (belum item-based). **Form kerja penuh baru SLS.SO.**
 - **REOPEN dari POSTED → 400** (mesin `NEXT` tak punya transisi POSTED→REOPEN; **sama
   persis** dgn cash/bank — gap warisan, bukan regresi). UI kebab menawarkan "Reopen"
   di POSTED tapi backend menolak. Perbaiki serempak dgn cash/bank di pass terpisah.
+
+---
+
+## M3 Warehouse & Inventory — 10 Transaksi (2026-06-03)
+
+Semua 10 transaksi M3 dibangun end-to-end: config layer (Form Builder + Kustomisasi Grid)
+untuk semua 10, backend + frontend untuk 7 transaksi utama; PA/RW/DC punya bentuk
+khusus (diuraikan di bawah).
+
+### Pola umum (MR/TS/RS/RF/SA/IB/SP)
+
+- **Backend**: satu module per tabel (`erp-inv-stock-movements` shared untuk 4 dokumen
+  via `movementType` discriminator; module terpisah untuk SA/IB/SP). Semua: guard
+  `ErpJwtAuthGuard`, state machine §2.7, penomoran via `sys_document_numberings`,
+  fiscal period dari tanggal transaksi, posting NO-OP seam (stock balance = derived
+  view `inv_stock_balances` dari status POSTED), enrich FK batched tanpa @relation.
+- **Frontend**: 1 page per kode transaksi (thin wrapper di atas shared core atau
+  standalone); form header 100% dari `useFormFields(transactionCode)`; grid detail
+  dari `getGridColumns(transactionCode)`; generic grid engine reuse
+  (`grid-line-core`/`use-grid-nav`/`LineCell`). URL sub-route `<base>/new` + `<base>/:id`
+  via `TRX_FORM_PAGES` (§2.3.1).
+
+### Keputusan desain per transaksi
+
+**MR/TS/RS/RF** → `inv_stock_movements` shared, `movementType` enum discriminator.
+Penomoran per-kode (MR/TS/RS/RF). Source/dest warehouse per-baris (TS/RS) atau
+header-only (MR). RF = fuel refill, kolom Harga/Liter tampil default.
+
+**SA (Stock Adjustment)** → `inv_stock_adjustments`. Arah INCREASE/DECREASE per-baris.
+**Akun GL server-side:** `inventoryAccountId = line ?? item.inventoryAccountId ??
+Setting(inventory.accounts.defaultInventoryAccountId)` — error eksplisit bila tidak
+diset. `contraAccountId = line ?? Setting(inventory.accounts.defaultAdjustmentContraAccountId)`.
+Frontend grid TIDAK tampilkan kolom akun (diturunkan otomatis).
+
+**IB (Opening Stock)** → `inv_opening_stocks`. Header wajib `currencyId`+`exchangeRate`.
+Akun persediaan server-side sama dengan SA. Header warehouse = default untuk baris;
+baris boleh override per baris.
+
+**SP (Stock Count)** → `inv_stock_counts`. Qty sistem/fisik/baik/rusak + varianceQty
+= fisik − sistem (dihitung server-side). Tanpa akun GL (penyesuaian terpisah via SA).
+Model TIDAK punya `postedAt` — POST hanya flip `status`+`postingStatus`.
+
+**PA (Price Adjustment)** → `inv_cost_recalculations`. Bukan dokumen hand-keyed;
+ini trigger proses recalc. Create = scope (item?/gudang?, dateRange, costingMethod)
+→ status PENDING; kalkulasi async out-of-scope. Tanpa workflow approval.
+Frontend: form header-only, create-only (tanpa edit), status badge job.
+
+**RW (Receipt Weigher)** → `inv_weighbridge_tickets`. Header-only (tanpa grid baris).
+`netWeight = grossWeight − tareWeight` dihitung server-side, tampil read-only di form.
+Workflow §2.7 penuh.
+
+**DC (Daily Check / Time Sheet)** → `inv_daily_checks` + `inv_daily_check_lines` (**tabel
+BARU**, migrasi `20260603_003`). Header: branchId/checkDate/machineRef/operatorRef.
+Baris: item+qty+unit+gudang. Workflow §2.7 penuh.
+
+### Kode transaksi ↔ route ↔ backend ↔ tabel
+
+| Kode    | Route FE                         | Backend endpoint                | Tabel header                  |
+|---------|----------------------------------|---------------------------------|-------------------------------|
+| INV.MR  | /warehouse/material-requests     | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.TS  | /warehouse/transfers             | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.RS  | /warehouse/transfer-receipts     | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.RF  | /warehouse/fuel-refills          | /erp/inv/stock-movements        | inv_stock_movements           |
+| INV.SA  | /warehouse/stock-adjustments     | /erp/inv/stock-adjustments      | inv_stock_adjustments         |
+| INV.IB  | /warehouse/opening-stocks        | /erp/inv/opening-stocks         | inv_opening_stocks            |
+| INV.SP  | /warehouse/stock-counts          | /erp/inv/stock-counts           | inv_stock_counts              |
+| INV.PA  | /warehouse/price-adjustments     | /erp/inv/price-adjustments      | inv_cost_recalculations       |
+| INV.RW  | /warehouse/receipt-weighers      | /erp/inv/weighbridge-tickets    | inv_weighbridge_tickets       |
+| INV.DC  | /warehouse/daily-checks          | /erp/inv/daily-checks           | inv_daily_checks              |
+
+### Deploy & verifikasi (2026-06-03)
+- Migrasi `20260603_003_erp_inv_daily_checks` → `prisma migrate deploy` (Postgres :3208). 79 migrasi sinkron.
+- **Fix gap grid-custom DC:** INV.DC awalnya terdaftar **tanpa** `grid:` family di
+  `seed-erp-transaction-grids.ts` → `sys_transaction_grids` 0 baris, sehingga DC selalu
+  jatuh ke `defaultInvDailyCheckCols()` dan **tak bisa** dikustomisasi via Kustomisasi Grid
+  (beda dengan 8 transaksi lain). Ditambah famili `invDailyCheck` →
+  `inv_daily_check_lines` + `INV_DAILY_CHECK_COLUMNS` (mirror default cols). Re-seed →
+  INV.DC kini 1 grid + 11 kolom (parity). RW tetap 0/0 (header-only, benar).
+- Container `sentient-infra-api-gateway` (`nest --watch`) tidak otomatis recompile modul
+  PA/RW/DC yang di-commit belakangan (route 404). Prosedur §2.34: `prisma generate` di
+  dalam container (DC model baru) → `docker restart`. Semua 7 route inv kini 401
+  (terdaftar + guarded): stock-movements, stock-adjustments, opening-stocks, stock-counts,
+  price-adjustments, weighbridge-tickets, daily-checks.
+
+### Follow-up
+- Kolom akun GL per-baris (SA/IB) bisa di-expose di Grid Custom bila admin ingin
+  override. Default server-side dari item/Setting sudah cukup untuk sebagian besar kasus.
+- IB: konversi mata uang (header `exchangeRate`) belum dipakai di posting GL — seam
+  tersedia, implementasi saat modul GL inventory diaktifkan.
+- PA: background job processor (mengisi `status=COMPLETED` + `totalDelta`) belum dibuat.
+- DC: model `inv_daily_check_lines` minimal (item+qty+unit). Bila perlu field mesin/
+  jam-kerja tambahan, tambah kolom + migrasi additif.
+
+---
+
+## § Purchasing (M4) — config baseline + forms
+
+**Pola = persis Sales (M5).** Purchasing dibangun meniru Sales Order item-based
+(header config-driven Form Builder + grid baris config-driven Kustomisasi Grid +
+state machine §2.7 + sub-route URL §2.3.1). Tiap dokumen `pur_*` punya line table
+sendiri (per-txn `lineTable` override, bukan satu tabel bersama).
+
+**13 tipe transaksi PUR** (paritas menu M4.TX) terdaftar di `sys_transaction_types`
+(`seed-erp-transaction-grids.ts`). Kode stub lama (`PUR.GR`/`PUR.INV`/`PUR.RET`)
+**di-prune** → diganti kode kanonik per menu:
+
+| Kode | Dokumen | Grid family | Line table |
+| --- | --- | --- | --- |
+| `PUR.PR` | Purchase Requisition | `purchaseItem` | `pur_requisition_lines` |
+| `PUR.RFQ` | Request for Quotation | `purchaseRfq` | `pur_rfq_suppliers` (baris = supplier diundang) |
+| `PUR.BS` | Bid Comparison | `purchaseBid` | `pur_bid_selection_lines` |
+| `PUR.PO` | Purchase Order | `purchaseItem` | `pur_order_lines` |
+| `PUR.GRN` | Goods Receipt | `purchaseReceipt` | `pur_goods_receipt_lines` (+ QC: accepted/rejected/quarantine) |
+| `PUR.PI` | Purchase Invoice | `purchaseItem` | `pur_invoice_lines` |
+| `PUR.DNR` | Return Shipment | `purchaseItem` | `pur_return_lines` (returnType=DEBIT_NOTE) |
+| `PUR.PRT` | Purchase Return | `purchaseItem` | `pur_return_lines` (returnType=RETURN_TO_VENDOR) |
+| `PUR.AP` · `PUR.PP` · `PUR.VPP` · `PUR.VP` · `PUR.OB` | Vendor Advance / Freight Payable / Payment Schedule / Vendor Payment / Opening AP | — (reuse finance domain) | — (katalog + header saja) |
+
+8 dokumen item-based dapat grid kolom default; 5 dokumen pembayaran/saldo-awal
+(`AP/PP/VPP/VP/OB` reuse `fin_ap_payments`/`fin_settlement_allocations`) = katalog +
+header form saja (grid menyusul saat desain reuse finance difinalisasi). Header field
+default per kode di `seed-erp-purchasing-forms.ts` (`seedPurchasingForms`): supplier
+**required** untuk PO/GRN/PI/DNR/PRT, **optional** untuk PR/RFQ/BS (pre-sourcing).
+
+**Kontrak dataField/fieldKey (jangan rename).** Grid `purchaseItem`: `rowNo`,`itemId`,
+`quantity`,`unitId`,`unitPrice`,`discountPercent`,`discountAmount`(hidden),`tax1Id`,
+`lineTotal`(skip/derived),`warehouseId`(hidden),`notes`,dims(hidden). Grid
+`purchaseReceipt` tambah `acceptedQty`/`rejectedQty`(hidden)/`quarantineQty`(hidden)/
+`unitCost`(hidden). Header item-doc: `supplierId`/`description`/`referenceNo` (LEFT) ·
+`branchId`/`locationId`/`warehouseId`/`payableAccountId` (CENTER) · `docDate`(@today)/
+`docNumber`/`currencyId`(default 1)/`paymentTermId`/`dueDate` (RIGHT).
+
+**Lookup registry** sudah punya `items`/`units`/`taxes`/`payment-terms` (ditambah saat
+Sales). Reuse — jangan bikin slug baru.
+
+**Form kerja penuh pertama = Purchase Order** (`/purchasing/purchase-orders`, code
+`PUR.PO`) — mirror SO 1:1. Backend `erp-pur-orders` (CRUD + numbering `PO` + fiscal
+period dari docDate + totals server-side + enrich cross-domain + workflow). **PO TIDAK
+posting GL** (dokumen komitmen; GRN posting inventory+GR/IR, PI posting AP) — posting
+service = no-op terdokumentasi. E2E verified: create→submit→approve→post (POSTED, 0
+ledger entries; subtotal/grandTotal benar). FE: `lib/api/pur-orders`,
+`purchase-transaction-form` (shared) + `pur-order-form`, `pur-item-lines`,
+`pur-structural-field`, `pur-orders-page` + filters; route di `TRX_FORM_PAGES` +
+`ERP_ROUTE_META`. **Beda dari SO:** `pur_orders` **tidak punya kolom `code`** (SO punya);
+`customerId`→`supplierId`, `receivableAccountId`→`payableAccountId`, `salesDeptId` di-drop.
+Reuse `cashBankWorkflowActions` + grid engine generik (sama spt SO).
+
+Semua 13 transaksi Purchasing selesai. Replikasi selesai (PR/PI/GRN/DNR/PRT/RFQ/BS).
+Payment docs (AP/PP/VPP/VP/OB): reuse pur_invoices / fin_ap_payments — lihat §§ payment docs di bawah.
+
+**Follow-up (sama persis SO):** REOPEN dari POSTED → 400 (gap warisan); kolom custom
+baris belum persist (`pur_*_lines` tak punya `custom_fields` JSONB).
+
+**Payment docs (AP/PP/VPP/VP/OB)**: reuse Finance domain + `fin_ap_payments` +4 kolom
+(migrasi `20260603_001`): `fx_gain_loss_amount/account_id` + `term_discount_amount/account_id`.
+AP/PP/OB = list pur_invoices dari sisi pembelian; VPP/VP = fin_ap_payments DRAFT/ALL.
+Form semua coming-soon — menunggu integrasi Finance AP payment form ke purchasing UI.
+Routes: /purchasing/vendor-advances · /purchasing/freight-payables ·
+/purchasing/payment-schedules · /purchasing/vendor-payments · /purchasing/opening-ap-balance.
+

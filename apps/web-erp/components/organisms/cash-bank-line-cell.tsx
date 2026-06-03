@@ -133,7 +133,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, autoOpe
           fill
           autoOpenModal={autoOpenModal}
           initialQuery={seed}
-          placeholder="Pilih…"
+          placeholder={col.placeholder || 'Pilih…'}
           value={value}
           initialLabel={label}
           onValueChange={(v) => onSet(v)}
@@ -149,7 +149,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, autoOpe
           fill
           autoOpenModal={autoOpenModal}
           initialQuery={seed}
-          placeholder="Pilih akun…"
+          placeholder={col.placeholder || 'Pilih akun…'}
           value={value}
           initialLabel={label}
           onValueChange={(v) => onSet(v)}
@@ -165,7 +165,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, autoOpe
           fill
           autoOpenModal={autoOpenModal}
           initialQuery={seed}
-          placeholder="Pilih partner…"
+          placeholder={col.placeholder || 'Pilih partner…'}
           value={value}
           initialLabel={label}
           onValueChange={(v) => onSet(v)}
@@ -225,6 +225,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, autoOpe
           autoFocus
           value={value}
           rows={2}
+          placeholder={col.placeholder ?? undefined}
           onChange={(e) => onSet(e.target.value)}
           onBlur={() => onEndEdit(false)}
           onKeyDown={(e) => {
@@ -255,6 +256,7 @@ function EditControl({ col, value, label, rowIndex, seed, selectOnFocus, autoOpe
         <Input
           autoFocus
           value={value}
+          placeholder={col.placeholder ?? undefined}
           onFocus={(e) => { if (selectOnFocus) e.currentTarget.select(); }}
           onChange={(e) => onSet(e.target.value)}
         />
@@ -273,12 +275,14 @@ function displayCell(col: GridCol, value: string, label?: string, rowIndex?: num
   }
 
   if (!value) {
-    // Lookup cells show no "Pilih…" label in the table — empty falls to the
-    // same muted "—" as text cells (the search icon on hover signals the picker).
+    // A configured placeholder (Kustomisasi Grid) wins as the empty hint; otherwise
+    // lookup cells show no "Pilih…" label (the search icon on hover signals the
+    // picker) and fall to the same muted "—" / "0" as text / numeric cells.
     const ph =
-      editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' ? '0'
-      : editor === 'NONE' ? ''
-      : '—';
+      col.placeholder
+      || (editor === 'NUMBER' || editor === 'DISCOUNT' || editor === 'STEPPER' ? '0'
+        : editor === 'NONE' ? ''
+        : '—');
     return { node: ph, muted: true };
   }
 

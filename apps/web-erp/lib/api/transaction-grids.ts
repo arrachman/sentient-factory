@@ -155,6 +155,12 @@ export interface ErpGridColumn {
   lookupSource?: string | null;
   lookupDefaultFilter?: Record<string, unknown> | null;
   lookupDefaultSort?: string | null;
+  /** Cell placeholder shown when empty; null/empty = built-in default. */
+  placeholder?: string | null;
+  /** Value prefilled on a new line row (lookup = id, others = raw string). */
+  defaultValue?: string | null;
+  /** Stored display label for a lookup `defaultValue` (set at pick time). */
+  defaultValueLabel?: string | null;
   columnType?: ColumnType | null;
   labelFormatter?: LabelFormatter | null;
   headerRenderer?: HeaderRenderer | null;
@@ -215,6 +221,9 @@ export const saveTransactionGrids = (code: string, grids: ErpTransactionGrid[]) 
         lookupDefaultFilter: c.lookupDefaultFilter && Object.keys(c.lookupDefaultFilter).length > 0
           ? c.lookupDefaultFilter : undefined,
         lookupDefaultSort: c.lookupDefaultSort ?? undefined,
+        placeholder: c.placeholder ?? undefined,
+        defaultValue: c.defaultValue ?? undefined,
+        defaultValueLabel: c.defaultValueLabel ?? undefined,
         columnType: c.columnType ?? undefined,
         labelFormatter: c.labelFormatter ?? undefined,
         headerRenderer: c.headerRenderer ?? undefined,

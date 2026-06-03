@@ -36,6 +36,14 @@ export interface SlsOrderFormData {
   description: string;
   referenceNo: string;
   notes: string;
+  /** Header discount — percent takes priority if both set. */
+  discountPercent: string;
+  discountAmount: string;
+  /** Header-level tax amounts (separate from per-line tax). */
+  tax1Amount: string;
+  tax2Amount: string;
+  otherCostAmount: string;
+  receivableAccountId: string;
   status: ErpDocumentStatus;
   postedAt?: string | null;
   grandTotal?: string;
@@ -65,6 +73,12 @@ export function defaultSlsOrderForm(): SlsOrderFormData {
     description: '',
     referenceNo: '',
     notes: '',
+    discountPercent: '',
+    discountAmount: '',
+    tax1Amount: '',
+    tax2Amount: '',
+    otherCostAmount: '',
+    receivableAccountId: '',
     status: 'DRAFT',
     lines: [newSlsItemLine()],
     customFields: {},
@@ -162,10 +176,16 @@ export function fromSlsOrder(r: ErpSlsOrder): SlsOrderFormData {
     description: r.description ?? '',
     referenceNo: r.referenceNo ?? '',
     notes: r.notes ?? '',
+    discountPercent: r.discountPercent ?? '',
+    discountAmount: r.discountAmount ?? '',
+    tax1Amount: r.tax1Amount ?? '',
+    tax2Amount: r.tax2Amount ?? '',
+    otherCostAmount: r.otherCostAmount ?? '',
+    receivableAccountId: r.receivableAccountId ?? '',
     status: r.status,
     postedAt: r.postedAt,
     grandTotal: r.grandTotal,
-    customFields: {},
+    customFields: (r.customFields as Record<string, string | number | null>) ?? {},
     lines: r.lines.map((l) => ({
       key: `sl-${l.id ?? l.lineNo}`,
       itemId: l.itemId,
@@ -186,11 +206,13 @@ export function fromSlsOrder(r: ErpSlsOrder): SlsOrderFormData {
       divisionId: l.divisionId ?? undefined,
       subdivisionId: l.subdivisionId ?? undefined,
       projectId: l.projectId ?? undefined,
+      customFields: (l.customFields as Record<string, unknown>) ?? undefined,
     })),
   };
 }
 
 export function toSlsOrderPayload(d: SlsOrderFormData): CreateSlsOrderPayload {
+  const hasCustomFields = Object.keys(d.customFields).length > 0;
   return {
     auto: d.auto,
     docNumber: d.auto ? undefined : d.docNumber || undefined,
@@ -202,12 +224,19 @@ export function toSlsOrderPayload(d: SlsOrderFormData): CreateSlsOrderPayload {
     customerId: d.customerId || undefined,
     paymentTermId: d.paymentTermId || undefined,
     salesDeptId: d.salesDeptId || undefined,
+    receivableAccountId: d.receivableAccountId || undefined,
     currencyId: d.currencyId,
     exchangeRate: d.exchangeRate || '1',
     priceMode: d.priceMode,
     description: d.description || undefined,
     referenceNo: d.referenceNo || undefined,
     notes: d.notes || undefined,
+    discountPercent: d.discountPercent || undefined,
+    discountAmount: d.discountAmount || undefined,
+    tax1Amount: d.tax1Amount || undefined,
+    tax2Amount: d.tax2Amount || undefined,
+    otherCostAmount: d.otherCostAmount || undefined,
+    customFields: hasCustomFields ? (d.customFields as Record<string, unknown>) : undefined,
     lines: d.lines
       .filter((l) => l.itemId && Number(l.quantity) > 0)
       .map((l, i) => ({
@@ -225,6 +254,7 @@ export function toSlsOrderPayload(d: SlsOrderFormData): CreateSlsOrderPayload {
         subdivisionId: l.subdivisionId || undefined,
         projectId: l.projectId || undefined,
         notes: l.notes || undefined,
+        customFields: l.customFields ? (l.customFields as Record<string, unknown>) : undefined,
         lineNo: i + 1,
       })),
   };
