@@ -118,11 +118,16 @@ import { TRX_FORM_PAGES } from './shell-trx-pages';
 import type { Lang } from '@/lib/shell-constants';
 import { InvReportPage } from '@/components/pages/inv-report-page';
 import { invReportOptions } from '@/lib/inv-report-options';
+import { PurReportPage } from '@/components/pages/pur-report-page';
+import { purReportOptions } from '@/lib/pur-report-options';
 
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
 /** Base path for the generic Warehouse (M3) report pages. */
 const INV_REPORT_PREFIX = '/warehouse/reports/';
+
+/** Base path for the generic Purchasing (M4) report pages. */
+const PUR_REPORT_PREFIX = '/purchasing/reports/';
 
 interface ErpPageCtx {
   t: ReturnType<typeof makeTranslator>;
@@ -283,6 +288,23 @@ export function renderRoute(
           reportKey={reportKey}
           title={opt.title}
           asOfMode={opt.asOfMode}
+          showItem={opt.showItem}
+          statusOptions={opt.statusOptions}
+        />
+      );
+    }
+  }
+
+  // ── Purchasing (M4) reports: one generic page driven by the report key ──────
+  if (route.startsWith(PUR_REPORT_PREFIX)) {
+    const reportKey = route.slice(PUR_REPORT_PREFIX.length);
+    if (reportKey) {
+      const opt = purReportOptions(reportKey);
+      return (
+        <PurReportPage
+          reportKey={reportKey}
+          title={opt.title}
+          showVendor={opt.showVendor}
           showItem={opt.showItem}
           statusOptions={opt.statusOptions}
         />

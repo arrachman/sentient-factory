@@ -130,6 +130,7 @@ import { ErpInvStockCountsModule } from './erp-inv-stock-counts/erp-inv-stock-co
 import { ErpInvPriceAdjustmentsModule } from './erp-inv-price-adjustments/erp-inv-price-adjustments.module';
 import { ErpInvWeighbridgeTicketsModule } from './erp-inv-weighbridge-tickets/erp-inv-weighbridge-tickets.module';
 import { ErpInvReportsModule } from './erp-inv-reports/erp-inv-reports.module';
+import { ErpPurReportsModule } from './erp-pur-reports/erp-pur-reports.module';
 import { ErpInvDailyChecksModule } from './erp-inv-daily-checks/erp-inv-daily-checks.module';
 import { ErpPurOrdersModule } from './erp-pur-orders/erp-pur-orders.module';
 import { ErpPurRequisitionsModule } from './erp-pur-requisitions/erp-pur-requisitions.module';
@@ -296,6 +297,7 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpInvStockCountsModule,
     ErpInvPriceAdjustmentsModule,
     ErpInvReportsModule,
+    ErpPurReportsModule,
     ErpInvWeighbridgeTicketsModule,
     ErpInvDailyChecksModule,
     ErpPurOrdersModule,
