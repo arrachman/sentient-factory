@@ -112,6 +112,9 @@ import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
 import { ErpFinCashBankTransactionsModule } from './erp-fin-cash-bank-transactions/erp-fin-cash-bank-transactions.module';
 import { ErpSlsOrdersModule } from './erp-sls-orders/erp-sls-orders.module';
 import { ErpInvStockMovementsModule } from './erp-inv-stock-movements/erp-inv-stock-movements.module';
+import { ErpInvStockAdjustmentsModule } from './erp-inv-stock-adjustments/erp-inv-stock-adjustments.module';
+import { ErpInvOpeningStocksModule } from './erp-inv-opening-stocks/erp-inv-opening-stocks.module';
+import { ErpInvStockCountsModule } from './erp-inv-stock-counts/erp-inv-stock-counts.module';
 import { ErpSysTransactionGridsModule } from './erp-sys-transaction-grids/erp-sys-transaction-grids.module';
 import { ErpFormFieldsModule } from './erp-form-fields/erp-form-fields.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
@@ -253,6 +256,9 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpFinCashBankTransactionsModule,
     ErpSlsOrdersModule,
     ErpInvStockMovementsModule,
+    ErpInvStockAdjustmentsModule,
+    ErpInvOpeningStocksModule,
+    ErpInvStockCountsModule,
     ErpSysTransactionGridsModule,
     ErpFormFieldsModule,
   ],
