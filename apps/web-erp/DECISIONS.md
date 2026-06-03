@@ -2287,6 +2287,20 @@ Baris: item+qty+unit+gudang. Workflow §2.7 penuh.
 | INV.RW  | /warehouse/receipt-weighers      | /erp/inv/weighbridge-tickets    | inv_weighbridge_tickets       |
 | INV.DC  | /warehouse/daily-checks          | /erp/inv/daily-checks           | inv_daily_checks              |
 
+### Deploy & verifikasi (2026-06-03)
+- Migrasi `20260603_003_erp_inv_daily_checks` → `prisma migrate deploy` (Postgres :3208). 79 migrasi sinkron.
+- **Fix gap grid-custom DC:** INV.DC awalnya terdaftar **tanpa** `grid:` family di
+  `seed-erp-transaction-grids.ts` → `sys_transaction_grids` 0 baris, sehingga DC selalu
+  jatuh ke `defaultInvDailyCheckCols()` dan **tak bisa** dikustomisasi via Kustomisasi Grid
+  (beda dengan 8 transaksi lain). Ditambah famili `invDailyCheck` →
+  `inv_daily_check_lines` + `INV_DAILY_CHECK_COLUMNS` (mirror default cols). Re-seed →
+  INV.DC kini 1 grid + 11 kolom (parity). RW tetap 0/0 (header-only, benar).
+- Container `sentient-infra-api-gateway` (`nest --watch`) tidak otomatis recompile modul
+  PA/RW/DC yang di-commit belakangan (route 404). Prosedur §2.34: `prisma generate` di
+  dalam container (DC model baru) → `docker restart`. Semua 7 route inv kini 401
+  (terdaftar + guarded): stock-movements, stock-adjustments, opening-stocks, stock-counts,
+  price-adjustments, weighbridge-tickets, daily-checks.
+
 ### Follow-up
 - Kolom akun GL per-baris (SA/IB) bisa di-expose di Grid Custom bila admin ingin
   override. Default server-side dari item/Setting sudah cukup untuk sebagian besar kasus.

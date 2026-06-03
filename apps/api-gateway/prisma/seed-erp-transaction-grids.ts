@@ -46,6 +46,7 @@ type GridFamily =
   // Inventory (M3) — item-line families mapping to the inv_* line tables.
   | 'invMoveTransfer' | 'invMoveRequest' | 'invFuel'
   | 'invOpening' | 'invCount' | 'invAdjustment' | 'invCostRecalc'
+  | 'invDailyCheck'
   // Sales (M5) — item-line family. Unlike finance/inventory families that share a
   // line table, each sales doc has its OWN line table → per-txn `lineTable` override.
   | 'salesItem';
@@ -62,6 +63,7 @@ const LINE_TABLE_BY_FAMILY: Record<GridFamily, string> = {
   invCount: 'inv_stock_count_lines',
   invAdjustment: 'inv_stock_adjustment_lines',
   invCostRecalc: 'inv_cost_recalculation_lines',
+  invDailyCheck: 'inv_daily_check_lines',
   // Fallback only — each salesItem txn ALWAYS sets an explicit `lineTable` override
   // (sales docs don't share a single line table).
   salesItem: 'sls_order_lines',
@@ -95,7 +97,7 @@ const TXNS: TxnDef[] = [
   { code: 'INV.PA', name: 'Price Adjustment (PA)', moduleKey: 'inventory', group: 'Transaction', grid: 'invCostRecalc' },
   { code: 'INV.IB', name: 'Opening Stock (IB)', moduleKey: 'inventory', group: 'Transaction', grid: 'invOpening' },
   { code: 'INV.RF', name: 'Fuel Refill (RF)', moduleKey: 'inventory', group: 'Transaction', grid: 'invFuel' },
-  { code: 'INV.DC', name: 'Time Sheet/Daily Check (DC)', moduleKey: 'inventory', group: 'Transaction' },
+  { code: 'INV.DC', name: 'Time Sheet/Daily Check (DC)', moduleKey: 'inventory', group: 'Transaction', grid: 'invDailyCheck' },
   { code: 'INV.RW', name: 'Receipt Weigher (RW)', moduleKey: 'inventory', group: 'Transaction' },
   // Purchasing
   { code: 'PUR.PO', name: 'Purchase Order', moduleKey: 'purchasing', group: 'Transaction' },
@@ -305,6 +307,19 @@ const INV_COST_RECALC_COLUMNS: ColDef[] = [
   ...INV_CUSTOM_SLOTS,
 ];
 
+// invDailyCheck → inv_daily_check_lines (Time Sheet/Daily Check): qty-based count
+// per item/warehouse. Mirrors defaultInvDailyCheckCols() in the frontend line-model.
+const INV_DAILY_CHECK_COLUMNS: ColDef[] = [
+  ROWNUM_COL,
+  { field: 'itemId', header: 'Item (Kode · Nama)', width: 320, type: 'LOOKUP', lookup: 'items', required: true },
+  { field: 'quantity', header: 'Qty', width: 120, type: 'NUMBER', required: true },
+  { field: 'unitId', header: 'Satuan', width: 140, type: 'LOOKUP', lookup: 'units', required: true },
+  { field: 'warehouseId', header: 'Gudang', width: 200, type: 'LOOKUP', lookup: 'warehouses' },
+  { field: 'costCenterId', header: 'Cost Center', width: 200, type: 'LOOKUP', lookup: 'cost-centers', visible: false },
+  { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
+  ...INV_CUSTOM_SLOTS,
+];
+
 // ── Sales (M5) item-line columns → sls_*_lines tables ────────────────────────
 
 // salesItem → per-txn sls_*_lines (item + qty/price/disc/tax + derived total).
@@ -351,6 +366,7 @@ const COLUMNS_BY_FAMILY: Record<GridFamily, ColDef[]> = {
   invCount: INV_COUNT_COLUMNS,
   invAdjustment: INV_ADJUSTMENT_COLUMNS,
   invCostRecalc: INV_COST_RECALC_COLUMNS,
+  invDailyCheck: INV_DAILY_CHECK_COLUMNS,
   salesItem: SALES_ITEM_COLUMNS,
 };
 
