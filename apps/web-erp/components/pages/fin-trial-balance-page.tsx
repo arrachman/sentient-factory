@@ -1,16 +1,16 @@
 'use client';
 
-/** Buku Besar (General Ledger) — finance report view + export. */
+/** Neraca Saldo (Trial Balance) — finance report view + export. */
 
 import { ReportPage, type ReportPageConfig } from './report-page';
 
 const CONFIG: ReportPageConfig = {
-  report: 'general-ledger',
-  title: 'Buku Besar',
-  codeTag: 'GL',
+  report: 'trial-balance',
+  title: 'Neraca Saldo',
+  codeTag: 'TB',
   mode: 'range',
 };
 
-export function ErpLedgerPage() {
+export function ErpTrialBalancePage() {
   return <ReportPage config={CONFIG} />;
 }

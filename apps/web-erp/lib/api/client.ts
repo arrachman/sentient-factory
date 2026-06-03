@@ -107,6 +107,87 @@ export function apiGet<T>(
   return request<T>({ method: 'GET', path, params });
 }
 
+// ─── URL builder + file download (used by report exports) ─────────────────────
+
+/**
+ * Build an absolute API URL from a relative `path` (prepends BASE_URL) and an
+ * optional query object. Mirrors the URL-building in the internal fetch helper.
+ * Exported because BASE_URL itself stays private.
+ */
+export function buildApiUrl(
+  path: string,
+  query?: Record<string, string | number | undefined>,
+): string {
+  let url = `${BASE_URL}${path}`;
+  if (query) {
+    const searchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined && value !== null) {
+        searchParams.set(key, String(value));
+      }
+    }
+    const qs = searchParams.toString();
+    if (qs) url = `${url}?${qs}`;
+  }
+  return url;
+}
+
+/** Extract a filename from a Content-Disposition header, if present. */
+function filenameFromDisposition(header: string | null): string | null {
+  if (!header) return null;
+  const star = /filename\*=(?:UTF-8'')?["']?([^"';]+)/i.exec(header);
+  if (star?.[1]) return decodeURIComponent(star[1]);
+  const plain = /filename=["']?([^"';]+)/i.exec(header);
+  return plain?.[1] ?? null;
+}
+
+/**
+ * Fetch a streamed file (with cookie auth) and trigger a browser download.
+ * Uses the server-provided filename from Content-Disposition when present,
+ * else `fallbackName`. Throws ErpApiError on non-ok responses.
+ */
+export async function downloadFile(
+  path: string,
+  query: Record<string, string | number | undefined> | undefined,
+  fallbackName: string,
+): Promise<void> {
+  const url = buildApiUrl(path, query);
+  const response = await fetch(url, { credentials: 'include' });
+
+  if (!response.ok) {
+    const fallbackMessage =
+      response.statusText || `Unduhan gagal (HTTP ${response.status})`;
+    let apiError: ApiError;
+    try {
+      const payload = (await response.json()) as {
+        error?: ApiError;
+        message?: string;
+      };
+      apiError = payload.error ?? {
+        code: `HTTP_${response.status}`,
+        message: payload.message ?? fallbackMessage,
+      };
+    } catch {
+      apiError = { code: `HTTP_${response.status}`, message: fallbackMessage };
+    }
+    throw new ErpApiError(apiError);
+  }
+
+  const blob = await response.blob();
+  const name =
+    filenameFromDisposition(response.headers.get('content-disposition')) ??
+    fallbackName;
+
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return request<T>({ method: 'POST', path, body });
 }
