@@ -2426,3 +2426,69 @@ Form semua coming-soon — menunggu integrasi Finance AP payment form ke purchas
 Routes: /purchasing/vendor-advances · /purchasing/freight-payables ·
 /purchasing/payment-schedules · /purchasing/vendor-payments · /purchasing/opening-ap-balance.
 
+
+---
+
+## § Warehouse (M3) Reports — 23 laporan + export server-side (2026-06-03)
+
+**Konteks:** menu REPORTS (`/warehouse/reports/*`, 23 path seeded) sebelumnya
+render blank (ComingSoon — tak ada komponen terdaftar). Dibuat full: view +
+export ke Excel/PDF/Word. Pilihan user: **semua report (A+B) sekaligus**,
+**export server-side** (api-gateway).
+
+**Pola = framework laporan uniform (1 kontrak).** Tiap report = `ReportDef`
+(`{ key, title, group, columns, resolve(filters) }`) → `ReportDataset`
+(`{ columns, rows, summary, total, generatedAt }`) yang **sama** dipakai view
+JSON dan ketiga exporter, jadi tampilan & file selalu konsisten. Tambah report =
+tambah satu `ReportDef`; tak ada plumbing per-report. Backend: `apps/api-gateway/
+src/erp-inv-reports/` (registry `inv-reports.service.ts` compose `buildTxnReports`
++ `buildStockReports`). Endpoint (guard `ErpJwtAuthGuard`):
+- `GET /erp/inv/reports` → katalog (key/title/group).
+- `GET /erp/inv/reports/:key` → ReportDataset JSON (tabel layar).
+- `GET /erp/inv/reports/:key/export?format=xlsx|pdf|docx&<filters>` → unduh file.
+Filter query: dateFrom/dateTo/asOfDate/warehouseId/itemId/status/search/page/limit.
+
+**23 report:**
+- **11 transaksi** (`group:'transaction'`): MR/TS/RS/RF/Return (ErpInvStockMovement
+  per `movementType`), SP/SA/PA/IB/DC/RW (header-level per modul). Filter status +
+  tanggal + gudang + search.
+- **4 item** (`group:'item'`): batch-items/batch-cards (ErpInvLot), serial-items/
+  serial-cards (ErpInvSerial). (Lot tak punya qty on-hand per-lot → kolom qty 0;
+  follow-up.)
+- **8 agregasi stok** (`group:'stock'`, reuse `InvMovingAverageCostService` dari
+  `erp-inv-gl` — saldo DERIVED dari POSTED movements ∪ opening, tak ada tabel
+  stock-ledger): stock (saldo+nilai), stock-cards (kartu stok running balance,
+  butuh itemId), stock-mutations (opening/in/out/closing), below-minimum
+  (`md_items.minStock`), daily-stock (saldo harian), cogs-balance (cost recalc),
+  stock-minus (saldo negatif), consignment (**kosong + note** — belum ada model
+  konsinyasi; hanya `md_items.consignmentAccountId`).
+
+**Export server-side** (`report-export.service.ts` + per-format): **exceljs**
+(xlsx), **pdfkit** (pdf — font Helvetica built-in, tanpa Chromium; pdfmake
+**tidak** dipakai, di-skip karena setup font 0.3.x ribet — pdfkit sudah jadi dep
+& dipakai modul `erp-fin-reports`), **docx** (word). Format sel per `column.type`
+(money/qty/number/percent/date/status) identik view & file. Filename
+`${key}-YYYYMMDD.ext`.
+
+**Frontend:** satu `InvReportPage` generik (`components/pages/inv-report-page.tsx`)
++ `ReportToolbar` (filter + tombol Excel/PDF/Word) + `ReportTable`, reuse
+`ErpListLayout`/`Table`/format helpers + `lib/api/client.downloadFile` (cookie
+`erp_token` + nama file dari `Content-Disposition`). Routing: `renderRoute`
+dispatch `/warehouse/reports/:key` → `InvReportPage`; opsi per-key di
+`lib/inv-report-options.ts` (status filter utk transaksi, item picker utk
+stock-cards, as-of utk stock).
+
+**Bug pre-eksis ditemukan & diperbaiki:** `inv_weighbridge_tickets.posted_at`
+ada di schema (sejak build RW) tapi tak pernah dimigrasi → semua Prisma read RW
+500 (P2022), termasuk list RW. Migrasi `20260603_005` menambah kolomnya.
+
+**Verifikasi E2E:** login admin → katalog 23 report → 23/23 data http 200 →
+export xlsx/pdf/docx magic bytes valid (PK/%PDF/PK). Typecheck api-gateway 0
+error; file FE report clean.
+
+**Follow-up:** (1) consignment butuh model transaksi konsinyasi. (2) batch/lot
+on-hand qty per gudang (skema lot tak simpan qty). (3) Statistics group
+(`/warehouse/stats/*`, 6 dashboard) masih ComingSoon — di luar scope ini.
+(4) Finance reports (`/finance/*`: cash-flow, AR/AP card/aging, giro-maturity,
+budget-realization) dibangun **paralel sesi lain** (modul `erp-fin-reports`,
+pola berbeda) — jangan dobel.
