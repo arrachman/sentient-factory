@@ -115,6 +115,9 @@ import { ErpInvStockMovementsModule } from './erp-inv-stock-movements/erp-inv-st
 import { ErpInvStockAdjustmentsModule } from './erp-inv-stock-adjustments/erp-inv-stock-adjustments.module';
 import { ErpInvOpeningStocksModule } from './erp-inv-opening-stocks/erp-inv-opening-stocks.module';
 import { ErpInvStockCountsModule } from './erp-inv-stock-counts/erp-inv-stock-counts.module';
+import { ErpInvPriceAdjustmentsModule } from './erp-inv-price-adjustments/erp-inv-price-adjustments.module';
+import { ErpInvWeighbridgeTicketsModule } from './erp-inv-weighbridge-tickets/erp-inv-weighbridge-tickets.module';
+import { ErpInvDailyChecksModule } from './erp-inv-daily-checks/erp-inv-daily-checks.module';
 import { ErpSysTransactionGridsModule } from './erp-sys-transaction-grids/erp-sys-transaction-grids.module';
 import { ErpFormFieldsModule } from './erp-form-fields/erp-form-fields.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
@@ -259,6 +262,9 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpInvStockAdjustmentsModule,
     ErpInvOpeningStocksModule,
     ErpInvStockCountsModule,
+    ErpInvPriceAdjustmentsModule,
+    ErpInvWeighbridgeTicketsModule,
+    ErpInvDailyChecksModule,
     ErpSysTransactionGridsModule,
     ErpFormFieldsModule,
   ],
