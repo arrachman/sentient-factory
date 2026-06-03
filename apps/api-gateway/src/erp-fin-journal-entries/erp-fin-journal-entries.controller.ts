@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { QueryJournalEntryDto } from './dto/query-journal-entry.dto';
+import { TransitionJournalEntryDto } from './dto/transition-journal-entry.dto';
 import { UpdateJournalEntryDto } from './dto/update-journal-entry.dto';
 import { ErpFinJournalEntriesService } from './erp-fin-journal-entries.service';
 
@@ -50,6 +51,16 @@ export class ErpFinJournalEntriesController {
     @Request() req: any,
   ) {
     return this.service.update(BigInt(id), dto, req.user?.id);
+  }
+
+  @Post(':id/transition')
+  @ApiOperation({ summary: 'Workflow transition (SUBMIT/APPROVE/REJECT/POST/REOPEN)' })
+  transition(
+    @Param('id') id: string,
+    @Body() dto: TransitionJournalEntryDto,
+    @Request() req: any,
+  ) {
+    return this.service.transition(BigInt(id), dto, req.user?.id);
   }
 
   @Delete(':id')

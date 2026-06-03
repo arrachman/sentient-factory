@@ -1,10 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import {
   ErpDocumentStatusDto,
   ErpJournalTypeDto,
 } from './create-journal-entry.dto';
+
+const SORTABLE = ['entryDate', 'docNumber', 'status', 'createdAt', 'updatedAt'] as const;
 
 export class QueryJournalEntryDto {
   @ApiPropertyOptional({ default: 1 })
@@ -36,4 +38,24 @@ export class QueryJournalEntryDto {
   @IsOptional()
   @IsEnum(ErpDocumentStatusDto)
   status?: ErpDocumentStatusDto;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() branchId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() partnerId?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() createdById?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() dateFrom?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() dateTo?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() docNumberFrom?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() docNumberTo?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+
+  @ApiPropertyOptional({ enum: SORTABLE, default: 'entryDate' })
+  @IsOptional()
+  @IsIn(SORTABLE as unknown as string[])
+  sortBy?: string;
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortDir?: 'asc' | 'desc';
 }

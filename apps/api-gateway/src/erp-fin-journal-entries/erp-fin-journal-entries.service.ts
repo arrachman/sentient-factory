@@ -1,99 +1,127 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  CreateJournalEntryDto,
-  CreateJournalLineDto,
-} from './dto/create-journal-entry.dto';
+import { JournalPostingService } from './journal-posting.service';
+import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 import { QueryJournalEntryDto } from './dto/query-journal-entry.dto';
 import { UpdateJournalEntryDto } from './dto/update-journal-entry.dto';
-
-function toBigInt(v?: string | null): bigint | null {
-  if (v === undefined || v === null || v === '') return null;
-  return BigInt(v);
-}
-
-function mapLine(line: CreateJournalLineDto) {
-  return {
-    accountId: BigInt(line.accountId),
-    currencyId: BigInt(line.currencyId),
-    exchangeRate: new Prisma.Decimal(line.exchangeRate),
-    debit: new Prisma.Decimal(line.debit),
-    credit: new Prisma.Decimal(line.credit),
-    debitFx: line.debitFx ? new Prisma.Decimal(line.debitFx) : null,
-    creditFx: line.creditFx ? new Prisma.Decimal(line.creditFx) : null,
-    notes: line.notes ?? null,
-    costCenterId: toBigInt(line.costCenterId),
-    divisionId: toBigInt(line.divisionId),
-    subdivisionId: toBigInt(line.subdivisionId),
-    projectId: toBigInt(line.projectId),
-    lineNo: line.lineNo,
-  };
-}
+import {
+  JournalTransitionAction as A,
+  TransitionJournalEntryDto,
+} from './dto/transition-journal-entry.dto';
+import {
+  toBigInt,
+  EDITABLE,
+  NEXT,
+  DOC_CODE,
+  FALLBACK_PREFIX,
+  mapLine,
+  buildJournalWhere,
+} from './journal-txn.helpers';
 
 @Injectable()
 export class ErpFinJournalEntriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly posting: JournalPostingService,
+  ) {}
 
-  async create(dto: CreateJournalEntryDto, actorId?: string) {
-    const actorBigInt = actorId ? BigInt(actorId) : null;
-
-    const created = await this.prisma.erpFinJournalEntry.create({
-      data: {
-        docNumber: dto.docNumber,
-        autoNumber: dto.autoNumber ?? null,
-        journalType: dto.journalType,
-        branchId: BigInt(dto.branchId),
-        locationId: toBigInt(dto.locationId),
-        source: dto.source ?? null,
-        entryDate: new Date(dto.entryDate),
-        fiscalPeriodId: BigInt(dto.fiscalPeriodId),
-        partnerId: toBigInt(dto.partnerId),
-        contactPerson: dto.contactPerson ?? null,
-        description: dto.description,
-        notes: dto.notes ?? null,
-        currencyId: BigInt(dto.currencyId),
-        exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-        status: dto.status ?? 'DRAFT',
-        postingStatus: dto.postingStatus ?? 'UNPOSTED',
-        legacyCode: dto.legacyCode ?? null,
-        createdById: actorBigInt,
-        updatedById: actorBigInt,
-        lines: dto.lines.length
-          ? { create: dto.lines.map(mapLine) }
-          : undefined,
-      },
-      include: { lines: true },
+  /** Resolve the fiscal period: explicit id, else the period containing the entry date. */
+  private async resolvePeriod(
+    tx: Prisma.TransactionClient,
+    fiscalPeriodId: string | undefined,
+    date: string,
+  ): Promise<bigint> {
+    if (fiscalPeriodId) return BigInt(fiscalPeriodId);
+    const d = new Date(date);
+    const period = await tx.erpFiscalPeriod.findFirst({
+      where: { deletedAt: null, startDate: { lte: d }, endDate: { gte: d } },
+      select: { id: true },
     });
+    if (!period) {
+      throw new BadRequestException(`Tidak ada periode fiskal yang memuat tanggal ${date}.`);
+    }
+    return period.id;
+  }
 
-    return { success: true, data: created };
+  /** Auto doc number per journalType via sys_document_numberings (fallback: count + prefix). */
+  private async genDocNumber(tx: Prisma.TransactionClient, journalType: string): Promise<string> {
+    const numbering = await tx.erpDocumentNumbering.findFirst({
+      where: { documentCode: DOC_CODE[journalType] ?? 'JV', deletedAt: null },
+    });
+    if (numbering) {
+      const seq = numbering.nextNumber;
+      await tx.erpDocumentNumbering.update({
+        where: { id: numbering.id },
+        data: { nextNumber: seq + 1 },
+      });
+      return `${numbering.prefix}${String(seq).padStart(numbering.digitCount, '0')}`;
+    }
+    const count = await tx.erpFinJournalEntry.count({ where: { journalType: journalType as never } });
+    return `${FALLBACK_PREFIX[journalType] ?? 'JV'}${String(count + 1).padStart(6, '0')}`;
+  }
+
+  private async findRaw(id: bigint) {
+    const entry = await this.prisma.erpFinJournalEntry.findFirst({
+      where: { id, deletedAt: null },
+      include: { lines: { orderBy: { lineNo: 'asc' } } },
+    });
+    if (!entry) throw new NotFoundException('Journal entry tidak ditemukan');
+    return entry;
+  }
+
+  // ── CRUD ────────────────────────────────────────────────────────────────────
+  async create(dto: CreateJournalEntryDto, actorId?: string) {
+    const actor = actorId ? BigInt(actorId) : null;
+    const created = await this.prisma.$transaction(async (tx) => {
+      const fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.entryDate);
+      const wantAuto = dto.auto !== false && !dto.docNumber;
+      const docNumber = wantAuto ? await this.genDocNumber(tx, dto.journalType) : dto.docNumber;
+      if (!docNumber) throw new BadRequestException('No transaksi wajib diisi.');
+
+      return tx.erpFinJournalEntry.create({
+        data: {
+          docNumber,
+          autoNumber: wantAuto ? docNumber : null,
+          journalType: dto.journalType as never,
+          branchId: BigInt(dto.branchId),
+          locationId: toBigInt(dto.locationId),
+          source: dto.source ?? null,
+          entryDate: new Date(dto.entryDate),
+          fiscalPeriodId,
+          partnerId: toBigInt(dto.partnerId),
+          contactPerson: dto.contactPerson ?? null,
+          description: dto.description,
+          notes: dto.notes ?? null,
+          currencyId: BigInt(dto.currencyId),
+          exchangeRate: new Prisma.Decimal(dto.exchangeRate),
+          status: 'DRAFT',
+          postingStatus: 'UNPOSTED',
+          legacyCode: dto.legacyCode ?? null,
+          createdById: actor,
+          updatedById: actor,
+          lines: dto.lines.length ? { create: dto.lines.map((l) => mapLine(l, dto)) } : undefined,
+        },
+        select: { id: true },
+      });
+    });
+    return this.findOne(created.id);
   }
 
   async findAll(query: QueryJournalEntryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
-    const skip = (page - 1) * limit;
-
-    const where: Prisma.ErpFinJournalEntryWhereInput = { deletedAt: null };
-
-    if (query.search?.trim()) {
-      const q = query.search.trim();
-      where.OR = [
-        { docNumber: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-      ];
-    }
-
-    if (query.journalType) where.journalType = query.journalType;
-    if (query.status) where.status = query.status;
+    const where = buildJournalWhere(query);
+    const sortBy = query.sortBy ?? 'entryDate';
+    const sortDir = query.sortDir ?? 'desc';
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpFinJournalEntry.findMany({
         where,
-        orderBy: [{ entryDate: 'desc' }, { createdAt: 'desc' }],
-        skip,
+        orderBy: [{ [sortBy]: sortDir }, { id: 'desc' }],
+        skip: (page - 1) * limit,
         take: limit,
-        include: { lines: true },
+        include: { lines: { orderBy: { lineNo: 'asc' } } },
       }),
       this.prisma.erpFinJournalEntry.count({ where }),
     ]);
@@ -101,98 +129,134 @@ export class ErpFinJournalEntriesService {
     return {
       success: true,
       data: items,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit) || 1,
-      },
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
     };
   }
 
   async findOne(id: bigint) {
-    const item = await this.prisma.erpFinJournalEntry.findFirst({
-      where: { id, deletedAt: null },
-      include: { lines: { orderBy: { lineNo: 'asc' } } },
-    });
-    if (!item) {
-      throw new NotFoundException('Journal entry not found');
-    }
-    return { success: true, data: item };
+    return { success: true, data: await this.findRaw(id) };
   }
 
   async update(id: bigint, dto: UpdateJournalEntryDto, actorId?: string) {
-    const existing = await this.prisma.erpFinJournalEntry.findFirst({
-      where: { id, deletedAt: null },
-    });
-    if (!existing) {
-      throw new NotFoundException('Journal entry not found');
+    const existing = await this.findRaw(id);
+    if (!EDITABLE.has(existing.status)) {
+      throw new BadRequestException(
+        `Dokumen berstatus ${existing.status} tidak bisa diedit. Reopen dulu bila perlu.`,
+      );
     }
-
-    const actorBigInt = actorId ? BigInt(actorId) : null;
-
-    const data: Prisma.ErpFinJournalEntryUpdateInput = {
-      updatedById: actorBigInt,
+    const actor = actorId ? BigInt(actorId) : null;
+    const header = {
+      currencyId: dto.currencyId ?? existing.currencyId.toString(),
+      exchangeRate: dto.exchangeRate ?? existing.exchangeRate.toString(),
     };
-    if (dto.docNumber !== undefined) data.docNumber = dto.docNumber;
-    if (dto.autoNumber !== undefined) data.autoNumber = dto.autoNumber;
-    if (dto.journalType !== undefined) data.journalType = dto.journalType;
-    if (dto.branchId !== undefined) data.branchId = BigInt(dto.branchId);
-    if (dto.locationId !== undefined) data.locationId = toBigInt(dto.locationId);
-    if (dto.source !== undefined) data.source = dto.source;
-    if (dto.entryDate !== undefined) data.entryDate = new Date(dto.entryDate);
-    if (dto.fiscalPeriodId !== undefined)
-      data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
-    if (dto.partnerId !== undefined) data.partnerId = toBigInt(dto.partnerId);
-    if (dto.contactPerson !== undefined) data.contactPerson = dto.contactPerson;
-    if (dto.description !== undefined) data.description = dto.description;
-    if (dto.notes !== undefined) data.notes = dto.notes;
-    if (dto.currencyId !== undefined) data.currencyId = BigInt(dto.currencyId);
-    if (dto.exchangeRate !== undefined)
-      data.exchangeRate = new Prisma.Decimal(dto.exchangeRate);
-    if (dto.status !== undefined) data.status = dto.status;
-    if (dto.postingStatus !== undefined) data.postingStatus = dto.postingStatus;
-    if (dto.legacyCode !== undefined) data.legacyCode = dto.legacyCode;
 
-    // Replace lines if provided (skeleton — simple delete+recreate)
-    if (dto.lines !== undefined) {
-      await this.prisma.erpFinJournalLine.deleteMany({
-        where: { journalEntryId: id },
-      });
-    }
-
-    const updated = await this.prisma.erpFinJournalEntry.update({
-      where: { id },
-      data: {
-        ...data,
-        lines:
-          dto.lines && dto.lines.length
-            ? { create: dto.lines.map(mapLine) }
-            : undefined,
-      },
-      include: { lines: { orderBy: { lineNo: 'asc' } } },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const data: Prisma.ErpFinJournalEntryUpdateInput = { updatedById: actor };
+      if (dto.docNumber !== undefined) data.docNumber = dto.docNumber;
+      if (dto.journalType !== undefined) data.journalType = dto.journalType as never;
+      if (dto.branchId !== undefined) data.branchId = BigInt(dto.branchId);
+      if (dto.locationId !== undefined) data.locationId = toBigInt(dto.locationId);
+      if (dto.source !== undefined) data.source = dto.source;
+      if (dto.partnerId !== undefined) data.partnerId = toBigInt(dto.partnerId);
+      if (dto.contactPerson !== undefined) data.contactPerson = dto.contactPerson;
+      if (dto.description !== undefined) data.description = dto.description;
+      if (dto.notes !== undefined) data.notes = dto.notes;
+      if (dto.currencyId !== undefined) data.currencyId = BigInt(dto.currencyId);
+      if (dto.exchangeRate !== undefined) data.exchangeRate = new Prisma.Decimal(dto.exchangeRate);
+      if (dto.entryDate !== undefined) {
+        data.entryDate = new Date(dto.entryDate);
+        data.fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.entryDate);
+      } else if (dto.fiscalPeriodId !== undefined) {
+        data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
+      }
+      if (dto.lines !== undefined) {
+        await tx.erpFinJournalLine.deleteMany({ where: { journalEntryId: id } });
+        data.lines = { create: dto.lines.map((l) => mapLine(l, header)) };
+      }
+      return tx.erpFinJournalEntry.update({ where: { id }, data, select: { id: true } });
     });
-
-    return { success: true, data: updated };
+    return this.findOne(updated.id);
   }
 
   async remove(id: bigint, actorId?: string) {
-    const existing = await this.prisma.erpFinJournalEntry.findFirst({
-      where: { id, deletedAt: null },
-      select: { id: true },
+    const existing = await this.findRaw(id);
+    if (existing.status === 'POSTED') {
+      throw new BadRequestException('Dokumen POSTED tidak bisa dihapus. Reopen dulu.');
+    }
+    await this.prisma.erpFinJournalEntry.update({
+      where: { id },
+      data: { deletedAt: new Date(), updatedById: actorId ? BigInt(actorId) : null },
     });
-    if (!existing) {
-      throw new NotFoundException('Journal entry not found');
+    return { success: true, message: 'Journal entry dihapus' };
+  }
+
+  // ── workflow (§2.7 state machine) ────────────────────────────────────────────
+  async transition(id: bigint, dto: TransitionJournalEntryDto, actorId?: string) {
+    const entry = await this.findRaw(id);
+    const actor = actorId ? BigInt(actorId) : null;
+    const next = NEXT[entry.status]?.[dto.action];
+    if (!next) {
+      throw new BadRequestException(`Aksi ${dto.action} tidak valid dari status ${entry.status}.`);
+    }
+    if (dto.action === A.REJECT && !dto.reason?.trim()) {
+      throw new BadRequestException('Alasan reject wajib diisi.');
+    }
+
+    if (dto.action === A.POST) {
+      const period = await this.prisma.erpFiscalPeriod.findUnique({
+        where: { id: entry.fiscalPeriodId },
+        select: { status: true },
+      });
+      if (period?.status === 'CLOSED') {
+        throw new BadRequestException('Periode fiskal sudah ditutup — tidak bisa posting.');
+      }
+      await this.prisma.$transaction(async (tx) => {
+        await this.posting.reverseLedger(tx, entry.id);
+        await this.posting.postToLedger(tx, entry, actor);
+        await tx.erpFinJournalEntry.update({
+          where: { id },
+          data: {
+            status: 'POSTED',
+            previousStatus: entry.status as never,
+            postingStatus: 'POSTED',
+            postedAt: new Date(),
+            postedById: actor,
+            updatedById: actor,
+          },
+        });
+      });
+      return this.findOne(id);
+    }
+
+    if (dto.action === A.REOPEN) {
+      await this.prisma.$transaction(async (tx) => {
+        await this.posting.reverseLedger(tx, entry.id);
+        await tx.erpFinJournalEntry.update({
+          where: { id },
+          data: {
+            status: 'DRAFT',
+            previousStatus: entry.status as never,
+            postingStatus: 'UNPOSTED',
+            postedAt: null,
+            postedById: null,
+            updatedById: actor,
+          },
+        });
+      });
+      return this.findOne(id);
     }
 
     await this.prisma.erpFinJournalEntry.update({
       where: { id },
       data: {
-        deletedAt: new Date(),
-        updatedById: actorId ? BigInt(actorId) : null,
+        status: next as never,
+        previousStatus: entry.status as never,
+        updatedById: actor,
+        ...(dto.action === A.REJECT
+          ? { metadata: { ...((entry.metadata as object) ?? {}), rejectReason: dto.reason } }
+          : {}),
       },
     });
-
-    return { success: true, message: 'Journal entry deleted' };
+    return this.findOne(id);
   }
 }

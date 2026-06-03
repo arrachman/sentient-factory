@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEnum,
   IsInt,
@@ -40,14 +41,15 @@ export class CreateJournalLineDto {
   @IsNotEmpty()
   accountId!: string;
 
-  @ApiProperty({ example: '1' })
+  @ApiPropertyOptional({ description: 'Default ke mata uang header' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  currencyId!: string;
+  currencyId?: string;
 
-  @ApiProperty({ example: '1.000000' })
+  @ApiPropertyOptional({ description: 'Default ke kurs header' })
+  @IsOptional()
   @IsNumberString()
-  exchangeRate!: string;
+  exchangeRate?: string;
 
   @ApiProperty({ example: '100000.0000' })
   @IsNumberString()
@@ -72,10 +74,15 @@ export class CreateJournalLineDto {
 }
 
 export class CreateJournalEntryDto {
-  @ApiProperty({ example: 'JV-2026-000001' })
+  @ApiPropertyOptional({ description: 'Kosongkan + auto=true untuk nomor otomatis' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  docNumber!: string;
+  docNumber?: string;
+
+  @ApiPropertyOptional({ default: true, description: 'Generate nomor otomatis bila docNumber kosong' })
+  @IsOptional()
+  @IsBoolean()
+  auto?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -98,10 +105,10 @@ export class CreateJournalEntryDto {
   @IsDateString()
   entryDate!: string;
 
-  @ApiProperty({ example: '1' })
+  @ApiPropertyOptional({ description: 'Opsional — diturunkan dari entryDate bila kosong' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  fiscalPeriodId!: string;
+  fiscalPeriodId?: string;
 
   @ApiPropertyOptional() @IsOptional() @IsString() partnerId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() contactPerson?: string;
