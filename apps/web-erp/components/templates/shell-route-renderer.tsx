@@ -120,6 +120,7 @@ import { ErpSlsPaymentReceiptsPage } from '@/components/pages/sls-payment-receip
 import { ErpSlsArCollectionsPage } from '@/components/pages/sls-ar-collections-page';
 import { ErpSlsArPaymentsPage } from '@/components/pages/sls-ar-payments-page';
 import { ErpSlsOpeningArBalancePage } from '@/components/pages/sls-opening-ar-balance-page';
+import { ErpSlsFreightReceivablesPage } from '@/components/pages/sls-freight-receivables-page';
 import {
   ErpInvMaterialRequestsPage,
   ErpInvTransfersPage,
@@ -202,6 +203,7 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/sales/ar-collections': ErpSlsArCollectionsPage,
   '/sales/ar-payments': ErpSlsArPaymentsPage,
   '/sales/opening-ar-balance': ErpSlsOpeningArBalancePage,
+  '/sales/freight-receivables': ErpSlsFreightReceivablesPage,
   '/warehouse/material-requests': ErpInvMaterialRequestsPage,
   '/warehouse/transfers': ErpInvTransfersPage,
   '/warehouse/transfer-receipts': ErpInvTransferReceiptsPage,
