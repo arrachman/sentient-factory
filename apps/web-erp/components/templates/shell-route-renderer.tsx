@@ -112,6 +112,9 @@ import {
 import { ErpInvStockAdjustmentsPage } from '@/components/pages/inv-stock-adjustments-page';
 import { ErpInvOpeningStocksPage } from '@/components/pages/inv-opening-stocks-page';
 import { ErpInvStockCountsPage } from '@/components/pages/inv-stock-counts-page';
+import { ErpInvPriceAdjustmentsPage } from '@/components/pages/inv-price-adjustments-page';
+import { ErpInvWeighbridgeTicketsPage } from '@/components/pages/inv-weighbridge-tickets-page';
+import { ErpInvDailyChecksPage } from '@/components/pages/inv-daily-checks-page';
 // Audit Logs
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
 // Admin tools & identity pages
@@ -152,6 +155,9 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/warehouse/stock-adjustments': ErpInvStockAdjustmentsPage,
   '/warehouse/opening-stocks': ErpInvOpeningStocksPage,
   '/warehouse/stock-counts': ErpInvStockCountsPage,
+  '/warehouse/price-adjustments': ErpInvPriceAdjustmentsPage,
+  '/warehouse/receipt-weighers': ErpInvWeighbridgeTicketsPage,
+  '/warehouse/daily-checks': ErpInvDailyChecksPage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 

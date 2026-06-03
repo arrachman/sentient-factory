@@ -300,6 +300,9 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/warehouse/stock-adjustments': { group: 'Warehouse', title: 'Stock Adjustment', icon: 'boxes' },
   '/warehouse/opening-stocks': { group: 'Warehouse', title: 'Opening Stock', icon: 'boxes' },
   '/warehouse/stock-counts': { group: 'Warehouse', title: 'Stock Count', icon: 'boxes' },
+  '/warehouse/price-adjustments': { group: 'Warehouse', title: 'Price Adjustment', icon: 'boxes' },
+  '/warehouse/receipt-weighers': { group: 'Warehouse', title: 'Receipt Weigher', icon: 'boxes' },
+  '/warehouse/daily-checks': { group: 'Warehouse', title: 'Daily Check', icon: 'boxes' },
   '/settings/appearance': { group: 'Administrator', title: 'Appearance', icon: 'gear' },
 };
 
