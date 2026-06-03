@@ -105,6 +105,7 @@ import { ErpSysMenusModule } from './erp-sys-menus/erp-sys-menus.module';
 import { ErpDocumentNumberingsModule } from './erp-document-numberings/erp-document-numberings.module';
 import { ErpFiscalPeriodsModule } from './erp-fiscal-periods/erp-fiscal-periods.module';
 import { ErpFinJournalEntriesModule } from './erp-fin-journal-entries/erp-fin-journal-entries.module';
+import { ErpFinGiroEntriesModule } from './erp-fin-giro-entries/erp-fin-giro-entries.module';
 import { ErpFinArReceiptsModule } from './erp-fin-ar-receipts/erp-fin-ar-receipts.module';
 import { ErpFinApPaymentsModule } from './erp-fin-ap-payments/erp-fin-ap-payments.module';
 import { ErpFinGirosModule } from './erp-fin-giros/erp-fin-giros.module';
@@ -259,6 +260,7 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpToolsModule,
     // ERP m2 Finance (skeleton CRUD)
     ErpFinJournalEntriesModule,
+    ErpFinGiroEntriesModule,
     ErpFinArReceiptsModule,
     ErpFinApPaymentsModule,
     ErpFinGirosModule,

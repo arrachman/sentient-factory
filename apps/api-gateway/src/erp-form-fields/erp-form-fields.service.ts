@@ -75,9 +75,10 @@ const BB_DEFAULTS: FormFieldDefault[] = JOURNAL_DEFAULTS.map((f) =>
 // ── Giro family (RG/SG) → fin_giros (instruments captured in the detail grid) ──
 // Instrument fields (No Giro/Bank/Jatuh Tempo/Nominal) live in the grid, not the header.
 const RG_DEFAULTS: FormFieldDefault[] = [
-  { fieldKey: 'partnerId',   kind: 'STRUCTURAL', label: 'Terima Dari',  fieldType: 'PARTNER',  isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'LEFT'   },
-  { fieldKey: 'description', kind: 'STRUCTURAL', label: 'Uraian',       fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT'   },
-  { fieldKey: 'branchId',    kind: 'STRUCTURAL', label: 'Cabang',       fieldType: 'BRANCH',   isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
+  { fieldKey: 'partnerId',     kind: 'STRUCTURAL', label: 'Terima Dari',   fieldType: 'PARTNER',  isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'LEFT'   },
+  { fieldKey: 'description',   kind: 'STRUCTURAL', label: 'Uraian',        fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT'   },
+  { fieldKey: 'giroAccountId', kind: 'STRUCTURAL', label: 'Akun Giro',     fieldType: 'ACCOUNT',  isRequired: false, isVisible: true, sortOrder: 2, columnSlot: 'LEFT', lookupDefaultFilter: CASH_ACCOUNT_FILTER },
+  { fieldKey: 'branchId',      kind: 'STRUCTURAL', label: 'Cabang',        fieldType: 'BRANCH',   isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
   { fieldKey: 'entryDate',   kind: 'STRUCTURAL', label: 'Tanggal',      fieldType: 'DATE',     isRequired: true,  isVisible: true, sortOrder: 0, columnSlot: 'RIGHT'  },
   { fieldKey: 'docNumber',   kind: 'STRUCTURAL', label: 'No Transaksi', fieldType: 'TEXT',     isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT'  },
   { fieldKey: 'currencyId',  kind: 'STRUCTURAL', label: 'Uang',         fieldType: 'CURRENCY', isRequired: true,  isVisible: true, sortOrder: 2, columnSlot: 'RIGHT'  },
