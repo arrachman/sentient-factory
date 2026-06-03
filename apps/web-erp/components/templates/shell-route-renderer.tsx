@@ -165,6 +165,10 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/bank-receipts': ErpBankReceiptsPage,
   '/finance/bank-disbursements': ErpBankDisbursementsPage,
   '/finance/general-journals': ErpGeneralJournalsPage,
+  '/finance/receipt-giros': ErpReceiptGirosPage,
+  '/finance/send-giros': ErpSendGirosPage,
+  '/finance/receipt-giro-clearings': ErpReceiptGiroClearingsPage,
+  '/finance/send-giro-clearings': ErpSendGiroClearingsPage,
   '/finance/adjustment-journals': ErpAdjustmentJournalsPage,
   '/finance/memorial-journals': ErpMemorialJournalsPage,
   '/finance/opening-balances': ErpOpeningBalancesPage,
@@ -328,10 +332,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   // /finance/cash-receipts + /finance/cash-disbursements + /finance/bank-receipts
   // + /finance/bank-disbursements → handled by TRX_FORM_PAGES (list + /new + /:id).
   '/finance/cashbank-transfers': () => <ErpCashbankTransfersPage />,
-  '/finance/receipt-giros': () => <ErpReceiptGirosPage />,
-  '/finance/send-giros': () => <ErpSendGirosPage />,
-  '/finance/receipt-giro-clearings': () => <ErpReceiptGiroClearingsPage />,
-  '/finance/send-giro-clearings': () => <ErpSendGiroClearingsPage />,
+  // /finance/receipt-giros + /send-giros + /receipt-giro-clearings
+  // + /send-giro-clearings → handled by TRX_FORM_PAGES (list + /new + /:id).
   // /finance/adjustment-journals + /memorial-journals + /opening-balances
   // + /revaluations → handled by TRX_FORM_PAGES (list + /new + /:id).
   // ── Legacy short-id aliases (static NAV fallback) ─────────────────────────
