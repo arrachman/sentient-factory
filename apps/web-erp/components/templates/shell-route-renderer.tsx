@@ -116,8 +116,13 @@ import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
 import { resolveTrxFormRoute } from '@/lib/trx-route';
 import { TRX_FORM_PAGES } from './shell-trx-pages';
 import type { Lang } from '@/lib/shell-constants';
+import { InvReportPage } from '@/components/pages/inv-report-page';
+import { invReportOptions } from '@/lib/inv-report-options';
 
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
+
+/** Base path for the generic Warehouse (M3) report pages. */
+const INV_REPORT_PREFIX = '/warehouse/reports/';
 
 interface ErpPageCtx {
   t: ReturnType<typeof makeTranslator>;
@@ -267,6 +272,23 @@ export function renderRoute(
 
   const erpPage = ERP_PAGES[route];
   if (erpPage) return erpPage({ t });
+
+  // ── Warehouse (M3) reports: one generic page driven by the report key ──────
+  if (route.startsWith(INV_REPORT_PREFIX)) {
+    const reportKey = route.slice(INV_REPORT_PREFIX.length);
+    if (reportKey) {
+      const opt = invReportOptions(reportKey);
+      return (
+        <InvReportPage
+          reportKey={reportKey}
+          title={opt.title}
+          asOfMode={opt.asOfMode}
+          showItem={opt.showItem}
+          statusOptions={opt.statusOptions}
+        />
+      );
+    }
+  }
 
   const TrxListPage = TRX_FORM_PAGES[route];
   if (TrxListPage) return <TrxListPage onNavigate={onNavigate} />;
