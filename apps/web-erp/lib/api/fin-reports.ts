@@ -48,7 +48,15 @@ export type ReportKey =
   | 'trial-balance'
   | 'income-statement'
   | 'balance-sheet'
-  | 'general-ledger';
+  | 'general-ledger'
+  | 'cash-flow'
+  | 'daily-cash-bank'
+  | 'ar-card'
+  | 'ar-aging'
+  | 'ap-card'
+  | 'ap-aging'
+  | 'giro-maturity'
+  | 'budget-realization';
 
 export type ExportFormat = 'xlsx' | 'pdf' | 'docx';
 

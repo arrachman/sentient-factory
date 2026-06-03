@@ -62,10 +62,17 @@ export class ErpFinApPaymentsService {
     if (query.status) where.status = query.status;
     if (query.paymentStatus) where.paymentStatus = query.paymentStatus;
 
+    const sortField = query.sortBy ?? 'transactionDate';
+    const sortDir = query.sortDir ?? 'desc';
+    const ALLOWED_SORT = ['transactionDate', 'docNumber', 'amount', 'createdAt', 'updatedAt'];
+    const orderBy = ALLOWED_SORT.includes(sortField)
+      ? [{ [sortField]: sortDir }, { createdAt: sortDir }]
+      : [{ transactionDate: 'desc' as const }, { createdAt: 'desc' as const }];
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpFinApPayment.findMany({
         where,
-        orderBy: [{ transactionDate: 'desc' }, { createdAt: 'desc' }],
+        orderBy,
         skip,
         take: limit,
       }),

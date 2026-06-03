@@ -1,7 +1,6 @@
 /**
  * Shell route renderer — maps a route string to the correct page component.
- * Kept separate from AppShell to respect the 400-line limit and give the
- * routing logic a single place to live.
+ * TRX_FORM_PAGES extracted to shell-trx-pages.ts to stay under 400 lines.
  */
 
 import * as React from 'react';
@@ -16,7 +15,7 @@ import { FinancialReport } from '@/components/pages/financial-report';
 import { DataList } from '@/components/pages/data-list';
 import { RecordForm } from '@/components/pages/record-form';
 import { TrxForm } from '@/components/pages/trx-form';
-// F2 Admin pages
+// Admin pages
 import { ErpUsersPage } from '@/components/pages/users-page';
 import { ErpBranchesPage } from '@/components/pages/branches-page';
 import { ErpRolesPage } from '@/components/pages/roles-page';
@@ -27,7 +26,7 @@ import { GridCustomizationPage } from '@/components/pages/grid-customization-pag
 import { FormBuilderPage } from '@/components/pages/form-builder-page';
 import { ErpDocumentNumberingsPage } from '@/components/pages/document-numberings-page';
 import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
-// F3 Master Data pages
+// Master Data pages
 import { ErpItemsPage } from '@/components/pages/items-page';
 import { ErpUnitsPage } from '@/components/pages/units-page';
 import { ErpPartnersPage } from '@/components/pages/partners-page';
@@ -46,7 +45,6 @@ import { ErpProjectsPage } from '@/components/pages/projects-page';
 import { ErpCostCentersPage } from '@/components/pages/cost-centers-page';
 import { ErpDepartmentsPage } from '@/components/pages/departments-page';
 import { ErpSubDepartmentsPage } from '@/components/pages/sub-departments-page';
-// MD legacy batch (2026-05-20) — 20 entitas dari MyERP+ m1_*
 import { ErpColorsPage } from '@/components/pages/colors-page';
 import { ErpNozzlesPage } from '@/components/pages/nozzles-page';
 import { ErpOemsPage } from '@/components/pages/oems-page';
@@ -75,7 +73,6 @@ import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-pa
 import { ErpTxnNoteDetailsPage } from '@/components/pages/txn-note-details-page';
 import { ErpPriceIndicesPage } from '@/components/pages/price-indices-page';
 import { ErpItemInformationsPage } from '@/components/pages/item-informations-page';
-// MD production batch — 10 entitas master produksi baru
 import { ErpProductionCategoriesPage } from '@/components/pages/production-categories-page';
 import { ErpPointCategoriesPage } from '@/components/pages/point-categories-page';
 import { ErpMiscellaneousPage } from '@/components/pages/miscellaneous-page';
@@ -86,167 +83,47 @@ import { ErpMachinesPage } from '@/components/pages/machines-page';
 import { ErpDesignersPage } from '@/components/pages/designers-page';
 import { ErpProductionActivitiesPage } from '@/components/pages/production-activities-page';
 import { ErpProductionRoutesPage } from '@/components/pages/production-routes-page';
-// F2 Finance (m2) pages — skeleton CRUD
-import { ErpGeneralJournalsPage } from '@/components/pages/fin-general-journals-page';
+// Finance (m2) static (non-TRX) pages
 import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
 import { ErpApPaymentsPage } from '@/components/pages/fin-ap-payments-page';
 import { ErpLedgerPage } from '@/components/pages/fin-ledger-page';
 import { ErpTrialBalancePage } from '@/components/pages/fin-trial-balance-page';
 import { ErpBalanceSheetPage } from '@/components/pages/fin-balance-sheet-page';
 import { ErpIncomeStatementPage } from '@/components/pages/fin-income-statement-page';
-import { ErpCashReceiptsPage } from '@/components/pages/fin-cash-receipts-page';
-import { ErpBankReceiptsPage } from '@/components/pages/fin-bank-receipts-page';
-import { ErpCashDisbursementsPage } from '@/components/pages/fin-cash-disbursements-page';
-import { ErpBankDisbursementsPage } from '@/components/pages/fin-bank-disbursements-page';
+import { ErpCashFlowPage } from '@/components/pages/fin-cash-flow-page';
+import { ErpDailyCashBankPage } from '@/components/pages/fin-daily-cash-bank-page';
+import { ErpArCardPage } from '@/components/pages/fin-ar-card-page';
+import { ErpArAgingPage } from '@/components/pages/fin-ar-aging-page';
+import { ErpApCardPage } from '@/components/pages/fin-ap-card-page';
+import { ErpApAgingPage } from '@/components/pages/fin-ap-aging-page';
+import { ErpGiroMaturityPage } from '@/components/pages/fin-giro-maturity-page';
+import { ErpBudgetRealizationPage } from '@/components/pages/fin-budget-realization-page';
 import { ErpCashbankTransfersPage } from '@/components/pages/fin-cashbank-transfers-page';
-import { ErpReceiptGirosPage } from '@/components/pages/fin-receipt-giros-page';
-import { ErpSendGirosPage } from '@/components/pages/fin-send-giros-page';
-import { ErpReceiptGiroClearingsPage } from '@/components/pages/fin-receipt-giro-clearings-page';
-import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clearings-page';
-import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
-import { ErpMemorialJournalsPage } from '@/components/pages/fin-memorial-journals-page';
-import { ErpOpeningBalancesPage } from '@/components/pages/fin-opening-balances-page';
-import { ErpRevaluationsPage } from '@/components/pages/fin-revaluations-page';
-// Sales (sls, m5)
-import { ErpSlsOrdersPage } from '@/components/pages/sls-orders-page';
-import { ErpSlsQuotationsPage } from '@/components/pages/sls-quotations-page';
-import { ErpSlsProformaInvoicesPage } from '@/components/pages/sls-proforma-invoices-page';
-import { ErpSlsPackingListsPage } from '@/components/pages/sls-packing-lists-page';
-import { ErpSlsDeliveryOrdersPage } from '@/components/pages/sls-delivery-orders-page';
-import { ErpSlsDeliveryReportsPage } from '@/components/pages/sls-delivery-reports-page';
-import { ErpSlsInvoicesPage } from '@/components/pages/sls-invoices-page';
-import { ErpSlsReturnsPage } from '@/components/pages/sls-returns-page';
-import { ErpSlsReturnReceiptsPage } from '@/components/pages/sls-return-receipts-page';
-import { ErpSlsCustomerAdvancesPage } from '@/components/pages/sls-customer-advances-page';
-import { ErpSlsInvoiceSwapsPage } from '@/components/pages/sls-invoice-swaps-page';
-import { ErpSlsPaymentReceiptsPage } from '@/components/pages/sls-payment-receipts-page';
-import { ErpSlsArCollectionsPage } from '@/components/pages/sls-ar-collections-page';
-import { ErpSlsArPaymentsPage } from '@/components/pages/sls-ar-payments-page';
-import { ErpSlsOpeningArBalancePage } from '@/components/pages/sls-opening-ar-balance-page';
-import { ErpSlsFreightReceivablesPage } from '@/components/pages/sls-freight-receivables-page';
-import {
-  ErpInvMaterialRequestsPage,
-  ErpInvTransfersPage,
-  ErpInvTransferReceiptsPage,
-  ErpInvFuelRefillsPage,
-} from '@/components/pages/inv-stock-movements-page';
-import { ErpInvStockAdjustmentsPage } from '@/components/pages/inv-stock-adjustments-page';
-import { ErpInvOpeningStocksPage } from '@/components/pages/inv-opening-stocks-page';
-import { ErpInvStockCountsPage } from '@/components/pages/inv-stock-counts-page';
-import { ErpInvPriceAdjustmentsPage } from '@/components/pages/inv-price-adjustments-page';
-import { ErpInvWeighbridgeTicketsPage } from '@/components/pages/inv-weighbridge-tickets-page';
-import { ErpInvDailyChecksPage } from '@/components/pages/inv-daily-checks-page';
-// Purchasing (pur, m4)
-import { ErpPurOrdersPage } from '@/components/pages/pur-orders-page';
-import { ErpPurRequisitionsPage } from '@/components/pages/pur-requisitions-page';
-import { ErpPurInvoicesPage } from '@/components/pages/pur-invoices-page';
-import { ErpReturnShipmentsPage } from '@/components/pages/pur-return-shipments-page';
-import { ErpPurchaseReturnsPage } from '@/components/pages/pur-purchase-returns-page';
-import { ErpGoodsReceiptsPage } from '@/components/pages/pur-goods-receipts-page';
-import { ErpRfqsPage } from '@/components/pages/pur-rfqs-page';
-import { ErpBidSelectionsPage } from '@/components/pages/pur-bid-selections-page';
-import { ErpVendorAdvancesPage } from '@/components/pages/pur-vendor-advances-page';
-import { ErpFreightPayablesPage } from '@/components/pages/pur-freight-payables-page';
-import { ErpPaymentSchedulesPage } from '@/components/pages/pur-payment-schedules-page';
-import { ErpVendorPaymentsPage } from '@/components/pages/pur-vendor-payments-page';
-import { ErpOpeningApBalancePage } from '@/components/pages/pur-opening-ap-balance-page';
-// Audit Logs
+// Admin tools & misc
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
-// Admin tools & identity pages
 import { ErpLanguagePage } from '@/components/pages/language-page';
 import { ErpOnlineUsersPage } from '@/components/pages/online-users-page';
 import { ErpFiscalPeriodsClosePage } from '@/components/pages/fiscal-periods-close-page';
 import { ErpRecalcCogsPage } from '@/components/pages/tools-recalc-cogs-page';
 import { ErpRepostJournalPage } from '@/components/pages/tools-repost-journal-page';
 import { ErpDataValidityPage } from '@/components/pages/tools-data-validity-page';
-// Settings sub-pages + Import
 import { SettingsGroupPage } from '@/components/pages/settings-group-page';
 import { AccountCodeFormatPage } from '@/components/pages/account-code-format-page';
 import { NumberFormatPage } from '@/components/pages/number-format-page';
 import { DateFormatPage } from '@/components/pages/date-format-page';
 import { ErpImportPage } from '@/components/pages/import-page';
 import { REGISTRY, MODULES, REPORTS } from '@/lib/registry';
-import {
-  resolveTrxFormRoute,
-  type TrxFormPage,
-} from '@/lib/trx-route';
+import { resolveTrxFormRoute } from '@/lib/trx-route';
+import { TRX_FORM_PAGES } from './shell-trx-pages';
+import type { Lang } from '@/lib/shell-constants';
 
-/**
- * Transaction form pages — URL-addressable in three shapes per `lib/trx-route`:
- * `<base>` (list), `<base>/new` (create), `<base>/:id` (edit). Keyed by the
- * canonical `sys_menus.path`. Add new transaction modules here (CD/BD/giro/
- * jurnal…) as they adopt the sub-route convention.
- */
-const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
-  '/finance/cash-receipts': ErpCashReceiptsPage,
-  '/finance/cash-disbursements': ErpCashDisbursementsPage,
-  '/finance/bank-receipts': ErpBankReceiptsPage,
-  '/finance/bank-disbursements': ErpBankDisbursementsPage,
-  '/finance/general-journals': ErpGeneralJournalsPage,
-  '/finance/receipt-giros': ErpReceiptGirosPage,
-  '/finance/send-giros': ErpSendGirosPage,
-  '/finance/receipt-giro-clearings': ErpReceiptGiroClearingsPage,
-  '/finance/send-giro-clearings': ErpSendGiroClearingsPage,
-  '/finance/adjustment-journals': ErpAdjustmentJournalsPage,
-  '/finance/memorial-journals': ErpMemorialJournalsPage,
-  '/finance/opening-balances': ErpOpeningBalancesPage,
-  '/finance/revaluations': ErpRevaluationsPage,
-  '/sales/orders': ErpSlsOrdersPage,
-  '/sales/quotations': ErpSlsQuotationsPage,
-  '/sales/proforma-invoices': ErpSlsProformaInvoicesPage,
-  '/sales/packing-lists': ErpSlsPackingListsPage,
-  '/sales/delivery-orders': ErpSlsDeliveryOrdersPage,
-  '/sales/delivery-reports': ErpSlsDeliveryReportsPage,
-  '/sales/invoices': ErpSlsInvoicesPage,
-  '/sales/returns': ErpSlsReturnsPage,
-  '/sales/return-receipts': ErpSlsReturnReceiptsPage,
-  '/sales/customer-advances': ErpSlsCustomerAdvancesPage,
-  '/sales/invoice-swaps': ErpSlsInvoiceSwapsPage,
-  '/sales/payment-receipts': ErpSlsPaymentReceiptsPage,
-  '/sales/ar-collections': ErpSlsArCollectionsPage,
-  '/sales/ar-payments': ErpSlsArPaymentsPage,
-  '/sales/opening-ar-balance': ErpSlsOpeningArBalancePage,
-  '/sales/freight-receivables': ErpSlsFreightReceivablesPage,
-  '/warehouse/material-requests': ErpInvMaterialRequestsPage,
-  '/warehouse/transfers': ErpInvTransfersPage,
-  '/warehouse/transfer-receipts': ErpInvTransferReceiptsPage,
-  '/warehouse/fuel-refills': ErpInvFuelRefillsPage,
-  '/warehouse/stock-adjustments': ErpInvStockAdjustmentsPage,
-  '/warehouse/opening-stocks': ErpInvOpeningStocksPage,
-  '/warehouse/stock-counts': ErpInvStockCountsPage,
-  '/warehouse/price-adjustments': ErpInvPriceAdjustmentsPage,
-  '/warehouse/receipt-weighers': ErpInvWeighbridgeTicketsPage,
-  '/warehouse/daily-checks': ErpInvDailyChecksPage,
-  '/purchasing/purchase-orders': ErpPurOrdersPage,
-  '/purchasing/purchase-requisitions': ErpPurRequisitionsPage,
-  '/purchasing/purchase-invoices': ErpPurInvoicesPage,
-  '/purchasing/return-shipments': ErpReturnShipmentsPage,
-  '/purchasing/purchase-returns': ErpPurchaseReturnsPage,
-  '/purchasing/goods-receipts': ErpGoodsReceiptsPage,
-  '/purchasing/rfqs': ErpRfqsPage,
-  '/purchasing/bid-comparisons': ErpBidSelectionsPage,
-  '/purchasing/vendor-advances': ErpVendorAdvancesPage,
-  '/purchasing/freight-payables': ErpFreightPayablesPage,
-  '/purchasing/payment-schedules': ErpPaymentSchedulesPage,
-  '/purchasing/vendor-payments': ErpVendorPaymentsPage,
-  '/purchasing/opening-ap-balance': ErpOpeningApBalancePage,
-};
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
-/**
- * ERP page registry. Keyed by the canonical route id = the seeded
- * `sys_menus.path` (single source of truth — the dynamic sidebar emits
- * these). Legacy short-ids (`adm-users`, `md-items`, …) are kept as
- * aliases so the static NAV fallback in `lib/nav.ts` keeps working when
- * the API is unreachable.
- */
 interface ErpPageCtx {
   t: ReturnType<typeof makeTranslator>;
 }
 
 const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
-  // ── Admin (sys/adm) ───────────────────────────────────────────────────────
-  // ── Admin Settings sub-pages ─────────────────────────────────────────────
   '/admin/settings/company': () => <SettingsGroupPage group="company" title="Pengaturan Perusahaan" />,
   '/admin/settings/accounting': () => <SettingsGroupPage group="accounting" title="Pengaturan Akuntansi" />,
   '/admin/settings/bank-accounts': () => <SettingsGroupPage group="bank-accounts" title="Rekening Bank Perusahaan" />,
@@ -262,9 +139,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/account-code-format': () => <AccountCodeFormatPage />,
   '/admin/number-format': () => <NumberFormatPage />,
   '/admin/date-format': () => <DateFormatPage />,
-  // ── Import ────────────────────────────────────────────────────────────────
   '/admin/import': () => <ErpImportPage />,
-  // ── Admin (sys/adm) ───────────────────────────────────────────────────────
   '/admin/users': () => <ErpUsersPage />,
   '/admin/roles': () => <ErpRolesPage />,
   '/admin/settings': () => <ErpSettingsPage />,
@@ -282,7 +157,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/tools/repost-journal': () => <ErpRepostJournalPage />,
   '/admin/tools/data-validity': () => <ErpDataValidityPage />,
   '/admin/preferences': (ctx) => <SettingsPage t={ctx.t} />,
-  // ── Master Data (md) ──────────────────────────────────────────────────────
   '/master/branches': () => <ErpBranchesPage />,
   '/master/items': () => <ErpItemsPage />,
   '/master/units': () => <ErpUnitsPage />,
@@ -298,7 +172,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/payment-terms': () => <ErpPaymentTermsPage />,
   '/master/divisions': () => <ErpDivisionsPage />,
   '/master/subdivisions': () => <ErpSubDivisionsPage />,
-  // ── Master Data Legacy Batch (2026-05-20) ─────────────────────────────────
   '/master/colors': () => <ErpColorsPage />,
   '/master/nozzles': () => <ErpNozzlesPage />,
   '/master/oems': () => <ErpOemsPage />,
@@ -321,7 +194,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/cities': () => <ErpCitiesPage />,
   '/master/areas': () => <ErpAreasPage />,
   '/master/item-locations': () => <ErpItemLocationsPage />,
-  // PartnerSubCategory: 1 table dengan enum type, 3 menu sidebar share page (decision 2026-05-20)
   '/master/customer-categories': () => <ErpPartnerSubCategoriesPage type="CUSTOMER" />,
   '/master/supplier-categories': () => <ErpPartnerSubCategoriesPage type="SUPPLIER" />,
   '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage type="SALESMAN" />,
@@ -330,9 +202,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/txn-note-details': () => <ErpTxnNoteDetailsPage />,
   '/master/price-indices': () => <ErpPriceIndicesPage />,
   '/master/item-info': () => <ErpItemInformationsPage />,
-  // Alias — legacy/long-form path; canonical lives in sys_menus as /master/item-info
   '/master/item-informations': () => <ErpItemInformationsPage />,
-  // MD production batch (2026-05-23) — 10 master produksi baru
   '/master/production-categories': () => <ErpProductionCategoriesPage />,
   '/master/point-categories': () => <ErpPointCategoriesPage />,
   '/master/miscellaneous': () => <ErpMiscellaneousPage />,
@@ -343,7 +213,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/designers': () => <ErpDesignersPage />,
   '/master/production-activities': () => <ErpProductionActivitiesPage />,
   '/master/production-routes': () => <ErpProductionRoutesPage />,
-  // ── Organization (md, mirror of /master/* org masters) ───────────────────
   '/org/branches': () => <ErpBranchesPage />,
   '/org/locations': () => <ErpLocationsPage />,
   '/org/warehouses': () => <ErpWarehousesPage />,
@@ -353,26 +222,24 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/org/cost-centers': () => <ErpCostCentersPage />,
   '/org/departments': () => <ErpDepartmentsPage />,
   '/org/sub-departments': () => <ErpSubDepartmentsPage />,
-  // ── User Settings (personal preferences) ─────────────────────────────────
   '/settings/appearance': (ctx) => <AppearancePage t={ctx.t} />,
-  // ── Legacy short-id aliases for settings routes ───────────────────────────
   'set-appearance': (ctx) => <AppearancePage t={ctx.t} />,
   'set-prefs': (ctx) => <SettingsPage t={ctx.t} />,
-  // ── Finance (fin, m2) ─────────────────────────────────────────────────────
   '/finance/receipt-memos': () => <ErpArReceiptsPage />,
   '/finance/send-memos': () => <ErpApPaymentsPage />,
   '/finance/ledger': () => <ErpLedgerPage />,
   '/finance/trial-balance': () => <ErpTrialBalancePage />,
   '/finance/balance-sheet': () => <ErpBalanceSheetPage />,
   '/finance/income-statement': () => <ErpIncomeStatementPage />,
-  // /finance/cash-receipts + /finance/cash-disbursements + /finance/bank-receipts
-  // + /finance/bank-disbursements → handled by TRX_FORM_PAGES (list + /new + /:id).
+  '/finance/cash-flow': () => <ErpCashFlowPage />,
+  '/finance/daily-cash-bank': () => <ErpDailyCashBankPage />,
+  '/finance/ar-card': () => <ErpArCardPage />,
+  '/finance/ar-aging': () => <ErpArAgingPage />,
+  '/finance/ap-card': () => <ErpApCardPage />,
+  '/finance/ap-aging': () => <ErpApAgingPage />,
+  '/finance/giro-maturity': () => <ErpGiroMaturityPage />,
+  '/finance/budget-realization': () => <ErpBudgetRealizationPage />,
   '/finance/cashbank-transfers': () => <ErpCashbankTransfersPage />,
-  // /finance/receipt-giros + /send-giros + /receipt-giro-clearings
-  // + /send-giro-clearings → handled by TRX_FORM_PAGES (list + /new + /:id).
-  // /finance/adjustment-journals + /memorial-journals + /opening-balances
-  // + /revaluations → handled by TRX_FORM_PAGES (list + /new + /:id).
-  // ── Legacy short-id aliases (static NAV fallback) ─────────────────────────
   'adm-users': () => <ErpUsersPage />,
   'adm-roles': () => <ErpRolesPage />,
   'adm-branches': () => <ErpBranchesPage />,
@@ -382,23 +249,12 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   'md-partners': () => <ErpPartnersPage />,
   'md-item-categories': () => <ErpItemCategoriesPage />,
 };
-import type { Lang } from '@/lib/shell-constants';
 
-/** If `route` ends with `-new`, returns the base route; otherwise `null`. */
 function resolveNewRoute(route: string): string | null {
   if (!route.endsWith('-new')) return null;
   return route.slice(0, -'-new'.length);
 }
 
-/**
- * Render the page component that corresponds to `route`.
- *
- * @param route       The current route string (e.g. `'home'`, `'items'`, `'items-new'`).
- * @param onNavigate  Navigate within the active tab (replaces current route).
- * @param onOpenTab   Open a route in a new tab (or switch to an existing one).
- * @param t           Translator produced by `makeTranslator`.
- * @param lang        Active UI language.
- */
 export function renderRoute(
   route: string,
   onNavigate: (r: string) => void,
@@ -409,11 +265,9 @@ export function renderRoute(
   if (route === 'home') return <Dashboard t={t} onNavigate={onOpenTab} />;
   if (route === 'statistik') return <Statistik t={t} onNavigate={onOpenTab} />;
 
-  // ── ERP pages (seeded sys_menus path = canonical id; short-id aliases) ─────
   const erpPage = ERP_PAGES[route];
   if (erpPage) return erpPage({ t });
 
-  // ── Transaction form pages (list / <base>/new / <base>/:id) ────────────────
   const TrxListPage = TRX_FORM_PAGES[route];
   if (TrxListPage) return <TrxListPage onNavigate={onNavigate} />;
   const trx = resolveTrxFormRoute(route, TRX_BASES);
@@ -431,38 +285,16 @@ export function renderRoute(
   const baseRoute = resolveNewRoute(route);
   if (baseRoute) {
     if (MODULES[baseRoute])
-      return (
-        <TrxForm
-          moduleId={baseRoute}
-          t={t}
-          lang={lang}
-          onNavigate={onNavigate}
-        />
-      );
+      return <TrxForm moduleId={baseRoute} t={t} lang={lang} onNavigate={onNavigate} />;
     if (REGISTRY[baseRoute])
       return <RecordForm moduleId={baseRoute} t={t} onNavigate={onNavigate} />;
     return <ComingSoon route={route} />;
   }
 
   if (MODULES[route])
-    return (
-      <GenericList
-        moduleId={route}
-        t={t}
-        lang={lang}
-        onNavigate={onNavigate}
-        onOpenTab={onOpenTab}
-      />
-    );
+    return <GenericList moduleId={route} t={t} lang={lang} onNavigate={onNavigate} onOpenTab={onOpenTab} />;
   if (REPORTS[route]) return <FinancialReport moduleId={route} t={t} />;
   if (REGISTRY[route])
-    return (
-      <DataList
-        moduleId={route}
-        t={t}
-        onNavigate={onNavigate}
-        onOpenTab={onOpenTab}
-      />
-    );
+    return <DataList moduleId={route} t={t} onNavigate={onNavigate} onOpenTab={onOpenTab} />;
   return <ComingSoon route={route} />;
 }

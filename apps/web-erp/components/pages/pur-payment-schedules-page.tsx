@@ -21,7 +21,7 @@ import { PurVendorPaymentForm } from './pur-vendor-payment-form';
 
 const BASE = '/purchasing/payment-schedules';
 
-export function ErpPaymentSchedulesPage({ formMode, onNavigate }: TrxFormPageProps = {}) {
+export function ErpPaymentSchedulesPage({ formMode, recordId, onNavigate }: TrxFormPageProps = {}) {
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const goList = React.useCallback(() => onNavigate?.(BASE), [onNavigate]);
   const [search, setSearch] = React.useState('');

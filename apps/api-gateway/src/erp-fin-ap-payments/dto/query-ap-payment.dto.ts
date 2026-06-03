@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import {
   ErpDocumentStatusDto,
   ErpSettlementStatusDto,
@@ -36,4 +36,14 @@ export class QueryApPaymentDto {
   @IsOptional()
   @IsEnum(ErpSettlementStatusDto)
   paymentStatus?: ErpSettlementStatusDto;
+
+  @ApiPropertyOptional({ default: 'transactionDate' })
+  @IsOptional()
+  @IsString()
+  sortBy?: string = 'transactionDate';
+
+  @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortDir?: 'asc' | 'desc' = 'desc';
 }

@@ -543,6 +543,11 @@ async function seedMenus(): Promise<Map<string, bigint>> {
       { code: 'M2.TX.SEND-GIRO',          title: 'Send Giro',            path: '/finance/send-giros',          legacyCode: 'SG' },
       { code: 'M2.TX.RECEIPT-GIRO-CLR',   title: 'Receipt Giro Clearing', path: '/finance/receipt-giro-clearings', legacyCode: 'RGC' },
       { code: 'M2.TX.SEND-GIRO-CLR',      title: 'Send Giro Clearing',   path: '/finance/send-giro-clearings', legacyCode: 'SGC' },
+      { code: 'M2.TX.MEMORIAL-JOURNAL',   title: 'Memorial Journal',     path: '/finance/memorial-journals',  legacyCode: 'JM' },
+      { code: 'M2.TX.REVALUATION',        title: 'FX Revaluation',       path: '/finance/revaluations',       legacyCode: 'RV' },
+      { code: 'M2.TX.RECEIPT-MEMO',       title: 'Receipt Memo',         path: '/finance/receipt-memos',      legacyCode: 'RM2' },
+      { code: 'M2.TX.SEND-MEMO',          title: 'Send Memo',            path: '/finance/send-memos',         legacyCode: 'SM2' },
+      { code: 'M2.TX.CASHBANK-TRANSFER',  title: 'Cash/Bank Transfer',   path: '/finance/cashbank-transfers', legacyCode: 'CBT' },
       { code: 'M2.TX.OPENING-BALANCE',    title: 'Opening Balance (CoA)', path: '/finance/opening-balances',   legacyCode: 'CB' },
     ], m2TxGrp.id);
     // Prune legacy duplicate "Bank Payment" (SM → fin_ap_payments) menu — superseded by
