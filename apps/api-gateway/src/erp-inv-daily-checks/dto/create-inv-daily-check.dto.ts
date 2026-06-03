@@ -35,6 +35,8 @@ export class InvDailyCheckLineDto {
   @ApiPropertyOptional() @IsOptional() @IsString() warehouseId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() costCenterId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() machineRef?: string;
+  @ApiPropertyOptional({ example: '8' }) @IsOptional() @IsDecimalString() workHours?: string;
 
   @ApiProperty({ example: 1 }) @IsInt() @Min(1) lineNo!: number;
 }

@@ -23,6 +23,10 @@ export interface InvStockAdjustmentLineRow extends GridRowBase {
   unitCost?: string;
   warehouseId?: string;
   warehouseLabel?: string;
+  inventoryAccountId?: string;
+  inventoryAccountLabel?: string;
+  contraAccountId?: string;
+  contraAccountLabel?: string;
   costCenterId?: string;
   notes?: string;
 }
@@ -38,7 +42,7 @@ export const newInvStockAdjustmentLine = (): InvStockAdjustmentLineRow => ({
 
 const STANDARD_FIELDS = new Set([
   'itemId', 'direction', 'quantity', 'unitId', 'unitCost',
-  'warehouseId', 'costCenterId', 'notes',
+  'warehouseId', 'inventoryAccountId', 'contraAccountId', 'costCenterId', 'notes',
 ]);
 
 const isStandard = (col: GridCol) => col.kind === 'STANDARD' && STANDARD_FIELDS.has(col.dataField);
@@ -54,6 +58,8 @@ const LABEL_KEYS: Record<string, keyof InvStockAdjustmentLineRow> = {
   itemId: 'itemLabel',
   unitId: 'unitLabel',
   warehouseId: 'warehouseLabel',
+  inventoryAccountId: 'inventoryAccountLabel',
+  contraAccountId: 'contraAccountLabel',
 };
 
 /** Build the partial-row patch to write `value` (+ optional lookup label) into a column. */
@@ -92,6 +98,8 @@ export function defaultInvStockAdjustmentCols(): GridCol[] {
     { dataField: 'unitId', headerText: 'Satuan', width: 140, dataType: 'LOOKUP', lookupSource: 'units', kind: 'STANDARD', isEditable: true, isRequired: true },
     { dataField: 'unitCost', headerText: 'Biaya', width: 150, dataType: 'NUMBER', kind: 'STANDARD', isEditable: true, isRequired: false, isSkippable: true, cellEditor: 'NUMBER' },
     { dataField: 'warehouseId', headerText: 'Gudang', width: 180, dataType: 'LOOKUP', lookupSource: 'warehouses', kind: 'STANDARD', isEditable: true, isRequired: false },
+    { dataField: 'inventoryAccountId', headerText: 'Akun Persediaan', width: 240, dataType: 'LOOKUP', lookupSource: 'accounts', kind: 'STANDARD', isEditable: true, isRequired: false },
+    { dataField: 'contraAccountId', headerText: 'Akun Lawan', width: 240, dataType: 'LOOKUP', lookupSource: 'accounts', kind: 'STANDARD', isEditable: true, isRequired: false },
     { dataField: 'notes', headerText: 'Catatan', width: 220, dataType: 'TEXT', kind: 'STANDARD', isEditable: true, isRequired: false },
   ];
 }

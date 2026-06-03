@@ -83,6 +83,8 @@ export interface InvStockAdjustmentLinePayload {
   unitId: string;
   unitCost?: string;
   warehouseId?: string;
+  inventoryAccountId?: string;
+  contraAccountId?: string;
   costCenterId?: string;
   divisionId?: string;
   subdivisionId?: string;

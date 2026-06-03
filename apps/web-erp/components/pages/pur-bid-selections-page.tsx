@@ -2,8 +2,7 @@
 
 /**
  * Bid Selection / Comparison (BS) — list + form. URL: /purchasing/bid-comparisons · /new · /:id.
- * Lines = bid evaluation rows (quotationLineId + rank/selected). The form displays a
- * "coming soon" message for the line editor; the list is fully functional.
+ * Full CRUD wired to PurBsForm.
  */
 
 import * as React from 'react';
@@ -22,15 +21,27 @@ import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import {
-  listPurBidSelections, deletePurBidSelection, transitionPurBidSelection, type ErpPurBidSelection,
+  listPurBidSelections, deletePurBidSelection, type ErpPurBidSelection,
 } from '@/lib/api/pur-bid-selections';
+import {
+  PurBsForm, defaultPurBsForm, fromPurBidSelection, toPurBsPayload,
+  type PurBsFormData, type PurBidSelectionTransition,
+  createPurBidSelection, updatePurBidSelection, getPurBidSelection, transitionPurBidSelection,
+} from './pur-bs-form';
 
 const BASE = '/purchasing/bid-comparisons';
 
 export function ErpBidSelectionsPage({ formMode, recordId, onNavigate }: TrxFormPageProps = {}) {
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
+  const [form, setForm] = React.useState<PurBsFormData>(defaultPurBsForm());
+  const [saving, setSaving] = React.useState(false);
+
+  const formReady =
+    formMode === 'create' ||
+    (formMode === 'edit' && String(form.id ?? '') === String(recordId ?? ''));
 
   const goList = React.useCallback(() => onNavigate?.(BASE), [onNavigate]);
+
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const { page, pageSize, setPage, setPageSize } = useListPagination('pur-bid-selections');
@@ -50,7 +61,44 @@ export function ErpBidSelectionsPage({ formMode, recordId, onNavigate }: TrxForm
   const totalRows = meta?.total ?? 0;
   const pageCount = meta?.totalPages ?? 1;
 
+  const openCreate = () => onNavigate?.(trxNewRoute(BASE));
   const openEdit = (r: ErpPurBidSelection) => onNavigate?.(trxEditRoute(BASE, r.id));
+
+  const loadForm = React.useCallback(() => {
+    if (formMode === 'create') { setForm(defaultPurBsForm()); return undefined; }
+    if (formMode === 'edit' && recordId) {
+      let alive = true;
+      getPurBidSelection(recordId)
+        .then((full) => alive && setForm(fromPurBidSelection(full)))
+        .catch(() => { if (!alive) return; notify('Gagal memuat Bid Comparison', 'danger'); goList(); });
+      return () => { alive = false; };
+    }
+    return undefined;
+  }, [formMode, recordId, goList]);
+  React.useEffect(() => loadForm(), [loadForm]);
+
+  const persist = async (closeAfter: boolean, newAfter = false) => {
+    if (!form.branchId || !form.docDate) { notify('Cabang dan Tanggal wajib diisi.', 'warn'); return; }
+    if (!form.bidLines.some((l) => l.quotationLineId)) { notify('Minimal satu baris evaluasi.', 'warn'); return; }
+    setSaving(true);
+    try {
+      const payload = toPurBsPayload(form);
+      if (form.id) { await updatePurBidSelection(form.id, payload); notify('Bid Comparison diperbarui', 'success'); }
+      else { await createPurBidSelection(payload); notify('Bid Comparison dibuat', 'success'); }
+      reload();
+      if (newAfter) { setForm(defaultPurBsForm()); onNavigate?.(trxNewRoute(BASE)); }
+      else if (closeAfter) { goList(); }
+    } catch (e: unknown) {
+      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
+    } finally { setSaving(false); }
+  };
+
+  const runTransition = async (r: ErpPurBidSelection, action: PurBidSelectionTransition) => {
+    let reason: string | undefined;
+    if (action === 'REJECT') { reason = window.prompt('Alasan menolak?') ?? undefined; if (!reason) return; }
+    try { await transitionPurBidSelection(r.id, action, reason); notify(`Berhasil: ${r.docNumber}`, 'success'); reload(); }
+    catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+  };
 
   const handleDelete = (r: ErpPurBidSelection) => {
     confirmAction({
@@ -63,19 +111,13 @@ export function ErpBidSelectionsPage({ formMode, recordId, onNavigate }: TrxForm
     });
   };
 
-  const runTransition = async (r: ErpPurBidSelection, action: string) => {
-    let reason: string | undefined;
-    if (action === 'REJECT') { reason = window.prompt('Alasan menolak?') ?? undefined; if (!reason) return; }
-    try { await transitionPurBidSelection(r.id, action as never, reason); notify(`Berhasil: ${r.docNumber}`, 'success'); reload(); }
-    catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
-  };
-
   const rowActions = (r: ErpPurBidSelection): RowActionItem[] => [
-    { label: 'Lihat', onSelect: () => openEdit(r) },
-    ...cashBankWorkflowActions(r.status as never, (a) => runTransition(r, a)),
+    { label: 'Edit / Lihat', onSelect: () => openEdit(r) },
+    ...cashBankWorkflowActions(r.status as never, (a) => runTransition(r, a as PurBidSelectionTransition)),
     { label: 'Hapus', onSelect: () => handleDelete(r), danger: true, separatorBefore: true },
   ];
 
+  // ── form view ─────────────────────────────────────────────────────────────────
   if (mode === 'form') {
     return (
       <div className="page">
@@ -83,25 +125,28 @@ export function ErpBidSelectionsPage({ formMode, recordId, onNavigate }: TrxForm
           <h1 className="page-title flex items-center gap-2">
             <button className="iconbtn" onClick={goList} title="Kembali" style={{ fontSize: 18, lineHeight: 1 }}>←</button>
             Perbandingan Harga <span className="code-tag">BS</span>
-            <span className="text-xs text-muted font-normal ml-2">— {recordId ? `#${recordId}` : 'baru'}</span>
           </h1>
         </div>
-        <div className="page-body p-8 text-center text-muted">
-          <div className="text-lg font-medium mb-2">Form Bid Comparison — coming soon</div>
-          <div className="text-sm">Editor ranking penawaran sedang disiapkan.</div>
-          <button className="btn mt-4" onClick={goList}>← Kembali ke daftar</button>
+        <div className="page-body overflow-auto p-4">
+          {formReady ? (
+            <PurBsForm data={form} onChange={setForm} saving={saving}
+              onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm} />
+          ) : (
+            <div className="p-8 text-center text-muted">Memuat…</div>
+          )}
         </div>
       </div>
     );
   }
 
+  // ── list view ─────────────────────────────────────────────────────────────────
   const summary: SummaryConfig = { metricLabel: 'Σ Bid Comparison', rowCount: rows.length, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
   const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
     <ErpListLayout title="Perbandingan Harga (BS)" code="BS" loading={loading} error={error}
-      search={search} onSearch={setSearch} onAdd={() => onNavigate?.(trxNewRoute(BASE))} onRefresh={reload}
+      search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
       toolbar={null} summary={summary} pagination={pagination}
       keyboardRows={{ rowCount: rows.length, focusedIndex: focused, onFocusChange: setFocused, onToggle: (i) => rows[i] && toggleSel(rows[i].id), onOpen: (i) => rows[i] && openEdit(rows[i]) }}>
       <Table>

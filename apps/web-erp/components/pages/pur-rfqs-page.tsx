@@ -2,8 +2,7 @@
 
 /**
  * Request for Quotation (RFQ) — list + form. URL: /purchasing/rfqs · /new · /:id.
- * Lines = invited suppliers (pur_rfq_suppliers). The form displays a "coming soon"
- * message for the line editor; the list is fully functional.
+ * Lines = invited suppliers (pur_rfq_suppliers). Full CRUD wired to PurRfqForm.
  */
 
 import * as React from 'react';
@@ -25,13 +24,25 @@ import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import {
   listPurRfqs, deletePurRfq, transitionPurRfq, type ErpPurRfq,
 } from '@/lib/api/pur-rfqs';
+import {
+  PurRfqForm, defaultPurRfqForm, fromPurRfq, toPurRfqPayload,
+  type PurRfqFormData, type PurRfqTransition,
+  createPurRfq, updatePurRfq, getPurRfq,
+} from './pur-rfq-form';
 
 const BASE = '/purchasing/rfqs';
 
 export function ErpRfqsPage({ formMode, recordId, onNavigate }: TrxFormPageProps = {}) {
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
+  const [form, setForm] = React.useState<PurRfqFormData>(defaultPurRfqForm());
+  const [saving, setSaving] = React.useState(false);
+
+  const formReady =
+    formMode === 'create' ||
+    (formMode === 'edit' && String(form.id ?? '') === String(recordId ?? ''));
 
   const goList = React.useCallback(() => onNavigate?.(BASE), [onNavigate]);
+
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
   const { page, pageSize, setPage, setPageSize } = useListPagination('pur-rfqs');
@@ -51,7 +62,44 @@ export function ErpRfqsPage({ formMode, recordId, onNavigate }: TrxFormPageProps
   const totalRows = meta?.total ?? 0;
   const pageCount = meta?.totalPages ?? 1;
 
+  const openCreate = () => onNavigate?.(trxNewRoute(BASE));
   const openEdit = (r: ErpPurRfq) => onNavigate?.(trxEditRoute(BASE, r.id));
+
+  const loadForm = React.useCallback(() => {
+    if (formMode === 'create') { setForm(defaultPurRfqForm()); return undefined; }
+    if (formMode === 'edit' && recordId) {
+      let alive = true;
+      getPurRfq(recordId)
+        .then((full) => alive && setForm(fromPurRfq(full)))
+        .catch(() => { if (!alive) return; notify('Gagal memuat RFQ', 'danger'); goList(); });
+      return () => { alive = false; };
+    }
+    return undefined;
+  }, [formMode, recordId, goList]);
+  React.useEffect(() => loadForm(), [loadForm]);
+
+  const persist = async (closeAfter: boolean, newAfter = false) => {
+    if (!form.branchId || !form.docDate) { notify('Cabang dan Tanggal wajib diisi.', 'warn'); return; }
+    if (!form.suppliers.some((s) => s.supplierId)) { notify('Minimal satu supplier diundang.', 'warn'); return; }
+    setSaving(true);
+    try {
+      const payload = toPurRfqPayload(form);
+      if (form.id) { await updatePurRfq(form.id, payload); notify('RFQ diperbarui', 'success'); }
+      else { await createPurRfq(payload); notify('RFQ dibuat', 'success'); }
+      reload();
+      if (newAfter) { setForm(defaultPurRfqForm()); onNavigate?.(trxNewRoute(BASE)); }
+      else if (closeAfter) { goList(); }
+    } catch (e: unknown) {
+      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
+    } finally { setSaving(false); }
+  };
+
+  const runTransition = async (r: ErpPurRfq, action: PurRfqTransition) => {
+    let reason: string | undefined;
+    if (action === 'REJECT') { reason = window.prompt('Alasan menolak?') ?? undefined; if (!reason) return; }
+    try { await transitionPurRfq(r.id, action, reason); notify(`Berhasil: ${r.docNumber}`, 'success'); reload(); }
+    catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+  };
 
   const handleDelete = (r: ErpPurRfq) => {
     confirmAction({
@@ -64,20 +112,13 @@ export function ErpRfqsPage({ formMode, recordId, onNavigate }: TrxFormPageProps
     });
   };
 
-  const runTransition = async (r: ErpPurRfq, action: string) => {
-    let reason: string | undefined;
-    if (action === 'REJECT') { reason = window.prompt('Alasan menolak?') ?? undefined; if (!reason) return; }
-    try { await transitionPurRfq(r.id, action as never, reason); notify(`Berhasil: ${r.docNumber}`, 'success'); reload(); }
-    catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
-  };
-
   const rowActions = (r: ErpPurRfq): RowActionItem[] => [
-    { label: 'Lihat', onSelect: () => openEdit(r) },
-    ...cashBankWorkflowActions(r.status as never, (a) => runTransition(r, a)),
+    { label: 'Edit / Lihat', onSelect: () => openEdit(r) },
+    ...cashBankWorkflowActions(r.status as never, (a) => runTransition(r, a as PurRfqTransition)),
     { label: 'Hapus', onSelect: () => handleDelete(r), danger: true, separatorBefore: true },
   ];
 
-  // Form mode: RFQ line editor (supplier list) belum ada; tampilkan pesan sementara.
+  // ── form view ─────────────────────────────────────────────────────────────────
   if (mode === 'form') {
     return (
       <div className="page">
@@ -85,25 +126,28 @@ export function ErpRfqsPage({ formMode, recordId, onNavigate }: TrxFormPageProps
           <h1 className="page-title flex items-center gap-2">
             <button className="iconbtn" onClick={goList} title="Kembali" style={{ fontSize: 18, lineHeight: 1 }}>←</button>
             Permintaan Penawaran <span className="code-tag">RFQ</span>
-            <span className="text-xs text-muted font-normal ml-2">— {recordId ? `#${recordId}` : 'baru'}</span>
           </h1>
         </div>
-        <div className="page-body p-8 text-center text-muted">
-          <div className="text-lg font-medium mb-2">Form RFQ — coming soon</div>
-          <div className="text-sm">Editor undangan supplier sedang disiapkan.</div>
-          <button className="btn mt-4" onClick={goList}>← Kembali ke daftar</button>
+        <div className="page-body overflow-auto p-4">
+          {formReady ? (
+            <PurRfqForm data={form} onChange={setForm} saving={saving}
+              onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm} />
+          ) : (
+            <div className="p-8 text-center text-muted">Memuat…</div>
+          )}
         </div>
       </div>
     );
   }
 
+  // ── list view ─────────────────────────────────────────────────────────────────
   const summary: SummaryConfig = { metricLabel: 'Σ RFQ', rowCount: rows.length, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
   const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
     <ErpListLayout title="Permintaan Penawaran (RFQ)" code="RFQ" loading={loading} error={error}
-      search={search} onSearch={setSearch} onAdd={() => onNavigate?.(trxNewRoute(BASE))} onRefresh={reload}
+      search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
       toolbar={null} summary={summary} pagination={pagination}
       keyboardRows={{ rowCount: rows.length, focusedIndex: focused, onFocusChange: setFocused, onToggle: (i) => rows[i] && toggleSel(rows[i].id), onOpen: (i) => rows[i] && openEdit(rows[i]) }}>
       {selected.size > 0 && (

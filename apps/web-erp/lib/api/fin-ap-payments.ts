@@ -51,7 +51,12 @@ export type UpdateApPaymentPayload = Partial<CreateApPaymentPayload>;
 export interface ListApPaymentsParams extends PaginationParams {
   status?: ErpDocumentStatus;
   paymentStatus?: ErpSettlementStatus;
+  search?: string;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
+
+export type ApPaymentTransition = 'POST' | 'VOID';
 
 export async function listApPayments(
   params?: ListApPaymentsParams,
@@ -80,6 +85,19 @@ export async function updateApPayment(
     `/fin/ap-payments/${id}`,
     payload,
   );
+  return res.data;
+}
+
+export async function getApPayment(id: string): Promise<ErpApPayment> {
+  const res = await apiGet<ApiResponse<ErpApPayment>>(`/fin/ap-payments/${id}`);
+  return res.data;
+}
+
+export async function transitionApPayment(
+  id: string,
+  action: ApPaymentTransition,
+): Promise<ErpApPayment> {
+  const res = await apiPost<ApiResponse<ErpApPayment>>(`/fin/ap-payments/${id}/transition`, { action });
   return res.data;
 }
 

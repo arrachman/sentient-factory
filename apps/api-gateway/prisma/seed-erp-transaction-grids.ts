@@ -288,7 +288,7 @@ const INV_OPENING_COLUMNS: ColDef[] = [
   { field: 'unitId', header: 'Satuan', width: 140, type: 'LOOKUP', lookup: 'units', required: true },
   { field: 'unitCost', header: 'Harga Pokok', width: 150, type: 'NUMBER', required: true },
   { field: 'warehouseId', header: 'Gudang', width: 200, type: 'LOOKUP', lookup: 'warehouses', required: true },
-  { field: 'inventoryAccountId', header: 'Akun Persediaan', width: 240, type: 'LOOKUP', lookup: 'accounts', visible: false },
+  { field: 'inventoryAccountId', header: 'Akun Persediaan', width: 240, type: 'LOOKUP', lookup: 'accounts' },
   { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
   { field: 'costCenterId', header: 'Cost Center', width: 200, type: 'LOOKUP', lookup: 'cost-centers', visible: false },
   { field: 'projectId', header: 'Proyek', width: 180, type: 'LOOKUP', lookup: 'projects', visible: false },
@@ -319,8 +319,8 @@ const INV_ADJUSTMENT_COLUMNS: ColDef[] = [
   { field: 'unitId', header: 'Satuan', width: 140, type: 'LOOKUP', lookup: 'units', required: true },
   { field: 'unitCost', header: 'Harga', width: 140, type: 'NUMBER' },
   { field: 'warehouseId', header: 'Gudang', width: 200, type: 'LOOKUP', lookup: 'warehouses' },
-  { field: 'inventoryAccountId', header: 'Akun Persediaan', width: 220, type: 'LOOKUP', lookup: 'accounts', visible: false },
-  { field: 'contraAccountId', header: 'Akun Lawan', width: 220, type: 'LOOKUP', lookup: 'accounts', visible: false },
+  { field: 'inventoryAccountId', header: 'Akun Persediaan', width: 220, type: 'LOOKUP', lookup: 'accounts' },
+  { field: 'contraAccountId', header: 'Akun Lawan', width: 220, type: 'LOOKUP', lookup: 'accounts' },
   { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
   ...INV_CUSTOM_SLOTS,
 ];
@@ -346,6 +346,8 @@ const INV_DAILY_CHECK_COLUMNS: ColDef[] = [
   { field: 'unitId', header: 'Satuan', width: 140, type: 'LOOKUP', lookup: 'units', required: true },
   { field: 'warehouseId', header: 'Gudang', width: 200, type: 'LOOKUP', lookup: 'warehouses' },
   { field: 'costCenterId', header: 'Cost Center', width: 200, type: 'LOOKUP', lookup: 'cost-centers', visible: false },
+  { field: 'machineRef', header: 'Mesin', width: 180, type: 'TEXT' },
+  { field: 'workHours', header: 'Jam Kerja', width: 120, type: 'NUMBER' },
   { field: 'notes', header: 'Catatan', width: 220, type: 'TEXT' },
   ...INV_CUSTOM_SLOTS,
 ];

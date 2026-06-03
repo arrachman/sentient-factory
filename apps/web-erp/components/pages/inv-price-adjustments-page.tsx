@@ -46,6 +46,7 @@ import {
   listInvPriceAdjustments,
   createInvPriceAdjustment,
   deleteInvPriceAdjustment,
+  processInvPriceAdjustment,
   getInvPriceAdjustment,
   type ErpInvPriceAdjustment,
   type ErpInvPriceAdjustmentStatus,
@@ -163,10 +164,33 @@ export function ErpInvPriceAdjustmentsPage({
     });
   };
 
-  const rowActions = (r: ErpInvPriceAdjustment): RowActionItem[] => [
-    { label: 'Lihat Detail', onSelect: () => openEdit(r) },
-    { label: 'Hapus', onSelect: () => handleDelete(r), danger: true, separatorBefore: true },
-  ];
+  const handleProcess = (r: ErpInvPriceAdjustment) => {
+    confirmAction({
+      title: 'Proses recalculation?',
+      message: `${r.docNumber} akan dihitung ulang dari moving-average cost.`,
+      confirmLabel: 'Proses', confirmIcon: 'refresh',
+      onConfirm: async () => {
+        try {
+          await processInvPriceAdjustment(r.id);
+          notify('Perhitungan ulang harga selesai', 'success');
+          reload();
+        } catch (e: unknown) {
+          notify(e instanceof Error ? e.message : 'Gagal memproses', 'danger');
+        }
+      },
+    });
+  };
+
+  const rowActions = (r: ErpInvPriceAdjustment): RowActionItem[] => {
+    const canProcess = r.status === 'PENDING' || r.status === 'FAILED';
+    return [
+      { label: 'Lihat Detail', onSelect: () => openEdit(r) },
+      ...(canProcess
+        ? [{ label: 'Proses', onSelect: () => handleProcess(r) } as RowActionItem]
+        : []),
+      { label: 'Hapus', onSelect: () => handleDelete(r), danger: true, separatorBefore: true },
+    ];
+  };
 
   const toggleSel = (id: string) =>
     setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });

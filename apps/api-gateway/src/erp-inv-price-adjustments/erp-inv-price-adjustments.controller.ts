@@ -28,6 +28,12 @@ export class ErpInvPriceAdjustmentsController {
     return this.service.create(dto, req.user?.id);
   }
 
+  @Post(':id/process')
+  @ApiOperation({ summary: 'Process a PA: derive deltas server-side, write lines, set COMPLETED/FAILED' })
+  process(@Param('id') id: string, @Request() req: any) {
+    return this.service.process(BigInt(id), req.user?.id ?? null);
+  }
+
   @Get()
   @ApiOperation({ summary: 'List price adjustments (filter by status/item/warehouse/date)' })
   findAll(@Query() query: QueryInvPriceAdjustmentsDto) {

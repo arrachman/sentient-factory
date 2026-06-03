@@ -86,6 +86,7 @@ export interface InvOpeningStockLinePayload {
   unitId: string;
   unitCost: string;
   warehouseId?: string;
+  inventoryAccountId?: string;
   costCenterId?: string;
   divisionId?: string;
   subdivisionId?: string;

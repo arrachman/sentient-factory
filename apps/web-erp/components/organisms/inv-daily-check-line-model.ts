@@ -18,6 +18,8 @@ export interface InvDailyCheckLineRow extends GridRowBase {
   warehouseId?: string;
   warehouseLabel?: string;
   costCenterId?: string;
+  machineRef?: string;
+  workHours?: string;
   notes?: string;
 }
 
@@ -30,7 +32,7 @@ export const newInvDailyCheckLine = (): InvDailyCheckLineRow => ({
 });
 
 const STANDARD_FIELDS = new Set([
-  'itemId', 'quantity', 'unitId', 'warehouseId', 'costCenterId', 'notes',
+  'itemId', 'quantity', 'unitId', 'warehouseId', 'costCenterId', 'machineRef', 'workHours', 'notes',
 ]);
 
 const isStandard = (col: GridCol) =>
@@ -85,6 +87,8 @@ export function defaultInvDailyCheckCols(): GridCol[] {
     { dataField: 'quantity', headerText: 'Qty', width: 110, dataType: 'NUMBER', kind: 'STANDARD', isEditable: true, isRequired: true, cellEditor: 'STEPPER' },
     { dataField: 'unitId', headerText: 'Satuan', width: 140, dataType: 'LOOKUP', lookupSource: 'units', kind: 'STANDARD', isEditable: true, isRequired: true },
     { dataField: 'warehouseId', headerText: 'Gudang', width: 180, dataType: 'LOOKUP', lookupSource: 'warehouses', kind: 'STANDARD', isEditable: true, isRequired: false },
+    { dataField: 'machineRef', headerText: 'Mesin', width: 180, dataType: 'TEXT', kind: 'STANDARD', isEditable: true, isRequired: false },
+    { dataField: 'workHours', headerText: 'Jam Kerja', width: 120, dataType: 'NUMBER', kind: 'STANDARD', isEditable: true, isRequired: false },
     { dataField: 'notes', headerText: 'Catatan', width: 220, dataType: 'TEXT', kind: 'STANDARD', isEditable: true, isRequired: false },
   ];
 }
