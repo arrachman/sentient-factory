@@ -2309,3 +2309,71 @@ Baris: item+qty+unit+gudang. Workflow §2.7 penuh.
 - PA: background job processor (mengisi `status=COMPLETED` + `totalDelta`) belum dibuat.
 - DC: model `inv_daily_check_lines` minimal (item+qty+unit). Bila perlu field mesin/
   jam-kerja tambahan, tambah kolom + migrasi additif.
+
+---
+
+## § Purchasing (M4) — config baseline + forms
+
+**Pola = persis Sales (M5).** Purchasing dibangun meniru Sales Order item-based
+(header config-driven Form Builder + grid baris config-driven Kustomisasi Grid +
+state machine §2.7 + sub-route URL §2.3.1). Tiap dokumen `pur_*` punya line table
+sendiri (per-txn `lineTable` override, bukan satu tabel bersama).
+
+**13 tipe transaksi PUR** (paritas menu M4.TX) terdaftar di `sys_transaction_types`
+(`seed-erp-transaction-grids.ts`). Kode stub lama (`PUR.GR`/`PUR.INV`/`PUR.RET`)
+**di-prune** → diganti kode kanonik per menu:
+
+| Kode | Dokumen | Grid family | Line table |
+| --- | --- | --- | --- |
+| `PUR.PR` | Purchase Requisition | `purchaseItem` | `pur_requisition_lines` |
+| `PUR.RFQ` | Request for Quotation | `purchaseRfq` | `pur_rfq_suppliers` (baris = supplier diundang) |
+| `PUR.BS` | Bid Comparison | `purchaseBid` | `pur_bid_selection_lines` |
+| `PUR.PO` | Purchase Order | `purchaseItem` | `pur_order_lines` |
+| `PUR.GRN` | Goods Receipt | `purchaseReceipt` | `pur_goods_receipt_lines` (+ QC: accepted/rejected/quarantine) |
+| `PUR.PI` | Purchase Invoice | `purchaseItem` | `pur_invoice_lines` |
+| `PUR.DNR` | Return Shipment | `purchaseItem` | `pur_return_lines` (returnType=DEBIT_NOTE) |
+| `PUR.PRT` | Purchase Return | `purchaseItem` | `pur_return_lines` (returnType=RETURN_TO_VENDOR) |
+| `PUR.AP` · `PUR.PP` · `PUR.VPP` · `PUR.VP` · `PUR.OB` | Vendor Advance / Freight Payable / Payment Schedule / Vendor Payment / Opening AP | — (reuse finance domain) | — (katalog + header saja) |
+
+8 dokumen item-based dapat grid kolom default; 5 dokumen pembayaran/saldo-awal
+(`AP/PP/VPP/VP/OB` reuse `fin_ap_payments`/`fin_settlement_allocations`) = katalog +
+header form saja (grid menyusul saat desain reuse finance difinalisasi). Header field
+default per kode di `seed-erp-purchasing-forms.ts` (`seedPurchasingForms`): supplier
+**required** untuk PO/GRN/PI/DNR/PRT, **optional** untuk PR/RFQ/BS (pre-sourcing).
+
+**Kontrak dataField/fieldKey (jangan rename).** Grid `purchaseItem`: `rowNo`,`itemId`,
+`quantity`,`unitId`,`unitPrice`,`discountPercent`,`discountAmount`(hidden),`tax1Id`,
+`lineTotal`(skip/derived),`warehouseId`(hidden),`notes`,dims(hidden). Grid
+`purchaseReceipt` tambah `acceptedQty`/`rejectedQty`(hidden)/`quarantineQty`(hidden)/
+`unitCost`(hidden). Header item-doc: `supplierId`/`description`/`referenceNo` (LEFT) ·
+`branchId`/`locationId`/`warehouseId`/`payableAccountId` (CENTER) · `docDate`(@today)/
+`docNumber`/`currencyId`(default 1)/`paymentTermId`/`dueDate` (RIGHT).
+
+**Lookup registry** sudah punya `items`/`units`/`taxes`/`payment-terms` (ditambah saat
+Sales). Reuse — jangan bikin slug baru.
+
+**Form kerja penuh pertama = Purchase Order** (`/purchasing/purchase-orders`, code
+`PUR.PO`) — mirror SO 1:1. Backend `erp-pur-orders` (CRUD + numbering `PO` + fiscal
+period dari docDate + totals server-side + enrich cross-domain + workflow). **PO TIDAK
+posting GL** (dokumen komitmen; GRN posting inventory+GR/IR, PI posting AP) — posting
+service = no-op terdokumentasi. E2E verified: create→submit→approve→post (POSTED, 0
+ledger entries; subtotal/grandTotal benar). FE: `lib/api/pur-orders`,
+`purchase-transaction-form` (shared) + `pur-order-form`, `pur-item-lines`,
+`pur-structural-field`, `pur-orders-page` + filters; route di `TRX_FORM_PAGES` +
+`ERP_ROUTE_META`. **Beda dari SO:** `pur_orders` **tidak punya kolom `code`** (SO punya);
+`customerId`→`supplierId`, `receivableAccountId`→`payableAccountId`, `salesDeptId` di-drop.
+Reuse `cashBankWorkflowActions` + grid engine generik (sama spt SO).
+
+Semua 13 transaksi Purchasing selesai. Replikasi selesai (PR/PI/GRN/DNR/PRT/RFQ/BS).
+Payment docs (AP/PP/VPP/VP/OB): reuse pur_invoices / fin_ap_payments — lihat §§ payment docs di bawah.
+
+**Follow-up (sama persis SO):** REOPEN dari POSTED → 400 (gap warisan); kolom custom
+baris belum persist (`pur_*_lines` tak punya `custom_fields` JSONB).
+
+**Payment docs (AP/PP/VPP/VP/OB)**: reuse Finance domain + `fin_ap_payments` +4 kolom
+(migrasi `20260603_001`): `fx_gain_loss_amount/account_id` + `term_discount_amount/account_id`.
+AP/PP/OB = list pur_invoices dari sisi pembelian; VPP/VP = fin_ap_payments DRAFT/ALL.
+Form semua coming-soon — menunggu integrasi Finance AP payment form ke purchasing UI.
+Routes: /purchasing/vendor-advances · /purchasing/freight-payables ·
+/purchasing/payment-schedules · /purchasing/vendor-payments · /purchasing/opening-ap-balance.
+

@@ -115,6 +115,20 @@ import { ErpInvStockCountsPage } from '@/components/pages/inv-stock-counts-page'
 import { ErpInvPriceAdjustmentsPage } from '@/components/pages/inv-price-adjustments-page';
 import { ErpInvWeighbridgeTicketsPage } from '@/components/pages/inv-weighbridge-tickets-page';
 import { ErpInvDailyChecksPage } from '@/components/pages/inv-daily-checks-page';
+// Purchasing (pur, m4)
+import { ErpPurOrdersPage } from '@/components/pages/pur-orders-page';
+import { ErpPurRequisitionsPage } from '@/components/pages/pur-requisitions-page';
+import { ErpPurInvoicesPage } from '@/components/pages/pur-invoices-page';
+import { ErpReturnShipmentsPage } from '@/components/pages/pur-return-shipments-page';
+import { ErpPurchaseReturnsPage } from '@/components/pages/pur-purchase-returns-page';
+import { ErpGoodsReceiptsPage } from '@/components/pages/pur-goods-receipts-page';
+import { ErpRfqsPage } from '@/components/pages/pur-rfqs-page';
+import { ErpBidSelectionsPage } from '@/components/pages/pur-bid-selections-page';
+import { ErpVendorAdvancesPage } from '@/components/pages/pur-vendor-advances-page';
+import { ErpFreightPayablesPage } from '@/components/pages/pur-freight-payables-page';
+import { ErpPaymentSchedulesPage } from '@/components/pages/pur-payment-schedules-page';
+import { ErpVendorPaymentsPage } from '@/components/pages/pur-vendor-payments-page';
+import { ErpOpeningApBalancePage } from '@/components/pages/pur-opening-ap-balance-page';
 // Audit Logs
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
 // Admin tools & identity pages
@@ -158,6 +172,19 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/warehouse/price-adjustments': ErpInvPriceAdjustmentsPage,
   '/warehouse/receipt-weighers': ErpInvWeighbridgeTicketsPage,
   '/warehouse/daily-checks': ErpInvDailyChecksPage,
+  '/purchasing/purchase-orders': ErpPurOrdersPage,
+  '/purchasing/purchase-requisitions': ErpPurRequisitionsPage,
+  '/purchasing/purchase-invoices': ErpPurInvoicesPage,
+  '/purchasing/return-shipments': ErpReturnShipmentsPage,
+  '/purchasing/purchase-returns': ErpPurchaseReturnsPage,
+  '/purchasing/goods-receipts': ErpGoodsReceiptsPage,
+  '/purchasing/rfqs': ErpRfqsPage,
+  '/purchasing/bid-comparisons': ErpBidSelectionsPage,
+  '/purchasing/vendor-advances': ErpVendorAdvancesPage,
+  '/purchasing/freight-payables': ErpFreightPayablesPage,
+  '/purchasing/payment-schedules': ErpPaymentSchedulesPage,
+  '/purchasing/vendor-payments': ErpVendorPaymentsPage,
+  '/purchasing/opening-ap-balance': ErpOpeningApBalancePage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
