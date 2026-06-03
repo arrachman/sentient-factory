@@ -109,6 +109,9 @@ import {
   ErpInvTransferReceiptsPage,
   ErpInvFuelRefillsPage,
 } from '@/components/pages/inv-stock-movements-page';
+import { ErpInvStockAdjustmentsPage } from '@/components/pages/inv-stock-adjustments-page';
+import { ErpInvOpeningStocksPage } from '@/components/pages/inv-opening-stocks-page';
+import { ErpInvStockCountsPage } from '@/components/pages/inv-stock-counts-page';
 // Audit Logs
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
 // Admin tools & identity pages
@@ -146,6 +149,9 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/warehouse/transfers': ErpInvTransfersPage,
   '/warehouse/transfer-receipts': ErpInvTransferReceiptsPage,
   '/warehouse/fuel-refills': ErpInvFuelRefillsPage,
+  '/warehouse/stock-adjustments': ErpInvStockAdjustmentsPage,
+  '/warehouse/opening-stocks': ErpInvOpeningStocksPage,
+  '/warehouse/stock-counts': ErpInvStockCountsPage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 

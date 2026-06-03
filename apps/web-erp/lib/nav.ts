@@ -297,6 +297,9 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/warehouse/transfers': { group: 'Warehouse', title: 'Stock Transfer', icon: 'boxes' },
   '/warehouse/transfer-receipts': { group: 'Warehouse', title: 'Transfer Receipt', icon: 'boxes' },
   '/warehouse/fuel-refills': { group: 'Warehouse', title: 'Fuel Refill', icon: 'boxes' },
+  '/warehouse/stock-adjustments': { group: 'Warehouse', title: 'Stock Adjustment', icon: 'boxes' },
+  '/warehouse/opening-stocks': { group: 'Warehouse', title: 'Opening Stock', icon: 'boxes' },
+  '/warehouse/stock-counts': { group: 'Warehouse', title: 'Stock Count', icon: 'boxes' },
   '/settings/appearance': { group: 'Administrator', title: 'Appearance', icon: 'gear' },
 };
 
