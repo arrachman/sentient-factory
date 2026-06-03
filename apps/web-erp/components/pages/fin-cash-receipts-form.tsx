@@ -10,6 +10,7 @@ import * as React from 'react';
 import {
   CashBankTransactionForm,
   type CashBankFormLabels,
+  type CashBankTransactionFormHandle,
 } from './cash-bank-transaction-form';
 import {
   defaultCashBankForm,
@@ -30,15 +31,20 @@ export const fromCashReceipt = (r: ErpCashReceipt): CashReceiptFormData =>
 export const toCashReceiptPayload = (d: CashReceiptFormData): CreateCashReceiptPayload =>
   toCashBankPayload(d, 'RECEIPT');
 
+export type { CashBankTransactionFormHandle as CashReceiptFormHandle };
+
 const CR_LABELS: CashBankFormLabels = { partner: 'Terima Dari', account: 'Akun Kas [D]' };
 
-export function CashReceiptForm(props: {
-  data: CashReceiptFormData;
-  onChange: (d: CashReceiptFormData) => void;
-  saving?: boolean;
-  onSave: () => void;
-  onSaveNew: () => void;
-  onReset: () => void;
-}) {
-  return <CashBankTransactionForm {...props} labels={CR_LABELS} transactionCode="FIN.CR" />;
-}
+export const CashReceiptForm = React.forwardRef<
+  CashBankTransactionFormHandle,
+  {
+    data: CashReceiptFormData;
+    onChange: (d: CashReceiptFormData) => void;
+    saving?: boolean;
+    onSave: () => void;
+    onSaveNew: () => void;
+    onReset: () => void;
+  }
+>(function CashReceiptForm(props, ref) {
+  return <CashBankTransactionForm ref={ref} {...props} labels={CR_LABELS} transactionCode="FIN.CR" />;
+});

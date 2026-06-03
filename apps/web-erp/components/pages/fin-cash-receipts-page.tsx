@@ -62,6 +62,7 @@ import {
   fromCashReceipt,
   toCashReceiptPayload,
   type CashReceiptFormData,
+  type CashReceiptFormHandle,
 } from './fin-cash-receipts-form';
 
 /** Canonical list path (seeded `sys_menus.path`); base for /new and /:id. */
@@ -76,6 +77,7 @@ export function ErpCashReceiptsPage({
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<CashReceiptFormData>(defaultCashReceiptForm);
   const [saving, setSaving] = React.useState(false);
+  const formRef = React.useRef<CashReceiptFormHandle>(null);
 
   // In edit mode the form is only ready once the loaded record matches the
   // route id — mounting CashReceiptForm before then would let its currency
@@ -163,8 +165,17 @@ export function ErpCashReceiptsPage({
   React.useEffect(() => loadForm(), [loadForm]);
 
   const persist = async (closeAfter: boolean, newAfter = false) => {
-    if (!form.branchId || !form.bankAccountId || !form.description) {
-      notify('Cabang, Akun Kas, dan Uraian wajib diisi.', 'warn');
+    // Validate required header fields; focus the first one that is empty.
+    const missing: { key: string; label: string }[] = [
+      { key: 'branchId',       label: 'Cabang' },
+      { key: 'bankAccountId',  label: 'Akun Kas' },
+      { key: 'description',    label: 'Uraian' },
+    ].filter(({ key }) => !form[key as keyof typeof form]);
+
+    if (missing.length) {
+      notify(`${missing.map((f) => f.label).join(', ')} wajib diisi.`, 'warn');
+      // Focus the first missing field so the user lands right on it.
+      formRef.current?.focusField(missing[0].key);
       return;
     }
     setSaving(true);
@@ -254,6 +265,7 @@ export function ErpCashReceiptsPage({
         <div className="page-body overflow-auto p-4">
           {formReady ? (
             <CashReceiptForm
+              ref={formRef}
               data={form}
               onChange={setForm}
               saving={saving}

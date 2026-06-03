@@ -66,7 +66,7 @@ export function CashBankStructuralField({ field, ctx }: { field: ErpFormField; c
   const { data, set, ph, ro, locked } = ctx;
   const key = field.fieldKey;
   const row = (children: React.ReactNode) => (
-    <FormFieldRow label={field.label} required={field.isRequired}>{children}</FormFieldRow>
+    <FormFieldRow label={field.label} required={field.isRequired} fieldKey={key}>{children}</FormFieldRow>
   );
 
   switch (key) {

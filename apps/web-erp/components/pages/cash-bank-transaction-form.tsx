@@ -45,21 +45,18 @@ export interface CashBankExtraTab {
   content: React.ReactNode;
 }
 
+/** Imperative handle exposed via ref so the parent page can focus a header field by key. */
+export interface CashBankTransactionFormHandle {
+  /** Scroll to and focus the first focusable input inside the header field with the given key. */
+  focusField: (key: string) => void;
+}
+
 const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
 const SLOTS: FormColumnSlot[] = ['LEFT', 'CENTER', 'RIGHT'];
 
-export function CashBankTransactionForm({
-  data,
-  onChange,
-  labels,
-  transactionCode,
-  headerExtra,
-  extraTabs = [],
-  saving,
-  onSave,
-  onSaveNew,
-  onReset,
-}: {
+export const CashBankTransactionForm = React.forwardRef<
+  CashBankTransactionFormHandle,
+  {
   data: CashBankFormData;
   onChange: (d: CashBankFormData) => void;
   labels: CashBankFormLabels;
@@ -73,10 +70,37 @@ export function CashBankTransactionForm({
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;
-}) {
+}
+>(function CashBankTransactionForm({
+  data,
+  onChange,
+  labels,
+  transactionCode,
+  headerExtra,
+  extraTabs = [],
+  saving,
+  onSave,
+  onSaveNew,
+  onReset,
+}, ref) {
   const [tab, setTab] = React.useState<string>('detail');
   const [currencies, setCurrencies] = React.useState<ErpCurrency[]>([]);
   const linesRef = React.useRef<CashBankLinesHandle>(null);
+  const headerRef = React.useRef<HTMLDivElement>(null);
+
+  // Expose imperative focusField so the parent page can scroll-to and focus
+  // the first missing required header field after a failed save attempt.
+  React.useImperativeHandle(ref, () => ({
+    focusField: (key: string) => {
+      const container = headerRef.current;
+      if (!container) return;
+      const row = container.querySelector<HTMLElement>(`[data-field-key="${key}"]`);
+      if (!row) return;
+      row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const input = row.querySelector<HTMLElement>('input:not([disabled]):not([type="checkbox"]), button:not([disabled])');
+      input?.focus();
+    },
+  }));
   // ArrowDown past the last header field hands focus to the detail grid (cell 0,0).
   const headerKeyNav = (e: React.KeyboardEvent<HTMLElement>) =>
     arrowFieldNav(e, {
@@ -225,6 +249,7 @@ export function CashBankTransactionForm({
       {/* Header — rendered from Form Builder config; LEFT/CENTER/RIGHT slots, ordered by sortOrder.
           ArrowDown/ArrowUp move focus between fields like Tab/Shift+Tab (§ arrow field nav). */}
       <div
+        ref={headerRef}
         className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 rounded-lg border border-border p-4"
         onKeyDown={headerKeyNav}
       >
@@ -295,4 +320,4 @@ export function CashBankTransactionForm({
       </div>
     </div>
   );
-}
+});
