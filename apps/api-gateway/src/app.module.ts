@@ -110,6 +110,7 @@ import { ErpFinArReceiptsModule } from './erp-fin-ar-receipts/erp-fin-ar-receipt
 import { ErpFinApPaymentsModule } from './erp-fin-ap-payments/erp-fin-ap-payments.module';
 import { ErpFinGirosModule } from './erp-fin-giros/erp-fin-giros.module';
 import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
+import { ErpFinReportsModule } from './erp-fin-reports/erp-fin-reports.module';
 import { ErpFinCashBankTransactionsModule } from './erp-fin-cash-bank-transactions/erp-fin-cash-bank-transactions.module';
 import { ErpSlsOrdersModule } from './erp-sls-orders/erp-sls-orders.module';
 import { ErpSlsQuotationsModule } from './erp-sls-quotations/erp-sls-quotations.module';
@@ -128,6 +129,7 @@ import { ErpInvOpeningStocksModule } from './erp-inv-opening-stocks/erp-inv-open
 import { ErpInvStockCountsModule } from './erp-inv-stock-counts/erp-inv-stock-counts.module';
 import { ErpInvPriceAdjustmentsModule } from './erp-inv-price-adjustments/erp-inv-price-adjustments.module';
 import { ErpInvWeighbridgeTicketsModule } from './erp-inv-weighbridge-tickets/erp-inv-weighbridge-tickets.module';
+import { ErpInvReportsModule } from './erp-inv-reports/erp-inv-reports.module';
 import { ErpInvDailyChecksModule } from './erp-inv-daily-checks/erp-inv-daily-checks.module';
 import { ErpPurOrdersModule } from './erp-pur-orders/erp-pur-orders.module';
 import { ErpPurRequisitionsModule } from './erp-pur-requisitions/erp-pur-requisitions.module';
@@ -275,6 +277,7 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpFinApPaymentsModule,
     ErpFinGirosModule,
     ErpFinLedgerModule,
+    ErpFinReportsModule,
     ErpFinCashBankTransactionsModule,
     ErpSlsOrdersModule,
     ErpSlsQuotationsModule,
@@ -292,6 +295,7 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpInvOpeningStocksModule,
     ErpInvStockCountsModule,
     ErpInvPriceAdjustmentsModule,
+    ErpInvReportsModule,
     ErpInvWeighbridgeTicketsModule,
     ErpInvDailyChecksModule,
     ErpPurOrdersModule,
