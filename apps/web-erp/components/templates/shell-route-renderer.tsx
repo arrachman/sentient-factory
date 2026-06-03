@@ -120,6 +120,19 @@ import { InvReportPage } from '@/components/pages/inv-report-page';
 import { invReportOptions } from '@/lib/inv-report-options';
 import { PurReportPage } from '@/components/pages/pur-report-page';
 import { purReportOptions } from '@/lib/pur-report-options';
+import {
+  SlsRptQuotationsPage, SlsRptOrdersPage, SlsRptCustomerAdvancesPage,
+  SlsRptPaymentReceiptsPage, SlsRptProformaInvoicesPage, SlsRptPackingListsPage,
+  SlsRptDeliveryOrdersPage, SlsRptDeliveryReportsPage, SlsRptInvoicesPage,
+  SlsRptFreightReceivablesPage, SlsRptReturnReceiptsPage, SlsRptReturnsPage,
+  SlsRptArCollectionsPage, SlsRptArPaymentsPage, SlsRptInvoiceSwapsPage,
+  SlsRptOpeningArBalancePage,
+} from '@/components/pages/sls-report-doc-pages';
+import {
+  SlsSummaryPage, SlsByCustomerPage, SlsBySalesmanPage, SlsByItemPage,
+  SlsByProjectPage, SlsByDivisionPage, SlsByCostCenterPage, SlsByItemCategoryPage,
+  SlsRevenueCollectionPage, SlsByGroupPage,
+} from '@/components/pages/sls-report-analytics-pages';
 
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
@@ -250,6 +263,34 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/finance/giro-maturity': () => <ErpGiroMaturityPage />,
   '/finance/budget-realization': () => <ErpBudgetRealizationPage />,
   '/finance/cashbank-transfers': () => <ErpCashbankTransfersPage />,
+  // Sales (M5) reports
+  '/sales/reports/quotations': () => <SlsRptQuotationsPage />,
+  '/sales/reports/orders': () => <SlsRptOrdersPage />,
+  '/sales/reports/customer-advances': () => <SlsRptCustomerAdvancesPage />,
+  '/sales/reports/payment-receipts': () => <SlsRptPaymentReceiptsPage />,
+  '/sales/reports/proforma-invoices': () => <SlsRptProformaInvoicesPage />,
+  '/sales/reports/packing-lists': () => <SlsRptPackingListsPage />,
+  '/sales/reports/delivery-orders': () => <SlsRptDeliveryOrdersPage />,
+  '/sales/reports/delivery-reports': () => <SlsRptDeliveryReportsPage />,
+  '/sales/reports/invoices': () => <SlsRptInvoicesPage />,
+  '/sales/reports/freight-receivables': () => <SlsRptFreightReceivablesPage />,
+  '/sales/reports/return-receipts': () => <SlsRptReturnReceiptsPage />,
+  '/sales/reports/returns': () => <SlsRptReturnsPage />,
+  '/sales/reports/ar-collections': () => <SlsRptArCollectionsPage />,
+  '/sales/reports/ar-payments': () => <SlsRptArPaymentsPage />,
+  '/sales/reports/invoice-swaps': () => <SlsRptInvoiceSwapsPage />,
+  '/sales/reports/opening-ar-balance': () => <SlsRptOpeningArBalancePage />,
+  '/sales/reports/summary': () => <SlsSummaryPage />,
+  '/sales/reports/by-customer': () => <SlsByCustomerPage />,
+  '/sales/reports/by-salesman': () => <SlsBySalesmanPage />,
+  '/sales/reports/by-item': () => <SlsByItemPage />,
+  '/sales/reports/by-project': () => <SlsByProjectPage />,
+  '/sales/reports/by-division': () => <SlsByDivisionPage />,
+  '/sales/reports/by-cost-center': () => <SlsByCostCenterPage />,
+  '/sales/reports/by-item-category': () => <SlsByItemCategoryPage />,
+  '/sales/reports/revenue-collection': () => <SlsRevenueCollectionPage />,
+  '/sales/reports/by-group': () => <SlsByGroupPage />,
+  // Legacy aliases
   'adm-users': () => <ErpUsersPage />,
   'adm-roles': () => <ErpRolesPage />,
   'adm-branches': () => <ErpBranchesPage />,
