@@ -298,6 +298,9 @@ const ERP_ROUTE_META: Record<string, { group: string; title: string; icon: IconN
   '/purchasing/purchase-invoices': { group: 'Pembelian', title: 'Faktur Pembelian', icon: 'shopping-cart' },
   '/purchasing/return-shipments': { group: 'Pembelian', title: 'Retur Pengiriman (DNR)', icon: 'shopping-cart' },
   '/purchasing/purchase-returns': { group: 'Pembelian', title: 'Retur Pembelian (PRT)', icon: 'shopping-cart' },
+  '/purchasing/goods-receipts': { group: 'Pembelian', title: 'Penerimaan Barang (GRN)', icon: 'shopping-cart' },
+  '/purchasing/rfqs': { group: 'Pembelian', title: 'Permintaan Penawaran (RFQ)', icon: 'shopping-cart' },
+  '/purchasing/bid-comparisons': { group: 'Pembelian', title: 'Perbandingan Harga (BS)', icon: 'shopping-cart' },
   '/settings/appearance': { group: 'Administrator', title: 'Appearance', icon: 'gear' },
 };
 

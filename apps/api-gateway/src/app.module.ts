@@ -115,6 +115,9 @@ import { ErpPurOrdersModule } from './erp-pur-orders/erp-pur-orders.module';
 import { ErpPurRequisitionsModule } from './erp-pur-requisitions/erp-pur-requisitions.module';
 import { ErpPurInvoicesModule } from './erp-pur-invoices/erp-pur-invoices.module';
 import { ErpPurReturnsModule } from './erp-pur-returns/erp-pur-returns.module';
+import { ErpPurGoodsReceiptsModule } from './erp-pur-goods-receipts/erp-pur-goods-receipts.module';
+import { ErpPurRfqsModule } from './erp-pur-rfqs/erp-pur-rfqs.module';
+import { ErpPurBidSelectionsModule } from './erp-pur-bid-selections/erp-pur-bid-selections.module';
 import { ErpSysTransactionGridsModule } from './erp-sys-transaction-grids/erp-sys-transaction-grids.module';
 import { ErpFormFieldsModule } from './erp-form-fields/erp-form-fields.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
@@ -259,6 +262,9 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpPurRequisitionsModule,
     ErpPurInvoicesModule,
     ErpPurReturnsModule,
+    ErpPurGoodsReceiptsModule,
+    ErpPurRfqsModule,
+    ErpPurBidSelectionsModule,
     ErpSysTransactionGridsModule,
     ErpFormFieldsModule,
   ],

@@ -109,6 +109,9 @@ import { ErpPurRequisitionsPage } from '@/components/pages/pur-requisitions-page
 import { ErpPurInvoicesPage } from '@/components/pages/pur-invoices-page';
 import { ErpReturnShipmentsPage } from '@/components/pages/pur-return-shipments-page';
 import { ErpPurchaseReturnsPage } from '@/components/pages/pur-purchase-returns-page';
+import { ErpGoodsReceiptsPage } from '@/components/pages/pur-goods-receipts-page';
+import { ErpRfqsPage } from '@/components/pages/pur-rfqs-page';
+import { ErpBidSelectionsPage } from '@/components/pages/pur-bid-selections-page';
 // Audit Logs
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
 // Admin tools & identity pages
@@ -147,6 +150,9 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/purchasing/purchase-invoices': ErpPurInvoicesPage,
   '/purchasing/return-shipments': ErpReturnShipmentsPage,
   '/purchasing/purchase-returns': ErpPurchaseReturnsPage,
+  '/purchasing/goods-receipts': ErpGoodsReceiptsPage,
+  '/purchasing/rfqs': ErpRfqsPage,
+  '/purchasing/bid-comparisons': ErpBidSelectionsPage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
