@@ -1,28 +1,44 @@
 'use client';
 
 /**
- * Vendor Advance (AP) — list + coming-soon form.
- * URL: /purchasing/vendor-advances · /new · /:id.
- * Backend: pur_invoices (payable voucher, no stock movement).
- * Form = coming soon (reuse pur-invoices-page form when available).
+ * Vendor Advance (AP) — list + form. URL: /purchasing/vendor-advances · /new · /:id.
+ * Backend: pur_invoices (payable voucher, no stock movement). Reuses PurInvoiceForm
+ * pinned to transaction code PUR.AP.
  */
 
 import * as React from 'react';
+import { Icon } from '@/components/ui/icons';
 import { Badge } from '@/components/ui/badge';
 import { ErpListLayout, type ListPaginationConfig, type SummaryConfig } from '@/components/organisms/erp-list-layout';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, CodeLinkCell } from '@/components/organisms/table';
 import { RowActionsMenu, RowContextMenu, type RowActionItem } from '@/components/molecules/row-actions-menu';
+import { confirmAction, notify } from '@/lib/feedback';
+import { cashBankWorkflowActions } from '@/lib/fin-cash-bank-workflow';
 import { type TrxFormPageProps, trxNewRoute, trxEditRoute } from '@/lib/trx-route';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { formatNumber } from '@/lib/format';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
-import { listPurInvoices, type ErpPurInvoice } from '@/lib/api/pur-invoices';
+import {
+  listPurInvoices, createPurInvoice, updatePurInvoice, deletePurInvoice,
+  getPurInvoice, transitionPurInvoice,
+  type ErpPurInvoice, type ErpDocumentStatus, type PurInvoiceTransition,
+} from '@/lib/api/pur-invoices';
+import { defaultPurOrderForm, type PurOrderFormData } from './pur-order-form-model';
+import { PurInvoiceForm } from './pur-invoice-form';
+import { fromPurInvoice, toPurInvoicePayload } from './pur-invoice-form-model';
 
 const BASE = '/purchasing/vendor-advances';
 
-export function ErpVendorAdvancesPage({ formMode, onNavigate }: TrxFormPageProps = {}) {
+export function ErpVendorAdvancesPage({ formMode, recordId, onNavigate }: TrxFormPageProps = {}) {
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
+  const [form, setForm] = React.useState<PurOrderFormData>(defaultPurOrderForm());
+  const [saving, setSaving] = React.useState(false);
+
+  const formReady =
+    formMode === 'create' ||
+    (formMode === 'edit' && String(form.id ?? '') === String(recordId ?? ''));
+
   const goList = React.useCallback(() => onNavigate?.(BASE), [onNavigate]);
   const [search, setSearch] = React.useState('');
   const { page, pageSize, setPage, setPageSize } = useListPagination('pur-vendor-advances');
@@ -36,8 +52,65 @@ export function ErpVendorAdvancesPage({ formMode, onNavigate }: TrxFormPageProps
   React.useEffect(() => { setPage(1); }, [debouncedSearch, pageSize]);
 
   const [focused, setFocused] = React.useState(-1);
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const totalRows = meta?.total ?? 0;
+  const pageCount = meta?.totalPages ?? 1;
+
+  const openCreate = () => onNavigate?.(trxNewRoute(BASE));
   const openEdit = (r: ErpPurInvoice) => onNavigate?.(trxEditRoute(BASE, r.id));
-  const rowActions = (r: ErpPurInvoice): RowActionItem[] => [{ label: 'Lihat', onSelect: () => openEdit(r) }];
+
+  const loadForm = React.useCallback(() => {
+    if (formMode === 'create') { setForm(defaultPurOrderForm()); return undefined; }
+    if (formMode === 'edit' && recordId) {
+      let alive = true;
+      getPurInvoice(recordId)
+        .then((full) => alive && setForm(fromPurInvoice(full)))
+        .catch(() => { if (!alive) return; notify('Gagal memuat Uang Muka Vendor', 'danger'); goList(); });
+      return () => { alive = false; };
+    }
+    return undefined;
+  }, [formMode, recordId, goList]);
+  React.useEffect(() => loadForm(), [loadForm]);
+
+  const persist = async (closeAfter: boolean, newAfter = false) => {
+    if (!form.branchId || !form.docDate || !form.currencyId) { notify('Cabang, Tanggal, dan Mata Uang wajib diisi.', 'warn'); return; }
+    if (!form.lines.some((l) => l.itemId && Number(l.quantity) > 0)) { notify('Minimal satu baris item dengan qty > 0.', 'warn'); return; }
+    setSaving(true);
+    try {
+      const payload = toPurInvoicePayload(form);
+      if (form.id) { await updatePurInvoice(form.id, payload); notify('Uang Muka Vendor diperbarui', 'success'); }
+      else { await createPurInvoice(payload); notify('Uang Muka Vendor dibuat', 'success'); }
+      reload();
+      if (newAfter) { setForm(defaultPurOrderForm()); onNavigate?.(trxNewRoute(BASE)); }
+      else if (closeAfter) { goList(); }
+    } catch (e: unknown) {
+      notify(e instanceof Error ? e.message : 'Gagal menyimpan', 'danger');
+    } finally { setSaving(false); }
+  };
+
+  const runTransition = async (r: ErpPurInvoice, action: PurInvoiceTransition) => {
+    let reason: string | undefined;
+    if (action === 'REJECT') { reason = window.prompt('Alasan menolak?') ?? undefined; if (!reason) return; }
+    try { await transitionPurInvoice(r.id, action, reason); notify(`Berhasil: ${r.docNumber}`, 'success'); reload(); }
+    catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+  };
+
+  const handleDelete = (r: ErpPurInvoice) => {
+    confirmAction({
+      title: 'Hapus Uang Muka Vendor?', message: `${r.docNumber} akan dihapus permanen.`,
+      variant: 'danger', confirmLabel: 'Hapus', confirmIcon: 'trash',
+      onConfirm: async () => {
+        try { await deletePurInvoice(r.id); notify('Dihapus', 'success'); reload(); }
+        catch (e: unknown) { notify(e instanceof Error ? e.message : 'Gagal', 'danger'); }
+      },
+    });
+  };
+
+  const rowActions = (r: ErpPurInvoice): RowActionItem[] => [
+    { label: 'Edit / Lihat', onSelect: () => openEdit(r) },
+    ...cashBankWorkflowActions(r.status as never, (a) => runTransition(r, a as PurInvoiceTransition)),
+    { label: 'Hapus', onSelect: () => handleDelete(r), danger: true, separatorBefore: true },
+  ];
 
   if (mode === 'form') {
     return (
@@ -48,28 +121,37 @@ export function ErpVendorAdvancesPage({ formMode, onNavigate }: TrxFormPageProps
             Uang Muka Vendor <span className="code-tag">AP</span>
           </h1>
         </div>
-        <div className="page-body p-8 text-center text-muted">
-          <div className="text-lg font-medium mb-2">Form Vendor Advance — coming soon</div>
-          <div className="text-sm">Form ini me-reuse endpoint Faktur Pembelian (pur_invoices) sebagai payable voucher.</div>
-          <button className="btn mt-4" onClick={goList}>← Kembali ke daftar</button>
+        <div className="page-body overflow-auto p-4">
+          {formReady ? (
+            <PurInvoiceForm data={form} onChange={setForm} saving={saving}
+              onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm} />
+          ) : (
+            <div className="p-8 text-center text-muted">Memuat…</div>
+          )}
         </div>
       </div>
     );
   }
 
-  const totalRows = meta?.total ?? 0;
-  const pageCount = meta?.totalPages ?? 1;
   const summary: SummaryConfig = { metricLabel: 'Σ Uang Muka', rowCount: rows.length, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
+  const toggleSel = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
     <ErpListLayout title="Uang Muka Vendor (AP)" code="AP" loading={loading} error={error}
-      search={search} onSearch={setSearch} onAdd={() => onNavigate?.(trxNewRoute(BASE))} onRefresh={reload}
+      search={search} onSearch={setSearch} onAdd={openCreate} onRefresh={reload}
       toolbar={null} summary={summary} pagination={pagination}
-      keyboardRows={{ rowCount: rows.length, focusedIndex: focused, onFocusChange: setFocused, onToggle: () => null, onOpen: (i) => rows[i] && openEdit(rows[i]) }}>
+      keyboardRows={{ rowCount: rows.length, focusedIndex: focused, onFocusChange: setFocused, onToggle: (i) => rows[i] && toggleSel(rows[i].id), onOpen: (i) => rows[i] && openEdit(rows[i]) }}>
+      {selected.size > 0 && (
+        <div className="bulk-bar flex items-center gap-3 px-3 py-2 mb-2 rounded-md bg-secondary text-sm">
+          <strong>{selected.size}</strong> baris dipilih
+          <button className="btn ghost sm" onClick={() => setSelected(new Set())}>Batal pilihan</button>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead style={{ width: 36 }} />
             <TableHead>No Transaksi</TableHead><TableHead>Tanggal</TableHead>
             <TableHead>Supplier</TableHead><TableHead>Uraian</TableHead>
             <TableHead style={{ textAlign: 'right' }}>Total</TableHead>
@@ -77,17 +159,18 @@ export function ErpVendorAdvancesPage({ formMode, onNavigate }: TrxFormPageProps
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.length === 0 ? <TableEmpty colSpan={7} /> : rows.map((r, i) => {
+          {rows.length === 0 ? <TableEmpty colSpan={8} /> : rows.map((r, i) => {
             const actions = rowActions(r);
             return (
               <RowContextMenu key={r.id} items={actions}>
                 <TableRow style={focused === i ? { boxShadow: 'inset 2px 0 0 var(--primary)' } : undefined} className="cursor-pointer">
+                  <TableCell style={{ textAlign: 'center' }}><input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSel(r.id)} /></TableCell>
                   <CodeLinkCell code={r.docNumber} onOpen={() => openEdit(r)} />
                   <TableCell>{r.docDate.slice(0, 10)}</TableCell>
                   <TableCell>{r.supplier?.name ?? '—'}</TableCell>
                   <TableCell>{r.description ?? '—'}</TableCell>
                   <TableCell className="tabular-nums" style={{ textAlign: 'right' }}>{formatNumber(Number(r.grandTotal), 2)}</TableCell>
-                  <TableCell><Badge variant={statusBadgeVariant(r.status)} dot>{statusLabel(r.status)}</Badge></TableCell>
+                  <TableCell><Badge variant={statusBadgeVariant(r.status as ErpDocumentStatus)} dot>{statusLabel(r.status as ErpDocumentStatus)}</Badge></TableCell>
                   <TableCell><RowActionsMenu items={actions} /></TableCell>
                 </TableRow>
               </RowContextMenu>

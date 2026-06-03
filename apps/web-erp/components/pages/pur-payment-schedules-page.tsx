@@ -49,7 +49,7 @@ export function ErpPaymentSchedulesPage({ formMode, onNavigate }: TrxFormPagePro
           </h1>
         </div>
         <div className="page-body overflow-auto p-4">
-          <PurVendorPaymentForm transactionCode="PUR.VPP" onBack={goList} />
+          <PurVendorPaymentForm transactionCode="PUR.VPP" formMode={formMode} recordId={recordId} onBack={goList} />
         </div>
       </div>
     );
