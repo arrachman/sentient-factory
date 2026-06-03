@@ -33,6 +33,8 @@ const TX_ITEMS = [
   { code: 'M2.TX.BANK-DISBURSEMENT',  title: 'Bank Disbursement',     path: '/finance/bank-disbursements',     legacyCode: 'BD'  },
   { code: 'M2.TX.GENERAL-JOURNAL',    title: 'General Journal',       path: '/finance/general-journals',       legacyCode: 'GJ'  },
   { code: 'M2.TX.ADJUSTMENT-JOURNAL', title: 'Adjustment Journal',    path: '/finance/adjustment-journals',    legacyCode: 'AJ'  },
+  { code: 'M2.TX.MEMORIAL-JOURNAL',   title: 'Memorial Journal',      path: '/finance/memorial-journals',      legacyCode: 'JM'  },
+  { code: 'M2.TX.REVALUATION',        title: 'FX Revaluation',        path: '/finance/revaluations',           legacyCode: 'RV'  },
   { code: 'M2.TX.RECEIPT-GIRO',       title: 'Receipt Giro',          path: '/finance/receipt-giros',          legacyCode: 'RG'  },
   { code: 'M2.TX.SEND-GIRO',          title: 'Send Giro',             path: '/finance/send-giros',             legacyCode: 'SG'  },
   { code: 'M2.TX.RECEIPT-GIRO-CLR',   title: 'Receipt Giro Clearing', path: '/finance/receipt-giro-clearings', legacyCode: 'RGC' },

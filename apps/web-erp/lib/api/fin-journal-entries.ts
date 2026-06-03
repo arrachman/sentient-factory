@@ -10,6 +10,7 @@ export type ErpJournalType =
   | 'MEMORIAL'
   | 'ADJUSTMENT'
   | 'OPENING_BALANCE'
+  | 'REVALUATION'
   | 'CLOSING';
 
 export type ErpDocumentStatus =

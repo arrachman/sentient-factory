@@ -101,6 +101,9 @@ import { ErpSendGirosPage } from '@/components/pages/fin-send-giros-page';
 import { ErpReceiptGiroClearingsPage } from '@/components/pages/fin-receipt-giro-clearings-page';
 import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clearings-page';
 import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
+import { ErpMemorialJournalsPage } from '@/components/pages/fin-memorial-journals-page';
+import { ErpOpeningBalancesPage } from '@/components/pages/fin-opening-balances-page';
+import { ErpRevaluationsPage } from '@/components/pages/fin-revaluations-page';
 // Sales (sls, m5)
 import { ErpSlsOrdersPage } from '@/components/pages/sls-orders-page';
 import {
@@ -145,6 +148,10 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/bank-receipts': ErpBankReceiptsPage,
   '/finance/bank-disbursements': ErpBankDisbursementsPage,
   '/finance/general-journals': ErpGeneralJournalsPage,
+  '/finance/adjustment-journals': ErpAdjustmentJournalsPage,
+  '/finance/memorial-journals': ErpMemorialJournalsPage,
+  '/finance/opening-balances': ErpOpeningBalancesPage,
+  '/finance/revaluations': ErpRevaluationsPage,
   '/sales/orders': ErpSlsOrdersPage,
   '/warehouse/material-requests': ErpInvMaterialRequestsPage,
   '/warehouse/transfers': ErpInvTransfersPage,
@@ -292,7 +299,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/finance/send-giros': () => <ErpSendGirosPage />,
   '/finance/receipt-giro-clearings': () => <ErpReceiptGiroClearingsPage />,
   '/finance/send-giro-clearings': () => <ErpSendGiroClearingsPage />,
-  '/finance/adjustment-journals': () => <ErpAdjustmentJournalsPage />,
+  // /finance/adjustment-journals + /memorial-journals + /opening-balances
+  // + /revaluations → handled by TRX_FORM_PAGES (list + /new + /:id).
   // ── Legacy short-id aliases (static NAV fallback) ─────────────────────────
   'adm-users': () => <ErpUsersPage />,
   'adm-roles': () => <ErpRolesPage />,
