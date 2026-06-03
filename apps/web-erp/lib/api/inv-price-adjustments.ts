@@ -94,3 +94,11 @@ export async function createInvPriceAdjustment(
 export async function deleteInvPriceAdjustment(id: string): Promise<void> {
   await apiDelete<void>(`${BASE}/${id}`);
 }
+
+/**
+ * Trigger the server-side cost recalculation for a PENDING/FAILED PA. The
+ * backend derives recalc lines + deltas from moving-average cost — no body. */
+export async function processInvPriceAdjustment(id: string): Promise<ErpInvPriceAdjustment> {
+  const res = await apiPost<ApiResponse<ErpInvPriceAdjustment>>(`${BASE}/${id}/process`, {});
+  return res.data;
+}
