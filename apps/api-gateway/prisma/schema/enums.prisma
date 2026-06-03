@@ -156,6 +156,11 @@ enum ErpGiroStatus {
   CANCELLED
 }
 
+enum ErpGiroEntryKind {
+  REGISTER
+  CLEAR
+}
+
 enum ErpArApType {
   RECEIVABLE
   PAYABLE
