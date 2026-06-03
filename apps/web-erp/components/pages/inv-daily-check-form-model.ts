@@ -142,6 +142,8 @@ export function fromInvDailyCheck(r: ErpInvDailyCheck): InvDailyCheckFormData {
       warehouseId: l.warehouseId ?? undefined,
       warehouseLabel: l.warehouse?.name,
       costCenterId: l.costCenterId ?? undefined,
+      machineRef: l.machineRef ?? undefined,
+      workHours: l.workHours ?? undefined,
       notes: l.notes ?? undefined,
     })),
   };
@@ -167,6 +169,8 @@ export function toInvDailyCheckPayload(d: InvDailyCheckFormData): CreateInvDaily
         unitId: l.unitId,
         warehouseId: l.warehouseId || undefined,
         costCenterId: l.costCenterId || undefined,
+        machineRef: l.machineRef || undefined,
+        workHours: l.workHours || undefined,
         notes: l.notes || undefined,
         lineNo: i + 1,
       })),

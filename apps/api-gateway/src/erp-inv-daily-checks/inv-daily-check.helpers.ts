@@ -74,6 +74,8 @@ export function mapDailyCheckLine(
     warehouseId: toBigInt(line.warehouseId),
     costCenterId: toBigInt(line.costCenterId),
     notes: line.notes ?? null,
+    machineRef: line.machineRef ?? null,
+    workHours: line.workHours ? new Prisma.Decimal(line.workHours) : null,
     lineNo: line.lineNo,
   };
 }

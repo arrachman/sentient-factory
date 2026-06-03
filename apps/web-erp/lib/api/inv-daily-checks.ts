@@ -35,6 +35,8 @@ export interface ErpInvDailyCheckLine {
   warehouse?: ErpRef | null;
   costCenterId?: string | null;
   costCenter?: ErpRef | null;
+  machineRef?: string | null;
+  workHours?: string | null;
   notes?: string | null;
   lineNo: number;
 }
@@ -69,6 +71,8 @@ export interface InvDailyCheckLinePayload {
   unitId: string;
   warehouseId?: string;
   costCenterId?: string;
+  machineRef?: string;
+  workHours?: string;
   notes?: string;
   lineNo: number;
 }
