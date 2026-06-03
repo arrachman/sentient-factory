@@ -61,6 +61,10 @@ export class UpdateSlsOrderDto {
 
   @ApiPropertyOptional() @IsOptional() @IsString() legacyCode?: string;
 
+  @ApiPropertyOptional({ description: 'Custom header fields from Form Builder (JSONB)' })
+  @IsOptional()
+  customFields?: Record<string, unknown>;
+
   @ApiPropertyOptional({ type: [SlsOrderLineDto] })
   @IsOptional()
   @IsArray()

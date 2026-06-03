@@ -99,6 +99,10 @@ export class SlsOrderLineDto {
   @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
 
+  @ApiPropertyOptional({ description: 'Custom line fields from Kustomisasi Grid (JSONB)' })
+  @IsOptional()
+  customFields?: Record<string, unknown>;
+
   @ApiProperty({ example: 1 })
   @IsInt()
   @Min(1)
@@ -226,6 +230,10 @@ export class CreateSlsOrderDto {
   status?: ErpDocumentStatusDto;
 
   @ApiPropertyOptional() @IsOptional() @IsString() legacyCode?: string;
+
+  @ApiPropertyOptional({ description: 'Custom header fields from Form Builder (JSONB)' })
+  @IsOptional()
+  customFields?: Record<string, unknown>;
 
   @ApiProperty({ type: [SlsOrderLineDto] })
   @IsArray()

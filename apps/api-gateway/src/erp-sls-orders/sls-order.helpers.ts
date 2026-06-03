@@ -60,6 +60,8 @@ export function buildSlsOrderWhere(query: QuerySlsOrdersDto): Prisma.ErpSlsOrder
  * NOT NULL columns (quantity, unitId, unitValue, baseQuantity, baseUnitId,
  * currencyId, exchangeRate, unitPrice) — defaults derived from the header for
  * the currency/rate and from the transaction unit for the base unit/qty.
+ * tax1Amount/tax2Amount are expected to already be computed server-side
+ * (see computeOrderTotals) and present on the line as decimal strings.
  */
 export function mapOrderLine(
   line: SlsOrderLineDto,
@@ -88,50 +90,127 @@ export function mapOrderLine(
     subdivisionId: toBigInt(line.subdivisionId),
     projectId: toBigInt(line.projectId),
     notes: line.notes ?? null,
+    customFields: line.customFields ? (line.customFields as Prisma.InputJsonValue) : undefined,
     lineNo: line.lineNo,
   };
 }
 
+const HUNDRED = new Prisma.Decimal(100);
+const ZERO = new Prisma.Decimal(0);
+const r4 = (d: Prisma.Decimal) => d.toDecimalPlaces(4);
+
+/** Gross of one line: qty * unitPrice (before any discount). */
+export function lineGross(line: SlsOrderLineDto): Prisma.Decimal {
+  return dec(line.quantity).mul(dec(line.unitPrice));
+}
+
+/** Line discount: explicit amount wins, else percent-of-gross, else 0. */
+export function lineDiscount(line: SlsOrderLineDto): Prisma.Decimal {
+  if (line.discountAmount != null) return dec(line.discountAmount);
+  if (line.discountPercent != null) return lineGross(line).mul(dec(line.discountPercent)).div(HUNDRED);
+  return ZERO;
+}
+
 /** Net of one line: qty*unitPrice minus line discount (explicit amount or %). */
 export function lineNet(line: SlsOrderLineDto): Prisma.Decimal {
-  const gross = dec(line.quantity).mul(dec(line.unitPrice));
-  let discount: Prisma.Decimal;
-  if (line.discountAmount != null) {
-    discount = new Prisma.Decimal(line.discountAmount);
-  } else if (line.discountPercent != null) {
-    discount = gross.mul(new Prisma.Decimal(line.discountPercent)).div(100);
-  } else {
-    discount = new Prisma.Decimal(0);
+  return lineGross(line).sub(lineDiscount(line));
+}
+
+type PriceMode = 'TAX_INCLUSIVE' | 'TAX_EXCLUSIVE';
+
+/**
+ * Tax amounts of one line, derived from the resolved tax rate(s) (percent) and
+ * the document price mode. Returns the taxable `base` too:
+ * - TAX_EXCLUSIVE: tax = net * rate%; base = net (tax sits on top).
+ * - TAX_INCLUSIVE: net already contains tax; base = net / (1 + Σrate%); the
+ *   backed-out tax is split across tax1/tax2 in proportion to their rate.
+ */
+function lineTaxAmounts(
+  line: SlsOrderLineDto,
+  rateById: Map<string, Prisma.Decimal>,
+  priceMode: PriceMode,
+): { tax1: Prisma.Decimal | null; tax2: Prisma.Decimal | null; base: Prisma.Decimal } {
+  const net = lineNet(line);
+  const r1 = line.tax1Id ? rateById.get(line.tax1Id) ?? ZERO : ZERO;
+  const r2 = line.tax2Id ? rateById.get(line.tax2Id) ?? ZERO : ZERO;
+
+  if (priceMode === 'TAX_INCLUSIVE') {
+    const totalRate = r1.add(r2);
+    if (totalRate.lte(0)) return { tax1: null, tax2: null, base: net };
+    const base = net.div(totalRate.div(HUNDRED).add(1));
+    const taxTotal = net.sub(base);
+    const tax1 = line.tax1Id ? r4(taxTotal.mul(r1).div(totalRate)) : null;
+    const tax2 = line.tax2Id ? (tax1 != null ? r4(taxTotal.sub(tax1)) : r4(taxTotal)) : null;
+    return { tax1, tax2, base: r4(base) };
   }
-  return gross.sub(discount);
+
+  const tax1 = line.tax1Id ? r4(net.mul(r1).div(HUNDRED)) : null;
+  const tax2 = line.tax2Id ? r4(net.mul(r2).div(HUNDRED)) : null;
+  return { tax1, tax2, base: net };
+}
+
+export interface OrderTotalsResult {
+  subtotal: Prisma.Decimal;
+  grandTotal: Prisma.Decimal;
+  /** Input lines echoed back with tax1Amount/tax2Amount filled (decimal strings). */
+  lines: SlsOrderLineDto[];
+  /** Resolved header discount amount (explicit, or derived from percent). */
+  discountAmount: Prisma.Decimal | null;
+  /** Resolved header other-cost amount (explicit, or derived from percent). */
+  otherCostAmount: Prisma.Decimal | null;
 }
 
 /**
- * Server-side totals. subtotal = Σ line net; grandTotal = subtotal
- * + Σ(line tax1+tax2) + header tax1+tax2 + otherCost − header discount.
+ * Server-side totals — single source of truth for money math.
+ * subtotal = Σ line taxable base; grandTotal = subtotal + Σ(line tax1+tax2)
+ * + header tax1+tax2 + otherCost − header discount. Line tax amounts are
+ * computed from the resolved tax rate map (never trusted from the client).
  */
-export function computeTotals(
-  lines: SlsOrderLineDto[],
+export function computeOrderTotals(
+  rawLines: SlsOrderLineDto[],
   header: {
+    discountPercent?: string;
     discountAmount?: string;
     tax1Amount?: string;
     tax2Amount?: string;
+    otherCostPercent?: string;
     otherCostAmount?: string;
   },
-): { subtotal: Prisma.Decimal; grandTotal: Prisma.Decimal } {
-  const subtotal = (lines ?? []).reduce(
-    (s, l) => s.add(lineNet(l)),
-    new Prisma.Decimal(0),
+  rateById: Map<string, Prisma.Decimal>,
+  priceMode: PriceMode,
+): OrderTotalsResult {
+  let subtotal = ZERO;
+  let lineTaxTotal = ZERO;
+  const lines = (rawLines ?? []).map((l) => {
+    const { tax1, tax2, base } = lineTaxAmounts(l, rateById, priceMode);
+    subtotal = subtotal.add(base);
+    if (tax1) lineTaxTotal = lineTaxTotal.add(tax1);
+    if (tax2) lineTaxTotal = lineTaxTotal.add(tax2);
+    return { ...l, tax1Amount: tax1?.toString(), tax2Amount: tax2?.toString() };
+  });
+  subtotal = r4(subtotal);
+
+  const discountAmount =
+    header.discountAmount != null
+      ? dec(header.discountAmount)
+      : header.discountPercent != null
+        ? r4(subtotal.mul(dec(header.discountPercent)).div(HUNDRED))
+        : null;
+  const otherCostAmount =
+    header.otherCostAmount != null
+      ? dec(header.otherCostAmount)
+      : header.otherCostPercent != null
+        ? r4(subtotal.mul(dec(header.otherCostPercent)).div(HUNDRED))
+        : null;
+
+  const grandTotal = r4(
+    subtotal
+      .add(lineTaxTotal)
+      .add(dec(header.tax1Amount))
+      .add(dec(header.tax2Amount))
+      .add(otherCostAmount ?? ZERO)
+      .sub(discountAmount ?? ZERO),
   );
-  const lineTax = (lines ?? []).reduce(
-    (s, l) => s.add(dec(l.tax1Amount)).add(dec(l.tax2Amount)),
-    new Prisma.Decimal(0),
-  );
-  const grandTotal = subtotal
-    .add(lineTax)
-    .add(dec(header.tax1Amount))
-    .add(dec(header.tax2Amount))
-    .add(dec(header.otherCostAmount))
-    .sub(dec(header.discountAmount));
-  return { subtotal, grandTotal };
+
+  return { subtotal, grandTotal, lines, discountAmount, otherCostAmount };
 }

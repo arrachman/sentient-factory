@@ -24,6 +24,7 @@ import {
 import { formatNumber } from '@/lib/format';
 import { notify } from '@/lib/feedback';
 import { getGridColumns, type ErpGridColumn } from '@/lib/api/transaction-grids';
+import { getItemForAutoFill } from '@/lib/api/sls-orders';
 import { LineCell } from './cash-bank-line-cell';
 import { useGridNav } from './use-grid-nav';
 import { useSeedLineDefaults } from './use-line-defaults';
@@ -204,7 +205,25 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
                       seed={isEdit ? seed : undefined}
                       selectOnFocus={selectOnFocus}
                       autoOpenModal={isEdit ? openModal : false}
-                      onSet={(value, label) => patch(l.key, slsItemGridModel.buildCellPatch(l, c, value, label))}
+                      onSet={(value, label) => {
+                        patch(l.key, slsItemGridModel.buildCellPatch(l, c, value, label));
+                        if (c.dataField === 'itemId' && value) {
+                          getItemForAutoFill(value).then((item) => {
+                            if (!item) return;
+                            const autoPatch: Partial<SlsItemLineRow> = {};
+                            if (item.salePrice && !l.unitPrice) autoPatch.unitPrice = item.salePrice;
+                            if (item.baseUnitId && !l.unitId) {
+                              autoPatch.unitId = item.baseUnitId;
+                              autoPatch.unitLabel = item.baseUnit?.name;
+                            }
+                            if (item.saleTaxId && !l.tax1Id) {
+                              autoPatch.tax1Id = item.saleTaxId;
+                              autoPatch.tax1Label = item.saleTax?.name;
+                            }
+                            if (Object.keys(autoPatch).length) patch(l.key, autoPatch);
+                          }).catch(() => null);
+                        }
+                      }}
                       onSelect={() => { if (!readOnly) selectCell(i, ci); }}
                       onEdit={() => { if (!readOnly) editCell(i, ci); }}
                       onEndEdit={(focus) => endEdit(focus)}

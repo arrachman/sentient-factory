@@ -16,7 +16,7 @@ import {
   NEXT,
   buildSlsOrderWhere,
   mapOrderLine,
-  computeTotals,
+  computeOrderTotals,
 } from './sls-order.helpers';
 
 const DOC_CODE = 'SO';
@@ -77,11 +77,49 @@ export class ErpSlsOrdersService {
     return { success: true, data: enriched };
   }
 
+  /** Fetch rate map for all tax ids referenced by a line set. */
+  private async taxRateMap(taxIds: (string | undefined)[]): Promise<Map<string, Prisma.Decimal>> {
+    const ids = [...new Set(taxIds.filter((v): v is string => !!v))];
+    if (!ids.length) return new Map();
+    const taxes = await this.prisma.erpTax.findMany({
+      where: { id: { in: ids.map(BigInt) }, deletedAt: null },
+      select: { id: true, rate: true },
+    });
+    const m = new Map<string, Prisma.Decimal>();
+    for (const t of taxes) m.set(t.id.toString(), t.rate);
+    return m;
+  }
+
+  /** Derive dueDate from payment term netDays if caller did not supply it. */
+  private async resolveDueDate(
+    paymentTermId: string | undefined,
+    docDate: string,
+    explicitDueDate?: string,
+  ): Promise<Date | null> {
+    if (explicitDueDate) return new Date(explicitDueDate);
+    if (!paymentTermId) return null;
+    const term = await this.prisma.erpPaymentTerm.findUnique({
+      where: { id: BigInt(paymentTermId) },
+      select: { netDays: true },
+    });
+    if (!term) return null;
+    const d = new Date(docDate);
+    d.setDate(d.getDate() + term.netDays);
+    return d;
+  }
+
   // ── CRUD ────────────────────────────────────────────────────────────────────
   async create(dto: CreateSlsOrderDto, actorId?: string) {
     const actor = actorId ? BigInt(actorId) : null;
+    const priceMode = (dto.priceMode ?? 'TAX_EXCLUSIVE') as 'TAX_EXCLUSIVE' | 'TAX_INCLUSIVE';
     const header = { currencyId: dto.currencyId, exchangeRate: dto.exchangeRate };
-    const { subtotal, grandTotal } = computeTotals(dto.lines, dto);
+
+    const taxIds = dto.lines.flatMap((l) => [l.tax1Id, l.tax2Id]);
+    const rateById = await this.taxRateMap(taxIds);
+    const { subtotal, grandTotal, lines: computedLines, discountAmount, otherCostAmount } =
+      computeOrderTotals(dto.lines, dto, rateById, priceMode);
+
+    const dueDate = await this.resolveDueDate(dto.paymentTermId, dto.docDate, dto.dueDate);
 
     const created = await this.prisma.$transaction(async (tx) => {
       const fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);
@@ -101,16 +139,16 @@ export class ErpSlsOrdersService {
           fiscalPeriodId,
           customerId: toBigInt(dto.customerId),
           paymentTermId: toBigInt(dto.paymentTermId),
-          dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
+          dueDate,
           currencyId: BigInt(dto.currencyId),
           exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-          priceMode: (dto.priceMode ?? 'TAX_EXCLUSIVE') as never,
+          priceMode: priceMode as never,
           subtotal,
           discountPercent: dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null,
-          discountAmount: dto.discountAmount != null ? new Prisma.Decimal(dto.discountAmount) : null,
+          discountAmount: discountAmount,
           tax1Amount: dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null,
           tax2Amount: dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null,
-          otherCostAmount: dto.otherCostAmount != null ? new Prisma.Decimal(dto.otherCostAmount) : null,
+          otherCostAmount: otherCostAmount,
           grandTotal,
           description: dto.description ?? null,
           notes: dto.notes ?? null,
@@ -121,10 +159,11 @@ export class ErpSlsOrdersService {
           status: 'DRAFT',
           postingStatus: 'UNPOSTED',
           legacyCode: dto.legacyCode ?? null,
+          customFields: dto.customFields ? (dto.customFields as Prisma.InputJsonValue) : undefined,
           createdById: actor,
           updatedById: actor,
-          lines: dto.lines.length
-            ? { create: dto.lines.map((l) => mapOrderLine(l, header)) }
+          lines: computedLines.length
+            ? { create: computedLines.map((l) => mapOrderLine(l, header)) }
             : undefined,
         },
         select: { id: true },
@@ -141,7 +180,7 @@ export class ErpSlsOrdersService {
 
     const sortBy = query.sortBy ?? 'docDate';
     const sortDir = query.sortDir ?? 'desc';
-    const [items, total] = await this.prisma.$transaction([
+    const [items, total, agg] = await this.prisma.$transaction([
       this.prisma.erpSlsOrder.findMany({
         where,
         orderBy: [{ [sortBy]: sortDir }, { id: 'desc' }],
@@ -150,12 +189,19 @@ export class ErpSlsOrdersService {
         include: { lines: { orderBy: { lineNo: 'asc' } } },
       }),
       this.prisma.erpSlsOrder.count({ where }),
+      this.prisma.erpSlsOrder.aggregate({ where, _sum: { grandTotal: true } }),
     ]);
 
     return {
       success: true,
       data: await enrichOrders(this.prisma, items),
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+        sumGrandTotal: agg._sum.grandTotal?.toString() ?? '0',
+      },
     };
   }
 
@@ -212,7 +258,7 @@ export class ErpSlsOrdersService {
         data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
       }
 
-      // Header money fields participate in totals — recompute against merged values.
+      // Header money fields — merge DTO with existing, then recompute totals.
       const discountAmount =
         dto.discountAmount !== undefined ? dto.discountAmount : existing.discountAmount?.toString();
       const tax1Amount =
@@ -223,42 +269,51 @@ export class ErpSlsOrdersService {
         dto.otherCostAmount !== undefined
           ? dto.otherCostAmount
           : existing.otherCostAmount?.toString();
-      if (dto.discountAmount !== undefined) {
-        data.discountAmount = dto.discountAmount != null ? new Prisma.Decimal(dto.discountAmount) : null;
-      }
       if (dto.tax1Amount !== undefined) {
         data.tax1Amount = dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null;
       }
       if (dto.tax2Amount !== undefined) {
         data.tax2Amount = dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null;
       }
-      if (dto.otherCostAmount !== undefined) {
-        data.otherCostAmount = dto.otherCostAmount != null ? new Prisma.Decimal(dto.otherCostAmount) : null;
-      }
 
-      const lines = dto.lines ?? existing.lines.map((l) => ({
+      const mergedLines: typeof dto.lines = dto.lines ?? existing.lines.map((l) => ({
         itemId: l.itemId.toString(),
         quantity: l.quantity.toString(),
         unitId: l.unitId.toString(),
         unitPrice: l.unitPrice.toString(),
         discountPercent: l.discountPercent?.toString(),
         discountAmount: l.discountAmount?.toString(),
+        tax1Id: (l.tax1Id as bigint | null)?.toString(),
+        tax2Id: (l.tax2Id as bigint | null)?.toString(),
         tax1Amount: l.tax1Amount?.toString(),
         tax2Amount: l.tax2Amount?.toString(),
         lineNo: l.lineNo,
+        customFields: (l.customFields as Record<string, unknown> | null) ?? undefined,
       }));
-      const { subtotal, grandTotal } = computeTotals(lines as never, {
-        discountAmount,
-        tax1Amount,
-        tax2Amount,
-        otherCostAmount,
-      });
-      data.subtotal = subtotal;
-      data.grandTotal = grandTotal;
+
+      const priceMode = ((dto.priceMode ?? existing.priceMode) as string) as 'TAX_EXCLUSIVE' | 'TAX_INCLUSIVE';
+      const taxIds = mergedLines.flatMap((l) => [l.tax1Id, l.tax2Id]);
+      const rateById = await this.taxRateMap(taxIds);
+      const totals = computeOrderTotals(mergedLines, { discountAmount, discountPercent: dto.discountPercent, tax1Amount, tax2Amount, otherCostAmount }, rateById, priceMode);
+      data.subtotal = totals.subtotal;
+      data.grandTotal = totals.grandTotal;
+      if (totals.discountAmount !== null) data.discountAmount = totals.discountAmount;
+      if (totals.otherCostAmount !== null) data.otherCostAmount = totals.otherCostAmount;
+
+      if (dto.customFields !== undefined) {
+        data.customFields = dto.customFields ? (dto.customFields as Prisma.InputJsonValue) : Prisma.DbNull;
+      }
+
+      // Recompute dueDate if paymentTerm changed but dueDate not explicitly set.
+      if (dto.paymentTermId !== undefined && dto.dueDate === undefined) {
+        const termId = dto.paymentTermId ?? null;
+        const docDateStr = dto.docDate ?? existing.docDate.toISOString().slice(0, 10);
+        data.dueDate = await this.resolveDueDate(termId ?? undefined, docDateStr, undefined);
+      }
 
       if (dto.lines !== undefined) {
         await tx.erpSlsOrderLine.deleteMany({ where: { orderId: id } });
-        data.lines = { create: dto.lines.map((l) => mapOrderLine(l, header)) };
+        data.lines = { create: totals.lines.map((l) => mapOrderLine(l, header)) };
       }
       await tx.erpSlsOrder.update({ where: { id }, data });
     });
