@@ -1,5 +1,6 @@
-// ERP m2 Finance — Journal Entries (header + lines) skeleton CRUD client
-// Endpoints: /fin/journal-entries
+// ERP m2 Finance — Journal Entries (header + lines) client.
+// Endpoints: /fin/journal-entries (+ /:id/transition). Backend = posting +
+// workflow state machine at cash/bank parity.
 
 import { apiDelete, apiGet, apiPatch, apiPost } from './client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
@@ -11,14 +12,24 @@ export type ErpJournalType =
   | 'OPENING_BALANCE'
   | 'CLOSING';
 
-export type ErpDocumentStatus = 'DRAFT' | 'POSTED' | 'VOID' | 'CANCELLED';
+export type ErpDocumentStatus =
+  | 'DRAFT'
+  | 'NEED_APPROVE'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'POSTED'
+  | 'VOID'
+  | 'CANCELLED';
 export type ErpPostingStatus = 'UNPOSTED' | 'POSTED';
+
+/** Workflow actions (§2.7 state machine), 1:1 with the backend transition DTO. */
+export type JournalTransition = 'SUBMIT' | 'APPROVE' | 'REJECT' | 'POST' | 'REOPEN';
 
 export interface ErpJournalLine {
   id?: string;
   accountId: string;
-  currencyId: string;
-  exchangeRate: string;
+  currencyId?: string;
+  exchangeRate?: string;
   debit: string;
   credit: string;
   debitFx?: string | null;
@@ -48,7 +59,9 @@ export interface ErpJournalEntry {
   currencyId: string;
   exchangeRate: string;
   status: ErpDocumentStatus;
+  previousStatus?: ErpDocumentStatus | null;
   postingStatus: ErpPostingStatus;
+  postedAt?: string | null;
   legacyCode?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -56,16 +69,17 @@ export interface ErpJournalEntry {
 }
 
 export interface CreateJournalEntryPayload {
-  docNumber: string;
+  /** Omit + auto=true for an auto-generated number (per journalType numbering). */
+  docNumber?: string;
+  auto?: boolean;
   journalType: ErpJournalType;
   branchId: string;
   entryDate: string;
-  fiscalPeriodId: string;
+  /** Optional — backend derives the period from entryDate when omitted. */
+  fiscalPeriodId?: string;
   description: string;
   currencyId: string;
   exchangeRate: string;
-  status?: ErpDocumentStatus;
-  postingStatus?: ErpPostingStatus;
   notes?: string;
   partnerId?: string;
   locationId?: string;
@@ -75,8 +89,20 @@ export interface CreateJournalEntryPayload {
 export type UpdateJournalEntryPayload = Partial<CreateJournalEntryPayload>;
 
 export interface ListJournalEntriesParams extends PaginationParams {
+  search?: string;
   journalType?: ErpJournalType;
   status?: ErpDocumentStatus;
+  branchId?: string;
+  partnerId?: string;
+  createdById?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  docNumberFrom?: string;
+  docNumberTo?: string;
+  description?: string;
+  notes?: string;
+  sortBy?: string;
+  sortDir?: 'asc' | 'desc';
 }
 
 export async function listJournalEntries(
@@ -88,13 +114,15 @@ export async function listJournalEntries(
   );
 }
 
+export async function getJournalEntry(id: string): Promise<ErpJournalEntry> {
+  const res = await apiGet<ApiResponse<ErpJournalEntry>>(`/fin/journal-entries/${id}`);
+  return res.data;
+}
+
 export async function createJournalEntry(
   payload: CreateJournalEntryPayload,
 ): Promise<ErpJournalEntry> {
-  const res = await apiPost<ApiResponse<ErpJournalEntry>>(
-    '/fin/journal-entries',
-    payload,
-  );
+  const res = await apiPost<ApiResponse<ErpJournalEntry>>('/fin/journal-entries', payload);
   return res.data;
 }
 
@@ -102,9 +130,18 @@ export async function updateJournalEntry(
   id: string,
   payload: UpdateJournalEntryPayload,
 ): Promise<ErpJournalEntry> {
-  const res = await apiPatch<ApiResponse<ErpJournalEntry>>(
-    `/fin/journal-entries/${id}`,
-    payload,
+  const res = await apiPatch<ApiResponse<ErpJournalEntry>>(`/fin/journal-entries/${id}`, payload);
+  return res.data;
+}
+
+export async function transitionJournalEntry(
+  id: string,
+  action: JournalTransition,
+  reason?: string,
+): Promise<ErpJournalEntry> {
+  const res = await apiPost<ApiResponse<ErpJournalEntry>>(
+    `/fin/journal-entries/${id}/transition`,
+    { action, reason },
   );
   return res.data;
 }

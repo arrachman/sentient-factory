@@ -87,7 +87,7 @@ import { ErpDesignersPage } from '@/components/pages/designers-page';
 import { ErpProductionActivitiesPage } from '@/components/pages/production-activities-page';
 import { ErpProductionRoutesPage } from '@/components/pages/production-routes-page';
 // F2 Finance (m2) pages — skeleton CRUD
-import { ErpJournalEntriesPage } from '@/components/pages/fin-journal-entries-page';
+import { ErpGeneralJournalsPage } from '@/components/pages/fin-general-journals-page';
 import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
 import { ErpApPaymentsPage } from '@/components/pages/fin-ap-payments-page';
 import { ErpLedgerPage } from '@/components/pages/fin-ledger-page';
@@ -144,6 +144,7 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/cash-disbursements': ErpCashDisbursementsPage,
   '/finance/bank-receipts': ErpBankReceiptsPage,
   '/finance/bank-disbursements': ErpBankDisbursementsPage,
+  '/finance/general-journals': ErpGeneralJournalsPage,
   '/sales/orders': ErpSlsOrdersPage,
   '/warehouse/material-requests': ErpInvMaterialRequestsPage,
   '/warehouse/transfers': ErpInvTransfersPage,
@@ -281,7 +282,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   'set-appearance': (ctx) => <AppearancePage t={ctx.t} />,
   'set-prefs': (ctx) => <SettingsPage t={ctx.t} />,
   // ── Finance (fin, m2) ─────────────────────────────────────────────────────
-  '/finance/general-journals': () => <ErpJournalEntriesPage />,
   '/finance/receipt-memos': () => <ErpArReceiptsPage />,
   '/finance/send-memos': () => <ErpApPaymentsPage />,
   '/finance/ledger': () => <ErpLedgerPage />,
