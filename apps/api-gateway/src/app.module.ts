@@ -111,6 +111,16 @@ import { ErpFinGirosModule } from './erp-fin-giros/erp-fin-giros.module';
 import { ErpFinLedgerModule } from './erp-fin-ledger/erp-fin-ledger.module';
 import { ErpFinCashBankTransactionsModule } from './erp-fin-cash-bank-transactions/erp-fin-cash-bank-transactions.module';
 import { ErpSlsOrdersModule } from './erp-sls-orders/erp-sls-orders.module';
+import { ErpSlsQuotationsModule } from './erp-sls-quotations/erp-sls-quotations.module';
+import { ErpSlsProformaInvoicesModule } from './erp-sls-proforma-invoices/erp-sls-proforma-invoices.module';
+import { ErpSlsPackingListsModule } from './erp-sls-packing-lists/erp-sls-packing-lists.module';
+import { ErpSlsDeliveryOrdersModule } from './erp-sls-delivery-orders/erp-sls-delivery-orders.module';
+import { ErpSlsDeliveryReportsModule } from './erp-sls-delivery-reports/erp-sls-delivery-reports.module';
+import { ErpSlsInvoicesModule } from './erp-sls-invoices/erp-sls-invoices.module';
+import { ErpSlsReturnsModule } from './erp-sls-returns/erp-sls-returns.module';
+import { ErpSlsReturnReceiptsModule } from './erp-sls-return-receipts/erp-sls-return-receipts.module';
+import { ErpSlsCustomerAdvancesModule } from './erp-sls-customer-advances/erp-sls-customer-advances.module';
+import { ErpSlsInvoiceSwapsModule } from './erp-sls-invoice-swaps/erp-sls-invoice-swaps.module';
 import { ErpInvStockMovementsModule } from './erp-inv-stock-movements/erp-inv-stock-movements.module';
 import { ErpInvStockAdjustmentsModule } from './erp-inv-stock-adjustments/erp-inv-stock-adjustments.module';
 import { ErpInvOpeningStocksModule } from './erp-inv-opening-stocks/erp-inv-opening-stocks.module';
@@ -265,6 +275,16 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpFinLedgerModule,
     ErpFinCashBankTransactionsModule,
     ErpSlsOrdersModule,
+    ErpSlsQuotationsModule,
+    ErpSlsProformaInvoicesModule,
+    ErpSlsPackingListsModule,
+    ErpSlsDeliveryOrdersModule,
+    ErpSlsDeliveryReportsModule,
+    ErpSlsInvoicesModule,
+    ErpSlsReturnsModule,
+    ErpSlsReturnReceiptsModule,
+    ErpSlsCustomerAdvancesModule,
+    ErpSlsInvoiceSwapsModule,
     ErpInvStockMovementsModule,
     ErpInvStockAdjustmentsModule,
     ErpInvOpeningStocksModule,

@@ -103,6 +103,20 @@ import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clear
 import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
 // Sales (sls, m5)
 import { ErpSlsOrdersPage } from '@/components/pages/sls-orders-page';
+import { ErpSlsQuotationsPage } from '@/components/pages/sls-quotations-page';
+import { ErpSlsProformaInvoicesPage } from '@/components/pages/sls-proforma-invoices-page';
+import { ErpSlsPackingListsPage } from '@/components/pages/sls-packing-lists-page';
+import { ErpSlsDeliveryOrdersPage } from '@/components/pages/sls-delivery-orders-page';
+import { ErpSlsDeliveryReportsPage } from '@/components/pages/sls-delivery-reports-page';
+import { ErpSlsInvoicesPage } from '@/components/pages/sls-invoices-page';
+import { ErpSlsReturnsPage } from '@/components/pages/sls-returns-page';
+import { ErpSlsReturnReceiptsPage } from '@/components/pages/sls-return-receipts-page';
+import { ErpSlsCustomerAdvancesPage } from '@/components/pages/sls-customer-advances-page';
+import { ErpSlsInvoiceSwapsPage } from '@/components/pages/sls-invoice-swaps-page';
+import { ErpSlsPaymentReceiptsPage } from '@/components/pages/sls-payment-receipts-page';
+import { ErpSlsArCollectionsPage } from '@/components/pages/sls-ar-collections-page';
+import { ErpSlsArPaymentsPage } from '@/components/pages/sls-ar-payments-page';
+import { ErpSlsOpeningArBalancePage } from '@/components/pages/sls-opening-ar-balance-page';
 import {
   ErpInvMaterialRequestsPage,
   ErpInvTransfersPage,
@@ -162,6 +176,20 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/bank-receipts': ErpBankReceiptsPage,
   '/finance/bank-disbursements': ErpBankDisbursementsPage,
   '/sales/orders': ErpSlsOrdersPage,
+  '/sales/quotations': ErpSlsQuotationsPage,
+  '/sales/proforma-invoices': ErpSlsProformaInvoicesPage,
+  '/sales/packing-lists': ErpSlsPackingListsPage,
+  '/sales/delivery-orders': ErpSlsDeliveryOrdersPage,
+  '/sales/delivery-reports': ErpSlsDeliveryReportsPage,
+  '/sales/invoices': ErpSlsInvoicesPage,
+  '/sales/returns': ErpSlsReturnsPage,
+  '/sales/return-receipts': ErpSlsReturnReceiptsPage,
+  '/sales/customer-advances': ErpSlsCustomerAdvancesPage,
+  '/sales/invoice-swaps': ErpSlsInvoiceSwapsPage,
+  '/sales/payment-receipts': ErpSlsPaymentReceiptsPage,
+  '/sales/ar-collections': ErpSlsArCollectionsPage,
+  '/sales/ar-payments': ErpSlsArPaymentsPage,
+  '/sales/opening-ar-balance': ErpSlsOpeningArBalancePage,
   '/warehouse/material-requests': ErpInvMaterialRequestsPage,
   '/warehouse/transfers': ErpInvTransfersPage,
   '/warehouse/transfer-receipts': ErpInvTransferReceiptsPage,
