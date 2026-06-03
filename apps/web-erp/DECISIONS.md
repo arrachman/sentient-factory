@@ -2301,14 +2301,63 @@ Baris: item+qty+unit+gudang. Workflow §2.7 penuh.
   (terdaftar + guarded): stock-movements, stock-adjustments, opening-stocks, stock-counts,
   price-adjustments, weighbridge-tickets, daily-checks.
 
-### Follow-up
-- Kolom akun GL per-baris (SA/IB) bisa di-expose di Grid Custom bila admin ingin
-  override. Default server-side dari item/Setting sudah cukup untuk sebagian besar kasus.
-- IB: konversi mata uang (header `exchangeRate`) belum dipakai di posting GL — seam
-  tersedia, implementasi saat modul GL inventory diaktifkan.
-- PA: background job processor (mengisi `status=COMPLETED` + `totalDelta`) belum dibuat.
-- DC: model `inv_daily_check_lines` minimal (item+qty+unit). Bila perlu field mesin/
-  jam-kerja tambahan, tambah kolom + migrasi additif.
+### Follow-up — RESOLVED (2026-06-03)
+
+Keempat follow-up M3 dikerjakan atas permintaan user ("ke-4 follow-up sekarang"):
+
+1. **DC field line mesin/jam** ✅ — `inv_daily_check_lines` dapat kolom `machineRef`
+   (TEXT) + `workHours` Decimal(19,4). Migrasi additif `20260603_004`. Distinct dari
+   `machineRef`/`operatorRef` yang sudah ada di HEADER. DTO/mapper/FE row model/default
+   cols/grid seed sinkron. Commit `c457e073`.
+
+2. **Kolom akun GL override (SA/IB)** ✅ — kolom `inventoryAccountId` (SA: + `contraAccountId`)
+   di-set `visible` di Kustomisasi Grid. FE row model bawa field typed (masuk
+   `STANDARD_FIELDS`+`LABEL_KEYS`) + serializer kirim/hydrate. Backend sudah resolve
+   line→item→Setting; sebelumnya nilai jatuh ke `customFields` & di-drop. Live DB:
+   3 kolom di-flip `is_visible=true` via SQL (seed `update:{}` tak meng-update baris
+   existing — baseline seed sudah benar untuk env baru). Commit `c457e073`.
+
+3. **PA processor** ✅ — `process()` kini **generate baris server-side** dari moving-average
+   (PA form header-only/trigger, tak ada line grid). Hitung `oldUnitCost` (item.averageCost
+   ?? standardCost) vs `newUnitCost` (moving-avg) × `affectedQty` (qty on-hand) →
+   `deltaAmount` + `totalDelta`, update `item.averageCost`, status `COMPLETED`/`FAILED`.
+   Endpoint `POST /erp/inv/price-adjustments/:id/process` + aksi "Proses" (status
+   PENDING/FAILED). **Catatan:** `inv_cost_recalculation_lines.warehouseId` NOT NULL →
+   PA wajib `warehouseId` di header (PA company-wide → BadRequest jelas). Commit `595b555f`.
+
+4. **GL valuation persediaan** ✅ (gated) — modul `erp-inv-gl`: `InvMovingAverageCostService`
+   (moving-average on-the-fly dari POSTED stock-movement lines UNION opening-stock lines,
+   sign per `movementType`; REQUEST/TRANSFER internal di-skip; `averageCost` field lama
+   tak dipakai/unmaintained) + helpers (`buildLedgerRows` assert debit==kredit,
+   `reverseInvLedger`) posting ke **`fin_ledger_entries`** (target nyata, mirror
+   `CashBankPostingService` — BUKAN `fin_journal_entries`). Wire ke 3 seam NO-OP:
+   - **SA**: Dr/Cr per arah `INCREASE`/`DECREASE` dari akun line.
+   - **IB**: N Dr persediaan + 1 Cr ekuitas pembukaan (Setting `defaultOpeningEquityAccountId`).
+   - **Movement valued**: `ISSUE` Dr COGS/Cr persediaan; `RETURN` kebalikan; TRANSFER/
+     TRANSFER_RECEIPT/REQUEST tanpa GL. Cost = line.unitCost ?? moving-avg ?? item cost.
+   - `reverseX` simetris (REOPEN/re-post unwind), assert balance tiap jurnal.
+
+   **AMAN BY DEFAULT:** seluruh posting **gated** di belakang Setting
+   `inventory/accounts/glPostingEnabled` (default **false** → seam tetap NO-OP persis
+   perilaku lama; status POST tetap flip, 0 baris ledger). Aktifkan via:
+   ```sql
+   INSERT INTO sys_settings(module,"group",key,value) VALUES
+     ('inventory','accounts','glPostingEnabled','true'),
+     ('inventory','accounts','defaultOpeningEquityAccountId','<id>'),
+     ('inventory','accounts','defaultCogsAccountId','<id>'),
+     ('inventory','accounts','defaultInventoryAccountId','<id>');
+   ```
+   Saat enabled tapi akun kurang → `BadRequestException` jelas (tidak silent).
+
+### Follow-up (sisa, butuh keputusan/di luar inventory)
+- **Sales COGS (DO/SI)**: posting COGS sisi penjualan dimiliki modul `erp-sls-*` yang
+  sedang dibangun sesi lain (seam `SlsDeliveryReportPostingService` NO-OP; modul SI/DO
+  masih stub). Ditunda agar tak bentrok; pola sama (`buildLedgerRows` reusable).
+- **IB exchangeRate** di posting GL: header `currencyId`/`exchangeRate` IB sudah dipakai;
+  SA/Movement tak punya kolom currency → default `currencyId=1`, `exchangeRate=1`.
+- **Snapshot `item.averageCost`**: kini diupdate hanya oleh PA process; movement POST belum
+  menyetel ulang average (moving-avg dihitung on-the-fly). Bila perlu snapshot konsisten,
+  tambah update saat movement POST.
 
 ---
 
