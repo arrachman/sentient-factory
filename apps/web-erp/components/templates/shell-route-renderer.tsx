@@ -103,6 +103,8 @@ import { ErpSendGiroClearingsPage } from '@/components/pages/fin-send-giro-clear
 import { ErpAdjustmentJournalsPage } from '@/components/pages/fin-adjustment-journals-page';
 // Sales (sls, m5)
 import { ErpSlsOrdersPage } from '@/components/pages/sls-orders-page';
+// Purchasing (pur, m4)
+import { ErpPurOrdersPage } from '@/components/pages/pur-orders-page';
 // Audit Logs
 import { ErpAuditLogsPage } from '@/components/pages/audit-logs-page';
 // Admin tools & identity pages
@@ -136,6 +138,7 @@ const TRX_FORM_PAGES: Record<string, TrxFormPage> = {
   '/finance/bank-receipts': ErpBankReceiptsPage,
   '/finance/bank-disbursements': ErpBankDisbursementsPage,
   '/sales/orders': ErpSlsOrdersPage,
+  '/purchasing/purchase-orders': ErpPurOrdersPage,
 };
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 

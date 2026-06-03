@@ -2228,4 +2228,20 @@ default per kode di `seed-erp-purchasing-forms.ts` (`seedPurchasingForms`): supp
 **Lookup registry** sudah punya `items`/`units`/`taxes`/`payment-terms` (ditambah saat
 Sales). Reuse — jangan bikin slug baru.
 
-**Form kerja penuh** menyusul per-dokumen (Purchase Order dulu, lalu replikasi).
+**Form kerja penuh pertama = Purchase Order** (`/purchasing/purchase-orders`, code
+`PUR.PO`) — mirror SO 1:1. Backend `erp-pur-orders` (CRUD + numbering `PO` + fiscal
+period dari docDate + totals server-side + enrich cross-domain + workflow). **PO TIDAK
+posting GL** (dokumen komitmen; GRN posting inventory+GR/IR, PI posting AP) — posting
+service = no-op terdokumentasi. E2E verified: create→submit→approve→post (POSTED, 0
+ledger entries; subtotal/grandTotal benar). FE: `lib/api/pur-orders`,
+`purchase-transaction-form` (shared) + `pur-order-form`, `pur-item-lines`,
+`pur-structural-field`, `pur-orders-page` + filters; route di `TRX_FORM_PAGES` +
+`ERP_ROUTE_META`. **Beda dari SO:** `pur_orders` **tidak punya kolom `code`** (SO punya);
+`customerId`→`supplierId`, `receivableAccountId`→`payableAccountId`, `salesDeptId` di-drop.
+Reuse `cashBankWorkflowActions` + grid engine generik (sama spt SO).
+
+**Replikasi** ke PR/GRN/PI/DNR/PRT (item docs) menyusul pakai PO sebagai template;
+RFQ (baris supplier)/BS (baris bid) + pembayaran (AP/VP/VPP)/OB butuh penanganan khusus.
+
+**Follow-up (sama persis SO):** REOPEN dari POSTED → 400 (gap warisan); kolom custom
+baris belum persist (`pur_*_lines` tak punya `custom_fields` JSONB).
