@@ -26,6 +26,9 @@ import { GridCustomizationPage } from '@/components/pages/grid-customization-pag
 import { FormBuilderPage } from '@/components/pages/form-builder-page';
 import { ErpDocumentNumberingsPage } from '@/components/pages/document-numberings-page';
 import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
+import { ErpBankAccountsPage } from '@/components/pages/bank-accounts-page';
+import { ErpApprovalRulesPage } from '@/components/pages/approval-rules-page';
+import { ErpHomeLayoutPage } from '@/components/pages/home-layout-page';
 // Master Data pages
 import { ErpItemsPage } from '@/components/pages/items-page';
 import { ErpUnitsPage } from '@/components/pages/units-page';
@@ -151,7 +154,7 @@ interface ErpPageCtx {
 const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/settings/company': () => <SettingsGroupPage group="company" title="Pengaturan Perusahaan" />,
   '/admin/settings/accounting': () => <SettingsGroupPage group="accounting" title="Pengaturan Akuntansi" />,
-  '/admin/settings/bank-accounts': () => <SettingsGroupPage group="bank-accounts" title="Rekening Bank Perusahaan" />,
+  '/admin/settings/bank-accounts': () => <ErpBankAccountsPage />,
   '/admin/settings/tax': () => <SettingsGroupPage group="tax" title="Pengaturan Pajak" />,
   '/admin/settings/description': () => <SettingsGroupPage group="description" title="Deskripsi Dokumen" />,
   '/admin/settings/format': () => <SettingsGroupPage group="format" title="Format Tampilan" />,
@@ -159,8 +162,8 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/settings/report-defaults': () => <SettingsGroupPage group="report-defaults" title="Default Laporan" />,
   '/admin/settings/signature': () => <SettingsGroupPage group="signature" title="Tanda Tangan" />,
   '/admin/settings/options': () => <SettingsGroupPage group="options" title="Opsi Lanjutan" />,
-  '/admin/settings/home': () => <SettingsGroupPage group="home" title="Pengaturan Beranda" />,
-  '/admin/settings/approval': () => <SettingsGroupPage group="approval" title="Pengaturan Persetujuan" />,
+  '/admin/settings/home': () => <ErpHomeLayoutPage />,
+  '/admin/settings/approval': () => <ErpApprovalRulesPage />,
   '/admin/account-code-format': () => <AccountCodeFormatPage />,
   '/admin/number-format': () => <NumberFormatPage />,
   '/admin/date-format': () => <DateFormatPage />,

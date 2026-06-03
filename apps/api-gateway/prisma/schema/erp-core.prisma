@@ -393,3 +393,100 @@ model ErpUserPreferences {
 
   @@map("adm_user_preferences")
 }
+
+// ── Initial Setup: company bank accounts (legacy 0-31) ──────────────────────
+// Rekening bank milik PERUSAHAAN (bukan partner). Dipakai sebagai sumber/tujuan
+// kas-bank transaksi & footer dokumen. Cross-domain ref (currency/GL account) =
+// scalar BigInt FK + @@index tanpa @relation (domain decoupled, pola erp-core).
+model ErpBankAccount {
+  id            BigInt    @id @default(autoincrement())
+  code          String    @unique @map("code")
+  name          String    @map("name")
+  bankName      String    @map("bank_name")
+  accountNumber String    @map("account_number")
+  accountHolder String    @map("account_holder")
+  branch        String?   @map("branch")
+  currencyId    BigInt?   @map("currency_id")
+  glAccountId   BigInt?   @map("gl_account_id")
+  swiftCode     String?   @map("swift_code")
+  isPrimary     Boolean   @default(false) @map("is_primary")
+  notes         String?   @map("notes")
+  isActive      Boolean   @default(true) @map("is_active")
+  legacyCode    String?   @map("legacy_code")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById   BigInt?   @map("created_by_id")
+  updatedById   BigInt?   @map("updated_by_id")
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([currencyId])
+  @@index([glAccountId])
+  @@map("sys_bank_accounts")
+}
+
+// ── Initial Setup: approval rules per document type (legacy 0-46) ───────────
+// Aturan persetujuan per jenis dokumen. Multi-level = beberapa baris per
+// documentType (level 1..n). approverRoleId = scalar FK ke adm_roles.
+model ErpApprovalRule {
+  id               BigInt    @id @default(autoincrement())
+  documentType     String    @map("document_type")
+  name             String    @map("name")
+  level            Int       @default(1) @map("level")
+  requiresApproval Boolean   @default(true) @map("requires_approval")
+  minAmount        Decimal?  @map("min_amount") @db.Decimal(19, 4)
+  approverRoleId   BigInt?   @map("approver_role_id")
+  notes            String?   @map("notes")
+  isActive         Boolean   @default(true) @map("is_active")
+  legacyCode       String?   @map("legacy_code")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?   @map("created_by_id")
+  updatedById      BigInt?   @map("updated_by_id")
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([documentType, level])
+  @@index([approverRoleId])
+  @@map("sys_approval_rules")
+}
+
+// ── Initial Setup: home/dashboard widget layout (legacy 0-39) ───────────────
+// Konfigurasi widget beranda (global). enabled + sortOrder + colSpan grid 1..4.
+model ErpHomeWidget {
+  id          BigInt    @id @default(autoincrement())
+  widgetKey   String    @unique @map("widget_key")
+  title       String    @map("title")
+  description String?   @map("description")
+  enabled     Boolean   @default(true) @map("enabled")
+  sortOrder   Int       @default(0) @map("sort_order")
+  colSpan     Int       @default(1) @map("col_span")
+  config      Json?     @map("config")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("sys_home_widgets")
+}
+
+// ── Initial Setup: data import jobs/history (legacy 0-20) ───────────────────
+// Riwayat impor data master. status: PENDING/SUCCESS/PARTIAL/FAILED.
+// errors = array {row, message} hasil validasi.
+model ErpImportJob {
+  id          BigInt    @id @default(autoincrement())
+  entity      String    @map("entity")
+  fileName    String    @map("file_name")
+  status      String    @default("PENDING") @map("status")
+  rowsTotal   Int       @default(0) @map("rows_total")
+  rowsOk      Int       @default(0) @map("rows_ok")
+  rowsFailed  Int       @default(0) @map("rows_failed")
+  errors      Json?     @map("errors")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?   @map("created_by_id")
+  updatedById BigInt?   @map("updated_by_id")
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([entity])
+  @@map("sys_import_jobs")
+}

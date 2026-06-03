@@ -2492,3 +2492,61 @@ on-hand qty per gudang (skema lot tak simpan qty). (3) Statistics group
 (4) Finance reports (`/finance/*`: cash-flow, AR/AP card/aging, giro-maturity,
 budget-realization) dibangun **paralel sesi lain** (modul `erp-fin-reports`,
 pola berbeda) — jangan dobel.
+
+---
+
+### Initial Setup (M0.CFG) — 4 halaman kaya menggantikan settings generik (2026-06-03)
+
+Sebelumnya 15 menu **INITIAL SETUP** (`M0.CFG`) ter-wire tapi 12 di antaranya
+cuma editor key-value generik (`SettingsGroupPage`) dan **Import Data**
+frontend-only (komentar di file: "backend import endpoint not yet implemented").
+Atas keputusan user (kedalaman = "stub + upgrade halaman yang seharusnya kaya",
+import = "bikin importer nyata"), 4 halaman di-upgrade jadi purpose-built;
+sisanya (company/accounting/tax/description/format/defaults/report-defaults/
+signature/options) **tetap** `SettingsGroupPage` (cukup sebagai key-value).
+
+**Tabel baru (4, domain `sys`)** — migrasi `20260603_006_erp_initial_setup_pages`
+(additive, 0 DROP; `migrate deploy` + `prisma generate` di container
+`sentient-infra-api-gateway` + restart; Postgres :3208):
+- `sys_bank_accounts` (`ErpBankAccount`) — rekening bank **perusahaan** (legacy
+  0-31). Beda dari `md_partner_bank_accounts` (rekening partner). currency/GL =
+  scalar BigInt FK + `@@index` tanpa `@relation` (domain decoupled).
+- `sys_approval_rules` (`ErpApprovalRule`) — aturan persetujuan per jenis
+  dokumen (legacy 0-46). Multi-level = beberapa baris per `documentType`
+  (`@@unique([documentType, level])`); `minAmount` threshold; `approverRoleId`.
+- `sys_home_widgets` (`ErpHomeWidget`) — konfigurasi widget beranda (legacy
+  0-39): `widgetKey` unik, `enabled`, `sortOrder`, `colSpan` (1–4), `config` Json.
+- `sys_import_jobs` (`ErpImportJob`) — riwayat impor (legacy 0-20): entity,
+  fileName, status, rowsTotal/Ok/Failed, errors Json.
+
+**Backend** (4 modul, pola `erp-currencies` 1:1, guard `ErpJwtAuthGuard`,
+soft-delete, server-driven query): `erp-bank-accounts` (`/api/erp/bank-accounts`),
+`erp-approval-rules` (`/api/erp/approval-rules`), `erp-home-widgets`
+(`/api/erp/home-widgets`, bulk status toggle `enabled`), `erp-import`
+(`/api/erp/import/:entity` upload via `FileInterceptor`@platform-express +
+`/entities` + `/template/:entity` xlsx + `/jobs`). Import = registry adapter
+per-entity di `erp-import.adapters.ts` (9 entitas: units, currencies,
+item-categories, taxes, payment-terms, branches, partners, accounts, warehouses
+— warehouse pakai header `locationCode`→`locationId`). Parse xlsx via `exceljs`
+(`wb.xlsx.load(buffer)`) + CSV line-split; validasi per-baris try/catch
+(duplikat/FK gagal = baris failed, batch jalan terus); job dicatat ke
+`sys_import_jobs`. Verifikasi: 4 endpoint balas **401** (mapped + guarded).
+
+**Frontend**: Bank Accounts / Approval / Home Layout reuse `SimpleMasterPage`
+(Approval & Home meng-alias `code`/`name`/`isActive` di API client karena
+field DB beda — `documentType`, `widgetKey`/`title`/`enabled`). Import =
+rewrite `import-page.tsx` (fetch entities, unduh template, upload, ringkasan
+hasil + tabel error baris, riwayat di `import-history.tsx`). Repoint 3 entri
+`ERP_PAGES` (`shell-route-renderer.tsx`) dari `SettingsGroupPage` →
+halaman baru; `/admin/import` sudah ke `ErpImportPage`. Tambah 4 entri
+`ERP_ROUTE_META`. Menu `sys_menus` sudah ter-seed sebelumnya (tak diubah).
+
+**Catatan ops:** dibangun **paralel sesi lain** yang sedang menggarap
+Manufacturing Work Orders (commit `71201684`, edit `shell-trx-pages.ts`,
+`erp-route-meta.ts §Produksi`, `MASTER-DATA-REPORT.md`) — file itu **bukan**
+bagian build ini & sengaja tidak disentuh.
+
+**Follow-up (tak di scope):** (1) seed default home widgets/approval rules
+(halaman fungsional dalam keadaan kosong — user isi sendiri). (2) Approval
+rules belum dipakai engine workflow transaksi (baru CRUD konfigurasi).
+(3) Bank Accounts belum dipakai sebagai sumber kas/bank di form transaksi.

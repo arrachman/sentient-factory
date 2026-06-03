@@ -145,6 +145,12 @@ import { ErpFormFieldsModule } from './erp-form-fields/erp-form-fields.module';
 import { ErpAuditModule } from './erp-audit/erp-audit.module';
 import { ErpLanguagesModule } from './erp-languages/erp-languages.module';
 import { ErpToolsModule } from './erp-tools/erp-tools.module';
+import { ErpBankAccountsModule } from './erp-bank-accounts/erp-bank-accounts.module';
+import { ErpApprovalRulesModule } from './erp-approval-rules/erp-approval-rules.module';
+import { ErpHomeWidgetsModule } from './erp-home-widgets/erp-home-widgets.module';
+import { ErpImportModule } from './erp-import/erp-import.module';
+import { ErpMfgBomsModule } from './erp-mfg-boms/erp-mfg-boms.module';
+import { ErpMfgWorkOrdersModule } from './erp-mfg-work-orders/erp-mfg-work-orders.module';
 
 @Module({
   imports: [
@@ -311,6 +317,12 @@ import { ErpToolsModule } from './erp-tools/erp-tools.module';
     ErpPurBidSelectionsModule,
     ErpSysTransactionGridsModule,
     ErpFormFieldsModule,
+    ErpBankAccountsModule,
+    ErpApprovalRulesModule,
+    ErpHomeWidgetsModule,
+    ErpImportModule,
+    ErpMfgBomsModule,
+    ErpMfgWorkOrdersModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)

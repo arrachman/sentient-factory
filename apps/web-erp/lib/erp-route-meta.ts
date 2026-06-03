@@ -27,6 +27,10 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/admin/tools/repost-journal': { group: 'Administrator', title: 'Repost Journals', icon: 'gear' },
   '/admin/tools/data-validity': { group: 'Administrator', title: 'Data Validity Check', icon: 'gear' },
   '/admin/preferences': { group: 'Administrator', title: 'Preferensi', icon: 'gear' },
+  '/admin/settings/bank-accounts': { group: 'Administrator', title: 'Rekening Bank', icon: 'gear' },
+  '/admin/settings/approval': { group: 'Administrator', title: 'Pengaturan Persetujuan', icon: 'gear' },
+  '/admin/settings/home': { group: 'Administrator', title: 'Pengaturan Beranda', icon: 'gear' },
+  '/admin/import': { group: 'Administrator', title: 'Import Data', icon: 'gear' },
   '/admin/account-code-format': { group: 'Administrator', title: 'Account Code Format', icon: 'calculator' },
   '/admin/number-format': { group: 'Administrator', title: 'Number Format', icon: 'calculator' },
   '/admin/date-format': { group: 'Administrator', title: 'Date Format', icon: 'calendar' },
@@ -206,6 +210,8 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/sales/reports/by-item-category': { group: 'Sales', title: 'Sales by Item Category', icon: 'stats' },
   '/sales/reports/revenue-collection': { group: 'Sales', title: 'Revenue & Collection', icon: 'stats' },
   '/sales/reports/by-group': { group: 'Sales', title: 'Sales by Group', icon: 'stats' },
+  '/manufacturing/boms': { group: 'Produksi', title: 'Bill of Materials', icon: 'layers' },
+  '/manufacturing/work-orders': { group: 'Produksi', title: 'Work Order', icon: 'tool' },
 };
 
 // Merge in read-only "Data" register routes (derived from register configs) so
