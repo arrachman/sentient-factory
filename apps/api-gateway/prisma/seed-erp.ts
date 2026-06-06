@@ -4,6 +4,7 @@ import { seedTransactionNotes } from './seed-erp-transaction-notes';
 import { seedTransactionGrids } from './seed-erp-transaction-grids';
 import { seedSalesForms } from './seed-erp-sales-forms';
 import { seedPurchasingForms } from './seed-erp-purchasing-forms';
+import { seedInitialSetup } from './seed-erp-initial-setup';
 import { iso4217Currencies } from './data/iso-4217-currencies';
 
 const prisma = new PrismaClient();
@@ -1589,6 +1590,7 @@ async function main() {
   await seedTransactionGrids(prisma);
   await seedSalesForms(prisma);
   await seedPurchasingForms(prisma);
+  await seedInitialSetup(prisma);
   console.log('\n✅ ERP seed complete.');
 }
 
