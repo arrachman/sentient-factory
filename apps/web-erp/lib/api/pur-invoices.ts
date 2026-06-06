@@ -166,6 +166,8 @@ export interface ListPurInvoicesParams extends PaginationParams {
   docNumberTo?: string;
   description?: string;
   createdById?: string;
+  /** true = hanya saldo awal AP; false = faktur reguler; undefined = semua. */
+  isOpeningBalance?: boolean;
 }
 
 type Query = Record<string, string | number | boolean | undefined>;

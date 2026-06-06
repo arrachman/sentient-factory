@@ -176,6 +176,27 @@ const purchaseInvoices: DocumentRegisterConfig<ErpPurInvoice> = {
   ],
 };
 
+/** Opening AP Balance = pur_invoices flagged isOpeningBalance (read-only register). */
+const openingApBalance: DocumentRegisterConfig<ErpPurInvoice> = {
+  group: GROUP,
+  title: 'Opening AP Balance',
+  code: 'OB-AP',
+  icon: 'database',
+  editBase: '/purchasing/purchase-invoices',
+  sortBy: 'docDate',
+  extraParams: { isOpeningBalance: true },
+  list: (p) => listPurInvoices(p as unknown as ListPurInvoicesParams),
+  getId: (r) => r.id,
+  getDocNumber: (r) => r.docNumber,
+  getDocDate: (r) => r.docDate,
+  getStatus: (r) => r.status,
+  columns: [
+    { header: 'Supplier', render: (r) => dash(r.supplier?.name), csv: (r) => r.supplier?.name ?? '' },
+    { header: 'Uraian', render: (r) => dash(r.description), csv: (r) => r.description ?? '' },
+    grandTotalColumn,
+  ],
+};
+
 /** Purchase-returns register factory (DNR/PRT share one endpoint via returnType). */
 function returnRegister(
   returnType: ListPurReturnsParams['returnType'],
@@ -237,4 +258,5 @@ export const PUR_REGISTERS: Record<string, AnyDocumentRegisterConfig> = {
   '/purchasing/data/return-shipments': returnRegister('DEBIT_NOTE', 'Return Shipment (DNR)', 'DNR', '/purchasing/return-shipments'),
   '/purchasing/data/purchase-returns': returnRegister('RETURN_TO_VENDOR', 'Purchase Return (PRT)', 'PRT', '/purchasing/purchase-returns'),
   '/purchasing/data/vendor-payments': vendorPayments,
+  '/purchasing/data/opening-ap-balance': openingApBalance,
 };

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ErpDocumentStatusDto } from './create-pur-invoice.dto';
 
 export const PUR_INVOICE_SORTABLE = [
@@ -85,4 +85,10 @@ export class QueryPurInvoicesDto {
   @IsOptional()
   @IsString()
   createdById?: string;
+
+  @ApiPropertyOptional({ description: 'true = hanya saldo awal AP, false = faktur reguler' })
+  @IsOptional()
+  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @IsBoolean()
+  isOpeningBalance?: boolean;
 }

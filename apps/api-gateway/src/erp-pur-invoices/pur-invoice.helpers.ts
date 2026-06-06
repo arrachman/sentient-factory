@@ -25,6 +25,7 @@ export function buildPurInvoiceWhere(query: QueryPurInvoicesDto): Prisma.ErpPurI
   const where: Prisma.ErpPurInvoiceWhereInput = { deletedAt: null };
 
   if (query.status) where.status = query.status as never;
+  if (query.isOpeningBalance !== undefined) where.isOpeningBalance = query.isOpeningBalance;
   if (query.branchId) where.branchId = BigInt(query.branchId);
   if (query.supplierId) where.supplierId = BigInt(query.supplierId);
   if (query.locationId) where.locationId = BigInt(query.locationId);
