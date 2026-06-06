@@ -210,6 +210,13 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/sales/reports/by-item-category': { group: 'Sales', title: 'Sales by Item Category', icon: 'stats' },
   '/sales/reports/revenue-collection': { group: 'Sales', title: 'Revenue & Collection', icon: 'stats' },
   '/sales/reports/by-group': { group: 'Sales', title: 'Sales by Group', icon: 'stats' },
+  // Warehouse (M3) statistics (2026-06-06)
+  '/warehouse/stats/kpi': { group: 'Warehouse · Statistics', title: 'KPI Warehouse', icon: 'stats' },
+  '/warehouse/stats/top-revenue': { group: 'Warehouse · Statistics', title: 'Top Revenue Products', icon: 'stats' },
+  '/warehouse/stats/best-selling': { group: 'Warehouse · Statistics', title: 'Best Selling Products', icon: 'stats' },
+  '/warehouse/stats/most-profitable': { group: 'Warehouse · Statistics', title: 'Most Profitable Products', icon: 'stats' },
+  '/warehouse/stats/below-minimum': { group: 'Warehouse · Statistics', title: 'Below Minimum Stock', icon: 'stats' },
+  '/warehouse/stats/approvals': { group: 'Warehouse · Statistics', title: 'Need Approval (Warehouse)', icon: 'stats' },
   '/manufacturing/boms': { group: 'Produksi', title: 'Bill of Materials', icon: 'layers' },
   '/manufacturing/work-orders': { group: 'Produksi', title: 'Work Order', icon: 'layers' },
 };

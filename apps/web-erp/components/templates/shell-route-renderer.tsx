@@ -138,6 +138,13 @@ import {
   SlsByProjectPage, SlsByDivisionPage, SlsByCostCenterPage, SlsByItemCategoryPage,
   SlsRevenueCollectionPage, SlsByGroupPage,
 } from '@/components/pages/sls-report-analytics-pages';
+// Warehouse (M3) statistics pages
+import { InvStatsKpiPage } from '@/components/pages/inv-stats-kpi-page';
+import { InvStatsTopRevenuePage } from '@/components/pages/inv-stats-top-revenue-page';
+import { InvStatsBestSellingPage } from '@/components/pages/inv-stats-best-selling-page';
+import { InvStatsMostProfitablePage } from '@/components/pages/inv-stats-most-profitable-page';
+import { InvStatsBelowMinimumPage } from '@/components/pages/inv-stats-below-minimum-page';
+import { InvStatsApprovalsPage } from '@/components/pages/inv-stats-approvals-page';
 
 const TRX_BASES = Object.keys(TRX_FORM_PAGES);
 
@@ -295,6 +302,13 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/sales/reports/by-item-category': () => <SlsByItemCategoryPage />,
   '/sales/reports/revenue-collection': () => <SlsRevenueCollectionPage />,
   '/sales/reports/by-group': () => <SlsByGroupPage />,
+  // Warehouse (M3) statistics
+  '/warehouse/stats/kpi': () => <InvStatsKpiPage />,
+  '/warehouse/stats/top-revenue': () => <InvStatsTopRevenuePage />,
+  '/warehouse/stats/best-selling': () => <InvStatsBestSellingPage />,
+  '/warehouse/stats/most-profitable': () => <InvStatsMostProfitablePage />,
+  '/warehouse/stats/below-minimum': () => <InvStatsBelowMinimumPage />,
+  '/warehouse/stats/approvals': () => <InvStatsApprovalsPage />,
   // Legacy aliases
   'adm-users': () => <ErpUsersPage />,
   'adm-roles': () => <ErpRolesPage />,
