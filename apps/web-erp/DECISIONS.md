@@ -11,6 +11,30 @@ di `CLAUDE.md` (section "Aturan turunan lintas-fitur"); di sini detail lengkapny
 
 ---
 
+### Report Engine — Custom PDF Report Engine (2026-06-06)
+
+Keputusan: Senti ERP membangun **custom report engine sendiri** — tanpa 3rd-party
+(Carbone.io, Stimulsoft, pdfme, LibreOffice, dll).
+
+**Riset dilakukan** dengan mempelajari 622+ file `.mrt` (Stimulsoft XML) dari legacy
+MyERP+ di `apps/web-erp/preferensi/Backened - myerpplus/report/mrt/m2`, `m4`, `m5`:
+- Template format: **JSON** (bukan XML/DOCX/XLSX)
+- Data source: **REST API endpoint** per report (tidak embed SQL di template)
+- Output: **PDF** + HTML preview
+- Rendering stack: **PENDING** — pilihan Puppeteer vs @react-pdf/renderer
+- Terbilang: implementasi TypeScript sendiri (bukan MySQL stored function)
+- Designer UI: fase berikutnya (MVP = JSON template manual)
+
+**Temuan kunci dari MRT:**
+- 6 tipe band: PageHeader, PageFooter, GroupHeader (n-level), Data, GroupFooter (n-level), EmptyBand
+- Komponen: Text, Image, HorizontalLine, VerticalLine (Start/EndPointPrimitive)
+- Expression: `{field}`, `{Sum()}`, `{IIF()}`, `{Format()}`, `{Replace()}`, `{PageNumber}`, `{TotalPageCount}`, `{Time}`, `{Line}`
+- Layout: CanGrow, CanShrink, PrintOnAllPages, NewPageBefore, WordWrap
+- Tidak ada Chart/CrossTab/Barcode/SubReport di seluruh m4+m5 (622 file)
+- 3 pola report: Form Dokumen, List/Tabulasi, Buku Besar/Ledger
+
+**Dokumen lengkap:** `apps/web-erp/report-engine/README.md` — living doc, update di sana.
+
 ---
 
 ### 2.4 Command palette = derived dari role-filtered nav (2026-05-20)
@@ -2550,3 +2574,36 @@ bagian build ini & sengaja tidak disentuh.
 (halaman fungsional dalam keadaan kosong — user isi sendiri). (2) Approval
 rules belum dipakai engine workflow transaksi (baru CRUD konfigurasi).
 (3) Bank Accounts belum dipakai sebagai sumber kas/bank di form transaksi.
+
+---
+
+## Data Register Pages (2026-06-06)
+
+**Keputusan:** Membangun semua 46 legacy DATA/STATS menu paths yang sebelumnya menampilkan `ComingSoon`.
+
+### Register system
+
+Dibuat `lib/registers/` — config-driven `DocumentRegisterPage` organism yang reusable: setiap dokumen didefinisikan sebagai `DocumentRegisterConfig<Row>` (list fn, kolom, editBase, status options). Renderer `shell-route-renderer.tsx` lookup REGISTER_CONFIGS sebelum TRX dispatch. Route meta di-merge otomatis dari register configs ke `ERP_ROUTE_META`. Register = read-only (tidak ada create/delete di halaman data).
+
+**35 Data registers** (inv 10 + pur 10 + sls 15): pakai endpoint list TX yang sudah ada.
+
+**Opening AP Balance:** filter `isOpeningBalance: true` ditambahkan ke `QueryPurInvoicesDto` + `buildPurInvoiceWhere`. Field sudah ada di `pur_invoices`.
+
+### Warehouse Statistics (6 halaman)
+
+Backend: modul baru `erp-inv-stats` — 6 GET-only endpoints (`/erp/inv/stats/*`): top-revenue, best-selling, most-profitable (COGS dari `sls_invoice_lines.unit_cost`), below-minimum (moving-average on-hand vs `md_items.min_stock`), approvals (NEED_APPROVE count per inv doc type), kpi. Tidak ada migrasi. FE: `lib/api/inv-stats.ts` + 6 halaman + `StatPageShell` organism.
+
+### Group B — 4 dokumen baru tanpa tabel baru (2026-06-06)
+
+**Keputusan (user, 2026-06-06):** vendor-advances (AP), freight-payables (PP), payment-schedules (VPP), ar-collections (IC) REUSE `fin_ap_payments` / `fin_ar_receipts` dengan discriminator `source` field — tidak membuat tabel baru. Schema comment di `fin_ap_payments` sudah mencatat reuse ini untuk VP/VPP.
+
+- AP, PP, VPP → `fin_ap_payments` (source='AP'/'PP'/'VPP')
+- IC → `fin_ar_receipts` (source='IC')
+
+Modules: `erp-pur-vendor-advances`, `erp-pur-freight-payables`, `erp-pur-payment-schedules`, `erp-sls-ar-collections`. Tiap modul: full CRUD + list (filter by source) + workflow DRAFT→NEED_APPROVE→APPROVED→POSTED + auto-number dari `sys_document_numberings`. GL posting = UNPOSTED + TODO (post-MVP).
+
+`source`/`partner`/`date` filter ditambahkan ke `QueryApPaymentDto` + `QueryArReceiptDto` (source, partnerId, dateFrom, dateTo). `sortBy`/`sortDir` ditambahkan ke `QueryArReceiptDto`.
+
+4 docNumber codes seeded: `AP`/`PP`/`VPP`/`IC` (via direct SQL karena `seed-erp.ts` punya pre-existing TS error `bulkUpsertMenuItems` undefined yang mencegah `ts-node seed-erp.ts`).
+
+**Follow-up (post-MVP):** GL posting untuk AP/PP/VPP/IC; line detail (invoice allocation) untuk VP/VPP/IC.
