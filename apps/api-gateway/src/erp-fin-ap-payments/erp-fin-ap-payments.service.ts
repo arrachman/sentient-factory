@@ -61,6 +61,14 @@ export class ErpFinApPaymentsService {
     }
     if (query.status) where.status = query.status;
     if (query.paymentStatus) where.paymentStatus = query.paymentStatus;
+    if (query.source) where.source = query.source;
+    if (query.partnerId) where.partnerId = BigInt(query.partnerId);
+    if (query.dateFrom || query.dateTo) {
+      where.transactionDate = {
+        ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
+        ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
+      };
+    }
 
     const sortField = query.sortBy ?? 'transactionDate';
     const sortDir = query.sortDir ?? 'desc';

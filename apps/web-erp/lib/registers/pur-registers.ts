@@ -46,6 +46,21 @@ import {
   type ListPurReturnsParams,
 } from '@/lib/api/pur-returns';
 import {
+  listVendorAdvances,
+  type ErpVendorAdvance,
+  type ListVendorAdvancesParams,
+} from '@/lib/api/pur-vendor-advances';
+import {
+  listFreightPayables,
+  type ErpFreightPayable,
+  type ListFreightPayablesParams,
+} from '@/lib/api/pur-freight-payables';
+import {
+  listPaymentSchedules,
+  type ErpPaymentSchedule,
+  type ListPaymentSchedulesParams,
+} from '@/lib/api/pur-payment-schedules';
+import {
   listApPayments,
   type ErpApPayment,
   type ListApPaymentsParams,
@@ -259,4 +274,46 @@ export const PUR_REGISTERS: Record<string, AnyDocumentRegisterConfig> = {
   '/purchasing/data/purchase-returns': returnRegister('RETURN_TO_VENDOR', 'Purchase Return (PRT)', 'PRT', '/purchasing/purchase-returns'),
   '/purchasing/data/vendor-payments': vendorPayments,
   '/purchasing/data/opening-ap-balance': openingApBalance,
+  '/purchasing/data/vendor-advances': {
+    group: GROUP, title: 'Vendor Advance (AP)', code: 'AP', icon: 'database',
+    editBase: '/purchasing/vendor-advances', sortBy: 'transactionDate',
+    list: (p) => listVendorAdvances(p as unknown as ListVendorAdvancesParams),
+    getId: (r: ErpVendorAdvance) => r.id,
+    getDocNumber: (r: ErpVendorAdvance) => r.docNumber,
+    getDocDate: (r: ErpVendorAdvance) => r.transactionDate,
+    getStatus: (r: ErpVendorAdvance) => r.status,
+    columns: [
+      { header: 'Supplier', render: (r: ErpVendorAdvance) => dash(r.partner?.name), csv: (r: ErpVendorAdvance) => r.partner?.name ?? '' },
+      { header: 'Uraian', render: (r: ErpVendorAdvance) => dash(r.description), csv: (r: ErpVendorAdvance) => r.description },
+      { header: 'Jumlah', align: 'right' as const, render: (r: ErpVendorAdvance) => formatNumber(Number(r.amount), 2), csv: (r: ErpVendorAdvance) => r.amount },
+    ],
+  },
+  '/purchasing/data/freight-payables': {
+    group: GROUP, title: 'Freight Payable (PP)', code: 'PP', icon: 'database',
+    editBase: '/purchasing/freight-payables', sortBy: 'transactionDate',
+    list: (p) => listFreightPayables(p as unknown as ListFreightPayablesParams),
+    getId: (r: ErpFreightPayable) => r.id,
+    getDocNumber: (r: ErpFreightPayable) => r.docNumber,
+    getDocDate: (r: ErpFreightPayable) => r.transactionDate,
+    getStatus: (r: ErpFreightPayable) => r.status,
+    columns: [
+      { header: 'Partner', render: (r: ErpFreightPayable) => dash(r.partner?.name), csv: (r: ErpFreightPayable) => r.partner?.name ?? '' },
+      { header: 'Uraian', render: (r: ErpFreightPayable) => dash(r.description), csv: (r: ErpFreightPayable) => r.description },
+      { header: 'Jumlah', align: 'right' as const, render: (r: ErpFreightPayable) => formatNumber(Number(r.amount), 2), csv: (r: ErpFreightPayable) => r.amount },
+    ],
+  },
+  '/purchasing/data/payment-schedules': {
+    group: GROUP, title: 'Payment Schedule (VPP)', code: 'VPP', icon: 'database',
+    editBase: '/purchasing/payment-schedules', sortBy: 'transactionDate',
+    list: (p) => listPaymentSchedules(p as unknown as ListPaymentSchedulesParams),
+    getId: (r: ErpPaymentSchedule) => r.id,
+    getDocNumber: (r: ErpPaymentSchedule) => r.docNumber,
+    getDocDate: (r: ErpPaymentSchedule) => r.transactionDate,
+    getStatus: (r: ErpPaymentSchedule) => r.status,
+    columns: [
+      { header: 'Supplier', render: (r: ErpPaymentSchedule) => dash(r.partner?.name), csv: (r: ErpPaymentSchedule) => r.partner?.name ?? '' },
+      { header: 'Uraian', render: (r: ErpPaymentSchedule) => dash(r.description), csv: (r: ErpPaymentSchedule) => r.description },
+      { header: 'Jumlah', align: 'right' as const, render: (r: ErpPaymentSchedule) => formatNumber(Number(r.amount), 2), csv: (r: ErpPaymentSchedule) => r.amount },
+    ],
+  },
 };

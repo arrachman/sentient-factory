@@ -5,6 +5,11 @@
  */
 
 import {
+  listArCollections,
+  type ErpArCollection,
+  type ListArCollectionsParams,
+} from '@/lib/api/sls-ar-collections';
+import {
   listSlsQuotations,
   type ErpSlsQuotation,
   type ListSlsQuotationsParams,
@@ -367,4 +372,18 @@ export const SLS_REGISTERS: Record<string, AnyDocumentRegisterConfig> = {
   '/sales/data/invoice-swaps': invoiceSwaps,
   '/sales/data/freight-receivables': freightReceivables,
   '/sales/data/opening-ar-balance': openingArBalance,
+  '/sales/data/ar-collections': {
+    group: 'Sales · Data', title: 'AR Collection (IC)', code: 'IC', icon: 'database',
+    editBase: '/sales/ar-collections', sortBy: 'transactionDate',
+    list: (p) => listArCollections(p as unknown as ListArCollectionsParams),
+    getId: (r: ErpArCollection) => r.id,
+    getDocNumber: (r: ErpArCollection) => r.docNumber,
+    getDocDate: (r: ErpArCollection) => r.transactionDate,
+    getStatus: (r: ErpArCollection) => r.status,
+    columns: [
+      { header: 'Customer', render: (r: ErpArCollection) => dash(r.partner?.name), csv: (r: ErpArCollection) => r.partner?.name ?? '' },
+      { header: 'Uraian', render: (r: ErpArCollection) => dash(r.description), csv: (r: ErpArCollection) => r.description },
+      { header: 'Jumlah', align: 'right' as const, render: (r: ErpArCollection) => formatNumber(Number(r.amount), 2), csv: (r: ErpArCollection) => r.amount },
+    ],
+  },
 };

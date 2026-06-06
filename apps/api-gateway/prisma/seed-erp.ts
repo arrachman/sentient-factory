@@ -811,6 +811,11 @@ async function seedDocumentNumberings() {
     { documentCode: 'BANK_DISBURSEMENT', name: 'Bank Keluar (Bank Disbursement)', prefix: 'SM', digitCount: 6 },
     { documentCode: 'BOM', name: 'Bill of Materials', prefix: 'BOM', digitCount: 6 },
     { documentCode: 'WO', name: 'Work Order', prefix: 'WO', digitCount: 6 },
+    // Purchasing advance / freight / schedule + AR collection (Group B — reuse fin_ap/ar_receipts)
+    { documentCode: 'AP', name: 'Vendor Advance (AP)', prefix: 'AP', digitCount: 6 },
+    { documentCode: 'PP', name: 'Freight Payable (PP)', prefix: 'PP', digitCount: 6 },
+    { documentCode: 'VPP', name: 'Payment Schedule (VPP)', prefix: 'VPP', digitCount: 6 },
+    { documentCode: 'IC', name: 'AR Collection (IC)', prefix: 'IC', digitCount: 6 },
   ]) {
     await prisma.erpDocumentNumbering.upsert({
       where: { documentCode: n.documentCode },

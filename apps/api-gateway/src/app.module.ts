@@ -152,6 +152,10 @@ import { ErpHomeWidgetsModule } from './erp-home-widgets/erp-home-widgets.module
 import { ErpImportModule } from './erp-import/erp-import.module';
 import { ErpMfgBomsModule } from './erp-mfg-boms/erp-mfg-boms.module';
 import { ErpMfgWorkOrdersModule } from './erp-mfg-work-orders/erp-mfg-work-orders.module';
+import { ErpSlsArCollectionsModule } from './erp-sls-ar-collections/erp-sls-ar-collections.module';
+import { ErpPurVendorAdvancesModule } from './erp-pur-vendor-advances/erp-pur-vendor-advances.module';
+import { ErpPurFreightPayablesModule } from './erp-pur-freight-payables/erp-pur-freight-payables.module';
+import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pur-payment-schedules.module';
 
 @Module({
   imports: [
@@ -284,6 +288,9 @@ import { ErpMfgWorkOrdersModule } from './erp-mfg-work-orders/erp-mfg-work-order
     ErpFinGiroEntriesModule,
     ErpFinArReceiptsModule,
     ErpFinApPaymentsModule,
+    // ERP Purchasing — Payment Schedules (VPP) — Jadwal Pembayaran Vendor M4.TX.VPP
+    ErpPurPaymentSchedulesModule,
+    ErpPurFreightPayablesModule,
     ErpFinGirosModule,
     ErpFinLedgerModule,
     ErpFinReportsModule,
@@ -325,6 +332,10 @@ import { ErpMfgWorkOrdersModule } from './erp-mfg-work-orders/erp-mfg-work-order
     ErpImportModule,
     ErpMfgBomsModule,
     ErpMfgWorkOrdersModule,
+    // ERP Sales — AR Collections (IC) — Penagihan Piutang M5.TX.IC
+    ErpSlsArCollectionsModule,
+    // ERP Purchasing — Vendor Advances (AP) — Uang Muka Pembelian M4.TX.AP
+    ErpPurVendorAdvancesModule,
   ],
   providers: [
     // Global rate limiter (apply to all routes)

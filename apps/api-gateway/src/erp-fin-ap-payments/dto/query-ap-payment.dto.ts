@@ -46,4 +46,24 @@ export class QueryApPaymentDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDir?: 'asc' | 'desc' = 'desc';
+
+  @ApiPropertyOptional({ description: 'Filter by source code (VP/AP/PP/VPP)' })
+  @IsOptional()
+  @IsString()
+  source?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by partner/supplier id' })
+  @IsOptional()
+  @IsString()
+  partnerId?: string;
+
+  @ApiPropertyOptional({ description: 'docDate >= (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  dateFrom?: string;
+
+  @ApiPropertyOptional({ description: 'docDate <= (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsString()
+  dateTo?: string;
 }

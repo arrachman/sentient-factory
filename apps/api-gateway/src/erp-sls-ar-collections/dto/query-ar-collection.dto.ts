@@ -1,12 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
-import {
-  ErpDocumentStatusDto,
-  ErpSettlementStatusDto,
-} from './create-ar-receipt.dto';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export class QueryArReceiptDto {
+export class QueryArCollectionDto {
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -27,15 +23,10 @@ export class QueryArReceiptDto {
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ enum: ErpDocumentStatusDto })
+  @ApiPropertyOptional({ description: 'Filter by document status' })
   @IsOptional()
-  @IsEnum(ErpDocumentStatusDto)
-  status?: ErpDocumentStatusDto;
-
-  @ApiPropertyOptional({ enum: ErpSettlementStatusDto })
-  @IsOptional()
-  @IsEnum(ErpSettlementStatusDto)
-  paymentStatus?: ErpSettlementStatusDto;
+  @IsString()
+  status?: string;
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
   @IsOptional()
@@ -47,12 +38,7 @@ export class QueryArReceiptDto {
   @IsString()
   sortBy?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by source code (IP/IC)' })
-  @IsOptional()
-  @IsString()
-  source?: string;
-
-  @ApiPropertyOptional({ description: 'Filter by customer/partner id' })
+  @ApiPropertyOptional({ description: 'Filter by partner/customer id' })
   @IsOptional()
   @IsString()
   partnerId?: string;
