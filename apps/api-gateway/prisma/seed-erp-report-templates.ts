@@ -296,7 +296,7 @@ const templateNeraca: Prisma.InputJsonValue = {
         "    WHEN 'ASSET'     THEN '1. Aset'",
         "    WHEN 'LIABILITY' THEN '2. Kewajiban'",
         "    WHEN 'EQUITY'    THEN '3. Ekuitas'",
-        '    ELSE a.type',
+        '    ELSE a.type::text',
         '  END AS type_label,',
         '  a.code,',
         '  a.name,',

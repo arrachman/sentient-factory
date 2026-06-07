@@ -24,11 +24,11 @@ export class ErpReportsService {
     if (module) where.module = module;
     if (isActive !== undefined) where.isActive = isActive;
 
-    const [rows, total] = await Promise.all([
+    const [items, total] = await Promise.all([
       this.prisma.erpRptTemplate.findMany({ where, skip, take: limit, orderBy: { [sortBy]: sortDir } }),
       this.prisma.erpRptTemplate.count({ where }),
     ]);
-    return { rows, meta: { total, page, totalPages: Math.ceil(total / limit) } };
+    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
   }
 
   async findOne(id: bigint) {
@@ -90,7 +90,8 @@ export class ErpReportsService {
     // Replace named params :name → positional $1, $2, ...
     const paramNames: string[] = [];
     const paramValues: unknown[] = [];
-    const paramPattern = /:([a-zA-Z_][a-zA-Z0-9_]*)/g;
+    // Negative lookbehind (?<!:) prevents matching :name inside ::casttype (PostgreSQL cast syntax)
+    const paramPattern = /(?<!:):([a-zA-Z_][a-zA-Z0-9_]*)/g;
     let sqlWithPositional = sql.replace(paramPattern, (_match, name: string) => {
       if (!paramNames.includes(name)) {
         paramNames.push(name);
