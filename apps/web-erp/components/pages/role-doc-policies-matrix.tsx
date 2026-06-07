@@ -15,6 +15,16 @@ const STATUS_SHORT: Record<string, string> = {
 };
 
 export const DOC_TYPE_LABELS: Record<string, string> = {
+  // Administrator
+  'ADM.USER': 'User', 'ADM.ROLE': 'Role & Permission',
+  'ADM.BRANCH': 'Cabang', 'ADM.DEPT': 'Departemen',
+  'ADM.APPROVAL': 'Aturan Approval',
+  // Master Data
+  'MD.PARTNER': 'Partner (Pelanggan / Pemasok)', 'MD.ITEM': 'Item / Produk',
+  'MD.ACCOUNT': 'Akun Rekening', 'MD.WAREHOUSE': 'Gudang',
+  'MD.CATEGORY': 'Kategori Item', 'MD.UNIT': 'Satuan',
+  'MD.PRICE_LIST': 'Daftar Harga', 'MD.TAX': 'Pajak',
+  // Finance
   CASH_RECEIPT: 'Kas Masuk', CASH_DISBURSEMENT: 'Kas Keluar',
   BANK_RECEIPT: 'Bank Masuk', BANK_DISBURSEMENT: 'Bank Keluar',
   JOURNAL_ENTRY: 'Jurnal Umum', ADJUSTING_JOURNAL: 'Jurnal Penyesuaian',
@@ -38,6 +48,8 @@ export const DOC_TYPE_LABELS: Record<string, string> = {
 };
 
 export const DOC_GROUPS: Array<{ label: string; items: string[] }> = [
+  { label: 'Administrator', items: ['ADM.USER', 'ADM.ROLE', 'ADM.BRANCH', 'ADM.DEPT', 'ADM.APPROVAL'] },
+  { label: 'Master Data', items: ['MD.PARTNER', 'MD.ITEM', 'MD.ACCOUNT', 'MD.WAREHOUSE', 'MD.CATEGORY', 'MD.UNIT', 'MD.PRICE_LIST', 'MD.TAX'] },
   { label: 'Keuangan — Kas & Bank', items: ['CASH_RECEIPT', 'CASH_DISBURSEMENT', 'BANK_RECEIPT', 'BANK_DISBURSEMENT'] },
   { label: 'Keuangan — Jurnal', items: ['JOURNAL_ENTRY', 'ADJUSTING_JOURNAL', 'JOURNAL_MEMO', 'BANK_BALANCE', 'REVERSAL'] },
   { label: 'Keuangan — Giro', items: ['INCOMING_GIRO', 'OUTGOING_GIRO', 'GIRO_CLEARING_IN', 'GIRO_CLEARING_OUT'] },
