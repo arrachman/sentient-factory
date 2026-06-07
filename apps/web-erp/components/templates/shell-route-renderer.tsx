@@ -30,6 +30,7 @@ import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
 import { ErpBankAccountsPage } from '@/components/pages/bank-accounts-page';
 import { ErpApprovalRulesPage } from '@/components/pages/approval-rules-page';
 import { ErpHomeLayoutPage } from '@/components/pages/home-layout-page';
+import { ErpRoleDocPoliciesPage } from '@/components/pages/role-doc-policies-page';
 // Master Data pages
 import { ErpItemsPage } from '@/components/pages/items-page';
 import { ErpUnitsPage } from '@/components/pages/units-page';
@@ -172,6 +173,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/settings/options': () => <SettingsGroupPage group="options" title="Opsi Lanjutan" />,
   '/admin/settings/home': () => <ErpHomeLayoutPage />,
   '/admin/settings/approval': () => <ErpApprovalRulesPage />,
+  '/admin/settings/doc-creation-policies': () => <ErpRoleDocPoliciesPage />,
   '/admin/account-code-format': () => <AccountCodeFormatPage />,
   '/admin/number-format': () => <NumberFormatPage />,
   '/admin/date-format': () => <DateFormatPage />,

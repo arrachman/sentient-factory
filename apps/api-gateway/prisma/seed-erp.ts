@@ -368,8 +368,9 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M0.CFG.SIGNATURE',      title: 'Signature Settings',  path: '/admin/settings/signature',      legacyCode: '0-37' },
     { code: 'M0.CFG.OPTIONS',        title: 'Options',             path: '/admin/settings/options',        legacyCode: '0-38' },
     { code: 'M0.CFG.HOME',           title: 'Home Layout',         path: '/admin/settings/home',           legacyCode: '0-39' },
-    { code: 'M0.CFG.APPROVAL',       title: 'Approval Settings',   path: '/admin/settings/approval',       legacyCode: '0-46' },
-    { code: 'M0.CFG.IMPORT',         title: 'Import Data',         path: '/admin/import',                  legacyCode: '0-20' },
+    { code: 'M0.CFG.APPROVAL',       title: 'Approval Settings',   path: '/admin/settings/approval',              legacyCode: '0-46' },
+    { code: 'M0.CFG.DOC-POLICY',     title: 'Doc Creation Policy', path: '/admin/settings/doc-creation-policies'                },
+    { code: 'M0.CFG.IMPORT',         title: 'Import Data',         path: '/admin/import',                         legacyCode: '0-20' },
   ], cfgGrp.id);
 
   // M0.ADM — Tool Administrator (legacy 0-25): identity & admin tools

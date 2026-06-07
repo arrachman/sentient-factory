@@ -30,6 +30,7 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/admin/preferences': { group: 'Administrator', title: 'Preferensi', icon: 'gear' },
   '/admin/settings/bank-accounts': { group: 'Administrator', title: 'Rekening Bank', icon: 'gear' },
   '/admin/settings/approval': { group: 'Administrator', title: 'Pengaturan Persetujuan', icon: 'gear' },
+  '/admin/settings/doc-creation-policies': { group: 'Administrator', title: 'Kebijakan Status Dokumen', icon: 'gear' },
   '/admin/settings/home': { group: 'Administrator', title: 'Pengaturan Beranda', icon: 'gear' },
   '/admin/import': { group: 'Administrator', title: 'Import Data', icon: 'gear' },
   '/admin/account-code-format': { group: 'Administrator', title: 'Account Code Format', icon: 'calculator' },

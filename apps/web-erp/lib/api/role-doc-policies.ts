@@ -35,8 +35,13 @@ export async function getMyAllowedStatuses(documentType: string): Promise<Creati
 
 // ─── CRUD (admin only) ────────────────────────────────────────────────────────
 
+export interface RoleDocPolicyQueryParams extends PaginationParams {
+  roleId?: string;
+  documentType?: string;
+}
+
 export async function listRoleDocPolicies(
-  params?: PaginationParams,
+  params?: RoleDocPolicyQueryParams,
 ): Promise<PaginatedResponse<ErpRoleDocPolicy>> {
   return apiGet<PaginatedResponse<ErpRoleDocPolicy>>(
     '/role-doc-policies',
