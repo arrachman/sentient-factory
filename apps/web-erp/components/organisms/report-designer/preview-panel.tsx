@@ -4,9 +4,8 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
 import { executeSqlQuery } from '@/lib/api/reports';
+import { MM_TO_PX } from '@/lib/report-component-factory';
 import type { RptBand, RptTemplate } from '@/lib/report-types';
-
-const MM_TO_PX = 3.78; // 96 dpi — 1mm ≈ 3.78px
 
 const PAGE_DIMS: Record<string, { w: number; h: number }> = {
   A4:     { w: 210, h: 297 },
@@ -22,19 +21,54 @@ function pageDims(template: RptTemplate) {
     : { w: d.w, h: d.h };
 }
 
+function fmtVal(v: unknown): string {
+  if (v == null) return '';
+  if (typeof v === 'number') {
+    return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(v);
+  }
+  return String(v);
+}
+
+function computeAgg(rows: Record<string, unknown>[]): Record<string, number> {
+  const agg: Record<string, number> = { 'COUNT(*)': rows.length };
+  if (!rows.length) return agg;
+  const cols = Object.keys(rows[0]);
+  for (const col of cols) {
+    const nums = rows.map(r => { const n = Number(r[col]); return isNaN(n) ? 0 : n; });
+    agg[`SUM(${col})`]   = nums.reduce((a, b) => a + b, 0);
+    agg[`COUNT(${col})`] = rows.filter(r => r[col] != null).length;
+    agg[`AVG(${col})`]   = nums.reduce((a, b) => a + b, 0) / rows.length;
+    agg[`MAX(${col})`]   = Math.max(...nums);
+    agg[`MIN(${col})`]   = nums.length ? Math.min(...nums) : 0;
+  }
+  return agg;
+}
+
 function evalExpr(
   expr: string,
   row: Record<string, unknown>,
   params: Record<string, string>,
+  agg: Record<string, number> = {},
 ): string {
   if (!expr) return '';
-  return expr.replace(/\{([^}]+)\}/g, (_m, inner: string) => {
+  // Pass 1: resolve {{aggregate(field)}} double-brace expressions
+  let result = expr.replace(/\{\{([^}]+)\}\}/g, (_m, inner: string) => {
     const t = inner.trim();
-    if (t === 'PageNumber')      return '1';
-    if (t === 'TotalPageCount')  return '?';
-    if (t.startsWith('data.'))   return String(row[t.slice(5)] ?? '');
+    if (t in agg) return fmtVal(agg[t]);
+    // Unknown aggregate (e.g. when rows=0) → show 0
+    if (/^(SUM|COUNT|AVG|MAX|MIN)\s*\(/.test(t)) return '0';
+    return `{{${t}}}`;
+  });
+  // Pass 2: resolve {field} single-brace expressions
+  return result.replace(/\{([^}]+)\}/g, (_m, inner: string) => {
+    const t = inner.trim();
+    if (t === 'PageNumber')       return '1';
+    if (t === 'TotalPageCount')   return '?';
+    if (t.startsWith('data.'))    return fmtVal(row[t.slice(5)]);
     if (t.startsWith('summary.')) return `(${t.slice(8)})`;
-    if (t.startsWith('params.')) return params[t.slice(7)] ?? '';
+    if (t.startsWith('params.'))  return params[t.slice(7)] ?? '';
+    if (t in row)    return fmtVal(row[t]);
+    if (t in params) return params[t] ?? '';
     return `{${t}}`;
   });
 }
@@ -43,6 +77,7 @@ function bandHtml(
   band: RptBand,
   row: Record<string, unknown>,
   params: Record<string, string>,
+  agg: Record<string, number> = {},
 ): string {
   const hPx = band.height * MM_TO_PX;
   const comps = band.components.map(comp => {
@@ -52,7 +87,7 @@ function bandHtml(
     const hcPx  = comp.height * MM_TO_PX;
 
     if (comp.type === 'text') {
-      const val = evalExpr(comp.expression, row, params);
+      const val = evalExpr(comp.expression, row, params, agg);
       const s   = comp.style;
       return `<div style="position:absolute;left:${left}px;top:${top}px;width:${wPx}px;height:${hcPx}px;` +
         `font-size:${s.fontSize ?? 9}px;` +
@@ -60,6 +95,7 @@ function bandHtml(
         `text-align:${s.align ?? 'left'};` +
         `font-weight:${s.bold ? '700' : '400'};` +
         `font-style:${s.italic ? 'italic' : 'normal'};` +
+        (s.background ? `background-color:${s.background};` : '') +
         `overflow:hidden;line-height:1.35;white-space:nowrap;">${val}</div>`;
     }
     if (comp.type === 'line') {
@@ -87,15 +123,16 @@ function buildHtml(
   const pageHpx    = h  * MM_TO_PX;
   const contentWpx = (w - m.left - m.right)   * MM_TO_PX;
 
+  const agg = computeAgg(rows);
   let bands = '';
   for (const band of template.bands) {
     if (band.type === 'data') {
-      const dataRows = rows.length > 0 ? rows : [{}];
-      for (let i = 0; i < dataRows.length; i++) {
-        bands += bandHtml(band, dataRows[i], params);
+      // Skip data band when no rows — avoids showing {field} placeholders
+      for (const row of rows) {
+        bands += bandHtml(band, row, params, agg);
       }
     } else {
-      bands += bandHtml(band, rows[0] ?? {}, params);
+      bands += bandHtml(band, rows[0] ?? {}, params, agg);
     }
   }
 

@@ -1243,6 +1243,23 @@ Trial Balance, Balance Sheet, Income Statement, Cash Flow, Daily Cash & Bank,
 AR Card, AR Aging, AP Card, AP Aging, Giro Maturity, Budget vs Realization
 (legacyCode = `2-<MENUID>`). Sebelumnya M2.RPT cuma punya General Ledger.
 
+**Tambahan 2 laporan finance (2026-06-07).** Audit ulang `m0_report` legacy modul
+Keuangan (1.301 report; mayoritas cetakan transaksi) → jenis laporan keuangan
+sejati yang belum live tinggal **dua**: **Neraca Mutasi** (`M2.RPT.MOVEMENT-BALANCE`,
+`/finance/movement-balance`, legacy `neracamutasi`) = trial-balance-with-movement
+(Saldo Awal · Debit · Kredit · Saldo Akhir per akun, konvensi debit-positif) dan
+**Perubahan Modal** (`M2.RPT.EQUITY-CHANGES`, `/finance/equity-changes`) = statement
+of changes in equity (Saldo Awal · Mutasi · Saldo Akhir per akun EQUITY + baris
+Laba/(Rugi) Tahun Berjalan). Dibangun lewat subsistem **live** `erp-fin-reports`
+(builder `statement-builders.ts` → `service.buildMovementBalance/buildEquityChanges`
+→ controller `GET /erp/fin/reports/{movement-balance,equity-changes}` → `ReportDocument`
+→ `ReportPage` wrapper tipis + route `ERP_PAGES`/`ERP_ROUTE_META` + `ReportKey`).
+**Catatan arsitektur penting:** menu Laporan finance yang LIVE = subsistem
+`erp-fin-reports` (`ReportPage`→`getReport`→backend SQL nyata), bukan
+`financial-report.tsx`/`REPORTS`/`NAV` (itu **fallback statis basi** dengan data
+mock — jangan dipakai untuk report baru). Seed `seed-erp.ts` grant semua menu ke
+SUPERADMIN → 2 entri langsung tampil. Smoke-test authenticated OK (2026-06-07).
+
 **Cakupan DB:** seluruh 11 item legacy ter-cover oleh 31 tabel `fin_*` (jauh di
 atas legacy). Yang belum: **frontend M2 belum dibangun** (path `/finance/*`
 ter-seed tapi belum ada entry di `ERP_PAGES`/`ERP_ROUTE_META`).
@@ -2607,3 +2624,36 @@ Modules: `erp-pur-vendor-advances`, `erp-pur-freight-payables`, `erp-pur-payment
 4 docNumber codes seeded: `AP`/`PP`/`VPP`/`IC` (via direct SQL karena `seed-erp.ts` punya pre-existing TS error `bulkUpsertMenuItems` undefined yang mencegah `ts-node seed-erp.ts`).
 
 **Follow-up (post-MVP):** GL posting untuk AP/PP/VPP/IC; line detail (invoice allocation) untuk VP/VPP/IC.
+
+### Report Designer — UX 3-dock + drag-to-bind + undo/redo (2026-06-07)
+
+Designer (`/admin/report-designer`) dirombak dari model **tab mutually-exclusive**
+(`activePanel` = dataSources|bands|preview, hanya satu kelihatan) ke **3 dock
+simultan + collapsible**:
+
+- **Dock kiri** (380px, toggle): tab **Data Sources** (SQL editor) / **Fields**
+  (palette kolom hasil query). Test Query mem-publish kolom via `onSchema(alias,
+  columns)` → di-hold di state page `schemas` → tab Fields render chip kolom.
+- **Center**: canvas selalu tampil; **Preview** kini split di kanan canvas
+  (toggle, bukan menelan canvas).
+- **Dock kanan** (260px, toggle): Properties.
+
+Fitur baru:
+- **Drag-to-bind**: field dari palette di-drag (HTML5 DnD, MIME
+  `application/x-rpt-field`) ke band → auto-buat text component `{kolom}` di posisi
+  cursor. Klik field = sisip ke band terpilih. Factory di
+  `lib/report-component-factory.ts` (`makeBoundText`, `resolveTargetBand`,
+  `MM_TO_PX` — sumber tunggal skala mm→px, dipakai canvas+overlay+preview).
+- **Toolbar komponen terpusat** di atas canvas (Text/Garis/Gambar) — gantikan
+  chip `T/—/IMG` per-gutter band. Gutter band kini hanya identitas + reorder/hapus.
+- **Resize handle** 8-arah pada komponen terpilih (line = 2 handle horizontal);
+  drag pakai update `transient` (tak menambah history per-frame).
+- **Undo/redo**: `past`/`future` di `DesignerState` (limit 50), tombol toolbar +
+  Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y; Ctrl+S simpan. Operasi transient (drag/resize)
+  snapshot sekali via `PUSH_HISTORY` saat mousedown.
+
+File: `report-store.ts` (history `commit()`), `report-types.ts` (state baru),
+organism `report-designer/` dipecah: `designer-canvas` (shell+toolbar),
+`band-row`, `component-overlay`, `component-toolbar`, `field-palette`. Semua < 400
+baris. Catatan: HTML5 DnD dipakai di sini (palette→canvas freeform) — di luar
+larangan §2.14 yang khusus tab-strip/sortable list.

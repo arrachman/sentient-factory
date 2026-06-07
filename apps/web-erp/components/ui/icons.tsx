@@ -223,6 +223,18 @@ const ICON_PATHS = {
       <path d="M8 5v3.5l2.5 1.5" />
     </>
   ),
+  undo: (
+    <>
+      <path d="M3 7h6.5a3.5 3.5 0 0 1 0 7H6" />
+      <path d="M5.5 4 3 7l2.5 3" />
+    </>
+  ),
+  redo: (
+    <>
+      <path d="M13 7H6.5a3.5 3.5 0 0 0 0 7H10" />
+      <path d="M10.5 4 13 7l-2.5 3" />
+    </>
+  ),
   info: (
     <>
       <circle cx="8" cy="8" r="6" />

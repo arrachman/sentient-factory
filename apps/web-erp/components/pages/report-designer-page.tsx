@@ -4,11 +4,11 @@
  * Report Designer (/admin/report-designer).
  * Dua mode:
  * - listMode=true  → daftar template
- * - listMode=false → editor designer (canvas + data sources + properties)
- * Arsitektur: multi-panel Stimulsoft-like.
- * Left panel: Data Sources (SQL query editor + test).
- * Center:     Canvas/artboard (bands + components drag).
- * Right:      Properties (selected band/component).
+ * - listMode=false → editor designer
+ * Arsitektur: 3 dock simultan + preview split (Stimulsoft-like).
+ * Left dock  : tab Data Sources (SQL editor) / Fields (palette kolom, drag-to-bind). Collapsible.
+ * Center     : Canvas/artboard (bands + components). Preview split bisa dibuka di kanannya.
+ * Right dock : Properties (band/komponen terpilih). Collapsible.
  */
 
 import * as React from 'react';
@@ -19,16 +19,43 @@ import type { RptTemplate } from '@/lib/report-types';
 import { ReportDesignerListPage } from './report-designer-list-page';
 import { DesignerToolbar } from '@/components/organisms/report-designer/designer-toolbar';
 import { DataSourcePanel } from '@/components/organisms/report-designer/datasource-panel';
+import { FieldPalette } from '@/components/organisms/report-designer/field-palette';
 import { DesignerCanvas } from '@/components/organisms/report-designer/designer-canvas';
 import { PropertiesPanel } from '@/components/organisms/report-designer/properties-panel';
 import { PreviewPanel } from '@/components/organisms/report-designer/preview-panel';
+import { Icon } from '@/components/ui/icons';
+
+/** Schema kolom hasil Test Query per data-source alias — dibagi ke FieldPalette. */
+export type DsSchemas = Record<string, string[]>;
 
 export function ReportDesignerPage() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [templateName, setTemplateName] = React.useState('');
   const [loadingTemplate, setLoadingTemplate] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [schemas, setSchemas] = React.useState<DsSchemas>({});
   const [state, dispatch] = React.useReducer(designerReducer, INITIAL_STATE);
+
+  const handleSaveRef = React.useRef<(() => void) | null>(null);
+
+  const setSchema = React.useCallback((alias: string, columns: string[]) => {
+    setSchemas(prev => ({ ...prev, [alias]: columns }));
+  }, []);
+
+  // Keyboard: Ctrl/Cmd+Z undo, Ctrl+Shift+Z / Ctrl+Y redo, Ctrl+S save.
+  React.useEffect(() => {
+    if (!editingId) return;
+    function onKey(e: KeyboardEvent) {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const k = e.key.toLowerCase();
+      if (k === 'z') { e.preventDefault(); dispatch({ type: e.shiftKey ? 'REDO' : 'UNDO' }); }
+      else if (k === 'y') { e.preventDefault(); dispatch({ type: 'REDO' }); }
+      else if (k === 's') { e.preventDefault(); handleSaveRef.current?.(); }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [editingId]);
 
   async function openDesigner(id: string) {
     setLoadingTemplate(true);
@@ -38,8 +65,8 @@ export function ReportDesignerPage() {
       setTemplateName(rec.name);
       const tmpl = rec.templateJson as unknown as RptTemplate;
       dispatch({ type: 'SET_TEMPLATE', template: tmpl });
-    } catch (e: any) {
-      notify(`Gagal memuat template: ${e.message}`, 'danger');
+    } catch (e) {
+      notify(`Gagal memuat template: ${e instanceof Error ? e.message : String(e)}`, 'danger');
       setEditingId(null);
     } finally {
       setLoadingTemplate(false);
@@ -53,12 +80,14 @@ export function ReportDesignerPage() {
       await updateReportTemplate(editingId, { templateJson: state.template as unknown as Record<string, unknown> });
       dispatch({ type: 'MARK_CLEAN' });
       notify('Template disimpan', 'success');
-    } catch (e: any) {
-      notify(e.message, 'danger');
+    } catch (e) {
+      notify(e instanceof Error ? e.message : String(e), 'danger');
     } finally {
       setSaving(false);
     }
   }
+  // Sinkronkan ref di luar render agar handler keyboard selalu lihat versi terbaru.
+  React.useEffect(() => { handleSaveRef.current = handleSave; });
 
   // List mode
   if (!editingId) {
@@ -74,7 +103,7 @@ export function ReportDesignerPage() {
     );
   }
 
-  // Designer mode — 3-panel layout
+  // Designer mode — 3 dock simultan + preview split
   return (
     <div className="flex flex-col h-full overflow-hidden" style={{ background: 'var(--bg-base)' }}>
       <DesignerToolbar
@@ -87,24 +116,54 @@ export function ReportDesignerPage() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left panel: Data Sources */}
+        {/* Left dock: tab Data / Fields, collapsible */}
         <div
           className="border-r border-[var(--border)] bg-[var(--bg-card)] overflow-hidden flex flex-col"
-          style={{ width: state.activePanel === 'dataSources' ? 380 : 0, transition: 'width 0.15s', minWidth: 0 }}
+          style={{ width: state.leftOpen ? 380 : 0, transition: 'width 0.15s', minWidth: 0 }}
         >
-          {state.activePanel === 'dataSources' && (
-            <DataSourcePanel
-              dataSources={state.template.dataSources}
-              dispatch={dispatch}
-            />
+          {state.leftOpen && (
+            <>
+              <div className="flex shrink-0 border-b border-[var(--border)]">
+                {(['data', 'fields'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => dispatch({ type: 'SET_LEFT_TAB', tab })}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs cursor-pointer transition-colors ${
+                      state.leftTab === tab
+                        ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] font-semibold'
+                        : 'text-[var(--fg-muted)] hover:bg-[var(--bg-hover)]'
+                    }`}
+                  >
+                    <Icon name={tab === 'data' ? 'database' : 'layers'} size={12} />
+                    {tab === 'data' ? 'Data Sources' : 'Fields'}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-hidden">
+                {state.leftTab === 'data' ? (
+                  <DataSourcePanel
+                    dataSources={state.template.dataSources}
+                    dispatch={dispatch}
+                    onSchema={setSchema}
+                  />
+                ) : (
+                  <FieldPalette
+                    dataSources={state.template.dataSources}
+                    schemas={schemas}
+                    selection={state.selection}
+                    bands={state.template.bands}
+                    onSchema={setSchema}
+                    dispatch={dispatch}
+                  />
+                )}
+              </div>
+            </>
           )}
         </div>
 
-        {/* Center: Canvas or Preview */}
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {state.activePanel === 'preview' ? (
-            <PreviewPanel template={state.template} />
-          ) : (
+        {/* Center: Canvas (+ Preview split bila dibuka) */}
+        <div className="flex-1 overflow-hidden flex">
+          <div className="flex-1 overflow-hidden flex flex-col min-w-0">
             <DesignerCanvas
               bands={state.template.bands}
               dataSources={state.template.dataSources}
@@ -112,15 +171,29 @@ export function ReportDesignerPage() {
               zoom={state.zoom}
               dispatch={dispatch}
             />
+          </div>
+          {state.previewOpen && (
+            <div className="flex-1 overflow-hidden flex flex-col min-w-0 border-l border-[var(--border)]">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--border)] bg-[var(--bg-card)] shrink-0">
+                <span className="text-xs font-semibold text-[var(--fg-muted)] uppercase tracking-wide">Preview</span>
+                <button onClick={() => dispatch({ type: 'TOGGLE_PREVIEW', open: false })}
+                  className="text-[var(--fg-muted)] hover:text-[var(--fg)] cursor-pointer" title="Tutup preview">
+                  <Icon name="x" size={14} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <PreviewPanel template={state.template} />
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Right panel: Properties */}
+        {/* Right dock: Properties, collapsible */}
         <div
           className="border-l border-[var(--border)] bg-[var(--bg-card)] overflow-hidden flex flex-col"
-          style={{ width: state.activePanel === 'bands' ? 240 : 0, transition: 'width 0.15s', minWidth: 0 }}
+          style={{ width: state.rightOpen ? 260 : 0, transition: 'width 0.15s', minWidth: 0 }}
         >
-          {state.activePanel === 'bands' && (
+          {state.rightOpen && (
             <div className="overflow-y-auto flex-1">
               <div className="px-3 py-2 border-b border-[var(--border)] flex items-center">
                 <span className="text-xs font-semibold text-[var(--fg-muted)] uppercase tracking-wide">Properti</span>

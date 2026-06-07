@@ -132,12 +132,22 @@ export interface DesignerSelection {
   componentId?: string;
 }
 
+/** Tab di dock kiri: editor data source vs palette field hasil query. */
+export type LeftTab = 'data' | 'fields';
+
 export interface DesignerState {
   template: RptTemplate;
   selection: DesignerSelection;
   isDirty: boolean;
   zoom: number;
-  activePanel: 'dataSources' | 'bands' | 'preview';
+  /** Dock kiri (Data/Fields), kanan (Properties), dan preview split — semua simultan & collapsible. */
+  leftTab: LeftTab;
+  leftOpen: boolean;
+  rightOpen: boolean;
+  previewOpen: boolean;
+  /** Undo/redo history — snapshot template sebelum tiap mutasi (dibatasi HISTORY_LIMIT). */
+  past: RptTemplate[];
+  future: RptTemplate[];
 }
 
 export type DesignerAction =
@@ -146,17 +156,24 @@ export type DesignerAction =
   | { type: 'SELECT_COMPONENT'; bandId: string; componentId: string }
   | { type: 'DESELECT' }
   | { type: 'ADD_BAND'; band: RptBand }
-  | { type: 'UPDATE_BAND'; bandId: string; patch: Partial<RptBand> }
+  | { type: 'UPDATE_BAND'; bandId: string; patch: Partial<RptBand>; transient?: boolean }
   | { type: 'REMOVE_BAND'; bandId: string }
   | { type: 'MOVE_BAND'; bandId: string; direction: 'up' | 'down' }
   | { type: 'ADD_COMPONENT'; bandId: string; component: RptComponent }
-  | { type: 'UPDATE_COMPONENT'; bandId: string; componentId: string; patch: Partial<RptComponent> }
+  | { type: 'UPDATE_COMPONENT'; bandId: string; componentId: string; patch: Partial<RptComponent>; transient?: boolean }
   | { type: 'REMOVE_COMPONENT'; bandId: string; componentId: string }
   | { type: 'ADD_DATASOURCE'; ds: RptDataSource }
   | { type: 'UPDATE_DATASOURCE'; dsId: string; patch: Partial<RptDataSource> }
   | { type: 'REMOVE_DATASOURCE'; dsId: string }
   | { type: 'SET_ZOOM'; zoom: number }
-  | { type: 'SET_PANEL'; panel: DesignerState['activePanel'] }
+  | { type: 'SET_LEFT_TAB'; tab: LeftTab }
+  | { type: 'TOGGLE_LEFT'; open?: boolean }
+  | { type: 'TOGGLE_RIGHT'; open?: boolean }
+  | { type: 'TOGGLE_PREVIEW'; open?: boolean }
+  /** Snapshot manual sebelum operasi transient (mis. drag) agar 1 drag = 1 undo step. */
+  | { type: 'PUSH_HISTORY' }
+  | { type: 'UNDO' }
+  | { type: 'REDO' }
   | { type: 'MARK_CLEAN' };
 
 // ── API response types ───────────────────────────────────────────────────────

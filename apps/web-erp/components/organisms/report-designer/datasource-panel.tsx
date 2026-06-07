@@ -3,13 +3,14 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icons';
-import { notify } from '@/lib/feedback';
 import { executeSqlQuery } from '@/lib/api/reports';
 import type { DesignerAction, RptDataSource, SqlQueryResult } from '@/lib/report-types';
 
 interface Props {
   dataSources: RptDataSource[];
   dispatch: React.Dispatch<DesignerAction>;
+  /** Publish kolom hasil Test Query agar tab Fields bisa drag-to-bind. */
+  onSchema?: (alias: string, columns: string[]) => void;
 }
 
 function genId() {
@@ -26,7 +27,7 @@ function blankDs(count: number): RptDataSource {
   };
 }
 
-export function DataSourcePanel({ dataSources, dispatch }: Props) {
+export function DataSourcePanel({ dataSources, dispatch, onSchema }: Props) {
   const [activeId, setActiveId] = React.useState<string | null>(dataSources[0]?.id ?? null);
   const [testResult, setTestResult] = React.useState<SqlQueryResult | null>(null);
   const [testError, setTestError] = React.useState<string | null>(null);
@@ -64,8 +65,9 @@ export function DataSourcePanel({ dataSources, dispatch }: Props) {
     try {
       const result = await executeSqlQuery(activeDs.sql, {}, 50);
       setTestResult(result);
-    } catch (e: any) {
-      setTestError(e.message);
+      if (result.columns?.length) onSchema?.(activeDs.alias, result.columns);
+    } catch (e) {
+      setTestError(e instanceof Error ? e.message : String(e));
     } finally {
       setTesting(false);
     }
@@ -73,9 +75,9 @@ export function DataSourcePanel({ dataSources, dispatch }: Props) {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* DS list */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
-        <span className="text-xs font-semibold text-[var(--fg-muted)] uppercase tracking-wide">Data Sources</span>
+      {/* DS list toolbar */}
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--border)]">
+        <span className="text-[10px] font-medium text-[var(--fg-muted)] uppercase tracking-wide">Daftar query</span>
         <button onClick={handleAdd} className="text-[var(--accent)] hover:opacity-70 cursor-pointer" title="Tambah data source">
           <Icon name="plus" size={14} />
         </button>
