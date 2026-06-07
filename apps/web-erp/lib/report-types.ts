@@ -129,11 +129,17 @@ export interface RptTemplate {
 export interface DesignerSelection {
   type: 'band' | 'component' | null;
   bandId?: string;
+  /** Komponen aktif (sumber properti detail). */
   componentId?: string;
+  /** Semua komponen terpilih (multi-select, dalam satu band). Termasuk componentId. */
+  componentIds?: string[];
 }
 
 /** Tab di dock kiri: editor data source vs palette field hasil query. */
 export type LeftTab = 'data' | 'fields';
+
+/** Tab editor properti komponen. */
+export type PropTab = 'layout' | 'style' | 'data';
 
 export interface DesignerState {
   template: RptTemplate;

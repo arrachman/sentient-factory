@@ -42,6 +42,12 @@ export function ReportDesignerPage() {
     setSchemas(prev => ({ ...prev, [alias]: columns }));
   }, []);
 
+  // Gabungan unik semua kolom hasil query → autocomplete/picker di Properties.
+  const allColumns = React.useMemo(
+    () => Array.from(new Set(Object.values(schemas).flat())),
+    [schemas],
+  );
+
   // Keyboard: Ctrl/Cmd+Z undo, Ctrl+Shift+Z / Ctrl+Y redo, Ctrl+S save.
   React.useEffect(() => {
     if (!editingId) return;
@@ -201,7 +207,7 @@ export function ReportDesignerPage() {
               <PropertiesPanel
                 selection={state.selection}
                 bands={state.template.bands}
-                dataSources={state.template.dataSources}
+                columns={allColumns}
                 dispatch={dispatch}
               />
             </div>
