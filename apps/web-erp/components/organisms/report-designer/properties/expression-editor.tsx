@@ -108,7 +108,7 @@ export function ExpressionEditor({ value, onChange, columns, rows = 2 }: Props) 
         onClick={e => sync(e.currentTarget)}
         onKeyDown={onKeyDown}
         onBlur={() => setTimeout(() => setAc(null), 120)}
-        className="w-full border rounded px-2 py-1 text-xs font-mono resize-none bg-[var(--bg-card)]"
+        className="w-full border rounded px-2 py-1 text-sm font-mono resize-none bg-[var(--bg-card)]"
         placeholder="{field} · {{SUM(field)}} · teks bebas"
       />
 

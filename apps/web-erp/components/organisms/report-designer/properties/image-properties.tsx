@@ -38,9 +38,9 @@ export function ImageProperties({ band, comp, tab, columns, dispatch }: Props) {
     <div>
       <PropRow label="Nama">
         <input type="text" value={comp.name} onChange={e => p({ name: e.target.value })}
-          className="w-full border rounded px-2 py-0.5 text-xs bg-[var(--bg-card)]" />
+          className="w-full border rounded px-2 py-1 text-sm bg-[var(--bg-card)]" />
       </PropRow>
-      <div className="text-[11px] text-[var(--fg-muted)] mt-1 mb-0.5">Sumber (URL / expression)</div>
+      <div className="text-xs text-[var(--fg-muted)] mt-1.5 mb-0.5">Sumber (URL / expression)</div>
       <ExpressionEditor value={comp.src} onChange={v => p({ src: v })} columns={columns} rows={1} />
       <p className="text-[10px] text-[var(--fg-muted)] mt-1">Mis. <code>{'{company.logoUrl}'}</code> atau URL gambar langsung.</p>
     </div>

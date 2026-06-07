@@ -5,14 +5,14 @@ import * as React from 'react';
 export function PropRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2 py-1">
-      <span className="text-[11px] text-[var(--fg-muted)] w-24 shrink-0 pt-1">{label}</span>
+      <span className="text-xs text-[var(--fg-muted)] w-24 shrink-0 pt-1">{label}</span>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }
 
 export function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <div className="text-[10px] font-semibold text-[var(--fg-muted)] uppercase tracking-wide mb-1 mt-2">{children}</div>;
+  return <div className="text-[11px] font-semibold text-[var(--fg-muted)] uppercase tracking-wide mb-1 mt-2">{children}</div>;
 }
 
 export function NumInput({ value, onChange, min, step = 1 }: {
@@ -25,7 +25,7 @@ export function NumInput({ value, onChange, min, step = 1 }: {
       min={min}
       step={step}
       onChange={e => onChange(parseFloat(e.target.value) || 0)}
-      className="w-full border rounded px-2 py-0.5 text-xs bg-[var(--bg-card)] font-mono"
+      className="w-full border rounded px-2 py-1 text-sm bg-[var(--bg-card)] font-mono"
     />
   );
 }
@@ -36,7 +36,7 @@ export function TxtInput({ value, onChange, mono }: { value: string; onChange: (
       type="text"
       value={value}
       onChange={e => onChange(e.target.value)}
-      className={`w-full border rounded px-2 py-0.5 text-xs bg-[var(--bg-card)] ${mono ? 'font-mono' : ''}`}
+      className={`w-full border rounded px-2 py-1 text-sm bg-[var(--bg-card)] ${mono ? 'font-mono' : ''}`}
     />
   );
 }
@@ -45,7 +45,7 @@ export function ChkInput({ checked, onChange, label }: { checked: boolean; onCha
   return (
     <label className="flex items-center gap-1.5 cursor-pointer">
       <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} />
-      <span className="text-xs">{label}</span>
+      <span className="text-sm">{label}</span>
     </label>
   );
 }
@@ -61,7 +61,7 @@ export function SelectInput<T extends string | number>({ value, options, onChang
         const opt = options.find(o => String(o.value) === raw);
         if (opt) onChange(opt.value);
       }}
-      className="w-full border rounded px-2 py-0.5 text-xs bg-[var(--bg-card)] cursor-pointer"
+      className="w-full border rounded px-2 py-1 text-sm bg-[var(--bg-card)] cursor-pointer"
     >
       {options.map(o => <option key={String(o.value)} value={String(o.value)}>{o.label}</option>)}
     </select>

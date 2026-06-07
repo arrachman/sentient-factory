@@ -12,6 +12,9 @@ import type {
 /** 1mm @ 96dpi. Sumber tunggal skala mm→px (canvas, overlay, preview). */
 export const MM_TO_PX = 3.7795275591;
 
+/** Lebar gutter label band di canvas (px) — dipakai band-row & ruler/artboard. */
+export const GUTTER_W = 150;
+
 export function genCompId(): string {
   return `cmp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 5)}`;
 }

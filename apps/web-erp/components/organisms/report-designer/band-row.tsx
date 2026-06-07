@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icons';
 import { ComponentOverlay } from './component-overlay';
 import {
   FIELD_DND_MIME,
+  GUTTER_W,
   MM_TO_PX,
   makeBoundText,
   type FieldDragPayload,
@@ -111,25 +112,25 @@ export function BandRow({ band, index, totalBands, selection, zoom, dispatch, pa
     <div className="flex items-stretch select-none">
       {/* Gutter: identitas band + reorder/hapus (tambah komponen pindah ke toolbar atas) */}
       <div
-        className={`flex flex-col justify-between shrink-0 px-2 py-1 cursor-pointer border-r border-[var(--border)] ${isBandSelected ? 'bg-[var(--bg-selected)]' : 'bg-[var(--bg-muted)] hover:bg-[var(--bg-hover)]'}`}
-        style={{ width: 120, minHeight: bandHeightPx }}
+        className={`flex flex-col justify-between shrink-0 px-2.5 py-1.5 cursor-pointer border-r border-[var(--border)] ${isBandSelected ? 'bg-[var(--bg-selected)]' : 'bg-[var(--bg-muted)] hover:bg-[var(--bg-hover)]'}`}
+        style={{ width: GUTTER_W, minHeight: bandHeightPx }}
         onClick={e => { e.stopPropagation(); dispatch({ type: 'SELECT_BAND', bandId: band.id }); }}
       >
-        <span className="text-[9px] font-semibold text-[var(--fg-muted)] uppercase tracking-wide leading-tight">
+        <span className="text-[11px] font-semibold text-[var(--fg-muted)] uppercase tracking-wide leading-tight">
           {bandLabel(band)}
         </span>
-        <div className="flex gap-1 mt-1">
+        <div className="flex gap-1.5 mt-1.5">
           <button onClick={e => { e.stopPropagation(); dispatch({ type: 'MOVE_BAND', bandId: band.id, direction: 'up' }); }}
             disabled={index === 0} className="opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer" title="Naik">
-            <Icon name="chevup" size={10} />
+            <Icon name="chevup" size={13} />
           </button>
           <button onClick={e => { e.stopPropagation(); dispatch({ type: 'MOVE_BAND', bandId: band.id, direction: 'down' }); }}
             disabled={index === totalBands - 1} className="opacity-60 hover:opacity-100 disabled:opacity-20 cursor-pointer" title="Turun">
-            <Icon name="chevdown" size={10} />
+            <Icon name="chevdown" size={13} />
           </button>
           <button onClick={e => { e.stopPropagation(); dispatch({ type: 'REMOVE_BAND', bandId: band.id }); }}
             className="opacity-60 hover:text-red-500 hover:opacity-100 cursor-pointer ml-auto" title="Hapus band">
-            <Icon name="trash" size={10} />
+            <Icon name="trash" size={13} />
           </button>
         </div>
       </div>
@@ -180,7 +181,7 @@ export function BandRow({ band, index, totalBands, selection, zoom, dispatch, pa
         )}
 
         {band.components.length === 0 && !dropActive && (
-          <div className="absolute inset-0 flex items-center justify-center text-[9px] text-[var(--fg-muted)] italic pointer-events-none">
+          <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[var(--fg-muted)] italic pointer-events-none">
             seret field ke sini, atau pakai toolbar komponen di atas
           </div>
         )}

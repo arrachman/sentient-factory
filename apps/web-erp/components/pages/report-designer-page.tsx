@@ -118,7 +118,7 @@ export function ReportDesignerPage() {
                   <button
                     key={tab}
                     onClick={() => dispatch({ type: 'SET_LEFT_TAB', tab })}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs cursor-pointer transition-colors ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm cursor-pointer transition-colors ${
                       state.leftTab === tab
                         ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] font-semibold'
                         : 'text-[var(--fg-muted)] hover:bg-[var(--bg-hover)]'
@@ -181,7 +181,7 @@ export function ReportDesignerPage() {
         {/* Right dock: Properties, collapsible */}
         <div
           className="border-l border-[var(--border)] bg-[var(--bg-card)] overflow-hidden flex flex-col"
-          style={{ width: state.rightOpen ? 260 : 0, transition: 'width 0.15s', minWidth: 0 }}
+          style={{ width: state.rightOpen ? 290 : 0, transition: 'width 0.15s', minWidth: 0 }}
         >
           {state.rightOpen && (
             <div className="overflow-y-auto flex-1">

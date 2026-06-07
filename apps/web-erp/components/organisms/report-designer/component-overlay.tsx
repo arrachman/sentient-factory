@@ -121,7 +121,7 @@ function OverlayContent({ comp, zoom }: { comp: RptComponent; zoom: number }) {
   if (comp.type === 'text') {
     return (
       <div className="w-full h-full overflow-hidden px-0.5 flex items-center" style={{
-        fontSize: (comp.style.fontSize ?? 9) * zoom * 0.8,
+        fontSize: (comp.style.fontSize ?? 9) * zoom,
         fontWeight: comp.style.bold ? 'bold' : 'normal',
         fontStyle: comp.style.italic ? 'italic' : 'normal',
         color: comp.style.color ?? '#000',
@@ -139,5 +139,5 @@ function OverlayContent({ comp, zoom }: { comp: RptComponent; zoom: number }) {
       }} />
     );
   }
-  return <div className="w-full h-full flex items-center justify-center text-[8px] text-[var(--fg-muted)] border-2 border-dashed border-[var(--border)]">IMG</div>;
+  return <div className="w-full h-full flex items-center justify-center text-[10px] text-[var(--fg-muted)] border-2 border-dashed border-[var(--border)]">IMG</div>;
 }

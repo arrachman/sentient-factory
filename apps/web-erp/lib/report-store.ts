@@ -27,7 +27,7 @@ export const INITIAL_STATE: DesignerState = {
   template: buildDefaultTemplate(),
   selection: { type: null },
   isDirty: false,
-  zoom: 1,
+  zoom: 1.3,
   leftTab: 'data',
   leftOpen: true,
   rightOpen: true,

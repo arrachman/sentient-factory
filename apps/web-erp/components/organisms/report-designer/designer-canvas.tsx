@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
-import { MM_TO_PX } from '@/lib/report-component-factory';
+import { GUTTER_W, MM_TO_PX } from '@/lib/report-component-factory';
 import { BandRow } from './band-row';
 import { ComponentToolbar } from './component-toolbar';
 import { AlignToolbar } from './align-toolbar';
@@ -110,20 +110,20 @@ export function DesignerCanvas({ bands, selection, zoom, dispatch }: Props) {
       </div>
 
       {/* Artboard */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-10">
         <div
           className="shadow-lg mx-auto"
-          style={{ width: pageWidthMm * zoom * MM_TO_PX + 120, background: 'white', border: '1px solid var(--border)' }}
+          style={{ width: pageWidthMm * zoom * MM_TO_PX + GUTTER_W, background: 'white', border: '1px solid var(--border)' }}
           onClick={() => dispatch({ type: 'DESELECT' })}
         >
           {/* Ruler */}
           <div className="flex sticky top-0 z-20 bg-[var(--bg-muted)] border-b border-[var(--border)]">
-            <div style={{ width: 120 }} className="shrink-0" />
-            <div className="relative overflow-hidden" style={{ width: pageWidthMm * zoom * MM_TO_PX, height: 16 }}>
+            <div style={{ width: GUTTER_W }} className="shrink-0" />
+            <div className="relative overflow-hidden" style={{ width: pageWidthMm * zoom * MM_TO_PX, height: 18 }}>
               {Array.from({ length: Math.floor(pageWidthMm / 10) + 1 }).map((_, i) => (
                 <div key={i} className="absolute top-0 flex flex-col items-center" style={{ left: i * 10 * zoom * MM_TO_PX }}>
-                  <div style={{ width: 1, height: 4, background: '#999' }} />
-                  <span style={{ fontSize: 7, color: '#999', marginTop: 1 }}>{i * 10}</span>
+                  <div style={{ width: 1, height: 5, background: '#999' }} />
+                  <span style={{ fontSize: 9, color: '#999', marginTop: 1 }}>{i * 10}</span>
                 </div>
               ))}
             </div>

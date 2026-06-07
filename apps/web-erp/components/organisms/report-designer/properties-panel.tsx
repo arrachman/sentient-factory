@@ -68,7 +68,7 @@ export function PropertiesPanel({ selection, bands, columns, dispatch }: Props) 
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 px-2 py-1.5 text-xs cursor-pointer transition-colors ${
+            className={`flex-1 px-2 py-2 text-sm cursor-pointer transition-colors ${
               tab === t.key
                 ? 'text-[var(--accent)] border-b-2 border-[var(--accent)] font-semibold'
                 : 'text-[var(--fg-muted)] hover:bg-[var(--bg-hover)]'
@@ -80,7 +80,7 @@ export function PropertiesPanel({ selection, bands, columns, dispatch }: Props) 
       </div>
 
       <div className="p-3 overflow-y-auto">
-        <div className="text-[10px] font-semibold text-[var(--fg-muted)] uppercase tracking-wide mb-2">{comp.type}</div>
+        <div className="text-[11px] font-semibold text-[var(--fg-muted)] uppercase tracking-wide mb-2">{comp.type}</div>
         {comp.type === 'text' && <TextProperties band={band} comp={comp} tab={tab} columns={columns} dispatch={dispatch} />}
         {comp.type === 'line' && <LineProperties band={band} comp={comp} tab={tab} dispatch={dispatch} />}
         {comp.type === 'image' && <ImageProperties band={band} comp={comp} tab={tab} columns={columns} dispatch={dispatch} />}
