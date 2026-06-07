@@ -7,6 +7,10 @@
 export type ApprovalStatus =
   | 'DRAFT'
   | 'NEED_APPROVE'
+  | 'APPROVE_1'
+  | 'APPROVE_2'
+  | 'APPROVE_3'
+  | 'APPROVE_4'
   | 'APPROVED'
   | 'REJECTED'
   | 'POSTED'
@@ -16,15 +20,18 @@ export type ApprovalStatus =
 type BadgeVariant = 'default' | 'primary' | 'success' | 'warn' | 'danger' | 'info';
 
 const VARIANT_MAP: Record<string, BadgeVariant> = {
-  // Canonical enum keys (from backend / DB) — matches ErpDocumentStatus (7 values)
   DRAFT: 'default',
   NEED_APPROVE: 'warn',
+  APPROVE_1: 'warn',
+  APPROVE_2: 'warn',
+  APPROVE_3: 'warn',
+  APPROVE_4: 'warn',
   APPROVED: 'success',
   REJECTED: 'danger',
   POSTED: 'info',
   VOID: 'default',
   CANCELLED: 'danger',
-  // Legacy display-string aliases (backwards compat with string-based status)
+  // Legacy display-string aliases
   Draft: 'default',
   'Need Approve': 'warn',
   Approved: 'success',
@@ -35,6 +42,10 @@ const VARIANT_MAP: Record<string, BadgeVariant> = {
 const LABEL_MAP: Record<string, string> = {
   DRAFT: 'Draft',
   NEED_APPROVE: 'Need Approve',
+  APPROVE_1: 'Approve 1',
+  APPROVE_2: 'Approve 2',
+  APPROVE_3: 'Approve 3',
+  APPROVE_4: 'Approve 4',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
   POSTED: 'Posted',
@@ -51,6 +62,10 @@ export const DOC_STATUS_FILTER_OPTIONS: ReadonlyArray<{ value: string; label: st
   { value: '', label: 'Semua Status' },
   { value: 'DRAFT', label: 'Draft' },
   { value: 'NEED_APPROVE', label: 'Need Approve' },
+  { value: 'APPROVE_1', label: 'Approve 1' },
+  { value: 'APPROVE_2', label: 'Approve 2' },
+  { value: 'APPROVE_3', label: 'Approve 3' },
+  { value: 'APPROVE_4', label: 'Approve 4' },
   { value: 'APPROVED', label: 'Approved' },
   { value: 'REJECTED', label: 'Rejected' },
   { value: 'POSTED', label: 'Posted' },

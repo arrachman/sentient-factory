@@ -10,7 +10,11 @@ import {
 } from 'class-validator';
 
 /** Creation statuses available for selection when making a new document. */
-export const CREATION_STATUSES = ['DRAFT', 'NEED_APPROVE', 'APPROVED'] as const;
+export const CREATION_STATUSES = [
+  'DRAFT', 'NEED_APPROVE',
+  'APPROVE_1', 'APPROVE_2', 'APPROVE_3', 'APPROVE_4',
+  'APPROVED', 'REJECTED',
+] as const;
 export type CreationStatus = (typeof CREATION_STATUSES)[number];
 
 export class CreateRoleDocPolicyDto {

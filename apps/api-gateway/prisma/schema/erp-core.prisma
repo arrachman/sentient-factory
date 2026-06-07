@@ -295,7 +295,7 @@ model ErpRoleMenu {
 }
 
 // Statuses user boleh pilih saat membuat dokumen baru, per role per document type.
-// allowedStatuses = subset dari ['DRAFT','NEED_APPROVE','APPROVED'].
+// allowedStatuses = subset dari CREATION_STATUSES (DRAFT/NEED_APPROVE/APPROVE_1..4/APPROVED/REJECTED).
 // Multi-role user → union semua rows roleId-nya.
 model ErpRoleDocPolicy {
   id               BigInt    @id @default(autoincrement())

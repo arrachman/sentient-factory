@@ -85,11 +85,17 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Draft', NEED_APPROVE: 'Need Approve', APPROVED: 'Approved',
+  DRAFT: 'Draft', NEED_APPROVE: 'Need Approve',
+  APPROVE_1: 'Approve 1', APPROVE_2: 'Approve 2',
+  APPROVE_3: 'Approve 3', APPROVE_4: 'Approve 4',
+  APPROVED: 'Approved', REJECTED: 'Rejected',
 };
 
-const STATUS_VARIANTS: Record<string, 'default' | 'warn' | 'success'> = {
-  DRAFT: 'default', NEED_APPROVE: 'warn', APPROVED: 'success',
+const STATUS_VARIANTS: Record<string, 'default' | 'warn' | 'success' | 'danger'> = {
+  DRAFT: 'default',
+  NEED_APPROVE: 'warn', APPROVE_1: 'warn', APPROVE_2: 'warn',
+  APPROVE_3: 'warn', APPROVE_4: 'warn',
+  APPROVED: 'success', REJECTED: 'danger',
 };
 
 // ─── Form helpers ─────────────────────────────────────────────────────────────
