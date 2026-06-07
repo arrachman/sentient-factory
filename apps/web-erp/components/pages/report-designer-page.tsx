@@ -23,6 +23,7 @@ import { FieldPalette } from '@/components/organisms/report-designer/field-palet
 import { DesignerCanvas } from '@/components/organisms/report-designer/designer-canvas';
 import { PropertiesPanel } from '@/components/organisms/report-designer/properties-panel';
 import { PreviewPanel } from '@/components/organisms/report-designer/preview-panel';
+import { useDesignerShortcuts } from '@/lib/use-designer-shortcuts';
 import { Icon } from '@/components/ui/icons';
 
 /** Schema kolom hasil Test Query per data-source alias — dibagi ke FieldPalette. */
@@ -36,8 +37,6 @@ export function ReportDesignerPage() {
   const [schemas, setSchemas] = React.useState<DsSchemas>({});
   const [state, dispatch] = React.useReducer(designerReducer, INITIAL_STATE);
 
-  const handleSaveRef = React.useRef<(() => void) | null>(null);
-
   const setSchema = React.useCallback((alias: string, columns: string[]) => {
     setSchemas(prev => ({ ...prev, [alias]: columns }));
   }, []);
@@ -48,20 +47,7 @@ export function ReportDesignerPage() {
     [schemas],
   );
 
-  // Keyboard: Ctrl/Cmd+Z undo, Ctrl+Shift+Z / Ctrl+Y redo, Ctrl+S save.
-  React.useEffect(() => {
-    if (!editingId) return;
-    function onKey(e: KeyboardEvent) {
-      const mod = e.ctrlKey || e.metaKey;
-      if (!mod) return;
-      const k = e.key.toLowerCase();
-      if (k === 'z') { e.preventDefault(); dispatch({ type: e.shiftKey ? 'REDO' : 'UNDO' }); }
-      else if (k === 'y') { e.preventDefault(); dispatch({ type: 'REDO' }); }
-      else if (k === 's') { e.preventDefault(); handleSaveRef.current?.(); }
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [editingId]);
+  useDesignerShortcuts({ active: !!editingId, state, dispatch, onSave: () => handleSave() });
 
   async function openDesigner(id: string) {
     setLoadingTemplate(true);
@@ -92,8 +78,6 @@ export function ReportDesignerPage() {
       setSaving(false);
     }
   }
-  // Sinkronkan ref di luar render agar handler keyboard selalu lihat versi terbaru.
-  React.useEffect(() => { handleSaveRef.current = handleSave; });
 
   // List mode
   if (!editingId) {

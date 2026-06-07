@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/icons';
 import { MM_TO_PX } from '@/lib/report-component-factory';
 import { BandRow } from './band-row';
 import { ComponentToolbar } from './component-toolbar';
+import { AlignToolbar } from './align-toolbar';
 import type {
   BandType,
   DesignerAction,
@@ -48,6 +49,15 @@ export function DesignerCanvas({ bands, selection, zoom, dispatch }: Props) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Komponen terpilih (untuk align toolbar saat multi-select dalam satu band).
+  const selectedComps = React.useMemo(() => {
+    if (selection.type !== 'component' || !selection.bandId) return [];
+    const b = bands.find(x => x.id === selection.bandId);
+    if (!b) return [];
+    const ids = new Set(selection.componentIds ?? (selection.componentId ? [selection.componentId] : []));
+    return b.components.filter(c => ids.has(c.id));
+  }, [selection, bands]);
+
   function addBand(preset: typeof BAND_PRESETS[0]) {
     const band: RptBand = { id: genBandId(), type: preset.type, height: 8, components: [], ...preset.defaults };
     dispatch({ type: 'ADD_BAND', band });
@@ -83,7 +93,11 @@ export function DesignerCanvas({ bands, selection, zoom, dispatch }: Props) {
         </div>
 
         <div className="w-px h-5 bg-[var(--border)]" />
-        <ComponentToolbar bands={bands} selection={selection} dispatch={dispatch} />
+        {selectedComps.length > 1 && selection.bandId ? (
+          <AlignToolbar comps={selectedComps} bandId={selection.bandId} dispatch={dispatch} />
+        ) : (
+          <ComponentToolbar bands={bands} selection={selection} dispatch={dispatch} />
+        )}
 
         <div className="flex items-center gap-1 ml-auto">
           <span className="text-xs text-[var(--fg-muted)]">-</span>

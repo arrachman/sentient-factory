@@ -166,8 +166,16 @@ export type DesignerAction =
   | { type: 'REMOVE_BAND'; bandId: string }
   | { type: 'MOVE_BAND'; bandId: string; direction: 'up' | 'down' }
   | { type: 'ADD_COMPONENT'; bandId: string; component: RptComponent }
+  | { type: 'ADD_COMPONENTS'; bandId: string; components: RptComponent[] }
   | { type: 'UPDATE_COMPONENT'; bandId: string; componentId: string; patch: Partial<RptComponent>; transient?: boolean }
+  /** Patch banyak komponen sekaligus (group move, align, equalize) = 1 undo step. */
+  | { type: 'PATCH_COMPONENTS'; bandId: string; patches: Array<{ id: string; patch: Partial<RptComponent> }>; transient?: boolean }
   | { type: 'REMOVE_COMPONENT'; bandId: string; componentId: string }
+  | { type: 'REMOVE_SELECTED' }
+  /** Tambah/kurangi komponen dari seleksi (shift/ctrl-click), dalam satu band. */
+  | { type: 'TOGGLE_COMPONENT'; bandId: string; componentId: string }
+  /** Set seleksi multi eksplisit (mis. setelah paste). */
+  | { type: 'SELECT_COMPONENTS'; bandId: string; componentIds: string[] }
   | { type: 'ADD_DATASOURCE'; ds: RptDataSource }
   | { type: 'UPDATE_DATASOURCE'; dsId: string; patch: Partial<RptDataSource> }
   | { type: 'REMOVE_DATASOURCE'; dsId: string }

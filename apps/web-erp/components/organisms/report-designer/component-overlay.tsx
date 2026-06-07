@@ -9,10 +9,15 @@ interface Props {
   comp: RptComponent;
   zoom: number;
   selected: boolean;
-  onSelect: () => void;
-  /** transient=true saat drag/resize berlangsung (tak menambah undo step). */
-  onUpdate: (patch: Partial<RptComponent>, transient?: boolean) => void;
+  /** Tampilkan handle resize (hanya saat seleksi tunggal). */
+  resizable: boolean;
+  onSelect: (additive: boolean) => void;
   onDragStart: () => void;
+  /** Delta drag (mm) dari titik mulai — band-row terapkan ke grup/tunggal. */
+  onDragDelta: (dx: number, dy: number) => void;
+  onDragEnd: () => void;
+  /** Resize komponen ini saja (transient saat berlangsung). */
+  onResize: (patch: Partial<RptComponent>, transient: boolean) => void;
   onRemove: () => void;
 }
 
@@ -31,21 +36,21 @@ const HANDLES: Array<{ h: Handle; cls: string; cursor: string }> = [
 
 const snap = (v: number) => Math.round(v * 2) / 2; // 0.5mm grid
 
-export function ComponentOverlay({ comp, zoom, selected, onSelect, onUpdate, onDragStart, onRemove }: Props) {
+export function ComponentOverlay({ comp, zoom, selected, resizable, onSelect, onDragStart, onDragDelta, onDragEnd, onResize, onRemove }: Props) {
   const scale = zoom * MM_TO_PX;
   const isLine = comp.type === 'line';
 
   function startDrag(e: React.MouseEvent) {
     e.stopPropagation();
-    onSelect();
+    const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+    if (additive) { onSelect(true); return; }
+    if (!selected) onSelect(false);
     onDragStart();
-    const start = { mx: e.clientX, my: e.clientY, x: comp.x, y: comp.y };
+    const start = { mx: e.clientX, my: e.clientY };
     function move(ev: MouseEvent) {
-      const dx = (ev.clientX - start.mx) / scale;
-      const dy = (ev.clientY - start.my) / scale;
-      onUpdate({ x: Math.max(0, snap(start.x + dx)), y: Math.max(0, snap(start.y + dy)) }, true);
+      onDragDelta((ev.clientX - start.mx) / scale, (ev.clientY - start.my) / scale);
     }
-    function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); }
+    function up() { onDragEnd(); document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); }
     document.addEventListener('mousemove', move);
     document.addEventListener('mouseup', up);
   }
@@ -53,7 +58,7 @@ export function ComponentOverlay({ comp, zoom, selected, onSelect, onUpdate, onD
   function startResize(e: React.MouseEvent, handle: Handle) {
     e.stopPropagation();
     e.preventDefault();
-    onSelect();
+    if (!selected) onSelect(false);
     onDragStart();
     const start = { mx: e.clientX, my: e.clientY, x: comp.x, y: comp.y, w: comp.width, h: comp.height };
     const minW = 2, minH = isLine ? 0 : 4;
@@ -65,7 +70,7 @@ export function ComponentOverlay({ comp, zoom, selected, onSelect, onUpdate, onD
       if (handle.includes('s')) h = Math.max(minH, snap(start.h + dy));
       if (handle.includes('w')) { const nx = Math.min(start.x + dx, start.x + start.w - minW); x = Math.max(0, snap(nx)); w = snap(start.w + (start.x - x)); }
       if (handle.includes('n')) { const ny = Math.min(start.y + dy, start.y + start.h - minH); y = Math.max(0, snap(ny)); h = snap(start.h + (start.y - y)); }
-      onUpdate({ x, y, width: w, height: h }, true);
+      onResize({ x, y, width: w, height: h }, true);
     }
     function up() { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); }
     document.addEventListener('mousemove', move);
@@ -88,7 +93,7 @@ export function ComponentOverlay({ comp, zoom, selected, onSelect, onUpdate, onD
   return (
     <div style={style} onMouseDown={startDrag} onClick={e => e.stopPropagation()} title={`${comp.type}: ${comp.name}`}>
       <OverlayContent comp={comp} zoom={zoom} />
-      {selected && (
+      {selected && resizable && (
         <>
           {HANDLES.filter(({ h }) => !isLine || h === 'e' || h === 'w').map(({ h, cls, cursor }) => (
             <span
@@ -98,13 +103,15 @@ export function ComponentOverlay({ comp, zoom, selected, onSelect, onUpdate, onD
               style={{ cursor }}
             />
           ))}
-          <button
-            onClick={e => { e.stopPropagation(); onRemove(); }}
-            style={{ position: 'absolute', top: -8, right: -8, zIndex: 25, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <Icon name="x" size={9} />
-          </button>
         </>
+      )}
+      {selected && (
+        <button
+          onClick={e => { e.stopPropagation(); onRemove(); }}
+          style={{ position: 'absolute', top: -8, right: -8, zIndex: 25, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
+          <Icon name="x" size={9} />
+        </button>
       )}
     </div>
   );

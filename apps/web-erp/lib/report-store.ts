@@ -75,7 +75,28 @@ export function designerReducer(state: DesignerState, action: DesignerAction): D
       return { ...state, selection: { type: 'band', bandId: action.bandId } };
 
     case 'SELECT_COMPONENT':
-      return { ...state, selection: { type: 'component', bandId: action.bandId, componentId: action.componentId } };
+      return { ...state, selection: { type: 'component', bandId: action.bandId, componentId: action.componentId, componentIds: [action.componentId] } };
+
+    case 'SELECT_COMPONENTS':
+      if (!action.componentIds.length) return { ...state, selection: { type: null } };
+      return {
+        ...state,
+        selection: {
+          type: 'component', bandId: action.bandId,
+          componentId: action.componentIds[action.componentIds.length - 1],
+          componentIds: action.componentIds,
+        },
+      };
+
+    case 'TOGGLE_COMPONENT': {
+      const s = state.selection;
+      const same = s.type === 'component' && s.bandId === action.bandId;
+      const ids = new Set(same ? (s.componentIds ?? (s.componentId ? [s.componentId] : [])) : []);
+      if (ids.has(action.componentId)) ids.delete(action.componentId); else ids.add(action.componentId);
+      const arr = [...ids];
+      if (!arr.length) return { ...state, selection: { type: null } };
+      return { ...state, selection: { type: 'component', bandId: action.bandId, componentId: arr[arr.length - 1], componentIds: arr } };
+    }
 
     case 'DESELECT':
       return { ...state, selection: { type: null } };
@@ -111,6 +132,35 @@ export function designerReducer(state: DesignerState, action: DesignerAction): D
       return commit(state, {
         ...t, bands: t.bands.map(b => b.id !== action.bandId ? b : { ...b, components: [...b.components, action.component] }),
       });
+
+    case 'ADD_COMPONENTS':
+      return commit(state, {
+        ...t, bands: t.bands.map(b => b.id !== action.bandId ? b : { ...b, components: [...b.components, ...action.components] }),
+      });
+
+    case 'PATCH_COMPONENTS': {
+      const map = new Map(action.patches.map(p => [p.id, p.patch]));
+      const next = {
+        ...t,
+        bands: t.bands.map(b => b.id !== action.bandId ? b : {
+          ...b,
+          components: b.components.map(c => map.has(c.id) ? ({ ...c, ...map.get(c.id) } as RptComponent) : c),
+        }),
+      };
+      return action.transient ? { ...state, template: next, isDirty: true } : commit(state, next);
+    }
+
+    case 'REMOVE_SELECTED': {
+      const s = state.selection;
+      if (s.type !== 'component' || !s.bandId) return state;
+      const ids = new Set(s.componentIds ?? (s.componentId ? [s.componentId] : []));
+      if (!ids.size) return state;
+      const next = {
+        ...t,
+        bands: t.bands.map(b => b.id !== s.bandId ? b : { ...b, components: b.components.filter(c => !ids.has(c.id)) }),
+      };
+      return { ...commit(state, next), selection: { type: null } };
+    }
 
     case 'UPDATE_COMPONENT': {
       const next = { ...t, bands: patchComponent(t.bands, action.bandId, action.componentId, action.patch) };

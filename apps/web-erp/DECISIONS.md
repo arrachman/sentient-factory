@@ -2657,3 +2657,28 @@ organism `report-designer/` dipecah: `designer-canvas` (shell+toolbar),
 `band-row`, `component-overlay`, `component-toolbar`, `field-palette`. Semua < 400
 baris. Catatan: HTML5 DnD dipakai di sini (palette→canvas freeform) — di luar
 larangan §2.14 yang khusus tab-strip/sortable list.
+
+### Report Designer — iterasi 2: Properties tab, expression pintar, multi-select, snap/align (2026-06-07)
+
+Lanjutan dari rombak 3-dock. Empat penambahan:
+
+- **Properties bertab** (`PropTab` = layout/style/data): `properties-panel` jadi
+  shell tab + sub-editor per tipe di `properties/` (`band/text/line/image-
+  properties`, `controls`, `layout-fields`). Editor **Image** baru (src+fit).
+- **ExpressionEditor** (`properties/expression-editor.tsx`): autocomplete kolom
+  saat ketik `{`, picker Field / Agregat (`{{SUM(col)}}`…) + token PageNumber/
+  TotalPageCount. Kolom = gabungan unik semua `schemas` hasil Test Query, dialir
+  ke Properties via prop `columns`.
+- **Multi-select + clipboard**: `DesignerSelection.componentIds` (dalam satu
+  band). Shift/Ctrl-click = `TOGGLE_COMPONENT`; aksi batch via `PATCH_COMPONENTS`
+  (group move = 1 undo step), `REMOVE_SELECTED`, `ADD_COMPONENTS`,
+  `SELECT_COMPONENTS`. Keyboard di hook `lib/use-designer-shortcuts.ts`:
+  Ctrl+C/V/D (clone via `cloneComponents`, offset 3mm), Del/Backspace,
+  Ctrl+Z/Shift+Z/Y, Ctrl+S — di-skip saat fokus input/textarea.
+- **Snap + align**: drag tunggal snap ke tepi/tengah komponen lain & batas band
+  (`lib/report-snap.ts`, threshold 1.2mm) + garis bantu accent; group drag bebas.
+  `AlignToolbar` (muncul di toolbar canvas saat ≥2 terpilih): align L/C/R · T/M/B,
+  sebar H/V, samakan lebar/tinggi (`lib/report-align.ts`).
+
+Resize handle = hanya saat seleksi tunggal (`resizable`). Semua file < 400 baris;
+geometri `LayoutFields` pakai `GeometryPatch` agar editor per-tipe assignable.

@@ -9,6 +9,7 @@ import {
   makeBoundText,
   type FieldDragPayload,
 } from '@/lib/report-component-factory';
+import { computeSnap } from '@/lib/report-snap';
 import type { BandType, DesignerAction, DesignerSelection, RptBand } from '@/lib/report-types';
 
 const BAND_LABELS: Record<BandType, string> = {
@@ -34,12 +35,61 @@ interface Props {
   pageWidthMm: number;
 }
 
+const snap = (v: number) => Math.round(v * 2) / 2;
+
 export function BandRow({ band, index, totalBands, selection, zoom, dispatch, pageWidthMm }: Props) {
   const scale = zoom * MM_TO_PX;
   const isBandSelected = selection.type === 'band' && selection.bandId === band.id;
   const bandHeightPx = band.height * scale;
   const bandWidthPx = pageWidthMm * scale;
   const [dropActive, setDropActive] = React.useState(false);
+
+  const selectedIds = React.useMemo(() => {
+    if (selection.type !== 'component' || selection.bandId !== band.id) return new Set<string>();
+    return new Set(selection.componentIds ?? (selection.componentId ? [selection.componentId] : []));
+  }, [selection, band.id]);
+
+  // Posisi awal komponen yang sedang di-drag (untuk group move tanpa drift).
+  const dragRef = React.useRef<Map<string, { x: number; y: number }> | null>(null);
+  const [guides, setGuides] = React.useState<{ vx?: number; hy?: number }>({});
+
+  function beginDrag(compId: string) {
+    dispatch({ type: 'PUSH_HISTORY' });
+    const ids = selectedIds.has(compId) && selectedIds.size > 1 ? [...selectedIds] : [compId];
+    const m = new Map<string, { x: number; y: number }>();
+    for (const id of ids) {
+      const c = band.components.find(x => x.id === id);
+      if (c) m.set(id, { x: c.x, y: c.y });
+    }
+    dragRef.current = m;
+  }
+
+  function dragDelta(dx: number, dy: number) {
+    const m = dragRef.current;
+    if (!m) return;
+    // Drag tunggal → snap ke tepi komponen lain + batas band, tampilkan garis bantu.
+    if (m.size === 1) {
+      const [id, p] = [...m.entries()][0];
+      const comp = band.components.find(c => c.id === id);
+      if (!comp) return;
+      const raw = { x: Math.max(0, snap(p.x + dx)), y: Math.max(0, snap(p.y + dy)), width: comp.width, height: comp.height };
+      const others = band.components.filter(c => c.id !== id);
+      const sn = computeSnap(raw, others, { w: pageWidthMm, h: band.height });
+      setGuides({ vx: sn.guideVX, hy: sn.guideHY });
+      dispatch({ type: 'PATCH_COMPONENTS', bandId: band.id, patches: [{ id, patch: { x: sn.x, y: sn.y } }], transient: true });
+      return;
+    }
+    // Grup → geser bebas tanpa snap.
+    const patches = [...m.entries()].map(([id, p]) => ({
+      id, patch: { x: Math.max(0, snap(p.x + dx)), y: Math.max(0, snap(p.y + dy)) },
+    }));
+    dispatch({ type: 'PATCH_COMPONENTS', bandId: band.id, patches, transient: true });
+  }
+
+  function endDrag() {
+    setGuides({});
+    dragRef.current = null;
+  }
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
@@ -108,13 +158,26 @@ export function BandRow({ band, index, totalBands, selection, zoom, dispatch, pa
             key={comp.id}
             comp={comp}
             zoom={zoom}
-            selected={selection.type === 'component' && selection.componentId === comp.id}
-            onSelect={() => dispatch({ type: 'SELECT_COMPONENT', bandId: band.id, componentId: comp.id })}
-            onUpdate={(patch, transient) => dispatch({ type: 'UPDATE_COMPONENT', bandId: band.id, componentId: comp.id, patch, transient })}
-            onDragStart={() => dispatch({ type: 'PUSH_HISTORY' })}
+            selected={selectedIds.has(comp.id)}
+            resizable={selectedIds.has(comp.id) && selectedIds.size <= 1}
+            onSelect={additive => dispatch(additive
+              ? { type: 'TOGGLE_COMPONENT', bandId: band.id, componentId: comp.id }
+              : { type: 'SELECT_COMPONENT', bandId: band.id, componentId: comp.id })}
+            onDragStart={() => beginDrag(comp.id)}
+            onDragDelta={dragDelta}
+            onDragEnd={endDrag}
+            onResize={(patch, transient) => dispatch({ type: 'UPDATE_COMPONENT', bandId: band.id, componentId: comp.id, patch, transient })}
             onRemove={() => dispatch({ type: 'REMOVE_COMPONENT', bandId: band.id, componentId: comp.id })}
           />
         ))}
+
+        {/* Garis bantu snap */}
+        {guides.vx != null && (
+          <div className="absolute top-0 bottom-0 pointer-events-none z-30" style={{ left: guides.vx * scale, width: 1, background: 'var(--accent)' }} />
+        )}
+        {guides.hy != null && (
+          <div className="absolute left-0 right-0 pointer-events-none z-30" style={{ top: guides.hy * scale, height: 1, background: 'var(--accent)' }} />
+        )}
 
         {band.components.length === 0 && !dropActive && (
           <div className="absolute inset-0 flex items-center justify-center text-[9px] text-[var(--fg-muted)] italic pointer-events-none">

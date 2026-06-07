@@ -3,6 +3,7 @@
 
 import type {
   RptBand,
+  RptComponent,
   RptImageComponent,
   RptLineComponent,
   RptTextComponent,
@@ -50,6 +51,16 @@ export function makeImage(band: RptBand): RptImageComponent {
     x: 0, y: 0, width: 30, height: 15,
     src: '{company.logoUrl}', fit: 'contain',
   };
+}
+
+/** Salin komponen dengan id baru + offset (untuk paste/duplicate). */
+export function cloneComponents(comps: RptComponent[], dx = 3, dy = 3): RptComponent[] {
+  return comps.map(c => ({
+    ...(structuredClone(c) as RptComponent),
+    id: genCompId(),
+    x: Math.max(0, c.x + dx),
+    y: Math.max(0, c.y + dy),
+  }));
 }
 
 /** Band tujuan default saat user menambah komponen tanpa seleksi eksplisit. */

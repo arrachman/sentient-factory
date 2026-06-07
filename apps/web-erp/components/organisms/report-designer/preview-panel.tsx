@@ -52,7 +52,7 @@ function evalExpr(
 ): string {
   if (!expr) return '';
   // Pass 1: resolve {{aggregate(field)}} double-brace expressions
-  let result = expr.replace(/\{\{([^}]+)\}\}/g, (_m, inner: string) => {
+  const result = expr.replace(/\{\{([^}]+)\}\}/g, (_m, inner: string) => {
     const t = inner.trim();
     if (t in agg) return fmtVal(agg[t]);
     // Unknown aggregate (e.g. when rows=0) → show 0
@@ -214,8 +214,8 @@ export function PreviewPanel({ template }: Props) {
         setRowCount(result.count);
       }
       setPreviewHtml(buildHtml(template, rows, paramValues));
-    } catch (e: any) {
-      setError(e.message ?? 'Terjadi kesalahan');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Terjadi kesalahan');
     } finally {
       setLoading(false);
     }
