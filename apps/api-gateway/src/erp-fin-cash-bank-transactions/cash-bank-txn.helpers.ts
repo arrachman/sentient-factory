@@ -11,12 +11,18 @@ export function toBigInt(v?: string | null): bigint | null {
 /** Statuses where header/lines may still be edited (§2.7 state machine). */
 export const EDITABLE = new Set(['DRAFT', 'NEED_APPROVE', 'REJECTED']);
 
-/** valid (status, action) → next status. POST/REOPEN handled separately. */
+/**
+ * valid (status, action) → next status. POST/REOPEN handled separately.
+ * REOPEN is allowed from APPROVED (un-approve) AND from POSTED (un-post): the
+ * REOPEN handler reverses this document's ledger entries, so a posted doc can be
+ * safely returned to DRAFT. Mirrors the journal/giro state machine.
+ */
 export const NEXT: Record<string, Partial<Record<A, string>>> = {
   DRAFT: { [A.SUBMIT]: 'NEED_APPROVE' },
   REJECTED: { [A.SUBMIT]: 'NEED_APPROVE' },
   NEED_APPROVE: { [A.APPROVE]: 'APPROVED', [A.REJECT]: 'REJECTED' },
   APPROVED: { [A.POST]: 'POSTED', [A.REOPEN]: 'DRAFT' },
+  POSTED: { [A.REOPEN]: 'DRAFT' },
 };
 
 /** (kind, direction) → numbering documentCode / fallback prefix. Kas=CR/CD, Bank=RM/SM. */
