@@ -46,8 +46,10 @@ export interface ReportDocument {
 
 export type ReportKey =
   | 'trial-balance'
+  | 'movement-balance'
   | 'income-statement'
   | 'balance-sheet'
+  | 'equity-changes'
   | 'general-ledger'
   | 'cash-flow'
   | 'daily-cash-bank'

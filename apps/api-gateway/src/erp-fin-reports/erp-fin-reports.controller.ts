@@ -50,6 +50,22 @@ export class ErpFinReportsController {
     return this.respond(doc, q.format, res);
   }
 
+  @Get('movement-balance')
+  @ApiOperation({ summary: 'Movement balance (Neraca Mutasi)' })
+  async movementBalance(@Query() q: QueryReportDto, @Res({ passthrough: false }) res: Response) {
+    if (!q.from || !q.to) throw new BadRequestException('from and to are required');
+    const doc = await this.service.buildMovementBalance(q.from, q.to, q.branchId);
+    return this.respond(doc, q.format, res);
+  }
+
+  @Get('equity-changes')
+  @ApiOperation({ summary: 'Statement of changes in equity (Perubahan Modal)' })
+  async equityChanges(@Query() q: QueryReportDto, @Res({ passthrough: false }) res: Response) {
+    if (!q.from || !q.to) throw new BadRequestException('from and to are required');
+    const doc = await this.service.buildEquityChanges(q.from, q.to, q.branchId);
+    return this.respond(doc, q.format, res);
+  }
+
   @Get('general-ledger')
   @ApiOperation({ summary: 'General ledger (Buku Besar)' })
   async generalLedger(@Query() q: QueryReportDto, @Res({ passthrough: false }) res: Response) {

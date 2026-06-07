@@ -93,6 +93,8 @@ import { ErpArReceiptsPage } from '@/components/pages/fin-ar-receipts-page';
 import { ErpApPaymentsPage } from '@/components/pages/fin-ap-payments-page';
 import { ErpLedgerPage } from '@/components/pages/fin-ledger-page';
 import { ErpTrialBalancePage } from '@/components/pages/fin-trial-balance-page';
+import { ErpMovementBalancePage } from '@/components/pages/fin-movement-balance-page';
+import { ErpEquityChangesPage } from '@/components/pages/fin-equity-changes-page';
 import { ErpBalanceSheetPage } from '@/components/pages/fin-balance-sheet-page';
 import { ErpIncomeStatementPage } from '@/components/pages/fin-income-statement-page';
 import { ErpCashFlowPage } from '@/components/pages/fin-cash-flow-page';
@@ -268,8 +270,10 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/finance/send-memos': () => <ErpApPaymentsPage />,
   '/finance/ledger': () => <ErpLedgerPage />,
   '/finance/trial-balance': () => <ErpTrialBalancePage />,
+  '/finance/movement-balance': () => <ErpMovementBalancePage />,
   '/finance/balance-sheet': () => <ErpBalanceSheetPage />,
   '/finance/income-statement': () => <ErpIncomeStatementPage />,
+  '/finance/equity-changes': () => <ErpEquityChangesPage />,
   '/finance/cash-flow': () => <ErpCashFlowPage />,
   '/finance/daily-cash-bank': () => <ErpDailyCashBankPage />,
   '/finance/ar-card': () => <ErpArCardPage />,

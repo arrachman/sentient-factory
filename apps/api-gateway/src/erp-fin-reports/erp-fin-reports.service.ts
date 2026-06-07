@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportColumn, ReportDocument, ReportRow, ReportSection } from './report-types';
 import { buildGeneralLedger } from './general-ledger.builder';
+import { buildEquityChanges, buildMovementBalance } from './statement-builders';
 import {
   AccountType,
   PostableAccount,
@@ -233,5 +234,19 @@ export class ErpFinReportsService {
     branchId?: string,
   ): Promise<ReportDocument> {
     return buildGeneralLedger(this.prisma, from, to, accountId, branchId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 5. Neraca Mutasi (Trial Balance with movement)
+  // ---------------------------------------------------------------------------
+  async buildMovementBalance(from: string, to: string, branchId?: string): Promise<ReportDocument> {
+    return buildMovementBalance(this.prisma, from, to, branchId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // 6. Perubahan Modal (Statement of Changes in Equity)
+  // ---------------------------------------------------------------------------
+  async buildEquityChanges(from: string, to: string, branchId?: string): Promise<ReportDocument> {
+    return buildEquityChanges(this.prisma, from, to, branchId);
   }
 }

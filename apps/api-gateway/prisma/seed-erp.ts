@@ -566,8 +566,10 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     await upsertItems([
       { code: 'M2.RPT.LEDGER',            title: 'General Ledger',          path: '/finance/ledger',              legacyCode: '2-41'  },
       { code: 'M2.RPT.TRIAL-BALANCE',     title: 'Trial Balance',           path: '/finance/trial-balance',       legacyCode: '2-42'  },
+      { code: 'M2.RPT.MOVEMENT-BALANCE',  title: 'Neraca Mutasi',           path: '/finance/movement-balance',    legacyCode: '2-44'  },
       { code: 'M2.RPT.BALANCE-SHEET',     title: 'Balance Sheet',           path: '/finance/balance-sheet',       legacyCode: '2-45'  },
       { code: 'M2.RPT.INCOME-STATEMENT',  title: 'Income Statement',        path: '/finance/income-statement',    legacyCode: '2-46'  },
+      { code: 'M2.RPT.EQUITY-CHANGES',    title: 'Perubahan Modal',         path: '/finance/equity-changes',      legacyCode: '2-48'  },
       { code: 'M2.RPT.CASH-FLOW',         title: 'Cash Flow',               path: '/finance/cash-flow',           legacyCode: '2-104' },
       { code: 'M2.RPT.DAILY-CASH-BANK',   title: 'Daily Cash & Bank',       path: '/finance/daily-cash-bank',     legacyCode: '2-43'  },
       { code: 'M2.RPT.AR-CARD',           title: 'AR Card',                 path: '/finance/ar-card',             legacyCode: '2-47'  },
