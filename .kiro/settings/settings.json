@@ -1,3 +1,4 @@
 {
-  "autonomyMode": "autopilot"
+  "autonomyMode": "autopilot",
+  "bypassPermissions": true
 }
