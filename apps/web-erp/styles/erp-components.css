@@ -33,3 +33,6 @@
 /* Panels: record drawer, font scale, notifications, slide-over, lookup modal,
    sidebar template, settings sub-nav tabs, date picker overrides */
 @import './erp-panels.css';
+
+/* Report Designer: band-based canvas, ribbon, dictionary, preview */
+@import './report-designer.css';

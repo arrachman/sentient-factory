@@ -2682,3 +2682,36 @@ Lanjutan dari rombak 3-dock. Empat penambahan:
 
 Resize handle = hanya saat seleksi tunggal (`resizable`). Semua file < 400 baris;
 geometri `LayoutFields` pakai `GeometryPatch` agar editor per-tipe assignable.
+
+### Report Designer — iterasi 3: reskin penuh ke model mock prototype (2026-06-07)
+
+Atas permintaan user (UI/UX ikut screenshot prototype `report-designer.jsx`,
+pilihan "reskin penuh + adopsi model mock" + 3 mode), **editor** designer
+(`/admin/report-designer`) di-rombak ulang ke band-based canvas gaya
+Stimulsoft + tag binding gaya Carbone `{d.x:formatter}`. **List page tetap
+backend-connected** (`report-designer-list-page.tsx`); hanya editornya yang
+diganti.
+
+- **Model = mock** (`lib/report-designer-mock.ts`): `RD_DATA` sample (company/
+  doc/items/totals), `rdResolve()` (resolver `{d.x:money|num}` + `{i.y}`),
+  `rdInitialBands()` (Faktur Penjualan: ReportTitle/PageHeader/Data/ReportFooter/
+  PageFooter), `RD_TOOLBOX`, `RD_DICT` (dictionary tree Carbone), `buildTemplate()`.
+  Store SQL/undo-redo lama (reducer `report-store.ts`) **tidak dipakai** editor ini.
+- **3 mode** (segmented control header): Desain (canvas band + ruler), Pratinjau
+  (`RdPreview` dokumen terisi), Template (kode Carbone-ish read-only).
+- **Layout**: header (judul + SRX + nama template + mode + Import/Jalankan/Export/
+  Simpan) · **ribbon** (Font/Align/Bands/Insert/Page/Zoom) · body 3-kolom
+  (Komponen+Sumber Data | canvas | Properti+Struktur) · footer pintasan.
+- **Organisms** `components/organisms/report-designer-mock/`: `mock-designer`
+  (orchestrator + state + keyboard Del/Esc/⌘P), `ribbon`, `left-panel`,
+  `canvas`, `preview`, `right-panel`, `shared`. Semua < 400 baris.
+- **CSS** `styles/report-designer.css` (di-import via `erp-components.css`),
+  pakai token (`--panel`/`--bg`/`--border`/`--primary`/`--fg-muted`…). Kelas
+  preview di-namespace `.rdv-*` untuk hindari bentrok `.rdp-*` react-day-picker.
+- **Catatan**: organism SQL-designer lama (`report-designer/designer-*`,
+  `datasource-panel`, `field-palette`, `properties*`, `preview-panel`,
+  `band-row`, `component-*`, `align-toolbar`) + `lib/report-store.ts` +
+  `lib/use-designer-shortcuts.ts` + `lib/report-align.ts` +
+  `lib/report-component-factory.ts` jadi **orphan** (tak di-import page).
+  `report-types.ts` & `report-template-dialog.tsx` **tetap** dipakai list page.
+  Penghapusan file orphan ditunda (butuh konfirmasi user) — build hijau tanpanya.
