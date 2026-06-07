@@ -21,6 +21,7 @@ import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateRoleDocPolicyDto } from './dto/create-role-doc-policy.dto';
 import { QueryRoleDocPolicyDto } from './dto/query-role-doc-policy.dto';
 import { UpdateRoleDocPolicyDto } from './dto/update-role-doc-policy.dto';
+import { BulkUpsertRoleDocPolicyDto } from './dto/bulk-upsert-role-doc-policy.dto';
 import { ErpRoleDocPoliciesService } from './erp-role-doc-policies.service';
 
 @ApiTags('ERP Role Doc Policies')
@@ -47,6 +48,19 @@ export class ErpRoleDocPoliciesController {
       documentType,
     );
     return { success: true, data: statuses };
+  }
+
+  @Get('all-for-role')
+  @ApiOperation({ summary: 'Get all policies for a role (no pagination)' })
+  @ApiQuery({ name: 'roleId', required: true })
+  listAllForRole(@Query('roleId') roleId: string) {
+    return this.service.listAllForRole(roleId);
+  }
+
+  @Post('bulk')
+  @ApiOperation({ summary: 'Bulk upsert role doc policies for a role' })
+  bulkUpsert(@Body() dto: BulkUpsertRoleDocPolicyDto, @Request() req: any) {
+    return this.service.bulkUpsert(dto, req.user?.id);
   }
 
   @Post()

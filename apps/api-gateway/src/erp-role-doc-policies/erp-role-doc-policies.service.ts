@@ -9,6 +9,7 @@ import { toAuditUserId } from '../common/utils/audit-user.util';
 import { CREATION_STATUSES, CreateRoleDocPolicyDto } from './dto/create-role-doc-policy.dto';
 import { QueryRoleDocPolicyDto } from './dto/query-role-doc-policy.dto';
 import { UpdateRoleDocPolicyDto } from './dto/update-role-doc-policy.dto';
+import { BulkUpsertRoleDocPolicyDto } from './dto/bulk-upsert-role-doc-policy.dto';
 
 @Injectable()
 export class ErpRoleDocPoliciesService {
@@ -114,6 +115,64 @@ export class ErpRoleDocPoliciesService {
       data: { deletedAt: new Date(), updatedById: toAuditUserId(actorId) },
     });
     return { success: true, message: 'Policy deleted' };
+  }
+
+  async listAllForRole(roleId: string) {
+    const items = await this.prisma.erpRoleDocPolicy.findMany({
+      where: { roleId: BigInt(roleId), deletedAt: null },
+      orderBy: { documentType: 'asc' },
+    });
+    return { success: true, data: items.map((it) => this.serialize(it)) };
+  }
+
+  async bulkUpsert(dto: BulkUpsertRoleDocPolicyDto, actorId?: string) {
+    const roleId = BigInt(dto.roleId);
+    const actor = toAuditUserId(actorId);
+
+    await this.prisma.$transaction(
+      async (tx) => {
+        for (const entry of dto.entries) {
+          const existing = await tx.erpRoleDocPolicy.findUnique({
+            where: { roleId_documentType: { roleId, documentType: entry.documentType } },
+          });
+
+          if (entry.allowedStatuses.length === 0) {
+            // No statuses checked → soft-delete if exists
+            if (existing && !existing.deletedAt) {
+              await tx.erpRoleDocPolicy.update({
+                where: { id: existing.id },
+                data: { deletedAt: new Date(), updatedById: actor },
+              });
+            }
+          } else if (existing) {
+            // Upsert (restore if soft-deleted)
+            await tx.erpRoleDocPolicy.update({
+              where: { id: existing.id },
+              data: {
+                allowedStatuses: entry.allowedStatuses,
+                isActive: true,
+                deletedAt: null,
+                updatedById: actor,
+              },
+            });
+          } else {
+            await tx.erpRoleDocPolicy.create({
+              data: {
+                roleId,
+                documentType: entry.documentType,
+                allowedStatuses: entry.allowedStatuses,
+                isActive: true,
+                createdById: actor,
+                updatedById: actor,
+              },
+            });
+          }
+        }
+      },
+      { timeout: 30000 },
+    );
+
+    return { success: true, message: 'Policies updated' };
   }
 
   /**

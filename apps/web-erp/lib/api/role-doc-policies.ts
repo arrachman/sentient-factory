@@ -27,6 +27,30 @@ export interface CreateRoleDocPolicyPayload {
 
 export type UpdateRoleDocPolicyPayload = Partial<CreateRoleDocPolicyPayload>;
 
+// ─── Bulk operations (admin matrix UI) ───────────────────────────────────────
+
+export async function getAllPoliciesForRole(
+  roleId: string,
+): Promise<ErpRoleDocPolicy[]> {
+  const res = await apiGet<ApiResponse<ErpRoleDocPolicy[]>>(
+    '/role-doc-policies/all-for-role',
+    { roleId },
+  );
+  return res.data;
+}
+
+export interface BulkUpsertEntry {
+  documentType: string;
+  allowedStatuses: string[];
+}
+
+export async function bulkUpsertPolicies(payload: {
+  roleId: string;
+  entries: BulkUpsertEntry[];
+}): Promise<void> {
+  await apiPost<ApiResponse<unknown>>('/role-doc-policies/bulk', payload);
+}
+
 // ─── My allowed statuses (used by transaction forms) ─────────────────────────
 
 export async function getMyAllowedStatuses(documentType: string): Promise<CreationStatus[]> {
