@@ -20,7 +20,7 @@ import { useFormFields, buildFormConfig } from '@/lib/use-form-fields';
 import { PurStructuralField, type PurStructuralFieldCtx } from '@/components/molecules/pur-structural-field';
 import { loadSupplierOptions } from '@/components/pages/pur-form-lookups';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
-import { type FormColumnSlot } from '@/lib/api/form-fields';
+import { type ErpFormField, type FormColumnSlot } from '@/lib/api/form-fields';
 import {
   createPurRfq,
   updatePurRfq,
@@ -118,13 +118,13 @@ export function toPurRfqPayload(d: PurRfqFormData): CreatePurRfqPayload {
 const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
 const SLOTS: FormColumnSlot[] = ['LEFT', 'CENTER', 'RIGHT'];
 
-const DEFAULT_RFQ_FIELDS = [
-    { fieldKey: 'description', kind: 'STRUCTURAL' as const, label: 'Uraian', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT' as FormColumnSlot },
-    { fieldKey: 'referenceNo', kind: 'STRUCTURAL' as const, label: 'No Referensi', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 2, columnSlot: 'LEFT' as FormColumnSlot },
-    { fieldKey: 'branchId', kind: 'STRUCTURAL' as const, label: 'Cabang', fieldType: 'BRANCH', isRequired: true, isVisible: true, sortOrder: 0, columnSlot: 'CENTER' as FormColumnSlot },
-    { fieldKey: 'locationId', kind: 'STRUCTURAL' as const, label: 'Lokasi', fieldType: 'LOCATION', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'CENTER' as FormColumnSlot },
-    { fieldKey: 'docDate', kind: 'STRUCTURAL' as const, label: 'Tanggal', fieldType: 'DATE', isRequired: true, isVisible: true, sortOrder: 0, columnSlot: 'RIGHT' as FormColumnSlot },
-    { fieldKey: 'docNumber', kind: 'STRUCTURAL' as const, label: 'No Transaksi', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT' as FormColumnSlot },
+const DEFAULT_RFQ_FIELDS: ErpFormField[] = [
+    { fieldKey: 'description', kind: 'STRUCTURAL', label: 'Uraian', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'LEFT' },
+    { fieldKey: 'referenceNo', kind: 'STRUCTURAL', label: 'No Referensi', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 2, columnSlot: 'LEFT' },
+    { fieldKey: 'branchId', kind: 'STRUCTURAL', label: 'Cabang', fieldType: 'BRANCH', isRequired: true, isVisible: true, sortOrder: 0, columnSlot: 'CENTER' },
+    { fieldKey: 'locationId', kind: 'STRUCTURAL', label: 'Lokasi', fieldType: 'LOCATION', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'CENTER' },
+    { fieldKey: 'docDate', kind: 'STRUCTURAL', label: 'Tanggal', fieldType: 'DATE', isRequired: true, isVisible: true, sortOrder: 0, columnSlot: 'RIGHT' },
+    { fieldKey: 'docNumber', kind: 'STRUCTURAL', label: 'No Transaksi', fieldType: 'TEXT', isRequired: false, isVisible: true, sortOrder: 1, columnSlot: 'RIGHT' },
   ];
 
 export function PurRfqForm({

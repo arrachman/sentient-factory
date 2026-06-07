@@ -32,6 +32,7 @@ import {
   listPurReturns, getPurReturn, createPurReturn, updatePurReturn,
   deletePurReturn, transitionPurReturn, type ErpPurReturn,
 } from '@/lib/api/pur-returns';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   PurReturnShipmentForm,
 } from './pur-return-shipment-form';
@@ -51,6 +52,7 @@ export function ErpReturnShipmentsPage({
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<PurOrderFormData>(defaultPurOrderForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('PUR.DNR');
 
   const formReady =
     formMode === 'create' ||
@@ -168,6 +170,7 @@ export function ErpReturnShipmentsPage({
           {formReady ? (
             <PurReturnShipmentForm
               data={form} onChange={setForm} saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)} onSaveNew={() => persist(false, true)}
               onReset={loadForm}
             />

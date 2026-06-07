@@ -21,6 +21,7 @@ export function SlsOrderForm(props: {
   data: SlsOrderFormData;
   onChange: (d: SlsOrderFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

@@ -27,6 +27,7 @@ import {
   listPurGoodsReceipts, getPurGoodsReceipt, createPurGoodsReceipt, updatePurGoodsReceipt,
   deletePurGoodsReceipt, transitionPurGoodsReceipt, type ErpPurGoodsReceipt,
 } from '@/lib/api/pur-goods-receipts';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import { PurGoodsReceiptForm } from './pur-goods-receipt-form';
 import { fromPurGoodsReceipt, toPurGoodsReceiptPayload } from './pur-goods-receipt-form-model';
 import { defaultPurOrderForm, type PurOrderFormData } from './pur-order-form-model';
@@ -37,6 +38,7 @@ export function ErpGoodsReceiptsPage({ formMode, recordId, onNavigate }: TrxForm
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<PurOrderFormData>(defaultPurOrderForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('PUR.GRN');
 
   const formReady =
     formMode === 'create' ||
@@ -130,6 +132,7 @@ export function ErpGoodsReceiptsPage({ formMode, recordId, onNavigate }: TrxForm
         <div className="page-body overflow-auto p-4">
           {formReady ? (
             <PurGoodsReceiptForm data={form} onChange={setForm} saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm} />
           ) : <div className="p-8 text-center text-muted">Memuat…</div>}
         </div>

@@ -18,6 +18,7 @@ export function PurInvoiceForm(props: {
   data: PurOrderFormData;
   onChange: (d: PurOrderFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

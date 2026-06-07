@@ -32,6 +32,7 @@ import {
   type ErpSlsInvoice,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-invoices';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsInvoiceForm,
   defaultSlsInvoiceForm,
@@ -47,6 +48,7 @@ export function ErpSlsInvoicesPage({ formMode, recordId, onNavigate }: TrxFormPa
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsInvoiceFormData>(defaultSlsInvoiceForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.SI');
 
   const formReady =
     formMode === 'create' ||
@@ -168,6 +170,7 @@ export function ErpSlsInvoicesPage({ formMode, recordId, onNavigate }: TrxFormPa
         <div className="page-body overflow-auto p-4">
           {formReady ? (
             <SlsInvoiceForm data={form} onChange={setForm} saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm} />
           ) : (
             <div className="p-8 text-center text-muted">Memuat…</div>

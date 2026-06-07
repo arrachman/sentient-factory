@@ -9,6 +9,7 @@ const CONFIG: JournalPageConfig = {
   base: '/finance/memorial-journals',
   code: 'FIN.JM',
   journalType: 'MEMORIAL',
+  documentType: 'JOURNAL_MEMO',
   title: 'Jurnal Memorial',
   codeTag: 'JM',
 };

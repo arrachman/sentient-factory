@@ -10,6 +10,7 @@ const CONFIG: GiroPageConfig = {
   code: 'FIN.RGC',
   kind: 'CLEAR',
   type: 'INCOMING',
+  documentType: 'GIRO_CLEARING_IN',
   title: 'Kliring Giro Masuk',
   codeTag: 'RGC',
 };

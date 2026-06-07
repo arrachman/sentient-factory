@@ -21,6 +21,7 @@ export function SlsQuotationForm(props: {
   data: SlsQuotationFormData;
   onChange: (d: SlsQuotationFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

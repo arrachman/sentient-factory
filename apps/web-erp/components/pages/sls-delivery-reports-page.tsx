@@ -35,6 +35,7 @@ import {
   type ErpSlsDeliveryReport,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-delivery-reports';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsDeliveryReportForm,
   defaultSlsDeliveryReportForm,
@@ -53,6 +54,7 @@ export function ErpSlsDeliveryReportsPage({ formMode, recordId, onNavigate }: Tr
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsDeliveryReportFormData>(defaultSlsDeliveryReportForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.DR');
 
   const formReady =
     formMode === 'create' ||
@@ -173,6 +175,7 @@ export function ErpSlsDeliveryReportsPage({ formMode, recordId, onNavigate }: Tr
         <div className="page-body overflow-auto p-4">
           {formReady ? (
             <SlsDeliveryReportForm data={form} onChange={setForm} saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm} />
           ) : (
             <div className="p-8 text-center text-muted">Memuat…</div>

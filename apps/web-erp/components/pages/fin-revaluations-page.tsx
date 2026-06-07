@@ -9,6 +9,7 @@ const CONFIG: JournalPageConfig = {
   base: '/finance/revaluations',
   code: 'FIN.RV',
   journalType: 'REVALUATION',
+  documentType: 'REVERSAL',
   title: 'Revaluasi Valas',
   codeTag: 'RV',
 };

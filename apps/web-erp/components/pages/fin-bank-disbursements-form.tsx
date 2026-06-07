@@ -61,12 +61,13 @@ export const paymentMethodLabel = (m?: ErpPaymentMethod | null): string => {
   return PAYMENT_METHODS.find((p) => p.value === m)?.label ?? m;
 };
 
-const EDITABLE = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
+const EDITABLE = ['DRAFT', 'NEED_APPROVE', 'APPROVE_1', 'APPROVE_2', 'APPROVE_3', 'APPROVE_4', 'REJECTED'];
 
 export function BankDisbursementForm({
   data,
   onChange,
   saving,
+  allowedCreationStatuses,
   onSave,
   onSaveNew,
   onReset,
@@ -74,6 +75,7 @@ export function BankDisbursementForm({
   data: BankDisbursementFormData;
   onChange: (d: BankDisbursementFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;
@@ -124,6 +126,7 @@ export function BankDisbursementForm({
       headerExtra={caraBayar}
       extraTabs={[{ key: 'giro', label: 'Giro', content: giroTab }]}
       saving={saving}
+      allowedCreationStatuses={allowedCreationStatuses}
       onSave={onSave}
       onSaveNew={onSaveNew}
       onReset={onReset}

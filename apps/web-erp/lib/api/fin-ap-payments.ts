@@ -30,7 +30,7 @@ export interface ErpApPayment {
 }
 
 export interface CreateApPaymentPayload {
-  docNumber: string;
+  docNumber?: string;
   branchId: string;
   transactionDate: string;
   fiscalPeriodId: string;

@@ -56,6 +56,7 @@ import {
   type ErpSlsQuotation,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-quotations';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsQuotationForm,
   defaultSlsQuotationForm,
@@ -82,6 +83,7 @@ export function ErpSlsQuotationsPage({ formMode, recordId, onNavigate }: TrxForm
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsQuotationFormData>(defaultSlsQuotationForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.SQ');
 
   const formReady =
     formMode === 'create' ||
@@ -260,6 +262,7 @@ export function ErpSlsQuotationsPage({ formMode, recordId, onNavigate }: TrxForm
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

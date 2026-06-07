@@ -58,6 +58,7 @@ import {
   type ErpBankDisbursement,
   type ErpDocumentStatus,
 } from '@/lib/api/fin-bank-disbursements';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   BankDisbursementForm,
   defaultBankDisbursementForm,
@@ -78,6 +79,7 @@ export function ErpBankDisbursementsPage({
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<BankDisbursementFormData>(defaultBankDisbursementForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('BANK_DISBURSEMENT');
 
   // In edit mode the form is only ready once the loaded record matches the
   // route id — mounting earlier lets the currency effect clobber it (race).
@@ -254,6 +256,7 @@ export function ErpBankDisbursementsPage({
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

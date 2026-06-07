@@ -56,6 +56,7 @@ import {
   type ErpSlsPackingList,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-packing-lists';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsPackingListForm,
   defaultSlsPackingListForm,
@@ -82,6 +83,7 @@ export function ErpSlsPackingListsPage({ formMode, recordId, onNavigate }: TrxFo
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsPackingListFormData>(defaultSlsPackingListForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.PL');
 
   const formReady =
     formMode === 'create' ||
@@ -260,6 +262,7 @@ export function ErpSlsPackingListsPage({ formMode, recordId, onNavigate }: TrxFo
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

@@ -51,6 +51,7 @@ import {
   type ErpSlsReturnReceipt,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-return-receipts';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsReturnReceiptForm,
   defaultSlsReturnReceiptForm,
@@ -65,6 +66,7 @@ export function ErpSlsReturnReceiptsPage({ formMode, recordId, onNavigate }: Trx
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsReturnReceiptFormData>(defaultSlsReturnReceiptForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.CR');
 
   const formReady =
     formMode === 'create' ||
@@ -236,6 +238,7 @@ export function ErpSlsReturnReceiptsPage({ formMode, recordId, onNavigate }: Trx
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

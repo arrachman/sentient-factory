@@ -21,6 +21,7 @@ export function SlsDeliveryOrderForm(props: {
   data: SlsDeliveryOrderFormData;
   onChange: (d: SlsDeliveryOrderFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

@@ -10,6 +10,7 @@ const CONFIG: GiroPageConfig = {
   code: 'FIN.SGC',
   kind: 'CLEAR',
   type: 'OUTGOING',
+  documentType: 'GIRO_CLEARING_OUT',
   title: 'Kliring Giro Keluar',
   codeTag: 'SGC',
 };

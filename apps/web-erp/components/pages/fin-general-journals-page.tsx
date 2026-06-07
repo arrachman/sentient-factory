@@ -9,6 +9,7 @@ const CONFIG: JournalPageConfig = {
   base: '/finance/general-journals',
   code: 'FIN.GJ',
   journalType: 'GENERAL',
+  documentType: 'JOURNAL_ENTRY',
   title: 'Jurnal Umum',
   codeTag: 'GJ',
 };

@@ -21,6 +21,7 @@ export function SlsReturnForm(props: {
   data: SlsReturnFormData;
   onChange: (d: SlsReturnFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

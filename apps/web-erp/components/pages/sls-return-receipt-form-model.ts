@@ -25,6 +25,8 @@ export interface SlsReturnReceiptFormData {
   locationLabel?: string;
   warehouseId: string;
   warehouseLabel?: string;
+  salesDeptId: string;
+  salesDeptLabel?: string;
   paymentTermId: string;
   paymentTermLabel?: string;
   currencyId: string;
@@ -62,6 +64,7 @@ export function defaultSlsReturnReceiptForm(): SlsReturnReceiptFormData {
     branchId: '',
     locationId: '',
     warehouseId: '',
+    salesDeptId: '',
     paymentTermId: '',
     currencyId: '',
     exchangeRate: '1',
@@ -156,6 +159,7 @@ export function fromSlsReturnReceipt(r: ErpSlsReturnReceipt): SlsReturnReceiptFo
     locationLabel: r.location?.name,
     warehouseId: r.warehouseId ?? '',
     warehouseLabel: r.warehouse?.name,
+    salesDeptId: (r as unknown as { salesDeptId?: string }).salesDeptId ?? '',
     paymentTermId: r.paymentTermId ?? '',
     paymentTermLabel: r.paymentTerm?.name,
     currencyId: r.currencyId,

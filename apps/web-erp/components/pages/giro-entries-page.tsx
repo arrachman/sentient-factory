@@ -35,6 +35,7 @@ import {
 import { confirmAction, notify } from '@/lib/feedback';
 import { giroWorkflowActions } from '@/lib/fin-giro-workflow';
 import { trxNewRoute, trxEditRoute, type TrxFormPageProps } from '@/lib/trx-route';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { formatNumber } from '@/lib/format';
@@ -70,6 +71,8 @@ export interface GiroPageConfig {
   kind: GiroKind;
   /** Scopes the list + new records (INCOMING|OUTGOING). */
   type: GiroType;
+  /** Document type for allowed-creation-status lookup, e.g. 'INCOMING_GIRO'. */
+  documentType: string;
   /** Indonesian module label, e.g. 'Giro Masuk'. */
   title: string;
   /** Short doc tag shown in the header, e.g. 'RG'. */
@@ -89,10 +92,11 @@ export function GiroEntriesPage({
   recordId,
   onNavigate,
 }: { config: GiroPageConfig } & TrxFormPageProps) {
-  const { base, code, kind, type, title, codeTag } = config;
+  const { base, code, kind, type, documentType, title, codeTag } = config;
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<GiroFormData>(() => defaultGiroForm(kind, type));
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses(documentType);
 
   const formReady =
     formMode === 'create' ||
@@ -252,6 +256,7 @@ export function GiroEntriesPage({
               onChange={setForm}
               transactionCode={code}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

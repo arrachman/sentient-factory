@@ -9,6 +9,7 @@ const CONFIG: JournalPageConfig = {
   base: '/finance/opening-balances',
   code: 'FIN.BB',
   journalType: 'OPENING_BALANCE',
+  documentType: 'BANK_BALANCE',
   title: 'Saldo Awal (CoA)',
   codeTag: 'BB',
 };

@@ -57,6 +57,7 @@ import {
   type ErpPurRequisition,
   type ErpDocumentStatus,
 } from '@/lib/api/pur-requisitions';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import { defaultPurOrderForm, type PurOrderFormData } from './pur-order-form-model';
 import { PurRequisitionForm } from './pur-requisition-form';
 import { fromPurRequisition, toPurRequisitionPayload } from './pur-requisition-form-model';
@@ -68,6 +69,7 @@ export function ErpPurRequisitionsPage({ formMode, recordId, onNavigate }: TrxFo
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<PurOrderFormData>(defaultPurOrderForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('PUR.PR');
 
   const formReady =
     formMode === 'create' ||
@@ -238,6 +240,7 @@ export function ErpPurRequisitionsPage({ formMode, recordId, onNavigate }: TrxFo
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

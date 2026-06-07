@@ -58,7 +58,7 @@ export interface CashBankTransactionFormHandle {
   focusField: (key: string) => void;
 }
 
-const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
+const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'APPROVE_1', 'APPROVE_2', 'APPROVE_3', 'APPROVE_4', 'REJECTED'];
 const SLOTS: FormColumnSlot[] = ['LEFT', 'CENTER', 'RIGHT'];
 
 export const CashBankTransactionForm = React.forwardRef<

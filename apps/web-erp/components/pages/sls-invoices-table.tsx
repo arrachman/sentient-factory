@@ -38,9 +38,9 @@ const SETTLEMENT_LABEL: Record<SlsSettlementStatus, string> = {
   PAID: 'Lunas',
 };
 
-const SETTLEMENT_VARIANT: Record<SlsSettlementStatus, 'danger' | 'warning' | 'success'> = {
+const SETTLEMENT_VARIANT: Record<SlsSettlementStatus, 'danger' | 'warn' | 'success'> = {
   UNPAID: 'danger',
-  PARTIAL: 'warning',
+  PARTIAL: 'warn',
   PAID: 'success',
 };
 

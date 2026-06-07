@@ -32,6 +32,7 @@ import {
   listPurReturns, getPurReturn, createPurReturn, updatePurReturn,
   deletePurReturn, transitionPurReturn, type ErpPurReturn,
 } from '@/lib/api/pur-returns';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import { PurPurchaseReturnForm } from './pur-purchase-return-form';
 import { fromPurReturn, toPurReturnPayload } from './pur-return-form-model';
 import { defaultPurOrderForm, type PurOrderFormData } from './pur-order-form-model';
@@ -45,6 +46,7 @@ export function ErpPurchaseReturnsPage({
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<PurOrderFormData>(defaultPurOrderForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('PUR.PRT');
 
   const formReady =
     formMode === 'create' ||
@@ -162,6 +164,7 @@ export function ErpPurchaseReturnsPage({
           {formReady ? (
             <PurPurchaseReturnForm
               data={form} onChange={setForm} saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)} onSaveNew={() => persist(false, true)}
               onReset={loadForm}
             />

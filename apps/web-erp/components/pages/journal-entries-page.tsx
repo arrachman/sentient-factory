@@ -35,6 +35,7 @@ import {
 import { confirmAction, notify } from '@/lib/feedback';
 import { journalWorkflowActions } from '@/lib/fin-journal-workflow';
 import { trxNewRoute, trxEditRoute, type TrxFormPageProps } from '@/lib/trx-route';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { formatNumber } from '@/lib/format';
@@ -67,6 +68,8 @@ export interface JournalPageConfig {
   code: string;
   /** Scopes the list + new records, e.g. 'GENERAL'. */
   journalType: ErpJournalType;
+  /** Document type for allowed-creation-status lookup, e.g. 'JOURNAL_ENTRY'. */
+  documentType: string;
   /** Indonesian module label, e.g. 'Jurnal Umum'. */
   title: string;
   /** Short doc tag shown in the header, e.g. 'GJ'. */
@@ -83,10 +86,11 @@ export function JournalEntriesPage({
   recordId,
   onNavigate,
 }: { config: JournalPageConfig } & TrxFormPageProps) {
-  const { base, code, journalType, title, codeTag } = config;
+  const { base, code, journalType, documentType, title, codeTag } = config;
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<JournalFormData>(() => defaultJournalForm(journalType));
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses(documentType);
 
   const formReady =
     formMode === 'create' ||
@@ -241,6 +245,7 @@ export function JournalEntriesPage({
               onChange={setForm}
               transactionCode={code}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

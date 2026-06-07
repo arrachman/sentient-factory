@@ -57,6 +57,7 @@ import {
   type ErpPurInvoice,
   type ErpDocumentStatus,
 } from '@/lib/api/pur-invoices';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import { defaultPurOrderForm, type PurOrderFormData } from './pur-order-form-model';
 import { PurInvoiceForm } from './pur-invoice-form';
 import { fromPurInvoice, toPurInvoicePayload } from './pur-invoice-form-model';
@@ -68,6 +69,7 @@ export function ErpPurInvoicesPage({ formMode, recordId, onNavigate }: TrxFormPa
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<PurOrderFormData>(defaultPurOrderForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('PUR.PI');
 
   const formReady =
     formMode === 'create' ||
@@ -238,6 +240,7 @@ export function ErpPurInvoicesPage({ formMode, recordId, onNavigate }: TrxFormPa
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

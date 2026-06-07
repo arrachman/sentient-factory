@@ -27,6 +27,7 @@ import {
   deleteSlsInvoice, getSlsInvoice, transitionSlsInvoice,
   type ErpSlsInvoice, type SlsInvoiceTransition,
 } from '@/lib/api/sls-invoices';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsFreightReceivableForm,
   defaultSlsInvoiceForm, fromSlsInvoice, toSlsInvoicePayload,
@@ -39,6 +40,7 @@ export function ErpSlsFreightReceivablesPage({ formMode, recordId, onNavigate }:
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsInvoiceFormData>(defaultSlsInvoiceForm());
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.RP');
 
   const formReady =
     formMode === 'create' ||
@@ -137,6 +139,7 @@ export function ErpSlsFreightReceivablesPage({ formMode, recordId, onNavigate }:
           {formReady ? (
             <SlsFreightReceivableForm
               data={form} onChange={setForm} saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)} onSaveNew={() => persist(false, true)} onReset={loadForm}
             />
           ) : (

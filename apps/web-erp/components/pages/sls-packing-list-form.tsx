@@ -21,6 +21,7 @@ export function SlsPackingListForm(props: {
   data: SlsPackingListFormData;
   onChange: (d: SlsPackingListFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

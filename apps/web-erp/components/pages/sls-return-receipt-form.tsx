@@ -21,6 +21,7 @@ export function SlsReturnReceiptForm(props: {
   data: SlsReturnReceiptFormData;
   onChange: (d: SlsReturnReceiptFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

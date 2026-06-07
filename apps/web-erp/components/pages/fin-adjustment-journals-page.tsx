@@ -9,6 +9,7 @@ const CONFIG: JournalPageConfig = {
   base: '/finance/adjustment-journals',
   code: 'FIN.AJ',
   journalType: 'ADJUSTMENT',
+  documentType: 'ADJUSTING_JOURNAL',
   title: 'Jurnal Penyesuaian',
   codeTag: 'AJ',
 };

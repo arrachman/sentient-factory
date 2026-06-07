@@ -13,6 +13,13 @@ import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { JournalLinesEditor, computeJournalTotals, type JournalLinesHandle } from '@/components/organisms/journal-lines';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
@@ -29,7 +36,7 @@ import {
 } from '@/components/molecules/journal-structural-field';
 import { CashBankCustomField } from '@/components/molecules/cash-bank-custom-fields';
 
-const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'REJECTED'];
+const EDITABLE: ErpDocumentStatus[] = ['DRAFT', 'NEED_APPROVE', 'APPROVE_1', 'APPROVE_2', 'APPROVE_3', 'APPROVE_4', 'REJECTED'];
 const SLOTS: FormColumnSlot[] = ['LEFT', 'CENTER', 'RIGHT'];
 
 /** Fallback header layout until the FIN.* config loads (mirrors backend JOURNAL_DEFAULTS). */
@@ -47,6 +54,7 @@ export function JournalTransactionForm({
   onChange,
   transactionCode,
   saving,
+  allowedCreationStatuses,
   onSave,
   onSaveNew,
   onReset,
@@ -56,6 +64,11 @@ export function JournalTransactionForm({
   /** Kustomisasi Grid + Form Builder code, e.g. "FIN.GJ". */
   transactionCode?: string;
   saving?: boolean;
+  /**
+   * Statuses available in the creation-status dropdown (create mode only).
+   * When undefined or single-element, the existing read-only badge is shown.
+   */
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;
@@ -90,6 +103,7 @@ export function JournalTransactionForm({
   };
 
   const locked = !EDITABLE.includes(data.status);
+  const showStatusPicker = !!allowedCreationStatuses && allowedCreationStatuses.length > 1 && !data.id;
   const ph = (key: string, fallback: string) => formConfig.byKey[key]?.placeholder || fallback;
   const ro = (key: string) => locked || formConfig.byKey[key]?.isReadonly === true;
 
@@ -167,7 +181,25 @@ export function JournalTransactionForm({
           <Icon name="refresh" size={13} /> Reset
         </button>
         <div className="flex-1" />
-        <Badge variant={statusBadgeVariant(data.status)} dot>{statusLabel(data.status)}</Badge>
+        {showStatusPicker ? (
+          <Select
+            value={data.status}
+            onValueChange={(v) => onChange({ ...data, status: v as typeof data.status })}
+          >
+            <SelectTrigger className="w-[160px] h-7 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {allowedCreationStatuses!.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {statusLabel(s)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge variant={statusBadgeVariant(data.status)} dot>{statusLabel(data.status)}</Badge>
+        )}
       </div>
 
       <div

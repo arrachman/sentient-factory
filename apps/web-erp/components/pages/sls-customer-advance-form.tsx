@@ -129,7 +129,8 @@ export function SlsCustomerAdvanceForm({
             loadOptions={loadCustomerOptions}
             placeholder="Cari pelanggan…"
             disabled={isPosted}
-            onSelect={(opt) => onChange({ ...data, customerId: opt?.value ?? '', customerLabel: opt?.label })}
+            onValueChange={(v) => onChange({ ...data, customerId: v })}
+            onPick={(o) => onChange({ ...data, customerId: o.value, customerLabel: o.label })}
           />
         </FormFieldRow>
 
@@ -141,7 +142,8 @@ export function SlsCustomerAdvanceForm({
             loadOptions={loadBranchOptions}
             placeholder="Pilih cabang…"
             disabled={isPosted}
-            onSelect={(opt) => onChange({ ...data, branchId: opt?.value ?? '', branchLabel: opt?.label })}
+            onValueChange={(v) => onChange({ ...data, branchId: v })}
+            onPick={(o) => onChange({ ...data, branchId: o.value, branchLabel: o.label })}
           />
         </FormFieldRow>
 
@@ -197,7 +199,8 @@ export function SlsCustomerAdvanceForm({
               loadOptions={loadCurrencyOptions}
               placeholder="Pilih uang…"
               disabled={isPosted}
-              onSelect={(opt) => onChange({ ...data, currencyId: opt?.value ?? '', currencyLabel: opt?.label })}
+              onValueChange={(v) => onChange({ ...data, currencyId: v })}
+              onPick={(o) => onChange({ ...data, currencyId: o.value, currencyLabel: o.label })}
             />
             <Input
               value={data.exchangeRate}
@@ -217,7 +220,8 @@ export function SlsCustomerAdvanceForm({
             loadOptions={loadPaymentTermOptions}
             placeholder="Pilih termin…"
             disabled={isPosted}
-            onSelect={(opt) => onChange({ ...data, paymentTermId: opt?.value ?? '', paymentTermLabel: opt?.label })}
+            onValueChange={(v) => onChange({ ...data, paymentTermId: v })}
+            onPick={(o) => onChange({ ...data, paymentTermId: o.value, paymentTermLabel: o.label })}
           />
         </FormFieldRow>
 
@@ -237,7 +241,7 @@ export function SlsCustomerAdvanceForm({
         <FormFieldRow label="Jumlah Advance" required>
           <NumInput
             value={data.amount}
-            onValueChange={(v) => set('amount', v)}
+            onChange={(v) => set('amount', v)}
             placeholder="0"
             disabled={isPosted}
             className="text-right text-lg font-semibold"

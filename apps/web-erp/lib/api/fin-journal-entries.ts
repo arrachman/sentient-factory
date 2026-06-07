@@ -16,6 +16,10 @@ export type ErpJournalType =
 export type ErpDocumentStatus =
   | 'DRAFT'
   | 'NEED_APPROVE'
+  | 'APPROVE_1'
+  | 'APPROVE_2'
+  | 'APPROVE_3'
+  | 'APPROVE_4'
   | 'APPROVED'
   | 'REJECTED'
   | 'POSTED'

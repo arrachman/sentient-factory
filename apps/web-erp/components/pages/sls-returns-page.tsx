@@ -51,6 +51,7 @@ import {
   type ErpSlsReturn,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-returns';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsReturnForm,
   defaultSlsReturnForm,
@@ -65,6 +66,7 @@ export function ErpSlsReturnsPage({ formMode, recordId, onNavigate }: TrxFormPag
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsReturnFormData>(defaultSlsReturnForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.RO');
 
   const formReady =
     formMode === 'create' ||
@@ -236,6 +238,7 @@ export function ErpSlsReturnsPage({ formMode, recordId, onNavigate }: TrxFormPag
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

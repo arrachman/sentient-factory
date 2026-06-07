@@ -10,6 +10,7 @@ const CONFIG: GiroPageConfig = {
   code: 'FIN.SG',
   kind: 'REGISTER',
   type: 'OUTGOING',
+  documentType: 'OUTGOING_GIRO',
   title: 'Giro Keluar',
   codeTag: 'SG',
 };

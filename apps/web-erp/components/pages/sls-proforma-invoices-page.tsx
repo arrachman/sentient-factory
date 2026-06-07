@@ -56,6 +56,7 @@ import {
   type ErpSlsProformaInvoice,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-proforma-invoices';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsProformaInvoiceForm,
   defaultSlsProformaInvoiceForm,
@@ -86,6 +87,7 @@ export function ErpSlsProformaInvoicesPage({
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsProformaInvoiceFormData>(defaultSlsProformaInvoiceForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.PI');
 
   const formReady =
     formMode === 'create' ||
@@ -266,6 +268,7 @@ export function ErpSlsProformaInvoicesPage({
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

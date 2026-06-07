@@ -52,6 +52,7 @@ import {
   type ErpSlsOrder,
   type ErpDocumentStatus,
 } from '@/lib/api/sls-orders';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 import {
   SlsOrderForm,
   defaultSlsOrderForm,
@@ -67,6 +68,7 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<SlsOrderFormData>(defaultSlsOrderForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('SLS.SO');
 
   const formReady =
     formMode === 'create' ||
@@ -247,6 +249,7 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

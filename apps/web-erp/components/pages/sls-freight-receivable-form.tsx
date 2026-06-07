@@ -23,6 +23,7 @@ export function SlsFreightReceivableForm({
   data: SlsInvoiceFormData;
   onChange: (d: SlsInvoiceFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

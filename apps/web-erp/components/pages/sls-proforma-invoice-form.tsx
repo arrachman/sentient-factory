@@ -21,6 +21,7 @@ export function SlsProformaInvoiceForm(props: {
   data: SlsProformaInvoiceFormData;
   onChange: (d: SlsProformaInvoiceFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;
