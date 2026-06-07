@@ -41,6 +41,7 @@ export function BankReceiptForm({
   data,
   onChange,
   saving,
+  allowedCreationStatuses,
   onSave,
   onSaveNew,
   onReset,
@@ -48,6 +49,7 @@ export function BankReceiptForm({
   data: BankReceiptFormData;
   onChange: (d: BankReceiptFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;
@@ -98,6 +100,7 @@ export function BankReceiptForm({
         },
       ]}
       saving={saving}
+      allowedCreationStatuses={allowedCreationStatuses}
       onSave={onSave}
       onSaveNew={onSaveNew}
       onReset={onReset}

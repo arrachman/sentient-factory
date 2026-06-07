@@ -41,6 +41,7 @@ export const CashReceiptForm = React.forwardRef<
     data: CashReceiptFormData;
     onChange: (d: CashReceiptFormData) => void;
     saving?: boolean;
+    allowedCreationStatuses?: string[];
     onSave: () => void;
     onSaveNew: () => void;
     onReset: () => void;

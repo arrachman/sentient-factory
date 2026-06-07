@@ -188,6 +188,7 @@ export function toCashBankPayload(
     docNumber: d.auto ? undefined : d.docNumber || undefined,
     direction,
     kind: d.kind,
+    status: d.status !== 'DRAFT' ? d.status : undefined,
     paymentMethod: isBank && d.paymentMethod ? d.paymentMethod : undefined,
     branchId: d.branchId,
     locationId: d.locationId || undefined,

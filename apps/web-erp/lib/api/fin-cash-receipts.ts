@@ -143,6 +143,7 @@ export interface CreateCashReceiptPayload {
   currencyId: string;
   exchangeRate: string;
   legacyCode?: string;
+  status?: ErpDocumentStatus;
   lines: CashBankLinePayload[];
   giros?: CashBankGiroPayload[];
 }

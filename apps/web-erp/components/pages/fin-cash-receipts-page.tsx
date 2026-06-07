@@ -64,6 +64,7 @@ import {
   type CashReceiptFormData,
   type CashReceiptFormHandle,
 } from './fin-cash-receipts-form';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 
 /** Canonical list path (seeded `sys_menus.path`); base for /new and /:id. */
 const CR_BASE = '/finance/cash-receipts';
@@ -78,6 +79,7 @@ export function ErpCashReceiptsPage({
   const [form, setForm] = React.useState<CashReceiptFormData>(defaultCashReceiptForm);
   const [saving, setSaving] = React.useState(false);
   const formRef = React.useRef<CashReceiptFormHandle>(null);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('CASH_RECEIPT');
 
   // In edit mode the form is only ready once the loaded record matches the
   // route id — mounting CashReceiptForm before then would let its currency
@@ -269,6 +271,7 @@ export function ErpCashReceiptsPage({
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

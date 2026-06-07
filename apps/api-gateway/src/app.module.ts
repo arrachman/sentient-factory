@@ -148,8 +148,10 @@ import { ErpLanguagesModule } from './erp-languages/erp-languages.module';
 import { ErpToolsModule } from './erp-tools/erp-tools.module';
 import { ErpBankAccountsModule } from './erp-bank-accounts/erp-bank-accounts.module';
 import { ErpApprovalRulesModule } from './erp-approval-rules/erp-approval-rules.module';
+import { ErpRoleDocPoliciesModule } from './erp-role-doc-policies/erp-role-doc-policies.module';
 import { ErpHomeWidgetsModule } from './erp-home-widgets/erp-home-widgets.module';
 import { ErpImportModule } from './erp-import/erp-import.module';
+import { ErpReportsModule } from './erp-reports/erp-reports.module';
 import { ErpMfgBomsModule } from './erp-mfg-boms/erp-mfg-boms.module';
 import { ErpMfgWorkOrdersModule } from './erp-mfg-work-orders/erp-mfg-work-orders.module';
 import { ErpSlsArCollectionsModule } from './erp-sls-ar-collections/erp-sls-ar-collections.module';
@@ -328,8 +330,10 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpFormFieldsModule,
     ErpBankAccountsModule,
     ErpApprovalRulesModule,
+    ErpRoleDocPoliciesModule,
     ErpHomeWidgetsModule,
     ErpImportModule,
+    ErpReportsModule,
     ErpMfgBomsModule,
     ErpMfgWorkOrdersModule,
     // ERP Sales — AR Collections (IC) — Penagihan Piutang M5.TX.IC

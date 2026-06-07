@@ -37,6 +37,7 @@ export function CashDisbursementForm(props: {
   data: CashDisbursementFormData;
   onChange: (d: CashDisbursementFormData) => void;
   saving?: boolean;
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;

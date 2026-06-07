@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ErpRoleDocPoliciesService } from '../erp-role-doc-policies/erp-role-doc-policies.service';
 import { CashBankPostingService } from './cash-bank-posting.service';
 import { enrichTransactions } from './cash-bank-enrich';
 import {
@@ -32,6 +33,7 @@ export class ErpFinCashBankTransactionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly posting: CashBankPostingService,
+    private readonly roleDocPolicies: ErpRoleDocPoliciesService,
   ) {}
 
   private async resolvePeriod(
@@ -149,6 +151,19 @@ export class ErpFinCashBankTransactionsService {
   async create(dto: CreateCashBankTransactionDto, actorId?: string) {
     const actor = actorId ? BigInt(actorId) : null;
     const kind = dto.kind ?? 'CASH';
+
+    // Validate requested creation status against role policy.
+    const docTypeKey = DOC_CODE[`${kind}_${dto.direction}`] ?? `${kind}_${dto.direction}`;
+    const requestedStatus = dto.status ?? 'DRAFT';
+    if (actorId) {
+      const allowed = await this.roleDocPolicies.getAllowedStatusesForUser(actorId, docTypeKey);
+      if (!allowed.includes(requestedStatus)) {
+        throw new ForbiddenException(
+          `Role Anda tidak diizinkan membuat dokumen dengan status "${requestedStatus}". Status yang diizinkan: ${allowed.join(', ')}.`,
+        );
+      }
+    }
+
     const created = await this.prisma.$transaction(async (tx) => {
       const fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.transactionDate);
       const wantAuto = dto.auto !== false && !dto.docNumber;
@@ -175,7 +190,7 @@ export class ErpFinCashBankTransactionsService {
           currencyId: BigInt(dto.currencyId),
           exchangeRate: new Prisma.Decimal(dto.exchangeRate),
           amount: sumAmount(dto.lines, dto.amount),
-          status: 'DRAFT',
+          status: requestedStatus as never,
           postingStatus: 'UNPOSTED',
           legacyCode: dto.legacyCode ?? null,
           createdById: actor,

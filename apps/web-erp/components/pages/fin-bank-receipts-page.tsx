@@ -64,6 +64,7 @@ import {
   type BankReceiptFormData,
 } from './fin-bank-receipts-form';
 import { paymentMethodLabel } from './fin-bank-receipts-form-model';
+import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
 
 /** Canonical list path (seeded `sys_menus.path`); base for /new and /:id. */
 const BR_BASE = '/finance/bank-receipts';
@@ -76,6 +77,7 @@ export function ErpBankReceiptsPage({
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
   const [form, setForm] = React.useState<BankReceiptFormData>(defaultBankReceiptForm);
   const [saving, setSaving] = React.useState(false);
+  const { statuses: allowedCreationStatuses } = useAllowedCreationStatuses('BANK_RECEIPT');
 
   const formReady =
     formMode === 'create' ||
@@ -250,6 +252,7 @@ export function ErpBankReceiptsPage({
               data={form}
               onChange={setForm}
               saving={saving}
+              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
               onSave={() => persist(true)}
               onSaveNew={() => persist(false, true)}
               onReset={loadForm}

@@ -401,6 +401,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M0.SYS.GRID',        title: 'Kustomisasi Grid',    path: '/admin/grid-customization'                    },
     { code: 'M0.SYS.FORM',        title: 'Form Builder',        path: '/admin/form-builder'                          },
     { code: 'M0.SYS.APPEARANCE',  title: 'Appearance',          path: '/settings/appearance'                         },
+    { code: 'M0.SYS.REPORT',      title: 'Report Designer',     path: '/admin/report-designer'                       },
   ], sysGrp.id);
 
   // ── M1: Master Data ───────────────────────────────────────────────────────
@@ -786,7 +787,7 @@ async function seedMenus(): Promise<Map<string, bigint>> {
   const m6Id = menuIds.get('M6');
   if (m6Id) {
     const m6TxGrp = await upsertMenu({ code: 'M6.TX', title: 'Transaksi', type: ErpMenuType.GROUP, parentId: m6Id, sortOrder: 1, legacyCode: '6-2' });
-    await bulkUpsertMenuItems([
+    await upsertItems([
       { code: 'M6.TX.BOM', title: 'Bill of Materials (BOM)', path: '/manufacturing/boms',        legacyCode: '6-3' },
       { code: 'M6.TX.WO',  title: 'Work Order (WO)',         path: '/manufacturing/work-orders', legacyCode: '6-4' },
     ], m6TxGrp.id);
@@ -923,6 +924,26 @@ async function seedRoleAndUser(menuIds: Map<string, bigint>, permIds: Map<string
       update: {},
     });
   }
+
+  // Super admin can create any document starting at any status.
+  const ALL_DOC_TYPES = [
+    'CASH_RECEIPT', 'CASH_DISBURSEMENT', 'BANK_RECEIPT', 'BANK_DISBURSEMENT',
+    'JOURNAL_ENTRY', 'ADJUSTING_JOURNAL', 'JOURNAL_MEMO', 'BANK_BALANCE',
+    'REVERSAL', 'INCOMING_GIRO', 'OUTGOING_GIRO', 'GIRO_CLEARING_IN', 'GIRO_CLEARING_OUT',
+    'PUR.PO', 'PUR.PR', 'PUR.PI', 'PUR.GRN', 'PUR.DNR', 'PUR.PRT',
+    'SLS.SO', 'SLS.SI', 'SLS.DO', 'SLS.RO', 'SLS.CR',
+    'INV.OS', 'INV.SA', 'INV.SC', 'INV.SM', 'INV.PA',
+    'MFG.WO',
+  ];
+  const SUPERADMIN_STATUSES = ['DRAFT', 'NEED_APPROVE', 'APPROVED'];
+  for (const documentType of ALL_DOC_TYPES) {
+    await prisma.erpRoleDocPolicy.upsert({
+      where: { roleId_documentType: { roleId: role.id, documentType } },
+      create: { roleId: role.id, documentType, allowedStatuses: SUPERADMIN_STATUSES, isActive: true },
+      update: { allowedStatuses: SUPERADMIN_STATUSES, isActive: true },
+    });
+  }
+  console.log('✓ adm_role_doc_policies (SUPERADMIN — all doc types, all creation statuses)');
 
   console.log('✓ adm_roles, adm_users, adm_user_roles, adm_role_permissions, adm_role_menus');
 }

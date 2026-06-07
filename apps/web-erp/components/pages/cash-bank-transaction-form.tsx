@@ -13,6 +13,13 @@ import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CashBankLinesEditor, type CashBankLinesHandle } from '@/components/organisms/cash-bank-lines';
 import { loadAccountOptionsCoded } from './items-form-lookups';
 import { buildLookupLoader } from '@/lib/lookup-source-registry';
@@ -67,6 +74,12 @@ export const CashBankTransactionForm = React.forwardRef<
   /** Extra tabs injected between Detail and Info (e.g. Giro). */
   extraTabs?: CashBankExtraTab[];
   saving?: boolean;
+  /**
+   * Statuses available in the creation-status dropdown (create mode only).
+   * When undefined or single-element, the existing read-only badge is shown.
+   * The page should call useAllowedCreationStatuses() and pass the result here.
+   */
+  allowedCreationStatuses?: string[];
   onSave: () => void;
   onSaveNew: () => void;
   onReset: () => void;
@@ -79,6 +92,7 @@ export const CashBankTransactionForm = React.forwardRef<
   headerExtra,
   extraTabs = [],
   saving,
+  allowedCreationStatuses,
   onSave,
   onSaveNew,
   onReset,
@@ -137,6 +151,10 @@ export const CashBankTransactionForm = React.forwardRef<
   };
 
   const locked = !EDITABLE.includes(data.status);
+
+  // Show status picker in create mode when the role allows more than one starting status.
+  const showStatusPicker =
+    !!allowedCreationStatuses && allowedCreationStatuses.length > 1 && !data.id;
 
   const bankAccountLoader = React.useMemo(() => {
     const f = formConfig.byKey['bankAccountId'];
@@ -241,9 +259,27 @@ export const CashBankTransactionForm = React.forwardRef<
           <Icon name="refresh" size={13} /> Reset
         </button>
         <div className="flex-1" />
-        <Badge variant={statusBadgeVariant(data.status)} dot>
-          {statusLabel(data.status)}
-        </Badge>
+        {showStatusPicker ? (
+          <Select
+            value={data.status}
+            onValueChange={(v) => onChange({ ...data, status: v as typeof data.status })}
+          >
+            <SelectTrigger className="w-[160px] h-7 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {allowedCreationStatuses!.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {statusLabel(s)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Badge variant={statusBadgeVariant(data.status)} dot>
+            {statusLabel(data.status)}
+          </Badge>
+        )}
       </div>
 
       {/* Header — rendered from Form Builder config; LEFT/CENTER/RIGHT slots, ordered by sortOrder.
