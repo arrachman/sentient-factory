@@ -24,6 +24,7 @@ import { ErpPermissionsPage } from '@/components/pages/permissions-page';
 import { ErpMenusPage } from '@/components/pages/menus-page';
 import { GridCustomizationPage } from '@/components/pages/grid-customization-page';
 import { FormBuilderPage } from '@/components/pages/form-builder-page';
+import { ReportDesignerPage } from '@/components/pages/report-designer-page';
 import { ErpDocumentNumberingsPage } from '@/components/pages/document-numberings-page';
 import { ErpFiscalPeriodsPage } from '@/components/pages/fiscal-periods-page';
 import { ErpBankAccountsPage } from '@/components/pages/bank-accounts-page';
@@ -182,6 +183,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/admin/menus': () => <ErpMenusPage />,
   '/admin/grid-customization': () => <GridCustomizationPage />,
   '/admin/form-builder': () => <FormBuilderPage />,
+  '/admin/report-designer': () => <ReportDesignerPage />,
   '/admin/document-numbering': () => <ErpDocumentNumberingsPage />,
   '/admin/fiscal-periods': () => <ErpFiscalPeriodsPage />,
   '/admin/audit-logs': () => <ErpAuditLogsPage />,

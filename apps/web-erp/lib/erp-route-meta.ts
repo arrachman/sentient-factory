@@ -16,6 +16,7 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/admin/menus': { group: 'Administrator', title: 'Menu Manager', icon: 'gear' },
   '/admin/grid-customization': { group: 'Administrator', title: 'Kustomisasi Grid', icon: 'layers' },
   '/admin/form-builder': { group: 'Administrator', title: 'Form Builder', icon: 'gear' },
+  '/admin/report-designer': { group: 'Administrator', title: 'Report Designer', icon: 'file' },
   '/admin/settings': { group: 'Administrator', title: 'System Settings', icon: 'gear' },
   '/admin/document-numbering': { group: 'Administrator', title: 'Document Numbering', icon: 'gear' },
   '/admin/fiscal-periods': { group: 'Administrator', title: 'Fiscal Periods', icon: 'gear' },
