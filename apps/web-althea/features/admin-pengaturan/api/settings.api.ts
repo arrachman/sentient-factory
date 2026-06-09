@@ -9,6 +9,7 @@ export type ClinicSettings = {
   timezone: string;
   currency: string;
   slotsOfDay: SlotDef[];
+  maxBookingsPerDay: number;
   closedDayOfWeek: number[];
   holidays: string[];
   taxEnabled: boolean;

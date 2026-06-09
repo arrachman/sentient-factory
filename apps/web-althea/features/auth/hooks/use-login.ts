@@ -52,7 +52,8 @@ export function useLogin() {
       const clinicRoles = res.data.user.roles.filter((r) => r.startsWith('clinic-')) as Role[];
       const role = clinicRoles[0] ?? 'clinic-admin';
       const landing = ROLE_DEFAULT_ROUTE[role] ?? '/admin/jadwal';
-      const target = returnTo && returnTo.startsWith('/') ? returnTo : landing;
+      // Exclude '/' — root page selalu redirect ke /login (page.tsx), jadi bukan valid returnTo
+      const target = returnTo && returnTo.startsWith('/') && returnTo !== '/' ? returnTo : landing;
       // Hard navigation — bypass RSC cache, biarin middleware run dengan cookie fresh
       window.location.assign(target);
     },

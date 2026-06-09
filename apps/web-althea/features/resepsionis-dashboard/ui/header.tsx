@@ -1,17 +1,14 @@
 'use client';
 
-import { CalendarPlus } from 'lucide-react';
 import { fmtDateLong } from './resepsionis-dashboard.helpers';
 
 export function Header({
   now,
   total,
-  onCreate,
   loading,
 }: {
   now: Date | null;
   total: number;
-  onCreate: () => void;
   loading: boolean;
 }) {
   return (
@@ -31,13 +28,6 @@ export function Header({
               : `${total} sesi dijadwalkan hari ini`}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onCreate}
-        className="btn btn-primary btn-sm"
-      >
-        <CalendarPlus className="h-4 w-4" /> Booking baru / Walk-in
-      </button>
     </header>
   );
 }

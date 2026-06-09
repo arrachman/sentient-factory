@@ -20,7 +20,6 @@ import {
   useCompleteBooking,
   useStartBooking,
 } from '@/features/admin-booking/hooks/use-booking';
-import { BookingWizard } from '@/features/admin-booking/ui/booking-wizard';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { todayKey } from './resepsionis-dashboard.helpers';
 import { type ColumnKey } from './resepsionis-dashboard.constants';
@@ -29,7 +28,6 @@ import { KpiStrip } from './kpi-strip';
 import { Column } from './column';
 
 export function ResepsionisDashboardPage() {
-  const [wizardOpen, setWizardOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [now, setNow] = useState<Date | null>(null);
 
@@ -105,7 +103,6 @@ export function ResepsionisDashboardPage() {
       <Header
         now={now}
         total={total}
-        onCreate={() => setWizardOpen(true)}
         loading={list.isLoading}
       />
 
@@ -196,7 +193,6 @@ export function ResepsionisDashboardPage() {
         />
       </div>
 
-      <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
     </div>
   );
 }

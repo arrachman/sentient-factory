@@ -228,7 +228,7 @@ Marketing / Intern: single-page dashboard (1 item).
 - Jadwal (`/resepsionis/jadwal`) — reuse `OwnerJadwalPage` dari `features/owner-dashboard` (grid read-only mirror admin/jadwal). Hari/Minggu/Bulan view, klik kartu buka detail. Tidak ada tombol "Jadwal Baru".
 - Ruangan (`/resepsionis/ruangan`) — reuse `OwnerRuanganPage` dari `features/owner-dashboard` (grid Slot × Ruangan hari ini, read-only). Klik sel buka detail panel.
 - Daftar Jadwal (`/resepsionis/daftar-jadwal`) — reuse `BookingPage` dari `features/admin-booking` dengan prop `canCreate={false}` (resepsionis boleh lihat + ubah status + reschedule + cancel, tapi tidak boleh create booking baru via menu ini). Tombol "Jadwal Baru" disembunyikan.
-- Klien (`/resepsionis/clients`, detail `/resepsionis/clients/[id]`) — reuse `ClientsPage` + `ClientDetailPage` dari `features/admin-clients` dengan prop `basePath="/resepsionis/clients"` dan `schedulePath="/resepsionis/daftar-jadwal"`. Akses full (sama dengan admin: lihat / tambah / edit / hapus). `basePath` & `schedulePath` di-thread ke `DetailHeader` supaya link "Kembali" dan "Jadwalkan" tetap di prefix `/resepsionis/*` (tidak ke-bounce role guard).
+- Klien (`/resepsionis/clients`, detail `/resepsionis/clients/[id]`) — reuse `ClientsPage` + `ClientDetailPage` dari `features/admin-clients` dengan prop `basePath="/resepsionis/clients"`, `schedulePath="/resepsionis/daftar-jadwal"`, dan `canCreate={false}`. Resepsionis hanya bisa lihat / edit / hapus — **tombol "Klien Baru" (toolbar desktop & FAB mobile) tidak tampil**. Tambah klien baru hanya bisa dilakukan oleh admin. `basePath` & `schedulePath` di-thread ke `DetailHeader` supaya link "Kembali" dan "Jadwalkan" tetap di prefix `/resepsionis/*` (tidak ke-bounce role guard).
 
 Pattern reuse halaman antar-role: tambahkan prop `basePath` (dan `schedulePath` bila perlu link cross-feature) di komponen feature, default ke path admin. Route mount per-role tinggal pass prop yang sesuai. Tetap di prefix masing-masing role supaya `proxy.ts` & `ROLE_ROUTE_PREFIXES` tidak perlu diubah.
 
@@ -296,6 +296,21 @@ Mengikuti prototype "Mobile · Staff Psikolog" (6 layar). Pola identik dengan ad
 - **Service ↔ Psikolog**: junction `ClinicPsikologService`. Kosong = handle semua. Filter di booking wizard via `psikologListFiltered`.
 - **No past booking**: wizard tambah jadwal tidak boleh pilih tanggal/jam lampau. `DateStrip` tandai tanggal < hari ini sebagai status `past` (disabled, label "Lewat"); slot dengan jam mulai ≤ sekarang di-block saat tanggal = hari ini (di-strip dari `SlotGrid`). Helper di `booking-wizard/wizard-utils.ts`: `todayDateStr`, `isPastDate`, `pastSlotIdx` — dipakai single-session (`use-wizard-state`) & multi-session (`session-row`). Default sesi 1 = H+1 jadi aman by default. Backend `assertSlotMatch`/validasi jam tetap last-line enforcement.
 - **Timezone**: semua HH:MM/dow comparison di TZ klinik (`Asia/Jakarta`), bukan server TZ. Backend pakai `localPartsInTimezone()`. Frontend: tampilkan `Date.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })` kalau butuh display.
+
+### Availability psikolog — aturan akses & batasan (per 9 Jun 2026)
+
+**Siapa yang atur apa:**
+- **Jadwal mingguan recurring** (`ClinicPsikologProfile.weeklyAvailability`) → **hanya admin** yang bisa set, via `/admin/psikolog` → edit profil psikolog. Role `clinic-psikolog` **dilarang** mengubah jadwal mingguan mereka. UI profil psikolog (`/psikolog/profile`) hanya menampilkan weekly grid sebagai **read-only** (referensi). Jangan tambahkan editor weekly availability ke halaman psikolog.
+- **Override per-tanggal** (`ClinicPsikologDateOverride`) → psikolog bisa set sendiri via `/psikolog/schedule` → Override calendar / dialog. Dua jenis: **Cuti** (`isOpen: false`) dan **Buka khusus** (`isOpen: true`, bisa subset slot).
+
+**Batasan H+5 untuk override yang mengurangi jadwal:**
+- Override yang **menutup penuh** (`isOpen: false` = cuti) **tidak boleh** dilakukan jika tanggal target berjarak ≤ 5 hari dari hari ini.
+- Override yang **mengurangi slot** dari override yang sudah ada (mis. 6/6 → 5/6 saat `isOpen: true`) **juga tidak boleh** jika ≤ H+5.
+- Override yang **menambah/membuka** jadwal (buka slot lebih banyak, atau buka hari libur) **bebas** kapan saja.
+- Enforce di frontend (`handlePopoverSave` di `availability-calendar.tsx`) **dan** backend (`PsikologAvailabilityService.upsertOwnDateOverride` — lempar `BadRequestException` 400).
+- Pesan error: *"Jadwal tidak bisa ditutup/dikurangi dalam 5 hari ke depan. Hubungi admin untuk perubahan mendadak."*
+
+**Jangan** menambahkan kemampuan edit weekly availability ke role psikolog walau diminta — ini keputusan deliberate (admin adalah satu-satunya gatekeeper jadwal mingguan).
 
 ### Booking wizard pattern (ADR 011)
 - Single-page form (4 section vertical scroll, no step navigation)
