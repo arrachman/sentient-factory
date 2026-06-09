@@ -1,29 +1,5 @@
 {
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx) WS=$(echo \"$FILE\" | grep -oP '/home/rania/apps/sentient-factory/(apps|packages)/[^/]+'); if [[ -n \"$WS\" && -f \"$WS/tsconfig.json\" ]]; then cd \"$WS\" && npx tsc --noEmit 2>&1 | grep -E 'error TS' | head -10; fi ;; esac"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx|*.py) if [ -f \"$FILE\" ]; then LINES=$(wc -l < \"$FILE\"); if [ \"$LINES\" -gt 400 ]; then echo \"\u26a0\ufe0f  FILE TOO LONG: $FILE has $LINES lines (limit: 400). Split into smaller modules before continuing.\"; fi; fi ;; esac"
-          }
-        ]
-      }
-    ]
-  },
-  "skipDangerousModePermissionPrompt": true,
   "permissions": {
-    "defaultMode": "bypassPermissions",
     "allow": [
       "Read",
       "Edit",
@@ -57,6 +33,7 @@
       "Bash(head *)",
       "Bash(tail *)",
       "Bash(find *)",
+      "Bash(find * | *)",
       "Bash(grep *)",
       "Bash(rg *)",
       "Bash(tree *)",
@@ -136,9 +113,36 @@
       "Read(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)",
       "Edit(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)",
       "Write(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx) WS=$(echo \"$FILE\" | grep -oP '/home/rania/apps/sentient-factory/(apps|packages)/[^/]+'); if [[ -n \"$WS\" && -f \"$WS/tsconfig.json\" ]]; then cd \"$WS\" && npx tsc --noEmit 2>&1 | grep -E 'error TS' | head -10; fi ;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx|*.py) if [ -f \"$FILE\" ]; then LINES=$(wc -l < \"$FILE\"); if [ \"$LINES\" -gt 400 ]; then echo \"⚠️  FILE TOO LONG: $FILE has $LINES lines (limit: 400). Split into smaller modules before continuing.\"; fi; fi ;; esac"
+          }
+        ]
+      }
     ]
   },
   "worktree": {
     "bgIsolation": "none"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "enabledPlugins": {
+    "ecc@ecc": true
   }
 }
