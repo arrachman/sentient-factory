@@ -13,6 +13,7 @@ import type { CreatePsikologInput, Psikolog } from '../model/types';
 import { PsikologCard } from './psikolog-card';
 import { ProfileAside } from './profile-aside';
 import { PsikologForm } from './psikolog-form';
+import { AdminScheduleDialog } from './schedule-dialog';
 import { QuotaExplainer } from './quota-explainer';
 
 const FILTER_TABS: Array<{ key: string; label: string }> = [
@@ -28,6 +29,7 @@ export function PsikologPage() {
   const [editing, setEditing] = useState<Psikolog | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [scheduleTarget, setScheduleTarget] = useState<Psikolog | null>(null);
 
   const listQuery = usePsikologList({
     isActive: true,
@@ -175,6 +177,7 @@ export function PsikologPage() {
               onEdit={() => openEdit(selected)}
               onDelete={handleDelete}
               onDeactivate={handleDeactivate}
+              onSchedule={(p) => setScheduleTarget(p)}
             />
           </div>
         )}
@@ -186,6 +189,12 @@ export function PsikologPage() {
         submitting={submitting}
         onSubmit={handleSubmit}
         onClose={() => { setDialogOpen(false); setEditing(null); }}
+      />
+
+      <AdminScheduleDialog
+        open={scheduleTarget !== null}
+        psikolog={scheduleTarget}
+        onClose={() => setScheduleTarget(null)}
       />
     </div>
   );

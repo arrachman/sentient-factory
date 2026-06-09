@@ -140,16 +140,22 @@ export const SPECIALTY_LABEL: Record<string, string> = {
 };
 
 /**
- * Default avatar color palette (sage spectrum).
+ * Preset avatar color swatches — quick picks for admin.
+ * Custom color can also be chosen via the color picker (any hex).
  */
 export const COLOR_PALETTE = [
-  '#2f7a3f',
-  '#4ea860',
-  '#e25822',
-  '#2f6fb5',
-  '#c98a14',
-  '#0f3a3a',
-  '#d94f7a',
+  '#2f7a3f', // dark green
+  '#4ea860', // medium green
+  '#5b8a66', // sage (primary)
+  '#0f3a3a', // deep teal
+  '#2f6fb5', // blue
+  '#1d4ed8', // deep blue
+  '#7c3aed', // violet
+  '#c98a14', // amber
+  '#e25822', // orange
+  '#d94f7a', // rose
+  '#be123c', // crimson
+  '#6b7280', // slate gray
 ];
 
 export type ListResponse = {

@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm, type Resolver } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { z } from 'zod';
@@ -16,17 +16,6 @@ import {
   type DayKey,
   type Psikolog,
 } from '../model/types';
-
-/**
- * Edit-mode schema: password field disembunyikan di UI tapi tetap ada di
- * form state (default `''`). Required-min-8 dari create schema akan fail
- * silently → submit terblok. Solusi: override password ke optional di
- * edit mode supaya zod tidak gagal walaupun empty. Parent submit handler
- * akan drop password sebelum kirim ke API.
- */
-const editPsikologSchema = createPsikologSchema.extend({
-  password: z.string().optional().or(z.literal('')),
-});
 
 type Props = {
   open: boolean;
@@ -59,7 +48,7 @@ const EMPTY_FORM: CreatePsikologInput = {
   password: '',
   title: '',
   specialty: [],
-  color: '',
+  color: COLOR_PALETTE[4],
   license: '',
   defaultSlots: 4,
   weeklyAvailability: DEFAULT_WEEKLY,
@@ -70,6 +59,14 @@ const EMPTY_FORM: CreatePsikologInput = {
 
 export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: Props) {
   const isEdit = initial !== null;
+  const [tempCustomColor, setTempCustomColor] = useState('');
+
+  const activeSchema = useMemo(() => {
+    return isEdit
+      ? createPsikologSchema.extend({ password: z.string().optional().or(z.literal('')) })
+      : createPsikologSchema;
+  }, [isEdit]);
+
   const {
     control,
     register,
@@ -79,13 +76,10 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
     setValue,
     formState: { errors },
   } = useForm<CreatePsikologInput>({
-    // Cast: editPsikologSchema infer type wider (password optional) — cast
-    // ke Resolver<CreatePsikologInput> aman karena empty password tetap
-    // valid string `''` di runtime, dan parent submit handler drop password
-    // sebelum kirim ke API saat edit.
-    resolver: zodResolver(
-      isEdit ? editPsikologSchema : createPsikologSchema,
-    ) as Resolver<CreatePsikologInput>,
+    // Cast: edit schema infer type wider (password optional) — cast ke
+    // Resolver<CreatePsikologInput> aman karena empty password tetap valid
+    // string '' di runtime; parent submit handler drop password saat edit.
+    resolver: zodResolver(activeSchema) as Resolver<CreatePsikologInput>,
     defaultValues: EMPTY_FORM,
   });
 
@@ -106,9 +100,9 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
         password: '',
         title: initial.title ?? '',
         specialty: initial.specialty,
-        color: initial.color ?? '',
+        color: initial.color ?? COLOR_PALETTE[4],
         license: initial.license ?? '',
-        defaultSlots: initial.defaultSlots,
+        defaultSlots: initial.defaultSlots ?? 4,
         weeklyAvailability: existingWA as Record<DayKey, DayAvailability>,
         serviceIds: initial.serviceIds ?? [],
         bio: initial.bio ?? '',
@@ -117,6 +111,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
     } else {
       reset(EMPTY_FORM);
     }
+    setTempCustomColor('');
   }, [initial, reset]);
 
   const selectedSpecialty = watch('specialty') ?? [];
@@ -240,6 +235,26 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="caption mb-1 block">Kuota Harian (maks sesi/hari)</label>
+              <input
+                type="number"
+                {...register('defaultSlots', { valueAsNumber: true })}
+                className="input-althea"
+                min={0}
+                max={20}
+                placeholder="4"
+              />
+              <p className="caption mt-1 text-fg-muted">
+                Batas sesi yang bisa di-booking per hari. Default 4.
+              </p>
+              {errors.defaultSlots && (
+                <p className="caption mt-1 text-danger">{errors.defaultSlots.message}</p>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="caption mb-1 block">Spesialisasi</label>
             <div className="flex flex-wrap gap-2">
@@ -263,37 +278,54 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
 
           <div>
             <label className="caption mb-1 block">Warna Avatar</label>
-            <div className="flex flex-wrap gap-2">
-              {COLOR_PALETTE.map((c) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {COLOR_PALETTE.slice(0, 5).map((c) => (
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setValue('color', c)}
+                  onClick={() => { setValue('color', c); setTempCustomColor(''); }}
                   className={`h-8 w-8 rounded-full border-2 transition ${
-                    selectedColor === c ? 'border-teal-800 ring-2 ring-sage-300' : 'border-border'
+                    selectedColor === c && !tempCustomColor ? 'border-teal-800 ring-2 ring-sage-300' : 'border-border'
                   }`}
                   style={{ backgroundColor: c }}
                   aria-label={`Warna ${c}`}
                 />
               ))}
+              {/* Custom color picker — pilih warna bebas, konfirmasi via tombol Set */}
+              <label
+                className={`relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 transition ${
+                  tempCustomColor
+                    ? 'border-teal-800 ring-2 ring-sage-300'
+                    : 'border-dashed border-border hover:border-sage-400'
+                }`}
+                title="Pilih warna kustom"
+                aria-label="Pilih warna kustom"
+              >
+                <span className="text-xs font-semibold leading-none text-fg-muted">+</span>
+                <input
+                  type="color"
+                  value={tempCustomColor || (selectedColor?.startsWith('#') ? selectedColor : '#5b8a66')}
+                  onChange={(e) => setTempCustomColor(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </label>
+              {tempCustomColor && (
+                <button
+                  type="button"
+                  onClick={() => { setValue('color', tempCustomColor); setTempCustomColor(''); }}
+                  className="btn btn-outline btn-sm"
+                  style={{ fontSize: 12, padding: '0 10px', height: 32 }}
+                >
+                  Set
+                </button>
+              )}
+              {!tempCustomColor && selectedColor && (
+                <span className="caption font-mono text-fg-muted">{selectedColor}</span>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="caption mb-1 block">Slot per hari (default)</label>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              {...register('defaultSlots', { valueAsNumber: true })}
-              className="input-althea max-w-[160px]"
-            />
-            <p className="caption mt-1 text-fg-muted">
-              Maksimal jumlah klien per hari yang bisa di-booking ke psikolog ini.
-            </p>
-          </div>
-
-          {/* Status psikolog — section terpisah supaya jelas bukan modifier slot per hari */}
+          {/* Status psikolog */}
           <div className="rounded-md border border-border bg-cream-50 p-3">
             <label className="caption block mb-2 font-semibold">
               Status Psikolog
@@ -382,4 +414,3 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
     </div>
   );
 }
-

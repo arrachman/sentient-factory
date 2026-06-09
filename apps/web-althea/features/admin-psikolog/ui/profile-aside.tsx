@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Edit, PowerOff, Trash2 } from 'lucide-react';
+import { CalendarDays, Check, Edit, PowerOff, Trash2 } from 'lucide-react';
 import { useServiceList } from '../../admin-layanan/hooks/use-service';
 import type { Service } from '../../admin-layanan/model/types';
 import { DAY_KEYS, SPECIALTY_LABEL, type DayKey, type Psikolog } from '../model/types';
@@ -17,11 +17,13 @@ export function ProfileAside({
   onEdit,
   onDelete,
   onDeactivate,
+  onSchedule,
 }: {
   p: Psikolog;
   onEdit: () => void;
   onDelete: (p: Psikolog) => void;
   onDeactivate: (p: Psikolog) => void;
+  onSchedule: (p: Psikolog) => void;
 }) {
   const sinceYear = p.createdAt ? new Date(p.createdAt).getFullYear() : null;
   const specialtyText =
@@ -178,9 +180,20 @@ export function ProfileAside({
         )}
       </div>
 
-      <button type="button" onClick={onEdit} className="btn btn-outline btn-sm" style={{ marginTop: 'auto' }}>
-        Lihat profil lengkap
-      </button>
+      <div className="flex flex-col gap-2" style={{ marginTop: 'auto' }}>
+        <button
+          type="button"
+          onClick={() => onSchedule(p)}
+          className="btn btn-outline btn-sm"
+          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <CalendarDays size={14} />
+          Atur Jadwal Default
+        </button>
+        <button type="button" onClick={onEdit} className="btn btn-outline btn-sm">
+          Lihat profil lengkap
+        </button>
+      </div>
     </aside>
   );
 }
