@@ -75,6 +75,8 @@ export class BookingStateChangesService {
       excludeBookingId: id,
     });
 
+    await this.validation.assertDefaultSlotsCapacity(newPsikologUserId, newStart, id);
+
     const history = (existing.data.rescheduleHistory as unknown[]) || [];
     history.push({
       from: {

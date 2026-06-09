@@ -11,6 +11,9 @@ model ClinicSettings {
   // supaya satu source of truth.
   // [{ start: "08:30", end: "10:00", label: "Pagi 1" }, ...]
   slotsOfDay               Json     @default("[]") @map("slots_of_day")
+  // Cap maksimum booking per psikolog per hari untuk display kapasitas Owner Dashboard.
+  // Terpisah dari jumlah slotsOfDay supaya target bisa beda dari total slot tersedia.
+  maxBookingsPerDay        Int      @default(6) @map("max_bookings_per_day")
   // Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). Default: Minggu tutup.
   closedDayOfWeek          Json     @default("[0]") @map("closed_day_of_week")
   holidays                 Json     @default("[]") // list of ISO date strings (tanggal libur ad-hoc)

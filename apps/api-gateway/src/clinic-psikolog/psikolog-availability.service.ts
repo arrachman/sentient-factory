@@ -1,11 +1,16 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { dateStrToDateColumn, localDateAtMidnight, localPartsInTimezone } from '../clinic-booking/timezone.util';
+import {
+  dateStrToDateColumn,
+  localDateAtMidnight,
+  localPartsInTimezone,
+} from '../clinic-booking/timezone.util';
 import { mapPsikologToResponse, userSelect } from './psikolog.utils';
 
 @Injectable()
@@ -60,6 +65,37 @@ export class PsikologAvailabilityService {
     }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) {
       throw new ConflictException(`Tanggal '${input.date}' bukan format ISO YYYY-MM-DD.`);
+    }
+    // H+5 guard: tutup jadwal atau kurangi slot tidak boleh jika tanggal ≤ 5 hari dari sekarang.
+    {
+      const tz = 'Asia/Jakarta';
+      const { dateStr: todayStr } = localPartsInTimezone(new Date(), tz);
+      const diffDays =
+        (new Date(input.date).getTime() - new Date(todayStr).getTime()) / (1000 * 60 * 60 * 24);
+      if (diffDays <= 5) {
+        if (!input.isOpen) {
+          throw new BadRequestException(
+            'Jadwal tidak bisa ditutup dalam H+5 (5 hari ke depan). Hubungi admin untuk perubahan mendadak.',
+          );
+        }
+        // Blokir juga pengurangan slot dari override yang sudah ada
+        if (Array.isArray(input.slotIndices)) {
+          const dateObj = dateStrToDateColumn(input.date);
+          const existingOverride = await this.prisma.clinicPsikologDateOverride.findUnique({
+            where: { psikologUserId_date: { psikologUserId: userId, date: dateObj } },
+          });
+          if (existingOverride?.isOpen) {
+            const existingCount = Array.isArray(existingOverride.slotIndices)
+              ? (existingOverride.slotIndices as number[]).length
+              : Number.MAX_SAFE_INTEGER;
+            if (input.slotIndices.length < existingCount) {
+              throw new BadRequestException(
+                'Jadwal tidak bisa dikurangi dalam H+5 (5 hari ke depan). Hubungi admin untuk perubahan mendadak.',
+              );
+            }
+          }
+        }
+      }
     }
     // Konversi date string ke midnight di TZ klinik (consistent dengan
     // resolveAvailabilityForDate + assertPsikologAvailable lookup).

@@ -5,11 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BookingEventsService } from './booking-events.service';
 import { BookingNotificationService } from './booking-notification.service';
 import { BookingValidationService } from './booking-validation.service';
-import {
-  CreateBookingDto,
-  QueryBookingDto,
-  UpdateBookingDto,
-} from './dto/clinic-booking.dto';
+import { CreateBookingDto, QueryBookingDto, UpdateBookingDto } from './dto/clinic-booking.dto';
 import { localDateAtMidnight } from './timezone.util';
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,7 +20,20 @@ export function addDaysIso(dateStr: string, days: number): string {
 
 export function buildIncludeRelations(): Prisma.ClinicBookingInclude {
   return {
-    client: { select: { id: true, name: true, gender: true, phoneWa: true } },
+    client: {
+      select: {
+        id: true,
+        name: true,
+        gender: true,
+        phoneWa: true,
+        bookings: {
+          where: { status: 'completed', deletedAt: null },
+          orderBy: { scheduledStart: 'desc' },
+          take: 1,
+          select: { scheduledStart: true, service: { select: { name: true } } },
+        },
+      },
+    },
     service: {
       select: {
         id: true,
@@ -42,7 +51,9 @@ export function buildIncludeRelations(): Prisma.ClinicBookingInclude {
         fullName: true,
         avatarUrl: true,
         phone: true,
-        clinicPsikologProfile: { select: { title: true, color: true, specialty: true, license: true } },
+        clinicPsikologProfile: {
+          select: { title: true, color: true, specialty: true, license: true },
+        },
       },
     },
     room: { select: { id: true, name: true, type: true } },
@@ -86,6 +97,8 @@ export class BookingCrudService {
       scheduledEnd: end,
       excludeBookingId: null,
     });
+
+    await this.validation.assertDefaultSlotsCapacity(dto.psikologUserId, start, null);
 
     if (!dto.createdViaWalkIn) {
       await this.validation.assertSlotMatch(start, end, dto.serviceId);

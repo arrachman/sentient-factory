@@ -217,6 +217,49 @@ export class BookingValidationService {
   }
 
   /**
+   * Cek jumlah booking aktif psikolog di tanggal `start` tidak melebihi
+   * `defaultSlots` dari ClinicPsikologProfile.
+   * - `excludeBookingId`: abaikan booking ini dari hitungan (untuk reschedule).
+   * - Jika `defaultSlots` 0 / null / profile tidak ada → skip (no cap).
+   */
+  async assertDefaultSlotsCapacity(
+    psikologUserId: number,
+    start: Date,
+    excludeBookingId: number | null = null,
+  ): Promise<void> {
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId: psikologUserId, deletedAt: null },
+      select: { defaultSlots: true, user: { select: { fullName: true, email: true } } },
+    });
+    if (!profile || !profile.defaultSlots || profile.defaultSlots <= 0) return;
+
+    const settings = await this.prisma.clinicSettings.findFirst({
+      where: { id: 1 },
+      select: { timezone: true },
+    });
+    const tz = settings?.timezone || 'Asia/Jakarta';
+    const { dateStr } = localPartsInTimezone(start, tz);
+    const dayStart = localDateAtMidnight(dateStr, tz);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const countWhere: Prisma.ClinicBookingWhereInput = {
+      deletedAt: null,
+      psikologUserId,
+      status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
+      scheduledStart: { gte: dayStart, lt: dayEnd },
+    };
+    if (excludeBookingId) countWhere.id = { not: excludeBookingId };
+
+    const count = await this.prisma.clinicBooking.count({ where: countWhere });
+    if (count >= profile.defaultSlots) {
+      const name = profile.user.fullName ?? profile.user.email;
+      throw new BadRequestException(
+        `${name} sudah penuh di ${dateStr} — ${count}/${profile.defaultSlots} slot terisi. Pilih tanggal atau psikolog lain.`,
+      );
+    }
+  }
+
+  /**
    * @deprecated Use `assertSlotMatch` instead. Stub kept for back-compat agar
    * caller existing tidak crash sampai semua di-migrasi.
    */
