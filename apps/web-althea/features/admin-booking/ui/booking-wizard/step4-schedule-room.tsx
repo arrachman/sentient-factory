@@ -45,6 +45,9 @@ export function Step4ScheduleRoom({
   psikologDayBookings,
   closedDayOfWeek,
   holidays,
+  isPsikologAtCapacity,
+  psikologBookingsCount,
+  psikologDailyLimit,
 }: {
   state: WizardState;
   setState: React.Dispatch<React.SetStateAction<WizardState>>;
@@ -71,6 +74,9 @@ export function Step4ScheduleRoom({
   psikologDayBookings: ReturnType<typeof useBookingList>;
   closedDayOfWeek: number[];
   holidays: string[];
+  isPsikologAtCapacity: boolean;
+  psikologBookingsCount: number;
+  psikologDailyLimit: number;
 }) {
   const selectedPsikolog =
     psikologList.data?.data.find((p) => p.userId === state.psikologUserId) ?? null;
@@ -110,6 +116,12 @@ export function Step4ScheduleRoom({
             <div className="rounded-md border border-sage-200 bg-sage-50 px-3 py-2 text-xs text-sage-800">
               ℹ Tanggal ini pakai <strong>jadwal khusus</strong> psikolog (override)
               {overrideReason ? ` — ${overrideReason}` : ''}.
+            </div>
+          )}
+          {isPsikologAtCapacity && (
+            <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+              ⛔ <strong>{psikologName}</strong> sudah mencapai batas booking harian ({psikologBookingsCount}/{psikologDailyLimit}).
+              Pilih tanggal lain atau ganti psikolog di step sebelumnya.
             </div>
           )}
           <SlotGrid

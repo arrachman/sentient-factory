@@ -129,7 +129,10 @@ export function useWizardState({
     occupiedRoomIds,
     intraConflict,
     selectedSlot,
-  } = useWizardAvailability({ s, slots, isMulti });
+    psikologBookingsCount,
+    dailyLimit,
+    isPsikologAtCapacity,
+  } = useWizardAvailability({ s, slots, isMulti, selectedPsikolog: selectedPsikolog ?? null });
 
   const { createSingleMut, createPackageMut, editMut } = useWizardMutations({ onClose, qc });
 
@@ -195,6 +198,7 @@ export function useWizardState({
     selectedSlot, psikologDayBookings, availabilityQuery,
     resolvedAvailability, psikologClosedToday,
     unavailableSlotIdx, occupiedRoomIds, intraConflict,
+    psikologBookingsCount, dailyLimit, isPsikologAtCapacity,
     allSessionsFilled, canSubmit, submitting, submit,
   };
 }

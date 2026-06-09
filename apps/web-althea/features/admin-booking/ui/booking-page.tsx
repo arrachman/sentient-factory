@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   CalendarDays,
   CheckCircle2,
+  DoorOpen,
   Eye,
   Play,
   Plus,
@@ -27,6 +28,7 @@ import {
 } from '../model/types';
 import { BookingDetailDialog } from './booking-detail-dialog';
 import { BookingWizard } from './booking-wizard';
+import { ChangeRoomDialog } from './change-room-dialog';
 import { RescheduleDialog } from './reschedule-dialog';
 
 function formatDateTime(iso: string): string {
@@ -91,6 +93,7 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
   const [detailing, setDetailing] = useState<Booking | null>(null);
   const [editing, setEditing] = useState<Booking | null>(null);
+  const [changingRoom, setChangingRoom] = useState<Booking | null>(null);
 
   const effectiveDate =
     quickFilter === 'today' || quickFilter === 'tomorrow'
@@ -321,6 +324,16 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
                         <RotateCw className="h-3.5 w-3.5" /> Reschedule
                       </button>
                     )}
+                    {b.status === 'checked_in' && (
+                      <button
+                        type="button"
+                        onClick={() => setChangingRoom(b)}
+                        className="btn btn-sm btn-outline"
+                        title="Ganti ruangan untuk booking ini"
+                      >
+                        <DoorOpen className="h-3.5 w-3.5" /> Ubah Ruangan
+                      </button>
+                    )}
                     {(b.status === 'checked_in' || b.status === 'completed') && (
                       <button
                         type="button"
@@ -388,6 +401,7 @@ export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) 
         onClose={() => setEditing(null)}
       />
       <RescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} />
+      <ChangeRoomDialog booking={changingRoom} onClose={() => setChangingRoom(null)} />
       <BookingDetailDialog booking={detailing} onClose={() => setDetailing(null)} />
     </div>
   );

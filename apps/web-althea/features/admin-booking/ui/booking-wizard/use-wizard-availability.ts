@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { usePsikologAvailabilityForDate } from '@/features/admin-psikolog/hooks/use-psikolog';
+import type { Psikolog } from '@/features/admin-psikolog/model/types';
 import { pastSlotIdx } from './wizard-utils';
 import type { WizardState } from './wizard-types';
 
@@ -17,6 +18,7 @@ interface UseWizardAvailabilityParams {
   s: WizardState;
   slots: SlotDef[];
   isMulti: boolean;
+  selectedPsikolog: Psikolog | null;
 }
 
 /**
@@ -27,6 +29,7 @@ export function useWizardAvailability({
   s,
   slots,
   isMulti,
+  selectedPsikolog,
 }: UseWizardAvailabilityParams) {
   const firstSession = s.sessions[0];
   const firstDate = firstSession?.date ?? '';
@@ -60,9 +63,48 @@ export function useWizardAvailability({
     return !resolvedAvailability.isOpen;
   }, [resolvedAvailability, s.psikologUserId, firstDate]);
 
+  // Kuota harian per psikolog dari profile.defaultSlots.
+  // 0 = tidak ada batas (unlimited). null berarti sama → skip enforcement.
+  const psikologDailyQuota =
+    (selectedPsikolog?.defaultSlots ?? 0) > 0 ? selectedPsikolog!.defaultSlots! : null;
+
+  const psikologBookingsCount = psikologDayBookings.data?.data.length ?? 0;
+
+  // Jumlah slot aktif psikolog di tanggal yang dipilih.
+  // null slotIndices = semua slot aktif; psikolog closed = 0.
+  const activePsikologSlots = (() => {
+    if (!s.psikologUserId || !firstDate || psikologClosedToday) return 0;
+    if (!resolvedAvailability) return slots.length;
+    const indices = resolvedAvailability.slotIndices;
+    return indices === null ? slots.length : indices.length;
+  })();
+
+  // Batas efektif: min(kuota_psikolog, slot_aktif). Fallback ke slot_aktif saat no quota.
+  const dailyLimit =
+    psikologDailyQuota !== null
+      ? activePsikologSlots > 0
+        ? Math.min(psikologDailyQuota, activePsikologSlots)
+        : psikologDailyQuota
+      : activePsikologSlots > 0
+        ? activePsikologSlots
+        : slots.length;
+
+  // Kuota harian tercapai → semua slot harus di-block.
+  const isQuotaFull =
+    psikologDailyQuota !== null &&
+    !!s.psikologUserId &&
+    !!firstDate &&
+    !psikologClosedToday &&
+    activePsikologSlots > 0 &&
+    psikologBookingsCount >= dailyLimit;
+
   const unavailableSlotIdx = useMemo(() => {
     if (!s.psikologUserId || !firstDate) return new Set<number>();
     if (psikologClosedToday) {
+      return new Set<number>(slots.map((_, i) => i));
+    }
+    // Kuota harian penuh → semua slot tidak bisa dipilih
+    if (isQuotaFull) {
       return new Set<number>(slots.map((_, i) => i));
     }
     const taken = pastSlotIdx(firstDate, slots);
@@ -91,6 +133,7 @@ export function useWizardAvailability({
     s.psikologUserId,
     psikologClosedToday,
     resolvedAvailability,
+    isQuotaFull,
   ]);
 
   // RoomId yang sudah terpakai di slot yang dipilih (single-session mode).
@@ -127,6 +170,8 @@ export function useWizardAvailability({
     return conflicts;
   }, [s.sessions, isMulti]);
 
+  const isPsikologAtCapacity = isQuotaFull;
+
   return {
     psikologDayBookings,
     allDayBookings,
@@ -137,5 +182,8 @@ export function useWizardAvailability({
     occupiedRoomIds,
     intraConflict,
     selectedSlot,
+    psikologBookingsCount,
+    dailyLimit,
+    isPsikologAtCapacity,
   };
 }

@@ -222,6 +222,9 @@ export function BookingWizard({
                   psikologDayBookings={w.psikologDayBookings}
                   closedDayOfWeek={w.closedDayOfWeek}
                   holidays={w.holidays}
+                  isPsikologAtCapacity={w.isPsikologAtCapacity}
+                  psikologBookingsCount={w.psikologBookingsCount}
+                  psikologDailyLimit={w.dailyLimit}
                 />
               </Section>
             </>

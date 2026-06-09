@@ -37,7 +37,13 @@ export type Booking = {
   bufferOverride: boolean;
   createdViaWalkIn: boolean;
   notes: string | null;
-  client: { id: number; name: string; gender: string; phoneWa: string };
+  client: {
+    id: number;
+    name: string;
+    gender: string;
+    phoneWa: string;
+    bookings?: { scheduledStart: string; service: { name: string } }[];
+  };
   service: { id: number; name: string; category: string; sessionCount: number; durationMinutes: number; basePrice: string | number };
   psikolog: {
     id: number;
