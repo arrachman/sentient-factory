@@ -36,14 +36,15 @@ export function RoomUsageGrid({
   onPick?: (room: Room, slotIdx: number, booking: Booking | null) => void;
   readOnly?: boolean;
 }) {
-  const colTpl = `90px repeat(${rooms.length}, minmax(96px, 1fr))`;
+  const activeRooms = rooms.filter((r) => r.isActive);
+  const colTpl = `90px repeat(${activeRooms.length}, minmax(96px, 1fr))`;
 
   return (
     // Satu container scroll untuk header + body — keduanya ikut saat scroll horizontal.
     // Header pakai sticky top:0 agar tetap terlihat saat scroll vertikal.
     <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
       <div style={{ minWidth: 'max-content' }}>
-        <GridHeader rooms={rooms} colTpl={colTpl} />
+        <GridHeader rooms={activeRooms} colTpl={colTpl} />
         {slots.map((slot, slotIdx) => (
           <div
             key={`${slot.start}-${slot.end}`}
@@ -58,7 +59,7 @@ export function RoomUsageGrid({
             }}
           >
             <SlotLabel slot={slot} idx={slotIdx} />
-            {rooms.map((r) => {
+            {activeRooms.map((r) => {
               const booking = bookingForCell(bookings, r.id, dateKey, slot);
               const cellKey = `${r.id}-${slotIdx}`;
               return (
@@ -67,6 +68,7 @@ export function RoomUsageGrid({
                   booking={booking}
                   isPicked={pickedKey === cellKey}
                   readOnly={readOnly}
+                  isInactive={!r.isActive}
                   onClick={() => onPick?.(r, slotIdx, booking)}
                 />
               );
@@ -112,6 +114,8 @@ function GridHeader({ rooms, colTpl }: { rooms: Room[]; colTpl: string }) {
               padding: '8px 8px',
               borderLeft: '1px solid var(--border)',
               textAlign: 'center',
+              opacity: r.isActive ? 1 : 0.45,
+              background: r.isActive ? 'transparent' : 'rgba(0,0,0,0.03)',
             }}
           >
             <div className="row gap-1" style={{ justifyContent: 'center' }}>
@@ -120,7 +124,7 @@ function GridHeader({ rooms, colTpl }: { rooms: Room[]; colTpl: string }) {
                   width: 8,
                   height: 8,
                   borderRadius: 2,
-                  background: s.fg,
+                  background: r.isActive ? s.fg : 'var(--fg-muted)',
                   display: 'inline-block',
                 }}
               />
@@ -128,12 +132,12 @@ function GridHeader({ rooms, colTpl }: { rooms: Room[]; colTpl: string }) {
                 style={{
                   fontSize: 11.5,
                   fontWeight: 600,
-                  color: 'var(--teal-800)',
+                  color: r.isActive ? 'var(--teal-800)' : 'var(--fg-muted)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}
-                title={r.name}
+                title={r.isActive ? r.name : `${r.name} (nonaktif)`}
               >
                 {r.name}
               </span>
@@ -145,7 +149,7 @@ function GridHeader({ rooms, colTpl }: { rooms: Room[]; colTpl: string }) {
                 marginTop: 2,
               }}
             >
-              kap. {r.capacity}
+              {r.isActive ? `kap. ${r.capacity}` : 'nonaktif'}
             </div>
           </div>
         );
@@ -183,11 +187,13 @@ function GridCell({
   booking,
   isPicked,
   readOnly,
+  isInactive,
   onClick,
 }: {
   booking: Booking | null;
   isPicked: boolean;
   readOnly: boolean;
+  isInactive: boolean;
   onClick: () => void;
 }) {
   const cellClass = booking
@@ -207,7 +213,8 @@ function GridCell({
         borderLeft: '1px solid var(--border)',
         minHeight: CELL_HEIGHT_PX,
         cursor: 'pointer',
-        background: isPicked ? PICKED_BG : 'transparent',
+        background: isPicked ? PICKED_BG : isInactive ? 'repeating-linear-gradient(135deg, rgba(0,0,0,0.025) 0px, rgba(0,0,0,0.025) 2px, transparent 2px, transparent 8px)' : 'transparent',
+        opacity: isInactive ? 0.5 : 1,
         borderTop: 0,
         borderBottom: 0,
         borderRight: 0,

@@ -63,7 +63,7 @@ export function useRoomsPage() {
     [settingsQuery.data],
   );
 
-  const roomList = useRoomList({ limit: 200, isActive: true });
+  const roomList = useRoomList({ limit: 200 });
   const bookingList = useBookingList({
     date,
     limit: 200,

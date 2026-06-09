@@ -26,6 +26,7 @@ function RoomRow({
         borderRadius: 8,
         background: selected ? 'var(--sage-100)' : 'var(--bg-elev)',
         border: '1px solid var(--border)',
+        opacity: room.isActive ? 1 : 0.5,
       }}
     >
       <button
@@ -37,7 +38,7 @@ function RoomRow({
           background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left',
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--teal-800)' }}>{room.name}</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: room.isActive ? 'var(--teal-800)' : 'var(--fg-muted, #6b7280)' }}>{room.name}</span>
         <span className="caption" style={{ fontSize: 11 }}>
           kap. {room.capacity}{room.isActive ? '' : ' · nonaktif'}
         </span>
