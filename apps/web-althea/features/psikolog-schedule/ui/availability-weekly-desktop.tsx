@@ -1,5 +1,7 @@
 'use client';
 
+import { Check, Moon } from 'lucide-react';
+import { Fragment } from 'react';
 import {
   DAY_KEYS,
   DAY_LABEL,
@@ -17,6 +19,8 @@ type Props = {
   isSlotChecked: (day: DayKey, slotIdx: number) => boolean;
 };
 
+const DAYS = DAY_KEYS.slice(0, 6) as DayKey[];
+
 export function AvailabilityWeeklyDesktop({
   draft,
   slots,
@@ -24,117 +28,167 @@ export function AvailabilityWeeklyDesktop({
   toggleDayClosed,
   isSlotChecked,
 }: Props) {
+  const slotCount = slots.length;
+
+  const totalOpen = DAYS.reduce((acc, day) => {
+    for (let i = 0; i < slotCount; i++) {
+      if (isSlotChecked(day, i)) acc += 1;
+    }
+    return acc;
+  }, 0);
+
   return (
-    <div className="hidden overflow-x-auto lg:block">
-      <table
-        className="w-full text-sm"
-        style={{ borderCollapse: 'separate', borderSpacing: 0 }}
+    <div className="hidden lg:block">
+      {/* Header */}
+      <div
+        className="flex items-start justify-between flex-wrap"
+        style={{ gap: 12, marginBottom: 14 }}
       >
-        <thead>
-          <tr>
-            <th
-              className="text-left text-[11px] font-semibold text-fg-muted uppercase tracking-wider"
-              style={{ padding: '8px 12px', borderBottom: '1px solid var(--border)' }}
-            >
-              Hari
-            </th>
-            {slots.map((slot, i) => (
-              <th
-                key={i}
-                className="text-center text-[11px] font-semibold text-fg-muted"
-                style={{
-                  padding: '8px 8px',
-                  borderBottom: '1px solid var(--border)',
-                  borderLeft: '1px solid var(--border)',
-                }}
-              >
-                <div className="font-mono text-teal-800 text-[12px]">
-                  {slot.start}
-                </div>
-                <div className="text-[10px] mt-0.5 normal-case font-medium">
-                  {slot.label || `Slot ${i + 1}`}
-                </div>
-              </th>
-            ))}
-            <th
+        <div className="flex flex-col">
+          <span className="eyebrow">Availability mingguan</span>
+          <h2
+            style={{
+              margin: '2px 0 0',
+              fontFamily: 'var(--font-serif)',
+              fontSize: 18,
+              fontWeight: 500,
+              color: 'var(--teal-800)',
+            }}
+          >
+            Jam praktik default
+          </h2>
+          <span className="caption" style={{ marginTop: 4 }}>
+            Klik sel untuk toggle · {totalOpen} slot tersedia
+          </span>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div
+        className="flex flex-wrap items-center"
+        style={{ gap: 14, marginBottom: 14, fontSize: 11 }}
+      >
+        <span className="flex items-center gap-1.5">
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 3,
+              background: 'var(--sage-300)',
+              display: 'inline-block',
+            }}
+          />
+          Tersedia
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 3,
+              background: 'var(--cream-100)',
+              border: '1px solid var(--border-strong, #d8d3c3)',
+              display: 'inline-block',
+            }}
+          />
+          Tidak tersedia
+        </span>
+      </div>
+
+      {/* Grid */}
+      <div style={{ overflowX: 'auto' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `110px repeat(${slotCount}, minmax(64px, 1fr))`,
+            gap: 6,
+            minWidth: 110 + slotCount * 64,
+          }}
+        >
+          {/* Header row: blank corner + slot labels */}
+          <div />
+          {slots.map((slot, i) => (
+            <div
+              key={i}
               style={{
-                padding: '8px 8px',
-                borderBottom: '1px solid var(--border)',
-                borderLeft: '1px solid var(--border)',
-                width: 70,
+                textAlign: 'center',
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--teal-800)',
+                paddingBottom: 6,
               }}
-            />
-          </tr>
-        </thead>
-        <tbody>
-          {DAY_KEYS.map((day) => {
-            const cfg = draft[day];
-            const isClosed = !cfg.isOpen;
+            >
+              {slot.label ?? `Slot ${i + 1}`}
+            </div>
+          ))}
+
+          {/* Day rows */}
+          {DAYS.map((day) => {
+            let openCount = 0;
+            for (let i = 0; i < slotCount; i++) {
+              if (isSlotChecked(day, i)) openCount += 1;
+            }
+            const allOpen = openCount === slotCount;
+            const partial = openCount > 0 && openCount < slotCount;
+
             return (
-              <tr key={day}>
-                <td
+              <Fragment key={day}>
+                <button
+                  type="button"
+                  onClick={() => toggleDayClosed(day)}
                   style={{
-                    padding: '10px 12px',
-                    borderBottom: '1px solid var(--border)',
-                    background: isClosed ? 'var(--cream-50)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--teal-800)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0 0 0 2px',
+                    textAlign: 'left',
                   }}
+                  title={allOpen ? 'Tutup semua slot hari ini' : 'Buka semua slot hari ini'}
                 >
-                  <div
-                    className={`font-medium ${isClosed ? 'text-fg-muted' : 'text-teal-800'}`}
-                  >
-                    {DAY_LABEL[day]}
-                  </div>
-                  {isClosed && <div className="caption">libur</div>}
-                </td>
-                {slots.map((_slot, slotIdx) => {
-                  const checked = isSlotChecked(day, slotIdx);
+                  {DAY_LABEL[day]}
+                  {allOpen && (
+                    <Check
+                      size={12}
+                      style={{ color: 'var(--sage-600)', strokeWidth: 2.5 }}
+                    />
+                  )}
+                  {partial && (
+                    <Moon size={12} style={{ color: 'var(--fg-muted)' }} />
+                  )}
+                </button>
+                {slots.map((slot, slotIdx) => {
+                  const active = isSlotChecked(day, slotIdx);
                   return (
-                    <td
+                    <button
                       key={slotIdx}
+                      type="button"
+                      onClick={() => toggleSlot(day, slotIdx)}
                       style={{
-                        padding: '10px 8px',
-                        borderBottom: '1px solid var(--border)',
-                        borderLeft: '1px solid var(--border)',
-                        textAlign: 'center',
-                        background: isClosed ? 'var(--cream-50)' : 'transparent',
-                        cursor: isClosed ? 'not-allowed' : 'pointer',
+                        height: 48,
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        background: active ? 'var(--sage-300)' : 'var(--cream-100)',
+                        border: active
+                          ? '1px solid transparent'
+                          : '1px solid var(--border-strong, #d8d3c3)',
+                        padding: 0,
+                        transition: 'background 0.12s, border-color 0.12s',
                       }}
-                      onClick={() => !isClosed && toggleSlot(day, slotIdx)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        disabled={isClosed}
-                        onChange={() => toggleSlot(day, slotIdx)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="h-4 w-4 cursor-pointer"
-                        aria-label={`${DAY_LABEL[day]} slot ${slotIdx + 1}`}
-                      />
-                    </td>
+                      aria-label={`${DAY_LABEL[day]} ${slot.label ?? `Slot ${slotIdx + 1}`} — ${active ? 'tersedia' : 'tidak tersedia'}`}
+                    />
                   );
                 })}
-                <td
-                  style={{
-                    padding: '10px 8px',
-                    borderBottom: '1px solid var(--border)',
-                    borderLeft: '1px solid var(--border)',
-                    textAlign: 'center',
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleDayClosed(day)}
-                    className="text-[11px] font-medium text-sage-700 hover:underline"
-                    title={isClosed ? 'Buka hari ini' : 'Tutup hari ini (uncheck semua)'}
-                  >
-                    {isClosed ? 'Buka' : 'Tutup'}
-                  </button>
-                </td>
-              </tr>
+              </Fragment>
             );
           })}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   );
 }

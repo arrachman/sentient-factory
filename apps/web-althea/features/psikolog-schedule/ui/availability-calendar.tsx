@@ -20,12 +20,25 @@
  */
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useDeleteMyDateOverride,
   useUpsertMyDateOverride,
 } from '@/features/admin-psikolog/hooks/use-psikolog';
 import type { ClinicSettings } from '@/features/admin-pengaturan/api/settings.api';
 import { CellEditPopover, type Override } from './cell-edit-popover';
+
+/** Cek apakah tanggal (YYYY-MM-DD) berjarak ≤ 5 hari dari hari ini (dalam H+5). */
+function isWithinHPlus5(targetDateKey: string): boolean {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(targetDateKey);
+  target.setHours(0, 0, 0, 0);
+  const diffDays = (target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= 5;
+}
+
+const H5_ERROR = 'Jadwal tidak bisa ditutup dalam 5 hari ke depan. Hubungi admin untuk perubahan mendadak.';
 
 type Mode = 'lihat' | 'cuti' | 'buka';
 
@@ -124,11 +137,16 @@ export function AvailabilityCalendar({
     const key = dateKey(d);
     if (key < today) return; // past, skip
     if (mode === 'cuti') {
-      // Instant toggle: kalau sudah cuti, hapus; else, set cuti
       const existing = overrideMap.get(key);
       if (existing && !existing.isOpen) {
+        // Hapus cuti yang sudah ada — selalu boleh
         deleteMut.mutate(key);
       } else {
+        // Set cuti baru — blokir jika H+5
+        if (isWithinHPlus5(key)) {
+          toast.error(H5_ERROR);
+          return;
+        }
         upsertMut.mutate({
           date: key,
           isOpen: false,
@@ -140,6 +158,36 @@ export function AvailabilityCalendar({
       // 'lihat' atau 'buka' → buka popover detail
       setPopover({ dateKey: key });
     }
+  }
+
+  function handlePopoverSave(input: {
+    date: string;
+    isOpen: boolean;
+    slotIndices: number[] | null;
+    reason: string | null;
+  }) {
+    if (isWithinHPlus5(input.date)) {
+      // Blokir tutup penuh (cuti)
+      if (!input.isOpen) {
+        toast.error(H5_ERROR);
+        return;
+      }
+      // Blokir pengurangan slot dari override yang sudah ada
+      if (input.slotIndices !== null) {
+        const existing = overrideMap.get(input.date);
+        if (existing?.isOpen) {
+          const existingCount = existing.slotIndices
+            ? existing.slotIndices.length
+            : slots.length;
+          if (input.slotIndices.length < existingCount) {
+            toast.error(H5_ERROR);
+            return;
+          }
+        }
+      }
+    }
+    upsertMut.mutate(input);
+    setPopover(null);
   }
 
   return (
@@ -333,11 +381,7 @@ export function AvailabilityCalendar({
           defaultReason={defaultReason}
           presetMode={mode === 'buka' ? 'buka' : null}
           onClose={() => setPopover(null)}
-          onSave={(input) => {
-            upsertMut.mutate(input, {
-              onSuccess: () => setPopover(null),
-            });
-          }}
+          onSave={handlePopoverSave}
           onDelete={(date) => {
             deleteMut.mutate(date, { onSuccess: () => setPopover(null) });
           }}

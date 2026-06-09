@@ -221,9 +221,9 @@ export function ScheduleMobile({
         <button
           type="button"
           onClick={onOpenAvailability}
-          className="btn btn-primary w-full"
+          className="btn btn-outline w-full"
         >
-          Atur availability mingguan
+          Cuti &amp; Override Jadwal
         </button>
       </div>
     </div>
