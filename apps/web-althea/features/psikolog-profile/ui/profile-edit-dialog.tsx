@@ -36,7 +36,8 @@ export function ProfileEditDialog({
   const [fullName, setFullName] = useState(initial.fullName ?? '');
   const [title, setTitle] = useState(initial.title ?? '');
   const [bio, setBio] = useState(initial.bio ?? '');
-  const [color, setColor] = useState(initial.color ?? COLOR_PALETTE[0]);
+  const [color, setColor] = useState(initial.color ?? COLOR_PALETTE[4]);
+  const [tempCustomColor, setTempCustomColor] = useState('');
   const [phone, setPhone] = useState(initial.phone ?? '');
   // Avatar state:
   //   - undefined = tidak diubah dari initial
@@ -53,7 +54,8 @@ export function ProfileEditDialog({
       setFullName(initial.fullName ?? '');
       setTitle(initial.title ?? '');
       setBio(initial.bio ?? '');
-      setColor(initial.color ?? COLOR_PALETTE[0]);
+      setColor(initial.color ?? COLOR_PALETTE[4]);
+      setTempCustomColor('');
       setPhone(initial.phone ?? '');
       setAvatarChange(undefined);
       setAvatarError(null);
@@ -326,31 +328,77 @@ export function ProfileEditDialog({
 
           <div>
             <label className="caption mb-1 block">Warna avatar</label>
-            <div className="flex flex-wrap" style={{ gap: 8 }}>
-              {COLOR_PALETTE.map((c) => (
+            <div className="flex flex-wrap items-center" style={{ gap: 8 }}>
+              {COLOR_PALETTE.slice(0, 5).map((c) => (
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setColor(c)}
+                  onClick={() => { setColor(c); setTempCustomColor(''); }}
                   className="rounded-full transition"
                   style={{
                     width: 32,
                     height: 32,
                     background: c,
                     border:
-                      color === c
+                      color === c && !tempCustomColor
                         ? '2px solid var(--teal-800)'
                         : '2px solid var(--border)',
                     boxShadow:
-                      color === c
+                      color === c && !tempCustomColor
                         ? '0 0 0 2px var(--sage-300)'
                         : 'none',
                     cursor: 'pointer',
                   }}
                   aria-label={`Pilih warna ${c}`}
-                  aria-pressed={color === c}
+                  aria-pressed={color === c && !tempCustomColor}
                 />
               ))}
+              {/* Custom color picker — pilih warna bebas, konfirmasi via tombol Set */}
+              <label
+                title="Pilih warna kustom"
+                style={{
+                  position: 'relative',
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  border: tempCustomColor
+                    ? '2px solid var(--teal-800)'
+                    : '2px dashed var(--border)',
+                  boxShadow: tempCustomColor ? '0 0 0 2px var(--sage-300)' : 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  display: 'grid',
+                  placeItems: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                <input
+                  type="color"
+                  value={tempCustomColor || (color.startsWith('#') ? color : '#5b8a66')}
+                  onChange={(e) => setTempCustomColor(e.target.value)}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    opacity: 0,
+                    cursor: 'pointer',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                  aria-label="Pilih warna kustom"
+                />
+                <span style={{ fontSize: 14, color: 'var(--fg-muted)', pointerEvents: 'none', lineHeight: 1, position: 'relative', zIndex: 1 }}>+</span>
+              </label>
+              {tempCustomColor && (
+                <button
+                  type="button"
+                  onClick={() => { setColor(tempCustomColor); setTempCustomColor(''); }}
+                  className="btn btn-outline btn-sm"
+                  style={{ fontSize: 12, padding: '0 10px', height: 28 }}
+                >
+                  Set
+                </button>
+              )}
             </div>
           </div>
 

@@ -66,6 +66,7 @@ export function AvailabilityGrid({
   bookedKeys = new Set(),
   onSave,
   saving,
+  readOnly = false,
 }: {
   /** Current weekly availability (from API) */
   initial: WeeklyAvailability;
@@ -73,8 +74,10 @@ export function AvailabilityGrid({
   slots: SlotDef[];
   /** Set of "dayIdx-slotIdx" keys yang sudah ada booking (read-only) */
   bookedKeys?: Set<string>;
-  onSave: (next: WeeklyAvailability) => void;
-  saving: boolean;
+  /** Hanya tampilkan, tidak bisa di-edit. Sembunyikan save indicator. */
+  readOnly?: boolean;
+  onSave?: (next: WeeklyAvailability) => void;
+  saving?: boolean;
 }) {
   const slotCount = slots.length;
   const [grid, setGrid] = useState<CellState[][]>(() => toGrid(initial, slotCount));
@@ -89,22 +92,23 @@ export function AvailabilityGrid({
   }, [initial, slotCount]);
 
   const draft = useMemo(() => fromGrid(grid), [grid]);
-  // Auto-save 500ms setelah user mengubah grid
+  // Auto-save 500ms setelah user mengubah grid (skip jika readOnly)
   useEffect(() => {
-    if (!userChangedRef.current) return;
+    if (readOnly || !userChangedRef.current) return;
     const timer = setTimeout(() => {
       if (!userChangedRef.current) return;
       userChangedRef.current = false;
-      onSaveRef.current(draft);
+      onSaveRef.current?.(draft);
       toast.success('Jadwal diperbarui');
     }, 500);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft]);
+  }, [draft, readOnly]);
 
   function toggleCell(dayIdx: number, slotIdx: number) {
+    if (readOnly) return;
     const cellKey = `${dayIdx}-${slotIdx}`;
-    if (bookedKeys.has(cellKey)) return; // Booked: read-only
+    if (bookedKeys.has(cellKey)) return;
     userChangedRef.current = true;
     setGrid((prev) => {
       const next = prev.map((row) => [...row]);
@@ -114,12 +118,13 @@ export function AvailabilityGrid({
   }
 
   function setRowAll(dayIdx: number, state: CellState) {
+    if (readOnly) return;
     userChangedRef.current = true;
     setGrid((prev) => {
       const next = prev.map((row) => [...row]);
       next[dayIdx] = next[dayIdx].map((cell, slotIdx) => {
         const cellKey = `${dayIdx}-${slotIdx}`;
-        if (bookedKeys.has(cellKey)) return cell; // skip booked
+        if (bookedKeys.has(cellKey)) return cell;
         return state;
       });
       return next;
@@ -150,16 +155,33 @@ export function AvailabilityGrid({
             Jam praktik default
           </h2>
           <span className="caption" style={{ marginTop: 4 }}>
-            Klik sel untuk toggle tersedia/tidak. {totalOpen} slot tersedia
-            {totalBooked > 0 ? ` · ${totalBooked} sudah di-book` : ''}
+            {readOnly
+              ? `Diatur oleh admin · ${totalOpen} slot tersedia${totalBooked > 0 ? ` · ${totalBooked} sudah di-book` : ''}`
+              : `Klik sel untuk toggle tersedia/tidak. ${totalOpen} slot tersedia${totalBooked > 0 ? ` · ${totalBooked} sudah di-book` : ''}`}
           </span>
         </div>
-        {saving && (
+        {!readOnly && saving && (
           <span
             className="caption"
             style={{ fontSize: 11, color: 'var(--sage-600)', alignSelf: 'center' }}
           >
             Menyimpan…
+          </span>
+        )}
+        {readOnly && (
+          <span
+            className="caption"
+            style={{
+              fontSize: 11,
+              color: 'var(--fg-muted)',
+              background: 'var(--cream-100)',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              padding: '2px 8px',
+              alignSelf: 'center',
+            }}
+          >
+            Read-only
           </span>
         )}
       </div>
@@ -205,52 +227,54 @@ export function AvailabilityGrid({
         </span>
       </div>
 
-      {/* Info + warning */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          marginBottom: 14,
-        }}
-      >
+      {/* Info + warning — hanya tampil di edit mode */}
+      {!readOnly && (
         <div
           style={{
-            background: 'var(--cream-100)',
-            border: '1px solid var(--border-strong, #d8d3c3)',
-            borderRadius: 6,
-            padding: '8px 12px',
-            fontSize: 11.5,
-            color: 'var(--teal-700, #1e3a3a)',
-            lineHeight: 1.6,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            marginBottom: 14,
           }}
         >
-          <strong style={{ display: 'block', marginBottom: 2 }}>Cara mengatur</strong>
-          Klik sel untuk buka/tutup slot jam tertentu. Klik nama hari untuk toggle semua slot hari itu sekaligus.
-          Perubahan otomatis tersimpan setelah 0,5 detik.
-          <br />
-          <span style={{ color: 'var(--teal-600, #2e5050)' }}>
-            Grid ini adalah <strong>jadwal default mingguan</strong> — berlaku untuk semua pekan
-            kecuali ada override per-tanggal yang diatur di halaman Jadwal Saya.
-          </span>
+          <div
+            style={{
+              background: 'var(--cream-100)',
+              border: '1px solid var(--border-strong, #d8d3c3)',
+              borderRadius: 6,
+              padding: '8px 12px',
+              fontSize: 11.5,
+              color: 'var(--teal-700, #1e3a3a)',
+              lineHeight: 1.6,
+            }}
+          >
+            <strong style={{ display: 'block', marginBottom: 2 }}>Cara mengatur</strong>
+            Klik sel untuk buka/tutup slot jam tertentu. Klik nama hari untuk toggle semua slot hari itu sekaligus.
+            Perubahan otomatis tersimpan setelah 0,5 detik.
+            <br />
+            <span style={{ color: 'var(--teal-600, #2e5050)' }}>
+              Grid ini adalah <strong>jadwal default mingguan</strong> — berlaku untuk semua pekan
+              kecuali ada override per-tanggal yang diatur di halaman Jadwal Saya.
+            </span>
+          </div>
+          <div
+            style={{
+              background: '#fff8ec',
+              border: '1px solid #f0c97a',
+              borderRadius: 6,
+              padding: '8px 12px',
+              fontSize: 11.5,
+              color: '#7a5200',
+              lineHeight: 1.6,
+            }}
+          >
+            <strong>⚠ Perhatikan dampaknya:</strong> Menutup slot yang sudah ada booking aktif
+            tidak membatalkan booking tersebut, tetapi slot itu tidak akan bisa dipesan lagi
+            oleh klien baru. Pastikan tidak ada booking mendatang di slot yang akan ditutup
+            sebelum menyimpan perubahan.
+          </div>
         </div>
-        <div
-          style={{
-            background: '#fff8ec',
-            border: '1px solid #f0c97a',
-            borderRadius: 6,
-            padding: '8px 12px',
-            fontSize: 11.5,
-            color: '#7a5200',
-            lineHeight: 1.6,
-          }}
-        >
-          <strong>⚠ Perhatikan dampaknya:</strong> Menutup slot yang sudah ada booking aktif
-          tidak membatalkan booking tersebut, tetapi slot itu tidak akan bisa dipesan lagi
-          oleh klien baru. Pastikan tidak ada booking mendatang di slot yang akan ditutup
-          sebelum menyimpan perubahan.
-        </div>
-      </div>
+      )}
 
       {/* Grid */}
       <div style={{ overflowX: 'auto' }}>
@@ -295,6 +319,7 @@ export function AvailabilityGrid({
                 onSetAll={(state) => setRowAll(dayIdx, state)}
                 allOpen={allOpen}
                 noneOpen={noneOpen}
+                readOnly={readOnly}
               />
             );
           })}
@@ -315,6 +340,7 @@ function DayRow({
   onSetAll,
   allOpen,
   noneOpen,
+  readOnly,
 }: {
   day: DayKey;
   dayIdx: number;
@@ -325,12 +351,13 @@ function DayRow({
   onSetAll: (state: CellState) => void;
   allOpen: boolean;
   noneOpen: boolean;
+  readOnly?: boolean;
 }) {
   return (
     <>
       <button
         type="button"
-        onClick={() => onSetAll(allOpen ? 'closed' : 'open')}
+        onClick={() => !readOnly && onSetAll(allOpen ? 'closed' : 'open')}
         className="text-left"
         style={{
           fontSize: 12.5,
@@ -340,10 +367,10 @@ function DayRow({
           alignItems: 'center',
           background: 'transparent',
           border: 'none',
-          cursor: 'pointer',
+          cursor: readOnly ? 'default' : 'pointer',
           padding: 0,
         }}
-        title={allOpen ? 'Tutup semua slot hari ini' : 'Buka semua slot hari ini'}
+        title={readOnly ? undefined : allOpen ? 'Tutup semua slot hari ini' : 'Buka semua slot hari ini'}
       >
         {DAY_LABEL[day]}
         <span className="caption" style={{ marginLeft: 6, fontSize: 9.5 }}>
@@ -358,12 +385,12 @@ function DayRow({
           <button
             type="button"
             key={slotIdx}
-            onClick={() => onToggleCell(dayIdx, slotIdx)}
-            disabled={isBooked}
+            onClick={() => !readOnly && onToggleCell(dayIdx, slotIdx)}
+            disabled={isBooked || readOnly}
             style={{
               height: 36,
               borderRadius: 4,
-              cursor: isBooked ? 'not-allowed' : 'pointer',
+              cursor: readOnly ? 'default' : isBooked ? 'not-allowed' : 'pointer',
               background:
                 display === 'booked'
                   ? 'var(--sage-500)'

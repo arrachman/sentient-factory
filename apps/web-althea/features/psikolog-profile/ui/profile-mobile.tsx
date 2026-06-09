@@ -2,12 +2,10 @@
 
 import Link from 'next/link';
 import {
-  CalendarClock,
   ChevronRight,
   FileText,
   Bell,
   Settings,
-  LifeBuoy,
   LogOut,
   Pencil,
 } from 'lucide-react';
@@ -121,32 +119,25 @@ export function ProfileMobile({
         {/* Menu */}
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           <MenuRow
-            icon={<CalendarClock className="h-5 w-5" />}
-            label="Atur availability"
-            sub="pola mingguan kamu"
-            href="/psikolog/schedule"
-          />
-          <MenuRow
             icon={<Pencil className="h-5 w-5" />}
             label="Edit profil"
             sub="foto, title, bio, spesialisasi"
             onClick={onEdit}
           />
           <MenuRow
+            icon={<Settings className="h-5 w-5" />}
+            label="Atur availability"
+            sub="jam praktik mingguan & per-tanggal"
+            href="/psikolog/schedule"
+          />
+          <MenuRow
             icon={<FileText className="h-5 w-5" />}
             label="SIPP & sertifikat"
+            sub="lisensi praktik"
           />
           <MenuRow
             icon={<Bell className="h-5 w-5" />}
-            label="Notifikasi & jam tenang"
-          />
-          <MenuRow
-            icon={<Settings className="h-5 w-5" />}
-            label="Pengaturan akun"
-          />
-          <MenuRow
-            icon={<LifeBuoy className="h-5 w-5" />}
-            label="Bantuan & dukungan"
+            label="Notifikasi"
             last
           />
         </div>
