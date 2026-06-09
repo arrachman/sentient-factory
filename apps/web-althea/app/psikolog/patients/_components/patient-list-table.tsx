@@ -301,7 +301,20 @@ function PatientRow({
         </div>
       </div>
       <span className="caption">{c.category}</span>
-      <span style={{ fontSize: 12.5, color: 'var(--fg)' }}>{c.service}</span>
+      <div className="flex flex-col" style={{ gap: 2 }}>
+        <span style={{ fontSize: 12.5, color: 'var(--fg)' }}>
+          {c.lastService ?? c.service}
+        </span>
+        {c.hasCompletedSession && c.lastSession ? (
+          <span className="caption" style={{ fontSize: 10.5 }}>
+            sesi terakhir: {c.lastSession}
+          </span>
+        ) : !c.hasCompletedSession && c.next !== '—' ? (
+          <span className="caption" style={{ fontSize: 10.5 }}>
+            sesi berikutnya: {c.next}
+          </span>
+        ) : null}
+      </div>
       <div className="flex flex-col" style={{ gap: 4 }}>
         <div className="flex items-baseline justify-between">
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--sage-700)', fontFamily: 'var(--font-serif)' }}>

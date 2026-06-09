@@ -54,6 +54,7 @@ function makeBaseClient(b: Booking): AggInternal {
     category: 'Dewasa',
     age: null,
     service: b.service.name,
+    lastService: null,
     sessionN: b.sessionN,
     sessionTotal: b.sessionTotal,
     next: '—',
@@ -115,6 +116,7 @@ function applyLastSession(c: AggInternal, now: Date) {
       0,
       Math.floor((now.getTime() - lastDate.getTime()) / (24 * 60 * 60 * 1000)),
     );
+    c.lastService = last.service.name;
   }
 }
 

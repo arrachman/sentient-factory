@@ -10,6 +10,7 @@ export type AggregatedClient = {
   category: string;
   age: number | null;
   service: string;
+  lastService: string | null;
   sessionN: number;
   sessionTotal: number;
   next: string;
@@ -21,6 +22,7 @@ export type AggregatedClient = {
   totalBookings: number;
   lastSession: string | null;
   lastGap: number | null;
+  hasCompletedSession: boolean;
   flags: string[];
 };
 
@@ -104,6 +106,7 @@ export function aggregateClients(bookings: Booking[]): AggregatedClient[] {
         category: 'Dewasa',
         age: null,
         service: b.service.name,
+        lastService: null,
         sessionN: b.sessionN,
         sessionTotal: b.sessionTotal,
         next: '—',
@@ -115,6 +118,7 @@ export function aggregateClients(bookings: Booking[]): AggregatedClient[] {
         totalBookings: 1,
         lastSession: null,
         lastGap: null,
+        hasCompletedSession: false,
         flags: [],
         _bookings: [b],
       });
@@ -141,19 +145,34 @@ export function aggregateClients(bookings: Booking[]): AggregatedClient[] {
       c.sessionTotal = nextBooking.sessionTotal;
     }
 
-    const sortedPast = c._bookings
-      .filter((b) => b.status === 'completed' || new Date(b.scheduledStart) < now)
-      .sort((a, b) => new Date(b.scheduledStart).getTime() - new Date(a.scheduledStart).getTime());
-    const lastBooking = sortedPast[0];
-    if (lastBooking) {
-      const lastDate = new Date(lastBooking.scheduledStart);
+    // Global last session across all psikolog (backend client.bookings sub-query).
+    // Falls back to own bookings if enriched data not present.
+    const globalLast = c._bookings[0]?.client.bookings?.[0];
+    if (globalLast) {
+      const lastDate = new Date(globalLast.scheduledStart);
       c.lastSession = lastDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
       c.lastGap = Math.max(
         0,
         Math.floor((now.getTime() - lastDate.getTime()) / (24 * 60 * 60 * 1000)),
       );
+      c.lastService = globalLast.service.name;
+    } else {
+      const sortedPast = c._bookings
+        .filter((b) => b.status === 'completed' || new Date(b.scheduledStart) < now)
+        .sort((a, b) => new Date(b.scheduledStart).getTime() - new Date(a.scheduledStart).getTime());
+      const lastBooking = sortedPast[0];
+      if (lastBooking) {
+        const lastDate = new Date(lastBooking.scheduledStart);
+        c.lastSession = lastDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+        c.lastGap = Math.max(
+          0,
+          Math.floor((now.getTime() - lastDate.getTime()) / (24 * 60 * 60 * 1000)),
+        );
+        c.lastService = lastBooking.service.name;
+      }
     }
 
+    c.hasCompletedSession = c._bookings.some((b) => b.status === 'completed');
     c.status = deriveStatus(c.totalBookings, c.sessionN, c.sessionTotal);
     c.risk = deriveRisk(c.lastGap, c.totalBookings);
 

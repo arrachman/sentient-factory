@@ -12,6 +12,7 @@ export type AggregatedClient = {
   category: string;
   age: number | null;
   service: string;
+  lastService: string | null;
   sessionN: number;
   sessionTotal: number;
   next: string;

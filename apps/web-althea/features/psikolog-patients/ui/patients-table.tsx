@@ -256,7 +256,16 @@ function PatientRow({
         </div>
       </div>
       <span className="caption">{c.category}</span>
-      <span style={{ fontSize: 12.5, color: 'var(--fg)' }}>{c.service}</span>
+      <div className="flex flex-col" style={{ gap: 2 }}>
+        <span style={{ fontSize: 12.5, color: 'var(--fg)' }}>
+          {c.lastService ?? c.service}
+        </span>
+        {c.lastService && c.lastSession ? (
+          <span className="caption" style={{ fontSize: 10.5 }}>
+            sesi terakhir: {c.lastSession}
+          </span>
+        ) : null}
+      </div>
       <ProgressCol n={c.sessionN} total={c.sessionTotal} pct={pct} />
       <NextSessionCol next={c.next} room={c.nextRoom} isToday={isToday} />
       <span
