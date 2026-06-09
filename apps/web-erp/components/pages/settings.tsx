@@ -160,6 +160,7 @@ interface SettingsState {
   dateFmt: string;
   fyStart: string;
   invMethod: string;
+  costMethod: string;
   baseCur: string;
   rounding: string;
   prefCR: string;
@@ -181,6 +182,7 @@ type TextKey =
   | 'dateFmt'
   | 'fyStart'
   | 'invMethod'
+  | 'costMethod'
   | 'baseCur'
   | 'rounding'
   | 'prefCR'
@@ -205,6 +207,7 @@ export function SettingsPage({ t }: SettingsPageProps) {
     dateFmt: 'DD/MM/YYYY',
     fyStart: 'Januari',
     invMethod: 'FIFO',
+    costMethod: 'AVG',
     baseCur: 'IDR',
     rounding: '0 desimal',
     prefCR: 'CR',
@@ -272,8 +275,11 @@ export function SettingsPage({ t }: SettingsPageProps) {
           <SetRow label="Awal Tahun Buku">
             <Sel value={s.fyStart} opts={['Januari', 'April', 'Juli', 'Oktober']} onChange={setText('fyStart')} />
           </SetRow>
-          <SetRow label="Metode Persediaan" hint="Berlaku untuk valuasi HPP">
+          <SetRow label="Metode Persediaan" hint="Berlaku untuk valuasi stok">
             <Sel value={s.invMethod} opts={['FIFO', 'Average', 'LIFO']} onChange={setText('invMethod')} />
+          </SetRow>
+          <SetRow label="Metode HPP" hint="Rumus penghitungan harga pokok saat keluar stok">
+            <Sel value={s.costMethod} opts={['AVG', 'FIFO', 'STD']} onChange={setText('costMethod')} />
           </SetRow>
           <SetRow label="Mata Uang Dasar">
             <Sel value={s.baseCur} opts={['IDR', 'USD', 'SGD']} onChange={setText('baseCur')} />

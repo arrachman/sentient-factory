@@ -22,7 +22,7 @@ import { ItemTypeInfoButton, getItemTypeTraits } from '@/components/molecules/it
 import type { FormErrors } from '@/lib/form-validation';
 import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generator';
 import type { ItemFormData } from './items-form';
-import { ITEM_TYPES, COST_METHODS } from './items-form';
+import { ITEM_TYPES } from './items-form';
 import { Section, LookupField, NumField, YesNoField, isStockable } from './items-form-parts';
 import { ItemLocationsEditor } from './items-form-locations';
 import { ItemAtributSection } from './items-form-atribut';
@@ -122,12 +122,6 @@ export function ItemFormFields({
           {getItemTypeTraits(data.itemType)}
         </p>
       </div>
-      <FormField label="Metode HPP" htmlFor="if-hpp" required help="Rumus penghitungan harga pokok saat keluar stok">
-        <Select value={data.costMethod} onValueChange={(v) => set('costMethod', v)}>
-          <SelectTrigger id="if-hpp"><SelectValue /></SelectTrigger>
-          <SelectContent>{COST_METHODS.map((m) => <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>)}</SelectContent>
-        </Select>
-      </FormField>
       <LookupField id="if-cat" label="Kategori" value={data.categoryId} onPick={(v) => set('categoryId', v)} loader={loadCategoryOptions} placeholder="Pilih kategori…" required initialLabel={data.categoryLabel} error={!!errors.categoryId} />
       <LookupField id="if-unit" label="Satuan" value={data.unitId} onPick={(v) => set('unitId', v)} loader={loadUnitOptions} placeholder="Pilih satuan…" required initialLabel={data.unitLabel} error={!!errors.unitId} />
       <LookupField id="if-kind" label="Jenis Barang" value={data.kindId} onPick={(v) => set('kindId', v)} loader={loadKindOptions} placeholder="Pilih jenis…" initialLabel={data.kindLabel} />

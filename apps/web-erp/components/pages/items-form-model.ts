@@ -4,7 +4,7 @@
  */
 
 import type {
-  ErpItemType, ErpCostingMethod,
+  ErpItemType,
   ItemOthersData, ItemCustomData,
 } from '@/lib/api/items';
 
@@ -32,17 +32,11 @@ export interface ItemBranchFormRow {
   branchId: string; branchLabel?: string;
   costCenterId: string; costCenterLabel?: string;
 }
-export const COST_METHODS: { value: ErpCostingMethod; label: string }[] = [
-  { value: 'AVG', label: 'Average' },
-  { value: 'FIFO', label: 'FIFO' },
-  { value: 'STD', label: 'Standard' },
-];
 
 export interface ItemFormData {
   code: string;
   name: string;
   itemType: ErpItemType;
-  costMethod: ErpCostingMethod;
   description: string;
   barcode: string;
 
@@ -140,7 +134,7 @@ export interface ItemFormData {
 }
 
 export const defaultItemForm = (): ItemFormData => ({
-  code: '', name: '', itemType: 'INVENTORY', costMethod: 'AVG', description: '', barcode: '',
+  code: '', name: '', itemType: 'INVENTORY', description: '', barcode: '',
   categoryId: '', unitId: '', kindId: '', productClassId: '',
   brandId: '', materialId: '', sizeId: '', colorId: '', sectionId: '',
   designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '',

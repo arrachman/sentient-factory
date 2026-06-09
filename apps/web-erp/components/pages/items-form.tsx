@@ -13,7 +13,6 @@ import type { ItemFormData } from './items-form-model';
 export { ItemFormFields } from './items-form-fields';
 export {
   ITEM_TYPES,
-  COST_METHODS,
   defaultItemForm,
 } from './items-form-model';
 export type {
@@ -48,7 +47,6 @@ export function fromItem(item: ErpItem): ItemFormData {
     code: item.code,
     name: item.name,
     itemType: item.itemType,
-    costMethod: item.costMethod ?? 'AVG',
     description: item.description ?? '',
     barcode: item.barcode ?? '',
     categoryId: item.categoryId ?? '', categoryLabel: refLabel(item.category),
@@ -152,7 +150,6 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     code: f.code,
     name: f.name,
     itemType: f.itemType,
-    costMethod: f.costMethod,
     categoryId: f.categoryId,
     unitId: f.unitId,
     description: orUndef(f.description),
