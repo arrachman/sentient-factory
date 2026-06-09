@@ -31,8 +31,6 @@ const FALLBACK_SLOTS = [
   { start: '09:30', end: '11:00' },
   { start: '11:00', end: '12:30' },
   { start: '13:00', end: '14:30' },
-  { start: '14:30', end: '16:00' },
-  { start: '16:00', end: '17:30' },
 ];
 
 export function useOwnerDashboard({
@@ -59,7 +57,8 @@ export function useOwnerDashboard({
   const slotsOfDay = settings?.slotsOfDay?.length
     ? settings.slotsOfDay
     : FALLBACK_SLOTS;
-  const slotsPerDay = slotsOfDay.length || DEFAULT_SLOTS_PER_DAY;
+  const slotsPerDay =
+    settings?.maxBookingsPerDay ?? slotsOfDay.length ?? DEFAULT_SLOTS_PER_DAY;
 
   const psikologs = psikologList.data?.data ?? [];
   const rooms = roomList.data?.data ?? [];
@@ -131,5 +130,6 @@ export function useOwnerDashboard({
     trendMax,
     roomGroups,
     topServices,
+    rangeDays,
   };
 }

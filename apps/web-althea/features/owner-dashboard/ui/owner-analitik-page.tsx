@@ -38,9 +38,9 @@ export function OwnerAnalitikPage() {
         isLoading={page.isLoadingPsikolog}
         rows={page.psikologPerf}
         totalCount={page.psikologs.length}
-        slotsPerDay={page.slotsPerDay}
-        rangeDays={page.range.days.length}
         periodLabel={periodLabel}
+        slotsPerDay={page.slotsPerDay}
+        rangeDays={page.rangeDays}
       />
 
       <div className="grid gap-5 grid-cols-1 md:grid-cols-2">

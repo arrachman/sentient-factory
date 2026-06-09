@@ -14,18 +14,18 @@ export function PsikologPerformanceCard({
   isLoading,
   rows,
   totalCount,
+  periodLabel,
   slotsPerDay,
   rangeDays,
-  periodLabel,
 }: {
   isLoading: boolean;
   rows: PsikologRowData[];
   totalCount: number;
+  periodLabel: string;
   slotsPerDay: number;
   rangeDays: number;
-  periodLabel: string;
 }) {
-  const maxSlots = slotsPerDay * Math.max(rangeDays, 1);
+  const fallbackCapacity = Math.max(slotsPerDay * rangeDays, 1);
   return (
     <div className="card-althea flex flex-col" style={{ padding: 20 }}>
       <div
@@ -45,7 +45,7 @@ export function PsikologPerformanceCard({
             Performa psikolog · {periodLabel}
           </h2>
           <span className="caption" style={{ marginTop: 2 }}>
-            {totalCount} psikolog aktif · target {maxSlots} slot/orang
+            {totalCount} psikolog aktif · kuota harian per psikolog
           </span>
         </div>
         <span
@@ -80,7 +80,8 @@ export function PsikologPerformanceCard({
               p={row.p}
               periodCount={row.periodCount}
               totalActive={row.totalActive}
-              maxSlots={maxSlots}
+              fallbackMaxBookings={fallbackCapacity}
+              rangeDays={rangeDays}
             />
           ))
         )}
@@ -93,15 +94,21 @@ function PsikologRow({
   p,
   periodCount,
   totalActive,
-  maxSlots,
+  fallbackMaxBookings,
+  rangeDays,
 }: {
   p: Psikolog;
   periodCount: number;
   totalActive: number;
-  maxSlots: number;
+  fallbackMaxBookings: number;
+  rangeDays: number;
 }) {
-  const max = maxSlots;
-  const pct = Math.min(100, (periodCount / Math.max(max, 1)) * 100);
+  const psikologQuota = (p.defaultSlots ?? 0) > 0 ? p.defaultSlots! : null;
+  const effectiveMax = Math.max(
+    psikologQuota !== null ? psikologQuota * rangeDays : fallbackMaxBookings,
+    1,
+  );
+  const pct = Math.min(100, (periodCount / effectiveMax) * 100);
   const color = p.color ?? DEFAULT_PSIKOLOG_COLOR;
   const initial = (p.fullName ?? p.email).slice(0, 2).toUpperCase();
   const rawSpecialty =
@@ -111,6 +118,8 @@ function PsikologRow({
   const specialty = rawSpecialty
     ? (SPECIALTY_LABEL[rawSpecialty] ?? rawSpecialty)
     : p.title;
+  const periodUnit = rangeDays === 1 ? 'hari' : rangeDays <= 7 ? 'minggu' : 'bulan';
+  const periodMax = psikologQuota !== null ? psikologQuota * rangeDays : null;
   return (
     <div
       className="flex items-center gap-3"
@@ -158,7 +167,7 @@ function PsikologRow({
               flexShrink: 0,
             }}
           >
-            {periodCount}/{max} · {totalActive} klien
+            {periodCount} booking · {totalActive} klien
           </span>
         </div>
         <div
@@ -180,14 +189,29 @@ function PsikologRow({
             }}
           />
         </div>
-        {specialty ? (
+        <div className="flex items-center justify-between gap-2" style={{ marginTop: 3 }}>
+          {specialty ? (
+            <span className="caption" style={{ fontSize: 10.5 }}>
+              {specialty}
+            </span>
+          ) : <span />}
           <span
             className="caption"
-            style={{ fontSize: 10.5, marginTop: 3 }}
+            style={{
+              fontSize: 10.5,
+              color: periodMax !== null ? 'var(--teal-800)' : 'var(--fg-muted)',
+              fontWeight: periodMax !== null ? 600 : 400,
+              flexShrink: 0,
+            }}
           >
-            {specialty}
+            maks {periodMax !== null ? periodMax : '—'} sesi/{periodUnit}
+            {periodMax !== null && rangeDays > 1 && (
+              <span style={{ fontWeight: 400, color: 'var(--fg-muted)', marginLeft: 3 }}>
+                ({psikologQuota}/hari)
+              </span>
+            )}
           </span>
-        ) : null}
+        </div>
       </div>
     </div>
   );
