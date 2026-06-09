@@ -91,7 +91,7 @@ export function ServicesSection({ sel }: { sel: ClientDetail }) {
   const services = sel.services ?? [];
   return (
     <section className="flex flex-col gap-2">
-      <SectionLabel>Layanan yang ditangani</SectionLabel>
+      <SectionLabel>Layanan yang diminati</SectionLabel>
       {services.length === 0 ? (
         <div className="text-sm italic text-fg-muted px-3 py-2.5 bg-cream-50 rounded-lg border border-border">
           Belum ada layanan terdaftar.

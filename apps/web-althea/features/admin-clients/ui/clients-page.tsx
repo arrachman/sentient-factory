@@ -28,7 +28,8 @@ const EMPTY: CreateClientInput = {
 
 export function ClientsPage({
   basePath = '/admin/clients',
-}: { basePath?: string } = {}) {
+  canCreate = true,
+}: { basePath?: string; canCreate?: boolean } = {}) {
   const router = useRouter();
   const [filter, setFilter] = useState<Filter>('semua');
   const [search, setSearch] = useState('');
@@ -84,6 +85,7 @@ export function ClientsPage({
         onChangeSearch={setSearch}
         onOpen={(id) => router.push(`${basePath}/${id}`)}
         onCreate={openCreate}
+        canCreate={canCreate}
       />
 
       <div className="hidden lg:flex h-[calc(100vh-4rem)] flex-col p-6">
@@ -97,6 +99,7 @@ export function ClientsPage({
           onChangeSearch={setSearch}
           onChangeCategory={setCategoryFilter}
           onCreate={openCreate}
+          canCreate={canCreate}
         />
         <ClientsTable
           items={items}
@@ -107,7 +110,7 @@ export function ClientsPage({
       </div>
       </div>
 
-      {open && (
+      {open && canCreate && (
         <ClientFormDialog
           editing={null}
           form={form}

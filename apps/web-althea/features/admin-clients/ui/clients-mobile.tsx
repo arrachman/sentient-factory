@@ -33,6 +33,7 @@ export function ClientsMobile({
   onChangeSearch,
   onOpen,
   onCreate,
+  canCreate = true,
 }: {
   items: Client[];
   isLoading: boolean;
@@ -43,6 +44,7 @@ export function ClientsMobile({
   onChangeSearch: (s: string) => void;
   onOpen: (id: number) => void;
   onCreate: () => void;
+  canCreate?: boolean;
 }) {
   return (
     <div className="lg:hidden">
@@ -136,15 +138,17 @@ export function ClientsMobile({
       </div>
 
       {/* FAB */}
-      <button
-        type="button"
-        onClick={onCreate}
-        aria-label="Tambah klien"
-        className="fixed bottom-20 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg"
-        style={{ background: 'var(--sage-500, #5b8a66)' }}
-      >
-        <Plus className="h-6 w-6" />
-      </button>
+      {canCreate && (
+        <button
+          type="button"
+          onClick={onCreate}
+          aria-label="Tambah klien"
+          className="fixed bottom-20 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg"
+          style={{ background: 'var(--sage-500, #5b8a66)' }}
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 }

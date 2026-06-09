@@ -75,7 +75,7 @@ export function ServicesMultiSelect({
 
   return (
     <div>
-      <label className="caption mb-1 block">Layanan yang ditangani *</label>
+      <label className="caption mb-1 block">Layanan yang diminati *</label>
       <div className="rounded-md border border-border bg-cream-50 p-3 flex flex-col gap-3">
         {serviceList.isLoading ? (
           <div className="text-fg-muted text-sm italic">Memuat layanan…</div>

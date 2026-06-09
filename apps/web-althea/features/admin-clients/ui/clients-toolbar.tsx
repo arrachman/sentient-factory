@@ -24,6 +24,7 @@ export function ClientsToolbar({
   onChangeSearch,
   onChangeCategory,
   onCreate,
+  canCreate = true,
 }: {
   filter: Filter;
   counts: Record<Filter, number>;
@@ -33,6 +34,7 @@ export function ClientsToolbar({
   onChangeSearch: (next: string) => void;
   onChangeCategory: (next: ClientCategory | '') => void;
   onCreate: () => void;
+  canCreate?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -84,13 +86,15 @@ export function ClientsToolbar({
             </option>
           ))}
         </select>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="btn btn-primary btn-sm"
-        >
-          <Plus className="h-4 w-4" /> Klien Baru
-        </button>
+        {canCreate && (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="btn btn-primary btn-sm"
+          >
+            <Plus className="h-4 w-4" /> Klien Baru
+          </button>
+        )}
       </div>
     </div>
   );
