@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { ErpListLayout } from '@/components/organisms/erp-list-layout';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/organisms/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, CodeLinkCell } from '@/components/organisms/table';
 import { ListFooter } from '@/components/organisms/list-footer';
 import { RowActionsMenu, type RowActionItem } from '@/components/molecules/row-actions-menu';
 import { Badge } from '@/components/ui/badge';
@@ -121,14 +121,7 @@ export function ReportDesignerListPage({ onOpenDesigner }: Props) {
           <TableBody>
             {rows.map(row => (
               <TableRow key={row.id}>
-                <TableCell>
-                  <button
-                    onClick={() => onOpenDesigner(row.id)}
-                    className="text-[var(--accent)] hover:underline font-mono text-sm cursor-pointer"
-                  >
-                    {row.code}
-                  </button>
-                </TableCell>
+                <CodeLinkCell code={row.code} onOpen={() => onOpenDesigner(row.id)} />
                 <TableCell>{row.name}</TableCell>
                 <TableCell>
                   <Badge variant="default">{row.module.toUpperCase()}</Badge>

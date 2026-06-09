@@ -29,6 +29,7 @@ Baca ini sebelum menyentuh apapun di `/report-engine/`.
 |---|---|---|
 | Pendekatan | **Custom engine, tanpa 3rd-party** (Carbone.io, Stimulsoft, pdfme, dll ditolak) | 2026-06-05 |
 | Format template | **JSON** — bukan XML seperti Stimulsoft .mrt, bukan DOCX/XLSX | 2026-06-05 |
+| Sintaks marker | **Gaya Carbone `{d.x:formatter}`** (ATM dari carbone.io) — `d` = baris data, `c` = complement (company/settings/params/summary), formatter suffix `:formatN`/`:formatD`/`:html`/`:terbilang`. Tetap **band-based** (bukan flat-loop Carbone). Spec di §5 | 2026-06-07 |
 | Sumber data | **API endpoint JSON** per report — tidak embed SQL di template | 2026-06-05 |
 | Output | **PDF** sebagai output utama; HTML preview sebagai byproduct | 2026-06-05 |
 | Rendering stack | **PENDING** — pilihan: @react-pdf/renderer vs Puppeteer/Playwright | PENDING |
@@ -195,8 +196,8 @@ Contoh: `"()"` → `(1.000)` | `"- "` → `-1.000 `.
 {IIF((val) < 0, formatMinus.kanan, "")}
 ```
 
-Di Senti ERP → satu helper `{formatNumber(field)}` di expression engine.
-Template tidak perlu tulis 5-lapis Replace.
+Di Senti ERP → cukup `{d.field:formatN(2)}` (§5.2). Template tidak perlu tulis
+5-lapis Replace; grup ribuan/desimal/minus diambil otomatis dari `settings`.
 
 ---
 
@@ -426,7 +427,7 @@ diulang di setiap baris `data[]`. Ini menghilangkan kebutuhan `SumIf` lintas-ban
   "type": "text",
   "name": "LBLTOTAL",
   "x": 120, "y": 0, "width": 30, "height": 6,
-  "expression": "{formatNumber(data.total)}",
+  "expression": "{d.total:formatN(2)}",
   "style": {
     "fontSize": 9,
     "fontFamily": "Arial",
@@ -448,7 +449,7 @@ diulang di setiap baris `data[]`. Ini menghilangkan kebutuhan `SumIf` lintas-ban
   "canShrink": false,
   "conditions": [
     {
-      "when": "data.total < 0",
+      "when": "d.total < 0",
       "style": { "color": "#FF0000" }
     }
   ]
@@ -461,7 +462,7 @@ diulang di setiap baris `data[]`. Ini menghilangkan kebutuhan `SumIf` lintas-ban
   "type": "image",
   "name": "CompanyLogo",
   "x": 0, "y": 0, "width": 30, "height": 15,
-  "src": "{company.logoUrl}",
+  "src": "{c.company.logoUrl}",
   "fit": "contain"
 }
 ```
@@ -478,51 +479,81 @@ diulang di setiap baris `data[]`. Ini menghilangkan kebutuhan `SumIf` lintas-ban
 
 ---
 
-## 5. Spesifikasi Expression Engine
+## 5. Spesifikasi Expression Engine — sintaks gaya Carbone (ATM)
+
+> **Keputusan 2026-06-07:** sintaks marker = **Amati-Tiru-Modifikasi dari carbone.io**.
+> Kita pinjam gaya terse `{d.field}` + formatter suffix `:name(args)`; **tetap
+> band-based** (bukan flat-loop `{d.items[i].x}` ala Carbone — band model dibutuhkan
+> untuk Buku Besar 2-level / Tipe 3, lihat §2.9). Iterasi baris ditangani oleh
+> **DataBand** atas `data[]`, bukan marker `[i]` inline.
 
 Expression engine meng-evaluate string `"..."` yang mengandung `{...}` blocks.
-Multiple ekspresi bisa digabung: `"Halaman {PageNumber} dari {TotalPageCount}"`.
+Multiple ekspresi bisa digabung: `"Halaman {$page} dari {$pages}"`.
 
-### Tipe Ekspresi
+### 5.1 Namespace (root data)
 
-| Syntax | Deskripsi | Contoh |
+ATM Carbone yang punya `d` (data) + `c` (complement). Di Senti:
+
+| Root | Isi | Sumber payload (§3.3) | Contoh |
+|---|---|---|---|
+| `d` | Baris data **scope band saat ini** (DataBand) | `data[]` per-row | `{d.ponotransaksi}`, `{d.namabarang}` |
+| `c` | **Complement** — semua data non-baris (company, settings, params, summary) | `company` / `settings` / `params` / `summary` | `{c.company.name}`, `{c.settings.dateFormat}`, `{c.params.dateFrom}`, `{c.summary.grandTotal}` |
+
+Nested OK: `{d.partner.name}`, `{c.company.address}`.
+
+### 5.2 Formatter (suffix `:name(args)`, bisa di-chain)
+
+ATM langsung dari Carbone (`{d.amount:formatN(2)}`, `{d.notes:html}`):
+
+| Formatter | Fungsi | Contoh |
 |---|---|---|
-| `{data.field}` | Nilai field dari baris data saat ini | `{data.ponotransaksi}` |
-| `{company.field}` | Company info | `{company.name}` |
-| `{settings.field}` | Print settings | `{settings.dateFormat}` |
-| `{params.field}` | Parameter laporan | `{params.dateFrom}` |
-| `{summary.field}` | Pre-computed aggregate | `{summary.grandTotal}` |
-| `{Sum(data.field)}` | Sum di scope group aktif | `{Sum(data.total)}` |
-| `{Count()}` | Jumlah baris di group | `{Count()}` |
-| `{Min(data.field)}` | Min value | `{Min(data.harga)}` |
-| `{Max(data.field)}` | Max value | `{Max(data.harga)}` |
-| `{Last(data.field)}` | Nilai baris terakhir di group | `{Last(data.saldo)}` |
-| `{IIF(cond, a, b)}` | Ternary | `{IIF(data.total < 0, "(", "")}` |
-| `{Format("DD/MM/YYYY", data.tgl)}` | Format tanggal/angka | — |
-| `{formatDate(data.tgl)}` | Shorthand pakai `settings.dateFormat` | — |
-| `{formatNumber(data.total)}` | Shorthand pakai number settings | — |
-| `{formatQty(data.jml)}` | Shorthand pakai `settings.qtyDigits` | — |
-| `{terbilang(data.total)}` | Nominal dalam huruf (IDR) | — |
-| `{PageNumber}` | Halaman saat ini | — |
-| `{TotalPageCount}` | Total halaman | — |
-| `{Now}` | Datetime saat cetak | `{Format("DD/MM/YYYY HH:mm", Now)}` |
-| `{LineNumber}` | Nomor baris di DataBand | — |
+| `:formatN(decimals?)` | Angka + grup ribuan dari `settings`. Default `decimalDigits` | `{d.total:formatN(2)}` |
+| `:formatC(currency?)` | Mata uang (+ simbol dari `settings.currencySymbol`) | `{d.total:formatC}` |
+| `:formatQ` | Kuantitas (`settings.qtyDigits`) | `{d.jml:formatQ}` |
+| `:formatD(pattern?)` | Tanggal; default `settings.dateFormat` | `{d.tgl:formatD(DD/MM/YYYY)}` |
+| `:terbilang(currency?)` | Nominal → huruf (§6) | `{c.summary.grandTotal:terbilang}` |
+| `:html` | Render string sebagai HTML (rich text) | `{d.notes:html}` |
+| `:upperCase` / `:lowerCase` / `:ucFirst` | Transform teks | `{d.status:upperCase}` |
+| `:padLeft(n,ch?)` / `:padRight(n,ch?)` | Padding | `{d.kode:padLeft(6,0)}` |
+| `:default(text)` | Fallback bila null/undefined/empty | `{d.npwp:default(-)}` |
+| `:ifLT(x):show(a):elseShow(b)` | Conditional tampil (Carbone `:ifEQ/:ifGT/:show`) | `{d.total:ifLT(0):show((-)):elseShow()}` |
 
-### Aturan Scope Aggregate
+Chain dieval kiri→kanan: `{d.total:formatN(2):default(0,00)}`.
 
-- `{Sum(...)}`, `{Count()}`, `{Last(...)}` → scope = group yang sedang di-render
-- Di `GroupFooterBand level 1` → aggregate atas semua baris dalam group level 1
-- Di `GroupFooterBand level 2` → aggregate atas semua baris dalam group level 2
-- Di `DataBand` → aggregate atas seluruh data (running total)
+### 5.3 Aggregate (band-scope, gaya fungsi)
 
-### Conditional Formatting
+Carbone `:aggSum` tak cocok dengan band model → tetap fungsi, namespace `d`:
 
-Ditulis sebagai JavaScript boolean expression sederhana:
+| Syntax | Deskripsi |
+|---|---|
+| `{sum(d.field)}` | Sum di scope group aktif |
+| `{count()}` | Jumlah baris di group |
+| `{min(d.field)}` / `{max(d.field)}` | Min / max |
+| `{last(d.field)}` | Nilai baris terakhir di group (running balance) |
+
+Formatter bisa ditempel: `{sum(d.total):formatN(2)}`.
+
+**Scope:** GroupFooter level 1 → agregat baris group level 1; level 2 → group
+level 2; di DataBand → running total seluruh data.
+
+### 5.4 System variable (prefix `$`)
+
+| Syntax | Deskripsi |
+|---|---|
+| `{$page}` | Halaman saat ini |
+| `{$pages}` | Total halaman |
+| `{$line}` | Nomor baris di DataBand |
+| `{$now}` | Datetime cetak — `{$now:formatD(DD/MM/YYYY HH:mm)}` |
+
+### 5.5 Conditional formatting (component `conditions[]`)
+
+Conditional **style** (warna/font) tetap di array `conditions` komponen (§4.3),
+bukan formatter. Ekspresi `when` = boolean JS sederhana atas namespace `d`/`c`:
 ```
-data.total < 0
-data.status == 'CANCELLED'
-data.glid == 0
-data.qty > data.qtyMax
+d.total < 0
+d.status == 'CANCELLED'
+d.glid == 0
+d.qty > d.qtyMax
 ```
 Operator: `==`, `!=`, `<`, `>`, `<=`, `>=`, `&&`, `||`, `!`
 
@@ -543,8 +574,8 @@ export function toTerbilang(amount: number, currency: 'IDR' | 'USD' = 'IDR'): st
 // toTerbilang(1000, 'USD')     → "ONE THOUSAND US DOLLAR"
 ```
 
-**Cara pakai di template:** `{terbilang(data.total)}` — expression engine memanggil
-fungsi ini, nilai sudah ada di `summary.terbilang` (pre-computed) atau dihitung on-the-fly.
+**Cara pakai di template:** `{c.summary.grandTotal:terbilang}` (formatter suffix, §5.2) —
+nilai biasanya sudah pre-computed di `summary.terbilang`, atau dihitung on-the-fly.
 
 **Belum dibuat** — pending phase implementasi.
 

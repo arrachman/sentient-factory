@@ -2715,3 +2715,39 @@ diganti.
   `lib/report-component-factory.ts` jadi **orphan** (tak di-import page).
   `report-types.ts` & `report-template-dialog.tsx` **tetap** dipakai list page.
   Penghapusan file orphan ditunda (butuh konfirmasi user) — build hijau tanpanya.
+
+## Data dummy transaksi finance — wajib POSTED + "terima dari" terisi (2026-06-07)
+
+Keputusan (dengan user): semua data transaksi DUMMY_SEED di menu TRANSAKSI
+finance harus **terposting** dan punya **"terima dari" (`partner_id`)**.
+
+- Partner diisi **acak per arah**: RECEIPT / giro INCOMING → partner `is_customer`;
+  DISBURSEMENT / giro OUTGOING → partner `is_supplier`; journal (tak berarah) →
+  acak dari semua partner.
+- Posting lewat **API state machine** (`/transition` SUBMIT→APPROVE→POST), bukan
+  flip kolom langsung, supaya `fin_ledger_entries` (GL) ikut ter-generate dgn
+  partner. Untuk doc yang sudah posted, `partner_id` dipropagasi ke ledger existing.
+- Script repair: `scripts/fix-transactions-posted-and-partner.mjs` (idempotent,
+  hanya menyentuh `source LIKE 'DUMMY%'`; giro tanpa kolom source = semua seed).
+  Punya retry backoff utk throttle 429.
+- Hasil: cash/bank 2219, giro 307, journal 636 → semua POSTED. Tanpa "terima dari"
+  tersisa hanya OPENING_BALANCE (1, memang tanpa lawan transaksi) + 1 journal
+  manual non-dummy. GL ledger 4693 → 6121.
+
+## Receipt Memo / Send Memo = AR Receipt / AP Payment (2026-06-07)
+
+Menu TRANSAKSI **Receipt Memo** → route `/finance/receipt-memos` → `ErpArReceiptsPage`
+→ tabel **`fin_ar_receipts`** (endpoint `/fin/ar-receipts`). **Send Memo** →
+`/finance/send-memos` → `ErpApPaymentsPage` → **`fin_ap_payments`**. (Komentar di
+`scripts/seed-bank-out-1000.mjs` yg menyebut memo = cash-bank-txn sudah usang.)
+
+AR Receipt = **skeleton CRUD**: `create` insert apa adanya, **tanpa** auto-number,
+**tanpa** GL ledger, **tanpa** state machine `/transition`. Jadi "terposting" =
+set `status='POSTED'`+`posting_status='POSTED'` langsung di payload/insert; `partner_id`
+(customer) wajib = "terima dari".
+
+Seed 2026-06-07: 1000 Receipt Memo POSTED, partner customer acak, tersebar merata
+per bulan Jan 2025→Jun 2026 (56×10 + 55×8), doc `RM0000001..RM0001000`,
+`source='DUMMY_SEED_RECEIPT_MEMO'`, bank acak 185–189, currency IDR. Insert via SQL
+langsung (setara API krn create tak punya side-effect GL). Hapus: delete where
+source='DUMMY_SEED_RECEIPT_MEMO'.
