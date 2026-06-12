@@ -16,7 +16,8 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import type { ItemOthersData, ItemCustomData } from '@/lib/api/items';
 import type { ItemFormData } from './items-form';
-import { Section, NumField } from './items-form-parts';
+import { Section, NumField, LookupField } from './items-form-parts';
+import { loadProductClassOptions } from './items-form-lookups';
 
 type SectionProps = { data: ItemFormData; onChange: (d: ItemFormData) => void };
 
@@ -55,6 +56,7 @@ export function ItemCustomSection({ data, onChange }: SectionProps) {
 
   return (
     <Section title="Custom" hint="Atribut produksi & moulding (paritas MyERP+)">
+      <LookupField id="if-pclass" label="Kelas Produk" value={data.productClassId} onPick={(v) => onChange({ ...data, productClassId: v })} loader={loadProductClassOptions} placeholder="Pilih kelas…" initialLabel={data.productClassLabel} />
       <TextField id="if-prodcat" label="Kategori Produksi" value={c.productionCategory ?? ''} onChange={(v) => setCustom('productionCategory', v)} />
       <TextField id="if-prodgrp" label="Kelompok Produksi" value={c.productionGroup ?? ''} onChange={(v) => setCustom('productionGroup', v)} />
       <NumField id="if-maxqtyso" label="Max Qty SO" value={c.maxQtySo ?? ''} onChange={(v) => setCustom('maxQtySo', v)} />

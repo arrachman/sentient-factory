@@ -2751,3 +2751,14 @@ per bulan Jan 2025→Jun 2026 (56×10 + 55×8), doc `RM0000001..RM0001000`,
 `source='DUMMY_SEED_RECEIPT_MEMO'`, bank acak 185–189, currency IDR. Insert via SQL
 langsung (setara API krn create tak punya side-effect GL). Hapus: delete where
 source='DUMMY_SEED_RECEIPT_MEMO'.
+
+---
+
+## Item form — field "Kelas Produk" pindah ke section Custom (2026-06-12)
+
+Atas permintaan user: lookup **Kelas Produk** (`productClassId`) dipindah dari
+section **Klasifikasi** ke section **Custom** di item form
+(`items-form-lainlain.tsx` `ItemCustomSection`, baris pertama sebelum atribut
+produksi). Binding data tidak berubah — tetap kolom `md_items.product_class_id`
+(bukan sidecar `metadata.custom`); hanya penempatan UI. Klasifikasi kini:
+Tipe · Kategori · Satuan · Jenis Barang.

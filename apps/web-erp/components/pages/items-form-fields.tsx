@@ -30,7 +30,7 @@ import { ItemDistributorsEditor } from './items-form-distributors';
 import { ItemBranchesEditor } from './items-form-branches';
 import { ItemLainLainSection, ItemCustomSection } from './items-form-lainlain';
 import {
-  loadCategoryOptions, loadUnitOptions, loadKindOptions, loadProductClassOptions,
+  loadCategoryOptions, loadUnitOptions, loadKindOptions,
   loadDivisionOptions, loadSubDivisionOptions, loadDepartmentOptions, loadSubDepartmentOptions,
   loadBranchOptions, loadLocationOptions, loadWarehouseOptions, loadProjectOptions,
   loadCostCenterOptions, loadAccountOptions, loadTaxOptions, loadPartnerOptions,
@@ -125,7 +125,6 @@ export function ItemFormFields({
       <LookupField id="if-cat" label="Kategori" value={data.categoryId} onPick={(v) => set('categoryId', v)} loader={loadCategoryOptions} placeholder="Pilih kategori…" required initialLabel={data.categoryLabel} error={!!errors.categoryId} />
       <LookupField id="if-unit" label="Satuan" value={data.unitId} onPick={(v) => set('unitId', v)} loader={loadUnitOptions} placeholder="Pilih satuan…" required initialLabel={data.unitLabel} error={!!errors.unitId} />
       <LookupField id="if-kind" label="Jenis Barang" value={data.kindId} onPick={(v) => set('kindId', v)} loader={loadKindOptions} placeholder="Pilih jenis…" initialLabel={data.kindLabel} />
-      <LookupField id="if-pclass" label="Kelas Produk" value={data.productClassId} onPick={(v) => set('productClassId', v)} loader={loadProductClassOptions} placeholder="Pilih kelas…" initialLabel={data.productClassLabel} />
     </Section>
   );
 
