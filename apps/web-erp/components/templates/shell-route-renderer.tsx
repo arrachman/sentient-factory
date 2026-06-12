@@ -70,7 +70,7 @@ import { ErpCountriesPage } from '@/components/pages/countries-page';
 import { ErpProvincesPage } from '@/components/pages/provinces-page';
 import { ErpCitiesPage } from '@/components/pages/cities-page';
 import { ErpAreasPage } from '@/components/pages/areas-page';
-import { ErpItemLocationsPage } from '@/components/pages/item-locations-page';
+import { ErpStorageBinsPage } from '@/components/pages/storage-bins-page';
 import { ErpPartnerSubCategoriesPage } from '@/components/pages/partner-sub-categories-page';
 import { ErpPriceCategoriesPage } from '@/components/pages/price-categories-page';
 import { ErpTransactionNotesPage } from '@/components/pages/transaction-notes-page';
@@ -232,7 +232,7 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/provinces': () => <ErpProvincesPage />,
   '/master/cities': () => <ErpCitiesPage />,
   '/master/areas': () => <ErpAreasPage />,
-  '/master/item-locations': () => <ErpItemLocationsPage />,
+  '/master/storage-bins': () => <ErpStorageBinsPage />,
   '/master/customer-categories': () => <ErpPartnerSubCategoriesPage type="CUSTOMER" />,
   '/master/supplier-categories': () => <ErpPartnerSubCategoriesPage type="SUPPLIER" />,
   '/master/salesman-categories': () => <ErpPartnerSubCategoriesPage type="SALESMAN" />,

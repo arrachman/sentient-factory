@@ -72,7 +72,7 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/master/provinces': { group: 'Data Master', title: 'Province', icon: 'database' },
   '/master/cities': { group: 'Data Master', title: 'City', icon: 'database' },
   '/master/areas': { group: 'Data Master', title: 'Area', icon: 'database' },
-  '/master/item-locations': { group: 'Data Master', title: 'Item Location', icon: 'database' },
+  '/master/storage-bins': { group: 'Data Master', title: 'Lokasi Gudang', icon: 'database' },
   '/master/customer-categories': { group: 'Data Master', title: 'Customer Category', icon: 'database' },
   '/master/supplier-categories': { group: 'Data Master', title: 'Supplier Category', icon: 'database' },
   '/master/salesman-categories': { group: 'Data Master', title: 'Salesman Category', icon: 'database' },
