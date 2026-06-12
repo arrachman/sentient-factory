@@ -1,7 +1,7 @@
 // ERP Item resource API — CRUD for md_items
 // Endpoints: /items
 
-import { apiGet, apiPost, apiPatch, apiDelete } from './client';
+import { apiGet, apiPost, apiPatch, apiDelete, apiUpload, buildApiUrl } from './client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -109,10 +109,11 @@ export interface ErpItem {
   dimWarehouses?: { warehouseId: string; warehouse?: RelationRef | null }[];
   dimLocations?: { locationId: string; location?: RelationRef | null }[];
 
-  // Costs & prices
-  standardCost?: string | null;      // "Hpp Update" (manual HPP)
-  averageCost?: string | null;       // "Hpp rata-rata" (computed, readonly)
-  purchasePrice?: string | null;     // "Harga Beli Terakhir"
+  // Costs & prices (all system-managed/readonly except purchaseDiscount + sale tiers)
+  standardCost?: string | null;      // legacy "Hpp Update" (manual HPP) — no longer surfaced
+  averageCost?: string | null;       // "HPP Rata-rata" (moving average, readonly)
+  lastHpp?: string | null;           // "HPP Terakhir" (net cost of latest purchase, readonly)
+  purchasePrice?: string | null;     // "Harga Beli Terakhir" (from latest purchase, readonly)
   purchaseDiscount?: string | null;  // "Diskon Pembelian" (percent)
   salePrice?: string | null;         // "Harga Jual 1" (mirror of tier level 1)
   sellingPrice?: string | null; // legacy alias of salePrice
@@ -244,7 +245,7 @@ export interface CreateItemPayload {
   defaultWarehouseIds?: string[];
   defaultLocationIds?: string[];
 
-  standardCost?: string;
+  // standardCost ("HPP Update") removed; lastHpp/averageCost are system-managed (read-only).
   purchasePrice?: string;
   purchaseDiscount?: string;
   salePrice?: string;
@@ -336,4 +337,79 @@ export async function bulkUpdateItemStatus(ids: string[], isActive: boolean): Pr
 export async function bulkDeleteItems(ids: string[]): Promise<{ affected: number }> {
   const res = await apiDelete<{ success: boolean; affected: number }>('/items/bulk', { ids });
   return { affected: res.affected };
+}
+
+// ─── Item media (gambar produk + video pendek) ───────────────────────────────
+// Gallery per item: max 8 gambar (satu "utama") + 1 video pendek.
+// File binary di-stream dari GET /items/:id/media/:mediaId/file (cookie auth).
+
+export type ItemMediaKind = 'IMAGE' | 'VIDEO';
+
+export interface ItemMedia {
+  id: string;
+  itemId: string;
+  kind: ItemMediaKind;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sortOrder: number;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
+export async function listItemMedia(itemId: string): Promise<ItemMedia[]> {
+  const res = await apiGet<ApiResponse<ItemMedia[]>>(`/items/${itemId}/media`);
+  return res.data;
+}
+
+export async function uploadItemMedia(
+  itemId: string,
+  kind: ItemMediaKind,
+  file: File,
+): Promise<ItemMedia> {
+  const form = new FormData();
+  form.append('kind', kind);
+  form.append('file', file);
+  const res = await apiUpload<ApiResponse<ItemMedia>>(`/items/${itemId}/media`, form);
+  return res.data;
+}
+
+export async function setPrimaryItemMedia(itemId: string, mediaId: string): Promise<ItemMedia> {
+  const res = await apiPatch<ApiResponse<ItemMedia>>(`/items/${itemId}/media/${mediaId}/primary`);
+  return res.data;
+}
+
+export async function deleteItemMedia(itemId: string, mediaId: string): Promise<void> {
+  await apiDelete<void>(`/items/${itemId}/media/${mediaId}`);
+}
+
+/** Absolute URL untuk <img src> / <video src> (cookie erp_token ikut same-origin). */
+export function itemMediaFileUrl(itemId: string, mediaId: string): string {
+  return buildApiUrl(`/items/${itemId}/media/${mediaId}/file`);
+}
+
+// ─── Purchase auto-fill ─────────────────────────────────────────────────────
+// Defaults pushed into a PR/PO/RI/PRT item line when an item is picked
+// (editable per line). Shape = subset of mapItem (GET /items/:id).
+export interface ItemPurchaseAutoFill {
+  id: string;
+  code: string;
+  name: string;
+  purchasePrice?: string | null;    // Harga Beli Terakhir → default unit price
+  purchaseDiscount?: string | null; // Diskon Pembelian (%) → default line discount
+  unitId: string;
+  unit?: { id: string; code: string; name: string } | null;
+  fieldUnitId?: string | null;
+  fieldUnit?: { id: string; code: string; name: string } | null;
+  purchaseTaxId?: string | null;
+  purchaseTax?: { id: string; code: string; name: string; rate?: string } | null;
+}
+
+export async function getItemForPurchaseAutoFill(id: string): Promise<ItemPurchaseAutoFill | null> {
+  try {
+    const res = await apiGet<ApiResponse<ItemPurchaseAutoFill>>(`/items/${id}`);
+    return res.data;
+  } catch {
+    return null;
+  }
 }

@@ -188,6 +188,39 @@ export async function downloadFile(
   URL.revokeObjectURL(objectUrl);
 }
 
+/**
+ * POST multipart/form-data (file upload). Content-Type is set by the browser
+ * (with boundary) — never set it manually. Same error envelope as `request`.
+ */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const response = await fetch(buildApiUrl(path), {
+    method: 'POST',
+    credentials: 'include',
+    body: form,
+  });
+
+  if (!response.ok) {
+    const fallbackMessage =
+      response.statusText || `Unggahan gagal (HTTP ${response.status})`;
+    let apiError: ApiError;
+    try {
+      const payload = (await response.json()) as {
+        error?: ApiError;
+        message?: string;
+      };
+      apiError = payload.error ?? {
+        code: `HTTP_${response.status}`,
+        message: payload.message ?? fallbackMessage,
+      };
+    } catch {
+      apiError = { code: `HTTP_${response.status}`, message: fallbackMessage };
+    }
+    throw new ErpApiError(apiError);
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return request<T>({ method: 'POST', path, body });
 }

@@ -33,6 +33,11 @@ enum ErpItemType {
   NON_INVENTORY
 }
 
+enum ErpItemMediaKind {
+  IMAGE
+  VIDEO
+}
+
 enum ErpAccountType {
   ASSET
   LIABILITY

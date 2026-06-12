@@ -74,6 +74,7 @@ function tierColumn(item: ErpItem, key: 'price' | 'discountPercent'): string[] {
 
 export function fromItem(item: ErpItem): ItemFormData {
   return {
+    id: item.id,
     code: item.code,
     name: item.name,
     itemType: item.itemType,
@@ -101,7 +102,7 @@ export function fromItem(item: ErpItem): ItemFormData {
     ...dimFromItem(item),
     projectId: item.projectId ?? '', projectLabel: refLabel(item.project),
     costCenterId: item.costCenterId ?? '', costCenterLabel: refLabel(item.costCenter),
-    standardCost: numStr(item.standardCost),
+    lastHpp: numStr(item.lastHpp),
     averageCost: numStr(item.averageCost),
     purchasePrice: numStr(item.purchasePrice),
     purchaseDiscount: numStr(item.purchaseDiscount),
@@ -201,7 +202,7 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     defaultLocationIds: f.defaultLocationIds,
     projectId: orNull(f.projectId),
     costCenterId: orNull(f.costCenterId),
-    standardCost: orUndef(f.standardCost),
+    // standardCost ("HPP Update") removed; lastHpp/averageCost are system-managed.
     purchasePrice: orUndef(f.purchasePrice),
     purchaseDiscount: orUndef(f.purchaseDiscount),
     salePrice: orUndef(f.salePrices[0]), // level 1 mirror (denormalized cache)

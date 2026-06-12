@@ -2840,3 +2840,46 @@ kolom existing `md_partner_categories.sales_tier` (`salesTier`, 1–10).
   `partner.category.salesTier`. Diteruskan ke `SlsItemLinesEditor` (`salesTier`
   prop); saat item dipilih, harga & diskon baris di-default dari
   `item.prices[level=salesTier]` (fallback Harga Jual 1 bila tier tak ada).
+
+---
+
+## Item Media — galeri gambar produk + video pendek (2026-06-12)
+
+UI/UX upload media di master Item (request user: upload image produk dengan
+preview ala ERP modern + video pendek per item).
+
+**DB & backend (api-gateway):**
+- Tabel baru `md_item_media` (`ErpItemMedia`, migrasi `20260612_008_erp_item_media`):
+  child `md_items` cascade, `kind` enum `ErpItemMediaKind` (`IMAGE`|`VIDEO`),
+  `fileName` (asli) + `storedName` (acak `<itemId>-<uuid>.<ext>`, unique),
+  `mimeType`/`sizeBytes`/`sortOrder`/`isPrimary`.
+- Aturan: **max 8 gambar** per item, **satu** ber-flag `isPrimary` (gambar
+  pertama auto-primary; hapus primary → promosi gambar berikutnya); **1 video**
+  per item — upload video baru menghapus video lama (file+row). Whitelist mime
+  (jpeg/png/webp/gif · mp4/webm/mov), limit 5MB gambar / 50MB video; ekstensi
+  diturunkan dari mime, bukan nama file user.
+- File binary di `apps/api-gateway/uploads/erp-items/` (gitignored; persist di
+  host via bind mount `../apps/api-gateway:/app`). Bukan static-assets global:
+  streaming lewat endpoint ber-guard `ErpJwtAuthGuard`
+  (`GET /erp/items/:itemId/media/:mediaId/file`, `res.sendFile` + Range →
+  video bisa seek; cookie `erp_token` ikut karena same-origin).
+- Endpoint: `GET /erp/items/:itemId/media` (list) · `POST` multipart
+  `file`+`kind` (upload, multer memory storage spt erp-import) ·
+  `PATCH :mediaId/primary` · `DELETE :mediaId`. Module: controller+service
+  baru `erp-item-media.*` di `ErpItemsModule`.
+
+**Frontend (web-erp):**
+- `apiUpload()` baru di `lib/api/client.ts` (multipart; Content-Type dibiarkan
+  browser yang set). API media di `lib/api/items.ts` + helper
+  `itemMediaFileUrl()` untuk `<img>/<video>` src.
+- Organism baru [`item-media-upload.tsx`](components/organisms/item-media-upload.tsx):
+  dropzone drag&drop + klik (gambar multiple, video single), thumbnail grid
+  aspect-square dengan aksi hover (jadikan utama ✓ / hapus 🗑), badge "Utama",
+  lightbox preview (klik gambar, Esc tutup), player `<video controls>` +
+  tombol Ganti/Hapus. Feedback via `notify()`; hapus via `confirmAction`
+  variant danger. Token design system, tanpa warna hardcode.
+- Form item: section side-nav baru **Media** (setelah Klasifikasi, mode
+  Lengkap). `ItemFormData.id` ditambahkan (kosong saat create) — media butuh
+  item tersimpan; mode create menampilkan empty state "Simpan item terlebih
+  dahulu". Upload **langsung tersimpan** saat unggah (bukan bagian payload
+  save form) — konsisten dengan pola attachment ERP umum.

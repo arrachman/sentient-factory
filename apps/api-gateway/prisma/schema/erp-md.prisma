@@ -175,6 +175,7 @@ model ErpItem {
   costCenterId              BigInt?          @map("cost_center_id")
   standardCost              Decimal          @default(0) @map("standard_cost") @db.Decimal(19, 4)
   averageCost               Decimal          @default(0) @map("average_cost") @db.Decimal(19, 4)
+  lastHpp                   Decimal          @default(0) @map("last_hpp") @db.Decimal(19, 4)
   purchasePrice             Decimal          @default(0) @map("purchase_price") @db.Decimal(19, 4)
   purchaseDiscount          Decimal          @default(0) @map("purchase_discount") @db.Decimal(9, 4)
   salePrice                 Decimal          @default(0) @map("sale_price") @db.Decimal(19, 4)
@@ -259,6 +260,7 @@ model ErpItem {
   dimBranches             ErpItemDimBranch[]      @relation("ItemDimBranches")
   dimWarehouses           ErpItemDimWarehouse[]   @relation("ItemDimWarehouses")
   dimLocations            ErpItemDimLocation[]    @relation("ItemDimLocations")
+  media                   ErpItemMedia[]          @relation("ItemMedia")
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -305,6 +307,28 @@ model ErpItemPrice {
   @@unique([itemId, level])
   @@index([itemId])
   @@map("md_item_prices")
+}
+
+/// Item media gallery — product images (max 8, one primary) + one short video.
+/// Files live on disk under uploads/erp-items (bind-mounted); stored_name is the
+/// random on-disk filename, file_name keeps the original upload name for display.
+model ErpItemMedia {
+  id          BigInt           @id @default(autoincrement())
+  itemId      BigInt           @map("item_id")
+  kind        ErpItemMediaKind @map("kind")
+  fileName    String           @map("file_name")
+  storedName  String           @unique @map("stored_name")
+  mimeType    String           @map("mime_type")
+  sizeBytes   Int              @map("size_bytes")
+  sortOrder   Int              @default(0) @map("sort_order")
+  isPrimary   Boolean          @default(false) @map("is_primary")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?          @map("created_by_id")
+
+  item ErpItem @relation("ItemMedia", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("md_item_media")
 }
 
 /// Per-warehouse stock level overrides (Stok Min/Maks + Min Order per Gudang).

@@ -238,6 +238,25 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 > `@@unique([itemId, level])`. SSOT 10 tier; `md_items.salePrice` = cache
 > level-1. Row level dgn price+diskon kosong **tidak** disimpan (sparse).
 
+### Item Media (`md_item_media` / `ErpItemMedia`) — child of `md_items` (new 2026-06-12)
+
+| Kolom | Tipe | Catatan |
+| --- | --- | --- |
+| id | BigInt PK | |
+| itemId ➜ | BigInt → Item | FK enforced, `onDelete: Cascade` |
+| kind | enum `ErpItemMediaKind` | `IMAGE` \| `VIDEO` |
+| fileName | String | nama file asli upload (display) |
+| storedName | String unique | nama acak on-disk `<itemId>-<uuid>.<ext>` |
+| mimeType / sizeBytes | String / Int | whitelist mime; img ≤ 5MB, video ≤ 50MB |
+| sortOrder / isPrimary | Int / Boolean | urutan galeri; satu gambar "Utama" per item |
+| createdAt / createdById | timestamptz / BigInt? | |
+
+> Galeri produk: **max 8 gambar** (satu primary) + **1 video pendek** (upload
+> baru mengganti yang lama). File binary di `apps/api-gateway/uploads/erp-items/`
+> (gitignored, persist via bind mount); endpoint stream
+> `GET /erp/items/:id/media/:mediaId/file` (guard `ErpJwtAuthGuard`, support
+> Range untuk video). Tanpa equivalent legacy (MyERP+ tidak punya media item).
+
 ---
 
 ## Partners — unified Customer / Supplier / Salesman (`md_*`)

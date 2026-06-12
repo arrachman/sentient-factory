@@ -29,6 +29,8 @@ export interface ItemWarehouseStockFormRow {
 }
 
 export interface ItemFormData {
+  /** Record id (kosong saat create) — dipakai section Media untuk upload file. */
+  id: string;
   code: string;
   name: string;
   itemType: ErpItemType;
@@ -67,9 +69,9 @@ export interface ItemFormData {
   costCenterId: string; costCenterLabel?: string;
 
   // Costs & prices
-  standardCost: string;       // "Hpp Update" (manual HPP)
-  averageCost: string;        // "Hpp rata-rata" (computed, readonly — display only)
-  purchasePrice: string;      // "Harga Beli Terakhir"
+  lastHpp: string;            // "HPP Terakhir" (net cost of latest purchase, readonly)
+  averageCost: string;        // "HPP Rata-rata" (moving average, readonly — display only)
+  purchasePrice: string;      // "Harga Beli Terakhir" (readonly, from latest purchase)
   purchaseDiscount: string;   // "Diskon Pembelian" (percent)
   salePrices: string[];       // "Harga Jual 1..10" (index 0 = level 1)
   saleDiscounts: string[];    // "Diskon Jual 1..10" (index 0 = level 1)
@@ -126,6 +128,7 @@ export interface ItemFormData {
 }
 
 export const defaultItemForm = (): ItemFormData => ({
+  id: '',
   code: '', name: '', itemType: 'INVENTORY', description: '', barcode: '',
   categoryId: '', unitId: '', kindId: '', productClassId: '',
   brandId: '', materialId: '', sizeId: '', colorId: '', sectionId: '',
@@ -135,7 +138,7 @@ export const defaultItemForm = (): ItemFormData => ({
   defaultWarehouseIds: [], defaultWarehouseLabels: {},
   defaultLocationIds: [], defaultLocationLabels: {},
   projectId: '', costCenterId: '',
-  standardCost: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',
+  lastHpp: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',
   salePrices: Array<string>(10).fill(''), saleDiscounts: Array<string>(10).fill(''),
   distributors: [],
   others: {}, custom: {},

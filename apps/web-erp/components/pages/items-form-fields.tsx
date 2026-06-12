@@ -12,7 +12,6 @@
  */
 
 import * as React from 'react';
-import { DateInput } from '@/components/ui/date-input';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,9 +23,9 @@ import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generato
 import type { ItemFormData } from './items-form';
 import { ITEM_TYPES } from './items-form';
 import { Section, LookupField, MultiLookupField, NumField, YesNoField, isStockable } from './items-form-parts';
+import { ItemMediaUpload } from '@/components/organisms/item-media-upload';
 import { ItemWarehouseStocksEditor } from './items-form-warehouse-stocks';
 import { ItemAtributSection } from './items-form-atribut';
-import { ItemDistributorsEditor } from './items-form-distributors';
 import { ItemLainLainSection, ItemCustomSection } from './items-form-lainlain';
 import {
   loadCategoryOptions, loadUnitOptions, loadKindOptions,
@@ -36,7 +35,7 @@ import {
 } from './items-form-lookups';
 
 type Mode = 'cepat' | 'lengkap';
-type SectionId = 'identitas' | 'klasifikasi' | 'atribut' | 'inventory' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'distributor' | 'catatan' | 'lainlain' | 'custom';
+type SectionId = 'identitas' | 'klasifikasi' | 'media' | 'atribut' | 'inventory' | 'pergerakanstok' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier';
 
 const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
 
@@ -66,17 +65,15 @@ export function ItemFormFields({
   const sections: { id: SectionId; label: string; available: boolean; hasError: boolean }[] = [
     { id: 'identitas', label: 'Identitas', available: true, hasError: !!(errors.code || errors.name) },
     { id: 'klasifikasi', label: 'Klasifikasi', available: true, hasError: !!(errors.categoryId || errors.unitId) },
+    { id: 'media', label: 'Media', available: true, hasError: false },
     { id: 'atribut', label: 'Atribut', available: true, hasError: false },
     { id: 'inventory', label: 'Inventory & Tracking', available: isStockable(data.itemType), hasError: false },
+    { id: 'pergerakanstok', label: 'Pergerakan Stok', available: isStockable(data.itemType), hasError: false },
     { id: 'harga', label: 'Harga', available: true, hasError: false },
     { id: 'pajak', label: 'Pajak', available: true, hasError: false },
     { id: 'akuntansi', label: 'Akuntansi', available: true, hasError: accountError },
     { id: 'dimensi', label: 'Dimensi GL', available: true, hasError: false },
     { id: 'supplier', label: 'Supplier', available: true, hasError: false },
-    { id: 'distributor', label: 'Distributor', available: true, hasError: false },
-    { id: 'catatan', label: 'Catatan', available: true, hasError: false },
-    { id: 'lainlain', label: 'Lain-lain', available: true, hasError: false },
-    { id: 'custom', label: 'Custom', available: true, hasError: false },
   ];
 
   const renderIdentitas = () => (
@@ -98,7 +95,6 @@ export function ItemFormFields({
       <FormField label="Status" htmlFor="if-active">
         <BooleanRadio id="if-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>
-      <YesNoField id="if-special" label="Spesial" value={data.isSpecial} onChange={(v) => set('isSpecial', v)} help="Item khusus, tidak masuk laporan reguler" />
     </Section>
   );
 
@@ -129,16 +125,32 @@ export function ItemFormFields({
     <Section title="Inventory & Tracking" hint="Stok Min/Maks + Min Order di bawah = nilai global (default semua gudang)">
       <NumField id="if-minstock" label="Stok Min" value={data.minStock} onChange={(v) => set('minStock', v)} />
       <NumField id="if-maxstock" label="Stok Maks" value={data.maxStock} onChange={(v) => set('maxStock', v)} />
-      <NumField id="if-reorder" label="Jumlah Reorder" value={data.reorderQty} onChange={(v) => set('reorderQty', v)} />
-      <NumField id="if-minorder" label="Min Order" value={data.minOrderQty} onChange={(v) => set('minOrderQty', v)} />
+<NumField id="if-minorder" label="Min Order" value={data.minOrderQty} onChange={(v) => set('minOrderQty', v)} />
       <div className="col-span-2 pt-2">
         <p className="pb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--fg-muted)]">Pengaturan per Gudang</p>
         <p className="pb-1 text-[11px] text-[var(--fg-subtle)]">Override Stok Min/Maks + Min Order untuk gudang tertentu. Kolom kosong = pakai nilai global.</p>
         <ItemWarehouseStocksEditor rows={data.warehouseStocks} onChange={(rows) => onChange({ ...data, warehouseStocks: rows })} />
       </div>
-      <YesNoField id="if-serial" label="Serial No." value={data.tracksSerial} onChange={(v) => set('tracksSerial', v)} />
-      <YesNoField id="if-batch" label="Batch / Lot" value={data.tracksBatch} onChange={(v) => set('tracksBatch', v)} />
       <YesNoField id="if-bin" label="Bin / Rak" value={data.tracksBin} onChange={(v) => set('tracksBin', v)} />
+    </Section>
+  );
+
+  const renderPergerakanStok = () => (
+    <Section title="Pergerakan Stok" hint="Tracking serial/batch menentukan cara pencatatan mutasi stok">
+      <YesNoField
+        id="if-serial"
+        label="Serial No."
+        value={data.tracksSerial}
+        onChange={(v) => set('tracksSerial', v)}
+        help="1 qty = 1 serial"
+      />
+      <YesNoField
+        id="if-batch"
+        label="Batch / Lot"
+        value={data.tracksBatch}
+        onChange={(v) => set('tracksBatch', v)}
+        help="1 qty bisa banyak batch"
+      />
       {data.tracksBatch && (
         <FormField label="Kategori Umur" htmlFor="if-age">
           <Input id="if-age" value={data.ageCategory} onChange={(e) => set('ageCategory', e.target.value)} placeholder="mis. FIFO 30 hari" />
@@ -155,26 +167,22 @@ export function ItemFormFields({
 
   const renderHarga = () => (
     <Section title="Harga" hint="Harga Jual 1–10 + diskon per tingkat (paritas MyERP+)">
-      <NumField id="if-buy" label="Harga Beli Terakhir" value={data.purchasePrice} onChange={(v) => set('purchasePrice', v)} />
-      <NumField id="if-avgcost" label="HPP Rata-rata" value={data.averageCost} onChange={() => {}} readOnly help="Otomatis dari sistem" />
-      <NumField id="if-buydisc" label="Diskon Pembelian" value={data.purchaseDiscount} onChange={(v) => set('purchaseDiscount', v)} placeholder="0" help="Persen (%)" />
-      <NumField id="if-stdcost" label="HPP Update" value={data.standardCost} onChange={(v) => set('standardCost', v)} help="Set HPP manual" />
+      <NumField id="if-buy" label="Harga Beli Terakhir" value={data.purchasePrice} onChange={() => {}} readOnly help="Otomatis dari transaksi pembelian terakhir" />
+      <NumField id="if-lasthpp" label="HPP Terakhir" value={data.lastHpp} onChange={() => {}} readOnly help="Otomatis dari transaksi pembelian terakhir" />
+      <NumField id="if-avgcost" label="HPP Rata-rata" value={data.averageCost} onChange={() => {}} readOnly help="Rata-rata bergerak (otomatis)" />
+      <NumField id="if-buydisc" label="Diskon Pembelian" value={data.purchaseDiscount} onChange={(v) => set('purchaseDiscount', v)} placeholder="0" help="Persen (%) · jadi default diskon di PR/PO/RI/PRT" />
       {data.salePrices.map((_, i) => (
         <React.Fragment key={i}>
           <NumField id={`if-sell-${i}`} label={`Harga Jual ${i + 1}`} value={data.salePrices[i] ?? ''} onChange={(v) => setTier('salePrices', i, v)} />
           <NumField id={`if-selldisc-${i}`} label={`Diskon Jual ${i + 1}`} value={data.saleDiscounts[i] ?? ''} onChange={(v) => setTier('saleDiscounts', i, v)} placeholder="0" />
         </React.Fragment>
       ))}
-      <FormField label="Harga berlaku s.d" htmlFor="if-valid" help="Setelah tanggal ini, harga jual perlu di-review">
-        <DateInput id="if-valid" value={data.validUntil} onChange={(v) => set('validUntil', v)} />
-      </FormField>
     </Section>
   );
 
   const renderPajak = () => (
     <Section title="Pajak">
-      <YesNoField id="if-vat" label="BKP (Kena PPN)" value={data.isVatable} onChange={(v) => set('isVatable', v)} help="Kena PPN saat transaksi beli/jual" />
-      <LookupField id="if-buytax" label="Pajak Beli" value={data.purchaseTaxId} onPick={(v) => set('purchaseTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.purchaseTaxLabel} />
+<LookupField id="if-buytax" label="Pajak Beli" value={data.purchaseTaxId} onPick={(v) => set('purchaseTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.purchaseTaxLabel} />
       <LookupField id="if-selltax" label="Pajak Jual" value={data.saleTaxId} onPick={(v) => set('saleTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.saleTaxLabel} />
     </Section>
   );
@@ -216,29 +224,31 @@ export function ItemFormFields({
     </Section>
   );
 
-  const renderDistributor = () => (
-    <Section title="Distributor" hint="Daftar distributor/supplier item (paritas MyERP+)">
-      <ItemDistributorsEditor rows={data.distributors} onChange={(rows) => onChange({ ...data, distributors: rows })} />
-    </Section>
-  );
-
-  const renderCatatan = () => (
-    <Section title="Catatan">
-      <FormField label="Deskripsi" htmlFor="if-desc" className="col-span-2 grid-cols-[110px_1fr]">
-        <Input id="if-desc" value={data.description} onChange={(e) => set('description', e.target.value)} placeholder="Opsional" />
-      </FormField>
-    </Section>
-  );
-
   const renderById: Record<SectionId, () => React.ReactElement> = {
     identitas: renderIdentitas, klasifikasi: renderKlasifikasi,
-    atribut: () => <ItemAtributSection data={data} onChange={onChange} />,
+    media: () => (
+      <Section title="Media" hint="Gambar produk + video pendek; tersimpan langsung saat diunggah">
+        <div className="col-span-2">
+          <ItemMediaUpload itemId={data.id || null} />
+        </div>
+      </Section>
+    ),
+    atribut: () => (
+      <>
+        <ItemAtributSection data={data} onChange={onChange} />
+        <ItemLainLainSection data={data} onChange={onChange} />
+        <ItemCustomSection data={data} onChange={onChange} />
+        <Section title="Catatan">
+          <FormField label="Deskripsi" htmlFor="if-desc" className="col-span-2 grid-cols-[110px_1fr]">
+            <Input id="if-desc" value={data.description} onChange={(e) => set('description', e.target.value)} placeholder="Opsional" />
+          </FormField>
+        </Section>
+      </>
+    ),
     inventory: renderInventory,
+    pergerakanstok: renderPergerakanStok,
     harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
-    dimensi: renderDimensi, supplier: renderSupplier, distributor: renderDistributor,
-    catatan: renderCatatan,
-    lainlain: () => <ItemLainLainSection data={data} onChange={onChange} />,
-    custom: () => <ItemCustomSection data={data} onChange={onChange} />,
+    dimensi: renderDimensi, supplier: renderSupplier,
   };
 
   const modeToggle = (
