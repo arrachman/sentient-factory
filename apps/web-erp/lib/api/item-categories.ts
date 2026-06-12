@@ -6,31 +6,54 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface ErpItemCategory {
+export interface ErpAccountRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
+/** 8 GL account FK fields on an item category (legacy MyERP+ parity). */
+export interface ItemCategoryAccountIds {
+  inventoryAccountId?: string | null;
+  cogsAccountId?: string | null;
+  salesAccountId?: string | null;
+  salesReturnAccountId?: string | null;
+  salesDiscountAccountId?: string | null;
+  purchaseReturnAccountId?: string | null;
+  purchaseDiscountAccountId?: string | null;
+  consignmentAccountId?: string | null;
+}
+
+export interface ErpItemCategory extends ItemCategoryAccountIds {
   id: string;
   code: string;
   name: string;
   isActive: boolean;
   parentId?: string | null;
-  inventoryAccountId?: string | null;
   createdAt: string;
   updatedAt: string;
   parent?: { id: string; name: string } | null;
+  inventoryAccount?: ErpAccountRef | null;
+  cogsAccount?: ErpAccountRef | null;
+  salesAccount?: ErpAccountRef | null;
+  salesReturnAccount?: ErpAccountRef | null;
+  salesDiscountAccount?: ErpAccountRef | null;
+  purchaseReturnAccount?: ErpAccountRef | null;
+  purchaseDiscountAccount?: ErpAccountRef | null;
+  consignmentAccount?: ErpAccountRef | null;
 }
 
-export interface CreateItemCategoryPayload {
+export interface CreateItemCategoryPayload extends ItemCategoryAccountIds {
   code: string;
   name: string;
   isActive?: boolean;
   parentId?: string | null;
-  inventoryAccountId?: string | null;
 }
 
-export interface UpdateItemCategoryPayload {
+export interface UpdateItemCategoryPayload extends ItemCategoryAccountIds {
   code?: string;
   name?: string;
   parentId?: string | null;
-  inventoryAccountId?: string | null;
 }
 
 // ─── API functions ────────────────────────────────────────────────────────────

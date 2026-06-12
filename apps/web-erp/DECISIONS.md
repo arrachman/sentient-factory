@@ -2762,3 +2762,26 @@ section **Klasifikasi** ke section **Custom** di item form
 produksi). Binding data tidak berubah — tetap kolom `md_items.product_class_id`
 (bukan sidecar `metadata.custom`); hanya penempatan UI. Klasifikasi kini:
 Tipe · Kategori · Satuan · Jenis Barang.
+
+---
+
+## Kategori Item — mapping 8 akun GL (2026-06-12)
+
+Paritas legacy MyERP+ "Kategori Produk": `md_item_categories` kini memetakan
+**8 akun GL default** per kategori, bukan 3. Existing: `inventory_account_id`
+(Persediaan), `cogs_account_id` (HPP), `sales_account_id` (Penjualan). Baru
+(migrasi `20260612_001_erp_item_category_gl_accounts`): `sales_return_account_id`,
+`sales_discount_account_id`, `purchase_return_account_id`,
+`purchase_discount_account_id`, `consignment_account_id` — semua `BigInt NULL`
+FK → `md_accounts` (`ON DELETE SET NULL`), mirror pola 8 relasi akun yang sudah
+ada di `md_items`.
+
+- **Backend**: `CreateErpItemCategoryDto` +5 field (Update via `PartialType`);
+  service wire create/update + `ACCOUNT_INCLUDES` (8 relasi `{id,code,name}`)
+  di `findAll`/`findOne` supaya form dapat label.
+- **Frontend**: `item-categories-page.tsx` — section "Akun GL" grid 2 kolom,
+  8 `SearchSelect` map-driven (`ACCOUNT_FIELDS`), loader reuse
+  `loadAccountOptionsCoded` (trigger "code - name"). Types di
+  `lib/api/item-categories.ts` via interface `ItemCategoryAccountIds`.
+- Semua akun **opsional** (nullable) — kategori boleh dibuat tanpa mapping;
+  fallback resolusi akun per-item/per-transaksi tetap berlaku.

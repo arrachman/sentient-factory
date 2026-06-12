@@ -2,10 +2,26 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
-import { BulkErpItemCategoryDto, BulkStatusErpItemCategoryDto } from './dto/bulk-erp-item-category.dto';
+import {
+  BulkErpItemCategoryDto,
+  BulkStatusErpItemCategoryDto,
+} from './dto/bulk-erp-item-category.dto';
 import { CreateErpItemCategoryDto } from './dto/create-erp-item-category.dto';
 import { QueryErpItemCategoryDto } from './dto/query-erp-item-category.dto';
 import { UpdateErpItemCategoryDto } from './dto/update-erp-item-category.dto';
+
+const ACCOUNT_SELECT = { select: { id: true, code: true, name: true } } as const;
+
+const ACCOUNT_INCLUDES = {
+  inventoryAccount: ACCOUNT_SELECT,
+  cogsAccount: ACCOUNT_SELECT,
+  salesAccount: ACCOUNT_SELECT,
+  salesReturnAccount: ACCOUNT_SELECT,
+  salesDiscountAccount: ACCOUNT_SELECT,
+  purchaseReturnAccount: ACCOUNT_SELECT,
+  purchaseDiscountAccount: ACCOUNT_SELECT,
+  consignmentAccount: ACCOUNT_SELECT,
+} as const;
 
 @Injectable()
 export class ErpItemCategoriesService {
@@ -35,6 +51,17 @@ export class ErpItemCategoriesService {
           inventoryAccountId: dto.inventoryAccountId ? BigInt(dto.inventoryAccountId) : null,
           cogsAccountId: dto.cogsAccountId ? BigInt(dto.cogsAccountId) : null,
           salesAccountId: dto.salesAccountId ? BigInt(dto.salesAccountId) : null,
+          salesReturnAccountId: dto.salesReturnAccountId ? BigInt(dto.salesReturnAccountId) : null,
+          salesDiscountAccountId: dto.salesDiscountAccountId
+            ? BigInt(dto.salesDiscountAccountId)
+            : null,
+          purchaseReturnAccountId: dto.purchaseReturnAccountId
+            ? BigInt(dto.purchaseReturnAccountId)
+            : null,
+          purchaseDiscountAccountId: dto.purchaseDiscountAccountId
+            ? BigInt(dto.purchaseDiscountAccountId)
+            : null,
+          consignmentAccountId: dto.consignmentAccountId ? BigInt(dto.consignmentAccountId) : null,
           createdById: actorId ? BigInt(actorId) : null,
           updatedById: actorId ? BigInt(actorId) : null,
         },
@@ -77,6 +104,7 @@ export class ErpItemCategoriesService {
         where,
         include: {
           parent: { select: { id: true, code: true, name: true } },
+          ...ACCOUNT_INCLUDES,
         },
         orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDir ?? 'desc' }],
         skip,
@@ -102,6 +130,7 @@ export class ErpItemCategoriesService {
       where: { id, deletedAt: null },
       include: {
         parent: { select: { id: true, code: true, name: true } },
+        ...ACCOUNT_INCLUDES,
         children: {
           where: { deletedAt: null },
           select: { id: true, code: true, name: true, isActive: true },
@@ -144,18 +173,56 @@ export class ErpItemCategoriesService {
           code: dto.code,
           name: dto.name,
           isActive: dto.isActive,
-          parentId: dto.parentId !== undefined
-            ? (dto.parentId ? BigInt(dto.parentId) : null)
-            : undefined,
-          inventoryAccountId: dto.inventoryAccountId !== undefined
-            ? (dto.inventoryAccountId ? BigInt(dto.inventoryAccountId) : null)
-            : undefined,
-          cogsAccountId: dto.cogsAccountId !== undefined
-            ? (dto.cogsAccountId ? BigInt(dto.cogsAccountId) : null)
-            : undefined,
-          salesAccountId: dto.salesAccountId !== undefined
-            ? (dto.salesAccountId ? BigInt(dto.salesAccountId) : null)
-            : undefined,
+          parentId:
+            dto.parentId !== undefined ? (dto.parentId ? BigInt(dto.parentId) : null) : undefined,
+          inventoryAccountId:
+            dto.inventoryAccountId !== undefined
+              ? dto.inventoryAccountId
+                ? BigInt(dto.inventoryAccountId)
+                : null
+              : undefined,
+          cogsAccountId:
+            dto.cogsAccountId !== undefined
+              ? dto.cogsAccountId
+                ? BigInt(dto.cogsAccountId)
+                : null
+              : undefined,
+          salesAccountId:
+            dto.salesAccountId !== undefined
+              ? dto.salesAccountId
+                ? BigInt(dto.salesAccountId)
+                : null
+              : undefined,
+          salesReturnAccountId:
+            dto.salesReturnAccountId !== undefined
+              ? dto.salesReturnAccountId
+                ? BigInt(dto.salesReturnAccountId)
+                : null
+              : undefined,
+          salesDiscountAccountId:
+            dto.salesDiscountAccountId !== undefined
+              ? dto.salesDiscountAccountId
+                ? BigInt(dto.salesDiscountAccountId)
+                : null
+              : undefined,
+          purchaseReturnAccountId:
+            dto.purchaseReturnAccountId !== undefined
+              ? dto.purchaseReturnAccountId
+                ? BigInt(dto.purchaseReturnAccountId)
+                : null
+              : undefined,
+          purchaseDiscountAccountId:
+            dto.purchaseDiscountAccountId !== undefined
+              ? dto.purchaseDiscountAccountId
+                ? BigInt(dto.purchaseDiscountAccountId)
+                : null
+              : undefined,
+          consignmentAccountId:
+            dto.consignmentAccountId !== undefined
+              ? dto.consignmentAccountId
+                ? BigInt(dto.consignmentAccountId)
+                : null
+              : undefined,
           updatedById: actorId ? BigInt(actorId) : null,
         },
       });

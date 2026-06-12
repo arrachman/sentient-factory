@@ -12,14 +12,42 @@ import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { SearchSelect } from '@/components/molecules/search-select';
 import { SimpleMasterPage } from '@/components/organisms/simple-master-page';
+import { loadAccountOptionsCoded } from '@/components/pages/items-form-lookups';
 import {
   listItemCategories, createItemCategory, updateItemCategory, deleteItemCategory,
   bulkUpdateErpItemCategoryStatus, bulkDeleteErpItemCategories,
-  type ErpItemCategory, type CreateItemCategoryPayload,
+  type ErpItemCategory, type CreateItemCategoryPayload, type ItemCategoryAccountIds,
 } from '@/lib/api/item-categories';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
-interface CatForm {
+type AccountFieldKey = keyof ItemCategoryAccountIds;
+
+/** 8 GL account pickers — order mirrors legacy MyERP+ layout (left/right columns). */
+const ACCOUNT_FIELDS: { key: AccountFieldKey; label: string }[] = [
+  { key: 'inventoryAccountId', label: 'Persediaan' },
+  { key: 'salesAccountId', label: 'Penjualan' },
+  { key: 'salesReturnAccountId', label: 'Retur Penjualan' },
+  { key: 'salesDiscountAccountId', label: 'Diskon Penjualan' },
+  { key: 'cogsAccountId', label: 'HPP' },
+  { key: 'purchaseReturnAccountId', label: 'Retur Pembelian' },
+  { key: 'purchaseDiscountAccountId', label: 'Diskon Pembelian' },
+  { key: 'consignmentAccountId', label: 'Konsinyasi' },
+];
+
+const ACCOUNT_RELATIONS: { idKey: AccountFieldKey; relKey: keyof ErpItemCategory }[] = [
+  { idKey: 'inventoryAccountId', relKey: 'inventoryAccount' },
+  { idKey: 'salesAccountId', relKey: 'salesAccount' },
+  { idKey: 'salesReturnAccountId', relKey: 'salesReturnAccount' },
+  { idKey: 'salesDiscountAccountId', relKey: 'salesDiscountAccount' },
+  { idKey: 'cogsAccountId', relKey: 'cogsAccount' },
+  { idKey: 'purchaseReturnAccountId', relKey: 'purchaseReturnAccount' },
+  { idKey: 'purchaseDiscountAccountId', relKey: 'purchaseDiscountAccount' },
+  { idKey: 'consignmentAccountId', relKey: 'consignmentAccount' },
+];
+
+type AccountFormState = Record<AccountFieldKey, string> & Record<`${AccountFieldKey}Label`, string>;
+
+interface CatForm extends AccountFormState {
   id?: string;
   code: string;
   name: string;
@@ -28,23 +56,50 @@ interface CatForm {
   parentLabel?: string;
 }
 
-const defaultForm = (): CatForm => ({ code: '', name: '', isActive: true, parentId: '', parentLabel: '' });
+const emptyAccounts = (): AccountFormState => {
+  const acc = {} as AccountFormState;
+  for (const f of ACCOUNT_FIELDS) {
+    acc[f.key] = '';
+    acc[`${f.key}Label`] = '';
+  }
+  return acc;
+};
 
-const fromRecord = (r: ErpItemCategory): CatForm => ({
-  id: r.id,
-  code: r.code,
-  name: r.name,
-  isActive: r.isActive,
-  parentId: r.parentId ?? '',
-  parentLabel: r.parent?.name ?? '',
+const defaultForm = (): CatForm => ({
+  code: '', name: '', isActive: true, parentId: '', parentLabel: '', ...emptyAccounts(),
 });
 
-const toPayload = (f: CatForm): CreateItemCategoryPayload => ({
-  code: f.code,
-  name: f.name,
-  isActive: f.isActive,
-  parentId: f.parentId || null,
-});
+const fromRecord = (r: ErpItemCategory): CatForm => {
+  const acc = emptyAccounts();
+  for (const { idKey, relKey } of ACCOUNT_RELATIONS) {
+    const rel = r[relKey] as { code: string; name: string } | null | undefined;
+    acc[idKey] = (r[idKey] as string | null | undefined) ?? '';
+    acc[`${idKey}Label`] = rel ? `${rel.code} - ${rel.name}` : '';
+  }
+  return {
+    id: r.id,
+    code: r.code,
+    name: r.name,
+    isActive: r.isActive,
+    parentId: r.parentId ?? '',
+    parentLabel: r.parent?.name ?? '',
+    ...acc,
+  };
+};
+
+const toPayload = (f: CatForm): CreateItemCategoryPayload => {
+  const acc: ItemCategoryAccountIds = {};
+  for (const { key } of ACCOUNT_FIELDS) {
+    acc[key] = f[key] || null;
+  }
+  return {
+    code: f.code,
+    name: f.name,
+    isActive: f.isActive,
+    parentId: f.parentId || null,
+    ...acc,
+  };
+};
 
 const validateCategory = (form: CatForm) =>
   validateForm(form, [
@@ -90,6 +145,25 @@ function FormFields({ data, onChange, errors = {} }: { data: CatForm; onChange: 
           title="Kategori Parent"
         />
       </FormField>
+
+      <div className="mt-2 mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+        Akun GL
+      </div>
+      <div className="grid grid-cols-2 gap-x-4">
+        {ACCOUNT_FIELDS.map(({ key, label }) => (
+          <FormField key={key} label={label} htmlFor={`cf-${key}`}>
+            <SearchSelect
+              id={`cf-${key}`}
+              placeholder="Pilih akun…"
+              value={data[key]}
+              onValueChange={(v) => set(key, v)}
+              loadOptions={loadAccountOptionsCoded}
+              initialLabel={data[`${key}Label`]}
+              title={`Akun ${label}`}
+            />
+          </FormField>
+        ))}
+      </div>
     </div>
   );
 }

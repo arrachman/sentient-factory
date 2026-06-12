@@ -95,6 +95,11 @@ Relations: `branch Branch`, `warehouses Warehouse[]`.
 | inventoryAccountId ○ ➜ | BigInt → Account | default GL (`icrekpersediaan`) |
 | cogsAccountId ○ ➜ | BigInt → Account | default GL (`icrekhargapokok`) |
 | salesAccountId ○ ➜ | BigInt → Account | default GL (`icrekpenjualan`) |
+| salesReturnAccountId ○ ➜ | BigInt → Account | default GL retur penjualan (2026-06-12, paritas 8-akun legacy) |
+| salesDiscountAccountId ○ ➜ | BigInt → Account | default GL diskon penjualan |
+| purchaseReturnAccountId ○ ➜ | BigInt → Account | default GL retur pembelian |
+| purchaseDiscountAccountId ○ ➜ | BigInt → Account | default GL diskon pembelian |
+| consignmentAccountId ○ ➜ | BigInt → Account | default GL konsinyasi |
 | isActive | Boolean | `icaktif` |
 
 Relations: self `parent`/`children`, `items Item[]`, GL accounts.
