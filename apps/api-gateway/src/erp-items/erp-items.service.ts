@@ -15,6 +15,7 @@ import {
   buildLocationRows,
   buildDistributorRows,
   buildBranchRows,
+  buildWarehouseStockRows,
   buildFkData,
   buildDecimalData,
   buildItemMetadata,
@@ -86,6 +87,9 @@ export class ErpItemsService {
           ...(buildBranchRows(dto.branches, actorId)
             ? { branches: { create: buildBranchRows(dto.branches, actorId) } }
             : {}),
+          ...(buildWarehouseStockRows(dto.warehouseStocks, actorId)
+            ? { warehouseStocks: { create: buildWarehouseStockRows(dto.warehouseStocks, actorId) } }
+            : {}),
         },
         include: ITEM_INCLUDE,
       });
@@ -129,7 +133,8 @@ export class ErpItemsService {
     if (query.kindId !== undefined) where.kindId = BigInt(query.kindId);
     if (query.productClassId !== undefined) where.productClassId = BigInt(query.productClassId);
     if (query.branchId !== undefined) where.branchId = BigInt(query.branchId);
-    if (query.defaultWarehouseId !== undefined) where.defaultWarehouseId = BigInt(query.defaultWarehouseId);
+    if (query.defaultWarehouseId !== undefined)
+      where.defaultWarehouseId = BigInt(query.defaultWarehouseId);
     if (query.isActive !== undefined) where.isActive = query.isActive;
 
     const sortField = query.sortBy ?? 'createdAt';
@@ -208,11 +213,12 @@ export class ErpItemsService {
           tracksBatch: dto.tracksBatch,
           tracksBin: dto.tracksBin,
           ageCategory: dto.ageCategory,
-          validUntil: dto.validUntil === undefined
-            ? undefined
-            : dto.validUntil === null || dto.validUntil === ''
-              ? null
-              : new Date(dto.validUntil),
+          validUntil:
+            dto.validUntil === undefined
+              ? undefined
+              : dto.validUntil === null || dto.validUntil === ''
+                ? null
+                : new Date(dto.validUntil),
           isVatable: dto.isVatable,
           isSpecial: dto.isSpecial,
           registrationNo: dto.registrationNo,
@@ -236,10 +242,23 @@ export class ErpItemsService {
             ? { placements: { deleteMany: {}, create: buildLocationRows(dto.locations, actorId) } }
             : {}),
           ...(dto.distributors !== undefined
-            ? { distributors: { deleteMany: {}, create: buildDistributorRows(dto.distributors, actorId) } }
+            ? {
+                distributors: {
+                  deleteMany: {},
+                  create: buildDistributorRows(dto.distributors, actorId),
+                },
+              }
             : {}),
           ...(dto.branches !== undefined
             ? { branches: { deleteMany: {}, create: buildBranchRows(dto.branches, actorId) } }
+            : {}),
+          ...(dto.warehouseStocks !== undefined
+            ? {
+                warehouseStocks: {
+                  deleteMany: {},
+                  create: buildWarehouseStockRows(dto.warehouseStocks, actorId),
+                },
+              }
             : {}),
         },
         include: ITEM_INCLUDE,

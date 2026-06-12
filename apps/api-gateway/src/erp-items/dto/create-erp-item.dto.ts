@@ -16,6 +16,7 @@ import { ItemPriceDto } from './item-price.dto';
 import { ItemLocationDto } from './item-location.dto';
 import { ItemBranchDto } from './item-branch.dto';
 import { ItemDistributorDto } from './item-distributor.dto';
+import { ItemWarehouseStockDto } from './item-warehouse-stock.dto';
 import { ItemOthersDto, ItemCustomDto } from './item-metadata.dto';
 
 export class CreateErpItemDto {
@@ -70,7 +71,9 @@ export class CreateErpItemDto {
   @IsString()
   kindId?: string | null;
 
-  @ApiPropertyOptional({ description: 'Product class ID (md_product_classes) — legacy "Kelas Produk"' })
+  @ApiPropertyOptional({
+    description: 'Product class ID (md_product_classes) — legacy "Kelas Produk"',
+  })
   @IsOptional()
   @IsString()
   productClassId?: string | null;
@@ -84,17 +87,32 @@ export class CreateErpItemDto {
 
   // ─── Atribut produk (legacy "Atribut") ────────────────────────────
   @ApiPropertyOptional({ description: 'Desainer ID (md_designers)' })
-  @IsOptional() @IsString() designerId?: string | null;
+  @IsOptional()
+  @IsString()
+  designerId?: string | null;
   @ApiPropertyOptional({ description: 'Nozzle ID (md_nozzles)' })
-  @IsOptional() @IsString() nozzleId?: string | null;
+  @IsOptional()
+  @IsString()
+  nozzleId?: string | null;
   @ApiPropertyOptional({ description: 'OEM ID (md_oems)' })
-  @IsOptional() @IsString() oemId?: string | null;
+  @IsOptional()
+  @IsString()
+  oemId?: string | null;
   @ApiPropertyOptional({ description: 'Vendor ID (md_partners) — legacy "Vendor"' })
-  @IsOptional() @IsString() vendorId?: string | null;
+  @IsOptional()
+  @IsString()
+  vendorId?: string | null;
   @ApiPropertyOptional({ description: 'Satuan Jual Default / default selling unit ID (md_units)' })
-  @IsOptional() @IsString() fieldUnitId?: string | null;
-  @ApiPropertyOptional({ example: '100', description: 'Faktor konversi: 1 satuan jual = N satuan dasar (mis. 1 kwintal = 100 kg)' })
-  @IsOptional() @IsString() fieldUnitFactor?: string;
+  @IsOptional()
+  @IsString()
+  fieldUnitId?: string | null;
+  @ApiPropertyOptional({
+    example: '100',
+    description: 'Faktor konversi: 1 satuan jual = N satuan dasar (mis. 1 kwintal = 100 kg)',
+  })
+  @IsOptional()
+  @IsString()
+  fieldUnitFactor?: string;
 
   // ─── GL / organizational dimensions ───────────────────────────────
   @ApiPropertyOptional() @IsOptional() @IsString() divisionId?: string | null;
@@ -110,36 +128,59 @@ export class CreateErpItemDto {
   // ─── Costs & prices ───────────────────────────────────────────────
   // standardCost = "Hpp Update" (manual HPP), averageCost = "Hpp rata-rata" (computed, readonly).
   @ApiPropertyOptional({ example: '50000', description: 'Hpp Update — manual/standard HPP' })
-  @IsOptional() @IsString() standardCost?: string;
+  @IsOptional()
+  @IsString()
+  standardCost?: string;
   @ApiPropertyOptional({ example: '50000', description: 'Harga Beli Terakhir' })
-  @IsOptional() @IsString() purchasePrice?: string;
+  @IsOptional()
+  @IsString()
+  purchasePrice?: string;
   @ApiPropertyOptional({ example: '5', description: 'Diskon Pembelian (percent)' })
-  @IsOptional() @IsString() purchaseDiscount?: string;
-  @ApiPropertyOptional({ example: '75000', description: 'Harga Jual 1 (mirror of price tier level 1)' })
-  @IsOptional() @IsString() salePrice?: string;
+  @IsOptional()
+  @IsString()
+  purchaseDiscount?: string;
+  @ApiPropertyOptional({
+    example: '75000',
+    description: 'Harga Jual 1 (mirror of price tier level 1)',
+  })
+  @IsOptional()
+  @IsString()
+  salePrice?: string;
 
-  @ApiPropertyOptional({ type: [ItemPriceDto], description: 'Sale price tiers (Harga Jual 1..10 + Diskon Jual 1..10)' })
+  @ApiPropertyOptional({
+    type: [ItemPriceDto],
+    description: 'Sale price tiers (Harga Jual 1..10 + Diskon Jual 1..10)',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ItemPriceDto)
   prices?: ItemPriceDto[];
 
-  @ApiPropertyOptional({ type: [ItemLocationDto], description: 'Item storage placements (Lokasi tab: Gudang + Lokasi)' })
+  @ApiPropertyOptional({
+    type: [ItemLocationDto],
+    description: 'Item storage placements (Lokasi tab: Gudang + Lokasi)',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ItemLocationDto)
   locations?: ItemLocationDto[];
 
-  @ApiPropertyOptional({ type: [ItemBranchDto], description: 'Item branch assignments (Branch tab: Cabang + Cost Center)' })
+  @ApiPropertyOptional({
+    type: [ItemBranchDto],
+    description: 'Item branch assignments (Branch tab: Cabang + Cost Center)',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ItemBranchDto)
   branches?: ItemBranchDto[];
 
-  @ApiPropertyOptional({ type: [ItemDistributorDto], description: 'Item distributors (Distributor tab: supplier partners)' })
+  @ApiPropertyOptional({
+    type: [ItemDistributorDto],
+    description: 'Item distributors (Distributor tab: supplier partners)',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -152,62 +193,125 @@ export class CreateErpItemDto {
   @ApiPropertyOptional({ example: '50' }) @IsOptional() @IsString() reorderQty?: string;
   @ApiPropertyOptional({ example: '5' }) @IsOptional() @IsString() minOrderQty?: string;
 
+  @ApiPropertyOptional({
+    type: [ItemWarehouseStockDto],
+    description:
+      'Per-warehouse overrides of Stok Min/Maks + Min Order (global values above stay the default)',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemWarehouseStockDto)
+  warehouseStocks?: ItemWarehouseStockDto[];
+
   // ─── Tracking flags ───────────────────────────────────────────────
-  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksSerial?: boolean = false;
+  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksSerial?: boolean =
+    false;
   @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksBatch?: boolean = false;
   @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() tracksBin?: boolean = false;
 
   // ─── GL accounts ──────────────────────────────────────────────────
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() inventoryAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() inventoryAccountId?:
+    | string
+    | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesAccountId?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() cogsAccountId?: string | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesReturnAccountId?: string | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesDiscountAccountId?: string | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseReturnAccountId?: string | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseDiscountAccountId?: string | null;
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() consignmentAccountId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesReturnAccountId?:
+    | string
+    | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() salesDiscountAccountId?:
+    | string
+    | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseReturnAccountId?:
+    | string
+    | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseDiscountAccountId?:
+    | string
+    | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() consignmentAccountId?:
+    | string
+    | null;
 
   // ─── Tax ──────────────────────────────────────────────────────────
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseTaxId?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() saleTaxId?: string | null;
 
   // ─── Supplier & physical ──────────────────────────────────────────
-  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() primarySupplierId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() primarySupplierId?:
+    | string
+    | null;
   @ApiPropertyOptional({ example: '1.5' }) @IsOptional() @IsString() weight?: string;
 
   // ─── Dimensi fisik & regulasi (legacy "Atribut") ──────────────────
-  @ApiPropertyOptional({ example: '120', description: 'Panjang' }) @IsOptional() @IsString() length?: string;
-  @ApiPropertyOptional({ example: '60', description: 'Lebar' }) @IsOptional() @IsString() width?: string;
-  @ApiPropertyOptional({ example: '30', description: 'Tinggi' }) @IsOptional() @IsString() height?: string;
-  @ApiPropertyOptional({ example: '0.216', description: 'Volume' }) @IsOptional() @IsString() volume?: string;
-  @ApiPropertyOptional({ example: '1', description: 'Konversi Kg/Pcs' }) @IsOptional() @IsString() conversionKgPcs?: string;
-  @ApiPropertyOptional({ description: 'No. Ijin Edar' }) @IsOptional() @IsString() registrationNo?: string | null;
-  @ApiPropertyOptional({ default: true, description: 'Retur — dapat diretur' }) @IsOptional() @IsBoolean() isReturnable?: boolean = true;
-  @ApiPropertyOptional({ default: false, description: 'Mobile' }) @IsOptional() @IsBoolean() isMobile?: boolean = false;
+  @ApiPropertyOptional({ example: '120', description: 'Panjang' })
+  @IsOptional()
+  @IsString()
+  length?: string;
+  @ApiPropertyOptional({ example: '60', description: 'Lebar' })
+  @IsOptional()
+  @IsString()
+  width?: string;
+  @ApiPropertyOptional({ example: '30', description: 'Tinggi' })
+  @IsOptional()
+  @IsString()
+  height?: string;
+  @ApiPropertyOptional({ example: '0.216', description: 'Volume' })
+  @IsOptional()
+  @IsString()
+  volume?: string;
+  @ApiPropertyOptional({ example: '1', description: 'Konversi Kg/Pcs' })
+  @IsOptional()
+  @IsString()
+  conversionKgPcs?: string;
+  @ApiPropertyOptional({ description: 'No. Ijin Edar' }) @IsOptional() @IsString() registrationNo?:
+    | string
+    | null;
+  @ApiPropertyOptional({ default: true, description: 'Retur — dapat diretur' })
+  @IsOptional()
+  @IsBoolean()
+  isReturnable?: boolean = true;
+  @ApiPropertyOptional({ default: false, description: 'Mobile' })
+  @IsOptional()
+  @IsBoolean()
+  isMobile?: boolean = false;
 
   // ─── Validity & flags (legacy parity) ─────────────────────────────
   @ApiPropertyOptional({ description: 'Kategori Umur (freetext)' })
-  @IsOptional() @IsString() ageCategory?: string | null;
+  @IsOptional()
+  @IsString()
+  ageCategory?: string | null;
 
   @ApiPropertyOptional({ description: 'Berlaku s.d (ISO date YYYY-MM-DD)' })
-  @IsOptional() @IsDateString() validUntil?: string | null;
+  @IsOptional()
+  @IsDateString()
+  validUntil?: string | null;
 
   @ApiPropertyOptional({ default: true, description: 'BKP — Barang Kena Pajak (VATable)' })
-  @IsOptional() @IsBoolean() isVatable?: boolean = true;
+  @IsOptional()
+  @IsBoolean()
+  isVatable?: boolean = true;
 
   @ApiPropertyOptional({ default: false, description: 'Spesial' })
-  @IsOptional() @IsBoolean() isSpecial?: boolean = false;
+  @IsOptional()
+  @IsBoolean()
+  isSpecial?: boolean = false;
 
   @ApiPropertyOptional({ default: true }) @IsOptional() @IsBoolean() isActive?: boolean = true;
 
   // ─── Lain-lain & Custom (legacy tabs) — persisted in md_items.metadata ────
-  @ApiPropertyOptional({ type: ItemOthersDto, description: 'Legacy "Lain-lain" tab (alias names + notes) → metadata.others' })
+  @ApiPropertyOptional({
+    type: ItemOthersDto,
+    description: 'Legacy "Lain-lain" tab (alias names + notes) → metadata.others',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => ItemOthersDto)
   others?: ItemOthersDto;
 
-  @ApiPropertyOptional({ type: ItemCustomDto, description: 'Legacy "Custom" tab (production/moulding attrs) → metadata.custom' })
+  @ApiPropertyOptional({
+    type: ItemCustomDto,
+    description: 'Legacy "Custom" tab (production/moulding attrs) → metadata.custom',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => ItemCustomDto)

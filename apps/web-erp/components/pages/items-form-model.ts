@@ -25,6 +25,17 @@ export interface ItemDistributorFormRow {
   partnerId: string; partnerLabel?: string;
 }
 
+/** One row in the per-warehouse stock override table (Stok Min/Maks + Min Order
+ *  per Gudang). `key` is a stable client id so SearchSelect state survives
+ *  row add/remove (not sent to API). */
+export interface ItemWarehouseStockFormRow {
+  key: string;
+  warehouseId: string; warehouseLabel?: string;
+  minStock: string;
+  maxStock: string;
+  minOrderQty: string;
+}
+
 /** One row in the "Branch" section (legacy Cabang + Cost Center). `key` is a
  *  stable client id so SearchSelect display state survives row add/remove. */
 export interface ItemBranchFormRow {
@@ -91,11 +102,12 @@ export interface ItemFormData {
   others: ItemOthersData;
   custom: ItemCustomData;
 
-  // Stock
+  // Stock (global defaults; per-warehouse overrides in warehouseStocks)
   minStock: string;
   maxStock: string;
   reorderQty: string;
   minOrderQty: string;
+  warehouseStocks: ItemWarehouseStockFormRow[];
   tracksSerial: boolean;
   tracksBatch: boolean;
   tracksBin: boolean;
@@ -148,6 +160,7 @@ export const defaultItemForm = (): ItemFormData => ({
   branches: [],
   others: {}, custom: {},
   minStock: '', maxStock: '', reorderQty: '', minOrderQty: '',
+  warehouseStocks: [],
   tracksSerial: false, tracksBatch: false, tracksBin: false,
   inventoryAccountId: '', salesAccountId: '', cogsAccountId: '',
   salesReturnAccountId: '', salesDiscountAccountId: '',

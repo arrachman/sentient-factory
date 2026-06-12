@@ -25,6 +25,7 @@ import type { ItemFormData } from './items-form';
 import { ITEM_TYPES } from './items-form';
 import { Section, LookupField, NumField, YesNoField, isStockable } from './items-form-parts';
 import { ItemLocationsEditor } from './items-form-locations';
+import { ItemWarehouseStocksEditor } from './items-form-warehouse-stocks';
 import { ItemAtributSection } from './items-form-atribut';
 import { ItemDistributorsEditor } from './items-form-distributors';
 import { ItemBranchesEditor } from './items-form-branches';
@@ -129,11 +130,16 @@ export function ItemFormFields({
   );
 
   const renderInventory = () => (
-    <Section title="Inventory & Tracking">
+    <Section title="Inventory & Tracking" hint="Stok Min/Maks + Min Order di bawah = nilai global (default semua gudang)">
       <NumField id="if-minstock" label="Stok Min" value={data.minStock} onChange={(v) => set('minStock', v)} />
       <NumField id="if-maxstock" label="Stok Maks" value={data.maxStock} onChange={(v) => set('maxStock', v)} />
       <NumField id="if-reorder" label="Jumlah Reorder" value={data.reorderQty} onChange={(v) => set('reorderQty', v)} />
       <NumField id="if-minorder" label="Min Order" value={data.minOrderQty} onChange={(v) => set('minOrderQty', v)} />
+      <div className="col-span-2 pt-2">
+        <p className="pb-1 text-[11px] font-medium uppercase tracking-wide text-[var(--fg-muted)]">Pengaturan per Gudang</p>
+        <p className="pb-1 text-[11px] text-[var(--fg-subtle)]">Override Stok Min/Maks + Min Order untuk gudang tertentu. Kolom kosong = pakai nilai global.</p>
+        <ItemWarehouseStocksEditor rows={data.warehouseStocks} onChange={(rows) => onChange({ ...data, warehouseStocks: rows })} />
+      </div>
       <YesNoField id="if-serial" label="Serial No." value={data.tracksSerial} onChange={(v) => set('tracksSerial', v)} />
       <YesNoField id="if-batch" label="Batch / Lot" value={data.tracksBatch} onChange={(v) => set('tracksBatch', v)} />
       <YesNoField id="if-bin" label="Bin / Rak" value={data.tracksBin} onChange={(v) => set('tracksBin', v)} />

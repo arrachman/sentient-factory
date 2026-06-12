@@ -50,6 +50,16 @@ export interface ItemBranchRow {
   costCenter?: RelationRef | null;
 }
 
+/** One per-warehouse stock level override (Stok Min/Maks + Min Order per Gudang).
+ *  Global values on the item stay the default; a row here overrides one warehouse. */
+export interface ItemWarehouseStockRow {
+  warehouseId: string;
+  minStock: string;
+  maxStock: string;
+  minOrderQty: string;
+  warehouse?: RelationRef | null;
+}
+
 /** Legacy "Lain-lain" tab — alias names + free-text notes (in metadata.others). */
 export interface ItemOthersData {
   aliasName1?: string; aliasName2?: string; aliasName3?: string; aliasName4?: string;
@@ -129,6 +139,7 @@ export interface ErpItem {
   maxStock?: string | null;
   reorderQty?: string | null;
   minOrderQty?: string | null;
+  warehouseStocks?: ItemWarehouseStockRow[]; // per-warehouse overrides (kosong = pakai global)
   tracksSerial?: boolean;
   tracksBatch?: boolean;
   tracksBin?: boolean;
@@ -258,6 +269,7 @@ export interface CreateItemPayload {
   maxStock?: string;
   reorderQty?: string;
   minOrderQty?: string;
+  warehouseStocks?: { warehouseId: string; minStock?: string; maxStock?: string; minOrderQty?: string }[];
 
   tracksSerial?: boolean;
   tracksBatch?: boolean;

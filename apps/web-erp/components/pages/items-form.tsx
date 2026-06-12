@@ -20,6 +20,7 @@ export type {
   ItemLocationFormRow,
   ItemDistributorFormRow,
   ItemBranchFormRow,
+  ItemWarehouseStockFormRow,
 } from './items-form-model';
 
 const refLabel = (r?: { code?: string; name?: string } | null) =>
@@ -99,6 +100,13 @@ export function fromItem(item: ErpItem): ItemFormData {
     maxStock: numStr(item.maxStock),
     reorderQty: numStr(item.reorderQty),
     minOrderQty: numStr(item.minOrderQty),
+    warehouseStocks: (item.warehouseStocks ?? []).map((w, i) => ({
+      key: `init-${i}`,
+      warehouseId: w.warehouseId, warehouseLabel: refLabel(w.warehouse),
+      minStock: numStr(w.minStock),
+      maxStock: numStr(w.maxStock),
+      minOrderQty: numStr(w.minOrderQty),
+    })),
     tracksSerial: item.tracksSerial ?? false,
     tracksBatch: item.tracksBatch ?? false,
     tracksBin: item.tracksBin ?? false,
@@ -197,6 +205,15 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     maxStock: orUndef(f.maxStock),
     reorderQty: orUndef(f.reorderQty),
     minOrderQty: orUndef(f.minOrderQty),
+    warehouseStocks: f.warehouseStocks
+      .filter((w) => w.warehouseId !== ''
+        && (w.minStock.trim() !== '' || w.maxStock.trim() !== '' || w.minOrderQty.trim() !== ''))
+      .map((w) => ({
+        warehouseId: w.warehouseId,
+        minStock: orUndef(w.minStock),
+        maxStock: orUndef(w.maxStock),
+        minOrderQty: orUndef(w.minOrderQty),
+      })),
     tracksSerial: f.tracksSerial,
     tracksBatch: f.tracksBatch,
     tracksBin: f.tracksBin,
