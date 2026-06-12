@@ -24,6 +24,7 @@ import {
 import { formatNumber } from '@/lib/format';
 import { notify } from '@/lib/feedback';
 import { getGridColumns, type ErpGridColumn } from '@/lib/api/transaction-grids';
+import { getItemForPurchaseAutoFill } from '@/lib/api/items';
 import { LineCell } from './cash-bank-line-cell';
 import { useGridNav } from './use-grid-nav';
 import { linesRequiredMissing, type GridCol } from './grid-line-core';
@@ -194,7 +195,31 @@ export const PurItemLinesEditor = React.forwardRef<PurItemLinesHandle, {
                       seed={isEdit ? seed : undefined}
                       selectOnFocus={selectOnFocus}
                       autoOpenModal={isEdit ? openModal : false}
-                      onSet={(value, label) => patch(l.key, purItemGridModel.buildCellPatch(l, c, value, label))}
+                      onSet={(value, label) => {
+                        patch(l.key, purItemGridModel.buildCellPatch(l, c, value, label));
+                        if (c.dataField === 'itemId' && value) {
+                          getItemForPurchaseAutoFill(value).then((item) => {
+                            if (!item) return;
+                            const autoPatch: Partial<PurItemLineRow> = {};
+                            // Diskon Pembelian item → default diskon baris (editable).
+                            if (item.purchaseDiscount && !l.discountPercent) {
+                              autoPatch.discountPercent = item.purchaseDiscount;
+                            }
+                            // Harga Beli Terakhir → default harga baris (editable).
+                            if (item.purchasePrice && !l.unitPrice) autoPatch.unitPrice = item.purchasePrice;
+                            // Satuan beli: pakai satuan dasar item.
+                            if (item.unitId && !l.unitId) {
+                              autoPatch.unitId = item.unitId;
+                              autoPatch.unitLabel = item.unit?.name;
+                            }
+                            if (item.purchaseTaxId && !l.tax1Id) {
+                              autoPatch.tax1Id = item.purchaseTaxId;
+                              autoPatch.tax1Label = item.purchaseTax?.name;
+                            }
+                            if (Object.keys(autoPatch).length) patch(l.key, autoPatch);
+                          }).catch(() => null);
+                        }
+                      }}
                       onSelect={() => { if (!readOnly) selectCell(i, ci); }}
                       onEdit={() => { if (!readOnly) editCell(i, ci); }}
                       onEndEdit={(focus) => endEdit(focus)}

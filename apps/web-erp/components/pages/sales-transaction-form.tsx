@@ -247,6 +247,7 @@ export function SalesTransactionForm<T extends SlsOrderFormData>({
           readOnly={locked}
           transactionCode={transactionCode}
           onValidityChange={setLineRequiredMissing}
+          salesTier={data.salesTier}
         />
       )}
       {tab === 'info' && (

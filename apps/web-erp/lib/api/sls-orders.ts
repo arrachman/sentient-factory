@@ -209,6 +209,9 @@ export interface ItemAutoFill {
   fieldUnitFactor?: string | null; // 1 satuan jual = N satuan dasar
   saleTaxId?: string | null;
   saleTax?: { id: string; code: string; name: string; rate: string } | null;
+  // Harga Jual 1..10 + Diskon Jual 1..10 — the active tier is picked by the
+  // customer category's salesTier (PartnerAutoFill.category.salesTier).
+  prices?: { level: number; price: string; discountPercent: string }[];
 }
 
 export async function getItemForAutoFill(id: string): Promise<ItemAutoFill | null> {
@@ -231,6 +234,8 @@ export interface PartnerAutoFill {
   currency?: { id: string; code: string; name: string } | null;
   receivableAccountId?: string | null;
   receivableAccount?: { id: string; code: string; name: string } | null;
+  // Kategori pelanggan → salesTier (1..10) memilih Harga/Diskon Jual tingkat berapa.
+  category?: { id: string; code: string; name: string; salesTier?: number | null } | null;
 }
 
 export async function getPartnerForAutoFill(id: string): Promise<PartnerAutoFill | null> {

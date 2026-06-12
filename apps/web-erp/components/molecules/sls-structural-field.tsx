@@ -78,10 +78,11 @@ export function SlsStructuralField({ field, ctx }: { field: ErpFormField; ctx: S
         <Picker value={data.customerId} initialLabel={data.customerLabel}
           ph={ph(key, 'Pilih pelanggan…')} ro={ro(key)} loader={loadCustomerOptions}
           onChange={async (v, label) => {
-            const patch: Partial<SlsOrderFormData> = { customerId: v, customerLabel: label ?? data.customerLabel };
+            const patch: Partial<SlsOrderFormData> = { customerId: v, customerLabel: label ?? data.customerLabel, salesTier: null };
             if (v) {
               const p = await getPartnerForAutoFill(v).catch(() => null);
               if (p) {
+                patch.salesTier = p.category?.salesTier ?? null;
                 if (p.saleTermId && !data.paymentTermId) {
                   patch.paymentTermId = p.saleTermId;
                   patch.paymentTermLabel = p.saleTerm?.name;

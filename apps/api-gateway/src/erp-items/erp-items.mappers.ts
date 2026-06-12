@@ -116,7 +116,8 @@ const FK_OPTIONAL_FIELDS = [
 ] as const;
 
 const DECIMAL_FIELDS = [
-  'standardCost',
+  // standardCost ("HPP Update") removed — no longer user-set.
+  // lastHpp/averageCost are system-managed (purchase posting), not DTO-driven.
   'purchasePrice',
   'purchaseDiscount',
   'salePrice',

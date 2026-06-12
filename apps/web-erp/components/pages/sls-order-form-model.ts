@@ -20,6 +20,9 @@ export interface SlsOrderFormData {
   dueDate: string;
   customerId: string;
   customerLabel?: string;
+  // Tingkat harga/diskon jual (1..10) dari kategori pelanggan; transient (tak disimpan),
+  // dipakai untuk auto-fill harga & diskon baris saat item dipilih.
+  salesTier?: number | null;
   branchId: string;
   branchLabel?: string;
   locationId: string;

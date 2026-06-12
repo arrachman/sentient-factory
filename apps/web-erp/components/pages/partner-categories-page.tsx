@@ -30,6 +30,7 @@ interface FormData {
   code: string;
   name: string;
   kind: ErpPartnerCategoryKind;
+  salesTier: string; // "1".."10" — tingkat Harga/Diskon Jual (hanya relevan untuk CUSTOMER)
   isActive: boolean;
 }
 
@@ -37,6 +38,7 @@ const defaultForm = (): FormData => ({
   code: '',
   name: '',
   kind: 'CUSTOMER',
+  salesTier: '',
   isActive: true,
 });
 
@@ -44,6 +46,7 @@ const fromRecord = (r: ErpPartnerCategory): FormData => ({
   code: r.code,
   name: r.name,
   kind: r.kind,
+  salesTier: r.salesTier != null ? String(r.salesTier) : '',
   isActive: r.isActive,
 });
 
@@ -51,6 +54,8 @@ const toPayload = (f: FormData): CreatePartnerCategoryPayload => ({
   code: f.code,
   name: f.name,
   kind: f.kind,
+  // Tier hanya untuk pelanggan; kategori lain kirim null.
+  salesTier: f.kind === 'CUSTOMER' && f.salesTier.trim() !== '' ? Number(f.salesTier) : null,
   isActive: f.isActive,
 });
 
@@ -58,6 +63,15 @@ const validatePartnerCategory = (form: FormData) =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
+    {
+      field: 'salesTier',
+      label: 'Tingkat Jual',
+      validate: (value, f) => {
+        if (f.kind !== 'CUSTOMER' || String(value ?? '').trim() === '') return undefined;
+        const n = Number(value);
+        return Number.isInteger(n) && n >= 1 && n <= 10 ? undefined : 'Tingkat jual harus 1–10';
+      },
+    },
   ]);
 
 function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
@@ -82,6 +96,20 @@ function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange:
           </SelectContent>
         </Select>
       </FormField>
+      {data.kind === 'CUSTOMER' && (
+        <FormField label="Tingkat Jual" htmlFor="pc-tier" error={errors.salesTier} help="Tingkat Harga/Diskon Jual (1–10) yang dipakai pelanggan kategori ini">
+          <Input
+            id="pc-tier"
+            type="number"
+            min={1}
+            max={10}
+            value={data.salesTier}
+            onChange={(e) => set('salesTier', e.target.value)}
+            placeholder="mis. 1"
+            aria-invalid={!!errors.salesTier}
+          />
+        </FormField>
+      )}
       <FormField label="Status" htmlFor="pc-active">
         <BooleanRadio id="pc-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>
@@ -116,7 +144,10 @@ export function ErpPartnerCategoriesPage() {
       toPayload={toPayload}
       FormFields={FormFields}
       validate={validatePartnerCategory}
-      extraColumns={[{ key: 'kind', label: 'Jenis', render: (row) => row.kind }]}
+      extraColumns={[
+        { key: 'kind', label: 'Jenis', render: (row) => row.kind },
+        { key: 'salesTier', label: 'Tingkat Jual', render: (row) => (row.salesTier != null ? String(row.salesTier) : '—') },
+      ]}
       extraFilters={kindFilters}
     />
   );

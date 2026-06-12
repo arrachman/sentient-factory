@@ -106,7 +106,7 @@ export class ErpPartnersService {
         skip,
         take: limit,
         include: {
-          category: { select: { id: true, code: true, name: true, kind: true } },
+          category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
           receivableAccount: { select: { id: true, code: true, name: true } },
           payableAccount: { select: { id: true, code: true, name: true } },
         },
@@ -130,7 +130,7 @@ export class ErpPartnersService {
     const item = await this.prisma.erpPartner.findFirst({
       where: { id, deletedAt: null },
       include: {
-        category: { select: { id: true, code: true, name: true, kind: true } },
+        category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
         receivableAccount: { select: { id: true, code: true, name: true } },
         payableAccount: { select: { id: true, code: true, name: true } },
         addresses: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },

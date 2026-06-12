@@ -24,7 +24,7 @@ export interface ErpPartnerCategory {
   code: string;
   name: string;
   kind: ErpPartnerCategoryKind;
-  salesTier?: string | null;
+  salesTier?: number | null; // Tingkat Harga/Diskon Jual (1–10) untuk pelanggan kategori ini
   isActive: boolean;
   legacyCode?: string | null;
   createdAt: string;
@@ -35,6 +35,7 @@ export interface CreatePartnerCategoryPayload {
   code: string;
   name: string;
   kind: ErpPartnerCategoryKind;
+  salesTier?: number | null;
   isActive?: boolean;
 }
 
@@ -42,6 +43,7 @@ export interface UpdatePartnerCategoryPayload {
   code?: string;
   name?: string;
   kind?: ErpPartnerCategoryKind;
+  salesTier?: number | null;
   isActive?: boolean;
 }
 

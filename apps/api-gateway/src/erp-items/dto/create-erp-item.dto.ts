@@ -136,12 +136,12 @@ export class CreateErpItemDto {
   @ApiPropertyOptional() @IsOptional() @IsString() costCenterId?: string | null;
 
   // ─── Costs & prices ───────────────────────────────────────────────
-  // standardCost = "Hpp Update" (manual HPP), averageCost = "Hpp rata-rata" (computed, readonly).
-  @ApiPropertyOptional({ example: '50000', description: 'Hpp Update — manual/standard HPP' })
-  @IsOptional()
-  @IsString()
-  standardCost?: string;
-  @ApiPropertyOptional({ example: '50000', description: 'Harga Beli Terakhir' })
+  // System-managed (read-only in UI), written by purchase posting, not by this DTO:
+  //   purchasePrice = "Harga Beli Terakhir" (last gross buy price)
+  //   lastHpp       = "HPP Terakhir"       (net landed cost of latest receipt)
+  //   averageCost   = "HPP Rata-rata"      (moving average)
+  // standardCost ("HPP Update", manual) was removed from the master form.
+  @ApiPropertyOptional({ example: '50000', description: 'Harga Beli Terakhir (system-managed; accepted for seed/import only)' })
   @IsOptional()
   @IsString()
   purchasePrice?: string;

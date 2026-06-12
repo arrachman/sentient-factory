@@ -620,6 +620,16 @@ Pajak · Akuntansi · Dimensi GL · Supplier · Catatan. Restructure dari
 7 section lama (§2.23) yang campur identitas dengan satuan, dan Akun
 GL dengan Dimensi/Supplier.
 
+**Atribut + Lain-lain + Custom digabung jadi 1 section (2026-06-12):**
+Atas permintaan user, tiga entry side-nav terpisah (`atribut`, `lainlain`,
+`custom`) dilebur jadi **satu** nav "Atribut". `renderById.atribut` kini
+me-render `ItemAtributSection` + `ItemLainLainSection` + `ItemCustomSection`
+berurutan dalam satu fragment — masing-masing tetap `<Section>` sendiri
+(judul "Dimensi & Berat" · "Klasifikasi Produk" · "Penanganan & Regulasi" ·
+"Lain-lain" · "Custom") jadi pemisahan visual tetap. `SectionId` `'lainlain'`/
+`'custom'` dihapus. Komponen di `items-form-lainlain.tsx` tidak diubah (masih
+nulis ke JSON sidecar `metadata.others`/`metadata.custom`, §2.38).
+
 **Conditional disclosure per itemType:**
 - `INVENTORY/CONSUMABLE/ASSET` → tampilkan Inventory & Tracking
 - `SERVICE/NON_INVENTORY` → sembunyikan Inventory & Tracking
@@ -2785,3 +2795,48 @@ ada di `md_items`.
   `lib/api/item-categories.ts` via interface `ItemCategoryAccountIds`.
 - Semua akun **opsional** (nullable) — kategori boleh dibuat tanpa mapping;
   fallback resolusi akun per-item/per-transaksi tetap berlaku.
+
+---
+
+## Item Harga tab — biaya otomatis dari pembelian + tier jual per kategori (2026-06-12)
+
+Empat keputusan terkait penetapan harga item (tab **Harga** di master item),
+dikonfirmasi dengan user — scope **end-to-end** (master + form transaksi + posting).
+
+**1. Harga Beli Terakhir + HPP Terakhir = otomatis dari pembelian terakhir.**
+- Schema: kolom baru `md_items.last_hpp` (`Decimal(19,4)`, default 0; migrasi
+  `20260612_007_erp_item_last_hpp`) = **HPP Terakhir** (net landed cost = harga
+  satuan − diskon dari Goods Receipt terbaru). `purchase_price` tetap = **Harga
+  Beli Terakhir** (gross). `average_cost` tetap = **HPP Rata-rata** (moving avg).
+- Posting: `PurGoodsReceiptPostingService.postToLedger` (dipanggil saat GRN POST,
+  di dalam `$transaction`) kini meng-update tiap item baris: `purchasePrice` =
+  `unitPrice` gross, `lastHpp` = net (helper `netUnitCost`: `unitCost` menang,
+  lalu diskon amount/qty, lalu diskon %), dan **seed** `averageCost` = `lastHpp`
+  hanya bila masih 0. Moving-average penuh menunggu pass `inv_*` stock movement
+  (GRN GL posting masih NO-OP). Reopen/repost = re-stamp; cost stamp tidak di-reverse.
+- UI: ketiga field di tab Harga jadi **read-only** (`Harga Beli Terakhir`,
+  `HPP Terakhir`, `HPP Rata-rata`), help "Otomatis dari transaksi pembelian terakhir".
+
+**2. "HPP Update" (manual standardCost) dihapus** dari form item. Kolom
+`md_items.standard_cost` **tetap ada** (non-destruktif) tapi tidak lagi
+di-input user: dibuang dari `CreateErpItemDto`, `DECIMAL_FIELDS` mapper,
+`ItemFormData`, `fromItem`/`toItemPayload`, dan `CreateItemPayload` FE.
+
+**3. Diskon Pembelian item = default baris PR/PO/RI/PRT (bisa diubah).** Saat
+item dipilih di grid pembelian (`pur-item-lines.tsx`, dipakai semua dokumen via
+`purchase-transaction-form.tsx`), fetch `getItemForPurchaseAutoFill` →
+default `discountPercent` dari `item.purchaseDiscount`, plus `unitPrice` dari
+Harga Beli Terakhir, satuan dasar, dan pajak beli. Semua hanya mengisi sel yang
+masih kosong — operator tetap bisa override per baris.
+
+**4. Tingkat Harga/Diskon Jual (1–10) ditentukan kategori pelanggan.** Pakai
+kolom existing `md_partner_categories.sales_tier` (`salesTier`, 1–10).
+- Backend: DTO partner-category +`salesTier` (`@IsInt @Min(1) @Max(10)`),
+  service create/update persist; `erp-partners.service` select `category.salesTier`
+  agar `/partners/:id` mengembalikannya.
+- FE: `partner-categories-page.tsx` — input "Tingkat Jual" muncul saat
+  kind=CUSTOMER (+ kolom list + validasi 1–10). Saat pelanggan dipilih di form
+  jual (`sls-structural-field.tsx`), `data.salesTier` di-set dari
+  `partner.category.salesTier`. Diteruskan ke `SlsItemLinesEditor` (`salesTier`
+  prop); saat item dipilih, harga & diskon baris di-default dari
+  `item.prices[level=salesTier]` (fallback Harga Jual 1 bila tier tak ada).

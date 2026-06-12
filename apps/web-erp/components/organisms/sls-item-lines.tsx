@@ -87,6 +87,12 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
   transactionCode?: string;
   /** Reports the required ("Wajib") columns still left empty across all rows. */
   onValidityChange?: (missing: string[]) => void;
+  /**
+   * Tingkat harga/diskon jual (1..10) dari kategori pelanggan terpilih. Saat item
+   * dipilih, harga & diskon baris di-default dari Harga Jual/Diskon Jual tingkat ini;
+   * fallback ke Harga Jual 1 (salePrice) bila tier tak di-set / tak ada.
+   */
+  salesTier?: number | null;
 }>(function SlsItemLinesEditor({
   lines,
   onChange,
@@ -94,6 +100,7 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
   columns,
   transactionCode,
   onValidityChange,
+  salesTier,
 }, ref) {
   const [fetched, setFetched] = React.useState<GridCol[] | undefined>();
 
@@ -211,7 +218,16 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
                           getItemForAutoFill(value).then((item) => {
                             if (!item) return;
                             const autoPatch: Partial<SlsItemLineRow> = {};
-                            if (item.salePrice && !l.unitPrice) autoPatch.unitPrice = item.salePrice;
+                            // Tingkat harga/diskon jual = salesTier kategori pelanggan.
+                            // Fallback ke Harga Jual 1 (salePrice) bila tier tak ada.
+                            const tier = salesTier
+                              ? item.prices?.find((p) => p.level === salesTier)
+                              : undefined;
+                            const tierPrice = tier?.price ?? item.salePrice;
+                            if (tierPrice && !l.unitPrice) autoPatch.unitPrice = tierPrice;
+                            if (tier?.discountPercent && Number(tier.discountPercent) > 0 && !l.discountPercent) {
+                              autoPatch.discountPercent = tier.discountPercent;
+                            }
                             // Satuan default penjualan: pakai satuan jual (fieldUnit,
                             // mis. kwintal) bila di-set di master item, else satuan dasar.
                             const defUnitId = item.fieldUnitId || item.unitId;
