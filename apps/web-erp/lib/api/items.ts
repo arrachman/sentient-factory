@@ -98,6 +98,7 @@ export interface ErpItem {
   oemId?: string | null;
   vendorId?: string | null;
   fieldUnitId?: string | null;
+  fieldUnitFactor?: string | null; // 1 satuan jual = N satuan dasar
 
   // GL / org dimensions
   divisionId?: string | null;
@@ -230,6 +231,7 @@ export interface CreateItemPayload {
   oemId?: string | null;
   vendorId?: string | null;
   fieldUnitId?: string | null;
+  fieldUnitFactor?: string;
 
   divisionId?: string | null;
   subdivisionId?: string | null;

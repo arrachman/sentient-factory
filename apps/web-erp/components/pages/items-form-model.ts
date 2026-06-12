@@ -57,6 +57,7 @@ export interface ItemFormData {
   oemId: string; oemLabel?: string;
   vendorId: string; vendorLabel?: string;
   fieldUnitId: string; fieldUnitLabel?: string;
+  fieldUnitFactor: string; // 1 satuan jual = N satuan dasar
 
   // GL / org dimensions
   divisionId: string; divisionLabel?: string;
@@ -137,7 +138,7 @@ export const defaultItemForm = (): ItemFormData => ({
   code: '', name: '', itemType: 'INVENTORY', description: '', barcode: '',
   categoryId: '', unitId: '', kindId: '', productClassId: '',
   brandId: '', materialId: '', sizeId: '', colorId: '', sectionId: '',
-  designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '',
+  designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '', fieldUnitFactor: '1',
   divisionId: '', subdivisionId: '', departmentId: '', subDepartmentId: '',
   branchId: '', defaultLocationId: '', defaultWarehouseId: '', projectId: '', costCenterId: '',
   standardCost: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',

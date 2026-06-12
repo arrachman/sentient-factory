@@ -5,7 +5,7 @@
  * best-practice into three sub-sections: Dimensi & Berat · Klasifikasi Produk ·
  * Penanganan & Regulasi. Lookups reuse existing masters (Warna/Merk/Ukuran/
  * Material/Section/Desainer), the two new masters (Nozzle/OEM), partners
- * (Vendor) and units (Satuan Lapangan). Atomic tier: Organism.
+ * (Vendor) and units (Satuan Jual Default + faktor konversi). Atomic tier: Organism.
  */
 
 import * as React from 'react';
@@ -47,8 +47,9 @@ export function ItemAtributSection({
         <LookupField id="if-vendor" label="Vendor" value={data.vendorId} onPick={(v) => set('vendorId', v)} loader={loadPartnerOptions} placeholder="Pilih vendor…" initialLabel={data.vendorLabel} />
       </Section>
 
-      <Section title="Penanganan & Regulasi" hint="Satuan lapangan, izin edar & flag operasional">
-        <LookupField id="if-fieldunit" label="Satuan Lapangan" value={data.fieldUnitId} onPick={(v) => set('fieldUnitId', v)} loader={loadUnitOptions} placeholder="Pilih satuan…" initialLabel={data.fieldUnitLabel} />
+      <Section title="Penanganan & Regulasi" hint="Satuan jual default, izin edar & flag operasional">
+        <LookupField id="if-fieldunit" label="Satuan Jual Default" value={data.fieldUnitId} onPick={(v) => set('fieldUnitId', v)} loader={loadUnitOptions} placeholder="Pilih satuan…" initialLabel={data.fieldUnitLabel} />
+        <NumField id="if-fieldunit-factor" label="Faktor Konversi Satuan Jual" value={data.fieldUnitFactor} onChange={(v) => set('fieldUnitFactor', v)} placeholder="1" help="1 satuan jual = N satuan dasar (mis. 1 kwintal = 100 kg)" />
         <FormField label="No. Ijin Edar" htmlFor="if-regno">
           <Input id="if-regno" value={data.registrationNo} onChange={(e) => set('registrationNo', e.target.value)} placeholder="Opsional" />
         </FormField>

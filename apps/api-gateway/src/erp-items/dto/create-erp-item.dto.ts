@@ -91,8 +91,10 @@ export class CreateErpItemDto {
   @IsOptional() @IsString() oemId?: string | null;
   @ApiPropertyOptional({ description: 'Vendor ID (md_partners) — legacy "Vendor"' })
   @IsOptional() @IsString() vendorId?: string | null;
-  @ApiPropertyOptional({ description: 'Satuan Lapangan / field unit ID (md_units)' })
+  @ApiPropertyOptional({ description: 'Satuan Jual Default / default selling unit ID (md_units)' })
   @IsOptional() @IsString() fieldUnitId?: string | null;
+  @ApiPropertyOptional({ example: '100', description: 'Faktor konversi: 1 satuan jual = N satuan dasar (mis. 1 kwintal = 100 kg)' })
+  @IsOptional() @IsString() fieldUnitFactor?: string;
 
   // ─── GL / organizational dimensions ───────────────────────────────
   @ApiPropertyOptional() @IsOptional() @IsString() divisionId?: string | null;

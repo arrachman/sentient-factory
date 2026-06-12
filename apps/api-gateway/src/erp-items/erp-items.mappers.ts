@@ -87,7 +87,7 @@ const DECIMAL_FIELDS = [
   'standardCost', 'purchasePrice', 'purchaseDiscount', 'salePrice',
   'minStock', 'maxStock', 'reorderQty', 'minOrderQty', 'weight',
   // Dimensi fisik (legacy "Atribut")
-  'length', 'width', 'height', 'volume', 'conversionKgPcs',
+  'length', 'width', 'height', 'volume', 'conversionKgPcs', 'fieldUnitFactor',
 ] as const;
 
 interface PriceTierInput { level: number; price?: string; discountPercent?: string }
