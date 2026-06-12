@@ -53,7 +53,6 @@ import { ErpSubDepartmentsPage } from '@/components/pages/sub-departments-page';
 import { ErpColorsPage } from '@/components/pages/colors-page';
 import { ErpNozzlesPage } from '@/components/pages/nozzles-page';
 import { ErpOemsPage } from '@/components/pages/oems-page';
-import { ErpItemPermissionsPage } from '@/components/pages/item-permissions-page';
 import { ErpBrandsPage } from '@/components/pages/brands-page';
 import { ErpMaterialsPage } from '@/components/pages/materials-page';
 import { ErpItemModelsPage } from '@/components/pages/item-models-page';
@@ -216,7 +215,6 @@ const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/colors': () => <ErpColorsPage />,
   '/master/nozzles': () => <ErpNozzlesPage />,
   '/master/oems': () => <ErpOemsPage />,
-  '/master/item-permissions': () => <ErpItemPermissionsPage />,
   '/master/brands': () => <ErpBrandsPage />,
   '/master/materials': () => <ErpMaterialsPage />,
   '/master/models': () => <ErpItemModelsPage />,

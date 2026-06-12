@@ -435,7 +435,6 @@ async function seedMenus(): Promise<Map<string, bigint>> {
     { code: 'M1.ITEM.PRICE-INDEX',    title: 'Price Index',       path: '/master/price-indices',   legacyCode: '1-81' },
     { code: 'M1.ITEM.PRICE-CATEGORY', title: 'Price Category',    path: '/master/price-categories', legacyCode: '1-90' },
     { code: 'M1.ITEM.COMMISSION',     title: 'Commission',        path: '/master/commissions',     legacyCode: '1-88' },
-    { code: 'M1.ITEM.PERMISSIONS',    title: 'Item Permissions',  path: '/master/item-permissions', legacyCode: '1-92' },
     { code: 'M1.ITEM.CLASS',          title: 'Class',             path: '/master/classes',         legacyCode: '1-96' },
     { code: 'M1.ITEM.MODEL',          title: 'Model',             path: '/master/models',          legacyCode: '1-97' },
     { code: 'M1.ITEM.SIZE',           title: 'Size',              path: '/master/sizes',           legacyCode: '1-98' },

@@ -55,7 +55,6 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/master/colors': { group: 'Data Master', title: 'Color', icon: 'database' },
   '/master/nozzles': { group: 'Data Master', title: 'Nozzle', icon: 'database' },
   '/master/oems': { group: 'Data Master', title: 'OEM', icon: 'database' },
-  '/master/item-permissions': { group: 'Data Master', title: 'Item Permissions', icon: 'database' },
   '/master/brands': { group: 'Data Master', title: 'Brand', icon: 'database' },
   '/master/materials': { group: 'Data Master', title: 'Material', icon: 'database' },
   '/master/models': { group: 'Data Master', title: 'Model', icon: 'database' },

@@ -109,6 +109,11 @@ model ErpItemCategory {
   inventoryAccountId BigInt?   @map("inventory_account_id")
   cogsAccountId      BigInt?   @map("cogs_account_id")
   salesAccountId     BigInt?   @map("sales_account_id")
+  salesReturnAccountId      BigInt? @map("sales_return_account_id")
+  salesDiscountAccountId    BigInt? @map("sales_discount_account_id")
+  purchaseReturnAccountId   BigInt? @map("purchase_return_account_id")
+  purchaseDiscountAccountId BigInt? @map("purchase_discount_account_id")
+  consignmentAccountId      BigInt? @map("consignment_account_id")
   isActive           Boolean   @default(true) @map("is_active")
   legacyCode         String?   @map("legacy_code")
   createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -122,6 +127,11 @@ model ErpItemCategory {
   inventoryAccount ErpAccount?       @relation("ItemCatInventoryAcct", fields: [inventoryAccountId], references: [id])
   cogsAccount      ErpAccount?       @relation("ItemCatCogsAcct", fields: [cogsAccountId], references: [id])
   salesAccount     ErpAccount?       @relation("ItemCatSalesAcct", fields: [salesAccountId], references: [id])
+  salesReturnAccount      ErpAccount? @relation("ItemCatSalesReturnAcct", fields: [salesReturnAccountId], references: [id])
+  salesDiscountAccount    ErpAccount? @relation("ItemCatSalesDiscountAcct", fields: [salesDiscountAccountId], references: [id])
+  purchaseReturnAccount   ErpAccount? @relation("ItemCatPurchaseReturnAcct", fields: [purchaseReturnAccountId], references: [id])
+  purchaseDiscountAccount ErpAccount? @relation("ItemCatPurchaseDiscountAcct", fields: [purchaseDiscountAccountId], references: [id])
+  consignmentAccount      ErpAccount? @relation("ItemCatConsignmentAcct", fields: [consignmentAccountId], references: [id])
   items            ErpItem[]
 
   @@index([parentId])
@@ -151,6 +161,7 @@ model ErpItem {
   oemId                     BigInt?          @map("oem_id")
   vendorId                  BigInt?          @map("vendor_id")
   fieldUnitId               BigInt?          @map("field_unit_id")
+  fieldUnitFactor           Decimal          @default(1) @map("field_unit_factor") @db.Decimal(19, 4)
   divisionId                BigInt?          @map("division_id")
   subdivisionId             BigInt?          @map("subdivision_id")
   departmentId              BigInt?          @map("department_id")
@@ -574,6 +585,11 @@ model ErpAccount {
   itemCatInventory     ErpItemCategory[] @relation("ItemCatInventoryAcct")
   itemCatCogs          ErpItemCategory[] @relation("ItemCatCogsAcct")
   itemCatSales         ErpItemCategory[] @relation("ItemCatSalesAcct")
+  itemCatSalesReturn      ErpItemCategory[] @relation("ItemCatSalesReturnAcct")
+  itemCatSalesDiscount    ErpItemCategory[] @relation("ItemCatSalesDiscountAcct")
+  itemCatPurchaseReturn   ErpItemCategory[] @relation("ItemCatPurchaseReturnAcct")
+  itemCatPurchaseDiscount ErpItemCategory[] @relation("ItemCatPurchaseDiscountAcct")
+  itemCatConsignment      ErpItemCategory[] @relation("ItemCatConsignmentAcct")
   itemInventory        ErpItem[]         @relation("ItemInventoryAcct")
   itemSales            ErpItem[]         @relation("ItemSalesAcct")
   itemCogs             ErpItem[]         @relation("ItemCogsAcct")
@@ -1253,28 +1269,6 @@ model ErpTransactionNoteDetail {
 
   @@index([transactionNoteId])
   @@map("md_transaction_note_details")
-}
-
-model ErpItemPermission {
-  id          BigInt    @id @default(autoincrement())
-  itemId      BigInt    @map("item_id") // FK -> md_items (scalar)
-  roleId      BigInt    @map("role_id") // FK -> adm_roles (scalar)
-  canView     Boolean   @default(true) @map("can_view")
-  canSell     Boolean   @default(true) @map("can_sell")
-  canBuy      Boolean   @default(true) @map("can_buy")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@unique([itemId, roleId])
-  @@index([itemId])
-  @@index([roleId])
-  @@index([legacyCode])
-  @@map("md_item_permissions")
 }
 
 model ErpProductionCategory {

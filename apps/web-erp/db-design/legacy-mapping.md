@@ -205,7 +205,9 @@ as GL dimension masters (resolved §8 #16; see module-roadmap.md m2 `fin`).
 
 **Item extras:** `m1_item_type` (kept as enum), `m1_item_location`,
 `m1_item_location_warehouse`, `m1_item_stock_warehouse`, `m1_item_supplier`,
-`m1_item_permission`, `m1_item_transaction` (→ inventory module),
+`m1_item_permission` (**dropped 2026-06-12** — fitur Izin Item/`md_item_permissions`
+dihapus penuh atas permintaan user: halaman, endpoint, dan tabel),
+`m1_item_transaction` (→ inventory module),
 `m1_item_hauling`.
 
 **Geography:** `m1_country`, `m1_province`, `m1_city`.

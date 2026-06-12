@@ -63,7 +63,6 @@ export const NAV: NavItem[] = [
       { id: '/master/colors', label: 'Warna', code: 'CLR' },
       { id: '/master/nozzles', label: 'Nozzle', code: 'NZL' },
       { id: '/master/oems', label: 'OEM', code: 'OEM' },
-      { id: '/master/item-permissions', label: 'Izin Item', code: 'IPM' },
       { id: '/master/price-indices', label: 'Price Index', code: 'PRX' },
       { id: '/master/item-info', label: 'Info Item', code: 'INF' },
     ],

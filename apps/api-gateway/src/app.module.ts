@@ -71,7 +71,6 @@ import { ErpPartnerSubCategoriesModule } from './erp-partner-sub-categories/part
 import { ErpPriceCategoriesModule } from './erp-price-categories/price-categories.module';
 import { ErpItemInformationsModule } from './erp-item-informations/erp-item-informations.module';
 import { ErpPriceIndicesModule } from './erp-price-indices/erp-price-indices.module';
-import { ErpItemPermissionsModule } from './erp-item-permissions/item-permissions.module';
 import { ErpTransactionNotesModule } from './erp-transaction-notes/transaction-notes.module';
 import { ErpTxnNoteDetailsModule } from './erp-txn-note-details/txn-note-details.module';
 import { ErpUsersModule } from './erp-users/erp-users.module';
@@ -249,7 +248,6 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpPriceCategoriesModule,
     ErpItemInformationsModule,
     ErpPriceIndicesModule,
-    ErpItemPermissionsModule,
     ErpTransactionNotesModule,
     ErpTxnNoteDetailsModule,
     ErpUsersModule,
