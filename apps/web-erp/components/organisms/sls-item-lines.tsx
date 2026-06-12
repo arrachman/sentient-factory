@@ -212,9 +212,13 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
                             if (!item) return;
                             const autoPatch: Partial<SlsItemLineRow> = {};
                             if (item.salePrice && !l.unitPrice) autoPatch.unitPrice = item.salePrice;
-                            if (item.baseUnitId && !l.unitId) {
-                              autoPatch.unitId = item.baseUnitId;
-                              autoPatch.unitLabel = item.baseUnit?.name;
+                            // Satuan default penjualan: pakai satuan jual (fieldUnit,
+                            // mis. kwintal) bila di-set di master item, else satuan dasar.
+                            const defUnitId = item.fieldUnitId || item.unitId;
+                            const defUnit = item.fieldUnitId ? item.fieldUnit : item.unit;
+                            if (defUnitId && !l.unitId) {
+                              autoPatch.unitId = defUnitId;
+                              autoPatch.unitLabel = defUnit?.name;
                             }
                             if (item.saleTaxId && !l.tax1Id) {
                               autoPatch.tax1Id = item.saleTaxId;

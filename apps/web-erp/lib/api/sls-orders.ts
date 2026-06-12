@@ -196,14 +196,17 @@ export function listSlsOrders(
   return apiGet<SlsOrderListResponse>(BASE, params as Query);
 }
 
-/** Item detail for auto-fill: salePrice, baseUnitId, saleTaxId. */
+/** Item detail for auto-fill (shape = mapItem dari GET /items/:id): salePrice, unitId, fieldUnitId, saleTaxId. */
 export interface ItemAutoFill {
   id: string;
   code: string;
   name: string;
   salePrice: string;
-  baseUnitId: string;
-  baseUnit?: { id: string; code: string; name: string } | null;
+  unitId: string; // satuan dasar (terkecil)
+  unit?: { id: string; code: string; name: string } | null;
+  fieldUnitId?: string | null; // satuan jual default (mis. kwintal)
+  fieldUnit?: { id: string; code: string; name: string } | null;
+  fieldUnitFactor?: string | null; // 1 satuan jual = N satuan dasar
   saleTaxId?: string | null;
   saleTax?: { id: string; code: string; name: string; rate: string } | null;
 }
