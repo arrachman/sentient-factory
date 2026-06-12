@@ -11,7 +11,7 @@ import { listDepartments } from '@/lib/api/departments';
 import { listSubDepartments } from '@/lib/api/sub-departments';
 import { listBranches } from '@/lib/api/branches';
 import { listLocations } from '@/lib/api/locations';
-import { listItemLocations } from '@/lib/api/item-locations';
+import { listStorageBins } from '@/lib/api/storage-bins';
 import { listWarehouses } from '@/lib/api/warehouses';
 import { listProjects } from '@/lib/api/projects';
 import { listCostCenters } from '@/lib/api/cost-centers';
@@ -43,6 +43,15 @@ function makeLoader(listFn: ListFn) {
 
 export const loadCategoryOptions = makeLoader(listItemCategories as unknown as ListFn);
 export const loadUnitOptions = makeLoader(listUnits as unknown as ListFn);
+
+/** Loader satuan dengan conversionFactor di option data — untuk Satuan Jual Default. */
+export const loadUnitOptionsWithFactor = async (search: string, page: number, limit: number) => {
+  const res = await listUnits({ search: search || undefined, page, limit, isActive: true });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code, conversionFactor: x.conversionFactor ?? '1' })),
+    total: res.meta.total,
+  };
+};
 export const loadKindOptions = makeLoader(listItemKinds as unknown as ListFn);
 export const loadProductClassOptions = makeLoader(listProductClasses as unknown as ListFn);
 export const loadDivisionOptions = makeLoader(listDivisions as unknown as ListFn);
@@ -51,7 +60,7 @@ export const loadDepartmentOptions = makeLoader(listDepartments as unknown as Li
 export const loadSubDepartmentOptions = makeLoader(listSubDepartments as unknown as ListFn);
 export const loadBranchOptions = makeLoader(listBranches as unknown as ListFn);
 export const loadLocationOptions = makeLoader(listLocations as unknown as ListFn);
-export const loadItemLocationOptions = makeLoader(listItemLocations as unknown as ListFn);
+export const loadItemLocationOptions = makeLoader(listStorageBins as unknown as ListFn);
 export const loadWarehouseOptions = makeLoader(listWarehouses as unknown as ListFn);
 export const loadProjectOptions = makeLoader(listProjects as unknown as ListFn);
 export const loadCostCenterOptions = makeLoader(listCostCenters as unknown as ListFn);

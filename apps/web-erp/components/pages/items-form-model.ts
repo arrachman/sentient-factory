@@ -10,14 +10,6 @@ import type {
 
 export const ITEM_TYPES: ErpItemType[] = ['INVENTORY', 'SERVICE', 'CONSUMABLE', 'ASSET', 'NON_INVENTORY'];
 
-/** One row in the "Lokasi" section (legacy Gudang + Lokasi). `key` is a stable
- *  client id so SearchSelect display state survives row add/remove (not sent). */
-export interface ItemLocationFormRow {
-  key: string;
-  warehouseId: string; warehouseLabel?: string;
-  locationId: string; locationLabel?: string;
-}
-
 /** One row in the "Distributor" section (legacy m1_item_supplier). `key` is a
  *  stable client id so SearchSelect display state survives row add/remove. */
 export interface ItemDistributorFormRow {
@@ -34,14 +26,6 @@ export interface ItemWarehouseStockFormRow {
   minStock: string;
   maxStock: string;
   minOrderQty: string;
-}
-
-/** One row in the "Branch" section (legacy Cabang + Cost Center). `key` is a
- *  stable client id so SearchSelect display state survives row add/remove. */
-export interface ItemBranchFormRow {
-  key: string;
-  branchId: string; branchLabel?: string;
-  costCenterId: string; costCenterLabel?: string;
 }
 
 export interface ItemFormData {
@@ -68,7 +52,7 @@ export interface ItemFormData {
   oemId: string; oemLabel?: string;
   vendorId: string; vendorLabel?: string;
   fieldUnitId: string; fieldUnitLabel?: string;
-  fieldUnitFactor: string; // 1 satuan jual = N satuan dasar
+  fieldUnitConversionFactor: string; // read-only, dari md_units.conversionFactor
 
   // GL / org dimensions
   divisionId: string; divisionLabel?: string;
@@ -89,14 +73,8 @@ export interface ItemFormData {
   salePrices: string[];       // "Harga Jual 1..10" (index 0 = level 1)
   saleDiscounts: string[];    // "Diskon Jual 1..10" (index 0 = level 1)
 
-  // Storage placements ("Lokasi" tab: Gudang + Lokasi per row)
-  locations: ItemLocationFormRow[];
-
   // Distributors ("Distributor" tab: supplier partner per row)
   distributors: ItemDistributorFormRow[];
-
-  // Branches ("Branch" tab: Cabang + Cost Center per row)
-  branches: ItemBranchFormRow[];
 
   // Lain-lain ("Lain-lain" tab) + Custom ("Custom" tab) → metadata sidecar
   others: ItemOthersData;
@@ -150,14 +128,12 @@ export const defaultItemForm = (): ItemFormData => ({
   code: '', name: '', itemType: 'INVENTORY', description: '', barcode: '',
   categoryId: '', unitId: '', kindId: '', productClassId: '',
   brandId: '', materialId: '', sizeId: '', colorId: '', sectionId: '',
-  designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '', fieldUnitFactor: '1',
+  designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '', fieldUnitConversionFactor: '1',
   divisionId: '', subdivisionId: '', departmentId: '', subDepartmentId: '',
   branchId: '', defaultLocationId: '', defaultWarehouseId: '', projectId: '', costCenterId: '',
   standardCost: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',
   salePrices: Array<string>(10).fill(''), saleDiscounts: Array<string>(10).fill(''),
-  locations: [],
   distributors: [],
-  branches: [],
   others: {}, custom: {},
   minStock: '', maxStock: '', reorderQty: '', minOrderQty: '',
   warehouseStocks: [],

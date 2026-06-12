@@ -24,4 +24,9 @@ export class CreateErpUnitDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
+
+  @ApiPropertyOptional({ example: '1', description: 'Faktor konversi: 1 satuan ini = N satuan dasar (mis. 1 kwintal = 100)' })
+  @IsOptional()
+  @IsString()
+  conversionFactor?: string;
 }

@@ -21,7 +21,7 @@ model ErpBranch {
   userBranchAccess ErpUserBranchAccess[]
   partners         ErpPartner[]
   items            ErpItem[]             @relation("ItemBranch")
-  itemBranches     ErpItemBranch[]       @relation("ItemBranchBranch")
+  itemDimBranches  ErpItemDimBranch[]    @relation("ItemDimBranchBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -49,6 +49,7 @@ model ErpLocation {
   warehouses         ErpWarehouse[]
   userLocationAccess ErpUserLocationAccess[]
   items              ErpItem[]               @relation("ItemDefaultLocation")
+  itemDimLocations   ErpItemDimLocation[]    @relation("ItemDimLocationLocation")
 
   @@index([branchId])
   @@index([legacyCode])
@@ -73,9 +74,9 @@ model ErpWarehouse {
   location            ErpLocation              @relation(fields: [locationId], references: [id])
   userWarehouseAccess ErpUserWarehouseAccess[]
   items               ErpItem[]                @relation("ItemDefaultWarehouse")
-  placements          ErpItemPlacement[]       @relation("ItemPlacementWarehouse")
   storageBins         ErpStorageBin[]          @relation("WarehouseStorageBins")
   itemStockLevels     ErpItemWarehouseStock[]  @relation("ItemWarehouseStockWarehouse")
+  itemDimWarehouses   ErpItemDimWarehouse[]    @relation("ItemDimWarehouseWarehouse")
 
   @@index([locationId])
   @@index([legacyCode])
@@ -163,7 +164,6 @@ model ErpItem {
   oemId                     BigInt?          @map("oem_id")
   vendorId                  BigInt?          @map("vendor_id")
   fieldUnitId               BigInt?          @map("field_unit_id")
-  fieldUnitFactor           Decimal          @default(1) @map("field_unit_factor") @db.Decimal(19, 4)
   divisionId                BigInt?          @map("division_id")
   subdivisionId             BigInt?          @map("subdivision_id")
   departmentId              BigInt?          @map("department_id")
@@ -254,10 +254,11 @@ model ErpItem {
   vendor                  ErpPartner?          @relation("ItemVendor", fields: [vendorId], references: [id])
   information             ErpItemInformation?
   prices                  ErpItemPrice[]       @relation("ItemPrices")
-  placements              ErpItemPlacement[]   @relation("ItemPlacements")
-  branches                ErpItemBranch[]      @relation("ItemBranches")
   distributors            ErpItemDistributor[] @relation("ItemDistributors")
   warehouseStocks         ErpItemWarehouseStock[] @relation("ItemWarehouseStocks")
+  dimBranches             ErpItemDimBranch[]      @relation("ItemDimBranches")
+  dimWarehouses           ErpItemDimWarehouse[]   @relation("ItemDimWarehouses")
+  dimLocations            ErpItemDimLocation[]    @relation("ItemDimLocations")
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -306,36 +307,6 @@ model ErpItemPrice {
   @@map("md_item_prices")
 }
 
-/// Item storage placements per item (legacy MyERP+ "Lokasi" tab = m1_item_location_warehouse).
-/// One row per (item, warehouse, location) — multi placement beyond defaultWarehouse/defaultLocation.
-/// NB: `locationId` now references `md_storage_bins` (hierarchical bin master,
-/// replacement of the old flat `md_item_locations`).
-model ErpItemPlacement {
-  id          BigInt   @id @default(autoincrement())
-  itemId      BigInt   @map("item_id")
-  warehouseId BigInt   @map("warehouse_id")
-  locationId  BigInt   @map("location_id")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?  @map("created_by_id")
-  updatedById BigInt?  @map("updated_by_id")
-
-  item      ErpItem         @relation("ItemPlacements", fields: [itemId], references: [id], onDelete: Cascade)
-  warehouse ErpWarehouse    @relation("ItemPlacementWarehouse", fields: [warehouseId], references: [id])
-  location  ErpStorageBin @relation("ItemPlacementLocation", fields: [locationId], references: [id])
-
-  @@unique([itemId, warehouseId, locationId])
-  @@index([itemId])
-  @@index([warehouseId])
-  @@index([locationId])
-  @@map("md_item_placements")
-}
-
-/// Item branch assignments per item (legacy MyERP+ item master "Branch" tab).
-/// One row per (item, branch) carrying a required cost center (Cabang + Cost Center).
-/// Complements the single home branchId/costCenterId on md_items — those stay the
-/// primary/default dimension; this lists the item's branch placements. Both FK to
-/// md masters (intra-domain enforced); cascade on item delete, restrict the masters.
 /// Per-warehouse stock level overrides (Stok Min/Maks + Min Order per Gudang).
 /// md_items.min_stock/max_stock/min_order_qty stay the GLOBAL defaults; a row
 /// here overrides them for one warehouse. Warehouses without a row use global.
@@ -360,25 +331,51 @@ model ErpItemWarehouseStock {
   @@map("md_item_warehouse_stocks")
 }
 
-model ErpItemBranch {
-  id           BigInt   @id @default(autoincrement())
-  itemId       BigInt   @map("item_id")
-  branchId     BigInt   @map("branch_id")
-  costCenterId BigInt   @map("cost_center_id")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById  BigInt?  @map("created_by_id")
-  updatedById  BigInt?  @map("updated_by_id")
+/// Multi-select GL dimension "Cabang" on the item form (Dimensi GL section).
+/// md_items.branch_id stays the primary/default (= first selection, denormalized);
+/// these rows list ALL selected branches.
+model ErpItemDimBranch {
+  id        BigInt   @id @default(autoincrement())
+  itemId    BigInt   @map("item_id")
+  branchId  BigInt   @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  item       ErpItem       @relation("ItemBranches", fields: [itemId], references: [id], onDelete: Cascade)
-  branch     ErpBranch     @relation("ItemBranchBranch", fields: [branchId], references: [id])
-  costCenter ErpCostCenter @relation("ItemBranchCostCenter", fields: [costCenterId], references: [id])
+  item   ErpItem   @relation("ItemDimBranches", fields: [itemId], references: [id], onDelete: Cascade)
+  branch ErpBranch @relation("ItemDimBranchBranch", fields: [branchId], references: [id])
 
   @@unique([itemId, branchId])
-  @@index([itemId])
   @@index([branchId])
-  @@index([costCenterId])
-  @@map("md_item_branches")
+  @@map("md_item_dim_branches")
+}
+
+/// Multi-select GL dimension "Gudang Default" (md_items.default_warehouse_id = first selection).
+model ErpItemDimWarehouse {
+  id          BigInt   @id @default(autoincrement())
+  itemId      BigInt   @map("item_id")
+  warehouseId BigInt   @map("warehouse_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item      ErpItem      @relation("ItemDimWarehouses", fields: [itemId], references: [id], onDelete: Cascade)
+  warehouse ErpWarehouse @relation("ItemDimWarehouseWarehouse", fields: [warehouseId], references: [id])
+
+  @@unique([itemId, warehouseId])
+  @@index([warehouseId])
+  @@map("md_item_dim_warehouses")
+}
+
+/// Multi-select GL dimension "Lokasi Default" (md_items.default_location_id = first selection).
+model ErpItemDimLocation {
+  id         BigInt   @id @default(autoincrement())
+  itemId     BigInt   @map("item_id")
+  locationId BigInt   @map("location_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  item     ErpItem     @relation("ItemDimLocations", fields: [itemId], references: [id], onDelete: Cascade)
+  location ErpLocation @relation("ItemDimLocationLocation", fields: [locationId], references: [id])
+
+  @@unique([itemId, locationId])
+  @@index([locationId])
+  @@map("md_item_dim_locations")
 }
 
 /// Item distributors per item (legacy MyERP+ "Distributor" tab = m1_item_supplier).
@@ -710,7 +707,6 @@ model ErpCostCenter {
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
   accrualSchedules              ErpFinAccrualSchedule[]
   items                         ErpItem[]                            @relation("ItemCostCenter")
-  itemBranches                  ErpItemBranch[]                      @relation("ItemBranchCostCenter")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -1210,7 +1206,6 @@ model ErpStorageBin {
   warehouse  ErpWarehouse       @relation("WarehouseStorageBins", fields: [warehouseId], references: [id])
   parent     ErpStorageBin?     @relation("StorageBinParent", fields: [parentId], references: [id])
   children   ErpStorageBin[]    @relation("StorageBinParent")
-  placements ErpItemPlacement[] @relation("ItemPlacementLocation")
 
   @@unique([warehouseId, code])
   @@index([warehouseId])

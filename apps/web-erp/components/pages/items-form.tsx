@@ -17,9 +17,7 @@ export {
 } from './items-form-model';
 export type {
   ItemFormData,
-  ItemLocationFormRow,
   ItemDistributorFormRow,
-  ItemBranchFormRow,
   ItemWarehouseStockFormRow,
 } from './items-form-model';
 
@@ -64,7 +62,7 @@ export function fromItem(item: ErpItem): ItemFormData {
     oemId: item.oemId ?? '', oemLabel: refLabel(item.oem),
     vendorId: item.vendorId ?? '', vendorLabel: refLabel(item.vendor),
     fieldUnitId: item.fieldUnitId ?? '', fieldUnitLabel: refLabel(item.fieldUnit),
-    fieldUnitFactor: numStr(item.fieldUnitFactor) || '1',
+    fieldUnitConversionFactor: numStr(item.fieldUnit?.conversionFactor) || '1',
     divisionId: item.divisionId ?? '', divisionLabel: refLabel(item.division),
     subdivisionId: item.subdivisionId ?? '', subdivisionLabel: refLabel(item.subdivision),
     departmentId: item.departmentId ?? '', departmentLabel: refLabel(item.department),
@@ -80,19 +78,9 @@ export function fromItem(item: ErpItem): ItemFormData {
     purchaseDiscount: numStr(item.purchaseDiscount),
     salePrices: tierColumn(item, 'price'),
     saleDiscounts: tierColumn(item, 'discountPercent'),
-    locations: (item.locations ?? []).map((l, i) => ({
-      key: `init-${i}`,
-      warehouseId: l.warehouseId, warehouseLabel: refLabel(l.warehouse),
-      locationId: l.locationId, locationLabel: refLabel(l.location),
-    })),
     distributors: (item.distributors ?? []).map((d, i) => ({
       key: `init-${i}`,
       partnerId: d.partnerId, partnerLabel: refLabel(d.partner),
-    })),
-    branches: (item.branches ?? []).map((b, i) => ({
-      key: `init-${i}`,
-      branchId: b.branchId, branchLabel: refLabel(b.branch),
-      costCenterId: b.costCenterId, costCenterLabel: refLabel(b.costCenter),
     })),
     others: { ...(item.metadata?.others ?? {}) },
     custom: { ...(item.metadata?.custom ?? {}) },
@@ -175,7 +163,6 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     oemId: orNull(f.oemId),
     vendorId: orNull(f.vendorId),
     fieldUnitId: orNull(f.fieldUnitId),
-    fieldUnitFactor: orUndef(f.fieldUnitFactor),
     divisionId: orNull(f.divisionId),
     subdivisionId: orNull(f.subdivisionId),
     departmentId: orNull(f.departmentId),
@@ -190,15 +177,9 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     purchaseDiscount: orUndef(f.purchaseDiscount),
     salePrice: orUndef(f.salePrices[0]), // level 1 mirror (denormalized cache)
     prices: buildPriceTiers(f),
-    locations: f.locations
-      .filter((l) => l.warehouseId !== '' && l.locationId !== '')
-      .map((l) => ({ warehouseId: l.warehouseId, locationId: l.locationId })),
     distributors: f.distributors
       .filter((d) => d.partnerId !== '')
       .map((d) => ({ partnerId: d.partnerId })),
-    branches: f.branches
-      .filter((b) => b.branchId !== '' && b.costCenterId !== '')
-      .map((b) => ({ branchId: b.branchId, costCenterId: b.costCenterId })),
     others: f.others,
     custom: f.custom,
     minStock: orUndef(f.minStock),

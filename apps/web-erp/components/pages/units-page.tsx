@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
+import { NumInput } from '@/components/molecules/num-input';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { SimpleMasterPage } from '@/components/organisms/simple-master-page';
 import {
@@ -22,20 +23,23 @@ interface UnitForm {
   code: string;
   name: string;
   isActive: boolean;
+  conversionFactor: string;
 }
 
-const defaultForm = (): UnitForm => ({ code: '', name: '', isActive: true });
+const defaultForm = (): UnitForm => ({ code: '', name: '', isActive: true, conversionFactor: '1' });
 
 const fromRecord = (r: ErpUnit): UnitForm => ({
   code: r.code,
   name: r.name,
   isActive: r.isActive,
+  conversionFactor: r.conversionFactor ?? '1',
 });
 
 const toPayload = (f: UnitForm): CreateUnitPayload => ({
   code: f.code,
   name: f.name,
   isActive: f.isActive,
+  conversionFactor: f.conversionFactor,
 });
 
 const validateUnit = (form: UnitForm) =>
@@ -53,6 +57,9 @@ function FormFields({ data, onChange, errors = {} }: { data: UnitForm; onChange:
       </FormField>
       <FormField label="Nama" htmlFor="uf-name" required error={errors.name}>
         <Input id="uf-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Kilogram" aria-invalid={!!errors.name} />
+      </FormField>
+      <FormField label="Faktor Konversi" htmlFor="uf-factor" help="1 satuan ini = N satuan dasar (mis. Kwintal = 100, Lusin = 12)">
+        <NumInput id="uf-factor" value={data.conversionFactor} onChange={(v) => set('conversionFactor', v)} placeholder="1" />
       </FormField>
       <FormField label="Status" htmlFor="uf-active">
         <BooleanRadio id="uf-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />

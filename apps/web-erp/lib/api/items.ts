@@ -28,26 +28,10 @@ export interface ItemPriceTier {
   discountPercent: string;
 }
 
-/** One item storage placement (legacy "Lokasi" tab: Gudang + Lokasi). */
-export interface ItemLocationRow {
-  warehouseId: string;
-  locationId: string;
-  warehouse?: RelationRef | null;
-  location?: RelationRef | null;
-}
-
 /** One item distributor (legacy "Distributor" tab: a supplier/distributor partner). */
 export interface ItemDistributorRow {
   partnerId: string;
   partner?: RelationRef | null;
-}
-
-/** One item branch assignment (legacy "Branch" tab: Cabang + Cost Center). */
-export interface ItemBranchRow {
-  branchId: string;
-  costCenterId: string;
-  branch?: RelationRef | null;
-  costCenter?: RelationRef | null;
 }
 
 /** One per-warehouse stock level override (Stok Min/Maks + Min Order per Gudang).
@@ -108,7 +92,6 @@ export interface ErpItem {
   oemId?: string | null;
   vendorId?: string | null;
   fieldUnitId?: string | null;
-  fieldUnitFactor?: string | null; // 1 satuan jual = N satuan dasar
 
   // GL / org dimensions
   divisionId?: string | null;
@@ -129,9 +112,7 @@ export interface ErpItem {
   salePrice?: string | null;         // "Harga Jual 1" (mirror of tier level 1)
   sellingPrice?: string | null; // legacy alias of salePrice
   prices?: ItemPriceTier[];          // "Harga Jual 1..10" + "Diskon Jual 1..10"
-  locations?: ItemLocationRow[];     // "Lokasi" tab: Gudang + Lokasi placements
   distributors?: ItemDistributorRow[]; // "Distributor" tab: supplier partners
-  branches?: ItemBranchRow[];        // "Branch" tab: Cabang + Cost Center
   metadata?: ItemMetadata | null;    // "Lain-lain" + "Custom" tabs (JSON sidecar)
 
   // Stock & tracking
@@ -216,7 +197,7 @@ export interface ErpItem {
   nozzle?: RelationRef | null;
   oem?: RelationRef | null;
   vendor?: RelationRef | null;
-  fieldUnit?: RelationRef | null;
+  fieldUnit?: (RelationRef & { conversionFactor?: string }) | null;
 }
 
 export interface CreateItemPayload {
@@ -242,7 +223,6 @@ export interface CreateItemPayload {
   oemId?: string | null;
   vendorId?: string | null;
   fieldUnitId?: string | null;
-  fieldUnitFactor?: string;
 
   divisionId?: string | null;
   subdivisionId?: string | null;
@@ -259,9 +239,7 @@ export interface CreateItemPayload {
   purchaseDiscount?: string;
   salePrice?: string;
   prices?: { level: number; price?: string; discountPercent?: string }[];
-  locations?: { warehouseId: string; locationId: string }[];
   distributors?: { partnerId: string }[];
-  branches?: { branchId: string; costCenterId: string }[];
   others?: ItemOthersData;   // "Lain-lain" tab → metadata.others
   custom?: ItemCustomData;   // "Custom" tab → metadata.custom
 

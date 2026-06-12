@@ -16,7 +16,7 @@ import { Section, LookupField, NumField, YesNoField } from './items-form-parts';
 import {
   loadColorOptions, loadBrandOptions, loadSizeOptions, loadMaterialOptions,
   loadSectionOptions, loadDesignerOptions, loadNozzleOptions, loadOemOptions,
-  loadPartnerOptions, loadUnitOptions,
+  loadPartnerOptions, loadUnitOptions, loadUnitOptionsWithFactor,
 } from './items-form-lookups';
 
 export function ItemAtributSection({
@@ -48,8 +48,10 @@ export function ItemAtributSection({
       </Section>
 
       <Section title="Penanganan & Regulasi" hint="Satuan jual default, izin edar & flag operasional">
-        <LookupField id="if-fieldunit" label="Satuan Jual Default" value={data.fieldUnitId} onPick={(v) => set('fieldUnitId', v)} loader={loadUnitOptions} placeholder="Pilih satuan…" initialLabel={data.fieldUnitLabel} />
-        <NumField id="if-fieldunit-factor" label="Faktor Konversi Satuan Jual" value={data.fieldUnitFactor} onChange={(v) => set('fieldUnitFactor', v)} placeholder="1" help="1 satuan jual = N satuan dasar (mis. 1 kwintal = 100 kg)" />
+        <LookupField id="if-fieldunit" label="Satuan Jual Default" value={data.fieldUnitId} onPick={(v) => set('fieldUnitId', v)} onPickOpt={(opt) => onChange({ ...data, fieldUnitId: opt.value, fieldUnitLabel: opt.label, fieldUnitConversionFactor: String(opt.conversionFactor ?? '1') })} loader={loadUnitOptionsWithFactor} placeholder="Pilih satuan…" initialLabel={data.fieldUnitLabel} />
+        <FormField label="Faktor Konversi Satuan Jual" htmlFor="if-fieldunit-factor" help="1 satuan jual = N satuan dasar — diambil dari master Satuan">
+          <input id="if-fieldunit-factor" readOnly value={data.fieldUnitConversionFactor} className="h-8 w-full rounded-[var(--radius)] border border-border bg-[var(--panel-2)] px-2 text-sm text-[var(--fg-muted)] cursor-default" />
+        </FormField>
         <FormField label="No. Ijin Edar" htmlFor="if-regno">
           <Input id="if-regno" value={data.registrationNo} onChange={(e) => set('registrationNo', e.target.value)} placeholder="Opsional" />
         </FormField>

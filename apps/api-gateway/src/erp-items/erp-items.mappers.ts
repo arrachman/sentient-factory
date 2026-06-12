@@ -41,19 +41,10 @@ export const ITEM_INCLUDE = {
   nozzle: { select: { id: true, code: true, name: true } },
   oem: { select: { id: true, code: true, name: true } },
   vendor: { select: { id: true, code: true, name: true } },
-  fieldUnit: { select: { id: true, code: true, name: true } },
+  fieldUnit: { select: { id: true, code: true, name: true, conversionFactor: true } },
   prices: {
     select: { level: true, price: true, discountPercent: true },
     orderBy: { level: 'asc' },
-  },
-  placements: {
-    select: {
-      warehouseId: true,
-      locationId: true,
-      warehouse: { select: { id: true, code: true, name: true } },
-      location: { select: { id: true, code: true, name: true } },
-    },
-    orderBy: { id: 'asc' },
   },
   distributors: {
     select: {
@@ -61,15 +52,6 @@ export const ITEM_INCLUDE = {
       partner: { select: { id: true, code: true, name: true } },
     },
     orderBy: { sortOrder: 'asc' },
-  },
-  branches: {
-    select: {
-      branchId: true,
-      costCenterId: true,
-      branch: { select: { id: true, code: true, name: true } },
-      costCenter: { select: { id: true, code: true, name: true } },
-    },
-    orderBy: { id: 'asc' },
   },
   warehouseStocks: {
     select: {
@@ -137,7 +119,6 @@ const DECIMAL_FIELDS = [
   'height',
   'volume',
   'conversionKgPcs',
-  'fieldUnitFactor',
 ] as const;
 
 interface PriceTierInput {
@@ -178,32 +159,6 @@ export function deriveSalePriceFromTiers(
   return new Prisma.Decimal(l1.price as string);
 }
 
-interface LocationInput {
-  warehouseId?: string;
-  locationId?: string;
-}
-
-/** Build md_item_locations rows, skipping incomplete pairs and deduping (itemId,warehouse,location). */
-export function buildLocationRows(locations: LocationInput[] | undefined, actorId?: string) {
-  if (!locations) return undefined;
-  const actor = actorId ? BigInt(actorId) : null;
-  const seen = new Set<string>();
-  return locations
-    .filter((l) => (l.warehouseId ?? '') !== '' && (l.locationId ?? '') !== '')
-    .filter((l) => {
-      const key = `${l.warehouseId}:${l.locationId}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((l) => ({
-      warehouseId: BigInt(l.warehouseId as string),
-      locationId: BigInt(l.locationId as string),
-      createdById: actor,
-      updatedById: actor,
-    }));
-}
-
 interface DistributorInput {
   partnerId?: string;
 }
@@ -227,32 +182,6 @@ export function buildDistributorRows(
     .map((d, i) => ({
       partnerId: BigInt(d.partnerId as string),
       sortOrder: i,
-      createdById: actor,
-      updatedById: actor,
-    }));
-}
-
-interface BranchInput {
-  branchId?: string;
-  costCenterId?: string;
-}
-
-/** Build md_item_branches rows, skipping incomplete pairs and deduping by branch (one cost center per branch). */
-export function buildBranchRows(branches: BranchInput[] | undefined, actorId?: string) {
-  if (!branches) return undefined;
-  const actor = actorId ? BigInt(actorId) : null;
-  const seen = new Set<string>();
-  return branches
-    .filter((b) => (b.branchId ?? '') !== '' && (b.costCenterId ?? '') !== '')
-    .filter((b) => {
-      const key = b.branchId as string;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((b) => ({
-      branchId: BigInt(b.branchId as string),
-      costCenterId: BigInt(b.costCenterId as string),
       createdById: actor,
       updatedById: actor,
     }));
@@ -368,18 +297,8 @@ export function buildItemMetadata(
 
 // Maps Prisma field names to the frontend ErpItem interface shape
 export function mapItem(item: any) {
-  const {
-    type,
-    baseUnit,
-    baseUnitId,
-    salePrice,
-    prices,
-    placements,
-    distributors,
-    branches,
-    warehouseStocks,
-    ...rest
-  } = item;
+  const { type, baseUnit, baseUnitId, salePrice, prices, distributors, warehouseStocks, ...rest } =
+    item;
   return {
     ...rest,
     itemType: type,
@@ -392,21 +311,9 @@ export function mapItem(item: any) {
       price: String(p.price),
       discountPercent: String(p.discountPercent),
     })),
-    locations: (placements ?? []).map((l: any) => ({
-      warehouseId: String(l.warehouseId),
-      locationId: String(l.locationId),
-      warehouse: l.warehouse ?? null,
-      location: l.location ?? null,
-    })),
     distributors: (distributors ?? []).map((d: any) => ({
       partnerId: String(d.partnerId),
       partner: d.partner ?? null,
-    })),
-    branches: (branches ?? []).map((b: any) => ({
-      branchId: String(b.branchId),
-      costCenterId: String(b.costCenterId),
-      branch: b.branch ?? null,
-      costCenter: b.costCenter ?? null,
     })),
     warehouseStocks: (warehouseStocks ?? []).map((w: any) => ({
       warehouseId: String(w.warehouseId),

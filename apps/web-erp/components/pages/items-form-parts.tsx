@@ -17,7 +17,7 @@ export const isStockable = (t: ErpItemType) =>
   t === 'INVENTORY' || t === 'CONSUMABLE' || t === 'ASSET';
 export const showsWeight = (t: ErpItemType) => t !== 'SERVICE';
 
-export type LookupLoader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: string }[]; total: number }>;
+export type LookupLoader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: string; [key: string]: unknown }[]; total: number }>;
 
 export function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -34,10 +34,12 @@ export function Section({ title, hint, children }: { title: string; hint?: strin
 export function LookupField(props: {
   id: string; label: string; value: string; onPick: (v: string) => void;
   loader: LookupLoader; placeholder: string; required?: boolean; initialLabel?: string; error?: boolean;
+  /** Optional: called with the full option object on pick (for reading extra fields like conversionFactor). */
+  onPickOpt?: (opt: { value: string; label: string; [key: string]: unknown }) => void;
 }) {
   return (
     <FormField label={props.label} htmlFor={props.id} required={props.required} error={props.error ? `${props.label} wajib diisi` : undefined}>
-      <SearchSelect id={props.id} value={props.value} onValueChange={props.onPick} placeholder={props.placeholder} loadOptions={props.loader} initialLabel={props.initialLabel} title={props.label} error={props.error} />
+      <SearchSelect id={props.id} value={props.value} onValueChange={props.onPick} onPick={props.onPickOpt} placeholder={props.placeholder} loadOptions={props.loader} initialLabel={props.initialLabel} title={props.label} error={props.error} />
     </FormField>
   );
 }

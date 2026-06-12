@@ -31,6 +31,7 @@ export class ErpUnitsService {
           code: dto.code,
           name: dto.name,
           isActive: dto.isActive ?? true,
+          conversionFactor: dto.conversionFactor ? new Prisma.Decimal(dto.conversionFactor) : undefined,
           createdById: actorId ? BigInt(actorId) : null,
           updatedById: actorId ? BigInt(actorId) : null,
         },
@@ -126,6 +127,7 @@ export class ErpUnitsService {
           code: dto.code,
           name: dto.name,
           isActive: dto.isActive,
+          conversionFactor: dto.conversionFactor ? new Prisma.Decimal(dto.conversionFactor) : undefined,
           updatedById: actorId ? BigInt(actorId) : null,
         },
       });

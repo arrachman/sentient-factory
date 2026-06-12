@@ -11,6 +11,7 @@ export interface ErpUnit {
   code: string;
   name: string;
   isActive: boolean;
+  conversionFactor: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -19,12 +20,14 @@ export interface CreateUnitPayload {
   code: string;
   name: string;
   isActive?: boolean;
+  conversionFactor?: string;
 }
 
 export interface UpdateUnitPayload {
   code?: string;
   name?: string;
   isActive?: boolean;
+  conversionFactor?: string;
 }
 
 // ─── API functions ────────────────────────────────────────────────────────────

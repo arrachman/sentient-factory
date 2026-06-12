@@ -13,8 +13,6 @@ import {
 import { Type } from 'class-transformer';
 import { ErpCostingMethod, ErpItemType } from '@prisma/client';
 import { ItemPriceDto } from './item-price.dto';
-import { ItemLocationDto } from './item-location.dto';
-import { ItemBranchDto } from './item-branch.dto';
 import { ItemDistributorDto } from './item-distributor.dto';
 import { ItemWarehouseStockDto } from './item-warehouse-stock.dto';
 import { ItemOthersDto, ItemCustomDto } from './item-metadata.dto';
@@ -106,14 +104,6 @@ export class CreateErpItemDto {
   @IsOptional()
   @IsString()
   fieldUnitId?: string | null;
-  @ApiPropertyOptional({
-    example: '100',
-    description: 'Faktor konversi: 1 satuan jual = N satuan dasar (mis. 1 kwintal = 100 kg)',
-  })
-  @IsOptional()
-  @IsString()
-  fieldUnitFactor?: string;
-
   // ─── GL / organizational dimensions ───────────────────────────────
   @ApiPropertyOptional() @IsOptional() @IsString() divisionId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() subdivisionId?: string | null;
@@ -122,6 +112,26 @@ export class CreateErpItemDto {
   @ApiPropertyOptional() @IsOptional() @IsString() branchId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() defaultLocationId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() defaultWarehouseId?: string | null;
+
+  // Multi-select GL dimensions (md_item_dim_*). When sent, the matching single
+  // column above is synced server-side to the first id (denormalized default).
+  @ApiPropertyOptional({ type: [String], description: 'Cabang multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  branchIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Gudang Default multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  defaultWarehouseIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Lokasi Default multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  defaultLocationIds?: string[];
   @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsString() costCenterId?: string | null;
 
@@ -156,26 +166,6 @@ export class CreateErpItemDto {
   @ValidateNested({ each: true })
   @Type(() => ItemPriceDto)
   prices?: ItemPriceDto[];
-
-  @ApiPropertyOptional({
-    type: [ItemLocationDto],
-    description: 'Item storage placements (Lokasi tab: Gudang + Lokasi)',
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ItemLocationDto)
-  locations?: ItemLocationDto[];
-
-  @ApiPropertyOptional({
-    type: [ItemBranchDto],
-    description: 'Item branch assignments (Branch tab: Cabang + Cost Center)',
-  })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => ItemBranchDto)
-  branches?: ItemBranchDto[];
 
   @ApiPropertyOptional({
     type: [ItemDistributorDto],
