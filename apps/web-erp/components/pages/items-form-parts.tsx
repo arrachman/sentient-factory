@@ -44,6 +44,58 @@ export function LookupField(props: {
   );
 }
 
+/**
+ * Multi-select lookup (SearchSelect mode="multi") + removable chips.
+ * Labels for picked ids are harvested from loader results (the modal pages
+ * through the same loader) merged onto the labels map held in form state,
+ * so chips survive section remount and edit-mode prefill.
+ */
+export function MultiLookupField(props: {
+  id: string; label: string; values: string[]; labels: Record<string, string>;
+  onChange: (values: string[], labels: Record<string, string>) => void;
+  loader: LookupLoader; placeholder: string;
+}) {
+  const { loader, labels, values, onChange } = props;
+  const seenRef = React.useRef<Record<string, string>>({});
+
+  const cachingLoader: LookupLoader = React.useCallback(async (s, p, l) => {
+    const res = await loader(s, p, l);
+    res.data.forEach((o) => { seenRef.current[o.value] = o.label; });
+    return res;
+  }, [loader]);
+
+  const handleValues = (next: string[]) => {
+    const merged = { ...labels };
+    next.forEach((v) => { if (!merged[v] && seenRef.current[v]) merged[v] = seenRef.current[v]; });
+    onChange(next, merged);
+  };
+
+  return (
+    <FormField label={props.label} htmlFor={props.id}>
+      <div className="flex flex-col gap-1">
+        <SearchSelect id={props.id} mode="multi" values={values} onValuesChange={handleValues} placeholder={props.placeholder} loadOptions={cachingLoader} title={props.label} />
+        {values.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {values.map((v) => (
+              <span key={v} className="inline-flex items-center gap-1 rounded-[var(--radius)] border border-border bg-[var(--panel-2)] px-1.5 py-0.5 text-[11px] text-foreground">
+                {labels[v] ?? seenRef.current[v] ?? `#${v}`}
+                <button
+                  type="button"
+                  aria-label={`Hapus ${labels[v] ?? v}`}
+                  className="cursor-pointer text-[var(--fg-subtle)] hover:text-foreground"
+                  onClick={() => handleValues(values.filter((x) => x !== v))}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </FormField>
+  );
+}
+
 export function NumField(props: { id: string; label: string; value: string; onChange: (v: string) => void; placeholder?: string; decimals?: number; readOnly?: boolean; help?: string }) {
   return (
     <FormField label={props.label} htmlFor={props.id} help={props.help}>

@@ -23,12 +23,10 @@ import type { FormErrors } from '@/lib/form-validation';
 import { generateNextItemCode, nextCodePreview } from '@/lib/items-code-generator';
 import type { ItemFormData } from './items-form';
 import { ITEM_TYPES } from './items-form';
-import { Section, LookupField, NumField, YesNoField, isStockable } from './items-form-parts';
-import { ItemLocationsEditor } from './items-form-locations';
+import { Section, LookupField, MultiLookupField, NumField, YesNoField, isStockable } from './items-form-parts';
 import { ItemWarehouseStocksEditor } from './items-form-warehouse-stocks';
 import { ItemAtributSection } from './items-form-atribut';
 import { ItemDistributorsEditor } from './items-form-distributors';
-import { ItemBranchesEditor } from './items-form-branches';
 import { ItemLainLainSection, ItemCustomSection } from './items-form-lainlain';
 import {
   loadCategoryOptions, loadUnitOptions, loadKindOptions,
@@ -38,7 +36,7 @@ import {
 } from './items-form-lookups';
 
 type Mode = 'cepat' | 'lengkap';
-type SectionId = 'identitas' | 'klasifikasi' | 'atribut' | 'inventory' | 'lokasi' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'distributor' | 'branch' | 'catatan' | 'lainlain' | 'custom';
+type SectionId = 'identitas' | 'klasifikasi' | 'atribut' | 'inventory' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier' | 'distributor' | 'catatan' | 'lainlain' | 'custom';
 
 const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
 
@@ -70,14 +68,12 @@ export function ItemFormFields({
     { id: 'klasifikasi', label: 'Klasifikasi', available: true, hasError: !!(errors.categoryId || errors.unitId) },
     { id: 'atribut', label: 'Atribut', available: true, hasError: false },
     { id: 'inventory', label: 'Inventory & Tracking', available: isStockable(data.itemType), hasError: false },
-    { id: 'lokasi', label: 'Lokasi', available: isStockable(data.itemType), hasError: false },
     { id: 'harga', label: 'Harga', available: true, hasError: false },
     { id: 'pajak', label: 'Pajak', available: true, hasError: false },
     { id: 'akuntansi', label: 'Akuntansi', available: true, hasError: accountError },
     { id: 'dimensi', label: 'Dimensi GL', available: true, hasError: false },
     { id: 'supplier', label: 'Supplier', available: true, hasError: false },
     { id: 'distributor', label: 'Distributor', available: true, hasError: false },
-    { id: 'branch', label: 'Branch', available: true, hasError: false },
     { id: 'catatan', label: 'Catatan', available: true, hasError: false },
     { id: 'lainlain', label: 'Lain-lain', available: true, hasError: false },
     { id: 'custom', label: 'Custom', available: true, hasError: false },
@@ -151,12 +147,6 @@ export function ItemFormFields({
     </Section>
   );
 
-  const renderLokasi = () => (
-    <Section title="Lokasi" hint="Penempatan item per Gudang + Lokasi (paritas MyERP+)">
-      <ItemLocationsEditor rows={data.locations} onChange={(rows) => onChange({ ...data, locations: rows })} />
-    </Section>
-  );
-
   const setTier = (arr: 'salePrices' | 'saleDiscounts', i: number, v: string) => {
     const next = [...data[arr]];
     next[i] = v;
@@ -208,9 +198,9 @@ export function ItemFormFields({
 
   const renderDimensi = () => (
     <Section title="Dimensi GL">
-      <LookupField id="if-branch" label="Cabang" value={data.branchId} onPick={(v) => set('branchId', v)} loader={loadBranchOptions} placeholder="Pilih cabang…" initialLabel={data.branchLabel} />
-      <LookupField id="if-wh" label="Gudang Default" value={data.defaultWarehouseId} onPick={(v) => set('defaultWarehouseId', v)} loader={loadWarehouseOptions} placeholder="Pilih gudang…" initialLabel={data.defaultWarehouseLabel} />
-      <LookupField id="if-loc" label="Lokasi Default" value={data.defaultLocationId} onPick={(v) => set('defaultLocationId', v)} loader={loadLocationOptions} placeholder="Pilih lokasi…" initialLabel={data.defaultLocationLabel} />
+      <MultiLookupField id="if-branch" label="Cabang" values={data.branchIds} labels={data.branchLabels} onChange={(ids, labels) => onChange({ ...data, branchIds: ids, branchLabels: labels })} loader={loadBranchOptions} placeholder="Pilih cabang…" />
+      <MultiLookupField id="if-wh" label="Gudang Default" values={data.defaultWarehouseIds} labels={data.defaultWarehouseLabels} onChange={(ids, labels) => onChange({ ...data, defaultWarehouseIds: ids, defaultWarehouseLabels: labels })} loader={loadWarehouseOptions} placeholder="Pilih gudang…" />
+      <MultiLookupField id="if-loc" label="Lokasi Default" values={data.defaultLocationIds} labels={data.defaultLocationLabels} onChange={(ids, labels) => onChange({ ...data, defaultLocationIds: ids, defaultLocationLabels: labels })} loader={loadLocationOptions} placeholder="Pilih lokasi…" />
       <LookupField id="if-div" label="Divisi" value={data.divisionId} onPick={(v) => set('divisionId', v)} loader={loadDivisionOptions} placeholder="Pilih divisi…" initialLabel={data.divisionLabel} />
       <LookupField id="if-subdiv" label="Sub Divisi" value={data.subdivisionId} onPick={(v) => set('subdivisionId', v)} loader={loadSubDivisionOptions} placeholder="Pilih sub divisi…" initialLabel={data.subdivisionLabel} />
       <LookupField id="if-dept" label="Departemen" value={data.departmentId} onPick={(v) => set('departmentId', v)} loader={loadDepartmentOptions} placeholder="Pilih departemen…" initialLabel={data.departmentLabel} />
@@ -232,12 +222,6 @@ export function ItemFormFields({
     </Section>
   );
 
-  const renderBranch = () => (
-    <Section title="Branch" hint="Penempatan item per Cabang + Cost Center (paritas MyERP+)">
-      <ItemBranchesEditor rows={data.branches} onChange={(rows) => onChange({ ...data, branches: rows })} />
-    </Section>
-  );
-
   const renderCatatan = () => (
     <Section title="Catatan">
       <FormField label="Deskripsi" htmlFor="if-desc" className="col-span-2 grid-cols-[110px_1fr]">
@@ -250,9 +234,9 @@ export function ItemFormFields({
     identitas: renderIdentitas, klasifikasi: renderKlasifikasi,
     atribut: () => <ItemAtributSection data={data} onChange={onChange} />,
     inventory: renderInventory,
-    lokasi: renderLokasi, harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
+    harga: renderHarga, pajak: renderPajak, akuntansi: renderAkuntansi,
     dimensi: renderDimensi, supplier: renderSupplier, distributor: renderDistributor,
-    branch: renderBranch, catatan: renderCatatan,
+    catatan: renderCatatan,
     lainlain: () => <ItemLainLainSection data={data} onChange={onChange} />,
     custom: () => <ItemCustomSection data={data} onChange={onChange} />,
   };

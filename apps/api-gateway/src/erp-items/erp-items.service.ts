@@ -12,10 +12,10 @@ import { UpdateErpItemDto } from './dto/update-erp-item.dto';
 import {
   ITEM_INCLUDE,
   buildPriceRows,
-  buildLocationRows,
   buildDistributorRows,
-  buildBranchRows,
   buildWarehouseStockRows,
+  buildDimRows,
+  buildDimSync,
   buildFkData,
   buildDecimalData,
   buildItemMetadata,
@@ -66,6 +66,8 @@ export class ErpItemsService {
           isReturnable: dto.isReturnable ?? true,
           isMobile: dto.isMobile ?? false,
           ...buildFkData(dto as unknown as Record<string, unknown>),
+          // Multi-select GL dims: single columns mirror the first selection.
+          ...buildDimSync(dto),
           // salePrice cache = level-1 tier price (§2.32) — overrides client-sent salePrice.
           ...(deriveSalePriceFromTiers(dto.prices) !== undefined
             ? { salePrice: deriveSalePriceFromTiers(dto.prices) }
@@ -78,14 +80,17 @@ export class ErpItemsService {
           ...(buildPriceRows(dto.prices, actorId)
             ? { prices: { create: buildPriceRows(dto.prices, actorId) } }
             : {}),
-          ...(buildLocationRows(dto.locations, actorId)
-            ? { placements: { create: buildLocationRows(dto.locations, actorId) } }
+          ...(buildDimRows(dto.branchIds, 'branchId')
+            ? { dimBranches: { create: buildDimRows(dto.branchIds, 'branchId') } }
+            : {}),
+          ...(buildDimRows(dto.defaultWarehouseIds, 'warehouseId')
+            ? { dimWarehouses: { create: buildDimRows(dto.defaultWarehouseIds, 'warehouseId') } }
+            : {}),
+          ...(buildDimRows(dto.defaultLocationIds, 'locationId')
+            ? { dimLocations: { create: buildDimRows(dto.defaultLocationIds, 'locationId') } }
             : {}),
           ...(buildDistributorRows(dto.distributors, actorId)
             ? { distributors: { create: buildDistributorRows(dto.distributors, actorId) } }
-            : {}),
-          ...(buildBranchRows(dto.branches, actorId)
-            ? { branches: { create: buildBranchRows(dto.branches, actorId) } }
             : {}),
           ...(buildWarehouseStockRows(dto.warehouseStocks, actorId)
             ? { warehouseStocks: { create: buildWarehouseStockRows(dto.warehouseStocks, actorId) } }
@@ -225,6 +230,8 @@ export class ErpItemsService {
           isReturnable: dto.isReturnable,
           isMobile: dto.isMobile,
           ...buildFkData(dto as unknown as Record<string, unknown>),
+          // Multi-select GL dims: single columns mirror the first selection.
+          ...buildDimSync(dto),
           // salePrice cache = level-1 tier price (§2.32) — overrides client-sent salePrice.
           ...(deriveSalePriceFromTiers(dto.prices) !== undefined
             ? { salePrice: deriveSalePriceFromTiers(dto.prices) }
@@ -238,9 +245,6 @@ export class ErpItemsService {
           ...(dto.prices !== undefined
             ? { prices: { deleteMany: {}, create: buildPriceRows(dto.prices, actorId) } }
             : {}),
-          ...(dto.locations !== undefined
-            ? { placements: { deleteMany: {}, create: buildLocationRows(dto.locations, actorId) } }
-            : {}),
           ...(dto.distributors !== undefined
             ? {
                 distributors: {
@@ -249,14 +253,30 @@ export class ErpItemsService {
                 },
               }
             : {}),
-          ...(dto.branches !== undefined
-            ? { branches: { deleteMany: {}, create: buildBranchRows(dto.branches, actorId) } }
-            : {}),
           ...(dto.warehouseStocks !== undefined
             ? {
                 warehouseStocks: {
                   deleteMany: {},
                   create: buildWarehouseStockRows(dto.warehouseStocks, actorId),
+                },
+              }
+            : {}),
+          ...(dto.branchIds !== undefined
+            ? { dimBranches: { deleteMany: {}, create: buildDimRows(dto.branchIds, 'branchId') } }
+            : {}),
+          ...(dto.defaultWarehouseIds !== undefined
+            ? {
+                dimWarehouses: {
+                  deleteMany: {},
+                  create: buildDimRows(dto.defaultWarehouseIds, 'warehouseId'),
+                },
+              }
+            : {}),
+          ...(dto.defaultLocationIds !== undefined
+            ? {
+                dimLocations: {
+                  deleteMany: {},
+                  create: buildDimRows(dto.defaultLocationIds, 'locationId'),
                 },
               }
             : {}),

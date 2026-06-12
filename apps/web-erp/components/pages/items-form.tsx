@@ -24,6 +24,37 @@ export type {
 const refLabel = (r?: { code?: string; name?: string } | null) =>
   r ? (r.code ? `${r.code} — ${r.name ?? ''}` : r.name ?? '') : '';
 
+/**
+ * Multi-select GL dims (Cabang / Gudang Default / Lokasi Default): build the
+ * id arrays + label maps from the dim rows, falling back to the legacy single
+ * column when an item predates the junction tables.
+ */
+function dimFromItem(item: ErpItem) {
+  const collect = <T,>(
+    rows: T[] | undefined,
+    getId: (r: T) => string,
+    getRef: (r: T) => { code?: string; name?: string } | null | undefined,
+    fallbackId?: string | null,
+    fallbackRef?: { code?: string; name?: string } | null,
+  ): { ids: string[]; labels: Record<string, string> } => {
+    if (rows?.length) {
+      const labels: Record<string, string> = {};
+      rows.forEach((r) => { labels[getId(r)] = refLabel(getRef(r)); });
+      return { ids: rows.map(getId), labels };
+    }
+    if (fallbackId) return { ids: [fallbackId], labels: { [fallbackId]: refLabel(fallbackRef) } };
+    return { ids: [], labels: {} };
+  };
+  const b = collect(item.dimBranches, (r) => r.branchId, (r) => r.branch, item.branchId, item.branch);
+  const w = collect(item.dimWarehouses, (r) => r.warehouseId, (r) => r.warehouse, item.defaultWarehouseId, item.defaultWarehouse);
+  const l = collect(item.dimLocations, (r) => r.locationId, (r) => r.location, item.defaultLocationId, item.defaultLocation);
+  return {
+    branchIds: b.ids, branchLabels: b.labels,
+    defaultWarehouseIds: w.ids, defaultWarehouseLabels: w.labels,
+    defaultLocationIds: l.ids, defaultLocationLabels: l.labels,
+  };
+}
+
 /** Numeric API fields (Decimal) may arrive as number or string — form state is string. */
 const numStr = (v: unknown): string => (v == null ? '' : String(v));
 
@@ -67,9 +98,7 @@ export function fromItem(item: ErpItem): ItemFormData {
     subdivisionId: item.subdivisionId ?? '', subdivisionLabel: refLabel(item.subdivision),
     departmentId: item.departmentId ?? '', departmentLabel: refLabel(item.department),
     subDepartmentId: item.subDepartmentId ?? '', subDepartmentLabel: refLabel(item.subDepartment),
-    branchId: item.branchId ?? '', branchLabel: refLabel(item.branch),
-    defaultLocationId: item.defaultLocationId ?? '', defaultLocationLabel: refLabel(item.defaultLocation),
-    defaultWarehouseId: item.defaultWarehouseId ?? '', defaultWarehouseLabel: refLabel(item.defaultWarehouse),
+    ...dimFromItem(item),
     projectId: item.projectId ?? '', projectLabel: refLabel(item.project),
     costCenterId: item.costCenterId ?? '', costCenterLabel: refLabel(item.costCenter),
     standardCost: numStr(item.standardCost),
@@ -167,9 +196,9 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
     subdivisionId: orNull(f.subdivisionId),
     departmentId: orNull(f.departmentId),
     subDepartmentId: orNull(f.subDepartmentId),
-    branchId: orNull(f.branchId),
-    defaultLocationId: orNull(f.defaultLocationId),
-    defaultWarehouseId: orNull(f.defaultWarehouseId),
+    branchIds: f.branchIds,
+    defaultWarehouseIds: f.defaultWarehouseIds,
+    defaultLocationIds: f.defaultLocationIds,
     projectId: orNull(f.projectId),
     costCenterId: orNull(f.costCenterId),
     standardCost: orUndef(f.standardCost),

@@ -63,6 +63,18 @@ export const ITEM_INCLUDE = {
     },
     orderBy: { id: 'asc' },
   },
+  dimBranches: {
+    select: { branchId: true, branch: { select: { id: true, code: true, name: true } } },
+    orderBy: { id: 'asc' },
+  },
+  dimWarehouses: {
+    select: { warehouseId: true, warehouse: { select: { id: true, code: true, name: true } } },
+    orderBy: { id: 'asc' },
+  },
+  dimLocations: {
+    select: { locationId: true, location: { select: { id: true, code: true, name: true } } },
+    orderBy: { id: 'asc' },
+  },
 } as const;
 
 // FK fields where empty string or null = clear the relation; non-empty = BigInt.
@@ -221,6 +233,44 @@ export function buildWarehouseStockRows(rows: WarehouseStockInput[] | undefined,
     }));
 }
 
+/** Build junction rows for one multi-select GL dimension (md_item_dim_*). */
+export function buildDimRows<K extends string>(
+  ids: string[] | undefined,
+  key: K,
+): Record<K, bigint>[] | undefined {
+  if (!ids) return undefined;
+  const unique = Array.from(new Set(ids.filter((v) => v !== '')));
+  return unique.map((v) => ({ [key]: BigInt(v) }) as Record<K, bigint>);
+}
+
+/**
+ * Sync the denormalized single dimension columns (branchId / defaultWarehouseId /
+ * defaultLocationId) to the FIRST id of each multi-select array, when that array
+ * was sent. Empty array clears the column. Spread AFTER buildFkData so the
+ * arrays win over any stale scalar the client may still send.
+ */
+export function buildDimSync(dto: {
+  branchIds?: string[];
+  defaultWarehouseIds?: string[];
+  defaultLocationIds?: string[];
+}): Record<string, bigint | null> {
+  const out: Record<string, bigint | null> = {};
+  const first = (ids: string[]) => ids.find((v) => v !== '');
+  if (dto.branchIds !== undefined) {
+    const f = first(dto.branchIds);
+    out.branchId = f ? BigInt(f) : null;
+  }
+  if (dto.defaultWarehouseIds !== undefined) {
+    const f = first(dto.defaultWarehouseIds);
+    out.defaultWarehouseId = f ? BigInt(f) : null;
+  }
+  if (dto.defaultLocationIds !== undefined) {
+    const f = first(dto.defaultLocationIds);
+    out.defaultLocationId = f ? BigInt(f) : null;
+  }
+  return out;
+}
+
 function toFkOrNull(v: string | null | undefined): bigint | null | undefined {
   if (v === undefined) return undefined;
   if (v === null || v === '') return null;
@@ -297,8 +347,19 @@ export function buildItemMetadata(
 
 // Maps Prisma field names to the frontend ErpItem interface shape
 export function mapItem(item: any) {
-  const { type, baseUnit, baseUnitId, salePrice, prices, distributors, warehouseStocks, ...rest } =
-    item;
+  const {
+    type,
+    baseUnit,
+    baseUnitId,
+    salePrice,
+    prices,
+    distributors,
+    warehouseStocks,
+    dimBranches,
+    dimWarehouses,
+    dimLocations,
+    ...rest
+  } = item;
   return {
     ...rest,
     itemType: type,
@@ -321,6 +382,18 @@ export function mapItem(item: any) {
       maxStock: String(w.maxStock),
       minOrderQty: String(w.minOrderQty),
       warehouse: w.warehouse ?? null,
+    })),
+    dimBranches: (dimBranches ?? []).map((d: any) => ({
+      branchId: String(d.branchId),
+      branch: d.branch ?? null,
+    })),
+    dimWarehouses: (dimWarehouses ?? []).map((d: any) => ({
+      warehouseId: String(d.warehouseId),
+      warehouse: d.warehouse ?? null,
+    })),
+    dimLocations: (dimLocations ?? []).map((d: any) => ({
+      locationId: String(d.locationId),
+      location: d.location ?? null,
     })),
   };
 }

@@ -59,9 +59,10 @@ export interface ItemFormData {
   subdivisionId: string; subdivisionLabel?: string;
   departmentId: string; departmentLabel?: string;
   subDepartmentId: string; subDepartmentLabel?: string;
-  branchId: string; branchLabel?: string;
-  defaultLocationId: string; defaultLocationLabel?: string;
-  defaultWarehouseId: string; defaultWarehouseLabel?: string;
+  // Multi-select dims (Cabang / Gudang Default / Lokasi Default) + label maps for chips
+  branchIds: string[]; branchLabels: Record<string, string>;
+  defaultWarehouseIds: string[]; defaultWarehouseLabels: Record<string, string>;
+  defaultLocationIds: string[]; defaultLocationLabels: Record<string, string>;
   projectId: string; projectLabel?: string;
   costCenterId: string; costCenterLabel?: string;
 
@@ -130,7 +131,10 @@ export const defaultItemForm = (): ItemFormData => ({
   brandId: '', materialId: '', sizeId: '', colorId: '', sectionId: '',
   designerId: '', nozzleId: '', oemId: '', vendorId: '', fieldUnitId: '', fieldUnitConversionFactor: '1',
   divisionId: '', subdivisionId: '', departmentId: '', subDepartmentId: '',
-  branchId: '', defaultLocationId: '', defaultWarehouseId: '', projectId: '', costCenterId: '',
+  branchIds: [], branchLabels: {},
+  defaultWarehouseIds: [], defaultWarehouseLabels: {},
+  defaultLocationIds: [], defaultLocationLabels: {},
+  projectId: '', costCenterId: '',
   standardCost: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',
   salePrices: Array<string>(10).fill(''), saleDiscounts: Array<string>(10).fill(''),
   distributors: [],

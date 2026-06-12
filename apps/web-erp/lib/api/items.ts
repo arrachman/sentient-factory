@@ -104,6 +104,11 @@ export interface ErpItem {
   projectId?: string | null;
   costCenterId?: string | null;
 
+  // Multi-select GL dimensions (md_item_dim_*; single ids above mirror the first selection)
+  dimBranches?: { branchId: string; branch?: RelationRef | null }[];
+  dimWarehouses?: { warehouseId: string; warehouse?: RelationRef | null }[];
+  dimLocations?: { locationId: string; location?: RelationRef | null }[];
+
   // Costs & prices
   standardCost?: string | null;      // "Hpp Update" (manual HPP)
   averageCost?: string | null;       // "Hpp rata-rata" (computed, readonly)
@@ -233,6 +238,11 @@ export interface CreateItemPayload {
   defaultWarehouseId?: string | null;
   projectId?: string | null;
   costCenterId?: string | null;
+
+  // Multi-select GL dimensions; backend mirrors single ids to the first entry
+  branchIds?: string[];
+  defaultWarehouseIds?: string[];
+  defaultLocationIds?: string[];
 
   standardCost?: string;
   purchasePrice?: string;
