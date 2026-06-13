@@ -1,0 +1,287 @@
+'use client';
+
+import * as React from 'react';
+import { FormField } from '@/components/ui/form-field';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { BooleanRadio } from '@/components/ui/radio-group';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { SearchSelect } from '@/components/molecules/search-select';
+import { NumInput } from '@/components/molecules/num-input';
+import { PartnerContactsEditor } from '@/components/organisms/partner-contacts-editor';
+import { PartnerAddressesEditor } from '@/components/organisms/partner-addresses-editor';
+import { MultiLookupField } from './items-form-parts';
+import {
+  loadBranchOptions,
+  loadWarehouseOptions,
+  loadLocationOptions,
+  loadCustomerCategoryOptions,
+  loadSupplierCategoryOptions,
+  loadSalesmanCategoryOptions,
+} from './items-form-lookups';
+import { loadPaymentTermOptions } from './pur-form-lookups';
+import { loadReceivableAccounts, loadPayableAccounts, loadCurrencyOptions } from './partners-lookups';
+import type { FormErrors } from '@/lib/form-validation';
+import type { PartnerForm, PartnerTypeKey } from './partners-form-types';
+
+export function PartnerFormFields({
+  data,
+  onChange,
+  errors = {},
+}: {
+  data: PartnerForm;
+  onChange: (d: PartnerForm) => void;
+  errors?: FormErrors<PartnerForm>;
+}) {
+  const set = (k: keyof PartnerForm, v: string | boolean) =>
+    onChange({ ...data, [k]: v });
+
+  const showCustomerFields = data.partnerType === 'CUSTOMER';
+  const showSupplierFields = data.partnerType === 'SUPPLIER';
+  const showSalesmanFields = data.partnerType === 'SALESMAN';
+
+  const savedHint = (
+    <div className="p-4 text-[12.5px] text-muted-foreground">
+      Simpan partner terlebih dahulu untuk menambah kontak &amp; alamat.
+    </div>
+  );
+
+  return (
+    <Tabs defaultValue="umum">
+      <TabsList>
+        <TabsTrigger value="umum">Umum</TabsTrigger>
+        <TabsTrigger value="transaksi">Transaksi</TabsTrigger>
+        <TabsTrigger value="kontak">Kontak</TabsTrigger>
+        <TabsTrigger value="alamat">Alamat</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="umum">
+        <div className="p-4">
+          <FormField label="Kode" htmlFor="pf-code" required error={errors.code}>
+            <Input
+              id="pf-code"
+              value={data.code}
+              onChange={(e) => set('code', e.target.value)}
+              placeholder="CUST-001"
+              aria-invalid={!!errors.code}
+            />
+          </FormField>
+          <FormField label="Nama" htmlFor="pf-name" required error={errors.name}>
+            <Input
+              id="pf-name"
+              value={data.name}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="PT Maju Bersama"
+              aria-invalid={!!errors.name}
+            />
+          </FormField>
+          <FormField label="Tipe" htmlFor="pf-type">
+            <Select
+              value={data.partnerType}
+              onValueChange={(v) => set('partnerType', v as PartnerTypeKey)}
+            >
+              <SelectTrigger id="pf-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CUSTOMER">Customer</SelectItem>
+                <SelectItem value="SUPPLIER">Supplier</SelectItem>
+                <SelectItem value="SALESMAN">Salesman</SelectItem>
+              </SelectContent>
+            </Select>
+          </FormField>
+          {showCustomerFields && (
+            <FormField label="Kategori Customer" htmlFor="pf-cust-cat">
+              <SearchSelect
+                id="pf-cust-cat"
+                value={data.customerCategoryId}
+                onValueChange={(v) => set('customerCategoryId', v)}
+                placeholder="Pilih kategori customer…"
+                loadOptions={loadCustomerCategoryOptions}
+                initialLabel={data.customerCategoryLabel}
+                title="Kategori Customer"
+              />
+            </FormField>
+          )}
+          {showSupplierFields && (
+            <FormField label="Kategori Supplier" htmlFor="pf-supp-cat">
+              <SearchSelect
+                id="pf-supp-cat"
+                value={data.supplierCategoryId}
+                onValueChange={(v) => set('supplierCategoryId', v)}
+                placeholder="Pilih kategori supplier…"
+                loadOptions={loadSupplierCategoryOptions}
+                initialLabel={data.supplierCategoryLabel}
+                title="Kategori Supplier"
+              />
+            </FormField>
+          )}
+          {showSalesmanFields && (
+            <FormField label="Kategori Salesman" htmlFor="pf-sales-cat">
+              <SearchSelect
+                id="pf-sales-cat"
+                value={data.salesmanCategoryId}
+                onValueChange={(v) => set('salesmanCategoryId', v)}
+                placeholder="Pilih kategori salesman…"
+                loadOptions={loadSalesmanCategoryOptions}
+                initialLabel={data.salesmanCategoryLabel}
+                title="Kategori Salesman"
+              />
+            </FormField>
+          )}
+          <FormField label="NPWP" htmlFor="pf-tax">
+            <Input
+              id="pf-tax"
+              value={data.taxNumber}
+              onChange={(e) => set('taxNumber', e.target.value)}
+              placeholder="01.234.567.8-901.000"
+            />
+          </FormField>
+          <MultiLookupField
+            id="pf-branch"
+            label="Cabang"
+            values={data.branchIds}
+            labels={data.branchLabels}
+            onChange={(ids, labels) => onChange({ ...data, branchIds: ids, branchLabels: labels })}
+            loader={loadBranchOptions}
+            placeholder="Pilih cabang…"
+          />
+          <MultiLookupField
+            id="pf-warehouse"
+            label="Gudang"
+            values={data.warehouseIds}
+            labels={data.warehouseLabels}
+            onChange={(ids, labels) => onChange({ ...data, warehouseIds: ids, warehouseLabels: labels })}
+            loader={loadWarehouseOptions}
+            placeholder="Pilih gudang…"
+          />
+          <MultiLookupField
+            id="pf-location"
+            label="Lokasi"
+            values={data.locationIds}
+            labels={data.locationLabels}
+            onChange={(ids, labels) => onChange({ ...data, locationIds: ids, locationLabels: labels })}
+            loader={loadLocationOptions}
+            placeholder="Pilih lokasi…"
+          />
+          <FormField label="Status" htmlFor="pf-active">
+            <BooleanRadio
+              id="pf-active"
+              value={data.isActive}
+              onValueChange={(v) => set('isActive', v)}
+            />
+          </FormField>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="transaksi">
+        <div className="p-4">
+          <FormField label="Uang" htmlFor="pf-currency">
+            <SearchSelect
+              id="pf-currency"
+              value={data.currencyId}
+              onValueChange={(v) => set('currencyId', v)}
+              placeholder="Pilih mata uang…"
+              loadOptions={loadCurrencyOptions}
+              initialLabel={data.currencyLabel}
+              title="Mata Uang"
+            />
+          </FormField>
+
+          <div className="mt-2 mb-1 text-[13px] font-semibold text-orange-500">Pembelian</div>
+          <div className="grid grid-cols-2 gap-x-6">
+            <FormField label="Termin" htmlFor="pf-pur-term">
+              <SearchSelect
+                id="pf-pur-term"
+                value={data.purchaseTermId}
+                onValueChange={(v) => set('purchaseTermId', v)}
+                placeholder="Pilih termin pembelian…"
+                loadOptions={loadPaymentTermOptions}
+                initialLabel={data.purchaseTermLabel}
+                title="Termin Pembelian"
+              />
+            </FormField>
+            <FormField label="Batas Hutang" htmlFor="pf-ap-limit">
+              <NumInput
+                id="pf-ap-limit"
+                value={data.apCreditLimit}
+                onChange={(v) => set('apCreditLimit', v)}
+                decimals={2}
+                placeholder="0,00"
+              />
+            </FormField>
+            <FormField label="Rek. Hutang" htmlFor="pf-pay-acct">
+              <SearchSelect
+                id="pf-pay-acct"
+                value={data.payableAccountId}
+                onValueChange={(v) => set('payableAccountId', v)}
+                placeholder="Cari akun hutang…"
+                loadOptions={loadPayableAccounts}
+                initialLabel={data.payableAccountLabel}
+                title="Akun Hutang"
+              />
+            </FormField>
+          </div>
+
+          <div className="mt-2 mb-1 text-[13px] font-semibold text-orange-500">Penjualan</div>
+          <div className="grid grid-cols-2 gap-x-6">
+            <FormField label="Termin" htmlFor="pf-sale-term">
+              <SearchSelect
+                id="pf-sale-term"
+                value={data.saleTermId}
+                onValueChange={(v) => set('saleTermId', v)}
+                placeholder="Pilih termin penjualan…"
+                loadOptions={loadPaymentTermOptions}
+                initialLabel={data.saleTermLabel}
+                title="Termin Penjualan"
+              />
+            </FormField>
+            <FormField label="Batas Piutang" htmlFor="pf-ar-limit">
+              <NumInput
+                id="pf-ar-limit"
+                value={data.arCreditLimit}
+                onChange={(v) => set('arCreditLimit', v)}
+                decimals={2}
+                placeholder="0,00"
+              />
+            </FormField>
+            <FormField label="Rek. Piutang" htmlFor="pf-recv-acct">
+              <SearchSelect
+                id="pf-recv-acct"
+                value={data.receivableAccountId}
+                onValueChange={(v) => set('receivableAccountId', v)}
+                placeholder="Cari akun piutang…"
+                loadOptions={loadReceivableAccounts}
+                initialLabel={data.receivableAccountLabel}
+                title="Akun Piutang"
+              />
+            </FormField>
+            <FormField label="Tingkat Harga Jual" htmlFor="pf-price-tier">
+              <NumInput
+                id="pf-price-tier"
+                value={data.salesPriceTier}
+                onChange={(v) => set('salesPriceTier', v)}
+                decimals={0}
+                placeholder="1"
+              />
+            </FormField>
+          </div>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="kontak">
+        {data.id ? <PartnerContactsEditor partnerId={data.id} /> : savedHint}
+      </TabsContent>
+
+      <TabsContent value="alamat">
+        {data.id ? <PartnerAddressesEditor partnerId={data.id} /> : savedHint}
+      </TabsContent>
+    </Tabs>
+  );
+}

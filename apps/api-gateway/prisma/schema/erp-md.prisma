@@ -540,6 +540,7 @@ model ErpPartner {
   apCreditLimit       Decimal?  @map("ap_credit_limit") @db.Decimal(19, 4)
   saleTermId          BigInt?   @map("sale_term_id")
   purchaseTermId      BigInt?   @map("purchase_term_id")
+  salesPriceTier      Int?      @default(1) @map("sales_price_tier")
   salesmanId          BigInt?   @map("salesman_id")
   commissionRate      Decimal?  @map("commission_rate") @db.Decimal(9, 4)
   branchId            BigInt?   @map("branch_id")

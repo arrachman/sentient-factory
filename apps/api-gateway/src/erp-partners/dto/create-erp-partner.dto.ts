@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateErpPartnerDto {
   @ApiProperty({ example: 'CUST-001', description: 'Unique partner code' })
@@ -114,7 +123,12 @@ export class CreateErpPartnerDto {
   @IsString()
   apCreditLimit?: string | null;
 
-  @ApiPropertyOptional({ example: 1, description: 'Tingkat harga jual 1–10', minimum: 1, maximum: 10 })
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Tingkat harga jual 1–10',
+    minimum: 1,
+    maximum: 10,
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

@@ -2,7 +2,14 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-const SORTABLE_FIELDS = ['code', 'name', 'isCustomer', 'isSupplier', 'isActive', 'createdAt'] as const;
+const SORTABLE_FIELDS = [
+  'code',
+  'name',
+  'isCustomer',
+  'isSupplier',
+  'isActive',
+  'createdAt',
+] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
 export class QueryErpPartnerDto {

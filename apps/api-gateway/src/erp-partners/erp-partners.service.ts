@@ -279,11 +279,7 @@ export class ErpPartnersService {
           : null
         : undefined;
     const salesmanBigInt =
-      dto.salesmanId !== undefined
-        ? dto.salesmanId
-          ? BigInt(dto.salesmanId)
-          : null
-        : undefined;
+      dto.salesmanId !== undefined ? (dto.salesmanId ? BigInt(dto.salesmanId) : null) : undefined;
     const receivableBigInt =
       dto.receivableAccountId !== undefined
         ? dto.receivableAccountId
