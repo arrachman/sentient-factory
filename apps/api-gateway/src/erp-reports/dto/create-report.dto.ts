@@ -6,5 +6,7 @@ export class CreateErpReportDto {
   @IsString() @IsNotEmpty() module!: string;
   @IsString() @IsOptional() description?: string;
   @IsObject() @IsOptional() templateJson?: Record<string, unknown>;
+  // Binds this template to a report (`<module>.<report>`, e.g. `fin.trial-balance`).
+  @IsString() @IsOptional() reportKey?: string;
   @IsBoolean() @IsOptional() isActive?: boolean;
 }

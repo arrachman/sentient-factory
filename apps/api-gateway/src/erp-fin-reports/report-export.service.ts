@@ -3,6 +3,8 @@ import { ReportDocument, ReportFormat } from './report-types';
 import { renderXlsx } from './report-export.xlsx';
 import { renderPdf } from './report-export.pdf';
 import { renderDoc } from './report-export.doc';
+import { ReportEngineService } from '../erp-report-engine/report-engine.service';
+import { finReportColumns, finReportContext } from './report-engine-adapter';
 
 export interface RenderedReport {
   buffer: Buffer;
@@ -12,6 +14,8 @@ export interface RenderedReport {
 
 @Injectable()
 export class ReportExportService {
+  constructor(private readonly engine: ReportEngineService) {}
+
   async render(doc: ReportDocument, format: ReportFormat): Promise<RenderedReport> {
     switch (format) {
       case 'xlsx': {
@@ -24,7 +28,14 @@ export class ReportExportService {
         };
       }
       case 'pdf': {
-        const buffer = await renderPdf(doc);
+        // Template-driven render when a Report Designer template is bound to this
+        // report (`fin.<key>`); otherwise fall back to the built-in pdfkit layout.
+        const templated = await this.engine.renderReport(
+          `fin.${doc.key}`,
+          finReportColumns(doc),
+          finReportContext(doc),
+        );
+        const buffer = templated ?? (await renderPdf(doc));
         return { buffer, contentType: 'application/pdf', filename: `${doc.key}.pdf` };
       }
       case 'docx': {

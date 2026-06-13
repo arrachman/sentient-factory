@@ -9,6 +9,9 @@ model ErpRptTemplate {
   module      String    @map("module")
   description String?   @map("description")
   templateJson Json     @map("template_json")
+  // Binds a template to a report (`<module>.<report>`, e.g. `fin.trial-balance`).
+  // The matching active template drives that report's PDF; null = unbound (ad-hoc).
+  reportKey   String?   @map("report_key")
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -18,5 +21,6 @@ model ErpRptTemplate {
 
   @@index([module])
   @@index([isActive])
+  @@index([reportKey])
   @@map("rpt_templates")
 }
