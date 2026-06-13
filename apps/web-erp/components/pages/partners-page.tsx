@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * F3 Master Data — Partner page (Customer / Supplier / Salesman).
+ * F3 Master Data — Partner page (Customer / Supplier).
  * Lists md_partners; supports create, edit, delete, bulk actions.
  * Atomic tier: Page.
  */
@@ -17,8 +17,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SearchSelect } from '@/components/molecules/search-select';
 import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
+import { PartnerContactsEditor } from '@/components/organisms/partner-contacts-editor';
+import { PartnerAddressesEditor } from '@/components/organisms/partner-addresses-editor';
+import { MultiLookupField } from './items-form-parts';
+import { loadBranchOptions, loadWarehouseOptions, loadLocationOptions } from './items-form-lookups';
 import {
   listPartners,
   createPartner,
@@ -60,12 +65,11 @@ const accountLabel = (acct?: { code: string; name: string } | null) =>
 
 // ─── Partner type helpers ─────────────────────────────────────────────────────
 
-type PartnerTypeKey = 'CUSTOMER' | 'SUPPLIER' | 'BOTH' | 'SALESMAN';
+type PartnerTypeKey = 'CUSTOMER' | 'SUPPLIER' | 'BOTH';
 
 function resolvePartnerType(p: ErpPartner): PartnerTypeKey {
   if (p.isCustomer && p.isSupplier) return 'BOTH';
   if (p.isSupplier) return 'SUPPLIER';
-  if (p.isSalesman) return 'SALESMAN';
   return 'CUSTOMER';
 }
 
@@ -73,13 +77,13 @@ function partnerTypeLabel(p: ErpPartner): string {
   const types: string[] = [];
   if (p.isCustomer) types.push('Customer');
   if (p.isSupplier) types.push('Supplier');
-  if (p.isSalesman) types.push('Salesman');
   return types.length > 0 ? types.join(', ') : '—';
 }
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
 interface PartnerForm {
+  id: string; // '' when creating; set when editing — needed for contact/address sub-resources
   code: string;
   name: string;
   partnerType: PartnerTypeKey;
@@ -88,10 +92,17 @@ interface PartnerForm {
   receivableAccountLabel: string;
   payableAccountId: string;
   payableAccountLabel: string;
+  branchIds: string[];
+  branchLabels: Record<string, string>;
+  warehouseIds: string[];
+  warehouseLabels: Record<string, string>;
+  locationIds: string[];
+  locationLabels: Record<string, string>;
   isActive: boolean;
 }
 
 const defaultForm = (): PartnerForm => ({
+  id: '',
   code: '',
   name: '',
   partnerType: 'CUSTOMER',
@@ -100,30 +111,67 @@ const defaultForm = (): PartnerForm => ({
   receivableAccountLabel: '',
   payableAccountId: '',
   payableAccountLabel: '',
+  branchIds: [],
+  branchLabels: {},
+  warehouseIds: [],
+  warehouseLabels: {},
+  locationIds: [],
+  locationLabels: {},
   isActive: true,
 });
 
-const fromRecord = (p: ErpPartner): PartnerForm => ({
-  code: p.code,
-  name: p.name,
-  partnerType: resolvePartnerType(p),
-  taxNumber: p.taxNumber ?? '',
-  receivableAccountId: p.receivableAccountId ?? '',
-  receivableAccountLabel: accountLabel(p.receivableAccount),
-  payableAccountId: p.payableAccountId ?? '',
-  payableAccountLabel: accountLabel(p.payableAccount),
-  isActive: p.isActive,
-});
+// Build the id array + {id: name} label map from a partner's dimension rows.
+function dimFromRows<T>(
+  rows: T[] | undefined,
+  getId: (r: T) => string,
+  getRef: (r: T) => { name: string } | null | undefined,
+): { ids: string[]; labels: Record<string, string> } {
+  const ids: string[] = [];
+  const labels: Record<string, string> = {};
+  (rows ?? []).forEach((r) => {
+    const id = getId(r);
+    ids.push(id);
+    const ref = getRef(r);
+    if (ref) labels[id] = ref.name;
+  });
+  return { ids, labels };
+}
+
+const fromRecord = (p: ErpPartner): PartnerForm => {
+  const b = dimFromRows(p.dimBranches, (r) => r.branchId, (r) => r.branch);
+  const w = dimFromRows(p.dimWarehouses, (r) => r.warehouseId, (r) => r.warehouse);
+  const l = dimFromRows(p.dimLocations, (r) => r.locationId, (r) => r.location);
+  return {
+    id: p.id,
+    code: p.code,
+    name: p.name,
+    partnerType: resolvePartnerType(p),
+    taxNumber: p.taxNumber ?? '',
+    receivableAccountId: p.receivableAccountId ?? '',
+    receivableAccountLabel: accountLabel(p.receivableAccount),
+    payableAccountId: p.payableAccountId ?? '',
+    payableAccountLabel: accountLabel(p.payableAccount),
+    branchIds: b.ids,
+    branchLabels: b.labels,
+    warehouseIds: w.ids,
+    warehouseLabels: w.labels,
+    locationIds: l.ids,
+    locationLabels: l.labels,
+    isActive: p.isActive,
+  };
+};
 
 const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   code: f.code,
   name: f.name,
   isCustomer: f.partnerType === 'CUSTOMER' || f.partnerType === 'BOTH',
   isSupplier: f.partnerType === 'SUPPLIER' || f.partnerType === 'BOTH',
-  isSalesman: f.partnerType === 'SALESMAN',
   taxNumber: f.taxNumber || undefined,
   receivableAccountId: f.receivableAccountId || null,
   payableAccountId: f.payableAccountId || null,
+  branchIds: f.branchIds,
+  warehouseIds: f.warehouseIds,
+  locationIds: f.locationIds,
   isActive: f.isActive,
 });
 
@@ -150,9 +198,23 @@ function PartnerFormFields({
   const showSupplierFields =
     data.partnerType === 'SUPPLIER' || data.partnerType === 'BOTH';
 
+  const savedHint = (
+    <div className="p-4 text-[12.5px] text-muted-foreground">
+      Simpan partner terlebih dahulu untuk menambah kontak &amp; alamat.
+    </div>
+  );
+
   return (
-    <div className="p-4">
-      <FormField label="Kode" htmlFor="pf-code" required error={errors.code}>
+    <Tabs defaultValue="umum">
+      <TabsList>
+        <TabsTrigger value="umum">Umum</TabsTrigger>
+        <TabsTrigger value="kontak">Kontak</TabsTrigger>
+        <TabsTrigger value="alamat">Alamat</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="umum">
+        <div className="p-4">
+          <FormField label="Kode" htmlFor="pf-code" required error={errors.code}>
         <Input
           id="pf-code"
           value={data.code}
@@ -182,7 +244,6 @@ function PartnerFormFields({
             <SelectItem value="CUSTOMER">Customer</SelectItem>
             <SelectItem value="SUPPLIER">Supplier</SelectItem>
             <SelectItem value="BOTH">Customer &amp; Supplier</SelectItem>
-            <SelectItem value="SALESMAN">Salesman</SelectItem>
           </SelectContent>
         </Select>
       </FormField>
@@ -220,14 +281,51 @@ function PartnerFormFields({
           />
         </FormField>
       )}
-      <FormField label="Status" htmlFor="pf-active">
-        <BooleanRadio
-          id="pf-active"
-          value={data.isActive}
-          onValueChange={(v) => set('isActive', v)}
-        />
-      </FormField>
-    </div>
+          <MultiLookupField
+            id="pf-branch"
+            label="Cabang"
+            values={data.branchIds}
+            labels={data.branchLabels}
+            onChange={(ids, labels) => onChange({ ...data, branchIds: ids, branchLabels: labels })}
+            loader={loadBranchOptions}
+            placeholder="Pilih cabang…"
+          />
+          <MultiLookupField
+            id="pf-warehouse"
+            label="Gudang"
+            values={data.warehouseIds}
+            labels={data.warehouseLabels}
+            onChange={(ids, labels) => onChange({ ...data, warehouseIds: ids, warehouseLabels: labels })}
+            loader={loadWarehouseOptions}
+            placeholder="Pilih gudang…"
+          />
+          <MultiLookupField
+            id="pf-location"
+            label="Lokasi"
+            values={data.locationIds}
+            labels={data.locationLabels}
+            onChange={(ids, labels) => onChange({ ...data, locationIds: ids, locationLabels: labels })}
+            loader={loadLocationOptions}
+            placeholder="Pilih lokasi…"
+          />
+          <FormField label="Status" htmlFor="pf-active">
+            <BooleanRadio
+              id="pf-active"
+              value={data.isActive}
+              onValueChange={(v) => set('isActive', v)}
+            />
+          </FormField>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="kontak">
+        {data.id ? <PartnerContactsEditor partnerId={data.id} /> : savedHint}
+      </TabsContent>
+
+      <TabsContent value="alamat">
+        {data.id ? <PartnerAddressesEditor partnerId={data.id} /> : savedHint}
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -291,6 +389,7 @@ export function ErpPartnersPage() {
       toPayload={toPayload}
       FormFields={PartnerFormFields}
       validate={validatePartner}
+      modalSize="lg"
       extraColumns={extraColumns}
       defaultSortBy="code"
       defaultSortDir="asc"

@@ -19,9 +19,10 @@ model ErpBranch {
 
   locations        ErpLocation[]
   userBranchAccess ErpUserBranchAccess[]
-  partners         ErpPartner[]
-  items            ErpItem[]             @relation("ItemBranch")
-  itemDimBranches  ErpItemDimBranch[]    @relation("ItemDimBranchBranch")
+  partners            ErpPartner[]
+  items               ErpItem[]              @relation("ItemBranch")
+  itemDimBranches     ErpItemDimBranch[]     @relation("ItemDimBranchBranch")
+  partnerDimBranches  ErpPartnerDimBranch[]  @relation("PartnerDimBranchBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -48,8 +49,9 @@ model ErpLocation {
   branch             ErpBranch               @relation(fields: [branchId], references: [id])
   warehouses         ErpWarehouse[]
   userLocationAccess ErpUserLocationAccess[]
-  items              ErpItem[]               @relation("ItemDefaultLocation")
-  itemDimLocations   ErpItemDimLocation[]    @relation("ItemDimLocationLocation")
+  items                ErpItem[]                @relation("ItemDefaultLocation")
+  itemDimLocations     ErpItemDimLocation[]     @relation("ItemDimLocationLocation")
+  partnerDimLocations  ErpPartnerDimLocation[]  @relation("PartnerDimLocationLocation")
 
   @@index([branchId])
   @@index([legacyCode])
@@ -75,8 +77,9 @@ model ErpWarehouse {
   userWarehouseAccess ErpUserWarehouseAccess[]
   items               ErpItem[]                @relation("ItemDefaultWarehouse")
   storageBins         ErpStorageBin[]          @relation("WarehouseStorageBins")
-  itemStockLevels     ErpItemWarehouseStock[]  @relation("ItemWarehouseStockWarehouse")
-  itemDimWarehouses   ErpItemDimWarehouse[]    @relation("ItemDimWarehouseWarehouse")
+  itemStockLevels      ErpItemWarehouseStock[]   @relation("ItemWarehouseStockWarehouse")
+  itemDimWarehouses    ErpItemDimWarehouse[]     @relation("ItemDimWarehouseWarehouse")
+  partnerDimWarehouses ErpPartnerDimWarehouse[]  @relation("PartnerDimWarehouseWarehouse")
 
   @@index([locationId])
   @@index([legacyCode])
@@ -261,6 +264,7 @@ model ErpItem {
   dimWarehouses           ErpItemDimWarehouse[]   @relation("ItemDimWarehouses")
   dimLocations            ErpItemDimLocation[]    @relation("ItemDimLocations")
   media                   ErpItemMedia[]          @relation("ItemMedia")
+  attachments             ErpItemAttachment[]     @relation("ItemAttachments")
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -329,6 +333,29 @@ model ErpItemMedia {
 
   @@index([itemId])
   @@map("md_item_media")
+}
+
+/// Item supporting documents (lampiran) — any file attached to an item:
+/// datasheet, spec, certificate, contract, etc. Generic (no IMAGE/VIDEO kind,
+/// no primary). Files live on disk under uploads/erp-items (bind-mounted);
+/// stored_name is the random on-disk filename, file_name keeps the original
+/// upload name for display/download. note = optional caption.
+model ErpItemAttachment {
+  id          BigInt   @id @default(autoincrement())
+  itemId      BigInt   @map("item_id")
+  fileName    String   @map("file_name")
+  storedName  String   @unique @map("stored_name")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  note        String?  @map("note")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by_id")
+
+  item ErpItem @relation("ItemAttachments", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("md_item_attachments")
 }
 
 /// Per-warehouse stock level overrides (Stok Min/Maks + Min Order per Gudang).
@@ -400,6 +427,51 @@ model ErpItemDimLocation {
   @@unique([itemId, locationId])
   @@index([locationId])
   @@map("md_item_dim_locations")
+}
+
+// Multi-select GL dimensions on a partner (Cabang / Gudang / Lokasi).
+// Mirror md_item_dim_*: junction rows; the single md_partners.branch_id stays
+// as the denormalized primary/default (= first selected branch).
+model ErpPartnerDimBranch {
+  id        BigInt   @id @default(autoincrement())
+  partnerId BigInt   @map("partner_id")
+  branchId  BigInt   @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  partner ErpPartner @relation("PartnerDimBranches", fields: [partnerId], references: [id], onDelete: Cascade)
+  branch  ErpBranch  @relation("PartnerDimBranchBranch", fields: [branchId], references: [id])
+
+  @@unique([partnerId, branchId])
+  @@index([branchId])
+  @@map("md_partner_dim_branches")
+}
+
+model ErpPartnerDimWarehouse {
+  id          BigInt   @id @default(autoincrement())
+  partnerId   BigInt   @map("partner_id")
+  warehouseId BigInt   @map("warehouse_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  partner   ErpPartner   @relation("PartnerDimWarehouses", fields: [partnerId], references: [id], onDelete: Cascade)
+  warehouse ErpWarehouse @relation("PartnerDimWarehouseWarehouse", fields: [warehouseId], references: [id])
+
+  @@unique([partnerId, warehouseId])
+  @@index([warehouseId])
+  @@map("md_partner_dim_warehouses")
+}
+
+model ErpPartnerDimLocation {
+  id         BigInt   @id @default(autoincrement())
+  partnerId  BigInt   @map("partner_id")
+  locationId BigInt   @map("location_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  partner  ErpPartner  @relation("PartnerDimLocations", fields: [partnerId], references: [id], onDelete: Cascade)
+  location ErpLocation @relation("PartnerDimLocationLocation", fields: [locationId], references: [id])
+
+  @@unique([partnerId, locationId])
+  @@index([locationId])
+  @@map("md_partner_dim_locations")
 }
 
 /// Item distributors per item (legacy MyERP+ "Distributor" tab = m1_item_supplier).
@@ -486,6 +558,9 @@ model ErpPartner {
   addresses           ErpPartnerAddress[]
   contacts            ErpPartnerContact[]
   bankAccounts        ErpPartnerBankAccount[]
+  dimBranches         ErpPartnerDimBranch[]   @relation("PartnerDimBranches")
+  dimWarehouses       ErpPartnerDimWarehouse[] @relation("PartnerDimWarehouses")
+  dimLocations        ErpPartnerDimLocation[] @relation("PartnerDimLocations")
   salesmanOfPartners  ErpPartner[]            @relation("PartnerSalesman")
   itemPrimarySupplier ErpItem[]               @relation("ItemPrimarySupplier")
   itemDistributors    ErpItemDistributor[]    @relation("ItemDistributorPartner")

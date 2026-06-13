@@ -9,6 +9,43 @@ import { CreateErpPartnerAddressDto } from './dto/create-erp-partner-address.dto
 import { CreateErpPartnerContactDto } from './dto/create-erp-partner-contact.dto';
 import { CreateErpPartnerBankAccountDto } from './dto/create-erp-partner-bank-account.dto';
 
+// Multi-select dimension junctions (md_partner_dim_*) — selected for read so the
+// edit form can prefill the chips.
+const PARTNER_DIM_INCLUDE = {
+  dimBranches: {
+    select: { branchId: true, branch: { select: { id: true, code: true, name: true } } },
+    orderBy: { id: 'asc' as const },
+  },
+  dimWarehouses: {
+    select: { warehouseId: true, warehouse: { select: { id: true, code: true, name: true } } },
+    orderBy: { id: 'asc' as const },
+  },
+  dimLocations: {
+    select: { locationId: true, location: { select: { id: true, code: true, name: true } } },
+    orderBy: { id: 'asc' as const },
+  },
+} as const;
+
+/** Build junction rows for one multi-select dimension. */
+function buildDimRows<K extends string>(
+  ids: string[] | undefined,
+  key: K,
+): Record<K, bigint>[] | undefined {
+  if (!ids) return undefined;
+  const unique = Array.from(new Set(ids.filter((v) => v !== '')));
+  return unique.map((v) => ({ [key]: BigInt(v) }) as Record<K, bigint>);
+}
+
+/**
+ * Denormalized single branch column = first branch id of the array (legacy
+ * fallback). Returns undefined when the array was not sent (no change).
+ */
+function firstBranchSync(branchIds: string[] | undefined): bigint | null | undefined {
+  if (branchIds === undefined) return undefined;
+  const f = branchIds.find((v) => v !== '');
+  return f ? BigInt(f) : null;
+}
+
 @Injectable()
 export class ErpPartnersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -44,15 +81,25 @@ export class ErpPartnersService {
           categoryId: categoryBigInt,
           isCustomer: dto.isCustomer ?? false,
           isSupplier: dto.isSupplier ?? false,
-          isSalesman: dto.isSalesman ?? false,
           taxNumber: dto.taxNumber,
           isTaxable: dto.isTaxable ?? false,
           receivableAccountId: receivableBigInt,
           payableAccountId: payableBigInt,
+          branchId: firstBranchSync(dto.branchIds) ?? null,
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
+          ...(buildDimRows(dto.branchIds, 'branchId')
+            ? { dimBranches: { create: buildDimRows(dto.branchIds, 'branchId') } }
+            : {}),
+          ...(buildDimRows(dto.warehouseIds, 'warehouseId')
+            ? { dimWarehouses: { create: buildDimRows(dto.warehouseIds, 'warehouseId') } }
+            : {}),
+          ...(buildDimRows(dto.locationIds, 'locationId')
+            ? { dimLocations: { create: buildDimRows(dto.locationIds, 'locationId') } }
+            : {}),
         },
+        include: PARTNER_DIM_INCLUDE,
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code', 'md_partners_code_key'])) {
@@ -109,6 +156,7 @@ export class ErpPartnersService {
           category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
           receivableAccount: { select: { id: true, code: true, name: true } },
           payableAccount: { select: { id: true, code: true, name: true } },
+          ...PARTNER_DIM_INCLUDE,
         },
       }),
       this.prisma.erpPartner.count({ where }),
@@ -136,6 +184,7 @@ export class ErpPartnersService {
         addresses: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
         contacts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
         bankAccounts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
+        ...PARTNER_DIM_INCLUDE,
       },
     });
     if (!item) {
@@ -168,11 +217,7 @@ export class ErpPartnersService {
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
     const categoryBigInt =
-      dto.categoryId !== undefined
-        ? dto.categoryId
-          ? BigInt(dto.categoryId)
-          : null
-        : undefined;
+      dto.categoryId !== undefined ? (dto.categoryId ? BigInt(dto.categoryId) : null) : undefined;
     const receivableBigInt =
       dto.receivableAccountId !== undefined
         ? dto.receivableAccountId
@@ -196,14 +241,34 @@ export class ErpPartnersService {
           categoryId: categoryBigInt,
           isCustomer: dto.isCustomer,
           isSupplier: dto.isSupplier,
-          isSalesman: dto.isSalesman,
           taxNumber: dto.taxNumber,
           isTaxable: dto.isTaxable,
           receivableAccountId: receivableBigInt,
           payableAccountId: payableBigInt,
+          branchId: firstBranchSync(dto.branchIds),
           isActive: dto.isActive,
           updatedById: actorBigInt,
+          ...(dto.branchIds !== undefined
+            ? { dimBranches: { deleteMany: {}, create: buildDimRows(dto.branchIds, 'branchId') } }
+            : {}),
+          ...(dto.warehouseIds !== undefined
+            ? {
+                dimWarehouses: {
+                  deleteMany: {},
+                  create: buildDimRows(dto.warehouseIds, 'warehouseId'),
+                },
+              }
+            : {}),
+          ...(dto.locationIds !== undefined
+            ? {
+                dimLocations: {
+                  deleteMany: {},
+                  create: buildDimRows(dto.locationIds, 'locationId'),
+                },
+              }
+            : {}),
         },
+        include: PARTNER_DIM_INCLUDE,
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code', 'md_partners_code_key'])) {
@@ -329,11 +394,7 @@ export class ErpPartnersService {
   // Bank Accounts
   // ---------------------------------------------------------------------------
 
-  async addBankAccount(
-    partnerId: bigint,
-    dto: CreateErpPartnerBankAccountDto,
-    actorId?: string,
-  ) {
+  async addBankAccount(partnerId: bigint, dto: CreateErpPartnerBankAccountDto, actorId?: string) {
     await this.assertPartnerExists(partnerId);
     const actorBigInt = actorId ? BigInt(actorId) : null;
 

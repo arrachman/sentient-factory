@@ -630,6 +630,28 @@ berurutan dalam satu fragment — masing-masing tetap `<Section>` sendiri
 `'custom'` dihapus. Komponen di `items-form-lainlain.tsx` tidak diubah (masih
 nulis ke JSON sidecar `metadata.others`/`metadata.custom`, §2.38).
 
+**Polish side-nav + file split (2026-06-13):**
+Atas permintaan user ("input lebih mudah & mengesankan"), layout Lengkap
+dinaikkan kelasnya tanpa mengubah data/flow:
+- **Side-nav berkelompok + ikon** — section dikelompokkan jadi 4 grup
+  (Inti · Detail · Keuangan · Dimensi & Supplier), tiap nav item ber-ikon
+  (`Icon` set). Marker per item: dot merah (error) · centang hijau (terisi)
+  · ring kosong (belum). "Terisi" diturunkan dari `sectionFilled(id,data)`.
+- **Identity header live** (`ItemFormContextHeader`) di atas konten: tile
+  ikon + Nama + Kode (mono) + badge tipe + badge Aktif/Nonaktif — selalu
+  terlihat di kedua mode supaya konteks tak hilang saat pindah section.
+- **Footer progress + Prev/Next** (`ItemFormFooter`): bar progress
+  "Terisi X/Y" + posisi "Bagian i dari N" + tombol Sebelumnya/Berikutnya
+  (navigasi antar section available). Hanya di mode Lengkap.
+- **Mode toggle** dipindah ke header bar dgn label deskriptif + ikon
+  (Cepat=tambah kilat, Lengkap=semua detail). Default tetap: Cepat untuk
+  item baru, Lengkap saat edit.
+- **File split (§3, <400 baris)**: `items-form-fields.tsx` jadi orchestrator
+  tipis (94 baris); section bodies → `items-form-sections.tsx`; metadata nav
+  + fill-detection + `SectionNav`/`ModeToggle` → `items-form-nav.tsx`;
+  identity header + footer → `items-form-chrome.tsx`. `Section` (di
+  `items-form-parts.tsx`) dapat prop `icon?` opsional (backward-compat).
+
 **Conditional disclosure per itemType:**
 - `INVENTORY/CONSUMABLE/ASSET` → tampilkan Inventory & Tracking
 - `SERVICE/NON_INVENTORY` → sembunyikan Inventory & Tracking
@@ -2883,3 +2905,200 @@ preview ala ERP modern + video pendek per item).
   item tersimpan; mode create menampilkan empty state "Simpan item terlebih
   dahulu". Upload **langsung tersimpan** saat unggah (bukan bagian payload
   save form) — konsisten dengan pola attachment ERP umum.
+
+## Item Lampiran — dokumen pendukung per item (2026-06-13)
+
+Request user (`/erp` "semua master data, transaksi bisa input file, bisa
+attachment file"): kapabilitas **lampiran file** ke record. Keputusan terkunci
+(4 pertanyaan, 2026-06-13): **Lampiran dulu** (impor file menyusul),
+**arsitektur per-modul** (tabel/endpoint khusus per entitas — bukan
+`sys_attachments` generik), **implement pilot 1 entitas** = **Item (`md_items`)**.
+Catatan: untuk lampiran murni, per-modul = duplikasi tabel/endpoint near-identik
+tiap entitas saat scale ke "semua" (vs satu tabel polymorphic) — biaya replikasi
+ini di-flag ke user, pilihan per-modul tetap dipakai untuk pilot.
+
+**DB & backend (api-gateway):**
+- Tabel baru `md_item_attachments` (`ErpItemAttachment`, migrasi
+  `20260613_001_erp_item_attachments`): child `md_items` cascade, **generik**
+  (tanpa `kind`/`isPrimary` ala media — semua file setara), `fileName` (asli) +
+  `storedName` (acak `att-<itemId>-<uuid>.<ext>`, unique),
+  `mimeType`/`sizeBytes`/`sortOrder`/`note?`/`createdById?`.
+- Aturan: **max 20 lampiran** per item, **10MB**/file. Whitelist mime: PDF ·
+  gambar (jpeg/png/webp/gif) · Word (doc/docx) · Excel (xls/xlsx) ·
+  PowerPoint (ppt/pptx) · CSV · teks · ZIP; ekstensi diturunkan dari mime,
+  bukan nama file user (cegah path trick).
+- File binary di `apps/api-gateway/uploads/erp-items/` (sama dir dengan media —
+  gitignored, bind mount host; `storedName` unik jadi tak bentrok). Streaming
+  lewat endpoint ber-guard `ErpJwtAuthGuard`
+  (`GET /erp/items/:itemId/attachments/:attachmentId/file`, `res.sendFile`,
+  `Content-Disposition: inline`; cookie `erp_token` same-origin).
+- Endpoint: `GET /erp/items/:itemId/attachments` (list) · `POST` multipart
+  `file`+`note?` (upload, multer memory storage) · `PATCH :attachmentId`
+  (ubah `note`) · `DELETE :attachmentId`. Module: controller+service baru
+  `erp-item-attachments.*` di `ErpItemsModule` (terpisah dari media).
+
+**Frontend (web-erp):**
+- API lampiran di `lib/api/items.ts` (`ItemAttachment` + `listItemAttachments`/
+  `uploadItemAttachment`/`updateItemAttachmentNote`/`deleteItemAttachment` +
+  `itemAttachmentFileUrl`); reuse `apiUpload()` (multipart) yang sudah ada.
+- Organism baru [`item-attachment-upload.tsx`](components/organisms/item-attachment-upload.tsx):
+  dropzone drag&drop + klik (multiple), daftar baris file (ikon + nama clickable
+  buka tab, ukuran, **catatan editable** simpan-on-blur, tombol unduh + hapus),
+  feedback via `notify()`, hapus via `confirmAction` variant danger. Token design
+  system, tanpa warna hardcode.
+- Form item: section side-nav baru **Lampiran** (grup Detail, setelah Media,
+  mode Lengkap; ikon `file`). Pakai `ItemFormData.id` (kosong saat create) —
+  lampiran butuh item tersimpan; mode create empty state. Upload **langsung
+  tersimpan** (bukan bagian payload save form), sama pola dengan Media.
+
+**Replikasi ke entitas lain** (master/transaksi berikutnya, saat diminta): salin
+pola per-modul — tabel `<domain>_<entitas>_attachments` + service/controller
+`erp-<entitas>-attachments.*` (reuse whitelist + limit) + API client + render
+organism `*-attachment-upload.tsx` (bisa digeneralisasi nanti bila user setuju
+pindah ke subsistem generik). **Impor file (bulk CSV/XLSX) = fase berikutnya**,
+belum dikerjakan.
+
+## Lampiran Transaksi — per id transaksi, 4 domain (2026-06-13)
+
+Lanjutan dari Item Lampiran: lampiran ke **transaksi** Finance / Warehouse
+(Inventory) / Purchasing / Sales. Keputusan user (2026-06-13): **arsitektur
+per-domain** (4 tabel generik, bukan 1 tabel global `sys_attachments`; bukan
+juga per-jenis-transaksi ~40 tabel), **cakupan semua jenis transaksi 4 domain**.
+Frasa user "**per id transaksi**" → tabel berkunci `(doc_type, doc_id)`.
+
+**DB & backend (api-gateway):**
+- 4 tabel generik (migrasi `20260613_002_erp_transaction_attachments`):
+  `fin_transaction_attachments`, `inv_transaction_attachments`,
+  `pur_transaction_attachments`, `sls_transaction_attachments`
+  (`ErpFin/Inv/Pur/SlsTransactionAttachment`). Kolom: `doc_type`/`doc_id`
+  (polymorphic lintas tabel transaksi domain — **tanpa FK**, index
+  `(doc_type, doc_id)`), `file_name`/`stored_name`(unique)/`mime_type`/
+  `size_bytes`/`note?`/`sort_order`/`created_at`/`created_by_id?`.
+- **Satu** module `erp-attachments` (1 service + 1 controller) melayani keempat
+  domain. Controller `@Controller('erp/:domain/attachments')` ber-guard
+  `ErpJwtAuthGuard`; service `delegate(domain)` memilih tabel Prisma yang tepat
+  (fin/inv/pur/sls). Endpoint per record:
+  `GET/POST /erp/:domain/attachments/:docType/:docId` (list/upload) ·
+  `PATCH/DELETE …/:attachmentId` (note/hapus) · `GET …/:attachmentId/file`
+  (stream `inline`). Whitelist mime (PDF/gambar/Office/CSV/teks/ZIP) max
+  **30×10MB**; `storedName` = `<domain>-<docType>-<docId>-<uuid>.<ext>`.
+- File di `uploads/erp-transactions/` (terpisah dari `uploads/erp-items/`;
+  env `ERP_TXN_UPLOAD_DIR`). Verifikasi live: keempat domain 401 saat
+  unauthenticated (route ter-register, guard aktif).
+
+**Frontend (web-erp):**
+- API generik `lib/api/transaction-attachments.ts` (`TransactionAttachment` +
+  list/upload/updateNote/delete + `transactionAttachmentFileUrl`),
+  parameter `(domain, docType, docId)`.
+- Organism generik [`transaction-attachment-upload.tsx`](components/organisms/transaction-attachment-upload.tsx)
+  — props `{ domain, docType, docId }`; UI identik item-attachment (dropzone +
+  catatan editable + buka/unduh/hapus), empty state bila `docId` null.
+- **Tab "Lampiran"** dipasang di **shared transaction form** (sekali per form,
+  meng-cover semua jenis dokumen yang lewat form itu): `domain` hardcoded per
+  form, `docType = transactionCode`, `docId = data.id ?? null`. Form ter-wire:
+  - **fin:** `cash-bank-transaction-form` (CR/CD/BD), `journal-transaction-form`
+    (GJ/AJ/JM/BB/RV), `giro-transaction-form` (RG/SG/RGC/SGC).
+  - **sls:** `sales-transaction-form` (semua 16 tipe SLS.*).
+  - **pur:** `purchase-transaction-form` (PR/PO/RFQ/GRN/PI/retur).
+  - **inv:** `inv-stock-adjustment/stock-count/stock-movement/opening-stock/daily-check-form`.
+
+**Sisa (follow-up):** form transaksi yang TIDAK lewat shared form di atas (mis.
+`inv-price-adjustment`, dokumen pur/sls dengan form bespoke, pembayaran
+AP/AR) — tinggal pasang `<TransactionAttachmentUpload domain docType docId>`
+dengan resep yang sama. Backend keempat domain sudah siap menerima docType
+apa pun. **Impor file bulk CSV/XLSX tetap fase berikutnya.**
+
+## § Desainer Laporan — drag-and-drop + edit konten report asli (2026-06-13)
+
+Editor `/admin/report-designer` (organism `report-designer-mock/`, kode "SRX")
+diberi dua kemampuan:
+
+**1. Drag-and-drop di kanvas (mode Desain).** Komponen (text/field/line/columns/
+datarow/totalrow) bisa di-drag untuk pindah posisi, ter-clamp di dalam band-nya
+(tak bisa keluar area band). Komponen text/line/field punya **resize handle** di
+tepi kanan saat terpilih untuk ubah lebar. Implementasi:
+- Hook `use-rd-drag.ts` (`useRdDrag`) — pointer-drag berbasis `window`
+  listener + `setPointerCapture`-style tracking, konversi px layar → % band
+  (untuk x/w) & px unzoomed (untuk y), clamp ke bounds band. Toggle class
+  `body.rd-dragging` (cursor grabbing global).
+- `canvas.tsx` `onPointerDown` per komponen → `moveComp(bandId, compId, patch)`
+  di `mock-designer.tsx`. CSS `.rd-draggable`/`.rd-resize-handle` di
+  `styles/report-designer.css`.
+
+**2. Template report-engine kini EDITABLE (bukan lagi fallback mock).** Sebelumnya
+template seed (Buku Besar/Neraca Saldo/Neraca) berformat report-engine
+(`dataSources` + SQL + `bands[].components`, geometri mm) ditolak `parseTemplateJson`
+→ editor menampilkan mock "FAKTUR PENJUALAN" generik, bukan konten report asli.
+Sekarang **adapter dua-arah** `lib/report-engine-adapter.ts`:
+- `reToBands(json)` — report-engine → model editor (`comps`, x/w %, y px).
+  Konversi geometri pakai `contentWidth` (dari pageSize+orientation+margins) &
+  `vScale = 760/contentWidth` agar proporsional dengan halaman nyata.
+- `reApplyGeometry(source, bands, paper)` — tulis-balik **hanya** geometri
+  (x/y/width/height), expression teks, dan style dasar (fontSize/bold/align) ke
+  JSON report-engine asli; **SQL, dataSources, groupBy, border, background, dan
+  field lain dipertahankan verbatim**. Komponen dicocokkan via `id`; yang dihapus
+  di-drop, yang baru di-append. **Tanpa data loss** pada query laporan.
+- `loadBands` (report-designer-io.ts) coba format editor → report-engine →
+  fallback mock; bawa `engineSource` untuk round-trip. `isForeignTemplate`
+  kini `false` untuk report-engine (jadi tak ada banner "tak bisa diedit" &
+  simpan tanpa confirm overwrite). `mock-designer.persist()` pakai
+  `reApplyGeometry(engineSource, …)` bila `engineSource` ada, else
+  `serializeTemplate`.
+- Struktur-tree (right panel) judul root = nama template asli (prop `title`),
+  bukan hardcode "Faktur Penjualan".
+
+**Catatan:** mode Pratinjau untuk data band report-engine (field individual,
+tanpa `cols` datarow) kini render seperti band biasa (tak meng-ulang sample
+rows). Penyempurnaan preview band data (bind ke dataSource nyata) = follow-up.
+
+---
+
+## § Partner form — Kontak & Alamat (no hp jangan di info utama) (2026-06-13)
+
+Atas permintaan user ("no hp jangan di utama"): nomor telepon **tidak** boleh
+berada di field info utama partner. Form partner (`partners-page.tsx`, tetap
+`SimpleMasterPage`, `modalSize="lg"`) kini **tab** `Umum` / `Kontak` / `Alamat`:
+
+- **Umum** = field utama partner (Kode, Nama, Tipe, NPWP, Akun Piutang/Hutang,
+  Status) — **tanpa** no hp.
+- **Kontak** = sub-list `md_partner_contacts` (nama, jabatan, **no hp**, email,
+  utama) — organism [`partner-contacts-editor.tsx`](components/organisms/partner-contacts-editor.tsx).
+- **Alamat** = sub-list `md_partner_addresses` (tipe, alamat, kota, provinsi,
+  kode pos, **no hp**, fax, utama) — organism
+  [`partner-addresses-editor.tsx`](components/organisms/partner-addresses-editor.tsx).
+
+Sub-resource = **tambah + hapus saja** (paritas backend; tak ada update inline).
+Endpoint reuse yang sudah ada: `GET /partners/:id` (include contacts/addresses),
+`POST|DELETE /partners/:id/contacts[/:id]`, `POST|DELETE /partners/:id/addresses[/:id]`
+— API client di [`lib/api/partners.ts`](lib/api/partners.ts) (`getPartner`,
+`addPartnerContact`/`removePartnerContact`, `addPartnerAddress`/`removePartnerAddress`).
+Tab Kontak/Alamat butuh partner **tersimpan** (`PartnerForm.id`); saat create
+baru, tab menampilkan hint "Simpan partner dulu". Editor fetch slice-nya sendiri
+via `getPartner(id)` saat tab aktif (Radix Tabs unmount konten non-aktif).
+**Tidak** ada kolom `phone` di `md_partners` — no hp memang hidup di
+contacts/addresses, bukan di master partner.
+
+### Partner — dimensi Cabang/Gudang/Lokasi multi-select (2026-06-13)
+
+Field **Cabang**, **Gudang**, **Lokasi** di form partner (tab **Umum**) dibuat
+**multiple** — mirror persis pola dimensi GL item (`md_item_dim_*`). Keputusan
+user: ketiga dimensi diadakan sekaligus; kolom tunggal `md_partners.branch_id`
+**dipertahankan** sebagai fallback/default (= cabang pertama yang dipilih).
+
+- **DB:** 3 tabel junction baru `md_partner_dim_branches` /
+  `md_partner_dim_warehouses` / `md_partner_dim_locations` (`partner_id` +
+  `<dim>_id`, unique pair, FK partner `ON DELETE CASCADE`, FK dim `RESTRICT`).
+  Migrasi `20260613_003_erp_partner_dim_multi` (hand-written SQL +
+  `prisma migrate deploy` di container, lalu `prisma generate` + restart).
+  Backfill: `branch_id` lama → baris pertama `md_partner_dim_branches`.
+  Gudang & Lokasi **pivot-only** (tak ada kolom tunggal di `md_partners`).
+- **Backend:** `CreateErpPartnerDto` + `branchIds`/`warehouseIds`/`locationIds`
+  (`string[]`); service `create`/`update` tulis pivot (`deleteMany`+`create`
+  saat update) + sync `branchId` ke id pertama via `firstBranchSync`;
+  `findAll`/`findOne` include `PARTNER_DIM_INCLUDE` agar form edit bisa prefill.
+- **Frontend:** reuse molecule `MultiLookupField` (dari `items-form-parts.tsx`)
+  + loader `loadBranchOptions`/`loadWarehouseOptions`/`loadLocationOptions`
+  (dari `items-form-lookups.ts`). `PartnerForm` simpan id array + label map per
+  dimensi; `fromRecord` derive dari `dimBranches/dimWarehouses/dimLocations`,
+  `toPayload` kirim ketiga array. **Jangan** fork komponen multi-select baru —
+  pola dim ini SSOT lintas master (item + partner).

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateErpPartnerDto {
   @ApiProperty({ example: 'CUST-001', description: 'Unique partner code' })
@@ -26,11 +26,6 @@ export class CreateErpPartnerDto {
   @IsOptional()
   @IsBoolean()
   isSupplier?: boolean = false;
-
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  isSalesman?: boolean = false;
 
   @ApiPropertyOptional({ example: '01.234.567.8-901.000' })
   @IsOptional()
@@ -65,4 +60,24 @@ export class CreateErpPartnerDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
+
+  // Multi-select dimensions (md_partner_dim_*). When sent, md_partners.branch_id
+  // is synced server-side to the first branch id (denormalized default).
+  @ApiPropertyOptional({ type: [String], description: 'Cabang multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  branchIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Gudang multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  warehouseIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Lokasi multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  locationIds?: string[];
 }
