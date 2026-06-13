@@ -206,14 +206,15 @@ export const RD_DICT: RdDictNode[] = [
 export const buildTemplate = (bands: RdBand[]): string => {
   let out = '';
   bands.forEach(b => {
+    const comps = b.comps || [];
     out += `<!-- ${b.type} -->\n`;
     if (b.type === 'Data') {
       out += `{#items}\n`;
-      b.comps[0]?.cols?.forEach(col => { out += `  ${(col.expr || '').replace('i.', 'd.items[i].')}\t`; });
+      comps[0]?.cols?.forEach(col => { out += `  ${(col.expr || '').replace('i.', 'd.items[i].')}\t`; });
       out += `\n{/items}\n\n`;
       return;
     }
-    b.comps.forEach(c => {
+    comps.forEach(c => {
       if (c.kind === 'columns') out += '  ' + (c.cols || []).map(col => col.label).join('\t') + '\n';
       else if (c.kind === 'totalrow') out += `  ${c.label}: ${c.expr}\n`;
       else if (c.expr) out += `  ${c.expr}\n`;

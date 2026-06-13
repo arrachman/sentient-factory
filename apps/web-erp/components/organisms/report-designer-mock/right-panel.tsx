@@ -12,6 +12,7 @@ interface Props {
   bands: RdBand[];
   sel: RdSelection;
   setSel: (s: RdSelection) => void;
+  title: string;
   selBand: RdBand | undefined;
   selComp: RdComp | undefined;
   updateComp: (patch: Partial<RdComp>) => void;
@@ -85,12 +86,12 @@ function BandProps({ selBand, updateBand }: Pick<Props, 'selBand' | 'updateBand'
   );
 }
 
-function StructureTree({ bands, sel, setSel }: Pick<Props, 'bands' | 'sel' | 'setSel'>) {
+function StructureTree({ bands, sel, setSel, title }: Pick<Props, 'bands' | 'sel' | 'setSel' | 'title'>) {
   return (
     <div className="rd-panel-body">
       <div className="rd-section-label">Struktur Report</div>
       <div className="rd-tree">
-        <div className="rd-tree-root"><Icon name="file" size={12} /> Faktur Penjualan</div>
+        <div className="rd-tree-root"><Icon name="file" size={12} /> {title || 'Laporan'}</div>
         {bands.map(b => (
           <div key={b.id}>
             <div className={`rd-tree-band${sel.band === b.id && !sel.comp ? ' active' : ''}`}
@@ -112,7 +113,7 @@ function StructureTree({ bands, sel, setSel }: Pick<Props, 'bands' | 'sel' | 'se
 }
 
 export function RdRightPanel(props: Props) {
-  const { rightTab, setRightTab, bands, sel, setSel, selBand, selComp, updateComp, updateBand, deleteComp } = props;
+  const { rightTab, setRightTab, bands, sel, setSel, title, selBand, selComp, updateComp, updateBand, deleteComp } = props;
   return (
     <aside className="rd-right">
       <div className="rd-tabs">
@@ -138,7 +139,7 @@ export function RdRightPanel(props: Props) {
           )}
         </div>
       ) : (
-        <StructureTree bands={bands} sel={sel} setSel={setSel} />
+        <StructureTree bands={bands} sel={sel} setSel={setSel} title={title} />
       )}
     </aside>
   );

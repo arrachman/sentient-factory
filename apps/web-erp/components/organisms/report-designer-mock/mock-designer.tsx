@@ -4,8 +4,14 @@ import * as React from 'react';
 import { Icon } from '@/components/ui/icons';
 import { Kbd } from '@/components/ui/kbd';
 import {
-  rdInitialBands, buildTemplate, type RdBand, type RdComp, type RdCompKind,
+  buildTemplate, type RdBand, type RdComp, type RdCompKind,
 } from '@/lib/report-designer-mock';
+import {
+  serializeTemplate, loadBands, downloadTemplate, pickTemplateFile, isForeignTemplate,
+} from '@/lib/report-designer-io';
+import { reApplyGeometry } from '@/lib/report-engine-adapter';
+import { updateReportTemplate } from '@/lib/api/reports';
+import { notify, confirmAction } from '@/lib/feedback';
 import { RdRibbon } from './ribbon';
 import { RdLeftPanel, type RdSelection } from './left-panel';
 import { RdCanvas } from './canvas';
@@ -21,18 +27,25 @@ const MODES: Array<[Mode, string, React.ComponentProps<typeof Icon>['name']]> = 
 ];
 
 interface Props {
+  templateId: string;
   templateName: string;
+  initialJson?: Record<string, unknown>;
   onBack: () => void;
 }
 
-export function MockReportDesigner({ templateName, onBack }: Props) {
-  const [bands, setBands] = React.useState<RdBand[]>(rdInitialBands);
+export function MockReportDesigner({ templateId, templateName, initialJson, onBack }: Props) {
+  const initial = React.useMemo(() => loadBands(initialJson), [initialJson]);
+  const engineSource = initial.engineSource;
+  const foreign = React.useMemo(() => isForeignTemplate(initialJson), [initialJson]);
+  const [bands, setBands] = React.useState<RdBand[]>(() => initial.bands);
   const [sel, setSel] = React.useState<RdSelection>({ band: 'b-title', comp: 'c4' });
   const [mode, setMode] = React.useState<Mode>('design');
   const [zoom, setZoom] = React.useState(100);
   const [leftTab, setLeftTab] = React.useState<'toolbox' | 'dict'>('toolbox');
   const [rightTab, setRightTab] = React.useState<'props' | 'tree'>('props');
-  const [paper, setPaper] = React.useState('A4');
+  const [paper, setPaper] = React.useState(initial.paper);
+  const [saving, setSaving] = React.useState(false);
+  const [dirty, setDirty] = React.useState(false);
   const [expandDict, setExpandDict] = React.useState<Record<string, boolean>>({
     'd.company': true, 'd.doc': true, 'd.items': true, 'd.totals': true,
   });
@@ -48,6 +61,13 @@ export function MockReportDesigner({ templateName, onBack }: Props) {
 
   const updateBand = React.useCallback((bandId: string, patch: Partial<RdBand>) => {
     setBands(bs => bs.map(b => b.id === bandId ? { ...b, ...patch } : b));
+  }, []);
+
+  // Position/size patch for a specific component (used by canvas drag-and-drop).
+  const moveComp = React.useCallback((bandId: string, compId: string, patch: Partial<RdComp>) => {
+    setBands(bs => bs.map(b => b.id !== bandId ? b : {
+      ...b, comps: b.comps.map(c => c.id !== compId ? c : { ...c, ...patch }),
+    }));
   }, []);
 
   const addComp = React.useCallback((kind: RdCompKind) => {
@@ -74,6 +94,61 @@ export function MockReportDesigner({ templateName, onBack }: Props) {
     updateComp({ expr: (selComp?.expr || '') + `{${path}}` });
   }, [sel.comp, selComp, updateComp]);
 
+  // Mark dirty on any edit to bands/paper (skip the initial mount).
+  const mounted = React.useRef(false);
+  React.useEffect(() => {
+    if (!mounted.current) { mounted.current = true; return; }
+    setDirty(true);
+  }, [bands, paper]);
+
+  const persist = React.useCallback(async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      // Report-engine templates round-trip through the adapter so SQL/dataSources
+      // survive; editor-native templates serialize to the designer's own format.
+      const templateJson = engineSource
+        ? reApplyGeometry(engineSource, bands, paper)
+        : serializeTemplate(bands, paper);
+      await updateReportTemplate(templateId, { templateJson });
+      setDirty(false);
+      notify('Template disimpan', 'success');
+    } catch (e) {
+      notify(`Gagal menyimpan: ${e instanceof Error ? e.message : String(e)}`, 'danger');
+    } finally {
+      setSaving(false);
+    }
+  }, [saving, templateId, bands, paper, engineSource]);
+
+  const handleSave = React.useCallback(() => {
+    // The visual designer cannot represent the richer report-engine schema used
+    // by seeded templates; saving would replace it. Require explicit confirm.
+    if (foreign) {
+      confirmAction({
+        title: 'Timpa template asli?',
+        message: 'Template ini memakai format report-engine lanjutan (query SQL/komponen) yang tidak bisa diedit visual designer. Menyimpan akan MENGGANTINYA dengan layout designer yang disederhanakan.',
+        variant: 'danger',
+        confirmLabel: 'Timpa & Simpan',
+        onConfirm: () => { void persist(); },
+      });
+      return;
+    }
+    void persist();
+  }, [foreign, persist]);
+
+  const handleExport = React.useCallback(() => {
+    downloadTemplate(templateName, bands, paper);
+  }, [templateName, bands, paper]);
+
+  const handleImport = React.useCallback(async () => {
+    const res = await pickTemplateFile();
+    if (!res) { notify('File template tidak valid', 'danger'); return; }
+    setBands(res.bands);
+    setPaper(res.paper);
+    setSel({ band: res.bands[0]?.id ?? '', comp: null });
+    notify('Template diimpor', 'success');
+  }, []);
+
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -87,6 +162,17 @@ export function MockReportDesigner({ templateName, onBack }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, [deleteComp]);
 
+  // Cmd/Ctrl+S saves even while a form field is focused.
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 's' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault(); void handleSave();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleSave]);
+
   const templateCode = React.useMemo(() => buildTemplate(bands), [bands]);
   const compCount = bands.reduce((s, b) => s + b.comps.length, 0);
 
@@ -97,6 +183,11 @@ export function MockReportDesigner({ templateName, onBack }: Props) {
         <button className="iconbtn" onClick={onBack} title="Kembali ke daftar"><Icon name="arrowleft" size={15} /></button>
         <h1 className="rd-title">Desainer Laporan <span className="rd-code-tag">SRX</span></h1>
         <span className="rd-subtitle">{templateName}</span>
+        {foreign && (
+          <span className="rd-subtitle" style={{ color: 'var(--warning, #d97706)' }} title="Template asli memakai format report-engine lanjutan; designer menampilkan layout default.">
+            <Icon name="info" size={12} /> format lanjutan — tak bisa diedit visual
+          </span>
+        )}
         <div className="rd-header-actions">
           <div className="rd-modeseg">
             {MODES.map(([m, label, ic]) => (
@@ -105,13 +196,15 @@ export function MockReportDesigner({ templateName, onBack }: Props) {
               </button>
             ))}
           </div>
-          <button className="btn"><Icon name="upload" size={12} /> Import</button>
+          <button className="btn" onClick={handleImport}><Icon name="upload" size={12} /> Import</button>
           <button className="btn" onClick={() => setMode('preview')}><Icon name="play" size={12} /> Jalankan <Kbd>⌘P</Kbd></button>
           <div className="btn-split">
-            <button className="btn"><Icon name="download" size={12} /> Export</button>
-            <button className="btn"><Icon name="chevdown" size={12} /></button>
+            <button className="btn" onClick={handleExport}><Icon name="download" size={12} /> Export</button>
+            <button className="btn" onClick={handleExport}><Icon name="chevdown" size={12} /></button>
           </div>
-          <button className="btn primary"><Icon name="save" size={12} /> Simpan <Kbd>⌘S</Kbd></button>
+          <button className="btn primary" onClick={handleSave} disabled={saving}>
+            <Icon name="save" size={12} /> {saving ? 'Menyimpan…' : dirty ? 'Simpan •' : 'Simpan'} <Kbd>⌘S</Kbd>
+          </button>
         </div>
       </div>
 
@@ -128,11 +221,12 @@ export function MockReportDesigner({ templateName, onBack }: Props) {
           <RdPreview bands={bands} zoom={zoom} />
         ) : (
           <RdCanvas bands={bands} zoom={zoom} sel={sel} setSel={setSel}
-            onClear={() => setSel(s => ({ ...s, comp: null }))} />
+            onClear={() => setSel(s => ({ ...s, comp: null }))} moveComp={moveComp} />
         )}
 
         <RdRightPanel rightTab={rightTab} setRightTab={setRightTab} bands={bands} sel={sel} setSel={setSel}
-          selBand={selBand} selComp={selComp} updateComp={updateComp} updateBand={updateBand} deleteComp={deleteComp} />
+          title={templateName} selBand={selBand} selComp={selComp} updateComp={updateComp}
+          updateBand={updateBand} deleteComp={deleteComp} />
       </div>
 
       {/* Footer pager */}

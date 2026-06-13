@@ -17,6 +17,7 @@ import { MockReportDesigner } from '@/components/organisms/report-designer-mock/
 export function ReportDesignerPage() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [templateName, setTemplateName] = React.useState('');
+  const [templateJson, setTemplateJson] = React.useState<Record<string, unknown> | undefined>();
   const [loadingTemplate, setLoadingTemplate] = React.useState(false);
 
   async function openDesigner(id: string) {
@@ -25,6 +26,7 @@ export function ReportDesignerPage() {
     try {
       const rec = await getReportTemplate(id);
       setTemplateName(rec.name);
+      setTemplateJson(rec.templateJson);
     } catch (e) {
       notify(`Gagal memuat template: ${e instanceof Error ? e.message : String(e)}`, 'danger');
       setEditingId(null);
@@ -47,8 +49,11 @@ export function ReportDesignerPage() {
 
   return (
     <MockReportDesigner
+      key={editingId}
+      templateId={editingId}
       templateName={templateName}
-      onBack={() => { setEditingId(null); setTemplateName(''); }}
+      initialJson={templateJson}
+      onBack={() => { setEditingId(null); setTemplateName(''); setTemplateJson(undefined); }}
     />
   );
 }

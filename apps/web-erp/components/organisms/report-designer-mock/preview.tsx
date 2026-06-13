@@ -49,8 +49,10 @@ export function RdPreview({ bands, zoom }: { bands: RdBand[]; zoom: number }) {
         <div className="rd-paper" style={{ width: w, padding: 24 }}>
           <div className="rdv">
             {bands.map(b => {
-              if (b.type === 'Data') {
-                const cols = b.comps[0]?.cols || [];
+              const cols = b.comps[0]?.cols;
+              // Only the datarow-style data band repeats over sample rows; report-engine
+              // data bands hold individual field comps and render like a normal band.
+              if (b.type === 'Data' && cols && cols.length) {
                 return (
                   <div key={b.id} className="rdv-databand">
                     {RD_DATA.items.map((item, idx) => (

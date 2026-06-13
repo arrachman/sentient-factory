@@ -396,6 +396,26 @@
 }
 .rd-band-area { position: relative; }
 
+/* drag-and-drop affordances */
+.rd-draggable { cursor: move; touch-action: none; }
+body.rd-dragging,
+body.rd-dragging * { cursor: grabbing !important; user-select: none; }
+
+.rd-resize-handle {
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  width: 8px;
+  height: 14px;
+  transform: translateY(-50%);
+  cursor: ew-resize;
+  border-radius: 3px;
+  background: var(--primary);
+  border: 1px solid var(--panel);
+  box-shadow: 0 0 0 1px var(--primary);
+  touch-action: none;
+}
+
 /* components on canvas */
 .rd-text {
   position: absolute;
