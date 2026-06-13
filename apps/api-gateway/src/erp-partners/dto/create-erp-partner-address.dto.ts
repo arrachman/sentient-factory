@@ -38,6 +38,11 @@ export class CreateErpPartnerAddressDto {
   @IsString()
   areaId?: string;
 
+  @ApiPropertyOptional({ description: 'Sub-area / kelurahan id (md_sub_areas)' })
+  @IsOptional()
+  @IsString()
+  subAreaId?: string;
+
   @ApiPropertyOptional({ example: '10220' })
   @IsOptional()
   @IsString()

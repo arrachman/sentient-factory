@@ -169,6 +169,7 @@ export interface ErpPartnerAddress {
   provinceId?: string | null;
   cityId?: string | null;
   areaId?: string | null;
+  subAreaId?: string | null;
   postalCode?: string | null;
   phone?: string | null;
   fax?: string | null;
@@ -179,6 +180,7 @@ export interface ErpPartnerAddress {
   province?: { id: string; name: string } | null;
   city?: { id: string; name: string } | null;
   area?: { id: string; name: string; postalCode?: string | null } | null;
+  subArea?: { id: string; name: string; postalCode?: string | null } | null;
 }
 
 export interface ErpPartnerDetail extends ErpPartner {
@@ -202,6 +204,7 @@ export interface CreatePartnerAddressPayload {
   provinceId?: string;
   cityId?: string;
   areaId?: string;
+  subAreaId?: string;
   postalCode?: string;
   phone?: string;
   fax?: string;

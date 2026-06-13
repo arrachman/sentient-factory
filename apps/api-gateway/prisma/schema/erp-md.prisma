@@ -597,6 +597,7 @@ model ErpPartnerAddress {
   provinceId   BigInt?        @map("province_id")
   cityId       BigInt?        @map("city_id")
   areaId       BigInt?        @map("area_id")
+  subAreaId    BigInt?        @map("sub_area_id")
   postalCode   String?        @map("postal_code")
   phone        String?        @map("phone")
   fax          String?        @map("fax")
@@ -613,12 +614,14 @@ model ErpPartnerAddress {
   province ErpProvince? @relation(fields: [provinceId], references: [id])
   city     ErpCity?     @relation(fields: [cityId], references: [id])
   area     ErpArea?     @relation(fields: [areaId], references: [id])
+  subArea  ErpSubArea?  @relation(fields: [subAreaId], references: [id])
 
   @@index([partnerId])
   @@index([countryId])
   @@index([provinceId])
   @@index([cityId])
   @@index([areaId])
+  @@index([subAreaId])
   @@map("md_partner_addresses")
 }
 
@@ -1302,7 +1305,8 @@ model ErpSubArea {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-  area        ErpArea   @relation(fields: [areaId], references: [id])
+  area             ErpArea              @relation(fields: [areaId], references: [id])
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([areaId])
   @@index([postalCode])

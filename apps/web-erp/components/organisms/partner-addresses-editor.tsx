@@ -40,6 +40,7 @@ import { listCountries } from '@/lib/api/countries';
 import { listProvinces } from '@/lib/api/provinces';
 import { listCities } from '@/lib/api/cities';
 import { listAreas } from '@/lib/api/areas';
+import { listSubAreas } from '@/lib/api/sub-areas';
 
 const TYPE_LABELS: Record<ErpAddressType, string> = {
   BILLING: 'Penagihan',
@@ -55,6 +56,7 @@ interface DraftAddress {
   provinceId: string;
   cityId: string;
   areaId: string;
+  subAreaId: string;
   postalCode: string;
   phone: string;
   fax: string;
@@ -70,6 +72,7 @@ const emptyDraft = (): DraftAddress => ({
   provinceId: '',
   cityId: '',
   areaId: '',
+  subAreaId: '',
   postalCode: '',
   phone: '',
   fax: '',
@@ -104,8 +107,15 @@ function makeAreaLoader(cityId: string) {
   };
 }
 
+function makeSubAreaLoader(areaId: string) {
+  return async (search: string, page: number, limit: number) => {
+    const res = await listSubAreas({ search: search || undefined, page, limit, isActive: true, areaId: areaId || undefined } as Parameters<typeof listSubAreas>[0]);
+    return { data: res.data.map((s) => ({ value: s.id, label: s.name, meta: s.postalCode ?? '' })), total: res.meta.total };
+  };
+}
+
 function addressLocationLabel(a: ErpPartnerAddress): string {
-  const parts = [a.area?.name, a.city?.name, a.province?.name, a.country?.name].filter(Boolean);
+  const parts = [a.subArea?.name, a.area?.name, a.city?.name, a.province?.name, a.country?.name].filter(Boolean);
   return parts.join(', ') || '—';
 }
 
@@ -130,6 +140,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
   const provinceLoader = React.useMemo(() => makeProvinceLoader(draft.countryId), [draft.countryId]);
   const cityLoader = React.useMemo(() => makeCityLoader(draft.provinceId), [draft.provinceId]);
   const areaLoader = React.useMemo(() => makeAreaLoader(draft.cityId), [draft.cityId]);
+  const subAreaLoader = React.useMemo(() => makeSubAreaLoader(draft.areaId), [draft.areaId]);
 
   const handleAdd = async () => {
     if (!draft.addressLine1.trim()) { notify('Alamat wajib diisi', 'warn'); return; }
@@ -142,6 +153,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
         provinceId: draft.provinceId || undefined,
         cityId: draft.cityId || undefined,
         areaId: draft.areaId || undefined,
+        subAreaId: draft.subAreaId || undefined,
         postalCode: draft.postalCode.trim() || undefined,
         phone: draft.phone.trim() || undefined,
         fax: draft.fax.trim() || undefined,
@@ -290,11 +302,27 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             onValueChange={(v) => setD('areaId', v)}
             onPick={(opt) => {
               const postalFromArea = (opt as typeof opt & { meta?: string }).meta ?? '';
-              setDraft((d) => ({ ...d, areaId: opt.value, postalCode: postalFromArea || d.postalCode }));
+              setDraft((d) => ({ ...d, areaId: opt.value, subAreaId: '', postalCode: postalFromArea || d.postalCode }));
             }}
             loadOptions={areaLoader}
             placeholder="Pilih kecamatan…"
             title="Kecamatan"
+          />
+        </FormField>
+
+        <FormField label="Kelurahan" htmlFor="pa-subarea">
+          <SearchSelect
+            key={`subarea-${draft.areaId}`}
+            id="pa-subarea"
+            value={draft.subAreaId}
+            onValueChange={(v) => setD('subAreaId', v)}
+            onPick={(opt) => {
+              const postalFromSubArea = (opt as typeof opt & { meta?: string }).meta ?? '';
+              setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: postalFromSubArea || d.postalCode }));
+            }}
+            loadOptions={subAreaLoader}
+            placeholder="Pilih kelurahan…"
+            title="Kelurahan"
           />
         </FormField>
 

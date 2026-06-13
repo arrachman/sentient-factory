@@ -229,6 +229,7 @@ export class ErpPartnersService {
             province: { select: { id: true, name: true } },
             city: { select: { id: true, name: true } },
             area: { select: { id: true, name: true, postalCode: true } },
+            subArea: { select: { id: true, name: true, postalCode: true } },
           },
         },
         contacts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
@@ -409,6 +410,7 @@ export class ErpPartnersService {
         provinceId: dto.provinceId ? BigInt(dto.provinceId) : null,
         cityId: dto.cityId ? BigInt(dto.cityId) : null,
         areaId: dto.areaId ? BigInt(dto.areaId) : null,
+        subAreaId: dto.subAreaId ? BigInt(dto.subAreaId) : null,
         postalCode: dto.postalCode,
         phone: dto.phone,
         fax: dto.fax,
@@ -423,6 +425,7 @@ export class ErpPartnersService {
         province: { select: { id: true, name: true } },
         city: { select: { id: true, name: true } },
         area: { select: { id: true, name: true, postalCode: true } },
+        subArea: { select: { id: true, name: true, postalCode: true } },
       },
     });
 
