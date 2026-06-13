@@ -23,7 +23,7 @@ export type UpdateErpCityPayload = Partial<CreateErpCityPayload>;
 
 const BASE = '/cities';
 
-export async function listCities(params?: PaginationParams): Promise<PaginatedResponse<ErpCity>> {
+export async function listCities(params?: PaginationParams & { provinceId?: string }): Promise<PaginatedResponse<ErpCity>> {
   return apiGet<PaginatedResponse<ErpCity>>(BASE, params as Record<string, string | number | boolean | undefined>);
 }
 

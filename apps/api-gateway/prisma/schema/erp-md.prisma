@@ -593,9 +593,10 @@ model ErpPartnerAddress {
   isDefault    Boolean        @default(false) @map("is_default")
   addressLine1 String         @map("address_line1")
   addressLine2 String?        @map("address_line2")
-  city         String?        @map("city")
-  province     String?        @map("province")
-  country      String?        @map("country")
+  countryId    BigInt?        @map("country_id")
+  provinceId   BigInt?        @map("province_id")
+  cityId       BigInt?        @map("city_id")
+  areaId       BigInt?        @map("area_id")
   postalCode   String?        @map("postal_code")
   phone        String?        @map("phone")
   fax          String?        @map("fax")
@@ -607,9 +608,17 @@ model ErpPartnerAddress {
   updatedById  BigInt?        @map("updated_by_id")
   deletedAt    DateTime?      @map("deleted_at") @db.Timestamptz(6)
 
-  partner ErpPartner @relation(fields: [partnerId], references: [id])
+  partner  ErpPartner   @relation(fields: [partnerId], references: [id])
+  country  ErpCountry?  @relation(fields: [countryId], references: [id])
+  province ErpProvince? @relation(fields: [provinceId], references: [id])
+  city     ErpCity?     @relation(fields: [cityId], references: [id])
+  area     ErpArea?     @relation(fields: [areaId], references: [id])
 
   @@index([partnerId])
+  @@index([countryId])
+  @@index([provinceId])
+  @@index([cityId])
+  @@index([areaId])
   @@map("md_partner_addresses")
 }
 
@@ -1203,8 +1212,9 @@ model ErpCountry {
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById BigInt?       @map("created_by_id")
   updatedById BigInt?       @map("updated_by_id")
-  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  provinces   ErpProvince[]
+  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  provinces        ErpProvince[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([legacyCode])
   @@map("md_countries")
@@ -1223,8 +1233,9 @@ model ErpProvince {
   createdById BigInt?    @map("created_by_id")
   updatedById BigInt?    @map("updated_by_id")
   deletedAt   DateTime?  @map("deleted_at") @db.Timestamptz(6)
-  country     ErpCountry @relation(fields: [countryId], references: [id])
-  cities      ErpCity[]
+  country          ErpCountry          @relation(fields: [countryId], references: [id])
+  cities           ErpCity[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([countryId])
   @@index([legacyCode])
@@ -1245,8 +1256,9 @@ model ErpCity {
   createdById BigInt?     @map("created_by_id")
   updatedById BigInt?     @map("updated_by_id")
   deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz(6)
-  province    ErpProvince @relation(fields: [provinceId], references: [id])
-  areas       ErpArea[]
+  province         ErpProvince         @relation(fields: [provinceId], references: [id])
+  areas            ErpArea[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([provinceId])
   @@index([legacyCode])
@@ -1268,8 +1280,9 @@ model ErpArea {
   createdById BigInt?      @map("created_by_id")
   updatedById BigInt?      @map("updated_by_id")
   deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz(6)
-  city        ErpCity      @relation(fields: [cityId], references: [id])
-  subAreas    ErpSubArea[]
+  city             ErpCity             @relation(fields: [cityId], references: [id])
+  subAreas         ErpSubArea[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([cityId])
   @@index([legacyCode])

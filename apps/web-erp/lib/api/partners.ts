@@ -165,15 +165,20 @@ export interface ErpPartnerAddress {
   type: ErpAddressType;
   addressLine1: string;
   addressLine2?: string | null;
-  city?: string | null;
-  province?: string | null;
-  country?: string | null;
+  countryId?: string | null;
+  provinceId?: string | null;
+  cityId?: string | null;
+  areaId?: string | null;
   postalCode?: string | null;
   phone?: string | null;
   fax?: string | null;
   email?: string | null;
   website?: string | null;
   isDefault: boolean;
+  country?: { id: string; name: string } | null;
+  province?: { id: string; name: string } | null;
+  city?: { id: string; name: string } | null;
+  area?: { id: string; name: string; postalCode?: string | null } | null;
 }
 
 export interface ErpPartnerDetail extends ErpPartner {
@@ -193,9 +198,10 @@ export interface CreatePartnerAddressPayload {
   type: ErpAddressType;
   addressLine1: string;
   addressLine2?: string;
-  city?: string;
-  province?: string;
-  country?: string;
+  countryId?: string;
+  provinceId?: string;
+  cityId?: string;
+  areaId?: string;
   postalCode?: string;
   phone?: string;
   fax?: string;

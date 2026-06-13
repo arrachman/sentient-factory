@@ -18,23 +18,25 @@ export class CreateErpPartnerAddressDto {
   @MaxLength(255)
   addressLine2?: string;
 
-  @ApiPropertyOptional({ example: 'Jakarta' })
+  @ApiPropertyOptional({ description: 'Country id (md_countries)' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  city?: string;
+  countryId?: string;
 
-  @ApiPropertyOptional({ example: 'DKI Jakarta' })
+  @ApiPropertyOptional({ description: 'Province id (md_provinces)' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  province?: string;
+  provinceId?: string;
 
-  @ApiPropertyOptional({ example: 'Indonesia' })
+  @ApiPropertyOptional({ description: 'City id (md_cities)' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  country?: string;
+  cityId?: string;
+
+  @ApiPropertyOptional({ description: 'Area / kecamatan id (md_areas)' })
+  @IsOptional()
+  @IsString()
+  areaId?: string;
 
   @ApiPropertyOptional({ example: '10220' })
   @IsOptional()
