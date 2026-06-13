@@ -125,6 +125,9 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
   const [draft, setDraft] = React.useState<DraftAddress>(emptyDraft);
   const [saving, setSaving] = React.useState(false);
 
+  // Cache kode pos per subAreaId — diisi saat loader dipanggil
+  const subAreaPostalRef = React.useRef<Record<string, string>>({});
+
   React.useEffect(() => {
     let active = true;
     getPartner(partnerId)
@@ -140,7 +143,27 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
   const provinceLoader = React.useMemo(() => makeProvinceLoader(draft.countryId), [draft.countryId]);
   const cityLoader = React.useMemo(() => makeCityLoader(draft.provinceId), [draft.provinceId]);
   const areaLoader = React.useMemo(() => makeAreaLoader(draft.cityId), [draft.cityId]);
-  const subAreaLoader = React.useMemo(() => makeSubAreaLoader(draft.areaId), [draft.areaId]);
+
+  const subAreaLoader = React.useMemo(() => {
+    subAreaPostalRef.current = {};
+    const inner = makeSubAreaLoader(draft.areaId);
+    return async (search: string, page: number, limit: number) => {
+      const result = await inner(search, page, limit);
+      result.data.forEach((opt) => {
+        const postal = String(opt.meta ?? '');
+        if (postal) subAreaPostalRef.current[opt.value] = postal;
+      });
+      return result;
+    };
+  }, [draft.areaId]);
+
+  // Backup: set kode pos saat subAreaId berubah — tidak bergantung timing onPick
+  React.useEffect(() => {
+    if (!draft.subAreaId) return;
+    const postal = subAreaPostalRef.current[draft.subAreaId];
+    if (postal) setDraft((d) => ({ ...d, postalCode: postal }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.subAreaId]);
 
   const handleAdd = async () => {
     if (!draft.addressLine1.trim()) { notify('Alamat wajib diisi', 'warn'); return; }
@@ -261,7 +284,11 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             id="pa-country"
             value={draft.countryId}
             onValueChange={(v) => setD('countryId', v)}
-            onPick={(opt) => setDraft((d) => ({ ...d, countryId: opt.value, provinceId: '', cityId: '', areaId: '', postalCode: '' }))}
+            onPick={(opt) => {
+              setDraft((d) => ({ ...d, countryId: opt.value, provinceId: '', cityId: '', areaId: '', postalCode: '' }));
+              // key berubah → Provinsi remount; fokus setelah React flush
+              setTimeout(() => document.getElementById('pa-prov')?.focus(), 0);
+            }}
             loadOptions={loadCountryOptions}
             placeholder="Pilih negara…"
             title="Negara"
@@ -274,7 +301,10 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             id="pa-prov"
             value={draft.provinceId}
             onValueChange={(v) => setD('provinceId', v)}
-            onPick={(opt) => setDraft((d) => ({ ...d, provinceId: opt.value, cityId: '', areaId: '', postalCode: '' }))}
+            onPick={(opt) => {
+              setDraft((d) => ({ ...d, provinceId: opt.value, cityId: '', areaId: '', postalCode: '' }));
+              setTimeout(() => document.getElementById('pa-city')?.focus(), 0);
+            }}
             loadOptions={provinceLoader}
             placeholder="Pilih provinsi…"
             title="Provinsi"
@@ -287,7 +317,10 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             id="pa-city"
             value={draft.cityId}
             onValueChange={(v) => setD('cityId', v)}
-            onPick={(opt) => setDraft((d) => ({ ...d, cityId: opt.value, areaId: '', postalCode: '' }))}
+            onPick={(opt) => {
+              setDraft((d) => ({ ...d, cityId: opt.value, areaId: '', postalCode: '' }));
+              setTimeout(() => document.getElementById('pa-area')?.focus(), 0);
+            }}
             loadOptions={cityLoader}
             placeholder="Pilih kota…"
             title="Kota"
@@ -302,6 +335,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             onValueChange={(v) => setD('areaId', v)}
             onPick={(opt) => {
               setDraft((d) => ({ ...d, areaId: opt.value, subAreaId: '', postalCode: opt.meta || d.postalCode }));
+              setTimeout(() => document.getElementById('pa-subarea')?.focus(), 0);
             }}
             loadOptions={areaLoader}
             placeholder="Pilih kecamatan…"
