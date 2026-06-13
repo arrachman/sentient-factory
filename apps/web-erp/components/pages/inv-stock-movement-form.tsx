@@ -21,6 +21,7 @@ import {
 } from '@/components/organisms/inv-stock-movement-lines';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
+import { TransactionAttachmentUpload } from '@/components/organisms/transaction-attachment-upload';
 import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/inv-stock-movements';
 import { type FormColumnSlot } from '@/lib/api/form-fields';
@@ -155,6 +156,7 @@ export function InvStockMovementForm({
       <div className="flex gap-1 border-b border-border">
         {[
           { key: 'detail', label: 'Detail' },
+          { key: 'lampiran', label: 'Lampiran' },
           { key: 'info', label: 'Info' },
         ].map((t) => (
           <button
@@ -172,6 +174,9 @@ export function InvStockMovementForm({
         ))}
       </div>
 
+      {tab === 'lampiran' && (
+        <TransactionAttachmentUpload domain="inv" docType={transactionCode ?? 'INV'} docId={data.id ?? null} />
+      )}
       {tab === 'detail' && (
         <InvStockMovementLinesEditor
           ref={linesRef}

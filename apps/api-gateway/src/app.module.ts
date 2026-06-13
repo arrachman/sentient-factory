@@ -88,6 +88,7 @@ import { ErpSubDepartmentsModule } from './erp-sub-departments/erp-sub-departmen
 import { ErpUnitsModule } from './erp-units/erp-units.module';
 import { ErpItemCategoriesModule } from './erp-item-categories/erp-item-categories.module';
 import { ErpItemsModule } from './erp-items/erp-items.module';
+import { ErpAttachmentsModule } from './erp-attachments/erp-attachments.module';
 import { ErpPartnerCategoriesModule } from './erp-partner-categories/erp-partner-categories.module';
 import { ErpPartnersModule } from './erp-partners/erp-partners.module';
 import { ErpColorsModule } from './erp-colors/erp-colors.module';
@@ -265,6 +266,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpUnitsModule,
     ErpItemCategoriesModule,
     ErpItemsModule,
+    ErpAttachmentsModule,
     ErpPartnerCategoriesModule,
     ErpPartnersModule,
     ErpColorsModule,

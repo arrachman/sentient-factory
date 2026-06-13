@@ -25,6 +25,7 @@ import { SlsItemLinesEditor, computeLineTotal, type SlsItemLinesHandle } from '@
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
+import { TransactionAttachmentUpload } from '@/components/organisms/transaction-attachment-upload';
 import { formatNumber } from '@/lib/format';
 import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/sls-orders';
@@ -222,6 +223,7 @@ export function SalesTransactionForm<T extends SlsOrderFormData>({
       <div className="flex gap-1 border-b border-border">
         {[
           { key: 'detail', label: 'Detail' },
+          { key: 'lampiran', label: 'Lampiran' },
           { key: 'info', label: 'Info' },
         ].map((t) => (
           <button
@@ -239,6 +241,9 @@ export function SalesTransactionForm<T extends SlsOrderFormData>({
         ))}
       </div>
 
+      {tab === 'lampiran' && (
+        <TransactionAttachmentUpload domain="sls" docType={transactionCode ?? 'SLS'} docId={data.id ?? null} />
+      )}
       {tab === 'detail' && (
         <SlsItemLinesEditor
           ref={linesRef}

@@ -26,6 +26,7 @@ import { buildLookupLoader } from '@/lib/lookup-source-registry';
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
+import { TransactionAttachmentUpload } from '@/components/organisms/transaction-attachment-upload';
 import { formatNumber } from '@/lib/format';
 import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/fin-cash-receipts';
@@ -302,6 +303,7 @@ export const CashBankTransactionForm = React.forwardRef<
         {[
           { key: 'detail', label: 'Detail' },
           ...extraTabs.map((t) => ({ key: t.key, label: t.label })),
+          { key: 'lampiran', label: 'Lampiran' },
           { key: 'info', label: 'Info' },
         ].map((t) => (
           <button
@@ -330,6 +332,9 @@ export const CashBankTransactionForm = React.forwardRef<
         />
       )}
       {extraTabs.map((t) => (tab === t.key ? <div key={t.key}>{t.content}</div> : null))}
+      {tab === 'lampiran' && (
+        <TransactionAttachmentUpload domain="fin" docType={transactionCode ?? 'FIN'} docId={data.id ?? null} />
+      )}
       {tab === 'info' && (
         <dl className="grid grid-cols-2 gap-y-2 gap-x-6 text-sm max-w-xl">
           <dt className="text-muted-foreground">No Transaksi</dt>

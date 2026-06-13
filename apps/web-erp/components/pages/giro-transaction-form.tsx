@@ -32,6 +32,7 @@ import {
 import { listCurrencies, type ErpCurrency } from '@/lib/api/currencies';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
+import { TransactionAttachmentUpload } from '@/components/organisms/transaction-attachment-upload';
 import { formatNumber } from '@/lib/format';
 import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/fin-journal-entries';
@@ -243,7 +244,7 @@ export function GiroTransactionForm({
       </div>
 
       <div className="flex gap-1 border-b border-border">
-        {[{ key: 'detail', label: 'Detail' }, { key: 'info', label: 'Info' }].map((t) => (
+        {[{ key: 'detail', label: 'Detail' }, { key: 'lampiran', label: 'Lampiran' }, { key: 'info', label: 'Info' }].map((t) => (
           <button
             key={t.key}
             type="button"
@@ -257,6 +258,9 @@ export function GiroTransactionForm({
         ))}
       </div>
 
+      {tab === 'lampiran' && (
+        <TransactionAttachmentUpload domain="fin" docType={transactionCode ?? 'FIN'} docId={data.id ?? null} />
+      )}
       {tab === 'detail' && (isRegister ? (
         <GiroInstrumentsEditor
           ref={linesRef}
