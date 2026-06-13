@@ -9,7 +9,7 @@
 
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
+import { Input, Textarea } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,6 +28,7 @@ import {
   TableCell,
   TableEmpty,
 } from '@/components/organisms/table';
+import { SearchSelect } from '@/components/molecules/search-select';
 import { confirmAction, notify } from '@/lib/feedback';
 import {
   getPartner,
@@ -36,6 +37,8 @@ import {
   type ErpPartnerAddress,
   type ErpAddressType,
 } from '@/lib/api/partners';
+import { listProvinces } from '@/lib/api/provinces';
+import { listCities } from '@/lib/api/cities';
 
 const TYPE_LABELS: Record<ErpAddressType, string> = {
   BILLING: 'Penagihan',
@@ -48,10 +51,15 @@ interface DraftAddress {
   type: ErpAddressType;
   addressLine1: string;
   city: string;
+  cityId: string;
   province: string;
+  provinceId: string;
   postalCode: string;
+  country: string;
   phone: string;
   fax: string;
+  email: string;
+  website: string;
   isDefault: boolean;
 }
 
@@ -59,12 +67,27 @@ const emptyDraft = (): DraftAddress => ({
   type: 'BILLING',
   addressLine1: '',
   city: '',
+  cityId: '',
   province: '',
+  provinceId: '',
   postalCode: '',
+  country: '',
   phone: '',
   fax: '',
+  email: '',
+  website: '',
   isDefault: false,
 });
+
+async function loadProvinceOptions(search: string, page: number, limit: number) {
+  const res = await listProvinces({ search: search || undefined, page, limit, isActive: true });
+  return { data: res.data.map((p) => ({ value: p.id, label: p.name })), total: res.meta.total };
+}
+
+async function loadCityOptions(search: string, page: number, limit: number) {
+  const res = await listCities({ search: search || undefined, page, limit, isActive: true });
+  return { data: res.data.map((c) => ({ value: c.id, label: c.name })), total: res.meta.total };
+}
 
 export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
   const [items, setItems] = React.useState<ErpPartnerAddress[]>([]);
@@ -93,9 +116,12 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
         addressLine1: draft.addressLine1.trim(),
         city: draft.city.trim() || undefined,
         province: draft.province.trim() || undefined,
+        country: draft.country.trim() || undefined,
         postalCode: draft.postalCode.trim() || undefined,
         phone: draft.phone.trim() || undefined,
         fax: draft.fax.trim() || undefined,
+        email: draft.email.trim() || undefined,
+        website: draft.website.trim() || undefined,
         isDefault: draft.isDefault,
       });
       setItems((prev) => [...prev, created]);
@@ -135,23 +161,27 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
               <TableHead style={{ width: 96 }}>Tipe</TableHead>
               <TableHead>Alamat</TableHead>
               <TableHead style={{ width: 120 }}>Kota</TableHead>
+              <TableHead style={{ width: 100 }}>Negara</TableHead>
               <TableHead style={{ width: 130 }}>No HP</TableHead>
+              <TableHead style={{ width: 160 }}>Email</TableHead>
               <TableHead style={{ width: 70 }}>Utama</TableHead>
               <TableHead style={{ width: 64 }} />
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="muted">Memuat…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="muted">Memuat…</TableCell></TableRow>
             ) : items.length === 0 ? (
-              <TableEmpty colSpan={6} variant="empty" entityLabel="alamat" />
+              <TableEmpty colSpan={8} variant="empty" entityLabel="alamat" />
             ) : (
               items.map((a) => (
                 <TableRow key={a.id}>
                   <TableCell className="muted">{TYPE_LABELS[a.type] ?? a.type}</TableCell>
                   <TableCell>{a.addressLine1}</TableCell>
                   <TableCell className="muted">{a.city || '—'}</TableCell>
+                  <TableCell className="muted">{a.country || '—'}</TableCell>
                   <TableCell>{a.phone || '—'}</TableCell>
+                  <TableCell className="muted">{a.email || '—'}</TableCell>
                   <TableCell>{a.isDefault ? <Badge variant="info" dot>Utama</Badge> : null}</TableCell>
                   <TableCell>
                     <button type="button" className="btn ghost danger" onClick={() => handleRemove(a)}>
@@ -182,23 +212,48 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
         </FormField>
         <div className="col-span-2">
           <FormField label="Alamat" htmlFor="pa-line1" required>
-            <Input id="pa-line1" value={draft.addressLine1} onChange={(e) => setD('addressLine1', e.target.value)} placeholder="Jl. Sudirman No. 1" />
+            <Textarea id="pa-line1" value={draft.addressLine1} onChange={(e) => setD('addressLine1', e.target.value)} placeholder="Jl. Sudirman No. 1" rows={3} />
           </FormField>
         </div>
-        <FormField label="Kota" htmlFor="pa-city">
-          <Input id="pa-city" value={draft.city} onChange={(e) => setD('city', e.target.value)} placeholder="Jakarta" />
-        </FormField>
         <FormField label="Provinsi" htmlFor="pa-prov">
-          <Input id="pa-prov" value={draft.province} onChange={(e) => setD('province', e.target.value)} placeholder="DKI Jakarta" />
+          <SearchSelect
+            id="pa-prov"
+            value={draft.provinceId}
+            onValueChange={(v) => setD('provinceId', v)}
+            onPick={(opt) => setDraft((d) => ({ ...d, provinceId: opt.value, province: opt.label, cityId: '', city: '' }))}
+            loadOptions={loadProvinceOptions}
+            placeholder="Pilih provinsi…"
+            title="Provinsi"
+          />
+        </FormField>
+        <FormField label="Kota" htmlFor="pa-city">
+          <SearchSelect
+            id="pa-city"
+            value={draft.cityId}
+            onValueChange={(v) => setD('cityId', v)}
+            onPick={(opt) => setDraft((d) => ({ ...d, cityId: opt.value, city: opt.label }))}
+            loadOptions={loadCityOptions}
+            placeholder="Pilih kota…"
+            title="Kota"
+          />
         </FormField>
         <FormField label="Kode Pos" htmlFor="pa-postal">
           <Input id="pa-postal" value={draft.postalCode} onChange={(e) => setD('postalCode', e.target.value)} placeholder="10220" />
+        </FormField>
+        <FormField label="Negara" htmlFor="pa-country">
+          <Input id="pa-country" value={draft.country} onChange={(e) => setD('country', e.target.value)} placeholder="Indonesia" />
         </FormField>
         <FormField label="No HP" htmlFor="pa-phone">
           <Input id="pa-phone" value={draft.phone} onChange={(e) => setD('phone', e.target.value)} placeholder="021-5551234" />
         </FormField>
         <FormField label="Fax" htmlFor="pa-fax">
           <Input id="pa-fax" value={draft.fax} onChange={(e) => setD('fax', e.target.value)} placeholder="021-5554321" />
+        </FormField>
+        <FormField label="Email" htmlFor="pa-email">
+          <Input id="pa-email" value={draft.email} onChange={(e) => setD('email', e.target.value)} placeholder="info@example.com" />
+        </FormField>
+        <FormField label="Website" htmlFor="pa-website">
+          <Input id="pa-website" value={draft.website} onChange={(e) => setD('website', e.target.value)} placeholder="https://www.example.com" />
         </FormField>
         <div className="flex items-end justify-end">
           <button type="button" className="btn primary" onClick={handleAdd} disabled={saving}>

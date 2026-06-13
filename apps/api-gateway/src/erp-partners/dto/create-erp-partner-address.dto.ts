@@ -54,6 +54,18 @@ export class CreateErpPartnerAddressDto {
   @MaxLength(50)
   fax?: string;
 
+  @ApiPropertyOptional({ example: 'info@example.com' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  email?: string;
+
+  @ApiPropertyOptional({ example: 'https://www.example.com' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  website?: string;
+
   @ApiPropertyOptional({ example: false, default: false })
   @IsOptional()
   @IsBoolean()
