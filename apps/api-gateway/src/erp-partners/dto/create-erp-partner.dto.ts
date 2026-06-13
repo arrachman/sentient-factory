@@ -27,6 +27,26 @@ export class CreateErpPartnerDto {
   @IsBoolean()
   isSupplier?: boolean = false;
 
+  @ApiPropertyOptional({ example: false, default: false })
+  @IsOptional()
+  @IsBoolean()
+  isSalesman?: boolean = false;
+
+  @ApiPropertyOptional({ example: '5', description: 'ErpPartnerCategory ID (kind=CUSTOMER)' })
+  @IsOptional()
+  @IsString()
+  customerCategoryId?: string | null;
+
+  @ApiPropertyOptional({ example: '6', description: 'ErpPartnerCategory ID (kind=SUPPLIER)' })
+  @IsOptional()
+  @IsString()
+  supplierCategoryId?: string | null;
+
+  @ApiPropertyOptional({ example: '7', description: 'ErpPartnerCategory ID (kind=SALESMAN)' })
+  @IsOptional()
+  @IsString()
+  salesmanCategoryId?: string | null;
+
   @ApiPropertyOptional({ example: '01.234.567.8-901.000' })
   @IsOptional()
   @IsString()

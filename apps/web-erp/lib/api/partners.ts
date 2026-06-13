@@ -46,6 +46,13 @@ export interface ErpPartner {
   categoryId?: string | null;
   isCustomer: boolean;
   isSupplier: boolean;
+  isSalesman: boolean;
+  customerCategoryId?: string | null;
+  supplierCategoryId?: string | null;
+  salesmanCategoryId?: string | null;
+  customerCategory?: ErpMasterRef | null;
+  supplierCategory?: ErpMasterRef | null;
+  salesmanCategory?: ErpMasterRef | null;
   taxNumber?: string | null;
   isTaxable: boolean;
   receivableAccountId?: string | null;
@@ -66,6 +73,10 @@ export interface CreatePartnerPayload {
   categoryId?: string;
   isCustomer?: boolean;
   isSupplier?: boolean;
+  isSalesman?: boolean;
+  customerCategoryId?: string | null;
+  supplierCategoryId?: string | null;
+  salesmanCategoryId?: string | null;
   taxNumber?: string;
   isTaxable?: boolean;
   receivableAccountId?: string | null;
@@ -82,6 +93,10 @@ export interface UpdatePartnerPayload {
   categoryId?: string;
   isCustomer?: boolean;
   isSupplier?: boolean;
+  isSalesman?: boolean;
+  customerCategoryId?: string | null;
+  supplierCategoryId?: string | null;
+  salesmanCategoryId?: string | null;
   taxNumber?: string;
   isTaxable?: boolean;
   receivableAccountId?: string | null;
@@ -117,6 +132,8 @@ export interface ErpPartnerAddress {
   postalCode?: string | null;
   phone?: string | null;
   fax?: string | null;
+  email?: string | null;
+  website?: string | null;
   isDefault: boolean;
 }
 
@@ -143,6 +160,8 @@ export interface CreatePartnerAddressPayload {
   postalCode?: string;
   phone?: string;
   fax?: string;
+  email?: string;
+  website?: string;
   isDefault?: boolean;
 }
 

@@ -69,6 +69,9 @@ export class ErpPartnersService {
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
     const categoryBigInt = dto.categoryId ? BigInt(dto.categoryId) : null;
+    const customerCatBigInt = dto.customerCategoryId ? BigInt(dto.customerCategoryId) : null;
+    const supplierCatBigInt = dto.supplierCategoryId ? BigInt(dto.supplierCategoryId) : null;
+    const salesmanCatBigInt = dto.salesmanCategoryId ? BigInt(dto.salesmanCategoryId) : null;
     const receivableBigInt = dto.receivableAccountId ? BigInt(dto.receivableAccountId) : null;
     const payableBigInt = dto.payableAccountId ? BigInt(dto.payableAccountId) : null;
 
@@ -79,8 +82,12 @@ export class ErpPartnersService {
           code: dto.code,
           name: dto.name,
           categoryId: categoryBigInt,
+          customerCategoryId: customerCatBigInt,
+          supplierCategoryId: supplierCatBigInt,
+          salesmanCategoryId: salesmanCatBigInt,
           isCustomer: dto.isCustomer ?? false,
           isSupplier: dto.isSupplier ?? false,
+          isSalesman: dto.isSalesman ?? false,
           taxNumber: dto.taxNumber,
           isTaxable: dto.isTaxable ?? false,
           receivableAccountId: receivableBigInt,
@@ -154,6 +161,9 @@ export class ErpPartnersService {
         take: limit,
         include: {
           category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
+          customerCategory: { select: { id: true, code: true, name: true } },
+          supplierCategory: { select: { id: true, code: true, name: true } },
+          salesmanCategory: { select: { id: true, code: true, name: true } },
           receivableAccount: { select: { id: true, code: true, name: true } },
           payableAccount: { select: { id: true, code: true, name: true } },
           ...PARTNER_DIM_INCLUDE,
@@ -179,6 +189,9 @@ export class ErpPartnersService {
       where: { id, deletedAt: null },
       include: {
         category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
+        customerCategory: { select: { id: true, code: true, name: true } },
+        supplierCategory: { select: { id: true, code: true, name: true } },
+        salesmanCategory: { select: { id: true, code: true, name: true } },
         receivableAccount: { select: { id: true, code: true, name: true } },
         payableAccount: { select: { id: true, code: true, name: true } },
         addresses: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
@@ -218,6 +231,18 @@ export class ErpPartnersService {
     const actorBigInt = actorId ? BigInt(actorId) : null;
     const categoryBigInt =
       dto.categoryId !== undefined ? (dto.categoryId ? BigInt(dto.categoryId) : null) : undefined;
+    const customerCatBigInt =
+      dto.customerCategoryId !== undefined
+        ? (dto.customerCategoryId ? BigInt(dto.customerCategoryId) : null)
+        : undefined;
+    const supplierCatBigInt =
+      dto.supplierCategoryId !== undefined
+        ? (dto.supplierCategoryId ? BigInt(dto.supplierCategoryId) : null)
+        : undefined;
+    const salesmanCatBigInt =
+      dto.salesmanCategoryId !== undefined
+        ? (dto.salesmanCategoryId ? BigInt(dto.salesmanCategoryId) : null)
+        : undefined;
     const receivableBigInt =
       dto.receivableAccountId !== undefined
         ? dto.receivableAccountId
@@ -239,8 +264,12 @@ export class ErpPartnersService {
           code: dto.code,
           name: dto.name,
           categoryId: categoryBigInt,
+          customerCategoryId: customerCatBigInt,
+          supplierCategoryId: supplierCatBigInt,
+          salesmanCategoryId: salesmanCatBigInt,
           isCustomer: dto.isCustomer,
           isSupplier: dto.isSupplier,
+          isSalesman: dto.isSalesman,
           taxNumber: dto.taxNumber,
           isTaxable: dto.isTaxable,
           receivableAccountId: receivableBigInt,
@@ -319,6 +348,8 @@ export class ErpPartnersService {
         postalCode: dto.postalCode,
         phone: dto.phone,
         fax: dto.fax,
+        email: dto.email,
+        website: dto.website,
         isDefault: dto.isDefault ?? false,
         createdById: actorBigInt,
         updatedById: actorBigInt,

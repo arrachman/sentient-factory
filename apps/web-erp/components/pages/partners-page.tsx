@@ -23,7 +23,14 @@ import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simpl
 import { PartnerContactsEditor } from '@/components/organisms/partner-contacts-editor';
 import { PartnerAddressesEditor } from '@/components/organisms/partner-addresses-editor';
 import { MultiLookupField } from './items-form-parts';
-import { loadBranchOptions, loadWarehouseOptions, loadLocationOptions } from './items-form-lookups';
+import {
+  loadBranchOptions,
+  loadWarehouseOptions,
+  loadLocationOptions,
+  loadCustomerCategoryOptions,
+  loadSupplierCategoryOptions,
+  loadSalesmanCategoryOptions,
+} from './items-form-lookups';
 import {
   listPartners,
   createPartner,
@@ -65,10 +72,10 @@ const accountLabel = (acct?: { code: string; name: string } | null) =>
 
 // ─── Partner type helpers ─────────────────────────────────────────────────────
 
-type PartnerTypeKey = 'CUSTOMER' | 'SUPPLIER' | 'BOTH';
+type PartnerTypeKey = 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN';
 
 function resolvePartnerType(p: ErpPartner): PartnerTypeKey {
-  if (p.isCustomer && p.isSupplier) return 'BOTH';
+  if (p.isSalesman) return 'SALESMAN';
   if (p.isSupplier) return 'SUPPLIER';
   return 'CUSTOMER';
 }
@@ -77,6 +84,7 @@ function partnerTypeLabel(p: ErpPartner): string {
   const types: string[] = [];
   if (p.isCustomer) types.push('Customer');
   if (p.isSupplier) types.push('Supplier');
+  if (p.isSalesman) types.push('Salesman');
   return types.length > 0 ? types.join(', ') : '—';
 }
 
@@ -88,6 +96,12 @@ interface PartnerForm {
   name: string;
   partnerType: PartnerTypeKey;
   taxNumber: string;
+  customerCategoryId: string;
+  customerCategoryLabel: string;
+  supplierCategoryId: string;
+  supplierCategoryLabel: string;
+  salesmanCategoryId: string;
+  salesmanCategoryLabel: string;
   receivableAccountId: string;
   receivableAccountLabel: string;
   payableAccountId: string;
@@ -107,6 +121,12 @@ const defaultForm = (): PartnerForm => ({
   name: '',
   partnerType: 'CUSTOMER',
   taxNumber: '',
+  customerCategoryId: '',
+  customerCategoryLabel: '',
+  supplierCategoryId: '',
+  supplierCategoryLabel: '',
+  salesmanCategoryId: '',
+  salesmanCategoryLabel: '',
   receivableAccountId: '',
   receivableAccountLabel: '',
   payableAccountId: '',
@@ -137,6 +157,8 @@ function dimFromRows<T>(
   return { ids, labels };
 }
 
+const categoryLabel = (cat?: { name: string } | null) => cat?.name ?? '';
+
 const fromRecord = (p: ErpPartner): PartnerForm => {
   const b = dimFromRows(p.dimBranches, (r) => r.branchId, (r) => r.branch);
   const w = dimFromRows(p.dimWarehouses, (r) => r.warehouseId, (r) => r.warehouse);
@@ -147,6 +169,12 @@ const fromRecord = (p: ErpPartner): PartnerForm => {
     name: p.name,
     partnerType: resolvePartnerType(p),
     taxNumber: p.taxNumber ?? '',
+    customerCategoryId: p.customerCategoryId ?? '',
+    customerCategoryLabel: categoryLabel(p.customerCategory),
+    supplierCategoryId: p.supplierCategoryId ?? '',
+    supplierCategoryLabel: categoryLabel(p.supplierCategory),
+    salesmanCategoryId: p.salesmanCategoryId ?? '',
+    salesmanCategoryLabel: categoryLabel(p.salesmanCategory),
     receivableAccountId: p.receivableAccountId ?? '',
     receivableAccountLabel: accountLabel(p.receivableAccount),
     payableAccountId: p.payableAccountId ?? '',
@@ -164,8 +192,12 @@ const fromRecord = (p: ErpPartner): PartnerForm => {
 const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   code: f.code,
   name: f.name,
-  isCustomer: f.partnerType === 'CUSTOMER' || f.partnerType === 'BOTH',
-  isSupplier: f.partnerType === 'SUPPLIER' || f.partnerType === 'BOTH',
+  isCustomer: f.partnerType === 'CUSTOMER',
+  isSupplier: f.partnerType === 'SUPPLIER',
+  isSalesman: f.partnerType === 'SALESMAN',
+  customerCategoryId: f.partnerType === 'CUSTOMER' ? (f.customerCategoryId || null) : null,
+  supplierCategoryId: f.partnerType === 'SUPPLIER' ? (f.supplierCategoryId || null) : null,
+  salesmanCategoryId: f.partnerType === 'SALESMAN' ? (f.salesmanCategoryId || null) : null,
   taxNumber: f.taxNumber || undefined,
   receivableAccountId: f.receivableAccountId || null,
   payableAccountId: f.payableAccountId || null,
@@ -193,10 +225,9 @@ function PartnerFormFields({
   const set = (k: keyof PartnerForm, v: string | boolean) =>
     onChange({ ...data, [k]: v });
 
-  const showCustomerFields =
-    data.partnerType === 'CUSTOMER' || data.partnerType === 'BOTH';
-  const showSupplierFields =
-    data.partnerType === 'SUPPLIER' || data.partnerType === 'BOTH';
+  const showCustomerFields = data.partnerType === 'CUSTOMER';
+  const showSupplierFields = data.partnerType === 'SUPPLIER';
+  const showSalesmanFields = data.partnerType === 'SALESMAN';
 
   const savedHint = (
     <div className="p-4 text-[12.5px] text-muted-foreground">
@@ -243,10 +274,49 @@ function PartnerFormFields({
           <SelectContent>
             <SelectItem value="CUSTOMER">Customer</SelectItem>
             <SelectItem value="SUPPLIER">Supplier</SelectItem>
-            <SelectItem value="BOTH">Customer &amp; Supplier</SelectItem>
+            <SelectItem value="SALESMAN">Salesman</SelectItem>
           </SelectContent>
         </Select>
       </FormField>
+      {showCustomerFields && (
+        <FormField label="Kategori Customer" htmlFor="pf-cust-cat">
+          <SearchSelect
+            id="pf-cust-cat"
+            value={data.customerCategoryId}
+            onValueChange={(v) => set('customerCategoryId', v)}
+            placeholder="Pilih kategori customer…"
+            loadOptions={loadCustomerCategoryOptions}
+            initialLabel={data.customerCategoryLabel}
+            title="Kategori Customer"
+          />
+        </FormField>
+      )}
+      {showSupplierFields && (
+        <FormField label="Kategori Supplier" htmlFor="pf-supp-cat">
+          <SearchSelect
+            id="pf-supp-cat"
+            value={data.supplierCategoryId}
+            onValueChange={(v) => set('supplierCategoryId', v)}
+            placeholder="Pilih kategori supplier…"
+            loadOptions={loadSupplierCategoryOptions}
+            initialLabel={data.supplierCategoryLabel}
+            title="Kategori Supplier"
+          />
+        </FormField>
+      )}
+      {showSalesmanFields && (
+        <FormField label="Kategori Salesman" htmlFor="pf-sales-cat">
+          <SearchSelect
+            id="pf-sales-cat"
+            value={data.salesmanCategoryId}
+            onValueChange={(v) => set('salesmanCategoryId', v)}
+            placeholder="Pilih kategori salesman…"
+            loadOptions={loadSalesmanCategoryOptions}
+            initialLabel={data.salesmanCategoryLabel}
+            title="Kategori Salesman"
+          />
+        </FormField>
+      )}
       <FormField label="NPWP" htmlFor="pf-tax">
         <Input
           id="pf-tax"

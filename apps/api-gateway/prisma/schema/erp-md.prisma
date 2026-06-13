@@ -511,7 +511,10 @@ model ErpPartnerCategory {
   updatedById BigInt?                @map("updated_by_id")
   deletedAt   DateTime?              @map("deleted_at") @db.Timestamptz(6)
 
-  partners ErpPartner[]
+  partners         ErpPartner[]
+  partnerCustomers ErpPartner[] @relation("PartnerCustomerCategory")
+  partnerSuppliers ErpPartner[] @relation("PartnerSupplierCategory")
+  partnerSalesmans ErpPartner[] @relation("PartnerSalesmanCategory")
 
   @@index([legacyCode])
   @@map("md_partner_categories")
@@ -525,6 +528,9 @@ model ErpPartner {
   isSupplier          Boolean   @default(false) @map("is_supplier")
   isSalesman          Boolean   @default(false) @map("is_salesman")
   categoryId          BigInt?   @map("category_id")
+  customerCategoryId  BigInt?   @map("customer_category_id")
+  supplierCategoryId  BigInt?   @map("supplier_category_id")
+  salesmanCategoryId  BigInt?   @map("salesman_category_id")
   taxNumber           String?   @map("tax_number")
   isTaxable           Boolean   @default(false) @map("is_taxable")
   currencyId          BigInt?   @map("currency_id")
@@ -547,6 +553,9 @@ model ErpPartner {
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   category          ErpPartnerCategory? @relation(fields: [categoryId], references: [id])
+  customerCategory  ErpPartnerCategory? @relation("PartnerCustomerCategory", fields: [customerCategoryId], references: [id])
+  supplierCategory  ErpPartnerCategory? @relation("PartnerSupplierCategory", fields: [supplierCategoryId], references: [id])
+  salesmanCategory  ErpPartnerCategory? @relation("PartnerSalesmanCategory", fields: [salesmanCategoryId], references: [id])
   currency          ErpCurrency?        @relation(fields: [currencyId], references: [id])
   receivableAccount ErpAccount?         @relation("PartnerReceivableAcct", fields: [receivableAccountId], references: [id])
   payableAccount    ErpAccount?         @relation("PartnerPayableAcct", fields: [payableAccountId], references: [id])
@@ -567,6 +576,9 @@ model ErpPartner {
   itemVendor          ErpItem[]               @relation("ItemVendor")
 
   @@index([categoryId])
+  @@index([customerCategoryId])
+  @@index([supplierCategoryId])
+  @@index([salesmanCategoryId])
   @@index([currencyId])
   @@index([salesmanId])
   @@index([legacyCode])
@@ -586,6 +598,8 @@ model ErpPartnerAddress {
   postalCode   String?        @map("postal_code")
   phone        String?        @map("phone")
   fax          String?        @map("fax")
+  email        String?        @map("email")
+  website      String?        @map("website")
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById  BigInt?        @map("created_by_id")
