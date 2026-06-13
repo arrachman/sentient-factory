@@ -318,7 +318,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             onValueChange={(v) => setD('subAreaId', v)}
             onPick={(opt) => {
               const postalFromSubArea = (opt as typeof opt & { meta?: string }).meta ?? '';
-              setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: postalFromSubArea || d.postalCode }));
+              setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: postalFromSubArea }));
             }}
             loadOptions={subAreaLoader}
             placeholder="Pilih kelurahan…"
