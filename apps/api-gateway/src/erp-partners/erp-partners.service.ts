@@ -26,6 +26,16 @@ const PARTNER_DIM_INCLUDE = {
   },
 } as const;
 
+const PARTNER_TRX_INCLUDE = {
+  currency: { select: { id: true, code: true, name: true, symbol: true } },
+  saleTerm: { select: { id: true, code: true, name: true } },
+  purchaseTerm: { select: { id: true, code: true, name: true } },
+} as const;
+
+const PARTNER_REF_INCLUDE = {
+  salesman: { select: { id: true, code: true, name: true } },
+} as const;
+
 /** Build junction rows for one multi-select dimension. */
 function buildDimRows<K extends string>(
   ids: string[] | undefined,
@@ -72,8 +82,12 @@ export class ErpPartnersService {
     const customerCatBigInt = dto.customerCategoryId ? BigInt(dto.customerCategoryId) : null;
     const supplierCatBigInt = dto.supplierCategoryId ? BigInt(dto.supplierCategoryId) : null;
     const salesmanCatBigInt = dto.salesmanCategoryId ? BigInt(dto.salesmanCategoryId) : null;
+    const salesmanBigInt = dto.salesmanId ? BigInt(dto.salesmanId) : null;
     const receivableBigInt = dto.receivableAccountId ? BigInt(dto.receivableAccountId) : null;
     const payableBigInt = dto.payableAccountId ? BigInt(dto.payableAccountId) : null;
+    const currencyBigInt = dto.currencyId ? BigInt(dto.currencyId) : null;
+    const saleTermBigInt = dto.saleTermId ? BigInt(dto.saleTermId) : null;
+    const purchaseTermBigInt = dto.purchaseTermId ? BigInt(dto.purchaseTermId) : null;
 
     let created;
     try {
@@ -85,6 +99,7 @@ export class ErpPartnersService {
           customerCategoryId: customerCatBigInt,
           supplierCategoryId: supplierCatBigInt,
           salesmanCategoryId: salesmanCatBigInt,
+          salesmanId: salesmanBigInt,
           isCustomer: dto.isCustomer ?? false,
           isSupplier: dto.isSupplier ?? false,
           isSalesman: dto.isSalesman ?? false,
@@ -92,6 +107,12 @@ export class ErpPartnersService {
           isTaxable: dto.isTaxable ?? false,
           receivableAccountId: receivableBigInt,
           payableAccountId: payableBigInt,
+          currencyId: currencyBigInt,
+          saleTermId: saleTermBigInt,
+          purchaseTermId: purchaseTermBigInt,
+          arCreditLimit: dto.arCreditLimit ?? undefined,
+          apCreditLimit: dto.apCreditLimit ?? undefined,
+          salesPriceTier: dto.salesPriceTier ?? 1,
           branchId: firstBranchSync(dto.branchIds) ?? null,
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
@@ -106,7 +127,7 @@ export class ErpPartnersService {
             ? { dimLocations: { create: buildDimRows(dto.locationIds, 'locationId') } }
             : {}),
         },
-        include: PARTNER_DIM_INCLUDE,
+        include: { ...PARTNER_DIM_INCLUDE, ...PARTNER_TRX_INCLUDE, ...PARTNER_REF_INCLUDE },
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code', 'md_partners_code_key'])) {
@@ -146,6 +167,10 @@ export class ErpPartnersService {
       where.isSupplier = query.isSupplier;
     }
 
+    if (query.isSalesman !== undefined) {
+      where.isSalesman = query.isSalesman;
+    }
+
     if (query.isActive !== undefined) {
       where.isActive = query.isActive;
     }
@@ -167,6 +192,8 @@ export class ErpPartnersService {
           receivableAccount: { select: { id: true, code: true, name: true } },
           payableAccount: { select: { id: true, code: true, name: true } },
           ...PARTNER_DIM_INCLUDE,
+          ...PARTNER_TRX_INCLUDE,
+          ...PARTNER_REF_INCLUDE,
         },
       }),
       this.prisma.erpPartner.count({ where }),
@@ -198,6 +225,8 @@ export class ErpPartnersService {
         contacts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
         bankAccounts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
         ...PARTNER_DIM_INCLUDE,
+        ...PARTNER_TRX_INCLUDE,
+        ...PARTNER_REF_INCLUDE,
       },
     });
     if (!item) {
@@ -233,15 +262,27 @@ export class ErpPartnersService {
       dto.categoryId !== undefined ? (dto.categoryId ? BigInt(dto.categoryId) : null) : undefined;
     const customerCatBigInt =
       dto.customerCategoryId !== undefined
-        ? (dto.customerCategoryId ? BigInt(dto.customerCategoryId) : null)
+        ? dto.customerCategoryId
+          ? BigInt(dto.customerCategoryId)
+          : null
         : undefined;
     const supplierCatBigInt =
       dto.supplierCategoryId !== undefined
-        ? (dto.supplierCategoryId ? BigInt(dto.supplierCategoryId) : null)
+        ? dto.supplierCategoryId
+          ? BigInt(dto.supplierCategoryId)
+          : null
         : undefined;
     const salesmanCatBigInt =
       dto.salesmanCategoryId !== undefined
-        ? (dto.salesmanCategoryId ? BigInt(dto.salesmanCategoryId) : null)
+        ? dto.salesmanCategoryId
+          ? BigInt(dto.salesmanCategoryId)
+          : null
+        : undefined;
+    const salesmanBigInt =
+      dto.salesmanId !== undefined
+        ? dto.salesmanId
+          ? BigInt(dto.salesmanId)
+          : null
         : undefined;
     const receivableBigInt =
       dto.receivableAccountId !== undefined
@@ -253,6 +294,16 @@ export class ErpPartnersService {
       dto.payableAccountId !== undefined
         ? dto.payableAccountId
           ? BigInt(dto.payableAccountId)
+          : null
+        : undefined;
+    const currencyBigInt =
+      dto.currencyId !== undefined ? (dto.currencyId ? BigInt(dto.currencyId) : null) : undefined;
+    const saleTermBigInt =
+      dto.saleTermId !== undefined ? (dto.saleTermId ? BigInt(dto.saleTermId) : null) : undefined;
+    const purchaseTermBigInt =
+      dto.purchaseTermId !== undefined
+        ? dto.purchaseTermId
+          ? BigInt(dto.purchaseTermId)
           : null
         : undefined;
 
@@ -267,6 +318,7 @@ export class ErpPartnersService {
           customerCategoryId: customerCatBigInt,
           supplierCategoryId: supplierCatBigInt,
           salesmanCategoryId: salesmanCatBigInt,
+          salesmanId: salesmanBigInt,
           isCustomer: dto.isCustomer,
           isSupplier: dto.isSupplier,
           isSalesman: dto.isSalesman,
@@ -274,6 +326,12 @@ export class ErpPartnersService {
           isTaxable: dto.isTaxable,
           receivableAccountId: receivableBigInt,
           payableAccountId: payableBigInt,
+          currencyId: currencyBigInt,
+          saleTermId: saleTermBigInt,
+          purchaseTermId: purchaseTermBigInt,
+          arCreditLimit: dto.arCreditLimit !== undefined ? dto.arCreditLimit : undefined,
+          apCreditLimit: dto.apCreditLimit !== undefined ? dto.apCreditLimit : undefined,
+          salesPriceTier: dto.salesPriceTier !== undefined ? dto.salesPriceTier : undefined,
           branchId: firstBranchSync(dto.branchIds),
           isActive: dto.isActive,
           updatedById: actorBigInt,
@@ -297,7 +355,7 @@ export class ErpPartnersService {
               }
             : {}),
         },
-        include: PARTNER_DIM_INCLUDE,
+        include: { ...PARTNER_DIM_INCLUDE, ...PARTNER_TRX_INCLUDE, ...PARTNER_REF_INCLUDE },
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code', 'md_partners_code_key'])) {

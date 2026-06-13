@@ -30,6 +30,7 @@ import {
   loadCustomerCategoryOptions,
   loadSupplierCategoryOptions,
   loadSalesmanCategoryOptions,
+  loadSalesmanPartnerOptions,
 } from './items-form-lookups';
 import {
   listPartners,
@@ -42,7 +43,10 @@ import {
   type CreatePartnerPayload,
 } from '@/lib/api/partners';
 import { listAccounts, type ErpAccountType } from '@/lib/api/accounts';
+import { listCurrencies } from '@/lib/api/currencies';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
+import { NumInput } from '@/components/molecules/num-input';
+import { loadPaymentTermOptions } from '@/components/pages/pur-form-lookups';
 
 const accountOptionLoader = (accountType: ErpAccountType) =>
   async (search: string, page: number, limit: number) => {
@@ -69,6 +73,17 @@ const loadPayableAccounts = accountOptionLoader('LIABILITY');
 
 const accountLabel = (acct?: { code: string; name: string } | null) =>
   acct ? `${acct.code} — ${acct.name}` : '';
+
+const loadCurrencyOptions = async (search: string, page: number, limit: number) => {
+  const res = await listCurrencies({ search: search || undefined, page, limit, isActive: true });
+  return {
+    data: res.data.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}`, code: c.code })),
+    total: res.meta?.total ?? res.data.length,
+  };
+};
+
+const termLabel = (t?: { code: string; name: string } | null) =>
+  t ? `${t.code} — ${t.name}` : '';
 
 // ─── Partner type helpers ─────────────────────────────────────────────────────
 
@@ -102,6 +117,8 @@ interface PartnerForm {
   supplierCategoryLabel: string;
   salesmanCategoryId: string;
   salesmanCategoryLabel: string;
+  salesmanId: string;
+  salesmanLabel: string;
   receivableAccountId: string;
   receivableAccountLabel: string;
   payableAccountId: string;
@@ -113,6 +130,16 @@ interface PartnerForm {
   locationIds: string[];
   locationLabels: Record<string, string>;
   isActive: boolean;
+  // Transaksi tab
+  currencyId: string;
+  currencyLabel: string;
+  saleTermId: string;
+  saleTermLabel: string;
+  purchaseTermId: string;
+  purchaseTermLabel: string;
+  arCreditLimit: string;
+  apCreditLimit: string;
+  salesPriceTier: string;
 }
 
 const defaultForm = (): PartnerForm => ({
@@ -127,6 +154,8 @@ const defaultForm = (): PartnerForm => ({
   supplierCategoryLabel: '',
   salesmanCategoryId: '',
   salesmanCategoryLabel: '',
+  salesmanId: '',
+  salesmanLabel: '',
   receivableAccountId: '',
   receivableAccountLabel: '',
   payableAccountId: '',
@@ -138,6 +167,15 @@ const defaultForm = (): PartnerForm => ({
   locationIds: [],
   locationLabels: {},
   isActive: true,
+  currencyId: '',
+  currencyLabel: '',
+  saleTermId: '',
+  saleTermLabel: '',
+  purchaseTermId: '',
+  purchaseTermLabel: '',
+  arCreditLimit: '',
+  apCreditLimit: '',
+  salesPriceTier: '1',
 });
 
 // Build the id array + {id: name} label map from a partner's dimension rows.
@@ -175,6 +213,8 @@ const fromRecord = (p: ErpPartner): PartnerForm => {
     supplierCategoryLabel: categoryLabel(p.supplierCategory),
     salesmanCategoryId: p.salesmanCategoryId ?? '',
     salesmanCategoryLabel: categoryLabel(p.salesmanCategory),
+    salesmanId: p.salesmanId ?? '',
+    salesmanLabel: p.salesman?.name ?? '',
     receivableAccountId: p.receivableAccountId ?? '',
     receivableAccountLabel: accountLabel(p.receivableAccount),
     payableAccountId: p.payableAccountId ?? '',
@@ -186,6 +226,15 @@ const fromRecord = (p: ErpPartner): PartnerForm => {
     locationIds: l.ids,
     locationLabels: l.labels,
     isActive: p.isActive,
+    currencyId: p.currencyId ?? '',
+    currencyLabel: p.currency ? `${p.currency.code} — ${p.currency.name}` : '',
+    saleTermId: p.saleTermId ?? '',
+    saleTermLabel: termLabel(p.saleTerm),
+    purchaseTermId: p.purchaseTermId ?? '',
+    purchaseTermLabel: termLabel(p.purchaseTerm),
+    arCreditLimit: p.arCreditLimit ?? '',
+    apCreditLimit: p.apCreditLimit ?? '',
+    salesPriceTier: String(p.salesPriceTier ?? 1),
   };
 };
 
@@ -198,9 +247,16 @@ const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   customerCategoryId: f.partnerType === 'CUSTOMER' ? (f.customerCategoryId || null) : null,
   supplierCategoryId: f.partnerType === 'SUPPLIER' ? (f.supplierCategoryId || null) : null,
   salesmanCategoryId: f.partnerType === 'SALESMAN' ? (f.salesmanCategoryId || null) : null,
+  salesmanId: f.partnerType === 'CUSTOMER' ? (f.salesmanId || null) : null,
   taxNumber: f.taxNumber || undefined,
   receivableAccountId: f.receivableAccountId || null,
   payableAccountId: f.payableAccountId || null,
+  currencyId: f.currencyId || null,
+  saleTermId: f.saleTermId || null,
+  purchaseTermId: f.purchaseTermId || null,
+  arCreditLimit: f.arCreditLimit || null,
+  apCreditLimit: f.apCreditLimit || null,
+  salesPriceTier: f.salesPriceTier ? Number(f.salesPriceTier) : 1,
   branchIds: f.branchIds,
   warehouseIds: f.warehouseIds,
   locationIds: f.locationIds,
@@ -211,6 +267,12 @@ const validatePartner = (form: PartnerForm) =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
+    {
+      field: 'salesmanId',
+      label: 'Salesman',
+      validate: (value, f) =>
+        f.partnerType === 'CUSTOMER' && !value ? 'Salesman wajib diisi' : undefined,
+    },
   ]);
 
 function PartnerFormFields({
@@ -239,6 +301,7 @@ function PartnerFormFields({
     <Tabs defaultValue="umum">
       <TabsList>
         <TabsTrigger value="umum">Umum</TabsTrigger>
+        <TabsTrigger value="transaksi">Transaksi</TabsTrigger>
         <TabsTrigger value="kontak">Kontak</TabsTrigger>
         <TabsTrigger value="alamat">Alamat</TabsTrigger>
       </TabsList>
@@ -291,6 +354,20 @@ function PartnerFormFields({
           />
         </FormField>
       )}
+      {showCustomerFields && (
+        <FormField label="Salesman" htmlFor="pf-salesman" required error={errors.salesmanId}>
+          <SearchSelect
+            id="pf-salesman"
+            value={data.salesmanId}
+            onValueChange={(v) => set('salesmanId', v)}
+            placeholder="Pilih salesman…"
+            loadOptions={loadSalesmanPartnerOptions}
+            initialLabel={data.salesmanLabel}
+            title="Salesman"
+            aria-invalid={!!errors.salesmanId}
+          />
+        </FormField>
+      )}
       {showSupplierFields && (
         <FormField label="Kategori Supplier" htmlFor="pf-supp-cat">
           <SearchSelect
@@ -325,32 +402,6 @@ function PartnerFormFields({
           placeholder="01.234.567.8-901.000"
         />
       </FormField>
-      {showCustomerFields && (
-        <FormField label="Akun Piutang (AR)" htmlFor="pf-recv-acct">
-          <SearchSelect
-            id="pf-recv-acct"
-            value={data.receivableAccountId}
-            onValueChange={(v) => set('receivableAccountId', v)}
-            placeholder="Cari akun piutang…"
-            loadOptions={loadReceivableAccounts}
-            initialLabel={data.receivableAccountLabel}
-            title="Akun Piutang"
-          />
-        </FormField>
-      )}
-      {showSupplierFields && (
-        <FormField label="Akun Hutang (AP)" htmlFor="pf-pay-acct">
-          <SearchSelect
-            id="pf-pay-acct"
-            value={data.payableAccountId}
-            onValueChange={(v) => set('payableAccountId', v)}
-            placeholder="Cari akun hutang…"
-            loadOptions={loadPayableAccounts}
-            initialLabel={data.payableAccountLabel}
-            title="Akun Hutang"
-          />
-        </FormField>
-      )}
           <MultiLookupField
             id="pf-branch"
             label="Cabang"
@@ -385,6 +436,101 @@ function PartnerFormFields({
               onValueChange={(v) => set('isActive', v)}
             />
           </FormField>
+        </div>
+      </TabsContent>
+
+      <TabsContent value="transaksi">
+        <div className="p-4">
+          <FormField label="Uang" htmlFor="pf-currency">
+            <SearchSelect
+              id="pf-currency"
+              value={data.currencyId}
+              onValueChange={(v) => set('currencyId', v)}
+              placeholder="Pilih mata uang…"
+              loadOptions={loadCurrencyOptions}
+              initialLabel={data.currencyLabel}
+              title="Mata Uang"
+            />
+          </FormField>
+
+          <div className="mt-2 mb-1 text-[13px] font-semibold text-orange-500">Pembelian</div>
+          <div className="grid grid-cols-2 gap-x-6">
+            <FormField label="Termin" htmlFor="pf-pur-term">
+              <SearchSelect
+                id="pf-pur-term"
+                value={data.purchaseTermId}
+                onValueChange={(v) => set('purchaseTermId', v)}
+                placeholder="Pilih termin pembelian…"
+                loadOptions={loadPaymentTermOptions}
+                initialLabel={data.purchaseTermLabel}
+                title="Termin Pembelian"
+              />
+            </FormField>
+            <FormField label="Batas Hutang" htmlFor="pf-ap-limit">
+              <NumInput
+                id="pf-ap-limit"
+                value={data.apCreditLimit}
+                onChange={(v) => set('apCreditLimit', v)}
+                decimals={2}
+                placeholder="0,00"
+              />
+            </FormField>
+            <FormField label="Rek. Hutang" htmlFor="pf-pay-acct">
+              <SearchSelect
+                id="pf-pay-acct"
+                value={data.payableAccountId}
+                onValueChange={(v) => set('payableAccountId', v)}
+                placeholder="Cari akun hutang…"
+                loadOptions={loadPayableAccounts}
+                initialLabel={data.payableAccountLabel}
+                title="Akun Hutang"
+              />
+            </FormField>
+          </div>
+
+          <div className="mt-2 mb-1 text-[13px] font-semibold text-orange-500">Penjualan</div>
+          <div className="grid grid-cols-2 gap-x-6">
+            <FormField label="Termin" htmlFor="pf-sale-term">
+              <SearchSelect
+                id="pf-sale-term"
+                value={data.saleTermId}
+                onValueChange={(v) => set('saleTermId', v)}
+                placeholder="Pilih termin penjualan…"
+                loadOptions={loadPaymentTermOptions}
+                initialLabel={data.saleTermLabel}
+                title="Termin Penjualan"
+              />
+            </FormField>
+            <FormField label="Batas Piutang" htmlFor="pf-ar-limit">
+              <NumInput
+                id="pf-ar-limit"
+                value={data.arCreditLimit}
+                onChange={(v) => set('arCreditLimit', v)}
+                decimals={2}
+                placeholder="0,00"
+              />
+            </FormField>
+            <FormField label="Rek. Piutang" htmlFor="pf-recv-acct">
+              <SearchSelect
+                id="pf-recv-acct"
+                value={data.receivableAccountId}
+                onValueChange={(v) => set('receivableAccountId', v)}
+                placeholder="Cari akun piutang…"
+                loadOptions={loadReceivableAccounts}
+                initialLabel={data.receivableAccountLabel}
+                title="Akun Piutang"
+              />
+            </FormField>
+            <FormField label="Tingkat Harga Jual" htmlFor="pf-price-tier">
+              <NumInput
+                id="pf-price-tier"
+                value={data.salesPriceTier}
+                onChange={(v) => set('salesPriceTier', v)}
+                decimals={0}
+                placeholder="1"
+              />
+            </FormField>
+          </div>
         </div>
       </TabsContent>
 

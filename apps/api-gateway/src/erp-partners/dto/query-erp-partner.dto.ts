@@ -51,6 +51,16 @@ export class QueryErpPartnerDto {
   @IsBoolean()
   isSupplier?: boolean;
 
+  @ApiPropertyOptional({ example: false })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean()
+  isSalesman?: boolean;
+
   @ApiPropertyOptional({ example: true })
   @IsOptional()
   @Transform(({ value }) => {

@@ -7,6 +7,7 @@ import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 export interface ListPartnersParams extends PaginationParams {
   isCustomer?: boolean;
   isSupplier?: boolean;
+  isSalesman?: boolean;
   categoryId?: string;
 }
 
@@ -39,6 +40,19 @@ export interface ErpPartnerDimLocation {
   location?: ErpMasterRef | null;
 }
 
+export interface ErpPartnerTermRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface ErpPartnerCurrencyRef {
+  id: string;
+  code: string;
+  name: string;
+  symbol?: string | null;
+}
+
 export interface ErpPartner {
   id: string;
   code: string;
@@ -50,15 +64,26 @@ export interface ErpPartner {
   customerCategoryId?: string | null;
   supplierCategoryId?: string | null;
   salesmanCategoryId?: string | null;
+  salesmanId?: string | null;
   customerCategory?: ErpMasterRef | null;
   supplierCategory?: ErpMasterRef | null;
   salesmanCategory?: ErpMasterRef | null;
+  salesman?: ErpMasterRef | null;
   taxNumber?: string | null;
   isTaxable: boolean;
   receivableAccountId?: string | null;
   payableAccountId?: string | null;
   receivableAccount?: ErpPartnerAccountRef | null;
   payableAccount?: ErpPartnerAccountRef | null;
+  currencyId?: string | null;
+  currency?: ErpPartnerCurrencyRef | null;
+  saleTermId?: string | null;
+  saleTerm?: ErpPartnerTermRef | null;
+  purchaseTermId?: string | null;
+  purchaseTerm?: ErpPartnerTermRef | null;
+  arCreditLimit?: string | null;
+  apCreditLimit?: string | null;
+  salesPriceTier?: number | null;
   dimBranches?: ErpPartnerDimBranch[];
   dimWarehouses?: ErpPartnerDimWarehouse[];
   dimLocations?: ErpPartnerDimLocation[];
@@ -77,10 +102,17 @@ export interface CreatePartnerPayload {
   customerCategoryId?: string | null;
   supplierCategoryId?: string | null;
   salesmanCategoryId?: string | null;
+  salesmanId?: string | null;
   taxNumber?: string;
   isTaxable?: boolean;
   receivableAccountId?: string | null;
   payableAccountId?: string | null;
+  currencyId?: string | null;
+  saleTermId?: string | null;
+  purchaseTermId?: string | null;
+  arCreditLimit?: string | null;
+  apCreditLimit?: string | null;
+  salesPriceTier?: number | null;
   branchIds?: string[];
   warehouseIds?: string[];
   locationIds?: string[];
@@ -97,10 +129,17 @@ export interface UpdatePartnerPayload {
   customerCategoryId?: string | null;
   supplierCategoryId?: string | null;
   salesmanCategoryId?: string | null;
+  salesmanId?: string | null;
   taxNumber?: string;
   isTaxable?: boolean;
   receivableAccountId?: string | null;
   payableAccountId?: string | null;
+  currencyId?: string | null;
+  saleTermId?: string | null;
+  purchaseTermId?: string | null;
+  arCreditLimit?: string | null;
+  apCreditLimit?: string | null;
+  salesPriceTier?: number | null;
   branchIds?: string[];
   warehouseIds?: string[];
   locationIds?: string[];

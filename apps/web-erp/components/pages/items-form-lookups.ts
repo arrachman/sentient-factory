@@ -109,6 +109,14 @@ export const loadCustomerCategoryOptions = makePartnerCategoryLoader('CUSTOMER')
 export const loadSupplierCategoryOptions = makePartnerCategoryLoader('SUPPLIER');
 export const loadSalesmanCategoryOptions = makePartnerCategoryLoader('SALESMAN');
 
+export const loadSalesmanPartnerOptions = async (search: string, page: number, limit: number) => {
+  const res = await listPartners({ search: search || undefined, page, limit, isActive: true, isSalesman: true });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
+    total: res.meta.total,
+  };
+};
+
 /** Distributor picker = partners flagged as supplier (legacy "Distributor" tab). */
 export const loadSupplierOptions = async (search: string, page: number, limit: number) => {
   const res = await listPartners({ search: search || undefined, page, limit, isActive: true, isSupplier: true });

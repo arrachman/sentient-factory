@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateErpPartnerDto {
   @ApiProperty({ example: 'CUST-001', description: 'Unique partner code' })
@@ -47,6 +47,14 @@ export class CreateErpPartnerDto {
   @IsString()
   salesmanCategoryId?: string | null;
 
+  @ApiPropertyOptional({
+    example: '10',
+    description: 'ErpPartner ID (salesman) — wajib untuk partner tipe Customer.',
+  })
+  @IsOptional()
+  @IsString()
+  salesmanId?: string | null;
+
   @ApiPropertyOptional({ example: '01.234.567.8-901.000' })
   @IsOptional()
   @IsString()
@@ -80,6 +88,38 @@ export class CreateErpPartnerDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean = true;
+
+  @ApiPropertyOptional({ example: '1', description: 'ErpCurrency ID — mata uang default partner' })
+  @IsOptional()
+  @IsString()
+  currencyId?: string | null;
+
+  @ApiPropertyOptional({ example: '5', description: 'ErpPaymentTerm ID — termin penjualan' })
+  @IsOptional()
+  @IsString()
+  saleTermId?: string | null;
+
+  @ApiPropertyOptional({ example: '6', description: 'ErpPaymentTerm ID — termin pembelian' })
+  @IsOptional()
+  @IsString()
+  purchaseTermId?: string | null;
+
+  @ApiPropertyOptional({ example: '5000000', description: 'Batas piutang (AR credit limit)' })
+  @IsOptional()
+  @IsString()
+  arCreditLimit?: string | null;
+
+  @ApiPropertyOptional({ example: '3000000', description: 'Batas hutang (AP credit limit)' })
+  @IsOptional()
+  @IsString()
+  apCreditLimit?: string | null;
+
+  @ApiPropertyOptional({ example: 1, description: 'Tingkat harga jual 1–10', minimum: 1, maximum: 10 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(10)
+  salesPriceTier?: number | null;
 
   // Multi-select dimensions (md_partner_dim_*). When sent, md_partners.branch_id
   // is synced server-side to the first branch id (denormalized default).
