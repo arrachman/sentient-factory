@@ -10,7 +10,7 @@ import {
   serializeTemplate, loadBands, downloadTemplate, pickTemplateFile, isForeignTemplate,
 } from '@/lib/report-designer-io';
 import { reApplyGeometry } from '@/lib/report-engine-adapter';
-import { updateReportTemplate } from '@/lib/api/reports';
+import { updateReportTemplate, previewReportTemplate, materializeReportTemplate } from '@/lib/api/reports';
 import { notify, confirmAction } from '@/lib/feedback';
 import { RdRibbon } from './ribbon';
 import { RdLeftPanel, type RdSelection } from './left-panel';
@@ -45,7 +45,14 @@ export function MockReportDesigner({ templateId, templateName, initialJson, onBa
   const [rightTab, setRightTab] = React.useState<'props' | 'tree'>('props');
   const [paper, setPaper] = React.useState(initial.paper);
   const [saving, setSaving] = React.useState(false);
+  const [previewing, setPreviewing] = React.useState(false);
+  const [materializing, setMaterializing] = React.useState(false);
   const [dirty, setDirty] = React.useState(false);
+  // Auto-templates have no editable bands until materialized from the report's columns.
+  const isAuto = React.useMemo(
+    () => (initialJson as { auto?: boolean } | undefined)?.auto === true,
+    [initialJson],
+  );
   const [expandDict, setExpandDict] = React.useState<Record<string, boolean>>({
     'd.company': true, 'd.doc': true, 'd.items': true, 'd.totals': true,
   });
@@ -140,6 +147,40 @@ export function MockReportDesigner({ templateId, templateName, initialJson, onBa
     downloadTemplate(templateName, bands, paper);
   }, [templateName, bands, paper]);
 
+  // Render the current template to a real PDF (engine, sample data) and open it.
+  const handlePreviewPdf = React.useCallback(async () => {
+    if (previewing) return;
+    setPreviewing(true);
+    try {
+      const templateJson = engineSource
+        ? reApplyGeometry(engineSource, bands, paper)
+        : serializeTemplate(bands, paper);
+      const blob = await previewReportTemplate(templateJson);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e) {
+      notify(`Gagal preview PDF: ${e instanceof Error ? e.message : String(e)}`, 'danger');
+    } finally {
+      setPreviewing(false);
+    }
+  }, [previewing, engineSource, bands, paper]);
+
+  // Auto-template → generate explicit, editable bands from the report's real columns.
+  const handleMaterialize = React.useCallback(async () => {
+    if (materializing) return;
+    setMaterializing(true);
+    try {
+      await materializeReportTemplate(templateId);
+      notify('Layout dibuat dari kolom laporan. Buka kembali template untuk mengedit.', 'success');
+      onBack();
+    } catch (e) {
+      notify(`Gagal membuat layout: ${e instanceof Error ? e.message : String(e)}`, 'danger');
+    } finally {
+      setMaterializing(false);
+    }
+  }, [materializing, templateId, onBack]);
+
   const handleImport = React.useCallback(async () => {
     const res = await pickTemplateFile();
     if (!res) { notify('File template tidak valid', 'danger'); return; }
@@ -198,6 +239,15 @@ export function MockReportDesigner({ templateId, templateName, initialJson, onBa
           </div>
           <button className="btn" onClick={handleImport}><Icon name="upload" size={12} /> Import</button>
           <button className="btn" onClick={() => setMode('preview')}><Icon name="play" size={12} /> Jalankan <Kbd>⌘P</Kbd></button>
+          <button className="btn" onClick={() => void handlePreviewPdf()} disabled={previewing}>
+            <Icon name="file" size={12} /> {previewing ? 'Membuat…' : 'Preview PDF'}
+          </button>
+          {isAuto && (
+            <button className="btn" onClick={() => void handleMaterialize()} disabled={materializing}
+              title="Template otomatis — buat layout band dari kolom laporan agar bisa diedit">
+              <Icon name="layers" size={12} /> {materializing ? 'Membuat…' : 'Buat layout dari kolom'}
+            </button>
+          )}
           <div className="btn-split">
             <button className="btn" onClick={handleExport}><Icon name="download" size={12} /> Export</button>
             <button className="btn" onClick={handleExport}><Icon name="chevdown" size={12} /></button>

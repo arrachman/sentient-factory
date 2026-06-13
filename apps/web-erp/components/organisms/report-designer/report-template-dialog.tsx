@@ -10,6 +10,7 @@ import {
   updateReportTemplate,
   type RptTemplateRecord,
 } from '@/lib/api/reports';
+import { reportKeyOptions } from '@/lib/report-keys';
 
 interface Props {
   open: boolean;
@@ -26,17 +27,27 @@ export function ReportTemplateDialog({ open, initial, onClose, onSaved, onOpenDe
   const [code, setCode] = React.useState('');
   const [name, setName] = React.useState('');
   const [module, setModule] = React.useState('sys');
+  const [reportKey, setReportKey] = React.useState('');
   const [description, setDescription] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+
+  const keyOptions = reportKeyOptions(module);
 
   React.useEffect(() => {
     if (open) {
       setCode(initial?.code ?? '');
       setName(initial?.name ?? '');
       setModule(initial?.module ?? 'sys');
+      setReportKey(initial?.reportKey ?? '');
       setDescription(initial?.description ?? '');
     }
   }, [open, initial]);
+
+  // Report keys are module-namespaced — drop the binding when the module changes.
+  function handleModuleChange(next: string) {
+    setModule(next);
+    setReportKey('');
+  }
 
   async function handleSave() {
     if (!code.trim() || !name.trim()) {
@@ -47,9 +58,9 @@ export function ReportTemplateDialog({ open, initial, onClose, onSaved, onOpenDe
     try {
       let saved: RptTemplateRecord;
       if (isEdit) {
-        saved = await updateReportTemplate(initial!.id, { name, module, description });
+        saved = await updateReportTemplate(initial!.id, { name, module, description, reportKey: reportKey || null });
       } else {
-        saved = await createReportTemplate({ code, name, module, description });
+        saved = await createReportTemplate({ code, name, module, description, reportKey: reportKey || null });
       }
       notify(isEdit ? 'Template diperbarui' : 'Template dibuat', 'success');
       onSaved();
@@ -88,11 +99,28 @@ export function ReportTemplateDialog({ open, initial, onClose, onSaved, onOpenDe
             <label className="block text-sm font-medium mb-1">Modul</label>
             <select
               value={module}
-              onChange={e => setModule(e.target.value)}
+              onChange={e => handleModuleChange(e.target.value)}
               className="w-full border rounded px-3 py-2 text-sm bg-[var(--bg-card)] cursor-pointer"
             >
               {MODULES.map(m => <option key={m} value={m}>{m.toUpperCase()}</option>)}
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Laporan terikat</label>
+            <select
+              value={reportKey}
+              onChange={e => setReportKey(e.target.value)}
+              disabled={keyOptions.length === 0}
+              className="w-full border rounded px-3 py-2 text-sm bg-[var(--bg-card)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">— Tidak terikat —</option>
+              {keyOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+            <p className="mt-1 text-xs text-[var(--fg-muted)]">
+              {keyOptions.length === 0
+                ? 'Belum ada laporan terdaftar untuk modul ini.'
+                : 'Template aktif yang terikat akan dipakai saat mencetak PDF laporan tsb.'}
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Deskripsi</label>
