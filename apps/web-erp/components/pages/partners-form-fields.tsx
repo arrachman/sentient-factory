@@ -24,6 +24,7 @@ import {
   loadCustomerCategoryOptions,
   loadSupplierCategoryOptions,
   loadSalesmanCategoryOptions,
+  loadSalesmanPartnerOptions,
 } from './items-form-lookups';
 import { loadPaymentTermOptions } from './pur-form-lookups';
 import { loadReceivableAccounts, loadPayableAccounts, loadCurrencyOptions } from './partners-lookups';
@@ -106,6 +107,20 @@ export function PartnerFormFields({
                 loadOptions={loadCustomerCategoryOptions}
                 initialLabel={data.customerCategoryLabel}
                 title="Kategori Customer"
+              />
+            </FormField>
+          )}
+          {showCustomerFields && (
+            <FormField label="Salesman" htmlFor="pf-salesman" required error={errors.salesmanId}>
+              <SearchSelect
+                id="pf-salesman"
+                value={data.salesmanId}
+                onValueChange={(v) => set('salesmanId', v)}
+                placeholder="Pilih salesman…"
+                loadOptions={loadSalesmanPartnerOptions}
+                initialLabel={data.salesmanLabel}
+                title="Salesman"
+                aria-invalid={!!errors.salesmanId}
               />
             </FormField>
           )}

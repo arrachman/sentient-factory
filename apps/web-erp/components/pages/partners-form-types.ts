@@ -33,6 +33,8 @@ export interface PartnerForm {
   supplierCategoryLabel: string;
   salesmanCategoryId: string;
   salesmanCategoryLabel: string;
+  salesmanId: string;
+  salesmanLabel: string;
   receivableAccountId: string;
   receivableAccountLabel: string;
   payableAccountId: string;
@@ -68,6 +70,8 @@ export const defaultForm = (): PartnerForm => ({
   supplierCategoryLabel: '',
   salesmanCategoryId: '',
   salesmanCategoryLabel: '',
+  salesmanId: '',
+  salesmanLabel: '',
   receivableAccountId: '',
   receivableAccountLabel: '',
   payableAccountId: '',
@@ -130,6 +134,8 @@ export const fromRecord = (p: ErpPartner): PartnerForm => {
     supplierCategoryLabel: catLabel(p.supplierCategory),
     salesmanCategoryId: p.salesmanCategoryId ?? '',
     salesmanCategoryLabel: catLabel(p.salesmanCategory),
+    salesmanId: p.salesmanId ?? '',
+    salesmanLabel: p.salesman?.name ?? '',
     receivableAccountId: p.receivableAccountId ?? '',
     receivableAccountLabel: acctLabel(p.receivableAccount),
     payableAccountId: p.payableAccountId ?? '',
@@ -162,6 +168,7 @@ export const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   customerCategoryId: f.partnerType === 'CUSTOMER' ? (f.customerCategoryId || null) : null,
   supplierCategoryId: f.partnerType === 'SUPPLIER' ? (f.supplierCategoryId || null) : null,
   salesmanCategoryId: f.partnerType === 'SALESMAN' ? (f.salesmanCategoryId || null) : null,
+  salesmanId: f.partnerType === 'CUSTOMER' ? (f.salesmanId || null) : null,
   taxNumber: f.taxNumber || undefined,
   receivableAccountId: f.receivableAccountId || null,
   payableAccountId: f.payableAccountId || null,
@@ -181,4 +188,10 @@ export const validatePartner = (form: PartnerForm) =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
+    {
+      field: 'salesmanId',
+      label: 'Salesman',
+      validate: (value, f) =>
+        f.partnerType === 'CUSTOMER' && !value ? 'Salesman wajib diisi' : undefined,
+    },
   ]);
