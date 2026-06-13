@@ -301,8 +301,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             value={draft.areaId}
             onValueChange={(v) => setD('areaId', v)}
             onPick={(opt) => {
-              const postalFromArea = (opt as typeof opt & { meta?: string }).meta ?? '';
-              setDraft((d) => ({ ...d, areaId: opt.value, subAreaId: '', postalCode: postalFromArea || d.postalCode }));
+              setDraft((d) => ({ ...d, areaId: opt.value, subAreaId: '', postalCode: opt.meta || d.postalCode }));
             }}
             loadOptions={areaLoader}
             placeholder="Pilih kecamatan…"
@@ -317,8 +316,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
             value={draft.subAreaId}
             onValueChange={(v) => setD('subAreaId', v)}
             onPick={(opt) => {
-              const postalFromSubArea = (opt as typeof opt & { meta?: string }).meta ?? '';
-              setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: postalFromSubArea }));
+              setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: opt.meta || d.postalCode }));
             }}
             loadOptions={subAreaLoader}
             placeholder="Pilih kelurahan…"

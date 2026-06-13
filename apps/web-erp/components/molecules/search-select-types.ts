@@ -39,8 +39,8 @@ export interface BaseProps {
   fill?: boolean;
   /** Open the modal window immediately on mount (e.g. triggered by a grid cell's search icon). */
   autoOpenModal?: boolean;
-  /** Fires alongside onValueChange with the picked option (value + display label). */
-  onPick?: (opt: { value: string; label: string }) => void;
+  /** Fires alongside onValueChange with the picked option (value + display label + optional meta). */
+  onPick?: (opt: { value: string; label: string; meta?: string }) => void;
 }
 
 export interface SingleProps extends BaseProps {
