@@ -37,6 +37,74 @@ MyERP+ di `apps/web-erp/preferensi/Backened - myerpplus/report/mrt/m2`, `m4`, `m
 
 ---
 
+### Report Engine — Wiring reports → Report Designer templates (2026-06-13)
+
+Keputusan user (`/erp` + `/confirmation`, 2026-06-13): semua **laporan** (Finance,
+Sales, Purchasing, Inventory) di-render ke PDF lewat **template yang diedit di
+Report Designer** (`/admin/report-designer`) — edit template → output cetak berubah.
+
+**Render stack final = `@react-pdf/renderer`** (menutup open-Q1 README; alternatif
+Puppeteer ditolak user). Konsekuensi sadar: fidelity vs canvas designer (HTML) tidak
+1:1 → scope engine = **structured report template** (page setup, brand header + logo,
+tabel kolom, section heading + subtotal + grand total, page header/footer + nomor
+halaman, font/warna). **Komponen free-form absolute-positioned ditunda.**
+
+**Arsitektur (kunci):** *template = LAYOUT, builder = DATA.* Engine mengambil hasil
+`ReportDocument` (fin) / `ReportDataset` (sls/pur/inv) yang sudah dihitung
+builder/SQL tervalidasi sebagai bind-data `{d}`, lalu menerapkan layout template.
+**SQL/`dataSources` di dalam template diabaikan** untuk laporan ber-`reportKey`
+(disimpan untuk ad-hoc report masa depan). Alasan: reuse semua logika report
+(subtotal, grouping, security), tanpa duplikasi business-logic sebagai raw SQL di
+template; `reportKey ↔ ReportDocument.key` jadi 1:1.
+
+**Dua kontrak data laporan berbeda** → engine konsumsi model **ternormalisasi**
+(`EngineReportData`) + adapter tipis per kontrak (`ReportDocument`/`ReportDataset`).
+
+**Binding** = field `reportKey` (nullable) di `ErpRptTemplate`/`rpt_templates`;
+laporan memuat template aktif (`isActive`) yang `reportKey`-nya cocok; bila tak ada
+→ fallback renderer pdfkit lama. **PDF-only** (xlsx/docx tetap renderer lama).
+
+**Engine** = modul backend baru `apps/api-gateway/src/erp-report-engine/`
+(shared, di-inject ke 4 modul report); PDF tree pakai `React.createElement` (tanpa
+TSX — backend NestJS tanpa konfigurasi `jsx`). Injeksi di choke-point tunggal
+`ReportExportService.render(doc, 'pdf')` per modul. Rollout: engine MVP → reportKey
++ seed → Finance pilot → sls/pur/inv. Status README report-engine → IMPLEMENTED saat
+fase tuntas.
+
+**Status implementasi (2026-06-13):** Engine + binding + **4 modul ter-wire & live**
+(fin/sls/pur/inv; route 401-guarded; 25 unit/integration test hijau). Fallback ke
+renderer lama (pdfkit/pdfmake) bila tak ada template aktif.
+
+- **Template "auto"** = presentation-only (`{ auto, pageSize, orientation, margins }`,
+  tanpa `bands`); engine **materialize** band dari kolom laporan live saat render
+  (`ReportEngineService.materialize`). Seed: 14 `fin.<report>` + 1 `<module>.__default`
+  per modul.
+- **Fallback default modul:** `renderReport` coba `<module>.<report>` dulu, lalu
+  `<module>.__default`. Jadi SEMUA laporan render via engine walau belum punya template
+  khusus; edit `__default` me-restyle se-modul, template per-report override.
+- **Stack deps:** `@react-pdf/renderer@^3` (CJS) + `react@^18` + `@types/react@^18`
+  lokal di api-gateway (v4 ESM-only pecah di CJS/jest; root `react@19` tak dipakai).
+- **⚠️ Ops:** `node_modules` api-gateway = **named Docker volume** (bukan bind-mount
+  host). Tambah dependency → WAJIB `docker exec sentient-infra-api-gateway npm i ...`
+  + `npx prisma generate` di dalam container + restart, bukan cukup install di host.
+- Konflik dgn seed lama `seed-erp-report-templates.ts` (Jun 9, format `{field}`/
+  `{{SUM()}}`/template-owns-SQL): **superseded**, dibiarkan utuh, unbound (tanpa
+  reportKey) — keputusan user 2026-06-13 lanjut arsitektur baru.
+- **Preview PDF (done 2026-06-13):** tombol "Preview PDF" di designer →
+  `POST /erp/reports/preview { templateJson }` → engine render template (auto-materialize
+  dari sample columns) dgn data contoh → PDF blob dibuka tab baru. Endpoint di
+  `ErpReportsService.previewTemplate` (sample di `report-preview-sample.ts`); works utk
+  template auto & explicit.
+- **Materialize (done 2026-06-13):** tombol "Buat layout dari kolom" di designer (muncul
+  utk template `auto`) → `POST /erp/reports/:id/materialize` → `ReportColumnsResolver`
+  ambil kolom REAL laporan (sls/pur/inv via `getColumns(key)` registry tanpa DB; fin via
+  build YTD) → `buildTableTemplate` → band eksplisit disimpan (auto→explicit), bisa
+  diedit di canvas + render live cocok. `ErpReportsModule` import 4 modul report.
+- **Phase 4 selesai.** Engine + binding + 4 modul + Preview + Materialize semua live &
+  ter-verifikasi (route 401-guarded, 25 test hijau, app boot bersih).
+
+---
+
 ### 2.4 Command palette = derived dari role-filtered nav (2026-05-20)
 
 `CommandPalette` (`components/organisms/command-palette.tsx`) **tidak boleh**
@@ -1034,6 +1102,17 @@ tanpa reseed).
 ---
 
 ### 2.32 Item — tab Harga paritas MyERP+ (price tiers 1–10) (2026-05-30)
+
+> **🔄 UPDATE 2026-06-13 — tingkat harga jadi dinamis/unlimited (keputusan user).**
+> Tab Harga **tidak lagi dibatasi 10 tingkat**. Aturan baru:
+> - Item baru mulai dengan **1 tingkat**; tombol "+ Tambah tingkat" / "− Hapus
+>   tingkat" menambah/menghapus **hanya di akhir** (level tetap kontigu 1..N).
+> - **Tanpa batas atas** (unlimited). Mirror level-1 → `salePrice` tetap.
+> - Frontend-only: `defaultItemForm()` → `salePrices/saleDiscounts = ['']`;
+>   `tierColumn()` panjang = level tertinggi yang ada (min 1); `buildPriceTiers()`
+>   loop sepanjang array. Kontrak API `prices: ItemPriceTier[]` sudah var-length
+>   sejak awal — `md_item_prices.level` cukup longgar (Int, no cap di app layer).
+> - File: `items-form-model.ts`, `items-form.tsx`, `items-form-sections.tsx`.
 
 Section **Harga** di form item (§2.25) di-expand ke paritas tab "Harga"
 MyERP+: 10 tingkat harga jual + diskon per tingkat. Mengakhiri "deferred
@@ -3102,3 +3181,50 @@ user: ketiga dimensi diadakan sekaligus; kolom tunggal `md_partners.branch_id`
   dimensi; `fromRecord` derive dari `dimBranches/dimWarehouses/dimLocations`,
   `toPayload` kirim ketiga array. **Jangan** fork komponen multi-select baru —
   pola dim ini SSOT lintas master (item + partner).
+
+
+### Termin Pembayaran — form add/edit dikelompokkan per seksi (2026-06-13)
+
+Form add/edit `payment-terms-page.tsx` (`FormFields`) yang sebelumnya berupa
+daftar datar 11 field di-refactor agar lebih user-friendly, dikelompokkan jadi
+4 seksi dengan `SectionTitle` lokal (+ hint): **Identitas** (Kode, Nama),
+**Diskon Pembayaran Awal**, **Denda Keterlambatan**, **Status**.
+
+- **Input numerik** patuh §2.31: hari (`netDays`, `discountDays1/2`) pakai
+  `NumInput decimals={0}`; persen (`discountPercent1/2`, `penaltyPercent`) pakai
+  `DiscountInput` (suffix `%`, clamp 0–100) — bukan lagi `<Input type=number>`
+  / teks polos.
+- **Diskon tier** disajikan sebagai satu baris ramah-baca lewat helper lokal
+  `DiscountTierRow`: "dalam [hari] hari → diskon [%]" (Tier 1 & Tier 2),
+  menggantikan 4 field terpisah yang membingungkan.
+- **`penaltyPeriod`** kini `Select` (Per hari/minggu/bulan/tahun) — value English
+  canonical (`daily/weekly/monthly/yearly`) tetap dikirim apa adanya ke DTO
+  string `penaltyPeriod`; bukan lagi free-text "monthly". ≥3 opsi → Select (§2.6).
+- Tidak ada perubahan DB/DTO/payload — murni penyajian FE. File 216 baris (<400);
+  typecheck+lint bersih. Test smoke (`__tests__/pages/payment-terms-page.test.tsx`)
+  dilengkapi mock `bulkUpdateErpPaymentTermStatus`/`bulkDeleteErpPaymentTerms`
+  yang sebelumnya hilang.
+
+### Partner form — tab Transaksi dikelompokkan jadi kartu seksi (2026-06-13)
+
+Tab **Transaksi** di form partner (`partners-form-fields.tsx`) dirapikan agar
+lebih mudah dipakai. Sebelumnya: header seksi pakai warna **hardcode**
+`text-orange-500` (terbaca seperti warning + langgar §2 "tanpa style/warna
+hardcode") dan grup **Pembelian** (3 field) di `grid-cols-2` membuat **Rek.
+Hutang** yatim di baris kedua.
+
+- Seksi sekarang = helper lokal `TrxSection` (Card + CardHeader ikon-led
+  `coins`/`cart`/`tag` + CardBody), bukan teks oranye. Warna ikon pakai token
+  `--primary-soft`/`--primary-soft-fg` (selaras `ItemFormContextHeader`).
+- 3 grup: **Mata Uang** (currency, full width), lalu **Pembelian** (Termin,
+  Batas Hutang, Rek. Hutang) & **Penjualan** (Termin, Batas Piutang, Rek.
+  Piutang, Tingkat Harga) berdampingan di `lg:grid-cols-2` (stack di layar
+  sempit). Field per kartu = satu kolom `FormField` (label 110px konsisten),
+  bukan grid 2-kolom yang merusak alignment.
+- Tambah `help` text: Batas Hutang/Piutang "0 = tanpa batas"; Tingkat Harga
+  "Level harga jual 1–10 untuk auto-isi harga". Label "Tingkat Harga Jual" →
+  "Tingkat Harga" (subtitle kartu sudah konteks Penjualan).
+- Tanpa perubahan DB/DTO/payload — murni penyajian FE. File 358 baris (<400);
+  typecheck+lint bersih. (Test `__tests__/pages/partners-page.test.tsx` gagal
+  pre-existing: mock `@/lib/api/partners` belum ekspor `bulkUpdatePartnerStatus`
+  — di luar scope perubahan ini.)
