@@ -73,8 +73,8 @@ export interface ItemFormData {
   averageCost: string;        // "HPP Rata-rata" (moving average, readonly — display only)
   purchasePrice: string;      // "Harga Beli Terakhir" (readonly, from latest purchase)
   purchaseDiscount: string;   // "Diskon Pembelian" (percent)
-  salePrices: string[];       // "Harga Jual 1..10" (index 0 = level 1)
-  saleDiscounts: string[];    // "Diskon Jual 1..10" (index 0 = level 1)
+  salePrices: string[];       // "Harga Jual 1..N" (index 0 = level 1, dinamis/unlimited)
+  saleDiscounts: string[];    // "Diskon Jual 1..N" (index 0 = level 1, dinamis/unlimited)
 
   // Distributors ("Distributor" tab: supplier partner per row)
   distributors: ItemDistributorFormRow[];
@@ -139,7 +139,7 @@ export const defaultItemForm = (): ItemFormData => ({
   defaultLocationIds: [], defaultLocationLabels: {},
   projectId: '', costCenterId: '',
   lastHpp: '', averageCost: '', purchasePrice: '', purchaseDiscount: '',
-  salePrices: Array<string>(10).fill(''), saleDiscounts: Array<string>(10).fill(''),
+  salePrices: [''], saleDiscounts: [''],
   distributors: [],
   others: {}, custom: {},
   minStock: '', maxStock: '', reorderQty: '', minOrderQty: '',

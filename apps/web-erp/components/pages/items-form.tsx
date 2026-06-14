@@ -59,12 +59,14 @@ function dimFromItem(item: ErpItem) {
 const numStr = (v: unknown): string => (v == null ? '' : String(v));
 
 /**
- * Expand the item's sparse price-tier rows into a fixed 10-slot string array
- * (index 0 = level 1). Level-1 price falls back to the denormalized salePrice.
+ * Expand the item's sparse price-tier rows into a dynamic-length string array
+ * (index 0 = level 1). Length = highest level present (min 1, unlimited).
+ * Level-1 price falls back to the denormalized salePrice.
  */
 function tierColumn(item: ErpItem, key: 'price' | 'discountPercent'): string[] {
   const byLevel = new Map((item.prices ?? []).map((p) => [p.level, p]));
-  return Array.from({ length: 10 }, (_, i) => {
+  const maxLevel = Math.max(1, ...Array.from(byLevel.keys()));
+  return Array.from({ length: maxLevel }, (_, i) => {
     const tier = byLevel.get(i + 1);
     if (tier) return numStr(tier[key]);
     if (i === 0 && key === 'price') return numStr(item.salePrice ?? item.sellingPrice);
@@ -159,10 +161,11 @@ export function fromItem(item: ErpItem): ItemFormData {
 const orUndef = (v: string) => (v.trim() === '' ? undefined : v);
 const orNull = (v: string) => (v.trim() === '' ? null : v);
 
-/** Collapse the 10 price/discount slots into sparse tier rows (skip fully-empty levels). */
+/** Collapse the dynamic price/discount slots into sparse tier rows (skip fully-empty levels). */
 function buildPriceTiers(f: ItemFormData): { level: number; price?: string; discountPercent?: string }[] {
   const rows: { level: number; price?: string; discountPercent?: string }[] = [];
-  for (let i = 0; i < 10; i += 1) {
+  const count = Math.max(f.salePrices.length, f.saleDiscounts.length);
+  for (let i = 0; i < count; i += 1) {
     const price = orUndef(f.salePrices[i] ?? '');
     const discountPercent = orUndef(f.saleDiscounts[i] ?? '');
     if (price !== undefined || discountPercent !== undefined) {

@@ -47,6 +47,16 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
     next[i] = v;
     onChange({ ...data, [arr]: next });
   };
+  const addTier = () =>
+    onChange({ ...data, salePrices: [...data.salePrices, ''], saleDiscounts: [...data.saleDiscounts, ''] });
+  const removeLastTier = () => {
+    if (data.salePrices.length <= 1) return;
+    onChange({
+      ...data,
+      salePrices: data.salePrices.slice(0, -1),
+      saleDiscounts: data.saleDiscounts.slice(0, -1),
+    });
+  };
 
   switch (id) {
     case 'identitas':
@@ -152,17 +162,26 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
 
     case 'harga':
       return (
-        <Section title="Harga" icon="coins" hint="Harga Jual 1–10 + diskon per tingkat (paritas MyERP+)">
+        <Section title="Harga" icon="coins" hint="Harga Jual bertingkat + diskon per tingkat — tambah sebanyak yang dibutuhkan">
           <NumField id="if-buy" label="Harga Beli Terakhir" value={data.purchasePrice} onChange={() => {}} readOnly help="Otomatis dari transaksi pembelian terakhir" />
           <NumField id="if-lasthpp" label="HPP Terakhir" value={data.lastHpp} onChange={() => {}} readOnly help="Otomatis dari transaksi pembelian terakhir" />
           <NumField id="if-avgcost" label="HPP Rata-rata" value={data.averageCost} onChange={() => {}} readOnly help="Rata-rata bergerak (otomatis)" />
-          <NumField id="if-buydisc" label="Diskon Pembelian" value={data.purchaseDiscount} onChange={(v) => set('purchaseDiscount', v)} placeholder="0" help="Persen (%) · jadi default diskon di PR/PO/RI/PRT" />
+          <NumField id="if-buydisc" label="Diskon Pembelian" value={data.purchaseDiscount} onChange={(v) => set('purchaseDiscount', v)} placeholder="0" decimals={2} help="Persen (%) · jadi default diskon di PR/PO/RI/PRT" />
           {data.salePrices.map((_, i) => (
             <React.Fragment key={i}>
               <NumField id={`if-sell-${i}`} label={`Harga Jual ${i + 1}`} value={data.salePrices[i] ?? ''} onChange={(v) => setTier('salePrices', i, v)} />
-              <NumField id={`if-selldisc-${i}`} label={`Diskon Jual ${i + 1}`} value={data.saleDiscounts[i] ?? ''} onChange={(v) => setTier('saleDiscounts', i, v)} placeholder="0" />
+              <NumField id={`if-selldisc-${i}`} label={`Diskon Jual ${i + 1}`} value={data.saleDiscounts[i] ?? ''} onChange={(v) => setTier('saleDiscounts', i, v)} placeholder="0" decimals={2} />
             </React.Fragment>
           ))}
+          <div className="col-span-2 flex items-center gap-1.5 pt-2">
+            <button type="button" onClick={addTier} className="shrink-0 rounded-[var(--radius)] border border-border bg-[var(--panel-2)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--panel-hover)]" title="Tambah tingkat harga">
+              + Tambah tingkat
+            </button>
+            <button type="button" onClick={removeLastTier} disabled={data.salePrices.length <= 1} className="shrink-0 rounded-[var(--radius)] border border-border bg-[var(--panel-2)] px-2 py-1 text-[11px] font-medium hover:bg-[var(--panel-hover)] disabled:opacity-50" title="Hapus tingkat terakhir">
+              − Hapus tingkat
+            </button>
+            <span className="text-[11px] text-[var(--fg-subtle)]">{data.salePrices.length} tingkat</span>
+          </div>
         </Section>
       );
 
