@@ -1,0 +1,124 @@
+# =====================================================================
+# Althea Psychology — Production stack (RAMPING)
+# Hanya 4 service: web-althea + api-gateway + PostgreSQL + Redis.
+# TANPA MySQL/MyERP, Vault, Debezium, Kafka, ai-engine (itu jalur ERP).
+#
+# Pakai:
+#   cp .env.althea-prod.example .env.althea-prod   # lalu isi rahasianya
+#   docker compose --env-file .env.althea-prod -f docker-compose.althea-prod.yml up -d --build
+#
+# Reverse proxy = Nginx Proxy Manager (service `npm`), satu network dengan app.
+# NPM proxy by service-name (web-althea:3202, api-gateway:3203) — app TIDAK perlu
+# diekspos ke publik. Hanya NPM yang buka 80/443 (+ 81 admin UI, batasi via UFW).
+#   Domain altheapsychology.co.id -> forward ke web-althea:3202
+#   Custom location /api          -> forward ke api-gateway:3203 (prefix /api)
+# =====================================================================
+
+name: althea-prod
+
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"     # HTTP (Let's Encrypt challenge + redirect)
+      - "443:443"   # HTTPS
+      - "81:81"     # Admin UI (akses awal; sebaiknya batasi/tutup via UFW)
+    environment:
+      TZ: Asia/Jakarta
+    volumes:
+      - npm_data:/data
+      - npm_letsencrypt:/etc/letsencrypt
+    depends_on:
+      - web-althea
+      - api-gateway
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      TZ: Asia/Jakarta
+      PGTZ: Asia/Jakarta
+    command: ["postgres", "-c", "timezone=Asia/Jakarta"]
+    volumes:
+      - althea_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Tidak ada host port — hanya diakses internal oleh api-gateway.
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - althea_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ../apps/api-gateway
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3203
+      TZ: Asia/Jakarta
+      # --- Database ---
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # --- Auth ---
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # --- CORS: origin frontend (browser kirim credentials, wildcard ditolak) ---
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      # --- WA queue (Redis) + Fonnte ---
+      WA_QUEUE_ENABLED: "true"
+      REDIS_URL: redis://redis:6379
+      FONNTE_ACCOUNT_TOKEN: ${FONNTE_ACCOUNT_TOKEN}
+      FONNTE_API_TOKEN: ${FONNTE_API_TOKEN:-}
+      FONNTE_WEBHOOK_URL: ${FONNTE_WEBHOOK_URL:-}
+      WEB_ALTHEA_URL: ${WEB_ALTHEA_URL}
+      # --- Vault dimatikan: rahasia di-inject langsung via env ---
+      VAULT_ENABLED: "false"
+    ports:
+      - "127.0.0.1:3203:3203"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web-althea:
+    build:
+      context: ../apps/web-althea
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* di-bake saat build. Same-origin (/api) di belakang reverse proxy.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3202
+      TZ: Asia/Jakarta
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
+      # Server-side fetch (SSR/Route Handler) WAJIB absolute → ke service api-gateway.
+      API_URL_INTERNAL: http://api-gateway:3203/api
+    ports:
+      - "127.0.0.1:3202:3202"
+    depends_on:
+      - api-gateway
+
+volumes:
+  althea_pgdata:
+  althea_redisdata:
+  npm_data:
+  npm_letsencrypt:
