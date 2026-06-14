@@ -182,7 +182,10 @@ export function SearchSelectModal({
               {totalPages > 1 && (
                 <span className="flex items-center gap-1"><Kbd>←</Kbd><Kbd>→</Kbd> halaman</span>
               )}
-              <span className="flex items-center gap-1"><Kbd>↵</Kbd> pilih</span>
+              {isMulti
+                ? <><span className="flex items-center gap-1"><Kbd>↵</Kbd> pilih</span><span className="flex items-center gap-1"><Kbd>⌘/Ctrl</Kbd><Kbd>↵</Kbd> submit</span></>
+                : <span className="flex items-center gap-1"><Kbd>↵</Kbd> pilih</span>
+              }
               <span className="flex items-center gap-1"><Kbd>ESC</Kbd> tutup</span>
             </div>
             <div className="flex items-center gap-3">
