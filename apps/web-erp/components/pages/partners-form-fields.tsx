@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { Card, CardHeader, CardTitle, CardSubtitle, CardBody } from '@/components/ui/card';
+import { Icon, type IconName } from '@/components/ui/icons';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SearchSelect } from '@/components/molecules/search-select';
 import { NumInput } from '@/components/molecules/num-input';
@@ -30,6 +32,34 @@ import { loadPaymentTermOptions } from './pur-form-lookups';
 import { loadReceivableAccounts, loadPayableAccounts, loadCurrencyOptions } from './partners-lookups';
 import type { FormErrors } from '@/lib/form-validation';
 import type { PartnerForm, PartnerTypeKey } from './partners-form-types';
+
+/** Titled, icon-led card used to group related transaksi fields. */
+function TrxSection({
+  icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: IconName;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--primary-soft)] text-[var(--primary-soft-fg)]">
+          <Icon name={icon} size={15} />
+        </span>
+        <div className="min-w-0">
+          <CardTitle>{title}</CardTitle>
+          {subtitle && <CardSubtitle>{subtitle}</CardSubtitle>}
+        </div>
+      </CardHeader>
+      <CardBody className="py-2">{children}</CardBody>
+    </Card>
+  );
+}
 
 export function PartnerFormFields({
   data,
@@ -196,96 +226,122 @@ export function PartnerFormFields({
       </TabsContent>
 
       <TabsContent value="transaksi">
-        <div className="p-4">
-          <FormField label="Uang" htmlFor="pf-currency">
-            <SearchSelect
-              id="pf-currency"
-              value={data.currencyId}
-              onValueChange={(v) => set('currencyId', v)}
-              placeholder="Pilih mata uang…"
-              loadOptions={loadCurrencyOptions}
-              initialLabel={data.currencyLabel}
-              title="Mata Uang"
-            />
-          </FormField>
+        <div className="flex flex-col gap-4 p-4">
+          <TrxSection
+            icon="coins"
+            title="Mata Uang"
+            subtitle="Mata uang default untuk transaksi partner ini."
+          >
+            <FormField label="Uang" htmlFor="pf-currency">
+              <SearchSelect
+                id="pf-currency"
+                value={data.currencyId}
+                onValueChange={(v) => set('currencyId', v)}
+                placeholder="Pilih mata uang…"
+                loadOptions={loadCurrencyOptions}
+                initialLabel={data.currencyLabel}
+                title="Mata Uang"
+              />
+            </FormField>
+          </TrxSection>
 
-          <div className="mt-2 mb-1 text-[13px] font-semibold text-orange-500">Pembelian</div>
-          <div className="grid grid-cols-2 gap-x-6">
-            <FormField label="Termin" htmlFor="pf-pur-term">
-              <SearchSelect
-                id="pf-pur-term"
-                value={data.purchaseTermId}
-                onValueChange={(v) => set('purchaseTermId', v)}
-                placeholder="Pilih termin pembelian…"
-                loadOptions={loadPaymentTermOptions}
-                initialLabel={data.purchaseTermLabel}
-                title="Termin Pembelian"
-              />
-            </FormField>
-            <FormField label="Batas Hutang" htmlFor="pf-ap-limit">
-              <NumInput
-                id="pf-ap-limit"
-                value={data.apCreditLimit}
-                onChange={(v) => set('apCreditLimit', v)}
-                decimals={2}
-                placeholder="0,00"
-              />
-            </FormField>
-            <FormField label="Rek. Hutang" htmlFor="pf-pay-acct">
-              <SearchSelect
-                id="pf-pay-acct"
-                value={data.payableAccountId}
-                onValueChange={(v) => set('payableAccountId', v)}
-                placeholder="Cari akun hutang…"
-                loadOptions={loadPayableAccounts}
-                initialLabel={data.payableAccountLabel}
-                title="Akun Hutang"
-              />
-            </FormField>
-          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <TrxSection
+              icon="cart"
+              title="Pembelian"
+              subtitle="Syarat saat partner menjadi pemasok (hutang)."
+            >
+              <FormField label="Termin" htmlFor="pf-pur-term">
+                <SearchSelect
+                  id="pf-pur-term"
+                  value={data.purchaseTermId}
+                  onValueChange={(v) => set('purchaseTermId', v)}
+                  placeholder="Pilih termin pembelian…"
+                  loadOptions={loadPaymentTermOptions}
+                  initialLabel={data.purchaseTermLabel}
+                  title="Termin Pembelian"
+                />
+              </FormField>
+              <FormField
+                label="Batas Hutang"
+                htmlFor="pf-ap-limit"
+                help="0 = tanpa batas."
+              >
+                <NumInput
+                  id="pf-ap-limit"
+                  value={data.apCreditLimit}
+                  onChange={(v) => set('apCreditLimit', v)}
+                  decimals={2}
+                  placeholder="0,00"
+                />
+              </FormField>
+              <FormField label="Rek. Hutang" htmlFor="pf-pay-acct">
+                <SearchSelect
+                  id="pf-pay-acct"
+                  value={data.payableAccountId}
+                  onValueChange={(v) => set('payableAccountId', v)}
+                  placeholder="Cari akun hutang…"
+                  loadOptions={loadPayableAccounts}
+                  initialLabel={data.payableAccountLabel}
+                  title="Akun Hutang"
+                />
+              </FormField>
+            </TrxSection>
 
-          <div className="mt-2 mb-1 text-[13px] font-semibold text-orange-500">Penjualan</div>
-          <div className="grid grid-cols-2 gap-x-6">
-            <FormField label="Termin" htmlFor="pf-sale-term">
-              <SearchSelect
-                id="pf-sale-term"
-                value={data.saleTermId}
-                onValueChange={(v) => set('saleTermId', v)}
-                placeholder="Pilih termin penjualan…"
-                loadOptions={loadPaymentTermOptions}
-                initialLabel={data.saleTermLabel}
-                title="Termin Penjualan"
-              />
-            </FormField>
-            <FormField label="Batas Piutang" htmlFor="pf-ar-limit">
-              <NumInput
-                id="pf-ar-limit"
-                value={data.arCreditLimit}
-                onChange={(v) => set('arCreditLimit', v)}
-                decimals={2}
-                placeholder="0,00"
-              />
-            </FormField>
-            <FormField label="Rek. Piutang" htmlFor="pf-recv-acct">
-              <SearchSelect
-                id="pf-recv-acct"
-                value={data.receivableAccountId}
-                onValueChange={(v) => set('receivableAccountId', v)}
-                placeholder="Cari akun piutang…"
-                loadOptions={loadReceivableAccounts}
-                initialLabel={data.receivableAccountLabel}
-                title="Akun Piutang"
-              />
-            </FormField>
-            <FormField label="Tingkat Harga Jual" htmlFor="pf-price-tier">
-              <NumInput
-                id="pf-price-tier"
-                value={data.salesPriceTier}
-                onChange={(v) => set('salesPriceTier', v)}
-                decimals={0}
-                placeholder="1"
-              />
-            </FormField>
+            <TrxSection
+              icon="tag"
+              title="Penjualan"
+              subtitle="Syarat saat partner menjadi pelanggan (piutang)."
+            >
+              <FormField label="Termin" htmlFor="pf-sale-term">
+                <SearchSelect
+                  id="pf-sale-term"
+                  value={data.saleTermId}
+                  onValueChange={(v) => set('saleTermId', v)}
+                  placeholder="Pilih termin penjualan…"
+                  loadOptions={loadPaymentTermOptions}
+                  initialLabel={data.saleTermLabel}
+                  title="Termin Penjualan"
+                />
+              </FormField>
+              <FormField
+                label="Batas Piutang"
+                htmlFor="pf-ar-limit"
+                help="0 = tanpa batas."
+              >
+                <NumInput
+                  id="pf-ar-limit"
+                  value={data.arCreditLimit}
+                  onChange={(v) => set('arCreditLimit', v)}
+                  decimals={2}
+                  placeholder="0,00"
+                />
+              </FormField>
+              <FormField label="Rek. Piutang" htmlFor="pf-recv-acct">
+                <SearchSelect
+                  id="pf-recv-acct"
+                  value={data.receivableAccountId}
+                  onValueChange={(v) => set('receivableAccountId', v)}
+                  placeholder="Cari akun piutang…"
+                  loadOptions={loadReceivableAccounts}
+                  initialLabel={data.receivableAccountLabel}
+                  title="Akun Piutang"
+                />
+              </FormField>
+              <FormField
+                label="Tingkat Harga"
+                htmlFor="pf-price-tier"
+                help="Level harga jual 1–10 untuk auto-isi harga."
+              >
+                <NumInput
+                  id="pf-price-tier"
+                  value={data.salesPriceTier}
+                  onChange={(v) => set('salesPriceTier', v)}
+                  decimals={0}
+                  placeholder="1"
+                />
+              </FormField>
+            </TrxSection>
           </div>
         </div>
       </TabsContent>
