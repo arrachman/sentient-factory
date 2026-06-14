@@ -17,7 +17,6 @@ import {
   TabDisabled,
 } from './tabs/tab-disabled';
 import { TabKlinik } from './tabs/tab-klinik';
-import { TabNotifikasi } from './tabs/tab-notifikasi';
 import { TabSlot } from './tabs/tab-slot';
 
 export function PengaturanPage() {
@@ -55,7 +54,7 @@ export function PengaturanPage() {
           display: 'grid',
           gridTemplateColumns: '220px 1fr',
           gap: 22,
-          padding: '16px 28px 28px',
+          padding: '16px 24px 24px',
           flex: 1,
           minHeight: 0,
         }}
@@ -88,7 +87,7 @@ function ActionBar({
   return (
     <div
       style={{
-        padding: '18px 28px 0',
+        padding: '18px 24px 0',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -142,8 +141,6 @@ function TabContent({
           toggleClosedDay={page.toggleClosedDay}
         />
       );
-    case 'notifikasi':
-      return <TabNotifikasi form={page.form} set={page.set} />;
     case 'pembayaran':
       return (
         <TabDisabled

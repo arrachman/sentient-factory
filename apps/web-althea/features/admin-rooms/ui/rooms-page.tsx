@@ -8,11 +8,11 @@
  * di file terpisah (`rooms-toolbar`, `room-stat-tile`, `room-usage-grid`,
  * `room-usage-legend`, `room-detail-panel`, `room-crud-drawer`).
  */
-import { SLOTS } from '../model/constants';
 import { useRoomsPage } from '../hooks/use-rooms-page';
 import { RoomCrudDrawer } from './room-crud-drawer';
 import { RoomDetailPanel } from './room-detail-panel';
 import { RoomReassignDialog } from './room-reassign-dialog';
+import { RoomsMobile } from './rooms-mobile';
 import { RoomStatTilesRow } from './room-stat-tiles-row';
 import { RoomUsageGrid } from './room-usage-grid';
 import { RoomUsageLegend } from './room-usage-legend';
@@ -23,9 +23,13 @@ export function RoomsPage() {
 
   return (
     <>
-      <div className="flex flex-col h-full min-h-0">
-        <PageHeader />
+      <RoomsMobile
+        rooms={page.rooms}
+        bookings={page.bookings}
+        isLoading={page.isLoading}
+      />
 
+      <div className="hidden lg:flex flex-col h-full min-h-0">
         <RoomsToolbar
           date={page.date}
           onChangeDate={page.setDate}
@@ -36,7 +40,7 @@ export function RoomsPage() {
         <RoomStatTilesRow stats={page.stats} />
 
         <div
-          className="px-7 pb-7 flex-1 min-h-0"
+          className="px-6 pb-6 flex-1 min-h-0"
           style={{ display: 'flex', gap: 16 }}
         >
           <GridCard>
@@ -49,6 +53,7 @@ export function RoomsPage() {
                 rooms={page.rooms}
                 bookings={page.bookings}
                 dateKey={page.date}
+                slots={page.slots}
                 pickedKey={
                   page.picked
                     ? `${page.picked.room.id}-${page.picked.slotIdx}`
@@ -62,11 +67,12 @@ export function RoomsPage() {
           {page.picked ? (
             <RoomDetailPanel
               room={page.picked.room}
-              slot={SLOTS[page.picked.slotIdx]}
+              slot={page.slots[page.picked.slotIdx]}
               booking={page.picked.booking}
               onClose={page.clearPicked}
               onEditMaster={() => page.startEdit(page.picked!.room)}
               onDelete={() => page.deleteRoom(page.picked!.room)}
+              onDeactivate={() => page.deactivateRoom(page.picked!.room)}
               onReassignBooking={page.startReassign}
             />
           ) : null}
@@ -85,6 +91,7 @@ export function RoomsPage() {
           onCreateNew={page.startCreate}
           onEdit={page.startEdit}
           onDelete={page.deleteRoom}
+          onDeactivate={page.deactivateRoom}
         />
       ) : null}
 
@@ -105,15 +112,6 @@ export function RoomsPage() {
 // =====================================================================
 // Local layout slivers
 // =====================================================================
-
-function PageHeader() {
-  return (
-    <div className="px-7 pt-6 pb-2">
-      <div className="eyebrow">Operasional · Pemakaian Ruangan</div>
-      <h1 className="h1 mt-1">Pemakaian Ruangan</h1>
-    </div>
-  );
-}
 
 function GridCard({ children }: { children: React.ReactNode }) {
   return (

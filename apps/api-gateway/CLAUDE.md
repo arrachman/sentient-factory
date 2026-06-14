@@ -32,7 +32,7 @@ npm run db:studio
 - Logger: gunakan `@sentient-factory/logger` (package), bukan `console.log`.
 
 ## Database (Prisma)
-- Schema: `prisma/schema.prisma` — **SSOT**. Edit di sini, lalu `npm run db:generate`.
+- Schema: **multi-file** di `prisma/schema/` (fitur `prismaSchemaFolder`, preview di Prisma 5.22) — **SSOT**. Dipecah per-domain: `platform`/`wms`/`clinic` + `erp-*` (core/md/fin/sls/pur/inv/mfg/fa/pos/pln) + `enums` + `datasource`. Tambah/ubah model di file domain yang sesuai (`@@map` prefix menentukan domain), lalu `npm run db:generate`. Prisma auto-detect folder; jangan buat `prisma/schema.prisma` lagi. Detail & alasan: `prisma/SCHEMA-SPLIT-PLAN.md`.
 - Migrasi dev: `npm run db:migrate -- --name <slug>`. **Jangan** edit migrasi yang sudah dipush.
 - Seed dev: `prisma/seed.ts`. Idempoten.
 - Backfill scripts (`backfill-*.ts`) hanya jalan manual; jangan masukkan ke startup.
@@ -89,12 +89,22 @@ Bug history: commit `14f9c49` fix booking slot 08:30 WIB salah parse jadi 01:30 
 `BookingValidationService` di `src/clinic-booking/booking-validation.service.ts`:
 
 1. `assertEntitiesExist(clientId, serviceId, psikologUserId, roomId)` — FK + active
-2. `assertNoConflict({...})` — psikolog/room overlap dengan buffer
+2. `assertNoConflict({...})` — psikolog/room overlap (exact window, tanpa buffer; fitur bufferMinutes dihapus)
 3. `assertSlotMatch(start, end)` — slot HH:MM exact match (TZ klinik)
 4. `assertPsikologAvailable(psikologUserId, start, slotIdx?)` — weekly + override
-   (skip kalau `bufferOverride: true`)
+   (skip kalau `bufferOverride: true` — flag ini skip step 2, 3, 4)
 
 Caller: `ClinicBookingService.create` + `BookingPackageService.create`.
+
+### WA fan-out (klien + psikolog)
+
+`BookingNotificationService.notify(booking, templateName)` di `src/clinic-booking/booking-notification.service.ts` selalu dispatch ke `booking.client.phoneWa`, lalu dispatch kedua ke `booking.psikolog.phone` **kalau** `ClinicWaTemplate.recipients` mengandung `'psikolog'` dan psikolog punya `User.phone`. Dua jalur — error sisi psikolog di-catch terpisah (log warn), tidak block kirim ke klien. Sumber nomor psikolog: kolom `User.phone` (bukan field baru di `ClinicPsikologProfile`).
+
+Konsekuensi untuk caller: setiap Prisma include yang nanti dipakai sebagai argumen `notify()` **wajib** select `psikolog.phone`. Sudah ada di `ClinicBookingService.includeRelations` + `BookingPackageService.includeRelations`.
+
+**Konvensi nama variabel template:** nama psikolog selalu dikirim dengan key **`nama_psikolog`** (match placeholder `{{nama_psikolog}}` di seed `seed-clinic-wa.ts`), bukan `psikolog`. Bug history: `BookingReminderScheduler.dispatchAndMark` sempat kirim key `psikolog` → reminder H-1 & 30m menampilkan `{{nama_psikolog}}` literal. Saat menambah/ubah variabel WA, samakan key dengan placeholder di seed template.
+
+Template baru — `Welcome Psikolog Baru` (`recipients: ['psikolog']`) — di-fire dari `ClinicPsikologService.create` saat akun psikolog dibuat dan `User.phone` ada. Setelah update seed: `npm run db:seed` di `apps/api-gateway` untuk upsert template.
 
 ### Junction tables (Althea)
 

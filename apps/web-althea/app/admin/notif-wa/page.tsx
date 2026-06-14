@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
+import { NotifWaPage } from '@/features/admin-notif-wa/ui/notif-wa-page';
 
 export const metadata: Metadata = { title: 'Notifikasi WhatsApp' };
 
 export default function AdminNotifWaPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="h1">Notifikasi WhatsApp</h1>
-      {/* TODO: features/admin-notif-wa/ui — template + dispatch + log */}
-    </div>
-  );
+  return <NotifWaPage />;
 }

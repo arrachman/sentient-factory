@@ -89,14 +89,14 @@ export function SendTestDialog({
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-outline"
+              className="btn btn-outline btn-sm"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={sendTest.isPending}
-              className="btn btn-primary"
+              className="btn btn-primary btn-sm"
             >
               <Send className="h-4 w-4" />
               {sendTest.isPending ? 'Mengirim...' : 'Kirim'}

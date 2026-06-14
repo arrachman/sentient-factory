@@ -1,7 +1,12 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BookingCrudService } from './booking-crud.service';
+import { BookingEditWizardService } from './booking-edit-wizard.service';
+import { BookingEventsService } from './booking-events.service';
 import { BookingNotesService } from './booking-notes.service';
 import { BookingNotificationService } from './booking-notification.service';
 import { BookingPackageService } from './booking-package.service';
+import { BookingStateChangesService } from './booking-state-changes.service';
+import { BookingTransitionsService } from './booking-transitions.service';
 import { BookingValidationService } from './booking-validation.service';
 import { ClinicBookingService } from './clinic-booking.service';
 
@@ -64,17 +69,20 @@ describe('ClinicBookingService — state machine + conflict detection', () => {
     const packageService = {
       create: jest.fn(),
     } as unknown as BookingPackageService;
-    const eventsMock = {
+    const events = {
       emit: jest.fn(),
       asObservable: jest.fn(),
-    } as unknown as import('./booking-events.service').BookingEventsService;
+    } as unknown as BookingEventsService;
+    const crudService = new BookingCrudService(prisma, validation, notifier, events);
+    const stateChanges = new BookingStateChangesService(prisma, notifier, validation, crudService);
+    const editWizard = new BookingEditWizardService(prisma, events, validation, crudService);
+    const transitionsService = new BookingTransitionsService(prisma, events, notifier, crudService, stateChanges, editWizard);
     service = new ClinicBookingService(
-      prisma,
-      validation,
+      crudService,
+      transitionsService,
       notifier,
       notes,
       packageService,
-      eventsMock,
     );
   });
 
@@ -132,35 +140,8 @@ describe('ClinicBookingService — state machine + conflict detection', () => {
           roomId: 1,
           scheduledStart: '2026-05-15T10:00:00Z',
           scheduledEnd: '2026-05-15T11:00:00Z',
-          bufferOverride: false,
         }),
       ).rejects.toThrow(ConflictException);
-    });
-
-    it('skips conflict check when bufferOverride=true', async () => {
-      prisma.clinicClient.findFirst.mockResolvedValue({ id: 1 });
-      prisma.clinicService.findFirst.mockResolvedValue({ id: 1 });
-      prisma.user.findFirst.mockResolvedValue({ id: 1 });
-      prisma.clinicRoom.findFirst.mockResolvedValue({ id: 1 });
-      prisma.clinicBooking.create.mockResolvedValue({
-        id: 1,
-        status: 'awaiting_dp',
-        scheduledStart: new Date(),
-        scheduledEnd: new Date(),
-      });
-
-      const result = await service.create({
-        clientId: 1,
-        serviceId: 1,
-        psikologUserId: 1,
-        roomId: 1,
-        scheduledStart: '2026-05-15T10:00:00Z',
-        scheduledEnd: '2026-05-15T11:00:00Z',
-        bufferOverride: true,
-      });
-
-      expect(result.success).toBe(true);
-      expect(prisma.clinicBooking.findFirst).not.toHaveBeenCalled(); // conflict check skipped
     });
   });
 
@@ -178,21 +159,16 @@ describe('ClinicBookingService — state machine + conflict detection', () => {
       );
     }
 
-    it('allows awaiting_dp → confirmed', async () => {
-      setupBooking('awaiting_dp');
-      const result = await service.transition(1, 'confirmed');
+    it('allows checked_in → in_progress', async () => {
+      setupBooking('checked_in');
+      const result = await service.transition(1, 'in_progress');
       expect(result.success).toBe(true);
     });
 
-    it('allows confirmed → checked_in', async () => {
-      setupBooking('confirmed');
-      const result = await service.transition(1, 'checked_in');
+    it('allows in_progress → completed', async () => {
+      setupBooking('in_progress');
+      const result = await service.transition(1, 'completed');
       expect(result.success).toBe(true);
-    });
-
-    it('rejects awaiting_dp → in_progress (skip step)', async () => {
-      setupBooking('awaiting_dp');
-      await expect(service.transition(1, 'in_progress')).rejects.toThrow(BadRequestException);
     });
 
     it('rejects completed → anything (terminal state)', async () => {
@@ -202,11 +178,11 @@ describe('ClinicBookingService — state machine + conflict detection', () => {
 
     it('rejects cancelled → anything (terminal state)', async () => {
       setupBooking('cancelled');
-      await expect(service.transition(1, 'confirmed')).rejects.toThrow(BadRequestException);
+      await expect(service.transition(1, 'in_progress')).rejects.toThrow(BadRequestException);
     });
 
     it('allows cancellation from active states', async () => {
-      for (const state of ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress']) {
+      for (const state of ['checked_in', 'in_progress']) {
         setupBooking(state);
         const result = await service.transition(1, 'cancelled');
         expect(result.success).toBe(true);

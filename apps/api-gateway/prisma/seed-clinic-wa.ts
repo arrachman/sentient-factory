@@ -41,7 +41,7 @@ const TEMPLATES: TemplateSeed[] = [
     category: 'pengingat',
     triggerEvent: 'follow_up',
     body:
-      'Halo {{nama_klien}},\n\nTerima kasih atas sesi hari ini bersama {{nama_psikolog}}.\n\nKami berharap sesi ini bermanfaat. Sesi berikutnya: {{sesi_berikut_tanggal}} pukul {{sesi_berikut_waktu}}.\n\nKalau ada hal yang ingin disampaikan, balas pesan ini.',
+      'Halo {{nama_klien}},\n\nTerima kasih atas sesi hari ini bersama {{nama_psikolog}}.\n\nKami berharap sesi ini bermanfaat. Sesi berikutnya: {{sesi_berikut_tanggal}}.\n\nKalau ada hal yang ingin disampaikan, balas pesan ini.',
     recipients: ['klien'],
   },
   {
@@ -49,7 +49,7 @@ const TEMPLATES: TemplateSeed[] = [
     category: 'pengingat',
     triggerEvent: 'feedback_request',
     body:
-      'Hai {{nama_klien}}, mohon waktunya 2 menit untuk feedback sesi tadi: {{link_form}}. Masukan Anda sangat berarti untuk kami. Terima kasih 🙏',
+      'Hai {{nama_klien}} 🌿\n\nTerima kasih sudah mengikuti sesi bersama {{nama_psikolog}} di Althea Psychology kemarin.\n\nBoleh dibantu ceritakan bagaimana pengalaman Anda mengikuti sesi tersebut? Cukup *balas pesan WhatsApp ini* dengan kesan, masukan, atau saran Anda — tidak perlu mengisi formulir atau membuka tautan apa pun.\n\nMasukan Anda sangat berarti untuk kami. Terima kasih 🙏',
     recipients: ['klien'],
   },
   {
@@ -67,7 +67,7 @@ const TEMPLATES: TemplateSeed[] = [
     category: 'jadwal',
     triggerEvent: 'confirmation',
     body:
-      'Halo {{nama_klien}},\n\nBooking Anda dikonfirmasi ✅\n📅 {{tanggal}}\n⏰ {{waktu}}\n👤 {{nama_psikolog}}\n📍 {{ruang}}\n💰 Total: Rp {{total}}\n\nKami tunggu kehadiran Anda di Althea Psychology.',
+      '[Althea Psychology] Konfirmasi Booking\n\nBooking berikut telah dikonfirmasi ✅\n\n🧑 Klien: {{nama_klien}}\n👤 Psikolog: {{nama_psikolog}}\n📋 Layanan: {{layanan}}\n\n📅 Jadwal:\n{{jadwal_lengkap}}\n{{total_baris}}\nMohon catat jadwal ini. Terima kasih.',
     recipients: ['klien', 'psikolog'],
   },
   {
@@ -75,7 +75,7 @@ const TEMPLATES: TemplateSeed[] = [
     category: 'jadwal',
     triggerEvent: 'reschedule',
     body:
-      'Halo {{nama_klien}},\n\nJadwal sesi Anda berubah:\n❌ Sebelumnya: {{tanggal_lama}} {{waktu_lama}}\n✅ Sekarang: {{tanggal_baru}} {{waktu_baru}}\n📍 {{ruang}}\n\nAlasan: {{alasan}}\n\nMohon konfirmasi kehadiran. Terima kasih.',
+      '[Althea Psychology] Update Jadwal Sesi\n\nJadwal sesi berikut telah dipindah:\n\n🧑 Klien: {{nama_klien}}\n👤 Psikolog: {{nama_psikolog}}\n📋 Layanan: {{layanan}}\n📍 Ruang: {{ruang}}\n\n❌ Sebelumnya: {{tanggal_lama}}, {{waktu_lama}}\n✅ Sekarang: {{tanggal_baru}}, {{waktu_baru}}\n\nAlasan: {{alasan}}\n\nMohon catat perubahan jadwal ini. Terima kasih.',
     recipients: ['klien', 'psikolog'],
   },
   {
@@ -83,7 +83,7 @@ const TEMPLATES: TemplateSeed[] = [
     category: 'jadwal',
     triggerEvent: 'cancel',
     body:
-      'Halo {{nama_klien}},\n\nSesi Anda di {{tanggal}} {{waktu}} telah dibatalkan.\n\nAlasan: {{alasan}}\n\nUntuk re-booking, silakan hubungi kami. Mohon maaf atas ketidaknyamanannya.',
+      '[Althea Psychology] Pembatalan Sesi\n\nSesi berikut telah dibatalkan ❌\n\n🧑 Klien: {{nama_klien}}\n👤 Psikolog: {{nama_psikolog}}\n📋 Layanan: {{layanan}}\n📅 Tanggal: {{tanggal}}\n⏰ Waktu: {{waktu}}\n📍 Ruang: {{ruang}}\n\nAlasan: {{alasan}}\n\nUntuk re-booking, silakan hubungi Althea Psychology. Terima kasih.',
     recipients: ['klien', 'psikolog'],
   },
   {
@@ -135,6 +135,14 @@ const TEMPLATES: TemplateSeed[] = [
     body:
       'Profil {{nama_psikolog}}, {{title}}\n\nSpesialisasi: {{spesialisasi}}\nPendidikan: {{pendidikan}}\nLisensi: {{lisensi}}\n\nWelcome to Althea.',
     recipients: ['klien'],
+  },
+  {
+    name: 'Welcome Psikolog Baru',
+    category: 'onboarding',
+    triggerEvent: 'psikolog_welcome',
+    body:
+      'Halo {{nama_psikolog}} 🌿\n\nSelamat datang di Althea Psychology. Akun Anda sudah aktif dan siap dipakai.\n\nLogin: {{login_url}}\nUsername: {{username}}\n\nKalau ada kendala akses, hubungi admin klinik. Terima kasih.',
+    recipients: ['psikolog'],
   },
 
   // ----- BAYAR (4) -----

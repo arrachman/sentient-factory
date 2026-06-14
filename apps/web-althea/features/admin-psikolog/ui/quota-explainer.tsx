@@ -1,7 +1,7 @@
 import { Bell } from 'lucide-react';
 
 /**
- * Banner BR-01 — kuota harian psikolog auto-unblock saat reschedule/cancel.
+ * Banner — kuota harian psikolog auto-unblock saat reschedule/cancel.
  */
 export function QuotaExplainer() {
   return (
@@ -27,7 +27,7 @@ export function QuotaExplainer() {
             className="caption"
             style={{ fontWeight: 600, color: '#2c4a60' }}
           >
-            Kuota harian psikolog (BR-01)
+            Kuota harian psikolog
           </span>
           <span
             className="caption"

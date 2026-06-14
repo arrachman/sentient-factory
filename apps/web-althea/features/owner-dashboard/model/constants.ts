@@ -27,4 +27,4 @@ export const ROOM_GROUP_COLOR: Record<string, string> = {
 /**
  * Fallback ketika ClinicSettings.slotsOfDay belum loaded atau kosong.
  */
-export const DEFAULT_SLOTS_PER_DAY = 6;
+export const DEFAULT_SLOTS_PER_DAY = 4;

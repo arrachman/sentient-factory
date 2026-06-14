@@ -131,7 +131,6 @@ export function ScheduleToolbar({
         type="button"
         onClick={onResetToToday}
         className="btn btn-ghost btn-sm"
-        style={{ height: 32 }}
         title="Kembali ke hari ini"
       >
         Hari ini
@@ -196,7 +195,6 @@ export function ScheduleToolbar({
           onClick={onToggleFilter}
           className="btn btn-outline btn-sm"
           style={{
-            height: 32,
             background:
               activeFilterCount > 0 ? 'var(--sage-50)' : undefined,
             borderColor:

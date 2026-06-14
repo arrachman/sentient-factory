@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useBookingList } from '@/features/admin-booking/hooks/use-booking';
 import { useRoomList } from '@/features/admin-rooms/hooks/use-room';
-import { SLOTS } from '@/features/admin-rooms/model/constants';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import type {
   Room,
   RoomType,
@@ -58,6 +58,12 @@ export function usePsikologRooms() {
     if (!date) setDate(todayKey());
   }, [date]);
 
+  const settingsQuery = useSettings();
+  const slots = useMemo(
+    () => settingsQuery.data?.data.slotsOfDay ?? [],
+    [settingsQuery.data],
+  );
+
   const roomList = useRoomList({ limit: 200, isActive: true });
   const bookingList = useBookingList({
     date: date || todayKey(),
@@ -88,13 +94,13 @@ export function usePsikologRooms() {
     const sessions = bookings.filter((b) =>
       rooms.some((r) => r.id === b.room.id),
     ).length;
-    const slotsAvailable = total * SLOTS.length;
+    const slotsAvailable = total * slots.length;
     const utilization =
       slotsAvailable > 0 ? Math.round((sessions / slotsAvailable) * 100) : 0;
     const usedIds = new Set(bookings.map((b) => b.room.id));
     const empty = rooms.filter((r) => !usedIds.has(r.id)).length;
     return { total, sessions, slotsAvailable, utilization, empty };
-  }, [rooms, bookings]);
+  }, [rooms, bookings, slots]);
 
   function pickCell(room: Room, slotIdx: number, booking: Booking | null) {
     setPicked({ room, slotIdx, booking });
@@ -127,6 +133,7 @@ export function usePsikologRooms() {
     allRooms,
     bookings,
     stats,
+    slots,
     picked,
     pickCell,
     clearPicked,

@@ -31,6 +31,7 @@ export function SlotCell({
   booking,
   availability,
   cellHeight,
+  onBookingClick,
 }: {
   date: Date;
   slotIdx: number;
@@ -39,8 +40,9 @@ export function SlotCell({
   booking: Booking | null;
   availability: DayAvailability;
   cellHeight: number;
+  onBookingClick?: (b: Booking) => void;
 }) {
-  if (booking) return <BookedCell booking={booking} cellHeight={cellHeight} />;
+  if (booking) return <BookedCell booking={booking} cellHeight={cellHeight} onClick={onBookingClick} />;
 
   const tone = emptySlotTone({ date, slotIdx, slotEnd, availability });
   if (tone === 'available') {
@@ -54,7 +56,15 @@ export function SlotCell({
 
 // ---- 4 cell variants ----
 
-function BookedCell({ booking, cellHeight }: { booking: Booking; cellHeight: number }) {
+function BookedCell({
+  booking,
+  cellHeight,
+  onClick,
+}: {
+  booking: Booking;
+  cellHeight: number;
+  onClick?: (b: Booking) => void;
+}) {
   const tone = bookedTone(booking);
   const cat = booking.service.category;
   const bar = SVC_BAR[cat] ?? SVC_BAR.konseling;
@@ -95,9 +105,13 @@ function BookedCell({ booking, cellHeight }: { booking: Booking; cellHeight: num
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       title={`${booking.client.name} · ${booking.service.name}${
         booking.sessionTotal > 1 ? ` · sesi ${booking.sessionN}/${booking.sessionTotal}` : ''
-      }`}
+      } — klik untuk detail`}
+      onClick={() => onClick?.(booking)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.(booking); }}
       style={{
         height: cellHeight - 4,
         margin: 2,

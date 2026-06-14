@@ -34,6 +34,19 @@ export function serviceGroupOf(s: Pick<Service, 'category' | 'name'>): ServiceGr
   return 'tes';
 }
 
+/**
+ * Override range waktu satu slot untuk layanan ini. `index` menunjuk ke slot
+ * di ClinicSettings.slotsOfDay (identitas/label slot tetap dari global) —
+ * di sini hanya start/end yang digeser. Slot global tanpa override dipakai
+ * apa adanya.
+ */
+export const slotOverrideSchema = z.object({
+  index: z.number().int().min(0),
+  start: z.string(),
+  end: z.string(),
+});
+export type SlotOverride = z.infer<typeof slotOverrideSchema>;
+
 export const serviceSchema = z.object({
   id: z.number().int(),
   name: z.string(),
@@ -43,7 +56,10 @@ export const serviceSchema = z.object({
   basePrice: z.union([z.number(), z.string()]).transform((v) => Number(v)),
   description: z.string().nullable(),
   isActive: z.boolean(),
+  slotOverrides: z.array(slotOverrideSchema).optional().default([]),
+  disabledSlotIndices: z.array(z.number().int().min(0)).optional().default([]),
   bookedThisMonth: z.number().int().optional().default(0),
+  hasBookings: z.boolean().default(false),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -57,6 +73,8 @@ export const createServiceSchema = z.object({
   basePrice: z.number().min(0),
   description: z.string().max(2000).optional(),
   isActive: z.boolean().optional(),
+  slotOverrides: z.array(slotOverrideSchema).max(50).optional(),
+  disabledSlotIndices: z.array(z.number().int().min(0)).max(50).optional(),
 });
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 

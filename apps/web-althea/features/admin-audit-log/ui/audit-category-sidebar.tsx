@@ -2,7 +2,7 @@
 
 /**
  * Sidebar kiri halaman Audit Log — daftar 10 kategori dengan ikon + count,
- * plus tip footer tentang BR-04.
+ * plus tip footer tentang privasi klien.
  */
 import { AUDIT_CATEGORIES, type AuditCategory } from '../model/types';
 
@@ -114,8 +114,8 @@ export function AuditCategorySidebar({
           className="caption"
           style={{ fontSize: 11.5, lineHeight: 1.45 }}
         >
-          Event "Akses ditolak" menandai pelanggaran BR-04 (psikolog × data
-          klien lain). Tinjau secara berkala.
+          Event "Akses ditolak" menandai pelanggaran privasi antar psikolog
+          (psikolog × data klien lain). Tinjau secara berkala.
         </div>
       </div>
     </aside>

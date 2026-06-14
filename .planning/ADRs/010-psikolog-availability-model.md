@@ -147,7 +147,7 @@ UI: `/psikolog/schedule` → tombol "Set Jadwal" (dialog weekly grid) + override
    - slotIndices subset check
 ```
 
-Call dari `clinic-booking.service.create` + `booking-package.service` kalau `!bufferOverride`.
+Call dari `clinic-booking.service.create` + `booking-package.service` kalau `!bufferOverride` (flag ini skip slot-match + availability check; fitur buffer sudah dihapus).
 
 ### G. UI gating
 

@@ -18,7 +18,7 @@ export function ServiceLegend() {
   );
 }
 
-function ServiceLegendItem({
+export function ServiceLegendItem({
   category,
   label,
 }: {

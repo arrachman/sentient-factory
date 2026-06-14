@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MoreHorizontal, Pencil, Plus, Search, Settings, Trash2, X } from 'lucide-react';
+import { Pencil, Plus, PowerOff, Search, Settings, Trash2, X } from 'lucide-react';
 import {
   useCreateService,
+  useDeactivateService,
   useDeleteService,
   useServiceList,
   useUpdateService,
@@ -18,6 +19,7 @@ import {
   type Service,
   type ServiceGroup,
 } from '../model/types';
+import { SlotOverrideEditor } from './slot-override-editor';
 
 const EMPTY: CreateServiceInput = {
   name: '',
@@ -27,6 +29,8 @@ const EMPTY: CreateServiceInput = {
   basePrice: 500000,
   description: '',
   isActive: true,
+  slotOverrides: [],
+  disabledSlotIndices: [],
 };
 
 function formatRp(n: number): string {
@@ -48,6 +52,7 @@ export function LayananPage() {
   const createMut = useCreateService();
   const updateMut = useUpdateService();
   const deleteMut = useDeleteService();
+  const deactivateMut = useDeactivateService();
 
   const items = list.data?.data ?? [];
 
@@ -99,6 +104,8 @@ export function LayananPage() {
       basePrice: s.basePrice,
       description: s.description ?? '',
       isActive: s.isActive,
+      slotOverrides: s.slotOverrides ?? [],
+      disabledSlotIndices: s.disabledSlotIndices ?? [],
     });
     setOpen(true);
   }
@@ -112,11 +119,15 @@ export function LayananPage() {
     if (!confirm(`Hapus layanan "${s.name}"?`)) return;
     deleteMut.mutate(s.id);
   }
+  function handleDeactivate(s: Service) {
+    if (!confirm(`Nonaktifkan layanan "${s.name}"? Layanan tidak akan muncul di booking baru.`)) return;
+    deactivateMut.mutate(s.id);
+  }
 
   const submitting = createMut.isPending || updateMut.isPending;
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-7">
+    <div className="flex flex-col gap-4 p-6">
       {/* Top toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="relative w-[280px] max-w-full">
@@ -257,17 +268,27 @@ export function LayananPage() {
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(s)}
-                          className="btn btn-icon btn-ghost btn-sm text-danger"
-                          aria-label="Hapus"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                        <button type="button" className="btn btn-icon btn-ghost btn-sm" aria-label="Lainnya">
-                          <MoreHorizontal className="h-3.5 w-3.5" />
-                        </button>
+                        {s.hasBookings ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeactivate(s)}
+                            disabled={!s.isActive}
+                            className="btn btn-icon btn-ghost btn-sm text-warning disabled:opacity-30 disabled:cursor-not-allowed"
+                            title={s.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
+                            aria-label="Nonaktifkan layanan"
+                          >
+                            <PowerOff className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(s)}
+                            className="btn btn-icon btn-ghost btn-sm text-danger"
+                            aria-label="Hapus"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -290,7 +311,7 @@ export function LayananPage() {
           <div className="card-althea w-full max-w-xl bg-card max-h-[92vh] overflow-y-auto">
             <div className="border-b border-border px-6 py-4 flex items-center justify-between">
               <h2 className="h2">{editing ? 'Edit Layanan' : 'Layanan Baru'}</h2>
-              <button type="button" onClick={close} className="btn btn-ghost btn-icon" aria-label="Tutup">
+              <button type="button" onClick={close} className="btn btn-ghost btn-icon btn-sm" aria-label="Tutup">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -331,13 +352,22 @@ export function LayananPage() {
                   className="input-althea h-auto py-2"
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm">
+              <div className="border-t border-border pt-3">
+                <label className="caption mb-1 block font-semibold">Slot yang Dipakai Layanan Ini</label>
+                <SlotOverrideEditor
+                  overrides={form.slotOverrides}
+                  onChangeOverrides={(next) => setForm({ ...form, slotOverrides: next })}
+                  disabledIndices={form.disabledSlotIndices}
+                  onChangeDisabled={(next) => setForm({ ...form, disabledSlotIndices: next })}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm border-t border-border pt-3">
                 <input type="checkbox" checked={form.isActive ?? true} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="h-4 w-4" />
                 Aktif
               </label>
               <div className="flex justify-end gap-2 border-t border-border pt-3">
-                <button type="button" onClick={close} className="btn btn-outline">Batal</button>
-                <button type="submit" disabled={submitting} className="btn btn-primary">
+                <button type="button" onClick={close} className="btn btn-outline btn-sm">Batal</button>
+                <button type="submit" disabled={submitting} className="btn btn-primary btn-sm">
                   {submitting ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
                 </button>
               </div>

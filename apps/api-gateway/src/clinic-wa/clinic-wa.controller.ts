@@ -84,6 +84,14 @@ export class ClinicWaController {
     return this.service.findAllLogs(query);
   }
 
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('clinic-admin')
+  @ApiOperation({ summary: 'WA daily stats (sentToday, readToday, failedToday, readRate)' })
+  getStats(@Query('date') date?: string) {
+    return this.service.getStats(date);
+  }
+
   // ===== Send-test =====
 
   @Post('send-test')
@@ -99,7 +107,18 @@ export class ClinicWaController {
   @Post('webhook')
   @SkipAudit()
   @ApiOperation({ summary: 'Fonnte webhook receiver — public endpoint, no JWT' })
-  webhook(@Body() dto: FonnteWebhookDto) {
+  webhook(@Body() body: Record<string, unknown>) {
+    // Fonnte sends extra fields (state, stateid, etc.) that vary by plan/version.
+    // We extract only the fields we use to avoid global ValidationPipe forbidNonWhitelisted rejection.
+    // Fonnte uses 'status' for delivery events but some webhook types use 'state' — pass both.
+    const dto: FonnteWebhookDto = {
+      id: body['id'] !== undefined && body['id'] !== null ? String(body['id']) : undefined,
+      sender: typeof body['sender'] === 'string' ? body['sender'] : undefined,
+      status: typeof body['status'] === 'string' ? body['status'] : undefined,
+      state: typeof body['state'] === 'string' ? body['state'] : undefined,
+      device: typeof body['device'] === 'string' ? body['device'] : undefined,
+      reason: typeof body['reason'] === 'string' ? body['reason'] : undefined,
+    };
     return this.service.handleWebhook(dto);
   }
 }

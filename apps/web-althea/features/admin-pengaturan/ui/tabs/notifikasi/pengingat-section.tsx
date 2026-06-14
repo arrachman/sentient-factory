@@ -1,16 +1,31 @@
+'use client';
+
+import type { UpdateSettingsInput } from '../../../api/settings.api';
+import { useWaTemplateRecipients } from '../../../hooks/use-wa-template-recipients';
 import { FieldRow } from '../../shared/field-row';
 import { MicroSelect } from '../../shared/micro-select';
 import { NotifEventRow } from '../../shared/notif-event-row';
 
 /**
- * Bagian "Pengingat sesi otomatis" — 7 event yang dijadwalkan otomatis
- * berdasarkan booking. Beberapa punya control tambahan (waktu kirim,
- * threshold, dll) lewat prop `extra`.
+ * Pengaturan WA — section "Kirim pesan otomatis".
+ *
+ * Recipient toggles ("WA klien" / "WA psikolog") bind langsung ke
+ * ClinicWaTemplate.recipients via useWaTemplateRecipients() — bukan
+ * ke ClinicSettings (SSOT pindah). Field timing (notifH1SendTime,
+ * notifFollowupDelayHours, notifFeedbackSendTime) tetap di settings.
  */
-export function PengingatSection() {
+export function PengingatSection({
+  form,
+  set,
+}: {
+  form: UpdateSettingsInput;
+  set: <K extends keyof UpdateSettingsInput>(key: K, value: UpdateSettingsInput[K]) => void;
+}) {
+  const { hasRecipient, toggle, isLoading } = useWaTemplateRecipients();
+
   return (
     <FieldRow
-      label="Pengingat sesi otomatis"
+      label="Kirim pesan otomatis"
       hint="Dijadwalkan otomatis berdasarkan booking. Edit isi pesan via Notifikasi WA · Template."
     >
       <div className="flex flex-col gap-2" style={{ maxWidth: 580 }}>
@@ -18,9 +33,20 @@ export function PengingatSection() {
           title="Konfirmasi booking"
           hint="Trigger: saat admin selesai jadwalkan klien"
           templates={[{ id: 't-konfirm' }]}
+          extra={null}
           recipients={[
-            { id: 'klien', label: 'WA klien', on: true },
-            { id: 'psikolog', label: 'WA psikolog', on: true },
+            {
+              id: 'klien',
+              label: 'WA klien',
+              on: !isLoading && hasRecipient('Konfirmasi Booking', 'klien'),
+              onChange: () => toggle('Konfirmasi Booking', 'klien'),
+            },
+            {
+              id: 'psikolog',
+              label: 'WA psikolog',
+              on: !isLoading && hasRecipient('Konfirmasi Booking', 'psikolog'),
+              onChange: () => toggle('Konfirmasi Booking', 'psikolog'),
+            },
           ]}
         />
         <NotifEventRow
@@ -34,7 +60,8 @@ export function PengingatSection() {
               </span>
               <input
                 className="input-althea"
-                defaultValue="18:00"
+                value={form.notifH1SendTime ?? '08:00'}
+                onChange={(e) => set('notifH1SendTime', e.target.value)}
                 style={{
                   width: 70,
                   height: 32,
@@ -46,18 +73,25 @@ export function PengingatSection() {
             </div>
           }
           recipients={[
-            { id: 'klien', label: 'WA klien', on: true },
-            { id: 'psikolog', label: 'WA psikolog', on: true },
+            {
+              id: 'klien',
+              label: 'WA klien',
+              on: !isLoading && hasRecipient('Pengingat H-1 Booking', 'klien'),
+              onChange: () => toggle('Pengingat H-1 Booking', 'klien'),
+            },
           ]}
         />
         <NotifEventRow
           title="Pengingat 30 menit"
-          hint="Trigger: 30 menit sebelum sesi (PRD BR-08)"
+          hint="Trigger: 30 menit sebelum sesi"
           templates={[{ id: 't-30m' }]}
-          badge="BR-08"
           recipients={[
-            { id: 'klien', label: 'WA klien', on: true },
-            { id: 'psikolog', label: 'WA psikolog', on: true },
+            {
+              id: 'klien',
+              label: 'WA klien',
+              on: !isLoading && hasRecipient('Pengingat 30 Menit Sebelum Sesi', 'klien'),
+              onChange: () => toggle('Pengingat 30 Menit Sebelum Sesi', 'klien'),
+            },
           ]}
         />
         <NotifEventRow
@@ -66,75 +100,55 @@ export function PengingatSection() {
           templates={[{ id: 't-followup' }]}
           extra={
             <MicroSelect
-              defaultValue="3"
+              value={String(form.notifFollowupDelayHours ?? 3)}
               options={[
                 ['1', '1 jam setelah'],
                 ['3', '3 jam setelah'],
                 ['24', '1 hari setelah'],
               ]}
+              onChange={(v) => set('notifFollowupDelayHours', Number(v))}
             />
           }
-          recipients={[{ id: 'klien', label: 'WA klien', on: true }]}
+          recipients={[
+            {
+              id: 'klien',
+              label: 'WA klien',
+              on: !isLoading && hasRecipient('Follow-up Post Session', 'klien'),
+              onChange: () => toggle('Follow-up Post Session', 'klien'),
+            },
+          ]}
         />
         <NotifEventRow
-          title="Pengingat sesi lanjutan"
-          hint="Untuk paket multi-sesi yang sesinya belum dijadwal"
-          templates={[{ id: 't-lanjutan' }]}
+          title="Form Feedback H+1"
+          hint="Trigger: H+1 jam 08.00 WIB setelah sesi completed — klien diminta balas WA langsung"
+          templates={[{ id: 't-feedback' }]}
           extra={
-            <MicroSelect
-              defaultValue="7"
-              options={[
-                ['3', 'H+3'],
-                ['7', 'H+7'],
-                ['14', 'H+14'],
-              ]}
-              width={90}
-            />
-          }
-          recipients={[{ id: 'klien', label: 'WA klien', on: false }]}
-        />
-        <NotifEventRow
-          title="Paket akan habis"
-          hint="Trigger: saat sesi tersisa ≤ 1 dari paket — tawarkan paket lanjutan"
-          templates={[{ id: 't-paket-habis' }]}
-          recipients={[{ id: 'klien', label: 'WA klien', on: true }]}
-        />
-        <NotifEventRow
-          title="Pengingat minggu kosong (psikolog)"
-          hint="Kirim WA ke psikolog kalau minggu kerja mendatang masih banyak slot kosong."
-          badge="psikolog"
-          templates={[{ id: 't-week-empty' }]}
-          extra={
-            <div className="flex items-center gap-1 flex-wrap">
+            <div className="flex items-center gap-1">
               <span className="caption" style={{ fontSize: 11 }}>
-                kirim
+                kirim pukul
               </span>
-              <MicroSelect
-                defaultValue="3"
-                options={[
-                  ['1', 'H-1'],
-                  ['3', 'H-3'],
-                  ['5', 'H-5'],
-                  ['7', 'H-7'],
-                ]}
-                width={78}
-              />
-              <span className="caption" style={{ fontSize: 11 }}>
-                jika kosong ≥
-              </span>
-              <MicroSelect
-                defaultValue="50"
-                options={[
-                  ['30', '30%'],
-                  ['50', '50%'],
-                  ['70', '70%'],
-                  ['80', '80%'],
-                ]}
-                width={78}
+              <input
+                className="input-althea"
+                value={form.notifFeedbackSendTime ?? '08:00'}
+                onChange={(e) => set('notifFeedbackSendTime', e.target.value)}
+                style={{
+                  width: 70,
+                  height: 32,
+                  fontSize: 12,
+                  fontVariantNumeric: 'tabular-nums',
+                  textAlign: 'center',
+                }}
               />
             </div>
           }
-          recipients={[{ id: 'psikolog', label: 'WA psikolog', on: true }]}
+          recipients={[
+            {
+              id: 'klien',
+              label: 'WA klien',
+              on: !isLoading && hasRecipient('Form Feedback', 'klien'),
+              onChange: () => toggle('Form Feedback', 'klien'),
+            },
+          ]}
         />
       </div>
     </FieldRow>

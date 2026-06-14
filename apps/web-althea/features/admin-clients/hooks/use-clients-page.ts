@@ -80,11 +80,12 @@ export function useClientsPage() {
       category: c.category ?? undefined,
       phoneWa: c.phoneWa,
       medicalRecordNumber: c.medicalRecordNumber ?? '',
-      preferredServiceType: c.preferredServiceType ?? '',
+      serviceIds: c.serviceIds ?? [],
       email: c.email ?? '',
       address: c.address ?? '',
       notes: c.notes ?? '',
       waOptedOut: c.waOptedOut,
+      isActive: c.isActive,
     });
     setOpen(true);
   }

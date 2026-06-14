@@ -12,6 +12,9 @@ import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
 import type { AlertOpsPayload, BaileysPairingPayload } from './types';
 import { moduleLabelFromKey, statusBadgeClass } from './utils';
 import { Shell } from './_shared';
+import { OpsTriageSection } from './ops-triage-section';
+import { OpsProviderHealth } from './ops-provider-health';
+import { OpsProviderReadiness } from './ops-provider-readiness';
 
 export function AlertOpsPageView() {
   const [ops, setOps] = useState<AlertOpsPayload | null>(null);
@@ -187,260 +190,22 @@ export function AlertOpsPageView() {
         </div>
       ) : null}
 
-      {ops?.triage ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Triage SLA</CardTitle>
-              <CardDescription>
-                Warning after {ops.triage.policy.warning_after_minutes} minutes, critical after {ops.triage.policy.critical_after_minutes} minutes.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-4">
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Open</div>
-                <div className="text-2xl font-semibold">{ops.triage.summary.open_items}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Investigating</div>
-                <div className="text-2xl font-semibold">{ops.triage.summary.investigating_items}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Overdue</div>
-                <div className="text-2xl font-semibold text-amber-700">{ops.triage.summary.overdue_items}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Critical</div>
-                <div className="text-2xl font-semibold text-rose-700">{ops.triage.summary.critical_items}</div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Stage Progression</CardTitle>
-              <CardDescription>Operational visibility of escalation progress across configured stages.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Staged Items</div>
-                <div className="text-2xl font-semibold">{ops.triage.summary.staged_items}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Pending Next Stage</div>
-                <div className="text-2xl font-semibold text-amber-700">{ops.triage.summary.pending_next_stage_items}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Final Stage</div>
-                <div className="text-2xl font-semibold text-slate-700">{ops.triage.summary.final_stage_items}</div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {ops?.triage?.audit_summary ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Triage Audit Activity</CardTitle>
-              <CardDescription>Operational actions taken on dead-letter triage items.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-4">
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Total Entries</div>
-                <div className="text-2xl font-semibold">{ops.triage.audit_summary.total_entries}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Ack / Unack</div>
-                <div className="text-2xl font-semibold">
-                  {ops.triage.audit_summary.acknowledge_actions}/{ops.triage.audit_summary.unacknowledge_actions}
-                </div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Assignments</div>
-                <div className="text-2xl font-semibold">{ops.triage.audit_summary.assignment_actions}</div>
-              </div>
-              <div className="rounded-xl border px-4 py-3">
-                <div className="text-xs text-muted-foreground">Latest Action</div>
-                <div className="text-sm font-medium">
-                  {ops.triage.audit_summary.latest_action_at
-                    ? ops.triage.audit_summary.latest_action_at.replace('T', ' ').slice(0, 19)
-                    : '-'}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Audit Breakdown</CardTitle>
-              <CardDescription>Top triage actions and operators over the recent filtered set.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="text-sm font-medium">By Action</div>
-                {ops.triage.audit_summary.action_breakdown.slice(0, 5).map((entry) => (
-                  <div key={entry.action_type} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm">
-                    <span>{entry.action_type}</span>
-                    <span className="font-medium">{entry.count}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="space-y-2">
-                <div className="text-sm font-medium">Top Actors</div>
-                {ops.triage.audit_summary.top_actors.length ? ops.triage.audit_summary.top_actors.map((entry) => (
-                  <div key={entry.actor} className="flex items-center justify-between rounded-xl border px-3 py-2 text-sm">
-                    <span>{entry.actor}</span>
-                    <span className="font-medium">{entry.action_count}</span>
-                  </div>
-                )) : (
-                  <div className="rounded-xl border border-dashed px-3 py-3 text-sm text-muted-foreground">
-                    No triage actors recorded yet.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      ) : null}
-
-      {deliveryStatus ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Provider Readiness</CardTitle>
-            <CardDescription>Backend delivery mode per channel.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
-            {deliveryStatus.channels.map((channel) => (
-              <div key={channel.channel_type} className="rounded-xl border px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium">{channel.channel_type}</span>
-                  <Badge variant="outline" className={channel.is_configured ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}>
-                    {channel.provider_mode}
-                  </Badge>
-                </div>
-                <div className="mt-2 text-xs text-muted-foreground">
-                  Provider: {channel.provider_name || '-'} · {channel.is_configured ? 'Configured' : 'Fallback / Dry Run'}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : null}
+      {ops?.triage ? <OpsTriageSection triage={ops.triage} /> : null}
+      {deliveryStatus ? <OpsProviderReadiness deliveryStatus={deliveryStatus} /> : null}
 
       {providerHealth ? (
-        <div className="grid gap-4 xl:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Baileys Session Health</CardTitle>
-              <CardDescription>Runtime readiness for WhatsApp delivery through Baileys.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between rounded-xl border px-4 py-3">
-                <span className="font-medium">Status</span>
-                <Badge variant="outline" className={providerHealth.baileys.session_ready ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}>
-                  {providerHealth.baileys.status_label}
-                </Badge>
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Enabled: {providerHealth.baileys.enabled ? 'Yes' : 'No'}
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Auth Directory: {providerHealth.baileys.auth_dir || '-'}
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Auth Dir Exists: {providerHealth.baileys.auth_dir_exists ? 'Yes' : 'No'} · Files: {providerHealth.baileys.auth_file_count}
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Creds Present: {providerHealth.baileys.creds_present ? 'Yes' : 'No'} · Session Ready: {providerHealth.baileys.session_ready ? 'Yes' : 'No'}
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Last Auth Update: {providerHealth.baileys.last_auth_update_at ? providerHealth.baileys.last_auth_update_at.replace('T', ' ').slice(0, 19) : '-'}
-              </div>
-              {providerHealth.baileys.pairing_required ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  Pairing is still required. Populate `ALERTING_WA_BAILEYS_AUTH_DIR`, enable Baileys, then complete the WhatsApp auth flow in runtime before expecting real delivery.
-                </div>
-              ) : null}
-              <div className="space-y-2 rounded-xl border px-4 py-3">
-                <div className="text-sm font-medium">Start Pairing</div>
-                <Input
-                  value={pairingPhoneNumber}
-                  onChange={(event) => setPairingPhoneNumber(event.target.value)}
-                  placeholder="62812xxxxxxx for pairing code, or leave blank for QR token"
-                />
-                <Button size="sm" onClick={startBaileysPairing} disabled={pairingLoading || !providerHealth.baileys.enabled}>
-                  {pairingLoading ? 'Starting Pairing...' : 'Start Baileys Pairing'}
-                </Button>
-                {!providerHealth.baileys.enabled ? (
-                  <div className="text-xs text-muted-foreground">
-                    Enable `ALERTING_WA_BAILEYS_ENABLED=true` first.
-                  </div>
-                ) : null}
-              </div>
-              {pairingResult ? (
-                <div className="rounded-xl border px-4 py-3">
-                  <div className="text-sm font-medium">Pairing Result</div>
-                  <div className="mt-2 text-xs text-muted-foreground">{pairingResult.message}</div>
-                  {pairingResult.pairing_code ? (
-                    <div className="mt-2 space-y-2">
-                      <div className="rounded-lg bg-slate-50 px-3 py-2 font-mono text-sm text-slate-900">
-                        {pairingResult.pairing_code}
-                      </div>
-                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(pairingResult.pairing_code || '')}>
-                        {isCopied ? 'Copied' : 'Copy Pairing Code'}
-                      </Button>
-                    </div>
-                  ) : null}
-                  {pairingResult.qr ? (
-                    <div className="mt-2 space-y-3">
-                      {qrImageUrl ? (
-                        <div className="flex justify-center rounded-xl border bg-white p-3">
-                          {/* next/image is not necessary here; QR is already a data URL payload */}
-                          <img src={qrImageUrl} alt="Baileys pairing QR" className="h-72 w-72" />
-                        </div>
-                      ) : null}
-                      {qrImageError ? (
-                        <div className="text-xs text-amber-600 dark:text-amber-400">{qrImageError}</div>
-                      ) : null}
-                      <div className="rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-900 break-all">
-                        {pairingResult.qr}
-                      </div>
-                      <Button size="sm" variant="outline" onClick={() => copyToClipboard(pairingResult.qr || '')}>
-                        {isCopied ? 'Copied' : 'Copy QR Token'}
-                      </Button>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>SMTP Health</CardTitle>
-              <CardDescription>Runtime readiness for email delivery through SMTP.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between rounded-xl border px-4 py-3">
-                <span className="font-medium">Status</span>
-                <Badge variant="outline" className={providerHealth.smtp.configured ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-700'}>
-                  {providerHealth.smtp.configured ? 'configured' : 'not-configured'}
-                </Badge>
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Host: {providerHealth.smtp.host || '-'} · Port: {providerHealth.smtp.port || '-'}
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Secure: {providerHealth.smtp.secure ? 'Yes' : 'No'} · From: {providerHealth.smtp.from || '-'}
-              </div>
-              <div className="rounded-xl border px-4 py-3 text-sm text-muted-foreground">
-                Auth Credentials Present: {providerHealth.smtp.has_auth ? 'Yes' : 'No'}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <OpsProviderHealth
+          providerHealth={providerHealth}
+          pairingPhoneNumber={pairingPhoneNumber}
+          setPairingPhoneNumber={setPairingPhoneNumber}
+          startBaileysPairing={startBaileysPairing}
+          pairingLoading={pairingLoading}
+          pairingResult={pairingResult}
+          qrImageUrl={qrImageUrl}
+          qrImageError={qrImageError}
+          copyToClipboard={copyToClipboard}
+          isCopied={isCopied}
+        />
       ) : null}
 
       {providerHealth ? (

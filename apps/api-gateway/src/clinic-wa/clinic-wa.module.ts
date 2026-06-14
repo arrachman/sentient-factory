@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
+import { ClinicSettingsModule } from '../clinic-settings/clinic-settings.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ClinicWaController } from './clinic-wa.controller';
 import { ClinicWaService } from './clinic-wa.service';
@@ -44,6 +45,7 @@ function parseRedisUrl(url: string | undefined) {
   imports: [
     ConfigModule,
     PrismaModule,
+    ClinicSettingsModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -58,10 +60,15 @@ function parseRedisUrl(url: string | undefined) {
     MockWAProvider,
     FonnteProvider,
     {
+      // Pilih FonnteProvider bila ada salah satu token (env FONNTE_API_TOKEN
+      // sebagai fallback lama, atau FONNTE_ACCOUNT_TOKEN supaya pairing flow
+      // bisa di-aktifkan dari UI tanpa env API token). FonnteProvider sendiri
+      // baca token aktif dari DB via ClinicSettingsService (lihat fonnte.provider.ts).
       provide: WA_PROVIDER,
       useFactory: (config: ConfigService, mock: MockWAProvider, fonnte: FonnteProvider) => {
-        const token = config.get<string>('FONNTE_API_TOKEN');
-        return token ? fonnte : mock;
+        const apiToken = config.get<string>('FONNTE_API_TOKEN');
+        const accountToken = config.get<string>('FONNTE_ACCOUNT_TOKEN');
+        return apiToken || accountToken ? fonnte : mock;
       },
       inject: [ConfigService, MockWAProvider, FonnteProvider],
     },

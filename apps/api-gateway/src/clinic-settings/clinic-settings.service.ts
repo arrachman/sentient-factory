@@ -1,52 +1,73 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+/**
+ * Facade service — delegates to focused sub-services.
+ * Retained for backward compatibility with external consumers
+ * (e.g. clinic-wa/providers/fonnte.provider.ts).
+ *
+ * New code should inject the specific service directly:
+ *   - ClinicSettingsCoreService   → get() / update()
+ *   - WaDeviceStatusService       → getActiveDeviceToken() / getWaDeviceStatus()
+ *   - WaDevicePairingService      → device pairing CRUD
+ */
+import { Injectable } from '@nestjs/common';
 import { UpdateSettingsDto } from './dto/clinic-settings.dto';
+import {
+  ActivateWaDeviceDto,
+  CreateWaDeviceDto,
+  WaDeviceQrDto,
+} from './dto/wa-device.dto';
+import { ClinicSettingsCoreService } from './clinic-settings-core.service';
+import { WaDeviceStatusService } from './wa-device-status.service';
+import { WaDevicePairingService } from './wa-device-pairing.service';
+import { WaDeviceStatus, WaDeviceListResponse } from './wa-device.types';
 
-const SETTINGS_ID = 1; // Single-row config table
+export type { WaDeviceStatus, FonnteDevice, WaDeviceListResponse } from './wa-device.types';
+export { SETTINGS_ID } from './wa-device.types';
 
 @Injectable()
 export class ClinicSettingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly core: ClinicSettingsCoreService,
+    private readonly waStatus: WaDeviceStatusService,
+    private readonly waPairing: WaDevicePairingService,
+  ) {}
 
-  async get() {
-    const settings = await this.prisma.clinicSettings.findUnique({
-      where: { id: SETTINGS_ID },
-    });
-    if (!settings) {
-      throw new NotFoundException(
-        'Clinic settings not initialized. Run db:seed:clinic untuk seed default.',
-      );
-    }
-    return { success: true, data: settings };
+  get() {
+    return this.core.get();
   }
 
-  async update(dto: UpdateSettingsDto, actorId?: number) {
-    const data: Prisma.ClinicSettingsUpdateInput = { updatedBy: actorId };
-    if (dto.clinicName !== undefined) data.clinicName = dto.clinicName;
-    if (dto.address !== undefined) data.address = dto.address;
-    if (dto.timezone !== undefined) data.timezone = dto.timezone;
-    if (dto.currency !== undefined) data.currency = dto.currency;
-    if (dto.slotsOfDay !== undefined) data.slotsOfDay = dto.slotsOfDay as Prisma.InputJsonValue;
-    if (dto.closedDayOfWeek !== undefined)
-      data.closedDayOfWeek = dto.closedDayOfWeek as Prisma.InputJsonValue;
-    if (dto.holidays !== undefined) data.holidays = dto.holidays as Prisma.InputJsonValue;
-    if (dto.bufferMinutes !== undefined) data.bufferMinutes = dto.bufferMinutes;
-    if (dto.taxEnabled !== undefined) data.taxEnabled = dto.taxEnabled;
-    if (dto.taxPercentage !== undefined) data.taxPercentage = new Prisma.Decimal(dto.taxPercentage);
-    if (dto.dpPercentage !== undefined) data.dpPercentage = new Prisma.Decimal(dto.dpPercentage);
-    if (dto.waSendEnabled !== undefined) data.waSendEnabled = dto.waSendEnabled;
-    if (dto.waCountryCode !== undefined) data.waCountryCode = dto.waCountryCode;
+  update(dto: UpdateSettingsDto, actorId?: number) {
+    return this.core.update(dto, actorId);
+  }
 
-    const updated = await this.prisma.clinicSettings.upsert({
-      where: { id: SETTINGS_ID },
-      create: {
-        id: SETTINGS_ID,
-        clinicName: dto.clinicName ?? 'Althea Psychology',
-        ...data,
-      } as unknown as Prisma.ClinicSettingsCreateInput,
-      update: data,
-    });
-    return { success: true, data: updated, message: 'Settings updated' };
+  getActiveDeviceToken(): Promise<string | null> {
+    return this.waStatus.getActiveDeviceToken();
+  }
+
+  getWaDeviceStatus(): Promise<WaDeviceStatus> {
+    return this.waStatus.getWaDeviceStatus();
+  }
+
+  listDevices(): Promise<WaDeviceListResponse> {
+    return this.waPairing.listDevices();
+  }
+
+  addDevice(dto: CreateWaDeviceDto) {
+    return this.waPairing.addDevice(dto);
+  }
+
+  getDeviceQr(dto: WaDeviceQrDto) {
+    return this.waPairing.getDeviceQr(dto);
+  }
+
+  checkDeviceConnected(dto: WaDeviceQrDto) {
+    return this.waPairing.checkDeviceConnected(dto);
+  }
+
+  activateDevice(dto: ActivateWaDeviceDto, actorId?: number) {
+    return this.waPairing.activateDevice(dto, actorId);
+  }
+
+  removeDevice(devicePhone: string, actorId?: number) {
+    return this.waPairing.removeDevice(devicePhone, actorId);
   }
 }

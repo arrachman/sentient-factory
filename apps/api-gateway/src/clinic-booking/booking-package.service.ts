@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingEventsService } from './booking-events.service';
+import { BookingNotificationService } from './booking-notification.service';
 import { BookingValidationService } from './booking-validation.service';
 import { CreatePackageBookingDto } from './dto/clinic-booking.dto';
 
@@ -31,6 +32,7 @@ export class BookingPackageService {
     private readonly prisma: PrismaService,
     private readonly validation: BookingValidationService,
     private readonly events: BookingEventsService,
+    private readonly notifier: BookingNotificationService,
   ) {}
 
   async create(dto: CreatePackageBookingDto, actorId?: number) {
@@ -103,17 +105,22 @@ export class BookingPackageService {
           s.roomId,
         );
       }
-      if (!dto.bufferOverride) {
-        await this.validation.assertNoConflict({
-          psikologUserId: s.psikologUserId,
-          roomId: s.roomId,
-          scheduledStart: s.start,
-          scheduledEnd: s.end,
-          excludeBookingId: null,
-        });
-        await this.validation.assertSlotMatch(s.start, s.end);
-        await this.validation.assertPsikologAvailable(s.psikologUserId, s.start);
-      }
+      await this.validation.assertNoRoomConflict({
+        roomId: s.roomId,
+        scheduledStart: s.start,
+        scheduledEnd: s.end,
+        excludeBookingId: null,
+      });
+
+      await this.validation.assertNoConflict({
+        psikologUserId: s.psikologUserId,
+        roomId: s.roomId,
+        scheduledStart: s.start,
+        scheduledEnd: s.end,
+        excludeBookingId: null,
+      });
+      await this.validation.assertSlotMatch(s.start, s.end, dto.serviceId);
+      await this.validation.assertPsikologAvailable(s.psikologUserId, s.start);
     }
   }
 
@@ -157,8 +164,7 @@ export class BookingPackageService {
             sessionN: s.index + 1,
             sessionTotal: sessions.length,
             packageGroupId,
-            status: 'awaiting_dp',
-            bufferOverride: dto.bufferOverride ?? false,
+            status: 'checked_in',
             createdViaWalkIn: false,
             notes: dto.notes,
             createdBy: actorId,
@@ -172,6 +178,21 @@ export class BookingPackageService {
     for (const b of created) {
       this.events.emit({ type: 'created', bookingId: b.id, status: b.status });
     }
+
+    // Info Psikolog: fire saat booking pertama klien (paket pertama untuk klien baru).
+    // Count exclude ID dari paket ini sendiri — kalau prior = 0, kirim sekali pakai
+    // booking pertama paket (session 1) sebagai konteks profile psikolog.
+    const createdIds = created.map((b) => b.id);
+    const priorBookings = await this.prisma.clinicBooking.count({
+      where: { clientId: dto.clientId, id: { notIn: createdIds }, deletedAt: null },
+    });
+    if (priorBookings === 0 && created.length > 0) {
+      void this.notifier.notifyPsikologInfo(created[0]);
+    }
+
+    // Konfirmasi Booking — 1 notifikasi untuk seluruh paket dengan jadwal lengkap.
+    // Fan-out ke psikolog (session 1) otomatis lewat template recipients.
+    void this.notifier.notifyPackageConfirmation(created);
 
     return {
       success: true,
@@ -198,7 +219,11 @@ export class BookingPackageService {
           id: true,
           email: true,
           fullName: true,
-          clinicPsikologProfile: { select: { title: true, color: true } },
+          avatarUrl: true,
+          phone: true,
+          clinicPsikologProfile: {
+            select: { title: true, color: true, specialty: true, license: true },
+          },
         },
       },
       room: { select: { id: true, name: true, type: true } },

@@ -46,3 +46,12 @@ export function useDeleteClient() {
     onError: (e: Error) => toast.error('Gagal hapus', { description: e.message }),
   });
 }
+
+export function useDeactivateClient() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => clientApi.update(id, { isActive: false }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: KEY }); toast.success('Klien dinonaktifkan'); },
+    onError: (e: Error) => toast.error('Gagal nonaktifkan', { description: e.message }),
+  });
+}

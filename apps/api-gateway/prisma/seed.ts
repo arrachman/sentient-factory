@@ -24,6 +24,12 @@ async function hashPassword(password: string): Promise<string> {
   return `pbkdf2$v1$${digest}$${iterations}$${salt.toString('base64')}$${derived.toString('base64')}`;
 }
 
+// NOTE: ERP menu seeding lives in `prisma/seed-erp.ts` (canonical, namespaced
+// codes `M0`/`M1`/...). A parallel `ERP_MENU_SEEDS` block here used to
+// re-introduce stray legacy short-id entries (`master-data`, `administrator`,
+// `md-items`, ...) on every `npm run db:seed`, causing duplicate sidebar
+// modules. Removed 2026-05-20. Run `npm run db:seed:erp` for ERP.
+
 async function main() {
   console.log('Seeding database...');
 
@@ -1355,6 +1361,8 @@ async function main() {
       });
     }
   }
+
+  // ERP menus seeded separately via `npm run db:seed:erp`. See top of file.
 
   console.log('Seeding completed.');
   console.log('-------------------------------------------');

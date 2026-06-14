@@ -49,6 +49,13 @@ export type CurrentService = {
   sessionTotal: number;
 };
 
+export const clientServiceRefSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  category: z.string(),
+});
+export type ClientServiceRef = z.infer<typeof clientServiceRefSchema>;
+
 export const clientSchema = z.object({
   id: z.number().int(),
   name: z.string(),
@@ -58,10 +65,13 @@ export const clientSchema = z.object({
   phoneWa: z.string(),
   medicalRecordNumber: z.string().nullable(),
   preferredServiceType: z.string().nullable(),
+  services: z.array(clientServiceRefSchema).default([]),
+  serviceIds: z.array(z.number().int()).default([]),
   email: z.string().nullable(),
   address: z.string().nullable(),
   notes: z.string().nullable(),
   waOptedOut: z.boolean(),
+  isActive: z.boolean(),
   createdAt: z.string(),
   updatedAt: z.string(),
   // Derived from backend enrichment
@@ -102,18 +112,30 @@ export type ClientWithHistory = Client & {
   }>;
 };
 
+/**
+ * Skema submit klien.
+ *
+ * Catatan: `age`, `medicalRecordNumber`, dan `serviceIds` **wajib diisi** di
+ * UI (HTML `required` / minimal 1 chip aktif) dan **divalidasi sebagai
+ * required di backend DTO**. Di sini tetap `.optional()` supaya
+ * `EMPTY_CLIENT` (draft state sebelum user mengetik) tidak melanggar tipe —
+ * bukan berarti boleh kosong saat submit. Field `preferredServiceType` lama
+ * sekarang **derived di backend** (nama service pertama urut by id) — jangan
+ * dipakai untuk input baru.
+ */
 export const createClientSchema = z.object({
   name: z.string().min(2).max(255),
   gender: z.enum(GENDERS),
   age: z.number().int().min(0).max(120).optional(),
   category: z.enum(CLIENT_CATEGORIES).optional(),
   phoneWa: z.string().min(8).max(30),
-  medicalRecordNumber: z.string().max(80).optional(),
-  preferredServiceType: z.string().max(60).optional(),
+  medicalRecordNumber: z.string().min(1).max(80).optional(),
+  serviceIds: z.array(z.number().int()).default([]),
   email: z.string().email().optional().or(z.literal('')),
   address: z.string().max(1000).optional(),
   notes: z.string().max(2000).optional(),
   waOptedOut: z.boolean().optional(),
+  isActive: z.boolean().optional(),
 });
 export type CreateClientInput = z.infer<typeof createClientSchema>;
 

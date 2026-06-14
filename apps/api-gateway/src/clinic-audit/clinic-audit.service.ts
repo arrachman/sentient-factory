@@ -32,13 +32,20 @@ export class ClinicAuditService {
         orderBy: [{ createdAt: 'desc' }],
         skip,
         take: limit,
+        include: {
+          user: { select: { fullName: true, username: true } },
+        },
       }),
       this.prisma.auditLog.count({ where }),
     ]);
 
     return {
       success: true,
-      data: items,
+      data: items.map((item) => ({
+        ...item,
+        userName: item.user?.fullName ?? item.user?.username ?? null,
+        user: undefined,
+      })),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }

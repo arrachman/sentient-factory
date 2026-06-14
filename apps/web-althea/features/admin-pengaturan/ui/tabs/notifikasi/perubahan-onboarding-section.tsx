@@ -1,12 +1,28 @@
+'use client';
+
 import { Bell } from 'lucide-react';
+import type { UpdateSettingsInput } from '../../../api/settings.api';
+import { useWaTemplateRecipients } from '../../../hooks/use-wa-template-recipients';
 import { FieldRow } from '../../shared/field-row';
 import { NotifEventRow } from '../../shared/notif-event-row';
 
 /**
- * Bagian "Perubahan jadwal sesi" + "Onboarding & akun" + "Pembayaran".
- * Disatukan karena semuanya pure NotifEventRow tanpa state khusus.
+ * Pengaturan WA — section "Perubahan jadwal sesi" + "Onboarding & akun".
+ *
+ * Recipient toggles bind langsung ke ClinicWaTemplate.recipients via
+ * useWaTemplateRecipients() (SSOT). Baris untuk event yang tidak punya
+ * template di seed (Ubah Ruangan, Ubah Layanan, Invite Staff, plus 3 row
+ * "Pembayaran" yang dulu locked) dihapus.
  */
-export function PerubahanOnboardingSection() {
+export function PerubahanOnboardingSection({
+  form: _form,
+  set: _set,
+}: {
+  form: UpdateSettingsInput;
+  set: <K extends keyof UpdateSettingsInput>(key: K, value: UpdateSettingsInput[K]) => void;
+}) {
+  const { hasRecipient, toggle, isLoading } = useWaTemplateRecipients();
+
   return (
     <>
       <FieldRow
@@ -22,8 +38,18 @@ export function PerubahanOnboardingSection() {
               { id: 't-resched-p', label: 'psikolog' },
             ]}
             recipients={[
-              { id: 'klien', label: 'WA klien', on: true },
-              { id: 'psikolog', label: 'WA psikolog', on: true },
+              {
+                id: 'klien',
+                label: 'WA klien',
+                on: !isLoading && hasRecipient('Reschedule Booking', 'klien'),
+                onChange: () => toggle('Reschedule Booking', 'klien'),
+              },
+              {
+                id: 'psikolog',
+                label: 'WA psikolog',
+                on: !isLoading && hasRecipient('Reschedule Booking', 'psikolog'),
+                onChange: () => toggle('Reschedule Booking', 'psikolog'),
+              },
             ]}
           />
           <NotifEventRow
@@ -35,28 +61,18 @@ export function PerubahanOnboardingSection() {
               { id: 't-cancel-p', label: 'psikolog' },
             ]}
             recipients={[
-              { id: 'klien', label: 'WA klien', on: true },
-              { id: 'psikolog', label: 'WA psikolog', on: true },
-            ]}
-          />
-          <NotifEventRow
-            title="Ubah ruangan saja (psikolog & jam tetap)"
-            hint="Kirim pemberitahuan ruangan baru tanpa mengubah jadwal."
-            templates={[
-              { id: 't-ruangan-k', label: 'klien' },
-              { id: 't-ruangan-p', label: 'psikolog' },
-            ]}
-            recipients={[
-              { id: 'klien', label: 'WA klien', on: true },
-              { id: 'psikolog', label: 'WA psikolog', on: true },
-            ]}
-          />
-          <NotifEventRow
-            title="Ubah layanan klien (silent edit)"
-            hint="Default: tidak kirim WA — admin tidak perlu kontak psikolog manual."
-            recipients={[
-              { id: 'klien', label: 'WA klien', on: false },
-              { id: 'psikolog', label: 'WA psikolog', on: false },
+              {
+                id: 'klien',
+                label: 'WA klien',
+                on: !isLoading && hasRecipient('Cancel Booking', 'klien'),
+                onChange: () => toggle('Cancel Booking', 'klien'),
+              },
+              {
+                id: 'psikolog',
+                label: 'WA psikolog',
+                on: !isLoading && hasRecipient('Cancel Booking', 'psikolog'),
+                onChange: () => toggle('Cancel Booking', 'psikolog'),
+              },
             ]}
           />
           <div
@@ -71,19 +87,11 @@ export function PerubahanOnboardingSection() {
           >
             <Bell
               size={13}
-              style={{
-                color: 'var(--info)',
-                flexShrink: 0,
-                marginTop: 2,
-              }}
+              style={{ color: 'var(--info)', flexShrink: 0, marginTop: 2 }}
             />
             <span
               className="caption"
-              style={{
-                fontSize: 11.5,
-                color: '#2c4a60',
-                lineHeight: 1.5,
-              }}
+              style={{ fontSize: 11.5, color: '#2c4a60', lineHeight: 1.5 }}
             >
               Mematikan WA ke psikolog tidak menonaktifkan notifikasi in-app —
               psikolog tetap melihat update di Dashboard mereka.
@@ -101,46 +109,40 @@ export function PerubahanOnboardingSection() {
             title="Selamat datang klien baru"
             hint="Trigger: setelah klien disimpan pertama kali"
             templates={[{ id: 't-welcome' }]}
-            recipients={[{ id: 'klien', label: 'WA klien', on: true }]}
+            recipients={[
+              {
+                id: 'klien',
+                label: 'WA klien',
+                on: !isLoading && hasRecipient('Welcome New Client', 'klien'),
+                onChange: () => toggle('Welcome New Client', 'klien'),
+              },
+            ]}
           />
           <NotifEventRow
-            title="Invite user baru (admin / psikolog / staff)"
-            hint="Link aktivasi akun + kata sandi awal"
-            templates={[{ id: 't-invite' }]}
-            recipients={[{ id: 'staff', label: 'WA staff', on: true }]}
+            title="Selamat datang psikolog baru"
+            hint="Trigger: saat akun psikolog dibuat dan User.phone tersedia"
+            templates={[{ id: 't-welcome-psikolog' }]}
+            recipients={[
+              {
+                id: 'psikolog',
+                label: 'WA psikolog',
+                on: !isLoading && hasRecipient('Welcome Psikolog Baru', 'psikolog'),
+                onChange: () => toggle('Welcome Psikolog Baru', 'psikolog'),
+              },
+            ]}
           />
           <NotifEventRow
             title="OTP login (lupa password)"
             hint="Kode 6 digit untuk reset kata sandi (mobile flow)"
             templates={[{ id: 't-otp' }]}
-            recipients={[{ id: 'user', label: 'WA user', on: true }]}
-          />
-        </div>
-      </FieldRow>
-
-      <FieldRow
-        label="Pembayaran"
-        hint="Notifikasi WA terkait DP, pelunasan, dan bukti pembayaran"
-      >
-        <div className="flex flex-col gap-2" style={{ maxWidth: 580 }}>
-          <NotifEventRow
-            title="Tagihan DP setelah booking"
-            hint="Kirim instruksi pembayaran DP ke klien"
-            templates={[{ id: 't-dp' }]}
-            recipients={[{ id: 'klien', label: 'WA klien', on: true }]}
-          />
-          <NotifEventRow
-            title="Bukti pembayaran (PDF) setelah pelunasan"
-            hint="Lampirkan invoice PDF di pesan WA"
-            badge="add-on"
-            templates={[{ id: 't-bukti-bayar' }]}
-            recipients={[{ id: 'klien', label: 'WA klien', on: false }]}
-          />
-          <NotifEventRow
-            title="Pengingat pelunasan"
-            hint="Kalau klien belum lunas H-1 sebelum sesi"
-            templates={[{ id: 't-pelunasan' }]}
-            recipients={[{ id: 'klien', label: 'WA klien', on: true }]}
+            recipients={[
+              {
+                id: 'user',
+                label: 'WA user',
+                on: !isLoading && hasRecipient('OTP Login', 'user'),
+                onChange: () => toggle('OTP Login', 'user'),
+              },
+            ]}
           />
         </div>
       </FieldRow>

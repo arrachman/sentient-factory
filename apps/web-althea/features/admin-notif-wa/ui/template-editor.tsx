@@ -7,14 +7,19 @@
  * "Template Baru" / "Edit · ID X" + nama input), body (form fields), footer
  * (tombol Send Test + Hapus + Simpan/Buat).
  */
-import { Save, Send, Trash2 } from 'lucide-react';
+import { Info, Save, Send, Trash2 } from 'lucide-react';
 import {
   CATEGORY_LABEL,
   WA_CATEGORIES,
   type CreateTemplateInput,
   type WaCategory,
 } from '../model/types';
-import { COMMON_VARIABLES } from '../model/constants';
+import {
+  COMMON_VARIABLES,
+  STATUS_LABEL,
+  STATUS_PILL_STYLE,
+  TRIGGER_META,
+} from '../model/constants';
 import { getRecipStyle } from '../model/format';
 
 export function TemplateEditor({
@@ -46,7 +51,7 @@ export function TemplateEditor({
     return (
       <div className="card-althea overflow-hidden flex flex-col">
         <div className="p-8 text-center text-fg-muted flex-1 flex items-center justify-center">
-          Pilih template di kiri untuk edit, atau klik{' '}
+          Pilih template di atas untuk edit, atau klik{' '}
           <strong className="ml-1">Template Baru</strong>.
         </div>
       </div>
@@ -99,6 +104,8 @@ export function TemplateEditor({
             />
           </div>
         </div>
+
+        <TriggerInfo triggerEvent={draft.triggerEvent ?? ''} />
 
         <RecipientPicker
           recipients={draft.recipients}
@@ -230,6 +237,77 @@ function RecipientPicker({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function TriggerInfo({ triggerEvent }: { triggerEvent: string }) {
+  const key = triggerEvent.trim().toLowerCase();
+  const meta = key ? TRIGGER_META[key] : undefined;
+
+  if (!meta) {
+    return (
+      <div className="rounded-md border border-dashed border-border bg-cream-50 px-3 py-2.5">
+        <div className="flex items-start gap-2">
+          <Info className="h-3.5 w-3.5 mt-0.5 text-fg-muted flex-shrink-0" />
+          <p className="text-xs text-fg-muted leading-relaxed">
+            {key
+              ? `Trigger "${key}" belum punya dokumentasi. Tambahkan di TRIGGER_META (constants.ts) untuk membantu admin lain memahami kapan notif ini terkirim.`
+              : 'Isi Trigger Event di atas untuk melihat penjelasan lengkap kapan dan bagaimana notifikasi ini bekerja.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-border bg-cream-50 divide-y divide-border">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <Info className="h-3.5 w-3.5 text-teal-800 flex-shrink-0" />
+          <span className="text-xs font-semibold text-teal-800">
+            Cara kerja notifikasi ini
+          </span>
+        </div>
+        <span
+          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${STATUS_PILL_STYLE[meta.status]}`}
+        >
+          {STATUS_LABEL[meta.status]}
+        </span>
+      </div>
+
+      {/* Narasi */}
+      <div className="px-3 py-2.5">
+        <p className="text-xs text-teal-800 leading-relaxed">{meta.cerita}</p>
+      </div>
+
+      {/* Syarat */}
+      <div className="px-3 py-2.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-fg-muted mb-1.5">
+          Supaya terkirim, pastikan:
+        </p>
+        <ul className="space-y-1">
+          {meta.syarat.map((s, i) => (
+            <li key={i} className="flex items-start gap-1.5 text-xs text-teal-800">
+              <span className="mt-0.5 h-3.5 w-3.5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-[9px] font-bold flex-shrink-0">
+                {i + 1}
+              </span>
+              {s}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Tips */}
+      {meta.tips ? (
+        <div className="px-3 py-2 bg-amber-50 rounded-b-md">
+          <p className="text-xs text-amber-900 leading-relaxed">
+            <span className="font-semibold">Tips: </span>
+            {meta.tips}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

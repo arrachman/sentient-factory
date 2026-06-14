@@ -18,22 +18,35 @@ const CAT_ORDER = ['konseling', 'terapi', 'tes'];
 /**
  * Section "Layanan" — button grid grouped by category.
  * 1 klik langsung pilih, no dropdown open-close.
+ *
+ * `serviceIdWhitelist` (optional): kalau di-set ke array non-empty, hanya
+ * service dengan id ∈ whitelist yang ditampilkan. Dipakai di edit mode
+ * untuk filter ke layanan yang psikolog terassign handle (junction).
+ * `undefined` atau array kosong → tampilkan semua (junction kosong di
+ * domain = handle semua service).
  */
 export function Step2Service({
   serviceList,
   selectedId,
   selectedService,
   onChange,
+  serviceIdWhitelist,
 }: {
   serviceList: ReturnType<typeof useServiceList>;
   selectedId: number | null;
   selectedService: Service | undefined;
   onChange: (id: number | null) => void;
+  serviceIdWhitelist?: number[];
 }) {
   const all = serviceList.data?.data ?? [];
   const grouped = useMemo(() => {
+    const whitelist =
+      serviceIdWhitelist && serviceIdWhitelist.length > 0
+        ? new Set(serviceIdWhitelist)
+        : null;
+    const filtered = whitelist ? all.filter((sv) => whitelist.has(sv.id)) : all;
     const map = new Map<string, Service[]>();
-    for (const sv of all) {
+    for (const sv of filtered) {
       const arr = map.get(sv.category) ?? [];
       arr.push(sv);
       map.set(sv.category, arr);
@@ -42,7 +55,7 @@ export function Step2Service({
       category: c,
       items: map.get(c) ?? [],
     }));
-  }, [all]);
+  }, [all, serviceIdWhitelist]);
 
   if (serviceList.isLoading) {
     return <div className="text-fg-muted text-sm">Memuat layanan...</div>;

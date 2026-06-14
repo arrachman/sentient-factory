@@ -139,7 +139,7 @@ GET    /api/clinic/stream/booking             # SSE
 ## Related ADRs
 
 - ADR 007 — pricing & DP model
-- ADR 008 — booking constraints (slot, buffer, walk-in, override)
+- ADR 008 — booking constraints (slot, walk-in, override; buffer dihapus)
 - ADR 010 — psikolog availability + service junction
 - ADR 011 — booking wizard UX (single-page)
 

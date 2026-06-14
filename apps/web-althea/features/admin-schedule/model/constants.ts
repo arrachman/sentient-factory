@@ -3,15 +3,6 @@
  */
 import type { Filters, SlotDef, TimeOfDay } from './types';
 
-export const SLOTS: SlotDef[] = [
-  { start: '08:00', end: '09:30' },
-  { start: '10:00', end: '11:30' },
-  { start: '13:00', end: '14:30' },
-  { start: '15:00', end: '16:30' },
-  { start: '17:00', end: '18:30' },
-  { start: '19:00', end: '20:30' },
-];
-
 export const SVC_COLOR: Record<
   string,
   { fill: string; bar: string; text: string }

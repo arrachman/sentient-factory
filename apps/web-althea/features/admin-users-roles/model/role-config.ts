@@ -1,15 +1,15 @@
 /**
  * Konfigurasi role + permission matrix untuk halaman User & Role.
  *
- * - ROLE_INFO: 6 role internal staf, masing-masing punya color, access level,
- *   dan deskripsi singkat untuk role cards.
+ * - ROLE_INFO: role staf aktif sesuai paket (standard = 4, premium = 6).
  * - MODULES: 10 modul yang bisa diakses (axis horizontal di matriks).
- * - PERMS: 6 × 10 = 60 cell. Tiap cell ∈ {edit, view, '—'}.
+ * - PERMS: Tiap cell ∈ {edit, view, '—'}.
  * - PERM_STYLE: warna chip per kategori permission.
  *
- * Catatan BR-04: psikolog tidak boleh akses "Klien (semua)" — hanya
+ * Catatan privasi: psikolog tidak boleh akses "Klien (semua)" — hanya
  * "Klien (sendiri)". Ini di-enforce di backend juga.
  */
+import { PLAN_FEATURES } from '@/shared/config/clinic-plan';
 import type { ClinicRoleName, CreateUserInput } from './types';
 
 export type RoleInfo = {
@@ -20,7 +20,7 @@ export type RoleInfo = {
   desc: string;
 };
 
-export const ROLE_INFO: RoleInfo[] = [
+const ALL_ROLE_INFO: RoleInfo[] = [
   {
     key: 'clinic-admin',
     label: 'Admin',
@@ -33,7 +33,7 @@ export const ROLE_INFO: RoleInfo[] = [
     label: 'Psikolog',
     color: '#7a8556',
     access: 'Terbatas (data sendiri)',
-    desc: 'Input availability, lihat jadwal & klien sendiri saja (BR-04)',
+    desc: 'Input availability, lihat jadwal & klien sendiri saja',
   },
   {
     key: 'clinic-owner',
@@ -64,6 +64,12 @@ export const ROLE_INFO: RoleInfo[] = [
     desc: 'Akses minimal sesuai kebutuhan',
   },
 ];
+
+export const ROLE_INFO: RoleInfo[] = ALL_ROLE_INFO.filter((r) => {
+  if (r.key === 'clinic-marketing') return PLAN_FEATURES.marketingRole;
+  if (r.key === 'clinic-intern') return PLAN_FEATURES.internRole;
+  return true;
+});
 
 export const MODULES = [
   'Penjadwalan',
@@ -100,7 +106,7 @@ export const EMPTY_FORM: CreateUserInput = {
   fullName: '',
   username: '',
   password: '',
-  roles: ['clinic-intern'],
+  roles: [PLAN_FEATURES.internRole ? 'clinic-intern' : 'clinic-resepsionis'],
   isActive: true,
 };
 

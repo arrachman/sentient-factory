@@ -6,7 +6,9 @@
  */
 import type { Booking } from '@/features/admin-booking/model/types';
 import type { Psikolog } from '@/features/admin-psikolog/model/types';
-import { SLOTS } from '../../model/constants';
+import type { SlotDef } from '@/features/admin-rooms/model/constants';
+import { emptySlotTone } from '@/features/psikolog-schedule/model/availability';
+import type { AvailabilityResolver } from '../../hooks/use-availability-map';
 import { findBookingForSlot } from '../../model/filters';
 import { BookingCard } from '../components/booking-card';
 import { EmptySlot } from '../components/empty-slot';
@@ -16,14 +18,20 @@ export function HariView({
   date,
   psikologs,
   bookings,
+  slots,
   isLoading,
-  onCellClick,
+  onBookingClick,
+  resolveAvailability,
+  onEmptySlotClick,
 }: {
   date: string;
   psikologs: Psikolog[];
   bookings: Booking[];
+  slots: SlotDef[];
   isLoading: boolean;
-  onCellClick: () => void;
+  onBookingClick: (b: Booking) => void;
+  resolveAvailability?: AvailabilityResolver;
+  onEmptySlotClick?: () => void;
 }) {
   if (isLoading) {
     return (
@@ -40,6 +48,7 @@ export function HariView({
 
   const colTpl = `110px repeat(${psikologs.length}, minmax(140px, 1fr))`;
   const minWidth = 110 + psikologs.length * 140;
+  const dateObj = new Date(`${date}T00:00:00`);
 
   return (
     <div style={{ overflowX: 'auto' }}>
@@ -65,22 +74,35 @@ export function HariView({
         ))}
       </div>
 
-      {SLOTS.map((slot, slotIdx) => (
+      {slots.map((slot, slotIdx) => (
         <div
           key={slot.start}
           style={{
             display: 'grid',
             gridTemplateColumns: colTpl,
             borderBottom:
-              slotIdx === SLOTS.length - 1
+              slotIdx === slots.length - 1
                 ? 'none'
                 : '1px solid var(--border)',
             minWidth,
+            background: slotIdx % 2 === 1 ? 'rgba(247, 244, 237, 0.55)' : 'transparent',
           }}
         >
-          <SlotLabel start={slot.start} end={slot.end} />
+          <SlotLabel label={slot.label ?? `Slot ${slotIdx + 1}`} />
           {psikologs.map((p) => {
             const b = findBookingForSlot(bookings, p.userId, date, slot);
+            let emptyTone;
+            let emptyReason: string | null = null;
+            if (!b && resolveAvailability) {
+              const avail = resolveAvailability(p.userId, dateObj);
+              emptyTone = emptySlotTone({
+                date: dateObj,
+                slotIdx,
+                slotEnd: slot.end,
+                availability: avail,
+              });
+              emptyReason = avail.reason ?? null;
+            }
             return (
               <div
                 key={p.id}
@@ -90,7 +112,15 @@ export function HariView({
                   minHeight: 88,
                 }}
               >
-                {b ? <BookingCard b={b} /> : <EmptySlot onClick={onCellClick} />}
+                {b ? (
+                  <BookingCard b={b} onClick={() => onBookingClick(b)} />
+                ) : (
+                  <EmptySlot
+                    tone={emptyTone}
+                    reason={emptyReason}
+                    onClick={onEmptySlotClick}
+                  />
+                )}
               </div>
             );
           })}
@@ -117,7 +147,7 @@ function SlotHeaderCell() {
   );
 }
 
-function SlotLabel({ start, end }: { start: string; end: string }) {
+function SlotLabel({ label }: { label: string }) {
   return (
     <div
       style={{
@@ -125,28 +155,18 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: 'var(--cream-50)',
         borderRight: '1px solid var(--border)',
       }}
     >
       <span
         style={{
-          fontSize: 11.5,
-          fontWeight: 600,
+          fontSize: 12,
+          fontWeight: 700,
           color: 'var(--teal-800)',
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {start}
-      </span>
-      <span
-        style={{
-          fontSize: 10.5,
-          color: 'var(--fg-muted)',
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {end}
+        {label}
       </span>
     </div>
   );

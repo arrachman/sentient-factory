@@ -3,7 +3,7 @@
 /**
  * Toolbar atas halaman User & Role:
  *   [tab pills: User aktif / Role & hak akses / Matriks permission]
- *                                                  [Ekspor] [Undang user baru]
+ *                                                  [Ekspor] [User baru]
  */
 import { Download, Plus } from 'lucide-react';
 import type { Tab } from '../model/role-config';
@@ -57,7 +57,6 @@ export function UsersToolbar({
               onClick={() => onChangeTab(t.key)}
               className="btn btn-sm"
               style={{
-                height: 30,
                 padding: '0 14px',
                 background: active ? 'var(--bg-elev, #fff)' : 'transparent',
                 boxShadow: active
@@ -93,7 +92,7 @@ export function UsersToolbar({
           onClick={onCreate}
           className="btn btn-primary btn-sm"
         >
-          <Plus size={15} style={{ stroke: '#fff' }} /> Undang user baru
+          <Plus size={15} style={{ stroke: '#fff' }} /> User baru
         </button>
       </div>
     </div>

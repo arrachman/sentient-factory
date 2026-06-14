@@ -22,10 +22,13 @@ import {
   useRescheduleBooking,
 } from '@/features/admin-booking/hooks/use-booking';
 import type { Booking } from '@/features/admin-booking/model/types';
-import { EMPTY_ROOM, SLOTS } from '../model/constants';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
+import { EMPTY_ROOM } from '../model/constants';
+import type { SlotDef } from '../model/constants';
 import { shortName, todayKey } from '../model/utils';
 import {
   useCreateRoom,
+  useDeactivateRoom,
   useDeleteRoom,
   useRoomList,
   useUpdateRoom,
@@ -54,7 +57,13 @@ export function useRoomsPage() {
   const [editing, setEditing] = useState<Room | null>(null);
   const [form, setForm] = useState<CreateRoomInput>(EMPTY_ROOM);
 
-  const roomList = useRoomList({ limit: 200, isActive: true });
+  const settingsQuery = useSettings();
+  const slots = useMemo<SlotDef[]>(
+    () => settingsQuery.data?.data.slotsOfDay ?? [],
+    [settingsQuery.data],
+  );
+
+  const roomList = useRoomList({ limit: 200 });
   const bookingList = useBookingList({
     date,
     limit: 200,
@@ -79,13 +88,13 @@ export function useRoomsPage() {
   const stats = useMemo(() => {
     const total = rooms.length;
     const sessions = bookings.length;
-    const slotsAvailable = total * SLOTS.length;
+    const slotsAvailable = total * slots.length;
     const utilization =
       slotsAvailable > 0 ? Math.round((sessions / slotsAvailable) * 100) : 0;
     const usedIds = new Set(bookings.map((b) => b.room.id));
     const empty = rooms.filter((r) => !usedIds.has(r.id)).length;
     return { total, sessions, slotsAvailable, utilization, empty };
-  }, [rooms, bookings]);
+  }, [rooms, bookings, slots]);
 
   const todayPsikolog = useMemo<LegendPsikolog[]>(() => {
     const map = new Map<number, LegendPsikolog>();
@@ -105,6 +114,7 @@ export function useRoomsPage() {
   const createMut = useCreateRoom();
   const updateMut = useUpdateRoom();
   const deleteMut = useDeleteRoom();
+  const deactivateMut = useDeactivateRoom();
   const rescheduleMut = useRescheduleBooking();
   const submitting = createMut.isPending || updateMut.isPending;
 
@@ -187,6 +197,15 @@ export function useRoomsPage() {
     });
   }
 
+  function deactivateRoom(room: Room) {
+    if (!confirm(`Nonaktifkan ruangan "${room.name}"? Ruangan tidak akan muncul di booking baru.`)) return;
+    deactivateMut.mutate(room.id, {
+      onSuccess: () => {
+        if (picked?.room.id === room.id) clearPicked();
+      },
+    });
+  }
+
   function startReassign() {
     if (!picked?.booking) return;
     setReassignBooking(picked.booking);
@@ -233,7 +252,8 @@ export function useRoomsPage() {
     bookings,
     stats,
     todayPsikolog,
-    isLoading: roomList.isLoading || bookingList.isLoading,
+    slots,
+    isLoading: roomList.isLoading || bookingList.isLoading || settingsQuery.isLoading,
     // crud handlers
     startCreate,
     startEdit,
@@ -241,6 +261,7 @@ export function useRoomsPage() {
     closeCrud,
     submitForm,
     deleteRoom,
+    deactivateRoom,
     // reassign-booking handlers
     reassignBooking,
     startReassign,

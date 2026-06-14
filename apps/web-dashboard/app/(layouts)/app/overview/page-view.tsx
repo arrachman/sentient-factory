@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CartesianGrid, Bar, BarChart, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { Check, ExternalLink, Link2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLogisticDashboardPage } from '@/app/(layouts)/app/hooks/use-logistic-dashboard-page';
 import {
   type DashboardDomain,
   fmtCompactNumber,
-  fmtDate,
   fmtNumber,
   PERIOD_OPTIONS,
   type PeriodFilter,
@@ -24,10 +22,14 @@ import {
 import { AutocompleteSelect } from '@/components/ui/autocomplete-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard';
+import {
+  OverviewBreakdownChart,
+  OverviewBreakdownTable,
+  OverviewTrendChart,
+  OverviewTrendTable,
+} from './overview-charts';
 
 export default function Page() {
   const [isSharing, setIsSharing] = useState(false);
@@ -273,155 +275,13 @@ export default function Page() {
       ) : null}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Trend {metricView === 'totalMetric' ? 'Metric' : 'Rows'} (30 titik terakhir)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-[220px] w-full" />
-              </div>
-            ) : trendChartData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Belum ada data tren.</p>
-            ) : (
-              <ChartContainer
-                config={{
-                  totalMetric: { label: 'Total Metric', color: 'hsl(var(--chart-1))' },
-                  totalRows: { label: 'Rows', color: 'hsl(var(--chart-3))' },
-                }}
-                className="h-[260px] w-full"
-              >
-                <LineChart data={trendChartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="dateLabel" tickLine={false} axisLine={false} minTickGap={20} />
-                  <YAxis tickLine={false} axisLine={false} width={56} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line
-                    type="monotone"
-                    dataKey={metricView}
-                    stroke={metricView === 'totalMetric' ? 'var(--color-totalMetric)' : 'var(--color-totalRows)'}
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Breakdown {metricView === 'totalMetric' ? 'Metric' : 'Rows'} by {groupBy || '-'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-[220px] w-full" />
-              </div>
-            ) : breakdownChartData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Belum ada data breakdown.</p>
-            ) : (
-              <ChartContainer
-                config={{
-                  totalMetric: { label: 'Total Metric', color: 'hsl(var(--chart-2))' },
-                  totalRows: { label: 'Rows', color: 'hsl(var(--chart-4))' },
-                }}
-                className="h-[260px] w-full"
-              >
-                <BarChart data={breakdownChartData} layout="vertical" margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                  <CartesianGrid horizontal={false} />
-                  <XAxis type="number" tickLine={false} axisLine={false} />
-                  <YAxis dataKey="groupKey" type="category" tickLine={false} axisLine={false} width={70} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar
-                    dataKey={metricView}
-                    fill={metricView === 'totalMetric' ? 'var(--color-totalMetric)' : 'var(--color-totalRows)'}
-                    radius={4}
-                  />
-                </BarChart>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
+        <OverviewTrendChart loading={loading} trendChartData={trendChartData} metricView={metricView} />
+        <OverviewBreakdownChart loading={loading} breakdownChartData={breakdownChartData} metricView={metricView} groupBy={groupBy} />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Trend Rows (sample)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tanggal</TableHead>
-                  <TableHead className="text-right">Rows</TableHead>
-                  <TableHead className="text-right">Metric</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={3}>Loading...</TableCell>
-                  </TableRow>
-                ) : trends.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3}>Belum ada data tren.</TableCell>
-                  </TableRow>
-                ) : (
-                  trends.slice(0, 12).map((row, index) => (
-                    <TableRow key={`${row.period_date ?? 'period'}-${index}`}>
-                      <TableCell>{fmtDate(row.period_date)}</TableCell>
-                      <TableCell className="text-right">{fmtNumber(row.total_rows, 0)}</TableCell>
-                      <TableCell className="text-right">{fmtCompactNumber(row.total_metric, 2)}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Breakdown Rows (sample)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Group</TableHead>
-                  <TableHead className="text-right">Rows</TableHead>
-                  <TableHead className="text-right">Metric</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={3}>Loading...</TableCell>
-                  </TableRow>
-                ) : breakdown.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3}>Belum ada data breakdown.</TableCell>
-                  </TableRow>
-                ) : (
-                  breakdown.slice(0, 12).map((row, index) => (
-                    <TableRow key={`${row.group_key ?? 'group'}-${index}`}>
-                      <TableCell>{row.group_key || 'UNKNOWN'}</TableCell>
-                      <TableCell className="text-right">{fmtNumber(row.total_rows, 0)}</TableCell>
-                      <TableCell className="text-right">{fmtCompactNumber(row.total_metric, 2)}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <OverviewTrendTable loading={loading} trends={trends} />
+        <OverviewBreakdownTable loading={loading} breakdown={breakdown} />
       </div>
 
       <Card className="mt-5">

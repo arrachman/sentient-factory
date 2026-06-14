@@ -1,6 +1,6 @@
 'use client';
 
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, PowerOff, Trash2 } from 'lucide-react';
 import { SPECIALTY_LABEL } from '../model/types';
 import type { Psikolog } from '../model/types';
 
@@ -9,9 +9,10 @@ type Props = {
   loading?: boolean;
   onEdit: (p: Psikolog) => void;
   onDelete: (p: Psikolog) => void;
+  onDeactivate: (p: Psikolog) => void;
 };
 
-export function PsikologList({ data, loading, onEdit, onDelete }: Props) {
+export function PsikologList({ data, loading, onEdit, onDelete, onDeactivate }: Props) {
   if (loading) {
     return (
       <div className="card-althea p-8 text-center text-fg-muted">
@@ -88,21 +89,34 @@ export function PsikologList({ data, loading, onEdit, onDelete }: Props) {
                   <button
                     type="button"
                     onClick={() => onEdit(p)}
-                    className="btn btn-ghost btn-icon"
+                    className="btn btn-ghost btn-icon btn-sm"
                     title="Edit"
                     aria-label="Edit psikolog"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(p)}
-                    className="btn btn-ghost btn-icon text-danger"
-                    title="Hapus"
-                    aria-label="Hapus psikolog"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  {p.hasBookings ? (
+                    <button
+                      type="button"
+                      onClick={() => onDeactivate(p)}
+                      disabled={!p.isActive}
+                      className="btn btn-ghost btn-icon btn-sm text-warning disabled:opacity-30 disabled:cursor-not-allowed"
+                      title={p.isActive ? 'Ada booking terkait — klik untuk nonaktifkan' : 'Sudah nonaktif'}
+                      aria-label="Nonaktifkan psikolog"
+                    >
+                      <PowerOff className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(p)}
+                      className="btn btn-ghost btn-icon btn-sm text-danger"
+                      title="Hapus"
+                      aria-label="Hapus psikolog"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

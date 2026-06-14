@@ -1,15 +1,23 @@
 'use client';
 
-import { Menu } from 'lucide-react';
+import { Bell } from 'lucide-react';
 
 /**
- * Top bar mobile — hamburger button (open menu) + brand + role badge.
+ * Top bar mobile — mirror prototype "Mobile · Admin Klinik":
+ * avatar + nama/role di kiri, judul halaman, bell di kanan.
+ * Avatar di-tap untuk membuka menu (sidebar drawer).
  */
 export function MobileTopbar({
   roleShort,
+  userName,
+  initial,
+  pageTitle,
   onOpenMenu,
 }: {
   roleShort: string;
+  userName: string;
+  initial: string;
+  pageTitle: string;
   onOpenMenu: () => void;
 }) {
   return (
@@ -17,13 +25,34 @@ export function MobileTopbar({
       <button
         type="button"
         onClick={onOpenMenu}
-        className="btn btn-ghost btn-icon"
+        className="flex items-center gap-2.5 text-left"
         aria-label="Buka menu"
       >
-        <Menu className="h-5 w-5" />
+        <span
+          className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold"
+          style={{ background: 'var(--sage-100, #dde9d8)', color: 'var(--sage-700, #3a5b3f)' }}
+        >
+          {initial}
+        </span>
+        <span className="flex flex-col leading-tight">
+          <span className="text-sm font-semibold text-teal-800">{userName}</span>
+          <span className="caption text-[11px]">{roleShort}</span>
+        </span>
       </button>
-      <span className="brand-mark text-lg text-teal-800">Althea</span>
-      <span className="badge badge-sage ml-auto">{roleShort}</span>
+
+      {pageTitle && (
+        <span className="brand-mark mx-auto text-base text-teal-800">
+          {pageTitle}
+        </span>
+      )}
+
+      <button
+        type="button"
+        className="btn btn-ghost btn-icon btn-sm ml-auto"
+        aria-label="Notifikasi"
+      >
+        <Bell className="h-5 w-5" />
+      </button>
     </header>
   );
 }

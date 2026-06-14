@@ -11,11 +11,15 @@ export function SidebarFooter({
   userName,
   userRole,
   onRequestLogout,
+  avatarUrl,
+  avatarColor,
 }: {
   initial: string;
   userName: string;
   userRole: string;
   onRequestLogout: () => void;
+  avatarUrl?: string | null;
+  avatarColor?: string | null;
 }) {
   return (
     <div className="border-t border-border p-3">
@@ -32,16 +36,26 @@ export function SidebarFooter({
             width: 36,
             height: 36,
             borderRadius: 999,
-            background: 'var(--cream-300)',
-            color: 'var(--teal-800)',
+            background: avatarUrl ? 'transparent' : (avatarColor ?? 'var(--cream-300)'),
+            color: avatarColor ? '#fff' : 'var(--teal-800)',
             display: 'grid',
             placeItems: 'center',
             fontWeight: 700,
             fontSize: 14,
             flexShrink: 0,
+            overflow: 'hidden',
           }}
         >
-          {initial}
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt={userName}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            initial
+          )}
         </div>
         <div
           className="flex flex-col leading-tight"
@@ -67,7 +81,7 @@ export function SidebarFooter({
         <button
           type="button"
           onClick={onRequestLogout}
-          className="btn btn-ghost btn-icon"
+          className="btn btn-ghost btn-icon btn-sm"
           aria-label="Logout"
           title="Logout"
           style={{ flexShrink: 0 }}

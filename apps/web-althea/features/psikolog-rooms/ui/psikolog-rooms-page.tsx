@@ -20,7 +20,6 @@ import { Bell } from 'lucide-react';
 import { RoomStatTilesRow } from '@/features/admin-rooms/ui/room-stat-tiles-row';
 import { RoomUsageGrid } from '@/features/admin-rooms/ui/room-usage-grid';
 import { RoomUsageLegend } from '@/features/admin-rooms/ui/room-usage-legend';
-import { SLOTS } from '@/features/admin-rooms/model/constants';
 import { usePsikologRooms } from '../hooks/use-psikolog-rooms';
 import { RoomDetailPanel } from './room-detail-panel';
 import { RoomsToolbar } from './rooms-toolbar';
@@ -60,8 +59,6 @@ export function PsikologRoomsPage() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <PageHeader />
-
       <RoomsToolbar
         date={page.date}
         typeFilter={page.typeFilter}
@@ -75,7 +72,7 @@ export function PsikologRoomsPage() {
       <RoomStatTilesRow stats={page.stats} />
 
       <div
-        className="px-7 pb-7 flex-1 min-h-0"
+        className="px-6 pb-6 flex-1 min-h-0"
         style={{ display: 'flex', gap: 16 }}
       >
         <GridCard>
@@ -88,12 +85,14 @@ export function PsikologRoomsPage() {
               rooms={page.rooms}
               bookings={page.bookings}
               dateKey={page.date}
+              slots={page.slots}
               pickedKey={
                 page.picked
                   ? `${page.picked.room.id}-${page.picked.slotIdx}`
                   : null
               }
               onPick={page.pickCell}
+              readOnly
             />
           </GridBody>
         </GridCard>
@@ -101,7 +100,7 @@ export function PsikologRoomsPage() {
         {page.picked ? (
           <RoomDetailPanel
             room={page.picked.room}
-            slot={SLOTS[page.picked.slotIdx]}
+            slot={page.slots[page.picked.slotIdx]}
             booking={page.picked.booking}
             onClose={page.clearPicked}
           />
@@ -116,19 +115,6 @@ export function PsikologRoomsPage() {
 // ============================================================================
 // Local layout slivers
 // ============================================================================
-
-function PageHeader() {
-  return (
-    <div className="px-7 pt-6 pb-2">
-      <div className="eyebrow">Klinis · Ruangan</div>
-      <h1 className="h1 mt-1">Pemakaian Ruangan</h1>
-      <p className="caption mt-1">
-        Lihat ketersediaan ruangan klinik hari ini — read-only. Untuk
-        reservasi atau perubahan, hubungi admin.
-      </p>
-    </div>
-  );
-}
 
 function GridCard({ children }: { children: React.ReactNode }) {
   return (

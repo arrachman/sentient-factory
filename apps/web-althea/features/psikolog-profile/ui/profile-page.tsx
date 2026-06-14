@@ -4,26 +4,20 @@ import { useState } from 'react';
 import {
   usePsikologMe,
   usePsikologStats,
-  useUpdateAvailability,
   useUpdateProfile,
 } from '../hooks/use-profile';
-import { AvailabilityGrid } from './availability-grid';
-import { CapacityCard } from './capacity-card';
+import { useSettings } from '@/features/admin-pengaturan/hooks/use-settings';
 import { ProfileCard } from './profile-card';
+import { ProfileMobile } from './profile-mobile';
 import { ProfileEditDialog } from './profile-edit-dialog';
 import { StatsCard } from './stats-card';
+import { AvailabilityGrid } from './availability-grid';
+import { AvailabilityOverridesSection } from '@/features/psikolog-schedule/ui/availability-overrides-section';
 
-/**
- * Psikolog · Profil Saya — own profile + availability editor.
- *
- * Layout 1fr 2fr:
- *   - Left: ProfileCard (clickable Edit) + StatsCard (live data)
- *   - Right: AvailabilityGrid + CapacityCard
- */
 export function ProfilePage() {
   const meQuery = usePsikologMe();
   const statsQuery = usePsikologStats();
-  const availMut = useUpdateAvailability();
+  const settingsQuery = useSettings();
   const profileMut = useUpdateProfile();
   const [editOpen, setEditOpen] = useState(false);
 
@@ -56,17 +50,28 @@ export function ProfilePage() {
   const p = meQuery.data?.data;
   if (!p) return null;
 
+  const slots = settingsQuery.data?.data.slotsOfDay ?? [];
+
   return (
-    <div style={{ padding: 28 }}>
+    <>
+      <ProfileMobile
+        p={p}
+        stats={statsQuery.data?.data}
+        statsLoading={statsQuery.isLoading}
+        onEdit={() => setEditOpen(true)}
+      />
+
+      {/* Desktop: 2-column grid — left profile info, right availability editor */}
       <div
+        className="hidden lg:grid p-6"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(280px, 1fr) minmax(0, 2fr)',
+          gridTemplateColumns: '340px 1fr',
           gap: 20,
+          alignItems: 'start',
         }}
       >
         {/* Left column */}
-        <div className="flex flex-col" style={{ gap: 12 }}>
+        <div className="flex flex-col" style={{ gap: 16 }}>
           <ProfileCard p={p} onEdit={() => setEditOpen(true)} />
           <StatsCard
             stats={statsQuery.data?.data}
@@ -75,13 +80,38 @@ export function ProfilePage() {
         </div>
 
         {/* Right column */}
-        <div className="flex flex-col" style={{ gap: 0 }}>
-          <AvailabilityGrid
-            initial={p.weeklyAvailability ?? {}}
-            saving={availMut.isPending}
-            onSave={(wa) => availMut.mutate(wa)}
-          />
-          <CapacityCard defaultSlots={p.defaultSlots} />
+        <div className="flex flex-col" style={{ gap: 16 }}>
+          {slots.length > 0 ? (
+            <AvailabilityGrid
+              initial={p.weeklyAvailability ?? {}}
+              slots={slots}
+              readOnly
+            />
+          ) : (
+            <div className="card-althea" style={{ padding: 22 }}>
+              <span className="eyebrow">Availability mingguan</span>
+              <p className="caption" style={{ marginTop: 8 }}>
+                Slot operasional belum dikonfigurasi. Admin perlu mengatur slot di{' '}
+                <span style={{ color: 'var(--sage-700)' }}>/admin/pengaturan</span>.
+              </p>
+            </div>
+          )}
+          {/* Override & cuti — psikolog bisa set sendiri */}
+          <div className="card-althea" style={{ padding: 22 }}>
+            <span className="eyebrow">Override & Cuti</span>
+            <h2
+              style={{
+                margin: '2px 0 12px',
+                fontFamily: 'var(--font-serif)',
+                fontSize: 18,
+                fontWeight: 500,
+                color: 'var(--teal-800)',
+              }}
+            >
+              Pengecualian per-tanggal
+            </h2>
+            <AvailabilityOverridesSection />
+          </div>
         </div>
       </div>
 
@@ -96,6 +126,6 @@ export function ProfilePage() {
           })
         }
       />
-    </div>
+    </>
   );
 }

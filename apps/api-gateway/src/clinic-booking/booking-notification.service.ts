@@ -1,5 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
+import { formatClinicTimeOfDay } from './timezone.util';
 
 /**
  * WA notification dispatch untuk booking lifecycle events.
@@ -10,6 +12,12 @@ import { ClinicWaService } from '../clinic-wa/clinic-wa.service';
  *
  * Fire-and-forget pattern: error tidak boleh block transition,
  * cuma logged ke console (dipantau Sentry di production).
+ *
+ * Routing per role di-drive oleh `ClinicWaTemplate.recipients` (single source
+ * of truth). Master kill-switch global: `ClinicSettings.waSendEnabled`.
+ *   - `recipients.includes('klien')` + client.phoneWa → kirim ke klien
+ *   - `recipients.includes('psikolog')` + psikolog.phone → fan-out psikolog
+ * Error sisi psikolog di-catch terpisah, tidak ganggu dispatch ke klien.
  */
 
 type BookingForNotification = {
@@ -18,32 +26,80 @@ type BookingForNotification = {
   scheduledEnd: Date;
   client: { name: string; phoneWa: string | null };
   service: { name: string; basePrice: unknown };
-  psikolog: { fullName: string | null };
+  psikolog: {
+    fullName: string | null;
+    phone?: string | null;
+    clinicPsikologProfile?: { title: string | null; specialty: string[]; license: string | null } | null;
+  };
   room: { name: string };
 };
 
 @Injectable()
 export class BookingNotificationService {
-  constructor(private readonly wa: ClinicWaService) {}
+  private readonly logger = new Logger(BookingNotificationService.name);
+
+  constructor(
+    private readonly wa: ClinicWaService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Master kill-switch: ClinicSettings.waSendEnabled. Bila false → seluruh
+   * dispatch WA dimatikan (override semua template). Granular routing
+   * per-role-per-event dipegang oleh ClinicWaTemplate.recipients.
+   */
+  private async isWaEnabled(): Promise<boolean> {
+    const s = await this.prisma.clinicSettings.findUnique({
+      where: { id: 1 },
+      select: { waSendEnabled: true },
+    });
+    return s?.waSendEnabled ?? false;
+  }
+
+  /**
+   * Ambil recipients template (array `klien` | `psikolog` | `staff` | `user`).
+   * Empty array bila template tidak aktif / tidak ada — dispatcher akan skip
+   * semua recipient.
+   */
+  private async getTemplateRecipients(templateName: string): Promise<string[]> {
+    const tpl = await this.prisma.clinicWaTemplate.findFirst({
+      where: { name: templateName, isActive: true, deletedAt: null },
+      select: { recipients: true },
+    });
+    return tpl?.recipients ?? [];
+  }
 
   /**
    * Fire-and-forget WA dispatch untuk booking event.
    * Caller pakai `void this.notify(...)` — error logged, tidak throw.
+   *
+   * Routing rule (single source of truth = `ClinicWaTemplate.recipients`):
+   *   - master switch `waSendEnabled` mati → skip semua
+   *   - `recipients.includes('klien')` → dispatch ke klien
+   *   - `recipients.includes('psikolog')` → fan-out ke psikolog (butuh phone)
    */
   async notify(
     booking: BookingForNotification,
     templateName: string,
     extraVars: Record<string, string | number> = {},
   ): Promise<void> {
-    if (!booking.client.phoneWa) {
-      // No phone, skip silently (some clients walk-in without WA)
+    if (!(await this.isWaEnabled())) return;
+
+    const recipients = await this.getTemplateRecipients(templateName);
+    if (recipients.length === 0) {
+      this.logger.debug(`[notify] skip ${templateName} — recipients empty`);
       return;
     }
+
+    const sendToKlien = recipients.includes('klien') && Boolean(booking.client.phoneWa);
+    const sendToPsikolog = recipients.includes('psikolog') && Boolean(booking.psikolog.phone);
+    if (!sendToKlien && !sendToPsikolog) return;
+
     try {
       // Format tanggal/waktu human-readable Indonesia (Asia/Jakarta)
       // supaya template variable {{tanggal}} {{waktu}} muncul rapi:
       //   tanggal: 'Senin, 11 Mei 2026'
-      //   waktu:   '14:30 WIB'
+      //   waktu:   '14.30 WIB'  (24-jam, dot separator)
       const tanggalFormatted = booking.scheduledStart.toLocaleDateString('id-ID', {
         weekday: 'long',
         day: '2-digit',
@@ -51,14 +107,15 @@ export class BookingNotificationService {
         year: 'numeric',
         timeZone: 'Asia/Jakarta',
       });
-      const waktuFormatted = booking.scheduledStart.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Jakarta',
-      });
+      const waktuFormatted = formatClinicTimeOfDay(booking.scheduledStart);
+      const waktuEndFormatted = formatClinicTimeOfDay(booking.scheduledEnd);
       const totalFormatted = new Intl.NumberFormat('id-ID').format(
         Number(booking.service.basePrice),
       );
+
+      // jadwal_lengkap & total_baris: default single-session, di-override oleh extraVars
+      // kalau dipanggil dari notifyPackageConfirmation (multi-sesi).
+      const defaultJadwalLengkap = `${tanggalFormatted} · ${waktuFormatted}–${waktuEndFormatted} WIB · ${booking.room.name}`;
 
       const variables = {
         nama_klien: booking.client.name,
@@ -69,17 +126,98 @@ export class BookingNotificationService {
         ruang: booking.room.name,
         layanan: booking.service.name,
         total: totalFormatted,
+        jadwal_lengkap: defaultJadwalLengkap,
+        total_baris: `💰 Total: Rp ${totalFormatted}`,
         ...extraVars,
       };
+      if (sendToKlien) {
+        await this.wa.dispatch({
+          templateName,
+          recipientType: 'klien',
+          recipientPhone: booking.client.phoneWa!,
+          variables,
+          bookingId: booking.id,
+        });
+      }
+
+      if (sendToPsikolog) {
+        try {
+          await this.wa.dispatch({
+            templateName,
+            recipientType: 'psikolog',
+            recipientPhone: booking.psikolog.phone!,
+            variables,
+            bookingId: booking.id,
+          });
+        } catch (errPsikolog) {
+          this.logger.warn(
+            `[BookingNotification] psikolog fan-out failed template=${templateName} bookingId=${booking.id}: ${errPsikolog instanceof Error ? errPsikolog.message : errPsikolog}`,
+          );
+        }
+      }
+    } catch (err) {
+      console.error(`[BookingNotification] template=${templateName} bookingId=${booking.id}:`, err);
+    }
+  }
+
+  /**
+   * Manual reminder dispatch (admin/resepsionis trigger).
+   * Beda dengan `notify()`: throw error kalau booking tidak punya phone
+   * atau status final, supaya caller bisa show ke user.
+   */
+  /**
+   * Kirim 1 WA Konfirmasi Booking untuk paket multi-sesi.
+   * Satu notifikasi dengan jadwal_lengkap semua sesi — tidak loop per sesi.
+   * Fire-and-forget — error tidak throw.
+   */
+  async notifyPackageConfirmation(bookings: BookingForNotification[]): Promise<void> {
+    if (bookings.length === 0) return;
+    const first = bookings[0];
+
+    const jadwal_lengkap = bookings
+      .map((b, i) => {
+        const tgl = b.scheduledStart.toLocaleDateString('id-ID', {
+          weekday: 'long',
+          day: '2-digit',
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'Asia/Jakarta',
+        });
+        const jamStart = formatClinicTimeOfDay(b.scheduledStart);
+        const jamEnd = formatClinicTimeOfDay(b.scheduledEnd);
+        return `Sesi ${i + 1}: ${tgl} · ${jamStart}–${jamEnd} WIB · ${b.room.name}`;
+      })
+      .join('\n');
+
+    await this.notify(first, 'Konfirmasi Booking', {
+      jadwal_lengkap,
+      total_baris: '', // sembunyikan total untuk paket multi-sesi
+    });
+  }
+
+  /**
+   * Kirim profil psikolog ke klien saat booking pertama dikonfirmasi.
+   * Fire-and-forget — error tidak throw.
+   */
+  async notifyPsikologInfo(booking: BookingForNotification): Promise<void> {
+    if (!booking.client.phoneWa) return;
+    try {
+      const profile = booking.psikolog.clinicPsikologProfile;
       await this.wa.dispatch({
-        templateName,
+        templateName: 'Info Psikolog',
         recipientType: 'klien',
         recipientPhone: booking.client.phoneWa,
-        variables,
+        variables: {
+          nama_psikolog: booking.psikolog.fullName ?? 'Psikolog Althea',
+          title: profile?.title ?? '',
+          spesialisasi: profile?.specialty?.join(', ') ?? '',
+          pendidikan: '',
+          lisensi: profile?.license ?? '',
+        },
         bookingId: booking.id,
       });
     } catch (err) {
-      console.error(`[BookingNotification] template=${templateName} bookingId=${booking.id}:`, err);
+      console.error(`[BookingNotification] template=Info Psikolog bookingId=${booking.id}:`, err);
     }
   }
 
@@ -124,10 +262,7 @@ export class BookingNotificationService {
           month: 'long',
           year: 'numeric',
         }),
-        waktu: new Date(booking.scheduledStart).toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
+        waktu: formatClinicTimeOfDay(new Date(booking.scheduledStart)),
       },
       bookingId: booking.id,
     });

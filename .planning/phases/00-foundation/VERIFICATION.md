@@ -55,7 +55,7 @@ clinic_psikolog_profile: 7 rows (1-to-1 dengan 7 psikolog users)
 
 clinic_settings (1 row):
   id=1, clinic_name='Althea Psychology', timezone='Asia/Jakarta'
-  buffer_minutes=15, tax_percentage=11.00, dp_percentage=50.00
+  tax_percentage=11.00, dp_percentage=50.00  (buffer_minutes dihapus dari skema)
 ```
 
 ## Issues teridentifikasi (di luar scope Slice 0)

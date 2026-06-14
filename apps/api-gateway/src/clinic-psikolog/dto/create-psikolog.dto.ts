@@ -26,6 +26,15 @@ export class CreatePsikologDto {
   fullName!: string;
 
   @ApiPropertyOptional({
+    description: 'No WhatsApp psikolog (E.164 atau format lokal Indonesia)',
+    example: '081234567890',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  phone?: string;
+
+  @ApiPropertyOptional({
     description: 'Username; auto-generated dari email kalau kosong',
     example: 'farah-rahmadhani',
   })

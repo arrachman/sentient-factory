@@ -17,7 +17,7 @@ export function RoomStatTilesRow({
 }) {
   return (
     <div
-      className="px-7 pb-4"
+      className="px-6 pb-4"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(4, 1fr)',

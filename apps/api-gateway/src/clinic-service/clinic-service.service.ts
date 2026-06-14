@@ -1,11 +1,53 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateServiceDto, QueryServiceDto, UpdateServiceDto } from './dto/clinic-service.dto';
+import {
+  CreateServiceDto,
+  QueryServiceDto,
+  SlotOverrideDto,
+  UpdateServiceDto,
+} from './dto/clinic-service.dto';
 
 @Injectable()
 export class ClinicServiceService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * Bersihkan slotOverrides sebelum simpan:
+   *  - start < end (HH:MM)
+   *  - satu index hanya boleh 1 entry (dedupe, last wins)
+   *  - urut by index biar deterministik
+   */
+  private normalizeSlotOverrides(raw?: SlotOverrideDto[]): SlotOverrideDto[] {
+    if (!raw || raw.length === 0) return [];
+    const byIndex = new Map<number, SlotOverrideDto>();
+    for (const o of raw) {
+      if (o.start >= o.end) {
+        throw new BadRequestException(
+          `Slot override index ${o.index}: jam mulai (${o.start}) harus sebelum jam selesai (${o.end}).`,
+        );
+      }
+      byIndex.set(o.index, { index: o.index, start: o.start, end: o.end });
+    }
+    return [...byIndex.values()].sort((a, b) => a.index - b.index);
+  }
+
+  /**
+   * Bersihkan disabledSlotIndices: dedupe, sort ascending, drop nilai negatif.
+   */
+  private normalizeDisabledSlotIndices(raw?: number[]): number[] {
+    if (!raw || raw.length === 0) return [];
+    const set = new Set<number>();
+    for (const i of raw) {
+      if (Number.isInteger(i) && i >= 0) set.add(i);
+    }
+    return [...set].sort((a, b) => a - b);
+  }
 
   async create(dto: CreateServiceDto, actorId?: number) {
     const existing = await this.prisma.clinicService.findFirst({
@@ -15,11 +57,22 @@ export class ClinicServiceService {
     if (existing) {
       throw new ConflictException(`Service '${dto.name}' sudah ada.`);
     }
+    const {
+      slotOverrides: _slotOverrides,
+      disabledSlotIndices: _disabledSlotIndices,
+      ...rest
+    } = dto;
     const created = await this.prisma.clinicService.create({
       data: {
-        ...dto,
+        ...rest,
         basePrice: new Prisma.Decimal(dto.basePrice),
         isActive: dto.isActive ?? true,
+        slotOverrides: this.normalizeSlotOverrides(
+          dto.slotOverrides,
+        ) as unknown as Prisma.InputJsonValue,
+        disabledSlotIndices: this.normalizeDisabledSlotIndices(
+          dto.disabledSlotIndices,
+        ) as unknown as Prisma.InputJsonValue,
         createdBy: actorId,
         updatedBy: actorId,
       },
@@ -73,9 +126,22 @@ export class ClinicServiceService {
     const bookedMap = new Map<number, number>(
       bookedAgg.map((row) => [row.serviceId, row._count._all]),
     );
+
+    // All-time booking existence untuk disable delete button di FE
+    const hasBookingsRows =
+      ids.length === 0
+        ? []
+        : await this.prisma.clinicBooking.findMany({
+            where: { serviceId: { in: ids }, deletedAt: null },
+            select: { serviceId: true },
+            distinct: ['serviceId'],
+          });
+    const hasBookingsSet = new Set(hasBookingsRows.map((b) => b.serviceId));
+
     const enriched = items.map((s) => ({
       ...s,
       bookedThisMonth: bookedMap.get(s.id) ?? 0,
+      hasBookings: hasBookingsSet.has(s.id),
     }));
 
     return {
@@ -95,17 +161,42 @@ export class ClinicServiceService {
 
   async update(id: number, dto: UpdateServiceDto, actorId?: number) {
     await this.findOne(id);
+    const {
+      slotOverrides: _slotOverrides,
+      disabledSlotIndices: _disabledSlotIndices,
+      ...rest
+    } = dto;
     const data: Prisma.ClinicServiceUpdateInput = {
-      ...dto,
+      ...rest,
       updatedBy: actorId,
     };
     if (dto.basePrice !== undefined) data.basePrice = new Prisma.Decimal(dto.basePrice);
+    if (dto.slotOverrides !== undefined) {
+      data.slotOverrides = this.normalizeSlotOverrides(
+        dto.slotOverrides,
+      ) as unknown as Prisma.InputJsonValue;
+    }
+    if (dto.disabledSlotIndices !== undefined) {
+      data.disabledSlotIndices = this.normalizeDisabledSlotIndices(
+        dto.disabledSlotIndices,
+      ) as unknown as Prisma.InputJsonValue;
+    }
     const updated = await this.prisma.clinicService.update({ where: { id }, data });
     return { success: true, data: updated, message: 'Service updated' };
   }
 
   async remove(id: number, actorId?: number) {
     await this.findOne(id);
+    // Block hard-delete kalau ada transaksi booking terkait — admin harus
+    // deactivate (toggle isActive=false) supaya histori tidak orphan.
+    const bookingCount = await this.prisma.clinicBooking.count({
+      where: { serviceId: id, deletedAt: null },
+    });
+    if (bookingCount > 0) {
+      throw new ConflictException(
+        `Service ini punya ${bookingCount} booking terkait. Tidak bisa dihapus — nonaktifkan saja lewat toggle "Aktif".`,
+      );
+    }
     await this.prisma.clinicService.update({
       where: { id },
       data: { deletedAt: new Date(), deletedBy: actorId, isActive: false, updatedBy: actorId },

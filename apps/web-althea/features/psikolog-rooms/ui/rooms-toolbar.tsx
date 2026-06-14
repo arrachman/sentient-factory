@@ -122,7 +122,6 @@ export function RoomsToolbar({
         type="button"
         onClick={onResetToToday}
         className="btn btn-ghost btn-sm"
-        style={{ height: 32 }}
         title="Kembali ke hari ini"
       >
         Hari ini

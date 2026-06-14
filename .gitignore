@@ -274,3 +274,13 @@ temp/
 **/*_locked_[0-9]*/
 **/*.bak.[0-9]*
 apps/open-design/
+
+insight/
+
+# Turborepo cache
+.turbo/cache/
+
+
+apps/web-erp/preferensi
+# Claude Code local worktrees (registered git worktrees, never commit)
+.claude/worktrees/

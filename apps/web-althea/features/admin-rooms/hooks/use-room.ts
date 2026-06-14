@@ -38,3 +38,12 @@ export function useDeleteRoom() {
     onError: (e: Error) => toast.error('Gagal hapus', { description: e.message }),
   });
 }
+
+export function useDeactivateRoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => roomApi.update(id, { isActive: false }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: KEY }); toast.success('Ruangan dinonaktifkan'); },
+    onError: (e: Error) => toast.error('Gagal nonaktifkan', { description: e.message }),
+  });
+}

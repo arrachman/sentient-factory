@@ -11,6 +11,14 @@ export function formatTime(iso: string | null): string {
   });
 }
 
+export function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+  });
+}
+
 export function getRecipStyle(r: string) {
   return (
     RECIPIENT_STYLE[r] || {

@@ -2,8 +2,10 @@
 
 /**
  * Tabel klien — kolom: Nama / Layanan / Psikolog / Sesi terakhir /
- * Sesi berikutnya / Status. Row hover & selected ada styling khusus.
+ * Sesi berikutnya / Status / Aksi. Baris tidak clickable; navigasi ke
+ * detail lewat tombol "Detail" di kolom Aksi.
  */
+import { ChevronRight } from 'lucide-react';
 import {
   CATEGORY_LABEL,
   CATEGORY_PALETTE,
@@ -14,20 +16,18 @@ import {
 import { formatDate, formatNextSession } from '../model/format';
 import { ClientAvatar } from './client-avatar';
 
-const COL_TPL = '2fr 1.5fr 1.3fr 1.4fr 1.4fr 90px';
+const COL_TPL = '2fr 1.5fr 1.3fr 1.4fr 1.4fr 90px 96px';
 
 export function ClientsTable({
   items,
   isLoading,
   totalCount,
-  selectedId,
-  onSelect,
+  onOpen,
 }: {
   items: Client[];
   isLoading: boolean;
   totalCount: number;
-  selectedId: number | null;
-  onSelect: (id: number) => void;
+  onOpen: (id: number) => void;
 }) {
   return (
     <div className="card-althea overflow-hidden flex-1 min-h-0 flex flex-col bg-card">
@@ -43,12 +43,7 @@ export function ClientsTable({
           </div>
         ) : (
           items.map((c) => (
-            <ClientRow
-              key={c.id}
-              client={c}
-              isSelected={selectedId === c.id}
-              onClick={() => onSelect(c.id)}
-            />
+            <ClientRow key={c.id} client={c} onClick={() => onOpen(c.id)} />
           ))
         )}
       </div>
@@ -73,28 +68,21 @@ function TableHeader() {
       <span>Sesi terakhir</span>
       <span>Sesi berikutnya</span>
       <span>Status</span>
+      <span className="text-right">Aksi</span>
     </div>
   );
 }
 
 function ClientRow({
   client: c,
-  isSelected,
   onClick,
 }: {
   client: Client;
-  isSelected: boolean;
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`grid items-center w-full text-left px-4 py-3 border-b border-border transition-colors ${
-        isSelected
-          ? 'bg-sage-50 border-l-[3px] border-l-sage-500 pl-[13px]'
-          : 'border-l-[3px] border-l-transparent hover:bg-cream-50'
-      }`}
+    <div
+      className="grid items-center w-full text-left px-4 py-3 border-b border-border transition-colors border-l-[3px] border-l-transparent hover:bg-cream-50"
       style={{ gridTemplateColumns: COL_TPL }}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -150,6 +138,16 @@ function ClientRow({
       >
         {STATUS_LABEL[c.derivedStatus]}
       </span>
-    </button>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onClick}
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-[12px] font-medium text-sage-600 transition-colors hover:bg-sage-50 hover:border-sage-300"
+        >
+          Detail
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }

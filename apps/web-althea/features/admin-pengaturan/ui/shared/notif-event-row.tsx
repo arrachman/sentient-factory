@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { Edit } from 'lucide-react';
+import { Edit, Lock } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Toggle } from './toggle';
 
-export type Recipient = { id: string; label: string; on: boolean };
+export type Recipient = { id: string; label: string; on: boolean; onChange?: (v: boolean) => void };
 
 /**
  * Row card untuk satu event notifikasi:
@@ -11,6 +11,9 @@ export type Recipient = { id: string; label: string; on: boolean };
  *
  * Template chip = ke `/admin/notif-wa?tpl=<id>` dengan optional label
  * (klien/psikolog/staff) ditampilkan kalau lebih dari satu template.
+ *
+ * `locked` = fitur Paket Full: row di-dim, toggle & link dinonaktifkan,
+ * badge "Paket Full" amber ditampilkan.
  */
 export function NotifEventRow({
   title,
@@ -20,6 +23,7 @@ export function NotifEventRow({
   extra,
   badge,
   templates,
+  locked = false,
 }: {
   title: string;
   hint?: string;
@@ -28,6 +32,7 @@ export function NotifEventRow({
   extra?: ReactNode;
   badge?: string;
   templates?: { id: string; label?: string }[];
+  locked?: boolean;
 }) {
   return (
     <div
@@ -37,6 +42,9 @@ export function NotifEventRow({
         border: '1px solid var(--border)',
         borderRadius: 8,
         flexWrap: 'wrap',
+        opacity: locked ? 0.6 : 1,
+        pointerEvents: locked ? 'none' : 'auto',
+        background: locked ? 'var(--cream-100)' : undefined,
       }}
     >
       <div className="flex flex-col" style={{ flex: 1, minWidth: 220 }}>
@@ -44,6 +52,9 @@ export function NotifEventRow({
           className="flex items-center gap-2"
           style={{ flexWrap: 'wrap' }}
         >
+          {locked ? (
+            <Lock size={12} style={{ color: '#92701a', flexShrink: 0 }} />
+          ) : null}
           <span
             style={{
               fontSize: 13,
@@ -53,7 +64,24 @@ export function NotifEventRow({
           >
             {title}
           </span>
-          {badge ? (
+          {locked ? (
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: 18,
+                padding: '0 7px',
+                fontSize: 10,
+                fontWeight: 600,
+                borderRadius: 999,
+                background: '#fef3c7',
+                color: '#92400e',
+                letterSpacing: 0.2,
+              }}
+            >
+              Paket Full
+            </span>
+          ) : badge ? (
             <span
               className="badge badge-neutral"
               style={{ height: 18, fontSize: 10 }}
@@ -67,7 +95,7 @@ export function NotifEventRow({
             {hint}
           </span>
         ) : null}
-        {Array.isArray(templates) && templates.length > 0 ? (
+        {!locked && Array.isArray(templates) && templates.length > 0 ? (
           <div
             className="flex gap-1 flex-wrap"
             style={{ marginTop: 6 }}
@@ -111,7 +139,12 @@ export function NotifEventRow({
           style={{ flexShrink: 0 }}
         >
           {recipients.map((r) => (
-            <Toggle key={r.id} on={r.on} label={r.label} />
+            <Toggle
+              key={r.id}
+              on={r.on}
+              label={r.label}
+              onChange={locked ? undefined : r.onChange}
+            />
           ))}
         </div>
       ) : null}

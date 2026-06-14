@@ -18,12 +18,14 @@ export function HariView({
   isLoading,
   slotsOfDay,
   availability,
+  onBookingClick,
 }: {
   date: string;
   bookings: Booking[];
   isLoading: boolean;
   slotsOfDay: ClinicSettings['slotsOfDay'];
   availability: DayAvailability;
+  onBookingClick?: (b: Booking) => void;
 }) {
   const dayDate = new Date(date);
 
@@ -120,22 +122,8 @@ export function HariView({
                     color: 'var(--teal-800)',
                   }}
                 >
-                  {slot.start}
+                  {slot.label ?? `Slot ${slotIdx + 1}`}
                 </span>
-                <span style={{ fontSize: 10.5, color: 'var(--fg-muted)' }}>
-                  {slot.end}
-                </span>
-                {slot.label && (
-                  <span
-                    style={{
-                      fontSize: 10,
-                      color: 'var(--fg-muted)',
-                      marginTop: 2,
-                    }}
-                  >
-                    {slot.label}
-                  </span>
-                )}
               </div>
               <div>
                 <SlotCell
@@ -146,6 +134,7 @@ export function HariView({
                   booking={booking}
                   availability={availability}
                   cellHeight={CELL_HEIGHT}
+                  onBookingClick={onBookingClick}
                 />
               </div>
             </div>

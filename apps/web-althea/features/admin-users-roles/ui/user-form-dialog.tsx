@@ -42,7 +42,7 @@ export function UserFormDialog({
       <div className="card-althea w-full max-w-xl bg-card max-h-[90vh] overflow-y-auto">
         <div className="border-b border-border px-6 py-4">
           <h2 className="h2 m-0">
-            {editing ? 'Edit User' : 'Undang user baru'}
+            {editing ? 'Edit User' : 'User baru'}
           </h2>
         </div>
         <form onSubmit={onSubmit} className="space-y-3 px-6 py-4">
@@ -148,14 +148,14 @@ export function UserFormDialog({
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-outline"
+              className="btn btn-outline btn-sm"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="btn btn-primary"
+              className="btn btn-primary btn-sm"
             >
               {submitting ? 'Menyimpan...' : editing ? 'Simpan' : 'Tambah'}
             </button>

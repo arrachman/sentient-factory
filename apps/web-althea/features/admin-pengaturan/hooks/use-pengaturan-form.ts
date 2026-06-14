@@ -23,7 +23,6 @@ function pickFormFromSettings(
     slotsOfDay: s.slotsOfDay,
     closedDayOfWeek: s.closedDayOfWeek,
     holidays: s.holidays,
-    bufferMinutes: s.bufferMinutes,
     taxEnabled: s.taxEnabled,
     taxPercentage: Number(s.taxPercentage),
     dpPercentage: Number(s.dpPercentage),

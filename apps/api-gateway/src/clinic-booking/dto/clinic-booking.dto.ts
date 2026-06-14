@@ -17,8 +17,6 @@ import {
 } from 'class-validator';
 
 export const BOOKING_STATUSES = [
-  'awaiting_dp',
-  'confirmed',
   'checked_in',
   'in_progress',
   'completed',
@@ -68,11 +66,6 @@ export class CreateBookingDto {
   @IsString()
   packageGroupId?: string;
 
-  @ApiPropertyOptional({ default: false, description: 'Skip buffer 15min check (admin override)' })
-  @IsOptional()
-  @IsBoolean()
-  bufferOverride?: boolean;
-
   @ApiPropertyOptional({ default: false, description: 'Walk-in booking (resepsionis)' })
   @IsOptional()
   @IsBoolean()
@@ -112,10 +105,6 @@ export class RescheduleBookingDto {
   @MaxLength(500)
   reason?: string;
 
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  bufferOverride?: boolean;
 }
 
 export class CancelBookingDto {
@@ -124,6 +113,53 @@ export class CancelBookingDto {
   @IsString()
   @MaxLength(500)
   reason?: string;
+}
+
+/**
+ * Atomic edit untuk booking ber-status `checked_in` — wizard mode "Ubah".
+ * Semua field opsional; backend fallback ke nilai existing kalau tidak dikirim.
+ * Validasi full: psikolog handle service baru (junction), slotMatch (overrides
+ * per-layanan), no-conflict (exclude self). Riwayat reschedule auto-write
+ * kalau jadwal/psikolog/room berubah. Payment auto-recompute kalau service
+ * berubah.
+ */
+export class EditBookingDto {
+  @ApiPropertyOptional({ example: 5, description: 'ID layanan baru' })
+  @IsOptional()
+  @IsInt()
+  serviceId?: number;
+
+  @ApiPropertyOptional({ example: '2026-05-26T09:00:00+07:00' })
+  @IsOptional()
+  @IsDateString()
+  scheduledStart?: string;
+
+  @ApiPropertyOptional({ example: '2026-05-26T10:00:00+07:00' })
+  @IsOptional()
+  @IsDateString()
+  scheduledEnd?: string;
+
+  @ApiPropertyOptional({ example: 147 })
+  @IsOptional()
+  @IsInt()
+  psikologUserId?: number;
+
+  @ApiPropertyOptional({ example: 1 })
+  @IsOptional()
+  @IsInt()
+  roomId?: number;
+
+  @ApiPropertyOptional({ description: 'Alasan edit (audit log + reschedule history)' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
 }
 
 export class QueryBookingDto {
@@ -139,7 +175,7 @@ export class QueryBookingDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(200)
+  @Max(500)
   limit?: number = 50;
 
   @ApiPropertyOptional({ enum: BOOKING_STATUSES })
@@ -151,6 +187,16 @@ export class QueryBookingDto {
   @IsOptional()
   @IsString()
   date?: string;
+
+  @ApiPropertyOptional({ description: 'Filter booking dari tanggal (YYYY-MM-DD), inklusif' })
+  @IsOptional()
+  @IsString()
+  dateFrom?: string;
+
+  @ApiPropertyOptional({ description: 'Filter booking sampai tanggal (YYYY-MM-DD), inklusif' })
+  @IsOptional()
+  @IsString()
+  dateTo?: string;
 
   @ApiPropertyOptional({ description: 'Filter by psikolog user id' })
   @IsOptional()
@@ -242,11 +288,6 @@ export class CreatePackageBookingDto {
   @ValidateNested({ each: true })
   @Type(() => PackageSessionDto)
   sessions!: PackageSessionDto[];
-
-  @ApiPropertyOptional({ default: false })
-  @IsOptional()
-  @IsBoolean()
-  bufferOverride?: boolean;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -65,7 +65,7 @@ export function Step1Client({
               setOpen(true);
               setTimeout(() => inputRef.current?.focus(), 0);
             }}
-            className="btn btn-ghost btn-icon h-7 w-7"
+            className="btn btn-ghost btn-icon btn-sm w-[30px]"
             aria-label="Ganti klien"
             title="Ganti klien"
           >

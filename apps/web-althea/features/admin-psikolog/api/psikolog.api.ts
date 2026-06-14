@@ -84,6 +84,31 @@ export const psikologApi = {
     ),
 
   /**
+   * List date overrides untuk psikolog tertentu (admin/wizard).
+   * Dipakai DateStrip booking wizard supaya hari yang di-override tampil
+   * sebagai available walau weekly-nya tutup.
+   */
+  listDateOverridesForUser: (
+    userId: number,
+    range?: { from?: string; to?: string },
+  ) => {
+    const usp = new URLSearchParams();
+    if (range?.from) usp.set('from', range.from);
+    if (range?.to) usp.set('to', range.to);
+    const qs = usp.toString();
+    return apiClient.get<{
+      success: boolean;
+      data: Array<{
+        id: number;
+        date: string;
+        isOpen: boolean;
+        slotIndices: number[] | null;
+        reason: string | null;
+      }>;
+    }>(`/psikolog/by-user/${userId}/date-overrides${qs ? `?${qs}` : ''}`);
+  },
+
+  /**
    * Resolve effective availability untuk psikolog tertentu di tanggal tertentu.
    * Merge date override (priority) + weeklyAvailability (fallback).
    * Dipakai booking wizard untuk preview slot mana yang available.

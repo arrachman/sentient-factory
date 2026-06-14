@@ -24,6 +24,7 @@ export function WeekGrid({
   isLoading,
   slotsOfDay,
   dayAvailability,
+  onBookingClick,
 }: {
   days: Date[];
   todayIdx: number;
@@ -31,6 +32,7 @@ export function WeekGrid({
   isLoading: boolean;
   slotsOfDay: ClinicSettings['slotsOfDay'];
   dayAvailability: DayAvailability[];
+  onBookingClick?: (b: Booking) => void;
 }) {
   // Fallback kalau settings belum loaded
   if (slotsOfDay.length === 0) {
@@ -87,10 +89,7 @@ export function WeekGrid({
                   color: 'var(--teal-800)',
                 }}
               >
-                {slot.start}
-              </span>
-              <span style={{ fontSize: 10, color: 'var(--fg-muted)' }}>
-                {slot.end}
+                {slot.label ?? `Slot ${slotIdx + 1}`}
               </span>
             </div>
             {days.map((d, dayIdx) => {
@@ -123,6 +122,7 @@ export function WeekGrid({
                       }
                     }
                     cellHeight={CELL_HEIGHT}
+                    onBookingClick={onBookingClick}
                   />
                 </div>
               );

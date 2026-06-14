@@ -41,6 +41,14 @@
       "envVar": "AI_ENGINE_PORT",
       "description": "AI processing service",
       "isActive": true
+    },
+    "web-erp": {
+      "name": "Web ERP (Prototype)",
+      "port": 3219,
+      "type": "static",
+      "envVar": "WEB_ERP_PORT",
+      "description": "Sentient ERP design prototype (static HTML/CSS)",
+      "isActive": true
     }
   },
   "services": {

@@ -8,6 +8,7 @@
 import { usePsikologDashboard } from '../hooks/use-psikolog-dashboard';
 import { formatDayLong } from '../model/format';
 import { ActionQueueCard } from './action-queue-card';
+import { DashboardMobile } from './dashboard-mobile';
 import { StatCard } from './stat-card';
 import { TodayScheduleCard } from './today-schedule-card';
 import { WeekMiniChart } from './week-mini-chart';
@@ -33,7 +34,10 @@ export function PsikologDashboard() {
   }
 
   return (
-    <div style={{ padding: 28 }}>
+    <>
+      <DashboardMobile page={page} />
+
+      <div className="hidden lg:block p-6">
       <Greeting today={page.today} greetName={page.greetName} />
 
       <div
@@ -92,7 +96,8 @@ export function PsikologDashboard() {
           <WeekMiniChart weekData={page.weekData} />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
     "allow": [
       "Read",
       "Edit",
@@ -34,6 +33,7 @@
       "Bash(head *)",
       "Bash(tail *)",
       "Bash(find *)",
+      "Bash(find * | *)",
       "Bash(grep *)",
       "Bash(rg *)",
       "Bash(tree *)",
@@ -67,10 +67,27 @@
       "Bash(mkdir *)",
       "Bash(for *)",
       "Bash(while *)",
+      "Bash(pm2 *)",
+      "Bash(systemctl *)",
+      "Bash(journalctl *)",
+      "Bash(curl *)",
+      "Bash(TOKEN=*)",
+      "Bash(sleep *)",
       "Bash(ls -la ~/.claude/ 2>/dev/null)",
       "Read(//home/rania/.claude/**)",
       "Bash(chmod 700 ~/.claude)",
-      "Bash(chmod 600 ~/.claude/settings.json ~/.claude/settings.local.json)"
+      "Bash(chmod 600 ~/.claude/settings.json ~/.claude/settings.local.json)",
+      "Bash(cd /home/rania/apps/sentient-factory && git stash && cd apps && npm run typecheck 2>&1 | tail -10; cd /home/rania/apps/sentient-factory && git stash pop)",
+      "Bash(cd /home/rania/apps/sentient-factory && git stash push -- apps*)",
+      "Bash(cd /home/rania/apps/sentient-factory/apps && grep *)",
+      "Bash({ *)",
+      "Skill(update-config)",
+      "Edit(**/.claude/settings.json)",
+      "Write(**/.claude/settings.json)",
+      "Edit(/home/rania/.claude/settings.json)",
+      "Write(/home/rania/.claude/settings.json)",
+      "Edit(/home/rania/apps/sentient-factory/.claude/settings.json)",
+      "Write(/home/rania/apps/sentient-factory/.claude/settings.json)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -86,7 +103,46 @@
       "Write(**/.env)",
       "Write(**/.env.*)",
       "Edit(config/ports.json)",
-      "Edit(infra/docker-compose.yml)"
+      "Edit(infra/docker-compose.yml)",
+      "Read(apps/web-erp/prototype/**)",
+      "Edit(apps/web-erp/prototype/**)",
+      "Write(apps/web-erp/prototype/**)",
+      "Read(**/web-erp/prototype/**)",
+      "Edit(**/web-erp/prototype/**)",
+      "Write(**/web-erp/prototype/**)",
+      "Read(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)",
+      "Edit(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)",
+      "Write(/home/rania/apps/sentient-factory/apps/web-erp/prototype/**)"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; if [[ -z \"$FILE\" ]]; then exit 0; fi; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx) WS=$(echo \"$FILE\" | grep -oP '/home/rania/apps/sentient-factory/(apps|packages)/[^/]+'); if [[ -n \"$WS\" && -f \"$WS/tsconfig.json\" ]]; then cd \"$WS\" && npx tsc --noEmit 2>&1 | grep -E 'error TS' | head -10; fi ;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=\"${CLAUDE_TOOL_INPUT_FILE_PATH:-}\"; case \"$FILE\" in *.ts|*.tsx|*.js|*.jsx|*.py) if [ -f \"$FILE\" ]; then LINES=$(wc -l < \"$FILE\"); if [ \"$LINES\" -gt 400 ]; then echo \"⚠️  FILE TOO LONG: $FILE has $LINES lines (limit: 400). Split into smaller modules before continuing.\"; fi; fi ;; esac"
+          }
+        ]
+      }
     ]
+  },
+  "worktree": {
+    "bgIsolation": "none"
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "enabledPlugins": {
+    "ecc@ecc": true
   }
 }

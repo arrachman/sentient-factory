@@ -1,61 +1,50 @@
 'use client';
 
 /**
- * Owner Dashboard — orchestrator. Tipis composer dari sub-cards.
+ * Owner Dashboard — snapshot operasional dengan filter periode
+ * (Harian/Mingguan/Bulanan). Grid jadwal psikolog & pemakaian ruangan
+ * dipindah ke menu tersendiri (`/owner/jadwal`, `/owner/ruangan`).
  */
 import { useOwnerDashboard } from '../hooks/use-owner-dashboard';
+import { useOwnerPeriod } from '../hooks/use-owner-period';
+import { periodLabelShort } from '../model/period';
 import { KpiStrip } from './kpi-strip';
-import { OwnerNotesCard } from './owner-notes-card';
-import { PsikologPerformanceCard } from './psikolog-performance-card';
-import { RoomUsageSection } from './room-usage-section';
-import { RoomUtilizationCard } from './room-utilization-card';
-import { TopServicesCard } from './top-services-card';
-import { WeekTrendCard } from './week-trend-card';
+import { OwnerPeriodToolbar } from './owner-period-toolbar';
+import { TrendCard } from './trend-card';
 
 export function OwnerDashboardPage() {
-  const page = useOwnerDashboard();
+  const period = useOwnerPeriod();
+  const page = useOwnerDashboard({
+    period: period.mode,
+    anchor: period.anchor,
+  });
+  const periodLabel = periodLabelShort(period.mode);
 
   return (
-    <div className="flex flex-col" style={{ padding: 28, gap: 22 }}>
-      <KpiStrip kpi={page.kpi} slotsPerDay={page.slotsPerDay} />
+    <div className="flex flex-col p-6 gap-6">
+      <OwnerPeriodToolbar
+        anchor={period.anchor}
+        mode={period.mode}
+        rangeLabel={period.rangeLabel}
+        onShiftPrev={period.onShiftPrev}
+        onShiftNext={period.onShiftNext}
+        onPickDate={period.setAnchor}
+        onResetToToday={period.onResetToToday}
+        onChangeMode={period.setMode}
+      />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.6fr 1fr',
-          gap: 20,
-        }}
-      >
-        <PsikologPerformanceCard
-          isLoading={page.isLoadingPsikolog}
-          rows={page.psikologPerf}
-          totalCount={page.psikologs.length}
-          slotsPerDay={page.slotsPerDay}
-        />
-        <div className="flex flex-col gap-3">
-          <WeekTrendCard
-            weekTrend={page.weekTrend}
-            weekTotal={page.weekTotal}
-            weekMax={page.weekMax}
-          />
-          <OwnerNotesCard note={page.ownerNote} />
-        </div>
-      </div>
+      <KpiStrip
+        kpi={page.kpi}
+        slotsPerDay={page.slotsPerDay}
+        periodLabel={periodLabel}
+        rangeDays={page.range.days.length}
+      />
 
-      <div
-        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}
-      >
-        <RoomUtilizationCard roomGroups={page.roomGroups} />
-        <TopServicesCard
-          topServices={page.topServices}
-          totalCatalogCount={page.services.length}
-        />
-      </div>
-
-      <RoomUsageSection
-        rooms={page.rooms}
-        todayBookings={page.todayBookings}
-        psikologs={page.psikologs}
+      <TrendCard
+        mode={period.mode}
+        bars={page.trend}
+        total={page.trendTotal}
+        max={page.trendMax}
       />
     </div>
   );

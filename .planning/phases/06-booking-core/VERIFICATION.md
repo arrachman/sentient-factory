@@ -19,7 +19,7 @@
 - `POST   /clinic/booking` — create
 - `GET    /clinic/booking` — list dengan filter (status, date, psikologUserId, etc.)
 - `GET    /clinic/booking/:id` — detail
-- `PATCH  /clinic/booking/:id` — update (notes, bufferOverride)
+- `PATCH  /clinic/booking/:id` — update (notes, bufferOverride — skip slot/availability check)
 - `POST   /clinic/booking/:id/confirm` — awaiting_dp → confirmed
 - `POST   /clinic/booking/:id/check-in` — confirmed → checked_in
 - `POST   /clinic/booking/:id/start` — checked_in → in_progress
@@ -31,11 +31,11 @@
 - ✅ FK validation (client/service/psikolog/room must exist)
 - ✅ Operating hours check (clinic_settings.operating_hours per day)
 - ✅ Holiday block (clinic_settings.holidays array)
-- ✅ Buffer 15-min check (default dari clinic_settings.bufferMinutes)
+- ~~✅ Buffer 15-min check~~ — DIHAPUS: fitur bufferMinutes sudah dihapus dari kode dan skema
 - ✅ Psikolog conflict detection (overlap with active bookings)
 - ✅ Room conflict detection (overlap with active bookings)
 - ✅ State machine transitions (terminal states blocked)
-- ✅ `bufferOverride=true` bypass operating hours + buffer
+- ✅ `bufferOverride=true` bypass slot-match + operating hours + psikolog availability (buffer sudah tidak ada)
 - ✅ `createdViaWalkIn=true` skip operating hours, status langsung `confirmed`
 
 ### Frontend (web-althea) ✅ minimal

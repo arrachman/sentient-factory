@@ -8,17 +8,32 @@ export type ClinicSettings = {
   address: string | null;
   timezone: string;
   currency: string;
-  /** Slot operasional klinik (booking harus pas dengan salah satu). */
   slotsOfDay: SlotDef[];
-  /** Hari tutup klinik (0=Minggu, 1=Senin, ..., 6=Sabtu). */
+  maxBookingsPerDay: number;
   closedDayOfWeek: number[];
   holidays: string[];
-  bufferMinutes: number;
   taxEnabled: boolean;
   taxPercentage: string | number;
   dpPercentage: string | number;
+  // WA master
   waSendEnabled: boolean;
   waCountryCode: string;
+  waSenderNumber: string;
+  // WA delivery & retry
+  waRetryCount: number;
+  waRetryDelayMinutes: number;
+  waSendWindowStart: string;
+  waSendWindowEnd: string;
+  notifFailedSendEmail: boolean;
+  // Email
+  emailInvoiceAfterPayment: boolean;
+  emailWeeklyRecap: boolean;
+  emailMonthlyPsikolog: boolean;
+  // Notifikasi — timing/delay. Recipient routing (klien/psikolog) di-pegang
+  // oleh ClinicWaTemplate.recipients, akses lewat /clinic/wa/template.
+  notifH1SendTime: string;
+  notifFollowupDelayHours: number;
+  notifFeedbackSendTime: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -31,16 +46,40 @@ export type UpdateSettingsInput = Partial<{
   slotsOfDay: SlotDef[];
   closedDayOfWeek: number[];
   holidays: string[];
-  bufferMinutes: number;
   taxEnabled: boolean;
   taxPercentage: number;
   dpPercentage: number;
-  waSendEnabled: boolean;
-  waCountryCode: string;
+  // WA master
+  waSendEnabled?: boolean;
+  waCountryCode?: string;
+  waSenderNumber?: string;
+  // WA delivery & retry
+  waRetryCount: number;
+  waRetryDelayMinutes: number;
+  waSendWindowStart: string;
+  waSendWindowEnd: string;
+  notifFailedSendEmail: boolean;
+  // Email
+  emailInvoiceAfterPayment: boolean;
+  emailWeeklyRecap: boolean;
+  emailMonthlyPsikolog: boolean;
+  // Notifikasi — timing/delay
+  notifH1SendTime: string;
+  notifFollowupDelayHours: number;
+  notifFeedbackSendTime: string;
 }>;
+
+export type WaDeviceStatus = {
+  connected: boolean;
+  deviceName?: string;
+  devicePhone?: string;
+  quota?: number;
+  expired?: string;
+};
 
 export const settingsApi = {
   get: () => apiClient.get<{ success: boolean; data: ClinicSettings }>('/settings'),
   update: (input: UpdateSettingsInput) =>
     apiClient.patch<{ success: boolean; data: ClinicSettings }>('/settings', input),
+  getWaStatus: () => apiClient.get<WaDeviceStatus>('/settings/wa-status'),
 };

@@ -6,6 +6,8 @@ type ListParams = {
   limit?: number;
   status?: string;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   psikologUserId?: number;
   clientId?: number;
   roomId?: number;
@@ -18,6 +20,8 @@ function qs(p: ListParams): string {
   if (p.limit !== undefined) u.set('limit', String(p.limit));
   if (p.status) u.set('status', p.status);
   if (p.date) u.set('date', p.date);
+  if (p.dateFrom) u.set('dateFrom', p.dateFrom);
+  if (p.dateTo) u.set('dateTo', p.dateTo);
   if (p.psikologUserId) u.set('psikologUserId', String(p.psikologUserId));
   if (p.clientId) u.set('clientId', String(p.clientId));
   if (p.roomId) u.set('roomId', String(p.roomId));
@@ -53,8 +57,10 @@ export const bookingApi = {
   list: (p: ListParams = {}) => apiClient.get<ListResponse>(`/booking${qs(p)}`),
   getById: (id: number) => apiClient.get<{ success: boolean; data: Booking }>(`/booking/${id}`),
   create: (input: CreateBookingInput) => apiClient.post<{ success: boolean; data: Booking }>('/booking', input),
-  confirm: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/confirm`),
-  checkIn: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/check-in`),
+  // Backend PATCH /booking/:id only persists `notes` (blocked once completed/cancelled).
+  // Schedule/room/psikolog & status changes go through reschedule/state-machine endpoints.
+  update: (id: number, input: { notes?: string }) =>
+    apiClient.patch<{ success: boolean; data: Booking }>(`/booking/${id}`, input),
   start: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/start`),
   complete: (id: number) => apiClient.post<{ success: boolean }>(`/booking/${id}/complete`),
   cancel: (id: number, reason?: string) => apiClient.post<{ success: boolean }>(`/booking/${id}/cancel`, { reason }),
@@ -71,6 +77,22 @@ export const bookingApi = {
   ) =>
     apiClient.post<{ success: boolean; data: Booking; message?: string }>(
       `/booking/${id}/reschedule`,
+      input,
+    ),
+  editBooking: (
+    id: number,
+    input: {
+      serviceId?: number;
+      scheduledStart?: string;
+      scheduledEnd?: string;
+      psikologUserId?: number;
+      roomId?: number;
+      notes?: string;
+      reason?: string;
+    },
+  ) =>
+    apiClient.post<{ success: boolean; data: Booking; message?: string }>(
+      `/booking/${id}/edit`,
       input,
     ),
   listNotes: (id: number) => apiClient.get<{ success: boolean; data: ClinicalNote[] }>(`/booking/${id}/note`),

@@ -1,295 +1,392 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DashboardService } from './dashboard.service';
 import { asJson, escapeSqlLiteral } from './dashboard.utils';
+import { AlertingDeliveryDispatchService } from './alerting-delivery-dispatch.service';
+import { AlertingTriageService } from './alerting-triage.service';
 
 /**
  * AlertingDeliveryService
  *
- * Owns delivery-side persistence helpers: triage audit, provider session
- * audit/state, test-rule bootstrap, triage recovery config.
+ * Owns the delivery pipeline orchestration: run cycle, delivery log queries,
+ * requeue, and Baileys health inspection.
  *
- * `runAlertDeliveryCycle` still lives on DashboardService (it depends on
- * dispatchAlertDelivery + channel-specific senders that have not been
- * migrated yet). This service exposes it through a forwardRef pass-through
- * so that AlertingConfigService.testAlertingChannel keeps working.
+ * Channel dispatch + config accessors → AlertingDeliveryDispatchService
+ * Dead-letter triage state → AlertingTriageService
+ * Provider session audit/state + test-rule → AlertingProviderSessionService
  */
 @Injectable()
 export class AlertingDeliveryService {
+  private readonly logger = new Logger(AlertingDeliveryService.name);
+  private alertDeliveryRunning = false;
+
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => DashboardService))
-    private readonly dashboardService: DashboardService,
+    private readonly alertingTriageService: AlertingTriageService,
+    private readonly alertingDeliveryDispatchService: AlertingDeliveryDispatchService,
   ) {}
 
-  // ── forwardRef pass-through (will be migrated in a later commit) ────
-  runAlertDeliveryCycle(actor: string) {
-    return this.dashboardService.runAlertDeliveryCycle(actor);
-  }
+  // ── Delivery cycle ───────────────────────────────────────────────────
 
-  // ── real bodies ─────────────────────────────────────────────────────
-
-  async ensureAlertingTestRule(actor: string) {
-    const existing = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT rule_id, rule_key
-      FROM public.alert_rule
-      WHERE rule_key = 'system-test-send-rule'
-        AND deleted_at IS NULL
-      LIMIT 1
-    `);
-
-    if (existing[0]?.rule_id) {
-      return {
-        rule_id: Number(existing[0].rule_id),
-        rule_key: String(existing[0].rule_key || 'system-test-send-rule'),
-      };
+  async runAlertDeliveryCycle(actor = 'system-delivery') {
+    if (this.alertDeliveryRunning) {
+      return { success: true, data: { processed_delivery_count: 0, skipped: true, results: [] } };
     }
 
-    const inserted = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      INSERT INTO public.alert_rule (
-        rule_key,
-        rule_name,
-        description,
-        module_key,
-        source_type,
-        source_ref,
-        metric_id,
-        system_metric_ref,
-        semantic_ref,
-        condition_mapping_id,
-        condition_mapping_key,
-        condition_operator_key,
-        comparison_type,
-        value_type,
-        schedule_type,
-        schedule_value,
-        severity,
-        primary_channel,
-        condition_summary,
-        condition_config,
-        source_context,
-        message_template,
-        status,
-        is_active,
-        created_by,
-        updated_by
-      ) VALUES (
-        'system-test-send-rule',
-        'System Test Send Rule',
-        'Internal rule used to validate alert notification channels.',
-        'alerting',
-        'manual-rule-source',
-        'test-send',
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        'threshold',
-        'text',
-        'preset',
-        'daily',
-        'low',
-        'email',
-        'Internal test-send rule',
-        '{}'::jsonb,
-        '{"system":true,"purpose":"test-send"}'::jsonb,
-        'This is a test notification from the alerting module.',
-        'active',
-        TRUE,
-        '${escapeSqlLiteral(actor)}',
-        '${escapeSqlLiteral(actor)}'
-      )
-      RETURNING rule_id, rule_key
+    this.alertDeliveryRunning = true;
+    try {
+      const triageRecoveryConfig = await this.alertingTriageService.getAlertingTriageRecoveryConfig();
+      const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+        SELECT
+          d.delivery_id,
+          d.event_id,
+          d.rule_id,
+          d.channel_type,
+          d.target_value,
+          d.provider_name,
+          d.retry_count,
+          d.max_retries,
+          e.event_key,
+          e.title AS event_title,
+          COALESCE(e.description, '') AS event_description,
+          e.event_payload,
+          r.rule_name,
+          COALESCE(r.message_template, '') AS message_template
+        FROM public.alert_delivery_log d
+        JOIN public.alert_event e ON e.event_id = d.event_id
+        JOIN public.alert_rule r ON r.rule_id = d.rule_id
+        WHERE d.delivery_status = 'queued'
+          AND (d.next_retry_at IS NULL OR d.next_retry_at <= NOW())
+        ORDER BY d.requested_at ASC, d.delivery_id ASC
+        LIMIT 25
+      `);
+
+      const results: Array<Record<string, unknown>> = [];
+      for (const row of rows) {
+        const deliveryId = Number(row.delivery_id || 0);
+        try {
+          const dispatchResult = await this.alertingDeliveryDispatchService.dispatchAlertDelivery({
+            channelType: String(row.channel_type || ''),
+            targetValue: String(row.target_value || ''),
+            eventKey: String(row.event_key || ''),
+            eventTitle: String(row.event_title || ''),
+            message:
+              String(row.message_template || '').trim() ||
+              String(row.event_description || '').trim() ||
+              String(row.event_title || '').trim(),
+            eventPayload: asJson(row.event_payload, {}),
+          });
+
+          await this.prisma.$executeRawUnsafe(`
+            UPDATE public.alert_delivery_log
+            SET
+              provider_name = '${escapeSqlLiteral(dispatchResult.providerName)}',
+              provider_message_id = ${dispatchResult.providerMessageId ? `'${escapeSqlLiteral(dispatchResult.providerMessageId)}'` : 'NULL'},
+              delivery_status = '${escapeSqlLiteral(dispatchResult.deliveryStatus)}',
+              response_payload = '${escapeSqlLiteral(JSON.stringify(dispatchResult.responsePayload))}'::jsonb,
+              error_message = NULL,
+              last_attempt_at = NOW(),
+              next_retry_at = NULL,
+              dead_lettered_at = NULL,
+              dead_letter_reason = NULL,
+              delivered_at = ${dispatchResult.deliveryStatus === 'failed' ? 'NULL' : 'NOW()'}
+            WHERE delivery_id = ${deliveryId}
+          `);
+
+          let autoClosedTriage = false;
+          if (triageRecoveryConfig.enabled && dispatchResult.deliveryStatus !== 'failed') {
+            const triageBeforeRows = await this.prisma.$queryRawUnsafe<
+              Array<Record<string, unknown>>
+            >(`
+              SELECT triage_status, acknowledged_at, assigned_to, note
+              FROM public.alert_dead_letter_triage
+              WHERE delivery_id = ${deliveryId}
+              LIMIT 1
+            `);
+            const resolvedCount = await this.prisma.$executeRawUnsafe(`
+              UPDATE public.alert_dead_letter_triage
+              SET
+                triage_status = 'resolved',
+                note = CASE
+                  WHEN COALESCE(note, '') = '' THEN 'Auto-resolved after successful delivery recovery.'
+                  ELSE note || E'\\nAuto-resolved after successful delivery recovery.'
+                END,
+                last_action_at = NOW(),
+                updated_by = '${escapeSqlLiteral(actor)}'
+              WHERE delivery_id = ${deliveryId}
+                AND triage_status <> 'resolved'
+            `);
+            autoClosedTriage = Number(resolvedCount || 0) > 0;
+            if (autoClosedTriage) {
+              const previous = triageBeforeRows[0];
+              await this.alertingTriageService.createAlertDeadLetterTriageAudit({
+                deliveryId,
+                actionType: 'auto-resolve',
+                previousTriageStatus: previous?.triage_status
+                  ? String(previous.triage_status)
+                  : null,
+                nextTriageStatus: 'resolved',
+                previousAcknowledgedAt: previous?.acknowledged_at
+                  ? String(previous.acknowledged_at)
+                  : null,
+                nextAcknowledgedAt: previous?.acknowledged_at
+                  ? String(previous.acknowledged_at)
+                  : null,
+                previousAssignedTo: previous?.assigned_to ? String(previous.assigned_to) : null,
+                nextAssignedTo: previous?.assigned_to ? String(previous.assigned_to) : null,
+                noteSnapshot: previous?.note
+                  ? String(previous.note)
+                  : 'Auto-resolved after successful delivery recovery.',
+                detailPayload: {
+                  trigger: 'delivery-recovery',
+                },
+                actor,
+              });
+            }
+          }
+
+          results.push({
+            delivery_id: deliveryId,
+            channel_type: row.channel_type,
+            target_value: row.target_value,
+            delivery_status: dispatchResult.deliveryStatus,
+            provider_name: dispatchResult.providerName,
+            auto_closed_triage: autoClosedTriage,
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown delivery worker error.';
+          const retryCount = Number(row.retry_count || 0);
+          const maxRetries = Math.max(Number(row.max_retries || 3) || 3, 1);
+          const nextRetryCount = retryCount + 1;
+          const shouldRetry = nextRetryCount < maxRetries;
+          const backoffMinutes = Math.min(5 * nextRetryCount, 60);
+          await this.prisma.$executeRawUnsafe(`
+            UPDATE public.alert_delivery_log
+            SET
+              delivery_status = '${shouldRetry ? 'queued' : 'dead-lettered'}',
+              error_message = '${escapeSqlLiteral(message)}',
+              response_payload = '${escapeSqlLiteral(
+                JSON.stringify({
+                  worker: 'delivery',
+                  status: shouldRetry ? 'queued_for_retry' : 'dead_lettered',
+                  retry_count: nextRetryCount,
+                  max_retries: maxRetries,
+                  retry_backoff_minutes: shouldRetry ? backoffMinutes : null,
+                }),
+              )}'::jsonb,
+              retry_count = ${nextRetryCount},
+              last_attempt_at = NOW(),
+              next_retry_at = ${shouldRetry ? `NOW() + INTERVAL '${backoffMinutes} minutes'` : 'NULL'},
+              dead_lettered_at = ${shouldRetry ? 'NULL' : 'NOW()'},
+              dead_letter_reason = ${shouldRetry ? 'NULL' : `'${escapeSqlLiteral(message)}'`},
+              delivered_at = NULL
+            WHERE delivery_id = ${deliveryId}
+          `);
+          this.logger.error(`Alert delivery failed for log ${deliveryId}: ${message}`);
+          results.push({
+            delivery_id: deliveryId,
+            channel_type: row.channel_type,
+            target_value: row.target_value,
+            delivery_status: shouldRetry ? 'queued' : 'dead-lettered',
+            retry_count: nextRetryCount,
+            max_retries: maxRetries,
+            error_message: message,
+          });
+        }
+      }
+
+      if (results.length) {
+        this.logger.log(`Alert delivery worker processed ${results.length} queued deliveries.`);
+      }
+
+      return {
+        success: true,
+        data: {
+          processed_delivery_count: results.length,
+          skipped: false,
+          actor,
+          results,
+        },
+      };
+    } finally {
+      this.alertDeliveryRunning = false;
+    }
+  }
+
+  // ── Baileys health (delegates to dispatch service) ───────────────────
+
+  getBaileysHealth() {
+    return this.alertingDeliveryDispatchService.getBaileysHealth();
+  }
+
+  // ── Delivery logs ────────────────────────────────────────────────────
+
+  async alertingDeliveryLogs(eventId?: string) {
+    const where = ['1 = 1'];
+    if (eventId) {
+      where.push(`d.event_id = ${Number(eventId) || 0}`);
+    }
+
+    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT
+        d.delivery_id,
+        d.event_id,
+        e.event_key,
+        e.title AS event_title,
+        COALESCE(rr.target_label, '') AS target_label,
+        d.channel_type,
+        d.target_value,
+        d.provider_name,
+        d.provider_message_id,
+        d.delivery_status,
+        d.response_payload,
+        d.error_message,
+        d.retry_count,
+        d.max_retries,
+        d.next_retry_at,
+        d.last_attempt_at,
+        d.dead_lettered_at,
+        d.dead_letter_reason,
+        d.requested_at,
+        d.delivered_at
+      FROM public.alert_delivery_log d
+      LEFT JOIN public.alert_event e ON e.event_id = d.event_id
+      LEFT JOIN public.alert_rule_recipient rr ON rr.recipient_id = d.recipient_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY d.requested_at DESC, d.delivery_id DESC
     `);
 
     return {
-      rule_id: Number(inserted[0]?.rule_id || 0),
-      rule_key: String(inserted[0]?.rule_key || 'system-test-send-rule'),
+      success: true,
+      data: rows.map((row) => ({
+        delivery_log_id: Number(row.delivery_id || 0),
+        event_id: Number(row.event_id || 0),
+        event_key: row.event_key || null,
+        event_title: row.event_title || null,
+        target_label: row.target_label || null,
+        channel_type: row.channel_type,
+        target_value: row.target_value,
+        provider_key: row.provider_name || null,
+        external_message_id: row.provider_message_id || null,
+        delivery_status: row.delivery_status,
+        error_message: row.error_message || null,
+        retry_count: Number(row.retry_count || 0),
+        max_retries: Number(row.max_retries || 0),
+        next_retry_at: row.next_retry_at || null,
+        last_attempt_at: row.last_attempt_at || null,
+        dead_lettered_at: row.dead_lettered_at || null,
+        dead_letter_reason: row.dead_letter_reason || null,
+        queued_at: row.requested_at,
+        sent_at: row.requested_at,
+        delivered_at: row.delivered_at,
+        response_payload: asJson(row.response_payload, {}),
+      })),
     };
   }
 
-  async createAlertProviderSessionAudit(input: {
-    providerName: string;
-    channelType: 'wa-group' | 'wa-personal' | 'email';
-    actionType: 'health-check' | 'pairing-start' | 'pairing-result' | 'session-refresh';
-    status: 'captured' | 'success' | 'failed' | 'warning';
-    pairingMode?: string | null;
-    phoneNumber?: string | null;
-    authDir?: string | null;
-    detailPayload?: Record<string, unknown>;
-    errorMessage?: string | null;
-    actor: string;
-  }) {
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO public.alert_provider_session_audit (
-        provider_name,
-        channel_type,
-        action_type,
-        status,
-        pairing_mode,
-        phone_number,
-        auth_dir,
-        detail_payload,
-        error_message,
-        created_by,
-        updated_by
-      ) VALUES (
-        '${escapeSqlLiteral(input.providerName)}',
-        '${escapeSqlLiteral(input.channelType)}',
-        '${escapeSqlLiteral(input.actionType)}',
-        '${escapeSqlLiteral(input.status)}',
-        ${input.pairingMode ? `'${escapeSqlLiteral(input.pairingMode)}'` : 'NULL'},
-        ${input.phoneNumber ? `'${escapeSqlLiteral(input.phoneNumber)}'` : 'NULL'},
-        ${input.authDir ? `'${escapeSqlLiteral(input.authDir)}'` : 'NULL'},
-        '${escapeSqlLiteral(JSON.stringify(input.detailPayload || {}))}'::jsonb,
-        ${input.errorMessage ? `'${escapeSqlLiteral(input.errorMessage)}'` : 'NULL'},
-        '${escapeSqlLiteral(input.actor)}',
-        '${escapeSqlLiteral(input.actor)}'
-      )
-    `);
-  }
+  async requeueAlertingDeliveryLog(deliveryId: string, actor: string) {
+    const normalizedDeliveryId = Number(deliveryId);
+    if (!Number.isFinite(normalizedDeliveryId) || normalizedDeliveryId <= 0) {
+      throw new BadRequestException('Invalid delivery id.');
+    }
 
-  async upsertAlertProviderSessionState(input: {
-    providerName: string;
-    channelType: 'wa-group' | 'wa-personal' | 'email';
-    sessionKey: string;
-    sessionStatus:
-      | 'disabled'
-      | 'disconnected'
-      | 'pairing-required'
-      | 'pairing-in-progress'
-      | 'ready'
-      | 'connected'
-      | 'error';
-    pairingMode?: string | null;
-    phoneNumber?: string | null;
-    authDir?: string | null;
-    statusMessage?: string | null;
-    detailPayload?: Record<string, unknown>;
-    lastHealthCheckAt?: Date | null;
-    lastPairingStartedAt?: Date | null;
-    lastPairingResultAt?: Date | null;
-    lastConnectedAt?: Date | null;
-    lastDisconnectedAt?: Date | null;
-    actor: string;
-  }) {
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO public.alert_provider_session_state (
-        provider_name,
-        channel_type,
-        session_key,
-        session_status,
-        pairing_mode,
-        phone_number,
-        auth_dir,
-        status_message,
-        last_health_check_at,
-        last_pairing_started_at,
-        last_pairing_result_at,
-        last_connected_at,
-        last_disconnected_at,
-        detail_payload,
-        is_active,
-        created_by,
-        updated_by
-      ) VALUES (
-        '${escapeSqlLiteral(input.providerName)}',
-        '${escapeSqlLiteral(input.channelType)}',
-        '${escapeSqlLiteral(input.sessionKey)}',
-        '${escapeSqlLiteral(input.sessionStatus)}',
-        ${input.pairingMode ? `'${escapeSqlLiteral(input.pairingMode)}'` : 'NULL'},
-        ${input.phoneNumber ? `'${escapeSqlLiteral(input.phoneNumber)}'` : 'NULL'},
-        ${input.authDir ? `'${escapeSqlLiteral(input.authDir)}'` : 'NULL'},
-        ${input.statusMessage ? `'${escapeSqlLiteral(input.statusMessage)}'` : 'NULL'},
-        ${input.lastHealthCheckAt ? `'${input.lastHealthCheckAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastPairingStartedAt ? `'${input.lastPairingStartedAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastPairingResultAt ? `'${input.lastPairingResultAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastConnectedAt ? `'${input.lastConnectedAt.toISOString()}'::timestamptz` : 'NULL'},
-        ${input.lastDisconnectedAt ? `'${input.lastDisconnectedAt.toISOString()}'::timestamptz` : 'NULL'},
-        '${escapeSqlLiteral(JSON.stringify(input.detailPayload || {}))}'::jsonb,
-        TRUE,
-        '${escapeSqlLiteral(input.actor)}',
-        '${escapeSqlLiteral(input.actor)}'
-      )
-      ON CONFLICT (session_key) DO UPDATE SET
-        session_status = EXCLUDED.session_status,
-        pairing_mode = EXCLUDED.pairing_mode,
-        phone_number = EXCLUDED.phone_number,
-        auth_dir = EXCLUDED.auth_dir,
-        status_message = EXCLUDED.status_message,
-        last_health_check_at = COALESCE(EXCLUDED.last_health_check_at, public.alert_provider_session_state.last_health_check_at),
-        last_pairing_started_at = COALESCE(EXCLUDED.last_pairing_started_at, public.alert_provider_session_state.last_pairing_started_at),
-        last_pairing_result_at = COALESCE(EXCLUDED.last_pairing_result_at, public.alert_provider_session_state.last_pairing_result_at),
-        last_connected_at = COALESCE(EXCLUDED.last_connected_at, public.alert_provider_session_state.last_connected_at),
-        last_disconnected_at = COALESCE(EXCLUDED.last_disconnected_at, public.alert_provider_session_state.last_disconnected_at),
-        detail_payload = EXCLUDED.detail_payload,
-        is_active = TRUE,
-        updated_by = EXCLUDED.updated_by
-    `);
-  }
-
-  async createAlertDeadLetterTriageAudit(input: {
-    deliveryId: number;
-    actionType: string;
-    previousTriageStatus: string | null;
-    nextTriageStatus: string | null;
-    previousAcknowledgedAt: string | null;
-    nextAcknowledgedAt: string | null;
-    previousAssignedTo: string | null;
-    nextAssignedTo: string | null;
-    noteSnapshot: string | null;
-    detailPayload: Record<string, unknown>;
-    actor: string;
-  }) {
-    await this.prisma.$executeRawUnsafe(`
-      INSERT INTO public.alert_dead_letter_triage_audit (
-        delivery_id,
-        action_type,
-        previous_triage_status,
-        next_triage_status,
-        previous_acknowledged_at,
-        next_acknowledged_at,
-        previous_assigned_to,
-        next_assigned_to,
-        note_snapshot,
-        detail_payload,
-        created_by
-      ) VALUES (
-        ${input.deliveryId},
-        '${escapeSqlLiteral(input.actionType)}',
-        ${input.previousTriageStatus ? `'${escapeSqlLiteral(input.previousTriageStatus)}'` : 'NULL'},
-        ${input.nextTriageStatus ? `'${escapeSqlLiteral(input.nextTriageStatus)}'` : 'NULL'},
-        ${input.previousAcknowledgedAt ? `'${escapeSqlLiteral(input.previousAcknowledgedAt)}'::timestamptz` : 'NULL'},
-        ${input.nextAcknowledgedAt ? `'${escapeSqlLiteral(input.nextAcknowledgedAt)}'::timestamptz` : 'NULL'},
-        ${input.previousAssignedTo ? `'${escapeSqlLiteral(input.previousAssignedTo)}'` : 'NULL'},
-        ${input.nextAssignedTo ? `'${escapeSqlLiteral(input.nextAssignedTo)}'` : 'NULL'},
-        ${input.noteSnapshot ? `'${escapeSqlLiteral(input.noteSnapshot)}'` : 'NULL'},
-        '${escapeSqlLiteral(JSON.stringify(input.detailPayload || {}))}'::jsonb,
-        '${escapeSqlLiteral(input.actor)}'
-      )
-    `);
-  }
-
-  async getAlertingTriageRecoveryConfig() {
-    const rows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
-      SELECT value_text, value_json
-      FROM public.alert_runtime_setting
-      WHERE is_active = TRUE
-        AND setting_key = 'triage_auto_close_on_recovery'
+    const existingRows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT delivery_status
+      FROM public.alert_delivery_log
+      WHERE delivery_id = ${normalizedDeliveryId}
       LIMIT 1
     `);
 
-    const row = rows[0];
-    const valueJson = asJson<Record<string, unknown>>(row?.value_json, {});
-    const valueText =
-      typeof row?.value_text === 'string' ? row.value_text.trim().toLowerCase() : '';
-    const enabled =
-      typeof valueJson['enabled'] === 'boolean'
-        ? Boolean(valueJson['enabled'])
-        : ['enabled', 'true', 'yes', '1', 'on'].includes(valueText);
+    if (!existingRows[0]) {
+      throw new NotFoundException('Alert delivery log not found.');
+    }
 
-    return { enabled };
+    const currentStatus = String(existingRows[0].delivery_status || '')
+      .trim()
+      .toLowerCase();
+    if (!['failed', 'dead-lettered'].includes(currentStatus)) {
+      throw new BadRequestException('Only failed or dead-lettered deliveries can be requeued.');
+    }
+
+    await this.prisma.$executeRawUnsafe(`
+      UPDATE public.alert_delivery_log
+      SET
+        delivery_status = 'queued',
+        retry_count = 0,
+        next_retry_at = NOW(),
+        last_attempt_at = NULL,
+        error_message = NULL,
+        dead_lettered_at = NULL,
+        dead_letter_reason = NULL
+      WHERE delivery_id = ${normalizedDeliveryId}
+    `);
+
+    const triageBeforeRows = await this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(`
+      SELECT triage_status, acknowledged_at, assigned_to, note
+      FROM public.alert_dead_letter_triage
+      WHERE delivery_id = ${normalizedDeliveryId}
+      LIMIT 1
+    `);
+
+    await this.prisma.$executeRawUnsafe(`
+      INSERT INTO public.alert_dead_letter_triage (
+        delivery_id,
+        triage_status,
+        acknowledged_at,
+        acknowledged_by,
+        assigned_to,
+        note,
+        last_action_at,
+        created_by,
+        updated_by
+      ) VALUES (
+        ${normalizedDeliveryId},
+        'requeued',
+        NULL,
+        NULL,
+        '${escapeSqlLiteral(actor)}',
+        'Delivery was manually requeued.',
+        NOW(),
+        '${escapeSqlLiteral(actor)}',
+        '${escapeSqlLiteral(actor)}'
+      )
+      ON CONFLICT (delivery_id) DO UPDATE SET
+        triage_status = 'requeued',
+        acknowledged_at = NULL,
+        acknowledged_by = NULL,
+        assigned_to = '${escapeSqlLiteral(actor)}',
+        note = 'Delivery was manually requeued.',
+        last_action_at = NOW(),
+        updated_by = '${escapeSqlLiteral(actor)}'
+    `);
+
+    const triageBefore = triageBeforeRows[0];
+    await this.alertingTriageService.createAlertDeadLetterTriageAudit({
+      deliveryId: normalizedDeliveryId,
+      actionType: 'requeue',
+      previousTriageStatus: triageBefore?.triage_status ? String(triageBefore.triage_status) : null,
+      nextTriageStatus: 'requeued',
+      previousAcknowledgedAt: triageBefore?.acknowledged_at
+        ? String(triageBefore.acknowledged_at)
+        : null,
+      nextAcknowledgedAt: null,
+      previousAssignedTo: triageBefore?.assigned_to ? String(triageBefore.assigned_to) : null,
+      nextAssignedTo: actor,
+      noteSnapshot: 'Delivery was manually requeued.',
+      detailPayload: {
+        trigger: 'manual-requeue',
+      },
+      actor,
+    });
+
+    const deliveryRun = await this.runAlertDeliveryCycle(actor);
+    const result = await this.alertingDeliveryLogs();
+    return {
+      success: true,
+      data: {
+        requeued_delivery_id: normalizedDeliveryId,
+        delivery_run: deliveryRun.data,
+        logs: result.data,
+      },
+    };
   }
 }

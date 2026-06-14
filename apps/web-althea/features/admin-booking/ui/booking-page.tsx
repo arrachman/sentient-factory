@@ -3,23 +3,20 @@
 import { useMemo, useState } from 'react';
 import {
   CalendarDays,
-  CalendarPlus,
-  Check,
   CheckCircle2,
+  DoorOpen,
   Eye,
-  Layers,
   Play,
+  Plus,
+  Replace,
   RotateCw,
   Search,
-  UserCheck,
   X,
 } from 'lucide-react';
 import {
   useBookingList,
   useCancelBooking,
-  useCheckInBooking,
   useCompleteBooking,
-  useConfirmBooking,
   useStartBooking,
 } from '../hooks/use-booking';
 import {
@@ -31,7 +28,7 @@ import {
 } from '../model/types';
 import { BookingDetailDialog } from './booking-detail-dialog';
 import { BookingWizard } from './booking-wizard';
-import { PackageWizard } from './package-wizard';
+import { ChangeRoomDialog } from './change-room-dialog';
 import { RescheduleDialog } from './reschedule-dialog';
 
 function formatDateTime(iso: string): string {
@@ -47,8 +44,6 @@ function formatDateTime(iso: string): string {
 
 function nextActions(status: BookingStatus): BookingStatus[] {
   const map: Record<BookingStatus, BookingStatus[]> = {
-    awaiting_dp: ['confirmed', 'cancelled'],
-    confirmed: ['checked_in', 'cancelled'],
     checked_in: ['in_progress', 'cancelled'],
     in_progress: ['completed', 'cancelled'],
     completed: [],
@@ -57,28 +52,48 @@ function nextActions(status: BookingStatus): BookingStatus[] {
   return map[status] || [];
 }
 
+const ACTION_LABEL: Record<BookingStatus, string> = {
+  checked_in: 'Check-in',
+  in_progress: 'Mulai',
+  completed: 'Selesai',
+  cancelled: 'Batal',
+};
+
+const ACTION_TOOLTIP: Record<BookingStatus, string> = {
+  checked_in: 'Tandai klien sudah check-in',
+  in_progress: 'Mulai sesi — status berubah jadi Berlangsung',
+  completed: 'Tandai sesi selesai — memicu notifikasi WA selesai',
+  cancelled: 'Batalkan booking — bisa isi alasan, memicu WA pembatalan',
+};
+
 type QuickFilter = 'all' | 'today' | 'tomorrow' | 'week' | 'past';
+
+function toLocalDateKey(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 function dateForQuickFilter(qf: QuickFilter): string | undefined {
   const today = new Date();
-  if (qf === 'today') return today.toISOString().slice(0, 10);
+  if (qf === 'today') return toLocalDateKey(today);
   if (qf === 'tomorrow') {
     const t = new Date(today);
     t.setDate(t.getDate() + 1);
-    return t.toISOString().slice(0, 10);
+    return toLocalDateKey(t);
   }
   return undefined;
 }
 
-export function BookingPage() {
+export function BookingPage({ canCreate = true }: { canCreate?: boolean } = {}) {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<string>('');
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('today');
   const [search, setSearch] = useState('');
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [packageWizardOpen, setPackageWizardOpen] = useState(false);
   const [rescheduling, setRescheduling] = useState<Booking | null>(null);
   const [detailing, setDetailing] = useState<Booking | null>(null);
+  const [editing, setEditing] = useState<Booking | null>(null);
+  const [changingRoom, setChangingRoom] = useState<Booking | null>(null);
 
   const effectiveDate =
     quickFilter === 'today' || quickFilter === 'tomorrow'
@@ -92,8 +107,6 @@ export function BookingPage() {
     includeCancelled: !statusFilter,
   });
 
-  const confirmMut = useConfirmBooking();
-  const checkInMut = useCheckInBooking();
   const startMut = useStartBooking();
   const completeMut = useCompleteBooking();
   const cancelMut = useCancelBooking();
@@ -104,9 +117,7 @@ export function BookingPage() {
       cancelMut.mutate({ id, reason });
       return;
     }
-    if (action === 'confirmed') confirmMut.mutate(id);
-    else if (action === 'checked_in') checkInMut.mutate(id);
-    else if (action === 'in_progress') startMut.mutate(id);
+    if (action === 'in_progress') startMut.mutate(id);
     else if (action === 'completed') completeMut.mutate(id);
   }
 
@@ -144,23 +155,7 @@ export function BookingPage() {
   }, [list.data?.data, quickFilter, search]);
 
   return (
-    <div className="space-y-6 p-4 lg:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="h1">Booking</h1>
-          <p className="caption mt-1">
-            Kelola booking sesi: konfirmasi, check-in, mulai sesi, reschedule, payment & WA reminder.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => setPackageWizardOpen(true)} className="btn btn-outline">
-            <Layers className="h-4 w-4" /> Paket
-          </button>
-          <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary">
-            <CalendarPlus className="h-4 w-4" /> Booking Baru
-          </button>
-        </div>
-      </div>
+    <div className="space-y-6 p-6">
 
       <div className="flex flex-wrap gap-2">
         {(
@@ -184,6 +179,13 @@ export function BookingPage() {
             <CalendarDays className="h-3.5 w-3.5" /> {f.label}
           </button>
         ))}
+        {canCreate && (
+          <div className="ml-auto flex items-center gap-2">
+            <button type="button" onClick={() => setWizardOpen(true)} className="btn btn-primary btn-sm">
+              <Plus className="h-4 w-4" /> Jadwal Baru
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -224,7 +226,7 @@ export function BookingPage() {
             setSearch('');
             setQuickFilter('all');
           }}
-          className="btn btn-ghost"
+          className="btn btn-ghost btn-sm"
         >
           Reset
         </button>
@@ -274,12 +276,23 @@ export function BookingPage() {
                     <span
                       className="avatar avatar-sm"
                       style={
-                        b.psikolog.clinicPsikologProfile?.color
-                          ? { backgroundColor: b.psikolog.clinicPsikologProfile.color, color: '#fff' }
-                          : undefined
+                        b.psikolog.avatarUrl
+                          ? { padding: 0, overflow: 'hidden' }
+                          : b.psikolog.clinicPsikologProfile?.color
+                            ? { backgroundColor: b.psikolog.clinicPsikologProfile.color, color: '#fff' }
+                            : undefined
                       }
                     >
-                      {(b.psikolog.fullName || b.psikolog.email).slice(0, 2).toUpperCase()}
+                      {b.psikolog.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={b.psikolog.avatarUrl}
+                          alt={b.psikolog.fullName || b.psikolog.email}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        (b.psikolog.fullName || b.psikolog.email).slice(0, 2).toUpperCase()
+                      )}
                     </span>
                     <span>{b.psikolog.fullName || b.psikolog.email}</span>
                   </div>
@@ -297,27 +310,47 @@ export function BookingPage() {
                       type="button"
                       onClick={() => setDetailing(b)}
                       className="btn btn-sm btn-ghost"
-                      title="Lihat detail"
+                      title="Lihat info lengkap booking (klien, layanan, pembayaran, catatan, riwayat)"
                     >
-                      <Eye className="h-3.5 w-3.5" />
+                      <Eye className="h-3.5 w-3.5" /> Detail
                     </button>
                     {!['cancelled', 'completed', 'in_progress'].includes(b.status) && (
                       <button
                         type="button"
                         onClick={() => setRescheduling(b)}
                         className="btn btn-sm btn-outline"
-                        title="Reschedule"
+                        title="Ganti tanggal/jam booking ini"
                       >
-                        <RotateCw className="h-3.5 w-3.5" />
+                        <RotateCw className="h-3.5 w-3.5" /> Reschedule
+                      </button>
+                    )}
+                    {b.status === 'checked_in' && (
+                      <button
+                        type="button"
+                        onClick={() => setChangingRoom(b)}
+                        className="btn btn-sm btn-outline"
+                        title="Ganti ruangan untuk booking ini"
+                      >
+                        <DoorOpen className="h-3.5 w-3.5" /> Ubah Ruangan
+                      </button>
+                    )}
+                    {(b.status === 'checked_in' || b.status === 'completed') && (
+                      <button
+                        type="button"
+                        onClick={() => setEditing(b)}
+                        className="btn btn-sm btn-outline"
+                        title={
+                          b.status === 'completed'
+                            ? 'Recategorisasi layanan untuk booking selesai — jadwal historis tetap, pembayaran recompute'
+                            : 'Ubah layanan booking — psikolog & jadwal tetap, pembayaran recompute otomatis'
+                        }
+                      >
+                        <Replace className="h-3.5 w-3.5" /> Ubah Layanan
                       </button>
                     )}
                     {nextActions(b.status).map((act) => {
                       const icon =
-                        act === 'confirmed' ? (
-                          <Check className="h-3.5 w-3.5" />
-                        ) : act === 'checked_in' ? (
-                          <UserCheck className="h-3.5 w-3.5" />
-                        ) : act === 'in_progress' ? (
+                        act === 'in_progress' ? (
                           <Play className="h-3.5 w-3.5" />
                         ) : act === 'completed' ? (
                           <CheckCircle2 className="h-3.5 w-3.5" />
@@ -330,9 +363,9 @@ export function BookingPage() {
                           type="button"
                           onClick={() => handleAction(b.id, act)}
                           className={`btn btn-sm ${act === 'cancelled' ? 'btn-ghost text-danger' : 'btn-outline'}`}
-                          title={STATUS_LABEL[act]}
+                          title={ACTION_TOOLTIP[act]}
                         >
-                          {icon}
+                          {icon} {ACTION_LABEL[act]}
                         </button>
                       );
                     })}
@@ -362,8 +395,13 @@ export function BookingPage() {
       </div>
 
       <BookingWizard open={wizardOpen} onClose={() => setWizardOpen(false)} />
-      <PackageWizard open={packageWizardOpen} onClose={() => setPackageWizardOpen(false)} />
+      <BookingWizard
+        open={!!editing}
+        editingBooking={editing}
+        onClose={() => setEditing(null)}
+      />
       <RescheduleDialog booking={rescheduling} onClose={() => setRescheduling(null)} />
+      <ChangeRoomDialog booking={changingRoom} onClose={() => setChangingRoom(null)} />
       <BookingDetailDialog booking={detailing} onClose={() => setDetailing(null)} />
     </div>
   );

@@ -99,7 +99,7 @@ export class ClinicPsikologController {
   @Patch('me')
   @Roles('clinic-psikolog')
   @ApiOperation({
-    summary: 'Edit own profile (subset: fullName, title, bio, color)',
+    summary: 'Edit own profile (subset: fullName, title, bio, color, phone)',
     description:
       'Psikolog hanya boleh edit field non-sensitive sendiri. Email/license/' +
       'defaultSlots/specialty/isActive admin-only (via PATCH /:id).',
@@ -111,6 +111,7 @@ export class ClinicPsikologController {
       title?: string;
       bio?: string;
       color?: string;
+      phone: string;
       /** Base64 data URL (data:image/...;base64,...) atau URL absolut, atau null untuk hapus. */
       avatarUrl?: string | null;
     },
@@ -204,6 +205,21 @@ export class ClinicPsikologController {
     const userId = req.user?.sub ?? req.user?.id;
     if (!userId) throw new BadRequestException('Unauthorized');
     return this.service.deleteOwnDateOverride(userId, date);
+  }
+
+  @Get('by-user/:userId/date-overrides')
+  @Roles('clinic-admin', 'clinic-resepsionis', 'clinic-psikolog', 'clinic-owner')
+  @ApiOperation({
+    summary: 'List override per-tanggal untuk psikolog tertentu (admin/wizard)',
+    description:
+      'Mirror /me/date-overrides tapi terima userId eksplisit. Dipakai booking wizard supaya DateStrip render hari yang di-override sebagai available. Query: ?from=YYYY-MM-DD&to=YYYY-MM-DD.',
+  })
+  listDateOverridesByUser(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Query('from') from: string | undefined,
+    @Query('to') to: string | undefined,
+  ) {
+    return this.service.listDateOverridesByUser(userId, from, to);
   }
 
   @Get('by-user/:userId/availability-for-date')

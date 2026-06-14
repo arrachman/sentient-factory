@@ -1,6 +1,6 @@
 /**
  * Tab "Matriks permission" — grid 6 role × 10 modul, cell = chip permission.
- * Footer note BR-04 (psikolog × klien-semua = —).
+ * Footer note (psikolog × klien-semua = —).
  */
 import { Fragment } from 'react';
 import { Bell } from 'lucide-react';
@@ -81,9 +81,9 @@ export function PermissionMatrix() {
           className="caption"
           style={{ color: '#2c4a60', fontSize: 11.5 }}
         >
-          <strong>BR-04:</strong> Psikolog hanya dapat edit data klien sendiri
-          (&ldquo;Klien sendiri&rdquo;), tidak dapat melihat data klien
-          psikolog lain (&ldquo;Klien (semua)&rdquo; = —).
+          <strong>Privasi antar psikolog:</strong> Psikolog hanya dapat edit
+          data klien sendiri (&ldquo;Klien sendiri&rdquo;), tidak dapat melihat
+          data klien psikolog lain (&ldquo;Klien (semua)&rdquo; = —).
         </span>
       </div>
     </div>

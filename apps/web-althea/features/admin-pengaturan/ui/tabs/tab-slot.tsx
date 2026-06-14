@@ -17,6 +17,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import type { SlotDef, UpdateSettingsInput } from '../../api/settings.api';
 import { DEFAULT_SLOT, HARI } from '../../model/constants';
+import { ServiceSlotSummary } from './service-slot-summary';
 
 type Props = {
   form: UpdateSettingsInput;
@@ -63,7 +64,7 @@ export function TabSlot({
               >
                 <span>Mulai</span>
                 <span>Selesai</span>
-                <span>Label (opsional)</span>
+                <span>Label</span>
                 <span />
               </div>
               {slots.map((s, i) => (
@@ -90,11 +91,13 @@ export function TabSlot({
                     value={s.label ?? ''}
                     onChange={(e) => updateSlot(i, { label: e.target.value })}
                     className="input-althea h-9 py-0 text-[13px]"
+                    required
+                    aria-required="true"
                   />
                   <button
                     type="button"
                     onClick={() => removeSlot(i)}
-                    className="btn btn-ghost btn-icon h-8 w-8 text-danger"
+                    className="btn btn-ghost btn-icon btn-sm w-[30px] text-danger"
                     aria-label="Hapus slot"
                     title="Hapus slot"
                   >
@@ -114,11 +117,13 @@ export function TabSlot({
           </button>
 
           <p className="caption mt-3 text-fg-muted">
-            💡 Slot harus tidak overlap. Booking di luar slot ditolak — kecuali admin centang{' '}
-            <em>Lewati validasi jeda &amp; jam buka</em> di wizard (untuk walk-in darurat).
+            💡 Slot harus tidak overlap. Booking harus sesuai dengan salah satu slot di atas.
           </p>
         </div>
       </section>
+
+      {/* Section: Slot khusus per layanan (read-only) */}
+      <ServiceSlotSummary />
 
       {/* Section: Hari tutup */}
       <section className="card-althea bg-card">
@@ -160,22 +165,7 @@ export function TabSlot({
           <h2 className="h2 m-0">Konfigurasi Lain</h2>
         </header>
 
-        <div className="px-5 py-4 grid grid-cols-2 gap-4">
-          <div>
-            <label className="caption mb-1 block">Buffer antar sesi (menit)</label>
-            <input
-              type="number"
-              min={0}
-              max={120}
-              value={form.bufferMinutes ?? 15}
-              onChange={(e) => set('bufferMinutes', Number(e.target.value))}
-              className="input-althea h-9 py-0 max-w-[140px]"
-            />
-            <p className="caption mt-1">
-              Default 15 menit. Sistem cegah booking yang berhimpit kurang dari ini.
-            </p>
-          </div>
-
+        <div className="px-5 py-4">
           <div>
             <label className="caption mb-1 block">Tanggal libur (ad-hoc)</label>
             <textarea

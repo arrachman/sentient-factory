@@ -45,6 +45,7 @@ export const psikologSchema = z.object({
   username: z.string(),
   fullName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
+  phone: z.string().nullable().optional(),
   isActive: z.boolean(),
   title: z.string().nullable(),
   specialty: z.array(z.string()),
@@ -58,6 +59,11 @@ export const psikologSchema = z.object({
   lastLogin: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  hasBookings: z.boolean().default(false),
+  /** Stats dari batch query findAll() — hanya ada di list admin, bukan di getById. */
+  todayCount: z.number().int().default(0),
+  weekCount: z.number().int().default(0),
+  clientCount: z.number().int().default(0),
 });
 
 export type Psikolog = z.infer<typeof psikologSchema>;
@@ -71,6 +77,11 @@ export type Psikolog = z.infer<typeof psikologSchema>;
 export const createPsikologSchema = z.object({
   email: z.string().email('Email tidak valid'),
   fullName: z.string().min(2, 'Nama minimal 2 karakter').max(255),
+  phone: z
+    .string()
+    .max(32, 'No WhatsApp maksimal 32 karakter')
+    .optional()
+    .or(z.literal('')),
   username: z.string().max(120).optional(),
   // Password wajib saat tambah psikolog baru — minimal 8 karakter.
   // Update schema (lihat updatePsikologSchema below) drop field ini, jadi
@@ -129,16 +140,22 @@ export const SPECIALTY_LABEL: Record<string, string> = {
 };
 
 /**
- * Default avatar color palette (sage spectrum).
+ * Preset avatar color swatches — quick picks for admin.
+ * Custom color can also be chosen via the color picker (any hex).
  */
 export const COLOR_PALETTE = [
-  '#5b8a66',
-  '#7aa382',
-  '#c97a5d',
-  '#6f8aa3',
-  '#9c7c3c',
-  '#3a4f4f',
-  '#e3a895',
+  '#2f7a3f', // dark green
+  '#4ea860', // medium green
+  '#5b8a66', // sage (primary)
+  '#0f3a3a', // deep teal
+  '#2f6fb5', // blue
+  '#1d4ed8', // deep blue
+  '#7c3aed', // violet
+  '#c98a14', // amber
+  '#e25822', // orange
+  '#d94f7a', // rose
+  '#be123c', // crimson
+  '#6b7280', // slate gray
 ];
 
 export type ListResponse = {

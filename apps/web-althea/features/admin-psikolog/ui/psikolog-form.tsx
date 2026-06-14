@@ -1,11 +1,11 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo } from 'react';
-import { Controller, useForm, type Control, type Resolver } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm, type Resolver } from 'react-hook-form';
 import { X } from 'lucide-react';
 import { z } from 'zod';
-import { useServiceList } from '@/features/admin-layanan/hooks/use-service';
+import { ServicesSection } from './psikolog-form-services';
 import {
   COLOR_PALETTE,
   SPECIALTY_LABEL,
@@ -16,17 +16,6 @@ import {
   type DayKey,
   type Psikolog,
 } from '../model/types';
-
-/**
- * Edit-mode schema: password field disembunyikan di UI tapi tetap ada di
- * form state (default `''`). Required-min-8 dari create schema akan fail
- * silently → submit terblok. Solusi: override password ke optional di
- * edit mode supaya zod tidak gagal walaupun empty. Parent submit handler
- * akan drop password sebelum kirim ke API.
- */
-const editPsikologSchema = createPsikologSchema.extend({
-  password: z.string().optional().or(z.literal('')),
-});
 
 type Props = {
   open: boolean;
@@ -39,7 +28,7 @@ type Props = {
 /**
  * Default seed weekly availability untuk create psikolog baru: Sen-Jum buka,
  * Sab+Min tutup. Tidak ada UI editor — psikolog yang bersangkutan atur sendiri
- * lewat /psikolog/schedule "Set Jadwal" dialog (BR-04 privacy).
+ * lewat /psikolog/schedule "Set Jadwal" dialog (privacy).
  */
 const DEFAULT_WEEKLY: Record<DayKey, DayAvailability> = {
   monday: { isOpen: true },
@@ -54,11 +43,12 @@ const DEFAULT_WEEKLY: Record<DayKey, DayAvailability> = {
 const EMPTY_FORM: CreatePsikologInput = {
   email: '',
   fullName: '',
+  phone: '',
   username: '',
   password: '',
   title: '',
   specialty: [],
-  color: '',
+  color: COLOR_PALETTE[4],
   license: '',
   defaultSlots: 4,
   weeklyAvailability: DEFAULT_WEEKLY,
@@ -69,6 +59,14 @@ const EMPTY_FORM: CreatePsikologInput = {
 
 export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: Props) {
   const isEdit = initial !== null;
+  const [tempCustomColor, setTempCustomColor] = useState('');
+
+  const activeSchema = useMemo(() => {
+    return isEdit
+      ? createPsikologSchema.extend({ password: z.string().optional().or(z.literal('')) })
+      : createPsikologSchema;
+  }, [isEdit]);
+
   const {
     control,
     register,
@@ -78,13 +76,10 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
     setValue,
     formState: { errors },
   } = useForm<CreatePsikologInput>({
-    // Cast: editPsikologSchema infer type wider (password optional) — cast
-    // ke Resolver<CreatePsikologInput> aman karena empty password tetap
-    // valid string `''` di runtime, dan parent submit handler drop password
-    // sebelum kirim ke API saat edit.
-    resolver: zodResolver(
-      isEdit ? editPsikologSchema : createPsikologSchema,
-    ) as Resolver<CreatePsikologInput>,
+    // Cast: edit schema infer type wider (password optional) — cast ke
+    // Resolver<CreatePsikologInput> aman karena empty password tetap valid
+    // string '' di runtime; parent submit handler drop password saat edit.
+    resolver: zodResolver(activeSchema) as Resolver<CreatePsikologInput>,
     defaultValues: EMPTY_FORM,
   });
 
@@ -100,13 +95,14 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
       reset({
         email: initial.email,
         fullName: initial.fullName ?? '',
+        phone: initial.phone ?? '',
         username: initial.username,
         password: '',
         title: initial.title ?? '',
         specialty: initial.specialty,
-        color: initial.color ?? '',
+        color: initial.color ?? COLOR_PALETTE[4],
         license: initial.license ?? '',
-        defaultSlots: initial.defaultSlots,
+        defaultSlots: initial.defaultSlots ?? 4,
         weeklyAvailability: existingWA as Record<DayKey, DayAvailability>,
         serviceIds: initial.serviceIds ?? [],
         bio: initial.bio ?? '',
@@ -115,6 +111,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
     } else {
       reset(EMPTY_FORM);
     }
+    setTempCustomColor('');
   }, [initial, reset]);
 
   const selectedSpecialty = watch('specialty') ?? [];
@@ -148,7 +145,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
           <button
             type="button"
             onClick={onClose}
-            className="btn btn-ghost btn-icon"
+            className="btn btn-ghost btn-icon btn-sm"
             aria-label="Close dialog"
           >
             <X className="h-5 w-5" />
@@ -177,6 +174,20 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
                 <p className="caption mt-1 text-danger">{errors.fullName.message}</p>
               )}
             </div>
+          </div>
+
+          <div>
+            <label className="caption mb-1 block">No WhatsApp</label>
+            <input
+              type="tel"
+              {...register('phone')}
+              className="input-althea"
+              placeholder="081234567890"
+              autoComplete="off"
+            />
+            {errors.phone && (
+              <p className="caption mt-1 text-danger">{errors.phone.message}</p>
+            )}
           </div>
 
           {!isEdit && (
@@ -224,6 +235,26 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="caption mb-1 block">Kuota Harian (maks sesi/hari)</label>
+              <input
+                type="number"
+                {...register('defaultSlots', { valueAsNumber: true })}
+                className="input-althea"
+                min={0}
+                max={20}
+                placeholder="4"
+              />
+              <p className="caption mt-1 text-fg-muted">
+                Batas sesi yang bisa di-booking per hari. Default 4.
+              </p>
+              {errors.defaultSlots && (
+                <p className="caption mt-1 text-danger">{errors.defaultSlots.message}</p>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="caption mb-1 block">Spesialisasi</label>
             <div className="flex flex-wrap gap-2">
@@ -247,37 +278,54 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
 
           <div>
             <label className="caption mb-1 block">Warna Avatar</label>
-            <div className="flex flex-wrap gap-2">
-              {COLOR_PALETTE.map((c) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {COLOR_PALETTE.slice(0, 5).map((c) => (
                 <button
                   key={c}
                   type="button"
-                  onClick={() => setValue('color', c)}
+                  onClick={() => { setValue('color', c); setTempCustomColor(''); }}
                   className={`h-8 w-8 rounded-full border-2 transition ${
-                    selectedColor === c ? 'border-teal-800 ring-2 ring-sage-300' : 'border-border'
+                    selectedColor === c && !tempCustomColor ? 'border-teal-800 ring-2 ring-sage-300' : 'border-border'
                   }`}
                   style={{ backgroundColor: c }}
                   aria-label={`Warna ${c}`}
                 />
               ))}
+              {/* Custom color picker — pilih warna bebas, konfirmasi via tombol Set */}
+              <label
+                className={`relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-2 transition ${
+                  tempCustomColor
+                    ? 'border-teal-800 ring-2 ring-sage-300'
+                    : 'border-dashed border-border hover:border-sage-400'
+                }`}
+                title="Pilih warna kustom"
+                aria-label="Pilih warna kustom"
+              >
+                <span className="text-xs font-semibold leading-none text-fg-muted">+</span>
+                <input
+                  type="color"
+                  value={tempCustomColor || (selectedColor?.startsWith('#') ? selectedColor : '#5b8a66')}
+                  onChange={(e) => setTempCustomColor(e.target.value)}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </label>
+              {tempCustomColor && (
+                <button
+                  type="button"
+                  onClick={() => { setValue('color', tempCustomColor); setTempCustomColor(''); }}
+                  className="btn btn-outline btn-sm"
+                  style={{ fontSize: 12, padding: '0 10px', height: 32 }}
+                >
+                  Set
+                </button>
+              )}
+              {!tempCustomColor && selectedColor && (
+                <span className="caption font-mono text-fg-muted">{selectedColor}</span>
+              )}
             </div>
           </div>
 
-          <div>
-            <label className="caption mb-1 block">Slot per hari (default)</label>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              {...register('defaultSlots', { valueAsNumber: true })}
-              className="input-althea max-w-[160px]"
-            />
-            <p className="caption mt-1 text-fg-muted">
-              Maksimal jumlah klien per hari yang bisa di-booking ke psikolog ini (BR-01).
-            </p>
-          </div>
-
-          {/* Status psikolog — section terpisah supaya jelas bukan modifier slot per hari */}
+          {/* Status psikolog */}
           <div className="rounded-md border border-border bg-cream-50 p-3">
             <label className="caption block mb-2 font-semibold">
               Status Psikolog
@@ -338,7 +386,7 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
            * Jadwal Mingguan dipindah ke halaman /psikolog/schedule "Set Jadwal"
            * (dialog AvailabilityDialog) — diatur sendiri oleh psikolog
            * bersangkutan, bukan oleh admin. Lebih sesuai dengan flow privasi
-           * BR-04: admin tidak set jadwal psikolog secara langsung.
+           * Catatan: admin tidak set jadwal psikolog secara langsung.
            */}
 
           <ServicesSection control={control} />
@@ -354,130 +402,15 @@ export function PsikologForm({ open, initial, submitting, onSubmit, onClose }: P
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
-            <button type="button" onClick={onClose} className="btn btn-outline">
+            <button type="button" onClick={onClose} className="btn btn-outline btn-sm">
               Batal
             </button>
-            <button type="submit" disabled={submitting} className="btn btn-primary">
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-sm">
               {submitting ? 'Menyimpan...' : isEdit ? 'Simpan' : 'Tambah Psikolog'}
             </button>
           </div>
         </form>
       </div>
-    </div>
-  );
-}
-
-/**
- * Section "Layanan yang ditangani" — multi-select chip list grouped by category.
- * Kosong = psikolog handle SEMUA layanan (default). Filled = subset only.
- */
-function ServicesSection({ control }: { control: Control<CreatePsikologInput> }) {
-  const serviceList = useServiceList({ limit: 200, isActive: true });
-  const services = serviceList.data?.data ?? [];
-
-  const grouped = useMemo(() => {
-    const map = new Map<string, typeof services>();
-    for (const sv of services) {
-      const arr = map.get(sv.category) ?? [];
-      arr.push(sv);
-      map.set(sv.category, arr);
-    }
-    const ORDER = ['konseling', 'terapi', 'tes'];
-    const LABEL: Record<string, string> = {
-      konseling: 'Konseling',
-      terapi: 'Terapi',
-      tes: 'Tes Psikologi',
-    };
-    return ORDER.filter((c) => map.has(c)).map((c) => ({
-      key: c,
-      label: LABEL[c],
-      items: map.get(c)!,
-    }));
-  }, [services]);
-
-  return (
-    <div>
-      <div className="flex items-baseline justify-between mb-1">
-        <label className="caption">Layanan yang ditangani</label>
-      </div>
-      <Controller
-        name="serviceIds"
-        control={control}
-        render={({ field }) => {
-          const value = (field.value ?? []) as number[];
-          const valueSet = new Set(value);
-          const toggle = (id: number) => {
-            if (valueSet.has(id)) {
-              field.onChange(value.filter((v) => v !== id));
-            } else {
-              field.onChange([...value, id]);
-            }
-          };
-          const allIds = services.map((s) => s.id);
-          const allSelected = allIds.length > 0 && allIds.every((id) => valueSet.has(id));
-          return (
-            <div className="rounded-md border border-border bg-cream-50 p-3 flex flex-col gap-3">
-              {serviceList.isLoading ? (
-                <div className="text-fg-muted text-sm italic">Memuat layanan...</div>
-              ) : services.length === 0 ? (
-                <div className="text-fg-muted text-sm italic">
-                  Belum ada layanan aktif. Tambah di menu Layanan.
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => field.onChange(allSelected ? [] : allIds)}
-                      className="btn btn-ghost btn-sm text-xs"
-                    >
-                      {allSelected ? 'Batal pilih semua' : 'Pilih semua'}
-                    </button>
-                    <span className="caption ml-auto">
-                      {value.length === 0
-                        ? 'Belum ada layanan dipilih'
-                        : `${value.length} dari ${services.length} layanan dipilih`}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {grouped.map((group) => (
-                      <div key={group.key}>
-                        <div className="caption font-semibold uppercase tracking-wider text-fg-muted mb-1">
-                          {group.label}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {group.items.map((sv) => {
-                            const active = valueSet.has(sv.id);
-                            return (
-                              <button
-                                key={sv.id}
-                                type="button"
-                                onClick={() => toggle(sv.id)}
-                                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
-                                  active
-                                    ? 'bg-sage-500 text-white border-sage-500'
-                                    : 'bg-card text-fg border-border hover:border-sage-300'
-                                }`}
-                              >
-                                {sv.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        }}
-      />
-      <p className="caption mt-1.5 text-fg-muted">
-        💡 Centang chip untuk layanan yang ditangani psikolog ini (mis. specialist anak hanya
-        konseling anak + terapi anak). Filter ini dipakai di booking wizard untuk hide psikolog
-        yang tidak relevan.
-      </p>
     </div>
   );
 }

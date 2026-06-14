@@ -71,16 +71,62 @@ export function localPartsInTimezone(d: Date, timezone = 'Asia/Jakarta'): LocalD
  * Convert local-date-string (YYYY-MM-DD di TZ klinik) jadi Date object
  * yang mewakili 00:00 di TZ tsb (sebagai UTC instant).
  *
- * Dipakai untuk lookup `clinic_psikolog_date_override.date` (column
- * disimpan sebagai "midnight di TZ klinik" expressed as UTC).
+ * HANYA dipakai untuk kalkulasi DOW / hh:mm comparison — BUKAN untuk
+ * write/lookup kolom @db.Date Prisma. Untuk kolom @db.Date, pakai
+ * `dateStrToDateColumn` supaya Prisma ambil UTC-date yang benar.
  */
 export function localDateAtMidnight(dateStr: string, timezone = 'Asia/Jakarta'): Date {
-  // Parse YYYY-MM-DD assuming clinic TZ. Trick: build ISO with offset
-  // computed dari Intl.DateTimeFormat.
-  // Simpler: ambil UTC date sama-sama lalu adjust. Cukup pakai
-  // Date constructor dengan TZ-offset string.
   const offset = getTimezoneOffsetString(dateStr, timezone);
   return new Date(`${dateStr}T00:00:00${offset}`);
+}
+
+/**
+ * Convert YYYY-MM-DD string ke Date untuk dipakai sebagai value kolom
+ * `@db.Date` (Postgres `date` type) di Prisma.
+ *
+ * Prisma menggunakan UTC date portion saat write ke kolom @db.Date.
+ * Jadi Date harus UTC midnight supaya `2026-05-15` tersimpan sebagai
+ * `2026-05-15` — bukan `2026-05-14` (hasil localDateAtMidnight WIB yang
+ * menghasilkan 2026-05-14T17:00:00Z).
+ */
+export function dateStrToDateColumn(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00.000Z`);
+}
+
+/**
+ * Format Date jadi "HH.mm" 24-jam di TZ klinik (dot separator).
+ *
+ * Dipakai untuk variabel WA template (`{{waktu}}`, `{{waktu_lama}}`,
+ * `{{waktu_baru}}`, dst) supaya output konsisten — mis. jam 3 sore →
+ * "15.00", bukan "3:00 PM" / "15:00" / "03.00".
+ */
+export function formatClinicTimeOfDay(d: Date, timezone = 'Asia/Jakarta'): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: timezone,
+  })
+    .format(d)
+    .replace(':', '.');
+}
+
+/**
+ * Build Date object yang mewakili `dateStr T hhmm` di TZ klinik (sebagai
+ * UTC instant). Dipakai saat backend perlu reconstruct booking time dari
+ * komponen tanggal + HH:MM string (mis. auto-recompute scheduledEnd dari
+ * slot.end layanan baru).
+ *
+ * Contoh: `buildClinicInstant('2026-05-26', '13:30', 'Asia/Jakarta')` →
+ * Date 2026-05-26T06:30:00.000Z (= 13:30 WIB).
+ */
+export function buildClinicInstant(
+  dateStr: string,
+  hhmm: string,
+  timezone = 'Asia/Jakarta',
+): Date {
+  const offset = getTimezoneOffsetString(dateStr, timezone);
+  return new Date(`${dateStr}T${hhmm}:00${offset}`);
 }
 
 function getTimezoneOffsetString(dateStr: string, timezone: string): string {

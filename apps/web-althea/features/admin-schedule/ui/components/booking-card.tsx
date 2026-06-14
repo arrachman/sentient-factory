@@ -5,17 +5,25 @@
 import type { Booking } from '@/features/admin-booking/model/types';
 import { SVC_COLOR } from '../../model/constants';
 
-export function BookingCard({ b }: { b: Booking }) {
+export function BookingCard({ b, onClick }: { b: Booking; onClick: () => void }) {
   const c = SVC_COLOR[b.service.category] ?? SVC_COLOR.konseling;
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       style={{
         background: c.fill,
         borderRadius: 8,
         borderLeft: `3px solid ${c.bar}`,
+        borderTop: 'none',
+        borderRight: 'none',
+        borderBottom: 'none',
         padding: '8px 9px',
         height: '100%',
         cursor: 'pointer',
+        textAlign: 'left',
+        width: '100%',
+        display: 'block',
       }}
       title={`#${b.id} · ${b.client.name}`}
     >
@@ -56,7 +64,7 @@ export function BookingCard({ b }: { b: Booking }) {
           />
         ) : null}
       </div>
-    </div>
+    </button>
   );
 }
 

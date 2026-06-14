@@ -24,7 +24,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -40,310 +39,40 @@ import {
   ToolbarHeading,
   ToolbarPageTitle,
 } from '@/components/layouts/app/components/toolbar';
+import {
+  FEATURE_LABELS,
+  fetchRows,
+  fmt,
+  fmtMoney,
+  fmtMoneyCompact,
+  isIntegerColumn,
+  isMonetaryColumn,
+  isNumericLike,
+  oneYearAgoDateOnly,
+  todayDateOnly,
+  toNumber,
+} from '../_shared/m2-types';
+import type { InsightItem, InsightResponse, SummaryRow } from '../_shared/m2-types';
+import { M2KpiCards } from '../_shared/m2-kpi-cards';
+import { M2InsightPanel } from '../_shared/m2-insight-panel';
 
-type DashboardResponse<T> = {
-  success?: boolean;
-  data?: { rows?: T[] };
-  message?: string;
+const FEATURE = 'm2_sm';
+const INSIGHT_TERM_MAP = {
+  totalDebit: 'total bank payment',
+  totalKredit: 'total terealisasi',
+  netCashflow: 'outstanding payment',
+  cashIn: 'nilai payment',
+  cashOut: 'nilai realisasi payment',
+  arusKasAgregat: 'ringkasan payment bank',
+  outlierNetCashflow: 'outlier bank payment',
 };
-
-type SummaryRow = {
-  total_journal_rows?: number | string;
-  total_debit?: number | string;
-  total_kredit?: number | string;
-  net_cashflow?: number | string;
-  total_cabang?: number | string;
-  total_sumber?: number | string;
-};
-
-type InsightResponse = {
-  success?: boolean;
-  data?: {
-    insights?: InsightItem[];
-    anomalies?: InsightItem[];
-    recommendations?: InsightItem[];
-    model?: {
-      provider?: string;
-      version?: string;
-    };
-  };
-  message?: string;
-};
-
-type InsightItem =
-  | string
-  | {
-      text?: string;
-      confidence?: number;
-    };
-
-const FEATURE_LABELS: Record<string, string> = {
-  m2_aj: 'Jurnal Penyesuaian (AJ)',
-  m2_bd: 'Anggaran (BD)',
-  m2_cb: 'Saldo Awal COA (CB)',
-  m2_cr: 'Kas Masuk (CR)',
-  m2_cd: 'Kas Keluar (CD)',
-  m2_gj: 'Jurnal Umum (GJ)',
-  m2_jm: 'Jurnal Memorial (JM)',
-  m2_rg: 'Giro Masuk (RG)',
-  m2_rgc: 'Giro Masuk Batal (RGC)',
-  m2_rm: 'Bank Receipt (RM)',
-  m2_sg: 'Giro Keluar (SG)',
-  m2_sgc: 'Giro Keluar Batal (SGC)',
-  m2_sm: 'Bank Payment (SM)',
-  m2_template: 'Template Jurnal (TJ)',
-};
-
-const FEATURE_COPY: Record<
-  string,
-  {
-    description: string;
-    kpi1: string;
-    kpi2: string;
-    kpi3: string;
-    kpi4: string;
-    trendTitle: string;
-    flowTitle: string;
-    sourceTitle: string;
-    branchTitle: string;
-    statusTitle: string;
-    tableTitle: string;
-    insightTitle: string;
-    insightHighlights: string;
-    insightAnomalies: string;
-    insightRecommendations: string;
-    totalBranchTitle: string;
-    totalSourceTitle: string;
-    emptyStatusText: string;
-    emptyInsightText: string;
-    emptyAnomalyText: string;
-    emptyRecommendationText: string;
-    emptyTableText: string;
-  }
-> = {
-  default: {
-    description:
-      'Dashboard Finance & Accounting dengan KPI, chart, breakdown, dan list transaksi.',
-    kpi1: 'Total Jurnal',
-    kpi2: 'Total Debit',
-    kpi3: 'Total Kredit',
-    kpi4: 'Net Cashflow',
-    trendTitle: 'Trend Debit vs Kredit',
-    flowTitle: 'Cash In vs Cash Out',
-    sourceTitle: 'Komposisi Sumber',
-    branchTitle: 'Top Cabang',
-    statusTitle: 'Ringkasan Status',
-    tableTitle: 'List Transaksi (Sample)',
-    insightTitle: 'AI Insight',
-    insightHighlights: 'Highlights',
-    insightAnomalies: 'Anomaly Alerts',
-    insightRecommendations: 'Recommendations',
-    totalBranchTitle: 'Total Cabang',
-    totalSourceTitle: 'Total Sumber',
-    emptyStatusText: 'No status data.',
-    emptyInsightText: 'No insight generated.',
-    emptyAnomalyText: 'No anomaly detected.',
-    emptyRecommendationText: 'No recommendation.',
-    emptyTableText: 'Tidak ada data tabel.',
-  },
-  m2_bd: {
-    description:
-      'Dashboard Anggaran (BD) untuk memantau nilai anggaran, realisasi pergerakan, dan status dokumen.',
-    kpi1: 'Total Dokumen Anggaran',
-    kpi2: 'Total Nilai Anggaran',
-    kpi3: 'Total Realisasi Anggaran',
-    kpi4: 'Selisih Anggaran',
-    trendTitle: 'Trend Nilai Anggaran vs Realisasi',
-    flowTitle: 'Alokasi Anggaran vs Realisasi',
-    sourceTitle: 'Komposisi Sumber Anggaran',
-    branchTitle: 'Top Cabang Berdasarkan Anggaran',
-    statusTitle: 'Ringkasan Status Anggaran',
-    tableTitle: 'List Dokumen Anggaran (Sample)',
-    insightTitle: 'AI Insight Anggaran',
-    insightHighlights: 'Sorotan Anggaran',
-    insightAnomalies: 'Anomali Anggaran',
-    insightRecommendations: 'Rekomendasi Anggaran',
-    totalBranchTitle: 'Total Cabang Anggaran',
-    totalSourceTitle: 'Total Sumber Anggaran',
-    emptyStatusText: 'Tidak ada data status anggaran.',
-    emptyInsightText: 'Belum ada insight anggaran.',
-    emptyAnomalyText: 'Belum ada anomali anggaran.',
-    emptyRecommendationText: 'Belum ada rekomendasi anggaran.',
-    emptyTableText: 'Tidak ada data dokumen anggaran.',
-  },
-  m2_sm: {
-    description:
-      'Dashboard Bank Payment (SM) untuk memantau pembayaran bank, tren pengeluaran, dan kualitas transaksi.',
-    kpi1: 'Total Transaksi Bank Payment',
-    kpi2: 'Total Nilai Pembayaran',
-    kpi3: 'Total Terealisasi',
-    kpi4: 'Outstanding Payment',
-    trendTitle: 'Trend Payment vs Realisasi',
-    flowTitle: 'Arus Payment Bank',
-    sourceTitle: 'Komposisi Sumber Payment',
-    branchTitle: 'Top Cabang Payment',
-    statusTitle: 'Ringkasan Status Bank Payment',
-    tableTitle: 'List Transaksi Bank Payment (Sample)',
-    insightTitle: 'AI Insight Bank Payment',
-    insightHighlights: 'Ringkasan',
-    insightAnomalies: 'Anomali',
-    insightRecommendations: 'Rekomendasi',
-    totalBranchTitle: 'Total Cabang',
-    totalSourceTitle: 'Total Sumber',
-    emptyStatusText: 'Belum ada data status bank payment.',
-    emptyInsightText: 'Belum ada insight bank payment.',
-    emptyAnomalyText: 'Belum ada anomali bank payment.',
-    emptyRecommendationText: 'Belum ada rekomendasi bank payment.',
-    emptyTableText: 'Tidak ada data transaksi bank payment.',
-  },
-};
-
-function toNumber(value: unknown): number {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function fmt(value: unknown, maximumFractionDigits = 0) {
-  return toNumber(value).toLocaleString('id-ID', { maximumFractionDigits });
-}
-
-function fmtCompact(value: unknown, maximumFractionDigits = 1) {
-  return toNumber(value).toLocaleString('id-ID', {
-    notation: 'compact',
-    maximumFractionDigits,
-  });
-}
-
-function fmtMoney(value: unknown, maximumFractionDigits = 2) {
-  return `Rp ${fmt(value, maximumFractionDigits)}`;
-}
-
-function fmtMoneyCompact(value: unknown, maximumFractionDigits = 1) {
-  return `Rp ${fmtCompact(value, maximumFractionDigits)}`;
-}
-
-function isNumericLike(value: unknown) {
-  if (typeof value === 'number') {
-    return Number.isFinite(value);
-  }
-  if (typeof value === 'string') {
-    return value.trim() !== '' && Number.isFinite(Number(value));
-  }
-  return false;
-}
-
-function isMonetaryColumn(column: string) {
-  const lower = column.toLowerCase();
-  return (
-    lower.includes('debit') ||
-    lower.includes('kredit') ||
-    lower.includes('cash') ||
-    lower.includes('amount') ||
-    lower.includes('total') ||
-    lower.includes('net')
-  );
-}
-
-function isIntegerColumn(column: string) {
-  const lower = column.toLowerCase();
-  return (
-    lower.endsWith('id') ||
-    lower.includes('_id') ||
-    lower.includes('status') ||
-    lower.includes('row')
-  );
-}
-
-function todayDateOnly() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function oneYearAgoDateOnly() {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() - 1);
-  return d.toISOString().slice(0, 10);
-}
-
-function normalizeInsightText(item: InsightItem): string {
-  if (typeof item === 'string') {
-    return item;
-  }
-  if (item && typeof item === 'object' && typeof item.text === 'string') {
-    return item.text;
-  }
-  return '-';
-}
-
-function normalizeInsightConfidence(item: InsightItem): string | null {
-  if (!item || typeof item === 'string') {
-    return null;
-  }
-  if (
-    typeof item.confidence !== 'number' ||
-    !Number.isFinite(item.confidence)
-  ) {
-    return null;
-  }
-  return `${Math.round(item.confidence * 100)}%`;
-}
-
-function contextualizeInsightText(text: string, feature: string): string {
-  if (feature === 'm2_bd') {
-    return text
-      .replace(/total debit/gi, 'total nilai anggaran')
-      .replace(/total kredit/gi, 'total realisasi anggaran')
-      .replace(/net cashflow/gi, 'selisih anggaran')
-      .replace(/cash in/gi, 'alokasi anggaran')
-      .replace(/cash out/gi, 'realisasi anggaran')
-      .replace(/arus kas agregat/gi, 'ringkasan alokasi vs realisasi')
-      .replace(/outlier net cashflow/gi, 'outlier selisih anggaran');
-  }
-
-  if (feature === 'm2_sm') {
-    return text
-      .replace(/total debit/gi, 'total bank payment')
-      .replace(/total kredit/gi, 'total terealisasi')
-      .replace(/net cashflow/gi, 'outstanding payment')
-      .replace(/cash in/gi, 'nilai payment')
-      .replace(/cash out/gi, 'nilai realisasi payment')
-      .replace(/arus kas agregat/gi, 'ringkasan payment bank')
-      .replace(/outlier net cashflow/gi, 'outlier bank payment');
-  }
-
-  return text;
-}
-
-async function fetchRows<T>(url: string): Promise<T[]> {
-  const response = await fetch(url, { cache: 'no-store' });
-  const payload = (await response
-    .json()
-    .catch(() => null)) as DashboardResponse<T> | null;
-  if (!response.ok || !payload?.success) {
-    throw new Error(payload?.message || `Request failed: ${response.status}`);
-  }
-  return payload.data?.rows ?? [];
-}
-
-const feature: string = 'm2_sm';
 
 export default function Page() {
-  const featureLabel =
-    FEATURE_LABELS[feature] ?? `Finance Feature (${feature})`;
-  const featureCopy = FEATURE_COPY[feature] ?? FEATURE_COPY.default;
-  const isBudgetFeature = feature === 'm2_bd';
-  const isBankPaymentFeature = feature === 'm2_sm';
-
+  const featureLabel = FEATURE_LABELS[FEATURE] ?? `Finance Feature (${FEATURE})`;
   const [fromDate, setFromDate] = useState(oneYearAgoDateOnly());
   const [toDate, setToDate] = useState(todayDateOnly());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   const [summary, setSummary] = useState<SummaryRow | null>(null);
   const [trends, setTrends] = useState<Record<string, unknown>[]>([]);
   const [breakdown, setBreakdown] = useState<Record<string, unknown>[]>([]);
@@ -352,266 +81,102 @@ export default function Page() {
   const [topContacts, setTopContacts] = useState<Record<string, unknown>[]>([]);
   const [status, setStatus] = useState<Record<string, unknown>[]>([]);
   const [tableRows, setTableRows] = useState<Record<string, unknown>[]>([]);
-  const [contactDrilldown, setContactDrilldown] = useState<
-    Record<string, unknown>[]
-  >([]);
-  const [activeKontakId, setActiveKontakId] = useState<string>('');
+  const [contactDrilldown, setContactDrilldown] = useState<Record<string, unknown>[]>([]);
+  const [activeKontakId, setActiveKontakId] = useState('');
   const [drilldownOpen, setDrilldownOpen] = useState(false);
   const [loadingKontak, setLoadingKontak] = useState<string | null>(null);
   const [insights, setInsights] = useState<InsightItem[]>([]);
   const [anomalies, setAnomalies] = useState<InsightItem[]>([]);
   const [recommendations, setRecommendations] = useState<InsightItem[]>([]);
-  const [insightModel, setInsightModel] = useState<{
-    provider?: string;
-    version?: string;
-  } | null>(null);
+  const [insightModel, setInsightModel] = useState<{ provider?: string; version?: string } | null>(null);
 
   const load = async () => {
     setLoading(true);
     setError('');
     try {
-      const query = new URLSearchParams({ fromDate, toDate, feature });
-      const [
-        summaryRows,
-        trendRows,
-        breakdownRows,
-        cashflowRows,
-        branchRows,
-        topContactRows,
-        statusRows,
-        detailRows,
-      ] = await Promise.all([
-        fetchRows<SummaryRow>(`/api/dashboard/m2/summary?${query.toString()}`),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/trends?${query.toString()}`,
-        ),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/breakdown?${query.toString()}&groupBy=tsumber`,
-        ),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/breakdown/cashflow?${query.toString()}`,
-        ),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/breakdown/branch?${query.toString()}`,
-        ),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/sm/top-contacts?${query.toString()}`,
-        ),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/breakdown/status?${query.toString()}`,
-        ),
-        fetchRows<Record<string, unknown>>(
-          `/api/dashboard/m2/table?${query.toString()}&page=1&pageSize=20&sortBy=tkredit&sortOrder=desc`,
-        ),
-      ]);
-
-      const insightQuery = new URLSearchParams({ fromDate, toDate, feature });
-      const insightResponse = await fetch(
-        `/api/dashboard/m2/insight?${insightQuery.toString()}`,
-        {
-          cache: 'no-store',
-        },
-      );
-      const insightPayload = (await insightResponse
-        .json()
-        .catch(() => null)) as InsightResponse | null;
-      if (insightResponse.ok && insightPayload?.success) {
-        setInsights(insightPayload.data?.insights ?? []);
-        setAnomalies(insightPayload.data?.anomalies ?? []);
-        setRecommendations(insightPayload.data?.recommendations ?? []);
-        setInsightModel(insightPayload.data?.model ?? null);
-      } else {
-        setInsights([]);
-        setAnomalies([]);
-        setRecommendations([]);
-        setInsightModel(null);
-      }
-
-      setSummary(summaryRows[0] ?? null);
-      setTrends(trendRows);
-      setBreakdown(breakdownRows);
-      setCashflow(cashflowRows);
-      setBranch(branchRows);
-      setTopContacts(topContactRows);
-      setStatus(statusRows);
-      setTableRows(detailRows);
-      setContactDrilldown([]);
-      setActiveKontakId('');
-      setDrilldownOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-    } finally {
-      setLoading(false);
-    }
+      const query = new URLSearchParams({ fromDate, toDate, feature: FEATURE });
+      const [summaryRows, trendRows, breakdownRows, cashflowRows, branchRows, topContactRows, statusRows, detailRows] =
+        await Promise.all([
+          fetchRows<SummaryRow>(`/api/dashboard/m2/summary?${query}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/trends?${query}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown?${query}&groupBy=tsumber`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown/cashflow?${query}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown/branch?${query}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/sm/top-contacts?${query}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/breakdown/status?${query}`),
+          fetchRows<Record<string, unknown>>(`/api/dashboard/m2/table?${query}&page=1&pageSize=20&sortBy=tkredit&sortOrder=desc`),
+        ]);
+      const insightResponse = await fetch(`/api/dashboard/m2/insight?${new URLSearchParams({ fromDate, toDate, feature: FEATURE })}`, { cache: 'no-store' });
+      const ip = (await insightResponse.json().catch(() => null)) as InsightResponse | null;
+      if (insightResponse.ok && ip?.success) {
+        setInsights(ip.data?.insights ?? []); setAnomalies(ip.data?.anomalies ?? []);
+        setRecommendations(ip.data?.recommendations ?? []); setInsightModel(ip.data?.model ?? null);
+      } else { setInsights([]); setAnomalies([]); setRecommendations([]); setInsightModel(null); }
+      setSummary(summaryRows[0] ?? null); setTrends(trendRows); setBreakdown(breakdownRows);
+      setCashflow(cashflowRows); setBranch(branchRows); setTopContacts(topContactRows);
+      setStatus(statusRows); setTableRows(detailRows);
+      setContactDrilldown([]); setActiveKontakId(''); setDrilldownOpen(false);
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to load dashboard'); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feature]);
+  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const trendChartData = useMemo(
-    () =>
-      trends.map((row) => ({
-        period: String(row.period_ym ?? '-'),
-        debit: toNumber(row.total_debit),
-        kredit: toNumber(row.total_kredit),
-        net: toNumber(row.net_cashflow),
-        budget: toNumber(row.total_debit),
-        realization: toNumber(row.total_kredit),
-      })),
-    [trends],
-  );
-
-  const sourceBreakdownData = useMemo(
-    () =>
-      breakdown.slice(0, 8).map((row) => ({
-        label: String(row.group_key ?? 'UNKNOWN'),
-        value: toNumber(row.total_debit) + toNumber(row.total_kredit),
-      })),
-    [breakdown],
-  );
-
-  const cashflowChartData = useMemo(
-    () =>
-      cashflow.map((row) => ({
-        period: String(row.period_ym ?? '-'),
-        cashIn: toNumber(row.cash_in),
-        cashOut: toNumber(row.cash_out),
-        allocation: toNumber(row.cash_in),
-        realization: toNumber(row.cash_out),
-      })),
-    [cashflow],
-  );
-
-  const kpiValues = useMemo(() => {
-    const totalRows = toNumber(summary?.total_journal_rows);
-    const totalDebit = toNumber(summary?.total_debit);
-    const totalKredit = toNumber(summary?.total_kredit);
-    const net = toNumber(summary?.net_cashflow);
-
-    if (!isBudgetFeature) {
-      return {
-        kpi1: totalRows,
-        kpi2: totalDebit,
-        kpi3: totalKredit,
-        kpi4: net,
-      };
-    }
-
-    return {
-      kpi1: totalRows,
-      kpi2: totalDebit,
-      kpi3: totalKredit,
-      kpi4: totalDebit - totalKredit,
-    };
-  }, [isBudgetFeature, summary]);
-
-  const branchChartData = useMemo(
-    () =>
-      branch.slice(0, 8).map((row) => ({
-        cabang: String(row.cabang ?? 'UNKNOWN'),
-        movement: toNumber(row.movement_amount),
-      })),
-    [branch],
-  );
+  const trendChartData = useMemo(() =>
+    trends.map((row) => ({ period: String(row.period_ym ?? '-'), debit: toNumber(row.total_debit), kredit: toNumber(row.total_kredit) })),
+    [trends]);
+  const sourceBreakdownData = useMemo(() =>
+    breakdown.slice(0, 8).map((row) => ({ label: String(row.group_key ?? 'UNKNOWN'), value: toNumber(row.total_debit) + toNumber(row.total_kredit) })),
+    [breakdown]);
+  const cashflowChartData = useMemo(() =>
+    cashflow.map((row) => ({ period: String(row.period_ym ?? '-'), cashIn: toNumber(row.cash_in), cashOut: toNumber(row.cash_out) })),
+    [cashflow]);
+  const kpiValues = useMemo(() => ({
+    kpi1: toNumber(summary?.total_journal_rows), kpi2: toNumber(summary?.total_debit),
+    kpi3: toNumber(summary?.total_kredit), kpi4: toNumber(summary?.net_cashflow),
+  }), [summary]);
+  const branchChartData = useMemo(() =>
+    branch.slice(0, 8).map((row) => ({ cabang: String(row.cabang ?? 'UNKNOWN'), movement: toNumber(row.movement_amount) })),
+    [branch]);
 
   const fallbackInsights = useMemo(() => {
-    if (!isBankPaymentFeature) {
-      return {
-        insights: [] as string[],
-        anomalies: [] as string[],
-        recommendations: [] as string[],
-      };
-    }
-
-    const totalPayment = toNumber(kpiValues.kpi2);
-    const totalRealisasi = toNumber(kpiValues.kpi3);
+    const total = toNumber(kpiValues.kpi2);
     const outstanding = Math.max(0, toNumber(kpiValues.kpi4));
-    const trxCount = toNumber(kpiValues.kpi1);
-    const outstandingPct =
-      totalPayment > 0 ? (outstanding / totalPayment) * 100 : 0;
+    const pct = total > 0 ? (outstanding / total) * 100 : 0;
+    const src = sourceBreakdownData[0]; const brnch = branchChartData[0]; const stTop = status[0];
+    const outlier = trendChartData.find((item) => toNumber(item.debit) > (total / Math.max(trendChartData.length, 1)) * 2.5);
+    return {
+      insights: [
+        `Periode analisis mencatat ${fmt(kpiValues.kpi1)} transaksi bank payment dengan total ${fmtMoney(total, 2)}.`,
+        `Total realisasi ${fmtMoney(kpiValues.kpi3, 2)} dengan outstanding ${fmtMoney(outstanding, 2)} (${fmt(pct, 2)}%).`,
+        src ? `Sumber payment terbesar: ${src.label} (${fmtMoney(src.value, 2)}).` : 'Belum ada sumber payment dominan.',
+        brnch ? `Cabang tertinggi: ${brnch.cabang} (${fmtMoney(brnch.movement, 2)}).` : 'Belum ada cabang dengan payment dominan.',
+      ],
+      anomalies: [
+        ...(pct > 30 ? [`Outstanding payment melebihi 30% dari total nilai payment (${fmt(pct, 2)}%).`] : []),
+        ...(outlier ? [`Lonjakan bank payment terdeteksi pada periode ${outlier.period}.`] : []),
+        ...(stTop && String(stTop.status_label ?? '').startsWith('unknown_') ? ['Terdapat status transaksi bank payment yang belum terpetakan (unknown_*).'] : []),
+      ],
+      recommendations: [
+        'Prioritaskan review transaksi payment outstanding terbesar berdasarkan sumber dan cabang.',
+        'Validasi transaksi outlier untuk memastikan akurasi nominal bank payment.',
+        'Pantau rasio outstanding payment secara periodik untuk menjaga kesehatan cash outflow.',
+      ],
+    };
+  }, [branchChartData, kpiValues, sourceBreakdownData, status, trendChartData]);
 
-    const sourceTop = sourceBreakdownData[0];
-    const branchTop = branchChartData[0];
-    const statusTop = status[0];
-    const trendOutlier = trendChartData.find(
-      (item) =>
-        toNumber(item.debit) >
-        (totalPayment / Math.max(trendChartData.length, 1)) * 2.5,
-    );
-
-    const ins = [
-      `Periode analisis mencatat ${fmt(trxCount)} transaksi bank payment dengan total ${fmtMoney(totalPayment, 2)}.`,
-      `Total realisasi ${fmtMoney(totalRealisasi, 2)} dengan outstanding ${fmtMoney(outstanding, 2)} (${fmt(outstandingPct, 2)}%).`,
-      sourceTop
-        ? `Sumber payment terbesar saat ini adalah ${sourceTop.label} dengan kontribusi ${fmtMoney(sourceTop.value, 2)}.`
-        : 'Belum ada sumber payment dominan.',
-      branchTop
-        ? `Cabang dengan nilai payment tertinggi: ${branchTop.cabang} (${fmtMoney(branchTop.movement, 2)}).`
-        : 'Belum ada cabang dengan payment dominan.',
-    ];
-
-    const anom = [
-      ...(outstandingPct > 30
-        ? [
-            `Outstanding payment melebihi 30% dari total nilai payment (${fmt(outstandingPct, 2)}%).`,
-          ]
-        : []),
-      ...(trendOutlier
-        ? [
-            `Lonjakan bank payment terdeteksi pada periode ${trendOutlier.period}; perlu verifikasi transaksi bernilai besar.`,
-          ]
-        : []),
-      ...(statusTop &&
-      String(statusTop.status_label ?? '').startsWith('unknown_')
-        ? [
-            'Terdapat status transaksi bank payment yang belum terpetakan (unknown_*).',
-          ]
-        : []),
-    ];
-
-    const rec = [
-      'Prioritaskan review transaksi payment outstanding terbesar berdasarkan sumber dan cabang.',
-      'Validasi transaksi outlier untuk memastikan akurasi nominal bank payment.',
-      'Pantau rasio outstanding payment secara periodik untuk menjaga kesehatan cash outflow.',
-    ];
-
-    return { insights: ins, anomalies: anom, recommendations: rec };
-  }, [
-    branchChartData,
-    isBankPaymentFeature,
-    kpiValues,
-    sourceBreakdownData,
-    status,
-    trendChartData,
-  ]);
-
-  const tableColumns =
-    tableRows.length > 0 ? Object.keys(tableRows[0]).slice(0, 8) : [];
+  const tableColumns = tableRows.length > 0 ? Object.keys(tableRows[0]).slice(0, 8) : [];
 
   const openContactDrilldown = async (kontakIdRaw: unknown) => {
     const kontakId = String(kontakIdRaw ?? '').trim();
     if (!kontakId) return;
-    setActiveKontakId(kontakId);
-    setDrilldownOpen(true);
-    setLoadingKontak(kontakId);
+    setActiveKontakId(kontakId); setDrilldownOpen(true); setLoadingKontak(kontakId);
     try {
-      const query = new URLSearchParams({
-        fromDate,
-        toDate,
-        feature,
-        kontakId,
-      });
       const rows = await fetchRows<Record<string, unknown>>(
-        `/api/dashboard/m2/sm/contact-drilldown?${query.toString()}`,
+        `/api/dashboard/m2/sm/contact-drilldown?${new URLSearchParams({ fromDate, toDate, feature: FEATURE, kontakId })}`,
       );
       setContactDrilldown(rows);
-    } catch {
-      setContactDrilldown([]);
-    } finally {
-      setLoadingKontak(null);
-    }
+    } catch { setContactDrilldown([]); } finally { setLoadingKontak(null); }
   };
 
   return (
@@ -619,233 +184,52 @@ export default function Page() {
       <Toolbar>
         <ToolbarHeading>
           <ToolbarPageTitle>{featureLabel}</ToolbarPageTitle>
-          <ToolbarDescription>
-            {featureCopy.description} ({feature})
-          </ToolbarDescription>
+          <ToolbarDescription>Dashboard Bank Payment (SM) untuk memantau pembayaran bank, tren pengeluaran, dan kualitas transaksi. ({FEATURE})</ToolbarDescription>
         </ToolbarHeading>
         <ToolbarActions>
           <div className="flex items-center gap-2">
-            <Input
-              type="date"
-              value={fromDate}
-              onChange={(event) => setFromDate(event.target.value)}
-              className="w-[160px]"
-            />
-            <Input
-              type="date"
-              value={toDate}
-              onChange={(event) => setToDate(event.target.value)}
-              className="w-[160px]"
-            />
-            <Button
-              variant="outline"
-              onClick={() => void load()}
-              disabled={loading}
-            >
-              <RefreshCw />
-              Refresh
-            </Button>
+            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="w-[160px]" />
+            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="w-[160px]" />
+            <Button variant="outline" onClick={() => void load()} disabled={loading}><RefreshCw /> Refresh</Button>
           </div>
         </ToolbarActions>
       </Toolbar>
 
-      {error ? (
-        <Card className="mb-4 border-destructive/30">
-          <CardContent className="pt-6 text-sm text-destructive">
-            {error}
-          </CardContent>
-        </Card>
-      ) : null}
+      {error ? <Card className="mb-4 border-destructive/30"><CardContent className="pt-6 text-sm text-destructive">{error}</CardContent></Card> : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.kpi1}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <p
-                  className="text-xl font-semibold leading-tight"
-                  title={fmt(kpiValues.kpi1)}
-                >
-                  {fmtCompact(kpiValues.kpi1)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fmt(kpiValues.kpi1)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.kpi2}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <p
-                  className="text-xl font-semibold leading-tight"
-                  title={fmtMoney(kpiValues.kpi2, 2)}
-                >
-                  {fmtMoneyCompact(kpiValues.kpi2, 2)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fmtMoney(kpiValues.kpi2, 2)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.kpi3}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <p
-                  className="text-xl font-semibold leading-tight"
-                  title={fmtMoney(kpiValues.kpi3, 2)}
-                >
-                  {fmtMoneyCompact(kpiValues.kpi3, 2)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fmtMoney(kpiValues.kpi3, 2)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.kpi4}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <p
-                  className="text-xl font-semibold leading-tight"
-                  title={fmtMoney(kpiValues.kpi4, 2)}
-                >
-                  {fmtMoneyCompact(kpiValues.kpi4, 2)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fmtMoney(kpiValues.kpi4, 2)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.totalBranchTitle}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <p
-                  className="text-xl font-semibold leading-tight"
-                  title={fmt(summary?.total_cabang)}
-                >
-                  {fmtCompact(summary?.total_cabang)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fmt(summary?.total_cabang)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.totalSourceTitle}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="h-8 w-24" />
-            ) : (
-              <>
-                <p
-                  className="text-xl font-semibold leading-tight"
-                  title={fmt(summary?.total_sumber)}
-                >
-                  {fmtCompact(summary?.total_sumber)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {fmt(summary?.total_sumber)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <M2KpiCards loading={loading} cards={[
+        { title: 'Total Transaksi Bank Payment', value: kpiValues.kpi1, isMoney: false },
+        { title: 'Total Nilai Pembayaran', value: kpiValues.kpi2, isMoney: true },
+        { title: 'Total Terealisasi', value: kpiValues.kpi3, isMoney: true },
+        { title: 'Outstanding Payment', value: kpiValues.kpi4, isMoney: true },
+        { title: 'Total Cabang', value: summary?.total_cabang, isMoney: false },
+        { title: 'Total Sumber', value: summary?.total_sumber, isMoney: false },
+      ]} />
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.trendTitle}</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Trend Payment vs Realisasi</CardTitle></CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis
-                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
-                  width={96}
-                />
-                <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
-                <Line
-                  dataKey={isBudgetFeature ? 'budget' : 'debit'}
-                  stroke="#2563eb"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  dataKey={isBudgetFeature ? 'realization' : 'kredit'}
-                  stroke="#dc2626"
-                  strokeWidth={2}
-                  dot={false}
-                />
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="period" />
+                <YAxis tickFormatter={(v) => fmtMoneyCompact(v, 1)} width={96} />
+                <Tooltip formatter={(v) => fmtMoneyCompact(v, 2)} />
+                <Line dataKey="debit" stroke="#2563eb" strokeWidth={2} dot={false} />
+                <Line dataKey="kredit" stroke="#dc2626" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.flowTitle}</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Arus Payment Bank</CardTitle></CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={cashflowChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis
-                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
-                  width={96}
-                />
-                <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
-                <Bar
-                  dataKey={isBudgetFeature ? 'allocation' : 'cashIn'}
-                  fill="#16a34a"
-                />
-                <Bar
-                  dataKey={isBudgetFeature ? 'realization' : 'cashOut'}
-                  fill="#ef4444"
-                />
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="period" />
+                <YAxis tickFormatter={(v) => fmtMoneyCompact(v, 1)} width={96} />
+                <Tooltip formatter={(v) => fmtMoneyCompact(v, 2)} />
+                <Bar dataKey="cashIn" fill="#16a34a" /><Bar dataKey="cashOut" fill="#ef4444" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -854,254 +238,92 @@ export default function Page() {
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.sourceTitle}</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Komposisi Sumber Payment</CardTitle></CardHeader>
           <CardContent className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sourceBreakdownData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" />
-                <YAxis
-                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
-                  width={96}
-                />
-                <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="label" />
+                <YAxis tickFormatter={(v) => fmtMoneyCompact(v, 1)} width={96} />
+                <Tooltip formatter={(v) => fmtMoneyCompact(v, 2)} />
                 <Bar dataKey="value" fill="#0ea5e9" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.branchTitle}</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Top Cabang Payment</CardTitle></CardHeader>
           <CardContent className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={branchChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="cabang" />
-                <YAxis
-                  tickFormatter={(value) => fmtMoneyCompact(value, 1)}
-                  width={96}
-                />
-                <Tooltip formatter={(value) => fmtMoneyCompact(value, 2)} />
+                <CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="cabang" />
+                <YAxis tickFormatter={(v) => fmtMoneyCompact(v, 1)} width={96} />
+                <Tooltip formatter={(v) => fmtMoneyCompact(v, 2)} />
                 <Bar dataKey="movement" fill="#7c3aed" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>{featureCopy.statusTitle}</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Ringkasan Status Bank Payment</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {status.slice(0, 6).map((row, index) => (
-              <div
-                key={`${row.status_label}-${index}`}
-                className="flex items-center justify-between text-sm"
-              >
+            {status.slice(0, 6).map((row, i) => (
+              <div key={`${String(row.status_label)}-${i}`} className="flex items-center justify-between text-sm">
                 <span>{String(row.status_label ?? 'unknown')}</span>
                 <span className="font-medium">{fmt(row.total_trx)}</span>
               </div>
             ))}
-            {status.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {featureCopy.emptyStatusText}
-              </p>
-            ) : null}
+            {status.length === 0 ? <p className="text-sm text-muted-foreground">Belum ada data status bank payment.</p> : null}
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle>Top Kontak Bank Payment</CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>Top Kontak Bank Payment</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {topContacts.slice(0, 6).map((row, index) => (
-              <button
-                key={`${row.kontak_key}-${index}`}
-                type="button"
+            {topContacts.slice(0, 6).map((row, i) => (
+              <button key={`${String(row.kontak_key)}-${i}`} type="button"
                 className="flex w-full items-center justify-between rounded px-1 py-1 text-sm hover:bg-muted/50"
-                onClick={() => void openContactDrilldown(row.kontak_key)}
-              >
+                onClick={() => void openContactDrilldown(row.kontak_key)}>
                 <span>Kontak {String(row.kontak_key ?? '0')}</span>
-                <span className="font-medium">
-                  {fmtMoney(row.total_payment, 2)}
-                </span>
+                <span className="font-medium">{fmtMoney(row.total_payment, 2)}</span>
               </button>
             ))}
-            {topContacts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Tidak ada kontak payment.
-              </p>
-            ) : null}
+            {topContacts.length === 0 ? <p className="text-sm text-muted-foreground">Tidak ada kontak payment.</p> : null}
           </CardContent>
         </Card>
       </div>
 
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>{featureCopy.insightTitle}</CardTitle>
-          <p className="text-xs text-muted-foreground">
-            {insightModel
-              ? `${insightModel.provider ?? 'n/a'} • ${insightModel.version ?? 'n/a'}`
-              : 'No model metadata'}
-          </p>
-        </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-3">
-          <div>
-            <p className="mb-2 text-sm font-semibold">
-              {featureCopy.insightHighlights}
-            </p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {insights.length === 0 &&
-              fallbackInsights.insights.length === 0 ? (
-                <li>{featureCopy.emptyInsightText}</li>
-              ) : null}
-              {insights.map((item, idx) => (
-                <li key={`ins-${idx}`}>
-                  -{' '}
-                  {contextualizeInsightText(
-                    normalizeInsightText(item),
-                    feature,
-                  )}
-                  {normalizeInsightConfidence(item)
-                    ? ` (${normalizeInsightConfidence(item)})`
-                    : ''}
-                </li>
-              ))}
-              {insights.length === 0 &&
-                fallbackInsights.insights.map((text, idx) => (
-                  <li key={`ins-fallback-${idx}`}>- {text}</li>
-                ))}
-            </ul>
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-semibold">
-              {featureCopy.insightAnomalies}
-            </p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {anomalies.length === 0 &&
-              fallbackInsights.anomalies.length === 0 ? (
-                <li>{featureCopy.emptyAnomalyText}</li>
-              ) : null}
-              {anomalies.map((item, idx) => (
-                <li key={`anom-${idx}`}>
-                  -{' '}
-                  {contextualizeInsightText(
-                    normalizeInsightText(item),
-                    feature,
-                  )}
-                  {normalizeInsightConfidence(item)
-                    ? ` (${normalizeInsightConfidence(item)})`
-                    : ''}
-                </li>
-              ))}
-              {anomalies.length === 0 &&
-                fallbackInsights.anomalies.map((text, idx) => (
-                  <li key={`anom-fallback-${idx}`}>- {text}</li>
-                ))}
-            </ul>
-          </div>
-          <div>
-            <p className="mb-2 text-sm font-semibold">
-              {featureCopy.insightRecommendations}
-            </p>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              {recommendations.length === 0 &&
-              fallbackInsights.recommendations.length === 0 ? (
-                <li>{featureCopy.emptyRecommendationText}</li>
-              ) : null}
-              {recommendations.map((item, idx) => (
-                <li key={`rec-${idx}`}>
-                  -{' '}
-                  {contextualizeInsightText(
-                    normalizeInsightText(item),
-                    feature,
-                  )}
-                  {normalizeInsightConfidence(item)
-                    ? ` (${normalizeInsightConfidence(item)})`
-                    : ''}
-                </li>
-              ))}
-              {recommendations.length === 0 &&
-                fallbackInsights.recommendations.map((text, idx) => (
-                  <li key={`rec-fallback-${idx}`}>- {text}</li>
-                ))}
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+      <M2InsightPanel insightTitle="AI Insight Bank Payment" insightModel={insightModel} insightTermMap={INSIGHT_TERM_MAP}
+        groups={[
+          { label: 'Ringkasan', items: insights, fallback: fallbackInsights.insights, empty: 'Belum ada insight bank payment.', prefix: 'ins' },
+          { label: 'Anomali', items: anomalies, fallback: fallbackInsights.anomalies, empty: 'Belum ada anomali bank payment.', prefix: 'anom' },
+          { label: 'Rekomendasi', items: recommendations, fallback: fallbackInsights.recommendations, empty: 'Belum ada rekomendasi bank payment.', prefix: 'rec' },
+        ]}
+      />
 
       <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>{featureCopy.tableTitle}</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>List Transaksi Bank Payment (Sample)</CardTitle></CardHeader>
         <CardContent>
-          {tableColumns.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {featureCopy.emptyTableText}
-            </p>
-          ) : (
+          {tableColumns.length === 0 ? <p className="text-sm text-muted-foreground">Tidak ada data transaksi bank payment.</p> : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  {tableColumns.map((column) => (
-                    <TableHead key={column}>{column}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
+              <TableHeader><TableRow>{tableColumns.map((col) => <TableHead key={col}>{col}</TableHead>)}</TableRow></TableHeader>
               <TableBody>
-                {tableRows.slice(0, 20).map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {tableColumns.map((column) => {
-                      if (column === 'kontak_id') {
-                        const kontakId = String(row[column] ?? '').trim();
-                        const isLoading = loadingKontak === kontakId;
+                {tableRows.slice(0, 20).map((row, ri) => (
+                  <TableRow key={ri}>
+                    {tableColumns.map((col) => {
+                      if (col === 'kontak_id') {
+                        const kid = String(row[col] ?? '').trim();
+                        const isLoading = loadingKontak === kid;
                         return (
-                          <TableCell
-                            key={`${rowIndex}-${column}`}
-                            className="text-right font-medium tabular-nums"
-                          >
+                          <TableCell key={`${ri}-${col}`} className="text-right font-medium tabular-nums">
                             <div className="flex items-center justify-end gap-2">
-                              <span>{fmt(row[column], 0)}</span>
-                              {kontakId ? (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    void openContactDrilldown(kontakId)
-                                  }
-                                  disabled={isLoading}
-                                >
-                                  {isLoading ? 'Loading...' : 'Drill-down'}
-                                </Button>
-                              ) : null}
+                              <span>{fmt(row[col], 0)}</span>
+                              {kid ? <Button variant="outline" size="sm" onClick={() => void openContactDrilldown(kid)} disabled={isLoading}>{isLoading ? 'Loading...' : 'Drill-down'}</Button> : null}
                             </div>
                           </TableCell>
                         );
                       }
-
                       return (
-                        <TableCell
-                          key={`${rowIndex}-${column}`}
-                          className={
-                            isNumericLike(row[column])
-                              ? 'text-right font-medium tabular-nums'
-                              : 'max-w-[220px] truncate'
-                          }
-                          title={String(row[column] ?? '-')}
-                        >
-                          {isNumericLike(row[column])
-                            ? isMonetaryColumn(column)
-                              ? fmtMoney(row[column], 2)
-                              : isIntegerColumn(column)
-                                ? fmt(row[column], 0)
-                                : fmt(row[column], 2)
-                            : String(row[column] ?? '-')}
+                        <TableCell key={`${ri}-${col}`} className={isNumericLike(row[col]) ? 'text-right font-medium tabular-nums' : 'max-w-[220px] truncate'} title={String(row[col] ?? '-')}>
+                          {isNumericLike(row[col]) ? isMonetaryColumn(col) ? fmtMoney(row[col], 2) : isIntegerColumn(col) ? fmt(row[col], 0) : fmt(row[col], 2) : String(row[col] ?? '-')}
                         </TableCell>
                       );
                     })}
@@ -1116,41 +338,22 @@ export default function Page() {
       <Dialog open={drilldownOpen} onOpenChange={setDrilldownOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>
-              Detail Follow-up Kontak Bank Payment {activeKontakId || '-'}
-            </DialogTitle>
-            <DialogDescription>
-              Transaksi payment terbesar pada periode terpilih.
-            </DialogDescription>
+            <DialogTitle>Detail Follow-up Kontak Bank Payment {activeKontakId || '-'}</DialogTitle>
+            <DialogDescription>Transaksi payment terbesar pada periode terpilih.</DialogDescription>
           </DialogHeader>
           <DialogBody>
-            {loadingKontak ? (
-              <p className="text-sm text-muted-foreground">
-                Memuat detail kontak...
-              </p>
-            ) : contactDrilldown.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Tidak ada detail kontak untuk periode ini.
-              </p>
-            ) : (
-              <div className="space-y-2 text-sm">
-                {contactDrilldown.slice(0, 20).map((drill, index) => (
-                  <div
-                    key={`modal-drill-${index}`}
-                    className="flex items-center justify-between gap-2 rounded border p-2"
-                  >
-                    <span className="truncate">
-                      {String(drill.trx_date ?? '-')} •{' '}
-                      {String(drill.no_transaksi ?? '-')} •{' '}
-                      {String(drill.cabang ?? '-')}
-                    </span>
-                    <span className="font-medium tabular-nums">
-                      {fmtMoney(drill.kredit, 2)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+            {loadingKontak ? <p className="text-sm text-muted-foreground">Memuat detail kontak...</p>
+              : contactDrilldown.length === 0 ? <p className="text-sm text-muted-foreground">Tidak ada detail kontak untuk periode ini.</p>
+              : (
+                <div className="space-y-2 text-sm">
+                  {contactDrilldown.slice(0, 20).map((drill, i) => (
+                    <div key={`drill-${i}`} className="flex items-center justify-between gap-2 rounded border p-2">
+                      <span className="truncate">{String(drill.trx_date ?? '-')} • {String(drill.no_transaksi ?? '-')} • {String(drill.cabang ?? '-')}</span>
+                      <span className="font-medium tabular-nums">{fmtMoney(drill.kredit, 2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
           </DialogBody>
         </DialogContent>
       </Dialog>

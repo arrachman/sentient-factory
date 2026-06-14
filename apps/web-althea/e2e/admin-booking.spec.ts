@@ -14,7 +14,7 @@ test.describe('admin booking pages (smoke)', () => {
   test('booking list loads', async ({ page }) => {
     await setupApiProxy(page);
     await loginAs(page, 'admin');
-    await page.goto('/admin/booking');
+    await page.goto('/admin/daftar-jadwal');
     await page.waitForLoadState('networkidle', { timeout: 10000 });
     // Either bookings ada / "Belum ada booking" message muncul
     const body = await page.locator('body').textContent();
@@ -24,7 +24,7 @@ test.describe('admin booking pages (smoke)', () => {
   test('schedule grid loads', async ({ page }) => {
     await setupApiProxy(page);
     await loginAs(page, 'admin');
-    await page.goto('/admin/schedule');
+    await page.goto('/admin/jadwal');
     await page.waitForLoadState('networkidle', { timeout: 10000 });
     const body = await page.locator('body').textContent();
     expect(body).toMatch(/jadwal|psikolog|schedule/i);

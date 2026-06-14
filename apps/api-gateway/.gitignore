@@ -46,3 +46,6 @@ prisma/*.db-journal
 # Test files
 *.spec.ts
 *.test.ts
+
+# Item media uploads (runtime files, bukan source)
+uploads/

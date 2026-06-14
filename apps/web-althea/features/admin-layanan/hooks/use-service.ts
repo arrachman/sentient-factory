@@ -41,3 +41,12 @@ export function useDeleteService() {
     onError: (e: Error) => toast.error('Gagal hapus', { description: e.message }),
   });
 }
+
+export function useDeactivateService() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => serviceApi.update(id, { isActive: false }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: KEY }); toast.success('Layanan dinonaktifkan'); },
+    onError: (e: Error) => toast.error('Gagal nonaktifkan', { description: e.message }),
+  });
+}

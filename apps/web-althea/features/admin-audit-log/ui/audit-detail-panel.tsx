@@ -6,17 +6,19 @@
  *   - Actor card (avatar + nama + role)
  *   - Properties grid (Waktu/Kategori/Entity/IP/Perangkat/Catatan)
  *   - Diff before/after (kalau ada oldData & newData berbeda)
- *   - BR-04 enforcement note (kalau severity danger + denied/br pattern)
+ *   - Privacy enforcement note (kalau severity danger + denied/br pattern)
  *   - Action buttons (Lihat sumber disabled, Ekspor)
  *   - Marker untuk event otomatis (system/cron)
  */
 import { useMemo } from 'react';
-import { ArrowRight, Calendar, Eye } from 'lucide-react';
+import { Calendar, Download } from 'lucide-react';
 import {
   ACTOR_COLOR_BY_ROLE,
   SEVERITY_META,
   categoryLabel,
   diff,
+  entityWordFromType,
+  formatRelativeTime,
   type AuditEvent,
 } from '../model/types';
 import { renderValue } from '../model/format';
@@ -123,17 +125,23 @@ function ActorCard({ event }: { event: AuditEvent }) {
 }
 
 function PropertiesGrid({ event }: { event: AuditEvent }) {
-  const rows: [string, string][] = [
-    ['Waktu', `${event.date} · ${event.time} WIB`],
+  const entityLabel = entityWordFromType(event.raw.entityType) ?? event.raw.entityType;
+  const timeDisplay = event.timeRelative
+    ? `${event.date} · ${event.time} WIB (${formatRelativeTime(event.iso)})`
+    : `${event.date} · ${event.time} WIB`;
+
+  const rows: [string, string, boolean?][] = [
+    ['Waktu', timeDisplay],
     ['Kategori', categoryLabel(event.category)],
-    ['Entity', event.raw.entityType],
-    ['IP', event.ip],
+    ['Entitas', event.raw.entityId ? `${entityLabel} #${event.raw.entityId}` : entityLabel],
+    ['Aksi', event.actionLabel],
+    ['IP Akses', event.ipLabel],
     ['Perangkat', event.device],
     ['Catatan', event.meta],
   ];
   return (
     <div className="col" style={{ gap: 0 }}>
-      {rows.map(([k, v]) => (
+      {rows.map(([k, v, mono]) => (
         <div
           key={k}
           style={{
@@ -152,10 +160,7 @@ function PropertiesGrid({ event }: { event: AuditEvent }) {
               fontSize: 12.5,
               color: 'var(--teal-800)',
               lineHeight: 1.45,
-              fontFamily:
-                k === 'IP' || k === 'Entity'
-                  ? 'var(--font-mono, monospace)'
-                  : 'inherit',
+              fontFamily: mono ? 'var(--font-mono, monospace)' : 'inherit',
               wordBreak: 'break-word',
             }}
           >
@@ -179,38 +184,48 @@ function DiffPreview({
       <span className="eyebrow">Perubahan data</span>
       <div
         style={{
-          padding: 10,
-          background: 'var(--danger-soft)',
-          border: '1px solid #e6c8c0',
+          border: '1px solid var(--border)',
           borderRadius: 6,
-          fontSize: 12,
+          overflow: 'hidden',
+          fontSize: 11.5,
           fontFamily: 'var(--font-mono, monospace)',
-          color: '#7a3328',
         }}
       >
-        {visible.map((f) => (
-          <div key={`b-${f.key}`}>
-            − {f.key}:{' '}
-            <span style={{ textDecoration: 'line-through', opacity: 0.8 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            padding: '6px 10px',
+            background: 'var(--cream-100)',
+            borderBottom: '1px solid var(--border)',
+            fontSize: 10,
+            fontWeight: 700,
+            color: 'var(--fg-muted)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          <span>Field</span>
+          <span>Sebelum</span>
+          <span>Sesudah</span>
+        </div>
+        {visible.map((f, i) => (
+          <div
+            key={f.key}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr',
+              padding: '7px 10px',
+              borderBottom: i < visible.length - 1 ? '1px solid var(--border)' : 'none',
+              alignItems: 'start',
+              gap: 4,
+            }}
+          >
+            <span style={{ color: 'var(--fg-muted)', fontWeight: 600 }}>{f.key}</span>
+            <span style={{ color: '#7a3328', textDecoration: 'line-through', opacity: 0.75 }}>
               {renderValue(f.before)}
             </span>
-          </div>
-        ))}
-      </div>
-      <div
-        style={{
-          padding: 10,
-          background: 'var(--success-soft)',
-          border: '1px solid #c8e0ce',
-          borderRadius: 6,
-          fontSize: 12,
-          fontFamily: 'var(--font-mono, monospace)',
-          color: '#2e5a37',
-        }}
-      >
-        {visible.map((f) => (
-          <div key={`a-${f.key}`}>
-            + {f.key}: {renderValue(f.after)}
+            <span style={{ color: '#2e5a37' }}>{renderValue(f.after)}</span>
           </div>
         ))}
       </div>
@@ -236,7 +251,7 @@ function Br04Note() {
       }}
     >
       <span style={{ fontSize: 12.5, fontWeight: 600, color: '#7a3328' }}>
-        BR-04 · Privasi antar psikolog
+        Privasi antar psikolog
       </span>
       <span
         className="caption"
@@ -261,18 +276,9 @@ function ActionButtons({ event }: { event: AuditEvent }) {
         type="button"
         className="btn btn-outline btn-sm"
         style={{ flex: 1 }}
-        disabled
-        title="Sumber payload tidak dipublish lewat audit endpoint"
-      >
-        <Eye size={13} /> Lihat sumber
-      </button>
-      <button
-        type="button"
-        className="btn btn-ghost btn-sm"
-        style={{ flex: 1 }}
         onClick={() => exportAuditCsv([event])}
       >
-        <ArrowRight size={13} /> Ekspor
+        <Download size={13} /> Ekspor event ini
       </button>
     </div>
   );

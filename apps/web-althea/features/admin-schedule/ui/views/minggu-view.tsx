@@ -5,20 +5,62 @@
  * booking; sisanya jadi "+N lagi" indicator.
  */
 import type { Booking } from '@/features/admin-booking/model/types';
-import { DAY_LABELS_SHORT, SLOTS, SVC_COLOR } from '../../model/constants';
+import type { Psikolog } from '@/features/admin-psikolog/model/types';
+import {
+  emptySlotTone,
+  type SlotCellTone,
+} from '@/features/psikolog-schedule/model/availability';
+import type { AvailabilityResolver } from '../../hooks/use-availability-map';
+import type { SlotDef } from '@/features/admin-rooms/model/constants';
+import { DAY_LABELS_SHORT, SVC_COLOR } from '../../model/constants';
 import { addDays, pad2, toDateKey, todayKey } from '../../model/format';
 import { EmptySlot } from '../components/empty-slot';
+
+/**
+ * Agregat ketersediaan satu sel (hari × slot) lintas psikolog: sel dianggap
+ * "tersedia" jika minimal satu psikolog buka di slot itu. Tidak butuh filter
+ * psikolog manual.
+ */
+function aggregateTone(
+  psikologs: Psikolog[],
+  resolve: AvailabilityResolver,
+  dateObj: Date,
+  slotIdx: number,
+  slotEnd: string,
+): SlotCellTone | undefined {
+  if (psikologs.length === 0) return undefined;
+  let sawLibur = false;
+  for (const p of psikologs) {
+    const tone = emptySlotTone({
+      date: dateObj,
+      slotIdx,
+      slotEnd,
+      availability: resolve(p.userId, dateObj),
+    });
+    if (tone === 'available') return 'available';
+    if (tone === 'libur') sawLibur = true;
+  }
+  return sawLibur ? 'libur' : 'past';
+}
 
 export function MingguView({
   weekStart,
   bookings,
+  slots,
   isLoading,
-  onCellClick,
+  onBookingClick,
+  psikologs = [],
+  resolveAvailability,
+  onEmptySlotClick,
 }: {
   weekStart: string;
   bookings: Booking[];
+  slots: SlotDef[];
   isLoading: boolean;
-  onCellClick: () => void;
+  onBookingClick: (b: Booking) => void;
+  psikologs?: Psikolog[];
+  resolveAvailability?: AvailabilityResolver;
+  onEmptySlotClick?: () => void;
 }) {
   if (isLoading) {
     return (
@@ -31,8 +73,7 @@ export function MingguView({
   const days: string[] = [];
   for (let i = 0; i < 7; i++) days.push(addDays(weekStart, i));
   const today = todayKey();
-  const byCell = groupByCell(bookings);
-
+  const byCell = groupByCell(bookings, slots);
   const colTpl = '110px repeat(7, minmax(120px, 1fr))';
   const minWidth = 110 + 7 * 120;
 
@@ -44,29 +85,42 @@ export function MingguView({
         colTpl={colTpl}
         minWidth={minWidth}
       />
-      {SLOTS.map((slot, slotIdx) => (
+      {slots.map((slot, slotIdx) => (
         <div
           key={slot.start}
           style={{
             display: 'grid',
             gridTemplateColumns: colTpl,
             borderBottom:
-              slotIdx === SLOTS.length - 1
+              slotIdx === slots.length - 1
                 ? 'none'
                 : '1px solid var(--border)',
             minWidth,
+            background: slotIdx % 2 === 1 ? 'rgba(247, 244, 237, 0.55)' : 'transparent',
           }}
         >
-          <SlotLabel start={slot.start} end={slot.end} />
+          <SlotLabel label={slot.label ?? `Slot ${slotIdx + 1}`} />
           {days.map((d) => {
             const cellKey = `${d}#${slotIdx}`;
             const cellBookings = byCell.get(cellKey) ?? [];
+            let emptyTone: SlotCellTone | undefined;
+            if (cellBookings.length === 0 && resolveAvailability) {
+              emptyTone = aggregateTone(
+                psikologs,
+                resolveAvailability,
+                new Date(`${d}T00:00:00`),
+                slotIdx,
+                slot.end,
+              );
+            }
             return (
               <DayCell
                 key={d}
                 bookings={cellBookings}
                 isToday={d === today}
-                onClickEmpty={onCellClick}
+                onBookingClick={onBookingClick}
+                emptyTone={emptyTone}
+                onEmptySlotClick={onEmptySlotClick}
               />
             );
           })}
@@ -76,13 +130,13 @@ export function MingguView({
   );
 }
 
-function groupByCell(bookings: Booking[]): Map<string, Booking[]> {
+function groupByCell(bookings: Booking[], slots: SlotDef[]): Map<string, Booking[]> {
   const out = new Map<string, Booking[]>();
   for (const b of bookings) {
     const start = new Date(b.scheduledStart);
     const dateKey = toDateKey(start);
     const hour = start.getHours();
-    const slotIdx = SLOTS.findIndex(
+    const slotIdx = slots.findIndex(
       (s) =>
         parseInt(s.start.split(':')[0], 10) === hour ||
         (parseInt(s.start.split(':')[0], 10) <= hour &&
@@ -164,7 +218,7 @@ function DayHeaderRow({
   );
 }
 
-function SlotLabel({ start, end }: { start: string; end: string }) {
+function SlotLabel({ label }: { label: string }) {
   return (
     <div
       style={{
@@ -172,28 +226,18 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        background: 'var(--cream-50)',
         borderRight: '1px solid var(--border)',
       }}
     >
       <span
         style={{
-          fontSize: 11.5,
-          fontWeight: 600,
+          fontSize: 12,
+          fontWeight: 700,
           color: 'var(--teal-800)',
           fontVariantNumeric: 'tabular-nums',
         }}
       >
-        {start}
-      </span>
-      <span
-        style={{
-          fontSize: 10.5,
-          color: 'var(--fg-muted)',
-          fontVariantNumeric: 'tabular-nums',
-        }}
-      >
-        {end}
+        {label}
       </span>
     </div>
   );
@@ -202,11 +246,15 @@ function SlotLabel({ start, end }: { start: string; end: string }) {
 function DayCell({
   bookings,
   isToday,
-  onClickEmpty,
+  onBookingClick,
+  emptyTone,
+  onEmptySlotClick,
 }: {
   bookings: Booking[];
   isToday: boolean;
-  onClickEmpty: () => void;
+  onBookingClick: (b: Booking) => void;
+  emptyTone?: SlotCellTone;
+  onEmptySlotClick?: () => void;
 }) {
   return (
     <div
@@ -218,11 +266,11 @@ function DayCell({
       }}
     >
       {bookings.length === 0 ? (
-        <EmptySlot onClick={onClickEmpty} />
+        <EmptySlot tone={emptyTone} onClick={onEmptySlotClick} />
       ) : (
         <div className="flex flex-col" style={{ gap: 3, height: '100%' }}>
           {bookings.slice(0, 2).map((b) => (
-            <MiniBookingChip key={b.id} b={b} />
+            <MiniBookingChip key={b.id} b={b} onClick={() => onBookingClick(b)} />
           ))}
           {bookings.length > 2 ? (
             <span className="caption" style={{ fontSize: 10, paddingLeft: 4 }}>
@@ -235,10 +283,12 @@ function DayCell({
   );
 }
 
-function MiniBookingChip({ b }: { b: Booking }) {
+function MiniBookingChip({ b, onClick }: { b: Booking; onClick: () => void }) {
   const c = SVC_COLOR[b.service.category] ?? SVC_COLOR.konseling;
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       style={{
         background: c.fill,
         borderLeft: `2px solid ${c.bar}`,
@@ -249,10 +299,14 @@ function MiniBookingChip({ b }: { b: Booking }) {
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
+        cursor: 'pointer',
+        border: 'none',
+        textAlign: 'left',
+        width: '100%',
       }}
       title={`#${b.id} · ${b.client.name} · ${b.room.name}`}
     >
       {b.client.name}
-    </div>
+    </button>
   );
 }

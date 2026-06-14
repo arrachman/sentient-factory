@@ -1,6 +1,6 @@
 /**
  * Baris 4 stat tiles untuk halaman Audit Log.
- * Gunakan tone danger untuk BR-04 + warn untuk login gagal yang aktif.
+ * Gunakan tone danger untuk akses ditolak + warn untuk login gagal yang aktif.
  */
 import { AuditStatTile } from './audit-stat-tile';
 
@@ -30,10 +30,10 @@ export function AuditStatTilesRow({
         sub="diambil real-time"
       />
       <AuditStatTile
-        lbl="Akses ditolak (BR-04)"
+        lbl="Akses ditolak"
         val={stats.deniedCount.toLocaleString('id-ID')}
         sub="psikolog × klien lain"
-        tone="danger"
+        tone={stats.deniedCount > 0 ? 'danger' : 'base'}
       />
       <AuditStatTile
         lbl="Login gagal"

@@ -4,7 +4,7 @@
  * Action bar atas halaman Audit Log:
  *   [pill "Audit aktif"] · counter event hari ini  ····  [search] [Rentang waktu] [Ekspor CSV]
  */
-import { Download, Filter, Search, ShieldCheck } from 'lucide-react';
+import { Download, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 
 export function AuditActionBar({
   totalLabel,
@@ -64,7 +64,7 @@ export function AuditActionBar({
           className="btn btn-outline btn-sm"
           onClick={onRefetch}
         >
-          <Filter size={13} /> Rentang waktu
+          <RefreshCw size={13} /> Refresh
         </button>
         <button
           type="button"

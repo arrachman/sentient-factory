@@ -33,6 +33,7 @@ import type { LucideIcon } from 'lucide-react';
 export type AuditLogRow = {
   id: number;
   userId: number | null;
+  userName: string | null;
   action: string;
   entityType: string;
   entityId: string | null;
@@ -74,7 +75,7 @@ export const AUDIT_CATEGORIES: {
   { k: 'auth', label: 'Login & sesi', icon: LogIn },
   { k: 'klien', label: 'Data klien', icon: Users },
   { k: 'jadwal', label: 'Penjadwalan', icon: ClipboardList },
-  { k: 'avail', label: 'Availability', icon: Clock },
+  { k: 'avail', label: 'Jadwal psikolog', icon: Clock },
   { k: 'layanan', label: 'Layanan & tarif', icon: ListChecks },
   { k: 'ruangan', label: 'Ruangan', icon: DoorOpen },
   { k: 'user', label: 'User & role', icon: User },
@@ -186,17 +187,22 @@ export function actionLabel(action: string, entityType: string): string {
   return generic;
 }
 
-function entityWordFromType(entityType: string): string | null {
+export function entityWordFromType(entityType: string): string | null {
   const t = (entityType || '').toLowerCase();
-  if (t.includes('client')) return 'data klien';
-  if (t.includes('booking')) return 'jadwal sesi';
-  if (t.includes('availability')) return 'availability psikolog';
-  if (t.includes('service') || t.includes('layanan')) return 'layanan';
-  if (t.includes('room')) return 'ruangan';
-  if (t.includes('user') || t.includes('role')) return 'user';
-  if (t.includes('psikolog')) return 'data psikolog';
-  if (t.includes('template')) return 'template WA';
-  if (t.includes('setting')) return 'pengaturan';
+  if (t.includes('client')) return 'Data klien';
+  if (t.includes('booking.note') || t.includes('session_note')) return 'Catatan sesi';
+  if (t.includes('booking')) return 'Jadwal sesi';
+  if (t.includes('date_override') || t.includes('date-override')) return 'Override jadwal psikolog';
+  if (t.includes('availability') || t.includes('slot')) return 'Ketersediaan psikolog';
+  if (t.includes('service') || t.includes('layanan')) return 'Layanan';
+  if (t.includes('room') || t.includes('ruangan')) return 'Ruangan';
+  if (t.includes('role')) return 'Role pengguna';
+  if (t.includes('user')) return 'Pengguna';
+  if (t.includes('psikolog')) return 'Data psikolog';
+  if (t.includes('template')) return 'Template WA';
+  if (t.includes('notif') || t.includes('wa')) return 'Notifikasi WA';
+  if (t.includes('setting') || t.includes('pengaturan')) return 'Pengaturan klinik';
+  if (t.includes('payment') || t.includes('invoice')) return 'Pembayaran';
   return null;
 }
 
@@ -213,12 +219,14 @@ export type AuditEvent = {
   target: string; // entityType #entityId
   meta: string;
   time: string; // HH:mm
+  timeRelative: string; // "3 jam lalu", "5 menit lalu"
   date: string; // dd MMM YYYY
   iso: string;
-  actor: string; // user label or "Sistem"
+  actor: string; // user name or "Sistem"
   actorRole: string;
   isAuto: boolean;
   ip: string;
+  ipLabel: string; // human-readable IP description
   device: string;
 };
 
@@ -254,10 +262,14 @@ export function toEvent(row: AuditLogRow): AuditEvent {
   const category = entityToCategory(row.entityType);
   const severity = actionToSeverity(row.action, row.entityType);
   const lbl = actionLabel(row.action, row.entityType);
+  const entityHuman = entityWordFromType(row.entityType);
   const target = row.entityId
-    ? `${row.entityType} #${row.entityId}`
-    : row.entityType;
+    ? `${entityHuman ?? humanizeEntityType(row.entityType)} #${row.entityId}`
+    : (entityHuman ?? humanizeEntityType(row.entityType));
   const isAuto = row.userId == null;
+  const actorName = isAuto
+    ? 'Sistem'
+    : row.userName ?? `Pengguna #${row.userId}`;
 
   return {
     id: row.id,
@@ -268,14 +280,45 @@ export function toEvent(row: AuditLogRow): AuditEvent {
     target,
     meta: deriveMeta(row),
     time,
+    timeRelative: formatRelativeTime(row.createdAt),
     date,
     iso: row.createdAt,
-    actor: isAuto ? 'Sistem' : `User #${row.userId}`,
+    actor: actorName,
     actorRole: isAuto ? 'Otomatis' : ROLE_FROM_ENTITY(row.entityType),
     isAuto,
     ip: row.ipAddress ?? '—',
+    ipLabel: formatIpLabel(row.ipAddress),
     device: row.userAgent ? shortenUA(row.userAgent) : '—',
   };
+}
+
+function humanizeEntityType(entityType: string): string {
+  // strip clinic. prefix and make readable
+  return entityType.replace(/^clinic\./, '').replace(/_/g, ' ');
+}
+
+export function formatRelativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return 'Baru saja';
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} menit lalu`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} jam lalu`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day} hari lalu`;
+  return '';
+}
+
+export function formatIpLabel(ip: string | null | undefined): string {
+  if (!ip) return 'IP tidak tersedia';
+  if (ip === '127.0.0.1' || ip === '::1') return 'Server lokal';
+  if (
+    ip.startsWith('192.168.') ||
+    ip.startsWith('10.') ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(ip)
+  ) return `LAN · ${ip}`;
+  return ip;
 }
 
 function shortenUA(ua: string): string {

@@ -20,7 +20,7 @@ export function RoomsToolbar({
 }) {
   const today = todayKey();
   return (
-    <div className="px-7 pt-2 pb-3 flex items-center justify-between flex-wrap gap-3">
+    <div className="px-6 pt-6 pb-3 flex items-center justify-between flex-wrap gap-3">
       <div className="row gap-2">
         <button
           type="button"

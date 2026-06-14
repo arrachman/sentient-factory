@@ -148,6 +148,29 @@ export class ClinicWaService {
     };
   }
 
+  async getStats(date?: string) {
+    const targetDate = date ? new Date(date) : new Date();
+    const start = new Date(targetDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(targetDate);
+    end.setHours(23, 59, 59, 999);
+    const where: Prisma.ClinicWaLogWhereInput = { createdAt: { gte: start, lte: end } };
+    const [total, readCount, failedCount] = await this.prisma.$transaction([
+      this.prisma.clinicWaLog.count({ where }),
+      this.prisma.clinicWaLog.count({ where: { ...where, status: 'dibaca' } }),
+      this.prisma.clinicWaLog.count({ where: { ...where, status: 'gagal' } }),
+    ]);
+    return {
+      success: true,
+      data: {
+        sentToday: total,
+        readToday: readCount,
+        failedToday: failedCount,
+        readRate: total > 0 ? Math.round((readCount / total) * 100) : 0,
+      },
+    };
+  }
+
   // ----- Send -----
 
   async sendTest(dto: SendTestDto, actorId?: number) {
@@ -236,7 +259,9 @@ export class ClinicWaService {
             body: args.body,
             metadata: args.metadata,
           },
-          WA_JOB_DEFAULTS,
+          // jobId unik per log entry — mencegah double-send jika waQueue.add()
+          // throw timeout tapi job sudah tersimpan di Redis (split-brain scenario).
+          { ...WA_JOB_DEFAULTS, jobId: `wa-log-${log.id}` },
         );
         return {
           success: true,
@@ -245,9 +270,12 @@ export class ClinicWaService {
         };
       } catch (e) {
         this.logger.error(
-          `Failed to enqueue WA job, falling back to sync: ${(e as Error).message}`,
+          `Failed to enqueue WA job (logId=${log.id}): ${(e as Error).message}`,
         );
-        // fall through to sync path
+        // Jangan fallback ke sync — job mungkin sudah ada di Redis.
+        // Fallback sync + job aktif di queue = 2 pesan terkirim.
+        // Log tetap status 'queued'; admin bisa retry manual atau queue akan proses saat Redis recover.
+        return { success: false, data: { logId: log.id, status: 'queued' }, message: 'Queue error — will retry via BullMQ' };
       }
     }
 
@@ -318,7 +346,11 @@ export class ClinicWaService {
       read: 'dibaca',
       failed: 'gagal',
     };
-    const newStatus = (dto.status && statusMap[dto.status]) || dto.status || log.status;
+    // Fonnte uses 'status' in most cases; some webhook types use 'state' instead.
+    // Prefer whichever carries a more final state (delivered > read > sent).
+    const FINAL_STATES = new Set(['delivered', 'read', 'failed']);
+    const rawStatus = FINAL_STATES.has(dto.status ?? '') ? dto.status : (dto.state ?? dto.status);
+    const newStatus = (rawStatus && statusMap[rawStatus]) || rawStatus || log.status;
     const data: Prisma.ClinicWaLogUpdateInput = { status: newStatus };
     if (newStatus === 'sampai') data.deliveredAt = new Date();
     if (newStatus === 'dibaca') data.readAt = new Date();

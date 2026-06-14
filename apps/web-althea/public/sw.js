@@ -13,10 +13,8 @@
  * - Periodic sync untuk update data
  */
 
-const CACHE_VERSION = 'althea-v1';
+const CACHE_VERSION = 'althea-v3-2026-06-08';
 const APP_SHELL = [
-  '/',
-  '/login',
   '/manifest.webmanifest',
 ];
 
@@ -62,6 +60,10 @@ self.addEventListener('fetch', (event) => {
 
   // Skip cross-origin (don't intercept, let browser handle)
   if (url.origin !== self.location.origin) return;
+
+  // Skip navigation requests (HTML page loads) — auth middleware harus jalan di server,
+  // jangan pernah kembalikan cached redirect/page untuk route yang dilindungi auth
+  if (request.mode === 'navigate') return;
 
   // Network-first for API calls
   if (url.pathname.startsWith('/api/')) {

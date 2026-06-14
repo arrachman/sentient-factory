@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { localDateAtMidnight, localPartsInTimezone } from './timezone.util';
+import { dateStrToDateColumn, localDateAtMidnight, localPartsInTimezone } from './timezone.util';
+import { resolveServiceSlots, type SlotDef, type SlotOverride } from './slot-resolve.util';
 
 /**
  * Validation helpers untuk booking operations.
@@ -67,11 +68,47 @@ export class BookingValidationService {
   }
 
   /**
-   * Cek psikolog & room conflict dengan buffer (default 15 menit).
+   * Cek room conflict — exact overlap tanpa buffer. SELALU dipanggil terlepas
+   * dari bufferOverride, karena ruangan adalah sumber daya fisik yang tidak bisa
+   * dipakai bersamaan. bufferOverride hanya berlaku untuk psikolog & slot check.
    *
-   * Buffer diambil dari ClinicSettings.bufferMinutes — slot existing ±buffer
-   * dianggap conflict supaya psikolog punya jeda istirahat / catatan.
-   *
+   * Throws ConflictException dengan detail konflik (tipe + bookingId existing).
+   */
+  async assertNoRoomConflict(args: {
+    roomId: number;
+    scheduledStart: Date;
+    scheduledEnd: Date;
+    excludeBookingId: number | null;
+  }): Promise<void> {
+    const { roomId, scheduledStart, scheduledEnd, excludeBookingId } = args;
+
+    const overlapWhere: Prisma.ClinicBookingWhereInput = {
+      deletedAt: null,
+      status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
+      roomId,
+      scheduledStart: { lt: scheduledEnd },
+      scheduledEnd: { gt: scheduledStart },
+    };
+    if (excludeBookingId) overlapWhere.id = { not: excludeBookingId };
+
+    const roomConflict = await this.prisma.clinicBooking.findFirst({
+      where: overlapWhere,
+      select: { id: true, scheduledStart: true, scheduledEnd: true },
+    });
+
+    if (roomConflict) {
+      throw new ConflictException({
+        message: 'Room conflict — ruangan sudah terpakai di waktu tersebut',
+        conflictType: 'room',
+        conflictBookingId: roomConflict.id,
+        scheduledStart: roomConflict.scheduledStart,
+        scheduledEnd: roomConflict.scheduledEnd,
+      });
+    }
+  }
+
+  /**
+   * Cek psikolog conflict (plain overlap, tanpa buffer jeda).
    * Throws ConflictException dengan detail konflik (tipe + bookingId existing).
    */
   async assertNoConflict(args: {
@@ -81,32 +118,21 @@ export class BookingValidationService {
     scheduledEnd: Date;
     excludeBookingId: number | null;
   }): Promise<void> {
-    const { psikologUserId, roomId, scheduledStart, scheduledEnd, excludeBookingId } = args;
-
-    const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
-    const bufferMs = (settings?.bufferMinutes ?? 15) * 60 * 1000;
-    const slotStart = new Date(scheduledStart.getTime() - bufferMs);
-    const slotEnd = new Date(scheduledEnd.getTime() + bufferMs);
+    const { psikologUserId, scheduledStart, scheduledEnd, excludeBookingId } = args;
 
     const overlapWhere: Prisma.ClinicBookingWhereInput = {
       deletedAt: null,
       status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
-      // Overlap test: existing.start < slotEnd AND existing.end > slotStart
-      scheduledStart: { lt: slotEnd },
-      scheduledEnd: { gt: slotStart },
+      // Overlap test: existing.start < end AND existing.end > start
+      scheduledStart: { lt: scheduledEnd },
+      scheduledEnd: { gt: scheduledStart },
     };
     if (excludeBookingId) overlapWhere.id = { not: excludeBookingId };
 
-    const [psikologConflict, roomConflict] = await Promise.all([
-      this.prisma.clinicBooking.findFirst({
-        where: { ...overlapWhere, psikologUserId },
-        select: { id: true, scheduledStart: true, scheduledEnd: true },
-      }),
-      this.prisma.clinicBooking.findFirst({
-        where: { ...overlapWhere, roomId },
-        select: { id: true, scheduledStart: true, scheduledEnd: true },
-      }),
-    ]);
+    const psikologConflict = await this.prisma.clinicBooking.findFirst({
+      where: { ...overlapWhere, psikologUserId },
+      select: { id: true, scheduledStart: true, scheduledEnd: true },
+    });
 
     if (psikologConflict) {
       throw new ConflictException({
@@ -115,15 +141,6 @@ export class BookingValidationService {
         conflictBookingId: psikologConflict.id,
         scheduledStart: psikologConflict.scheduledStart,
         scheduledEnd: psikologConflict.scheduledEnd,
-      });
-    }
-    if (roomConflict) {
-      throw new ConflictException({
-        message: 'Room conflict',
-        conflictType: 'room',
-        conflictBookingId: roomConflict.id,
-        scheduledStart: roomConflict.scheduledStart,
-        scheduledEnd: roomConflict.scheduledEnd,
       });
     }
   }
@@ -138,7 +155,7 @@ export class BookingValidationService {
    *
    * Mengganti `assertWithinOperatingHours` lama (operatingHours window per hari).
    */
-  async assertSlotMatch(start: Date, end: Date): Promise<void> {
+  async assertSlotMatch(start: Date, end: Date, serviceId?: number): Promise<void> {
     const settings = await this.prisma.clinicSettings.findFirst({ where: { id: 1 } });
     if (!settings) return; // no settings, allow (bootstrap mode)
 
@@ -167,15 +184,77 @@ export class BookingValidationService {
     }
 
     // 3. Slot match check (pakai HH:MM di TZ klinik)
-    const slots =
-      (settings.slotsOfDay as Array<{ start: string; end: string; label?: string }>) || [];
-    if (slots.length === 0) return; // belum di-config, allow (bootstrap mode)
+    const globalSlots = (settings.slotsOfDay as SlotDef[]) || [];
+    if (globalSlots.length === 0) return; // belum di-config, allow (bootstrap mode)
 
-    const matched = slots.find((s) => s.start === startParts.hhmm && s.end === endParts.hhmm);
+    // Layanan boleh override range waktu slot (identitas/label tetap global)
+    // dan menonaktifkan slot tertentu via disabledSlotIndices. Tanpa serviceId
+    // → validasi terhadap slot global apa adanya.
+    let slots = globalSlots;
+    if (serviceId !== undefined) {
+      const service = await this.prisma.clinicService.findFirst({
+        where: { id: serviceId, deletedAt: null },
+        select: { slotOverrides: true, disabledSlotIndices: true },
+      });
+      slots = resolveServiceSlots(
+        globalSlots,
+        (service?.slotOverrides as SlotOverride[] | null) ?? null,
+        (service?.disabledSlotIndices as number[] | null) ?? null,
+      );
+    }
+
+    // Slot disabled untuk layanan ini tidak boleh di-book sama sekali.
+    const enabledSlots = slots.filter((s) => !s.disabled);
+    const matched = enabledSlots.find(
+      (s) => s.start === startParts.hhmm && s.end === endParts.hhmm,
+    );
     if (!matched) {
-      const available = slots.map((s) => `${s.start}-${s.end}`).join(', ');
+      const available = enabledSlots.map((s) => `${s.start}-${s.end}`).join(', ') || '(tidak ada)';
       throw new BadRequestException(
-        `Booking ${startParts.hhmm}-${endParts.hhmm} tidak cocok dengan slot operasional klinik. Slot tersedia: ${available}.`,
+        `Booking ${startParts.hhmm}-${endParts.hhmm} tidak cocok dengan slot layanan ini. Slot tersedia: ${available}.`,
+      );
+    }
+  }
+
+  /**
+   * Cek jumlah booking aktif psikolog di tanggal `start` tidak melebihi
+   * `defaultSlots` dari ClinicPsikologProfile.
+   * - `excludeBookingId`: abaikan booking ini dari hitungan (untuk reschedule).
+   * - Jika `defaultSlots` 0 / null / profile tidak ada → skip (no cap).
+   */
+  async assertDefaultSlotsCapacity(
+    psikologUserId: number,
+    start: Date,
+    excludeBookingId: number | null = null,
+  ): Promise<void> {
+    const profile = await this.prisma.clinicPsikologProfile.findFirst({
+      where: { userId: psikologUserId, deletedAt: null },
+      select: { defaultSlots: true, user: { select: { fullName: true, email: true } } },
+    });
+    if (!profile || !profile.defaultSlots || profile.defaultSlots <= 0) return;
+
+    const settings = await this.prisma.clinicSettings.findFirst({
+      where: { id: 1 },
+      select: { timezone: true },
+    });
+    const tz = settings?.timezone || 'Asia/Jakarta';
+    const { dateStr } = localPartsInTimezone(start, tz);
+    const dayStart = localDateAtMidnight(dateStr, tz);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const countWhere: Prisma.ClinicBookingWhereInput = {
+      deletedAt: null,
+      psikologUserId,
+      status: { in: ['awaiting_dp', 'confirmed', 'checked_in', 'in_progress'] },
+      scheduledStart: { gte: dayStart, lt: dayEnd },
+    };
+    if (excludeBookingId) countWhere.id = { not: excludeBookingId };
+
+    const count = await this.prisma.clinicBooking.count({ where: countWhere });
+    if (count >= profile.defaultSlots) {
+      const name = profile.user.fullName ?? profile.user.email;
+      throw new BadRequestException(
+        `${name} sudah penuh di ${dateStr} — ${count}/${profile.defaultSlots} slot terisi. Pilih tanggal atau psikolog lain.`,
       );
     }
   }
@@ -228,7 +307,7 @@ export class BookingValidationService {
     // weeklyAvailability + date overrides (yang dianggap WIB).
     const startParts = localPartsInTimezone(start, tz);
     const dow = startParts.dow;
-    const dateOnly = localDateAtMidnight(startParts.dateStr, tz);
+    const dateOnly = dateStrToDateColumn(startParts.dateStr);
 
     // 1. PRIORITAS: cek date override untuk tanggal spesifik
     const override = await this.prisma.clinicPsikologDateOverride.findUnique({
