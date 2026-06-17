@@ -1,7 +1,7 @@
 import type * as React from 'react';
 import type { RsCtrl } from '../hooks/use-report-studio';
-import type { RsTplKey } from '@/lib/report-studio/types';
 import { templateOptions } from '@/lib/report-studio/i18n';
+import { isBuiltinKey } from '@/lib/report-studio/template-io';
 import { qBtn } from './styles';
 
 export function quickbarVals(c: RsCtrl) {
@@ -15,10 +15,18 @@ export function quickbarVals(c: RsCtrl) {
     { ext: 'HTM', label: 'HTML', onClick: () => a.exportHTMLfile() },
     { ext: 'PRN', label: id ? 'Cetak' : 'Print', onClick: () => a.exportPagesPrint(false) },
   ];
+  // Real templates from the reports API; fall back to built-in keys when empty/offline.
+  const tplOptions = st.tplList.length
+    ? st.tplList.map((t) => ({ v: t.id, label: t.name }))
+    : templateOptions(id);
   return {
-    reportName: c.effName, templateOptions: templateOptions(id), tplKey: st.tplKey,
+    reportName: c.effName, templateOptions: tplOptions, tplKey: st.currentId ?? st.tplKey,
     onName: (e: React.ChangeEvent<HTMLInputElement>) => c.set({ reportName: e.target.value }),
-    onTemplate: (e: React.ChangeEvent<HTMLSelectElement>) => a.loadTemplate(e.target.value as RsTplKey, true),
+    onTemplate: (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const v = e.target.value;
+      if (isBuiltinKey(v)) a.loadTemplate(v, true); else a.selectTemplate(v);
+    },
+    onSave: a.save,
     onUndo: a.undo, onRedo: a.redo, undoStyle, redoStyle,
     langBtnLabel: id ? 'ID' : 'EN', toggleLang: () => c.set((s) => ({ lang: s.lang === 'id' ? 'en' : 'id' })),
     themeGlyph: c.theme === 'dark' ? '☾' : '☀', toggleTheme: () => c.set((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),

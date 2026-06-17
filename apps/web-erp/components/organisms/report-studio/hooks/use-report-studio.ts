@@ -13,6 +13,8 @@ import {
   buildPagesHTML, buildTableHTML, download, printHTML, fileName,
 } from '@/lib/report-studio/export';
 import { defName } from '@/lib/report-studio/i18n';
+import { reportFromTemplateJson } from '@/lib/report-studio/template-io';
+import { listReportTemplates, getReportTemplate, updateReportTemplate } from '@/lib/api/reports';
 
 export interface RsState {
   report: RsReport; tplKey: RsTplKey; selEl: string | null; selBand: string | null;
@@ -24,6 +26,7 @@ export interface RsState {
   snap: boolean; grid: number; showGrid: boolean; rulerOn: boolean; guidesOn: boolean;
   pageSize: string; orient: string; margin: string;
   propOpen: Record<string, boolean>; clipHas: boolean; undoN: number; redoN: number;
+  tplList: Array<{ id: string; name: string }>; currentId: string | null;
 }
 
 type Patch = Partial<RsState> | ((s: RsState) => Partial<RsState>);
@@ -46,6 +49,7 @@ export function useReportStudio() {
       ribbon: 'home', rightTab: 'props', menu: null, snap: true, grid: 8, showGrid: true, rulerOn: true, guidesOn: true,
       pageSize: 'a4', orient: 'portrait', margin: 'normal',
       propOpen: { pos: true, text: true, appearance: true, behavior: false }, clipHas: false, undoN: 0, redoN: 0,
+      tplList: [], currentId: null,
     };
   });
   const stRef = React.useRef(st);
@@ -107,7 +111,26 @@ export function useReportStudio() {
   const loadTemplate = (key: RsTplKey, keepView: boolean) => {
     const r = buildReport(key, nextId); r.key = key;
     undoRef.current = []; redoRef.current = [];
-    set((s) => ({ report: r, tplKey: key, selEl: null, selBand: null, reportName: null, groupBy: GROUP_DEF[key] || '', view: keepView ? s.view : 'design', undoN: 0, redoN: 0 }));
+    set((s) => ({ report: r, tplKey: key, currentId: null, selEl: null, selBand: null, reportName: null, groupBy: GROUP_DEF[key] || '', view: keepView ? s.view : 'design', undoN: 0, redoN: 0 }));
+  };
+
+  // Load a real saved template from the reports API (native JSON or starter layout).
+  const selectTemplate = (id: string) => {
+    getReportTemplate(id).then((rec) => {
+      const r = reportFromTemplateJson(rec.templateJson, rec.module, nextId);
+      const key = (r.key as RsTplKey) || 'invoice';
+      undoRef.current = []; redoRef.current = [];
+      set({ report: r, currentId: id, tplKey: key, selEl: null, selBand: null, reportName: rec.name, groupBy: GROUP_DEF[key] || '', undoN: 0, redoN: 0, view: 'design' });
+    }).catch((e) => toast(e instanceof Error ? e.message : String(e)));
+  };
+
+  // Persist the current design back to its template record (RsReport → templateJson).
+  const save = () => {
+    const s = stRef.current;
+    if (!s.currentId) { toast(s.lang === 'id' ? 'Pilih template dulu untuk menyimpan' : 'Pick a template to save'); return; }
+    updateReportTemplate(s.currentId, { templateJson: s.report as unknown as Record<string, unknown>, name: effNameOf(s) })
+      .then(() => toast(s.lang === 'id' ? 'Template disimpan' : 'Template saved'))
+      .catch((e) => toast(e instanceof Error ? e.message : String(e)));
   };
 
   const toast = (msg: string) => {
@@ -266,6 +289,16 @@ export function useReportStudio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load real templates from the reports API on mount; open the first one.
+  React.useEffect(() => {
+    listReportTemplates({ limit: 100, isActive: true }).then((res) => {
+      const items = res.data.map((t) => ({ id: t.id, name: t.name }));
+      set({ tplList: items });
+      if (items.length) selectTemplate(items[0].id);
+    }).catch(() => { /* offline → keep built-in default layout */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selObj: RsElement | null = st.selEl
     ? (st.report.bands.flatMap((b) => b.els).find((e) => e.id === st.selEl) || null)
     : null;
@@ -278,7 +311,7 @@ export function useReportStudio() {
     report: st.report, selObj, selBandObj, findEl, findBand, pushUndo, updateEl, updateBand, editEl,
     STYLES, previewPages: () => previewPagesOf(st),
     actions: {
-      undo, redo, loadTemplate, onGroupBy, toast,
+      undo, redo, loadTemplate, selectTemplate, save, onGroupBy, toast,
       doCopy, doCut, doPaste, dupSel, delSel, addElement, zMove,
       onElementMouseDown, onResizeMouseDown, onBandResizeDown, onBandLabelDown, onBandMouseDown,
       onFieldDragStart, allowDrop, onCanvasDrop,

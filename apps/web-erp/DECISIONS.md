@@ -2915,9 +2915,21 @@ Keputusan & catatan:
   (`buildVals`). UI = organisms `components/organisms/report-studio/*` + page
   `components/pages/report-studio-page.tsx` (daftar di `ERP_PAGES`
   `shell-route-renderer.tsx`).
-- **Mock/standalone**: data SalesDB/PurchasingDB/FinanceDB = dummy in-file,
-  **belum** terhubung ke backend reports (`lib/api/reports`). Komponen lama
-  (`report-designer-page.tsx`, `report-designer-list-page.tsx`,
-  `organisms/report-designer-mock/*`, `report-template-dialog`,
-  `lib/report-designer-mock.ts`) kini **tak direferensikan** (superseded) —
-  dibiarkan di tree (reversible), kandidat cleanup/relink-ke-backend lanjutan.
+- **Template wired ke backend (2026-06-17)**: dropdown template = **list asli**
+  dari `lib/api/reports` (`listReportTemplates`, filter `isActive`). Pilih →
+  `getReportTemplate` → `templateJson` di-load via
+  `lib/report-studio/template-io.ts` `reportFromTemplateJson()`: kalau JSON
+  **native RsReport** (discriminator: tiap band punya `els[]` + `type`) dipakai
+  apa adanya; kalau **legacy/empty** (template lama pakai skema band beda, tanpa
+  `els`) → buka **starter layout per-module** (SALES/PUR/FIN/INV→builtin).
+  Tombol **Simpan** (quickbar) → `updateReportTemplate(currentId,{templateJson:
+  report, name})` — RsReport JSON-serializable, round-trip. Offline/API gagal →
+  fallback builtin 5 template (`isBuiltinKey`). **Data baris preview masih
+  sample in-file** (SalesDB/dll); `executeSqlQuery` tersedia utk wiring rows
+  nyata berikutnya.
+- **Cleanup (2026-06-17)**: cluster lama **DIHAPUS** (superseded, self-contained,
+  tak direferensikan): `report-designer-page.tsx`, `report-designer-list-page.tsx`,
+  `organisms/report-designer/*`, `organisms/report-designer-mock/*`,
+  `lib/report-designer-mock.ts`, `lib/report-api.ts`. `lib/api/reports.ts` tetap
+  (dipakai Report Studio). Route path `/admin/report-designer` + `erp-route-meta`
+  tetap (canonical `sys_menus.path`).

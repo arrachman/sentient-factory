@@ -32,6 +32,9 @@ export function RsQuickbar({ v }: { v: RsVals }) {
         </select>
         <button onClick={v.toggleLang} title="Language" style={s("height:28px;width:40px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#eef1f6;font-size:11px;font-weight:700;border-radius:6px;cursor:pointer;font-family:'IBM Plex Mono',monospace")}>{v.langBtnLabel}</button>
         <button onClick={v.toggleTheme} title="Theme" style={s('height:28px;width:30px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#eef1f6;border-radius:6px;cursor:pointer')}>{v.themeGlyph}</button>
+        <button onClick={v.onSave} title="Simpan (Save)" style={s('height:28px;padding:0 11px;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#eef1f6;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer')}>
+          <svg width="13" height="13" viewBox="0 0 16 16"><path d="M3 2h8l2 2v10H3zM5 2v4h6V2M5 11h6" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>{v.t.export === 'Export' ? 'Save' : 'Simpan'}
+        </button>
         <div style={s('position:relative')}>
           <button onClick={v.toggleExport} style={s('height:28px;padding:0 12px;display:flex;align-items:center;gap:6px;border:none;background:var(--accent,#2563eb);color:#fff;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer')}>
             <svg width="12" height="12" viewBox="0 0 16 16"><path d="M8 2v7M5 6.2l3 3 3-3M3 12.5h10" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>{v.t.export}
