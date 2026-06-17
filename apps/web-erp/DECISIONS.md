@@ -2883,3 +2883,41 @@ preview ala ERP modern + video pendek per item).
   item tersimpan; mode create menampilkan empty state "Simpan item terlebih
   dahulu". Upload **langsung tersimpan** saat unggah (bukan bagian payload
   save form) — konsisten dengan pola attachment ERP umum.
+
+## Report Studio — desainer laporan band-based (2026-06-17)
+
+Route `/admin/report-designer` (live `erp.fr-labs.my.id/app/admin/report-designer`)
+sekarang menampilkan **Report Studio** — port React **fungsional penuh** dari
+mockup `apps/web-erp/Report-Designer-ERP-Profesional/ReportStudio.dc.html`
+(export dc-runtime). Menggantikan `MockReportDesigner` lama (whole-route,
+keputusan user 2026-06-17). UI gaya ribbon MS-Office: quickbar (undo/redo, nama
+laporan, pilih template, lang/tema, Ekspor) + ribbon Home/Page/Layout/View +
+doc-tabs (Design/Preview) + data rail (Data/Relasi/Parameter/Fungsi, drag field
+ke kanvas) + kanvas band (drag/move/resize elemen, ruler/grid/guides) + panel
+kanan (Properti/Pohon/Kamus) + status bar. Fungsi nyata: undo/redo, clipboard,
+group-by, 5 template (invoice/sales/purchasing/finance/customers) + data dummy,
+ekspor PDF/Print (iframe), Excel/Word/HTML (Blob download), live preview
+berpaginasi, evaluator ekspresi (Sum/Avg/Count/Max/Min/Today/PageNumber/…).
+
+Keputusan & catatan:
+- **Pixel-faithful (pilihan user)**: styling memakai inline-style verbatim dari
+  mockup sebagai **"designer surface"** — **pengecualian sadar** atas §2 (token-
+  only). Tema (light/dark) + warna aksen tetap lewat CSS var palette (`--accent`
+  /`--panel`/`--border`/…) yang di-set di root via `rootStyle`. Helper `s()`
+  (`lib/report-studio/css.ts`) mem-parse string CSS → objek style React;
+  hover/focus lewat komponen `Hov` (`rs-shared.tsx`).
+- **Struktur** (semua ≤400 baris, §3): logika murni di
+  `lib/report-studio/*` (types, constants, i18n, format, templates, data,
+  el-style, palette, pagination, export, css). Controller =
+  hook `useReportStudio` (single merged-state + refs untuk scratch non-render;
+  `stRef` disinkron via effect, uid = counter modul — hindari akses ref saat
+  render / aturan `react-hooks/refs`). Port `renderVals()` → `vals/*` builders
+  (`buildVals`). UI = organisms `components/organisms/report-studio/*` + page
+  `components/pages/report-studio-page.tsx` (daftar di `ERP_PAGES`
+  `shell-route-renderer.tsx`).
+- **Mock/standalone**: data SalesDB/PurchasingDB/FinanceDB = dummy in-file,
+  **belum** terhubung ke backend reports (`lib/api/reports`). Komponen lama
+  (`report-designer-page.tsx`, `report-designer-list-page.tsx`,
+  `organisms/report-designer-mock/*`, `report-template-dialog`,
+  `lib/report-designer-mock.ts`) kini **tak direferensikan** (superseded) —
+  dibiarkan di tree (reversible), kandidat cleanup/relink-ke-backend lanjutan.
