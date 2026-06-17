@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, SlidersHorizontal } from 'lucide-react';
 import type { Booking } from '@/features/admin-booking/model/types';
 import { DAY_LABELS_SHORT, SVC_COLOR } from '../model/constants';
@@ -54,9 +54,14 @@ export function ScheduleMobile({
   onBookingClick: (b: Booking) => void;
   onToggleFilter: () => void;
 }) {
-  const days = useMemo(() => {
+  // Derive day pills client-side only. `todayKey()` pakai `new Date()` yang
+  // berbeda antara server (UTC) dan browser (WIB) di sekitar tengah malam →
+  // hydration mismatch (server render "15", client "16"). Init [] supaya SSR +
+  // first client render konsisten, isi setelah mount.
+  const [days, setDays] = useState<string[]>([]);
+  useEffect(() => {
     const start = todayKey();
-    return Array.from({ length: 14 }, (_, i) => addDays(start, i));
+    setDays(Array.from({ length: 14 }, (_, i) => addDays(start, i)));
   }, []);
 
   const daySessions = useMemo(() => {
