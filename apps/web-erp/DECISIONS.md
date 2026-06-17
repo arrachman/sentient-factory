@@ -2924,9 +2924,16 @@ Keputusan & catatan:
   `els`) → buka **starter layout per-module** (SALES/PUR/FIN/INV→builtin).
   Tombol **Simpan** (quickbar) → `updateReportTemplate(currentId,{templateJson:
   report, name})` — RsReport JSON-serializable, round-trip. Offline/API gagal →
-  fallback builtin 5 template (`isBuiltinKey`). **Data baris preview masih
-  sample in-file** (SalesDB/dll); `executeSqlQuery` tersedia utk wiring rows
-  nyata berikutnya.
+  fallback builtin 5 template (`isBuiltinKey`).
+- **Rows preview wired ke SQL nyata (2026-06-17)**: `RsReport.sql` opsional
+  (persist di templateJson). Editor SQL di Data tab (textarea, debounce 500ms) →
+  `executeSqlQuery(sql,{},200)` → `state.sqlRows/sqlCols/sqlErr`. Saat SQL aktif:
+  `effectiveData()` pakai rows nyata (bukan `buildData`), **dictionary** (Data
+  tab + Kamus) menampilkan **kolom hasil query** (datasource "Query") sebagai
+  field draggable, bind = nama kolom (`resolveField(bind,row)`=`row[bind]` sudah
+  generik); `bindOptions` property-grid + status bar (`Query · SQL · N baris`)
+  ikut. SQL kosong → balik ke data contoh. Keyboard handler skip `<textarea>`
+  jadi ngetik SQL aman.
 - **Cleanup (2026-06-17)**: cluster lama **DIHAPUS** (superseded, self-contained,
   tak direferensikan): `report-designer-page.tsx`, `report-designer-list-page.tsx`,
   `organisms/report-designer/*`, `organisms/report-designer-mock/*`,

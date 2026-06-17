@@ -48,6 +48,7 @@ export function rightVals(c: RsCtrl) {
   SCHEMA.forEach((ds) => ds.tables.forEach((tb) => tb.fields.forEach((f) => bindOptions.push({ v: tb.name + '.' + f[0], label: tb.name + '.' + f[0] }))));
   ['Sum(InvoiceLines.Amount)', 'Count()', 'Today()', 'PageNumber()', 'TotalPages()'].forEach((x) => bindOptions.push({ v: x, label: x }));
   PARAMS.forEach((p) => bindOptions.push({ v: p.name, label: p.name }));
+  c.dataCols.forEach((col) => bindOptions.push({ v: col, label: col }));
 
   const propGroups: PropGroup[] = []; let selName = ''; let selDesc = '';
 

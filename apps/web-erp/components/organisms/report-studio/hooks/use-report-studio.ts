@@ -14,7 +14,8 @@ import {
 } from '@/lib/report-studio/export';
 import { defName } from '@/lib/report-studio/i18n';
 import { reportFromTemplateJson } from '@/lib/report-studio/template-io';
-import { listReportTemplates, getReportTemplate, updateReportTemplate } from '@/lib/api/reports';
+import { listReportTemplates, getReportTemplate, updateReportTemplate, executeSqlQuery } from '@/lib/api/reports';
+import type { RsReportData } from '@/lib/report-studio/types';
 
 export interface RsState {
   report: RsReport; tplKey: RsTplKey; selEl: string | null; selBand: string | null;
@@ -27,6 +28,7 @@ export interface RsState {
   pageSize: string; orient: string; margin: string;
   propOpen: Record<string, boolean>; clipHas: boolean; undoN: number; redoN: number;
   tplList: Array<{ id: string; name: string }>; currentId: string | null;
+  sqlRows: Array<Record<string, unknown>> | null; sqlCols: string[]; sqlErr: string | null; sqlLoading: boolean;
 }
 
 type Patch = Partial<RsState> | ((s: RsState) => Partial<RsState>);
@@ -50,6 +52,7 @@ export function useReportStudio() {
       pageSize: 'a4', orient: 'portrait', margin: 'normal',
       propOpen: { pos: true, text: true, appearance: true, behavior: false }, clipHas: false, undoN: 0, redoN: 0,
       tplList: [], currentId: null,
+      sqlRows: null, sqlCols: [], sqlErr: null, sqlLoading: false,
     };
   });
   const stRef = React.useRef(st);
@@ -252,9 +255,14 @@ export function useReportStudio() {
   // ---------- exports ----------
   // Pure of state so the render path (canvasVals) computes from current `st`,
   // while handlers pass the live `stRef.current`.
-  const previewPagesOf = (s: RsState) => getPreviewPages(s.report, {
-    rows: buildData(s.tplKey).rows, ctx: buildData(s.tplKey).headerCtx, groupBy: s.groupBy, pageW: dimsOf(s)[0], pageH: dimsOf(s)[1],
-  });
+  // Effective preview dataset: live SQL rows when a query is set & loaded, else sample data.
+  const effectiveData = (s: RsState): RsReportData =>
+    (s.report.sql && s.sqlRows ? { headerCtx: {}, rows: s.sqlRows as unknown as RsReportData['rows'] } : buildData(s.tplKey));
+  const previewPagesOf = (s: RsState) => {
+    const d = effectiveData(s);
+    return getPreviewPages(s.report, { rows: d.rows, ctx: d.headerCtx, groupBy: s.groupBy, pageW: dimsOf(s)[0], pageH: dimsOf(s)[1] });
+  };
+  const setSql = (sql: string) => set((s) => ({ report: { ...s.report, sql } }));
   const exportPagesPrint = (asPdf: boolean) => {
     const s = stRef.current; set({ expOpen: false });
     printHTML(buildPagesHTML(previewPagesOf(s), effNameOf(s), dimsOf(s)[0], dimsOf(s)[1], s.orient));
@@ -263,7 +271,7 @@ export function useReportStudio() {
   const exportHTMLfile = () => { const s = stRef.current; set({ expOpen: false }); const ok = download(fileName(effNameOf(s), 'html'), 'text/html', buildPagesHTML(previewPagesOf(s), effNameOf(s), dimsOf(s)[0], dimsOf(s)[1], s.orient)); toast(ok ? (isId() ? 'File HTML diunduh' : 'HTML downloaded') : 'Export blocked'); };
   const exportTable = (kind: 'xls' | 'doc') => {
     const s = stRef.current; set({ expOpen: false }); const mime = kind === 'xls' ? 'application/vnd.ms-excel' : 'application/msword';
-    const ok = download(fileName(effNameOf(s), kind), mime, buildTableHTML(effNameOf(s), buildData(s.tplKey)));
+    const ok = download(fileName(effNameOf(s), kind), mime, buildTableHTML(effNameOf(s), effectiveData(s)));
     toast(ok ? (isId() ? ('File ' + (kind === 'xls' ? 'Excel' : 'Word') + ' diunduh') : ((kind === 'xls' ? 'Excel' : 'Word') + ' downloaded')) : 'Export blocked');
   };
 
@@ -299,6 +307,20 @@ export function useReportStudio() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Run the report SQL (debounced) when present; feeds live rows into preview/dictionary.
+  React.useEffect(() => {
+    const sql = (st.report.sql || '').trim();
+    if (!sql) { if (stRef.current.sqlRows || stRef.current.sqlErr || stRef.current.sqlLoading) set({ sqlRows: null, sqlCols: [], sqlErr: null, sqlLoading: false }); return; }
+    const timer = setTimeout(() => {
+      set({ sqlLoading: true });
+      executeSqlQuery(sql, {}, 200)
+        .then((res) => set({ sqlRows: res.rows, sqlCols: res.columns, sqlErr: null, sqlLoading: false }))
+        .catch((e) => set({ sqlRows: null, sqlCols: [], sqlErr: e instanceof Error ? e.message : String(e), sqlLoading: false }));
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [st.report.sql]);
+
   const selObj: RsElement | null = st.selEl
     ? (st.report.bands.flatMap((b) => b.els).find((e) => e.id === st.selEl) || null)
     : null;
@@ -310,8 +332,10 @@ export function useReportStudio() {
     pageW: dims[0], pageH: dims[1], marginPx: MARGINS[st.margin] || 40, zoom: st.zoom || 1, snapV, effName: effNameOf(st),
     report: st.report, selObj, selBandObj, findEl, findBand, pushUndo, updateEl, updateBand, editEl,
     STYLES, previewPages: () => previewPagesOf(st),
+    sql: st.report.sql || '', sqlErr: st.sqlErr, sqlLoading: st.sqlLoading,
+    sqlActive: !!(st.report.sql && st.sqlRows), dataCols: st.sqlCols, rowCount: effectiveData(st).rows.length,
     actions: {
-      undo, redo, loadTemplate, selectTemplate, save, onGroupBy, toast,
+      undo, redo, loadTemplate, selectTemplate, save, setSql, onGroupBy, toast,
       doCopy, doCut, doPaste, dupSel, delSel, addElement, zMove,
       onElementMouseDown, onResizeMouseDown, onBandResizeDown, onBandLabelDown, onBandMouseDown,
       onFieldDragStart, allowDrop, onCanvasDrop,

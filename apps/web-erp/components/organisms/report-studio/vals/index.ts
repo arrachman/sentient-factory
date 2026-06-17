@@ -1,6 +1,5 @@
 import type { RsCtrl } from '../hooks/use-report-studio';
 import { palette, rootStyle } from '@/lib/report-studio/palette';
-import { buildData } from '@/lib/report-studio/data';
 import { DATASOURCE_NAME, tr } from '@/lib/report-studio/i18n';
 import { quickbarVals } from './quickbar';
 import { ribbonVals } from './ribbon';
@@ -13,9 +12,8 @@ export function buildVals(c: RsCtrl) {
   const id = c.isId; const st = c.st;
   const pal = palette(st.theme, st.accent);
   const cv = canvasVals(c);
-  const dsName = DATASOURCE_NAME[st.tplKey];
-  const rowCount = buildData(st.tplKey).rows.length;
-  const statusLeft = dsName + '  ·  ' + rowCount + (id ? ' baris' : ' rows') + (st.snap ? '  ·  ' + (id ? 'rekat' : 'snap') + ' ' + st.grid + 'px' : '');
+  const dsName = c.sqlActive ? 'Query · SQL' : DATASOURCE_NAME[st.tplKey];
+  const statusLeft = dsName + '  ·  ' + c.rowCount + (id ? ' baris' : ' rows') + (st.snap ? '  ·  ' + (id ? 'rekat' : 'snap') + ' ' + st.grid + 'px' : '');
   const statusRight = Math.round(c.zoom * 100) + '%   ·   ' + st.pageSize.toUpperCase() + ' ' + (st.orient === 'landscape' ? '↔' : '↕') + '   ·   ' + c.pageW + '×' + cv.paperH;
   return {
     rootStyle: rootStyle(pal), t: tr(id),

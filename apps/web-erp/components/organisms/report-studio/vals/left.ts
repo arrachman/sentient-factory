@@ -1,6 +1,7 @@
 import type { RsCtrl } from '../hooks/use-report-studio';
 import type { RsLeftTab } from '@/lib/report-studio/types';
 import { SCHEMA, RELATIONS, PARAMS } from '@/lib/report-studio/constants';
+import { isMoney } from '@/lib/report-studio/format';
 import { GROUP_OPTIONS, tr } from '@/lib/report-studio/i18n';
 import { dtBase } from './styles';
 
@@ -20,14 +21,21 @@ export function leftVals(c: RsCtrl) {
 
   const groupOptions = (GROUP_OPTIONS[st.tplKey] || ['']).map((v) => ({ v, label: v === '' ? (id ? '(tanpa pengelompokan)' : '(no grouping)') : v }));
 
-  const dataTree = SCHEMA.map((ds) => ({
-    name: ds.name,
-    tables: ds.tables.map((tb) => ({
-      name: tb.name, caret: st.openTables[tb.name] ? '▾' : '▸', open: !!st.openTables[tb.name],
-      onToggle: () => c.set((s) => ({ openTables: { ...s.openTables, [tb.name]: !s.openTables[tb.name] } })),
-      fields: tb.fields.map((f) => ({ name: f[0], badge: f[1], path: tb.name + '.' + f[0] })),
-    })),
-  }));
+  const dataTree = c.sqlActive
+    ? [{
+      name: 'Query', tables: [{
+        name: 'Hasil', caret: '▾', open: true, onToggle: () => { /* always open */ },
+        fields: c.dataCols.map((col) => ({ name: col, badge: isMoney(col) ? '$' : 'T', path: col })),
+      }],
+    }]
+    : SCHEMA.map((ds) => ({
+      name: ds.name,
+      tables: ds.tables.map((tb) => ({
+        name: tb.name, caret: st.openTables[tb.name] ? '▾' : '▸', open: !!st.openTables[tb.name],
+        onToggle: () => c.set((s) => ({ openTables: { ...s.openTables, [tb.name]: !s.openTables[tb.name] } })),
+        fields: tb.fields.map((f) => ({ name: f[0], badge: f[1], path: tb.name + '.' + f[0] })),
+      })),
+    }));
 
   const relations = RELATIONS.map((r) => {
     const opt = (r.id in st.relOpt) ? st.relOpt[r.id] : r.opt;
@@ -57,6 +65,7 @@ export function leftVals(c: RsCtrl) {
     leftOpen: st.leftOpen, leftClosed: !st.leftOpen, leftTabs,
     tabData: st.leftTab === 'data', tabRel: st.leftTab === 'relations', tabParam: st.leftTab === 'params', tabFunc: st.leftTab === 'funcs',
     groupBy: st.groupBy, onGroupBy: a.onGroupBy, groupOptions, dataTree, onFieldDragStart: a.onFieldDragStart, relations, params, funcs,
+    sql: c.sql, onSql: a.setSql, sqlErr: c.sqlErr, sqlLoading: c.sqlLoading,
     toggleLeftPanel: () => c.set((s) => ({ leftOpen: !s.leftOpen })),
   };
 }

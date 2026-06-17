@@ -42,6 +42,8 @@ export interface RsBand {
 export interface RsReport {
   bands: RsBand[];
   key?: string;
+  /** Optional SQL; when set, preview rows come from executeSqlQuery instead of sample data. */
+  sql?: string;
 }
 
 export type RsTplKey = 'invoice' | 'sales' | 'purchasing' | 'finance' | 'customers';

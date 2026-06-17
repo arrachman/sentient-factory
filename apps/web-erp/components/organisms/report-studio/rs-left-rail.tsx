@@ -54,6 +54,11 @@ export function RsLeftRail({ v }: { v: RsVals }) {
         {v.tabData && (
           <>
             <div style={s('padding:10px 12px;border-bottom:1px solid var(--border,#e1e5ea)')}>
+              <div style={s('font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#6b7280);margin-bottom:6px;display:flex;align-items:center;gap:6px')}>SQL{v.sqlLoading ? <span style={s('font-weight:500;text-transform:none;color:var(--accent,#2563eb)')}>· memuat…</span> : null}</div>
+              <textarea value={v.sql} onChange={(e) => v.onSql(e.target.value)} placeholder="SELECT … (kosong = data contoh)" spellCheck={false} style={s("width:100%;height:62px;resize:vertical;padding:6px 8px;border:1px solid var(--border,#e1e5ea);border-radius:7px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:11px;font-family:'IBM Plex Mono',monospace;line-height:1.4")} />
+              {v.sqlErr ? <div style={s('margin-top:5px;font-size:10.5px;color:#dc2626;line-height:1.3')}>{v.sqlErr}</div> : null}
+            </div>
+            <div style={s('padding:10px 12px;border-bottom:1px solid var(--border,#e1e5ea)')}>
               <div style={s('font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#6b7280);margin-bottom:6px')}>{v.t.groupBy}</div>
               <select value={v.groupBy} onChange={(e) => v.onGroupBy(e.target.value)} style={s("width:100%;height:30px;padding:0 9px;border:1px solid var(--border,#e1e5ea);border-radius:7px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12px;font-family:'IBM Plex Mono',monospace")}>
                 {v.groupOptions.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
