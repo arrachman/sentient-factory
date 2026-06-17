@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:'IBM Plex Sans',system-ui,sans-serif}
+  #root{height:100vh}
+  input,select,button{font-family:inherit}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:rgba(128,138,155,.4);border-radius:6px;border:2px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(128,138,155,.7);background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+  @keyframes rsIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<div style="{{ rootStyle }}">
+
+  <!-- ============ TOOLBAR ============ -->
+  <header style="height:52px;flex:0 0 52px;display:flex;align-items:center;gap:7px;padding:0 11px;background:var(--panel,#fff);border-bottom:1px solid var(--border,#e1e5ea);z-index:30">
+    <div style="display:flex;align-items:center;gap:9px">
+      <div style="width:26px;height:26px;border-radius:7px;background:var(--accent,#2563eb);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px;font-family:'IBM Plex Mono',monospace">R</div>
+      <div style="font-weight:700;font-size:14px;letter-spacing:-.01em;color:var(--text,#1d2330)">Report<span style="color:var(--accent,#2563eb)">Studio</span></div>
+    </div>
+    <div style="width:1px;height:24px;background:var(--border,#e1e5ea);margin:0 2px"></div>
+    <select value="{{ tplKey }}" onChange="{{ onTemplate }}" style="height:30px;padding:0 26px 0 9px;border:1px solid var(--border,#e1e5ea);border-radius:7px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12.5px;font-weight:600;cursor:pointer;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted,#6b7280) 50%),linear-gradient(135deg,var(--muted,#6b7280) 50%,transparent 50%);background-position:calc(100% - 14px) 13px,calc(100% - 9px) 13px;background-size:5px 5px,5px 5px;background-repeat:no-repeat">
+      <sc-for list="{{ templateOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+    </select>
+    <input value="{{ reportName }}" onInput="{{ onName }}" placeholder="{{ t.reportName }}" style="height:30px;flex:1;min-width:50px;padding:0 10px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text,#1d2330);font-size:13px;font-weight:500" style-focus="border:1px solid var(--accent,#2563eb);background:var(--panel2,#f7f8fa)" />
+
+    <div style="display:flex;align-items:center;gap:2px;background:var(--panel2,#f7f8fa);border:1px solid var(--border,#e1e5ea);border-radius:8px;padding:3px;flex:0 0 auto">
+      <button onClick="{{ addText }}" title="{{ t.text }}" style="width:28px;height:26px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--text,#1d2330);border-radius:6px;cursor:pointer" style-hover="background:var(--hover,#eef2f8)"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M3 4h10M8 4v9" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button>
+      <button onClick="{{ addLine }}" title="{{ t.line }}" style="width:28px;height:26px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--text,#1d2330);border-radius:6px;cursor:pointer" style-hover="background:var(--hover,#eef2f8)"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M2 8h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button onClick="{{ addBox }}" title="{{ t.box }}" style="width:28px;height:26px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;color:var(--text,#1d2330);border-radius:6px;cursor:pointer" style-hover="background:var(--hover,#eef2f8)"><svg width="14" height="14" viewBox="0 0 16 16"><rect x="2.5" y="3.5" width="11" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/></svg></button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:1px;background:var(--panel2,#f7f8fa);border:1px solid var(--border,#e1e5ea);border-radius:8px;padding:3px;flex:0 0 auto">
+      <button onClick="{{ zoomOut }}" style="width:26px;height:26px;border:none;background:transparent;color:var(--text,#1d2330);font-size:16px;border-radius:6px;cursor:pointer" style-hover="background:var(--hover,#eef2f8)">−</button>
+      <div style="width:42px;text-align:center;font-size:11.5px;font-weight:600;color:var(--muted,#6b7280);font-family:'IBM Plex Mono',monospace">{{ zoomPct }}</div>
+      <button onClick="{{ zoomIn }}" style="width:26px;height:26px;border:none;background:transparent;color:var(--text,#1d2330);font-size:16px;border-radius:6px;cursor:pointer" style-hover="background:var(--hover,#eef2f8)">+</button>
+    </div>
+
+    <div style="display:flex;align-items:center;background:var(--panel2,#f7f8fa);border:1px solid var(--border,#e1e5ea);border-radius:8px;padding:3px;gap:2px;flex:0 0 auto">
+      <button onClick="{{ setDesign }}" style="{{ viewSegStyleD }}"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M4 3l9 4.2-3.6 1.3L8 13 4 3z" fill="currentColor"/></svg>{{ t.design }}</button>
+      <button onClick="{{ setPreview }}" style="{{ viewSegStyleP }}"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M1 8s2.6-4.4 7-4.4S15 8 15 8s-2.6 4.4-7 4.4S1 8 1 8z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>{{ t.preview }}</button>
+    </div>
+
+    <button onClick="{{ toggleLang }}" style="height:30px;width:42px;border:1px solid var(--border,#e1e5ea);background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:11.5px;font-weight:700;border-radius:8px;cursor:pointer;font-family:'IBM Plex Mono',monospace" style-hover="background:var(--hover,#eef2f8)">{{ langBtnLabel }}</button>
+    <button onClick="{{ toggleTheme }}" title="theme" style="height:30px;width:32px;border:1px solid var(--border,#e1e5ea);background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:var(--hover,#eef2f8)"><span>{{ themeGlyph }}</span></button>
+
+    <div style="position:relative">
+      <button onClick="{{ toggleExport }}" style="height:30px;padding:0 13px;display:flex;align-items:center;gap:6px;border:none;background:var(--accent,#2563eb);color:#fff;font-size:12.5px;font-weight:600;border-radius:8px;cursor:pointer"><svg width="13" height="13" viewBox="0 0 16 16"><path d="M8 2v7M5 6.2l3 3 3-3M3 12.5h10" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ t.export }}</button>
+      <sc-if value="{{ expOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;right:0;top:36px;width:178px;background:var(--panel,#fff);border:1px solid var(--border,#e1e5ea);border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,.18);padding:5px;z-index:50;animation:rsIn .12s ease">
+          <sc-for list="{{ exportItems }}" as="x" hint-placeholder-count="5">
+            <button onClick="{{ x.onClick }}" style="width:100%;display:flex;align-items:center;gap:9px;height:32px;padding:0 9px;border:none;background:transparent;color:var(--text,#1d2330);font-size:12.5px;font-weight:500;border-radius:7px;cursor:pointer;text-align:left" style-hover="background:var(--hover,#eef2f8)"><span style="width:34px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;color:var(--accent,#2563eb)">{{ x.ext }}</span>{{ x.label }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </header>
+
+  <!-- ============ BODY ============ -->
+  <div style="flex:1;display:flex;min-height:0">
+
+    <!-- LEFT PANEL -->
+    <aside style="width:256px;flex:0 0 256px;display:flex;flex-direction:column;background:var(--panel,#fff);border-right:1px solid var(--border,#e1e5ea);min-height:0">
+      <div style="display:flex;padding:8px 8px 0;gap:2px;border-bottom:1px solid var(--border,#e1e5ea)">
+        <sc-for list="{{ leftTabs }}" as="tab" hint-placeholder-count="4">
+          <button onClick="{{ tab.onClick }}" style="{{ tab.style }}">{{ tab.label }}</button>
+        </sc-for>
+      </div>
+      <div style="flex:1;overflow:auto;min-height:0">
+
+        <!-- DATA -->
+        <sc-if value="{{ tabData }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:11px 12px;border-bottom:1px solid var(--border,#e1e5ea)">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#6b7280);margin-bottom:6px">{{ t.groupBy }}</div>
+            <select value="{{ groupBy }}" onChange="{{ onGroupBy }}" style="width:100%;height:30px;padding:0 9px;border:1px solid var(--border,#e1e5ea);border-radius:7px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12px;font-family:'IBM Plex Mono',monospace">
+              <sc-for list="{{ groupOptions }}" as="o" hint-placeholder-count="2"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+            </select>
+          </div>
+          <div style="padding:9px 12px 4px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#6b7280)">{{ t.dragHint }}</div>
+          <sc-for list="{{ dataTree }}" as="ds" hint-placeholder-count="3">
+            <div style="padding:7px 12px 3px;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--accent,#2563eb);font-family:'IBM Plex Mono',monospace">{{ ds.name }}</div>
+            <sc-for list="{{ ds.tables }}" as="tb" hint-placeholder-count="3">
+              <div onClick="{{ tb.onToggle }}" style="display:flex;align-items:center;gap:7px;padding:5px 12px 5px 16px;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--text,#1d2330)" style-hover="background:var(--hover,#eef2f8)">
+                <span style="color:var(--muted,#6b7280);font-size:9px;width:8px">{{ tb.caret }}</span>
+                <svg width="13" height="13" viewBox="0 0 16 16" style="opacity:.55"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M2 6h12" stroke="currentColor" stroke-width="1.3"/></svg>
+                {{ tb.name }}
+              </div>
+              <sc-if value="{{ tb.open }}" hint-placeholder-val="{{ false }}">
+                <sc-for list="{{ tb.fields }}" as="f" hint-placeholder-count="4">
+                  <div draggable="true" data-path="{{ f.path }}" onDragStart="{{ onFieldDragStart }}" style="display:flex;align-items:center;gap:8px;padding:4px 12px 4px 38px;cursor:grab;font-size:12px;color:var(--text,#1d2330)" style-hover="background:var(--accent-weak,#e7efff)">
+                    <span style="width:15px;height:15px;flex:0 0 15px;border-radius:4px;background:var(--panel2,#f0f2f5);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--muted,#6b7280)">{{ f.badge }}</span>
+                    {{ f.name }}
+                  </div>
+                </sc-for>
+              </sc-if>
+            </sc-for>
+          </sc-for>
+          <div style="height:14px"></div>
+        </sc-if>
+
+        <!-- RELATIONS -->
+        <sc-if value="{{ tabRel }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:11px 12px;font-size:11.5px;line-height:1.5;color:var(--muted,#6b7280)">{{ t.relHint }}</div>
+          <sc-for list="{{ relations }}" as="r" hint-placeholder-count="4">
+            <div style="margin:0 10px 8px;padding:10px;border:1px solid var(--border,#e1e5ea);border-radius:9px;background:var(--panel2,#f7f8fa)">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text,#1d2330);line-height:1.5"><span style="color:var(--accent,#2563eb)">{{ r.left }}</span></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted,#6b7280);margin:1px 0 8px">↳ {{ r.right }}</div>
+              <button onClick="{{ r.onToggle }}" style="{{ r.btnStyle }}">{{ r.mode }}</button>
+            </div>
+          </sc-for>
+        </sc-if>
+
+        <!-- PARAMETERS -->
+        <sc-if value="{{ tabParam }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:9px 12px 4px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#6b7280)">{{ t.dragHint }}</div>
+          <sc-for list="{{ params }}" as="p" hint-placeholder-count="5">
+            <div draggable="true" data-path="{{ p.path }}" onDragStart="{{ onFieldDragStart }}" style="display:flex;align-items:center;gap:9px;margin:0 10px 6px;padding:8px 10px;border:1px solid var(--border,#e1e5ea);border-radius:8px;background:var(--panel2,#f7f8fa);cursor:grab" style-hover="border-color:var(--accent,#2563eb)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--accent,#2563eb)">{{ p.name }}</span>
+              <span style="margin-left:auto;font-size:11px;color:var(--muted,#6b7280)">{{ p.val }}</span>
+            </div>
+          </sc-for>
+        </sc-if>
+
+        <!-- FUNCTIONS -->
+        <sc-if value="{{ tabFunc }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:9px 12px 4px;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted,#6b7280)">{{ t.dragHint }}</div>
+          <sc-for list="{{ funcs }}" as="fn" hint-placeholder-count="6">
+            <div draggable="true" data-path="{{ fn.path }}" onDragStart="{{ onFieldDragStart }}" style="margin:0 10px 6px;padding:8px 10px;border:1px solid var(--border,#e1e5ea);border-radius:8px;background:var(--panel2,#f7f8fa);cursor:grab" style-hover="border-color:var(--accent,#2563eb)">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text,#1d2330)">{{ fn.sig }}</div>
+              <div style="font-size:11px;color:var(--muted,#6b7280);margin-top:2px">{{ fn.desc }}</div>
+            </div>
+          </sc-for>
+        </sc-if>
+      </div>
+    </aside>
+
+    <!-- CENTER -->
+    <main style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--canvas,#cfd4db);min-height:0">
+
+      <!-- DESIGN -->
+      <sc-if value="{{ isDesign }}" hint-placeholder-val="{{ true }}">
+        <div style="flex:1;overflow:auto;padding:30px 36px 60px 140px;display:flex;justify-content:center;align-items:flex-start;min-height:0">
+          <div style="{{ paperWrapStyle }}">
+            <div style="{{ paperStyle }}">
+              <div style="{{ guideStyleL }}"></div>
+              <div style="{{ guideStyleR }}"></div>
+              <sc-for list="{{ bands }}" as="b" hint-placeholder-count="4">
+                <div data-band="{{ b.id }}" onDrop="{{ onCanvasDrop }}" onDragOver="{{ allowDrop }}" onMouseDown="{{ onBandMouseDown }}" style="{{ b.style }}">
+                  <div data-band="{{ b.id }}" onMouseDown="{{ onBandLabelDown }}" style="{{ b.tabStyle }}">{{ b.label }}</div>
+                  <sc-for list="{{ b.els }}" as="el" hint-placeholder-count="3">
+                    <div data-id="{{ el.id }}" onMouseDown="{{ onElementMouseDown }}" style="{{ el.boxStyle }}">{{ el.display }}
+                      <sc-if value="{{ el.selected }}" hint-placeholder-val="{{ false }}">
+                        <div data-id="{{ el.id }}" onMouseDown="{{ onResizeMouseDown }}" style="position:absolute;right:-5px;bottom:-5px;width:10px;height:10px;background:#2563eb;border:1.5px solid #fff;border-radius:2px;cursor:nwse-resize;z-index:6"></div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <div data-band="{{ b.id }}" onMouseDown="{{ onBandResizeDown }}" style="position:absolute;left:0;right:0;bottom:-2px;height:6px;cursor:ns-resize;z-index:4"></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- PREVIEW -->
+      <sc-if value="{{ isPreview }}" hint-placeholder-val="{{ false }}">
+        <div style="flex:1;overflow:auto;padding:34px;display:flex;flex-direction:column;align-items:center;gap:26px;min-height:0">
+          <sc-for list="{{ previewPages }}" as="pg" hint-placeholder-count="1">
+            <div style="width:794px;min-height:1123px;background:#fff;color:#14181f;box-shadow:0 8px 40px rgba(0,0,0,.28);display:flex;flex-direction:column;padding:40px 0;flex:0 0 auto">
+              <div>
+                <sc-for list="{{ pg.top }}" as="bi" hint-placeholder-count="3">
+                  <div style="{{ bi.style }}">
+                    <sc-for list="{{ bi.els }}" as="el" hint-placeholder-count="3"><div style="{{ el.boxStyle }}">{{ el.display }}</div></sc-for>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="flex:1"></div>
+              <div>
+                <sc-for list="{{ pg.bottom }}" as="bi" hint-placeholder-count="1">
+                  <div style="{{ bi.style }}">
+                    <sc-for list="{{ bi.els }}" as="el" hint-placeholder-count="2"><div style="{{ el.boxStyle }}">{{ el.display }}</div></sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside style="width:272px;flex:0 0 272px;display:flex;flex-direction:column;background:var(--panel,#fff);border-left:1px solid var(--border,#e1e5ea);min-height:0">
+      <div style="flex:0 0 38%;display:flex;flex-direction:column;border-bottom:1px solid var(--border,#e1e5ea);min-height:0">
+        <div style="padding:11px 13px 8px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280)">{{ t.structure }}</div>
+        <div style="flex:1;overflow:auto;padding:0 6px 8px;min-height:0">
+          <sc-for list="{{ structure }}" as="n" hint-placeholder-count="6">
+            <div onClick="{{ n.onClick }}" style="{{ n.style }}">{{ n.label }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="padding:11px 13px 8px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280)">{{ t.properties }}</div>
+        <div style="flex:1;overflow:auto;padding:0 13px 16px;min-height:0">
+
+          <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:22px 6px;font-size:12.5px;line-height:1.55;color:var(--muted,#6b7280);text-align:center">{{ t.noSel }}</div>
+          </sc-if>
+
+          <!-- ELEMENT PROPS -->
+          <sc-if value="{{ hasSelEl }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280);margin:4px 0 7px">{{ t.content }}</div>
+            <sc-if value="{{ sel.isText }}" hint-placeholder-val="{{ true }}">
+              <input value="{{ sel.text }}" onInput="{{ onPropText }}" style="width:100%;height:32px;padding:0 9px;border:1px solid var(--border,#e1e5ea);border-radius:7px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12.5px;margin-bottom:8px" />
+            </sc-if>
+            <label style="font-size:11px;color:var(--muted,#6b7280);display:block;margin-bottom:4px">{{ t.binding }}</label>
+            <select value="{{ sel.bind }}" onChange="{{ onPropBind }}" style="width:100%;height:32px;padding:0 9px;border:1px solid var(--border,#e1e5ea);border-radius:7px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12px;font-family:'IBM Plex Mono',monospace;margin-bottom:12px">
+              <sc-for list="{{ bindOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.label }}</option></sc-for>
+            </select>
+
+            <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280);margin:4px 0 7px">{{ t.posSize }}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted,#6b7280);width:12px">X</span><input type="number" value="{{ sel.x }}" onInput="{{ onPropX }}" style="{{ numStyle }}" /></div>
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted,#6b7280);width:12px">Y</span><input type="number" value="{{ sel.y }}" onInput="{{ onPropY }}" style="{{ numStyle }}" /></div>
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted,#6b7280);width:12px">W</span><input type="number" value="{{ sel.w }}" onInput="{{ onPropW }}" style="{{ numStyle }}" /></div>
+              <div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--muted,#6b7280);width:12px">H</span><input type="number" value="{{ sel.h }}" onInput="{{ onPropH }}" style="{{ numStyle }}" /></div>
+            </div>
+
+            <sc-if value="{{ sel.isText }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280);margin:4px 0 7px">{{ t.typo }}</div>
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:6px;flex:0 0 96px"><span style="font-size:11px;color:var(--muted,#6b7280)">{{ t.font }}</span><input type="number" value="{{ sel.size }}" onInput="{{ onPropSize }}" style="{{ numStyle }}" /></div>
+                <div style="display:flex;gap:3px;margin-left:auto">
+                  <button onClick="{{ toggleBold }}" style="{{ sel.boldStyle }}">B</button>
+                  <button onClick="{{ toggleItalic }}" style="{{ sel.italicStyle }}">i</button>
+                </div>
+              </div>
+              <div style="display:flex;gap:3px;margin-bottom:12px">
+                <button onClick="{{ setAlignL }}" style="{{ sel.alStyleL }}">⌶</button>
+                <button onClick="{{ setAlignC }}" style="{{ sel.alStyleC }}">≡</button>
+                <button onClick="{{ setAlignR }}" style="{{ sel.alStyleR }}">⌶</button>
+              </div>
+              <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280);margin:4px 0 7px">{{ t.colors }}</div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+                <sc-for list="{{ colorSwatches }}" as="c" hint-placeholder-count="6">
+                  <button data-color="{{ c.v }}" onClick="{{ onSetColor }}" style="{{ c.style }}"></button>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <div style="display:flex;gap:8px">
+              <button onClick="{{ dupSel }}" style="flex:1;height:32px;border:1px solid var(--border,#e1e5ea);background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12px;font-weight:600;border-radius:7px;cursor:pointer" style-hover="background:var(--hover,#eef2f8)">{{ t.duplicate }}</button>
+              <button onClick="{{ delSel }}" style="flex:1;height:32px;border:1px solid #f3c2c2;background:rgba(220,38,38,.06);color:#dc2626;font-size:12px;font-weight:600;border-radius:7px;cursor:pointer">{{ t.delete }}</button>
+            </div>
+          </sc-if>
+
+          <!-- BAND PROPS -->
+          <sc-if value="{{ hasSelBand }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted,#6b7280);margin:4px 0 7px">{{ t.band }}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text,#1d2330);margin-bottom:12px">{{ selBandVM.label }}</div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--muted,#6b7280);flex:0 0 60px">{{ t.height }}</span><input type="number" value="{{ selBandVM.h }}" onInput="{{ onBandHeight }}" style="{{ numStyle }}" /><span style="font-size:11px;color:var(--muted,#6b7280)">px</span></div>
+          </sc-if>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- STATUS BAR -->
+  <footer style="height:26px;flex:0 0 26px;display:flex;align-items:center;padding:0 14px;gap:14px;background:var(--panel,#fff);border-top:1px solid var(--border,#e1e5ea);font-size:11px;color:var(--muted,#6b7280);font-family:'IBM Plex Mono',monospace">
+    <span>{{ statusLeft }}</span>
+    <span style="margin-left:auto">{{ statusRight }}</span>
+  </footer>
+
+  <sc-if value="{{ toastOn }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:46px;left:50%;transform:translateX(-50%);background:#1d2330;color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:500;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:80;animation:rsIn .15s ease">{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;},&quot;defaultTemplate&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;invoice&quot;,&quot;sales&quot;,&quot;purchasing&quot;,&quot;finance&quot;,&quot;customers&quot;],&quot;default&quot;:&quot;invoice&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;id&quot;,&quot;en&quot;],&quot;default&quot;:&quot;id&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#2563eb&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { tplKey:null, report:null, selEl:null, selBand:null, view:'design', leftTab:'data', zoom:1, theme:null, lang:null, accent:null, openTables:{Customers:true,Invoices:true,InvoiceLines:true,Accounts:true}, relOpt:{}, reportName:null, toast:null, expOpen:false, groupBy:'' };
+  GROUP_DEF = {sales:'Customers.Name',purchasing:'Vendors.Name',customers:'Customers.City'};
+
+  SCHEMA = [
+    {name:'SalesDB', tables:[
+      {name:'Customers', fields:[['CustomerID','#'],['Name','T'],['City','T'],['Country','T'],['Email','T'],['Phone','T']]},
+      {name:'Invoices', fields:[['InvoiceID','#'],['InvoiceNo','T'],['Date','D'],['DueDate','D'],['Status','T'],['Subtotal','$'],['Tax','$'],['Total','$']]},
+      {name:'InvoiceLines', fields:[['LineID','#'],['Description','T'],['Qty','#'],['Price','$'],['Discount','$'],['Amount','$']]},
+      {name:'Products', fields:[['ProductID','#'],['SKU','T'],['Name','T'],['Category','T'],['Unit','T'],['Price','$']]}
+    ]},
+    {name:'PurchasingDB', tables:[
+      {name:'Vendors', fields:[['VendorID','#'],['Name','T'],['City','T'],['Term','T']]},
+      {name:'PurchaseOrders', fields:[['POID','#'],['PONo','T'],['Date','D'],['Status','T'],['Total','$']]},
+      {name:'POLines', fields:[['POLineID','#'],['Description','T'],['Qty','#'],['Cost','$'],['Amount','$']]}
+    ]},
+    {name:'FinanceDB', tables:[
+      {name:'Accounts', fields:[['AccountID','#'],['Code','T'],['Name','T'],['Type','T']]},
+      {name:'GLEntries', fields:[['EntryID','#'],['Date','D'],['Debit','$'],['Credit','$'],['Amount','$'],['Memo','T']]}
+    ]}
+  ];
+  RELATIONS = [
+    {id:'r1',left:'Invoices.CustomerID',right:'Customers.CustomerID',opt:false},
+    {id:'r2',left:'InvoiceLines.InvoiceID',right:'Invoices.InvoiceID',opt:false},
+    {id:'r3',left:'InvoiceLines.ProductID',right:'Products.ProductID',opt:true},
+    {id:'r4',left:'PurchaseOrders.VendorID',right:'Vendors.VendorID',opt:false},
+    {id:'r5',left:'POLines.POID',right:'PurchaseOrders.POID',opt:false},
+    {id:'r6',left:'GLEntries.AccountID',right:'Accounts.AccountID',opt:false}
+  ];
+  PARAMS = [
+    {name:'@TanggalDari',val:'01 Jun 2026'},{name:'@TanggalSampai',val:'30 Jun 2026'},
+    {name:'@Cabang',val:'Jakarta'},{name:'@MataUang',val:'IDR'},{name:'@Pelanggan',val:'Semua'}
+  ];
+  _uid = 0;
+
+  // ---------- effective settings ----------
+  effTheme(){ return this.state.theme || this.props.theme || 'light'; }
+  effLang(){ return this.state.lang || this.props.lang || 'id'; }
+  effAccent(){ return this.state.accent || this.props.accent || '#2563eb'; }
+  effZoom(){ return this.state.zoom || 1; }
+  effTpl(){ return this.state.tplKey || this.props.defaultTemplate || 'invoice'; }
+  isId(){ return this.effLang() === 'id'; }
+
+  componentDidMount(){
+    if(!this.state.report) this.loadTemplate(this.effTpl(), true);
+    this._mm = (e)=>this._onMove(e); this._mu = ()=>{ this._drag=null; };
+    window.addEventListener('mousemove', this._mm);
+    window.addEventListener('mouseup', this._mu);
+  }
+  componentWillUnmount(){ window.removeEventListener('mousemove', this._mm); window.removeEventListener('mouseup', this._mu); }
+
+  // ---------- factories ----------
+  E(kind,x,y,w,h,o){ o=o||{}; return {id:'e'+(++this._uid),kind,x,y,w,h,text:o.text||'',bind:o.bind||'',size:o.size||10,bold:!!o.bold,italic:!!o.italic,align:o.align||'left',color:o.color||'',bg:o.bg||'',mono:!!o.mono}; }
+  B(type,h,els,o){ o=o||{}; return {id:'b'+(++this._uid),type,h,els:els||[],bg:o.bg||''}; }
+
+  // ---------- templates ----------
+  buildReport(key){
+    const E=(k,x,y,w,h,o)=>this.E(k,x,y,w,h,o), B=(t,h,e,o)=>this.B(t,h,e,o);
+    const pageFooter = ()=>B('PageFooter',22,[
+      E('label',40,5,260,14,{text:'Dicetak 17 Jun 2026 14:30 — ReportStudio',size:8,color:'#9aa3b2'}),
+      E('label',600,5,80,14,{text:'Halaman',size:8,align:'right',color:'#9aa3b2'}),
+      E('expr',686,5,22,14,{bind:'PageNumber()',size:8,align:'center',color:'#9aa3b2'}),
+      E('label',708,5,10,14,{text:'/',size:8,align:'center',color:'#9aa3b2'}),
+      E('expr',718,5,22,14,{bind:'TotalPages()',size:8,align:'center',color:'#9aa3b2'})
+    ]);
+    if(key==='invoice') return {bands:[
+      B('ReportHeader',152,[
+        E('label',40,18,320,28,{text:'ACME CORPORATION',size:20,bold:true}),
+        E('label',40,49,320,14,{text:'Jl. Jend. Sudirman Kav. 1, Jakarta 10220',size:9,color:'#6b7280'}),
+        E('label',40,64,320,14,{text:'NPWP 01.234.567.8-901.000',size:9,color:'#6b7280'}),
+        E('label',494,14,260,34,{text:'INVOICE',size:30,bold:true,align:'right'}),
+        E('label',470,92,128,13,{text:'No. Invoice',size:9,align:'right',color:'#6b7280'}),
+        E('field',600,89,154,16,{bind:'Invoices.InvoiceNo',size:11,bold:true,align:'right'}),
+        E('label',470,110,128,13,{text:'Tanggal',size:9,align:'right',color:'#6b7280'}),
+        E('field',600,108,154,15,{bind:'Invoices.Date',size:10,align:'right'}),
+        E('label',470,127,128,13,{text:'Jatuh Tempo',size:9,align:'right',color:'#6b7280'}),
+        E('field',600,125,154,15,{bind:'Invoices.DueDate',size:10,align:'right'}),
+        E('label',40,92,200,13,{text:'TAGIHAN KEPADA',size:9,bold:true,color:'#6b7280'}),
+        E('field',40,108,330,18,{bind:'Customers.Name',size:13,bold:true}),
+        E('field',40,128,330,15,{bind:'Customers.City',size:10,color:'#374151'})
+      ]),
+      B('ColumnHeader',26,[
+        E('label',40,5,320,16,{text:'Deskripsi',size:10,bold:true,color:'#ffffff'}),
+        E('label',360,5,80,16,{text:'Qty',size:10,bold:true,align:'right',color:'#ffffff'}),
+        E('label',452,5,148,16,{text:'Harga',size:10,bold:true,align:'right',color:'#ffffff'}),
+        E('label',606,5,148,16,{text:'Jumlah',size:10,bold:true,align:'right',color:'#ffffff'})
+      ],{bg:'#1f2937'}),
+      B('Detail',24,[
+        E('field',40,4,320,16,{bind:'Products.Name',size:10}),
+        E('field',360,4,80,16,{bind:'InvoiceLines.Qty',size:10,align:'right'}),
+        E('field',452,4,148,16,{bind:'InvoiceLines.Price',size:10,align:'right'}),
+        E('field',606,4,148,16,{bind:'InvoiceLines.Amount',size:10,align:'right'})
+      ]),
+      B('ReportFooter',150,[
+        E('label',452,12,148,16,{text:'Subtotal',size:10,align:'right',color:'#6b7280'}),
+        E('expr',606,12,148,16,{bind:'Sum(InvoiceLines.Amount)',size:10,align:'right'}),
+        E('label',452,32,148,16,{text:'PPN 11%',size:10,align:'right',color:'#6b7280'}),
+        E('expr',606,32,148,16,{bind:'Sum(InvoiceLines.Amount)*0.11',size:10,align:'right'}),
+        E('line',452,55,302,2,{bg:'#1f2937'}),
+        E('label',452,62,148,18,{text:'TOTAL',size:12,bold:true,align:'right'}),
+        E('expr',606,61,148,18,{bind:'Sum(InvoiceLines.Amount)*1.11',size:12,bold:true,align:'right'}),
+        E('label',40,84,300,13,{text:'CATATAN PEMBAYARAN',size:9,bold:true,color:'#6b7280'}),
+        E('label',40,100,380,42,{text:'Transfer ke BCA 123-456-7890 a.n. Acme Corporation. Mohon cantumkan nomor invoice pada berita transfer. Terima kasih.',size:9,color:'#374151'})
+      ])
+    ]};
+    if(key==='sales') return {bands:[
+      B('ReportHeader',72,[
+        E('label',40,16,400,24,{text:'LAPORAN PENJUALAN',size:20,bold:true}),
+        E('label',40,46,500,14,{text:'Periode 01 Jun 2026 – 30 Jun 2026  ·  Cabang Jakarta  ·  Mata Uang IDR',size:10,color:'#6b7280'}),
+        E('label',494,18,260,16,{text:'Acme Corporation',size:11,bold:true,align:'right'})
+      ]),
+      B('ColumnHeader',24,[
+        E('label',40,4,90,16,{text:'Tanggal',size:9.5,bold:true,color:'#374151'}),
+        E('label',135,4,120,16,{text:'No. Invoice',size:9.5,bold:true,color:'#374151'}),
+        E('label',255,4,200,16,{text:'Pelanggan',size:9.5,bold:true,color:'#374151'}),
+        E('label',455,4,90,16,{text:'Qty',size:9.5,bold:true,align:'right',color:'#374151'}),
+        E('label',600,4,154,16,{text:'Total',size:9.5,bold:true,align:'right',color:'#374151'})
+      ],{bg:'#eef1f6'}),
+      B('GroupHeader',24,[
+        E('label',40,5,80,15,{text:'Pelanggan:',size:10,bold:true,color:'#2563eb'}),
+        E('field',122,5,430,15,{bind:'Customers.Name',size:11,bold:true})
+      ],{bg:'#eaf1fb'}),
+      B('Detail',22,[
+        E('field',40,3,90,16,{bind:'Invoices.Date',size:9.5}),
+        E('field',135,3,120,16,{bind:'Invoices.InvoiceNo',size:9.5}),
+        E('field',255,3,200,16,{bind:'Customers.Name',size:9.5}),
+        E('field',455,3,90,16,{bind:'InvoiceLines.Qty',size:9.5,align:'right'}),
+        E('field',600,3,154,16,{bind:'InvoiceLines.Amount',size:9.5,align:'right'})
+      ]),
+      B('GroupFooter',22,[
+        E('line',40,2,714,1,{bg:'#c7d3e2'}),
+        E('label',300,5,255,15,{text:'Subtotal',size:10,align:'right',bold:true,color:'#6b7280'}),
+        E('expr',600,5,154,15,{bind:'Sum(InvoiceLines.Amount)',size:10,align:'right',bold:true})
+      ]),
+      B('ReportFooter',44,[
+        E('line',40,8,714,2,{bg:'#1f2937'}),
+        E('label',300,16,255,18,{text:'TOTAL PENJUALAN',size:11,bold:true,align:'right'}),
+        E('expr',600,15,154,18,{bind:'Sum(InvoiceLines.Amount)',size:12,bold:true,align:'right'})
+      ]),
+      pageFooter()
+    ]};
+    if(key==='purchasing') return {bands:[
+      B('ReportHeader',72,[
+        E('label',40,16,440,24,{text:'LAPORAN PEMBELIAN',size:20,bold:true}),
+        E('label',40,46,500,14,{text:'Periode 01 Jun 2026 – 30 Jun 2026  ·  Status: Diterima',size:10,color:'#6b7280'}),
+        E('label',494,18,260,16,{text:'Acme Corporation',size:11,bold:true,align:'right'})
+      ]),
+      B('ColumnHeader',24,[
+        E('label',40,4,90,16,{text:'Tanggal',size:9.5,bold:true,color:'#374151'}),
+        E('label',135,4,110,16,{text:'No. PO',size:9.5,bold:true,color:'#374151'}),
+        E('label',245,4,210,16,{text:'Vendor',size:9.5,bold:true,color:'#374151'}),
+        E('label',455,4,90,16,{text:'Qty',size:9.5,bold:true,align:'right',color:'#374151'}),
+        E('label',600,4,154,16,{text:'Nilai',size:9.5,bold:true,align:'right',color:'#374151'})
+      ],{bg:'#eef1f6'}),
+      B('GroupHeader',24,[
+        E('label',40,5,70,15,{text:'Vendor:',size:10,bold:true,color:'#2563eb'}),
+        E('field',112,5,440,15,{bind:'Vendors.Name',size:11,bold:true})
+      ],{bg:'#eaf1fb'}),
+      B('Detail',22,[
+        E('field',40,3,90,16,{bind:'PurchaseOrders.Date',size:9.5}),
+        E('field',135,3,110,16,{bind:'PurchaseOrders.PONo',size:9.5}),
+        E('field',245,3,210,16,{bind:'Vendors.Name',size:9.5}),
+        E('field',455,3,90,16,{bind:'POLines.Qty',size:9.5,align:'right'}),
+        E('field',600,3,154,16,{bind:'POLines.Amount',size:9.5,align:'right'})
+      ]),
+      B('GroupFooter',22,[
+        E('line',40,2,714,1,{bg:'#c7d3e2'}),
+        E('label',300,5,255,15,{text:'Subtotal',size:10,align:'right',bold:true,color:'#6b7280'}),
+        E('expr',600,5,154,15,{bind:'Sum(POLines.Amount)',size:10,align:'right',bold:true})
+      ]),
+      B('ReportFooter',44,[
+        E('line',40,8,714,2,{bg:'#1f2937'}),
+        E('label',300,16,255,18,{text:'TOTAL PEMBELIAN',size:11,bold:true,align:'right'}),
+        E('expr',600,15,154,18,{bind:'Sum(POLines.Amount)',size:12,bold:true,align:'right'})
+      ]),
+      pageFooter()
+    ]};
+    if(key==='finance') return {bands:[
+      B('ReportHeader',74,[
+        E('label',40,14,300,14,{text:'ACME CORPORATION',size:10,bold:true,color:'#6b7280'}),
+        E('label',40,30,440,24,{text:'LAPORAN LABA RUGI',size:19,bold:true}),
+        E('label',40,58,440,14,{text:'Periode 01 Januari – 30 Juni 2026  (dalam Rupiah)',size:10,color:'#6b7280'})
+      ]),
+      B('ColumnHeader',24,[
+        E('label',40,4,400,16,{text:'KETERANGAN',size:9.5,bold:true,color:'#374151'}),
+        E('label',554,4,200,16,{text:'JUMLAH',size:9.5,bold:true,align:'right',color:'#374151'})
+      ],{bg:'#eef1f6'}),
+      B('Detail',22,[
+        E('field',40,3,440,16,{bind:'Accounts.Name',size:10}),
+        E('field',554,3,200,16,{bind:'GLEntries.Amount',size:10,align:'right'})
+      ]),
+      B('ReportFooter',46,[
+        E('line',40,8,714,2,{bg:'#1f2937'}),
+        E('label',300,15,255,20,{text:'LABA BERSIH',size:12,bold:true,align:'right'}),
+        E('expr',554,14,200,20,{bind:'Sum(GLEntries.Amount)',size:13,bold:true,align:'right'})
+      ]),
+      pageFooter()
+    ]};
+    // customers
+    return {bands:[
+      B('ReportHeader',58,[
+        E('label',40,16,440,24,{text:'DAFTAR PELANGGAN',size:20,bold:true}),
+        E('label',40,46,400,14,{text:'Database: SalesDB · Customers',size:10,color:'#6b7280'})
+      ]),
+      B('ColumnHeader',24,[
+        E('label',40,4,70,16,{text:'ID',size:9.5,bold:true,color:'#374151'}),
+        E('label',110,4,200,16,{text:'Nama',size:9.5,bold:true,color:'#374151'}),
+        E('label',310,4,150,16,{text:'Kota',size:9.5,bold:true,color:'#374151'}),
+        E('label',460,4,180,16,{text:'Email',size:9.5,bold:true,color:'#374151'}),
+        E('label',640,4,114,16,{text:'Telepon',size:9.5,bold:true,color:'#374151'})
+      ],{bg:'#eef1f6'}),
+      B('GroupHeader',24,[
+        E('label',40,5,60,15,{text:'Kota:',size:10,bold:true,color:'#2563eb'}),
+        E('field',102,5,400,15,{bind:'Customers.City',size:11,bold:true})
+      ],{bg:'#eaf1fb'}),
+      B('Detail',22,[
+        E('field',40,3,70,16,{bind:'Customers.CustomerID',size:9.5}),
+        E('field',110,3,200,16,{bind:'Customers.Name',size:9.5}),
+        E('field',310,3,150,16,{bind:'Customers.City',size:9.5}),
+        E('field',460,3,180,16,{bind:'Customers.Email',size:9.5}),
+        E('field',640,3,114,16,{bind:'Customers.Phone',size:9.5})
+      ]),
+      B('GroupFooter',22,[
+        E('line',40,2,714,1,{bg:'#c7d3e2'}),
+        E('label',430,5,180,15,{text:'Jumlah',size:10,align:'right',color:'#6b7280'}),
+        E('expr',620,5,134,15,{bind:'Count()',size:10,align:'right',bold:true})
+      ]),
+      B('ReportFooter',36,[
+        E('line',40,8,714,2,{bg:'#dfe3e9'}),
+        E('label',430,14,180,16,{text:'Total Pelanggan',size:10,align:'right',color:'#6b7280'}),
+        E('expr',620,14,134,16,{bind:'Count()',size:11,bold:true,align:'right'})
+      ]),
+      pageFooter()
+    ]};
+  }
+
+  buildData(key){
+    if(key==='invoice'){
+      const ctx={'Invoices.InvoiceNo':'INV-2026-0042','Invoices.Date':'17 Jun 2026','Invoices.DueDate':'01 Jul 2026','Customers.Name':'PT Maju Bersama Sejahtera','Customers.City':'Jakarta Selatan, DKI Jakarta'};
+      const L=[['Laptop Bisnis Pro 14"',2,12500000,25000000],['Docking Station USB-C',2,1850000,3700000],['Monitor 27" QHD',3,3200000,9600000],['Keyboard Mekanikal',5,950000,4750000],['Lisensi Office 365 (tahun)',10,1200000,12000000],['Jasa Instalasi & Setup',1,2500000,2500000]];
+      return {headerCtx:ctx, rows:L.map(r=>({'Products.Name':r[0],'InvoiceLines.Qty':r[1],'InvoiceLines.Price':r[2],'InvoiceLines.Amount':r[3]}))};
+    }
+    if(key==='sales'){
+      const D=['02 Jun','03 Jun','05 Jun','07 Jun','09 Jun','11 Jun','13 Jun','15 Jun','18 Jun','20 Jun','22 Jun','24 Jun','26 Jun','28 Jun','29 Jun','30 Jun'];
+      const C=['PT Maju Bersama','CV Sentosa Abadi','PT Global Niaga','Toko Sumber Rejeki','PT Cahaya Mandiri','UD Berkah Jaya','PT Sinar Terang','CV Mitra Usaha'];
+      const P=['Laptop Bisnis Pro','Monitor 27" QHD','Printer Laser','Router Enterprise','Server Rack 2U','Switch 48-Port'];
+      const rows=[]; for(let i=0;i<16;i++){ const qty=2+(i*3)%9; const amt=(1500000+(i*1234567)%18000000); rows.push({'Invoices.Date':D[i]+' 2026','Invoices.InvoiceNo':'INV-2026-'+String(20+i).padStart(4,'0'),'Customers.Name':C[i%C.length],'Products.Name':P[i%P.length],'InvoiceLines.Qty':qty,'InvoiceLines.Amount':amt}); }
+      return {headerCtx:{}, rows};
+    }
+    if(key==='purchasing'){
+      const D=['01 Jun','04 Jun','06 Jun','08 Jun','10 Jun','12 Jun','14 Jun','16 Jun','19 Jun','21 Jun','23 Jun','27 Jun'];
+      const V=['PT Distribusi Elektronik','CV Komponen Nusantara','PT Teknologi Andal','UD Logistik Cepat','PT Sumber Komputer'];
+      const P=['Laptop Bisnis Pro','Monitor 27" QHD','SSD NVMe 1TB','RAM 16GB DDR5','Power Supply 750W'];
+      const rows=[]; for(let i=0;i<12;i++){ const qty=5+(i*4)%20; const amt=(2200000+(i*987654)%14000000); rows.push({'PurchaseOrders.Date':D[i]+' 2026','PurchaseOrders.PONo':'PO-2026-'+String(10+i).padStart(4,'0'),'Vendors.Name':V[i%V.length],'Products.Name':P[i%P.length],'POLines.Qty':qty,'POLines.Amount':amt}); }
+      return {headerCtx:{}, rows};
+    }
+    if(key==='finance'){
+      const F=[['PENDAPATAN',null],['  Penjualan Barang',1842000000],['  Pendapatan Jasa',236000000],['  Pendapatan Lain',48000000],['HARGA POKOK PENJUALAN',null],['  Pembelian Barang',-1120000000],['  Biaya Produksi',-184000000],['BEBAN OPERASIONAL',null],['  Gaji & Tunjangan',-312000000],['  Sewa & Utilitas',-96000000],['  Pemasaran',-74000000],['  Penyusutan',-38000000],['PENDAPATAN/BEBAN LAIN',null],['  Beban Bunga',-22000000]];
+      return {headerCtx:{}, rows:F.map(r=>({'Accounts.Name':r[0],'GLEntries.Amount':(r[1]===null?'':r[1])}))};
+    }
+    // customers
+    const N=['PT Maju Bersama Sejahtera','CV Sentosa Abadi','PT Global Niaga Utama','Toko Sumber Rejeki','PT Cahaya Mandiri','UD Berkah Jaya','PT Sinar Terang Abadi','CV Mitra Usaha','PT Karya Nusantara','Toko Elektronik Jaya','PT Andalan Prima','CV Sukses Makmur','PT Dwi Tunggal','UD Rahmat Sejahtera','PT Bintang Timur','CV Harapan Baru'];
+    const KT=['Jakarta','Surabaya','Bandung','Medan','Semarang','Makassar','Yogyakarta','Denpasar'];
+    const rows=N.map((n,i)=>({'Customers.CustomerID':'C'+String(1001+i),'Customers.Name':n,'Customers.City':KT[i%KT.length],'Customers.Email':'cs@'+n.split(' ')[1].toLowerCase()+'.co.id','Customers.Phone':'021-'+(5550000+i*131).toString().slice(0,7)}));
+    return {headerCtx:{}, rows};
+  }
+
+  loadTemplate(key, keepView){
+    const r=this.buildReport(key);
+    this.setState({report:r, tplKey:key, selEl:null, selBand:null, reportName:null, groupBy:(this.GROUP_DEF[key]||''), view: keepView?this.state.view:'design'});
+  }
+  onGroupBy = (e)=>{ const v=e.target.value; this.setState({groupBy:v}); const gh=(this.state.report||{bands:[]}).bands.find(b=>b.type==='GroupHeader'); if(gh && v){ const f=gh.els.find(x=>x.kind==='field'); if(f) this.updateEl(f.id,{bind:v}); } };
+
+  // ---------- formatting / resolving ----------
+  num(v){ if(typeof v==='number')return v; if(v==null||v==='')return NaN; return parseFloat(String(v).replace(/[^0-9.\-]/g,'')); }
+  isMoney(p){ return /price|harga|amount|jumlah|total|subtotal|tax|ppn|cost|biaya|debit|kredit|credit|saldo|nilai/i.test(p); }
+  fmtNum(n){ return (Math.round(n*100)/100).toLocaleString('id-ID'); }
+  fmtMoney(n){ return (n<0?'(':'')+'Rp '+this.fmtNum(Math.abs(n))+(n<0?')':''); }
+  fmtField(p,v){ if(typeof v==='number'){ return this.isMoney(p)?this.fmtMoney(v):this.fmtNum(v); } return String(v); }
+  resolveField(bind,row,ctx){
+    let v;
+    if(row && Object.prototype.hasOwnProperty.call(row,bind)) v=row[bind];
+    else if(ctx && Object.prototype.hasOwnProperty.call(ctx,bind)) v=ctx[bind];
+    else if(bind.charAt(0)==='@'){ const p=this.PARAMS.find(x=>x.name===bind); v=p?p.val:bind; }
+    if(v===undefined||v===null||v==='') return v===0?'0':'';
+    return typeof v==='number'?this.fmtField(bind,v):String(v);
+  }
+  evalExpr(expr,rows,ctx,pageNo,pageCount){
+    expr=(expr||'').trim(); let m;
+    if(m=expr.match(/^Sum\(([^)]+)\)(?:\s*\*\s*([\d.]+))?$/)){ const f=m[1].trim(); let s=0; rows.forEach(r=>{const n=this.num(r&&r[f]); if(!isNaN(n))s+=n;}); if(m[2])s*=parseFloat(m[2]); return this.isMoney(f)?this.fmtMoney(s):this.fmtNum(s); }
+    if(m=expr.match(/^Avg\(([^)]+)\)$/)){ const f=m[1].trim(); let s=0,c=0; rows.forEach(r=>{const n=this.num(r&&r[f]); if(!isNaN(n)){s+=n;c++;}}); const a=c?s/c:0; return this.isMoney(f)?this.fmtMoney(a):this.fmtNum(a); }
+    if(/^Count\(\s*\)$/.test(expr)) return String(rows.length);
+    if(m=expr.match(/^Max\(([^)]+)\)$/)){ const f=m[1].trim(); let mx=-Infinity; rows.forEach(r=>{const n=this.num(r&&r[f]); if(!isNaN(n))mx=Math.max(mx,n);}); return this.fmtNum(mx===-Infinity?0:mx); }
+    if(m=expr.match(/^Min\(([^)]+)\)$/)){ const f=m[1].trim(); let mn=Infinity; rows.forEach(r=>{const n=this.num(r&&r[f]); if(!isNaN(n))mn=Math.min(mn,n);}); return this.fmtNum(mn===Infinity?0:mn); }
+    if(/^Today\(\s*\)$/.test(expr)) return '17 Jun 2026';
+    if(/^Now\(\s*\)$/.test(expr)) return '17 Jun 2026 14:30';
+    if(/^PageNumber\(\s*\)$/.test(expr)) return String(pageNo);
+    if(/^TotalPages\(\s*\)$/.test(expr)) return String(pageCount);
+    return '= '+expr;
+  }
+
+  // ---------- element style ----------
+  elBox(el,mode,selected){
+    const data = el.kind==='field'||el.kind==='expr';
+    let s='position:absolute;box-sizing:border-box;left:'+el.x+'px;top:'+el.y+'px;width:'+el.w+'px;height:'+el.h+'px;overflow:hidden;';
+    if(el.kind==='line'||el.kind==='box'){
+      s+='background:'+(el.bg||(el.kind==='line'?'#1f2937':'transparent'))+';';
+      if(el.kind==='box') s+='border:1px solid '+(el.color||'#1f2937')+';';
+      if(mode==='design'&&selected) s+='outline:1.5px solid #2563eb;z-index:6;';
+      return s;
+    }
+    s+='display:flex;align-items:center;padding:0 3px;font-size:'+el.size+'px;line-height:1.12;white-space:nowrap;';
+    const j=el.align==='right'?'flex-end':el.align==='center'?'center':'flex-start';
+    s+='justify-content:'+j+';text-align:'+el.align+';';
+    s+='font-weight:'+(el.bold?700:400)+';'; if(el.italic)s+='font-style:italic;';
+    s+="font-family:"+((data||el.mono)?"'IBM Plex Mono',monospace":"'IBM Plex Sans',sans-serif")+';';
+    let color = el.color || '#14181f';
+    if(mode==='design'&&data&&!el.color) color='#1d4ed8';
+    s+='color:'+color+';';
+    if(el.bg) s+='background:'+el.bg+';';
+    if(mode==='design'&&data){ if(!el.bg)s+='background:rgba(37,99,235,.06);'; s+='border:1px dashed rgba(37,99,235,.4);'; }
+    if(mode==='design'&&selected) s+='outline:1.5px solid #2563eb;z-index:6;';
+    return s;
+  }
+  elDisplay(el){ if(el.kind==='line'||el.kind==='box')return ''; if(el.kind==='label')return el.text; if(el.kind==='field')return '{'+(el.bind||'?')+'}'; return '='+(el.bind||'?'); }
+  elPreview(el,row,ctx,rows,pageNo,pageCount){ if(el.kind==='line'||el.kind==='box')return ''; if(el.kind==='label')return el.text; if(el.kind==='field')return this.resolveField(el.bind,row,ctx); return this.evalExpr(el.bind,rows,ctx,pageNo,pageCount); }
+
+  bandLabel(type){
+    const id=this.isId();
+    const M={ReportHeader:['Judul Laporan','Report Header'],PageHeader:['Header Halaman','Page Header'],ColumnHeader:['Header Kolom','Column Header'],Detail:['Detail','Detail'],GroupHeader:['Header Grup','Group Header'],GroupFooter:['Footer Grup','Group Footer'],ColumnFooter:['Footer Kolom','Column Footer'],PageFooter:['Footer Halaman','Page Footer'],ReportFooter:['Footer Laporan','Report Footer']};
+    const x=M[type]||[type,type]; return id?x[0]:x[1];
+  }
+
+  // ---------- lookups ----------
+  findEl(id){ const r=this.state.report; if(!r)return null; for(const b of r.bands){ const e=b.els.find(x=>x.id===id); if(e)return e; } return null; }
+  findBand(id){ const r=this.state.report; return r?r.bands.find(b=>b.id===id):null; }
+  findBandOfEl(id){ const r=this.state.report; if(!r)return null; return r.bands.find(b=>b.els.some(x=>x.id===id)); }
+  updateEl(id,patch){ this.setState(s=>({report:{bands:s.report.bands.map(b=>({...b,els:b.els.map(e=>e.id===id?{...e,...patch}:e)}))}})); }
+  updateBand(id,patch){ this.setState(s=>({report:{bands:s.report.bands.map(b=>b.id===id?{...b,...patch}:b)}})); }
+
+  // ---------- drag/move/resize ----------
+  _onMove(e){ const d=this._drag; if(!d)return; const z=this.effZoom(); const dx=(e.clientX-d.sx)/z, dy=(e.clientY-d.sy)/z;
+    if(d.mode==='move'){ const x=Math.max(0,Math.min(794-d.w,Math.round(d.ox+dx))); const y=Math.max(0,Math.min(Math.max(0,d.bandH-d.h),Math.round(d.oy+dy))); this.updateEl(d.id,{x,y}); }
+    else if(d.mode==='resize'){ const w=Math.max(14,Math.min(794-d.ox,Math.round(d.ow+dx))); const h=Math.max(6,Math.min(d.bandH-d.oy,Math.round(d.oh+dy))); this.updateEl(d.id,{w,h}); }
+    else if(d.mode==='bandH'){ this.updateBand(d.id,{h:Math.max(18,Math.round(d.oh+dy))}); }
+  }
+  onElementMouseDown = (e)=>{ e.stopPropagation(); const id=e.currentTarget.dataset.id; const el=this.findEl(id); const b=this.findBandOfEl(id); if(!el||!b)return; this.setState({selEl:id,selBand:null}); this._drag={mode:'move',id,sx:e.clientX,sy:e.clientY,ox:el.x,oy:el.y,w:el.w,h:el.h,bandH:b.h}; e.preventDefault(); };
+  onResizeMouseDown = (e)=>{ e.stopPropagation(); const id=e.currentTarget.dataset.id; const el=this.findEl(id); const b=this.findBandOfEl(id); if(!el||!b)return; this.setState({selEl:id,selBand:null}); this._drag={mode:'resize',id,sx:e.clientX,sy:e.clientY,ow:el.w,oh:el.h,ox:el.x,oy:el.y,bandH:b.h}; e.preventDefault(); };
+  onBandResizeDown = (e)=>{ e.stopPropagation(); const id=e.currentTarget.dataset.band; const b=this.findBand(id); if(!b)return; this.setState({selBand:id,selEl:null}); this._drag={mode:'bandH',id,sy:e.clientY,oh:b.h}; e.preventDefault(); };
+  onBandLabelDown = (e)=>{ e.stopPropagation(); this.setState({selBand:e.currentTarget.dataset.band,selEl:null}); };
+  onBandMouseDown = (e)=>{ if(e.target===e.currentTarget) this.setState({selEl:null,selBand:null}); };
+
+  onFieldDragStart = (e)=>{ const p=e.currentTarget.dataset.path; e.dataTransfer.setData('text/plain',p); e.dataTransfer.effectAllowed='copy'; };
+  allowDrop = (e)=>{ e.preventDefault(); try{e.dataTransfer.dropEffect='copy';}catch(_){} };
+  onCanvasDrop = (e)=>{ e.preventDefault(); const bandId=e.currentTarget.dataset.band; const path=e.dataTransfer.getData('text/plain'); if(!path||!bandId)return;
+    const rect=e.currentTarget.getBoundingClientRect(); const z=this.effZoom();
+    let kind='field', bind=path, w=150, h=18, text='';
+    if(path.indexOf('expr:')===0){ kind='expr'; bind=path.slice(5); w=150; }
+    else if(path.indexOf('param:')===0){ kind='field'; bind=path.slice(6); w=130; }
+    let x=Math.round((e.clientX-rect.left)/z - w/2); let y=Math.round((e.clientY-rect.top)/z - h/2);
+    const b=this.findBand(bandId); const bh=b?b.h:24;
+    x=Math.max(0,Math.min(794-w,x)); y=Math.max(0,Math.min(Math.max(0,bh-h),y));
+    const el=this.E(kind,x,y,w,h,{bind,text,size:10});
+    this.setState(s=>({report:{bands:s.report.bands.map(bb=>bb.id===bandId?{...bb,els:[...bb.els,el]}:bb)}, selEl:el.id, selBand:null}));
+  };
+
+  // ---------- toolbar / props handlers ----------
+  setView = (v)=>this.setState({view:v});
+  setDesign = ()=>this.setState({view:'design'});
+  setPreview = ()=>this.setState({view:'preview'});
+  setLeftTab = (id)=>this.setState({leftTab:id});
+  onTemplate = (e)=>this.loadTemplate(e.target.value,true);
+  onName = (e)=>this.setState({reportName:e.target.value});
+  toggleTheme = ()=>this.setState(s=>({theme:(s.theme||this.props.theme||'light')==='light'?'dark':'light'}));
+  toggleLang = ()=>this.setState(s=>({lang:(s.lang||this.props.lang||'id')==='id'?'en':'id'}));
+  toggleExport = ()=>this.setState(s=>({expOpen:!s.expOpen}));
+  zoomIn = ()=>this.setState(s=>({zoom:Math.min(2,(s.zoom||1)+0.1)}));
+  zoomOut = ()=>this.setState(s=>({zoom:Math.max(0.4,(s.zoom||1)-0.1)}));
+  toggleTable = (name)=>this.setState(s=>({openTables:{...s.openTables,[name]:!s.openTables[name]}}));
+  toggleRel = (id)=>this.setState(s=>({relOpt:{...s.relOpt,[id]:!(id in s.relOpt? s.relOpt[id]: this.RELATIONS.find(r=>r.id===id).opt)}}));
+  toast(msg){ this.setState({toast:msg,expOpen:false}); clearTimeout(this._t); this._t=setTimeout(()=>this.setState({toast:null}),1900); }
+  defName(){ const id=this.isId(); const m={invoice:id?'Invoice Penjualan':'Sales Invoice',sales:id?'Laporan Penjualan Bulanan':'Monthly Sales Report',purchasing:id?'Laporan Pembelian':'Purchasing Report',finance:id?'Laporan Laba Rugi':'Profit & Loss Statement',customers:id?'Daftar Pelanggan':'Customer List'}; return m[this.effTpl()]; }
+  effName(){ return this.state.reportName!==null?this.state.reportName:this.defName(); }
+  esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  fileName(ext){ return (this.effName()||'report').replace(/[^a-z0-9]+/gi,'_').replace(/^_|_$/g,'').toLowerCase()+'.'+ext; }
+  docHead(){ return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+this.esc(this.effName())+'</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0}body{font-family:\'IBM Plex Sans\',sans-serif;background:#e9ecf0;padding:24px;display:flex;flex-direction:column;align-items:center;gap:20px}.sheet{width:794px;min-height:1123px;background:#fff;color:#14181f;box-shadow:0 4px 20px rgba(0,0,0,.18);display:flex;flex-direction:column;padding:40px 0}@media print{body{background:#fff;padding:0;gap:0}.sheet{box-shadow:none;margin:0;page-break-after:always}@page{size:A4;margin:0}}</style></head><body>'; }
+  buildPagesHTML(){ const pages=this.getPreviewPages(this.state.report||this.buildReport(this.effTpl())); let b=''; const band=(bi)=>{ let s='<div style="'+bi.style+'">'; bi.els.forEach(el=>{ s+='<div style="'+el.boxStyle+'">'+this.esc(el.display)+'</div>'; }); return s+'</div>'; }; pages.forEach(pg=>{ b+='<div class="sheet"><div>'; pg.top.forEach(bi=>{b+=band(bi);}); b+='</div><div style="flex:1"></div><div>'; pg.bottom.forEach(bi=>{b+=band(bi);}); b+='</div></div>'; }); return this.docHead()+b+'</body></html>'; }
+  buildTableHTML(){ const data=this.buildData(this.effTpl()); const rows=data.rows; const cols=rows.length?Object.keys(rows[0]):[]; const head=cols.map(c=>'<th style="border:1px solid #c8ccd3;padding:6px 9px;background:#1f2937;color:#fff;text-align:left;font-size:12px">'+this.esc(c.split('.').pop())+'</th>').join(''); let body=''; rows.forEach(r=>{ body+='<tr>'+cols.map(c=>{ const v=r[c]; const txt=typeof v==='number'?this.fmtField(c,v):this.esc(v); const al=typeof v==='number'?'right':'left'; return '<td style="border:1px solid #d7dbe1;padding:5px 9px;font-size:12px;text-align:'+al+'">'+txt+'</td>'; }).join('')+'</tr>'; }); const ctx=data.headerCtx; let ctxHTML=''; if(ctx&&Object.keys(ctx).length){ ctxHTML='<table style="margin-bottom:14px;font-size:12px">'+Object.keys(ctx).map(k=>'<tr><td style="padding:2px 12px 2px 0;color:#6b7280">'+this.esc(k)+'</td><td style="padding:2px 0;font-weight:600">'+this.esc(ctx[k])+'</td></tr>').join('')+'</table>'; } return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+this.esc(this.effName())+'</title></head><body style="font-family:Arial,sans-serif;padding:18px"><h2 style="margin:0 0 4px">'+this.esc(this.effName())+'</h2><div style="color:#6b7280;font-size:12px;margin-bottom:14px">ReportStudio · '+new Date().toLocaleDateString('id-ID')+'</div>'+ctxHTML+'<table style="border-collapse:collapse;width:100%">'+'<thead><tr>'+head+'</tr></thead><tbody>'+body+'</tbody></table></body></html>'; }
+  download(name,mime,content){ try{ const blob=new Blob([content],{type:mime}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),3000); return true; }catch(e){ return false; } }
+  printHTML(html){ try{ const f=document.createElement('iframe'); f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0'; document.body.appendChild(f); const d=f.contentWindow.document; d.open(); d.write(html); d.close(); setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>f.remove(),2000); },500); }catch(e){} }
+  exportPDF(){ this.setState({expOpen:false}); this.printHTML(this.buildPagesHTML()); this.toast(this.isId()?'Membuka dialog cetak → simpan sebagai PDF':'Opening print → save as PDF'); }
+  exportPrint(){ this.setState({expOpen:false}); this.printHTML(this.buildPagesHTML()); this.toast(this.isId()?'Membuka dialog cetak…':'Opening print…'); }
+  exportHTMLfile(){ this.setState({expOpen:false}); const ok=this.download(this.fileName('html'),'text/html',this.buildPagesHTML()); this.toast(ok?(this.isId()?'File HTML diunduh':'HTML downloaded'):'Export blocked'); }
+  exportTable(kind){ this.setState({expOpen:false}); const mime=kind==='xls'?'application/vnd.ms-excel':'application/msword'; const ok=this.download(this.fileName(kind),mime,this.buildTableHTML()); this.toast(ok?(this.isId()?('File '+(kind==='xls'?'Excel':'Word')+' diunduh'):((kind==='xls'?'Excel':'Word')+' downloaded')):'Export blocked'); }
+
+  addElement(kind){ const bId=this.state.selBand || (this.findBandOfEl(this.state.selEl)||{}).id || this.state.report.bands[0].id;
+    const el = kind==='label'? this.E('label',60,8,160,18,{text:this.isId()?'Teks baru':'New text',size:11}) : kind==='line'? this.E('line',60,10,260,2,{bg:'#1f2937'}) : this.E('box',60,8,160,40,{color:'#1f2937'});
+    this.setState(s=>({report:{bands:s.report.bands.map(b=>b.id===bId?{...b,els:[...b.els,el]}:b)}, selEl:el.id, selBand:null}));
+  }
+  addText = ()=>this.addElement('label');
+  addLine = ()=>this.addElement('line');
+  addBox = ()=>this.addElement('box');
+
+  onPropText = (e)=>this.updateEl(this.state.selEl,{text:e.target.value});
+  onPropBind = (e)=>this.updateEl(this.state.selEl,{bind:e.target.value});
+  onPropX = (e)=>this.updateEl(this.state.selEl,{x:parseInt(e.target.value)||0});
+  onPropY = (e)=>this.updateEl(this.state.selEl,{y:parseInt(e.target.value)||0});
+  onPropW = (e)=>this.updateEl(this.state.selEl,{w:Math.max(4,parseInt(e.target.value)||4)});
+  onPropH = (e)=>this.updateEl(this.state.selEl,{h:Math.max(2,parseInt(e.target.value)||2)});
+  onPropSize = (e)=>this.updateEl(this.state.selEl,{size:Math.max(5,parseInt(e.target.value)||10)});
+  toggleBold = ()=>{ const el=this.findEl(this.state.selEl); if(el)this.updateEl(el.id,{bold:!el.bold}); };
+  toggleItalic = ()=>{ const el=this.findEl(this.state.selEl); if(el)this.updateEl(el.id,{italic:!el.italic}); };
+  setAlignL = ()=>this.updateEl(this.state.selEl,{align:'left'});
+  setAlignC = ()=>this.updateEl(this.state.selEl,{align:'center'});
+  setAlignR = ()=>this.updateEl(this.state.selEl,{align:'right'});
+  onSetColor = (e)=>this.updateEl(this.state.selEl,{color:e.currentTarget.dataset.color});
+  dupSel = ()=>{ const el=this.findEl(this.state.selEl); const b=this.findBandOfEl(this.state.selEl); if(!el||!b)return; const ne={...el,id:'e'+(++this._uid),x:Math.min(794-el.w,el.x+12),y:el.y+12}; this.setState(s=>({report:{bands:s.report.bands.map(bb=>bb.id===b.id?{...bb,els:[...bb.els,ne]}:bb)},selEl:ne.id})); };
+  delSel = ()=>{ const id=this.state.selEl; this.setState(s=>({report:{bands:s.report.bands.map(b=>({...b,els:b.els.filter(e=>e.id!==id)}))},selEl:null})); };
+  onBandHeight = (e)=>this.updateBand(this.state.selBand,{h:Math.max(18,parseInt(e.target.value)||18)});
+  selectNode = (sel)=>this.setState(sel);
+
+  // ---------- preview pagination ----------
+  getPreviewPages(report){
+    const tpl=this.effTpl(); const data=this.buildData(tpl); const allRows=data.rows; const ctx=data.headerCtx;
+    const find=(t)=>report.bands.find(b=>b.type===t);
+    const rh=find('ReportHeader'), ch=find('ColumnHeader'), gh=find('GroupHeader'), gf=find('GroupFooter'), det=find('Detail'), pf=find('PageFooter'), rf=find('ReportFooter');
+    const groupBy=this.state.groupBy||'';
+    const body=[];
+    if(groupBy && gh){
+      const sorted=[...allRows].sort((a,b)=>String(a[groupBy]==null?'':a[groupBy]).localeCompare(String(b[groupBy]==null?'':b[groupBy])));
+      const map=new Map();
+      sorted.forEach(r=>{ const k=r[groupBy]; if(!map.has(k))map.set(k,[]); map.get(k).push(r); });
+      for(const entry of map){ const grp=entry[1];
+        body.push({band:gh,row:grp[0],rows:grp});
+        if(det) grp.forEach(r=>body.push({band:det,row:r,rows:grp}));
+        if(gf) body.push({band:gf,row:grp[0],rows:grp});
+      }
+    } else if(det){
+      allRows.forEach(r=>body.push({band:det,row:r,rows:allRows}));
+    }
+    const usable=1123-80;
+    const colH=ch?ch.h:0, pfH=pf?pf.h:0, rfH=rf?rf.h:0, rhH=rh?rh.h:0;
+    const avail=(i)=>Math.max(60, usable - colH - pfH - rfH - (i===0?rhH:0));
+    const pagesBody=[]; let cur=[], curH=0, idx=0;
+    body.forEach(u=>{ const h=u.band.h; if(cur.length && curH+h>avail(idx)){ pagesBody.push(cur); cur=[]; curH=0; idx++; } cur.push(u); curH+=h; });
+    pagesBody.push(cur);
+    const pageCount=Math.max(1, pagesBody.length);
+    const inst=(band,row,rows,pno)=>({ style:'position:relative;width:794px;height:'+band.h+'px;'+(band.bg?'background:'+band.bg+';':''), els:band.els.map(el=>({boxStyle:this.elBox(el,'preview',false), display:this.elPreview(el,row,ctx,rows,pno,pageCount)})) });
+    const pages=[];
+    pagesBody.forEach((list,i)=>{
+      const top=[], bottom=[];
+      if(rh && i===0) top.push(inst(rh,null,allRows,i+1));
+      if(ch) top.push(inst(ch,null,allRows,i+1));
+      list.forEach(u=>top.push(inst(u.band,u.row,u.rows,i+1)));
+      if(rf && i===pageCount-1) bottom.push(inst(rf,null,allRows,i+1));
+      if(pf) bottom.push(inst(pf,null,allRows,i+1));
+      pages.push({top,bottom});
+    });
+    return pages;
+  }
+
+  // ---------- palette ----------
+  palette(){
+    const a=this.effAccent();
+    if(this.effTheme()==='dark') return {bg:'#0d0f13',panel:'#15181f',panel2:'#1b1f27',border:'#272c36',text:'#e4e8f0',muted:'#8b93a3',accent:a,accentWeak:'#16263f',canvas:'#0a0c10',hover:'#1e2430'};
+    return {bg:'#eef0f3',panel:'#ffffff',panel2:'#f7f8fa',border:'#e1e5ea',text:'#1d2330',muted:'#6b7280',accent:a,accentWeak:'#e7efff',canvas:'#cfd4db',hover:'#eef2f8'};
+  }
+
+  renderVals(){
+    const id=this.isId();
+    const report=this.state.report||this.buildReport(this.effTpl());
+    const pal=this.palette();
+    const z=this.effZoom();
+    const tplKey=this.effTpl();
+    const selElId=this.state.selEl, selBandId=this.state.selBand;
+
+    const rootStyle='--bg:'+pal.bg+';--panel:'+pal.panel+';--panel2:'+pal.panel2+';--border:'+pal.border+';--text:'+pal.text+';--muted:'+pal.muted+';--accent:'+pal.accent+';--accent-weak:'+pal.accentWeak+';--canvas:'+pal.canvas+';--hover:'+pal.hover+';height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:\'IBM Plex Sans\',system-ui,sans-serif;overflow:hidden';
+
+    const t={
+      reportName:id?'Nama laporan':'Report name', dragHint:id?'Seret field ke kanvas':'Drag fields to canvas',
+      data:'Data', relations:id?'Relasi':'Relations', params:id?'Parameter':'Parameters', funcs:id?'Fungsi':'Functions',
+      properties:id?'Properti':'Properties', structure:id?'Struktur':'Structure', design:id?'Desain':'Design',
+      preview:id?'Pratinjau':'Preview', export:id?'Ekspor':'Export', text:id?'Teks':'Text', line:id?'Garis':'Line', box:id?'Kotak':'Box',
+      content:id?'Konten':'Content', binding:id?'Sumber Data':'Data Field', posSize:id?'Posisi & Ukuran':'Position & Size',
+      typo:id?'Teks':'Typography', colors:id?'Warna':'Colors', band:'Band', height:id?'Tinggi':'Height',
+      font:id?'Ukuran':'Size', duplicate:id?'Gandakan':'Duplicate', delete:id?'Hapus':'Delete', groupBy:id?'Kelompokkan (Group by)':'Group by',
+      noSel:id?'Pilih elemen pada kanvas untuk mengubah propertinya, atau seret field dari panel Data.':'Select an element on the canvas to edit its properties, or drag a field from the Data panel.',
+      relHint:id?'Atur relasi antar tabel. Klik untuk mengubah INNER/LEFT (wajib/opsional).':'Configure table relations. Click to toggle INNER/LEFT (required/optional).'
+    };
+
+    const templateOptions=[['invoice',id?'Invoice':'Invoice'],['sales',id?'Laporan Penjualan':'Sales Report'],['purchasing',id?'Laporan Pembelian':'Purchasing Report'],['finance',id?'Laba Rugi':'Profit & Loss'],['customers',id?'Daftar Pelanggan':'Customer List']].map(o=>({v:o[0],label:o[1]}));
+    const defNames={invoice:id?'Invoice Penjualan':'Sales Invoice',sales:id?'Laporan Penjualan Bulanan':'Monthly Sales Report',purchasing:id?'Laporan Pembelian':'Purchasing Report',finance:id?'Laporan Laba Rugi':'Profit & Loss Statement',customers:id?'Daftar Pelanggan':'Customer List'};
+    const reportName=this.state.reportName!==null?this.state.reportName:defNames[tplKey];
+
+    const segBase='height:24px;padding:0 11px;display:flex;align-items:center;gap:6px;border:none;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;';
+    const segOn=segBase+'background:var(--accent,#2563eb);color:#fff;';
+    const segOff=segBase+'background:transparent;color:var(--muted,#6b7280);';
+
+    const tabs=[['data',t.data],['relations',t.relations],['params',t.params],['funcs',t.funcs]];
+    const leftTabs=tabs.map(tb=>{ const on=this.state.leftTab===tb[0]; return {label:tb[1], onClick:()=>this.setLeftTab(tb[0]), style:'flex:1;height:30px;border:none;border-bottom:2px solid '+(on?'var(--accent,#2563eb)':'transparent')+';background:transparent;color:'+(on?'var(--accent,#2563eb)':'var(--muted,#6b7280)')+';font-size:11.5px;font-weight:600;cursor:pointer;'}; });
+
+    const goMap={sales:['','Customers.Name','Products.Name','Invoices.Date'],purchasing:['','Vendors.Name','Products.Name'],customers:['','Customers.City'],invoice:[''],finance:['']};
+    const groupBy=this.state.groupBy||'';
+    const groupOptions=(goMap[tplKey]||['']).map(v=>({v,label:v===''?(id?'(tanpa pengelompokan)':'(no grouping)'):v}));
+
+    const dataTree=this.SCHEMA.map(ds=>({ name:ds.name, tables:ds.tables.map(tb=>({ name:tb.name, caret:this.state.openTables[tb.name]?'▾':'▸', open:!!this.state.openTables[tb.name], onToggle:()=>this.toggleTable(tb.name), fields:tb.fields.map(f=>({name:f[0],badge:f[1],path:tb.name+'.'+f[0]})) })) }));
+
+    const relations=this.RELATIONS.map(r=>{ const opt=(r.id in this.state.relOpt)?this.state.relOpt[r.id]:r.opt; return {left:r.left,right:r.right,mode:opt?(id?'Opsional · LEFT JOIN':'Optional · LEFT JOIN'):(id?'Wajib · INNER JOIN':'Required · INNER JOIN'), onToggle:()=>this.toggleRel(r.id), btnStyle:'width:100%;height:26px;border:1px solid '+(opt?'#c8923a':'var(--accent,#2563eb)')+';border-radius:6px;background:'+(opt?'rgba(200,146,58,.1)':'var(--accent-weak,#e7efff)')+';color:'+(opt?'#b07d22':'var(--accent,#2563eb)')+';font-size:11px;font-weight:600;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;'}; });
+
+    const params=this.PARAMS.map(p=>({name:p.name,val:p.val,path:'param:'+p.name}));
+    const funcs=[['Sum(field)','Sum(InvoiceLines.Amount)',id?'Total dari kolom angka':'Total of a numeric column'],['Avg(field)','Avg(InvoiceLines.Amount)',id?'Rata-rata':'Average'],['Count()','Count()',id?'Jumlah baris':'Row count'],['Max(field)','Max(InvoiceLines.Amount)',id?'Nilai tertinggi':'Maximum'],['Min(field)','Min(InvoiceLines.Amount)',id?'Nilai terendah':'Minimum'],['Today()','Today()',id?'Tanggal hari ini':'Current date'],['PageNumber()','PageNumber()',id?'Nomor halaman':'Page number'],['TotalPages()','TotalPages()',id?'Total halaman':'Total pages']].map(f=>({sig:f[0],path:'expr:'+f[1],desc:f[2]}));
+
+    // canvas
+    const paperH=report.bands.reduce((a,b)=>a+b.h,0);
+    const paperWrapStyle='transform:scale('+z+');transform-origin:top center;transition:transform .1s ease;';
+    const paperStyle='position:relative;width:794px;min-height:'+paperH+'px;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.22);';
+    const guideStyleL='position:absolute;left:40px;top:0;bottom:0;width:1px;background:repeating-linear-gradient(180deg,rgba(37,99,235,.18) 0 4px,transparent 4px 8px);pointer-events:none;z-index:1;';
+    const guideStyleR='position:absolute;left:754px;top:0;bottom:0;width:1px;background:repeating-linear-gradient(180deg,rgba(37,99,235,.18) 0 4px,transparent 4px 8px);pointer-events:none;z-index:1;';
+
+    const bands=report.bands.map(b=>({ id:b.id, label:this.bandLabel(b.type),
+      style:'position:relative;width:794px;height:'+b.h+'px;border-bottom:1px dashed #d6dae1;'+(b.bg?'background:'+b.bg+';':'')+(selBandId===b.id?'box-shadow:inset 0 0 0 1.5px rgba(37,99,235,.5);':''),
+      tabStyle:'position:absolute;left:-104px;top:3px;width:96px;text-align:right;font:600 8.5px/1.3 \'IBM Plex Mono\',monospace;letter-spacing:.03em;text-transform:uppercase;color:'+(selBandId===b.id?'var(--accent,#2563eb)':'#9aa3b2')+';cursor:pointer;user-select:none;',
+      els:b.els.map(el=>({id:el.id, boxStyle:this.elBox(el,'design',selElId===el.id), display:this.elDisplay(el), selected:selElId===el.id})) }));
+
+    // structure
+    const structure=[];
+    report.bands.forEach(b=>{
+      structure.push({label:this.bandLabel(b.type), onClick:()=>this.selectNode({selBand:b.id,selEl:null}), style:'display:flex;align-items:center;padding:5px 8px;font-size:11.5px;font-weight:700;color:var(--text,#1d2330);border-radius:6px;cursor:pointer;'+(selBandId===b.id?'background:var(--accent-weak,#e7efff);color:var(--accent,#2563eb);':'')});
+      b.els.forEach(el=>{ const lbl=el.kind==='label'?'“'+(el.text||'').slice(0,20)+'”':el.kind==='field'?'{'+el.bind+'}':el.kind==='expr'?'='+el.bind:(el.kind==='line'?'─ Garis':'▢ Kotak'); structure.push({label:lbl, onClick:()=>this.selectNode({selEl:el.id,selBand:null}), style:'padding:3px 8px 3px 24px;font-size:11px;color:var(--muted,#6b7280);border-radius:6px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'+(selElId===el.id?'background:var(--accent-weak,#e7efff);color:var(--accent,#2563eb);':'')}); });
+    });
+
+    // properties
+    const selObj=this.findEl(selElId);
+    const hasSelEl=!!selObj, hasSelBand=!!selBandId&&!hasSelEl, noSel=!hasSelEl&&!hasSelBand;
+    const numStyle='width:100%;height:30px;padding:0 8px;border:1px solid var(--border,#e1e5ea);border-radius:6px;background:var(--panel2,#f7f8fa);color:var(--text,#1d2330);font-size:12px;';
+    const tbtn=(on)=>'width:30px;height:30px;border:1px solid '+(on?'var(--accent,#2563eb)':'var(--border,#e1e5ea)')+';border-radius:6px;background:'+(on?'var(--accent,#2563eb)':'var(--panel2,#f7f8fa)')+';color:'+(on?'#fff':'var(--text,#1d2330)')+';font-size:13px;font-weight:700;cursor:pointer;';
+    const abtn=(on,g)=>'flex:1;height:30px;border:1px solid '+(on?'var(--accent,#2563eb)':'var(--border,#e1e5ea)')+';border-radius:6px;background:'+(on?'var(--accent-weak,#e7efff)':'var(--panel2,#f7f8fa)')+';color:'+(on?'var(--accent,#2563eb)':'var(--muted,#6b7280)')+';font-size:13px;cursor:pointer;';
+    let sel=null;
+    if(selObj){ sel={ text:selObj.text, bind:selObj.bind, x:selObj.x, y:selObj.y, w:selObj.w, h:selObj.h, size:selObj.size,
+      isText:selObj.kind!=='line'&&selObj.kind!=='box',
+      boldStyle:tbtn(selObj.bold), italicStyle:tbtn(selObj.italic),
+      alStyleL:abtn(selObj.align==='left'), alStyleC:abtn(selObj.align==='center'), alStyleR:abtn(selObj.align==='right') }; }
+    const selBandObj=this.findBand(selBandId);
+    const selBandVM=selBandObj?{label:this.bandLabel(selBandObj.type),h:selBandObj.h}:{label:'',h:0};
+
+    const bindOptions=[{v:'',label:id?'(tidak ada)':'(none)'}];
+    this.SCHEMA.forEach(ds=>ds.tables.forEach(tb=>tb.fields.forEach(f=>bindOptions.push({v:tb.name+'.'+f[0],label:tb.name+'.'+f[0]}))));
+    ['Sum(InvoiceLines.Amount)','Count()','Today()','PageNumber()','TotalPages()'].forEach(x=>bindOptions.push({v:x,label:x}));
+    this.PARAMS.forEach(p=>bindOptions.push({v:p.name,label:p.name}));
+
+    const swatches=['#14181f','#6b7280','#2563eb','#dc2626','#16a34a','#ffffff'];
+    const colorSwatches=swatches.map(c=>({v:c, style:'width:26px;height:26px;border-radius:6px;cursor:pointer;background:'+c+';border:1px solid '+(c==='#ffffff'?'#d0d4da':c)+';'+(selObj&&selObj.color===c?'box-shadow:0 0 0 2px #fff,0 0 0 4px var(--accent,#2563eb);':'')}));
+
+    const exportItems=[
+      {ext:'PDF',label:'PDF',onClick:()=>this.exportPDF()},
+      {ext:'XLS',label:'Excel',onClick:()=>this.exportTable('xls')},
+      {ext:'DOC',label:'Word',onClick:()=>this.exportTable('doc')},
+      {ext:'HTM',label:'HTML',onClick:()=>this.exportHTMLfile()},
+      {ext:'⎙',label:id?'Cetak':'Print',onClick:()=>this.exportPrint()}
+    ];
+
+    const dsName={invoice:'SalesDB · InvoiceLines',sales:'SalesDB · Invoices',purchasing:'PurchasingDB · POLines',finance:'FinanceDB · GLEntries',customers:'SalesDB · Customers'}[tplKey];
+    const rowCount=this.buildData(tplKey).rows.length;
+    const statusLeft=dsName+'  ·  '+rowCount+(id?' baris':' rows');
+    const statusRight=Math.round(z*100)+'%   ·   A4 210×297mm';
+
+    return {
+      rootStyle, t, templateOptions, tplKey, reportName, onTemplate:this.onTemplate, onName:this.onName,
+      isDesign:this.state.view==='design', isPreview:this.state.view==='preview',
+      setDesign:this.setDesign, setPreview:this.setPreview, viewSegStyleD:this.state.view==='design'?segOn:segOff, viewSegStyleP:this.state.view==='preview'?segOn:segOff,
+      addText:this.addText, addLine:this.addLine, addBox:this.addBox, zoomIn:this.zoomIn, zoomOut:this.zoomOut, zoomPct:Math.round(z*100)+'%',
+      themeGlyph:this.effTheme()==='dark'?'☾':'☀', toggleTheme:this.toggleTheme, langBtnLabel:id?'ID':'EN', toggleLang:this.toggleLang,
+      toggleExport:this.toggleExport, expOpen:this.state.expOpen, exportItems,
+      leftTabs, tabData:this.state.leftTab==='data', tabRel:this.state.leftTab==='relations', tabParam:this.state.leftTab==='params', tabFunc:this.state.leftTab==='funcs',
+      dataTree, onFieldDragStart:this.onFieldDragStart, relations, params, funcs, groupBy, groupOptions, onGroupBy:this.onGroupBy,
+      paperWrapStyle, paperStyle, guideStyleL, guideStyleR, bands,
+      allowDrop:this.allowDrop, onCanvasDrop:this.onCanvasDrop, onBandMouseDown:this.onBandMouseDown, onBandLabelDown:this.onBandLabelDown, onBandResizeDown:this.onBandResizeDown, onElementMouseDown:this.onElementMouseDown, onResizeMouseDown:this.onResizeMouseDown,
+      previewPages:this.getPreviewPages(report),
+      structure, hasSelEl, hasSelBand, noSel, sel, selBandVM, bindOptions, colorSwatches, numStyle,
+      onPropText:this.onPropText, onPropBind:this.onPropBind, onPropX:this.onPropX, onPropY:this.onPropY, onPropW:this.onPropW, onPropH:this.onPropH, onPropSize:this.onPropSize,
+      toggleBold:this.toggleBold, toggleItalic:this.toggleItalic, setAlignL:this.setAlignL, setAlignC:this.setAlignC, setAlignR:this.setAlignR, onSetColor:this.onSetColor, dupSel:this.dupSel, delSel:this.delSel, onBandHeight:this.onBandHeight,
+      statusLeft, statusRight, toast:this.state.toast, toastOn:!!this.state.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
