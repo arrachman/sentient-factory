@@ -40,4 +40,19 @@ export interface TreeDndMasterPageProps<T extends TreeRow, F> {
   }>;
   validate?: (form: F) => FormErrors<F>;
   extraColumns?: TreeDndExtraColumn<T>[];
+  /**
+   * Optional dropdown filters that scope the tree to a single node plus its
+   * descendants. Provide one entry per dimension, ordered **broad → narrow**
+   * (e.g. `[{ type: 'MODULE' }, { type: 'GROUP' }]`). Each select lists nodes
+   * of its `type` constrained to the subtree of the nearest broader selection;
+   * the tree is scoped to the most specific selected node. Default off.
+   */
+  treeFilters?: TreeFilterConfig[];
+}
+
+export interface TreeFilterConfig {
+  /** Node type used as this filter dimension. */
+  type: TreeNodeType;
+  /** Visible label for the control + "Semua …" option. */
+  label?: string;
 }

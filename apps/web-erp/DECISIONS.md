@@ -528,6 +528,38 @@ Konsekuensi vibe coding:
 - Butuh bulk action di menus lagi? Itu balik konflik dgn keputusan "drag
   handle ganti checkbox" — eskalasi ke user dulu (§5).
 
+**Filter by Modul + Grup (2026-06-17).** Menu Manager kini punya dua dropdown
+filter di header (kiri search): **Modul** lalu **Grup**. Diimplementasikan
+sebagai prop **reusable** `treeFilters?: TreeFilterConfig[]` di
+`TreeDndMasterPage` (default off, backward-compatible — hanya menus-page yang
+mengaktifkannya: `[{ type: 'MODULE', label: 'Modul' }, { type: 'GROUP', label:
+'Grup' }]`). Aturan:
+
+- Urutan array = **broad → narrow**. Setiap select me-list node bertipe
+  `cfg.type` yang dibatasi ke **subtree dari pilihan filter yang lebih luas**
+  (pilih Modul → daftar Grup menyusut ke grup dalam modul itu).
+- Memilih filter yang lebih luas **mereset** semua pilihan yang lebih sempit
+  (`setFilterAt`).
+- Tree di-scope ke **node paling spesifik yang dipilih** (`scopeRootId`) +
+  seluruh descendant-nya (`scopedFlat`); search tetap berjalan di atas scope.
+- Tetap **client-side** (selaras pengecualian §2.12 untuk `menus`). DnD reorder
+  **di-disable** selama ada filter aktif (`filterActive`) supaya
+  `inferNewParent` tidak salah hitung di flat list terpotong.
+- Sentinel `__ALL__` = "Semua" (Radix Select melarang value kosong).
+
+Reuse `treeFilters` untuk tree hierarkis lain (CoA/kategori) — jangan rakit
+filter ad-hoc per halaman.
+
+**Fix scroll (2026-06-17).** `TreeDndMasterPage` **tidak** punya pagination
+(by design: seluruh tree harus terlihat agar DnD reorder bermakna), tapi dulu
+tidak bisa di-scroll saat daftar panjang: `.tabview` = `position:absolute;
+inset:0` sehingga halaman wajib mengatur scroll internalnya sendiri, sementara
+root `.card` organism ini tidak punya `height`/area scroll. Fix: root card
+`height:100%; minHeight:0` (mengisi tabview) + container tabel `.lines`
+jadi area scroll vertikal (`flex:1; minHeight:0; overflowY:auto`). Header
+kolom (`.lines th { position:sticky; top:0 }`) otomatis ter-pin saat scroll.
+Pola ini sama dgn `.page-body` di `ErpListLayout`.
+
 ---
 
 ### 2.23 Item master = form lengkap sectioned (2026-05-24)

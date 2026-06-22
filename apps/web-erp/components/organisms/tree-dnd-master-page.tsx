@@ -22,6 +22,13 @@ import {
 } from '@dnd-kit/sortable';
 import { Icon } from '@/components/ui/icons';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { type RowActionItem } from '@/components/molecules/row-actions-menu';
 import {
   Modal,
@@ -55,6 +62,7 @@ import { confirmAction, notify } from '@/lib/feedback';
 import { hasErrors, type FormErrors } from '@/lib/form-validation';
 import { tGlobal } from '@/lib/mock';
 import { useTreeKeyboardNav } from '@/lib/use-tree-keyboard-nav';
+import { useModalShortcuts } from '@/lib/use-modal-shortcuts';
 
 export type { TreeRow, TreeNodeType } from './tree-dnd-master-page.types';
 export type { TreeDndExtraColumn } from './tree-dnd-row';
@@ -74,13 +82,17 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
   FormFields,
   validate,
   extraColumns = [],
+  treeFilters,
 }: TreeDndMasterPageProps<T, F>) {
   const [rows, setRows] = React.useState<T[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState('');
   const [debouncedSearch, setDebouncedSearch] = React.useState('');
+  // One selected node id per `treeFilters` entry (empty string = "Semua").
+  const [filterSel, setFilterSel] = React.useState<string[]>([]);
   const searchRef = React.useRef<HTMLInputElement>(null);
+  const filterActive = filterSel.some(Boolean);
 
   const reload = React.useCallback(async () => {
     setLoading(true);
@@ -108,25 +120,97 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
     return out;
   }, [rows]);
 
+  // Map of parentId → child rows, used for subtree collection (filters + scope).
+  const childrenByParent = React.useMemo(() => {
+    const m = new Map<string, T[]>();
+    for (const f of flat) {
+      const pid = f.row.parentId ?? '';
+      const list = m.get(pid) ?? [];
+      list.push(f.row);
+      m.set(pid, list);
+    }
+    return m;
+  }, [flat]);
+
+  const subtreeIds = React.useCallback(
+    (rootId: string) => {
+      const ids = new Set<string>();
+      const walk = (id: string) => {
+        ids.add(id);
+        for (const c of childrenByParent.get(id) ?? []) walk(c.id);
+      };
+      walk(rootId);
+      return ids;
+    },
+    [childrenByParent],
+  );
+
+  // Most specific selected node id (largest filter index with a selection).
+  const scopeRootId = React.useMemo(() => {
+    for (let i = filterSel.length - 1; i >= 0; i--) {
+      if (filterSel[i]) return filterSel[i];
+    }
+    return '';
+  }, [filterSel]);
+
+  // Options for each filter dimension, constrained to the subtree of the
+  // nearest broader selection (so picking a Module narrows the Group list).
+  const filterOptions = React.useMemo(() => {
+    if (!treeFilters) return [];
+    return treeFilters.map((cfg, i) => {
+      let scopeSet: Set<string> | null = null;
+      for (let j = i - 1; j >= 0; j--) {
+        if (filterSel[j]) {
+          scopeSet = subtreeIds(filterSel[j]);
+          break;
+        }
+      }
+      return flat
+        .filter(
+          (f) =>
+            f.row.type === cfg.type &&
+            (!scopeSet || scopeSet.has(f.row.id)),
+        )
+        .map((f) => f.row);
+    });
+  }, [treeFilters, flat, filterSel, subtreeIds]);
+
+  // Scope the flat list to the selected node + its descendants. Without a
+  // selection (or when filters are disabled) the full tree is returned.
+  const scopedFlat = React.useMemo(() => {
+    if (!treeFilters || !scopeRootId) return flat;
+    const keep = subtreeIds(scopeRootId);
+    return flat.filter((f) => keep.has(f.row.id));
+  }, [flat, treeFilters, scopeRootId, subtreeIds]);
+
   const visibleFlat = React.useMemo(() => {
     const q = debouncedSearch.trim().toLowerCase();
-    if (!q) return flat;
-    const idxById = new Map(flat.map((f, i) => [f.row.id, i]));
+    if (!q) return scopedFlat;
+    const idxById = new Map(scopedFlat.map((f, i) => [f.row.id, i]));
     const matches = new Set<string>();
-    for (const f of flat) {
+    for (const f of scopedFlat) {
       const r = f.row;
       if (r.code.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)) {
         matches.add(r.id);
         let pid = r.parentId;
         while (pid) {
           matches.add(pid);
-          const parent = flat[idxById.get(pid) ?? -1]?.row;
+          const parent = scopedFlat[idxById.get(pid) ?? -1]?.row;
           pid = parent?.parentId ?? null;
         }
       }
     }
-    return flat.filter((f) => matches.has(f.row.id));
-  }, [flat, debouncedSearch]);
+    return scopedFlat.filter((f) => matches.has(f.row.id));
+  }, [scopedFlat, debouncedSearch]);
+
+  // Select a value for filter `i`; clear all narrower (higher-index) selections.
+  const setFilterAt = (i: number, value: string) =>
+    setFilterSel((prev) => {
+      const next = treeFilters ? treeFilters.map((_, k) => prev[k] ?? '') : [];
+      next[i] = value;
+      for (let k = i + 1; k < next.length; k++) next[k] = '';
+      return next;
+    });
 
   const sortableIds = visibleFlat.map((f) => f.row.id);
 
@@ -155,7 +239,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
   // row selection (§2.22 — drag handle replaces the checkbox column).
   const { focusedIndex } = useTreeKeyboardNav({
     rowCount: visibleFlat.length,
-    resetKey: debouncedSearch,
+    resetKey: `${debouncedSearch}|${filterSel.join(',')}`,
     searchRef,
     onAdd: openCreate,
     onOpenFocused: (i) => {
@@ -180,20 +264,31 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
     setSaving(true);
     try {
       if (editing) {
-        await update(editing.id, toPayload(form));
+        const updated = await update(editing.id, toPayload(form));
+        // Surgical update: replace only the changed row so the list doesn't
+        // flicker through a full reload. `flat` re-sorts via useMemo.
+        setRows((prev) => prev.map((r) => (r.id === editing.id ? updated : r)));
         notify(`${tGlobal(title)} ${tGlobal('diperbarui')}`, 'success');
       } else {
-        await create(toPayload(form));
+        const created = await create(toPayload(form));
+        // Append the new row; flattenTree places it by parentId + sortOrder.
+        setRows((prev) => [...prev, created]);
         notify(`${tGlobal(title)} ${tGlobal('dibuat')}`, 'success');
       }
       setOpen(false);
-      reload();
     } catch (e) {
       notify(e instanceof Error ? e.message : tGlobal('Gagal menyimpan'), 'danger');
     } finally {
       setSaving(false);
     }
   };
+
+  useModalShortcuts({
+    open,
+    editing: !!editing,
+    onSave: handleSave,
+    onSaveAndNew: handleSave,
+  });
 
   const handleDelete = (row: T) =>
     confirmAction({
@@ -205,8 +300,11 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
       onConfirm: async () => {
         try {
           await remove(row.id);
+          // Surgical removal: drop this row plus any descendants (delete may
+          // cascade server-side) from local state. No full reload → no flicker.
+          const removeIds = subtreeIds(row.id);
+          setRows((prev) => prev.filter((r) => !removeIds.has(r.id)));
           notify(`${tGlobal(title)} ${tGlobal('dihapus')}`, 'success');
-          reload();
         } catch (e) {
           notify(e instanceof Error ? e.message : tGlobal('Gagal'), 'danger');
         }
@@ -221,7 +319,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    if (debouncedSearch) {
+    if (debouncedSearch || filterActive) {
       notify(tGlobal('Bersihkan filter sebelum menata ulang'), 'warn');
       return;
     }
@@ -269,17 +367,41 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
   const colCount = 5 + extraColumns.length;
 
   return (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%', minHeight: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 12px 0' }}>
         <h2 style={{ fontSize: 'calc(15px * var(--font-scale, 1))', fontWeight: 600 }}>{tGlobal(title)}</h2>
         <div style={{ display: 'flex', gap: 8 }}>
+          {treeFilters?.map((cfg, i) => {
+            const label = cfg.label ?? cfg.type;
+            return (
+              <Select
+                key={cfg.type + i}
+                value={filterSel[i] || '__ALL__'}
+                onValueChange={(v) => setFilterAt(i, v === '__ALL__' ? '' : v)}
+              >
+                <SelectTrigger aria-label={tGlobal(label)} style={{ width: 180 }}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__ALL__">
+                    {tGlobal('Semua')} {tGlobal(label)}
+                  </SelectItem>
+                  {filterOptions[i]?.map((n) => (
+                    <SelectItem key={n.id} value={n.id}>
+                      {n.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            );
+          })}
           <Input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tGlobal('Cari…')} style={{ width: 220 }} />
           <button className="btn ghost" onClick={reload} title={tGlobal('Muat ulang')}><Icon name="refresh" /></button>
           <button className="btn primary" onClick={openCreate}><Icon name="plus" /> {tGlobal('Tambah')}</button>
         </div>
       </div>
 
-      <div className="lines">
+      <div className="lines" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
         {loading ? (
           <div style={{ padding: 16 }} className="muted">{tGlobal('Memuat...')}</div>
         ) : error ? (
@@ -310,7 +432,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
                   {visibleFlat.length === 0 ? (
                     <TableEmpty
                       colSpan={colCount}
-                      variant={debouncedSearch ? 'filtered' : 'empty'}
+                      variant={debouncedSearch || filterActive ? 'filtered' : 'empty'}
                       entityLabel={tGlobal(entityLabel)}
                       searchTerm={debouncedSearch || undefined}
                     />
@@ -368,7 +490,7 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
             <button className="btn ghost" onClick={() => setOpen(false)}>
               {tGlobal('Batal')}
             </button>
-            <button className="btn primary" onClick={handleSave} disabled={saving}>
+            <button className="btn primary" onClick={handleSave} disabled={saving} title="Ctrl+Enter">
               {saving ? tGlobal('Menyimpan...') : tGlobal('Simpan')}
             </button>
           </ModalFooter>

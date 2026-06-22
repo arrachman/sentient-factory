@@ -90,6 +90,10 @@ export function ErpMenusPage() {
       FormFields={MenuFormFields}
       validate={validateMenu}
       extraColumns={extraColumns}
+      treeFilters={[
+        { type: 'MODULE', label: 'Modul' },
+        { type: 'GROUP', label: 'Grup' },
+      ]}
     />
   );
 }
