@@ -1,3 +1,10 @@
+# Pin the Compose project name so every `docker compose` invocation in this
+# dir uses "sentient_factory" regardless of how it's run. Without this the
+# project defaulted to the dir name "infra", colliding with the unrelated
+# stack at ~/apps/local_apps/infra (also "infra") and clobbering shared
+# service names like `postgres` (caused Prisma P1001 on 2026-06-22).
+name: sentient_factory
+
 services:
   vault:
     image: hashicorp/vault:1.16
@@ -127,7 +134,7 @@ services:
       NODE_ENV: development
       PORT: 3203
       CHOKIDAR_USEPOLLING: "true"
-      DATABASE_URL: postgresql://root:PasswordSuperRahasia123!@postgres:5432/sentient_factory
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       MYERPPLUS_DB_MAPPING_ROOT: /myerpplus-db-mapping/db
       DASHBOARD_SQL_TEMPLATE_ROOT: /myerpplus-db-mapping/dashboard-mapping/sql-templates
       HR_ATTENDANCE_STORAGE_PATH: /app/temp/hr-attendance

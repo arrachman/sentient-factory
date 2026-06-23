@@ -104,6 +104,10 @@ vault_cmd kv put "$VAULT_KV_MOUNT/$VAULT_SHARED_PATH" \
   POSTGRES_USER="root" \
   POSTGRES_PASSWORD="replace-me" \
   DATABASE_URL="postgresql://root:replace-me@postgres:5432/sentient_factory" \
+  MYSQL_ROOT_PASSWORD="replace-me" \
+  MYSQL_PASSWORD="replace-me" \
+  MYSQL_USER="app_user" \
+  MYSQL_DATABASE="sentient_db" \
   REDIS_URL="redis://redis:6379" \
   JWT_SECRET="replace-me" \
   JWT_EXPIRES_IN="7d" \
