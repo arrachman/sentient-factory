@@ -2,6 +2,9 @@
 
 export const qBtn = 'width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);border-radius:6px;cursor:pointer;';
 
+/** Light chrome toolbar button (ERP-token aligned) — used by the integrated quickbar. */
+export const qIconLight = 'width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border,#e1e5ea);background:var(--panel,#fff);border-radius:var(--radius,5px);cursor:pointer;';
+
 export const rtBase = 'height:28px;padding:0 14px;border:none;background:transparent;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:6px 6px 0 0;';
 export const rGroup = 'display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 8px 3px;flex:0 0 auto;';
 export const rLabel = 'font-size:9px;color:var(--muted,#6b7280);letter-spacing:.02em;margin-top:2px;text-align:center;';

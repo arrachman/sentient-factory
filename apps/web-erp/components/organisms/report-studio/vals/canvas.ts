@@ -44,6 +44,7 @@ export function canvasVals(c: RsCtrl) {
     rulerOn: st.rulerOn, rulerH, rulerV, hRulerStyle, vRulerStyle, paperWrapStyle, paperStyle, guides, bands, paperH,
     allowDrop: a.allowDrop, onCanvasDrop: a.onCanvasDrop, onBandMouseDown: a.onBandMouseDown, onBandLabelDown: a.onBandLabelDown,
     onBandResizeDown: a.onBandResizeDown, onElementMouseDown: a.onElementMouseDown, onResizeMouseDown: a.onResizeMouseDown,
+    onCanvasWheel: a.onCanvasWheel,
     previewPages: c.previewPages(), previewSheetStyle,
   };
 }

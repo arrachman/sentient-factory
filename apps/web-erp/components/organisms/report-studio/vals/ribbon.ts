@@ -100,7 +100,7 @@ export function ribbonVals(c: RsCtrl) {
     zFront: () => a.zMove(true), zBack: () => a.zMove(false),
 
     // view
-    zoomIn: () => c.set((s) => ({ zoom: Math.min(2.5, Math.round(((s.zoom || 1) + 0.1) * 10) / 10) })),
+    zoomIn: () => c.set((s) => ({ zoom: Math.min(4, Math.round(((s.zoom || 1) + 0.1) * 10) / 10) })),
     zoomOut: () => c.set((s) => ({ zoom: Math.max(0.4, Math.round(((s.zoom || 1) - 0.1) * 10) / 10) })),
     zoom100: () => c.set({ zoom: 1 }), zoomFit: () => c.set({ zoom: 0.7 }), zoomPct: Math.round(c.zoom * 100) + '%',
     toggleLeftPanel: () => c.set((s) => ({ leftOpen: !s.leftOpen })), dataPanelBtn: wideTgl(st.leftOpen), dataPanelLabel: (id ? 'Panel Data' : 'Data Panel') + (st.leftOpen ? ' ✓' : ''),

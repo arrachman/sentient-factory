@@ -224,6 +224,21 @@ export function useReportStudio() {
     set((s) => ({ report: { ...s.report, bands: s.report.bands.map((bb) => (bb.id === bandId ? { ...bb, els: [...bb.els, el] } : bb)) }, selEl: el.id, selBand: null }));
   };
 
+  // ---------- zoom (ribbon buttons + ctrl/cmd-wheel on canvas) ----------
+  const ZOOM_MIN = 0.4; const ZOOM_MAX = 4;
+  const setZoom = (z: number) => set({ zoom: Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z * 100) / 100)) });
+  // Ctrl/Cmd + wheel: zoom toward the cursor by adjusting scroll after the resize.
+  const onCanvasWheel = (el: HTMLElement, clientX: number, clientY: number, deltaY: number) => {
+    const old = stRef.current.zoom || 1;
+    const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(old * (deltaY < 0 ? 1.1 : 1 / 1.1) * 100) / 100));
+    if (next === old) return;
+    const rect = el.getBoundingClientRect();
+    const cx = el.scrollLeft + (clientX - rect.left); const cy = el.scrollTop + (clientY - rect.top);
+    const ratio = next / old;
+    setZoom(next);
+    requestAnimationFrame(() => { el.scrollLeft = cx * ratio - (clientX - rect.left); el.scrollTop = cy * ratio - (clientY - rect.top); });
+  };
+
   // ---------- element creation ----------
   const addElement = (kind: 'label' | 'line' | 'box') => {
     const s0 = stRef.current;
@@ -279,6 +294,9 @@ export function useReportStudio() {
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target && (e.target as HTMLElement).tagName) || '';
+      const mod0 = e.ctrlKey || e.metaKey;
+      // Ctrl/Cmd+S saves from anywhere, including while editing the report name.
+      if (mod0 && e.key.toLowerCase() === 's') { save(); e.preventDefault(); return; }
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
       const k = e.key.toLowerCase(); const mod = e.ctrlKey || e.metaKey;
       if (mod && k === 'c') { doCopy(); e.preventDefault(); }
@@ -336,7 +354,7 @@ export function useReportStudio() {
     sqlActive: !!(st.report.sql && st.sqlRows), dataCols: st.sqlCols, rowCount: effectiveData(st).rows.length,
     actions: {
       undo, redo, loadTemplate, selectTemplate, save, setSql, onGroupBy, toast,
-      doCopy, doCut, doPaste, dupSel, delSel, addElement, zMove,
+      doCopy, doCut, doPaste, dupSel, delSel, addElement, zMove, setZoom, onCanvasWheel,
       onElementMouseDown, onResizeMouseDown, onBandResizeDown, onBandLabelDown, onBandMouseDown,
       onFieldDragStart, allowDrop, onCanvasDrop,
       exportPagesPrint, exportHTMLfile, exportTable,

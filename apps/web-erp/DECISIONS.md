@@ -2972,3 +2972,25 @@ Keputusan & catatan:
   `lib/report-designer-mock.ts`, `lib/report-api.ts`. `lib/api/reports.ts` tetap
   (dipakai Report Studio). Route path `/admin/report-designer` + `erp-route-meta`
   tetap (canonical `sys_menus.path`).
+- **Integrasi chrome ke template ERP (2026-06-22, keputusan user)**: scope =
+  *chrome integration* (kanvas/designer surface **tetap** pixel-faithful, §2
+  exception tak berubah). Dua keluhan yang disasar: **double header** & **alur
+  simpan/load**.
+  - **Quickbar tidak lagi "header gelap kedua"**: `rs-quickbar.tsx` diubah dari
+    titlebar gelap (`--titlebar:#11161f`, font IBM Plex, wordmark "R ReportStudio"
+    + label `.rdl — Designer`) → **toolbar terang ber-token ERP** (`--panel`/
+    `--border`/`--radius`, tinggi 44px = `--topbar-h`). Wordmark + `.rdl`
+    **dihapus** (redundan dgn breadcrumb ERP "Report Designer"). Doctabs + ribbon
+    di bawahnya sudah terang → seluruh area atas jadi kohesif dgn shell ERP.
+  - **Font chrome native ERP**: `rootStyle` (`palette.ts`) `font-family` →
+    `var(--font-sans, …)` (Geist saat tersedia, fallback IBM Plex/system). `@import`
+    Google Fonts dipangkas ke **IBM Plex Mono saja** (masih dipakai status bar +
+    label ekstensi ekspor).
+  - **Alur simpan/load lebih jelas**: dropdown template diberi label eksplisit
+    **"Template"** (terbaca sbg buka/ganti template); tombol **Simpan = primary
+    (accent)** — aksi harian; **Ekspor = secondary outline** (sebelumnya kebalik:
+    Ekspor accent, Simpan ghost samar). Undo/redo pakai gaya ikon terang
+    (`qIconLight` di `vals/styles.ts`), disabled → muted + `not-allowed`.
+  - **Shortcut Ctrl/Cmd+S → simpan** ditambah di keyboard handler `useReportStudio`
+    (di-handle sebelum guard input, jadi tetap jalan saat fokus di field nama).
+  - Tak ada perubahan fungsi designer/kanvas; semua file ≤400 baris, typecheck OK.

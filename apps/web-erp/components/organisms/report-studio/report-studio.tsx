@@ -12,7 +12,7 @@ import { RsPreview } from './rs-preview';
 import { RsRightPanel } from './rs-right-panel';
 
 const STYLE_TAG = `
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap');
 @keyframes rsIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes rsPop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 .rs-root *{box-sizing:border-box}

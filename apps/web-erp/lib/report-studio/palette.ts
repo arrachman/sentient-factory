@@ -22,5 +22,5 @@ export function rootStyle(pal: RsPalette): string {
   return '--bg:' + pal.bg + ';--panel:' + pal.panel + ';--panel2:' + pal.panel2 + ';--border:' + pal.border
     + ';--text:' + pal.text + ';--muted:' + pal.muted + ';--accent:' + pal.accent + ';--accent-weak:' + pal.accentWeak
     + ';--canvas:' + pal.canvas + ';--hover:' + pal.hover + ';--titlebar:' + pal.titlebar + ';--ribbon:' + pal.ribbon
-    + ';--ribbonbar:' + pal.ribbonbar + ";height:100%;min-height:0;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',system-ui,sans-serif;overflow:hidden";
+    + ';--ribbonbar:' + pal.ribbonbar + ";height:100%;min-height:0;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font-family:var(--font-sans,'IBM Plex Sans',system-ui,sans-serif);overflow:hidden";
 }

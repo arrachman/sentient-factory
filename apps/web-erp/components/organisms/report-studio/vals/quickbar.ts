@@ -2,12 +2,12 @@ import type * as React from 'react';
 import type { RsCtrl } from '../hooks/use-report-studio';
 import { templateOptions } from '@/lib/report-studio/i18n';
 import { isBuiltinKey } from '@/lib/report-studio/template-io';
-import { qBtn } from './styles';
+import { qIconLight } from './styles';
 
 export function quickbarVals(c: RsCtrl) {
   const id = c.isId; const st = c.st; const a = c.actions;
-  const undoStyle = qBtn + 'color:' + (st.undoN ? '#eef1f6' : 'rgba(255,255,255,.3)') + ';';
-  const redoStyle = qBtn + 'color:' + (st.redoN ? '#eef1f6' : 'rgba(255,255,255,.3)') + ';';
+  const undoStyle = qIconLight + 'color:' + (st.undoN ? 'var(--text,#1d2330)' : 'var(--muted,#aab2c0)') + (st.undoN ? '' : ';cursor:not-allowed') + ';';
+  const redoStyle = qIconLight + 'color:' + (st.redoN ? 'var(--text,#1d2330)' : 'var(--muted,#aab2c0)') + (st.redoN ? '' : ';cursor:not-allowed') + ';';
   const exportItems = [
     { ext: 'PDF', label: 'PDF', onClick: () => a.exportPagesPrint(true) },
     { ext: 'XLS', label: 'Excel', onClick: () => a.exportTable('xls') },
