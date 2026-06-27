@@ -1,0 +1,25 @@
+/* =====================================================================
+   Senti MDP — base element rules (lean foundation).
+   Enforces the interactive-cursor rule (web-erp CLAUDE.md §2.8) and a few
+   primitives. Full component CSS is added per-module as the design system
+   grows (atomic design). No hardcoded colors — tokens only.
+   ===================================================================== */
+
+button,
+a,
+[role='button'],
+input[type='checkbox'],
+input[type='radio'],
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
