@@ -119,7 +119,7 @@ emits records ERP can consume. Direction and ownership:
 | 3 | Production-result → ERP posting contract (sync API vs event/outbox). | Define per module at MES catalog time. |
 | 4 | EAM asset master: build fresh, or seed/mirror from ERP `fa_assets`. | Fresh master; optional scalar link to `fa_assets`. |
 | 5 | OEE: materialized rollup table vs on-the-fly view. | View first; materialize if slow. |
-| 6 | Port number for `apps/web-mdp` (+ UFW LAN allow). | Pick next free via `npm run ports:find`. |
+| 6 | ~~Port number for `apps/web-mdp`~~ → **resolved: 3220** (next to web-erp 3219). App boots via `WEB_MDP_PORT` default. **Pending (user OK):** register in `config/ports.json` (permission-protected) + `sudo ufw allow from 192.168.1.0/24 to any port 3220 proto tcp comment 'web-mdp'`. | — |
 
 ---
 
