@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Camera, LogIn, LogOut, MapPin, Loader2 } from 'lucide-react';
+import { Camera, LogIn, LogOut, MapPin, Loader2, ScanFace } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/molecules/page-header';
+import { FaceEnrollDialog } from '@/components/pages/face-enroll-dialog';
 import { useCamera } from '@/lib/use-camera';
 import { getAttendanceMe, clockIn, clockOut } from '@/lib/api/attendance';
 import type { ClockPayload } from '@/lib/api/attendance';
@@ -23,10 +24,11 @@ function pick(o: Record<string, unknown>, ...keys: string[]): string {
 
 export function AttendanceClockView() {
   const qc = useQueryClient();
-  const { videoRef, ready, error: camError, start: startCamera, capture } = useCamera();
+  const { videoRef, ready, error: camError, start: startCamera, stop: stopCamera, capture } = useCamera();
   const [coords, setCoords] = useState<Coords | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [busy, setBusy] = useState<null | 'in' | 'out'>(null);
+  const [enrollOpen, setEnrollOpen] = useState(false);
   const startedRef = useRef(false);
 
   const { data: me } = useQuery({
@@ -141,8 +143,30 @@ export function AttendanceClockView() {
             Snapshot selfie diambil otomatis saat menekan tombol. Pastikan wajah
             terlihat jelas dan Anda berada di dalam area worksite.
           </p>
+
+          <div className="flex items-center justify-between border-t pt-3">
+            <span className="text-xs text-muted-foreground">Wajah belum terdaftar atau ingin perbarui?</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                stopCamera();
+                setEnrollOpen(true);
+              }}
+            >
+              <ScanFace className="h-4 w-4" /> Daftarkan Wajah
+            </Button>
+          </div>
         </div>
       </div>
+
+      <FaceEnrollDialog
+        open={enrollOpen}
+        onOpenChange={(o) => {
+          setEnrollOpen(o);
+          if (!o) void startCamera(); // resume clock camera after enrolling
+        }}
+      />
     </div>
   );
 }

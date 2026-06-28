@@ -31,7 +31,7 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Riwayat Absensi (+ paginasi) | Timesheets (dasar) | ✅ | `GET /hr/attendance/history` |
 | Tinjauan Absensi (+ detail + snapshot) | Approvals | ✅ | `GET /hr/attendance-reviews(/:eventId)` (+approve/reject/clarify/reopen) |
 | Lokasi & Geofence (CRUD) | Geofencing | ✅ | `GET/POST/PATCH/DELETE /hr/worksites` |
-| Pendaftaran Wajah | Face Recognition | 🟡 | `GET /hr/face-enrollments` (capture enroll UI ⬜) |
+| Pendaftaran Wajah (+ capture kamera) | Face Recognition | ✅ | `GET /hr/face-enrollments`, `POST /hr/face-enrollment` |
 | Karyawan (+ assign worksite) | People & Groups | ✅ | `GET /hr/users`, `PUT /hr/users/:id/worksites` |
 | Pengaturan | Overtime/verifikasi/dll | ✅ | `GET /hr/settings`, `PATCH /hr/settings/:key` |
 | Timesheet | Timesheets | ⬜ | — |
