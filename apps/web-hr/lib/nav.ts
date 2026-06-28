@@ -53,7 +53,7 @@ export const HR_NAV: HrNavGroup[] = [
     key: 'workforce',
     title: 'Manajemen Tenaga Kerja',
     items: [
-      { key: 'timesheets', title: 'Timesheet', path: '/app/timesheets', icon: CalendarClock, status: 'soon' },
+      { key: 'timesheets', title: 'Timesheet', path: '/app/timesheets', icon: CalendarClock, status: 'live' },
       { key: 'schedules', title: 'Jadwal & Shift', path: '/app/schedules', icon: CalendarDays, status: 'soon' },
       { key: 'leave', title: 'Cuti', path: '/app/leave', icon: Plane, status: 'soon' },
       { key: 'projects', title: 'Proyek & Aktivitas', path: '/app/projects', icon: FolderKanban, status: 'soon' },

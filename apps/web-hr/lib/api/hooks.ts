@@ -16,6 +16,8 @@ import { listFaceEnrollments } from './face-enrollments';
 import type { FaceEnrollment } from './face-enrollments';
 import { listEmployees } from './employees';
 import type { HrEmployee } from './employees';
+import { listTimesheets } from './timesheets';
+import type { TimesheetQuery, TimesheetPayload } from './timesheets';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -27,6 +29,7 @@ export const hrQueryKeys = {
   reviews: (q?: AttendanceReviewQuery) => ['hr', 'attendance-reviews', q ?? {}] as const,
   faceEnrollments: ['hr', 'face-enrollments'] as const,
   employees: ['hr', 'employees'] as const,
+  timesheets: (q?: TimesheetQuery) => ['hr', 'timesheets', q ?? {}] as const,
 } as const;
 
 /** Normalize an array-or-{data} payload into a plain array. */
@@ -92,5 +95,12 @@ export function useEmployees() {
   return useQuery<HrEmployee[]>({
     queryKey: hrQueryKeys.employees,
     queryFn: async () => asArray<HrEmployee>(await listEmployees()),
+  });
+}
+
+export function useTimesheets(query?: TimesheetQuery) {
+  return useQuery<TimesheetPayload>({
+    queryKey: hrQueryKeys.timesheets(query),
+    queryFn: () => listTimesheets(query),
   });
 }

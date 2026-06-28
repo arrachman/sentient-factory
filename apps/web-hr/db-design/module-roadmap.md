@@ -34,7 +34,7 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Pendaftaran Wajah (+ capture kamera) | Face Recognition | ✅ | `GET /hr/face-enrollments`, `POST /hr/face-enrollment` |
 | Karyawan (+ assign worksite) | People & Groups | ✅ | `GET /hr/users`, `PUT /hr/users/:id/worksites` |
 | Pengaturan | Overtime/verifikasi/dll | ✅ | `GET /hr/settings`, `PATCH /hr/settings/:key` |
-| Timesheet | Timesheets | ⬜ | — |
+| Timesheet (rekap jam/lembur, agregasi) | Timesheets | ✅ | `GET /hr/timesheets` (derived, tanpa tabel baru) |
 | Jadwal & Shift | Work Schedules | ⬜ | — |
 | Cuti / PTO | Time Off | ⬜ | — |
 | Proyek & Aktivitas | Projects/Activity | ⬜ | — |

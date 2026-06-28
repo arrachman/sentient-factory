@@ -4,6 +4,7 @@ import * as path from 'path';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryHrAttendanceHistoryDto } from './dto/query-hr-attendance-history.dto';
+import { QueryHrTimesheetDto } from './dto/query-hr-timesheet.dto';
 import {
   getHrProfileByAppUserId,
   isPrivileged,
@@ -234,6 +235,112 @@ export class AttendanceQueryService {
 
   getAttendanceDashboard(authUser: AuthUser) {
     return this.attendanceDashboardService.getAttendanceDashboard(authUser);
+  }
+
+  /**
+   * Timesheet — derived aggregation over hr_attendance_sessions (no new tables).
+   * One row per employee for the selected period: days present, total minutes,
+   * and overtime beyond the standard daily minutes setting. Privileged roles see
+   * everyone; regular users see only themselves.
+   */
+  async getTimesheets(authUser: AuthUser, query: QueryHrTimesheetDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 25;
+    const offset = (page - 1) * limit;
+    const privileged = isPrivileged(authUser.roles);
+    const search = query.search?.trim() ?? '';
+
+    // Scope: privileged + userId → that user; otherwise non-privileged → self.
+    let targetHrUserId: number | null = null;
+    const targetAppUserId = query.userId ? (privileged ? query.userId : authUser.id) : null;
+    if (targetAppUserId !== null || !privileged) {
+      const profile = await getHrProfileByAppUserId(
+        this.prisma,
+        targetAppUserId ?? authUser.id,
+      );
+      if (!profile) {
+        return { success: true, data: [], meta: { page, limit, total: 0, totalPages: 1 } };
+      }
+      targetHrUserId = Number(profile.hrUserId);
+    }
+
+    const standardDailyMinutes = await this.settingsService.getNumberSetting(
+      'attendance',
+      'standard_daily_minutes',
+      480,
+    );
+
+    const scopeSql =
+      targetHrUserId !== null ? Prisma.sql`AND s.user_id = ${targetHrUserId}` : Prisma.empty;
+    const searchSql =
+      search.length > 0
+        ? Prisma.sql`
+            AND (
+              lower(coalesce(u.full_name, '')) LIKE lower(${`%${search}%`})
+              OR lower(coalesce(u.username, '')) LIKE lower(${`%${search}%`})
+              OR lower(coalesce(hu.employee_code, '')) LIKE lower(${`%${search}%`})
+            )`
+        : Prisma.empty;
+    const dateFromSql = query.dateFrom
+      ? Prisma.sql`AND s.work_date >= ${query.dateFrom}::date`
+      : Prisma.empty;
+    const dateToSql = query.dateTo
+      ? Prisma.sql`AND s.work_date <= ${query.dateTo}::date`
+      : Prisma.empty;
+
+    const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
+      SELECT
+        hu.user_id AS "appUserId",
+        hu.employee_code AS "employeeCode",
+        u.username,
+        u.full_name AS "fullName",
+        count(*) FILTER (WHERE s.clock_in_at IS NOT NULL)::int AS "daysPresent",
+        coalesce(sum(s.total_work_minutes), 0)::int AS "totalMinutes",
+        coalesce(sum(GREATEST(coalesce(s.total_work_minutes, 0) - ${standardDailyMinutes}, 0)), 0)::int AS "overtimeMinutes",
+        min(s.work_date) AS "firstDate",
+        max(s.work_date) AS "lastDate"
+      FROM public.hr_attendance_sessions s
+      JOIN public.hr_users hu ON hu.id = s.user_id
+      JOIN public.m0_users u ON u.id = hu.user_id
+      WHERE s.deleted_at IS NULL
+        ${scopeSql}
+        ${searchSql}
+        ${dateFromSql}
+        ${dateToSql}
+      GROUP BY hu.user_id, hu.employee_code, u.username, u.full_name
+      ORDER BY u.full_name NULLS LAST, u.username
+      LIMIT ${limit}
+      OFFSET ${offset}
+    `);
+
+    const countRows = await this.prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
+      SELECT count(*)::bigint AS total FROM (
+        SELECT 1
+        FROM public.hr_attendance_sessions s
+        JOIN public.hr_users hu ON hu.id = s.user_id
+        JOIN public.m0_users u ON u.id = hu.user_id
+        WHERE s.deleted_at IS NULL
+          ${scopeSql}
+          ${searchSql}
+          ${dateFromSql}
+          ${dateToSql}
+        GROUP BY hu.user_id
+      ) t
+    `);
+
+    const total = Number(countRows[0]?.total ?? 0);
+
+    return {
+      success: true,
+      data: normalizeHrDates(rows),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+        standardDailyMinutes,
+      },
+    };
   }
 
   async getAttendanceEventSnapshot(authUser: AuthUser, eventId: number) {
