@@ -55,6 +55,7 @@ import { ErpCountriesModule } from './erp-countries/countries.module';
 import { ErpProvincesModule } from './erp-provinces/provinces.module';
 import { ErpCitiesModule } from './erp-cities/cities.module';
 import { ErpAreasModule } from './erp-areas/areas.module';
+import { ErpSubAreasModule } from './erp-sub-areas/sub-areas.module';
 import { ErpStorageBinsModule } from './erp-storage-bins/storage-bins.module';
 import { ErpPartnerSubCategoriesModule } from './erp-partner-sub-categories/partner-sub-categories.module';
 import { ErpPriceCategoriesModule } from './erp-price-categories/price-categories.module';
@@ -79,6 +80,7 @@ import { ErpSubDepartmentsModule } from './erp-sub-departments/erp-sub-departmen
 import { ErpUnitsModule } from './erp-units/erp-units.module';
 import { ErpItemCategoriesModule } from './erp-item-categories/erp-item-categories.module';
 import { ErpItemsModule } from './erp-items/erp-items.module';
+import { ErpAttachmentsModule } from './erp-attachments/erp-attachments.module';
 import { ErpPartnerCategoriesModule } from './erp-partner-categories/erp-partner-categories.module';
 import { ErpPartnersModule } from './erp-partners/erp-partners.module';
 import { ErpColorsModule } from './erp-colors/erp-colors.module';
@@ -222,6 +224,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpProvincesModule,
     ErpCitiesModule,
     ErpAreasModule,
+    ErpSubAreasModule,
     ErpStorageBinsModule,
     ErpPartnerSubCategoriesModule,
     ErpPriceCategoriesModule,
@@ -246,6 +249,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpUnitsModule,
     ErpItemCategoriesModule,
     ErpItemsModule,
+    ErpAttachmentsModule,
     ErpPartnerCategoriesModule,
     ErpPartnersModule,
     ErpColorsModule,

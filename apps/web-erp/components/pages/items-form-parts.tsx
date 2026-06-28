@@ -11,6 +11,7 @@ import { FormField } from '@/components/ui/form-field';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { NumInput } from '@/components/molecules/num-input';
 import { SearchSelect } from '@/components/molecules/search-select';
+import { Icon, type IconName } from '@/components/ui/icons';
 import type { ErpItemType } from '@/lib/api/items';
 
 export const isStockable = (t: ErpItemType) =>
@@ -19,10 +20,15 @@ export const showsWeight = (t: ErpItemType) => t !== 'SERVICE';
 
 export type LookupLoader = (s: string, p: number, l: number) => Promise<{ data: { value: string; label: string; code?: string; [key: string]: unknown }[]; total: number }>;
 
-export function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+export function Section({ title, hint, icon, children }: { title: string; hint?: string; icon?: IconName; children: React.ReactNode }) {
   return (
     <section className="border-t border-border first:border-t-0">
-      <header className="flex items-baseline gap-2 bg-[var(--panel-2)] px-5 py-1.5">
+      <header className="flex items-center gap-2 bg-[var(--panel-2)] px-5 py-2">
+        {icon && (
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[var(--primary-soft)] text-[var(--primary-soft-fg)]">
+            <Icon name={icon} size={12} />
+          </span>
+        )}
         <h4 className="text-[11px] font-semibold uppercase tracking-wide text-foreground">{title}</h4>
         {hint && <span className="text-[11px] text-[var(--fg-subtle)]">— {hint}</span>}
       </header>

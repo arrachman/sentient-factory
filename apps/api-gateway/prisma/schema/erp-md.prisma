@@ -19,9 +19,10 @@ model ErpBranch {
 
   locations        ErpLocation[]
   userBranchAccess ErpUserBranchAccess[]
-  partners         ErpPartner[]
-  items            ErpItem[]             @relation("ItemBranch")
-  itemDimBranches  ErpItemDimBranch[]    @relation("ItemDimBranchBranch")
+  partners            ErpPartner[]
+  items               ErpItem[]              @relation("ItemBranch")
+  itemDimBranches     ErpItemDimBranch[]     @relation("ItemDimBranchBranch")
+  partnerDimBranches  ErpPartnerDimBranch[]  @relation("PartnerDimBranchBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -48,8 +49,9 @@ model ErpLocation {
   branch             ErpBranch               @relation(fields: [branchId], references: [id])
   warehouses         ErpWarehouse[]
   userLocationAccess ErpUserLocationAccess[]
-  items              ErpItem[]               @relation("ItemDefaultLocation")
-  itemDimLocations   ErpItemDimLocation[]    @relation("ItemDimLocationLocation")
+  items                ErpItem[]                @relation("ItemDefaultLocation")
+  itemDimLocations     ErpItemDimLocation[]     @relation("ItemDimLocationLocation")
+  partnerDimLocations  ErpPartnerDimLocation[]  @relation("PartnerDimLocationLocation")
 
   @@index([branchId])
   @@index([legacyCode])
@@ -75,8 +77,9 @@ model ErpWarehouse {
   userWarehouseAccess ErpUserWarehouseAccess[]
   items               ErpItem[]                @relation("ItemDefaultWarehouse")
   storageBins         ErpStorageBin[]          @relation("WarehouseStorageBins")
-  itemStockLevels     ErpItemWarehouseStock[]  @relation("ItemWarehouseStockWarehouse")
-  itemDimWarehouses   ErpItemDimWarehouse[]    @relation("ItemDimWarehouseWarehouse")
+  itemStockLevels      ErpItemWarehouseStock[]   @relation("ItemWarehouseStockWarehouse")
+  itemDimWarehouses    ErpItemDimWarehouse[]     @relation("ItemDimWarehouseWarehouse")
+  partnerDimWarehouses ErpPartnerDimWarehouse[]  @relation("PartnerDimWarehouseWarehouse")
 
   @@index([locationId])
   @@index([legacyCode])
@@ -261,6 +264,7 @@ model ErpItem {
   dimWarehouses           ErpItemDimWarehouse[]   @relation("ItemDimWarehouses")
   dimLocations            ErpItemDimLocation[]    @relation("ItemDimLocations")
   media                   ErpItemMedia[]          @relation("ItemMedia")
+  attachments             ErpItemAttachment[]     @relation("ItemAttachments")
 
   @@index([categoryId])
   @@index([baseUnitId])
@@ -329,6 +333,29 @@ model ErpItemMedia {
 
   @@index([itemId])
   @@map("md_item_media")
+}
+
+/// Item supporting documents (lampiran) — any file attached to an item:
+/// datasheet, spec, certificate, contract, etc. Generic (no IMAGE/VIDEO kind,
+/// no primary). Files live on disk under uploads/erp-items (bind-mounted);
+/// stored_name is the random on-disk filename, file_name keeps the original
+/// upload name for display/download. note = optional caption.
+model ErpItemAttachment {
+  id          BigInt   @id @default(autoincrement())
+  itemId      BigInt   @map("item_id")
+  fileName    String   @map("file_name")
+  storedName  String   @unique @map("stored_name")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  note        String?  @map("note")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by_id")
+
+  item ErpItem @relation("ItemAttachments", fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@map("md_item_attachments")
 }
 
 /// Per-warehouse stock level overrides (Stok Min/Maks + Min Order per Gudang).
@@ -402,6 +429,51 @@ model ErpItemDimLocation {
   @@map("md_item_dim_locations")
 }
 
+// Multi-select GL dimensions on a partner (Cabang / Gudang / Lokasi).
+// Mirror md_item_dim_*: junction rows; the single md_partners.branch_id stays
+// as the denormalized primary/default (= first selected branch).
+model ErpPartnerDimBranch {
+  id        BigInt   @id @default(autoincrement())
+  partnerId BigInt   @map("partner_id")
+  branchId  BigInt   @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  partner ErpPartner @relation("PartnerDimBranches", fields: [partnerId], references: [id], onDelete: Cascade)
+  branch  ErpBranch  @relation("PartnerDimBranchBranch", fields: [branchId], references: [id])
+
+  @@unique([partnerId, branchId])
+  @@index([branchId])
+  @@map("md_partner_dim_branches")
+}
+
+model ErpPartnerDimWarehouse {
+  id          BigInt   @id @default(autoincrement())
+  partnerId   BigInt   @map("partner_id")
+  warehouseId BigInt   @map("warehouse_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  partner   ErpPartner   @relation("PartnerDimWarehouses", fields: [partnerId], references: [id], onDelete: Cascade)
+  warehouse ErpWarehouse @relation("PartnerDimWarehouseWarehouse", fields: [warehouseId], references: [id])
+
+  @@unique([partnerId, warehouseId])
+  @@index([warehouseId])
+  @@map("md_partner_dim_warehouses")
+}
+
+model ErpPartnerDimLocation {
+  id         BigInt   @id @default(autoincrement())
+  partnerId  BigInt   @map("partner_id")
+  locationId BigInt   @map("location_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  partner  ErpPartner  @relation("PartnerDimLocations", fields: [partnerId], references: [id], onDelete: Cascade)
+  location ErpLocation @relation("PartnerDimLocationLocation", fields: [locationId], references: [id])
+
+  @@unique([partnerId, locationId])
+  @@index([locationId])
+  @@map("md_partner_dim_locations")
+}
+
 /// Item distributors per item (legacy MyERP+ "Distributor" tab = m1_item_supplier).
 /// One row per (item, partner) — the supplier/distributor partners that supply this item.
 /// partner_id -> md_partners (filtered to is_supplier on the UI). Multi-row beyond the
@@ -439,7 +511,10 @@ model ErpPartnerCategory {
   updatedById BigInt?                @map("updated_by_id")
   deletedAt   DateTime?              @map("deleted_at") @db.Timestamptz(6)
 
-  partners ErpPartner[]
+  partners         ErpPartner[]
+  partnerCustomers ErpPartner[] @relation("PartnerCustomerCategory")
+  partnerSuppliers ErpPartner[] @relation("PartnerSupplierCategory")
+  partnerSalesmans ErpPartner[] @relation("PartnerSalesmanCategory")
 
   @@index([legacyCode])
   @@map("md_partner_categories")
@@ -453,6 +528,9 @@ model ErpPartner {
   isSupplier          Boolean   @default(false) @map("is_supplier")
   isSalesman          Boolean   @default(false) @map("is_salesman")
   categoryId          BigInt?   @map("category_id")
+  customerCategoryId  BigInt?   @map("customer_category_id")
+  supplierCategoryId  BigInt?   @map("supplier_category_id")
+  salesmanCategoryId  BigInt?   @map("salesman_category_id")
   taxNumber           String?   @map("tax_number")
   isTaxable           Boolean   @default(false) @map("is_taxable")
   currencyId          BigInt?   @map("currency_id")
@@ -462,6 +540,7 @@ model ErpPartner {
   apCreditLimit       Decimal?  @map("ap_credit_limit") @db.Decimal(19, 4)
   saleTermId          BigInt?   @map("sale_term_id")
   purchaseTermId      BigInt?   @map("purchase_term_id")
+  salesPriceTier      Int?      @default(1) @map("sales_price_tier")
   salesmanId          BigInt?   @map("salesman_id")
   commissionRate      Decimal?  @map("commission_rate") @db.Decimal(9, 4)
   branchId            BigInt?   @map("branch_id")
@@ -475,6 +554,9 @@ model ErpPartner {
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   category          ErpPartnerCategory? @relation(fields: [categoryId], references: [id])
+  customerCategory  ErpPartnerCategory? @relation("PartnerCustomerCategory", fields: [customerCategoryId], references: [id])
+  supplierCategory  ErpPartnerCategory? @relation("PartnerSupplierCategory", fields: [supplierCategoryId], references: [id])
+  salesmanCategory  ErpPartnerCategory? @relation("PartnerSalesmanCategory", fields: [salesmanCategoryId], references: [id])
   currency          ErpCurrency?        @relation(fields: [currencyId], references: [id])
   receivableAccount ErpAccount?         @relation("PartnerReceivableAcct", fields: [receivableAccountId], references: [id])
   payableAccount    ErpAccount?         @relation("PartnerPayableAcct", fields: [payableAccountId], references: [id])
@@ -486,12 +568,18 @@ model ErpPartner {
   addresses           ErpPartnerAddress[]
   contacts            ErpPartnerContact[]
   bankAccounts        ErpPartnerBankAccount[]
+  dimBranches         ErpPartnerDimBranch[]   @relation("PartnerDimBranches")
+  dimWarehouses       ErpPartnerDimWarehouse[] @relation("PartnerDimWarehouses")
+  dimLocations        ErpPartnerDimLocation[] @relation("PartnerDimLocations")
   salesmanOfPartners  ErpPartner[]            @relation("PartnerSalesman")
   itemPrimarySupplier ErpItem[]               @relation("ItemPrimarySupplier")
   itemDistributors    ErpItemDistributor[]    @relation("ItemDistributorPartner")
   itemVendor          ErpItem[]               @relation("ItemVendor")
 
   @@index([categoryId])
+  @@index([customerCategoryId])
+  @@index([supplierCategoryId])
+  @@index([salesmanCategoryId])
   @@index([currencyId])
   @@index([salesmanId])
   @@index([legacyCode])
@@ -505,21 +593,35 @@ model ErpPartnerAddress {
   isDefault    Boolean        @default(false) @map("is_default")
   addressLine1 String         @map("address_line1")
   addressLine2 String?        @map("address_line2")
-  city         String?        @map("city")
-  province     String?        @map("province")
-  country      String?        @map("country")
+  countryId    BigInt?        @map("country_id")
+  provinceId   BigInt?        @map("province_id")
+  cityId       BigInt?        @map("city_id")
+  areaId       BigInt?        @map("area_id")
+  subAreaId    BigInt?        @map("sub_area_id")
   postalCode   String?        @map("postal_code")
   phone        String?        @map("phone")
   fax          String?        @map("fax")
+  email        String?        @map("email")
+  website      String?        @map("website")
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById  BigInt?        @map("created_by_id")
   updatedById  BigInt?        @map("updated_by_id")
   deletedAt    DateTime?      @map("deleted_at") @db.Timestamptz(6)
 
-  partner ErpPartner @relation(fields: [partnerId], references: [id])
+  partner  ErpPartner   @relation(fields: [partnerId], references: [id])
+  country  ErpCountry?  @relation(fields: [countryId], references: [id])
+  province ErpProvince? @relation(fields: [provinceId], references: [id])
+  city     ErpCity?     @relation(fields: [cityId], references: [id])
+  area     ErpArea?     @relation(fields: [areaId], references: [id])
+  subArea  ErpSubArea?  @relation(fields: [subAreaId], references: [id])
 
   @@index([partnerId])
+  @@index([countryId])
+  @@index([provinceId])
+  @@index([cityId])
+  @@index([areaId])
+  @@index([subAreaId])
   @@map("md_partner_addresses")
 }
 
@@ -1113,8 +1215,9 @@ model ErpCountry {
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   createdById BigInt?       @map("created_by_id")
   updatedById BigInt?       @map("updated_by_id")
-  deletedAt   DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  provinces   ErpProvince[]
+  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  provinces        ErpProvince[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([legacyCode])
   @@map("md_countries")
@@ -1133,8 +1236,9 @@ model ErpProvince {
   createdById BigInt?    @map("created_by_id")
   updatedById BigInt?    @map("updated_by_id")
   deletedAt   DateTime?  @map("deleted_at") @db.Timestamptz(6)
-  country     ErpCountry @relation(fields: [countryId], references: [id])
-  cities      ErpCity[]
+  country          ErpCountry          @relation(fields: [countryId], references: [id])
+  cities           ErpCity[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([countryId])
   @@index([legacyCode])
@@ -1155,8 +1259,9 @@ model ErpCity {
   createdById BigInt?     @map("created_by_id")
   updatedById BigInt?     @map("updated_by_id")
   deletedAt   DateTime?   @map("deleted_at") @db.Timestamptz(6)
-  province    ErpProvince @relation(fields: [provinceId], references: [id])
-  areas       ErpArea[]
+  province         ErpProvince         @relation(fields: [provinceId], references: [id])
+  areas            ErpArea[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([provinceId])
   @@index([legacyCode])
@@ -1178,8 +1283,9 @@ model ErpArea {
   createdById BigInt?      @map("created_by_id")
   updatedById BigInt?      @map("updated_by_id")
   deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz(6)
-  city        ErpCity      @relation(fields: [cityId], references: [id])
-  subAreas    ErpSubArea[]
+  city             ErpCity             @relation(fields: [cityId], references: [id])
+  subAreas         ErpSubArea[]
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([cityId])
   @@index([legacyCode])
@@ -1199,7 +1305,8 @@ model ErpSubArea {
   createdById BigInt?   @map("created_by_id")
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-  area        ErpArea   @relation(fields: [areaId], references: [id])
+  area             ErpArea              @relation(fields: [areaId], references: [id])
+  partnerAddresses ErpPartnerAddress[]
 
   @@index([areaId])
   @@index([postalCode])

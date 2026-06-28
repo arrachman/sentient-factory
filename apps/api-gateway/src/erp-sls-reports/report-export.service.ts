@@ -10,6 +10,8 @@ import { buildFilename } from './report-export.format';
 import { renderXlsx } from './report-export.xlsx';
 import { renderPdf } from './report-export.pdf';
 import { renderDocx } from './report-export.docx';
+import { ReportEngineService } from '../erp-report-engine/report-engine.service';
+import { datasetColumns, datasetContext } from '../erp-report-engine/dataset-adapter';
 
 export interface RenderedReport {
   buffer: Buffer;
@@ -25,15 +27,25 @@ const CONTENT_TYPE: Record<ReportFormat, string> = {
 
 @Injectable()
 export class ReportExportService {
+  constructor(private readonly engine: ReportEngineService) {}
+
   async render(dataset: ReportDataset, format: ReportFormat): Promise<RenderedReport> {
     let buffer: Buffer;
     switch (format) {
       case 'xlsx':
         buffer = await renderXlsx(dataset);
         break;
-      case 'pdf':
-        buffer = await renderPdf(dataset);
+      case 'pdf': {
+        // Template-driven render when a Report Designer template is bound
+        // (`sls.<key>`, or the `sls.__default` module template); else pdfmake.
+        const templated = await this.engine.renderReport(
+          `sls.${dataset.key}`,
+          datasetColumns(dataset),
+          datasetContext(dataset),
+        );
+        buffer = templated ?? (await renderPdf(dataset));
         break;
+      }
       case 'docx':
         buffer = await renderDocx(dataset);
         break;

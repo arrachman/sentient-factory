@@ -50,7 +50,7 @@ export interface UpdatePartnerCategoryPayload {
 // ─── API functions ────────────────────────────────────────────────────────────
 
 export async function listPartnerCategories(
-  params?: PaginationParams & { kind?: 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN' },
+  params?: PaginationParams & { kind?: 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN'; isActive?: boolean },
 ): Promise<PaginatedResponse<ErpPartnerCategory>> {
   return apiGet<PaginatedResponse<ErpPartnerCategory>>(
     '/partner-categories',

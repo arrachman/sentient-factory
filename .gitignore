@@ -18,6 +18,8 @@ out/
 # Misc
 .DS_Store
 *.pem
+# Data impor klien (PII: nama, no. WA, MRN) — jangan commit
+import-data-client.json
 .env
 .env.vault
 .env.local
@@ -26,6 +28,7 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.althea-prod
 .vscode/
 .idea/
 *.swp

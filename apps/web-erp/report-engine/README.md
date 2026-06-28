@@ -1,9 +1,16 @@
 # Senti ERP — Report Engine
 
-> Status: **RESEARCH COMPLETE — AWAITING IMPLEMENTATION GO-AHEAD**
-> Phase: Design / Architecture
-> Last updated: 2026-06-06
+> Status: **IMPLEMENTED (MVP) — Finance pilot live**
+> Phase: Implementation (engine + Finance wiring); Sales/Purchasing/Inventory rollout + designer alignment pending
+> Last updated: 2026-06-13
 > Author: Claude (dari riset bersama user)
+>
+> **2026-06-13 update:** render engine dibangun (`apps/api-gateway/src/erp-report-engine/`,
+> stack = **@react-pdf/renderer v3**). Arsitektur final = *template owns LAYOUT, report
+> builder owns DATA* (template SQL/`dataSources` diabaikan untuk laporan ber-`reportKey`).
+> Binding via kolom `rpt_templates.report_key` (`<module>.<report>`). Finance: 14 report
+> ter-wire ke engine (fallback pdfkit bila tak ada template aktif). Detail keputusan:
+> `apps/web-erp/DECISIONS.md` §"Report Engine — Wiring reports → Report Designer templates".
 
 Dokumen ini adalah **single source of truth** untuk desain custom report engine Senti ERP.
 Baca ini sebelum menyentuh apapun di `/report-engine/`.
@@ -32,7 +39,9 @@ Baca ini sebelum menyentuh apapun di `/report-engine/`.
 | Sintaks marker | **Gaya Carbone `{d.x:formatter}`** (ATM dari carbone.io) — `d` = baris data, `c` = complement (company/settings/params/summary), formatter suffix `:formatN`/`:formatD`/`:html`/`:terbilang`. Tetap **band-based** (bukan flat-loop Carbone). Spec di §5 | 2026-06-07 |
 | Sumber data | **API endpoint JSON** per report — tidak embed SQL di template | 2026-06-05 |
 | Output | **PDF** sebagai output utama; HTML preview sebagai byproduct | 2026-06-05 |
-| Rendering stack | **PENDING** — pilihan: @react-pdf/renderer vs Puppeteer/Playwright | PENDING |
+| Rendering stack | **@react-pdf/renderer v3** (CJS, React 18 lokal di api-gateway) — Puppeteer ditolak | 2026-06-13 |
+| Sumber data (revisi) | **Builder owns data** — engine bind hasil `ReportDocument`/`ReportDataset` sebagai `{d}`; SQL di template diabaikan untuk laporan ber-`reportKey` | 2026-06-13 |
+| Binding laporan→template | Kolom `rpt_templates.report_key` (`<module>.<report>`); template aktif yang cocok dipakai saat cetak PDF | 2026-06-13 |
 | Designer UI | **Fase berikutnya** — MVP pakai template JSON manual dulu | 2026-06-05 |
 | Terbilang | Implement sendiri sebagai fungsi TS, **bukan** MySQL stored procedure | 2026-06-05 |
 | Legacy MRT | Referensi feature/logic/flow SAJA — **tidak diport 1:1** | 2026-06-05 |

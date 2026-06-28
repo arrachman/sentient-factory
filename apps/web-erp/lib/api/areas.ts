@@ -7,6 +7,7 @@ export interface ErpArea {
   code: string;
   name: string;
   cityId: string;
+  postalCode?: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -23,7 +24,7 @@ export type UpdateErpAreaPayload = Partial<CreateErpAreaPayload>;
 
 const BASE = '/areas';
 
-export async function listAreas(params?: PaginationParams): Promise<PaginatedResponse<ErpArea>> {
+export async function listAreas(params?: PaginationParams & { cityId?: string }): Promise<PaginatedResponse<ErpArea>> {
   return apiGet<PaginatedResponse<ErpArea>>(BASE, params as Record<string, string | number | boolean | undefined>);
 }
 

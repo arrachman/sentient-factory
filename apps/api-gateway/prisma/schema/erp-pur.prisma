@@ -947,3 +947,23 @@ model ErpPurReturnLine {
   @@index([invoiceLineId])
   @@map("pur_return_lines")
 }
+
+/// Lampiran dokumen pendukung transaksi Purchasing — generik, berkunci
+/// (doc_type, doc_id). doc_id polymorphic lintas tabel transaksi pur
+/// (tanpa FK; index saja). File di uploads/erp-transactions (bind-mount host).
+model ErpPurTransactionAttachment {
+  id          BigInt   @id @default(autoincrement())
+  docType     String   @map("doc_type")
+  docId       BigInt   @map("doc_id")
+  fileName    String   @map("file_name")
+  storedName  String   @unique @map("stored_name")
+  mimeType    String   @map("mime_type")
+  sizeBytes   Int      @map("size_bytes")
+  note        String?  @map("note")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById BigInt?  @map("created_by_id")
+
+  @@index([docType, docId])
+  @@map("pur_transaction_attachments")
+}

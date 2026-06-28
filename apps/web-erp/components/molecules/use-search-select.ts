@@ -33,6 +33,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const [localSelected, setLocalSelected] = React.useState<Set<string>>(new Set());
   const [localSingle, setLocalSingle] = React.useState('');
   const [localSingleLabel, setLocalSingleLabel] = React.useState('');
+  const [localSingleMeta, setLocalSingleMeta] = React.useState('');
   const [displayLabel, setDisplayLabel] = React.useState('');
 
   // ── Single inline-search state ────────────────────────────────────────────
@@ -134,7 +135,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     setTableActive(false);
     setPage(1);
     if (isMulti) setLocalSelected(new Set(props.values));
-    else { setLocalSingle(props.value ?? ''); setLocalSingleLabel(displayLabel); }
+    else { setLocalSingle(props.value ?? ''); setLocalSingleLabel(displayLabel); setLocalSingleMeta(''); }
     setOpen(true);
     setTimeout(() => { searchRef.current?.focus(); searchRef.current?.select(); }, 60);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -177,6 +178,8 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       setInputFocused(false);
       return;
     }
+    // Simpan sebelum await — relatedTarget hilang setelah event loop tick
+    const blurTarget = e.relatedTarget as HTMLElement | null;
     setDropdownOpen(false);
     if (!inputText) {
       if (!isMulti) { props.onValueChange(''); setDisplayLabel(''); }
@@ -188,18 +191,27 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       try {
         const { data: results } = await loadOptions(inputText, 1, limit);
         if (results.length === 0) {
-          // Tidak ditemukan → kosongkan lalu buka modal dengan teks pencarian
+          // Tidak ditemukan → revert (jangan buka modal saat blur)
           if (!isMulti) props.onValueChange('');
           setDisplayLabel('');
           setInputText('');
           setInputFocused(false);
-          openModal(inputText);
           return;
         }
         const exact = pickExactCodeMatch(results, inputText);
-        if (exact) { selectFromDropdown(exact); return; }
-        if (results.length === 1) { selectFromDropdown(results[0]); return; }
-        openModal(inputText);
+        if (exact) {
+          selectFromDropdown(exact);
+          blurTarget?.focus(); // kembalikan fokus ke field tujuan user
+          return;
+        }
+        if (results.length === 1) {
+          selectFromDropdown(results[0]);
+          blurTarget?.focus(); // kembalikan fokus ke field tujuan user
+          return;
+        }
+        // Banyak hasil, tidak ada exact match → revert (jangan buka modal saat blur)
+        setInputFocused(false);
+        setInputText(displayLabel);
         return;
       } catch {
         // fall through to revert
@@ -283,7 +295,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   const selectFromDropdown = (opt: SearchSelectOption) => {
     if (!isMulti) {
       props.onValueChange(opt.value);
-      props.onPick?.({ value: opt.value, label: optLabel(opt) });
+      props.onPick?.({ value: opt.value, label: optLabel(opt), meta: String(opt.meta ?? '') });
       setDisplayLabel(optLabel(opt));
       setInputText(optLabel(opt));
     }
@@ -293,14 +305,14 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
 
   // ── Modal selection ───────────────────────────────────────────────────────
   const selectSingle = (opt: SearchSelectOption, idx?: number) => {
-    if (!isMulti) { setLocalSingle(opt.value); setLocalSingleLabel(optLabel(opt)); }
+    if (!isMulti) { setLocalSingle(opt.value); setLocalSingleLabel(optLabel(opt)); setLocalSingleMeta(String(opt.meta ?? '')); }
     if (idx !== undefined) { setFocusedIdx(idx); setTableActive(true); }
   };
 
   const confirmRow = (opt: SearchSelectOption) => {
     if (isMulti) { toggleMulti(opt.value); return; }
     props.onValueChange(opt.value);
-    props.onPick?.({ value: opt.value, label: optLabel(opt) });
+    props.onPick?.({ value: opt.value, label: optLabel(opt), meta: String(opt.meta ?? '') });
     setDisplayLabel(optLabel(opt));
     closeModal(true);
   };
@@ -313,7 +325,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       props.onValuesChange(Array.from(localSelected));
     } else if (localSingle) {
       props.onValueChange(localSingle);
-      props.onPick?.({ value: localSingle, label: localSingleLabel });
+      props.onPick?.({ value: localSingle, label: localSingleLabel, meta: localSingleMeta });
       setDisplayLabel(localSingleLabel);
     }
     closeModal();
@@ -336,36 +348,46 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
       e.preventDefault();
       if (!tableActive) {
         setTableActive(true); setFocusedIdx(0);
-        if (!isMulti && displayOptions[0]) { setLocalSingle(displayOptions[0].value); setLocalSingleLabel(optLabel(displayOptions[0])); }
+        if (!isMulti && displayOptions[0]) { setLocalSingle(displayOptions[0].value); setLocalSingleLabel(optLabel(displayOptions[0])); setLocalSingleMeta(String(displayOptions[0].meta ?? '')); }
       } else {
         const next = Math.min(focusedIdx + 1, displayOptions.length - 1);
         setFocusedIdx(next);
-        if (!isMulti && displayOptions[next]) { setLocalSingle(displayOptions[next].value); setLocalSingleLabel(optLabel(displayOptions[next])); }
+        if (!isMulti && displayOptions[next]) { setLocalSingle(displayOptions[next].value); setLocalSingleLabel(optLabel(displayOptions[next])); setLocalSingleMeta(String(displayOptions[next].meta ?? '')); }
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (tableActive && focusedIdx === 0) { setTableActive(false); setLocalSingle(''); setLocalSingleLabel(''); searchRef.current?.focus(); }
+      if (tableActive && focusedIdx === 0) { setTableActive(false); setLocalSingle(''); setLocalSingleLabel(''); setLocalSingleMeta(''); searchRef.current?.focus(); }
       else if (tableActive) {
         const prev = Math.max(focusedIdx - 1, 0);
         setFocusedIdx(prev);
-        if (!isMulti && displayOptions[prev]) { setLocalSingle(displayOptions[prev].value); setLocalSingleLabel(optLabel(displayOptions[prev])); }
+        if (!isMulti && displayOptions[prev]) { setLocalSingle(displayOptions[prev].value); setLocalSingleLabel(optLabel(displayOptions[prev])); setLocalSingleMeta(String(displayOptions[prev].meta ?? '')); }
       }
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       setPage((p) => Math.max(1, p - 1));
       setFocusedIdx(0);
-      setLocalSingle(''); setLocalSingleLabel('');
+      setLocalSingle(''); setLocalSingleLabel(''); setLocalSingleMeta('');
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       setPage((p) => Math.min(totalPages, p + 1));
       setFocusedIdx(0);
-      setLocalSingle(''); setLocalSingleLabel('');
+      setLocalSingle(''); setLocalSingleLabel(''); setLocalSingleMeta('');
     } else if (e.key === 'Enter') {
       if (e.target instanceof HTMLButtonElement) return;
       e.preventDefault();
-      if (!tableActive || !displayOptions[focusedIdx]) return;
-      if (isMulti) toggleMulti(displayOptions[focusedIdx].value);
-      else confirmRow(displayOptions[focusedIdx]);
+      if (e.metaKey || e.ctrlKey) {
+        confirm();
+      } else if (isMulti) {
+        if (!tableActive || !displayOptions[focusedIdx]) return;
+        toggleMulti(displayOptions[focusedIdx].value);
+      } else {
+        if (!tableActive || !displayOptions[focusedIdx]) return;
+        confirmRow(displayOptions[focusedIdx]);
+      }
+    } else if (e.key === ' ') {
+      if (!isMulti || !tableActive || !displayOptions[focusedIdx]) return;
+      e.preventDefault();
+      toggleMulti(displayOptions[focusedIdx].value);
     }
   };
 
@@ -379,7 +401,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
   return {
     // State
     open, query, options, loading, focusedIdx, tableActive, page, total,
-    localSelected, localSingle, localSingleLabel, displayLabel,
+    localSelected, localSingle, localSingleLabel, localSingleMeta, displayLabel,
     inputText, inputFocused, dropdownOpen, dropdownOptions, dropdownLoading,
     // Computed
     columns, totalPages, displayOptions, colSpan, confirmCount, triggerDisplay,

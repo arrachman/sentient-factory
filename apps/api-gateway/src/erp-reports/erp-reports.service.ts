@@ -5,6 +5,11 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { ReportEngineService } from '../erp-report-engine/report-engine.service';
+import { datasetColumns, datasetContext } from '../erp-report-engine/dataset-adapter';
+import { buildTableTemplate } from '../erp-report-engine/template-builder';
+import { sampleDataset } from './report-preview-sample';
+import { ReportColumnsResolver } from './report-columns-resolver';
 import { CreateErpReportDto } from './dto/create-report.dto';
 import { ExecuteSqlDto } from './dto/execute-sql.dto';
 import { QueryErpReportDto } from './dto/query-report.dto';
@@ -14,14 +19,57 @@ const FORBIDDEN_KEYWORDS = /\b(insert|update|delete|drop|truncate|alter|create|g
 
 @Injectable()
 export class ErpReportsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly engine: ReportEngineService,
+    private readonly columnsResolver: ReportColumnsResolver,
+  ) {}
+
+  /**
+   * Materialize an auto-template into explicit, editable bands built from the bound
+   * report's REAL columns — so the Report Designer can band-edit it and the live
+   * render matches. Requires the template to have a `reportKey`.
+   */
+  async materializeTemplate(id: bigint, userId?: bigint) {
+    const rec = await this.findOne(id);
+    if (!rec.reportKey) {
+      throw new BadRequestException('Template belum terikat ke laporan (reportKey kosong)');
+    }
+    const columns = await this.columnsResolver.resolve(rec.reportKey);
+    const stored = (rec.templateJson ?? {}) as Record<string, unknown>;
+    const template = buildTableTemplate({
+      name: (stored.name as string) ?? rec.name,
+      module: rec.module,
+      columns,
+      pageSize: stored.pageSize as never,
+      orientation: stored.orientation as never,
+      margins: stored.margins as never,
+    });
+    return this.update(id, { templateJson: template as unknown as Record<string, unknown> }, userId);
+  }
+
+  /**
+   * Render a template (as currently edited in the designer) to a PDF with sample
+   * data — backs the "Preview PDF" button. Throws if the template can't render.
+   */
+  async previewTemplate(templateJson: Record<string, unknown>): Promise<Buffer> {
+    const ds = sampleDataset();
+    const buffer = await this.engine.renderStoredTemplate(
+      templateJson,
+      datasetColumns(ds),
+      datasetContext(ds),
+    );
+    if (!buffer) throw new BadRequestException('Template tidak dapat dirender');
+    return buffer;
+  }
 
   async findAll(query: QueryErpReportDto) {
-    const { page = 1, limit = 20, search, module, isActive, sortBy = 'createdAt', sortDir = 'desc' } = query;
+    const { page = 1, limit = 20, search, module, reportKey, isActive, sortBy = 'createdAt', sortDir = 'desc' } = query;
     const skip = (page - 1) * limit;
     const where: any = { deletedAt: null };
     if (search) where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { code: { equals: search, mode: 'insensitive' } }];
     if (module) where.module = module;
+    if (reportKey) where.reportKey = reportKey;
     if (isActive !== undefined) where.isActive = isActive;
 
     const [items, total] = await Promise.all([
@@ -37,6 +85,18 @@ export class ErpReportsService {
     return rec;
   }
 
+  /**
+   * Resolve the active template bound to a report (`<module>.<report>`). Used by the
+   * report export services to drive template-based PDF rendering. Most-recently
+   * updated active template wins if several share a reportKey.
+   */
+  async findActiveByReportKey(reportKey: string) {
+    return this.prisma.erpRptTemplate.findFirst({
+      where: { reportKey, isActive: true, deletedAt: null },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
   async create(dto: CreateErpReportDto, userId?: bigint) {
     return this.prisma.erpRptTemplate.create({
       data: {
@@ -45,6 +105,7 @@ export class ErpReportsService {
         module: dto.module,
         description: dto.description,
         templateJson: (dto.templateJson ?? {}) as Prisma.InputJsonValue,
+        reportKey: dto.reportKey,
         isActive: dto.isActive ?? true,
         createdById: userId,
         updatedById: userId,
@@ -62,6 +123,7 @@ export class ErpReportsService {
         ...(dto.module !== undefined && { module: dto.module }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.templateJson !== undefined && { templateJson: dto.templateJson as Prisma.InputJsonValue }),
+        ...(dto.reportKey !== undefined && { reportKey: dto.reportKey }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         updatedById: userId,
       },

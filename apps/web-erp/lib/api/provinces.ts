@@ -24,7 +24,7 @@ export type UpdateErpProvincePayload = Partial<CreateErpProvincePayload>;
 
 const BASE = '/provinces';
 
-export async function listProvinces(params?: PaginationParams): Promise<PaginatedResponse<ErpProvince>> {
+export async function listProvinces(params?: PaginationParams & { countryId?: string }): Promise<PaginatedResponse<ErpProvince>> {
   return apiGet<PaginatedResponse<ErpProvince>>(BASE, params as Record<string, string | number | boolean | undefined>);
 }
 

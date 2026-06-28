@@ -19,6 +19,7 @@ import {
 } from '@/components/organisms/inv-stock-count-lines';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
+import { TransactionAttachmentUpload } from '@/components/organisms/transaction-attachment-upload';
 import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/inv-stock-counts';
 import { type FormColumnSlot } from '@/lib/api/form-fields';
@@ -153,6 +154,7 @@ export function InvStockCountForm({
       <div className="flex gap-1 border-b border-border">
         {[
           { key: 'detail', label: 'Detail' },
+          { key: 'lampiran', label: 'Lampiran' },
           { key: 'info', label: 'Info' },
         ].map((t) => (
           <button
@@ -170,6 +172,9 @@ export function InvStockCountForm({
         ))}
       </div>
 
+      {tab === 'lampiran' && (
+        <TransactionAttachmentUpload domain="inv" docType={transactionCode ?? 'INV'} docId={data.id ?? null} />
+      )}
       {tab === 'detail' && (
         <InvStockCountLinesEditor
           ref={linesRef}

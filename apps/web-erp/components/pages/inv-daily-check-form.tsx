@@ -18,6 +18,7 @@ import {
 } from '@/components/organisms/inv-daily-check-lines';
 import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import { notify } from '@/lib/feedback';
+import { TransactionAttachmentUpload } from '@/components/organisms/transaction-attachment-upload';
 import { arrowFieldNav } from '@/lib/field-focus-nav';
 import type { ErpDocumentStatus } from '@/lib/api/inv-daily-checks';
 import type { InvDailyCheckTransition } from '@/lib/api/inv-daily-checks';
@@ -197,6 +198,7 @@ export function InvDailyCheckForm({
       <div className="flex gap-1 border-b border-border">
         {[
           { key: 'detail', label: 'Detail' },
+          { key: 'lampiran', label: 'Lampiran' },
           { key: 'info', label: 'Info' },
         ].map((t) => (
           <button
@@ -214,6 +216,9 @@ export function InvDailyCheckForm({
         ))}
       </div>
 
+      {tab === 'lampiran' && (
+        <TransactionAttachmentUpload domain="inv" docType={transactionCode ?? 'INV'} docId={data.id ?? null} />
+      )}
       {tab === 'detail' && (
         <InvDailyCheckLinesEditor
           ref={linesRef}
