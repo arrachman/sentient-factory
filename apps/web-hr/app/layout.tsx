@@ -25,6 +25,11 @@ export const viewport = {
   initialScale: 1,
 };
 
+// web-hr screens are client + cookie-auth (data fetched at runtime from
+// /api/hr/*). Static prerendering provides no value and the provider tree must
+// run on the client, so render every route dynamically.
+export const dynamic = 'force-dynamic';
+
 // Blocking appearance init — sets data-theme attrs before first paint (no FOUC).
 const APPEARANCE_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('hr-appearance')||'{}');var e=document.documentElement;e.setAttribute('data-density',s.density||'comfortable');e.setAttribute('data-primary',s.primary||'teal');}catch(x){}})();`;
 

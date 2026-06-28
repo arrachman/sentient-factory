@@ -2,7 +2,6 @@
 
 import { ReactNode } from 'react';
 import { Loader2, ShieldAlert, Inbox, AlertTriangle } from 'lucide-react';
-import { HrApiError } from '@/lib/api/client';
 
 /**
  * Standard loading / error / empty states for HR data screens.
@@ -32,7 +31,7 @@ export function QueryState({
   }
 
   if (error) {
-    const status = (error as HrApiError)?.code;
+    const status = (error as { code?: string })?.code;
     const isAuth = status === 'HTTP_401' || status === 'UNAUTHORIZED';
     return (
       <Centered>

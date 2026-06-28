@@ -1,7 +1,10 @@
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+// npm hoists workspace deps (react, next, @sentient-factory/ui-kit, …) to the
+// monorepo root. Turbopack must use the monorepo root so those resolve.
+const MONOREPO_ROOT = resolve(__dirname, '../..');
 
 // Internal api-gateway URL (server-side only — not exposed to browser).
 // In production set HR_INTERNAL_API_URL to wherever api-gateway is reachable
@@ -14,8 +17,9 @@ const nextConfig = {
   output: 'standalone',
   // Shared workspace package consumed as TS source (web-hr is the first clean adopter).
   transpilePackages: ['@sentient-factory/ui-kit'],
-  // Scope Turbopack to this app (monorepo has multiple lockfiles).
-  turbopack: { root: __dirname },
+  // Scope Turbopack to this app (matches web-erp; node_modules still resolve
+  // upward to the hoisted monorepo root).
+  turbopack: { root: MONOREPO_ROOT },
   devIndicators: false,
 
   // Same-origin proxy: browser calls /api/* (auth + /api/hr/*) are forwarded

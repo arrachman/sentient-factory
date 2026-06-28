@@ -48,6 +48,15 @@
       "envVar": "WEB_MDP_PORT",
       "description": "Senti MDP — Manufacturing Digitalization Platform (ISA-95 Level 3 / MOM)",
       "isActive": true
+    },
+    "web-hr": {
+      "name": "Web HR",
+      "port": 3221,
+      "type": "nextjs",
+      "envVar": "WEB_HR_PORT",
+      "description": "Senti HR — Time & Attendance / Workforce Management (jibble.io adaptation, first clean ui-kit adopter)",
+      "productionUrl": "http://hr.fr-labs.my.id",
+      "isActive": true
     }
   },
   "services": {

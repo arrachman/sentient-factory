@@ -9,7 +9,7 @@ export interface Column<T> {
 
 /** Minimal read-only table for HR list screens. Richer grid (TanStack Table,
  *  bulk/keyboard nav) can be added per-screen as needs grow. */
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T>({
   columns,
   rows,
   rowKey,
@@ -38,7 +38,9 @@ export function DataTable<T extends Record<string, unknown>>({
             <tr key={rowKey(row, i)} className="border-b last:border-0 hover:bg-muted/30">
               {columns.map((c) => (
                 <td key={c.key} className={`px-3 py-2 align-middle ${c.className ?? ''}`}>
-                  {c.render ? c.render(row) : String(row[c.key] ?? '—')}
+                  {c.render
+                    ? c.render(row)
+                    : String((row as Record<string, unknown>)[c.key] ?? '—')}
                 </td>
               ))}
             </tr>
