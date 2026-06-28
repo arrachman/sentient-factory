@@ -80,13 +80,6 @@
       "description": "Static company profile page for Tarik Data Digital",
       "isActive": true
     },
-    "kafka-ui": {
-      "name": "Kafka UI",
-      "port": 3212,
-      "type": "kafka-ui",
-      "description": "Kafka cluster web interface",
-      "isActive": true
-    },
     "postgres": {
       "port": 3208,
       "description": "PostgreSQL database"
@@ -102,18 +95,6 @@
     "vault": {
       "port": 8200,
       "description": "HashiCorp Vault dev server"
-    },
-    "kafka": {
-      "port": 9092,
-      "description": "Apache Kafka broker"
-    },
-    "kafka-external": {
-      "port": 29092,
-      "description": "Apache Kafka external listener"
-    },
-    "debezium-connect": {
-      "port": 8083,
-      "description": "Debezium Kafka Connect service"
     },
     "influxdb": {
       "port": 8086,
