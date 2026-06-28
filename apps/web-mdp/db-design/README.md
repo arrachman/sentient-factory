@@ -1,8 +1,9 @@
 # Web-MDP — Database Design (Level 3 / MOM)
 
 > Status: **design docs (no Prisma, no migration)** · Fase 0 ✅ · Fase 1 scaffold ✅
-> (app boots, port 3220) · **Fase 2: MES catalogued** ([entities-mes.md](entities-mes.md))
-> — review gate. Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
+> (app boots, port 3220) · **Fase 2: MES catalogued + Prisma migrated**
+> ([entities-mes.md](entities-mes.md); schema `apps/api-gateway/prisma/schema/mdp-mes.prisma`,
+> migration `20260628_001_mdp_mes` live). Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
 > `apps/web-mdp` (ISA-95 Level 3).
 >
 > **Single source of truth.** This `db-design/` set (this README +

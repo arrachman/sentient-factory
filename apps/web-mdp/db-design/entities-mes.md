@@ -1,7 +1,11 @@
 # MES — Manufacturing Execution: Entity Catalog (`mes` + foundation `mdp`/`eam`)
 
-> Status: **FIELD CATALOG — review gate (no Prisma yet)**. Date: 2026-06-27 ·
-> Product: Senti MDP, `apps/web-mdp`. Anchor module (build order #1).
+> Status: **PRISMA WRITTEN + MIGRATED (2026-06-28)** — schema at
+> `apps/api-gateway/prisma/schema/mdp-mes.prisma`; migration
+> `20260628_001_mdp_mes` applied to live DB (additive: 10 tables + 5 enums,
+> 0 DROP) via scoped `db execute` + `migrate resolve` (team's unrelated pending
+> migration left untouched). Catalog below = the design that was realized.
+> Date: 2026-06-27 · Product: Senti MDP, `apps/web-mdp`. Anchor module (build #1).
 > Extends [README.md](README.md) + [module-roadmap.md](module-roadmap.md).
 > **Scope:** MES core (manual-entry first — no machine/SCADA ingestion) **plus**
 > the minimal `mdp`/`eam` foundation tables MES depends on. Full EAM registry

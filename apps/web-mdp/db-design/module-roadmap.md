@@ -44,11 +44,12 @@ Built early; MES/CMMS/OEE all depend on it.
 
 ---
 
-## 2. `mes` — Manufacturing Execution (ANCHOR) ✅ catalogued
+## 2. `mes` — Manufacturing Execution (ANCHOR) ✅ catalogued + ✅ migrated
 
-> **Field-level catalog done:** [entities-mes.md](entities-mes.md) (6 `mes_*`
-> entities + minimal `mdp`/`eam` foundation MES needs + 5 enums). Review gate
-> before Prisma. The table below is the original coarse plan, kept for context.
+> **Field catalog + Prisma done:** [entities-mes.md](entities-mes.md) (6 `mes_*`
+> entities + minimal `mdp`/`eam` foundation + 5 enums). Schema at
+> `apps/api-gateway/prisma/schema/mdp-mes.prisma`; migration `20260628_001_mdp_mes`
+> live on DB. The table below is the original coarse plan, kept for context.
 
 Consumes ERP `mfg_work_orders` / `mfg_boms` / `md_items`. **Manual entry first.**
 
