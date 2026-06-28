@@ -71,6 +71,21 @@ import { ErpLocationsModule } from './erp-locations/erp-locations.module';
 import { ErpWarehousesModule } from './erp-warehouses/erp-warehouses.module';
 import { ErpMdpWorkCentersModule } from './erp-mdp-work-centers/erp-mdp-work-centers.module';
 import { ErpMdpProductionOrdersModule } from './erp-mdp-production-orders/erp-mdp-production-orders.module';
+import { ErpMdpShiftsModule } from './erp-mdp-shifts/erp-mdp-shifts.module';
+import { ErpMdpReasonCodesModule } from './erp-mdp-reason-codes/erp-mdp-reason-codes.module';
+import { ErpMdpAssetsModule } from './erp-mdp-assets/erp-mdp-assets.module';
+import { ErpMdpProductionLogsModule } from './erp-mdp-production-logs/erp-mdp-production-logs.module';
+import { ErpMdpDowntimeEventsModule } from './erp-mdp-downtime-events/erp-mdp-downtime-events.module';
+import { ErpMdpOperationsModule } from './erp-mdp-operations/erp-mdp-operations.module';
+import { ErpMdpMaterialConsumptionsModule } from './erp-mdp-material-consumptions/erp-mdp-material-consumptions.module';
+import { ErpMdpLaborLogsModule } from './erp-mdp-labor-logs/erp-mdp-labor-logs.module';
+import { ErpMdpWorkCalendarsModule } from './erp-mdp-work-calendars/erp-mdp-work-calendars.module';
+import { ErpMdpMenusModule } from './erp-mdp-menus/erp-mdp-menus.module';
+import { ErpMdpRoleMenusModule } from './erp-mdp-role-menus/erp-mdp-role-menus.module';
+import { ErpMdpWmsTasksModule } from './erp-mdp-wms-tasks/erp-mdp-wms-tasks.module';
+import { ErpMdpWmsHandlingUnitsModule } from './erp-mdp-wms-handling-units/erp-mdp-wms-handling-units.module';
+import { ErpMdpWmsPicksModule } from './erp-mdp-wms-picks/erp-mdp-wms-picks.module';
+import { ErpMdpWmsMovementsModule } from './erp-mdp-wms-movements/erp-mdp-wms-movements.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -240,6 +255,21 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpWarehousesModule,
     ErpMdpWorkCentersModule,
     ErpMdpProductionOrdersModule,
+    ErpMdpShiftsModule,
+    ErpMdpReasonCodesModule,
+    ErpMdpAssetsModule,
+    ErpMdpProductionLogsModule,
+    ErpMdpDowntimeEventsModule,
+    ErpMdpOperationsModule,
+    ErpMdpMaterialConsumptionsModule,
+    ErpMdpLaborLogsModule,
+    ErpMdpWorkCalendarsModule,
+    ErpMdpMenusModule,
+    ErpMdpRoleMenusModule,
+    ErpMdpWmsTasksModule,
+    ErpMdpWmsHandlingUnitsModule,
+    ErpMdpWmsPicksModule,
+    ErpMdpWmsMovementsModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,

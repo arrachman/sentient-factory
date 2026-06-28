@@ -33,6 +33,7 @@
     "db:seed:item-txn-types": "ts-node prisma/seed-erp-item-txn-types.ts",
     "db:seed:txn-note-details": "ts-node prisma/seed-erp-txn-note-details.ts",
     "db:seed:fiscal-periods": "ts-node prisma/seed-erp-fiscal-periods.ts",
+    "db:seed:mdp": "ts-node prisma/seed-mdp-foundation.ts",
     "db:ensure-system-user": "ts-node prisma/ensure-system-user.ts",
     "db:backfill:inventory-ledger": "ts-node prisma/backfill-inventory-ledger.ts",
     "db:studio": "prisma studio",

@@ -52,7 +52,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Putaway, picking, dan perpindahan stok fisik → feed ERP inv.',
     domains: ['wms'],
     icon: Warehouse,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/wms',
   },
   {
     id: 'qms',

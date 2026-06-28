@@ -5,6 +5,17 @@
 > `20260628_001_mdp_mes` applied to live DB (additive: 10 tables + 5 enums,
 > 0 DROP) via scoped `db execute` + `migrate resolve` (team's unrelated pending
 > migration left untouched). Catalog below = the design that was realized.
+>
+> **Backend CRUD COMPLETE (2026-06-28):** all 6 `mes_*` entities guarded by
+> `ErpJwtAuthGuard` at `/api/mdp/{production-orders,operations,production-logs,
+> material-consumptions,downtime-events,labor-logs}` (all verified 401). Highlights:
+> `mes_production_logs` recomputes parent-order rollup per MES-4; `mes_downtime_events`
+> + `mes_labor_logs` derive `durationSeconds` on close; `mes_operations` goodQty/scrapQty
+> are manual-entry (no auto-rollup from logs in MVP); `mes_material_consumptions`
+> `itemId`/`sourceBinId` are cross-app scalar (not asserted), `postingStatus` stays
+> PENDING until the ERP-emit worker (open #3). **All MES UI still pending** except
+> production-orders (list+create). No new migration — tables existed since
+> `20260628_001_mdp_mes`.
 > Date: 2026-06-27 · Product: Senti MDP, `apps/web-mdp`. Anchor module (build #1).
 > Extends [README.md](README.md) + [module-roadmap.md](module-roadmap.md).
 > **Scope:** MES core (manual-entry first — no machine/SCADA ingestion) **plus**

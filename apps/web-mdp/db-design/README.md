@@ -1,9 +1,12 @@
 # Web-MDP — Database Design (Level 3 / MOM)
 
-> Status: **design docs (no Prisma, no migration)** · Fase 0 ✅ · Fase 1 scaffold ✅
-> (app boots, port 3220) · **Fase 2: MES catalogued + Prisma migrated**
-> ([entities-mes.md](entities-mes.md); schema `apps/api-gateway/prisma/schema/mdp-mes.prisma`,
-> migration `20260628_001_mdp_mes` live). Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
+> Status: Fase 0 ✅ · Fase 1 scaffold ✅ (app boots, port 3220) · **Fase 2: MES
+> catalogued + Prisma migrated** ([entities-mes.md](entities-mes.md); schema
+> `apps/api-gateway/prisma/schema/mdp-mes.prisma`, migration `20260628_001_mdp_mes`
+> live) · **Foundation masters CRUD live (2026-06-28)**: shifts + reason-codes
+> (mdp), work-centers + assets (eam) — backend `/api/mdp/{shifts,reason-codes,
+> assets,work-centers}` + web-mdp `/app/master/*` + seed `npm run db:seed:mdp`.
+> Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
 > `apps/web-mdp` (ISA-95 Level 3).
 >
 > **Single source of truth.** This `db-design/` set (this README +
@@ -117,7 +120,7 @@ emits records ERP can consume. Direction and ownership:
 
 | # | Decision | Default lean |
 | --- | --- | --- |
-| 1 | MDP access control: reuse ERP roles wholesale, or add `mdp_role_*` mapping for shop-floor roles (operator/QA/technician)? | Add thin `mdp_*` mapping; identity stays `adm_users`. |
+| 1 | ~~MDP access control: reuse ERP roles wholesale, or add `mdp_role_*` mapping?~~ → **RESOLVED 2026-06-28 (with user) = thin mapping.** `mdp_menus` (nav SSOT, self-tree) + `mdp_role_menus` (scalar `roleId` → ERP `adm_roles`, NO DB-FK; `menuId` → `mdp_menus`; `canView`/`canEdit`). Identity stays `adm_users`. **Role-filtered nav live (2026-06-28):** `GET /api/mdp/menus/nav` resolves the user's ERP roles (`adm_user_roles`) → `mdp_role_menus` → visible menu tree (+ ancestors), fallback = full active tree when no mapping; consumed by `DynamicSidebar` in `app-shell`. | — (resolved) |
 | 2 | Backend placement: extend `apps/api-gateway` (module `mdp-*`) vs new NestJS service. | Extend api-gateway first (cheap); split later if scale demands. |
 | 3 | Production-result → ERP posting contract (sync API vs event/outbox). | Define per module at MES catalog time. |
 | 4 | EAM asset master: build fresh, or seed/mirror from ERP `fa_assets`. | Fresh master; optional scalar link to `fa_assets`. |

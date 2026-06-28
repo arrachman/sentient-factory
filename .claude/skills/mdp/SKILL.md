@@ -130,7 +130,7 @@ PK `BigInt @id @default(autoincrement())` · `code`/`name` · soft-delete
 - **Fase 0** ✅ design docs foundation (CLAUDE.md + db-design hub +
   module-roadmap).
 - **Fase 1** ✅ scaffold `apps/web-mdp` (Next 16, boots/builds, port 3220,
-  terdaftar di config/ports.json). ⚠️ **UFW 3220 masih perlu sudo user**.
+  terdaftar di config/ports.json). **UFW 3220 ✅ DONE** (rule LAN sudah ada).
 - **Fase 2 MES** ✅ catalogued (`db-design/entities-mes.md`) + **Prisma
   migrated** (`mdp-mes.prisma`, 10 model + 5 enum, migrasi `20260628_001_mdp_mes`
   live).
@@ -138,17 +138,56 @@ PK `BigInt @id @default(autoincrement())` · `code`/`name` · soft-delete
   `erp-mdp-production-orders` (`/api/mdp/work-centers`, `/api/mdp/production-orders`,
   verified 401). UI `web-mdp`: `lib/api.ts` + production-orders-page (list+create)
   di route `/app/mes`.
+- **Foundation masters LIVE** (2026-06-28): backend CRUD `erp-mdp-shifts`,
+  `erp-mdp-reason-codes`, `erp-mdp-assets` (`/api/mdp/{shifts,reason-codes,assets}`,
+  verified 401, terdaftar di app.module). UI `web-mdp`: organism reusable
+  `MasterCrudPage` (list+search+create/edit+soft-delete) + atom `StatusBadge`;
+  4 page config (work-centers, assets, shifts, reason-codes) di
+  `/app/master/*` + landing `/app/master` (registry `lib/masters.ts` +
+  `MasterGrid`) + nav Database di app-shell. API client `lib/api.ts` punya
+  factory `crudResource()` (shifts/reasonCodes/assets/workCenters).
+- **Seed foundation LIVE**: `prisma/seed-mdp-foundation.ts` (`npm run db:seed:mdp`,
+  idempotent upsert by code) → 4 assets, 5 work centers, 3 shifts, 8 reason codes,
+  3 sample production orders (link ke `md_items` nyata via scalar FK).
+- **MES backend COMPLETE** (2026-06-28): keenam entitas `mes_*` punya CRUD
+  terguard di `/api/mdp/{production-orders,operations,production-logs,
+  material-consumptions,downtime-events,labor-logs}` (semua verified 401). Sorotan:
+  production-logs **recompute rollup order** di `$transaction` (MES-4); downtime &
+  labor derive `durationSeconds` on close; operations goodQty/scrapQty manual-entry;
+  material-consumptions itemId/sourceBinId cross-app scalar (tak di-assert),
+  postingStatus PENDING s/d emit. Tabel sudah ter-migrasi (`20260628_001_mdp_mes`)
+  → **tanpa migrasi baru**; terdaftar di app.module, container restart, typecheck
+  bersih. api.ts: crudResource + tipe utk semua. ⚠️ **UI MES eksekusi belum ada**
+  (baru backend+api-client; hanya production-orders punya page list+create).
+
+- **MES UI execution COMPLETE** (2026-06-28): keenam entitas punya page list+create/edit
+  di `/app/mes/*` (orders, operations, logs, consumptions, downtime, labor) via organism
+  `MasterCrudPage` + molecule `MesNav`. Ditambah tipe field reusable `datetime`
+  (datetime-local ↔ ISO) di MasterCrudPage. FK = input ID mentah (functional slice).
+- **Foundation bolong CLOSED** (2026-06-28): migrasi additive `20260628144144_mdp_foundation`
+  (mdp_work_calendars + mdp_menus + mdp_role_menus, 0 DROP, applied+resolved). Backend CRUD
+  `/api/mdp/{work-calendars,menus,role-menus}` (verified 401, di app.module). UI master
+  `work-calendars` + `menus`. Seed +2 calendars, +14 menus. **Decision #1 RESOLVED = thin
+  mapping** (mdp_role_menus: scalar roleId→adm_roles, menuId→mdp_menus). api.ts diperluas.
+
+- **Role-filtered nav LIVE** (2026-06-28): `GET /api/mdp/menus/nav` (service `nav()` di
+  erp-mdp-menus) resolve user→`adm_user_roles`→`mdp_role_menus`→pohon menu (+ancestor;
+  fallback full tree bila tak ada mapping). Dikonsumsi organism `DynamicSidebar`
+  (fetch + fallback ke `MDP_MODULES` statis) gantikan sidebar statis di `app-shell`.
+- **WMS COMPLETE** (2026-06-28): katalog `db-design/entities-wms.md`; schema `mdp-wms.prisma`
+  (4 model wms_tasks/picks/movements/handling_units + 4 enum MdpWms*); migrasi additive
+  `20260628161907_mdp_wms` (0 DROP, applied+resolved). Backend CRUD `/api/mdp/wms/{tasks,
+  picks,movements,handling-units}` (verified 401, di app.module). UI `/app/wms/*` (MasterCrudPage
+  + molecule `WmsNav`). api.ts + seed (2 HU, 2 task, 1 movement) + menu tree wms. Movement→ERP
+  `inv_` posting = decision #3 (postingStatus PENDING, stub).
 
 ### Pending / next
-- UFW 3220 (sudo user): `sudo ufw allow from 192.168.1.0/24 to any port 3220
-  proto tcp comment 'web-mdp' && sudo ufw reload`.
-- MES entitas lain (operations, production_logs, material_consumptions,
-  downtime_events, labor_logs) backend+UI; CRUD foundation master (shifts,
-  reason codes, assets); seed data foundation untuk uji.
-- Port stack UI penuh web-erp §2.7 (keyboard-nav/kebab/bulk/organism reusable).
-- ERP-emit outbox (decision #3); MDP access map (decision #1, mdp_role_*).
-- **Build order modul**: mdp/eam foundation → MES (anchor) → WMS → QMS → CMMS →
-  DMS/PRTS/IMS/LMS → OEE.
+- `mdp_role_menus` belum ada admin UI khusus (backend siap; role mappings belum di-seed →
+  nav saat ini pakai fallback full-tree untuk semua user).
+- Port stack UI penuh web-erp §2.7 (keyboard-nav/kebab/bulk); FK lookup-select di form.
+- ERP-emit outbox (decision #3, masih stub) — MES consumptions + WMS movements menunggu emit.
+- **Build order modul**: mdp/eam foundation ✅ → MES ✅ → WMS ✅ → **QMS** (berikutnya) →
+  CMMS → DMS/PRTS/IMS/LMS → OEE overlay.
 
 ## Bootstrap sesi baru (resume checklist)
 

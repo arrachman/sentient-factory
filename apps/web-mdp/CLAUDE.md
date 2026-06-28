@@ -65,8 +65,13 @@ app lain. ERP memiliki `sys_*`/`adm_*`/`md_*`/`fin_*`/`inv_*`/`pur_*`/`sls_*`/
 > **Kaizen = metode**, bukan sistem; difasilitasi via `prt_*` + `dms_*` + `lms_*`.
 
 - **Identity:** MDP **reuse** auth ERP (`adm_users`, `ErpJwtAuthGuard`) — tidak
-  bikin tabel user baru. Pemetaan akses/role khusus MDP (bila perlu) = tabel
-  `mdp_*`. *(Open decision — lihat db-design/README §Open.)*
+  bikin tabel user baru. Pemetaan akses/role khusus MDP = **thin mapping**
+  (decision #1 **resolved 2026-06-28**): `mdp_menus` (nav SSOT, self-tree) +
+  `mdp_role_menus` (scalar `roleId` → ERP `adm_roles` tanpa DB-FK, `menuId` →
+  `mdp_menus`, `canView`/`canEdit`). Identity tetap `adm_users`. **Nav
+  role-filtered live:** `GET /api/mdp/menus/nav` (user→`adm_user_roles`→
+  `mdp_role_menus`→menu tree + ancestor; fallback full tree bila belum ada
+  mapping) dikonsumsi `DynamicSidebar` di `app-shell`.
 - **Referensi lintas-domain & lintas-app** (mis. `mes` → ERP `mfg_work_orders`,
   `eam` → ERP `fa_assets`) = **scalar `BigInt` FK + `@@index`, TANPA**
   `@relation`/FK DB — domain tetap decoupled (pola sama web-erp). FK

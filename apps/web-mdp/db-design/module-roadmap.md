@@ -12,8 +12,9 @@ from `web-erp/db-design §3`. Cross-app refs (→ ERP) = scalar `BigInt` FK.
 
 ## Build order (dependency-driven)
 
-`mdp`/`eam` foundation → **MES** (anchor) → **WMS** → **QMS** → **CMMS** →
-**DMS · PRTS · IMS · LMS** → **OEE** overlay.
+`mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** → **CMMS** →
+**DMS · PRTS · IMS · LMS** → **OEE** overlay. *(Role-filtered nav live:
+`/api/mdp/menus/nav` + `DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
 
 ---
 
@@ -23,11 +24,18 @@ Shared across all modules; built in Phase 1 alongside scaffold.
 
 | Entity | Table | Notes |
 | --- | --- | --- |
-| Shift | `mdp_shifts` | Shift definitions (start/end, breaks) for MES/OEE. |
-| Work calendar | `mdp_work_calendars` | Planned operating time; basis for OEE availability. |
-| Reason code | `mdp_reason_codes` | Catalog: downtime/scrap/delay reasons (typed). |
-| Menu / nav | `mdp_menus` | Nav SSOT for MDP shell (mirror `sys_menus` pattern). |
-| Access map | `mdp_role_menus` *(open #1)* | MDP role→menu; identity stays `adm_users`. |
+| Shift | `mdp_shifts` | ✅ **CRUD live** (`/api/mdp/shifts`, UI `/app/master/shifts`). Shift definitions (start/end) for MES/OEE. |
+| Work calendar | `mdp_work_calendars` | ✅ **CRUD live** (`/api/mdp/work-calendars`, UI `/app/master/work-calendars`). Planned operating time (plannedMinutesPerDay × workingDaysPerWeek); basis for OEE availability. |
+| Reason code | `mdp_reason_codes` | ✅ **CRUD live** (`/api/mdp/reason-codes`, UI `/app/master/reason-codes`). Typed catalog: downtime/scrap/delay/quality. |
+| Menu / nav | `mdp_menus` | ✅ **CRUD live** (`/api/mdp/menus`, UI `/app/master/menus`). Nav SSOT (self-tree, mirror `sys_menus`); seeded MES + master tree. |
+| Access map | `mdp_role_menus` | ✅ **Backend live** (`/api/mdp/role-menus`). Decision #1 **resolved = thin mapping**: scalar `roleId` → ERP `adm_roles` (no DB-FK) + `menuId` → `mdp_menus`; `canView`/`canEdit`. Identity stays `adm_users`. *(No dedicated admin UI yet.)* |
+
+> **Foundation CRUD shipped (2026-06-28):** shifts + reason-codes + work-calendars
+> + menus (mdp), work-centers + assets (eam), and role-menus (backend) have backend
+> CRUD modules; all but role-menus have web-mdp master pages (reusable
+> `MasterCrudPage` organism) + seed (`npm run db:seed:mdp` → 2 calendars, 14 menus).
+> Migration `20260628144144_mdp_foundation` (additive: mdp_work_calendars +
+> mdp_menus + mdp_role_menus).
 
 ---
 
@@ -37,10 +45,10 @@ Built early; MES/CMMS/OEE all depend on it.
 
 | Entity | Table | Notes |
 | --- | --- | --- |
-| Asset | `eam_assets` | Maintained equipment master. Scalar `erpFixedAssetId?` → ERP `fa_assets`. |
-| Asset hierarchy | `eam_asset_hierarchies` | Plant → area → line → machine → component tree. |
-| Work center | `eam_work_centers` | Production resource grouping (used by MES routing). |
-| Meter / counter | `eam_meters` | Runtime/cycle counters (basis for usage-based PM & OEE). |
+| Asset | `eam_assets` | ✅ **CRUD live** (`/api/mdp/assets`, UI `/app/master/assets`). Maintained equipment master. Scalar `erpFixedAssetId?` → ERP `fa_assets`. |
+| Asset hierarchy | `eam_asset_hierarchies` | *(not yet)* Plant → area → line → machine → component tree. |
+| Work center | `eam_work_centers` | ✅ **CRUD live** (`/api/mdp/work-centers`, UI `/app/master/work-centers`). Production resource grouping (used by MES routing). |
+| Meter / counter | `eam_meters` | *(not yet)* Runtime/cycle counters (basis for usage-based PM & OEE). |
 
 ---
 
@@ -55,26 +63,43 @@ Consumes ERP `mfg_work_orders` / `mfg_boms` / `md_items`. **Manual entry first.*
 
 | Entity | Table | Notes |
 | --- | --- | --- |
-| Production order | `mes_production_orders` | Executable order; `erpWorkOrderId` → ERP `mfg_work_orders`. |
-| Operation / step | `mes_operations` | Routing steps per order, at a work center. |
-| Production log | `mes_production_logs` | Good/scrap qty, start/stop, operator — the result ERP ingests. |
-| Material consumption | `mes_material_consumptions` | Components consumed (→ ERP `inv_` issue). |
-| Downtime event | `mes_downtime_events` | Stoppages tagged with `mdp_reason_codes` (OEE availability). |
-| Labor log | `mes_labor_logs` | Operator time per operation (reuse `adm_users`). |
+| Production order | `mes_production_orders` | ✅ **CRUD live** (`/api/mdp/production-orders`). Executable order; `erpWorkOrderId` → ERP `mfg_work_orders`. |
+| Operation / step | `mes_operations` | ✅ **CRUD live** (`/api/mdp/operations`). Routing steps per order, at a work center; sequenced. |
+| Production log | `mes_production_logs` | ✅ **CRUD live** (`/api/mdp/production-logs`). Good/scrap qty, start/stop, operator — the result ERP ingests. Mutations recompute parent-order `producedGoodQty`/`producedScrapQty` rollup (MES-4). |
+| Material consumption | `mes_material_consumptions` | ✅ **CRUD live** (`/api/mdp/material-consumptions`). Components consumed (→ ERP `inv_` issue); `postingStatus` PENDING until emit. |
+| Downtime event | `mes_downtime_events` | ✅ **CRUD live** (`/api/mdp/downtime-events`). Stoppages tagged with `mdp_reason_codes`; `durationSeconds` derived on close (OEE availability). |
+| Labor log | `mes_labor_logs` | ✅ **CRUD live** (`/api/mdp/labor-logs`). Operator time per operation; `durationSeconds` derived on close. |
+
+> **MES backend COMPLETE (2026-06-28):** all 6 `mes_*` entities have guarded CRUD
+> at `/api/mdp/{production-orders,operations,production-logs,material-consumptions,downtime-events,labor-logs}`
+> (verified 401). No new migration — all tables existed since `20260628_001_mdp_mes`.
+>
+> **MES UI COMPLETE (2026-06-28):** all 6 entities now have list+create/edit pages
+> under `/app/mes/*` (orders, operations, logs, consumptions, downtime, labor) via
+> the reusable `MasterCrudPage` organism + `MesNav` sub-nav molecule. Added a
+> reusable `datetime` field type to `MasterCrudPage` (datetime-local ↔ ISO). FK
+> inputs are raw ID text (functional slice; lookup-select port is a later pass).
 
 ---
 
-## 3. `wms` — Warehouse Execution
+## 3. `wms` — Warehouse Execution ✅ catalogued + ✅ migrated + ✅ backend + UI
+
+> **Field catalog + Prisma done:** [entities-wms.md](entities-wms.md) (4 `wms_*`
+> entities + 4 enums). Schema `apps/api-gateway/prisma/schema/mdp-wms.prisma`;
+> migration `20260628161907_mdp_wms` (additive) live.
 
 Physical execution that **emits** movements ERP posts to `inv_stock_movements`.
-References `md_storage_bins`. Does **not** own stock balances.
+References `md_storage_bins` (scalar). Does **not** own stock balances.
 
 | Entity | Table | Notes |
 | --- | --- | --- |
-| Task | `wms_tasks` | Putaway / pick / move / count task (typed, assignable). |
-| Pick | `wms_picks` | Pick lines against a task/order. |
-| Movement | `wms_movements` | Completed physical move; emitted to ERP `inv_`. |
-| License plate / handling unit | `wms_handling_units` | Pallet/container grouping (optional). |
+| Task | `wms_tasks` | ✅ **CRUD live** (`/api/mdp/wms/tasks`, UI `/app/wms`). Putaway/pick/move/count/replenish (typed, assignable; scalar refs to md_items/md_storage_bins/mes_production_orders/adm_users). |
+| Pick | `wms_picks` | ✅ **CRUD live** (`/api/mdp/wms/picks`, UI `/app/wms/picks`). Pick lines against a task; qtyRequested/qtyPicked; optional handling unit. |
+| Movement | `wms_movements` | ✅ **CRUD live** (`/api/mdp/wms/movements`, UI `/app/wms/movements`). Completed physical move; `postingStatus` PENDING until emit to ERP `inv_` (decision #3 outbox, stubbed). |
+| License plate / handling unit | `wms_handling_units` | ✅ **CRUD live** (`/api/mdp/wms/handling-units`, UI `/app/wms/handling-units`). Pallet/container grouping. |
+
+> **WMS COMPLETE (2026-06-28):** all 4 entities have guarded CRUD + web-mdp UI
+> (`MasterCrudPage` + `WmsNav` sub-nav). Movement→ERP posting deferred (decision #3).
 
 ---
 
