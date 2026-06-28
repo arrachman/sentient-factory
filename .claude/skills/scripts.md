@@ -9,7 +9,6 @@ Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
 
 | Script | Fungsi |
 |--------|--------|
-| `start-all.sh` | Start semua active apps sekaligus |
 | `bootstrap-vault-dev.sh` | Inisialisasi HashiCorp Vault untuk development |
 | `vault-login-dev.sh` | Login ke Vault & ambil auth token |
 | `vault-approle-login.sh` | Login Vault via AppRole (untuk CI/production) |
@@ -27,12 +26,6 @@ Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
 ---
 
 ## Detail Per Script
-
-### `start-all.sh`
-Start semua aplikasi yang aktif:
-```bash
-bash scripts/start-all.sh
-```
 
 ### Vault Scripts
 
@@ -111,11 +104,8 @@ bash scripts/vault-login-dev.sh
 # 3. Render .env
 bash scripts/render-vault-env.sh
 
-# 4. Start semua infrastruktur
+# 4. Start semua service (infra + apps) via Docker Compose
 bash scripts/docker-up-with-vault.sh
-
-# 5. Start semua apps
-bash scripts/start-all.sh
 ```
 
 ## Alur Vault di Production

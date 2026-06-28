@@ -11,7 +11,6 @@ fileMatchPattern: "scripts/**"
 
 | Script | Fungsi |
 |--------|--------|
-| `start-all.sh` | Start semua active apps |
 | `bootstrap-vault-dev.sh` | Inisialisasi HashiCorp Vault (pertama kali) |
 | `vault-login-dev.sh` | Login Vault & ambil auth token |
 | `vault-approle-login.sh` | Login Vault via AppRole (CI/production) |
@@ -29,8 +28,7 @@ fileMatchPattern: "scripts/**"
 bash scripts/bootstrap-vault-dev.sh   # 1. Bootstrap Vault
 bash scripts/vault-login-dev.sh       # 2. Login Vault
 bash scripts/render-vault-env.sh      # 3. Render .env
-bash scripts/docker-up-with-vault.sh  # 4. Start infra
-bash scripts/start-all.sh             # 5. Start apps
+bash scripts/docker-up-with-vault.sh  # 4. Start semua service (infra + apps) via Docker Compose
 ```
 
 ## Port Manager

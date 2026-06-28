@@ -30,7 +30,6 @@ Manajer paket: **npm workspaces + Turborepo** (ada `pnpm-workspace.yaml` legacy 
 ```bash
 # Dev
 npm run dev                 # turbo run dev (semua app)
-npm run dev:all             # ./scripts/start-all.sh (port-aware)
 npm run build && npm test
 npm run lint && npm run typecheck
 

@@ -164,27 +164,6 @@ class PortManager {
       }
     });
   }
-
-  generateStartAllScript() {
-    console.log("\n📜 Start All Script (Active Apps Only):\n");
-    console.log("#!/bin/bash");
-    console.log("# Start all active applications with configured ports");
-    console.log("");
-
-    Object.entries(this.config.apps).forEach(([key, app]) => {
-      if (app.isActive) {
-        const port = this.getPort(key);
-        console.log(`echo "Starting ${app.name} on port ${port}..."`);
-        console.log(`cd apps/${key} && ${app.envVar}=${port} npm run dev &`);
-        console.log(`sleep 2`);
-        console.log("");
-      }
-    });
-
-    console.log('echo "All active applications started!"');
-    console.log('echo "Press Ctrl+C to stop"');
-    console.log("wait");
-  }
 }
 
 // CLI Interface
@@ -263,10 +242,6 @@ switch (command) {
     portManager.generateStartCommands();
     break;
 
-  case "script":
-    portManager.generateStartAllScript();
-    break;
-
   case "help":
   default:
     console.log(`
@@ -285,7 +260,6 @@ Commands:
   active <app> <true|false> Set active status of app
   env                Generate environment variables
   commands           Generate start commands for active apps
-  script             Generate start-all.sh script for active apps
   help               Show this help message
 
 Examples:

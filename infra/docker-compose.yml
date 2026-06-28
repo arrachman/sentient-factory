@@ -101,9 +101,8 @@ services:
     ports:
       - "3203:3203"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3203
-      CHOKIDAR_USEPOLLING: "true"
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       MYERPPLUS_DB_MAPPING_ROOT: /myerpplus-db-mapping/db
       DASHBOARD_SQL_TEMPLATE_ROOT: /myerpplus-db-mapping/dashboard-mapping/sql-templates
@@ -118,7 +117,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: sh -c "npm install --include=dev && npx prisma generate && npm run dev"
+    command: sh -c "npm install --include=dev && npx prisma generate && npm run build && npm run start:prod"
 
   web-dashboard:
     image: node:20-alpine
@@ -132,7 +131,7 @@ services:
     ports:
       - "3201:3201"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       API_GATEWAY_URL: http://api-gateway:3203
       AI_ENGINE_URL: http://ai-engine:8001
       NEXT_PUBLIC_API_URL: https://sentient.fr-labs.my.id
@@ -157,7 +156,8 @@ services:
         npm install --include=dev &&
         cp package-lock.json node_modules/.package-lock.stamp;
       fi &&
-      npm run dev -- -H 0.0.0.0 -p 3201"
+      npm run build &&
+      npm run start -- -H 0.0.0.0 -p 3201"
 
   docs:
     image: node:20-alpine
@@ -170,7 +170,7 @@ services:
     ports:
       - "3205:3205"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
     volumes:

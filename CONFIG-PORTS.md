@@ -75,11 +75,8 @@ The monorepo contains multiple applications that need to run on different ports 
 ### Starting All Applications
 
 ```bash
-# Start all apps with configured ports
-npm run dev:all
-
-# Or using the script directly
-./scripts/start-all.sh
+# Start all services (infra + apps) via Docker Compose
+docker compose -p sentient_factory -f infra/docker-compose.yml up -d
 ```
 
 ### Port Management Commands
@@ -108,9 +105,6 @@ npm run ports:env
 
 # Generate start commands (active apps only)
 npm run ports:commands
-
-# Generate start-all script (active apps only)
-npm run ports:script
 ```
 
 ### Starting Individual Applications
@@ -154,7 +148,7 @@ $(npm run ports:commands | grep -A2 "Web Dashboard" | tail -1)
 
 - Toggle active status: `ports:toggle <app>`
 - Set active status: `ports:active <app> <true|false>`
-- Only active apps are started by `dev:all`
+- Only active apps are tracked as active in `config/ports.json`
 - Inactive apps are skipped automatically
 
 ### 5. CLI Management

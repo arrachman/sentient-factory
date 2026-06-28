@@ -10,7 +10,6 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "dev": "turbo run dev",
-    "dev:all": "./scripts/start-all.sh",
     "ports:list": "node scripts/port-manager.js list",
     "ports:check": "node scripts/port-manager.js check",
     "ports:find": "node scripts/port-manager.js find",
@@ -19,7 +18,6 @@
     "ports:active": "node scripts/port-manager.js active",
     "ports:env": "node scripts/port-manager.js env",
     "ports:commands": "node scripts/port-manager.js commands",
-    "ports:script": "node scripts/port-manager.js script",
     "build": "turbo run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
