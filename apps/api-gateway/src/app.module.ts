@@ -92,6 +92,10 @@ import { ErpMdpQmsInspectionsModule } from './erp-mdp-qms-inspections/erp-mdp-qm
 import { ErpMdpQmsResultsModule } from './erp-mdp-qms-results/erp-mdp-qms-results.module';
 import { ErpMdpQmsNonconformancesModule } from './erp-mdp-qms-nonconformances/erp-mdp-qms-nonconformances.module';
 import { ErpMdpQmsCapaActionsModule } from './erp-mdp-qms-capa-actions/erp-mdp-qms-capa-actions.module';
+import { ErpMdpMntWorkOrdersModule } from './erp-mdp-mnt-work-orders/erp-mdp-mnt-work-orders.module';
+import { ErpMdpMntPmSchedulesModule } from './erp-mdp-mnt-pm-schedules/erp-mdp-mnt-pm-schedules.module';
+import { ErpMdpMntFailureCodesModule } from './erp-mdp-mnt-failure-codes/erp-mdp-mnt-failure-codes.module';
+import { ErpMdpMntSparePartsModule } from './erp-mdp-mnt-spare-parts/erp-mdp-mnt-spare-parts.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -282,6 +286,10 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpMdpQmsResultsModule,
     ErpMdpQmsNonconformancesModule,
     ErpMdpQmsCapaActionsModule,
+    ErpMdpMntWorkOrdersModule,
+    ErpMdpMntPmSchedulesModule,
+    ErpMdpMntFailureCodesModule,
+    ErpMdpMntSparePartsModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,

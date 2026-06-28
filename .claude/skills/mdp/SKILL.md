@@ -190,14 +190,24 @@ PK `BigInt @id @default(autoincrement())` · `code`/`name` · soft-delete
   Disposisi NCR **tidak** auto-posting ke stok/MES (QMS hanya flag). Plan/inspection 6-tabel
   (keputusan user) agar hasil ukur per-karakteristik queryable. Backend di-generate via
   data-driven script (mirror pola wms; typecheck container bersih).
+- **CMMS COMPLETE** (2026-06-28): katalog `db-design/entities-cmms.md`; schema `mdp-cmms.prisma`
+  (4 model mnt_work_orders/pm_schedules/spare_parts/failure_codes + 6 enum MdpMnt*); migrasi
+  additive `20260628173639_mdp_cmms` (0 DROP, applied+resolved). Backend CRUD
+  `/api/mdp/mnt/{work-orders,pm-schedules,spare-parts,failure-codes}` (verified 401, di
+  app.module). UI `/app/maintenance/*` (MasterCrudPage + molecule `MntNav`). api.ts + 5 menu
+  rows mnt (seed file + SQL upsert). mnt→eam refs (assetId/workCenterId) = cross-domain scalar;
+  spare-parts itemId/qty required → generator di-patch (required bigint pakai `BigInt()` bukan
+  `toBig()` di create+update). Spare issue→ERP `inv_` = decision #3 (postingStatus PENDING, stub).
+  ⚠️ **Container kini production-mode** (`build && start:prod` dari docker-compose yg diubah sesi
+  lain) → restart = full `nest build` (~2-3 mnt), bukan watch; build error = server tak naik.
 
 ### Pending / next
 - `mdp_role_menus` belum ada admin UI khusus (backend siap; role mappings belum di-seed →
   nav saat ini pakai fallback full-tree untuk semua user).
 - Port stack UI penuh web-erp §2.7 (keyboard-nav/kebab/bulk); FK lookup-select di form.
 - ERP-emit outbox (decision #3, masih stub) — MES consumptions + WMS movements menunggu emit.
-- **Build order modul**: mdp/eam foundation ✅ → MES ✅ → WMS ✅ → QMS ✅ → **CMMS**
-  (berikutnya) → DMS/PRTS/IMS/LMS → OEE overlay.
+- **Build order modul**: mdp/eam foundation ✅ → MES ✅ → WMS ✅ → QMS ✅ → CMMS ✅ →
+  **DMS/PRTS/IMS/LMS** (berikutnya) → OEE overlay.
 
 ## Bootstrap sesi baru (resume checklist)
 

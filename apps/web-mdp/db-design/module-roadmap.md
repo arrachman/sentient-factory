@@ -12,7 +12,7 @@ from `web-erp/db-design §3`. Cross-app refs (→ ERP) = scalar `BigInt` FK.
 
 ## Build order (dependency-driven)
 
-`mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** ✅ → **CMMS** →
+`mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** ✅ → **CMMS** ✅ →
 **DMS · PRTS · IMS · LMS** → **OEE** overlay. *(Role-filtered nav live:
 `/api/mdp/menus/nav` + `DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
 
@@ -129,16 +129,25 @@ lines) so per-characteristic measurements are queryable.
 
 ---
 
-## 5. `mnt` — Maintenance (CMMS)
+## 5. `mnt` — Maintenance (CMMS) ✅ catalogued + ✅ migrated + ✅ backend + UI
 
-Maintains `eam_assets`; spares are ERP `md_items` + `inv_`.
+> **Field catalog + Prisma done:** [entities-cmms.md](entities-cmms.md) (4 `mnt_*`
+> entities + 6 enums). Schema `apps/api-gateway/prisma/schema/mdp-cmms.prisma`;
+> migration `20260628173639_mdp_cmms` (additive, 0 DROP) live.
+
+Maintains `eam_assets`; spares are ERP `md_items` + `inv_`. Spare consumption
+**emits** an ERP `inv_` issue (decision #3 outbox, stubbed).
 
 | Entity | Table | Notes |
 | --- | --- | --- |
-| Maintenance WO | `mnt_work_orders` | Corrective/preventive WO against an `eam_asset`. |
-| PM schedule | `mnt_pm_schedules` | Time- or meter-based preventive triggers. |
-| Spare usage | `mnt_spare_parts` | Parts consumed on a WO (→ ERP `inv_` issue). |
-| Failure code | `mnt_failure_codes` | Failure/cause/remedy taxonomy. |
+| Maintenance WO | `mnt_work_orders` | ✅ **CRUD live** (`/api/mdp/mnt/work-orders`, UI `/app/maintenance`). Corrective/preventive WO; scalar refs to eam_assets/work_centers; intra-FK to pm_schedule + failure_code. |
+| PM schedule | `mnt_pm_schedules` | ✅ **CRUD live** (`/api/mdp/mnt/pm-schedules`). Time- or meter-based triggers (meter scalars; `eam_meters` future). |
+| Spare usage | `mnt_spare_parts` | ✅ **CRUD live** (`/api/mdp/mnt/spare-parts`). Child of WO; `postingStatus` PENDING until emit to ERP `inv_`. |
+| Failure code | `mnt_failure_codes` | ✅ **CRUD live** (`/api/mdp/mnt/failure-codes`). Failure/cause/remedy taxonomy. |
+
+> **CMMS COMPLETE (2026-06-28):** all 4 entities have guarded CRUD + web-mdp UI
+> (`MasterCrudPage` + `MntNav` sub-nav at `/app/maintenance/*`). Spare issue→ERP
+> `inv_` deferred (decision #3 outbox). FK fields = raw ID (functional slice).
 
 ---
 

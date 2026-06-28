@@ -72,7 +72,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Work order pemeliharaan, jadwal PM, dan spare parts.',
     domains: ['mnt', 'eam'],
     icon: Wrench,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/maintenance',
   },
   {
     id: 'prts',

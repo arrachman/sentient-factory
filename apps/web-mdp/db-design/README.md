@@ -6,9 +6,11 @@
 > live) · **Foundation masters CRUD live (2026-06-28)**: shifts + reason-codes
 > (mdp), work-centers + assets (eam) — backend `/api/mdp/{shifts,reason-codes,
 > assets,work-centers}` + web-mdp `/app/master/*` + seed `npm run db:seed:mdp`.
-> · **MES + WMS + QMS modules COMPLETE (2026-06-28)**: full-stack CRUD + UI —
-> MES `/app/mes/*`, WMS `/app/wms/*`, QMS `/app/quality/*`
-> ([entities-qms.md](entities-qms.md); migration `20260628164110_mdp_qms`).
+> · **MES + WMS + QMS + CMMS modules COMPLETE (2026-06-28)**: full-stack CRUD +
+> UI — MES `/app/mes/*`, WMS `/app/wms/*`, QMS `/app/quality/*`, CMMS
+> `/app/maintenance/*` ([entities-qms.md](entities-qms.md),
+> [entities-cmms.md](entities-cmms.md); migrations `20260628164110_mdp_qms`,
+> `20260628173639_mdp_cmms`).
 > Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
 > `apps/web-mdp` (ISA-95 Level 3).
 >
