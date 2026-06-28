@@ -15,7 +15,6 @@ const columns: Column<FaceEnrollment>[] = [
     render: (r) =>
       r.activeEnrollmentId ? (
         <span className="block h-9 w-9 overflow-hidden rounded-full border bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={faceEnrollmentSnapshotUrl(String(r.activeEnrollmentId))}
             alt={r.name}

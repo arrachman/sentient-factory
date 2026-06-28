@@ -9,6 +9,7 @@ import {
   MapPin,
   ScanFace,
   Users,
+  Fingerprint,
   CalendarClock,
   CalendarDays,
   Plane,
@@ -40,6 +41,7 @@ export const HR_NAV: HrNavGroup[] = [
     title: 'Kehadiran',
     items: [
       { key: 'dashboard', title: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard, status: 'live' },
+      { key: 'attendance', title: 'Absensi Saya', path: '/app/attendance', icon: Fingerprint, status: 'live' },
       { key: 'history', title: 'Riwayat Absensi', path: '/app/attendance-history', icon: History, status: 'live' },
       { key: 'reviews', title: 'Tinjauan Absensi', path: '/app/attendance-reviews', icon: ClipboardCheck, status: 'live' },
       { key: 'worksites', title: 'Lokasi & Geofence', path: '/app/worksites', icon: MapPin, status: 'live' },
@@ -63,7 +65,7 @@ export const HR_NAV: HrNavGroup[] = [
     items: [
       { key: 'reports', title: 'Laporan', path: '/app/reports', icon: BarChart3, status: 'soon' },
       { key: 'kiosk', title: 'Mode Kiosk', path: '/app/kiosk', icon: MonitorSmartphone, status: 'soon' },
-      { key: 'settings', title: 'Pengaturan', path: '/app/settings', icon: Settings, status: 'soon' },
+      { key: 'settings', title: 'Pengaturan', path: '/app/settings', icon: Settings, status: 'live' },
     ],
   },
 ];

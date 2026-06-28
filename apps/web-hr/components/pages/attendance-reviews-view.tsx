@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Check, X, MessageCircleQuestion } from 'lucide-react';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/molecules/page-header';
 import { QueryState } from '@/components/molecules/query-state';
+import { Pagination } from '@/components/molecules/pagination';
 import { DataTable, type Column } from '@/components/organisms/data-table';
 import { useAttendanceReviews, hrQueryKeys } from '@/lib/api/hooks';
 import { applyAttendanceReviewAction } from '@/lib/api/attendance-reviews';
@@ -33,11 +35,13 @@ function pick(row: ReviewRow, ...keys: string[]): string {
 export function AttendanceReviewsView() {
   const [status, setStatus] = useState<ReviewStatus>('pending');
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const qc = useQueryClient();
 
-  const query = { reviewStatus: status, limit: 50 };
+  const query = { reviewStatus: status, page, limit: 25 };
   const { data, isLoading, error } = useAttendanceReviews(query);
   const rows = (data?.data ?? []) as ReviewRow[];
+  const totalPages = data?.meta?.totalPages ?? 1;
 
   async function act(eventId: string, action: ReviewAction) {
     setBusyId(eventId);
@@ -70,13 +74,21 @@ export function AttendanceReviewsView() {
         const busy = busyId === id;
         if (status !== 'pending' && status !== 'needs_clarification') {
           return (
-            <Button size="sm" variant="default" disabled={busy} onClick={() => act(id, 'reopen')}>
-              Buka lagi
-            </Button>
+            <div className="flex justify-end gap-1.5">
+              <Button asChild size="sm" variant="ghost">
+                <Link href={`/app/attendance-reviews/${id}`}>Detail</Link>
+              </Button>
+              <Button size="sm" variant="default" disabled={busy} onClick={() => act(id, 'reopen')}>
+                Buka lagi
+              </Button>
+            </div>
           );
         }
         return (
           <div className="flex justify-end gap-1.5">
+            <Button asChild size="sm" variant="ghost">
+              <Link href={`/app/attendance-reviews/${id}`}>Detail</Link>
+            </Button>
             <Button size="sm" variant="default" disabled={busy} onClick={() => act(id, 'request-clarification')}>
               <MessageCircleQuestion className="h-3.5 w-3.5" />
             </Button>
@@ -104,7 +116,7 @@ export function AttendanceReviewsView() {
             key={t.value}
             size="sm"
             variant={status === t.value ? 'primary' : 'default'}
-            onClick={() => setStatus(t.value)}
+            onClick={() => { setStatus(t.value); setPage(1); }}
           >
             {t.label}
           </Button>
@@ -112,6 +124,7 @@ export function AttendanceReviewsView() {
       </div>
       <QueryState isLoading={isLoading} error={error} isEmpty={rows.length === 0}>
         <DataTable columns={columns} rows={rows} rowKey={(r, i) => pick(r, 'id', 'eventId') + i} />
+        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
       </QueryState>
     </div>
   );

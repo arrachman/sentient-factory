@@ -27,19 +27,19 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Modul | jibble | Status | Endpoint |
 | --- | --- | --- | --- |
 | Dashboard Kehadiran | Dashboard | ✅ | `GET /hr/attendance/dashboard` |
-| Riwayat Absensi | Timesheets (dasar) | ✅ | `GET /hr/attendance/history` |
-| Tinjauan Absensi | Approvals | ✅ | `GET /hr/attendance-reviews` (+approve/reject/clarify/reopen) |
-| Lokasi & Geofence | Geofencing | ✅ | `GET/POST/PATCH/DELETE /hr/worksites` |
-| Pendaftaran Wajah | Face Recognition | ✅ | `GET /hr/face-enrollments`, `POST /hr/face-enrollment` |
-| Karyawan | People & Groups | 🟡 | `GET /hr/users` |
-| Personal Portal / Clock | Timer + Verification | 🟡 | `POST /hr/attendance/clock-in|clock-out|face-identify` |
+| Absensi Saya (clock in/out + kamera/GPS) | Timer + Verification | ✅ | `POST /hr/attendance/clock-in\|clock-out` |
+| Riwayat Absensi (+ paginasi) | Timesheets (dasar) | ✅ | `GET /hr/attendance/history` |
+| Tinjauan Absensi (+ detail + snapshot) | Approvals | ✅ | `GET /hr/attendance-reviews(/:eventId)` (+approve/reject/clarify/reopen) |
+| Lokasi & Geofence (CRUD) | Geofencing | ✅ | `GET/POST/PATCH/DELETE /hr/worksites` |
+| Pendaftaran Wajah | Face Recognition | 🟡 | `GET /hr/face-enrollments` (capture enroll UI ⬜) |
+| Karyawan (+ assign worksite) | People & Groups | ✅ | `GET /hr/users`, `PUT /hr/users/:id/worksites` |
+| Pengaturan | Overtime/verifikasi/dll | ✅ | `GET /hr/settings`, `PATCH /hr/settings/:key` |
 | Timesheet | Timesheets | ⬜ | — |
 | Jadwal & Shift | Work Schedules | ⬜ | — |
 | Cuti / PTO | Time Off | ⬜ | — |
 | Proyek & Aktivitas | Projects/Activity | ⬜ | — |
 | Laporan & Export | Reports/Exports | ⬜ | — |
 | Mode Kiosk | Kiosk + NFC/PIN | ⬜ | — |
-| Pengaturan | Overtime/Break/SSO/2FA/Audit | ⬜ | sebagian (`/hr/settings`) |
 
 Gap jibble lain (catatan): Selfie-per-entry, Offline mode, Integrasi Chat
 (Slack/Teams), Invoicing/Billing, Live Activity, Productivity/Monitoring/

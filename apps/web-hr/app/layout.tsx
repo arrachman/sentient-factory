@@ -36,7 +36,6 @@ const APPEARANCE_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.ge
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="id" className="h-full" suppressHydrationWarning>
-      {/* eslint-disable-next-line @next/next/no-head-element */}
       <head>
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_INIT_SCRIPT }} />
       </head>
