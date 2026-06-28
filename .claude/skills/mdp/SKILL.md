@@ -1,0 +1,176 @@
+---
+name: mdp
+description: >
+  Skill untuk bekerja di apps/web-mdp — produk Senti MDP (Manufacturing
+  Digitalization Platform), ISA-95 Level 3 / MOM yang duduk di antara Senti ERP
+  (Level 4) dan lapangan (Level 2-0). Aktifkan setiap kali task menyentuh
+  apps/web-mdp/** atau menyebut modul MOM (MES/produksi, QMS/kualitas,
+  CMMS/pemeliharaan, WMS, PRTS, DMS, IMS/QHSE, LMS, OEE, EAM/aset), desain DB
+  MDP, atau endpoint /api/mdp/*.
+trigger: >
+  Aktif saat user menyebut "web-mdp", "mdp", "Senti MDP", "layer 3", "level 3",
+  "MOM", "ISA-95", "MES", "QMS", "CMMS", "WMS", "PRTS", "DMS", "IMS/QHSE", "LMS",
+  "OEE", "EAM", "work center", "production order", "downtime/reason code", "shift",
+  "shop floor", atau mengedit file di apps/web-mdp/ atau apps/api-gateway/src/erp-mdp-*.
+  JUGA aktif saat user menyebut domain/URL deployment "mdp.fr-labs.my.id".
+---
+
+Kamu bekerja di `apps/web-mdp` — **produk Senti MDP** (*Manufacturing
+Digitalization Platform*), implementasi **ISA-95 Level 3 / MOM**. MDP duduk **di
+antara** Senti ERP (`apps/web-erp`, Level 4 — bisnis) dan lapangan (Level 2-0 —
+SCADA/PLC/sensor). MDP **bukan** modul ERP; ia bounded-context terpisah dengan
+persona, data velocity, dan UX berbeda.
+
+Skill ini berlaku di atas root `CLAUDE.md` repo dan `apps/web-mdp/CLAUDE.md`
+(keduanya non-negosiabel). **Baca `apps/web-mdp/CLAUDE.md` sebelum kerja** — itu
+rulebook otoritatif tiap sesi. Desain DB otoritatif = `apps/web-mdp/db-design/`.
+
+## Aturan non-negosiabel (dari apps/web-mdp/CLAUDE.md)
+
+1. **Penamaan tabel WAJIB:** `<domain>_<plural-snake>`, lowercase, tanpa prefix
+   produk. MDP memakai prefix domain **baru** yang tidak beririsan dengan ERP
+   (`sys/adm/md/fin/inv/pur/sls/mfg/fa/bi/pos/pln`) maupun platform
+   (`m0/m1/clinic`):
+
+   | Domain | Cakupan | Modul | Contoh |
+   | --- | --- | --- | --- |
+   | `mdp` | Config & master lintas-modul (shift, kalender, reason/downtime code, menu SSOT) | semua | `mdp_shifts`, `mdp_reason_codes` |
+   | `eam` | Registry aset/equipment (backbone L3–L4; jembatan ke ERP `fa_assets`) | EAM, MES, CMMS, OEE | `eam_assets`, `eam_work_centers` |
+   | `mes` | Eksekusi produksi & data collection | MES | `mes_production_orders`, `mes_operations`, `mes_production_logs` |
+   | `qms` | Kualitas (inspeksi, NCR, CAPA) | QMS | `qms_inspections`, `qms_nonconformances` |
+   | `mnt` | Pemeliharaan / CMMS | CMMS | `mnt_work_orders`, `mnt_pm_schedules` |
+   | `wms` | Eksekusi gudang fisik | WMS | `wms_tasks`, `wms_movements` |
+   | `prt` | Problem & issue tracking (Andon) | PRTS | `prt_issues`, `prt_escalations` |
+   | `dms` | Dokumen terkontrol | DMS | `dms_documents`, `dms_revisions` |
+   | `ehs` | QHSE terpadu | IMS | `ehs_incidents`, `ehs_audits` |
+   | `lms` | Pelatihan & kompetensi | LMS | `lms_courses`, `lms_certifications` |
+
+   - Prisma: model `PascalCase` ber-prefix **`Mdp`** (hindari bentrok model
+     ERP/platform di schema yang sama) + `@@map("<domain>_...")`, mis.
+     `model MdpProductionOrder { ... @@map("mes_production_orders") }`.
+   - **FK lintas-app/lintas-domain = scalar `BigInt` + `@@index`, TANPA
+     `@relation`/DB-FK** (decoupled dari ERP). FK intra-domain ditegakkan
+     dengan `@relation`. Cross-ref ke ERP (itemId, erpWorkOrderId, branchId,
+     fa_assets) selalu scalar BigInt — jangan bikin DB-FK ke tabel ERP.
+
+2. **MES = manual entry dulu** (operator via UI tablet/kiosk). Integrasi mesin
+   (SCADA/PLC/OPC-UA, time-series ingestion) = fase masa depan, **bukan MVP**.
+   Desain sekarang tak boleh mengasumsikan koneksi mesin — sediakan titik
+   ekstensi bersih saja.
+
+3. **Design system dulu, baru slicing frontend.** Port tokens/komponen dari
+   web-erp. Tidak ada style/warna/spacing hardcode. Butuh elemen UI baru → bikin
+   reusable dulu. (Catatan: UI MES saat ini masih *functional slice* ad-hoc,
+   belum port penuh stack list-organism §2.7 web-erp.)
+
+4. **Saat ragu → tanya user.** Aksi berisiko (schema/migrasi, hapus/rename,
+   lintas-modul) = konfirmasi dulu.
+
+## Konvensi field (warisan dari web-erp)
+
+PK `BigInt @id @default(autoincrement())` · `code`/`name` · soft-delete
+`deletedAt` (timestamptz) · `isActive` · audit quartet
+(`createdAt`/`updatedAt`/`createdById`/`updatedById`) · money/qty `Decimal(19,4)`
+· rate `Decimal(9,4)` · semua waktu UTC timestamptz · enum Postgres ber-prefix
+`Mdp` · `metadata Json?` opsional.
+
+## Kontrak integrasi L4↔L3 (otoritatif — db-design/README §Integrasi)
+
+- **WMS** mengeluarkan pergerakan → **ERP `inv_` yang posting** stok. WMS tidak
+  memiliki saldo stok.
+- **MES** mengeksekusi `mfg_work_orders` milik ERP → mengemit
+  `mes_production_entries`/log balik ke ERP.
+- **`eam_assets`** = master equipment yang dipelihara; link opsional (scalar) ke
+  ERP `fa_assets`.
+- **OEE** = metrik turunan (dihitung dari mes downtime/log), **bukan** modul/tabel
+  sumber.
+- Kontrak **ERP-emit (outbox)** = **decision #3, masih di-stub/ditunda**. Jangan
+  diam-diam bikin DB-FK lintas app; emit lewat outbox saat kontрак final.
+
+## Arsitektur & tech
+
+- **App**: Next.js 16 (Turbopack), React 19, Tailwind v4 (`@theme inline`), TS
+  strict. Port **3220** (envVar `WEB_MDP_PORT`, di `config/ports.json`). Origin
+  `mdp.fr-labs.my.id`. **Install standalone**: `cd apps/web-mdp && npm install
+  --workspaces=false --no-audit --no-fund` (root `npm install` gagal karena
+  `apps/open-design` pakai protocol pnpm `workspace:`).
+- **Backend = extend `apps/api-gateway`** (decision #2, BUKAN service baru).
+  Modul NestJS ber-prefix `erp-mdp-*`, controller `@Controller('mdp/...')` →
+  path `/api/mdp/...` (global prefix `api`). Guard = **`ErpJwtAuthGuard`**
+  (cookie `erp_token`, reuse auth ERP). Daftarkan modul di
+  `apps/api-gateway/src/app.module.ts`.
+- **DB = Postgres bersama** (`sentient-postgres-core` / db `sentient_factory`,
+  host `localhost:3208`). Schema multi-file Prisma di
+  `apps/api-gateway/prisma/schema/` (file `mdp-*.prisma`).
+- **DB hidup tidak schema-managed sepenuhnya** ([[prisma-live-db-not-schema-managed]]):
+  ~230 tabel live (dim_/obt_/etl_/hr_) TIDAK ada di Prisma. **JANGAN
+  `prisma migrate dev`/`diff` raw** (drop seluruh warehouse). Migrasi MDP =
+  **additive DDL** hasil extract dari `migrate diff` dengan semua DROP/drift
+  md_* dibuang, lalu apply terkontrol (lihat alur di §Migrasi).
+
+## Migrasi (alur aman yang dipakai)
+
+1. Tulis/ubah `apps/api-gateway/prisma/schema/mdp-*.prisma`.
+2. `prisma migrate diff --from-schema-datasource prisma/schema
+   --to-schema-datamodel prisma/schema --script` → review.
+3. **Extract hanya statement yang menyasar tabel MDP** (`eam_/mdp_/mes_/qms_/...`
+   + `CREATE TYPE "Mdp...`). Buang SEMUA `DROP`/drift md_* (diff penuh =
+   destruktif, jangan apply mentah). Pastikan 0 DROP & semua FK REFERENCES hanya
+   ke tabel MDP.
+4. Simpan ke `apps/api-gateway/prisma/migrations/<ts>_mdp_<slug>/migration.sql`.
+5. Apply terskop: `prisma db execute --file <sql> --schema prisma/schema` lalu
+   `prisma migrate resolve --applied <migration-name>`. **JANGAN `migrate
+   deploy`** (akan ikut apply migrasi team yang pending & tak terkait).
+6. **Regen Prisma client DI DALAM container** (container punya node_modules
+   volume sendiri): `docker exec sentient-infra-api-gateway sh -lc 'npx prisma
+   generate'` lalu restart container. Smoke test endpoint (401 = wired+guarded).
+
+## Status (per 2026-06-28)
+
+- **Fase 0** ✅ design docs foundation (CLAUDE.md + db-design hub +
+  module-roadmap).
+- **Fase 1** ✅ scaffold `apps/web-mdp` (Next 16, boots/builds, port 3220,
+  terdaftar di config/ports.json). ⚠️ **UFW 3220 masih perlu sudo user**.
+- **Fase 2 MES** ✅ catalogued (`db-design/entities-mes.md`) + **Prisma
+  migrated** (`mdp-mes.prisma`, 10 model + 5 enum, migrasi `20260628_001_mdp_mes`
+  live).
+- **MES vertical slice LIVE**: backend `erp-mdp-work-centers` +
+  `erp-mdp-production-orders` (`/api/mdp/work-centers`, `/api/mdp/production-orders`,
+  verified 401). UI `web-mdp`: `lib/api.ts` + production-orders-page (list+create)
+  di route `/app/mes`.
+
+### Pending / next
+- UFW 3220 (sudo user): `sudo ufw allow from 192.168.1.0/24 to any port 3220
+  proto tcp comment 'web-mdp' && sudo ufw reload`.
+- MES entitas lain (operations, production_logs, material_consumptions,
+  downtime_events, labor_logs) backend+UI; CRUD foundation master (shifts,
+  reason codes, assets); seed data foundation untuk uji.
+- Port stack UI penuh web-erp §2.7 (keyboard-nav/kebab/bulk/organism reusable).
+- ERP-emit outbox (decision #3); MDP access map (decision #1, mdp_role_*).
+- **Build order modul**: mdp/eam foundation → MES (anchor) → WMS → QMS → CMMS →
+  DMS/PRTS/IMS/LMS → OEE.
+
+## Bootstrap sesi baru (resume checklist)
+
+Saat melanjutkan di sesi lain:
+1. Baca `apps/web-mdp/CLAUDE.md` + `apps/web-mdp/db-design/README.md` +
+   `module-roadmap.md` (status & build order terbaru).
+2. Untuk modul yang sedang dikerjakan, baca katalog `db-design/entities-<mod>.md`.
+3. Cek schema Prisma `apps/api-gateway/prisma/schema/mdp-*.prisma` & modul
+   backend `apps/api-gateway/src/erp-mdp-*`.
+4. Recall memory [[mdp-layer3-architecture]] untuk keputusan & progress.
+5. Verifikasi container backend hidup: `docker ps | grep api-gateway`; endpoint
+   `/api/mdp/*` harus balas 401 (bukan 404) bila wired.
+
+## Disiplin dokumen (sama seperti erp)
+
+Setiap keputusan/perubahan flow/konvensi/status → **WAJIB update `.md` di
+`apps/web-mdp/`**: rulebook ke `CLAUDE.md`, skema ke `db-design/`. Catat sebagai
+fakta ringkas (keputusan + alasan), bukan log percakapan. Update memory
+[[mdp-layer3-architecture]] saat progress berubah. Jangan declare selesai
+sebelum dokumen sinkron.
+
+## Saat ragu
+
+Tanya user. `apps/web-mdp/CLAUDE.md` adalah otoritas — kalau skill ini berbeda
+dengan file itu, file itu yang menang; perbarui skill ini agar sinkron.
