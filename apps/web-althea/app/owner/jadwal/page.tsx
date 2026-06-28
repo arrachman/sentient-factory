@@ -1,8 +1,0 @@
-import type { Metadata } from 'next';
-import { OwnerJadwalPage } from '@/features/owner-dashboard/ui/owner-jadwal-page';
-
-export const metadata: Metadata = { title: 'Jadwal Psikolog' };
-
-export default function OwnerJadwalRoute() {
-  return <OwnerJadwalPage />;
-}

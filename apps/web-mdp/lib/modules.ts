@@ -25,6 +25,8 @@ export interface MdpModule {
   readonly domains: readonly string[];
   readonly icon: LucideIcon;
   readonly status: ModuleStatus;
+  /** App route if the module has a live page; absent = not yet routed. */
+  readonly route?: string;
 }
 
 /**
@@ -40,7 +42,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Jalankan & catat produksi dari work order ERP (entry manual).',
     domains: ['mes', 'eam'],
     icon: Factory,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/mes',
   },
   {
     id: 'wms',

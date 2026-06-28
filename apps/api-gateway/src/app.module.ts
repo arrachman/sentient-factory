@@ -25,17 +25,6 @@ import { DepartmentsModule } from './departments/departments.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
-import { ClinicAuditModule } from './clinic-audit/clinic-audit.module';
-import { ClinicWaModule } from './clinic-wa/clinic-wa.module';
-import { ClinicPsikologModule } from './clinic-psikolog/clinic-psikolog.module';
-import { ClinicServiceModule } from './clinic-service/clinic-service.module';
-import { ClinicRoomModule } from './clinic-room/clinic-room.module';
-import { ClinicClientModule } from './clinic-client/clinic-client.module';
-import { ClinicUsersModule } from './clinic-users/clinic-users.module';
-import { ClinicBookingModule } from './clinic-booking/clinic-booking.module';
-import { ClinicPaymentModule } from './clinic-payment/clinic-payment.module';
-import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-note.module';
-import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -79,6 +68,8 @@ import { ErpPermissionsModule } from './erp-permissions/erp-permissions.module';
 import { ErpBranchesModule } from './erp-branches/erp-branches.module';
 import { ErpLocationsModule } from './erp-locations/erp-locations.module';
 import { ErpWarehousesModule } from './erp-warehouses/erp-warehouses.module';
+import { ErpMdpWorkCentersModule } from './erp-mdp-work-centers/erp-mdp-work-centers.module';
+import { ErpMdpProductionOrdersModule } from './erp-mdp-production-orders/erp-mdp-production-orders.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -201,18 +192,6 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     SessionsModule,
     DashboardModule,
     HrAttendanceModule,
-    // Clinic domain (Althea Psychology) — see .planning/ADRs/002, 005, 006
-    ClinicAuditModule,
-    ClinicWaModule,
-    ClinicPsikologModule,
-    ClinicServiceModule,
-    ClinicRoomModule,
-    ClinicClientModule,
-    ClinicUsersModule,
-    ClinicBookingModule,
-    ClinicPaymentModule,
-    ClinicSessionNoteModule,
-    ClinicSettingsModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)
@@ -256,6 +235,8 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpBranchesModule,
     ErpLocationsModule,
     ErpWarehousesModule,
+    ErpMdpWorkCentersModule,
+    ErpMdpProductionOrdersModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,

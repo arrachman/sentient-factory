@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import type { ElementType } from 'react';
 import { MDP_MODULES, type ModuleStatus } from '@/lib/modules';
 import { cn } from '@/lib/utils';
 
@@ -19,10 +21,15 @@ export function ModuleGrid() {
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {MDP_MODULES.map((mod) => {
         const Icon = mod.icon;
+        const Wrapper = (mod.route ? Link : 'div') as ElementType;
         return (
-          <article
+          <Wrapper
             key={mod.id}
-            className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/40"
+            {...(mod.route ? { href: mod.route } : {})}
+            className={cn(
+              'flex flex-col gap-3 rounded-lg border border-border bg-card p-4 transition-colors',
+              mod.route ? 'cursor-pointer hover:border-primary/60 hover:shadow-sm' : 'hover:border-primary/40'
+            )}
           >
             <header className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2.5">
@@ -58,7 +65,7 @@ export function ModuleGrid() {
                 </code>
               ))}
             </footer>
-          </article>
+          </Wrapper>
         );
       })}
     </div>
