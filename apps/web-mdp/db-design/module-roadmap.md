@@ -44,7 +44,11 @@ Built early; MES/CMMS/OEE all depend on it.
 
 ---
 
-## 2. `mes` — Manufacturing Execution (ANCHOR)
+## 2. `mes` — Manufacturing Execution (ANCHOR) ✅ catalogued
+
+> **Field-level catalog done:** [entities-mes.md](entities-mes.md) (6 `mes_*`
+> entities + minimal `mdp`/`eam` foundation MES needs + 5 enums). Review gate
+> before Prisma. The table below is the original coarse plan, kept for context.
 
 Consumes ERP `mfg_work_orders` / `mfg_boms` / `md_items`. **Manual entry first.**
 

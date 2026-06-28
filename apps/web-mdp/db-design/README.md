@@ -1,12 +1,14 @@
 # Web-MDP — Database Design (Level 3 / MOM)
 
-> Status: **FASE 0 — design docs (no Prisma, no migration)**. Date: 2026-06-27 ·
-> Author: agent (Claude) · Product: **Senti MDP**, `apps/web-mdp` (ISA-95 Level 3).
+> Status: **design docs (no Prisma, no migration)** · Fase 0 ✅ · Fase 1 scaffold ✅
+> (app boots, port 3220) · **Fase 2: MES catalogued** ([entities-mes.md](entities-mes.md))
+> — review gate. Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
+> `apps/web-mdp` (ISA-95 Level 3).
 >
 > **Single source of truth.** This `db-design/` set (this README +
-> `module-roadmap.md` + per-module field catalogs to come) is the authoritative
-> DB design for web-mdp. Per-module field catalogs follow **one at a time after
-> review** — same discipline as `apps/web-erp/db-design/`.
+> `module-roadmap.md` + `entities-mes.md` + per-module field catalogs to come) is
+> the authoritative DB design for web-mdp. Per-module field catalogs follow
+> **one at a time after review** — same discipline as `apps/web-erp/db-design/`.
 
 This is the data-model design for **Senti MDP**, the Manufacturing Operations
 Management (MOM) layer that sits between **Senti ERP** (Level 4, `apps/web-erp`)
