@@ -11,8 +11,6 @@ VAULT_SHARED_PATH="${VAULT_SHARED_PATH:-sentient-factory/dev/shared}"
 VAULT_API_PATH="${VAULT_API_PATH:-sentient-factory/dev/api-gateway}"
 VAULT_WEB_PATH="${VAULT_WEB_PATH:-sentient-factory/dev/web-dashboard}"
 VAULT_MYERP_PATH="${VAULT_MYERP_PATH:-sentient-factory/dev/myerpplus-db-mapping}"
-VAULT_CDC_PATH="${VAULT_CDC_PATH:-sentient-factory/dev/cdc}"
-VAULT_ETL_WORKER_PATH="${VAULT_ETL_WORKER_PATH:-sentient-factory/dev/etl-worker}"
 
 export VAULT_ADDR
 export VAULT_TOKEN
@@ -76,22 +74,6 @@ path "${VAULT_KV_MOUNT}/data/${VAULT_MYERP_PATH}" {
 path "${VAULT_KV_MOUNT}/metadata/${VAULT_MYERP_PATH}" {
   capabilities = ["read"]
 }
-
-path "${VAULT_KV_MOUNT}/data/${VAULT_CDC_PATH}" {
-  capabilities = ["read"]
-}
-
-path "${VAULT_KV_MOUNT}/metadata/${VAULT_CDC_PATH}" {
-  capabilities = ["read"]
-}
-
-path "${VAULT_KV_MOUNT}/data/${VAULT_ETL_WORKER_PATH}" {
-  capabilities = ["read"]
-}
-
-path "${VAULT_KV_MOUNT}/metadata/${VAULT_ETL_WORKER_PATH}" {
-  capabilities = ["read"]
-}
 EOF
 
 vault_cmd secrets list -format=json >/tmp/vault-secrets.json
@@ -147,24 +129,6 @@ vault_cmd kv put "$VAULT_KV_MOUNT/$VAULT_MYERP_PATH" \
   MYSQL_PASSWORD="replace-me" \
   MYSQL_DATABASE="myerpplus"
 
-vault_cmd kv put "$VAULT_KV_MOUNT/$VAULT_CDC_PATH" \
-  CDC_MYSQL_HOST="mysql" \
-  CDC_MYSQL_PORT="3306" \
-  CDC_MYSQL_USER="root" \
-  CDC_MYSQL_PASSWORD="replace-me" \
-  CDC_MYSQL_DATABASE="myerpplus" \
-  CDC_MYSQL_SERVER_ID="184054" \
-  CDC_MYSQL_TABLE_INCLUDE_LIST="myerpplus.orders,myerpplus.order_items,myerpplus.customers,myerpplus.m1_currency" \
-  KAFKA_BOOTSTRAP_SERVERS="kafka:9092" \
-  DEBEZIUM_CONNECT_URL="http://debezium-connect:8083"
-
-vault_cmd kv put "$VAULT_KV_MOUNT/$VAULT_ETL_WORKER_PATH" \
-  DATABASE_URL="postgresql://root:replace-me@postgres:5432/sentient_factory" \
-  KAFKA_BROKERS="kafka:9092" \
-  KAFKA_GROUP_ID="sentient-factory-etl-worker" \
-  CDC_TOPIC_PREFIX="myerpplus" \
-  NODE_ENV="development"
-
 write_policy < "$tmp_policy_file"
 vault_cmd auth enable approle >/dev/null 2>&1 || true
 vault_cmd write auth/approle/role/"$VAULT_APPROLE_NAME" \
@@ -186,8 +150,6 @@ KV paths  :
   - $VAULT_KV_MOUNT/$VAULT_API_PATH
   - $VAULT_KV_MOUNT/$VAULT_WEB_PATH
   - $VAULT_KV_MOUNT/$VAULT_MYERP_PATH
-  - $VAULT_KV_MOUNT/$VAULT_CDC_PATH
-  - $VAULT_KV_MOUNT/$VAULT_ETL_WORKER_PATH
 Role ID   : $role_id
 Secret ID : $secret_id
 

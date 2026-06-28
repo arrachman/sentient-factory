@@ -8,10 +8,10 @@ Singkat, deklaratif, dan dipertahankan up-to-date.
 Monorepo platform manufaktur berbasis AI. Stack utama:
 - **Frontend**: Next.js (React 18+, TypeScript) di `apps/web-dashboard`, `apps/landing-page`, `apps/marketing`.
 - **Backend**: NestJS + Prisma (TypeScript) di `apps/api-gateway`.
-- **AI/ETL**: Node + Python (LangChain) di `apps/ai-engine`, `apps/etl-worker`.
+- **AI**: Node + Python (LangChain) di `apps/ai-engine`.
 - **DB mapping**: `apps/myerpplus-db-mapping` (jembatan ke MyERP+).
 - **Shared**: `packages/shared-types`, `packages/ui-kit`, `packages/logger`.
-- **Infra**: Docker Compose (`infra/docker-compose.yml`), Vault, Debezium CDC, Postgres, Redis, MySQL (MyERP+).
+- **Infra**: Docker Compose (`infra/docker-compose.yml`), Vault, Postgres, Redis, MySQL (MyERP+).
 
 Manajer paket: **npm workspaces + Turborepo** (ada `pnpm-workspace.yaml` legacy — `package.json` deklarasinya `npm@10`; **gunakan `npm`**, bukan pnpm, kecuali instruksi sebaliknya).
 
@@ -53,10 +53,6 @@ npm run db:migrate
 npm run db:seed
 npm run db:backup
 npm run db:mysql            # shell ke MySQL MyERP+
-
-# CDC (Debezium)
-npm run cdc:connector:render:myerp
-npm run cdc:connector:apply:myerp
 ```
 
 ## 4. Layout & port
@@ -103,7 +99,7 @@ Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow
 - Async/await; hindari callback. Functional style untuk transform data.
 - ESLint Airbnb-ish (lihat config tiap app).
 
-**Python (ai-engine, etl-worker)**
+**Python (ai-engine)**
 - Python 3.11+, PEP 8, type hints wajib, Pydantic untuk DTO.
 - Async untuk I/O (httpx, asyncpg).
 
@@ -136,7 +132,6 @@ Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow
 - Membuka dua dev server di port 3101 → konflik. Selalu `npm run ports:check` dulu.
 - Edit `apps/myerpplus-db-mapping` tanpa render ulang Vault env (`vault:render:myerp`) → koneksi MySQL gagal.
 - Update `packages/shared-types` di TS saja → runtime ai-engine error karena Pydantic tertinggal.
-- Connector Debezium di-apply tanpa `cdc:connector:render` ulang → kredensial expired.
 - **Worktree ≠ live dev server**: edit di feature worktree tidak langsung terlihat di browser sampai di-cherry-pick/merge ke branch yang ditonton server. Sebelum fix UI, konfirmasi dulu branch mana yang sedang dijalankan dev server, lalu tawarkan cherry-pick jika fix perlu langsung tampil.
 
 ## 9. Jangan disentuh tanpa diminta
