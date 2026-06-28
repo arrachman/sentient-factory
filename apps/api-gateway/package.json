@@ -19,8 +19,6 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "ts-node prisma/seed.ts",
-    "db:seed:clinic": "ts-node prisma/seed-clinic.ts",
-    "db:seed:clinic:wa": "ts-node prisma/seed-clinic-wa.ts",
     "db:seed:erp": "ts-node prisma/seed-erp.ts",
     "db:seed:manufacturing": "ts-node prisma/seed-erp-manufacturing.ts",
     "db:seed:erp:taxes-id": "ts-node prisma/seed-erp-md-taxes-indonesia.ts",

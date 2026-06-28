@@ -24,9 +24,6 @@ model User {
   inventoryLedgers       InventoryLedger[]
   managerInsights        ManagerInsight[]
   managerRisks           ManagerRisk[]
-  clinicPsikologProfile  ClinicPsikologProfile?
-  clinicBookings         ClinicBooking[]         @relation("BookingPsikolog")
-  clinicPsikologServices ClinicPsikologService[] @relation("PsikologServices")
 
   @@index([warehouseId])
   @@map("m0_users")

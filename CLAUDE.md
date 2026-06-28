@@ -91,7 +91,7 @@ Checklist tiap kali menambah port:
    ```
 3. Verifikasi dari klien LAN: `curl -v --max-time 5 http://<host-ip>:<PORT>/`.
 
-Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow saat ini termasuk: 22 (ssh), 3202 (web-althea), 3203 (api-gateway), 3218 (web-erp prototype), 3307 (mysql), 9395.
+Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow saat ini termasuk: 22 (ssh), 3203 (api-gateway), 3218 (web-erp prototype), 3307 (mysql), 9395.
 
 ## 5. Konvensi kode
 
