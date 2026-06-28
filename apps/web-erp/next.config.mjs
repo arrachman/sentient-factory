@@ -12,6 +12,8 @@ const ERP_INTERNAL_API_URL =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Shared workspace package consumed as TS source (not a built dist).
+  transpilePackages: ['@sentient-factory/ui-kit'],
   // Scope Turbopack to this app (monorepo has multiple lockfiles; also
   // keeps the watcher off sibling reference dirs like prototype/preferensi).
   turbopack: { root: __dirname },
