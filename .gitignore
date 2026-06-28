@@ -270,6 +270,7 @@ temp/
 # Superpowers/agent prep — build artifacts & root-owned backups
 **/dist_root_*/
 **/dist_root_locked_*/
+**/dist.root-owned.bak/
 **/*_root_owned_backup_*/
 **/node_modules.root_owned_backup_*/
 **/*_locked_[0-9]*/
