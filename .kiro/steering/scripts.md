@@ -22,7 +22,6 @@ fileMatchPattern: "scripts/**"
 | `port-manager.js` | CLI manajemen port `config/ports.json` |
 | `backup-postgres.sh` | Backup PostgreSQL manual |
 | `install-pg-backup-cron.sh` | Install cron job backup otomatis |
-| `render-debezium-connector.sh` | Render Debezium connector config |
 
 ## Alur Setup Development (Pertama Kali)
 

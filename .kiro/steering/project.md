@@ -14,7 +14,6 @@ Monorepo dengan npm workspaces + Turbo. Semua apps di `apps/`, packages di `pack
 | web-dashboard | `apps/web-dashboard` | 3201 | Next.js 16 + React 19 |
 | web-erp (prototype) | `apps/web-erp/prototype` | 3218 | CDN React 18 SPA, no bundler |
 | ai-engine | `apps/ai-engine` | 8001 | Python FastAPI + LangChain |
-| etl-worker | `apps/etl-worker` | — | Node.js + KafkaJS |
 | docs | `apps/docs` | 3205 | Docusaurus |
 
 ## Packages
@@ -39,7 +38,6 @@ Monorepo dengan npm workspaces + Turbo. Semua apps di `apps/`, packages di `pack
 
 - PostgreSQL 17: port `3208` (Docker), container `sentient-postgres-core`, DB `sentient_factory`
 - Redis 7: port `3214`
-- Kafka: port `9092`
 - Vault: port `8200`
 - Docker Compose: `infra/docker-compose.yml`
 - Secrets: dikelola via HashiCorp Vault, scripts di `scripts/`

@@ -1,6 +1,6 @@
 ---
 name: infra
-description: Skill untuk bekerja dengan infra/ — Docker Compose setup lengkap (Vault, MySQL, PostgreSQL, Redis, Kafka, Debezium, Nginx, Prometheus), Kubernetes configs, systemd services, dan init scripts.
+description: Skill untuk bekerja dengan infra/ — Docker Compose setup lengkap (Vault, MySQL, PostgreSQL, Redis, Nginx, Prometheus), Kubernetes configs, systemd services, dan init scripts.
 ---
 
 Kamu sedang bekerja di `infra/` — infrastruktur Sentient Factory.
@@ -11,10 +11,6 @@ Kamu sedang bekerja di `infra/` — infrastruktur Sentient Factory.
 infra/
 ├── docker-compose.yml         # Setup lengkap semua services
 ├── docker-compose-backup.md   # Catatan perubahan docker-compose
-├── debezium/
-│   ├── connectors/            # Debezium connector configs (JSON)
-│   ├── rendered/              # Rendered connector configs
-│   └── README.md
 ├── nginx/
 │   └── sentient.fr-labs.my.id.conf   # Nginx reverse proxy
 ├── init-scripts/
@@ -35,21 +31,12 @@ infra/
 | `mysql` | mysql:8 | 3307 | Source MyERPPlus |
 | `redis` | redis:7 | 3214 | Cache & queue |
 
-### Message Queue & CDC
-| Service | Image | Port | Fungsi |
-|---------|-------|------|--------|
-| `kafka` | confluentinc/cp-kafka | 9092, 29092 | Event streaming |
-| `kafka-ui` | provectuslabs/kafka-ui | — | Kafka management UI |
-| `debezium-connect` | debezium/connect | — | CDC connector |
-
 ### Applications
 | Service | Port | Fungsi |
 |---------|------|--------|
 | `api-gateway` | 3103 | NestJS backend |
 | `web-dashboard` | 3201 | Next.js dashboard |
 | `ai-engine` | 8001 | Python AI service |
-| `etl-worker` | — | Kafka CDC consumer |
-| `open-design` | 3215 | Design tool |
 | `apps-mockup` | 3213 | UI mockup server |
 | `docs` | 3205 | Docusaurus docs |
 | `sentient-marketing` | 3209 | Marketing page |
@@ -69,7 +56,7 @@ infra/
 docker compose -f infra/docker-compose.yml up -d
 
 # Start services tertentu saja
-docker compose -f infra/docker-compose.yml up -d postgres redis kafka
+docker compose -f infra/docker-compose.yml up -d postgres redis
 
 # Stop semua
 docker compose -f infra/docker-compose.yml down
@@ -86,37 +73,6 @@ docker compose -f infra/docker-compose.yml restart web-dashboard
 # Rebuild image app
 docker compose -f infra/docker-compose.yml build api-gateway
 docker compose -f infra/docker-compose.yml up -d api-gateway
-```
-
-## Debezium CDC Setup
-
-### Register Connector
-```bash
-# Render connector config dari template
-bash scripts/render-debezium-connector.sh
-
-# Register ke Debezium REST API
-curl -X POST http://localhost:8083/connectors \
-  -H 'Content-Type: application/json' \
-  -d @infra/debezium/rendered/myerpplus-connector.json
-
-# Cek status connector
-curl http://localhost:8083/connectors/myerpplus-connector/status
-```
-
-### Connector Config (`infra/debezium/connectors/`)
-```json
-{
-  "name": "myerpplus-connector",
-  "config": {
-    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-    "database.hostname": "mysql",
-    "database.port": "3306",
-    "database.server.name": "myerpplus",
-    "table.include.list": "myerpplus.*",
-    "topic.prefix": "myerpplus"
-  }
-}
 ```
 
 ## Nginx Reverse Proxy

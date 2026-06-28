@@ -1,6 +1,6 @@
 ---
 name: scripts
-description: Skill untuk bekerja dengan scripts/ — kumpulan shell scripts untuk manajemen Vault, PostgreSQL backup, port manager, start/stop services, sinkronisasi env, dan Debezium connector.
+description: Skill untuk bekerja dengan scripts/ — kumpulan shell scripts untuk manajemen Vault, PostgreSQL backup, port manager, start/stop services, dan sinkronisasi env.
 ---
 
 Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
@@ -21,7 +21,6 @@ Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
 | `backup-postgres.sh` | Backup otomatis PostgreSQL |
 | `install-pg-backup-cron.sh` | Install cron job untuk backup PostgreSQL |
 | `mysql-access.sh` | Helper akses MySQL |
-| `render-debezium-connector.sh` | Render Debezium connector config dari template |
 | `start-infra-on-boot.sh` | Start infra services saat boot |
 | `stop-infra-on-boot.sh` | Stop infra services |
 
@@ -87,13 +86,6 @@ bash scripts/install-pg-backup-cron.sh
 ```bash
 bash scripts/mysql-access.sh
 # Shortcut untuk masuk ke MySQL dengan credentials dari .env
-```
-
-### Debezium Connector
-```bash
-# Render connector config dari template + env variables
-bash scripts/render-debezium-connector.sh
-# Output: infra/debezium/rendered/*.json
 ```
 
 ### Boot Scripts (systemd/production)

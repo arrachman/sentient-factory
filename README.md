@@ -303,11 +303,9 @@ curl -X POST http://127.0.0.1:3201/api/ai/chat \
 URL utama:
 
 - Manager dashboard: `http://127.0.0.1:3201/app/dashboard/manager`
-- Kafka UI: `http://127.0.0.1:3210`
 - `secret/sentient-factory/dev/api-gateway`
 - `secret/sentient-factory/dev/web-dashboard`
 - `secret/sentient-factory/dev/myerpplus-db-mapping`
-- local CDC overlay file for Debezium: `infra/.env.vault.cdc` (ignored by git)
 
 The `api-gateway` loads secrets from Vault before Nest boots. Other apps can render `.env.vault` from Vault with the helper scripts, while `.env.example` files stay committed as safe templates.
 

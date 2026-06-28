@@ -16,12 +16,6 @@ fileMatchPattern: "infra/**"
 | `mysql` | mysql:8 | 3307 | Source MyERPPlus |
 | `redis` | redis:7 | 3214 | Cache & queue |
 
-### Message Queue & CDC
-| Service | Port | Fungsi |
-|---------|------|--------|
-| `kafka` | 9092, 29092 | Event streaming |
-| `debezium-connect` | — | CDC connector |
-
 ### Applications
 | Service | Port |
 |---------|------|
@@ -42,7 +36,7 @@ fileMatchPattern: "infra/**"
 docker compose -f infra/docker-compose.yml up -d
 
 # Start specific services
-docker compose -f infra/docker-compose.yml up -d postgres redis kafka
+docker compose -f infra/docker-compose.yml up -d postgres redis
 
 # Logs
 docker compose -f infra/docker-compose.yml logs -f api-gateway
@@ -52,21 +46,6 @@ docker compose -f infra/docker-compose.yml restart web-dashboard
 
 # Stop + hapus volumes (HATI-HATI: data hilang)
 docker compose -f infra/docker-compose.yml down -v
-```
-
-## Debezium CDC Setup
-
-```bash
-# Render connector config
-bash scripts/render-debezium-connector.sh
-
-# Register ke Debezium
-curl -X POST http://localhost:8083/connectors \
-  -H 'Content-Type: application/json' \
-  -d @infra/debezium/rendered/myerpplus-connector.json
-
-# Cek status
-curl http://localhost:8083/connectors/myerpplus-connector/status
 ```
 
 ## PostgreSQL Access
