@@ -36,7 +36,7 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Pengaturan | Overtime/verifikasi/dll | ✅ | `GET /hr/settings`, `PATCH /hr/settings/:key` |
 | Timesheet (rekap jam/lembur, agregasi) | Timesheets | ✅ | `GET /hr/timesheets` (derived, tanpa tabel baru) |
 | Jadwal & Shift | Work Schedules | ⬜ | — |
-| Cuti / PTO | Time Off | ⬜ | — |
+| Cuti / PTO (tipe + pengajuan + approval) | Time Off | ✅ | `GET/POST /hr/leave/types`, `GET/POST /hr/leave/requests` (+approve/reject/cancel) — tabel `hr_leave_types`, `hr_leave_requests` |
 | Proyek & Aktivitas | Projects/Activity | ⬜ | — |
 | Laporan & Export | Reports/Exports | ⬜ | — |
 | Mode Kiosk | Kiosk + NFC/PIN | ⬜ | — |

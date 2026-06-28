@@ -18,6 +18,8 @@ import { listEmployees } from './employees';
 import type { HrEmployee } from './employees';
 import { listTimesheets } from './timesheets';
 import type { TimesheetQuery, TimesheetPayload } from './timesheets';
+import { listLeaveTypes, listLeaveRequests } from './leave';
+import type { LeaveType, LeaveRequestQuery, LeaveRequestPayload } from './leave';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -30,6 +32,8 @@ export const hrQueryKeys = {
   faceEnrollments: ['hr', 'face-enrollments'] as const,
   employees: ['hr', 'employees'] as const,
   timesheets: (q?: TimesheetQuery) => ['hr', 'timesheets', q ?? {}] as const,
+  leaveTypes: ['hr', 'leave', 'types'] as const,
+  leaveRequests: (q?: LeaveRequestQuery) => ['hr', 'leave', 'requests', q ?? {}] as const,
 } as const;
 
 /** Normalize an array-or-{data} payload into a plain array. */
@@ -102,5 +106,20 @@ export function useTimesheets(query?: TimesheetQuery) {
   return useQuery<TimesheetPayload>({
     queryKey: hrQueryKeys.timesheets(query),
     queryFn: () => listTimesheets(query),
+  });
+}
+
+export function useLeaveTypes() {
+  return useQuery<LeaveType[]>({
+    queryKey: hrQueryKeys.leaveTypes,
+    queryFn: async () => asArray<LeaveType>(await listLeaveTypes()),
+    staleTime: STABLE_STALE_TIME,
+  });
+}
+
+export function useLeaveRequests(query?: LeaveRequestQuery) {
+  return useQuery<LeaveRequestPayload>({
+    queryKey: hrQueryKeys.leaveRequests(query),
+    queryFn: () => listLeaveRequests(query),
   });
 }

@@ -55,7 +55,7 @@ export const HR_NAV: HrNavGroup[] = [
     items: [
       { key: 'timesheets', title: 'Timesheet', path: '/app/timesheets', icon: CalendarClock, status: 'live' },
       { key: 'schedules', title: 'Jadwal & Shift', path: '/app/schedules', icon: CalendarDays, status: 'soon' },
-      { key: 'leave', title: 'Cuti', path: '/app/leave', icon: Plane, status: 'soon' },
+      { key: 'leave', title: 'Cuti', path: '/app/leave', icon: Plane, status: 'live' },
       { key: 'projects', title: 'Proyek & Aktivitas', path: '/app/projects', icon: FolderKanban, status: 'soon' },
     ],
   },

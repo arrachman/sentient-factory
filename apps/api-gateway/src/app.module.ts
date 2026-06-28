@@ -25,6 +25,7 @@ import { DepartmentsModule } from './departments/departments.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
+import { HrLeaveModule } from './hr-leave/hr-leave.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -219,6 +220,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     SessionsModule,
     DashboardModule,
     HrAttendanceModule,
+    HrLeaveModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)
