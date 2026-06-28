@@ -86,6 +86,12 @@ import { ErpMdpWmsTasksModule } from './erp-mdp-wms-tasks/erp-mdp-wms-tasks.modu
 import { ErpMdpWmsHandlingUnitsModule } from './erp-mdp-wms-handling-units/erp-mdp-wms-handling-units.module';
 import { ErpMdpWmsPicksModule } from './erp-mdp-wms-picks/erp-mdp-wms-picks.module';
 import { ErpMdpWmsMovementsModule } from './erp-mdp-wms-movements/erp-mdp-wms-movements.module';
+import { ErpMdpQmsPlansModule } from './erp-mdp-qms-plans/erp-mdp-qms-plans.module';
+import { ErpMdpQmsCharacteristicsModule } from './erp-mdp-qms-characteristics/erp-mdp-qms-characteristics.module';
+import { ErpMdpQmsInspectionsModule } from './erp-mdp-qms-inspections/erp-mdp-qms-inspections.module';
+import { ErpMdpQmsResultsModule } from './erp-mdp-qms-results/erp-mdp-qms-results.module';
+import { ErpMdpQmsNonconformancesModule } from './erp-mdp-qms-nonconformances/erp-mdp-qms-nonconformances.module';
+import { ErpMdpQmsCapaActionsModule } from './erp-mdp-qms-capa-actions/erp-mdp-qms-capa-actions.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -270,6 +276,12 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpMdpWmsHandlingUnitsModule,
     ErpMdpWmsPicksModule,
     ErpMdpWmsMovementsModule,
+    ErpMdpQmsPlansModule,
+    ErpMdpQmsCharacteristicsModule,
+    ErpMdpQmsInspectionsModule,
+    ErpMdpQmsResultsModule,
+    ErpMdpQmsNonconformancesModule,
+    ErpMdpQmsCapaActionsModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,

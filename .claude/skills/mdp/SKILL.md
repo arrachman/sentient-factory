@@ -180,14 +180,24 @@ PK `BigInt @id @default(autoincrement())` · `code`/`name` · soft-delete
   picks,movements,handling-units}` (verified 401, di app.module). UI `/app/wms/*` (MasterCrudPage
   + molecule `WmsNav`). api.ts + seed (2 HU, 2 task, 1 movement) + menu tree wms. Movement→ERP
   `inv_` posting = decision #3 (postingStatus PENDING, stub).
+- **QMS COMPLETE** (2026-06-28): katalog `db-design/entities-qms.md`; schema `mdp-qms.prisma`
+  (6 model qms_inspection_plans/characteristics/inspections/results/nonconformances/capa_actions
+  + 9 enum MdpQms*; enum verdict = `MdpQmsInspectionVerdict` agar tak bentrok model
+  `MdpQmsInspectionResult`); migrasi additive `20260628164110_mdp_qms` (0 DROP, applied+resolved).
+  Backend CRUD `/api/mdp/qms/{plans,characteristics,inspections,results,nonconformances,
+  capa-actions}` (verified 401, di app.module). UI `/app/quality/*` (MasterCrudPage + molecule
+  `QmsNav`). api.ts + 7 menu rows qms (via SQL upsert — ts-node absen di container/host).
+  Disposisi NCR **tidak** auto-posting ke stok/MES (QMS hanya flag). Plan/inspection 6-tabel
+  (keputusan user) agar hasil ukur per-karakteristik queryable. Backend di-generate via
+  data-driven script (mirror pola wms; typecheck container bersih).
 
 ### Pending / next
 - `mdp_role_menus` belum ada admin UI khusus (backend siap; role mappings belum di-seed →
   nav saat ini pakai fallback full-tree untuk semua user).
 - Port stack UI penuh web-erp §2.7 (keyboard-nav/kebab/bulk); FK lookup-select di form.
 - ERP-emit outbox (decision #3, masih stub) — MES consumptions + WMS movements menunggu emit.
-- **Build order modul**: mdp/eam foundation ✅ → MES ✅ → WMS ✅ → **QMS** (berikutnya) →
-  CMMS → DMS/PRTS/IMS/LMS → OEE overlay.
+- **Build order modul**: mdp/eam foundation ✅ → MES ✅ → WMS ✅ → QMS ✅ → **CMMS**
+  (berikutnya) → DMS/PRTS/IMS/LMS → OEE overlay.
 
 ## Bootstrap sesi baru (resume checklist)
 

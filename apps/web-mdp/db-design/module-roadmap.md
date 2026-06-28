@@ -12,7 +12,7 @@ from `web-erp/db-design §3`. Cross-app refs (→ ERP) = scalar `BigInt` FK.
 
 ## Build order (dependency-driven)
 
-`mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** → **CMMS** →
+`mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** ✅ → **CMMS** →
 **DMS · PRTS · IMS · LMS** → **OEE** overlay. *(Role-filtered nav live:
 `/api/mdp/menus/nav` + `DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
 
@@ -103,16 +103,29 @@ References `md_storage_bins` (scalar). Does **not** own stock balances.
 
 ---
 
-## 4. `qms` — Quality Management
+## 4. `qms` — Quality Management ✅ catalogued + ✅ migrated + ✅ backend + UI
 
-Inspection hooks into MES output & ERP goods receipts.
+> **Field catalog + Prisma done:** [entities-qms.md](entities-qms.md) (6 `qms_*`
+> entities + 9 enums). Schema `apps/api-gateway/prisma/schema/mdp-qms.prisma`;
+> migration `20260628164110_mdp_qms` (additive, 0 DROP) live.
+
+Records quality results against MES output & ERP goods receipts. **Flags**
+dispositions (scrap/rework/return) but does **not** post stock — ERP/MES realize
+the move. Model depth = 6 tables (plan+characteristics, inspection+results child
+lines) so per-characteristic measurements are queryable.
 
 | Entity | Table | Notes |
 | --- | --- | --- |
-| Inspection plan | `qms_inspection_plans` | Characteristics + spec limits per item/operation. |
-| Inspection | `qms_inspections` | Recorded results (incoming/in-process/final). |
-| Nonconformance (NCR) | `qms_nonconformances` | Defect record; links to `mes`/`inv`/`pur`. |
-| CAPA action | `qms_capa_actions` | Corrective/preventive actions + follow-up. |
+| Inspection plan | `qms_inspection_plans` | ✅ **CRUD live** (`/api/mdp/qms/plans`, UI `/app/quality`). Spec template per item/operation (scalar refs). |
+| Characteristic | `qms_inspection_characteristics` | ✅ **CRUD live** (`/api/mdp/qms/characteristics`). Child of plan: spec limits (nominal/LSL/USL), variable/attribute. |
+| Inspection | `qms_inspections` | ✅ **CRUD live** (`/api/mdp/qms/inspections`). Recorded inspection (incoming/in-process/final), verdict PENDING/PASS/FAIL. |
+| Inspection result | `qms_inspection_results` | ✅ **CRUD live** (`/api/mdp/qms/results`). Child: measured value per characteristic + pass/fail. |
+| Nonconformance (NCR) | `qms_nonconformances` | ✅ **CRUD live** (`/api/mdp/qms/nonconformances`). Defect record + disposition; scalar links to item/PO/ERP doc; intra-FK to inspection. |
+| CAPA action | `qms_capa_actions` | ✅ **CRUD live** (`/api/mdp/qms/capa-actions`). Corrective/preventive + verification; intra-FK to NCR (may be standalone). |
+
+> **QMS COMPLETE (2026-06-28):** all 6 entities have guarded CRUD + web-mdp UI
+> (`MasterCrudPage` + `QmsNav` sub-nav at `/app/quality/*`). Disposition→ERP
+> stock/MES not auto-posted (QMS flags only). FK fields = raw ID (functional slice).
 
 ---
 

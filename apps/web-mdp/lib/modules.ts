@@ -62,7 +62,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Inspeksi, nonconformance (NCR), dan tindakan CAPA.',
     domains: ['qms'],
     icon: ShieldCheck,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/quality',
   },
   {
     id: 'cmms',
