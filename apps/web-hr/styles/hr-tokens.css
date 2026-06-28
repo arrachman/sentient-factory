@@ -1,0 +1,48 @@
+/* =====================================================================
+   web-hr — Senti HR brand token overrides
+   ---------------------------------------------------------------------
+   Only VALUES are overridden here. Token NAMES/GROUPS come from the shared
+   contract: @sentient-factory/ui-kit/styles/base-tokens.css (imported first
+   in globals.css). HR's identity = teal/emerald (distinct from ERP blue).
+   See FRONTEND-DESIGN-SYSTEM.md §5.
+   ===================================================================== */
+
+:root,
+[data-theme='light'] {
+  /* Primary palette — HR teal */
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-fg: #ffffff;
+  --primary-soft: #f0fdfa;
+  --primary-soft-fg: #0f766e;
+
+  --selection-bg: rgba(13, 148, 136, 0.18);
+
+  /* Slightly roomier metrics than ERP (HR is less data-dense). */
+  --row-h: 34px;
+  --header-h: 34px;
+  --topbar-h: 52px;
+  --sidebar-w: 232px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  /* Re-bridge ring/accent onto HR primary. */
+  --ring: var(--primary);
+  --accent: var(--primary-soft);
+  --accent-foreground: var(--primary-soft-fg);
+}
+
+.dark,
+[data-theme='dark'] {
+  --primary: #2dd4bf;
+  --primary-hover: #5eead4;
+  --primary-fg: #042f2e;
+  --primary-soft: #0c2926;
+  --primary-soft-fg: #5eead4;
+
+  --selection-bg: rgba(45, 212, 191, 0.28);
+
+  --ring: var(--primary);
+  --accent: var(--primary-soft);
+  --accent-foreground: var(--primary-soft-fg);
+}
