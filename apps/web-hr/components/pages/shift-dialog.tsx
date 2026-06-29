@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -26,33 +26,25 @@ export function ShiftDialog({
   shift?: HrShift | null;
 }) {
   const qc = useQueryClient();
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
-  const [startTime, setStartTime] = useState('08:00');
-  const [endTime, setEndTime] = useState('16:00');
-  const [breakMinutes, setBreakMinutes] = useState('60');
-  const [saving, setSaving] = useState(false);
   const isEdit = Boolean(shift);
+  const formKey = `${open ? 'open' : 'closed'}-${shift?.id ?? 'new'}`;
 
-  useEffect(() => {
-    if (!open) return;
-    setCode(shift?.code ?? '');
-    setName(shift?.name ?? '');
-    setStartTime(shift?.startTime ?? '08:00');
-    setEndTime(shift?.endTime ?? '16:00');
-    setBreakMinutes(String(shift?.breakMinutes ?? 60));
-  }, [open, shift]);
-
-  async function submit() {
-    if (!code.trim() || !name.trim()) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const code = String(formData.get('code') ?? '').trim();
+    const name = String(formData.get('name') ?? '').trim();
+    const startTime = String(formData.get('startTime') ?? '08:00');
+    const endTime = String(formData.get('endTime') ?? '16:00');
+    const breakMinutes = String(formData.get('breakMinutes') ?? '60');
+    if (!code || !name) {
       toast.error('Kode dan nama shift wajib diisi.');
       return;
     }
-    setSaving(true);
     try {
       const payload = {
-        code: code.trim(),
-        name: name.trim(),
+        code,
+        name,
         startTime,
         endTime,
         breakMinutes: Number(breakMinutes) || 0,
@@ -64,8 +56,6 @@ export function ShiftDialog({
       onOpenChange(false);
     } catch (e) {
       toast.error((e as Error)?.message ?? 'Gagal menyimpan shift.');
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -75,44 +65,44 @@ export function ShiftDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Ubah Shift' : 'Tambah Shift'}</DialogTitle>
         </DialogHeader>
-        <DialogBody className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Kode</Label>
-              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="PAGI" />
+        <DialogBody>
+          <form key={formKey} className="space-y-3" onSubmit={submit}>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Kode</Label>
+                <Input name="code" defaultValue={shift?.code ?? ''} placeholder="PAGI" />
+              </div>
+              <div className="space-y-1">
+                <Label>Nama</Label>
+                <Input name="name" defaultValue={shift?.name ?? ''} placeholder="Shift Pagi" />
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label>Nama</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Shift Pagi" />
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>Mulai</Label>
+                <Input name="startTime" type="time" defaultValue={shift?.startTime ?? '08:00'} />
+              </div>
+              <div className="space-y-1">
+                <Label>Selesai</Label>
+                <Input name="endTime" type="time" defaultValue={shift?.endTime ?? '16:00'} />
+              </div>
+              <div className="space-y-1">
+                <Label>Istirahat (mnt)</Label>
+                <Input
+                  name="breakMinutes"
+                  type="number"
+                  min={0}
+                  defaultValue={String(shift?.breakMinutes ?? 60)}
+                />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label>Mulai</Label>
-              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
+                Batal
+              </Button>
+              <Button type="submit" variant="primary">Simpan</Button>
             </div>
-            <div className="space-y-1">
-              <Label>Selesai</Label>
-              <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>Istirahat (mnt)</Label>
-              <Input
-                type="number"
-                min={0}
-                value={breakMinutes}
-                onChange={(e) => setBreakMinutes(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="default" onClick={() => onOpenChange(false)} disabled={saving}>
-              Batal
-            </Button>
-            <Button variant="primary" onClick={submit} disabled={saving}>
-              {saving ? 'Menyimpan…' : 'Simpan'}
-            </Button>
-          </div>
+          </form>
         </DialogBody>
       </DialogContent>
     </Dialog>

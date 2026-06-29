@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -39,7 +39,7 @@ export function WorksiteAssignDialog({
   appUserId: string | null;
   employeeName?: string;
 }) {
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selectedOverride, setSelectedOverride] = useState<Set<number> | null>(null);
   const [saving, setSaving] = useState(false);
 
   const { data: worksitesData } = useQuery({
@@ -54,18 +54,24 @@ export function WorksiteAssignDialog({
     queryFn: () => getUserWorksites(appUserId as string),
     enabled: open && Boolean(appUserId),
   });
-
-  useEffect(() => {
-    if (userWs) setSelected(new Set(extractAssignedIds(userWs)));
-  }, [userWs]);
+  const baseSelected = useMemo(() => new Set(extractAssignedIds(userWs)), [userWs]);
+  const selected = selectedOverride ?? baseSelected;
 
   function toggle(id: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
+    setSelectedOverride((prev) => {
+      const source = prev ?? selected;
+      const next = new Set(source);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setSelectedOverride(null);
+    }
+    onOpenChange(nextOpen);
   }
 
   async function save() {
@@ -74,7 +80,7 @@ export function WorksiteAssignDialog({
     try {
       await updateUserWorksites(appUserId, { worksiteIds: Array.from(selected) });
       toast.success('Penugasan worksite disimpan.');
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (e) {
       toast.error((e as Error)?.message ?? 'Gagal menyimpan.');
     } finally {
@@ -83,7 +89,7 @@ export function WorksiteAssignDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Worksite — {employeeName ?? 'Karyawan'}</DialogTitle>
@@ -113,7 +119,7 @@ export function WorksiteAssignDialog({
             </ul>
           )}
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="default" onClick={() => onOpenChange(false)} disabled={saving}>
+            <Button variant="default" onClick={() => handleOpenChange(false)} disabled={saving}>
               Batal
             </Button>
             <Button variant="primary" onClick={save} disabled={saving}>

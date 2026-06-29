@@ -40,12 +40,18 @@ export function FaceEnrollDialog({
 
   useEffect(() => {
     if (open) {
-      setShot(null);
       void start();
     } else {
       stop();
     }
   }, [open, start, stop]);
+
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setShot(null);
+    }
+    onOpenChange(nextOpen);
+  }
 
   function takeShot() {
     const data = capture();
@@ -81,7 +87,7 @@ export function FaceEnrollDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Daftarkan Wajah{subjectName ? ` — ${subjectName}` : ''}</DialogTitle>
@@ -89,7 +95,6 @@ export function FaceEnrollDialog({
         <DialogBody className="space-y-3">
           <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
             {shot ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={shot} alt="Pratinjau wajah" className="h-full w-full object-cover" />
             ) : (
               <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />

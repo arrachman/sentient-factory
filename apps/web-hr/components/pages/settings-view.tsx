@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,19 +19,23 @@ export function SettingsView() {
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const settings: HrSetting[] = normalizeSettings(data);
-
-  useEffect(() => {
-    if (settings.length) {
-      setDraft(Object.fromEntries(settings.map((s) => [s.key, valueToString(s.value)])));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  const currentValues = useMemo(
+    () => Object.fromEntries(settings.map((s) => [s.key, valueToString(s.value)])),
+    [settings],
+  );
 
   async function save(key: string) {
+    const value = draft[key] ?? currentValues[key] ?? '';
     setSavingKey(key);
     try {
-      await updateSetting(key, parseValue(draft[key]));
+      await updateSetting(key, parseValue(value));
       toast.success(`Pengaturan "${key}" disimpan.`);
+      setDraft((prev) => {
+        if (!(key in prev)) return prev;
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
     } catch (e) {
       toast.error((e as Error)?.message ?? 'Gagal menyimpan.');
     } finally {
@@ -56,7 +60,7 @@ export function SettingsView() {
               </div>
               <Input
                 className="w-56"
-                value={draft[s.key] ?? ''}
+                value={draft[s.key] ?? currentValues[s.key] ?? ''}
                 onChange={(e) => setDraft((d) => ({ ...d, [s.key]: e.target.value }))}
               />
               <Button

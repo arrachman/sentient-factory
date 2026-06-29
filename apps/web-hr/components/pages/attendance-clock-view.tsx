@@ -30,6 +30,7 @@ export function AttendanceClockView() {
   const [busy, setBusy] = useState<null | 'in' | 'out'>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const startedRef = useRef(false);
+  const geolocationSupported = typeof navigator === 'undefined' || Boolean(navigator.geolocation);
 
   const { data: me } = useQuery({
     queryKey: ['hr', 'attendance', 'me'],
@@ -48,8 +49,6 @@ export function AttendanceClockView() {
         () => setGeoError('Lokasi tidak tersedia. Aktifkan GPS / izinkan lokasi.'),
         { enableHighAccuracy: true, timeout: 10_000 },
       );
-    } else {
-      setGeoError('Geolokasi tidak didukung browser ini.');
     }
   }, [startCamera]);
 
@@ -112,7 +111,7 @@ export function AttendanceClockView() {
               <MapPin className="h-4 w-4" />
               {coords
                 ? `${coords.latitude.toFixed(5)}, ${coords.longitude.toFixed(5)}`
-                : geoError ?? 'Mengambil lokasi…'}
+                : geoError ?? (geolocationSupported ? 'Mengambil lokasi…' : 'Geolokasi tidak didukung browser ini.')}
             </span>
             <span className="ml-auto rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
               Status: {isClockedIn ? 'Sudah clock in' : sessionState}

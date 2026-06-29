@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import type { FormEvent } from 'react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -26,25 +26,18 @@ export function ShiftAssignDialog({
   const qc = useQueryClient();
   const { data: shifts } = useShifts();
   const { data: employees } = useEmployees();
-  const [appUserId, setAppUserId] = useState('');
-  const [shiftId, setShiftId] = useState('');
-  const [workDate, setWorkDate] = useState('');
-  const [saving, setSaving] = useState(false);
+  const formKey = open ? 'shift-assign-open' : 'shift-assign-closed';
 
-  useEffect(() => {
-    if (open) {
-      setAppUserId('');
-      setShiftId('');
-      setWorkDate('');
-    }
-  }, [open]);
-
-  async function submit() {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const appUserId = String(formData.get('appUserId') ?? '');
+    const shiftId = String(formData.get('shiftId') ?? '');
+    const workDate = String(formData.get('workDate') ?? '');
     if (!appUserId || !shiftId || !workDate) {
       toast.error('Karyawan, shift, dan tanggal wajib diisi.');
       return;
     }
-    setSaving(true);
     try {
       await createShiftAssignment({
         appUserId: Number(appUserId),
@@ -56,8 +49,6 @@ export function ShiftAssignDialog({
       onOpenChange(false);
     } catch (e) {
       toast.error((e as Error)?.message ?? 'Gagal menyimpan jadwal.');
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -67,49 +58,49 @@ export function ShiftAssignDialog({
         <DialogHeader>
           <DialogTitle>Assign Shift</DialogTitle>
         </DialogHeader>
-        <DialogBody className="space-y-3">
-          <div className="space-y-1">
-            <Label>Karyawan</Label>
-            <select
-              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-              value={appUserId}
-              onChange={(e) => setAppUserId(e.target.value)}
-            >
-              <option value="">— pilih —</option>
-              {(employees ?? []).map((emp) => (
-                <option key={emp.appUserId} value={emp.appUserId}>
-                  {emp.name}{emp.employeeCode ? ` (${emp.employeeCode})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <Label>Shift</Label>
-            <select
-              className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-              value={shiftId}
-              onChange={(e) => setShiftId(e.target.value)}
-            >
-              <option value="">— pilih —</option>
-              {(shifts ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.startTime}–{s.endTime})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <Label>Tanggal</Label>
-            <Input type="date" value={workDate} onChange={(e) => setWorkDate(e.target.value)} />
-          </div>
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="default" onClick={() => onOpenChange(false)} disabled={saving}>
-              Batal
-            </Button>
-            <Button variant="primary" onClick={submit} disabled={saving}>
-              {saving ? 'Menyimpan…' : 'Assign'}
-            </Button>
-          </div>
+        <DialogBody>
+          <form key={formKey} className="space-y-3" onSubmit={submit}>
+            <div className="space-y-1">
+              <Label>Karyawan</Label>
+              <select
+                name="appUserId"
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                defaultValue=""
+              >
+                <option value="">— pilih —</option>
+                {(employees ?? []).map((emp) => (
+                  <option key={emp.appUserId} value={emp.appUserId}>
+                    {emp.name}{emp.employeeCode ? ` (${emp.employeeCode})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label>Shift</Label>
+              <select
+                name="shiftId"
+                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
+                defaultValue=""
+              >
+                <option value="">— pilih —</option>
+                {(shifts ?? []).map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.startTime}–{s.endTime})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label>Tanggal</Label>
+              <Input name="workDate" type="date" defaultValue="" />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
+                Batal
+              </Button>
+              <Button type="submit" variant="primary">Assign</Button>
+            </div>
+          </form>
         </DialogBody>
       </DialogContent>
     </Dialog>
