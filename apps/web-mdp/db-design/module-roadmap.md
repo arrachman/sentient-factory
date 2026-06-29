@@ -13,8 +13,9 @@ from `web-erp/db-design §3`. Cross-app refs (→ ERP) = scalar `BigInt` FK.
 ## Build order (dependency-driven)
 
 `mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** ✅ → **CMMS** ✅ →
-**DMS ✅ · PRTS ✅ · IMS ✅ · LMS ✅** → **OEE** overlay (next). *(Role-filtered nav live:
-`/api/mdp/menus/nav` + `DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
+**DMS ✅ · PRTS ✅ · IMS ✅ · LMS ✅** → **OEE** overlay ✅. **All 8 MOM modules +
+OEE overlay DONE.** *(Role-filtered nav live: `/api/mdp/menus/nav` +
+`DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
 
 ---
 
@@ -212,12 +213,21 @@ Controlled documents (SOP, work instructions, drawings).
 
 ---
 
-## 10. OEE — derived overlay (NOT a module)
+## 10. OEE — derived overlay (NOT a module) ✅ LIVE
 
 No own tables. **OEE = Availability × Performance × Quality**, computed from:
 
 - **Availability** ← `mdp_work_calendars` planned time − `mes_downtime_events`.
 - **Performance** ← `mes_production_logs` actual vs ideal cycle on `eam_work_centers`.
-- **Quality** ← good vs scrap (`mes_production_logs`) + `qms_nonconformances`.
+- **Quality** ← good vs scrap (`mes_production_logs`); `qms_nonconformances`
+  surfaced as supplementary count (NCR per work center), not folded into the Q
+  ratio (canonical Q = good/total from production logs).
 
-Implementation: a view (default) or materialized rollup if slow (open #5).
+Implementation (decision #5 = **view-first**): computed **on-the-fly** in
+`erp-mdp-oee` (NestJS), **no migration / no tables**. Endpoint
+`GET /api/mdp/oee?from&to&workCenterId` (verified 401) returns per-work-center
+rows + an aggregate summary (sum-of-components, not naive average). Math isolated
+in `oee-math.ts`; missing calendar / ideal-cycle yields `null` (not 0) so the UI
+shows "—" vs a genuine zero. UI `/app/oee` (`OeeDashboardPage`): date-range +
+work-center filter, 4 KPI cards (OEE/A/P/Q, world-class color thresholds), and a
+per-work-center breakdown table. Materialize only if this proves slow.

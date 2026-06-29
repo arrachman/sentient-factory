@@ -122,7 +122,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Availability × Performance × Quality — overlay dari MES/CMMS/QMS.',
     domains: ['mes', 'mnt', 'qms'],
     icon: Gauge,
-    status: 'planned',
+    status: 'live',
+    route: '/app/oee',
   },
   {
     id: 'eam',

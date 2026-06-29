@@ -10,7 +10,9 @@
 > `/app/mes/*`, WMS `/app/wms/*`, QMS `/app/quality/*`, CMMS `/app/maintenance/*`,
 > PRTS `/app/problems/*`, DMS `/app/documents/*`, IMS `/app/qhse/*`, LMS
 > `/app/training/*` (catalogs entities-{mes,wms,qms,cmms,prts,dms,ims,lms}.md).
-> Only OEE overlay remains.
+> · **OEE overlay COMPLETE (2026-06-29)**: derived metric (no tables), computed
+> on-the-fly in `erp-mdp-oee` → `GET /api/mdp/oee`; UI `/app/oee`. **All 8 MOM
+> modules + OEE done — Senti MDP MVP feature-complete.**
 > Date: 2026-06-27 · Author: agent (Claude) · Product: **Senti MDP**,
 > `apps/web-mdp` (ISA-95 Level 3).
 >
