@@ -4,7 +4,8 @@ Time & Attendance / Workforce Management untuk Sentient Factory — adaptasi
 **jibble.io**, dan **adopter bersih pertama** `@sentient-factory/ui-kit`.
 
 - **Port:** 3221 (`WEB_HR_PORT`) · origin `hr.fr-labs.my.id`
-- **Backend:** shared api-gateway `/api/hr/*` (modul `hr-attendance`)
+- **Backend:** shared api-gateway `/api/hr/*` (reuse modul HR live:
+  `hr-attendance`, `hr-leave`, `hr-workforce`, `hr-reports`, `hr-kiosk`)
 - **Auth:** sesi platform (cookie `sf_token`) — login lewat platform Sentient
 - **Stack:** Next.js 16 · React 19 · Tailwind v4 · TanStack Query · ui-kit
 
@@ -39,8 +40,10 @@ adaptasi jibble + rencana DB). Standar lintas-app: `packages/ui-kit/FRONTEND-DES
 - **Fase 0 ✅** scaffold (configs, ui-kit wiring, shell, tokens, api foundation).
 - **Fase 1 ✅** layar absensi live: dashboard, riwayat, tinjauan (approve/reject/
   clarify/reopen), lokasi & geofence, pendaftaran wajah, karyawan.
-- **Fase 2 ⬜** roadmap jibble (timesheet, jadwal/shift, cuti, proyek, laporan,
-  kiosk, pengaturan) — stub "coming soon", butuh approval + DB additive per modul.
+- **Fase 2 🟡** fitur live bertahap: timesheet (derived), cuti/PTO, jadwal/shift,
+  proyek/aktivitas, laporan/export, dan mode kiosk + PIN. Sisa modul lanjutan
+  (pengaturan overtime/break, lock period, NFC/offline, kiosk face UI, SSO/2FA)
+  masih butuh approval + DB additive per modul.
 
 ## Catatan keamanan
 
