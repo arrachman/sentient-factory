@@ -39,7 +39,7 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Cuti / PTO (tipe + pengajuan + approval) | Time Off | ✅ | `GET/POST /hr/leave/types`, `GET/POST /hr/leave/requests` (+approve/reject/cancel) — tabel `hr_leave_types`, `hr_leave_requests` |
 | Proyek & Aktivitas | Projects/Activity | ✅ | `GET/POST/PATCH/DELETE /hr/projects`, `GET/POST/DELETE /hr/project-time` — tabel `hr_projects`, `hr_project_time_entries` |
 | Laporan & Export | Reports/Exports | ✅ | `GET /hr/reports` (katalog), `GET /hr/reports/:key`, `GET /hr/reports/:key/export?format=csv\|xlsx` — modul `hr-reports`, derived (tanpa tabel baru), privileged-only. Laporan: rekap kehadiran, jam proyek, rekap cuti |
-| Mode Kiosk | Kiosk + NFC/PIN | ⬜ | — |
+| Mode Kiosk | Kiosk + NFC/PIN | ✅ | `GET /hr/kiosk/roster`, `POST /hr/kiosk/clock`, `PUT/DELETE /hr/kiosk/pin/:appUserId` — modul `hr-kiosk`, privileged (device dibuka admin). PIN per-karyawan (`hr_users.kiosk_pin_hash`, scrypt) + jalur wajah backend-ready (clock by appUserId). NFC belum |
 
 Gap jibble lain (catatan): Selfie-per-entry, Offline mode, Integrasi Chat
 (Slack/Teams), Invoicing/Billing, Live Activity, Productivity/Monitoring/
@@ -53,8 +53,8 @@ Screenshots (⚠️ sensitif privasi — opt-in + transparan), Integrasi payroll
 3. ✅ **Cuti / PTO** (kebijakan, saldo, akrual, approval).
 4. ✅ **Proyek & Aktivitas** (alokasi waktu — modul `hr-workforce`).
 5. ✅ **Laporan & Export** (rekap + XLS/CSV — modul `hr-reports`, derived; lock periode/audit ditunda).
-6. **Kiosk** (mode UI + NFC/PIN + offline sync). ← berikutnya
-7. **Pengaturan lanjutan** (overtime/break rules, kalender libur, SSO/2FA, RBAC).
+6. ✅ **Kiosk** (mode UI + PIN — modul `hr-kiosk`; wajah backend-ready, NFC + offline sync ditunda).
+7. **Pengaturan lanjutan** (overtime/break rules, kalender libur, SSO/2FA, RBAC). ← berikutnya
 
 Tiap modul ⬜ = **approval terpisah** sebelum desain DB + endpoint + halaman.
 

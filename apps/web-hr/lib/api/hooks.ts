@@ -26,6 +26,8 @@ import { listProjects, listProjectTime } from './projects';
 import type { HrProject, ProjectTimeQuery, ProjectTimePayload } from './projects';
 import { listReportCatalog, getReport } from './reports';
 import type { HrReportCatalogItem, HrReportDataset, HrReportFilters } from './reports';
+import { listKioskRoster } from './kiosk';
+import type { KioskRosterEntry } from './kiosk';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -46,6 +48,7 @@ export const hrQueryKeys = {
   projectTime: (q?: ProjectTimeQuery) => ['hr', 'project-time', q ?? {}] as const,
   reportCatalog: ['hr', 'reports', 'catalog'] as const,
   report: (key: string, f?: HrReportFilters) => ['hr', 'reports', key, f ?? {}] as const,
+  kioskRoster: ['hr', 'kiosk', 'roster'] as const,
 } as const;
 
 /** Unwrap a {data} envelope or pass through a bare value. */
@@ -192,5 +195,12 @@ export function useReport(
     queryFn: async () => unwrap<HrReportDataset>(await getReport(key as string, filters)),
     enabled: Boolean(key),
     ...options,
+  });
+}
+
+export function useKioskRoster() {
+  return useQuery<KioskRosterEntry[]>({
+    queryKey: hrQueryKeys.kioskRoster,
+    queryFn: async () => asArray<KioskRosterEntry>(await listKioskRoster()),
   });
 }

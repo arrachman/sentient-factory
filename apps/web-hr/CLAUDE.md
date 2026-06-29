@@ -65,12 +65,15 @@ Timesheet (derived), Cuti/PTO (`hr-leave`), Jadwal/Shift + Proyek/Aktivitas
 (`hr-workforce` — `hr_shifts`/`hr_shift_assignments`/`hr_projects`/
 `hr_project_time_entries`), Laporan/Export (`hr-reports` — derived, tanpa tabel
 baru; rekap kehadiran/jam proyek/cuti + export CSV/XLSX via exceljs,
-privileged-only).
+privileged-only), Mode Kiosk (`hr-kiosk` — perangkat bersama dibuka admin; clock
+via PIN per-karyawan `hr_users.kiosk_pin_hash` di-hash scrypt; jalur wajah
+backend-ready via clock-by-appUserId; privileged-only).
 
 ## Roadmap (Fase 2+ sisa, stub coming-soon)
 
-Kiosk → Pengaturan lanjutan (+ lock periode/audit untuk laporan). Tiap modul =
-approval terpisah + desain DB additive. Detail + gap jibble lengkap di
+Pengaturan lanjutan (overtime/break rules, kalender libur, SSO/2FA, RBAC) + lock
+periode/audit laporan + NFC/offline-sync & jalur wajah kiosk di frontend. Tiap
+modul = approval terpisah + desain DB additive. Detail + gap jibble lengkap di
 `db-design/module-roadmap.md`.
 
 ## Perintah

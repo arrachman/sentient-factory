@@ -122,4 +122,12 @@ export type {
 } from './reports';
 export { listReportCatalog, getReport, downloadReport } from './reports';
 
+export type {
+  KioskRosterEntry,
+  KioskAction,
+  KioskClockPayload,
+  KioskClockResult,
+} from './kiosk';
+export { listKioskRoster, kioskClock, setKioskPin, clearKioskPin } from './kiosk';
+
 export { hrQueryKeys, asArray } from './hooks';

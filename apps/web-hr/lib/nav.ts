@@ -64,7 +64,7 @@ export const HR_NAV: HrNavGroup[] = [
     title: 'Laporan & Lainnya',
     items: [
       { key: 'reports', title: 'Laporan', path: '/app/reports', icon: BarChart3, status: 'live' },
-      { key: 'kiosk', title: 'Mode Kiosk', path: '/app/kiosk', icon: MonitorSmartphone, status: 'soon' },
+      { key: 'kiosk', title: 'Mode Kiosk', path: '/app/kiosk', icon: MonitorSmartphone, status: 'live' },
       { key: 'settings', title: 'Pengaturan', path: '/app/settings', icon: Settings, status: 'live' },
     ],
   },

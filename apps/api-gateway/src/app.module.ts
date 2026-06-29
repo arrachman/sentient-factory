@@ -28,6 +28,7 @@ import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
 import { HrLeaveModule } from './hr-leave/hr-leave.module';
 import { HrWorkforceModule } from './hr-workforce/hr-workforce.module';
 import { HrReportsModule } from './hr-reports/hr-reports.module';
+import { HrKioskModule } from './hr-kiosk/hr-kiosk.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -237,6 +238,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     HrLeaveModule,
     HrWorkforceModule,
     HrReportsModule,
+    HrKioskModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)
