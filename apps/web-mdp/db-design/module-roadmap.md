@@ -13,7 +13,7 @@ from `web-erp/db-design §3`. Cross-app refs (→ ERP) = scalar `BigInt` FK.
 ## Build order (dependency-driven)
 
 `mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** ✅ → **CMMS** ✅ →
-**DMS · PRTS · IMS · LMS** → **OEE** overlay. *(Role-filtered nav live:
+**DMS ✅ · PRTS ✅ · IMS ✅ · LMS ✅** → **OEE** overlay (next). *(Role-filtered nav live:
 `/api/mdp/menus/nav` + `DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
 
 ---
@@ -151,7 +151,11 @@ Maintains `eam_assets`; spares are ERP `md_items` + `inv_`. Spare consumption
 
 ---
 
-## 6. `prt` — Problem & Issue Tracking (PRTS)
+## 6. `prt` — Problem & Issue Tracking (PRTS) ✅ catalogued + migrated + backend + UI
+
+> Done 2026-06-28: [entities-prts.md](entities-prts.md); schema `mdp-prts.prisma`
+> (2 models + 4 enums); migration `mdp_prts` (additive, 0 DROP); CRUD
+> `/api/mdp/prt/{issues,escalations}` (401); UI `/app/problems/*` (+ PrtNav).
 
 Andon-style capture & escalation; links to any execution record.
 
@@ -162,7 +166,11 @@ Andon-style capture & escalation; links to any execution record.
 
 ---
 
-## 7. `dms` — Document Management
+## 7. `dms` — Document Management ✅ catalogued + migrated + backend + UI
+
+> Done 2026-06-28: [entities-dms.md](entities-dms.md); schema `mdp-dms.prisma`
+> (3 models + 3 enums); migration `mdp_dms` (additive, 0 DROP); CRUD
+> `/api/mdp/dms/{documents,revisions,acknowledgements}` (401); UI `/app/documents/*` (+ DmsNav).
 
 Controlled documents (SOP, work instructions, drawings).
 
@@ -174,7 +182,12 @@ Controlled documents (SOP, work instructions, drawings).
 
 ---
 
-## 8. `ehs` — QHSE / IMS (integrated)
+## 8. `ehs` — QHSE / IMS (integrated) ✅ catalogued + migrated + backend + UI
+
+> Done 2026-06-28: [entities-ims.md](entities-ims.md); schema `mdp-ims.prisma`
+> (3 models + 7 enums); migration `mdp_ims` (additive, 0 DROP); CRUD
+> `/api/mdp/ehs/{incidents,audits,permits}` (401); UI `/app/qhse/*` (+ EhsNav).
+
 
 | Entity | Table | Notes |
 | --- | --- | --- |
@@ -184,7 +197,12 @@ Controlled documents (SOP, work instructions, drawings).
 
 ---
 
-## 9. `lms` — Learning Management
+## 9. `lms` — Learning Management ✅ catalogued + migrated + backend + UI
+
+> Done 2026-06-28: [entities-lms.md](entities-lms.md); schema `mdp-lms.prisma`
+> (3 models + 3 enums); migration `mdp_lms` (additive, 0 DROP); CRUD
+> `/api/mdp/lms/{courses,enrollments,competencies}` (401); UI `/app/training/*` (+ LmsNav).
+
 
 | Entity | Table | Notes |
 | --- | --- | --- |

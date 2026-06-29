@@ -26,6 +26,7 @@ import { SessionsModule } from './sessions/sessions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
 import { HrLeaveModule } from './hr-leave/hr-leave.module';
+import { HrWorkforceModule } from './hr-workforce/hr-workforce.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -97,6 +98,17 @@ import { ErpMdpMntWorkOrdersModule } from './erp-mdp-mnt-work-orders/erp-mdp-mnt
 import { ErpMdpMntPmSchedulesModule } from './erp-mdp-mnt-pm-schedules/erp-mdp-mnt-pm-schedules.module';
 import { ErpMdpMntFailureCodesModule } from './erp-mdp-mnt-failure-codes/erp-mdp-mnt-failure-codes.module';
 import { ErpMdpMntSparePartsModule } from './erp-mdp-mnt-spare-parts/erp-mdp-mnt-spare-parts.module';
+import { ErpMdpPrtIssuesModule } from './erp-mdp-prt-issues/erp-mdp-prt-issues.module';
+import { ErpMdpPrtEscalationsModule } from './erp-mdp-prt-escalations/erp-mdp-prt-escalations.module';
+import { ErpMdpDmsDocumentsModule } from './erp-mdp-dms-documents/erp-mdp-dms-documents.module';
+import { ErpMdpDmsRevisionsModule } from './erp-mdp-dms-revisions/erp-mdp-dms-revisions.module';
+import { ErpMdpDmsAcknowledgementsModule } from './erp-mdp-dms-acknowledgements/erp-mdp-dms-acknowledgements.module';
+import { ErpMdpEhsIncidentsModule } from './erp-mdp-ehs-incidents/erp-mdp-ehs-incidents.module';
+import { ErpMdpEhsAuditsModule } from './erp-mdp-ehs-audits/erp-mdp-ehs-audits.module';
+import { ErpMdpEhsPermitsModule } from './erp-mdp-ehs-permits/erp-mdp-ehs-permits.module';
+import { ErpMdpLmsCoursesModule } from './erp-mdp-lms-courses/erp-mdp-lms-courses.module';
+import { ErpMdpLmsEnrollmentsModule } from './erp-mdp-lms-enrollments/erp-mdp-lms-enrollments.module';
+import { ErpMdpLmsCompetenciesModule } from './erp-mdp-lms-competencies/erp-mdp-lms-competencies.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -221,6 +233,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     DashboardModule,
     HrAttendanceModule,
     HrLeaveModule,
+    HrWorkforceModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)
@@ -292,6 +305,17 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpMdpMntPmSchedulesModule,
     ErpMdpMntFailureCodesModule,
     ErpMdpMntSparePartsModule,
+    ErpMdpPrtIssuesModule,
+    ErpMdpPrtEscalationsModule,
+    ErpMdpDmsDocumentsModule,
+    ErpMdpDmsRevisionsModule,
+    ErpMdpDmsAcknowledgementsModule,
+    ErpMdpEhsIncidentsModule,
+    ErpMdpEhsAuditsModule,
+    ErpMdpEhsPermitsModule,
+    ErpMdpLmsCoursesModule,
+    ErpMdpLmsEnrollmentsModule,
+    ErpMdpLmsCompetenciesModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,

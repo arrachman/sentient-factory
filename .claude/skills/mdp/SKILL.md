@@ -201,13 +201,24 @@ PK `BigInt @id @default(autoincrement())` · `code`/`name` · soft-delete
   ⚠️ **Container kini production-mode** (`build && start:prod` dari docker-compose yg diubah sesi
   lain) → restart = full `nest build` (~2-3 mnt), bukan watch; build error = server tak naik.
 
+- **DMS/PRTS/IMS/LMS COMPLETE** (2026-06-28): 4 modul terakhir di-generate sekaligus via
+  `gen-rest.js` (extend gen: backend + page + route + nav + api.ts splice dari satu config).
+  Schemas `mdp-{prts,dms,ims,lms}.prisma` (11 model total: prt_issues/escalations,
+  dms_documents/revisions/acknowledgements, ehs_incidents/audits/permits,
+  lms_courses/enrollments/competencies). 4 migrasi additive (`mdp_prts/dms/ims/lms`, 0 DROP).
+  Backend CRUD `/api/mdp/{prt,dms,ehs,lms}/*` (semua 401, di app.module). UI `/app/{problems,
+  documents,qhse,training}/*` (MasterCrudPage + 4 nav molecule Prt/Dms/Ehs/LmsNav). 15 menu
+  rows (SQL). **Generator bug ke-3 fixed:** child update REQUIRED datetime pakai `new Date()`
+  bukan nullable expr (selain bigint required yg sudah). Generator dpt `bool` support
+  (lms isMandatory). Semua 8 modul MOM full-stack DONE; sisa = OEE overlay.
+
 ### Pending / next
 - `mdp_role_menus` belum ada admin UI khusus (backend siap; role mappings belum di-seed →
   nav saat ini pakai fallback full-tree untuk semua user).
 - Port stack UI penuh web-erp §2.7 (keyboard-nav/kebab/bulk); FK lookup-select di form.
 - ERP-emit outbox (decision #3, masih stub) — MES consumptions + WMS movements menunggu emit.
 - **Build order modul**: mdp/eam foundation ✅ → MES ✅ → WMS ✅ → QMS ✅ → CMMS ✅ →
-  **DMS/PRTS/IMS/LMS** (berikutnya) → OEE overlay.
+  DMS ✅ PRTS ✅ IMS ✅ LMS ✅ → **OEE overlay** (berikutnya, satu-satunya yang tersisa).
 
 ## Bootstrap sesi baru (resume checklist)
 

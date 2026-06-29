@@ -82,7 +82,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Andon, penangkapan masalah, dan eskalasi.',
     domains: ['prt'],
     icon: AlertTriangle,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/problems',
   },
   {
     id: 'dms',
@@ -91,7 +92,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Dokumen terkontrol, revisi, dan acknowledgement.',
     domains: ['dms'],
     icon: FileText,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/documents',
   },
   {
     id: 'ims',
@@ -100,7 +102,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Insiden, audit, dan izin kerja (permit-to-work).',
     domains: ['ehs'],
     icon: HardHat,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/qhse',
   },
   {
     id: 'lms',
@@ -109,7 +112,8 @@ export const MDP_MODULES: readonly MdpModule[] = [
     description: 'Kursus, enrollment, dan matriks kompetensi.',
     domains: ['lms'],
     icon: GraduationCap,
-    status: 'planned',
+    status: 'in-progress',
+    route: '/app/training',
   },
   {
     id: 'oee',
