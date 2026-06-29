@@ -24,6 +24,8 @@ import { listShifts, listShiftAssignments } from './schedules';
 import type { HrShift, HrShiftAssignment, ShiftAssignmentQuery } from './schedules';
 import { listProjects, listProjectTime } from './projects';
 import type { HrProject, ProjectTimeQuery, ProjectTimePayload } from './projects';
+import { listReportCatalog, getReport } from './reports';
+import type { HrReportCatalogItem, HrReportDataset, HrReportFilters } from './reports';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -42,7 +44,17 @@ export const hrQueryKeys = {
   shiftAssignments: (q?: ShiftAssignmentQuery) => ['hr', 'shift-assignments', q ?? {}] as const,
   projects: ['hr', 'projects'] as const,
   projectTime: (q?: ProjectTimeQuery) => ['hr', 'project-time', q ?? {}] as const,
+  reportCatalog: ['hr', 'reports', 'catalog'] as const,
+  report: (key: string, f?: HrReportFilters) => ['hr', 'reports', key, f ?? {}] as const,
 } as const;
+
+/** Unwrap a {data} envelope or pass through a bare value. */
+function unwrap<T>(payload: T | { data: T }): T {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as { data: T }).data;
+  }
+  return payload as T;
+}
 
 /** Normalize an array-or-{data} payload into a plain array. */
 export function asArray<T>(payload: T[] | { data?: T[] } | undefined | null): T[] {
@@ -159,5 +171,26 @@ export function useProjectTime(query?: ProjectTimeQuery) {
   return useQuery<ProjectTimePayload>({
     queryKey: hrQueryKeys.projectTime(query),
     queryFn: () => listProjectTime(query),
+  });
+}
+
+export function useReportCatalog() {
+  return useQuery<HrReportCatalogItem[]>({
+    queryKey: hrQueryKeys.reportCatalog,
+    queryFn: async () => asArray<HrReportCatalogItem>(await listReportCatalog()),
+    staleTime: STABLE_STALE_TIME,
+  });
+}
+
+export function useReport(
+  key: string | null,
+  filters?: HrReportFilters,
+  options?: Partial<UseQueryOptions<HrReportDataset>>,
+) {
+  return useQuery<HrReportDataset>({
+    queryKey: hrQueryKeys.report(key ?? '', filters),
+    queryFn: async () => unwrap<HrReportDataset>(await getReport(key as string, filters)),
+    enabled: Boolean(key),
+    ...options,
   });
 }

@@ -1,18 +1,8 @@
 import type { Metadata } from 'next';
-import { ComingSoon } from '@/components/pages/coming-soon';
+import { ReportsView } from '@/components/pages/reports-view';
 
-export const metadata: Metadata = { title: 'Laporan' };
+export const metadata: Metadata = { title: 'Laporan & Export' };
 
 export default function Page() {
-  return (
-    <ComingSoon
-      title="Laporan"
-      description="Analitik kehadiran & data siap-payroll dengan export."
-      bullets={[
-          'Laporan kehadiran & jam kerja',
-          'Rekap lembur & keterlambatan',
-          'Export XLS/CSV',
-          'Audit trail & lock periode',      ]}
-    />
-  );
+  return <ReportsView />;
 }

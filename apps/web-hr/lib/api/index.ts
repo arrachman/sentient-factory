@@ -111,4 +111,15 @@ export {
   deleteProjectTime,
 } from './projects';
 
+export type {
+  HrReportColType,
+  HrReportColumn,
+  HrReportSummaryItem,
+  HrReportCatalogItem,
+  HrReportDataset,
+  HrReportFilters,
+  HrReportFormat,
+} from './reports';
+export { listReportCatalog, getReport, downloadReport } from './reports';
+
 export { hrQueryKeys, asArray } from './hooks';

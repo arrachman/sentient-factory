@@ -27,6 +27,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
 import { HrLeaveModule } from './hr-leave/hr-leave.module';
 import { HrWorkforceModule } from './hr-workforce/hr-workforce.module';
+import { HrReportsModule } from './hr-reports/hr-reports.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -109,6 +110,7 @@ import { ErpMdpEhsPermitsModule } from './erp-mdp-ehs-permits/erp-mdp-ehs-permit
 import { ErpMdpLmsCoursesModule } from './erp-mdp-lms-courses/erp-mdp-lms-courses.module';
 import { ErpMdpLmsEnrollmentsModule } from './erp-mdp-lms-enrollments/erp-mdp-lms-enrollments.module';
 import { ErpMdpLmsCompetenciesModule } from './erp-mdp-lms-competencies/erp-mdp-lms-competencies.module';
+import { ErpMdpOeeModule } from './erp-mdp-oee/erp-mdp-oee.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -234,6 +236,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     HrAttendanceModule,
     HrLeaveModule,
     HrWorkforceModule,
+    HrReportsModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)
@@ -316,6 +319,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpMdpLmsCoursesModule,
     ErpMdpLmsEnrollmentsModule,
     ErpMdpLmsCompetenciesModule,
+    ErpMdpOeeModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,

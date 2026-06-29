@@ -63,12 +63,15 @@ Lokasi & Geofence, Pendaftaran Wajah, Karyawan.
 
 Timesheet (derived), Cuti/PTO (`hr-leave`), Jadwal/Shift + Proyek/Aktivitas
 (`hr-workforce` — `hr_shifts`/`hr_shift_assignments`/`hr_projects`/
-`hr_project_time_entries`).
+`hr_project_time_entries`), Laporan/Export (`hr-reports` — derived, tanpa tabel
+baru; rekap kehadiran/jam proyek/cuti + export CSV/XLSX via exceljs,
+privileged-only).
 
 ## Roadmap (Fase 2+ sisa, stub coming-soon)
 
-Laporan/Export → Kiosk → Pengaturan lanjutan. Tiap modul = approval terpisah +
-desain DB additive. Detail + gap jibble lengkap di `db-design/module-roadmap.md`.
+Kiosk → Pengaturan lanjutan (+ lock periode/audit untuk laporan). Tiap modul =
+approval terpisah + desain DB additive. Detail + gap jibble lengkap di
+`db-design/module-roadmap.md`.
 
 ## Perintah
 
