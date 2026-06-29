@@ -35,9 +35,9 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Karyawan (+ assign worksite) | People & Groups | ✅ | `GET /hr/users`, `PUT /hr/users/:id/worksites` |
 | Pengaturan | Overtime/verifikasi/dll | ✅ | `GET /hr/settings`, `PATCH /hr/settings/:key` |
 | Timesheet (rekap jam/lembur, agregasi) | Timesheets | ✅ | `GET /hr/timesheets` (derived, tanpa tabel baru) |
-| Jadwal & Shift | Work Schedules | ⬜ | — |
+| Jadwal & Shift | Work Schedules | ✅ | `GET/POST/PATCH/DELETE /hr/shifts`, `GET/POST/DELETE /hr/shift-assignments` — tabel `hr_shifts`, `hr_shift_assignments` |
 | Cuti / PTO (tipe + pengajuan + approval) | Time Off | ✅ | `GET/POST /hr/leave/types`, `GET/POST /hr/leave/requests` (+approve/reject/cancel) — tabel `hr_leave_types`, `hr_leave_requests` |
-| Proyek & Aktivitas | Projects/Activity | ⬜ | — |
+| Proyek & Aktivitas | Projects/Activity | ✅ | `GET/POST/PATCH/DELETE /hr/projects`, `GET/POST/DELETE /hr/project-time` — tabel `hr_projects`, `hr_project_time_entries` |
 | Laporan & Export | Reports/Exports | ⬜ | — |
 | Mode Kiosk | Kiosk + NFC/PIN | ⬜ | — |
 
@@ -48,11 +48,11 @@ Screenshots (⚠️ sensitif privasi — opt-in + transparan), Integrasi payroll
 
 ## 4. Build order (roadmap Fase 2+)
 
-1. **Timesheet** (turunan dari `hr_attendance_sessions` — paling cepat bernilai).
-2. **Jadwal & Shift** (master shift + assignment).
-3. **Cuti / PTO** (kebijakan, saldo, akrual, approval).
-4. **Proyek & Aktivitas** (alokasi waktu).
-5. **Laporan & Export** (rekap + XLS/CSV + lock periode/audit).
+1. ✅ **Timesheet** (turunan dari `hr_attendance_sessions` — paling cepat bernilai).
+2. ✅ **Jadwal & Shift** (master shift + assignment — modul `hr-workforce`).
+3. ✅ **Cuti / PTO** (kebijakan, saldo, akrual, approval).
+4. ✅ **Proyek & Aktivitas** (alokasi waktu — modul `hr-workforce`).
+5. **Laporan & Export** (rekap + XLS/CSV + lock periode/audit). ← berikutnya
 6. **Kiosk** (mode UI + NFC/PIN + offline sync).
 7. **Pengaturan lanjutan** (overtime/break rules, kalender libur, SSO/2FA, RBAC).
 

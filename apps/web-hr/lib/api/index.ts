@@ -74,4 +74,41 @@ export {
   attendanceEventSnapshotUrl,
 } from './face-enrollments';
 
+export type {
+  HrShift,
+  CreateShiftPayload,
+  UpdateShiftPayload,
+  HrShiftAssignment,
+  ShiftAssignmentQuery,
+  CreateShiftAssignmentPayload,
+} from './schedules';
+export {
+  listShifts,
+  createShift,
+  updateShift,
+  deleteShift,
+  listShiftAssignments,
+  createShiftAssignment,
+  deleteShiftAssignment,
+} from './schedules';
+
+export type {
+  HrProject,
+  CreateProjectPayload,
+  UpdateProjectPayload,
+  HrProjectTimeEntry,
+  ProjectTimeQuery,
+  ProjectTimePayload,
+  CreateProjectTimePayload,
+} from './projects';
+export {
+  listProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+  listProjectTime,
+  createProjectTime,
+  deleteProjectTime,
+} from './projects';
+
 export { hrQueryKeys, asArray } from './hooks';

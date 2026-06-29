@@ -59,11 +59,16 @@ db-design/           # module-roadmap.md (DB plan + jibble mapping)
 Dashboard, Riwayat Absensi, Tinjauan Absensi (approve/reject/clarify/reopen),
 Lokasi & Geofence, Pendaftaran Wajah, Karyawan.
 
-## Roadmap (Fase 2+, stub coming-soon)
+## Live Fase 2 (consume `/api/hr/*`)
 
-Timesheet → Jadwal/Shift → Cuti → Proyek/Aktivitas → Laporan/Export → Kiosk →
-Pengaturan. Tiap modul = approval terpisah + desain DB additive. Detail +
-gap jibble lengkap di `db-design/module-roadmap.md`.
+Timesheet (derived), Cuti/PTO (`hr-leave`), Jadwal/Shift + Proyek/Aktivitas
+(`hr-workforce` — `hr_shifts`/`hr_shift_assignments`/`hr_projects`/
+`hr_project_time_entries`).
+
+## Roadmap (Fase 2+ sisa, stub coming-soon)
+
+Laporan/Export → Kiosk → Pengaturan lanjutan. Tiap modul = approval terpisah +
+desain DB additive. Detail + gap jibble lengkap di `db-design/module-roadmap.md`.
 
 ## Perintah
 

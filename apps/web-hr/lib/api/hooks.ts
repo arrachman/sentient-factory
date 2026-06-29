@@ -20,6 +20,10 @@ import { listTimesheets } from './timesheets';
 import type { TimesheetQuery, TimesheetPayload } from './timesheets';
 import { listLeaveTypes, listLeaveRequests } from './leave';
 import type { LeaveType, LeaveRequestQuery, LeaveRequestPayload } from './leave';
+import { listShifts, listShiftAssignments } from './schedules';
+import type { HrShift, HrShiftAssignment, ShiftAssignmentQuery } from './schedules';
+import { listProjects, listProjectTime } from './projects';
+import type { HrProject, ProjectTimeQuery, ProjectTimePayload } from './projects';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -34,6 +38,10 @@ export const hrQueryKeys = {
   timesheets: (q?: TimesheetQuery) => ['hr', 'timesheets', q ?? {}] as const,
   leaveTypes: ['hr', 'leave', 'types'] as const,
   leaveRequests: (q?: LeaveRequestQuery) => ['hr', 'leave', 'requests', q ?? {}] as const,
+  shifts: ['hr', 'shifts'] as const,
+  shiftAssignments: (q?: ShiftAssignmentQuery) => ['hr', 'shift-assignments', q ?? {}] as const,
+  projects: ['hr', 'projects'] as const,
+  projectTime: (q?: ProjectTimeQuery) => ['hr', 'project-time', q ?? {}] as const,
 } as const;
 
 /** Normalize an array-or-{data} payload into a plain array. */
@@ -121,5 +129,35 @@ export function useLeaveRequests(query?: LeaveRequestQuery) {
   return useQuery<LeaveRequestPayload>({
     queryKey: hrQueryKeys.leaveRequests(query),
     queryFn: () => listLeaveRequests(query),
+  });
+}
+
+export function useShifts() {
+  return useQuery<HrShift[]>({
+    queryKey: hrQueryKeys.shifts,
+    queryFn: async () => asArray<HrShift>(await listShifts()),
+    staleTime: STABLE_STALE_TIME,
+  });
+}
+
+export function useShiftAssignments(query?: ShiftAssignmentQuery) {
+  return useQuery<HrShiftAssignment[]>({
+    queryKey: hrQueryKeys.shiftAssignments(query),
+    queryFn: async () => asArray<HrShiftAssignment>(await listShiftAssignments(query)),
+  });
+}
+
+export function useProjects() {
+  return useQuery<HrProject[]>({
+    queryKey: hrQueryKeys.projects,
+    queryFn: async () => asArray<HrProject>(await listProjects()),
+    staleTime: STABLE_STALE_TIME,
+  });
+}
+
+export function useProjectTime(query?: ProjectTimeQuery) {
+  return useQuery<ProjectTimePayload>({
+    queryKey: hrQueryKeys.projectTime(query),
+    queryFn: () => listProjectTime(query),
   });
 }
