@@ -16,14 +16,14 @@ model User {
   deletedAt    DateTime? @map("deleted_at")
   deletedBy    Int?      @map("deleted_by")
 
-  roles                  UserRole[]
-  departments            UserDepartment[]
-  sessions               Session[]
-  auditLogs              AuditLog[]
-  warehouse              MasterDataWarehouse?    @relation(fields: [warehouseId], references: [id])
-  inventoryLedgers       InventoryLedger[]
-  managerInsights        ManagerInsight[]
-  managerRisks           ManagerRisk[]
+  roles            UserRole[]
+  departments      UserDepartment[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
+  warehouse        MasterDataWarehouse? @relation(fields: [warehouseId], references: [id])
+  inventoryLedgers InventoryLedger[]
+  managerInsights  ManagerInsight[]
+  managerRisks     ManagerRisk[]
 
   @@index([warehouseId])
   @@map("m0_users")

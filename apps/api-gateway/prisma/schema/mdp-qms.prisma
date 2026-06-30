@@ -115,7 +115,7 @@ model MdpQmsInspectionCharacteristic {
   createdById        BigInt?                  @map("created_by_id")
   updatedById        BigInt?                  @map("updated_by_id")
 
-  plan    MdpQmsInspectionPlan    @relation(fields: [planId], references: [id])
+  plan    MdpQmsInspectionPlan     @relation(fields: [planId], references: [id])
   results MdpQmsInspectionResult[]
 
   @@index([planId])
@@ -123,28 +123,28 @@ model MdpQmsInspectionCharacteristic {
 }
 
 model MdpQmsInspection {
-  id                BigInt                 @id @default(autoincrement())
-  code              String                 @unique
-  planId            BigInt?                @map("plan_id")
-  type              MdpQmsInspectionType   @map("type")
-  itemId            BigInt?                @map("item_id") // cross-app -> md_items
-  productionOrderId BigInt?                @map("production_order_id") // cross-domain -> mes_production_orders
-  lotCode           String?                @map("lot_code")
-  lotSize           Decimal?               @map("lot_size") @db.Decimal(19, 4)
-  sampleSize        Decimal?               @map("sample_size") @db.Decimal(19, 4)
+  id                BigInt                  @id @default(autoincrement())
+  code              String                  @unique
+  planId            BigInt?                 @map("plan_id")
+  type              MdpQmsInspectionType    @map("type")
+  itemId            BigInt?                 @map("item_id") // cross-app -> md_items
+  productionOrderId BigInt?                 @map("production_order_id") // cross-domain -> mes_production_orders
+  lotCode           String?                 @map("lot_code")
+  lotSize           Decimal?                @map("lot_size") @db.Decimal(19, 4)
+  sampleSize        Decimal?                @map("sample_size") @db.Decimal(19, 4)
   result            MdpQmsInspectionVerdict @default(PENDING) @map("result")
-  inspectedAt       DateTime               @map("inspected_at") @db.Timestamptz(6)
-  inspectedById     BigInt?                @map("inspected_by_id") // cross-app -> adm_users
-  notes             String?                @map("notes")
-  isActive          Boolean                @default(true) @map("is_active")
-  metadata          Json?                  @map("metadata")
-  deletedAt         DateTime?              @map("deleted_at") @db.Timestamptz(6)
-  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById       BigInt?                @map("created_by_id")
-  updatedById       BigInt?                @map("updated_by_id")
+  inspectedAt       DateTime                @map("inspected_at") @db.Timestamptz(6)
+  inspectedById     BigInt?                 @map("inspected_by_id") // cross-app -> adm_users
+  notes             String?                 @map("notes")
+  isActive          Boolean                 @default(true) @map("is_active")
+  metadata          Json?                   @map("metadata")
+  deletedAt         DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById       BigInt?                 @map("created_by_id")
+  updatedById       BigInt?                 @map("updated_by_id")
 
-  plan            MdpQmsInspectionPlan?   @relation(fields: [planId], references: [id])
+  plan            MdpQmsInspectionPlan?    @relation(fields: [planId], references: [id])
   results         MdpQmsInspectionResult[]
   nonconformances MdpQmsNonconformance[]
 
@@ -218,29 +218,29 @@ model MdpQmsNonconformance {
 }
 
 model MdpQmsCapaAction {
-  id                BigInt           @id @default(autoincrement())
-  code              String           @unique
-  name              String
-  nonconformanceId  BigInt?          @map("nonconformance_id")
-  type              MdpQmsCapaType   @default(CORRECTIVE) @map("type")
-  status            MdpQmsCapaStatus @default(OPEN) @map("status")
-  description       String?          @map("description")
-  rootCause         String?          @map("root_cause")
-  actionPlan        String?          @map("action_plan")
-  assignedToId      BigInt?          @map("assigned_to_id") // cross-app -> adm_users
-  dueDate           DateTime?        @map("due_date") @db.Timestamptz(6)
-  completedAt       DateTime?        @map("completed_at") @db.Timestamptz(6)
-  verifiedById      BigInt?          @map("verified_by_id") // cross-app -> adm_users
-  verifiedAt        DateTime?        @map("verified_at") @db.Timestamptz(6)
-  effectiveness     String?          @map("effectiveness")
-  notes             String?          @map("notes")
-  isActive          Boolean          @default(true) @map("is_active")
-  metadata          Json?            @map("metadata")
-  deletedAt         DateTime?        @map("deleted_at") @db.Timestamptz(6)
-  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById       BigInt?          @map("created_by_id")
-  updatedById       BigInt?          @map("updated_by_id")
+  id               BigInt           @id @default(autoincrement())
+  code             String           @unique
+  name             String
+  nonconformanceId BigInt?          @map("nonconformance_id")
+  type             MdpQmsCapaType   @default(CORRECTIVE) @map("type")
+  status           MdpQmsCapaStatus @default(OPEN) @map("status")
+  description      String?          @map("description")
+  rootCause        String?          @map("root_cause")
+  actionPlan       String?          @map("action_plan")
+  assignedToId     BigInt?          @map("assigned_to_id") // cross-app -> adm_users
+  dueDate          DateTime?        @map("due_date") @db.Timestamptz(6)
+  completedAt      DateTime?        @map("completed_at") @db.Timestamptz(6)
+  verifiedById     BigInt?          @map("verified_by_id") // cross-app -> adm_users
+  verifiedAt       DateTime?        @map("verified_at") @db.Timestamptz(6)
+  effectiveness    String?          @map("effectiveness")
+  notes            String?          @map("notes")
+  isActive         Boolean          @default(true) @map("is_active")
+  metadata         Json?            @map("metadata")
+  deletedAt        DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      BigInt?          @map("created_by_id")
+  updatedById      BigInt?          @map("updated_by_id")
 
   nonconformance MdpQmsNonconformance? @relation(fields: [nonconformanceId], references: [id])
 

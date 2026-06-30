@@ -83,7 +83,7 @@ model MdpWorkCenter {
   createdById       BigInt?   @map("created_by_id")
   updatedById       BigInt?   @map("updated_by_id")
 
-  asset            MdpAsset?               @relation(fields: [assetId], references: [id])
+  asset            MdpAsset?            @relation(fields: [assetId], references: [id])
   operations       MdpOperation[]
   downtimeEvents   MdpDowntimeEvent[]
   productionOrders MdpProductionOrder[]

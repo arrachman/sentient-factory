@@ -550,17 +550,17 @@ model ErpInvDailyCheck {
 }
 
 model ErpInvDailyCheckLine {
-  id           BigInt  @id @default(autoincrement())
-  dailyCheckId BigInt  @map("daily_check_id")
-  itemId       BigInt  @map("item_id") // FK -> md_items
-  quantity     Decimal @map("quantity") @db.Decimal(19, 4)
-  unitId       BigInt  @map("unit_id") // FK -> md_units
-  warehouseId  BigInt? @map("warehouse_id") // FK -> md_warehouses
-  costCenterId BigInt? @map("cost_center_id") // FK -> md_cost_centers
-  notes        String? @map("notes")
+  id           BigInt   @id @default(autoincrement())
+  dailyCheckId BigInt   @map("daily_check_id")
+  itemId       BigInt   @map("item_id") // FK -> md_items
+  quantity     Decimal  @map("quantity") @db.Decimal(19, 4)
+  unitId       BigInt   @map("unit_id") // FK -> md_units
+  warehouseId  BigInt?  @map("warehouse_id") // FK -> md_warehouses
+  costCenterId BigInt?  @map("cost_center_id") // FK -> md_cost_centers
+  notes        String?  @map("notes")
   machineRef   String?  @map("machine_ref")
   workHours    Decimal? @map("work_hours") @db.Decimal(19, 4)
-  lineNo       Int     @map("line_no")
+  lineNo       Int      @map("line_no")
 
   dailyCheck ErpInvDailyCheck @relation(fields: [dailyCheckId], references: [id], onDelete: Cascade)
 

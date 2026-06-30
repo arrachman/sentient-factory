@@ -55,37 +55,37 @@ model ErpTransactionGrid {
 }
 
 model ErpTransactionGridColumn {
-  id        BigInt @id @default(autoincrement())
-  gridId    BigInt @map("grid_id")
-  sortOrder Int    @default(0) @map("sort_order") // "No" column / display order
-  headerText String @map("header_text")
-  dataField String @map("data_field") // standard field key (accountId, amount, …) or custom slot (customText1, …)
-  width     Int    @default(120) @map("width")
-  isVisible   Boolean @default(true) @map("is_visible")
-  isRequired  Boolean @default(false) @map("is_required")
-  isEditable  Boolean @default(true) @map("is_editable")
-  isSkippable Boolean @default(false) @map("is_skippable") // cell skipped during tab/arrow focus navigation
-  kind         String  @default("STANDARD") @map("kind") // STANDARD | CUSTOM
-  dataType     String  @default("TEXT") @map("data_type") // TEXT | NUMBER | DATE | LOOKUP
-  lookupSource String? @map("lookup_source") // for LOOKUP: registry slug (accounts|partners|cost-centers|…); legacy slugs aliased at runtime
-  lookupDefaultFilter Json?   @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"isActive":true}
-  lookupDefaultSort   String? @map("lookup_default_sort") // "field:direction", e.g. "name:asc"
+  id                  BigInt    @id @default(autoincrement())
+  gridId              BigInt    @map("grid_id")
+  sortOrder           Int       @default(0) @map("sort_order") // "No" column / display order
+  headerText          String    @map("header_text")
+  dataField           String    @map("data_field") // standard field key (accountId, amount, …) or custom slot (customText1, …)
+  width               Int       @default(120) @map("width")
+  isVisible           Boolean   @default(true) @map("is_visible")
+  isRequired          Boolean   @default(false) @map("is_required")
+  isEditable          Boolean   @default(true) @map("is_editable")
+  isSkippable         Boolean   @default(false) @map("is_skippable") // cell skipped during tab/arrow focus navigation
+  kind                String    @default("STANDARD") @map("kind") // STANDARD | CUSTOM
+  dataType            String    @default("TEXT") @map("data_type") // TEXT | NUMBER | DATE | LOOKUP
+  lookupSource        String?   @map("lookup_source") // for LOOKUP: registry slug (accounts|partners|cost-centers|…); legacy slugs aliased at runtime
+  lookupDefaultFilter Json?     @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"isActive":true}
+  lookupDefaultSort   String?   @map("lookup_default_sort") // "field:direction", e.g. "name:asc"
   // Per-column field settings (mirror sys_form_fields) — apply to the live entry grid.
-  placeholder       String? @map("placeholder") // cell placeholder shown when empty; null = built-in default
-  defaultValue      String? @map("default_value") // prefilled on a new line row (lookup = id, others = raw string)
-  defaultValueLabel String? @map("default_value_label") // resolved display label for a lookup defaultValue (stored at pick time)
+  placeholder         String?   @map("placeholder") // cell placeholder shown when empty; null = built-in default
+  defaultValue        String?   @map("default_value") // prefilled on a new line row (lookup = id, others = raw string)
+  defaultValueLabel   String?   @map("default_value_label") // resolved display label for a lookup defaultValue (stored at pick time)
   // Semantic column type — single selector that derives all 4 presentation slots below.
-  columnType     String? @map("column_type") // text|number|currency|decimal|percent|date|datetime|checkbox|lookup|textarea|badge|link|discount|stepper|combobox|account_picker|partner_picker
+  columnType          String?   @map("column_type") // text|number|currency|decimal|percent|date|datetime|checkbox|lookup|textarea|badge|link|discount|stepper|combobox|account_picker|partner_picker
   // Presentation/edit slots (allowlist in DTO + FE dropdowns; null = derive from dataType)
-  labelFormatter String? @map("label_formatter") // value format in cell: NONE|NUMBER|DECIMAL|CURRENCY|PERCENT|DATE|DATETIME|BOOLEAN
-  headerRenderer String? @map("header_renderer") // header cell render: DEFAULT|REQUIRED|CENTER|WRAP|HELP
-  cellRenderer   String? @map("cell_renderer") // row cell render: TEXT|NUMERIC|CURRENCY|BADGE|CHECK|LINK|LOOKUP
-  cellEditor     String? @map("cell_editor") // active-cell editor: TEXT|NUMBER|DATE|LOOKUP|TEXTAREA|CHECKBOX|NONE|DISCOUNT|STEPPER|COMBOBOX|ACCOUNT_PICKER|PARTNER_PICKER
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  labelFormatter      String?   @map("label_formatter") // value format in cell: NONE|NUMBER|DECIMAL|CURRENCY|PERCENT|DATE|DATETIME|BOOLEAN
+  headerRenderer      String?   @map("header_renderer") // header cell render: DEFAULT|REQUIRED|CENTER|WRAP|HELP
+  cellRenderer        String?   @map("cell_renderer") // row cell render: TEXT|NUMERIC|CURRENCY|BADGE|CHECK|LINK|LOOKUP
+  cellEditor          String?   @map("cell_editor") // active-cell editor: TEXT|NUMBER|DATE|LOOKUP|TEXTAREA|CHECKBOX|NONE|DISCOUNT|STEPPER|COMBOBOX|ACCOUNT_PICKER|PARTNER_PICKER
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById         BigInt?   @map("created_by_id")
+  updatedById         BigInt?   @map("updated_by_id")
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   grid ErpTransactionGrid @relation(fields: [gridId], references: [id], onDelete: Cascade)
 
