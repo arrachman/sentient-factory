@@ -3,19 +3,24 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, Check, X, Ban } from 'lucide-react';
+import { Check, X, Ban } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/molecules/page-header';
-import { QueryState } from '@/components/molecules/query-state';
-import { Pagination } from '@/components/molecules/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { HrListLayout } from '@/components/organisms/list-layout';
 import { DataTable, type Column } from '@/components/organisms/data-table';
 import { LeaveRequestDialog } from '@/components/pages/leave-request-dialog';
 import { useLeaveRequests } from '@/lib/api/hooks';
 import { applyLeaveAction } from '@/lib/api/leave';
 import type { LeaveRequest, LeaveStatus, LeaveAction } from '@/lib/api/leave';
 
-const TABS: { value: LeaveStatus; label: string }[] = [
+const STATUS_OPTIONS: { value: LeaveStatus; label: string }[] = [
   { value: 'pending', label: 'Menunggu' },
   { value: 'approved', label: 'Disetujui' },
   { value: 'rejected', label: 'Ditolak' },
@@ -37,9 +42,10 @@ export function LeaveView() {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const query = { status, page, limit: 25 };
-  const { data, isLoading, error } = useLeaveRequests(query);
+  const { data, isLoading, error, refetch } = useLeaveRequests(query);
   const rows = (data?.data ?? []) as LeaveRequest[];
   const totalPages = data?.meta?.totalPages ?? 1;
+  const totalRows = data?.meta?.total ?? rows.length;
 
   async function act(id: string, action: LeaveAction) {
     setBusyId(id);
@@ -71,7 +77,11 @@ export function LeaveView() {
     {
       key: 'status',
       header: 'Status',
-      render: (r) => <Badge variant={STATUS_VARIANT[r.status]} dot>{r.status}</Badge>,
+      render: (r) => (
+        <Badge variant={STATUS_VARIANT[r.status]} dot>
+          {r.status}
+        </Badge>
+      ),
     },
     {
       key: 'actions',
@@ -99,34 +109,51 @@ export function LeaveView() {
     },
   ];
 
-  return (
-    <div>
-      <PageHeader
-        title="Cuti"
-        description="Pengajuan & persetujuan cuti karyawan (adaptasi jibble Time Off / PTO)."
-        actions={
-          <Button variant="primary" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4" /> Ajukan Cuti
-          </Button>
-        }
-      />
-      <div className="mb-4 flex gap-1.5">
-        {TABS.map((t) => (
-          <Button
-            key={t.value}
-            size="sm"
-            variant={status === t.value ? 'primary' : 'default'}
-            onClick={() => { setStatus(t.value); setPage(1); }}
-          >
-            {t.label}
-          </Button>
+  const statusFilter = (
+    <Select
+      value={status}
+      onValueChange={(v) => {
+        setStatus(v as LeaveStatus);
+        setPage(1);
+      }}
+    >
+      <SelectTrigger style={{ width: 'auto', minWidth: '9rem' }}>
+        <span style={{ color: 'var(--fg-faint)', marginRight: 2 }}>Status:</span>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {STATUS_OPTIONS.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
         ))}
-      </div>
-      <QueryState isLoading={isLoading} error={error} isEmpty={rows.length === 0}>
-        <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
-        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
-      </QueryState>
+      </SelectContent>
+    </Select>
+  );
+
+  return (
+    <>
+      <HrListLayout
+        title="Cuti"
+        code="LVE"
+        loading={isLoading}
+        error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+        onRefresh={() => refetch()}
+        onAdd={() => setDialogOpen(true)}
+        addLabel="Ajukan Cuti"
+        toolbar={statusFilter}
+        summary={{ metricLabel: 'Pengajuan', rowCount: rows.length, totalCount: totalRows }}
+        pagination={{ page, pageCount: totalPages, totalRows, onPage: setPage }}
+      >
+        {rows.length === 0 ? (
+          <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
+            Tidak ada pengajuan untuk status ini.
+          </div>
+        ) : (
+          <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
+        )}
+      </HrListLayout>
       <LeaveRequestDialog open={dialogOpen} onOpenChange={setDialogOpen} />
-    </div>
+    </>
   );
 }

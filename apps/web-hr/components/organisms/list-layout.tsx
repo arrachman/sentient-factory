@@ -64,13 +64,16 @@ interface HrListLayoutProps {
   code: string;
   loading?: boolean;
   error?: string | null;
-  search: string;
-  onSearch: (q: string) => void;
+  /** Omit to hide the search box (views without a searchable field). */
+  search?: string;
+  onSearch?: (q: string) => void;
   onAdd?: () => void;
   onRefresh: () => void;
   onExport?: () => void;
   addLabel?: string;
   filters?: FilterConfig[];
+  /** Custom filter controls (e.g. date-range inputs) rendered in the filter bar. */
+  toolbar?: React.ReactNode;
   summary?: SummaryConfig;
   pagination?: ListPagination;
   keyboardRows?: KeyboardRowConfig;
@@ -90,6 +93,7 @@ export function HrListLayout({
   onExport,
   addLabel,
   filters,
+  toolbar,
   summary,
   pagination,
   keyboardRows,
@@ -163,7 +167,8 @@ export function HrListLayout({
 
   const hasActiveFilter = filters?.some((f) => f.value !== '');
   const handleReset = () => filters?.forEach((f) => f.onChange(''));
-  const showFilterBar = (filters && filters.length > 0) || !!summary;
+  const showSearch = onSearch !== undefined;
+  const showFilterBar = (filters && filters.length > 0) || !!toolbar || !!summary;
 
   return (
     <div className="page">
@@ -173,16 +178,18 @@ export function HrListLayout({
           <span className="code-tag">{code}</span>
         </h1>
         <div className="page-actions">
-          <div className="search-input">
-            <Icon name="search" size={12} />
-            <input
-              ref={searchRef}
-              placeholder="Cari…"
-              value={search}
-              onChange={(e) => onSearch(e.target.value)}
-            />
-            <Kbd>/</Kbd>
-          </div>
+          {showSearch && (
+            <div className="search-input">
+              <Icon name="search" size={12} />
+              <input
+                ref={searchRef}
+                placeholder="Cari…"
+                value={search ?? ''}
+                onChange={(e) => onSearch?.(e.target.value)}
+              />
+              <Kbd>/</Kbd>
+            </div>
+          )}
           {onExport && (
             <button className="btn" onClick={onExport} title="Export data">
               <Icon name="download" size={12} /> Export
@@ -216,6 +223,8 @@ export function HrListLayout({
               </SelectContent>
             </Select>
           ))}
+
+          {toolbar}
 
           <div style={{ flex: 1 }} />
 

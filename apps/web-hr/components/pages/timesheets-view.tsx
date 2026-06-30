@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { PageHeader } from '@/components/molecules/page-header';
-import { QueryState } from '@/components/molecules/query-state';
-import { Pagination } from '@/components/molecules/pagination';
+import { HrListLayout } from '@/components/organisms/list-layout';
 import { DataTable, type Column } from '@/components/organisms/data-table';
 import { useTimesheets } from '@/lib/api/hooks';
 import { formatMinutes } from '@/lib/api/timesheets';
@@ -25,7 +23,7 @@ export function TimesheetsView() {
   const [dateTo, setDateTo] = useState(todayISO());
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, error } = useTimesheets({
+  const { data, isLoading, error, refetch } = useTimesheets({
     search: search || undefined,
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
@@ -35,6 +33,7 @@ export function TimesheetsView() {
 
   const rows = (data?.data ?? []) as TimesheetRow[];
   const totalPages = data?.meta?.totalPages ?? 1;
+  const totalRows = data?.meta?.total ?? rows.length;
 
   const columns: Column<TimesheetRow>[] = [
     { key: 'employeeCode', header: 'Kode', render: (r) => r.employeeCode ?? '—' },
@@ -68,27 +67,53 @@ export function TimesheetsView() {
     },
   ];
 
-  return (
-    <div>
-      <PageHeader
-        title="Timesheet"
-        description="Rekap jam kerja per karyawan dari sesi absensi — dasar payroll (adaptasi jibble Timesheets)."
+  const dateRange = (
+    <>
+      <Input
+        type="date"
+        value={dateFrom}
+        onChange={(e) => {
+          setDateFrom(e.target.value);
+          setPage(1);
+        }}
+        className="w-40"
       />
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Input
-          placeholder="Cari nama / kode…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="w-56"
-        />
-        <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} className="w-40" />
-        <span className="text-xs text-muted-foreground">s/d</span>
-        <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} className="w-40" />
-      </div>
-      <QueryState isLoading={isLoading} error={error} isEmpty={rows.length === 0}>
+      <span className="text-xs text-muted-foreground">s/d</span>
+      <Input
+        type="date"
+        value={dateTo}
+        onChange={(e) => {
+          setDateTo(e.target.value);
+          setPage(1);
+        }}
+        className="w-40"
+      />
+    </>
+  );
+
+  return (
+    <HrListLayout
+      title="Timesheet"
+      code="TMS"
+      loading={isLoading}
+      error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+      search={search}
+      onSearch={(q) => {
+        setSearch(q);
+        setPage(1);
+      }}
+      onRefresh={() => refetch()}
+      toolbar={dateRange}
+      summary={{ metricLabel: 'Karyawan', rowCount: rows.length, totalCount: totalRows }}
+      pagination={{ page, pageCount: totalPages, totalRows, onPage: setPage }}
+    >
+      {rows.length === 0 ? (
+        <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
+          Tidak ada data timesheet untuk filter ini.
+        </div>
+      ) : (
         <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.appUserId)} />
-        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
-      </QueryState>
-    </div>
+      )}
+    </HrListLayout>
   );
 }

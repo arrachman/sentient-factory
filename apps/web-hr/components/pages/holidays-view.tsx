@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/molecules/page-header';
-import { QueryState } from '@/components/molecules/query-state';
+import { HrListLayout, type FilterConfig } from '@/components/organisms/list-layout';
 import { DataTable, type Column } from '@/components/organisms/data-table';
 import { HolidayDialog } from '@/components/pages/holiday-dialog';
 import { useHolidays } from '@/lib/api/hooks';
@@ -16,7 +15,6 @@ import type { HrHoliday } from '@/lib/api/holidays';
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = [CURRENT_YEAR - 1, CURRENT_YEAR, CURRENT_YEAR + 1];
-
 const WEEKDAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
 function weekdayLabel(iso: string): string {
@@ -27,18 +25,25 @@ function weekdayLabel(iso: string): string {
 export function HolidaysView() {
   const qc = useQueryClient();
   const [year, setYear] = useState(CURRENT_YEAR);
+  const [search, setSearch] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<HrHoliday | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useHolidays({ year });
-  const rows = data ?? [];
+  const { data, isLoading, error, refetch } = useHolidays({ year });
+  const allRows = useMemo(() => data ?? [], [data]);
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return allRows;
+    return allRows.filter(
+      (r) => r.name?.toLowerCase().includes(q) || r.region?.toLowerCase().includes(q),
+    );
+  }, [allRows, search]);
 
   function openCreate() {
     setEditing(null);
     setDialogOpen(true);
   }
-
   function openEdit(holiday: HrHoliday) {
     setEditing(holiday);
     setDialogOpen(true);
@@ -57,6 +62,16 @@ export function HolidaysView() {
       setBusyId(null);
     }
   }
+
+  const filters: FilterConfig[] = [
+    {
+      key: 'year',
+      label: 'Tahun',
+      value: String(year),
+      onChange: (v) => setYear(Number(v)),
+      options: YEARS.map((y) => ({ label: String(y), value: String(y) })),
+    },
+  ];
 
   const columns: Column<HrHoliday>[] = [
     { key: 'holidayDate', header: 'Tanggal', render: (r) => r.holidayDate?.slice(0, 10) ?? '—' },
@@ -96,32 +111,29 @@ export function HolidaysView() {
   ];
 
   return (
-    <div>
-      <PageHeader
+    <>
+      <HrListLayout
         title="Kalender Libur"
-        description="Hari libur nasional & cuti bersama (adaptasi jibble Holiday Calendar). Dipakai perhitungan lembur & timesheet."
-        actions={
-          <Button variant="primary" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Tambah Hari Libur
-          </Button>
-        }
-      />
-      <div className="mb-4 flex gap-1.5">
-        {YEARS.map((y) => (
-          <Button
-            key={y}
-            size="sm"
-            variant={year === y ? 'primary' : 'default'}
-            onClick={() => setYear(y)}
-          >
-            {y}
-          </Button>
-        ))}
-      </div>
-      <QueryState isLoading={isLoading} error={error} isEmpty={rows.length === 0}>
-        <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
-      </QueryState>
+        code="HOL"
+        loading={isLoading}
+        error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+        search={search}
+        onSearch={setSearch}
+        onRefresh={() => refetch()}
+        onAdd={openCreate}
+        addLabel="Tambah Hari Libur"
+        filters={filters}
+        summary={{ metricLabel: 'Hari libur', rowCount: rows.length, totalCount: allRows.length }}
+      >
+        {rows.length === 0 ? (
+          <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
+            {allRows.length === 0 ? 'Belum ada hari libur tahun ini.' : 'Tidak ada hasil untuk filter ini.'}
+          </div>
+        ) : (
+          <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
+        )}
+      </HrListLayout>
       <HolidayDialog open={dialogOpen} onOpenChange={setDialogOpen} holiday={editing} />
-    </div>
+    </>
   );
 }

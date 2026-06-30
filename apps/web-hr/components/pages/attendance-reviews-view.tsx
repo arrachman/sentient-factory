@@ -7,9 +7,14 @@ import { toast } from 'sonner';
 import { Check, X, MessageCircleQuestion } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/molecules/page-header';
-import { QueryState } from '@/components/molecules/query-state';
-import { Pagination } from '@/components/molecules/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { HrListLayout } from '@/components/organisms/list-layout';
 import { DataTable, type Column } from '@/components/organisms/data-table';
 import { useAttendanceReviews, hrQueryKeys } from '@/lib/api/hooks';
 import { applyAttendanceReviewAction } from '@/lib/api/attendance-reviews';
@@ -17,7 +22,7 @@ import type { ReviewStatus, ReviewAction } from '@/lib/api/attendance-reviews';
 
 type ReviewRow = Record<string, unknown>;
 
-const STATUS_TABS: { value: ReviewStatus; label: string }[] = [
+const STATUS_OPTIONS: { value: ReviewStatus; label: string }[] = [
   { value: 'pending', label: 'Pending' },
   { value: 'needs_clarification', label: 'Klarifikasi' },
   { value: 'approved', label: 'Disetujui' },
@@ -39,9 +44,10 @@ export function AttendanceReviewsView() {
   const qc = useQueryClient();
 
   const query = { reviewStatus: status, page, limit: 25 };
-  const { data, isLoading, error } = useAttendanceReviews(query);
+  const { data, isLoading, error, refetch } = useAttendanceReviews(query);
   const rows = (data?.data ?? []) as ReviewRow[];
   const totalPages = data?.meta?.totalPages ?? 1;
+  const totalRows = data?.meta?.total ?? rows.length;
 
   async function act(eventId: string, action: ReviewAction) {
     setBusyId(eventId);
@@ -104,28 +110,46 @@ export function AttendanceReviewsView() {
     },
   ];
 
-  return (
-    <div>
-      <PageHeader
-        title="Tinjauan Absensi"
-        description="Setujui, tolak, atau minta klarifikasi atas absensi yang ditandai (adaptasi jibble Approvals)."
-      />
-      <div className="mb-4 flex gap-1.5">
-        {STATUS_TABS.map((t) => (
-          <Button
-            key={t.value}
-            size="sm"
-            variant={status === t.value ? 'primary' : 'default'}
-            onClick={() => { setStatus(t.value); setPage(1); }}
-          >
-            {t.label}
-          </Button>
+  const statusFilter = (
+    <Select
+      value={status}
+      onValueChange={(v) => {
+        setStatus(v as ReviewStatus);
+        setPage(1);
+      }}
+    >
+      <SelectTrigger style={{ width: 'auto', minWidth: '9rem' }}>
+        <span style={{ color: 'var(--fg-faint)', marginRight: 2 }}>Status:</span>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {STATUS_OPTIONS.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
         ))}
-      </div>
-      <QueryState isLoading={isLoading} error={error} isEmpty={rows.length === 0}>
+      </SelectContent>
+    </Select>
+  );
+
+  return (
+    <HrListLayout
+      title="Tinjauan Absensi"
+      code="REV"
+      loading={isLoading}
+      error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+      onRefresh={() => refetch()}
+      toolbar={statusFilter}
+      summary={{ metricLabel: 'Tinjauan', rowCount: rows.length, totalCount: totalRows }}
+      pagination={{ page, pageCount: totalPages, totalRows, onPage: setPage }}
+    >
+      {rows.length === 0 ? (
+        <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
+          Tidak ada tinjauan untuk status ini.
+        </div>
+      ) : (
         <DataTable columns={columns} rows={rows} rowKey={(r, i) => pick(r, 'id', 'eventId') + i} />
-        <Pagination page={page} totalPages={totalPages} onPage={setPage} />
-      </QueryState>
-    </div>
+      )}
+    </HrListLayout>
   );
 }

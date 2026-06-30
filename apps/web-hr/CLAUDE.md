@@ -188,47 +188,60 @@ ERP §2.7 di-port ke HR (tanpa i18n; reuse `Icon`/`Kbd`/`Select` + CSS Fase-1
 (`/ n ← → j k x Enter`), footer paginasi + hint. **Tabel = `children`** (HR
 `DataTable` atau grid lebih kaya) — layout hanya pegang chrome sekeliling.
 
-**Adopter pilot = Lokasi & Geofence** (`worksites-view.tsx`, code `GEO`):
-search+status filter+summary client-side (list kecil, tanpa server-pagination).
-Pola adopsi: `<HrListLayout title code loading error search onSearch onRefresh
-onAdd filters summary>{table}</HrListLayout>`.
+Props opsional: `search`/`onSearch` (sembunyikan box bila tak dipakai),
+`toolbar` (kontrol filter custom mis. date-range), `filters` (Select generik),
+`pagination` (server-side), `keyboardRows`. Pola adopsi: `<HrListLayout title
+code loading error [search onSearch] onRefresh [onAdd] [filters|toolbar] summary
+[pagination]>{table}</HrListLayout>`.
 
-**Sisa view list belum migrasi** (masih pakai `PageHeader`+`QueryState`+
-`DataTable` lama): employees, holidays, roles, schedules, leave, projects,
-timesheets, attendance-history, reviews, reports. Replikasi pola pilot per view;
-untuk list besar/server-side gunakan prop `pagination` + debounce search ke API
-(ikuti §2.12 ERP). Kebab row-actions + selection/keyboard-row + bulk bar =
-follow-up (butuh port table.tsx kaya + row-actions-menu; `HrListLayout` sudah
-sediakan hook `keyboardRows`).
+**7 view list sudah migrasi** ke `HrListLayout`: worksites (`GEO`), employees
+(`EMP`), holidays (`HOL`, year filter), attendance-history (`ATT`, date-range
+toolbar + server-pagination), timesheets (`TMS`, idem), leave (`LVE`, status
+toolbar + pagination + ajukan), attendance-reviews (`REV`, status toolbar +
+pagination). Search client-side untuk list kecil; server-side (debounce) untuk
+yang ber-pagination.
+
+**4 view sengaja bespoke** (multi-section, BUKAN single §2.7 list — mirip split
+SimpleMaster-vs-bespoke ERP): roles (peran + penugasan), schedules (shift +
+assignment), projects (proyek + time-entry), reports (katalog + filter + hasil).
+Jangan paksa ke `HrListLayout` — mereka punya >1 tabel/seksi.
+
+Follow-up: kebab row-actions + selection/keyboard-row + bulk bar (butuh port
+table.tsx kaya + row-actions-menu; `HrListLayout` sudah sediakan hook
+`keyboardRows`).
 
 ## Disiplin dokumen
 
 Setiap keputusan/perubahan → update file ini atau `db-design/`. Jangan declare
 selesai sebelum dokumen sinkron.
 
-## Workflow vibe coding — commit ke `dev` + build production
+## Workflow vibe coding — commit + build + restart + push (WAJIB, 2026-06-30)
 
-**WAJIB tiap sesi vibe coding selesai** (satuan kerja yang bisa diserahkan):
-commit ke branch `dev` lalu build & deploy ke production. Production web-hr =
-proses `npm run start` (`next start`) detached di **port 3221** (bukan PM2).
+**WAJIB tiap sesi vibe coding selesai** (satuan kerja yang bisa diserahkan),
+jalankan **4 langkah berurutan tanpa kecuali**: **commit → build → restart serve
+→ push**. Production web-hr = proses `npm run start` (`next start`) detached di
+**port 3221** (bukan PM2). Push ke `origin dev` **sudah diizinkan user secara
+standing** (2026-06-30) — lakukan otomatis, tak perlu tanya tiap kali.
 
 Urutan baku (jalankan dari `apps/web-hr/`):
 
 ```bash
-npm run check                       # lint+typecheck+size+test WAJIB hijau dulu
+npm run check                       # 1a. lint+typecheck+size+test WAJIB hijau dulu
 git add -A
-git commit -m "feat(hr): <ringkas>" # branch dev; conventional, JANGAN --no-verify
-git push origin dev                 # hanya bila user mengizinkan push
+git commit -m "feat(hr): <ringkas>" # 1b. branch dev; conventional, JANGAN --no-verify
 
-# build production
-npm run build
+npm run build                       # 2. build production (gagal → STOP, jangan lanjut)
 
-# restart serve di port 3221 (detached) → production ter-update
-fuser -k 3221/tcp 2>/dev/null || true
+fuser -k 3221/tcp 2>/dev/null || true   # 3. restart serve detached → production ter-update
 nohup npm run start > /tmp/web-hr.out 2>&1 &
-curl -sf --max-time 5 http://localhost:3221 >/dev/null && echo "HR up :3221"
+sleep 5 && curl -sf --max-time 5 http://localhost:3221 >/dev/null && echo "HR up :3221"
+
+git push origin dev                 # 4. push (standing-authorized; bukan --force)
 ```
 
-Aturan: (1) `npm run check` gagal → STOP, jangan commit/build. (2) Build gagal →
-jangan restart serve (production lama tetap hidup); perbaiki dulu. (3) Commit ke
-branch lain selain `dev` atau `git push --force` = tanya user dulu.
+Aturan: (1) `npm run check` gagal → STOP, jangan commit/build/push. (2) Build
+gagal → jangan restart serve (production lama tetap hidup) & jangan push; perbaiki
+dulu. (3) `git push --force` atau push ke branch selain `dev` = tetap tanya user.
+(4) Catatan: `next.config.mjs` set `output: 'standalone'` → `next start` memberi
+warning "use node .next/standalone/server.js"; tetap serve normal — lihat
+follow-up bila ingin selaras penuh.
