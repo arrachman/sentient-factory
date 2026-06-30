@@ -1,0 +1,9 @@
+{
+  "label": "Kehadiran",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "title": "Kehadiran",
+    "description": "Modul inti time & attendance: dashboard, absensi, riwayat, tinjauan, lokasi/geofence, wajah, karyawan, dan akses/peran."
+  }
+}
