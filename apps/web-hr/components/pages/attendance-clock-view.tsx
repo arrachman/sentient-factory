@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { PageHeader } from "@/components/molecules/page-header";
 import { FaceEnrollDialog } from "@/components/pages/face-enroll-dialog";
 import {
-  CameraPanel,
-  StatusHero,
-  ActionPanel,
+  StageTopBar,
+  FaceGuide,
+  StageActionDock,
   toDate,
   formatDuration,
   type Coords,
@@ -118,45 +118,46 @@ export function AttendanceClockView() {
     <PageHeader
       title="Absensi Saya"
       code="ATT"
-      description="Clock in / out dengan verifikasi selfie dan lokasi GPS (adaptasi jibble Timer + Verification)."
+      bodyClassName="p-0 overflow-hidden"
     >
-      <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <StatusHero
+      <div className="relative h-full min-h-[480px] w-full overflow-hidden bg-black">
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        {/* subtle vignette so glass overlays stay legible over any frame */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/45" />
+
+        <FaceGuide ready={ready} camError={camError} />
+
+        <StageTopBar
           now={now}
           isClockedIn={isClockedIn}
           isDone={isDone}
           elapsed={elapsed}
           clockInAt={clockInAt}
-          totalMinutes={today?.total_work_minutes ?? null}
+          onEnroll={() => {
+            stopCamera();
+            setEnrollOpen(true);
+          }}
         />
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <CameraPanel
-            videoRef={videoRef}
-            ready={ready}
-            camError={camError}
-            isClockedIn={isClockedIn}
-            onEnroll={() => {
-              stopCamera();
-              setEnrollOpen(true);
-            }}
-          />
-
-          <ActionPanel
-            isClockedIn={isClockedIn}
-            isDone={isDone}
-            clockInAt={clockInAt}
-            clockOutAt={clockOutAt}
-            totalMinutes={today?.total_work_minutes ?? null}
-            worksiteName={worksiteName}
-            coords={coords}
-            geoError={geoError}
-            cameraReady={ready}
-            busy={busy}
-            canClock={canClock}
-            onClock={doClock}
-          />
-        </div>
+        <StageActionDock
+          isClockedIn={isClockedIn}
+          isDone={isDone}
+          clockInAt={clockInAt}
+          clockOutAt={clockOutAt}
+          totalMinutes={today?.total_work_minutes ?? null}
+          worksiteName={worksiteName}
+          coords={coords}
+          geoError={geoError}
+          cameraReady={ready}
+          busy={busy}
+          canClock={canClock}
+          onClock={doClock}
+        />
       </div>
 
       <FaceEnrollDialog

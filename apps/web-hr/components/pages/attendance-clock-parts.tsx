@@ -13,7 +13,6 @@ import {
   ScanFace,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export type Coords = { latitude: number; longitude: number };
 
@@ -55,150 +54,129 @@ export function formatDuration(ms: number): string {
   return h > 0 ? `${h}j ${m}m` : `${m}m`;
 }
 
-// ─── Hero: live clock + contextual status ───────────────────────────────────
+type StatusTone = "live" | "done" | "idle";
 
-export function StatusHero({
+function statusOf(isClockedIn: boolean, isDone: boolean): {
+  tone: StatusTone;
+  Icon: typeof Clock;
+  title: string;
+} {
+  if (isClockedIn) return { tone: "live", Icon: Clock, title: "Sedang bekerja" };
+  if (isDone) return { tone: "done", Icon: CalendarCheck, title: "Sesi selesai" };
+  return { tone: "idle", Icon: LogIn, title: "Belum clock in" };
+}
+
+// ─── Top overlay: status pill (left) + live clock (right) ───────────────────
+
+export function StageTopBar({
   now,
   isClockedIn,
   isDone,
   elapsed,
   clockInAt,
-  totalMinutes,
+  onEnroll,
 }: {
   now: Date;
   isClockedIn: boolean;
   isDone: boolean;
   elapsed: string | null;
   clockInAt: Date | null;
-  totalMinutes: number | null;
-}) {
-  const tone = isClockedIn ? "success" : isDone ? "info" : "neutral";
-  const ring = {
-    success: "bg-success-soft text-success ring-success/20",
-    info: "bg-info-soft text-info ring-info/20",
-    neutral: "bg-accent text-accent-foreground ring-border",
-  }[tone];
-
-  const Icon = isClockedIn ? Clock : isDone ? CalendarCheck : LogIn;
-  const title = isClockedIn
-    ? "Sedang bekerja"
-    : isDone
-      ? "Sesi hari ini selesai"
-      : "Belum clock in";
-  const subtitle = isClockedIn
-    ? `Mulai ${clockInAt ? HM_FMT.format(clockInAt) : "—"}${elapsed ? ` · ${elapsed} berjalan` : ""}`
-    : isDone
-      ? `Total kerja ${typeof totalMinutes === "number" ? formatDuration(totalMinutes * 60_000) : "—"}`
-      : "Lakukan clock in untuk mulai mencatat jam kerja Anda hari ini.";
-
-  return (
-    <div className="flex flex-col items-start justify-between gap-5 rounded-xl border bg-card p-5 shadow-sm sm:flex-row sm:items-center">
-      <div className="flex items-center gap-4">
-        <span
-          className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full ring-1 ${ring}`}
-        >
-          <Icon className="h-6 w-6" />
-        </span>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-base font-semibold leading-tight">
-              {title}
-            </span>
-            {isClockedIn && elapsed && (
-              <Badge variant="success" dot>
-                {elapsed}
-              </Badge>
-            )}
-          </div>
-          <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-      </div>
-
-      <div className="text-left sm:text-right">
-        <div className="font-mono text-4xl font-semibold tabular-nums leading-none tracking-tight">
-          {TIME_FMT.format(now)}
-        </div>
-        <div className="mt-1.5 text-sm capitalize text-muted-foreground">
-          {DATE_FMT.format(now)}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Camera / selfie verification ──────────────────────────────────────────
-
-export function CameraPanel({
-  videoRef,
-  ready,
-  camError,
-  isClockedIn,
-  onEnroll,
-}: {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  ready: boolean;
-  camError: string | null;
-  isClockedIn: boolean;
   onEnroll: () => void;
 }) {
+  const { tone, Icon, title } = statusOf(isClockedIn, isDone);
+  const dot = {
+    live: "bg-emerald-400",
+    done: "bg-sky-400",
+    idle: "bg-white/50",
+  }[tone];
+  const subtitle = isClockedIn
+    ? `Sejak ${clockInAt ? HM_FMT.format(clockInAt) : "—"}${elapsed ? ` · ${elapsed}` : ""}`
+    : isDone
+      ? "Kerja hari ini sudah tercatat"
+      : "Posisikan wajah, lalu clock in";
+
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
-      <div className="relative aspect-video bg-black">
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          className="h-full w-full object-cover"
-        />
-        {ready && (
-          <>
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="h-[68%] w-[42%] rounded-[50%] border-2 border-white/50 shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]" />
-            </div>
-            <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
-              <ScanFace className="h-3.5 w-3.5" /> Verifikasi wajah
-            </span>
-          </>
-        )}
-        {!ready && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/80">
-            {camError ? (
-              <>
-                <Camera className="h-6 w-6 text-white/60" />
-                <p className="max-w-xs px-4 text-center text-sm">{camError}</p>
-              </>
-            ) : (
-              <>
-                <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="text-sm">Menyiapkan kamera…</span>
-              </>
-            )}
-          </div>
-        )}
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 p-4 sm:p-5">
+      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-black/45 px-4 py-2.5 text-white shadow-lg ring-1 ring-white/10 backdrop-blur-md">
+        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10">
+          <Icon className="h-4.5 w-4.5" />
+          <span
+            className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full ${dot} ${tone === "live" ? "animate-pulse" : ""} ring-2 ring-black/50`}
+          />
+        </span>
+        <div className="leading-tight">
+          <div className="text-sm font-semibold">{title}</div>
+          <div className="text-[11px] text-white/65">{subtitle}</div>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Selfie diambil otomatis saat menekan tombol clock
-          {isClockedIn ? " out" : " in"}. Posisikan wajah di dalam bingkai.
-        </p>
+      <div className="flex flex-col items-end gap-2">
+        <div className="pointer-events-auto rounded-2xl bg-black/45 px-4 py-2 text-right text-white shadow-lg ring-1 ring-white/10 backdrop-blur-md">
+          <div className="font-mono text-2xl font-semibold tabular-nums leading-none tracking-tight sm:text-3xl">
+            {TIME_FMT.format(now)}
+          </div>
+          <div className="mt-1 text-[11px] capitalize text-white/65">
+            {DATE_FMT.format(now)}
+          </div>
+        </div>
         <Button
           variant="ghost"
           size="sm"
-          className="shrink-0"
           onClick={onEnroll}
+          className="pointer-events-auto h-8 gap-1.5 rounded-full bg-black/45 px-3 text-xs text-white ring-1 ring-white/10 backdrop-blur-md hover:bg-black/60 hover:text-white"
         >
-          <ScanFace className="h-4 w-4" /> Daftarkan Wajah
+          <ScanFace className="h-3.5 w-3.5" /> Daftarkan Wajah
         </Button>
       </div>
     </div>
   );
 }
 
-// ─── Action card: summary + readiness + clock button ────────────────────────
+// ─── Center: face-alignment guide + camera state ────────────────────────────
 
-export function ActionPanel({
+export function FaceGuide({
+  ready,
+  camError,
+}: {
+  ready: boolean;
+  camError: string | null;
+}) {
+  if (ready) {
+    return (
+      <div className="pointer-events-none absolute inset-0 z-[5] flex items-center justify-center">
+        <div className="relative h-[58%] max-h-[460px] w-[44%] max-w-[360px]">
+          <div className="absolute inset-0 rounded-[50%] border-2 border-white/45 shadow-[0_0_0_9999px_rgba(0,0,0,0.34)]" />
+          <span className="absolute -bottom-9 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-black/55 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+            <ScanFace className="h-3.5 w-3.5" /> Posisikan wajah di dalam bingkai
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-3 text-white/85">
+      {camError ? (
+        <>
+          <Camera className="h-8 w-8 text-white/55" />
+          <p className="max-w-sm px-6 text-center text-sm leading-relaxed">
+            {camError}
+          </p>
+        </>
+      ) : (
+        <>
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="text-sm">Menyiapkan kamera…</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Bottom dock: summary + readiness chips + clock action ──────────────────
+
+export function StageActionDock({
   isClockedIn,
   isDone,
   clockInAt,
@@ -226,92 +204,92 @@ export function ActionPanel({
   onClock: (kind: "in" | "out") => void;
 }) {
   return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
-      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border bg-border text-center">
-        <SummaryCell label="Masuk" value={clockInAt ? HM_FMT.format(clockInAt) : "—"} />
-        <SummaryCell label="Keluar" value={clockOutAt ? HM_FMT.format(clockOutAt) : "—"} />
-        <SummaryCell
-          label="Total"
-          value={
-            typeof totalMinutes === "number"
-              ? formatDuration(totalMinutes * 60_000)
-              : "—"
-          }
-        />
-      </div>
-
-      <div className="space-y-1.5">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-          Kesiapan
-        </p>
-        <ReadinessRow
-          ok={cameraReady}
-          label={cameraReady ? "Kamera siap" : "Menyiapkan kamera…"}
-          icon={<Camera className="h-3.5 w-3.5" />}
-        />
-        <ReadinessRow
-          ok={Boolean(coords)}
-          label={
-            coords
-              ? `Lokasi terkunci (${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`
-              : (geoError ?? "Mengambil lokasi GPS…")
-          }
-          icon={<MapPin className="h-3.5 w-3.5" />}
-        />
-        {worksiteName && (
-          <ReadinessRow
-            ok
-            label={`Worksite: ${worksiteName}`}
-            icon={<MapPin className="h-3.5 w-3.5" />}
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-4 sm:p-5">
+      <div className="pointer-events-auto mx-auto flex w-full max-w-4xl flex-col gap-4 rounded-2xl bg-black/50 p-4 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+        <div className="grid flex-1 grid-cols-3 gap-2">
+          <Stat label="Masuk" value={clockInAt ? HM_FMT.format(clockInAt) : "—"} />
+          <Stat label="Keluar" value={clockOutAt ? HM_FMT.format(clockOutAt) : "—"} />
+          <Stat
+            label="Total"
+            value={
+              typeof totalMinutes === "number"
+                ? formatDuration(totalMinutes * 60_000)
+                : "—"
+            }
           />
-        )}
-      </div>
+        </div>
 
-      <div className="mt-auto space-y-2">
-        {isClockedIn ? (
-          <Button
-            variant="danger"
-            className="h-12 w-full text-sm font-semibold"
-            disabled={!canClock}
-            onClick={() => onClock("out")}
-          >
-            {busy === "out" ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <LogOut className="h-5 w-5" />
-            )}
-            Clock Out
-          </Button>
-        ) : (
-          <Button
-            variant="primary"
-            className="h-12 w-full text-sm font-semibold"
-            disabled={!canClock}
-            onClick={() => onClock("in")}
-          >
-            {busy === "in" ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <LogIn className="h-5 w-5" />
-            )}
-            {isDone ? "Clock In Lagi" : "Clock In"}
-          </Button>
-        )}
+        <div className="hidden w-px self-stretch bg-white/12 sm:block" />
 
-        {!coords && (
-          <p className="text-center text-xs text-muted-foreground">
-            Tombol aktif setelah lokasi GPS terkunci.
-          </p>
-        )}
+        <div className="flex flex-1 flex-col gap-1.5">
+          <Chip
+            ok={cameraReady}
+            icon={<Camera className="h-3.5 w-3.5" />}
+            label={cameraReady ? "Kamera siap" : "Menyiapkan kamera…"}
+          />
+          <Chip
+            ok={Boolean(coords)}
+            icon={<MapPin className="h-3.5 w-3.5" />}
+            label={
+              coords
+                ? `Lokasi terkunci · ${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`
+                : (geoError ?? "Mengambil lokasi GPS…")
+            }
+          />
+          {worksiteName && (
+            <Chip
+              ok
+              icon={<MapPin className="h-3.5 w-3.5" />}
+              label={`Worksite · ${worksiteName}`}
+            />
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1.5 sm:w-56">
+          {isClockedIn ? (
+            <Button
+              variant="danger"
+              className="h-14 w-full text-base font-semibold"
+              disabled={!canClock}
+              onClick={() => onClock("out")}
+            >
+              {busy === "out" ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <LogOut className="h-5 w-5" />
+              )}
+              Clock Out
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              className="h-14 w-full text-base font-semibold"
+              disabled={!canClock}
+              onClick={() => onClock("in")}
+            >
+              {busy === "in" ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <LogIn className="h-5 w-5" />
+              )}
+              {isDone ? "Clock In Lagi" : "Clock In"}
+            </Button>
+          )}
+          {!coords && (
+            <p className="text-center text-[11px] text-white/55">
+              Aktif setelah lokasi GPS terkunci
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function SummaryCell({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-card p-3">
-      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-xl bg-white/8 px-3 py-2 text-center ring-1 ring-white/10">
+      <div className="text-[10px] uppercase tracking-wide text-white/55">
         {label}
       </div>
       <div className="mt-0.5 font-mono text-sm font-semibold tabular-nums">
@@ -321,7 +299,7 @@ function SummaryCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ReadinessRow({
+function Chip({
   ok,
   label,
   icon,
@@ -332,14 +310,12 @@ function ReadinessRow({
 }) {
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className={ok ? "text-success" : "text-muted-foreground"}>
-        {icon}
-      </span>
-      <span className="flex-1 text-foreground/90">{label}</span>
+      <span className={ok ? "text-emerald-400" : "text-white/55"}>{icon}</span>
+      <span className="flex-1 truncate text-white/85">{label}</span>
       {ok ? (
-        <Check className="h-4 w-4 text-success" />
+        <Check className="h-4 w-4 shrink-0 text-emerald-400" />
       ) : (
-        <CircleDashed className="h-4 w-4 animate-pulse text-muted-foreground" />
+        <CircleDashed className="h-4 w-4 shrink-0 animate-pulse text-white/55" />
       )}
     </div>
   );
