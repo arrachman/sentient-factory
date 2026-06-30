@@ -130,4 +130,31 @@ export type {
 } from './kiosk';
 export { listKioskRoster, kioskClock, setKioskPin, clearKioskPin } from './kiosk';
 
+export type {
+  HrHoliday,
+  HolidayQuery,
+  CreateHolidayPayload,
+  UpdateHolidayPayload,
+} from './holidays';
+export { listHolidays, createHoliday, updateHoliday, deleteHoliday } from './holidays';
+
+export type { OvertimePolicy, UpdateOvertimePolicyPayload } from './policy';
+export { getOvertimePolicy, updateOvertimePolicy } from './policy';
+
+export type {
+  HrRole,
+  HrRoleRef,
+  UserRoles,
+  CreateRolePayload,
+  UpdateRolePayload,
+} from './roles';
+export {
+  listRoles,
+  createRole,
+  updateRole,
+  deleteRole,
+  getUserRoles,
+  setUserRoles,
+} from './roles';
+
 export { hrQueryKeys, asArray } from './hooks';

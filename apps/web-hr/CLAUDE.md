@@ -69,12 +69,23 @@ privileged-only), Mode Kiosk (`hr-kiosk` — perangkat bersama dibuka admin; clo
 via PIN per-karyawan `hr_users.kiosk_pin_hash` di-hash scrypt; jalur wajah
 backend-ready via clock-by-appUserId; privileged-only).
 
+## Live "Pengaturan lanjutan" (Fase 2 lanjutan)
+
+Kalender Libur (`hr-holidays` — tabel `hr_holidays` additive; list publik, CRUD
+privileged; dipakai perhitungan lembur/timesheet), Aturan Lembur & Istirahat
+(`hr-policy` — `GET/PUT /hr/policy/overtime`, disimpan di `hr_settings` group
+`overtime` dengan key snake_case fully-qualified, TANPA tabel baru; GET publik,
+PUT privileged), Akses & Peran/RBAC (`hr-roles` — tabel `hr_roles` +
+`hr_user_roles` additive; seed 3 peran sistem HR_ADMIN/MANAGER/EMPLOYEE;
+manajemen peran + penugasan per-karyawan; **enforcement guard belum diwire** —
+endpoint masih pakai `isPrivileged(JWT roles)`).
+
 ## Roadmap (Fase 2+ sisa, stub coming-soon)
 
-Pengaturan lanjutan (overtime/break rules, kalender libur, SSO/2FA, RBAC) + lock
-periode/audit laporan + NFC/offline-sync & jalur wajah kiosk di frontend. Tiap
-modul = approval terpisah + desain DB additive. Detail + gap jibble lengkap di
-`db-design/module-roadmap.md`.
+SSO/2FA (lintas-app, terkopel auth ERP — butuh koordinasi backend platform) +
+lock periode/audit laporan + NFC/offline-sync & jalur wajah kiosk di frontend +
+wiring enforcement RBAC ke guard. Tiap modul = approval terpisah + desain DB
+additive. Detail + gap jibble lengkap di `db-design/module-roadmap.md`.
 
 ## Perintah
 

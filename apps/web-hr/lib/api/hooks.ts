@@ -28,6 +28,12 @@ import { listReportCatalog, getReport } from './reports';
 import type { HrReportCatalogItem, HrReportDataset, HrReportFilters } from './reports';
 import { listKioskRoster } from './kiosk';
 import type { KioskRosterEntry } from './kiosk';
+import { listHolidays } from './holidays';
+import type { HrHoliday, HolidayQuery } from './holidays';
+import { getOvertimePolicy } from './policy';
+import type { OvertimePolicy } from './policy';
+import { listRoles } from './roles';
+import type { HrRole } from './roles';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -49,6 +55,10 @@ export const hrQueryKeys = {
   reportCatalog: ['hr', 'reports', 'catalog'] as const,
   report: (key: string, f?: HrReportFilters) => ['hr', 'reports', key, f ?? {}] as const,
   kioskRoster: ['hr', 'kiosk', 'roster'] as const,
+  holidays: (q?: HolidayQuery) => ['hr', 'holidays', q ?? {}] as const,
+  overtimePolicy: ['hr', 'policy', 'overtime'] as const,
+  roles: ['hr', 'roles'] as const,
+  userRoles: (appUserId: string) => ['hr', 'user-roles', appUserId] as const,
 } as const;
 
 /** Unwrap a {data} envelope or pass through a bare value. */
@@ -202,5 +212,29 @@ export function useKioskRoster() {
   return useQuery<KioskRosterEntry[]>({
     queryKey: hrQueryKeys.kioskRoster,
     queryFn: async () => asArray<KioskRosterEntry>(await listKioskRoster()),
+  });
+}
+
+export function useHolidays(query?: HolidayQuery) {
+  return useQuery<HrHoliday[]>({
+    queryKey: hrQueryKeys.holidays(query),
+    queryFn: async () => asArray<HrHoliday>(await listHolidays(query)),
+    staleTime: STABLE_STALE_TIME,
+  });
+}
+
+export function useOvertimePolicy() {
+  return useQuery<OvertimePolicy>({
+    queryKey: hrQueryKeys.overtimePolicy,
+    queryFn: async () => unwrap<OvertimePolicy>(await getOvertimePolicy()),
+    staleTime: STABLE_STALE_TIME,
+  });
+}
+
+export function useRoles() {
+  return useQuery<HrRole[]>({
+    queryKey: hrQueryKeys.roles,
+    queryFn: async () => asArray<HrRole>(await listRoles()),
+    staleTime: STABLE_STALE_TIME,
   });
 }

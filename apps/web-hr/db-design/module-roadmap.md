@@ -40,6 +40,9 @@ Tabel live: `hr_users`, `hr_worksites`, `hr_user_worksites`,
 | Proyek & Aktivitas | Projects/Activity | ✅ | `GET/POST/PATCH/DELETE /hr/projects`, `GET/POST/DELETE /hr/project-time` — tabel `hr_projects`, `hr_project_time_entries` |
 | Laporan & Export | Reports/Exports | ✅ | `GET /hr/reports` (katalog), `GET /hr/reports/:key`, `GET /hr/reports/:key/export?format=csv\|xlsx` — modul `hr-reports`, derived (tanpa tabel baru), privileged-only. Laporan: rekap kehadiran, jam proyek, rekap cuti |
 | Mode Kiosk | Kiosk + NFC/PIN | ✅ | `GET /hr/kiosk/roster`, `POST /hr/kiosk/clock`, `PUT/DELETE /hr/kiosk/pin/:appUserId` — modul `hr-kiosk`, privileged (device dibuka admin). PIN per-karyawan (`hr_users.kiosk_pin_hash`, scrypt) + jalur wajah backend-ready (clock by appUserId). NFC belum |
+| Kalender Libur | Holiday Calendar | ✅ | `GET/POST/PATCH/DELETE /hr/holidays` — modul `hr-holidays`, tabel `hr_holidays` (additive). List publik, CRUD privileged. Dipakai perhitungan lembur/timesheet |
+| Aturan Lembur & Istirahat | Overtime Tracker | ✅ | `GET/PUT /hr/policy/overtime` — modul `hr-policy`, disimpan di `hr_settings` group `overtime` (key snake_case fully-qualified, TANPA tabel baru). GET publik, PUT privileged |
+| Akses & Peran (RBAC) | People & Groups | ✅ | `GET/POST/PATCH/DELETE /hr/roles` + `GET/PUT /hr/users/:appUserId/roles` — modul `hr-roles`, tabel `hr_roles` + `hr_user_roles` (additive), seed 3 peran sistem (HR_ADMIN/MANAGER/EMPLOYEE). Manajemen + penugasan; enforcement guard belum diwire |
 
 Gap jibble lain (catatan): Selfie-per-entry, Offline mode, Integrasi Chat
 (Slack/Teams), Invoicing/Billing, Live Activity, Productivity/Monitoring/
@@ -54,7 +57,12 @@ Screenshots (⚠️ sensitif privasi — opt-in + transparan), Integrasi payroll
 4. ✅ **Proyek & Aktivitas** (alokasi waktu — modul `hr-workforce`).
 5. ✅ **Laporan & Export** (rekap + XLS/CSV — modul `hr-reports`, derived; lock periode/audit ditunda).
 6. ✅ **Kiosk** (mode UI + PIN — modul `hr-kiosk`; wajah backend-ready, NFC + offline sync ditunda).
-7. **Pengaturan lanjutan** (overtime/break rules, kalender libur, SSO/2FA, RBAC). ← berikutnya
+7. **Pengaturan lanjutan** — sebagian ✅:
+   - ✅ **Kalender Libur** (`hr-holidays`, tabel `hr_holidays`).
+   - ✅ **Aturan Lembur & Istirahat** (`hr-policy`, `hr_settings` group `overtime`, no new table).
+   - ✅ **RBAC eksplisit** (`hr-roles`, tabel `hr_roles` + `hr_user_roles`; manajemen + penugasan, enforcement guard menyusul).
+   - ⬜ **SSO/2FA** (lintas-app, terkopel auth ERP — ditunda, butuh koordinasi backend platform).
+   - ⬜ lock periode/audit laporan, NFC/offline-sync kiosk.
 
 Tiap modul ⬜ = **approval terpisah** sebelum desain DB + endpoint + halaman.
 

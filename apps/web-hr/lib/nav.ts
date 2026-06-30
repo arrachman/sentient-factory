@@ -9,13 +9,16 @@ import {
   MapPin,
   ScanFace,
   Users,
+  ShieldCheck,
   Fingerprint,
   CalendarClock,
   CalendarDays,
+  CalendarX,
   Plane,
   FolderKanban,
   BarChart3,
   MonitorSmartphone,
+  Timer,
   Settings,
 } from 'lucide-react';
 
@@ -47,6 +50,7 @@ export const HR_NAV: HrNavGroup[] = [
       { key: 'worksites', title: 'Lokasi & Geofence', path: '/app/worksites', icon: MapPin, status: 'live' },
       { key: 'face', title: 'Pendaftaran Wajah', path: '/app/face-enrollments', icon: ScanFace, status: 'live' },
       { key: 'employees', title: 'Karyawan', path: '/app/employees', icon: Users, status: 'live' },
+      { key: 'roles', title: 'Akses & Peran', path: '/app/roles', icon: ShieldCheck, status: 'live' },
     ],
   },
   {
@@ -56,6 +60,7 @@ export const HR_NAV: HrNavGroup[] = [
       { key: 'timesheets', title: 'Timesheet', path: '/app/timesheets', icon: CalendarClock, status: 'live' },
       { key: 'schedules', title: 'Jadwal & Shift', path: '/app/schedules', icon: CalendarDays, status: 'live' },
       { key: 'leave', title: 'Cuti', path: '/app/leave', icon: Plane, status: 'live' },
+      { key: 'holidays', title: 'Kalender Libur', path: '/app/holidays', icon: CalendarX, status: 'live' },
       { key: 'projects', title: 'Proyek & Aktivitas', path: '/app/projects', icon: FolderKanban, status: 'live' },
     ],
   },
@@ -65,6 +70,7 @@ export const HR_NAV: HrNavGroup[] = [
     items: [
       { key: 'reports', title: 'Laporan', path: '/app/reports', icon: BarChart3, status: 'live' },
       { key: 'kiosk', title: 'Mode Kiosk', path: '/app/kiosk', icon: MonitorSmartphone, status: 'live' },
+      { key: 'overtime', title: 'Aturan Lembur', path: '/app/overtime', icon: Timer, status: 'live' },
       { key: 'settings', title: 'Pengaturan', path: '/app/settings', icon: Settings, status: 'live' },
     ],
   },
