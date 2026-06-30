@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import * as Icons from 'lucide-react';
 import { Layers, Square, type LucideIcon } from 'lucide-react';
 import { fetchNav, type NavNode } from '@/lib/api';
@@ -50,7 +51,15 @@ function navItems(nodes: NavNode[]): RailItem[] {
  * user's ERP roles → mdp_role_menus → visible menus). Falls back to the static
  * module registry on error or empty response so the shell is never blank.
  */
+/** Active when the current path is the item's route or a child of it. */
+function isActive(pathname: string, href?: string): boolean {
+  if (!href) return false;
+  if (href === '/app') return pathname === '/app';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function DynamicSidebar() {
+  const pathname = usePathname() ?? '';
   const [items, setItems] = useState<RailItem[]>(fallbackItems);
 
   useEffect(() => {
@@ -72,14 +81,20 @@ export function DynamicSidebar() {
       <Link
         href="/app"
         title="Beranda"
-        className="nav-item active"
+        className={`nav-item${isActive(pathname, '/app') ? ' active' : ''}`}
       >
         <Layers size={16} strokeWidth={1.6} />
         <span className="nav-label">Beranda</span>
       </Link>
       {items.map((it) =>
         it.href ? (
-          <Link key={it.key} href={it.href} title={it.title} className="nav-item" data-tip={it.title}>
+          <Link
+            key={it.key}
+            href={it.href}
+            title={it.title}
+            className={`nav-item${isActive(pathname, it.href) ? ' active' : ''}`}
+            data-tip={it.title}
+          >
             <it.Icon size={16} strokeWidth={1.6} />
             <span className="nav-label">{it.title}</span>
           </Link>

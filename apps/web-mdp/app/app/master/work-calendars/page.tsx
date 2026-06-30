@@ -1,13 +1,8 @@
-import type { Metadata } from 'next';
-import { AppShell } from '@/components/templates/app-shell';
-import { WorkCalendarsPage } from '@/components/pages/work-calendars-page';
+import type { Metadata } from "next";
+import { WorkCalendarsPage } from "@/components/pages/work-calendars-page";
 
-export const metadata: Metadata = { title: 'Master · Work Calendar' };
+export const metadata: Metadata = { title: "Master · Work Calendar" };
 
 export default function Page() {
-  return (
-    <AppShell>
-      <WorkCalendarsPage />
-    </AppShell>
-  );
+  return <WorkCalendarsPage />;
 }

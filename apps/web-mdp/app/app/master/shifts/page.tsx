@@ -1,13 +1,8 @@
-import type { Metadata } from 'next';
-import { AppShell } from '@/components/templates/app-shell';
-import { ShiftsPage } from '@/components/pages/shifts-page';
+import type { Metadata } from "next";
+import { ShiftsPage } from "@/components/pages/shifts-page";
 
-export const metadata: Metadata = { title: 'Master · Shift' };
+export const metadata: Metadata = { title: "Master · Shift" };
 
 export default function Page() {
-  return (
-    <AppShell>
-      <ShiftsPage />
-    </AppShell>
-  );
+  return <ShiftsPage />;
 }
