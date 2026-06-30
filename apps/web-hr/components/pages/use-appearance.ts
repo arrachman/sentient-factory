@@ -94,10 +94,10 @@ export function useAppearance(): UseAppearanceResult {
       lang: (stored.lang as Lang) ?? DEFAULTS.lang,
       urlRouting: stored.urlRouting ?? DEFAULTS.urlRouting,
     };
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot server-SSOT hydration (client-only)
     setTw(baseline);
 
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot server-SSOT hydration (client-only)
     getMyPreferences()
       .then((prefs) => {
         if (cancelled || !prefs) {
