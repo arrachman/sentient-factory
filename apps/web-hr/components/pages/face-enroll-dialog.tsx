@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { Camera, RefreshCw, Loader2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Camera, RefreshCw, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogBody,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { useCamera } from '@/lib/use-camera';
-import { createFaceEnrollment } from '@/lib/api/face-enrollments';
-import { hrQueryKeys } from '@/lib/api/hooks';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useCamera } from "@/lib/use-camera";
+import { createFaceEnrollment } from "@/lib/api/face-enrollments";
+import { hrQueryKeys } from "@/lib/api/hooks";
 
 /**
  * Face enrollment capture. Self-enroll when `targetAppUserId` is omitted, or
@@ -34,7 +34,14 @@ export function FaceEnrollDialog({
   subjectName?: string;
 }) {
   const qc = useQueryClient();
-  const { videoRef, ready, error: camError, start, stop, capture } = useCamera();
+  const {
+    videoRef,
+    ready,
+    error: camError,
+    start,
+    stop,
+    capture,
+  } = useCamera();
   const [shot, setShot] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -56,7 +63,7 @@ export function FaceEnrollDialog({
   function takeShot() {
     const data = capture();
     if (!data) {
-      toast.error('Kamera belum siap.');
+      toast.error("Kamera belum siap.");
       return;
     }
     setShot(data);
@@ -64,7 +71,7 @@ export function FaceEnrollDialog({
 
   async function save() {
     if (!shot) {
-      toast.error('Ambil foto wajah dulu.');
+      toast.error("Ambil foto wajah dulu.");
       return;
     }
     setSaving(true);
@@ -72,15 +79,15 @@ export function FaceEnrollDialog({
       await createFaceEnrollment({
         targetAppUserId,
         snapshotDataUrl: shot,
-        faceDetectionMode: 'browser',
-        metadata: { source: 'web-hr', capturedAt: new Date().toISOString() },
+        faceDetectionMode: "browser",
+        metadata: { source: "web-hr", capturedAt: new Date().toISOString() },
       });
-      toast.success('Wajah berhasil didaftarkan.');
+      toast.success("Wajah berhasil didaftarkan.");
       await qc.invalidateQueries({ queryKey: hrQueryKeys.faceEnrollments });
       await qc.invalidateQueries({ queryKey: hrQueryKeys.employees });
       onOpenChange(false);
     } catch (e) {
-      toast.error((e as Error)?.message ?? 'Gagal mendaftarkan wajah.');
+      toast.error((e as Error)?.message ?? "Gagal mendaftarkan wajah.");
     } finally {
       setSaving(false);
     }
@@ -90,19 +97,32 @@ export function FaceEnrollDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Daftarkan Wajah{subjectName ? ` — ${subjectName}` : ''}</DialogTitle>
+          <DialogTitle>
+            Daftarkan Wajah{subjectName ? ` — ${subjectName}` : ""}
+          </DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-3">
           <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
             {shot ? (
-              <img src={shot} alt="Pratinjau wajah" className="h-full w-full object-cover" />
+              <img
+                src={shot}
+                alt="Pratinjau wajah"
+                className="h-full w-full object-cover"
+              />
             ) : (
-              <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
+              <video
+                ref={videoRef}
+                playsInline
+                muted
+                className="h-full w-full object-cover"
+              />
             )}
             {!ready && !shot && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/80">
                 {camError ? (
-                  <p className="max-w-xs px-4 text-center text-sm">{camError}</p>
+                  <p className="max-w-xs px-4 text-center text-sm">
+                    {camError}
+                  </p>
                 ) : (
                   <>
                     <Camera className="h-6 w-6" />
@@ -114,13 +134,17 @@ export function FaceEnrollDialog({
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Posisikan wajah di tengah, pencahayaan cukup, lalu ambil foto. Foto ini
-            jadi referensi verifikasi saat clock-in.
+            Posisikan wajah di tengah, pencahayaan cukup, lalu ambil foto. Foto
+            ini jadi referensi verifikasi saat clock-in.
           </p>
 
           <div className="flex justify-end gap-2">
             {shot ? (
-              <Button variant="default" onClick={() => setShot(null)} disabled={saving}>
+              <Button
+                variant="default"
+                onClick={() => setShot(null)}
+                disabled={saving}
+              >
                 <RefreshCw className="h-4 w-4" /> Ambil ulang
               </Button>
             ) : (
@@ -129,7 +153,8 @@ export function FaceEnrollDialog({
               </Button>
             )}
             <Button variant="primary" onClick={save} disabled={saving || !shot}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null} Daftarkan
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{" "}
+              Daftarkan
             </Button>
           </div>
         </DialogBody>

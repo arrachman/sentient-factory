@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
 // Presentational cards for Setting → Tampilan (HR). Ported from web-erp.
-import { Moon, Sun, Layers, Type, Boxes, Check } from 'lucide-react';
+import { Moon, Sun, Layers, Type, Boxes, Check } from "lucide-react";
 import {
   FONT_PX,
   PALETTE_PACKS,
@@ -14,7 +14,7 @@ import {
   type Lang,
   type Translator,
   type Tweaks,
-} from './appearance-parts';
+} from "./appearance-parts";
 
 export type { Translator };
 
@@ -37,25 +37,25 @@ export function ThemeLanguageCard({
   t: Translator;
 }) {
   return (
-    <SetCard icon={Moon} title={t('Tema')} sub={t('Mode terang atau gelap')}>
-      <SetRow label={t('Mode Tema')} hint={t('Berlaku untuk seluruh aplikasi')}>
+    <SetCard icon={Moon} title={t("Tema")} sub={t("Mode terang atau gelap")}>
+      <SetRow label={t("Mode Tema")} hint={t("Berlaku untuk seluruh aplikasi")}>
         <Seg
           value={theme}
           onChange={(v) => setTheme(v)}
           options={[
-            { v: 'light', label: t('Terang'), icon: Sun },
-            { v: 'dark', label: t('Gelap'), icon: Moon },
+            { v: "light", label: t("Terang"), icon: Sun },
+            { v: "dark", label: t("Gelap"), icon: Moon },
           ]}
         />
       </SetRow>
-      <SetRow label={t('Bahasa')} hint={t('Antarmuka')}>
+      <SetRow label={t("Bahasa")} hint={t("Antarmuka")}>
         <Seg
           value={lang}
-          onChange={(v) => applyTweak('lang', v as Lang)}
+          onChange={(v) => applyTweak("lang", v as Lang)}
           options={[
-            { v: 'id', label: t('Indonesia') },
-            { v: 'en', label: t('English') },
-            { v: 'ja', label: t('Japanese') },
+            { v: "id", label: t("Indonesia") },
+            { v: "en", label: t("English") },
+            { v: "ja", label: t("Japanese") },
           ]}
         />
       </SetRow>
@@ -74,38 +74,46 @@ export function AccentColorCard({
   t: Translator;
 }) {
   return (
-    <SetCard icon={Layers} title={t('Warna Aksen')} sub={t('Paket & warna primer')}>
-      <SetRow label={t('Paket Warna')} hint={t('Set warna siap pakai')}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <SetCard
+      icon={Layers}
+      title={t("Warna Aksen")}
+      sub={t("Paket & warna primer")}
+    >
+      <SetRow label={t("Paket Warna")} hint={t("Set warna siap pakai")}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {PALETTE_PACKS.map((p) => (
             <button
               key={p.v}
               type="button"
-              onClick={() => applyTweak('primary', p.v)}
+              onClick={() => applyTweak("primary", p.v)}
               style={{
-                display: 'flex',
-                alignItems: 'center',
+                display: "flex",
+                alignItems: "center",
                 gap: 8,
-                padding: '7px 10px',
+                padding: "7px 10px",
                 borderRadius: 8,
-                cursor: 'pointer',
-                font: 'inherit',
-                textAlign: 'left',
-                background: primary === p.v ? 'var(--primary-soft)' : 'var(--panel)',
-                border: primary === p.v ? '1px solid var(--primary)' : '1px solid var(--border)',
+                cursor: "pointer",
+                font: "inherit",
+                textAlign: "left",
+                background:
+                  primary === p.v ? "var(--primary-soft)" : "var(--panel)",
+                border:
+                  primary === p.v
+                    ? "1px solid var(--primary)"
+                    : "1px solid var(--border)",
               }}
             >
-              <span style={{ display: 'flex' }}>
+              <span style={{ display: "flex" }}>
                 {p.colors.map((c, i) => (
                   <span
                     key={i}
                     style={{
                       width: 13,
                       height: 13,
-                      borderRadius: '50%',
+                      borderRadius: "50%",
                       background: c,
                       marginLeft: i ? -5 : 0,
-                      boxShadow: '0 0 0 1.5px var(--panel)',
+                      boxShadow: "0 0 0 1.5px var(--panel)",
                     }}
                   />
                 ))}
@@ -113,15 +121,19 @@ export function AccentColorCard({
               <span style={{ lineHeight: 1.2 }}>
                 <span
                   style={{
-                    fontSize: 'calc(12px * var(--font-scale, 1))',
+                    fontSize: "calc(12px * var(--font-scale, 1))",
                     fontWeight: 600,
-                    display: 'block',
-                    color: primary === p.v ? 'var(--primary-soft-fg)' : 'var(--fg)',
+                    display: "block",
+                    color:
+                      primary === p.v ? "var(--primary-soft-fg)" : "var(--fg)",
                   }}
                 >
                   {t(p.label)}
                 </span>
-                <span className="muted" style={{ fontSize: 'calc(10.5px * var(--font-scale, 1))' }}>
+                <span
+                  className="muted"
+                  style={{ fontSize: "calc(10.5px * var(--font-scale, 1))" }}
+                >
                   {t(p.sub)}
                 </span>
               </span>
@@ -129,26 +141,29 @@ export function AccentColorCard({
           ))}
         </div>
       </SetRow>
-      <SetRow label={t('Warna Spesifik')}>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <SetRow label={t("Warna Spesifik")}>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {SWATCHES.map((s) => (
             <button
               key={s.v}
               type="button"
               title={s.label}
-              onClick={() => applyTweak('primary', s.v)}
+              onClick={() => applyTweak("primary", s.v)}
               style={{
                 width: 30,
                 height: 30,
-                borderRadius: '50%',
+                borderRadius: "50%",
                 background: s.c,
-                cursor: 'pointer',
-                border: primary === s.v ? '2px solid var(--fg)' : '2px solid transparent',
-                boxShadow: '0 0 0 1px var(--border)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
+                cursor: "pointer",
+                border:
+                  primary === s.v
+                    ? "2px solid var(--fg)"
+                    : "2px solid transparent",
+                boxShadow: "0 0 0 1px var(--border)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
               }}
             >
               {primary === s.v && <Check size={13} />}
@@ -156,7 +171,7 @@ export function AccentColorCard({
           ))}
         </div>
       </SetRow>
-      <SetRow label={t('Aksen Aktif')}>
+      <SetRow label={t("Aksen Aktif")}>
         <span className="pill primary">
           <span className="dot" />
           {t(SWATCHES.find((s) => s.v === primary)?.label || primary)}
@@ -177,22 +192,29 @@ export function FontScaleCard({
   t: Translator;
 }) {
   return (
-    <SetCard icon={Type} title={t('Ukuran Font')} sub={t('Skala teks antarmuka')}>
-      <SetRow label={t('Ukuran')} hint={t('Kecil · Normal · Besar · Ekstra Besar')}>
+    <SetCard
+      icon={Type}
+      title={t("Ukuran Font")}
+      sub={t("Skala teks antarmuka")}
+    >
+      <SetRow
+        label={t("Ukuran")}
+        hint={t("Kecil · Normal · Besar · Ekstra Besar")}
+      >
         <Seg
           value={fontScale}
-          onChange={(v) => applyTweak('fontScale', v as FontScale)}
+          onChange={(v) => applyTweak("fontScale", v as FontScale)}
           options={[
-            { v: 'sm', label: t('Kecil') },
-            { v: 'base', label: t('Normal') },
-            { v: 'lg', label: t('Besar') },
-            { v: 'xl', label: t('Ekstra Besar') },
+            { v: "sm", label: t("Kecil") },
+            { v: "base", label: t("Normal") },
+            { v: "lg", label: t("Besar") },
+            { v: "xl", label: t("Ekstra Besar") },
           ]}
         />
       </SetRow>
-      <SetRow label={t('Pratinjau')}>
+      <SetRow label={t("Pratinjau")}>
         <span style={{ fontSize: FONT_PX[fontScale] || 13 }}>
-          {t('Contoh teks tabel & form')} — {fontScale}
+          {t("Contoh teks tabel & form")} — {fontScale}
         </span>
       </SetRow>
     </SetCard>
@@ -210,14 +232,21 @@ export function DensityCard({
   t: Translator;
 }) {
   return (
-    <SetCard icon={Boxes} title={t('Layout')} sub={t('Kepadatan tampilan tabel & list')}>
-      <SetRow label={t('Kepadatan')} hint={t('Compact memuat lebih banyak baris')}>
+    <SetCard
+      icon={Boxes}
+      title={t("Layout")}
+      sub={t("Kepadatan tampilan tabel & list")}
+    >
+      <SetRow
+        label={t("Kepadatan")}
+        hint={t("Compact memuat lebih banyak baris")}
+      >
         <Seg
           value={density}
-          onChange={(v) => applyTweak('density', v as Density)}
+          onChange={(v) => applyTweak("density", v as Density)}
           options={[
-            { v: 'compact', label: t('Compact') },
-            { v: 'comfortable', label: t('Comfortable') },
+            { v: "compact", label: t("Compact") },
+            { v: "comfortable", label: t("Comfortable") },
           ]}
         />
       </SetRow>

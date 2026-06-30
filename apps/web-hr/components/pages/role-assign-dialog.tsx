@@ -1,24 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogBody,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { QueryState } from '@/components/molecules/query-state';
-import { useRoles, hrQueryKeys } from '@/lib/api/hooks';
-import { getUserRoles, setUserRoles } from '@/lib/api/roles';
-import type { UserRoles } from '@/lib/api/roles';
-import type { HrEmployee } from '@/lib/api/employees';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { QueryState } from "@/components/molecules/query-state";
+import { useRoles, hrQueryKeys } from "@/lib/api/hooks";
+import { getUserRoles, setUserRoles } from "@/lib/api/roles";
+import type { UserRoles } from "@/lib/api/roles";
+import type { HrEmployee } from "@/lib/api/employees";
 
 function unwrap<T>(payload: T | { data: T }): T {
-  if (payload && typeof payload === 'object' && 'data' in payload) {
+  if (payload && typeof payload === "object" && "data" in payload) {
     return (payload as { data: T }).data;
   }
   return payload as T;
@@ -35,7 +35,7 @@ export function RoleAssignDialog({
 }) {
   const qc = useQueryClient();
   const { data: roles = [] } = useRoles();
-  const appUserId = employee ? String(employee.appUserId) : '';
+  const appUserId = employee ? String(employee.appUserId) : "";
 
   const { data, isLoading, error } = useQuery<UserRoles>({
     queryKey: hrQueryKeys.userRoles(appUserId),
@@ -44,14 +44,14 @@ export function RoleAssignDialog({
   });
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [syncKey, setSyncKey] = useState('');
+  const [syncKey, setSyncKey] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Seed local selection from server roles whenever the target user (or their
   // server-side roles) change. Adjusting state during render is React's
   // recommended alternative to a sync effect.
   if (data) {
-    const key = `${appUserId}|${data.roles.map((r) => r.id).join(',')}`;
+    const key = `${appUserId}|${data.roles.map((r) => r.id).join(",")}`;
     if (key !== syncKey) {
       setSyncKey(key);
       setSelected(new Set(data.roles.map((r) => String(r.id))));
@@ -72,12 +72,14 @@ export function RoleAssignDialog({
     setSaving(true);
     try {
       await setUserRoles(appUserId, Array.from(selected).map(Number));
-      toast.success('Peran karyawan diperbarui.');
-      await qc.invalidateQueries({ queryKey: hrQueryKeys.userRoles(appUserId) });
+      toast.success("Peran karyawan diperbarui.");
+      await qc.invalidateQueries({
+        queryKey: hrQueryKeys.userRoles(appUserId),
+      });
       await qc.invalidateQueries({ queryKey: hrQueryKeys.roles });
       onOpenChange(false);
     } catch (e) {
-      toast.error((e as Error)?.message ?? 'Gagal menyimpan peran.');
+      toast.error((e as Error)?.message ?? "Gagal menyimpan peran.");
     } finally {
       setSaving(false);
     }
@@ -87,10 +89,16 @@ export function RoleAssignDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Peran — {employee?.name ?? employee?.username ?? ''}</DialogTitle>
+          <DialogTitle>
+            Peran — {employee?.name ?? employee?.username ?? ""}
+          </DialogTitle>
         </DialogHeader>
         <DialogBody>
-          <QueryState isLoading={isLoading} error={error} isEmpty={roles.length === 0}>
+          <QueryState
+            isLoading={isLoading}
+            error={error}
+            isEmpty={roles.length === 0}
+          >
             <div className="space-y-1">
               {roles.map((role) => (
                 <label
@@ -104,10 +112,16 @@ export function RoleAssignDialog({
                     onChange={() => toggle(String(role.id))}
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium">{role.name}</span>
-                    <span className="block font-mono text-[11px] text-muted-foreground">{role.code}</span>
+                    <span className="block text-sm font-medium">
+                      {role.name}
+                    </span>
+                    <span className="block font-mono text-[11px] text-muted-foreground">
+                      {role.code}
+                    </span>
                     {role.description && (
-                      <span className="block text-xs text-muted-foreground">{role.description}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {role.description}
+                      </span>
                     )}
                   </span>
                 </label>
@@ -115,11 +129,20 @@ export function RoleAssignDialog({
             </div>
           </QueryState>
           <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => onOpenChange(false)}
+            >
               Batal
             </Button>
-            <Button type="button" variant="primary" disabled={saving} onClick={save}>
-              {saving ? 'Menyimpan…' : 'Simpan'}
+            <Button
+              type="button"
+              variant="primary"
+              disabled={saving}
+              onClick={save}
+            >
+              {saving ? "Menyimpan…" : "Simpan"}
             </Button>
           </div>
         </DialogBody>

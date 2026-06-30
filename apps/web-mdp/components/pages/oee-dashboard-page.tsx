@@ -74,19 +74,23 @@ export function OeeDashboardPage() {
   const s = report?.summary;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">OEE Overlay</h1>
-          <p className="text-sm text-muted-foreground">
-            Overall Equipment Effectiveness = Ketersediaan × Performa × Kualitas. Metrik turunan
-            dari MES (downtime/log) + kalender kerja + QMS — bukan modul, tanpa tabel sendiri.
-          </p>
+    <div className="page">
+      <div className="page-header">
+        <h1 className="page-title">
+          OEE Overlay
+          <span className="code-tag">OEE</span>
+        </h1>
+        <div className="page-actions">
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={cn('size-4', loading && 'animate-spin')} /> Refresh
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-          <RefreshCw className={cn('size-4', loading && 'animate-spin')} /> Refresh
-        </Button>
       </div>
+      <div className="page-body flex flex-col gap-4 overflow-auto p-4">
+        <p className="text-sm text-muted-foreground">
+          Overall Equipment Effectiveness = Ketersediaan × Performa × Kualitas. Metrik turunan
+          dari MES (downtime/log) + kalender kerja + QMS — bukan modul, tanpa tabel sendiri.
+        </p>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-card p-3">
         <Field label="Dari">
@@ -153,6 +157,7 @@ export function OeeDashboardPage() {
           belum cukup: kalender kerja (planned time) atau ideal cycle time work center belum diisi.
         </p>
       )}
+      </div>
     </div>
   );
 }

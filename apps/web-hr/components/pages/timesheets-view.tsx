@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { HrListLayout } from '@/components/organisms/list-layout';
-import { DataTable, type Column } from '@/components/organisms/data-table';
-import { useTimesheets } from '@/lib/api/hooks';
-import { formatMinutes } from '@/lib/api/timesheets';
-import type { TimesheetRow } from '@/lib/api/timesheets';
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { HrListLayout } from "@/components/organisms/list-layout";
+import { DataTable, type Column } from "@/components/organisms/data-table";
+import { useTimesheets } from "@/lib/api/hooks";
+import { formatMinutes } from "@/lib/api/timesheets";
+import type { TimesheetRow } from "@/lib/api/timesheets";
 
 function firstOfMonthISO(): string {
   const d = new Date();
@@ -18,7 +18,7 @@ function todayISO(): string {
 }
 
 export function TimesheetsView() {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState(firstOfMonthISO());
   const [dateTo, setDateTo] = useState(todayISO());
   const [page, setPage] = useState(1);
@@ -36,18 +36,33 @@ export function TimesheetsView() {
   const totalRows = data?.meta?.total ?? rows.length;
 
   const columns: Column<TimesheetRow>[] = [
-    { key: 'employeeCode', header: 'Kode', render: (r) => r.employeeCode ?? '—' },
-    { key: 'fullName', header: 'Karyawan', render: (r) => r.fullName ?? r.username ?? '—' },
-    { key: 'daysPresent', header: 'Hari Hadir', className: 'tabular-nums', render: (r) => r.daysPresent },
     {
-      key: 'totalMinutes',
-      header: 'Total Jam',
-      className: 'tabular-nums',
-      render: (r) => <span className="font-medium">{formatMinutes(r.totalMinutes)}</span>,
+      key: "employeeCode",
+      header: "Kode",
+      render: (r) => r.employeeCode ?? "—",
     },
     {
-      key: 'holidayMinutes',
-      header: 'Jam Libur',
+      key: "fullName",
+      header: "Karyawan",
+      render: (r) => r.fullName ?? r.username ?? "—",
+    },
+    {
+      key: "daysPresent",
+      header: "Hari Hadir",
+      className: "tabular-nums",
+      render: (r) => r.daysPresent,
+    },
+    {
+      key: "totalMinutes",
+      header: "Total Jam",
+      className: "tabular-nums",
+      render: (r) => (
+        <span className="font-medium">{formatMinutes(r.totalMinutes)}</span>
+      ),
+    },
+    {
+      key: "holidayMinutes",
+      header: "Jam Libur",
       render: (r) =>
         (r.holidayMinutes ?? 0) > 0 ? (
           <Badge variant="default">{formatMinutes(r.holidayMinutes)}</Badge>
@@ -56,8 +71,8 @@ export function TimesheetsView() {
         ),
     },
     {
-      key: 'overtimeMinutes',
-      header: 'Lembur',
+      key: "overtimeMinutes",
+      header: "Lembur",
       render: (r) =>
         r.overtimeMinutes > 0 ? (
           <Badge variant="warn">{formatMinutes(r.overtimeMinutes)}</Badge>
@@ -96,7 +111,7 @@ export function TimesheetsView() {
       title="Timesheet"
       code="TMS"
       loading={isLoading}
-      error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+      error={error ? ((error as Error)?.message ?? "Terjadi kesalahan.") : null}
       search={search}
       onSearch={(q) => {
         setSearch(q);
@@ -104,7 +119,11 @@ export function TimesheetsView() {
       }}
       onRefresh={() => refetch()}
       toolbar={dateRange}
-      summary={{ metricLabel: 'Karyawan', rowCount: rows.length, totalCount: totalRows }}
+      summary={{
+        metricLabel: "Karyawan",
+        rowCount: rows.length,
+        totalCount: totalRows,
+      }}
       pagination={{ page, pageCount: totalPages, totalRows, onPage: setPage }}
     >
       {rows.length === 0 ? (
@@ -112,7 +131,11 @@ export function TimesheetsView() {
           Tidak ada data timesheet untuk filter ini.
         </div>
       ) : (
-        <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.appUserId)} />
+        <DataTable
+          columns={columns}
+          rows={rows}
+          rowKey={(r) => String(r.appUserId)}
+        />
       )}
     </HrListLayout>
   );

@@ -4,15 +4,22 @@
 // chrome CSS (.sidebar / .nav-item / .flyout). Modules come from the role-
 // filtered menu endpoint (useHrMyMenus); the static HR_NAV is the fallback so
 // the rail is never blank while the request is in flight or on error.
+//
+// Honors the Setting → Tampilan appearance config applied to <html>:
+//   data-sidebar='label'        → CSS shows the `.nav-label` text (icon + label)
+//   data-sidebar-menu='accordion' → submenu expands inline below the module
+//   data-sidebar-menu='flyout'    → submenu opens as a hover flyout (default)
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { LucideIcon } from 'lucide-react';
-import { Clock4, Users, BarChart3, Square } from 'lucide-react';
+import { Clock4, Users, BarChart3, Square, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HR_NAV, resolveIcon, toAppPath } from '@/lib/nav';
 import { useHrMyMenus } from '@/lib/api/hooks';
 import type { HrMenuNode } from '@/lib/api/sys-menus';
+
+type SidebarMenuMode = 'flyout' | 'accordion';
 
 interface SbItem {
   path: string; // full /app/... path
@@ -64,17 +71,46 @@ function isItemActive(pathname: string, path: string): boolean {
   return pathname === path || pathname.startsWith(`${path}/`);
 }
 
+/** Reads the live `data-sidebar-menu` attribute on <html>, re-rendering on change. */
+function useSidebarMenuMode(): SidebarMenuMode {
+  const [mode, setMode] = useState<SidebarMenuMode>('flyout');
+  useEffect(() => {
+    const el = document.documentElement;
+    const read = () =>
+      setMode(el.getAttribute('data-sidebar-menu') === 'accordion' ? 'accordion' : 'flyout');
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(el, { attributes: true, attributeFilter: ['data-sidebar-menu'] });
+    return () => obs.disconnect();
+  }, []);
+  return mode;
+}
+
 export function DynamicSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data } = useHrMyMenus();
   const modules = data && data.length > 0 ? modulesFromMenus(data) : modulesFromNav();
+  const menuMode = useSidebarMenuMode();
 
+  // Flyout state (hover-driven)
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [openTop, setOpenTop] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Accordion state — which module is expanded. Defaults to the active module.
+  const activeKey =
+    modules.find((m) => m.items.some((it) => isItemActive(pathname, it.path)))?.key ?? null;
+  const [expandedKey, setExpandedKey] = useState<string | null>(activeKey);
+
+  // When navigating to a different module, auto-expand it in accordion mode.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sync expanded module to the active route
+    if (menuMode === 'accordion' && activeKey) setExpandedKey(activeKey);
+  }, [menuMode, activeKey]);
+
   const enter = (e: React.MouseEvent<HTMLElement>, key: string) => {
+    if (menuMode === 'accordion') return;
     if (timer.current) clearTimeout(timer.current);
     setOpenTop(e.currentTarget.getBoundingClientRect().top);
     setOpenKey(key);
@@ -97,7 +133,7 @@ export function DynamicSidebar() {
 
   return (
     <>
-      <nav className="sidebar" onMouseLeave={leave}>
+      <nav className="sidebar" onMouseLeave={menuMode === 'flyout' ? leave : undefined}>
         <a
           href={toAppPath('/dashboard')}
           className="nav-item"
@@ -105,10 +141,50 @@ export function DynamicSidebar() {
           onClick={(e) => go(e, toAppPath('/dashboard'))}
         >
           <Clock4 size={16} strokeWidth={1.6} />
+          <span className="nav-label">Senti HR</span>
         </a>
         <div className="nav-divider" />
         {modules.map((m) => {
           const active = m.items.some((it) => isItemActive(pathname, it.path));
+
+          if (menuMode === 'accordion') {
+            const isExpanded = expandedKey === m.key;
+            return (
+              <div key={m.key} style={{ display: 'contents' }}>
+                <div
+                  className={cn('nav-item', active && 'active')}
+                  data-tip={m.title}
+                  onClick={() => setExpandedKey(isExpanded ? null : m.key)}
+                >
+                  <m.Icon size={16} strokeWidth={1.6} />
+                  <span className="nav-label" style={{ flex: 1 }}>
+                    {m.title}
+                  </span>
+                  {isExpanded ? (
+                    <ChevronUp size={12} strokeWidth={1.6} style={{ opacity: 0.5, flexShrink: 0 }} />
+                  ) : (
+                    <ChevronDown size={12} strokeWidth={1.6} style={{ opacity: 0.5, flexShrink: 0 }} />
+                  )}
+                </div>
+                {isExpanded && (
+                  <div className="accordion-submenu">
+                    {m.items.map((it) => (
+                      <a
+                        key={it.path}
+                        href={it.path}
+                        className={cn('accordion-item', isItemActive(pathname, it.path) && 'active')}
+                        onClick={(e) => go(e, it.path)}
+                      >
+                        <it.Icon size={14} strokeWidth={1.6} />
+                        <span>{it.title}</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <div
               key={m.key}
@@ -117,12 +193,13 @@ export function DynamicSidebar() {
               onMouseEnter={(e) => enter(e, m.key)}
             >
               <m.Icon size={16} strokeWidth={1.6} />
+              <span className="nav-label">{m.title}</span>
             </div>
           );
         })}
       </nav>
 
-      {openModule && (
+      {menuMode === 'flyout' && openModule && (
         <div
           className="flyout"
           style={{

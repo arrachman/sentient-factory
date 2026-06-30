@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { HrListLayout } from '@/components/organisms/list-layout';
-import { DataTable, type Column } from '@/components/organisms/data-table';
-import { useAttendanceHistory } from '@/lib/api/hooks';
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { HrListLayout } from "@/components/organisms/list-layout";
+import { DataTable, type Column } from "@/components/organisms/data-table";
+import { useAttendanceHistory } from "@/lib/api/hooks";
 
 // History rows are dynamic from the backend; render the most common fields and
 // fall back gracefully. Keys cover both camelCase and snake_case shapes.
@@ -13,23 +13,43 @@ type HistoryRow = Record<string, unknown>;
 function pick(row: HistoryRow, ...keys: string[]): string {
   for (const k of keys) {
     const v = row[k];
-    if (v !== undefined && v !== null && v !== '') return String(v);
+    if (v !== undefined && v !== null && v !== "") return String(v);
   }
-  return '—';
+  return "—";
 }
 
 const columns: Column<HistoryRow>[] = [
-  { key: 'name', header: 'Karyawan', render: (r) => pick(r, 'name', 'employeeName', 'fullName') },
-  { key: 'date', header: 'Tanggal', render: (r) => pick(r, 'workDate', 'work_date', 'date') },
-  { key: 'in', header: 'Clock In', render: (r) => pick(r, 'clockInAt', 'clock_in_at', 'clockIn') },
-  { key: 'out', header: 'Clock Out', render: (r) => pick(r, 'clockOutAt', 'clock_out_at', 'clockOut') },
-  { key: 'status', header: 'Status', render: (r) => pick(r, 'status', 'reviewStatus', 'state') },
+  {
+    key: "name",
+    header: "Karyawan",
+    render: (r) => pick(r, "name", "employeeName", "fullName"),
+  },
+  {
+    key: "date",
+    header: "Tanggal",
+    render: (r) => pick(r, "workDate", "work_date", "date"),
+  },
+  {
+    key: "in",
+    header: "Clock In",
+    render: (r) => pick(r, "clockInAt", "clock_in_at", "clockIn"),
+  },
+  {
+    key: "out",
+    header: "Clock Out",
+    render: (r) => pick(r, "clockOutAt", "clock_out_at", "clockOut"),
+  },
+  {
+    key: "status",
+    header: "Status",
+    render: (r) => pick(r, "status", "reviewStatus", "state"),
+  },
 ];
 
 export function AttendanceHistoryView() {
-  const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error, refetch } = useAttendanceHistory({
@@ -73,7 +93,7 @@ export function AttendanceHistoryView() {
       title="Riwayat Absensi"
       code="ATT"
       loading={isLoading}
-      error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+      error={error ? ((error as Error)?.message ?? "Terjadi kesalahan.") : null}
       search={search}
       onSearch={(q) => {
         setSearch(q);
@@ -81,7 +101,11 @@ export function AttendanceHistoryView() {
       }}
       onRefresh={() => refetch()}
       toolbar={dateRange}
-      summary={{ metricLabel: 'Catatan', rowCount: rows.length, totalCount: totalRows }}
+      summary={{
+        metricLabel: "Catatan",
+        rowCount: rows.length,
+        totalCount: totalRows,
+      }}
       pagination={{ page, pageCount: totalPages, totalRows, onPage: setPage }}
     >
       {rows.length === 0 ? (

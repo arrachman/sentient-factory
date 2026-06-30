@@ -1,51 +1,56 @@
-'use client';
+"use client";
 
-import { Eye, TrendingUp, Plus, Download } from 'lucide-react';
-import { Sparkline } from '@/components/atoms/sparkline';
-import type { Translator } from '@/lib/i18n';
+import { Eye, TrendingUp, Plus, Download } from "lucide-react";
+import { Sparkline } from "@/components/atoms/sparkline";
+import type { Translator } from "@/lib/i18n";
 
 const PREVIEW_SERIES = [128, 134, 131, 140, 137, 145, 142, 148, 151, 156];
 
 /** Static "Pratinjau Langsung" card — reflects live tweaks via CSS vars. */
 export function LivePreviewCard({ t }: { t: Translator }) {
   return (
-    <div className="card" style={{ gridColumn: 'span 12' }}>
+    <div className="card" style={{ gridColumn: "span 12" }}>
       <div className="card-h">
         <span
           style={{
-            display: 'inline-flex',
+            display: "inline-flex",
             width: 24,
             height: 24,
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'var(--primary-soft)',
-            color: 'var(--primary-soft-fg)',
+            alignItems: "center",
+            justifyContent: "center",
+            background: "var(--primary-soft)",
+            color: "var(--primary-soft-fg)",
             borderRadius: 5,
           }}
         >
           <Eye size={13} />
         </span>
         <div>
-          <div className="title">{t('Pratinjau Langsung')}</div>
+          <div className="title">{t("Pratinjau Langsung")}</div>
           <div className="sub" style={{ marginTop: 1 }}>
-            {t('Perubahan diterapkan seketika')}
+            {t("Perubahan diterapkan seketika")}
           </div>
         </div>
       </div>
       <div
         className="card-b"
-        style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-start' }}
+        style={{
+          display: "flex",
+          gap: 14,
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+        }}
       >
         <div
           style={{
-            flex: '1 1 220px',
-            border: '1px solid var(--border)',
+            flex: "1 1 220px",
+            border: "1px solid var(--border)",
             borderRadius: 8,
             padding: 14,
           }}
         >
           <div className="kpi" style={{ padding: 0 }}>
-            <div className="label">{t('Kehadiran hari ini')}</div>
+            <div className="label">{t("Kehadiran hari ini")}</div>
             <div className="value">156 orang</div>
             <div className="delta up">
               <TrendingUp size={11} /> +4,8%
@@ -55,38 +60,48 @@ export function LivePreviewCard({ t }: { t: Translator }) {
             </div>
           </div>
         </div>
-        <div style={{ flex: '1 1 240px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div
+          style={{
+            flex: "1 1 240px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <div style={{ display: "flex", gap: 8 }}>
             <button type="button" className="btn primary">
-              <Plus size={12} /> {t('Tambah')}
+              <Plus size={12} /> {t("Tambah")}
             </button>
             <button type="button" className="btn">
-              <Download size={12} /> {t('Export')}
+              <Download size={12} /> {t("Export")}
             </button>
             <button type="button" className="btn ghost">
-              {t('Batal')}
+              {t("Batal")}
             </button>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: "flex", gap: 8 }}>
             <span className="pill success">
               <span className="dot" />
-              {t('Hadir')}
+              {t("Hadir")}
             </span>
             <span className="pill warn">
               <span className="dot" />
-              {t('Terlambat')}
+              {t("Terlambat")}
             </span>
             <span className="pill primary">
               <span className="dot" />
-              {t('Izin')}
+              {t("Izin")}
             </span>
           </div>
-          <table className="tbl" style={{ border: '1px solid var(--border)', borderRadius: 8 }}>
+          <table
+            className="tbl"
+            style={{ border: "1px solid var(--border)", borderRadius: 8 }}
+          >
             <thead>
               <tr>
-                <th>{t('No')}</th>
-                <th>{t('Nama')}</th>
-                <th className="col-num">{t('Total')}</th>
+                <th>{t("No")}</th>
+                <th>{t("Nama")}</th>
+                <th className="col-num">{t("Total")}</th>
               </tr>
             </thead>
             <tbody>

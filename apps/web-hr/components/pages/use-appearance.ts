@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useTheme } from 'next-themes';
-import { makeTranslator, type Translator } from '@/lib/i18n';
-import { notify } from '@/lib/feedback';
+import * as React from "react";
+import { useTheme } from "next-themes";
+import { makeTranslator, type Translator } from "@/lib/i18n";
+import { notify } from "@/lib/feedback";
 import {
   DEFAULTS,
   STORAGE_KEY,
@@ -13,7 +13,7 @@ import {
   type SidebarMode,
   type SidebarMenuMode,
   type Tweaks,
-} from './appearance-parts';
+} from "./appearance-parts";
 
 export interface UseAppearanceResult {
   tw: Tweaks;
@@ -37,11 +37,11 @@ export function useAppearance(): UseAppearanceResult {
 
   const applyToDom = React.useCallback((next: Tweaks) => {
     const el = document.documentElement;
-    el.setAttribute('data-primary', next.primary);
-    el.setAttribute('data-density', next.density);
-    el.setAttribute('data-fontscale', next.fontScale);
-    el.setAttribute('data-sidebar', next.sidebar);
-    el.setAttribute('data-sidebar-menu', next.sidebarMenu || 'flyout');
+    el.setAttribute("data-primary", next.primary);
+    el.setAttribute("data-density", next.density);
+    el.setAttribute("data-fontscale", next.fontScale);
+    el.setAttribute("data-sidebar", next.sidebar);
+    el.setAttribute("data-sidebar-menu", next.sidebarMenu || "flyout");
   }, []);
 
   // Hydrate local state from localStorage / DOM attributes on mount.
@@ -56,20 +56,23 @@ export function useAppearance(): UseAppearanceResult {
       stored = {};
     }
     const baseline: Tweaks = {
-      primary: stored.primary ?? el.getAttribute('data-primary') ?? DEFAULTS.primary,
+      primary:
+        stored.primary ?? el.getAttribute("data-primary") ?? DEFAULTS.primary,
       density:
-        (stored.density as Density) ?? (el.getAttribute('data-density') as Density) ?? DEFAULTS.density,
+        (stored.density as Density) ??
+        (el.getAttribute("data-density") as Density) ??
+        DEFAULTS.density,
       fontScale:
         (stored.fontScale as FontScale) ??
-        (el.getAttribute('data-fontscale') as FontScale) ??
+        (el.getAttribute("data-fontscale") as FontScale) ??
         DEFAULTS.fontScale,
       sidebar:
         (stored.sidebar as SidebarMode) ??
-        (el.getAttribute('data-sidebar') as SidebarMode) ??
+        (el.getAttribute("data-sidebar") as SidebarMode) ??
         DEFAULTS.sidebar,
       sidebarMenu:
         (stored.sidebarMenu as SidebarMenuMode) ??
-        (el.getAttribute('data-sidebar-menu') as SidebarMenuMode) ??
+        (el.getAttribute("data-sidebar-menu") as SidebarMenuMode) ??
         DEFAULTS.sidebarMenu,
       lang: (stored.lang as Lang) ?? DEFAULTS.lang,
       urlRouting: stored.urlRouting ?? DEFAULTS.urlRouting,
@@ -105,15 +108,18 @@ export function useAppearance(): UseAppearanceResult {
   );
 
   const resetAll = React.useCallback(() => {
-    setTheme('light');
+    setTheme("light");
     setTw(DEFAULTS);
     twRef.current = DEFAULTS;
     applyToDom(DEFAULTS);
     persist(DEFAULTS);
-    notify(makeTranslator(DEFAULTS.lang)('Tampilan dikembalikan ke bawaan'), 'info');
+    notify(
+      makeTranslator(DEFAULTS.lang)("Tampilan dikembalikan ke bawaan"),
+      "info",
+    );
   }, [setTheme, applyToDom, persist]);
 
-  const fontScale: FontScale = tw.fontScale || 'base';
+  const fontScale: FontScale = tw.fontScale || "base";
 
   return { tw, t, theme, setTheme, applyTweak, resetAll, fontScale };
 }

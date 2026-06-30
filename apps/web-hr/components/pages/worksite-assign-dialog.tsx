@@ -1,29 +1,32 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogBody,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { listWorksites } from '@/lib/api/worksites';
-import type { HrWorksite } from '@/lib/api/worksites';
-import { getUserWorksites, updateUserWorksites } from '@/lib/api/employees';
-import { asArray } from '@/lib/api/hooks';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { listWorksites } from "@/lib/api/worksites";
+import type { HrWorksite } from "@/lib/api/worksites";
+import { getUserWorksites, updateUserWorksites } from "@/lib/api/employees";
+import { asArray } from "@/lib/api/hooks";
 
 function extractAssignedIds(payload: unknown): number[] {
   const raw = (payload as { data?: unknown })?.data ?? payload;
-  if (!raw || typeof raw !== 'object') return [];
+  if (!raw || typeof raw !== "object") return [];
   const o = raw as Record<string, unknown>;
-  if (Array.isArray(o.worksiteIds)) return (o.worksiteIds as unknown[]).map(Number);
+  if (Array.isArray(o.worksiteIds))
+    return (o.worksiteIds as unknown[]).map(Number);
   if (Array.isArray(o.worksites)) {
-    return (o.worksites as Record<string, unknown>[]).map((w) => Number(w.id ?? w.worksiteId));
+    return (o.worksites as Record<string, unknown>[]).map((w) =>
+      Number(w.id ?? w.worksiteId),
+    );
   }
   return [];
 }
@@ -39,22 +42,27 @@ export function WorksiteAssignDialog({
   appUserId: string | null;
   employeeName?: string;
 }) {
-  const [selectedOverride, setSelectedOverride] = useState<Set<number> | null>(null);
+  const [selectedOverride, setSelectedOverride] = useState<Set<number> | null>(
+    null,
+  );
   const [saving, setSaving] = useState(false);
 
   const { data: worksitesData } = useQuery({
-    queryKey: ['hr', 'worksites', 'all-for-assign'],
+    queryKey: ["hr", "worksites", "all-for-assign"],
     queryFn: () => listWorksites(),
     enabled: open,
   });
   const worksites = asArray<HrWorksite>(worksitesData);
 
   const { data: userWs, isLoading } = useQuery({
-    queryKey: ['hr', 'user-worksites', appUserId],
+    queryKey: ["hr", "user-worksites", appUserId],
     queryFn: () => getUserWorksites(appUserId as string),
     enabled: open && Boolean(appUserId),
   });
-  const baseSelected = useMemo(() => new Set(extractAssignedIds(userWs)), [userWs]);
+  const baseSelected = useMemo(
+    () => new Set(extractAssignedIds(userWs)),
+    [userWs],
+  );
   const selected = selectedOverride ?? baseSelected;
 
   function toggle(id: number) {
@@ -78,11 +86,13 @@ export function WorksiteAssignDialog({
     if (!appUserId) return;
     setSaving(true);
     try {
-      await updateUserWorksites(appUserId, { worksiteIds: Array.from(selected) });
-      toast.success('Penugasan worksite disimpan.');
+      await updateUserWorksites(appUserId, {
+        worksiteIds: Array.from(selected),
+      });
+      toast.success("Penugasan worksite disimpan.");
       handleOpenChange(false);
     } catch (e) {
-      toast.error((e as Error)?.message ?? 'Gagal menyimpan.');
+      toast.error((e as Error)?.message ?? "Gagal menyimpan.");
     } finally {
       setSaving(false);
     }
@@ -92,7 +102,7 @@ export function WorksiteAssignDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Worksite — {employeeName ?? 'Karyawan'}</DialogTitle>
+          <DialogTitle>Worksite — {employeeName ?? "Karyawan"}</DialogTitle>
         </DialogHeader>
         <DialogBody className="space-y-3">
           {isLoading ? (
@@ -100,7 +110,9 @@ export function WorksiteAssignDialog({
               <Loader2 className="h-5 w-5 animate-spin" />
             </div>
           ) : worksites.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">Belum ada worksite.</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Belum ada worksite.
+            </p>
           ) : (
             <ul className="max-h-72 space-y-1 overflow-auto">
               {worksites.map((w) => (
@@ -112,18 +124,24 @@ export function WorksiteAssignDialog({
                       onChange={() => toggle(Number(w.id))}
                     />
                     <span className="text-sm">{w.name}</span>
-                    <span className="ml-auto font-mono text-xs text-muted-foreground">{w.code}</span>
+                    <span className="ml-auto font-mono text-xs text-muted-foreground">
+                      {w.code}
+                    </span>
                   </label>
                 </li>
               ))}
             </ul>
           )}
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="default" onClick={() => handleOpenChange(false)} disabled={saving}>
+            <Button
+              variant="default"
+              onClick={() => handleOpenChange(false)}
+              disabled={saving}
+            >
               Batal
             </Button>
             <Button variant="primary" onClick={save} disabled={saving}>
-              {saving ? 'Menyimpan…' : 'Simpan'}
+              {saving ? "Menyimpan…" : "Simpan"}
             </Button>
           </div>
         </DialogBody>

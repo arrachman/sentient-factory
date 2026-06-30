@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useQueryClient } from '@tanstack/react-query';
-import type { FormEvent } from 'react';
-import { toast } from 'sonner';
+import { useQueryClient } from "@tanstack/react-query";
+import type { FormEvent } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogBody,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useShifts, useEmployees } from '@/lib/api/hooks';
-import { createShiftAssignment } from '@/lib/api/schedules';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useShifts, useEmployees } from "@/lib/api/hooks";
+import { createShiftAssignment } from "@/lib/api/schedules";
 
 export function ShiftAssignDialog({
   open,
@@ -26,16 +26,16 @@ export function ShiftAssignDialog({
   const qc = useQueryClient();
   const { data: shifts } = useShifts();
   const { data: employees } = useEmployees();
-  const formKey = open ? 'shift-assign-open' : 'shift-assign-closed';
+  const formKey = open ? "shift-assign-open" : "shift-assign-closed";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const appUserId = String(formData.get('appUserId') ?? '');
-    const shiftId = String(formData.get('shiftId') ?? '');
-    const workDate = String(formData.get('workDate') ?? '');
+    const appUserId = String(formData.get("appUserId") ?? "");
+    const shiftId = String(formData.get("shiftId") ?? "");
+    const workDate = String(formData.get("workDate") ?? "");
     if (!appUserId || !shiftId || !workDate) {
-      toast.error('Karyawan, shift, dan tanggal wajib diisi.');
+      toast.error("Karyawan, shift, dan tanggal wajib diisi.");
       return;
     }
     try {
@@ -44,11 +44,11 @@ export function ShiftAssignDialog({
         shiftId: Number(shiftId),
         workDate,
       });
-      toast.success('Jadwal shift tersimpan.');
-      await qc.invalidateQueries({ queryKey: ['hr', 'shift-assignments'] });
+      toast.success("Jadwal shift tersimpan.");
+      await qc.invalidateQueries({ queryKey: ["hr", "shift-assignments"] });
       onOpenChange(false);
     } catch (e) {
-      toast.error((e as Error)?.message ?? 'Gagal menyimpan jadwal.');
+      toast.error((e as Error)?.message ?? "Gagal menyimpan jadwal.");
     }
   }
 
@@ -70,7 +70,8 @@ export function ShiftAssignDialog({
                 <option value="">— pilih —</option>
                 {(employees ?? []).map((emp) => (
                   <option key={emp.appUserId} value={emp.appUserId}>
-                    {emp.name}{emp.employeeCode ? ` (${emp.employeeCode})` : ''}
+                    {emp.name}
+                    {emp.employeeCode ? ` (${emp.employeeCode})` : ""}
                   </option>
                 ))}
               </select>
@@ -95,10 +96,16 @@ export function ShiftAssignDialog({
               <Input name="workDate" type="date" defaultValue="" />
             </div>
             <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="default" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => onOpenChange(false)}
+              >
                 Batal
               </Button>
-              <Button type="submit" variant="primary">Assign</Button>
+              <Button type="submit" variant="primary">
+                Assign
+              </Button>
             </div>
           </form>
         </DialogBody>
