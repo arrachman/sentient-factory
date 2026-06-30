@@ -5,17 +5,26 @@ title: Melaporkan Hasil Produksi (MES)
 
 # Melaporkan Hasil Produksi (MES)
 
-Panduan operator mencatat hasil produksi terhadap perintah kerja (work order).
+Panduan operator mencatat hasil produksi terhadap perintah kerja (*production
+order*). Untuk rincian setiap halaman lihat [Referensi MES](/mdp/referensi/mes).
 
 ## Langkah
 
-1. Buka **MES → Work Order**, pilih perintah kerja yang aktif.
-2. Tekan **Lapor Produksi**.
-3. Isi **kuantitas baik** dan **kuantitas reject** yang dihasilkan.
-4. Pilih mesin/stasiun kerja dan catat waktu mulai/selesai bila diminta.
-5. Tekan **Simpan**. Data masuk ke perhitungan OEE secara otomatis.
+1. Buka **Manufacturing Execution → Production Orders** lewat sidebar.
+2. Pilih perintah kerja yang berstatus `RELEASED` atau `IN_PROGRESS`
+   (tekan `Enter` atau klik kodenya).
+3. Catat pelaporan di **Production Logs** (**+ Tambah** / pintasan `N`):
+   - **Kuantitas baik** dan **kuantitas reject** yang dihasilkan.
+   - Periode/waktu bila diminta.
+4. Tekan **Simpan**. Sistem **menghitung ulang** akumulasi *good qty* pada order
+   induk secara otomatis (rollup transaksional).
+5. Data masuk ke perhitungan [OEE](/mdp/referensi/oee) (Performance & Quality).
 
-> Entri bersifat *manual-entry-first*: dapat diisi manual sebelum integrasi
+## Mencatat downtime & jam kerja
+
+- **Downtime mesin** → **MES → Downtime Events**: isi waktu mulai/selesai dan
+  pilih **reason code**. Durasi dihitung saat event ditutup.
+- **Jam kerja** → **MES → Labor Logs**: catat operator dan rentang waktu.
+
+> Entri bersifat **manual-entry-first**: dapat diisi manual sebelum integrasi
 > mesin tersedia.
-
-<!-- TODO: tambahkan screenshot form pelaporan produksi -->
