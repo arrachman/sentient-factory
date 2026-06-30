@@ -141,6 +141,14 @@ ekspos `/user-preferences` untuk HR). Knob **URL Routing** kosmetik (HR
 filesystem-routed multitab; flag tersimpan tapi belum mengubah routing) — tetap
 disertakan demi paritas visual. i18n hanya cover string layar appearance.
 
+**Sidebar live menghormati config (2026-06-30):** `dynamic-sidebar.tsx` membaca
+atribut `<html>` yang di-set hook appearance — `data-sidebar='label'` →
+render `.nav-label` (Ikon + Label), `data-sidebar-menu='accordion'` → submenu
+expand inline di bawah modul (`.accordion-submenu`/`.accordion-item`, modul aktif
+auto-expand), default `flyout` (hover). Mode dibaca reaktif via `MutationObserver`
+pada atribut sehingga ganti knob langsung berlaku tanpa reload. CSS sudah ada
+sejak scaffold (`hr-panels.css [data-sidebar='label']`, `hr-shell.css .accordion-*`).
+
 ## Roadmap (Fase 2+ sisa, stub coming-soon)
 
 SSO/2FA (lintas-app, terkopel auth ERP — butuh koordinasi backend platform) +
