@@ -144,7 +144,34 @@ UI ad-hoc. Tambahan konteks MDP:
 
 ---
 
-## 5. Saat ragu
+## 5. Workflow vibe coding — commit ke `dev` + build production
+
+**WAJIB tiap sesi vibe coding selesai** (satuan kerja yang bisa diserahkan):
+commit ke branch `dev` lalu build & deploy ke production. Production web-mdp =
+proses `npm run start` (`next start`) detached di **port 3220** (bukan PM2).
+
+Urutan baku (jalankan dari `apps/web-mdp/`):
+
+```bash
+npm run check                       # lint+typecheck+size+test WAJIB hijau dulu
+git add -A
+git commit -m "feat(mdp): <ringkas>" # branch dev; conventional, JANGAN --no-verify
+git push origin dev                  # hanya bila user mengizinkan push
+
+# build production
+npm run build
+
+# restart serve di port 3220 (detached) → production ter-update
+fuser -k 3220/tcp 2>/dev/null || true
+nohup npm run start > /tmp/web-mdp.out 2>&1 &
+curl -sf --max-time 5 http://localhost:3220 >/dev/null && echo "MDP up :3220"
+```
+
+Aturan: (1) `npm run check` gagal → STOP, jangan commit/build. (2) Build gagal →
+jangan restart serve (production lama tetap hidup); perbaiki dulu. (3) Commit ke
+branch lain selain `dev` atau `git push --force` = tanya user dulu.
+
+## 6. Saat ragu
 
 Tanya user. Tidak ada pengecualian diam-diam. `apps/web-mdp/CLAUDE.md` +
 `db-design/` adalah otoritas untuk MDP; kalau bertentangan dengan asumsi, file

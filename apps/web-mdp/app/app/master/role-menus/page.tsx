@@ -7,9 +7,7 @@ export const metadata: Metadata = { title: 'Master · Akses Menu per Role' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-5xl">
-        <RoleMenusPage />
-      </div>
+      <RoleMenusPage />
     </AppShell>
   );
 }

@@ -7,9 +7,7 @@ export const metadata: Metadata = { title: 'Setting · Tampilan' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
-        <AppearancePage />
-      </div>
+      <AppearancePage />
     </AppShell>
   );
 }

@@ -117,6 +117,30 @@ oleh `resolveHrPrivilege`.
 Kolom baru `holidayDays`/`holidayMinutes`; `overtimeMinutes` = seluruh jam di hari
 libur (bila `count_holiday_as_overtime`) atau jam di atas `daily_regular_hours`.
 
+## Setting → Tampilan (appearance, 2026-06-30)
+
+Port 1:1 halaman **Setting → Tampilan** dari web-erp (via referensi web-mdp yang
+juga 1:1 ERP). Route `/app/settings/appearance` (nav item "Tampilan", grup
+Laporan & Lainnya). Komponen di `components/pages/`: `appearance-view.tsx`
+(layar) + `appearance-cards.tsx` + `appearance-parts.tsx` (konstanta/helper) +
+`appearance-preview.tsx` (kartu Pratinjau Langsung) + `use-appearance.ts` (hook).
+Pendukung baru: `lib/i18n.ts` (`makeTranslator` ID/EN/JA, fallback ke key),
+`lib/feedback.ts` (`notify` → sonner toast, `confirmAction` → native confirm),
+`components/atoms/sparkline.tsx`.
+
+Knob: Tema (next-themes light/dark), Bahasa (ID/EN/JA, hanya layar ini yang
+ter-i18n), Warna Aksen (pack + swatch, default brand **teal**), Ukuran Font,
+Kepadatan, Mode Sidebar (ikon/label + flyout/accordion), URL Routing. Diterapkan
+ke `<html>` via `data-primary`/`data-density`/`data-fontscale`/`data-sidebar`/
+`data-sidebar-menu` (token CSS sudah ada sejak scaffold ERP).
+
+**Deviasi sadar dari ERP/MDP:** persistensi **localStorage saja** (key
+`hr-appearance`, dibaca skrip blocking di `app/layout.tsx` anti-FOUC) — HR tak
+punya backend user-preferences (auth = `sf_token`, bukan `erp_token`; gateway tak
+ekspos `/user-preferences` untuk HR). Knob **URL Routing** kosmetik (HR
+filesystem-routed multitab; flag tersimpan tapi belum mengubah routing) — tetap
+disertakan demi paritas visual. i18n hanya cover string layar appearance.
+
 ## Roadmap (Fase 2+ sisa, stub coming-soon)
 
 SSO/2FA (lintas-app, terkopel auth ERP — butuh koordinasi backend platform) +

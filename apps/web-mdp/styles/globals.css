@@ -8,6 +8,7 @@
 @source '../shared';
 @source '../lib';
 @import './mdp-tokens.css';
+@import './erp-components.css';
 @import './mdp-base.css';
 
 @custom-variant dark (&:is(.dark *));

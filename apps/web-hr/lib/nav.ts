@@ -22,6 +22,7 @@ import {
   MonitorSmartphone,
   Timer,
   Settings,
+  Palette,
 } from 'lucide-react';
 
 export type NavStatus = 'live' | 'soon';
@@ -74,6 +75,7 @@ export const HR_NAV: HrNavGroup[] = [
       { key: 'kiosk', title: 'Mode Kiosk', path: '/app/kiosk', icon: MonitorSmartphone, status: 'live' },
       { key: 'overtime', title: 'Aturan Lembur', path: '/app/overtime', icon: Timer, status: 'live' },
       { key: 'settings', title: 'Pengaturan', path: '/app/settings', icon: Settings, status: 'live' },
+      { key: 'appearance', title: 'Tampilan', path: '/app/settings/appearance', icon: Palette, status: 'live' },
     ],
   },
 ];

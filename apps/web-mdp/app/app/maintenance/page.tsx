@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'CMMS · Work Orders' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <MntNav />
-        <MntWorkOrdersPage />
+        <div className="min-h-0 flex-1">
+          <MntWorkOrdersPage />
+        </div>
       </div>
     </AppShell>
   );

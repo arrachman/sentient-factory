@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'MES · Production Orders' };
 export default function MesPage() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <MesNav />
-        <ProductionOrdersPage />
+        <div className="min-h-0 flex-1">
+          <ProductionOrdersPage />
+        </div>
       </div>
     </AppShell>
   );

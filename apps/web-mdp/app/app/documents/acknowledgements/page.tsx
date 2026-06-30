@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'Acknowledgements' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <DmsNav />
-        <DmsAcknowledgementsPage />
+        <div className="min-h-0 flex-1">
+          <DmsAcknowledgementsPage />
+        </div>
       </div>
     </AppShell>
   );

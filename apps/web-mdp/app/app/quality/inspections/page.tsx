@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'QMS · Inspections' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <QmsNav />
-        <QmsInspectionsPage />
+        <div className="min-h-0 flex-1">
+          <QmsInspectionsPage />
+        </div>
       </div>
     </AppShell>
   );

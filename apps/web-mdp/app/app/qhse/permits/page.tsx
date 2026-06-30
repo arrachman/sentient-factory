@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'Permits' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <EhsNav />
-        <EhsPermitsPage />
+        <div className="min-h-0 flex-1">
+          <EhsPermitsPage />
+        </div>
       </div>
     </AppShell>
   );

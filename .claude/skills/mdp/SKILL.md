@@ -240,6 +240,15 @@ fakta ringkas (keputusan + alasan), bukan log percakapan. Update memory
 [[mdp-layer3-architecture]] saat progress berubah. Jangan declare selesai
 sebelum dokumen sinkron.
 
+## Workflow vibe coding — commit ke `dev` + build production
+
+**WAJIB tiap sesi vibe coding selesai**: commit ke branch `dev` lalu build &
+deploy ke production. Production web-mdp = `npm run start` (`next start`) detached
+di **port 3220** (bukan PM2). Detail + urutan baku = `apps/web-mdp/CLAUDE.md` §5
+(otoritatif). Ringkas: `npm run check` hijau → commit `dev` → `npm run build` →
+restart serve di :3220. Check/build gagal = STOP. Commit ke branch non-`dev` atau
+`--force` = tanya user.
+
 ## Saat ragu
 
 Tanya user. `apps/web-mdp/CLAUDE.md` adalah otoritas — kalau skill ini berbeda

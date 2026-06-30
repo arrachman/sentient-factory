@@ -195,6 +195,15 @@ rulebook app ke `apps/web-hr/CLAUDE.md` (buat saat scaffold), desain DB ke
 & `ROADMAP.md` bila status fitur berubah. Jangan declare selesai sebelum dokumen
 sinkron.
 
+## Workflow vibe coding — commit ke `dev` + build production
+
+**WAJIB tiap sesi vibe coding selesai**: commit ke branch `dev` lalu build &
+deploy ke production. Production web-hr = `npm run start` (`next start`) detached
+di **port 3221** (bukan PM2). Detail + urutan baku = `apps/web-hr/CLAUDE.md`
+§Workflow vibe coding (otoritatif). Ringkas: `npm run check` hijau → commit `dev`
+→ `npm run build` → restart serve di :3221. Check/build gagal = STOP. Commit ke
+branch non-`dev` atau `--force` = tanya user.
+
 ## Saat ragu
 
 Tanya user. `FRONTEND-DESIGN-SYSTEM.md` + `apps/web-hr/CLAUDE.md` (setelah ada)

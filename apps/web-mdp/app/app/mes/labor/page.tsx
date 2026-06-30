@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'MES · Labor Logs' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <MesNav />
-        <LaborLogsPage />
+        <div className="min-h-0 flex-1">
+          <LaborLogsPage />
+        </div>
       </div>
     </AppShell>
   );

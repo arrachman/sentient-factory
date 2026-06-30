@@ -7,9 +7,7 @@ export const metadata: Metadata = { title: 'Master · Reason Code' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
-        <ReasonCodesPage />
-      </div>
+      <ReasonCodesPage />
     </AppShell>
   );
 }

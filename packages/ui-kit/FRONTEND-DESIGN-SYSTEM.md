@@ -121,7 +121,8 @@ lib/api/
 └── <resource>.ts    # one file per backend resource (branches, items, employees, …)
 ```
 
-`web-mdp` put everything in one `lib/api.ts`. Do **not** copy that. One file per resource keeps
+`web-mdp` originally put everything in one `lib/api.ts` (realigned 2026-06-30 to `lib/api/*` —
+per-domain modules + barrel). Do **not** reintroduce a monolith. One file per resource keeps
 each under 400 lines and matches the backend's one-module-per-resource layout.
 
 ### 4.2 `client.ts` — copy verbatim, change only the base URL
@@ -218,6 +219,147 @@ Tokens are **CSS variables**, not Tailwind config. Tailwind v4 consumes them via
 
 ---
 
+## 5.5. Semantic class layer — the `web-erp` visual contract (SSOT)
+
+There are **two** styling layers, and every `web-*` app uses both:
+
+1. **Token-driven Tailwind primitives** (`components/ui/*`) — buttons inside dialogs, badges,
+   inputs in forms built from `ui/`. These resolve via the shadcn bridge (§5).
+2. **Semantic ERP classes** — the *chrome and dense data surfaces* (page header, toolbar, data
+   table, status pills, pager, line editors). These are **plain CSS classes**, ported from the
+   prototype with names kept identical, living in `styles/erp-*.css`. Pages compose them with
+   `className="page-header"`, `className="btn primary"`, etc. — **not** ad-hoc Tailwind.
+
+> **Rule:** the dense "ERP look" comes from this semantic class layer, not from sprinkling
+> Tailwind utilities on chrome. A new app **copies the whole `styles/erp-*.css` set**, renames the
+> file prefix if desired, and changes only token *values* (§5). The class *names and structure*
+> below are non-negotiable so cross-app muscle memory and pixel parity hold.
+
+### 5.5.1 The CSS files (copy the whole set)
+
+`styles/erp-components.css` is an index that `@import`s the sub-files; `globals.css` imports it.
+Reference: [`apps/web-erp/styles/`](../../apps/web-erp/styles).
+
+| File | Owns |
+| ---- | ---- |
+| `erp-shell.css`     | base layout, app shell, topbar, sidebar, breadcrumb, **page chrome** (`.page`, `.page-header`, `.page-title`, `.code-tag`, `.page-actions`) |
+| `erp-controls.css`  | **buttons** (`.btn*`), **toolbar/filters** (`.toolbar`, `.chip`, `.search-input`), **forms** (`.field`, `.form-section`), **page body** (`.page-body`), tabs, detail **line editor** (`.lines`) |
+| `erp-table.css`     | **data table** (`.tbl-wrap`, `.tbl`), **status pill** (`.pill*`), **pager** (`.pager`), **bulk bar** (`.bulk-bar`), empty/loading states |
+| `erp-panels.css`    | record drawer, slide-over panels, lookup modal, settings sub-nav |
+| `erp-dialogs.css`   | confirm dialog, toasts, user menu, workspace switcher |
+| `erp-dashboard.css` · `erp-contact-picker.css` · `erp-multitab.css` · `erp-login.css` | dashboard/cmd-palette, contact picker, multi-tab workspace, auth screens |
+
+### 5.5.2 Canonical page skeleton (list screen)
+
+Every list/master page renders this exact structure (see
+[`generic-list-parts.tsx`](../../apps/web-erp/components/pages/generic-list-parts.tsx)):
+
+```tsx
+<div className="page">
+  <div className="page-header">
+    <h1 className="page-title">
+      {title}
+      <span className="code-tag">M-101</span>          {/* mono doc/menu code */}
+    </h1>
+    <div className="page-actions">                      {/* margin-left:auto */}
+      <div className="search-input"><Icon name="search"/><input/><Kbd>/</Kbd></div>
+      <button className="btn"><Icon name="download"/> Export</button>
+      <button className="btn"><Icon name="refresh"/></button>
+      <div className="btn-split">                        {/* primary + dropdown caret */}
+        <button className="btn primary"><Icon name="plus"/> Tambah <Kbd>N</Kbd></button>
+        <button className="btn primary"><Icon name="chevdown"/></button>
+      </div>
+    </div>
+  </div>
+
+  <div className="filter-bar"> … filter button + chips + summary … </div>   {/* pinned */}
+
+  <div className="page-body">                            {/* flex:1; min-h-0; scrolls */}
+    <div className="tbl-wrap scrollbar">
+      <table className="tbl"> … </table>
+    </div>
+  </div>
+
+  <ListFooter />                                          {/* row count + kbd hints + pager */}
+</div>
+```
+
+This is the **canonical modern organism** ([`erp-list-layout.tsx`](../../apps/web-erp/components/organisms/erp-list-layout.tsx),
+mirrored by web-hr's `list-layout.tsx` and web-mdp's `master-crud-page.tsx`): `.page-header` →
+`.filter-bar` → `.page-body` (the scroller) → footer. A legacy prototype-port variant
+([`generic-list.tsx`](../../apps/web-erp/components/pages/generic-list.tsx)) uses `.toolbar` +
+`.chip` filters and a `.pager` footer instead, with `.tbl-wrap scrollbar` self-scrolling (no
+`.page-body`). Both are valid; **new apps follow `erp-list-layout`** (`.filter-bar` + `.page-body`).
+
+Detail/form pages keep `.page` + `.page-header`, then use a scroll body —
+`<div className="page-body overflow-auto p-4">` — wrapping `.form-section` / `.field` / `.lines`.
+The `.lines` modifier is for **detail line-editors only** — never on a list `.tbl-wrap` (use
+`scrollbar`).
+
+**Structural rules:**
+- `.page` is `flex-column; height:100%`. `.page-header` and `.toolbar` stay pinned;
+  **only `.page-body` scrolls** (`flex:1; min-height:0; overflow-y:auto`).
+- `.page-actions` floats right (`margin-left:auto`); search box first, then secondary `.btn`s,
+  primary action last in a `.btn-split`.
+- The `.code-tag` (mono menu/doc code) sits inside `.page-title`.
+
+### 5.5.3 Button vocabulary (`.btn`)
+
+26px tall, 12px/500 text, `var(--radius)`, token-driven. Combine the base with one modifier:
+
+| Class | Use |
+| ----- | --- |
+| `btn`            | default / secondary action |
+| `btn primary`    | the one main action (filled `--primary`) |
+| `btn ghost`      | tertiary / icon-only toolbar action (transparent) |
+| `btn danger`     | destructive (red text, red-soft hover) |
+| `btn sm`         | 22px compact (inside dense rows/bulk bar) |
+| `btn-split`      | wrapper: primary button + caret button fused |
+| `:disabled`      | `opacity:.45; not-allowed` |
+
+Embedded shortcut hints use `<Kbd>` (the `.kbd` primitive). **Never** restyle `.btn` with Tailwind;
+add a modifier or a token instead.
+
+### 5.5.4 Forms (`.field`)
+
+`.form-section` groups fields. Each control is:
+
+```tsx
+<div className="field">                 {/* add `err` class to show error state */}
+  <label>Nama <span className="req">*</span></label>
+  <div className="ctrl"><input type="text" /></div>      {/* or select / textarea / .lookup */}
+  <div className="help">Helper / error text</div>
+</div>
+```
+
+Inputs are flat, `var(--panel)` bg, focus ring from `--primary`. `.field.err` reddens border + help.
+Lookup/picker fields use `.ctrl .lookup`.
+
+### 5.5.5 Data table (`.tbl`) & status (`.pill`)
+
+- `.tbl-wrap` → scroll container; `.tbl` → the table (12px, sticky `thead`, hover/`.selected`/`.focused`
+  rows). Column helpers: `.col-check` (checkbox col), `.col-num`/`.num` (right-align numerics),
+  `.muted`, `.mono`. Sortable headers add `.sortable` + `.sort-ind`. Empty state: `.tbl-empty`.
+- **Status pill** = `.pill` + one status modifier: `success` · `warn` · `danger` · `info` · `primary`
+  (each with a leading `.dot`). This is the canonical way to render workflow/active status in tables.
+  In React, the `StatusBadge` helper (per-app `badge.tsx`) maps the workflow enum → pill (§8).
+- **Pager** `.pager` (page segments `.seg`), **bulk action bar** `.bulk-bar` (`.count`, `.divider`,
+  `.ba-btn`) appears when rows are selected.
+
+### 5.5.6 Filter toolbar
+
+`.toolbar` row holds a filter icon + `.chip`s. A `.chip` shows `.label` + `.val`, gets `.active`,
+has an `.x` remove affordance, and `.chip.add` adds a new filter. The free-text `.search-input`
+(with `/` `Kbd`) lives in `.page-actions`, not the toolbar.
+
+> **One-line summary for new screens:** wrap in `.page`; header = `.page-header`/`.page-title`+
+> `.code-tag`/`.page-actions`; pinned `.toolbar` of `.chip`s; scrolling `.page-body` of
+> `.tbl-wrap > .tbl` + `.pager`; actions are `.btn[ primary|ghost|danger|sm]`; status is `.pill`;
+> forms are `.field` in `.form-section`. Pull the styling from the copied `styles/erp-*.css` — never
+> re-invent chrome with raw Tailwind.
+
+---
+
 ## 6. Root layout (`app/layout.tsx`) — provider order
 
 Copy this order exactly (from `web-erp`); it is load-bearing:
@@ -300,7 +442,7 @@ Per-app: `metadata.title.template`, `storageKey`, `viewport.themeColor` (= brand
 | Aspect            | `web-erp` (canonical)            | `web-mdp` (drifted)        | HR should use |
 | ----------------- | -------------------------------- | -------------------------- | ------------- |
 | Primitives folder | `components/ui/`                 | `components/atoms/`        | `ui/`         |
-| API layer         | `lib/api/*` (per-resource)       | single `lib/api.ts`        | `lib/api/*`   |
+| API layer         | `lib/api/*` (per-resource)       | `lib/api/*` (realigned 2026-06-30) | `lib/api/*`   |
 | Query provider    | `shared/providers/query-provider`| `theme-provider` only      | both, erp-style |
 | Error handling    | `ErpApiError {code,message,details}` envelope | `throw new Error(msg)` | typed envelope |
 | Tokens file       | `erp-tokens.css` (full groups)   | `mdp-tokens.css` (subset)  | full groups   |

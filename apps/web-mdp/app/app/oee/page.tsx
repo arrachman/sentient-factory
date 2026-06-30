@@ -7,9 +7,7 @@ export const metadata: Metadata = { title: 'OEE Overlay' };
 export default function OeePage() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
-        <OeeDashboardPage />
-      </div>
+      <OeeDashboardPage />
     </AppShell>
   );
 }

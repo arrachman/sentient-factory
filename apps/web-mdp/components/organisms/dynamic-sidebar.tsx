@@ -7,9 +7,6 @@ import { Layers, Square, type LucideIcon } from 'lucide-react';
 import { fetchNav, type NavNode } from '@/lib/api';
 import { MDP_MODULES } from '@/lib/modules';
 
-const ICON_CLS =
-  'flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground';
-
 /** Resolve a lucide icon name (from mdp_menus.icon) to a component, with fallback. */
 function resolveIcon(name?: string | null): LucideIcon {
   if (name && name in Icons) {
@@ -71,22 +68,25 @@ export function DynamicSidebar() {
   }, []);
 
   return (
-    <aside className="flex w-[52px] shrink-0 flex-col items-center gap-1 border-r border-border bg-card py-2">
+    <aside className="sidebar">
       <Link
         href="/app"
         title="Beranda"
-        className="mb-2 flex size-9 items-center justify-center rounded-md bg-primary text-primary-foreground"
+        className="nav-item active"
       >
-        <Layers className="size-5" />
+        <Layers size={16} strokeWidth={1.6} />
+        <span className="nav-label">Beranda</span>
       </Link>
       {items.map((it) =>
         it.href ? (
-          <Link key={it.key} href={it.href} title={it.title} className={ICON_CLS}>
-            <it.Icon className="size-4.5" />
+          <Link key={it.key} href={it.href} title={it.title} className="nav-item" data-tip={it.title}>
+            <it.Icon size={16} strokeWidth={1.6} />
+            <span className="nav-label">{it.title}</span>
           </Link>
         ) : (
-          <button key={it.key} type="button" title={it.title} className={ICON_CLS} disabled>
-            <it.Icon className="size-4.5" />
+          <button key={it.key} type="button" title={it.title} className="nav-item" disabled>
+            <it.Icon size={16} strokeWidth={1.6} />
+            <span className="nav-label">{it.title}</span>
           </button>
         )
       )}

@@ -7,9 +7,7 @@ export const metadata: Metadata = { title: 'Master · Shift' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
-        <ShiftsPage />
-      </div>
+      <ShiftsPage />
     </AppShell>
   );
 }

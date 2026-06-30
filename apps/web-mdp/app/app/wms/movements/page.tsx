@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'WMS · Movements' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <WmsNav />
-        <WmsMovementsPage />
+        <div className="min-h-0 flex-1">
+          <WmsMovementsPage />
+        </div>
       </div>
     </AppShell>
   );

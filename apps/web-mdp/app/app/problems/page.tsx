@@ -8,9 +8,11 @@ export const metadata: Metadata = { title: 'Issues' };
 export default function Page() {
   return (
     <AppShell>
-      <div className="mx-auto max-w-7xl">
+      <div className="flex h-full flex-col">
         <PrtNav />
-        <PrtIssuesPage />
+        <div className="min-h-0 flex-1">
+          <PrtIssuesPage />
+        </div>
       </div>
     </AppShell>
   );
