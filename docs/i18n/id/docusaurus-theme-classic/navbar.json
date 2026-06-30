@@ -1,0 +1,34 @@
+{
+  "title": {
+    "message": "Sentient Factory",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Sentient Factory Logo",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Senti HR": {
+    "message": "Senti HR",
+    "description": "Navbar item with label Senti HR"
+  },
+  "item.label.Senti ERP": {
+    "message": "Senti ERP",
+    "description": "Navbar item with label Senti ERP"
+  },
+  "item.label.Senti MDP": {
+    "message": "Senti MDP",
+    "description": "Navbar item with label Senti MDP"
+  },
+  "item.label.Blog": {
+    "message": "Blog",
+    "description": "Navbar item with label Blog"
+  },
+  "item.label.Internal": {
+    "message": "Internal",
+    "description": "Navbar item with label Internal"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "label": "Panduan Pengguna",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "title": "Panduan Pengguna",
+    "description": "Cara membuat dan memproses transaksi harian di Senti ERP."
+  }
+}

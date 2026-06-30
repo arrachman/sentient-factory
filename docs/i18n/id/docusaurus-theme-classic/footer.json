@@ -1,0 +1,50 @@
+{
+  "link.title.Produk": {
+    "message": "Produk",
+    "description": "The title of the footer links column with title=Produk in the footer"
+  },
+  "link.title.Internal": {
+    "message": "Internal",
+    "description": "The title of the footer links column with title=Internal in the footer"
+  },
+  "link.title.More": {
+    "message": "More",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.Senti HR": {
+    "message": "Senti HR",
+    "description": "The label of footer link with label=Senti HR linking to /hr"
+  },
+  "link.item.label.Senti ERP": {
+    "message": "Senti ERP",
+    "description": "The label of footer link with label=Senti ERP linking to /erp"
+  },
+  "link.item.label.Senti MDP": {
+    "message": "Senti MDP",
+    "description": "The label of footer link with label=Senti MDP linking to /mdp"
+  },
+  "link.item.label.Getting Started": {
+    "message": "Getting Started",
+    "description": "The label of footer link with label=Getting Started linking to /internal/intro"
+  },
+  "link.item.label.Marketing": {
+    "message": "Marketing",
+    "description": "The label of footer link with label=Marketing linking to /internal/marketing"
+  },
+  "link.item.label.Contributing": {
+    "message": "Contributing",
+    "description": "The label of footer link with label=Contributing linking to /internal/contributing"
+  },
+  "link.item.label.Blog": {
+    "message": "Blog",
+    "description": "The label of footer link with label=Blog linking to /blog"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/sentient-factory"
+  },
+  "copyright": {
+    "message": "Copyright © 2026 Sentient Factory Project. Built with Docusaurus.",
+    "description": "The footer copyright"
+  }
+}

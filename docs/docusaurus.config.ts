@@ -1,49 +1,63 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import type { PluginOptions as DocsPluginOptions } from "@docusaurus/plugin-content-docs";
+import { PRODUCT_DOCS } from "./config/products";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+// Satu instance plugin-content-docs per produk (HR/ERP/MDP). Versioning aktif
+// per produk; snapshot di-cut saat rilis via:
+//   npm --prefix docs run docusaurus docs:version:<id> <versi>
+const productDocPlugins = PRODUCT_DOCS.map((product) => [
+  "@docusaurus/plugin-content-docs",
+  {
+    id: product.id,
+    path: product.path,
+    routeBasePath: product.routeBasePath,
+    sidebarPath: product.sidebarPath,
+    // Versioning disiapkan; sebelum versi pertama di-cut, hanya "current".
+  } satisfies Partial<DocsPluginOptions>,
+]);
+
 const config: Config = {
-  title: "Sentient Factory",
-  tagline: "Documentation for Sentient Factory Project",
+  title: "Sentient Factory Docs",
+  tagline: "Dokumentasi produk Senti — HR, ERP, MDP",
   favicon: "img/favicon.ico",
 
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
-  // Set the production url of your site here
-  url: "https://sentient.fr-labs.my.id",
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/docs/",
+  // D5: portal dokumentasi dilayani di subdomain sendiri.
+  url: "https://docs.fr-labs.my.id",
+  baseUrl: "/",
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: "sentient-factory", // Usually your GitHub org/user name.
-  projectName: "docs", // Usually your repo name.
+  organizationName: "sentient-factory",
+  projectName: "docs",
 
   onBrokenLinks: "warn",
 
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
+  // D2: default Bahasa Indonesia (audiens end-user/operator lokal). Locale `en`
+  // disiapkan tetapi belum diterjemahkan — diisi bertahap.
   i18n: {
-    defaultLocale: "en",
-    locales: ["en"],
+    defaultLocale: "id",
+    locales: ["id", "en"],
+    localeConfigs: {
+      id: { label: "Bahasa Indonesia" },
+      en: { label: "English" },
+    },
   },
 
   presets: [
     [
       "classic",
       {
+        // Instance docs "default" = dokumentasi internal/dev (route /internal).
         docs: {
+          path: "docs",
+          routeBasePath: "/internal",
           sidebarPath: "./sidebars.ts",
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/sentient-factory/docs/tree/main/",
         },
         blog: {
           showReadingTime: true,
@@ -51,10 +65,6 @@ const config: Config = {
             type: ["rss", "atom"],
             xslt: true,
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: "https://github.com/sentient-factory/docs/tree/main/",
-          // Useful options to enforce blogging best practices
           onInlineTags: "warn",
           onInlineAuthors: "warn",
           onUntruncatedBlogPosts: "warn",
@@ -65,6 +75,10 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  plugins: productDocPlugins as any,
+
   themes: ["@docusaurus/theme-mermaid"],
 
   markdown: {
@@ -72,7 +86,6 @@ const config: Config = {
   },
 
   themeConfig: {
-    // Replace with your project's social card
     image: "img/docusaurus-social-card.jpg",
     colorMode: {
       respectPrefersColorScheme: true,
@@ -84,13 +97,22 @@ const config: Config = {
         src: "img/logo.svg",
       },
       items: [
-        {
-          type: "docSidebar",
-          sidebarId: "tutorialSidebar",
-          position: "left",
-          label: "Documentation",
-        },
+        // Satu link per produk ke docs-nya. Setelah versi pertama di-cut,
+        // tambahkan item { type: "docsVersionDropdown", docsPluginId: <id> }
+        // pada posisi "right" untuk selector versi per produk.
+        ...PRODUCT_DOCS.map((product) => ({
+          type: "docSidebar" as const,
+          sidebarId: `${product.id}Sidebar`,
+          docsPluginId: product.id,
+          position: "left" as const,
+          label: product.label,
+        })),
         { to: "/blog", label: "Blog", position: "left" },
+        { to: "/internal", label: "Internal", position: "left" },
+        {
+          type: "localeDropdown",
+          position: "right",
+        },
         {
           href: "https://github.com/sentient-factory",
           label: "GitHub",
@@ -102,54 +124,25 @@ const config: Config = {
       style: "dark",
       links: [
         {
-          title: "Documentation",
-          items: [
-            {
-              label: "Getting Started",
-              to: "/docs/docs/intro",
-            },
-            {
-              label: "Marketing",
-              to: "/docs/docs/marketing",
-            },
-            {
-              label: "Contributing",
-              to: "/docs/docs/contributing",
-            },
-          ],
+          title: "Produk",
+          items: PRODUCT_DOCS.map((product) => ({
+            label: product.label,
+            to: product.routeBasePath,
+          })),
         },
         {
-          title: "Community",
+          title: "Internal",
           items: [
-            {
-              label: "GitHub Discussions",
-              href: "https://github.com/sentient-factory/discussions",
-            },
-            {
-              label: "Discord",
-              href: "https://discord.gg/sentient-factory",
-            },
-            {
-              label: "Twitter",
-              href: "https://twitter.com/sentientfactory",
-            },
+            { label: "Getting Started", to: "/internal/intro" },
+            { label: "Marketing", to: "/internal/marketing" },
+            { label: "Contributing", to: "/internal/contributing" },
           ],
         },
         {
           title: "More",
           items: [
-            {
-              label: "Blog",
-              to: "/blog",
-            },
-            {
-              label: "GitHub",
-              href: "https://github.com/sentient-factory",
-            },
-            {
-              label: "Contributing",
-              to: "/docs/docs/contributing",
-            },
+            { label: "Blog", to: "/blog" },
+            { label: "GitHub", href: "https://github.com/sentient-factory" },
           ],
         },
       ],

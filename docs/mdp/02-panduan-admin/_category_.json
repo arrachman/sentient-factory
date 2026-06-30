@@ -1,0 +1,9 @@
+{
+  "label": "Panduan Admin",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "title": "Panduan Admin",
+    "description": "Konfigurasi master MOM, aset, dan parameter OEE."
+  }
+}

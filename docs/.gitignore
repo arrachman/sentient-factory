@@ -8,6 +8,9 @@
 .docusaurus
 .cache-loader
 
+# Sisa artefak build lama milik root (perlu `sudo rm` manual untuk hapus)
+*.old-root-*
+
 # Misc
 .DS_Store
 .env.local
