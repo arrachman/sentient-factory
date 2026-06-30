@@ -34,6 +34,8 @@ import { getOvertimePolicy } from './policy';
 import type { OvertimePolicy } from './policy';
 import { listRoles } from './roles';
 import type { HrRole } from './roles';
+import { getMyMenus } from './sys-menus';
+import type { HrMenuNode } from './sys-menus';
 
 const STABLE_STALE_TIME = 5 * 60 * 1000;
 
@@ -59,6 +61,7 @@ export const hrQueryKeys = {
   overtimePolicy: ['hr', 'policy', 'overtime'] as const,
   roles: ['hr', 'roles'] as const,
   userRoles: (appUserId: string) => ['hr', 'user-roles', appUserId] as const,
+  myMenus: ['hr', 'sys-menus', 'my-menus'] as const,
 } as const;
 
 /** Unwrap a {data} envelope or pass through a bare value. */
@@ -80,6 +83,18 @@ export function useHrMe(options?: Partial<UseQueryOptions<HrAuthUser>>) {
   return useQuery<HrAuthUser>({
     queryKey: hrQueryKeys.me,
     queryFn: getMe,
+    staleTime: STABLE_STALE_TIME,
+    retry: false,
+    ...options,
+  });
+}
+
+/** Role-filtered sidebar menu tree. Errors are swallowed by the caller, which
+ *  falls back to the static HR_NAV so the shell is never blank. */
+export function useHrMyMenus(options?: Partial<UseQueryOptions<HrMenuNode[]>>) {
+  return useQuery<HrMenuNode[]>({
+    queryKey: hrQueryKeys.myMenus,
+    queryFn: getMyMenus,
     staleTime: STABLE_STALE_TIME,
     retry: false,
     ...options,

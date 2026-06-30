@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Loader2, ShieldAlert, Inbox, AlertTriangle } from 'lucide-react';
+import { Loader2, ShieldAlert, Inbox, AlertTriangle, LogIn } from 'lucide-react';
 
 /**
  * Standard loading / error / empty states for HR data screens.
@@ -40,9 +40,18 @@ export function QueryState({
             <ShieldAlert className="h-6 w-6 text-warn" />
             <p className="text-sm font-medium">Sesi tidak ditemukan</p>
             <p className="max-w-sm text-center text-xs text-muted-foreground">
-              web-hr memakai sesi platform (cookie <code>sf_token</code>). Login
-              dulu lewat platform Sentient, lalu buka kembali halaman ini.
+              web-hr memakai sesi platform (cookie <code>sf_token</code>). Masuk
+              dulu untuk memuat data.
             </p>
+            <a
+              href={`/login?returnTo=${encodeURIComponent(
+                typeof window !== 'undefined' ? window.location.pathname : '/app/dashboard',
+              )}`}
+              className="mt-1 inline-flex h-7 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:opacity-90"
+            >
+              <LogIn className="h-3.5 w-3.5" />
+              Masuk
+            </a>
           </>
         ) : (
           <>

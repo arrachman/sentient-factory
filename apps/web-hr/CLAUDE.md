@@ -43,6 +43,10 @@ Rulebook ini berlaku **di atas** root `CLAUDE.md` + `packages/ui-kit/FRONTEND-DE
   `/erp/auth/login`). Tidak mengelola user/registrasi — hanya menukar kredensial
   platform jadi cookie pada origin ini (origin LAN tak mewarisi cookie app lain).
   401 → `QueryState` tampil tombol **Masuk** menuju `/login?returnTo=<path>`.
+  **Logout** (`UserMenu` di `app-shell` Topbar): karena `sf_token` di-set
+  client-side (bukan HttpOnly), keluar = `clearSession()` di `lib/api/auth.ts`
+  (hapus cookie `sf_token`) lalu `window.location.assign('/login')` (hard reload
+  buang seluruh query cache). TIDAK ada endpoint logout backend.
 - **Auth gate** = `proxy.ts` (konvensi Next 16, ex-`middleware`): route `/app/*`
   tanpa cookie `sf_token` → redirect 307 ke `/login?returnTo=<path>` sebelum
   shell render. Backstop client di `AppShell` (`useSessionGuard` via `useHrMe`):
@@ -62,8 +66,8 @@ app/                 # routing tipis; app/app/* = shell + screens
 components/
   ui/                # re-export ui-kit/ui/* (satu-satunya yang sentuh primitif)
   molecules/         # page-header, query-state
-  organisms/         # data-table, app-shell di templates/
-  templates/         # app-shell (sidebar+topbar lean, data-driven lib/nav.ts)
+  organisms/         # data-table, dynamic-sidebar, tab-bar
+  templates/         # app-shell (multi-tab chrome: rail+topbar+tabstrip)
   pages/             # satu file per layar (identitas app)
 lib/
   api/               # client.ts + types.ts + hooks.ts + index.ts + <resource>.ts
@@ -146,11 +150,33 @@ npm run check        # lint + typecheck + check:size + test
   Jangan hapus — root punya `next` versi beda (drift). Reinstal via `npm install`
   di root (jangan `-w web-hr` sendiri — itu mem-prune workspace lain).
 
-## Catatan deviasi (sadar)
+## Shell multi-tab (Fase 2 — port dari web-erp, 2026-06-30)
 
-Shell HR sengaja **lean** (sidebar+topbar), bukan port multi-tab shell web-erp
-yang terkopel ke 200+ halaman ERP. Mengikuti token/folder/kontrak yang sama;
-shell kaya bisa di-port bila HR butuh multi-tab.
+Shell HR = **port multi-tab** dari web-erp (membatalkan keputusan "lean" awal,
+atas permintaan user). Chrome di CSS Fase 1 (`hr-shell.css` + `hr-multitab.css`,
+class identik ERP: `.app`/`.sidebar`/`.topbar`/`.tabstrip`/`.tabview`).
+
+Komponen:
+- `components/templates/app-shell.tsx` — chrome host (`.app` grid). Hidup di
+  `app/app/layout.tsx` yang **persisten** lintas-navigasi, jadi tab strip awet.
+- `components/organisms/dynamic-sidebar.tsx` — icon-rail + flyout, modul dari
+  `useHrMyMenus()` (`GET /api/hr/sys-menus/my-menus`, role-filtered) dengan
+  fallback `HR_NAV` statis bila API kosong/error. Ikon lucide via `resolveIcon`.
+- `components/organisms/tab-bar.tsx` — tab strip gaya browser (close/close-lain/
+  close-kanan/reload via context-menu, reorder via **HTML5 DnD native** — HR
+  belum pakai `@dnd-kit`). Ikon lucide langsung.
+- `lib/use-hr-tabs.ts` — state tab **URL-driven** (tab = pathname `/app/...`).
+- `lib/nav.ts` — `toAppPath`/`stripApp`/`resolveIcon`/`pageMetaFor` + `HR_NAV`
+  (tetap `/app`-prefixed; SSOT fallback + uji `nav.test.ts`).
+
+**Deviasi sadar dari shell ERP** (lebih lean — boleh diperkaya nanti):
+- Tab di-key oleh pathname `/app/...` → view berbasis `<Link>` yang ada navigasi
+  natif; **routing filesystem tetap SSOT** route→view (`app/app/<route>/page.tsx`
+  render `<View/>`; AppShell render `{children}` di area tab, BUKAN registry).
+- Hanya view route aktif yang mounted (tanpa hidden keep-alive divs); `reload`
+  remount via nonce per-route. 1 route = 1 tab (tanpa duplikat).
+- Belum ada: command palette (K), notification/activity drawer, i18n, mode
+  accordion/url-routing toggle, persistensi workspace localStorage.
 
 ## Disiplin dokumen
 
