@@ -15,7 +15,9 @@ from `web-erp/db-design §3`. Cross-app refs (→ ERP) = scalar `BigInt` FK.
 `mdp`/`eam` foundation ✅ → **MES** ✅ → **WMS** ✅ → **QMS** ✅ → **CMMS** ✅ →
 **DMS ✅ · PRTS ✅ · IMS ✅ · LMS ✅** → **OEE** overlay ✅. **All 8 MOM modules +
 OEE overlay DONE.** *(Role-filtered nav live: `/api/mdp/menus/nav` +
-`DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`.)*
+`DynamicSidebar` consume `mdp_menus`+`mdp_role_menus`. Access-map admin UI live
+at `/app/master/role-menus`; SUPERADMIN seeded → all menus, so nav is now truly
+role-driven, not fallback.)*
 
 ---
 
@@ -29,7 +31,7 @@ Shared across all modules; built in Phase 1 alongside scaffold.
 | Work calendar | `mdp_work_calendars` | ✅ **CRUD live** (`/api/mdp/work-calendars`, UI `/app/master/work-calendars`). Planned operating time (plannedMinutesPerDay × workingDaysPerWeek); basis for OEE availability. |
 | Reason code | `mdp_reason_codes` | ✅ **CRUD live** (`/api/mdp/reason-codes`, UI `/app/master/reason-codes`). Typed catalog: downtime/scrap/delay/quality. |
 | Menu / nav | `mdp_menus` | ✅ **CRUD live** (`/api/mdp/menus`, UI `/app/master/menus`). Nav SSOT (self-tree, mirror `sys_menus`); seeded MES + master tree. |
-| Access map | `mdp_role_menus` | ✅ **Backend live** (`/api/mdp/role-menus`). Decision #1 **resolved = thin mapping**: scalar `roleId` → ERP `adm_roles` (no DB-FK) + `menuId` → `mdp_menus`; `canView`/`canEdit`. Identity stays `adm_users`. *(No dedicated admin UI yet.)* |
+| Access map | `mdp_role_menus` | ✅ **Backend live** (`/api/mdp/role-menus`). Decision #1 **resolved = thin mapping**: scalar `roleId` → ERP `adm_roles` (no DB-FK) + `menuId` → `mdp_menus`; `canView`/`canEdit`. Identity stays `adm_users`. ✅ **Admin UI live** (`/app/master/role-menus`): role-picker + menu-tree matrix (canView/canEdit, edit⇒view); atomic bulk save `PUT /api/mdp/role-menus/role/:roleId` (reconcile create/update/soft-delete). Role list = read-only `GET /api/mdp/roles` (adm_roles). Seed maps SUPERADMIN→all menus. |
 
 > **Foundation CRUD shipped (2026-06-28):** shifts + reason-codes + work-calendars
 > + menus (mdp), work-centers + assets (eam), and role-menus (backend) have backend

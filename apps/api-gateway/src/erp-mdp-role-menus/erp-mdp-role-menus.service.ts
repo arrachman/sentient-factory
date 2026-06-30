@@ -3,11 +3,89 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoleMenuDto } from './dto/create-role-menu.dto';
 import { QueryRoleMenuDto } from './dto/query-role-menu.dto';
+import { SetRoleMenusDto } from './dto/set-role-menus.dto';
 import { UpdateRoleMenuDto } from './dto/update-role-menu.dto';
+
+const MENU_INCLUDE = {
+  menu: { select: { id: true, code: true, name: true, path: true } },
+} as const;
 
 @Injectable()
 export class ErpMdpRoleMenusService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Read-only list of ERP roles (adm_roles) — drives the access-map admin UI. */
+  async listRoles() {
+    const data = await this.prisma.erpRole.findMany({
+      where: { deletedAt: null },
+      select: { id: true, code: true, name: true, isActive: true },
+      orderBy: [{ name: 'asc' }],
+    });
+    return { success: true, data };
+  }
+
+  /**
+   * Atomically reconcile a role's full menu access set against `dto.entries`:
+   * create missing mappings, update present ones, and soft-delete live mappings
+   * not in the list. Unknown menu ids are ignored (no cross-FK error).
+   */
+  async setForRole(roleIdRaw: string, dto: SetRoleMenusDto, actorId?: string) {
+    const roleId = BigInt(roleIdRaw);
+    const actor = actorId ? BigInt(actorId) : null;
+
+    const validMenus = await this.prisma.mdpMenu.findMany({
+      where: { deletedAt: null },
+      select: { id: true },
+    });
+    const valid = new Set(validMenus.map((m) => m.id.toString()));
+    const desired = new Map(
+      (dto.entries ?? [])
+        .filter((e) => valid.has(String(e.menuId)))
+        .map((e) => [String(e.menuId), e]),
+    );
+
+    const data = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.mdpRoleMenu.findMany({ where: { roleId } });
+      const byMenu = new Map(existing.map((e) => [e.menuId.toString(), e]));
+
+      for (const [menuId, entry] of desired) {
+        const found = byMenu.get(menuId);
+        const flags = { canView: entry.canView ?? true, canEdit: entry.canEdit ?? false };
+        if (found) {
+          await tx.mdpRoleMenu.update({
+            where: { id: found.id },
+            data: { ...flags, deletedAt: null, updatedById: actor },
+          });
+        } else {
+          await tx.mdpRoleMenu.create({
+            data: {
+              roleId,
+              menuId: BigInt(menuId),
+              ...flags,
+              createdById: actor,
+              updatedById: actor,
+            },
+          });
+        }
+      }
+
+      for (const e of existing) {
+        if (!e.deletedAt && !desired.has(e.menuId.toString())) {
+          await tx.mdpRoleMenu.update({
+            where: { id: e.id },
+            data: { deletedAt: new Date(), updatedById: actor },
+          });
+        }
+      }
+
+      return tx.mdpRoleMenu.findMany({
+        where: { roleId, deletedAt: null },
+        include: MENU_INCLUDE,
+      });
+    });
+
+    return { success: true, data };
+  }
 
   async create(dto: CreateRoleMenuDto, actorId?: string) {
     const roleId = BigInt(dto.roleId);

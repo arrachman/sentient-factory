@@ -336,6 +336,33 @@ export const workCalendars = crudResource<WorkCalendar>('/work-calendars');
 export const menus = crudResource<Menu>('/menus');
 export const roleMenus = crudResource<RoleMenu>('/role-menus');
 
+/** ERP role (adm_roles) — read-only; MDP reuses ERP identity/roles. */
+export interface Role {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+}
+
+/** List ERP roles for the access-map admin UI. */
+export function fetchRoles() {
+  return request<{ success: boolean; data: Role[] }>('/roles');
+}
+
+export interface RoleMenuEntry {
+  menuId: string;
+  canView?: boolean;
+  canEdit?: boolean;
+}
+
+/** Atomically replace a role's full menu access set (create/update/soft-delete). */
+export function setRoleMenus(roleId: string, entries: RoleMenuEntry[]) {
+  return request<{ success: boolean; data: RoleMenu[] }>(`/role-menus/role/${roleId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ entries }),
+  });
+}
+
 /** WMS execution — physical warehouse work; movements emit to ERP inv_ (decision #3). */
 export const wmsTasks = crudResource<WmsTask>('/wms/tasks');
 export const wmsHandlingUnits = crudResource<WmsHandlingUnit>('/wms/handling-units');

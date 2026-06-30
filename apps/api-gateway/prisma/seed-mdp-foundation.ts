@@ -488,6 +488,14 @@ const MENU_DEFS: MenuDef[] = [
     moduleKey: 'mdp',
     sequence: 96,
   },
+  {
+    code: 'master.role-menus',
+    name: 'Akses Menu per Role',
+    parentCode: 'master',
+    path: '/app/master/role-menus',
+    moduleKey: 'mdp',
+    sequence: 97,
+  },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -759,6 +767,43 @@ async function main() {
     console.log('✅ WMS tasks: 2 upserted · movements: 1 upserted');
   } else {
     console.warn('⚠ No md_items — skipping sample WMS tasks/movements.');
+  }
+
+  // 9. Default access map — grant the admin role full access to every menu so the
+  // role-filtered nav has a real mapping (instead of falling back to full-tree).
+  // Idempotent: upserts by (roleId, menuId). Skipped if no admin role exists.
+  const adminRole = await prisma.erpRole.findFirst({
+    where: {
+      deletedAt: null,
+      code: { in: ['SUPERADMIN', 'ADMIN', 'superadmin', 'admin'] },
+    },
+    select: { id: true, code: true },
+    orderBy: { id: 'asc' },
+  });
+  if (adminRole) {
+    const allMenus = await prisma.mdpMenu.findMany({
+      where: { deletedAt: null },
+      select: { id: true },
+    });
+    let mapped = 0;
+    for (const m of allMenus) {
+      const existing = await prisma.mdpRoleMenu.findFirst({
+        where: { roleId: adminRole.id, menuId: m.id },
+        select: { id: true },
+      });
+      const data = { canView: true, canEdit: true, deletedAt: null };
+      if (existing) {
+        await prisma.mdpRoleMenu.update({ where: { id: existing.id }, data });
+      } else {
+        await prisma.mdpRoleMenu.create({
+          data: { roleId: adminRole.id, menuId: m.id, ...data },
+        });
+      }
+      mapped++;
+    }
+    console.log(`✅ Role access: ${adminRole.code} → ${mapped} menus (canView+canEdit)`);
+  } else {
+    console.warn('⚠ No admin role (adm_roles) — skipping default access map.');
   }
 
   console.log('\nDone.');

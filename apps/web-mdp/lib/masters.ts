@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Boxes, CalendarClock, Clock, Factory, ListTree, Tag } from 'lucide-react';
+import { Boxes, CalendarClock, Clock, Factory, ListTree, ShieldCheck, Tag } from 'lucide-react';
 
 export interface MdpMaster {
   readonly id: string;
@@ -63,5 +63,13 @@ export const MDP_MASTERS: readonly MdpMaster[] = [
     domain: 'mdp',
     icon: ListTree,
     route: '/app/master/menus',
+  },
+  {
+    id: 'role-menus',
+    name: 'Akses Menu per Role',
+    description: 'Peta akses role → menu (canView/canEdit); role dikelola di ERP.',
+    domain: 'mdp',
+    icon: ShieldCheck,
+    route: '/app/master/role-menus',
   },
 ];
