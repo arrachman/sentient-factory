@@ -109,6 +109,22 @@ UI ad-hoc. Tambahan konteks MDP:
   state online/offline jelas. Tetap pakai token & komponen reusable.
 - Semua standar list page (§2.7 web-erp), kebab actions, status badge, format
   angka, density token, keyboard-first → **berlaku sama** untuk MDP.
+- **UI/UX parity (2026-06-30):** MDP memakai token + CSS komponen ERP
+  (`erp-components.css` dan sub-file) serta `MasterCrudPage` mengikuti chrome
+  ERP: topbar/sidebar `.app`, dense grid, action/filter bar, drawer form,
+  checkbox selection, bulk bar, sortable header, dan keyboard-first shortcuts.
+- **Auth gate (2026-06-30):** `/app/**` wajib melalui `proxy.ts`; tanpa cookie
+  `erp_token` redirect ke `/login?returnTo=<path>`. Halaman `/login` memakai
+  `/api/erp/auth/login` agar cookie HttpOnly `erp_token` diset oleh api-gateway.
+  Response API MDP 401 juga wajib mengarahkan ulang ke login.
+- **Login demo + kontrak body (2026-06-30):** demo cred MDP = `rania / sentient`
+  (dari `prisma/seed-erp.ts`, terverifikasi 200 di `/api/erp/auth/login`). **BUKAN**
+  `admin@example.com / Password123!` — seed itu (`prisma/seed.ts`) tidak di-apply ke
+  DB live, jadi 401. Banner "Mode demo" (`.login-demo` di `erp-login.css`) menampilkan
+  akun+sandi + link "isi otomatis" (`fillDemo`). **Body login WAJIB `{ login, password }`
+  saja** — DTO `ErpLoginDto` hanya whitelist dua field itu; `remember` ditolak
+  (`forbidNonWhitelisted` → 400). Checkbox "Ingat saya" = client-side cosmetic (UI
+  parity web-erp/web-hr), jangan dikirim ke backend.
 - Batas **400 baris/file** (§3 web-erp) berlaku tanpa pengecualian.
 
 ---
