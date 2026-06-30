@@ -134,12 +134,28 @@ Kepadatan, Mode Sidebar (ikon/label + flyout/accordion), URL Routing. Diterapkan
 ke `<html>` via `data-primary`/`data-density`/`data-fontscale`/`data-sidebar`/
 `data-sidebar-menu` (token CSS sudah ada sejak scaffold ERP).
 
-**Deviasi sadar dari ERP/MDP:** persistensi **localStorage saja** (key
-`hr-appearance`, dibaca skrip blocking di `app/layout.tsx` anti-FOUC) — HR tak
-punya backend user-preferences (auth = `sf_token`, bukan `erp_token`; gateway tak
-ekspos `/user-preferences` untuk HR). Knob **URL Routing** kosmetik (HR
-filesystem-routed multitab; flag tersimpan tapi belum mengubah routing) — tetap
-disertakan demi paritas visual. i18n hanya cover string layar appearance.
+**Persistensi backend SSOT (2026-06-30):** preferensi disimpan di backend
+`hr_user_preferences` (Prisma model `HrUserPreferences`, 1:1 port ERP
+`adm_user_preferences`; PK = `user_id` platform = `sub` JWT `sf_token`; kolom
+`theme`/`language` + sisa tweaks di `metadata` JSON). Migrasi Prisma
+`20260630094036_hr_user_preferences` (schema `prisma/schema/hr-foundation.prisma`)
+— tabel additive, sudah applied. Modul gateway `hr-user-preferences`
+(`@Controller('hr/user-preferences')`: `GET me` + `PUT me`, guard
+`JwtAuthGuard` — konsisten `hr-attendance`, baca `sf_token`). Client:
+`lib/api/user-preferences.ts` (`getMyPreferences`/
+`updateMyPreferences`); `use-appearance.ts` hidrasi sekali dari server saat mount
+(server SSOT menimpa baseline) lalu mirror balik ke localStorage.
+**localStorage** (key `hr-appearance`) tetap dipakai sebagai cermin anti-FOUC —
+skrip blocking di `app/layout.tsx` membaca `data-*` (`primary`/`density`/
+`fontscale`/`sidebar`/`sidebar-menu`) sebelum first paint; hook lalu re-apply dari
+server SSOT setelah React mount. Knob **URL Routing** kosmetik (HR filesystem-routed
+multitab; flag tersimpan tapi belum mengubah routing) — tetap disertakan demi
+paritas visual. i18n hanya cover string layar appearance.
+
+> ⚠️ Catatan deploy: `hr-user-preferences` adalah Prisma model, jadi setelah
+> `prisma migrate` WAJIB `prisma generate` **di dalam container api-gateway**
+> (node_modules = Docker volume, tak ikut bind-mount) + restart container —
+> kalau tidak, `this.prisma.hrUserPreferences` undefined / route 404.
 
 **Sidebar live menghormati config (2026-06-30):** `dynamic-sidebar.tsx` membaca
 atribut `<html>` yang di-set hook appearance — `data-sidebar='label'` →
