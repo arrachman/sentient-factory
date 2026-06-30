@@ -163,8 +163,8 @@ Komponen:
   `useHrMyMenus()` (`GET /api/hr/sys-menus/my-menus`, role-filtered) dengan
   fallback `HR_NAV` statis bila API kosong/error. Ikon lucide via `resolveIcon`.
 - `components/organisms/tab-bar.tsx` — tab strip gaya browser (close/close-lain/
-  close-kanan/reload via context-menu, reorder via **HTML5 DnD native** — HR
-  belum pakai `@dnd-kit`). Ikon lucide langsung.
+  close-kanan/reload via context-menu, reorder via **@dnd-kit** SortableContext
+  persis ERP). Ikon lucide langsung.
 - `lib/use-hr-tabs.ts` — state tab **URL-driven** (tab = pathname `/app/...`).
 - `lib/nav.ts` — `toAppPath`/`stripApp`/`resolveIcon`/`pageMetaFor` + `HR_NAV`
   (tetap `/app`-prefixed; SSOT fallback + uji `nav.test.ts`).
@@ -178,7 +178,57 @@ Komponen:
 - Belum ada: command palette (K), notification/activity drawer, i18n, mode
   accordion/url-routing toggle, persistensi workspace localStorage.
 
+## List engine generik (Fase 3 — port §2.7 ERP, 2026-06-30)
+
+`components/organisms/list-layout.tsx` (`HrListLayout`) = chrome list standar
+ERP §2.7 di-port ke HR (tanpa i18n; reuse `Icon`/`Kbd`/`Select` + CSS Fase-1
+`.page`/`.page-header`/`.search-input`/`.filter-bar`/`.filter-summary`/
+`.page-body`). Menyediakan: action bar (search `/` + export + refresh + tambah
+`N`), filter + summary bar (+ reset), state loading/error inline, keyboard-first
+(`/ n ← → j k x Enter`), footer paginasi + hint. **Tabel = `children`** (HR
+`DataTable` atau grid lebih kaya) — layout hanya pegang chrome sekeliling.
+
+**Adopter pilot = Lokasi & Geofence** (`worksites-view.tsx`, code `GEO`):
+search+status filter+summary client-side (list kecil, tanpa server-pagination).
+Pola adopsi: `<HrListLayout title code loading error search onSearch onRefresh
+onAdd filters summary>{table}</HrListLayout>`.
+
+**Sisa view list belum migrasi** (masih pakai `PageHeader`+`QueryState`+
+`DataTable` lama): employees, holidays, roles, schedules, leave, projects,
+timesheets, attendance-history, reviews, reports. Replikasi pola pilot per view;
+untuk list besar/server-side gunakan prop `pagination` + debounce search ke API
+(ikuti §2.12 ERP). Kebab row-actions + selection/keyboard-row + bulk bar =
+follow-up (butuh port table.tsx kaya + row-actions-menu; `HrListLayout` sudah
+sediakan hook `keyboardRows`).
+
 ## Disiplin dokumen
 
 Setiap keputusan/perubahan → update file ini atau `db-design/`. Jangan declare
 selesai sebelum dokumen sinkron.
+
+## Workflow vibe coding — commit ke `dev` + build production
+
+**WAJIB tiap sesi vibe coding selesai** (satuan kerja yang bisa diserahkan):
+commit ke branch `dev` lalu build & deploy ke production. Production web-hr =
+proses `npm run start` (`next start`) detached di **port 3221** (bukan PM2).
+
+Urutan baku (jalankan dari `apps/web-hr/`):
+
+```bash
+npm run check                       # lint+typecheck+size+test WAJIB hijau dulu
+git add -A
+git commit -m "feat(hr): <ringkas>" # branch dev; conventional, JANGAN --no-verify
+git push origin dev                 # hanya bila user mengizinkan push
+
+# build production
+npm run build
+
+# restart serve di port 3221 (detached) → production ter-update
+fuser -k 3221/tcp 2>/dev/null || true
+nohup npm run start > /tmp/web-hr.out 2>&1 &
+curl -sf --max-time 5 http://localhost:3221 >/dev/null && echo "HR up :3221"
+```
+
+Aturan: (1) `npm run check` gagal → STOP, jangan commit/build. (2) Build gagal →
+jangan restart serve (production lama tetap hidup); perbaiki dulu. (3) Commit ke
+branch lain selain `dev` atau `git push --force` = tanya user dulu.

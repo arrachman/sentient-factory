@@ -1,26 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/molecules/page-header';
-import { QueryState } from '@/components/molecules/query-state';
+import { HrListLayout, type FilterConfig } from '@/components/organisms/list-layout';
 import { DataTable, type Column } from '@/components/organisms/data-table';
 import { WorksiteFormDialog } from '@/components/pages/worksite-form-dialog';
 import { useWorksites, hrQueryKeys } from '@/lib/api/hooks';
 import { deleteWorksite } from '@/lib/api/worksites';
 import type { HrWorksite } from '@/lib/api/worksites';
 
+/** Lokasi & Geofence — pilot adopter of the §2.7 HrListLayout chrome
+ *  (action bar + search + status filter + summary + footer). Worksites is a
+ *  small list, so search/filter run client-side (no server pagination). */
 export function WorksitesView() {
   const qc = useQueryClient();
-  const { data, isLoading, error } = useWorksites();
-  const rows = data ?? [];
+  const { data, isLoading, error, refetch } = useWorksites();
+  const allRows = useMemo(() => data ?? [], [data]);
+
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState(''); // '' = semua
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<HrWorksite | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return allRows.filter((w) => {
+      const matchesSearch =
+        !q || w.code?.toLowerCase().includes(q) || w.name?.toLowerCase().includes(q);
+      const matchesStatus =
+        status === '' ||
+        (status === 'active' && w.isActive) ||
+        (status === 'inactive' && !w.isActive);
+      return matchesSearch && matchesStatus;
+    });
+  }, [allRows, search, status]);
 
   function openCreate() {
     setEditing(null);
@@ -45,6 +63,20 @@ export function WorksitesView() {
     }
   }
 
+  const filters: FilterConfig[] = [
+    {
+      key: 'status',
+      label: 'Status',
+      value: status,
+      onChange: setStatus,
+      options: [
+        { label: 'Semua', value: '' },
+        { label: 'Aktif', value: 'active' },
+        { label: 'Nonaktif', value: 'inactive' },
+      ],
+    },
+  ];
+
   const columns: Column<HrWorksite>[] = [
     { key: 'code', header: 'Kode' },
     { key: 'name', header: 'Nama Lokasi' },
@@ -57,7 +89,12 @@ export function WorksitesView() {
         </span>
       ),
     },
-    { key: 'radiusMeters', header: 'Radius', render: (r) => <span className="tabular-nums">{r.radiusMeters} m</span> },
+    {
+      key: 'radiusMeters',
+      header: 'Radius',
+      className: 'text-right',
+      render: (r) => <span className="tabular-nums">{r.radiusMeters} m</span>,
+    },
     {
       key: 'isActive',
       header: 'Status',
@@ -76,7 +113,12 @@ export function WorksitesView() {
           <Button size="sm" variant="default" onClick={() => openEdit(r)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button size="sm" variant="danger" disabled={deletingId === String(r.id)} onClick={() => remove(r)}>
+          <Button
+            size="sm"
+            variant="danger"
+            disabled={deletingId === String(r.id)}
+            onClick={() => remove(r)}
+          >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -85,20 +127,29 @@ export function WorksitesView() {
   ];
 
   return (
-    <div>
-      <PageHeader
+    <>
+      <HrListLayout
         title="Lokasi & Geofence"
-        description="Titik kerja dengan geofence GPS untuk membatasi area clock-in (adaptasi jibble Geofencing)."
-        actions={
-          <Button variant="primary" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Tambah
-          </Button>
-        }
-      />
-      <QueryState isLoading={isLoading} error={error} isEmpty={rows.length === 0}>
-        <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
-      </QueryState>
+        code="GEO"
+        loading={isLoading}
+        error={error ? ((error as Error)?.message ?? 'Terjadi kesalahan.') : null}
+        search={search}
+        onSearch={setSearch}
+        onRefresh={() => refetch()}
+        onAdd={openCreate}
+        filters={filters}
+        summary={{ metricLabel: 'Worksite', rowCount: rows.length, totalCount: allRows.length }}
+        keyboardHints
+      >
+        {rows.length === 0 ? (
+          <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
+            {allRows.length === 0 ? 'Belum ada worksite.' : 'Tidak ada hasil untuk filter ini.'}
+          </div>
+        ) : (
+          <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
+        )}
+      </HrListLayout>
       <WorksiteFormDialog open={dialogOpen} onOpenChange={setDialogOpen} worksite={editing} />
-    </div>
+    </>
   );
 }
