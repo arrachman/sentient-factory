@@ -41,9 +41,7 @@ function renderCsv(dataset: HrReportDataset): Buffer {
   lines.push('');
   lines.push(dataset.columns.map((c) => csvCell(c.header)).join(','));
   for (const row of dataset.rows) {
-    lines.push(
-      dataset.columns.map((c) => csvCell(formatCellValue(row[c.key], c.type))).join(','),
-    );
+    lines.push(dataset.columns.map((c) => csvCell(formatCellValue(row[c.key], c.type))).join(','));
   }
   if (dataset.summary.length > 0) {
     lines.push('');

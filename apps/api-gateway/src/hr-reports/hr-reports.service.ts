@@ -105,9 +105,7 @@ export class HrReportsService {
   private async resolveAttendanceRecap(f: HrReportFilters) {
     const std = await this.getStandardDailyMinutes();
     const { from, to } = this.dateRange(f, Prisma.sql`s.work_date`);
-    const userSql = f.userId
-      ? Prisma.sql`AND hu.user_id = ${f.userId}`
-      : Prisma.empty;
+    const userSql = f.userId ? Prisma.sql`AND hu.user_id = ${f.userId}` : Prisma.empty;
     const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
       SELECT
         hu.employee_code AS "employeeCode",
@@ -142,7 +140,11 @@ export class HrReportsService {
       summary: [
         { label: 'Jumlah Karyawan', value: mapped.length, type: 'number' as const },
         { label: 'Total Jam', value: Math.round(totalHours * 100) / 100, type: 'hours' as const },
-        { label: 'Total Lembur (jam)', value: Math.round(overtimeHours * 100) / 100, type: 'hours' as const },
+        {
+          label: 'Total Lembur (jam)',
+          value: Math.round(overtimeHours * 100) / 100,
+          type: 'hours' as const,
+        },
       ],
     };
   }
@@ -185,7 +187,11 @@ export class HrReportsService {
       summary: [
         { label: 'Jumlah Proyek', value: mapped.length, type: 'number' as const },
         { label: 'Total Jam', value: Math.round(totalHours * 100) / 100, type: 'hours' as const },
-        { label: 'Jam Billable', value: Math.round(billableHours * 100) / 100, type: 'hours' as const },
+        {
+          label: 'Jam Billable',
+          value: Math.round(billableHours * 100) / 100,
+          type: 'hours' as const,
+        },
       ],
     };
   }
@@ -226,7 +232,11 @@ export class HrReportsService {
       rows: normalizeHrDates(mapped),
       summary: [
         { label: 'Total Pengajuan', value: totalRequests, type: 'number' as const },
-        { label: 'Total Hari Cuti', value: Math.round(totalDays * 100) / 100, type: 'days' as const },
+        {
+          label: 'Total Hari Cuti',
+          value: Math.round(totalDays * 100) / 100,
+          type: 'days' as const,
+        },
       ],
     };
   }

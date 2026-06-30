@@ -9,7 +9,7 @@ import * as Sentry from '@sentry/node';
 export function initSentry() {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) {
-    // eslint-disable-next-line no-console
+     
     console.log('[sentry] SENTRY_DSN not set — error tracking disabled');
     return;
   }
@@ -28,6 +28,6 @@ export function initSentry() {
       return event;
     },
   });
-  // eslint-disable-next-line no-console
+   
   console.log('[sentry] initialized');
 }

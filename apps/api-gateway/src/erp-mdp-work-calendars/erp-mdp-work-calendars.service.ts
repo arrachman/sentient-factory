@@ -97,7 +97,9 @@ export class ErpMdpWorkCalendarsService {
   }
 
   async update(id: bigint, dto: UpdateWorkCalendarDto, actorId?: string) {
-    const existing = await this.prisma.mdpWorkCalendar.findFirst({ where: { id, deletedAt: null } });
+    const existing = await this.prisma.mdpWorkCalendar.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!existing) throw new NotFoundException('Work calendar not found');
 
     if (dto.code && dto.code !== existing.code) {

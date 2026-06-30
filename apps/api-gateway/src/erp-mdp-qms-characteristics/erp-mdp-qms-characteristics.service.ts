@@ -5,8 +5,6 @@ import { CreateQmsCharacteristicDto } from './dto/create-characteristic.dto';
 import { QueryQmsCharacteristicDto } from './dto/query-characteristic.dto';
 import { UpdateQmsCharacteristicDto } from './dto/update-characteristic.dto';
 
-const toBig = (v?: string | null) => (v ? BigInt(v) : null);
-
 @Injectable()
 export class ErpMdpQmsCharacteristicsService {
   constructor(private readonly prisma: PrismaService) {}

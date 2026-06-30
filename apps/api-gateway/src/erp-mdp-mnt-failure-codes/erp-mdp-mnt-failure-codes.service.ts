@@ -7,23 +7,20 @@ import { QueryMntFailureCodeDto } from './dto/query-failure-code.dto';
 import { UpdateMntFailureCodeDto } from './dto/update-failure-code.dto';
 
 const CODE_TARGETS = ['code', 'mnt_failure_codes_code_key'];
-const toBig = (v?: string | null) => (v ? BigInt(v) : null);
 
 @Injectable()
 export class ErpMdpMntFailureCodesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private data(dto: CreateMntFailureCodeDto | UpdateMntFailureCodeDto, partial: boolean) {
-    const d: Prisma.MdpMntFailureCodeUncheckedCreateInput | Prisma.MdpMntFailureCodeUncheckedUpdateInput = {
+  private data(dto: CreateMntFailureCodeDto | UpdateMntFailureCodeDto, _partial: boolean) {
+    const d:
+      | Prisma.MdpMntFailureCodeUncheckedCreateInput
+      | Prisma.MdpMntFailureCodeUncheckedUpdateInput = {
       code: dto.code,
       name: dto.name,
       type: dto.type as any,
       description: dto.description,
     } as any;
-    const setBig = (key: string, v?: string) => {
-      if (!partial || v !== undefined) (d as any)[key] = toBig(v);
-    };
-
 
     return d;
   }
@@ -100,7 +97,9 @@ export class ErpMdpMntFailureCodesService {
   }
 
   async update(id: bigint, dto: UpdateMntFailureCodeDto, actorId?: string) {
-    const existing = await this.prisma.mdpMntFailureCode.findFirst({ where: { id, deletedAt: null } });
+    const existing = await this.prisma.mdpMntFailureCode.findFirst({
+      where: { id, deletedAt: null },
+    });
     if (!existing) throw new NotFoundException('Failure code not found');
     if (dto.code && dto.code !== existing.code) {
       const dup = await this.prisma.mdpMntFailureCode.findFirst({

@@ -4,10 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ErpRoleDocPoliciesService } from '../erp-role-doc-policies/erp-role-doc-policies.service';
 import { CashBankPostingService } from './cash-bank-posting.service';
 import { enrichTransactions } from './cash-bank-enrich';
-import {
-  CashBankLineDto,
-  CreateCashBankTransactionDto,
-} from './dto/create-cash-bank-transaction.dto';
+import { CreateCashBankTransactionDto } from './dto/create-cash-bank-transaction.dto';
 import { QueryCashBankTransactionDto } from './dto/query-cash-bank-transaction.dto';
 import { UpdateCashBankTransactionDto } from './dto/update-cash-bank-transaction.dto';
 import {

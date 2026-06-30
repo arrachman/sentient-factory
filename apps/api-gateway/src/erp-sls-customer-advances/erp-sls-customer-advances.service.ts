@@ -90,7 +90,7 @@ export class ErpSlsCustomerAdvancesService {
 
   async create(dto: CreateSlsCustomerAdvanceDto, actorId?: string) {
     const actor = actorId ? BigInt(actorId) : null;
-    const dueDate = await this.resolveDueDate(dto.paymentTermId, dto.docDate, dto.dueDate);
+    await this.resolveDueDate(dto.paymentTermId, dto.docDate, dto.dueDate);
 
     const created = await this.prisma.$transaction(async (tx) => {
       const fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);

@@ -39,7 +39,10 @@ export class CreateWorkCalendarDto {
   @IsString()
   shiftId?: string;
 
-  @ApiProperty({ example: 1440, description: 'Planned operating minutes per day (OEE availability basis)' })
+  @ApiProperty({
+    example: 1440,
+    description: 'Planned operating minutes per day (OEE availability basis)',
+  })
   @Type(() => Number)
   @IsNumber()
   @Min(0)

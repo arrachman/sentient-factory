@@ -226,7 +226,7 @@ export class ErpSlsDeliveryOrdersService {
     };
 
     await this.prisma.$transaction(async (tx) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const data: any = { updatedById: actor };
       if (dto.docNumber !== undefined) {
         data.docNumber = dto.docNumber;

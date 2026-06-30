@@ -1,11 +1,21 @@
-import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  getHrProfileByAppUserId, isPrivileged, normalizeHrDates,
+  getHrProfileByAppUserId,
+  isPrivileged,
+  normalizeHrDates,
 } from '../hr-attendance/hr-attendance-helpers';
 import {
-  CreateProjectDto, UpdateProjectDto, CreateProjectTimeDto, QueryProjectTimeDto,
+  CreateProjectDto,
+  UpdateProjectDto,
+  CreateProjectTimeDto,
+  QueryProjectTimeDto,
 } from './dto/workforce.dto';
 
 type AuthUser = { id: number; roles?: string[] };
@@ -76,9 +86,12 @@ export class ProjectService {
     const limit = Math.min(q.limit && q.limit > 0 ? q.limit : DEFAULT_LIMIT, MAX_LIMIT);
     const offset = (page - 1) * limit;
 
-    const scopeSql = scopeHrUserId !== null ? Prisma.sql`AND pte.user_id = ${scopeHrUserId}` : Prisma.empty;
+    const scopeSql =
+      scopeHrUserId !== null ? Prisma.sql`AND pte.user_id = ${scopeHrUserId}` : Prisma.empty;
     const projSql = q.projectId ? Prisma.sql`AND pte.project_id = ${q.projectId}` : Prisma.empty;
-    const fromSql = q.dateFrom ? Prisma.sql`AND pte.work_date >= ${q.dateFrom}::date` : Prisma.empty;
+    const fromSql = q.dateFrom
+      ? Prisma.sql`AND pte.work_date >= ${q.dateFrom}::date`
+      : Prisma.empty;
     const toSql = q.dateTo ? Prisma.sql`AND pte.work_date <= ${q.dateTo}::date` : Prisma.empty;
     const whereSql = Prisma.sql`pte.deleted_at IS NULL ${scopeSql} ${projSql} ${fromSql} ${toSql}`;
 

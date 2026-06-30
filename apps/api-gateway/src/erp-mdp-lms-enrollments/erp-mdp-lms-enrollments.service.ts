@@ -5,8 +5,6 @@ import { CreateLmsEnrollmentDto } from './dto/create-enrollment.dto';
 import { QueryLmsEnrollmentDto } from './dto/query-enrollment.dto';
 import { UpdateLmsEnrollmentDto } from './dto/update-enrollment.dto';
 
-const toBig = (v?: string | null) => (v ? BigInt(v) : null);
-
 @Injectable()
 export class ErpMdpLmsEnrollmentsService {
   constructor(private readonly prisma: PrismaService) {}

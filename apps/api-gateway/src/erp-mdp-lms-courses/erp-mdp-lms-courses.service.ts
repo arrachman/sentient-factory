@@ -7,13 +7,12 @@ import { QueryLmsCourseDto } from './dto/query-course.dto';
 import { UpdateLmsCourseDto } from './dto/update-course.dto';
 
 const CODE_TARGETS = ['code', 'lms_courses_code_key'];
-const toBig = (v?: string | null) => (v ? BigInt(v) : null);
 
 @Injectable()
 export class ErpMdpLmsCoursesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private data(dto: CreateLmsCourseDto | UpdateLmsCourseDto, partial: boolean) {
+  private data(dto: CreateLmsCourseDto | UpdateLmsCourseDto, _partial: boolean) {
     const d: Prisma.MdpLmsCourseUncheckedCreateInput | Prisma.MdpLmsCourseUncheckedUpdateInput = {
       code: dto.code,
       name: dto.name,
@@ -24,10 +23,6 @@ export class ErpMdpLmsCoursesService {
       isMandatory: dto.isMandatory,
       validityMonths: dto.validityMonths,
     } as any;
-    const setBig = (key: string, v?: string) => {
-      if (!partial || v !== undefined) (d as any)[key] = toBig(v);
-    };
-
 
     return d;
   }
@@ -99,7 +94,10 @@ export class ErpMdpLmsCoursesService {
   async findOne(id: bigint) {
     const item = await this.prisma.mdpLmsCourse.findFirst({
       where: { id, deletedAt: null },
-      include: { enrollments: { where: { deletedAt: null } }, competencies: { where: { deletedAt: null } } },
+      include: {
+        enrollments: { where: { deletedAt: null } },
+        competencies: { where: { deletedAt: null } },
+      },
     });
     if (!item) throw new NotFoundException('Course not found');
     return { success: true, data: item };

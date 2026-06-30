@@ -51,7 +51,11 @@ export class HrWorkforceController {
 
   @Patch('shifts/:id')
   @ApiOperation({ summary: 'Update shift (privileged)' })
-  updateShift(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateShiftDto) {
+  updateShift(
+    @Request() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateShiftDto,
+  ) {
     return this.shifts.updateShift(req.user, id, dto);
   }
 
@@ -95,7 +99,11 @@ export class HrWorkforceController {
 
   @Patch('projects/:id')
   @ApiOperation({ summary: 'Update project (privileged)' })
-  updateProject(@Request() req: any, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProjectDto) {
+  updateProject(
+    @Request() req: any,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateProjectDto,
+  ) {
     return this.projects.updateProject(req.user, id, dto);
   }
 

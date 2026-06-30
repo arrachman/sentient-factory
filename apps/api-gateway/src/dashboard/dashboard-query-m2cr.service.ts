@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DashboardMysqlService } from './dashboard-mysql.service';
-import { QueryDashboardRangeDto } from './dto/query-dashboard-range.dto';
 import { QueryDashboardTableDto } from './dto/query-dashboard-table.dto';
 import {
   toNumber,

@@ -1,8 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, Min,
-} from 'class-validator';
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 
 const PIN_RE = /^\d{4,6}$/;
 

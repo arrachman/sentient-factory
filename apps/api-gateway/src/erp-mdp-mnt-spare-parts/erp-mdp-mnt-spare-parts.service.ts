@@ -5,8 +5,6 @@ import { CreateMntSparePartDto } from './dto/create-spare-part.dto';
 import { QueryMntSparePartDto } from './dto/query-spare-part.dto';
 import { UpdateMntSparePartDto } from './dto/update-spare-part.dto';
 
-const toBig = (v?: string | null) => (v ? BigInt(v) : null);
-
 @Injectable()
 export class ErpMdpMntSparePartsService {
   constructor(private readonly prisma: PrismaService) {}
