@@ -6,6 +6,10 @@
 @source '../components';
 @source '../shared';
 @source '../lib';
+/* Scan ui-kit primitives (consumed directly, not via local adapters) so their
+   utility classes — e.g. the Dialog's `left-1/2 -translate-x-1/2 z-50` centering
+   + overlay — are generated. Without this the dialog renders off-screen/invisible. */
+@source '../../../packages/ui-kit/src';
 
 /* Base token contract (names + neutral defaults) from the shared ui-kit, then
    the HR brand overrides. web-hr is the first clean adopter of this contract. */
