@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   getHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from '../hr-attendance/hr-attendance-helpers';
 import {
@@ -24,8 +24,8 @@ type AuthUser = { id: number; roles?: string[] };
 export class HrLeaveService {
   constructor(private prisma: PrismaService) {}
 
-  private requirePrivileged(authUser: AuthUser) {
-    if (!isPrivileged(authUser.roles)) {
+  private async requirePrivileged(authUser: AuthUser) {
+    if (!(await resolveHrPrivilege(this.prisma, authUser))) {
       throw new ForbiddenException('Hanya admin/manager yang dapat melakukan aksi ini.');
     }
   }
@@ -44,7 +44,7 @@ export class HrLeaveService {
   }
 
   async createLeaveType(authUser: AuthUser, dto: CreateLeaveTypeDto) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const rows = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
       INSERT INTO public.hr_leave_types (code, name, is_paid, default_quota_days, is_active, created_by)
       VALUES (${dto.code}, ${dto.name}, ${dto.isPaid ?? true},
@@ -55,7 +55,7 @@ export class HrLeaveService {
   }
 
   async updateLeaveType(authUser: AuthUser, id: number, dto: UpdateLeaveTypeDto) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const sets: Prisma.Sql[] = [];
     if (dto.code !== undefined) sets.push(Prisma.sql`code = ${dto.code}`);
     if (dto.name !== undefined) sets.push(Prisma.sql`name = ${dto.name}`);
@@ -74,7 +74,7 @@ export class HrLeaveService {
   }
 
   async deleteLeaveType(authUser: AuthUser, id: number) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const res = await this.prisma.$executeRaw(Prisma.sql`
       UPDATE public.hr_leave_types
       SET deleted_at = now(), deleted_by = ${authUser.id}
@@ -90,7 +90,7 @@ export class HrLeaveService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 25;
     const offset = (page - 1) * limit;
-    const privileged = isPrivileged(authUser.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const search = query.search?.trim() ?? '';
 
     let scopeHrUserId: number | null = null;
@@ -173,11 +173,11 @@ export class HrLeaveService {
       // Owner may cancel own request; privileged may cancel any.
       const profile = await getHrProfileByAppUserId(this.prisma, authUser.id);
       const isOwner = profile && Number(profile.hrUserId) === Number(row.user_id);
-      if (!isOwner && !isPrivileged(authUser.roles)) {
+      if (!isOwner && !await resolveHrPrivilege(this.prisma, authUser)) {
         throw new ForbiddenException('Tidak boleh membatalkan pengajuan ini.');
       }
     } else {
-      this.requirePrivileged(authUser);
+      await this.requirePrivileged(authUser);
     }
 
     await this.prisma.$executeRaw(Prisma.sql`

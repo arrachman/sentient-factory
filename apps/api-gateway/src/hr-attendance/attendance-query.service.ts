@@ -7,7 +7,7 @@ import { QueryHrAttendanceHistoryDto } from './dto/query-hr-attendance-history.d
 import { QueryHrTimesheetDto } from './dto/query-hr-timesheet.dto';
 import {
   getHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from './hr-attendance-helpers';
 import {
@@ -133,7 +133,7 @@ export class AttendanceQueryService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const offset = (page - 1) * limit;
-    const privileged = isPrivileged(authUser.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const search = query.search?.trim() ?? '';
     const targetAppUserId = query.userId ? (privileged ? query.userId : authUser.id) : null;
 
@@ -247,7 +247,7 @@ export class AttendanceQueryService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 25;
     const offset = (page - 1) * limit;
-    const privileged = isPrivileged(authUser.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const search = query.search?.trim() ?? '';
 
     // Scope: privileged + userId → that user; otherwise non-privileged → self.
@@ -385,7 +385,7 @@ export class AttendanceQueryService {
   }
 
   async getAttendanceEventSnapshot(authUser: AuthUser, eventId: number) {
-    const privileged = isPrivileged(authUser.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const rows = await this.prisma.$queryRaw<
       Array<{ snapshot_url: string | null; user_id: number }>
     >(Prisma.sql`

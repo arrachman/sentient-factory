@@ -28,13 +28,17 @@ Rulebook ini berlaku **di atas** root `CLAUDE.md` + `packages/ui-kit/FRONTEND-DE
   (Tier 2). `transpilePackages: ['@sentient-factory/ui-kit']`.
 - **Base URL** = same-origin `/api` → `next.config.mjs` rewrite ke
   `HR_INTERNAL_API_URL` (api-gateway). Browser panggil `/api/hr/*` + `/api/auth/*`.
-- **Auth** = sesi platform (cookie `sf_token`). web-hr punya halaman login tipis
-  sendiri (`app/login/page.tsx`): POST `/api/auth/login` (rewrite ke gateway) →
-  simpan JWT `data.token` sebagai cookie `sf_token` (Path=/, SameSite=Lax,
-  Max-Age 7h) → redirect `returnTo`. Tidak mengelola user/registrasi — hanya
-  menukar kredensial platform jadi cookie pada origin ini (perlu karena origin
-  LAN tak mewarisi cookie dari app lain). 401 → `QueryState` tampil tombol
-  **Masuk** menuju `/login?returnTo=<path>`.
+- **Auth** = sesi platform (cookie `sf_token`). web-hr punya halaman login
+  sendiri (`app/login/page.tsx`, UI split-screen meniru web-erp, brand HR/teal):
+  POST `/api/auth/login` **by EMAIL** `{ email, password }` (rewrite ke gateway,
+  modul `src/auth` — BUKAN `/erp/auth/login` yang set `erp_token` HttpOnly & tak
+  dibaca guard HR) → simpan JWT `data.token` sebagai cookie `sf_token` (Path=/,
+  SameSite=Lax; Max-Age 7h bila "Ingat saya", else session) → redirect
+  `returnTo`. Email default ter-prefill `super_admin@fr-labs.my.id` (password
+  selalu kosong — jangan hardcode kredensial). Tidak mengelola user/registrasi —
+  hanya menukar kredensial platform jadi cookie pada origin ini (origin LAN tak
+  mewarisi cookie app lain). 401 → `QueryState` tampil tombol **Masuk** menuju
+  `/login?returnTo=<path>`.
 - **Auth gate** = `proxy.ts` (konvensi Next 16, ex-`middleware`): route `/app/*`
   tanpa cookie `sf_token` → redirect 307 ke `/login?returnTo=<path>` sebelum
   shell render. Backstop client di `AppShell` (`useSessionGuard` via `useHrMe`):
@@ -45,6 +49,7 @@ Rulebook ini berlaku **di atas** root `CLAUDE.md` + `packages/ui-kit/FRONTEND-DE
 ## Struktur
 
 ```
+proxy.ts             # auth gate Next 16: /app/* tanpa sf_token → redirect /login
 app/                 # routing tipis; app/app/* = shell + screens
   layout.tsx         # providers + appearance init (themeColor teal)
   login/page.tsx     # login tipis (tukar kredensial platform → cookie sf_token)
@@ -92,9 +97,11 @@ HR_ADMIN/MANAGER/EMPLOYEE; manajemen peran + penugasan per-karyawan).
 **Enforcement RBAC (additive):** helper `resolveHrPrivilege(prisma, authUser)` di
 `hr-attendance-helpers` — privileged jika **JWT platform roles** (`admin`/`manager`)
 **ATAU** punya peran `HR_ADMIN`/`HR_MANAGER` di `hr_user_roles`. Hanya MENAMBAH
-akses (tak pernah mengunci). Sudah diwire ke modul HR-admin (holidays/policy/roles);
-**enforcement lintas endpoint absensi/cuti/dll masih pakai `isPrivileged(JWT)`** —
-increment berikutnya (risiko lockout → hati-hati).
+akses (tak pernah mengunci). Diwire ke modul HR-admin (holidays/policy/roles)
+**dan seluruh endpoint absensi (`hr-attendance`: review/query/timesheet/face-
+enroll/face-identify/user-worksite/settings) + cuti (`hr-leave`)** — semua cek
+privileged kini lewat `resolveHrPrivilege`. **Sisa pakai `isPrivileged(JWT)`:**
+`hr-workforce` (shift/project), `hr-reports`, `hr-kiosk` — increment berikutnya.
 
 **Timesheet konsumsi kebijakan:** `GET /hr/timesheets` membaca policy `overtime`
 (`daily_regular_hours`, `enabled`, `count_holiday_as_overtime`) + `hr_holidays`.
@@ -105,7 +112,7 @@ libur (bila `count_holiday_as_overtime`) atau jam di atas `daily_regular_hours`.
 
 SSO/2FA (lintas-app, terkopel auth ERP — butuh koordinasi backend platform) +
 lock periode/audit laporan + NFC/offline-sync & jalur wajah kiosk di frontend +
-**perluasan enforcement RBAC** ke endpoint absensi/cuti/timesheet. Tiap modul =
+**perluasan enforcement RBAC** ke `hr-workforce`/`hr-reports`/`hr-kiosk`. Tiap modul =
 approval terpisah + desain DB additive. Detail + gap jibble lengkap di
 `db-design/module-roadmap.md`.
 

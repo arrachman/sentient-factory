@@ -7,7 +7,7 @@ import { CreateFaceEnrollmentDto } from './dto/create-face-enrollment.dto';
 import { IdentifyFaceDto } from './dto/identify-face.dto';
 import {
   requireHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from './hr-attendance-helpers';
 import { persistSnapshot } from './hr-attendance-snapshot';
@@ -127,7 +127,7 @@ export class FaceEnrollmentService {
       return requireHrProfileByAppUserId(this.prisma, authUser.id);
     }
 
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException(
         'Hanya manager atau admin yang boleh mendaftarkan wajah pegawai lain.',
       );
@@ -325,7 +325,7 @@ export class FaceEnrollmentService {
   }
 
   async getFaceEnrollmentManagement(authUser: AuthUser) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException(
         'Manajemen pendaftaran wajah hanya tersedia untuk manager atau admin.',
       );

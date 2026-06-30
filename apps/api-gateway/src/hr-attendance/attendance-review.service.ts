@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryHrAttendanceReviewDto } from './dto/query-hr-attendance-review.dto';
-import { isPrivileged, normalizeHrDates } from './hr-attendance-helpers';
+import { resolveHrPrivilege, normalizeHrDates } from './hr-attendance-helpers';
 
 type AuthUser = {
   id: number;
@@ -15,7 +15,7 @@ export class AttendanceReviewService {
   constructor(private prisma: PrismaService) {}
 
   async getAttendanceReviews(authUser: AuthUser, query: QueryHrAttendanceReviewDto) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException(
         'Attendance review queue is only available to privileged roles.',
       );
@@ -110,7 +110,7 @@ export class AttendanceReviewService {
   }
 
   async getAttendanceReviewDetail(authUser: AuthUser, eventId: number) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException(
         'Attendance review detail is only available to privileged roles.',
       );
@@ -193,7 +193,7 @@ export class AttendanceReviewService {
     nextStatus: 'pending' | 'approved' | 'rejected' | 'needs_clarification',
     note?: string,
   ) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException(
         'Attendance review action is only available to privileged roles.',
       );
