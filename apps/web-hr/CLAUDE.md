@@ -83,6 +83,31 @@ db-design/           # module-roadmap.md (DB plan + jibble mapping)
 Dashboard, Riwayat Absensi, Tinjauan Absensi (approve/reject/clarify/reopen),
 Lokasi & Geofence, Pendaftaran Wajah, Karyawan.
 
+### Stage absensi `/app/attendance` (clock screen, redesign 2026-06-30)
+
+Layar full-bleed kamera (`attendance-clock-view.tsx`) dengan 3 overlay glass
+di atas `<video>`: top bar (status + jam live + Daftarkan Wajah), **face
+scanner 3D**, dan action dock (readiness stepper + tombol clock).
+
+- **Face scanner** (`attendance-face-scanner.tsx` + `styles/hr-attendance.css`):
+  oval spotlight + dua gyro-ring berputar (kesan 3D), scan-sweep, corner
+  brackets yang merapat saat lock, dan pulse. Fase via atribut `data-phase`
+  (`init|scanning|locked|error`); animasi murni CSS, hormati
+  `prefers-reduced-motion`.
+- **Deteksi wajah** (`lib/use-face-detector.ts`): best-effort native
+  `FaceDetector` (Shape Detection API). Bila ada → feedback framing real-time
+  (present/centered), warning multi-wajah (anti buddy-punch), dan isi
+  `faceScore`/`faceDetectionCount` (+`faceCentered`,`gpsAccuracyM` di metadata)
+  ke payload clock; `faceDetectionMode='shape-detection'`. Bila tak didukung →
+  `supported=false`, fallback "framing manual" (TIDAK pernah memalsukan lock).
+  Backend tetap SSOT identitas.
+- **Lokasi** (`lib/use-geo.ts`): status machine `idle|locating|ready|error` +
+  `accuracy` (±m) + `locate()` untuk tombol **"Coba lagi"** — GPS gagal tak lagi
+  membuat user mentok (perbaikan utama dari layar lama yang hanya menampilkan
+  "Lokasi tidak tersedia" tanpa jalan keluar). Clock tetap di-gate `coords`.
+- Kontrak `/api/hr/attendance/clock-in|clock-out` TIDAK berubah (field baru
+  semuanya opsional).
+
 ## Live Fase 2 (consume `/api/hr/*`)
 
 Timesheet (derived), Cuti/PTO (`hr-leave`), Jadwal/Shift + Proyek/Aktivitas
