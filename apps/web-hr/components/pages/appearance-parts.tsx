@@ -361,12 +361,12 @@ export function UrlRoutingCard({
     <SetCard
       icon={Layers}
       title={t("URL Routing")}
-      sub={t("Sinkronisasi URL browser dengan halaman aktif")}
+      sub={t("Pilih cara navigasi: multi-tab atau satu halaman")}
     >
       <SetRow
         label={t("Mode")}
         hint={t(
-          "Per-halaman URL: URL browser ikut route aktif; Internal: navigasi tidak mengubah URL",
+          "Internal: navigator multi-tab (tiap halaman jadi tab); Per-halaman URL: navigator disembunyikan, hanya satu halaman aktif",
         )}
       >
         <Seg

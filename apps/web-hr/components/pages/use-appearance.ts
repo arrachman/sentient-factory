@@ -9,6 +9,7 @@ import {
   updateMyPreferences,
   HrApiError,
 } from "@/lib/api";
+import { SET_EVENT, HYDRATE_EVENT } from "@/lib/use-url-routing";
 import {
   DEFAULTS,
   STORAGE_KEY,
@@ -60,6 +61,18 @@ export function useAppearance(): UseAppearanceResult {
       /* localStorage unavailable — ignore */
     }
   }, []);
+
+  // Notify the shell (lib/use-url-routing.ts) when the Per-page URL mode changes
+  // so the tab strip show/hide + tab accumulation react live without a reload.
+  const notifyUrlRouting = React.useCallback(
+    (enabled: boolean, hydrate: boolean) => {
+      if (typeof window === "undefined") return;
+      window.dispatchEvent(
+        new CustomEvent(hydrate ? HYDRATE_EVENT : SET_EVENT, { detail: { enabled } }),
+      );
+    },
+    [],
+  );
 
   // Hydrate: localStorage > DOM > DEFAULTS first (synchronous), then override
   // with the server SSOT once /hr/user-preferences/me resolves.
@@ -120,6 +133,9 @@ export function useAppearance(): UseAppearanceResult {
         if (prefs.theme) setTheme(prefs.theme);
         // Mirror server SSOT → localStorage so the FOUC init script matches.
         persistLocal(merged);
+        // Sync the shell's urlRouting flag from the server SSOT (hydrate, no
+        // workspace reset — the shell just adopts the persisted mode).
+        notifyUrlRouting(merged.urlRouting, true);
         hydratedRef.current = true;
       })
       .catch(() => {
@@ -144,8 +160,11 @@ export function useAppearance(): UseAppearanceResult {
       applyToDom(next);
       persistLocal(next);
       setTw(next);
+      // Toggling URL Routing switches the shell mode live (tab strip + tab
+      // accumulation). Fire the set event so useUrlRoutingFlag re-reads it.
+      if (key === "urlRouting") notifyUrlRouting(Boolean(val), false);
     },
-    [applyToDom, persistLocal],
+    [applyToDom, persistLocal, notifyUrlRouting],
   );
 
   // Debounce-save to the backend whenever theme or tw changes (post-hydration).
@@ -184,11 +203,12 @@ export function useAppearance(): UseAppearanceResult {
     twRef.current = DEFAULTS;
     applyToDom(DEFAULTS);
     persistLocal(DEFAULTS);
+    notifyUrlRouting(DEFAULTS.urlRouting, false);
     notify(
       makeTranslator(DEFAULTS.lang)("Tampilan dikembalikan ke bawaan"),
       "info",
     );
-  }, [setTheme, applyToDom, persistLocal]);
+  }, [setTheme, applyToDom, persistLocal, notifyUrlRouting]);
 
   const fontScale: FontScale = tw.fontScale || "base";
 

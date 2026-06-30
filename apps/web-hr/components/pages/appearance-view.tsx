@@ -66,10 +66,10 @@ export function AppearanceView() {
                 : t("Kembali ke Mode Internal?"),
               message: v
                 ? t(
-                    "URL browser akan mengikuti halaman aktif sehingga bisa di-bookmark & dibagikan.",
+                    "Tab navigator akan disembunyikan. Kamu hanya bisa membuka satu halaman pada satu waktu (URL tetap mengikuti halaman aktif).",
                   )
                 : t(
-                    "Navigasi tidak akan mengubah URL browser (mode internal).",
+                    "Tab navigator aktif kembali — kamu bisa membuka banyak halaman sebagai tab.",
                   ),
               variant: "warn",
               icon: "layers",

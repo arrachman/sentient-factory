@@ -173,9 +173,22 @@ ke `<html>` via `data-primary`/`data-density`/`data-fontscale`/`data-sidebar`/
 **localStorage** (key `hr-appearance`) tetap dipakai sebagai cermin anti-FOUC —
 skrip blocking di `app/layout.tsx` membaca `data-*` (`primary`/`density`/
 `fontscale`/`sidebar`/`sidebar-menu`) sebelum first paint; hook lalu re-apply dari
-server SSOT setelah React mount. Knob **URL Routing** kosmetik (HR filesystem-routed
-multitab; flag tersimpan tapi belum mengubah routing) — tetap disertakan demi
-paritas visual. i18n hanya cover string layar appearance.
+server SSOT setelah React mount. Knob **URL Routing** kini **fungsional** (2026-30):
+`lib/use-url-routing.ts` (`useUrlRoutingFlag`) baca flag dari localStorage
+`hr-appearance` + dengar event `hr-set-url-routing`/`hr-hydrate-url-routing` yang
+di-fire `use-appearance.ts` saat toggle/hydrate/reset. AppShell mengkonsumsi:
+- **Internal (urlRouting=false, default) → multi-tab**: tab strip tampil, tiap
+  route berbeda terakumulasi jadi tab (`useHrTabs` default).
+- **Per-halaman URL (urlRouting=true) → single-page**: tab strip **disembunyikan**
+  + `useHrTabs({ singlePage: true })` collapse ke 1 tab aktif (navigasi
+  replace-in-place, tanpa akumulasi).
+
+⚠️ **Deviasi sadar dari web-erp §2.19:** di ERP mode Internal men-collapse URL
+browser ke root via `history.replaceState`; HR **tidak** (filesystem routing —
+URL = sumber view, di-collapse akan merusak deep-link/refresh). Jadi di HR kedua
+mode **tetap pakai URL asli `/app/<route>`**; toggle hanya mengendalikan tab strip
++ akumulasi tab (bukan bentuk URL). Hint/pesan konfirmasi di kartu sudah
+mendeskripsikan perilaku tab, bukan URL. i18n hanya cover string layar appearance.
 
 > ⚠️ Catatan deploy: `hr-user-preferences` adalah Prisma model, jadi setelah
 > `prisma migrate` WAJIB `prisma generate` **di dalam container api-gateway**
@@ -249,7 +262,8 @@ Komponen:
 - Hanya view route aktif yang mounted (tanpa hidden keep-alive divs); `reload`
   remount via nonce per-route. 1 route = 1 tab (tanpa duplikat).
 - Belum ada: command palette (K), notification/activity drawer, i18n, mode
-  accordion/url-routing toggle, persistensi workspace localStorage.
+  accordion, persistensi workspace localStorage. (Toggle URL Routing sudah
+  fungsional — lihat §Setting → Tampilan.)
 
 ## List engine generik (Fase 3 — port §2.7 ERP, 2026-06-30)
 

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, LogOut } from 'lucide-react';
 import { useHrTabs } from '@/lib/use-hr-tabs';
+import { useUrlRoutingFlag } from '@/lib/use-url-routing';
 import { pageMetaFor } from '@/lib/nav';
 import { DynamicSidebar } from '@/components/organisms/dynamic-sidebar';
 import { TabBar } from '@/components/organisms/tab-bar';
@@ -27,6 +28,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   useSessionGuard(pathname);
 
+  // Per-page URL mode hides the tab strip and collapses the workspace to a
+  // single tab (navigation replaces in place). Internal mode = multi-tab.
+  const urlRouting = useUrlRoutingFlag();
+
   const {
     tabs,
     activeRoute,
@@ -37,23 +42,25 @@ export function AppShell({ children }: { children: ReactNode }) {
     closeRight,
     reload,
     reorder,
-  } = useHrTabs();
+  } = useHrTabs({ singlePage: urlRouting });
 
   return (
     <div className="app">
       <DynamicSidebar />
       <Topbar />
       <main className="main">
-        <TabBar
-          tabs={tabs}
-          activeRoute={activeRoute}
-          onActivate={activate}
-          onClose={closeTab}
-          onReload={reload}
-          onCloseOthers={closeOthers}
-          onCloseRight={closeRight}
-          onReorder={reorder}
-        />
+        {!urlRouting && (
+          <TabBar
+            tabs={tabs}
+            activeRoute={activeRoute}
+            onActivate={activate}
+            onClose={closeTab}
+            onReload={reload}
+            onCloseOthers={closeOthers}
+            onCloseRight={closeRight}
+            onReorder={reorder}
+          />
+        )}
         <div className="tabviews">
           <div className="tabview" style={{ display: 'flex' }}>
             <div key={`${activeRoute}:${activeNonce}`} className="h-full w-full overflow-auto p-6">

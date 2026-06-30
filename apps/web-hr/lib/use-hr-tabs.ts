@@ -31,7 +31,17 @@ export interface HrTabsApi {
   reorder: (fromRoute: string, toRoute: string) => void;
 }
 
-export function useHrTabs(): HrTabsApi {
+export interface UseHrTabsOptions {
+  /**
+   * Per-page URL mode (Setting → Tampilan → URL Routing). When true the shell
+   * hides the tab strip and collapses the workspace to a single tab: every
+   * navigation replaces the active page in place instead of accumulating tabs.
+   */
+  singlePage?: boolean;
+}
+
+export function useHrTabs(options?: UseHrTabsOptions): HrTabsApi {
+  const singlePage = !!options?.singlePage;
   const pathname = usePathname();
   const router = useRouter();
   const activeRoute = pathname;
@@ -46,6 +56,11 @@ export function useHrTabs(): HrTabsApi {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- URL→tab sync (see above)
     setTabs((prev) => {
+      // Per-page URL mode: keep only the active route (no accumulation). The
+      // tab strip is hidden by the shell; navigation replaces in place.
+      if (singlePage) {
+        return prev.length === 1 && prev[0].route === pathname ? prev : [{ route: pathname }];
+      }
       if (prev.some((t) => t.route === pathname)) return prev;
       if (prev.length >= MAX_TABS) {
         // Replace the last tab when the strip is full (matches ERP cap behaviour).
@@ -53,7 +68,7 @@ export function useHrTabs(): HrTabsApi {
       }
       return [...prev, { route: pathname }];
     });
-  }, [pathname]);
+  }, [pathname, singlePage]);
 
   const activate = useCallback(
     (route: string) => {
