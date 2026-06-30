@@ -33,7 +33,16 @@ export function useCamera(): UseCameraResult {
   const start = useCallback(async () => {
     setError(null);
     if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      setError('Kamera tidak didukung browser ini.');
+      // getUserMedia hanya tersedia di secure context (HTTPS atau localhost).
+      // Akses via http://<IP-LAN> membuat navigator.mediaDevices undefined
+      // meski browser sebenarnya mendukung kamera — beri diagnosa yang benar.
+      const insecure =
+        typeof window !== 'undefined' && !window.isSecureContext && location.hostname !== 'localhost';
+      setError(
+        insecure
+          ? 'Kamera butuh koneksi aman (HTTPS). Buka lewat https:// atau http://localhost — akses via alamat IP HTTP tidak diizinkan browser.'
+          : 'Kamera tidak didukung browser ini.',
+      );
       return;
     }
     try {
