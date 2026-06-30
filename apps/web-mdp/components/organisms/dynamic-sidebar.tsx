@@ -58,11 +58,18 @@ function isActive(pathname: string, href?: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DynamicSidebar() {
+export function DynamicSidebar({ initialNav }: { initialNav?: NavNode[] }) {
   const pathname = usePathname() ?? '';
-  const [items, setItems] = useState<RailItem[]>(fallbackItems);
+  // Seed from the server-fetched nav so the first paint is already correct
+  // (no static-fallback→fetch flicker on refresh). Fall back to the static
+  // module registry only when the server provided nothing.
+  const [items, setItems] = useState<RailItem[]>(() =>
+    initialNav?.length ? navItems(initialNav) : fallbackItems(),
+  );
 
   useEffect(() => {
+    // Server already resolved the nav — no client refetch needed.
+    if (initialNav?.length) return;
     let alive = true;
     fetchNav()
       .then((res) => {
@@ -74,7 +81,7 @@ export function DynamicSidebar() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [initialNav]);
 
   return (
     <aside className="sidebar">

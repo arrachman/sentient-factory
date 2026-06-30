@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { DynamicSidebar } from '@/components/organisms/dynamic-sidebar';
 import { ToastHost } from '@/components/molecules/toast-host';
+import type { NavNode } from '@/lib/api';
 import { Activity, Bell, Keyboard, Search, Settings } from 'lucide-react';
 
 /**
@@ -10,10 +11,16 @@ import { Activity, Bell, Keyboard, Search, Settings } from 'lucide-react';
  * the user's ERP roles via mdp_role_menus), falling back to the static module
  * registry when nav is unavailable.
  */
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({
+  children,
+  initialNav,
+}: {
+  children: ReactNode;
+  initialNav?: NavNode[];
+}) {
   return (
     <div className="app">
-      <DynamicSidebar />
+      <DynamicSidebar initialNav={initialNav} />
 
       <header className="topbar">
         <div className="brand">
