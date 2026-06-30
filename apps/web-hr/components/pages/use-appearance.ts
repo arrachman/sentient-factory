@@ -5,6 +5,11 @@ import { useTheme } from "next-themes";
 import { makeTranslator, type Translator } from "@/lib/i18n";
 import { notify } from "@/lib/feedback";
 import {
+  getMyPreferences,
+  updateMyPreferences,
+  HrApiError,
+} from "@/lib/api";
+import {
   DEFAULTS,
   STORAGE_KEY,
   type Density,
@@ -25,15 +30,19 @@ export interface UseAppearanceResult {
   fontScale: FontScale;
 }
 
-// HR has no per-user preferences backend (auth = platform `sf_token`, not
-// `erp_token`, and the gateway exposes no `/user-preferences` for HR). So unlike
-// ERP/MDP, appearance persists to localStorage only (`hr-appearance`) — the same
-// key the blocking init script in `app/layout.tsx` reads to avoid FOUC. Theme is
-// owned by next-themes (`hr-theme`).
+// Appearance persistence (1:1 port of web-erp):
+//   - localStorage (`hr-appearance`) = optimistic mirror, read by the blocking
+//     init script in `app/layout.tsx` to avoid FOUC.
+//   - backend `/hr/user-preferences/me` = server SSOT (cross-device). On mount
+//     we hydrate from the API (API > localStorage > DOM > DEFAULTS); after
+//     hydration every tweak debounce-saves (500ms) to the server.
+// Theme is owned by next-themes (`hr-theme`); we sync it to the API too.
 export function useAppearance(): UseAppearanceResult {
   const { theme, setTheme } = useTheme();
   const [tw, setTw] = React.useState<Tweaks>(DEFAULTS);
   const t = React.useMemo(() => makeTranslator(tw.lang), [tw.lang]);
+  const hydratedRef = React.useRef(false);
+  const saveTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const applyToDom = React.useCallback((next: Tweaks) => {
     const el = document.documentElement;
@@ -44,8 +53,16 @@ export function useAppearance(): UseAppearanceResult {
     el.setAttribute("data-sidebar-menu", next.sidebarMenu || "flyout");
   }, []);
 
-  // Hydrate local state from localStorage / DOM attributes on mount.
-  // Order: localStorage > DOM attr > DEFAULTS.
+  const persistLocal = React.useCallback((next: Tweaks) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* localStorage unavailable — ignore */
+    }
+  }, []);
+
+  // Hydrate: localStorage > DOM > DEFAULTS first (synchronous), then override
+  // with the server SSOT once /hr/user-preferences/me resolves.
   React.useEffect(() => {
     const el = document.documentElement;
     let stored: Partial<Tweaks> = {};
@@ -77,9 +94,41 @@ export function useAppearance(): UseAppearanceResult {
       lang: (stored.lang as Lang) ?? DEFAULTS.lang,
       urlRouting: stored.urlRouting ?? DEFAULTS.urlRouting,
     };
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot hydration from localStorage (client-only)
     setTw(baseline);
-    applyToDom(baseline);
+
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot server-SSOT hydration (client-only)
+    getMyPreferences()
+      .then((prefs) => {
+        if (cancelled || !prefs) {
+          hydratedRef.current = true;
+          return;
+        }
+        const meta = (prefs.metadata ?? {}) as Partial<Tweaks>;
+        const merged: Tweaks = {
+          primary: meta.primary ?? baseline.primary,
+          density: (meta.density as Density) ?? baseline.density,
+          fontScale: (meta.fontScale as FontScale) ?? baseline.fontScale,
+          sidebar: (meta.sidebar as SidebarMode) ?? baseline.sidebar,
+          sidebarMenu:
+            (meta.sidebarMenu as SidebarMenuMode) ?? baseline.sidebarMenu,
+          lang: (prefs.language as Lang) ?? baseline.lang,
+          urlRouting: meta.urlRouting ?? baseline.urlRouting,
+        };
+        setTw(merged);
+        applyToDom(merged);
+        if (prefs.theme) setTheme(prefs.theme);
+        // Mirror server SSOT → localStorage so the FOUC init script matches.
+        persistLocal(merged);
+        hydratedRef.current = true;
+      })
+      .catch(() => {
+        // Not logged in / endpoint unavailable — fall back to localStorage only.
+        hydratedRef.current = true;
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,36 +137,58 @@ export function useAppearance(): UseAppearanceResult {
     twRef.current = tw;
   }, [tw]);
 
-  const persist = React.useCallback((next: Tweaks) => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      /* localStorage unavailable — ignore */
-    }
-  }, []);
-
   const applyTweak = React.useCallback(
     <K extends keyof Tweaks>(key: K, val: Tweaks[K]) => {
       const next = { ...twRef.current, [key]: val };
       twRef.current = next;
       applyToDom(next);
-      persist(next);
+      persistLocal(next);
       setTw(next);
     },
-    [applyToDom, persist],
+    [applyToDom, persistLocal],
   );
+
+  // Debounce-save to the backend whenever theme or tw changes (post-hydration).
+  React.useEffect(() => {
+    if (!hydratedRef.current) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      updateMyPreferences({
+        theme: theme ?? "light",
+        language: tw.lang,
+        metadata: {
+          primary: tw.primary,
+          density: tw.density,
+          fontScale: tw.fontScale,
+          sidebar: tw.sidebar,
+          sidebarMenu: tw.sidebarMenu,
+          urlRouting: tw.urlRouting,
+        },
+      }).catch((err) => {
+        const msg =
+          err instanceof HrApiError
+            ? err.message
+            : t("Gagal menyimpan preferensi tampilan");
+        notify(msg, "danger");
+      });
+    }, 500);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, tw]);
 
   const resetAll = React.useCallback(() => {
     setTheme("light");
     setTw(DEFAULTS);
     twRef.current = DEFAULTS;
     applyToDom(DEFAULTS);
-    persist(DEFAULTS);
+    persistLocal(DEFAULTS);
     notify(
       makeTranslator(DEFAULTS.lang)("Tampilan dikembalikan ke bawaan"),
       "info",
     );
-  }, [setTheme, applyToDom, persist]);
+  }, [setTheme, applyToDom, persistLocal]);
 
   const fontScale: FontScale = tw.fontScale || "base";
 

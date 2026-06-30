@@ -38,8 +38,8 @@ export const DEFAULTS: Tweaks = {
   primary: 'blue',
   density: 'compact',
   fontScale: 'base',
-  sidebar: 'icon',
-  sidebarMenu: 'flyout',
+  sidebar: 'label',
+  sidebarMenu: 'accordion',
   lang: 'id',
   urlRouting: false,
 };

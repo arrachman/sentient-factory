@@ -258,6 +258,15 @@ body {
   gap: 2px;
   position: relative;
   z-index: 50;
+  /* Full-height rail: the grid cell already stretches the sidebar to 100vh, but
+     without an explicit height + overflow the flex children overflow and get
+     clipped by `.app { overflow: hidden }` when many modules render (label
+     mode, expanded accordion). Force a scroll container instead. */
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 .sidebar .nav-item {
   width: 36px;

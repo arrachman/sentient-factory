@@ -33,6 +33,7 @@ import { HrHolidaysModule } from './hr-holidays/hr-holidays.module';
 import { HrPolicyModule } from './hr-policy/hr-policy.module';
 import { HrRolesModule } from './hr-roles/hr-roles.module';
 import { HrSysMenusModule } from './hr-sys-menus/hr-sys-menus.module';
+import { HrUserPreferencesModule } from './hr-user-preferences/hr-user-preferences.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -247,6 +248,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     HrPolicyModule,
     HrRolesModule,
     HrSysMenusModule,
+    HrUserPreferencesModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)

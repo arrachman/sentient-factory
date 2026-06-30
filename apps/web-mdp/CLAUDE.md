@@ -125,6 +125,14 @@ UI ad-hoc. Tambahan konteks MDP:
   saja** — DTO `ErpLoginDto` hanya whitelist dua field itu; `remember` ditolak
   (`forbidNonWhitelisted` → 400). Checkbox "Ingat saya" = client-side cosmetic (UI
   parity web-erp/web-hr), jangan dikirim ke backend.
+- **Sidebar submenu (2026-06-30):** submenu modul dirender di **sidebar** dari
+  pohon `mdp_menus` (`children` dari `/api/mdp/menus/nav`), **bukan** tab bar
+  in-page. `DynamicSidebar` menghormati `data-sidebar-menu`: `accordion`
+  (expand inline di bawah modul, modul aktif auto-expand — **default MDP**) atau
+  `flyout` (panel hover). Tab molecule lama `*-nav.tsx` (Wms/Mes/Qms/Mnt/Prt/
+  Dms/Ehs/Lms) **dihapus**; halaman tidak lagi merender `<XxxNav/>`. Default
+  appearance: `sidebar='label'` + `sidebarMenu='accordion'` (anti-FOUC script
+  `app/layout.tsx` ikut set `data-sidebar-menu`).
 - Batas **400 baris/file** (§3 web-erp) berlaku tanpa pengecualian.
 
 ---

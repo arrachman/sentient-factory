@@ -142,6 +142,13 @@ export type { OvertimePolicy, UpdateOvertimePolicyPayload } from './policy';
 export { getOvertimePolicy, updateOvertimePolicy } from './policy';
 
 export type {
+  HrUserPreferences,
+  HrUserPreferencesMetadata,
+  UpdateHrUserPreferencesInput,
+} from './user-preferences';
+export { getMyPreferences, updateMyPreferences } from './user-preferences';
+
+export type {
   HrRole,
   HrRoleRef,
   UserRoles,

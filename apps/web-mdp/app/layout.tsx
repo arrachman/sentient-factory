@@ -24,7 +24,7 @@ export const viewport = {
 
 // Runs before first paint so appearance data-attributes are never missing on
 // the initial frame (prevents FOUC). Mirrors web-erp.
-const APPEARANCE_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('mdp-appearance')||localStorage.getItem('erp-appearance')||'{}');var e=document.documentElement;e.setAttribute('data-density',s.density||'compact');e.setAttribute('data-fontscale',s.fontScale||'base');e.setAttribute('data-sidebar',s.sidebar||'icon');e.setAttribute('data-primary',s.primary||'blue');}catch(x){}})();`;
+const APPEARANCE_INIT_SCRIPT = `(function(){try{var s=JSON.parse(localStorage.getItem('mdp-appearance')||localStorage.getItem('erp-appearance')||'{}');var e=document.documentElement;e.setAttribute('data-density',s.density||'compact');e.setAttribute('data-fontscale',s.fontScale||'base');e.setAttribute('data-sidebar',s.sidebar||'label');e.setAttribute('data-sidebar-menu',s.sidebarMenu||'accordion');e.setAttribute('data-primary',s.primary||'blue');}catch(x){}})();`;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
