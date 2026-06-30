@@ -1,27 +1,25 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { PageHeader } from "@/components/molecules/page-header";
-import { FaceEnrollDialog } from "@/components/pages/face-enroll-dialog";
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { PageHeader } from '@/components/molecules/page-header';
+import { FaceEnrollDialog } from '@/components/pages/face-enroll-dialog';
 import {
   StageTopBar,
-  FaceGuide,
-  StageActionDock,
   toDate,
   formatDuration,
-  type Coords,
   type TodaySession,
-} from "@/components/pages/attendance-clock-parts";
-import { useCamera } from "@/lib/use-camera";
-import { useNow } from "@/lib/use-now";
-import { getAttendanceMe, clockIn, clockOut } from "@/lib/api/attendance";
-import type { ClockPayload } from "@/lib/api/attendance";
-import { hrQueryKeys } from "@/lib/api/hooks";
-
-const GEO_SUPPORTED =
-  typeof navigator === "undefined" || Boolean(navigator.geolocation);
+} from '@/components/pages/attendance-clock-parts';
+import { StageActionDock } from '@/components/pages/attendance-action-dock';
+import { FaceScanner, deriveScanPhase } from '@/components/pages/attendance-face-scanner';
+import { useCamera } from '@/lib/use-camera';
+import { useGeo } from '@/lib/use-geo';
+import { useFaceDetector } from '@/lib/use-face-detector';
+import { useNow } from '@/lib/use-now';
+import { getAttendanceMe, clockIn, clockOut } from '@/lib/api/attendance';
+import type { ClockPayload } from '@/lib/api/attendance';
+import { hrQueryKeys } from '@/lib/api/hooks';
 
 export function AttendanceClockView() {
   const qc = useQueryClient();
@@ -34,37 +32,23 @@ export function AttendanceClockView() {
     stop: stopCamera,
     capture,
   } = useCamera();
-  const [coords, setCoords] = useState<Coords | null>(null);
-  const [geoError, setGeoError] = useState<string | null>(
-    GEO_SUPPORTED ? null : "Geolokasi tidak didukung browser ini.",
-  );
-  const [busy, setBusy] = useState<null | "in" | "out">(null);
+  const geo = useGeo();
+  const face = useFaceDetector(videoRef, ready);
+  const [busy, setBusy] = useState<null | 'in' | 'out'>(null);
   const [enrollOpen, setEnrollOpen] = useState(false);
   const startedRef = useRef(false);
 
   const { data: me } = useQuery({
-    queryKey: ["hr", "attendance", "me"],
+    queryKey: ['hr', 'attendance', 'me'],
     queryFn: getAttendanceMe,
     retry: false,
   });
 
-  // Start camera + request geolocation once on mount.
+  // Start the camera once on mount (geolocation self-starts in useGeo).
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
     void startCamera();
-    if (typeof navigator !== "undefined" && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          setCoords({
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-          }),
-        () =>
-          setGeoError("Lokasi tidak tersedia. Aktifkan GPS / izinkan lokasi."),
-        { enableHighAccuracy: true, timeout: 10_000 },
-      );
-    }
   }, [startCamera]);
 
   const today = useMemo<TodaySession | null>(() => {
@@ -84,42 +68,52 @@ export function AttendanceClockView() {
   const worksiteName =
     today?.clock_in_worksite_name ?? today?.clock_out_worksite_name ?? null;
 
-  const canClock = Boolean(coords) && busy === null;
+  const scanPhase = deriveScanPhase({
+    cameraReady: ready,
+    camError,
+    faceSupported: face.supported,
+    present: face.present,
+    centered: face.centered,
+  });
 
-  async function doClock(kind: "in" | "out") {
-    if (!coords) {
-      toast.error("Menunggu lokasi GPS…");
+  const canClock = Boolean(geo.coords) && busy === null;
+
+  async function doClock(kind: 'in' | 'out') {
+    if (!geo.coords) {
+      toast.error('Menunggu lokasi GPS… tekan “Coba lagi” bila perlu.');
       return;
     }
     setBusy(kind);
+    const metrics = face.metricsRef.current;
     const payload: ClockPayload = {
-      latitude: coords.latitude,
-      longitude: coords.longitude,
+      latitude: geo.coords.latitude,
+      longitude: geo.coords.longitude,
       snapshotDataUrl: capture() ?? undefined,
-      faceDetectionMode: "browser",
-      metadata: { source: "web-hr", capturedAt: new Date().toISOString() },
+      faceDetectionMode: face.supported ? 'shape-detection' : 'browser',
+      faceScore: face.supported ? metrics.score : undefined,
+      faceDetectionCount: face.supported ? metrics.count : undefined,
+      metadata: {
+        source: 'web-hr',
+        capturedAt: new Date().toISOString(),
+        gpsAccuracyM: geo.accuracy ?? undefined,
+        faceCentered: face.supported ? metrics.centered : undefined,
+      },
     };
     try {
-      if (kind === "in") await clockIn(payload);
+      if (kind === 'in') await clockIn(payload);
       else await clockOut(payload);
-      toast.success(
-        kind === "in" ? "Clock in tercatat." : "Clock out tercatat.",
-      );
-      await qc.invalidateQueries({ queryKey: ["hr", "attendance", "me"] });
+      toast.success(kind === 'in' ? 'Clock in tercatat.' : 'Clock out tercatat.');
+      await qc.invalidateQueries({ queryKey: ['hr', 'attendance', 'me'] });
       await qc.invalidateQueries({ queryKey: hrQueryKeys.dashboard });
     } catch (e) {
-      toast.error((e as Error)?.message ?? "Proses absensi gagal.");
+      toast.error((e as Error)?.message ?? 'Proses absensi gagal.');
     } finally {
       setBusy(null);
     }
   }
 
   return (
-    <PageHeader
-      title="Absensi Saya"
-      code="ATT"
-      bodyClassName="p-0 overflow-hidden"
-    >
+    <PageHeader title="Absensi Saya" code="ATT" bodyClassName="p-0 overflow-hidden">
       <div className="relative h-full min-h-[480px] w-full overflow-hidden bg-black">
         <video
           ref={videoRef}
@@ -130,7 +124,12 @@ export function AttendanceClockView() {
         {/* subtle vignette so glass overlays stay legible over any frame */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/45" />
 
-        <FaceGuide ready={ready} camError={camError} />
+        <FaceScanner
+          phase={scanPhase}
+          camError={camError}
+          faceSupported={face.supported}
+          faceCount={face.count}
+        />
 
         <StageTopBar
           now={now}
@@ -151,9 +150,15 @@ export function AttendanceClockView() {
           clockOutAt={clockOutAt}
           totalMinutes={today?.total_work_minutes ?? null}
           worksiteName={worksiteName}
-          coords={coords}
-          geoError={geoError}
+          coords={geo.coords}
+          accuracy={geo.accuracy}
+          geoStatus={geo.status}
+          geoError={geo.error}
+          onRetryGeo={geo.locate}
           cameraReady={ready}
+          camError={camError}
+          scanPhase={scanPhase}
+          faceSupported={face.supported}
           busy={busy}
           canClock={canClock}
           onClock={doClock}

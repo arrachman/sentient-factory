@@ -31,3 +31,6 @@
 /* Panels: record drawer, font scale, notifications, slide-over, lookup modal,
    sidebar template, settings sub-nav tabs, date picker overrides */
 @import './hr-panels.css';
+
+/* Attendance: animated 3D face-scan stage for /app/attendance */
+@import './hr-attendance.css';
