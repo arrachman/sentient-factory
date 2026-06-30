@@ -1,6 +1,5 @@
 import {
   Controller,
-  ForbiddenException,
   Get,
   Param,
   Query,
@@ -11,7 +10,6 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { isPrivileged } from '../hr-attendance/hr-attendance-helpers';
 import { HrReportsService } from './hr-reports.service';
 import { renderReport } from './report-export';
 import { ExportHrReportDto, QueryHrReportDto } from './dto/query-hr-report.dto';
@@ -26,12 +24,6 @@ type AuthUser = { id: number; roles?: string[] };
 export class HrReportsController {
   constructor(private readonly service: HrReportsService) {}
 
-  private requirePrivileged(user: AuthUser) {
-    if (!isPrivileged(user.roles)) {
-      throw new ForbiddenException('Laporan hanya untuk admin/manager.');
-    }
-  }
-
   private toFilters(q: QueryHrReportDto): HrReportFilters {
     return {
       dateFrom: q.dateFrom,
@@ -43,8 +35,8 @@ export class HrReportsController {
 
   @Get()
   @ApiOperation({ summary: 'List report catalog (privileged)' })
-  getCatalog(@Request() req: { user: AuthUser }) {
-    this.requirePrivileged(req.user);
+  async getCatalog(@Request() req: { user: AuthUser }) {
+    await this.service.ensurePrivileged(req.user);
     return { success: true, data: this.service.getCatalog() };
   }
 
@@ -55,7 +47,7 @@ export class HrReportsController {
     @Param('key') key: string,
     @Query() q: QueryHrReportDto,
   ) {
-    this.requirePrivileged(req.user);
+    await this.service.ensurePrivileged(req.user);
     const dataset = await this.service.getReport(key, this.toFilters(q));
     return { success: true, data: dataset };
   }
@@ -68,7 +60,7 @@ export class HrReportsController {
     @Query() q: ExportHrReportDto,
     @Res() res: Response,
   ) {
-    this.requirePrivileged(req.user);
+    await this.service.ensurePrivileged(req.user);
     const dataset = await this.service.getReport(key, this.toFilters(q));
     const out = await renderReport(dataset, q.format === 'csv' ? 'csv' : 'xlsx');
     res.setHeader('Content-Type', out.contentType);

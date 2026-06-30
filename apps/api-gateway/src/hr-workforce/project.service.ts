@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   getHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from '../hr-attendance/hr-attendance-helpers';
 import {
@@ -27,8 +27,8 @@ const MAX_LIMIT = 200;
 export class ProjectService {
   constructor(private prisma: PrismaService) {}
 
-  private requirePrivileged(a: AuthUser) {
-    if (!isPrivileged(a.roles)) throw new ForbiddenException('Hanya admin/manager.');
+  private async requirePrivileged(a: AuthUser) {
+    if (!(await resolveHrPrivilege(this.prisma, a))) throw new ForbiddenException('Hanya admin/manager.');
   }
 
   async listProjects() {
@@ -40,7 +40,7 @@ export class ProjectService {
   }
 
   async createProject(a: AuthUser, dto: CreateProjectDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const rows = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
       INSERT INTO public.hr_projects (code, name, client_name, is_billable, is_active, created_by)
       VALUES (${dto.code}, ${dto.name}, ${dto.clientName ?? null},
@@ -49,7 +49,7 @@ export class ProjectService {
   }
 
   async updateProject(a: AuthUser, id: number, dto: UpdateProjectDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const sets: Prisma.Sql[] = [];
     if (dto.code !== undefined) sets.push(Prisma.sql`code = ${dto.code}`);
     if (dto.name !== undefined) sets.push(Prisma.sql`name = ${dto.name}`);
@@ -65,7 +65,7 @@ export class ProjectService {
   }
 
   async deleteProject(a: AuthUser, id: number) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const res = await this.prisma.$executeRaw(Prisma.sql`
       UPDATE public.hr_projects SET deleted_at = now(), deleted_by = ${a.id}
       WHERE id = ${id} AND deleted_at IS NULL`);
@@ -74,7 +74,7 @@ export class ProjectService {
   }
 
   async listTimeEntries(a: AuthUser, q: QueryProjectTimeDto) {
-    const privileged = isPrivileged(a.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, a);
     // Non-privileged users only ever see their own entries.
     let scopeHrUserId: number | null = null;
     if (!privileged) {
@@ -128,7 +128,7 @@ export class ProjectService {
   }
 
   async deleteTimeEntry(a: AuthUser, id: number) {
-    const privileged = isPrivileged(a.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, a);
     let scopeSql: Prisma.Sql = Prisma.empty;
     if (!privileged) {
       const p = await getHrProfileByAppUserId(this.prisma, a.id);

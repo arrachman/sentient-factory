@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException, BadRequestException 
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
-  getHrProfileByAppUserId, isPrivileged, normalizeHrDates,
+  getHrProfileByAppUserId, resolveHrPrivilege, normalizeHrDates,
 } from '../hr-attendance/hr-attendance-helpers';
 import {
   CreateShiftDto, UpdateShiftDto, CreateShiftAssignmentDto, QueryShiftAssignmentDto,
@@ -14,8 +14,8 @@ type AuthUser = { id: number; roles?: string[] };
 export class ShiftService {
   constructor(private prisma: PrismaService) {}
 
-  private requirePrivileged(a: AuthUser) {
-    if (!isPrivileged(a.roles)) throw new ForbiddenException('Hanya admin/manager.');
+  private async requirePrivileged(a: AuthUser) {
+    if (!(await resolveHrPrivilege(this.prisma, a))) throw new ForbiddenException('Hanya admin/manager.');
   }
 
   async listShifts() {
@@ -28,7 +28,7 @@ export class ShiftService {
   }
 
   async createShift(a: AuthUser, dto: CreateShiftDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const rows = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
       INSERT INTO public.hr_shifts (code, name, start_time, end_time, break_minutes, is_active, created_by)
       VALUES (${dto.code}, ${dto.name}, ${dto.startTime}::time, ${dto.endTime}::time,
@@ -37,7 +37,7 @@ export class ShiftService {
   }
 
   async updateShift(a: AuthUser, id: number, dto: UpdateShiftDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const sets: Prisma.Sql[] = [];
     if (dto.code !== undefined) sets.push(Prisma.sql`code = ${dto.code}`);
     if (dto.name !== undefined) sets.push(Prisma.sql`name = ${dto.name}`);
@@ -54,7 +54,7 @@ export class ShiftService {
   }
 
   async deleteShift(a: AuthUser, id: number) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const res = await this.prisma.$executeRaw(Prisma.sql`
       UPDATE public.hr_shifts SET deleted_at = now(), deleted_by = ${a.id}
       WHERE id = ${id} AND deleted_at IS NULL`);
@@ -63,7 +63,7 @@ export class ShiftService {
   }
 
   async listAssignments(a: AuthUser, q: QueryShiftAssignmentDto) {
-    const privileged = isPrivileged(a.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, a);
     let scopeHrUserId: number | null = null;
     const targetAppUserId = q.userId ? (privileged ? q.userId : a.id) : null;
     if (targetAppUserId !== null || !privileged) {
@@ -89,7 +89,7 @@ export class ShiftService {
   }
 
   async createAssignment(a: AuthUser, dto: CreateShiftAssignmentDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const profile = await getHrProfileByAppUserId(this.prisma, dto.appUserId);
     if (!profile) throw new BadRequestException('Karyawan tidak terdaftar di HR.');
     const rows = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
@@ -102,7 +102,7 @@ export class ShiftService {
   }
 
   async deleteAssignment(a: AuthUser, id: number) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const res = await this.prisma.$executeRaw(Prisma.sql`
       UPDATE public.hr_shift_assignments SET deleted_at = now(), deleted_by = ${a.id}
       WHERE id = ${id} AND deleted_at IS NULL`);

@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { normalizeHrDates } from '../hr-attendance/hr-attendance-helpers';
+import { normalizeHrDates, resolveHrPrivilege } from '../hr-attendance/hr-attendance-helpers';
 import {
   HrReportCatalogItem,
   HrReportColumn,
@@ -20,6 +20,13 @@ function toHours(minutes: unknown): number {
 @Injectable()
 export class HrReportsService {
   constructor(private prisma: PrismaService) {}
+
+  /** Reports are privileged-only: platform admin/manager OR HR_ADMIN/HR_MANAGER. */
+  async ensurePrivileged(authUser: { id: number; roles?: string[] }) {
+    if (!(await resolveHrPrivilege(this.prisma, authUser))) {
+      throw new ForbiddenException('Laporan hanya untuk admin/manager.');
+    }
+  }
 
   private readonly defs: HrReportDef[] = [
     {

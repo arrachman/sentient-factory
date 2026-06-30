@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   getHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from '../hr-attendance/hr-attendance-helpers';
 import { FaceEnrollmentService } from '../hr-attendance/face-enrollment.service';
@@ -24,13 +24,13 @@ export class HrKioskService {
     private faceEnrollment: FaceEnrollmentService,
   ) {}
 
-  private requirePrivileged(a: AuthUser) {
-    if (!isPrivileged(a.roles)) throw new ForbiddenException('Mode kiosk hanya admin/manager.');
+  private async requirePrivileged(a: AuthUser) {
+    if (!(await resolveHrPrivilege(this.prisma, a))) throw new ForbiddenException('Mode kiosk hanya admin/manager.');
   }
 
   /** Roster of active employees for the kiosk picker (no secrets returned). */
   async getRoster(a: AuthUser) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
       SELECT
         hu.user_id AS "appUserId",
@@ -46,7 +46,7 @@ export class HrKioskService {
   }
 
   async setPin(a: AuthUser, appUserId: number, dto: SetKioskPinDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const profile = await getHrProfileByAppUserId(this.prisma, appUserId);
     if (!profile) throw new NotFoundException('Karyawan tidak terdaftar di HR.');
     const hash = hashKioskPin(dto.pin);
@@ -58,7 +58,7 @@ export class HrKioskService {
   }
 
   async clearPin(a: AuthUser, appUserId: number) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     const profile = await getHrProfileByAppUserId(this.prisma, appUserId);
     if (!profile) throw new NotFoundException('Karyawan tidak terdaftar di HR.');
     await this.prisma.$executeRaw(Prisma.sql`
@@ -69,7 +69,7 @@ export class HrKioskService {
   }
 
   async clock(a: AuthUser, dto: KioskClockDto) {
-    this.requirePrivileged(a);
+    await this.requirePrivileged(a);
     if (!dto.appUserId) {
       throw new BadRequestException('Pilih karyawan terlebih dahulu.');
     }
