@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/molecules/page-header";
 import { FaceEnrollDialog } from "@/components/pages/face-enroll-dialog";
 import {
   CameraPanel,
-  StatusPanel,
+  StatusHero,
+  ActionPanel,
   toDate,
   formatDuration,
   type Coords,
@@ -119,34 +120,43 @@ export function AttendanceClockView() {
       code="ATT"
       description="Clock in / out dengan verifikasi selfie dan lokasi GPS (adaptasi jibble Timer + Verification)."
     >
-      <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <CameraPanel
-          videoRef={videoRef}
-          ready={ready}
-          camError={camError}
-          isClockedIn={isClockedIn}
-          onEnroll={() => {
-            stopCamera();
-            setEnrollOpen(true);
-          }}
-        />
-
-        <StatusPanel
+      <div className="mx-auto flex max-w-5xl flex-col gap-4">
+        <StatusHero
           now={now}
           isClockedIn={isClockedIn}
           isDone={isDone}
           elapsed={elapsed}
           clockInAt={clockInAt}
-          clockOutAt={clockOutAt}
           totalMinutes={today?.total_work_minutes ?? null}
-          worksiteName={worksiteName}
-          coords={coords}
-          geoError={geoError}
-          cameraReady={ready}
-          busy={busy}
-          canClock={canClock}
-          onClock={doClock}
         />
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <CameraPanel
+            videoRef={videoRef}
+            ready={ready}
+            camError={camError}
+            isClockedIn={isClockedIn}
+            onEnroll={() => {
+              stopCamera();
+              setEnrollOpen(true);
+            }}
+          />
+
+          <ActionPanel
+            isClockedIn={isClockedIn}
+            isDone={isDone}
+            clockInAt={clockInAt}
+            clockOutAt={clockOutAt}
+            totalMinutes={today?.total_work_minutes ?? null}
+            worksiteName={worksiteName}
+            coords={coords}
+            geoError={geoError}
+            cameraReady={ready}
+            busy={busy}
+            canClock={canClock}
+            onClock={doClock}
+          />
+        </div>
       </div>
 
       <FaceEnrollDialog

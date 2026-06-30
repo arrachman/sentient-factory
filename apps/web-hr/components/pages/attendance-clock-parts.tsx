@@ -5,6 +5,7 @@ import {
   Check,
   CircleDashed,
   Clock,
+  CalendarCheck,
   LogIn,
   LogOut,
   MapPin,
@@ -54,6 +55,77 @@ export function formatDuration(ms: number): string {
   return h > 0 ? `${h}j ${m}m` : `${m}m`;
 }
 
+// ─── Hero: live clock + contextual status ───────────────────────────────────
+
+export function StatusHero({
+  now,
+  isClockedIn,
+  isDone,
+  elapsed,
+  clockInAt,
+  totalMinutes,
+}: {
+  now: Date;
+  isClockedIn: boolean;
+  isDone: boolean;
+  elapsed: string | null;
+  clockInAt: Date | null;
+  totalMinutes: number | null;
+}) {
+  const tone = isClockedIn ? "success" : isDone ? "info" : "neutral";
+  const ring = {
+    success: "bg-success-soft text-success ring-success/20",
+    info: "bg-info-soft text-info ring-info/20",
+    neutral: "bg-accent text-accent-foreground ring-border",
+  }[tone];
+
+  const Icon = isClockedIn ? Clock : isDone ? CalendarCheck : LogIn;
+  const title = isClockedIn
+    ? "Sedang bekerja"
+    : isDone
+      ? "Sesi hari ini selesai"
+      : "Belum clock in";
+  const subtitle = isClockedIn
+    ? `Mulai ${clockInAt ? HM_FMT.format(clockInAt) : "—"}${elapsed ? ` · ${elapsed} berjalan` : ""}`
+    : isDone
+      ? `Total kerja ${typeof totalMinutes === "number" ? formatDuration(totalMinutes * 60_000) : "—"}`
+      : "Lakukan clock in untuk mulai mencatat jam kerja Anda hari ini.";
+
+  return (
+    <div className="flex flex-col items-start justify-between gap-5 rounded-xl border bg-card p-5 shadow-sm sm:flex-row sm:items-center">
+      <div className="flex items-center gap-4">
+        <span
+          className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full ring-1 ${ring}`}
+        >
+          <Icon className="h-6 w-6" />
+        </span>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-base font-semibold leading-tight">
+              {title}
+            </span>
+            {isClockedIn && elapsed && (
+              <Badge variant="success" dot>
+                {elapsed}
+              </Badge>
+            )}
+          </div>
+          <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+      </div>
+
+      <div className="text-left sm:text-right">
+        <div className="font-mono text-4xl font-semibold tabular-nums leading-none tracking-tight">
+          {TIME_FMT.format(now)}
+        </div>
+        <div className="mt-1.5 text-sm capitalize text-muted-foreground">
+          {DATE_FMT.format(now)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Camera / selfie verification ──────────────────────────────────────────
 
 export function CameraPanel({
@@ -70,7 +142,7 @@ export function CameraPanel({
   onEnroll: () => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <div className="flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm">
       <div className="relative aspect-video bg-black">
         <video
           ref={videoRef}
@@ -79,22 +151,26 @@ export function CameraPanel({
           className="h-full w-full object-cover"
         />
         {ready && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="h-[68%] w-[42%] rounded-[50%] border-2 border-white/40" />
-          </div>
-        )}
-        {ready && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
-            <ScanFace className="h-3.5 w-3.5" /> Verifikasi wajah
-          </span>
+          <>
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="h-[68%] w-[42%] rounded-[50%] border-2 border-white/50 shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]" />
+            </div>
+            <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/55 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+              <ScanFace className="h-3.5 w-3.5" /> Verifikasi wajah
+            </span>
+          </>
         )}
         {!ready && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/80">
             {camError ? (
-              <p className="max-w-xs px-4 text-center text-sm">{camError}</p>
+              <>
+                <Camera className="h-6 w-6 text-white/60" />
+                <p className="max-w-xs px-4 text-center text-sm">{camError}</p>
+              </>
             ) : (
               <>
-                <Camera className="h-6 w-6" />
+                <Loader2 className="h-6 w-6 animate-spin" />
                 <span className="text-sm">Menyiapkan kamera…</span>
               </>
             )}
@@ -103,11 +179,16 @@ export function CameraPanel({
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t px-4 py-3">
-        <p className="text-xs text-muted-foreground">
-          Snapshot selfie diambil otomatis saat menekan tombol clock
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Selfie diambil otomatis saat menekan tombol clock
           {isClockedIn ? " out" : " in"}. Posisikan wajah di dalam bingkai.
         </p>
-        <Button variant="ghost" size="sm" className="shrink-0" onClick={onEnroll}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0"
+          onClick={onEnroll}
+        >
           <ScanFace className="h-4 w-4" /> Daftarkan Wajah
         </Button>
       </div>
@@ -115,13 +196,11 @@ export function CameraPanel({
   );
 }
 
-// ─── Status + action ────────────────────────────────────────────────────────
+// ─── Action card: summary + readiness + clock button ────────────────────────
 
-export function StatusPanel({
-  now,
+export function ActionPanel({
   isClockedIn,
   isDone,
-  elapsed,
   clockInAt,
   clockOutAt,
   totalMinutes,
@@ -133,10 +212,8 @@ export function StatusPanel({
   canClock,
   onClock,
 }: {
-  now: Date;
   isClockedIn: boolean;
   isDone: boolean;
-  elapsed: string | null;
   clockInAt: Date | null;
   clockOutAt: Date | null;
   totalMinutes: number | null;
@@ -148,63 +225,28 @@ export function StatusPanel({
   canClock: boolean;
   onClock: (kind: "in" | "out") => void;
 }) {
-  const statusBadge = isClockedIn ? (
-    <Badge variant="success">Sedang bekerja</Badge>
-  ) : isDone ? (
-    <Badge variant="info">Sesi selesai</Badge>
-  ) : (
-    <Badge variant="default">Belum clock in</Badge>
-  );
-
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
-      <div className="text-center">
-        <div className="font-mono text-4xl font-semibold tabular-nums tracking-tight">
-          {TIME_FMT.format(now)}
-        </div>
-        <div className="mt-1 text-sm capitalize text-muted-foreground">
-          {DATE_FMT.format(now)}
-        </div>
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border bg-border text-center">
+        <SummaryCell label="Masuk" value={clockInAt ? HM_FMT.format(clockInAt) : "—"} />
+        <SummaryCell label="Keluar" value={clockOutAt ? HM_FMT.format(clockOutAt) : "—"} />
+        <SummaryCell
+          label="Total"
+          value={
+            typeof totalMinutes === "number"
+              ? formatDuration(totalMinutes * 60_000)
+              : "—"
+          }
+        />
       </div>
-
-      <div className="flex items-center justify-center gap-2">
-        {statusBadge}
-        {elapsed && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
-            <Clock className="h-3.5 w-3.5" /> {elapsed}
-          </span>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border bg-border text-center">
-        <div className="bg-card p-3">
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            Masuk
-          </div>
-          <div className="mt-0.5 font-mono text-sm font-semibold tabular-nums">
-            {clockInAt ? HM_FMT.format(clockInAt) : "—"}
-          </div>
-        </div>
-        <div className="bg-card p-3">
-          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            Keluar
-          </div>
-          <div className="mt-0.5 font-mono text-sm font-semibold tabular-nums">
-            {clockOutAt ? HM_FMT.format(clockOutAt) : "—"}
-          </div>
-        </div>
-      </div>
-
-      {isDone && typeof totalMinutes === "number" && (
-        <p className="text-center text-xs text-muted-foreground">
-          Total kerja hari ini: {formatDuration(totalMinutes * 60_000)}
-        </p>
-      )}
 
       <div className="space-y-1.5">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Kesiapan
+        </p>
         <ReadinessRow
           ok={cameraReady}
-          label="Kamera siap"
+          label={cameraReady ? "Kamera siap" : "Menyiapkan kamera…"}
           icon={<Camera className="h-3.5 w-3.5" />}
         />
         <ReadinessRow
@@ -225,41 +267,56 @@ export function StatusPanel({
         )}
       </div>
 
-      {isClockedIn ? (
-        <Button
-          variant="danger"
-          className="h-12 w-full text-sm font-semibold"
-          disabled={!canClock}
-          onClick={() => onClock("out")}
-        >
-          {busy === "out" ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <LogOut className="h-5 w-5" />
-          )}
-          Clock Out
-        </Button>
-      ) : (
-        <Button
-          variant="primary"
-          className="h-12 w-full text-sm font-semibold"
-          disabled={!canClock}
-          onClick={() => onClock("in")}
-        >
-          {busy === "in" ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <LogIn className="h-5 w-5" />
-          )}
-          {isDone ? "Clock In Lagi" : "Clock In"}
-        </Button>
-      )}
+      <div className="mt-auto space-y-2">
+        {isClockedIn ? (
+          <Button
+            variant="danger"
+            className="h-12 w-full text-sm font-semibold"
+            disabled={!canClock}
+            onClick={() => onClock("out")}
+          >
+            {busy === "out" ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <LogOut className="h-5 w-5" />
+            )}
+            Clock Out
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            className="h-12 w-full text-sm font-semibold"
+            disabled={!canClock}
+            onClick={() => onClock("in")}
+          >
+            {busy === "in" ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <LogIn className="h-5 w-5" />
+            )}
+            {isDone ? "Clock In Lagi" : "Clock In"}
+          </Button>
+        )}
 
-      {!coords && (
-        <p className="text-center text-xs text-muted-foreground">
-          Tombol aktif setelah lokasi GPS terkunci.
-        </p>
-      )}
+        {!coords && (
+          <p className="text-center text-xs text-muted-foreground">
+            Tombol aktif setelah lokasi GPS terkunci.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-card p-3">
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 font-mono text-sm font-semibold tabular-nums">
+        {value}
+      </div>
     </div>
   );
 }
@@ -275,7 +332,9 @@ function ReadinessRow({
 }) {
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="text-muted-foreground">{icon}</span>
+      <span className={ok ? "text-success" : "text-muted-foreground"}>
+        {icon}
+      </span>
       <span className="flex-1 text-foreground/90">{label}</span>
       {ok ? (
         <Check className="h-4 w-4 text-success" />
