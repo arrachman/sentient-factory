@@ -89,7 +89,7 @@ Tiap modul ⬜ = **approval terpisah** sebelum desain DB + endpoint + halaman.
 - Shell HR = **lean** (sidebar+topbar data-driven dari `lib/nav.ts`), bukan port
   multi-tab shell web-erp (terlalu terkopel ke 200+ halaman ERP). Bisa di-port
   nanti bila HR butuh multi-tab.
-- Port **3221** (`WEB_HR_PORT`), origin `hr.fr-labs.my.id`.
+- Port **3209** (`WEB_HR_PORT`), origin `hr.fr-labs.my.id`.
 
 ## 7. Disiplin dokumen
 

@@ -149,8 +149,8 @@ Modul ✅ = migrasi UI dari web-dashboard ke web-hr dulu, lalu poles.
 
 - **App**: Next.js 16 (App Router, Turbopack), React 19, Tailwind v4 (token via
   `@theme`), TS strict — versi disalin verbatim dari `apps/web-erp/package.json`.
-- **Port**: **3221** (usulan), envVar `WEB_HR_PORT`, daftarkan via
-  `npm run ports:*` (jangan edit `config/ports.json` manual) + **buka UFW 3221**
+- **Port**: **3209** (usulan), envVar `WEB_HR_PORT`, daftarkan via
+  `npm run ports:*` (jangan edit `config/ports.json` manual) + **buka UFW 3209**
   (lihat root CLAUDE.md §4.1) supaya klien LAN tidak timeout.
 - **Origin produksi (usulan)**: `hr.fr-labs.my.id` (nginx → web-hr).
 - **Backend**: extend `apps/api-gateway` (`/api/hr/*`), guard `ErpJwtAuthGuard`.
@@ -180,7 +180,7 @@ Modul ✅ = migrasi UI dari web-dashboard ke web-hr dulu, lalu poles.
 3. `styles/hr-tokens.css` dari `erp-tokens.css`; ubah hanya brand values.
 4. Wire ui-kit langsung (deps `*` + `transpilePackages` + `createApiClient`).
 5. Set base-URL strategy + rewrite/env.
-6. Daftarkan port 3221 via port-manager + buka UFW.
+6. Daftarkan port 3209 via port-manager + buka UFW.
 7. `lib/api/<resource>.ts` per entitas HR (`employees`, `worksites`,
    `attendance-sessions`, `attendance-reviews`, `face-enrollments`, ...).
 8. `components/pages/*` per layar; register di route registry shell.
@@ -199,9 +199,9 @@ sinkron.
 
 **WAJIB tiap sesi vibe coding selesai**: commit ke branch `dev` lalu build &
 deploy ke production. Production web-hr = `npm run start` (`next start`) detached
-di **port 3221** (bukan PM2). Detail + urutan baku = `apps/web-hr/CLAUDE.md`
+di **port 3209** (bukan PM2). Detail + urutan baku = `apps/web-hr/CLAUDE.md`
 §Workflow vibe coding (otoritatif). Ringkas: `npm run check` hijau → commit `dev`
-→ `npm run build` → restart serve di :3221. Check/build gagal = STOP. Commit ke
+→ `npm run build` → restart serve di :3209. Check/build gagal = STOP. Commit ke
 branch non-`dev` atau `--force` = tanya user.
 
 ## Saat ragu

@@ -3,7 +3,7 @@
 Time & Attendance / Workforce Management untuk Sentient Factory — adaptasi
 **jibble.io**, dan **adopter bersih pertama** `@sentient-factory/ui-kit`.
 
-- **Port:** 3221 (`WEB_HR_PORT`) · origin `hr.fr-labs.my.id`
+- **Port:** 3209 (`WEB_HR_PORT`) · origin `hr.fr-labs.my.id`
 - **Backend:** shared api-gateway `/api/hr/*` (reuse modul HR live:
   `hr-attendance`, `hr-leave`, `hr-workforce`, `hr-reports`, `hr-kiosk`)
 - **Auth:** sesi platform (cookie `sf_token`) — login lewat platform Sentient
@@ -14,7 +14,7 @@ Time & Attendance / Workforce Management untuk Sentient Factory — adaptasi
 ```bash
 cp .env.example .env.local      # set HR_INTERNAL_API_URL bila perlu
 npm install                     # dari root monorepo (workspaces) — lihat catatan
-npm run dev                     # http://localhost:3221
+npm run dev                     # http://localhost:3209
 ```
 
 > **Catatan install:** ui-kit dikonsumsi sebagai workspace package (`"*"`).

@@ -51,7 +51,7 @@
     },
     "web-hr": {
       "name": "Web HR",
-      "port": 3221,
+      "port": 3209,
       "type": "nextjs",
       "envVar": "WEB_HR_PORT",
       "description": "Senti HR — Time & Attendance / Workforce Management (jibble.io adaptation, first clean ui-kit adopter)",
@@ -70,7 +70,7 @@
     },
     "hr-marketing": {
       "name": "HR Marketing",
-      "port": 3209,
+      "port": 3221,
       "type": "static",
       "description": "Static marketing page for HR module",
       "isActive": true

@@ -23,7 +23,7 @@ Rulebook ini berlaku **di atas** root `CLAUDE.md` + `packages/ui-kit/FRONTEND-DE
 
 ## Arsitektur
 
-- Next.js 16 + React 19 + Tailwind v4 + TS strict. Port **3221** (`WEB_HR_PORT`).
+- Next.js 16 + React 19 + Tailwind v4 + TS strict. Port **3209** (`WEB_HR_PORT`).
 - ui-kit langsung: `createApiClient`/`AppQueryProvider`/`cn` (Tier 1) + `ui/*`
   (Tier 2). `transpilePackages: ['@sentient-factory/ui-kit']`.
 - **Base URL** = same-origin `/api` → `next.config.mjs` rewrite ke
@@ -176,7 +176,7 @@ approval terpisah + desain DB additive. Detail + gap jibble lengkap di
 ## Perintah
 
 ```bash
-npm run dev          # port 3221
+npm run dev          # port 3209
 npm run build && npm start
 npm run check        # lint + typecheck + check:size + test
 ```
@@ -276,7 +276,7 @@ selesai sebelum dokumen sinkron.
 **WAJIB tiap sesi vibe coding selesai** (satuan kerja yang bisa diserahkan),
 jalankan **4 langkah berurutan tanpa kecuali**: **commit → build → restart serve
 → push**. Production web-hr = proses `npm run start` (`next start`) detached di
-**port 3221** (bukan PM2). Push ke `origin dev` **sudah diizinkan user secara
+**port 3209** (bukan PM2). Push ke `origin dev` **sudah diizinkan user secara
 standing** (2026-06-30) — lakukan otomatis, tak perlu tanya tiap kali.
 
 Urutan baku (jalankan dari `apps/web-hr/`):
@@ -288,9 +288,9 @@ git commit -m "feat(hr): <ringkas>" # 1b. branch dev; conventional, JANGAN --no-
 
 npm run build                       # 2. build production (gagal → STOP, jangan lanjut)
 
-fuser -k 3221/tcp 2>/dev/null || true   # 3. restart serve detached → production ter-update
+fuser -k 3209/tcp 2>/dev/null || true   # 3. restart serve detached → production ter-update
 nohup npm run start > /tmp/web-hr.out 2>&1 &
-sleep 5 && curl -sf --max-time 5 http://localhost:3221 >/dev/null && echo "HR up :3221"
+sleep 5 && curl -sf --max-time 5 http://localhost:3209 >/dev/null && echo "HR up :3209"
 
 git push origin dev                 # 4. push (standing-authorized; bukan --force)
 ```

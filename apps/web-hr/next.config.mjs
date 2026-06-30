@@ -35,7 +35,7 @@ const nextConfig = {
   },
 };
 
-const PORT = process.env.WEB_HR_PORT || '3221';
+const PORT = process.env.WEB_HR_PORT || '3209';
 
 const defaultDevOrigins = [
   '192.168.1.150',

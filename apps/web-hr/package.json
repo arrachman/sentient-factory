@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p ${WEB_HR_PORT:-3221}",
+    "dev": "next dev -p ${WEB_HR_PORT:-3209}",
     "build": "next build",
-    "start": "next start -p ${WEB_HR_PORT:-3221}",
+    "start": "next start -p ${WEB_HR_PORT:-3209}",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:strict": "eslint . --max-warnings 0",
