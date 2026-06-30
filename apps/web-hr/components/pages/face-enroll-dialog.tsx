@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useCamera } from "@/lib/use-camera";
+import { getAttendanceErrorCopy } from "@/lib/attendance-errors";
+import { captureFaceEmbedding, type FaceEmbeddingCapture } from "@/lib/face-embedding";
 import { createFaceEnrollment } from "@/lib/api/face-enrollments";
 import { hrQueryKeys } from "@/lib/api/hooks";
 
@@ -43,6 +45,7 @@ export function FaceEnrollDialog({
     capture,
   } = useCamera();
   const [shot, setShot] = useState<string | null>(null);
+  const [faceCapture, setFaceCapture] = useState<FaceEmbeddingCapture | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export function FaceEnrollDialog({
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       setShot(null);
+      setFaceCapture(null);
     }
     onOpenChange(nextOpen);
   }
@@ -66,11 +70,17 @@ export function FaceEnrollDialog({
       toast.error("Kamera belum siap.");
       return;
     }
+    const embedding = captureFaceEmbedding(videoRef.current);
+    if (!embedding) {
+      toast.error("Wajah belum terbaca. Tunggu kamera stabil lalu coba lagi.");
+      return;
+    }
     setShot(data);
+    setFaceCapture(embedding);
   }
 
   async function save() {
-    if (!shot) {
+    if (!shot || !faceCapture) {
       toast.error("Ambil foto wajah dulu.");
       return;
     }
@@ -79,15 +89,23 @@ export function FaceEnrollDialog({
       await createFaceEnrollment({
         targetAppUserId,
         snapshotDataUrl: shot,
+        qualityScore: faceCapture.qualityScore,
+        livenessScore: faceCapture.livenessScore,
+        faceEmbedding: faceCapture.embedding,
         faceDetectionMode: "browser",
-        metadata: { source: "web-hr", capturedAt: new Date().toISOString() },
+        metadata: {
+          source: "web-hr",
+          capturedAt: new Date().toISOString(),
+          embeddingDimensions: faceCapture.embedding.length,
+        },
       });
       toast.success("Wajah berhasil didaftarkan.");
       await qc.invalidateQueries({ queryKey: hrQueryKeys.faceEnrollments });
       await qc.invalidateQueries({ queryKey: hrQueryKeys.employees });
       onOpenChange(false);
     } catch (e) {
-      toast.error((e as Error)?.message ?? "Gagal mendaftarkan wajah.");
+      const copy = getAttendanceErrorCopy(e);
+      toast.error(copy.title, { description: copy.description });
     } finally {
       setSaving(false);
     }
@@ -112,6 +130,7 @@ export function FaceEnrollDialog({
             ) : (
               <video
                 ref={videoRef}
+                autoPlay
                 playsInline
                 muted
                 className="h-full w-full object-cover"
@@ -142,8 +161,11 @@ export function FaceEnrollDialog({
             {shot ? (
               <Button
                 variant="default"
-                onClick={() => setShot(null)}
                 disabled={saving}
+                onClick={() => {
+                  setShot(null);
+                  setFaceCapture(null);
+                }}
               >
                 <RefreshCw className="h-4 w-4" /> Ambil ulang
               </Button>

@@ -16,6 +16,8 @@ import { FaceScanner, deriveScanPhase } from '@/components/pages/attendance-face
 import { useCamera } from '@/lib/use-camera';
 import { useGeo } from '@/lib/use-geo';
 import { useFaceDetector } from '@/lib/use-face-detector';
+import { captureFaceEmbedding } from '@/lib/face-embedding';
+import { getAttendanceErrorCopy } from '@/lib/attendance-errors';
 import { useNow } from '@/lib/use-now';
 import { getAttendanceMe, clockIn, clockOut } from '@/lib/api/attendance';
 import type { ClockPayload } from '@/lib/api/attendance';
@@ -85,18 +87,30 @@ export function AttendanceClockView() {
     }
     setBusy(kind);
     const metrics = face.metricsRef.current;
+    const faceCapture = captureFaceEmbedding(
+      videoRef.current,
+      face.supported ? metrics.score : 0.85,
+    );
+    if (!faceCapture) {
+      toast.error('Kamera belum bisa membaca wajah. Tunggu sebentar lalu coba lagi.');
+      setBusy(null);
+      return;
+    }
     const payload: ClockPayload = {
       latitude: geo.coords.latitude,
       longitude: geo.coords.longitude,
       snapshotDataUrl: capture() ?? undefined,
+      faceEmbedding: faceCapture.embedding,
       faceDetectionMode: face.supported ? 'shape-detection' : 'browser',
-      faceScore: face.supported ? metrics.score : undefined,
+      faceScore: face.supported ? metrics.score : faceCapture.qualityScore,
+      livenessScore: faceCapture.livenessScore,
       faceDetectionCount: face.supported ? metrics.count : undefined,
       metadata: {
         source: 'web-hr',
         capturedAt: new Date().toISOString(),
         gpsAccuracyM: geo.accuracy ?? undefined,
         faceCentered: face.supported ? metrics.centered : undefined,
+        embeddingDimensions: faceCapture.embedding.length,
       },
     };
     try {
@@ -106,7 +120,8 @@ export function AttendanceClockView() {
       await qc.invalidateQueries({ queryKey: ['hr', 'attendance', 'me'] });
       await qc.invalidateQueries({ queryKey: hrQueryKeys.dashboard });
     } catch (e) {
-      toast.error((e as Error)?.message ?? 'Proses absensi gagal.');
+      const copy = getAttendanceErrorCopy(e);
+      toast.error(copy.title, { description: copy.description });
     } finally {
       setBusy(null);
     }
@@ -117,6 +132,7 @@ export function AttendanceClockView() {
       <div className="relative h-full min-h-[480px] w-full overflow-hidden bg-black">
         <video
           ref={videoRef}
+          autoPlay
           playsInline
           muted
           className="absolute inset-0 h-full w-full object-cover"
