@@ -3,7 +3,9 @@ import { apiGet, apiPost, buildApiUrl } from './client';
 
 export interface FaceEnrollment {
   appUserId: string;
-  name: string;
+  name?: string | null;
+  /** Backend HR mengembalikan `fullName` sebagai nama pegawai. */
+  fullName?: string | null;
   employeeCode?: string | null;
   activeEnrollmentId?: string | null;
   enrollmentStatus?: string;

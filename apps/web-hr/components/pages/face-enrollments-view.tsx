@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/molecules/page-header";
 import { QueryState } from "@/components/molecules/query-state";
 import { DataTable, type Column } from "@/components/organisms/data-table";
+import { FaceAvatar } from "@/components/pages/face-avatar";
 import { FaceEnrollDialog } from "@/components/pages/face-enroll-dialog";
 import { useFaceEnrollments } from "@/lib/api/hooks";
-import { faceEnrollmentSnapshotUrl } from "@/lib/api/face-enrollments";
 import type { FaceEnrollment } from "@/lib/api/face-enrollments";
+
+/** Nama tampilan pegawai. Backend HR mengembalikan `fullName`; `name` fallback. */
+function displayName(r: FaceEnrollment): string {
+  return (r.fullName ?? r.name ?? "").toString();
+}
 
 export function FaceEnrollmentsView() {
   const { data, isLoading, error } = useFaceEnrollments();
@@ -21,25 +26,23 @@ export function FaceEnrollmentsView() {
     {
       key: "snapshot",
       header: "Wajah",
-      render: (r) =>
-        r.activeEnrollmentId ? (
-          <span className="block h-9 w-9 overflow-hidden rounded-full border bg-muted">
-            <img
-              src={faceEnrollmentSnapshotUrl(String(r.activeEnrollmentId))}
-              alt={r.name}
-              className="h-full w-full object-cover"
-            />
-          </span>
-        ) : (
-          <span className="block h-9 w-9 rounded-full border bg-muted" />
-        ),
+      render: (r) => (
+        <FaceAvatar
+          activeEnrollmentId={r.activeEnrollmentId}
+          name={displayName(r)}
+        />
+      ),
     },
     {
       key: "employeeCode",
       header: "Kode",
       render: (r) => r.employeeCode ?? "—",
     },
-    { key: "name", header: "Nama" },
+    {
+      key: "name",
+      header: "Nama",
+      render: (r) => displayName(r) || "—",
+    },
     {
       key: "enrollmentStatus",
       header: "Status",
@@ -82,7 +85,7 @@ export function FaceEnrollmentsView() {
         open={enrollFor !== null}
         onOpenChange={(o) => !o && setEnrollFor(null)}
         targetAppUserId={enrollFor ? Number(enrollFor.appUserId) : undefined}
-        subjectName={enrollFor?.name}
+        subjectName={enrollFor ? displayName(enrollFor) : undefined}
       />
     </PageHeader>
   );
