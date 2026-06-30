@@ -206,9 +206,17 @@ SimpleMaster-vs-bespoke ERP): roles (peran + penugasan), schedules (shift +
 assignment), projects (proyek + time-entry), reports (katalog + filter + hasil).
 Jangan paksa ke `HrListLayout` — mereka punya >1 tabel/seksi.
 
-Follow-up: kebab row-actions + selection/keyboard-row + bulk bar (butuh port
-table.tsx kaya + row-actions-menu; `HrListLayout` sudah sediakan hook
-`keyboardRows`).
+**List kaya (§2.9/§2.11) — DONE, pilot Worksites:** `DataTable` di-enhance
+(opsional, backward-compatible) dengan: selection (checkbox kolom + select-all,
+`selectedKeys`/`onToggleKey`/`onToggleAll`), kebab `rowActions(row)` + paritas
+klik-kanan (`molecules/row-actions.tsx` = `RowActionsMenu`+`RowContextMenu`,
+ui-kit dropdown/context, item `danger`), highlight `focusedIndex` (keyboard
+`j/k/x/Enter` via `HrListLayout.keyboardRows`), dan `onRowOpen`. Bulk bar =
+`organisms/bulk-action-bar.tsx` (`BulkActionBar` generik: `count`+`actions[]`+
+`onCancel`, CSS Fase-1 `.bulk-bar`/`.ba-btn`) tampil saat ≥1 terpilih. **Adopter
+= worksites-view** (Edit/Hapus di kebab, bulk Hapus, select-all, keyboard focus).
+Replikasi ke view list lain: oper props selection/`rowActions`/`keyboardRows`
+yang sama; pindahkan aksi inline lama ke `rowActions`.
 
 ## Disiplin dokumen
 

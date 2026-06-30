@@ -3,29 +3,32 @@
 import { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { HrListLayout, type FilterConfig } from '@/components/organisms/list-layout';
 import { DataTable, type Column } from '@/components/organisms/data-table';
+import { BulkActionBar } from '@/components/organisms/bulk-action-bar';
+import type { RowActionItem } from '@/components/molecules/row-actions';
 import { WorksiteFormDialog } from '@/components/pages/worksite-form-dialog';
 import { useWorksites, hrQueryKeys } from '@/lib/api/hooks';
 import { deleteWorksite } from '@/lib/api/worksites';
 import type { HrWorksite } from '@/lib/api/worksites';
 
-/** Lokasi & Geofence — pilot adopter of the §2.7 HrListLayout chrome
- *  (action bar + search + status filter + summary + footer). Worksites is a
- *  small list, so search/filter run client-side (no server pagination). */
+/** Lokasi & Geofence — full §2.7/§2.9/§2.11 list: action bar + search + status
+ *  filter + summary + footer, plus selection, bulk delete, kebab row-actions
+ *  (right-click parity), and keyboard-first row focus. Pilot for the rich list
+ *  pattern; small list so search/filter run client-side. */
 export function WorksitesView() {
   const qc = useQueryClient();
   const { data, isLoading, error, refetch } = useWorksites();
   const allRows = useMemo(() => data ?? [], [data]);
 
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState(''); // '' = semua
+  const [status, setStatus] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<HrWorksite | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -49,17 +52,33 @@ export function WorksitesView() {
     setDialogOpen(true);
   }
 
-  async function remove(w: HrWorksite) {
-    if (!confirm(`Hapus worksite "${w.name}"?`)) return;
-    setDeletingId(String(w.id));
+  function toggleKey(key: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.size === rows.length ? new Set() : new Set(rows.map((r) => String(r.id))),
+    );
+  }
+  const clearSelection = () => setSelected(new Set());
+
+  async function removeMany(ids: string[], label: string) {
+    if (!confirm(`Hapus ${label}?`)) return;
+    setBusy(true);
     try {
-      await deleteWorksite(String(w.id));
-      toast.success('Worksite dihapus.');
+      await Promise.all(ids.map((id) => deleteWorksite(id)));
+      toast.success(`${ids.length} worksite dihapus.`);
+      clearSelection();
       await qc.invalidateQueries({ queryKey: hrQueryKeys.worksites() });
     } catch (e) {
       toast.error((e as Error)?.message ?? 'Gagal menghapus.');
     } finally {
-      setDeletingId(null);
+      setBusy(false);
     }
   }
 
@@ -104,25 +123,15 @@ export function WorksitesView() {
         </Badge>
       ),
     },
+  ];
+
+  const rowActions = (r: HrWorksite): RowActionItem[] => [
+    { label: 'Edit', onSelect: () => openEdit(r) },
     {
-      key: 'actions',
-      header: '',
-      className: 'text-right',
-      render: (r) => (
-        <div className="flex justify-end gap-1.5">
-          <Button size="sm" variant="default" onClick={() => openEdit(r)}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            disabled={deletingId === String(r.id)}
-            onClick={() => remove(r)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      ),
+      label: 'Hapus',
+      danger: true,
+      separatorBefore: true,
+      onSelect: () => removeMany([String(r.id)], `worksite "${r.name}"`),
     },
   ];
 
@@ -139,14 +148,41 @@ export function WorksitesView() {
         onAdd={openCreate}
         filters={filters}
         summary={{ metricLabel: 'Worksite', rowCount: rows.length, totalCount: allRows.length }}
-        keyboardHints
+        keyboardRows={{
+          rowCount: rows.length,
+          focusedIndex,
+          onFocusChange: setFocusedIndex,
+          onToggle: (i) => rows[i] && toggleKey(String(rows[i].id)),
+          onOpen: (i) => rows[i] && openEdit(rows[i]),
+        }}
       >
+        <BulkActionBar
+          count={selected.size}
+          onCancel={clearSelection}
+          actions={[
+            {
+              label: 'Hapus',
+              danger: true,
+              onClick: () => !busy && removeMany([...selected], `${selected.size} worksite`),
+            },
+          ]}
+        />
         {rows.length === 0 ? (
           <div className="flex min-h-[160px] items-center justify-center text-sm text-muted-foreground">
             {allRows.length === 0 ? 'Belum ada worksite.' : 'Tidak ada hasil untuk filter ini.'}
           </div>
         ) : (
-          <DataTable columns={columns} rows={rows} rowKey={(r) => String(r.id)} />
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(r) => String(r.id)}
+            selectedKeys={selected}
+            onToggleKey={toggleKey}
+            onToggleAll={toggleAll}
+            rowActions={rowActions}
+            focusedIndex={focusedIndex}
+            onRowOpen={openEdit}
+          />
         )}
       </HrListLayout>
       <WorksiteFormDialog open={dialogOpen} onOpenChange={setDialogOpen} worksite={editing} />
