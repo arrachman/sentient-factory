@@ -5,15 +5,20 @@ export const metadata: Metadata = { title: "Master Data" };
 
 export default function MasterHomePage() {
   return (
-    <div className="mx-auto flex max-w-7xl flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-lg font-semibold text-foreground">Master Data</h1>
+    <div className="page">
+      <div className="page-header">
+        <h1 className="page-title">
+          Master Data
+          <span className="code-tag">MDP</span>
+        </h1>
+      </div>
+      <div className="page-body flex flex-col gap-5 overflow-auto p-4">
         <p className="text-sm text-muted-foreground">
           Master fondasi (mdp · eam) yang menopang eksekusi MES — work center,
           aset, shift, dan reason code.
         </p>
+        <MasterGrid />
       </div>
-      <MasterGrid />
     </div>
   );
 }
