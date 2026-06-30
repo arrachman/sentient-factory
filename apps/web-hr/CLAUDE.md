@@ -94,13 +94,26 @@ scanner 3D**, dan action dock (readiness stepper + tombol clock).
   brackets yang merapat saat lock, dan pulse. Fase via atribut `data-phase`
   (`init|scanning|locked|error`); animasi murni CSS, hormati
   `prefers-reduced-motion`.
-- **Deteksi wajah** (`lib/use-face-detector.ts`): best-effort native
-  `FaceDetector` (Shape Detection API). Bila ada → feedback framing real-time
-  (present/centered), warning multi-wajah (anti buddy-punch), dan isi
+- **Deteksi wajah** (`lib/use-face-detector.ts` + `lib/face-engines.ts`,
+  multi-engine sejak 2026-06-30): dua engine `FaceEngine` dengan prioritas —
+  (1) **native** `FaceDetector` (Shape Detection API) bila ada; (2) fallback
+  **MediaPipe** BlazeFace (`@mediapipe/tasks-vision`, WASM short-range,
+  `runningMode:'VIDEO'`). ⚠️ Native `FaceDetector` praktis **tidak tersedia** di
+  Chrome/Safari/Firefox modern (`window.FaceDetector` undefined) — dulu inilah
+  sebab layar mentok di "framing manual"; MediaPipe-lah yang kini memberi
+  auto-lock di semua browser. Engine aktif → feedback framing real-time
+  (present/centered), warning multi-wajah (anti buddy-punch), isi
   `faceScore`/`faceDetectionCount` (+`faceCentered`,`gpsAccuracyM` di metadata)
-  ke payload clock; `faceDetectionMode='shape-detection'`. Bila tak didukung →
-  `supported=false`, fallback "framing manual" (TIDAK pernah memalsukan lock).
-  Backend tetap SSOT identitas.
+  ke payload clock; `faceDetectionMode` = `'native'|'mediapipe'`. Hanya bila
+  KEDUA engine gagal → `supported=false`, fallback "framing manual"
+  (`faceDetectionMode='browser'`; TIDAK pernah memalsukan lock). Backend tetap
+  SSOT identitas.
+  - **Aset WASM** di-host **same-origin** di `public/mediapipe/`: subdir `wasm/`
+    (binari ±33 MB, **gitignored**, di-sync ulang dari `node_modules` via
+    `scripts/sync-mediapipe.mjs` pada `predev`/`prebuild`) + `models/
+    blaze_face_short_range.tflite` (230 KB, **di-commit**). Tanpa CDN → aman di
+    host LAN/offline. Resolver WASM = `/mediapipe/wasm`, model =
+    `/mediapipe/models/...`.
 - **Lokasi** (`lib/use-geo.ts`): status machine `idle|locating|ready|error` +
   `accuracy` (±m) + `locate()` untuk tombol **"Coba lagi"** — GPS gagal tak lagi
   membuat user mentok (perbaikan utama dari layar lama yang hanya menampilkan
