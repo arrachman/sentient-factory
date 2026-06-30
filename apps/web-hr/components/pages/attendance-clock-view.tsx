@@ -101,7 +101,7 @@ export function AttendanceClockView() {
       longitude: geo.coords.longitude,
       snapshotDataUrl: capture() ?? undefined,
       faceEmbedding: faceCapture.embedding,
-      faceDetectionMode: face.supported ? 'shape-detection' : 'browser',
+      faceDetectionMode: face.engine ?? 'browser',
       faceScore: face.supported ? metrics.score : faceCapture.qualityScore,
       livenessScore: faceCapture.livenessScore,
       faceDetectionCount: face.supported ? metrics.count : undefined,

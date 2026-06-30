@@ -41,3 +41,6 @@ next-env.d.ts.bak
 
 # Misc
 .turbo
+
+# MediaPipe WASM runtime (reproduced from node_modules by scripts/sync-mediapipe.mjs)
+/public/mediapipe/wasm/
