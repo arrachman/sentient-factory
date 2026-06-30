@@ -47,6 +47,16 @@ export function TimesheetsView() {
       render: (r) => <span className="font-medium">{formatMinutes(r.totalMinutes)}</span>,
     },
     {
+      key: 'holidayMinutes',
+      header: 'Jam Libur',
+      render: (r) =>
+        (r.holidayMinutes ?? 0) > 0 ? (
+          <Badge variant="default">{formatMinutes(r.holidayMinutes)}</Badge>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
+    {
       key: 'overtimeMinutes',
       header: 'Lembur',
       render: (r) =>

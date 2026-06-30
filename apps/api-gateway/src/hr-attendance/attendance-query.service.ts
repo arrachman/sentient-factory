@@ -264,11 +264,40 @@ export class AttendanceQueryService {
       targetHrUserId = Number(profile.hrUserId);
     }
 
-    const standardDailyMinutes = await this.settingsService.getNumberSetting(
+    // Overtime/break policy (hr-policy module → hr_settings group 'overtime').
+    // Falls back to the legacy attendance setting / 8h when unset.
+    const legacyStandardMinutes = await this.settingsService.getNumberSetting(
       'attendance',
       'standard_daily_minutes',
       480,
     );
+    const overtimeEnabled = await this.settingsService.getBooleanSetting(
+      'overtime',
+      'enabled',
+      true,
+    );
+    const dailyRegularHours = await this.settingsService.getNumberSetting(
+      'overtime',
+      'daily_regular_hours',
+      Math.round((legacyStandardMinutes / 60) * 100) / 100,
+    );
+    const countHolidayAsOvertime = await this.settingsService.getBooleanSetting(
+      'overtime',
+      'count_holiday_as_overtime',
+      true,
+    );
+    const standardDailyMinutes = Math.max(0, Math.round(dailyRegularHours * 60));
+
+    // A session's work_date is a holiday if an active hr_holidays row matches it,
+    // either on the exact date or (for recurring rows) on the same month/day.
+    const isHolidayExpr = Prisma.sql`EXISTS (
+      SELECT 1 FROM public.hr_holidays h
+      WHERE h.deleted_at IS NULL AND h.is_active
+        AND (
+          (NOT h.is_recurring AND h.holiday_date = s.work_date)
+          OR (h.is_recurring AND to_char(h.holiday_date, 'MM-DD') = to_char(s.work_date, 'MM-DD'))
+        )
+    )`;
 
     const scopeSql =
       targetHrUserId !== null ? Prisma.sql`AND s.user_id = ${targetHrUserId}` : Prisma.empty;
@@ -295,8 +324,17 @@ export class AttendanceQueryService {
         u.username,
         u.full_name AS "fullName",
         count(*) FILTER (WHERE s.clock_in_at IS NOT NULL)::int AS "daysPresent",
+        count(*) FILTER (WHERE s.clock_in_at IS NOT NULL AND ${isHolidayExpr})::int AS "holidayDays",
         coalesce(sum(s.total_work_minutes), 0)::int AS "totalMinutes",
-        coalesce(sum(GREATEST(coalesce(s.total_work_minutes, 0) - ${standardDailyMinutes}, 0)), 0)::int AS "overtimeMinutes",
+        coalesce(sum(CASE WHEN ${isHolidayExpr} THEN coalesce(s.total_work_minutes, 0) ELSE 0 END), 0)::int AS "holidayMinutes",
+        coalesce(sum(
+          CASE
+            WHEN ${overtimeEnabled} = false THEN 0
+            WHEN ${countHolidayAsOvertime} = true AND ${isHolidayExpr}
+              THEN coalesce(s.total_work_minutes, 0)
+            ELSE GREATEST(coalesce(s.total_work_minutes, 0) - ${standardDailyMinutes}, 0)
+          END
+        ), 0)::int AS "overtimeMinutes",
         min(s.work_date) AS "firstDate",
         max(s.work_date) AS "lastDate"
       FROM public.hr_attendance_sessions s
@@ -339,6 +377,9 @@ export class AttendanceQueryService {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
         standardDailyMinutes,
+        overtimeEnabled,
+        dailyRegularMinutes: standardDailyMinutes,
+        countHolidayAsOvertime,
       },
     };
   }

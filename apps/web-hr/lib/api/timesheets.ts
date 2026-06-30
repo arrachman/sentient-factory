@@ -7,7 +7,9 @@ export interface TimesheetRow {
   username?: string;
   fullName?: string | null;
   daysPresent: number;
+  holidayDays?: number;
   totalMinutes: number;
+  holidayMinutes?: number;
   overtimeMinutes: number;
   firstDate?: string | null;
   lastDate?: string | null;
@@ -24,7 +26,16 @@ export interface TimesheetQuery {
 
 export interface TimesheetPayload {
   data?: TimesheetRow[];
-  meta?: { page: number; limit: number; total: number; totalPages: number; standardDailyMinutes?: number };
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    standardDailyMinutes?: number;
+    overtimeEnabled?: boolean;
+    dailyRegularMinutes?: number;
+    countHolidayAsOvertime?: boolean;
+  };
   [key: string]: unknown;
 }
 

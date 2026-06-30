@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { isPrivileged, normalizeHrDates } from '../hr-attendance/hr-attendance-helpers';
+import { resolveHrPrivilege, normalizeHrDates } from '../hr-attendance/hr-attendance-helpers';
 import { CreateHolidayDto, UpdateHolidayDto, QueryHolidayDto } from './dto/holiday.dto';
 
 type AuthUser = { id: number; roles?: string[] };
@@ -10,8 +10,8 @@ type AuthUser = { id: number; roles?: string[] };
 export class HrHolidaysService {
   constructor(private prisma: PrismaService) {}
 
-  private requirePrivileged(authUser: AuthUser) {
-    if (!isPrivileged(authUser.roles)) {
+  private async requirePrivileged(authUser: AuthUser) {
+    if (!(await resolveHrPrivilege(this.prisma, authUser))) {
       throw new ForbiddenException('Hanya admin/manager yang dapat mengubah kalender libur.');
     }
   }
@@ -33,7 +33,7 @@ export class HrHolidaysService {
   }
 
   async create(authUser: AuthUser, dto: CreateHolidayDto) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const rows = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
       INSERT INTO public.hr_holidays
         (holiday_date, name, is_recurring, region, is_active, created_by)
@@ -45,7 +45,7 @@ export class HrHolidaysService {
   }
 
   async update(authUser: AuthUser, id: number, dto: UpdateHolidayDto) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const sets: Prisma.Sql[] = [];
     if (dto.holidayDate !== undefined) sets.push(Prisma.sql`holiday_date = ${dto.holidayDate}::date`);
     if (dto.name !== undefined) sets.push(Prisma.sql`name = ${dto.name}`);
@@ -63,7 +63,7 @@ export class HrHolidaysService {
   }
 
   async remove(authUser: AuthUser, id: number) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const res = await this.prisma.$executeRaw(Prisma.sql`
       UPDATE public.hr_holidays
       SET deleted_at = now(), deleted_by = ${authUser.id}

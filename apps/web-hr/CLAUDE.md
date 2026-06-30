@@ -28,8 +28,18 @@ Rulebook ini berlaku **di atas** root `CLAUDE.md` + `packages/ui-kit/FRONTEND-DE
   (Tier 2). `transpilePackages: ['@sentient-factory/ui-kit']`.
 - **Base URL** = same-origin `/api` → `next.config.mjs` rewrite ke
   `HR_INTERNAL_API_URL` (api-gateway). Browser panggil `/api/hr/*` + `/api/auth/*`.
-- **Auth** = sesi platform (cookie `sf_token`); web-hr TIDAK punya login. 401 →
-  `QueryState` menampilkan hint "login lewat platform".
+- **Auth** = sesi platform (cookie `sf_token`). web-hr punya halaman login tipis
+  sendiri (`app/login/page.tsx`): POST `/api/auth/login` (rewrite ke gateway) →
+  simpan JWT `data.token` sebagai cookie `sf_token` (Path=/, SameSite=Lax,
+  Max-Age 7h) → redirect `returnTo`. Tidak mengelola user/registrasi — hanya
+  menukar kredensial platform jadi cookie pada origin ini (perlu karena origin
+  LAN tak mewarisi cookie dari app lain). 401 → `QueryState` tampil tombol
+  **Masuk** menuju `/login?returnTo=<path>`.
+- **Auth gate** = `proxy.ts` (konvensi Next 16, ex-`middleware`): route `/app/*`
+  tanpa cookie `sf_token` → redirect 307 ke `/login?returnTo=<path>` sebelum
+  shell render. Backstop client di `AppShell` (`useSessionGuard` via `useHrMe`):
+  cookie ada tapi token kedaluwarsa (401 `/api/auth/me`) → redirect `/login`
+  juga. `/login` + `/api/*` + aset statis tetap publik.
 - Error class `HrApiError`, query-key namespace `['hr', …]`, storageKey `hr-theme`.
 
 ## Struktur
@@ -37,6 +47,7 @@ Rulebook ini berlaku **di atas** root `CLAUDE.md` + `packages/ui-kit/FRONTEND-DE
 ```
 app/                 # routing tipis; app/app/* = shell + screens
   layout.tsx         # providers + appearance init (themeColor teal)
+  login/page.tsx     # login tipis (tukar kredensial platform → cookie sf_token)
   app/layout.tsx     # AppShell wrapper
   app/<route>/page.tsx
 components/
@@ -72,20 +83,31 @@ backend-ready via clock-by-appUserId; privileged-only).
 ## Live "Pengaturan lanjutan" (Fase 2 lanjutan)
 
 Kalender Libur (`hr-holidays` — tabel `hr_holidays` additive; list publik, CRUD
-privileged; dipakai perhitungan lembur/timesheet), Aturan Lembur & Istirahat
-(`hr-policy` — `GET/PUT /hr/policy/overtime`, disimpan di `hr_settings` group
-`overtime` dengan key snake_case fully-qualified, TANPA tabel baru; GET publik,
-PUT privileged), Akses & Peran/RBAC (`hr-roles` — tabel `hr_roles` +
-`hr_user_roles` additive; seed 3 peran sistem HR_ADMIN/MANAGER/EMPLOYEE;
-manajemen peran + penugasan per-karyawan; **enforcement guard belum diwire** —
-endpoint masih pakai `isPrivileged(JWT roles)`).
+privileged), Aturan Lembur & Istirahat (`hr-policy` — `GET/PUT /hr/policy/overtime`,
+disimpan di `hr_settings` group `overtime` dengan key snake_case fully-qualified,
+TANPA tabel baru; GET publik, PUT privileged), Akses & Peran/RBAC (`hr-roles` —
+tabel `hr_roles` + `hr_user_roles` additive; seed 3 peran sistem
+HR_ADMIN/MANAGER/EMPLOYEE; manajemen peran + penugasan per-karyawan).
+
+**Enforcement RBAC (additive):** helper `resolveHrPrivilege(prisma, authUser)` di
+`hr-attendance-helpers` — privileged jika **JWT platform roles** (`admin`/`manager`)
+**ATAU** punya peran `HR_ADMIN`/`HR_MANAGER` di `hr_user_roles`. Hanya MENAMBAH
+akses (tak pernah mengunci). Sudah diwire ke modul HR-admin (holidays/policy/roles);
+**enforcement lintas endpoint absensi/cuti/dll masih pakai `isPrivileged(JWT)`** —
+increment berikutnya (risiko lockout → hati-hati).
+
+**Timesheet konsumsi kebijakan:** `GET /hr/timesheets` membaca policy `overtime`
+(`daily_regular_hours`, `enabled`, `count_holiday_as_overtime`) + `hr_holidays`.
+Kolom baru `holidayDays`/`holidayMinutes`; `overtimeMinutes` = seluruh jam di hari
+libur (bila `count_holiday_as_overtime`) atau jam di atas `daily_regular_hours`.
 
 ## Roadmap (Fase 2+ sisa, stub coming-soon)
 
 SSO/2FA (lintas-app, terkopel auth ERP — butuh koordinasi backend platform) +
 lock periode/audit laporan + NFC/offline-sync & jalur wajah kiosk di frontend +
-wiring enforcement RBAC ke guard. Tiap modul = approval terpisah + desain DB
-additive. Detail + gap jibble lengkap di `db-design/module-roadmap.md`.
+**perluasan enforcement RBAC** ke endpoint absensi/cuti/timesheet. Tiap modul =
+approval terpisah + desain DB additive. Detail + gap jibble lengkap di
+`db-design/module-roadmap.md`.
 
 ## Perintah
 

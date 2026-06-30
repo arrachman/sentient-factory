@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { isPrivileged } from '../hr-attendance/hr-attendance-helpers';
+import { resolveHrPrivilege } from '../hr-attendance/hr-attendance-helpers';
 import { UpdateOvertimePolicyDto } from './dto/overtime-policy.dto';
 
 type AuthUser = { id: number; roles?: string[] };
@@ -71,7 +71,7 @@ export class HrPolicyService {
   }
 
   async updateOvertimePolicy(authUser: AuthUser, dto: UpdateOvertimePolicyDto) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!(await resolveHrPrivilege(this.prisma, authUser))) {
       throw new ForbiddenException('Hanya admin/manager yang dapat mengubah kebijakan lembur.');
     }
     const updates = Object.entries(OVERTIME_FIELDS).filter(

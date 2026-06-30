@@ -8,7 +8,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   getHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from '../hr-attendance/hr-attendance-helpers';
 import { CreateRoleDto, UpdateRoleDto } from './dto/role.dto';
@@ -19,8 +19,8 @@ type AuthUser = { id: number; roles?: string[] };
 export class HrRolesService {
   constructor(private prisma: PrismaService) {}
 
-  private requirePrivileged(authUser: AuthUser) {
-    if (!isPrivileged(authUser.roles)) {
+  private async requirePrivileged(authUser: AuthUser) {
+    if (!(await resolveHrPrivilege(this.prisma, authUser))) {
       throw new ForbiddenException('Hanya admin/manager yang dapat mengelola peran HR.');
     }
   }
@@ -42,7 +42,7 @@ export class HrRolesService {
   }
 
   async createRole(authUser: AuthUser, dto: CreateRoleDto) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const rows = await this.prisma.$queryRaw<Array<{ id: number }>>(Prisma.sql`
       INSERT INTO public.hr_roles (code, name, description, is_system, is_active, created_by)
       VALUES (${dto.code}, ${dto.name}, ${dto.description ?? null}, false,
@@ -53,7 +53,7 @@ export class HrRolesService {
   }
 
   async updateRole(authUser: AuthUser, id: number, dto: UpdateRoleDto) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const sets: Prisma.Sql[] = [];
     if (dto.code !== undefined) sets.push(Prisma.sql`code = ${dto.code}`);
     if (dto.name !== undefined) sets.push(Prisma.sql`name = ${dto.name}`);
@@ -70,7 +70,7 @@ export class HrRolesService {
   }
 
   async deleteRole(authUser: AuthUser, id: number) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const rows = await this.prisma.$queryRaw<Array<{ isSystem: boolean }>>(Prisma.sql`
       SELECT is_system AS "isSystem" FROM public.hr_roles
       WHERE id = ${id} AND deleted_at IS NULL LIMIT 1
@@ -99,7 +99,7 @@ export class HrRolesService {
   }
 
   async getUserRoles(authUser: AuthUser, targetAppUserId: number) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const hrUserId = await this.resolveHrUserId(targetAppUserId);
     const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
       SELECT r.id, r.code, r.name
@@ -112,7 +112,7 @@ export class HrRolesService {
   }
 
   async setUserRoles(authUser: AuthUser, targetAppUserId: number, roleIds: number[]) {
-    this.requirePrivileged(authUser);
+    await this.requirePrivileged(authUser);
     const hrUserId = await this.resolveHrUserId(targetAppUserId);
     const uniqueRoleIds = Array.from(new Set(roleIds.filter((v) => Number.isFinite(v) && v > 0)));
 
