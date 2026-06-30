@@ -1,11 +1,27 @@
 'use client';
 
-// Browser-style tab strip for the HR shell. Ported from the web-erp TabBar but
-// adapted to HR's URL-keyed tabs (lib/use-hr-tabs) and without @dnd-kit — reorder
-// uses native HTML5 drag events (self-contained, no extra dependency). Tabs are
-// identified by their `/app/...` route; activating one navigates the router.
+// Browser-style tab strip for the HR shell. Ported from the web-erp TabBar
+// (@dnd-kit sortable reorder for full ERP parity) and adapted to HR's URL-keyed
+// tabs (lib/use-hr-tabs): tabs are identified by their `/app/...` route, and
+// activating one navigates the router. Lucide icons (HR has no name-registry).
 
 import { useEffect, useRef, useState } from 'react';
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+  useSortable,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { X, RefreshCw, ChevronRight, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { pageMetaFor } from '@/lib/nav';
@@ -28,6 +44,70 @@ interface CtxMenu {
   y: number;
 }
 
+interface SortableTabChipProps {
+  tab: HrTab;
+  active: boolean;
+  closable: boolean;
+  onActivate: (route: string) => void;
+  onClose: (route: string) => void;
+  onContextMenu: (e: React.MouseEvent, route: string) => void;
+}
+
+function SortableTabChip({
+  tab,
+  active,
+  closable,
+  onActivate,
+  onClose,
+  onContextMenu,
+}: SortableTabChipProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: tab.route });
+  const meta = pageMetaFor(tab.route);
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+    zIndex: isDragging ? 10 : undefined,
+  };
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      data-tab={tab.route}
+      className={cn('tab-chip', active && 'active', isDragging && 'dragging')}
+      title={meta.title}
+      onClick={() => onActivate(tab.route)}
+      onContextMenu={(e) => onContextMenu(e, tab.route)}
+      onAuxClick={(e) => {
+        if (e.button === 1 && closable) {
+          e.preventDefault();
+          onClose(tab.route);
+        }
+      }}
+      {...attributes}
+      {...listeners}
+    >
+      <meta.Icon className="tab-ico" size={13} strokeWidth={1.6} />
+      <span className="tab-label">{meta.title}</span>
+      {closable && (
+        <span
+          className="tab-x"
+          title="Tutup tab"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose(tab.route);
+          }}
+          onAuxClick={(e) => e.stopPropagation()}
+        >
+          <X size={10} />
+        </span>
+      )}
+    </div>
+  );
+}
+
 export function TabBar({
   tabs,
   activeRoute,
@@ -40,10 +120,9 @@ export function TabBar({
 }: TabBarProps) {
   const stripRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<CtxMenu | null>(null);
-  const dragRoute = useRef<string | null>(null);
 
   useEffect(() => {
-    const el = stripRef.current?.querySelector(`[data-tab="${CSS.escape(activeRoute)}"]`);
+    const el = stripRef.current?.querySelector(`[data-tab="${window.CSS.escape(activeRoute)}"]`);
     if (el) el.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [activeRoute, tabs.length]);
 
@@ -76,57 +155,36 @@ export function TabBar({
   const hasOthers = tabs.length > 1;
   const hasRight = menuIdx > -1 && menuIdx < tabs.length - 1;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    onReorder(String(active.id), String(over.id));
+  };
+
+  const tabIds = tabs.map((t) => t.route);
+
   return (
     <div className="tabstrip" ref={stripRef}>
-      {tabs.map((tab) => {
-        const active = tab.route === activeRoute;
-        const meta = pageMetaFor(tab.route);
-        return (
-          <div
-            key={tab.route}
-            data-tab={tab.route}
-            className={cn('tab-chip', active && 'active')}
-            title={meta.title}
-            draggable
-            onClick={() => onActivate(tab.route)}
-            onContextMenu={(e) => openMenu(e, tab.route)}
-            onAuxClick={(e) => {
-              if (e.button === 1) {
-                e.preventDefault();
-                onClose(tab.route);
-              }
-            }}
-            onDragStart={() => {
-              dragRoute.current = tab.route;
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              if (dragRoute.current && dragRoute.current !== tab.route) {
-                onReorder(dragRoute.current, tab.route);
-              }
-              dragRoute.current = null;
-            }}
-          >
-            <meta.Icon className="tab-ico" size={13} strokeWidth={1.6} />
-            <span className="tab-label">{meta.title}</span>
-            {tabs.length > 1 && (
-              <span
-                className="tab-x"
-                title="Tutup tab"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClose(tab.route);
-                }}
-                onAuxClick={(e) => e.stopPropagation()}
-              >
-                <X size={10} />
-              </span>
-            )}
-          </div>
-        );
-      })}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={tabIds} strategy={horizontalListSortingStrategy}>
+          {tabs.map((tab) => (
+            <SortableTabChip
+              key={tab.route}
+              tab={tab}
+              active={tab.route === activeRoute}
+              closable={tabs.length > 1}
+              onActivate={onActivate}
+              onClose={onClose}
+              onContextMenu={openMenu}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
       <div style={{ flex: 1 }} />
       <span className="tab-count">{tabs.length} tab</span>
 
