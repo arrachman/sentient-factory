@@ -1,7 +1,7 @@
 # Semantic Schema M3 Summary
 
-Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m3.json`
-Function/query source: `/home/rania/apps/sentient-factory/m3-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_3.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
+Schema source: `/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m3.json`
+Function/query source: `/opt/sentient-factory/m3-queries.md`, `/opt/sentient-factory/m0_report_rmoduleid_3.sql`, `/opt/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
 
 Total M3 tables in schema: **43**
 Total M3 tables detected in active queries: **43**

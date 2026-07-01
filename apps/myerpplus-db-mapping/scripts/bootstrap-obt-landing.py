@@ -18,7 +18,7 @@ from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
 
-ROOT = Path("/home/rania/apps/sentient-factory")
+ROOT = Path("/opt/sentient-factory")
 PG_RUNNER_PATH = ROOT / "apps" / "myerpplus-db-mapping" / "scripts" / "run-pg-obt-table-sql.py"
 LANDING_SQL_PATH = (
     ROOT

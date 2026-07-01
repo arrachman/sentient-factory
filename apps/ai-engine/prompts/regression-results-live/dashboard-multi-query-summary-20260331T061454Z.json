@@ -72,5 +72,5 @@
       ]
     }
   ],
-  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T061454Z.json"
+  "outputs_path": "/opt/sentient-factory/apps/ai-engine/prompts/regression-results-live/dashboard-multi-query-outputs-20260331T061454Z.json"
 }

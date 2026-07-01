@@ -4,7 +4,7 @@
   "total": 10,
   "failed": 0,
   "passed": 10,
-  "outputs_path": "/home/rania/apps/sentient-factory/apps/ai-engine/prompts/regression-results-live/m5-regression-outputs-20260330T054914Z.json",
+  "outputs_path": "/opt/sentient-factory/apps/ai-engine/prompts/regression-results-live/m5-regression-outputs-20260330T054914Z.json",
   "results": [
     {
       "id": "m5_001_sq_header_list",

@@ -1,7 +1,7 @@
 # Semantic Schema M1 Summary
 
-Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m1.json`
-Function/query source: `/home/rania/apps/sentient-factory/m1-queries.md`, `/home/rania/apps/sentient-factory/m1-queries-by-type.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_1.sql`
+Schema source: `/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m1.json`
+Function/query source: `/opt/sentient-factory/m1-queries.md`, `/opt/sentient-factory/m1-queries-by-type.md`, `/opt/sentient-factory/m0_report_rmoduleid_1.sql`
 
 Total M1 tables in schema: **49**
 Total explicit join hints in schema: **0**

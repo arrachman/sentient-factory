@@ -1,7 +1,7 @@
 # Semantic Schema M4 Summary
 
-Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m4.json`
-Function/query source: `/home/rania/apps/sentient-factory/m4-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_4.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
+Schema source: `/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m4.json`
+Function/query source: `/opt/sentient-factory/m4-queries.md`, `/opt/sentient-factory/m0_report_rmoduleid_4.sql`, `/opt/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
 
 Total M4 tables in schema: **77**
 Total M4 tables detected in active queries: **77**

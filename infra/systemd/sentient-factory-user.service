@@ -5,9 +5,9 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/rania/apps/sentient-factory
-ExecStart=/home/rania/apps/sentient-factory/scripts/start-infra-on-boot.sh
-ExecStop=/home/rania/apps/sentient-factory/scripts/stop-infra-on-boot.sh
+WorkingDirectory=/opt/sentient-factory
+ExecStart=/opt/sentient-factory/scripts/start-infra-on-boot.sh
+ExecStop=/opt/sentient-factory/scripts/stop-infra-on-boot.sh
 RemainAfterExit=yes
 TimeoutStartSec=0
 

@@ -1,12 +1,12 @@
 # Plan Sinkronisasi M4-M7 ke semantic-query-schema-dashboard-obt.json
 
-Tujuan dokumen ini adalah menyusun rencana sinkronisasi semantic summary domain `M4`, `M5`, `M6`, dan `M7` ke [db/semantic-query-schema-dashboard-obt.json](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json) agar `apps/ai-engine` membaca coverage dashboard dari OBT/dim kanonik, bukan dari tabel source mentah.
+Tujuan dokumen ini adalah menyusun rencana sinkronisasi semantic summary domain `M4`, `M5`, `M6`, dan `M7` ke [db/semantic-query-schema-dashboard-obt.json](/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json) agar `apps/ai-engine` membaca coverage dashboard dari OBT/dim kanonik, bukan dari tabel source mentah.
 
 Catatan path aktual di repo:
-- `M4`: [db/m4-purchasing/semantic-schema-m4-summary.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m4-purchasing/semantic-schema-m4-summary.md)
-- `M5`: [db/m5-sales/semantic-schema-m5-summary.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-m5-summary.md)
-- `M6`: [db/m6-manufacturing/semantic-schema-m6-summary.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m6-manufacturing/semantic-schema-m6-summary.md)
-- `M7`: [db/m7-procurement advanced/semantic-schema-m7-summary.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m7-procurement%20advanced/semantic-schema-m7-summary.md)
+- `M4`: [db/m4-purchasing/semantic-schema-m4-summary.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m4-purchasing/semantic-schema-m4-summary.md)
+- `M5`: [db/m5-sales/semantic-schema-m5-summary.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-m5-summary.md)
+- `M6`: [db/m6-manufacturing/semantic-schema-m6-summary.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m6-manufacturing/semantic-schema-m6-summary.md)
+- `M7`: [db/m7-procurement advanced/semantic-schema-m7-summary.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m7-procurement%20advanced/semantic-schema-m7-summary.md)
 
 ## Prinsip Sinkronisasi
 

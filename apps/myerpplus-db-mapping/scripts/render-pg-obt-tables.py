@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 
-ROOT = Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping")
+ROOT = Path("/opt/sentient-factory/apps/myerpplus-db-mapping")
 SQL_DIR = ROOT / "db" / "obt-physical-sql"
 OUT_DIR = SQL_DIR / "pgsql-tables"
 

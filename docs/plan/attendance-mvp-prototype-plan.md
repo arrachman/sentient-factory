@@ -1233,17 +1233,17 @@ ORDER BY hu.id;
 
 File runnable yang sudah diturunkan dari plan ini:
 
-1. [sentient_hr_attendance_00_run_all.sql](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_00_run_all.sql)
-2. [sentient_hr_attendance_01_schema.sql](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_01_schema.sql)
-3. [sentient_hr_attendance_02_menu_seed.sql](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_02_menu_seed.sql)
-4. [sentient_hr_attendance_03_seed_minimal.sql](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_03_seed_minimal.sql)
-5. [sentient_hr_attendance_09_user_worksites.sql](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_09_user_worksites.sql)
+1. [sentient_hr_attendance_00_run_all.sql](/opt/sentient-factory/docs/sql/sentient_hr_attendance_00_run_all.sql)
+2. [sentient_hr_attendance_01_schema.sql](/opt/sentient-factory/docs/sql/sentient_hr_attendance_01_schema.sql)
+3. [sentient_hr_attendance_02_menu_seed.sql](/opt/sentient-factory/docs/sql/sentient_hr_attendance_02_menu_seed.sql)
+4. [sentient_hr_attendance_03_seed_minimal.sql](/opt/sentient-factory/docs/sql/sentient_hr_attendance_03_seed_minimal.sql)
+5. [sentient_hr_attendance_09_user_worksites.sql](/opt/sentient-factory/docs/sql/sentient_hr_attendance_09_user_worksites.sql)
 
 Contoh eksekusi:
 
 ```bash
 psql 'postgresql://root:PasswordSuperRahasia123!@127.0.0.1:3208/sentient_factory' \
-  -f /home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_00_run_all.sql
+  -f /opt/sentient-factory/docs/sql/sentient_hr_attendance_00_run_all.sql
 ```
 
 ## 26. Status Implementasi Saat Ini
@@ -1303,9 +1303,9 @@ Status yang sudah selesai:
    - `admin@example.com` menerima `mode = 'admin'`
    - `staff.hr@example.com` menerima `mode = 'self'`
 19. snapshot file berhasil ditulis oleh backend ke path host-visible setelah bind mount:
-   - [`temp/hr-attendance/enrollments`](/home/rania/apps/sentient-factory/temp/hr-attendance/enrollments)
-   - [`temp/hr-attendance/clock-in`](/home/rania/apps/sentient-factory/temp/hr-attendance/clock-in)
-   - [`temp/hr-attendance/clock-out`](/home/rania/apps/sentient-factory/temp/hr-attendance/clock-out)
+   - [`temp/hr-attendance/enrollments`](/opt/sentient-factory/temp/hr-attendance/enrollments)
+   - [`temp/hr-attendance/clock-in`](/opt/sentient-factory/temp/hr-attendance/clock-in)
+   - [`temp/hr-attendance/clock-out`](/opt/sentient-factory/temp/hr-attendance/clock-out)
 20. `api-gateway` sekarang memakai:
    - `HR_ATTENDANCE_STORAGE_PATH=/app/temp/hr-attendance`
    - bind mount `../temp/hr-attendance:/app/temp/hr-attendance`
@@ -1314,7 +1314,7 @@ Status yang sudah selesai:
    - `GET /api/hr/events/:eventId/snapshot`
    - akses dibatasi ke owner event atau role privileged
 23. web-dashboard sudah punya proxy binary untuk snapshot:
-   - [`app/api/hr/events/[eventId]/snapshot/route.ts`](/home/rania/apps/sentient-factory/apps/web-dashboard/app/api/hr/events/[eventId]/snapshot/route.ts)
+   - [`app/api/hr/events/[eventId]/snapshot/route.ts`](/opt/sentient-factory/apps/web-dashboard/app/api/hr/events/[eventId]/snapshot/route.ts)
 24. halaman `Attendance` sudah menampilkan thumbnail snapshot pada recent events dan membuka gambar lewat route proxy terotorisasi
 25. endpoint audit client-side failure sudah tersedia:
    - `POST /api/hr/attendance/report-failure`
@@ -1369,9 +1369,9 @@ Status yang sudah selesai:
    - `embedding_json`
    - `detector_metadata`
    melalui migration:
-   - [`sentient_hr_attendance_06_face_embedding_schema.sql`](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_06_face_embedding_schema.sql)
+   - [`sentient_hr_attendance_06_face_embedding_schema.sql`](/opt/sentient-factory/docs/sql/sentient_hr_attendance_06_face_embedding_schema.sql)
 53. `run_all` SQL sudah diperbarui agar migration face embedding ikut dijalankan:
-   - [`sentient_hr_attendance_00_run_all.sql`](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_00_run_all.sql)
+   - [`sentient_hr_attendance_00_run_all.sql`](/opt/sentient-factory/docs/sql/sentient_hr_attendance_00_run_all.sql)
 54. payload frontend/backend untuk:
    - `POST /api/hr/face-enrollment`
    - `POST /api/hr/attendance/clock-in`
@@ -1524,7 +1524,7 @@ Status yang sudah selesai:
    - pegawai target
    - actor yang melakukan pendaftaran
 116. file schema tambahan untuk aturan uniqueness sudah ditambahkan dan dijalankan:
-   - [sentient_hr_attendance_08_face_enrollment_uniqueness.sql](/home/rania/apps/sentient-factory/docs/sql/sentient_hr_attendance_08_face_enrollment_uniqueness.sql)
+   - [sentient_hr_attendance_08_face_enrollment_uniqueness.sql](/opt/sentient-factory/docs/sql/sentient_hr_attendance_08_face_enrollment_uniqueness.sql)
 117. halaman admin baru untuk operasional pendaftaran wajah sekarang tersedia:
    - `/app/hr/face-enrollments`
    - title menu: `Face Enrollment Management`

@@ -72,16 +72,16 @@ curl -X POST http://127.0.0.1:8001/api/chat/dashboard-query \
 ## Example: Starting The AI Engine
 
 ```bash
-docker compose -p sentient_factory -f /home/rania/apps/sentient-factory/infra/docker-compose.yml up -d --force-recreate ai-engine
+docker compose -p sentient_factory -f /opt/sentient-factory/infra/docker-compose.yml up -d --force-recreate ai-engine
 ```
 
 ```bash
-VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only docker compose -p sentient_factory -f /home/rania/apps/sentient-factory/infra/docker-compose.yml up -d --force-recreate ai-engine
+VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only docker compose -p sentient_factory -f /opt/sentient-factory/infra/docker-compose.yml up -d --force-recreate ai-engine
 ```
 
 ```bash
 docker rm -f sentient-infra-ai-engine
-env VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only docker compose -p sentient_factory -f /home/rania/apps/sentient-factory/infra/docker-compose.yml up -d ai-engine
+env VAULT_DEV_ROOT_TOKEN_ID=change-me-local-only docker compose -p sentient_factory -f /opt/sentient-factory/infra/docker-compose.yml up -d ai-engine
 ```
 
 ## M5 Analysis Checklist

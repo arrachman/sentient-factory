@@ -7,7 +7,7 @@ import importlib.util
 from pathlib import Path
 
 
-ROOT = Path("/home/rania/apps/sentient-factory")
+ROOT = Path("/opt/sentient-factory")
 PG_RUNNER_PATH = ROOT / "apps" / "myerpplus-db-mapping" / "scripts" / "run-pg-obt-table-sql.py"
 
 WATCH_GROUPS = {
