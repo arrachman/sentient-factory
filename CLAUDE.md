@@ -25,6 +25,14 @@ Manajer paket: **npm workspaces + Turborepo** (ada `pnpm-workspace.yaml` legacy 
 6. **Setelah ubah Prisma schema atau generate client** → WAJIB jalankan `prisma migrate deploy` (atau `prisma migrate dev`) sebelum declare task selesai. Jangan anggap schema change cukup tanpa migrasi.
 7. Commit ber-prefix conventional: `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`. Lihat `git log --oneline` untuk gaya.
 
+### 2.1 Trigger skill ERP
+
+Jika user menyebut domain/URL deployment **`erp.fr-labs.my.id`** dalam bentuk apa pun
+(mis. `https://erp.fr-labs.my.id/` atau path di bawahnya), agent **WAJIB membaca
+`.claude/skills/erp/SKILL.md` terlebih dahulu** sebelum menjawab, menginspeksi,
+atau mengubah kode terkait. URL itu diperlakukan sebagai konteks
+`apps/web-erp`.
+
 ## 3. Perintah yang sering dipakai
 
 ```bash
@@ -87,6 +95,49 @@ Checklist tiap kali menambah port:
 3. Verifikasi dari klien LAN: `curl -v --max-time 5 http://<host-ip>:<PORT>/`.
 
 Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow saat ini termasuk: 22 (ssh), 3203 (api-gateway), 3218 (web-erp prototype), 3307 (mysql), 9395.
+
+### 4.2 Menjalankan app Next.js — pakai standalone, BUKAN `next start`
+
+App Next.js di repo ini (`web-erp`, `web-hr`, `web-mdp`, dst.) semuanya pakai `output: 'standalone'` di `next.config`. Artinya untuk production, **WAJIB** jalankan via `node <standalone>/server.js`, bukan `npm run start` (`next start`).
+
+**Kenapa bukan `next start`?** Dengan `output: 'standalone'`, `next build` sudah men-trace dependency dan menghasilkan server ramping self-contained di `.next/standalone/`. Menjalankan `next start` di atasnya = boros (load runtime Next penuh) + Next sendiri kasih warning: *"next start does not work with output: standalone — use node .next/standalone/server.js instead"*. Selain itu `next start` butuh source tree + `node_modules` utuh, sedangkan standalone bisa di-copy mentah ke mesin lain tanpa `npm install`.
+
+| | `next start` | `node standalone/server.js` |
+|---|---|---|
+| Runtime | Full Next framework (~besar) | Server ramping hasil trace (kecil) |
+| Butuh `node_modules` penuh? | Ya | Tidak (sudah disertakan minimal) |
+| Baca `next.config` runtime? | Ya | Sebagian (rewrites/redirects **dibake saat build**) |
+| Cocok untuk | cek cepat hasil build | **production / deploy** |
+
+**Caveat WAJIB — standalone TIDAK menyertakan static & public:**
+- `.next/static` (CSS/JS chunk) → tidak ikut, harus disalin manual, kalau tidak chunk 404.
+- Folder `public/` → tidak ikut, salin manual bila ada.
+
+**Layout standalone bisa beda** tergantung cara build (turbo root vs langsung di app dir):
+- `web-erp`, `web-hr` → `apps/<app>/.next/standalone/apps/<app>/server.js` (nested).
+- `web-mdp` → `apps/<app>/.next/standalone/server.js` (flat).
+Selalu cek dengan `find <app>/.next/standalone -name server.js -not -path '*/node_modules/*'`.
+
+**Resep menjalankan (contoh web-erp port 3219):**
+```bash
+cd apps/web-erp
+# 1. sync static & public (jalankan SETIAP setelah next build)
+cp -rT .next/static .next/standalone/apps/web-erp/.next/static
+[ -d public ] && cp -rT public .next/standalone/apps/web-erp/public
+
+# 2. start standalone server (cwd = folder server.js)
+cd .next/standalone/apps/web-erp
+PORT=3219 ERP_INTERNAL_API_URL=http://localhost:3203 nohup node server.js > /tmp/web-erp.log 2>&1 &
+```
+
+Env internal-API per app (rewrite `/api/*` → api-gateway 3203, dibake saat build):
+- web-erp → `ERP_INTERNAL_API_URL` (rewrite `/api/erp/*`)
+- web-hr  → `HR_INTERNAL_API_URL`  (rewrite `/api/*`)
+- web-mdp → `MDP_INTERNAL_API_URL` (fallback `ERP_INTERNAL_API_URL`; rewrite `/api/erp/*` + `/api/mdp/*`)
+
+**Untuk dev** tetap `npm run dev` (Next dev server + hot reload) — standalone hanya untuk production.
+
+> Catatan: ini baru background shell sesi ini, bukan systemd. Kalau perlu auto-start + survive reboot, buat unit systemd atau service Docker. Lihat juga §8 (kesalahan umum).
 
 ## 5. Konvensi kode
 
