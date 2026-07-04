@@ -8,14 +8,6 @@
       "description": "Main administration dashboard",
       "isActive": true
     },
-    "landing-page": {
-      "name": "Landing Page",
-      "port": 3102,
-      "type": "nextjs",
-      "envVar": "LANDING_PAGE_PORT",
-      "description": "Marketing landing page",
-      "isActive": false
-    },
     "api-gateway": {
       "name": "API Gateway",
       "port": 3203,

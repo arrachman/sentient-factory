@@ -6,7 +6,7 @@ Singkat, deklaratif, dan dipertahankan up-to-date.
 ## 1. Apa ini
 
 Monorepo platform manufaktur berbasis AI. Stack utama:
-- **Frontend**: Next.js (React 18+, TypeScript) di `apps/web-dashboard`, `apps/landing-page`, `apps/marketing`.
+- **Frontend**: Next.js (React 18+, TypeScript) di `apps/web-dashboard`, `apps/marketing`.
 - **Backend**: NestJS + Prisma (TypeScript) di `apps/api-gateway`.
 - **AI**: Node + Python (LangChain) di `apps/ai-engine`.
 - **DB mapping**: `apps/myerpplus-db-mapping` (jembatan ke MyERP+).
@@ -69,7 +69,6 @@ Port assignment hidup di `config/ports.json` (lihat `CONFIG-PORTS.md`):
 | App           | Port | Type    |
 | ------------- | ---- | ------- |
 | web-dashboard | 3101 | Next.js |
-| landing-page  | 3102 | Next.js |
 | api-gateway   | 3103 | NestJS  |
 | ai-engine     | 3104 | Node    |
 | docs          | 3105 | Docusaurus |

@@ -26,13 +26,6 @@ The monorepo contains multiple applications that need to run on different ports 
       "description": "Main administration dashboard",
       "isActive": true
     },
-    "landing-page": {
-      "name": "Landing Page",
-      "port": 3102,
-      "type": "nextjs",
-      "envVar": "LANDING_PAGE_PORT",
-      "description": "Marketing landing page"
-    },
     "api-gateway": {
       "name": "API Gateway",
       "port": 3103,
@@ -65,7 +58,6 @@ The monorepo contains multiple applications that need to run on different ports 
 | Application   | Port | Status      | Type    | Env Variable         | Description              |
 | ------------- | ---- | ----------- | ------- | -------------------- | ------------------------ |
 | Web Dashboard | 3101 | ✅ Active   | Next.js | `WEB_DASHBOARD_PORT` | Administration dashboard |
-| Landing Page  | 3102 | ✅ Active   | Next.js | `LANDING_PAGE_PORT`  | Marketing website        |
 | API Gateway   | 3103 | ✅ Active   | Fastify | `API_GATEWAY_PORT`   | Backend API server       |
 | AI Engine     | 3104 | ⏸️ Inactive | Node.js | `AI_ENGINE_PORT`     | AI processing service    |
 | Documentation | 3105 | ⏸️ Inactive | Docs    | `DOCS_PORT`          | Project documentation    |
@@ -162,8 +154,8 @@ $(npm run ports:commands | grep -A2 "Web Dashboard" | tail -1)
 ### Update a Port
 
 ```bash
-# Update landing page to port 3202
-npm run ports:update landing-page 3202
+# Update web dashboard to port 3202
+npm run ports:update web-dashboard 3202
 
 # Verify the change
 npm run ports:list
@@ -176,7 +168,6 @@ npm run ports:env
 # Output:
 # export WEB_DASHBOARD_PORT=3101
 # export NEXT_PUBLIC_WEB_DASHBOARD_PORT=3101
-# export LANDING_PAGE_PORT=3102
 # ...
 ```
 
