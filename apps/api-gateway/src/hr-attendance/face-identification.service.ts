@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { IdentifyFaceDto } from './dto/identify-face.dto';
 import {
   requireHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
 } from './hr-attendance-helpers';
 import {
   getAttendanceStorageBaseDir,
@@ -179,7 +179,7 @@ export class FaceIdentificationService {
   }
 
   async getFaceEnrollmentSnapshot(authUser: AuthUser, enrollmentId: number) {
-    const privileged = isPrivileged(authUser.roles);
+    const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const rows = await this.prisma.$queryRaw<
       Array<{ snapshot_url: string | null; app_user_id: number }>
     >(Prisma.sql`

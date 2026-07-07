@@ -341,7 +341,7 @@ async function seedSettings() {
       group: 'number-format',
       key: 'number_decimals',
       name: 'Jumlah Desimal Default',
-      value: '0',
+      value: '2',
       dataType: 'integer',
     },
     {

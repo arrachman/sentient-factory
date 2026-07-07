@@ -1,7 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
-import { SkipAudit } from '../clinic-audit/decorators/skip-audit.decorator';
 
 @ApiTags('Health')
 @Controller('health')
@@ -9,7 +8,6 @@ export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Get()
-  @SkipAudit()
   @ApiOperation({ summary: 'Service liveness check' })
   liveness() {
     return {
@@ -20,7 +18,6 @@ export class HealthController {
   }
 
   @Get('readiness')
-  @SkipAudit()
   @ApiOperation({ summary: 'Service readiness check (verify DB)' })
   async readiness() {
     let dbStatus: 'ok' | 'fail' = 'ok';

@@ -1,0 +1,30 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.hrSidebar.category.Panduan Pengguna": {
+    "message": "Panduan Pengguna",
+    "description": "The label for category 'Panduan Pengguna' in sidebar 'hrSidebar'"
+  },
+  "sidebar.hrSidebar.category.Panduan Pengguna.link.generated-index.title": {
+    "message": "Panduan Pengguna",
+    "description": "The generated-index page title for category 'Panduan Pengguna' in sidebar 'hrSidebar'"
+  },
+  "sidebar.hrSidebar.category.Panduan Pengguna.link.generated-index.description": {
+    "message": "Cara karyawan dan supervisor menggunakan Senti HR sehari-hari.",
+    "description": "The generated-index page description for category 'Panduan Pengguna' in sidebar 'hrSidebar'"
+  },
+  "sidebar.hrSidebar.category.Panduan Admin": {
+    "message": "Panduan Admin",
+    "description": "The label for category 'Panduan Admin' in sidebar 'hrSidebar'"
+  },
+  "sidebar.hrSidebar.category.Panduan Admin.link.generated-index.title": {
+    "message": "Panduan Admin",
+    "description": "The generated-index page title for category 'Panduan Admin' in sidebar 'hrSidebar'"
+  },
+  "sidebar.hrSidebar.category.Panduan Admin.link.generated-index.description": {
+    "message": "Konfigurasi organisasi, lokasi, shift, dan kebijakan Senti HR.",
+    "description": "The generated-index page description for category 'Panduan Admin' in sidebar 'hrSidebar'"
+  }
+}

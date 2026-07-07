@@ -18,9 +18,9 @@ Dokumen desain lanjutan:
 ```bash
 cd apps/ai-engine
 python3 -m pip install --user --break-system-packages fastapi 'uvicorn[standard]' pydantic-settings httpx psycopg2-binary tomli
-PYTHONPATH=/home/rania/apps/sentient-factory/apps/ai-engine \
+PYTHONPATH=/opt/sentient-factory/apps/ai-engine \
 DATABASE_URL='postgresql://root:<password>@127.0.0.1:3208/sentient_factory' \
-CODEX_CONFIG_PATH=/home/rania/apps/sentient-factory/.codex-cli/config.toml \
+CODEX_CONFIG_PATH=/opt/sentient-factory/.codex-cli/config.toml \
 python3 -m uvicorn sentient_factory_ai.main:app --host 0.0.0.0 --port 8001
 ```
 
@@ -96,8 +96,8 @@ Artefak regression M5:
 Jalankan full regression:
 
 ```bash
-cd /home/rania/apps/sentient-factory/apps/ai-engine
-PYTHONPATH=/home/rania/apps/sentient-factory/apps/ai-engine \
+cd /opt/sentient-factory/apps/ai-engine
+PYTHONPATH=/opt/sentient-factory/apps/ai-engine \
 DATABASE_URL='postgresql://dummy:dummy@localhost:5432/dummy' \
 python3 prompts/run_m5_regression.py
 ```
@@ -105,8 +105,8 @@ python3 prompts/run_m5_regression.py
 Jalankan subset test:
 
 ```bash
-cd /home/rania/apps/sentient-factory/apps/ai-engine
-PYTHONPATH=/home/rania/apps/sentient-factory/apps/ai-engine \
+cd /opt/sentient-factory/apps/ai-engine
+PYTHONPATH=/opt/sentient-factory/apps/ai-engine \
 DATABASE_URL='postgresql://dummy:dummy@localhost:5432/dummy' \
 python3 prompts/run_m5_regression.py \
   --ids m5_005_ic_poly_si m5_006_pv_poly_sr
@@ -121,7 +121,7 @@ apps/ai-engine/prompts/regression-results/
 Validator manual tetap bisa dipakai jika sudah punya output query sendiri:
 
 ```bash
-cd /home/rania/apps/sentient-factory/apps/ai-engine
+cd /opt/sentient-factory/apps/ai-engine
 python3 prompts/validate_m5_regression.py \
   --outputs /path/to/generated-results.json
 ```
@@ -137,14 +137,14 @@ Artefak regression dashboard:
 Jalankan full regression dashboard:
 
 ```bash
-cd /home/rania/apps/sentient-factory/apps/ai-engine
+cd /opt/sentient-factory/apps/ai-engine
 python3 prompts/run_dashboard_multi_query_regression.py
 ```
 
 Jalankan subset test dashboard:
 
 ```bash
-cd /home/rania/apps/sentient-factory/apps/ai-engine
+cd /opt/sentient-factory/apps/ai-engine
 python3 prompts/run_dashboard_multi_query_regression.py \
   --ids dashboard_001_customer_receivable dashboard_002_sales_funnel
 ```
@@ -152,7 +152,7 @@ python3 prompts/run_dashboard_multi_query_regression.py \
 Validator manual untuk output dashboard:
 
 ```bash
-cd /home/rania/apps/sentient-factory/apps/ai-engine
+cd /opt/sentient-factory/apps/ai-engine
 python3 prompts/validate_dashboard_multi_query.py \
   --outputs /path/to/dashboard-results.json
 ```
@@ -190,7 +190,7 @@ apt-get update
 apt-get install -y tesseract-ocr tesseract-ocr-ind tesseract-ocr-eng poppler-utils
 ```
 
-Dependency Python OCR sudah didaftarkan di [pyproject.toml](/home/rania/apps/sentient-factory/apps/ai-engine/pyproject.toml):
+Dependency Python OCR sudah didaftarkan di [pyproject.toml](/opt/sentient-factory/apps/ai-engine/pyproject.toml):
 - `pytesseract`
 - `Pillow`
 - `pypdf`

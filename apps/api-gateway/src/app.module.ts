@@ -25,17 +25,15 @@ import { DepartmentsModule } from './departments/departments.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { HrAttendanceModule } from './hr-attendance/hr-attendance.module';
-import { ClinicAuditModule } from './clinic-audit/clinic-audit.module';
-import { ClinicWaModule } from './clinic-wa/clinic-wa.module';
-import { ClinicPsikologModule } from './clinic-psikolog/clinic-psikolog.module';
-import { ClinicServiceModule } from './clinic-service/clinic-service.module';
-import { ClinicRoomModule } from './clinic-room/clinic-room.module';
-import { ClinicClientModule } from './clinic-client/clinic-client.module';
-import { ClinicUsersModule } from './clinic-users/clinic-users.module';
-import { ClinicBookingModule } from './clinic-booking/clinic-booking.module';
-import { ClinicPaymentModule } from './clinic-payment/clinic-payment.module';
-import { ClinicSessionNoteModule } from './clinic-session-note/clinic-session-note.module';
-import { ClinicSettingsModule } from './clinic-settings/clinic-settings.module';
+import { HrLeaveModule } from './hr-leave/hr-leave.module';
+import { HrWorkforceModule } from './hr-workforce/hr-workforce.module';
+import { HrReportsModule } from './hr-reports/hr-reports.module';
+import { HrKioskModule } from './hr-kiosk/hr-kiosk.module';
+import { HrHolidaysModule } from './hr-holidays/hr-holidays.module';
+import { HrPolicyModule } from './hr-policy/hr-policy.module';
+import { HrRolesModule } from './hr-roles/hr-roles.module';
+import { HrSysMenusModule } from './hr-sys-menus/hr-sys-menus.module';
+import { HrUserPreferencesModule } from './hr-user-preferences/hr-user-preferences.module';
 // ERP domain (web-erp)
 import { ErpAuthModule } from './erp-auth/erp-auth.module';
 // MD legacy batch (2026-05-20)
@@ -66,6 +64,7 @@ import { ErpCountriesModule } from './erp-countries/countries.module';
 import { ErpProvincesModule } from './erp-provinces/provinces.module';
 import { ErpCitiesModule } from './erp-cities/cities.module';
 import { ErpAreasModule } from './erp-areas/areas.module';
+import { ErpSubAreasModule } from './erp-sub-areas/sub-areas.module';
 import { ErpStorageBinsModule } from './erp-storage-bins/storage-bins.module';
 import { ErpPartnerSubCategoriesModule } from './erp-partner-sub-categories/partner-sub-categories.module';
 import { ErpPriceCategoriesModule } from './erp-price-categories/price-categories.module';
@@ -79,6 +78,45 @@ import { ErpPermissionsModule } from './erp-permissions/erp-permissions.module';
 import { ErpBranchesModule } from './erp-branches/erp-branches.module';
 import { ErpLocationsModule } from './erp-locations/erp-locations.module';
 import { ErpWarehousesModule } from './erp-warehouses/erp-warehouses.module';
+import { ErpMdpWorkCentersModule } from './erp-mdp-work-centers/erp-mdp-work-centers.module';
+import { ErpMdpProductionOrdersModule } from './erp-mdp-production-orders/erp-mdp-production-orders.module';
+import { ErpMdpShiftsModule } from './erp-mdp-shifts/erp-mdp-shifts.module';
+import { ErpMdpReasonCodesModule } from './erp-mdp-reason-codes/erp-mdp-reason-codes.module';
+import { ErpMdpAssetsModule } from './erp-mdp-assets/erp-mdp-assets.module';
+import { ErpMdpProductionLogsModule } from './erp-mdp-production-logs/erp-mdp-production-logs.module';
+import { ErpMdpDowntimeEventsModule } from './erp-mdp-downtime-events/erp-mdp-downtime-events.module';
+import { ErpMdpOperationsModule } from './erp-mdp-operations/erp-mdp-operations.module';
+import { ErpMdpMaterialConsumptionsModule } from './erp-mdp-material-consumptions/erp-mdp-material-consumptions.module';
+import { ErpMdpLaborLogsModule } from './erp-mdp-labor-logs/erp-mdp-labor-logs.module';
+import { ErpMdpWorkCalendarsModule } from './erp-mdp-work-calendars/erp-mdp-work-calendars.module';
+import { ErpMdpMenusModule } from './erp-mdp-menus/erp-mdp-menus.module';
+import { ErpMdpRoleMenusModule } from './erp-mdp-role-menus/erp-mdp-role-menus.module';
+import { ErpMdpWmsTasksModule } from './erp-mdp-wms-tasks/erp-mdp-wms-tasks.module';
+import { ErpMdpWmsHandlingUnitsModule } from './erp-mdp-wms-handling-units/erp-mdp-wms-handling-units.module';
+import { ErpMdpWmsPicksModule } from './erp-mdp-wms-picks/erp-mdp-wms-picks.module';
+import { ErpMdpWmsMovementsModule } from './erp-mdp-wms-movements/erp-mdp-wms-movements.module';
+import { ErpMdpQmsPlansModule } from './erp-mdp-qms-plans/erp-mdp-qms-plans.module';
+import { ErpMdpQmsCharacteristicsModule } from './erp-mdp-qms-characteristics/erp-mdp-qms-characteristics.module';
+import { ErpMdpQmsInspectionsModule } from './erp-mdp-qms-inspections/erp-mdp-qms-inspections.module';
+import { ErpMdpQmsResultsModule } from './erp-mdp-qms-results/erp-mdp-qms-results.module';
+import { ErpMdpQmsNonconformancesModule } from './erp-mdp-qms-nonconformances/erp-mdp-qms-nonconformances.module';
+import { ErpMdpQmsCapaActionsModule } from './erp-mdp-qms-capa-actions/erp-mdp-qms-capa-actions.module';
+import { ErpMdpMntWorkOrdersModule } from './erp-mdp-mnt-work-orders/erp-mdp-mnt-work-orders.module';
+import { ErpMdpMntPmSchedulesModule } from './erp-mdp-mnt-pm-schedules/erp-mdp-mnt-pm-schedules.module';
+import { ErpMdpMntFailureCodesModule } from './erp-mdp-mnt-failure-codes/erp-mdp-mnt-failure-codes.module';
+import { ErpMdpMntSparePartsModule } from './erp-mdp-mnt-spare-parts/erp-mdp-mnt-spare-parts.module';
+import { ErpMdpPrtIssuesModule } from './erp-mdp-prt-issues/erp-mdp-prt-issues.module';
+import { ErpMdpPrtEscalationsModule } from './erp-mdp-prt-escalations/erp-mdp-prt-escalations.module';
+import { ErpMdpDmsDocumentsModule } from './erp-mdp-dms-documents/erp-mdp-dms-documents.module';
+import { ErpMdpDmsRevisionsModule } from './erp-mdp-dms-revisions/erp-mdp-dms-revisions.module';
+import { ErpMdpDmsAcknowledgementsModule } from './erp-mdp-dms-acknowledgements/erp-mdp-dms-acknowledgements.module';
+import { ErpMdpEhsIncidentsModule } from './erp-mdp-ehs-incidents/erp-mdp-ehs-incidents.module';
+import { ErpMdpEhsAuditsModule } from './erp-mdp-ehs-audits/erp-mdp-ehs-audits.module';
+import { ErpMdpEhsPermitsModule } from './erp-mdp-ehs-permits/erp-mdp-ehs-permits.module';
+import { ErpMdpLmsCoursesModule } from './erp-mdp-lms-courses/erp-mdp-lms-courses.module';
+import { ErpMdpLmsEnrollmentsModule } from './erp-mdp-lms-enrollments/erp-mdp-lms-enrollments.module';
+import { ErpMdpLmsCompetenciesModule } from './erp-mdp-lms-competencies/erp-mdp-lms-competencies.module';
+import { ErpMdpOeeModule } from './erp-mdp-oee/erp-mdp-oee.module';
 import { ErpDivisionsModule } from './erp-divisions/erp-divisions.module';
 import { ErpSubDivisionsModule } from './erp-sub-divisions/erp-sub-divisions.module';
 import { ErpProjectsModule } from './erp-projects/erp-projects.module';
@@ -88,6 +126,7 @@ import { ErpSubDepartmentsModule } from './erp-sub-departments/erp-sub-departmen
 import { ErpUnitsModule } from './erp-units/erp-units.module';
 import { ErpItemCategoriesModule } from './erp-item-categories/erp-item-categories.module';
 import { ErpItemsModule } from './erp-items/erp-items.module';
+import { ErpAttachmentsModule } from './erp-attachments/erp-attachments.module';
 import { ErpPartnerCategoriesModule } from './erp-partner-categories/erp-partner-categories.module';
 import { ErpPartnersModule } from './erp-partners/erp-partners.module';
 import { ErpColorsModule } from './erp-colors/erp-colors.module';
@@ -201,18 +240,15 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     SessionsModule,
     DashboardModule,
     HrAttendanceModule,
-    // Clinic domain (Althea Psychology) — see .planning/ADRs/002, 005, 006
-    ClinicAuditModule,
-    ClinicWaModule,
-    ClinicPsikologModule,
-    ClinicServiceModule,
-    ClinicRoomModule,
-    ClinicClientModule,
-    ClinicUsersModule,
-    ClinicBookingModule,
-    ClinicPaymentModule,
-    ClinicSessionNoteModule,
-    ClinicSettingsModule,
+    HrLeaveModule,
+    HrWorkforceModule,
+    HrReportsModule,
+    HrKioskModule,
+    HrHolidaysModule,
+    HrPolicyModule,
+    HrRolesModule,
+    HrSysMenusModule,
+    HrUserPreferencesModule,
     // ERP domain (web-erp) — auth + admin + org + items + partners + finance + system config
     ErpAuthModule,
     // MD legacy batch (2026-05-20)
@@ -243,6 +279,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpProvincesModule,
     ErpCitiesModule,
     ErpAreasModule,
+    ErpSubAreasModule,
     ErpStorageBinsModule,
     ErpPartnerSubCategoriesModule,
     ErpPriceCategoriesModule,
@@ -256,6 +293,45 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpBranchesModule,
     ErpLocationsModule,
     ErpWarehousesModule,
+    ErpMdpWorkCentersModule,
+    ErpMdpProductionOrdersModule,
+    ErpMdpShiftsModule,
+    ErpMdpReasonCodesModule,
+    ErpMdpAssetsModule,
+    ErpMdpProductionLogsModule,
+    ErpMdpDowntimeEventsModule,
+    ErpMdpOperationsModule,
+    ErpMdpMaterialConsumptionsModule,
+    ErpMdpLaborLogsModule,
+    ErpMdpWorkCalendarsModule,
+    ErpMdpMenusModule,
+    ErpMdpRoleMenusModule,
+    ErpMdpWmsTasksModule,
+    ErpMdpWmsHandlingUnitsModule,
+    ErpMdpWmsPicksModule,
+    ErpMdpWmsMovementsModule,
+    ErpMdpQmsPlansModule,
+    ErpMdpQmsCharacteristicsModule,
+    ErpMdpQmsInspectionsModule,
+    ErpMdpQmsResultsModule,
+    ErpMdpQmsNonconformancesModule,
+    ErpMdpQmsCapaActionsModule,
+    ErpMdpMntWorkOrdersModule,
+    ErpMdpMntPmSchedulesModule,
+    ErpMdpMntFailureCodesModule,
+    ErpMdpMntSparePartsModule,
+    ErpMdpPrtIssuesModule,
+    ErpMdpPrtEscalationsModule,
+    ErpMdpDmsDocumentsModule,
+    ErpMdpDmsRevisionsModule,
+    ErpMdpDmsAcknowledgementsModule,
+    ErpMdpEhsIncidentsModule,
+    ErpMdpEhsAuditsModule,
+    ErpMdpEhsPermitsModule,
+    ErpMdpLmsCoursesModule,
+    ErpMdpLmsEnrollmentsModule,
+    ErpMdpLmsCompetenciesModule,
+    ErpMdpOeeModule,
     ErpDivisionsModule,
     ErpSubDivisionsModule,
     ErpProjectsModule,
@@ -265,6 +341,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpUnitsModule,
     ErpItemCategoriesModule,
     ErpItemsModule,
+    ErpAttachmentsModule,
     ErpPartnerCategoriesModule,
     ErpPartnersModule,
     ErpColorsModule,

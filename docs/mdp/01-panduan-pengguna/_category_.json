@@ -1,0 +1,9 @@
+{
+  "label": "Panduan Pengguna",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "title": "Panduan Pengguna (Operator)",
+    "description": "Alur tugas langkah-demi-langkah untuk operator: mencatat produksi, kualitas, downtime, dan masalah di lantai pabrik."
+  }
+}

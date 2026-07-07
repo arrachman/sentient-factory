@@ -12,10 +12,14 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
+    "version:hr": "docusaurus docs:version:hr",
+    "version:erp": "docusaurus docs:version:erp",
+    "version:mdp": "docusaurus docs:version:mdp",
     "typecheck": "tsc"
   },
   "dependencies": {
     "@docusaurus/core": "3.9.2",
+    "@docusaurus/plugin-content-docs": "^3.9.2",
     "@docusaurus/preset-classic": "3.9.2",
     "@docusaurus/theme-mermaid": "3.9.2",
     "@mdx-js/react": "^3.0.0",

@@ -22,8 +22,16 @@ export class ErpCitiesService {
   ) {}
 
   async create(dto: CreateErpCityDto, actorId?: string) {
-    const existing = await this.prisma.erpCity.findFirst({ where: { code: dto.code }, select: { id: true, deletedAt: true } });
-    if (existing) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(existing.deletedAt) });
+    const existing = await this.prisma.erpCity.findFirst({
+      where: { code: dto.code },
+      select: { id: true, deletedAt: true },
+    });
+    if (existing)
+      throwDuplicate({
+        fieldLabel: FIELD_LABEL,
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
     const actorBigInt = actorId ? BigInt(actorId) : null;
     let created;
     try {
@@ -31,7 +39,7 @@ export class ErpCitiesService {
         data: {
           code: dto.code,
           name: dto.name,
-        provinceId: BigInt(dto.provinceId),
+          provinceId: BigInt(dto.provinceId),
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
@@ -44,8 +52,11 @@ export class ErpCitiesService {
       throw error;
     }
     this.audit.log({
-      action: 'CREATE', entityName: ENTITY, entityId: created.id,
-      summary: `${LABEL_ID} ${created.code} dibuat`, actorId: actorBigInt ?? undefined,
+      action: 'CREATE',
+      entityName: ENTITY,
+      entityId: created.id,
+      summary: `${LABEL_ID} ${created.code} dibuat`,
+      actorId: actorBigInt ?? undefined,
     });
     return { success: true, data: created };
   }
@@ -63,13 +74,18 @@ export class ErpCitiesService {
       ];
     }
     if (query.isActive !== undefined) where.isActive = query.isActive;
+    if (query.provinceId) where.provinceId = BigInt(query.provinceId);
     const sortBy = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpCity.findMany({ where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit }),
       this.prisma.erpCity.count({ where }),
     ]);
-    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+    return {
+      success: true,
+      data: items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+    };
   }
 
   async findOne(id: bigint) {
@@ -82,8 +98,16 @@ export class ErpCitiesService {
     const existing = await this.prisma.erpCity.findFirst({ where: { id, deletedAt: null } });
     if (!existing) throw new NotFoundException(`${ENTITY} not found`);
     if (dto.code && dto.code !== existing.code) {
-      const duplicate = await this.prisma.erpCity.findFirst({ where: { code: dto.code, NOT: { id } }, select: { id: true, deletedAt: true } });
-      if (duplicate) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(duplicate.deletedAt) });
+      const duplicate = await this.prisma.erpCity.findFirst({
+        where: { code: dto.code, NOT: { id } },
+        select: { id: true, deletedAt: true },
+      });
+      if (duplicate)
+        throwDuplicate({
+          fieldLabel: FIELD_LABEL,
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
     }
     const actorBigInt = actorId ? BigInt(actorId) : null;
     let updated;
@@ -104,10 +128,17 @@ export class ErpCitiesService {
       }
       throw error;
     }
-    const changes = diffFields(existing as unknown as Record<string, unknown>, updated as unknown as Record<string, unknown>);
+    const changes = diffFields(
+      existing as unknown as Record<string, unknown>,
+      updated as unknown as Record<string, unknown>,
+    );
     this.audit.log({
-      action: 'UPDATE', entityName: ENTITY, entityId: id, changes,
-      summary: `${LABEL_ID} ${updated.code} diperbarui`, actorId: actorBigInt ?? undefined,
+      action: 'UPDATE',
+      entityName: ENTITY,
+      entityId: id,
+      changes,
+      summary: `${LABEL_ID} ${updated.code} diperbarui`,
+      actorId: actorBigInt ?? undefined,
     });
     return { success: true, data: updated };
   }
@@ -133,11 +164,23 @@ export class ErpCitiesService {
   }
 
   async remove(id: bigint, actorId?: string) {
-    const existing = await this.prisma.erpCity.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
+    const existing = await this.prisma.erpCity.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
     if (!existing) throw new NotFoundException(`${ENTITY} not found`);
     const actorBigInt = actorId ? BigInt(actorId) : null;
-    await this.prisma.erpCity.update({ where: { id }, data: { deletedAt: new Date(), updatedById: actorBigInt } });
-    this.audit.log({ action: 'DELETE', entityName: ENTITY, entityId: id, summary: `${LABEL_ID} id=${id} dihapus`, actorId: actorBigInt ?? undefined });
+    await this.prisma.erpCity.update({
+      where: { id },
+      data: { deletedAt: new Date(), updatedById: actorBigInt },
+    });
+    this.audit.log({
+      action: 'DELETE',
+      entityName: ENTITY,
+      entityId: id,
+      summary: `${LABEL_ID} id=${id} dihapus`,
+      actorId: actorBigInt ?? undefined,
+    });
     return { success: true, message: `${ENTITY} deleted` };
   }
 }

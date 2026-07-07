@@ -4,7 +4,7 @@ import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   getHrProfileByAppUserId,
-  isPrivileged,
+  resolveHrPrivilege,
   normalizeHrDates,
 } from './hr-attendance-helpers';
 
@@ -271,7 +271,7 @@ export class UserWorksiteService {
   }
 
   async getAttendanceUsers(authUser: AuthUser) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException('Daftar pegawai hanya tersedia untuk manager atau admin.');
     }
 
@@ -310,7 +310,7 @@ export class UserWorksiteService {
   }
 
   async getUserWorksites(authUser: AuthUser, targetAppUserId: number) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException('Daftar tempat kerja hanya tersedia untuk manager atau admin.');
     }
 
@@ -340,7 +340,7 @@ export class UserWorksiteService {
     targetAppUserId: number,
     dto: { worksiteIds: number[] },
   ) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException(
         'Mengubah tempat kerja hanya tersedia untuk manager atau admin.',
       );

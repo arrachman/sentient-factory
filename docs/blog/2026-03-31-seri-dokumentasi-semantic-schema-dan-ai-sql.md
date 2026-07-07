@@ -235,7 +235,7 @@ Domain `M5` dipakai sebagai contoh konkret karena:
 #### 1. Sumber query report
 
 File:
-- [m0_report_rmoduleid_5.sql](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/m0_report_rmoduleid_5.sql)
+- [m0_report_rmoduleid_5.sql](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/m0_report_rmoduleid_5.sql)
 
 Peran:
 - menangkap query report `rmoduleid = 5`
@@ -244,7 +244,7 @@ Peran:
 #### 2. Sumber query service
 
 File:
-- [m5-queries.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/m5-queries.md)
+- [m5-queries.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/m5-queries.md)
 
 Peran:
 - menangkap query aktif dari `m5_*.vb`
@@ -253,7 +253,7 @@ Peran:
 #### 3. Pengelompokan query
 
 File:
-- [m5-queries-by-type.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/m5-queries-by-type.md)
+- [m5-queries-by-type.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/m5-queries-by-type.md)
 
 Peran:
 - membantu melihat pola listing, getdata, history, payment, dan relasi dokumen
@@ -261,7 +261,7 @@ Peran:
 #### 4. Schema domain
 
 File:
-- [semantic-schema-m5.json](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5.json)
+- [semantic-schema-m5.json](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5.json)
 
 Peran:
 - source of truth khusus domain sales M5
@@ -269,7 +269,7 @@ Peran:
 #### 5. Schema gabungan
 
 File:
-- [semantic-schema-sales.json](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-sales.json)
+- [semantic-schema-sales.json](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-sales.json)
 
 Peran:
 - membawa M5 ke area sales yang lebih luas
@@ -277,7 +277,7 @@ Peran:
 #### 6. Summary audit
 
 File:
-- [semantic-schema-m5-summary.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5-summary.md)
+- [semantic-schema-m5-summary.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5-summary.md)
 
 Peran:
 - memudahkan audit manusia atas tabel, function, alias, dan relasi M5
@@ -288,8 +288,8 @@ Catatan:
 #### 7. Guide NL2SQL
 
 File:
-- [semantic-schema-m5-nl2sql.md](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5-nl2sql.md)
-- [semantic-schema-m5-nl2sql.json](/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5-nl2sql.json)
+- [semantic-schema-m5-nl2sql.md](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5-nl2sql.md)
+- [semantic-schema-m5-nl2sql.json](/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5%20-%20sales/semantic-schema-m5-nl2sql.json)
 
 Peran:
 - memberi istilah bisnis seperti `SQ`, `SO`, `DO`, `SI`, `IC`, `PV`, `SPA`
@@ -298,7 +298,7 @@ Peran:
 #### 8. Integrasi ke prompt
 
 File:
-- [sales_sql_readonly_generator.prompt.md](/home/rania/apps/sentient-factory/apps/ai-engine/prompts/sales_sql_readonly_generator.prompt.md)
+- [sales_sql_readonly_generator.prompt.md](/opt/sentient-factory/apps/ai-engine/prompts/sales_sql_readonly_generator.prompt.md)
 
 Peran:
 - mengubah schema dan guide menjadi instruksi final untuk model
@@ -306,8 +306,8 @@ Peran:
 #### 9. Regression test
 
 File:
-- [sales_sql_readonly_generator.m5-regression-tests.md](/home/rania/apps/sentient-factory/apps/ai-engine/prompts/sales_sql_readonly_generator.m5-regression-tests.md)
-- [sales_sql_readonly_generator.m5-regression-tests.json](/home/rania/apps/sentient-factory/apps/ai-engine/prompts/sales_sql_readonly_generator.m5-regression-tests.json)
+- [sales_sql_readonly_generator.m5-regression-tests.md](/opt/sentient-factory/apps/ai-engine/prompts/sales_sql_readonly_generator.m5-regression-tests.md)
+- [sales_sql_readonly_generator.m5-regression-tests.json](/opt/sentient-factory/apps/ai-engine/prompts/sales_sql_readonly_generator.m5-regression-tests.json)
 
 Peran:
 - menjaga agar kualitas query M5 tetap stabil setelah perubahan prompt atau schema

@@ -1,25 +1,3 @@
-'use client';
-
-import { ReactNode, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
-export function AppQueryProvider({ children }: { children: ReactNode }) {
-  const [client] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 30_000,
-            refetchOnWindowFocus: false,
-            retry: 1,
-          },
-        },
-      }),
-  );
-
-  return (
-    <QueryClientProvider client={client}>
-      {children}
-    </QueryClientProvider>
-  );
-}
+// Re-exported from the shared @sentient-factory/ui-kit (Tier 1). The provider
+// itself carries the 'use client' boundary; existing imports stay stable.
+export { AppQueryProvider } from '@sentient-factory/ui-kit/providers';

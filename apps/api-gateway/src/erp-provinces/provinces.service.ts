@@ -22,8 +22,16 @@ export class ErpProvincesService {
   ) {}
 
   async create(dto: CreateErpProvinceDto, actorId?: string) {
-    const existing = await this.prisma.erpProvince.findFirst({ where: { code: dto.code }, select: { id: true, deletedAt: true } });
-    if (existing) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(existing.deletedAt) });
+    const existing = await this.prisma.erpProvince.findFirst({
+      where: { code: dto.code },
+      select: { id: true, deletedAt: true },
+    });
+    if (existing)
+      throwDuplicate({
+        fieldLabel: FIELD_LABEL,
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
     const actorBigInt = actorId ? BigInt(actorId) : null;
     let created;
     try {
@@ -31,7 +39,7 @@ export class ErpProvincesService {
         data: {
           code: dto.code,
           name: dto.name,
-        countryId: BigInt(dto.countryId),
+          countryId: BigInt(dto.countryId),
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
@@ -44,8 +52,11 @@ export class ErpProvincesService {
       throw error;
     }
     this.audit.log({
-      action: 'CREATE', entityName: ENTITY, entityId: created.id,
-      summary: `${LABEL_ID} ${created.code} dibuat`, actorId: actorBigInt ?? undefined,
+      action: 'CREATE',
+      entityName: ENTITY,
+      entityId: created.id,
+      summary: `${LABEL_ID} ${created.code} dibuat`,
+      actorId: actorBigInt ?? undefined,
     });
     return { success: true, data: created };
   }
@@ -63,17 +74,28 @@ export class ErpProvincesService {
       ];
     }
     if (query.isActive !== undefined) where.isActive = query.isActive;
+    if (query.countryId) where.countryId = BigInt(query.countryId);
     const sortBy = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpProvince.findMany({
-        where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit,
+        where,
+        orderBy: [{ [sortBy]: sortDir }],
+        skip,
+        take: limit,
         include: { country: { select: { name: true } } },
       }),
       this.prisma.erpProvince.count({ where }),
     ]);
-    const data = items.map(({ country, ...rest }) => ({ ...rest, countryName: country?.name ?? null }));
-    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+    const data = items.map(({ country, ...rest }) => ({
+      ...rest,
+      countryName: country?.name ?? null,
+    }));
+    return {
+      success: true,
+      data,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+    };
   }
 
   async findOne(id: bigint) {
@@ -90,8 +112,16 @@ export class ErpProvincesService {
     const existing = await this.prisma.erpProvince.findFirst({ where: { id, deletedAt: null } });
     if (!existing) throw new NotFoundException(`${ENTITY} not found`);
     if (dto.code && dto.code !== existing.code) {
-      const duplicate = await this.prisma.erpProvince.findFirst({ where: { code: dto.code, NOT: { id } }, select: { id: true, deletedAt: true } });
-      if (duplicate) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(duplicate.deletedAt) });
+      const duplicate = await this.prisma.erpProvince.findFirst({
+        where: { code: dto.code, NOT: { id } },
+        select: { id: true, deletedAt: true },
+      });
+      if (duplicate)
+        throwDuplicate({
+          fieldLabel: FIELD_LABEL,
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
     }
     const actorBigInt = actorId ? BigInt(actorId) : null;
     let updated;
@@ -112,10 +142,17 @@ export class ErpProvincesService {
       }
       throw error;
     }
-    const changes = diffFields(existing as unknown as Record<string, unknown>, updated as unknown as Record<string, unknown>);
+    const changes = diffFields(
+      existing as unknown as Record<string, unknown>,
+      updated as unknown as Record<string, unknown>,
+    );
     this.audit.log({
-      action: 'UPDATE', entityName: ENTITY, entityId: id, changes,
-      summary: `${LABEL_ID} ${updated.code} diperbarui`, actorId: actorBigInt ?? undefined,
+      action: 'UPDATE',
+      entityName: ENTITY,
+      entityId: id,
+      changes,
+      summary: `${LABEL_ID} ${updated.code} diperbarui`,
+      actorId: actorBigInt ?? undefined,
     });
     return { success: true, data: updated };
   }
@@ -141,11 +178,23 @@ export class ErpProvincesService {
   }
 
   async remove(id: bigint, actorId?: string) {
-    const existing = await this.prisma.erpProvince.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
+    const existing = await this.prisma.erpProvince.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
     if (!existing) throw new NotFoundException(`${ENTITY} not found`);
     const actorBigInt = actorId ? BigInt(actorId) : null;
-    await this.prisma.erpProvince.update({ where: { id }, data: { deletedAt: new Date(), updatedById: actorBigInt } });
-    this.audit.log({ action: 'DELETE', entityName: ENTITY, entityId: id, summary: `${LABEL_ID} id=${id} dihapus`, actorId: actorBigInt ?? undefined });
+    await this.prisma.erpProvince.update({
+      where: { id },
+      data: { deletedAt: new Date(), updatedById: actorBigInt },
+    });
+    this.audit.log({
+      action: 'DELETE',
+      entityName: ENTITY,
+      entityId: id,
+      summary: `${LABEL_ID} id=${id} dihapus`,
+      actorId: actorBigInt ?? undefined,
+    });
     return { success: true, message: `${ENTITY} deleted` };
   }
 }

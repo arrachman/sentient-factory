@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+/* Tailwind v4 — explicit sources (source(none) disables auto-crawl). */
+@import 'tailwindcss' source(none);
+@source '../app';
+@source '../components';
+@source '../shared';
+@source '../lib';
+/* Scan ui-kit primitives (consumed directly, not via local adapters) so their
+   utility classes — e.g. the Dialog's `left-1/2 -translate-x-1/2 z-50` centering
+   + overlay — are generated. Without this the dialog renders off-screen/invisible. */
+@source '../../../packages/ui-kit/src';
+
+/* Base token contract (names + neutral defaults) from the shared ui-kit, then
+   the HR brand overrides. web-hr is the first clean adopter of this contract. */
+@import '@sentient-factory/ui-kit/styles/base-tokens.css';
+@import './hr-tokens.css';
+@import './hr-components.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Bind CSS-variable tokens to Tailwind utility classes (bg-*, text-*, …). */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  *,
+  ::before,
+  ::after {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: var(--fg);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--selection-bg);
+  }
+}

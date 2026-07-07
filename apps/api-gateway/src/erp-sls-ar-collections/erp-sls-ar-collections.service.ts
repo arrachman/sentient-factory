@@ -25,11 +25,6 @@ const NEXT: Record<string, Partial<Record<A, string>>> = {
   APPROVED:    { [A.POST]: 'POSTED', [A.REOPEN]: 'DRAFT' },
 };
 
-function toBigInt(v?: string | null): bigint | null {
-  if (v === undefined || v === null || v === '') return null;
-  return BigInt(v);
-}
-
 @Injectable()
 export class ErpSlsArCollectionsService {
   constructor(private readonly prisma: PrismaService) {}

@@ -112,12 +112,9 @@ apps/myerpplus-db-mapping/db/obt-physical-sql/pgsql-tables/pg_check_obt_portfoli
 - the current readiness check shows only partial master tables such as `m1_contact` and `m1_item` are present; the transactional source set is still missing
 - because of that, only the `pg_create_table_*` step was executed; the `pg_insert_*` step is intentionally deferred until source replication or staging is ready
 - the new CDC coverage gate also makes the earlier blocker explicit: transaction topics for `m4`, `m5`, and `m12` are still missing from the current PostgreSQL CDC sink
-- the concept-derived OBT portfolio tables have now been created in PostgreSQL `127.0.0.1:3208` as empty ETL targets using a shared bootstrap contract
+- the concept-derived OBT portfolio tables have now been created in PostgreSQL `127.0.0.1:3208` as empty targets using a shared bootstrap contract
 
-For the concrete landing prerequisites, continue with:
-
-- [`/obt/minimum-landing-contract-for-obt-etl`](/docs/obt/minimum-landing-contract-for-obt-etl)
-- [`/obt/cdc-to-landing-materialization-for-obt`](/docs/obt/cdc-to-landing-materialization-for-obt)
+> Note: the former ETL/CDC transport (Debezium → Kafka → etl-worker) and its landing/materialization guides have been removed. This document is kept for the OBT physical table design only.
 
 ## Recommended Next Step
 

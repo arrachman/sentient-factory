@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 
-ROOT = Path("/home/rania/apps/sentient-factory")
+ROOT = Path("/opt/sentient-factory")
 BOOTSTRAP_PATH = ROOT / "apps" / "myerpplus-db-mapping" / "scripts" / "bootstrap-obt-landing.py"
 OBT_SQL_DIR = ROOT / "apps" / "myerpplus-db-mapping" / "db" / "obt-physical-sql" / "pgsql-tables"
 

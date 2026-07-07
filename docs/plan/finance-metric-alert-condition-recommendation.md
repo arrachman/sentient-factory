@@ -10,7 +10,7 @@ Tujuannya:
 
 Referensi metric source:
 
-- [finance-business-metric-registry-mapping.md](/home/rania/apps/sentient-factory/docs/plan/finance-business-metric-registry-mapping.md)
+- [finance-business-metric-registry-mapping.md](/opt/sentient-factory/docs/plan/finance-business-metric-registry-mapping.md)
 
 ## Prinsip Umum
 

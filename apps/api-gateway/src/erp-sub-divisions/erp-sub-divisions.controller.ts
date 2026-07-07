@@ -1,7 +1,7 @@
 import {
   Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { BulkErpSubDivisionDto, BulkStatusErpSubDivisionDto } from './dto/bulk-erp-sub-division.dto';
 import { CreateErpSubDivisionDto } from './dto/create-erp-sub-division.dto';

@@ -1,0 +1,28 @@
+name: Deploy self-hosted
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+    inputs:
+      services:
+        description: "Space-separated compose services to activate"
+        required: false
+        default: "web-dashboard"
+
+concurrency:
+  group: sentient-factory-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - sentient-factory
+
+    steps:
+      - name: Deploy on VPS
+        run: |
+          services="${{ github.event.inputs.services || 'web-dashboard' }}"
+          /opt/sentient-factory/scripts/deploy-self-hosted.sh $services

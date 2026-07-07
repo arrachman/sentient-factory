@@ -54,7 +54,6 @@ const toPayload = (f: VendorForm): CreatePartnerPayload => ({
   name: f.name,
   isCustomer: false,
   isSupplier: true,
-  isSalesman: false,
   taxNumber: f.taxNumber || undefined,
   isTaxable: f.isTaxable,
   isActive: f.isActive,

@@ -1,0 +1,9 @@
+{
+  "label": "Laporan & Lainnya",
+  "position": 7,
+  "link": {
+    "type": "generated-index",
+    "title": "Laporan & Lainnya",
+    "description": "Laporan & export, mode kiosk, aturan lembur, pengaturan verifikasi, dan tampilan."
+  }
+}

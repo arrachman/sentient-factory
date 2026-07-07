@@ -1,6 +1,7 @@
-// Lookup option loaders for the Item form's SearchSelect controls.
+// Lookup option loaders for Item and Partner form SearchSelect controls.
 // Each loader returns { data: {value,label,code}[], total } from a master list API.
 
+import { listPartnerCategories } from '@/lib/api/partner-categories';
 import { listItemCategories } from '@/lib/api/item-categories';
 import { listUnits } from '@/lib/api/units';
 import { listItemKinds } from '@/lib/api/item-types';
@@ -93,6 +94,28 @@ export const loadSectionOptions = makeLoader(listSections as unknown as ListFn);
 export const loadDesignerOptions = makeLoader(listDesigners as unknown as ListFn);
 export const loadNozzleOptions = makeLoader(listNozzles as unknown as ListFn);
 export const loadOemOptions = makeLoader(listOems as unknown as ListFn);
+
+/** Partner category loaders — filtered by kind. */
+const makePartnerCategoryLoader = (kind: 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN') =>
+  async (search: string, page: number, limit: number) => {
+    const res = await listPartnerCategories({ page, limit, search: search || undefined, kind, isActive: true });
+    return {
+      data: res.data.map((c) => ({ value: c.id, label: c.name, code: c.code })),
+      total: res.meta.total,
+    };
+  };
+
+export const loadCustomerCategoryOptions = makePartnerCategoryLoader('CUSTOMER');
+export const loadSupplierCategoryOptions = makePartnerCategoryLoader('SUPPLIER');
+export const loadSalesmanCategoryOptions = makePartnerCategoryLoader('SALESMAN');
+
+export const loadSalesmanPartnerOptions = async (search: string, page: number, limit: number) => {
+  const res = await listPartners({ search: search || undefined, page, limit, isActive: true, isSalesman: true });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
+    total: res.meta.total,
+  };
+};
 
 /** Distributor picker = partners flagged as supplier (legacy "Distributor" tab). */
 export const loadSupplierOptions = async (search: string, page: number, limit: number) => {

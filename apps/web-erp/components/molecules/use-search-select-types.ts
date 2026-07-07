@@ -33,6 +33,7 @@ export interface SearchSelectState {
   localSelected: Set<string>;
   localSingle: string;
   localSingleLabel: string;
+  localSingleMeta: string;
   displayLabel: string;
   // Single inline-search state
   inputText: string;

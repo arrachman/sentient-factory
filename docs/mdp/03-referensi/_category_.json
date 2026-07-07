@@ -1,0 +1,9 @@
+{
+  "label": "Referensi Modul",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "title": "Referensi Modul",
+    "description": "Rincian setiap modul MOM: fungsi, bagian halaman, model interaksi, flow operasional, dan kontrak integrasi ke ERP — lengkap dengan screenshot."
+  }
+}

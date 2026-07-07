@@ -29,5 +29,6 @@ import { WorksiteService } from './worksite.service';
     UserWorksiteService,
     WorksiteService,
   ],
+  exports: [FaceEnrollmentService],
 })
 export class HrAttendanceModule {}

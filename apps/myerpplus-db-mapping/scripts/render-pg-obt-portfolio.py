@@ -7,7 +7,7 @@ import re
 from pathlib import Path
 
 
-ROOT = Path("/home/rania/apps/sentient-factory")
+ROOT = Path("/opt/sentient-factory")
 CONCEPT_DOC = ROOT / "docs" / "docs" / "08-obt" / "konsep-obt-m0-m12.md"
 OUT_FILE = (
     ROOT

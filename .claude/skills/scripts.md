@@ -1,6 +1,6 @@
 ---
 name: scripts
-description: Skill untuk bekerja dengan scripts/ — kumpulan shell scripts untuk manajemen Vault, PostgreSQL backup, port manager, start/stop services, sinkronisasi env, dan Debezium connector.
+description: Skill untuk bekerja dengan scripts/ — kumpulan shell scripts untuk manajemen Vault, PostgreSQL backup, port manager, start/stop services, dan sinkronisasi env.
 ---
 
 Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
@@ -9,7 +9,6 @@ Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
 
 | Script | Fungsi |
 |--------|--------|
-| `start-all.sh` | Start semua active apps sekaligus |
 | `bootstrap-vault-dev.sh` | Inisialisasi HashiCorp Vault untuk development |
 | `vault-login-dev.sh` | Login ke Vault & ambil auth token |
 | `vault-approle-login.sh` | Login Vault via AppRole (untuk CI/production) |
@@ -21,19 +20,12 @@ Kamu sedang bekerja di `scripts/` — automation scripts Sentient Factory.
 | `backup-postgres.sh` | Backup otomatis PostgreSQL |
 | `install-pg-backup-cron.sh` | Install cron job untuk backup PostgreSQL |
 | `mysql-access.sh` | Helper akses MySQL |
-| `render-debezium-connector.sh` | Render Debezium connector config dari template |
 | `start-infra-on-boot.sh` | Start infra services saat boot |
 | `stop-infra-on-boot.sh` | Stop infra services |
 
 ---
 
 ## Detail Per Script
-
-### `start-all.sh`
-Start semua aplikasi yang aktif:
-```bash
-bash scripts/start-all.sh
-```
 
 ### Vault Scripts
 
@@ -89,13 +81,6 @@ bash scripts/mysql-access.sh
 # Shortcut untuk masuk ke MySQL dengan credentials dari .env
 ```
 
-### Debezium Connector
-```bash
-# Render connector config dari template + env variables
-bash scripts/render-debezium-connector.sh
-# Output: infra/debezium/rendered/*.json
-```
-
 ### Boot Scripts (systemd/production)
 ```bash
 # Pasang sebagai startup service
@@ -119,11 +104,8 @@ bash scripts/vault-login-dev.sh
 # 3. Render .env
 bash scripts/render-vault-env.sh
 
-# 4. Start semua infrastruktur
+# 4. Start semua service (infra + apps) via Docker Compose
 bash scripts/docker-up-with-vault.sh
-
-# 5. Start semua apps
-bash scripts/start-all.sh
 ```
 
 ## Alur Vault di Production

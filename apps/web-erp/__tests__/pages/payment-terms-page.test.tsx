@@ -8,6 +8,8 @@ const api = vi.hoisted(() => ({
   createPaymentTerm: vi.fn(),
   updatePaymentTerm: vi.fn(),
   deletePaymentTerm: vi.fn(),
+  bulkUpdateErpPaymentTermStatus: vi.fn(),
+  bulkDeleteErpPaymentTerms: vi.fn(),
 }));
 vi.mock('@/lib/api/payment-terms', () => api);
 vi.mock('@/lib/feedback', () => createFeedbackMock());

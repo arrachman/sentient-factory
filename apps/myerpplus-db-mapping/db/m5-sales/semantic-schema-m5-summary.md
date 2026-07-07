@@ -1,7 +1,7 @@
 # Semantic Schema M5 Summary
 
-Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m5.json`
-Function/query source: `/home/rania/apps/sentient-factory/m5-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_5.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
+Schema source: `/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m5.json`
+Function/query source: `/opt/sentient-factory/m5-queries.md`, `/opt/sentient-factory/m0_report_rmoduleid_5.sql`, `/opt/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
 
 Total M5 tables in schema: **82**
 Total M5 tables detected in active queries: **82**

@@ -94,13 +94,13 @@ export function formatRawForDisplay(
     ? intDigits.replace(/\B(?=(\d{3})+(?!\d))/g, format.thousandsSep)
     : intDigits;
   const dec = decimals ?? format.decimals;
-  // If user is mid-typing decimals, preserve their fraction even if longer than dec.
-  // If decimals is fixed (>0) and no fraction yet typed, don't auto-append zeros.
-  let fracOut = fracRaw;
-  if (dec === 0) {
-    fracOut = ''; // strip
-  }
   const sign = negative ? '-' : '';
+  // Integer field: never show decimal separator regardless of raw content.
+  if (dec === 0) {
+    return `${sign}${grouped}`;
+  }
+  // Decimal field: preserve mid-typing state (trailing sep, partial digits).
+  const fracOut = fracRaw;
   if (fracOut === '' && !body.includes('.')) return `${sign}${grouped}`;
   return `${sign}${grouped}${format.decimalSep}${fracOut}`;
 }

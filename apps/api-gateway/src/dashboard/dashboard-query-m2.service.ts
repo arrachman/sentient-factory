@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { DashboardMysqlService } from './dashboard-mysql.service';
-import { QueryDashboardRangeDto } from './dto/query-dashboard-range.dto';
 
 type M2Domain = 'm2';
 

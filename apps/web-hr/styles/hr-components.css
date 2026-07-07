@@ -1,0 +1,36 @@
+/* =====================================================================
+   Senti HR — Component CSS index
+   Paritas penuh dengan apps/web-erp/styles/erp-components.css; class names
+   kept identical (token-driven). Semua rule ada di sub-file di bawah —
+   tambah rule ke sub-file yang sesuai, bukan di sini.
+   (erp-contact-picker.css & report-designer.css TIDAK di-port — tidak dipakai HR.)
+   ===================================================================== */
+
+/* Core layout: base globals, app shell, topbar, sidebar, page chrome */
+@import './hr-shell.css';
+
+/* Controls: buttons, filter/toolbar, form, detail line editor */
+@import './hr-controls.css';
+
+/* Table: data table, status pill, pager, bulk actions,
+   filter bar, keyboard hints, audit panel, diff, pagination, states */
+@import './hr-table.css';
+
+/* Dashboard, command palette, shortcut overlay, misc, tooltips, animations */
+@import './hr-dashboard.css';
+
+/* Multi-tab workspace shell + financial report table */
+@import './hr-multitab.css';
+
+/* Overlays & menus: confirm dialog, toasts, user menu, workspace switcher */
+@import './hr-dialogs.css';
+
+/* Login / auth screens */
+@import './hr-login.css';
+
+/* Panels: record drawer, font scale, notifications, slide-over, lookup modal,
+   sidebar template, settings sub-nav tabs, date picker overrides */
+@import './hr-panels.css';
+
+/* Attendance: animated 3D face-scan stage for /app/attendance */
+@import './hr-attendance.css';

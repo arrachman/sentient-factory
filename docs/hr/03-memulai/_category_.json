@@ -1,0 +1,9 @@
+{
+  "label": "Memulai",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "title": "Memulai",
+    "description": "Login, struktur navigasi (shell, sidebar, tab), dan pengaturan tampilan Senti HR."
+  }
+}

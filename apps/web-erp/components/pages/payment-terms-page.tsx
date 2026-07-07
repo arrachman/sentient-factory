@@ -4,6 +4,15 @@ import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { NumInput } from '@/components/molecules/num-input';
+import { DiscountInput } from '@/components/molecules/discount-input';
 import { SimpleMasterPage } from '@/components/organisms/simple-master-page';
 import {
   listPaymentTerms, createPaymentTerm, updatePaymentTerm, deletePaymentTerm,
@@ -79,37 +88,98 @@ const validatePaymentTerm = (form: FormData) =>
     },
   ]);
 
+// Periode denda — descriptor string ke backend (English canonical), label ID.
+const PENALTY_PERIOD_OPTIONS = [
+  { value: 'daily', label: 'Per hari' },
+  { value: 'weekly', label: 'Per minggu' },
+  { value: 'monthly', label: 'Per bulan' },
+  { value: 'yearly', label: 'Per tahun' },
+] as const;
+
+function SectionTitle({ children, hint }: { children: React.ReactNode; hint?: string }) {
+  return (
+    <div className="mt-5 mb-1 first:mt-0">
+      <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[var(--fg-muted)]">
+        {children}
+      </h3>
+      {hint && <p className="mt-0.5 text-[11px] text-[var(--fg-subtle)]">{hint}</p>}
+    </div>
+  );
+}
+
+/** Satu baris tier: "Bayar dalam [hari] hari → diskon [%]". */
+function DiscountTierRow({
+  label, idPrefix, days, percent, onDays, onPercent,
+}: {
+  label: string;
+  idPrefix: string;
+  days: string;
+  percent: string;
+  onDays: (v: string) => void;
+  onPercent: (v: string) => void;
+}) {
+  return (
+    <FormField label={label} htmlFor={`${idPrefix}-days`}>
+      <div className="flex w-full items-center gap-2">
+        <span className="whitespace-nowrap text-[11px] text-[var(--fg-subtle)]">dalam</span>
+        <NumInput id={`${idPrefix}-days`} value={days} onChange={onDays} decimals={0} placeholder="10" className="w-16" />
+        <span className="whitespace-nowrap text-[11px] text-[var(--fg-subtle)]">hari → diskon</span>
+        <div className="w-24"><DiscountInput id={`${idPrefix}-pct`} value={percent} onChange={onPercent} placeholder="2" /></div>
+      </div>
+    </FormField>
+  );
+}
+
 function FormFields({ data, onChange, errors = {} }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData> }) {
   const set = (k: keyof FormData, v: string | boolean) => onChange({ ...data, [k]: v });
   return (
     <div className="p-4">
+      <SectionTitle>Identitas</SectionTitle>
       <FormField label="Kode" htmlFor="pt-code" required error={errors.code}>
         <Input id="pt-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="NET30" aria-invalid={!!errors.code} />
       </FormField>
       <FormField label="Nama" htmlFor="pt-name" required error={errors.name}>
-        <Input id="pt-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Net 30 Days" aria-invalid={!!errors.name} />
+        <Input id="pt-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Pembayaran 30 Hari" aria-invalid={!!errors.name} />
       </FormField>
-      <FormField label="Jatuh Tempo (hari)" htmlFor="pt-net" required error={errors.netDays}>
-        <Input id="pt-net" type="number" value={data.netDays} onChange={(e) => set('netDays', e.target.value)} placeholder="30" aria-invalid={!!errors.netDays} />
+      <FormField label="Jatuh Tempo" htmlFor="pt-net" required error={errors.netDays} help="Batas pembayaran dihitung dari tanggal faktur. Isi 0 untuk tunai/COD.">
+        <div className="flex w-full items-center gap-2">
+          <NumInput id="pt-net" value={data.netDays} onChange={(v) => set('netDays', v)} decimals={0} placeholder="30" className="w-24" aria-invalid={!!errors.netDays} />
+          <span className="whitespace-nowrap text-[11px] text-[var(--fg-subtle)]">hari</span>
+        </div>
       </FormField>
-      <FormField label="Diskon Hari (Tier 1)" htmlFor="pt-dd1">
-        <Input id="pt-dd1" type="number" value={data.discountDays1} onChange={(e) => set('discountDays1', e.target.value)} placeholder="10" />
+
+      <SectionTitle hint="Insentif bila pelanggan membayar sebelum jatuh tempo. Kosongkan bila tidak ada diskon.">
+        Diskon Pembayaran Awal
+      </SectionTitle>
+      <DiscountTierRow
+        label="Tier 1" idPrefix="pt-d1"
+        days={data.discountDays1} percent={data.discountPercent1}
+        onDays={(v) => set('discountDays1', v)} onPercent={(v) => set('discountPercent1', v)}
+      />
+      <DiscountTierRow
+        label="Tier 2" idPrefix="pt-d2"
+        days={data.discountDays2} percent={data.discountPercent2}
+        onDays={(v) => set('discountDays2', v)} onPercent={(v) => set('discountPercent2', v)}
+      />
+
+      <SectionTitle hint="Denda yang dikenakan bila pembayaran melewati jatuh tempo. Kosongkan bila tidak ada denda.">
+        Denda Keterlambatan
+      </SectionTitle>
+      <FormField label="Besar Denda" htmlFor="pt-pen">
+        <div className="w-24"><DiscountInput id="pt-pen" value={data.penaltyPercent} onChange={(v) => set('penaltyPercent', v)} placeholder="1.5" /></div>
       </FormField>
-      <FormField label="Diskon Persen (Tier 1)" htmlFor="pt-dp1">
-        <Input id="pt-dp1" value={data.discountPercent1} onChange={(e) => set('discountPercent1', e.target.value)} placeholder="2.00" />
+      <FormField label="Periode" htmlFor="pt-penp">
+        <Select value={data.penaltyPeriod || undefined} onValueChange={(v) => set('penaltyPeriod', v)}>
+          <SelectTrigger id="pt-penp"><SelectValue placeholder="Pilih periode denda" /></SelectTrigger>
+          <SelectContent>
+            {PENALTY_PERIOD_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </FormField>
-      <FormField label="Diskon Hari (Tier 2)" htmlFor="pt-dd2">
-        <Input id="pt-dd2" type="number" value={data.discountDays2} onChange={(e) => set('discountDays2', e.target.value)} placeholder="5" />
-      </FormField>
-      <FormField label="Diskon Persen (Tier 2)" htmlFor="pt-dp2">
-        <Input id="pt-dp2" value={data.discountPercent2} onChange={(e) => set('discountPercent2', e.target.value)} placeholder="1.00" />
-      </FormField>
-      <FormField label="Denda Persen" htmlFor="pt-pen">
-        <Input id="pt-pen" value={data.penaltyPercent} onChange={(e) => set('penaltyPercent', e.target.value)} placeholder="1.50" />
-      </FormField>
-      <FormField label="Periode Denda" htmlFor="pt-penp">
-        <Input id="pt-penp" value={data.penaltyPeriod} onChange={(e) => set('penaltyPeriod', e.target.value)} placeholder="monthly" />
-      </FormField>
+
+      <SectionTitle>Status</SectionTitle>
       <FormField label="Status" htmlFor="pt-active">
         <BooleanRadio id="pt-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
       </FormField>

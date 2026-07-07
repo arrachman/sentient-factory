@@ -40,12 +40,6 @@ docs/
 │       ├── semantic-obt-blueprint.md
 │       ├── semantic-cross-module-lineage.md
 │       ├── semantic-to-physical-obt-mapping.md
-│       ├── bootstrap-full-load-and-cdc-for-obt.md
-│       ├── cdc-to-landing-materialization-for-obt.md
-│       ├── end-to-end-obt-etl-plan.md
-│       ├── obt-etl-execution-checklist.md
-│       ├── obt-etl-workbreakdown-by-component.md
-│       ├── obt-portfolio-rollout-status.md
 │       └── draft-physical-obt-sql-skeletons.md
 ├── src/
 │   ├── components/                # Custom React components
@@ -133,6 +127,4 @@ Useful untuk onboarding user baru dan dokumentasi fitur.
 Dokumentasi teknis arsitektur OBT (Operational Business Transformation):
 - Konsep dan blueprint
 - Mapping semantic ke physical tables
-- ETL execution plan & checklist
-- CDC materialization guide
-- Rollout status per modul
+- Draft physical OBT SQL skeletons

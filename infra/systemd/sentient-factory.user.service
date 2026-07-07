@@ -5,9 +5,9 @@ After=default.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/home/rania/apps/sentient-factory
-ExecStart=/home/rania/apps/sentient-factory/scripts/start-infra-on-boot.sh
-ExecStop=/home/rania/apps/sentient-factory/scripts/stop-infra-on-boot.sh
+WorkingDirectory=/opt/sentient-factory
+ExecStart=/opt/sentient-factory/scripts/start-infra-on-boot.sh
+ExecStop=/opt/sentient-factory/scripts/stop-infra-on-boot.sh
 TimeoutStartSec=0
 
 [Install]

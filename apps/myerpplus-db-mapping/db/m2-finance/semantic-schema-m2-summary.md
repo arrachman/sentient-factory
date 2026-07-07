@@ -1,7 +1,7 @@
 # Semantic Schema M2 Summary
 
-Schema source: `/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m2.json`
-Function/query source: `/home/rania/apps/sentient-factory/m2-queries.md`, `/home/rania/apps/sentient-factory/m0_report_rmoduleid_2.sql`, `/home/rania/apps/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
+Schema source: `/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-schema-m2.json`
+Function/query source: `/opt/sentient-factory/m2-queries.md`, `/opt/sentient-factory/m0_report_rmoduleid_2.sql`, `/opt/sentient-factory/client-backend/api-myerpplus/app_code/ws/m0/m0_query.vb`
 
 Total M2 tables in schema: **70**
 Total M2 tables detected in active queries: **70**

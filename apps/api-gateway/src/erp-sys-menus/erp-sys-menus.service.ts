@@ -43,29 +43,35 @@ export class ErpSysMenusService {
       where: { code: dto.code },
       select: { id: true, deletedAt: true },
     });
-    if (existing) {
-      if (existing.deletedAt) {
-        throw new BadRequestException(
-          `Menu code "${dto.code}" already exists (soft-deleted). Restore or use a different code.`,
-        );
-      }
-      throw new BadRequestException(`Menu code "${dto.code}" already exists`);
-    }
 
     const actorBigInt = toAuditUserId(actorId) ? BigInt(toAuditUserId(actorId) as number) : undefined;
+    const sharedData = {
+      title: dto.title,
+      path: dto.path,
+      icon: dto.icon,
+      type: dto.type,
+      parentId: dto.parentId ? BigInt(dto.parentId) : null,
+      sortOrder: dto.sortOrder,
+      isActive: dto.isActive,
+      updatedById: actorBigInt,
+      deletedAt: null,
+      updatedAt: new Date(),
+    };
+
+    if (existing) {
+      // Restore soft-deleted or update live record with matching code
+      const updated = await this.prisma.erpMenu.update({
+        where: { id: existing.id },
+        data: sharedData,
+      });
+      return { success: true, data: updated };
+    }
 
     const created = await this.prisma.erpMenu.create({
       data: {
         code: dto.code,
-        title: dto.title,
-        path: dto.path,
-        icon: dto.icon,
-        type: dto.type,
-        parentId: dto.parentId ? BigInt(dto.parentId) : null,
-        sortOrder: dto.sortOrder,
-        isActive: dto.isActive,
+        ...sharedData,
         createdById: actorBigInt,
-        updatedById: actorBigInt,
       },
     });
 

@@ -1,0 +1,14 @@
+import type { Metadata } from "next";
+import { WmsPicksPage } from "@/components/pages/wms-picks-page";
+
+export const metadata: Metadata = { title: "WMS · Picks" };
+
+export default function Page() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="min-h-0 flex-1">
+        <WmsPicksPage />
+      </div>
+    </div>
+  );
+}

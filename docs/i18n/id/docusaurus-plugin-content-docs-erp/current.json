@@ -1,0 +1,30 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.erpSidebar.category.Panduan Pengguna": {
+    "message": "Panduan Pengguna",
+    "description": "The label for category 'Panduan Pengguna' in sidebar 'erpSidebar'"
+  },
+  "sidebar.erpSidebar.category.Panduan Pengguna.link.generated-index.title": {
+    "message": "Panduan Pengguna",
+    "description": "The generated-index page title for category 'Panduan Pengguna' in sidebar 'erpSidebar'"
+  },
+  "sidebar.erpSidebar.category.Panduan Pengguna.link.generated-index.description": {
+    "message": "Cara membuat dan memproses transaksi harian di Senti ERP.",
+    "description": "The generated-index page description for category 'Panduan Pengguna' in sidebar 'erpSidebar'"
+  },
+  "sidebar.erpSidebar.category.Panduan Admin": {
+    "message": "Panduan Admin",
+    "description": "The label for category 'Panduan Admin' in sidebar 'erpSidebar'"
+  },
+  "sidebar.erpSidebar.category.Panduan Admin.link.generated-index.title": {
+    "message": "Panduan Admin",
+    "description": "The generated-index page title for category 'Panduan Admin' in sidebar 'erpSidebar'"
+  },
+  "sidebar.erpSidebar.category.Panduan Admin.link.generated-index.description": {
+    "message": "Konfigurasi master data, bagan akun, dan penomoran dokumen.",
+    "description": "The generated-index page description for category 'Panduan Admin' in sidebar 'erpSidebar'"
+  }
+}

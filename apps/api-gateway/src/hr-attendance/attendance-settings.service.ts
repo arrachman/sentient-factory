@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { PrismaService } from '../prisma/prisma.service';
-import { isPrivileged } from './hr-attendance-helpers';
+import { resolveHrPrivilege } from './hr-attendance-helpers';
 
 type AuthUser = {
   id: number;
@@ -65,7 +65,7 @@ export class AttendanceSettingsService {
   }
 
   async getSettings(authUser: AuthUser) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException('HR settings are only available to privileged roles.');
     }
 
@@ -98,7 +98,7 @@ export class AttendanceSettingsService {
   }
 
   async updateSetting(authUser: AuthUser, settingKey: string, value: string) {
-    if (!isPrivileged(authUser.roles)) {
+    if (!await resolveHrPrivilege(this.prisma, authUser)) {
       throw new BadRequestException('Updating HR settings is only available to privileged roles.');
     }
 

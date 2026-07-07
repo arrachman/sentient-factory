@@ -16,7 +16,7 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 
 
-ROOT = Path("/home/rania/apps/sentient-factory")
+ROOT = Path("/opt/sentient-factory")
 SQL_DIR = ROOT / "apps" / "myerpplus-db-mapping" / "db" / "obt-physical-sql" / "pgsql-tables"
 ENV_FILES = [
     ROOT / ".env",

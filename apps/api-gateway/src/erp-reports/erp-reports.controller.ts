@@ -8,8 +8,10 @@ import {
   Post,
   Query,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { CreateErpReportDto } from './dto/create-report.dto';
@@ -59,5 +61,26 @@ export class ErpReportsController {
   @ApiOperation({ summary: 'Execute a read-only SQL query (SELECT only)' })
   executeSql(@Body() dto: ExecuteSqlDto) {
     return this.service.executeSql(dto);
+  }
+
+  @Post(':id/materialize')
+  @ApiOperation({ summary: 'Generate editable bands from the bound report columns' })
+  materialize(@Param('id') id: string, @Request() req: any) {
+    return this.service.materializeTemplate(BigInt(id), req.user?.id);
+  }
+
+  @Post('preview')
+  @ApiOperation({ summary: 'Render a template to PDF with sample data (designer preview)' })
+  async preview(
+    @Body() body: { templateJson?: Record<string, unknown> },
+    @Res() res: Response,
+  ) {
+    const buffer = await this.service.previewTemplate(body?.templateJson ?? {});
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': 'inline; filename="preview.pdf"',
+      'Content-Length': String(buffer.length),
+    });
+    res.send(buffer);
   }
 }

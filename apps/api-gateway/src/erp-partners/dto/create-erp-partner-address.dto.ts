@@ -18,23 +18,30 @@ export class CreateErpPartnerAddressDto {
   @MaxLength(255)
   addressLine2?: string;
 
-  @ApiPropertyOptional({ example: 'Jakarta' })
+  @ApiPropertyOptional({ description: 'Country id (md_countries)' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  city?: string;
+  countryId?: string;
 
-  @ApiPropertyOptional({ example: 'DKI Jakarta' })
+  @ApiPropertyOptional({ description: 'Province id (md_provinces)' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  province?: string;
+  provinceId?: string;
 
-  @ApiPropertyOptional({ example: 'Indonesia' })
+  @ApiPropertyOptional({ description: 'City id (md_cities)' })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
-  country?: string;
+  cityId?: string;
+
+  @ApiPropertyOptional({ description: 'Area / kecamatan id (md_areas)' })
+  @IsOptional()
+  @IsString()
+  areaId?: string;
+
+  @ApiPropertyOptional({ description: 'Sub-area / kelurahan id (md_sub_areas)' })
+  @IsOptional()
+  @IsString()
+  subAreaId?: string;
 
   @ApiPropertyOptional({ example: '10220' })
   @IsOptional()
@@ -53,6 +60,18 @@ export class CreateErpPartnerAddressDto {
   @IsString()
   @MaxLength(50)
   fax?: string;
+
+  @ApiPropertyOptional({ example: 'info@example.com' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  email?: string;
+
+  @ApiPropertyOptional({ example: 'https://www.example.com' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  website?: string;
 
   @ApiPropertyOptional({ example: false, default: false })
   @IsOptional()

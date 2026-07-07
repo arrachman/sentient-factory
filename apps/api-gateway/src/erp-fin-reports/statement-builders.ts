@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReportColumn, ReportDocument, ReportRow } from './report-types';
 import {

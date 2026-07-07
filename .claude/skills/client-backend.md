@@ -47,9 +47,7 @@ Sentient Factory **tidak** memanggil API MyERPPlus secara langsung. Integrasi di
 
 ```
 MyERPPlus (MySQL database)
-    ↓ Debezium CDC (Change Data Capture)
-Kafka Topics: myerpplus.*
-    ↓ ETL Worker (apps/etl-worker)
+    ↓ (transport ETL/CDC lama [Debezium → Kafka → etl-worker] sudah dihapus)
 PostgreSQL sentient_factory
     ↓ OBT Transformation (apps/myerpplus-db-mapping)
 obt_* tables

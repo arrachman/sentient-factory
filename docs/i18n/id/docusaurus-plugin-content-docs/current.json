@@ -1,0 +1,174 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.tutorialSidebar.category.Marketing": {
+    "message": "Marketing",
+    "description": "The label for category 'Marketing' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Marketing.link.generated-index.title": {
+    "message": "Marketing",
+    "description": "The generated-index page title for category 'Marketing' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Marketing.link.generated-index.description": {
+    "message": "Marketing documentation and ticket references.",
+    "description": "The generated-index page description for category 'Marketing' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Marketing Documentation Tickets": {
+    "message": "Marketing Documentation Tickets",
+    "description": "The label for category 'Marketing Documentation Tickets' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.M0001 - Brand Guidelines Documentation": {
+    "message": "M0001 - Brand Guidelines Documentation",
+    "description": "The label for category 'M0001 - Brand Guidelines Documentation' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.Tutorial MyERPPlus": {
+    "message": "Tutorial MyERPPlus",
+    "description": "The label for category 'Tutorial MyERPPlus' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m0-administrator": {
+    "message": "m0-administrator",
+    "description": "The label for category 'm0-administrator' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m0-administrator.link.generated-index.title": {
+    "message": "m0-administrator",
+    "description": "The generated-index page title for category 'm0-administrator' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m0-administrator.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus administrator module.",
+    "description": "The generated-index page description for category 'm0-administrator' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m1-master data": {
+    "message": "m1-master data",
+    "description": "The label for category 'm1-master data' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m1-master data.link.generated-index.title": {
+    "message": "m1-master data",
+    "description": "The generated-index page title for category 'm1-master data' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m1-master data.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus master data module.",
+    "description": "The generated-index page description for category 'm1-master data' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m2-finance": {
+    "message": "m2-finance",
+    "description": "The label for category 'm2-finance' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m2-finance.link.generated-index.title": {
+    "message": "m2-finance",
+    "description": "The generated-index page title for category 'm2-finance' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m2-finance.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus finance module.",
+    "description": "The generated-index page description for category 'm2-finance' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m3-inventory": {
+    "message": "m3-inventory",
+    "description": "The label for category 'm3-inventory' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m3-inventory.link.generated-index.title": {
+    "message": "m3-inventory",
+    "description": "The generated-index page title for category 'm3-inventory' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m3-inventory.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus inventory module.",
+    "description": "The generated-index page description for category 'm3-inventory' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m4-purchase": {
+    "message": "m4-purchase",
+    "description": "The label for category 'm4-purchase' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m4-purchase.link.generated-index.title": {
+    "message": "m4-purchase",
+    "description": "The generated-index page title for category 'm4-purchase' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m4-purchase.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus purchase module.",
+    "description": "The generated-index page description for category 'm4-purchase' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m5-sales": {
+    "message": "m5-sales",
+    "description": "The label for category 'm5-sales' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m5-sales.link.generated-index.title": {
+    "message": "m5-sales",
+    "description": "The generated-index page title for category 'm5-sales' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m5-sales.link.generated-index.description": {
+    "message": "Tutorial untuk modul sales MyERPPlus.",
+    "description": "The generated-index page description for category 'm5-sales' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.production": {
+    "message": "production",
+    "description": "The label for category 'production' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.production.link.generated-index.title": {
+    "message": "production",
+    "description": "The generated-index page title for category 'production' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.production.link.generated-index.description": {
+    "message": "Panduan modul production MYERPPlus.",
+    "description": "The generated-index page description for category 'production' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.fixed": {
+    "message": "fixed",
+    "description": "The label for category 'fixed' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.fixed.link.generated-index.title": {
+    "message": "fixed",
+    "description": "The generated-index page title for category 'fixed' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.fixed.link.generated-index.description": {
+    "message": "Panduan modul fixed MYERPPlus.",
+    "description": "The generated-index page description for category 'fixed' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m8-analytics content": {
+    "message": "m8-analytics content",
+    "description": "The label for category 'm8-analytics content' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m8-analytics content.link.generated-index.title": {
+    "message": "m8-analytics content",
+    "description": "The generated-index page title for category 'm8-analytics content' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m8-analytics content.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus analytics content module.",
+    "description": "The generated-index page description for category 'm8-analytics content' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m11-healthcare": {
+    "message": "m11-healthcare",
+    "description": "The label for category 'm11-healthcare' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m11-healthcare.link.generated-index.title": {
+    "message": "m11-healthcare",
+    "description": "The generated-index page title for category 'm11-healthcare' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m11-healthcare.link.generated-index.description": {
+    "message": "Tutorials for the MyERPPlus healthcare module.",
+    "description": "The generated-index page description for category 'm11-healthcare' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m12-pos": {
+    "message": "m12-pos",
+    "description": "The label for category 'm12-pos' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m12-pos.link.generated-index.title": {
+    "message": "m12-pos",
+    "description": "The generated-index page title for category 'm12-pos' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.m12-pos.link.generated-index.description": {
+    "message": "Tutorials and schema artifacts for POS or retail transaction flow.",
+    "description": "The generated-index page description for category 'm12-pos' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.OBT": {
+    "message": "OBT",
+    "description": "The label for category 'OBT' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.OBT.link.generated-index.title": {
+    "message": "OBT",
+    "description": "The generated-index page title for category 'OBT' in sidebar 'tutorialSidebar'"
+  },
+  "sidebar.tutorialSidebar.category.OBT.link.generated-index.description": {
+    "message": "Cross-module semantic OBT concepts and blueprint for MyERPPlus.",
+    "description": "The generated-index page description for category 'OBT' in sidebar 'tutorialSidebar'"
+  }
+}

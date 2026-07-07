@@ -121,7 +121,7 @@ export class ErpRolesService {
     return { success: true, message: 'ERP Role deleted' };
   }
 
-  async assignPermissions(id: BigInt, dto: AssignPermissionsDto, actorId?: string) {
+  async assignPermissions(id: BigInt, dto: AssignPermissionsDto, _actorId?: string) {
     const role = await this.prisma.erpRole.findFirst({
       where: { id: id as bigint, deletedAt: null },
       select: { id: true },
@@ -167,7 +167,7 @@ export class ErpRolesService {
     return { success: true, data: rows.map((r) => r.permission) };
   }
 
-  async assignMenus(id: BigInt, dto: AssignMenusDto, actorId?: string) {
+  async assignMenus(id: BigInt, dto: AssignMenusDto, _actorId?: string) {
     const role = await this.prisma.erpRole.findFirst({
       where: { id: id as bigint, deletedAt: null },
       select: { id: true },

@@ -18,14 +18,16 @@ out/
 # Misc
 .DS_Store
 *.pem
+# Data impor klien (PII: nama, no. WA, MRN) — jangan commit
+import-data-client.json
 .env
 .env.vault
 .env.local
 .env.vault.local
-.env.vault.cdc
 .env.development.local
 .env.test.local
 .env.production.local
+.env.althea-prod
 .vscode/
 .idea/
 *.swp
@@ -81,7 +83,6 @@ jspm_packages/
 .env.test
 .env.production
 *.env.vault
-infra/debezium/rendered/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -143,7 +144,7 @@ MANIFEST
 
 # Exception: web app lib/ (TS/JS code, not Python venv)
 # Covers both top-level apps/*/lib/ dan nested feature lib/ (e.g.
-# apps/web-althea/features/<feature>/lib/).
+# apps/web-erp/features/<feature>/lib/).
 !apps/*/lib/
 !apps/*/lib/**
 !apps/*/**/lib/
@@ -269,6 +270,7 @@ temp/
 # Superpowers/agent prep — build artifacts & root-owned backups
 **/dist_root_*/
 **/dist_root_locked_*/
+**/dist.root-owned.bak/
 **/*_root_owned_backup_*/
 **/node_modules.root_owned_backup_*/
 **/*_locked_[0-9]*/

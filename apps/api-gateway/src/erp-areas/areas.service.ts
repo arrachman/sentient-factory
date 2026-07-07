@@ -22,8 +22,16 @@ export class ErpAreasService {
   ) {}
 
   async create(dto: CreateErpAreaDto, actorId?: string) {
-    const existing = await this.prisma.erpArea.findFirst({ where: { code: dto.code }, select: { id: true, deletedAt: true } });
-    if (existing) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(existing.deletedAt) });
+    const existing = await this.prisma.erpArea.findFirst({
+      where: { code: dto.code },
+      select: { id: true, deletedAt: true },
+    });
+    if (existing)
+      throwDuplicate({
+        fieldLabel: FIELD_LABEL,
+        value: dto.code,
+        isSoftDeleted: Boolean(existing.deletedAt),
+      });
     const actorBigInt = actorId ? BigInt(actorId) : null;
     let created;
     try {
@@ -31,7 +39,7 @@ export class ErpAreasService {
         data: {
           code: dto.code,
           name: dto.name,
-        cityId: BigInt(dto.cityId),
+          cityId: BigInt(dto.cityId),
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
@@ -44,8 +52,11 @@ export class ErpAreasService {
       throw error;
     }
     this.audit.log({
-      action: 'CREATE', entityName: ENTITY, entityId: created.id,
-      summary: `${LABEL_ID} ${created.code} dibuat`, actorId: actorBigInt ?? undefined,
+      action: 'CREATE',
+      entityName: ENTITY,
+      entityId: created.id,
+      summary: `${LABEL_ID} ${created.code} dibuat`,
+      actorId: actorBigInt ?? undefined,
     });
     return { success: true, data: created };
   }
@@ -63,13 +74,33 @@ export class ErpAreasService {
       ];
     }
     if (query.isActive !== undefined) where.isActive = query.isActive;
+    if (query.cityId) where.cityId = BigInt(query.cityId);
     const sortBy = query.sortBy ?? 'createdAt';
     const sortDir = query.sortDir ?? 'desc';
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpArea.findMany({ where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit }),
+      this.prisma.erpArea.findMany({
+        where,
+        orderBy: [{ [sortBy]: sortDir }],
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          cityId: true,
+          postalCode: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
       this.prisma.erpArea.count({ where }),
     ]);
-    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+    return {
+      success: true,
+      data: items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+    };
   }
 
   async findOne(id: bigint) {
@@ -82,8 +113,16 @@ export class ErpAreasService {
     const existing = await this.prisma.erpArea.findFirst({ where: { id, deletedAt: null } });
     if (!existing) throw new NotFoundException(`${ENTITY} not found`);
     if (dto.code && dto.code !== existing.code) {
-      const duplicate = await this.prisma.erpArea.findFirst({ where: { code: dto.code, NOT: { id } }, select: { id: true, deletedAt: true } });
-      if (duplicate) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(duplicate.deletedAt) });
+      const duplicate = await this.prisma.erpArea.findFirst({
+        where: { code: dto.code, NOT: { id } },
+        select: { id: true, deletedAt: true },
+      });
+      if (duplicate)
+        throwDuplicate({
+          fieldLabel: FIELD_LABEL,
+          value: dto.code,
+          isSoftDeleted: Boolean(duplicate.deletedAt),
+        });
     }
     const actorBigInt = actorId ? BigInt(actorId) : null;
     let updated;
@@ -104,10 +143,17 @@ export class ErpAreasService {
       }
       throw error;
     }
-    const changes = diffFields(existing as unknown as Record<string, unknown>, updated as unknown as Record<string, unknown>);
+    const changes = diffFields(
+      existing as unknown as Record<string, unknown>,
+      updated as unknown as Record<string, unknown>,
+    );
     this.audit.log({
-      action: 'UPDATE', entityName: ENTITY, entityId: id, changes,
-      summary: `${LABEL_ID} ${updated.code} diperbarui`, actorId: actorBigInt ?? undefined,
+      action: 'UPDATE',
+      entityName: ENTITY,
+      entityId: id,
+      changes,
+      summary: `${LABEL_ID} ${updated.code} diperbarui`,
+      actorId: actorBigInt ?? undefined,
     });
     return { success: true, data: updated };
   }
@@ -133,11 +179,23 @@ export class ErpAreasService {
   }
 
   async remove(id: bigint, actorId?: string) {
-    const existing = await this.prisma.erpArea.findFirst({ where: { id, deletedAt: null }, select: { id: true } });
+    const existing = await this.prisma.erpArea.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
     if (!existing) throw new NotFoundException(`${ENTITY} not found`);
     const actorBigInt = actorId ? BigInt(actorId) : null;
-    await this.prisma.erpArea.update({ where: { id }, data: { deletedAt: new Date(), updatedById: actorBigInt } });
-    this.audit.log({ action: 'DELETE', entityName: ENTITY, entityId: id, summary: `${LABEL_ID} id=${id} dihapus`, actorId: actorBigInt ?? undefined });
+    await this.prisma.erpArea.update({
+      where: { id },
+      data: { deletedAt: new Date(), updatedById: actorBigInt },
+    });
+    this.audit.log({
+      action: 'DELETE',
+      entityName: ENTITY,
+      entityId: id,
+      summary: `${LABEL_ID} id=${id} dihapus`,
+      actorId: actorBigInt ?? undefined,
+    });
     return { success: true, message: `${ENTITY} deleted` };
   }
 }

@@ -250,7 +250,7 @@ def _resolve_existing_path(configured_path: Path) -> Path:
     if configured_path.name == "semantic-query-schema-dashboard-obt.json":
         candidates.extend(
             [
-                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
+                Path("/opt/sentient-factory/apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
                 Path("/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
                 Path("apps/myerpplus-db-mapping/db/semantic-query-schema-dashboard-obt.json"),
             ]
@@ -258,10 +258,10 @@ def _resolve_existing_path(configured_path: Path) -> Path:
     if configured_path.name == "semantic-schema-sales.json":
         candidates.extend(
             [
-                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
+                Path("/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
                 Path("/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
                 Path("apps/myerpplus-db-mapping/db/m5-sales/semantic-schema-sales.json"),
-                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
+                Path("/opt/sentient-factory/apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
                 Path("/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
                 Path("apps/myerpplus-db-mapping/db/m5 - sales/semantic-schema-sales.json"),
             ]
@@ -269,7 +269,7 @@ def _resolve_existing_path(configured_path: Path) -> Path:
     if configured_path.name == "obt-agent-mapping.json":
         candidates.extend(
             [
-                Path("/home/rania/apps/sentient-factory/apps/myerpplus-db-mapping/db/obt-agent-mapping.json"),
+                Path("/opt/sentient-factory/apps/myerpplus-db-mapping/db/obt-agent-mapping.json"),
                 Path("/myerpplus-db-mapping/db/obt-agent-mapping.json"),
                 Path("apps/myerpplus-db-mapping/db/obt-agent-mapping.json"),
             ]

@@ -39,6 +39,11 @@ export class PurReportsService {
     return def;
   }
 
+  /** Column definitions for a report, without resolving rows (design-time use). */
+  getColumns(key: string) {
+    return this.def(key).columns;
+  }
+
   /** Resolve a report to its uniform dataset (used by view AND export). */
   async getDataset(key: string, filters: ReportFilters): Promise<ReportDataset> {
     const def = this.def(key);

@@ -1,10 +1,3 @@
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-/**
- * Merge Tailwind classes dengan handling konflik utility (twMerge) +
- * conditional classes (clsx). Standard ShadCN helper.
- */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// Re-exported from the shared @sentient-factory/ui-kit (Tier 1). Kept here so
+// existing `@/lib/utils` imports across the app stay stable.
+export { cn } from '@sentient-factory/ui-kit';

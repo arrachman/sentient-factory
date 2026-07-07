@@ -4,6 +4,7 @@ import { CreateHrWorksiteDto } from './dto/create-hr-worksite.dto';
 import { CreateFaceEnrollmentDto } from './dto/create-face-enrollment.dto';
 import { IdentifyFaceDto } from './dto/identify-face.dto';
 import { QueryHrAttendanceHistoryDto } from './dto/query-hr-attendance-history.dto';
+import { QueryHrTimesheetDto } from './dto/query-hr-timesheet.dto';
 import { QueryHrAttendanceReviewDto } from './dto/query-hr-attendance-review.dto';
 import { QueryHrWorksiteDto } from './dto/query-hr-worksite.dto';
 import { ReportAttendanceFailureDto } from './dto/report-attendance-failure.dto';
@@ -103,6 +104,10 @@ export class HrAttendanceService {
 
   getAttendanceHistory(authUser: AuthUser, query: QueryHrAttendanceHistoryDto) {
     return this.queryService.getAttendanceHistory(authUser, query);
+  }
+
+  getTimesheets(authUser: AuthUser, query: QueryHrTimesheetDto) {
+    return this.queryService.getTimesheets(authUser, query);
   }
 
   getAttendanceDashboard(authUser: AuthUser) {

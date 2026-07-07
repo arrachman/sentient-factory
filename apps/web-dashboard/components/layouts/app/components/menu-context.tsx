@@ -64,16 +64,9 @@ function mapApiMenus(items: SidebarMenuApiItem[]): MenuConfig {
       const isLegacyManagerAiMenu =
         item.key === 'administrator-dashboard-manager' ||
         item.path === '/app/dashboard/manager';
-      const isAttendanceReviewsMenu =
-        item.key === 'hr-attendance-reviews' ||
-        item.path === '/app/hr/attendance-reviews';
       const mapped: MenuItem = {
         key: item.key,
-        title: isLegacyManagerAiMenu
-          ? 'Senti AI'
-          : isAttendanceReviewsMenu
-            ? 'Attendance Reviews'
-            : item.title,
+        title: isLegacyManagerAiMenu ? 'Senti AI' : item.title,
         path: isLegacyManagerAiMenu
           ? '/app/senti-ai'
           : item.path ?? undefined,

@@ -230,13 +230,15 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 | --- | --- | --- |
 | id | BigInt PK | |
 | itemId ➜ | BigInt → Item | FK enforced, `onDelete: Cascade` |
-| level | Int | 1–10 (tingkat harga, nyambung `md_partners.salesTier`) |
+| level | Int | 1..N kontigu (tingkat harga dinamis/unlimited, nyambung `md_partners.salesTier`) |
 | price | Decimal(19,4) | "Harga Jual N" (`bhargajualN`) |
 | discountPercent | Decimal(9,4) | "Diskon Jual N" (persen) |
 | audit | — | createdAt/updatedAt/createdById/updatedById |
 
-> `@@unique([itemId, level])`. SSOT 10 tier; `md_items.salePrice` = cache
-> level-1. Row level dgn price+diskon kosong **tidak** disimpan (sparse).
+> `@@unique([itemId, level])`. Tingkat **dinamis/unlimited** (lihat DECISIONS.md
+> §2.32 UPDATE 2026-06-13 — item baru mulai 1 tier, tambah/hapus hanya di akhir);
+> `md_items.salePrice` = cache level-1. Row level dgn price+diskon kosong
+> **tidak** disimpan (sparse).
 
 ### Item Media (`md_item_media` / `ErpItemMedia`) — child of `md_items` (new 2026-06-12)
 

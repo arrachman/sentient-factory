@@ -53,6 +53,39 @@ export function isPrivileged(roles?: string[]) {
   return Array.isArray(roles) && roles.some((role) => role === 'admin' || role === 'manager');
 }
 
+/** HR role codes (hr_roles.code) that grant privileged access to HR admin surfaces. */
+export const HR_PRIVILEGED_ROLE_CODES = ['HR_ADMIN', 'HR_MANAGER'] as const;
+
+/** Active HR role codes assigned to an app user via hr_user_roles. */
+export async function getHrRoleCodesByAppUserId(
+  prisma: PrismaService,
+  appUserId: number,
+): Promise<string[]> {
+  const rows = await prisma.$queryRaw<Array<{ code: string }>>(Prisma.sql`
+    SELECT r.code
+    FROM public.hr_user_roles ur
+    JOIN public.hr_roles r ON r.id = ur.role_id AND r.deleted_at IS NULL AND r.is_active
+    JOIN public.hr_users hu ON hu.id = ur.user_id AND hu.deleted_at IS NULL
+    WHERE hu.user_id = ${appUserId} AND ur.deleted_at IS NULL
+  `);
+  return rows.map((row) => row.code);
+}
+
+/**
+ * Privilege resolution that is ADDITIVE: a user is privileged if their platform
+ * JWT roles say so (legacy) OR they hold an HR_ADMIN/HR_MANAGER role in
+ * hr_user_roles. It can only grant access, never revoke — so wiring it in never
+ * locks out anyone who was privileged before.
+ */
+export async function resolveHrPrivilege(
+  prisma: PrismaService,
+  authUser: { id: number; roles?: string[] },
+): Promise<boolean> {
+  if (isPrivileged(authUser.roles)) return true;
+  const codes = await getHrRoleCodesByAppUserId(prisma, authUser.id);
+  return codes.some((code) => (HR_PRIVILEGED_ROLE_CODES as readonly string[]).includes(code));
+}
+
 function padTimestampPart(value: number) {
   return String(value).padStart(2, '0');
 }
