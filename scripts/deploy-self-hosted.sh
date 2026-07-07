@@ -5,6 +5,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BRANCH="${DEPLOY_BRANCH:-dev}"
 LOCK_FILE="/tmp/sentient-factory-deploy.lock"
 
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+  # The GitHub runner user service does not inherit the interactive shell PATH.
+  # Load nvm here so npm/node are available during deploy.
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh"
+  nvm use --silent default >/dev/null 2>&1 || true
+fi
+
 services=("$@")
 if [[ ${#services[@]} -eq 0 ]]; then
   services=("web-dashboard")
