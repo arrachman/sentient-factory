@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BRANCH="${DEPLOY_BRANCH:-dev}"
+BRANCH="${DEPLOY_BRANCH:-main}"
 LOCK_FILE="/tmp/sentient-factory-deploy.lock"
 
 export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
