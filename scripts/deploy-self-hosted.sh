@@ -14,10 +14,75 @@ if [[ -s "$NVM_DIR/nvm.sh" ]]; then
   nvm use --silent default >/dev/null 2>&1 || true
 fi
 
+add_service() {
+  local service="$1"
+  local existing
+  for existing in "${services[@]:-}"; do
+    [[ "$existing" == "$service" ]] && return 0
+  done
+  services+=("$service")
+}
+
+detect_services() {
+  local before="$1"
+  local after="$2"
+  local changed_file
+
+  services=()
+
+  while IFS= read -r changed_file; do
+    case "$changed_file" in
+      apps/web-dashboard/public/media/app/favicon.ico)
+        add_service web-dashboard
+        add_service hr-marketing
+        add_service erp-marketing
+        add_service sentient-marketing
+        add_service tarik-data-digital
+        ;;
+      apps/web-dashboard/*)
+        add_service web-dashboard
+        ;;
+      apps/api-gateway/*|apps/myerpplus-db-mapping/*)
+        add_service api-gateway
+        ;;
+      apps/apps-mockup/*)
+        add_service apps-mockup
+        ;;
+      apps/marketing/hr-*)
+        add_service hr-marketing
+        ;;
+      apps/marketing/erp-*)
+        add_service erp-marketing
+        ;;
+      apps/marketing/sentient-*)
+        add_service sentient-marketing
+        ;;
+      apps/marketing/tarik-data-digital-*)
+        add_service tarik-data-digital
+        ;;
+      docs/*)
+        add_service docs
+        ;;
+      packages/*|package.json|package-lock.json|turbo.json|pnpm-workspace.yaml)
+        add_service api-gateway
+        add_service web-dashboard
+        add_service docs
+        ;;
+      infra/docker-compose.yml|scripts/activate-build.sh|scripts/deploy-self-hosted.sh)
+        add_service api-gateway
+        add_service web-dashboard
+        add_service docs
+        add_service apps-mockup
+        add_service hr-marketing
+        add_service erp-marketing
+        add_service sentient-marketing
+        add_service tarik-data-digital
+        ;;
+    esac
+  done < <(git diff --name-only "$before" "$after")
+}
+
 services=("$@")
-if [[ ${#services[@]} -eq 0 ]]; then
-  services=("web-dashboard")
-fi
 
 exec 9>"$LOCK_FILE"
 flock -n 9 || {
@@ -40,6 +105,29 @@ if [[ -n "$(git status --porcelain)" ]]; then
 fi
 
 git fetch origin "$BRANCH"
+
+if [[ ${#services[@]} -eq 0 ]]; then
+  before="${DEPLOY_BEFORE:-}"
+  after="${DEPLOY_AFTER:-origin/$BRANCH}"
+
+  if [[ -n "$before" && "$before" =~ ^0+$ ]]; then
+    before="$(git rev-parse HEAD)"
+  fi
+
+  if [[ -n "$before" ]] && git rev-parse --verify "$before^{commit}" >/dev/null 2>&1 && git rev-parse --verify "$after^{commit}" >/dev/null 2>&1; then
+    detect_services "$before" "$after"
+  else
+    echo "Could not determine changed files; deploying web-dashboard." >&2
+    services=("web-dashboard")
+  fi
+fi
+
+if [[ ${#services[@]} -eq 0 ]]; then
+  echo "No deployable service changes detected."
+  exit 0
+fi
+
+echo "Services selected for deploy: ${services[*]}"
 git merge --ff-only "origin/$BRANCH"
 
 if [[ " ${services[*]} " == *" web-dashboard "* ]]; then

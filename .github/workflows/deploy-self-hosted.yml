@@ -23,6 +23,9 @@ jobs:
 
     steps:
       - name: Deploy on VPS
+        env:
+          DEPLOY_BEFORE: ${{ github.event.before }}
+          DEPLOY_AFTER: ${{ github.event.after }}
         run: |
-          services="${{ github.event.inputs.services || 'web-dashboard' }}"
+          services="${{ github.event.inputs.services }}"
           /opt/sentient-factory/scripts/deploy-self-hosted.sh $services
