@@ -81,6 +81,13 @@
       "description": "Static company profile page for Tarik Data Digital",
       "isActive": true
     },
+    "erp-marketing": {
+      "name": "ERP Marketing",
+      "port": 3222,
+      "type": "static",
+      "description": "Static marketing page for Senti ERP",
+      "isActive": true
+    },
     "postgres": {
       "port": 3208,
       "description": "PostgreSQL database"

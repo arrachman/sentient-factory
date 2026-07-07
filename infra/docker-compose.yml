@@ -225,6 +225,41 @@ services:
       ) &
       exec nginx -g 'daemon off;'"
 
+  erp-marketing:
+    image: nginx:alpine
+    container_name: sentient-infra-erp-marketing
+    restart: unless-stopped
+    ports:
+      - "3222:80"
+    volumes:
+      - ../apps/marketing/erp-marketing.html:/tmp/erp-marketing-source.html:ro
+      - ../apps/web-dashboard/public/media/app/favicon.ico:/tmp/favicon.ico:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    command: >
+      /bin/sh -c "mkdir -p /usr/share/nginx/html/media/app &&
+      sync_assets() {
+        awk 'found || /^<!DOCTYPE html>/{found=1; print}' /tmp/erp-marketing-source.html > /usr/share/nginx/html/index.html.tmp &&
+        mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html &&
+        cp /tmp/favicon.ico /usr/share/nginx/html/media/app/favicon.ico;
+      } &&
+      sync_assets &&
+      (
+        last_state='' ;
+        while true; do
+          next_state=\"$$(stat -c '%Y:%s' /tmp/erp-marketing-source.html /tmp/favicon.ico 2>/dev/null | tr '\n' '|')\" ;
+          if [ \"$$next_state\" != \"$$last_state\" ]; then
+            sync_assets ;
+            last_state=\"$$next_state\" ;
+          fi ;
+          sleep 1 ;
+        done
+      ) &
+      exec nginx -g 'daemon off;'"
+
   sentient-marketing:
     image: nginx:alpine
     container_name: sentient-infra-sentient-marketing

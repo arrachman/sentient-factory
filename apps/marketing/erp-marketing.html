@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Senti ERP — ERP Cloud untuk Bisnis Indonesia</title>
+<meta name="description" content="Senti ERP: akuntansi, inventory, pembelian, penjualan, dan produksi dalam satu sistem ERP cloud. Pengguna tak terbatas, mulai Rp 750rb/bulan."/>
+<link rel="icon" href="/media/app/favicon.ico" sizes="any"/>
+<link rel="shortcut icon" href="/media/app/favicon.ico"/>
+<link rel="apple-touch-icon" href="/media/app/favicon.ico"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+:root{--bg:#ffffff;--alt:#f6f8fc;--bd:#e6e8ec;--tx:#0f172a;--mut:#5b6477;--blue:#2563eb;--blueh:color-mix(in oklab,var(--blue),#000 14%);--panel:#ffffff;--chip:#eef4ff;--sh:0 1px 3px rgba(15,23,42,.08)}
+html[data-th="dark"]{--bg:#0a0d14;--alt:#10141d;--bd:#1f2632;--tx:#e7eaf0;--mut:#98a2b3;--panel:#10141d;--chip:#16233f;--sh:0 1px 3px rgba(0,0,0,.45)}
+html{scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+section[id]{scroll-margin-top:76px}
+a{color:inherit}
+.rv{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+.rv-in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){.rv{transition:none;opacity:1;transform:none}}
+.nav-burger{display:none}
+@media (max-width:1080px){
+.g-hero{grid-template-columns:1fr !important;gap:44px !important}
+.g-why{grid-template-columns:repeat(3,1fr) !important}
+.g-mod{grid-template-columns:repeat(3,1fr) !important}
+.g-dd{grid-template-columns:1fr !important;gap:32px !important}
+.g-ind{grid-template-columns:1fr 1fr !important}
+.g-tst{grid-template-columns:1fr !important;max-width:560px;margin-left:auto !important;margin-right:auto !important}
+.g-price{grid-template-columns:1fr !important;max-width:520px;margin-left:auto !important;margin-right:auto !important}
+.g-stats{grid-template-columns:1fr 1fr !important;gap:32px !important}
+.g-foot{grid-template-columns:1fr 1fr !important;gap:36px !important}
+}
+@media (max-width:1280px){
+.nav-desk{display:none !important}
+.nav-burger{display:inline-flex !important}
+}
+@media (max-width:1080px){
+.bn-shot{display:none !important}
+.bn-slide{padding:56px 24px !important}
+}
+@media (max-width:680px){
+.bn-title{font-size:32px !important}
+}
+@media (max-width:680px){
+.sec{padding:56px 0 !important}
+.hero-h{font-size:34px !important;line-height:1.15 !important}
+.g-hl{grid-template-columns:1fr !important}
+.g-why{grid-template-columns:1fr 1fr !important}
+.g-mod{grid-template-columns:1fr 1fr !important}
+.g-ind{grid-template-columns:1fr !important}
+.m-cta{display:flex !important}
+.wa-float{bottom:78px !important}
+.trust-row{gap:16px 22px !important}
+body{padding-bottom:64px}
+}
+</style>
+</head>
+<body>
+<header data-screen-label="Nav" style="position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--bd)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px;height:64px;display:flex;align-items:center;gap:24px">
+    <a href="#" style="display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:800;font-size:17px;letter-spacing:-.01em;white-space:nowrap;flex-shrink:0">
+      <span style="width:26px;height:26px;border-radius:6px;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:800">S</span>
+      <span>Senti ERP</span>
+    </a>
+    <nav class="nav-desk" aria-label="Utama" style="display:flex;gap:16px;font-size:13px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--tx);white-space:nowrap">
+      <a href="#modul" style="text-decoration:none" style-hover="color:var(--blue)" data-i18n="nav_modul">Modul</a>
+      <a href="#fitur" style="text-decoration:none" style-hover="color:var(--blue)" data-i18n="nav_fitur">Fitur</a>
+      <a href="#industri" style="text-decoration:none" style-hover="color:var(--blue)" data-i18n="nav_industri">Industri</a>
+      <a href="#harga" style="text-decoration:none" style-hover="color:var(--blue)" data-i18n="nav_harga">Harga</a>
+      <a href="#faq" style="text-decoration:none" style-hover="color:var(--blue)">FAQ</a>
+    </nav>
+    <div class="nav-desk" style="margin-left:auto;display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0">
+      <a href="tel:0215051510" style="text-decoration:none;font-size:13.5px;font-weight:700;color:var(--tx);letter-spacing:.01em;margin-right:2px;white-space:nowrap">021-5051-5105</a>
+      <a href="#faq" style="text-decoration:none;font-size:13px;font-weight:600;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:8px 14px;white-space:nowrap;background:var(--bg)" style-hover="border-color:var(--blue);color:var(--blue)" data-i18n="cta_sales">Hubungi Sales</a>
+      <a href="#harga" style="text-decoration:none;font-size:13px;font-weight:600;color:#fff;background:var(--blue);border-radius:6px;padding:8px 16px;white-space:nowrap" style-hover="background:var(--blueh)" data-i18n="nav_demo">Jadwalkan Demo</a>
+      <div role="group" aria-label="Pilih bahasa" style="display:flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;font-size:12px;font-weight:600;margin-left:4px">
+        <button type="button" data-lang-btn="id" aria-label="Bahasa Indonesia" style="border:none;background:transparent;color:var(--mut);padding:5px 9px;cursor:pointer;font:inherit">ID</button>
+        <button type="button" data-lang-btn="en" aria-label="English" style="border:none;background:transparent;color:var(--mut);padding:5px 9px;cursor:pointer;font:inherit">EN</button>
+      </div>
+      <button type="button" data-theme-btn aria-label="Ganti mode terang/gelap" style="border:1px solid var(--bd);background:transparent;color:var(--tx);width:32px;height:32px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+        <span data-icon-moon style="display:inline-flex"><i data-lucide="moon" style="width:16px;height:16px"></i></span>
+        <span data-icon-sun style="display:none"><i data-lucide="sun" style="width:16px;height:16px"></i></span>
+      </button>
+    </div>
+    <button type="button" class="nav-burger" data-burger aria-label="Buka menu" aria-expanded="false" style="margin-left:auto;border:1px solid var(--bd);background:transparent;color:var(--tx);width:36px;height:36px;border-radius:6px;align-items:center;justify-content:center;cursor:pointer">
+      <span data-icon-menu style="display:inline-flex"><i data-lucide="menu" style="width:18px;height:18px"></i></span>
+      <span data-icon-x style="display:none"><i data-lucide="x" style="width:18px;height:18px"></i></span>
+    </button>
+  </div>
+  <div data-mnav style="display:none;flex-direction:column;gap:4px;border-top:1px solid var(--bd);background:var(--bg);padding:12px 24px 18px">
+    <a href="#modul" style="text-decoration:none;font-size:15px;font-weight:600;padding:10px 4px" data-i18n="nav_modul">Modul</a>
+    <a href="#fitur" style="text-decoration:none;font-size:15px;font-weight:600;padding:10px 4px" data-i18n="nav_fitur">Fitur</a>
+    <a href="#industri" style="text-decoration:none;font-size:15px;font-weight:600;padding:10px 4px" data-i18n="nav_industri">Industri</a>
+    <a href="#harga" style="text-decoration:none;font-size:15px;font-weight:600;padding:10px 4px" data-i18n="nav_harga">Harga</a>
+    <a href="#faq" style="text-decoration:none;font-size:15px;font-weight:600;padding:10px 4px">FAQ</a>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 0 4px">
+      <div role="group" aria-label="Pilih bahasa" style="display:flex;border:1px solid var(--bd);border-radius:6px;overflow:hidden;font-size:12px;font-weight:600">
+        <button type="button" data-lang-btn="id" aria-label="Bahasa Indonesia" style="border:none;background:transparent;color:var(--mut);padding:6px 11px;cursor:pointer;font:inherit">ID</button>
+        <button type="button" data-lang-btn="en" aria-label="English" style="border:none;background:transparent;color:var(--mut);padding:6px 11px;cursor:pointer;font:inherit">EN</button>
+      </div>
+      <button type="button" data-theme-btn aria-label="Ganti mode terang/gelap" style="border:1px solid var(--bd);background:transparent;color:var(--tx);width:34px;height:34px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">
+        <span data-icon-moon style="display:inline-flex"><i data-lucide="moon" style="width:16px;height:16px"></i></span>
+        <span data-icon-sun style="display:none"><i data-lucide="sun" style="width:16px;height:16px"></i></span>
+      </button>
+    </div>
+    <a href="#harga" style="text-decoration:none;text-align:center;font-size:15px;font-weight:600;color:#fff;background:var(--blue);border-radius:6px;padding:11px 16px;margin-top:6px" data-i18n="nav_demo">Jadwalkan Demo</a>
+  </div>
+</header>
+
+<section data-screen-label="Hero" style="background:var(--alt);border-bottom:1px solid var(--bd)">
+  <div class="bn-slide" style="max-width:1180px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:44px;padding:72px 24px">
+        <div style="max-width:500px">
+          <p style="margin:0 0 14px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)" data-i18n="hero_kicker">ERP Cloud untuk Bisnis Indonesia</p>
+          <h1 class="bn-title" style="margin:0 0 16px;font-size:40px;line-height:1.12;font-weight:800;letter-spacing:-.02em" data-i18n="hero_h">ERP lengkap yang mudah dipakai seluruh tim Anda</h1>
+          <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:var(--mut);max-width:460px" data-i18n="hero_sub">Akuntansi, inventory, pembelian, penjualan, dan produksi — satu sistem berbasis web, tanpa instalasi.</p>
+          <div style="display:inline-flex;flex-direction:column;gap:2px;border:1px solid var(--bd);border-left:3px solid var(--blue);border-radius:8px;background:var(--bg);padding:12px 16px;margin-bottom:22px">
+            <span style="font-size:12px;font-weight:600;color:var(--mut)" data-i18n="pa_label">Harga flat, tanpa kejutan</span>
+            <span style="font-size:16px;font-weight:700" data-i18n="pa_main">Semua fitur ERP, pengguna tak terbatas — mulai Rp 750rb/bln</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+            <a href="#harga" style="text-decoration:none;font-size:15px;font-weight:600;color:#fff;background:var(--blue);border-radius:6px;padding:12px 22px" style-hover="background:var(--blueh)" data-i18n="nav_demo">Jadwalkan Demo</a>
+            <a href="#harga" style="text-decoration:none;font-size:15px;font-weight:600;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:12px 22px;background:var(--bg)" style-hover="border-color:var(--blue);color:var(--blue)" data-i18n="cta_trial">Coba Gratis 30 Hari</a>
+          </div>
+          <ul style="list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13.5px;color:var(--mut)">
+            <li style="display:flex;align-items:center;gap:7px"><i data-lucide="check" style="width:15px;height:15px;color:var(--blue)"></i><span data-i18n="hb1">Implementasi kurang dari 2 minggu</span></li>
+            <li style="display:flex;align-items:center;gap:7px"><i data-lucide="check" style="width:15px;height:15px;color:var(--blue)"></i><span data-i18n="hb2">Tanpa biaya per pengguna</span></li>
+            <li style="display:flex;align-items:center;gap:7px"><i data-lucide="check" style="width:15px;height:15px;color:var(--blue)"></i><span data-i18n="hb3">Data tersimpan di Indonesia</span></li>
+          </ul>
+        </div>
+        <div class="bn-shot" style="width:540px;flex-shrink:0;border:1px solid var(--bd);border-radius:8px;background:var(--panel);box-shadow:var(--sh);overflow:hidden;font-size:11px" aria-label="Contoh tampilan dasbor Senti ERP" role="img">
+      <div style="display:flex;align-items:center;gap:14px;height:40px;padding:0 14px;border-bottom:1px solid var(--bd)">
+        <span style="width:16px;height:16px;border-radius:4px;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800">S</span>
+        <span style="font-weight:700;font-size:11px">Dasbor</span>
+        <span style="font-size:11px;color:var(--mut)">Penjualan</span>
+        <span style="font-size:11px;color:var(--mut)">Stok</span>
+        <span style="font-size:11px;color:var(--mut)">Keuangan</span>
+        <span style="margin-left:auto;font-size:10px;color:var(--mut)">4 Juli 2026</span>
+      </div>
+      <div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div style="border:1px solid var(--bd);border-radius:6px;padding:10px">
+            <div style="font-size:9px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">Penjualan Bln Ini</div>
+            <div style="font-size:13px;font-weight:800;margin-top:3px;white-space:nowrap">Rp 46.666.000</div>
+            <div style="font-size:9px;color:#16a34a;font-weight:600;margin-top:2px">▲ +12,4% vs bln lalu</div>
+          </div>
+          <div style="border:1px solid var(--bd);border-radius:6px;padding:10px">
+            <div style="font-size:9px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">Piutang Jatuh Tempo</div>
+            <div style="font-size:13px;font-weight:800;margin-top:3px;white-space:nowrap">Rp 8.120.000</div>
+            <div style="font-size:9px;color:var(--mut);margin-top:2px">6 faktur</div>
+          </div>
+          <div style="border:1px solid var(--bd);border-radius:6px;padding:10px">
+            <div style="font-size:9px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">Stok Tersedia</div>
+            <div style="font-size:13px;font-weight:800;margin-top:3px;white-space:nowrap">12.480 pcs</div>
+            <div style="font-size:9px;color:var(--mut);margin-top:2px">3 gudang</div>
+          </div>
+          <div style="border:1px solid var(--bd);border-radius:6px;padding:10px">
+            <div style="font-size:9px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">PO Terbuka</div>
+            <div style="font-size:13px;font-weight:800;margin-top:3px;white-space:nowrap">14</div>
+            <div style="font-size:9px;color:#d97706;font-weight:600;margin-top:2px">2 perlu approval</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 3fr;gap:10px">
+          <div style="border:1px solid var(--bd);border-radius:6px;padding:10px">
+            <div style="font-size:9px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Penjualan 7 Hari</div>
+            <div style="display:flex;align-items:flex-end;gap:5px;height:64px">
+              <div style="flex:1;height:38%;background:var(--chip);border-radius:2px"></div>
+              <div style="flex:1;height:52%;background:var(--chip);border-radius:2px"></div>
+              <div style="flex:1;height:44%;background:var(--chip);border-radius:2px"></div>
+              <div style="flex:1;height:66%;background:var(--chip);border-radius:2px"></div>
+              <div style="flex:1;height:58%;background:var(--chip);border-radius:2px"></div>
+              <div style="flex:1;height:80%;background:var(--blue);border-radius:2px"></div>
+              <div style="flex:1;height:72%;background:var(--chip);border-radius:2px"></div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--bd);border-radius:6px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr .9fr;gap:6px;padding:7px 10px;background:var(--alt);font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">
+              <span>Faktur</span><span>Pelanggan</span><span>Total</span><span>Status</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr .9fr;gap:6px;padding:7px 10px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+              <span style="font-weight:600">INV-2607</span><span style="color:var(--mut)">PT Prima Karya</span><span style="white-space:nowrap">Rp 4.250.000</span><span style="justify-self:start;background:rgba(22,163,74,.12);color:#16a34a;font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">✓ Lunas</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr .9fr;gap:6px;padding:7px 10px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+              <span style="font-weight:600">INV-2606</span><span style="color:var(--mut)">CV Berkah Distribusi</span><span style="white-space:nowrap">Rp 12.800.000</span><span style="justify-self:start;background:rgba(37,99,235,.12);color:var(--blue);font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">→ Terkirim</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr .9fr;gap:6px;padding:7px 10px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+              <span style="font-weight:600">INV-2605</span><span style="color:var(--mut)">Kopi Nusantara</span><span style="white-space:nowrap">Rp 2.140.000</span><span style="justify-self:start;background:rgba(22,163,74,.12);color:#16a34a;font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">✓ Lunas</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1.1fr 1.4fr 1.1fr .9fr;gap:6px;padding:7px 10px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+              <span style="font-weight:600">INV-2604</span><span style="color:var(--mut)">Garuda Tekstil</span><span style="white-space:nowrap">Rp 7.900.000</span><span style="justify-self:start;background:rgba(91,100,119,.14);color:var(--mut);font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">• Draft</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Trust bar" style="padding:28px 0;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);background:var(--alt)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;gap:16px;align-items:center">
+    <p style="margin:0;font-size:13px;font-weight:600;color:var(--mut)" data-i18n="trust_t">Dipercaya 2.500+ perusahaan di Indonesia</p>
+    <div class="trust-row" style="display:flex;flex-wrap:wrap;justify-content:center;gap:20px 40px;font-size:15px;font-weight:700;letter-spacing:.02em;color:var(--mut);opacity:.75">
+      <span>PRIMA KARYA</span><span>Sinar Logam</span><span>BERKAH DISTRIBUSI</span><span>Kopi Nusantara</span><span>MITRA PANGAN</span><span>Garuda Tekstil</span>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Highlights" class="sec" style="padding:80px 0;background:var(--bg)">
+  <div class="g-hl" style="max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+    <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:26px;box-shadow:var(--sh)">
+      <span style="width:40px;height:40px;border-radius:8px;background:var(--chip);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px"><i data-lucide="bar-chart-3" style="width:20px;height:20px"></i></span>
+      <h3 style="margin:0 0 6px;font-size:17px;font-weight:700" data-i18n="hl1_t">Laporan real-time</h3>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:var(--mut)" data-i18n="hl1_d">Angka penjualan, stok, dan kas selalu terbaru — kapan pun dibuka.</p>
+    </div>
+    <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:26px;box-shadow:var(--sh)">
+      <span style="width:40px;height:40px;border-radius:8px;background:var(--chip);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px"><i data-lucide="sliders-horizontal" style="width:20px;height:20px"></i></span>
+      <h3 style="margin:0 0 6px;font-size:17px;font-weight:700" data-i18n="hl2_t">Menu bisa dikustomisasi</h3>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:var(--mut)" data-i18n="hl2_d">Atur tampilan dan alur input sesuai cara kerja tim Anda.</p>
+    </div>
+    <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:26px;box-shadow:var(--sh)">
+      <span style="width:40px;height:40px;border-radius:8px;background:var(--chip);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px"><i data-lucide="users" style="width:20px;height:20px"></i></span>
+      <h3 style="margin:0 0 6px;font-size:17px;font-weight:700" data-i18n="hl3_t">2.500+ perusahaan</h3>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:var(--mut)" data-i18n="hl3_d">Manufaktur, distribusi, dan retail di seluruh Indonesia.</p>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Why Senti" class="sec" style="padding:80px 0;background:var(--alt);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px">
+    <h2 style="margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:-.02em;text-align:center" data-i18n="why_t">Kenapa Senti ERP</h2>
+    <p style="margin:0 auto 40px;font-size:15px;color:var(--mut);text-align:center;max-width:560px" data-i18n="why_sub">Dibangun untuk cara kerja perusahaan Indonesia — sederhana, cepat, dan transparan.</p>
+    <div class="g-why" style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:20px;text-align:center">
+        <i data-lucide="globe" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:10px 0 5px;font-size:14px;font-weight:700" data-i18n="w1_t">Berbasis Web</h3>
+        <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--mut)" data-i18n="w1_d">Akses dari browser mana pun, tanpa server sendiri.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:20px;text-align:center">
+        <i data-lucide="infinity" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:10px 0 5px;font-size:14px;font-weight:700" data-i18n="w2_t">Pengguna Tak Terbatas</h3>
+        <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--mut)" data-i18n="w2_d">Satu harga untuk seluruh tim, berapa pun jumlahnya.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:20px;text-align:center">
+        <i data-lucide="activity" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:10px 0 5px;font-size:14px;font-weight:700" data-i18n="w3_t">Laporan Real-Time</h3>
+        <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--mut)" data-i18n="w3_d">Setiap transaksi langsung tercermin di laporan.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:20px;text-align:center">
+        <i data-lucide="shield-check" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:10px 0 5px;font-size:14px;font-weight:700" data-i18n="w4_t">Aman &amp; Teraudit</h3>
+        <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--mut)" data-i18n="w4_d">Enkripsi, backup harian, dan jejak audit lengkap.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:20px;text-align:center">
+        <i data-lucide="life-buoy" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:10px 0 5px;font-size:14px;font-weight:700" data-i18n="w5_t">Didampingi Tim</h3>
+        <p style="margin:0;font-size:12.5px;line-height:1.55;color:var(--mut)" data-i18n="w5_d">Tim lokal mendampingi dari setup sampai berjalan.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="modul" data-screen-label="Modules" class="sec" style="padding:80px 0;background:var(--bg)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px">
+    <h2 style="margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:-.02em;text-align:center" data-i18n="mod_t">Semua modul yang bisnis Anda butuhkan</h2>
+    <p style="margin:0 auto 40px;font-size:15px;color:var(--mut);text-align:center;max-width:560px" data-i18n="mod_sub">Satu data, semua modul terhubung — tanpa entri ganda.</p>
+    <div class="g-mod" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="database" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">MD</span>
+        </div>
+        <span style="font-size:15px;font-weight:700">Master Data</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="calculator" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">FIN</span>
+        </div>
+        <span style="font-size:15px;font-weight:700" data-i18n="mod_fin">Akuntansi &amp; GL</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="boxes" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">INV</span>
+        </div>
+        <span style="font-size:15px;font-weight:700">Inventory</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="shopping-cart" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">PUR</span>
+        </div>
+        <span style="font-size:15px;font-weight:700" data-i18n="mod_pur">Pembelian</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="receipt" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">SLS</span>
+        </div>
+        <span style="font-size:15px;font-weight:700" data-i18n="mod_sls">Penjualan</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="factory" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">MFG</span>
+        </div>
+        <span style="font-size:15px;font-weight:700" data-i18n="mod_mfg">Produksi</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="building-2" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">FA</span>
+        </div>
+        <span style="font-size:15px;font-weight:700" data-i18n="mod_fa">Aset Tetap</span>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:22px;display:flex;flex-direction:column;gap:12px" style-hover="border-color:var(--blue)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <i data-lucide="store" style="width:22px;height:22px;color:var(--blue)"></i>
+          <span style="font-family:ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;background:var(--chip);color:var(--blue);padding:3px 8px;border-radius:5px">POS</span>
+        </div>
+        <span style="font-size:15px;font-weight:700">POS &amp; Retail</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="fitur" data-screen-label="Feature deep-dive" class="sec" style="padding:80px 0;background:var(--alt);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px;display:flex;flex-direction:column;gap:64px">
+    <div class="g-dd" style="display:grid;grid-template-columns:1fr 1.15fr;gap:56px;align-items:center">
+      <div>
+        <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)" data-i18n="dd1_k">Keuangan</p>
+        <h2 style="margin:0 0 14px;font-size:26px;font-weight:800;letter-spacing:-.02em" data-i18n="dd1_t">Keuangan yang selalu rapi</h2>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font-size:15px;line-height:1.5;color:var(--mut)">
+          <li style="display:flex;gap:10px"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="dd1_b1">Jurnal otomatis dari setiap transaksi penjualan &amp; pembelian</span></li>
+          <li style="display:flex;gap:10px"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="dd1_b2">Neraca &amp; laba rugi real-time, siap diaudit</span></li>
+          <li style="display:flex;gap:10px"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="dd1_b3">Rekonsiliasi bank lebih cepat dengan impor mutasi</span></li>
+        </ul>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);box-shadow:var(--sh);overflow:hidden;font-size:11px" role="img" aria-label="Contoh jurnal umum">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:38px;padding:0 14px;border-bottom:1px solid var(--bd)">
+          <span style="font-weight:700;font-size:11px">Jurnal Umum — Juli 2026</span>
+          <span style="background:rgba(22,163,74,.12);color:#16a34a;font-weight:600;font-size:9px;padding:2px 8px;border-radius:99px">✓ Neraca seimbang</span>
+        </div>
+        <div style="display:grid;grid-template-columns:.9fr 1.8fr 1fr 1fr;gap:6px;padding:7px 14px;background:var(--alt);font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">
+          <span>Tanggal</span><span>Akun</span><span style="text-align:right">Debit</span><span style="text-align:right">Kredit</span>
+        </div>
+        <div style="display:grid;grid-template-columns:.9fr 1.8fr 1fr 1fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px">
+          <span>02/07</span><span>1101 · Kas Bank BCA</span><span style="text-align:right">4.250.000,00</span><span style="text-align:right;color:var(--mut)">—</span>
+        </div>
+        <div style="display:grid;grid-template-columns:.9fr 1.8fr 1fr 1fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px">
+          <span>02/07</span><span>4101 · Pendapatan Penjualan</span><span style="text-align:right;color:var(--mut)">—</span><span style="text-align:right">4.250.000,00</span>
+        </div>
+        <div style="display:grid;grid-template-columns:.9fr 1.8fr 1fr 1fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px">
+          <span>03/07</span><span>5101 · HPP Bahan Baku</span><span style="text-align:right">2.816.000,00</span><span style="text-align:right;color:var(--mut)">—</span>
+        </div>
+        <div style="display:grid;grid-template-columns:.9fr 1.8fr 1fr 1fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px">
+          <span>03/07</span><span>1301 · Persediaan Barang</span><span style="text-align:right;color:var(--mut)">—</span><span style="text-align:right">2.816.000,00</span>
+        </div>
+        <div style="display:grid;grid-template-columns:.9fr 1.8fr 1fr 1fr;gap:6px;padding:9px 14px;border-top:1px solid var(--bd);font-size:10px;font-weight:800;background:var(--alt)">
+          <span></span><span>Total</span><span style="text-align:right">46.666.000,00</span><span style="text-align:right">46.666.000,00</span>
+        </div>
+      </div>
+    </div>
+    <div class="g-dd" style="display:grid;grid-template-columns:1.15fr 1fr;gap:56px;align-items:center">
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);box-shadow:var(--sh);overflow:hidden;font-size:11px" role="img" aria-label="Contoh kartu stok multi gudang">
+        <div style="display:flex;align-items:center;justify-content:space-between;height:38px;padding:0 14px;border-bottom:1px solid var(--bd)">
+          <span style="font-weight:700;font-size:11px">Kartu Stok — Multi Gudang</span>
+          <span style="font-size:10px;color:var(--mut)">Diperbarui 09.41 WIB</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr .9fr;gap:6px;padding:7px 14px;background:var(--alt);font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em">
+          <span>Item</span><span style="text-align:right">Gdg JKT</span><span style="text-align:right">Gdg SBY</span><span style="text-align:right">Gdg MDN</span><span>Status</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr .9fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+          <span style="font-weight:600">Baut M8 Galvanis</span><span style="text-align:right">3.200</span><span style="text-align:right">1.850</span><span style="text-align:right">940</span><span style="justify-self:start;background:rgba(22,163,74,.12);color:#16a34a;font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">✓ Aman</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr .9fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+          <span style="font-weight:600">Plat Besi 2mm</span><span style="text-align:right">120</span><span style="text-align:right">85</span><span style="text-align:right">40</span><span style="justify-self:start;background:rgba(217,119,6,.14);color:#d97706;font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">! Menipis</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr .9fr;gap:6px;padding:8px 14px;border-top:1px solid var(--bd);font-size:10px;align-items:center">
+          <span style="font-weight:600">Cat Primer 5L</span><span style="text-align:right">480</span><span style="text-align:right">310</span><span style="text-align:right">225</span><span style="justify-self:start;background:rgba(22,163,74,.12);color:#16a34a;font-weight:600;font-size:9px;padding:2px 7px;border-radius:99px;white-space:nowrap">✓ Aman</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--bd);background:var(--alt)">
+          <i data-lucide="lightbulb" style="width:14px;height:14px;color:var(--blue)"></i>
+          <span style="font-size:10px;color:var(--mut)"><b style="color:var(--tx)">Saran pengadaan:</b> PO 500 lbr Plat Besi 2mm → PT Sinar Logam</span>
+          <span style="margin-left:auto;background:var(--blue);color:#fff;font-weight:600;font-size:9px;padding:4px 10px;border-radius:5px">Buat PO</span>
+        </div>
+      </div>
+      <div>
+        <p style="margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)" data-i18n="dd2_k">Rantai Pasok</p>
+        <h2 style="margin:0 0 14px;font-size:26px;font-weight:800;letter-spacing:-.02em" data-i18n="dd2_t">Stok terkendali di semua gudang</h2>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font-size:15px;line-height:1.5;color:var(--mut)">
+          <li style="display:flex;gap:10px"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="dd2_b1">Kartu stok multi-gudang yang selalu akurat</span></li>
+          <li style="display:flex;gap:10px"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="dd2_b2">Saran pengadaan otomatis saat stok menipis</span></li>
+          <li style="display:flex;gap:10px"><i data-lucide="check-circle-2" style="width:18px;height:18px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="dd2_b3">Stock opname dengan selisih tercatat otomatis</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="industri" data-screen-label="Industries" class="sec" style="padding:80px 0;background:var(--bg)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px">
+    <h2 style="margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:-.02em;text-align:center" data-i18n="ind_t">Solusi per industri</h2>
+    <p style="margin:0 auto 40px;font-size:15px;color:var(--mut);text-align:center;max-width:560px" data-i18n="ind_sub">Konfigurasi siap pakai untuk model bisnis Anda.</p>
+    <div class="g-ind" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:24px" style-hover="border-color:var(--blue)">
+        <i data-lucide="factory" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:12px 0 6px;font-size:16px;font-weight:700" data-i18n="i1_t">Manufaktur</h3>
+        <p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--mut)" data-i18n="i1_d">BOM, perintah kerja, dan biaya produksi.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:24px" style-hover="border-color:var(--blue)">
+        <i data-lucide="truck" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:12px 0 6px;font-size:16px;font-weight:700" data-i18n="i2_t">Distribusi</h3>
+        <p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--mut)" data-i18n="i2_d">Multi-gudang, harga bertingkat, armada pengiriman.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:24px" style-hover="border-color:var(--blue)">
+        <i data-lucide="store" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:12px 0 6px;font-size:16px;font-weight:700">Retail &amp; F&amp;B</h3>
+        <p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--mut)" data-i18n="i3_d">POS terhubung langsung ke stok dan akuntansi.</p>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:24px" style-hover="border-color:var(--blue)">
+        <i data-lucide="briefcase" style="width:22px;height:22px;color:var(--blue)"></i>
+        <h3 style="margin:12px 0 6px;font-size:16px;font-weight:700" data-i18n="i4_t">Jasa &amp; Proyek</h3>
+        <p style="margin:0;font-size:13.5px;line-height:1.55;color:var(--mut)" data-i18n="i4_d">Biaya per proyek dan penagihan bertahap.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Stats" style="padding:56px 0;background:var(--alt);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div class="g-stats" style="max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center">
+    <div class="rv">
+      <div style="font-size:36px;font-weight:800;letter-spacing:-.02em;color:var(--blue)" data-i18n="s1_n">2.500+</div>
+      <div style="font-size:13px;font-weight:500;color:var(--mut);margin-top:4px" data-i18n="s1_l">perusahaan pengguna</div>
+    </div>
+    <div class="rv">
+      <div style="font-size:36px;font-weight:800;letter-spacing:-.02em;color:var(--blue)">15+</div>
+      <div style="font-size:13px;font-weight:500;color:var(--mut);margin-top:4px" data-i18n="s2_l">industri terlayani</div>
+    </div>
+    <div class="rv">
+      <div style="font-size:36px;font-weight:800;letter-spacing:-.02em;color:var(--blue)" data-i18n="s3_n">99,9%</div>
+      <div style="font-size:13px;font-weight:500;color:var(--mut);margin-top:4px" data-i18n="s3_l">uptime 12 bulan terakhir</div>
+    </div>
+    <div class="rv">
+      <div style="font-size:36px;font-weight:800;letter-spacing:-.02em;color:var(--blue)" data-i18n="s4_n">4,8/5</div>
+      <div style="font-size:13px;font-weight:500;color:var(--mut);margin-top:4px" data-i18n="s4_l">rating kepuasan pelanggan</div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Testimonials" class="sec" style="padding:80px 0;background:var(--bg)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px">
+    <h2 style="margin:0 0 40px;font-size:30px;font-weight:800;letter-spacing:-.02em;text-align:center" data-i18n="tst_t">Apa kata pengguna</h2>
+    <div class="g-tst" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <figure class="rv" style="margin:0;border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:26px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:18px">
+        <blockquote style="margin:0;font-size:15px;line-height:1.6" data-i18n="q1">“Tutup buku bulanan dari 10 hari jadi 2 hari. Angkanya sekarang bisa dipercaya.”</blockquote>
+        <figcaption style="display:flex;align-items:center;gap:12px">
+          <span aria-hidden="true" style="width:40px;height:40px;border-radius:50%;background:var(--chip);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">BS</span>
+          <span style="display:flex;flex-direction:column">
+            <span style="font-size:14px;font-weight:700">Budi Santoso</span>
+            <span style="font-size:12.5px;color:var(--mut)" data-i18n="r1">Direktur Operasional, PT Prima Karya Logam · Surabaya</span>
+          </span>
+        </figcaption>
+      </figure>
+      <figure class="rv" style="margin:0;border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:26px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:18px">
+        <blockquote style="margin:0;font-size:15px;line-height:1.6" data-i18n="q2">“Stok 3 gudang akhirnya cocok dengan pembukuan. Tidak ada entri ganda lagi.”</blockquote>
+        <figcaption style="display:flex;align-items:center;gap:12px">
+          <span aria-hidden="true" style="width:40px;height:40px;border-radius:50%;background:var(--chip);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">SW</span>
+          <span style="display:flex;flex-direction:column">
+            <span style="font-size:14px;font-weight:700">Sari Wulandari</span>
+            <span style="font-size:12.5px;color:var(--mut)" data-i18n="r2">Finance Manager, CV Berkah Distribusi · Bandung</span>
+          </span>
+        </figcaption>
+      </figure>
+      <figure class="rv" style="margin:0;border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:26px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:18px">
+        <blockquote style="margin:0;font-size:15px;line-height:1.6" data-i18n="q3">“Timnya mendampingi sampai semua kasir dan admin lancar. Dua minggu langsung jalan.”</blockquote>
+        <figcaption style="display:flex;align-items:center;gap:12px">
+          <span aria-hidden="true" style="width:40px;height:40px;border-radius:50%;background:var(--chip);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">AP</span>
+          <span style="display:flex;flex-direction:column">
+            <span style="font-size:14px;font-weight:700">Andi Pratama</span>
+            <span style="font-size:12.5px;color:var(--mut)" data-i18n="r3">Owner, Kopi Nusantara Group · Makassar</span>
+          </span>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="harga" data-screen-label="Pricing" class="sec" style="padding:80px 0;background:var(--alt);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px">
+    <h2 style="margin:0 0 8px;font-size:30px;font-weight:800;letter-spacing:-.02em;text-align:center" data-i18n="price_t">Harga flat &amp; sederhana</h2>
+    <p style="margin:0 auto 40px;font-size:15px;color:var(--mut);text-align:center;max-width:560px" data-i18n="price_sub">Semua paket termasuk pengguna tak terbatas. Tanpa biaya per user.</p>
+    <div class="g-price" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:start">
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:28px;display:flex;flex-direction:column;gap:18px">
+        <div>
+          <h3 style="margin:0 0 4px;font-size:17px;font-weight:700">Starter</h3>
+          <p style="margin:0;font-size:13px;color:var(--mut)" data-i18n="p1_d">Untuk usaha yang baru merapikan operasional.</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <span style="font-size:32px;font-weight:800;letter-spacing:-.02em" data-i18n="p1_price">Rp 750rb</span>
+          <span style="font-size:14px;color:var(--mut)" data-i18n="per_mo">/bln</span>
+        </div>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--mut)">
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p1f1">Modul FIN, INV, SLS, PUR</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p_unl">Pengguna tak terbatas</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p1f3">1 entitas usaha</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p1f4">Dukungan email &amp; chat</span></li>
+        </ul>
+        <a href="#" style="text-decoration:none;text-align:center;font-size:14px;font-weight:600;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:11px 16px" style-hover="border-color:var(--blue);color:var(--blue)" data-i18n="cta_trial_s">Coba Gratis</a>
+      </div>
+      <div class="rv" style="border:2px solid var(--blue);border-radius:8px;background:var(--panel);padding:28px;display:flex;flex-direction:column;gap:18px;position:relative">
+        <span style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;font-size:11px;font-weight:700;letter-spacing:.04em;padding:4px 12px;border-radius:99px;white-space:nowrap" data-i18n="p2_chip">Paling Populer</span>
+        <div>
+          <h3 style="margin:0 0 4px;font-size:17px;font-weight:700">Business</h3>
+          <p style="margin:0;font-size:13px;color:var(--mut)" data-i18n="p2_d">Untuk operasional multi-gudang dan produksi.</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <span style="font-size:32px;font-weight:800;letter-spacing:-.02em" data-i18n="p2_price">Rp 1,5jt</span>
+          <span style="font-size:14px;color:var(--mut)" data-i18n="per_mo">/bln</span>
+        </div>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--mut)">
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p2f1">Semua modul, termasuk MFG &amp; POS</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p_unl">Pengguna tak terbatas</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p2f3">3 entitas usaha</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p2f4">Multi-gudang &amp; multi-cabang</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p2f5">Dukungan prioritas + pendampingan</span></li>
+        </ul>
+        <a href="#" style="text-decoration:none;text-align:center;font-size:14px;font-weight:600;color:#fff;background:var(--blue);border-radius:6px;padding:11px 16px" style-hover="background:var(--blueh)" data-i18n="cta_trial_s">Coba Gratis</a>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel);padding:28px;display:flex;flex-direction:column;gap:18px">
+        <div>
+          <h3 style="margin:0 0 4px;font-size:17px;font-weight:700">Enterprise</h3>
+          <p style="margin:0;font-size:13px;color:var(--mut)" data-i18n="p3_d">Untuk grup usaha dengan kebutuhan khusus.</p>
+        </div>
+        <div style="display:flex;align-items:baseline;gap:4px">
+          <span style="font-size:32px;font-weight:800;letter-spacing:-.02em" data-i18n="p3_price">Kustom</span>
+        </div>
+        <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--mut)">
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p3f1">Semua fitur Business</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p3f2">Entitas tak terbatas</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p3f3">API &amp; integrasi khusus</span></li>
+          <li style="display:flex;gap:9px;align-items:flex-start"><i data-lucide="check" style="width:16px;height:16px;color:var(--blue);flex-shrink:0;margin-top:2px"></i><span data-i18n="p3f4">SLA &amp; manajer akun khusus</span></li>
+        </ul>
+        <a href="#" style="text-decoration:none;text-align:center;font-size:14px;font-weight:600;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:11px 16px" style-hover="border-color:var(--blue);color:var(--blue)" data-i18n="cta_sales">Hubungi Sales</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" data-screen-label="FAQ" class="sec" style="padding:80px 0;background:var(--bg)">
+  <div style="max-width:760px;margin:0 auto;padding:0 24px">
+    <h2 style="margin:0 0 36px;font-size:30px;font-weight:800;letter-spacing:-.02em;text-align:center" data-i18n="faq_t">Pertanyaan umum</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel)">
+        <button type="button" data-faq aria-expanded="false" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;border:none;background:transparent;color:var(--tx);font:inherit;font-size:15px;font-weight:600;text-align:left;padding:17px 20px;cursor:pointer">
+          <span data-i18n="f1q">Berapa lama implementasinya?</span>
+          <i data-lucide="chevron-down" style="width:18px;height:18px;color:var(--mut);flex-shrink:0;transition:transform .2s"></i>
+        </button>
+        <div data-faq-panel style="display:none;padding:0 20px 18px;font-size:14.5px;line-height:1.65;color:var(--mut)"><span data-i18n="f1a">Rata-rata 1–2 minggu. Tim kami membantu setup master data, saldo awal, dan pelatihan tim Anda.</span></div>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel)">
+        <button type="button" data-faq aria-expanded="false" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;border:none;background:transparent;color:var(--tx);font:inherit;font-size:15px;font-weight:600;text-align:left;padding:17px 20px;cursor:pointer">
+          <span data-i18n="f2q">Benarkah pengguna tak terbatas?</span>
+          <i data-lucide="chevron-down" style="width:18px;height:18px;color:var(--mut);flex-shrink:0;transition:transform .2s"></i>
+        </button>
+        <div data-faq-panel style="display:none;padding:0 20px 18px;font-size:14.5px;line-height:1.65;color:var(--mut)"><span data-i18n="f2a">Ya. Harga dihitung per perusahaan, bukan per pengguna. Tambah akun kapan saja tanpa biaya tambahan.</span></div>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel)">
+        <button type="button" data-faq aria-expanded="false" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;border:none;background:transparent;color:var(--tx);font:inherit;font-size:15px;font-weight:600;text-align:left;padding:17px 20px;cursor:pointer">
+          <span data-i18n="f3q">Bagaimana keamanan data kami?</span>
+          <i data-lucide="chevron-down" style="width:18px;height:18px;color:var(--mut);flex-shrink:0;transition:transform .2s"></i>
+        </button>
+        <div data-faq-panel style="display:none;padding:0 20px 18px;font-size:14.5px;line-height:1.65;color:var(--mut)"><span data-i18n="f3a">Data dienkripsi, dibackup harian, dan tersimpan di data center di Indonesia. Setiap perubahan tercatat di jejak audit.</span></div>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel)">
+        <button type="button" data-faq aria-expanded="false" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;border:none;background:transparent;color:var(--tx);font:inherit;font-size:15px;font-weight:600;text-align:left;padding:17px 20px;cursor:pointer">
+          <span data-i18n="f4q">Apakah bisa integrasi dengan sistem lain?</span>
+          <i data-lucide="chevron-down" style="width:18px;height:18px;color:var(--mut);flex-shrink:0;transition:transform .2s"></i>
+        </button>
+        <div data-faq-panel style="display:none;padding:0 20px 18px;font-size:14.5px;line-height:1.65;color:var(--mut)"><span data-i18n="f4a">Bisa. Tersedia API, ekspor-impor Excel, serta integrasi marketplace dan pembayaran di paket Business ke atas.</span></div>
+      </div>
+      <div class="rv" style="border:1px solid var(--bd);border-radius:8px;background:var(--panel)">
+        <button type="button" data-faq aria-expanded="false" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;border:none;background:transparent;color:var(--tx);font:inherit;font-size:15px;font-weight:600;text-align:left;padding:17px 20px;cursor:pointer">
+          <span data-i18n="f5q">Kami masih pakai spreadsheet. Bagaimana migrasinya?</span>
+          <i data-lucide="chevron-down" style="width:18px;height:18px;color:var(--mut);flex-shrink:0;transition:transform .2s"></i>
+        </button>
+        <div data-faq-panel style="display:none;padding:0 20px 18px;font-size:14.5px;line-height:1.65;color:var(--mut)"><span data-i18n="f5a">Impor master data dan saldo awal langsung dari template Excel. Tim kami memeriksa hasilnya bersama Anda.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="Final CTA" style="padding:34px 0;background:#33475f">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px;display:flex;flex-wrap:wrap;align-items:center;gap:20px 32px">
+    <h2 style="margin:0;font-size:25px;font-weight:800;letter-spacing:-.01em;color:#fff" data-i18n="fb_t">Jika ada pertanyaan, hubungi kami!</h2>
+    <a href="tel:0215051510" style="text-decoration:none;font-size:27px;font-weight:800;color:#fff;letter-spacing:.02em">021-5051-5105</a>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-left:auto">
+      <a href="#faq" style="text-decoration:none;font-size:14px;font-weight:600;color:#fff;border:1px solid rgba(255,255,255,.45);border-radius:6px;padding:11px 22px" data-i18n="cta_sales">Hubungi Sales</a>
+      <a href="#harga" style="text-decoration:none;font-size:14px;font-weight:700;color:#33475f;background:#fff;border-radius:6px;padding:11px 22px" data-i18n="nav_demo">Jadwalkan Demo</a>
+    </div>
+  </div>
+</section>
+
+<footer data-screen-label="Footer" style="background:var(--bg);padding:56px 0 28px">
+  <div style="max-width:1180px;margin:0 auto;padding:0 24px">
+    <div class="g-foot" style="display:grid;grid-template-columns:repeat(5,1fr);gap:40px;margin-bottom:52px">
+      <nav aria-label="Fitur Produk" style="display:flex;flex-direction:column;gap:15px;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
+        <span style="font-weight:800;font-size:13px;color:var(--tx);margin-bottom:6px" data-i18n="fc1">Fitur Produk</span>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_stok">Stok Barang</a>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="mod_mfg">Produksi</a>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="mod_sls">Penjualan</a>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="mod_pur">Pembelian</a>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_akt">Akuntansi</a>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)">POS &amp; Retail</a>
+        <a href="#modul" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="mod_fa">Aset Tetap</a>
+      </nav>
+      <nav aria-label="Telusuri" style="display:flex;flex-direction:column;gap:15px;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
+        <span style="font-weight:800;font-size:13px;color:var(--tx);margin-bottom:6px" data-i18n="fc2">Telusuri</span>
+        <a href="#fitur" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_demo">Demo Produk</a>
+        <a href="#faq" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_konsul">Konsultasi</a>
+        <a href="#harga" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_trial">Coba Gratis</a>
+        <a href="#fitur" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_why">Kenapa Senti ERP</a>
+        <a href="#industri" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_users">Pengguna Senti</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_tentang">Tentang Senti</a>
+      </nav>
+      <nav aria-label="Harga" style="display:flex;flex-direction:column;gap:15px;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
+        <span style="font-weight:800;font-size:13px;color:var(--tx);margin-bottom:6px" data-i18n="nav_harga">Harga</span>
+        <a href="#harga" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="nav_harga">Harga</a>
+        <a href="#industri" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_2500">2.500+ Perusahaan Pengguna</a>
+        <a href="#faq" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)">FAQ</a>
+      </nav>
+      <nav aria-label="Pelayanan" style="display:flex;flex-direction:column;gap:15px;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
+        <span style="font-weight:800;font-size:13px;color:var(--tx);margin-bottom:6px" data-i18n="fc4">Pelayanan</span>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_training">Pelayanan Training</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_bantuan">Bantuan Gratis</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_video">Video Tutorial</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_upgrade">Upgrade Sistem</a>
+      </nav>
+      <nav aria-label="Tentang Kami" style="display:flex;flex-direction:column;gap:15px;font-size:12px;text-transform:uppercase;letter-spacing:.03em">
+        <span style="font-weight:800;font-size:13px;color:var(--tx);margin-bottom:6px" data-i18n="fc5">Tentang Kami</span>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="ft_about_l">Tentang Kami</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="l_team">Temui Tim Kami</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="ft_career">Karier</a>
+        <a href="#" style="text-decoration:none;color:var(--mut)" style-hover="color:var(--blue)" data-i18n="ft_contact">Kontak</a>
+      </nav>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;margin-bottom:20px">
+      <span style="font-size:12px;font-weight:700;color:var(--tx)">Global Sites</span>
+      <select data-lang-select aria-label="Pilih bahasa situs" style="font:inherit;font-size:12px;color:var(--mut);background:var(--alt);border:1px solid var(--bd);border-radius:5px;padding:7px 10px">
+        <option value="id">Indonesia (Bahasa Indonesia)</option>
+        <option value="en">English</option>
+      </select>
+      <a href="#" style="text-decoration:none;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);background:var(--alt);border:1px solid var(--bd);border-radius:5px;padding:8px 14px" style-hover="color:var(--blue)" data-i18n="l_sitemap">Peta Situs</a>
+      <a href="#" style="text-decoration:none;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);background:var(--alt);border:1px solid var(--bd);border-radius:5px;padding:8px 14px" style-hover="color:var(--blue)" data-i18n="l_privacy">Kebijakan Privasi</a>
+    </div>
+    <div style="border-top:1px solid var(--bd);padding-top:20px;font-size:12.5px;color:var(--mut)" data-i18n="ft_copy">© 2026 PT Senti Teknologi Indonesia. Hak cipta dilindungi.</div>
+  </div>
+</footer>
+
+<a href="#" class="wa-float" aria-label="Chat via WhatsApp" style="position:fixed;right:20px;bottom:20px;z-index:60;width:52px;height:52px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.22)">
+  <i data-lucide="message-circle" style="width:26px;height:26px"></i>
+</a>
+
+<div class="m-cta" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:60;gap:10px;padding:10px 16px;background:var(--bg);border-top:1px solid var(--bd)">
+  <a href="#harga" style="flex:1;text-decoration:none;text-align:center;font-size:14px;font-weight:600;color:var(--tx);border:1px solid var(--bd);border-radius:6px;padding:11px 12px" data-i18n="nav_demo">Jadwalkan Demo</a>
+  <a href="#harga" style="flex:1.3;text-decoration:none;text-align:center;font-size:14px;font-weight:700;color:#fff;background:var(--blue);border-radius:6px;padding:12px 12px" data-i18n="cta_trial">Coba Gratis 30 Hari</a>
+</div>
+<script>
+(function () {
+    var EN = {
+      nav_modul: "Modules", nav_fitur: "Features", nav_industri: "Industries", nav_harga: "Pricing",
+      nav_demo: "Schedule a Demo", nav_try: "Start Free Trial",
+      hero_kicker: "Cloud ERP for Indonesian Businesses",
+      hero_h: "A complete ERP your whole team can actually use",
+      hero_sub: "Accounting, inventory, purchasing, sales, and production — one web-based system, nothing to install.",
+      pa_label: "Flat price, no surprises",
+      pa_main: "Every ERP feature, unlimited users — from Rp 750K/month",
+      cta_trial: "Start 30-Day Free Trial", cta_demo: "Watch Demo",
+      hb1: "Live in under 2 weeks", hb2: "No per-user fees", hb3: "Data hosted in Indonesia",
+      trust_t: "Trusted by 2,500+ companies across Indonesia",
+      hl1_t: "Real-time reports", hl1_d: "Sales, stock, and cash figures — current every time you look.",
+      hl2_t: "Customizable menus", hl2_d: "Arrange screens and input flows to match how your team works.",
+      hl3_t: "2,500+ companies", hl3_d: "Manufacturers, distributors, and retailers across Indonesia.",
+      why_t: "Why Senti ERP", why_sub: "Built for how Indonesian companies work — simple, fast, and transparent.",
+      w1_t: "Web-Based", w1_d: "Use it from any browser — no servers to maintain.",
+      w2_t: "Unlimited Users", w2_d: "One price for the whole team, no matter the headcount.",
+      w3_t: "Real-Time Reports", w3_d: "Every transaction shows up in reports instantly.",
+      w4_t: "Secure & Audited", w4_d: "Encryption, daily backups, and a full audit trail.",
+      w5_t: "Guided Onboarding", w5_d: "A local team guides you from setup to go-live.",
+      mod_t: "Every module your business needs",
+      mod_sub: "One database, every module connected — no double entry.",
+      mod_fin: "Accounting & GL", mod_pur: "Purchasing", mod_sls: "Sales", mod_mfg: "Production", mod_fa: "Fixed Assets",
+      dd1_k: "Finance", dd1_t: "Finance that stays tidy",
+      dd1_b1: "Journals posted automatically from every sale and purchase",
+      dd1_b2: "Real-time balance sheet & P&L, audit-ready",
+      dd1_b3: "Faster bank reconciliation with statement import",
+      dd2_k: "Supply Chain", dd2_t: "Stock under control in every warehouse",
+      dd2_b1: "Accurate multi-warehouse stock cards",
+      dd2_b2: "Automatic reorder suggestions when stock runs low",
+      dd2_b3: "Stocktakes with variances recorded automatically",
+      ind_t: "Solutions by industry", ind_sub: "Ready-made configurations for your business model.",
+      i1_t: "Manufacturing", i1_d: "BOMs, work orders, and production costing.",
+      i2_t: "Distribution", i2_d: "Multi-warehouse, tiered pricing, delivery fleets.",
+      i3_d: "POS wired straight into stock and accounting.",
+      i4_t: "Services & Projects", i4_d: "Per-project costing and progressive billing.",
+      s1_n: "2,500+", s1_l: "companies on Senti", s2_l: "industries served",
+      s3_n: "99.9%", s3_l: "uptime, last 12 months", s4_n: "4.8/5", s4_l: "customer satisfaction rating",
+      tst_t: "What customers say",
+      q1: "“Monthly close went from 10 days to 2. We finally trust our numbers.”",
+      q2: "“Stock across 3 warehouses finally matches the books. No more double entry.”",
+      q3: "“Their team stayed with us until every cashier and admin was fluent. Live in two weeks.”",
+      r1: "Operations Director, PT Prima Karya Logam · Surabaya",
+      r2: "Finance Manager, CV Berkah Distribusi · Bandung",
+      r3: "Owner, Kopi Nusantara Group · Makassar",
+      price_t: "Simple, flat pricing",
+      price_sub: "Every plan includes unlimited users. No per-seat fees.",
+      per_mo: "/mo", p_unl: "Unlimited users",
+      p1_d: "For businesses just getting organized.", p1_price: "Rp 750K",
+      p1f1: "FIN, INV, SLS, PUR modules", p1f3: "1 business entity", p1f4: "Email & chat support",
+      p2_chip: "Most Popular", p2_d: "For multi-warehouse and production operations.", p2_price: "Rp 1.5M",
+      p2f1: "All modules, incl. MFG & POS", p2f3: "3 business entities",
+      p2f4: "Multi-warehouse & multi-branch", p2f5: "Priority support + onboarding",
+      p3_d: "For business groups with custom needs.", p3_price: "Custom",
+      p3f1: "Everything in Business", p3f2: "Unlimited entities",
+      p3f3: "API & custom integrations", p3f4: "SLA & dedicated account manager",
+      cta_trial_s: "Start Free", cta_sales: "Contact Sales",
+      faq_t: "Frequently asked questions",
+      f1q: "How long does implementation take?",
+      f1a: "Typically 1–2 weeks. Our team helps with master data setup, opening balances, and training your team.",
+      f2q: "Is it really unlimited users?",
+      f2a: "Yes. Pricing is per company, not per user. Add accounts anytime at no extra cost.",
+      f3q: "How is our data secured?",
+      f3a: "Data is encrypted, backed up daily, and stored in Indonesian data centers. Every change is logged in an audit trail.",
+      f4q: "Can it integrate with other systems?",
+      f4a: "Yes. We provide an API, Excel import/export, plus marketplace and payment integrations on Business plans and above.",
+      f5q: "We still run on spreadsheets. How does migration work?",
+      f5a: "Import master data and opening balances straight from Excel templates. Our team reviews the results with you.",
+      fc_t: "Ready to get your operations in order?",
+      fc_sub: "Start free for 30 days — no credit card required.",
+      ft_about: "Cloud ERP for manufacturing, distribution, and retail companies in Indonesia.",
+      ft_prod: "Product", ft_sec: "Security", ft_co: "Company", ft_about_l: "About Us",
+      ft_career: "Careers", ft_contact: "Contact", ft_sup: "Support", ft_help: "Help Center",
+      ft_docs: "Documentation", ft_status: "System Status",
+      ft_copy: "© 2026 PT Senti Teknologi Indonesia. All rights reserved.",
+      fb_t: "Have questions? Contact us!", fb_contact: "Contact Us", fb_demo: "Try a Demo", fb_trial: "Start Free Trial",
+      fc1: "Product Features", fc2: "Explore", fc4: "Services", fc5: "About Us",
+      l_stok: "Inventory", l_akt: "Accounting",
+      l_demo: "Product Demo", l_konsul: "Consultation", l_trial: "Free Trial",
+      l_why: "Why Senti ERP", l_users: "Senti Customers", l_tentang: "About Senti",
+      l_2500: "2,500+ Companies", l_training: "Training Services", l_bantuan: "Free Support",
+      l_video: "Video Tutorials", l_upgrade: "System Upgrades",
+      l_team: "Meet Our Team", l_sitemap: "Sitemap", l_privacy: "Privacy Policy",
+      bn2_t: "Senti ERP, Flexible by Design", bn2_s: "Arrange menus, reports, and functions to fit your business."
+    };
+
+    var ID = {};
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      var k = el.getAttribute("data-i18n");
+      if (!(k in ID)) ID[k] = el.textContent;
+    });
+
+    var theme;
+    function setTheme(t, save) {
+      theme = t;
+      document.documentElement.setAttribute("data-th", t);
+      if (save) localStorage.setItem("senti-theme", t);
+      document.querySelectorAll("[data-icon-sun]").forEach(function (s) { s.style.display = t === "dark" ? "inline-flex" : "none"; });
+      document.querySelectorAll("[data-icon-moon]").forEach(function (m) { m.style.display = t === "dark" ? "none" : "inline-flex"; });
+    }
+
+    var lang;
+    function setLang(l, save) {
+      lang = l;
+      document.documentElement.lang = l;
+      if (save) localStorage.setItem("senti-lang", l);
+      document.querySelectorAll("[data-i18n]").forEach(function (el) {
+        var k = el.getAttribute("data-i18n");
+        var v = l === "en" ? (EN[k] != null ? EN[k] : ID[k]) : ID[k];
+        if (v != null) el.textContent = v;
+      });
+      document.querySelectorAll("[data-lang-select]").forEach(function (s) { s.value = l; });
+      document.querySelectorAll("[data-lang-btn]").forEach(function (b) {
+        var active = b.getAttribute("data-lang-btn") === l;
+        b.style.background = active ? "var(--blue)" : "transparent";
+        b.style.color = active ? "#fff" : "var(--mut)";
+        b.setAttribute("aria-pressed", String(active));
+      });
+    }
+
+    var savedT = localStorage.getItem("senti-theme");
+    var osDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setTheme(savedT || (osDark ? "dark" : "light"), false);
+    setLang(localStorage.getItem("senti-lang") || "id", false);
+
+    document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { setTheme(theme === "dark" ? "light" : "dark", true); });
+    });
+    document.querySelectorAll("[data-lang-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { setLang(b.getAttribute("data-lang-btn"), true); });
+    });
+    document.querySelectorAll("[data-lang-select]").forEach(function (s) {
+      s.addEventListener("change", function () { setLang(s.value, true); });
+    });
+
+    document.querySelectorAll("[data-faq]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var panel = btn.parentElement.querySelector("[data-faq-panel]");
+        var open = panel.style.display !== "none";
+        panel.style.display = open ? "none" : "block";
+        btn.setAttribute("aria-expanded", String(!open));
+        var chev = btn.querySelector("svg");
+        if (chev) chev.style.transform = open ? "" : "rotate(180deg)";
+      });
+    });
+
+    var burger = document.querySelector("[data-burger]");
+    var mnav = document.querySelector("[data-mnav]");
+    function setMenu(open) {
+      mnav.style.display = open ? "flex" : "none";
+      burger.setAttribute("aria-expanded", String(open));
+      burger.querySelector("[data-icon-menu]").style.display = open ? "none" : "inline-flex";
+      burger.querySelector("[data-icon-x]").style.display = open ? "inline-flex" : "none";
+    }
+    if (burger && mnav) {
+      burger.addEventListener("click", function () { setMenu(mnav.style.display === "none" || !mnav.style.display); });
+      mnav.querySelectorAll("a").forEach(function (a) { a.addEventListener("click", function () { setMenu(false); }); });
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add("rv-in"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll(".rv").forEach(function (el) { io.observe(el); });
+
+    document.querySelectorAll("[style-hover]").forEach(function (el) {
+      var base = el.getAttribute("style") || "";
+      var hover = el.getAttribute("style-hover");
+      el.addEventListener("mouseenter", function () { el.style.cssText = base + ";" + hover; });
+      el.addEventListener("mouseleave", function () { el.style.cssText = base; });
+    });
+
+    function renderIcons() {
+      function tryIcons() {
+        if (window.lucide && window.lucide.createIcons) { window.lucide.createIcons(); return true; }
+        return false;
+      }
+      if (!tryIcons()) {
+        var n = 0;
+        var t = setInterval(function () { if (tryIcons() || ++n > 40) clearInterval(t); }, 150);
+      }
+    }
+    renderIcons();
+})();
+</script>
+</body>
+</html>
