@@ -1,0 +1,38 @@
+# .cursorrules — Cursor Operating Guide
+
+> File ini dibaca oleh **Cursor** saat bekerja di repo ini.
+
+## Aturan tertinggi (WAJIB)
+
+**Single source of truth instruksi ada di `CLAUDE.md`.**
+Sebelum melakukan APA PUN (menulis/mengubah kode, menjalankan perintah,
+mengedit konfigurasi), kamu **WAJIB membaca `CLAUDE.md` lebih dulu** secara
+penuh dan mematuhinya tanpa kecuali.
+
+File ini (.cursorrules) hanya berfungsi sebagai:
+1. **Pointer** — mengarahkan Cursor ke `CLAUDE.md`.
+2. **Catatan kompatibilitas** khusus Cursor yang tidak tercakup CLAUDE.md.
+
+Jika ada konflik antara .cursorrules dan CLAUDE.md → **CLAUDE.md yang menang**.
+
+## Cara kerja
+
+1. Baca `CLAUDE.md` penuh di awal sesi.
+2. Patuhi seluruh aturan non-negotiable (§2), perintah (§3), konvensi kode
+   (§5), testing (§6), dan jebakan umum (§8).
+3. Jangan duplikasi isi CLAUDE.md ke sini — cukup rujuk.
+
+## Catatan khusus Cursor
+
+- Composer / Chat: patuhi §5 (maks 400 baris/file, named exports, strict TS).
+- Jalankan perintah persis seperti di CLAUDE.md §3: pakai **npm**, bukan pnpm.
+- Untuk app Next.js produksi → `node <standalone>/server.js`, **bukan**
+  `next start` (CLAUDE.md §4.2).
+- Gunakan `npm run typecheck` / `npm run lint` sebelum menganggap selesai.
+- §4.1: setiap port baru yang butuh akses LAN **WAJIB** di-allow di UFW.
+- Jangan edit file di §9 tanpa diminta (`infra/docker-compose.yml`,
+  `config/ports.json`, dll).
+
+## Singkatnya
+
+> **Baca `CLAUDE.md`. Patuhi isinya. Selesai.**
