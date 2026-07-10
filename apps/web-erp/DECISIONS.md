@@ -2908,6 +2908,23 @@ Tipe · Kategori · Satuan · Jenis Barang.
 
 ---
 
+## Item form — tracking stok eksklusif Batch / Serial / Tidak pakai (2026-07-10)
+
+Keputusan user dari halaman `/app/master/items`, section **Pergerakan Stok**:
+mode tracking item harus dipilih sebagai **salah satu** dari **Batch / Lot**,
+**Serial No.**, atau **Tidak pakai**. UI tidak boleh lagi menampilkan dua toggle
+independen `Serial No.` dan `Batch / Lot`, karena itu memungkinkan kedua flag
+aktif bersamaan dan membingungkan saat mutasi stok.
+
+Implementasi frontend tetap memakai kolom/API existing `tracksBatch` +
+`tracksSerial` agar tidak perlu migrasi DB: segmented `RadioGroup` 3 opsi di
+`items-form-sections.tsx` memetakan pilihan ke dua boolean. Adapter save
+`toItemPayload()` menormalisasi ulang dengan prioritas `serial` bila data lama
+pernah punya dua flag aktif, sehingga payload keluar selalu eksklusif. Field
+`Kategori Umur` hanya tampil untuk mode Batch.
+
+---
+
 ## Kategori Item — mapping 8 akun GL (2026-06-12)
 
 Paritas legacy MyERP+ "Kategori Produk": `md_item_categories` kini memetakan

@@ -10,6 +10,25 @@ import type {
 
 export const ITEM_TYPES: ErpItemType[] = ['INVENTORY', 'SERVICE', 'CONSUMABLE', 'ASSET', 'NON_INVENTORY'];
 
+export type ItemStockTrackingMode = 'none' | 'batch' | 'serial';
+
+export const ITEM_STOCK_TRACKING_OPTIONS: ReadonlyArray<{ value: ItemStockTrackingMode; label: string }> = [
+  { value: 'none', label: 'Tidak pakai' },
+  { value: 'batch', label: 'Batch / Lot' },
+  { value: 'serial', label: 'Serial No.' },
+];
+
+export const stockTrackingModeFromFlags = (tracksBatch: boolean, tracksSerial: boolean): ItemStockTrackingMode => {
+  if (tracksSerial) return 'serial';
+  if (tracksBatch) return 'batch';
+  return 'none';
+};
+
+export const stockTrackingFlagsFromMode = (mode: ItemStockTrackingMode) => ({
+  tracksBatch: mode === 'batch',
+  tracksSerial: mode === 'serial',
+});
+
 /** One row in the "Distributor" section (legacy m1_item_supplier). `key` is a
  *  stable client id so SearchSelect display state survives row add/remove. */
 export interface ItemDistributorFormRow {

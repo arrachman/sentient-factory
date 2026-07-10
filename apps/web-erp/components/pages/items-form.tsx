@@ -8,7 +8,7 @@
 
 import type { ErpItem, CreateItemPayload } from '@/lib/api/items';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
-import type { ItemFormData } from './items-form-model';
+import { stockTrackingFlagsFromMode, stockTrackingModeFromFlags, type ItemFormData } from './items-form-model';
 
 export { ItemFormFields } from './items-form-fields';
 export {
@@ -228,8 +228,7 @@ export function toItemPayload(f: ItemFormData): CreateItemPayload {
         maxStock: orUndef(w.maxStock),
         minOrderQty: orUndef(w.minOrderQty),
       })),
-    tracksSerial: f.tracksSerial,
-    tracksBatch: f.tracksBatch,
+    ...stockTrackingFlagsFromMode(stockTrackingModeFromFlags(f.tracksBatch, f.tracksSerial)),
     tracksBin: f.tracksBin,
     inventoryAccountId: orNull(f.inventoryAccountId),
     salesAccountId: orNull(f.salesAccountId),

@@ -11,12 +11,18 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BooleanRadio } from '@/components/ui/radio-group';
+import { BooleanRadio, RadioGroup } from '@/components/ui/radio-group';
 import { ItemTypeInfoButton, getItemTypeTraits } from '@/components/molecules/item-type-info';
 import type { FormErrors } from '@/lib/form-validation';
 import { nextCodePreview } from '@/lib/items-code-generator';
 import type { ItemFormData } from './items-form-model';
-import { ITEM_TYPES } from './items-form-model';
+import {
+  ITEM_STOCK_TRACKING_OPTIONS,
+  ITEM_TYPES,
+  stockTrackingFlagsFromMode,
+  stockTrackingModeFromFlags,
+  type ItemStockTrackingMode,
+} from './items-form-model';
 import { Section, LookupField, MultiLookupField, NumField, YesNoField } from './items-form-parts';
 import { ItemMediaUpload } from '@/components/organisms/item-media-upload';
 import { ItemAttachmentUpload } from '@/components/organisms/item-attachment-upload';
@@ -150,8 +156,19 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
     case 'pergerakanstok':
       return (
         <Section title="Pergerakan Stok" icon="swap" hint="Tracking serial/batch menentukan cara pencatatan mutasi stok">
-          <YesNoField id="if-serial" label="Serial No." value={data.tracksSerial} onChange={(v) => set('tracksSerial', v)} help="1 qty = 1 serial" />
-          <YesNoField id="if-batch" label="Batch / Lot" value={data.tracksBatch} onChange={(v) => set('tracksBatch', v)} help="1 qty bisa banyak batch" />
+          <FormField label="Tracking" htmlFor="if-tracking" className="col-span-2 grid-cols-[110px_1fr]">
+            <div className="flex flex-col gap-1">
+              <RadioGroup<ItemStockTrackingMode>
+                id="if-tracking"
+                value={stockTrackingModeFromFlags(data.tracksBatch, data.tracksSerial)}
+                onValueChange={(mode) => onChange({ ...data, ...stockTrackingFlagsFromMode(mode) })}
+                options={ITEM_STOCK_TRACKING_OPTIONS}
+                className="w-full"
+                aria-label="Mode tracking stok"
+              />
+              <p className="text-[11px] text-[var(--fg-subtle)]">Batch = banyak qty per lot; Serial = 1 qty per nomor; Tidak pakai = mutasi qty biasa.</p>
+            </div>
+          </FormField>
           {data.tracksBatch && (
             <FormField label="Kategori Umur" htmlFor="if-age">
               <Input id="if-age" value={data.ageCategory} onChange={(e) => set('ageCategory', e.target.value)} placeholder="mis. FIFO 30 hari" />
