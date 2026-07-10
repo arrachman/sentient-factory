@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Senti ERP — Deck Pitch (Viewer)</title>
+<!--
+  HTML mirror dari deck pitch (12 slide, 16:9). Fungsi ganda:
+  1. Viewer web — buka di browser, navigasi panah ←/→.
+  2. Render ke PDF via chromium headless (lihat render-deck-pdf.sh).
+  Konten disinkron dengan 05-deck-pitch-senti-erp.pptx.
+-->
+<style>
+  :root{
+    --blue:#2563eb; --blueh:#1d4ed8; --bluedk:#0b1a3d; --bluedp:#16294d;
+    --bluebg:#eef4ff; --tx:#0f172a; --mut:#5b6477; --bd:#e6e8ec;
+    --bg:#fff; --alt:#f6f8fc; --green:#15803d; --redbg:#fef2f2; --redtx:#7f1d1d;
+    --grnbg:#ecfdf5; --grntx:#065f46; --amber:#ca8a04;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#1a1f2e;color:var(--tx)}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;gap:14px}
+  .slide{
+    width:1280px;height:720px;background:var(--bg);position:relative;overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.4);display:flex;flex-direction:column;padding:54px 64px;
+    flex-shrink:0;
+  }
+  .slide.dark{background:var(--bluedk);color:#fff}
+  .topbar{position:absolute;top:0;left:0;right:0;height:6px;background:var(--blue)}
+  .logo{position:absolute;top:24px;left:64px;display:flex;align-items:center;gap:9px;font-weight:800;font-size:18px}
+  .logo .mk{width:30px;height:30px;background:var(--blue);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+  .dark .logo{color:#fff}.dark .logo .mk{background:#fff;color:var(--blue)}
+  .pnum{position:absolute;bottom:22px;right:64px;font-size:12px;color:var(--mut);font-weight:600}
+  .dark .pnum{color:rgba(255,255,255,.5)}
+  .brand-foot{position:absolute;bottom:22px;left:64px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--tx)}
+  .dark .brand-foot{color:rgba(255,255,255,.7)}
+  .brand-foot .mk{width:18px;height:18px;background:var(--blue);color:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px}
+  .dark .brand-foot .mk{background:#fff;color:var(--blue)}
+
+  .eyebrow{font-size:13px;font-weight:800;color:var(--blue);letter-spacing:1.5px;text-transform:uppercase;margin-top:18px}
+  .dark .eyebrow{color:#93c5fd}
+  .h1{font-size:46px;font-weight:800;line-height:1.08;letter-spacing:-1.2px;margin:6px 0}
+  .h1.xl{font-size:54px}
+  .sub{font-size:19px;color:var(--mut);line-height:1.45;font-weight:500;max-width:1050px}
+  .dark .sub{color:#c7d2fe}
+
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:24px}
+  .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:26px}
+  .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:22px}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:18px}
+  .card.bg{background:var(--bluebg)}
+  .card.darkcard{background:var(--bluedp);border-color:#2a3b66;color:#fff}
+  .card-top-accent{border-top:5px solid var(--blue)}
+
+  .num{font-size:24px;font-weight:800;color:var(--blueh)}
+  .ct{font-size:16px;font-weight:700;margin-top:2px}
+  .cd{font-size:13px;color:var(--mut);margin-top:4px;line-height:1.3}
+  .ico{font-size:40px;text-align:center;margin:4px 0 8px}
+  .ico-l{font-size:46px}
+
+  .row{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--bd);border-left:6px solid var(--blue);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+  .row .ic{font-size:30px;width:46px;text-align:center}
+  .row .rt b{font-size:17px;display:block}
+  .row .rt span{font-size:13.5px;color:var(--mut)}
+
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:24px}
+  .ba .col{border-radius:16px;padding:22px}
+  .ba .before{background:var(--redbg);color:var(--redtx);border:1px solid #fccaca}
+  .ba .after{background:var(--grnbg);color:var(--grntx);border:1px solid #a7f3d0}
+  .ba .col b{display:block;font-size:15px;margin-bottom:12px;letter-spacing:1px}
+  .ba li{list-style:none;padding:7px 0;font-size:16px;font-weight:600;border-bottom:1px solid rgba(0,0,0,.06)}
+  .ba li:last-child{border:none}
+  .ba li::before{margin-right:9px;font-weight:800}
+  .ba .before li::before{content:"✗"}
+  .ba .after li::before{content:"✓"}
+
+  .plans{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:26px}
+  .plan{border:1px solid var(--bd);border-radius:16px;padding:22px;background:#fff;position:relative}
+  .plan.pop{border:2px solid var(--blue);background:var(--bluebg)}
+  .plan .nm{font-size:18px;font-weight:800}
+  .plan .pr{font-size:30px;font-weight:800;color:var(--blueh);margin:6px 0 10px}
+  .plan .pr small{font-size:14px;color:var(--mut);font-weight:500}
+  .plan ul{list-style:none;font-size:13px;color:var(--mut);line-height:1.7}
+  .plan ul li::before{content:"✓ ";color:var(--green);font-weight:700}
+  .plan.pop ul li{color:#1e293b}
+  .tag-pop{position:absolute;top:-13px;right:18px;background:var(--blue);color:#fff;font-size:10px;font-weight:700;padding:4px 11px;border-radius:6px;letter-spacing:.5px}
+
+  .stat-num{font-size:42px;font-weight:800;color:#fff;text-align:center;line-height:1}
+  .stat-lbl{font-size:13px;color:#c7d2fe;text-align:center;margin-top:6px}
+  .tst{background:var(--bluedp);border-left:6px solid var(--blue);border-radius:12px;padding:18px 22px;margin-top:20px;color:#fff}
+  .tst q{font-size:17px;font-style:italic;line-height:1.4;quotes:"\201C" "\201D";display:block}
+  .tst .by{font-size:12px;color:#93c5fd;margin-top:8px;display:block}
+
+  .badge-row{display:flex;gap:10px;margin-top:26px}
+  .badge{background:var(--bluedp);color:#fff;padding:8px 16px;border-radius:999px;font-size:13px;font-weight:600}
+
+  .pill{display:inline-block;background:var(--bluebg);color:var(--blueh);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px}
+  .cta-box{background:var(--bluedp);border:1px solid #2a3b66;border-radius:14px;padding:22px 28px;margin-top:26px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .cta-box .lbl{font-size:13px;font-weight:700;color:#93c5fd}
+  .cta-box .val{font-size:26px;font-weight:800;color:#fff;margin-top:4px}
+  .center-note{text-align:center;font-size:14px;color:var(--mut);margin-top:18px}
+  .dark .center-note{color:#93c5fd}
+
+  .hint{color:#94a3b8;font-size:14px;text-align:center;max-width:1280px}
+  .hint kbd{background:#2a3142;color:#e2e8f0;padding:2px 7px;border-radius:4px;font-size:12px;border:1px solid #3a4258}
+  @media print{
+    body{background:#fff;padding:0;gap:0}
+    .slide{box-shadow:none;margin:0;page-break-after:always}
+    .hint{display:none}
+    .slide:last-child{page-break-after:auto}
+  }
+</style>
+</head>
+<body>
+<div class="hint">🖥️ Deck Pitch Viewer — gunakan <kbd>←</kbd> <kbd>→</kbd> untuk navigasi · <kbd>P</kbd> print/PDF · 12 slide 16:9</div>
+
+<!-- SLIDE 1: COVER -->
+<div class="slide dark" id="d1">
+  <div class="topbar"></div>
+  <div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Pitch Deck · 2026</div>
+  <div class="h1 xl" style="margin-top:30px">ERP Lengkap untuk<br>Bisnis Indonesia.</div>
+  <div class="sub" style="margin-top:18px">Akuntansi, stok, penjualan, dan produksi dalam satu sistem berbasis web. Harga flat, pengguna tak terbatas, implementasi 2 minggu.</div>
+  <div class="badge-row">
+    <span class="badge">2.500+ perusahaan</span>
+    <span class="badge">🇮🇩 Data di Indonesia</span>
+    <span class="badge">99,9% uptime</span>
+  </div>
+  <div style="position:absolute;bottom:54px;left:64px;font-size:14px;color:#93c5fd">PT Senti Teknologi Indonesia · 021-5051-5105</div>
+  <div class="pnum">01 / 12</div>
+</div>
+
+<!-- SLIDE 2: AGENDA -->
+<div class="slide" id="d2">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Agenda</div>
+  <div class="h1">Apa yang akan kita bahas</div>
+  <div class="grid3">
+    <div class="card bg"><div class="num">01</div><div class="ct">Masalah</div><div class="cd">Pain operasional yang lazim dijumpai.</div></div>
+    <div class="card bg"><div class="num">02</div><div class="ct">Solusi</div><div class="cd">Apa itu Senti ERP dan kenapa beda.</div></div>
+    <div class="card bg"><div class="num">03</div><div class="ct">Modul & Industri</div><div class="cd">Fitur dan segmen yang dilayani.</div></div>
+    <div class="card bg"><div class="num">04</div><div class="ct">Harga</div><div class="cd">Model harga flat, tanpa per user.</div></div>
+    <div class="card bg"><div class="num">05</div><div class="ct">Implementasi</div><div class="cd">Bagaimana onboarding berjalan.</div></div>
+    <div class="card bg"><div class="num">06</div><div class="ct">Demo & Q&A</div><div class="cd">Jadwalkan demo & tanya jawab.</div></div>
+  </div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">02 / 12</div>
+</div>
+
+<!-- SLIDE 3: PROBLEM -->
+<div class="slide" id="d3">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Masalah</div>
+  <div class="h1">Operasional yang menyita waktu & uang</div>
+  <div class="sub">Empat pain yang kami dengar berulang dari pemilik usaha:</div>
+  <div style="margin-top:22px">
+    <div class="row"><div class="ic">📉</div><div class="rt"><b>Tutup buku makan 10 hari</b><span>Tim keuangan kejar setoran; angka sering berubah sampai akhir bulan.</span></div></div>
+    <div class="row"><div class="ic">📦</div><div class="rt"><b>Stok tak cocok dengan pembukuan</b><span>Fisik gudang beda dengan catatan Excel — selisih sulit ditelusuri.</span></div></div>
+    <div class="row"><div class="ic">🔁</div><div class="rt"><b>Entri ganda antar tim</b><span>Penjualan input di satu tempat, keuangan input lagi di tempat lain.</span></div></div>
+    <div class="row"><div class="ic">💸</div><div class="rt"><b>Software mahal & per user</b><span>Tambah karyawan = tambah biaya; jadi tidak scale dengan bisnis.</span></div></div>
+  </div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">03 / 12</div>
+</div>
+
+<!-- SLIDE 4: SOLUTION -->
+<div class="slide" id="d4">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Solusi</div>
+  <div class="h1">Bisnis Anda, setelah Senti ERP</div>
+  <div class="ba">
+    <div class="col before"><b>SEBELUM</b><ul><li>Tutup buku 10 hari</li><li>Stok tidak cocok</li><li>Entri ganda antar tim</li><li>Bayar per user</li><li>Server sendiri rawan mati</li></ul></div>
+    <div class="col after"><b>SESUDAH</b><ul><li>Tutup buku 2 hari</li><li>Real-time, auto kartu stok</li><li>Satu data, semua modul</li><li>Harga flat, user tak terbatas</li><li>Cloud + backup harian</li></ul></div>
+  </div>
+  <div class="center-note" style="font-weight:700;color:var(--blueh)">Satu sistem menyatukan data → angka lebih cepat, lebih akurat, lebih murah.</div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">04 / 12</div>
+</div>
+
+<!-- SLIDE 5: KENAPA / USP -->
+<div class="slide" id="d5">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Kenapa Senti ERP</div>
+  <div class="h1">Lima keunggulan yang dirasakan langsung</div>
+  <div class="grid5">
+    <div class="card card-top-accent"><div class="ico">🌐</div><div class="ct" style="text-align:center">Berbasis Web</div><div class="cd" style="text-align:center">Akses dari browser mana pun, tanpa server sendiri.</div></div>
+    <div class="card card-top-accent"><div class="ico">∞</div><div class="ct" style="text-align:center">User Tak Terbatas</div><div class="cd" style="text-align:center">Satu harga untuk seluruh tim, berapa pun jumlahnya.</div></div>
+    <div class="card card-top-accent"><div class="ico">⚡</div><div class="ct" style="text-align:center">Real-Time</div><div class="cd" style="text-align:center">Setiap transaksi langsung tercermin di laporan.</div></div>
+    <div class="card card-top-accent"><div class="ico">🔒</div><div class="ct" style="text-align:center">Aman & Teraudit</div><div class="cd" style="text-align:center">Enkripsi, backup harian, jejak audit lengkap.</div></div>
+    <div class="card card-top-accent"><div class="ico">🤝</div><div class="ct" style="text-align:center">Didampingi Tim</div><div class="cd" style="text-align:center">Setup sampai berjalan — implementasi 2 minggu.</div></div>
+  </div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">05 / 12</div>
+</div>
+
+<!-- SLIDE 6: MODUL -->
+<div class="slide" id="d6">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Satu data, semua modul</div>
+  <div class="h1">8 modul terintegrasi, tanpa entri ganda</div>
+  <div class="grid4" style="margin-top:20px">
+    <div class="card bg"><div class="num">MD</div><div class="ct">Master Data</div><div class="cd">Pelanggan, vendor, item, akun.</div></div>
+    <div class="card bg"><div class="num">FIN</div><div class="ct">Akuntansi & GL</div><div class="cd">Jurnal otomatis, neraca, laba rugi.</div></div>
+    <div class="card bg"><div class="num">INV</div><div class="ct">Inventory</div><div class="cd">Kartu stok multi-gudang, opname.</div></div>
+    <div class="card bg"><div class="num">PUR</div><div class="ct">Pembelian</div><div class="cd">PO, penerimaan, hutang.</div></div>
+    <div class="card bg"><div class="num">SLS</div><div class="ct">Penjualan</div><div class="cd">Faktur, piutang, harga bertingkat.</div></div>
+    <div class="card bg"><div class="num">MFG</div><div class="ct">Produksi</div><div class="cd">BOM, perintah kerja, HPP.</div></div>
+    <div class="card bg"><div class="num">FA</div><div class="ct">Aset Tetap</div><div class="cd">Penyusutan, pelacakan aset.</div></div>
+    <div class="card bg"><div class="num">POS</div><div class="ct">POS & Retail</div><div class="cd">Kasir nyambung ke stok & akuntansi.</div></div>
+  </div>
+  <div class="center-note">Semua modul berbagi satu database — input sekali, terpakai di semua sisi.</div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">06 / 12</div>
+</div>
+
+<!-- SLIDE 7: PER INDUSTRI -->
+<div class="slide" id="d7">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Solusi per industri</div>
+  <div class="h1">Konfigurasi siap untuk model bisnis Anda</div>
+  <div style="margin-top:22px">
+    <div class="row"><div class="ic">🏭</div><div class="rt"><b>Manufaktur</b><span>BOM, perintah kerja, dan biaya produksi (HPP).</span></div><span class="pill">MFG + FIN</span></div>
+    <div class="row"><div class="ic">📦</div><div class="rt"><b>Distribusi</b><span>Multi-gudang, harga bertingkat, armada pengiriman.</span></div><span class="pill">INV + PUR</span></div>
+    <div class="row"><div class="ic">☕</div><div class="rt"><b>Retail & F&B</b><span>POS terhubung langsung ke stok dan akuntansi.</span></div><span class="pill">POS + INV + SLS</span></div>
+    <div class="row"><div class="ic">📋</div><div class="rt"><b>Jasa & Proyek</b><span>Biaya per proyek dan penagihan bertahap.</span></div><span class="pill">FIN + SLS</span></div>
+  </div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">07 / 12</div>
+</div>
+
+<!-- SLIDE 8: SOCIAL PROOF -->
+<div class="slide dark" id="d8">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Bukan janji — sudah berjalan</div>
+  <div class="h1">Angka yang bisa diperiksa</div>
+  <div class="grid4" style="margin-top:30px">
+    <div class="card darkcard"><div class="stat-num">2.500+</div><div class="stat-lbl">perusahaan pengguna</div></div>
+    <div class="card darkcard"><div class="stat-num">15+</div><div class="stat-lbl">industri terlayani</div></div>
+    <div class="card darkcard"><div class="stat-num">99,9%</div><div class="stat-lbl">uptime 12 bulan</div></div>
+    <div class="card darkcard"><div class="stat-num">4,8/5</div><div class="stat-lbl">rating kepuasan</div></div>
+  </div>
+  <div class="tst"><q>Tutup buku bulanan dari 10 hari jadi 2 hari. Angkanya sekarang bisa dipercaya.</q><span class="by">Budi Santoso — Direktur Operasional, PT Prima Karya Logem · Surabaya</span></div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">08 / 12</div>
+</div>
+
+<!-- SLIDE 9: HARGA -->
+<div class="slide" id="d9">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Harga flat & sederhana</div>
+  <div class="h1">Tanpa biaya per user</div>
+  <div class="sub">Semua paket termasuk pengguna tak terbatas. Tambah tim tanpa tambah biaya.</div>
+  <div class="plans">
+    <div class="plan"><div class="nm">Starter</div><div class="pr">Rp 750rb <small>/bln</small></div><ul><li>Modul FIN, INV, SLS, PUR</li><li>Pengguna tak terbatas</li><li>1 entitas usaha</li><li>Dukungan email & chat</li></ul></div>
+    <div class="plan pop"><span class="tag-pop">PALING POPULER</span><div class="nm">Business</div><div class="pr">Rp 1,5jt <small>/bln</small></div><ul><li>Semua modul, + MFG & POS</li><li>Pengguna tak terbatas</li><li>3 entitas usaha</li><li>Multi-gudang & cabang</li><li>Dukungan prioritas</li></ul></div>
+    <div class="plan"><div class="nm">Enterprise</div><div class="pr">Kustom</div><ul><li>Semua fitur Business</li><li>Entitas tak terbatas</li><li>API & integrasi khusus</li><li>SLA & manajer akun</li></ul></div>
+  </div>
+  <div class="center-note" style="font-weight:700;color:var(--blueh)">Semua paket: coba gratis 30 hari · tanpa kartu kredit · implementasi &lt; 2 minggu</div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">09 / 12</div>
+</div>
+
+<!-- SLIDE 10: IMPLEMENTASI -->
+<div class="slide" id="d10">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Implementasi</div>
+  <div class="h1">Dari nol sampai jalan dalam 2 minggu</div>
+  <div style="margin-top:22px">
+    <div class="row"><span class="pill" style="min-width:120px;text-align:center">Minggu 1</span><div class="rt"><b>Setup & Migrasi</b><span>Master data & saldo awal diimpor dari template Excel. Tim kami verifikasi bersama Anda.</span></div></div>
+    <div class="row"><span class="pill" style="min-width:120px;text-align:center">Minggu 1-2</span><div class="rt"><b>Pelatihan Tim</b><span>Sesi training per peran: keuangan, gudang, sales, kasir. Materi + rekaman.</span></div></div>
+    <div class="row"><span class="pill" style="min-width:120px;text-align:center">Minggu 2</span><div class="rt"><b>Go-Live Bertahap</b><span>Mulai dari satu modul/unit, lalu roll-out. Dampingan langsung saat transaksi pertama.</span></div></div>
+    <div class="row"><span class="pill" style="min-width:120px;text-align:center">Berkelanjutan</span><div class="rt"><b>Dukungan</b><span>Email, chat, dan (paket Business+) dukungan prioritas + pendampingan berkelanjutan.</span></div></div>
+  </div>
+  <div class="center-note">Migrasi dari spreadsheet? Kami periksa hasil impor Excel bersama Anda — bukan self-service.</div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">10 / 12</div>
+</div>
+
+<!-- SLIDE 11: DIFFERENSIATOR -->
+<div class="slide" id="d11">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Kenapa bukan yang lain</div>
+  <div class="h1">Empat pembeda yang kami pertahankan</div>
+  <div style="margin-top:24px">
+    <div class="row"><div class="num" style="width:60px;text-align:center">01</div><div class="rt"><b>Harga flat, bukan per user</b><span>Kompetitor umumnya nagih per user → makin lama makin mahal. Kami tidak.</span></div></div>
+    <div class="row"><div class="num" style="width:60px;text-align:center">02</div><div class="rt"><b>Implementasi cepat (1–2 minggu)</b><span>Dengan dampingan tim lokal — bukan self-service yang menyatroni.</span></div></div>
+    <div class="row"><div class="num" style="width:60px;text-align:center">03</div><div class="rt"><b>Data tersimpan di Indonesia</b><span>Kepatuhan UU PDP, latency, kedaulatan data.</span></div></div>
+    <div class="row"><div class="num" style="width:60px;text-align:center">04</div><div class="rt"><b>Satu data, semua modul</b><span>Tanpa entri ganda, tanpa silo antar departemen.</span></div></div>
+  </div>
+  <div class="brand-foot"><span class="mk">S</span> Senti ERP</div><div class="pnum">11 / 12</div>
+</div>
+
+<!-- SLIDE 12: CTA -->
+<div class="slide dark" id="d12">
+  <div class="topbar"></div><div class="logo"><span class="mk">S</span> Senti ERP</div>
+  <div class="eyebrow">Langkah berikutnya</div>
+  <div class="h1 xl" style="margin-top:20px">Jadwalkan Demo Gratis.</div>
+  <div class="sub" style="margin-top:14px">20 menit demo berbasis kasus bisnis Anda. Lihat langsung modul yang relevan, tanya jawab, lalu coba gratis 30 hari.</div>
+  <div class="cta-box">
+    <div><div class="lbl">📞 Telepon Sales</div><div class="val">021-5051-5105</div></div>
+    <div><div class="lbl">🌐 PT Senti Teknologi Indonesia</div><div class="val">Coba Gratis 30 Hari</div></div>
+  </div>
+  <div class="center-note">Terima kasih · Implementasi &lt; 2 minggu · Tanpa biaya per pengguna · Data di Indonesia.</div>
+  <div class="pnum">12 / 12</div>
+</div>
+
+<script>
+// keyboard nav (viewer only)
+const slides=[...document.querySelectorAll('.slide')];
+let cur=0;
+function show(i){slides.forEach((s,idx)=>s.style.display=(idx===i?'flex':'none'))}
+show(0);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')cur=Math.min(cur+1,slides.length-1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')cur=Math.max(cur-1,0);
+  show(cur);
+});
+</script>
+</body>
+</html>

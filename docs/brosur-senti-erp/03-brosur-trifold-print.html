@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Senti ERP — Brosur Tri-Fold (Print Ready)</title>
+<!--
+  BROSUR TRI-FOLD SENTI ERP — PRINT READY
+  Cara pakai:
+  1. Buka file ini di browser (Chrome/Edge/Firefox).
+  2. Ctrl+P → "Save as PDF" → Paper: A4 → Margin: None → Scale: 100.
+  3. Hasil = 2 halaman A4 landscape (luar + dalam), masing-masing 3 panel.
+  4. Cetak dua-muka, lipat letter-fold (panel kanan masuk dulu).
+
+  Spesifikasi:
+  - A4 landscape 297×210mm. Tiap panel 99mm, panel flap 95mm.
+  - Bleed 3mm & safe-margin 5mm (atur di prepress jika perlu).
+  - Warna follow brand marketing: biru #2563eb, netral #0f172a/#5b6477.
+-->
+<style>
+  :root{
+    --blue:#2563eb; --blueh:#1d4ed8; --bluebg:#eef4ff;
+    --tx:#0f172a; --mut:#5b6477; --bd:#e6e8ec; --bg:#ffffff; --alt:#f6f8fc;
+    --green:#15803d; --amber:#ca8a04; --red:#b91c1c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+  html,body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--tx); background:#888}
+  body{padding:20px}
+  .sheet{
+    width:297mm; height:210mm; background:var(--bg); margin:0 auto 20px;
+    display:grid; grid-template-columns:95mm 101mm 101mm;
+    box-shadow:0 4px 20px rgba(0,0,0,.25); position:relative; overflow:hidden;
+    page-break-after:always;
+  }
+  .sheet:last-child{page-break-after:auto}
+  .panel{padding:11mm 9mm; position:relative; display:flex; flex-direction:column}
+  .panel + .panel{border-left:1px dashed #cfd6e2}
+  .flap-mark{position:absolute; top:4mm; font-size:8px; color:var(--bd); letter-spacing:1px; font-weight:600}
+
+  /* shared */
+  .logo{display:flex; align-items:center; gap:8px; font-weight:800; font-size:15px; letter-spacing:-.2px}
+  .logo .mark{width:26px; height:26px; background:var(--blue); color:#fff; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:15px}
+  .tag{font-size:9.5px; color:var(--mut); font-weight:500}
+  .badge{display:inline-flex; align-items:center; gap:4px; background:var(--bluebg); color:var(--blueh); font-size:9px; font-weight:600; padding:3px 8px; border-radius:999px}
+  .h-hero{font-size:23px; line-height:1.12; font-weight:800; letter-spacing:-.5px}
+  .sub{font-size:11px; color:var(--mut); line-height:1.45; font-weight:500}
+  .sec-title{font-size:13px; font-weight:800; letter-spacing:-.2px; margin-bottom:6px}
+  .sec-eyebrow{font-size:8.5px; font-weight:700; color:var(--blue); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px}
+
+  /* PAGE 1 = LUAR : Cover(flap) | Brand punggung | Hook */
+  .cover{background:linear-gradient(155deg,#0b1a3d 0%, #15296b 55%, var(--blue) 130%); color:#fff}
+  .cover .logo, .cover .tag{color:#fff}
+  .cover .mark{background:#fff; color:var(--blue)}
+  .cover .h-hero{color:#fff; margin:14mm 0 6mm}
+  .cover .sub{color:#c7d2fe; margin-bottom:8mm}
+  .cover .badge{background:rgba(255,255,255,.16); color:#fff}
+  .cover .cta-box{margin-top:auto; background:#fff; color:var(--tx); border-radius:10px; padding:5mm}
+  .cover .cta-box .cta-btn{background:var(--blue); color:#fff; text-align:center; padding:9px; border-radius:7px; font-weight:700; font-size:11px; margin-top:5px}
+  .cover .contact{display:flex; justify-content:space-between; align-items:center; font-size:9px; font-weight:600; color:var(--mut)}
+
+  .brand{background:var(--alt); align-items:center; text-align:center; justify-content:center}
+  .brand .big-mark{width:54px; height:54px; background:var(--blue); color:#fff; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:30px; margin:0 auto 10px}
+  .brand h2{font-size:20px; font-weight:800; letter-spacing:-.4px}
+  .brand .tagline{font-size:10.5px; color:var(--mut); margin:6px 0 16px; line-height:1.4}
+  .brand .pillars{display:flex; flex-direction:column; gap:8px; margin-top:10px; width:100%}
+  .brand .pillar{display:flex; gap:8px; align-items:flex-start; font-size:10px; color:var(--tx); text-align:left; background:#fff; padding:7px 9px; border-radius:8px; border:1px solid var(--bd)}
+  .brand .pillar b{color:var(--blueh); font-size:14px; line-height:1}
+
+  .hook{justify-content:center}
+  .hook .pain{font-size:16px; font-weight:800; line-height:1.25; margin:10mm 0}
+  .hook .pain em{font-style:normal; color:var(--blue); position:relative}
+  .hook .pain em::after{content:""; position:absolute; left:0; right:0; bottom:-2px; height:6px; background:rgba(37,99,235,.18); z-index:-1; border-radius:3px}
+  .hook .audience{font-size:9.5px; color:var(--mut); border-top:1px solid var(--bd); padding-top:8px; margin-top:auto}
+
+  /* PAGE 2 = DALAM : Kenapa | Modul & Industri | Harga+CTA */
+  .ba{display:flex; gap:4px; margin:5mm 0}
+  .ba .col{flex:1; font-size:9.5px; line-height:1.5}
+  .ba .col.before{background:#fef2f2; color:#7f1d1d; padding:6px; border-radius:7px}
+  .ba .col.after{background:#ecfdf5; color:#065f46; padding:6px; border-radius:7px}
+  .ba .col b{display:block; font-size:9px; margin-bottom:4px; letter-spacing:.5px}
+  .ba li{list-style:none; padding:2px 0}
+  .ba li::before{margin-right:4px; font-weight:700}
+  .ba .before li::before{content:"✗"}
+  .ba .after li::before{content:"✓"}
+
+  .usp{display:grid; grid-template-columns:1fr 1fr; gap:5px; margin:4mm 0}
+  .usp .u{border:1px solid var(--bd); border-radius:7px; padding:6px; font-size:9px}
+  .usp .u b{display:block; color:var(--blueh); font-size:9.5px; margin-bottom:2px}
+  .usp .u span{color:var(--mut)}
+
+  .tst{margin-top:auto; background:var(--bluebg); border-radius:8px; padding:7px; font-size:9.5px; line-height:1.45; color:#1e293b}
+  .tst q{font-weight:600; quotes:"\201C" "\201D"}
+  .tst .by{display:block; margin-top:4px; font-size:8.5px; color:var(--mut); font-weight:600}
+
+  .modgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin:3mm 0}
+  .modgrid .m{border:1px solid var(--bd); border-radius:6px; padding:5px 4px; text-align:center; font-size:8px}
+  .modgrid .m .code{display:block; font-weight:800; color:var(--blue); font-size:9px; margin-bottom:2px}
+  .modgrid .m .nm{color:var(--mut); line-height:1.2}
+
+  .indus{display:grid; grid-template-columns:1fr 1fr; gap:4px; margin:3mm 0; font-size:9px}
+  .indus .i{background:var(--alt); border-radius:6px; padding:5px 7px}
+  .indus .i b{color:var(--tx); font-size:9px}
+  .indus .i span{display:block; color:var(--mut); font-size:8.5px; margin-top:2px}
+
+  .stats{display:flex; gap:6px; justify-content:space-between; border-top:1px solid var(--bd); padding-top:6px; margin-top:4px}
+  .stats .s{text-align:center; flex:1}
+  .stats .s b{display:block; font-size:13px; color:var(--blueh); font-weight:800}
+  .stats .s span{font-size:7.5px; color:var(--mut); text-transform:uppercase; letter-spacing:.5px}
+
+  .price{display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; margin:3mm 0}
+  .price .p{border:1px solid var(--bd); border-radius:8px; padding:6px; position:relative; font-size:8.5px}
+  .price .p.pop{border:2px solid var(--blue); background:var(--bluebg)}
+  .price .p .nm{font-weight:700; font-size:9.5px}
+  .price .p .pr{font-size:12px; font-weight:800; color:var(--blueh); margin:2px 0}
+  .price .p .pr small{font-size:8px; color:var(--mut); font-weight:500}
+  .price .p ul{list-style:none; color:var(--mut); line-height:1.5; margin-top:3px}
+  .price .p.pop ul li{color:#1e293b}
+  .price .tag-pop{position:absolute; top:-7px; right:6px; background:var(--blue); color:#fff; font-size:7px; font-weight:700; padding:1px 5px; border-radius:4px}
+
+  .faq{font-size:9px; line-height:1.4; margin:2mm 0}
+  .faq .q{font-weight:700; color:var(--tx); margin-top:4px}
+  .faq .a{color:var(--mut); margin-bottom:2px}
+
+  .cta-final{margin-top:auto; background:linear-gradient(135deg,var(--blue),var(--blueh)); color:#fff; border-radius:10px; padding:6mm; text-align:center}
+  .cta-final b{font-size:14px; display:block; margin-bottom:3px}
+  .cta-final .ph{font-size:12px; font-weight:700; letter-spacing:.5px}
+  .cta-final .note{font-size:8.5px; opacity:.85; margin-top:4px}
+  .cta-final .qr{width:30px; height:30px; background:#fff; margin:4px auto 0; border-radius:4px; display:flex; align-items:center; justify-content:center; color:var(--blue); font-size:7px; font-weight:700}
+
+  @media print{
+    body{background:#fff; padding:0}
+    .sheet{box-shadow:none; margin:0; page-break-after:always}
+    .sheet:last-child{page-break-after:auto}
+    .no-print{display:none}
+  }
+  .hint{max-width:297mm; margin:0 auto 16px; background:#fff; border-radius:10px; padding:14px 18px; font-size:13px; color:#334155; box-shadow:0 2px 10px rgba(0,0,0,.1)}
+  .hint b{color:var(--blueh)}
+  .hint code{background:#eef2ff; padding:1px 5px; border-radius:4px; font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="hint no-print">
+  📄 <b>Brochur Print-Ready</b> — Buka di browser, tekan <code>Ctrl+P</code> → <b>Save as PDF</b> → Paper <b>A4</b>, Orientation <b>Landscape</b>, Margins <b>None</b>, Scale <b>100%</b>. Hasil 2 halaman (luar + dalam). Cetak bolak-balik, lipat letter-fold (panel kanan masuk dulu). Edit copy di file HTML ini.
+</div>
+
+<!-- ============ HALAMAN 1: SISI LUAR ============ -->
+<div class="sheet">
+  <!-- Panel ① COVER (flap, dilipat ke dalam) -->
+  <div class="panel cover">
+    <span class="flap-mark">① COVER (flap)</span>
+    <div class="logo"><span class="mark">S</span> <span>Senti ERP</span></div>
+    <div class="h-hero">ERP Lengkap untuk Bisnis Indonesia.</div>
+    <div class="sub">Akuntansi, stok, penjualan, produksi — satu sistem berbasis web. Harga flat, pengguna tak terbatas.</div>
+    <div style="display:flex; gap:5px; flex-wrap:wrap; margin-bottom:4mm">
+      <span class="badge">⭐ 2.500+ perusahaan</span>
+      <span class="badge">🇮🇩 Data di Indonesia</span>
+    </div>
+    <div class="cta-box">
+      <div style="font-size:9px; color:var(--mut); font-weight:600">Mulai dari</div>
+      <div style="font-size:18px; font-weight:800; color:var(--blueh)">Rp 750rb <span style="font-size:10px; color:var(--mut); font-weight:500">/bulan</span></div>
+      <div class="cta-btn">Jadwalkan Demo Gratis →</div>
+      <div class="contact" style="margin-top:6px">
+        <span>📞 021-5051-5105</span>
+        <span class="badge" style="background:#ecfdf5; color:#065f46">Coba Gratis 30 Hari</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel ② PUNGGUNG / BRAND -->
+  <div class="panel brand">
+    <span class="flap-mark">② PUNGGUNG (tengah)</span>
+    <div class="big-mark">S</div>
+    <h2>Senti ERP</h2>
+    <div class="tagline">Harga flat, pengguna tak terbatas.<br>Implementasi 2 minggu, didampingi tim lokal.</div>
+    <div class="pillars">
+      <div class="pillar"><b>5</b><div><b style="display:block; font-size:10px; color:var(--tx)">5 USP inti</b><span style="font-size:8.5px; color:var(--mut)">Web · User ∞ · Real-time · Aman · Dampingan</span></div></div>
+      <div class="pillar"><b>8</b><div><b style="display:block; font-size:10px; color:var(--tx)">8 Modul terintegrasi</b><span style="font-size:8.5px; color:var(--mut)">MD · FIN · INV · PUR · SLS · MFG · FA · POS</span></div></div>
+      <div class="pillar"><b>4</b><div><b style="display:block; font-size:10px; color:var(--tx)">4 Segmen siap pakai</b><span style="font-size:8.5px; color:var(--mut)">Manufaktur · Distribusi · Retail/F&B · Jasa</span></div></div>
+    </div>
+    <div style="margin-top:8mm; font-size:8px; color:var(--mut)">PT Senti Teknologi Indonesia · © 2026</div>
+  </div>
+
+  <!-- Panel ③ HOOK (dibaca saat ambil brosur) -->
+  <div class="panel hook">
+    <span class="flap-mark">③ HOOK (depan saat tertutup)</span>
+    <div class="sec-eyebrow">Kenapa sekarang?</div>
+    <div class="pain">Tutup buku bulanan masih <em>10 hari</em>?<br>Stok gudang <em>tidak cocok</em> sama pembukuan?</div>
+    <div class="sub">Ada cara yang lebih cepat. Senti ERP menyatukan semua operasional dalam satu data — real-time, tanpa entri ganda.</div>
+    <div class="audience">Untuk manufaktur · distribusi · retail/F&B · jasa & proyek</div>
+  </div>
+</div>
+
+<!-- ============ HALAMAN 2: SISI DALAM ============ -->
+<div class="sheet">
+  <!-- Panel ④ KENAPA (Sebelum/Sesudah) -->
+  <div class="panel">
+    <span class="flap-mark">④ KENAPA (buka pertama)</span>
+    <div class="sec-eyebrow">Sebelum / Sesudah</div>
+    <div class="sec-title">Bisnis Anda, setelah Senti ERP</div>
+    <div class="ba">
+      <div class="col before"><b>SEBELUM</b>
+        <ul>
+          <li>Tutup buku 10 hari</li>
+          <li>Stok ≠ pembukuan</li>
+          <li>Entri ganda antar tim</li>
+          <li>Bayar per user → mahal</li>
+          <li>Server sendiri rawan mati</li>
+        </ul>
+      </div>
+      <div class="col after"><b>SESUDAH</b>
+        <ul>
+          <li>Tutup buku 2 hari</li>
+          <li>Real-time, auto-kartu stok</li>
+          <li>Satu data, semua modul</li>
+          <li>Harga flat, user ∞</li>
+          <li>Cloud, backup harian</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sec-title" style="font-size:11px; margin-top:3mm">Kenapa Senti ERP</div>
+    <div class="usp">
+      <div class="u"><b>🌐 Berbasis Web</b><span>Akses dari browser mana pun.</span></div>
+      <div class="u"><b>∞ User Tak Terbatas</b><span>Satu harga, semua tim.</span></div>
+      <div class="u"><b>⚡ Real-Time</b><span>Transaksi langsung tercermin.</span></div>
+      <div class="u"><b>🔒 Aman & Teraudit</b><span>Enkripsi + backup harian.</span></div>
+    </div>
+    <div class="tst">
+      <q>Tutup buku bulanan dari 10 hari jadi 2 hari. Angkanya sekarang bisa dipercaya.</q>
+      <span class="by">— Budi Santoso, Direktur Operasional PT Prima Karya Logem · Surabaya</span>
+    </div>
+  </div>
+
+  <!-- Panel ⑤ MODUL & INDUSTRI -->
+  <div class="panel">
+    <span class="flap-mark">⑤ MODUL & INDUSTRI</span>
+    <div class="sec-eyebrow">Satu data, semua modul</div>
+    <div class="sec-title">Semua yang bisnis butuhkan</div>
+    <div class="modgrid">
+      <div class="m"><span class="code">MD</span><span class="nm">Master Data</span></div>
+      <div class="m"><span class="code">FIN</span><span class="nm">Akuntansi & GL</span></div>
+      <div class="m"><span class="code">INV</span><span class="nm">Inventory</span></div>
+      <div class="m"><span class="code">PUR</span><span class="nm">Pembelian</span></div>
+      <div class="m"><span class="code">SLS</span><span class="nm">Penjualan</span></div>
+      <div class="m"><span class="code">MFG</span><span class="nm">Produksi</span></div>
+      <div class="m"><span class="code">FA</span><span class="nm">Aset Tetap</span></div>
+      <div class="m"><span class="code">POS</span><span class="nm">POS & Retail</span></div>
+    </div>
+    <div class="sec-title" style="font-size:11px; margin-top:2mm">Solusi per industri</div>
+    <div class="indus">
+      <div class="i"><b>🏭 Manufaktur</b><span>BOM, perintah kerja, biaya produksi.</span></div>
+      <div class="i"><b>📦 Distribusi</b><span>Multi-gudang, harga bertingkat, armada.</span></div>
+      <div class="i"><b>☕ Retail & F&B</b><span>POS nyambung ke stok & akuntansi.</span></div>
+      <div class="i"><b>📋 Jasa & Proyek</b><span>Biaya per proyek, penagihan bertahap.</span></div>
+    </div>
+    <div class="stats">
+      <div class="s"><b>2.500+</b><span>perusahaan</span></div>
+      <div class="s"><b>15+</b><span>industri</span></div>
+      <div class="s"><b>99,9%</b><span>uptime</span></div>
+      <div class="s"><b>4,8/5</b><span>kepuasan</span></div>
+    </div>
+    <div class="tst" style="margin-top:3mm">
+      <q>Stok 3 gudang akhirnya cocok dengan pembukuan. Tidak ada entri ganda lagi.</q>
+      <span class="by">— Sari Wulandari, Finance Manager CV Berkah Distribusi · Bandung</span>
+    </div>
+  </div>
+
+  <!-- Panel ⑥ HARGA + CTA -->
+  <div class="panel">
+    <span class="flap-mark">⑥ HARGA + CTA (baca terakhir)</span>
+    <div class="sec-eyebrow">Harga flat & sederhana</div>
+    <div class="sec-title">Tanpa biaya per user</div>
+    <div class="price">
+      <div class="p">
+        <div class="nm">Starter</div>
+        <div class="pr">Rp 750rb<small>/bln</small></div>
+        <ul>
+          <li>FIN · INV · SLS · PUR</li>
+          <li>User ∞ · 1 entitas</li>
+          <li>Email & chat</li>
+        </ul>
+      </div>
+      <div class="p pop">
+        <span class="tag-pop">POPULER</span>
+        <div class="nm">Business</div>
+        <div class="pr">Rp 1,5jt<small>/bln</small></div>
+        <ul>
+          <li>+ MFG & POS</li>
+          <li>3 entitas · multi-gudang</li>
+          <li>Dukungan prioritas</li>
+        </ul>
+      </div>
+      <div class="p">
+        <div class="nm">Enterprise</div>
+        <div class="pr">Kustom</div>
+        <ul>
+          <li>Semua fitur Business</li>
+          <li>Entitas ∞ · API khusus</li>
+          <li>SLA + akun manager</li>
+        </ul>
+      </div>
+    </div>
+    <div class="faq">
+      <div class="q">Berapa lama implementasi?</div>
+      <div class="a">Rata-rata 1–2 minggu, dengan setup master data & training.</div>
+      <div class="q">Benar pengguna tak terbatas?</div>
+      <div class="a">Ya. Harga per perusahaan, bukan per user.</div>
+      <div class="q">Bagaimana migrasi dari Excel?</div>
+      <div class="a">Impor dari template Excel, tim kami periksa bersama Anda.</div>
+    </div>
+    <div class="cta-final">
+      <b>Jadwalkan Demo Gratis</b>
+      <div class="ph">📞 021-5051-5105</div>
+      <div class="qr">QR</div>
+      <div class="note">Coba gratis 30 hari · Tanpa kartu kredit · Implementasi &lt; 2 minggu</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Senti ERP — Carousel Sosmed</title>
+<!--
+  CAROUSEL SOSMED SENTI ERP
+  Format: 1080×1080 (Instagram square) — juga cocok untuk LinkedIn (crop).
+  9 slide. Cara render ke PNG:
+    ./render-carousel.sh   (pakai chromium headless, 1 PNG per slide)
+  Atau buka di browser, screenshot manual tiap slide.
+-->
+<style>
+  :root{
+    --blue:#2563eb; --blueh:#1d4ed8; --bluebg:#eef4ff; --bluedk:#0b1a3d;
+    --tx:#0f172a; --mut:#5b6477; --bd:#e6e8ec; --bg:#ffffff; --alt:#f6f8fc;
+    --green:#15803d; --amber:#ca8a04; --red:#b91c1c;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{font-family:'Inter',system-ui,-apple-system,sans-serif; background:#444; color:var(--tx)}
+  body{padding:24px; display:flex; flex-direction:column; align-items:center; gap:20px}
+  .slide{
+    width:1080px; height:1080px; background:var(--bg); position:relative; overflow:hidden;
+    display:flex; flex-direction:column; padding:72px 80px;
+    box-shadow:0 8px 30px rgba(0,0,0,.3);
+  }
+  .s-dark{background:linear-gradient(155deg,#0b1a3d 0%, #15296b 55%, var(--blue) 130%); color:#fff}
+
+  .topbar{display:flex; justify-content:space-between; align-items:center; font-size:22px; font-weight:700; color:var(--mut)}
+  .s-dark .topbar{color:rgba(255,255,255,.7)}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:800; font-size:26px; color:var(--tx)}
+  .s-dark .logo{color:#fff}
+  .logo .mark{width:42px; height:42px; background:var(--blue); color:#fff; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:24px}
+  .s-dark .logo .mark{background:#fff; color:var(--blue)}
+  .pgnum{font-size:20px; font-weight:700}
+
+  .eyebrow{font-size:24px; font-weight:800; color:var(--blue); letter-spacing:2px; text-transform:uppercase}
+  .s-dark .eyebrow{color:#93c5fd}
+  .h1{font-size:74px; font-weight:800; line-height:1.05; letter-spacing:-2px; margin:8px 0}
+  .h1.big{font-size:88px}
+  .h2{font-size:46px; font-weight:800; line-height:1.1; letter-spacing:-1px; margin-bottom:18px}
+  .sub{font-size:28px; color:var(--mut); line-height:1.4; font-weight:500; max-width:880px}
+  .s-dark .sub{color:#c7d2fe}
+
+  .foot{margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end; font-size:22px; color:var(--mut); border-top:1px solid var(--bd); padding-top:24px}
+  .s-dark .foot{border-color:rgba(255,255,255,.2); color:rgba(255,255,255,.7)}
+  .cta-pill{background:var(--blue); color:#fff; padding:14px 28px; border-radius:999px; font-weight:700; font-size:22px}
+  .s-dark .cta-pill{background:#fff; color:var(--blue)}
+
+  .pain-list{display:flex; flex-direction:column; gap:18px; margin-top:30px}
+  .pain-list .row{display:flex; gap:22px; align-items:center; background:var(--alt); border-radius:16px; padding:24px 30px; border:1px solid var(--bd)}
+  .pain-list .ico{font-size:44px; width:60px; text-align:center}
+  .pain-list .t b{display:block; font-size:30px; color:var(--tx)}
+  .pain-list .t span{font-size:23px; color:var(--mut)}
+
+  .usp-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:24px}
+  .usp-grid .u{border:2px solid var(--bd); border-radius:18px; padding:28px}
+  .usp-grid .u .ico{font-size:46px}
+  .usp-grid .u b{display:block; font-size:30px; margin:8px 0 4px}
+  .usp-grid .u span{font-size:22px; color:var(--mut); line-height:1.35}
+
+  .mod-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:28px}
+  .mod-grid .m{background:var(--alt); border-radius:14px; padding:20px 12px; text-align:center; border:1px solid var(--bd)}
+  .mod-grid .m .code{font-size:30px; font-weight:800; color:var(--blue)}
+  .mod-grid .m .nm{font-size:18px; color:var(--mut); margin-top:4px}
+
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:30px}
+  .stats .s{text-align:center; background:var(--bluebg); border-radius:16px; padding:28px 12px}
+  .stats .s b{display:block; font-size:54px; color:var(--blueh); font-weight:800; line-height:1}
+  .stats .s span{font-size:20px; color:var(--mut); margin-top:6px; display:block}
+
+  .price-row{display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-top:30px}
+  .price-row .p{border:2px solid var(--bd); border-radius:20px; padding:30px 22px; position:relative}
+  .price-row .p.pop{border-color:var(--blue); background:var(--bluebg)}
+  .price-row .p .nm{font-size:28px; font-weight:800}
+  .price-row .p .pr{font-size:42px; font-weight:800; color:var(--blueh); margin:8px 0}
+  .price-row .p .pr small{font-size:22px; color:var(--mut); font-weight:500}
+  .price-row .p ul{list-style:none; font-size:21px; color:var(--mut); line-height:1.7; margin-top:10px}
+  .price-row .tag-pop{position:absolute; top:-14px; right:20px; background:var(--blue); color:#fff; font-size:18px; font-weight:700; padding:4px 14px; border-radius:8px}
+
+  .ba{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:28px}
+  .ba .col{border-radius:18px; padding:28px}
+  .ba .before{background:#fef2f2; color:#7f1d1d}
+  .ba .after{background:#ecfdf5; color:#065f46}
+  .ba .col b{display:block; font-size:26px; margin-bottom:12px; letter-spacing:1px}
+  .ba li{list-style:none; padding:8px 0; font-size:24px; font-weight:600; border-bottom:1px solid rgba(0,0,0,.06)}
+  .ba li:last-child{border:none}
+  .ba li::before{margin-right:10px; font-weight:800}
+  .ba .before li::before{content:"✗"}
+  .ba .after li::before{content:"✓"}
+
+  .tst-big{background:var(--bluebg); border-radius:24px; padding:48px; margin:24px 0; border-left:8px solid var(--blue)}
+  .tst-big q{font-size:42px; font-weight:700; line-height:1.3; quotes:"\201C" "\201D"; color:var(--tx); display:block}
+  .tst-big .by{display:block; margin-top:20px; font-size:24px; color:var(--mut); font-weight:600}
+
+  .center{align-items:center; text-align:center; justify-content:center}
+  .arrow{font-size:48px; text-align:center; color:var(--blue); margin-top:30px; font-weight:800}
+
+  /* slide number badge for IG */
+  .ig-dots{position:absolute; bottom:28px; left:50%; transform:translateX(-50%); display:flex; gap:8px}
+  .ig-dots i{width:8px; height:8px; border-radius:50%; background:var(--bd); display:block}
+  .ig-dots i.on{background:var(--blue); width:24px; border-radius:4px}
+  .s-dark .ig-dots i{background:rgba(255,255,255,.25)}
+  .s-dark .ig-dots i.on{background:#fff}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: COVER / HOOK -->
+<div class="slide s-dark" id="s1">
+  <div class="topbar">
+    <div class="logo"><span class="mark">S</span> Senti ERP</div>
+    <div class="pgnum">1/9</div>
+  </div>
+  <div style="margin:auto 0">
+    <div class="eyebrow">ERP untuk Bisnis Indonesia</div>
+    <div class="h1 big">Tutup Buku 10 Hari Jadi 2 Hari.</div>
+    <div class="sub">Akuntansi, stok, penjualan, produksi — satu sistem. Harga flat, pengguna tak terbatas. Mulai Rp 750rb/bln.</div>
+  </div>
+  <div class="foot">
+    <span>⭐ Dipercaya 2.500+ perusahaan · 🇮🇩 Data di Indonesia</span>
+    <span class="cta-pill">Geser →</span>
+  </div>
+  <div class="ig-dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 2: PAIN -->
+<div class="slide" id="s2">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">2/9</div></div>
+  <div class="eyebrow">Suara familiar?</div>
+  <div class="h2">Sulit ini masih terjadi tiap bulan:</div>
+  <div class="pain-list">
+    <div class="row"><div class="ico">📉</div><div class="t"><b>Tutup buku makan 10 hari</b><span>Tim keuangan kejar setoran, angka sering berubah.</span></div></div>
+    <div class="row"><div class="ico">📦</div><div class="t"><b>Stok ≠ pembukuan</b><span>Fisik gudang beda sama yang tertulis di Excel.</span></div></div>
+    <div class="row"><div class="ico">🔁</div><div class="t"><b>Entri ganda antar tim</b><span>Penjualan input di sana, keuangan input lagi di sini.</span></div></div>
+    <div class="row"><div class="ico">💸</div><div class="t"><b>Software mahal & per user</b><span>Makin banyak karyawan, makin mahal tagihannya.</span></div></div>
+  </div>
+  <div class="ig-dots"><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 3: SOLUSI / SEBELUM-SESUDAH -->
+<div class="slide" id="s3">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">3/9</div></div>
+  <div class="eyebrow">Solusinya</div>
+  <div class="h2">Bisnis Anda, setelah Senti ERP</div>
+  <div class="ba">
+    <div class="col before"><b>SEBELUM</b>
+      <ul><li>Tutup buku 10 hari</li><li>Stok tak cocok</li><li>Entri ganda</li><li>Bayar per user</li><li>Server rawan mati</li></ul>
+    </div>
+    <div class="col after"><b>SESUDAH</b>
+      <ul><li>Tutup buku 2 hari</li><li>Real-time</li><li>Satu data</li><li>Harga flat, user ∞</li><li>Cloud + backup</li></ul>
+    </div>
+  </div>
+  <div class="arrow">↓ Angka berubah, kepercayaan naik</div>
+  <div class="ig-dots"><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 4: 5 USP -->
+<div class="slide" id="s4">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">4/9</div></div>
+  <div class="eyebrow">Kenapa Senti ERP</div>
+  <div class="h2">5 keunggulan yang dirasakan langsung</div>
+  <div class="usp-grid">
+    <div class="u"><div class="ico">🌐</div><b>Berbasis Web</b><span>Akses dari browser mana pun, tanpa server sendiri.</span></div>
+    <div class="u"><div class="ico">∞</div><b>User Tak Terbatas</b><span>Satu harga untuk semua tim, berapa pun jumlahnya.</span></div>
+    <div class="u"><div class="ico">⚡</div><b>Real-Time</b><span>Setiap transaksi langsung tercermin di laporan.</span></div>
+    <div class="u"><div class="ico">🔒</div><b>Aman & Teraudit</b><span>Enkripsi, backup harian, jejak audit lengkap.</span></div>
+  </div>
+  <div class="row" style="display:flex; gap:22px; align-items:center; background:var(--bluebg); border-radius:16px; padding:24px 30px; margin-top:20px">
+    <div style="font-size:44px">🤝</div>
+    <div><b style="font-size:30px; display:block">Didampingi Tim Lokal</b><span style="font-size:23px; color:var(--mut)">Setup sampai berjalan — implementasi 2 minggu.</span></div>
+  </div>
+  <div class="ig-dots"><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 5: MODUL -->
+<div class="slide" id="s5">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">5/9</div></div>
+  <div class="eyebrow">Satu data, semua modul</div>
+  <div class="h2">8 modul, tanpa entri ganda</div>
+  <div class="mod-grid">
+    <div class="m"><div class="code">MD</div><div class="nm">Master Data</div></div>
+    <div class="m"><div class="code">FIN</div><div class="nm">Akuntansi & GL</div></div>
+    <div class="m"><div class="code">INV</div><div class="nm">Inventory</div></div>
+    <div class="m"><div class="code">PUR</div><div class="nm">Pembelian</div></div>
+    <div class="m"><div class="code">SLS</div><div class="nm">Penjualan</div></div>
+    <div class="m"><div class="code">MFG</div><div class="nm">Produksi</div></div>
+    <div class="m"><div class="code">FA</div><div class="nm">Aset Tetap</div></div>
+    <div class="m"><div class="code">POS</div><div class="nm">POS & Retail</div></div>
+  </div>
+  <div class="ig-dots"><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 6: PER INDUSTRI -->
+<div class="slide" id="s6">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">6/9</div></div>
+  <div class="eyebrow">Solusi per industri</div>
+  <div class="h2">Konfigurasi siap untuk model bisnis Anda</div>
+  <div class="usp-grid">
+    <div class="u"><div class="ico">🏭</div><b>Manufaktur</b><span>BOM, perintah kerja, biaya produksi (HPP).</span></div>
+    <div class="u"><div class="ico">📦</div><b>Distribusi</b><span>Multi-gudang, harga bertingkat, armada.</span></div>
+    <div class="u"><div class="ico">☕</div><b>Retail & F&B</b><span>POS nyambung ke stok & akuntansi.</span></div>
+    <div class="u"><div class="ico">📋</div><b>Jasa & Proyek</b><span>Biaya per proyek, penagihan bertahap.</span></div>
+  </div>
+  <div class="ig-dots"><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 7: STATISTIK / SOCIAL PROOF -->
+<div class="slide s-dark" id="s7">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">7/9</div></div>
+  <div class="eyebrow">Bukan janji, sudah berjalan</div>
+  <div class="h1">Angka yang bisa diperiksa.</div>
+  <div class="stats" style="margin-top:50px">
+    <div class="s" style="background:rgba(255,255,255,.1)"><b style="color:#fff">2.500+</b><span style="color:#c7d2fe">perusahaan</span></div>
+    <div class="s" style="background:rgba(255,255,255,.1)"><b style="color:#fff">15+</b><span style="color:#c7d2fe">industri</span></div>
+    <div class="s" style="background:rgba(255,255,255,.1)"><b style="color:#fff">99,9%</b><span style="color:#c7d2fe">uptime 12 bln</span></div>
+    <div class="s" style="background:rgba(255,255,255,.1)"><b style="color:#fff">4,8/5</b><span style="color:#c7d2fe">kepuasan</span></div>
+  </div>
+  <div class="ig-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i></div>
+</div>
+
+<!-- SLIDE 8: HARGA -->
+<div class="slide" id="s8">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">8/9</div></div>
+  <div class="eyebrow">Harga flat & sederhana</div>
+  <div class="h2">Tanpa biaya per user</div>
+  <div class="price-row">
+    <div class="p">
+      <div class="nm">Starter</div>
+      <div class="pr">Rp 750rb<small>/bln</small></div>
+      <ul><li>FIN · INV · SLS · PUR</li><li>User ∞ · 1 entitas</li><li>Email & chat</li></ul>
+    </div>
+    <div class="p pop">
+      <span class="tag-pop">POPULER</span>
+      <div class="nm">Business</div>
+      <div class="pr">Rp 1,5jt<small>/bln</small></div>
+      <ul><li>+ MFG & POS</li><li>3 entitas · multi-gudang</li><li>Prioritas + dampingan</li></ul>
+    </div>
+    <div class="p">
+      <div class="nm">Enterprise</div>
+      <div class="pr">Kustom</div>
+      <ul><li>Semua fitur Business</li><li>Entitas ∞ · API</li><li>SLA + akun manager</li></ul>
+    </div>
+  </div>
+  <div class="ig-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i></div>
+</div>
+
+<!-- SLIDE 9: TESTIMONI + CTA -->
+<div class="slide" id="s9">
+  <div class="topbar"><div class="logo"><span class="mark">S</span> Senti ERP</div><div class="pgnum">9/9</div></div>
+  <div class="eyebrow">Apa kata pengguna</div>
+  <div class="tst-big">
+    <q>Tutup buku bulanan dari 10 hari jadi 2 hari. Angkanya sekarang bisa dipercaya.</q>
+    <span class="by">— Budi Santoso, Direktur Operasional PT Prima Karya Logem · Surabaya</span>
+  </div>
+  <div class="foot" style="border:none; padding:0; margin-top:0">
+    <div>
+      <div style="font-size:28px; font-weight:800; color:var(--tx)">Coba Gratis 30 Hari</div>
+      <div style="font-size:22px; color:var(--mut)">📞 021-5051-5105 · Implementasi &lt; 2 minggu</div>
+    </div>
+    <span class="cta-pill">Jadwalkan Demo →</span>
+  </div>
+  <div class="ig-dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div>
+</div>
+
+</body>
+</html>
