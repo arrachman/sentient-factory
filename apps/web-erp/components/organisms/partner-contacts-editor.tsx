@@ -3,7 +3,7 @@
 /**
  * Editable sub-list of partner contacts (md_partner_contacts).
  * Phone ("no hp") lives here — deliberately kept out of the partner's
- * main/"Utama" fields. Add + remove only (matches backend capability).
+ * main/"Utama" fields. Add, edit (kebab menu, §2.11), and remove.
  * Atomic tier: Organism.
  */
 
@@ -21,10 +21,12 @@ import {
   TableCell,
   TableEmpty,
 } from '@/components/organisms/table';
+import { RowActionsMenu, RowContextMenu, type RowActionItem } from '@/components/molecules/row-actions-menu';
 import { confirmAction, notify } from '@/lib/feedback';
 import {
   getPartner,
   addPartnerContact,
+  updatePartnerContact,
   removePartnerContact,
   type ErpPartnerContact,
 } from '@/lib/api/partners';
@@ -50,6 +52,7 @@ export function PartnerContactsEditor({ partnerId }: { partnerId: string }) {
   const [loading, setLoading] = React.useState(true);
   const [draft, setDraft] = React.useState<DraftContact>(emptyDraft);
   const [saving, setSaving] = React.useState(false);
+  const [editingId, setEditingId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -63,22 +66,46 @@ export function PartnerContactsEditor({ partnerId }: { partnerId: string }) {
   const setD = (k: keyof DraftContact, v: string | boolean) =>
     setDraft((d) => ({ ...d, [k]: v }));
 
-  const handleAdd = async () => {
+  const handleEdit = (c: ErpPartnerContact) => {
+    setEditingId(c.id);
+    setDraft({
+      name: c.name,
+      title: c.title ?? '',
+      phone: c.phone ?? '',
+      email: c.email ?? '',
+      isDefault: c.isDefault,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setDraft(emptyDraft());
+  };
+
+  const handleSubmit = async () => {
     if (!draft.name.trim()) { notify('Nama kontak wajib diisi', 'warn'); return; }
     setSaving(true);
     try {
-      const created = await addPartnerContact(partnerId, {
+      const payload = {
         name: draft.name.trim(),
         title: draft.title.trim() || undefined,
         phone: draft.phone.trim() || undefined,
         email: draft.email.trim() || undefined,
         isDefault: draft.isDefault,
-      });
-      setItems((prev) => [...prev, created]);
+      };
+      if (editingId) {
+        const updated = await updatePartnerContact(partnerId, editingId, payload);
+        setItems((prev) => prev.map((x) => (x.id === editingId ? updated : x)));
+        notify('Kontak diperbarui', 'success');
+      } else {
+        const created = await addPartnerContact(partnerId, payload);
+        setItems((prev) => [...prev, created]);
+        notify('Kontak ditambahkan', 'success');
+      }
+      setEditingId(null);
       setDraft(emptyDraft());
-      notify('Kontak ditambahkan', 'success');
     } catch (e) {
-      notify(e instanceof Error ? e.message : 'Gagal menambah kontak', 'danger');
+      notify(e instanceof Error ? e.message : 'Gagal menyimpan kontak', 'danger');
     } finally {
       setSaving(false);
     }
@@ -95,6 +122,7 @@ export function PartnerContactsEditor({ partnerId }: { partnerId: string }) {
         try {
           await removePartnerContact(partnerId, c.id);
           setItems((prev) => prev.filter((x) => x.id !== c.id));
+          if (editingId === c.id) handleCancelEdit();
           notify('Kontak dihapus', 'success');
         } catch (e) {
           notify(e instanceof Error ? e.message : 'Gagal menghapus', 'danger');
@@ -122,27 +150,35 @@ export function PartnerContactsEditor({ partnerId }: { partnerId: string }) {
             ) : items.length === 0 ? (
               <TableEmpty colSpan={6} variant="empty" entityLabel="kontak" />
             ) : (
-              items.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>{c.name}</TableCell>
-                  <TableCell className="muted">{c.title || '—'}</TableCell>
-                  <TableCell>{c.phone || '—'}</TableCell>
-                  <TableCell className="muted">{c.email || '—'}</TableCell>
-                  <TableCell>{c.isDefault ? <Badge variant="info" dot>Utama</Badge> : null}</TableCell>
-                  <TableCell>
-                    <button type="button" className="btn ghost danger" onClick={() => handleRemove(c)}>
-                      Hapus
-                    </button>
-                  </TableCell>
-                </TableRow>
-              ))
+              items.map((c) => {
+                const rowActions: RowActionItem[] = [
+                  { label: 'Edit', onSelect: () => handleEdit(c) },
+                  { label: 'Hapus', onSelect: () => handleRemove(c), danger: true, separatorBefore: true },
+                ];
+                return (
+                  <RowContextMenu key={c.id} items={rowActions}>
+                    <TableRow>
+                      <TableCell>{c.name}</TableCell>
+                      <TableCell className="muted">{c.title || '—'}</TableCell>
+                      <TableCell>{c.phone || '—'}</TableCell>
+                      <TableCell className="muted">{c.email || '—'}</TableCell>
+                      <TableCell>{c.isDefault ? <Badge variant="info" dot>Utama</Badge> : null}</TableCell>
+                      <TableCell>
+                        <RowActionsMenu items={rowActions} />
+                      </TableCell>
+                    </TableRow>
+                  </RowContextMenu>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </div>
 
       <fieldset className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-[var(--radius)] border border-border p-3">
-        <legend className="px-1 text-[12px] font-medium text-muted-foreground">Tambah kontak</legend>
+        <legend className="px-1 text-[12px] font-medium text-muted-foreground">
+          {editingId ? 'Edit kontak' : 'Tambah kontak'}
+        </legend>
         <FormField label="Nama" htmlFor="pc-name" required>
           <Input id="pc-name" value={draft.name} onChange={(e) => setD('name', e.target.value)} placeholder="Budi Santoso" />
         </FormField>
@@ -158,9 +194,14 @@ export function PartnerContactsEditor({ partnerId }: { partnerId: string }) {
         <FormField label="Kontak utama" htmlFor="pc-default">
           <BooleanRadio id="pc-default" value={draft.isDefault} onValueChange={(v) => setD('isDefault', v)} trueLabel="Ya" falseLabel="Tidak" />
         </FormField>
-        <div className="col-span-2 flex justify-end">
-          <button type="button" className="btn primary" onClick={handleAdd} disabled={saving}>
-            {saving ? 'Menambah…' : 'Tambah kontak'}
+        <div className="col-span-2 flex justify-end gap-2">
+          {editingId && (
+            <button type="button" className="btn ghost" onClick={handleCancelEdit} disabled={saving}>
+              Batal
+            </button>
+          )}
+          <button type="button" className="btn primary" onClick={handleSubmit} disabled={saving}>
+            {saving ? 'Menyimpan…' : editingId ? 'Simpan' : 'Tambah kontak'}
           </button>
         </div>
       </fieldset>

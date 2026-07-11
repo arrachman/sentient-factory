@@ -16,7 +16,9 @@ import { CreateErpPartnerDto } from './dto/create-erp-partner.dto';
 import { QueryErpPartnerDto } from './dto/query-erp-partner.dto';
 import { UpdateErpPartnerDto } from './dto/update-erp-partner.dto';
 import { CreateErpPartnerAddressDto } from './dto/create-erp-partner-address.dto';
+import { UpdateErpPartnerAddressDto } from './dto/update-erp-partner-address.dto';
 import { CreateErpPartnerContactDto } from './dto/create-erp-partner-contact.dto';
+import { UpdateErpPartnerContactDto } from './dto/update-erp-partner-contact.dto';
 import { CreateErpPartnerBankAccountDto } from './dto/create-erp-partner-bank-account.dto';
 import { ErpPartnersService } from './erp-partners.service';
 
@@ -81,6 +83,17 @@ export class ErpPartnersController {
     return this.service.addAddress(BigInt(id), dto, req.user?.id);
   }
 
+  @Patch(':id/addresses/:addressId')
+  @ApiOperation({ summary: 'Update address of ERP partner' })
+  @ApiResponse({ status: 200, description: 'Partner address updated' })
+  updateAddress(
+    @Param('addressId') addressId: string,
+    @Body() dto: UpdateErpPartnerAddressDto,
+    @Request() req: any,
+  ) {
+    return this.service.updateAddress(BigInt(addressId), dto, req.user?.id);
+  }
+
   @Delete(':id/addresses/:addressId')
   @ApiOperation({ summary: 'Remove address from ERP partner (soft delete)' })
   @ApiResponse({ status: 200, description: 'Partner address deleted' })
@@ -101,6 +114,17 @@ export class ErpPartnersController {
     @Request() req: any,
   ) {
     return this.service.addContact(BigInt(id), dto, req.user?.id);
+  }
+
+  @Patch(':id/contacts/:contactId')
+  @ApiOperation({ summary: 'Update contact of ERP partner' })
+  @ApiResponse({ status: 200, description: 'Partner contact updated' })
+  updateContact(
+    @Param('contactId') contactId: string,
+    @Body() dto: UpdateErpPartnerContactDto,
+    @Request() req: any,
+  ) {
+    return this.service.updateContact(BigInt(contactId), dto, req.user?.id);
   }
 
   @Delete(':id/contacts/:contactId')

@@ -5,7 +5,9 @@ import { CreateErpPartnerDto } from './dto/create-erp-partner.dto';
 import { QueryErpPartnerDto } from './dto/query-erp-partner.dto';
 import { UpdateErpPartnerDto } from './dto/update-erp-partner.dto';
 import { CreateErpPartnerAddressDto } from './dto/create-erp-partner-address.dto';
+import { UpdateErpPartnerAddressDto } from './dto/update-erp-partner-address.dto';
 import { CreateErpPartnerContactDto } from './dto/create-erp-partner-contact.dto';
+import { UpdateErpPartnerContactDto } from './dto/update-erp-partner-contact.dto';
 import { CreateErpPartnerBankAccountDto } from './dto/create-erp-partner-bank-account.dto';
 import {
   PARTNER_LIST_INCLUDE,
@@ -197,6 +199,42 @@ export class ErpPartnersService {
     return { success: true, data: address };
   }
 
+  async updateAddress(addressId: bigint, dto: UpdateErpPartnerAddressDto, actorId?: string) {
+    const existing = await this.prisma.erpPartnerAddress.findFirst({
+      where: { id: addressId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Partner address not found');
+    }
+
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+
+    const address = await this.prisma.erpPartnerAddress.update({
+      where: { id: addressId },
+      data: {
+        type: dto.type,
+        addressLine1: dto.addressLine1,
+        addressLine2: dto.addressLine2,
+        countryId: dto.countryId !== undefined ? (dto.countryId ? BigInt(dto.countryId) : null) : undefined,
+        provinceId: dto.provinceId !== undefined ? (dto.provinceId ? BigInt(dto.provinceId) : null) : undefined,
+        cityId: dto.cityId !== undefined ? (dto.cityId ? BigInt(dto.cityId) : null) : undefined,
+        areaId: dto.areaId !== undefined ? (dto.areaId ? BigInt(dto.areaId) : null) : undefined,
+        subAreaId: dto.subAreaId !== undefined ? (dto.subAreaId ? BigInt(dto.subAreaId) : null) : undefined,
+        postalCode: dto.postalCode,
+        phone: dto.phone,
+        fax: dto.fax,
+        email: dto.email,
+        website: dto.website,
+        isDefault: dto.isDefault,
+        updatedById: actorBigInt,
+      },
+      include: { ...PARTNER_ADDRESS_GEO_INCLUDE },
+    });
+
+    return { success: true, data: address };
+  }
+
   async removeAddress(addressId: bigint, actorId?: string) {
     const existing = await this.prisma.erpPartnerAddress.findFirst({
       where: { id: addressId, deletedAt: null },
@@ -233,6 +271,32 @@ export class ErpPartnersService {
         email: dto.email,
         isDefault: dto.isDefault ?? false,
         createdById: actorBigInt,
+        updatedById: actorBigInt,
+      },
+    });
+
+    return { success: true, data: contact };
+  }
+
+  async updateContact(contactId: bigint, dto: UpdateErpPartnerContactDto, actorId?: string) {
+    const existing = await this.prisma.erpPartnerContact.findFirst({
+      where: { id: contactId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new NotFoundException('Partner contact not found');
+    }
+
+    const actorBigInt = actorId ? BigInt(actorId) : null;
+
+    const contact = await this.prisma.erpPartnerContact.update({
+      where: { id: contactId },
+      data: {
+        name: dto.name,
+        title: dto.title,
+        phone: dto.phone,
+        email: dto.email,
+        isDefault: dto.isDefault,
         updatedById: actorBigInt,
       },
     });

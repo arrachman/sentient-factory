@@ -191,6 +191,8 @@ export interface CreatePartnerContactPayload {
   isDefault?: boolean;
 }
 
+export type UpdatePartnerContactPayload = Partial<CreatePartnerContactPayload>;
+
 export interface CreatePartnerAddressPayload {
   type: ErpAddressType;
   addressLine1: string;
@@ -207,6 +209,8 @@ export interface CreatePartnerAddressPayload {
   website?: string;
   isDefault?: boolean;
 }
+
+export type UpdatePartnerAddressPayload = Partial<CreatePartnerAddressPayload>;
 
 // ─── API functions ────────────────────────────────────────────────────────────
 
@@ -260,6 +264,15 @@ export async function addPartnerContact(
   return res.data;
 }
 
+export async function updatePartnerContact(
+  partnerId: string,
+  contactId: string,
+  payload: UpdatePartnerContactPayload,
+): Promise<ErpPartnerContact> {
+  const res = await apiPatch<ApiResponse<ErpPartnerContact>>(`/partners/${partnerId}/contacts/${contactId}`, payload);
+  return res.data;
+}
+
 export async function removePartnerContact(partnerId: string, contactId: string): Promise<void> {
   await apiDelete<void>(`/partners/${partnerId}/contacts/${contactId}`);
 }
@@ -269,6 +282,15 @@ export async function addPartnerAddress(
   payload: CreatePartnerAddressPayload,
 ): Promise<ErpPartnerAddress> {
   const res = await apiPost<ApiResponse<ErpPartnerAddress>>(`/partners/${partnerId}/addresses`, payload);
+  return res.data;
+}
+
+export async function updatePartnerAddress(
+  partnerId: string,
+  addressId: string,
+  payload: UpdatePartnerAddressPayload,
+): Promise<ErpPartnerAddress> {
+  const res = await apiPatch<ApiResponse<ErpPartnerAddress>>(`/partners/${partnerId}/addresses/${addressId}`, payload);
   return res.data;
 }
 
