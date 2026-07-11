@@ -18,6 +18,12 @@ import {
   mapProformaInvoiceLine,
   computeOrderTotals,
 } from './sls-proforma-invoice.helpers';
+import {
+  buildSlsProformaInvoiceCreateData,
+  buildSlsProformaInvoiceUpdatePatch,
+  mapExistingSlsProformaInvoiceLines,
+  buildSlsProformaInvoiceTotalsInput,
+} from './sls-proforma-invoice-persistence.mapper';
 
 const DOC_CODE = 'PI';
 const FALLBACK_PREFIX = 'PI';
@@ -116,8 +122,7 @@ export class ErpSlsProformaInvoicesService {
 
     const taxIds = dto.lines.flatMap((l) => [l.tax1Id, l.tax2Id]);
     const rateById = await this.taxRateMap(taxIds);
-    const { subtotal, grandTotal, lines: computedLines, discountAmount, otherCostAmount } =
-      computeOrderTotals(dto.lines, dto, rateById, priceMode);
+    const totals = computeOrderTotals(dto.lines, dto, rateById, priceMode);
 
     const dueDate = await this.resolveDueDate(dto.paymentTermId, dto.docDate, dto.dueDate);
 
@@ -127,48 +132,17 @@ export class ErpSlsProformaInvoicesService {
       const docNumber = wantAuto ? await this.genDocNumber(tx) : dto.docNumber;
       if (!docNumber) throw new BadRequestException('No dokumen wajib diisi.');
 
-      const row = await tx.erpSlsProformaInvoice.create({
-        data: {
-          code: docNumber,
-          docNumber,
-          autoNumber: wantAuto ? docNumber : null,
-          branchId: BigInt(dto.branchId),
-          locationId: toBigInt(dto.locationId),
-          warehouseId: toBigInt(dto.warehouseId),
-          docDate: new Date(dto.docDate),
-          fiscalPeriodId,
-          customerId: toBigInt(dto.customerId),
-          paymentTermId: toBigInt(dto.paymentTermId),
-          dueDate,
-          currencyId: BigInt(dto.currencyId),
-          exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-          priceMode: priceMode as never,
-          subtotal,
-          discountPercent: dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null,
-          discountAmount: discountAmount,
-          tax1Amount: dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null,
-          tax2Amount: dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null,
-          otherCostAmount: otherCostAmount,
-          grandTotal,
-          description: dto.description ?? null,
-          notes: dto.notes ?? null,
-          referenceNo: dto.referenceNo ?? null,
-          referenceDate: dto.referenceDate ? new Date(dto.referenceDate) : null,
-          receivableAccountId: toBigInt(dto.receivableAccountId),
-          salesDeptId: toBigInt(dto.salesDeptId),
-          quotationId: toBigInt(dto.quotationId),
-          orderId: toBigInt(dto.orderId),
-          status: 'DRAFT',
-          postingStatus: 'UNPOSTED',
-          legacyCode: dto.legacyCode ?? null,
-          createdById: actor,
-          updatedById: actor,
-          lines: computedLines.length
-            ? { create: computedLines.map((l) => mapProformaInvoiceLine(l, header)) }
-            : undefined,
-        },
-        select: { id: true },
+      const data = buildSlsProformaInvoiceCreateData(dto, {
+        docNumber,
+        wantAuto,
+        fiscalPeriodId,
+        actor,
+        priceMode,
+        dueDate,
+        header,
+        totals,
       });
+      const row = await tx.erpSlsProformaInvoice.create({ data, select: { id: true } });
       return row;
     });
     return this.one(created.id);
@@ -224,61 +198,9 @@ export class ErpSlsProformaInvoicesService {
     };
 
     await this.prisma.$transaction(async (tx) => {
-      const data: Prisma.ErpSlsProformaInvoiceUpdateInput = { updatedById: actor };
-      if (dto.docNumber !== undefined) {
-        data.docNumber = dto.docNumber;
-        data.code = dto.docNumber;
-      }
-      if (dto.branchId !== undefined) data.branchId = BigInt(dto.branchId);
-      if (dto.locationId !== undefined) data.locationId = toBigInt(dto.locationId);
-      if (dto.warehouseId !== undefined) data.warehouseId = toBigInt(dto.warehouseId);
-      if (dto.customerId !== undefined) data.customerId = toBigInt(dto.customerId);
-      if (dto.paymentTermId !== undefined) data.paymentTermId = toBigInt(dto.paymentTermId);
-      if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
-      if (dto.currencyId !== undefined) data.currencyId = BigInt(dto.currencyId);
-      if (dto.exchangeRate !== undefined) data.exchangeRate = new Prisma.Decimal(dto.exchangeRate);
-      if (dto.priceMode !== undefined) data.priceMode = dto.priceMode as never;
-      if (dto.description !== undefined) data.description = dto.description;
-      if (dto.notes !== undefined) data.notes = dto.notes;
-      if (dto.referenceNo !== undefined) data.referenceNo = dto.referenceNo;
-      if (dto.referenceDate !== undefined) {
-        data.referenceDate = dto.referenceDate ? new Date(dto.referenceDate) : null;
-      }
-      if (dto.receivableAccountId !== undefined) {
-        data.receivableAccountId = toBigInt(dto.receivableAccountId);
-      }
-      if (dto.salesDeptId !== undefined) data.salesDeptId = toBigInt(dto.salesDeptId);
-      if (dto.quotationId !== undefined) {
-        data.quotation = dto.quotationId
-          ? { connect: { id: BigInt(dto.quotationId) } }
-          : { disconnect: true };
-      }
-      if (dto.orderId !== undefined) {
-        data.order = dto.orderId
-          ? { connect: { id: BigInt(dto.orderId) } }
-          : { disconnect: true };
-      }
-      if (dto.discountPercent !== undefined) {
-        data.discountPercent = dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null;
-      }
-      if (dto.legacyCode !== undefined) data.legacyCode = dto.legacyCode;
-      if (dto.docDate !== undefined) {
-        data.docDate = new Date(dto.docDate);
-        data.fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);
-      } else if (dto.fiscalPeriodId !== undefined) {
-        data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
-      }
+      const data = buildSlsProformaInvoiceUpdatePatch(dto, actor);
 
-      const discountAmount =
-        dto.discountAmount !== undefined ? dto.discountAmount : existing.discountAmount?.toString();
-      const tax1Amount =
-        dto.tax1Amount !== undefined ? dto.tax1Amount : existing.tax1Amount?.toString();
-      const tax2Amount =
-        dto.tax2Amount !== undefined ? dto.tax2Amount : existing.tax2Amount?.toString();
-      const otherCostAmount =
-        dto.otherCostAmount !== undefined
-          ? dto.otherCostAmount
-          : existing.otherCostAmount?.toString();
+      // tax1/tax2 explicit amount fields (kept here — they feed totals recompute)
       if (dto.tax1Amount !== undefined) {
         data.tax1Amount = dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null;
       }
@@ -286,29 +208,36 @@ export class ErpSlsProformaInvoicesService {
         data.tax2Amount = dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null;
       }
 
-      const mergedLines: typeof dto.lines = dto.lines ?? existing.lines.map((l) => ({
-        itemId: l.itemId.toString(),
-        quantity: l.quantity.toString(),
-        unitId: l.unitId.toString(),
-        unitPrice: l.unitPrice.toString(),
-        discountPercent: l.discountPercent?.toString(),
-        discountAmount: l.discountAmount?.toString(),
-        tax1Id: (l.tax1Id as bigint | null)?.toString(),
-        tax2Id: (l.tax2Id as bigint | null)?.toString(),
-        tax1Amount: l.tax1Amount?.toString(),
-        tax2Amount: l.tax2Amount?.toString(),
-        lineNo: l.lineNo,
-      }));
+      // fiscal period (async — needs tx; cannot live in the pure mapper)
+      if (dto.docDate !== undefined) {
+        data.docDate = new Date(dto.docDate);
+        data.fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);
+      } else if (dto.fiscalPeriodId !== undefined) {
+        data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
+      }
 
-      const priceMode = ((dto.priceMode ?? existing.priceMode) as string) as 'TAX_EXCLUSIVE' | 'TAX_INCLUSIVE';
+      // ── totals recompute ────────────────────────────────────────────────────
+      const totalsInput = buildSlsProformaInvoiceTotalsInput(dto, existing);
+      const mergedLines: typeof dto.lines =
+        dto.lines ?? mapExistingSlsProformaInvoiceLines(existing.lines);
+
+      const priceMode = ((dto.priceMode ?? existing.priceMode) as string) as
+        | 'TAX_EXCLUSIVE'
+        | 'TAX_INCLUSIVE';
       const taxIds = mergedLines.flatMap((l) => [l.tax1Id, l.tax2Id]);
       const rateById = await this.taxRateMap(taxIds);
-      const totals = computeOrderTotals(mergedLines, { discountAmount, discountPercent: dto.discountPercent, tax1Amount, tax2Amount, otherCostAmount }, rateById, priceMode);
+      const totals = computeOrderTotals(
+        mergedLines,
+        { ...totalsInput, discountPercent: dto.discountPercent },
+        rateById,
+        priceMode,
+      );
       data.subtotal = totals.subtotal;
       data.grandTotal = totals.grandTotal;
       if (totals.discountAmount !== null) data.discountAmount = totals.discountAmount;
       if (totals.otherCostAmount !== null) data.otherCostAmount = totals.otherCostAmount;
 
+      // dueDate recompute when payment term changes without explicit dueDate
       if (dto.paymentTermId !== undefined && dto.dueDate === undefined) {
         const termId = dto.paymentTermId ?? null;
         const docDateStr = dto.docDate ?? existing.docDate.toISOString().slice(0, 10);
