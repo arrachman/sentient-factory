@@ -11,7 +11,8 @@ import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BooleanRadio, RadioGroup } from '@/components/ui/radio-group';
+import { BooleanRadio } from '@/components/ui/radio-group';
+import { DescriptiveRadioCards } from '@/components/molecules/descriptive-radio-cards';
 import { ItemTypeInfoButton, getItemTypeTraits } from '@/components/molecules/item-type-info';
 import type { FormErrors } from '@/lib/form-validation';
 import { nextCodePreview } from '@/lib/items-code-generator';
@@ -155,25 +156,16 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
 
     case 'pergerakanstok':
       return (
-        <Section title="Pergerakan Stok" icon="swap" hint="Tracking serial/batch menentukan cara pencatatan mutasi stok">
-          <FormField label="Tracking" htmlFor="if-tracking" className="col-span-2 grid-cols-[110px_1fr]">
-            <div className="flex flex-col gap-1">
-              <RadioGroup<ItemStockTrackingMode>
-                id="if-tracking"
-                value={stockTrackingModeFromFlags(data.tracksBatch, data.tracksSerial)}
-                onValueChange={(mode) => onChange({ ...data, ...stockTrackingFlagsFromMode(mode) })}
-                options={ITEM_STOCK_TRACKING_OPTIONS}
-                className="w-full"
-                aria-label="Mode tracking stok"
-              />
-              <p className="text-[11px] text-[var(--fg-subtle)]">Batch = banyak qty per lot; Serial = 1 qty per nomor; Tidak pakai = mutasi qty biasa.</p>
-            </div>
+        <Section title="Pergerakan Stok" icon="swap" hint="Pilih bagaimana item dikenali saat stok masuk, dipindah, dan keluar">
+          <FormField label="Tracking" className="col-span-2 grid-cols-[110px_1fr]">
+            <DescriptiveRadioCards<ItemStockTrackingMode>
+              value={stockTrackingModeFromFlags(data.tracksBatch, data.tracksSerial)}
+              onValueChange={(mode) => onChange({ ...data, ...stockTrackingFlagsFromMode(mode) })}
+              options={ITEM_STOCK_TRACKING_OPTIONS}
+              className="w-full"
+              aria-label="Cara pencatatan stok"
+            />
           </FormField>
-          {data.tracksBatch && (
-            <FormField label="Kategori Umur" htmlFor="if-age">
-              <Input id="if-age" value={data.ageCategory} onChange={(e) => set('ageCategory', e.target.value)} placeholder="mis. FIFO 30 hari" />
-            </FormField>
-          )}
         </Section>
       );
 

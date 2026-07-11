@@ -12,11 +12,31 @@ export const ITEM_TYPES: ErpItemType[] = ['INVENTORY', 'SERVICE', 'CONSUMABLE', 
 
 export type ItemStockTrackingMode = 'none' | 'batch' | 'serial';
 
-export const ITEM_STOCK_TRACKING_OPTIONS: ReadonlyArray<{ value: ItemStockTrackingMode; label: string }> = [
-  { value: 'none', label: 'Tidak pakai' },
-  { value: 'batch', label: 'Batch / Lot' },
-  { value: 'serial', label: 'Serial No.' },
-];
+export const ITEM_STOCK_TRACKING_OPTIONS = [
+  {
+    value: 'none',
+    label: 'Tidak pakai',
+    description: 'Stok hanya dicatat berdasarkan jumlah.',
+    example: 'Cocok untuk bahan curah dan ATK.',
+  },
+  {
+    value: 'batch',
+    label: 'Batch / Lot',
+    description: 'Stok dikelompokkan berdasarkan batch atau lot.',
+    example: 'Cocok untuk makanan, obat, dan bahan baku.',
+  },
+  {
+    value: 'serial',
+    label: 'Serial No.',
+    description: 'Setiap unit stok memiliki nomor unik.',
+    example: 'Cocok untuk mesin, laptop, dan elektronik.',
+  },
+] satisfies ReadonlyArray<{
+  value: ItemStockTrackingMode;
+  label: string;
+  description: string;
+  example: string;
+}>;
 
 export const stockTrackingModeFromFlags = (tracksBatch: boolean, tracksSerial: boolean): ItemStockTrackingMode => {
   if (tracksSerial) return 'serial';

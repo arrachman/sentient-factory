@@ -765,7 +765,7 @@ dinaikkan kelasnya tanpa mengubah data/flow:
 - `INVENTORY/CONSUMABLE/ASSET` → tampilkan Inventory & Tracking
 - `SERVICE/NON_INVENTORY` → sembunyikan Inventory & Tracking
 - `SERVICE` → sembunyikan juga Berat (kg)
-- `tracksBatch=Ya` → munculkan Kategori Umur (intra-section)
+- `tracksBatch=Ya` → tidak menampilkan lagi field legacy Kategori Umur; tracking cukup via mode Batch/Lot
 
 **Smart features:**
 - Tombol **Auto** di samping field Kode → fetch item dgn prefix
@@ -2926,11 +2926,18 @@ independen `Serial No.` dan `Batch / Lot`, karena itu memungkinkan kedua flag
 aktif bersamaan dan membingungkan saat mutasi stok.
 
 Implementasi frontend tetap memakai kolom/API existing `tracksBatch` +
-`tracksSerial` agar tidak perlu migrasi DB: segmented `RadioGroup` 3 opsi di
-`items-form-sections.tsx` memetakan pilihan ke dua boolean. Adapter save
-`toItemPayload()` menormalisasi ulang dengan prioritas `serial` bila data lama
-pernah punya dua flag aktif, sehingga payload keluar selalu eksklusif. Field
-`Kategori Umur` hanya tampil untuk mode Batch.
+`tracksSerial` agar tidak perlu migrasi DB. Sejak polish 2026-07-11, tiga opsi
+ditampilkan sebagai **kartu deskriptif eksklusif** (arti + contoh penggunaan),
+bukan segmented control ringkas, supaya konsekuensi pilihan langsung dipahami
+admin ERP. Molecule reusable `DescriptiveRadioCards` menjaga native radio
+semantics, keyboard/focus, dan token design system; `items-form-sections.tsx`
+memetakan pilihan ke dua boolean secara immutable.
+
+Adapter save `toItemPayload()` menormalisasi ulang dengan prioritas `serial`
+bila data lama pernah punya dua flag aktif, sehingga payload keluar selalu
+eksklusif. Field legacy `Kategori Umur`/`ageCategory` tidak ditampilkan di UI
+Batch/Lot karena copy dan fungsinya membingungkan; kolom tetap dipertahankan di
+API/DB untuk kompatibilitas data lama.
 
 ---
 
