@@ -79,7 +79,7 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
   switch (id) {
     case 'identitas':
       return (
-        <Section title="Identitas & Klasifikasi" icon="layers" hint="Data dasar, tipe, kategori, dan satuan item">
+        <Section title="Identitas" icon="user" hint="Kode, nama, barcode, dan status item">
           <FormField label="Kode" htmlFor="if-code" required error={errors.code}>
             <div className="flex w-full items-center gap-1.5">
               <Input id="if-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={nextCodePreview(data.itemType)} aria-invalid={!!errors.code} />
@@ -97,6 +97,12 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
           <FormField label="Status" htmlFor="if-active">
             <BooleanRadio id="if-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
           </FormField>
+        </Section>
+      );
+
+    case 'klasifikasi':
+      return (
+        <Section title="Klasifikasi" icon="layers" hint="Tipe, kategori, satuan, dan jenis barang">
           <div className="grid grid-cols-[110px_1fr] items-center gap-x-3 py-[5px]">
             <div className="flex items-center gap-1">
               <Label htmlFor="if-type" required>Tipe</Label>

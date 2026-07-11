@@ -713,7 +713,7 @@ per mode. Keputusan ini berlaku **khusus form item** — masih sectioned
 
 **Mode entri:**
 - **Cepat** — default saat tambah item baru (`data.code === ''`). Hanya
-  section gabungan **Identitas & Klasifikasi** (~7-8 field wajib). Layout scroll.
+  dua section **Identitas** + **Klasifikasi** (~7-8 field wajib). Layout scroll.
 - **Lengkap** — default saat edit. Semua section, **side-nav 200px di
   kiri** + content section aktif di kanan. Section conditional (Inventory
   & Tracking) hanya muncul saat `isStockable(itemType)`. Dot merah di
@@ -724,7 +724,7 @@ tanpa kehilangan state form. Modal pakai `size="xl"` (1100px) supaya
 side-nav + content tidak crowded.
 
 **Section grouping inti:**
-Identitas & Klasifikasi · Media · Lampiran · Atribut · Inventory & Tracking
+Identitas · Klasifikasi · Media · Lampiran · Atribut · Inventory & Tracking
 (conditional) · Pergerakan Stok · Harga · Pajak · Akuntansi · Dimensi GL ·
 Supplier. Restructure dari 7 section lama (§2.23) yang campur identitas
 dengan satuan, dan Akun GL dengan Dimensi/Supplier.
@@ -736,6 +736,17 @@ Barcode, Status, Tipe, Kategori, Satuan, Jenis Barang. Quick-add tetap hanya
 menampilkan field inti/wajib, tetapi kini sebagai satu section agar alur input
 lebih ringkas. Error validasi `code`/`name`/`categoryId`/`unitId` dan marker
 terisi dirutekan ke section gabungan.
+
+**Identitas & Klasifikasi dipecah kembali → 2 section (2026-07-11):**
+Atas permintaan user (edit modal `/app/master/items`), nav `identitas`
+menjadi **"Identitas"** (Kode, Nama, Barcode, Status) dan ditambah nav baru
+`klasifikasi` **"Klasifikasi"** (Tipe, Kategori, Satuan, Jenis Barang) tepat di
+bawahnya — urutan `identitas` → `klasifikasi` → `media` … Side-nav berubah dari
+satu entry jadi dua, berurutan di group `inti`. Quick-add (`CEPAT_SECTIONS`)
+sekarang merender **kedua** section berurutan (Identitas lalu Klasifikasi).
+Error validasi `code`/`name` → nav `identitas`; `categoryId`/`unitId` → nav
+`klasifikasi`. Marker terisi dipisah: identitas = `code`/`name`/`kindId`,
+klasifikasi = `categoryId`/`unitId`.
 
 **Atribut + Lain-lain + Custom digabung jadi 1 section (2026-06-12):**
 Atas permintaan user, tiga entry side-nav terpisah (`atribut`, `lainlain`,

@@ -14,10 +14,10 @@ import { isStockable } from './items-form-parts';
 
 export type Mode = 'cepat' | 'lengkap';
 export type SectionId =
-  | 'identitas' | 'media' | 'lampiran' | 'atribut' | 'inventory'
+  | 'identitas' | 'klasifikasi' | 'media' | 'lampiran' | 'atribut' | 'inventory'
   | 'pergerakanstok' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier';
 
-export const CEPAT_SECTIONS: SectionId[] = ['identitas'];
+export const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
 
 type GroupId = 'inti' | 'detail' | 'keuangan' | 'lainnya';
 
@@ -32,7 +32,8 @@ const GROUP_ORDER: GroupId[] = ['inti', 'detail', 'keuangan', 'lainnya'];
 interface SectionMeta { label: string; icon: IconName; group: GroupId }
 
 const SECTION_META: Record<SectionId, SectionMeta> = {
-  identitas: { label: 'Identitas & Klasifikasi', icon: 'layers', group: 'inti' },
+  identitas: { label: 'Identitas', icon: 'user', group: 'inti' },
+  klasifikasi: { label: 'Klasifikasi', icon: 'layers', group: 'inti' },
   media: { label: 'Media', icon: 'eye', group: 'detail' },
   lampiran: { label: 'Lampiran', icon: 'file', group: 'detail' },
   atribut: { label: 'Atribut', icon: 'tag', group: 'detail' },
@@ -46,7 +47,7 @@ const SECTION_META: Record<SectionId, SectionMeta> = {
 };
 
 const ORDER: SectionId[] = [
-  'identitas', 'media', 'lampiran', 'atribut', 'inventory',
+  'identitas', 'klasifikasi', 'media', 'lampiran', 'atribut', 'inventory',
   'pergerakanstok', 'harga', 'pajak', 'akuntansi', 'dimensi', 'supplier',
 ];
 
@@ -55,7 +56,8 @@ const anySet = (...vals: (string | undefined)[]) => vals.some((v) => !!v && v.tr
 /** Whether the user has put meaningful data into a section (drives the side-nav fill dot). */
 function sectionFilled(id: SectionId, d: ItemFormData): boolean {
   switch (id) {
-    case 'identitas': return anySet(d.code, d.name, d.categoryId, d.unitId, d.kindId);
+    case 'identitas': return anySet(d.code, d.name, d.kindId);
+    case 'klasifikasi': return anySet(d.categoryId, d.unitId);
     case 'atribut': return anySet(
       d.brandId, d.materialId, d.sizeId, d.colorId, d.sectionId, d.designerId,
       d.nozzleId, d.oemId, d.vendorId, d.description,
@@ -92,7 +94,8 @@ export function buildSections(data: ItemFormData, errors: FormErrors<ItemFormDat
     || errors.purchaseDiscountAccountId || errors.consignmentAccountId
   );
   const errorById: Partial<Record<SectionId, boolean>> = {
-    identitas: !!(errors.code || errors.name || errors.categoryId || errors.unitId),
+    identitas: !!(errors.code || errors.name),
+    klasifikasi: !!(errors.categoryId || errors.unitId),
     akuntansi: accountError,
   };
   return ORDER.map((id) => ({
