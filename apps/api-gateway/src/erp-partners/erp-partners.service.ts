@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateErpPartnerDto } from './dto/create-erp-partner.dto';
@@ -8,53 +7,18 @@ import { UpdateErpPartnerDto } from './dto/update-erp-partner.dto';
 import { CreateErpPartnerAddressDto } from './dto/create-erp-partner-address.dto';
 import { CreateErpPartnerContactDto } from './dto/create-erp-partner-contact.dto';
 import { CreateErpPartnerBankAccountDto } from './dto/create-erp-partner-bank-account.dto';
-
-// Multi-select dimension junctions (md_partner_dim_*) — selected for read so the
-// edit form can prefill the chips.
-const PARTNER_DIM_INCLUDE = {
-  dimBranches: {
-    select: { branchId: true, branch: { select: { id: true, code: true, name: true } } },
-    orderBy: { id: 'asc' as const },
-  },
-  dimWarehouses: {
-    select: { warehouseId: true, warehouse: { select: { id: true, code: true, name: true } } },
-    orderBy: { id: 'asc' as const },
-  },
-  dimLocations: {
-    select: { locationId: true, location: { select: { id: true, code: true, name: true } } },
-    orderBy: { id: 'asc' as const },
-  },
-} as const;
-
-const PARTNER_TRX_INCLUDE = {
-  currency: { select: { id: true, code: true, name: true, symbol: true } },
-  saleTerm: { select: { id: true, code: true, name: true } },
-  purchaseTerm: { select: { id: true, code: true, name: true } },
-} as const;
-
-const PARTNER_REF_INCLUDE = {
-  salesman: { select: { id: true, code: true, name: true } },
-} as const;
-
-/** Build junction rows for one multi-select dimension. */
-function buildDimRows<K extends string>(
-  ids: string[] | undefined,
-  key: K,
-): Record<K, bigint>[] | undefined {
-  if (!ids) return undefined;
-  const unique = Array.from(new Set(ids.filter((v) => v !== '')));
-  return unique.map((v) => ({ [key]: BigInt(v) }) as Record<K, bigint>);
-}
-
-/**
- * Denormalized single branch column = first branch id of the array (legacy
- * fallback). Returns undefined when the array was not sent (no change).
- */
-function firstBranchSync(branchIds: string[] | undefined): bigint | null | undefined {
-  if (branchIds === undefined) return undefined;
-  const f = branchIds.find((v) => v !== '');
-  return f ? BigInt(f) : null;
-}
+import {
+  PARTNER_LIST_INCLUDE,
+  PARTNER_DETAIL_INCLUDE,
+  PARTNER_MUTATION_INCLUDE,
+  PARTNER_ADDRESS_GEO_INCLUDE,
+  buildErpPartnerWhere,
+  buildErpPartnerOrderBy,
+} from './erp-partner.query-builders';
+import {
+  buildErpPartnerCreateData,
+  buildErpPartnerUpdatePatch,
+} from './erp-partner.data-mappers';
 
 @Injectable()
 export class ErpPartnersService {
@@ -78,56 +42,13 @@ export class ErpPartnersService {
     }
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
-    const categoryBigInt = dto.categoryId ? BigInt(dto.categoryId) : null;
-    const customerCatBigInt = dto.customerCategoryId ? BigInt(dto.customerCategoryId) : null;
-    const supplierCatBigInt = dto.supplierCategoryId ? BigInt(dto.supplierCategoryId) : null;
-    const salesmanCatBigInt = dto.salesmanCategoryId ? BigInt(dto.salesmanCategoryId) : null;
-    const salesmanBigInt = dto.salesmanId ? BigInt(dto.salesmanId) : null;
-    const receivableBigInt = dto.receivableAccountId ? BigInt(dto.receivableAccountId) : null;
-    const payableBigInt = dto.payableAccountId ? BigInt(dto.payableAccountId) : null;
-    const currencyBigInt = dto.currencyId ? BigInt(dto.currencyId) : null;
-    const saleTermBigInt = dto.saleTermId ? BigInt(dto.saleTermId) : null;
-    const purchaseTermBigInt = dto.purchaseTermId ? BigInt(dto.purchaseTermId) : null;
+    const data = buildErpPartnerCreateData(dto, actorBigInt);
 
     let created;
     try {
       created = await this.prisma.erpPartner.create({
-        data: {
-          code: dto.code,
-          name: dto.name,
-          categoryId: categoryBigInt,
-          customerCategoryId: customerCatBigInt,
-          supplierCategoryId: supplierCatBigInt,
-          salesmanCategoryId: salesmanCatBigInt,
-          salesmanId: salesmanBigInt,
-          isCustomer: dto.isCustomer ?? false,
-          isSupplier: dto.isSupplier ?? false,
-          isSalesman: dto.isSalesman ?? false,
-          taxNumber: dto.taxNumber,
-          isTaxable: dto.isTaxable ?? false,
-          receivableAccountId: receivableBigInt,
-          payableAccountId: payableBigInt,
-          currencyId: currencyBigInt,
-          saleTermId: saleTermBigInt,
-          purchaseTermId: purchaseTermBigInt,
-          arCreditLimit: dto.arCreditLimit ?? undefined,
-          apCreditLimit: dto.apCreditLimit ?? undefined,
-          salesPriceTier: dto.salesPriceTier ?? 1,
-          branchId: firstBranchSync(dto.branchIds) ?? null,
-          isActive: dto.isActive ?? true,
-          createdById: actorBigInt,
-          updatedById: actorBigInt,
-          ...(buildDimRows(dto.branchIds, 'branchId')
-            ? { dimBranches: { create: buildDimRows(dto.branchIds, 'branchId') } }
-            : {}),
-          ...(buildDimRows(dto.warehouseIds, 'warehouseId')
-            ? { dimWarehouses: { create: buildDimRows(dto.warehouseIds, 'warehouseId') } }
-            : {}),
-          ...(buildDimRows(dto.locationIds, 'locationId')
-            ? { dimLocations: { create: buildDimRows(dto.locationIds, 'locationId') } }
-            : {}),
-        },
-        include: { ...PARTNER_DIM_INCLUDE, ...PARTNER_TRX_INCLUDE, ...PARTNER_REF_INCLUDE },
+        data,
+        include: { ...PARTNER_MUTATION_INCLUDE },
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code', 'md_partners_code_key'])) {
@@ -144,57 +65,16 @@ export class ErpPartnersService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.ErpPartnerWhereInput = { deletedAt: null };
-
-    if (query.search?.trim()) {
-      const q = query.search.trim();
-      where.OR = [
-        { code: { equals: q, mode: 'insensitive' } },
-        { name: { contains: q, mode: 'insensitive' } },
-        { taxNumber: { contains: q, mode: 'insensitive' } },
-      ];
-    }
-
-    if (query.categoryId !== undefined) {
-      where.categoryId = BigInt(query.categoryId);
-    }
-
-    if (query.isCustomer !== undefined) {
-      where.isCustomer = query.isCustomer;
-    }
-
-    if (query.isSupplier !== undefined) {
-      where.isSupplier = query.isSupplier;
-    }
-
-    if (query.isSalesman !== undefined) {
-      where.isSalesman = query.isSalesman;
-    }
-
-    if (query.isActive !== undefined) {
-      where.isActive = query.isActive;
-    }
-
-    const sortBy = query.sortBy ?? 'createdAt';
-    const sortDir = query.sortDir ?? 'desc';
+    const where = buildErpPartnerWhere(query);
+    const orderBy = buildErpPartnerOrderBy(query);
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpPartner.findMany({
         where,
-        orderBy: [{ [sortBy]: sortDir }],
+        orderBy,
         skip,
         take: limit,
-        include: {
-          category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
-          customerCategory: { select: { id: true, code: true, name: true } },
-          supplierCategory: { select: { id: true, code: true, name: true } },
-          salesmanCategory: { select: { id: true, code: true, name: true } },
-          receivableAccount: { select: { id: true, code: true, name: true } },
-          payableAccount: { select: { id: true, code: true, name: true } },
-          ...PARTNER_DIM_INCLUDE,
-          ...PARTNER_TRX_INCLUDE,
-          ...PARTNER_REF_INCLUDE,
-        },
+        include: { ...PARTNER_LIST_INCLUDE },
       }),
       this.prisma.erpPartner.count({ where }),
     ]);
@@ -214,30 +94,7 @@ export class ErpPartnersService {
   async findOne(id: bigint) {
     const item = await this.prisma.erpPartner.findFirst({
       where: { id, deletedAt: null },
-      include: {
-        category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
-        customerCategory: { select: { id: true, code: true, name: true } },
-        supplierCategory: { select: { id: true, code: true, name: true } },
-        salesmanCategory: { select: { id: true, code: true, name: true } },
-        receivableAccount: { select: { id: true, code: true, name: true } },
-        payableAccount: { select: { id: true, code: true, name: true } },
-        addresses: {
-          where: { deletedAt: null },
-          orderBy: { createdAt: 'asc' },
-          include: {
-            country: { select: { id: true, name: true } },
-            province: { select: { id: true, name: true } },
-            city: { select: { id: true, name: true } },
-            area: { select: { id: true, name: true, postalCode: true } },
-            subArea: { select: { id: true, name: true, postalCode: true } },
-          },
-        },
-        contacts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
-        bankAccounts: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
-        ...PARTNER_DIM_INCLUDE,
-        ...PARTNER_TRX_INCLUDE,
-        ...PARTNER_REF_INCLUDE,
-      },
+      include: { ...PARTNER_DETAIL_INCLUDE },
     });
     if (!item) {
       throw new NotFoundException('ERP Partner not found');
@@ -268,100 +125,14 @@ export class ErpPartnersService {
     }
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
-    const categoryBigInt =
-      dto.categoryId !== undefined ? (dto.categoryId ? BigInt(dto.categoryId) : null) : undefined;
-    const customerCatBigInt =
-      dto.customerCategoryId !== undefined
-        ? dto.customerCategoryId
-          ? BigInt(dto.customerCategoryId)
-          : null
-        : undefined;
-    const supplierCatBigInt =
-      dto.supplierCategoryId !== undefined
-        ? dto.supplierCategoryId
-          ? BigInt(dto.supplierCategoryId)
-          : null
-        : undefined;
-    const salesmanCatBigInt =
-      dto.salesmanCategoryId !== undefined
-        ? dto.salesmanCategoryId
-          ? BigInt(dto.salesmanCategoryId)
-          : null
-        : undefined;
-    const salesmanBigInt =
-      dto.salesmanId !== undefined ? (dto.salesmanId ? BigInt(dto.salesmanId) : null) : undefined;
-    const receivableBigInt =
-      dto.receivableAccountId !== undefined
-        ? dto.receivableAccountId
-          ? BigInt(dto.receivableAccountId)
-          : null
-        : undefined;
-    const payableBigInt =
-      dto.payableAccountId !== undefined
-        ? dto.payableAccountId
-          ? BigInt(dto.payableAccountId)
-          : null
-        : undefined;
-    const currencyBigInt =
-      dto.currencyId !== undefined ? (dto.currencyId ? BigInt(dto.currencyId) : null) : undefined;
-    const saleTermBigInt =
-      dto.saleTermId !== undefined ? (dto.saleTermId ? BigInt(dto.saleTermId) : null) : undefined;
-    const purchaseTermBigInt =
-      dto.purchaseTermId !== undefined
-        ? dto.purchaseTermId
-          ? BigInt(dto.purchaseTermId)
-          : null
-        : undefined;
+    const data = buildErpPartnerUpdatePatch(dto, actorBigInt);
 
     let updated;
     try {
       updated = await this.prisma.erpPartner.update({
         where: { id },
-        data: {
-          code: dto.code,
-          name: dto.name,
-          categoryId: categoryBigInt,
-          customerCategoryId: customerCatBigInt,
-          supplierCategoryId: supplierCatBigInt,
-          salesmanCategoryId: salesmanCatBigInt,
-          salesmanId: salesmanBigInt,
-          isCustomer: dto.isCustomer,
-          isSupplier: dto.isSupplier,
-          isSalesman: dto.isSalesman,
-          taxNumber: dto.taxNumber,
-          isTaxable: dto.isTaxable,
-          receivableAccountId: receivableBigInt,
-          payableAccountId: payableBigInt,
-          currencyId: currencyBigInt,
-          saleTermId: saleTermBigInt,
-          purchaseTermId: purchaseTermBigInt,
-          arCreditLimit: dto.arCreditLimit !== undefined ? dto.arCreditLimit : undefined,
-          apCreditLimit: dto.apCreditLimit !== undefined ? dto.apCreditLimit : undefined,
-          salesPriceTier: dto.salesPriceTier !== undefined ? dto.salesPriceTier : undefined,
-          branchId: firstBranchSync(dto.branchIds),
-          isActive: dto.isActive,
-          updatedById: actorBigInt,
-          ...(dto.branchIds !== undefined
-            ? { dimBranches: { deleteMany: {}, create: buildDimRows(dto.branchIds, 'branchId') } }
-            : {}),
-          ...(dto.warehouseIds !== undefined
-            ? {
-                dimWarehouses: {
-                  deleteMany: {},
-                  create: buildDimRows(dto.warehouseIds, 'warehouseId'),
-                },
-              }
-            : {}),
-          ...(dto.locationIds !== undefined
-            ? {
-                dimLocations: {
-                  deleteMany: {},
-                  create: buildDimRows(dto.locationIds, 'locationId'),
-                },
-              }
-            : {}),
-        },
-        include: { ...PARTNER_DIM_INCLUDE, ...PARTNER_TRX_INCLUDE, ...PARTNER_REF_INCLUDE },
+        data,
+        include: { ...PARTNER_MUTATION_INCLUDE },
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code', 'md_partners_code_key'])) {
@@ -420,13 +191,7 @@ export class ErpPartnersService {
         createdById: actorBigInt,
         updatedById: actorBigInt,
       },
-      include: {
-        country: { select: { id: true, name: true } },
-        province: { select: { id: true, name: true } },
-        city: { select: { id: true, name: true } },
-        area: { select: { id: true, name: true, postalCode: true } },
-        subArea: { select: { id: true, name: true, postalCode: true } },
-      },
+      include: { ...PARTNER_ADDRESS_GEO_INCLUDE },
     });
 
     return { success: true, data: address };
